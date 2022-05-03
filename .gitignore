@@ -1,0 +1,17 @@
+# dev
+dist
+node_modules
+public/script.js
+public/script.js.map
+
+.yarn/*
+.pnp.*
+# !.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# OS
+.DS_Store
