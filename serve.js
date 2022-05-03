@@ -2,10 +2,11 @@ const { build } = require("esbuild");
 const chokidar = require("chokidar");
 const liveServer = require("live-server");
 const esbuildPluginPnp = require('@yarnpkg/esbuild-plugin-pnp');
+const esbuildPluginPostcss = require('esbuild-postcss');
 
 (async () => {
   const builder = await build({
-    plugins: [esbuildPluginPnp.pnpPlugin()],
+    plugins: [esbuildPluginPostcss(), esbuildPluginPnp.pnpPlugin()],
     bundle: true,
     // Defines env variables for bundled JavaScript; here `process.env.NODE_ENV`
     // is propagated with a fallback.
