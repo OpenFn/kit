@@ -8,6 +8,7 @@ import ReactFlow, {
 import "./main.css";
 import TriggerNode from "./TriggerNode";
 import { MarkerType } from "react-flow-renderer";
+import { ProjectSpace, toFlow } from "./ProjectSpace";
 interface Props {
   foo: string;
 }
@@ -99,28 +100,26 @@ const initialEdges = [
 
 const snapGrid = [10, 10];
 
-function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      nodeTypes={nodeTypes}
-      snapToGrid={true}
-      snapGrid={snapGrid}
-      fitView
-    />
-  );
-}
 
-const App: React.FC<Props> = ({ foo }) => {
+const App: React.FC<{ projectSpace: ProjectSpace }> = ({ projectSpace }) => {
+  const [n,e] = toFlow(projectSpace)
+  
+  const [nodes, setNodes, onNodesChange] = useNodesState(n);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(e);
+
   return (
     <div className="h-full">
-      <Flow />
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
+        snapToGrid={true}
+        snapGrid={snapGrid}
+        fitView
+      />
     </div>
   );
 };
