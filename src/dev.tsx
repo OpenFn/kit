@@ -14,13 +14,19 @@ const projectSpace = {
       id: "bbb",
       name: "Job B",
       adaptor: "@openfn/language-salesforce@0.2.2",
-      trigger: { type: "on_job_failure", upstreamJob: "aaa" },
+      trigger: { type: "on_job_failure", upstreamJob: "111" },
     },
     {
       id: "ccc",
       name: "Job C",
       adaptor: "@openfn/language-dhis2@0.3.5",
       trigger: { type: "on_job_success", upstreamJob: "aaa" },
+    },
+    {
+      id: "111",
+      name: "Job E",
+      adaptor: "@openfn/language-dhis2@0.3.5",
+      trigger: { type: "on_job_failure", upstreamJob: "aaa" },
     },
   ],
 };
