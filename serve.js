@@ -1,12 +1,11 @@
-const { build } = require("esbuild");
-const chokidar = require("chokidar");
-const liveServer = require("live-server");
-const esbuildPluginPnp = require('@yarnpkg/esbuild-plugin-pnp');
-const esbuildPluginPostcss = require('esbuild-postcss');
+import { build } from "esbuild";
+import { watch } from "chokidar";
+import liveServer from "live-server";
+import esbuildPluginPostcss from 'esbuild-postcss';
 
 (async () => {
   const builder = await build({
-    plugins: [esbuildPluginPostcss(), esbuildPluginPnp.pnpPlugin()],
+    plugins: [esbuildPluginPostcss()],
     bundle: true,
     // Defines env variables for bundled JavaScript; here `process.env.NODE_ENV`
     // is propagated with a fallback.
@@ -24,9 +23,7 @@ const esbuildPluginPostcss = require('esbuild-postcss');
     sourcemap: true,
   });
   // `chokidar` watcher source changes.
-  chokidar
-    // Watches TypeScript and React TypeScript.
-    .watch("src/**/*.{ts,tsx}", {
+  watch("src/**/*.{ts,tsx}", {
       interval: 0, // No delay
     })
     // Rebuilds esbuild (incrementally -- see `build.incremental`).

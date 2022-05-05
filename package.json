@@ -1,13 +1,14 @@
 {
   "name": "flow-blocks-test",
   "packageManager": "yarn@3.2.0",
+  "type": "module",
   "devDependencies": {
     "@types/live-server": "^1.2.1",
     "@types/node": "^17.0.31",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.3",
-    "@yarnpkg/esbuild-plugin-pnp": "^3.0.0-rc.4",
     "autoprefixer": "^10.4.7",
+    "ava": "^4.2.0",
     "chokidar": "^3.5.3",
     "esbuild": "^0.14.38",
     "esbuild-postcss": "^0.0.4",
@@ -15,6 +16,7 @@
     "postcss": "^8.4.13",
     "rimraf": "^3.0.2",
     "tailwindcss": "^3.0.24",
+    "ts-node": "^10.7.0",
     "typescript": "^4.6.4"
   },
   "dependencies": {
@@ -22,5 +24,14 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-flow-renderer": "^10.2.0"
+  },
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--loader=ts-node/esm",
+      "--experimental-specifier-resolution=node"
+    ]
   }
 }

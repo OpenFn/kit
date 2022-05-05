@@ -10,7 +10,7 @@
     "isolatedModules": true, // Unconditionally emit imports for unresolved files
     "jsx": "react", // Support JSX in .tsx files
     "lib": ["dom", "dom.iterable", "esnext"], // List of library files to be included in the compilation
-    "module": "esnext", // Specify module code generation
+    "module": "es2020", // Specify module code generation
     "moduleResolution": "node", // Resolve modules using Node.js style
     "noEmit": false, // Do not emit output (meaning do not compile code, only perform type checking)
     "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statement
@@ -21,7 +21,7 @@
     "skipLibCheck": true, // Skip type checking of all declaration files
     "sourceMap": true, // Generate corrresponding .map file
     "strict": true, // Enable all strict type checking options
-    "target": "es6" // Specify ECMAScript target version
+    "target": "es2020" // Specify ECMAScript target version
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx", "src/dev.tsx"]
