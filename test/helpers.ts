@@ -1,4 +1,4 @@
-import { Job } from "../src/project-space";
+import { Job } from "../src/types";
 
 export function OnFailJob(upstreamJob: Job, attrs: { name: string }): Job {
   return {

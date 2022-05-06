@@ -1,14 +1,15 @@
 import React from "react";
 import App from "./index";
 import { createRoot } from "react-dom/client";
+import { ProjectSpace } from "./types";
 
-const projectSpace = {
+const projectSpace: ProjectSpace = {
   jobs: [
     {
       id: "aaa",
       name: "Job A",
       adaptor: "@openfn/language-salesforce@2.8.1",
-      trigger: { type: 'webhook' },
+      trigger: { type: "webhook" },
     },
     {
       id: "bbb",

@@ -48,7 +48,14 @@ test("deriveNodesWithEdges for a webhook job", (t) => {
         position: { x: 0, y: 0 },
       },
     ],
-    [{ id: "job-a-webhook->job-a", source: "job-a-webhook", target: "job-a" }],
+    [
+      {
+        id: "job-a-webhook->job-a",
+        source: "job-a-webhook",
+        target: "job-a",
+        animated: true,
+      },
+    ],
   ]);
 });
 
@@ -64,7 +71,16 @@ test("deriveNodesWithEdges for a on fail job", (t) => {
         position: { x: 0, y: 0 },
       },
     ],
-    [{ id: "job-a->job-b", source: "job-a", target: "job-b" }],
+    [
+      {
+        id: "job-a->job-b",
+        source: "job-a",
+        target: "job-b",
+        label: "On Failure",
+        labelShowBg: false,
+        className: "fail-stroke",
+      },
+    ],
   ]);
 });
 
@@ -86,6 +102,13 @@ test("toFlow expands a webhook job to a trigger node and a job node", (t) => {
         position: { x: 0, y: 200 },
       },
     ],
-    [{ id: "job-a-webhook->job-a", source: "job-a-webhook", target: "job-a" }],
+    [
+      {
+        id: "job-a-webhook->job-a",
+        source: "job-a-webhook",
+        target: "job-a",
+        animated: true,
+      },
+    ],
   ]);
 });

@@ -1,31 +1,5 @@
 import { digl } from "@crinkles/digl";
-import { Edge, Node } from "react-flow-renderer";
-
-type WebhookTrigger = {
-  type: "webhook";
-};
-
-type FlowTrigger = {
-  type: "on_job_failure" | "on_job_success";
-  upstreamJob: string;
-};
-
-export interface Job {
-  id: string;
-  name: string;
-  adaptor: string;
-  trigger: FlowTrigger | WebhookTrigger;
-}
-
-export interface FlowJob extends Job {
-  trigger: FlowTrigger;
-}
-
-export interface ProjectSpace {
-  jobs: Job[];
-  startingPoint?: { x: number; y: number };
-  spacing?: number;
-}
+import { Job, NodesAndEdges, FlowJob, ProjectSpace } from "./types";
 
 export function createPositionFactory(
   nodes: { id: string }[],
@@ -65,11 +39,13 @@ function deriveWebhook(job: Job): NodesAndEdges {
     type: "input",
     position: { x: 0, y: 0 },
   };
+
   const jobNode = {
     id: job.id,
     data: { label: job.name },
     position: { x: 0, y: 0 },
   };
+
   return [
     [triggerNode, jobNode],
     [
@@ -77,6 +53,7 @@ function deriveWebhook(job: Job): NodesAndEdges {
         id: `${triggerNode.id}->${job.id}`,
         source: triggerNode.id,
         target: jobNode.id,
+        animated: true,
       },
     ],
   ];
@@ -88,16 +65,23 @@ function deriveFlow(job: FlowJob): NodesAndEdges {
     data: { label: job.name },
     position: { x: 0, y: 0 },
   };
+
+  const label =
+    job.trigger.type == "on_job_failure" ? "On Failure" : "On Success";
+  const className =
+    job.trigger.type == "on_job_failure" ? "fail-stroke" : "success-stroke";
+
   const edge = {
     id: `${job.trigger.upstreamJob}->${job.id}`,
     source: job.trigger.upstreamJob,
     target: jobNode.id,
+    labelShowBg: false,
+    className,
+    label,
   };
 
   return [[jobNode], [edge]];
 }
-
-type NodesAndEdges = [nodes: Node[], edges: Edge[]];
 
 export function deriveNodesWithEdges(job: Job): NodesAndEdges {
   switch (job.trigger.type) {
@@ -129,6 +113,7 @@ export function toFlow(projectSpace: ProjectSpace): NodesAndEdges {
     [[], []]
   );
 
+  // TODO: set type to "output" on node where there is no edge with it's id as a source
   const positionFactory = createPositionFactory(nodes, edges);
 
   return [nodes.map((n) => ({ ...n, position: positionFactory(n.id) })), edges];

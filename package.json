@@ -1,7 +1,10 @@
 {
   "name": "flow-blocks-test",
-  "packageManager": "yarn@3.2.0",
   "type": "module",
+  "scripts": {
+    "test": "ava",
+    "dev": "node serve.js"
+  },
   "devDependencies": {
     "@types/live-server": "^1.2.1",
     "@types/node": "^17.0.31",
@@ -32,6 +35,9 @@
     "nodeArguments": [
       "--loader=ts-node/esm",
       "--experimental-specifier-resolution=node"
+    ],
+    "files": [
+      "test/**/*test.ts"
     ]
   }
 }
