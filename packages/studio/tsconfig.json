@@ -17,7 +17,7 @@
     "noUnusedLocals": true, // Report errors on unused locals
     "noUnusedParameters": true, // Report errors on unused parameters
     "resolveJsonModule": true, // Include modules imported with .json extension
-    "outDir": "./dist",
+    "declarationDir": "./types",
     "skipLibCheck": true, // Skip type checking of all declaration files
     "sourceMap": true, // Generate corrresponding .map file
     "strict": true, // Enable all strict type checking options

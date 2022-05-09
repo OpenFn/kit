@@ -1,0 +1,25 @@
+{
+  "name": "flow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "pnpm node esbuild.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@openfn/studio": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.38",
+    "esbuild-postcss": "^0.0.4",
+    "live-server": "^1.2.2",
+    "postcss": "^8.4.13",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "tailwindcss": "^3.0.24"
+  }
+}

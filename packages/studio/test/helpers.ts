@@ -9,7 +9,7 @@ export function OnFailJob(upstreamJob: Job, attrs: { name: string }): Job {
   };
 }
 
-export function WebhookJob(attrs: { name: string }): Job {
+export function WebhookJob(attrs: { name: string, [key: string]: any }): Job {
   return {
     id: attrs.name.toLowerCase().replace(/[?\W]+/g, "-"),
     adaptor: "@openfn/language-salesforce@2.8.1",

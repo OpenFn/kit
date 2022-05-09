@@ -4,10 +4,16 @@ dist
 node_modules
 public/
 !public/index.html
+tsconfig.tsbuildinfo
 
+# Build tools
+.rollup.cache
+.parcel-cache
+
+# Package management
 .yarn/*
 .pnp.*
-# !.yarn/cache
+
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases

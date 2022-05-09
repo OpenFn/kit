@@ -9,11 +9,18 @@ type FlowTrigger = {
   upstreamJob: string;
 };
 
+export interface Operation {
+  id: string;
+  label: string;
+  comment?: string;
+}
+
 export interface Job {
   id: string;
   name: string;
   adaptor: string;
   trigger: FlowTrigger | WebhookTrigger;
+  operations?: Operation[];
 }
 
 export interface FlowJob extends Job {
