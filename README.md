@@ -4,12 +4,19 @@ Lightning ProjectSpace
 ## Installing
 
 - Install [`pnpm`](https://pnpm.io/installation)
-- Run `pnpm i`
+- Run `pnpm run setup`
+- Run `pnpm run build`
 
-## Development Server
+## Examples
 
-- `pnpm run dev`
+**ProjectSpace Flow**
+
+```
+pnpm run -C examples/flow start
+```
 
 ## Running Tests
 
-- `pnpm run test`
+```
+pnpm run test
+```
