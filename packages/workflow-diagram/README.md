@@ -1,9 +1,15 @@
+# @openfn/workflow-diagram
+
+Diagram component to render OpenFn Workflows.
+
+Using [ReactFlow](https://reactflow.dev/) and ELKjs.
+
+## Usage
+
+```jsx
 import WorkflowDiagram from "@openfn/workflow-diagram";
 
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-const projectSpace = {
+let exampleData = {
   jobs: [
     {
       id: "A",
@@ -13,8 +19,8 @@ const projectSpace = {
       operations: [
         { id: "115", label: "create", comment: "Create an object" },
         { id: "25", label: "fn", comment: "Map out new records" },
-        { id: "35", label: "upsert", comment: "Upsert results" }
-      ]
+        { id: "35", label: "upsert", comment: "Upsert results" },
+      ],
     },
     {
       id: "B",
@@ -37,14 +43,10 @@ const projectSpace = {
   ],
 };
 
-const root = createRoot(document.getElementById("root"));
+<WorkflowDiagram projectSpace={exampleData} />;
+```
 
-root.render(
-  <div className="h-screen w-screen">
-    <div className="flex-none h-full">
-      <WorkflowDiagram projectSpace={projectSpace} />
-    </div>
-  </div>
-);
-
-
+> ReactFlow needs to know the size of the parent DOM element in order to draw
+> the diagram, ensure the component is wrapped in an element with a known
+> height.
+> _See: https://reactflow.dev/docs/guides/troubleshooting/#the-react-flow-parent-container-needs-a-width-and-a-height-to-render-the-graph_

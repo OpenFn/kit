@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@openfn/studio": "workspace:*"
+    "@openfn/workflow-diagram": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.14.38",
