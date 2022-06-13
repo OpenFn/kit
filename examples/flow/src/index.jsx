@@ -13,8 +13,8 @@ const projectSpace = {
       operations: [
         { id: "115", label: "create", comment: "Create an object" },
         { id: "25", label: "fn", comment: "Map out new records" },
-        { id: "35", label: "upsert", comment: "Upsert results" }
-      ]
+        { id: "35", label: "upsert", comment: "Upsert results" },
+      ],
     },
     {
       id: "B",
@@ -42,9 +42,10 @@ const root = createRoot(document.getElementById("root"));
 root.render(
   <div className="h-screen w-screen">
     <div className="flex-none h-full">
-      <WorkflowDiagram projectSpace={projectSpace} />
+      <WorkflowDiagram
+        projectSpace={projectSpace}
+        onNodeClick={(data) => console.log("Clicked Node:", data)}
+      />
     </div>
   </div>
 );
-
-

@@ -34,7 +34,7 @@ test("toElkNode for a webhook job", (t) => {
           "elk.direction": "DOWN",
           "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
         },
-        properties: { label: "Job A" },
+        properties: { label: "Job A", type: "job" },
         children: [],
         edges: [],
       },
@@ -86,6 +86,7 @@ test("toFlow for a webhook job", async (t) => {
           label: "Job A",
         },
         id: "job-a",
+        type: "job",
         position: {
           x: 20,
           y: 140,

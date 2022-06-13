@@ -1,4 +1,5 @@
 import typescript from "@rollup/plugin-typescript";
+import postcss from "rollup-plugin-postcss";
 import dts from "rollup-plugin-dts";
 
 import pkg from "./package.json" assert { type: "json" };
@@ -14,6 +15,7 @@ export default [
       },
     ],
     plugins: [
+      postcss(),
       typescript({ tsconfig: "./tsconfig.json" }),
     ],
     external: ["react", "react-dom", /elkjs*/, /react-flow/],

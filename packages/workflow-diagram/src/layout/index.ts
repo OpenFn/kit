@@ -126,7 +126,7 @@ function deriveWebhook(job: Job): ElkNodeEdges {
 
   const jobNode = {
     id: job.id,
-    properties: { label: job.name },
+    properties: { label: job.name, type: "job" },
     children: operationNodes,
     edges: operationEdges,
     layoutOptions: {
@@ -153,7 +153,7 @@ function deriveWebhook(job: Job): ElkNodeEdges {
 function deriveFlow(job: FlowJob): ElkNodeEdges {
   const jobNode = {
     id: job.id,
-    properties: { label: job.name },
+    properties: { label: job.name, type: "job" },
     width: 150,
     height: 50,
   };
