@@ -6,8 +6,17 @@ import { Node } from "react-flow-renderer";
 import { FlowElkNode } from "./types";
 
 function nodeData(node: FlowElkNode) {
+  const hasChildren = (node.children || []).length > 0;
+
   if (node.properties) {
-    return { data: { label: node.properties.label } };
+    return {
+      data: {
+        label: node.properties.label,
+        id: node.id,
+        type: node.properties.type,
+        hasChildren,
+      },
+    };
   }
 
   return { data: {} };

@@ -15,7 +15,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm ava",
-    "build": "rimraf dist/ && rollup -c",
+    "build": "rimraf dist/ .rollup.cache && rollup -c",
     "watch": "pnpm rollup -cw --no-watch.clearScreen"
   },
   "keywords": [],
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "elkjs": "^0.8.1",
-    "react-flow-renderer": "^10.3.4"
+    "react-flow-renderer": "^10.3.6"
   },
   "peerDependencies": {
     "react": "16 || 17 || 18",

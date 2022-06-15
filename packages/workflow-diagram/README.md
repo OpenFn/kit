@@ -43,10 +43,20 @@ let exampleData = {
   ],
 };
 
-<WorkflowDiagram projectSpace={exampleData} />;
+<WorkflowDiagram projectSpace={exampleData} onNodeClick={clickHandler} />;
 ```
 
 > ReactFlow needs to know the size of the parent DOM element in order to draw
 > the diagram, ensure the component is wrapped in an element with a known
 > height.
 > _See: https://reactflow.dev/docs/guides/troubleshooting/#the-react-flow-parent-container-needs-a-width-and-a-height-to-render-the-graph_
+
+**Handling Click Events**
+
+### `onNodeClick` _optional_
+
+When a node is clicked on, gets called with `(event, data)`.
+
+### `onPaneClick` _optional_
+
+When the pane is clicked, useful for tracking 'unselecting' a node.

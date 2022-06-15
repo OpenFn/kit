@@ -38,6 +38,7 @@ export function flattenElk(node: FlowElkNode): FlowNodeEdges {
           id: e.id,
           source: e.sources[0],
           target: e.targets[0],
+          type: "smoothstep",
         } as Edge;
       }),
     ]
@@ -116,17 +117,16 @@ function deriveWebhook(job: Job): ElkNodeEdges {
 
   const triggerNode = {
     id: `${job.id}-webhook`,
-    properties: { label: "Webhook", type: "input" },
+    properties: { label: "Webhook", type: "trigger" },
     children: [],
     edges: [],
-
     width: 150,
-    height: 50,
+    height: 40,
   };
 
   const jobNode = {
     id: job.id,
-    properties: { label: job.name, type: "job" },
+    properties: { label: job.name, type: "job", id: job.id },
     children: operationNodes,
     edges: operationEdges,
     layoutOptions: {
@@ -153,9 +153,9 @@ function deriveWebhook(job: Job): ElkNodeEdges {
 function deriveFlow(job: FlowJob): ElkNodeEdges {
   const jobNode = {
     id: job.id,
-    properties: { label: job.name, type: "job" },
+    properties: { label: job.name, type: "job", id: job.id },
     width: 150,
-    height: 50,
+    height: 40,
   };
 
   const label =

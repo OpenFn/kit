@@ -1,21 +1,22 @@
 import { toElkNode, toFlow } from "layout";
-import React, { useEffect, useCallback } from "react";
-import ReactFlow, { useNodesState, useEdgesState } from "react-flow-renderer";
-// import "./main.css";
-// import TriggerNode from "./TriggerNode";
-import { ProjectSpace } from "./types";
+import React, { useEffect } from "react";
+import ReactFlow, { useEdgesState, useNodesState } from "react-flow-renderer";
 import JobNode from "./nodes/JobNode";
+import TriggerNode from "./nodes/TriggerNode";
+import type { ProjectSpace } from "./types";
 
 import "./main.css";
 
 const nodeTypes = {
   job: JobNode,
+  trigger: TriggerNode,
 };
 
 const WorkflowDiagram: React.FC<{
   projectSpace: ProjectSpace;
-  onNodeClick?: ({}) => void;
-}> = ({ projectSpace, onNodeClick }) => {
+  onNodeClick?: (event: React.MouseEvent, {}) => void;
+  onPaneClick?: (event: React.MouseEvent) => void;
+}> = ({ projectSpace, onNodeClick, onPaneClick }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -28,17 +29,8 @@ const WorkflowDiagram: React.FC<{
     });
   }, []);
 
-  const outerRef = useCallback((node: Element) => {
-    if (onNodeClick) {
-      node.addEventListener("node-clicked", (e: CustomEventInit<any>) => {
-        onNodeClick(e.detail);
-      });
-    }
-  }, []);
-
   return (
     <ReactFlow
-      ref={outerRef}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
@@ -47,6 +39,8 @@ const WorkflowDiagram: React.FC<{
       nodeTypes={nodeTypes}
       snapToGrid={true}
       snapGrid={[10, 10]}
+      onNodeClick={onNodeClick}
+      onPaneClick={onPaneClick}
       fitView
     />
   );

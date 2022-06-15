@@ -21,8 +21,8 @@ test("toElkNode for a webhook job", (t) => {
       {
         id: "job-a-webhook",
         width: 150,
-        height: 50,
-        properties: { label: "Webhook", type: "input" },
+        height: 40,
+        properties: { label: "Webhook", type: "trigger" },
         children: [],
         edges: [],
       },
@@ -34,7 +34,7 @@ test("toElkNode for a webhook job", (t) => {
           "elk.direction": "DOWN",
           "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
         },
-        properties: { label: "Job A", type: "job" },
+        properties: { label: "Job A", type: "job", id: "job-a" },
         children: [],
         edges: [],
       },
@@ -49,7 +49,7 @@ test("toElkNode for a webhook job", (t) => {
     ],
   };
 
-  t.deepEqual(graph, expected);
+  t.deepEqual(expected, graph);
 });
 
 test("toFlow for a webhook job", async (t) => {
@@ -62,12 +62,16 @@ test("toFlow for a webhook job", async (t) => {
         id: "job-a-webhook->job-a",
         source: "job-a-webhook",
         target: "job-a",
+        type: "smoothstep",
       },
     ],
     nodes: [
       {
         data: {
           label: "Webhook",
+          type: "trigger",
+          id: "job-a-webhook",
+          hasChildren: false,
         },
         id: "job-a-webhook",
         position: {
@@ -76,20 +80,23 @@ test("toFlow for a webhook job", async (t) => {
         },
         style: {
           backgroundColor: "rgba(240,240,240,0)",
-          height: 50,
+          height: 40,
           width: 150,
         },
-        type: "input",
+        type: "trigger",
       },
       {
         data: {
           label: "Job A",
+          type: "job",
+          id: "job-a",
+          hasChildren: false,
         },
         id: "job-a",
         type: "job",
         position: {
           x: 20,
-          y: 140,
+          y: 130,
         },
         style: {
           backgroundColor: "rgba(240,240,240,0)",
