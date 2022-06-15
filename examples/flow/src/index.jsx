@@ -3,6 +3,8 @@ import WorkflowDiagram from "@openfn/workflow-diagram";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+import "./app.css"
+
 const projectSpace = {
   jobs: [
     {
@@ -39,12 +41,21 @@ const projectSpace = {
 
 const root = createRoot(document.getElementById("root"));
 
+function onNodeClick(_event, node) {
+  console.log("Clicked Node:", node)
+}
+
+function onPaneClick(event) {
+  console.log("Clicked pane:", event)
+}
+
 root.render(
   <div className="h-screen w-screen">
-    <div className="flex-none h-full">
+    <div className="flex-none h-full bg-gray-100">
       <WorkflowDiagram
         projectSpace={projectSpace}
-        onNodeClick={(data) => console.log("Clicked Node:", data)}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
       />
     </div>
   </div>
