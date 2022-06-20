@@ -18,7 +18,7 @@ const DocumentDownloadIcon = () => {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      id="document-download"
+      className="document-download"
     >
       <path
         strokeLinecap="round"
