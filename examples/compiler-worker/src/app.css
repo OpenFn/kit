@@ -1,0 +1,15 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+textarea {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scroll-margin-right: 0.2em;
+  scroll-margin: 0.2em;
+  scrollbar-color: #4285f4;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+}
