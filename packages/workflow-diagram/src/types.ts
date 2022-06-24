@@ -19,7 +19,7 @@ export interface Job {
   id: string;
   name: string;
   adaptor: string;
-  trigger: FlowTrigger | WebhookTrigger;
+  trigger: FlowTrigger | WebhookTrigger | CronTrigger;
   operations?: Operation[];
 }
 
