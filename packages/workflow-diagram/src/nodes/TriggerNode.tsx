@@ -30,7 +30,25 @@ const DocumentDownloadIcon = () => {
   );
 };
 
-const JobNode = ({
+const ClockIcon = () => {
+  return (
+    <svg
+      className="clock"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+};
+
+const TriggerNode = ({
   data,
   isConnectable,
   sourcePosition = Position.Bottom,
@@ -43,7 +61,7 @@ const JobNode = ({
     >
       <div className={`flex items-center`}>
         <div className="flex-none w-6 text-slate-700 rounded-full bg-slate-300 p-1">
-          <DocumentDownloadIcon />
+          {data?.label == "Webhook" ? <DocumentDownloadIcon /> : <ClockIcon />}
         </div>
         <div className="flex-auto">{data?.label}</div>
       </div>
@@ -56,6 +74,6 @@ const JobNode = ({
   );
 };
 
-JobNode.displayName = "JobNode";
+TriggerNode.displayName = "TriggerNode";
 
-export default memo(JobNode);
+export default memo(TriggerNode);

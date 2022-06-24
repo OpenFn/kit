@@ -1,5 +1,9 @@
 import { Edge, Node } from "react-flow-renderer";
 
+type CronTrigger = {
+  type: "cron";
+};
+
 type WebhookTrigger = {
   type: "webhook";
 };
@@ -19,7 +23,7 @@ export interface Job {
   id: string;
   name: string;
   adaptor: string;
-  trigger: FlowTrigger | WebhookTrigger;
+  trigger: FlowTrigger | WebhookTrigger | CronTrigger;
   operations?: Operation[];
 }
 

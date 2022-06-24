@@ -112,6 +112,44 @@ function deriveOperations(job: Job): ElkNodeEdges {
   return [[], []];
 }
 
+function deriveCron(job: Job): ElkNodeEdges {
+  const [operationNodes, operationEdges] = deriveOperations(job);
+
+  const triggerNode = {
+    id: `${job.id}-cron`,
+    properties: { label: "Cron", type: "trigger" },
+    children: [],
+    edges: [],
+    width: 100,
+    height: 40,
+  };
+
+  const jobNode = {
+    id: job.id,
+    properties: { label: job.name, type: "job", id: job.id },
+    children: operationNodes,
+    edges: operationEdges,
+    layoutOptions: {
+      "elk.direction": "DOWN",
+      "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
+    },
+    width: 150,
+    height: 50,
+  };
+
+  return [
+    [triggerNode, jobNode],
+    [
+      {
+        id: `${triggerNode.id}->${job.id}`,
+        sources: [triggerNode.id],
+        targets: [jobNode.id],
+        sections: [],
+      },
+    ],
+  ];
+}
+
 function deriveWebhook(job: Job): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
@@ -177,6 +215,9 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
 
 export function deriveNodesWithEdges(job: Job): ElkNodeEdges {
   switch (job.trigger.type) {
+    case "cron":
+      return deriveCron(job);
+
     case "webhook":
       return deriveWebhook(job);
 
