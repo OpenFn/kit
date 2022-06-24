@@ -1,5 +1,9 @@
 import { Edge, Node } from "react-flow-renderer";
 
+type CronTrigger = {
+  type: "cron";
+};
+
 type WebhookTrigger = {
   type: "webhook";
 };
