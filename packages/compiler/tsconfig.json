@@ -41,8 +41,10 @@
     // Enable all strict type checking options
     "strict": true,
     // Specify ECMAScript target version
-    "target": "ES2020"
+    "target": "ES2020",
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "dist"]
+  
 }

@@ -3,26 +3,23 @@ import ts from "typescript";
 import {
   // createDefaultMapFromNodeModules,
   createDefaultMapFromCDN,
-  createSystem,
   createVirtualTypeScriptEnvironment,
   VirtualTypeScriptEnvironment,
 } from "@typescript/vfs";
+import { createSystem } from "./fake-fs";
 import { WrappedSymbol } from "./wrapped-symbol";
 
-export async function assembleCompiler(code: string): Promise<Project> {
+export async function getDefaultMap(): Promise<Map<string, string>> {
   const shouldCache = true;
   // This caches the lib files in the site's localStorage
   const fsMap = await createDefaultMapFromCDN(
-    { target: ts.ScriptTarget.ES2020 },
+    { target: Project.compilerOpts.target },
     "4.5.5",
     shouldCache,
     ts
   );
 
-  const compiler: Project = new Project(fsMap);
-  compiler.addFile(code);
-
-  return compiler;
+  return fsMap;
 }
 
 /**
@@ -43,6 +40,7 @@ export class Project {
     (program: ts.Program, options: {}) => ts.TransformerFactory<ts.SourceFile>
   >;
   transformOptions!: {};
+  ts: typeof ts;
 
   constructor(fsMap: Map<string, string> = new Map()) {
     this.transformers = [];
@@ -51,6 +49,7 @@ export class Project {
     // this.fsMap = createDefaultMapFromNodeModules(BaseCompiler.compilerOpts, ts);
 
     this.fsMap = fsMap;
+    this.ts = ts;
 
     // If you need a FS backed system, useful for debugging missing definitions.
     // const projectRoot = join(__dirname, "..");
@@ -101,8 +100,26 @@ export class Project {
     return this.program.getSourceFile(filename);
   }
 
-  addFile(expression: string, filename: string = "index.ts") {
+
+  /**
+   * Add a file to the environment.
+   * 
+   * Note that files added via the constructor are not considered part of the
+   * 'project', rather files available for reading during diagnostics and 
+   * compilation. To add packages or type definitions use `addFile`.
+   */
+  createFile(expression: string, filename: string = "index.ts") {
     this.env.createFile(filename, expression);
+  }
+
+  /**
+   * Add a file to the system.
+   * 
+   * Differs from `createFile` in that these files are not considered part of 
+   * the project - but part of the file system.
+   */
+  addFile(content: string, path: string) {
+    this.system.writeFile(path, content);
   }
 
   // useTransform(func: () => ts.TransformerFactory<ts.SourceFile>) {
@@ -111,7 +128,7 @@ export class Project {
 
   /**
    * Return a list of symbols that have been marked for export.
-   * In the case of aliases (`export { a, b}`), these aliases are followed
+   * In the case of aliases (`export {a, b}`), these aliases are followed
    * to their original symbol.
    */
   getSymbol(sourceFile: ts.SourceFile): WrappedSymbol {
@@ -123,13 +140,15 @@ export class Project {
     return new WrappedSymbol(this.typeChecker, sfSymbol);
   }
 
-  getDiagnostics(): readonly ts.Diagnostic[] {
-    return ts.getPreEmitDiagnostics(this.program, this.sourceFile);
-    // return this.env.languageService.getSemanticDiagnostics("index.ts");
+  getDiagnostics(sourceFile?: ts.SourceFile): readonly ts.Diagnostic[] {
+    return ts.getPreEmitDiagnostics(
+      this.program,
+      sourceFile || this.sourceFile
+    );
   }
 
-  formatDiagnostics(): string[] {
-    return this.getDiagnostics().map((diagnostic) => {
+  formatDiagnostics(sourceFile?: ts.SourceFile): string[] {
+    return this.getDiagnostics(sourceFile).map((diagnostic) => {
       if (diagnostic.file) {
         let { line, character } = ts.getLineAndCharacterOfPosition(
           diagnostic.file,
@@ -148,10 +167,10 @@ export class Project {
     });
   }
 
-  compile(): string {
-    const sourceFile = this.program.getSourceFile("index.ts");
+  compile(sourceFile?: ts.SourceFile): ts.EmitResult {
+    sourceFile = sourceFile || this.program.getSourceFile("index.ts");
     // const emitResult =
-    this.program.emit(sourceFile, this.system.writeFile, undefined, false, {
+    return this.program.emit(sourceFile, this.system.writeFile, undefined, false, {
       before: this.transformers.map((t) =>
         t(this.program, this.transformOptions)
       ), // [transformer(this.program, {})],
@@ -159,10 +178,11 @@ export class Project {
       afterDeclarations: [],
     });
 
-    return this.system.readFile("index.js")!;
+    // return this.system.readFile("index.js")!;
   }
 
   static compilerOpts: ts.CompilerOptions = {
+    allowJs: true,
     experimentalDecorators: true,
     module: ts.ModuleKind.ES2020,
     moduleResolution: ts.ModuleResolutionKind.NodeJs,
@@ -171,9 +191,10 @@ export class Project {
     noUnusedParameters: true,
     stripInternal: true,
     declaration: false,
-    baseUrl: "./",
-    lib: ["ES2021"],
-    target: ts.ScriptTarget.ES2021,
+    baseUrl: "/",
+    // outDir: "/dist",
+    lib: ["ES2020"],
+    target: ts.ScriptTarget.ES2020,
   };
 
   // transform(): ts.TransformationResult<ts.Node> {

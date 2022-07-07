@@ -18,7 +18,7 @@ const workerApi = {
       throw new Error("Project not initialized, call `createProject` first.");
     }
 
-    project.addFile(dts, "index.d.ts");
+    project.createFile(dts, "index.d.ts");
     const sourceFile = project.getSourceFile("index.d.ts")!;
 
     return project.getSymbol(sourceFile).exports.reduce((symbols, symbol) => {

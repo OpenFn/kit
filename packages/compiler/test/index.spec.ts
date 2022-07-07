@@ -1,4 +1,4 @@
-import assert from "assert";
+import { assert } from "chai";
 import { Project } from "../src/compiler";
 import { getDtsFixture } from "./helpers";
 
@@ -6,7 +6,7 @@ describe("getExports", () => {
   it("for export aliases", async () => {
     const exampleDts = await getDtsFixture("language-common.export-alias");
     const p = new Project();
-    p.addFile(exampleDts, "index.d.ts");
+    p.createFile(exampleDts, "index.d.ts");
 
     const sourceFile = p.getSourceFile("index.d.ts")!;
 
@@ -14,14 +14,14 @@ describe("getExports", () => {
       .getSymbol(sourceFile)
       .exports.filter((sym) => sym.isFunctionDeclaration);
 
-    assert(syms.find((sym) => sym.name == "execute"));
-    assert(!syms.find((sym) => sym.name == "DataSource"));
+    assert.isOk(syms.find((sym) => sym.name == "execute"));
+    assert.isOk(!syms.find((sym) => sym.name == "DataSource"));
   });
 
   it("for export declarations", async () => {
     const exampleDts = await getDtsFixture("language-common");
     const p = new Project();
-    p.addFile(exampleDts, "index.d.ts");
+    p.createFile(exampleDts, "index.d.ts");
 
     const sourceFile = p.getSourceFile("index.d.ts")!;
 
@@ -32,11 +32,11 @@ describe("getExports", () => {
       );
 
     const httpModuleDeclaration = symbols.find((sym) => sym.name == "http");
-    
-    assert(httpModuleDeclaration);
-    assert(httpModuleDeclaration.exports.length == 9);
 
-    assert(symbols.find((sym) => sym.name == "execute"));
-    assert(!symbols.find((sym) => sym.name == "DataSource"));
+    assert.isOk(httpModuleDeclaration);
+    assert.equal(httpModuleDeclaration!.exports.length, 9);
+
+    assert.isOk(symbols.find((sym) => sym.name == "execute"));
+    assert.isOk(!symbols.find((sym) => sym.name == "DataSource"));
   });
 });
