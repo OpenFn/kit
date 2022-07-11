@@ -1,3 +1,4 @@
+import { describe } from "mocha";
 import { assert } from "chai";
 import { Project } from "../src/compiler";
 import { getDtsFixture } from "./helpers";
