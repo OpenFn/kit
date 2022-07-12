@@ -64,6 +64,7 @@ const commonBuildOptions = {
   format: "esm",
   target: ["es2020"],
   outdir: "./dist",
+  external: ["fs", "events", "stream", "path", "util", "constants", "assert"],
   pure: ["console.log", "console.time", "console.timeEnd"],
 };
 

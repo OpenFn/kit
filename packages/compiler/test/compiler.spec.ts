@@ -4,6 +4,11 @@ global.localStorage = new LocalStorage("./tmp");
 import { readFile } from "fs/promises";
 import { Project, getDefaultMap } from "../src/compiler";
 import { createDefaultMapFromNodeModules } from "@typescript/vfs";
+import {
+  fetchFile,
+  fetchFileListing,
+  fetchDTSListing,
+} from "../src/package-fs";
 
 // "get" a package
 // look at it's package.json for typings
@@ -39,42 +44,57 @@ describe("Adaptor FS maps", () => {
   });
 });
 
-describe("getAdaptor", () => {
-  it("can fetch from the local filesystem", async () => {
-    const fsMap = await getAdaptor("/home/stuart/Sourcecode/language-common2");
+describe("compiler", () => {
+  describe("getAdaptor", () => {
+    it("can fetch from the local filesystem", async () => {
+      const adaptorName = "@openfn/language-common@2.0.0-rc1";
 
-    const filePaths = Array.from(fsMap.keys());
+      const fsMap = new Map();
+      fsMap.set(
+        `/node_modules/@openfn/language-common/package.json`,
+        await fetchFile(`${adaptorName}/package.json`)
+      );
 
-    assert.deepEqual(filePaths, [
-      "/node_modules/@openfn/language-common/package.json",
-      "/node_modules/@openfn/language-common/dist/language-common.d.ts",
-    ]);
+      for await (const file of fetchDTSListing(adaptorName)) {
+        fsMap.set(
+          `/node_modules/@openfn/language-common${file}`,
+          await fetchFile(`${adaptorName}${file}`)
+        );
+      }
 
-    const projectFsMap: Map<string, string> = new Map([
-      ...(await createDefaultMapFromNodeModules(Project.compilerOpts)),
-    ]);
+      const filePaths = Array.from(fsMap.keys());
 
-    const project = new Project(projectFsMap);
+      assert.deepEqual(filePaths, [
+        "/node_modules/@openfn/language-common/package.json",
+        "/node_modules/@openfn/language-common/dist/language-common.d.ts",
+      ]);
 
-    for (const [path, content] of fsMap) {
-      project.addFile(content, path);
-    }
+      const projectFsMap: Map<string, string> = new Map([
+        ...(await createDefaultMapFromNodeModules(Project.compilerOpts)),
+      ]);
 
-    project.createFile(
-      [
-        "import {execute} from '@openfn/language-common';",
-        "execute(1)",
-        "clgs.log()",
-      ].join("\n"),
-      "/src/index.ts"
-    );
+      const project = new Project(projectFsMap);
 
-    assert.deepEqual(
-      project.formatDiagnostics(project.getSourceFile("/src/index.ts")),
-      [
-        "/src/index.ts (2,9): Argument of type 'number' is not assignable to parameter of type 'Operation<State | Promise<State>>'.",
-        "/src/index.ts (3,1): Cannot find name 'clgs'.",
-      ]
-    );
+      for (const [path, content] of fsMap) {
+        project.addFile(content, path);
+      }
+
+      project.createFile(
+        [
+          "import {execute} from '@openfn/language-common';",
+          "execute(1)",
+          "clgs.log()",
+        ].join("\n"),
+        "/src/index.ts"
+      );
+
+      assert.deepEqual(
+        project.formatDiagnostics(project.getSourceFile("/src/index.ts")),
+        [
+          "/src/index.ts (2,9): Argument of type 'number' is not assignable to parameter of type 'Operation<State | Promise<State>>'.",
+          "/src/index.ts (3,1): Cannot find name 'clgs'.",
+        ]
+      );
+    }).timeout(8000);
   });
 });

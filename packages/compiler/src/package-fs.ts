@@ -4,6 +4,8 @@
  * Utilities for loading packages
  */
 import fetch from "cross-fetch";
+import { LocalStorage } from "node-localstorage";
+global.localStorage = new LocalStorage("./tmp");
 
 interface PackageListing {
   path: string;
@@ -25,7 +27,12 @@ function* flattenFiles(
   }
 }
 
-async function getFileListing(packageName: string) {
+export async function fetchFileListing(packageName: string) {
+  const cached = localStorage.getItem(packageName);
+  if (cached) {
+    return flattenFiles(JSON.parse(cached));
+  }
+
   const response = await fetch(`https://unpkg.com/${packageName}/?meta`);
 
   if (response.status != 200) {
@@ -35,6 +42,7 @@ async function getFileListing(packageName: string) {
   }
 
   const listing = (await response.json()) as PackageListing;
+  localStorage.setItem(packageName, JSON.stringify(listing));
 
   return flattenFiles(listing);
 }
@@ -49,8 +57,8 @@ const dtsExtension = /\.d\.ts$/;
  * }
  * @param packageName string
  */
-export async function* fetchDTS(packageName: string) {
-  for (const f of await getFileListing(packageName)) {
+export async function* fetchDTSListing(packageName: string) {
+  for (const f of await fetchFileListing(packageName)) {
     if (dtsExtension.test(f)) {
       yield f;
     }
@@ -62,6 +70,11 @@ export async function* fetchDTS(packageName: string) {
  * @param path string
  */
 export async function fetchFile(path: string) {
+  const cached = localStorage.getItem(path);
+  if (cached) {
+    return cached;
+  }
+  
   const response = await fetch(`https://unpkg.com/${path}`);
 
   if (response.status != 200) {
@@ -70,5 +83,8 @@ export async function fetchFile(path: string) {
     );
   }
 
-  return response.text();
+  const contents = await response.text();
+  localStorage.setItem(path, contents);
+  
+  return contents;
 }

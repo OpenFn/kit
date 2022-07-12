@@ -1,6 +1,6 @@
 import { expose } from "threads/worker";
 import { Project } from "../compiler";
-import { fetchDTS, fetchFile } from "../package-fs";
+import { fetchDTSListing, fetchFile } from "../package-fs";
 
 let project: undefined | Project;
 
@@ -47,7 +47,7 @@ function describeAdaptor(dts: string) {
 
 async function fetchDTSForPackage(packageName: string) {
   const results = new Map<string, string>();
-  for await (const path of fetchDTS(packageName)) {
+  for await (const path of fetchDTSListing(packageName)) {
     const fullPath = `${packageName}${path}`;
     const contents = await fetchFile(fullPath);
     results.set(`${packageName}${path}`, contents);

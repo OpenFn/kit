@@ -2,7 +2,7 @@ import assert from "assert";
 import { ModuleThread, spawn, Thread, BlobWorker } from "threads";
 import { WorkerAPI } from "../src/worker/worker";
 import { getDtsFixture } from "./helpers";
-import { buildSync } from "esbuild";
+import { build } from "esbuild";
 
 const exampleDts = await getDtsFixture("language-common");
 
@@ -12,8 +12,8 @@ const exampleDts = await getDtsFixture("language-common");
  * Worker implementations that appears to either not bundle the nodejs implementation
  * or doesn't correctly export it during runtime.
  */
-function buildAsString(filename) {
-  let result = buildSync({
+async function buildAsString(filename) {
+  let result = await build({
     entryPoints: [filename],
     sourcemap: "inline",
     bundle: true,
@@ -29,24 +29,31 @@ function buildAsString(filename) {
   return result.outputFiles[0].contents;
 }
 
-it("can call the api from a worker", async () => {
-  let worker: ModuleThread<WorkerAPI>;
+describe("worker", () => {
+  let blobWorker: BlobWorker | undefined;
 
-  try {
-    worker = await spawn<WorkerAPI>(
-      new BlobWorker(buildAsString("src/worker/worker.ts"))
-    );
-    await worker.createProject();
-    assert((await worker.createProject()) == true);
+  before(async () => {
+    blobWorker = new BlobWorker(await buildAsString("src/worker/worker.ts"));
+  });
 
-    const adaptorExports = await worker.describeAdaptor(exampleDts);
+  it("describeAdaptor", async () => {
+    let worker: ModuleThread<WorkerAPI>;
 
-    assert(adaptorExports.find((sym) => sym.name == "execute"));
-    assert(!adaptorExports.find((sym) => sym.name == "DataSource"));
-    return Thread.terminate(worker);
-  } catch (error) {
-    console.log(error);
+    try {
+      worker = await spawn<WorkerAPI>(blobWorker);
 
-    assert(!error, error);
-  }
+      await worker.createProject();
+      assert((await worker.createProject()) == true);
+
+      const adaptorExports = await worker.describeAdaptor(exampleDts);
+
+      assert(adaptorExports.find((sym) => sym.name == "execute"));
+      assert(!adaptorExports.find((sym) => sym.name == "DataSource"));
+      return Thread.terminate(worker);
+    } catch (error) {
+      console.log(error);
+
+      assert(!error, error);
+    }
+  }).timeout(5000);
 });
