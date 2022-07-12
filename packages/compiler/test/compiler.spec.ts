@@ -44,8 +44,8 @@ describe("Adaptor FS maps", () => {
   });
 });
 
-describe("compiler", () => {
-  describe("getAdaptor", () => {
+describe("Project", () => {
+  describe("constructor", () => {
     it("can fetch from the local filesystem", async () => {
       const adaptorName = "@openfn/language-common@2.0.0-rc1";
 
@@ -76,7 +76,7 @@ describe("compiler", () => {
       const project = new Project(projectFsMap);
 
       for (const [path, content] of fsMap) {
-        project.addFile(content, path);
+        project.addToFS(content, path);
       }
 
       project.createFile(
@@ -96,5 +96,18 @@ describe("compiler", () => {
         ]
       );
     }).timeout(8000);
+  });
+
+  describe("addToFS", () => {
+    const project = new Project(new Map([["foo", ""]]));
+    project.addToFS(new Map([["bar", ""]]));
+
+    assert.deepEqual(
+      project.fsMap,
+      new Map([
+        ["foo", ""],
+        ["bar", ""],
+      ])
+    );
   });
 });

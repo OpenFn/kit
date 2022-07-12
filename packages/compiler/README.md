@@ -24,6 +24,11 @@ const worker = await startWorker();
 const results = await worker.describeAdaptor("a .d.ts as a string");
 ```
 
+### Project
+
+The `Project` object is a wrapper around the Typescript compiler, providing
+the necessary hooks to interact with code and module type definitions.
+
 ## Building
 
 The Worker is built in two phases:
@@ -32,4 +37,3 @@ The Worker is built in two phases:
 2. Compile the entrypoint, which injects the worker as a string.
 
 By splitting this up we can produce a single file that can be used in the browser.
-

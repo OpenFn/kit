@@ -100,26 +100,32 @@ export class Project {
     return this.program.getSourceFile(filename);
   }
 
-
   /**
    * Add a file to the environment.
-   * 
+   *
    * Note that files added via the constructor are not considered part of the
-   * 'project', rather files available for reading during diagnostics and 
+   * 'project', rather files available for reading during diagnostics and
    * compilation. To add packages or type definitions use `addFile`.
    */
-  createFile(expression: string, filename: string = "index.ts") {
+  createFile(expression: string, filename: string = "index.ts"): ts.SourceFile {
     this.env.createFile(filename, expression);
+    return this.getSourceFile(filename) as ts.SourceFile;
   }
 
   /**
    * Add a file to the system.
-   * 
-   * Differs from `createFile` in that these files are not considered part of 
+   *
+   * Differs from `createFile` in that these files are not considered part of
    * the project - but part of the file system.
    */
-  addFile(content: string, path: string) {
-    this.system.writeFile(path, content);
+  addToFS(mapOrContent: string | Map<string, string>, path?: string): void {
+    if (path) {
+      this.system.writeFile(path, mapOrContent as string);
+    } else {
+      for (const [path, content] of mapOrContent as Map<string, string>) {
+        this.system.writeFile(path, content);
+      }
+    }
   }
 
   // useTransform(func: () => ts.TransformerFactory<ts.SourceFile>) {
@@ -170,13 +176,19 @@ export class Project {
   compile(sourceFile?: ts.SourceFile): ts.EmitResult {
     sourceFile = sourceFile || this.program.getSourceFile("index.ts");
     // const emitResult =
-    return this.program.emit(sourceFile, this.system.writeFile, undefined, false, {
-      before: this.transformers.map((t) =>
-        t(this.program, this.transformOptions)
-      ), // [transformer(this.program, {})],
-      after: [],
-      afterDeclarations: [],
-    });
+    return this.program.emit(
+      sourceFile,
+      this.system.writeFile,
+      undefined,
+      false,
+      {
+        before: this.transformers.map((t) =>
+          t(this.program, this.transformOptions)
+        ), // [transformer(this.program, {})],
+        after: [],
+        afterDeclarations: [],
+      }
+    );
 
     // return this.system.readFile("index.js")!;
   }
