@@ -22,3 +22,5 @@ tsconfig.tsbuildinfo
 
 # OS
 .DS_Store
+
+tmp
