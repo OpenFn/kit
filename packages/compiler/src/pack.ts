@@ -49,13 +49,17 @@ export class Pack {
   }
 
   async getFiles(files?: string[]) {
-    Promise.allSettled((files || this.fileListing).map(this.getFile.bind(this)))
+    await Promise.allSettled(
+      (files || this.fileListing).map((file) => this.getFile(file))
+    );
+
+    return this.fsMap;
   }
 
   async getFile(file: string) {
     // TODO: change to allow FS fetching
     const contents = await fetchFile(this.specifier + file);
-    this.fsMap.set(file, contents)
+    this.fsMap.set(file, contents);
   }
 
   static async fromUnpkg(specifier: string): Promise<Pack> {
