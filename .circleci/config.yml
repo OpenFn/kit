@@ -15,7 +15,7 @@ jobs:
     steps:
       - run:
           name: Install pnpm
-          command: curl -fsSL https://get.pnpm.io/install.sh | sh -
+          command: curl -fsSL https://get.pnpm.io/install.sh | bash -
       - checkout
       - restore_cache:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
