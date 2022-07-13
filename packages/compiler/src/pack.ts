@@ -1,4 +1,5 @@
 import { fetchFile, fetchFileListing } from "./package-fs";
+import urlJoin from "url-join";
 
 interface PackParameters {
   path: string;
@@ -46,6 +47,14 @@ export class Pack {
 
   public get version(): string {
     return this.packageJson.version;
+  }
+
+  /**
+   * Get the "types" property from `package.json`, and ensure it's path is
+   * relative to `/`.
+   */
+  public get types(): string {
+    return urlJoin("/", this.packageJson.types)
   }
 
   async getFiles(files?: string[]) {

@@ -7,6 +7,13 @@ import fetch from "cross-fetch";
 import { LocalStorage } from "node-localstorage";
 global.localStorage = new LocalStorage("./tmp");
 
+export class NotFound extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotFound";
+  }
+}
+
 interface PackageListing {
   path: string;
   type: "directory" | "file";
@@ -74,17 +81,21 @@ export async function fetchFile(path: string) {
   if (cached) {
     return cached;
   }
-  
+
   const response = await fetch(`https://unpkg.com/${path}`);
 
-  if (response.status != 200) {
-    throw new Error(
-      `Failed getting file at: ${path} got: ${response.status} ${response.statusText}`
-    );
-  }
+  switch (response.status) {
+    case 200:
+      const contents = await response.text();
+      localStorage.setItem(path, contents);
 
-  const contents = await response.text();
-  localStorage.setItem(path, contents);
-  
-  return contents;
+      return contents;
+    case 404:
+      throw new NotFound(`Got 404 from Unpkg for: ${path}`);
+
+    default:
+      throw new Error(
+        `Failed getting file at: ${path} got: ${response.status} ${response.statusText}`
+      );
+  }
 }

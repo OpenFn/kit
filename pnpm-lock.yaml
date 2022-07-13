@@ -98,6 +98,7 @@ importers:
       tslib: ^2.4.0
       tsm: ^2.2.1
       typescript: ^4.7.4
+      url-join: ^5.0.0
     devDependencies:
       '@types/chai': 4.3.1
       '@types/mocha': 9.1.1
@@ -115,6 +116,7 @@ importers:
       tslib: 2.4.0
       tsm: 2.2.1
       typescript: 4.7.4
+      url-join: 5.0.0
 
   packages/workflow-diagram:
     specifiers:
@@ -4545,6 +4547,11 @@ packages:
   /urix/0.1.0:
     resolution: {integrity: sha512-Am1ousAhSLBeB9cG/7k7r2R0zj50uDRlZHPGbazid5s9rlF1F/QKYObEKSIunSjIOkJZqwRRLpvewjEkM7pSqg==}
     deprecated: Please see https://github.com/lydell/urix#deprecated
+    dev: true
+
+  /url-join/5.0.0:
+    resolution: {integrity: sha512-n2huDr9h9yzd6exQVnH/jU5mr+Pfx08LRXXZhkLLetAMESRj+anQsTAh940iMrIetKAmry9coFuZQ2jY8/p3WA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
   /use/3.1.1:
