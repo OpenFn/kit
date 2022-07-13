@@ -1,6 +1,6 @@
 import { describe } from "mocha";
 import { assert } from "chai";
-import { Project } from "../src/compiler";
+import { Project } from "../src/project";
 import { getDtsFixture } from "./helpers";
 
 describe("getExports", () => {

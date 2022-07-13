@@ -2,7 +2,7 @@ import { assert } from "chai";
 import { LocalStorage } from "node-localstorage";
 global.localStorage = new LocalStorage("./tmp");
 import { readFile } from "fs/promises";
-import { Project, getDefaultMap } from "../src/compiler";
+import { Project, getDefaultMap } from "../src/project";
 import { createDefaultMapFromNodeModules } from "@typescript/vfs";
 import {
   fetchFile,
