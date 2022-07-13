@@ -27,7 +27,10 @@ describe("Pack", () => {
       await pack.getFiles();
       assert.equal(pack.fsMap.size, 7);
 
-      assert.equal(pack.types, "/dist/language-common.d.ts");
+      assert.equal(
+        pack.types,
+        "/node_modules/@openfn/language-common/dist/language-common.d.ts"
+      );
       assert.ok(pack.fsMap.get(pack.types));
     }).timeout(20000);
 

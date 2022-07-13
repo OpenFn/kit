@@ -6,6 +6,7 @@ interface PackParameters {
   packageJson?: PackageJson;
   fileListing?: string[];
   fsMap?: Map<string, string>;
+  packageBase?: string;
 }
 
 interface PackageJson {
@@ -19,12 +20,14 @@ export class Pack {
   _packageJson: PackageJson | undefined;
   _fileListing: string[] | undefined;
   fsMap: Map<string, string>;
+  _packageBase: string | undefined;
 
   constructor(params: PackParameters) {
     this.path = params.path;
     this._packageJson = params.packageJson;
     this._fileListing = params.fileListing;
     this.fsMap = params.fsMap || new Map();
+    this._packageBase = params.packageBase;
   }
 
   public get packageJson(): PackageJson {
@@ -34,6 +37,11 @@ export class Pack {
     return this._packageJson;
   }
 
+  /**
+   * The file contents of the package according to the source.
+   *
+   * _Different to `fsMap`, which includes the `root`._
+   */
   public get fileListing(): string[] {
     if (!this._fileListing) {
       throw new Error("fileListing not available.");
@@ -41,6 +49,11 @@ export class Pack {
     return this._fileListing;
   }
 
+  /**
+   * The absolute name and version of the package.
+   *
+   * i.e. `@<org>/<package>@<version>`
+   */
   public get specifier(): string {
     return `${this.packageJson.name}@${this.packageJson.version}`;
   }
@@ -49,17 +62,26 @@ export class Pack {
     return this.packageJson.version;
   }
 
+  public get packageBase(): string {
+    if (this._packageBase) {
+      return this._packageBase;
+    }
+
+    this._packageBase = urlJoin("/node_modules", this.packageJson.name);
+    return this.packageBase;
+  }
+
   /**
    * Get the "types" property from `package.json`, and ensure it's path is
    * relative to `/`.
    */
   public get types(): string {
-    return urlJoin("/", this.packageJson.types)
+    return urlJoin(this.packageBase, this.packageJson.types);
   }
 
   async getFiles(files?: string[]) {
     await Promise.allSettled(
-      (files || this.fileListing).map((file) => this.getFile(file))
+      (files || this.fileListing).map(this.getFile, this)
     );
 
     return this.fsMap;
@@ -68,7 +90,7 @@ export class Pack {
   async getFile(file: string) {
     // TODO: change to allow FS fetching
     const contents = await fetchFile(this.specifier + file);
-    this.fsMap.set(file, contents);
+    this.fsMap.set(urlJoin(this.packageBase, file), contents);
   }
 
   static async fromUnpkg(specifier: string): Promise<Pack> {

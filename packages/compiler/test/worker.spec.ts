@@ -1,4 +1,5 @@
-import assert from "assert";
+import { describe } from "mocha";
+import { assert } from "chai";
 import { ModuleThread, spawn, Thread, BlobWorker } from "threads";
 import { WorkerAPI } from "../src/worker/worker";
 import { getDtsFixture } from "./helpers";
@@ -29,31 +30,64 @@ async function buildAsString(filename) {
   return result.outputFiles[0].contents;
 }
 
-describe("worker", () => {
-  let blobWorker: BlobWorker | undefined;
 
-  before(async () => {
-    blobWorker = new BlobWorker(await buildAsString("src/worker/worker.ts"));
+describe("worker", () => {
+  let compiledBlob;
+
+  before(async function() {
+    this.timeout(5000)
+    compiledBlob = await buildAsString("src/worker/worker.ts");
   });
 
-  it("describeAdaptor", async () => {
-    let worker: ModuleThread<WorkerAPI>;
+  describe("describeAdaptor", () => {
+    it("creates and describes a dts file", async () => {
+      const blobWorker = new BlobWorker(compiledBlob);
+      const worker = await spawn<WorkerAPI>(blobWorker);
 
-    try {
-      worker = await spawn<WorkerAPI>(blobWorker);
+      try {
+        await worker.createProject();
+        assert.ok(await worker.createProject());
 
-      await worker.createProject();
-      assert((await worker.createProject()) == true);
+        const adaptorExports = await worker.describeAdaptor(exampleDts);
 
-      const adaptorExports = await worker.describeAdaptor(exampleDts);
+        assert.ok(adaptorExports.find((sym) => sym.name == "execute"));
+        assert.ok(!adaptorExports.find((sym) => sym.name == "DataSource"));
 
-      assert(adaptorExports.find((sym) => sym.name == "execute"));
-      assert(!adaptorExports.find((sym) => sym.name == "DataSource"));
-      return Thread.terminate(worker);
-    } catch (error) {
-      console.log(error);
+        return Thread.terminate(worker);
+      } catch (error) {
+        if (worker) Thread.terminate(worker);
+        throw error;
+      }
+    }).timeout(8000);
+  });
 
-      assert(!error, error);
+  describe("loadModule", () => {
+    it("can load a module", async function () {
+      const blobWorker = new BlobWorker(compiledBlob);
+      const worker = await spawn<WorkerAPI>(blobWorker);
+
+      try {
+        await worker.createProject();
+        await worker.loadModule("@openfn/language-common@2.0.0-rc1");
+
+        const adaptorExports = await worker.describeDts(
+          "/node_modules/@openfn/language-common/dist/language-common.d.ts"
+        );
+        assert.ok(adaptorExports.find((sym) => sym.name == "execute"));
+        assert.ok(!adaptorExports.find((sym) => sym.name == "DataSource"));
+
+        await Thread.terminate(worker);
+      } catch (e) {
+        await Thread.terminate(worker);
+        throw e;
+      }
+    }).timeout(20000);
+  });
+
+  // HACK: Worker threads seem to prevent Mocha from exiting
+  afterEach(function () {
+    if (this.currentTest!.state == "failed") {
+      setTimeout(() => process.exit(1), 500);
     }
-  }).timeout(5000);
+  });
 });
