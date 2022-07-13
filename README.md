@@ -1,6 +1,8 @@
 Lightning ProjectSpace
 ======================
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/OpenFn/kit/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/OpenFn/kit/tree/main)
+
 ## Installing
 
 - Install [`pnpm`](https://pnpm.io/installation)
