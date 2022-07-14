@@ -7,6 +7,7 @@
  * the compiler in either the browser or in Node.
  */
 
+// @ts-ignore
 import workerInternals from "../../dist/worker-internals.js?raw";
 import { WorkerAPI } from "./worker";
 import { spawn, BlobWorker } from "threads";

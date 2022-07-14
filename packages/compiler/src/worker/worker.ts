@@ -5,12 +5,15 @@ import { Pack } from "../pack";
 
 let project: undefined | Project;
 
-type FunctionDescription = {
+export type FunctionDescription = {
   name: string;
   comment: string;
 };
 
 function createProject() {
+  if (!process) {
+    throw Error("This worker does not work in browsers currently :(")
+  }
   project = new Project();
   return true;
 }
@@ -34,7 +37,7 @@ async function loadModule(specifier: string) {
   );
 
   project.addToFS(files);
-  project.createFile(files.get(pack.types), pack.types);
+  project.createFile(files.get(pack.types)!, pack.types);
 
   // TODO: return serializable Pack so the consumer
   // knows where to find particular files

@@ -4,8 +4,7 @@
  * Utilities for loading packages
  */
 import fetch from "cross-fetch";
-import { LocalStorage } from "node-localstorage";
-global.localStorage = new LocalStorage("./tmp");
+import "./local-storage.ts"
 
 export class NotFound extends Error {
   constructor(message: string) {

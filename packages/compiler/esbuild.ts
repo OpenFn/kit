@@ -1,6 +1,16 @@
 import { build } from "esbuild";
 import path from "path";
-import { readFile } from "fs/promises";
+import { readFile, rm } from "fs/promises";
+import { BuildOptions } from "esbuild";
+import { execaCommand } from 'execa';
+
+function run(command: string) {
+  return execaCommand(command, {
+    preferLocal: true,
+    shell: true,
+    stdio: 'inherit',
+  });
+}
 
 export default function rawPlugin() {
   return {
@@ -57,7 +67,7 @@ const watchOptions = {
 
 let watch = process.argv[2] === "watch" ? watchOptions : false;
 
-const commonBuildOptions = {
+const commonBuildOptions: BuildOptions = {
   bundle: true,
   write: true,
   watch,
@@ -66,9 +76,12 @@ const commonBuildOptions = {
   outdir: "./dist",
   external: ["fs", "events", "stream", "path", "util", "constants", "assert"],
   pure: ["console.log", "console.time", "console.timeEnd"],
+  sourcemap: false,
 };
 
 try {
+  await run('tsc -p tsconfig.bundle.json');
+
   /**
    * WebWorker internals modules
    * This is the bundle that includes the Worker, Typescript and the interface
@@ -101,6 +114,20 @@ try {
     minify: false,
     plugins: [rawPlugin()],
   });
+
+  // Cleanup worker-internals since they are bundled into the worker.
+  await rm("./dist/worker-internals.js")
+
+  await build({
+    ...commonBuildOptions,
+    entryPoints: {
+      index: "./src/index.ts",
+    },
+    format: "esm",
+    minify: true,
+    plugins: [],
+  });
+
 } catch (error) {
   console.error(error);
   process.exit(1);
