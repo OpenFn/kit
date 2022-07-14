@@ -9,7 +9,7 @@ describe("fetchDTS", () => {
     }
 
     assert.deepEqual(results, ['/dist/index.d.ts'])
-  });
+  }).timeout(20000);
 });
 
 describe("fetchFile", () => {

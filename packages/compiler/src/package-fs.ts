@@ -4,7 +4,6 @@
  * Utilities for loading packages
  */
 import fetch from "cross-fetch";
-import "./local-storage.ts"
 
 export class NotFound extends Error {
   constructor(message: string) {
@@ -34,10 +33,10 @@ function* flattenFiles(
 }
 
 export async function fetchFileListing(packageName: string) {
-  const cached = localStorage.getItem(packageName);
-  if (cached) {
-    return flattenFiles(JSON.parse(cached));
-  }
+  // const cached = localStorage.getItem(packageName);
+  // if (cached) {
+  //   return flattenFiles(JSON.parse(cached));
+  // }
 
   const response = await fetch(`https://unpkg.com/${packageName}/?meta`);
 
@@ -48,7 +47,7 @@ export async function fetchFileListing(packageName: string) {
   }
 
   const listing = (await response.json()) as PackageListing;
-  localStorage.setItem(packageName, JSON.stringify(listing));
+  // localStorage.setItem(packageName, JSON.stringify(listing));
 
   return flattenFiles(listing);
 }
@@ -76,17 +75,17 @@ export async function* fetchDTSListing(packageName: string) {
  * @param path string
  */
 export async function fetchFile(path: string) {
-  const cached = localStorage.getItem(path);
-  if (cached) {
-    return cached;
-  }
+  // const cached = localStorage.getItem(path);
+  // if (cached) {
+  //   return cached;
+  // }
 
   const response = await fetch(`https://unpkg.com/${path}`);
 
   switch (response.status) {
     case 200:
       const contents = await response.text();
-      localStorage.setItem(path, contents);
+      // localStorage.setItem(path, contents);
 
       return contents;
     case 404:
