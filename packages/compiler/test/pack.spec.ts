@@ -31,7 +31,7 @@ describe("Pack", () => {
         pack.types,
         "/node_modules/@openfn/language-common/dist/language-common.d.ts"
       );
-      assert.ok(pack.fsMap.get(pack.types));
+      assert.ok(pack.fsMap.get(pack.types!));
     }).timeout(20000);
 
     it("throws an error when a package can't be found", async () => {
@@ -46,6 +46,28 @@ describe("Pack", () => {
         error,
         "NotFound: Got 404 from Unpkg for: @openfn/foobar/package.json"
       );
+    });
+  });
+
+  describe("getters", () => {
+    it("returns the 'types' property with the packageBase", () => {
+      let pack = new Pack({
+        path: "foopackage",
+        packageJson: {
+          name: "foopackage",
+          version: "1.2.3",
+          types: "dist/index.d.ts",
+        },
+      });
+
+      assert.equal(pack.types, "/node_modules/foopackage/dist/index.d.ts");
+
+      pack = new Pack({
+        path: "foopackage",
+        packageJson: { name: "foopackage", version: "1.2.3" },
+      });
+
+      assert.equal(pack.types, null);
     });
   });
 });

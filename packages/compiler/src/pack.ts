@@ -1,3 +1,40 @@
+/**
+ * # Pack
+ *
+ * Object used to handle loading and querying module packages.
+ *
+ * Internally the file listing is kept without a directory prefix, and
+ * all paths returned by `.types` and `.getFiles()` are prefixed by 
+ * `packageBase`. This allows a packages to be loaded from different sources
+ * such as the local filesystem or from a CDN, and the resulting paths to mimic
+ * a local filesystem.
+ * 
+ * At a minimum, a Pack requires a `path`. A path is intended to represent
+ * where to find the package - at present it is an npm style specifier
+ * (e.g. `@myorg/mypackage@1.0.0`, or `mypackage`).
+ *
+ * While you can build a new Pack instance via the constructor, the easiest way
+ * is to use the public methods.
+ *
+ * ## Loading from Unpkg
+ *
+ * ```js
+ * const pack = await Pack.fromUnpkg("@myorg/mypackage")
+ * ```
+ * 
+ * This will create a new Pack instance and download it's `package.json` and
+ * get a file listing. 
+ * Next in order to download all the files in a package you can use
+ * `pack.getFiles()`, or pass in a list of files you want to be retrieved.
+ * 
+ * ```js
+ * const packageOrDts = /(?:package.json)|(?:\.d\.ts$)/i;
+ * const files = await pack.getFiles(
+ *   pack.fileListing.filter((path) => packageOrDts.test(path))
+ * );
+ * ```
+ */
+
 import { fetchFile, fetchFileListing } from "./package-fs";
 import urlJoin from "url-join";
 
@@ -12,7 +49,7 @@ interface PackParameters {
 interface PackageJson {
   name: string;
   version: string;
-  types: string;
+  types?: string;
 }
 
 export class Pack {
@@ -53,11 +90,19 @@ export class Pack {
    * The absolute name and version of the package.
    *
    * i.e. `@<org>/<package>@<version>`
+   *
+   * This may differ from the `path` passed in during creation.
+   * For example, if the package path was `mypackage@latest` and the latest
+   * version is `1.2.3` as stated by the `package.json` the resulting
+   * specifier will be `mypackage@1.2.3`.
    */
   public get specifier(): string {
     return `${this.packageJson.name}@${this.packageJson.version}`;
   }
 
+  /**
+   * The version of the package specified in the `package.json`
+   */
   public get version(): string {
     return this.packageJson.version;
   }
@@ -75,7 +120,8 @@ export class Pack {
    * Get the "types" property from `package.json`, and ensure it's path is
    * relative to `/`.
    */
-  public get types(): string {
+  public get types(): string | null {
+    if (!this.packageJson.types) return null;
     return urlJoin(this.packageBase, this.packageJson.types);
   }
 

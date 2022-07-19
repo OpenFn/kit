@@ -12,7 +12,7 @@ export type FunctionDescription = {
 
 function createProject() {
   if (!process) {
-    throw Error("This worker does not work in browsers currently :(")
+    throw Error("This worker does not work in browsers currently :(");
   }
   project = new Project();
   return true;
@@ -31,6 +31,11 @@ async function loadModule(specifier: string) {
   }
 
   const pack = await Pack.fromUnpkg(specifier);
+
+  if (!pack.types)
+    throw new Error(
+      `Package does not have a 'types' property: ${pack.specifier}`
+    );
 
   const files = await pack.getFiles(
     pack.fileListing.filter((path) => packageOrDts.test(path))

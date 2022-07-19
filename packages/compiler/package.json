@@ -14,14 +14,19 @@
         "default": "./dist/index.js"
       }
     },
-    "./worker": "./dist/worker.js"
+    "./worker": {
+      "import": {
+        "types": "./dist/worker/index.d.ts",
+        "default": "./dist/worker.js"
+      }
+    }
   },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm mocha test/**/*.spec.ts",
     "build": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
-    "watch": "node esbuild.js watch"
+    "watch": "node esbuild.ts watch"
   },
   "keywords": [],
   "author": "Stuart Corbishley <stuart@openfn.org>",
@@ -47,7 +52,7 @@
     "url-join": "^5.0.0"
   },
   "files": [
-    "dist/worker.js",
+    "dist",
     "README.md"
   ]
 }
