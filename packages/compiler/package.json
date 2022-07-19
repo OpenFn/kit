@@ -54,5 +54,10 @@
   "files": [
     "dist",
     "README.md"
-  ]
+  ],
+  "typesVersions": {
+    "*": {
+      "worker": ["dist/worker/index.d.ts"]
+    }
+  }
 }
