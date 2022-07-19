@@ -10,6 +10,7 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
       - image: cimg/node:16.15
+    resource_class: medium
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
@@ -21,12 +22,12 @@ jobs:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
           # https://circleci.com/docs/2.0/configuration-reference/?section=reference#save_cache
           keys:
-            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.json"}}
+            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
       - run:
           name: Install
           command: pnpm install --frozen-lockfile
       - save_cache:
-          key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.json"}}
+          key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
           paths:
             - node_modules
       - run:

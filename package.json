@@ -4,9 +4,9 @@
   "description": "",
   "scripts": {
     "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
-    "build": "pnpm run clean && pnpm -r --filter ./packages/* run build",
+    "build": "pnpm run clean && pnpm -r --filter './packages/*' run build",
     "clean": "rimraf packages/*/dist",
-    "test": "pnpm -r --filter ./packages/* run test"
+    "test": "pnpm -r --filter './packages/*' run test"
   },
   "keywords": [],
   "author": "",
