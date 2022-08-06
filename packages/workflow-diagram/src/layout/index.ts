@@ -17,6 +17,7 @@ import { Edge, Node } from "react-flow-renderer";
 import { FlowJob, Job, ProjectSpace } from "types";
 import { Rect, ChildRect } from "./flow-nodes";
 import { FlowElkNode, FlowNodeEdges, ElkNodeEdges } from "./types";
+import { NONAME } from "dns";
 
 /**
  * Flattens an ELK node into a tuple of Nodes and Edges that are
@@ -26,8 +27,24 @@ export function flattenElk(node: FlowElkNode): FlowNodeEdges {
   return (node.children || []).reduce<FlowNodeEdges>(
     ([nodes, edges], c) => {
       const [childNodes, childEdges] = flattenElk(c);
+
+      // TODO: @Amber, add plus button...
+      console.log(
+        "@Amber, I've managed to calculate whether a node has any descendants",
+        'and it shows up here as "type" ... if node.type == output, then we',
+        "should add another node which is child to IT with a custom shape",
+        nodes
+      );
+
       return [
-        [...nodes, Rect(c), ...childNodes.map((n) => ChildRect(c, n))],
+        [
+          ...nodes.map((n) => {
+            console.log(n);
+            return n;
+          }),
+          Rect(c),
+          ...childNodes.map((n) => ChildRect(c, n)),
+        ],
         [...edges, ...childEdges],
       ] as FlowNodeEdges;
     },
@@ -35,10 +52,11 @@ export function flattenElk(node: FlowElkNode): FlowNodeEdges {
       [],
       (node.edges || []).map((e) => {
         return {
-          id: e.id,
+          ...e,
           source: e.sources[0],
           target: e.targets[0],
-          type: "smoothstep",
+          animated: true,
+          labelBgStyle: { fill: "#f3f4f6" },
         } as Edge;
       }),
     ]
@@ -81,6 +99,7 @@ function deriveOperations(job: Job): ElkNodeEdges {
                 id: `${prevOperation.id}->${op.id}`,
                 sources: [prevOperation.id],
                 targets: [op.id],
+                animated: true,
               },
             ]
           : [];
@@ -126,7 +145,7 @@ function deriveCron(job: Job): ElkNodeEdges {
 
   const jobNode = {
     id: job.id,
-    properties: { label: job.name, type: "job", id: job.id },
+    properties: { label: job.name, type: getNodeType(true, job.hasDescendent) },
     children: operationNodes,
     edges: operationEdges,
     layoutOptions: {
@@ -144,6 +163,7 @@ function deriveCron(job: Job): ElkNodeEdges {
         id: `${triggerNode.id}->${job.id}`,
         sources: [triggerNode.id],
         targets: [jobNode.id],
+        label: "on match",
         sections: [],
       },
     ],
@@ -164,7 +184,11 @@ function deriveWebhook(job: Job): ElkNodeEdges {
 
   const jobNode = {
     id: job.id,
-    properties: { label: job.name, type: "job", id: job.id },
+    properties: {
+      label: job.name,
+      type: getNodeType(true, job.hasDescendent),
+      id: job.id,
+    },
     children: operationNodes,
     edges: operationEdges,
     layoutOptions: {
@@ -182,6 +206,7 @@ function deriveWebhook(job: Job): ElkNodeEdges {
         id: `${triggerNode.id}->${job.id}`,
         sources: [triggerNode.id],
         targets: [jobNode.id],
+        label: "on receipt",
         sections: [],
       },
     ],
@@ -189,15 +214,27 @@ function deriveWebhook(job: Job): ElkNodeEdges {
 }
 
 function deriveFlow(job: FlowJob): ElkNodeEdges {
+  const [operationNodes, operationEdges] = deriveOperations(job);
+
   const jobNode = {
     id: job.id,
-    properties: { label: job.name, type: "job", id: job.id },
+    properties: {
+      label: job.name,
+      type: getNodeType(true, job.hasDescendent),
+      id: job.id,
+    },
+    children: operationNodes,
+    edges: operationEdges,
+    layoutOptions: {
+      "elk.direction": "DOWN",
+      "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
+    },
     width: 150,
     height: 40,
   };
 
   const label =
-    job.trigger.type == "on_job_failure" ? "On Failure" : "On Success";
+    job.trigger.type == "on_job_failure" ? "on failure" : "on success";
   const className =
     job.trigger.type == "on_job_failure" ? "fail-stroke" : "success-stroke";
 
@@ -205,8 +242,6 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
     id: `${job.trigger.upstreamJob}->${job.id}`,
     sources: [job.trigger.upstreamJob],
     targets: [jobNode.id],
-    labelShowBg: false,
-    className,
     label,
   };
 
@@ -254,12 +289,22 @@ const defaultLayoutOptions: LayoutOptions = {
 };
 
 export function toElkNode(projectSpace: ProjectSpace) {
-  const [children, edges] = projectSpace.jobs.reduce<ElkNodeEdges>(
-    (nodesAndEdges, job) => {
-      return mergeTuples(nodesAndEdges, deriveNodesWithEdges(job));
-    },
-    [[], []]
-  );
+  const [children, edges] = projectSpace.jobs
+    .map((x) => {
+      // TODO: @Amber, refactor this maybe? feels heavy but I'm not sure there's
+      // another way.
+      const hasDescendent = !!projectSpace.jobs.find(
+        (j) => j?.trigger?.upstreamJob == x.id
+      );
+
+      return { ...x, hasDescendent };
+    })
+    .reduce<ElkNodeEdges>(
+      (nodesAndEdges, job) => {
+        return mergeTuples(nodesAndEdges, deriveNodesWithEdges(job));
+      },
+      [[], []]
+    );
   return {
     id: "root",
     layoutOptions: defaultLayoutOptions,
@@ -275,6 +320,7 @@ export async function toFlow(node: FlowElkNode): Promise<{
   const elk = new ELK();
 
   const elkResults = (await elk.layout(node)) as FlowElkNode;
+
   const [nodes, edges] = flattenElk(elkResults);
 
   return { nodes, edges };

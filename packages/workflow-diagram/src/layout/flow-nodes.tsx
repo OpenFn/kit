@@ -33,12 +33,19 @@ function nodeType(node: FlowElkNode) {
 }
 
 export function Rect(node: FlowElkNode): Node {
+  const isContainer = node.children.length > 0;
+
   return {
     id: node.id,
     style: {
       height: node.height,
       width: node.width,
-      backgroundColor: "rgba(240,240,240,0)",
+      zIndex: isContainer ? -1 : 1,
+      // todo: clean up colors and borders
+      borderColor: "#d3d3d3",
+      // backgroundColor: isContainer
+      //   ? "rgba(255,255,255,0.5)"
+      //   : "rgba(255,255,255,0.85)",
     },
     position: { x: node.x || 0, y: node.y || 0 },
 

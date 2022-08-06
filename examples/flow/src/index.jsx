@@ -3,7 +3,7 @@ import WorkflowDiagram from "@openfn/workflow-diagram";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import "./app.css"
+import "./app.css";
 
 const projectSpace = {
   jobs: [
@@ -35,6 +35,16 @@ const projectSpace = {
       name: "Job E",
       adaptor: "@openfn/language-dhis2@0.3.5",
       trigger: { type: "on_job_failure", upstreamJob: "A" },
+      operations: [
+        { id: "29", label: "fn", comment: "Map out new records" },
+        { id: "39", label: "upsert", comment: "Upsert results" },
+      ],
+    },
+    {
+      id: "D",
+      name: "Job D",
+      adaptor: "@openfn/language-http@4.0.0",
+      trigger: { type: "cron" },
     },
   ],
 };
@@ -42,11 +52,11 @@ const projectSpace = {
 const root = createRoot(document.getElementById("root"));
 
 function onNodeClick(_event, node) {
-  console.log("Clicked Node:", node)
+  console.log("Clicked Node:", node);
 }
 
 function onPaneClick(event) {
-  console.log("Clicked pane:", event)
+  console.log("Clicked pane:", event);
 }
 
 root.render(
