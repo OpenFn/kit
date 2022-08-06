@@ -153,7 +153,7 @@ function deriveCron(job: Job): ElkNodeEdges {
       "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
     },
     width: 150,
-    height: 50,
+    height: 40,
   };
 
   return [
@@ -196,7 +196,7 @@ function deriveWebhook(job: Job): ElkNodeEdges {
       "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
     },
     width: 150,
-    height: 50,
+    height: 40,
   };
 
   return [
