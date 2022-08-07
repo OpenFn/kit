@@ -140,6 +140,7 @@ function deriveCron(job: Job): ElkNodeEdges {
     children: [],
     edges: [],
     width: 100,
+    shape: "circle",
     height: 40,
   };
 
@@ -178,7 +179,8 @@ function deriveWebhook(job: Job): ElkNodeEdges {
     properties: { label: "Webhook", type: "trigger" },
     children: [],
     edges: [],
-    width: 150,
+    shape: "circle",
+    width: 100,
     height: 40,
   };
 

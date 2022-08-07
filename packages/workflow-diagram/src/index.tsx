@@ -31,13 +31,17 @@ const WorkflowDiagram: React.FC<{
 
   return (
     <ReactFlow
-      // Thank you, Christopher Möller, for explaining that we can use this!
+      // Thank you, Christopher Möller, for explaining that we can use this...
       proOptions={{ account: "paid-pro", hideAttribution: true }}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       // onConnect={onConnect}
+      // If we let folks drag, we have to save new visual configuration...
+      nodesDraggable={false}
+      // No interaction for this yet...
+      nodesConnectable={false}
       nodeTypes={nodeTypes}
       snapToGrid={true}
       snapGrid={[10, 10]}
