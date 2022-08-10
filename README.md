@@ -36,3 +36,10 @@ pnpm run -C examples/compiler-worker start
 ```
 pnpm run test
 ```
+
+## Documentation
+
+For information on the history of the OpenFn internals and ideas for the future
+see [docs/future](docs/future).
+
+
