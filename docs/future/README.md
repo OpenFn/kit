@@ -7,4 +7,5 @@ and ideas for the future.
 ## Table of Contents
 
 - [History of Core](history.md)
+- [Kit Components](kit-components.md)
 

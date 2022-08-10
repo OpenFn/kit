@@ -25,3 +25,5 @@ tsconfig.tsbuildinfo
 
 tmp
 .vscode
+
+*.drawio.bkp
