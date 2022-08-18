@@ -1,6 +1,7 @@
 import type { Project } from "./project";
 export { Project } from "./project";
 export { Pack } from "./pack";
+export * from './package-fs';
 
 type FunctionDescription = {
   name: string;
