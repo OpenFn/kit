@@ -66,7 +66,7 @@ const dtsExtension = /\.d\.ts$/;
  * @param packageName string
  */
 export async function* fetchDTSListing(packageName: string) {
-  for (const f of await fetchFileListing(packageName)) {
+  for (const f of await fetchFileListing(packageName, true)) {
     if (dtsExtension.test(f)) {
       yield f;
     }
