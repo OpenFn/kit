@@ -18,21 +18,24 @@ interface PackageListing {
   files?: PackageListing[];
 }
 
-function* flattenFiles(
+export function* flattenFiles(
   listing: PackageListing,
+  ignoreNodeModules = false,
   path: string = ""
 ): Generator<string> {
   if (listing.type == "directory") {
     for (let i = 0; i < listing.files!.length; i++) {
       const f = listing.files![i];
-      yield* flattenFiles(f);
+      if (!ignoreNodeModules || !f.path.startsWith('/node_modules/')) {
+        yield* flattenFiles(f, ignoreNodeModules);
+      }
     }
   } else {
     yield `${path}${listing.path}`;
   }
 }
 
-export async function fetchFileListing(packageName: string) {
+export async function fetchFileListing(packageName: string, ignoreNodeModules = false) {
   // const cached = localStorage.getItem(packageName);
   // if (cached) {
   //   return flattenFiles(JSON.parse(cached));
@@ -49,7 +52,7 @@ export async function fetchFileListing(packageName: string) {
   const listing = (await response.json()) as PackageListing;
   // localStorage.setItem(packageName, JSON.stringify(listing));
 
-  return flattenFiles(listing);
+  return flattenFiles(listing, ignoreNodeModules);
 }
 
 const dtsExtension = /\.d\.ts$/;
