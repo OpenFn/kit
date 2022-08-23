@@ -103,3 +103,22 @@ test('jobs do not mutate the original state', async (t) => {
   t.is(state.data.x, 1);
   t.is(result.data.x, 2);
 })
+
+// test('override console.log', async (t) => {
+//   const log: string[] = [];
+//   const logger = {
+//     log(message: string) {
+//       log.push(message);
+//     }
+//   };
+
+//   const job = [(s) => {
+//     console.log("x");
+//     return s;
+//   }]
+
+//   const state = createState();
+//   const result = await run(job, state, { logger })
+
+//   t.deepEqual(log, ["x"]);
+// });
