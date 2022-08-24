@@ -12,7 +12,7 @@ import linker from '../src/linker';
 
 let context = vm.createContext();
 
-test.before(() => {
+test.beforeEach(() => {
   context = vm.createContext();
 });
 
