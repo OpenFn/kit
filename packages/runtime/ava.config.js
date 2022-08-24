@@ -5,10 +5,9 @@ module.exports = {
     ts: "commonjs"
   },
 
-  // nodeArguments: [
-  //   "--loader=ts-node/esm"
-  // ],
-
+  nodeArguments: [
+    "--experimental-vm-modules"
+  ],
 
   "require": [
     "ts-node/register"

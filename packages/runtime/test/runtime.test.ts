@@ -14,7 +14,11 @@ const createState = (data = {}) => ({
   configuration: {}
 });
 
-test('a no-op job with one operation', async (t) => {
+// Most of these unit tests pass in live JS code into the job pipeline
+// This is convenient in testing as it's easier to catch errors
+// Note that the linker and module loader do heavier testing of strings
+
+test('a live no-op job with one operation', async (t) => {
   const job = [(s: State) => s];
   const state = createState();
   const result = await run(job, state);
@@ -22,7 +26,15 @@ test('a no-op job with one operation', async (t) => {
   t.deepEqual(state, result);
 });
 
-test('a no-op job with one fn operation', async (t) => {
+test('a stringified no-op job with one operation', async (t) => {
+  const job = "export default [(s) => s]";
+  const state = createState();
+  const result = await run(job, state);
+
+  t.deepEqual(state, result);
+});
+
+test('a live no-op job with @openfn/language-common.fn', async (t) => {
   const job = [fn((s: State) => s)];
   const state = createState();
   const result = await run(job, state);
@@ -61,7 +73,7 @@ test('jobs run in series', async (t) => {
   const result = await run(job, state) as TestState;
 
   t.is(result.data.x, 12);
-})
+});
 
 test('jobs run in series with async operations', async (t) => {
   const job = [
@@ -88,8 +100,7 @@ test('jobs run in series with async operations', async (t) => {
   const result = await run(job, state) as TestState;
 
   t.is(result.data.x, 12);
-})
-
+});
 
 test('jobs do not mutate the original state', async (t) => {
   const job = [(s: TestState) => {
@@ -102,23 +113,23 @@ test('jobs do not mutate the original state', async (t) => {
 
   t.is(state.data.x, 1);
   t.is(result.data.x, 2);
-})
+});
 
-// test('override console.log', async (t) => {
-//   const log: string[] = [];
-//   const logger = {
-//     log(message: string) {
-//       log.push(message);
-//     }
-//   };
+test('override console.log', async (t) => {
+  const log: string[] = [];
+  // Passing in a logger object to catch all console.log calls
+  const logger = {
+    log(message: string) {
+      log.push(message);
+    }
+  };
 
-//   const job = [(s) => {
-//     console.log("x");
-//     return s;
-//   }]
+  // We must define this job as a module so that it binds to the sandboxed context
+  const fn = '(s) => { console.log("x"); return s; }'
+  const job = `export default [${fn}];`
+  
+  const state = createState();
+  await run(job, state, { logger })
 
-//   const state = createState();
-//   const result = await run(job, state, { logger })
-
-//   t.deepEqual(log, ["x"]);
-// });
+  t.deepEqual(log, ["x"]);
+});
