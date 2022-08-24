@@ -26,13 +26,34 @@ type Options = {
 
 const defaultState = { data: {}, configuration: {} };
 
+export default async function run(
+  incomingJobs: string | Operation[],
+  initialState: State = defaultState,
+  opts: Options = {}) {
+  // Setup a shared execution context
+  const context = buildContext(opts)
+  
+  const jobs = await parseIncomingJobs(incomingJobs, context, opts.forceSandbox);
+
+  // Create the main reducer function
+  // TODO we shouldn't import this, we should define our own
+  // (but it's nice to prove it works with the original execute implementation)
+  const reducer = execute(...jobs.map((fn) => wrap(fn)));
+
+  // Run the job
+  const result = await reducer(initialState);
+
+  // return the final state
+  return result;
+}
+
 // TODO I'm in the market for the best solution here
 // immer? deep-clone?
 // What should we do if functions are in the state?
 const clone = (state: State) => JSON.parse(JSON.stringify(state))
 
 // Wrap an operation with various useful stuff
-// A cloned state object so that prior state is always preserved
+// * A cloned state object so that prior state is always preserved
 // TODO: try/catch stuff
 // TODO: automated logging and metrics stuff
 const wrap = (fn: Operation) => {
@@ -43,15 +64,8 @@ const wrap = (fn: Operation) => {
 };
 
 
-// Build a safe and helpful execution context for the job
-// Note that wrapping functions in our own context like this will kill any closures in the original scope
-// so you can't do stuff like this:
-// const something = "jam";  // abritrary code
-// (() => state.x = something); // operation
-// However, the compiler could wrap any "loose" top level code into a function
-// which would exeecute into the shared context
-// and then your closures should basically be available?
-// Major difficulty: import statements are also lost in the new contextualisation!
+// Build a safe and helpful execution context
+// This will be shared by all operations
 const buildContext = (options: Options) => {
   const logger = options.logger ?? console;
   
@@ -77,25 +91,4 @@ const parseIncomingJobs = async (jobs: string | Operation[], context: vm.Context
     }
     return jobs as Operation[];
   }
-}
-
-export default async function run(
-  incomingJobs: string | Operation[],
-  initialState: State = defaultState,
-  opts: Options = {}) {
-  // Setup a shared execution context
-  const context = buildContext(opts)
-  
-  const jobs = await parseIncomingJobs(incomingJobs, context, opts.forceSandbox);
-
-  // Create the main reducer function
-  // TODO we shouldm't import this, we should define out own
-  // (but it's nice to prove it works with the original execute implementation)
-  const reducer = execute(...jobs.map((fn) => wrap(fn)));
-
-  // Run the job!
-  const result = await reducer(initialState);
-
-  // return the final state
-  return result;
 }

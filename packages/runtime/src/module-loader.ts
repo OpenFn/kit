@@ -4,19 +4,6 @@
 import vm from 'node:vm';
 import mainLinker, { Linker } from './linker';
 
-const validate = (_src: string) => {  
-  // use the compiler to run some basic validation on the string
-  // * Only @openfn imports
-  // * Should export an array (of functions)
-  // Throw if a fail
-  return true;
-}
-
-type Options = {
-  context?: vm.Context;
-  linker?: Linker;
-}
-
 // Given a source strng, representing an esm module, evaluate it and return the result
 // We expect the module to export default an array of functions
 // The function will be validated
@@ -43,9 +30,22 @@ export default async (src: string, opts: Options = {}) => {
     throw new Error(`module loader cannot resolve dependency: ${specifier}`);
   }); 
 
-  // Run the module
-  // Exports are written to module.namespace
+  // Run the module - exports are written to module.namespace
   await module.evaluate()
 
+  // Return whatever is in the default export
   return module.namespace.default;
+}
+
+function validate(_src: string) {  
+  // use the compiler to run some basic validation on the string
+  // * Only @openfn imports
+  // * Should export an array (of functions)
+  // Throw if a fail
+  return true;
+}
+
+type Options = {
+  context?: vm.Context;
+  linker?: Linker;
 }

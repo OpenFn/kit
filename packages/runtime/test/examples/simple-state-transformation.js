@@ -2,7 +2,7 @@ import { fn } from '@openfn/language-common';
 
 export default [
   fn(() => {
-    // Initialise somes tate
+    // Initialise some state
     return {
       data: {
         count: 1
