@@ -70,7 +70,19 @@ const buildContext = (options: Options) => {
   const logger = options.logger ?? console;
   
   const context = vm.createContext({
-    console: logger
+    console: logger,
+
+    // TODO we need to keep a whole bunch of globals really
+    atob,
+    btoa,
+    clearInterval,
+    clearTimeout,
+    fetch,
+    JSON,
+    parseFloat,
+    parseInt,
+    setInterval,
+    setTimeout,
   }, {
     codeGeneration: {
       strings: false,

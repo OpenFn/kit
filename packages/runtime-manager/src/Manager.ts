@@ -1,9 +1,5 @@
-import { EventEmitter } from 'node:events';
 import path from 'node:path';
-//import workerpool from 'workerpool';
 import Piscina from 'piscina';
-
-class Bus extends EventEmitter {};
 
 type JobRegistry = Record<string, string>;
 
@@ -14,14 +10,23 @@ const Manager = function() {
   const workers = new Piscina({
     filename: path.resolve('./dist/worker.js')
   });
-  workers.on('ready', console.log)
+
+  workers.on('message', console.log)
+
+  // Maintain state of each job
+  // I really really want some details about the thread its running in...
+  const state: Record<string, any> = {};
+
   // Run a job in a worker
   // Accepts the name of a registered job
-  const run = async (name: string) => {
+  const run = async (name: string, state: any) => {
     const src =  registry[name];
     if (src) {
-      //return await workers.exec('runJob', [src])
-      return await workers.run(src)
+      // need a unique job + process id to go here
+      state[name] = true
+      const result = await workers.run([src, state])
+      delete state[name];
+      return result;
     }
     throw new Error("Job not found: " + name);
   };
@@ -38,18 +43,17 @@ const Manager = function() {
 
   const getRegisteredJobs = () => Object.keys(registry);
 
-  // const getActiveJobs = () => {
-
-  // }
-
-  const bus = new Bus();
-  
+  const getActiveJobs = () => {
+    return workers.threads;
+  }
 
   return {
     run,
     registerJob,
     getRegisteredJobs,
-    on: (evt: string, fn: () => void) => bus.on(evt, fn),
+    getActiveJobs,
+    // subscribe directly to worker events
+    on: (evt: string, fn: () => void) => workers.on(evt, fn),
     // I don't think we actually want a publish event?
   }
 };
