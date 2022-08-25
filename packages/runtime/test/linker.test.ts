@@ -27,9 +27,9 @@ test("basic import stuff", async (t) => {
   t.assert(m3.default() ===  40);
 
   const common = await import('@openfn/language-common');
-  t.assert(common.hasOwnProperty('fn'))
-  t.assert(common.hasOwnProperty('each'))
-  t.assert(common.hasOwnProperty('combine'))
+  t.truthy(common.fn)
+  t.truthy(common.each)
+  t.truthy(common.combine)
 });
 
 test("loads a simple test module", async (t) => {

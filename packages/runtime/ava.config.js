@@ -1,18 +1,13 @@
-module.exports = {
+export default {
   extensions: {
-    // Because of how we've handled vm as an external dependency in langauge-common,
-    // we need to compile ts code to cjs
-    ts: "commonjs"
+   ts: "module"
   },
 
   nodeArguments: [
+    "--loader=ts-node/esm",
+    "--experimental-specifier-resolution=node",
     "--experimental-vm-modules"
   ],
-
-  "require": [
-    "ts-node/register"
-  ],
-
 
   files: [
     "test/**/*test.ts"
