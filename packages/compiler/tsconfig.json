@@ -1,50 +1,5 @@
 {
-  "compilerOptions": {
-    // Allow JavaScript files to be compiled
-    "allowJs": true,
-    // Allow default imports from modules with no default export
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": "src",
-    "outDir": "dist",
-    "declarationDir": ".",
-    // Generate corresponding .d.ts file
-    "declaration": true,
-    // Disables namespace imports (import * as fs from "fs") and enables CJS/AMD/UMD style imports (import fs from "fs")
-    "esModuleInterop": true,
-    // Disallow inconsistently-cased references to the same file.
-    "forceConsistentCasingInFileNames": true,
-    // Enable incremental compilation by reading/writing information from prior compilations to a file on disk
-    "incremental": true,
-    // Unconditionally emit imports for unresolved files
-    "isolatedModules": true,
-    // "jsx": "react", // Support JSX in .tsx files
-    // List of library files to be included in the compilation
-    "lib": ["ES2022", "DOM.Iterable"],
-    // Specify module code generation
-    "module": "es2022",
-    // Resolve modules using Node.js style
-    "moduleResolution": "node",
-    // Do not emit output (meaning do not compile code, only perform type checking)
-    "noEmit": false,
-    // Report errors for fallthrough cases in switch statement
-    "noFallthroughCasesInSwitch": true,
-    // Report errors on unused locals
-    "noUnusedLocals": true,
-    // Report errors on unused parameters
-    "noUnusedParameters": true,
-    // Include modules imported with .json extension
-    "resolveJsonModule": true,
-    // Skip type checking of all declaration files
-    "skipLibCheck": true,
-    // Generate corrresponding .map file
-    "sourceMap": true,
-    // Enable all strict type checking options
-    "strict": true,
-    // Specify ECMAScript target version
-    "target": "ES2020",
-    "typeRoots": ["./node_modules/@types"]
-  },
+  "extends": "../../tsconfig.common",
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "dist"]
-  
 }
