@@ -1,23 +1,27 @@
 import { EventEmitter } from 'node:events';
-import workerpool from 'workerpool';
+import path from 'node:path';
+//import workerpool from 'workerpool';
+import Piscina from 'piscina';
+
+class Bus extends EventEmitter {};
+
+type JobRegistry = Record<string, string>;
 
 // Manages a pool of workers
-
-class Bus extends EventEmitter {}
-
-type JobRegistry = Record<string, string>
-
 const Manager = function() {
-  console.log('creating new manager')
   const registry: JobRegistry = {};
-  const workers = workerpool.pool(__filename + './worker.js');
-  
+  //const workers = workerpool.pool(path.resolve('./dist/worker.js'), { workerType: 'process' });
+  const workers = new Piscina({
+    filename: path.resolve('./dist/worker.js')
+  });
+  workers.on('ready', console.log)
   // Run a job in a worker
   // Accepts the name of a registered job
   const run = async (name: string) => {
     const src =  registry[name];
     if (src) {
-      workers.exec()
+      //return await workers.exec('runJob', [src])
+      return await workers.run(src)
     }
     throw new Error("Job not found: " + name);
   };

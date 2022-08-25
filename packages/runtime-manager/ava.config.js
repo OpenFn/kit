@@ -5,7 +5,8 @@ export default {
 
   nodeArguments: [
     "--loader=ts-node/esm",
-    "--experimental-specifier-resolution=node"
+    "--experimental-specifier-resolution=node",
+    "--experimental-vm-modules"
   ],
 
   files: [

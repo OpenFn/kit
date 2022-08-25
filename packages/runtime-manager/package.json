@@ -5,11 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm ava"
+    "test": "pnpm ava",
+    "build": "rimraf dist/ .rollup.cache && rollup -c",
+    "watch": "pnpm rollup -cw --no-watch.clearScreen"
   },
   "author": "Joe Clark <jclark@openfn.org>",
   "license": "ISC",
   "dependencies": {
+    "@openfn/runtime": "workspace:^0.0.1",
+    "@types/workerpool": "^6.1.0",
+    "piscina": "^3.2.0",
     "workerpool": "^6.2.1"
   },
   "devDependencies": {
