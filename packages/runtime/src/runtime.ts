@@ -77,7 +77,6 @@ const buildContext = (options: Options) => {
     btoa,
     clearInterval,
     clearTimeout,
-    fetch,
     JSON,
     parseFloat,
     parseInt,

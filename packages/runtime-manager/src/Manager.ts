@@ -15,17 +15,18 @@ const Manager = function() {
 
   // Maintain state of each job
   // I really really want some details about the thread its running in...
-  const state: Record<string, any> = {};
+  // this is useless tbh!
+  const threadState: Record<string, any> = {};
 
   // Run a job in a worker
   // Accepts the name of a registered job
-  const run = async (name: string, state: any) => {
+  const run = async (name: string, state?: any) => {
     const src =  registry[name];
     if (src) {
       // need a unique job + process id to go here
-      state[name] = true
+      threadState[name] = true
       const result = await workers.run([src, state])
-      delete state[name];
+      delete threadState[name];
       return result;
     }
     throw new Error("Job not found: " + name);
