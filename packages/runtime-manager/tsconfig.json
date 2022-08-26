@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.common",
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts", "dist"],
+  "exclude": ["node_modules", "**/*.test.ts", "dist"],
   "compilerOptions": {
     "baseUrl": "src",
     "outDir": "dist",

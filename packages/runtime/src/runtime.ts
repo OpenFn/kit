@@ -29,7 +29,8 @@ export default async function run(
   incomingJobs: string | Operation[],
   initialState: State = defaultState,
   opts: Options = {}) {
-  // Setup a shared execution context
+
+    // Setup a shared execution context
   const context = buildContext(opts)
   
   const jobs = await initJobs(incomingJobs, context, opts.forceSandbox);
