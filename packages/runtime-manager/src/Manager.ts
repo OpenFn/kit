@@ -3,30 +3,27 @@ import Piscina from 'piscina';
 
 type JobRegistry = Record<string, string>;
 
+let jobid = 1000;
+
 // Manages a pool of workers
 const Manager = function() {
   const registry: JobRegistry = {};
-  //const workers = workerpool.pool(path.resolve('./dist/worker.js'), { workerType: 'process' });
   const workers = new Piscina({
     filename: path.resolve('./dist/worker.js')
   });
 
-  workers.on('message', console.log)
-
-  // Maintain state of each job
-  // I really really want some details about the thread its running in...
-  // this is useless tbh!
-  const threadState: Record<string, any> = {};
+  workers.on('message', (m) => {
+    console.log(m);
+  })
 
   // Run a job in a worker
   // Accepts the name of a registered job
   const run = async (name: string, state?: any) => {
     const src =  registry[name];
     if (src) {
-      // need a unique job + process id to go here
-      threadState[name] = true
-      const result = await workers.run([src, state])
-      delete threadState[name];
+      jobid++
+      // TODO is there any benefit in using an arraybuffer to pass data directly?
+      const result = await workers.run([jobid, src, state]);
       return result;
     }
     throw new Error("Job not found: " + name);
