@@ -1,5 +1,24 @@
 {
   "extends": "../../tsconfig.common",
+  "compilerOptions": {
+    "baseUrl": "src",
+    "outDir": "dist",
+    "declarationDir": ".",
+    // Support JSX in .tsx files
+    "jsx": "react"
+    // List of library files to be included in the compilation
+    // "lib": ["dom", "dom.iterable", "esnext"],
+    // Specify module code generation
+    // "module": "es2020",
+    // Specify ECMAScript target version
+    // "target": "es2020"
+  },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx", "src/dev.tsx", "dist"]
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/dev.tsx",
+    "dist"
+  ]
 }
