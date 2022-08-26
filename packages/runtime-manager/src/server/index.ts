@@ -34,7 +34,7 @@ const handlePost = (ctx: koa.Context) => {
 };
 
 const runJob = async (name: string) => {
-  console.log(`Running job: ${name}...`)
+  console.log(`Starting job: ${name}...`)
   
   const result = await runtime.run(name, {
     configuration: {
@@ -42,16 +42,23 @@ const runJob = async (name: string) => {
     }
   });
 
-  console.log('--')
+  // console.log('--')
   console.log(`Job ${name} finished`)
   console.log(result)
-  console.log('--')
+  // console.log('--')
   report();
 }
 
 const report = () => {
-  const threadCount = runtime.getActiveJobs().length;
-  console.log(`active threads: ${threadCount}`) 
+  const jobs = runtime.getActiveJobs();
+  const oldJobs = runtime.getCompletedJobs();
+  console.log('---')
+  console.log(`completed jobs: ${oldJobs.length}`) 
+  console.log(`active jobs (${jobs.length}):`) 
+  for (const job of jobs) {
+    console.log(` [${job.id}] ${job.name}: (thread: ${job.threadId})`)
+  }
+  console.log('---')
 }
 
 app.use((ctx) => {

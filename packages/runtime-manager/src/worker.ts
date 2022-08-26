@@ -3,35 +3,34 @@
 // (it has to for experimental modules to work)
 // Is this a concern? If secrets are passed in they could be visible
 // The sandbox should hep
-import run from '@openfn/runtime';
-import { parentPort, threadId } from 'worker_threads';
+import runJob from '@openfn/runtime';
+import workerpool from 'workerpool';
+import { threadId } from 'worker_threads';
+import * as e from './events';
 
-type Handshake = {
-  type: 'handshake',
-  jobId: number,
-  threadId: number
-}
-
-function postMessage(obj: Handshake) {
-  parentPort?.postMessage({
-    ready: true, // magic flag we apparently need to send a message?!
-    ...obj,
-  });
+function publish(event:  e.JobEvent) {
+  workerpool.workerEmit(event);
 }
 
 // When the worker starts, it should report back its id
 // We need the runaround here because our worker pool obfuscates it
 function init(jobId: number) {
-  postMessage({ type: 'handshake', jobId, threadId });
+  publish({ type: e.ACCEPT_JOB, jobId, threadId })
 }
 
-export default async (args: [number, string, any]) => {
-  const [jobId, src, state] = args;
-  const p = run(src, state);
+const run = async (jobId: number, src: string, state?: any) => {
   init(jobId)
-  return await p;
+  try {
+    const result = await runJob(src, state);
+    publish({ type: e.COMPLETE_JOB, jobId, state: result })
+    return result;
+  }
+  catch(err) {
+    // @ts-ignore TODO sort out error typing
+    publish({ type: e.JOB_ERROR, jobId, message: err.message })
+  }
 };
 
-// export default (args: [number, string, any]) => {
-//   init(args[0])
-// }
+workerpool.worker({
+  run
+});
