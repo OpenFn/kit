@@ -2,8 +2,7 @@ import vm from 'node:vm';
 import { execute } from '@openfn/language-common';
 import type { Operation, State } from '@openfn/language-common';
 
-// @ts-ignore grr
-import evaluate from './module-loader';
+import loadModule from './module-loader';
 
 type Options = {
   // TODO should match the console API but this will do for now
@@ -33,12 +32,12 @@ export default async function run(
   // Setup a shared execution context
   const context = buildContext(opts)
   
-  const jobs = await parseIncomingJobs(incomingJobs, context, opts.forceSandbox);
+  const jobs = await initJobs(incomingJobs, context, opts.forceSandbox);
 
   // Create the main reducer function
   // TODO we shouldn't import this, we should define our own
   // (but it's nice to prove it works with the original execute implementation)
-  const reducer = execute(...jobs.map((fn) => wrap(fn)));
+  const reducer = execute(...jobs.map(runOperation));
 
   // Run the job
   const result = await reducer(initialState);
@@ -47,8 +46,7 @@ export default async function run(
   return result;
 }
 
-// TODO I'm in the market for the best solution here
-// immer? deep-clone?
+// TODO I'm in the market for the best solution here - immer? deep-clone?
 // What should we do if functions are in the state?
 const clone = (state: State) => JSON.parse(JSON.stringify(state))
 
@@ -56,13 +54,12 @@ const clone = (state: State) => JSON.parse(JSON.stringify(state))
 // * A cloned state object so that prior state is always preserved
 // TODO: try/catch stuff
 // TODO: automated logging and metrics stuff
-const wrap = (fn: Operation) => {
+const runOperation = (fn: Operation) => {
   return (state: State) => {
     const newState = clone(state);
     return fn(newState);
   }
 };
-
 
 // Build a safe and helpful execution context
 // This will be shared by all operations
@@ -71,10 +68,7 @@ const buildContext = (options: Options) => {
   
   const context = vm.createContext({
     console: logger,
-
     // TODO we need to keep a whole bunch of globals really
-    atob,
-    btoa,
     clearInterval,
     clearTimeout,
     JSON,
@@ -92,10 +86,10 @@ const buildContext = (options: Options) => {
   return context;
 }
 
-const parseIncomingJobs = async (jobs: string | Operation[], context: vm.Context, forceSandbox?: boolean): Promise<Operation[]> => {
+const initJobs = async (jobs: string | Operation[], context: vm.Context, forceSandbox?: boolean): Promise<Operation[]> => {
   if (typeof jobs === 'string') {
     // Load jobs from a source module string
-    return await evaluate(jobs, { context }) as Operation[];
+    return await loadModule(jobs, { context }) as Operation[];
   } else {
     if (forceSandbox) {
       throw new Error("Invalid arguments: jobs must be strings")
