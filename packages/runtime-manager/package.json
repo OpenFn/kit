@@ -8,7 +8,7 @@
     "test": "pnpm ava",
     "build": "rimraf dist/ .rollup.cache && rollup -c",
     "watch": "pnpm rollup -cw --no-watch.clearScreen",
-    "serve": "nodemon -e ts --exec 'tsm --experimental-vm-modules src/server/index.ts'"
+    "serve": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/server/index.ts'"
   },
   "author": "Joe Clark <jclark@openfn.org>",
   "license": "ISC",

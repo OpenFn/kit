@@ -32,7 +32,16 @@ test.skip('Should run a simple job', async (t) => {
   const m = Manager();
   m.registerJob('test', 'export default [() => 10];');
   const result = await m.run('test');
+  console.log(result)
   // @ts-ignore
+  t.assert(result === 10);
+});
+
+// This might work for testing because there's no module loading
+test('Should run a simple job with live js', async (t) => {
+  const m = Manager();
+  m.registerJob('test', '[() => 10]');
+  const result = await m.run('test') as number;
   t.assert(result === 10);
 });
 

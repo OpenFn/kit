@@ -4,7 +4,10 @@ import * as e from './events';
 
 export type State = any; // TODO I want a nice state def with generics
 
-type JobRegistry = Record<string, string>;
+// hmm, may need to support this for unit tests (which does kind of make sense)
+type LiveJob = Array<(s: State) => State>;
+
+type JobRegistry = Record<string, string | LiveJob>;
 
 let jobid = 1000;
 
@@ -22,7 +25,7 @@ type JobStats = {
 }
 
 // Manages a pool of workers
-const Manager = function() {
+const Manager = function(allowLive = false) {
   const jobsList: Map<number, JobStats> = new Map();
   const activeJobs: number[] = [];
   
@@ -60,9 +63,10 @@ const Manager = function() {
   const run = async (name: string, state?: any) => {
     const src =  registry[name];
     if (src) {
-      jobid++
-      // TODO is there any benefit in using an arraybuffer to pass data directly?
-      const result = await workers.exec('run', [jobid, src, state], {
+      jobid++;
+
+      const allowEval = true;
+      const result = await workers.exec('run', [jobid, src, state, allowEval], {
         on: ({ type, ...args }: e.JobEvent) => {
           if (type === e.ACCEPT_JOB) {
             const { jobId, threadId } = args as e.AcceptJobEvent
@@ -82,7 +86,7 @@ const Manager = function() {
   // register a job to enable it to be run
   // should we validate before registering?
   // should we track versions? This isn't a content manager though... idk
-  const registerJob = (name: string, source: string) => {
+  const registerJob = (name: string, source: string | LiveJob) => {
     if (registry[name]) {
       throw new Error("Job already registered: " + name);
     }
