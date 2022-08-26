@@ -27,21 +27,13 @@ test('Should return a registered job list', (t) => {
   t.deepEqual(m.getRegisteredJobs(), ['my_job', 'my_other_job']);
 });
 
-// The ava test runner doesn't seem to be getting the experimental_vm_modules flag and so this fails :(
-test.skip('Should run a simple job', async (t) => {
-  const m = Manager();
-  m.registerJob('test', 'export default [() => 10];');
-  const result = await m.run('test');
-  console.log(result)
-  // @ts-ignore
-  t.assert(result === 10);
-});
-
-// This might work for testing because there's no module loading
-test('Should run a simple job with live js', async (t) => {
-  const m = Manager();
-  m.registerJob('test', '[() => 10]');
-  const result = await m.run('test') as number;
+test('Should run a mock job with a simple return value', async (t) => {
+  // This uses the mock worker, not the actual runtime
+  // It will still exercise all the lifecycle logic found in the worker-helper,
+  // Just not the runtime logic
+  const m = Manager(true);
+  m.registerJob('test', 'mock');
+  const result = await m.run('test', { returnValue: 10 }) as number;
   t.assert(result === 10);
 });
 

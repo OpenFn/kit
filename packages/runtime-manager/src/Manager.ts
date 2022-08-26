@@ -25,12 +25,14 @@ type JobStats = {
 }
 
 // Manages a pool of workers
-const Manager = function(allowLive = false) {
+const Manager = function(useMock = false) {
   const jobsList: Map<number, JobStats> = new Map();
   const activeJobs: number[] = [];
   
   const registry: JobRegistry = {};
-  const workers = workerpool.pool(path.resolve('./dist/worker.js'));
+  const workers = workerpool.pool(path.resolve(
+    useMock ? './dist/mock-worker.js' : './dist/worker.js'
+  ));
 
   const acceptJob = (jobId: number, name: string, threadId: number) => {
     if (jobsList.has(jobId)) {
@@ -65,8 +67,7 @@ const Manager = function(allowLive = false) {
     if (src) {
       jobid++;
 
-      const allowEval = true;
-      const result = await workers.exec('run', [jobid, src, state, allowEval], {
+      const result = await workers.exec('run', [jobid, src, state], {
         on: ({ type, ...args }: e.JobEvent) => {
           if (type === e.ACCEPT_JOB) {
             const { jobId, threadId } = args as e.AcceptJobEvent
