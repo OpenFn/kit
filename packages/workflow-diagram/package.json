@@ -1,6 +1,6 @@
 {
   "name": "@openfn/workflow-diagram",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "type": "module",
   "exports": {
@@ -42,6 +42,7 @@
     "typescript": "^4.8.2"
   },
   "dependencies": {
+    "classcat": "^5.0.4",
     "elkjs": "^0.8.1",
     "react-flow-renderer": "^10.3.16"
   },

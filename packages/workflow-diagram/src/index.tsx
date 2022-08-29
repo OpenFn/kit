@@ -1,14 +1,18 @@
-import { toElkNode, toFlow } from "layout";
+import { toElkNode, toFlow } from "./layout";
 import React, { useEffect } from "react";
 import ReactFlow, { useEdgesState, useNodesState } from "react-flow-renderer";
 import JobNode from "./nodes/JobNode";
 import TriggerNode from "./nodes/TriggerNode";
+import AddNode from "./nodes/AddNode";
+import OperationNode from "./nodes/OperationNode";
 import type { ProjectSpace } from "./types";
 
 import "./main.css";
 
 const nodeTypes = {
   job: JobNode,
+  add: AddNode,
+  operation: OperationNode,
   trigger: TriggerNode,
 };
 

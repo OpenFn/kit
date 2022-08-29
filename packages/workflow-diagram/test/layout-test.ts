@@ -1,5 +1,5 @@
 import test from "ava";
-import { toElkNode, toFlow } from "../src/layout";
+import { toElkNode, toFlow } from "../src/layout/index";
 import { WebhookJob } from "./helpers";
 
 test("toElkNode for a webhook job", (t) => {

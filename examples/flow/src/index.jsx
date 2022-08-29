@@ -60,7 +60,7 @@ function onPaneClick(event) {
 }
 
 root.render(
-  <div className="h-screen w-screen">
+  <div className="h-screen w-screen antialiased">
     <div className="flex-none h-full bg-gray-100">
       <WorkflowDiagram
         projectSpace={projectSpace}

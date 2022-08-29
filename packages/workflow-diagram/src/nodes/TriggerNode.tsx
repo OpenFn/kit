@@ -48,6 +48,8 @@ const ClockIcon = () => {
   );
 };
 
+
+
 const TriggerNode = ({
   data,
   isConnectable,
@@ -69,6 +71,7 @@ const TriggerNode = ({
         type="source"
         position={sourcePosition}
         isConnectable={isConnectable}
+        style={{ border: "none", height: 0, top: 0 }}
       />
     </div>
   );

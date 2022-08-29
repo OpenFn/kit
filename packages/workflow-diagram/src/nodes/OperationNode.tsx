@@ -2,7 +2,6 @@ import React, { memo } from "react";
 
 import { Handle, Position } from "react-flow-renderer";
 import type { NodeProps } from "react-flow-renderer";
-import cc from "classcat";
 
 // background:#fff
 // border:1px solid #1a192b
@@ -13,27 +12,17 @@ import cc from "classcat";
 // text-align:center
 // width:150px
 
-const JobNode = ({
+const OperationNode = ({
   data,
   isConnectable,
-  selected,
   targetPosition = Position.Top,
   sourcePosition = Position.Bottom,
 }: NodeProps) => {
   return (
     <div
-      className={cc([
-        "bg-white",
-        "rounded-md",
-        "shadow-sm",
-        selected ? "ring-2" : "ring-0.5",
-        selected ? "ring-indigo-500" : "ring-black",
-        selected ? "ring-opacity-20" : "ring-opacity-5",
-        "text-xs",
-        "p-2",
-        "text-center",
-        "h-full",
-      ])}
+      className="bg-white rounded-md
+                   ring-1 ring-black ring-opacity-5 
+                   text-xs p-2 text-center h-full"
     >
       <Handle
         type="target"
@@ -55,6 +44,6 @@ const JobNode = ({
   );
 };
 
-JobNode.displayName = "JobNode";
+OperationNode.displayName = "OperationNode";
 
-export default memo(JobNode);
+export default memo(OperationNode);

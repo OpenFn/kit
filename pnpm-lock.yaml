@@ -103,6 +103,7 @@ importers:
       '@types/react': ^18.0.17
       '@types/react-dom': ^18.0.6
       ava: ^4.3.3
+      classcat: ^5.0.4
       elkjs: ^0.8.1
       esbuild: ^0.15.5
       postcss: ^8.4.16
@@ -119,6 +120,7 @@ importers:
       tsm: ^2.2.2
       typescript: ^4.8.2
     dependencies:
+      classcat: 5.0.4
       elkjs: 0.8.1
       react-flow-renderer: 10.3.16_biqbaboplfbrettd7655fr4n2y
     devDependencies:
