@@ -44,7 +44,8 @@
   "dependencies": {
     "classcat": "^5.0.4",
     "elkjs": "^0.8.1",
-    "react-flow-renderer": "^10.3.16"
+    "react-flow-renderer": "^10.3.16",
+    "zustand": "^4.1.1"
   },
   "peerDependencies": {
     "react": "16 || 17 || 18",

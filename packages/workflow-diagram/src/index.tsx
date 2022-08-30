@@ -1,13 +1,13 @@
-import { toElkNode, toFlow } from "./layout";
 import React, { useEffect } from "react";
-import ReactFlow, { useEdgesState, useNodesState } from "react-flow-renderer";
-import JobNode from "./nodes/JobNode";
-import TriggerNode from "./nodes/TriggerNode";
 import AddNode from "./nodes/AddNode";
+import JobNode from "./nodes/JobNode";
 import OperationNode from "./nodes/OperationNode";
+import TriggerNode from "./nodes/TriggerNode";
 import type { ProjectSpace } from "./types";
 
+import ReactFlow from "react-flow-renderer";
 import "./main.css";
+import { useStore } from "./store";
 
 const nodeTypes = {
   job: JobNode,
@@ -21,17 +21,12 @@ const WorkflowDiagram: React.FC<{
   onNodeClick?: (event: React.MouseEvent, {}) => void;
   onPaneClick?: (event: React.MouseEvent) => void;
 }> = ({ projectSpace, onNodeClick, onPaneClick }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const { nodes, edges, onNodesChange, onEdgesChange, setProjectSpace } =
+    useStore();
 
   useEffect(() => {
-    const elkNodes = toElkNode(projectSpace);
-
-    toFlow(elkNodes).then(({ nodes, edges }) => {
-      setNodes(nodes);
-      setEdges(edges);
-    });
-  }, []);
+    setProjectSpace(projectSpace);
+  }, [projectSpace]);
 
   return (
     <ReactFlow

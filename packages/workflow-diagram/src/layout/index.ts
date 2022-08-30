@@ -257,15 +257,10 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   };
 }
 
-export async function toFlow(node: FlowElkNode): Promise<{
-  nodes: Node<any>[];
-  edges: Edge<any>[];
-}> {
+export async function toFlow(node: FlowElkNode): Promise<FlowNodeEdges> {
   const elk = new ELK();
 
   const elkResults = (await elk.layout(node)) as FlowElkNode;
 
-  const [nodes, edges] = flattenElk(elkResults);
-
-  return { nodes, edges };
+  return flattenElk(elkResults);
 }
