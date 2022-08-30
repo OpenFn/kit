@@ -1,4 +1,4 @@
-import { Job } from "types";
+import { Job, Workflow } from "types";
 import { FlowElkNode, ElkNodeEdges } from "./types";
 
 const defaultLayoutOptions = {
@@ -52,3 +52,19 @@ export function jobNodeFactory(job: Job): FlowElkNode {
     height: 40,
   };
 }
+
+export function workflowNodeFactory(workflow: Workflow): FlowElkNode {
+  return {
+    id: workflow.id,
+    properties: {
+      label: workflow.name || "null",
+      type: "workflow",
+    },
+    children: [],
+    edges: [],
+    layoutOptions: defaultLayoutOptions,
+    width: 150,
+    height: 40,
+  };
+}
+

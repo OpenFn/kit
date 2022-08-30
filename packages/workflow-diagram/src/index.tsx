@@ -5,6 +5,7 @@ import OperationNode from "./nodes/OperationNode";
 import TriggerNode from "./nodes/TriggerNode";
 import type { ProjectSpace } from "./types";
 
+import WorkflowNode from "nodes/WorkflowNode";
 import ReactFlow from "react-flow-renderer";
 import "./main.css";
 import { useStore } from "./store";
@@ -14,6 +15,7 @@ const nodeTypes = {
   add: AddNode,
   operation: OperationNode,
   trigger: TriggerNode,
+  workflow: WorkflowNode,
 };
 
 const WorkflowDiagram: React.FC<{

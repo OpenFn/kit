@@ -13,9 +13,8 @@
 import type { LayoutOptions } from "elkjs";
 import ELK from "elkjs/lib/elk.bundled";
 
-import { Edge, Node } from "react-flow-renderer";
-import { FlowJob, FlowTrigger, Job, ProjectSpace } from "types";
-import { addNodeFactory, jobNodeFactory } from "./factories";
+import { FlowJob, FlowTrigger, Job, ProjectSpace, Workflow } from "types";
+import { addNodeFactory, jobNodeFactory, workflowNodeFactory } from "./factories";
 import { toChildFlowNode, toFlowEdge, toFlowNode } from "./flow-nodes";
 import { ElkNodeEdges, FlowElkNode, FlowNodeEdges } from "./types";
 
@@ -27,8 +26,6 @@ export function flattenElk(node: FlowElkNode): FlowNodeEdges {
   return (node.children || []).reduce<FlowNodeEdges>(
     (acc: FlowNodeEdges, node) => {
       const [childNodes, childEdges] = flattenElk(node);
-
-      
 
       return mergeTuples(acc, [
         [
@@ -229,32 +226,51 @@ function hasDescendent(projectSpace: ProjectSpace, job: Job): boolean {
 /**
  * Turns a ProjectSpace object into a FlowElkNode, this can be handled to ELK
  * for layout calculation.
- * 
+ *
  * The extended interface (`FlowElkNode`) has extra properties on it in order
  * to preserve specific information for React Flow.
- * 
- * @param projectSpace 
+ *
+ * @param projectSpace
  */
 export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
-  const [children, edges] = projectSpace.jobs.reduce<ElkNodeEdges>(
-    (nodesAndEdges, job) => {
-      return mergeTuples(
-        nodesAndEdges,
-        deriveNodesWithEdges({
-          ...job,
-          hasDescendents: hasDescendent(projectSpace, job),
-        })
-      );
-    },
-    [[], []]
-  );
+  console.log(groupByWorkflow(projectSpace));
 
+  let nodeEdges: ElkNodeEdges = [[], []];
+
+  for (const [workflow, jobs] of groupByWorkflow(projectSpace)) {
+
+    let [jobNodes, jobEdges] = jobs.reduce<ElkNodeEdges>(
+      (nodesAndEdges, job) => {
+        return mergeTuples(
+          nodesAndEdges,
+          deriveNodesWithEdges({
+            ...job,
+            hasDescendents: hasDescendent(projectSpace, job),
+          })
+        );
+      },
+      [[], []]
+    );
+
+    nodeEdges = mergeTuples(nodeEdges, [[{...workflowNodeFactory(workflow), children: jobNodes, edges: jobEdges}], []]);
+  }
+
+  const [children, edges] = nodeEdges;
   return {
     id: "root",
     layoutOptions: defaultLayoutOptions,
     children,
     edges,
   };
+}
+
+function groupByWorkflow(projectSpace: ProjectSpace): Map<Workflow, Job[]> {
+  return new Map(
+    projectSpace.workflows.map((workflow) => [
+      workflow,
+      projectSpace.jobs.filter(({ workflowId }) => workflowId == workflow.id),
+    ])
+  );
 }
 
 export async function toFlow(node: FlowElkNode): Promise<FlowNodeEdges> {
