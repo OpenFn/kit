@@ -36,6 +36,7 @@
   "dependencies": {
     "@types/yargs": "^17.0.12",
     "acorn": "^8.8.0",
+    "ast-types": "^0.14.2",
     "ava": "^4.2.0",
     "recast": "^0.21.2",
     "yargs": "^17.5.1"
