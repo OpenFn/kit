@@ -1,5 +1,5 @@
 {
-  "name": "@openfn/compiler",
+  "name": "@openfn/describe-package",
   "version": "0.0.1",
   "description": "",
   "type": "module",

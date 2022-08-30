@@ -26,7 +26,7 @@ function WorkerInspector() {
     setWorkerState({ loading: true, loaded: false });
 
     const workerImportStart = performance.now();
-    import("@openfn/compiler/worker")
+    import("@openfn/describe-package/worker")
       .then(async ({ startWorker }) => {
         setWorkerState({ loading: false, loaded: true });
         setWorker(await startWorker());

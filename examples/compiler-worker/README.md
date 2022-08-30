@@ -1,6 +1,6 @@
-# Compiler Worker
+# Describe Package Worker
 
-A living example of how to use the `@openfn/compiler` worker in
+A living example of how to use the `@openfn/describe-package` worker in
 a browser.
 
 ## Running

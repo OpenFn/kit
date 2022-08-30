@@ -1,6 +1,6 @@
-# @openfn/compiler
+# @openfn/describe-package
 
-Compiler and utils for inspecting and compiling OpenFn Jobs.
+Utility for inspecting and describing an arbitrary npm package.
 
 ## Usage
 
@@ -9,7 +9,7 @@ There is a demo project available in [examples/compiler-worker](../../examples/c
 ### Inspecting a module
 
 ```js
-import { Pack, Project, describeDts } from "@openfn/compiler";
+import { Pack, Project, describeDts } from "@openfn/describe-package";
 
 const project = new Project();
 
@@ -49,7 +49,7 @@ the necessary hooks to interact with code and module type definitions.
 > ⛔ Not working currently. 
 
 ```js
-const { startWorker } = await import("@openfn/compiler/worker");
+const { startWorker } = await import("@openfn/describe-package/worker");
 const worker = await startWorker();
 const results = await worker.describeAdaptor("a .d.ts as a string");
 ```

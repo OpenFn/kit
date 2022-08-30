@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@openfn/compiler": "workspace:*"
+    "@openfn/describe-package": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.2",

@@ -11,8 +11,8 @@ Lightning ProjectSpace
 
 ## Packages
 
-- [`@openfn/compiler`](packages/compiler)  
-- [`@openfn/workflow-diagram`](packages/workflow-diagram)  
+- [`@openfn/describe-package`](packages/describe-package)  
+- [`@openfn/workflow-diagram`](packages/workflow-diagram)
 
 ## Examples
 

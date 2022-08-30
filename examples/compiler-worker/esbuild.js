@@ -12,7 +12,7 @@ liveserver.start({
 })
 
 await esbuild.build({
-  entryPoints: ['src/index.tsx', '@openfn/compiler/worker', 'src/from-unpkg.tsx'],
+  entryPoints: ['src/index.tsx', '@openfn/describe-package/worker', 'src/from-unpkg.tsx'],
   outdir: 'dist/',
   bundle: true,
   splitting: true,
