@@ -1,5 +1,5 @@
 import test from 'ava';
-import { builders as b, builders } from 'ast-types';
+import { builders as b } from 'ast-types';
 
 import transform, { buildvisitorMap } from '../src/transform';
 
