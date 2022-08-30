@@ -12,7 +12,7 @@
 import { namedTypes, NodePath } from 'ast-types';
 import { visit } from 'recast';
 
-import { ensureExports } from './transforms';
+import ensureExports from './transforms/ensure-exports';
 
 type VisitorFunction =  (path: typeof NodePath) => boolean | undefined; // return true to abort further traversal
 

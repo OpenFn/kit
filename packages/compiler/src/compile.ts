@@ -15,14 +15,9 @@ type Options = {
   eval?: boolean;
 }
 
-// TODO should this be async?
+// TODO should this be async? not sure yet there's any need
 export default function compile(path: string, opts: Options) {
-  let source;
-  if (!opts.eval) {
-    source = loadFile(path);
-  } else {
-    source = path;
-  }
+  const source = opts.eval ? path : loadFile(path);
 
   const ast = parse(source);
   const transformedAst = transform(ast);
