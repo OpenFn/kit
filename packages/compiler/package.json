@@ -1,0 +1,42 @@
+{
+  "name": "@openfn/compiler",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "engines": {
+    "node": ">=16",
+    "pnpm": ">=7"
+  },
+  "exports": {},
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "pnpm ava",
+    "build": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
+    "watch": "node esbuild.ts watch",
+    "parse": "node --no-warnings --loader=tsm src/cli/parse.ts"
+  },
+  "keywords": [],
+  "author": "Joe Clark<jclark@openfn.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.45",
+    "@typescript/vfs": "^1.3.5",
+    "esbuild": "^0.14.38",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.8.1",
+    "tslib": "^2.4.0",
+    "tsm": "^2.2.1",
+    "typescript": "^4.7.4"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@types/yargs": "^17.0.12",
+    "acorn": "^8.8.0",
+    "ava": "^4.2.0",
+    "yargs": "^17.5.1"
+  }
+}
