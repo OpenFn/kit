@@ -14,11 +14,8 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [
-      postcss(),
-      typescript({ tsconfig: "./tsconfig.json" }),
-    ],
-    external: ["react", "react-dom", /elkjs*/, /react-flow/],
+    plugins: [postcss(), typescript({ tsconfig: "./tsconfig.json" })],
+    external: ["react", "react-dom", /elkjs*/, /react-flow/, "classcat"],
   },
   {
     input: pkg.exports["."].import.types,

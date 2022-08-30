@@ -2,9 +2,17 @@
 @tailwind utilities;
 
 .react-flow__edge.fail-stroke .react-flow__edge-path {
-  stroke: theme('colors.red.400')
+  stroke: theme("colors.red.400");
 }
 
 .react-flow__edge.success-stroke .react-flow__edge-path {
-  stroke: theme('colors.green.500')
+  stroke: theme("colors.green.500");
+}
+
+.dashed-edge {
+  stroke-dasharray: 5px;
+}
+
+.dotted-edge {
+  stroke-dasharray: 1px;
 }
