@@ -1,6 +1,6 @@
-## Devtools
+## @openfn/cli (devtools)
 
-This package contains new devtools
+This package contains a new devtools cli
 
 Devtools will:
 * Compile a job expression into an executable module
@@ -13,13 +13,15 @@ If you do `devtools somefolder` it will read expression, state and write output 
 
 ## Example usage
 
-devtools expression.js
+`npm install -i @openfn/cli`
 
-devtools tmp
+`openfn expression.js`
+
+`openfn tmp`
 
 ## API sketch
 
-devtools expression.js \
+openfn expression.js \
   --state="path/to/initial-state.json" \
   --output="path/to/output.json" \
   --expression="path/to/expression.js" \
@@ -27,3 +29,4 @@ devtools expression.js \
   --no-validate (don't validate the input)
   --stdout (output to stdout)
   --log level (set the logging level)
+  --adapter=@openfn/language-common:path/to/language-common

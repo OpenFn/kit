@@ -56,6 +56,39 @@ importers:
       react-dom: 18.2.0_react@18.2.0
       tailwindcss: 3.1.5_postcss@8.4.14
 
+  packages/cli:
+    specifiers:
+      '@openfn/compiler': workspace:^0.0.1
+      '@openfn/runtime': workspace:^0.0.1
+      '@rollup/plugin-typescript': ^8.3.2
+      '@types/node': ^17.0.45
+      '@types/yargs': ^17.0.12
+      ava: ^4.2.0
+      esbuild: ^0.14.38
+      rimraf: ^3.0.2
+      rollup: ^2.72.1
+      rollup-plugin-dts: ^4.2.1
+      ts-node: ^10.8.1
+      tslib: ^2.4.0
+      typescript: ^4.7.4
+      yargs: ^17.5.1
+    dependencies:
+      '@openfn/compiler': link:../compiler
+      '@openfn/runtime': link:../runtime
+      '@types/yargs': 17.0.12
+      ava: 4.3.1
+      yargs: 17.5.1
+    devDependencies:
+      '@rollup/plugin-typescript': 8.3.3_mrkdcqv53wzt2ybukxlrvz47fu
+      '@types/node': 17.0.45
+      esbuild: 0.14.54
+      rimraf: 3.0.2
+      rollup: 2.76.0
+      rollup-plugin-dts: 4.2.2_sk2p66houzdp4ognhkknlnus3i
+      ts-node: 10.8.1_x2utdhayajzrh747hktprshhby
+      tslib: 2.4.0
+      typescript: 4.7.4
+
   packages/compiler:
     specifiers:
       '@rollup/plugin-typescript': ^8.3.2
