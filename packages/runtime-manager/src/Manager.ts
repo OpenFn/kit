@@ -1,6 +1,7 @@
 import path from 'node:path';
 import workerpool from 'workerpool';
 import * as e from './events';
+import compile from '@openfn/compiler';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -87,10 +88,18 @@ const Manager = function(useMock = false) {
   // register a job to enable it to be run
   // should we validate before registering?
   // should we track versions? This isn't a content manager though... idk
-  const registerJob = (name: string, source: string | LiveJob) => {
+  // We should allow compilation here
+  const registerJob = (name: string, source: string) => {
     if (registry[name]) {
       throw new Error("Job already registered: " + name);
     }
+
+
+    // if it's a string, we should compile it
+    if (typeof source === 'string') {
+      source = compile(source, { eval: true }); // TODO shouldn't need the eval flag really
+    }
+
     registry[name] = source;
   };
 
@@ -110,6 +119,7 @@ const Manager = function(useMock = false) {
   }
 
   return {
+    _registry: registry, // for unit testing really
     run,
     registerJob,
     getRegisteredJobs,

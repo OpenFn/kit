@@ -1,6 +1,6 @@
 import test from 'ava';
 import execute from '@openfn/runtime';
-import slowmo from '../src/server/jobs/slow-random';
+import compile from '@openfn/compiler';
 
 type SlowMoState = {
   data: {
@@ -12,8 +12,9 @@ const wait = async(time: number) => new Promise(resolve => {
   setTimeout(resolve, time);
 });
 
+const compiledJob = compile('src/server/jobs/slow-random.js');
 test('slowmo should return a value', async (t) => {
-  const result = await execute(slowmo) as SlowMoState;
+  const result = await execute(compiledJob) as SlowMoState;
 
   t.assert(result);
   t.assert(result.data.result);
@@ -23,7 +24,7 @@ test('slowmo should return a value', async (t) => {
 test('slowmo should return after 500ms', async (t) => {
   let result;
 
-  execute(slowmo).then((r)=> {
+  execute(compiledJob).then((r)=> {
     result = r;
   });
 
@@ -48,7 +49,7 @@ test('slowmo should accept a delay time as config', async (t) => {
     },
     data: {}
   };
-  execute(slowmo, state).then((r)=> {
+  execute(compiledJob, state).then((r)=> {
     result = r;
   });
 
@@ -68,7 +69,7 @@ test('slowmo should return random numbers', async (t) => {
     },
     data: {}
   };
-  const a = await execute(slowmo, state)
-  const b = await execute(slowmo, state)  
+  const a = await execute(compiledJob, state)
+  const b = await execute(compiledJob, state)  
   t.assert(a !== b);
 })
