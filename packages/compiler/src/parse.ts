@@ -37,3 +37,11 @@ export default function parse(source: string) {
 
   return ast;
 }
+
+// Simplified parse with no location info
+export const simpleParse = (source: string) => 
+  acorn.parse(source, {
+    sourceType: 'module',
+    ecmaVersion: 10,
+    locations: false
+  })

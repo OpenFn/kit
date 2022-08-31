@@ -5,6 +5,7 @@ import parse from '../../src/parse';
 
 import transform from '../../src/transform';
 import visitors from '../../src/transforms/ensure-exports';
+import  { assertCodeEqual } from '../util';
 
 // TODO where can I get this info?
 // Representations of ast nodes is a bit of a mess tbh
@@ -21,10 +22,6 @@ const findKeyword = (ast: RecastNode, kind: string) => ast.tokens.find(
   ({ type, value }) => type === "Keyword" && value === kind
 );
 
-const assertCodeEqual = (t: ExecutionContext, a: namedTypes.Node, b: namedTypes.Node) => {
-  t.assert(print(a).code === print(b).code);
-}
-
 test('visits a Program node', (t) => {
   let visitCount = 0;
   const mockVisitors = [{
@@ -35,7 +32,7 @@ test('visits a Program node', (t) => {
   const program = b.program([
     b.expressionStatement(
       b.callExpression(
-        b.identifier('jam'),
+        b.identifier('fn'),
         []
       )
     )

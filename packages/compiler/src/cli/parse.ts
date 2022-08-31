@@ -3,13 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers'
-import parse from '../parse';
+import parse, { simpleParse } from '../parse';
 
 type Args = {
   _: string[];
   e?: boolean;
   t?: string;
   o?: string;
+  s?: boolean;
 }
 
 const args = yargs(hideBin(process.argv))
@@ -22,13 +23,17 @@ const args = yargs(hideBin(process.argv))
     boolean: true,
     description: 'treat the input as an expresssion, not a path',
   })
-  .option('', {
+  .option('output', {
     alias: 'o',
     description: 'output the result to file',
   })
   .option('test', {
     alias: 't',
     description: 'output the result as a test ast'
+  })
+  .option('simplify', {
+    alias: 's',
+    description: 'output a simplified tree (no location info)',
   })
   .example('parse -t simple-expression my-src.json', 'parse my-src.json into a test sat called simple-expression.json')
   .example('parse -e "const x=10"', 'parse the expression "const x=10" and write the results to stdout')
@@ -41,7 +46,9 @@ if (!args.e) {
   expression = fs.readFileSync(inputPath, 'utf8');
 }
 
-const result = parse(expression);
+const result = args.s ?
+  simpleParse(expression)
+  : parse(expression);
 
 // TODO write output to disk
 let output: { result: string, path: string | null }

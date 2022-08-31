@@ -13,6 +13,7 @@ import { namedTypes, NodePath } from 'ast-types';
 import { visit } from 'recast';
 
 import ensureExports from './transforms/ensure-exports';
+import topLevelOps from './transforms/top-level-operations';
 
 type VisitorFunction =  (path: typeof NodePath) => boolean | undefined; // return true to abort further traversal
 
@@ -25,8 +26,8 @@ type VisitorMap = Record<string, VisitorFunction[]>;
 
 export default function transform(ast: namedTypes.Node, visitorList?: Visitor[]) {
   if (!visitorList) {
-    // TODO maybe automate this from imports
-    visitorList = [ensureExports];
+    // TODO maybe automate this from imports?
+    visitorList = [ensureExports, topLevelOps];
   }
   const visitors = buildvisitorMap(visitorList);
   visit(ast, buildVisitorFunction(visitors))
