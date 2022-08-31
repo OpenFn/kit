@@ -29,22 +29,23 @@ loadJobs();
 
 const handlePost = (ctx: koa.Context) => {
   ctx;
+  const state = {
+    configuration: {
+      delay: Math.random() * 10000
+    }
+  };
   // start a job
-  runJob('slow-random')
+  runJob('slow-random', state);
 };
 
-const runJob = async (name: string) => {
+const runJob = async (name: string, state: any) => {
   console.log(`Starting job: ${name}...`)
   
-  const result = await runtime.run(name, {
-    configuration: {
-      delay: 4000
-    }
-  });
+  const result = await runtime.run(name, state);
 
   // console.log('--')
-  console.log(`Job ${name} finished`)
-  console.log(result)
+  console.log(`Job ${name} finished in ${result.duration / 1000}s`)
+  console.log(result.result)
   // console.log('--')
   report();
 }

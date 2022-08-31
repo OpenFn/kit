@@ -63,12 +63,12 @@ const Manager = function(useMock = false) {
 
   // Run a job in a worker
   // Accepts the name of a registered job
-  const run = async (name: string, state?: any) => {
+  const run = async (name: string, state?: any): Promise<JobStats> => {
     const src =  registry[name];
     if (src) {
-      jobid++;
+      const thisJobId = ++jobid;
 
-      const result = await workers.exec('run', [jobid, src, state], {
+      await workers.exec('run', [jobid, src, state], {
         on: ({ type, ...args }: e.JobEvent) => {
           if (type === e.ACCEPT_JOB) {
             const { jobId, threadId } = args as e.AcceptJobEvent
@@ -80,7 +80,7 @@ const Manager = function(useMock = false) {
           }
         }
       });
-      return result;
+      return jobsList.get(thisJobId) as JobStats;
     }
     throw new Error("Job not found: " + name);
   };
@@ -94,10 +94,9 @@ const Manager = function(useMock = false) {
       throw new Error("Job already registered: " + name);
     }
 
-
     // if it's a string, we should compile it
     if (typeof source === 'string') {
-      source = compile(source, { eval: true }); // TODO shouldn't need the eval flag really
+      source = compile(source);
     }
 
     registry[name] = source;
