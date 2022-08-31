@@ -21,7 +21,8 @@ export default function parse(source: string) {
     range: true,
     parser: {
       parse: (source: string) =>
-        acorn.parse(source, {
+      // TODO this can't parse nullish coalescence, so maybe we just need a more modern ecma version!
+      acorn.parse(source, {
           sourceType: 'module', // Note: this is different to v1 (but back compatible I think)
           ecmaVersion: 10,
           allowHashBang: true,

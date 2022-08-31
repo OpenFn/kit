@@ -4,6 +4,6 @@
   "exclude": ["node_modules", "**/*.test.ts", "dist"],
   "compilerOptions": {
     "lib": ["esnext"],
-    "declarationDir": ".",
+    "declarationDir": "."
   }
 }

@@ -2,12 +2,13 @@
  * Move any top-level operations into the default exports array
  */
 
-import {NodePath, builders as b, namedTypes as n } from 'ast-types';
-
+import { namedTypes as n } from 'ast-types';
+// @ts-ignore
+import type { NodePath } from 'ast-types/main.d.ts'
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 
-function visitor(path: typeof NodePath) {
+function visitor(path: NodePath) {
   const root = path.parent.parent.node;
   // Check if the node is a top level Operation
   if (

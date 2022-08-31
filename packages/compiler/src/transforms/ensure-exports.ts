@@ -3,8 +3,9 @@
  * This will not move operations into the default export
  * This will do nothing if the source already declares any kind of exports
  */
-import {NodePath, builders as b } from 'ast-types';
-
+import { builders as b } from 'ast-types';
+// @ts-ignore
+import type { NodePath } from 'ast-types/main.d.ts'
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 

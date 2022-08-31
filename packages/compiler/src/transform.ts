@@ -15,7 +15,7 @@ import { visit } from 'recast';
 import ensureExports from './transforms/ensure-exports';
 import topLevelOps from './transforms/top-level-operations';
 
-type VisitorFunction =  (path: typeof NodePath) => boolean | undefined; // return true to abort further traversal
+type VisitorFunction =  (path: typeof NodePath) => boolean | undefined | void; // return true to abort further traversal
 
 type Visitor = {
   types: string[];
