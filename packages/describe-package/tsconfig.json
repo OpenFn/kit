@@ -2,5 +2,7 @@
   "extends": "../../tsconfig.common",
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "dist"],
-  "typeRoots": ["./node_modules/@types"]
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types"]
+  }
 }
