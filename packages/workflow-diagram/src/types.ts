@@ -2,10 +2,12 @@ import { Edge, Node } from "react-flow-renderer";
 
 export type CronTrigger = {
   type: "cron";
+  upstreamJob?: null;
 };
 
 export type WebhookTrigger = {
   type: "webhook";
+  upstreamJob?: null;
 };
 
 export type FlowTrigger = {
@@ -14,6 +16,7 @@ export type FlowTrigger = {
 };
 
 export type Trigger = CronTrigger | WebhookTrigger | FlowTrigger;
+export type TriggerType = Trigger["type"];
 
 export interface Operation {
   id: string;
@@ -23,7 +26,9 @@ export interface Operation {
 
 export interface Job {
   id: string;
+  workflowId: string;
   name: string;
+  enabled: boolean;
   adaptor: string;
   trigger: Trigger;
   operations?: Operation[];
@@ -34,8 +39,14 @@ export interface FlowJob extends Job {
   trigger: FlowTrigger;
 }
 
+export interface Workflow {
+  id: string;
+  name: string | null;
+}
+
 export interface ProjectSpace {
   jobs: Job[];
+  workflows: Workflow[];
   startingPoint?: { x: number; y: number };
   spacing?: number;
 }

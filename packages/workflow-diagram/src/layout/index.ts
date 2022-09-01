@@ -3,7 +3,7 @@
  * for Jobs, Triggers and Operations.
  *
  * It works by first converting a `ProjectSpace` into a nested `ElkNode`-like
- * object (with `properties` added for later).
+ * object (with `__flowProps__` added for later).
  * Then the resulting object is passed to ELKs layout function, which adds
  * coordinates to all the nodes.
  * And finally with `flattenElk` we both flatten and convert the ELK object
@@ -11,74 +11,34 @@
  */
 
 import type { LayoutOptions } from "elkjs";
-import ELK from "elkjs/lib/elk.bundled";
+import ELK from "elkjs/lib/elk.bundled.js";
 
-import { Edge, Node } from "react-flow-renderer";
-import { FlowJob, FlowTrigger, Job, ProjectSpace } from "types";
-import { addNodeFactory, jobNodeFactory } from "./factories";
-import { toChildFlowNode, toFlowEdge, toFlowNode } from "./flow-nodes";
-import { ElkNodeEdges, FlowElkNode, FlowNodeEdges } from "./types";
-
-/**
- * Flattens an ELK node into a tuple of Nodes and Edges that are
- * compatible with React Flow.
- */
-export function flattenElk(node: FlowElkNode): FlowNodeEdges {
-  return (node.children || []).reduce<FlowNodeEdges>(
-    (acc: FlowNodeEdges, node) => {
-      const [childNodes, childEdges] = flattenElk(node);
-
-      
-
-      return mergeTuples(acc, [
-        [
-          toFlowNode(node),
-          ...childNodes.map((childNode) => toChildFlowNode(node, childNode)),
-        ],
-        childEdges,
-      ]);
-    },
-    [[], (node.edges || []).map(toFlowEdge)] as FlowNodeEdges
-  );
-}
+import { FlowJob, FlowTrigger, Job, ProjectSpace, Workflow } from "types";
+import {
+  addNodeFactory,
+  jobNodeFactory,
+  operationEdgeFactory,
+  operationNodeFactory,
+  triggerNodeFactory,
+  workflowNodeFactory,
+} from "./factories";
+import { toFlowEdge, toFlowNode } from "./flow-nodes";
+import { ElkNodeEdges, FlowElkEdge, FlowElkNode, FlowNodeEdges } from "./types";
 
 function deriveOperations(job: Job): ElkNodeEdges {
   if (job.operations) {
     return job.operations.reduce<ElkNodeEdges>(
-      ([nodes, edges], op) => {
+      ([nodes, edges], operation) => {
         const prevOperation = nodes[nodes.length - 1];
 
-        const edge = prevOperation
-          ? [
-              {
-                id: `${prevOperation.id}->${op.id}`,
-                sources: [prevOperation.id],
-                targets: [op.id],
-                properties: { animated: false, dashed: true },
-                markerEnd: { type: "arrowclosed" },
-              },
-            ]
+        const edge: FlowElkEdge[] = prevOperation
+          ? [operationEdgeFactory(operation, prevOperation)]
           : [];
 
-        const operation = [
-          {
-            id: op.id,
-            properties: {
-              label: op.label,
-              type: "operation",
-            },
-            layoutOptions: {
-              "elk.direction": "DOWN",
-              "elk.padding": "[top=0,left=10.0,bottom=10.0,right=10.0]",
-            },
-            children: [],
-            edges: [],
-            width: 130,
-            height: 40,
-          },
-        ];
-
-        return mergeTuples([nodes, edges], [operation, edge]);
+        return mergeTuples(
+          [nodes, edges],
+          [[operationNodeFactory(operation)], edge]
+        );
       },
       [[], []]
     );
@@ -90,32 +50,24 @@ function deriveOperations(job: Job): ElkNodeEdges {
 function deriveCron(job: Job): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const triggerNode: FlowElkNode = {
-    id: `${job.id}-cron`,
-    properties: { label: "Cron", type: "trigger" },
-    width: 100,
-    height: 40,
-  };
+  const triggerNode: FlowElkNode = triggerNodeFactory(job);
 
-  const jobNode = {
+  const jobNode: FlowElkNode = {
     ...jobNodeFactory(job),
     children: operationNodes,
     edges: operationEdges,
   };
 
+  const triggerJobEdge: FlowElkEdge = {
+    id: `${triggerNode.id}->${job.id}`,
+    sources: [triggerNode.id],
+    targets: [jobNode.id],
+    labels: [{ text: "on match" }],
+    __flowProps__: { animated: true },
+  };
+
   return mergeTuples(
-    [
-      [triggerNode, jobNode],
-      [
-        {
-          id: `${triggerNode.id}->${job.id}`,
-          sources: [triggerNode.id],
-          targets: [jobNode.id],
-          label: "on match",
-          properties: { animated: true },
-        },
-      ],
-    ],
+    [[triggerNode, jobNode], [triggerJobEdge]],
     addNodeFactory(jobNode)
   );
 }
@@ -123,12 +75,7 @@ function deriveCron(job: Job): ElkNodeEdges {
 function deriveWebhook(job: Job): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const triggerNode = {
-    id: `${job.id}-webhook`,
-    properties: { label: "Webhook", type: "trigger" },
-    width: 100,
-    height: 40,
-  };
+  const triggerNode = triggerNodeFactory(job);
 
   const jobNode = {
     ...jobNodeFactory(job),
@@ -136,27 +83,21 @@ function deriveWebhook(job: Job): ElkNodeEdges {
     edges: operationEdges,
   };
 
-  return mergeTuples(
-    [
-      [triggerNode, jobNode],
-      [
-        {
-          id: `${triggerNode.id}->${job.id}`,
-          sources: [triggerNode.id],
-          targets: [jobNode.id],
-          label: "on receipt",
-          properties: { animated: true },
-        },
-      ],
-    ],
-    addNodeFactory(jobNode)
-  );
+  const edge: FlowElkEdge = {
+    id: `${triggerNode.id}->${job.id}`,
+    sources: [triggerNode.id],
+    targets: [jobNode.id],
+    labels: [{ text: "on receipt" }],
+    __flowProps__: { animated: true },
+  };
+
+  return mergeTuples([[triggerNode, jobNode], [edge]], addNodeFactory(jobNode));
 }
 
 function deriveFlow(job: FlowJob): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const jobNode = {
+  const jobNode: FlowElkNode = {
     ...jobNodeFactory(job),
     children: operationNodes,
     edges: operationEdges,
@@ -165,12 +106,12 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
   const label =
     job.trigger.type == "on_job_failure" ? "on failure" : "on success";
 
-  const edge = {
+  const edge: FlowElkEdge = {
     id: `${job.trigger.upstreamJob}->${job.id}`,
     sources: [job.trigger.upstreamJob],
     targets: [jobNode.id],
-    properties: { animated: true },
-    label,
+    __flowProps__: { animated: true },
+    labels: [{ text: label }],
   };
 
   return mergeTuples([[jobNode], [edge]], addNodeFactory(jobNode));
@@ -202,20 +143,6 @@ function mergeTuples(
   ];
 }
 
-const defaultLayoutOptions: LayoutOptions = {
-  "elk.algorithm": "elk.mrtree",
-  "elk.direction": "DOWN",
-  // "elk.separateConnectedComponents": true,
-  // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-  "elk.alignment": "RIGHT",
-  "spacing.nodeNode": "70",
-  "spacing.nodeNodeBetweenLayers": "45",
-  "spacing.edgeNode": "25",
-  "spacing.edgeNodeBetweenLayers": "20",
-  "spacing.edgeEdge": "20",
-  "spacing.edgeEdgeBetweenLayers": "15",
-};
-
 function hasDescendent(projectSpace: ProjectSpace, job: Job): boolean {
   return Boolean(
     projectSpace.jobs.find((j) => {
@@ -226,46 +153,112 @@ function hasDescendent(projectSpace: ProjectSpace, job: Job): boolean {
   );
 }
 
+const rootLayoutOptions: LayoutOptions = {
+  "elk.algorithm": "elk.box",
+  "elk.box.packingMode": "GROUP_DEC",
+  // "elk.separateConnectedComponents": "true",
+  // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+  "elk.alignment": "TOP",
+  "spacing.nodeNode": "40",
+  "spacing.nodeNodeBetweenLayers": "45",
+  "spacing.edgeNode": "25",
+  "spacing.edgeNodeBetweenLayers": "20",
+  "spacing.edgeEdge": "20",
+  "spacing.edgeEdgeBetweenLayers": "15",
+};
+
+function groupByWorkflow(projectSpace: ProjectSpace): Map<Workflow, Job[]> {
+  return new Map(
+    projectSpace.workflows.map((workflow) => [
+      workflow,
+      projectSpace.jobs.filter(({ workflowId }) => workflowId == workflow.id),
+    ])
+  );
+}
+
 /**
  * Turns a ProjectSpace object into a FlowElkNode, this can be handled to ELK
  * for layout calculation.
- * 
+ *
  * The extended interface (`FlowElkNode`) has extra properties on it in order
  * to preserve specific information for React Flow.
- * 
- * @param projectSpace 
+ *
+ * @param projectSpace
  */
 export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
-  const [children, edges] = projectSpace.jobs.reduce<ElkNodeEdges>(
-    (nodesAndEdges, job) => {
-      return mergeTuples(
-        nodesAndEdges,
-        deriveNodesWithEdges({
-          ...job,
-          hasDescendents: hasDescendent(projectSpace, job),
-        })
-      );
-    },
-    [[], []]
-  );
+  let nodeEdges: ElkNodeEdges = [[], []];
 
+  for (const [workflow, jobs] of groupByWorkflow(projectSpace)) {
+    let [jobNodes, jobEdges] = jobs.reduce<ElkNodeEdges>(
+      (nodesAndEdges, job) => {
+        return mergeTuples(
+          nodesAndEdges,
+          deriveNodesWithEdges({
+            ...job,
+            hasDescendents: hasDescendent(projectSpace, job),
+          })
+        );
+      },
+      [[], []]
+    );
+
+    nodeEdges = mergeTuples(nodeEdges, [
+      [
+        {
+          ...workflowNodeFactory(workflow),
+          children: jobNodes,
+          edges: jobEdges,
+        },
+      ],
+      [],
+    ]);
+  }
+
+  const [children, edges] = nodeEdges;
+
+  // This root node gets ignored later, but we need a starting point for
+  // gathering up all workflows as children
   return {
     id: "root",
-    layoutOptions: defaultLayoutOptions,
+    layoutOptions: rootLayoutOptions,
     children,
     edges,
+    __flowProps__: { data: { label: "" }, type: "root" },
   };
 }
 
-export async function toFlow(node: FlowElkNode): Promise<{
-  nodes: Node<any>[];
-  edges: Edge<any>[];
-}> {
+export async function toFlow(node: FlowElkNode): Promise<FlowNodeEdges> {
   const elk = new ELK();
 
   const elkResults = (await elk.layout(node)) as FlowElkNode;
 
-  const [nodes, edges] = flattenElk(elkResults);
+  // Skip the 'root' graph node, head straight for the children, they are
+  // the workflows.
+  const flow = (elkResults!.children || []).reduce<FlowNodeEdges>(
+    (acc, child) => mergeTuples(acc, flattenElk(child)),
+    [[], []]
+  );
 
-  return { nodes, edges };
+  return flow;
+}
+
+/**
+ * Flattens an ELK node into a tuple of Nodes and Edges that are
+ * compatible with React Flow.
+ */
+export function flattenElk(
+  node: FlowElkNode,
+  parent?: FlowElkNode
+): FlowNodeEdges {
+  return (node.children || []).reduce<FlowNodeEdges>(
+    (acc: FlowNodeEdges, child) => {
+      const [childNodes, childEdges] = flattenElk(child, node);
+
+      return mergeTuples(acc, [[...childNodes], childEdges]);
+    },
+    [
+      [toFlowNode(node, parent)],
+      (node.edges || []).map(toFlowEdge),
+    ] as FlowNodeEdges
+  );
 }

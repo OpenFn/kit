@@ -1,12 +1,29 @@
 import { ElkExtendedEdge, ElkNode } from "elkjs";
-import { Edge, Node } from "react-flow-renderer";
+import { Edge, EdgeMarker, Node } from "react-flow-renderer";
+
+export interface EdgeFlowProps {
+  animated: boolean;
+  dashed?: boolean;
+  dotted?: boolean;
+  markerEnd?: EdgeMarker;
+}
 
 export interface FlowElkEdge extends ElkExtendedEdge {
-  properties: { animated: boolean, dashed?: boolean, dotted?: boolean };
+  __flowProps__: EdgeFlowProps;
+}
+
+export interface NodeFlowProps {
+  data: {
+    label: string;
+    workflowId?: string;
+    parentId?: string;
+    [key: string]: any;
+  };
+  type: string;
 }
 
 export interface FlowElkNode extends ElkNode {
-  properties?: { label: string; type?: string };
+  __flowProps__: NodeFlowProps;
   x?: number;
   y?: number;
   width?: number;

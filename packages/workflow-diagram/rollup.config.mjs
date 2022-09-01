@@ -15,7 +15,7 @@ export default [
       },
     ],
     plugins: [postcss(), typescript({ tsconfig: "./tsconfig.json" })],
-    external: ["react", "react-dom", /elkjs*/, /react-flow/, "classcat"],
+    external: ["react", "react-dom", /elkjs*/, /react-flow/, "classcat", "zustand"],
   },
   {
     input: pkg.exports["."].import.types,

@@ -48,8 +48,6 @@ const ClockIcon = () => {
   );
 };
 
-
-
 const TriggerNode = ({
   data,
   isConnectable,
