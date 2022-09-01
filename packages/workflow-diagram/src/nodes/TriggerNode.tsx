@@ -55,7 +55,7 @@ const TriggerNode = ({
 }: NodeProps) => {
   return (
     <div
-      className="bg-white rounded-md shadow-sm 
+      className="bg-white rounded-full shadow-sm 
                    ring-0.5 ring-black ring-opacity-5 
                    text-xs p-2 text-center h-full"
     >
@@ -69,6 +69,7 @@ const TriggerNode = ({
         type="source"
         position={sourcePosition}
         isConnectable={isConnectable}
+        style={{ border: "none", height: 0, top: 0 }}
       />
     </div>
   );

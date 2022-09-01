@@ -1,5 +1,25 @@
 {
   "extends": "../../tsconfig.common",
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx", "src/dev.tsx", "dist"]
+  "compilerOptions": {
+    "baseUrl": "src",
+    "outDir": "dist",
+    "declarationDir": ".",
+    // Support JSX in .tsx files
+    "jsx": "react",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/dev.tsx",
+    "dist"
+  ]
 }
