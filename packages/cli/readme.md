@@ -30,3 +30,7 @@ openfn expression.js \
   --stdout (output to stdout)
   --log level (set the logging level)
   --adapter=@openfn/language-common:path/to/language-common
+
+## TODO experimental args
+
+When we call the CLI `node cli.js` or whatever, we need to pass in experimental module flags for it to work. This is annoying. Should the cli spin up a new process with the right args?

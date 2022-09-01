@@ -1,37 +1,38 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import compile from '@openfn/compiler';
 import runtime from '@openfn/runtime';
+
 
 export type Opts = {
   jobPath?: string;
   statePath?: string;
+  stateStdin?: string;
   outputPath?: string;
   outputStdout?: boolean;
-
-  // TODO accept custom compilers and runtimes?
 }
 
 export type SafeOpts = Required<Opts>;
 
-
 export default async (basePath: string, opts: Opts) => {
-  console.log(' **** ')
   const args = ensureOpts(basePath, opts);
-
-  const state = loadState(args);
+  console.log(`Loading job from ${args.jobPath}`)
+  
+  const state = await loadState(args);
+  // TODO should we resolve this path?
+  // What if you're running devtools globally?
   const code = compile(args.jobPath);
   const result = await runtime(code, state);
 
   if (opts.outputStdout) {
+    console.log(`\nResult: `)
     console.log(result)
   } else {
-    writeOutput(args, result);
+    await writeOutput(args, result);
   }
-
+  console.log(`\nDone! ✨`)
 }
 
-// TODO should all paths be absolute by now?
-// Maybe resolution is later?
 export function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   const newOpts = {
     outputStdout: opts.outputStdout ?? false,
@@ -58,14 +59,33 @@ export function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   return newOpts as SafeOpts;
 }
 
-function loadState(opts: SafeOpts) {
-  opts; // TODO read the state in
+async function loadState(opts: SafeOpts) {
+  if (opts.stateStdin) {
+    try {
+      return JSON.parse(opts.stateStdin);
+    } catch(e) {
+      console.error("Failed to load state from stdin")
+      console.error(opts.stateStdin);
+      process.exit(1);
+    }
+  }
+
+  try {
+    console.warn(`Loading state from ${opts.statePath}`);
+    const str = await fs.readFile(opts.statePath, 'utf8')
+    return JSON.parse(str)
+  } catch(e) {
+    console.warn('Error loading state!');
+    console.log(e);
+  }
+  console.log('Using default state')
   return {
     data: {},
     configuration: {}
   };
 }
 
-// function writeOutput(opts:Opts, state: any) {
-
-// }
+async function writeOutput(opts: SafeOpts, state: any) {
+  console.log(`Writing output to ${opts.outputPath}`)
+  await fs.writeFile(opts.outputPath, JSON.stringify(state, null, 4));
+}

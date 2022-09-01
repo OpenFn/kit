@@ -22,7 +22,7 @@
     "test:watch": "pnpm ava -w",
     "build": "rimraf dist/ .rollup.cache && rollup -c",
     "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
-    "openfn": "node --no-warnings --loader=ts-node/esm src/cli.ts"
+    "openfn": "tsm --no-warnings --experimental-vm-modules src/cli.ts"
   },
   "keywords": [],
   "author": "Joe Clark<jclark@openfn.org>",
@@ -40,9 +40,11 @@
   },
   "dependencies": {
     "@openfn/compiler": "workspace:^0.0.1",
+    "@openfn/language-common": "2.0.0-rc3",
     "@openfn/runtime": "workspace:^0.0.1",
     "@types/yargs": "^17.0.12",
     "ava": "^4.2.0",
+    "tsm": "^2.2.2",
     "yargs": "^17.5.1"
   },
   "files": [

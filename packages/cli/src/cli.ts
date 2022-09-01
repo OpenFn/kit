@@ -4,7 +4,8 @@ import { hideBin } from 'yargs/helpers'
 import run, { Opts } from './run';
 
 type YargsOpts = Opts & { 
-  path: string
+  path: string;
+  _: string[];
 }
 
 const opts = yargs(hideBin(process.argv))
@@ -51,4 +52,4 @@ const opts = yargs(hideBin(process.argv))
   })
   .parse() as YargsOpts;
 
-run(opts.path, opts);
+run(opts._[0], opts);
