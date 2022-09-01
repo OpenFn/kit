@@ -14,6 +14,7 @@ let exampleData = {
     {
       id: "A",
       name: "Job A",
+      workflowId: "wf-one",
       adaptor: "@openfn/language-salesforce@2.8.1",
       trigger: { type: "webhook" },
       operations: [
@@ -25,20 +26,29 @@ let exampleData = {
     {
       id: "B",
       name: "Job B",
+      workflowId: "wf-one",
       adaptor: "@openfn/language-salesforce@0.2.2",
       trigger: { type: "on_job_failure", upstreamJob: "E" },
     },
     {
       id: "C",
       name: "Job C",
+      workflowId: "wf-one",
       adaptor: "@openfn/language-dhis2@0.3.5",
       trigger: { type: "on_job_success", upstreamJob: "A" },
     },
     {
       id: "E",
       name: "Job E",
+      workflowId: "wf-one",
       adaptor: "@openfn/language-dhis2@0.3.5",
       trigger: { type: "on_job_failure", upstreamJob: "A" },
+    },
+  ],
+  workflows: [
+    {
+      name: "my workflow",
+      id: "wf-one",
     },
   ],
 };

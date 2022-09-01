@@ -1,10 +1,10 @@
 {
   "id": "root",
   "layoutOptions": {
-    "elk.algorithm": "elk.mrtree",
-    "elk.direction": "DOWN",
-    "elk.alignment": "RIGHT",
-    "spacing.nodeNode": "70",
+    "elk.algorithm": "elk.box",
+    "elk.box.packingMode": "GROUP_DEC",
+    "elk.alignment": "TOP",
+    "spacing.nodeNode": "40",
     "spacing.nodeNodeBetweenLayers": "45",
     "spacing.edgeNode": "25",
     "spacing.edgeNodeBetweenLayers": "20",
@@ -384,6 +384,7 @@
         "elk.algorithm": "elk.mrtree",
         "elk.direction": "DOWN",
         "elk.padding": "[top=40,left=20.0,bottom=20.0,right=20.0]",
+        "elk.separateConnectedComponents": "true",
         "elk.alignment": "RIGHT",
         "spacing.nodeNode": "70",
         "spacing.nodeNodeBetweenLayers": "45",

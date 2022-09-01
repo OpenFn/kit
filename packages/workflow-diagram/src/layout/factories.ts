@@ -72,6 +72,8 @@ export function jobNodeFactory(job: Job): FlowElkNode {
     __flowProps__: {
       data: {
         label: job.name,
+        id: job.id,
+        workflowId: job.workflowId,
       },
       type: "job",
     },
@@ -88,7 +90,8 @@ export function workflowNodeFactory(workflow: Workflow): FlowElkNode {
     id: workflow.id,
     __flowProps__: {
       data: {
-        label: workflow.name || "null",
+        label: workflow.name,
+        id: workflow.id,
       },
       type: "workflow",
     },

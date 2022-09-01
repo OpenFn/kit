@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { describe } from "mocha";
 import { ProjectSpace } from "../dist/types";
-import { toElkNode, toFlow } from "../src/layout/index";
+import { doLayout, toElkNode, toFlow } from "../src/layout/index";
 import { FlowElkNode, FlowNodeEdges } from "../src/layout/types";
 import { getFixture } from "./helpers";
 
@@ -12,8 +12,27 @@ describe("toElkNode", () => {
     );
 
     const expected = await getFixture<FlowElkNode>("single-workflow-elknode");
+    const elkNode = toElkNode(projectSpace);
 
-    assert.deepEqual(toElkNode(projectSpace), expected);
+    for (let i = 0; i < expected.children!.length; i++) {
+      const child = expected.children![i];
+      const actual = elkNode.children![i];
+
+      assert.deepEqual(
+        actual.layoutOptions,
+        child.layoutOptions,
+        `Child#${i} didn't match the expected layoutOptions`
+      );
+
+      assert.deepEqual(
+        actual,
+        child,
+        `Child#${i} didn't match the expected one`
+      );
+    }
+
+    assert.deepEqual(elkNode.layoutOptions, expected.layoutOptions);
+    assert.deepEqual(elkNode.__flowProps__, expected.__flowProps__);
   });
 });
 
@@ -26,7 +45,7 @@ describe("toFlow", () => {
       "single-workflow-nodeedges"
     );
 
-    const [nodes, edges] = await toFlow(flowElkNode);
+    const [nodes, edges] = toFlow(await doLayout(flowElkNode));
 
     for (let i = 0; i < expectedNodes.length; i++) {
       const node = expectedNodes[i];

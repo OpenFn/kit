@@ -159,6 +159,7 @@ const rootLayoutOptions: LayoutOptions = {
   // "elk.separateConnectedComponents": "true",
   // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
   "elk.alignment": "TOP",
+  // "elk.expandNodes": "true",
   "spacing.nodeNode": "40",
   "spacing.nodeNodeBetweenLayers": "45",
   "spacing.edgeNode": "25",
@@ -227,14 +228,16 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   };
 }
 
-export async function toFlow(node: FlowElkNode): Promise<FlowNodeEdges> {
-  const elk = new ELK();
+const elk = new ELK();
 
-  const elkResults = (await elk.layout(node)) as FlowElkNode;
+export function doLayout(node: FlowElkNode) {
+  return elk.layout(node) as Promise<FlowElkNode>;
+}
 
+export function toFlow(node: FlowElkNode): FlowNodeEdges {
   // Skip the 'root' graph node, head straight for the children, they are
   // the workflows.
-  const flow = (elkResults!.children || []).reduce<FlowNodeEdges>(
+  const flow = (node!.children || []).reduce<FlowNodeEdges>(
     (acc, child) => mergeTuples(acc, flattenElk(child)),
     [[], []]
   );

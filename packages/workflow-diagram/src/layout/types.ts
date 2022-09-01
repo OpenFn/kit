@@ -12,13 +12,15 @@ export interface FlowElkEdge extends ElkExtendedEdge {
   __flowProps__: EdgeFlowProps;
 }
 
+export type NodeData = {
+  label: string | null;
+  workflowId?: string;
+  parentId?: string;
+  [key: string]: any;
+};
+
 export interface NodeFlowProps {
-  data: {
-    label: string;
-    workflowId?: string;
-    parentId?: string;
-    [key: string]: any;
-  };
+  data: NodeData;
   type: string;
 }
 

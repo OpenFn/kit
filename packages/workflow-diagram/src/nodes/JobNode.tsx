@@ -1,17 +1,9 @@
 import React, { memo } from "react";
 
-import { Handle, Position } from "react-flow-renderer";
-import type { NodeProps } from "react-flow-renderer";
 import cc from "classcat";
-
-// background:#fff
-// border:1px solid #1a192b
-// border-radius:3px
-// color:#222
-// font-size:12px
-// padding:10px
-// text-align:center
-// width:150px
+import type { NodeProps } from "react-flow-renderer";
+import { Handle, Position } from "react-flow-renderer";
+import { NodeData } from "layout/types";
 
 const JobNode = ({
   data,
@@ -19,20 +11,21 @@ const JobNode = ({
   selected,
   targetPosition = Position.Top,
   sourcePosition = Position.Bottom,
-}: NodeProps) => {
+}: NodeProps<NodeData>) => {
   return (
     <div
       className={cc([
         "bg-white",
+        "cursor-pointer",
+        "h-full",
+        "p-2",
         "rounded-md",
         "shadow-sm",
+        "text-center",
+        "text-xs",
         selected ? "ring-2" : "ring-0.5",
         selected ? "ring-indigo-500" : "ring-black",
         selected ? "ring-opacity-20" : "ring-opacity-5",
-        "text-xs",
-        "p-2",
-        "text-center",
-        "h-full",
       ])}
     >
       <Handle
@@ -42,7 +35,13 @@ const JobNode = ({
         style={{ border: "none", height: 0, top: 0 }}
       />
 
-      <div className={`flex h-full ${data.hasChildren ? "" : "items-center"}`}>
+      <div
+        className={cc([
+          "flex",
+          "h-full",
+          !data.hasChildren ? "items-center" : false,
+        ])}
+      >
         <div className="flex-auto">{data?.label}</div>
       </div>
       <Handle
