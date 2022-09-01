@@ -15,8 +15,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm ava",
+    "test:watch": "pnpm ava -w",
     "build": "rimraf dist/ .rollup.cache && rollup -c",
-    "watch": "pnpm rollup -cw --no-watch.clearScreen"
+    "build:watch": "pnpm rollup -cw --no-watch.clearScreen"
   },
   "keywords": [],
   "author": "Joe Clark <jclark@openfn.org>",

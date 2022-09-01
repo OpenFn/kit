@@ -16,12 +16,10 @@ export default [
     plugins: [
       typescript({ tsconfig: "./tsconfig.json" }),
     ],
-    external: [],
   },
   {
     input: pkg.exports["."].import.types,
     output: [{ file: pkg.exports["."].import.types, format: "esm" }],
     plugins: [dts()],
-    external: [/\.css$/u],
   },
 ];

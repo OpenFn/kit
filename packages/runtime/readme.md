@@ -1,8 +1,17 @@
 ## Runtime
 
-A runtime for running openfn jobs.
+A runtime for running openfn jobs and reporting on their status.
 
-The runtime should be passed a list of operations, which are functions that take and return state
+The runtime will load an array of operations from a module and execute them in series.
+
+An operation is a function which takes state as input and returns state, or a promise resolving to state, as output.
+```
+run([
+  (state) => state
+])
+```
+
+The compiler can be used to convert job DSL into an compatible ESM module.
 
 ## Basic Usage
 
@@ -17,24 +26,56 @@ const initialState = {};
 const { data } = await run(source, initialState);
 ```
 
-See test/examples for more useage.
+See the `test` folder for more usage examples.
+
+## Building
+
+To build a js package into `dist/`, run:
+
+```
+$ pnpm build
+```
+
+To watch and re-build whenever the js changes, run
+
+```
+$ pnpm build:watch
+```
+
+Note: The watch throws an error on first run but seems to work.
+
+You can test or watch tests with
+```
+$ pnpm test
+$ pnpm test:watch
+```
+
 
 ## Runtime Design
 
-The runtime's job is to take a pipline of operations an execute them in series.
+The runtime's job is to take a pipline of operations and execute them in series.
 
 The runtime should:
-* Accept a pipleline as stringified ESM module
+
+* Accept a pipleline as an array of functions or a stringified ESM module
 * Validate the input string to ensure there's no security concerns (like blacklisted imports)
-* Execute the pipeline in a safe environment (with some utilities and overiddes provided)
+* Execute the pipeline in a safe environment (with some utilities and overrides provided)
 * Ensure that the state object is not mutated between jobs
-* Return a state object
-* It can also accept a pipeline as a live JS array (although I'm not sure why), but this won't be sandboxed
+* Return a promise and event-emitted (with a `on(event)` function)
+* Emit lifecycle events for the job pipeline
+* Resolve to a state object
 
 The runtime should not:
-* Do any disk I/O 
 * Compile its input jobs (although it will validate using the compiler)
+* Do any disk I/O 
+* Do any thread/process management (see the runtime manager)
 
-Loading modules from disk should be handled by the runtime manager or wider environment (eg lightning, devtools).
+## Module Loading & Linking
 
-The runtime is designed to be able to run in a worker thread, but it itself will not create worker threads (That's a job for the runtime environment)
+When loading jobs from a string, they will be loaded as an ESM module. This uses the experimental vm.SourceTextModule.
+
+If the job contains imports of its own, `vm` will not resolve those imports. We have to provide a linker function to handle it.
+
+At the moment, the linker is very trivial, and simply projects imports from the runtime's own environment into the module via vm.Synthetic Module. You can pass a whitelist, as an array of regexes, to only allow matching modules to be loaded.
+
+We will want to extend this functionality to allow version control on adaptors (ie, we can make `import { fn } from '@open/language-common@2.0.0-rc3` work)
