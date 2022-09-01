@@ -5,7 +5,7 @@
  */
 import vm from 'node:vm';
 
-// TODO no typedef available quite yet
+// TODO no typedef available yet
 type Module = any;
 
 export type Linker = (specifier: string, context: vm.Context)

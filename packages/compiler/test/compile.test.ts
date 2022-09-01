@@ -16,7 +16,6 @@ test('do not add default exports if exports exist', (t) => {
   t.assert(result === expected);
 });
 
-
 test('compile a single operation', (t) => {
   const source = "fn();"
   const expected = "export default [fn()];";

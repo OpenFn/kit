@@ -9,16 +9,9 @@ type Options = {
   logger?: {
     log: (message: string) => void;
   },
-  // How should the runtime interpret the source input?
-  // As a path to an module, an esm string or live js?
-  // Defaults to an esm string I guess
-  // Actually, I think module loading is outside the runtime's scope
-  // The runtime manager can load and pass modules as strings
-  // Let's say that for now
-  //eval?: 'esm-path' | 'esm-string' | 'none';
-  eval?: 'string' | 'none',
 
-  // Ensure that all incoming jobs are sandboxed
+  // TODO currently unused
+  // Ensure that all incoming jobs are sandboxed / loaded as text
   // In practice this means throwing if someone tries to pass live js
   forceSandbox?: boolean; 
 }
@@ -33,12 +26,12 @@ export default async function run(
     // Setup a shared execution context
   const context = buildContext(opts)
   
-  const jobs = await initJobs(incomingJobs, context, opts.forceSandbox);
+  const operations = await prepareJob(incomingJobs, context, opts.forceSandbox);
 
   // Create the main reducer function
   // TODO we shouldn't import this, we should define our own
   // (but it's nice to prove it works with the original execute implementation)
-  const reducer = execute(...jobs.map(runOperation));
+  const reducer = execute(...operations.map(wrapOperation));
 
   // Run the job
   const result = await reducer(initialState);
@@ -55,7 +48,7 @@ const clone = (state: State) => JSON.parse(JSON.stringify(state))
 // * A cloned state object so that prior state is always preserved
 // TODO: try/catch stuff
 // TODO: automated logging and metrics stuff
-const runOperation = (fn: Operation) => {
+const wrapOperation = (fn: Operation) => {
   return (state: State) => {
     const newState = clone(state);
     return fn(newState);
@@ -64,12 +57,13 @@ const runOperation = (fn: Operation) => {
 
 // Build a safe and helpful execution context
 // This will be shared by all operations
+// TODO is it possible for one operation to break the npm cache somehow?
 const buildContext = (options: Options) => {
   const logger = options.logger ?? console;
   
   const context = vm.createContext({
     console: logger,
-    // TODO we need to keep a whole bunch of globals really
+    // TODO take a closer look at what globals to pass through
     clearInterval,
     clearTimeout,
     JSON,
@@ -87,7 +81,7 @@ const buildContext = (options: Options) => {
   return context;
 }
 
-const initJobs = async (jobs: string | Operation[], context: vm.Context, forceSandbox?: boolean): Promise<Operation[]> => {
+const prepareJob = async (jobs: string | Operation[], context: vm.Context, forceSandbox?: boolean): Promise<Operation[]> => {
   if (typeof jobs === 'string') {
     // Load jobs from a source module string
     return await loadModule(jobs, { context }) as Operation[];

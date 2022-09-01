@@ -13,13 +13,12 @@
   "author": "Joe Clark <jclark@openfn.org>",
   "license": "ISC",
   "dependencies": {
-    "@openfn/language-common": "2.0.0-rc3",
     "@openfn/compiler": "workspace:^0.0.1",
+    "@openfn/language-common": "2.0.0-rc3",
     "@openfn/runtime": "workspace:^0.0.1",
     "@types/koa": "^2.13.5",
     "@types/workerpool": "^6.1.0",
     "koa": "^2.13.4",
-    "piscina": "^3.2.0",
     "tsm": "^2.2.2",
     "workerpool": "^6.2.1"
   },

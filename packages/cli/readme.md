@@ -1,27 +1,34 @@
 ## @openfn/cli (devtools)
 
-This package contains a new devtools cli
+This package contains a new devtools cli.
 
 Devtools will:
 * Compile a job expression into an executable module
 * Pass the compiled module into the runtime
-* Write the resulting state to /tmp
+* Write or print the resulting state.
 
-State and output will be read/written from/to /tmp/[expression]. You can set this folder to whatever you like with the --dir argument.
+The CLI only has one command right now. Give it a path and it will:
+* If the path ends in .js, it will be loaded as a job file and executed. State and output will be read/written relative to it.
+* If the path is a folder, the CLI will look for a job.js, state.json and write an output.json.
 
-If you do `devtools somefolder` it will read expression, state and write output form/to that folder
+You can override specific paths.
 
-## Example usage
+Run `pnmp -h` to print usage help (the best source of truth right now).
 
-`npm install -i @openfn/cli`
+## Example future usage
 
-`openfn expression.js`
+```
+$ npm install -g @openfn/cli`
+$ openfn execute expression.js`
+$ openfn execute tmp`
+```
 
-`openfn tmp`
+## Eventual API sketch
 
-## API sketch
+I envisage the CLI either being installed globally (useful if you're writing an adaptor) or straight out of kit (useful if you're writing core stuff).
 
-openfn expression.js \
+```
+$ openfn execute expression.js \
   --state="path/to/initial-state.json" \
   --output="path/to/output.json" \
   --expression="path/to/expression.js" \
@@ -30,7 +37,14 @@ openfn expression.js \
   --stdout (output to stdout)
   --log level (set the logging level)
   --adapter=@openfn/language-common:path/to/language-common
+```
+```
+$ openfn compile
+```
+```
+$ openfn validate
+```
 
-## TODO experimental args
+## TODO experimental args difficulty
 
 When we call the CLI `node cli.js` or whatever, we need to pass in experimental module flags for it to work. This is annoying. Should the cli spin up a new process with the right args?
