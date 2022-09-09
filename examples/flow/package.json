@@ -14,7 +14,7 @@
     "@openfn/workflow-diagram": "workspace:*"
   },
   "devDependencies": {
-    "esbuild": "^0.14.38",
+    "esbuild": "^0.15.7",
     "esbuild-postcss": "^0.0.4",
     "live-server": "^1.2.2",
     "postcss": "^8.4.13",

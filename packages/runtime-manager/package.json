@@ -13,7 +13,7 @@
   "author": "Joe Clark <jclark@openfn.org>",
   "license": "ISC",
   "dependencies": {
-    "@openfn/compiler": "workspace:^0.0.1",
+    "@openfn/compiler": "workspace:^0.0.2",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/runtime": "workspace:^0.0.1",
     "@types/koa": "^2.13.5",
