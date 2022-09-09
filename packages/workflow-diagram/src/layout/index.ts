@@ -63,7 +63,7 @@ function deriveCron(job: Job): ElkNodeEdges {
     sources: [triggerNode.id],
     targets: [jobNode.id],
     labels: [{ text: "on match" }],
-    __flowProps__: { animated: true },
+    __flowProps__: { animated: false },
   };
 
   return mergeTuples(
@@ -88,7 +88,7 @@ function deriveWebhook(job: Job): ElkNodeEdges {
     sources: [triggerNode.id],
     targets: [jobNode.id],
     labels: [{ text: "on receipt" }],
-    __flowProps__: { animated: true },
+    __flowProps__: { animated: false },
   };
 
   return mergeTuples([[triggerNode, jobNode], [edge]], addNodeFactory(jobNode));
@@ -110,7 +110,7 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
     id: `${job.trigger.upstreamJob}->${job.id}`,
     sources: [job.trigger.upstreamJob],
     targets: [jobNode.id],
-    __flowProps__: { animated: true },
+    __flowProps__: { animated: false },
     labels: [{ text: label }],
   };
 

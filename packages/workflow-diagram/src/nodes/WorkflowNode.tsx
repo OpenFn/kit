@@ -15,8 +15,8 @@ const WorkflowNode = ({
   return (
     <div
       className={cc([
-        "border-2",
-        "border-dashed",
+        // "border-2",
+        // "border-dashed",
         "h-full",
         "p-2",
         "rounded-md",

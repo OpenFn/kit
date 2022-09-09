@@ -37,7 +37,7 @@ export function addNodeFactory(node: FlowElkNode): ElkNodeEdges {
     id: `${node.id}->${node.id}-add`,
     sources: [node.id],
     targets: [addNode.id],
-    __flowProps__: edgeFlowProps({ dashed: true }),
+    __flowProps__: edgeFlowProps({ dashed: false }),
   };
 
   return [[addNode], [addEdge]];
@@ -143,8 +143,8 @@ export function operationEdgeFactory(
     targets: [operation.id],
     __flowProps__: {
       animated: false,
-      dashed: true,
-      markerEnd: { type: "arrowclosed" },
+      dashed: false,
+      // markerEnd: { type: "arrowclosed" },
     },
   };
 }
