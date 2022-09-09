@@ -6,9 +6,10 @@ import TriggerNode from "./nodes/TriggerNode";
 import type { ProjectSpace } from "./types";
 
 import WorkflowNode from "nodes/WorkflowNode";
-import ReactFlow, { ReactFlowProvider } from "react-flow-renderer";
+import ReactFlow, { Node, ReactFlowProvider } from "react-flow-renderer";
 import "./main.css";
 import * as Store from "./store";
+import { NodeData } from "layout/types";
 
 const nodeTypes = {
   job: JobNode,
@@ -20,7 +21,7 @@ const nodeTypes = {
 
 const WorkflowDiagram: React.FC<{
   projectSpace: ProjectSpace;
-  onNodeClick?: (event: React.MouseEvent, {}) => void;
+  onNodeClick?: (event: React.MouseEvent, node: Node<NodeData>) => void;
   onPaneClick?: (event: React.MouseEvent) => void;
 }> = ({ projectSpace, onNodeClick, onPaneClick }) => {
   const { nodes, edges, onNodesChange, onEdgesChange } =
