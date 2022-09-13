@@ -1,8 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import compile from '@openfn/compiler';
-import runtime from '@openfn/runtime';
-
+import run from '@openfn/runtime';
 
 export type Opts = {
   jobPath?: string;
@@ -19,10 +18,13 @@ export default async (basePath: string, opts: Opts) => {
   console.log(`Loading job from ${args.jobPath}`)
   
   const state = await loadState(args);
-  // TODO should we resolve this path?
-  // What if you're running devtools globally?
   const code = compile(args.jobPath);
-  const result = await runtime(code, state);
+  const result = await run(code, state, {
+    linker: {
+      modulesHome: process.env.OPENFN_MODULES_HOME,
+      trace: false
+    }
+  });
 
   if (opts.outputStdout) {
     console.log(`\nResult: `)

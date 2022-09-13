@@ -45,6 +45,24 @@ $ openfn compile
 $ openfn validate
 ```
 
+## Module Resolution
+
+Any import statements inside a job have to resolve to a node module. This either means the module is resolved:
+
+* Relative to the env var OPENFN_MODULE_HOME
+* Relative to CLI's node_modules
+* Relative to global node_modules
+
+Basically, to work with adaptors, you should:
+
+* Save your adaptors globally
+
+Or
+
+* Save adaptors to a folder somewhere (~/openfn) and set OPENFN_MODULE_HOME=~/openfn
+
 ## TODO experimental args difficulty
 
 When we call the CLI `node cli.js` or whatever, we need to pass in experimental module flags for it to work. This is annoying. Should the cli spin up a new process with the right args?
+
+Update: We now also need to pass --experimental-specifier-resolution=node to handle dynamic imports.

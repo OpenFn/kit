@@ -2,10 +2,16 @@
   "name": "@openfn/cli",
   "version": "0.0.1",
   "description": "",
-  "type": "module",
   "engines": {
     "node": ">=16",
     "pnpm": ">=7"
+  },
+  "scripts": {
+    "test": "pnpm ava",
+    "test:watch": "pnpm ava -w",
+    "build": "rimraf dist/ .rollup.cache && rollup -c",
+    "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
+    "openfn": "tsm --no-warnings --experimental-vm-modules --experimental-specifier-resolution=node src/cli.ts"
   },
   "exports": {
     ".": {
@@ -17,13 +23,6 @@
   },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "test": "pnpm ava",
-    "test:watch": "pnpm ava -w",
-    "build": "rimraf dist/ .rollup.cache && rollup -c",
-    "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
-    "openfn": "tsm --no-warnings --experimental-vm-modules src/cli.ts"
-  },
   "keywords": [],
   "author": "Joe Clark<jclark@openfn.org>",
   "license": "ISC",
