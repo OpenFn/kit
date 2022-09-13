@@ -2,9 +2,9 @@
  * Load an esm module from a string
  */
 import vm from 'node:vm';
-import mainLinker, { Linker } from './linker';
+import mainLinker, { Linker, LinkerOptions } from './linker';
 
-type Options = {
+type Options = LinkerOptions & {
   context?: vm.Context;
   linker?: Linker;
 }
@@ -15,7 +15,7 @@ type Options = {
 export default async (src: string, opts: Options = {}) => {
   validate(src);
 
-  const context = opts.context ?? vm.createContext();
+  const context = opts.context || vm.createContext();
   const linker = opts.linker || mainLinker;
 
   // @ts-ignore no defs for this experimental API
@@ -27,14 +27,13 @@ export default async (src: string, opts: Options = {}) => {
   // https://nodejs.org/api/vm.html#modulelinklinker
   await module.link(async (specifier: string) => {
     if (linker) {
-      const result = await linker(specifier, context!)
+      const result = await linker(specifier, context, opts);
       if (result) {
         return result;
       }
     }
     throw new Error(`module loader cannot resolve dependency: ${specifier}`);
   }); 
-
   // Run the module - exports are written to module.namespace
   await module.evaluate()
 

@@ -80,4 +80,8 @@ If the job contains imports of its own, `vm` will not resolve those imports. We 
 
 At the moment, the linker is very trivial, and simply projects imports from the runtime's own environment into the module via vm.Synthetic Module. You can pass a whitelist, as an array of regexes, to only allow matching modules to be loaded.
 
+By default, imports will be resolved using nodes resolution algorithm relative to the runtime's directory. The linker accepts a moduleHome, which accepts a folder to load modules from instead. This is a hook allowing adaptors to be loaded from the local filesystem. Soon we'll also be able to pass specific paths and maybe even point to the local langauge adaptor monorepo to load from there.
+
+We may add support for dynamic module loading - ie, the linker will download the module from unpkg.
+
 We will want to extend this functionality to allow version control on adaptors (ie, we can make `import { fn } from '@open/language-common@2.0.0-rc3` work)

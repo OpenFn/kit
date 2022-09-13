@@ -1,8 +1,10 @@
 import vm from 'node:vm';
-import { execute } from '@openfn/language-common';
-import type { Operation, State } from '@openfn/language-common';
+// TODO remove this dependency
+import { execute, Operation, State  } from '@openfn/language-common';
 
 import loadModule from './module-loader';
+import { LinkerOptions } from './linker';
+
 
 type Options = {
   // TODO should match the console API but this will do for now
@@ -14,19 +16,22 @@ type Options = {
   // Ensure that all incoming jobs are sandboxed / loaded as text
   // In practice this means throwing if someone tries to pass live js
   forceSandbox?: boolean; 
+
+  linker?: LinkerOptions;
 }
 
 const defaultState = { data: {}, configuration: {} };
 
+// TODO what if an operation throws?
 export default async function run(
   incomingJobs: string | Operation[],
   initialState: State = defaultState,
   opts: Options = {}) {
 
-    // Setup a shared execution context
+  // Setup a shared execution context
   const context = buildContext(opts)
   
-  const operations = await prepareJob(incomingJobs, context, opts.forceSandbox);
+  const operations = await prepareJob(incomingJobs, context, opts);
 
   // Create the main reducer function
   // TODO we shouldn't import this, we should define our own
@@ -81,12 +86,11 @@ const buildContext = (options: Options) => {
   return context;
 }
 
-const prepareJob = async (jobs: string | Operation[], context: vm.Context, forceSandbox?: boolean): Promise<Operation[]> => {
+const prepareJob = async (jobs: string | Operation[], context: vm.Context, opts: Options = {}): Promise<Operation[]> => {
   if (typeof jobs === 'string') {
-    // Load jobs from a source module string
-    return await loadModule(jobs, { context }) as Operation[];
+    return await loadModule(jobs, { ...opts.linker, context }) as Operation[];
   } else {
-    if (forceSandbox) {
+    if (opts.forceSandbox) {
       throw new Error("Invalid arguments: jobs must be strings")
     }
     return jobs as Operation[];
