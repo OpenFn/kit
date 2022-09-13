@@ -3,7 +3,8 @@
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts", "dist"],
   "compilerOptions": {
+    "rootDir": "src",
     "lib": ["esnext"],
-    "declarationDir": "."
+    "tsBuildInfoFile": "./ts.cache/tsbuildinfo",
   }
 }

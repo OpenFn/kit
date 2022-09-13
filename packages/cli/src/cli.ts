@@ -1,7 +1,7 @@
-// main cli entrypoint
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers'
-import run, { Opts } from './run';
+import { Opts } from './execute';
+import runInChildProcess from './process';
 
 type YargsOpts = Opts & { 
   path: string;
@@ -52,4 +52,5 @@ const opts = yargs(hideBin(process.argv))
   })
   .parse() as YargsOpts;
 
-run(opts._[0], opts);
+// If all inputs have parsed OK, we can go ahead and run in a child process
+runInChildProcess(opts._[0], opts);

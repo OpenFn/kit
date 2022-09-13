@@ -9,9 +9,9 @@
   "scripts": {
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
-    "build": "rimraf dist/ .rollup.cache && rollup -c",
+    "build": "rimraf dist/ .rollup.cache ts.cache && rollup -c",
     "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
-    "openfn": "tsm --no-warnings --experimental-vm-modules --experimental-specifier-resolution=node src/cli.ts"
+    "openfn": "node --no-warnings dist/index.js"
   },
   "exports": {
     ".": {
@@ -21,6 +21,7 @@
       }
     }
   },
+  "type": "module",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "keywords": [],
