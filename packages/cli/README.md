@@ -13,7 +13,15 @@ The CLI only has one command right now. Give it a path and it will:
 
 You can override specific paths.
 
-Run `pnmp -h` to print usage help (the best source of truth right now).
+Run `pnpm openfn -h` to print usage help (the best source of truth right now).
+
+## Usage from this repo
+
+```
+$ pnpm openfn path/to/job.js
+$ pnpm openfn -h
+$ pnpm build:watch
+```
 
 ## Example future usage
 
