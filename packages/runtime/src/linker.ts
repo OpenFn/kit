@@ -61,15 +61,14 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     // TODO is this true for all namespaced packages?
     const name = specifier.startsWith('@openfn') ? specifier.split('/').pop() : specifier;
     path = `${options.modulesHome}/${name}`;
+    if (options.trace) {
+      console.log(`[linker] Loading module ${specifier} from ${path}`);
+    }
   }
   
   if (path) {
     try {
-      if (options.trace) {
-        console.log(`[linker] Loading module ${specifier} from ${path}`);
-      }
-      const m = await import(path);
-      return m;
+      return import(path);
     } catch(e) {
       if (options.trace) {
         console.warn(`[linker] Failed to load module ${specifier} from ${path}`);

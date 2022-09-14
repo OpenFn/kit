@@ -15,12 +15,6 @@ export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run t
   .positional('path', {
     describe: 'The path to load the job from'
   })
-  .option('job-path', {
-    alias: 'j',
-    boolean: true,
-    description: 'Path to the job file',
-  })
-  .alias('j', 'e') // job & expression are interchangeable
   .option('output-path', {
     alias: 'o',
     description: 'Path to the output file',
@@ -30,7 +24,7 @@ export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run t
     boolean: true,
     description: 'Output to stdout',
   })
-  .option('state', {
+  .option('state-path', {
     alias: 's',
     description: 'Path to the state file'
   })
@@ -47,6 +41,7 @@ export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run t
     description: 'Skip compilation'
   })
   .option('adaptors', {
+    alias: ['a', 'adaptor'],
     description: 'Pass one or more adaptors in the form name=path/to/adaptor',
     array: true
   })

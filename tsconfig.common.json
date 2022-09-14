@@ -14,7 +14,7 @@
     // Disallow inconsistently-cased references to the same file.
     "forceConsistentCasingInFileNames": true,
     // Enable incremental compilation by reading/writing information from prior compilations to a file on disk
-    "incremental": true,
+    "incremental": false,
     // Unconditionally emit imports for unresolved files
     "isolatedModules": true,
     // "jsx": "react", // Support JSX in .tsx files

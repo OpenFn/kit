@@ -1,9 +1,3 @@
-/*
- * Here's where it gets a bit more difficult
- * We need the linker to be able to load nested dependencies of modules
- * 
- * I am really worried about the dynamic import in langauge-common
- */
 import test from 'ava';
 import vm from 'node:vm';
 import path from 'node:path';

@@ -5,9 +5,11 @@ export type SafeOpts = Required<Opts>;
 
 export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   const newOpts = {
+    noCompile: opts.noCompile,
     outputStdout: opts.outputStdout ?? false,
     silent: opts.silent,
-    noCompile: opts.noCompile,
+    stateStdin: opts.stateStdin,
+    traceLinker: opts.traceLinker,
   } as Opts;
 
   const set = (key: keyof Opts, value: string) => {

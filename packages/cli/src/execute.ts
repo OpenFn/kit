@@ -12,27 +12,71 @@ export type Opts = {
   outputStdout?: boolean;
   adaptors?: string[];
   noCompile?: boolean;
+  traceLinker?: boolean;
 }
 
-export default async (basePath: string, rawOpts: Opts) => {
+export default async (basePath: string, options: Opts) => {
+  const opts = ensureOpts(basePath, options);
+
   const log = (...args: any) => {
-    if (!rawOpts.silent) {
+    if (!opts.silent) {
       console.log(...args);
     }
   };
 
-  const opts = ensureOpts(basePath, rawOpts);
-  log(`Loading job from ${opts.jobPath}`)
-  
-  const state = await loadState(opts);
-  const code = opts.noCompile ?
-    await fs.readFile(opts.jobPath, 'utf8') // TMP just for testing
-    : compile(opts.jobPath);
+  const writeOutput = async (state: any) => {
+    if (!opts.silent) {
+      console.log(`Writing output to ${opts.outputPath}`)
+    }
+    await fs.writeFile(opts.outputPath, JSON.stringify(state, null, 4));
+  }
+
+  const loadState = async () => {
+    if (opts.stateStdin) {
+      try {
+        log('Reading state from stdin')
+        return JSON.parse(opts.stateStdin);
+      } catch(e) {
+        console.error("Failed to load state from stdin")
+        console.error(opts.stateStdin);
+        process.exit(1);
+      }
+    }
+
+    try {
+      log(`Loading state from ${opts.statePath}`);
+      const str = await fs.readFile(opts.statePath, 'utf8')
+      return JSON.parse(str)
+    } catch(e) {
+      console.warn('Error loading state!');
+      console.log(e);
+    }
+    log('Using default state')
+    return {
+      data: {},
+      configuration: {}
+    };
+  }
+
+  const loadJob = async () => {
+    log(`Loading job from ${opts.jobPath}`)
+
+    if (opts.noCompile) {
+      log('Skipping compilation...')
+      return fs.readFile(opts.jobPath, 'utf8');
+    } else {
+      log('Compiling job source');
+      return compile(opts.jobPath);
+    }
+  };
+
+  const state = await loadState();
+  const code = await loadJob();
   const result = await run(code, state, {
     linker: {
       modulesHome: process.env.OPENFN_MODULES_HOME,
-      modulePaths: parseAdaptors(rawOpts),
-      trace: false
+      modulePaths: parseAdaptors(options),
+      trace: options.traceLinker
     }
   });
 
@@ -41,42 +85,10 @@ export default async (basePath: string, rawOpts: Opts) => {
     console.log(`\nResult: `)
     console.log(result)
   } else {
-    await writeOutput(opts, result);
+    await writeOutput(result);
   }
+
   log(`\nDone! ✨`)
-}
-
-async function loadState(opts: SafeOpts) {
-  // TODO repeating this is a bit annoying...
-  const log = (...args: any) => {
-    if (!opts.silent) {
-      console.log(...args);
-    }
-  };
-
-  if (opts.stateStdin) {
-    try {
-      return JSON.parse(opts.stateStdin);
-    } catch(e) {
-      console.error("Failed to load state from stdin")
-      console.error(opts.stateStdin);
-      process.exit(1);
-    }
-  }
-
-  try {
-    log(`Loading state from ${opts.statePath}`);
-    const str = await fs.readFile(opts.statePath, 'utf8')
-    return JSON.parse(str)
-  } catch(e) {
-    console.warn('Error loading state!');
-    console.log(e);
-  }
-  log('Using default state')
-  return {
-    data: {},
-    configuration: {}
-  };
 }
 
 // TODO we should throw if the adaptor strings are invalid for any reason
@@ -88,9 +100,4 @@ function parseAdaptors(opts: Opts) {
     return obj;
   }, adaptors);
   return adaptors;
-}
-
-async function writeOutput(opts: SafeOpts, state: any) {
-  console.log(`Writing output to ${opts.outputPath}`)
-  await fs.writeFile(opts.outputPath, JSON.stringify(state, null, 4));
 }
