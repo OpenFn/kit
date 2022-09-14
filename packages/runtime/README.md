@@ -29,6 +29,16 @@ const { data } = await run(source, initialState);
 
 See the `test` folder for more usage examples.
 
+## Experimental VM Args
+
+For the runtime to work, the parent process needs two experimental vm args to be passed:
+```
+--experimental-vm-modules
+--experimental-specifier-resolution=node
+```
+
+You may also want to pass `--no-warnings` to suppress annoying console warnings.
+
 ## Building
 
 To build a js package into `dist/`, run:
@@ -74,13 +84,18 @@ The runtime should not:
 
 ## Module Loading & Linking
 
-When loading jobs from a string, they will be loaded as an ESM module. This uses the experimental vm.SourceTextModule.
+When loading jobs from a string, they will be loaded as an ESM module. This uses the experimental `vm.SourceTextModule`.
 
-If the job contains imports of its own, `vm` will not resolve those imports. We have to provide a linker function to handle it.
+If the job contains imports of its own, `vm` will not resolve those imports. We have to provide a linker function to handle it. Our linker function will:
+* Import the required module
+* Create a `vm.SyntheticModule` to act as a proxy to it
+* Load the synthetic module into the job's runtime context.
 
-At the moment, the linker is very trivial, and simply projects imports from the runtime's own environment into the module via vm.Synthetic Module. You can pass a whitelist, as an array of regexes, to only allow matching modules to be loaded.
+You can pass a whitelist (as an array of regexes) to only allow matching modules to be loaded.
 
-By default, imports will be resolved using nodes resolution algorithm relative to the runtime's directory. The linker accepts a moduleHome, which accepts a folder to load modules from instead. This is a hook allowing adaptors to be loaded from the local filesystem. Soon we'll also be able to pass specific paths and maybe even point to the local langauge adaptor monorepo to load from there.
+By default, imports will be resolved using node's resolution algorithm relative to the runtime's directory. This is unhelpful as the runtime itself doesn't depend on packages the jobs need (like language adaptors).
+
+The linker accepts a moduleHome, which accepts a folder to load linked modules from. This is a hook allowing adaptors to be loaded from the local filesystem. Soon we'll also be able to pass specific paths and maybe even point to the local langauge adaptor monorepo to load from there.
 
 We may add support for dynamic module loading - ie, the linker will download the module from unpkg.
 

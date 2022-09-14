@@ -35,11 +35,10 @@ export default async (specifier: string, context: vm.Context, options: LinkerOpt
     throw new Error(`Error: module blacklisted: ${specifier}`)
   }
 
-  // Load the actual module
   const exports = await loadActualModule(specifier, options);
   const exportNames = Object.keys(exports);
   
-  // Wrap it up in a Synthetic Module
+  // Wrap up the module into aa Synthetic Module
   // @ts-ignore we have no def for synthetic module
   const m = new vm.SyntheticModule(exportNames, function() {
     for(const e of exportNames) {
@@ -52,6 +51,7 @@ export default async (specifier: string, context: vm.Context, options: LinkerOpt
   await m.link(() => {});
   await m.evaluate();
 
+  // Return the synthetic module
   return m;
 }
 

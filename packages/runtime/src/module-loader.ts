@@ -9,7 +9,7 @@ type Options = LinkerOptions & {
   linker?: Linker;
 }
 
-// Given a source strng, representing an esm module, evaluate it and return the result
+// Given a source string representing an esm module, evaluate it and return the result
 // We expect the module to export default an array of functions
 // The function will be validated
 export default async (src: string, opts: Options = {}) => {

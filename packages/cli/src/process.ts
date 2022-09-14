@@ -9,8 +9,13 @@ import type { Opts } from './execute';
 // The default export will create a new child process which calls itself
 export default function (basePath: string, opts: Opts) {
   const execArgv = [
+    // Suppress experimental argument warnings
     '--no-warnings',
+
+    // Allows us to load an ESM module from a text string
     '--experimental-vm-modules',
+
+    // Allows us to do import('path/to/language-common') in the linker
     '--experimental-specifier-resolution=node',
   ];
   
