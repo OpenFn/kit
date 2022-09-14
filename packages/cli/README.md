@@ -5,10 +5,12 @@ This package contains a new devtools cli.
 Devtools will:
 * Compile a job expression into an executable module
 * Pass the compiled module into the runtime
-* Write or print the resulting state.
+* Write or print the resulting state
+* Allow local adaptor implementations to be passed
 
-The CLI only has one command right now. Give it a path and it will:
-* If the path ends in .js, it will be loaded as a job file and executed. State and output will be read/written relative to it.
+The CLI only has one command right now (execute). Give it a path and it will:
+
+* If the path ends in .js, load as a job file and execute. State and output will be read/written relative to it.
 * If the path is a folder, the CLI will look for a job.js, state.json and write an output.json.
 
 You can override specific paths.
@@ -23,34 +25,15 @@ $ pnpm openfn -h
 $ pnpm build:watch
 ```
 
+See test/execute.test.ts for more usage examples
+
 ## Example future usage
 
 ```
 $ npm install -g @openfn/cli`
 $ openfn execute expression.js`
+$ openfn compile expression.js`
 $ openfn execute tmp`
-```
-
-## Eventual API sketch
-
-I envisage the CLI either being installed globally (useful if you're writing an adaptor) or straight out of kit (useful if you're writing core stuff).
-
-```
-$ openfn execute expression.js \
-  --state="path/to/initial-state.json" \
-  --output="path/to/output.json" \
-  --expression="path/to/expression.js" \
-  --no-compile (won't compile expresson.js)
-  --no-validate (don't validate the input)
-  --stdout (output to stdout)
-  --log level (set the logging level)
-  --adapter=@openfn/language-common:path/to/language-common
-```
-```
-$ openfn compile
-```
-```
-$ openfn validate
 ```
 
 ## Module Resolution
