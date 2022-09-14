@@ -1,11 +1,11 @@
 /**
  * Load an esm module from a string
  */
-import vm from 'node:vm';
+import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
 
 type Options = LinkerOptions & {
-  context?: vm.Context;
+  context?: Context;
   linker?: Linker;
 }
 
@@ -18,7 +18,6 @@ export default async (src: string, opts: Options = {}) => {
   const context = opts.context || vm.createContext();
   const linker = opts.linker || mainLinker;
 
-  // @ts-ignore no defs for this experimental API
   const module = new vm.SourceTextModule(src, {
     context
   });

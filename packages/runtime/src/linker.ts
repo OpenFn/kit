@@ -3,30 +3,24 @@
  * The tricky bit is this MUST load all linked libraries in the context of the parent module
  * https://nodejs.org/api/html#modulelinklinker
  */
-import vm from 'node:vm';
-
-// TODO no typedef available yet
-type Module = any;
+import vm, { Module, SyntheticModule, Context } from './experimental-vm';
 
 export type LinkerOptions = {
   // paths to modules: '@openfn/language-common': './path/to/common.js'
   // What are paths relative to?
-  modulePaths?: Record<string, string>,
+  modulePaths?: Record<string, string>;
 
   // Unless otherwise specified, modules will be loaded from here (relative to cli dir)
   modulesHome?: string;
-  // Unless otherwise specified, openfn modules will be loaded from here (relative to cli dir)
-  openfnHome?: string;
-
+  
   whitelist?: RegExp[], // whitelist packages which the linker allows to be imported
-
+  
   trace?: boolean; // log module lookup information
 }
 
-export type Linker = (specifier: string, context: vm.Context)
-  => Promise<Module | null> ;
+export type Linker = (specifier: string, context: Context, options?: LinkerOptions) => Promise<Module>;
 
-export default async (specifier: string, context: vm.Context, options: LinkerOptions = {}) => {
+const linker: Linker = async (specifier, context, options = {}) => {
   const { whitelist, trace } = options;
   if (trace) {
     console.log(`[linker] loading module ${specifier}`)
@@ -38,17 +32,15 @@ export default async (specifier: string, context: vm.Context, options: LinkerOpt
   const exports = await loadActualModule(specifier, options);
   const exportNames = Object.keys(exports);
   
-  // Wrap up the module into aa Synthetic Module
-  // @ts-ignore we have no def for synthetic module
-  const m = new vm.SyntheticModule(exportNames, function() {
+  // Wrap up the real module into a Synthetic Module
+  const m = new vm.SyntheticModule(exportNames, function(this: SyntheticModule) {
     for(const e of exportNames) {
-      // @ts-ignore 'this' is the untyped synthetic module
       this.setExport(e, exports[e]);
     }
-  }, { context })
+  }, { context });
   
   // resolve the module
-  await m.link(() => {});
+  await m.link(() => new Promise((r) => r({} as Module)));
   await m.evaluate();
 
   // Return the synthetic module
@@ -85,3 +77,5 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
 
   return import(specifier)
 }
+
+export default linker;

@@ -16,18 +16,21 @@ test.beforeEach(() => {
   context = vm.createContext();
 });
 
-test("assert we can dynamically import test-module-simple", async (t) => {
-  const m1 = await import('./test-module-simple.js');
+/**
+ * Run some basic tests that we can define and import mini-modules within the test harness
+ */
+test("assert we can dynamically import module 'number-export'", async (t) => {
+  const m1 = await import('./__modules__/number-export.js');
   t.assert(m1.default === 20);
 });
 
-test("assert we can dynamically import test-module-fancy", async (t) => {
-  const m2 = await import('./test-module-fancy.js');
+test("assert we can dynamically import fn-export", async (t) => {
+  const m2 = await import('./__modules__/fn-export.js');
   t.assert(m2.fn() === 20);
 });
 
-test("assert we can dynamically import test-module-fancy-with-deps", async (t) => {
-  const m3 = await import('./test-module-fancy-with-deps.js');
+test("assert we can dynamically import fn-export-with-deps", async (t) => {
+  const m3 = await import('./__modules__/fn-export-with-deps.js');
   t.assert(m3.default() ===  40);
 });
 
@@ -43,35 +46,30 @@ test("assert we can dynamically import @openfn/language-common", async (t) => {
   t.truthy(common.combine)
 });
 
+/**
+ * Use the linker to load various modules
+ */
 test("load a simple test module", async (t) => {
-  // exports 20 as a default
-  const m = await linker(path.resolve("test/test-module-simple.js"), context);
+  const m = await linker(path.resolve('test/__modules__/number-export.js'), context);
   
-  // @ts-ignore test the namespace
   t.assert(m.namespace.default === 20);
 });
 
 test("load a fancy test module", async (t) => {
-  // Exports a named function fn, which returns 20
-  const m = await linker(path.resolve("test/test-module-fancy.js"), context);
+  const m = await linker(path.resolve('test/__modules__/fn-export.js'), context);
   
-  // @ts-ignore test the namespace
   t.assert(m.namespace.fn() === 20);
 });
 
 test("load a fancy test module with dependencies", async (t) => {
-  // Exports a default function which returns double fancy-module.fn
-  const m = await linker(path.resolve("test/test-module-fancy-with-deps.js"), context);
+  const m = await linker(path.resolve('test/__modules__/fn-export-with-deps.js'), context);
   
-  // @ts-ignore test the namespace
   t.assert(m.namespace.default() === 40);
 });
 
-// loads openfn common
 test("load @openfn/langauge-common", async (t) => {
   const m = await linker("@openfn/language-common", context);
   
-  // @ts-ignore test the namespace
   const exports = Object.keys(m.namespace);
   t.assert(exports.includes("fn"))
   t.assert(exports.includes("execute"))
@@ -97,17 +95,40 @@ test("throw if a non-whitelisted value is passed", async (t) => {
   );
 });
 
-test("does not throw if a whitelisted value is passed", async (t) => {
+test("does not throw if an exact whitelisted value is passed", async (t) => {
+  await t.notThrowsAsync(
+    () => linker('@openfn/language-common', context, { whitelist: [/^@openfn\/language-common$/] })
+  );
+});
+
+test("does not throw if a partial whitelisted value is passed", async (t) => {
   await t.notThrowsAsync(
     () => linker('@openfn/language-common', context, { whitelist: [/^@openfn\//] })
   );
 });
 
-test.only("load from modulesHome", async (t) => {
+
+test("Fails to load a module it can't find", async (t) => {
+  await t.throwsAsync(
+    () => linker('ultimate-answer', context, { whitelist: [/^@openfn\//] })
+  );
+})
+
+test("loads a module from modulesHome", async (t) => {
   const options = {
     modulesHome: path.resolve('test/__modules__')
   };
   const m = await linker('ultimate-answer', context, options)
+  t.assert(m.namespace.default === 42)
+});
+
+test.skip("loads a module from a specific path", async (t) => {
+  const options = {
+    modulePaths: {
+      'ultimate-answer': path.resolve('test/__modules__')
+    }
+  };
+  const m = await linker('ultimate-answer', context, options);
   t.assert(m.namespace.default === 42)
 });
 
