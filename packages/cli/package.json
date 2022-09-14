@@ -44,6 +44,7 @@
     "@openfn/runtime": "workspace:^0.0.1",
     "@types/yargs": "^17.0.12",
     "ava": "^4.2.0",
+    "mock-fs": "^5.1.4",
     "tsm": "^2.2.2",
     "yargs": "^17.5.1"
   },

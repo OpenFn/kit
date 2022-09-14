@@ -122,10 +122,10 @@ test("loads a module from modulesHome", async (t) => {
   t.assert(m.namespace.default === 42)
 });
 
-test.skip("loads a module from a specific path", async (t) => {
+test.only("loads a module from a specific path", async (t) => {
   const options = {
     modulePaths: {
-      'ultimate-answer': path.resolve('test/__modules__')
+      'ultimate-answer': path.resolve('test/__modules__/ultimate-answer')
     }
   };
   const m = await linker('ultimate-answer', context, options);

@@ -7,7 +7,6 @@ import vm, { Module, SyntheticModule, Context } from './experimental-vm';
 
 export type LinkerOptions = {
   // paths to modules: '@openfn/language-common': './path/to/common.js'
-  // What are paths relative to?
   modulePaths?: Record<string, string>;
 
   // Unless otherwise specified, modules will be loaded from here (relative to cli dir)
@@ -49,12 +48,17 @@ const linker: Linker = async (specifier, context, options = {}) => {
 
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
-  let path = '';
+  // Lookup the path from an explicit specifier first
+  let path = options.modulePaths?.[specifier] || '';
+  if (options.trace && path) {
+    console.log(`[linker] Loading module ${specifier} from mapped ${path}`);
+  }
 
-  // Load a module from a custom folder
-  if (options.modulesHome) {
+  // If there's no path and a modulesHome, try to load the module from modulesHome
+  if (!path && options.modulesHome) {
     // if loading an openfn module, we need to remove openfn from the path
     // ie @openfn/language-common -> language-common
+    // TODO is this true for all namespaced packages?
     const name = specifier.startsWith('@openfn') ? specifier.split('/').pop() : specifier;
     path = `${options.modulesHome}/${name}`;
   }

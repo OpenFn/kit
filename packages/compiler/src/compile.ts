@@ -5,7 +5,7 @@ import { isPath, loadFile } from './util';
 
 export default function compile(pathOrSource: string) {
   const source = isPath(pathOrSource) ? loadFile(pathOrSource) : pathOrSource;
-
+  console.log(' source: ', source)
   const ast = parse(source);
   const transformedAst = transform(ast);
   const compiledSource = print(transformedAst).code;

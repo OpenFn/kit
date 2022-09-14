@@ -1,67 +1,59 @@
-import path from 'node:path';
 import fs from 'node:fs/promises';
 import compile from '@openfn/compiler';
 import run from '@openfn/runtime';
+import ensureOpts, { SafeOpts } from './ensure-opts';
 
 export type Opts = {
+  silent?: boolean; // no logging
   jobPath?: string;
   statePath?: string;
   stateStdin?: string;
   outputPath?: string;
   outputStdout?: boolean;
+  adaptors?: string[];
+  noCompile?: boolean;
 }
 
-export type SafeOpts = Required<Opts>;
+export default async (basePath: string, rawOpts: Opts) => {
+  const log = (...args: any) => {
+    if (!rawOpts.silent) {
+      console.log(...args);
+    }
+  };
 
-export default async (basePath: string, opts: Opts) => {
-  const args = ensureOpts(basePath, opts);
-  console.log(`Loading job from ${args.jobPath}`)
+  const opts = ensureOpts(basePath, rawOpts);
+  log(`Loading job from ${opts.jobPath}`)
   
-  const state = await loadState(args);
-  const code = compile(args.jobPath);
+  const state = await loadState(opts);
+  const code = opts.noCompile ?
+    await fs.readFile(opts.jobPath, 'utf8') // TMP just for testing
+    : compile(opts.jobPath);
   const result = await run(code, state, {
     linker: {
       modulesHome: process.env.OPENFN_MODULES_HOME,
+      modulePaths: parseAdaptors(rawOpts),
       trace: false
     }
   });
 
   if (opts.outputStdout) {
+    // Log this even if in silent mode
     console.log(`\nResult: `)
     console.log(result)
   } else {
-    await writeOutput(args, result);
+    await writeOutput(opts, result);
   }
-  console.log(`\nDone! ✨`)
-}
-
-export function ensureOpts(basePath: string, opts: Opts): SafeOpts {
-  const newOpts = {
-    outputStdout: opts.outputStdout ?? false,
-  } as Opts;
-
-  const set = (key: keyof Opts, value: string) => {
-    // @ts-ignore TODO
-    newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;
-  };
-
-  let baseDir = basePath;
-
-  if (basePath.endsWith('.js')) {
-    baseDir = path.dirname(basePath);
-    set('jobPath', basePath)
-  } else {
-    set('jobPath', `${baseDir}/job.js`)
-  }
-  set('statePath', `${baseDir}/state.json`)
-  if (!opts.outputStdout) {
-    set('outputPath', `${baseDir}/output.json`)  
-  }
-
-  return newOpts as SafeOpts;
+  log(`\nDone! ✨`)
 }
 
 async function loadState(opts: SafeOpts) {
+  // TODO repeating this is a bit annoying...
+  const log = (...args: any) => {
+    if (!opts.silent) {
+      console.log(...args);
+    }
+  };
+
   if (opts.stateStdin) {
     try {
       return JSON.parse(opts.stateStdin);
@@ -73,18 +65,29 @@ async function loadState(opts: SafeOpts) {
   }
 
   try {
-    console.warn(`Loading state from ${opts.statePath}`);
+    log(`Loading state from ${opts.statePath}`);
     const str = await fs.readFile(opts.statePath, 'utf8')
     return JSON.parse(str)
   } catch(e) {
     console.warn('Error loading state!');
     console.log(e);
   }
-  console.log('Using default state')
+  log('Using default state')
   return {
     data: {},
     configuration: {}
   };
+}
+
+// TODO we should throw if the adaptor strings are invalid for any reason
+function parseAdaptors(opts: Opts) {
+  const adaptors: Record<string, string> = {};
+  opts.adaptors?.reduce((obj, exp) => {
+    const [module, path] = exp.split('=');
+    obj[module] = path;
+    return obj;
+  }, adaptors);
+  return adaptors;
 }
 
 async function writeOutput(opts: SafeOpts, state: any) {

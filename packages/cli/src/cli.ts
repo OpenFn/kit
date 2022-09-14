@@ -8,11 +8,10 @@ type YargsOpts = Opts & {
   _: string[];
 }
 
-const opts = yargs(hideBin(process.argv))
-  .command('openfn [path]' , "Run the job at the provided path")
-
+export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run the job at the provided path")
   .example('openfn path/to/dir', 'Looks for job.js, state.json in path/to/dir')
   .example('openfn path/to/job.js', 'Reads job.js, looks for state next to it, and outputs next to it')
+  .example('openfn path/to/job.js --adaptor language-common=repo/openfn/language-common language-http=repo/openfn/language-http', 'Pass several local adaptor modules into the job')
   .positional('path', {
     describe: 'The path to load the job from'
   })
@@ -47,10 +46,12 @@ const opts = yargs(hideBin(process.argv))
     boolean: true,
     description: 'Skip compilation'
   })
-  .option('adaptor', {
-    description: 'adaptor-name:path/to/adaptor'
+  .option('adaptors', {
+    description: 'Pass one or more adaptors in the form name=path/to/adaptor',
+    array: true
   })
-  .parse() as YargsOpts;
+
+const opts = cmd.parse() as YargsOpts;
 
 // If all inputs have parsed OK, we can go ahead and run in a child process
 runInChildProcess(opts._[0], opts);

@@ -8,7 +8,9 @@ type Args = {
 
 // When receiving a message as a child process, we pull out the args and run
 process.on('message', ({ basePath, opts }: Args) => {
-  execute(basePath, opts).then(() => {
-    process.send!({ done: true });
-  });
+  if (basePath && typeof basePath === 'string') {
+    execute(basePath, opts).then(() => {
+      process.send!({ done: true });
+    });
+  }
 });
