@@ -13,8 +13,9 @@ function visitor(path: NodePath) {
   // Check if the node is a top level Operation
   if (
     // Check this is a top level call expression
-    // (The parent will be an ExpressionStatement, and its parent a Program)
+    // ie, the parent must be an ExpressionStatement, and the statement's parent must be a Program
     n.Program.check(root)
+    && n.Statement.check(path.parent.node)
     
     // If it's an Operation call (ie, fn(() => {})), the callee will be an IdentifierExpression
     && n.Identifier.check(path.node.callee)) {

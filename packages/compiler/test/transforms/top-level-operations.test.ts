@@ -1,10 +1,10 @@
 import test from 'ava';
-import { NodePath, builders as b, namedTypes as n  } from 'ast-types';
+import { builders as b, namedTypes as n  } from 'ast-types';
+import { print } from 'recast';
 
 import transform from '../../src/transform';
 import visitors from '../../src/transforms/top-level-operations';
 import  { assertCodeEqual } from '../util';
-
 const createProgramWithExports = (statements) =>
   b.program([
     ...statements,
@@ -18,7 +18,6 @@ const createOperationStatement = (name, args: any[] = []) =>
       args
     )
   );
-
 
 test('visits a Call Expression node', (t) => {
   let visitCount = 0;
@@ -45,22 +44,24 @@ test('moves an operation into the exports array', (t) => {
     createOperationStatement('fn')
   ]);
 
-  const { body } = transform(ast, [visitors]);
+  const { body } = transform(ast, [visitors]) as n.Program;
   // should only be ony top level child
   t.assert(body.length === 1)
 
   // That child should be a default declaration
   t.assert(n.ExportDefaultDeclaration.check(body[0]))
+  const dec = (body[0] as n.ExportDefaultDeclaration).declaration;
 
   // The declaration should be an array of 1
-  t.assert(n.ArrayExpression.check(body[0].declaration))
-  t.assert(body[0].declaration.elements.length == 1)
+  t.assert(n.ArrayExpression.check(dec))
+  const arr = dec as n.ArrayExpression;
+  t.assert(arr.elements.length == 1)
 
   // And the one element should be a call to fn
-  const call = body[0].declaration.elements[0];
+  const call = arr.elements[0] as n.CallExpression;
   t.assert(n.CallExpression.check(call));
   t.assert(n.Identifier.check(call.callee))
-  t.assert(call.callee.name === "fn");
+  t.assert((call.callee as n.Identifier).name === "fn");
 });
 
 test('moves multiple operations into the exports array', (t) => {
@@ -89,6 +90,7 @@ test('moves multiple operations into the exports array', (t) => {
 });
 
 test('does not move a nested operation into the exports array', (t) => {
+  // fn(() => fn())
   const ast = createProgramWithExports([
     createOperationStatement('fn', [
       b.arrowFunctionExpression(
@@ -163,4 +165,40 @@ test('does nothing if there\'s no export statement', (t) => {
   assertCodeEqual(t, ast, transformed);
 });
 
-// Does nothing if the export statement is wrong
+test('should only take the top of a nested operation call (and preserve its arguments)', (t) => {
+  // ie combine(fn()) -> export default [combine(fn())];
+  const ast =  createProgramWithExports([
+    createOperationStatement('combine',
+      [b.callExpression(
+        b.identifier('fn'), []
+      )]
+    )
+  ]);
+
+  const { body } = transform(ast, [visitors]) as n.Program;
+  // should only be ony top level child
+  t.assert(body.length === 1)
+
+  // That child should be a default declaration
+  t.assert(n.ExportDefaultDeclaration.check(body[0]))
+  const dec = (body[0] as n.ExportDefaultDeclaration).declaration;
+
+  // The declaration should be an array of 1
+  t.assert(n.ArrayExpression.check(dec))
+  const arr = dec as n.ArrayExpression;
+  t.assert(arr.elements.length == 1)
+
+  // And the one element should be a call to combine
+  const combine = arr.elements[0] as n.CallExpression;
+  t.assert(n.CallExpression.check(combine));
+  t.assert(n.Identifier.check(combine.callee))
+  t.assert((combine.callee as n.Identifier).name === "combine");
+
+  // Combine's first argument should be a call to fn
+  const fn = combine.arguments[0] as n.CallExpression;
+  t.assert(n.CallExpression.check(fn));
+  t.assert(n.Identifier.check(fn.callee))
+  t.assert((fn.callee as n.Identifier).name === "fn");
+})
+
+// TODO Does nothing if the export statement is wrong
