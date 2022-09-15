@@ -45,6 +45,11 @@ export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run t
     description: 'Pass one or more adaptors in the form name=path/to/adaptor',
     array: true
   })
+  .option('trace-linker', {
+    alias: ['t', 'trace'],
+    description: 'Trace module resolution output in the linker',
+    boolean: true,
+  })
 
 const opts = cmd.parse() as YargsOpts;
 

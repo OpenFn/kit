@@ -111,4 +111,15 @@ test('preserve stateStdin', (t) => {
 
   t.assert(opts.stateStdin === '{}');
 });
+
+
+test('preserve trace', (t) => {
+  const initialOpts = {
+    traceLinker: true
+  } as Opts;
+  
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.traceLinker);
+});
 // TODO what if stdout and output path are set?
