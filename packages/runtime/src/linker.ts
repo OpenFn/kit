@@ -29,12 +29,23 @@ const linker: Linker = async (specifier, context, options = {}) => {
   }
 
   const exports = await loadActualModule(specifier, options);
-  const exportNames = Object.keys(exports);
+
+  // TODO: Slightly mad handling for ESM and EJS modules
+  // Needs more work
+  let target = exports;
+  if (exports.__esModule) {
+    // CJS
+    target = target.default.default; // ?!
+  } else {
+    // ESM
+    target = target.default;
+  }
   
+  const exportNames = Object.keys(target);
   // Wrap up the real module into a Synthetic Module
   const m = new vm.SyntheticModule(exportNames, function(this: SyntheticModule) {
     for(const e of exportNames) {
-      this.setExport(e, exports[e]);
+      this.setExport(e, target[e]);
     }
   }, { context });
   

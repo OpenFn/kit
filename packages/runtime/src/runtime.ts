@@ -29,7 +29,7 @@ export default async function run(
   opts: Options = {}) {
 
   // Setup a shared execution context
-  const context = buildContext(opts)
+  const context = buildContext(initialState, opts)
   
   const operations = await prepareJob(incomingJobs, context, opts);
 
@@ -63,7 +63,7 @@ const wrapOperation = (fn: Operation) => {
 // Build a safe and helpful execution context
 // This will be shared by all operations
 // TODO is it possible for one operation to break the npm cache somehow?
-const buildContext = (options: Options) => {
+const buildContext = (state: any, options: Options) => {
   const logger = options.logger ?? console;
   
   const context = vm.createContext({
@@ -76,6 +76,7 @@ const buildContext = (options: Options) => {
     parseInt,
     setInterval,
     setTimeout,
+    state, // TODO I don't really want to pass global state through
   }, {
     codeGeneration: {
       strings: false,
