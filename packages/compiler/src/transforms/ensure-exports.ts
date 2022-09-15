@@ -5,6 +5,7 @@
  */
 import { builders as b } from 'ast-types';
 // @ts-ignore
+import type { Visitor } from '../transform';
 import type { NodePath } from 'ast-types/main.d.ts'
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
@@ -30,6 +31,7 @@ const buildExports = () => b.exportDefaultDeclaration(
 )
 
 export default {
+  id: 'ensure-exports',
   types: ['Program'],
   visitor,
-}
+} as Visitor;

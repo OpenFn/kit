@@ -74,7 +74,7 @@ export async function* fetchDTSListing(packageName: string) {
 }
 
 /**
- * Retrieves a files for a given package/path from unpkg.com.
+ * Retrieves a file for a given package/path from unpkg.com.
  * @param path string
  */
 export async function fetchFile(path: string) {

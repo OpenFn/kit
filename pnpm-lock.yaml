@@ -97,6 +97,7 @@ importers:
 
   packages/compiler:
     specifiers:
+      '@openfn/describe-package': workspace:^0.0.1
       '@rollup/plugin-typescript': ^8.3.2
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -115,6 +116,7 @@ importers:
       typescript: ^4.7.4
       yargs: ^17.5.1
     dependencies:
+      '@openfn/describe-package': link:../describe-package
       '@types/yargs': 17.0.12
       acorn: 8.8.0
       ast-types: 0.14.2

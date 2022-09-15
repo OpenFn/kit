@@ -3,10 +3,16 @@
  */
 
 import { namedTypes as n } from 'ast-types';
+import type { Visitor } from '../transform';
 // @ts-ignore
 import type { NodePath } from 'ast-types/main.d.ts'
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
+
+export type TopLevelOpsOptions = {
+  // Wrap operations in a `(state) => op` wrapper
+  wrap: boolean; // TODO
+}
 
 function visitor(path: NodePath) {
   const root = path.parent.parent.node;
@@ -38,6 +44,7 @@ function visitor(path: NodePath) {
 
 
 export default {
+  id: 'top-level-operations',
   types: ['CallExpression'],
   visitor,
-}
+} as Visitor;

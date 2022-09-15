@@ -12,44 +12,64 @@
 import { namedTypes, NodePath } from 'ast-types';
 import { visit } from 'recast';
 
+import addImports, { AddImportsOptions } from './transforms/add-imports';
 import ensureExports from './transforms/ensure-exports';
-import topLevelOps from './transforms/top-level-operations';
+import topLevelOps, { TopLevelOpsOptions } from './transforms/top-level-operations';
 
-type VisitorFunction =  (path: typeof NodePath) => boolean | undefined | void; // return true to abort further traversal
+export type TransformerName = 'add-imports' | 'ensure-exports' | 'top-level-operations' | 'test';
 
-type Visitor = {
+type VisitorFunction =  (path: typeof NodePath, options?: any | boolean) => Promise<boolean | undefined> | boolean | undefined | void; // return true to abort further traversal
+
+export type Visitor = {
+  id: TransformerName;  // TODO would rather not include this but I can't see a better solution right now...
   types: string[];
   visitor: VisitorFunction;
 }
 
 type VisitorMap = Record<string, VisitorFunction[]>;
 
-export default function transform(ast: namedTypes.Node, visitorList?: Visitor[]) {
+export type TransformOptions = {
+  // TODO is there a neat way to automate this?
+  ['add-imports']?: AddImportsOptions | boolean;
+  ['ensure-exports']?: boolean;
+  ['top-level-operations']?: TopLevelOpsOptions | boolean;
+  ['test']?: any;
+}
+
+export default function transform(
+  ast: namedTypes.Node,
+  visitorList?: Visitor[],
+  options: TransformOptions = {},
+  ) {
   if (!visitorList) {
     // TODO maybe automate this from imports?
-    visitorList = [ensureExports, topLevelOps];
+    visitorList = [ensureExports, topLevelOps, addImports];
   }
-  const visitors = buildvisitorMap(visitorList);
-  visit(ast, buildVisitorFunction(visitors))
+  const visitors = buildvisitorMap(visitorList as Visitor[], options);
+  visit(ast, buildVisitorMethods(visitors))
 
   return ast;
 }
 
-export function buildvisitorMap(visitors: Visitor[]): VisitorMap {
+// Build a map of AST node types against an array of visitor functions
+// Each visitor must trap the appropriate options
+export function buildvisitorMap(visitors: Visitor[], options: TransformOptions = {}): VisitorMap {
   const map: Record<string, VisitorFunction[]> = {};
-  for (const { types, visitor } of visitors) {
-    for (const type of types) {
-      const name = `visit${type}`;
-      if (!map[name]) {
-        map[name] = [];
+  for (const { types, visitor, id } of visitors) {
+    if (options[id] !== false) {
+      for (const type of types) {
+        const name = `visit${type}`;
+        if (!map[name]) {
+          map[name] = [];
+        }
+        map[name].push((n: typeof NodePath) => visitor(n, options[id] ?? {}));
       }
-      map[name].push(visitor);
     }
   }
   return map;
 }
 
-function buildVisitorFunction(visitors: VisitorMap) {
+export function buildVisitorMethods(visitors: VisitorMap) {
   const result: Record<string, VisitorFunction> = {};
 
   for (const v in visitors) {

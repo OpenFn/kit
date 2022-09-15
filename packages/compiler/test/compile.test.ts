@@ -36,3 +36,18 @@ test('compile multiple operations', (t) => {
   const result = compile(source);
   t.assert(result === expected);
 });
+
+test('add imports', (t) => {
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: '@openfn/language-common',
+        exports: ['fn']
+      }
+    }
+  }
+  const source = "fn();"
+  const expected = `import { fn } from "@openfn/language-common";\nexport default [fn()];`;
+  const result = compile(source, options);
+  t.assert(result === expected);
+});

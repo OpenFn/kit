@@ -1,6 +1,5 @@
 import test, { ExecutionContext } from 'ava';
 import { namedTypes, NodePath, builders as b } from 'ast-types';
-import { print } from 'recast';
 import parse from '../../src/parse';
 
 import transform from '../../src/transform';

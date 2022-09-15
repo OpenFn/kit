@@ -28,3 +28,11 @@ If writing tests against ast trees, you can pass the -t flag with a test name. T
 ## Documentation
 
 TODO
+
+## Inserting imports
+
+The compiler can inject imports for a specific adaptor.
+
+This requires the exports for the adaptor to be pre-loaded and appended to the options object. This is because the AST walked is synchronous, but fetching type definitions is an asynchronous task. [more details to follow]
+
+There is a helper function `preloadAdaptorExports` in `src/util` to do this.
