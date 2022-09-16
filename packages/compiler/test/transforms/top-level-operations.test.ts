@@ -1,10 +1,10 @@
 import test from 'ava';
 import { builders as b, namedTypes as n  } from 'ast-types';
-import { print } from 'recast';
 
 import transform from '../../src/transform';
 import visitors from '../../src/transforms/top-level-operations';
 import  { assertCodeEqual } from '../util';
+
 const createProgramWithExports = (statements) =>
   b.program([
     ...statements,
@@ -154,7 +154,7 @@ test('does nothing if there\'s no export statement', (t) => {
     createOperationStatement('fn')
   ]);
 
-  const transformed = transform(ast, [visitors]);
+  const transformed = transform(ast, [visitors]) as n.Program;
   // should only be ony top level child
   t.assert(transformed.body.length === 1)
 

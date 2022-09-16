@@ -3,18 +3,17 @@
  * This will not move operations into the default export
  * This will do nothing if the source already declares any kind of exports
  */
-import { builders as b } from 'ast-types';
-// @ts-ignore
+import { builders as b, namedTypes } from 'ast-types';
+import type { NodePath } from 'ast-types/lib/node-path'
 import type { Visitor } from '../transform';
-import type { NodePath } from 'ast-types/main.d.ts'
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 
-function visitor(path: typeof NodePath) {
+function visitor(path: NodePath<namedTypes.Program>) {
   // check the export statements
   // if we find any, we do nothing
   const currentExport = path.node.body.find(
-    ({ type }: typeof NodePath) => type.match(/Export/)
+    ({ type }) => type.match(/Export/)
   );
   if (currentExport) {
     return;

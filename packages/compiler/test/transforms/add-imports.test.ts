@@ -126,6 +126,13 @@ test('findAllDanglingIdentifiers: let x = 1, y = 2;', (t) => {
   t.assert(Object.keys(result).length == 0)
 });
 
+test('findAllDanglingIdentifiers: const { x } = obj;', (t) => {
+  const ast = parse('const { x } = obj;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 1)
+  t.truthy(result['obj']);
+});
+
 test('findAllDanglingIdentifiers: export default (a) => a;', (t) => {
   const ast = parse('export default (a) => a;');
   const result = findAllDanglingIdentifiers(ast);

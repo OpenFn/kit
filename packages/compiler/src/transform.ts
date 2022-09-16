@@ -9,7 +9,8 @@
  * and call all of our transformers on it?
  * Well, that makes ordering a bit harder
  */
-import { namedTypes, NodePath } from 'ast-types';
+import { namedTypes } from 'ast-types';
+import type { NodePath } from 'ast-types/lib/node-path';
 import { visit } from 'recast';
 
 import addImports, { AddImportsOptions } from './transforms/add-imports';
@@ -18,7 +19,7 @@ import topLevelOps, { TopLevelOpsOptions } from './transforms/top-level-operatio
 
 export type TransformerName = 'add-imports' | 'ensure-exports' | 'top-level-operations' | 'test';
 
-type VisitorFunction =  (path: typeof NodePath, options?: any | boolean) => Promise<boolean | undefined> | boolean | undefined | void; // return true to abort further traversal
+type VisitorFunction =  (path: NodePath<any,any>, options?: any | boolean) => Promise<boolean | undefined> | boolean | undefined | void; // return true to abort further traversal
 
 export type Visitor = {
   id: TransformerName;  // TODO would rather not include this but I can't see a better solution right now...
@@ -62,7 +63,7 @@ export function buildvisitorMap(visitors: Visitor[], options: TransformOptions =
         if (!map[name]) {
           map[name] = [];
         }
-        map[name].push((n: typeof NodePath) => visitor(n, options[id] ?? {}));
+        map[name].push((n: NodePath) => visitor(n, options[id] ?? {}));
       }
     }
   }
@@ -73,7 +74,7 @@ export function buildVisitorMethods(visitors: VisitorMap) {
   const result: Record<string, VisitorFunction> = {};
 
   for (const v in visitors) {
-    result[v] = function(path: typeof NodePath) {
+    result[v] = function(path: NodePath) {
       const fns = visitors[v];
       for(const next of fns) {
         const abort = next!(path);

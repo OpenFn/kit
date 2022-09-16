@@ -2,10 +2,9 @@
  * Move any top-level operations into the default exports array
  */
 
-import { namedTypes as n } from 'ast-types';
+import { namedTypes as n, namedTypes } from 'ast-types';
+import type { NodePath } from 'ast-types/lib/node-path';
 import type { Visitor } from '../transform';
-// @ts-ignore
-import type { NodePath } from 'ast-types/main.d.ts'
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 
@@ -14,7 +13,7 @@ export type TopLevelOpsOptions = {
   wrap: boolean; // TODO
 }
 
-function visitor(path: NodePath) {
+function visitor(path: NodePath<namedTypes.CallExpression>) {
   const root = path.parent.parent.node;
   // Check if the node is a top level Operation
   if (

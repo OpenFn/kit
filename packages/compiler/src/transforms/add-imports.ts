@@ -8,12 +8,10 @@
  * This will only work with 2.0 adaptors with type defs
  */
 import { builders as b, namedTypes as n } from 'ast-types';
+import type { NodePath } from 'ast-types/lib/node-path';
+import type { ASTNode } from 'ast-types';
+import { visit } from 'recast';
 import type { Visitor } from '../transform';
-// @ts-ignore
-import type { NodePath } from 'ast-types/main.d.ts'
-
-// tmp
-import { print, visit } from 'recast';
 
 export type AddImportsOptions = {
   // Adaptor MUSt be pre-populated for this transformer to actually do anything
@@ -23,12 +21,13 @@ export type AddImportsOptions = {
   };
 }
 
+export type IdentifierList = Record<string, true>;
+
 // Find a list of all identifiers that haven't been declared in this AST
-// TODO typings
-export function findAllDanglingIdentifiers(ast: any /*TODO*/) {
-  const result = {};
+export function findAllDanglingIdentifiers(ast: ASTNode) {
+  const result: IdentifierList = {};
   visit(ast, {
-    visitIdentifier: function (path: NodePath) {
+    visitIdentifier: function (path) {
       // If this is the top object of a member expression
       if (n.MemberExpression.check(path.parentPath.node)) {
         // If  this identifier is the subject of any part of an expression chain, it's not a dangler
@@ -60,7 +59,7 @@ export function findAllDanglingIdentifiers(ast: any /*TODO*/) {
   return result;
 }
 
-function visitor(path: typeof NodePath, options: AddImportsOptions) {
+function visitor(path: NodePath, options: AddImportsOptions) {
   if (options.adaptor) {
     const { name, exports } = options?.adaptor;
     if (name && exports) {
