@@ -26,6 +26,7 @@
   "scripts": {
     "test": "pnpm mocha test/**/*.spec.ts",
     "build": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
+    "build:rollup": "rimraf dist/ .rollup.cache && rollup -c",
     "watch": "node esbuild.ts watch"
   },
   "keywords": [],
@@ -57,7 +58,14 @@
   ],
   "typesVersions": {
     "*": {
-      "worker": ["dist/worker/index.d.ts"]
+      "worker": [
+        "dist/worker/index.d.ts"
+      ]
     }
+  },
+  "dependencies": {
+    "@rollup/plugin-typescript": "^8.5.0",
+    "rollup": "^2.79.0",
+    "rollup-plugin-dts": "^4.2.2"
   }
 }
