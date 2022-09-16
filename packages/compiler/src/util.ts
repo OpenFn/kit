@@ -25,7 +25,13 @@ export const preloadAdaptorExports = async (specifier: string) => {
     // load locally
     const pkgSrc = await readFile(`${specifier}/package.json`, 'utf8');
     pkg = JSON.parse(pkgSrc);
-    types =  await readFile(`${specifier}/${pkg.types}`, 'utf8');
+    if (pkg.types) {
+      types =  await readFile(`${specifier}/${pkg.types}`, 'utf8');
+    } else {
+      // If there's no type information, we can safely return
+      // TODO should we log a warning?
+      return [];
+    }
   } else {
     // load from unpkg
     const pkgSrc = await fetchFile(`${specifier}/package.json`);

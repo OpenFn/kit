@@ -41,11 +41,15 @@ async function run(command: string, job: string, options: RunOptions = {}) {
     [outputPath]: '{}',
     [pnpm]: mock.load(pnpm, {}),
     // enable us to load test modules through the mock
-    '/modules/': mock.load(path.resolve('test/__modules__/'), {})
+    '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
+    // Expose language-common too for dynamica import
+    //'@openfn/language-common': mock.load(path.resolve('node_modules/@openfn/language-common'), {}),
+    '/node_modules/': mock.load(path.resolve('node_modules/'), {}),
   })
 
   const opts = cmd.parse(command) as Opts;
   opts.silent = true; // disable logging
+  //opts.traceLinker = true;
   await execute(jobPath, opts);
   
   // read the mock output
@@ -136,6 +140,24 @@ test.serial('override adaptors: openfn -S 49.5 --adaptors times-two=/modules/tim
 test.serial('override adaptors: openfn -S 49.5 -a times-two=/modules/times-two', async (t) => {
   const result = await run('openfn -S 49.5 -a times-two=/modules/times-two', JOB_MOCK_ADAPTOR);
   t.assert(result === '99');
+});
+
+// This works:
+// pnpm openfn tmp/job.js -a @openfn/language-common@2.0.0-rc3
+// But the equivalent in the test harness fails at runtime (the compiled code looks fine)
+test.serial.skip('auto-import from language-common: openfn job.js -a @openfn/language-common', async (t) => {
+  // Load the mapped package JSON
+  mock({
+    '/node_modules/': mock.load(path.resolve('node_modules/'), {}),
+  })
+  const pkg = await fs.readFile('/node_modules/@openfn/language-common/package.json', 'utf8');
+  t.truthy(pkg);
+
+  // Note that in the test harness we're explicitly mapping language common to this package's actual node modules
+  // ... and yet its failing!
+  const job = 'fn((state) => state.data.done = true);'
+  const result = await run('openfn -a @openfn/language-common=/node_modules/@openfn/language-common', job);
+  t.assert(result.data?.done === true);
 });
 
 // TODO - need to work out a way to test agaist stdout

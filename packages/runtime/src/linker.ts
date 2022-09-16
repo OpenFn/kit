@@ -38,7 +38,12 @@ const linker: Linker = async (specifier, context, options = {}) => {
     target = target.default.default; // ?!
   } else {
     // ESM
-    target = target.default;
+    // If we import @openfn/language-common@2.0.0-rc3, its named exports are found on the default object
+    // Which doesn't seem quite right?
+    // This elaborate workaround may help
+    if (Object.keys(exports).length === 1 && exports.default && Object.keys(exports.default).length > 0) {
+      target = target.default;
+    }
   }
   
   const exportNames = Object.keys(target);

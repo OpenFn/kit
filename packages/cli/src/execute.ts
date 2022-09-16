@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
-import compile from '@openfn/compiler';
+import compile,{ preloadAdaptorExports, TransformOptions } from '@openfn/compiler';
 import run from '@openfn/runtime';
-import ensureOpts, { SafeOpts } from './ensure-opts';
+import ensureOpts from './ensure-opts';
 
 export type Opts = {
   silent?: boolean; // no logging
@@ -10,9 +10,21 @@ export type Opts = {
   stateStdin?: string;
   outputPath?: string;
   outputStdout?: boolean;
+  modulesHome?: string;
   adaptors?: string[];
   noCompile?: boolean;
   traceLinker?: boolean;
+}
+
+// TODO this is a bit of a temporary solution
+// Adaptors need a version specifier right now to load type definitions for auto import
+// But that specifier must be excluded in the actual import by the adaptor
+const stripVersionSpecifier = (specifier: string) => {
+  const idx = specifier.lastIndexOf('@');
+  if (idx > 0) {
+    return specifier.substring(0, idx);
+  }
+  return specifier;
 }
 
 export default async (basePath: string, options: Opts) => {
@@ -62,11 +74,32 @@ export default async (basePath: string, options: Opts) => {
     log(`Loading job from ${opts.jobPath}`)
 
     if (opts.noCompile) {
-      log('Skipping compilation...')
+      log('Skipping compilation')
       return fs.readFile(opts.jobPath, 'utf8');
     } else {
       log('Compiling job source');
-      return compile(opts.jobPath);
+      // if there's an adaptor, loads its type defs
+      const options: TransformOptions = {};
+      if (opts.adaptors) {
+        const [pattern] = opts.adaptors; // TODO add-imports only takes on adaptor, but the cli can take multiple
+        const [specifier, path] = pattern.split('=');
+        const exportSpecifier = path || specifier
+        try {
+          const exports = await preloadAdaptorExports(exportSpecifier);
+          options['add-imports'] = {
+            adaptor: {
+              name: stripVersionSpecifier(specifier),
+              exports
+            }
+          };
+        }
+        catch (e) {
+          console.error("error processing adaptors")
+          console.error(` specifier: ${exportSpecifier}`);
+          console.error(e)
+        }
+      }
+      return compile(opts.jobPath, options);
     }
   };
 
@@ -74,7 +107,7 @@ export default async (basePath: string, options: Opts) => {
   const code = await loadJob();
   const result = await run(code, state, {
     linker: {
-      modulesHome: process.env.OPENFN_MODULES_HOME,
+      modulesHome: options.modulesHome || process.env.OPENFN_MODULES_HOME,
       modulePaths: parseAdaptors(options),
       trace: options.traceLinker
     }
