@@ -25,23 +25,24 @@ export type AddImportsOptions = {
 
 // Find a list of all identifiers that haven't been declared in this AST
 // TODO typings
-// TODO is this just too difficult to do for all cases? Nested expressions are really hard
 export function findAllDanglingIdentifiers(ast: any /*TODO*/) {
   const result = {};
   visit(ast, {
     visitIdentifier: function (path: NodePath) {
       // If this is the top object of a member expression
-      const isMemberExpression =  n.MemberExpression.check(path.parentPath.node);
-      if (isMemberExpression) {
-        const isTopMemberExpression =  !n.MemberExpression.check(path.parentPath.parentPath.node);
-        const isObject = path.parentPath.node.object.name === path.node.name;
-        // console.log(`${path.node.name}:
-        //   isMemberExpression: ${isMemberExpression}
-        //   isTopMemberExpression: ${isTopMemberExpression}
-        //   isObject: ${isObject}`
-        // )
-        if (!isTopMemberExpression || !isObject) {
-          return false;
+      if (n.MemberExpression.check(path.parentPath.node)) {
+        // If  this identifier is the subject of any part of an expression chain, it's not a dangler
+        let target = path;
+        let parent = path.parentPath;
+        while(parent.node.property) {
+          // Check if target node is a property
+          if (parent.node.property === target.node) {
+            // If so, abort traversal
+            return false;
+          }
+          // Step up the tree
+          target = parent;
+          parent = parent.parentPath;
         }
       }
       // If this identifier was declared in this scope, ignore it

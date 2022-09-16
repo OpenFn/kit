@@ -1,54 +1,42 @@
 import test from 'ava';
 import path from 'node:path';
 import { namedTypes as n, builders as b } from 'ast-types';
+
 import parse from '../../src/parse';
 import transform from '../../src/transform';
 import addImports, { findAllDanglingIdentifiers } from '../../src/transforms/add-imports';
 import { preloadAdaptorExports } from '../../src/util';
-import { visit } from 'recast';
 
-test('visits a Program node', (t) => {
-  let visitCount = 0;
-  const mockVisitors = [{
-    types: addImports.types,
-    visitor: () => { visitCount++; }
-  }];
-
-  const program = b.program([
-    b.expressionStatement(
-      b.callExpression(
-        b.identifier('fn'),
-        []
-      )
-    )
-  ]);
-
-  transform(program, mockVisitors);
-  t.assert(visitCount === 1)
-});
-
-test('findAllDanglingIdentifiers can find an identifier', (t) => {
+test('findAllDanglingIdentifiers: x;', (t) => {
   const ast = parse("x;")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
 });
 
-test('findAllDanglingIdentifiers can find an identifier in a call expression', (t) => {
+test('findAllDanglingIdentifiers: x();', (t) => {
   const ast = parse("x();")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
 });
 
-test('findAllDanglingIdentifiers can find duplicate identifiers', (t) => {
+test('findAllDanglingIdentifiers: x = x', (t) => {
   const ast = parse("x = x;")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
 });
 
-test('findAllDanglingIdentifiers can find multiple identifiers', (t) => {
+test('findAllDanglingIdentifiers: x = y', (t) => {
+  const ast = parse("x = y;")
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 2)
+  t.truthy(result['x']);
+  t.truthy(result['y']);
+});
+
+test('findAllDanglingIdentifiers: x;y();', (t) => {
   const ast = parse("x;y();")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 2)
@@ -56,7 +44,7 @@ test('findAllDanglingIdentifiers can find multiple identifiers', (t) => {
   t.truthy(result['y']);
 });
 
-test('findAllDanglingIdentifiers only returns the object of a simple member expressions', (t) => {
+test('findAllDanglingIdentifiers: x.y;', (t) => {
   const ast = parse("x.y;")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
@@ -64,39 +52,43 @@ test('findAllDanglingIdentifiers only returns the object of a simple member expr
   t.falsy(result['y']);
 });
 
-// TODO this fails
-test.skip('findAllDanglingIdentifiers only returns the top object of nested member expressions', (t) => {
+test('findAllDanglingIdentifiers: x.y.z;', (t) => {
   const ast = parse("x.y.z;")
   const result = findAllDanglingIdentifiers(ast);
-  console.log(result)
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
   t.falsy(result['y']);
   t.falsy(result['z']);
 });
 
-test('findAllDanglingIdentifiers only returns the top object of a method call', (t) => {
+test('findAllDanglingIdentifiers: x.y.z.a;', (t) => {
+  const ast = parse("x.y.z;")
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 1)
+  t.truthy(result['x']);
+  t.falsy(result['y']);
+  t.falsy(result['z']);
+  t.falsy(result['a']);
+});
+
+test('findAllDanglingIdentifiers: x.y();', (t) => {
   const ast = parse("x.y();")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
   t.falsy(result['y']);
-  t.falsy(result['z']);
 });
 
-// TODO this fails
-test.skip('findAllDanglingIdentifiers only returns the top object of a call inside a member expression', (t) => {
+test('findAllDanglingIdentifiers: x().y;', (t) => {
   const ast = parse("x().y;")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
   t.falsy(result['y']);
-  t.falsy(result['z']);
 });
 
-// TODO this fails
-test.skip('findAllDanglingIdentifiers only returns the top object of a nested method call', (t) => {
-  const ast = parse("x.y().z();")
+test('findAllDanglingIdentifiers: x.y().z;', (t) => {
+  const ast = parse("x.y().z;")
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1)
   t.truthy(result['x']);
@@ -104,57 +96,78 @@ test.skip('findAllDanglingIdentifiers only returns the top object of a nested me
   t.falsy(result['z']);
 });
 
-// test.only('findAllDanglingIdentifiers can find deeply nested identifiers', (t) => {
-//   const ast = parse(`fn(() => {
-//     const f = () => {
-//       x;
-//     }
-//   })`);
-//   const result = findAllDanglingIdentifiers(ast);
-//   t.assert(Object.keys(result).length == 1)
-//   t.truthy(result['x']);
-// })
+test('findAllDanglingIdentifiers: x().y.z;', (t) => {
+  const ast = parse("x.y().z;")
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 1)
+  t.truthy(result['x']);
+  t.falsy(result['y']);
+  t.falsy(result['z']);
+});
 
-test('findAllDanglingIdentifiers ignores variable declarations', (t) => {
+test('findAllDanglingIdentifiers: x.y.z();', (t) => {
+  const ast = parse("x.y.z();")
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 1)
+  t.truthy(result['x']);
+  t.falsy(result['y']);
+  t.falsy(result['z']);
+});
+
+test('findAllDanglingIdentifiers: const x = 1;', (t) => {
   const ast = parse('const x = 1;');
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 0)
 });
 
-test('findAllDanglingIdentifiers ignores identifiers declared in scope', (t) => {
-  const ast = parse(`fn(() => {
-    const f = (a) => {
-      a;
-      const x = 1;
-      x;
-      let y = 2;
-      y;
-
-      z; // find this only
-    };
-  })`);
+test('findAllDanglingIdentifiers: let x = 1, y = 2;', (t) => {
+  const ast = parse('let x = 1, y = 2;');
   const result = findAllDanglingIdentifiers(ast);
-  t.assert(Object.keys(result).length == 2)
-  t.truthy(result['z']);
-  t.truthy(result['fn']);
-  t.falsy(result['a']);
-  t.falsy(result['x']);
-  t.falsy(result['y']);
-})
+  t.assert(Object.keys(result).length == 0)
+});
 
-test('findAllDanglingIdentifiers ignores identifiers declared in a parent scope', (t) => {
+test('findAllDanglingIdentifiers: export default (a) => a;', (t) => {
+  const ast = parse('export default (a) => a;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 0)
+});
+
+test('findAllDanglingIdentifiers: export default () => a;', (t) => {
+  const ast = parse('export default () => a;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 1)
+  t.truthy(result['a']);
+});
+
+test('findAllDanglingIdentifiers: function f(a) { a; };', (t) => {
+  const ast = parse('function f(a) { a; };');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 0)
+});
+
+test('findAllDanglingIdentifiers: import { fn } from "fn"; fn;', (t) => {
+  const ast = parse('import { fn } from "fn"; fn;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 0)
+});
+
+test('findAllDanglingIdentifiers: import * as fn from "fn"; fn;', (t) => {
+  const ast = parse('import * as fn from "fn"; fn;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 0)
+});
+
+test('findAllDanglingIdentifiers: nested scoping', (t) => {
   const ast = parse(`fn((a) => {
     const x = 1;
-    let y = 2;
+    a;
     const f = () => {
       x;
-      y;
-
-      z; // find this only
+      a;
+      z; // dangling
     };
   })`);
   const result = findAllDanglingIdentifiers(ast);
-  console.log(result)
   t.assert(Object.keys(result).length == 2)
   t.truthy(result['z']);
   t.truthy(result['fn']);
@@ -183,10 +196,10 @@ test('add imports for a test module', async (t) => {
 
   const [first] = transformed.body;
   t.assert(n.ImportDeclaration.check(first));
-  const imports = (first as n.ImportDeclaration).specifiers;
+  const imports = (first as n.ImportDeclaration).specifiers as n.ImportSpecifier[];
   t.assert(imports.length === 2);
-  t.assert(imports?.find(i => i.imported.name === 'x'));
-  t.assert(imports?.find(i => i.imported.name === 'y'));
+  t.assert(imports.find(i => i.imported.name === 'x'));
+  t.assert(imports.find(i => i.imported.name === 'y'));
 });
 
 test('only add used imports for a test module', async (t) => {
@@ -208,9 +221,9 @@ test('only add used imports for a test module', async (t) => {
 
   const [first] = transformed.body;
   t.assert(n.ImportDeclaration.check(first));
-  const imports = (first as n.ImportDeclaration).specifiers;
+  const imports = (first as n.ImportDeclaration).specifiers as n.ImportSpecifier[];
   t.assert(imports.length === 1);
-  t.assert(imports?.find(i => i.imported.name === 'x'));
+  t.assert(imports.find(i => i.imported.name === 'x'));
 });
 
 test('don\'t add imports if nothing is used', async (t) => {
