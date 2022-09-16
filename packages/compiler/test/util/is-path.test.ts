@@ -1,5 +1,5 @@
 import test from 'ava'
-import { isPath } from '../src/util';
+import { isPath } from '../../src/util';
 
 // Code snippets
 [

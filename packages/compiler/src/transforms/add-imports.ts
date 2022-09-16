@@ -14,7 +14,7 @@ import { visit } from 'recast';
 import type { Visitor } from '../transform';
 
 export type AddImportsOptions = {
-  // Adaptor MUSt be pre-populated for this transformer to actually do anything
+  // Adaptor MUST be pre-populated for this transformer to actually do anything
   adaptor: {
     name: string;
     exports: string[],

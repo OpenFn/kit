@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Project, describeDts, fetchFile } from '../../describe-package/src/index';
+import { Project, describeDts, fetchFile } from '@openfn/describe-package';
 
 export const loadFile = (filePath: string) => fs.readFileSync(path.resolve(filePath), 'utf8');
 
