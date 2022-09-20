@@ -52,20 +52,20 @@ Here's how I recommend getting set up:
 * Create a folder for next-gen language adaptors somewhere on your machine
 
 ```
-$ mkdir -p ~/openfn/next/adaptors
+$ mkdir -p ~/adaptors/@openfn
 ```
 
 * Clone `language-common` into that folder
 
 ```
-git clone https://github.com/OpenFn/language-common.git ~/openfn/next/adaptors --branch 2.0.0-pre
+git clone https://github.com/OpenFn/language-common.git ~/adaptors/@openfn --branch 2.0.0-pre
 ```
 
 * Set your `OPENFN_MODULES_HOME` environment variable to point to the next-gen adaptors folder. This will tell the CLI to load adaptors from this folder by default.
 
 ```
 # In ~/.bashc or whatever
-export OPENFN_MODULES_HOME=~/openfn/next/adaptors
+export OPENFN_MODULES_HOME=~/adaptors/@openfn
 ```
 
 This will improve in future, as we implement automatic module loading and add type definitions to the published adaptor packages.

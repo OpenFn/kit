@@ -1,4 +1,4 @@
-import execute, { Opts } from './execute';
+import execute, { Opts } from '../commands';
 
 type Args = {
   command?: string; // TODO execute | compile | validate etc

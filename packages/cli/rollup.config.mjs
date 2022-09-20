@@ -17,10 +17,10 @@ export default [
     ],
   },
   {
-    input: "src/child-process.ts",
+    input: "src/process/child-process.ts",
     output: [
       {
-        file: 'dist/child-process.js',
+        file: 'dist/process/child-process.js',
         format: "esm",
         sourcemap: true,
       },

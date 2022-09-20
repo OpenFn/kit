@@ -4,7 +4,7 @@ import mock from 'mock-fs';
 import fs from 'node:fs/promises';
 
 import { cmd } from '../src/cli';
-import execute, { Opts } from '../src/execute';
+import execute, { Opts } from '../src/commands';
 
 test.afterEach(() => {
   mock.restore();
@@ -142,6 +142,18 @@ test.serial('override adaptors: openfn -S 49.5 --adaptors times-two=/modules/tim
 test.serial('override adaptors: openfn -S 49.5 -a times-two=/modules/times-two', async (t) => {
   const result = await run('openfn -S 49.5 -a times-two=/modules/times-two', JOB_MOCK_ADAPTOR);
   t.assert(result === 99);
+});
+
+test.serial('auto-import from test module with modulesHome: openfn job.js -S 11 -a times-two', async (t) => {
+  const job = 'export default [byTwo]';
+  const result = await run('openfn -S 11 -a times-two', job, { modulesHome: '/modules' });
+  t.assert(result === 22);
+});
+
+test.serial('auto-import from test module with path: openfn job.js -S 11 -a times-two', async (t) => {
+  const job = 'export default [byTwo]';
+  const result = await run('openfn -S 22 -a times-two=/modules/times-two', job);
+  t.assert(result === 44);
 });
 
 test.serial('auto-import from language-common: openfn job.js -a @openfn/language-common', async (t) => {

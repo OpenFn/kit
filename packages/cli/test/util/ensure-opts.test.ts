@@ -1,6 +1,6 @@
 import test from 'ava';
-import { Opts } from '../src/execute';
-import ensureOpts from '../src/ensure-opts';
+import { Opts } from '../../src/commands';
+import ensureOpts from '../../src/util/ensure-opts';
 
 test('set job, state and output from a base path', (t) => {
   const initialOpts = {} as Opts;
@@ -54,14 +54,6 @@ test('should use the user\'s output path', (t) => {
   t.assert(opts.jobPath === 'a/job.js');
   t.assert(opts.outputPath === outputPath);
   t.assert(opts.statePath === 'a/state.json');
-});
-
-test('should append @openfn to adaptors', (t) => {
-  const initialOpts = {
-    adaptors: ['language-common=a/b/c']
-  } as Opts;
-  const opts = ensureOpts('a', initialOpts);
-  t.assert(opts.adaptors[0] === '@openfn/language-common=a/b/c');
 });
 
 test('should not append @openfn to adaptors if already prefixed', (t) => {

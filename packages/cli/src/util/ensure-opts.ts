@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { Opts} from './execute';
+import { Opts} from '../commands';
 
 export type SafeOpts = Required<Opts>;
 
@@ -35,12 +35,13 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   // Should we go further and bundle language-common?
   // But 90% of jobs use something else. Better to use auto loading.
   if (opts.adaptors) {
-    newOpts.adaptors = opts.adaptors.map((adaptor) => {
-      if (!adaptor.startsWith('@openfn/')) {
-        return `@openfn/${adaptor}`
-      }
-      return adaptor
-    });
+    newOpts.adaptors = opts.adaptors;
+    // newOpts.adaptors = opts.adaptors.map((adaptor) => {
+    //   if (!adaptor.startsWith('@openfn/')) {
+    //     return `@openfn/${adaptor}`
+    //   }
+    //   return adaptor
+    // });
   }
 
   return newOpts as SafeOpts;

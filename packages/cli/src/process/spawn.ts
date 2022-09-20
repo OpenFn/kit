@@ -4,7 +4,7 @@
  */
 import path from 'node:path';
 import { fork } from "node:child_process";
-import type { Opts } from './execute';
+import type { Opts } from '../commands';
 
 // The default export will create a new child process which calls itself
 export default function (basePath: string, opts: Opts) {
@@ -19,7 +19,7 @@ export default function (basePath: string, opts: Opts) {
     '--experimental-specifier-resolution=node',
   ];
   
-  const child = fork(path.resolve('dist/child-process.js'), [], { execArgv });
+  const child = fork(path.resolve('dist/process/child-process.js'), [], { execArgv });
 
   child.on('message', ({ done }: { done: boolean}) => {
     if (done) {

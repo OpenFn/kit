@@ -1,12 +1,5 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers'
-import { Opts } from './execute';
-import runInChildProcess from './process';
-
-type YargsOpts = Opts & { 
-  path: string;
-  _: string[];
-}
 
 export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run the job at the provided path")
   .example('openfn path/to/dir', 'Looks for job.js, state.json in path/to/dir')
@@ -49,9 +42,4 @@ export const cmd = yargs(hideBin(process.argv)).command('openfn [path]' , "Run t
     alias: ['t', 'trace'],
     description: 'Trace module resolution output in the linker',
     boolean: true,
-  })
-
-const opts = cmd.parse() as YargsOpts;
-
-// If all inputs have parsed OK, we can go ahead and run in a child process
-runInChildProcess(opts._[0], opts);
+  });
