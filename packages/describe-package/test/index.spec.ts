@@ -1,7 +1,27 @@
-import { describe } from "mocha";
-import { assert } from "chai";
+import { describe, test } from "mocha";
+import { assert, expect } from "chai";
+import { describeDts } from '../src/index';
 import { Project } from "../src/project";
-import { getDtsFixture } from "./helpers";
+import { getDtsFixture, setupProject } from "./helpers";
+
+describe('describeDTS', () => {
+  test('describe exported functions', async () => {
+    const project = await setupProject('export-fns')
+    const exports = await describeDts(project);
+
+    expect(exports).to.deep.include({ name: 'fn1', comment: '' });
+    expect(exports).to.deep.include({ name: 'fn2', comment: '' });
+  })
+
+  // TODO this doesn't work at the moment
+  test.skip('export default object', async () => {
+    const project = await setupProject('export-default-obj')
+    const exports = await describeDts(project);
+
+    expect(exports).to.deep.include({ name: 'default' });
+  });
+})
+
 
 describe("getExports", () => {
   it("for export aliases", async () => {

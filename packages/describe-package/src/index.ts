@@ -8,7 +8,7 @@ type FunctionDescription = {
   comment: string;
 };
 
-export function describeDts(project: Project, path: string) {
+export function describeDts(project: Project, path: string = "index.d.ts") {
   const sourceFile = project.getSourceFile(path);
 
   if (!sourceFile) {
