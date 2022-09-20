@@ -75,8 +75,9 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     // if loading an openfn module, we need to remove openfn from the path
     // ie @openfn/language-common -> language-common
     // TODO is this true for all namespaced packages?
-    const name = specifier.startsWith('@openfn') ? specifier.split('/').pop() : specifier;
-    path = `${options.modulesHome}/${name}`;
+    // TODO no, I don't think this is right at all!
+    //const name = specifier.startsWith('@openfn') ? specifier.split('/').pop() : specifier;
+    path = `${options.modulesHome}/${specifier}`;
     if (options.trace) {
       console.log(`[linker] Loading module ${specifier} from ${path}`);
     }
