@@ -33,6 +33,7 @@ export const preloadAdaptorExports = async (specifier: string) => {
       return [];
     }
   } else {
+    // TODO - if modules_home is set, we should look there for definitions before calling out to unpkg
     // load from unpkg
     const pkgSrc = await fetchFile(`${specifier}/package.json`);
     pkg = JSON.parse(pkgSrc);

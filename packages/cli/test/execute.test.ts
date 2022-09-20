@@ -8,17 +8,18 @@ import execute, { Opts } from '../src/execute';
 
 test.afterEach(() => {
   mock.restore();
-})
+});
 
 const JOB_EXPORT_42 = 'export default [() => 42];'
 const JOB_TIMES_2 = 'export default [(state) => state * 2];'
-const JOB_MOCK_ADAPTOR = 'import timesTwo from "times-two"; export default [timesTwo];'
+const JOB_MOCK_ADAPTOR = 'import { byTwo } from "times-two"; export default [byTwo];'
 
 type RunOptions = {
   jobPath?: string;
   statePath?: string;
   outputPath?: string;
   state?: any;
+  modulesHome?: string;
 }
 
 // Helper function to mock a file system with particular paths and values,
@@ -42,23 +43,24 @@ async function run(command: string, job: string, options: RunOptions = {}) {
     [pnpm]: mock.load(pnpm, {}),
     // enable us to load test modules through the mock
     '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
-    // Expose language-common too for dynamica import
-    //'@openfn/language-common': mock.load(path.resolve('node_modules/@openfn/language-common'), {}),
-    '/node_modules/': mock.load(path.resolve('node_modules/'), {}),
+    //'node_modules': mock.load(path.resolve('node_modules/'), {}),
   })
 
   const opts = cmd.parse(command) as Opts;
+  opts.modulesHome = options.modulesHome;
   opts.silent = true; // disable logging
-  //opts.traceLinker = true;
+  // opts.traceLinker = true;
+
   await execute(jobPath, opts);
   
   // read the mock output
-  return fs.readFile(outputPath, 'utf8');
+  const result = await fs.readFile(outputPath, 'utf8');
+  return JSON.parse(result);
 }
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
   const result = await run('openfn job.js', JOB_EXPORT_42);
-  t.assert(result === '42');
+  t.assert(result === 42);
 });
 
 test.serial('run a trivial job from a folder: openfn ~/openfn/jobs/the-question', async (t) => {
@@ -70,7 +72,7 @@ test.serial('run a trivial job from a folder: openfn ~/openfn/jobs/the-question'
   };
 
   const result = await run('openfn ~/openfn/jobs/the-question', JOB_EXPORT_42, options);
-  t.assert(result === '42');
+  t.assert(result === 42);
 
   const output = await fs.readFile('~/openfn/jobs/the-question/output.json', 'utf8');
   t.assert(output === '42');
@@ -81,7 +83,7 @@ test.serial('output to file: openfn job.js --output-path=/tmp/my-output.json', a
     outputPath: '/tmp/my-output.json'
   };
   const result = await run('openfn job.js --output-path=/tmp/my-output.json', JOB_EXPORT_42, options);
-  t.assert(result === '42');
+  t.assert(result === 42);
 
   const output = await fs.readFile('/tmp/my-output.json', 'utf8');
   t.assert(output === '42');
@@ -92,7 +94,7 @@ test.serial('output to file with alias: openfn job.js -o=/tmp/my-output.json', a
     outputPath: '/tmp/my-output.json'
   };
   const result = await run('openfn job.js -o /tmp/my-output.json', JOB_EXPORT_42, options);
-  t.assert(result === '42');
+  t.assert(result === 42);
 
   const output = await fs.readFile('/tmp/my-output.json', 'utf8');
   t.assert(output === '42');
@@ -104,7 +106,7 @@ test.serial('read state from file: openfn job.js --state-path=/tmp/my-state.json
     state: '33'
   };
   const result = await run('openfn job.js --state-path=/tmp/my-state.json', JOB_TIMES_2, options);
-  t.assert(result === '66');
+  t.assert(result === 66);
 });
 
 
@@ -114,50 +116,41 @@ test.serial('read state from file with alias: openfn job.js -s /tmp/my-state.jso
     state: '33'
   };
   const result = await run('openfn job.js -s /tmp/my-state.json', JOB_TIMES_2, options);
-  t.assert(result === '66');
+  t.assert(result === 66);
 });
 
 test.serial('read state from stdin: openfn job.js --state-stdin=11', async (t) => {
   const result = await run('openfn job.js --state-stdin=11', JOB_TIMES_2);
-  t.assert(result === '22');
+  t.assert(result === 22);
 });
 
 test.serial('read state from stdin with alias: openfn job.js -S 44', async (t) => {
   const result = await run('openfn job.js -S 44', JOB_TIMES_2);
-  t.assert(result === '88');
+  t.assert(result === 88);
 });
 
 test.serial('override an adaptor: openfn -S 49.5 --adaptor times-two=/modules/times-two', async (t) => {
   const result = await run('openfn -S 49.5 --adaptor times-two=/modules/times-two', JOB_MOCK_ADAPTOR);
-  t.assert(result === '99');
+  t.assert(result === 99);
 });
 
 test.serial('override adaptors: openfn -S 49.5 --adaptors times-two=/modules/times-two', async (t) => {
   const result = await run('openfn -S 49.5 --adaptors times-two=/modules/times-two', JOB_MOCK_ADAPTOR);
-  t.assert(result === '99');
+  t.assert(result === 99);
 });
 
 test.serial('override adaptors: openfn -S 49.5 -a times-two=/modules/times-two', async (t) => {
   const result = await run('openfn -S 49.5 -a times-two=/modules/times-two', JOB_MOCK_ADAPTOR);
-  t.assert(result === '99');
+  t.assert(result === 99);
 });
 
-// This works:
-// pnpm openfn tmp/job.js -a @openfn/language-common@2.0.0-rc3
-// But the equivalent in the test harness fails at runtime (the compiled code looks fine)
-test.serial.skip('auto-import from language-common: openfn job.js -a @openfn/language-common', async (t) => {
-  // Load the mapped package JSON
-  mock({
-    '/node_modules/': mock.load(path.resolve('node_modules/'), {}),
-  })
-  const pkg = await fs.readFile('/node_modules/@openfn/language-common/package.json', 'utf8');
-  t.truthy(pkg);
-
-  // Note that in the test harness we're explicitly mapping language common to this package's actual node modules
-  // ... and yet its failing!
-  const job = 'fn((state) => state.data.done = true);'
-  const result = await run('openfn -a @openfn/language-common=/node_modules/@openfn/language-common', job);
-  t.assert(result.data?.done === true);
+test.serial('auto-import from language-common: openfn job.js -a @openfn/language-common', async (t) => {
+  const job = 'fn((state) => { state.data.done = true; return state; });'
+  // Note that we're simulating the OPEN_FN_MODULES_HOME env var
+  // to load a mock langauge-common out of our test modules
+  // TODO no matter what I do, I can't seem to get this to load from our actual node_modules?!
+  const result = await run('openfn -a @openfn/language-common', job, { modulesHome: '/modules'/*'node_modules'*/ });
+  t.truthy(result.data?.done);
 });
 
 // TODO - need to work out a way to test agaist stdout

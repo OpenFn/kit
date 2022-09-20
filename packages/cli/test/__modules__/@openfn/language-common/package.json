@@ -1,5 +1,5 @@
 {
-  "name": "times-two",
+  "name": "language-common",
   "version": "0.0.1",
   "type": "module",
   "module": "index.js",

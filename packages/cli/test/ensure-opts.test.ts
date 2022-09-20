@@ -122,4 +122,38 @@ test('preserve trace', (t) => {
 
   t.truthy(opts.traceLinker);
 });
+
+
+test.serial('preserve modulesHome', (t) => {
+  const initialOpts = {
+    modulesHome: 'a/b/c'
+  } as Opts;
+  
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.modulesHome === 'a/b/c');
+});
+
+test.serial('use an env var for modulesHome', (t) => {
+  process.env.OPENFN_MODULES_HOME = 'JAM';
+
+  const initialOpts = {} as Opts;
+  
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.modulesHome === 'JAM');
+  delete process.env.OPENFN_MODULES_HOME
+});
+
+test.serial('use prefer an explicit value for modulesHometo an env var', (t) => {
+  process.env.OPENFN_MODULES_HOME = 'JAM';
+
+  const initialOpts = {
+    modulesHome: 'a/b/c'
+  } as Opts;
+  
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.modulesHome === 'a/b/c');
+});
 // TODO what if stdout and output path are set?

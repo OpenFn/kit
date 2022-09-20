@@ -1,2 +1,1 @@
-export default (state) => state * 2;
-
+export const byTwo = (state) => state * 2;

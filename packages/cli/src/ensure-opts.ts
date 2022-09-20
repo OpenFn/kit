@@ -10,6 +10,7 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
     silent: opts.silent,
     stateStdin: opts.stateStdin,
     traceLinker: opts.traceLinker,
+    modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
   } as Opts;
 
   const set = (key: keyof Opts, value: string) => {
@@ -29,6 +30,10 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   if (!opts.outputStdout) {
     set('outputPath', `${baseDir}/output.json`)  
   }
+
+  // TODO if no adaptor is provided, default to language common
+  // Should we go further and bundle language-common?
+  // But 90% of jobs use something else. Better to use auto loading.
   if (opts.adaptors) {
     newOpts.adaptors = opts.adaptors.map((adaptor) => {
       if (!adaptor.startsWith('@openfn/')) {

@@ -30,7 +30,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
     visitIdentifier: function (path) {
       // If this is the top object of a member expression
       if (n.MemberExpression.check(path.parentPath.node)) {
-        // If  this identifier is the subject of any part of an expression chain, it's not a dangler
+        // If this identifier is the subject of any part of an expression chain, it's not a dangler
         let target = path;
         let parent = path.parentPath;
         while(parent.node.property) {
@@ -61,7 +61,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
 
 function visitor(path: NodePath, options: AddImportsOptions) {
   if (options.adaptor) {
-    const { name, exports } = options?.adaptor;
+    const { name, exports } = options.adaptor;
     if (name && exports) {
       const identifiers = findAllDanglingIdentifiers(path.node);
       const usedExports = exports.filter((e) => identifiers[e])
