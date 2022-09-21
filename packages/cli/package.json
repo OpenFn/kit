@@ -22,14 +22,17 @@
     }
   },
   "type": "module",
+  "bin": {
+    "openfn": "dist/index.js"
+  },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "keywords": [],
   "author": "Joe Clark<jclark@openfn.org>",
   "license": "ISC",
   "devDependencies": {
-    "@rollup/plugin-typescript": "^8.3.2",
     "@openfn/language-common": "2.0.0-rc3",
+    "@rollup/plugin-typescript": "^8.3.2",
     "@types/node": "^17.0.45",
     "esbuild": "^0.15.7",
     "rimraf": "^3.0.2",
@@ -45,6 +48,7 @@
     "@types/yargs": "^17.0.12",
     "ava": "^4.2.0",
     "mock-fs": "^5.1.4",
+    "rollup-plugin-preserve-shebang": "^1.0.1",
     "tsm": "^2.2.2",
     "yargs": "^17.5.1"
   },

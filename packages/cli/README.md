@@ -29,15 +29,36 @@ $ openfn --help
 $ openfn path/to/expression.js`
 ```
 
+## legacy Jobs failing?
+
+If legacy jobs ar failing because adaptor functions aren't found, you need to tell the CLI which adaptor to use. It will then auto-insert import statements for you.
+
+```
+$ openfn job.js -a @openfn/language-commmon
+```
+
+There's more detail in this further down in the readme.
+
 ## Usage from this repo
+
+You can run the cli straight from source with `pnpm`
 
 ```
 $ pnpm openfn path/to/job.js
 $ pnpm openfn -h
-$ pnpm build:watch
 ```
 
 See test/execute.test.ts for more usage examples
+
+## Installing globally
+
+To install the CLI globally from this repo (ie, to do `openfn job.js` instead of `pnpm openfn job.js`), run:
+
+```
+$ npm install -g .
+```
+
+Note that this will install the built source from `dist`
 
 ## Current state
 

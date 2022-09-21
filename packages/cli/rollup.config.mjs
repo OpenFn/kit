@@ -1,5 +1,5 @@
 import typescript from "@rollup/plugin-typescript";
-
+import shebang from 'rollup-plugin-preserve-shebang';
 import pkg from "./package.json" assert { type: "json" };
 
 export default [
@@ -14,6 +14,7 @@ export default [
     ],
     plugins: [
       typescript({ tsconfig: "./tsconfig.json" }),
+      shebang()
     ],
   },
   {
