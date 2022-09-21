@@ -82,7 +82,6 @@ importers:
       '@types/yargs': 17.0.12
       ava: 4.3.3
       mock-fs: 5.1.4
-      rollup-plugin-preserve-shebang: 1.0.1
       tsm: 2.2.2
       yargs: 17.5.1
     devDependencies:
@@ -93,6 +92,7 @@ importers:
       rimraf: 3.0.2
       rollup: 2.79.0
       rollup-plugin-dts: 4.2.2_ihkqvyh37tzxtjmovjyy2yrv7m
+      rollup-plugin-preserve-shebang: 1.0.1
       ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
       tslib: 2.4.0
       typescript: 4.8.3
@@ -3543,7 +3543,7 @@ packages:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
     dependencies:
       sourcemap-codec: 1.4.8
-    dev: false
+    dev: true
 
   /magic-string/0.26.3:
     resolution: {integrity: sha512-u1Po0NDyFcwdg2nzHT88wSK0+Rih0N1M+Ph1Sp08k8yvFFU3KR72wryS7e1qMPJypt99WB7fIFVCA92mQrMjrg==}
@@ -4857,7 +4857,7 @@ packages:
     resolution: {integrity: sha512-gk7ExGBqvUinhgrvldKHkAKXXwRkWMXMZymNkrtn50uBgHITlhRjhnKmbNGwAIc4Bzgl3yLv7/8Fhi/XeHhFKg==}
     dependencies:
       magic-string: 0.25.9
-    dev: false
+    dev: true
 
   /rollup-pluginutils/2.8.2:
     resolution: {integrity: sha512-EEp9NhnUkwY8aif6bxgovPHMoMoNr2FulJziTndpt5H9RdwC47GSGuII9XxpSdzVGM0GWrNPHV6ie1LTNJPaLQ==}

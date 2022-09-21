@@ -13,10 +13,13 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [
-      typescript({ tsconfig: "./tsconfig.json" }),
+    plugins: [typescript({ tsconfig: "./tsconfig.json" })],
+    external: [
+      ...Object.keys(pkg.dependencies),
+      "node:fs",
+      "node:path",
+      "node:fs/promises",
     ],
-    external: [],
   },
   {
     input: pkg.exports["."].import.types,
