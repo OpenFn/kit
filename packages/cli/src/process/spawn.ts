@@ -3,6 +3,7 @@
  * This lets us hide the neccessary arguments needed to run our devtools
  */
 import path from 'node:path';
+import * as url from 'url';
 import { fork } from "node:child_process";
 import type { Opts } from '../commands';
 
@@ -19,7 +20,8 @@ export default function (basePath: string, opts: Opts) {
     '--experimental-specifier-resolution=node',
   ];
   
-  const child = fork(path.resolve('dist/process/child-process.js'), [], { execArgv });
+  const dirname = path.dirname(url.fileURLToPath(import.meta.url));
+  const child = fork(`${dirname}/process/child-process.js`, [], { execArgv });
 
   child.on('message', ({ done }: { done: boolean}) => {
     if (done) {
