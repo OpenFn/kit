@@ -7,6 +7,8 @@ export const cmd = yargs(hideBin(process.argv))
   .example('openfn foo/job.js', 'Reads foo/job.js, looks for state and output in foo')
   .example('openfn job.js -adaptor @openfn/language-common', 'Run job.js with automatic imports from the commmon language adaptor')
   .example('openfn job.js -adaptor @openfn/language-common=repo/openfn/language-common', 'Run job.js with a local implementation of the common language adaptor')
+  .example('openfn foo/job.js -c', 'Compile a job to foo/output/js')
+  .example('openfn foo/job.js -cO', 'Compile a job to stdout')
   .positional('path', {
     describe: 'The path to load the job from (a .js file or a dir containing a job.js file)',
     demandOption: true
