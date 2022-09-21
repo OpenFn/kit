@@ -32,6 +32,11 @@ export const cmd = yargs(hideBin(process.argv))
     boolean: true,
     description: 'Skip validation'
   })
+  .option('compile-only', {
+    alias: 'c',
+    boolean: true,
+    description: 'Skip compilation'
+  })
   .option('no-compile', {
     boolean: true,
     description: 'Skip compilation'

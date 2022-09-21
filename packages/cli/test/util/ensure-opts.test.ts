@@ -115,6 +115,26 @@ test('preserve trace', (t) => {
   t.truthy(opts.traceLinker);
 });
 
+test('compile only', (t) => {
+  const initialOpts = {
+    compileOnly: true
+  } as Opts;
+  
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.compileOnly);
+});
+
+test('update the default output with compile only', (t) => {
+  const initialOpts = {
+    compileOnly: true
+  } as Opts;
+  
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.outputPath === 'a/output.js');
+});
+
 
 test.serial('preserve modulesHome', (t) => {
   const initialOpts = {

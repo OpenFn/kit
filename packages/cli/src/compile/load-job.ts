@@ -63,18 +63,20 @@ export const loadTransformOptions = async (opts: SafeOpts, log = (_str: string) 
       // 2) A module defined in the opts.modulesHome folder
       (opts.modulesHome && await doPreload(`${opts.modulesHome}/${specifier}`, false)) ||
       // 3) An npm module specifier
-      await doPreload(specifier);
-
-    if (exports) {
-      options['add-imports'] = {
-        adaptor: {
-          name: stripVersionSpecifier(specifier),
-          exports
-        }
-      };
-    } else {
-      console.error(`Failed to load exports for ${pattern}`)
+      await doPreload(specifier)
+      || [];
+      
+    if (exports.length === 0) {
+      console.warn(`WARNING: no module exports loaded for ${pattern}`)
+      console.log ('         automatic imports will be skipped')
     }
+
+    options['add-imports'] = {
+      adaptor: {
+        name: stripVersionSpecifier(specifier),
+        exports
+      }
+    };
   }
   return options;
 }

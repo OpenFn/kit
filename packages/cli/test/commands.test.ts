@@ -4,7 +4,7 @@ import mock from 'mock-fs';
 import fs from 'node:fs/promises';
 
 import { cmd } from '../src/cli';
-import execute, { Opts } from '../src/commands';
+import { execute, compile, Opts } from '../src/commands';
 
 test.afterEach(() => {
   mock.restore();
@@ -51,11 +51,15 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.silent = true; // disable logging
   // opts.traceLinker = true;
 
-  await execute(jobPath, opts);
-  
-  // read the mock output
-  const result = await fs.readFile(outputPath, 'utf8');
-  return JSON.parse(result);
+  // TODO OK not such a helpful test...
+  if (opts.compileOnly) {
+    await compile(jobPath, opts);
+  } else {
+    await execute(jobPath, opts);
+    // read the mock output
+    const result = await fs.readFile(outputPath, 'utf8');
+    return JSON.parse(result);
+  }
 }
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
@@ -163,6 +167,16 @@ test.serial('auto-import from language-common: openfn job.js -a @openfn/language
   // TODO no matter what I do, I can't seem to get this to load from our actual node_modules?!
   const result = await run('openfn -a @openfn/language-common', job, { modulesHome: '/modules'/*'node_modules'*/ });
   t.truthy(result.data?.done);
+});
+
+test.serial('compile a job: openfn job.js -c', async (t) => {
+  const options = {
+    outputPath: 'output.js',
+  }
+  await run('openfn job.js -c', 'fn(42);', options);
+
+  const output = await fs.readFile('output.js', 'utf8');
+  t.assert(output === 'export default [fn(42)];');
 });
 
 // TODO - need to work out a way to test agaist stdout

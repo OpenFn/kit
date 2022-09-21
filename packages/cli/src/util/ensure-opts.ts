@@ -5,8 +5,9 @@ export type SafeOpts = Required<Opts>;
 
 export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   const newOpts = {
-    noCompile: opts.noCompile,
-    outputStdout: opts.outputStdout ?? false,
+    noCompile: Boolean(opts.noCompile),
+    compileOnly: Boolean(opts.compileOnly),
+    outputStdout: Boolean(opts.outputStdout),
     silent: opts.silent,
     stateStdin: opts.stateStdin,
     traceLinker: opts.traceLinker,
@@ -28,7 +29,7 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   }
   set('statePath', `${baseDir}/state.json`)
   if (!opts.outputStdout) {
-    set('outputPath', `${baseDir}/output.json`)  
+    set('outputPath', newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`)  
   }
 
   // TODO if no adaptor is provided, default to language common
