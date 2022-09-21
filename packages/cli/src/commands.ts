@@ -18,6 +18,7 @@ export type Opts = {
 }
 
 export const execute = async (basePath: string, options: Opts) => {
+  console.log(basePath)
   const opts = ensureOpts(basePath, options);
 
   const log = (...args: any) => {
