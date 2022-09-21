@@ -13,11 +13,13 @@ import type { ASTNode } from 'ast-types';
 import { visit } from 'recast';
 import type { Visitor } from '../transform';
 
+const GLOBALS = /^(state|console|JSON|setInterval|clearInterval|setTimeout|clearTimeout|parseInt|parseFloat|atob|btoa)$/;
+
 export type AddImportsOptions = {
   // Adaptor MUST be pre-populated for this transformer to actually do anything
   adaptor: {
     name: string;
-    exports: string[],
+    exports?: string[],
   };
 }
 
@@ -62,9 +64,13 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
 function visitor(path: NodePath, options: AddImportsOptions) {
   if (options.adaptor) {
     const { name, exports } = options.adaptor;
-    if (name && exports) {
+    if (name) {
       const identifiers = findAllDanglingIdentifiers(path.node);
-      const usedExports = exports.filter((e) => identifiers[e])
+      const usedExports = exports && exports.length ?
+        // If we have exports for this adaptor, import any dangling variables from the export list
+        exports.filter((e) => identifiers[e])
+        // If we have no exports for this adaptor, import anything apart from a few choice globals
+        : Object.keys(identifiers).filter(i => !i.match(GLOBALS))
       if (usedExports.length) {
         const i = b.importDeclaration(
           usedExports.map(e => b.importSpecifier(b.identifier(e))),

@@ -69,6 +69,21 @@ test('do not add imports', (t) => {
   t.assert(result === expected);
 });
 
+test('dumbly add imports', (t) => {
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: '@openfn/language-common'
+      }
+    }
+  }
+  // This example already has the correct imports declared, so add-imports should do nothing
+  const source = "import { jam } from '@openfn/language-common'; jam(state);"
+  const expected = `import { jam } from '@openfn/language-common';\nexport default [jam(state)];`;
+  const result = compile(source, options);
+  t.assert(result === expected);
+});
+
 test('twitter example', async (t) => {
   const source = await fs.readFile(path.resolve('test/jobs/twitter.js'), 'utf8');
   // The expected source has been taken from a previous compilation

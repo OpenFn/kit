@@ -183,7 +183,7 @@ test('findAllDanglingIdentifiers: nested scoping', (t) => {
   t.falsy(result['y']);
 })
 
-test('add imports for a test module', async (t) => {
+test("add imports for a test module", async (t) => {
   const ast = b.program([
     b.expressionStatement(b.identifier('x')),
     b.expressionStatement(b.identifier('y')),
@@ -209,7 +209,7 @@ test('add imports for a test module', async (t) => {
   t.assert(imports.find(i => i.imported.name === 'y'));
 });
 
-test('only add used imports for a test module', async (t) => {
+test("only add used imports for a test module", async (t) => {
   const ast = b.program([
     b.expressionStatement(b.identifier('x')),
   ]);
@@ -233,7 +233,7 @@ test('only add used imports for a test module', async (t) => {
   t.assert(imports.find(i => i.imported.name === 'x'));
 });
 
-test('don\'t add imports if nothing is used', async (t) => {
+test("don't add imports if nothing is used", async (t) => {
   const ast = b.program([]);
 
   const exports = await preloadAdaptorExports(path.resolve('test/__modules__/adaptor'))
@@ -251,7 +251,7 @@ test('don\'t add imports if nothing is used', async (t) => {
   t.assert(transformed.body.length === 0);
 });
 
-test('don\'t import if a variable is declared with the same name', async (t) => {
+test("don't import if a variable is declared with the same name", async (t) => {
   const ast = b.program([
     b.variableDeclaration(
       "const",
@@ -272,3 +272,78 @@ test('don\'t import if a variable is declared with the same name', async (t) => 
   const transformed = transform(ast, [addImports], options) as n.Program;
   t.assert(transformed.body.length === 1);
 });
+
+test("dumbly add imports for an adaptor with unknown exports", (t) => {
+  const ast = b.program([
+    b.expressionStatement(b.identifier('x')),
+    b.expressionStatement(b.identifier('y')),
+  ]);
+
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: 'test-adaptor'
+      }
+    }
+  };
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  const [first] = transformed.body;
+  t.assert(n.ImportDeclaration.check(first));
+  const imports = (first as n.ImportDeclaration).specifiers as n.ImportSpecifier[];
+  t.assert(imports.length === 2);
+  t.assert(imports.find(i => i.imported.name === 'x'));
+  t.assert(imports.find(i => i.imported.name === 'y'));
+})
+
+test("dumbly add imports for an adaptor with empty exports", (t) => {
+  const ast = b.program([
+    b.expressionStatement(b.identifier('x')),
+    b.expressionStatement(b.identifier('y')),
+  ]);
+
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: 'test-adaptor',
+        exports: []
+      }
+    }
+  };
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  const [first] = transformed.body;
+  t.assert(n.ImportDeclaration.check(first));
+  const imports = (first as n.ImportDeclaration).specifiers as n.ImportSpecifier[];
+  t.assert(imports.length === 2);
+  t.assert(imports.find(i => i.imported.name === 'x'));
+  t.assert(imports.find(i => i.imported.name === 'y'));
+})
+
+test("don't dumbly add imports for globals", (t) => {
+  const globals = ['state', 'console', 'JSON', 'setInterval', 'clearInterval','setTimeout', 'clearTimeout', 'parseInt', 'parseFloat', 'atob', 'btoa'];
+  const ast = b.program(
+    [
+      b.expressionStatement(b.identifier('x'))].concat(
+        globals.map(g => 
+          b.expressionStatement(b.identifier(g))
+        )
+      )
+  );
+
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: 'test-adaptor',
+        exports: []
+      }
+    }
+  };
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  const [first] = transformed.body;
+  t.assert(n.ImportDeclaration.check(first));
+  const imports = (first as n.ImportDeclaration).specifiers as n.ImportSpecifier[];
+  t.assert(imports.length == 1);
+  t.assert(imports[0].imported.name === 'x');
+})
