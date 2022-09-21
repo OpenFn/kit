@@ -21,7 +21,7 @@ export default function (basePath: string, opts: Opts) {
   ];
   
   const dirname = path.dirname(url.fileURLToPath(import.meta.url));
-  const child = fork(`${dirname}/process/child-process.js`, [], { execArgv });
+  const child = fork(`${dirname}/process/runner.js`, [], { execArgv });
 
   child.on('message', ({ done }: { done: boolean}) => {
     if (done) {
