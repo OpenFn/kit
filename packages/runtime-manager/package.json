@@ -1,6 +1,6 @@
 {
   "name": "runtime-manager",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An example runtime manager service.",
   "main": "index.js",
   "type": "module",
@@ -13,9 +13,9 @@
   "author": "Joe Clark <jclark@openfn.org>",
   "license": "ISC",
   "dependencies": {
-    "@openfn/compiler": "workspace:^0.0.2",
+    "@openfn/compiler": "workspace:^0.0.4",
     "@openfn/language-common": "2.0.0-rc3",
-    "@openfn/runtime": "workspace:^0.0.1",
+    "@openfn/runtime": "workspace:^0.0.2",
     "@types/koa": "^2.13.5",
     "@types/workerpool": "^6.1.0",
     "koa": "^2.13.4",
