@@ -25,8 +25,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm mocha test/**/*.spec.ts",
-    "build": "build:rollup",
-    "build:esbuid": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
+    "build": "pnpm build:rollup",
+    "build:esbuild": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
     "build:rollup": "rimraf dist/ .rollup.cache && rollup -c",
     "watch": "node esbuild.ts watch"
   },
