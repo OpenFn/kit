@@ -9,6 +9,48 @@ Lightning ProjectSpace
 - Run `pnpm run setup`
 - Run `pnpm run build`
 
+## Releases & Changesets
+
+We use changesets to manage releases: [`github.com/changesets`](https://github.com/changesets/changesets)
+
+A changeset is a description of batch of changes, coupled with semver information.
+
+### Adding a change
+
+When submitting a PR against this repo, include a changeset to describe your work.
+
+```
+pnpm changeset
+```
+
+For example changeset notes, look in the `.changesets` folder.
+
+### Releasing
+
+To relase to npm:
+
+1) Update versions
+```
+pnpm changeset version
+```
+
+This will automatically update the version numbers of the affected packages.
+
+2) Rebuild
+```
+pnpm install
+```
+
+
+(3a Test? Sanity check? Review?) 
+
+3) Publish
+
+```
+pnmp publish -r
+```
+
+
 ## Packages
 
 - [`@openfn/describe-package`](packages/describe-package)  
