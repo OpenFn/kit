@@ -1,6 +1,6 @@
 {
   "name": "compiler-worker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -10,6 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "private": true,
   "dependencies": {
     "@openfn/describe-package": "workspace:*"
   },

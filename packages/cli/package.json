@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "engines": {
     "node": ">=16",
@@ -44,8 +44,8 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@openfn/compiler": "workspace:^0.0.3",
-    "@openfn/runtime": "workspace:^0.0.1",
+    "@openfn/compiler": "workspace:^0.0.4",
+    "@openfn/runtime": "workspace:^0.0.2",
     "@types/yargs": "^17.0.12",
     "ava": "^4.2.0",
     "mock-fs": "^5.1.4",

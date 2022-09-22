@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@changesets/cli": "^2.24.4",
     "rimraf": "^3.0.2"
   }
 }

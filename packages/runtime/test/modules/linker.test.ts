@@ -2,7 +2,7 @@ import test from 'ava';
 import vm from 'node:vm';
 import path from 'node:path';
 
-import linker from '../src/linker';
+import linker from '../../src/modules/linker';
 
 let context = vm.createContext();
 
@@ -14,22 +14,22 @@ test.beforeEach(() => {
  * Run some basic tests that we can define and import mini-modules within the test harness
  */
 test("assert we can dynamically import module 'number-export'", async (t) => {
-  const m1 = await import('./__modules__/number-export.js');
+  const m1 = await import('../__modules__/number-export.js');
   t.assert(m1.default === 20);
 });
 
 test("assert we can dynamically import fn-export", async (t) => {
-  const m2 = await import('./__modules__/fn-export.js');
+  const m2 = await import('../__modules__/fn-export.js');
   t.assert(m2.fn() === 20);
 });
 
 test("assert we can dynamically import fn-export-with-deps", async (t) => {
-  const m3 = await import('./__modules__/fn-export-with-deps.js');
+  const m3 = await import('../__modules__/fn-export-with-deps.js');
   t.assert(m3.default() ===  40);
 });
 
 test("assert we can dynamically import ultimate-answer", async (t) => {
-  const m3 = await import('./__modules__/ultimate-answer');
+  const m3 = await import('../__modules__/ultimate-answer');
   t.assert(m3.default ===  42);
 });
 
@@ -116,7 +116,7 @@ test("loads a module from modulesHome", async (t) => {
   t.assert(m.namespace.default === 42)
 });
 
-test.only("loads a module from a specific path", async (t) => {
+test("loads a module from a specific path", async (t) => {
   const options = {
     modulePaths: {
       'ultimate-answer': path.resolve('test/__modules__/ultimate-answer')
