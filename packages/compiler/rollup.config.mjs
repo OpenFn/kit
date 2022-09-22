@@ -16,15 +16,16 @@ export default [
     plugins: [typescript({ tsconfig: "./tsconfig.json" })],
     external: [
       ...Object.keys(pkg.dependencies),
-      "node:fs",
-      "node:path",
-      "node:fs/promises",
+      /^node:/
     ],
   },
   {
     input: pkg.exports["."].import.types,
     output: [{ file: pkg.exports["."].import.types, format: "esm" }],
     plugins: [dts()],
-    external: [/\.css$/u],
+    external: [
+      ...Object.keys(pkg.dependencies),
+      /^node:/
+    ],
   },
 ];

@@ -14,8 +14,7 @@ export default [
     ],
     external: [
       ...Object.keys(pkg.dependencies),
-      "node:path",
-      "node:child_process",
+      /^node:/,
       "yargs/helpers"
     ],
     plugins: [typescript({ tsconfig: "./tsconfig.json" }), shebang()],
@@ -24,9 +23,7 @@ export default [
     input: "src/process/runner.ts",
     external: [
       ...Object.keys(pkg.dependencies),
-      "node:fs/promises",
-      "node:path",
-      "node:child_process",
+      /^node:/,
     ],
     output: [
       {

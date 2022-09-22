@@ -16,11 +16,12 @@ export default [
     plugins: [
       typescript({ tsconfig: "./tsconfig.json" }),
     ],
-    external: ["fs", "events", "stream", "path", "util", "constants", "assert"],
+    external: ["fs", "events", "stream", "path", "util", "constants", "assert", /^node:/],
   },
   {
     input: pkg.exports["."].import.types,
     output: [{ file: pkg.exports["."].import.types, format: "esm" }],
+    external: ["fs", "events", "stream", "path", "util", "constants", "assert", /^node:/],  
     plugins: [dts()],
   },
 ];

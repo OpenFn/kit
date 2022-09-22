@@ -13,13 +13,13 @@ export default [
         sourcemap: true,
       },
     ],
-    external: ["node:vm"],
+    external: [/^node:/],
     plugins: [typescript({ tsconfig: "./tsconfig.json" })],
   },
   {
     input: pkg.exports["."].import.types,
     output: [{ file: pkg.exports["."].import.types, format: "esm" }],
-    external: ["node:vm"],
+    external: [/^node:/],
     plugins: [dts()],
   },
 ];
