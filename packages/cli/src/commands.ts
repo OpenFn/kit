@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import createLogger from '@openfn/logger';
 import ensureOpts, { SafeOpts } from './util/ensure-opts';
 import compileJob from './compile/load-job';
 import loadState from './execute/load-state';
@@ -87,11 +87,7 @@ export const compile = async (basePath: string, options: Opts) => {
   // Or should each command have its own options parser?
   const opts = ensureOpts(basePath, options);
 
-  const log = (...args: any) => {
-    if (!opts.silent) {
-      console.log(...args);
-    }
-  };
+  const log = createLogger('Compiler')
 
   const code = await compileJob(opts, log);
   if (opts.outputStdout) {
@@ -109,28 +105,24 @@ export const execute = async (basePath: string, options: Opts) => {
   assertPath(basePath);
   const opts = ensureOpts(basePath, options);
 
-  const log = (...args: any) => {
-    if (!opts.silent) {
-      console.log(...args);
-    }
-  };
+  const log = createLogger('CLI')
 
   const state = await loadState(opts, log);
-  const code = await compileJob(opts, log);
+  const code = await compileJob(opts, createLogger('Compiler'));
   const result = await run(code, state, opts);
   
   if (opts.outputStdout) {
-    // Log this even if in silent mode
-    console.log(`\nResult: `)
-    console.log(result)
+    // TODO Log this even if in silent mode
+    log(`\nResult: `)
+    log(result)
   } else {
     if (!opts.silent) {
-      console.log(`Writing output to ${opts.outputPath}`)
+      log(`Writing output to ${opts.outputPath}`)
     }
     await fs.writeFile(opts.outputPath, JSON.stringify(result, null, 4));
   }
 
-  log(`\nDone! ✨`)
+  log(`Done! ✨`)
 }
 
 // This is disabled for now because

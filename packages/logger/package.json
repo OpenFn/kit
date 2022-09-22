@@ -1,0 +1,33 @@
+{
+  "name": "@openfn/logger",
+  "version": "0.0.1",
+  "description": "Cross-package logging utility",
+  "module": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf dist/ .rollup.cache ts.cache && rollup -c"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "author": "",
+  "license": "ISC",
+  "types": "./index.d.ts",
+  "dependencies": {
+    "chalk": "4"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^8.5.0",
+    "@types/node": "^18.7.18",
+    "rollup": "^2.79.1",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
+    "tsm": "^2.2.2",
+    "typescript": "^4.8.3"
+  }
+}
