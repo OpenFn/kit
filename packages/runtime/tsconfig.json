@@ -6,5 +6,9 @@
     "rootDir": "src",
     "lib": ["esnext"],
     "declarationDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "src/types.d.ts"]
+    }
   },
 }

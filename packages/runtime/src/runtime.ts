@@ -1,10 +1,7 @@
 import vm from 'node:vm';
-// TODO remove this dependency
-import { execute, Operation, State  } from '@openfn/language-common';
 
-import loadModule from './module-loader';
-import { LinkerOptions } from './linker';
-
+import loadModule from './modules/module-loader';
+import { LinkerOptions } from './modules/linker';
 
 type Options = {
   // TODO should match the console API but this will do for now
@@ -34,11 +31,9 @@ export default async function run(
   const operations = await prepareJob(incomingJobs, context, opts);
 
   // Create the main reducer function
-  // TODO we shouldn't import this, we should define our own
-  // (but it's nice to prove it works with the original execute implementation)
   const reducer = execute(...operations.map(wrapOperation));
 
-  // Run the job
+  // Run the pipeline
   const result = await reducer(initialState);
 
   // return the final state
@@ -48,6 +43,17 @@ export default async function run(
 // TODO I'm in the market for the best solution here - immer? deep-clone?
 // What should we do if functions are in the state?
 const clone = (state: State) => JSON.parse(JSON.stringify(state))
+
+const execute = (...operations: Operation[]): Operation => {
+  return state => {
+    const start = Promise.resolve(state);
+
+    return operations.reduce((acc, operation) => {
+      return acc.then(operation);
+    }, start);
+  };
+};
+
 
 // Wrap an operation with various useful stuff
 // * A cloned state object so that prior state is always preserved
@@ -63,7 +69,7 @@ const wrapOperation = (fn: Operation) => {
 // Build a safe and helpful execution context
 // This will be shared by all operations
 // TODO is it possible for one operation to break the npm cache somehow?
-const buildContext = (state: any, options: Options) => {
+const buildContext = (state: State, options: Options) => {
   const logger = options.logger ?? console;
   
   const context = vm.createContext({

@@ -1,6 +1,6 @@
 import vm from 'node:vm';
 import test from "ava";
-import evaluate from '../src/module-loader'
+import evaluate from '../../src/modules/module-loader'
 
 test('load a simple module', async (t) => {
   const src = "export default 20;"

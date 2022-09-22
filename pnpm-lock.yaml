@@ -189,7 +189,7 @@ importers:
 
   packages/runtime:
     specifiers:
-      '@openfn/language-common': ^2.0.0-rc3
+      '@openfn/language-common': 2.0.0-rc3
       '@rollup/plugin-typescript': ^8.3.2
       '@types/node': ^17.0.31
       ava: ^4.2.0
@@ -607,7 +607,6 @@ packages:
 
   /@openfn/language-common/2.0.0-rc3:
     resolution: {integrity: sha512-7kwhBnCd1idyTB3MD9dXmUqROAhoaUIkz2AGDKuv9vn/cbZh7egEv9/PzKkRcDJYFV9qyyS+cVT3Xbgsg2ii5g==}
-    bundledDependencies: []
 
   /@rollup/plugin-typescript/8.4.0_lgw3yndmlomwrra4tomb66mtni:
     resolution: {integrity: sha512-QssfoOP6V4/6skX12EfOW5UzJAv/c334F4OJWmQpe2kg3agEa0JwVCckwmfuvEgDixyX+XyxjFenH7M2rDKUyQ==}
