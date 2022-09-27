@@ -109,6 +109,9 @@ export const execute = async (basePath: string, options: Opts) => {
 
   const state = await loadState(opts, log);
   const code = await compileJob(opts, createLogger('Compiler'));
+  // TODO the runtime needs to accept a logger to fed through to jobs
+  // Also the runtime will emit, rather than log directly
+  // So probably want to log and listen here
   const result = await run(code, state, opts);
   
   if (opts.outputStdout) {

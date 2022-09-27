@@ -16,10 +16,32 @@ const priority = {
   [ERROR]: 3,
 };
 
+// TODO I'd quite like each package to have its own colour, I think
+// that would be a nice branding exercise, even when running standalone
+const colors = {
+  'Compiler': 'green', // reassuring green
+  'Runtime': 'pink', // cheerful pink
+  'Job': 'blue', // businesslike blue
+
+  // default to white I guess
+}
+
 type LogOptions = {
   silent?: boolean;
   level?: number;
-  logger?: typeof console; // a log object, allowing total override of the output
+
+  // TODO how can we duplicate the custom logger, so we do a standard log AND something else (eg http log)
+  logger?: typeof console; // a log object, allowing total override of the output#
+
+
+  // terrible name... when two logs of different types are side by side
+  // stick an empty line between
+  breakUpTypes: boolean;
+
+  // TODO if the output extends beyond the screenwith, wrap a bit
+  //      just enough to avoid the [type][level] column (like this comment)
+  wrap: boolean
+
 }
 
 // import BasicReporter from 'consola/basic'
@@ -29,6 +51,10 @@ type LogOptions = {
 export default function(name: string, options: LogOptions = {}) {
   const minLevel = priority[options.level ?? INFO];
 
+  // TODO what if we want to hide levels?
+  // OR hide some levels?
+  // Or customise the display?
+  // TODO use cool emojis
   const styleLevel = (level: LogLevel) => {
     switch (level) {
       case ERROR:
@@ -48,6 +74,8 @@ export default function(name: string, options: LogOptions = {}) {
   // main logger function
   const log = (level: LogLevel, ...args: LogArgs) => {
     const output = [
+      // TODO how can we fix the with of the type column so that things
+      //      are nicely arranged in the CLI?
       c.blue(`[${name}]`),
       styleLevel(level)
     ]
@@ -75,6 +103,12 @@ export default function(name: string, options: LogOptions = {}) {
   logger[WARN] = wrap(WARN);
 
   logger.log = wrap(INFO);
+
+  // possible convenience APIs
+  logger.force = () => {} // force the next lines to log (even if silent)
+  logger.unforce = () => {} // restore silent default
+  logger.break = () => {} // print a line break
+  logger.indent = (spaces: 0) => {} // set the indent level
 
   return logger;
 }
