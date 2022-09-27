@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 0.0.4
+
+### Patch Changes
+
+- 8148cd5: Updated builds
+- Updated dependencies [8148cd5]
+  - @openfn/compiler@0.0.5
+  - @openfn/runtime@0.0.3
+
 ## 0.0.3
 
 ### Patch Changes

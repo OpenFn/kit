@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.3
+
+### Patch Changes
+
+- 8148cd5: Updated builds
+
 ## 0.0.2
 
 ### Patch Changes
