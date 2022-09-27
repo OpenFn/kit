@@ -20,6 +20,7 @@ export type AddImportsOptions = {
   adaptor: {
     name: string;
     exports?: string[],
+    exportAll?: boolean,
   };
 }
 
@@ -63,7 +64,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
 
 function visitor(path: NodePath, options: AddImportsOptions) {
   if (options.adaptor) {
-    const { name, exports } = options.adaptor;
+    const { name, exports, exportAll } = options.adaptor;
     if (name) {
       const identifiers = findAllDanglingIdentifiers(path.node);
       const usedExports = exports && exports.length ?
@@ -72,14 +73,28 @@ function visitor(path: NodePath, options: AddImportsOptions) {
         // If we have no exports for this adaptor, import anything apart from a few choice globals
         : Object.keys(identifiers).filter(i => !i.match(GLOBALS))
       if (usedExports.length) {
-        const i = b.importDeclaration(
-          usedExports.map(e => b.importSpecifier(b.identifier(e))),
-          b.stringLiteral(name)
-        );
-        path.get("body").insertAt(0, i);
+        addUsedImports(path, usedExports, name);
+        if (exportAll) {
+          addExportAdaptor(path, name)
+        }
       }
     }
   }
+}
+
+// Add an import statement to pull in the named values from an adaptor 
+function addUsedImports(path: NodePath, imports: string[], adaptorName: string) {
+  const i = b.importDeclaration(
+    imports.map(e => b.importSpecifier(b.identifier(e))),
+    b.stringLiteral(adaptorName)
+  );
+  path.get("body").insertAt(0, i);
+}
+
+// Add an export all statement
+function addExportAdaptor(path: NodePath, adaptorName: string) {
+  const e = b.exportAllDeclaration(b.stringLiteral(adaptorName), null)
+  path.get("body").insertAt(1, e);
 }
 
 export default {

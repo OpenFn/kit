@@ -19,15 +19,23 @@ You can pass a string of Javascript and it will output an AST tree to stdout.
 
 Pass -s for a simplified tree (way easier to read!), -o path/to/output.json, -e to eval the input (otherwise it'll be treated as a path)
 
-`$pnpm parse -s -e "fn();"`
+`$ pnpm parse -s -e "fn();"`
 
 If writing tests against ast trees, you can pass the -t flag with a test name. The resulting tree will be output to `test/asts/{name}.json` without prettification.
 
-`$pnpm parse -t "my-test" /tmp/my-test.js`
+`$ pnpm parse -t "my-test" /tmp/my-test.js`
 
 ## Documentation
 
 TODO
+
+# Node types reference
+
+It can be pretty hard to understand what the parse trees look like.
+
+The basic spec is here: [https://github.com/estree/estree/blob/master/es2015.md](https://github.com/estree/estree/blob/master/es2015.md)
+
+You have to check the parent folder for later language extensions.
 
 ## Inserting imports
 

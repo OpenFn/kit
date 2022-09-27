@@ -84,6 +84,23 @@ test('dumbly add imports', (t) => {
   t.assert(result === expected);
 });
 
+test('add imports with export all', (t) => {
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: '@openfn/language-common',
+        exports: ['fn'],
+        exportAll: true
+      }
+    }
+  }
+  const source = "fn();"
+  const expected = `import { fn } from "@openfn/language-common";\nexport * from "@openfn/language-common";\nexport default [fn()];`;
+  const result = compile(source, options);
+  t.assert(result === expected);
+});
+
+
 test('twitter example', async (t) => {
   const source = await fs.readFile(path.resolve('test/jobs/twitter.js'), 'utf8');
   // The expected source has been taken from a previous compilation

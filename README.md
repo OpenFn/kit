@@ -41,7 +41,6 @@ This will automatically update the version numbers of the affected packages.
 pnpm install
 ```
 
-
 (3a Test? Sanity check? Review?) 
 
 3) Publish

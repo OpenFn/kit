@@ -347,3 +347,38 @@ test("don't dumbly add imports for globals", (t) => {
   t.assert(imports.length == 1);
   t.assert(imports[0].imported.name === 'x');
 })
+
+test("export everything from an adaptor", (t) => {
+  const ast = b.program([
+    b.expressionStatement(b.identifier('x')),
+  ]);
+
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: 'test-adaptor',
+        exportAll: true
+      }
+    }
+  };
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  // Should be three statements now
+  t.assert(transformed.body.length == 3);
+  const imp = transformed.body[0] as n.ImportDeclaration;
+  const ex = transformed.body[1] as n.ExportAllDeclaration;
+  const stmt = transformed.body[2] as n.ExpressionStatement;
+  
+  // An import * from
+  t.assert(n.ImportDeclaration.check(imp))
+  const specs = imp.specifiers as n.ImportSpecifier[];
+  t.assert(specs.length == 1);
+  t.assert(specs[0].imported.name === 'x');
+  
+  // An export * from
+  t.assert(n.ExportAllDeclaration.check(ex))
+  t.assert(ex.source.value === "test-adaptor")
+
+  // And the original statement
+  t.assert(n.ExpressionStatement.check(stmt));
+});
