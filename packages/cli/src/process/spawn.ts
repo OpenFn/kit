@@ -29,6 +29,6 @@ export default function (basePath: string, opts: Opts) {
       process.exit(0)
     }
   })
-  child.send({ basePath, opts })
+  child.send({ init: true, basePath, opts })
 };
 

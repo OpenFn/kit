@@ -1,24 +1,56 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import ensureOpts from './util/ensure-opts';
 import compileJob from './compile/load-job';
 import loadState from './execute/load-state';
 import run from './execute/execute';
 
+// import packageConfig from '../package.json' assert { type: 'json' };
+
 export type Opts = {
-  silent?: boolean; // no logging
+  adaptors?: string[];
+  compileOnly?: boolean;
   jobPath?: string;
-  statePath?: string;
-  stateStdin?: string;
+  logger?: any; // TODO
+  modulesHome?: string;
+  noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;
-  modulesHome?: string;
-  adaptors?: string[];
-  noCompile?: boolean;
-  compileOnly?: boolean;
+  silent?: boolean; // no logging
+  statePath?: string;
+  stateStdin?: string;
   traceLinker?: boolean;
+  version?: boolean;
+}
+
+// Top level command parser
+const parse = async (basePath: string, options: Opts) => {
+  if (options.version) {
+    return version(options);
+  }
+  if (options.compileOnly) {
+    return compile(basePath, options);
+  }
+  return execute(basePath, options);
+};
+
+export default parse;
+
+const assertPath = (basePath?: string) => {
+  if (!basePath) {
+    console.error('ERROR: no path provided!');
+    console.error('\nUsage:');
+    console.error('  open path/to/job.js');
+    console.error('\nFor more help do:');
+    console.error('  openfn --help ');
+    process.exit(1);
+  }
 }
 
 export const compile = async (basePath: string, options: Opts) => {
+  assertPath(basePath);
+  // TODO should parse do all the options stuff and pass it downstream?
+  // Or should each command have its own options parser?
   const opts = ensureOpts(basePath, options);
 
   const log = (...args: any) => {
@@ -40,6 +72,7 @@ export const compile = async (basePath: string, options: Opts) => {
 };
 
 export const execute = async (basePath: string, options: Opts) => {
+  assertPath(basePath);
   const opts = ensureOpts(basePath, options);
 
   const log = (...args: any) => {
@@ -66,4 +99,19 @@ export const execute = async (basePath: string, options: Opts) => {
   log(`\nDone! ✨`)
 }
 
-export default execute;
+export const version = async (options: Opts) => {
+  // Note that this should ignore silent
+  const logger = options.logger || console;
+
+  const src = await fs.readFile(path.resolve('package.json'), 'utf8')
+  const pkg = JSON.parse(src);
+  logger.log(`@openfn/cli ${pkg.version}`)
+  for (const d in pkg.dependencies) {
+    if (d.startsWith('@openfn')) {
+      const pkgpath = path.resolve(`node_modules/${d}/package.json`)
+      const s = await fs.readFile(pkgpath, 'utf8')
+      const p = JSON.parse(s);
+      logger.log(` - ${d} ${p.version}`)
+    }
+  }
+}

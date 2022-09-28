@@ -4,7 +4,8 @@ import mock from 'mock-fs';
 import fs from 'node:fs/promises';
 
 import { cmd } from '../src/cli';
-import { execute, compile, Opts } from '../src/commands';
+import commandParser, { Opts } from '../src/commands';
+import { openStdin } from 'node:process';
 
 test.afterEach(() => {
   mock.restore();
@@ -20,6 +21,10 @@ type RunOptions = {
   outputPath?: string;
   state?: any;
   modulesHome?: string;
+  logger?: {
+    log: (s: string) => void;
+  },
+  disableMock?: boolean;
 }
 
 // Helper function to mock a file system with particular paths and values,
@@ -36,31 +41,63 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   const pnpm = path.resolve('../../node_modules/.pnpm')
 
   // Mock the file system in-memory
-  mock({
-    [jobPath]: job,
-    [statePath]: state,
-    [outputPath]: '{}',
-    [pnpm]: mock.load(pnpm, {}),
-    // enable us to load test modules through the mock
-    '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
-    //'node_modules': mock.load(path.resolve('node_modules/'), {}),
-  })
+  if (!options.disableMock) {
+    mock({
+      [jobPath]: job,
+      [statePath]: state,
+      [outputPath]: '{}',
+      [pnpm]: mock.load(pnpm, {}),
+      // enable us to load test modules through the mock
+      '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
+      //'node_modules': mock.load(path.resolve('node_modules/'), {}),
+    })
+  }
 
   const opts = cmd.parse(command) as Opts;
   opts.modulesHome = options.modulesHome;
   opts.silent = true; // disable logging
+  opts.logger = options.logger;
   // opts.traceLinker = true;
-
-  // TODO OK not such a helpful test...
-  if (opts.compileOnly) {
-    await compile(jobPath, opts);
-  } else {
-    await execute(jobPath, opts);
-    // read the mock output
+  await commandParser(jobPath, opts)
+  try {
+    // Try and load the result as json as a test convenience
     const result = await fs.readFile(outputPath, 'utf8');
-    return JSON.parse(result);
+    if (result) {
+      return JSON.parse(result);
+    }
+  } catch(e) {
+    // do nothing
   }
 }
+
+test.serial('print version information with -v', async (t) => {
+  const out: string[] = [];
+  const logger = {
+    log: (m: string) => out.push(m)
+  };
+  const result = await run('openfn -v', '', { logger, disableMock: true });
+  t.falsy(result);
+  // Really rough testing on the log output here
+  // 1) Should print out at least one line
+  t.assert(out.length > 0);
+  // 2) First line should mention @openfn/cli
+  t.assert(out[0].match(/@openfn\/cli/))
+});
+
+
+test.serial('print version information with --version', async (t) => {
+  const out: string[] = [];
+  const logger = {
+    log: (m: string) => out.push(m)
+  };
+  const result = await run('openfn -version', '', { logger, disableMock: true });
+  t.falsy(result);
+  // Really rough testing on the log output here
+  // 1) Should print out at least one line
+  t.assert(out.length > 0);
+  // 2) First line should mention @openfn/cli
+  t.assert(out[0].match(/@openfn\/cli/))
+});
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
   const result = await run('openfn job.js', JOB_EXPORT_42);
