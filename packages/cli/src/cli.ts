@@ -2,7 +2,8 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers'
 
 export const cmd = yargs(hideBin(process.argv))
-  .command('openfn [path]' , "Run the job at the path")
+  .command('[path]' , "Run the job at the path")
+  .command('--test' , "Run a trivial test job with no disk I/O")
   .example('openfn path/to/dir', 'Looks for job.js, state.json in path/to/dir')
   .example('openfn foo/job.js', 'Reads foo/job.js, looks for state and output in foo')
   .example('openfn job.js -adaptor @openfn/language-common', 'Run job.js with automatic imports from the commmon language adaptor')
@@ -14,7 +15,8 @@ export const cmd = yargs(hideBin(process.argv))
     demandOption: true
   })
   .option('test', {
-    description: 'Run a test job to exercise the installation',
+    description: 'Run a test job to exercise the installation. Pass a number via -S to multiply by 2.',
+    boolean: true,
   })
   .option('output-path', {
     alias: 'o',
@@ -40,7 +42,7 @@ export const cmd = yargs(hideBin(process.argv))
   .option('compile-only', {
     alias: 'c',
     boolean: true,
-    description: 'Skip compilation'
+    description: 'Compile the job but don\'t execute it. State is written to output.js or returned to console if -O is set.'
   })
   .option('no-compile', {
     boolean: true,
