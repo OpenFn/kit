@@ -69,11 +69,8 @@ $ pnpm pack:local
 
 Run the install command as printed in your shell - something like `npm -g dist/openfn-cli-local.tgz`
 
-Then point it at any job file:
+You can run `openfn --test` to exercise the runtime and compiler.
 
-`openfn job.js`
-
-TODO: the CLI should support a job form stdin in so that we can do a complete test from the commandline without any filesystem dependencies. Then we can automate it!
 
 ## Packages
 

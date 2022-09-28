@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import ensureOpts from './util/ensure-opts';
+import ensureOpts, { SafeOpts } from './util/ensure-opts';
 import compileJob from './compile/load-job';
 import loadState from './execute/load-state';
 import run from './execute/execute';
@@ -16,18 +16,18 @@ export type Opts = {
   noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;
-  silent?: boolean; // no logging
+  silent?: boolean; // no logging (TODO would a null logger be better?)
   statePath?: string;
   stateStdin?: string;
   traceLinker?: boolean;
-  version?: boolean;
+  test?: boolean;
 }
 
 // Top level command parser
 const parse = async (basePath: string, options: Opts) => {
-  // if (options.version) {
-  //   return version(options);
-  // }
+  if (options.test) {
+    return test(options);
+  }
   if (options.compileOnly) {
     return compile(basePath, options);
   }
@@ -46,6 +46,40 @@ const assertPath = (basePath?: string) => {
     process.exit(1);
   }
 }
+
+const nolog = {
+  log: () => {}
+};
+
+export const test = async (options: Opts) => {
+  const opts = { ... options } as SafeOpts;
+
+  const logger = options.logger || (opts.silent ? nolog : console);
+
+  logger.log('Running test job...')
+  logger.log()
+
+  // This is a bit weird but it'll actually work!
+  opts.jobPath = `const fn = () => state => state * 2; fn()`;
+
+  if (!opts.stateStdin) {
+    logger.log('No state detected: pass -S <number> to provide some state');
+    opts.stateStdin = "21";
+  }
+  
+  // TODO need to fix this log API but there's work for that on another branch
+  const state = await loadState(opts, nolog.log);
+  const code = await compileJob(opts, nolog.log);
+  logger.log('Compiled job:')
+  logger.log()
+  logger.log(code);
+  logger.log()
+  logger.log('Running job:')
+  const result = await run(code, state, opts);
+  logger.log()
+  logger.log(`Result: ${result}`);
+  return result;
+};
 
 export const compile = async (basePath: string, options: Opts) => {
   assertPath(basePath);
@@ -105,13 +139,6 @@ export const execute = async (basePath: string, options: Opts) => {
 // export const version = async (options: Opts) => {
 //   // Note that this should ignore silent
 //   const logger = options.logger || console;
-
-//   // difficulty: paths here are relative to the module
-//   // And may be resolved from  inside the process
-//   // But we need to return relative to whever openfn is installed
-//   // hrrrnnnngh
-  
-//   console.log(import.meta.url)
 //   const src = await fs.readFile(path.resolve('package.json'), 'utf8')
 //   const pkg = JSON.parse(src);
 //   logger.log(`@openfn/cli ${pkg.version}`)

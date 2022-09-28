@@ -59,6 +59,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.logger = options.logger;
   // opts.traceLinker = true;
   await commandParser(jobPath, opts)
+  
   try {
     // Try and load the result as json as a test convenience
     const result = await fs.readFile(outputPath, 'utf8');
@@ -70,33 +71,43 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   }
 }
 
-test.serial('print version information with -v', async (t) => {
+// Skipped because we're relying on yargs.version
+test.serial.skip('print version information with -v', async (t) => {
   const out: string[] = [];
   const logger = {
     log: (m: string) => out.push(m)
   };
-  const result = await run('openfn -v', '', { logger, disableMock: true });
-  t.falsy(result);
-  // Really rough testing on the log output here
-  // 1) Should print out at least one line
+  await run('openfn -v', '', { logger, disableMock: true });
   t.assert(out.length > 0);
-  // 2) First line should mention @openfn/cli
-  t.assert(out[0].match(/@openfn\/cli/))
 });
 
-
-test.serial('print version information with --version', async (t) => {
+// Skipped because we're relying on yargs.version
+test.serial.skip('print version information with --version', async (t) => {
   const out: string[] = [];
   const logger = {
     log: (m: string) => out.push(m)
   };
-  const result = await run('openfn -version', '', { logger, disableMock: true });
-  t.falsy(result);
-  // Really rough testing on the log output here
-  // 1) Should print out at least one line
+  await run('openfn --version', '', { logger, disableMock: true });
   t.assert(out.length > 0);
-  // 2) First line should mention @openfn/cli
-  t.assert(out[0].match(/@openfn\/cli/))
+});
+
+test.serial('run test job with default state', async (t) => {
+  const out: string[] = [];
+  const logger = {
+    log: (m: string) => out.push(m)
+  };
+  await run('openfn --test', '', { logger });
+  const last = out.pop()
+  t.assert(last === "Result: 42")
+});
+
+test.serial('run test job with custom state', async (t) => {
+  const out: string[] = [];
+  const logger = {
+    log: (m: string) => out.push(m)
+  };await run('openfn --test -S 1', '', { logger });
+  const last = out.pop()
+  t.assert(last === "Result: 2")
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {

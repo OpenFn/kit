@@ -13,6 +13,9 @@ export const cmd = yargs(hideBin(process.argv))
     describe: 'The path to load the job from (a .js file or a dir containing a job.js file)',
     demandOption: true
   })
+  .option('test', {
+    description: 'Run a test job to exercise the installation',
+  })
   .option('output-path', {
     alias: 'o',
     description: 'Path to the output file',
