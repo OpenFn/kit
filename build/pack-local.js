@@ -27,7 +27,7 @@ function processPackageJSON(stream, packageMap, pack) {
       const pkg = JSON.parse(buf.toString('utf8'));
       for (const dep in pkg.dependencies) {
         if (packageMap[dep]) {
-          console.log(`Napping ${dep} to ${packageMap[dep]}`)
+          console.log(`Mapping ${dep} to ${packageMap[dep]}`)
           pkg.dependencies[dep] = packageMap[dep];
         }
       }
@@ -88,6 +88,12 @@ const mapPackages = (files) => {
 console.log('Updating package.jsons')
 findPackages().then(async (files) => {
   const pkgs = mapPackages(files);
-  Promise.all(files.map((f) => updatePkg(pkgs, f)));
+  Promise.all(files.map((f) => updatePkg(pkgs, f))).then(() => {
+    console.log();
+    console.log('Build complete!');
+    console.log(`Install the CLI from ${pkgs['@openfn/cli']} with the command below:`)
+    console.log();
+    console.log(`   npm install -g dist/${pkgs['@openfn/cli']}`)
+  })
 })
 
