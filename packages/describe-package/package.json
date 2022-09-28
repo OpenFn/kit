@@ -28,7 +28,8 @@
     "build": "pnpm build:rollup",
     "build:esbuild": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
     "build:rollup": "rimraf dist/ .rollup.cache && rollup -c",
-    "watch": "node esbuild.ts watch"
+    "watch": "node esbuild.ts watch",
+    "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
   "author": "Stuart Corbishley <stuart@openfn.org>",

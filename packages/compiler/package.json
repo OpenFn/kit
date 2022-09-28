@@ -22,7 +22,8 @@
     "test:watch": "pnpm ava -w",
     "build": "rimraf dist/ .rollup.cache && rollup -c",
     "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
-    "parse": "node --no-warnings --loader=tsm src/cli/parse.ts"
+    "parse": "node --no-warnings --loader=tsm src/cli/parse.ts",
+    "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
   "author": "Joe Clark<jclark@openfn.org>",

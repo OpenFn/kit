@@ -11,7 +11,8 @@
     "test:watch": "pnpm ava -w",
     "build": "rimraf dist/ .rollup.cache ts.cache && rollup -c",
     "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
-    "openfn": "node --no-warnings dist/index.js"
+    "openfn": "node --no-warnings dist/index.js",
+    "pack": "pnpm pack --pack-destination ../../dist"
   },
   "exports": {
     ".": {
@@ -47,7 +48,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@openfn/compiler": "workspace:^0.0.4",
+    "@openfn/compiler": "workspace:0.0.4",
     "@openfn/runtime": "workspace:^0.0.2",
     "yargs": "^17.5.1"
   },

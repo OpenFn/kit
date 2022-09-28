@@ -17,7 +17,8 @@
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
     "build": "rimraf dist/ .rollup.cache && rollup -c",
-    "build:watch": "pnpm rollup -cw --no-watch.clearScreen"
+    "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
+    "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
   "author": "Joe Clark <jclark@openfn.org>",
