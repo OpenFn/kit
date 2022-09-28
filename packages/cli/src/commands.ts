@@ -25,9 +25,9 @@ export type Opts = {
 
 // Top level command parser
 const parse = async (basePath: string, options: Opts) => {
-  if (options.version) {
-    return version(options);
-  }
+  // if (options.version) {
+  //   return version(options);
+  // }
   if (options.compileOnly) {
     return compile(basePath, options);
   }
@@ -99,19 +99,28 @@ export const execute = async (basePath: string, options: Opts) => {
   log(`\nDone! ✨`)
 }
 
-export const version = async (options: Opts) => {
-  // Note that this should ignore silent
-  const logger = options.logger || console;
+// This is disabled for now because
+// 1) Resolving paths relative to the install location of the module is tricky
+// 2) yargs does a pretty good job of reporting the CLI's version
+// export const version = async (options: Opts) => {
+//   // Note that this should ignore silent
+//   const logger = options.logger || console;
 
-  const src = await fs.readFile(path.resolve('package.json'), 'utf8')
-  const pkg = JSON.parse(src);
-  logger.log(`@openfn/cli ${pkg.version}`)
-  for (const d in pkg.dependencies) {
-    if (d.startsWith('@openfn')) {
-      const pkgpath = path.resolve(`node_modules/${d}/package.json`)
-      const s = await fs.readFile(pkgpath, 'utf8')
-      const p = JSON.parse(s);
-      logger.log(` - ${d} ${p.version}`)
-    }
-  }
-}
+//   // difficulty: paths here are relative to the module
+//   // And may be resolved from  inside the process
+//   // But we need to return relative to whever openfn is installed
+//   // hrrrnnnngh
+  
+//   console.log(import.meta.url)
+//   const src = await fs.readFile(path.resolve('package.json'), 'utf8')
+//   const pkg = JSON.parse(src);
+//   logger.log(`@openfn/cli ${pkg.version}`)
+//   for (const d in pkg.dependencies) {
+//     if (d.startsWith('@openfn')) {
+//       const pkgpath = path.resolve(`node_modules/${d}/package.json`)
+//       const s = await fs.readFile(pkgpath, 'utf8')
+//       const p = JSON.parse(s);
+//       logger.log(` - ${d} ${p.version}`)
+//     }
+//   }
+// }

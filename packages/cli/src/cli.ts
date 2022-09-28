@@ -53,9 +53,9 @@ export const cmd = yargs(hideBin(process.argv))
     description: 'Trace module resolution output in the linker',
     boolean: true,
   })
-  .version(false)
+  // .version(false)
   .option('version', {
     alias: ['v'],
-    description: 'Print the version of the CLI and @openfn dependencies',
+    description: 'Print the version of the CLI',
     boolean: true,
   });
