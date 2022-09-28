@@ -17,6 +17,8 @@ async function findPackages() {
   });
 }
 
+const getLocalTarballName = (packagePath) => packagePath.replace('.tgz', '-local.tgz');
+
 function processPackageJSON(stream, packageMap, pack) {
   return new Promise(resolve => {
     const data = [];
@@ -28,7 +30,7 @@ function processPackageJSON(stream, packageMap, pack) {
       for (const dep in pkg.dependencies) {
         if (packageMap[dep]) {
           console.log(`Mapping ${dep} to ${packageMap[dep]}`)
-          pkg.dependencies[dep] = packageMap[dep];
+          pkg.dependencies[dep] = getLocalTarballName(packageMap[dep]);
         }
       }
       pack.entry({ name: 'package/package.json' }, JSON.stringify(pkg, null, 2), resolve)
@@ -37,8 +39,8 @@ function processPackageJSON(stream, packageMap, pack) {
 }
 
 function updatePkg(packageMap, filename) {
-  const path = `dist/${filename}`;
-  console.log(' - Updating package', path)
+  const pkgPath = `dist/${filename}`;
+  console.log(' - Updating package', pkgPath)
   
   // The packer contains the new (gzipped) tarball
   const pack = tarStream.pack();
@@ -58,12 +60,12 @@ function updatePkg(packageMap, filename) {
 
     // Pipe to a -local file name
     // Reading and writing to the same tarball seems to cause problems, funnily enough
-    const out = fs.createWriteStream(path.replace('.tgz', '-local.tgz'))
+    const out = fs.createWriteStream(getLocalTarballName(pkgPath))
     // Note that we have to start piping to the output stream immediately,
     // otherwise we get backpressure fails on the pack stream
     pack.pipe(out);
     
-    fs.createReadStream(path)
+    fs.createReadStream(pkgPath)
       .pipe(gunzip())
       .pipe(extract)
       
@@ -85,15 +87,15 @@ const mapPackages = (files) => {
   }, {});
 }
 
-console.log('Updating package.jsons')
 findPackages().then(async (files) => {
   const pkgs = mapPackages(files);
   Promise.all(files.map((f) => updatePkg(pkgs, f))).then(() => {
+    const cliPath = getLocalTarballName(pkgs['@openfn/cli']);
     console.log();
     console.log('Build complete!');
-    console.log(`Install the CLI from ${pkgs['@openfn/cli']} with the command below:`)
+    console.log(`Install the CLI from ${cliPath} with the command below:`)
     console.log();
-    console.log(`   npm install -g dist/${pkgs['@openfn/cli']}`)
+    console.log(`   npm install -g ${cliPath}`)
   })
 })
 

@@ -62,6 +62,7 @@ The `build/pack-local` script is an overly complicated solution which:
 To run the test:
 
 ```
+$ pnpm build
 $ pnpm clean:local
 $ pnpm pack:local
 ```
