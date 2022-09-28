@@ -5,6 +5,7 @@
  */
 const path = require('node:path')
 const fs = require('node:fs');
+const { createGzip } = require('node:zlib');
 const tarStream = require('tar-stream');
 const gunzip = require('gunzip-maybe');
 
@@ -21,16 +22,15 @@ function processPackageJSON(stream, packageMap, pack) {
     const data = [];
     stream.on('data', c => data.push(c))
     stream.on('end', () => {
-      console.log('writing package json')
       const buf = Buffer.concat(data)
       
       const pkg = JSON.parse(buf.toString('utf8'));
       for (const dep in pkg.dependencies) {
         if (packageMap[dep]) {
+          console.log(`Napping ${dep} to ${packageMap[dep]}`)
           pkg.dependencies[dep] = packageMap[dep];
         }
       }
-      console.log(pkg.dependencies);
       pack.entry({ name: 'package/package.json' }, JSON.stringify(pkg, null, 2), resolve)
     });
   });
@@ -38,10 +38,12 @@ function processPackageJSON(stream, packageMap, pack) {
 
 function updatePkg(packageMap, filename) {
   const path = `dist/${filename}`;
-  
-  // The packer contains the new tarball
-  var pack = tarStream.pack();
   console.log(' - Updating package', path)
+  
+  // The packer contains the new (gzipped) tarball
+  const pack = tarStream.pack();
+  pack.pipe(createGzip());
+
   return new Promise((resolve) => {
     // The extractor streams the old tarball
     var extract = tarStream.extract();
@@ -54,9 +56,12 @@ function updatePkg(packageMap, filename) {
       }
     });
 
-    // Pipe to a .local file name
+    // Pipe to a -local file name
     // Reading and writing to the same tarball seems to cause problems, funnily enough
-    pack.pipe(fs.createWriteStream(path.replace('.tgz', '-local.tgz')));
+    const out = fs.createWriteStream(path.replace('.tgz', '-local.tgz'))
+    // Note that we have to start piping to the output stream immediately,
+    // otherwise we get backpressure fails on the pack stream
+    pack.pipe(out);
     
     fs.createReadStream(path)
       .pipe(gunzip())
@@ -74,7 +79,7 @@ const mapPackages = (files) => {
   return files.reduce((obj, file) => {
     const mapped = /openfn-(.+)-\d+\.\d+\.\d+\.tgz/.exec(file)
     if (mapped && mapped[1]) {
-      obj[`@openfn/${mapped[1]}`] = path.resolve(file);
+      obj[`@openfn/${mapped[1]}`] = path.resolve('dist', file);
     }
     return obj;
   }, {});
