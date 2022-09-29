@@ -58,9 +58,4 @@ export const cmd = yargs(hideBin(process.argv))
     description: 'Trace module resolution output in the linker',
     boolean: true,
   })
-  // .version(false)
-  .option('version', {
-    alias: ['v'],
-    description: 'Print the version of the CLI',
-    boolean: true,
-  });
+  .alias('v', 'version');
