@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.0.5
+
+### Patch Changes
+
+- 27c6434: Added a --test command to the cli
+- 8a5311b: Added support for a --version flag in the cli
+  - @openfn/compiler@0.0.6
+
 ## 0.0.4
 
 ### Patch Changes

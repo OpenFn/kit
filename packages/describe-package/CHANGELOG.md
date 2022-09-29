@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.5
+
+### Patch Changes
+
+- 27c6434: Fixed describe-package dependencies
+
 ## 0.0.4
 
 ### Patch Changes

@@ -65,9 +65,9 @@ importers:
 
   packages/cli:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.4
+      '@openfn/compiler': workspace:^0.0.5
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/runtime': workspace:^0.0.2
+      '@openfn/runtime': workspace:^0.0.3
       '@rollup/plugin-typescript': ^8.3.2
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -104,7 +104,7 @@ importers:
 
   packages/compiler:
     specifiers:
-      '@openfn/describe-package': workspace:^0.0.3
+      '@openfn/describe-package': workspace:^0.0.4
       '@rollup/plugin-typescript': ^8.3.2
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -169,6 +169,7 @@ importers:
       cross-fetch: 3.1.5
       node-localstorage: 2.2.1
       threads: 1.7.0
+      typescript: 4.8.3
       url-join: 5.0.0
     devDependencies:
       '@rollup/plugin-typescript': 8.5.0_tznp6w7csbjledp5nresoxoky4
@@ -186,7 +187,6 @@ importers:
       ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
       tslib: 2.4.0
       tsm: 2.2.2
-      typescript: 4.8.3
 
   packages/runtime:
     specifiers:
@@ -214,9 +214,9 @@ importers:
 
   packages/runtime-manager:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.4
+      '@openfn/compiler': workspace:^0.0.5
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/runtime': workspace:^0.0.2
+      '@openfn/runtime': workspace:^0.0.3
       '@rollup/plugin-typescript': ^8.3.2
       '@types/koa': ^2.13.5
       '@types/node': ^17.0.31
@@ -6833,7 +6833,6 @@ packages:
     resolution: {integrity: sha512-goMHfm00nWPa8UvR/CPSvykqf6dVV8x/dp0c5mFTMTIu0u0FlGWRioyy7Nn0PGAdHxpJZnuO/ut+PpQ8UiHAig==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: true
 
   /unbox-primitive/1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
