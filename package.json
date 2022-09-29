@@ -16,9 +16,7 @@
   "license": "ISC",
   "devDependencies": {
     "@changesets/cli": "^2.24.4",
-    "rimraf": "^3.0.2"
-  },
-  "dependencies": {
+    "rimraf": "^3.0.2",
     "gunzip-maybe": "^1.4.2",
     "tar-stream": "^2.2.0"
   }

@@ -31,6 +31,9 @@ jobs:
           paths:
             - node_modules
       - run:
+          name: Build packages
+          command: pnpm build
+      - run:
           name: Run Tests
           command: pnpm test
 
