@@ -1,6 +1,6 @@
 module.exports = {
   extensions: {
-   ts: "module"
+    ts: "module"
   },
 
   environmentVariables: {

@@ -260,11 +260,9 @@ importers:
       '@types/react': ^18.0.18
       '@types/react-dom': ^18.0.6
       ava: ^4.3.3
-      chai: ^4.3.6
       classcat: ^5.0.4
       elkjs: ^0.8.2
       esbuild: ^0.15.6
-      mocha: ^10.0.0
       postcss: ^8.4.16
       react: ^18.2.0
       react-dom: ^18.2.0
@@ -292,9 +290,7 @@ importers:
       '@types/react': 18.0.18
       '@types/react-dom': 18.0.6
       ava: 4.3.3
-      chai: 4.3.6
       esbuild: 0.15.6
-      mocha: 10.0.0
       postcss: 8.4.16
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
