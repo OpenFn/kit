@@ -36,12 +36,33 @@ pnpm changeset version
 
 This will automatically update the version numbers of the affected packages.
 
+Commit the changes:
+
+```
+git commit -am "Updated changeset version"
+```
+
 2) Rebuild
 ```
 pnpm install
+pnpm build
 ```
 
-(3a Test? Sanity check? Review?) 
+3) Test
+
+Build the test bundle:
+```
+$ pnpm clean:local
+$ pnpm pack:local
+```
+
+Install using command reported by pack:local (`npm install -g dist/openfn-cli-<version>-local.tgz`)
+
+Sanity check the version and ensure it works:
+```
+$ openfn --version
+$ openfn --test
+```
 
 3) Publish
 
