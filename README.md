@@ -47,7 +47,7 @@ pnpm install
 3) Publish
 
 ```
-pnmp publish -r
+pnpm changeset publish --otp <OTP>
 ```
 
 ## Testing the built package
