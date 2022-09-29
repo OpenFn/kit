@@ -133,3 +133,25 @@ test('override console.log', async (t) => {
 
   t.deepEqual(log, ["x"]);
 });
+
+test.only('calls execute if exported from a job', async (t) => {
+  const message = "__EXECUTE__";
+  let didLog = false;
+  const logger = {
+    log(m: string) {
+      if (m === message) {
+        didLog = true;
+      }
+    }
+  };
+  // The execute function, if called by the runtime, will send a specific
+  // message to console.log, which we can pick up here in the test
+  const source = `
+    export const execute = () => { console.log('${message}'); return () => ({}) };
+    export default [];
+  `;
+
+  await run(source, {}, { logger })
+
+  t.truthy(didLog);
+})

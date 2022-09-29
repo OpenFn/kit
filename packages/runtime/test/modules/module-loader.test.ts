@@ -1,20 +1,20 @@
 import vm from 'node:vm';
 import test from "ava";
-import evaluate from '../../src/modules/module-loader'
+import loadModule from '../../src/modules/module-loader'
 
 test('load a simple module', async (t) => {
   const src = "export default 20;"
 
-  const result = await evaluate(src);
+  const m = await loadModule(src);
 
-  t.assert(result === 20);
+  t.assert(m.default === 20);
 });
 
 test('load a module with a function', async (t) => {
   const src = "export default () => 20;"
 
-  const fn = await evaluate(src);
-  const result = fn();
+  const m = await loadModule(src);
+  const result = m.default();
 
   t.assert(result === 20);
 });
@@ -23,9 +23,9 @@ test('load a module with a context', async (t) => {
   const src = "export default x;"
 
   const context = vm.createContext({ x: 20 });
-  const result = await evaluate(src, { context });
+  const m = await loadModule(src, { context });
 
-  t.assert(result === 20);
+  t.assert(m.default === 20);
 });
 
 test('load a module with an import', async (t) => {
@@ -40,9 +40,18 @@ test('load a module with an import', async (t) => {
     await m.evaluate();
     return m;
   };
-  const result = await evaluate(src, { linker });
+  const m = await loadModule(src, { linker });
 
-  t.assert(result === 20);
+  t.assert(m.default === 20);
 })
+
+test('load a module with aribtrary exports', async (t) => {
+  const src = "export const x = 10; export const y = 20;";
+
+  const m = await loadModule(src);
+
+  t.assert(m.x === 10);
+  t.assert(m.y === 20);
+});
 
 // throw if an unrecognise import is provided

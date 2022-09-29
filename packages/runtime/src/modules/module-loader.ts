@@ -9,10 +9,20 @@ type Options = LinkerOptions & {
   linker?: Linker;
 }
 
-// Given a source string representing an esm module, evaluate it and return the result
-// We expect the module to export default an array of functions
+// aka ModuleDescriptor?
+export type LoadedJob = {
+  default: Operation[];
+  execute?: (...fns: Operation[]) => (state: any) => any;
+}
+
+// Very generic description of a module's exports
+export type ModuleExports = Record<'default' | string, any>;
+
+// Loads an ESM source string and returns the operation queue and execute function (if present)
 // The function will be validated
-export default async (src: string, opts: Options = {}) => {
+// TODO actually, validation should probably be left to the runtime manager
+// the runtime itself should naive
+export default async (src: string, opts: Options = {}): Promise<ModuleExports> => {
   validate(src);
 
   const context = opts.context || vm.createContext();
@@ -35,9 +45,8 @@ export default async (src: string, opts: Options = {}) => {
   }); 
   // Run the module - exports are written to module.namespace
   await module.evaluate()
-
-  // Return whatever is in the default export
-  return module.namespace.default;
+  
+  return module.namespace;
 }
 
 function validate(_src: string) {  

@@ -17,6 +17,13 @@ type Options = {
   linker?: LinkerOptions;
 }
 
+type JobModule = {
+  operations: Operation[],
+  execute?: (...operations: Operation[]) => (state: any) => any;
+  // TODO lifecycle hooks
+}
+
+
 const defaultState = { data: {}, configuration: {} };
 
 // TODO what if an operation throws?
@@ -28,10 +35,10 @@ export default async function run(
   // Setup a shared execution context
   const context = buildContext(initialState, opts)
   
-  const operations = await prepareJob(incomingJobs, context, opts);
+  const { operations, execute } = await prepareJob(incomingJobs, context, opts);
 
   // Create the main reducer function
-  const reducer = execute(...operations.map(wrapOperation));
+  const reducer = (execute || defaultExecute)(...operations.map(wrapOperation));
 
   // Run the pipeline
   const result = await reducer(initialState);
@@ -44,7 +51,8 @@ export default async function run(
 // What should we do if functions are in the state?
 const clone = (state: State) => JSON.parse(JSON.stringify(state))
 
-const execute = (...operations: Operation[]): Operation => {
+// Standard execute factory
+const defaultExecute = (...operations: Operation[]): Operation => {
   return state => {
     const start = Promise.resolve(state);
 
@@ -53,7 +61,6 @@ const execute = (...operations: Operation[]): Operation => {
     }, start);
   };
 };
-
 
 // Wrap an operation with various useful stuff
 // * A cloned state object so that prior state is always preserved
@@ -93,13 +100,18 @@ const buildContext = (state: State, options: Options) => {
   return context;
 }
 
-const prepareJob = async (jobs: string | Operation[], context: vm.Context, opts: Options = {}): Promise<Operation[]> => {
+const prepareJob = async (jobs: string | Operation[], context: vm.Context, opts: Options = {}): Promise<JobModule> => {
   if (typeof jobs === 'string') {
-    return await loadModule(jobs, { ...opts.linker, context }) as Operation[];
+    const exports =  await loadModule(jobs, { ...opts.linker, context });
+    const operations = exports.default;
+    return {
+      operations,
+      ...exports
+    } as JobModule;
   } else {
     if (opts.forceSandbox) {
       throw new Error("Invalid arguments: jobs must be strings")
     }
-    return jobs as Operation[];
+    return { operations: jobs as Operation[] }
   }
 }
