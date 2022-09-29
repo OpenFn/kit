@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.4
+
+### Patch Changes
+
+- 5623913: Allow execute() function to be overriden by adaptors and jobs
+
 ## 0.0.3
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 0.0.6
+
+### Patch Changes
+
+- 5623913: Allow execute() function to be overriden by adaptors and jobs
+- fb2b570: Fix version warning in cli
+- Updated dependencies [5623913]
+  - @openfn/compiler@0.0.7
+  - @openfn/runtime@0.0.4
+
 ## 0.0.5
 
 ### Patch Changes
