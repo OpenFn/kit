@@ -217,6 +217,12 @@ test.serial('auto-import from language-common: openfn job.js -a @openfn/language
   t.truthy(result.data?.done);
 });
 
+test.serial('use execute from language-postgres: openfn job.js -a @openfn/language-common', async (t) => {
+  const job = 'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });'
+  const result = await run('openfn -a @openfn/language-postgres', job, { modulesHome: '/modules' });
+  t.assert(result === 'execute called!');
+});
+
 test.serial('compile a job: openfn job.js -c', async (t) => {
   const options = {
     outputPath: 'output.js',

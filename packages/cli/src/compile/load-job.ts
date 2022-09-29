@@ -74,7 +74,8 @@ export const loadTransformOptions = async (opts: SafeOpts, log = (_str: string) 
     options['add-imports'] = {
       adaptor: {
         name: stripVersionSpecifier(specifier),
-        exports
+        exports,
+        exportAll: true,
       }
     };
   }
