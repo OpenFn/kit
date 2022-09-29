@@ -1,19 +1,24 @@
 import c from 'chalk';
+import figures from 'figures';
 
 type LogArgs = any[];
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'debug' | 'trace' | 'info' | 'warn' | 'error' | 'success';
 
-const DEBUG = 'debug';
-const INFO = 'info';
-const WARN = 'warn';
-const ERROR = 'error';
+export const DEBUG = 'debug';
+export const TRACE = 'trace';
+export const INFO = 'info';
+export const WARN = 'warn';
+export const ERROR = 'error';
+export const SUCCESS = 'success';
 
 const priority = {
   [DEBUG]: 0,
+  [TRACE]: 0,
   [INFO] : 1,
   [WARN] : 2,
-  [ERROR]: 3,
+  [ERROR]: 2,
+  [SUCCESS] : 2,
 };
 
 // TODO I'd quite like each package to have its own colour, I think
@@ -28,61 +33,79 @@ const colors = {
 
 type LogOptions = {
   silent?: boolean;
-  level?: number;
+  level?: LogLevel;
 
   // TODO how can we duplicate the custom logger, so we do a standard log AND something else (eg http log)
   logger?: typeof console; // a log object, allowing total override of the output#
 
+  hideNamespace?: boolean;
+  hideIcons?: boolean;
 
   // terrible name... when two logs of different types are side by side
   // stick an empty line between
-  breakUpTypes: boolean;
+  breakUpTypes?: boolean;
 
   // TODO if the output extends beyond the screenwith, wrap a bit
   //      just enough to avoid the [type][level] column (like this comment)
-  wrap: boolean
+  wrap?: boolean
 
 }
 
-// import BasicReporter from 'consola/basic'
+type Logger = typeof console;
+
+// TODO what if we want to hide levels?
+// OR hide some levels?
+// Or customise the display?
+// TODO use cool emojis
+export const styleLevel = (level: LogLevel) => {
+  switch (level) {
+    case ERROR:
+      return c.red(figures.cross);
+    case WARN:
+      return c.yellow(figures.warning);
+    case SUCCESS:
+      return c.green(figures.tick);
+    case DEBUG:
+    case TRACE:
+      return c.grey(figures.pointer);
+    default:
+      return c.white(figures.info);
+  }
+}
+
+const defaultEmitter = {
+  ...console,
+  success: (...args) => console.log(...args)
+}
 
 // This reporter should previx all logs with the logger name
 // It should also handle grouping
-export default function(name: string, options: LogOptions = {}) {
+export default function(name?: string, options?: LogOptions = {}): Logger {
   const minLevel = priority[options.level ?? INFO];
 
-  // TODO what if we want to hide levels?
-  // OR hide some levels?
-  // Or customise the display?
-  // TODO use cool emojis
-  const styleLevel = (level: LogLevel) => {
-    switch (level) {
-      case ERROR:
-        return c.red('[E]')
-      case WARN:
-        return c.yellow('[W]')
-      case DEBUG:
-        return c.gray('[d]')
-      default:
-        return c.white('[i]')
-    }
-  }
-
   // This is what we actually pass the log strings to
-  const emitter = options.logger || console;
+  const emitter = options.logger || defaultEmitter;
 
   // main logger function
   const log = (level: LogLevel, ...args: LogArgs) => {
-    const output = [
+    const output = [];
+
+    if (name && !options.hideNamespace) {
       // TODO how can we fix the with of the type column so that things
       //      are nicely arranged in the CLI?
-      c.blue(`[${name}]`),
-      styleLevel(level)
-    ]
+      output.push(c.blue(`[${name}]`));
+    }
+    if (!options.hideIcons) {
+      output.push(styleLevel(level))
+    }
+
     output.push(...args)
     // concatenate consecutive strings
     // log objects by themselves, pretty printed
 
+    // TODO I'd really really like a nice way to visualise log('state': hugeJsonObject)
+    // This will take some effort I think
+    
     // how do we actually log?
     if (!options.silent && priority[level] >= minLevel) {
       if (emitter[level]) {
@@ -99,17 +122,19 @@ export default function(name: string, options: LogOptions = {}) {
 
   logger[INFO] = wrap(INFO);
   logger[DEBUG] = wrap(DEBUG);
+  logger[TRACE] = wrap(DEBUG); // Note trace deliberately maps to debug!
   logger[ERROR] = wrap(ERROR);
   logger[WARN] = wrap(WARN);
+  logger[SUCCESS] = wrap(SUCCESS);
 
   logger.log = wrap(INFO);
 
   // possible convenience APIs
   logger.force = () => {} // force the next lines to log (even if silent)
   logger.unforce = () => {} // restore silent default
-  logger.break = () => {} // print a line break
+  logger.break = () => { console.log() } // print a line break
   logger.indent = (spaces: 0) => {} // set the indent level
 
-  return logger;
+  return logger as Logger;
 }
 

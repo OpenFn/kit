@@ -1,2 +1,5 @@
-// Dumb utility for typings and defaults
-export default console.log;
+import createLogger from '@openfn/logger';
+
+const logger = createLogger();
+
+export default logger;

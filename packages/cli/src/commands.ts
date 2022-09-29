@@ -47,37 +47,40 @@ const assertPath = (basePath?: string) => {
   }
 }
 
+// TODO this is not a good solution
+// We shold use log levels in the components to get this effect
+// ALso, if --silent is passed in the CLI, we need to respect that
 const nolog = {
-  log: () => {}
+  log: () => {},
+  debug: () => {},
+  success: () => {}
 };
 
 export const test = async (options: Opts) => {
   const opts = { ... options } as SafeOpts;
 
-  const logger = options.logger || (opts.silent ? nolog : console);
+  // const logger = options.logger || (opts.silent ? nolog : console);
+  const logger = createLogger('CLI')
 
   logger.log('Running test job...')
-  logger.log()
 
   // This is a bit weird but it'll actually work!
   opts.jobPath = `const fn = () => state => state * 2; fn()`;
 
   if (!opts.stateStdin) {
-    logger.log('No state detected: pass -S <number> to provide some state');
+    logger.warn('No state detected: pass -S <number> to provide some state');
     opts.stateStdin = "21";
   }
   
   // TODO need to fix this log API but there's work for that on another branch
-  const state = await loadState(opts, nolog.log);
-  const code = await compileJob(opts, nolog.log);
-  logger.log('Compiled job:')
-  logger.log()
-  logger.log(code);
-  logger.log()
-  logger.log('Running job:')
+  const state = await loadState(opts, nolog);
+  const code = await compileJob(opts, nolog);
+  logger.break()
+  logger.info('Compiled job:', '\n', code) // TODO there's an ugly intend here
+  logger.break()
+  logger.info('Running job...')
   const result = await run(code, state, opts);
-  logger.log()
-  logger.log(`Result: ${result}`);
+  logger.success(`Result: ${result}`);
   return result;
 };
 
@@ -105,10 +108,10 @@ export const execute = async (basePath: string, options: Opts) => {
   assertPath(basePath);
   const opts = ensureOpts(basePath, options);
 
-  const log = createLogger('CLI')
+  const log = createLogger('CLI', { level: 'info' })
 
   const state = await loadState(opts, log);
-  const code = await compileJob(opts, createLogger('Compiler'));
+  const code = await compileJob(opts, log);
   // TODO the runtime needs to accept a logger to fed through to jobs
   // Also the runtime will emit, rather than log directly
   // So probably want to log and listen here
@@ -116,16 +119,16 @@ export const execute = async (basePath: string, options: Opts) => {
   
   if (opts.outputStdout) {
     // TODO Log this even if in silent mode
-    log(`\nResult: `)
-    log(result)
+    log.success(`Result: `)
+    log.success(result)
   } else {
     if (!opts.silent) {
-      log(`Writing output to ${opts.outputPath}`)
+      log.success(`Writing output to ${opts.outputPath}`)
     }
     await fs.writeFile(opts.outputPath, JSON.stringify(result, null, 4));
   }
 
-  log(`Done! ✨`)
+  log.success(`Done! ✨`)
 }
 
 // This is disabled for now because

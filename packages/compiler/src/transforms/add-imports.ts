@@ -62,7 +62,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   return result;
 }
 
-function visitor(path: NodePath, options: AddImportsOptions) {
+function visitor(path: NodePath, options: AddImportsOptions, logger: any) {
   if (options.adaptor) {
     const { name, exports, exportAll } = options.adaptor;
     if (name) {
@@ -73,9 +73,12 @@ function visitor(path: NodePath, options: AddImportsOptions) {
         // If we have no exports for this adaptor, import anything apart from a few choice globals
         : Object.keys(identifiers).filter(i => !i.match(GLOBALS))
       if (usedExports.length) {
+        // TODO maybe in trace output we can say WHY we're doing these things
         addUsedImports(path, usedExports, name);
+        logger.info(`Added import statement for ${name}`);
         if (exportAll) {
           addExportAdaptor(path, name)
+          logger.info(`Added export * statement for ${name}`);
         }
       }
     }
@@ -84,6 +87,7 @@ function visitor(path: NodePath, options: AddImportsOptions) {
 
 // Add an import statement to pull in the named values from an adaptor 
 function addUsedImports(path: NodePath, imports: string[], adaptorName: string) {
+  // TODO add trace output
   const i = b.importDeclaration(
     imports.map(e => b.importSpecifier(b.identifier(e))),
     b.stringLiteral(adaptorName)

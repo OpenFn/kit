@@ -3,26 +3,32 @@ import type { SafeOpts } from '../util/ensure-opts';
 import defaultLogger from '../util/default-logger';
 
 export default async (opts: SafeOpts, log = defaultLogger) => {
+  log.debug('Load state...')
   if (opts.stateStdin) {
     try {
-      log('Reading state from stdin')
-      return JSON.parse(opts.stateStdin);
+      const json = JSON.parse(opts.stateStdin);
+      log.success('Read state from stdin');
+      log.debug('state:', json);
+      return json;
     } catch(e) {
-      console.error("Failed to load state from stdin")
-      console.error(opts.stateStdin);
+      log.error("Failed to load state from stdin")
+      log.error(opts.stateStdin);
+      log.error(e)
       process.exit(1);
     }
   }
 
   try {
-    log(`Loading state from ${opts.statePath}`);
     const str = await fs.readFile(opts.statePath, 'utf8')
-    return JSON.parse(str)
+    const json = JSON.parse(str)
+    log.success(`Loaded state from ${opts.statePath}`);
+    log.debug('state:', json)
+    return json;
   } catch(e) {
-    console.warn('Error loading state!');
-    console.log(e);
+    log.warn(`Error loading state from ${opts.statePath}`);
+    log.warn(e);
   }
-  log('Using default state')
+  log.warn('Using default state { data: {}, configuration: {}')
   return {
     data: {},
     configuration: {}

@@ -63,7 +63,7 @@ export function buildvisitorMap(visitors: Visitor[], options: TransformOptions =
         if (!map[name]) {
           map[name] = [];
         }
-        map[name].push((n: NodePath) => visitor(n, options[id] ?? {}));
+        map[name].push((n: NodePath) => visitor(n, options[id] ?? {}, options.logger));
       }
     }
   }

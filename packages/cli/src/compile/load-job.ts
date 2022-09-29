@@ -5,17 +5,18 @@ import defaultLogger from '../util/default-logger';
 
 // Load and compile a job from a file
 export default async (opts: SafeOpts, log = defaultLogger) => {
-  // TODO to make output more readable this should use log groups
-  log(`Loading job from ${opts.jobPath}`)
-
+  log.debug('Loading job...')
+  let job;
   if (opts.noCompile) {
-    log('Skipping compilation')
-    return fs.readFile(opts.jobPath, 'utf8');
+    log.info('Skipping compilation as noCompile is set')
+    job = fs.readFile(opts.jobPath, 'utf8');
+    log.success(`Loaded job from ${opts.jobPath} (no compilation)`)
   } else {
-    log('Compiling job source');
     const options: TransformOptions = await loadTransformOptions(opts, log);
-    return compile(opts.jobPath, options);
+    job = compile(opts.jobPath, options);
+    log.success(`Compiled job from ${opts.jobPath}`)
   }
+  return job;
 };
 
 // TODO this is a bit of a temporary solution
@@ -30,8 +31,10 @@ export const stripVersionSpecifier = (specifier: string) => {
 }
 
 // Mutate the opts object to write export information for the add-imports transformer
-export const loadTransformOptions = async (opts: SafeOpts, log = (_str: string) => {}) => {
-  const options: TransformOptions  = {};
+export const loadTransformOptions = async (opts: SafeOpts, log = defaultLogger) => {
+  const options: TransformOptions  = {
+    logger: log
+  };
 
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
@@ -43,14 +46,14 @@ export const loadTransformOptions = async (opts: SafeOpts, log = (_str: string) 
     const doPreload = async (path: string, logError: boolean = true) => {
       try {
         const result =  await preloadAdaptorExports(path);
-          if (result) {
-            log(`Compiler loading typedefs for ${specifier} from ${path}`)
-          }
+        if (result) {
+          log.info(`Pre-loaded typedefs for ${specifier} from ${path}`)
+        }
         return result;
       } catch(e) {
         if (logError) {
-          console.error(`error processing adaptors from path ${path}`);
-          console.error(e)
+          log.error(`Failed to loa adaptor typedefs from path ${path}`);
+          log.error(e)
         }
       }
     }

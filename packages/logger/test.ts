@@ -1,13 +1,14 @@
-import createLogger from './src/logger';
+import createLogger, { DEBUG } from './src/logger';
 
-const logger = new createLogger('Test');
+const logger = createLogger('Test', { level: DEBUG });
 
-logger('should work')
-logger.log('log message')
-// logger.debug('trace message')
-logger.error('OH NO')
-logger.warn('careful now')
-logger.log('a', 'b')
+logger('log')
+logger.debug('debug')
+// logger.trace('trace')
+logger.success('success')
+logger.info('info')
+logger.warn('warning')
+logger.error('error')
 logger.info({ a: 1, b: 2 })
 
 
