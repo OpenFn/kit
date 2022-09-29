@@ -20,7 +20,7 @@ type JobStats = {
   status: 'pending' | 'done' | 'err',
   startTime: number,
   threadId: number,
-  duration?: number,
+  duration: number,
   error?: string
   result?: any // State
 }
@@ -44,7 +44,8 @@ const Manager = function(useMock = false) {
       name,
       status: 'pending',
       threadId,
-      startTime: new Date().getTime()
+      startTime: new Date().getTime(),
+      duration: -1,
     });
     activeJobs.push(jobId);
   };

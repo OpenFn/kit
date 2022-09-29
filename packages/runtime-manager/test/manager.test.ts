@@ -41,8 +41,8 @@ test('Should run a mock job with a simple return value', async (t) => {
   // Just not the runtime logic
   const m = Manager(true);
   m.registerJob('test', 'mock');
-  const result = await m.run('test', { returnValue: 10 }) as number;
-  t.assert(result === 10);
+  const { result } = await m.run('test', { returnValue: 111 });
+  t.assert(result === 111);
 });
 
 // should publish an event when a job starts
