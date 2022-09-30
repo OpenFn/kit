@@ -1,21 +1,37 @@
 import c from 'chalk';
 import figures from 'figures';
+import parseOptions from './options';
 
-type LogArgs = any[];
+// Nice clean log level definitions
 
-type LogLevel = 'debug' | 'trace' | 'info' | 'warn' | 'error' | 'success';
+// Don't log anything at all (good for unit tests)
+// (Note that this doesn't stop a component printing to stdout! It just disables the logger)
+export const NONE = 'none';
 
-export const DEBUG = 'debug';
-export const TRACE = 'trace';
+// Defaults for all the family. Prints what the user absolutely has to know.
+// Top-level completions, errors and warnings
+export const SUCCESS = 'success'; // aka default
+
+// For power users. Success + generally interesting high-level information about what's happening.
+// Ie, operations starting, compiler changes
 export const INFO = 'info';
-export const WARN = 'warn';
-export const ERROR = 'error';
-export const SUCCESS = 'success';
+
+// For devs debugging - really detailed output about stepping into and out of major operations.
+// includes lots of data dumps
+export const DEBUG = 'debug';
+
+export const WARN = 'warn'; // TODO remove (this is success)
+export const ERROR = 'error'; // TODO remove (this is success)
+export const TRACE = 'trace'; // TODO remove (this is debug)
 
 const priority = {
   [DEBUG]: 0,
-  [TRACE]: 0,
   [INFO] : 1,
+  'default': 2,
+  [NONE] : 9,
+
+  // TODO remove all this
+  [TRACE]: 0,
   [WARN] : 2,
   [ERROR]: 2,
   [SUCCESS] : 2,
@@ -31,27 +47,6 @@ const colors = {
   // default to white I guess
 }
 
-type LogOptions = {
-  silent?: boolean;
-  level?: LogLevel;
-
-  // TODO how can we duplicate the custom logger, so we do a standard log AND something else (eg http log)
-  logger?: typeof console; // a log object, allowing total override of the output#
-
-  hideNamespace?: boolean;
-  hideIcons?: boolean;
-
-  // terrible name... when two logs of different types are side by side
-  // stick an empty line between
-  breakUpTypes?: boolean;
-
-  // TODO if the output extends beyond the screenwith, wrap a bit
-  //      just enough to avoid the [type][level] column (like this comment)
-  wrap?: boolean
-
-}
-
-type Logger = typeof console;
 
 // TODO what if we want to hide levels?
 // OR hide some levels?
@@ -73,29 +68,30 @@ export const styleLevel = (level: LogLevel) => {
   }
 }
 
-const defaultEmitter = {
-  ...console,
-  success: (...args) => console.log(...args)
-}
-
-// This reporter should previx all logs with the logger name
+// This reporter should prefix all logs with the logger name
 // It should also handle grouping
-export default function(name?: string, options?: LogOptions = {}): Logger {
-  const minLevel = priority[options.level ?? INFO];
+// The options object should be namespaced so that runtime managers can pass a global options object
+// to each logger. Seems counter-intuitive but it should be much easier!
+// TODO allow the logger to accept a single argument
+export default function(name?: string, options: NamespacedOptions = {}): Logger {
+  const opts = parseOptions(options, name);
+  const minLevel = priority[opts.level];
 
   // This is what we actually pass the log strings to
-  const emitter = options.logger || defaultEmitter;
+  const emitter = opts.logger;
 
   // main logger function
   const log = (level: LogLevel, ...args: LogArgs) => {
+    if (level === NONE) return;
+
     const output = [];
 
-    if (name && !options.hideNamespace) {
+    if (name && !opts.hideNamespace) {
       // TODO how can we fix the with of the type column so that things
       //      are nicely arranged in the CLI?
       output.push(c.blue(`[${name}]`));
     }
-    if (!options.hideIcons) {
+    if (!opts.hideIcons) {
       output.push(styleLevel(level))
     }
 
@@ -107,7 +103,7 @@ export default function(name?: string, options?: LogOptions = {}): Logger {
     // This will take some effort I think
     
     // how do we actually log?
-    if (!options.silent && priority[level] >= minLevel) {
+    if (priority[level] >= minLevel) {
       if (emitter[level]) {
         emitter[level](...output)
       }
@@ -116,7 +112,9 @@ export default function(name?: string, options?: LogOptions = {}): Logger {
 
   const wrap = (level: LogLevel) => (...args: LogArgs) => log(level, ...args);
 
+  // TODO remove this, it's not clear what level it will log to
   const logger = function(...args: LogArgs) {
+    console.warn("WARNING: deprecated call to logger()")
     log(INFO, ...args);
   };
 

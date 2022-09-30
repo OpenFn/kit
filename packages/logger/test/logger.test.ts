@@ -1,6 +1,6 @@
 import test from 'ava';
 import chalk from 'chalk';
-import createLogger, { styleLevel } from '../src/logger';
+import actualCreateLogger, { styleLevel } from '../src/logger';
 
 // disble chalk colours in unit tests
 chalk.level = 0
@@ -19,9 +19,12 @@ type TestLogger = typeof console & {
 }
 
 const icons = {
-  INFO: styleLevel('info'),
-  DEBUG: styleLevel('debug')
-}
+  info: styleLevel('info'),
+  debug: styleLevel('debug'),
+  success: styleLevel('success'),
+  warn: styleLevel('warn'),
+  error: styleLevel('error'),
+};
 
 // Create a test log emitter
 // The logger will call this with output
@@ -29,66 +32,176 @@ function testLogger() {
   const history: any[] = [];
   const logger = {
     ...console,
-
-   info: (...out: any[]) => history.push(['info', ...out]),
-
     _out: history,
+    _last: [],
   };
+  ['info', 'success', 'debug', 'warn', 'error'].forEach((l) => {
+    logger[l] = (...out: any[]) => history.push([l, ...out]);
+  });
   Object.defineProperty(logger, '_last', {
     get: () => history[history.length - 1]
   })
   return logger as TestLogger;
 };
 
-test('log with defaults', (t) => {
-  const l = testLogger();
+// Conveniene API - looks like the acutal logger API
+// But it creates a test  emitter which logs to an array,
+// and returns it in a tuple
+const createLogger = (name?: string, opts: NamespaceOptions = {}) => {
+  const l = testLogger(); 
+  
+  return [
+    actualCreateLogger(name, {
+      [name || 'global']: {
+        logger: l,
+        ...opts
+      }
+    }),
+    l
+  ];
+};
 
-  // TODO not a very nice signature for an anon logger with options!
-  const logger = createLogger(undefined, { logger: l });
-  logger('abc');
+test('log with defaults', (t) => {
+  const [logger, l] = createLogger();
+  logger.success('abc');
 
   // can't use parse here, so we'll do it manually
   const [level, ...rest] = l._last;
   const message = rest.join(' ');
-  t.assert(level === 'info');
-  t.assert(message === `${icons.INFO} abc`);
+  t.assert(level === 'success');
+  t.assert(message === `${icons.success} abc`);
 });
 
-test('info - logs with namespace', (t) => {
-  const l = testLogger();
+test('does not log with level=none', (t) => {
+  const [logger, l] = createLogger(undefined, { level: 'none' });
+  logger.success('a');
+  logger.info('b');
+  logger.debug('c');
+  logger.warn('d');
+  logger.error('e');
+  logger.log('e');
 
-  const logger = createLogger('x', { logger: l });
-  logger.info('abc');
+  t.assert(l._out.length === 0);
+});
+
+// Automated structural tests per level
+['info', 'debug', 'error', 'warn'].forEach((level) => {
+  test(`${level} - logs with icon and namespace`, (t) => {
+    const options = { level };
+    const [logger, l] = createLogger('x', options);
+    logger[level]('abc');
+
+    const result = parse(l._last);
+    t.assert(result.level === level);
+    t.assert(result.namespace === '[x]');
+    t.assert(result.icon === icons[level]);
+    t.assert(result.message === 'abc');
+  });
+
+  test(`${level} - logs without icon`, (t) => {
+    const options = { level, hideIcons: true };
+    const [logger, l] = createLogger('x', options)
+    logger[level]('abc');
+
+    const [_level, _namespace, ..._rest] = l._last;
+    const _message = _rest.join('_');
+    t.assert(_level === level);
+    t.assert(_namespace === '[x]');
+    t.assert(_message === 'abc');  });
+
+  test(`${level} - logs without namespace`, (t) => {
+    const options = { level, hideNamespace: true };
+    const [logger, l] = createLogger('x', options)
+    logger[level]('abc');
+
+    const [_level, _icon, ..._rest] = l._last;
+    const _message = _rest.join('_');
+    t.assert(_level === level);
+    t.assert(_icon === icons[level]);
+    t.assert(_message === 'abc');
+  });
+});
+
+test('log() should behave like info', (t) => {
+  const options = { level: 'debug' };
+  const [logger, l] = createLogger('x', options);
+  logger.log('abc');
 
   const result = parse(l._last);
   t.assert(result.level === 'info');
   t.assert(result.namespace === '[x]');
-  t.assert(result.icon === icons.INFO);
+  t.assert(result.icon === icons.info);
   t.assert(result.message === 'abc');
+})
+
+test.skip('default logs success, error and warning but not info and debug', (t) => {
+  const [logger, l] = createLogger(undefined, { level: 'default' });
+  
+  logger.debug('d');
+  logger.info('i');
+  t.assert(l._out.length === 0)
+
+  logger.success('s');
+  let result = parse(l._last);
+  console.log(result)
+  t.assert(result.level === 'success');
+  t.assert(result.message === 's');
+
+  logger.warn('w');
+  result = parse(l._last);
+  t.assert(result.level === 'warn');
+  t.assert(result.message === 'w');
+
+  logger.error('e');
+  result = parse(l._last);
+  t.assert(result.level === 'error');
+  t.assert(result.message === 'e');
 });
 
-test('info - logs without namespace', (t) => {
-  const l = testLogger();
-
-  const logger = createLogger('x', { logger: l, showNamespace: false });
-  logger.info('abc');
-
-  const result = parse(l._last);
-  t.assert(result.level === 'info');
-  t.assert(result.namespace === '[x]');
-  t.assert(result.icon === icons.INFO);
-  t.assert(result.message === 'abc');
-});
-
-test('info - does not log trace or debug', (t) => {
-  const l = testLogger();
-
-  const logger = createLogger('x', { logger: l, level: 'info' });
-  logger.trace('abc');
+test('info - does not log debug', (t) => {
+  const options = { level: 'info' };
+  const [logger, l] = createLogger('x', options);
   logger.debug('abc');
 
   t.assert(l._out.length === 0)
 });
+
+test('info - logs errors and warnings', (t) => {
+  const options = { level: 'info' };
+  const [logger, l] = createLogger('x', options);
+  logger.warn('a');
+  let result = parse(l._last);
+  t.assert(result.level === 'warn');
+
+  logger.error('b');
+  result = parse(l._last);
+  t.assert(result.level === 'error');
+});
+
+test('debug - logs everything', (t) => {
+  const options = { level: 'debug' };
+  const [logger, l] = createLogger('x', options);
+  logger.info('i');
+  let result = parse(l._last);
+  t.assert(result.level === 'info');
+  t.assert(result.message === 'i');
+  
+  logger.debug('d');
+  result = parse(l._last);
+  t.assert(result.level === 'debug');
+  t.assert(result.message === 'd');
+
+  logger.warn('w');
+  result = parse(l._last);
+  t.assert(result.level === 'warn');
+  t.assert(result.message === 'w');
+
+  logger.error('e');
+  result = parse(l._last);
+  t.assert(result.level === 'error');
+  t.assert(result.message === 'e');
+});
+
 
 
 // test('debug', () => {
