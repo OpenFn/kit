@@ -26,15 +26,15 @@ type LogOptions = {
   wrap?: boolean
   
   // or is this a terminal concern?
-  showTimestamps: boolean;
+  showTimestamps?: boolean;
   
   // paths to stuff in the state object we should obfuscate
   // this should work with language adaptors
   // like if we on sensitive c in a.b.c, console.log(c) should 
-  sensitivePaths: string[];
+  sensitivePaths?: string[];
 
-  sanitiseState: boolean; // defaults to true
-  detectState: boolean; // defaults to true
+  sanitiseState?: boolean; // defaults to true
+  detectState?: boolean; // defaults to true
 }
 
 // Design for a logger
