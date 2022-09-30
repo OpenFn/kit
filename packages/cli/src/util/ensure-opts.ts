@@ -1,7 +1,15 @@
 import path from 'node:path';
-import { Opts} from '../commands';
+import { Opts, SafeOpts } from '../commands';
+import { LogOptions } from '@openfn/logger';
 
-export type SafeOpts = Required<Opts>;
+export const defaultLoggerOptions = {
+  global: {
+    level: 'default',
+  },
+  runtime: {
+    level: 'trace',
+  }
+}
 
 export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
   const newOpts = {
@@ -12,7 +20,7 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
     stateStdin: opts.stateStdin,
     traceLinker: opts.traceLinker,
     modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
-  } as Opts;
+  } as SafeOpts;
 
   const set = (key: keyof Opts, value: string) => {
     // @ts-ignore TODO
@@ -32,6 +40,23 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
     set('outputPath', newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`)  
   }
 
+  const components: Record<string, LogOptions> = {};
+  if (opts.log) {
+    opts.log.forEach((l) => {
+      if (l.match(/=/)) {
+        const [component, level] = l.split('=');
+        components[component] = { level };
+      } else  {
+        components['global'] = { level: l };
+      }
+    })
+    // TODO what if other log options are passed? Not really a concern right now
+  }
+  newOpts.log = {
+    ...defaultLoggerOptions,
+    ...components,
+  };
+
   // TODO if no adaptor is provided, default to language common
   // Should we go further and bundle language-common?
   // But 90% of jobs use something else. Better to use auto loading.
@@ -45,5 +70,5 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
     // });
   }
 
-  return newOpts as SafeOpts;
+  return newOpts;
 }

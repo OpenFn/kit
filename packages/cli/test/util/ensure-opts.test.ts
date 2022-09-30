@@ -1,6 +1,6 @@
 import test from 'ava';
 import { Opts } from '../../src/commands';
-import ensureOpts from '../../src/util/ensure-opts';
+import ensureOpts, { defaultLoggerOptions } from '../../src/util/ensure-opts';
 
 test('set job, state and output from a base path', (t) => {
   const initialOpts = {} as Opts;
@@ -135,6 +135,44 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
+test('log: add default options', (t) => {
+  const initialOpts = {} as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.deepEqual(opts.log, defaultLoggerOptions);
+});
+
+test('log: override global options', (t) => {
+  const initialOpts = {
+    log: ['debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.deepEqual(opts.log.global, { level: 'debug' });
+});
+
+test('log: set a specific option', (t) => {
+  const initialOpts = {
+    log: ['compiler=debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.deepEqual(opts.log.compiler, { level: 'debug' });
+});
+
+test('log: set global and a specific option', (t) => {
+  const initialOpts = {
+    log: ['none', 'compiler=debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.deepEqual(opts.log.global, { level: 'none' });
+  t.deepEqual(opts.log.compiler, { level: 'debug' });
+});
 
 test.serial('preserve modulesHome', (t) => {
   const initialOpts = {

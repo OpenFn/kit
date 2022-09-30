@@ -38,6 +38,21 @@ test("use namespaced overrides", (t) => {
   t.assert(o.level === 'debug');
 });
 
+test("use globals in a namespaced logger", (t) => {
+  const o = calculateOptions({
+    global: { level: 'none' },
+  }, 'test');
+  t.assert(o.level === 'none');
+});
+
+test("use global properties in a namespaced logger", (t) => {
+  const o = calculateOptions({
+    global: { level: 'none' },
+    test: { wrap: true },
+  }, 'test');
+  t.assert(o.level === 'none');
+});
+
 test("don't mutate default options", (t) => {
   const defaultCopy = { ...defaults };
   

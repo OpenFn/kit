@@ -27,10 +27,18 @@ const parseOptions = (opts: NamespacedOptions  = {}, name: string = 'global'): R
     ...defaults
   };
 
+  // apply provided global defaults
+  const globals = opts.global;
+  if (globals) {
+    Object.assign(options, globals);
+  }
+
   // Then look to see if there are any overrides for the namespace
-  const namespaced = opts[name];
-  if (namespaced) {
-    Object.assign(options, namespaced);
+  if (name !== 'global') {
+    const namespaced = opts[name];
+    if (namespaced) {
+      Object.assign(options, namespaced);
+    }
   }
 
   return options;

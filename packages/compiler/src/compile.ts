@@ -12,18 +12,30 @@ type FutureOptions = {
   transform?: TransformOptions;
 }
 
-type Options = TransformOptions & {
-  logger: Logger
+export type Options = TransformOptions & {
+  logger?: Logger
 };
 
 export default function compile(pathOrSource: string, options: Options = {}) {
-  // TODO need a few unit tests around the logger
-  // also I'm not enjoying how it's fed through to the transformers
-  const logger = options.logger || defaultLogger;
-  const source = isPath(pathOrSource) ? loadFile(pathOrSource) : pathOrSource;
+  const logger = options.logger
+  logger.debug('Starting compilation');
+
+  let source = pathOrSource;
+  if (isPath(pathOrSource)) {
+    logger.debug('Compiling from file at', pathOrSource);
+    source = loadFile(pathOrSource)
+  } else {
+    logger.debug('Compling from string');
+  }
   const ast = parse(source);
+  logger.debug('Parsed source tree')
+
   const transformedAst = transform(ast, undefined, options);
+  logger.debug('Transformed source AST')
+
   const compiledSource = print(transformedAst).code;
+  logger.debug('Compiled source:')
+  logger.debug(compiledSource); // TODO indent or something
 
   return compiledSource;
 }

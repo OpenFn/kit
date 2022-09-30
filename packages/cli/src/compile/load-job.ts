@@ -1,10 +1,11 @@
+// TODO rename to compile.ts
 import fs from 'node:fs/promises';
-import compile,{ preloadAdaptorExports, TransformOptions } from '@openfn/compiler';
-import type { SafeOpts } from '../util/ensure-opts';
-import defaultLogger from '../util/default-logger';
+import createLogger, { Logger } from '@openfn/logger';
+import compile,{ preloadAdaptorExports, Options } from '@openfn/compiler';
+import type { SafeOpts } from '../commands';
 
 // Load and compile a job from a file
-export default async (opts: SafeOpts, log = defaultLogger) => {
+export default async (opts: SafeOpts, log: Logger) => {
   log.debug('Loading job...')
   let job;
   if (opts.noCompile) {
@@ -12,8 +13,9 @@ export default async (opts: SafeOpts, log = defaultLogger) => {
     job = fs.readFile(opts.jobPath, 'utf8');
     log.success(`Loaded job from ${opts.jobPath} (no compilation)`)
   } else {
-    const options: TransformOptions = await loadTransformOptions(opts, log);
-    job = compile(opts.jobPath, options);
+    const complilerOptions: Options = await loadTransformOptions(opts, log);
+    complilerOptions.logger = createLogger('Compiler', opts.log);
+    job = compile(opts.jobPath, complilerOptions);
     log.success(`Compiled job from ${opts.jobPath}`)
   }
   return job;
@@ -52,7 +54,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log = defaultLogger) 
         return result;
       } catch(e) {
         if (logError) {
-          log.error(`Failed to loa adaptor typedefs from path ${path}`);
+          log.error(`Failed to load adaptor typedefs from path ${path}`);
           log.error(e)
         }
       }
