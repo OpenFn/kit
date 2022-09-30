@@ -44,10 +44,10 @@ function testLogger() {
   return logger as TestLogger;
 };
 
-// Conveniene API - looks like the acutal logger API
+// Convenience API - looks like the acutal logger API
 // But it creates a test  emitter which logs to an array,
 // and returns it in a tuple
-const createLogger = (name?: string, opts: NamespaceOptions = {}) => {
+const createLogger = (name?: string, opts: NamespacedOptions = {}) => {
   const l = testLogger(); 
   
   return [
@@ -72,20 +72,8 @@ test('log with defaults', (t) => {
   t.assert(message === `${icons.success} abc`);
 });
 
-test('does not log with level=none', (t) => {
-  const [logger, l] = createLogger(undefined, { level: 'none' });
-  logger.success('a');
-  logger.info('b');
-  logger.debug('c');
-  logger.warn('d');
-  logger.error('e');
-  logger.log('e');
-
-  t.assert(l._out.length === 0);
-});
-
 // Automated structural tests per level
-['info', 'debug', 'error', 'warn'].forEach((level) => {
+['success', 'info', 'debug', 'error', 'warn'].forEach((level) => {
   test(`${level} - logs with icon and namespace`, (t) => {
     const options = { level };
     const [logger, l] = createLogger('x', options);
@@ -134,8 +122,23 @@ test('log() should behave like info', (t) => {
   t.assert(result.message === 'abc');
 })
 
-test.skip('default logs success, error and warning but not info and debug', (t) => {
-  const [logger, l] = createLogger(undefined, { level: 'default' });
+
+test('with level=none, logs nothing', (t) => {
+  // TODO this doesn't give me very documentary-style tests
+  // because the signature is actually quite misleading
+  const [logger, l] = createLogger(undefined, { level: 'none' });
+  logger.success('a');
+  logger.info('b');
+  logger.debug('c');
+  logger.warn('d');
+  logger.error('e');
+  logger.log('e');
+
+  t.assert(l._out.length === 0);
+});
+
+test('with level=default, logs success, error and warning but not info and debug', (t) => {
+  const [logger, l] = createLogger('x', { level: 'default' });
   
   logger.debug('d');
   logger.info('i');
@@ -143,7 +146,6 @@ test.skip('default logs success, error and warning but not info and debug', (t) 
 
   logger.success('s');
   let result = parse(l._last);
-  console.log(result)
   t.assert(result.level === 'success');
   t.assert(result.message === 's');
 
@@ -158,27 +160,25 @@ test.skip('default logs success, error and warning but not info and debug', (t) 
   t.assert(result.message === 'e');
 });
 
-test('info - does not log debug', (t) => {
+test('with level=info, logs errors and warnings but not debug', (t) => {
   const options = { level: 'info' };
   const [logger, l] = createLogger('x', options);
   logger.debug('abc');
 
   t.assert(l._out.length === 0)
-});
 
-test('info - logs errors and warnings', (t) => {
-  const options = { level: 'info' };
-  const [logger, l] = createLogger('x', options);
   logger.warn('a');
   let result = parse(l._last);
   t.assert(result.level === 'warn');
-
+  t.assert(result.message === 'a');
+  
   logger.error('b');
   result = parse(l._last);
   t.assert(result.level === 'error');
+  t.assert(result.message === 'b');
 });
 
-test('debug - logs everything', (t) => {
+test('with level=debug logs everything', (t) => {
   const options = { level: 'debug' };
   const [logger, l] = createLogger('x', options);
   logger.info('i');
@@ -201,25 +201,3 @@ test('debug - logs everything', (t) => {
   t.assert(result.level === 'error');
   t.assert(result.message === 'e');
 });
-
-
-
-// test('debug', () => {
-
-// });
-
-// test('trace', () => {
-
-// });
-
-// test('warning', () => {
-
-// });
-
-// test('error', () => {
-
-// });
-
-// test('namespace', () => {
-
-// });

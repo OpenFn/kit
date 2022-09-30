@@ -1,6 +1,8 @@
 
 type LogArgs = any[];
 
+// TODO something is wrong with these typings
+// Trying to differntite user priority presets from log functions
 type LogFns = 'debug' | 'info' | 'log' | 'warn' | 'error' | 'success';
 type LogLevel = 'debug' | 'info' | 'default' | 'none';
 

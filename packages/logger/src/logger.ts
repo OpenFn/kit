@@ -20,21 +20,18 @@ export const INFO = 'info';
 // includes lots of data dumps
 export const DEBUG = 'debug';
 
-export const WARN = 'warn'; // TODO remove (this is success)
-export const ERROR = 'error'; // TODO remove (this is success)
-export const TRACE = 'trace'; // TODO remove (this is debug)
+export const ERROR = 'error';
+
+export const WARN = 'warn';
 
 const priority = {
   [DEBUG]: 0,
   [INFO] : 1,
   'default': 2,
-  [NONE] : 9,
-
-  // TODO remove all this
-  [TRACE]: 0,
   [WARN] : 2,
   [ERROR]: 2,
   [SUCCESS] : 2,
+  [NONE] : 9,
 };
 
 // TODO I'd quite like each package to have its own colour, I think
@@ -52,7 +49,7 @@ const colors = {
 // OR hide some levels?
 // Or customise the display?
 // TODO use cool emojis
-export const styleLevel = (level: LogLevel) => {
+export const styleLevel = (level: LogFns) => {
   switch (level) {
     case ERROR:
       return c.red(figures.cross);
@@ -61,7 +58,6 @@ export const styleLevel = (level: LogLevel) => {
     case SUCCESS:
       return c.green(figures.tick);
     case DEBUG:
-    case TRACE:
       return c.grey(figures.pointer);
     default:
       return c.white(figures.info);
@@ -81,8 +77,8 @@ export default function(name?: string, options: NamespacedOptions = {}): Logger 
   const emitter = opts.logger;
 
   // main logger function
-  const log = (level: LogLevel, ...args: LogArgs) => {
-    if (level === NONE) return;
+  const log = (level: LogFns, ...args: LogArgs) => {
+    if (opts.level === NONE) return;
 
     const output = [];
 
@@ -110,7 +106,7 @@ export default function(name?: string, options: NamespacedOptions = {}): Logger 
     }
   };
 
-  const wrap = (level: LogLevel) => (...args: LogArgs) => log(level, ...args);
+  const wrap = (level: LogFns) => (...args: LogArgs) => log(level, ...args);
 
   // TODO remove this, it's not clear what level it will log to
   const logger = function(...args: LogArgs) {
@@ -118,14 +114,13 @@ export default function(name?: string, options: NamespacedOptions = {}): Logger 
     log(INFO, ...args);
   };
 
-  logger[INFO] = wrap(INFO);
-  logger[DEBUG] = wrap(DEBUG);
-  logger[TRACE] = wrap(DEBUG); // Note trace deliberately maps to debug!
-  logger[ERROR] = wrap(ERROR);
-  logger[WARN] = wrap(WARN);
-  logger[SUCCESS] = wrap(SUCCESS);
-
+  logger.info = wrap(INFO);
   logger.log = wrap(INFO);
+  logger.debug = wrap(DEBUG);
+  logger.error = wrap(ERROR);
+  logger.warn = wrap(WARN);
+  logger.success = wrap(SUCCESS);
+
 
   // possible convenience APIs
   logger.force = () => {} // force the next lines to log (even if silent)
