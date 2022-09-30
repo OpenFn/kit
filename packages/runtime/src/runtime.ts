@@ -36,7 +36,6 @@ export default async function run(
   const context = buildContext(initialState, opts)
   
   const { operations, execute } = await prepareJob(incomingJobs, context, opts);
-
   // Create the main reducer function
   const reducer = (execute || defaultExecute)(...operations.map(wrapOperation));
 

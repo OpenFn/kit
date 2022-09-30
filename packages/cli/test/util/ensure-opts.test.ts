@@ -12,6 +12,16 @@ test('set job, state and output from a base path', (t) => {
   t.assert(opts.outputPath === 'a/output.json');
 });
 
+test("default base path to '.'", (t) => {
+  const initialOpts = {} as Opts;
+  
+  const opts = ensureOpts(undefined, initialOpts);
+
+  t.assert(opts.jobPath === './job.js');
+  t.assert(opts.statePath === './state.json');
+  t.assert(opts.outputPath === './output.json');
+});
+
 test('should set state and output from a base path with an extension', (t) => {
   const initialOpts = {} as Opts;
   
@@ -133,6 +143,17 @@ test('update the default output with compile only', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.outputPath === 'a/output.js');
+});
+
+test('test mode logs to info', (t) => {
+  const initialOpts = {
+    test: true,
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.truthy(opts.test);
+  t.deepEqual(opts.log.global, { level: 'info' });
 });
 
 test('log: add default options', (t) => {

@@ -1,5 +1,5 @@
 import run from '@openfn/runtime';
-import type { SafeOpts } from '../util/ensure-opts';
+import type { SafeOpts } from '../commands';
 
 export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
   return run(code, state, {

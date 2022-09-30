@@ -1,4 +1,3 @@
-// TODO rename to compile.ts
 import fs from 'node:fs/promises';
 import createLogger, { Logger } from '@openfn/logger';
 import compile,{ preloadAdaptorExports, Options } from '@openfn/compiler';
@@ -33,8 +32,8 @@ export const stripVersionSpecifier = (specifier: string) => {
 }
 
 // Mutate the opts object to write export information for the add-imports transformer
-export const loadTransformOptions = async (opts: SafeOpts, log = defaultLogger) => {
-  const options: TransformOptions  = {
+export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
+  const options: Options = {
     logger: log
   };
 

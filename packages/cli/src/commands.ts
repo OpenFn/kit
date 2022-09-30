@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises';
-import createLogger, { NamespacedOptions } from '@openfn/logger';
+import createLogger, { NamespacedOptions, Logger, createMockLogger } from '@openfn/logger';
 import ensureOpts from './util/ensure-opts';
-import compileJob from './compile/load-job';
+import compile from './compile/compile';
 import loadState from './execute/load-state';
-import run from './execute/execute';
+import execute from './execute/execute';
 
 export type Opts = {
   adaptors?: string[];
@@ -14,7 +14,7 @@ export type Opts = {
   noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;
-  silent?: boolean; // no logging (TODO would a null logger be better?)
+  silent?: boolean; // DEPRECATED
   statePath?: string;
   stateStdin?: string;
   traceLinker?: boolean;
@@ -26,18 +26,26 @@ export type SafeOpts = Required<Opts> & {
 };
 
 // Top level command parser
-const parse = async (basePath: string, options: Opts) => {
-  if (options.test) {
-    return test(options);
+const parse = async (basePath: string, options: Opts, log?: Logger) => {
+  // TODO allow a logger to be passed in for test purposes
+  // I THINK I need this but tbh not sure yet!
+  const opts = ensureOpts(basePath, options);
+  const logger = log || createLogger('CLI', opts.log);
+
+  if (opts.test) {
+    return runTest(opts, logger);
   }
-  if (options.compileOnly) {
-    return compile(basePath, options);
+
+  assertPath(basePath);
+  if (opts.compileOnly) {
+    return runCompile(opts, logger);
   }
-  return execute(basePath, options);
+  return runExecute(opts, logger);
 };
 
 export default parse;
 
+// TODO probably this isn't neccessary and we just use cwd?
 const assertPath = (basePath?: string) => {
   if (!basePath) {
     console.error('ERROR: no path provided!');
@@ -49,89 +57,59 @@ const assertPath = (basePath?: string) => {
   }
 }
 
-// TODO this is not a good solution
-// We shold use log levels in the components to get this effect
-// ALso, if --silent is passed in the CLI, we need to respect that
-const nolog = {
-  log: () => {},
-  debug: () => {},
-  success: () => {}
+export const runExecute = async (options: SafeOpts, logger: Logger) => {
+  const state = await loadState(options, logger);
+  const code = await compile(options, logger);
+  // TODO runtime logging
+  const result = await execute(code, state, options);
+  
+  if (options.outputStdout) {
+    // TODO Log this even if in silent mode
+    logger.success(`Result: `)
+    logger.success(result)
+  } else {
+    if (!options.silent) {
+      logger.success(`Writing output to ${options.outputPath}`)
+    }
+    await fs.writeFile(options.outputPath, JSON.stringify(result, null, 4));
+  }
+
+  logger.success(`Done! ✨`)
+}
+
+export const runCompile = async (options: SafeOpts, logger: Logger) => {
+  const code = await compile(options, logger);
+  if (options.outputStdout) {
+    // Log this even if in silent mode
+    logger.success('Compiled code:')
+    console.log(code)
+  } else {
+    await fs.writeFile(options.outputPath, code);
+    logger.success(`Compiled to ${options.outputPath}`)
+  }
 };
 
-export const test = async (options: Opts) => {
-  const opts = { ... options } as SafeOpts;
-
-  // const logger = options.logger || (opts.silent ? nolog : console);
-  // const code = await compileJob(opts, createLogger('Compiler'));
-  const logger = createLogger('CLI')
-
+export const runTest = async (options: SafeOpts, logger: Logger) => {
   logger.log('Running test job...')
 
   // This is a bit weird but it'll actually work!
-  opts.jobPath = `const fn = () => state => state * 2; fn()`;
+  options.jobPath = `const fn = () => state => state * 2; fn()`;
 
-  if (!opts.stateStdin) {
+  if (!options.stateStdin) {
     logger.warn('No state detected: pass -S <number> to provide some state');
-    opts.stateStdin = "21";
+    options.stateStdin = "21";
   }
   
-  // TODO need to fix this log API but there's work for that on another branch
-  const state = await loadState(opts, nolog);
-  const code = await compileJob(opts, logger);
+  const state = await loadState(options, createMockLogger());
+  const code = await compile(options, logger);
   logger.break()
   logger.info('Compiled job:', '\n', code) // TODO there's an ugly intend here
   logger.break()
   logger.info('Running job...')
-  const result = await run(code, state, opts);
+  const result = await execute(code, state, options);
   logger.success(`Result: ${result}`);
   return result;
 };
-
-export const compile = async (basePath: string, options: Opts) => {
-  assertPath(basePath);
-  // TODO should parse do all the options stuff and pass it downstream?
-  // Or should each command have its own options parser?
-  const opts = ensureOpts(basePath, options);
-
-  const log = createLogger('Compiler')
-
-  const code = await compileJob(opts, log);
-  if (opts.outputStdout) {
-    // Log this even if in silent mode
-    console.log(code)
-  } else {
-    if (!opts.silent) {
-      console.log(`Writing output to ${opts.outputPath}`)
-    }
-    await fs.writeFile(opts.outputPath, code);
-  }
-};
-
-export const execute = async (basePath: string, options: Opts) => {
-  assertPath(basePath);
-  const opts = ensureOpts(basePath, options);
-  const cliLogger = createLogger('CLI', opts.log);
-
-  const state = await loadState(opts, cliLogger);
-  const code = await compileJob(opts, cliLogger);
-  // TODO the runtime needs to accept a logger to fed through to jobs
-  // Also the runtime will emit, rather than log directly
-  // So probably want to log and listen here
-  const result = await run(code, state, opts);
-  
-  if (opts.outputStdout) {
-    // TODO Log this even if in silent mode
-    cliLogger.success(`Result: `)
-    cliLogger.success(result)
-  } else {
-    if (!opts.silent) {
-      cliLogger.success(`Writing output to ${opts.outputPath}`)
-    }
-    await fs.writeFile(opts.outputPath, JSON.stringify(result, null, 4));
-  }
-
-  cliLogger.success(`Done! ✨`)
-}
 
 // This is disabled for now because
 // 1) Resolving paths relative to the install location of the module is tricky

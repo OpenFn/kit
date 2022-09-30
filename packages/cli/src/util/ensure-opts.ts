@@ -11,15 +11,16 @@ export const defaultLoggerOptions = {
   }
 }
 
-export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
+export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts {
   const newOpts = {
-    noCompile: Boolean(opts.noCompile),
     compileOnly: Boolean(opts.compileOnly),
+    modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
+    noCompile: Boolean(opts.noCompile),
     outputStdout: Boolean(opts.outputStdout),
     silent: opts.silent,
     stateStdin: opts.stateStdin,
+    test: opts.test,
     traceLinker: opts.traceLinker,
-    modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
   } as SafeOpts;
 
   const set = (key: keyof Opts, value: string) => {
@@ -47,10 +48,13 @@ export default function ensureOpts(basePath: string, opts: Opts): SafeOpts {
         const [component, level] = l.split('=');
         components[component] = { level };
       } else  {
-        components['global'] = { level: l };
+        components.global = { level: l };
       }
     })
     // TODO what if other log options are passed? Not really a concern right now
+  } else if (opts.test) {
+    // In test mode, log at info level by default
+    components.global = { level: 'info' }
   }
   newOpts.log = {
     ...defaultLoggerOptions,

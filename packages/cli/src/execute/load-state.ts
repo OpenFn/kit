@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
-import type { SafeOpts } from '../util/ensure-opts';
-import defaultLogger from '../util/default-logger';
+import type { Logger } from '@openfn/logger';
+import type { SafeOpts } from '../commands';
 
-export default async (opts: SafeOpts, log = defaultLogger) => {
+export default async (opts: SafeOpts, log: Logger) => {
   log.debug('Load state...')
   if (opts.stateStdin) {
     try {
@@ -28,6 +28,7 @@ export default async (opts: SafeOpts, log = defaultLogger) => {
     log.warn(`Error loading state from ${opts.statePath}`);
     log.warn(e);
   }
+
   log.warn('Using default state { data: {}, configuration: {}')
   return {
     data: {},
