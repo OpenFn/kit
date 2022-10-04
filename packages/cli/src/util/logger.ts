@@ -1,15 +1,17 @@
 // Wrapper around the logger API to load a namespaced logger with the right options
-import createLogger from '@openfn/logger';
+import actualCreateLogger from '@openfn/logger';
 export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
-import type { SafeOpts } from '../commands'
+import type { Opts } from '../commands'
 
-export default (name: string, options: SafeOpts) => {
+export const createLogger = (name: string = '', options: Opts) => {
   const logOptions = options.log || {};
   let level = logOptions[name] || logOptions.default || 'default';
-  return createLogger(name, {
+  return actualCreateLogger(name, {
     level,
     ...logOptions,
   })
 }
 
-export const createNullLogger = () => createLogger(undefined, { level: 'none' });
+export default createLogger;
+
+export const createNullLogger = () => createLogger(undefined, { log: { default : 'none' } });

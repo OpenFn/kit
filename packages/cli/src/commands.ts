@@ -60,8 +60,7 @@ const assertPath = (basePath?: string) => {
 export const runExecute = async (options: SafeOpts, logger: Logger) => {
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
-  // TODO runtime logging
-  const result = await execute(code, state, options);
+  const result = await execute(code, state, options, logger);
   
   if (options.outputStdout) {
     // TODO Log this even if in silent mode

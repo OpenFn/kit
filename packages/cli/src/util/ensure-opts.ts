@@ -4,7 +4,7 @@ import type { LogOptions } from '@openfn/logger';
 
 export const defaultLoggerOptions = {
   default: 'default',
-  runtime: 'trace'
+  Job: 'debug'
 }
 
 export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts {
