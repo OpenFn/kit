@@ -1,7 +1,8 @@
 // TODO not crazy about the handling of this
+// but to support the success handler we need to alias console.log
 const defaultEmitter = {
   ...console,
-  success: (...args) => console.log(...args)
+  success: (...args: any[]) => console.log(...args)
 };
 
 export const defaults: Required<LogOptions> = {
@@ -20,26 +21,16 @@ export const defaults: Required<LogOptions> = {
   sensitivePaths: ['configuration'],
 };
 
-// This will return a fully defined options object with defaults and namespace-specific overrides
-const parseOptions = (opts: NamespacedOptions  = {}, name: string = 'global'): Required<LogOptions> => {
+// This will return a fully defined options object
+const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
   // First default all values
   const options = {
-    ...defaults
+    ...defaults,
+    ...opts,
   };
 
-  // apply provided global defaults
-  const globals = opts.global;
-  if (globals) {
-    Object.assign(options, globals);
-  }
-
-  // Then look to see if there are any overrides for the namespace
-  if (name !== 'global') {
-    const namespaced = opts[name];
-    if (namespaced) {
-      Object.assign(options, namespaced);
-    }
-  }
+  // TODO handle merging of arrays (ie sensitive paths)
+  // Maybe, this is actually a non trivial issue
 
   return options;
 }

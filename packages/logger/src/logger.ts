@@ -1,6 +1,6 @@
 import c from 'chalk';
 import figures from 'figures';
-import parseOptions from './options';
+import ensureOptions from './options';
 
 // Nice clean log level definitions
 
@@ -69,8 +69,8 @@ export const styleLevel = (level: LogFns) => {
 // The options object should be namespaced so that runtime managers can pass a global options object
 // to each logger. Seems counter-intuitive but it should be much easier!
 // TODO allow the logger to accept a single argument
-export default function(name?: string, options: NamespacedOptions = {}): Logger {
-  const opts = parseOptions(options, name);
+export default function(name?: string, options: LogOptions = {}): Logger {
+  const opts = ensureOptions(options);
   const minLevel = priority[opts.level];
 
   // This is what we actually pass the log strings to
@@ -108,25 +108,20 @@ export default function(name?: string, options: NamespacedOptions = {}): Logger 
 
   const wrap = (level: LogFns) => (...args: LogArgs) => log(level, ...args);
 
-  // TODO remove this, it's not clear what level it will log to
-  const logger = function(...args: LogArgs) {
-    console.warn("WARNING: deprecated call to logger()")
-    log(INFO, ...args);
+  const logger = {
+    info: wrap(INFO),
+    log: wrap(INFO),
+    debug: wrap(DEBUG),
+    error: wrap(ERROR),
+    warn: wrap(WARN),
+    success: wrap(SUCCESS),
+
+    // possible convenience APIs
+    force: () => {}, // force the next lines to log (even if silent)
+    unforce: () => {}, // restore silent default
+    break: () => { console.log() }, // print a line break
+    indent: (spaces: 0) => {}, // set the indent level
   };
-
-  logger.info = wrap(INFO);
-  logger.log = wrap(INFO);
-  logger.debug = wrap(DEBUG);
-  logger.error = wrap(ERROR);
-  logger.warn = wrap(WARN);
-  logger.success = wrap(SUCCESS);
-
-
-  // possible convenience APIs
-  logger.force = () => {} // force the next lines to log (even if silent)
-  logger.unforce = () => {} // restore silent default
-  logger.break = () => { console.log() } // print a line break
-  logger.indent = (spaces: 0) => {} // set the indent level
 
   return logger as Logger;
 }

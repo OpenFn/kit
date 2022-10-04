@@ -4,15 +4,10 @@ type LogArgs = any[];
 // TODO something is wrong with these typings
 // Trying to differntite user priority presets from log functions
 type LogFns = 'debug' | 'info' | 'log' | 'warn' | 'error' | 'success';
+
 type LogLevel = 'debug' | 'info' | 'default' | 'none';
 
-// Need a better name for this
-// it's an options object with namespaces
-// global applies to all loggers, unless there's a namespaced override
-type NamespacedOptions = Record<'global' | string, LogOptions>; 
-
 type LogOptions = {
-  // silent?: boolean;
   level?: LogLevel;
 
   // TODO how can we duplicate the custom logger, so we do a standard log AND something else (eg http log)
@@ -45,12 +40,12 @@ interface Logger extends Console {
   constructor(name: string);
 
   // standard log functions
-  log();
-  info();
-  warn();
-  error();
-  trace(); // TODO I think I'll remove this, it's confusing with trace and debug
-  success();
+  log(...args: any[]): void;
+  info(...args: any[]): void;
+  debug(...args: any[]): void;
+  warn(...args: any[]): void;
+  error(...args: any[]): void;
+  success(...args: any[]): void;
 
   // fancier log functions
   group();

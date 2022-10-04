@@ -21,7 +21,6 @@
   },
   "author": "",
   "license": "ISC",
-  "types": "./index.d.ts",
   "dependencies": {
     "chalk": "4",
     "figures": "^5.0.0"

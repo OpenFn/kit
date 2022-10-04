@@ -14,43 +14,21 @@ test("defaults to level 'default'", (t) => {
   t.deepEqual(o.level, 'default');
 });
 
-test("apply global options if there's no name provided", (t) => {
+test('level can be overriden', (t) => {
   const o = calculateOptions({
-    global: { level: 'none' },
-    test: { level: 'debug' }
+    level: 'debug'    
   });
-  t.assert(o.level === 'none');
-});
-
-test("explicitly apply global options", (t) => {
-  const o = calculateOptions({
-    global: { level: 'none' },
-    test: { level: 'debug' }
-  }, 'global');
-  t.assert(o.level === 'none');
-});
-
-test("use namespaced overrides", (t) => {
-  const o = calculateOptions({
-    global: { level: 'none' },
-    test: { level: 'debug' }
-  }, 'test');
   t.assert(o.level === 'debug');
 });
 
-test("use globals in a namespaced logger", (t) => {
-  const o = calculateOptions({
-    global: { level: 'none' },
-  }, 'test');
-  t.assert(o.level === 'none');
-});
-
-test("use global properties in a namespaced logger", (t) => {
-  const o = calculateOptions({
-    global: { level: 'none' },
-    test: { wrap: true },
-  }, 'test');
-  t.assert(o.level === 'none');
+test('all defaults can be overridden', (t) => {
+  const newOpts = Object.keys(defaults).reduce((obj, k) => {
+    // @ts-ignore
+    obj[k] = 22;
+    return obj;
+  }, {});
+  const o = calculateOptions(newOpts);
+  t.deepEqual(newOpts, o);
 });
 
 test("don't mutate default options", (t) => {
@@ -58,12 +36,11 @@ test("don't mutate default options", (t) => {
   
   // Create an options obejct with the same keys as default, but nonsense values
   const opts = {};
-  Object.keys(defaultCopy).forEach((key, value) => {
+  Object.keys(defaultCopy).forEach((key) => {
+    // @ts-ignore
     opts[key] = 99;
-  })
-  calculateOptions({
-    global: opts
   });
+  calculateOptions(opts);
 
   // Ensure the defaults objects remains unchanged
   t.deepEqual(defaultCopy, defaults);
