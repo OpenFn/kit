@@ -1,14 +1,10 @@
 import path from 'node:path';
 import { Opts, SafeOpts } from '../commands';
-import { LogOptions } from '@openfn/logger';
+import type { LogOptions } from '@openfn/logger';
 
 export const defaultLoggerOptions = {
-  global: {
-    level: 'default',
-  },
-  runtime: {
-    level: 'trace',
-  }
+  default: 'default',
+  runtime: 'trace'
 }
 
 export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts {
@@ -46,15 +42,15 @@ export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts
     opts.log.forEach((l) => {
       if (l.match(/=/)) {
         const [component, level] = l.split('=');
-        components[component] = { level };
+        components[component] = level;
       } else  {
-        components.global = { level: l };
+        components.default = l;
       }
     })
     // TODO what if other log options are passed? Not really a concern right now
   } else if (opts.test) {
     // In test mode, log at info level by default
-    components.global = { level: 'info' }
+    components.default = 'info';
   }
   newOpts.log = {
     ...defaultLoggerOptions,

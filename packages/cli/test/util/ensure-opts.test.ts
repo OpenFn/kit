@@ -153,7 +153,7 @@ test('test mode logs to info', (t) => {
   const opts = ensureOpts('', initialOpts);
 
   t.truthy(opts.test);
-  t.deepEqual(opts.log.global, { level: 'info' });
+  t.is(opts.log.default, 'info');
 });
 
 test('log: add default options', (t) => {
@@ -164,14 +164,14 @@ test('log: add default options', (t) => {
   t.deepEqual(opts.log, defaultLoggerOptions);
 });
 
-test('log: override global options', (t) => {
+test('log: override default options', (t) => {
   const initialOpts = {
     log: ['debug'],
   } as Opts;
   
   const opts = ensureOpts('', initialOpts);
 
-  t.deepEqual(opts.log.global, { level: 'debug' });
+  t.is(opts.log.default, 'debug');
 });
 
 test('log: set a specific option', (t) => {
@@ -181,18 +181,18 @@ test('log: set a specific option', (t) => {
   
   const opts = ensureOpts('', initialOpts);
 
-  t.deepEqual(opts.log.compiler, { level: 'debug' });
+  t.is(opts.log.compiler, 'debug');
 });
 
-test('log: set global and a specific option', (t) => {
+test('log: set default and a specific option', (t) => {
   const initialOpts = {
     log: ['none', 'compiler=debug'],
   } as Opts;
   
   const opts = ensureOpts('', initialOpts);
 
-  t.deepEqual(opts.log.global, { level: 'none' });
-  t.deepEqual(opts.log.compiler, { level: 'debug' });
+  t.is(opts.log.default, 'none');
+  t.is(opts.log.compiler, 'debug');
 });
 
 test.serial('preserve modulesHome', (t) => {

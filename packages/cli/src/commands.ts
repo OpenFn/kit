@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import createLogger, { NamespacedOptions, Logger, createMockLogger } from '@openfn/logger';
+import createLogger, { createNullLogger, Logger, LogLevel } from './util/logger';
 import ensureOpts from './util/ensure-opts';
 import compile from './compile/compile';
 import loadState from './execute/load-state';
@@ -9,7 +9,7 @@ export type Opts = {
   adaptors?: string[];
   compileOnly?: boolean;
   jobPath?: string;
-  log?: string[];
+  log?: string[] | Record<string, LogLevel>;
   modulesHome?: string;
   noCompile?: boolean;
   outputPath?: string;
@@ -22,7 +22,7 @@ export type Opts = {
 }
 
 export type SafeOpts = Required<Opts> & {
-  log: NamespacedOptions;
+  log: Record<string, LogLevel>;
 };
 
 // Top level command parser
@@ -30,7 +30,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   // TODO allow a logger to be passed in for test purposes
   // I THINK I need this but tbh not sure yet!
   const opts = ensureOpts(basePath, options);
-  const logger = log || createLogger('CLI', opts.log);
+  const logger = log || createLogger('CLI', opts);
 
   if (opts.test) {
     return runTest(opts, logger);
@@ -100,7 +100,7 @@ export const runTest = async (options: SafeOpts, logger: Logger) => {
     options.stateStdin = "21";
   }
   
-  const state = await loadState(options, createMockLogger());
+  const state = await loadState(options, createNullLogger);
   const code = await compile(options, logger);
   logger.break()
   logger.info('Compiled job:', '\n', code) // TODO there's an ugly intend here

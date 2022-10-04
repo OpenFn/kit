@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import createLogger, { Logger } from '@openfn/logger';
+import createLogger, { Logger } from '../util/logger';
 import compile,{ preloadAdaptorExports, Options } from '@openfn/compiler';
 import type { SafeOpts } from '../commands';
 
@@ -13,7 +13,7 @@ export default async (opts: SafeOpts, log: Logger) => {
     log.success(`Loaded job from ${opts.jobPath} (no compilation)`)
   } else {
     const complilerOptions: Options = await loadTransformOptions(opts, log);
-    complilerOptions.logger = createLogger('Compiler', opts.log);
+    complilerOptions.logger = createLogger('Compiler', opts);
     job = compile(opts.jobPath, complilerOptions);
     log.success(`Compiled job from ${opts.jobPath}`)
   }
