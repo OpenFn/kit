@@ -123,6 +123,8 @@ export default function(name?: string, options: LogOptions = {}): Logger {
     indent: (spaces: 0) => {}, // set the indent level
   };
 
+  logger.options = opts; // debug and testing
+
   return logger as Logger;
 }
 

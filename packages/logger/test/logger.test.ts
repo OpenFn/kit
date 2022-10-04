@@ -1,6 +1,7 @@
 import test from 'ava';
 import chalk from 'chalk';
 import { styleLevel } from '../src/logger';
+import { defaults as defaultOptions } from '../src/options';
 
 // We're going to run all these tests against the mock logger
 // Which is basically thin wrapper around the logger which bypasses
@@ -9,6 +10,9 @@ import createLogger from '../src/mock';
 
 // disable chalk colours in unit tests
 chalk.level = 0;
+
+// Annoying.
+const { logger, ...defaultOptionsWithoutLogger } = defaultOptions;
 
 // parse log output into a consumable parts
 const parse = ([level, namespace, icon, ...rest ]: string[]) => ({
@@ -36,6 +40,22 @@ test('log with defaults', (t) => {
   const message = rest.join(' ');
   t.assert(level === 'success');
   t.assert(message === `${icons.success} abc`);
+});
+
+test('returns default options', (t) => {
+  const { options } = createLogger();
+  const { logger, ...optionsWithoutLogger } = options;
+  t.deepEqual(optionsWithoutLogger, defaultOptionsWithoutLogger);
+});
+
+test('returns custom options', (t) => {
+  const { options } = createLogger(undefined, { level: 'debug' });
+  const { logger, ...optionsWithoutLogger } = options;
+  const expected = {
+    ...defaultOptionsWithoutLogger,
+    level: 'debug',
+  };
+  t.deepEqual(optionsWithoutLogger, expected);
 });
 
 // Automated structural tests per level

@@ -39,6 +39,8 @@ type LogOptions = {
 interface Logger extends Console {
   constructor(name: string);
 
+  options: Required<LogOptions>;
+
   // standard log functions
   log(...args: any[]): void;
   info(...args: any[]): void;
