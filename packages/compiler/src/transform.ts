@@ -12,6 +12,7 @@
 import { namedTypes } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import { visit } from 'recast';
+import createLogger, { Logger } from '@openfn/logger';
 
 import addImports, { AddImportsOptions } from './transforms/add-imports';
 import ensureExports from './transforms/ensure-exports';
@@ -30,12 +31,16 @@ export type Visitor = {
 type VisitorMap = Record<string, VisitorFunction[]>;
 
 export type TransformOptions = {
+  logger?: Logger; //  TODO maybe in the wrong place?
+
   // TODO is there a neat way to automate this?
   ['add-imports']?: AddImportsOptions | boolean;
   ['ensure-exports']?: boolean;
   ['top-level-operations']?: TopLevelOpsOptions | boolean;
   ['test']?: any;
 }
+
+const defaultLogger = createLogger();
 
 export default function transform(
   ast: namedTypes.Node,
@@ -55,6 +60,7 @@ export default function transform(
 // Build a map of AST node types against an array of visitor functions
 // Each visitor must trap the appropriate options
 export function buildvisitorMap(visitors: Visitor[], options: TransformOptions = {}): VisitorMap {
+  const logger = options.logger || defaultLogger;
   const map: Record<string, VisitorFunction[]> = {};
   for (const { types, visitor, id } of visitors) {
     if (options[id] !== false) {
@@ -63,7 +69,7 @@ export function buildvisitorMap(visitors: Visitor[], options: TransformOptions =
         if (!map[name]) {
           map[name] = [];
         }
-        map[name].push((n: NodePath) => visitor(n, options[id] ?? {}, options.logger));
+        map[name].push((n: NodePath) => visitor(n, options[id] ?? {}, logger));
       }
     }
   }

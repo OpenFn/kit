@@ -4,7 +4,7 @@ import parse from './parse';
 import transform, { TransformOptions } from './transform';
 import { isPath, loadFile } from './util';
 
-const defaultLogger = createLogger('Compiler')
+const defaultLogger = createLogger()
 
 // TODO want to migrate to this but it'll break everything...
 type FutureOptions = {
@@ -17,7 +17,7 @@ export type Options = TransformOptions & {
 };
 
 export default function compile(pathOrSource: string, options: Options = {}) {
-  const logger = options.logger
+  const logger = options.logger || defaultLogger;
   logger.debug('Starting compilation');
 
   let source = pathOrSource;
