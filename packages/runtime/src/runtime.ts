@@ -1,13 +1,11 @@
 import vm from 'node:vm';
-
+import createLogger, { Logger } from '@openfn/logger';
 import loadModule from './modules/module-loader';
-import { LinkerOptions } from './modules/linker';
+import type { LinkerOptions } from './modules/linker';
 
 type Options = {
-  // TODO should match the console API but this will do for now
-  logger?: {
-    log: (message: string) => void;
-  },
+  logger?: Logger;
+  jobLogger?: Logger;
 
   // TODO currently unused
   // Ensure that all incoming jobs are sandboxed / loaded as text
@@ -23,6 +21,7 @@ type JobModule = {
   // TODO lifecycle hooks
 }
 
+const defaultLogger = createLogger();
 
 const defaultState = { data: {}, configuration: {} };
 
@@ -31,17 +30,21 @@ export default async function run(
   incomingJobs: string | Operation[],
   initialState: State = defaultState,
   opts: Options = {}) {
+  const logger = opts.logger || defaultLogger;
 
+  logger.debug('Intialising pipeline');
   // Setup a shared execution context
   const context = buildContext(initialState, opts)
   
   const { operations, execute } = await prepareJob(incomingJobs, context, opts);
   // Create the main reducer function
-  const reducer = (execute || defaultExecute)(...operations.map(wrapOperation));
+  const reducer = (execute || defaultExecute)(...operations.map((op) => wrapOperation(op, logger)));
 
   // Run the pipeline
+  logger.debug('Executing pipeline');
   const result = await reducer(initialState);
-
+  logger.debug('Pipeline complete!');
+  logger.debug(result);
   // return the final state
   return result;
 }
@@ -65,8 +68,10 @@ const defaultExecute = (...operations: Operation[]): Operation => {
 // * A cloned state object so that prior state is always preserved
 // TODO: try/catch stuff
 // TODO: automated logging and metrics stuff
-const wrapOperation = (fn: Operation) => {
+const wrapOperation = (fn: Operation, logger: Logger) => {
   return (state: State) => {
+    // TODO this output isn't very interesting yet!
+    logger.debug('Running operation...')
     const newState = clone(state);
     return fn(newState);
   }
@@ -76,7 +81,7 @@ const wrapOperation = (fn: Operation) => {
 // This will be shared by all operations
 // TODO is it possible for one operation to break the npm cache somehow?
 const buildContext = (state: State, options: Options) => {
-  const logger = options.logger ?? console;
+  const logger = options.jobLogger ?? console;
   
   const context = vm.createContext({
     console: logger,
