@@ -9,6 +9,12 @@ type MockLogger = Logger & {
   _last: LogMessage; // the last log message
   _history: any[]; // everything logged
   _reset: () => void; // reset history
+  _parse: (m: LogMessage) => {
+    level: string;
+    namespace?: string;
+    icon?: string;
+    message: string;
+  }
 }
 
 // TODO options need to be namespaced
@@ -41,6 +47,31 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
   mock._reset = () => {
     history.splice(0, history.length);
   }
+  // intelligently parse log output based on options
+  mock._parse = (log: LogMessage) => {
+    let level = '';
+    let namespace = '';
+    let icon = '';
+    let message = [];
+    
+    if (name && !opts.hideNamespace && !opts.hideIcons) {
+      [level, namespace, icon, ...message ] = log;
+    } else if(name && !opts.hideNamespace) {
+      [level, namespace, ...message ] = log;
+    } else if(!opts.hideIcons) {
+      [level, icon, ...message ] = log;
+    } else {
+      [level, ...message ] = log;
+    }
+     
+    return {
+      level,
+      // Chop out the square brackets from the namespace, it's a style thing and annoying in tests
+      namespace: namespace.substring(1, namespace.length - 1),
+      icon,
+      message: message.join(' ')
+    };
+  };
 
   return mock;
 };

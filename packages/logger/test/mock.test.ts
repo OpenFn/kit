@@ -80,3 +80,70 @@ test('_reset removes history and last', (t) => {
   t.assert(logger._history.length === 0);
   t.deepEqual(logger._last, []);
 });
+
+// TODO crunch through all the parse settings here
+test('_parse with default settings', (t) => {
+  const logger = mockLogger();
+  logger.success('x')
+
+  const { level, icon, namespace, message } = logger._parse(logger._last);
+  t.assert(level === 'success');
+  t.truthy(icon);
+  t.assert(message === 'x');
+  t.falsy(namespace);
+});
+
+test('_parse with a namespace', (t) => {
+  const logger = mockLogger('a');
+  logger.success('x')
+
+  const { level, icon, namespace, message } = logger._parse(logger._last);
+  t.is(level, 'success');
+  t.is(namespace, 'a');
+  t.truthy(icon);
+  t.is(message, 'x');
+});
+
+test('_parse with a disabled namespace', (t) => {
+  const logger = mockLogger('a', { hideNamespace: true });
+  logger.success('x')
+
+  const { level, icon, namespace, message } = logger._parse(logger._last);
+  t.is(level, 'success');
+  t.truthy(icon);
+  t.is(message, 'x');
+  t.falsy(namespace);
+});
+
+test('_parse with a disabled icon', (t) => {
+  const logger = mockLogger('a', { hideIcons: true });
+  logger.success('x')
+
+  const { level, icon, namespace, message } = logger._parse(logger._last);
+  t.is(namespace, 'a');
+  t.is(level, 'success');
+  t.is(message, 'x');
+  t.falsy(icon);
+});
+
+test('_parse with a disabled icon and namespace', (t) => {
+  const logger = mockLogger('a', { hideIcons: true, hideNamespace: true });
+  logger.success('x')
+
+  const { level, icon, namespace, message } = logger._parse(logger._last);
+  t.is(level, 'success');
+  t.is(message, 'x');
+  t.falsy(namespace);
+  t.falsy(icon);
+});
+
+test('_parse with mtultiple log arguments', (t) => {
+  const logger = mockLogger('a');
+  logger.success('x', 'y', 'z')
+
+  const { level, icon, namespace, message } = logger._parse(logger._last);
+  t.is(level, 'success');
+  t.is(namespace, 'a');
+  t.truthy(icon);
+  t.is(message, 'x y z');
+});
