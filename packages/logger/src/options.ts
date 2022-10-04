@@ -1,3 +1,32 @@
+export type LogLevel = 'debug' | 'info' | 'default' | 'none';
+
+export type LogEmitter = typeof console & { success: typeof console.log };
+
+export type LogOptions = {
+  level?: LogLevel;
+
+   // a log object, allowing total override of the output#
+  logger?: LogEmitter;
+
+  hideNamespace?: boolean;
+  hideIcons?: boolean;
+
+  // TODO if the output extends beyond the screenwith, wrap a bit
+  //      just enough to avoid the [type][level] column (like this comment)
+  wrap?: boolean
+  
+  // or is this a terminal concern?
+  showTimestamps?: boolean;
+  
+  // paths to stuff in the state object we should obfuscate
+  // this should work with language adaptors
+  // like if we on sensitive c in a.b.c, console.log(c) should 
+  sensitivePaths?: string[];
+
+  sanitiseState?: boolean; // defaults to true
+  detectState?: boolean; // defaults to true
+}
+
 // TODO not crazy about the handling of this
 // but to support the success handler we need to alias console.log
 const defaultEmitter = {

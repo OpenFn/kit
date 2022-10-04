@@ -1,6 +1,6 @@
 import c from 'chalk';
 import figures from 'figures';
-import ensureOptions from './options';
+import ensureOptions, { LogOptions, LogLevel } from './options';
 
 // Nice clean log level definitions
 
@@ -24,9 +24,45 @@ export const ERROR = 'error';
 
 export const WARN = 'warn';
 
-const priority = {
+
+export type LogArgs = any[];
+
+// TODO something is wrong with these typings
+// Trying to differntite user priority presets from log functions
+export type LogFns = 'debug' | 'info' | 'log' | 'warn' | 'error' | 'success';
+
+// Design for a logger
+// some inputs:
+// This will be passed into a job, so must look like the console object
+// will be used by default by compiler and runtime
+export interface Logger extends Console {
+  constructor(name: string): Logger;
+
+  options: Required<LogOptions>;
+
+  // standard log functions
+  log(...args: any[]): void;
+  info(...args: any[]): void;
+  debug(...args: any[]): void;
+  warn(...args: any[]): void;
+  error(...args: any[]): void;
+  success(...args: any[]): void;
+
+  // fancier log functions
+  // group();
+  // groupEnd();
+  // time();
+  // timeEnd()
+
+  // special log functions
+  // state() // output a state object
+}
+
+// Typing here is a bit messy because filter levels and function levels are conflated
+const priority: Record<LogFns | LogLevel, number> = {
   [DEBUG]: 0,
   [INFO] : 1,
+  ['log'] : 1,
   'default': 2,
   [WARN] : 2,
   [ERROR]: 2,
@@ -34,15 +70,15 @@ const priority = {
   [NONE] : 9,
 };
 
-// TODO I'd quite like each package to have its own colour, I think
-// that would be a nice branding exercise, even when running standalone
-const colors = {
-  'Compiler': 'green', // reassuring green
-  'Runtime': 'pink', // cheerful pink
-  'Job': 'blue', // businesslike blue
+// // TODO I'd quite like each package to have its own colour, I think
+// // that would be a nice branding exercise, even when running standalone
+// const colors = {
+//   'Compiler': 'green', // reassuring green
+//   'Runtime': 'pink', // cheerful pink
+//   'Job': 'blue', // businesslike blue
 
-  // default to white I guess
-}
+//   // default to white I guess
+// }
 
 
 // TODO what if we want to hide levels?
@@ -70,8 +106,8 @@ export const styleLevel = (level: LogFns) => {
 // to each logger. Seems counter-intuitive but it should be much easier!
 // TODO allow the logger to accept a single argument
 export default function(name?: string, options: LogOptions = {}): Logger {
-  const opts = ensureOptions(options);
-  const minLevel = priority[opts.level];
+  const opts = ensureOptions(options) as Required<LogOptions>;
+  const minLevel= priority[opts.level];
 
   // This is what we actually pass the log strings to
   const emitter = opts.logger;
@@ -100,7 +136,7 @@ export default function(name?: string, options: LogOptions = {}): Logger {
     
     // how do we actually log?
     if (priority[level] >= minLevel) {
-      if (emitter[level]) {
+      if (emitter.hasOwnProperty(level)) {
         emitter[level](...output)
       }
     }
@@ -108,6 +144,7 @@ export default function(name?: string, options: LogOptions = {}): Logger {
 
   const wrap = (level: LogFns) => (...args: LogArgs) => log(level, ...args);
 
+  // TODO this does not yet cover the full console API
   const logger = {
     info: wrap(INFO),
     log: wrap(INFO),
@@ -120,10 +157,11 @@ export default function(name?: string, options: LogOptions = {}): Logger {
     force: () => {}, // force the next lines to log (even if silent)
     unforce: () => {}, // restore silent default
     break: () => { console.log() }, // print a line break
-    indent: (spaces: 0) => {}, // set the indent level
-  };
+    indent: (_spaces: 0) => {}, // set the indent level
+    
+    options: opts, // debug and testing
+  } as unknown; // type shenanegans
 
-  logger.options = opts; // debug and testing
 
   return logger as Logger;
 }

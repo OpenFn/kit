@@ -1,6 +1,7 @@
 // Mock logger which doesn't log anything
 // TODO built in an API to return the history - very useful in unit tests
-import createLogger from './logger';
+import createLogger, { Logger, LogFns } from './logger';
+import type { LogOptions, LogEmitter } from './options';
 
 // Each log message is saved as the level, then whatever was actually logged
 type LogMessage = [LogFns, ...any[]];
@@ -23,7 +24,7 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
 
   const logger = {
     ...console
-  };
+  } as LogEmitter;
 
   ['log', 'info', 'success', 'debug', 'warn', 'error'].forEach((l) => {
     const level = l as LogFns;
