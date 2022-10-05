@@ -4,7 +4,7 @@
 
 import { namedTypes as n, namedTypes } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
-import type { Visitor } from '../transform';
+import type { Transformer } from '../transform';
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 
@@ -46,4 +46,4 @@ export default {
   id: 'top-level-operations',
   types: ['CallExpression'],
   visitor,
-} as Visitor;
+} as Transformer;

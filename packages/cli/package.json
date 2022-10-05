@@ -50,6 +50,7 @@
   "dependencies": {
     "@openfn/compiler": "workspace:^0.0.6",
     "@openfn/runtime": "workspace:^0.0.3",
+    "@openfn/logger": "workspace:^0.0.1",
     "yargs": "^17.5.1"
   },
   "files": [

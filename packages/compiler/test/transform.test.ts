@@ -1,8 +1,11 @@
 import test from 'ava';
 import { builders as b } from 'ast-types';
 import {visit} from 'recast';
+import { createMockLogger } from '@openfn/logger';
 
-import transform, { buildvisitorMap, buildVisitorMethods, TransformerName } from '../src/transform';
+import transform, { indexTransformers, buildVisitors, TransformerName } from '../src/transform';
+
+const logger = createMockLogger();
 
 const noop = () => false;
 
@@ -10,45 +13,45 @@ const TEST = 'test' as TransformerName;
 const ENSURE_EXPORTS = 'ensure-exports' as TransformerName;
 
 test('build a visitor map with one visitor', (t) => {
-  const visitors = [{ id: TEST, types: ['CallExpression'], visitor: noop }];
+  const transformers = [{ id: TEST, types: ['CallExpression'], visitor: noop }];
 
-  const map = buildvisitorMap(visitors);
+  const map = indexTransformers(transformers);
 
   t.truthy(map.visitCallExpression);
-  t.assert(map.visitCallExpression.length === 1);
+  t.assert(map.visitCallExpression!.length === 1);
 });
 
 test('build a visitor map with multiple visitors', (t) => {
-  const visitors = [
+  const transformers = [
     { id: TEST, types: ['CallExpression'], visitor: noop },
     { id: TEST, types: ['VariableDeclaration'], visitor: noop }
   ];
 
-  const map = buildvisitorMap(visitors);
+  const map = indexTransformers(transformers);
 
   t.truthy(map.visitCallExpression);
-  t.assert(map.visitCallExpression.length === 1);
+  t.assert(map.visitCallExpression!.length === 1);
 
   t.truthy(map.visitVariableDeclaration);
-  t.assert(map.visitVariableDeclaration.length === 1);
+  t.assert(map.visitVariableDeclaration!.length === 1);
 });
 
 test('build a visitor map with multiple visitors of the same type', (t) => {
-  const visitors = [
+  const transformers = [
     { id: TEST, types: ['CallExpression'], visitor: noop },
     { id: TEST, types: ['CallExpression'], visitor: noop }
   ];
   
-  const map = buildvisitorMap(visitors);
+  const map = indexTransformers(transformers);
   
   t.truthy(map.visitCallExpression);
-  t.assert(map.visitCallExpression.length === 2);
+  t.assert(map.visitCallExpression!.length === 2);
 });
 
 test('transform will visit nodes once', (t) => {
   let visitCount = 0;
   const visitor = () => { visitCount++ };
-  const visitors = [{ id: TEST, types: ['CallExpression'], visitor }];
+  const transformers = [{ id: TEST, types: ['CallExpression'], visitor }];
 
   const program = b.program([
     b.expressionStatement(
@@ -59,14 +62,14 @@ test('transform will visit nodes once', (t) => {
     )
   ]);
 
-  transform(program, visitors);
+  transform(program, transformers);
   t.assert(visitCount === 1)
 });
 
 test('transform will visit nested nodes', (t) => {
   let visitCount = 0;
   const visitor = () => { visitCount++ };
-  const visitors = [{ id: TEST, types: ['CallExpression'], visitor }];
+  const transformers = [{ id: TEST, types: ['CallExpression'], visitor }];
 
   const program = b.program([
     b.expressionStatement(
@@ -76,14 +79,14 @@ test('transform will visit nested nodes', (t) => {
       )
     )
   ]);
-  transform(program, visitors);
+  transform(program, transformers);
   t.assert(visitCount === 2)
 });
 
 test('transform will stop if a visitor returns truthy', (t) => {
   let visitCount = 0;
   const visitor = () => Boolean(++visitCount);
-  const visitors = [{ id: TEST, types: ['CallExpression'], visitor }];
+  const transformers = [{ id: TEST, types: ['CallExpression'], visitor }];
 
   const program = b.program([
     b.expressionStatement(
@@ -93,14 +96,14 @@ test('transform will stop if a visitor returns truthy', (t) => {
       )
     )
   ]);
-  transform(program, visitors);
+  transform(program, transformers);
   t.assert(visitCount === 1)
 });
 
 test('ignore disabled visitors', (t) => {
-  const visitors = [{ id: TEST, types: ['Program'], visitor: noop }];
+  const transformers = [{ id: TEST, types: ['Program'], visitor: noop }];
 
-  const map = buildvisitorMap(visitors, { 'test': false });
+  const map = indexTransformers(transformers, { 'test': false });
 
   // Should add no visitors
   t.assert(Object.keys(map).length === 0);
@@ -108,35 +111,36 @@ test('ignore disabled visitors', (t) => {
 
 test('passes options to a visitor', (t) => {
   let result;
-  const visitor = (_node: unknown, options: any) => {
+  const visitor = (_node: unknown, _logger: unknown, options: any) => {
     result = options.value;
   }
-  const visitors = [{ id: TEST, types: ['Program'], visitor }];
+  const transformers = [{ id: TEST, types: ['Program'], visitor }];
 
-  // Build a visitor map which should trap the options
-  const map = buildvisitorMap(visitors, { [TEST]: { value: 42 }});
+  const map = indexTransformers(transformers);
+  const options =  { [TEST]: { value: 42 } };
 
   // Visit an AST and ensure the visitor is called with the right options
-  visit(b.program([]), buildVisitorMethods(map))
+  visit(b.program([]), buildVisitors(map, logger, options));
 
   t.assert(result === 42);
 });
 
 test('passes options to several visitors', (t) => {
   let total = 0;
-  const visitor = (_node: unknown, options: any) => {
+  const visitor = (_node: unknown, _logger: unknown, options: any) => {
     total += options.value;
   }
-  const visitors = [
+  const transformers = [
     { id: TEST, types: ['Program'], visitor },
     { id: TEST, types: ['Program'], visitor }
   ];
 
   // Build a visitor map which should trap the options
-  const map = buildvisitorMap(visitors, { [TEST]: { value: 2 }});
+  const map = indexTransformers(transformers);
+  const options = { [TEST]: { value: 2 }};
   
   // Visit an AST and ensure the visitor is called with the right options
-  visit(b.program([]), buildVisitorMethods(map))
+  visit(b.program([]), buildVisitors(map, logger, options))
 
   t.assert(total === 4);
 });
@@ -145,13 +149,13 @@ test('passes options to the correct visitor', (t) => {
   let x;
   let y;
 
-  const visitor_a = (_node: unknown, options: any) => {
+  const visitor_a = (_node: unknown, _logger: unknown, options: any) => {
     x = options.value;
   };
-  const visitor_b = (_node: unknown, options: any) => {
+  const visitor_b = (_node: unknown, _logger: unknown, options: any) => {
     y = options.value;
   };
-  const visitors = [
+  const transformers = [
     { id: ENSURE_EXPORTS, types: ['Program'], visitor: visitor_a },
     { id: TEST, types: ['Program'], visitor: visitor_b  }
   ];
@@ -161,10 +165,10 @@ test('passes options to the correct visitor', (t) => {
     [ENSURE_EXPORTS]:  {value: 99 }, // x
     [TEST]: {value: 42 } // y
   }
-  const map = buildvisitorMap(visitors, options);
+  const map = indexTransformers(transformers);
 
   // Visit an AST and ensure the visitor is called with the right options
-  visit(b.program([]), buildVisitorMethods(map))
+  visit(b.program([]), buildVisitors(map, logger, options))
 
   t.assert(x === 99);
   t.assert(y === 42);
