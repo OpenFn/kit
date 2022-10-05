@@ -69,6 +69,7 @@ export function buildvisitorMap(visitors: Visitor[], options: TransformOptions =
         if (!map[name]) {
           map[name] = [];
         }
+        // TODO this is way overcomplicated
         map[name].push((n: NodePath) => visitor(n, options[id] ?? {}, logger));
       }
     }

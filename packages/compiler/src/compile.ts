@@ -7,10 +7,10 @@ import { isPath, loadFile } from './util';
 const defaultLogger = createLogger()
 
 // TODO want to migrate to this but it'll break everything...
-type FutureOptions = {
-  logger?: Logger;
-  transform?: TransformOptions;
-}
+// type FutureOptions = {
+//   logger?: Logger;
+//   transform?: TransformOptions;
+// }
 
 export type Options = TransformOptions & {
   logger?: Logger

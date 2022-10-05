@@ -12,6 +12,7 @@ import type { NodePath } from 'ast-types/lib/node-path';
 import type { ASTNode } from 'ast-types';
 import { visit } from 'recast';
 import type { Visitor } from '../transform';
+import type { Logger } from '@openfn/logger';
 
 const GLOBALS = /^(state|console|JSON|setInterval|clearInterval|setTimeout|clearTimeout|parseInt|parseFloat|atob|btoa)$/;
 
@@ -62,7 +63,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   return result;
 }
 
-function visitor(path: NodePath, options: AddImportsOptions, logger: any) {
+function visitor(path: NodePath, options: AddImportsOptions, logger: Logger) {
   if (options.adaptor) {
     const { name, exports, exportAll } = options.adaptor;
     if (name) {
