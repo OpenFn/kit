@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import createLogger, { createNullLogger, Logger, LogLevel } from './util/logger'; 
+import createLogger, { CLI, createNullLogger, Logger, LogLevel } from './util/logger'; 
 import ensureOpts from './util/ensure-opts';
 import compile from './compile/compile';
 import loadState from './execute/load-state';
@@ -30,7 +30,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   // TODO allow a logger to be passed in for test purposes
   // I THINK I need this but tbh not sure yet!
   const opts = ensureOpts(basePath, options);
-  const logger = log || createLogger('CLI', opts);
+  const logger = log || createLogger(CLI, opts);
 
   if (opts.test) {
     return runTest(opts, logger);

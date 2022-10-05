@@ -1,5 +1,5 @@
 import run from '@openfn/runtime';
-import createLogger from '../util/logger';
+import createLogger, { RUNTIME, JOB } from '../util/logger';
 import type { SafeOpts } from '../commands';
 
 export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
@@ -9,8 +9,8 @@ export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
   // Then again, maybe that doesn't make sense
   // Maybe we have to feed a job logger in?
   return run(code, state, {
-    logger: createLogger('Runtime', opts),
-    jobLogger: createLogger('Job', opts),
+    logger: createLogger(RUNTIME, opts),
+    jobLogger: createLogger(JOB, opts),
     linker: {
       modulesHome: opts.modulesHome,
       modulePaths: parseAdaptors(opts),

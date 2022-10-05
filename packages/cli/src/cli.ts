@@ -54,7 +54,7 @@ export const cmd = yargs(hideBin(process.argv))
   })
   .option('adaptors', {
     alias: ['a', 'adaptor'],
-    description: 'Pass one or more adaptors in the form name=path/to/adaptor]',
+    description: 'Pass one or more adaptors in the form name=path/to/adaptor',
     array: true
   })
   // TODO this becomes log compiler=debug

@@ -1,6 +1,6 @@
 import test from 'ava';
 import { Opts } from '../../src/commands';
-import ensureOpts, { defaultLoggerOptions } from '../../src/util/ensure-opts';
+import ensureOpts, { defaultLoggerOptions, ERROR_MESSAGE_LOG_LEVEL, ERROR_MESSAGE_LOG_COMPONENT } from '../../src/util/ensure-opts';
 
 test('set job, state and output from a base path', (t) => {
   const initialOpts = {} as Opts;
@@ -182,6 +182,54 @@ test('log: set a specific option', (t) => {
   const opts = ensureOpts('', initialOpts);
 
   t.is(opts.log.compiler, 'debug');
+});
+
+test('log: throw if an unknown log level is passed', (t) => {
+  const initialOpts = {
+    log: ['foo'],
+  } as Opts;
+  
+  const error = t.throws(() => ensureOpts('', initialOpts));
+  t.is(error?.message, ERROR_MESSAGE_LOG_LEVEL);
+});
+
+test('log: throw if an unknown log level is passed to a component', (t) => {
+  const initialOpts = {
+    log: ['cli=foo'],
+  } as Opts;
+  
+  const error = t.throws(() => ensureOpts('', initialOpts));
+  t.is(error?.message, ERROR_MESSAGE_LOG_LEVEL);
+});
+
+test('log: throw if an unknown log component is passed', (t) => {
+  const initialOpts = {
+    log: ['foo=debug'],
+  } as Opts;
+  
+  const error = t.throws(() => ensureOpts('', initialOpts));
+  t.is(error?.message, ERROR_MESSAGE_LOG_COMPONENT);
+});
+
+test('log: accept short component names', (t) => {
+  const initialOpts = {
+    log: ['cmp=debug', 'r/t=debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.compiler, 'debug');
+  t.is(opts.log.runtime, 'debug')
+});
+
+test('log: arguments are case insensitive', (t) => {
+  const initialOpts = {
+    log: ['ClI=InFo'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.cli, 'info');
 });
 
 test('log: set default and a specific option', (t) => {
