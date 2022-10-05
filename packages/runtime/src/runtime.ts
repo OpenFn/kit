@@ -1,5 +1,5 @@
 import vm from 'node:vm';
-import createLogger, { Logger } from '@openfn/logger';
+import createLogger, { Logger, printDuration } from '@openfn/logger';
 import loadModule from './modules/module-loader';
 import type { LinkerOptions } from './modules/linker';
 
@@ -38,10 +38,10 @@ export default async function run(
   
   const { operations, execute } = await prepareJob(incomingJobs, context, opts);
   // Create the main reducer function
-  const reducer = (execute || defaultExecute)(...operations.map((op) => wrapOperation(op, logger)));
+  const reducer = (execute || defaultExecute)(...operations.map((op, idx) => wrapOperation(op, logger, `${idx + 1}`)));
 
   // Run the pipeline
-  logger.debug('Executing pipeline');
+  logger.debug(`Executing pipeline (${operations.length} operations)`);
   const result = await reducer(initialState);
   logger.debug('Pipeline complete!');
   logger.debug(result);
@@ -68,12 +68,16 @@ const defaultExecute = (...operations: Operation[]): Operation => {
 // * A cloned state object so that prior state is always preserved
 // TODO: try/catch stuff
 // TODO: automated logging and metrics stuff
-const wrapOperation = (fn: Operation, logger: Logger) => {
-  return (state: State) => {
+const wrapOperation = (fn: Operation, logger: Logger, name: string) => {
+  return async (state: State) => {
     // TODO this output isn't very interesting yet!
-    logger.debug('Running operation...')
+    logger.debug(`Starting operation ${name}`)
+    const start = new Date().getTime();
     const newState = clone(state);
-    return fn(newState);
+    const result = await fn(newState);
+    const duration = printDuration(new Date().getTime() - start);
+    logger.success(`Operation ${name} complete in ${duration}`)
+    return result
   }
 };
 

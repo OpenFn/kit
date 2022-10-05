@@ -1,5 +1,5 @@
 // Wrapper around the logger API to load a namespaced logger with the right options
-import actualCreateLogger from '@openfn/logger';
+import actualCreateLogger, { printDuration } from '@openfn/logger';
 export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
 import type { SafeOpts} from '../commands'
 
@@ -28,3 +28,5 @@ export const createLogger = (name: string = '', options: Pick<SafeOpts, 'log'>) 
 export default createLogger;
 
 export const createNullLogger = () => createLogger(undefined, { log: { default : 'none' } });
+
+export { printDuration };

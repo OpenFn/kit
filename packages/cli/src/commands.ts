@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import createLogger, { CLI, createNullLogger, Logger, LogLevel } from './util/logger'; 
+import createLogger, { CLI, createNullLogger, Logger, LogLevel, printDuration } from './util/logger'; 
 import ensureOpts from './util/ensure-opts';
 import compile from './compile/compile';
 import loadState from './execute/load-state';
@@ -56,6 +56,7 @@ const assertPath = (basePath?: string) => {
 }
 
 export const runExecute = async (options: SafeOpts, logger: Logger) => {
+  const start = new Date().getTime();
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
   const result = await execute(code, state, options);
@@ -69,7 +70,9 @@ export const runExecute = async (options: SafeOpts, logger: Logger) => {
     await fs.writeFile(options.outputPath, JSON.stringify(result, null, 4));
   }
 
-  logger.success(`Done! ✨`)
+  const duration = printDuration(new Date().getTime() - start);
+
+  logger.success(`Done in ${duration}! ✨`)
 }
 
 export const runCompile = async (options: SafeOpts, logger: Logger) => {
