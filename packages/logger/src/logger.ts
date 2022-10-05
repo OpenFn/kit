@@ -1,6 +1,6 @@
 import c from 'chalk';
 import * as symbols from './symbols';
-
+import sanitize from './sanitize';
 import ensureOptions, { LogOptions, LogLevel } from './options';
 
 // Nice clean log level definitions
@@ -139,7 +139,8 @@ export default function(name?: string, options: LogOptions = {}): Logger {
     // how do we actually log?
     if (priority[level] >= minLevel) {
       if (emitter.hasOwnProperty(level)) {
-        emitter[level](...output)
+        const cleaned = output.map(sanitize, options);
+        emitter[level](...cleaned)
       }
     }
   };

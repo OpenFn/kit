@@ -21,7 +21,7 @@ export type LogOptions = {
   // paths to stuff in the state object we should obfuscate
   // this should work with language adaptors
   // like if we on sensitive c in a.b.c, console.log(c) should 
-  sensitivePaths?: string[];
+  sanitizePaths?: string[];
 
   sanitiseState?: boolean; // defaults to true
   detectState?: boolean; // defaults to true
@@ -47,7 +47,7 @@ export const defaults: Required<LogOptions> = {
   showTimestamps: false,
   sanitiseState: false,
   detectState: false,
-  sensitivePaths: ['configuration'],
+  sanitizePaths: ['configuration'],
 };
 
 // This will return a fully defined options object
@@ -60,6 +60,10 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
 
   // TODO handle merging of arrays (ie sensitive paths)
   // Maybe, this is actually a non trivial issue
+  // If the user sets a path list, is this an override or extension?
+  // Let's make it an extension
+  
+  // Let's hard-code config sanitizing, then take an array of extra paths
 
   return options;
 }

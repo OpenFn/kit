@@ -2,6 +2,7 @@ import test from 'ava';
 import chalk from 'chalk';
 import { styleLevel } from '../src/logger';
 import { defaults as defaultOptions } from '../src/options';
+import { SECRET } from '../src/sanitize';
 
 // We're going to run all these tests against the mock logger
 // Which is basically thin wrapper around the logger which bypasses
@@ -189,4 +190,18 @@ test('with level=debug logs everything', (t) => {
   result = parse(logger._last);
   t.assert(result.level === 'error');
   t.assert(result.message === 'e');
+});
+
+test('sanitize state', (t) => {
+  const logger = createLogger();
+  logger.success({
+    configuration: {
+      x: 'y'
+    },
+    data: {},
+  });
+
+  const { message } = logger._parse(logger._last);
+  // @ts-ignore
+  t.is(message.configuration.x, SECRET);
 });

@@ -14,7 +14,7 @@ type MockLogger = Logger & {
     level: string;
     namespace?: string;
     icon?: string;
-    message: string;
+    message: string | object;
   }
 }
 
@@ -53,16 +53,28 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
     let level = '';
     let namespace = '';
     let icon = '';
-    let message = [];
+    let messageParts = [];
     
     if (name && !opts.hideNamespace && !opts.hideIcons) {
-      [level, namespace, icon, ...message ] = log;
+      [level, namespace, icon, ...messageParts ] = log;
     } else if(name && !opts.hideNamespace) {
-      [level, namespace, ...message ] = log;
+      [level, namespace, ...messageParts ] = log;
     } else if(!opts.hideIcons) {
-      [level, icon, ...message ] = log;
+      [level, icon, ...messageParts ] = log;
     } else {
-      [level, ...message ] = log;
+      [level, ...messageParts ] = log;
+    }
+
+    // Simplified message handling
+    // If the first argument is a string, join the whole message into one friendly string
+    // (ie how a user would see it)
+    // If the first argument is an object, make that the message
+    // TODO this won't scale very far
+    let message = '';
+    if (typeof messageParts[0] === "string") {
+      message = messageParts.join(' ');
+    } else {
+      message = messageParts[0];
     }
      
     return {
@@ -70,7 +82,7 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
       // Chop out the square brackets from the namespace, it's a style thing and annoying in tests
       namespace: namespace.substring(1, namespace.length - 1),
       icon,
-      message: message.join(' ')
+      message, 
     };
   };
 
