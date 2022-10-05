@@ -9,6 +9,7 @@
     "build": "rimraf dist/ .rollup.cache ts.cache && rollup -c",
     "build:watch": "pnpm rollup -cw --no-watch.clearScreen",
     "test": "pnpm ava",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "test:watch": "pnpm ava -w",
     "pack": "pnpm pack --pack-destination ../../dist"
   },

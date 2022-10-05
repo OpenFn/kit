@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { Opts, SafeOpts } from '../commands';
-import type { LogOptions } from '@openfn/logger';
+import {  LogLevel } from './logger'; 
 
 export const defaultLoggerOptions = {
-  default: 'default',
-  Job: 'debug'
+  default: 'default' as const,
+  Job: 'debug' as const,
 }
 
 export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts {
@@ -37,14 +37,15 @@ export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts
     set('outputPath', newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`)  
   }
 
-  const components: Record<string, LogOptions> = {};
+  const components: Record<string, LogLevel> = {};
   if (opts.log) {
     opts.log.forEach((l) => {
+      // TODO we should validate these values really as they come from user input!
       if (l.match(/=/)) {
         const [component, level] = l.split('=');
-        components[component] = level;
+        components[component] = level as LogLevel;
       } else  {
-        components.default = l;
+        components.default = l as LogLevel;
       }
     })
     // TODO what if other log options are passed? Not really a concern right now

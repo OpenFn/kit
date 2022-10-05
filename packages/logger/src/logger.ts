@@ -1,5 +1,6 @@
 import c from 'chalk';
-import figures from 'figures';
+import * as symbols from './symbols';
+
 import ensureOptions, { LogOptions, LogLevel } from './options';
 
 // Nice clean log level definitions
@@ -49,6 +50,7 @@ export interface Logger extends Console {
   success(...args: any[]): void;
 
   // fancier log functions
+  break(): void;
   // group();
   // groupEnd();
   // time();
@@ -88,15 +90,15 @@ const priority: Record<LogFns | LogLevel, number> = {
 export const styleLevel = (level: LogFns) => {
   switch (level) {
     case ERROR:
-      return c.red(figures.cross);
+      return c.red(symbols.cross);
     case WARN:
-      return c.yellow(figures.warning);
+      return c.yellow(symbols.warning);
     case SUCCESS:
-      return c.green(figures.tick);
+      return c.green(symbols.tick);
     case DEBUG:
-      return c.grey(figures.pointer);
+      return c.grey(symbols.pointer);
     default:
-      return c.white(figures.info);
+      return c.white(symbols.info);
   }
 }
 

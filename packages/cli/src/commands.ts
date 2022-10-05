@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import createLogger, { createNullLogger, Logger, LogLevel } from './util/logger';
+import createLogger, { createNullLogger, Logger, LogLevel } from './util/logger'; 
 import ensureOpts from './util/ensure-opts';
 import compile from './compile/compile';
 import loadState from './execute/load-state';
@@ -9,7 +9,7 @@ export type Opts = {
   adaptors?: string[];
   compileOnly?: boolean;
   jobPath?: string;
-  log?: string[] | Record<string, LogLevel>;
+  log?: string[];
   modulesHome?: string;
   noCompile?: boolean;
   outputPath?: string;
@@ -21,7 +21,7 @@ export type Opts = {
   test?: boolean;
 }
 
-export type SafeOpts = Required<Opts> & {
+export type SafeOpts = Required<Omit<Opts, "log">> & {
   log: Record<string, LogLevel>;
 };
 
@@ -60,7 +60,7 @@ const assertPath = (basePath?: string) => {
 export const runExecute = async (options: SafeOpts, logger: Logger) => {
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
-  const result = await execute(code, state, options, logger);
+  const result = await execute(code, state, options);
   
   if (options.outputStdout) {
     // TODO Log this even if in silent mode
@@ -99,7 +99,9 @@ export const runTest = async (options: SafeOpts, logger: Logger) => {
     options.stateStdin = "21";
   }
   
-  const state = await loadState(options, createNullLogger);
+  const silentLogger = createNullLogger();
+
+  const state = await loadState(options, silentLogger);
   const code = await compile(options, logger);
   logger.break()
   logger.info('Compiled job:', '\n', code) // TODO there's an ugly intend here
