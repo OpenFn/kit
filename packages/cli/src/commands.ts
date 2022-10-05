@@ -14,10 +14,8 @@ export type Opts = {
   noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;
-  silent?: boolean; // DEPRECATED
   statePath?: string;
   stateStdin?: string;
-  traceLinker?: boolean;
   test?: boolean;
 }
 
@@ -67,9 +65,7 @@ export const runExecute = async (options: SafeOpts, logger: Logger) => {
     logger.success(`Result: `)
     logger.success(result)
   } else {
-    if (!options.silent) {
-      logger.success(`Writing output to ${options.outputPath}`)
-    }
+    logger.success(`Writing output to ${options.outputPath}`)
     await fs.writeFile(options.outputPath, JSON.stringify(result, null, 4));
   }
 
@@ -79,7 +75,7 @@ export const runExecute = async (options: SafeOpts, logger: Logger) => {
 export const runCompile = async (options: SafeOpts, logger: Logger) => {
   const code = await compile(options, logger);
   if (options.outputStdout) {
-    // Log this even if in silent mode
+    // TODO log this even if in silent mode
     logger.success('Compiled code:')
     console.log(code)
   } else {

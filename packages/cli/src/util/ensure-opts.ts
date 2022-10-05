@@ -72,10 +72,8 @@ export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts
     modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
     noCompile: Boolean(opts.noCompile),
     outputStdout: Boolean(opts.outputStdout),
-    silent: opts.silent,
     stateStdin: opts.stateStdin,
     test: opts.test,
-    traceLinker: opts.traceLinker,
   } as SafeOpts;
 
   const set = (key: keyof Opts, value: string) => {

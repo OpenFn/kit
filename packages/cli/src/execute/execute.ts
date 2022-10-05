@@ -14,7 +14,6 @@ export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
     linker: {
       modulesHome: opts.modulesHome,
       modulePaths: parseAdaptors(opts),
-      trace: opts.traceLinker
     }
   });
 }

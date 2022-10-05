@@ -74,16 +74,6 @@ test('should not append @openfn to adaptors if already prefixed', (t) => {
   t.assert(opts.adaptors[0] === '@openfn/language-common=a/b/c');
 })
 
-test('preserve silent', (t) => {
-  const initialOpts = {
-    silent: true
-  } as Opts;
-  
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.silent);
-});
-
 test('preserve outputStdout', (t) => {
   const initialOpts = {
     outputStdout: true
@@ -112,17 +102,6 @@ test('preserve stateStdin', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.stateStdin === '{}');
-});
-
-
-test('preserve trace', (t) => {
-  const initialOpts = {
-    traceLinker: true
-  } as Opts;
-  
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.traceLinker);
 });
 
 test('compile only', (t) => {
