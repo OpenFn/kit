@@ -1,15 +1,4 @@
-/**
- * Transform an AST into a job compatible with the open fn run time
- * - Move leading top level code into a fn() job
- * - Move top-level code
- * - Ignore any other top-level code
- * 
- * 
- * Instead of calling visit() many times, what if we traverse the tree once
- * and call all of our transformers on it?
- * Well, that makes ordering a bit harder
- */
-import { namedTypes } from 'ast-types';
+import { namedTypes, Visitor } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import { visit } from 'recast';
 import createLogger, { Logger } from '@openfn/logger';
@@ -20,20 +9,19 @@ import topLevelOps, { TopLevelOpsOptions } from './transforms/top-level-operatio
 
 export type TransformerName = 'add-imports' | 'ensure-exports' | 'top-level-operations' | 'test';
 
-type VisitorFunction =  (path: NodePath<any,any>, options?: any | boolean) => Promise<boolean | undefined> | boolean | undefined | void; // return true to abort further traversal
+type TransformFunction =  (path: NodePath<any,any>, logger: Logger, options?: any | boolean) => Promise<boolean | undefined> | boolean | undefined | void; // return true to abort further traversal
 
-export type Visitor = {
-  id: TransformerName;  // TODO would rather not include this but I can't see a better solution right now...
+export type Transformer = {
+  id: TransformerName;
   types: string[];
-  visitor: VisitorFunction;
+  visitor: TransformFunction;
 }
 
-type VisitorMap = Record<string, VisitorFunction[]>;
+type TransformerIndex = Partial<Record<keyof Visitor, Transformer[]>>;
 
 export type TransformOptions = {
   logger?: Logger; //  TODO maybe in the wrong place?
 
-  // TODO is there a neat way to automate this?
   ['add-imports']?: AddImportsOptions | boolean;
   ['ensure-exports']?: boolean;
   ['top-level-operations']?: TopLevelOpsOptions | boolean;
@@ -44,47 +32,52 @@ const defaultLogger = createLogger();
 
 export default function transform(
   ast: namedTypes.Node,
-  visitorList?: Visitor[],
+  transformers?: Transformer[],
   options: TransformOptions = {},
   ) {
-  if (!visitorList) {
-    // TODO maybe automate this from imports?
-    visitorList = [ensureExports, topLevelOps, addImports];
+  if (!transformers) {
+    transformers = [ensureExports, topLevelOps, addImports] as Transformer[];
   }
-  const visitors = buildvisitorMap(visitorList as Visitor[], options);
-  visit(ast, buildVisitorMethods(visitors))
+  const logger = options.logger || defaultLogger;
+  const transformerIndex = indexTransformers(transformers, options);
+  
+  const v =  buildVisitors(transformerIndex, logger, options);
+  // @ts-ignore generic disagree on Visitor, so disabling type checking for now
+  visit(ast, v);
 
   return ast;
 }
 
-// Build a map of AST node types against an array of visitor functions
-// Each visitor must trap the appropriate options
-export function buildvisitorMap(visitors: Visitor[], options: TransformOptions = {}): VisitorMap {
-  const logger = options.logger || defaultLogger;
-  const map: Record<string, VisitorFunction[]> = {};
-  for (const { types, visitor, id } of visitors) {
+// Build a map of AST node types against an array of transform functions
+export function indexTransformers(transformers: Transformer[], options: TransformOptions = {}): TransformerIndex {
+  const index: TransformerIndex = {};
+  for (const t of transformers) {
+    const { types, id } = t;
     if (options[id] !== false) {
       for (const type of types) {
-        const name = `visit${type}`;
-        if (!map[name]) {
-          map[name] = [];
+        const name = `visit${type}` as keyof Visitor;
+        if (!index[name]) {
+          index[name] = [];
         }
-        // TODO this is way overcomplicated
-        map[name].push((n: NodePath) => visitor(n, options[id] ?? {}, logger));
+        index[name]!.push(t);
       }
     }
   }
-  return map;
+  return index;
 }
 
-export function buildVisitorMethods(visitors: VisitorMap) {
-  const result: Record<string, VisitorFunction> = {};
+// Build an index of AST visitors, where each node type is mapped to a visitor function which
+// calls out to the correct transformer, passing a logger and options
+export function buildVisitors(transformerIndex: TransformerIndex, logger: Logger, options: TransformOptions = {} ) {
+  const visitors: Visitor = {};
 
-  for (const v in visitors) {
-    result[v] = function(path: NodePath) {
-      const fns = visitors[v];
-      for(const next of fns) {
-        const abort = next!(path);
+  for (const k in transformerIndex) {
+    const astType = k as keyof Visitor;
+    visitors[astType] = function(path: NodePath) {
+      const transformers = transformerIndex[astType]!;
+      for(const { id, visitor } of transformers) {
+        const opts = options[id] || {};
+        const abort = visitor!(path, logger, opts);
         if (abort) {
           return false;
         }
@@ -92,5 +85,5 @@ export function buildVisitorMethods(visitors: VisitorMap) {
       this.traverse(path);
     }
   }
-  return result;
+  return visitors;
 }

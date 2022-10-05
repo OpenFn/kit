@@ -11,7 +11,7 @@ import { builders as b, namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { ASTNode } from 'ast-types';
 import { visit } from 'recast';
-import type { Visitor } from '../transform';
+import type { Transformer } from '../transform';
 import type { Logger } from '@openfn/logger';
 
 const GLOBALS = /^(state|console|JSON|setInterval|clearInterval|setTimeout|clearTimeout|parseInt|parseFloat|atob|btoa)$/;
@@ -63,7 +63,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   return result;
 }
 
-function visitor(path: NodePath, options: AddImportsOptions, logger: Logger) {
+function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
   if (options.adaptor) {
     const { name, exports, exportAll } = options.adaptor;
     if (name) {
@@ -106,4 +106,4 @@ export default {
   id: 'add-imports',
   types: ['Program'],
   visitor,
-} as Visitor;
+} as Transformer;

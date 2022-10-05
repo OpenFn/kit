@@ -5,7 +5,7 @@
  */
 import { builders as b, namedTypes } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path'
-import type { Visitor } from '../transform';
+import type { Transformer } from '../transform';
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 
@@ -33,4 +33,4 @@ export default {
   id: 'ensure-exports',
   types: ['Program'],
   visitor,
-} as Visitor;
+} as Transformer;
