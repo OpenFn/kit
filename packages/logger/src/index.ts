@@ -1,7 +1,8 @@
 import createLogger from './logger';
 import createMockLogger from './mock';
+import  isValidLogLevel from './util/is-valid-log-level';
 
-export { createMockLogger };
+export { createMockLogger, isValidLogLevel };
 
 export default createLogger;
 

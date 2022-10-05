@@ -25,7 +25,6 @@ export const ERROR = 'error';
 
 export const WARN = 'warn';
 
-
 export type LogArgs = any[];
 
 // TODO something is wrong with these typings
