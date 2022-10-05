@@ -35,6 +35,7 @@ const defaultEmitter = {
 };
 
 export const defaults: Required<LogOptions> = {
+  level: 'default',
   // TODO support an array of emitters here
   logger: defaultEmitter, // I guess?
 
