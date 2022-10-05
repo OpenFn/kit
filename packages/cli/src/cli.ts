@@ -10,6 +10,8 @@ export const cmd = yargs(hideBin(process.argv))
   .example('openfn job.js -adaptor @openfn/language-common=repo/openfn/language-common', 'Run job.js with a local implementation of the common language adaptor')
   .example('openfn foo/job.js -c', 'Compile a job to foo/output/js')
   .example('openfn foo/job.js -cO', 'Compile a job to stdout')
+  .example('openfn foo/job.js --log debug', 'Run a job with debug-level logging')
+  .example('openfn foo/job.js --log compiler=debug', 'Use debug logging in the compiler only')
   
   .positional('path', {
     describe: 'The path to load the job from (a .js file or a dir containing a job.js file)',
@@ -63,7 +65,7 @@ export const cmd = yargs(hideBin(process.argv))
   })
   .option('log', {
     alias: ['l'],
-    description: 'Set the default log level (or override for a component)',
+    description: 'Set the default log level to none, trace, info or default',
     array: true
   })
   .alias('v', 'version');
