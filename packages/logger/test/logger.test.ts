@@ -1,7 +1,7 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { styleLevel } from '../src/logger';
-import { defaults as defaultOptions } from '../src/options';
+import { styleLevel, LogFns } from '../src/logger';
+import { defaults as defaultOptions, LogLevel } from '../src/options';
 import { SECRET } from '../src/sanitize';
 
 // We're going to run all these tests against the mock logger
