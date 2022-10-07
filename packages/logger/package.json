@@ -9,8 +9,8 @@
     "node": ">=16"
   },
   "scripts": {
-    "build:watch": "pnpm build --watch",
     "build": "tsup --config ../../tsup.config.js src/index.ts",
+    "build:watch": "pnpm build --watch",
     "test": "pnpm ava",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "test:watch": "pnpm ava -w",
