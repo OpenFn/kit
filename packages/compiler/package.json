@@ -2,6 +2,8 @@
   "name": "@openfn/compiler",
   "version": "0.0.10",
   "description": "",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
   "type": "module",
   "engines": {
     "node": ">=16",
@@ -27,8 +29,6 @@
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
-  "author": "Open Function Group",
-  "license": "ISC",
   "devDependencies": {
     "@types/node": "^17.0.45",
     "@types/yargs": "^17.0.12",

@@ -3,6 +3,8 @@
   "version": "0.0.3",
   "description": "Cross-package logging utility",
   "module": "dist/index.js",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
   "types": "dist/index.d.ts",
   "type": "module",
   "engines": {
@@ -24,8 +26,6 @@
       }
     }
   },
-  "author": "Open Function Group",
-  "license": "ISC",
   "dependencies": {
     "chalk": "4",
     "figures": "^5.0.0"

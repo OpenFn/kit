@@ -11,7 +11,7 @@
     "build:watch": "pnpm build --watch",
     "serve": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/server/index.ts'"
   },
-  "author": "Joe Clark <jclark@openfn.org>",
+  "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "dependencies": {
     "@openfn/compiler": "workspace:^0.0.10",

@@ -2,6 +2,8 @@
   "name": "@openfn/describe-package",
   "version": "0.0.6",
   "description": "",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
   "type": "module",
   "engines": {
     "node": ">=16",
@@ -32,8 +34,6 @@
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
-  "author": "Open Function Group",
-  "license": "ISC",
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.5.0",
     "@types/chai": "^4.3.1",

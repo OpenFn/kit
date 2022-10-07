@@ -30,7 +30,7 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "keywords": [],
-  "author": "Open Function Group",
+  "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "devDependencies": {
     "@openfn/language-common": "2.0.0-rc3",

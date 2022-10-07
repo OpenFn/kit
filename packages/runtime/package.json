@@ -22,7 +22,7 @@
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
-  "author": "Joe Clark <jclark@openfn.org>",
+  "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "devDependencies": {
     "@openfn/language-common": "2.0.0-rc3",
