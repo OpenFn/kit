@@ -1,7 +1,9 @@
 {
-  "name": "flow-blocks-test",
+  "name": "@openfn/kit",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Next-generation OpenFN tooling",
+  "type": "module",
   "scripts": {
     "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
     "build": "pnpm run clean && pnpm -r --filter './packages/*' run build",

@@ -26,7 +26,7 @@ const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
   if (opts.log) {
     // Parse and validate each incoming log argument
-    opts.log.forEach((l) => {
+    opts.log.forEach((l: string) => {
       let component = '';
       let level = '';
 
