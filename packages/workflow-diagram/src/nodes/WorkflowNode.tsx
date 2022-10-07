@@ -62,6 +62,11 @@ const WorkflowNode = ({
   );
 };
 
+const EmptyWorkflowNode = () => <div></div>
+
 WorkflowNode.displayName = "WorkflowNode";
+EmptyWorkflowNode.displayName = "WorkflowNode";
+
+export {EmptyWorkflowNode};
 
 export default memo(WorkflowNode);

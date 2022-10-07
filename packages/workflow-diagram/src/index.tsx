@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import AddNode from "./nodes/AddNode";
 import JobNode from "./nodes/JobNode";
 import OperationNode from "./nodes/OperationNode";
-import TriggerNode from "./nodes/TriggerNode";
+import {TriggerWorkflowNode} from "./nodes/TriggerNode";
 import type { ProjectSpace } from "./types";
 
-import WorkflowNode from "nodes/WorkflowNode";
+import {EmptyWorkflowNode} from "nodes/WorkflowNode";
 import ReactFlow, { Node, ReactFlowProvider } from "react-flow-renderer";
 import "./main.css";
 import * as Store from "./store";
@@ -15,8 +15,8 @@ const nodeTypes = {
   job: JobNode,
   add: AddNode,
   operation: OperationNode,
-  trigger: TriggerNode,
-  workflow: WorkflowNode,
+  trigger: TriggerWorkflowNode,
+  workflow: EmptyWorkflowNode,
 };
 
 const WorkflowDiagram: React.FC<{

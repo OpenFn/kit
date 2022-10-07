@@ -75,6 +75,35 @@ const TriggerNode = ({
   );
 };
 
+
+const TriggerWorkflowNode = ({
+  data,
+  isConnectable,
+  sourcePosition = Position.Bottom,
+}: NodeProps) => {
+  return (
+    <div
+      className="bg-white rounded-sm shadow border
+                 
+                   text-xs text-slate-600 p-2 text-center h-full"
+    >
+      <div className={`flex flex-col items-center`}>
+        <div className="flex-auto">{data?.workflow?.name}</div>
+        <div className="flex-auto text-[0.5rem] italic">{data?.label}</div>
+      </div>
+      <Handle
+        type="source"
+        position={sourcePosition}
+        isConnectable={isConnectable}
+        style={{ border: "none", height: 0, top: 0 }}
+      />
+    </div>
+  );
+};
+
+TriggerWorkflowNode.displayName = "TriggerNode";
 TriggerNode.displayName = "TriggerNode";
+
+export {TriggerWorkflowNode}
 
 export default memo(TriggerNode);
