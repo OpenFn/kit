@@ -3,6 +3,7 @@
  */
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
+import type { Operation } from '../runtime';
 
 type Options = LinkerOptions & {
   context?: Context;

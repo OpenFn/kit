@@ -3,6 +3,17 @@ import createLogger, { Logger, printDuration } from '@openfn/logger';
 import loadModule from './modules/module-loader';
 import type { LinkerOptions } from './modules/linker';
 
+export declare interface State<D = object, C = object> {
+  configuration: C;
+  data: D;
+  references?: Array<any>;
+  index?: number;
+}
+
+export declare interface Operation<T = Promise<State> | State> {
+  (state: State): T;
+}
+
 type Options = {
   logger?: Logger;
   jobLogger?: Logger;

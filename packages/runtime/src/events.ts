@@ -1,5 +1,6 @@
 // module to help with events
 
+export default {};
 
 /*
 pipeline start
