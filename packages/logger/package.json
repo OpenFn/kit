@@ -24,7 +24,7 @@
       }
     }
   },
-  "author": "",
+  "author": "Open Function Group",
   "license": "ISC",
   "dependencies": {
     "chalk": "4",

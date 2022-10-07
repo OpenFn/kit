@@ -14,7 +14,7 @@
     "pack:local": "pnpm run pack && node ./build/pack-local.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Open Function Group",
   "license": "ISC",
   "devDependencies": {
     "@changesets/cli": "^2.24.4",

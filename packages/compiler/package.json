@@ -27,7 +27,7 @@
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
-  "author": "Joe Clark<jclark@openfn.org>",
+  "author": "Open Function Group",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^17.0.45",
