@@ -85,9 +85,14 @@ const TriggerWorkflowNode = ({
       className="bg-white rounded-sm shadow border flex items-center justify-center     
                    text-xs text-slate-600 p-2 text-center h-full"
     >
-      <div className={`flex flex-col items-center`}>
+      <div className={`flex flex-col items-center w-full`}>
         <div className="flex-auto">{data?.workflow?.name}</div>
-        <div className="flex-auto text-[0.5rem] italic">{data?.label}</div>
+        <div
+          className="flex-auto text-[0.6rem] italic whitespace-nowrap text-ellipsis w-full overflow-hidden"
+          title={data?.description}
+        >
+          {data?.description}
+        </div>
       </div>
       <Handle
         type="source"

@@ -14,7 +14,11 @@ const projectSpace = {
       workflowId: "wf-one",
       adaptor: "@openfn/language-salesforce@2.8.1",
       enabled: true,
-      trigger: { type: "webhook" },
+      trigger: {
+        type: "webhook",
+        description:
+          "when data is received at https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
+      },
       operations: [
         { id: "115", label: "create", comment: "Create an object" },
         { id: "25", label: "fn", comment: "Map out new records" },
@@ -55,7 +59,7 @@ const projectSpace = {
       workflowId: "wf-two",
       adaptor: "@openfn/language-http@4.0.0",
       enabled: true,
-      trigger: { type: "cron" },
+      trigger: { type: "cron", description: "at 7:34pm every Tuesday" },
     },
   ],
   workflows: [

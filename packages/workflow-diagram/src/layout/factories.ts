@@ -54,7 +54,11 @@ export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
   return {
     id: `${job.id}-trigger`,
     __flowProps__: {
-      data: { label: TriggerLabels[job.trigger.type], workflow },
+      data: {
+        label: TriggerLabels[job.trigger.type],
+        description: job.trigger.description,
+        workflow,
+      },
       type: "trigger",
     },
     width: 190,
