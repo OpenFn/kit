@@ -1,12 +1,11 @@
+// This tsconfig is really only used for valdiation
+// Build artefacts are all controlled by tsup
 {
   "compilerOptions": {
     // Allow JavaScript files to be compiled
     "allowJs": true,
     // Allow default imports from modules with no default export
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "src",
-    "outDir": "dist",
-    "declarationDir": ".",
     // Generate corresponding .d.ts file
     "declaration": true,
     // Disables namespace imports (import * as fs from "fs") and enables CJS/AMD/UMD style imports (import fs from "fs")
@@ -17,7 +16,6 @@
     "incremental": false,
     // Unconditionally emit imports for unresolved files
     "isolatedModules": true,
-    // "jsx": "react", // Support JSX in .tsx files
     // List of library files to be included in the compilation
     "lib": ["ES2022", "DOM.Iterable"],
     // Specify module code generation
@@ -25,7 +23,7 @@
     // Resolve modules using Node.js style
     "moduleResolution": "node",
     // Do not emit output (meaning do not compile code, only perform type checking)
-    "noEmit": false,
+    "noEmit": true,
     // Report errors for fallthrough cases in switch statement
     "noFallthroughCasesInSwitch": true,
     // Report errors on unused locals
@@ -36,8 +34,6 @@
     "resolveJsonModule": true,
     // Skip type checking of all declaration files
     "skipLibCheck": true,
-    // Generate corrresponding .map file
-    "sourceMap": true,
     // Enable all strict type checking options
     "strict": true,
     // Specify ECMAScript target version
