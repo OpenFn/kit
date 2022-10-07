@@ -4,23 +4,23 @@ import sanitize, { SECRET } from '../src/sanitize';
 
 const options = {};
 test('simply return a string', (t) => {
-  const result = sanitize("x", options);
+  const result = sanitize('x', options);
   t.is(result, 'x');
 });
 
 test('simply return an object', (t) => {
-  const result = sanitize({ "a": "x" }, options);
-  t.deepEqual(result, { "a": "x" });
+  const result = sanitize({ a: 'x' }, options);
+  t.deepEqual(result, { a: 'x' });
 });
 
 test('sanitize state.configuration', (t) => {
   const state = {
     configuration: { password: 'password1', username: 'foo' },
-    data: { x: 1 }
+    data: { x: 1 },
   };
   const expectedState = {
     configuration: { password: SECRET, username: SECRET },
-    data: { x: 1 }
+    data: { x: 1 },
   };
   const result = sanitize(state, options);
   t.deepEqual(result, expectedState);
@@ -28,18 +28,13 @@ test('sanitize state.configuration', (t) => {
 
 // TODO not implemented yet
 test.skip('sanitize a simple path', (t) => {
-  const result = sanitize({ "a": "x" }, { sanitizePaths: ['a'] });
-  t.deepEqual(result, { "a": SECRET });
+  const result = sanitize({ a: 'x' }, { sanitizePaths: ['a'] });
+  t.deepEqual(result, { a: SECRET });
 });
 
+test.skip('sanitize state.configuration even if extra args are passed', () => {});
 
-test.skip('sanitize state.configuration even if extra args are passed', () => {
-  
-});
-
-test.skip('don\'t sanitize nested state-like objects', () => {
-  
-});
+test.skip("don't sanitize nested state-like objects", () => {});
 
 // TODO do some cool jsonpath stuff
 

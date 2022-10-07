@@ -62,13 +62,13 @@ export interface Logger extends Console {
 // Typing here is a bit messy because filter levels and function levels are conflated
 const priority: Record<LogFns | LogLevel, number> = {
   [DEBUG]: 0,
-  [INFO] : 1,
-  ['log'] : 1,
-  'default': 2,
-  [WARN] : 2,
+  [INFO]: 1,
+  log: 1,
+  default: 2,
+  [WARN]: 2,
   [ERROR]: 2,
-  [SUCCESS] : 2,
-  [NONE] : 9,
+  [SUCCESS]: 2,
+  [NONE]: 9,
 };
 
 // // TODO I'd quite like each package to have its own colour, I think
@@ -80,7 +80,6 @@ const priority: Record<LogFns | LogLevel, number> = {
 
 //   // default to white I guess
 // }
-
 
 // TODO what if we want to hide levels?
 // OR hide some levels?
@@ -99,16 +98,16 @@ export const styleLevel = (level: LogFns) => {
     default:
       return c.white(symbols.info);
   }
-}
+};
 
 // This reporter should prefix all logs with the logger name
 // It should also handle grouping
 // The options object should be namespaced so that runtime managers can pass a global options object
 // to each logger. Seems counter-intuitive but it should be much easier!
 // TODO allow the logger to accept a single argument
-export default function(name?: string, options: LogOptions = {}): Logger {
+export default function (name?: string, options: LogOptions = {}): Logger {
   const opts = ensureOptions(options) as Required<LogOptions>;
-  const minLevel= priority[opts.level];
+  const minLevel = priority[opts.level];
 
   // This is what we actually pass the log strings to
   const emitter = opts.logger;
@@ -125,26 +124,29 @@ export default function(name?: string, options: LogOptions = {}): Logger {
       output.push(c.blue(`[${name}]`));
     }
     if (!opts.hideIcons) {
-      output.push(styleLevel(level))
+      output.push(styleLevel(level));
     }
 
-    output.push(...args)
+    output.push(...args);
     // concatenate consecutive strings
     // log objects by themselves, pretty printed
 
     // TODO I'd really really like a nice way to visualise log('state': hugeJsonObject)
     // This will take some effort I think
-    
+
     // how do we actually log?
     if (priority[level] >= minLevel) {
       if (emitter.hasOwnProperty(level)) {
-        const cleaned = output.map(o => sanitize(o, options));
-        emitter[level](...cleaned)
+        const cleaned = output.map((o) => sanitize(o, options));
+        emitter[level](...cleaned);
       }
     }
   };
 
-  const wrap = (level: LogFns) => (...args: LogArgs) => log(level, ...args);
+  const wrap =
+    (level: LogFns) =>
+    (...args: LogArgs) =>
+      log(level, ...args);
 
   // TODO this does not yet cover the full console API
   const logger = {
@@ -158,13 +160,14 @@ export default function(name?: string, options: LogOptions = {}): Logger {
     // possible convenience APIs
     force: () => {}, // force the next lines to log (even if silent)
     unforce: () => {}, // restore silent default
-    break: () => { console.log() }, // print a line break
+    // print a line break
+    break: () => {
+      console.log();
+    },
     indent: (_spaces: 0) => {}, // set the indent level
-    
+
     options: opts, // debug and testing
   } as unknown; // type shenanegans
 
-
   return logger as Logger;
 }
-
