@@ -4,7 +4,7 @@
  */
 import path from 'node:path';
 import * as url from 'url';
-import { fork } from "node:child_process";
+import { fork } from 'node:child_process';
 import type { Opts } from '../commands';
 
 // The default export will create a new child process which calls itself
@@ -19,16 +19,15 @@ export default function (basePath: string, opts: Opts) {
     // Allows us to do import('path/to/language-common') in the linker
     '--experimental-specifier-resolution=node',
   ];
-  
+
   const dirname = path.dirname(url.fileURLToPath(import.meta.url));
   const child = fork(`${dirname}/process/runner.js`, [], { execArgv });
 
-  child.on('message', ({ done }: { done: boolean}) => {
+  child.on('message', ({ done }: { done: boolean }) => {
     if (done) {
       child.kill();
-      process.exit(0)
+      process.exit(0);
     }
-  })
-  child.send({ init: true, basePath, opts })
-};
-
+  });
+  child.send({ init: true, basePath, opts });
+}

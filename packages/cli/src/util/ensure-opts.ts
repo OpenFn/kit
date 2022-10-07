@@ -1,17 +1,18 @@
 import path from 'node:path';
 import { isValidLogLevel } from '@openfn/logger';
 import { Opts, SafeOpts } from '../commands';
-import {  LogLevel } from './logger'; 
+import { LogLevel } from './logger';
 
 export const defaultLoggerOptions = {
   default: 'default' as const,
   //  TODO fix to lower case
   job: 'debug' as const,
-}
+};
 
-export const ERROR_MESSAGE_LOG_LEVEL = 'Unknown log level. Valid levels are none, debug, info and default.';
-export const ERROR_MESSAGE_LOG_COMPONENT = 'Unknown log component. Valid components are cli, compiler, runtime and job.';
-
+export const ERROR_MESSAGE_LOG_LEVEL =
+  'Unknown log level. Valid levels are none, debug, info and default.';
+export const ERROR_MESSAGE_LOG_COMPONENT =
+  'Unknown log component. Valid components are cli, compiler, runtime and job.';
 
 const componentShorthands: Record<string, string> = {
   cmp: 'compiler',
@@ -19,8 +20,9 @@ const componentShorthands: Record<string, string> = {
   'r/t': 'runtime',
 };
 
-// TODO what about shorthands? 
-const isValidComponent = (v: string) => /^(cli|runtime|compiler|job|default)$/i.test(v)
+// TODO what about shorthands?
+const isValidComponent = (v: string) =>
+  /^(cli|runtime|compiler|job|default)$/i.test(v);
 
 const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
@@ -31,30 +33,30 @@ const ensureLogOpts = (opts: Opts) => {
       let level = '';
 
       if (l.match(/=/)) {
-        const parts = l.split('=')
+        const parts = l.split('=');
         component = parts[0].toLowerCase();
         if (componentShorthands[component]) {
           component = componentShorthands[component];
         }
         level = parts[1].toLowerCase() as LogLevel;
-      } else  {
+      } else {
         component = 'default';
-        level = l.toLowerCase() as LogLevel
+        level = l.toLowerCase() as LogLevel;
       }
 
       if (!isValidComponent(component)) {
-        throw new Error(ERROR_MESSAGE_LOG_COMPONENT)
+        throw new Error(ERROR_MESSAGE_LOG_COMPONENT);
       }
 
       level = level.toLowerCase();
       if (!isValidLogLevel(level)) {
         // TODO need to think about how the CLI frontend handles these errors
         // But this is fine for now
-        throw new Error(ERROR_MESSAGE_LOG_LEVEL)
+        throw new Error(ERROR_MESSAGE_LOG_LEVEL);
       }
 
       components[component] = level as LogLevel;
-    })
+    });
     // TODO what if other log options are passed? Not really a concern right now
   } else if (opts.test) {
     // In test mode, log at info level by default
@@ -64,9 +66,12 @@ const ensureLogOpts = (opts: Opts) => {
     ...defaultLoggerOptions,
     ...components,
   };
-}
+};
 
-export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts {
+export default function ensureOpts(
+  basePath: string = '.',
+  opts: Opts
+): SafeOpts {
   const newOpts = {
     compileOnly: Boolean(opts.compileOnly),
     modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
@@ -85,13 +90,16 @@ export default function ensureOpts(basePath: string = '.', opts: Opts): SafeOpts
 
   if (basePath.endsWith('.js')) {
     baseDir = path.dirname(basePath);
-    set('jobPath', basePath)
+    set('jobPath', basePath);
   } else {
-    set('jobPath', `${baseDir}/job.js`)
+    set('jobPath', `${baseDir}/job.js`);
   }
-  set('statePath', `${baseDir}/state.json`)
+  set('statePath', `${baseDir}/state.json`);
   if (!opts.outputStdout) {
-    set('outputPath', newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`)  
+    set(
+      'outputPath',
+      newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`
+    );
   }
 
   newOpts.log = ensureLogOpts(opts);

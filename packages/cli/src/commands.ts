@@ -1,5 +1,11 @@
 import fs from 'node:fs/promises';
-import createLogger, { CLI, createNullLogger, Logger, LogLevel, printDuration } from './util/logger'; 
+import createLogger, {
+  CLI,
+  createNullLogger,
+  Logger,
+  LogLevel,
+  printDuration,
+} from './util/logger';
 import ensureOpts from './util/ensure-opts';
 import compile from './compile/compile';
 import loadState from './execute/load-state';
@@ -17,9 +23,9 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   test?: boolean;
-}
+};
 
-export type SafeOpts = Required<Omit<Opts, "log">> & {
+export type SafeOpts = Required<Omit<Opts, 'log'>> & {
   log: Record<string, LogLevel>;
 };
 
@@ -53,59 +59,59 @@ const assertPath = (basePath?: string) => {
     console.error('  openfn --help ');
     process.exit(1);
   }
-}
+};
 
 export const runExecute = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
   const result = await execute(code, state, options);
-  
+
   if (options.outputStdout) {
     // TODO Log this even if in silent mode
-    logger.success(`Result: `)
-    logger.success(result)
+    logger.success(`Result: `);
+    logger.success(result);
   } else {
-    logger.success(`Writing output to ${options.outputPath}`)
+    logger.success(`Writing output to ${options.outputPath}`);
     await fs.writeFile(options.outputPath, JSON.stringify(result, null, 4));
   }
 
   const duration = printDuration(new Date().getTime() - start);
 
-  logger.success(`Done in ${duration}! ✨`)
-}
+  logger.success(`Done in ${duration}! ✨`);
+};
 
 export const runCompile = async (options: SafeOpts, logger: Logger) => {
   const code = await compile(options, logger);
   if (options.outputStdout) {
     // TODO log this even if in silent mode
-    logger.success('Compiled code:')
-    console.log(code)
+    logger.success('Compiled code:');
+    console.log(code);
   } else {
     await fs.writeFile(options.outputPath, code);
-    logger.success(`Compiled to ${options.outputPath}`)
+    logger.success(`Compiled to ${options.outputPath}`);
   }
 };
 
 export const runTest = async (options: SafeOpts, logger: Logger) => {
-  logger.log('Running test job...')
+  logger.log('Running test job...');
 
   // This is a bit weird but it'll actually work!
   options.jobPath = `const fn = () => state => state * 2; fn()`;
 
   if (!options.stateStdin) {
     logger.warn('No state detected: pass -S <number> to provide some state');
-    options.stateStdin = "21";
+    options.stateStdin = '21';
   }
-  
+
   const silentLogger = createNullLogger();
 
   const state = await loadState(options, silentLogger);
   const code = await compile(options, logger);
-  logger.break()
-  logger.info('Compiled job:', '\n', code) // TODO there's an ugly intend here
-  logger.break()
-  logger.info('Running job...')
+  logger.break();
+  logger.info('Compiled job:', '\n', code); // TODO there's an ugly intend here
+  logger.break();
+  logger.info('Running job...');
   const result = await execute(code, state, options);
   logger.success(`Result: ${result}`);
   return result;

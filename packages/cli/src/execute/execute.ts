@@ -14,9 +14,9 @@ export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
     linker: {
       modulesHome: opts.modulesHome,
       modulePaths: parseAdaptors(opts),
-    }
+    },
   });
-}
+};
 
 // TODO we should throw if the adaptor strings are invalid for any reason
 function parseAdaptors(opts: SafeOpts) {
