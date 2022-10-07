@@ -1,3 +1,6 @@
+// TODO
+// I've preserved this original esbuild as it has special handling for the web worker bundle
+// Later, we need to figure out how to simplify this and bring it into line with the other builds
 import { build } from "esbuild";
 import path from "path";
 import { readFile, rm } from "fs/promises";
