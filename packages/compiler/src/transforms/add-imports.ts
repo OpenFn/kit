@@ -7,12 +7,12 @@
  * This needs to accept an external argument
  * This will only work with 2.0 adaptors with type defs
  */
-import { builders as b, namedTypes as n } from "ast-types";
-import type { NodePath } from "ast-types/lib/node-path";
-import type { ASTNode } from "ast-types";
-import { visit } from "recast";
-import type { Transformer } from "../transform";
-import type { Logger } from "@openfn/logger";
+import { builders as b, namedTypes as n } from 'ast-types';
+import type { NodePath } from 'ast-types/lib/node-path';
+import type { ASTNode } from 'ast-types';
+import { visit } from 'recast';
+import type { Transformer } from '../transform';
+import type { Logger } from '@openfn/logger';
 
 const GLOBALS =
   /^(state|console|JSON|setInterval|clearInterval|setTimeout|clearTimeout|parseInt|parseFloat|atob|btoa)$/;
@@ -107,17 +107,17 @@ function addUsedImports(
     imports.map((e) => b.importSpecifier(b.identifier(e))),
     b.stringLiteral(adaptorName)
   );
-  path.get("body").insertAt(0, i);
+  path.get('body').insertAt(0, i);
 }
 
 // Add an export all statement
 function addExportAdaptor(path: NodePath, adaptorName: string) {
   const e = b.exportAllDeclaration(b.stringLiteral(adaptorName), null);
-  path.get("body").insertAt(1, e);
+  path.get('body').insertAt(1, e);
 }
 
 export default {
-  id: "add-imports",
-  types: ["Program"],
+  id: 'add-imports',
+  types: ['Program'],
   visitor,
 } as Transformer;

@@ -4,7 +4,7 @@ import parse from './parse';
 import transform, { TransformOptions } from './transform';
 import { isPath, loadFile } from './util';
 
-const defaultLogger = createLogger()
+const defaultLogger = createLogger();
 
 // TODO want to migrate to this but it'll break everything...
 // type FutureOptions = {
@@ -13,7 +13,7 @@ const defaultLogger = createLogger()
 // }
 
 export type Options = TransformOptions & {
-  logger?: Logger
+  logger?: Logger;
 };
 
 export default function compile(pathOrSource: string, options: Options = {}) {
@@ -23,18 +23,18 @@ export default function compile(pathOrSource: string, options: Options = {}) {
   let source = pathOrSource;
   if (isPath(pathOrSource)) {
     logger.debug('Compiling from file at', pathOrSource);
-    source = loadFile(pathOrSource)
+    source = loadFile(pathOrSource);
   } else {
     logger.debug('Compling from string');
   }
   const ast = parse(source);
-  logger.debug('Parsed source tree')
+  logger.debug('Parsed source tree');
 
   const transformedAst = transform(ast, undefined, options);
-  logger.debug('Transformed source AST')
+  logger.debug('Transformed source AST');
 
   const compiledSource = print(transformedAst).code;
-  logger.debug('Compiled source:')
+  logger.debug('Compiled source:');
   logger.debug(compiledSource); // TODO indent or something
 
   return compiledSource;

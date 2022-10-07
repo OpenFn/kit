@@ -1,31 +1,25 @@
-import typescript from "@rollup/plugin-typescript";
-import dts from "rollup-plugin-dts";
+import typescript from '@rollup/plugin-typescript';
+import dts from 'rollup-plugin-dts';
 
-import pkg from "./package.json" assert { type: "json" };
+import pkg from './package.json' assert { type: 'json' };
 
 export default [
   {
-    input: "src/index.ts",
+    input: 'src/index.ts',
     output: [
       {
-        file: pkg.exports["."].import.default,
-        format: "esm",
+        file: pkg.exports['.'].import.default,
+        format: 'esm',
         sourcemap: true,
       },
     ],
-    plugins: [typescript({ tsconfig: "./tsconfig.json" })],
-    external: [
-      ...Object.keys(pkg.dependencies),
-      /^node:/
-    ],
+    plugins: [typescript({ tsconfig: './tsconfig.json' })],
+    external: [...Object.keys(pkg.dependencies), /^node:/],
   },
   {
-    input: pkg.exports["."].import.types,
-    output: [{ file: pkg.exports["."].import.types, format: "esm" }],
+    input: pkg.exports['.'].import.types,
+    output: [{ file: pkg.exports['.'].import.types, format: 'esm' }],
     plugins: [dts()],
-    external: [
-      ...Object.keys(pkg.dependencies),
-      /^node:/
-    ],
+    external: [...Object.keys(pkg.dependencies), /^node:/],
   },
 ];

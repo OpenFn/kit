@@ -26,7 +26,7 @@ function verify(opts) {
   if (!opts.sandbox) {
     throw new Error('verify requires a `sandbox` option.');
   }
-  return ast => {
+  return (ast) => {
     // Inject all the exported members of the module into the top of the AST.
     // This is used to infer existence of a call expression for the language pack
     // using the `scope.lookup` facility.
@@ -35,7 +35,7 @@ function verify(opts) {
         members: b.objectPattern(
           Object.keys(opts.sandbox)
             .map(b.identifier)
-            .map(id => b.property('init', id, id))
+            .map((id) => b.property('init', id, id))
         ),
       }).body[0]
     );
@@ -97,7 +97,7 @@ function verify(opts) {
 // Example:
 // `foo(); bar();` => wrapRootExpressions('execute') => `execute(foo(), bar())`
 function wrapRootExpressions(ident) {
-  return ast => {
+  return (ast) => {
     ast.rootExpressions = [];
 
     types.visit(ast, {
@@ -126,7 +126,7 @@ function wrapRootExpressions(ident) {
 //
 // Example: `foo(1,2,3)` => callFunction('foo', 'bar') => `foo(1,2,3)(bar)`
 function callFunction(call, ident) {
-  return ast => {
+  return (ast) => {
     types.visit(ast, {
       visitCallExpression: function (path) {
         var node = path.node;
@@ -150,7 +150,7 @@ function callFunction(call, ident) {
 //
 // Example: `foo()` => wrapIIFE() => `(function() { return foo(); })()`
 function wrapIIFE() {
-  return ast => {
+  return (ast) => {
     ast.program.body = [
       b.expressionStatement(
         b.callExpression(

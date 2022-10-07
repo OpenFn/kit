@@ -4,7 +4,7 @@
  * This will do nothing if the source already declares any kind of exports
  */
 import { builders as b, namedTypes } from 'ast-types';
-import type { NodePath } from 'ast-types/lib/node-path'
+import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
@@ -12,9 +12,7 @@ import type { Transformer } from '../transform';
 function visitor(path: NodePath<namedTypes.Program>) {
   // check the export statements
   // if we find any, we do nothing
-  const currentExport = path.node.body.find(
-    ({ type }) => type.match(/Export/)
-  );
+  const currentExport = path.node.body.find(({ type }) => type.match(/Export/));
   if (currentExport) {
     return;
   }
@@ -25,9 +23,7 @@ function visitor(path: NodePath<namedTypes.Program>) {
 }
 
 // This will basically create `default export [];`
-const buildExports = () => b.exportDefaultDeclaration(
-  b.arrayExpression([])
-)
+const buildExports = () => b.exportDefaultDeclaration(b.arrayExpression([]));
 
 export default {
   id: 'ensure-exports',
