@@ -191,11 +191,6 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   let nodeEdges: ElkNodeEdges = [[], []];
 
   for (const [workflow, jobs] of groupByWorkflow(projectSpace)) {
-
-    //const [triggerJob, ...rest] = jobs;
-
-    console.log("jobs", jobs)
-
     let [jobNodes, jobEdges] = jobs.reduce<ElkNodeEdges>(
       (nodesAndEdges, job) => {
         return mergeTuples(
@@ -222,11 +217,7 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   }
 
   const [children, edges] = nodeEdges;
-
-  console.log("children", children)
-  console.log("edges", edges)
-
-
+  
   // This root node gets ignored later, but we need a starting point for
   // gathering up all workflows as children
   return {
