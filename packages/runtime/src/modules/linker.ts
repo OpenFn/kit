@@ -11,21 +11,25 @@ export type LinkerOptions = {
 
   // Unless otherwise specified, modules will be loaded from here (relative to cli dir)
   modulesHome?: string;
-  
-  whitelist?: RegExp[], // whitelist packages which the linker allows to be imported
-  
-  trace?: boolean; // log module lookup information
-}
 
-export type Linker = (specifier: string, context: Context, options?: LinkerOptions) => Promise<Module>;
+  whitelist?: RegExp[]; // whitelist packages which the linker allows to be imported
+
+  trace?: boolean; // log module lookup information
+};
+
+export type Linker = (
+  specifier: string,
+  context: Context,
+  options?: LinkerOptions
+) => Promise<Module>;
 
 const linker: Linker = async (specifier, context, options = {}) => {
   const { whitelist, trace } = options;
   if (trace) {
-    console.log(`[linker] loading module ${specifier}`)
+    console.log(`[linker] loading module ${specifier}`);
   }
   if (whitelist && !whitelist.find((r) => r.exec(specifier))) {
-    throw new Error(`Error: module blacklisted: ${specifier}`)
+    throw new Error(`Error: module blacklisted: ${specifier}`);
   }
 
   const exports = await loadActualModule(specifier, options);
@@ -41,26 +45,34 @@ const linker: Linker = async (specifier, context, options = {}) => {
     // If we import @openfn/language-common@2.0.0-rc3, its named exports are found on the default object
     // Which doesn't seem quite right?
     // This elaborate workaround may help
-    if (Object.keys(exports).length === 1 && exports.default && Object.keys(exports.default).length > 0) {
+    if (
+      Object.keys(exports).length === 1 &&
+      exports.default &&
+      Object.keys(exports.default).length > 0
+    ) {
       target = target.default;
     }
   }
-  
+
   const exportNames = Object.keys(target);
   // Wrap up the real module into a Synthetic Module
-  const m = new vm.SyntheticModule(exportNames, function(this: SyntheticModule) {
-    for(const e of exportNames) {
-      this.setExport(e, target[e]);
-    }
-  }, { context });
-  
+  const m = new vm.SyntheticModule(
+    exportNames,
+    function (this: SyntheticModule) {
+      for (const e of exportNames) {
+        this.setExport(e, target[e]);
+      }
+    },
+    { context }
+  );
+
   // resolve the module
   await m.link(() => new Promise((r) => r({} as Module)));
   await m.evaluate();
 
   // Return the synthetic module
   return m;
-}
+};
 
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
@@ -82,20 +94,22 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       console.log(`[linker] Loading module ${specifier} from ${path}`);
     }
   }
-  
+
   if (path) {
     try {
       return import(path);
-    } catch(e) {
+    } catch (e) {
       if (options.trace) {
-        console.warn(`[linker] Failed to load module ${specifier} from ${path}`);
-        console.log(e)
+        console.warn(
+          `[linker] Failed to load module ${specifier} from ${path}`
+        );
+        console.log(e);
       }
       // If we fail to load from a path, fall back to loading from a specifier
     }
   }
 
-  return import(specifier)
-}
+  return import(specifier);
+};
 
 export default linker;

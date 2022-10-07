@@ -146,7 +146,7 @@ test('calls execute if exported from a job', async (t) => {
     export default [];
   `;
 
-  await run(source, {}, { jobLogger: logger });
+  await run(source, { configuration: {}, data: {} }, { jobLogger: logger });
 
   t.is(logger._history.length, 1);
 });
