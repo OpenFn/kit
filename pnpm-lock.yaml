@@ -193,15 +193,12 @@ importers:
 
   packages/logger:
     specifiers:
-      '@rollup/plugin-typescript': ^8.5.0
       '@types/node': ^18.7.18
       ava: ^4.3.3
       chalk: '4'
       figures: ^5.0.0
-      rollup: ^2.79.1
       ts-node: ^10.9.1
       tslib: ^2.4.0
-      tsm: ^2.2.2
       tsup: ^6.2.3
       typescript: ^4.8.3
     dependencies:
@@ -209,13 +206,10 @@ importers:
       figures: 5.0.0
       tsup: 6.2.3_qv3zdqwr5cvvfboiktsp7a3dfa
     devDependencies:
-      '@rollup/plugin-typescript': 8.5.0_jm3lfwhp2n3nxb4wwf6zz565he
       '@types/node': 18.7.18
       ava: 4.3.3
-      rollup: 2.79.1
       ts-node: 10.9.1_bidgzm5cq2du6gnjtweqqjrrn4
       tslib: 2.4.0
-      tsm: 2.2.2
       typescript: 4.8.3
 
   packages/runtime:
@@ -673,24 +667,6 @@ packages:
       typescript: 4.8.2
     dev: true
 
-  /@rollup/plugin-typescript/8.5.0_jm3lfwhp2n3nxb4wwf6zz565he:
-    resolution: {integrity: sha512-wMv1/scv0m/rXx21wD2IsBbJFba8wGF3ErJIr6IKRfRj49S85Lszbxb4DCo8iILpluTjk2GAAu9CoZt4G3ppgQ==}
-    engines: {node: '>=8.0.0'}
-    peerDependencies:
-      rollup: ^2.14.0
-      tslib: '*'
-      typescript: '>=3.7.0'
-    peerDependenciesMeta:
-      tslib:
-        optional: true
-    dependencies:
-      '@rollup/pluginutils': 3.1.0_rollup@2.79.1
-      resolve: 1.22.1
-      rollup: 2.79.1
-      tslib: 2.4.0
-      typescript: 4.8.3
-    dev: true
-
   /@rollup/plugin-typescript/8.5.0_ppxule2mhlgb6ds3e4gxjflaqy:
     resolution: {integrity: sha512-wMv1/scv0m/rXx21wD2IsBbJFba8wGF3ErJIr6IKRfRj49S85Lszbxb4DCo8iILpluTjk2GAAu9CoZt4G3ppgQ==}
     engines: {node: '>=8.0.0'}
@@ -737,18 +713,6 @@ packages:
       estree-walker: 1.0.1
       picomatch: 2.3.1
       rollup: 2.79.0
-    dev: true
-
-  /@rollup/pluginutils/3.1.0_rollup@2.79.1:
-    resolution: {integrity: sha512-GksZ6pr6TpIjHm8h9lSQ8pi8BE9VeubNT0OMJ3B5uZJ8pz73NPiqOtCog/x2/QzM1ENChPKxMDhiQuRHsqc+lg==}
-    engines: {node: '>= 8.0.0'}
-    peerDependencies:
-      rollup: ^1.20.0||^2.0.0
-    dependencies:
-      '@types/estree': 0.0.39
-      estree-walker: 1.0.1
-      picomatch: 2.3.1
-      rollup: 2.79.1
     dev: true
 
   /@tailwindcss/forms/0.5.2_tailwindcss@3.1.5:
@@ -6363,6 +6327,7 @@ packages:
     hasBin: true
     optionalDependencies:
       fsevents: 2.3.2
+    dev: false
 
   /run-parallel/1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
