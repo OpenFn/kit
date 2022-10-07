@@ -138,7 +138,7 @@ export default function(name?: string, options: LogOptions = {}): Logger {
     // how do we actually log?
     if (priority[level] >= minLevel) {
       if (emitter.hasOwnProperty(level)) {
-        const cleaned = output.map(sanitize, options);
+        const cleaned = output.map(o => sanitize(o, options));
         emitter[level](...cleaned)
       }
     }

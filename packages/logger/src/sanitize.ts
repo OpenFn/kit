@@ -5,7 +5,7 @@ import { LogOptions } from "./options";
 export const SECRET = '****';
 
 // Node itself does a good job of circular references and functions
-const sanitize = (item: string | object, _options: Pick<LogOptions, 'sanitizePaths'>) => {
+const sanitize = (item: string | object, _options: Pick<LogOptions, 'sanitizePaths'> = {}) => {
   // TODO what if the object contains functions?
   if (typeof item !== "string") {
     const obj = item as Record<string, unknown>;
