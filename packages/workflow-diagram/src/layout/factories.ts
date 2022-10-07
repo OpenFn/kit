@@ -57,8 +57,8 @@ export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
       data: { label: TriggerLabels[job.trigger.type], workflow },
       type: "trigger",
     },
-    width: 150,
-    height: 50,
+    width: 190,
+    height: 70,
   };
 }
 

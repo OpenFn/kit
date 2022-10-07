@@ -75,7 +75,6 @@ const TriggerNode = ({
   );
 };
 
-
 const TriggerWorkflowNode = ({
   data,
   isConnectable,
@@ -83,8 +82,7 @@ const TriggerWorkflowNode = ({
 }: NodeProps) => {
   return (
     <div
-      className="bg-white rounded-sm shadow border
-                 
+      className="bg-white rounded-sm shadow border flex items-center justify-center     
                    text-xs text-slate-600 p-2 text-center h-full"
     >
       <div className={`flex flex-col items-center`}>
@@ -104,6 +102,6 @@ const TriggerWorkflowNode = ({
 TriggerWorkflowNode.displayName = "TriggerNode";
 TriggerNode.displayName = "TriggerNode";
 
-export {TriggerWorkflowNode}
+export { TriggerWorkflowNode };
 
 export default memo(TriggerNode);
