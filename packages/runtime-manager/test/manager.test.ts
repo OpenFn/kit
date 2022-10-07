@@ -10,15 +10,15 @@ test('Should create a new manager', (t) => {
 test('Should register a job', (t) => {
   const m = Manager();
   m.registerJob('my_job', 'x');
-  t.assert(m.getRegisteredJobs().includes('my_job'));;
+  t.assert(m.getRegisteredJobs().includes('my_job'));
 });
 
 test('Should compile a registered job', (t) => {
   const m = Manager();
   m.registerJob('my_job', 'fn()');
-  
+
   const compiled = m._registry['my_job'];
-  t.assert(compiled === "export default [fn()];")
+  t.assert(compiled === 'export default [fn()];');
 });
 
 test('Should throw if registering a job that already exists', (t) => {

@@ -9,6 +9,6 @@ import run from '@openfn/runtime';
 
 workerpool.worker({
   run: async (jobId: number, src: string, state?: any) => {
-    return helper(jobId, async () => run(src, state))
-  }
+    return helper(jobId, async () => run(src, state));
+  },
 });
