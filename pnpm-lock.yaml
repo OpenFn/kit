@@ -67,7 +67,7 @@ importers:
       '@openfn/compiler': workspace:^0.0.8
       '@openfn/language-common': 2.0.0-rc3
       '@openfn/logger': workspace:^0.0.2
-      '@openfn/runtime': workspace:^0.0.6
+      '@openfn/runtime': workspace:^0.0.7
       '@rollup/plugin-typescript': ^8.3.2
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -247,7 +247,7 @@ importers:
     specifiers:
       '@openfn/compiler': workspace:^0.0.8
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/runtime': workspace:^0.0.6
+      '@openfn/runtime': workspace:^0.0.7
       '@rollup/plugin-typescript': ^8.3.2
       '@types/koa': ^2.13.5
       '@types/node': ^17.0.31
