@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.6
+
+### Patch Changes
+
+- fix broken package.json
+
 ## 0.0.5
 
 ### Patch Changes
