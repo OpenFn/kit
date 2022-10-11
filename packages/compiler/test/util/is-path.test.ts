@@ -1,4 +1,4 @@
-import test from 'ava'
+import test from 'ava';
 import { isPath } from '../../src/util';
 
 // Code snippets
@@ -14,7 +14,7 @@ x.js`,
 ].forEach((src) => {
   test(`is not a path: ${src}`, (t) => {
     t.falsy(isPath(src));
-  })
+  });
 });
 
 // Paths
@@ -29,5 +29,5 @@ x.js`,
 ].forEach((src) => {
   test(`is a path: ${src}`, (t) => {
     t.truthy(isPath(src));
-  })
+  });
 });
