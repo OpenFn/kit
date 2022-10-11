@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import AddNode from "./nodes/AddNode";
 import JobNode from "./nodes/JobNode";
 import OperationNode from "./nodes/OperationNode";
-import {TriggerWorkflowNode} from "./nodes/TriggerNode";
+import TriggerWorkflowNode from "./nodes/TriggerWorkflowNode";
 import type { ProjectSpace } from "./types";
 
-import {EmptyWorkflowNode} from "nodes/WorkflowNode";
+import EmptyWorkflowNode from "nodes/EmptyWorkflowNode";
 import ReactFlow, { Node, ReactFlowProvider } from "react-flow-renderer";
 import "./main.css";
 import * as Store from "./store";
@@ -24,8 +24,7 @@ const WorkflowDiagram: React.FC<{
   onNodeClick?: (event: React.MouseEvent, node: Node<NodeData>) => void;
   onPaneClick?: (event: React.MouseEvent) => void;
 }> = ({ projectSpace, onNodeClick, onPaneClick }) => {
-  const { nodes, edges, onNodesChange, onEdgesChange } =
-    Store.useStore();
+  const { nodes, edges, onNodesChange, onEdgesChange } = Store.useStore();
 
   useEffect(() => {
     if (projectSpace) {
