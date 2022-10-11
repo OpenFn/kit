@@ -11,7 +11,8 @@ import { builders as b, namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { ASTNode } from 'ast-types';
 import { visit } from 'recast';
-import type { Visitor } from '../transform';
+import type { Transformer } from '../transform';
+import type { Logger } from '@openfn/logger';
 
 const GLOBALS = /^(state|console|JSON|setInterval|clearInterval|setTimeout|clearTimeout|parseInt|parseFloat|atob|btoa)$/;
 
@@ -62,7 +63,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   return result;
 }
 
-function visitor(path: NodePath, options: AddImportsOptions) {
+function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
   if (options.adaptor) {
     const { name, exports, exportAll } = options.adaptor;
     if (name) {
@@ -73,9 +74,12 @@ function visitor(path: NodePath, options: AddImportsOptions) {
         // If we have no exports for this adaptor, import anything apart from a few choice globals
         : Object.keys(identifiers).filter(i => !i.match(GLOBALS))
       if (usedExports.length) {
+        // TODO maybe in trace output we can say WHY we're doing these things
         addUsedImports(path, usedExports, name);
+        logger.info(`Added import statement for ${name}`);
         if (exportAll) {
           addExportAdaptor(path, name)
+          logger.info(`Added export * statement for ${name}`);
         }
       }
     }
@@ -84,6 +88,7 @@ function visitor(path: NodePath, options: AddImportsOptions) {
 
 // Add an import statement to pull in the named values from an adaptor 
 function addUsedImports(path: NodePath, imports: string[], adaptorName: string) {
+  // TODO add trace output
   const i = b.importDeclaration(
     imports.map(e => b.importSpecifier(b.identifier(e))),
     b.stringLiteral(adaptorName)
@@ -101,4 +106,4 @@ export default {
   id: 'add-imports',
   types: ['Program'],
   visitor,
-} as Visitor;
+} as Transformer;

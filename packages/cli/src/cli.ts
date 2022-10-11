@@ -10,10 +10,14 @@ export const cmd = yargs(hideBin(process.argv))
   .example('openfn job.js -adaptor @openfn/language-common=repo/openfn/language-common', 'Run job.js with a local implementation of the common language adaptor')
   .example('openfn foo/job.js -c', 'Compile a job to foo/output/js')
   .example('openfn foo/job.js -cO', 'Compile a job to stdout')
+  .example('openfn foo/job.js --log debug', 'Run a job with debug-level logging')
+  .example('openfn foo/job.js --log compiler=debug', 'Use debug logging in the compiler only')
+  
   .positional('path', {
     describe: 'The path to load the job from (a .js file or a dir containing a job.js file)',
     demandOption: true
   })
+
   .option('test', {
     description: 'Run a test job to exercise the installation. Pass a number via -S to multiply by 2.',
     boolean: true,
@@ -50,12 +54,18 @@ export const cmd = yargs(hideBin(process.argv))
   })
   .option('adaptors', {
     alias: ['a', 'adaptor'],
-    description: 'Pass one or more adaptors in the form name[]=path/to/adaptor]',
+    description: 'Pass one or more adaptors in the form name=path/to/adaptor',
     array: true
   })
+  // TODO this becomes log compiler=debug
   .option('trace-linker', {
     alias: ['t', 'trace'],
     description: 'Trace module resolution output in the linker',
     boolean: true,
+  })
+  .option('log', {
+    alias: ['l'],
+    description: 'Set the default log level to none, trace, info or default',
+    array: true
   })
   .alias('v', 'version');

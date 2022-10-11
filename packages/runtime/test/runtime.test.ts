@@ -1,6 +1,7 @@
 import test from "ava";
 import { fn } from '@openfn/language-common';
 import type { State, Operation } from '@openfn/language-common';
+import { createMockLogger } from '@openfn/logger';
 import run from '../src/runtime';
 
 type TestState = State & {
@@ -115,43 +116,34 @@ test('jobs do not mutate the original state', async (t) => {
   t.is(result.data.x, 2);
 });
 
-test('override console.log', async (t) => {
-  const log: string[] = [];
-  // Passing in a logger object to catch all console.log calls
-  const logger = {
-    log(message: string) {
-      log.push(message);
-    }
-  };
+test('forwards a logger to the console object inside a job', async (t) => {
+  const logger = createMockLogger(undefined, { level: 'info' });
 
   // We must define this job as a module so that it binds to the sandboxed context
-  const fn = '(s) => { console.log("x"); return s; }'
-  const job = `export default [${fn}];`
+  const job = `
+export default [
+  (s) => { console.log("x"); return s; }
+];`
   
   const state = createState();
-  await run(job, state, { logger })
+  await run(job, state, { jobLogger: logger });
 
-  t.deepEqual(log, ["x"]);
+  const output = logger._parse(logger._last);
+  t.is(output.level, 'info');
+  t.is(output.message, 'x');
 });
 
-test.only('calls execute if exported from a job', async (t) => {
-  const message = "__EXECUTE__";
-  let didLog = false;
-  const logger = {
-    log(m: string) {
-      if (m === message) {
-        didLog = true;
-      }
-    }
-  };
+test('calls execute if exported from a job', async (t) => {
+  const logger = createMockLogger(undefined, { level: 'info' });
+
   // The execute function, if called by the runtime, will send a specific
   // message to console.log, which we can pick up here in the test
   const source = `
-    export const execute = () => { console.log('${message}'); return () => ({}) };
+    export const execute = () => { console.log('x'); return () => ({}) };
     export default [];
   `;
 
-  await run(source, {}, { logger })
+  await run(source, {}, { jobLogger: logger });
 
-  t.truthy(didLog);
-})
+  t.is(logger._history.length, 1);
+});

@@ -1,6 +1,6 @@
 import test from 'ava';
 import { Opts } from '../../src/commands';
-import ensureOpts from '../../src/util/ensure-opts';
+import ensureOpts, { defaultLoggerOptions, ERROR_MESSAGE_LOG_LEVEL, ERROR_MESSAGE_LOG_COMPONENT } from '../../src/util/ensure-opts';
 
 test('set job, state and output from a base path', (t) => {
   const initialOpts = {} as Opts;
@@ -10,6 +10,16 @@ test('set job, state and output from a base path', (t) => {
   t.assert(opts.jobPath === 'a/job.js');
   t.assert(opts.statePath === 'a/state.json');
   t.assert(opts.outputPath === 'a/output.json');
+});
+
+test("default base path to '.'", (t) => {
+  const initialOpts = {} as Opts;
+  
+  const opts = ensureOpts(undefined, initialOpts);
+
+  t.assert(opts.jobPath === './job.js');
+  t.assert(opts.statePath === './state.json');
+  t.assert(opts.outputPath === './output.json');
 });
 
 test('should set state and output from a base path with an extension', (t) => {
@@ -64,16 +74,6 @@ test('should not append @openfn to adaptors if already prefixed', (t) => {
   t.assert(opts.adaptors[0] === '@openfn/language-common=a/b/c');
 })
 
-test('preserve silent', (t) => {
-  const initialOpts = {
-    silent: true
-  } as Opts;
-  
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.silent);
-});
-
 test('preserve outputStdout', (t) => {
   const initialOpts = {
     outputStdout: true
@@ -104,17 +104,6 @@ test('preserve stateStdin', (t) => {
   t.assert(opts.stateStdin === '{}');
 });
 
-
-test('preserve trace', (t) => {
-  const initialOpts = {
-    traceLinker: true
-  } as Opts;
-  
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.traceLinker);
-});
-
 test('compile only', (t) => {
   const initialOpts = {
     compileOnly: true
@@ -135,6 +124,103 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
+test('test mode logs to info', (t) => {
+  const initialOpts = {
+    test: true,
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.truthy(opts.test);
+  t.is(opts.log.default, 'info');
+});
+
+test('log: add default options', (t) => {
+  const initialOpts = {} as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.deepEqual(opts.log, defaultLoggerOptions);
+});
+
+test('log: override default options', (t) => {
+  const initialOpts = {
+    log: ['debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'debug');
+});
+
+test('log: set a specific option', (t) => {
+  const initialOpts = {
+    log: ['compiler=debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.compiler, 'debug');
+});
+
+test('log: throw if an unknown log level is passed', (t) => {
+  const initialOpts = {
+    log: ['foo'],
+  } as Opts;
+  
+  const error = t.throws(() => ensureOpts('', initialOpts));
+  t.is(error?.message, ERROR_MESSAGE_LOG_LEVEL);
+});
+
+test('log: throw if an unknown log level is passed to a component', (t) => {
+  const initialOpts = {
+    log: ['cli=foo'],
+  } as Opts;
+  
+  const error = t.throws(() => ensureOpts('', initialOpts));
+  t.is(error?.message, ERROR_MESSAGE_LOG_LEVEL);
+});
+
+test('log: throw if an unknown log component is passed', (t) => {
+  const initialOpts = {
+    log: ['foo=debug'],
+  } as Opts;
+  
+  const error = t.throws(() => ensureOpts('', initialOpts));
+  t.is(error?.message, ERROR_MESSAGE_LOG_COMPONENT);
+});
+
+test('log: accept short component names', (t) => {
+  const initialOpts = {
+    log: ['cmp=debug', 'r/t=debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.compiler, 'debug');
+  t.is(opts.log.runtime, 'debug')
+});
+
+test('log: arguments are case insensitive', (t) => {
+  const initialOpts = {
+    log: ['ClI=InFo'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.cli, 'info');
+});
+
+test('log: set default and a specific option', (t) => {
+  const initialOpts = {
+    log: ['none', 'compiler=debug'],
+  } as Opts;
+  
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'none');
+  t.is(opts.log.compiler, 'debug');
+});
 
 test.serial('preserve modulesHome', (t) => {
   const initialOpts = {

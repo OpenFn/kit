@@ -1,41 +1,49 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
-import ensureOpts, { SafeOpts } from './util/ensure-opts';
-import compileJob from './compile/load-job';
+import createLogger, { CLI, createNullLogger, Logger, LogLevel, printDuration } from './util/logger'; 
+import ensureOpts from './util/ensure-opts';
+import compile from './compile/compile';
 import loadState from './execute/load-state';
-import run from './execute/execute';
-
-// import packageConfig from '../package.json' assert { type: 'json' };
+import execute from './execute/execute';
 
 export type Opts = {
   adaptors?: string[];
   compileOnly?: boolean;
   jobPath?: string;
-  logger?: any; // TODO
+  log?: string[];
   modulesHome?: string;
   noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;
-  silent?: boolean; // no logging (TODO would a null logger be better?)
   statePath?: string;
   stateStdin?: string;
-  traceLinker?: boolean;
   test?: boolean;
 }
 
+export type SafeOpts = Required<Omit<Opts, "log">> & {
+  log: Record<string, LogLevel>;
+};
+
 // Top level command parser
-const parse = async (basePath: string, options: Opts) => {
-  if (options.test) {
-    return test(options);
+const parse = async (basePath: string, options: Opts, log?: Logger) => {
+  // TODO allow a logger to be passed in for test purposes
+  // I THINK I need this but tbh not sure yet!
+  const opts = ensureOpts(basePath, options);
+  const logger = log || createLogger(CLI, opts);
+
+  if (opts.test) {
+    return runTest(opts, logger);
   }
-  if (options.compileOnly) {
-    return compile(basePath, options);
+
+  assertPath(basePath);
+  if (opts.compileOnly) {
+    return runCompile(opts, logger);
   }
-  return execute(basePath, options);
+  return runExecute(opts, logger);
 };
 
 export default parse;
 
+// TODO probably this isn't neccessary and we just use cwd?
 const assertPath = (basePath?: string) => {
   if (!basePath) {
     console.error('ERROR: no path provided!');
@@ -47,91 +55,61 @@ const assertPath = (basePath?: string) => {
   }
 }
 
-const nolog = {
-  log: () => {}
-};
-
-export const test = async (options: Opts) => {
-  const opts = { ... options } as SafeOpts;
-
-  const logger = options.logger || (opts.silent ? nolog : console);
-
-  logger.log('Running test job...')
-  logger.log()
-
-  // This is a bit weird but it'll actually work!
-  opts.jobPath = `const fn = () => state => state * 2; fn()`;
-
-  if (!opts.stateStdin) {
-    logger.log('No state detected: pass -S <number> to provide some state');
-    opts.stateStdin = "21";
-  }
+export const runExecute = async (options: SafeOpts, logger: Logger) => {
+  const start = new Date().getTime();
+  const state = await loadState(options, logger);
+  const code = await compile(options, logger);
+  const result = await execute(code, state, options);
   
-  // TODO need to fix this log API but there's work for that on another branch
-  const state = await loadState(opts, nolog.log);
-  const code = await compileJob(opts, nolog.log);
-  logger.log('Compiled job:')
-  logger.log()
-  logger.log(code);
-  logger.log()
-  logger.log('Running job:')
-  const result = await run(code, state, opts);
-  logger.log()
-  logger.log(`Result: ${result}`);
-  return result;
-};
+  if (options.outputStdout) {
+    // TODO Log this even if in silent mode
+    logger.success(`Result: `)
+    logger.success(result)
+  } else {
+    logger.success(`Writing output to ${options.outputPath}`)
+    await fs.writeFile(options.outputPath, JSON.stringify(result, null, 4));
+  }
 
-export const compile = async (basePath: string, options: Opts) => {
-  assertPath(basePath);
-  // TODO should parse do all the options stuff and pass it downstream?
-  // Or should each command have its own options parser?
-  const opts = ensureOpts(basePath, options);
+  const duration = printDuration(new Date().getTime() - start);
 
-  const log = (...args: any) => {
-    if (!opts.silent) {
-      console.log(...args);
-    }
-  };
+  logger.success(`Done in ${duration}! ✨`)
+}
 
-  const code = await compileJob(opts, log);
-  if (opts.outputStdout) {
-    // Log this even if in silent mode
+export const runCompile = async (options: SafeOpts, logger: Logger) => {
+  const code = await compile(options, logger);
+  if (options.outputStdout) {
+    // TODO log this even if in silent mode
+    logger.success('Compiled code:')
     console.log(code)
   } else {
-    if (!opts.silent) {
-      console.log(`Writing output to ${opts.outputPath}`)
-    }
-    await fs.writeFile(opts.outputPath, code);
+    await fs.writeFile(options.outputPath, code);
+    logger.success(`Compiled to ${options.outputPath}`)
   }
 };
 
-export const execute = async (basePath: string, options: Opts) => {
-  assertPath(basePath);
-  const opts = ensureOpts(basePath, options);
+export const runTest = async (options: SafeOpts, logger: Logger) => {
+  logger.log('Running test job...')
 
-  const log = (...args: any) => {
-    if (!opts.silent) {
-      console.log(...args);
-    }
-  };
+  // This is a bit weird but it'll actually work!
+  options.jobPath = `const fn = () => state => state * 2; fn()`;
 
-  const state = await loadState(opts, log);
-  const code = await compileJob(opts, log);
-  const result = await run(code, state, opts);
-  
-  if (opts.outputStdout) {
-    // Log this even if in silent mode
-    console.log(`\nResult: `)
-    console.log(result)
-  } else {
-    if (!opts.silent) {
-      console.log(`Writing output to ${opts.outputPath}`)
-    }
-    await fs.writeFile(opts.outputPath, JSON.stringify(result, null, 4));
+  if (!options.stateStdin) {
+    logger.warn('No state detected: pass -S <number> to provide some state');
+    options.stateStdin = "21";
   }
+  
+  const silentLogger = createNullLogger();
 
-  log(`\nDone! ✨`)
-}
+  const state = await loadState(options, silentLogger);
+  const code = await compile(options, logger);
+  logger.break()
+  logger.info('Compiled job:', '\n', code) // TODO there's an ugly intend here
+  logger.break()
+  logger.info('Running job...')
+  const result = await execute(code, state, options);
+  logger.success(`Result: ${result}`);
+  return result;
+};
 
 // This is disabled for now because
 // 1) Resolving paths relative to the install location of the module is tricky

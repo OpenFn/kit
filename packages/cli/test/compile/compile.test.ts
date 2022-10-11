@@ -1,8 +1,11 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
-import { stripVersionSpecifier, loadTransformOptions } from '../../src/compile/load-job';
-import type { SafeOpts } from '../../src/ensure-opts';
+import mockLogger from '@openfn/logger';
+import { stripVersionSpecifier, loadTransformOptions } from '../../src/compile/compile';
+import type { SafeOpts } from '../../src/commands';
+
+const mockLog = mockLogger();
 
 test.afterEach(() => {
   mock.restore();
@@ -47,7 +50,7 @@ test("stripVersionSpecifier: do nothing if there's no specifier", (t) => {
 
 test("loadTransformOptions: do nothing", async (t) => {
   const opts = {} as SafeOpts;
-  const result = loadTransformOptions(opts);
+  const result = loadTransformOptions(opts, mockLog);
   t.assert(JSON.stringify(result) === '{}');
 });
 
@@ -60,7 +63,7 @@ test.serial("loadTransformOptions: describes imports from an explicit path", asy
     adaptors: ['times-two=/modules/times-two']
   } as SafeOpts;
 
-  const result = await loadTransformOptions(opts) as TransformOptionsWithImports;
+  const result = await loadTransformOptions(opts, mockLog) as TransformOptionsWithImports;
   t.truthy(result['add-imports']);
 
   // Should describe the exports of the times-two module
@@ -77,7 +80,7 @@ test.serial("loadTransformOptions: describes imports from an explicit path and v
     adaptors: ['times-two@1.0.0=/modules/times-two']
   } as SafeOpts;
 
-  const result = await loadTransformOptions(opts) as TransformOptionsWithImports;
+  const result = await loadTransformOptions(opts, mockLog) as TransformOptionsWithImports;
   t.truthy(result['add-imports']);
 
   // Should describe the exports of the times-two module
@@ -95,7 +98,7 @@ test.serial("loadTransformOptions: describes imports from a relative path from m
     modulesHome: '/modules/'
   } as SafeOpts;
 
-  const result = await loadTransformOptions(opts)  as TransformOptionsWithImports;
+  const result = await loadTransformOptions(opts, mockLog)  as TransformOptionsWithImports;
   t.truthy(result['add-imports']);
 
   // Should describe the exports of the times-two module
@@ -110,7 +113,7 @@ test("loadTransformOptions: describes imports from unpkg", async (t) => {
     adaptors: ['@openfn/language-common@2.0.0-rc3']
   } as SafeOpts;
 
-  const result = await loadTransformOptions(opts)  as TransformOptionsWithImports;
+  const result = await loadTransformOptions(opts, mockLog)  as TransformOptionsWithImports;
 
   const { name, exports }  = result['add-imports'].adaptor;
   t.assert(name === '@openfn/language-common');
