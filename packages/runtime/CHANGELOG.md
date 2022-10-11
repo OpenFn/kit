@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 0.0.8
+
+### Patch Changes
+
+- 92e5427: bump everything, npm package.json issues
+- Updated dependencies [92e5427]
+  - @openfn/logger@0.0.3
+
 ## 0.0.7
 
 ### Patch Changes

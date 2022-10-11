@@ -1,5 +1,14 @@
 # runtime-manager
 
+## 0.0.9
+
+### Patch Changes
+
+- 92e5427: bump everything, npm package.json issues
+- Updated dependencies [92e5427]
+  - @openfn/compiler@0.0.9
+  - @openfn/runtime@0.0.8
+
 ## 0.0.8
 
 ### Patch Changes

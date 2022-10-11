@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.3
+
+### Patch Changes
+
+- 92e5427: bump everything, npm package.json issues
+
 ## 0.0.2
 
 ### Patch Changes

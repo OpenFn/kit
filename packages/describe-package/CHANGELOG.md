@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.6
+
+### Patch Changes
+
+- 92e5427: bump everything, npm package.json issues
+
 ## 0.0.5
 
 ### Patch Changes
