@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 0.0.7
+
+### Patch Changes
+
+- f79bf9a: Added logger service to CLI, compiler and runtime
+- Updated dependencies [f79bf9a]
+  - @openfn/compiler@0.0.8
+  - @openfn/logger@0.0.2
+  - @openfn/runtime@0.0.5
+
 ## 0.0.6
 
 ### Patch Changes

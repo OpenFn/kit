@@ -1,6 +1,6 @@
 {
   "name": "@openfn/runtime",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "type": "module",
   "exports": {
@@ -41,6 +41,6 @@
     "README.md"
   ],
   "dependencies": {
-    "@openfn/logger": "workspace:^0.0.1"
+    "@openfn/logger": "workspace:^0.0.2"
   }
 }

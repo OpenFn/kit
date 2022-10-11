@@ -1,6 +1,6 @@
 {
   "name": "@openfn/compiler",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "type": "module",
   "engines": {
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@openfn/describe-package": "workspace:^0.0.5",
-    "@openfn/logger": "workspace:^0.0.1",
+    "@openfn/logger": "workspace:^0.0.2",
     "acorn": "^8.8.0",
     "recast": "^0.21.2",
     "yargs": "^17.5.1"
