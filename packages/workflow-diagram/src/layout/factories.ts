@@ -50,15 +50,19 @@ const TriggerLabels: { [key in TriggerType]: string } = {
   on_job_success: "on success",
 };
 
-export function triggerNodeFactory(job: Job): FlowElkNode {
+export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
   return {
     id: `${job.id}-trigger`,
     __flowProps__: {
-      data: { label: TriggerLabels[job.trigger.type] },
+      data: {
+        label: TriggerLabels[job.trigger.type],
+        description: job.trigger.description,
+        workflow,
+      },
       type: "trigger",
     },
-    width: 100,
-    height: 40,
+    width: 190,
+    height: 70,
   };
 }
 

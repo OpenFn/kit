@@ -47,10 +47,11 @@ function deriveOperations(job: Job): ElkNodeEdges {
   return [[], []];
 }
 
-function deriveCron(job: Job): ElkNodeEdges {
+function deriveCron(job: Job, workflow: Workflow): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const triggerNode: FlowElkNode = triggerNodeFactory(job);
+  const triggerNode: FlowElkNode = triggerNodeFactory(job, workflow);
+
 
   const jobNode: FlowElkNode = {
     ...jobNodeFactory(job),
@@ -72,10 +73,10 @@ function deriveCron(job: Job): ElkNodeEdges {
   );
 }
 
-function deriveWebhook(job: Job): ElkNodeEdges {
+function deriveWebhook(job: Job, workflow: Workflow): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const triggerNode = triggerNodeFactory(job);
+  const triggerNode = triggerNodeFactory(job, workflow);
 
   const jobNode = {
     ...jobNodeFactory(job),
@@ -117,13 +118,13 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
   return mergeTuples([[jobNode], [edge]], addNodeFactory(jobNode));
 }
 
-export function deriveNodesWithEdges(job: Job): ElkNodeEdges {
+export function deriveNodesWithEdges(job: Job, workflow: Workflow): ElkNodeEdges {
   switch (job.trigger.type) {
     case "cron":
-      return deriveCron(job);
+      return deriveCron(job, workflow);
 
     case "webhook":
-      return deriveWebhook(job);
+      return deriveWebhook(job, workflow);
 
     case "on_job_failure":
     case "on_job_success":
@@ -197,7 +198,7 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
           deriveNodesWithEdges({
             ...job,
             hasDescendents: hasDescendent(projectSpace, job),
-          })
+          }, workflow)
         );
       },
       [[], []]
@@ -216,7 +217,7 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   }
 
   const [children, edges] = nodeEdges;
-
+  
   // This root node gets ignored later, but we need a starting point for
   // gathering up all workflows as children
   return {
