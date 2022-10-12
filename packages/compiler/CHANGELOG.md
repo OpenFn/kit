@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.0.10
+
+### Patch Changes
+
+- 1d293ae: Fix property names in job code
+  Support tilde in adaptor paths
+
 ## 0.0.9
 
 ### Patch Changes

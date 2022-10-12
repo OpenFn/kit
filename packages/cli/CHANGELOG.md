@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [1d293ae]
+  - @openfn/compiler@0.0.10
+
 ## 0.0.10
 
 ### Patch Changes
