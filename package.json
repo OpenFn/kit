@@ -12,6 +12,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "rimraf": "^3.0.2"
+    "rimraf": "3.0.2"
   }
 }
