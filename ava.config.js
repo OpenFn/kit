@@ -10,7 +10,6 @@ module.exports = {
   nodeArguments: [
     "--loader=ts-node/esm",
     "--no-warnings", // Disable experimental module warnings
-    "--experimental-specifier-resolution=node",
     "--experimental-vm-modules"
   ],
 
