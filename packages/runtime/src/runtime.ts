@@ -18,6 +18,9 @@ type Options = {
   logger?: Logger;
   jobLogger?: Logger;
 
+  // Treat state as immutable (likely to break in legacy jobs)
+  immutableState?: boolean;
+
   // TODO currently unused
   // Ensure that all incoming jobs are sandboxed / loaded as text
   // In practice this means throwing if someone tries to pass live js
@@ -52,7 +55,9 @@ export default async function run(
   const { operations, execute } = await prepareJob(incomingJobs, context, opts);
   // Create the main reducer function
   const reducer = (execute || defaultExecute)(
-    ...operations.map((op, idx) => wrapOperation(op, logger, `${idx + 1}`))
+    ...operations.map((op, idx) =>
+      wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
+    )
   );
 
   // Run the pipeline
@@ -83,12 +88,17 @@ const defaultExecute = (...operations: Operation[]): Operation => {
 // * A cloned state object so that prior state is always preserved
 // TODO: try/catch stuff
 // TODO: automated logging and metrics stuff
-const wrapOperation = (fn: Operation, logger: Logger, name: string) => {
+const wrapOperation = (
+  fn: Operation,
+  logger: Logger,
+  name: string,
+  immutableState?: boolean
+) => {
   return async (state: State) => {
     // TODO this output isn't very interesting yet!
     logger.debug(`Starting operation ${name}`);
     const start = new Date().getTime();
-    const newState = clone(state);
+    const newState = immutableState ? clone(state) : state;
     const result = await fn(newState);
     const duration = printDuration(new Date().getTime() - start);
     logger.success(`Operation ${name} complete in ${duration}`);

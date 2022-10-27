@@ -104,6 +104,23 @@ test('jobs run in series with async operations', async (t) => {
   t.is(result.data.x, 12);
 });
 
+test('jobs do mutate the original state', async (t) => {
+  const job = [
+    (s: TestState) => {
+      s.data.x = 2;
+      return s;
+    },
+  ] as Operation[];
+
+  const state = createState({ x: 1 }) as TestState;
+  const result = (await run(job, state, {
+    immutableState: false,
+  })) as TestState;
+
+  t.is(state.data.x, 2);
+  t.is(result.data.x, 2);
+});
+
 test('jobs do not mutate the original state', async (t) => {
   const job = [
     (s: TestState) => {
@@ -113,7 +130,7 @@ test('jobs do not mutate the original state', async (t) => {
   ] as Operation[];
 
   const state = createState({ x: 1 }) as TestState;
-  const result = (await run(job, state)) as TestState;
+  const result = (await run(job, state, { immutableState: true })) as TestState;
 
   t.is(state.data.x, 1);
   t.is(result.data.x, 2);
