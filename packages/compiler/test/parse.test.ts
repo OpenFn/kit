@@ -7,7 +7,7 @@ import parse from '../src/parse';
 import { loadAst } from './util';
 
 test('parse a simple statement', (t) => {
-  const source = "const x = 10;";
+  const source = 'const x = 10;';
 
   const ast = loadAst('simple-statement');
   const result = parse(source);

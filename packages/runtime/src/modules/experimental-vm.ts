@@ -13,18 +13,17 @@ export interface Module {
 export interface SyntheticModule extends Module {
   new (exports: string[], fn: () => void, context: vm.Context): SyntheticModule;
   setExport(name: string, value: any): void;
-} 
+}
 
 export interface SourceTextModule extends Module {
   new (source: string, options: any): SyntheticModule;
   setExport(name: string, value: any): void;
-} 
-
+}
 
 export type ExperimentalVM = typeof vm & {
   SyntheticModule: SyntheticModule;
   SourceTextModule: SourceTextModule;
-}
+};
 
 export default vm as ExperimentalVM;
 export type { Context } from 'node:vm';

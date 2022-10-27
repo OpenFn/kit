@@ -1,7 +1,18 @@
 import vm from 'node:vm';
-import createLogger, { Logger, printDuration } from '@openfn/logger';
+import { createMockLogger, Logger, printDuration } from '@openfn/logger';
 import loadModule from './modules/module-loader';
 import type { LinkerOptions } from './modules/linker';
+
+export declare interface State<D = object, C = object> {
+  configuration: C;
+  data: D;
+  references?: Array<any>;
+  index?: number;
+}
+
+export declare interface Operation<T = Promise<State> | State> {
+  (state: State): T;
+}
 
 type Options = {
   logger?: Logger;
@@ -10,18 +21,19 @@ type Options = {
   // TODO currently unused
   // Ensure that all incoming jobs are sandboxed / loaded as text
   // In practice this means throwing if someone tries to pass live js
-  forceSandbox?: boolean; 
+  forceSandbox?: boolean;
 
   linker?: LinkerOptions;
-}
+};
 
 type JobModule = {
-  operations: Operation[],
+  operations: Operation[];
   execute?: (...operations: Operation[]) => (state: any) => any;
   // TODO lifecycle hooks
-}
+};
 
-const defaultLogger = createLogger();
+// Log nothing by default
+const defaultLogger = createMockLogger();
 
 const defaultState = { data: {}, configuration: {} };
 
@@ -29,16 +41,19 @@ const defaultState = { data: {}, configuration: {} };
 export default async function run(
   incomingJobs: string | Operation[],
   initialState: State = defaultState,
-  opts: Options = {}) {
+  opts: Options = {}
+) {
   const logger = opts.logger || defaultLogger;
 
   logger.debug('Intialising pipeline');
   // Setup a shared execution context
-  const context = buildContext(initialState, opts)
-  
+  const context = buildContext(initialState, opts);
+
   const { operations, execute } = await prepareJob(incomingJobs, context, opts);
   // Create the main reducer function
-  const reducer = (execute || defaultExecute)(...operations.map((op, idx) => wrapOperation(op, logger, `${idx + 1}`)));
+  const reducer = (execute || defaultExecute)(
+    ...operations.map((op, idx) => wrapOperation(op, logger, `${idx + 1}`))
+  );
 
   // Run the pipeline
   logger.debug(`Executing pipeline (${operations.length} operations)`);
@@ -51,11 +66,11 @@ export default async function run(
 
 // TODO I'm in the market for the best solution here - immer? deep-clone?
 // What should we do if functions are in the state?
-const clone = (state: State) => JSON.parse(JSON.stringify(state))
+const clone = (state: State) => JSON.parse(JSON.stringify(state));
 
 // Standard execute factory
 const defaultExecute = (...operations: Operation[]): Operation => {
-  return state => {
+  return (state) => {
     const start = Promise.resolve(state);
 
     return operations.reduce((acc, operation) => {
@@ -71,14 +86,14 @@ const defaultExecute = (...operations: Operation[]): Operation => {
 const wrapOperation = (fn: Operation, logger: Logger, name: string) => {
   return async (state: State) => {
     // TODO this output isn't very interesting yet!
-    logger.debug(`Starting operation ${name}`)
+    logger.debug(`Starting operation ${name}`);
     const start = new Date().getTime();
     const newState = clone(state);
     const result = await fn(newState);
     const duration = printDuration(new Date().getTime() - start);
-    logger.success(`Operation ${name} complete in ${duration}`)
-    return result
-  }
+    logger.success(`Operation ${name} complete in ${duration}`);
+    return result;
+  };
 };
 
 // Build a safe and helpful execution context
@@ -86,40 +101,47 @@ const wrapOperation = (fn: Operation, logger: Logger, name: string) => {
 // TODO is it possible for one operation to break the npm cache somehow?
 const buildContext = (state: State, options: Options) => {
   const logger = options.jobLogger ?? console;
-  
-  const context = vm.createContext({
-    console: logger,
-    // TODO take a closer look at what globals to pass through
-    clearInterval,
-    clearTimeout,
-    JSON,
-    parseFloat,
-    parseInt,
-    setInterval,
-    setTimeout,
-    state, // TODO I don't really want to pass global state through
-  }, {
-    codeGeneration: {
-      strings: false,
-      wasm: false
+
+  const context = vm.createContext(
+    {
+      console: logger,
+      // TODO take a closer look at what globals to pass through
+      clearInterval,
+      clearTimeout,
+      JSON,
+      parseFloat,
+      parseInt,
+      setInterval,
+      setTimeout,
+      state, // TODO I don't really want to pass global state through
+    },
+    {
+      codeGeneration: {
+        strings: false,
+        wasm: false,
+      },
     }
-  });
+  );
 
   return context;
-}
+};
 
-const prepareJob = async (jobs: string | Operation[], context: vm.Context, opts: Options = {}): Promise<JobModule> => {
+const prepareJob = async (
+  jobs: string | Operation[],
+  context: vm.Context,
+  opts: Options = {}
+): Promise<JobModule> => {
   if (typeof jobs === 'string') {
-    const exports =  await loadModule(jobs, { ...opts.linker, context });
+    const exports = await loadModule(jobs, { ...opts.linker, context });
     const operations = exports.default;
     return {
       operations,
-      ...exports
+      ...exports,
     } as JobModule;
   } else {
     if (opts.forceSandbox) {
-      throw new Error("Invalid arguments: jobs must be strings")
+      throw new Error('Invalid arguments: jobs must be strings');
     }
-    return { operations: jobs as Operation[] }
+    return { operations: jobs as Operation[] };
   }
-}
+};

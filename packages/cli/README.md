@@ -3,15 +3,16 @@
 This package contains a new devtools CLI.
 
 The CLI allows you to
-* Run a job (expression), writing output to disk or stdout
-* ~~Compile a job~~ (coming soon)
-* ~~Validate a job~~ (coming soon)
-* Use local language adaptors to run the job
+
+- Run a job (expression), writing output to disk or stdout
+- ~~Compile a job~~ (coming soon)
+- ~~Validate a job~~ (coming soon)
+- Use local language adaptors to run the job
 
 The CLI reads a path as its main argument. That path should either point to a .js file or a folder.
 
-* If the path ends in .js, load as a job file and execute. State and output will be read/written relative to it.
-* If the path is a folder, the CLI will look for a job.js, state.json and write an output.json.
+- If the path ends in .js, load as a job file and execute. State and output will be read/written relative to it.
+- If the path is a folder, the CLI will look for a job.js, state.json and write an output.json.
 
 From this input it will infer a working directory, from which state will be read and output will be written.
 
@@ -70,19 +71,19 @@ Right now, that means @openfn/language-common@2.0.0-rc3.
 
 Here's how I recommend getting set up:
 
-* Create a folder for next-gen language adaptors somewhere on your machine
+- Create a folder for next-gen language adaptors somewhere on your machine
 
 ```
 $ mkdir -p ~/adaptors/@openfn
 ```
 
-* Clone `language-common` into that folder
+- Clone `language-common` into that folder
 
 ```
 git clone https://github.com/OpenFn/language-common.git ~/adaptors/@openfn --branch 2.0.0-pre
 ```
 
-* Set your `OPENFN_MODULES_HOME` environment variable to point to the next-gen adaptors folder. This will tell the CLI to load adaptors from this folder by default.
+- Set your `OPENFN_MODULES_HOME` environment variable to point to the next-gen adaptors folder. This will tell the CLI to load adaptors from this folder by default.
 
 ```
 # In ~/.bashc or whatever
@@ -112,14 +113,14 @@ Any import statements inside a job have to resolve to a node module.
 
 A module can be resolved:
 
-* Relative to the env var OPENFN_MODULE_HOME
-* Relative to CLI's node_modules
-* Relative to global node_modules
+- Relative to the env var OPENFN_MODULE_HOME
+- Relative to CLI's node_modules
+- Relative to global node_modules
 
 Basically, to work with adaptors, you should:
 
-* Save your adaptors globally
+- Save your adaptors globally
 
 Or
 
-* Save adaptors to a folder somewhere (~/openfn) and set OPENFN_MODULE_HOME=~/openfn
+- Save adaptors to a folder somewhere (~/openfn) and set OPENFN_MODULE_HOME=~/openfn

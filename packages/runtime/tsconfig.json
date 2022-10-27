@@ -1,14 +1,4 @@
 {
   "extends": "../../tsconfig.common",
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts", "dist"],
-  "compilerOptions": {
-    "rootDir": "src",
-    "lib": ["esnext"],
-    "declarationDir": ".",
-    "baseUrl": ".",
-    "paths": {
-      "*": ["*", "src/types.d.ts"]
-    }
-  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }

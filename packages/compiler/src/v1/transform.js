@@ -2,7 +2,7 @@ const recast = require('recast'),
   estemplate = require('estemplate'),
   fs = require('fs');
 
-const types = require("ast-types");
+const types = require('ast-types');
 const { namedTypes: n, builders: b } = types;
 
 const { createTree } = require('@openfn/doclet-query');
@@ -24,14 +24,16 @@ function getModuleExports({ packageName, memberProperty }, doclets) {
   if (!memberProperty)
     throw new Error(
       `Inspecting JSDoc data for non-namespaced modules not supported.
-       Use <languagePack>.<module> format.`)
+       Use <languagePack>.<module> format.`
+    );
 
   try {
-    return createTree(doclets)[packageName].modules[memberProperty].exports
+    return createTree(doclets)[packageName].modules[memberProperty].exports;
   } catch (e) {
     throw new Error(
       `Error locating exported members of ${packageName}.${memberProperty}
-       Please check the JSDoc data that was provided.`)
+       Please check the JSDoc data that was provided.`
+    );
   }
 }
 
@@ -43,8 +45,8 @@ function getModuleExports({ packageName, memberProperty }, doclets) {
  */
 function getModuleConfig(languagePack) {
   // We currently ignore namespaces deeper than 1. i.e. foo.bar
-  const [ packageName, memberProperty ] = languagePack.split(".")
-  return ({ packageName, memberProperty })
+  const [packageName, memberProperty] = languagePack.split('.');
+  return { packageName, memberProperty };
 }
 
 /**
@@ -54,20 +56,19 @@ function getModuleConfig(languagePack) {
  * @param {object|string} ast - Code to transform
  * @param {Object} options
  * @param {string} options.languagePack - relative package/module name
- * @param {object} options.doclets - list of JSDoc tags for languagePack 
+ * @param {object} options.doclets - list of JSDoc tags for languagePack
  */
 function transform(ast, { languagePack, doclets }) {
-
   let moduleConfig = getModuleConfig(languagePack);
-  const adaptorExports = getModuleExports(moduleConfig, doclets)
+  const adaptorExports = getModuleExports(moduleConfig, doclets);
 
   try {
     // Check if the language pack specified exists
     // TODO: referencing call expressions not available in the languagePack
     // should register errors on the AST.
-    require.resolve(moduleConfig.packageName)
+    require.resolve(moduleConfig.packageName);
   } catch (e) {
-    console.warn(`Warning: ${languagePack} could not be resolved.`)
+    console.warn(`Warning: ${languagePack} could not be resolved.`);
   }
 
   if (typeof ast === 'string')
@@ -82,25 +83,25 @@ function transform(ast, { languagePack, doclets }) {
           });
         },
       },
-    })
+    });
 
-    // Recast with Acorn doesn't have an initial errors array.
-    // if (!ast.program.errors) {
-    //   ast.program.errors = [];
-    // }
+  // Recast with Acorn doesn't have an initial errors array.
+  // if (!ast.program.errors) {
+  //   ast.program.errors = [];
+  // }
 
   // Inject all the exported members of the module into the top of the AST.
   // This is used to infer existence of a call expression for the language pack
   // using the `scope.lookup` facility.
-  ast.program.body.unshift(estemplate(
-    `const <%= members %> = AdaptorStub;`,
-    {
+  ast.program.body.unshift(
+    estemplate(`const <%= members %> = AdaptorStub;`, {
       members: b.objectPattern(
         Object.keys(adaptorExports)
           .map(b.identifier)
-          .map(id => b.property("init", id, id))
-      )
-    }).body[0])
+          .map((id) => b.property('init', id, id))
+      ),
+    }).body[0]
+  );
 
   // =======================================================================
   // Language Call Expressions
@@ -120,18 +121,18 @@ function transform(ast, { languagePack, doclets }) {
 
   ast.callExpressions = [];
 
-  console.log("Analysing expression");
+  console.log('Analysing expression');
   // get static analysis of expression
 
   types.visit(ast, {
     // This method will be called for any node with .type "CallExpression":
-    visitCallExpression: function(path) {
+    visitCallExpression: function (path) {
       var node = path.node;
 
       // If a callExpression's callee is also a callExpression
       // then we can assume state is being injected.
       // i.e. operation(...args)(state)
-      if ( n.Identifier.check(node.callee) ) {
+      if (n.Identifier.check(node.callee)) {
         // We only track callees with identity.
         // So skip over over outer callExpressions.
         if (path.scope.lookup(node.callee.name)) {
@@ -139,91 +140,97 @@ function transform(ast, { languagePack, doclets }) {
         }
       }
 
-      if ( n.MemberExpression.check(node.callee) && n.Identifier.check(node.callee.object) ) {
+      if (
+        n.MemberExpression.check(node.callee) &&
+        n.Identifier.check(node.callee.object)
+      ) {
         if (path.scope.lookup(node.callee.object.name)) {
           ast.callExpressions.push(node);
         }
       }
 
       this.traverse(path);
-    }
+    },
   });
-
 
   // Unique Expressions
   let languageCallExpressions = ast.callExpressions
-    .map(c => {
+    .map((c) => {
       switch (c.callee.type) {
         // operation(...args)
         case 'Identifier':
-          return c.callee.name
+          return c.callee.name;
 
         // namespace.operation(...args)
         case 'MemberExpression':
           if (n.Identifier.check(c.callee.object)) {
-            return c.callee.object.name
+            return c.callee.object.name;
           }
-        
+
         default:
-          throw new TypeError(`Invalid language pack call expression: \n ${recast.print(c).code}`)
-          
+          throw new TypeError(
+            `Invalid language pack call expression: \n ${recast.print(c).code}`
+          );
       }
     })
-    .filter(( value,index,self ) => self.indexOf(value) === index)
-
+    .filter((value, index, self) => self.indexOf(value) === index);
 
   console.info(`Found ${ast.callExpressions.length} call expressions.`);
-  console.info(`This expression uses the following calls:\n  ${languageCallExpressions.join(', ')}`)
+  console.info(
+    `This expression uses the following calls:\n  ${languageCallExpressions.join(
+      ', '
+    )}`
+  );
 
   // =======================================================================
   // Execute Wrapper
   // =======================================================================
 
-  ast.rootExpressions = []
+  ast.rootExpressions = [];
 
   types.visit(ast, {
-    visitCallExpression: function(path) {
+    visitCallExpression: function (path) {
       var node = path.node;
 
       ast.rootExpressions.push(node);
 
       return false;
-    }
+    },
   });
 
   console.info(`Found ${ast.rootExpressions.length} root call expressions.`);
-  console.info("Wrapping root call expressions in `execute` call.");
+  console.info('Wrapping root call expressions in `execute` call.');
 
-  console.info("Adding `execute` to language pack dependency list.")
+  console.info('Adding `execute` to language pack dependency list.');
 
-  languageCallExpressions.push('execute')
+  languageCallExpressions.push('execute');
 
   ast.program.body = [
     b.expressionStatement(
-      b.callExpression( b.identifier('execute'), ast.rootExpressions )
-    )
-  ]
+      b.callExpression(b.identifier('execute'), ast.rootExpressions)
+    ),
+  ];
 
   // =======================================================================
   // Dependency Injector
   // =======================================================================
 
-  console.info("Injecting language pack dependencies.")
-  let expression = ast.program.body[0].expression
+  console.info('Injecting language pack dependencies.');
+  let expression = ast.program.body[0].expression;
 
   let injectedCallExpression = b.callExpression(
     b.functionExpression(
       null,
       languageCallExpressions.sort().map(b.identifier),
-      b.blockStatement([
-        b.returnStatement( expression )
-      ])
+      b.blockStatement([b.returnStatement(expression)])
     ),
-    languageCallExpressions.sort().map(name => {
-      return b.memberExpression(b.identifier('languagePack'), b.identifier(name))
+    languageCallExpressions.sort().map((name) => {
+      return b.memberExpression(
+        b.identifier('languagePack'),
+        b.identifier(name)
+      );
     })
-
-  )
+  );
 
   // =======================================================================
   // Main Function
@@ -248,17 +255,18 @@ function transform(ast, { languagePack, doclets }) {
           });
 
       }
-      `, {
-        expressionStatement: injectedCallExpression
-      }).body;
-
+      `,
+    {
+      expressionStatement: injectedCallExpression,
+    }
+  ).body;
 
   // =======================================================================
   // CommonJS Requires
   // =======================================================================
 
-  let moduleReferences = languagePack.split('.')
-  let moduleRequires
+  let moduleReferences = languagePack.split('.');
+  let moduleRequires;
 
   if (moduleReferences.length > 1) {
     moduleRequires = estemplate(
@@ -266,11 +274,11 @@ function transform(ast, { languagePack, doclets }) {
       var finalStatePath = process.env.STATE_PATH;
       var languagePack = require(<%= moduleName %>)[<%= memberProperty %>]
       `,
-      { 
+      {
         moduleName: b.literal(moduleReferences[0]),
-        memberProperty: b.literal(moduleReferences[1])
+        memberProperty: b.literal(moduleReferences[1]),
       }
-    ).body
+    ).body;
   } else {
     moduleRequires = estemplate(
       `
@@ -278,7 +286,7 @@ function transform(ast, { languagePack, doclets }) {
       var languagePack = require(<%= moduleName %>)
       `,
       { moduleName: b.literal(moduleReferences[0]) }
-    ).body
+    ).body;
   }
 
   // =======================================================================
@@ -313,17 +321,16 @@ function transform(ast, { languagePack, doclets }) {
         main(initialState)
 
       });
-      `, {}
-  ).body
+      `,
+    {}
+  ).body;
 
+  ast.program.body = [...moduleRequires, ...getInitialState, ...executeChain];
 
-  ast.program.body = [ ...moduleRequires, ...getInitialState, ...executeChain ];
-
-  return ast
-
+  return ast;
 }
 
 module.exports = {
   transform,
-  toString
+  toString,
 };

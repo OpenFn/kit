@@ -1,7 +1,7 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { styleLevel } from '../src/logger';
-import { defaults as defaultOptions } from '../src/options';
+import { styleLevel, LogFns } from '../src/logger';
+import { defaults as defaultOptions, LogLevel } from '../src/options';
 import { SECRET } from '../src/sanitize';
 
 // We're going to run all these tests against the mock logger
@@ -16,11 +16,11 @@ chalk.level = 0;
 const { logger, ...defaultOptionsWithoutLogger } = defaultOptions;
 
 // parse log output into a consumable parts
-const parse = ([level, namespace, icon, ...rest ]: string[]) => ({
+const parse = ([level, namespace, icon, ...rest]: string[]) => ({
   level,
   namespace,
   icon,
-  message: rest.join(' ')
+  message: rest.join(' '),
 });
 
 const icons: Record<LogFns, string> = {
@@ -79,18 +79,19 @@ test('returns custom options', (t) => {
 
   test(`${level} - logs without icon`, (t) => {
     const options = { level, hideIcons: true };
-    const logger = createLogger('x', options)
+    const logger = createLogger('x', options);
     logger[fn]('abc');
 
     const [_level, _namespace, ..._rest] = logger._last;
     const _message = _rest.join('_');
     t.assert(_level === fn);
     t.assert(_namespace === '[x]');
-    t.assert(_message === 'abc');  });
+    t.assert(_message === 'abc');
+  });
 
   test(`${level} - logs without namespace`, (t) => {
     const options = { level, hideNamespace: true };
-    const logger = createLogger('x', options)
+    const logger = createLogger('x', options);
     logger[fn]('abc');
 
     const [_level, _icon, ..._rest] = logger._last;
@@ -129,10 +130,10 @@ test('with level=none, logs nothing', (t) => {
 
 test('with level=default, logs success, error and warning but not info and debug', (t) => {
   const logger = createLogger('x', { level: 'default' });
-  
+
   logger.debug('d');
   logger.info('i');
-  t.assert(logger._history.length === 0)
+  t.assert(logger._history.length === 0);
 
   logger.success('s');
   let result = parse(logger._last);
@@ -155,13 +156,13 @@ test('with level=info, logs errors and warnings but not debug', (t) => {
   const logger = createLogger('x', options);
   logger.debug('abc');
 
-  t.assert(logger._history.length === 0)
+  t.assert(logger._history.length === 0);
 
   logger.warn('a');
   let result = parse(logger._last);
   t.assert(result.level === 'warn');
   t.assert(result.message === 'a');
-  
+
   logger.error('b');
   result = parse(logger._last);
   t.assert(result.level === 'error');
@@ -175,7 +176,7 @@ test('with level=debug logs everything', (t) => {
   let result = parse(logger._last);
   t.assert(result.level === 'info');
   t.assert(result.message === 'i');
-  
+
   logger.debug('d');
   result = parse(logger._last);
   t.assert(result.level === 'debug');
@@ -196,7 +197,7 @@ test('sanitize state', (t) => {
   const logger = createLogger();
   logger.success({
     configuration: {
-      x: 'y'
+      x: 'y',
     },
     data: {},
   });

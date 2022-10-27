@@ -7,9 +7,7 @@ The runtime will load an array of operations from a module and execute them in s
 An operation is a function which takes state as input and returns state, or a promise resolving to state, as output.
 
 ```js
-run([
-  (state) => state
-])
+run([(state) => state]);
 ```
 
 The compiler can be used to convert job DSL into an compatible ESM module.
@@ -32,6 +30,7 @@ See the `test` folder for more usage examples.
 ## Experimental VM Args
 
 For the runtime to work, the parent process needs two experimental vm args to be passed:
+
 ```
 --experimental-vm-modules
 --experimental-specifier-resolution=node
@@ -87,9 +86,10 @@ The runtime should not:
 When loading jobs from a string, they will be loaded as an ESM module. This uses the experimental `vm.SourceTextModule`.
 
 If the job contains imports of its own, `vm` will not resolve those imports. We have to provide a linker function to handle it. Our linker function will:
-* Import the required module
-* Create a `vm.SyntheticModule` to act as a proxy to it
-* Load the synthetic module into the job's runtime context.
+
+- Import the required module
+- Create a `vm.SyntheticModule` to act as a proxy to it
+- Load the synthetic module into the job's runtime context.
 
 You can pass a whitelist (as an array of regexes) to only allow matching modules to be loaded.
 

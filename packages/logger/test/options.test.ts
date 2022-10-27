@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import calculateOptions, { defaults }  from '../src/options';
+import calculateOptions, { defaults } from '../src/options';
 
 test('should set all values by default', (t) => {
   const o = calculateOptions();
@@ -16,7 +16,7 @@ test("defaults to level 'default'", (t) => {
 
 test('level can be overriden', (t) => {
   const o = calculateOptions({
-    level: 'debug'    
+    level: 'debug',
   });
   t.assert(o.level === 'debug');
 });
@@ -33,7 +33,7 @@ test('all defaults can be overridden', (t) => {
 
 test("don't mutate default options", (t) => {
   const defaultCopy = { ...defaults };
-  
+
   // Create an options obejct with the same keys as default, but nonsense values
   const opts = {};
   Object.keys(defaultCopy).forEach((key) => {

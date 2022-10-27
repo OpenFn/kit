@@ -5,7 +5,7 @@ export type LogEmitter = typeof console & { success: typeof console.log };
 export type LogOptions = {
   level?: LogLevel;
 
-   // a log object, allowing total override of the output#
+  // a log object, allowing total override of the output#
   logger?: LogEmitter;
 
   hideNamespace?: boolean;
@@ -13,25 +13,25 @@ export type LogOptions = {
 
   // TODO if the output extends beyond the screenwith, wrap a bit
   //      just enough to avoid the [type][level] column (like this comment)
-  wrap?: boolean
-  
+  wrap?: boolean;
+
   // or is this a terminal concern?
   showTimestamps?: boolean;
-  
+
   // paths to stuff in the state object we should obfuscate
   // this should work with language adaptors
-  // like if we on sensitive c in a.b.c, console.log(c) should 
+  // like if we on sensitive c in a.b.c, console.log(c) should
   sanitizePaths?: string[];
 
   sanitiseState?: boolean; // defaults to true
   detectState?: boolean; // defaults to true
-}
+};
 
 // TODO not crazy about the handling of this
 // but to support the success handler we need to alias console.log
 const defaultEmitter = {
   ...console,
-  success: (...args: any[]) => console.log(...args)
+  success: (...args: any[]) => console.log(...args),
 };
 
 export const defaults: Required<LogOptions> = {
@@ -62,10 +62,10 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
   // Maybe, this is actually a non trivial issue
   // If the user sets a path list, is this an override or extension?
   // Let's make it an extension
-  
+
   // Let's hard-code config sanitizing, then take an array of extra paths
 
   return options;
-}
+};
 
 export default parseOptions;
