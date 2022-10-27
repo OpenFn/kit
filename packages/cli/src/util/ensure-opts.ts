@@ -79,6 +79,7 @@ export default function ensureOpts(
     outputStdout: Boolean(opts.outputStdout),
     stateStdin: opts.stateStdin,
     test: opts.test,
+    immutable: opts.immutable || false,
   } as SafeOpts;
 
   const set = (key: keyof Opts, value: string) => {

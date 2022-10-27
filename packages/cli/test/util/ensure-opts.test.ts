@@ -108,6 +108,24 @@ test('preserve stateStdin', (t) => {
   t.assert(opts.stateStdin === '{}');
 });
 
+test('preserve immutable', (t) => {
+  const initialOpts = {
+    immutable: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.immutable);
+});
+
+test('default immutable to false', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.immutable === false);
+});
+
 test('compile only', (t) => {
   const initialOpts = {
     compileOnly: true,

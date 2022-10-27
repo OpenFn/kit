@@ -14,6 +14,7 @@ import execute from './execute/execute';
 export type Opts = {
   adaptors?: string[];
   compileOnly?: boolean;
+  immutable?: boolean;
   jobPath?: string;
   log?: string[];
   modulesHome?: string;

@@ -70,6 +70,10 @@ export const cmd = yargs(hideBin(process.argv))
     boolean: true,
     description: 'Skip compilation',
   })
+  .option('immutable', {
+    boolean: true,
+    description: 'Treat state as immutable',
+  })
   .option('adaptors', {
     alias: ['a', 'adaptor'],
     description: 'Pass one or more adaptors in the form name=path/to/adaptor',
