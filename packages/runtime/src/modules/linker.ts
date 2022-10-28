@@ -82,6 +82,8 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     console.log(`[linker] Loading module ${specifier} from mapped ${path}`);
   }
 
+  // TODO get rid of modulesHome and instead load from the repo
+
   // If there's no path and a modulesHome, try to load the module from modulesHome
   if (!path && options.modulesHome) {
     // if loading an openfn module, we need to remove openfn from the path
