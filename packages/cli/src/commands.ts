@@ -10,17 +10,22 @@ import ensureOpts from './util/ensure-opts';
 import compile from './compile/compile';
 import loadState from './execute/load-state';
 import execute from './execute/execute';
+import install from './install/install';
 
 export type Opts = {
+  command?: string;
+  adaptor?: boolean;
   adaptors?: string[];
   compileOnly?: boolean;
   immutable?: boolean;
+  install?: boolean;
   jobPath?: string;
   log?: string[];
   modulesHome?: string;
   noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;
+  packages?: string[];
   statePath?: string;
   stateStdin?: string;
   test?: boolean;
@@ -37,15 +42,25 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
-  if (opts.test) {
-    return runTest(opts, logger);
+  let handler: (_opts: SafeOpts, _logger: Logger) => any = () => null;
+  switch (options.command) {
+    case 'install':
+      handler = runInstall;
+      break;
+    case 'compile':
+      assertPath(basePath);
+      handler = runCompile;
+      break;
+    case 'test':
+      handler = runTest;
+      break;
+    case 'execute':
+    default:
+      assertPath(basePath);
+      handler = runExecute;
   }
 
-  assertPath(basePath);
-  if (opts.compileOnly) {
-    return runCompile(opts, logger);
-  }
-  return runExecute(opts, logger);
+  return handler(opts, logger);
 };
 
 export default parse;
@@ -116,6 +131,10 @@ export const runTest = async (options: SafeOpts, logger: Logger) => {
   const result = await execute(code, state, options);
   logger.success(`Result: ${result}`);
   return result;
+};
+
+export const runInstall = async (options: SafeOpts, logger: Logger) => {
+  await install(options, logger);
 };
 
 // This is disabled for now because

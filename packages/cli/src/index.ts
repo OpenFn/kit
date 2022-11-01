@@ -8,4 +8,4 @@ type YargsOpts = Opts & {
   _: string[];
 };
 const opts = cmd.parse() as YargsOpts;
-runInChildProcess(opts._[0], opts);
+runInChildProcess(opts.path, opts);

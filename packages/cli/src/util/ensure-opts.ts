@@ -68,17 +68,22 @@ const ensureLogOpts = (opts: Opts) => {
   };
 };
 
+// TODO should this vary by command?
 export default function ensureOpts(
   basePath: string = '.',
   opts: Opts
 ): SafeOpts {
   const newOpts = {
+    adaptor: opts.adaptor, // TODO needs testing (and should only apply to the install command)
+    command: opts.command,
     compileOnly: Boolean(opts.compileOnly),
     modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
     noCompile: Boolean(opts.noCompile),
     outputStdout: Boolean(opts.outputStdout),
+    packages: opts.packages, // TODO needs testing (and should only apply to the install command)
     stateStdin: opts.stateStdin,
     test: opts.test,
+    install: opts.install || false,
     immutable: opts.immutable || false,
   } as SafeOpts;
 
@@ -88,7 +93,6 @@ export default function ensureOpts(
   };
 
   let baseDir = basePath;
-
   if (basePath.endsWith('.js')) {
     baseDir = path.dirname(basePath);
     set('jobPath', basePath);

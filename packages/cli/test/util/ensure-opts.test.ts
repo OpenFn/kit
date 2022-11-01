@@ -6,6 +6,16 @@ import ensureOpts, {
   ERROR_MESSAGE_LOG_COMPONENT,
 } from '../../src/util/ensure-opts';
 
+test('preserve the command name', (t) => {
+  const initialOpts = {
+    command: 'compile',
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.command === 'compile');
+});
+
 test('set job, state and output from a base path', (t) => {
   const initialOpts = {} as Opts;
 
@@ -134,6 +144,16 @@ test('compile only', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.truthy(opts.compileOnly);
+});
+
+test('install only', (t) => {
+  const initialOpts = {
+    install: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.install);
 });
 
 test('update the default output with compile only', (t) => {
