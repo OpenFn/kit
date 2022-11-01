@@ -64,10 +64,10 @@ importers:
 
   packages/cli:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.10
+      '@openfn/compiler': workspace:^0.0.11
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/logger': workspace:^0.0.3
-      '@openfn/runtime': workspace:^0.0.8
+      '@openfn/logger': workspace:^0.0.4
+      '@openfn/runtime': workspace:^0.0.9
       '@types/mock-fs': ^4.13.1
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -97,8 +97,8 @@ importers:
 
   packages/compiler:
     specifiers:
-      '@openfn/describe-package': workspace:^0.0.6
-      '@openfn/logger': workspace:^0.0.3
+      '@openfn/describe-package': workspace:^0.0.7
+      '@openfn/logger': workspace:^0.0.4
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
       acorn: ^8.8.0
@@ -199,7 +199,7 @@ importers:
   packages/runtime:
     specifiers:
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/logger': workspace:^0.0.3
+      '@openfn/logger': workspace:^0.0.4
       '@types/node': ^17.0.31
       ava: ^4.2.0
       ts-node: ^10.7.0
@@ -219,9 +219,9 @@ importers:
 
   packages/runtime-manager:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.10
+      '@openfn/compiler': workspace:^0.0.11
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/runtime': workspace:^0.0.8
+      '@openfn/runtime': workspace:^0.0.9
       '@types/koa': ^2.13.5
       '@types/node': ^17.0.31
       '@types/workerpool': ^6.1.0
