@@ -24,15 +24,17 @@ export default async (
 
   const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
   const aliasedName = `${name}_${version}`;
-  const alias = `@npm:${name}@${version}`;
+  const alias = `npm:${name}@${version}`;
 
   const exists = await isModuleInstalled(aliasedName, repoPath);
   if (!exists) {
     // TODO use a proper logger here
     console.log(`installing ${aliasedName} to ${repoPath}`);
-    await exec(`npm install ${flags.join(' ')} ${alias}`, {
+    await exec(`npm install ${flags.join(' ')} ${aliasedName}@${alias}`, {
       cwd: repoPath,
     });
     return true;
+  } else {
+    console.log('Module already installed');
   }
 };

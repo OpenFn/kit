@@ -19,8 +19,8 @@ export default async (path: string) => {
     JSON.parse(raw);
     console.log('Repo exists');
   } catch (e) {
-    console.log('Writing package.json');
-    fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
+    console.log('Writing package.json to ', pkgPath);
+    await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
   }
   return true;
 };
