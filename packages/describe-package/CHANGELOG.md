@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.7
+
+### Patch Changes
+
+- 28168a8: Updated build process
+
 ## 0.0.6
 
 ### Patch Changes
