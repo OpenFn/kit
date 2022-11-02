@@ -13,12 +13,7 @@ export default async (opts: InstallOpts, log: Logger) => {
     if (adaptor) {
       packages = packages.map((name) => `@openfn/language-${name}`);
     }
-    // log.info(`Installing ${packages.length} packages to ${modulesHome}`);
-    // log.info(packages);
-
     // TODO modulesHome becomes something like repoHome
     await install(packages[0], modulesHome, log);
-
-    // log.success('Installed packages: ', packages);
   }
 };
