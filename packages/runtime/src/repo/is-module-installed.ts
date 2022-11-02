@@ -10,6 +10,7 @@ export default async (
 ) => {
   // This arcane code looks in the package json to see if this package and version are already installed
   // npm pkg get returns {} if it doesn't find a match
+  // TODO not worth it, may as well filtr the pkg json ourselves
   const { stdout } = await exec(`npm pkg get dependencies[${aliasedName}]`, {
     cwd: repoPath,
   });

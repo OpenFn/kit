@@ -1,6 +1,10 @@
 import { defaultRepoPath } from './install';
 import { readFile } from 'node:fs/promises';
 import exec from '../util/exec';
+import path from 'node:path';
+
+// TODO I thought it would be useful to put lots of small fiddly functions in here
+// but actually this is most of the repo logic and it just makes it all hard to find!
 
 export const getNameAndVersion = (specifier: string) => {
   let name;
@@ -21,9 +25,20 @@ export const getNameAndVersion = (specifier: string) => {
 // This ensures that a matching module can be found
 // Someone needs to be responsible for ensureing that @latest is actually correct
 // Which is an auto install issue
-export const getAliasedName = (specifier: string) => {
-  let { name, version } = getNameAndVersion(specifier);
-  return `${name}_${version}`;
+export const getAliasedName = (specifier: string, version?: string) => {
+  let name;
+  if (version === undefined) {
+    const x = getNameAndVersion(specifier);
+    name = x.name;
+    version = x.version;
+  } else {
+    name = specifier;
+  }
+
+  if (version) {
+    return `${name}_${version}`;
+  }
+  return name;
 };
 
 // This will alias the name of a specifier
@@ -80,14 +95,23 @@ export const getLatestInstalledVersion = async (
   return null;
 };
 
-export const getModulePath = (
+export const getModulePath = async (
   specifier: string,
   repoPath: string = defaultRepoPath
 ) => {
-  const alias = getAliasedName(specifier);
-  // if there's no version specifier, we should take the latest available
-  //... but how do we know what that is?
-  return `${repoPath}/node_modules/${alias}`;
+  const { name, version } = getNameAndVersion(specifier);
+  let alias;
+
+  if (version) {
+    // for now, must be an exact match
+    // TODO
+  } else {
+    alias = await getLatestInstalledVersion(specifier, repoPath);
+  }
+  if (alias) {
+    return path.resolve(`${repoPath}`, `node_modules/${alias}`);
+  }
+  return null;
 };
 
 export const getModulePathFromAlias = (

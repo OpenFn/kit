@@ -1,7 +1,7 @@
 // logic to autoinstall a module
 import exec from '../util/exec';
 import ensureRepo from './ensure-repo';
-import getNameAndVersion from './get-name-and-version';
+import { getNameAndVersion, getLatestVersion } from './util';
 import isModuleInstalled from './is-module-installed';
 
 // TODO decide where this is
@@ -19,8 +19,10 @@ export default async (
 ) => {
   await ensureRepo(repoPath);
 
-  // So if a version isn't passed in the specifier, how do we know what will be installed?
-  const { name, version } = await getNameAndVersion(specifier);
+  let { name, version } = getNameAndVersion(specifier);
+  if (!version) {
+    version = await getLatestVersion(specifier);
+  }
 
   const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
   const aliasedName = `${name}_${version}`;

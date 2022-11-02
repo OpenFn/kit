@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
+import createLogger, { Logger } from '@openfn/logger';
 
-const pkg = {
+const defaultPkg = {
   name: 'openfn-repo',
   description: 'A repository for modules used by the openfn runtime',
   private: true,
@@ -8,19 +9,22 @@ const pkg = {
   version: '1.0.0',
 };
 
-export default async (path: string) => {
-  // ensure a repo with a package.json exists at this path
+const defaultLogger = createLogger();
+
+// ensure a repo with a package.json exists at this path
+// Also returns the package json
+export default async (path: string, log: Logger = defaultLogger) => {
   await fs.mkdir(path, { recursive: true });
 
-  // is there a package json>
   const pkgPath = `${path}/package.json`;
   try {
     const raw = await fs.readFile(pkgPath, 'utf8');
-    JSON.parse(raw);
-    console.log('Repo exists');
+    const pkg = JSON.parse(raw);
+    log.debug('Repo exists');
+    return pkg;
   } catch (e) {
-    console.log('Writing package.json to ', pkgPath);
-    await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
+    log.debug(`Creating new repo at ${pkgPath}`);
+    await fs.writeFile(pkgPath, JSON.stringify(defaultPkg, null, 2));
+    return { ...defaultPkg };
   }
-  return true;
 };
