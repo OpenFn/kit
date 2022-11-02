@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 0.0.12
+
+### Patch Changes
+
+- 6d1d199: Support mutability in the runtime
+- 28168a8: Updated build process
+- Updated dependencies [6d1d199]
+- Updated dependencies [28168a8]
+  - @openfn/runtime@0.0.9
+  - @openfn/compiler@0.0.11
+  - @openfn/logger@0.0.4
+
 ## 0.0.11
 
 ### Patch Changes

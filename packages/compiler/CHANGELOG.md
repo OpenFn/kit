@@ -1,5 +1,14 @@
 # @openfn/compiler
 
+## 0.0.11
+
+### Patch Changes
+
+- 28168a8: Updated build process
+- Updated dependencies [28168a8]
+  - @openfn/describe-package@0.0.7
+  - @openfn/logger@0.0.4
+
 ## 0.0.10
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # compiler-worker
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [28168a8]
+  - @openfn/describe-package@0.0.7
+
 ## 1.0.4
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # runtime-manager
 
+## 0.0.11
+
+### Patch Changes
+
+- 28168a8: Updated build process
+- Updated dependencies [6d1d199]
+- Updated dependencies [28168a8]
+  - @openfn/runtime@0.0.9
+  - @openfn/compiler@0.0.11
+
 ## 0.0.10
 
 ### Patch Changes
