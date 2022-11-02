@@ -1,7 +1,7 @@
 // logic to autoinstall a module
 import exec from '../util/exec';
 import ensureRepo from './ensure-repo';
-import { getNameAndVersion, getLatestVersion } from './util';
+import { getNameAndVersion, getLatestVersion, getModulePath } from './util';
 import createLogger, { Logger } from '@openfn/logger';
 
 // TODO decide where this is
@@ -27,13 +27,12 @@ export default async (
     version = await getLatestVersion(specifier);
   }
 
-  const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
-  const aliasedName = `${name}_${version}`;
-  const alias = `npm:${name}@${version}`;
+  const exists = await getModulePath(specifier, repoPath);
 
-  const exists = await isModuleInstalled(aliasedName, repoPath);
   if (!exists) {
-    // TODO use a proper logger here
+    const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
+    const alias = `npm:${name}@${version}`;
+    const aliasedName = `${name}_${version}`;
     log.info(`Installing ${aliasedName} to ${repoPath}`);
     await exec(`npm install ${flags.join(' ')} ${aliasedName}@${alias}`, {
       cwd: repoPath,
@@ -41,6 +40,6 @@ export default async (
     log.success(`Installed ${specifier}`);
     return true;
   } else {
-    log.debug(`Module ${specifier} already installed`);
+    log.info(`Module ${specifier} already installed`);
   }
 };
