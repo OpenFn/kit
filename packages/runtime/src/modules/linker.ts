@@ -43,7 +43,7 @@ const linker: Linker = async (specifier, context, options = {}) => {
   // TODO: Slightly mad handling for ESM and EJS modules
   // Needs more work
   let target = exports;
-  if (exports.__esModule) {
+  if (exports.__esModule && target.default.default) {
     // CJS
     target = target.default.default; // ?!
   } else {

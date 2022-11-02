@@ -3,11 +3,14 @@ import exec from '../util/exec';
 import ensureRepo from './ensure-repo';
 import { getNameAndVersion, getLatestVersion } from './util';
 import isModuleInstalled from './is-module-installed';
+import createLogger, { Logger } from '@openfn/logger';
 
 // TODO decide where this is
 // In practice I'm not sure it'll ever be used? Every runtime manager
 // will provide a path, so its only core dev
 export const defaultRepoPath = '/tmp/openfn/repo';
+
+const defaultLogger = createLogger();
 
 // Install the module at specifier into the repo at repoPath
 // Should this be smart and check if it exists first?
@@ -15,7 +18,8 @@ export const defaultRepoPath = '/tmp/openfn/repo';
 // TODO support multiple installs in one call
 export default async (
   specifier: string,
-  repoPath: string = defaultRepoPath
+  repoPath: string = defaultRepoPath,
+  log: Logger = defaultLogger
 ) => {
   await ensureRepo(repoPath);
 
@@ -31,12 +35,13 @@ export default async (
   const exists = await isModuleInstalled(aliasedName, repoPath);
   if (!exists) {
     // TODO use a proper logger here
-    console.log(`installing ${aliasedName} to ${repoPath}`);
+    log.info(`Installing ${aliasedName} to ${repoPath}`);
     await exec(`npm install ${flags.join(' ')} ${aliasedName}@${alias}`, {
       cwd: repoPath,
     });
+    log.success(`Installed ${specifier}`);
     return true;
   } else {
-    console.log('Module already installed');
+    log.debug(`Module ${specifier} already installed`);
   }
 };

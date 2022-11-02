@@ -99,7 +99,7 @@ export const getModulePath = async (
   specifier: string,
   repoPath: string = defaultRepoPath
 ) => {
-  const { name, version } = getNameAndVersion(specifier);
+  const { version } = getNameAndVersion(specifier);
   let alias;
 
   if (version) {
@@ -122,5 +122,3 @@ export const getModulePathFromAlias = (
   //... but how do we know what that is?
   return `${repoPath}/node_modules/${alias}`;
 };
-
-export const ensureVersion = async (specifier: string) => {};
