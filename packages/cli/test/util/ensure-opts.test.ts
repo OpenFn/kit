@@ -98,6 +98,7 @@ test('preserve outputStdout', (t) => {
   t.truthy(opts.outputStdout);
 });
 
+// TODO deprecate
 test('preserve noCompile', (t) => {
   const initialOpts = {
     noCompile: true,
@@ -136,28 +137,21 @@ test('default immutable to false', (t) => {
   t.assert(opts.immutable === false);
 });
 
-test('compile only', (t) => {
+test('perserve the autoinstall flag', (t) => {
   const initialOpts = {
-    compileOnly: true,
+    autoinstall: true,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.truthy(opts.compileOnly);
+  t.truthy(opts.autoinstall);
 });
 
-test('install only', (t) => {
-  const initialOpts = {
-    install: true,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.install);
-});
-
+// TODO does this make sense?
+// This is the question of: should we have an ensure-opt for each command
 test('update the default output with compile only', (t) => {
   const initialOpts = {
+    command: 'compile',
     compileOnly: true,
   } as Opts;
 

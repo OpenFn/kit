@@ -36,6 +36,14 @@ const testCommand = {
   },
 };
 
+const cleanCommand = {
+  command: 'clean',
+  desc: 'Removes all modules from the runtime module repo',
+  handler: (argv: Argv) => {
+    argv.command = 'clean';
+  },
+};
+
 const compileCommand = {
   command: 'compile [path]',
   desc: 'compile a openfn job and print or save the resulting js',
@@ -67,6 +75,11 @@ const executeCommand = {
       .option('immutable', {
         boolean: true,
         description: 'Treat state as immutable',
+      })
+      .option('autoinstall', {
+        alias: 'i',
+        boolean: true,
+        description: 'Auto-install the language adaptor',
       })
       .option('state-path', {
         alias: 's',
@@ -125,6 +138,7 @@ export const cmd = yargs(hideBin(process.argv))
   .command(executeCommand as yargs.CommandModule<{}>)
   .command(compileCommand as yargs.CommandModule<{}>)
   .command(installCommand as yargs.CommandModule<{}>)
+  .command(cleanCommand as yargs.CommandModule<{}>)
   .command(testCommand as yargs.CommandModule<{}>)
   .option('log', {
     alias: ['l'],

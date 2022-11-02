@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
-import createLogger, { COMPILER, Logger } from '../util/logger';
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
+import { getModulePath } from '@openfn/runtime';
+import createLogger, { COMPILER, Logger } from '../util/logger';
 import type { SafeOpts } from '../commands';
 
 // Load and compile a job from a file
@@ -44,6 +45,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
     const [specifier, path] = pattern.split('=');
 
     // Preload exports from a path, optionally logging errors in case of a failure
+    log.debug(`Attempting to preload typedefs for ${specifier}`);
     const doPreload = async (path: string, logError: boolean = true) => {
       try {
         const result = await preloadAdaptorExports(path);
@@ -59,19 +61,28 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
       }
     };
 
-    // TODO need better trace/debug output on this I think
+    const repoPath = await getModulePath(specifier, opts.modulesHome);
+    if (repoPath) {
+      log.debug(`Found ${specifier} in the repo`);
+    }
+
+    // TODO need better trace/debug output on this
+    // TODO Not to mention really, really good test coverage
     // Looking up the adaptor's type definition is complex. In this order, we should use:
     const exports =
       // 1) An explicit file path
       (path && (await doPreload(path))) ||
-      // 2) A module defined in the opts.modulesHome folder
+      // 2) A module in the repo
+      (repoPath && (await doPreload(repoPath))) ||
+      // 3) DEPRECATED? A module defined in the opts.modulesHome folder
       (opts.modulesHome &&
         (await doPreload(`${opts.modulesHome}/${specifier}`, false))) ||
-      // 3) An npm module specifier
+      // 4) An npm module specifier
       (await doPreload(specifier)) ||
       [];
 
     if (exports.length === 0) {
+      // TODO is this true currently?
       console.warn(`WARNING: no module exports loaded for ${pattern}`);
       console.log('         automatic imports will be skipped');
     }

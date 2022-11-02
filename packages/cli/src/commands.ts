@@ -11,14 +11,15 @@ import compile from './compile/compile';
 import loadState from './execute/load-state';
 import execute from './execute/execute';
 import install from './install/install';
+import { exec } from 'node:child_process';
 
 export type Opts = {
   command?: string;
+
   adaptor?: boolean;
   adaptors?: string[];
-  compileOnly?: boolean;
+  autoinstall?: boolean;
   immutable?: boolean;
-  install?: boolean;
   jobPath?: string;
   log?: string[];
   modulesHome?: string;
@@ -54,6 +55,9 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     case 'test':
       handler = runTest;
       break;
+    case 'clean':
+      handler = runClean;
+      break;
     case 'execute':
     default:
       assertPath(basePath);
@@ -79,6 +83,16 @@ const assertPath = (basePath?: string) => {
 
 export const runExecute = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
+
+  // auto install the language adaptor
+  if (options.autoinstall) {
+    logger.info('Auto-installing language adaptors');
+    await install(
+      { packages: options.adaptors, modulesHome: options.modulesHome },
+      logger
+    );
+  }
+
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
   const result = await execute(code, state, options);
@@ -135,6 +149,22 @@ export const runTest = async (options: SafeOpts, logger: Logger) => {
 
 export const runInstall = async (options: SafeOpts, logger: Logger) => {
   await install(options, logger);
+};
+
+export const runClean = async (options: SafeOpts, logger: Logger) => {
+  // TODO should we prompt confirm first? What if modulesHome is something bad?
+  if (options.modulesHome) {
+    return new Promise<void>((resolve) => {
+      logger.info(`Cleaning repo at ${options.modulesHome} `);
+      exec(`npm exec rimraf ${options.modulesHome}`, () => {
+        logger.success('Repo cleaned');
+        resolve();
+      });
+    });
+  } else {
+    logger.error('Clean failed');
+    logger.error('No modulesHome path detected');
+  }
 };
 
 // This is disabled for now because

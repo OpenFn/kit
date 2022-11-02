@@ -75,15 +75,14 @@ export default function ensureOpts(
 ): SafeOpts {
   const newOpts = {
     adaptor: opts.adaptor, // TODO needs testing (and should only apply to the install command)
+    autoinstall: opts.autoinstall,
     command: opts.command,
-    compileOnly: Boolean(opts.compileOnly),
     modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
     noCompile: Boolean(opts.noCompile),
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages, // TODO needs testing (and should only apply to the install command)
     stateStdin: opts.stateStdin,
     test: opts.test,
-    install: opts.install || false,
     immutable: opts.immutable || false,
   } as SafeOpts;
 
@@ -100,10 +99,13 @@ export default function ensureOpts(
     set('jobPath', `${baseDir}/job.js`);
   }
   set('statePath', `${baseDir}/state.json`);
+
   if (!opts.outputStdout) {
     set(
       'outputPath',
-      newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`
+      newOpts.command === 'compile'
+        ? `${baseDir}/output.js`
+        : `${baseDir}/output.json`
     );
   }
 
