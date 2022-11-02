@@ -7,6 +7,7 @@ const defaultPkg = {
   private: true,
   author: 'Open Function Group <admin@openfn.org>',
   version: '1.0.0',
+  dependencies: {},
 };
 
 const defaultLogger = createLogger();
