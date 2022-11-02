@@ -10,7 +10,7 @@ An operation is a function which takes state as input and returns state, or a pr
 run([(state) => state]);
 ```
 
-The compiler can be used to convert job DSL into an compatible ESM module.
+The compiler can be used to convert job DSL into an compatible ESM module (the runtime does not do this automatically).
 
 ## Basic Usage
 
@@ -26,6 +26,8 @@ const { data } = await run(source, initialState);
 ```
 
 See the `test` folder for more usage examples.
+
+The runtime provides no CLI. Use packages/cli (devtools) for this.
 
 ## Experimental VM Args
 
@@ -54,7 +56,7 @@ $ pnpm build:watch
 
 Note: The watch throws an error on first run but seems to work.
 
-You can test or watch tests with
+You can test or watch tests with:
 
 ```
 $ pnpm test
@@ -74,29 +76,30 @@ The runtime should:
 - Return a promise and event-emitted (with a `on(event)` function)
 - Emit lifecycle events for the job pipeline
 - Resolve to a state object
+- Load runtime dependencies from explicit paths or a local repo
 
 The runtime should not:
 
 - Compile its input jobs (although it will validate using the compiler)
 - Do any disk I/O
 - Do any thread/process management (see the runtime manager)
+- Auto install any dependencies
 
-## Module Loading & Linking
+## Module Loading
 
-When loading jobs from a string, they will be loaded as an ESM module. This uses the experimental `vm.SourceTextModule`.
+When a job calls `import` to import a dependent module, the runtime must resolve the import statement into executable code.
 
-If the job contains imports of its own, `vm` will not resolve those imports. We have to provide a linker function to handle it. Our linker function will:
+It does this through a `linker` function, which takes as arguments a package specifier and `vm` context, and an options object. It will load the module using a dynamic `import` and proxy the interface through a `vm.SyntheticModules`, usng the experimental `vm.SourceTextModule` API.
 
-- Import the required module
-- Create a `vm.SyntheticModule` to act as a proxy to it
-- Load the synthetic module into the job's runtime context.
+Modules can be loaded from:
+- An explicit path (pass as a dictionary of name: path strings into the options)
+- The current working repo (see below)
+- The current working node_modules (should we somehow disallow this?)
 
-You can pass a whitelist (as an array of regexes) to only allow matching modules to be loaded.
+The repo is a managed folder which the runtime uses to install and load modules from/to. It is just an arbitrary private npm package (ie, a folder containing a package.json and node_modules). Generally, it is expected that linked modules are loaded from this folder.
 
-By default, imports will be resolved using node's resolution algorithm relative to the runtime's directory. This is unhelpful as the runtime itself doesn't depend on packages the jobs need (like language adaptors).
+The runtime is self-managing and won't do any installs itself, that's up to the runtime manager to sort out
 
-The linker accepts a moduleHome, which accepts a folder to load linked modules from. This is a hook allowing adaptors to be loaded from the local filesystem. Soon we'll also be able to pass specific paths and maybe even point to the local langauge adaptor monorepo to load from there.
+A whitelist can be passed (as an array of regexes) to the linker's options, only allow matching modules to be loaded.
 
-We may add support for dynamic module loading - ie, the linker will download the module from unpkg.
-
-We will want to extend this functionality to allow version control on adaptors (ie, we can make `import { fn } from '@open/language-common@2.0.0-rc3` work)
+Right now, it's expected that the runtime manager (ie the CLI) will manage the installation of dependencies into the repo before executing the runtime. Later, we may allow the runtime to auto-install dependencies from directives at the top of the job source.

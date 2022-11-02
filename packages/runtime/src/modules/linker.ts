@@ -3,17 +3,12 @@
  * The tricky bit is this MUST load all linked libraries in the context of the parent module
  * https://nodejs.org/api/html#modulelinklinker
  */
-import isModuleInstalled from '../repo/is-module-installed';
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
-import { ensureAliasedName, getModulePathFromAlias } from '../repo/util';
+import { getModulePath } from '../repo/util';
 
 export type LinkerOptions = {
   // paths to modules: '@openfn/language-common': './path/to/common.js'
   modulePaths?: Record<string, string>;
-
-  // Unless otherwise specified, modules will be loaded from here (relative to cli dir)
-  // TODO DEPRECATED
-  modulesHome?: string;
 
   // path to the module repo
   repo?: string;
@@ -83,33 +78,14 @@ const linker: Linker = async (specifier, context, options = {}) => {
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   // Lookup the path from an explicit specifier first
-  let path = options.modulePaths?.[specifier] || '';
+  let path = options.modulePaths?.[specifier] || null;
   if (options.trace && path) {
     console.log(`[linker] Loading module ${specifier} from mapped ${path}`);
   }
 
-  // TODO get rid of modulesHome and instead load from the repo
-  if (!path) {
-    // Load a specifier_version name (even if there's no vesion in the specifieer)
-    const alias = await ensureAliasedName(specifier, options.repo);
-    const isInstalled = await isModuleInstalled(alias, options.repo);
-    if (isInstalled) {
-      // TODO this is messy
-      path = await getModulePathFromAlias(alias, options.repo);
-    }
-    // set the path to point to the repo
-  }
-  // If there's no path and a modulesHome, try to load the module from modulesHome
-  if (!path && options.modulesHome) {
-    // if loading an openfn module, we need to remove openfn from the path
-    // ie @openfn/language-common -> language-common
-    // TODO is this true for all namespaced packages?
-    // TODO no, I don't think this is right at all!
-    //const name = specifier.startsWith('@openfn') ? specifier.split('/').pop() : specifier;
-    path = `${options.modulesHome}/${specifier}`;
-    if (options.trace) {
-      console.log(`[linker] Loading module ${specifier} from ${path}`);
-    }
+  if (!path && options.repo) {
+    // Try and load a matching path from the repo
+    path = await getModulePath(specifier, options.repo);
   }
 
   if (path) {

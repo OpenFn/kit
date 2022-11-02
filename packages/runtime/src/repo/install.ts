@@ -2,7 +2,6 @@
 import exec from '../util/exec';
 import ensureRepo from './ensure-repo';
 import { getNameAndVersion, getLatestVersion } from './util';
-import isModuleInstalled from './is-module-installed';
 import createLogger, { Logger } from '@openfn/logger';
 
 // TODO decide where this is

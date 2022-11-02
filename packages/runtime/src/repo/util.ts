@@ -63,6 +63,16 @@ export const getLatestVersion = async (specifier: string) => {
   return stdout.trim(); // TODO this works for now but isn't very robust
 };
 
+export const loadRepoPkg = async (repoPath: string = defaultRepoPath) => {
+  try {
+    const pkgRaw = await readFile(`${repoPath}/package.json`, 'utf8');
+    return JSON.parse(pkgRaw);
+  } catch (e) {
+    console.error('ERROR PARSING REPO JSON');
+    return null;
+  }
+};
+
 // Note that the specifier shouldn't have an @
 export const getLatestInstalledVersion = async (
   specifier: string,
@@ -70,13 +80,7 @@ export const getLatestInstalledVersion = async (
   pkg?: JSON
 ) => {
   if (!pkg) {
-    try {
-      const pkgRaw = await readFile(`${repoPath}/package.json`, 'utf8');
-      pkg = JSON.parse(pkgRaw);
-    } catch (e) {
-      console.error('ERROR PARSING REPO JSON');
-      return null;
-    }
+    pkg = await loadRepoPkg(repoPath);
   }
   // @ts-ignore
   const { dependencies } = pkg;
@@ -103,11 +107,16 @@ export const getModulePath = async (
   let alias;
 
   if (version) {
-    // for now, must be an exact match
-    // TODO
+    // TODO: fuzzy semver match
+    const a = getAliasedName(specifier);
+    const pkg = await loadRepoPkg(repoPath);
+    if (pkg.dependencies[a]) {
+      alias = a;
+    }
   } else {
     alias = await getLatestInstalledVersion(specifier, repoPath);
   }
+
   if (alias) {
     return path.resolve(`${repoPath}`, `node_modules/${alias}`);
   }

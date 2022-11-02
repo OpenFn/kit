@@ -51,6 +51,15 @@ test.serial('return the path to the latest version of a package', async (t) => {
   t.is(path, `${repoPath}node_modules/${aliasLatest}`);
 });
 
-// return the path to a specific version of a package
+test.serial('return the path to a specific version of a package', async (t) => {
+  const name = '@openfn/language-common';
+  const specifier = `${name}@1.0.0`;
+  const alias = `${name}_1.0.0`;
+  mockPkg({
+    [alias]: '1.0.0',
+  });
+  const path = await getModulePath(specifier, repoPath);
+  t.is(path, `${repoPath}node_modules/${alias}`);
+});
 
-// return the path to a matching version of a package
+// TODO return the path to a matching version of a package
