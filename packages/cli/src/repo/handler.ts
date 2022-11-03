@@ -43,3 +43,11 @@ export const clean = async (options: SafeOpts, logger: Logger) => {
     logger.error('No modulesHome path detected');
   }
 };
+
+export const pwd = async (options: SafeOpts, logger: Logger) => {
+  // TODO should we report if modules home is set?
+  logger.info(
+    `OPENFN_MODULES_HOME is set to ${process.env.OPENFN_MODULES_HOME}`
+  );
+  logger.success(`Repo working directory is: ${options.modulesHome}`);
+};

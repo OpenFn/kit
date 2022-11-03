@@ -313,6 +313,31 @@ test.serial('compile a job: openfn compile job.js', async (t) => {
   t.assert(output === 'export default [fn(42)];');
 });
 
+test.serial('pwd if modules_home is passed', async (t) => {
+  const options = {
+    modulesHome: 'a/b/c',
+    logger,
+  };
+  await run('repo pwd', '', options);
+
+  const { message } = logger._parse(logger._last);
+  t.assert(message, 'Repo working directory is: a/b/c');
+});
+
+test.serial('pwd with modules_home from env', async (t) => {
+  process.env.OPENFN_MODULES_HOME = 'x/y/z';
+
+  const options = {
+    logger,
+  };
+  await run('repo pwd', '', options);
+
+  const { message } = logger._parse(logger._last);
+  t.assert(message, 'Repo working directory is: x/y/z');
+
+  delete process.env.OPENFN_MODULES_HOME;
+});
+
 // TODO - need to work out a way to test agaist stdout
 // should return to stdout
 // should log stuff to console

@@ -3,7 +3,7 @@ import ensureOpts from './util/ensure-opts';
 import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
-import { clean, install } from './repo/handler';
+import { clean, install, pwd } from './repo/handler';
 
 export type Opts = {
   command?: string;
@@ -41,6 +41,9 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       break;
     case 'repo-clean':
       handler = clean;
+      break;
+    case 'repo-pwd':
+      handler = pwd;
       break;
     case 'compile':
       assertPath(basePath);
