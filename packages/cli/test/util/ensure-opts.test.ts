@@ -160,17 +160,6 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
-test('test mode logs to info', (t) => {
-  const initialOpts = {
-    test: true,
-  } as Opts;
-
-  const opts = ensureOpts('', initialOpts);
-
-  t.truthy(opts.test);
-  t.is(opts.log.default, 'info');
-});
-
 test('log: add default options', (t) => {
   const initialOpts = {} as Opts;
 

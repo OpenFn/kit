@@ -11,6 +11,7 @@ const logger = createMockLogger();
 
 test.afterEach(() => {
   mock.restore();
+  logger._reset();
 });
 
 const JOB_EXPORT_42 = 'export default [() => 42];';
@@ -96,26 +97,16 @@ test.serial.skip('print version information with --version', async (t) => {
   t.assert(out.length > 0);
 });
 
-// skipped while the logger gets refactored
-test.serial.skip('run test job with default state', async (t) => {
-  const out: string[] = [];
-  const logger = {
-    log: (m: string) => out.push(m),
-  };
-  await run('openfn --test', '', { logger });
-  const last = out.pop();
-  t.assert(last === 'Result: 42');
+test.serial('run test job with default state', async (t) => {
+  await run('test', '', { logger });
+  const { message } = logger._parse(logger._last);
+  t.assert(message === 'Result: 42');
 });
 
-// skipped while the logger gets refactored
-test.serial.skip('run test job with custom state', async (t) => {
-  const out: string[] = [];
-  const logger = {
-    log: (m: string) => out.push(m),
-  };
-  await run('openfn --test -S 1', '', { logger });
-  const last = out.pop();
-  t.assert(last === 'Result: 2');
+test.serial('run test job with custom state', async (t) => {
+  await run('test -S 1', '', { logger });
+  const { message } = logger._parse(logger._last);
+  t.assert(message === 'Result: 2');
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {

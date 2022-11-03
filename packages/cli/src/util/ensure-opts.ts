@@ -58,9 +58,6 @@ const ensureLogOpts = (opts: Opts) => {
       components[component] = level as LogLevel;
     });
     // TODO what if other log options are passed? Not really a concern right now
-  } else if (opts.test) {
-    // In test mode, log at info level by default
-    components.default = 'info';
   }
   return {
     ...defaultLoggerOptions,
@@ -82,7 +79,6 @@ export default function ensureOpts(
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages, // TODO needs testing (and should only apply to the install command)
     stateStdin: opts.stateStdin,
-    test: opts.test,
     immutable: opts.immutable || false,
   } as SafeOpts;
 

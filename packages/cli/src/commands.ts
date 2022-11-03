@@ -1,10 +1,4 @@
-import fs from 'node:fs/promises';
-import createLogger, {
-  CLI,
-  Logger,
-  LogLevel,
-  printDuration,
-} from './util/logger';
+import createLogger, { CLI, Logger, LogLevel } from './util/logger';
 import ensureOpts from './util/ensure-opts';
 import execute from './execute/handler';
 import compile from './compile/handler';
@@ -27,7 +21,6 @@ export type Opts = {
   packages?: string[];
   statePath?: string;
   stateStdin?: string;
-  test?: boolean;
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log'>> & {
