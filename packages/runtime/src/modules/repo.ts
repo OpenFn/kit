@@ -115,7 +115,8 @@ export const loadRepoPkg = async (repoPath: string = defaultRepoPath) => {
     const pkgRaw = await readFile(`${repoPath}/package.json`, 'utf8');
     return JSON.parse(pkgRaw);
   } catch (e) {
-    console.error('ERROR PARSING REPO JSON');
+    // TODO should we report this error anywhere? It's probably fine
+    //console.error('ERROR PARSING REPO JSON');
     return null;
   }
 };
@@ -129,19 +130,22 @@ export const getLatestInstalledVersion = async (
   if (!pkg) {
     pkg = await loadRepoPkg(repoPath);
   }
-  // @ts-ignore
-  const { dependencies } = pkg;
-  let latest: string | null = null;
-  Object.keys(dependencies).forEach((d: string) => {
-    if (d.startsWith(`${specifier}_`)) {
-      const [_name, version] = d.split('_'); // todo what if there's genuinely an underscore in the name?
-      if (!latest || version > latest) {
-        latest = version;
+
+  if (pkg) {
+    // @ts-ignore
+    const { dependencies } = pkg;
+    let latest: string | null = null;
+    Object.keys(dependencies).forEach((d: string) => {
+      if (d.startsWith(`${specifier}_`)) {
+        const [_name, version] = d.split('_'); // todo what if there's genuinely an underscore in the name?
+        if (!latest || version > latest) {
+          latest = version;
+        }
       }
+    });
+    if (latest) {
+      return `${specifier}_${latest}`;
     }
-  });
-  if (latest) {
-    return `${specifier}_${latest}`;
   }
   return null;
 };
@@ -157,7 +161,7 @@ export const getModulePath = async (
     // TODO: fuzzy semver match
     const a = getAliasedName(specifier);
     const pkg = await loadRepoPkg(repoPath);
-    if (pkg.dependencies[a]) {
+    if (pkg && pkg.dependencies[a]) {
       alias = a;
     }
   } else {
