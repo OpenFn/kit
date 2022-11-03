@@ -1,5 +1,5 @@
 import type { Opts } from '../commands';
-import type { Logger } from '../util/logger';
+import { defaultLogger, Logger } from '../util/logger';
 import { install } from '@openfn/runtime';
 
 // Bit wierd
@@ -7,7 +7,7 @@ import { install } from '@openfn/runtime';
 // maybe packages and modulesHome are actually required?
 type InstallOpts = Partial<Pick<Opts, 'packages' | 'adaptor' | 'modulesHome'>>;
 
-export default async (opts: InstallOpts, log: Logger) => {
+export default async (opts: InstallOpts, log: Logger = defaultLogger) => {
   let { packages, adaptor, modulesHome } = opts;
   if (packages) {
     if (adaptor) {
