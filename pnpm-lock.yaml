@@ -74,6 +74,7 @@ importers:
       ava: ^4.2.0
       mock-fs: ^5.1.4
       rimraf: ^3.0.2
+      treeify: ^1.1.0
       ts-node: ^10.8.1
       tslib: ^2.4.0
       tsup: ^6.2.3
@@ -84,6 +85,7 @@ importers:
       '@openfn/logger': link:../logger
       '@openfn/runtime': link:../runtime
       rimraf: 3.0.2
+      treeify: 1.1.0
       yargs: 17.5.1
     devDependencies:
       '@openfn/language-common': 2.0.0-rc3
@@ -7010,6 +7012,11 @@ packages:
   /tree-kill/1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
+
+  /treeify/1.1.0:
+    resolution: {integrity: sha512-1m4RA7xVAJrSGrrXGs0L3YTwyvBs2S8PbRHaLZAkFw7JR8oIFwYtysxlBZhYIa7xSyiYJKZ3iGrrk55cGA3i9A==}
+    engines: {node: '>=0.6'}
+    dev: false
 
   /trim-newlines/3.0.1:
     resolution: {integrity: sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==}

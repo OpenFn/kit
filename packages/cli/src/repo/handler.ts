@@ -1,7 +1,8 @@
 import { exec } from 'node:child_process';
-import { install as rtInstall } from '@openfn/runtime';
+import treeify from 'treeify';
+import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
 import type { Opts, SafeOpts } from '../commands';
-import createLogger, { defaultLogger, Logger } from '../util/logger';
+import { defaultLogger, Logger } from '../util/logger';
 
 // Bit wierd
 // I want to declare what install COULD use
@@ -50,4 +51,36 @@ export const pwd = async (options: SafeOpts, logger: Logger) => {
     `OPENFN_MODULES_HOME is set to ${process.env.OPENFN_MODULES_HOME}`
   );
   logger.success(`Repo working directory is: ${options.modulesHome}`);
+};
+
+export const getDependencyList = async (options: SafeOpts, _logger: Logger) => {
+  const pkg = await loadRepoPkg(options.modulesHome);
+
+  const result: Record<string, string[]> = {};
+  Object.keys(pkg.dependencies).forEach((key) => {
+    const [name, version] = key.split('_');
+    if (!result[name]) {
+      result[name] = [];
+    }
+    result[name].push(version);
+  });
+
+  return result;
+};
+export const list = async (options: SafeOpts, logger: Logger) => {
+  const tree = await getDependencyList(options, logger);
+  await pwd(options, logger);
+
+  // Convert the raw dependency list in a nice format for treeify
+  const output: Record<string, any> = {};
+  Object.keys(tree).forEach((key) => {
+    const versions = tree[key];
+    output[key] = {};
+    versions.forEach((v) => {
+      output[key][v] = null;
+    });
+  });
+
+  // Print with treeify (not very good really)
+  logger.success('Installed packages:\n\n' + treeify.asTree(output));
 };
