@@ -14,8 +14,32 @@ import { visit } from 'recast';
 import type { Transformer } from '../transform';
 import type { Logger } from '@openfn/logger';
 
-const GLOBALS =
-  /^(state|console|JSON|setInterval|clearInterval|setTimeout|clearTimeout|parseInt|parseFloat|atob|btoa)$/;
+const globals = [
+  'atob',
+  'Blob',
+  'btoa',
+  'Buffer',
+  'clearInterval',
+  'clearTimeout',
+  'console',
+  'Date',
+  'Error',
+  'Event',
+  'exports', // shouldn't be used or available but even so, we shouldn't auto add an import
+  'global',
+  'JSON',
+  'module', // ditto
+  'parseFloat',
+  'parseInt',
+  'process', // ditto
+  'Promise',
+  'require', // ditto
+  'setInterval',
+  'setTimeout',
+  'state',
+  'URL',
+];
+const globalRE = new RegExp(`^${globals.join('|')}$`);
 
 export type AddImportsOptions = {
   // Adaptor MUST be pre-populated for this transformer to actually do anything
@@ -82,7 +106,7 @@ function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
           ? // If we have exports for this adaptor, import any dangling variables from the export list
             exports.filter((e) => identifiers[e])
           : // If we have no exports for this adaptor, import anything apart from a few choice globals
-            Object.keys(identifiers).filter((i) => !i.match(GLOBALS));
+            Object.keys(identifiers).filter((i) => !globalRE.test(i));
       if (usedExports.length) {
         // TODO maybe in trace output we can say WHY we're doing these things
         addUsedImports(path, usedExports, name);

@@ -354,19 +354,31 @@ test('dumbly add imports for an adaptor with unknown exports', (t) => {
   t.assert(imports.find((i) => i.imported.name === 'y'));
 });
 
-test("don't dumbly add imports for globals", (t) => {
+test("don't auto add imports for node globals", (t) => {
   const globals = [
-    'state',
-    'console',
-    'JSON',
-    'setInterval',
-    'clearInterval',
-    'setTimeout',
-    'clearTimeout',
-    'parseInt',
-    'parseFloat',
     'atob',
+    'Blob',
     'btoa',
+    'Buffer',
+    'clearInterval',
+    'clearTimeout',
+    'console',
+    'Date',
+    'Error',
+    'Event',
+    'exports',
+    'global',
+    'JSON',
+    'module',
+    'parseFloat',
+    'parseInt',
+    'process',
+    'Promise',
+    'require',
+    'setInterval',
+    'setTimeout',
+    'state',
+    'URL',
   ];
   const ast = b.program(
     [b.expressionStatement(b.identifier('x'))].concat(

@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- 41bdfdc: Don't try and import globals like Promise or Date
 - 28168a8: Updated build process
 - Updated dependencies [28168a8]
   - @openfn/describe-package@0.0.7
