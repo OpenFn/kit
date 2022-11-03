@@ -5,6 +5,8 @@ import printDuration from './util/duration';
 
 export { createMockLogger, isValidLogLevel, printDuration };
 
+export const defaultLogger = createLogger();
+
 export default createLogger;
 
 export type { Logger } from './logger';
