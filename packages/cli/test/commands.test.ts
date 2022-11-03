@@ -53,6 +53,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       [pnpm]: mock.load(pnpm, {}),
       // enable us to load test modules through the mock
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
+      '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
       //'node_modules': mock.load(path.resolve('node_modules/'), {}),
     });
   }
@@ -270,7 +271,7 @@ test.serial(
   async (t) => {
     const job = 'export default [byTwo]';
     const result = await run('openfn -S 11 -a times-two', job, {
-      modulesHome: '/modules',
+      modulesHome: '/repo',
     });
     t.assert(result === 22);
   }
@@ -292,11 +293,8 @@ test.serial(
   'auto-import from language-common: openfn job.js -a @openfn/language-common',
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
-    // Note that we're simulating the OPEN_FN_MODULES_HOME env var
-    // to load a mock langauge-common out of our test modules
-    // TODO no matter what I do, I can't seem to get this to load from our actual node_modules?!
     const result = await run('openfn -a @openfn/language-common', job, {
-      modulesHome: '/modules' /*'node_modules'*/,
+      modulesHome: '/repo',
     });
     t.truthy(result.data?.done);
   }
@@ -308,17 +306,17 @@ test.serial(
     const job =
       'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
     const result = await run('openfn -a @openfn/language-postgres', job, {
-      modulesHome: '/modules',
+      modulesHome: '/repo',
     });
     t.assert(result === 'execute called!');
   }
 );
 
-test.serial('compile a job: openfn job.js -c', async (t) => {
+test.serial('compile a job: openfn compile job.js', async (t) => {
   const options = {
     outputPath: 'output.js',
   };
-  await run('openfn job.js -c', 'fn(42);', options);
+  await run('compile job.js', 'fn(42);', options);
 
   const output = await fs.readFile('output.js', 'utf8');
   t.assert(output === 'export default [fn(42)];');

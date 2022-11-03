@@ -1,0 +1,8 @@
+{
+  "name": "test-repo",
+  "dependencies": {
+    "times-two_0.0.1": "npm:times_two@0.0.1",
+    "@openfn/language-common_0.0.1": "npm:@openfn/language-common0.0.1",
+    "@openfn/language-postgres_0.0.1": "npm:@openfn/language-postgres@0.0.1"
+  }
+}

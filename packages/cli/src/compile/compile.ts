@@ -39,6 +39,28 @@ export const stripVersionSpecifier = (specifier: string) => {
   return specifier;
 };
 
+// Take a module path as provided by the CLI and convert it into a path
+export const resolveSpecifierPath = async (
+  pattern: string,
+  modulesHome: string,
+  log: Logger
+) => {
+  const [specifier, path] = pattern.split('=');
+
+  if (path) {
+    // given an explicit path, just load it.
+    log.debug(`Resolved ${specifier} to path: ${path}`);
+    return path;
+  }
+
+  const repoPath = await getModulePath(specifier, modulesHome);
+  if (repoPath) {
+    log.debug(`Resolved ${specifier} to repo module`);
+    return repoPath;
+  }
+  return null;
+};
+
 // Mutate the opts object to write export information for the add-imports transformer
 export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
   const options: Options = {
@@ -48,50 +70,27 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
   if (opts.adaptors) {
+    let exports;
     const [pattern] = opts.adaptors; // TODO add-imports only takes on adaptor, but the cli can take multiple
-    const [specifier, path] = pattern.split('=');
+    const [specifier] = pattern.split('=');
 
     // Preload exports from a path, optionally logging errors in case of a failure
     log.debug(`Attempting to preload typedefs for ${specifier}`);
-    const doPreload = async (path: string, logError: boolean = true) => {
+    const path = await resolveSpecifierPath(pattern, opts.modulesHome, log);
+    if (path) {
       try {
-        const result = await preloadAdaptorExports(path);
-        if (result) {
-          log.info(`Pre-loaded typedefs for ${specifier} from ${path}`);
+        exports = await preloadAdaptorExports(path);
+        if (exports) {
+          log.info(`Loaded typedefs for ${specifier}`);
         }
-        return result;
       } catch (e) {
-        if (logError) {
-          log.error(`Failed to load adaptor typedefs from path ${path}`);
-          log.error(e);
-        }
+        log.error(`Failed to load adaptor typedefs from path ${path}`);
+        log.error(e);
       }
-    };
-
-    const repoPath = await getModulePath(specifier, opts.modulesHome);
-    if (repoPath) {
-      log.debug(`Found ${specifier} in the repo`);
     }
 
-    // TODO need better trace/debug output on this
-    // TODO Not to mention really, really good test coverage
-    // Looking up the adaptor's type definition is complex. In this order, we should use:
-    const exports =
-      // 1) An explicit file path
-      (path && (await doPreload(path))) ||
-      // 2) A module in the repo
-      (repoPath && (await doPreload(repoPath))) ||
-      // 3) DEPRECATED? A module defined in the opts.modulesHome folder
-      (opts.modulesHome &&
-        (await doPreload(`${opts.modulesHome}/${specifier}`, false))) ||
-      // 4) An npm module specifier
-      (await doPreload(specifier)) ||
-      [];
-
-    if (exports.length === 0) {
-      // TODO is this true currently?
-      console.warn(`WARNING: no module exports loaded for ${pattern}`);
-      console.log('         automatic imports will be skipped');
+    if (!exports || exports.length === 0) {
+      console.warn(`WARNING: no module exports found for ${pattern}`);
     }
 
     options['add-imports'] = {
