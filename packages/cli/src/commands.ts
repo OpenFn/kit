@@ -1,17 +1,15 @@
 import fs from 'node:fs/promises';
 import createLogger, {
   CLI,
-  createNullLogger,
   Logger,
   LogLevel,
   printDuration,
 } from './util/logger';
 import ensureOpts from './util/ensure-opts';
-import compile from './compile/compile';
-import loadState from './execute/load-state';
-import execute from './execute/execute';
-import install from './install/install';
-import { exec } from 'node:child_process';
+import execute from './execute/handler';
+import compile from './compile/handler';
+import test from './test/handler';
+import { clean, install } from './repo/handler';
 
 export type Opts = {
   command?: string;
@@ -45,23 +43,23 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
 
   let handler: (_opts: SafeOpts, _logger: Logger) => any = () => null;
   switch (options.command) {
-    case 'install':
-      handler = runInstall;
+    case 'repo-install':
+      handler = install;
+      break;
+    case 'repo-clean':
+      handler = clean;
       break;
     case 'compile':
       assertPath(basePath);
-      handler = runCompile;
+      handler = compile;
       break;
     case 'test':
-      handler = runTest;
-      break;
-    case 'clean':
-      handler = runClean;
+      handler = test;
       break;
     case 'execute':
     default:
       assertPath(basePath);
-      handler = runExecute;
+      handler = execute;
   }
 
   return handler(opts, logger);
@@ -78,92 +76,6 @@ const assertPath = (basePath?: string) => {
     console.error('\nFor more help do:');
     console.error('  openfn --help ');
     process.exit(1);
-  }
-};
-
-export const runExecute = async (options: SafeOpts, logger: Logger) => {
-  const start = new Date().getTime();
-
-  // auto install the language adaptor
-  if (options.autoinstall) {
-    logger.info('Auto-installing language adaptors');
-    await install(
-      { packages: options.adaptors, modulesHome: options.modulesHome },
-      logger
-    );
-  }
-
-  const state = await loadState(options, logger);
-  const code = await compile(options, logger);
-  const result = await execute(code, state, options);
-
-  if (options.outputStdout) {
-    // TODO Log this even if in silent mode
-    logger.success(`Result: `);
-    logger.success(result);
-  } else {
-    logger.success(`Writing output to ${options.outputPath}`);
-    await fs.writeFile(options.outputPath, JSON.stringify(result, null, 4));
-  }
-
-  const duration = printDuration(new Date().getTime() - start);
-
-  logger.success(`Done in ${duration}! ✨`);
-};
-
-export const runCompile = async (options: SafeOpts, logger: Logger) => {
-  const code = await compile(options, logger);
-  if (options.outputStdout) {
-    // TODO log this even if in silent mode
-    logger.success('Compiled code:');
-    console.log(code);
-  } else {
-    await fs.writeFile(options.outputPath, code);
-    logger.success(`Compiled to ${options.outputPath}`);
-  }
-};
-
-export const runTest = async (options: SafeOpts, logger: Logger) => {
-  logger.log('Running test job...');
-
-  // This is a bit weird but it'll actually work!
-  options.jobPath = `const fn = () => state => state * 2; fn()`;
-
-  if (!options.stateStdin) {
-    logger.warn('No state detected: pass -S <number> to provide some state');
-    options.stateStdin = '21';
-  }
-
-  const silentLogger = createNullLogger();
-
-  const state = await loadState(options, silentLogger);
-  const code = await compile(options, logger);
-  logger.break();
-  logger.info('Compiled job:', '\n', code); // TODO there's an ugly intend here
-  logger.break();
-  logger.info('Running job...');
-  const result = await execute(code, state, options);
-  logger.success(`Result: ${result}`);
-  return result;
-};
-
-export const runInstall = async (options: SafeOpts, logger: Logger) => {
-  await install(options, logger);
-};
-
-export const runClean = async (options: SafeOpts, logger: Logger) => {
-  // TODO should we prompt confirm first? What if modulesHome is something bad?
-  if (options.modulesHome) {
-    return new Promise<void>((resolve) => {
-      logger.info(`Cleaning repo at ${options.modulesHome} `);
-      exec(`npm exec rimraf ${options.modulesHome}`, () => {
-        logger.success('Repo cleaned');
-        resolve();
-      });
-    });
-  } else {
-    logger.error('Clean failed');
-    logger.error('No modulesHome path detected');
   }
 };
 
