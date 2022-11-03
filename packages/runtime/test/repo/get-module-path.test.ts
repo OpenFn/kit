@@ -1,7 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import { getModulePath } from '../../../src/repo/util';
+import { getModulePath } from '../../src/modules/repo';
 
 const logger = createMockLogger();
 

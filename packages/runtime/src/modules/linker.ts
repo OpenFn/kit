@@ -4,7 +4,7 @@
  * https://nodejs.org/api/html#modulelinklinker
  */
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
-import { getModulePath } from '../repo/util';
+import { getModulePath } from './repo';
 
 export type LinkerOptions = {
   // paths to modules: '@openfn/language-common': './path/to/common.js'
