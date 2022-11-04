@@ -72,10 +72,11 @@ export const install = async (
       const aliasedName = `${name}_${version}`;
       return `${aliasedName}@${alias}`;
     });
+    // TODO it would be nice to report something about what's going on under the hood here
     await execFn(`npm install ${flags.join(' ')} ${aliases.join(' ')}`, {
       cwd: repoPath,
     });
-    log.success(`Installed all modules!`);
+    log.success(`Installed ${filtered.map(({ name }) => name).join(', ')}!`);
     return true;
   }
 };
