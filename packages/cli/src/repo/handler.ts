@@ -2,7 +2,7 @@ import { exec } from 'node:child_process';
 import treeify from 'treeify';
 import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
 import type { Opts, SafeOpts } from '../commands';
-import { defaultLogger, Logger } from '../util/logger';
+import { defaultLogger, Logger, printDuration } from '../util/logger';
 
 // Weird declaration of the possible values for the install API
 type InstallOpts = Partial<Pick<Opts, 'packages' | 'adaptor' | 'repoDir'>>;
@@ -11,6 +11,7 @@ export const install = async (
   opts: InstallOpts,
   log: Logger = defaultLogger
 ) => {
+  const start = new Date().getTime();
   let { packages, adaptor, repoDir } = opts;
   log.success('Installing packages...'); // not really success but I want it to default
   if (packages) {
@@ -24,7 +25,8 @@ export const install = async (
     }
     await rtInstall(packages, repoDir, log);
   }
-  log.success('Installation complete');
+  const duration = printDuration(new Date().getTime() - start);
+  log.success(`Installation complete in ${duration}`);
 };
 
 export const clean = async (options: SafeOpts, logger: Logger) => {
