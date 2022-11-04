@@ -36,11 +36,11 @@ const executeCommand = {
         'Reads foo/job.js, looks for state and output in foo'
       )
       .example(
-        'openfn job.js -a @openfn/language-common',
-        'Run job.js with automatic imports from the commmon language adaptor'
+        'openfn job.js -a common',
+        'Run job.js using @openfn/language-common'
       )
       .example(
-        'openfn install @openfn/language-common',
+        'openfn install -a common',
         'Install the latest version of language-common to the repo'
       );
   },
@@ -64,7 +64,8 @@ export const applyExecuteOptions = (yargs: yargs.Argv) =>
     })
     .option('adaptors', {
       alias: ['a', 'adaptor'],
-      description: 'Pass one or more adaptors in the form name=path/to/adaptor',
+      description:
+        'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build.',
       array: true,
     });
 

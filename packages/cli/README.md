@@ -30,22 +30,35 @@ $ openfn --help
 $ openfn path/to/expression.js`
 ```
 
-## legacy Jobs failing?
+## Language Adaptors
 
-If you're running a job without an explicit import statement (ie, any job not written specifically for this new runtime), the CLI will probably fail.
+The old engine used to compile knowlede of langauge adaptors into the job file. We no longer do this.
+
+Generally the new runtime prefers to explictly import all dependencies - although the compiler will auto-insert imports from a given adaptor for you.
 
 You need to pass the name of an adaptor for the runtime to use. It will auto-insert an import statement for you.
 
 ```
+$ openfn job.js -a commmon
+```
+
+You can use a short-hand name, like above, but longform names also work:
+```
 $ openfn job.js -a @openfn/language-commmon
+```
+
+You can pass an explicit version number too:
+
+```
+$ openfn job.js -a commmon@1.7.3
 ```
 
 The adaptor also needs to be installed in the CLI's module repo. You can do this manually:
 
 ```
-$ openfn install @openfn/language-commmon
+$ openfn install commmon
 ```
-If no version is provided, the latest will be installed.
+If no version is provided, the latest will be installed. Again, long and short-form names can be used.
 
 Alternatively, pass the -i flag when running a job (it's safe to do this redundantly):
 ```
