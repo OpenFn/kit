@@ -11,11 +11,9 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
 
   // auto install the language adaptor
   if (options.autoinstall) {
+    const { repoDir } = options;
     logger.info('Auto-installing language adaptors');
-    await install(
-      { packages: options.adaptors, modulesHome: options.modulesHome },
-      logger
-    );
+    await install({ packages: options.adaptors, repoDir }, logger);
   }
 
   const state = await loadState(options, logger);

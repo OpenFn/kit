@@ -14,7 +14,7 @@ export type Opts = {
   immutable?: boolean;
   jobPath?: string;
   log?: string[];
-  modulesHome?: string;
+  repoDir?: string;
   noCompile?: boolean;
   outputPath?: string;
   outputStdout?: boolean;

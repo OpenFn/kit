@@ -42,7 +42,7 @@ export const stripVersionSpecifier = (specifier: string) => {
 // Take a module path as provided by the CLI and convert it into a path
 export const resolveSpecifierPath = async (
   pattern: string,
-  modulesHome: string,
+  repoDir: string,
   log: Logger
 ) => {
   const [specifier, path] = pattern.split('=');
@@ -53,7 +53,7 @@ export const resolveSpecifierPath = async (
     return path;
   }
 
-  const repoPath = await getModulePath(specifier, modulesHome);
+  const repoPath = await getModulePath(specifier, repoDir);
   if (repoPath) {
     log.debug(`Resolved ${specifier} to repo module`);
     return repoPath;
@@ -76,7 +76,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
 
     // Preload exports from a path, optionally logging errors in case of a failure
     log.debug(`Attempting to preload typedefs for ${specifier}`);
-    const path = await resolveSpecifierPath(pattern, opts.modulesHome, log);
+    const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
     if (path) {
       try {
         exports = await preloadAdaptorExports(path);

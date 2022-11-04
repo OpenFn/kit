@@ -179,7 +179,7 @@ test.serial(
     });
     const opts = {
       adaptors: ['times-two'],
-      modulesHome: '/repo/',
+      repoDir: '/repo/',
     } as SafeOpts;
 
     const result = (await loadTransformOptions(

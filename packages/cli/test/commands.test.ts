@@ -24,7 +24,7 @@ type RunOptions = {
   statePath?: string;
   outputPath?: string;
   state?: any;
-  modulesHome?: string;
+  repoDir?: string;
   logger?: {
     log: (s: string) => void;
   };
@@ -60,7 +60,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   }
 
   const opts = cmd.parse(command) as Opts;
-  opts.modulesHome = options.modulesHome;
+  opts.repoDir = options.repoDir;
 
   opts.log = ['none'];
 
@@ -258,11 +258,11 @@ test.serial(
 );
 
 test.serial(
-  'auto-import from test module with modulesHome: openfn job.js -S 11 -a times-two',
+  'auto-import from test module with repoDir: openfn job.js -S 11 -a times-two',
   async (t) => {
     const job = 'export default [byTwo]';
     const result = await run('openfn -S 11 -a times-two', job, {
-      modulesHome: '/repo',
+      repoDir: '/repo',
     });
     t.assert(result === 22);
   }
@@ -285,7 +285,7 @@ test.serial(
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
     const result = await run('openfn -a @openfn/language-common', job, {
-      modulesHome: '/repo',
+      repoDir: '/repo',
     });
     t.truthy(result.data?.done);
   }
@@ -297,7 +297,7 @@ test.serial(
     const job =
       'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
     const result = await run('openfn -a @openfn/language-postgres', job, {
-      modulesHome: '/repo',
+      repoDir: '/repo',
     });
     t.assert(result === 'execute called!');
   }
@@ -315,7 +315,7 @@ test.serial('compile a job: openfn compile job.js', async (t) => {
 
 test.serial('pwd if modules_home is passed', async (t) => {
   const options = {
-    modulesHome: 'a/b/c',
+    repoDir: 'a/b/c',
     logger,
   };
   await run('repo pwd', '', options);
@@ -325,7 +325,7 @@ test.serial('pwd if modules_home is passed', async (t) => {
 });
 
 test.serial('pwd with modules_home from env', async (t) => {
-  process.env.OPENFN_MODULES_HOME = 'x/y/z';
+  process.env.OPENFN_REPO_DIR = 'x/y/z';
 
   const options = {
     logger,
@@ -335,7 +335,7 @@ test.serial('pwd with modules_home from env', async (t) => {
   const { message } = logger._parse(logger._last);
   t.assert(message, 'Repo working directory is: x/y/z');
 
-  delete process.env.OPENFN_MODULES_HOME;
+  delete process.env.OPENFN_REPO_DIR;
 });
 
 // TODO - need to work out a way to test agaist stdout

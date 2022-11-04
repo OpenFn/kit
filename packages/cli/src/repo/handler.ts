@@ -4,18 +4,16 @@ import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
 import type { Opts, SafeOpts } from '../commands';
 import { defaultLogger, Logger } from '../util/logger';
 
-// Bit wierd
-// I want to declare what install COULD use
-// maybe packages and modulesHome are actually required?
-type InstallOpts = Partial<Pick<Opts, 'packages' | 'adaptor' | 'modulesHome'>>;
+// Weird declaration of the possible values for the install API
+type InstallOpts = Partial<Pick<Opts, 'packages' | 'adaptor' | 'repoDir'>>;
 
 export const install = async (
   opts: InstallOpts,
   log: Logger = defaultLogger
 ) => {
-  let { packages, adaptor, modulesHome } = opts;
+  let { packages, adaptor, repoDir } = opts;
   if (packages) {
-    log.debug('modulesHome is set to:', modulesHome);
+    log.debug('repoDir is set to:', repoDir);
     if (adaptor) {
       packages = packages.map((name) => {
         const expanded = `@openfn/language-${name}`;
@@ -23,38 +21,35 @@ export const install = async (
         return expanded;
       });
     }
-    // TODO modulesHome becomes something like repoHome
-    await rtInstall(packages[0], modulesHome, log);
+    await rtInstall(packages[0], repoDir, log);
   }
   log.success('Installation complete');
 };
 
 export const clean = async (options: SafeOpts, logger: Logger) => {
-  // TODO should we prompt confirm first? What if modulesHome is something bad?
-  if (options.modulesHome) {
+  // TODO should we prompt confirm first? What if repoDir is something bad?
+  if (options.repoDir) {
     return new Promise<void>((resolve) => {
-      logger.info(`Cleaning repo at ${options.modulesHome} `);
-      exec(`npm exec rimraf ${options.modulesHome}`, () => {
+      logger.info(`Cleaning repo at ${options.repoDir} `);
+      exec(`npm exec rimraf ${options.repoDir}`, () => {
         logger.success('Repo cleaned');
         resolve();
       });
     });
   } else {
     logger.error('Clean failed');
-    logger.error('No modulesHome path detected');
+    logger.error('No repoDir path detected');
   }
 };
 
 export const pwd = async (options: SafeOpts, logger: Logger) => {
   // TODO should we report if modules home is set?
-  logger.info(
-    `OPENFN_MODULES_HOME is set to ${process.env.OPENFN_MODULES_HOME}`
-  );
-  logger.success(`Repo working directory is: ${options.modulesHome}`);
+  logger.info(`OPENFN_REPO_DIR is set to ${process.env.OPENFN_REPO_DIR}`);
+  logger.success(`Repo working directory is: ${options.repoDir}`);
 };
 
 export const getDependencyList = async (options: SafeOpts, _logger: Logger) => {
-  const pkg = await loadRepoPkg(options.modulesHome);
+  const pkg = await loadRepoPkg(options.repoDir);
 
   const result: Record<string, string[]> = {};
   Object.keys(pkg.dependencies).forEach((key) => {

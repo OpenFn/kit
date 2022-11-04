@@ -77,11 +77,11 @@ Note that this will install the built source from `dist`
 
 The CLI will save and load adaptors from an arbitrary folder on your system.
 
-You should set the OPENFN_MODULES_HOME env var to something sensible.
+You should set the OPENFN_REPO_DIR env var to something sensible.
 
 ```
 # In ~/.bashc or whatever
-export OPENFN_MODULES_HOME=~/adaptors/@openfn
+export OPENFN_REPO_DIR=~/adaptors/@openfn
 ```
 
 At the time of writing, teh env var name is about to change. Soon you will be able to pass the repo dir into the command line, but the env var is a much easier way to work.
