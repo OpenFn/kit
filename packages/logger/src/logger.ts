@@ -1,4 +1,6 @@
 import c from 'chalk';
+// @ts-ignore
+import Confirm from 'prompt-confirm';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import ensureOptions, { LogOptions, LogLevel } from './options';
@@ -49,6 +51,7 @@ export interface Logger extends Console {
   success(...args: any[]): void;
 
   // fancier log functions
+  confirm(message: string, force?: boolean): Promise<boolean>;
   break(): void;
   // group();
   // groupEnd();
@@ -143,6 +146,14 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     }
   };
 
+  const confirm = async (message: string, force = false) => {
+    if (force) {
+      return true;
+    }
+    const prompt = new Confirm({ message });
+    return prompt.run();
+  };
+
   const wrap =
     (level: LogFns) =>
     (...args: LogArgs) =>
@@ -156,6 +167,8 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     error: wrap(ERROR),
     warn: wrap(WARN),
     success: wrap(SUCCESS),
+
+    confirm,
 
     // possible convenience APIs
     force: () => {}, // force the next lines to log (even if silent)

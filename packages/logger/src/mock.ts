@@ -4,7 +4,7 @@ import createLogger, { Logger, LogFns } from './logger';
 import type { LogOptions, LogEmitter } from './options';
 
 // Each log message is saved as the level, then whatever was actually logged
-type LogMessage = [LogFns, ...any[]];
+type LogMessage = [LogFns | 'confirm', ...any[]];
 
 type MockLogger = Logger & {
   _last: LogMessage; // the last log message
@@ -55,6 +55,10 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
     let icon = '';
     let messageParts = [];
 
+    if (log[0] === 'confirm') {
+      return { level: 'confirm', message: log[1] };
+    }
+
     if (name && !opts.hideNamespace && !opts.hideIcons) {
       [level, namespace, icon, ...messageParts] = log;
     } else if (name && !opts.hideNamespace) {
@@ -84,6 +88,17 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
       icon,
       message,
     };
+  };
+
+  /*
+   * Any unit tests with confirm prompts should:
+   * a) auto-confirm the prompt
+   * b) see a confirm message in the log history
+   */
+  mock.confirm = async (message: string) => {
+    console.log(message);
+    history.push(['confirm', message]);
+    return true;
   };
 
   return mock;
