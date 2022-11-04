@@ -12,6 +12,7 @@ export const install = async (
   log: Logger = defaultLogger
 ) => {
   const start = new Date().getTime();
+  log.timer('install');
   let { packages, adaptor, repoDir } = opts;
   log.success('Installing packages...'); // not really success but I want it to default
   if (packages) {
@@ -25,7 +26,7 @@ export const install = async (
     }
     await rtInstall(packages, repoDir, log);
   }
-  const duration = printDuration(new Date().getTime() - start);
+  const duration = log.timer('install');
   log.success(`Installation complete in ${duration}`);
 };
 
