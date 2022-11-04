@@ -11,7 +11,6 @@ export const install = async (
   opts: InstallOpts,
   log: Logger = defaultLogger
 ) => {
-  const start = new Date().getTime();
   log.timer('install');
   let { packages, adaptor, repoDir } = opts;
   log.success('Installing packages...'); // not really success but I want it to default
