@@ -4,6 +4,7 @@ import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
 import { clean, install, pwd, list } from './repo/handler';
+import expandAdaptors from './util/expand-adaptors';
 
 export type Opts = {
   command?: string;
@@ -30,10 +31,13 @@ export type SafeOpts = Required<Omit<Opts, 'log'>> & {
 
 // Top level command parser
 const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  // TODO allow a logger to be passed in for test purposes
-  // I THINK I need this but tbh not sure yet!
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
+
+  if (opts.adaptors) {
+    // Note that we can't do this in ensureOpts because we don't have a logger configured yet
+    opts.adaptors = expandAdaptors(opts.adaptors, logger);
+  }
 
   if (opts.command! == 'test' && !opts.repoDir) {
     logger.warn(

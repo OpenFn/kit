@@ -1,6 +1,9 @@
 import path from 'node:path';
 import { Opts, SafeOpts } from '../commands';
-import { LogLevel, isValidLogLevel } from './logger';
+import { createNullLogger, LogLevel, isValidLogLevel } from './logger';
+import expandAdaptors from './expand-adaptors';
+
+const nullLogger = createNullLogger();
 
 export const defaultLoggerOptions = {
   default: 'default' as const,
@@ -64,20 +67,20 @@ const ensureLogOpts = (opts: Opts) => {
   };
 };
 
-// TODO should this vary by command?
 export default function ensureOpts(
   basePath: string = '.',
   opts: Opts
 ): SafeOpts {
   const newOpts = {
-    adaptor: opts.adaptor, // TODO needs testing (and should only apply to the install command)
+    adaptor: opts.adaptor, // only applies to install (a bit messy)
+    adaptors: opts.adaptors,
     autoinstall: opts.autoinstall,
     command: opts.command,
     force: opts.force || false,
     repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR,
     noCompile: Boolean(opts.noCompile),
     outputStdout: Boolean(opts.outputStdout),
-    packages: opts.packages, // TODO needs testing (and should only apply to the install command)
+    packages: opts.packages,
     stateStdin: opts.stateStdin,
     immutable: opts.immutable || false,
   } as SafeOpts;
@@ -106,19 +109,6 @@ export default function ensureOpts(
   }
 
   newOpts.log = ensureLogOpts(opts);
-
-  // TODO if no adaptor is provided, default to language common
-  // Should we go further and bundle language-common?
-  // But 90% of jobs use something else. Better to use auto loading.
-  if (opts.adaptors) {
-    newOpts.adaptors = opts.adaptors;
-    // newOpts.adaptors = opts.adaptors.map((adaptor) => {
-    //   if (!adaptor.startsWith('@openfn/')) {
-    //     return `@openfn/${adaptor}`
-    //   }
-    //   return adaptor
-    // });
-  }
 
   return newOpts;
 }

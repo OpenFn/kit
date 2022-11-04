@@ -2,7 +2,8 @@ import { exec } from 'node:child_process';
 import treeify from 'treeify';
 import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
 import type { Opts, SafeOpts } from '../commands';
-import { defaultLogger, Logger, printDuration } from '../util/logger';
+import { defaultLogger, Logger } from '../util/logger';
+import expandAdaptors from '../util/expand-adaptors';
 
 // Weird declaration of the possible values for the install API
 type InstallOpts = Partial<Pick<Opts, 'packages' | 'adaptor' | 'repoDir'>>;
@@ -17,11 +18,7 @@ export const install = async (
   if (packages) {
     log.debug('repoDir is set to:', repoDir);
     if (adaptor) {
-      packages = packages.map((name) => {
-        const expanded = `@openfn/language-${name}`;
-        log.info(`Expanded adaptor ${name} to ${expanded}`);
-        return expanded;
-      });
+      packages = expandAdaptors(packages, log);
     }
     await rtInstall(packages, repoDir, log);
   }
