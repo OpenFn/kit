@@ -59,6 +59,25 @@ test.serial('attempt to install a package', async (t) => {
   t.true(/(npm install).*(my-package)/.test(cmd));
 });
 
+test.serial('attempt to install multiple packages', async (t) => {
+  const exec = mockExec();
+
+  await install(
+    // Again, note that we use explicit versioning to prevent calling out to npm
+    ['my-package@1.0.0', 'your-package@1.0.0', 'their_package@3.0.0'],
+    '/tmp/repo',
+    mockLogger,
+    exec
+  );
+
+  const cmd = getLastComamnd(exec);
+  // Check the basic shape of the command
+  // (this does assume the order of the install command but it should be fine!)
+  t.true(
+    /(npm install).*(my-package).*(your-package).*(their_package)/.test(cmd)
+  );
+});
+
 // test the flags to prevent regressions
 test.serial('installing should use the correct flags', async (t) => {
   const exec = mockExec();

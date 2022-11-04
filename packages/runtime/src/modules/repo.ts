@@ -14,38 +14,69 @@ const defaultPkg = {
 
 export const defaultRepoPath = '/tmp/oenfn/repo';
 
+const ensureArray = (s: string | string[]): string[] => {
+  if (Array.isArray(s)) {
+    return s;
+  }
+  return [s] as string[];
+};
+
+type InstallList = Array<{ name: string; version: string }>;
+
+const filterSpecifiers = async (
+  specifiers: string[],
+  repoPath: string,
+  log: Logger
+): Promise<InstallList> => {
+  const result: InstallList = [];
+  for (const s of specifiers) {
+    // TODO we can optimise here by caching pkg
+    let { name, version } = getNameAndVersion(s);
+    if (!version) {
+      version = await getLatestVersion(s);
+    }
+
+    const exists = await getModulePath(s, repoPath);
+    if (exists) {
+      log.info(`Skipping ${name}@${version} as already installed`);
+    } else {
+      log.info(`Will install ${name} version ${version}`);
+      result.push({ name, version });
+    }
+  }
+  return result;
+};
+
 /*
  * Install a module from a specifier (ie, name@version) to the provided repo path.
  * If a matching version is already installed, this does nothing.
  * TODO support multiple specifiers in one call
  */
 export const install = async (
-  specifier: string,
+  specifiers: string | string[],
   repoPath: string = defaultRepoPath,
   log: Logger = defaultLogger,
   execFn = exec // for unit testing
 ) => {
   await ensureRepo(repoPath);
+  const filtered = await filterSpecifiers(
+    ensureArray(specifiers),
+    repoPath,
+    log
+  );
 
-  let { name, version } = getNameAndVersion(specifier);
-  if (!version) {
-    version = await getLatestVersion(specifier);
-  }
-
-  const exists = await getModulePath(specifier, repoPath);
-
-  if (!exists) {
+  if (filtered.length) {
     const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
-    const alias = `npm:${name}@${version}`;
-    const aliasedName = `${name}_${version}`;
-    log.info(`Installing ${aliasedName} to ${repoPath}`);
-    await execFn(`npm install ${flags.join(' ')} ${aliasedName}@${alias}`, {
+    const aliases = filtered.map(({ name, version }) => {
+      const alias = `npm:${name}@${version}`;
+      const aliasedName = `${name}_${version}`;
+      return `${aliasedName}@${alias}`;
+    });
+    await execFn(`npm install ${flags.join(' ')} ${aliases.join(' ')}`, {
       cwd: repoPath,
     });
-    log.success(`Installed ${specifier}`);
+    log.success(`Installed all modules!`);
     return true;
-  } else {
-    log.info(`Module ${specifier} already installed`);
   }
 };
 
