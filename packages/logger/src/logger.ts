@@ -3,6 +3,7 @@ import c from 'chalk';
 import Confirm from 'prompt-confirm';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
+import getDurationString from './util/duration';
 import ensureOptions, { LogOptions, LogLevel } from './options';
 
 // Nice clean log level definitions
@@ -52,6 +53,7 @@ export interface Logger extends Console {
 
   // fancier log functions
   confirm(message: string, force?: boolean): Promise<boolean>;
+  timer(name: string): string | undefined;
   break(): void;
   // group();
   // groupEnd();
@@ -154,6 +156,21 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     return prompt.run();
   };
 
+  const timers: Record<string, number> = {};
+
+  /**
+   * Toggle to start and end a timer
+   * If a timer is ended,returns a nicely formatted duration string
+   */
+  const timer = (name: string) => {
+    if (timers[name]) {
+      const startTime = timers[name];
+      delete timers[name];
+      return getDurationString(new Date().getTime() - startTime);
+    }
+    timers[name] = new Date().getTime();
+  };
+
   const wrap =
     (level: LogFns) =>
     (...args: LogArgs) =>
@@ -169,6 +186,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     success: wrap(SUCCESS),
 
     confirm,
+    timer,
 
     // possible convenience APIs
     force: () => {}, // force the next lines to log (even if silent)
