@@ -22,7 +22,7 @@ export const install = async (
         return expanded;
       });
     }
-    await rtInstall(packages[0], repoDir, log);
+    await rtInstall(packages, repoDir, log);
   }
   log.success('Installation complete');
 };
