@@ -13,6 +13,7 @@ export type Opts = {
   autoinstall?: boolean;
   immutable?: boolean;
   jobPath?: string;
+  force?: boolean;
   log?: string[];
   repoDir?: string;
   noCompile?: boolean;

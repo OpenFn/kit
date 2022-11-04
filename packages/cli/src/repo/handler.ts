@@ -12,6 +12,7 @@ export const install = async (
   log: Logger = defaultLogger
 ) => {
   let { packages, adaptor, repoDir } = opts;
+  log.success('Installing packages...'); // not really success but I want it to default
   if (packages) {
     log.debug('repoDir is set to:', repoDir);
     if (adaptor) {
@@ -27,15 +28,20 @@ export const install = async (
 };
 
 export const clean = async (options: SafeOpts, logger: Logger) => {
-  // TODO should we prompt confirm first? What if repoDir is something bad?
   if (options.repoDir) {
-    return new Promise<void>((resolve) => {
-      logger.info(`Cleaning repo at ${options.repoDir} `);
-      exec(`npm exec rimraf ${options.repoDir}`, () => {
-        logger.success('Repo cleaned');
-        resolve();
+    const doIt = await logger.confirm(
+      `This will remove everything at ${options.repoDir}. Do you wish to proceed?`,
+      options.force
+    );
+    if (doIt) {
+      return new Promise<void>((resolve) => {
+        logger.info(`Cleaning repo at ${options.repoDir} `);
+        exec(`npm exec rimraf ${options.repoDir}`, () => {
+          logger.success('Repo cleaned');
+          resolve();
+        });
       });
-    });
+    }
   } else {
     logger.error('Clean failed');
     logger.error('No repoDir path detected');

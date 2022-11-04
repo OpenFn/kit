@@ -47,6 +47,12 @@ export const clean = {
   handler: (argv: Arguments<Opts>) => {
     argv.command = 'repo-clean';
   },
+  builder: (yargs: yargs.Argv) =>
+    yargs.option('force', {
+      alias: ['f'],
+      description: 'Skip the prompt and force deletion',
+      boolean: true,
+    }),
 } as yargs.CommandModule<{}>;
 
 export const pwd = {

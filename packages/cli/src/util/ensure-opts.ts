@@ -74,6 +74,7 @@ export default function ensureOpts(
     adaptor: opts.adaptor, // TODO needs testing (and should only apply to the install command)
     autoinstall: opts.autoinstall,
     command: opts.command,
+    force: opts.force || false,
     repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR,
     noCompile: Boolean(opts.noCompile),
     outputStdout: Boolean(opts.outputStdout),
