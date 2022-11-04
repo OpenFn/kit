@@ -225,10 +225,10 @@ test.serial(
 );
 
 test.serial(
-  'override an adaptor: openfn -S 49.5 --adaptor times-two=/modules/times-two',
+  'override an adaptor: openfn --no-expand -S 49.5 --adaptor times-two=/modules/times-two',
   async (t) => {
     const result = await run(
-      'openfn -S 49.5 --adaptor times-two=/modules/times-two',
+      'openfn --no-expand -S 49.5 --adaptor times-two=/modules/times-two',
       JOB_MOCK_ADAPTOR
     );
     t.assert(result === 99);
@@ -236,10 +236,10 @@ test.serial(
 );
 
 test.serial(
-  'override adaptors: openfn -S 49.5 --adaptors times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand -S 49.5 --adaptors times-two=/modules/times-two',
   async (t) => {
     const result = await run(
-      'openfn -S 49.5 --adaptors times-two=/modules/times-two',
+      'openfn --no-expand -S 49.5 --adaptors times-two=/modules/times-two',
       JOB_MOCK_ADAPTOR
     );
     t.assert(result === 99);
@@ -247,10 +247,10 @@ test.serial(
 );
 
 test.serial(
-  'override adaptors: openfn -S 49.5 -a times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand -S 49.5 -a times-two=/modules/times-two',
   async (t) => {
     const result = await run(
-      'openfn -S 49.5 -a times-two=/modules/times-two',
+      'openfn --no-expand -S 49.5 -a times-two=/modules/times-two',
       JOB_MOCK_ADAPTOR
     );
     t.assert(result === 99);
@@ -261,7 +261,7 @@ test.serial(
   'auto-import from test module with repoDir: openfn job.js -S 11 -a times-two',
   async (t) => {
     const job = 'export default [byTwo]';
-    const result = await run('openfn -S 11 -a times-two', job, {
+    const result = await run('openfn --no-expand -S 11 -a times-two', job, {
       repoDir: '/repo',
     });
     t.assert(result === 22);

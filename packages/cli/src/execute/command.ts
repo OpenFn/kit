@@ -67,6 +67,10 @@ export const applyExecuteOptions = (yargs: yargs.Argv) =>
       description:
         'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build.',
       array: true,
+    })
+    .option('no-expand', {
+      description: 'Don\t attempt to auto-expand adaptor shorthand names',
+      boolean: true,
     });
 
 export default executeCommand;

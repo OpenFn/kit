@@ -118,6 +118,16 @@ test('preserve noCompile', (t) => {
   t.truthy(opts.noCompile);
 });
 
+test('preserve expand', (t) => {
+  const initialOpts = {
+    expand: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.expand);
+});
+
 test('preserve stateStdin', (t) => {
   const initialOpts = {
     stateStdin: '{}',

@@ -14,6 +14,7 @@ export type Opts = {
   autoinstall?: boolean;
   immutable?: boolean;
   jobPath?: string;
+  expand: boolean; // for unit tests really
   force?: boolean;
   log?: string[];
   repoDir?: string;
@@ -34,7 +35,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
-  if (opts.adaptors) {
+  if (opts.adaptors && opts.expand) {
     // Note that we can't do this in ensureOpts because we don't have a logger configured yet
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
   }

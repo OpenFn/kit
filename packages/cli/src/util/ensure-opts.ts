@@ -1,9 +1,6 @@
 import path from 'node:path';
 import { Opts, SafeOpts } from '../commands';
-import { createNullLogger, LogLevel, isValidLogLevel } from './logger';
-import expandAdaptors from './expand-adaptors';
-
-const nullLogger = createNullLogger();
+import { LogLevel, isValidLogLevel } from './logger';
 
 export const defaultLoggerOptions = {
   default: 'default' as const,
@@ -79,6 +76,7 @@ export default function ensureOpts(
     force: opts.force || false,
     repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR,
     noCompile: Boolean(opts.noCompile),
+    expand: Boolean(opts.expand),
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
     stateStdin: opts.stateStdin,
