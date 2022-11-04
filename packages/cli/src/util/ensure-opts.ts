@@ -1,7 +1,6 @@
 import path from 'node:path';
-import { isValidLogLevel } from '@openfn/logger';
 import { Opts, SafeOpts } from '../commands';
-import { LogLevel } from './logger';
+import { LogLevel, isValidLogLevel } from './logger';
 
 export const defaultLoggerOptions = {
   default: 'default' as const,

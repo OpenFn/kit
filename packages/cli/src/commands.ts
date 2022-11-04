@@ -35,6 +35,15 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
+  if (opts.command! == 'test' && !opts.repoDir) {
+    logger.warn(
+      'WARNING: no repo module dir found! Using the default (/tmp/repo)'
+    );
+    logger.warn(
+      'You should set OPENFN_REPO_DIR or pass --repoDir=some/path in to the CLI'
+    );
+  }
+
   let handler: (_opts: SafeOpts, _logger: Logger) => any = () => null;
   switch (options.command) {
     case 'repo-install':
