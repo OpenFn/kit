@@ -12,7 +12,7 @@ const defaultPkg = {
   dependencies: {},
 };
 
-export const defaultRepoPath = '/tmp/oenfn/repo';
+export const defaultRepoPath = '/tmp/openfn/repo';
 
 const ensureArray = (s: string | string[]): string[] => {
   if (Array.isArray(s)) {
