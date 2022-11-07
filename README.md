@@ -61,7 +61,7 @@ Install using command reported by pack:local (`npm install -g dist/openfn-cli-<v
 Sanity check the version and ensure it works:
 ```
 $ openfn --version
-$ openfn --test
+$ openfn test
 ```
 
 3) Publish
@@ -89,7 +89,7 @@ $ pnpm pack:local
 
 Run the install command as printed in your shell - something like `npm -g dist/openfn-cli-local.tgz`
 
-You can run `openfn --test` to exercise the runtime and compiler.
+You can run `openfn test` to exercise the runtime and compiler.
 
 
 ## Packages

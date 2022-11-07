@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "chalk": "4",
-    "figures": "^5.0.0"
+    "figures": "^5.0.0",
+    "prompt-confirm": "^2.0.4"
   },
   "devDependencies": {
     "@types/node": "^18.7.18",

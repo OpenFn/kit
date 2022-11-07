@@ -11,6 +11,7 @@ const logger = createMockLogger();
 
 test.afterEach(() => {
   mock.restore();
+  logger._reset();
 });
 
 const JOB_EXPORT_42 = 'export default [() => 42];';
@@ -23,7 +24,7 @@ type RunOptions = {
   statePath?: string;
   outputPath?: string;
   state?: any;
-  modulesHome?: string;
+  repoDir?: string;
   logger?: {
     log: (s: string) => void;
   };
@@ -53,12 +54,13 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       [pnpm]: mock.load(pnpm, {}),
       // enable us to load test modules through the mock
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
+      '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
       //'node_modules': mock.load(path.resolve('node_modules/'), {}),
     });
   }
 
   const opts = cmd.parse(command) as Opts;
-  opts.modulesHome = options.modulesHome;
+  opts.repoDir = options.repoDir;
 
   opts.log = ['none'];
 
@@ -95,26 +97,16 @@ test.serial.skip('print version information with --version', async (t) => {
   t.assert(out.length > 0);
 });
 
-// skipped while the logger gets refactored
-test.serial.skip('run test job with default state', async (t) => {
-  const out: string[] = [];
-  const logger = {
-    log: (m: string) => out.push(m),
-  };
-  await run('openfn --test', '', { logger });
-  const last = out.pop();
-  t.assert(last === 'Result: 42');
+test.serial('run test job with default state', async (t) => {
+  await run('test', '', { logger });
+  const { message } = logger._parse(logger._last);
+  t.assert(message === 'Result: 42');
 });
 
-// skipped while the logger gets refactored
-test.serial.skip('run test job with custom state', async (t) => {
-  const out: string[] = [];
-  const logger = {
-    log: (m: string) => out.push(m),
-  };
-  await run('openfn --test -S 1', '', { logger });
-  const last = out.pop();
-  t.assert(last === 'Result: 2');
+test.serial('run test job with custom state', async (t) => {
+  await run('test -S 1', '', { logger });
+  const { message } = logger._parse(logger._last);
+  t.assert(message === 'Result: 2');
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
@@ -233,10 +225,10 @@ test.serial(
 );
 
 test.serial(
-  'override an adaptor: openfn -S 49.5 --adaptor times-two=/modules/times-two',
+  'override an adaptor: openfn --no-expand -S 49.5 --adaptor times-two=/modules/times-two',
   async (t) => {
     const result = await run(
-      'openfn -S 49.5 --adaptor times-two=/modules/times-two',
+      'openfn --no-expand -S 49.5 --adaptor times-two=/modules/times-two',
       JOB_MOCK_ADAPTOR
     );
     t.assert(result === 99);
@@ -244,10 +236,10 @@ test.serial(
 );
 
 test.serial(
-  'override adaptors: openfn -S 49.5 --adaptors times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand -S 49.5 --adaptors times-two=/modules/times-two',
   async (t) => {
     const result = await run(
-      'openfn -S 49.5 --adaptors times-two=/modules/times-two',
+      'openfn --no-expand -S 49.5 --adaptors times-two=/modules/times-two',
       JOB_MOCK_ADAPTOR
     );
     t.assert(result === 99);
@@ -255,10 +247,10 @@ test.serial(
 );
 
 test.serial(
-  'override adaptors: openfn -S 49.5 -a times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand -S 49.5 -a times-two=/modules/times-two',
   async (t) => {
     const result = await run(
-      'openfn -S 49.5 -a times-two=/modules/times-two',
+      'openfn --no-expand -S 49.5 -a times-two=/modules/times-two',
       JOB_MOCK_ADAPTOR
     );
     t.assert(result === 99);
@@ -266,11 +258,11 @@ test.serial(
 );
 
 test.serial(
-  'auto-import from test module with modulesHome: openfn job.js -S 11 -a times-two',
+  'auto-import from test module with repoDir: openfn job.js -S 11 -a times-two',
   async (t) => {
     const job = 'export default [byTwo]';
-    const result = await run('openfn -S 11 -a times-two', job, {
-      modulesHome: '/modules',
+    const result = await run('openfn --no-expand -S 11 -a times-two', job, {
+      repoDir: '/repo',
     });
     t.assert(result === 22);
   }
@@ -292,11 +284,8 @@ test.serial(
   'auto-import from language-common: openfn job.js -a @openfn/language-common',
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
-    // Note that we're simulating the OPEN_FN_MODULES_HOME env var
-    // to load a mock langauge-common out of our test modules
-    // TODO no matter what I do, I can't seem to get this to load from our actual node_modules?!
     const result = await run('openfn -a @openfn/language-common', job, {
-      modulesHome: '/modules' /*'node_modules'*/,
+      repoDir: '/repo',
     });
     t.truthy(result.data?.done);
   }
@@ -308,20 +297,45 @@ test.serial(
     const job =
       'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
     const result = await run('openfn -a @openfn/language-postgres', job, {
-      modulesHome: '/modules',
+      repoDir: '/repo',
     });
     t.assert(result === 'execute called!');
   }
 );
 
-test.serial('compile a job: openfn job.js -c', async (t) => {
+test.serial('compile a job: openfn compile job.js', async (t) => {
   const options = {
     outputPath: 'output.js',
   };
-  await run('openfn job.js -c', 'fn(42);', options);
+  await run('compile job.js', 'fn(42);', options);
 
   const output = await fs.readFile('output.js', 'utf8');
   t.assert(output === 'export default [fn(42)];');
+});
+
+test.serial('pwd if modules_home is passed', async (t) => {
+  const options = {
+    repoDir: 'a/b/c',
+    logger,
+  };
+  await run('repo pwd', '', options);
+
+  const { message } = logger._parse(logger._last);
+  t.assert(message, 'Repo working directory is: a/b/c');
+});
+
+test.serial('pwd with modules_home from env', async (t) => {
+  process.env.OPENFN_REPO_DIR = 'x/y/z';
+
+  const options = {
+    logger,
+  };
+  await run('repo pwd', '', options);
+
+  const { message } = logger._parse(logger._last);
+  t.assert(message, 'Repo working directory is: x/y/z');
+
+  delete process.env.OPENFN_REPO_DIR;
 });
 
 // TODO - need to work out a way to test agaist stdout

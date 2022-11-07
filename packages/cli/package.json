@@ -46,8 +46,10 @@
   },
   "dependencies": {
     "@openfn/compiler": "workspace:^0.0.11",
-    "@openfn/runtime": "workspace:^0.0.9",
     "@openfn/logger": "workspace:^0.0.4",
+    "@openfn/runtime": "workspace:^0.0.9",
+    "rimraf": "^3.0.2",
+    "treeify": "^1.1.0",
     "yargs": "^17.5.1"
   },
   "files": [

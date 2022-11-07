@@ -7,5 +7,6 @@ type YargsOpts = Opts & {
   path: string;
   _: string[];
 };
-const opts = cmd.parse() as YargsOpts;
-runInChildProcess(opts._[0], opts);
+// TODO messy typings here
+const opts = cmd.parse() as unknown as YargsOpts;
+runInChildProcess(opts.path, opts);

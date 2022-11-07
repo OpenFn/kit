@@ -9,6 +9,12 @@ import { SECRET } from '../src/sanitize';
 // console and provides an inspection API
 import createLogger from '../src/mock';
 
+const wait = (ms: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
 // disable chalk colours in unit tests
 chalk.level = 0;
 
@@ -205,4 +211,31 @@ test('sanitize state', (t) => {
   const { message } = logger._parse(logger._last);
   // @ts-ignore
   t.is(message.configuration.x, SECRET);
+});
+
+test('timer: start', (t) => {
+  const logger = createLogger();
+  const result = logger.timer('t');
+  t.falsy(result);
+});
+
+test('timer: return a string on end', async (t) => {
+  const logger = createLogger();
+  logger.timer('t');
+  await wait(10);
+  const duration = logger.timer('t');
+  t.truthy(duration);
+  t.assert(typeof duration === 'string');
+  t.true(duration?.endsWith('ms'));
+});
+
+test('timer: start a new timer with the same name', async (t) => {
+  const logger = createLogger();
+  logger.timer('t');
+  await wait(10);
+  const duration = logger.timer('t');
+  t.true(duration?.endsWith('ms'));
+
+  const result = logger.timer('t');
+  t.falsy(result);
 });

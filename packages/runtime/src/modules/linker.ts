@@ -4,13 +4,14 @@
  * https://nodejs.org/api/html#modulelinklinker
  */
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
+import { getModulePath } from './repo';
 
 export type LinkerOptions = {
   // paths to modules: '@openfn/language-common': './path/to/common.js'
   modulePaths?: Record<string, string>;
 
-  // Unless otherwise specified, modules will be loaded from here (relative to cli dir)
-  modulesHome?: string;
+  // path to the module repo
+  repo?: string;
 
   whitelist?: RegExp[]; // whitelist packages which the linker allows to be imported
 
@@ -37,7 +38,7 @@ const linker: Linker = async (specifier, context, options = {}) => {
   // TODO: Slightly mad handling for ESM and EJS modules
   // Needs more work
   let target = exports;
-  if (exports.__esModule) {
+  if (exports.__esModule && target.default.default) {
     // CJS
     target = target.default.default; // ?!
   } else {
@@ -77,22 +78,14 @@ const linker: Linker = async (specifier, context, options = {}) => {
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   // Lookup the path from an explicit specifier first
-  let path = options.modulePaths?.[specifier] || '';
+  let path = options.modulePaths?.[specifier] || null;
   if (options.trace && path) {
     console.log(`[linker] Loading module ${specifier} from mapped ${path}`);
   }
 
-  // If there's no path and a modulesHome, try to load the module from modulesHome
-  if (!path && options.modulesHome) {
-    // if loading an openfn module, we need to remove openfn from the path
-    // ie @openfn/language-common -> language-common
-    // TODO is this true for all namespaced packages?
-    // TODO no, I don't think this is right at all!
-    //const name = specifier.startsWith('@openfn') ? specifier.split('/').pop() : specifier;
-    path = `${options.modulesHome}/${specifier}`;
-    if (options.trace) {
-      console.log(`[linker] Loading module ${specifier} from ${path}`);
-    }
+  if (!path && options.repo) {
+    // Try and load a matching path from the repo
+    path = await getModulePath(specifier, options.repo);
   }
 
   if (path) {

@@ -1,7 +1,6 @@
 import path from 'node:path';
-import { isValidLogLevel } from '@openfn/logger';
 import { Opts, SafeOpts } from '../commands';
-import { LogLevel } from './logger';
+import { LogLevel, isValidLogLevel } from './logger';
 
 export const defaultLoggerOptions = {
   default: 'default' as const,
@@ -58,9 +57,6 @@ const ensureLogOpts = (opts: Opts) => {
       components[component] = level as LogLevel;
     });
     // TODO what if other log options are passed? Not really a concern right now
-  } else if (opts.test) {
-    // In test mode, log at info level by default
-    components.default = 'info';
   }
   return {
     ...defaultLoggerOptions,
@@ -73,12 +69,17 @@ export default function ensureOpts(
   opts: Opts
 ): SafeOpts {
   const newOpts = {
-    compileOnly: Boolean(opts.compileOnly),
-    modulesHome: opts.modulesHome || process.env.OPENFN_MODULES_HOME,
+    adaptor: opts.adaptor, // only applies to install (a bit messy)
+    adaptors: opts.adaptors,
+    autoinstall: opts.autoinstall,
+    command: opts.command,
+    force: opts.force || false,
+    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR,
     noCompile: Boolean(opts.noCompile),
+    expand: Boolean(opts.expand),
     outputStdout: Boolean(opts.outputStdout),
+    packages: opts.packages,
     stateStdin: opts.stateStdin,
-    test: opts.test,
     immutable: opts.immutable || false,
   } as SafeOpts;
 
@@ -88,7 +89,6 @@ export default function ensureOpts(
   };
 
   let baseDir = basePath;
-
   if (basePath.endsWith('.js')) {
     baseDir = path.dirname(basePath);
     set('jobPath', basePath);
@@ -96,27 +96,17 @@ export default function ensureOpts(
     set('jobPath', `${baseDir}/job.js`);
   }
   set('statePath', `${baseDir}/state.json`);
+
   if (!opts.outputStdout) {
     set(
       'outputPath',
-      newOpts.compileOnly ? `${baseDir}/output.js` : `${baseDir}/output.json`
+      newOpts.command === 'compile'
+        ? `${baseDir}/output.js`
+        : `${baseDir}/output.json`
     );
   }
 
   newOpts.log = ensureLogOpts(opts);
-
-  // TODO if no adaptor is provided, default to language common
-  // Should we go further and bundle language-common?
-  // But 90% of jobs use something else. Better to use auto loading.
-  if (opts.adaptors) {
-    newOpts.adaptors = opts.adaptors;
-    // newOpts.adaptors = opts.adaptors.map((adaptor) => {
-    //   if (!adaptor.startsWith('@openfn/')) {
-    //     return `@openfn/${adaptor}`
-    //   }
-    //   return adaptor
-    // });
-  }
 
   return newOpts;
 }

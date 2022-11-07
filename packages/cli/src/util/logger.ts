@@ -1,7 +1,9 @@
 // Wrapper around the logger API to load a namespaced logger with the right options
 import actualCreateLogger, { printDuration } from '@openfn/logger';
-export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
 import type { SafeOpts } from '../commands';
+
+export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
+export { isValidLogLevel, defaultLogger } from '@openfn/logger';
 
 // All known loggers
 export const CLI = 'cli';

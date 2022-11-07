@@ -137,7 +137,7 @@ test('_parse with a disabled icon and namespace', (t) => {
   t.falsy(icon);
 });
 
-test('_parse with mtultiple log arguments', (t) => {
+test('_parse with multiple log arguments', (t) => {
   const logger = mockLogger('a');
   logger.success('x', 'y', 'z');
 
@@ -146,4 +146,15 @@ test('_parse with mtultiple log arguments', (t) => {
   t.is(namespace, 'a');
   t.truthy(icon);
   t.is(message, 'x y z');
+});
+
+test('confirm should log and return true', async (t) => {
+  const logger = mockLogger('a');
+  const result = await logger.confirm('really?');
+
+  t.true(result);
+
+  const { level, message } = logger._parse(logger._last);
+  t.is(level, 'confirm');
+  t.is(message, 'really?');
 });

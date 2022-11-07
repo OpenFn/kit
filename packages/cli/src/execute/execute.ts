@@ -13,7 +13,7 @@ export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
     logger: createLogger(RUNTIME, opts),
     jobLogger: createLogger(JOB, opts),
     linker: {
-      modulesHome: opts.modulesHome,
+      repo: opts.repoDir,
       modulePaths: parseAdaptors(opts),
     },
   });

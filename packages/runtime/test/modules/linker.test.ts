@@ -33,7 +33,7 @@ test('assert we can dynamically import ultimate-answer', async (t) => {
   t.assert(m3.default === 42);
 });
 
-test('assert we can dynamically import @openfn/language-common', async (t) => {
+test('assert we can dynamically import @openfn/language-common from node_modules', async (t) => {
   const common = await import('@openfn/language-common');
   t.truthy(common.fn);
   t.truthy(common.each);
@@ -70,7 +70,7 @@ test('load a fancy test module with dependencies', async (t) => {
   t.assert(m.namespace.default() === 40);
 });
 
-test('load @openfn/langauge-common', async (t) => {
+test('load @openfn/language-common from node modules', async (t) => {
   const m = await linker('@openfn/language-common', context);
 
   const exports = Object.keys(m.namespace);
@@ -117,14 +117,6 @@ test("Fails to load a module it can't find", async (t) => {
   );
 });
 
-test('loads a module from modulesHome', async (t) => {
-  const options = {
-    modulesHome: path.resolve('test/__modules__'),
-  };
-  const m = await linker('ultimate-answer', context, options);
-  t.assert(m.namespace.default === 42);
-});
-
 test('loads a module from a specific path', async (t) => {
   const options = {
     modulePaths: {
@@ -135,6 +127,18 @@ test('loads a module from a specific path', async (t) => {
   t.assert(m.namespace.default === 42);
 });
 
-// load from openfn home
-// use openfn home over modules home
-// load from path
+test('loads a specific module version from the repo', async (t) => {
+  const options = {
+    repo: path.resolve('test/__repo'),
+  };
+  const m = await linker('ultimate-answer@1.0.0', context, options);
+  t.assert(m.namespace.default === 42);
+});
+
+test('loads the latest module version from the repo', async (t) => {
+  const options = {
+    repo: path.resolve('test/__repo'),
+  };
+  const m = await linker('ultimate-answer', context, options);
+  t.assert(m.namespace.default === 43);
+});

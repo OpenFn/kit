@@ -5,8 +5,8 @@ This package contains a new devtools CLI.
 The CLI allows you to
 
 - Run a job (expression), writing output to disk or stdout
-- ~~Compile a job~~ (coming soon)
-- ~~Validate a job~~ (coming soon)
+- Compile a job
+- Install modules for jobs
 - Use local language adaptors to run the job
 
 The CLI reads a path as its main argument. That path should either point to a .js file or a folder.
@@ -30,15 +30,40 @@ $ openfn --help
 $ openfn path/to/expression.js`
 ```
 
-## legacy Jobs failing?
+## Language Adaptors
 
-If legacy jobs ar failing because adaptor functions aren't found, you need to tell the CLI which adaptor to use. It will then auto-insert import statements for you.
+The old engine used to compile knowlede of langauge adaptors into the job file. We no longer do this.
 
+Generally the new runtime prefers to explictly import all dependencies - although the compiler will auto-insert imports from a given adaptor for you.
+
+You need to pass the name of an adaptor for the runtime to use. It will auto-insert an import statement for you.
+
+```
+$ openfn job.js -a commmon
+```
+
+You can use a short-hand name, like above, but longform names also work:
 ```
 $ openfn job.js -a @openfn/language-commmon
 ```
 
-There's more detail in this further down in the readme.
+You can pass an explicit version number too:
+
+```
+$ openfn job.js -a commmon@1.7.3
+```
+
+The adaptor also needs to be installed in the CLI's module repo. You can do this manually:
+
+```
+$ openfn install commmon
+```
+If no version is provided, the latest will be installed. Again, long and short-form names can be used.
+
+Alternatively, pass the -i flag when running a job (it's safe to do this redundantly):
+```
+$ openfn job.js -i -a @openfn/language-commmon
+```
 
 ## Usage from this repo
 
@@ -61,36 +86,20 @@ $ npm install -g .
 
 Note that this will install the built source from `dist`
 
-## Current state
+## Repo Directory
 
-For legacy jobs (ie, jobs without explicit imports), the new runtime is only compatible with language adaptors with type definitions.
+The CLI will save and load adaptors from an arbitrary folder on your system.
 
-Right now, that means @openfn/language-common@2.0.0-rc3.
-
-## Getting Started
-
-Here's how I recommend getting set up:
-
-- Create a folder for next-gen language adaptors somewhere on your machine
-
-```
-$ mkdir -p ~/adaptors/@openfn
-```
-
-- Clone `language-common` into that folder
-
-```
-git clone https://github.com/OpenFn/language-common.git ~/adaptors/@openfn --branch 2.0.0-pre
-```
-
-- Set your `OPENFN_MODULES_HOME` environment variable to point to the next-gen adaptors folder. This will tell the CLI to load adaptors from this folder by default.
+You should set the OPENFN_REPO_DIR env var to something sensible.
 
 ```
 # In ~/.bashc or whatever
-export OPENFN_MODULES_HOME=~/adaptors/@openfn
+export OPENFN_REPO_DIR=~/adaptors/@openfn
 ```
 
-This will improve in future, as we implement automatic module loading and add type definitions to the published adaptor packages.
+At the time of writing, teh env var name is about to change. Soon you will be able to pass the repo dir into the command line, but the env var is a much easier way to work.
+
+Monorepo support is coming soon.
 
 ## Automatic Imports
 
@@ -106,21 +115,3 @@ $ openfn job.js --adaptors @openfn/language-http=path/to/adaptor
 If a path is passed (relative to the working directory), that path will be used to load a local version of the adaptor (both at runtime and for import generation)
 
 If no path is passed, the currently deployed npm package will be used.
-
-## Notes on Module Resolution
-
-Any import statements inside a job have to resolve to a node module.
-
-A module can be resolved:
-
-- Relative to the env var OPENFN_MODULE_HOME
-- Relative to CLI's node_modules
-- Relative to global node_modules
-
-Basically, to work with adaptors, you should:
-
-- Save your adaptors globally
-
-Or
-
-- Save adaptors to a folder somewhere (~/openfn) and set OPENFN_MODULE_HOME=~/openfn

@@ -6,6 +6,16 @@ import ensureOpts, {
   ERROR_MESSAGE_LOG_COMPONENT,
 } from '../../src/util/ensure-opts';
 
+test('preserve the command name', (t) => {
+  const initialOpts = {
+    command: 'compile',
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.assert(opts.command === 'compile');
+});
+
 test('set job, state and output from a base path', (t) => {
   const initialOpts = {} as Opts;
 
@@ -88,6 +98,16 @@ test('preserve outputStdout', (t) => {
   t.truthy(opts.outputStdout);
 });
 
+test('preserve force', (t) => {
+  const initialOpts = {
+    force: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.force);
+});
+
 test('preserve noCompile', (t) => {
   const initialOpts = {
     noCompile: true,
@@ -96,6 +116,16 @@ test('preserve noCompile', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.truthy(opts.noCompile);
+});
+
+test('preserve expand', (t) => {
+  const initialOpts = {
+    expand: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.expand);
 });
 
 test('preserve stateStdin', (t) => {
@@ -126,35 +156,27 @@ test('default immutable to false', (t) => {
   t.assert(opts.immutable === false);
 });
 
-test('compile only', (t) => {
+test('perserve the autoinstall flag', (t) => {
   const initialOpts = {
-    compileOnly: true,
+    autoinstall: true,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.truthy(opts.compileOnly);
+  t.truthy(opts.autoinstall);
 });
 
+// TODO does this make sense?
+// This is the question of: should we have an ensure-opt for each command
 test('update the default output with compile only', (t) => {
   const initialOpts = {
+    command: 'compile',
     compileOnly: true,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.outputPath === 'a/output.js');
-});
-
-test('test mode logs to info', (t) => {
-  const initialOpts = {
-    test: true,
-  } as Opts;
-
-  const opts = ensureOpts('', initialOpts);
-
-  t.truthy(opts.test);
-  t.is(opts.log.default, 'info');
 });
 
 test('log: add default options', (t) => {
@@ -244,39 +266,36 @@ test('log: set default and a specific option', (t) => {
   t.is(opts.log.compiler, 'debug');
 });
 
-test.serial('preserve modulesHome', (t) => {
+test.serial('preserve repoDir', (t) => {
   const initialOpts = {
-    modulesHome: 'a/b/c',
+    repoDir: 'a/b/c',
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.assert(opts.modulesHome === 'a/b/c');
+  t.assert(opts.repoDir === 'a/b/c');
 });
 
-test.serial('use an env var for modulesHome', (t) => {
-  process.env.OPENFN_MODULES_HOME = 'JAM';
+test.serial('use an env var for repoDir', (t) => {
+  process.env.OPENFN_REPO_DIR = 'JAM';
 
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.truthy(opts.modulesHome === 'JAM');
-  delete process.env.OPENFN_MODULES_HOME;
+  t.truthy(opts.repoDir === 'JAM');
+  delete process.env.OPENFN_REPO_DIR;
 });
 
-test.serial(
-  'use prefer an explicit value for modulesHometo an env var',
-  (t) => {
-    process.env.OPENFN_MODULES_HOME = 'JAM';
+test.serial('use prefer an explicit value for repoDirto an env var', (t) => {
+  process.env.OPENFN_REPO_DIR = 'JAM';
 
-    const initialOpts = {
-      modulesHome: 'a/b/c',
-    } as Opts;
+  const initialOpts = {
+    repoDir: 'a/b/c',
+  } as Opts;
 
-    const opts = ensureOpts('a', initialOpts);
+  const opts = ensureOpts('a', initialOpts);
 
-    t.assert(opts.modulesHome === 'a/b/c');
-  }
-);
+  t.assert(opts.repoDir === 'a/b/c');
+});
 // TODO what if stdout and output path are set?
