@@ -6,7 +6,7 @@ The runtime manager is designed as a long running node service that runs jobs as
 
 ## Demo Server
 
-Run `pnmpm start` to start the manager as a web service. This gives a bit of an example of how the manager might be used.
+Run `pnpm start` to start the manager as a web service. This gives a bit of an example of how the manager might be used.
 
 Go to `localhost:1234` to see a report on any active threads as well as the job history.
 
