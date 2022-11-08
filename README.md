@@ -31,7 +31,7 @@ We use [`pnpm`](https://pnpm.io/installation), a fast, disk space efficient pack
 
 ## Installing
 
-- `$ pnpm setup`
+- `$ pnpm run setup`
 - `$ pnpm build`
 
 ## Running Tests
