@@ -2,7 +2,7 @@ OpenFn Kit
 ======================
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/OpenFn/kit/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/OpenFn/kit/tree/main)
 
-**Kit** _noun_ (_/kɪt/_)
+**Kit** _noun_ _/kɪt/_
 
 A set of articles or equipment needed for a specific purpose.
 
