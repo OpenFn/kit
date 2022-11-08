@@ -1,5 +1,13 @@
 # runtime-manager
 
+## 0.0.12
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/runtime@0.0.10
+  - @openfn/compiler@0.0.12
+
 ## 0.0.11
 
 ### Patch Changes

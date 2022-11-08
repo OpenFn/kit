@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 0.0.13
+
+### Patch Changes
+
+- ef9406b: Support auto-install of modules
+- Updated dependencies
+  - @openfn/logger@0.0.5
+  - @openfn/runtime@0.0.10
+  - @openfn/compiler@0.0.12
+
 ## 0.0.12
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "CLI devtools for the openfn toolchain.",
   "engines": {
     "node": ">=16",
@@ -45,9 +45,9 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@openfn/compiler": "workspace:^0.0.11",
-    "@openfn/logger": "workspace:^0.0.4",
-    "@openfn/runtime": "workspace:^0.0.9",
+    "@openfn/compiler": "workspace:^0.0.12",
+    "@openfn/logger": "workspace:^0.0.5",
+    "@openfn/runtime": "workspace:^0.0.10",
     "rimraf": "^3.0.2",
     "treeify": "^1.1.0",
     "yargs": "^17.5.1"
