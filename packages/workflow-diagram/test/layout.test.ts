@@ -5,7 +5,7 @@ import { toElkNode, toFlow, doLayout } from '../src/layout/index';
 import { FlowElkNode, FlowNodeEdges } from '../src/layout/types';
 import { getFixture } from './helpers';
 
-test('toElkNode should convert a project space to a workflow', async (t) => {
+test.skip('toElkNode should convert a project space to a workflow', async (t) => {
   const projectSpace = await getFixture<ProjectSpace>(
     'single-workflow-projectspace'
   );
