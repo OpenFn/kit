@@ -1,7 +1,7 @@
-# Describe Package Worker
+# DTS Inspector
 
 A living example of how to use the `@openfn/describe-package` worker in
-a browser.
+a browser to inspect an openfn language adaptor.
 
 ## Running
 

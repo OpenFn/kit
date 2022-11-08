@@ -5,12 +5,18 @@ for development, any changes detected in the dependencies will trigger a rebuild
 
 **ProjectSpace Flow**
 
+Uses packages/workflow-diagram
+
+From root:
 ```
 pnpm run -C examples/flow start
 ```
 
-**Compiler Worker**
+**DTS Inspector**
 
+Uses packages/describe-package
+
+From root:
 ```
-pnpm run -C examples/compiler-worker start
+pnpm run -C examples/describe-package start
 ```
