@@ -8,9 +8,9 @@
  */
 
 // @ts-ignore
-import workerInternals from "../../dist/worker-internals.js?raw";
-import { WorkerAPI } from "./worker";
-import { spawn, BlobWorker } from "threads";
+import workerInternals from '../../dist/worker-internals.js?raw';
+import { WorkerAPI } from './worker';
+import { spawn, BlobWorker } from 'threads';
 
 export function startWorker() {
   return spawn<WorkerAPI>(BlobWorker.fromText(workerInternals));

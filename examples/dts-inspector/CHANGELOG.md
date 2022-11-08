@@ -1,4 +1,4 @@
-# compiler-worker
+# dts-inspector
 
 ## 1.0.5
 

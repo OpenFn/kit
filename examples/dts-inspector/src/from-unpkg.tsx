@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import "./app.css";
 import { StatusIcon, FuncIcon } from "./icons";
-import { Pack, Project, describeDts } from "@openfn/compiler";
+import { Pack, Project, describeDts } from "@openfn/describe-package";
 
 const packageOrDts = /(?:package.json)|(?:\.d\.ts$)/i;
 const moduleOptions = ["@openfn/language-common@2.0.0-rc1"];
