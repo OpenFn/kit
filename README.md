@@ -1,13 +1,48 @@
-Lightning ProjectSpace
+OpenFn Kit
 ======================
-
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/OpenFn/kit/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/OpenFn/kit/tree/main)
+
+**Kit** _noun_
+
+_/kɪt/_
+
+A set of articles or equipment needed for a specific purpose.
+
+1. _a football kit_
+1. _the next-generation openfn data integration kit_
+
+---
+
+This repo contains runtime, tooling, libraries and components to support the next generation core openfn data integration pipeline.
+
+It is a kitbag of Javascript-based components to support Lightning.
+
+## Prerequisities
+
+* [asdf](https://github.com/asdf-vm/asdf)
+* [pnpm](https://pnpm.io/installation)
+
+We use [asdf](https://github.com/asdf-vm/asdf) to configure our local
+environments and ensure consistency of versions.
+
+You should install asdf and the [NodeJs](https://github.com/asdf-vm/asdf-nodejs) plugin.
+
+We use [`pnpm`](https://pnpm.io/installation), a fast, disk space efficient package manager, to handle node dependencies within the repo.
 
 ## Installing
 
-- Install [`pnpm`](https://pnpm.io/installation)
-- Run `pnpm run setup`
-- Run `pnpm run build`
+- `$ pnpm setup`
+- `$ pnpm build`
+
+## Running Tests
+
+```
+pnpm run test
+```
+
+# Development Guide
+
+Thanks for being here! You're contributing to a digital public good that will always be free and open source and aimed at serving innovative NGOs, governments, and social impact organizations the world over! You rock ❤️
 
 ## Releases & Changesets
 
@@ -92,11 +127,6 @@ Run the install command as printed in your shell - something like `npm -g dist/o
 You can run `openfn test` to exercise the runtime and compiler.
 
 
-## Packages
-
-- [`@openfn/describe-package`](packages/describe-package)  
-- [`@openfn/workflow-diagram`](packages/workflow-diagram)
-
 ## Examples
 
 The example apps serve to illustrate how these packages can be used, and also
@@ -112,12 +142,6 @@ pnpm run -C examples/flow start
 
 ```
 pnpm run -C examples/compiler-worker start
-```
-
-## Running Tests
-
-```
-pnpm run test
 ```
 
 ## Documentation
