@@ -27,8 +27,10 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm mocha test/**/*.spec.ts",
-    "build:worker": "rimraf dist/ && node --loader=tsm esbuild.ts prod",
-    "build": "tsup --config ../../tsup.config.js src/index.ts",
+    "clean": "rimraf dist",
+    "build:worker": "tsm esbuild-worker.ts prod",
+    "build:index": "tsup --config ../../tsup.config.js src/index.ts",
+    "build": "pnpm clean && pnpm build:index && pnpm build:worker",
     "build:watch": "pnpm build --watch",
     "watch": "node esbuild.ts watch",
     "pack": "pnpm pack --pack-destination ../../dist"

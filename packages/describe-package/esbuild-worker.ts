@@ -1,10 +1,7 @@
-// TODO
-// I've preserved this original esbuild as it has special handling for the web worker bundle
-// Later, we need to figure out how to simplify this and bring it into line with the other builds
-import { build } from "esbuild";
-import path from "path";
-import { readFile, rm } from "fs/promises";
-import { BuildOptions } from "esbuild";
+import { build } from 'esbuild';
+import path from 'path';
+import { readFile, rm } from 'fs/promises';
+import { BuildOptions } from 'esbuild';
 import { execaCommand } from 'execa';
 
 function run(command: string) {
@@ -17,22 +14,22 @@ function run(command: string) {
 
 export default function rawPlugin() {
   return {
-    name: "raw",
+    name: 'raw',
     setup(build) {
       build.onResolve({ filter: /\?raw$/ }, (args) => {
         return {
           path: path.isAbsolute(args.path)
             ? args.path
             : path.join(args.resolveDir, args.path),
-          namespace: "raw-loader",
+          namespace: 'raw-loader',
         };
       });
       build.onLoad(
-        { filter: /\?raw$/, namespace: "raw-loader" },
+        { filter: /\?raw$/, namespace: 'raw-loader' },
         async (args) => {
           return {
-            contents: await readFile(args.path.replace(/\?raw$/, "")),
-            loader: "text",
+            contents: await readFile(args.path.replace(/\?raw$/, '')),
+            loader: 'text',
           };
         }
       );
@@ -41,10 +38,10 @@ export default function rawPlugin() {
 }
 
 function showUsage() {
-  console.log("USAGE");
-  console.log("node esbuild.js watch"); // build and serve dev files
-  console.log("node esbuild.js dev"); // build dev files
-  console.log("node esbuild.js prod"); // build for production
+  console.log('USAGE');
+  console.log('node esbuild.js watch'); // build and serve dev files
+  console.log('node esbuild.js dev'); // build dev files
+  console.log('node esbuild.js prod'); // build for production
   process.exit(0);
 }
 
@@ -52,39 +49,37 @@ if (process.argv.length < 3) {
   showUsage();
 }
 
-if (!["dev", "watch", "prod"].includes(process.argv[2])) {
+if (!['dev', 'watch', 'prod'].includes(process.argv[2])) {
   showUsage();
 }
 
 // production mode, or not
-const production = process.argv[2] === "prod";
+const production = process.argv[2] === 'prod';
 
 // esbuild watch in dev mode to rebuild out files
 const watchOptions = {
   onRebuild(error) {
     if (error)
-      console.error("esbuild: Watch build failed:", error.getMessage());
-    else console.log("esbuild: Watch build succeeded");
+      console.error('esbuild: Watch build failed:', error.getMessage());
+    else console.log('esbuild: Watch build succeeded');
   },
 };
 
-let watch = process.argv[2] === "watch" ? watchOptions : false;
+let watch = process.argv[2] === 'watch' ? watchOptions : false;
 
 const commonBuildOptions: BuildOptions = {
   bundle: true,
   write: true,
   watch,
-  format: "esm",
-  target: ["es2020"],
-  outdir: "./dist",
-  external: ["fs", "events", "stream", "path", "util", "constants", "assert"],
-  pure: ["console.log", "console.time", "console.timeEnd"],
+  format: 'esm',
+  target: ['es2020'],
+  outdir: './dist',
+  external: ['fs', 'events', 'stream', 'path', 'util', 'constants', 'assert'],
+  pure: ['console.log', 'console.time', 'console.timeEnd'],
   sourcemap: false,
 };
 
 try {
-  await run('tsc -p tsconfig.bundle.json');
-
   /**
    * WebWorker internals modules
    * This is the bundle that includes the Worker, Typescript and the interface
@@ -95,9 +90,9 @@ try {
   await build({
     ...commonBuildOptions,
     entryPoints: {
-      "worker-internals": "./src/worker/worker.ts",
+      'worker-internals': './src/worker/worker.ts',
     },
-    format: "esm",
+    format: 'esm',
     minify: true,
   });
 
@@ -111,26 +106,25 @@ try {
   await build({
     ...commonBuildOptions,
     entryPoints: {
-      worker: "./src/worker/index.ts",
+      worker: './src/worker/index.ts',
     },
-    format: "esm",
+    format: 'esm',
     minify: false,
     plugins: [rawPlugin()],
   });
 
   // Cleanup worker-internals since they are bundled into the worker.
-  await rm("./dist/worker-internals.js")
+  await rm('./dist/worker-internals.js');
 
-  await build({
-    ...commonBuildOptions,
-    entryPoints: {
-      index: "./src/index.ts",
-    },
-    format: "esm",
-    minify: true,
-    plugins: [],
-  });
-
+  // await build({
+  //   ...commonBuildOptions,
+  //   entryPoints: {
+  //     index: './src/index.ts',
+  //   },
+  //   format: 'esm',
+  //   minify: true,
+  //   plugins: [],
+  // });
 } catch (error) {
   console.error(error);
   process.exit(1);

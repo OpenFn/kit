@@ -12,7 +12,7 @@
     "declaration": true,
     "declarationDir": "dist/",
     "declarationMap": true,
-    "outDir": "dist/",
-    "emitDeclarationOnly": true
+    "outDir": "dist/"
+    // "emitDeclarationOnly": true
   }
 }
