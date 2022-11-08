@@ -37,7 +37,7 @@ export function addNodeFactory(node: FlowElkNode): ElkNodeEdges {
     id: `${node.id}->${node.id}-add`,
     sources: [node.id],
     targets: [addNode.id],
-    __flowProps__: edgeFlowProps({ dashed: true }),
+    __flowProps__: edgeFlowProps({ dashed: false }),
   };
 
   return [[addNode], [addEdge]];
@@ -50,15 +50,19 @@ const TriggerLabels: { [key in TriggerType]: string } = {
   on_job_success: "on success",
 };
 
-export function triggerNodeFactory(job: Job): FlowElkNode {
+export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
   return {
     id: `${job.id}-trigger`,
     __flowProps__: {
-      data: { label: TriggerLabels[job.trigger.type] },
+      data: {
+        label: TriggerLabels[job.trigger.type],
+        description: job.trigger.description,
+        workflow,
+      },
       type: "trigger",
     },
-    width: 100,
-    height: 40,
+    width: 190,
+    height: 70,
   };
 }
 
@@ -72,6 +76,8 @@ export function jobNodeFactory(job: Job): FlowElkNode {
     __flowProps__: {
       data: {
         label: job.name,
+        id: job.id,
+        workflowId: job.workflowId,
       },
       type: "job",
     },
@@ -88,7 +94,8 @@ export function workflowNodeFactory(workflow: Workflow): FlowElkNode {
     id: workflow.id,
     __flowProps__: {
       data: {
-        label: workflow.name || "null",
+        label: workflow.name,
+        id: workflow.id,
       },
       type: "workflow",
     },
@@ -140,8 +147,8 @@ export function operationEdgeFactory(
     targets: [operation.id],
     __flowProps__: {
       animated: false,
-      dashed: true,
-      markerEnd: { type: "arrowclosed" },
+      dashed: false,
+      // markerEnd: { type: "arrowclosed" },
     },
   };
 }

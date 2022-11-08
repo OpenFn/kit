@@ -44,6 +44,7 @@ importers:
   examples/flow:
     specifiers:
       '@openfn/workflow-diagram': workspace:*
+      classcat: ^5.0.4
       esbuild: ^0.15.7
       esbuild-postcss: ^0.0.4
       live-server: ^1.2.2
@@ -54,8 +55,9 @@ importers:
     dependencies:
       '@openfn/workflow-diagram': link:../../packages/workflow-diagram
     devDependencies:
-      esbuild: 0.15.7
-      esbuild-postcss: 0.0.4_pwlbyvrduplt24nl76aano4cga
+      classcat: 5.0.4
+      esbuild: 0.15.10
+      esbuild-postcss: 0.0.4_rxuvwtlhawmvhchlbkmjksrzhi
       live-server: 1.2.2
       postcss: 8.4.14
       react: 18.2.0
@@ -1997,7 +1999,6 @@ packages:
 
   /classcat/5.0.4:
     resolution: {integrity: sha512-sbpkOw6z413p+HDGcBENe498WM9woqWHiJxCq7nvmxe9WmrUmqfAcxpIwAiMtM5Q3AhYkzXcNQHqsWq0mND51g==}
-    dev: false
 
   /clean-stack/2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
@@ -3354,6 +3355,19 @@ packages:
       postcss: ^8.0.0
     dependencies:
       esbuild: 0.15.7
+      postcss: 8.4.14
+      postcss-load-config: 3.1.4_postcss@8.4.14
+    transitivePeerDependencies:
+      - ts-node
+    dev: true
+
+  /esbuild-postcss/0.0.4_rxuvwtlhawmvhchlbkmjksrzhi:
+    resolution: {integrity: sha512-CKYibp+aCswskE+gBPnGZ0b9YyuY0n9w2dxyMaoLYEvGTwmjkRj5SV8l1zGJpw8KylqmcMTK0Gr349RnOLd+8A==}
+    peerDependencies:
+      esbuild: '*'
+      postcss: ^8.0.0
+    dependencies:
+      esbuild: 0.15.10
       postcss: 8.4.14
       postcss-load-config: 3.1.4_postcss@8.4.14
     transitivePeerDependencies:

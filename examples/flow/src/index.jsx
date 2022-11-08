@@ -1,7 +1,8 @@
-import WorkflowDiagram from "@openfn/workflow-diagram";
+import WorkflowDiagram, { Store } from "@openfn/workflow-diagram";
 
 import React from "react";
 import { createRoot } from "react-dom/client";
+import cc from "classcat";
 
 import "./app.css";
 
@@ -13,7 +14,11 @@ const projectSpace = {
       workflowId: "wf-one",
       adaptor: "@openfn/language-salesforce@2.8.1",
       enabled: true,
-      trigger: { type: "webhook" },
+      trigger: {
+        type: "webhook",
+        description:
+          "when data is received at https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
+      },
       operations: [
         { id: "115", label: "create", comment: "Create an object" },
         { id: "25", label: "fn", comment: "Map out new records" },
@@ -54,7 +59,7 @@ const projectSpace = {
       workflowId: "wf-two",
       adaptor: "@openfn/language-http@4.0.0",
       enabled: true,
-      trigger: { type: "cron" },
+      trigger: { type: "cron", description: "at 7:34pm every Tuesday" },
     },
   ],
   workflows: [
@@ -73,14 +78,49 @@ function onPaneClick(event) {
   console.log("Clicked pane:", event);
 }
 
-root.render(
-  <div className="h-screen w-screen antialiased">
-    <div className="flex-none h-full bg-gray-100">
-      <WorkflowDiagram
-        projectSpace={projectSpace}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-      />
+function Button({ children, className = {}, onClick }) {
+  return (
+    <div className="relative">
+      <div
+        onClick={onClick}
+        className={cc([
+          "pointer-events-auto rounded-md bg-indigo-600 py-2 px-3 text-[0.8125rem] font-semibold leading-5 text-white hover:bg-indigo-500",
+          className,
+        ])}
+      >
+        {...children}
+      </div>
     </div>
-  </div>
-);
+  );
+}
+
+function View() {
+  function onClick(e) {
+    Store.addWorkspace({ name: null, id: btoa(Math.random().toString()) });
+    console.log(e);
+  }
+
+  return (
+    <div className="h-screen w-screen antialiased">
+      <div className="flex h-full w-full flex-col">
+        <div className="h-16 bg-white flex gap-3 p-3 items-center border-b shadow-sm z-10">
+          <Button onClick={onClick}>Add Workflow</Button>
+        </div>
+        <div className="flex-auto bg-secondary-100 relative">
+          <section
+            id="inner_content"
+            className="overflow-y-auto absolute top-0 bottom-0 left-0 right-0 bg-gray-100"
+          >
+            <WorkflowDiagram
+              projectSpace={projectSpace}
+              onNodeClick={onNodeClick}
+              onPaneClick={onPaneClick}
+            />
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+root.render(<View />);

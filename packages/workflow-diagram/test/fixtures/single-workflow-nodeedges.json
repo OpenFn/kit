@@ -8,8 +8,8 @@
         "zIndex": -1
       },
       "position": {
-        "x": 20,
-        "y": 20
+        "x": 15,
+        "y": 15
       },
       "data": {
         "hasChildren": true,
@@ -294,7 +294,7 @@
       "label": "on receipt",
       "source": "A-trigger",
       "target": "A",
-      "animated": true,
+      "animated": false,
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
@@ -309,14 +309,14 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "E->B",
       "label": "on failure",
       "source": "E",
       "target": "B",
-      "animated": true,
+      "animated": false,
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
@@ -331,14 +331,14 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "A->C",
       "label": "on success",
       "source": "A",
       "target": "C",
-      "animated": true,
+      "animated": false,
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
@@ -353,14 +353,14 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "A->E",
       "label": "on failure",
       "source": "A",
       "target": "E",
-      "animated": true,
+      "animated": false,
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
@@ -375,7 +375,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "115->25",
@@ -386,7 +386,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge",
+      "className": "",
       "markerEnd": {
         "type": "arrowclosed"
       }
@@ -400,7 +400,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge",
+      "className": "",
       "markerEnd": {
         "type": "arrowclosed"
       }
@@ -414,7 +414,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge",
+      "className": "",
       "markerEnd": {
         "type": "arrowclosed"
       }

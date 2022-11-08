@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.15.7",
+    "classcat": "^5.0.4",
     "esbuild-postcss": "^0.0.4",
     "live-server": "^1.2.2",
     "postcss": "^8.4.13",

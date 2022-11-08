@@ -47,10 +47,11 @@ function deriveOperations(job: Job): ElkNodeEdges {
   return [[], []];
 }
 
-function deriveCron(job: Job): ElkNodeEdges {
+function deriveCron(job: Job, workflow: Workflow): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const triggerNode: FlowElkNode = triggerNodeFactory(job);
+  const triggerNode: FlowElkNode = triggerNodeFactory(job, workflow);
+
 
   const jobNode: FlowElkNode = {
     ...jobNodeFactory(job),
@@ -63,7 +64,7 @@ function deriveCron(job: Job): ElkNodeEdges {
     sources: [triggerNode.id],
     targets: [jobNode.id],
     labels: [{ text: "on match" }],
-    __flowProps__: { animated: true },
+    __flowProps__: { animated: false },
   };
 
   return mergeTuples(
@@ -72,10 +73,10 @@ function deriveCron(job: Job): ElkNodeEdges {
   );
 }
 
-function deriveWebhook(job: Job): ElkNodeEdges {
+function deriveWebhook(job: Job, workflow: Workflow): ElkNodeEdges {
   const [operationNodes, operationEdges] = deriveOperations(job);
 
-  const triggerNode = triggerNodeFactory(job);
+  const triggerNode = triggerNodeFactory(job, workflow);
 
   const jobNode = {
     ...jobNodeFactory(job),
@@ -88,7 +89,7 @@ function deriveWebhook(job: Job): ElkNodeEdges {
     sources: [triggerNode.id],
     targets: [jobNode.id],
     labels: [{ text: "on receipt" }],
-    __flowProps__: { animated: true },
+    __flowProps__: { animated: false },
   };
 
   return mergeTuples([[triggerNode, jobNode], [edge]], addNodeFactory(jobNode));
@@ -110,20 +111,20 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
     id: `${job.trigger.upstreamJob}->${job.id}`,
     sources: [job.trigger.upstreamJob],
     targets: [jobNode.id],
-    __flowProps__: { animated: true },
+    __flowProps__: { animated: false },
     labels: [{ text: label }],
   };
 
   return mergeTuples([[jobNode], [edge]], addNodeFactory(jobNode));
 }
 
-export function deriveNodesWithEdges(job: Job): ElkNodeEdges {
+export function deriveNodesWithEdges(job: Job, workflow: Workflow): ElkNodeEdges {
   switch (job.trigger.type) {
     case "cron":
-      return deriveCron(job);
+      return deriveCron(job, workflow);
 
     case "webhook":
-      return deriveWebhook(job);
+      return deriveWebhook(job, workflow);
 
     case "on_job_failure":
     case "on_job_success":
@@ -159,6 +160,7 @@ const rootLayoutOptions: LayoutOptions = {
   // "elk.separateConnectedComponents": "true",
   // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
   "elk.alignment": "TOP",
+  // "elk.expandNodes": "true",
   "spacing.nodeNode": "40",
   "spacing.nodeNodeBetweenLayers": "45",
   "spacing.edgeNode": "25",
@@ -196,7 +198,7 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
           deriveNodesWithEdges({
             ...job,
             hasDescendents: hasDescendent(projectSpace, job),
-          })
+          }, workflow)
         );
       },
       [[], []]
@@ -215,7 +217,7 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   }
 
   const [children, edges] = nodeEdges;
-
+  
   // This root node gets ignored later, but we need a starting point for
   // gathering up all workflows as children
   return {
@@ -227,14 +229,16 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   };
 }
 
-export async function toFlow(node: FlowElkNode): Promise<FlowNodeEdges> {
-  const elk = new ELK();
+const elk = new ELK();
 
-  const elkResults = (await elk.layout(node)) as FlowElkNode;
+export function doLayout(node: FlowElkNode) {
+  return elk.layout(node) as Promise<FlowElkNode>;
+}
 
+export function toFlow(node: FlowElkNode): FlowNodeEdges {
   // Skip the 'root' graph node, head straight for the children, they are
   // the workflows.
-  const flow = (elkResults!.children || []).reduce<FlowNodeEdges>(
+  const flow = (node!.children || []).reduce<FlowNodeEdges>(
     (acc, child) => mergeTuples(acc, flattenElk(child)),
     [[], []]
   );
