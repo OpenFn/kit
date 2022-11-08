@@ -12,7 +12,6 @@ test.skip('toElkNode should convert a project space to a workflow', async (t) =>
 
   const expected = await getFixture<FlowElkNode>('single-workflow-elknode');
   const elkNode = toElkNode(projectSpace);
-  console.log(elkNode);
   for (let i = 0; i < expected.children!.length; i++) {
     const child = expected.children![i];
     const actual = elkNode.children![i];
