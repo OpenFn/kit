@@ -2,15 +2,6 @@ import { build } from 'esbuild';
 import path from 'path';
 import { readFile, rm } from 'fs/promises';
 import { BuildOptions } from 'esbuild';
-import { execaCommand } from 'execa';
-
-function run(command: string) {
-  return execaCommand(command, {
-    preferLocal: true,
-    shell: true,
-    stdio: 'inherit',
-  });
-}
 
 export default function rawPlugin() {
   return {
@@ -36,25 +27,6 @@ export default function rawPlugin() {
     },
   };
 }
-
-function showUsage() {
-  console.log('USAGE');
-  console.log('node esbuild.js watch'); // build and serve dev files
-  console.log('node esbuild.js dev'); // build dev files
-  console.log('node esbuild.js prod'); // build for production
-  process.exit(0);
-}
-
-if (process.argv.length < 3) {
-  showUsage();
-}
-
-if (!['dev', 'watch', 'prod'].includes(process.argv[2])) {
-  showUsage();
-}
-
-// production mode, or not
-const production = process.argv[2] === 'prod';
 
 // esbuild watch in dev mode to rebuild out files
 const watchOptions = {
@@ -115,16 +87,6 @@ try {
 
   // Cleanup worker-internals since they are bundled into the worker.
   await rm('./dist/worker-internals.js');
-
-  // await build({
-  //   ...commonBuildOptions,
-  //   entryPoints: {
-  //     index: './src/index.ts',
-  //   },
-  //   format: 'esm',
-  //   minify: true,
-  //   plugins: [],
-  // });
 } catch (error) {
   console.error(error);
   process.exit(1);
