@@ -29,9 +29,7 @@
     "@types/react": "^18.0.18",
     "@types/react-dom": "^18.0.6",
     "ava": "^4.3.3",
-    "chai": "^4.3.6",
     "esbuild": "^0.15.6",
-    "mocha": "^10.0.0",
     "postcss": "^8.4.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -54,19 +52,6 @@
   "peerDependencies": {
     "react": "16 || 17 || 18",
     "react-dom": "16 || 17 || 18"
-  },
-  "ava": {
-    "extensions": {
-      "ts": "module",
-      "js": true
-    },
-    "nodeArguments": [
-      "--loader=tsm",
-      "--experimental-specifier-resolution=node"
-    ],
-    "files": [
-      "test/**/*test.ts"
-    ]
   },
   "files": [
     "dist/index.js",

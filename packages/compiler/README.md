@@ -1,73 +1,46 @@
-# @openfn/compiler
+## @openfn/compiler
 
-Compiler and utils for inspecting and compiling OpenFn Jobs.
+Functions and utilities to compile and analyse code.
 
-## Usage
+The primary job of the compiler right now is to take job DSL code and convert it into JS which can be executed by the runtime.
 
-There is a demo project available in [examples/compiler-worker](../../examples/compiler-worker/).
+## Expected functionality
 
-### Inspecting a module
+- Build an AST for some JS (and openfn JS DSL)
+- Transpile a JS-DSL into job-compatible JS
+- Report errors and warnings on job/js code (custom linting stuff)
+- (maybe) Generate a form UI tree and convert a form UI tree back to JS
 
-```js
-import { Pack, Project, describeDts } from "@openfn/compiler";
+## CLI Parser
 
-const project = new Project();
+A simple CLI parser utility is provided.
 
-// Load a module from Unpkg
-const pack = await Pack.fromUnpkg("@openfn/language-common@2.0.0-rc1");
+You can pass a string of Javascript and it will output an AST tree to stdout.
 
-const packageOrDts = /(?:package.json)|(?:\.d\.ts$)/i;
+Pass -s for a simplified tree (way easier to read!), -o path/to/output.json, -e to eval the input (otherwise it'll be treated as a path)
 
-if (!pack.types) {
-  throw new Error(
-    `No 'types' field found for ${pack.specifier}`
-  );
-}
+`$ pnpm parse -s -e "fn();"`
 
-// Download the `package.json` and `.d.ts` files.
-const files = await pack.getFiles(
-  pack.fileListing.filter((path) => packageOrDts.test(path))
-);
+If writing tests against ast trees, you can pass the -t flag with a test name. The resulting tree will be output to `test/asts/{name}.json` without prettification.
 
-// Add the files to the Project filesystem.
-project.addToFS(files);
+`$ pnpm parse -t "my-test" /tmp/my-test.js`
 
-// Add the types entrypoint (e.g. `index.d.ts`) as a 'project file'.
-project.createFile(files.get(pack.types), pack.types);
+## Documentation
 
-// And finally get a list of exported members from a module.
-const operations = describeDts(project, pack.types);
-```
+TODO
 
-### Project
+# Node types reference
 
-The `Project` object is a wrapper around the Typescript compiler, providing
-the necessary hooks to interact with code and module type definitions.
+It can be pretty hard to understand what the parse trees look like.
 
-## Workers
+The basic spec is here: [https://github.com/estree/estree/blob/master/es2015.md](https://github.com/estree/estree/blob/master/es2015.md)
 
-> ⛔ Not working currently. 
+You have to check the parent folder for later language extensions.
 
-```js
-const { startWorker } = await import("@openfn/compiler/worker");
-const worker = await startWorker();
-const results = await worker.describeAdaptor("a .d.ts as a string");
-```
+## Inserting imports
 
-## Building
+The compiler can inject imports for a specific adaptor.
 
-There are three scripts:
+This requires the exports for the adaptor to be pre-loaded and appended to the options object. This is because the AST walked is synchronous, but fetching type definitions is an asynchronous task. [more details to follow]
 
-- `pnpm test`  
-  Runs the tests
-- `pnpm run build`  
-  Cleans up `dist` and builds for packaging for npm.
-- `pnpm run watch`  
-  Rebuilds on changes.
-
-The Worker is built in two phases:
-
-1. Bundle up the worker which includes the TypeScript compiler.
-2. Compile the entrypoint, which injects the worker as a string.
-
-By splitting this up we can produce a single file that can be used in the browser.
+There is a helper function `preloadAdaptorExports` in `src/util` to do this.

@@ -5,6 +5,7 @@ node_modules
 public/
 !public/index.html
 tsconfig.tsbuildinfo
+ts.cache
 
 # Build tools
 .rollup.cache

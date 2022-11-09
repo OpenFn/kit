@@ -1,47 +1,26 @@
+// This tsconfig is really only used for valdiation
+// Build artefacts are all controlled by tsup
 {
-  "compilerOptions": {
-    // Allow JavaScript files to be compiled
-    "allowJs": true,
-    // Allow default imports from modules with no default export
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": "src",
-    "outDir": "dist",
-    "declarationDir": ".",
-    // Generate corresponding .d.ts file
-    "declaration": true,
-    // Disables namespace imports (import * as fs from "fs") and enables CJS/AMD/UMD style imports (import fs from "fs")
-    "esModuleInterop": true,
-    // Disallow inconsistently-cased references to the same file.
-    "forceConsistentCasingInFileNames": true,
-    // Enable incremental compilation by reading/writing information from prior compilations to a file on disk
-    "incremental": true,
-    // Unconditionally emit imports for unresolved files
-    "isolatedModules": true,
-    // "jsx": "react", // Support JSX in .tsx files
-    // List of library files to be included in the compilation
-    "lib": ["ES2022", "DOM.Iterable"],
-    // Specify module code generation
-    "module": "es2022",
-    // Resolve modules using Node.js style
-    "moduleResolution": "node",
-    // Do not emit output (meaning do not compile code, only perform type checking)
-    "noEmit": false,
-    // Report errors for fallthrough cases in switch statement
-    "noFallthroughCasesInSwitch": true,
-    // Report errors on unused locals
-    "noUnusedLocals": true,
-    // Report errors on unused parameters
-    "noUnusedParameters": true,
-    // Include modules imported with .json extension
-    "resolveJsonModule": true,
-    // Skip type checking of all declaration files
-    "skipLibCheck": true,
-    // Generate corrresponding .map file
-    "sourceMap": true,
-    // Enable all strict type checking options
-    "strict": true,
-    // Specify ECMAScript target version
-    "target": "ES2020",
-    "typeRoots": ["./node_modules/@types"]
+  "ts-node": {
+    "experimentalSpecifierResolution": "node"
   },
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    // This is needed to support the import.meta statement
+    "module": "es2020",
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "incremental": false,
+    "isolatedModules": true,
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true
+  }
 }

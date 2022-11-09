@@ -1,12 +1,13 @@
 {
   "name": "flow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "pnpm node esbuild.js"
   },
+  "private": true,
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -14,8 +15,8 @@
     "@openfn/workflow-diagram": "workspace:*"
   },
   "devDependencies": {
+    "esbuild": "^0.15.7",
     "classcat": "^5.0.4",
-    "esbuild": "^0.14.38",
     "esbuild-postcss": "^0.0.4",
     "live-server": "^1.2.2",
     "postcss": "^8.4.13",

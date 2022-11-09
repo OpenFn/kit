@@ -309,7 +309,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "E->B",
@@ -331,7 +331,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "A->C",
@@ -353,7 +353,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "A->E",
@@ -375,7 +375,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge"
+      "className": ""
     },
     {
       "id": "115->25",
@@ -386,7 +386,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge",
+      "className": "",
       "markerEnd": {
         "type": "arrowclosed"
       }
@@ -400,7 +400,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge",
+      "className": "",
       "markerEnd": {
         "type": "arrowclosed"
       }
@@ -414,7 +414,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "dashed-edge",
+      "className": "",
       "markerEnd": {
         "type": "arrowclosed"
       }

@@ -1,0 +1,46 @@
+{
+  "name": "@openfn/logger",
+  "version": "0.0.4",
+  "description": "Cross-package logging utility",
+  "module": "dist/index.js",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.js src/index.ts",
+    "build:watch": "pnpm build --watch",
+    "test": "pnpm ava",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "test:watch": "pnpm ava -w",
+    "pack": "pnpm pack --pack-destination ../../dist"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "dependencies": {
+    "chalk": "4",
+    "figures": "^5.0.0",
+    "prompt-confirm": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.18",
+    "ava": "^4.3.3",
+    "ts-node": "10.8.1",
+    "tslib": "^2.4.0",
+    "tsup": "^6.2.3",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Transpilation settings.
+    "module": "ES2020",
+    "target": "ES2020",
+    // Output settings.
+    "charset": "utf-8",
+    "newLine": "LF",
+    "sourceMap": true,
+    // Type declaration settings.
+    "declaration": true,
+    "declarationDir": "dist/",
+    "declarationMap": true,
+    "outDir": "dist/"
+    // "emitDeclarationOnly": true
+  }
+}

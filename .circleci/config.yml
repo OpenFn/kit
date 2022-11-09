@@ -9,14 +9,14 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: cimg/node:16.15
+      - image: cimg/node:18.12
     resource_class: medium
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - run:
           name: Install pnpm
-          command: corepack enable && corepack prepare pnpm@7.5.1 --activate
+          command: corepack enable && corepack prepare pnpm@7.14.2 --activate
       - checkout
       - restore_cache:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
@@ -30,6 +30,9 @@ jobs:
           key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
           paths:
             - node_modules
+      - run:
+          name: Build packages
+          command: pnpm build
       - run:
           name: Run Tests
           command: pnpm test

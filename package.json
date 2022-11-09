@@ -1,17 +1,25 @@
 {
-  "name": "flow-blocks-test",
+  "name": "@openfn/kit",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Next-generation OpenFN tooling",
   "scripts": {
     "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
     "build": "pnpm run clean && pnpm -r --filter './packages/*' run build",
     "clean": "rimraf packages/*/dist",
-    "test": "pnpm -r --filter './packages/*' run test"
+    "clean:local": "rimraf dist",
+    "test": "pnpm -r --filter './packages/*' run test",
+    "test:types": "pnpm -r --filter './packages/*' run test:types",
+    "pack": "pnpm -r run pack",
+    "pack:local": "pnpm run pack && node ./build/pack-local.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Open Function Group",
   "license": "ISC",
   "devDependencies": {
-    "rimraf": "^3.0.2"
+    "@changesets/cli": "^2.25.0",
+    "gunzip-maybe": "^1.4.2",
+    "rimraf": "^3.0.2",
+    "tar-stream": "^2.2.0"
   }
 }
