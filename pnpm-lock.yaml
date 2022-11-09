@@ -272,6 +272,7 @@ importers:
       '@types/react-dom': ^18.0.6
       ava: ^4.3.3
       classcat: ^5.0.4
+      cronstrue: ^2.14.0
       elkjs: ^0.8.2
       esbuild: ^0.15.6
       postcss: ^8.4.16
@@ -290,6 +291,7 @@ importers:
       zustand: ^4.1.1
     dependencies:
       classcat: 5.0.4
+      cronstrue: 2.14.0
       elkjs: 0.8.2
       react-flow-renderer: 10.3.16_biqbaboplfbrettd7655fr4n2y
       zustand: 4.1.1_react@18.2.0
@@ -2204,6 +2206,10 @@ packages:
 
   /create-require/1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
+
+  /cronstrue/2.14.0:
+    resolution: {integrity: sha512-rUTXOwOYrw7o4iV+Wg7fUXjMXDuqAMnhU007LrvaGbfVx73aiZz2e5SYjsAt6Q7ML2/z7Gq3qTncy3GKO9MLSQ==}
+    dev: false
 
   /cross-fetch/3.1.5:
     resolution: {integrity: sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==}

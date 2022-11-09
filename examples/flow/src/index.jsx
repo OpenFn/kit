@@ -16,8 +16,7 @@ const projectSpace = {
       enabled: true,
       trigger: {
         type: "webhook",
-        description:
-          "when data is received at https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
+        url: "https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
       },
       operations: [
         { id: "115", label: "create", comment: "Create an object" },
@@ -59,11 +58,11 @@ const projectSpace = {
       workflowId: "wf-two",
       adaptor: "@openfn/language-http@4.0.0",
       enabled: true,
-      trigger: { type: "cron", description: "at 7:34pm every Tuesday" },
+      trigger: { type: "cron", expression: "* * * * *" },
     },
   ],
   workflows: [
-    { name: "Workflow One", id: "wf-one" },
+    { name: null, id: "wf-one" },
     { name: "Workflow Two", id: "wf-two" },
   ],
 };
