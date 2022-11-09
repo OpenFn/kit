@@ -15,6 +15,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm ava",
+    "test-transform": "pnpm mocha test/transform.spec.ts",
     "build": "rimraf dist/ .rollup.cache && rollup -c",
     "watch": "pnpm rollup -cw --no-watch.clearScreen"
   },

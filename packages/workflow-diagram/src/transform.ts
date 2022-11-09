@@ -1,7 +1,7 @@
 import cronstrue from "cronstrue";
 import { Trigger, Workflow, Job } from "./types";
 
-export function generateDescription(trigger: Trigger): string | null {
+function generateDescription(trigger: Trigger): string | null {
   switch (trigger.type) {
     case "webhook":
       return `When data is received at ${trigger.url}`;
