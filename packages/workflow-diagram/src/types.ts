@@ -2,12 +2,14 @@ import { Edge, Node } from "react-flow-renderer";
 
 export type CronTrigger = {
   type: "cron";
+  expression: string;
   upstreamJob?: null;
   description: string;
 };
 
 export type WebhookTrigger = {
   type: "webhook";
+  url: string;
   upstreamJob?: null;
   description: string;
 };
