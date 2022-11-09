@@ -103,6 +103,12 @@ $ openfn test
 pnpm changeset publish --otp <OTP>
 ```
 
+4) Push tags
+
+```
+git push --follow-tags
+```
+
 ## Testing the built package
 
 You can test the built CLI package to ensure it works before publishing it.
