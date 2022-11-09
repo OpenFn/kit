@@ -1,5 +1,12 @@
 # @openfn/logger
 
+## 0.0.5
+
+### Patch Changes
+
+- f1a957c: Added a confirm utility
+- e9cbc06: Export a default logger
+
 ## 0.0.4
 
 ### Patch Changes

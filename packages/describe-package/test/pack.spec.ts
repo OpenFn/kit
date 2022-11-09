@@ -7,7 +7,7 @@ describe('Pack', () => {
     it('resolves the specifier after getting the package.json', async () => {
       const pack = await Pack.fromUnpkg('@openfn/language-common');
       assert.equal(pack.path, '@openfn/language-common');
-      assert.match(pack.specifier, /@openfn\/language-common@\d\.\d\.\d/);
+      assert.match(pack.specifier, /^@openfn\/language-common@\d\.\d\.\d/);
     }).timeout(20000);
 
     it('it loads the file listing', async () => {

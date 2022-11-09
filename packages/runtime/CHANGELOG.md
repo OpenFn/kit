@@ -1,5 +1,14 @@
 # @openfn/runtime
 
+## 0.0.10
+
+### Patch Changes
+
+- ef9406b: Support auto-install of modules
+- 73d8199: Fix default repo location typo
+- Updated dependencies
+  - @openfn/logger@0.0.5
+
 ## 0.0.9
 
 ### Patch Changes
