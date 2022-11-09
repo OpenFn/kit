@@ -10,6 +10,7 @@ import ReactFlow, { Node, ReactFlowProvider } from "react-flow-renderer";
 import "./main.css";
 import * as Store from "./store";
 import { NodeData } from "layout/types";
+import { addDescription, renameUntitledWorkflows } from "./transform";
 
 const nodeTypes = {
   job: JobNode,
@@ -28,7 +29,16 @@ const WorkflowDiagram: React.FC<{
 
   useEffect(() => {
     if (projectSpace) {
-      Store.setProjectSpace(projectSpace);
+      const jobs = addDescription(projectSpace.jobs);
+      const workflows = renameUntitledWorkflows(projectSpace.workflows);
+
+      const transformedProjectSpace = {
+        ...projectSpace,
+        jobs,
+        workflows,
+      } as ProjectSpace;
+
+      Store.setProjectSpace(transformedProjectSpace);
     }
   }, [projectSpace]);
 
