@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.8
+
+### Patch Changes
+
+- 6c57303: Include worker bundle in package
+
 ## 0.0.7
 
 ### Patch Changes
