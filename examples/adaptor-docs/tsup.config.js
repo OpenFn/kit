@@ -2,7 +2,6 @@ import { defineConfig } from 'tsup';
 import Koa from 'koa';
 import serve from 'koa-static';
 import copyStaticFiles from 'esbuild-copy-static-files';
-import refresh from 'browser-refresh-client';
 
 let app;
 
@@ -13,10 +12,8 @@ const onSuccess = () => {
     const app = new Koa();
     app.use(serve('./dist'))
     console.log('Server running at localhost:1234')
+    console.log(process.env.BROWSER_REFRESH_URL)
     app.listen(1234)
-  } else {
-    // trigger a refresh
-    refresh.refreshPage()
   }
 }
 
