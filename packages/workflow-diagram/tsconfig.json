@@ -6,15 +6,10 @@
     "declarationDir": ".",
     // Support JSX in .tsx files
     "jsx": "react",
-    "lib": [
-      "ES2022",
-      "DOM"
-    ],
+    "lib": ["ES2022", "DOM"],
+    "target": "esnext"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "node_modules",
     "**/*.test.ts",

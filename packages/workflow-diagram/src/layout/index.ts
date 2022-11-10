@@ -10,10 +10,10 @@
  * to one compatible with React Flow.
  */
 
-import type { LayoutOptions } from "elkjs";
-import ELK from "elkjs/lib/elk.bundled.js";
+import type { LayoutOptions } from 'elkjs';
+import ELK from 'elkjs/lib/elk.bundled.js';
 
-import { FlowJob, FlowTrigger, Job, ProjectSpace, Workflow } from "types";
+import { FlowJob, FlowTrigger, Job, ProjectSpace, Workflow } from 'types';
 import {
   addNodeFactory,
   jobNodeFactory,
@@ -21,9 +21,9 @@ import {
   operationNodeFactory,
   triggerNodeFactory,
   workflowNodeFactory,
-} from "./factories";
-import { toFlowEdge, toFlowNode } from "./flow-nodes";
-import { ElkNodeEdges, FlowElkEdge, FlowElkNode, FlowNodeEdges } from "./types";
+} from './factories';
+import { toFlowEdge, toFlowNode } from './flow-nodes';
+import { ElkNodeEdges, FlowElkEdge, FlowElkNode, FlowNodeEdges } from './types';
 
 function deriveOperations(job: Job): ElkNodeEdges {
   if (job.operations) {
@@ -52,7 +52,6 @@ function deriveCron(job: Job, workflow: Workflow): ElkNodeEdges {
 
   const triggerNode: FlowElkNode = triggerNodeFactory(job, workflow);
 
-
   const jobNode: FlowElkNode = {
     ...jobNodeFactory(job),
     children: operationNodes,
@@ -63,7 +62,7 @@ function deriveCron(job: Job, workflow: Workflow): ElkNodeEdges {
     id: `${triggerNode.id}->${job.id}`,
     sources: [triggerNode.id],
     targets: [jobNode.id],
-    labels: [{ text: "on match" }],
+    labels: [{ text: 'on match' }],
     __flowProps__: { animated: false },
   };
 
@@ -88,7 +87,7 @@ function deriveWebhook(job: Job, workflow: Workflow): ElkNodeEdges {
     id: `${triggerNode.id}->${job.id}`,
     sources: [triggerNode.id],
     targets: [jobNode.id],
-    labels: [{ text: "on receipt" }],
+    labels: [{ text: 'on receipt' }],
     __flowProps__: { animated: false },
   };
 
@@ -105,7 +104,7 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
   };
 
   const label =
-    job.trigger.type == "on_job_failure" ? "on failure" : "on success";
+    job.trigger.type == 'on_job_failure' ? 'on failure' : 'on success';
 
   const edge: FlowElkEdge = {
     id: `${job.trigger.upstreamJob}->${job.id}`,
@@ -118,16 +117,19 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
   return mergeTuples([[jobNode], [edge]], addNodeFactory(jobNode));
 }
 
-export function deriveNodesWithEdges(job: Job, workflow: Workflow): ElkNodeEdges {
+export function deriveNodesWithEdges(
+  job: Job,
+  workflow: Workflow
+): ElkNodeEdges {
   switch (job.trigger.type) {
-    case "cron":
+    case 'cron':
       return deriveCron(job, workflow);
 
-    case "webhook":
+    case 'webhook':
       return deriveWebhook(job, workflow);
 
-    case "on_job_failure":
-    case "on_job_success":
+    case 'on_job_failure':
+    case 'on_job_success':
       return deriveFlow(job as FlowJob);
     default:
       throw new Error(`Got unrecognised job: ${JSON.stringify(job)}`);
@@ -147,7 +149,7 @@ function mergeTuples(
 function hasDescendent(projectSpace: ProjectSpace, job: Job): boolean {
   return Boolean(
     projectSpace.jobs.find((j) => {
-      if (j.trigger.type in ["on_job_failure", "on_job_success"]) {
+      if (j.trigger.type in ['on_job_failure', 'on_job_success']) {
         return (j.trigger as FlowTrigger).upstreamJob == job.id;
       }
     })
@@ -155,18 +157,18 @@ function hasDescendent(projectSpace: ProjectSpace, job: Job): boolean {
 }
 
 const rootLayoutOptions: LayoutOptions = {
-  "elk.algorithm": "elk.box",
-  "elk.box.packingMode": "GROUP_DEC",
+  'elk.algorithm': 'elk.box',
+  'elk.box.packingMode': 'GROUP_DEC',
   // "elk.separateConnectedComponents": "true",
   // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-  "elk.alignment": "TOP",
+  'elk.alignment': 'TOP',
   // "elk.expandNodes": "true",
-  "spacing.nodeNode": "40",
-  "spacing.nodeNodeBetweenLayers": "45",
-  "spacing.edgeNode": "25",
-  "spacing.edgeNodeBetweenLayers": "20",
-  "spacing.edgeEdge": "20",
-  "spacing.edgeEdgeBetweenLayers": "15",
+  'spacing.nodeNode': '40',
+  'spacing.nodeNodeBetweenLayers': '45',
+  'spacing.edgeNode': '25',
+  'spacing.edgeNodeBetweenLayers': '20',
+  'spacing.edgeEdge': '20',
+  'spacing.edgeEdgeBetweenLayers': '15',
 };
 
 function groupByWorkflow(projectSpace: ProjectSpace): Map<Workflow, Job[]> {
@@ -195,10 +197,13 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
       (nodesAndEdges, job) => {
         return mergeTuples(
           nodesAndEdges,
-          deriveNodesWithEdges({
-            ...job,
-            hasDescendents: hasDescendent(projectSpace, job),
-          }, workflow)
+          deriveNodesWithEdges(
+            {
+              ...job,
+              hasDescendents: hasDescendent(projectSpace, job),
+            },
+            workflow
+          )
         );
       },
       [[], []]
@@ -217,15 +222,15 @@ export function toElkNode(projectSpace: ProjectSpace): FlowElkNode {
   }
 
   const [children, edges] = nodeEdges;
-  
+
   // This root node gets ignored later, but we need a starting point for
   // gathering up all workflows as children
   return {
-    id: "root",
+    id: 'root',
     layoutOptions: rootLayoutOptions,
     children,
     edges,
-    __flowProps__: { data: { label: "" }, type: "root" },
+    __flowProps__: { data: { label: '' }, type: 'root' },
   };
 }
 

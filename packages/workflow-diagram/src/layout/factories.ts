@@ -13,6 +13,12 @@ function generateDescription(trigger: Trigger): string | null {
   }
 }
 
+function renameWorkflowForUntitled(workflow: Workflow): Workflow {
+  return workflow.name
+    ? workflow
+    : ({ ...workflow, name: 'Untitled' } as Workflow);
+}
+
 const defaultLayoutOptions = {
   'elk.direction': 'DOWN',
   'elk.padding': '[top=35,left=10.0,bottom=10.0,right=10.0]',
@@ -69,7 +75,7 @@ export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
       data: {
         label: TriggerLabels[job.trigger.type],
         description: generateDescription(job.trigger),
-        workflow,
+        workflow: renameWorkflowForUntitled(workflow),
       },
       type: 'trigger',
     },
@@ -106,7 +112,7 @@ export function workflowNodeFactory(workflow: Workflow): FlowElkNode {
     id: workflow.id,
     __flowProps__: {
       data: {
-        label: workflow.name ?? 'Untitled',
+        label: workflow.name,
         id: workflow.id,
       },
       type: 'workflow',
