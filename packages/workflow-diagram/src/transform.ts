@@ -4,9 +4,9 @@ import { Trigger, Workflow, Job } from "./types";
 function generateDescription(trigger: Trigger): string | null {
   switch (trigger.type) {
     case "webhook":
-      return `When data is received at ${trigger.url}`;
+      return `When data is received at ${trigger.webhookUrl}`;
     case "cron":
-      return cronstrue.toString(trigger.expression);
+      return cronstrue.toString(trigger.cronExpression);
     default:
       return null;
   }
