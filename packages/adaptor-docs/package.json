@@ -1,0 +1,46 @@
+{
+  "name": "@openfn/adaptor-docs",
+  "version": "0.0.1",
+  "description": "Component for displaying adaptor documentation",
+  "engines": {
+    "node": ">=16",
+    "pnpm": ">=7"
+  },
+  "scripts": {
+    "test": "pnpm ava",
+    "test:watch": "pnpm ava -w",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "build": "tsup --config ./tsup.config.js",
+    "build:watch": "pnpm build --watch",
+    "pack": "pnpm pack --pack-destination ../../dist"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.2.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "@types/react": "^18.0.25",
+    "@types/typescript": "^2.0.0",
+    "ts-lib": "^0.0.5",
+    "ts-node": "^10.9.1",
+    "tsup": "^6.2.3",
+    "typescript": "^4.8.4"
+  }
+}
