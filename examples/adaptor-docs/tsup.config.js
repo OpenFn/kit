@@ -5,11 +5,9 @@ import copyStaticFiles from 'esbuild-copy-static-files';
 
 let app;
 
-// start/restart a new koa server on finish
-// but this doesn't help us hot reload...
 const onSuccess = () => {
   if (!app) {
-    const app = new Koa();
+    app = new Koa();
     app.use(serve('./dist'))
     console.log('Server running at localhost:1234')
     console.log(process.env.BROWSER_REFRESH_URL)
@@ -25,6 +23,7 @@ export default defineConfig({
   target: 'es2020',
   clean: true,
   watch: true,
+  noExternal: ["@openfn"],
   esbuildPlugins: [copyStaticFiles({
     src: './static/',
     dest: './dist/'
