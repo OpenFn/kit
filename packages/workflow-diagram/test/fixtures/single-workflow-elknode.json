@@ -27,7 +27,7 @@
           "__flowProps__": {
             "data": {
               "label": "Webhook",
-              "description": "When data is received at https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
+              "webhookUrl": "https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
               "workflow": {
                 "id": "wf-one",
                 "name": "Workflow One"

@@ -1,23 +1,5 @@
-import cronstrue from 'cronstrue';
 import { Job, Operation, Trigger, TriggerType, Workflow } from 'types';
 import { FlowElkNode, ElkNodeEdges, EdgeFlowProps, FlowElkEdge } from './types';
-
-function generateDescription(trigger: Trigger): string | null {
-  switch (trigger.type) {
-    case 'webhook':
-      return `When data is received at ${trigger.webhookUrl}`;
-    case 'cron':
-      return cronstrue.toString(trigger.cronExpression);
-    default:
-      return null;
-  }
-}
-
-function renameWorkflowForUntitled(workflow: Workflow): Workflow {
-  return workflow.name
-    ? workflow
-    : ({ ...workflow, name: 'Untitled' } as Workflow);
-}
 
 const defaultLayoutOptions = {
   'elk.direction': 'DOWN',
@@ -68,15 +50,30 @@ const TriggerLabels: { [key in TriggerType]: string } = {
   on_job_success: 'on success',
 };
 
+function getWebhookUrlOrCronExpression(trigger: Trigger): string[] | null[] {
+  switch (trigger.type) {
+    case 'webhook':
+      return ['webhookUrl', trigger.webhookUrl];
+    case 'cron':
+      return ['cronExpression', trigger.cronExpression];
+    default:
+      return [null, null];
+  }
+}
+
 export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
+  let data = {
+    label: TriggerLabels[job.trigger.type],
+    workflow,
+  };
+  const [key, value] = getWebhookUrlOrCronExpression(job.trigger);
+  if (key) {
+    data = { ...data, [key]: value };
+  }
   return {
     id: `${job.id}-trigger`,
     __flowProps__: {
-      data: {
-        label: TriggerLabels[job.trigger.type],
-        description: generateDescription(job.trigger),
-        workflow: renameWorkflowForUntitled(workflow),
-      },
+      data,
       type: 'trigger',
     },
     width: 190,
