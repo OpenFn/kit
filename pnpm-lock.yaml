@@ -27,6 +27,7 @@ importers:
       esbuild-postcss: ^0.0.4
       koa: ^2.13.4
       koa-static: ^5.0.0
+      koa-websocket: ^7.0.0
       live-server: ^1.2.2
       postcss: ^8.4.13
       react: ^18.2.0
@@ -49,6 +50,7 @@ importers:
       esbuild-postcss: 0.0.4_aud5ikz75yyztiacb6xsw3iddi
       koa: 2.13.4
       koa-static: 5.0.0
+      koa-websocket: 7.0.0
       live-server: 1.2.2
       postcss: 8.4.16
       react: 18.2.0
@@ -4859,6 +4861,19 @@ packages:
       - supports-color
     dev: true
 
+  /koa-websocket/7.0.0:
+    resolution: {integrity: sha512-MsHUFKqA4+j+0dpPKWtsvZfnpQ1NcgF+AaTZQZ4B3Xj/cWK31qqmKx9HnA5Gw1LV2aIDzqwy0IDBsZYRurTUAg==}
+    dependencies:
+      co: 4.6.0
+      debug: 4.3.4
+      koa-compose: 4.1.0
+      ws: 8.11.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: true
+
   /koa/2.13.4:
     resolution: {integrity: sha512-43zkIKubNbnrULWlHdN5h1g3SEKXOEzoAlRsHOTFpnlDu8JlAOZSMJBLULusuXRequboiwJcj5vtYXKB3k7+2g==}
     engines: {node: ^4.8.4 || ^6.10.1 || ^7.10.1 || >= 8.1.4}
@@ -8327,6 +8342,19 @@ packages:
     dependencies:
       imurmurhash: 0.1.4
       signal-exit: 3.0.7
+    dev: true
+
+  /ws/8.11.0:
+    resolution: {integrity: sha512-HPG3wQd9sNQoT9xHyNCXoDUa+Xw/VevmY9FoHyQ+g+rrMn4j6FB4np7Z0OhdTgjx6MgQLK7jwSy1YecU1+4Asg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
     dev: true
 
   /xtend/4.0.2:

@@ -1,17 +1,29 @@
 import { defineConfig } from 'tsup';
 import Koa from 'koa';
 import serve from 'koa-static';
+import websockify from 'koa-websocket'
+
 import copyStaticFiles from 'esbuild-copy-static-files';
 
 let app;
+let listeners = []
 
 const onSuccess = () => {
   if (!app) {
-    app = new Koa();
+    app = new websockify(new Koa());
     app.use(serve('./dist'))
     console.log('Server running at localhost:1234')
-    console.log(process.env.BROWSER_REFRESH_URL)
     app.listen(1234)
+    
+    app.ws.use((ctx) => {
+      console.log(' socket connect!!')
+      listeners.push(ctx)
+    });
+  } else {
+    console.log('triggering refresh')
+    while (listeners.length) {
+      listeners.pop().websocket.send('refresh')
+    }
   }
 }
 
