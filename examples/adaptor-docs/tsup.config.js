@@ -16,7 +16,6 @@ const onSuccess = () => {
     app.listen(1234)
     
     app.ws.use((ctx) => {
-      console.log(' socket connect!!')
       listeners.push(ctx)
     });
   } else {
@@ -34,7 +33,7 @@ export default defineConfig({
   format: 'esm',
   target: 'es2020',
   clean: true,
-  watch: true,
+  watch: ['.', '../../packages/adaptor-docs/dist'],
   noExternal: ["@openfn"],
   esbuildPlugins: [copyStaticFiles({
     src: './static/',
