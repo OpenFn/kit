@@ -28,6 +28,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "dependencies": {
+    "@openfn/runtime": "workspace:^0.0.10",
     "react": "^18.2.0"
   },
   "files": [

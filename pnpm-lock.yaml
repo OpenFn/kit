@@ -113,6 +113,7 @@ importers:
 
   packages/adaptor-docs:
     specifiers:
+      '@openfn/runtime': workspace:^0.0.10
       '@types/node': ^18.11.9
       '@types/react': ^18.0.25
       '@types/typescript': ^2.0.0
@@ -122,6 +123,7 @@ importers:
       tsup: ^6.2.3
       typescript: ^4.8.4
     dependencies:
+      '@openfn/runtime': link:../runtime
       react: 18.2.0
     devDependencies:
       '@types/node': 18.11.9
