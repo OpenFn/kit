@@ -1,7 +1,7 @@
-import { expose } from "threads/worker";
-import { Project } from "../project";
-import { fetchFile } from "../package-fs";
-import { Pack } from "../pack";
+import { expose } from 'threads/worker';
+import { Project } from '../typescript/project';
+import { fetchFile } from '../fs/package-fs';
+import { Pack } from '../pack';
 
 let project: undefined | Project;
 
@@ -12,7 +12,7 @@ export type FunctionDescription = {
 
 function createProject() {
   if (!process) {
-    throw Error("This worker does not work in browsers currently :(");
+    throw Error('This worker does not work in browsers currently :(');
   }
   project = new Project();
   return true;
@@ -27,7 +27,7 @@ const packageOrDts = /(?:package.json)|(?:\.d\.ts$)/i;
  */
 async function loadModule(specifier: string) {
   if (!project) {
-    throw new Error("Project not initialized, call `createProject` first.");
+    throw new Error('Project not initialized, call `createProject` first.');
   }
 
   const pack = await Pack.fromUnpkg(specifier);
@@ -51,7 +51,7 @@ async function loadModule(specifier: string) {
 
 function describeDts(path: string) {
   if (!project) {
-    throw new Error("Project not initialized, call `createProject` first.");
+    throw new Error('Project not initialized, call `createProject` first.');
   }
 
   const sourceFile = project.getSourceFile(path);
@@ -85,11 +85,11 @@ function describeDts(path: string) {
 
 function describeAdaptor(dts: string) {
   if (!project) {
-    throw new Error("Project not initialized, call `createProject` first.");
+    throw new Error('Project not initialized, call `createProject` first.');
   }
 
-  project.createFile(dts, "index.d.ts");
-  return describeDts("index.d.ts");
+  project.createFile(dts, 'index.d.ts');
+  return describeDts('index.d.ts');
 }
 
 const workerApi = {

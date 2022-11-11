@@ -1,20 +1,20 @@
-import ts from "typescript";
+import ts from 'typescript';
 
 import {
   // createDefaultMapFromNodeModules,
   createDefaultMapFromCDN,
   createVirtualTypeScriptEnvironment,
   VirtualTypeScriptEnvironment,
-} from "@typescript/vfs";
-import { createSystem } from "./fake-fs";
-import { WrappedSymbol } from "./wrapped-symbol";
+} from '@typescript/vfs';
+import { createSystem } from '../fs/fake-fs';
+import { WrappedSymbol } from './wrapped-symbol';
 
 export async function getDefaultMap(): Promise<Map<string, string>> {
   const shouldCache = true;
   // This caches the lib files in the site's localStorage
   const fsMap = await createDefaultMapFromCDN(
     { target: Project.compilerOpts.target },
-    "4.5.5",
+    '4.5.5',
     shouldCache,
     ts
   );
@@ -70,7 +70,7 @@ export class Project {
    * @param dts the .d.ts file as a string
    */
   addTypeDefinition(moduleName: string, dts: string) {
-    const typedModulePath = moduleName.replace("@", "").replace("/", "__");
+    const typedModulePath = moduleName.replace('@', '').replace('/', '__');
 
     this.fsMap.set(`/node_modules/@types/${typedModulePath}/index.d.ts`, dts);
     this.env.createFile(`${typedModulePath}.d.ts`, dts);
@@ -89,7 +89,7 @@ export class Project {
   }
 
   public get sourceFile(): ts.SourceFile {
-    return this.program.getSourceFile("index.ts")!;
+    return this.program.getSourceFile('index.ts')!;
   }
 
   public get typeChecker(): ts.TypeChecker {
@@ -107,7 +107,7 @@ export class Project {
    * 'project', rather files available for reading during diagnostics and
    * compilation. To add packages or type definitions use `addFile`.
    */
-  createFile(expression: string, filename: string = "index.ts"): ts.SourceFile {
+  createFile(expression: string, filename: string = 'index.ts'): ts.SourceFile {
     this.env.createFile(filename, expression);
     return this.getSourceFile(filename) as ts.SourceFile;
   }
@@ -140,7 +140,7 @@ export class Project {
   getSymbol(sourceFile: ts.SourceFile): WrappedSymbol {
     const sfSymbol = this.typeChecker.getSymbolAtLocation(sourceFile);
     if (!sfSymbol) {
-      throw new Error("Expected a symbol for location of SourceFile");
+      throw new Error('Expected a symbol for location of SourceFile');
     }
 
     return new WrappedSymbol(this.typeChecker, sfSymbol);
@@ -162,19 +162,19 @@ export class Project {
         );
         let message = ts.flattenDiagnosticMessageText(
           diagnostic.messageText,
-          "\n"
+          '\n'
         );
         return `${diagnostic.file.fileName} (${line + 1},${
           character + 1
         }): ${message}`;
       } else {
-        return ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+        return ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
       }
     });
   }
 
   compile(sourceFile?: ts.SourceFile): ts.EmitResult {
-    sourceFile = sourceFile || this.program.getSourceFile("index.ts");
+    sourceFile = sourceFile || this.program.getSourceFile('index.ts');
     // const emitResult =
     return this.program.emit(
       sourceFile,
@@ -203,9 +203,9 @@ export class Project {
     noUnusedParameters: true,
     stripInternal: true,
     declaration: false,
-    baseUrl: "/",
+    baseUrl: '/',
     // outDir: "/dist",
-    lib: ["ES2020"],
+    lib: ['ES2020'],
     target: ts.ScriptTarget.ES2020,
   };
 
