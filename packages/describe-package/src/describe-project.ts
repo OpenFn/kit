@@ -1,11 +1,35 @@
 import type { Project } from './typescript/project';
+import type { FunctionDescription, ParameterDescription } from './api';
+import { WrappedSymbol } from './typescript/wrapped-symbol';
 
-type FunctionDescription = {
-  name: string;
-  comment: string;
+const describeParameter = (
+  project: Project,
+  symbol: WrappedSymbol
+): ParameterDescription => {
+  const typeNode = project.typeChecker.getTypeFromTypeNode(symbol.type);
+  const typeString = project.typeChecker.typeToString(typeNode);
+  return {
+    name: symbol.name,
+    optional: false,
+    type: typeString,
+  };
 };
 
-// Given a Project, describe it from the entry point
+const describeFunction = (
+  project: Project,
+  symbol: WrappedSymbol,
+  moduleName?: string
+): FunctionDescription => {
+  return {
+    name: moduleName ? `${moduleName}.${symbol.name}` : symbol.name,
+    description: symbol.comment,
+    parameters: symbol.parameters.map((p) => describeParameter(project, p)),
+    magic: false,
+    isOperation: false,
+  };
+};
+
+// Describe the exported functions of a given d.ts file in a project
 const describeProject = (
   project: Project,
   typesEntry: string = 'index.d.ts'
@@ -18,25 +42,19 @@ const describeProject = (
 
   return project.getSymbol(sourceFile).exports.reduce((symbols, symbol) => {
     if (symbol.isFunctionDeclaration) {
-      symbols.push({
-        name: symbol.name,
-        comment: symbol.comment,
-      });
+      symbols.push(describeFunction(project, symbol));
     }
 
     if (symbol.isModuleDeclaration) {
       symbol.exports.map((modSymbol) => {
         if (modSymbol.isFunctionDeclaration) {
-          symbols.push({
-            name: `${symbol.name}.${modSymbol.name}`,
-            comment: modSymbol.comment,
-          });
+          symbols.push(describeFunction(project, modSymbol, symbol.name));
         }
       });
     }
 
     return symbols;
-  }, [] as FunctionDescription[]);
+  }, [] as Partial<FunctionDescription>[]);
 };
 
 export default describeProject;

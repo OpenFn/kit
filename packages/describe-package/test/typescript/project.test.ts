@@ -9,6 +9,7 @@ import {
   fetchFileListing,
   fetchDTSListing,
 } from '../../src/fs/package-fs';
+import { getDtsFixture, setupProject } from '../helpers';
 
 test('fetch from the local filesystem', async (t) => {
   t.timeout(8000);
@@ -73,6 +74,43 @@ test('addToFS', (t) => {
       ['bar', ''],
     ])
   );
+});
+
+test('getSymbol handles export aliases', async (t) => {
+  const exampleDts = await getDtsFixture('language-common.export-alias');
+  const p = new Project();
+  p.createFile(exampleDts, 'index.d.ts');
+
+  const sourceFile = p.getSourceFile('index.d.ts')!;
+
+  const syms = p
+    .getSymbol(sourceFile)
+    .exports.filter((sym) => sym.isFunctionDeclaration);
+
+  t.assert(syms.find((sym) => sym.name == 'execute'));
+  t.assert(!syms.find((sym) => sym.name == 'DataSource'));
+});
+
+test('getSymbol handles export declarations', async (t) => {
+  const exampleDts = await getDtsFixture('language-common');
+  const p = new Project();
+  p.createFile(exampleDts, 'index.d.ts');
+
+  const sourceFile = p.getSourceFile('index.d.ts')!;
+
+  const symbols = p
+    .getSymbol(sourceFile)
+    .exports.filter(
+      (sym) => sym.isModuleDeclaration || sym.isFunctionDeclaration
+    );
+
+  const httpModuleDeclaration = symbols.find((sym) => sym.name == 'http');
+
+  t.assert(httpModuleDeclaration);
+  t.is(httpModuleDeclaration!.exports.length, 9);
+
+  t.assert(symbols.find((sym) => sym.name == 'execute'));
+  t.assert(!symbols.find((sym) => sym.name == 'DataSource'));
 });
 
 // TODO this is unfinished

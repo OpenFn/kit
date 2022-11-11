@@ -1,4 +1,7 @@
-// This is what I think the API of this thing should be
+import { getNameAndVersion } from './util';
+import { Project } from './typescript/project';
+import { fetchDTSListing, fetchFile } from './fs/package-fs';
+import describeProject from './describe-project';
 
 // Sketching
 type Options = {
@@ -19,21 +22,21 @@ type Options = {
 
 // Is this a generic package, or an adaptor? Maybe try and keep it generic
 // Although in the short-medium term it's only gonna be used for adaptors
-type PackageDescription = {
+export type PackageDescription = {
   name: string;
   version: string;
-  functions: FunctionDescription[];
+  functions: Partial<FunctionDescription>[];
 };
 
-type FunctionDescription = {
+export type FunctionDescription = {
   name: string;
-  version: string; // is it helpful to inherit this? Probably not....
   magic: boolean; // keep you-know-who happy
   isOperation: boolean; // Is this an Operation?
   parameters: ParameterDescription[];
+  description: string;
 };
 
-type ParameterDescription = {
+export type ParameterDescription = {
   name: string;
   optional: boolean;
   type: string; // this is a human-readble string I think. Should we also store a machine readable type?
@@ -43,8 +46,28 @@ type ParameterDescription = {
 
 export const describePackage = async (
   specifier: string,
-  options: Options
-): Promise<PackageDescription> => {};
+  _options: Options
+): Promise<PackageDescription> => {
+  const { name, version } = getNameAndVersion(specifier);
+  const project = new Project();
+
+  const files = await fetchDTSListing(specifier);
+
+  const functions: Partial<FunctionDescription>[] = [];
+  for await (const fileName of files) {
+    const f = await fetchFile(`${specifier}${fileName}`);
+    project.createFile(f, fileName);
+    // TODO no, this feels more like describeDTS doesn't it
+    // Or describe functions
+    functions.push(...describeProject(project, fileName));
+  }
+
+  return {
+    name,
+    version,
+    functions,
+  };
+};
 
 // Load DTS as a string
 // This would be used by monaco, which wants to load all the type defs for a package
@@ -54,5 +77,5 @@ export const describePackage = async (
 // the server and have a repo passed in
 export const loadDTS = async (
   specifier: string,
-  options: Options
+  _options: Options
 ): Promise<string[]> => {};
