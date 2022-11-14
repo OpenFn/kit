@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "classcat": "^5.0.4",
+    "cronstrue": "^2.14.0",
     "elkjs": "^0.8.2",
     "react-flow-renderer": "^10.3.16",
     "zustand": "^4.1.1"

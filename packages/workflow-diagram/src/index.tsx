@@ -1,15 +1,15 @@
-import React, { useEffect } from "react";
-import AddNode from "./nodes/AddNode";
-import JobNode from "./nodes/JobNode";
-import OperationNode from "./nodes/OperationNode";
-import TriggerWorkflowNode from "./nodes/TriggerWorkflowNode";
-import type { ProjectSpace } from "./types";
+import React, { useEffect } from 'react';
+import AddNode from './nodes/AddNode';
+import JobNode from './nodes/JobNode';
+import OperationNode from './nodes/OperationNode';
+import TriggerWorkflowNode from './nodes/TriggerWorkflowNode';
+import type { ProjectSpace } from './types';
 
-import EmptyWorkflowNode from "nodes/EmptyWorkflowNode";
-import ReactFlow, { Node, ReactFlowProvider } from "react-flow-renderer";
-import "./main.css";
-import * as Store from "./store";
-import { NodeData } from "layout/types";
+import EmptyWorkflowNode from 'nodes/EmptyWorkflowNode';
+import ReactFlow, { Node, ReactFlowProvider } from 'react-flow-renderer';
+import './main.css';
+import * as Store from './store';
+import { NodeData } from 'layout/types';
 
 const nodeTypes = {
   job: JobNode,
@@ -36,7 +36,7 @@ const WorkflowDiagram: React.FC<{
     <ReactFlowProvider>
       <ReactFlow
         // Thank you, Christopher Möller, for explaining that we can use this...
-        proOptions={{ account: "paid-pro", hideAttribution: true }}
+        proOptions={{ account: 'paid-pro', hideAttribution: true }}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}

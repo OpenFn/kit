@@ -7,7 +7,8 @@
       "adaptor": "@openfn/language-salesforce@2.8.1",
       "enabled": true,
       "trigger": {
-        "type": "webhook"
+        "type": "webhook",
+        "webhookUrl": "https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a"
       },
       "operations": [
         {
@@ -79,7 +80,8 @@
       "adaptor": "@openfn/language-http@4.0.0",
       "enabled": true,
       "trigger": {
-        "type": "cron"
+        "type": "cron",
+        "cronExpression": "* * * * *"
       }
     }
   ],
@@ -87,6 +89,10 @@
     {
       "name": "Workflow One",
       "id": "wf-one"
+    },
+    {
+      "name": null,
+      "id": "wf-two"
     }
   ]
 }

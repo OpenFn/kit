@@ -3,7 +3,7 @@
     {
       "id": "wf-one",
       "style": {
-        "height": 794,
+        "height": 824,
         "width": 583,
         "zIndex": -1
       },
@@ -13,6 +13,7 @@
       },
       "data": {
         "hasChildren": true,
+        "id": "wf-one",
         "label": "Workflow One"
       },
       "type": "workflow"
@@ -20,17 +21,22 @@
     {
       "id": "A-trigger",
       "style": {
-        "height": 40,
-        "width": 100,
+        "height": 70,
+        "width": 190,
         "zIndex": 1
       },
       "position": {
-        "x": 312,
+        "x": 267,
         "y": 40
       },
       "data": {
         "hasChildren": false,
-        "label": "Webhook"
+        "label": "Webhook",
+        "webhookUrl": "https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
+        "workflow": {
+          "id": "wf-one",
+          "name": "Workflow One"
+        }
       },
       "type": "trigger",
       "parentNode": "wf-one",
@@ -45,11 +51,13 @@
       },
       "position": {
         "x": 287,
-        "y": 150.5
+        "y": 180.5
       },
       "data": {
         "hasChildren": true,
-        "label": "Job A"
+        "id": "A",
+        "label": "Job A",
+        "workflowId": "wf-one"
       },
       "type": "job",
       "parentNode": "wf-one",
@@ -121,7 +129,7 @@
       },
       "position": {
         "x": 539,
-        "y": 486
+        "y": 516
       },
       "data": {
         "hasChildren": false,
@@ -141,11 +149,13 @@
       },
       "position": {
         "x": 20,
-        "y": 640
+        "y": 670
       },
       "data": {
         "hasChildren": false,
-        "label": "Job B"
+        "id": "B",
+        "label": "Job B",
+        "workflowId": "wf-one"
       },
       "type": "job",
       "parentNode": "wf-one",
@@ -160,7 +170,7 @@
       },
       "position": {
         "x": 83,
-        "y": 750
+        "y": 780
       },
       "data": {
         "hasChildren": false,
@@ -180,11 +190,13 @@
       },
       "position": {
         "x": 319,
-        "y": 478
+        "y": 508
       },
       "data": {
         "hasChildren": false,
-        "label": "Job C"
+        "id": "C",
+        "label": "Job C",
+        "workflowId": "wf-one"
       },
       "type": "job",
       "parentNode": "wf-one",
@@ -199,7 +211,7 @@
       },
       "position": {
         "x": 382,
-        "y": 648
+        "y": 678
       },
       "data": {
         "hasChildren": false,
@@ -219,11 +231,13 @@
       },
       "position": {
         "x": 99,
-        "y": 425.5
+        "y": 455.5
       },
       "data": {
         "hasChildren": true,
-        "label": "Job E"
+        "id": "E",
+        "label": "Job E",
+        "workflowId": "wf-one"
       },
       "type": "job",
       "parentNode": "wf-one",
@@ -276,7 +290,7 @@
       },
       "position": {
         "x": 240,
-        "y": 648
+        "y": 678
       },
       "data": {
         "hasChildren": false,
@@ -386,10 +400,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "",
-      "markerEnd": {
-        "type": "arrowclosed"
-      }
+      "className": ""
     },
     {
       "id": "25->35",
@@ -400,10 +411,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "",
-      "markerEnd": {
-        "type": "arrowclosed"
-      }
+      "className": ""
     },
     {
       "id": "29->39",
@@ -414,10 +422,7 @@
       "labelBgStyle": {
         "fill": "#f3f4f6"
       },
-      "className": "",
-      "markerEnd": {
-        "type": "arrowclosed"
-      }
+      "className": ""
     }
   ]
 ]

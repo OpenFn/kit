@@ -1,9 +1,9 @@
-import { Job, Operation, TriggerType, Workflow } from "types";
-import { FlowElkNode, ElkNodeEdges, EdgeFlowProps, FlowElkEdge } from "./types";
+import { Job, Operation, Trigger, TriggerType, Workflow } from 'types';
+import { FlowElkNode, ElkNodeEdges, EdgeFlowProps, FlowElkEdge } from './types';
 
 const defaultLayoutOptions = {
-  "elk.direction": "DOWN",
-  "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]",
+  'elk.direction': 'DOWN',
+  'elk.padding': '[top=35,left=10.0,bottom=10.0,right=10.0]',
 };
 
 function edgeFlowProps(attrs: Partial<EdgeFlowProps>): EdgeFlowProps {
@@ -24,9 +24,9 @@ export function addNodeFactory(node: FlowElkNode): ElkNodeEdges {
     __flowProps__: {
       data: {
         parentId: node.id,
-        label: "Add",
+        label: 'Add',
       },
-      type: "add",
+      type: 'add',
     },
     layoutOptions: defaultLayoutOptions,
     width: 24,
@@ -44,22 +44,37 @@ export function addNodeFactory(node: FlowElkNode): ElkNodeEdges {
 }
 
 const TriggerLabels: { [key in TriggerType]: string } = {
-  cron: "Cron",
-  webhook: "Webhook",
-  on_job_failure: "on failure",
-  on_job_success: "on success",
+  cron: 'Cron',
+  webhook: 'Webhook',
+  on_job_failure: 'on failure',
+  on_job_success: 'on success',
 };
 
+function getWebhookUrlOrCronExpression(trigger: Trigger): string[] | null[] {
+  switch (trigger.type) {
+    case 'webhook':
+      return ['webhookUrl', trigger.webhookUrl];
+    case 'cron':
+      return ['cronExpression', trigger.cronExpression];
+    default:
+      return [null, null];
+  }
+}
+
 export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
+  let data = {
+    label: TriggerLabels[job.trigger.type],
+    workflow,
+  };
+  const [key, value] = getWebhookUrlOrCronExpression(job.trigger);
+  if (key) {
+    data = { ...data, [key]: value };
+  }
   return {
     id: `${job.id}-trigger`,
     __flowProps__: {
-      data: {
-        label: TriggerLabels[job.trigger.type],
-        description: job.trigger.description,
-        workflow,
-      },
-      type: "trigger",
+      data,
+      type: 'trigger',
     },
     width: 190,
     height: 70,
@@ -79,7 +94,7 @@ export function jobNodeFactory(job: Job): FlowElkNode {
         id: job.id,
         workflowId: job.workflowId,
       },
-      type: "job",
+      type: 'job',
     },
     children: [],
     edges: [],
@@ -97,22 +112,22 @@ export function workflowNodeFactory(workflow: Workflow): FlowElkNode {
         label: workflow.name,
         id: workflow.id,
       },
-      type: "workflow",
+      type: 'workflow',
     },
     children: [],
     edges: [],
     layoutOptions: {
-      "elk.separateConnectedComponents": "true",
-      "elk.algorithm": "elk.mrtree",
-      "elk.direction": "DOWN",
-      "elk.padding": "[top=40,left=20.0,bottom=20.0,right=20.0]",
-      "elk.alignment": "RIGHT",
-      "spacing.nodeNode": "70",
-      "spacing.nodeNodeBetweenLayers": "45",
-      "spacing.edgeNode": "25",
-      "spacing.edgeNodeBetweenLayers": "20",
-      "spacing.edgeEdge": "20",
-      "spacing.edgeEdgeBetweenLayers": "15",
+      'elk.separateConnectedComponents': 'true',
+      'elk.algorithm': 'elk.mrtree',
+      'elk.direction': 'DOWN',
+      'elk.padding': '[top=40,left=20.0,bottom=20.0,right=20.0]',
+      'elk.alignment': 'RIGHT',
+      'spacing.nodeNode': '70',
+      'spacing.nodeNodeBetweenLayers': '45',
+      'spacing.edgeNode': '25',
+      'spacing.edgeNodeBetweenLayers': '20',
+      'spacing.edgeEdge': '20',
+      'spacing.edgeEdgeBetweenLayers': '15',
     },
     width: 150,
     height: 100,
@@ -124,11 +139,11 @@ export function operationNodeFactory(operation: Operation): FlowElkNode {
     id: operation.id,
     __flowProps__: {
       data: { label: operation.label },
-      type: "operation",
+      type: 'operation',
     },
     layoutOptions: {
-      "elk.direction": "DOWN",
-      "elk.padding": "[top=0,left=10.0,bottom=10.0,right=10.0]",
+      'elk.direction': 'DOWN',
+      'elk.padding': '[top=0,left=10.0,bottom=10.0,right=10.0]',
     },
     children: [],
     edges: [],
