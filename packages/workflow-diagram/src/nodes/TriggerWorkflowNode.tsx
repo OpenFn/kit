@@ -27,13 +27,13 @@ const TriggerWorkflowNode = ({
   const updatedData = updateData(data);
   return (
     <div
-      className="bg-white cursor-pointer h-full p-2 rounded-md shadow-sm
+      className="bg-white cursor-pointer h-full py-1 px-2 rounded-md shadow-sm
         text-center text-xs ring-0.5 ring-black ring-opacity-5"
     >
       <div className={`flex flex-col items-center w-full`}>
         <div className="flex-auto">{updatedData?.workflow?.name}</div>
         <div
-          className="flex-auto text-[0.6rem] italic whitespace-nowrap text-ellipsis w-full overflow-hidden"
+          className="whitespace-pre-line flex-auto text-[0.6rem] italic text-ellipsis w-full overflow-hidden"
           title={updatedData?.description}
         >
           {updatedData?.description}
