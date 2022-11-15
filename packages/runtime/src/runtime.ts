@@ -142,7 +142,11 @@ const prepareJob = async (
   opts: Options = {}
 ): Promise<JobModule> => {
   if (typeof jobs === 'string') {
-    const exports = await loadModule(jobs, { ...opts.linker, context });
+    const exports = await loadModule(jobs, {
+      ...opts.linker,
+      context,
+      log: opts.logger,
+    });
     const operations = exports.default;
     return {
       operations,

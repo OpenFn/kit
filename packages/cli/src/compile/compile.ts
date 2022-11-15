@@ -53,7 +53,7 @@ export const resolveSpecifierPath = async (
     return path;
   }
 
-  const repoPath = await getModulePath(specifier, repoDir);
+  const repoPath = await getModulePath(specifier, repoDir, log);
   if (repoPath) {
     log.debug(`Resolved ${specifier} to repo module`);
     return repoPath;

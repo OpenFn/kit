@@ -3,10 +3,15 @@
  * The tricky bit is this MUST load all linked libraries in the context of the parent module
  * https://nodejs.org/api/html#modulelinklinker
  */
+import { createMockLogger, Logger } from '@openfn/logger';
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
 import { getModulePath } from './repo';
 
+const defaultLogger = createMockLogger();
+
 export type LinkerOptions = {
+  log?: Logger;
+
   // paths to modules: '@openfn/language-common': './path/to/common.js'
   modulePaths?: Record<string, string>;
 
@@ -15,6 +20,7 @@ export type LinkerOptions = {
 
   whitelist?: RegExp[]; // whitelist packages which the linker allows to be imported
 
+  // TODO deprecated - use the logger instead
   trace?: boolean; // log module lookup information
 };
 
@@ -25,10 +31,10 @@ export type Linker = (
 ) => Promise<Module>;
 
 const linker: Linker = async (specifier, context, options = {}) => {
-  const { whitelist, trace } = options;
-  if (trace) {
-    console.log(`[linker] loading module ${specifier}`);
-  }
+  const { whitelist } = options;
+  const log = options.log || defaultLogger;
+  log.debug(`[linker] loading module ${specifier}`);
+
   if (whitelist && !whitelist.find((r) => r.exec(specifier))) {
     throw new Error(`Error: module blacklisted: ${specifier}`);
   }
@@ -77,11 +83,10 @@ const linker: Linker = async (specifier, context, options = {}) => {
 
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
+  const log = options.log || defaultLogger;
+
   // Lookup the path from an explicit specifier first
   let path = options.modulePaths?.[specifier] || null;
-  if (options.trace && path) {
-    console.log(`[linker] Loading module ${specifier} from mapped ${path}`);
-  }
 
   if (!path && options.repo) {
     // Try and load a matching path from the repo
@@ -89,19 +94,20 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   }
 
   if (path) {
+    // TODO: should we log WHY this path was used? Maybe this is enough for now
+    log.debug(`[linker] Loading module ${specifier} from ${path}`);
     try {
       return import(path);
     } catch (e) {
       if (options.trace) {
-        console.warn(
-          `[linker] Failed to load module ${specifier} from ${path}`
-        );
+        log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
         console.log(e);
       }
       // If we fail to load from a path, fall back to loading from a specifier
     }
   }
 
+  log.debug(`[linker] Loading ${specifier} using default import()`);
   return import(specifier);
 };
 
