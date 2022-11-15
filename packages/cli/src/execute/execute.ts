@@ -1,4 +1,5 @@
-import run from '@openfn/runtime';
+import run, { getNameAndVersion } from '@openfn/runtime';
+import type { ModuleInfo, ModuleInfoMap } from '@openfn/runtime';
 import createLogger, { RUNTIME, JOB } from '../util/logger';
 import type { SafeOpts } from '../commands';
 
@@ -14,17 +15,25 @@ export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
     jobLogger: createLogger(JOB, opts),
     linker: {
       repo: opts.repoDir,
-      modulePaths: parseAdaptors(opts),
+      modules: parseAdaptors(opts),
     },
   });
 };
 
 // TODO we should throw if the adaptor strings are invalid for any reason
-function parseAdaptors(opts: SafeOpts) {
-  const adaptors: Record<string, string> = {};
-  opts.adaptors?.reduce((obj, exp) => {
+export function parseAdaptors(opts: Pick<SafeOpts, 'adaptors'>) {
+  const adaptors: ModuleInfoMap = {};
+  opts.adaptors.reduce((obj, exp) => {
     const [module, path] = exp.split('=');
-    obj[module] = path;
+    const { name, version } = getNameAndVersion(module);
+    const info: ModuleInfo = {};
+    if (path) {
+      info.path = path;
+    }
+    if (version) {
+      info.version = version;
+    }
+    obj[name] = info;
     return obj;
   }, adaptors);
   return adaptors;

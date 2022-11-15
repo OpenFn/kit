@@ -9,11 +9,17 @@ import { getModulePath } from './repo';
 
 const defaultLogger = createMockLogger();
 
+export type ModuleInfo = {
+  path?: string;
+  version?: string;
+};
+
+export type ModuleInfoMap = Record<string, ModuleInfo>;
+
 export type LinkerOptions = {
   log?: Logger;
 
-  // paths to modules: '@openfn/language-common': './path/to/common.js'
-  modulePaths?: Record<string, string>;
+  modules?: ModuleInfoMap;
 
   // path to the module repo
   repo?: string;
@@ -30,6 +36,8 @@ export type Linker = (
   options?: LinkerOptions
 ) => Promise<Module>;
 
+// Quick note that the specifier coming in won't have version info because it's come straight for js code
+// So it's a module name really!
 const linker: Linker = async (specifier, context, options = {}) => {
   const { whitelist } = options;
   const log = options.log || defaultLogger;
@@ -86,11 +94,18 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   const log = options.log || defaultLogger;
 
   // Lookup the path from an explicit specifier first
-  let path = options.modulePaths?.[specifier] || null;
+  let path;
+  let version;
+  if (options.modules?.[specifier]) {
+    ({ path, version } = options.modules?.[specifier]);
+  }
 
   if (!path && options.repo) {
     // Try and load a matching path from the repo
-    path = await getModulePath(specifier, options.repo);
+    const specifierWithVersion = version
+      ? `${specifier}@${version}`
+      : specifier;
+    path = await getModulePath(specifierWithVersion, options.repo);
   }
 
   if (path) {
