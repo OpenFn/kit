@@ -15,7 +15,7 @@ export const cmd = yargs(hideBin(process.argv))
   // Common options
   .option('log', {
     alias: ['l'],
-    description: 'Set the default log level to none, trace, info or default',
+    description: 'Set the default log level to none, default, info or debug',
     array: true,
   })
   .alias('v', 'version')
