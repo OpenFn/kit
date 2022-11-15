@@ -119,8 +119,10 @@ test("Fails to load a module it can't find", async (t) => {
 
 test('loads a module from a specific path', async (t) => {
   const options = {
-    modulePaths: {
-      'ultimate-answer': path.resolve('test/__modules__/ultimate-answer'),
+    modules: {
+      'ultimate-answer': {
+        path: path.resolve('test/__modules__/ultimate-answer'),
+      },
     },
   };
   const m = await linker('ultimate-answer', context, options);
