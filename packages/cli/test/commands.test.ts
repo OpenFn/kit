@@ -6,6 +6,7 @@ import { createMockLogger } from '@openfn/logger';
 
 import { cmd } from '../src/cli';
 import commandParser, { Opts } from '../src/commands';
+import { DEFAULT_REPO_DIR } from '../src/util/ensure-opts';
 
 const logger = createMockLogger();
 
@@ -313,6 +314,21 @@ test.serial('compile a job: openfn compile job.js', async (t) => {
   t.assert(output === 'export default [fn(42)];');
 });
 
+test.serial('pwd should return the default repo path', async (t) => {
+  const dir = process.env.OPENFN_REPO_DIR;
+  delete process.env.OPENFN_REPO_DIR; // ensure this is unset
+
+  const options = {
+    logger,
+  };
+  await run('repo pwd', '', options);
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, `Repo working directory is: ${DEFAULT_REPO_DIR}`);
+
+  process.env.OPENFN_REPO_DIR = dir;
+});
+
 test.serial('pwd if modules_home is passed', async (t) => {
   const options = {
     repoDir: 'a/b/c',
@@ -321,10 +337,11 @@ test.serial('pwd if modules_home is passed', async (t) => {
   await run('repo pwd', '', options);
 
   const { message } = logger._parse(logger._last);
-  t.assert(message, 'Repo working directory is: a/b/c');
+  t.is(message, 'Repo working directory is: a/b/c');
 });
 
 test.serial('pwd with modules_home from env', async (t) => {
+  const dir = process.env.OPENFN_REPO_DIR;
   process.env.OPENFN_REPO_DIR = 'x/y/z';
 
   const options = {
@@ -333,9 +350,9 @@ test.serial('pwd with modules_home from env', async (t) => {
   await run('repo pwd', '', options);
 
   const { message } = logger._parse(logger._last);
-  t.assert(message, 'Repo working directory is: x/y/z');
+  t.is(message, 'Repo working directory is: x/y/z');
 
-  delete process.env.OPENFN_REPO_DIR;
+  process.env.OPENFN_REPO_DIR = dir;
 });
 
 test.serial('list should return something', async (t) => {
@@ -347,9 +364,9 @@ test.serial('list should return something', async (t) => {
 
   // Rough check of the shape of the output
   const [pwd, installed] = logger._history;
-  t.assert(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
+  t.is(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
 
-  t.assert(logger._parse(installed).message, 'Installed packages:');
+  t.assert(logger._parse(installed).message.startsWith('Installed packages:'));
 });
 
 // This used to throw, see #70
