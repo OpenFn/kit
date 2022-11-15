@@ -34,6 +34,7 @@ export type FunctionDescription = {
   isOperation: boolean; // Is this an Operation?
   parameters: ParameterDescription[];
   description: string;
+  examples: string[];
 };
 
 export type ParameterDescription = {

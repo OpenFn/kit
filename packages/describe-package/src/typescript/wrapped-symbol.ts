@@ -68,6 +68,22 @@ export class WrappedSymbol {
     return [];
   }
 
+  public get examples(): string[] {
+    const examples = [];
+    // @ts-ignore
+    const jsdoc = this.symbol.valueDeclaration?.jsDoc;
+    if (jsdoc) {
+      for (const d of jsdoc) {
+        examples.push(
+          ...d.tags
+            .filter((tag: ts.JSDocTag) => tag.tagName.escapedText === 'example')
+            .map((tag: ts.JSDocTag) => tag.comment)
+        );
+      }
+    }
+    return examples;
+  }
+
   public get type(): ts.TypeNode {
     // This works for parameters but how generic is it?
     // @ts-ignore

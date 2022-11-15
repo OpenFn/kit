@@ -26,6 +26,7 @@ const describeFunction = (
     parameters: symbol.parameters.map((p) => describeParameter(project, p)),
     magic: false,
     isOperation: false,
+    examples: symbol.examples,
   };
 };
 

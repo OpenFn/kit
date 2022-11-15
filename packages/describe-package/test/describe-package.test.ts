@@ -33,3 +33,8 @@ test('1 parameters in a 1-arity function', async (t) => {
   t.is(flavour.name, 'flavour');
   t.is(flavour.type, 'string');
 });
+
+test.only('Load the example', async (t) => {
+  const fn = get('traditional');
+  t.is(fn.example[0], 'traditional()');
+});
