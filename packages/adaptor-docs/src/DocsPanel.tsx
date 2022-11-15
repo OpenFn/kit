@@ -3,7 +3,7 @@
 import React from 'react';
 import { getNameAndVersion }  from './util';
 import useDocs from './useDocs';
-import type { FunctionDescription, ParameterDescription } from '@openfn/describe-package';
+import type { FunctionDescription } from '@openfn/describe-package';
 
 type DocsPanelProps = {
   specifier?: string;
@@ -25,7 +25,7 @@ const DocsListing = ({ item }: { item: FunctionDescription }) => {
     <div>
       <h2>{getSignature(item)}</h2>
       <p>{item.description}</p>
-      {item.example && <pre>item.example</pre>}
+      {item.examples.map((eg) => <pre>{eg}</pre>)}
     </div>
   )
 }
