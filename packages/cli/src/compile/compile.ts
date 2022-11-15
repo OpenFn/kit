@@ -90,7 +90,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
     }
 
     if (!exports || exports.length === 0) {
-      console.warn(`WARNING: no module exports found for ${pattern}`);
+      log.debug(`No module exports found for ${pattern}`);
     }
 
     options['add-imports'] = {
