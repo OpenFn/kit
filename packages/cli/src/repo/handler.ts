@@ -55,16 +55,16 @@ export const pwd = async (options: SafeOpts, logger: Logger) => {
 
 export const getDependencyList = async (options: SafeOpts, _logger: Logger) => {
   const pkg = await loadRepoPkg(options.repoDir);
-
   const result: Record<string, string[]> = {};
-  Object.keys(pkg.dependencies).forEach((key) => {
-    const [name, version] = key.split('_');
-    if (!result[name]) {
-      result[name] = [];
-    }
-    result[name].push(version);
-  });
-
+  if (pkg) {
+    Object.keys(pkg.dependencies).forEach((key) => {
+      const [name, version] = key.split('_');
+      if (!result[name]) {
+        result[name] = [];
+      }
+      result[name].push(version);
+    });
+  }
   return result;
 };
 export const list = async (options: SafeOpts, logger: Logger) => {

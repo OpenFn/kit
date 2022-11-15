@@ -338,6 +338,36 @@ test.serial('pwd with modules_home from env', async (t) => {
   delete process.env.OPENFN_REPO_DIR;
 });
 
+test.serial('list should return something', async (t) => {
+  const options = {
+    logger,
+    repoDir: 'a/b/c',
+  };
+  await run('repo list', '', options);
+
+  // Rough check of the shape of the output
+  const [pwd, installed] = logger._history;
+  t.assert(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
+
+  t.assert(logger._parse(installed).message, 'Installed packages:');
+});
+
+// This used to throw, see #70
+test.serial('list does not throw if repo is not initialised', async (t) => {
+  mock({
+    '/repo/': {}, // empty dir
+  });
+
+  const opts = cmd.parse('repo list') as Opts;
+  opts.repoDir = '/repo/';
+  opts.logger = logger;
+
+  await commandParser('', opts, logger);
+
+  const { message } = logger._parse(logger._last);
+  t.truthy(message);
+});
+
 // TODO - need to work out a way to test agaist stdout
 // should return to stdout
 // should log stuff to console
