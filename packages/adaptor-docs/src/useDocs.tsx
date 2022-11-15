@@ -1,13 +1,18 @@
 // this is unit testable (although of course the describe-packaeg lookup is tricky)
-import React from 'react';
+import { useState, useEffect } from 'react';
+import { describePackage } from '@openfn/describe-package';
 
-const useDocs = () => {
-  const test = [
-    { name: 'fn', comment: 'a function '},
-    { name: 'doTheThing', comment: 'another function '}
-  ]
+const useDocs = (specifier: string) => {
+  const [docs, setDocs] = useState([]);
 
-  return test;
+  useEffect(() => {
+    describePackage(specifier).then((result) => {
+      console.log(result)
+      setDocs(result.functions);
+    });
+  }, [specifier])
+
+  return docs;
 };
 
 export default useDocs;

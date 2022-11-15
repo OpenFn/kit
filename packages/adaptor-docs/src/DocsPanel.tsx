@@ -3,16 +3,17 @@
 import React from 'react';
 import { getNameAndVersion }  from './util';
 import useDocs from './useDocs';
+import type { FunctionDescription, ParameterDescription } from '@openfn/describe-package';
 
 type DocsPanelProps = {
   specifier?: string;
 }
 
-// TODO copied from describe-package
-type FunctionDescription = {
-  name: string;
-  comment: string;
-};
+const getSignature = (fn: FunctionDescription) => {
+  const paramList: string[] = fn.parameters.map(({ name }) => name);
+
+  return `${fn.name}(${paramList.join(', ')})`
+}
 
 // TODO this will move out
 // Not quite sure what it is yet
@@ -22,11 +23,13 @@ type FunctionDescription = {
 const DocsListing = ({ item }: { item: FunctionDescription }) => {
   return (
     <div>
-      <h2>{item.name}</h2>
-      <p>{item.comment}</p>
+      <h2>{getSignature(item)}</h2>
+      <p>{item.description}</p>
+      {item.example && <pre>item.example</pre>}
     </div>
   )
 }
+
 
 const DocsPanel = ({ specifier }: DocsPanelProps) => {
   if (!specifier) {;
@@ -35,10 +38,10 @@ const DocsPanel = ({ specifier }: DocsPanelProps) => {
 
   const { name, version } = getNameAndVersion(specifier);
 
-  const data = useDocs();
+  const data = useDocs(specifier);
   return (
   <div>
-    <h1>{name}</h1>
+    <h1>Adaptor {name} v{version}</h1>
     {data.map((item) => <DocsListing key={item.name} item={item} />)}
   </div>)
 };

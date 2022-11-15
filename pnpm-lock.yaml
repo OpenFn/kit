@@ -113,6 +113,7 @@ importers:
 
   packages/adaptor-docs:
     specifiers:
+      '@openfn/describe-package': workspace:^0.0.8
       '@openfn/runtime': workspace:^0.0.10
       '@types/node': ^18.11.9
       '@types/react': ^18.0.25
@@ -123,6 +124,7 @@ importers:
       tsup: ^6.2.3
       typescript: ^4.8.4
     dependencies:
+      '@openfn/describe-package': link:../describe-package
       '@openfn/runtime': link:../runtime
       react: 18.2.0
     devDependencies:
@@ -1095,10 +1097,10 @@ packages:
 
   /@types/node/17.0.45:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
+    dev: true
 
   /@types/node/18.11.9:
     resolution: {integrity: sha512-CRpX21/kGdzjOpFsZSkcrXMGIBWMGNIHXXBVFSH+ggkftxg+XYP20TESbh+zFvFj3EQOl5byk0HTRn1IL6hbqg==}
-    dev: true
 
   /@types/node/18.7.14:
     resolution: {integrity: sha512-6bbDaETVi8oyIARulOE9qF1/Qdi/23z6emrUh0fNJRUmjznqrixD4MpGDdgOFk5Xb0m2H6Xu42JGdvAxaJR/wA==}
@@ -5867,7 +5869,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.0.6
-      ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
+      ts-node: 10.9.1_cbe7ovvae6zqfnmtgctpgpys54
       yaml: 1.10.2
 
   /postcss-load-config/4.0.1_postcss@8.4.14:
@@ -7570,7 +7572,6 @@ packages:
       typescript: 4.8.4
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-    dev: true
 
   /ts-node/10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
@@ -7601,6 +7602,7 @@ packages:
       typescript: 4.8.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    dev: true
 
   /ts-node/10.9.1_tphhiizkxv2hzwkunblc3hbmra:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
@@ -7915,7 +7917,6 @@ packages:
     resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: true
 
   /unbox-primitive/1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
