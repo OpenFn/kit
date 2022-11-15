@@ -76,7 +76,11 @@ export const install = async (
     await execFn(`npm install ${flags.join(' ')} ${aliases.join(' ')}`, {
       cwd: repoPath,
     });
-    log.success(`Installed ${filtered.map(({ name }) => name).join(', ')}!`);
+    log.success(
+      `Installed ${filtered
+        .map(({ name, version }) => `${name}@${version}`)
+        .join(', ')}`
+    );
     return true;
   }
 };
