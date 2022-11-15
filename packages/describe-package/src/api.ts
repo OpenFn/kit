@@ -76,6 +76,6 @@ export const describePackage = async (
 // This is called directly by Lightning's frontend at the moment, but I think it needs to be called from
 // the server and have a repo passed in
 export const loadDTS = async (
-  specifier: string,
+  _specifier: string,
   _options: Options
-): Promise<string[]> => {};
+): Promise<string[]> => ['declare module {}'];

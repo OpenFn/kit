@@ -60,18 +60,18 @@ export class WrappedSymbol {
 
   public get parameters(): WrappedSymbol[] {
     if (this.symbol.valueDeclaration) {
+      // @ts-ignore
       return this.symbol.valueDeclaration.parameters.map(
-        (param) => new WrappedSymbol(this.typeChecker, param.symbol)
+        (param: any) => new WrappedSymbol(this.typeChecker, param.symbol)
       );
     }
-    return null;
+    return [];
   }
 
-  public get type(): TypeNode {
+  public get type(): ts.TypeNode {
     // This works for parameters but how generic is it?
-    if (this.symbol.valueDeclaration) {
-      return this.symbol.valueDeclaration.type;
-    }
+    // @ts-ignore
+    return this.symbol.valueDeclaration?.type;
   }
 
   // public get typeString(): NodeObject {
