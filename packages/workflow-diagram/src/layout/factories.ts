@@ -1,4 +1,4 @@
-import { Job, Operation, Trigger, TriggerType, Workflow } from 'types';
+import { Job, Operation, TriggerType, Workflow } from 'types';
 import { FlowElkNode, ElkNodeEdges, EdgeFlowProps, FlowElkEdge } from './types';
 
 const defaultLayoutOptions = {
@@ -50,26 +50,13 @@ const TriggerLabels: { [key in TriggerType]: string } = {
   on_job_success: 'on success',
 };
 
-function getWebhookUrlOrCronExpression(trigger: Trigger): string[] | null[] {
-  switch (trigger.type) {
-    case 'webhook':
-      return ['webhookUrl', trigger.webhookUrl];
-    case 'cron':
-      return ['cronExpression', trigger.cronExpression];
-    default:
-      return [null, null];
-  }
-}
-
 export function triggerNodeFactory(job: Job, workflow: Workflow): FlowElkNode {
   let data = {
     label: TriggerLabels[job.trigger.type],
+    trigger: job.trigger,
     workflow,
   };
-  const [key, value] = getWebhookUrlOrCronExpression(job.trigger);
-  if (key) {
-    data = { ...data, [key]: value };
-  }
+
   return {
     id: `${job.id}-trigger`,
     __flowProps__: {

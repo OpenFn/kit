@@ -61,10 +61,19 @@ const projectSpace = {
       enabled: true,
       trigger: { type: 'cron', cronExpression: '* * * * *' },
     },
+    {
+      id: 'F',
+      name: 'Job F',
+      workflowId: 'wf-three',
+      adaptor: '@openfn/language-http@4.0.0',
+      enabled: true,
+      trigger: { type: 'cron', cronExpression: null },
+    },
   ],
   workflows: [
     { name: null, id: 'wf-one' },
     { name: 'Workflow Two', id: 'wf-two' },
+    { name: 'Workflow Three', id: 'wf-three' },
   ],
 };
 

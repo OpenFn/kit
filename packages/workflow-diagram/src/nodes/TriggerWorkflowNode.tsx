@@ -2,41 +2,47 @@ import React, { memo } from 'react';
 
 import { Handle, Position } from 'react-flow-renderer';
 import type { NodeProps } from 'react-flow-renderer';
+import type { Trigger, Workflow } from '../types';
 import cronstrue from 'cronstrue';
 
-function updateData(data: any): any {
-  switch (data.label) {
-    case 'Webhook':
-      data.description = `When data is received at ${data.webhookUrl}`;
-      break;
-    case 'Cron':
-      data.description = cronstrue.toString(data.cronExpression);
-      break;
+function descriptionFor({ trigger }: { trigger: Trigger }): string | null {
+  switch (trigger.type) {
+    case 'webhook':
+      return `When data is received at ${trigger.webhookUrl}`;
+    case 'cron':
+      try {
+        return cronstrue.toString(trigger.cronExpression);
+      } catch (_error) {
+        return null;
+      }
     default:
-      break;
+      return null;
   }
-  data.workflow.name = data.workflow.name ?? 'Untitled';
-  return data;
 }
 
 const TriggerWorkflowNode = ({
   data,
   isConnectable,
   sourcePosition = Position.Bottom,
-}: NodeProps) => {
-  const updatedData = updateData(data);
+}: NodeProps & {
+  data: { label: string; trigger: Trigger; workflow: Workflow };
+}): JSX.Element => {
+  console.log(data);
+
+  const workflowName = data.workflow.name;
+  const description = descriptionFor(data);
   return (
     <div
       className="bg-white cursor-pointer h-full py-1 px-1 rounded-md shadow-sm
         text-center text-xs ring-0.5 ring-black ring-opacity-5"
     >
       <div className="flex flex-col items-center justify-center h-full text-center">
-        <p>{updatedData?.workflow?.name}</p>
+        <p>{workflowName}</p>
         <p
-          title={updatedData?.description}
+          title={description || ''}
           className="text-[0.6rem] italic text-ellipsis overflow-hidden whitespace-pre-line"
         >
-          {updatedData?.description}
+          {description}
         </p>
       </div>
       <Handle
