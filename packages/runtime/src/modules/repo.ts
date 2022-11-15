@@ -207,7 +207,7 @@ export const getModulePath = async (
 
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
-    log.debug(`repo resolved ${specifier} path to ${path}`);
+    log.debug(`repo resolved ${specifier} path to ${p}`);
     return p;
   } else {
     log.debug(`module not found in repo: ${specifier}`);

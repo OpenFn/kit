@@ -78,7 +78,7 @@ export default function ensureOpts(
     force: opts.force || false,
     repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
     noCompile: Boolean(opts.noCompile),
-    expand: Boolean(opts.expand),
+    expand: opts.expand !== false,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
     stateStdin: opts.stateStdin,

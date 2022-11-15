@@ -120,12 +120,42 @@ test('preserve noCompile', (t) => {
 
 test('preserve expand', (t) => {
   const initialOpts = {
-    expand: true,
+    expand: false,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.truthy(opts.expand);
+  t.false(opts.expand);
+});
+
+test('default expand', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.expand);
+});
+
+test('default expand if undefined', (t) => {
+  // @ts-ignore
+  const initialOpts = {
+    expand: undefined,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.expand);
+});
+
+test('default expand if null', (t) => {
+  // @ts-ignore
+  const initialOpts = {
+    expand: null,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.expand);
 });
 
 test('preserve stateStdin', (t) => {
