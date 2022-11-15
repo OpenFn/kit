@@ -72,7 +72,7 @@ export default function ensureOpts(
 ): SafeOpts {
   const newOpts = {
     adaptor: opts.adaptor, // only applies to install (a bit messy)
-    adaptors: opts.adaptors,
+    adaptors: opts.adaptors || [],
     autoinstall: opts.autoinstall,
     command: opts.command,
     force: opts.force || false,

@@ -68,7 +68,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
 
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
-  if (opts.adaptors) {
+  if (opts.adaptors?.length) {
     let exports;
     const [pattern] = opts.adaptors; // TODO add-imports only takes on adaptor, but the cli can take multiple
     const [specifier] = pattern.split('=');

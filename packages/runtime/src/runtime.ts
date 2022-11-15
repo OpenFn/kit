@@ -47,7 +47,6 @@ export default async function run(
   opts: Options = {}
 ) {
   const logger = opts.logger || defaultLogger;
-  console.log(opts);
   logger.debug('Intialising pipeline');
   // Setup a shared execution context
   const context = buildContext(initialState, opts);
