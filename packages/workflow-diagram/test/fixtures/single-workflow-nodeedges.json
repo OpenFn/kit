@@ -32,7 +32,10 @@
       "data": {
         "hasChildren": false,
         "label": "Webhook",
-        "webhookUrl": "https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a",
+        "trigger": {
+          "type": "webhook",
+          "webhookUrl": "https://demo.openfn.org/i/34f843bd-eb87-4833-b32a-905139534d5a"
+        },
         "workflow": {
           "id": "wf-one",
           "name": "Workflow One"
@@ -426,3 +429,4 @@
     }
   ]
 ]
+
