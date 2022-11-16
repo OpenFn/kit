@@ -15,6 +15,7 @@ type MockLogger = Logger & {
     namespace?: string;
     icon?: string;
     message: string | object;
+    messageRaw: any[];
   };
 };
 
@@ -56,7 +57,7 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
     let messageParts = [];
 
     if (log[0] === 'confirm') {
-      return { level: 'confirm', message: log[1] };
+      return { level: 'confirm', message: log[1], messageRaw: [log[1]] };
     }
 
     if (name && !opts.hideNamespace && !opts.hideIcons) {
@@ -87,6 +88,7 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
       namespace: namespace.substring(1, namespace.length - 1),
       icon,
       message,
+      messageRaw: messageParts,
     };
   };
 
@@ -96,7 +98,6 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
    * b) see a confirm message in the log history
    */
   mock.confirm = async (message: string) => {
-    console.log(message);
     history.push(['confirm', message]);
     return true;
   };
