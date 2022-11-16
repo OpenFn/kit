@@ -25,9 +25,6 @@ export type LinkerOptions = {
   repo?: string;
 
   whitelist?: RegExp[]; // whitelist packages which the linker allows to be imported
-
-  // TODO deprecated - use the logger instead
-  trace?: boolean; // log module lookup information
 };
 
 export type Linker = (
@@ -114,10 +111,8 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     try {
       return import(path);
     } catch (e) {
-      if (options.trace) {
-        log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
-        console.log(e);
-      }
+      log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
+      console.log(e);
       // If we fail to load from a path, fall back to loading from a specifier
     }
   }
