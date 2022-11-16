@@ -10,8 +10,11 @@
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
-    "build": "tsup --config ./tsup.config.js",
+    "build:tsup": "tsup --config ./tsup.config.js",
+    "build": "rollup -c",
+    "build:css": "tsup --config ./tsup-css.config.js",
     "build:watch": "pnpm build --watch",
+    "build:clean": "rimraf dist",
     "pack": "pnpm pack --pack-destination ../../dist",
     "export": "sh scripts/export.sh"
   },
@@ -31,8 +34,13 @@
   "dependencies": {
     "@openfn/describe-package": "workspace:^0.0.8",
     "@openfn/runtime": "workspace:^0.0.10",
+    "esbuild": "^0.15.14",
+    "esbuild-css-modules-plugin": "^2.6.2",
+    "esbuild-postcss": "^0.0.4",
+    "esbuild-style-plugin": "^1.6.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.2.4"
   },
   "peerDependencies": {
     "react": "16 || 17 || 18",
@@ -43,9 +51,15 @@
     "README.md"
   ],
   "devDependencies": {
+    "@rollup/plugin-typescript": "^9.0.2",
     "@types/node": "^18.11.9",
     "@types/react": "^18.0.25",
-    "@types/typescript": "^2.0.0",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.19",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.79.0",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-postcss": "^4.0.2",
     "ts-lib": "^0.0.5",
     "ts-node": "^10.9.1",
     "tsup": "^6.2.3",

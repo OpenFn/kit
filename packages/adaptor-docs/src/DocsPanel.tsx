@@ -20,12 +20,18 @@ const getSignature = (fn: FunctionDescription) => {
 // TODO:
 // - it has to be collapsible
 // - it needs a lot more metadata (args, example)
-const DocsListing = ({ item }: { item: FunctionDescription }) => {
+const DocsFn = ({ item }: { item: FunctionDescription }) => {
   return (
-    <div>
-      <h2>{getSignature(item)}</h2>
-      <p>{item.description}</p>
-      {item.examples.map((eg, idx) => <pre key={`${item.name}-eg-${idx}`}>{eg}</pre>)}
+    <div className="block mb-8">
+      <label className="block text-m font-bold text-secondary-700 mb-1">{getSignature(item)}</label>
+      <p className="block text-sm">{item.description}</p>
+      {item.examples.map((eg, idx) =>
+        <pre
+          className="rounded-md px-4 py-2 mx-4 my-4 font-mono bg-slate-100 border-2 border-slate-200 text-slate-800 min-h-full text-xs"
+          key={`${item.name}-eg-${idx}`}>
+            {eg}
+        </pre>
+      )}
     </div>
   )
 }
@@ -39,9 +45,9 @@ const DocsPanel = ({ specifier }: DocsPanelProps) => {
 
   const docs = useDocs(specifier);
   return (
-  <div>
-    <h1>Adaptor {name} v{version}</h1>
-    {docs.map((item) => <DocsListing key={item.name} item={item} />)}
+  <div className="block m-2 mb-8">
+    <h1 className="h1 text-xl mb-6 font-bold text-secondary-700">Adaptor {name} v{version}</h1>
+    {docs.map((item) => <DocsFn key={item.name} item={item} />)}
   </div>)
 };
 
