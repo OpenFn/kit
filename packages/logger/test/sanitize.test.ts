@@ -26,6 +26,30 @@ test('sanitize state.configuration', (t) => {
   t.deepEqual(result, expectedState);
 });
 
+test('sanitize if no data is passed', (t) => {
+  const state = {
+    configuration: { password: 'password1', username: 'foo' },
+  };
+  const expectedState = {
+    configuration: { password: SECRET, username: SECRET },
+  };
+  const result = sanitize(state, options);
+  t.deepEqual(result, expectedState);
+});
+
+test('preserve top level stuff after sanitizing', (t) => {
+  const state = {
+    configuration: { password: 'password1', username: 'foo' },
+    jam: 'jar',
+  };
+  const expectedState = {
+    configuration: { password: SECRET, username: SECRET },
+    jam: 'jar',
+  };
+  const result = sanitize(state, options);
+  t.deepEqual(result, expectedState);
+});
+
 // TODO not implemented yet
 test.skip('sanitize a simple path', (t) => {
   const result = sanitize({ a: 'x' }, { sanitizePaths: ['a'] });
