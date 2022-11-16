@@ -31,10 +31,11 @@ export default defineConfig({
     'app': 'src/index.tsx'
   },
   format: 'esm',
-  target: 'es2020',
+  platform: 'browser',
   clean: true,
+  bundle: true,
   watch: ['.', '../../packages/adaptor-docs/dist'],
-  noExternal: ["@openfn"],
+  noExternal: ["@openfn/adaptor-docs", "react"],
   esbuildPlugins: [copyStaticFiles({
     src: './static/',
     dest: './dist/'

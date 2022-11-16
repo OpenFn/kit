@@ -11,11 +11,9 @@
   "author": "",
   "license": "ISC",
   "private": true,
-  "dependencies": {
-    "@openfn/adaptor-docs": "workspace:^0.0.1",
-    "@openfn/describe-package": "workspace:*"
-  },
   "devDependencies": {
+    "@openfn/adaptor-docs": "workspace:^0.0.1",
+    "@openfn/describe-package": "workspace:*",
     "@tailwindcss/forms": "^0.5.2",
     "@types/node": "^18.11.9",
     "@types/react": "^18.0.8",
