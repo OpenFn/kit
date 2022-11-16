@@ -12,7 +12,8 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ./tsup.config.js",
     "build:watch": "pnpm build --watch",
-    "pack": "pnpm pack --pack-destination ../../dist"
+    "pack": "pnpm pack --pack-destination ../../dist",
+    "export": "sh scripts/export.sh"
   },
   "exports": {
     ".": {
@@ -30,7 +31,12 @@
   "dependencies": {
     "@openfn/describe-package": "workspace:^0.0.8",
     "@openfn/runtime": "workspace:^0.0.10",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "peerDependencies": {
+    "react": "16 || 17 || 18",
+    "react-dom": "16 || 17 || 18"
   },
   "files": [
     "dist",
