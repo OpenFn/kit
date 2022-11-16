@@ -3,7 +3,8 @@ import DocsPanel from './DocsPanel';
 
 type AdaptorDocsProps = {
     specifier?: string;
+    onInsert?: (text: string) => void;
 };
 
-export default ({ specifier }: AdaptorDocsProps) =>
-  (<DocsPanel specifier={specifier} />)
+export default ({ specifier, onInsert }: AdaptorDocsProps) =>
+  (<DocsPanel specifier={specifier} onInsert={onInsert} />)

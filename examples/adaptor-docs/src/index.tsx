@@ -7,5 +7,5 @@ import AdaptorDocs from '@openfn/adaptor-docs';
 const root = createRoot(document.getElementById("root"));
 
 root.render(
-  <AdaptorDocs specifier="@openfn/language-common@1.7.4" />
+  <AdaptorDocs specifier="@openfn/language-common@1.7.4" onInsert={console.log}/>
 );
