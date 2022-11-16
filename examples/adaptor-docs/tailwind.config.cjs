@@ -31,7 +31,7 @@ module.exports = {
         'danger-700': '#b91c1c',
       },
     },
-  },                            
+  },
   plugins: [
     // require('@tailwindcss/forms'),
     // require('@tailwindcss/container-queries'),
