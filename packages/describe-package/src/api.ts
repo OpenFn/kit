@@ -25,7 +25,7 @@ type Options = {
 export type PackageDescription = {
   name: string;
   version: string;
-  functions: Partial<FunctionDescription>[];
+  functions: FunctionDescription[];
 };
 
 export type FunctionDescription = {
@@ -54,7 +54,7 @@ export const describePackage = async (
 
   const files = await fetchDTSListing(specifier);
 
-  const functions: Partial<FunctionDescription>[] = [];
+  const functions: FunctionDescription[] = [];
   for await (const fileName of files) {
     const f = await fetchFile(`${specifier}${fileName}`);
     project.createFile(f, fileName);

@@ -55,7 +55,7 @@ const describeProject = (
     }
 
     return symbols;
-  }, [] as Partial<FunctionDescription>[]);
+  }, [] as FunctionDescription[]);
 };
 
 export default describeProject;
