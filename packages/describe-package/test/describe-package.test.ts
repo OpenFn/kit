@@ -34,7 +34,7 @@ test('1 parameters in a 1-arity function', async (t) => {
   t.is(flavour.type, 'string');
 });
 
-test.only('Load the example', async (t) => {
+test('Load the example', async (t) => {
   const fn = get('traditional');
-  t.is(fn.example[0], 'traditional()');
+  t.is(fn.examples[0], 'traditional()');
 });
