@@ -14,7 +14,7 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [postcss({}), typescript({ tsconfig: './tsconfig.json' })],
+    plugins: [postcss(), typescript({ tsconfig: './tsconfig.json' })],
     external: ['react', 'react-dom'],
   },
   {
