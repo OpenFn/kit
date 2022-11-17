@@ -54,7 +54,7 @@
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.19",
     "rimraf": "^3.0.2",
-    "rollup": "^2.79.0",
+    "rollup": "^3.0.0",
     "rollup-plugin-dts": "^4.2.2",
     "rollup-plugin-postcss": "^4.0.2",
     "ts-lib": "^0.0.5",
