@@ -31,7 +31,6 @@
   "license": "ISC",
   "dependencies": {
     "@openfn/describe-package": "workspace:^0.0.8",
-    "@openfn/runtime": "workspace:^0.0.10",
     "esbuild": "^0.15.14",
     "esbuild-css-modules-plugin": "^2.6.2",
     "esbuild-postcss": "^0.0.4",
