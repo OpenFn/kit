@@ -1,5 +1,6 @@
 // This is duplicated and lightly edited from Lightning
 module.exports = {
+  prefix: 'ad--',
   darkMode: 'class',
   content: [
     './src/**/*.{js,jsx,ts,tsx}',
@@ -32,8 +33,5 @@ module.exports = {
       },
     },
   },                            
-  plugins: [
-    // require('@tailwindcss/forms'),
-    // require('@tailwindcss/container-queries'),
-  ],
+  plugins: [],
 };

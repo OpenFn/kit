@@ -32,7 +32,7 @@ const getSignature = (fn: FunctionDescription) => {
 const PreButton = ({ label, onClick, tooltip }: PreButtonFunctionProps) => 
   // TODO give some kind of feedback on click
   <button
-    className="rounded-md bg-slate-300 text-white px-2 py-1 mr-1 text-xs"
+    className="ad--rounded-md ad--bg-slate-300 ad--text-white ad--px-2 ad--py-1 ad--mr-1 ad--text-xs"
     title={tooltip || ''}
     onClick={onClick}>
     {label}
@@ -40,18 +40,18 @@ const PreButton = ({ label, onClick, tooltip }: PreButtonFunctionProps) =>
 
 const RenderFunction = ({ fn, onInsert }: RenderFunctionProps) => {
   return (
-    <div className="block mb-10">
-      <label className="block text-m font-bold text-secondary-700 mb-1">{getSignature(fn)}</label>
-      <p className="block text-sm">{fn.description}</p>
-      {fn.examples.length > 0 && <label className="block text-sm">Example:</label>}
+    <div className="ad--block ad--mb-10">
+      <label className="ad--block ad--text-m ad--font-bold ad--text-secondary-700 ad--mb-1">{getSignature(fn)}</label>
+      <p className="ad--block ad--text-sm">{fn.description}</p>
+      {fn.examples.length > 0 && <label className="ad--block ad--text-sm">Example:</label>}
       {fn.examples.map((eg, idx) =>
         <div key={`${fn.name}-eg-${idx}`} style={{ marginTop: '-6px'}}>
-          <div className="w-full px-5 text-right" style={{ height: '13px'}}>
+          <div className="ad--w-full ad--px-5 ad--text-right" style={{ height: '13px'}}>
             <PreButton label="COPY" onClick={() => doCopy(eg)} tooltip="Copy this example to the clipboard"/>
             {onInsert && <PreButton label="ADD" onClick={() => onInsert(eg)} tooltip="Add this snippet to the end of the code"/>}
           </div>
           <pre
-            className="rounded-md pl-4 pr-30 py-2 mx-4 my-0 font-mono bg-slate-100 border-2 border-slate-200 text-slate-800 min-h-full text-xs overflow-x-auto"
+            className="ad--rounded-md ad--pl-4 ad--pr-30 ad--py-2 ad--mx-4 ad--my-0 ad--font-mono ad--bg-slate-100 ad--border-2 ad--border-slate-200 ad--text-slate-800 ad--min-h-full ad--text-xs ad--overflow-x-auto"
             >
               {eg}
           </pre>

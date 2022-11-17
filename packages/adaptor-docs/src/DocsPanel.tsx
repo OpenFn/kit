@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PackageDescription } from '@openfn/describe-package';
+import type { PackageDescription, FunctionDescription } from '@openfn/describe-package';
 import useDocs from './useDocs';
 import Function from './render/Function';
 
@@ -23,9 +23,9 @@ const DocsPanel = ({ specifier, onInsert }: DocsPanelProps) => {
   
   const { name, version, functions } = pkg as PackageDescription;
   return (
-    <div className="block m-2">
-      <h1 className="h1 text-lg font-bold text-secondary-700 mb-2">{name} v{version}</h1>
-      <div className="text-sm mb-4">Operations available for use by this adaptor are listed below.</div>
+    <div className="ad--block ad--m-2">
+      <h1 className="ad--h1 ad--text-lg ad--font-bold ad--text-secondary-700 ad--mb-2">{name} v{version}</h1>
+      <div className="ad--text-sm ad--mb-4">Operations available for use by this adaptor are listed below.</div>
       {functions
         // TODO we ought to memo the sort really, although this won't render very often so it's probably ok
         .sort((a, b) => {
