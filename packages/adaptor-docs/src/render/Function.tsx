@@ -2,8 +2,14 @@ import React from 'react';
 import type { FunctionDescription } from '@openfn/describe-package';
 
 type RenderFunctionProps = {
-  fn: FunctionDescription
+  fn: FunctionDescription;
   onInsert?: (text: string) => void;
+}
+
+type PreButtonFunctionProps = {
+  tooltip?: string;
+  label: string;
+  onClick?: () => void;
 }
 
 const doCopy = async (text: string) => {
@@ -23,10 +29,11 @@ const getSignature = (fn: FunctionDescription) => {
   return `${fn.name}(${paramList.join(', ')})`
 }
 
-const PreButton = ({ label, onClick }: { label: string, onClick?: () => void }) => 
+const PreButton = ({ label, onClick, tooltip }: PreButtonFunctionProps) => 
   // TODO give some kind of feedback on click
   <button
     className="rounded-md bg-slate-300 text-white px-2 py-1 mr-1 text-xs"
+    title={tooltip || ''}
     onClick={onClick}>
     {label}
   </button>
@@ -36,11 +43,12 @@ const RenderFunction = ({ fn, onInsert }: RenderFunctionProps) => {
     <div className="block mb-10">
       <label className="block text-m font-bold text-secondary-700 mb-1">{getSignature(fn)}</label>
       <p className="block text-sm">{fn.description}</p>
+      {fn.examples.length > 0 && <label className="block text-sm">Example:</label>}
       {fn.examples.map((eg, idx) =>
-        <div key={`${fn.name}-eg-${idx}`}>
+        <div key={`${fn.name}-eg-${idx}`} style={{ marginTop: '-6px'}}>
           <div className="w-full px-5 text-right" style={{ height: '13px'}}>
-            <PreButton label="COPY" onClick={() => doCopy(eg)} />
-            {onInsert && <PreButton label="INSERT" onClick={() => onInsert(eg)} />}
+            <PreButton label="COPY" onClick={() => doCopy(eg)} tooltip="Copy this example to the clipboard"/>
+            {onInsert && <PreButton label="ADD" onClick={() => onInsert(eg)} tooltip="Add this snippet to the end of the code"/>}
           </div>
           <pre
             className="rounded-md pl-4 pr-30 py-2 mx-4 my-0 font-mono bg-slate-100 border-2 border-slate-200 text-slate-800 min-h-full text-xs overflow-x-auto"

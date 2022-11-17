@@ -23,8 +23,9 @@ const DocsPanel = ({ specifier, onInsert }: DocsPanelProps) => {
   
   const { name, version, functions } = pkg as PackageDescription;
   return (
-    <div className="block m-2 mb-8">
-      <h1 className="h1 text-xl mb-6 font-bold text-secondary-700">{name} v{version}</h1>
+    <div className="block m-2">
+      <h1 className="h1 text-lg font-bold text-secondary-700 mb-2">{name} v{version}</h1>
+      <div className="text-sm mb-4">Operations available for use by this adaptor are listed below.</div>
       {functions
         // TODO we ought to memo the sort really, although this won't render very often so it's probably ok
         .sort((a, b) => {
