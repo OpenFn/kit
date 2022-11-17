@@ -47,7 +47,6 @@ export default async function run(
   opts: Options = {}
 ) {
   const logger = opts.logger || defaultLogger;
-
   logger.debug('Intialising pipeline');
   // Setup a shared execution context
   const context = buildContext(initialState, opts);
@@ -95,7 +94,6 @@ const wrapOperation = (
   immutableState?: boolean
 ) => {
   return async (state: State) => {
-    // TODO this output isn't very interesting yet!
     logger.debug(`Starting operation ${name}`);
     const start = new Date().getTime();
     const newState = immutableState ? clone(state) : state;
@@ -142,7 +140,11 @@ const prepareJob = async (
   opts: Options = {}
 ): Promise<JobModule> => {
   if (typeof jobs === 'string') {
-    const exports = await loadModule(jobs, { ...opts.linker, context });
+    const exports = await loadModule(jobs, {
+      ...opts.linker,
+      context,
+      log: opts.logger,
+    });
     const operations = exports.default;
     return {
       operations,

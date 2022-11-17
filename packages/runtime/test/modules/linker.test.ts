@@ -119,19 +119,38 @@ test("Fails to load a module it can't find", async (t) => {
 
 test('loads a module from a specific path', async (t) => {
   const options = {
-    modulePaths: {
-      'ultimate-answer': path.resolve('test/__modules__/ultimate-answer'),
+    modules: {
+      'ultimate-answer': {
+        path: path.resolve('test/__modules__/ultimate-answer'),
+      },
     },
   };
   const m = await linker('ultimate-answer', context, options);
   t.assert(m.namespace.default === 42);
 });
 
-test('loads a specific module version from the repo', async (t) => {
+// while this method technically works, it's not like to be ever used like this because the specifiers
+// come straight out of import statements, and so never have versions
+test('loads a specific module version from the repo (the wrong way)', async (t) => {
   const options = {
     repo: path.resolve('test/__repo'),
   };
   const m = await linker('ultimate-answer@1.0.0', context, options);
+  t.assert(m.namespace.default === 42);
+});
+
+// This is how we expect versioned modules to be loaded: someone (whether the CLI or a directive or whatever)
+// Will pass in version metata much as they would the path to the module
+test('loads a specific module version from the repo (the right way)', async (t) => {
+  const options = {
+    repo: path.resolve('test/__repo'),
+    modules: {
+      'ultimate-answer': {
+        version: '1.0.0',
+      },
+    },
+  };
+  const m = await linker('ultimate-answer', context, options);
   t.assert(m.namespace.default === 42);
 });
 

@@ -13,6 +13,8 @@ export const ERROR_MESSAGE_LOG_LEVEL =
 export const ERROR_MESSAGE_LOG_COMPONENT =
   'Unknown log component. Valid components are cli, compiler, runtime and job.';
 
+export const DEFAULT_REPO_DIR = '/tmp/openfn/repo';
+
 const componentShorthands: Record<string, string> = {
   cmp: 'compiler',
   rt: 'runtime',
@@ -70,13 +72,13 @@ export default function ensureOpts(
 ): SafeOpts {
   const newOpts = {
     adaptor: opts.adaptor, // only applies to install (a bit messy)
-    adaptors: opts.adaptors,
+    adaptors: opts.adaptors || [],
     autoinstall: opts.autoinstall,
     command: opts.command,
     force: opts.force || false,
-    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR,
+    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
     noCompile: Boolean(opts.noCompile),
-    expand: Boolean(opts.expand),
+    expand: opts.expand !== false,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
     stateStdin: opts.stateStdin,

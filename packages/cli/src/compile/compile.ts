@@ -53,9 +53,8 @@ export const resolveSpecifierPath = async (
     return path;
   }
 
-  const repoPath = await getModulePath(specifier, repoDir);
+  const repoPath = await getModulePath(specifier, repoDir, log);
   if (repoPath) {
-    log.debug(`Resolved ${specifier} to repo module`);
     return repoPath;
   }
   return null;
@@ -69,7 +68,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
 
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
-  if (opts.adaptors) {
+  if (opts.adaptors?.length) {
     let exports;
     const [pattern] = opts.adaptors; // TODO add-imports only takes on adaptor, but the cli can take multiple
     const [specifier] = pattern.split('=');
@@ -90,7 +89,7 @@ export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
     }
 
     if (!exports || exports.length === 0) {
-      console.warn(`WARNING: no module exports found for ${pattern}`);
+      log.debug(`No module exports found for ${pattern}`);
     }
 
     options['add-imports'] = {

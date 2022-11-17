@@ -12,15 +12,15 @@ const sanitize = (
   // TODO what if the object contains functions?
   if (typeof item !== 'string') {
     const obj = item as Record<string, unknown>;
-    if (obj.data && obj.configuration) {
-      // This is a state object, so let's sanitize it
-      const cleanConfig = {} as Record<string, unknown>;
+    if (obj.configuration) {
+      // This looks sensitive, so let's sanitize it
+      const configuration = {} as Record<string, unknown>;
       for (const k in obj.configuration) {
-        cleanConfig[k] = SECRET;
+        configuration[k] = SECRET;
       }
       const cleaned = {
-        configuration: cleanConfig,
-        data: obj.data,
+        ...obj,
+        configuration,
       };
       return cleaned;
     }

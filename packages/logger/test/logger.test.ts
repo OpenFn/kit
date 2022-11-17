@@ -213,6 +213,22 @@ test('sanitize state', (t) => {
   t.is(message.configuration.x, SECRET);
 });
 
+test('sanitize state in second arg', (t) => {
+  const logger = createLogger();
+  logger.success('state', {
+    configuration: {
+      x: 'y',
+    },
+    data: {},
+  });
+
+  const { messageRaw } = logger._parse(logger._last);
+  const [message, state] = messageRaw;
+  // @ts-ignore
+  t.is(message, 'state');
+  t.is(state.configuration.x, SECRET);
+});
+
 test('timer: start', (t) => {
   const logger = createLogger();
   const result = logger.timer('t');

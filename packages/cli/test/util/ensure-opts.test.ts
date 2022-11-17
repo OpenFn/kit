@@ -88,6 +88,26 @@ test('should not append @openfn to adaptors if already prefixed', (t) => {
   t.assert(opts.adaptors[0] === '@openfn/language-common=a/b/c');
 });
 
+test('should create an empty adaptors object', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.adaptors);
+  t.falsy(opts.adaptors.length);
+});
+
+test('should create an empty adaptors object if undefined', (t) => {
+  const initialOpts = {
+    adaptors: undefined,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.adaptors);
+  t.falsy(opts.adaptors.length);
+});
+
 test('preserve outputStdout', (t) => {
   const initialOpts = {
     outputStdout: true,
@@ -120,12 +140,42 @@ test('preserve noCompile', (t) => {
 
 test('preserve expand', (t) => {
   const initialOpts = {
-    expand: true,
+    expand: false,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.truthy(opts.expand);
+  t.false(opts.expand);
+});
+
+test('default expand', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.expand);
+});
+
+test('default expand if undefined', (t) => {
+  // @ts-ignore
+  const initialOpts = {
+    expand: undefined,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.expand);
+});
+
+test('default expand if null', (t) => {
+  // @ts-ignore
+  const initialOpts = {
+    expand: null,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.expand);
 });
 
 test('preserve stateStdin', (t) => {

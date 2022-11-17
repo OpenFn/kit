@@ -93,6 +93,16 @@ test('_parse with default settings', (t) => {
   t.falsy(namespace);
 });
 
+test('_parse raw message', (t) => {
+  const logger = mockLogger();
+  logger.success('x', 1, true);
+
+  const { messageRaw } = logger._parse(logger._last);
+  t.is(messageRaw[0], 'x');
+  t.is(messageRaw[1], 1);
+  t.true(messageRaw[2]);
+});
+
 test('_parse with a namespace', (t) => {
   const logger = mockLogger('a');
   logger.success('x');

@@ -4,10 +4,12 @@
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
 import type { Operation } from '../runtime';
+import { Logger } from '@openfn/logger';
 
 type Options = LinkerOptions & {
   context?: Context;
   linker?: Linker;
+  log?: Logger;
 };
 
 // aka ModuleDescriptor?

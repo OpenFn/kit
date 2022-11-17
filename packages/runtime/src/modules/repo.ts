@@ -36,7 +36,7 @@ const filterSpecifiers = async (
       version = await getLatestVersion(s);
     }
 
-    const exists = await getModulePath(s, repoPath);
+    const exists = await getModulePath(s, repoPath, log);
     if (exists) {
       log.info(`Skipping ${name}@${version} as already installed`);
     } else {
@@ -76,7 +76,11 @@ export const install = async (
     await execFn(`npm install ${flags.join(' ')} ${aliases.join(' ')}`, {
       cwd: repoPath,
     });
-    log.success(`Installed ${filtered.map(({ name }) => name).join(', ')}!`);
+    log.success(
+      `Installed ${filtered
+        .map(({ name, version }) => `${name}@${version}`)
+        .join(', ')}`
+    );
     return true;
   }
 };
@@ -184,7 +188,8 @@ export const getLatestInstalledVersion = async (
 
 export const getModulePath = async (
   specifier: string,
-  repoPath: string = defaultRepoPath
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger // TODO should this be a null logger?
 ) => {
   const { version } = getNameAndVersion(specifier);
   let alias;
@@ -201,7 +206,11 @@ export const getModulePath = async (
   }
 
   if (alias) {
-    return path.resolve(`${repoPath}`, `node_modules/${alias}`);
+    const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
+    log.debug(`repo resolved ${specifier} path to ${p}`);
+    return p;
+  } else {
+    log.debug(`module not found in repo: ${specifier}`);
   }
   return null;
 };
