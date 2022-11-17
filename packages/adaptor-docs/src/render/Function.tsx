@@ -40,23 +40,25 @@ const PreButton = ({ label, onClick, tooltip }: PreButtonFunctionProps) =>
 
 const RenderFunction = ({ fn, onInsert }: RenderFunctionProps) => {
   return (
-    <div className="block mb-10">
-      <label className="block text-m font-bold text-secondary-700 mb-1">{getSignature(fn)}</label>
-      <p className="block text-sm">{fn.description}</p>
-      {fn.examples.length > 0 && <label className="block text-sm">Example:</label>}
-      {fn.examples.map((eg, idx) =>
-        <div key={`${fn.name}-eg-${idx}`} style={{ marginTop: '-6px'}}>
-          <div className="w-full px-5 text-right" style={{ height: '13px'}}>
-            <PreButton label="COPY" onClick={() => doCopy(eg)} tooltip="Copy this example to the clipboard"/>
-            {onInsert && <PreButton label="ADD" onClick={() => onInsert(eg)} tooltip="Add this snippet to the end of the code"/>}
+    <details>
+      <summary className="text-m text-secondary-700 mb-1 cursor-pointer">{getSignature(fn)}</summary>
+      <div className="block mb-4 pl-4">
+        <p className="block text-sm">{fn.description}</p>
+        {fn.examples.length > 0 && <label className="block text-sm">Example:</label>}
+        {fn.examples.map((eg, idx) =>
+          <div key={`${fn.name}-eg-${idx}`} style={{ marginTop: '-6px'}}>
+            <div className="w-full px-5 text-right" style={{ height: '13px'}}>
+              <PreButton label="COPY" onClick={() => doCopy(eg)} tooltip="Copy this example to the clipboard"/>
+              {onInsert && <PreButton label="ADD" onClick={() => onInsert(eg)} tooltip="Add this snippet to the end of the code"/>}
+            </div>
+            <pre
+              className="rounded-md pl-4 pr-30 py-2 mx-4 my-0 font-mono bg-slate-100 border-2 border-slate-200 text-slate-800 min-h-full text-xs overflow-x-auto"
+              >
+                {eg}
+            </pre>
           </div>
-          <pre
-            className="rounded-md pl-4 pr-30 py-2 mx-4 my-0 font-mono bg-slate-100 border-2 border-slate-200 text-slate-800 min-h-full text-xs overflow-x-auto"
-            >
-              {eg}
-          </pre>
+        )}
         </div>
-      )}
     </div>
   )
 }
