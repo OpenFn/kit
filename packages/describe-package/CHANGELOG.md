@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.9
+
+### Patch Changes
+
+- d6d11a1: Internal refactor and new top-level API
+
 ## 0.0.8
 
 ### Patch Changes

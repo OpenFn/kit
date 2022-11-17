@@ -1,6 +1,6 @@
 {
   "name": "@openfn/adaptor-docs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Component for displaying adaptor documentation",
   "engines": {
     "node": ">=16",
@@ -30,7 +30,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "dependencies": {
-    "@openfn/describe-package": "workspace:^0.0.8",
+    "@openfn/describe-package": "workspace:^0.0.9",
     "esbuild": "^0.15.14",
     "esbuild-css-modules-plugin": "^2.6.2",
     "esbuild-postcss": "^0.0.4",
