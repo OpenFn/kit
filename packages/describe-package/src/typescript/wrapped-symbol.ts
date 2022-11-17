@@ -1,4 +1,4 @@
-import ts from "typescript";
+import ts from 'typescript';
 
 export class WrappedSymbol {
   typeChecker: ts.TypeChecker;
@@ -57,6 +57,46 @@ export class WrappedSymbol {
   public get name(): string {
     return this.symbol.getName();
   }
+
+  public get parameters(): WrappedSymbol[] {
+    if (this.symbol.valueDeclaration) {
+      // @ts-ignore
+      return this.symbol.valueDeclaration.parameters.map(
+        (param: any) => new WrappedSymbol(this.typeChecker, param.symbol)
+      );
+    }
+    return [];
+  }
+
+  public get examples(): string[] {
+    const examples = [];
+    // @ts-ignore
+    const jsdoc = this.symbol.valueDeclaration?.jsDoc;
+    if (jsdoc) {
+      for (const d of jsdoc) {
+        examples.push(
+          ...d.tags
+            .filter((tag: ts.JSDocTag) => tag.tagName.escapedText === 'example')
+            .map((tag: ts.JSDocTag) => tag.comment)
+        );
+      }
+    }
+    return examples;
+  }
+
+  public get type(): ts.TypeNode {
+    // This works for parameters but how generic is it?
+    // @ts-ignore
+    return this.symbol.valueDeclaration?.type;
+  }
+
+  // public get typeString(): NodeObject {
+  //   const type = this.typeChecker.getDeclaredTypeOfSymbol(
+  //     this.symbol.declarations[0]
+  //   );
+  //   console.log(' > ', type.intrinsicName);
+  //   return this.typeChecker.typeToString(type);
+  // }
 }
 
 // interface DocEntry {

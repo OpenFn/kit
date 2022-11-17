@@ -4,11 +4,11 @@
  * Object used to handle loading and querying module packages.
  *
  * Internally the file listing is kept without a directory prefix, and
- * all paths returned by `.types` and `.getFiles()` are prefixed by 
+ * all paths returned by `.types` and `.getFiles()` are prefixed by
  * `packageBase`. This allows a packages to be loaded from different sources
  * such as the local filesystem or from a CDN, and the resulting paths to mimic
  * a local filesystem.
- * 
+ *
  * At a minimum, a Pack requires a `path`. A path is intended to represent
  * where to find the package - at present it is an npm style specifier
  * (e.g. `@myorg/mypackage@1.0.0`, or `mypackage`).
@@ -21,12 +21,12 @@
  * ```js
  * const pack = await Pack.fromUnpkg("@myorg/mypackage")
  * ```
- * 
+ *
  * This will create a new Pack instance and download it's `package.json` and
- * get a file listing. 
+ * get a file listing.
  * Next in order to download all the files in a package you can use
  * `pack.getFiles()`, or pass in a list of files you want to be retrieved.
- * 
+ *
  * ```js
  * const packageOrDts = /(?:package.json)|(?:\.d\.ts$)/i;
  * const files = await pack.getFiles(
@@ -35,8 +35,8 @@
  * ```
  */
 
-import { fetchFile, fetchFileListing } from "./package-fs";
-import urlJoin from "url-join";
+import { fetchFile, fetchFileListing } from './fs/package-fs';
+import urlJoin from 'url-join';
 
 interface PackParameters {
   path: string;
@@ -69,7 +69,7 @@ export class Pack {
 
   public get packageJson(): PackageJson {
     if (!this._packageJson) {
-      throw new Error("packageJson not available.");
+      throw new Error('packageJson not available.');
     }
     return this._packageJson;
   }
@@ -81,7 +81,7 @@ export class Pack {
    */
   public get fileListing(): string[] {
     if (!this._fileListing) {
-      throw new Error("fileListing not available.");
+      throw new Error('fileListing not available.');
     }
     return this._fileListing;
   }
@@ -112,7 +112,7 @@ export class Pack {
       return this._packageBase;
     }
 
-    this._packageBase = urlJoin("/node_modules", this.packageJson.name);
+    this._packageBase = urlJoin('/node_modules', this.packageJson.name);
     return this.packageBase;
   }
 
@@ -142,7 +142,7 @@ export class Pack {
   static async fromUnpkg(specifier: string): Promise<Pack> {
     const pack = new Pack({
       path: specifier,
-      packageJson: JSON.parse(await fetchFile(specifier + "/package.json")),
+      packageJson: JSON.parse(await fetchFile(specifier + '/package.json')),
       fileListing: Array.from(await fetchFileListing(specifier)),
     });
 
