@@ -1,6 +1,6 @@
 {
   "name": "@openfn/compiler",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Compiler and language tooling for openfn jobs.",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@openfn/describe-package": "workspace:^0.0.8",
-    "@openfn/logger": "workspace:^0.0.5",
+    "@openfn/logger": "workspace:^0.0.6",
     "acorn": "^8.8.0",
     "ast-types": "^0.14.2",
     "recast": "^0.21.2",

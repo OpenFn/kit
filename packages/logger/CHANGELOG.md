@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.6
+
+### Patch Changes
+
+- 2d07777: Fix state sanitisation
+
 ## 0.0.5
 
 ### Patch Changes
