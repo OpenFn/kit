@@ -18,7 +18,6 @@ importers:
     specifiers:
       '@openfn/adaptor-docs': workspace:^0.0.2
       '@openfn/describe-package': workspace:*
-      '@tailwindcss/forms': ^0.5.2
       '@types/node': ^18.11.9
       '@types/react': ^18.0.8
       '@types/react-dom': ^18.0.3
@@ -29,10 +28,8 @@ importers:
       koa-static: ^5.0.0
       koa-websocket: ^7.0.0
       live-server: ^1.2.2
-      postcss: ^8.4.13
       react: ^18.2.0
       react-dom: ^18.2.0
-      tailwindcss: ^3.0.24
       ts-node: ^10.9.1
       tslib: ^2.4.0
       tsup: ^6.2.3
@@ -40,24 +37,21 @@ importers:
     devDependencies:
       '@openfn/adaptor-docs': link:../../packages/adaptor-docs
       '@openfn/describe-package': link:../../packages/describe-package
-      '@tailwindcss/forms': 0.5.2_tailwindcss@3.1.8
       '@types/node': 18.11.9
       '@types/react': 18.0.25
       '@types/react-dom': 18.0.6
       esbuild: 0.15.10
       esbuild-copy-static-files: 0.1.0
-      esbuild-postcss: 0.0.4_aud5ikz75yyztiacb6xsw3iddi
+      esbuild-postcss: 0.0.4_d2uaq2snhwfwxq5kh3k33ygooy
       koa: 2.13.4
       koa-static: 5.0.0
       koa-websocket: 7.0.0
       live-server: 1.2.2
-      postcss: 8.4.16
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      tailwindcss: 3.1.8_57znarxsqwmnneadci5z5fd5gu
       ts-node: 10.9.1_cbe7ovvae6zqfnmtgctpgpys54
       tslib: 2.4.0
-      tsup: 6.2.3_jylrygoudazywojakzcxggf34e
+      tsup: 6.2.3_mwhvu7sfp6vq5ryuwb6hlbjfka
       typescript: 4.8.4
 
   examples/dts-inspector:
@@ -1178,6 +1172,7 @@ packages:
 
   /@types/node/17.0.45:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
+    dev: true
 
   /@types/node/18.11.9:
     resolution: {integrity: sha512-CRpX21/kGdzjOpFsZSkcrXMGIBWMGNIHXXBVFSH+ggkftxg+XYP20TESbh+zFvFj3EQOl5byk0HTRn1IL6hbqg==}
@@ -3737,15 +3732,14 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-postcss/0.0.4_aud5ikz75yyztiacb6xsw3iddi:
+  /esbuild-postcss/0.0.4_d2uaq2snhwfwxq5kh3k33ygooy:
     resolution: {integrity: sha512-CKYibp+aCswskE+gBPnGZ0b9YyuY0n9w2dxyMaoLYEvGTwmjkRj5SV8l1zGJpw8KylqmcMTK0Gr349RnOLd+8A==}
     peerDependencies:
       esbuild: '*'
       postcss: ^8.0.0
     dependencies:
       esbuild: 0.15.10
-      postcss: 8.4.16
-      postcss-load-config: 3.1.4_57znarxsqwmnneadci5z5fd5gu
+      postcss-load-config: 3.1.4_ts-node@10.9.1
     transitivePeerDependencies:
       - ts-node
     dev: true
@@ -6511,7 +6505,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.0.6
-      ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
+      ts-node: 10.9.1_cbe7ovvae6zqfnmtgctpgpys54
       yaml: 1.10.2
 
   /postcss-load-config/3.1.4_v776zzvn44o7tpgzieipaairwm:
@@ -8625,6 +8619,7 @@ packages:
       typescript: 4.8.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    dev: true
 
   /ts-node/10.9.1_tphhiizkxv2hzwkunblc3hbmra:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
@@ -8775,7 +8770,7 @@ packages:
       - ts-node
     dev: true
 
-  /tsup/6.2.3_jylrygoudazywojakzcxggf34e:
+  /tsup/6.2.3_mwhvu7sfp6vq5ryuwb6hlbjfka:
     resolution: {integrity: sha512-J5Pu2Dx0E1wlpIEsVFv9ryzP1pZ1OYsJ2cBHZ7GrKteytNdzaSz5hmLX7/nAxtypq+jVkVvA79d7S83ETgHQ5w==}
     engines: {node: '>=14'}
     hasBin: true
@@ -8799,8 +8794,7 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss: 8.4.16
-      postcss-load-config: 3.1.4_57znarxsqwmnneadci5z5fd5gu
+      postcss-load-config: 3.1.4_ts-node@10.9.1
       resolve-from: 5.0.0
       rollup: 2.79.1
       source-map: 0.8.0-beta.0
