@@ -22,7 +22,8 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
       }
-    }
+    },
+    "./index.css": "./dist/index.css"
   },
   "type": "module",
   "module": "dist/index.js",
