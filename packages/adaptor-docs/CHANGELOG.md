@@ -1,5 +1,11 @@
 # @openfn/adaptor-docs
 
+## 0.0.3
+
+### Patch Changes
+
+- fc3c8a1: Split out CSS in order to avoid conflicts with other Tailwind projects
+
 ## 0.0.2
 
 ### Patch Changes

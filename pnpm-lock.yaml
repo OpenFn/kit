@@ -16,7 +16,7 @@ importers:
 
   examples/adaptor-docs:
     specifiers:
-      '@openfn/adaptor-docs': workspace:^0.0.2
+      '@openfn/adaptor-docs': workspace:^0.0.3
       '@openfn/describe-package': workspace:*
       '@tailwindcss/forms': ^0.5.2
       '@types/node': ^18.11.9
