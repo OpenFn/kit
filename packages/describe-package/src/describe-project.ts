@@ -2,6 +2,10 @@ import type { Project } from './typescript/project';
 import type { FunctionDescription, ParameterDescription } from './api';
 import { WrappedSymbol } from './typescript/wrapped-symbol';
 
+type DescribeOptions = {
+  allowEmptyDesc?: boolean; // defaults to false
+};
+
 const describeParameter = (
   project: Project,
   symbol: WrappedSymbol
@@ -41,7 +45,8 @@ const describeFunction = (
 // Describe the exported functions of a given d.ts file in a project
 const describeProject = (
   project: Project,
-  typesEntry: string = 'index.d.ts'
+  typesEntry: string = 'index.d.ts',
+  options: DescribeOptions = {}
 ) => {
   const sourceFile = project.getSourceFile(typesEntry);
 
@@ -50,7 +55,10 @@ const describeProject = (
   }
 
   return project.getSymbol(sourceFile).exports.reduce((symbols, symbol) => {
-    if (symbol.isFunctionDeclaration && symbol.comment) {
+    if (
+      (symbol.isFunctionDeclaration && options.allowEmptyDesc) ||
+      symbol.comment
+    ) {
       symbols.push(describeFunction(project, symbol));
     }
 
