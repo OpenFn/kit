@@ -41,7 +41,9 @@ const PreButton = ({ label, onClick, tooltip }: PreButtonFunctionProps) =>
 const RenderFunction = ({ fn, onInsert }: RenderFunctionProps) => {
   return (
     <details>
-      <summary className="text-m text-secondary-700 mb-1 cursor-pointer">{getSignature(fn)}</summary>
+      <summary className="text-m text-secondary-700 mb-1 cursor-pointer marker:text-slate-600 marker:text-sm">
+        <span style={{ position: 'relative', top: '1px' }}>{getSignature(fn)}</span>
+      </summary>
       <div className="block mb-4 pl-4">
         <p className="block text-sm">{fn.description}</p>
         {fn.examples.length > 0 && <label className="block text-sm">Example:</label>}
