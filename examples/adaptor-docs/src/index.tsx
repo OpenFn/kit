@@ -2,11 +2,11 @@ import './hot-reload';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import AdaptorDocs from '@openfn/adaptor-docs';
-import '@openfn/adaptor-docs/index.css';
+
+import App from './App';
 
 const root = createRoot(document.getElementById("root"));
 
 root.render(
-  <AdaptorDocs specifier="@openfn/language-common@1.7.4" onInsert={console.log}/>
+  <App />
 );
