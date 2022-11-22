@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import cc from 'classcat';
 
 import './app.css';
+import '@openfn/workflow-diagram/index.css'
 
 const projectSpace = {
   jobs: [

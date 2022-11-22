@@ -1,5 +1,11 @@
 # @openfn/workflow-diagram
 
+## 0.3.0
+
+### Minor Changes
+
+- 9221125: Moved CSS to be exported instead of injected
+
 ## 0.2.1
 
 ### Patch Changes
