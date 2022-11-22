@@ -73,23 +73,9 @@ export class WrappedSymbol {
   }
 
   public get examples(): string[] {
-    const examples = [];
-    // @ts-ignore
-    const jsdoc = this.symbol.valueDeclaration?.jsDoc;
-    if (jsdoc) {
-      for (const d of jsdoc) {
-        if (d.tags) {
-          examples.push(
-            ...d.tags
-              .filter(
-                (tag: ts.JSDocTag) => tag.tagName.escapedText === 'example'
-              )
-              .map((tag: ts.JSDocTag) => tag.comment)
-          );
-        }
-      }
-    }
-    return examples;
+    return this.jsDocTags
+      .filter((tag: ts.JSDocTag) => tag.tagName.escapedText === 'example')
+      .map((tag: ts.JSDocTag) => tag.comment) as string[];
   }
 
   public get type(): ts.TypeNode {
@@ -98,6 +84,34 @@ export class WrappedSymbol {
     return this.symbol.valueDeclaration?.type;
   }
 
+  // A function is private unless it has a public tag
+  public get isPublic(): boolean {
+    return this.jsDocTags.some(
+      (tag: ts.JSDocTag) => tag.tagName.escapedText === 'public'
+    );
+  }
+
+  public get isExportAlias(): boolean {
+    // @ts-ignore symbol.parent
+    const parentSymbol = this.symbol.parent;
+    return (
+      parentSymbol && parentSymbol.escapedName.match(/^\"\/node_modules\//)
+    );
+  }
+
+  public get jsDocTags(): ts.JSDocTag[] {
+    const tags: ts.JSDocTag[] = [];
+    // @ts-ignore
+    const jsdoc = this.symbol.valueDeclaration?.jsDoc;
+    if (jsdoc) {
+      for (const d of jsdoc) {
+        if (d.tags) {
+          tags.push(...d.tags);
+        }
+      }
+    }
+    return tags;
+  }
   // public get typeString(): NodeObject {
   //   const type = this.typeChecker.getDeclaredTypeOfSymbol(
   //     this.symbol.declarations[0]

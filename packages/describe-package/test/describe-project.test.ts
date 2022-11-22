@@ -21,6 +21,11 @@ test('List all the exported functions', async (t) => {
   t.truthy(get('fn'));
 });
 
+test('Does not include private functions', async (t) => {
+  const priv = get('somethingPrivate');
+  t.falsy(priv);
+});
+
 test('No parameters in a 0-arity function', async (t) => {
   const trad = get('traditional');
   t.is(trad.parameters.length, 0);

@@ -7,7 +7,7 @@ let fns;
 // Load the fixture once and then run a bunch of tests against it
 test.before(async () => {
   const project = await setupProject('types');
-  fns = await describeProject(project, undefined, { allowEmptyDesc: true });
+  fns = await describeProject(project, undefined, { includePrivate: true });
 });
 
 const get = (name) => fns.find((fn) => fn.name === name);
