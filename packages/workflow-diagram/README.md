@@ -9,6 +9,9 @@ Using [ReactFlow](https://reactflow.dev/) and ELKjs.
 ```jsx
 import WorkflowDiagram from "@openfn/workflow-diagram";
 
+// If you want to include the bundled CSS.
+import "@openfn/workflow-diagram/index.css";
+
 let exampleData = {
   jobs: [
     {
