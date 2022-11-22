@@ -59,7 +59,11 @@ export class WrappedSymbol {
   }
 
   public get parameters(): WrappedSymbol[] {
-    if (this.symbol.valueDeclaration) {
+    if (
+      this.symbol.valueDeclaration &&
+      // @ts-ignore
+      this.symbol.valueDeclaration.parameters
+    ) {
       // @ts-ignore
       return this.symbol.valueDeclaration.parameters.map(
         (param: any) => new WrappedSymbol(this.typeChecker, param.symbol)
