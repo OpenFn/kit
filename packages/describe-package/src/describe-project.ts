@@ -22,8 +22,10 @@ const describeFunction = (
 ): FunctionDescription => {
   // If this is a non native symbol, say where it came from
   let parent = undefined;
-  if (symbol.symbol.parent.escapedName.match(/^\"\/node_modules\//)) {
-    [parent] = symbol.symbol.parent.escapedName.match(/(language-\w+)/);
+  // @ts-ignore symbol.parent
+  const parentSymbol = symbol.symbol.parent;
+  if (parentSymbol && parentSymbol.escapedName.match(/^\"\/node_modules\//)) {
+    [parent] = parentSymbol.escapedName.match(/(language-\w+)/);
   }
   return {
     name: moduleName ? `${moduleName}.${symbol.name}` : symbol.name,
