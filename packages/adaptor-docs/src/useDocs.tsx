@@ -6,6 +6,7 @@ const useDocs = (specifier: string) => {
   const [docs, setDocs] = useState<PackageDescription | null | false>(null);
 
   useEffect(() => {
+    setDocs(null); // Reset docs when the specifier changes
     describePackage(specifier, {}).then((result) => {
       setDocs(result);
     });
