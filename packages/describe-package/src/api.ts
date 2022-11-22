@@ -35,6 +35,7 @@ export type FunctionDescription = {
   parameters: ParameterDescription[];
   description: string;
   examples: string[];
+  parent?: string;
 };
 
 export type ParameterDescription = {

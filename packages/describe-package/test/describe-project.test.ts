@@ -18,7 +18,7 @@ test('List all the exported functions', async (t) => {
   t.truthy(get('traditional'));
   t.truthy(get('oneFlavour'));
   t.truthy(get('manyFlavours'));
-  t.truthy(get('x'));
+  t.truthy(get('fn'));
 });
 
 test('No parameters in a 0-arity function', async (t) => {
@@ -37,9 +37,11 @@ test('1 parameters in a 1-arity function', async (t) => {
 test('Load the example', async (t) => {
   const fn = get('traditional');
   t.is(fn.examples[0], 'traditional()');
+  t.is(fn.parent, undefined);
 });
 
-test.only('Load common fn', async (t) => {
+test('Load common fn', async (t) => {
   const fn = get('fn');
   t.truthy(fn);
+  t.is(fn.parent, 'language-common');
 });

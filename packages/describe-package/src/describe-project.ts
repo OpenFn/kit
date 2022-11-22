@@ -20,6 +20,11 @@ const describeFunction = (
   symbol: WrappedSymbol,
   moduleName?: string
 ): FunctionDescription => {
+  // If this is a non native symbol, say where it came from
+  let parent = undefined;
+  if (symbol.symbol.parent.escapedName.match(/^\"\/node_modules\//)) {
+    [parent] = symbol.symbol.parent.escapedName.match(/(language-\w+)/);
+  }
   return {
     name: moduleName ? `${moduleName}.${symbol.name}` : symbol.name,
     description: symbol.comment,
@@ -27,6 +32,7 @@ const describeFunction = (
     magic: false,
     isOperation: false,
     examples: symbol.examples,
+    parent,
   };
 };
 
@@ -42,7 +48,7 @@ const describeProject = (
   }
 
   return project.getSymbol(sourceFile).exports.reduce((symbols, symbol) => {
-    if (symbol.isFunctionDeclaration) {
+    if (symbol.isFunctionDeclaration && symbol.comment) {
       symbols.push(describeFunction(project, symbol));
     }
 

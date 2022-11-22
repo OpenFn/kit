@@ -74,11 +74,15 @@ export class WrappedSymbol {
     const jsdoc = this.symbol.valueDeclaration?.jsDoc;
     if (jsdoc) {
       for (const d of jsdoc) {
-        examples.push(
-          ...d.tags
-            .filter((tag: ts.JSDocTag) => tag.tagName.escapedText === 'example')
-            .map((tag: ts.JSDocTag) => tag.comment)
-        );
+        if (d.tags) {
+          examples.push(
+            ...d.tags
+              .filter(
+                (tag: ts.JSDocTag) => tag.tagName.escapedText === 'example'
+              )
+              .map((tag: ts.JSDocTag) => tag.comment)
+          );
+        }
       }
     }
     return examples;

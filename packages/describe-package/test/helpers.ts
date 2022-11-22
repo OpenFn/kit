@@ -12,7 +12,9 @@ export async function setupProject(dtsName: string): Promise<Project> {
   // This is sort of cheating but really helps me set up the pattern
   project.addTypeDefinition(
     '@openfn/language-common',
-    'export declare function fn(): void;',
+    // The comment is important because otherwise it'll be ignored
+    `/** Common fn */
+     export declare function fn(): void;`,
     'Adaptor.d.ts'
   );
   project.addTypeDefinition(
