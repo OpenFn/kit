@@ -43,8 +43,6 @@ export type ParameterDescription = {
   type: string; // this is a human-readble string I think. Should we also store a machine readable type?
 };
 
-// I think we can get the API down to just these functions
-
 export const describePackage = async (
   specifier: string,
   _options: Options
@@ -52,14 +50,22 @@ export const describePackage = async (
   const { name, version } = getNameAndVersion(specifier);
   const project = new Project();
 
-  const files = await fetchDTSListing(specifier);
+  // Include language-common in the project model
+  // (I don't expect this to be permanent)
+  const common = await fetchDTSListing('@openfn/language-common');
+  for await (const fileName of common) {
+    const f = await fetchFile(`@openfn/language-common${fileName}`);
+    // Flatten the paths or else there's trouble
+    // TODO need to better understand this at some stage
+    const relativeFileName = fileName.split('/').pop();
+    project.addTypeDefinition('@openfn/language-common', f, relativeFileName);
+  }
 
+  const files = await fetchDTSListing(specifier);
   const functions: FunctionDescription[] = [];
   for await (const fileName of files) {
     const f = await fetchFile(`${specifier}${fileName}`);
     project.createFile(f, fileName);
-    // TODO no, this feels more like describeDTS doesn't it
-    // Or describe functions
     functions.push(...describeProject(project, fileName));
   }
 
