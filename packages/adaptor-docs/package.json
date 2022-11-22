@@ -13,8 +13,7 @@
     "build:css": "tsup --config ./tsup-css.config.js",
     "build:watch": "pnpm build --watch",
     "build:clean": "rimraf dist",
-    "pack": "pnpm pack --pack-destination ../../dist",
-    "export": "sh scripts/export.sh"
+    "pack": "pnpm pack --pack-destination ../../dist"
   },
   "exports": {
     ".": {
