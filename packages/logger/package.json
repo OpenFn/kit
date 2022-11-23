@@ -27,7 +27,7 @@
     }
   },
   "dependencies": {
-    "chalk": "4",
+    "chalk": "^5.1.2",
     "figures": "^5.0.0",
     "prompt-confirm": "^2.0.4"
   },
