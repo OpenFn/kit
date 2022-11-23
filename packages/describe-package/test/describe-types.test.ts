@@ -1,15 +1,13 @@
 import test from 'ava';
 import { setupProject } from './helpers';
-
-// TODO haven't got the semantics right yet
-import describeFunctions from '../src/describe-project';
+import describeProject from '../src/describe-project';
 
 let fns;
 
 // Load the fixture once and then run a bunch of tests against it
 test.before(async () => {
   const project = await setupProject('types');
-  fns = await describeFunctions(project);
+  fns = await describeProject(project, undefined, { includePrivate: true });
 });
 
 const get = (name) => fns.find((fn) => fn.name === name);

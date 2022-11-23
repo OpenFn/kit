@@ -32,12 +32,13 @@
     "build:worker": "tsm esbuild-worker.ts",
     "build:index": "tsup --config tsup.config.js src/index.ts",
     "build": "pnpm clean && pnpm build:index && pnpm build:worker",
-    "build:watch": "pnpm build --watch",
+    "build:watch": "pnpm build:index --watch",
     "watch": "node esbuild.ts watch",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
   "devDependencies": {
+    "@openfn/language-common": "1.7.5",
     "@rollup/plugin-typescript": "^8.5.0",
     "@types/chai": "^4.3.1",
     "@types/node": "^17.0.45",

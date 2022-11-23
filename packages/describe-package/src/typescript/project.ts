@@ -69,11 +69,18 @@ export class Project {
    * i.e. the adaptors name `@openfn/language-http`.
    * @param dts the .d.ts file as a string
    */
-  addTypeDefinition(moduleName: string, dts: string) {
+  // addTypeDefinition(moduleName: string, dts: string) {
+  //   const typedModulePath = moduleName.replace('@', '').replace('/', '__');
+
+  //   this.fsMap.set(`/node_modules/@types/${typedModulePath}/index.d.ts`, dts);
+  //   this.env.createFile(`${typedModulePath}.d.ts`, dts);
+  // }
+
+  addTypeDefinition(moduleName: string, dts: string, fileName = 'index.d.ts') {
     const typedModulePath = moduleName.replace('@', '').replace('/', '__');
 
-    this.fsMap.set(`/node_modules/@types/${typedModulePath}/index.d.ts`, dts);
-    this.env.createFile(`${typedModulePath}.d.ts`, dts);
+    this.fsMap.set(`/node_modules/@types/${typedModulePath}/${fileName}`, dts);
+    this.env.createFile(`${typedModulePath}__${fileName}`, dts);
   }
 
   // addAdaptorFSMap(adaptorPackagePath: string) {
