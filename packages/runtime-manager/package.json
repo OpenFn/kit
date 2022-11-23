@@ -14,7 +14,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "dependencies": {
-    "@openfn/compiler": "workspace:^0.0.15",
+    "@openfn/compiler": "workspace:^0.0.16",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/runtime": "workspace:^0.0.11",
     "@types/koa": "^2.13.5",

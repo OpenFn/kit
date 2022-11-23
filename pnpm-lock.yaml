@@ -159,7 +159,7 @@ importers:
 
   packages/cli:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.15
+      '@openfn/compiler': workspace:^0.0.16
       '@openfn/language-common': 2.0.0-rc3
       '@openfn/logger': workspace:^0.0.6
       '@openfn/runtime': workspace:^0.0.11
@@ -320,7 +320,7 @@ importers:
 
   packages/runtime-manager:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.15
+      '@openfn/compiler': workspace:^0.0.16
       '@openfn/language-common': 2.0.0-rc3
       '@openfn/runtime': workspace:^0.0.11
       '@types/koa': ^2.13.5
@@ -6616,7 +6616,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.0.6
-      ts-node: 10.9.1_x2utdhayajzrh747hktprshhby
+      ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
       yaml: 1.10.2
 
   /postcss-load-config/3.1.4_v776zzvn44o7tpgzieipaairwm:
@@ -8750,7 +8750,6 @@ packages:
       typescript: 4.8.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-    dev: true
 
   /ts-node/10.9.1_tphhiizkxv2hzwkunblc3hbmra:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
@@ -8812,6 +8811,7 @@ packages:
       typescript: 4.7.4
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    dev: true
 
   /tslib/2.4.0:
     resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
@@ -9084,6 +9084,7 @@ packages:
     resolution: {integrity: sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
+    dev: true
 
   /typescript/4.8.2:
     resolution: {integrity: sha512-C0I1UsrrDHo2fYI5oaCGbSejwX4ch+9Y5jTQELvovfmFkK3HHSZJB8MSJcWLmCUBzQBchCrZ9rMRV6GuNrvGtw==}

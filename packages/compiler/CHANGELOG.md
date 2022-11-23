@@ -5,8 +5,6 @@
 ### Patch Changes
 
 - 7f68a40: Rollback describe-package dependency
-- Updated dependencies [c8023b7]
-  - @openfn/describe-package@0.0.10
 
 ## 0.0.15
 
