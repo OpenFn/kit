@@ -5,8 +5,7 @@ import type { Opts, SafeOpts } from '../commands';
 import { defaultLogger, Logger } from '../util/logger';
 import expandAdaptors from '../util/expand-adaptors';
 
-// Weird declaration of the possible values for the install API
-type InstallOpts = Partial<Pick<Opts, 'packages' | 'adaptor' | 'repoDir'>>;
+type InstallOpts = Pick<Opts, 'packages' | 'adaptor' | 'repoDir'>;
 
 export const install = async (
   opts: InstallOpts,

@@ -160,6 +160,7 @@ importers:
   packages/cli:
     specifiers:
       '@openfn/compiler': workspace:^0.0.15
+      '@openfn/describe-package': workspace:^0.0.9
       '@openfn/language-common': 2.0.0-rc3
       '@openfn/logger': workspace:^0.0.6
       '@openfn/runtime': workspace:^0.0.11
@@ -177,6 +178,7 @@ importers:
       yargs: ^17.5.1
     dependencies:
       '@openfn/compiler': link:../compiler
+      '@openfn/describe-package': link:../describe-package
       '@openfn/logger': link:../logger
       '@openfn/runtime': link:../runtime
       rimraf: 3.0.2
@@ -758,6 +760,7 @@ packages:
 
   /@openfn/language-common/2.0.0-rc3:
     resolution: {integrity: sha512-7kwhBnCd1idyTB3MD9dXmUqROAhoaUIkz2AGDKuv9vn/cbZh7egEv9/PzKkRcDJYFV9qyyS+cVT3Xbgsg2ii5g==}
+    bundledDependencies: []
 
   /@rollup/plugin-typescript/8.4.0_lgw3yndmlomwrra4tomb66mtni:
     resolution: {integrity: sha512-QssfoOP6V4/6skX12EfOW5UzJAv/c334F4OJWmQpe2kg3agEa0JwVCckwmfuvEgDixyX+XyxjFenH7M2rDKUyQ==}

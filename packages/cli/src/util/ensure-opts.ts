@@ -82,6 +82,7 @@ export default function ensureOpts(
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
     stateStdin: opts.stateStdin,
+    specifier: opts.specifier,
     immutable: opts.immutable || false,
   } as SafeOpts;
 
