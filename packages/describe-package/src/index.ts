@@ -9,7 +9,7 @@ export type {
 
 // legacy exports - this should all be superceded by the new API
 export { Pack } from './pack';
-export type { Project } from './typescript/project';
+export { Project } from './typescript/project';
 export * from './fs/package-fs';
 
 export {
