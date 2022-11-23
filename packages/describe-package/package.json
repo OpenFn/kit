@@ -30,9 +30,10 @@
     "test:watch": "pnpm ava -w",
     "clean": "rimraf dist",
     "build:worker": "tsm esbuild-worker.ts",
-    "build:index": "tsup --config tsup.config.js src/index.ts",
-    "build": "pnpm clean && pnpm build:index && pnpm build:worker",
-    "build:watch": "pnpm build:index --watch",
+    "build:node": "tsup --config tsup.config.js src/index.ts",
+    "build:web": "tsup --config tsup.web.config.js",
+    "build": "pnpm clean && pnpm build:node && pnpm build:web && pnpm build:worker",
+    "build:watch": "pnpm build:node --watch",
     "watch": "node esbuild.ts watch",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
