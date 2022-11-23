@@ -2,11 +2,11 @@
 @tailwind utilities;
 
 .react-flow__edge.fail-stroke .react-flow__edge-path {
-  stroke: theme("colors.red.400");
+  stroke: theme('colors.red.400');
 }
 
 .react-flow__edge.success-stroke .react-flow__edge-path {
-  stroke: theme("colors.green.500");
+  stroke: theme('colors.green.500');
 }
 
 .dashed-edge {
@@ -15,4 +15,14 @@
 
 .dotted-edge {
   stroke-dasharray: 1px;
+}
+
+.react-flow__node-default .react-flow__handle,
+.react-flow__node-group .react-flow__handle,
+.react-flow__node-input .react-flow__handle,
+.react-flow__node-output .react-flow__handle {
+  border-radius: 1px;
+  background-color: #784be8;
+  width: 40px;
+  height: 15px;
 }

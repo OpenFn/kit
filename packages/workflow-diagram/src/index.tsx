@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import AddNode from './nodes/AddNode';
 import JobNode from './nodes/JobNode';
 import OperationNode from './nodes/OperationNode';
 import TriggerWorkflowNode from './nodes/TriggerWorkflowNode';
@@ -13,7 +12,6 @@ import { NodeData } from 'layout/types';
 
 const nodeTypes = {
   job: JobNode,
-  add: AddNode,
   operation: OperationNode,
   trigger: TriggerWorkflowNode,
   workflow: EmptyWorkflowNode,

@@ -80,8 +80,14 @@ const projectSpace = {
 
 const root = createRoot(document.getElementById('root'));
 
-function onNodeClick(_event, node) {
-  console.log('Clicked Node:', node);
+function onNodeClick(event, node) {
+  const plusIds = new Set(['plusButton', 'plusIcon']);
+  if (plusIds.has(event.target.id)) {
+    event.stopPropagation();
+    console.log('Plus button clicked');
+  } else {
+    console.log('Clicked Node:', node);
+  }
 }
 
 function onPaneClick(event) {
