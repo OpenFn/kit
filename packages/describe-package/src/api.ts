@@ -44,6 +44,12 @@ export type ParameterDescription = {
   type: string; // this is a human-readble string I think. Should we also store a machine readable type?
 };
 
+/*
+ * describePackage will describe all the publicly exported functions of an adaptor
+ * This is expected to be the main (only?) enytrypoint for this package
+ * - Each function MUST have an @public jsdoc tag
+ * - The beta file is excluded
+ */
 export const describePackage = async (
   specifier: string,
   _options: Options
@@ -65,9 +71,12 @@ export const describePackage = async (
   const files = await fetchDTSListing(specifier);
   const functions: FunctionDescription[] = [];
   for await (const fileName of files) {
-    const f = await fetchFile(`${specifier}${fileName}`);
-    project.createFile(f, fileName);
-    functions.push(...describeProject(project, fileName));
+    // Exclude the beta file
+    if (!/beta\.d\.ts$/.test(fileName)) {
+      const f = await fetchFile(`${specifier}${fileName}`);
+      project.createFile(f, fileName);
+      functions.push(...describeProject(project, fileName));
+    }
   }
 
   return {
