@@ -38,16 +38,13 @@ export const preloadAdaptorExports = async (specifier: string) => {
       return [];
     }
   } else {
-    console.log('Going online!');
     // TODO this should never be used right now - the CLI should always pass in a path
 
     // TODO - if modules_home is set, we should look there for definitions before calling out to unpkg
     // load from unpkg
     const pkgSrc = await fetchFile(`${specifier}/package.json`);
     pkg = JSON.parse(pkgSrc);
-    console.log(pkg);
     types = await fetchFile(`${specifier}/${pkg.types}`);
-    console.log(types);
   }
 
   // Setup the project so we can read the dts definitions
@@ -55,7 +52,9 @@ export const preloadAdaptorExports = async (specifier: string) => {
   project.createFile(types, pkg.types);
 
   // find the main dts
-  const functionDefs = describeDts(project, pkg.types);
+  const functionDefs = describeDts(project, pkg.types, {
+    includePrivate: true,
+  });
   // Return a flat array of names
   return functionDefs.map(({ name }) => name);
 };
