@@ -28,7 +28,7 @@
     "@types/node": "^18.7.14",
     "@types/react": "^18.0.18",
     "@types/react-dom": "^18.0.6",
-    "ava": "^4.3.3",
+    "ava": "5.1.0",
     "esbuild": "^0.15.6",
     "postcss": "^8.4.16",
     "react": "^18.2.0",
