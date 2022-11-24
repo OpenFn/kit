@@ -24,6 +24,7 @@ export type Opts = {
   packages?: string[];
   statePath?: string;
   stateStdin?: string;
+  noStrictOutput?: boolean; // defaults to false
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log'>> & {

@@ -31,6 +31,11 @@ const executeCommand = {
         boolean: true,
         description: 'Skip compilation',
       })
+      .option('no-strict-output', {
+        boolean: true,
+        description:
+          'Allow properties other than data to be returned in the output.',
+      })
       .example(
         'openfn foo/job.js',
         'Reads foo/job.js, looks for state and output in foo'
