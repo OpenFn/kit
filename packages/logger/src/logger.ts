@@ -1,6 +1,5 @@
 import c from 'chalk';
-// @ts-ignore
-import Confirm from 'prompt-confirm';
+import iconfirm from '@inquirer/confirm';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import getDurationString from './util/duration';
@@ -152,8 +151,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     if (force) {
       return true;
     }
-    const prompt = new Confirm({ message });
-    return prompt.run();
+    return iconfirm({ message });
   };
 
   const timers: Record<string, number> = {};
