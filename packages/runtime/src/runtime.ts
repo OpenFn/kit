@@ -114,6 +114,13 @@ const buildContext = (state: State, options: Options) => {
   const context = vm.createContext(
     {
       console: logger,
+      clearInterval,
+      clearTimeout,
+      JSON,
+      parseFloat,
+      parseInt,
+      setInterval,
+      setTimeout,
       state, // TODO I don't really want to pass global state through
     },
     {
