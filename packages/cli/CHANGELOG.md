@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.0.17
+
+### Patch Changes
+
+- 7f68a40: Update global list
+- Updated dependencies [7f68a40]
+  - @openfn/compiler@0.0.16
+
 ## 0.0.16
 
 ### Patch Changes

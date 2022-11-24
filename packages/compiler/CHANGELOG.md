@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.0.16
+
+### Patch Changes
+
+- 7f68a40: Rollback describe-package dependency
+
 ## 0.0.15
 
 ### Patch Changes
