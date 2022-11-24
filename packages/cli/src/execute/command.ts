@@ -65,7 +65,7 @@ export const applyExecuteOptions = (yargs: yargs.Argv) =>
     .option('output-stdout', {
       alias: 'O',
       boolean: true,
-      description: 'Print output to stdout (intead of a file)',
+      description: 'Print output to stdout (instead of a file)',
     })
     .option('adaptors', {
       alias: ['a', 'adaptor'],

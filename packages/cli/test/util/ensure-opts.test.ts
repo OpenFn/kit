@@ -118,6 +118,34 @@ test('preserve outputStdout', (t) => {
   t.truthy(opts.outputStdout);
 });
 
+test('preserve strictOutput false', (t) => {
+  const initialOpts = {
+    strictOutput: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.false(opts.strictOutput);
+});
+
+test('preserve strictOutput true', (t) => {
+  const initialOpts = {
+    strictOutput: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.strictOutput);
+});
+
+test('strictOutput true by default', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.strictOutput);
+});
+
 test('preserve force', (t) => {
   const initialOpts = {
     force: true,

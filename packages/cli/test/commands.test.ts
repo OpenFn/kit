@@ -19,6 +19,8 @@ const JOB_EXPORT_42 = 'export default [() => 42];';
 const JOB_TIMES_2 = 'export default [(state) => state * 2];';
 const JOB_MOCK_ADAPTOR =
   'import { byTwo } from "times-two"; export default [byTwo];';
+const JOB_EXPORT_STATE =
+  "export default [() => ({ configuration: {}, data: {}, foo: 'bar' })];";
 
 type RunOptions = {
   jobPath?: string;
@@ -174,6 +176,50 @@ test.serial(
 
     const output = await fs.readFile('/tmp/my-output.json', 'utf8');
     t.assert(output === '42');
+  }
+);
+
+test.serial(
+  'output to file with strict state: openfn job.js --output-path=/tmp/my-output.json',
+  async (t) => {
+    const options = {
+      outputPath: '/tmp/my-output.json',
+    };
+
+    const result = await run(
+      'openfn job.js --output-path=/tmp/my-output.json',
+      JOB_EXPORT_STATE,
+      options
+    );
+    t.deepEqual(result, { data: {} });
+
+    const expectedFileContents = JSON.stringify({ data: {} }, null, 2);
+    const output = await fs.readFile('/tmp/my-output.json', 'utf8');
+    t.is(output, expectedFileContents);
+  }
+);
+
+test.serial(
+  'output to file with non-strict state: openfn job.js --output-path=/tmp/my-output.json',
+  async (t) => {
+    const options = {
+      outputPath: '/tmp/my-output.json',
+    };
+
+    const result = await run(
+      'openfn job.js --output-path=/tmp/my-output.json --no-strict-output',
+      JOB_EXPORT_STATE,
+      options
+    );
+    t.deepEqual(result, { data: {}, foo: 'bar' });
+
+    const expectedFileContents = JSON.stringify(
+      { data: {}, foo: 'bar' },
+      null,
+      2
+    );
+    const output = await fs.readFile('/tmp/my-output.json', 'utf8');
+    t.assert(output === expectedFileContents);
   }
 );
 

@@ -20,14 +20,14 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const code = await compile(options, logger);
   const result = await execute(code, state, options);
 
-  await handleOutput(options, logger, result);
+  await handleOutput(options, result, logger);
 
   const duration = printDuration(new Date().getTime() - start);
   logger.success(`Done in ${duration}! ✨`);
 };
 
 export const handleOutput = async (
-  options: Pick<Opts, 'noStrictOutput' | 'outputStdout' | 'outputPath'>,
+  options: Pick<Opts, 'strictOutput' | 'outputStdout' | 'outputPath'>,
   result: any,
   logger: Logger
 ) => {
@@ -35,19 +35,17 @@ export const handleOutput = async (
   if (output && (output.configuration || output.data)) {
     // handle an object. Probably need a better test.
     const { data, configuration, ...rest } = result;
-    if (options.noStrictOutput) {
-      // if not in strict mode, we can write everything to the output
-      // except config?
+    if (options.strictOutput !== false) {
+      output = { data };
+    } else {
       output = {
         data,
         ...rest,
       };
-    } else {
-      output = { data };
     }
-    // Now stringify
-    output = JSON.stringify(output, null, 2);
   }
+  // Now stringify
+  output = JSON.stringify(output, null, 2);
 
   if (options.outputStdout) {
     logger.success(`Result: `);

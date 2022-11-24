@@ -106,7 +106,7 @@ test('strict-mode: only output data', async (t) => {
   const result = await handleOutput(
     {
       outputStdout: true,
-      noStrictOutput: false,
+      strictOutput: true,
     },
     {
       data: {},
@@ -139,7 +139,7 @@ test('non-strict-mode: exclude configuration', async (t) => {
   const result = await handleOutput(
     {
       outputStdout: true,
-      noStrictOutput: true,
+      strictOutput: false,
     },
     {
       data: {},
@@ -154,7 +154,7 @@ test('non-strict-mode: include other stuff', async (t) => {
   const result = await handleOutput(
     {
       outputStdout: true,
-      noStrictOutput: true,
+      strictOutput: false,
     },
     {
       data: {},
@@ -173,7 +173,6 @@ test.skip('handle circular data', async (t) => {
   const result = await handleOutput(
     {
       outputStdout: true,
-      noStrictOutput: false,
     },
     {
       data: a,
@@ -189,7 +188,6 @@ test('ignore fuctions', async (t) => {
   const result = await handleOutput(
     {
       outputStdout: true,
-      noStrictOutput: false,
     },
     {
       data: a,
@@ -210,7 +208,6 @@ test('output to file', async (t) => {
   await handleOutput(
     {
       outputPath: 'out.json',
-      noStrictOutput: false,
     },
     {
       data: 1,

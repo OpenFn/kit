@@ -12,19 +12,19 @@ export type Opts = {
   adaptor?: boolean;
   adaptors?: string[];
   autoinstall?: boolean;
-  immutable?: boolean;
-  jobPath?: string;
   expand: boolean; // for unit tests really
   force?: boolean;
+  immutable?: boolean;
+  jobPath?: string;
   log?: string[];
-  repoDir?: string;
   noCompile?: boolean;
+  strictOutput?: boolean; // defaults to true
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
+  repoDir?: string;
   statePath?: string;
   stateStdin?: string;
-  noStrictOutput?: boolean; // defaults to false
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log'>> & {
