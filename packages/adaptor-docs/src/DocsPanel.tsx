@@ -25,9 +25,8 @@ const DocsPanel = ({ specifier, onInsert }: DocsPanelProps) => {
   return (
     <div className="block m-2">
       <h1 className="h1 text-lg font-bold text-secondary-700 mb-2">{name} v{version}</h1>
-      <div className="text-sm mb-4">Operations available for use by this adaptor are listed below.</div>
+      <div className="text-sm mb-4">API reference:</div>
       {functions
-        // TODO we ought to memo the sort really, although this won't render very often so it's probably ok
         .sort((a, b) => {
           if (a.name > b.name) return 1;
           else if (a.name < b.name) return -1;
