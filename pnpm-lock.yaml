@@ -184,7 +184,7 @@ importers:
 
   packages/compiler:
     specifiers:
-      '@openfn/describe-package': workspace:0.0.9
+      '@openfn/describe-package': workspace:^0.0.9
       '@openfn/logger': workspace:^0.0.6
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -6260,7 +6260,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.0.6
-      ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
+      ts-node: 10.9.1_x2utdhayajzrh747hktprshhby
       yaml: 1.10.2
     dev: true
 

@@ -3,4 +3,5 @@
 ---
 
 Include language-common in package descriptions
-Only document exported functions with a description
+Only document public functions
+Exclude beta file from documentation

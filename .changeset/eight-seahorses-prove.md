@@ -2,4 +2,4 @@
 '@openfn/adaptor-docs': patch
 ---
 
-Nested docs items in expandable sections
+Nest docs items in expandable sections
