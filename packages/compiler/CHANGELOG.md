@@ -1,5 +1,13 @@
 # @openfn/compiler
 
+## 0.0.16
+
+### Patch Changes
+
+- 4a5712f: Update list of globals for add-imports
+- Updated dependencies [e434ef6]
+  - @openfn/describe-package@0.0.10
+
 ## 0.0.15
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @openfn/adaptor-docs
 
+## 0.0.5
+
+### Patch Changes
+
+- bc26aba: Nest docs items in expandable sections
+- 43f6aba: Clear docs content when the specifier changes
+- Updated dependencies [c8023b7]
+  - @openfn/describe-package@0.0.10
+
 ## 0.0.4
 
 ### Patch Changes
