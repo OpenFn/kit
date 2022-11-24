@@ -16,7 +16,7 @@ importers:
 
   examples/adaptor-docs:
     specifiers:
-      '@openfn/adaptor-docs': workspace:^0.0.4
+      '@openfn/adaptor-docs': workspace:^0.0.5
       '@openfn/describe-package': workspace:*
       '@tailwindcss/forms': ^0.5.2
       '@types/node': ^18.11.9
@@ -112,7 +112,7 @@ importers:
 
   packages/adaptor-docs:
     specifiers:
-      '@openfn/describe-package': workspace:^0.0.9
+      '@openfn/describe-package': workspace:^0.0.10
       '@types/node': ^18.11.9
       '@types/react': ^18.0.25
       autoprefixer: ^10.4.13
@@ -184,7 +184,7 @@ importers:
 
   packages/compiler:
     specifiers:
-      '@openfn/describe-package': workspace:^0.0.9
+      '@openfn/describe-package': workspace:^0.0.10
       '@openfn/logger': workspace:^0.0.6
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -6260,7 +6260,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.0.6
-      ts-node: 10.9.1_x2utdhayajzrh747hktprshhby
+      ts-node: 10.9.1_rb7lfb2dlgdf5f7m6mcvvespxa
       yaml: 1.10.2
     dev: true
 
