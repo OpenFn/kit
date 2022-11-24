@@ -130,6 +130,18 @@ Run the install command as printed in your shell - something like `npm -g dist/o
 
 You can run `openfn test` to exercise the runtime and compiler.
 
+## Building into Lightning
+
+Some components are designed to be run from inside Lightning.
+
+To test a local package without publishing it to npm, run:
+
+```
+pnpm export adaptor-docs
+```
+
+This will build adaptor-docs into a tarball and install it directly into Lightning (assuming that `Lightning` is a sibling dir of `kit`).
+
 ## Documentation
 
 For information on the history of the OpenFn internals and ideas for the future
