@@ -4,16 +4,25 @@ import loadState from './load-state';
 import execute from './execute';
 import compile from '../compile/compile';
 import { install } from '../repo/handler';
-import { SafeOpts } from '../commands';
+import { Opts, SafeOpts } from '../commands';
+
+export const getAutoinstallTargets = (
+  options: Pick<Opts, 'adaptors' | 'autoinstall'>
+) => {
+  if (options.autoinstall && options.adaptors) {
+    return options.adaptors?.filter((a) => !/=/.test(a));
+  }
+  return [];
+};
 
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
 
-  // auto install the language adaptor
-  if (options.autoinstall) {
+  const autoInstallTargets = getAutoinstallTargets(options);
+  if (autoInstallTargets.length) {
     const { repoDir } = options;
     logger.info('Auto-installing language adaptors');
-    await install({ packages: options.adaptors, repoDir }, logger);
+    await install({ packages: autoInstallTargets, repoDir }, logger);
   }
 
   const state = await loadState(options, logger);

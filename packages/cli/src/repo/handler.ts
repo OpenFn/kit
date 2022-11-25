@@ -12,18 +12,18 @@ export const install = async (
   opts: InstallOpts,
   log: Logger = defaultLogger
 ) => {
-  log.timer('install');
   let { packages, adaptor, repoDir } = opts;
-  log.success('Installing packages...'); // not really success but I want it to default
   if (packages) {
+    log.timer('install');
+    log.success('Installing packages...'); // not really success but I want it to default
     log.debug('repoDir is set to:', repoDir);
     if (adaptor) {
       packages = expandAdaptors(packages, log);
     }
     await rtInstall(packages, repoDir, log);
+    const duration = log.timer('install');
+    log.success(`Installation complete in ${duration}`);
   }
-  const duration = log.timer('install');
-  log.success(`Installation complete in ${duration}`);
 };
 
 export const clean = async (options: SafeOpts, logger: Logger) => {
