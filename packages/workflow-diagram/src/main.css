@@ -16,13 +16,3 @@
 .dotted-edge {
   stroke-dasharray: 1px;
 }
-
-/* .react-flow__node-default .react-flow__handle,
-.react-flow__node-group .react-flow__handle,
-.react-flow__node-input .react-flow__handle,
-.react-flow__node-output .react-flow__handle {
-  border-radius: 1px;
-  background-color: #784be8;
-  width: 40px;
-  height: 15px;
-} */
