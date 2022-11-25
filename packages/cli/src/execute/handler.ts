@@ -20,13 +20,13 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const code = await compile(options, logger);
   const result = await execute(code, state, options);
 
-  await handleOutput(options, result, logger);
+  await serializeOutput(options, result, logger);
 
   const duration = printDuration(new Date().getTime() - start);
   logger.success(`Done in ${duration}! ✨`);
 };
 
-export const handleOutput = async (
+export const serializeOutput = async (
   options: Pick<Opts, 'strictOutput' | 'outputStdout' | 'outputPath'>,
   result: any,
   logger: Logger
@@ -44,8 +44,12 @@ export const handleOutput = async (
       };
     }
   }
-  // Now stringify
-  output = JSON.stringify(output, null, 2);
+
+  if (output === undefined) {
+    output = '';
+  } else {
+    output = JSON.stringify(output, null, 2);
+  }
 
   if (options.outputStdout) {
     logger.success(`Result: `);
