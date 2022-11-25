@@ -27,9 +27,7 @@ const TriggerWorkflowNode = ({
 }: NodeProps & {
   data: { label: string; trigger: Trigger; workflow: Workflow };
 }): JSX.Element => {
-  console.log(data);
-
-  const workflowName = data.workflow.name;
+  const workflowName = data.workflow.name ?? 'Untitled';
   const description = descriptionFor(data);
   return (
     <div

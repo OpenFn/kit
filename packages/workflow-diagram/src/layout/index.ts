@@ -15,7 +15,6 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 
 import { FlowJob, FlowTrigger, Job, ProjectSpace, Workflow } from 'types';
 import {
-  addNodeFactory,
   jobNodeFactory,
   operationEdgeFactory,
   operationNodeFactory,
@@ -66,10 +65,7 @@ function deriveCron(job: Job, workflow: Workflow): ElkNodeEdges {
     __flowProps__: { animated: false },
   };
 
-  return mergeTuples(
-    [[triggerNode, jobNode], [triggerJobEdge]],
-    addNodeFactory(jobNode)
-  );
+  return mergeTuples([[triggerNode, jobNode], [triggerJobEdge]], [[], []]);
 }
 
 function deriveWebhook(job: Job, workflow: Workflow): ElkNodeEdges {
@@ -91,7 +87,7 @@ function deriveWebhook(job: Job, workflow: Workflow): ElkNodeEdges {
     __flowProps__: { animated: false },
   };
 
-  return mergeTuples([[triggerNode, jobNode], [edge]], addNodeFactory(jobNode));
+  return mergeTuples([[triggerNode, jobNode], [edge]], [[], []]);
 }
 
 function deriveFlow(job: FlowJob): ElkNodeEdges {
@@ -114,7 +110,7 @@ function deriveFlow(job: FlowJob): ElkNodeEdges {
     labels: [{ text: label }],
   };
 
-  return mergeTuples([[jobNode], [edge]], addNodeFactory(jobNode));
+  return mergeTuples([[jobNode], [edge]], [[], []]);
 }
 
 export function deriveNodesWithEdges(

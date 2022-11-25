@@ -140,22 +140,6 @@
           "height": 40
         },
         {
-          "id": "A-add",
-          "__flowProps__": {
-            "data": {
-              "parentId": "A",
-              "label": "Add"
-            },
-            "type": "add"
-          },
-          "layoutOptions": {
-            "elk.direction": "DOWN",
-            "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]"
-          },
-          "width": 24,
-          "height": 24
-        },
-        {
           "id": "B",
           "__flowProps__": {
             "data": {
@@ -175,22 +159,6 @@
           "height": 40
         },
         {
-          "id": "B-add",
-          "__flowProps__": {
-            "data": {
-              "parentId": "B",
-              "label": "Add"
-            },
-            "type": "add"
-          },
-          "layoutOptions": {
-            "elk.direction": "DOWN",
-            "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]"
-          },
-          "width": 24,
-          "height": 24
-        },
-        {
           "id": "C",
           "__flowProps__": {
             "data": {
@@ -208,22 +176,6 @@
           },
           "width": 150,
           "height": 40
-        },
-        {
-          "id": "C-add",
-          "__flowProps__": {
-            "data": {
-              "parentId": "C",
-              "label": "Add"
-            },
-            "type": "add"
-          },
-          "layoutOptions": {
-            "elk.direction": "DOWN",
-            "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]"
-          },
-          "width": 24,
-          "height": 24
         },
         {
           "id": "E",
@@ -292,22 +244,6 @@
           },
           "width": 150,
           "height": 40
-        },
-        {
-          "id": "E-add",
-          "__flowProps__": {
-            "data": {
-              "parentId": "E",
-              "label": "Add"
-            },
-            "type": "add"
-          },
-          "layoutOptions": {
-            "elk.direction": "DOWN",
-            "elk.padding": "[top=35,left=10.0,bottom=10.0,right=10.0]"
-          },
-          "width": 24,
-          "height": 24
         }
       ],
       "edges": [
@@ -329,19 +265,6 @@
           }
         },
         {
-          "id": "A->A-add",
-          "sources": [
-            "A"
-          ],
-          "targets": [
-            "A-add"
-          ],
-          "__flowProps__": {
-            "animated": false,
-            "dashed": false
-          }
-        },
-        {
           "id": "E->B",
           "sources": [
             "E"
@@ -357,19 +280,6 @@
               "text": "on failure"
             }
           ]
-        },
-        {
-          "id": "B->B-add",
-          "sources": [
-            "B"
-          ],
-          "targets": [
-            "B-add"
-          ],
-          "__flowProps__": {
-            "animated": false,
-            "dashed": false
-          }
         },
         {
           "id": "A->C",
@@ -389,19 +299,6 @@
           ]
         },
         {
-          "id": "C->C-add",
-          "sources": [
-            "C"
-          ],
-          "targets": [
-            "C-add"
-          ],
-          "__flowProps__": {
-            "animated": false,
-            "dashed": false
-          }
-        },
-        {
           "id": "A->E",
           "sources": [
             "A"
@@ -417,19 +314,6 @@
               "text": "on failure"
             }
           ]
-        },
-        {
-          "id": "E->E-add",
-          "sources": [
-            "E"
-          ],
-          "targets": [
-            "E-add"
-          ],
-          "__flowProps__": {
-            "animated": false,
-            "dashed": false
-          }
         }
       ],
       "layoutOptions": {
@@ -457,4 +341,3 @@
     "type": "root"
   }
 }
-

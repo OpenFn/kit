@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import AddNode from './nodes/AddNode';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import JobNode from './nodes/JobNode';
 import OperationNode from './nodes/OperationNode';
 import TriggerWorkflowNode from './nodes/TriggerWorkflowNode';
@@ -13,7 +12,6 @@ import { NodeData } from 'layout/types';
 
 const nodeTypes = {
   job: JobNode,
-  add: AddNode,
   operation: OperationNode,
   trigger: TriggerWorkflowNode,
   workflow: EmptyWorkflowNode,
@@ -21,10 +19,27 @@ const nodeTypes = {
 
 const WorkflowDiagram: React.FC<{
   projectSpace: ProjectSpace;
+  onJobAddClick?: (node: Node<NodeData>) => void;
   onNodeClick?: (event: React.MouseEvent, node: Node<NodeData>) => void;
   onPaneClick?: (event: React.MouseEvent) => void;
-}> = ({ projectSpace, onNodeClick, onPaneClick }) => {
+}> = ({ projectSpace, onNodeClick, onPaneClick, onJobAddClick }) => {
   const { nodes, edges, onNodesChange, onEdgesChange } = Store.useStore();
+
+  const handleNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node<NodeData>) => {
+      const plusIds = new Set(['plusButton', 'plusIcon']);
+      if (plusIds.has(event.target.id) && onJobAddClick) {
+        event.stopPropagation();
+
+        onJobAddClick(node);
+      } else {
+        if (onNodeClick) {
+          onNodeClick(event, node);
+        }
+      }
+    },
+    [onJobAddClick, onNodeClick]
+  );
 
   useEffect(() => {
     if (projectSpace) {
@@ -49,7 +64,7 @@ const WorkflowDiagram: React.FC<{
         nodeTypes={nodeTypes}
         snapToGrid={true}
         snapGrid={[10, 10]}
-        onNodeClick={onNodeClick}
+        onNodeClick={handleNodeClick}
         onPaneClick={onPaneClick}
         fitView
       />
