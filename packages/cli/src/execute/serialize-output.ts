@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
+import stringify from 'fast-safe-stringify';
 import { Logger } from '../util/logger';
 import { Opts } from '../commands';
-
 const serializeOutput = async (
   options: Pick<Opts, 'strictOutput' | 'outputStdout' | 'outputPath'>,
   result: any,
@@ -24,7 +24,7 @@ const serializeOutput = async (
   if (output === undefined) {
     output = '';
   } else {
-    output = JSON.stringify(output, null, 2);
+    output = stringify(output, null, 2);
   }
 
   if (options.outputStdout) {

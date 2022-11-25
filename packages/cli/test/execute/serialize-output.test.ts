@@ -164,10 +164,9 @@ test('non-strict-mode: include other stuff', async (t) => {
   t.is(result, toString({ data: {}, _secret: 'true' }));
 });
 
-// TODO fails right now
-test.skip('handle circular data', async (t) => {
+test('handle circular data', async (t) => {
   const a: any = { name: 'a' };
-  a.rel = a;
+  a.ref = a;
 
   const result = await serializeOutput(
     {
@@ -178,7 +177,35 @@ test.skip('handle circular data', async (t) => {
     },
     logger
   );
-  t.is(result, toString({ data: {} }));
+  t.is(result, toString({ data: { name: 'a', ref: '[Circular]' } }));
+});
+
+test('handle nested circular data', async (t) => {
+  const a: any = {
+    x: {
+      y: {},
+    },
+  };
+  a.x.y.z = a;
+
+  const result = await serializeOutput(
+    {
+      outputStdout: true,
+    },
+    {
+      data: a,
+    },
+    logger
+  );
+
+  const expected = {
+    x: {
+      y: {
+        z: '[Circular]',
+      },
+    },
+  };
+  t.is(result, toString({ data: expected }));
 });
 
 test('ignore fuctions', async (t) => {
