@@ -14,6 +14,6 @@ const docgenCommand = {
       'Generates docs for a specific version of language-common'
     );
   },
-} as yargs.CommandModule<{}>;
+} as yargs.CommandModule<Opts>;
 
 export default docgenCommand;

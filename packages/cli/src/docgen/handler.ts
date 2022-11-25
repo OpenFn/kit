@@ -1,28 +1,89 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { Opts } from '../commands';
 import type { Logger } from '../util/logger';
 
-// import { describePackage, PackageDescription } from '@openfn/describe-package';
-// openfn docgen commmon
-// openfn help common fn
+import { describePackage, PackageDescription } from '@openfn/describe-package';
 
-type DocGenFn = (specifier: string) => PackageDescription;
+export type DocGenFn = (specifier: string) => Promise<PackageDescription>;
 
-// const actualDocGen: DocGenFn = (specifier: string) =>
-//   describePackage(specifier);
+const RETRY_DURATION = 500;
+const RETRY_COUNT = 20;
+
+const actualDocGen: DocGenFn = (specifier: string) =>
+  describePackage(specifier, {});
 
 const ensureRepo = () => {};
 
-export const generatePlaceholder = async (path: string) => {
-  await writeFile(path, `{ "loading": true, "timestamp": ${Date.now()}}`);
+export const generatePlaceholder = (path: string) => {
+  writeFileSync(path, `{ "loading": true, "timestamp": ${Date.now()}}`);
 };
 
-const docsHandler = async (
+const generateDocs = async (
+  specifier: string,
+  path: string,
+  docgen: DocGenFn,
+  logger: Logger
+) => {
+  const result = await docgen(specifier);
+
+  await writeFile(path, JSON.stringify(result, null, 2));
+  logger.success('Done!');
+  return path;
+};
+
+const waitForDocs = async (
+  docs: object,
+  path: string,
+  logger: Logger,
+  retryDuration = RETRY_DURATION
+): Promise<string> => {
+  try {
+    if (docs.hasOwnProperty('loading')) {
+      // if this is a placeholder... set an interval and wait for JSON to be written
+      // TODO should we watch with chokidar instead? The polling is actually kinda reassuring
+      logger.info('Docs are being loaded by another process. Waiting.');
+      return new Promise((resolve, reject) => {
+        let count = 0;
+        let i = setInterval(() => {
+          logger.info('Waiting..');
+          if (count > RETRY_COUNT) {
+            clearInterval(i);
+            reject('Timed out waiting for docs to load.');
+          }
+          const updated = JSON.parse(readFileSync(path, 'utf8'));
+          if (!updated.hasOwnProperty('loading')) {
+            logger.info('Docs found!');
+            clearInterval(i);
+            resolve(path);
+          }
+          count++;
+        }, retryDuration);
+      });
+    } else {
+      logger.info(`Docs already written to cache at ${path}`);
+      logger.success('Done!');
+      return path;
+      // If we get here the docs have been written, everything is fine
+      // TODO should we sanity check the name and version? Would make sense
+    }
+  } catch (e) {
+    // If something is wrong with the current JSON, abort for now
+    // To be fair it may not matter as we'll write over it anyway
+    // Maybe we should encourge a openfn docs purge <specifier> or something
+    logger.error('Existing doc JSON corrupt. Aborting.');
+    throw e;
+  }
+};
+
+const docsHandler = (
   options: Required<Pick<Opts, 'specifier' | 'repoDir'>>,
   logger: Logger,
-  docgen: DocGenFn /*= actualDocGen*/
-) => {
+  docgen: DocGenFn = actualDocGen,
+  retryDuration = RETRY_DURATION
+): Promise<string> => {
   const { specifier, repoDir } = options;
+  logger.success(`Generating docs for ${specifier}`); // TODO not success, but a default level info log.
 
   // TODO ensure the specifier is correct
   // If there's no version, we nede to add one
@@ -31,41 +92,16 @@ const docsHandler = async (
   const path = `${repoDir}/docs/${specifier}.json`;
 
   try {
-    // TODO probably also needs to be sync?
-    const existing = await readFile(path, 'utf8');
-    if (existing) {
-      try {
-        const existingJSON = JSON.parse(existing);
-        if (existingJSON.loading) {
-          // if this is a placeholder... set an interval and wait for JSON to be written
-          // then return the value
-          // An even smarter approach would be to watch with chokidar
-        } else {
-          // If we get here the docs have been written, everything is fine
-          // TODO should we sanity check the name and version? Would make sense
-        }
-      } catch (e) {
-        // If something is wrong with the current JSON, abort for now
-        // To be fair it may not matter as we'll write over it anyway
-        // Maybe we should encourge a openfn docs purge <specifier> or something
-        logger.error('Existing doc JSON corrupt. Aborting.');
-      }
-    }
+    const existing = readFileSync(path, 'utf8');
+    // Return or wait for the existing docs
+    return waitForDocs(JSON.parse(existing), path, logger, retryDuration);
   } catch (e) {
-    // If the file does not exist and is not loading, generate the docs and write
-    // TODO actually should be sync because this is high priority
-    await generatePlaceholder(path);
+    // Generate docs from scratch
+    logger.info(`Docs JSON not foud at ${path}`);
+    generatePlaceholder(path);
 
-    // generate docs if needed
-    const result = await docgen(specifier);
-
-    await writeFile(path, JSON.stringify(result, null, 2));
+    return generateDocs(specifier, path, docgen, logger);
   }
-
-  return path;
 };
 
-export default () => {
-  console.log('hello world');
-};
-// export default docsHandler;
+export default docsHandler;
