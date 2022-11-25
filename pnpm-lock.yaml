@@ -155,6 +155,7 @@ importers:
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
       ava: 5.1.0
+      fast-safe-stringify: ^2.1.1
       mock-fs: ^5.1.4
       rimraf: ^3.0.2
       treeify: ^1.1.0
@@ -167,6 +168,7 @@ importers:
       '@openfn/compiler': link:../compiler
       '@openfn/logger': link:../logger
       '@openfn/runtime': link:../runtime
+      fast-safe-stringify: 2.1.1
       rimraf: 3.0.2
       treeify: 1.1.0
       yargs: 17.5.1
@@ -3928,6 +3930,10 @@ packages:
       merge2: 1.4.1
       micromatch: 4.0.5
     dev: true
+
+  /fast-safe-stringify/2.1.1:
+    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
+    dev: false
 
   /fastq/1.13.0:
     resolution: {integrity: sha512-YpkpUnK8od0o1hmeSc7UUs/eB/vIPWJYjKck2QKIzAf71Vm1AAQ3EbuZB3g2JIy+pg+ERD0vqI79KyZiB2e2Nw==}

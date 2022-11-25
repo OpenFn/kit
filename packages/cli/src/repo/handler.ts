@@ -1,4 +1,5 @@
 import { exec } from 'node:child_process';
+// @ts-ignore
 import treeify from 'treeify';
 import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
 import type { Opts, SafeOpts } from '../commands';
