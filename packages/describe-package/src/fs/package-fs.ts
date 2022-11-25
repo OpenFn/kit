@@ -28,27 +28,10 @@ interface JSDelivrListing {
   }>;
 }
 
-export function* flattenFiles(
-  listing: PackageListing,
-  ignoreNodeModules = false,
-  path: string = ''
-): Generator<string> {
-  if (listing.type == 'directory') {
-    for (let i = 0; i < listing.files!.length; i++) {
-      const f = listing.files![i];
-      if (!ignoreNodeModules || !f.path.startsWith('/node_modules/')) {
-        yield* flattenFiles(f, ignoreNodeModules);
-      }
-    }
-  } else {
-    yield `${path}${listing.path}`;
-  }
-}
-
 export async function fetchFileListing(packageName: string) {
   // const cached = localStorage.getItem(packageName);
   // if (cached) {
-  //   return flattenFiles(JSON.parse(cached));
+  //   return JSON.parse(cached);
   // }
 
   const response = await fetch(
