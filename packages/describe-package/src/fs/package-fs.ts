@@ -3,27 +3,37 @@
  *
  * Utilities for loading packages
  */
-import fetch from "cross-fetch";
+import fetch from 'cross-fetch';
 
 export class NotFound extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "NotFound";
+    this.name = 'NotFound';
   }
 }
 
 interface PackageListing {
   path: string;
-  type: "directory" | "file";
+  type: 'directory' | 'file';
   files?: PackageListing[];
+}
+
+interface JSDelivrListing {
+  default: string;
+  files: Array<{
+    name: string;
+    hash: string;
+    time: string;
+    size: number;
+  }>;
 }
 
 export function* flattenFiles(
   listing: PackageListing,
   ignoreNodeModules = false,
-  path: string = ""
+  path: string = ''
 ): Generator<string> {
-  if (listing.type == "directory") {
+  if (listing.type == 'directory') {
     for (let i = 0; i < listing.files!.length; i++) {
       const f = listing.files![i];
       if (!ignoreNodeModules || !f.path.startsWith('/node_modules/')) {
@@ -35,13 +45,15 @@ export function* flattenFiles(
   }
 }
 
-export async function fetchFileListing(packageName: string, ignoreNodeModules = false) {
+export async function fetchFileListing(packageName: string) {
   // const cached = localStorage.getItem(packageName);
   // if (cached) {
   //   return flattenFiles(JSON.parse(cached));
   // }
 
-  const response = await fetch(`https://unpkg.com/${packageName}/?meta`);
+  const response = await fetch(
+    `https://data.jsdelivr.com/v1/package/npm/${packageName}/flat`
+  );
 
   if (response.status != 200) {
     throw new Error(
@@ -49,10 +61,8 @@ export async function fetchFileListing(packageName: string, ignoreNodeModules = 
     );
   }
 
-  const listing = (await response.json()) as PackageListing;
-  // localStorage.setItem(packageName, JSON.stringify(listing));
-
-  return flattenFiles(listing, ignoreNodeModules);
+  const listing = (await response.json()) as JSDelivrListing;
+  return listing.files?.map(({ name }) => name);
 }
 
 const dtsExtension = /\.d\.ts$/;
@@ -66,7 +76,7 @@ const dtsExtension = /\.d\.ts$/;
  * @param packageName string
  */
 export async function* fetchDTSListing(packageName: string) {
-  for (const f of await fetchFileListing(packageName, true)) {
+  for (const f of await fetchFileListing(packageName)) {
     if (dtsExtension.test(f)) {
       yield f;
     }
@@ -83,7 +93,7 @@ export async function fetchFile(path: string) {
   //   return cached;
   // }
 
-  const response = await fetch(`https://unpkg.com/${path}`);
+  const response = await fetch(`https://cdn.jsdelivr.net/npm/${path}`);
 
   switch (response.status) {
     case 200:

@@ -2,28 +2,26 @@ import test from 'ava';
 
 import { Pack } from '../src/pack';
 
-test('fromUnpkg resolves the specifier after getting the package.json', async (t) => {
+test('fetch resolves the specifier after getting the package.json', async (t) => {
   t.timeout(20000);
 
-  const pack = await Pack.fromUnpkg('@openfn/language-common');
-  t.is(pack.path, '@openfn/language-common');
+  const pack = await Pack.fetch('@openfn/language-common@1.7.5');
+  t.is(pack.path, '@openfn/language-common@1.7.5');
   t.regex(pack.specifier, /^@openfn\/language-common@\d\.\d\.\d/);
 });
 
-test('fromUnpkg loads the file listing', async (t) => {
+test('fetch loads the file listing', async (t) => {
   t.timeout(20000);
 
-  const pack = await Pack.fromUnpkg('@openfn/language-common@2.0.0-rc1');
+  const pack = await Pack.fetch('@openfn/language-common@2.0.0-rc1');
   t.is(pack.path, '@openfn/language-common@2.0.0-rc1');
-  t.deepEqual(pack.fileListing, [
-    '/LICENSE',
-    '/dist/index.cjs',
-    '/dist/index.js',
-    '/dist/language-common.d.ts',
-    '/package.json',
-    '/LICENSE.LESSER',
-    '/README.md',
-  ]);
+  t.true(pack.fileListing.includes('/LICENSE'));
+  t.true(pack.fileListing.includes('/dist/index.cjs'));
+  t.true(pack.fileListing.includes('/dist/index.js'));
+  t.true(pack.fileListing.includes('/dist/language-common.d.ts'));
+  t.true(pack.fileListing.includes('/package.json'));
+  t.true(pack.fileListing.includes('/LICENSE.LESSER'));
+  t.true(pack.fileListing.includes('/README.md'));
 
   t.is(pack.fsMap.size, 0);
   await pack.getFiles();
@@ -36,8 +34,8 @@ test('fromUnpkg loads the file listing', async (t) => {
   t.truthy(pack.fsMap.get(pack.types!));
 });
 
-test("Unpkg throws an error when a package can't be found", async (t) => {
-  await t.throwsAsync(async () => Pack.fromUnpkg('@openfn/foobar'), {
+test("fetch throws an error when a package can't be found", async (t) => {
+  await t.throwsAsync(async () => Pack.fetch('@openfn/foobar'), {
     message: 'Got 404 from Unpkg for: @openfn/foobar/package.json',
   });
 });
