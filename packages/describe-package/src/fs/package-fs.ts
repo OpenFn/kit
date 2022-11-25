@@ -12,12 +12,6 @@ export class NotFound extends Error {
   }
 }
 
-interface PackageListing {
-  path: string;
-  type: 'directory' | 'file';
-  files?: PackageListing[];
-}
-
 interface JSDelivrListing {
   default: string;
   files: Array<{
