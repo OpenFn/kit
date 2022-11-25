@@ -2,7 +2,7 @@ import test from 'ava';
 import mockfs from 'mock-fs';
 import { readFile } from 'node:fs/promises';
 
-import { serializeOutput } from '../../src/execute/handler';
+import serializeOutput from '../../src/execute/serialize-output';
 import { createMockLogger } from '@openfn/logger';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
