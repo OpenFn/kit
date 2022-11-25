@@ -61,7 +61,7 @@ const RenderFunction = ({ fn, onInsert }: RenderFunctionProps) => {
           </div>
         )}
         </div>
-    </div>
+    </details>
   )
 }
 

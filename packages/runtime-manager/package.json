@@ -4,6 +4,7 @@
   "description": "An example runtime manager service.",
   "main": "index.js",
   "type": "module",
+  "private": true,
   "scripts": {
     "test": "pnpm ava",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
@@ -26,7 +27,7 @@
     "@types/koa": "^2.13.5",
     "@types/node": "^17.0.31",
     "@types/workerpool": "^6.1.0",
-    "ava": "^4.2.0",
+    "ava": "5.1.0",
     "nodemon": "^2.0.19",
     "ts-node": "^10.8.1",
     "tslib": "^2.4.0",

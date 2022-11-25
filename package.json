@@ -7,7 +7,7 @@
     "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
     "build": "pnpm run clean && pnpm -r --filter './packages/*' run build",
     "clean": "rimraf packages/*/dist",
-    "clean:local": "rimraf dist",
+    "clean:local": "rimraf dist/**/*",
     "test": "pnpm -r --filter './packages/*' run test",
     "test:types": "pnpm -r --filter './packages/*' run test:types",
     "pack": "pnpm -r run pack",

@@ -4,7 +4,9 @@
 
 ### Patch Changes
 
-- 7f68a40: Rollback describe-package dependency
+- 4a5712f: Update list of globals for add-imports
+- Updated dependencies [e434ef6]
+  - @openfn/describe-package@0.0.10
 
 ## 0.0.15
 

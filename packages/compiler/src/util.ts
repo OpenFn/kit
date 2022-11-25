@@ -52,7 +52,9 @@ export const preloadAdaptorExports = async (specifier: string) => {
   project.createFile(types, pkg.types);
 
   // find the main dts
-  const functionDefs = describeDts(project, pkg.types);
+  const functionDefs = describeDts(project, pkg.types, {
+    includePrivate: true,
+  });
   // Return a flat array of names
   return functionDefs.map(({ name }) => name);
 };
