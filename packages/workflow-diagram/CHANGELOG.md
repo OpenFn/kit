@@ -1,5 +1,11 @@
 # @openfn/workflow-diagram
 
+## 0.4.1
+
+### Patch Changes
+
+- Fix broken build
+
 ## 0.4.0
 
 ### Minor Changes

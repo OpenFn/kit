@@ -1,5 +1,12 @@
 # flow
 
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/workflow-diagram@0.4.1
+
 ## 1.0.5
 
 ### Patch Changes
