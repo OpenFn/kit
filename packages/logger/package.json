@@ -27,9 +27,9 @@
     }
   },
   "dependencies": {
+    "@inquirer/confirm": "0.0.28-alpha.0",
     "chalk": "^5.1.2",
-    "figures": "^5.0.0",
-    "prompt-confirm": "^2.0.4"
+    "figures": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.7.18",
