@@ -412,7 +412,8 @@ test.serial('list should return something', async (t) => {
   const [pwd, installed] = logger._history;
   t.is(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
 
-  t.assert(logger._parse(installed).message.startsWith('Installed packages:'));
+  const message = logger._parse(installed).message as string;
+  t.assert(message.startsWith('Installed packages:'));
 });
 
 // This used to throw, see #70
@@ -423,7 +424,6 @@ test.serial('list does not throw if repo is not initialised', async (t) => {
 
   const opts = cmd.parse('repo list') as Opts;
   opts.repoDir = '/repo/';
-  opts.logger = logger;
 
   await commandParser('', opts, logger);
 

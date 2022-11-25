@@ -49,7 +49,7 @@ const executeCommand = {
         'Install the latest version of language-common to the repo'
       );
   },
-};
+} as yargs.CommandModule<Opts>;
 
 export const applyExecuteOptions = (yargs: yargs.Argv) =>
   yargs

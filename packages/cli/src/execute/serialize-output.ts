@@ -24,7 +24,7 @@ const serializeOutput = async (
   if (output === undefined) {
     output = '';
   } else {
-    output = stringify(output, null, 2);
+    output = stringify(output, undefined, 2);
   }
 
   if (options.outputStdout) {

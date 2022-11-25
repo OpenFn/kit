@@ -12,7 +12,7 @@ export type Opts = {
   adaptor?: boolean;
   adaptors?: string[];
   autoinstall?: boolean;
-  expand: boolean; // for unit tests really
+  expand?: boolean; // for unit tests really
   force?: boolean;
   immutable?: boolean;
   jobPath?: string;
