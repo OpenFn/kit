@@ -9,7 +9,8 @@ function PlusButton() {
   return (
     <button
       id="plusButton"
-      className="transition duration-500 ease-in-out pointer-events-auto rounded-full bg-indigo-600 py-1 px-4 text-[0.8125rem] font-semibold leading-5 text-white hover:bg-indigo-500"
+      className="transition duration-150 ease-in-out pointer-events-auto rounded-full
+               bg-indigo-600 py-1 px-4 text-[0.8125rem] font-semibold leading-5 text-white hover:bg-indigo-500"
     >
       <svg
         id="plusIcon"
@@ -33,20 +34,10 @@ const JobNode = ({
   targetPosition = Position.Top,
   sourcePosition = Position.Bottom,
 }: NodeProps<NodeData>) => {
-  const [isMouseInside, setIsMouseInside] = useState(false);
-
-  const mouseEnter = () => {
-    setIsMouseInside(true);
-  };
-  const mouseLeave = () => {
-    setIsMouseInside(false);
-  };
-
   return (
     <div
-      onMouseEnter={mouseEnter}
-      onMouseLeave={mouseLeave}
       className={cc([
+        'group',
         'bg-white',
         'cursor-pointer',
         'h-full',
@@ -74,10 +65,15 @@ const JobNode = ({
           !data.hasChildren ? 'items-center' : false,
         ])}
       >
-        <div className="flex flex-col items-center justify-center h-full text-center">
+        <div className="flex justify-center h-full text-center">
           <p>{data?.label}</p>
         </div>
-        {isMouseInside && <PlusButton />}
+      </div>
+      <div
+        className="flex flex-col items-center opacity-0 
+                      group-hover:opacity-100 transition duration-150 ease-in-out"
+      >
+        <PlusButton />
       </div>
       <Handle
         type="source"
