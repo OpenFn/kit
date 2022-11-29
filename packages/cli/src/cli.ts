@@ -23,5 +23,10 @@ export const cmd = yargs(hideBin(process.argv))
     description: 'Set the default log level to none, default, info or debug',
     array: true,
   })
+  .example('openfn execute help', 'Show documentation for the execute command')
+  .example(
+    'openfn docs @openfn/language-common each',
+    'Get more help on the common.each command'
+  )
   .alias('v', 'version')
   .help() as yargs.Argv<Opts>;
