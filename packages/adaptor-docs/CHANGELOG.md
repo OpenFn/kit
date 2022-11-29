@@ -1,5 +1,12 @@
 # @openfn/adaptor-docs
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [5c7605c]
+  - @openfn/describe-package@0.0.11
+
 ## 0.0.5
 
 ### Patch Changes

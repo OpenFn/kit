@@ -57,17 +57,31 @@ export const describePackage = async (
   const { name, version } = getNameAndVersion(specifier);
   const project = new Project();
 
-  // Include language-common in the project model
-  // (I don't expect this to be permanent)
-  const common = await fetchDTSListing('@openfn/language-common');
-  for await (const fileName of common) {
-    const f = await fetchFile(`@openfn/language-common${fileName}`);
-    // Flatten the paths or else there's trouble
-    // TODO need to better understand this at some stage
-    const relativeFileName = fileName.split('/').pop();
-    project.addTypeDefinition('@openfn/language-common', f, relativeFileName);
+  if (name != '@openfn/language-common') {
+    // Include language-common in the project model
+    // (I don't expect this to be permanent)
+
+    // First work out the correct version
+    const pkg = await fetchFile(`${specifier}/package.json`);
+    const commonVersion = JSON.parse(pkg).dependencies?.[
+      '@openfn/language-common'
+    ].replace('^', '');
+
+    // fetch it
+    const common = await fetchDTSListing(
+      `@openfn/language-common@${commonVersion}`
+    );
+    // Load it into the project
+    for await (const fileName of common) {
+      const f = await fetchFile(`@openfn/language-common${fileName}`);
+      // Flatten the paths or else there's trouble
+      // TODO need to better understand this at some stage
+      const relativeFileName = fileName.split('/').pop();
+      project.addTypeDefinition('@openfn/language-common', f, relativeFileName);
+    }
   }
 
+  // Now fetch the listings for the actual package
   const files = await fetchDTSListing(specifier);
   const functions: FunctionDescription[] = [];
   for await (const fileName of files) {

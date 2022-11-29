@@ -1,5 +1,12 @@
 # @openfn/logger
 
+## 0.0.7
+
+### Patch Changes
+
+- 0b6c0ff: Replace confirm utility to remove security vulnerability
+- 4555139: Allow null and undefined to be logged
+
 ## 0.0.6
 
 ### Patch Changes

@@ -5,9 +5,10 @@ import { repo as repoCommand, install as installCommand } from './repo/command';
 import executeCommand from './execute/command';
 import compileCommand from './compile/command';
 import testCommand from './test/command';
+import { Opts } from './commands';
 
 export const cmd = yargs(hideBin(process.argv))
-  .command(executeCommand as yargs.CommandModule<{}>)
+  .command(executeCommand)
   .command(compileCommand)
   .command(installCommand) // allow install to run from the top as well as repo
   .command(repoCommand)
@@ -19,4 +20,4 @@ export const cmd = yargs(hideBin(process.argv))
     array: true,
   })
   .alias('v', 'version')
-  .help();
+  .help() as yargs.Argv<Opts>;

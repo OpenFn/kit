@@ -31,6 +31,11 @@ const executeCommand = {
         boolean: true,
         description: 'Skip compilation',
       })
+      .option('no-strict-output', {
+        boolean: true,
+        description:
+          'Allow properties other than data to be returned in the output.',
+      })
       .example(
         'openfn foo/job.js',
         'Reads foo/job.js, looks for state and output in foo'
@@ -44,7 +49,7 @@ const executeCommand = {
         'Install the latest version of language-common to the repo'
       );
   },
-};
+} as yargs.CommandModule<Opts>;
 
 export const applyExecuteOptions = (yargs: yargs.Argv) =>
   yargs
@@ -60,7 +65,7 @@ export const applyExecuteOptions = (yargs: yargs.Argv) =>
     .option('output-stdout', {
       alias: 'O',
       boolean: true,
-      description: 'Print output to stdout (intead of a file)',
+      description: 'Print output to stdout (instead of a file)',
     })
     .option('adaptors', {
       alias: ['a', 'adaptor'],

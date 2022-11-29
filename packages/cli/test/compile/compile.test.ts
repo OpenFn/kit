@@ -1,7 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
-import createLogger, { createMockLogger } from '@openfn/logger';
+import { createMockLogger } from '@openfn/logger';
 import {
   stripVersionSpecifier,
   loadTransformOptions,

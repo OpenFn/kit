@@ -1,6 +1,6 @@
 {
   "name": "@openfn/logger",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Cross-package logging utility",
   "module": "dist/index.js",
   "author": "Open Function Group <admin@openfn.org>",
@@ -27,9 +27,9 @@
     }
   },
   "dependencies": {
+    "@inquirer/confirm": "0.0.28-alpha.0",
     "chalk": "^5.1.2",
-    "figures": "^5.0.0",
-    "prompt-confirm": "^2.0.4"
+    "figures": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.7.18",
