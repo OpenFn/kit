@@ -431,6 +431,37 @@ test.serial('list does not throw if repo is not initialised', async (t) => {
   t.truthy(message);
 });
 
+test.serial('docs should print documention', async (t) => {
+  mock({
+    '/repo/docs/common@1.0.0.json': JSON.stringify({
+      name: 'test',
+      functions: [
+        {
+          name: 'fn',
+          parameters: [],
+          examples: [],
+        },
+      ],
+    }),
+  });
+
+  const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
+  opts.repoDir = '/repo';
+
+  await commandParser('', opts, logger);
+
+  const [_a, b, c] = logger._history;
+  const docs = logger._parse(b).message as string;
+  // match the signature
+  t.regex(docs, /\#\# fn\(\)/);
+  // Match usage examples
+  t.regex(docs, /\#\#\# Usage Examples/);
+
+  const { message, level } = logger._parse(c);
+  t.is(level, 'success');
+  t.is(message, 'Done!');
+});
+
 // TODO - need to work out a way to test agaist stdout
 // should return to stdout
 // should log stuff to console
