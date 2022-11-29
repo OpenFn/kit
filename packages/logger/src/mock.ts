@@ -4,7 +4,7 @@ import createLogger, { Logger, LogFns } from './logger';
 import type { LogOptions, LogEmitter } from './options';
 
 // Each log message is saved as the level, then whatever was actually logged
-type LogMessage = [LogFns | 'confirm', ...any[]];
+type LogMessage = [LogFns | 'confirm' | 'print', ...any[]];
 
 type MockLogger = Logger & {
   _last: LogMessage; // the last log message
@@ -42,6 +42,10 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
   // Type shenanegans while we append the mock APIs
   const mock = m as MockLogger;
 
+  mock.print = (...out: any[]) => {
+    history.push(['print', ...out]);
+  };
+
   Object.defineProperty(mock, '_last', {
     get: () => history[history.length - 1] || [],
   });
@@ -58,6 +62,9 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
 
     if (log[0] === 'confirm') {
       return { level: 'confirm', message: log[1], messageRaw: [log[1]] };
+    }
+    if (log[0] === 'print') {
+      return { level: 'print', message: log[1], messageRaw: [log[1]] };
     }
 
     if (name && !opts.hideNamespace && !opts.hideIcons) {

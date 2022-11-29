@@ -168,3 +168,12 @@ test('confirm should log and return true', async (t) => {
   t.is(level, 'confirm');
   t.is(message, 'really?');
 });
+
+test('print should include the message', async (t) => {
+  const logger = mockLogger('a');
+  logger.print('z');
+
+  const { level, message } = logger._parse(logger._last);
+  t.is(level, 'print');
+  t.is(message, 'z');
+});

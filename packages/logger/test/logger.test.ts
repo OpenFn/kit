@@ -108,6 +108,16 @@ test('returns custom options', (t) => {
   });
 });
 
+test('print() should be barebones', (t) => {
+  const options = { level: 'default' as const };
+  const logger = createLogger('x', options);
+  logger.print('abc');
+
+  const [level, message] = logger._last;
+  t.is(level, 'print');
+  t.is(message, 'abc');
+});
+
 test('log() should behave like info', (t) => {
   const options = { level: 'debug' as const };
   const logger = createLogger('x', options);
