@@ -25,8 +25,7 @@ export const generatePlaceholder = (path: string) => {
 
 const finish = (logger: Logger, resultPath: string) => {
   logger.success('Done! Docs can be found at:\n');
-  // TODO I want to print this without any logger overhead, so that it's easy to scrape from the terminal
-  logger.success(`  ${path.resolve(resultPath)}`);
+  logger.print(`  ${path.resolve(resultPath)}`);
 };
 
 const generateDocs = async (
