@@ -118,6 +118,14 @@ test('print() should be barebones', (t) => {
   t.is(message, 'abc');
 });
 
+test('print() should not log if level is none', (t) => {
+  const options = { level: 'none' as const };
+  const logger = createLogger('x', options);
+  logger.print('abc');
+
+  t.is(logger._last.length, 0);
+});
+
 test('log() should behave like info', (t) => {
   const options = { level: 'debug' as const };
   const logger = createLogger('x', options);

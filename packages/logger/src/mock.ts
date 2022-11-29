@@ -43,7 +43,9 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
   const mock = m as MockLogger;
 
   mock.print = (...out: any[]) => {
-    history.push(['print', ...out]);
+    if (opts.level !== 'none') {
+      history.push(['print', ...out]);
+    }
   };
 
   Object.defineProperty(mock, '_last', {

@@ -151,7 +151,9 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   // print() will log without any metadata/overhead/santization
   // basically a proxy for console.log
   const print = (...args: any[]) => {
-    emitter.info(...args);
+    if (opts.level !== NONE) {
+      emitter.info(...args);
+    }
   };
 
   const confirm = async (message: string, force = false) => {
