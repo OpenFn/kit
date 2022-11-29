@@ -4,6 +4,7 @@ import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
 import docgen from './docgen/handler';
+import docs from './docs/handler';
 import { clean, install, pwd, list } from './repo/handler';
 import expandAdaptors from './util/expand-adaptors';
 
@@ -22,6 +23,7 @@ export type Opts = {
   strictOutput?: boolean; // defaults to true
   outputPath?: string;
   outputStdout?: boolean;
+  operation?: string;
   packages?: string[];
   specifier?: string; // docgen
   repoDir?: string;
@@ -34,6 +36,7 @@ const handlers = {
   compile,
   test,
   docgen,
+  docs,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,

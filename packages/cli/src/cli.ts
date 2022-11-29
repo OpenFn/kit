@@ -6,6 +6,7 @@ import executeCommand from './execute/command';
 import compileCommand from './compile/command';
 import testCommand from './test/command';
 import docgenCommand from './docgen/command';
+import docsCommand from './docs/command';
 import { Opts } from './commands';
 
 export const cmd = yargs(hideBin(process.argv))
@@ -14,6 +15,7 @@ export const cmd = yargs(hideBin(process.argv))
   .command(installCommand) // allow install to run from the top as well as repo
   .command(repoCommand)
   .command(testCommand)
+  .command(docsCommand)
   .command(docgenCommand)
   // Common options
   .option('log', {

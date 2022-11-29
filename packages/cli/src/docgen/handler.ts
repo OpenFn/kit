@@ -85,7 +85,7 @@ const waitForDocs = async (
   }
 };
 
-const docsHandler = (
+const docgenHandler = (
   options: Required<Pick<Opts, 'specifier' | 'repoDir'>>,
   logger: Logger,
   docgen: DocGenFn = actualDocGen,
@@ -117,4 +117,4 @@ const docsHandler = (
   }
 };
 
-export default docsHandler;
+export default docgenHandler;
