@@ -19,7 +19,7 @@
  * ## Loading from Unpkg
  *
  * ```js
- * const pack = await Pack.fromUnpkg("@myorg/mypackage")
+ * const pack = await Pack.fetch("@myorg/mypackage")
  * ```
  *
  * This will create a new Pack instance and download it's `package.json` and
@@ -139,7 +139,7 @@ export class Pack {
     this.fsMap.set(urlJoin(this.packageBase, file), contents);
   }
 
-  static async fromUnpkg(specifier: string): Promise<Pack> {
+  static async fetch(specifier: string): Promise<Pack> {
     const pack = new Pack({
       path: specifier,
       packageJson: JSON.parse(await fetchFile(specifier + '/package.json')),
