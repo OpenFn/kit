@@ -159,7 +159,7 @@ importers:
       mock-fs: ^5.1.4
       rimraf: ^3.0.2
       treeify: ^1.1.0
-      ts-node: ^10.8.1
+      ts-node: ^10.9.1
       tslib: ^2.4.0
       tsup: ^6.2.3
       typescript: ^4.7.4
@@ -194,7 +194,7 @@ importers:
       ast-types: ^0.14.2
       ava: 5.1.0
       recast: ^0.21.2
-      ts-node: ^10.8.1
+      ts-node: ^10.9.1
       tslib: ^2.4.0
       tsup: ^6.2.3
       typescript: ^4.7.4
@@ -227,7 +227,7 @@ importers:
       node-localstorage: ^2.2.1
       rimraf: ^3.0.2
       threads: 1.7.0
-      ts-node: ^10.8.1
+      ts-node: ^10.9.1
       tslib: ^2.4.0
       tsm: ^2.2.1
       tsup: ^6.2.3
@@ -283,7 +283,7 @@ importers:
       ava: 5.1.0
       mock-fs: ^5.1.4
       semver: ^7.3.8
-      ts-node: ^10.7.0
+      ts-node: ^10.9.1
       tslib: ^2.4.0
       tsup: ^6.2.3
       typescript: ^4.6.4
@@ -311,7 +311,7 @@ importers:
       ava: 5.1.0
       koa: ^2.13.4
       nodemon: ^2.0.19
-      ts-node: ^10.8.1
+      ts-node: ^10.9.1
       tslib: ^2.4.0
       tsm: ^2.2.2
       tsup: ^6.2.3
@@ -820,7 +820,7 @@ packages:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.1.8_57znarxsqwmnneadci5z5fd5gu
+      tailwindcss: 3.1.8_postcss@8.4.16
     dev: true
 
   /@trysound/sax/0.2.0:
@@ -5936,7 +5936,7 @@ packages:
     dependencies:
       lilconfig: 2.0.6
       postcss: 8.4.16
-      ts-node: 10.9.1_cbe7ovvae6zqfnmtgctpgpys54
+      ts-node: 10.9.1_tphhiizkxv2hzwkunblc3hbmra
       yaml: 1.10.2
     dev: true
 
