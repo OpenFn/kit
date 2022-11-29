@@ -156,7 +156,24 @@ test.serial(
   }
 );
 
-test.skip("remove a placeholder if there's an error", () => {});
+test.serial("remove the placeholder if there's an error", async (t) => {
+  const path = `${DOCS_PATH}/${specifier}.json`;
+
+  const docgen = (async () => {
+    // When docgen is called, a placeholder should now exist
+    const placeholder = await loadJSON(path);
+    t.truthy(placeholder);
+    t.true(placeholder.loading);
+
+    throw new Error('test');
+  }) as unknown as DocGenFn;
+
+  await docsHandler(options, logger, docgen);
+
+  // placeholder should be gone
+  const empty = await loadJSON(path);
+  t.falsy(empty);
+});
 
 test.serial('wait for docs if a placeholder is present', async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
@@ -188,4 +205,43 @@ test.serial('wait for docs if a placeholder is present', async (t) => {
 
   t.is(docs.name, 'test');
   t.is(docs.version, '1.0.0');
+});
+
+test.serial("throw there's a timeout", async (t) => {
+  const path = `${DOCS_PATH}/${specifier}.json`;
+
+  mockfs({
+    [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
+  });
+
+  // This will timeout
+  const timeout = 2;
+  await t.throwsAsync(
+    async () => docsHandler(options, logger, async () => {}, timeout),
+    {
+      message: 'Timed out waiting for docs to load',
+    }
+  );
+});
+
+test.serial("don't remove the placeholder if there's a timeout", async (t) => {
+  const path = `${DOCS_PATH}/${specifier}.json`;
+
+  mockfs({
+    [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
+  });
+
+  const timeout = 2;
+  await t.throwsAsync(
+    async () => docsHandler(options, logger, async () => {}, timeout),
+    {
+      message: 'Timed out waiting for docs to load',
+    }
+  );
+
+  // docs should be present and correct
+  const placeholder = await loadJSON(path);
+
+  t.truthy(placeholder);
+  t.true(placeholder.loading);
 });

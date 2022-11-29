@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { Opts } from '../commands';
@@ -58,7 +58,7 @@ const waitForDocs = async (
           logger.info('Waiting..');
           if (count > RETRY_COUNT) {
             clearInterval(i);
-            reject('Timed out waiting for docs to load.');
+            reject(new Error('Timed out waiting for docs to load'));
           }
           const updated = JSON.parse(readFileSync(path, 'utf8'));
           if (!updated.hasOwnProperty('loading')) {
@@ -80,7 +80,7 @@ const waitForDocs = async (
     // If something is wrong with the current JSON, abort for now
     // To be fair it may not matter as we'll write over it anyway
     // Maybe we should encourge a openfn docs purge <specifier> or something
-    logger.error('Existing doc JSON corrupt. Aborting.');
+    logger.error('Existing doc JSON corrupt. Aborting');
     throw e;
   }
 };
@@ -90,7 +90,7 @@ const docgenHandler = (
   logger: Logger,
   docgen: DocGenFn = actualDocGen,
   retryDuration = RETRY_DURATION
-): Promise<string> => {
+): Promise<string | void> => {
   const { specifier, repoDir } = options;
   logger.success(`Generating docs for ${specifier}`); // TODO not success, but a default level info log.
 
@@ -100,20 +100,28 @@ const docgenHandler = (
   const path = `${repoDir}/docs/${specifier}.json`;
   ensurePath(path);
 
+  const handleError = () => {
+    // Remove the placeholder
+    logger.info('Removing placeholder');
+    rmSync(path);
+  };
+
   try {
     const existing = readFileSync(path, 'utf8');
     // Return or wait for the existing docs
-    return waitForDocs(JSON.parse(existing), path, logger, retryDuration).catch(
-      (e: Error) => {
-        console.error(e);
-      }
-    );
+    // If there's a timeot error, don't remove the placeholder
+    return waitForDocs(JSON.parse(existing), path, logger, retryDuration);
   } catch (e) {
     // Generate docs from scratch
-    logger.info(`Docs JSON not foud at ${path}`);
+    logger.info(`Docs JSON not found at ${path}`);
+    logger.debug('Generating placeholder');
     generatePlaceholder(path);
 
-    return generateDocs(specifier, path, docgen, logger);
+    return generateDocs(specifier, path, docgen, logger).catch((e) => {
+      logger.error('Error generating documentation');
+      logger.error(e);
+      handleError();
+    });
   }
 };
 
