@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import cc from 'classcat';
 
 import './app.css';
-import '@openfn/workflow-diagram/index.css'
+import '@openfn/workflow-diagram/index.css';
 
 const projectSpace = {
   jobs: [
@@ -80,12 +80,16 @@ const projectSpace = {
 
 const root = createRoot(document.getElementById('root'));
 
-function onNodeClick(_event, node) {
+function onNodeClick(event, node) {
   console.log('Clicked Node:', node);
 }
 
 function onPaneClick(event) {
   console.log('Clicked pane:', event);
+}
+
+function onJobAddClick(node) {
+  console.log('Clicked Add Job:', node);
 }
 
 function Button({ children, className = {}, onClick }) {
@@ -123,6 +127,7 @@ function View() {
           >
             <WorkflowDiagram
               projectSpace={projectSpace}
+              onJobAddClick={onJobAddClick}
               onNodeClick={onNodeClick}
               onPaneClick={onPaneClick}
             />

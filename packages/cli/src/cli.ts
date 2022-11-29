@@ -6,6 +6,7 @@ import executeCommand from './execute/command';
 import compileCommand from './compile/command';
 import testCommand from './test/command';
 import docgenCommand from './docgen/command';
+import { Opts } from './commands';
 
 export const cmd = yargs(hideBin(process.argv))
   .command(executeCommand)
@@ -21,4 +22,4 @@ export const cmd = yargs(hideBin(process.argv))
     array: true,
   })
   .alias('v', 'version')
-  .help();
+  .help() as yargs.Argv<Opts>;

@@ -355,6 +355,7 @@ test('dumbly add imports for an adaptor with unknown exports', (t) => {
 });
 
 test("don't auto add imports for node globals", (t) => {
+  // Note that this is not an exhaustive set
   const globals = [
     'atob',
     'Blob',
@@ -367,14 +368,18 @@ test("don't auto add imports for node globals", (t) => {
     'Error',
     'Event',
     'exports',
+    'isNaN',
     'global',
     'JSON',
+    'Map',
     'module',
+    'NaN',
     'parseFloat',
     'parseInt',
     'process',
     'Promise',
     'require',
+    'Set',
     'setInterval',
     'setTimeout',
     'state',

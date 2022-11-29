@@ -1,47 +1,10 @@
 import { Job, Operation, TriggerType, Workflow } from 'types';
-import { FlowElkNode, ElkNodeEdges, EdgeFlowProps, FlowElkEdge } from './types';
+import { FlowElkNode, FlowElkEdge } from './types';
 
 const defaultLayoutOptions = {
   'elk.direction': 'DOWN',
   'elk.padding': '[top=35,left=10.0,bottom=10.0,right=10.0]',
 };
-
-function edgeFlowProps(attrs: Partial<EdgeFlowProps>): EdgeFlowProps {
-  return {
-    animated: false,
-    ...attrs,
-  };
-}
-
-/**
- * Builds a pair of Node/Edges with the `add` type assigned.
- *
- * @param node The Node that will be the parent to this add button
- */
-export function addNodeFactory(node: FlowElkNode): ElkNodeEdges {
-  const addNode = {
-    id: `${node.id}-add`,
-    __flowProps__: {
-      data: {
-        parentId: node.id,
-        label: 'Add',
-      },
-      type: 'add',
-    },
-    layoutOptions: defaultLayoutOptions,
-    width: 24,
-    height: 24,
-  };
-
-  const addEdge = {
-    id: `${node.id}->${node.id}-add`,
-    sources: [node.id],
-    targets: [addNode.id],
-    __flowProps__: edgeFlowProps({ dashed: false }),
-  };
-
-  return [[addNode], [addEdge]];
-}
 
 const TriggerLabels: { [key in TriggerType]: string } = {
   cron: 'Cron',

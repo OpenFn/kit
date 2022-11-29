@@ -13,17 +13,18 @@ export type Opts = {
   adaptor?: boolean;
   adaptors?: string[];
   autoinstall?: boolean;
+  expand?: boolean; // for unit tests really
+  force?: boolean;
   immutable?: boolean;
   jobPath?: string;
-  expand: boolean; // for unit tests really
-  force?: boolean;
   log?: string[];
-  repoDir?: string;
   noCompile?: boolean;
+  strictOutput?: boolean; // defaults to true
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
   specifier?: string; // docgen
+  repoDir?: string;
   statePath?: string;
   stateStdin?: string;
 };

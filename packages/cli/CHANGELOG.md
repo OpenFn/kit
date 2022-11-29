@@ -1,5 +1,31 @@
 # @openfn/cli
 
+## 0.0.19
+
+### Patch Changes
+
+- @openfn/compiler@0.0.18
+
+## 0.0.18
+
+### Patch Changes
+
+- 68b4208: Support circular structures in JSON output
+  Introduce strict output (by default) which only serializes data
+  Never serialize configuration to output
+- Updated dependencies
+  - @openfn/logger@0.0.7
+  - @openfn/compiler@0.0.17
+  - @openfn/runtime@0.0.12
+
+## 0.0.17
+
+### Patch Changes
+
+- 7f68a40: Update global list
+- Updated dependencies [7f68a40]
+  - @openfn/compiler@0.0.16
+
 ## 0.0.16
 
 ### Patch Changes

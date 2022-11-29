@@ -1,5 +1,17 @@
 # @openfn/workflow-diagram
 
+## 0.4.1
+
+### Patch Changes
+
+- Fix broken build
+
+## 0.4.0
+
+### Minor Changes
+
+- ca38bae: Move plus button to Job nodes
+
 ## 0.3.0
 
 ### Minor Changes

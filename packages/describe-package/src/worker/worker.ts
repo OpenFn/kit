@@ -30,7 +30,7 @@ async function loadModule(specifier: string) {
     throw new Error('Project not initialized, call `createProject` first.');
   }
 
-  const pack = await Pack.fromUnpkg(specifier);
+  const pack = await Pack.fetch(specifier);
 
   if (!pack.types)
     throw new Error(

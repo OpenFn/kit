@@ -1,5 +1,20 @@
 # @openfn/describe-package
 
+## 0.0.11
+
+### Patch Changes
+
+- 5c7605c: Use jsdelivr rather than unpkg
+
+## 0.0.10
+
+### Patch Changes
+
+- c8023b7: Include language-common in package descriptions
+  Only document public functions
+  Exclude beta file from documentation
+- e434ef6: Fix build for node
+
 ## 0.0.9
 
 ### Patch Changes

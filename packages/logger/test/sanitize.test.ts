@@ -8,6 +8,16 @@ test('simply return a string', (t) => {
   t.is(result, 'x');
 });
 
+test('simply return null', (t) => {
+  const result = sanitize(null, options);
+  t.is(result, null);
+});
+
+test('simply return undefined', (t) => {
+  const result = sanitize(undefined, options);
+  t.is(result, undefined);
+});
+
 test('simply return an object', (t) => {
   const result = sanitize({ a: 'x' }, options);
   t.deepEqual(result, { a: 'x' });

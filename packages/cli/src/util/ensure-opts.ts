@@ -83,9 +83,9 @@ export default function ensureOpts(
     packages: opts.packages,
     stateStdin: opts.stateStdin,
     specifier: opts.specifier,
+    strictOutput: opts.strictOutput ?? true,
     immutable: opts.immutable || false,
   } as SafeOpts;
-
   const set = (key: keyof Opts, value: string) => {
     // @ts-ignore TODO
     newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;

@@ -110,10 +110,10 @@ const wrapOperation = (
 const buildContext = (state: State, options: Options) => {
   const logger = options.jobLogger ?? console;
 
+  // TODO review this and decide what we explicitly want to exclude (see #104)
   const context = vm.createContext(
     {
       console: logger,
-      // TODO take a closer look at what globals to pass through
       clearInterval,
       clearTimeout,
       JSON,
