@@ -1,5 +1,7 @@
-import { readFile, writeFile } from 'node:fs/promises';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import path from 'node:path';
+
 import { Opts } from '../commands';
 import type { Logger } from '../util/logger';
 
@@ -13,10 +15,18 @@ const RETRY_COUNT = 20;
 const actualDocGen: DocGenFn = (specifier: string) =>
   describePackage(specifier, {});
 
-const ensureRepo = () => {};
+// Ensure the path to a .json file exists
+export const ensurePath = (filePath: string) =>
+  mkdirSync(path.dirname(filePath), { recursive: true });
 
 export const generatePlaceholder = (path: string) => {
   writeFileSync(path, `{ "loading": true, "timestamp": ${Date.now()}}`);
+};
+
+const finish = (logger: Logger, resultPath: string) => {
+  logger.success('Done! Docs can be found at:\n');
+  // TODO I want to print this without any logger overhead, so that it's easy to scrape from the terminal
+  logger.success(`  ${path.resolve(resultPath)}`);
 };
 
 const generateDocs = async (
@@ -28,7 +38,7 @@ const generateDocs = async (
   const result = await docgen(specifier);
 
   await writeFile(path, JSON.stringify(result, null, 2));
-  logger.success('Done!');
+  finish(logger, path);
   return path;
 };
 
@@ -62,7 +72,7 @@ const waitForDocs = async (
       });
     } else {
       logger.info(`Docs already written to cache at ${path}`);
-      logger.success('Done!');
+      finish(logger, path);
       return path;
       // If we get here the docs have been written, everything is fine
       // TODO should we sanity check the name and version? Would make sense
@@ -88,13 +98,17 @@ const docsHandler = (
   // TODO ensure the specifier is correct
   // If there's no version, we nede to add one
   // TODO check the repo exists and is intialised?
-
   const path = `${repoDir}/docs/${specifier}.json`;
+  ensurePath(path);
 
   try {
     const existing = readFileSync(path, 'utf8');
     // Return or wait for the existing docs
-    return waitForDocs(JSON.parse(existing), path, logger, retryDuration);
+    return waitForDocs(JSON.parse(existing), path, logger, retryDuration).catch(
+      (e: Error) => {
+        console.error(e);
+      }
+    );
   } catch (e) {
     // Generate docs from scratch
     logger.info(`Docs JSON not foud at ${path}`);

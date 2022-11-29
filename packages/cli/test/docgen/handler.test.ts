@@ -1,14 +1,11 @@
 // Test the actual functionality of docgen
 // ie, generate docs to a mock folder
 import test from 'ava';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import mockfs from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import docsHandler, {
-  DocGenFn,
-  generatePlaceholder,
-} from '../../src/docgen/handler';
+import docsHandler, { DocGenFn, ensurePath } from '../../src/docgen/handler';
 
 const logger = createMockLogger();
 
@@ -65,18 +62,38 @@ test.serial('generate mock docs', async (t) => {
   t.is(docs.version, '1.0.0');
 });
 
-// TODO ensure repo
+test.serial('log the result path', async (t) => {
+  await docsHandler(options, logger, mockGen);
 
-test.serial('ensurePlaceholder', async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
-  const empty = await loadJSON(path);
-  t.falsy(empty);
+  const { message } = logger._parse(logger._last);
+  t.is(message, `  ${DOCS_PATH}/${specifier}.json`);
+});
 
-  generatePlaceholder(path);
+test.serial("ensurePath if there's no repo", (t) => {
+  mockfs({
+    ['/tmp']: {},
+  });
+  ensurePath('/tmp/repo/docs/x.json');
 
-  const docs = await loadJSON(path);
-  t.true(docs.loading);
-  t.assert(typeof docs.timestamp === 'number');
+  t.true(existsSync('/tmp/repo/docs'));
+});
+
+test.serial("ensurePath if there's no docs folder", (t) => {
+  mockfs({
+    ['/tmp/repo']: {},
+  });
+  ensurePath('/tmp/repo/docs/x.json');
+
+  t.true(existsSync('/tmp/repo/docs'));
+});
+
+test.serial("ensurePath if there's a namespace", (t) => {
+  mockfs({
+    ['/tmp']: {},
+  });
+  ensurePath('/tmp/repo/docs/@openfn/language-common.json');
+
+  t.true(existsSync('/tmp/repo/docs/@openfn'));
 });
 
 test.serial('do not generate docs if they already exist', async (t) => {
@@ -138,6 +155,8 @@ test.serial(
     await promise.then();
   }
 );
+
+test.skip("remove a placeholder if there's an error", () => {});
 
 test.serial('wait for docs if a placeholder is present', async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
