@@ -6,6 +6,7 @@ import { Opts } from '../commands';
 import type { Logger } from '../util/logger';
 
 import { describePackage, PackageDescription } from '@openfn/describe-package';
+import { getNameAndVersion } from '@openfn/runtime';
 
 export type DocGenFn = (specifier: string) => Promise<PackageDescription>;
 
@@ -85,6 +86,8 @@ const waitForDocs = async (
   }
 };
 
+// This function deliberately blocks woth synchronous I/O
+// while it looks to see whether docs need generating
 const docgenHandler = (
   options: Required<Pick<Opts, 'specifier' | 'repoDir'>>,
   logger: Logger,
@@ -92,10 +95,17 @@ const docgenHandler = (
   retryDuration = RETRY_DURATION
 ): Promise<string | void> => {
   const { specifier, repoDir } = options;
+
+  const { version } = getNameAndVersion(specifier);
+  if (!version) {
+    logger.error('Error: No version number detected');
+    logger.error('eg, @openfn/language-common@1.7.5');
+    logger.error('Aborting');
+    process.exit(9); // invalid argument
+  }
+
   logger.success(`Generating docs for ${specifier}`); // TODO not success, but a default level info log.
-  // TODO ensure the specifier is correct
-  // If there's no version, we nede to add one
-  // TODO check the repo exists and is intialised?
+
   const path = `${repoDir}/docs/${specifier}.json`;
   ensurePath(path);
 
