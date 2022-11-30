@@ -5,7 +5,11 @@ import { readFileSync, existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import mockfs from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import docsHandler, { DocGenFn, ensurePath } from '../../src/docgen/handler';
+import docsHandler, {
+  DocGenFn,
+  ensurePath,
+  TIMEOUT_MS,
+} from '../../src/docgen/handler';
 
 const logger = createMockLogger();
 
@@ -244,4 +248,36 @@ test.serial("don't remove the placeholder if there's a timeout", async (t) => {
 
   t.truthy(placeholder);
   t.true(placeholder.loading);
+});
+
+test.serial("reset the placeholder if it's old", async (t) => {
+  const path = `${DOCS_PATH}/${specifier}.json`;
+
+  mockfs({
+    [path]: `{ "loading": true, "test", true, "timestamp": ${
+      Date.now() - 1001
+    } }`,
+  });
+
+  let docgencalled = false;
+  const docgen = (async (specifier: string) => {
+    // a new timestamp should be generated
+    const placeholder = await loadJSON(path);
+    t.true(placeholder.loading);
+    t.falsy(placeholder.test);
+
+    docgencalled = true;
+    return await mockGen(specifier);
+  }) as DocGenFn;
+
+  await docsHandler(options, logger, docgen);
+
+  // It should call out to the docgen function
+  t.true(docgencalled);
+
+  // docs should be present and correct
+  const docs = await loadJSON(path);
+
+  t.is(docs.name, 'test');
+  t.is(docs.version, '1.0.0');
 });

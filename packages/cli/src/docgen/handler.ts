@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises';
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, fstat } from 'node:fs';
 import path from 'node:path';
 
 import { Opts } from '../commands';
@@ -12,6 +12,8 @@ export type DocGenFn = (specifier: string) => Promise<PackageDescription>;
 
 const RETRY_DURATION = 500;
 const RETRY_COUNT = 20;
+
+const TIMEOUT_MS = 1000 * 60;
 
 const actualDocGen: DocGenFn = (specifier: string) =>
   describePackage(specifier, {});
@@ -117,12 +119,21 @@ const docgenHandler = (
 
   try {
     const existing = readFileSync(path, 'utf8');
+    const json = JSON.parse(existing);
+    if (json && json.timeout && Date.now() - json.timeout >= TIMEOUT_MS) {
+      // If the placeholder is more than TIMEOUT_MS old, remove it and try again
+      logger.info(`Expired placeholder found. Removing.`);
+      rmSync(path);
+      throw new Error('TIMEOUT');
+    }
     // Return or wait for the existing docs
-    // If there's a timeot error, don't remove the placeholder
-    return waitForDocs(JSON.parse(existing), path, logger, retryDuration);
+    // If there's a timeout error, don't remove the placeholder
+    return waitForDocs(json, path, logger, retryDuration);
   } catch (e) {
     // Generate docs from scratch
-    logger.info(`Docs JSON not found at ${path}`);
+    if (e.message !== 'TIMEOUT') {
+      logger.info(`Docs JSON not found at ${path}`);
+    }
     logger.debug('Generating placeholder');
     generatePlaceholder(path);
 
