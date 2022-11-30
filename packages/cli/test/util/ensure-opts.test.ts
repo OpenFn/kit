@@ -183,7 +183,7 @@ test('preserve specifier', (t) => {
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.false(opts.specifier);
+  t.is(opts.specifier, '@openfn/language-common@1.0.0');
 });
 
 test('default expand', (t) => {
