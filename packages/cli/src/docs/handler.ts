@@ -9,7 +9,6 @@ import type { FunctionDescription } from '@openfn/describe-package';
 import { getNameAndVersion, getLatestVersion } from '@openfn/runtime';
 import expandAdaptors from '../util/expand-adaptors';
 
-// TODO this is kinda hard to unit test...
 const describe = (adaptorName: string, fn: FunctionDescription) => `## ${
   fn.name
 }(${fn.parameters.map(({ name }) => name).join(',')})
@@ -45,20 +44,18 @@ const docsHandler = async (
     logger.success(`Showing docs for ${adaptorName} v${version}`);
   }
 
-  // so first we need to generate docs (a noop if they exist)
+  // First we need to generate docs metadata (this is a no-op if they exist already)
   logger.info('Generating/loading documentation...');
   const path = await docgen(
     {
       specifier: `${name}@${version}`,
       repoDir,
     },
-    // TODO maybe create a new logger here?
-    // Interestingly we don't want to log the path to docs
-    // We really only want to report if it goes into heavy docgen
+    // TODO I'm not sure how to handle logging here - we ought to feedback SOMETHING though
     createNullLogger()
   );
 
-  // Then we get the json
+  // If docgen succeeded, we should have a path to the metadata
   if (path) {
     const source = await readFile(path, 'utf8');
     const data = JSON.parse(source);
@@ -66,7 +63,10 @@ const docsHandler = async (
     const fn = data.functions.find(({ name }) => name === operation);
     logger.debug('Operation schema:', fn);
     logger.success(`Documentation for ${name}.${operation} v${version}:\n`);
+
+    // Generate a documentation string
     const desc = describe(name, fn);
+    // Log the description without any ceremony/meta stuff from the logger
     logger.print(desc);
 
     logger.success('Done!');
