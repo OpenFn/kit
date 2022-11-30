@@ -93,7 +93,6 @@ const docgenHandler = (
 ): Promise<string | void> => {
   const { specifier, repoDir } = options;
   logger.success(`Generating docs for ${specifier}`); // TODO not success, but a default level info log.
-
   // TODO ensure the specifier is correct
   // If there's no version, we nede to add one
   // TODO check the repo exists and is intialised?

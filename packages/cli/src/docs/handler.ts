@@ -7,6 +7,7 @@ import type { Logger } from '../util/logger';
 import type { FunctionDescription } from '@openfn/describe-package';
 
 import { getNameAndVersion, getLatestVersion } from '@openfn/runtime';
+import expandAdaptors from '../util/expand-adaptors';
 
 // TODO this is kinda hard to unit test...
 const describe = (adaptorName: string, fn: FunctionDescription) => `## ${
@@ -28,19 +29,20 @@ https://docs.openfn.org/adaptors/packages/${adaptorName.replace(
 `;
 
 const docsHandler = async (
-  options: Required<Pick<Opts, 'adaptor' | 'operation' | 'repoDir'>>,
+  options: Required<Pick<Opts, 'operation' | 'repoDir'>> & { adaptor: string },
   logger: Logger
 ): Promise<void> => {
   const { adaptor, operation, repoDir } = options;
 
   // does the adaptor have a version? If not, fetch the latest
   // (docgen won't do this for us)
-  let { name, version } = getNameAndVersion(adaptor as unknown as string); // TODO garbage typings
+  const [adaptorName] = expandAdaptors([adaptor], logger);
+  let { name, version } = getNameAndVersion(adaptorName);
   if (!version) {
     logger.info('No version number provided, looking for latest...');
     version = await getLatestVersion(version);
     logger.info('Found ', version);
-    logger.success(`Showing docs for ${name} v${version}`);
+    logger.success(`Showing docs for ${adaptorName} v${version}`);
   }
 
   // so first we need to generate docs (a noop if they exist)

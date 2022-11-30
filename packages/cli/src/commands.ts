@@ -11,7 +11,7 @@ import expandAdaptors from './util/expand-adaptors';
 export type Opts = {
   command?: string;
 
-  adaptor?: boolean;
+  adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
