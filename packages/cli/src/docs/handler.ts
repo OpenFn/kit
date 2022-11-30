@@ -1,5 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
-import path, { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
 
 import docgen from '../docgen/handler';
 import { Opts } from '../commands';
@@ -10,15 +9,22 @@ import type { FunctionDescription } from '@openfn/describe-package';
 import { getNameAndVersion, getLatestVersion } from '@openfn/runtime';
 
 // TODO this is kinda hard to unit test...
-const describe = (fn: FunctionDescription) => `## ${fn.name}(${fn.parameters
-  .map(({ name }) => name)
-  .join(',')})
+const describe = (adaptorName: string, fn: FunctionDescription) => `## ${
+  fn.name
+}(${fn.parameters.map(({ name }) => name).join(',')})
 
 ${fn.description}
 
 ### Usage Examples
 
 ${fn.examples.length ? fn.examples.map((eg) => eg).join('\n\n') : 'None'}
+
+### API Reference
+
+https://docs.openfn.org/adaptors/packages/${adaptorName.replace(
+  '@openfn/language-',
+  ''
+)}-docs#${fn.name}
 `;
 
 const docsHandler = async (
@@ -31,13 +37,14 @@ const docsHandler = async (
   // (docgen won't do this for us)
   let { name, version } = getNameAndVersion(adaptor as unknown as string); // TODO garbage typings
   if (!version) {
-    logger.info('No version number provided, looking for latest');
+    logger.info('No version number provided, looking for latest...');
     version = await getLatestVersion(version);
+    logger.info('Found ', version);
     logger.success(`Showing docs for ${name} v${version}`);
   }
 
   // so first we need to generate docs (a noop if they exist)
-  logger.info('Generating/loading documetation...');
+  logger.info('Generating/loading documentation...');
   const path = await docgen(
     {
       specifier: `${name}@${version}`,
@@ -50,20 +57,20 @@ const docsHandler = async (
   );
 
   // Then we get the json
-  const source = await readFile(path, 'utf8');
-  const data = JSON.parse(source);
+  if (path) {
+    const source = await readFile(path, 'utf8');
+    const data = JSON.parse(source);
 
-  const fn = data.functions.find(({ name }) => name === operation);
-  logger.debug('Operation schema:', fn);
-  logger.success(`Documentation for ${name}.${operation} v${version}:\n`);
-  const desc = describe(fn);
-  logger.print(desc);
+    const fn = data.functions.find(({ name }) => name === operation);
+    logger.debug('Operation schema:', fn);
+    logger.success(`Documentation for ${name}.${operation} v${version}:\n`);
+    const desc = describe(name, fn);
+    logger.print(desc);
 
-  logger.success('Done!');
-
-  // find out function (or error)
-
-  // then print the info
+    logger.success('Done!');
+  } else {
+    logger.error('Not found');
+  }
 };
 
 export default docsHandler;

@@ -431,7 +431,7 @@ test.serial('list does not throw if repo is not initialised', async (t) => {
   t.truthy(message);
 });
 
-test.serial('docs should print documention', async (t) => {
+test.serial.only('docs should print documention', async (t) => {
   mock({
     '/repo/docs/common@1.0.0.json': JSON.stringify({
       name: 'test',
@@ -456,6 +456,10 @@ test.serial('docs should print documention', async (t) => {
   t.regex(docs, /\#\# fn\(\)/);
   // Match usage examples
   t.regex(docs, /\#\#\# Usage Examples/);
+  t.regex(
+    docs,
+    /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
+  );
 
   const { message, level } = logger._parse(c);
   t.is(level, 'success');
