@@ -65,7 +65,7 @@ const JobNode = ({
           !data.hasChildren ? 'items-center' : false,
         ])}
       >
-        <div className="flex justify-center h-full text-center">
+        <div className="flex flex-col justify-center h-full text-center">
           <p>{data?.label}</p>
         </div>
       </div>
