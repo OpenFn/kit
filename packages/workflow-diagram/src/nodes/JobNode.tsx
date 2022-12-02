@@ -60,21 +60,15 @@ const JobNode = ({
 
       <div
         className={cc([
+          'flex',
+          !data.hasChildren && 'flex-col',
+          'justify-center',
           'h-full',
           'text-center',
-          !data.hasChildren && 'items-center',
         ])}
       >
-        <div
-          className={cc([
-            'flex',
-            !data.hasChildren && 'flex-col',
-            'justify-center',
-            'h-full',
-            'text-center',
-          ])}
-        >
-          <p>{data?.label}</p>
+        <div className="flex justify-center h-full text-center">
+          <p className="truncate">{data?.label}</p>
         </div>
       </div>
       <div
