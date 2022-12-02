@@ -60,7 +60,7 @@ For example changeset notes, look in the `.changesets` folder.
 
 ### Releasing
 
-To relase to npm:
+To release to npm:
 
 1) Update versions
 ```

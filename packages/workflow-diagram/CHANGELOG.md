@@ -1,5 +1,11 @@
 # @openfn/workflow-diagram
 
+## 0.4.2
+
+### Patch Changes
+
+- a752064: Align vertically job node titles
+
 ## 0.4.1
 
 ### Patch Changes
