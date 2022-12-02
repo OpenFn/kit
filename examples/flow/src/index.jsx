@@ -36,7 +36,7 @@ const projectSpace = {
     },
     {
       id: 'C',
-      name: 'Job C',
+      name: 'Transform and load all patient Data to OpenMRS',
       workflowId: 'wf-one',
       adaptor: '@openfn/language-dhis2@0.3.5',
       enabled: true,
@@ -56,7 +56,7 @@ const projectSpace = {
     },
     {
       id: 'D',
-      name: 'Job D',
+      name: 'Send reports to DHIS2 instance',
       workflowId: 'wf-two',
       adaptor: '@openfn/language-http@4.0.0',
       enabled: true,
