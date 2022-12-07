@@ -6,14 +6,6 @@ Kit Components
 
 ![](diagrams/kit-components.svg)
 
-## Workflow Diagram
-
-See [here](../../packages/workflow-diagram/)
-
-## Editor
-
-## Code Generator Widget
-
 ## Analyzer
 
 See [here](../../packages/compiler/)
