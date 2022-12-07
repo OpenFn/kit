@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 0.0.20
+
+### Patch Changes
+
+- 8d0f029: Add docgen and docs commands
+- 7571536: Fix hang on windows
+- Updated dependencies [e95c133]
+  - @openfn/logger@0.0.8
+  - @openfn/compiler@0.0.19
+  - @openfn/runtime@0.0.13
+
 ## 0.0.19
 
 ### Patch Changes

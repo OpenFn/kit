@@ -71,7 +71,7 @@ export default function ensureOpts(
   opts: Opts
 ): SafeOpts {
   const newOpts = {
-    adaptor: opts.adaptor, // only applies to install (a bit messy)
+    adaptor: opts.adaptor, // only applies to install (a bit messy) (now applies to docs too)
     adaptors: opts.adaptors || [],
     autoinstall: opts.autoinstall,
     command: opts.command,
@@ -80,8 +80,10 @@ export default function ensureOpts(
     noCompile: Boolean(opts.noCompile),
     expand: opts.expand !== false,
     outputStdout: Boolean(opts.outputStdout),
+    operation: opts.operation,
     packages: opts.packages,
     stateStdin: opts.stateStdin,
+    specifier: opts.specifier,
     strictOutput: opts.strictOutput ?? true,
     immutable: opts.immutable || false,
   } as SafeOpts;
