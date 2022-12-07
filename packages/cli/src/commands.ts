@@ -3,13 +3,15 @@ import ensureOpts from './util/ensure-opts';
 import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
+import docgen from './docgen/handler';
+import docs from './docs/handler';
 import { clean, install, pwd, list } from './repo/handler';
 import expandAdaptors from './util/expand-adaptors';
 
 export type Opts = {
   command?: string;
 
-  adaptor?: boolean;
+  adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
@@ -21,10 +23,24 @@ export type Opts = {
   strictOutput?: boolean; // defaults to true
   outputPath?: string;
   outputStdout?: boolean;
+  operation?: string;
   packages?: string[];
+  specifier?: string; // docgen
   repoDir?: string;
   statePath?: string;
   stateStdin?: string;
+};
+
+const handlers = {
+  execute,
+  compile,
+  test,
+  docgen,
+  docs,
+  ['repo-clean']: clean,
+  ['repo-install']: install,
+  ['repo-pwd']: pwd,
+  ['repo-list']: list,
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log'>> & {
@@ -50,31 +66,13 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     );
   }
 
-  let handler: (_opts: SafeOpts, _logger: Logger) => any = () => null;
-  switch (options.command) {
-    case 'repo-install':
-      handler = install;
-      break;
-    case 'repo-clean':
-      handler = clean;
-      break;
-    case 'repo-pwd':
-      handler = pwd;
-      break;
-    case 'repo-list':
-      handler = list;
-      break;
-    case 'compile':
-      assertPath(basePath);
-      handler = compile;
-      break;
-    case 'test':
-      handler = test;
-      break;
-    case 'execute':
-    default:
-      assertPath(basePath);
-      handler = execute;
+  const handler = options.command ? handlers[options.command] : execute;
+  if (!opts.command || /^(compile|execute)$/.test(opts.command)) {
+    assertPath(basePath);
+  }
+  if (!handler) {
+    logger.error(`Unrecognise command: ${options.command}`);
+    process.exit(1);
   }
 
   return handler(opts, logger);

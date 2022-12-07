@@ -3,7 +3,7 @@ import { Opts } from '../commands';
 
 const executeCommand = {
   command: 'execute [path]',
-  desc: 'Run an openfn job',
+  desc: `Run an openfn job. Get more help by running openfn <command> help`,
   aliases: ['$0'],
   handler: (argv: Arguments<Opts>) => {
     argv.command = 'execute';

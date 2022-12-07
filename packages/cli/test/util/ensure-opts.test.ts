@@ -176,6 +176,16 @@ test('preserve expand', (t) => {
   t.false(opts.expand);
 });
 
+test('preserve specifier', (t) => {
+  const initialOpts = {
+    specifier: '@openfn/language-common@1.0.0',
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.is(opts.specifier, '@openfn/language-common@1.0.0');
+});
+
 test('default expand', (t) => {
   const initialOpts = {} as Opts;
 

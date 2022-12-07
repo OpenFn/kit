@@ -51,6 +51,7 @@ export interface Logger extends Console {
   success(...args: any[]): void;
 
   // fancier log functions
+  print(...args: any[]): void;
   confirm(message: string, force?: boolean): Promise<boolean>;
   timer(name: string): string | undefined;
   break(): void;
@@ -147,6 +148,14 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     }
   };
 
+  // print() will log without any metadata/overhead/santization
+  // basically a proxy for console.log
+  const print = (...args: any[]) => {
+    if (opts.level !== NONE) {
+      emitter.info(...args);
+    }
+  };
+
   const confirm = async (message: string, force = false) => {
     if (force) {
       return true;
@@ -182,9 +191,9 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     error: wrap(ERROR),
     warn: wrap(WARN),
     success: wrap(SUCCESS),
-
     confirm,
     timer,
+    print,
 
     // possible convenience APIs
     force: () => {}, // force the next lines to log (even if silent)
