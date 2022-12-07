@@ -7,6 +7,8 @@ import * as url from 'url';
 import { fork } from 'node:child_process';
 import type { Opts } from '../commands';
 
+type Messages =  { done?: boolean, init?: boolean};
+
 // The default export will create a new child process which calls itself
 export default function (basePath: string, opts: Opts) {
   const execArgv = [
@@ -21,13 +23,16 @@ export default function (basePath: string, opts: Opts) {
   ];
 
   const dirname = path.dirname(url.fileURLToPath(import.meta.url));
+  
   const child = fork(`${dirname}/process/runner.js`, [], { execArgv });
 
-  child.on('message', ({ done }: { done: boolean }) => {
+  child.on('message', ({ done, init }: Messages) => {
+    if (init) {
+      child.send({ init: true, basePath, opts });
+    }
     if (done) {
       child.kill();
       process.exit(0);
     }
   });
-  child.send({ init: true, basePath, opts });
 }
