@@ -5,7 +5,6 @@ import assert from 'node:assert';
 import { Logger } from '@openfn/logger';
 import { getNameAndVersion } from '@openfn/runtime';
 
-// TODO also validate the adaptor name
 export const validateMonoRepo = async (repoPath: string, log: Logger) => {
   try {
     const raw = await readFile(`${repoPath}/package.json`, 'utf8');
@@ -16,9 +15,6 @@ export const validateMonoRepo = async (repoPath: string, log: Logger) => {
     throw new Error('Monorepo not found');
   }
 };
-
-// TODO I'd like to implement this but not sure about testing it
-const buildAdaptor = async () => {};
 
 // Convert an adaptor name into a path to the adaptor in the monorepo
 export const updatePath = (adaptor: string, repoPath: string, log: Logger) => {
@@ -44,10 +40,10 @@ const useAdaptorsRepo = async (
   repoPath: string,
   log: Logger
 ) => {
-  log.info('Updating adaptor paths to point to the monorepo');
+  log.success(`Loading adaptors from monorepo at ${repoPath}`);
   const updatedAdaptors = adaptors.map((a) => {
     const p = updatePath(a, repoPath, log);
-    log.debug(`Mapped ${a} tp ${p}`);
+    log.info(`Mapped adaptor ${a} to monorepo: ${p.split('=')[1]}`);
     return p;
   });
   return updatedAdaptors;
