@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 import meta from './metadata.json' assert { type: 'json'};
 
@@ -10,19 +10,41 @@ const Entity = ({ data }) => {
       {data.datatype && <i>({data.datatype})</i>}
     </div>
     {data.entities && 
-      <ul>{data.entities.map((e) => <Entity data={e} />)}</ul>
+      <ul>{data.entities.map((e) => <Entity data={e} key={e.name}  />)}</ul>
     }
   </li>
 }
 
 export default () => {
-  console.log(meta)
+  const [filter, setFilter] = useState({ hideSystem: true });
+  const [data, setData] = useState({ datasource: '', entities: [] });
 
+  const update = useCallback(() => {
+    const filtered = meta.entities.filter((e) => {
+      if (filter.hideSystem) {
+        return !e.system;
+      }
+      return true;
+    })
+    setData({ ...meta, entities: filtered });
+  }, [filter]);
+
+  const toggleSystem = useCallback((evt) => {
+    const { checked } = evt.target;
+    setFilter({ hideSystem: !checked });
+  });
+
+  useEffect(() => update(), [filter])
+  
   return (
     <>
-      <h1>{meta.datasource}</h1>
-      <div>{meta.entities.length} root entities:</div>
-      <ul>{meta.entities.map((e) => <Entity data={e} />)}</ul>
+      <h1>{data.datasource}</h1>
+      <p>
+        <input type="checkbox" onChange={toggleSystem} />
+        Show system entities
+      </p>
+      <p>{data.entities.length} entities:</p>
+      <ul>{data.entities.map((e) => <Entity data={e} key={e.name} />)}</ul>
     </>
   )
 }
