@@ -14,6 +14,16 @@ const executeCommand = {
         boolean: true,
         description: 'Treat state as immutable',
       })
+      .option('adaptors-repo', {
+        string: true,
+        description:
+          'Path to the adaptors monorepo. Adaptors will be loaded from here. You can also use env var OPENFN_ADAPTORS_REPO.',
+      })
+      .option('no-adaptors-repo', {
+        boolean: true,
+        description:
+          'Set to disable using the adaptors repo through the env var',
+      })
       .option('autoinstall', {
         alias: 'i',
         boolean: true,

@@ -14,7 +14,7 @@ export type Opts = {
 
   adaptor?: boolean | string;
   adaptors?: string[];
-  adaptorsRepo?: string;
+  adaptorsRepo?: string | false;
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
   force?: boolean;
@@ -60,6 +60,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       opts.adaptorsRepo,
       logger
     );
+    logger.success(`Loading adaptors from monorepo at ${opts.adaptorsRepo}`);
   } else if (opts.adaptors && opts.expand) {
     // Note that we can't do this in ensureOpts because we don't have a logger configured yet
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
@@ -79,7 +80,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     assertPath(basePath);
   }
   if (!handler) {
-    logger.error(`Unrecognise command: ${options.command}`);
+    logger.error(`Unrecognised command: ${options.command}`);
     process.exit(1);
   }
 

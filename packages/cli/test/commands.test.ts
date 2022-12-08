@@ -58,7 +58,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       // enable us to load test modules through the mock
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
       '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
-      //'node_modules': mock.load(path.resolve('node_modules/'), {}),
+      '/monorepo/': mock.load(path.resolve('test/__monorepo__/'), {}),
     });
   }
 
@@ -350,6 +350,29 @@ test.serial(
   }
 );
 
+test.serial(
+  'load an adaptor from the monorepo directly: openfn job.js --adaptors-repo /monorepo/ -a common',
+  async (t) => {
+    const job = 'export default [alterState(() => 39)]';
+    const result = await run(
+      'openfn job.js --adaptors-repo /monorepo/ -a common',
+      job
+    );
+    t.assert(result === 39);
+  }
+);
+
+test.serial.only(
+  'load an adaptor from the monorepo env var: openfn job.js -a common',
+  async (t) => {
+    process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
+    const job = 'export default [alterState(() => 39)]';
+    const result = await run('openfn job.js -a common', job);
+    t.assert(result === 39);
+    delete process.env.OPENFN_ADAPTORS_REPO;
+  }
+);
+
 test.serial('compile a job: openfn compile job.js', async (t) => {
   const options = {
     outputPath: 'output.js',
@@ -431,7 +454,7 @@ test.serial('list does not throw if repo is not initialised', async (t) => {
   t.truthy(message);
 });
 
-test.serial('docs should print documention with full names', async (t) => {
+test.serial('docs should print documenation with full names', async (t) => {
   mock({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
