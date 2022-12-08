@@ -454,7 +454,7 @@ test.serial('list does not throw if repo is not initialised', async (t) => {
   t.truthy(message);
 });
 
-test.serial('docs should print documenation with full names', async (t) => {
+test.serial('docs should print documentation with full names', async (t) => {
   mock({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
