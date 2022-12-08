@@ -9,7 +9,7 @@ import { Opts, SafeOpts } from '../commands';
 export const getAutoinstallTargets = (
   options: Pick<Opts, 'adaptors' | 'autoinstall'>
 ) => {
-  if (options.autoinstall && options.adaptors) {
+  if (options.adaptors) {
     return options.adaptors?.filter((a) => !/=/.test(a));
   }
   return [];
@@ -18,11 +18,15 @@ export const getAutoinstallTargets = (
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
 
-  const autoInstallTargets = getAutoinstallTargets(options);
-  if (autoInstallTargets.length) {
-    const { repoDir } = options;
-    logger.info('Auto-installing language adaptors');
-    await install({ packages: autoInstallTargets, repoDir }, logger);
+  const { repoDir, adaptorsRepo, autoinstall } = options;
+  if (adaptorsRepo && autoinstall) {
+    logger.warn('Skipping auto-install as monorepo is being used');
+  } else if (autoinstall) {
+    const autoInstallTargets = getAutoinstallTargets(options);
+    if (autoInstallTargets.length) {
+      logger.info('Auto-installing language adaptors');
+      await install({ packages: autoInstallTargets, repoDir }, logger);
+    }
   }
 
   const state = await loadState(options, logger);
