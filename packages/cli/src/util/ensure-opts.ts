@@ -92,6 +92,11 @@ export default function ensureOpts(
     newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;
   };
 
+  const { OPENFN_ADAPTORS_REPO } = process.env;
+  if (OPENFN_ADAPTORS_REPO) {
+    newOpts.adaptorsRepo = OPENFN_ADAPTORS_REPO;
+  }
+
   let baseDir = basePath;
   if (basePath.endsWith('.js')) {
     baseDir = path.dirname(basePath);

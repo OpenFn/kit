@@ -7,12 +7,14 @@ import docgen from './docgen/handler';
 import docs from './docs/handler';
 import { clean, install, pwd, list } from './repo/handler';
 import expandAdaptors from './util/expand-adaptors';
+import useAdaptorsRepo from './util/use-adaptors-repo';
 
 export type Opts = {
   command?: string;
 
   adaptor?: boolean | string;
   adaptors?: string[];
+  adaptorsRepo?: string;
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
   force?: boolean;
@@ -52,7 +54,13 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
-  if (opts.adaptors && opts.expand) {
+  if (opts.adaptorsRepo) {
+    opts.adaptors = await useAdaptorsRepo(
+      opts.adaptors,
+      opts.adaptorsRepo,
+      logger
+    );
+  } else if (opts.adaptors && opts.expand) {
     // Note that we can't do this in ensureOpts because we don't have a logger configured yet
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
   }
