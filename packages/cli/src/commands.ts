@@ -5,6 +5,7 @@ import compile from './compile/handler';
 import test from './test/handler';
 import docgen from './docgen/handler';
 import docs from './docs/handler';
+import metadata from './metadata/handler';
 import { clean, install, pwd, list } from './repo/handler';
 import expandAdaptors from './util/expand-adaptors';
 import useAdaptorsRepo from './util/use-adaptors-repo';
@@ -39,6 +40,7 @@ const handlers = {
   test,
   docgen,
   docs,
+  metadata,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,

@@ -7,6 +7,7 @@ import compileCommand from './compile/command';
 import testCommand from './test/command';
 import docgenCommand from './docgen/command';
 import docsCommand from './docs/command';
+import metadataCommand from './metadata/command';
 import { Opts } from './commands';
 
 export const cmd = yargs(hideBin(process.argv))
@@ -16,6 +17,7 @@ export const cmd = yargs(hideBin(process.argv))
   .command(repoCommand)
   .command(testCommand)
   .command(docsCommand)
+  .command(metadataCommand)
   .command(docgenCommand)
   // Common options
   .option('log', {
