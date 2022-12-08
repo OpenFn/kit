@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.8
+
+### Patch Changes
+
+- e95c133: Add a print() function
+
 ## 0.0.7
 
 ### Patch Changes

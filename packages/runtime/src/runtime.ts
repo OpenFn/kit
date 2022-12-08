@@ -110,18 +110,16 @@ const wrapOperation = (
 const buildContext = (state: State, options: Options) => {
   const logger = options.jobLogger ?? console;
 
-  // TODO review this and decide what we explicitly want to exclude (see #104)
   const context = vm.createContext(
     {
       console: logger,
+      state, // TODO I don't really want to pass global state through
       clearInterval,
       clearTimeout,
-      JSON,
       parseFloat,
       parseInt,
       setInterval,
       setTimeout,
-      state, // TODO I don't really want to pass global state through
     },
     {
       codeGeneration: {

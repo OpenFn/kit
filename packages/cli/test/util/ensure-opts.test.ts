@@ -6,6 +6,8 @@ import ensureOpts, {
   ERROR_MESSAGE_LOG_COMPONENT,
 } from '../../src/util/ensure-opts';
 
+delete process.env.OPENFN_ADAPTORS_REPO;
+
 test('preserve the command name', (t) => {
   const initialOpts = {
     command: 'compile',
@@ -176,6 +178,16 @@ test('preserve expand', (t) => {
   t.false(opts.expand);
 });
 
+test('preserve specifier', (t) => {
+  const initialOpts = {
+    specifier: '@openfn/language-common@1.0.0',
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.is(opts.specifier, '@openfn/language-common@1.0.0');
+});
+
 test('default expand', (t) => {
   const initialOpts = {} as Opts;
 
@@ -255,6 +267,51 @@ test('update the default output with compile only', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.outputPath === 'a/output.js');
+});
+
+test('adaptorsRepo: unset by default', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.adaptorsRepo);
+});
+
+test('adaptorsRepo: load from OPENFN_ADAPTORS_REPO', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.is(opts.adaptorsRepo, 'a/b/c');
+  delete process.env.OPENFN_ADAPTORS_REPO;
+});
+
+test('adaptorsRepo: accept as option', (t) => {
+  const initialOpts = {
+    adaptorsRepo: 'x/y/z',
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.is(opts.adaptorsRepo, 'x/y/z');
+});
+
+test('adaptorsRepo: prefer option to env var', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    adaptorsRepo: 'x/y/z',
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.is(opts.adaptorsRepo, 'x/y/z');
+});
+
+test("adaptorsRepo: isn't set if adaptorsRepo is false", (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    adaptorsRepo: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.adaptorsRepo);
 });
 
 test('log: add default options', (t) => {

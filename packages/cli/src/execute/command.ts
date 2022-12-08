@@ -3,7 +3,7 @@ import { Opts } from '../commands';
 
 const executeCommand = {
   command: 'execute [path]',
-  desc: 'Run an openfn job',
+  desc: `Run an openfn job. Get more help by running openfn <command> help`,
   aliases: ['$0'],
   handler: (argv: Arguments<Opts>) => {
     argv.command = 'execute';
@@ -13,6 +13,16 @@ const executeCommand = {
       .option('immutable', {
         boolean: true,
         description: 'Treat state as immutable',
+      })
+      .option('adaptors-repo', {
+        string: true,
+        description:
+          'Path to the adaptors monorepo. Adaptors will be loaded from here. You can also use env var OPENFN_ADAPTORS_REPO.',
+      })
+      .option('no-adaptors-repo', {
+        boolean: true,
+        description:
+          'Set to disable using the adaptors repo through the env var',
       })
       .option('autoinstall', {
         alias: 'i',

@@ -58,7 +58,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       // enable us to load test modules through the mock
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
       '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
-      //'node_modules': mock.load(path.resolve('node_modules/'), {}),
+      '/monorepo/': mock.load(path.resolve('test/__monorepo__/'), {}),
     });
   }
 
@@ -350,6 +350,29 @@ test.serial(
   }
 );
 
+test.serial(
+  'load an adaptor from the monorepo directly: openfn job.js --adaptors-repo /monorepo/ -a common',
+  async (t) => {
+    const job = 'export default [alterState(() => 39)]';
+    const result = await run(
+      'openfn job.js --adaptors-repo /monorepo/ -a common',
+      job
+    );
+    t.assert(result === 39);
+  }
+);
+
+test.serial.only(
+  'load an adaptor from the monorepo env var: openfn job.js -a common',
+  async (t) => {
+    process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
+    const job = 'export default [alterState(() => 39)]';
+    const result = await run('openfn job.js -a common', job);
+    t.assert(result === 39);
+    delete process.env.OPENFN_ADAPTORS_REPO;
+  }
+);
+
 test.serial('compile a job: openfn compile job.js', async (t) => {
   const options = {
     outputPath: 'output.js',
@@ -429,6 +452,76 @@ test.serial('list does not throw if repo is not initialised', async (t) => {
 
   const { message } = logger._parse(logger._last);
   t.truthy(message);
+});
+
+test.serial('docs should print documentation with full names', async (t) => {
+  mock({
+    '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
+      name: 'test',
+      functions: [
+        {
+          name: 'fn',
+          parameters: [],
+          examples: [],
+        },
+      ],
+    }),
+  });
+
+  const opts = cmd.parse('docs @openfn/language-common@1.0.0 fn') as Opts;
+  opts.repoDir = '/repo';
+
+  await commandParser('', opts, logger);
+
+  const [_a, b, c] = logger._history;
+  const docs = logger._parse(b).message as string;
+  // match the signature
+  t.regex(docs, /\#\# fn\(\)/);
+  // Match usage examples
+  t.regex(docs, /\#\#\# Usage Examples/);
+  t.regex(
+    docs,
+    /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
+  );
+
+  const { message, level } = logger._parse(c);
+  t.is(level, 'success');
+  t.is(message, 'Done!');
+});
+
+test.serial('docs should print documention with shorthand names', async (t) => {
+  mock({
+    '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
+      name: 'test',
+      functions: [
+        {
+          name: 'fn',
+          parameters: [],
+          examples: [],
+        },
+      ],
+    }),
+  });
+
+  const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
+  opts.repoDir = '/repo';
+
+  await commandParser('', opts, logger);
+
+  const [_a, b, c] = logger._history;
+  const docs = logger._parse(b).message as string;
+  // match the signature
+  t.regex(docs, /\#\# fn\(\)/);
+  // Match usage examples
+  t.regex(docs, /\#\#\# Usage Examples/);
+  t.regex(
+    docs,
+    /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
+  );
+
+  const { message, level } = logger._parse(c);
+  t.is(level, 'success');
+  t.is(message, 'Done!');
 });
 
 // TODO - need to work out a way to test agaist stdout
