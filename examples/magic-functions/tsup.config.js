@@ -28,7 +28,7 @@ const onSuccess = () => {
 
 export default defineConfig({
   entry: {
-    app: 'src/index.tsx',
+    explorer: 'src/explorer/index.tsx',
   },
   format: 'esm',
   platform: 'browser',

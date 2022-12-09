@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 
-import meta from './metadata.json' assert { type: 'json'};
+import meta from '../metadata.json' assert { type: 'json'};
 
 const Entity = ({ data }) => {
 
