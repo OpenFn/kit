@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Monaco from "@monaco-editor/react";
 import type { EditorProps as MonacoProps } from  "@monaco-editor/react/lib/types";
-
 import meta from '../metadata.json' assert { type: 'json'};
 
 const code = `import { upsert } from '@openfn/language-salesforce';
@@ -22,7 +21,9 @@ declare module '@openfn/language-salesforce' {
    * })
    * @constructor
    * @param {String} sObject - API name of the sObject.
+   * @paramLookup sObject .entities[] | select(.system != true).name
    * @param {String} externalId - ID.
+   * @paramLookup externalId .entities[] | select(.name == "{{args.sObject}}") | .entities[].name
    * @param {Object} attrs - Field attributes for the new object.
    * @param {State} state - Runtime state.
    * @returns {Operation}
@@ -105,17 +106,66 @@ const getFields = (sobjectName: string) => {
 
 }
 
-const extractArguments = (model, help) => {
-  const allArgs = model.getValue().substring(help.applicableSpan.start, help.applicableSpan.start + help.applicableSpan.length)
-  return allArgs.split(',').map(a => a.trim()).map(a => {
-    // Only return string literal values (for now at least)
-    if (a.startsWith("'") || a.startsWith('"')) {
-      console.log(a)
-      return a.substring(1, a.length-1)
-    }
-    return null;
-  })
+// I think the contract is: select an entity and we'll return its name
+// Or is the contract: use jq to build a list of strings? Yes that's more generic
+const getJq = (query: string) => {
+  // cheating to get rid of system stuff (this should be done by config I think)
+  // const filtered = meta.entities.filter(({ system }) => !system);
+
+  // JQ is installed as a global bundle
+  // it is HUGE at 1.6 mb
+  // There's a wasm bundle at almost 1mb
+  const suggestions = jq.json(meta, query).map((s:string) => ({
+    label: `"${s}"`,
+    kind: monaco.languages.CompletionItemKind.Text,
+    insertText: `"${s}"`
+  }));
+
+  return {
+    // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
+    suggestions
+  }
+
 }
+
+// Returns an indexed object of argument names with known values
+// help is the parameter help object
+// model is the text model
+const extractArguments = (help, model) => {
+  const allArgs = model.getValue().substring(help.applicableSpan.start, help.applicableSpan.start + help.applicableSpan.length)
+  return allArgs.split(',').map(a => a.trim()).reduce((acc, arg, index) => {
+    // Only return string literal values (for now at least)
+    if (arg.startsWith("'") || arg.startsWith('"')) {
+      const param = help.items[0].parameters[index];
+      acc[param.name] = arg.substring(1, arg.length-1)
+    }
+    return acc;
+  }, {})
+}
+
+const replacePlaceholders = (args, expression) => {
+  const placeholders = expression.match(/{{.+}}/)
+  let newExpression = expression;
+  if (placeholders) {
+    const allOk = placeholders.every((q) => {
+      const exp = q.substring(2, q.length-2);
+      const [_args, name] = exp.split('.')
+      const val = args[name]
+      if (val) {
+        newExpression = newExpression.replace(q, val)
+        return true;
+      }
+      // Flag that somethingwent weont
+      return false;
+    });
+    if (allOk) {
+      return newExpression
+    }
+    // If something went wrong with the expression, forget the whole thing
+    return null;
+  }
+  return expression;
+};
 
 const getCompletionProvider = (monaco) => ({
 	provideCompletionItems: async function (model, position, context) {
@@ -134,34 +184,30 @@ const getCompletionProvider = (monaco) => ({
 
     // This API gives us details about parameters defined in the signature AND gives us context
     const help = await worker.getSignatureHelpItems('file:///job.js', model.getOffsetAt(position))
-    console.log(help)
 
     const param = help.items[0].parameters[help.argumentIndex]
 
-    // TODO this needs to become a lookup against metadata, drive by docs. Somehow.
-    if (param.name === 'sObject') {
-      // Difficulty: this should ONLY show the sobject strings, but sadly it shows everything
-      // I want to show ONLY this completion provider, not the others
-      return getSObjects();
-    }
-    if (param.name === 'externalId') {
-      const [first] = extractArguments(model, help);
-      if (first) {
-        return getFields(first);
+    // Check the lookup rule for this paramter
+    const nameRe = new RegExp(`^${param.name}`);
+    const lookup = help.items[0].tags.find(({ name, text }) => {
+      if (name == "paramLookup") {
+        return nameRe.test(text[0].text);
+      }
+    });
+
+    if (lookup) {
+      const [_name, expression] = lookup.text[0].text.split(nameRe)
+      // Parse this function call's arguments and map any values we have
+      const args = extractArguments(help, model);
+      // Check the query expression for any placeholders (of the form arg.name)
+      const finalExpression = replacePlaceholders(args, expression)
+      // If we have a valid expression, run it an return whatever results we get!
+      if (finalExpression) {
+        return getJq(finalExpression);
       }
     }
 
-		return new Promise((r) => r({
-      // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionList.html
-			suggestions: [
-        {
-          // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
-          label: 'jam',
-          kind: monaco.languages.CompletionItemKind.Text,
-          insertText: 'jamjar'
-        },
-      ],
-		}));
+    return { suggestions: [] };
 	}
 });
 
