@@ -55,66 +55,16 @@ const options: MonacoProps['options'] = {
     // Hide keywords
     showKeywords: false,
   }
-  // quickSuggestions: {
-  //   other: false,
-  //   comments: false,
-  //   strings: false
-  // },
 };
 
-/*
- * My provider will do a few things
- * 1) Only suggest from the language adaptor (need to unregister the default provider I think)
- *       - between options.suggest.showKeywords and compilerOptions.nolib, we can hide most default suggestions
- * 2) Use metadata to suggesdt string values
- */
-
-// return a list of sobject completion items
-const getSObjects = () => {
-  // TODO instead of this function, we need to map this based on a path
-  // The path needs to say "where are the strings to insert"
-  // Is it just a json path? jq query?
-  const suggestions = meta.entities.filter(({ system }) => !system).map(({ name }) => ({
-    label: `"${name}"`,
-    kind: monaco.languages.CompletionItemKind.Text,
-    insertText: `"${name}"`
-  }))
-
-  return {
-    // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
-    suggestions
-  }
-}
-
-const getFields = (sobjectName: string) => {
-  // TODO instead of this function, we need to map this based on a path
-  // The path needs to say "where are the strings to insert"
-  // Is it just a json path? jq query?
-  const obj = meta.entities.find(({ name }) => name === sobjectName );
-  if (obj) {
-    const suggestions = obj?.entities.map(({ name }) => ({
-      label: `"${name}"`,
-      kind: monaco.languages.CompletionItemKind.Text,
-      insertText: `"${name}"`
-    }))
-    return {
-      // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
-      suggestions
-    }
-  }
-  return [];
-
-}
-
-// I think the contract is: select an entity and we'll return its name
-// Or is the contract: use jq to build a list of strings? Yes that's more generic
+// get JQ must return an array of strings based on the metadata structure
 const getJq = (query: string) => {
   // cheating to get rid of system stuff (this should be done by config I think)
   // const filtered = meta.entities.filter(({ system }) => !system);
 
   // JQ is installed as a global bundle
   // it is HUGE at 1.6 mb
-  // There's a wasm bundle at almost 1mb
+  // There's a wasm bundle at almost 1mb which might be a little better
   const suggestions = jq.json(meta, query).map((s:string) => ({
     label: `"${s}"`,
     kind: monaco.languages.CompletionItemKind.Text,
@@ -215,9 +165,6 @@ const getCompletionProvider = (monaco) => ({
 const Editor = () => {
 
   const handleEditorDidMount = useCallback((editor: any, monaco: typeof Monaco) => {
-    // console.log(editor)
-    // console.log(editor.getModel()); // text model?
-    // console.log(monaco.languages)
     monaco.languages.registerCompletionItemProvider('javascript', getCompletionProvider(monaco))
 
     monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -226,7 +173,6 @@ const Editor = () => {
       
       // Disables core js libs in code completion
       noLib: true,
-
     });
 
     monaco.languages.typescript.javascriptDefaults.setExtraLibs([{ content: dts }]);
