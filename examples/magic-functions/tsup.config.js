@@ -29,6 +29,7 @@ const onSuccess = () => {
 export default defineConfig({
   entry: {
     explorer: 'src/explorer/index.tsx',
+    editor: 'src/editor/index.tsx',
   },
   format: 'esm',
   platform: 'browser',
@@ -39,7 +40,7 @@ export default defineConfig({
     '../../packages/adaptor-docs/dist',
     '../../packages/describe-package/dist',
   ],
-  noExternal: ['@openfn/adaptor-docs', 'react'],
+  noExternal: ['@openfn/adaptor-docs', 'react', '@monaco-editor/react'],
   esbuildPlugins: [
     copyStaticFiles({
       src: './static/',
