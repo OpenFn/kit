@@ -90,110 +90,77 @@ const getFields = (sobjectName: string) => {
   // The path needs to say "where are the strings to insert"
   // Is it just a json path? jq query?
   const obj = meta.entities.find(({ name }) => name === sobjectName );
-  const suggestions = obj?.entities.map(({ name }) => ({
-    label: `"${name}"`,
-    kind: monaco.languages.CompletionItemKind.Text,
-    insertText: `"${name}"`
-  }))
-
-  return {
-    // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
-    suggestions
+  if (obj) {
+    const suggestions = obj?.entities.map(({ name }) => ({
+      label: `"${name}"`,
+      kind: monaco.languages.CompletionItemKind.Text,
+      insertText: `"${name}"`
+    }))
+    return {
+      // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
+      suggestions
+    }
   }
+  return [];
+
 }
 
+const extractArguments = (model, help) => {
+  const allArgs = model.getValue().substring(help.applicableSpan.start, help.applicableSpan.start + help.applicableSpan.length)
+  return allArgs.split(',').map(a => a.trim()).map(a => {
+    // Only return string literal values (for now at least)
+    if (a.startsWith("'") || a.startsWith('"')) {
+      console.log(a)
+      return a.substring(1, a.length-1)
+    }
+    return null;
+  })
+}
 
 const getCompletionProvider = (monaco) => ({
 	provideCompletionItems: async function (model, position, context) {
     // model is ITextModel
     // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ITextModel.html
-    console.log(model)
-    // console.log(position)
-    // console.log(context)
-    
-    // So we need to work out where we are in the model. How do we do this?
-    // I need to get the symbol (if there is one)
+
     const workerFactory = await monaco.languages.typescript.getJavaScriptWorker();
     const worker = await workerFactory();
     // console.log(worker)
 
     // So if we're on a function, this will return a definition
     // Tells us the container (@openfn/language-salesforce) and kind (function)
-    // Sadly this is useless!!
+    // Sadly this is useless right now!!
     // const def = await worker.getDefinitionAtPosition('file:///job.js', model.getOffsetAt(position))
     // console.log(def);
 
+    // This API gives us details about parameters defined in the signature AND gives us context
     const help = await worker.getSignatureHelpItems('file:///job.js', model.getOffsetAt(position))
     console.log(help)
 
     const param = help.items[0].parameters[help.argumentIndex]
 
-    // const param = help.items[help.selectedItemIndex][0].paramters
-    console.log(param)
     // TODO this needs to become a lookup against metadata, drive by docs. Somehow.
     if (param.name === 'sObject') {
-      // Difficulty: this should ONLY show the sobejct strings, but sadly it shows everything
+      // Difficulty: this should ONLY show the sobject strings, but sadly it shows everything
       // I want to show ONLY this completion provider, not the others
       return getSObjects();
     }
     if (param.name === 'externalId') {
-      // How do we get the sobject name? It's not in the singature
-      // We're going to have to look in the source
-      // previous token is ,
-      // we need the one before
-      // const start = model.getPositionAt(help.applicableSpan.start)
-      // const end = model.getPositionAt(help.applicableSpan.start + help.applicableSpan.length)
-      // console.log(start)
-      // console.log(end)
-      // const allArgs = model.getValue().substring(help.applicableSpan.start, help.applicableSpan.start + help.applicableSpan.length)
-      // console.log(' > ', allArgs)
-      
-      // luckily getting the first argument is easy, but this doesn't scale well
-      // Really, we need a helper that maps each parameter to the value, if known
-      // This actually assumes there's not loads of whitespace
-      const firstArg = model.getWordAtPosition(model.getPositionAt(help.applicableSpan.start + 1))
-      console.log(firstArg)
-      return getFields(firstArg.word);
+      const [first] = extractArguments(model, help);
+      if (first) {
+        return getFields(first);
+      }
     }
 
-    // Which is fun, but I need to know that I'm in a paramter. hm.
-  
-
-    // are we on the first parameter of upsert?
-
-    // console.log(' ** provider  called **')
-		// // find out if we are completing a property in the 'dependencies' object.
-		// var textUntilPosition = model.getValueInRange({
-		// 	startLineNumber: 1,
-		// 	startColumn: 1,
-		// 	endLineNumber: position.lineNumber,
-		// 	endColumn: position.column
-		// });
-		// var match = textUntilPosition.match(
-		// 	/"dependencies"\s*:\s*\{\s*("[^"]*"\s*:\s*"[^"]*"\s*,\s*)*([^"]*)?$/
-		// );
-		// if (!match) {
-		// 	return { suggestions: [] };
-		// }
-		// var word = model.getWordUntilPosition(position);
-		// var range = {
-		// 	startLineNumber: position.lineNumber,
-		// 	endLineNumber: position.lineNumber,
-		// 	startColumn: word.startColumn,
-		// 	endColumn: word.endColumn
-		// };
 		return new Promise((r) => r({
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionList.html
 			suggestions: [
-        // TODO this needs t
         {
           // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
           label: 'jam',
           kind: monaco.languages.CompletionItemKind.Text,
           insertText: 'jamjar'
         },
-      ], //createDependencyProposals(range)
-
+      ],
 		}));
 	}
 });
@@ -227,7 +194,6 @@ const Editor = () => {
     value={code}
     options={options}
     onMount={handleEditorDidMount}
-    // onChange={handleSourceChange}
   />)
 }
 
