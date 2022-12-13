@@ -43,9 +43,9 @@ const describeFunction = (
         let [caption, code] = eg.split('</caption>');
         caption = caption.replace('<caption>', '');
 
-        return { caption, code };
+        return { caption: caption.trim(), code: code.trim() };
       }
-      return { code: eg };
+      return { code: eg.trim() };
     }),
     parent,
   };
