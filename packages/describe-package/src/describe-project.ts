@@ -38,7 +38,15 @@ const describeFunction = (
     parameters: symbol.parameters.map((p) => describeParameter(project, p)),
     magic: false,
     isOperation: false,
-    examples: symbol.examples,
+    examples: symbol.examples.map((eg: string) => {
+      if (eg.startsWith('<caption>')) {
+        let [caption, code] = eg.split('</caption>');
+        caption = caption.replace('<caption>', '');
+
+        return { caption, code };
+      }
+      return { code: eg };
+    }),
     parent,
   };
 };
