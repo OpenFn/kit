@@ -27,12 +27,18 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
 
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
-  const result = await execute(code, state, options);
+  try {
+    const result = await execute(code, state, options);
+    await serializeOutput(options, result, logger);
+    const duration = printDuration(new Date().getTime() - start);
+    logger.success(`Done in ${duration}! ✨`);
+  } catch (error) {
+    logger.error(error);
 
-  await serializeOutput(options, result, logger);
-
-  const duration = printDuration(new Date().getTime() - start);
-  logger.success(`Done in ${duration}! ✨`);
+    const duration = printDuration(new Date().getTime() - start);
+    logger.error(`Took ${duration}.`);
+    process.exitCode = 1;
+  }
 };
 
 export default executeHandler;
