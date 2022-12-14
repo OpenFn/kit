@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 0.0.21
+
+### Patch Changes
+
+- 4442a41: Forward spawned child process exit code to CLI process on exit
+
 ## 0.0.20
 
 ### Patch Changes
