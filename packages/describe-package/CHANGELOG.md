@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.12
+
+### Patch Changes
+
+- 220fb95: Handle captions in examples
+
 ## 0.0.11
 
 ### Patch Changes
