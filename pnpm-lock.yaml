@@ -89,7 +89,7 @@ importers:
 
   packages/adaptor-docs:
     specifiers:
-      '@openfn/describe-package': workspace:^0.0.11
+      '@openfn/describe-package': workspace:*
       '@types/node': ^18.11.9
       '@types/react': ^18.0.25
       autoprefixer: ^10.4.13
@@ -124,11 +124,11 @@ importers:
 
   packages/cli:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.19
-      '@openfn/describe-package': workspace:^0.0.11
+      '@openfn/compiler': workspace:*
+      '@openfn/describe-package': workspace:*
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/logger': workspace:^0.0.8
-      '@openfn/runtime': workspace:^0.0.13
+      '@openfn/logger': workspace:*
+      '@openfn/runtime': workspace:*
       '@types/mock-fs': ^4.13.1
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
@@ -165,8 +165,8 @@ importers:
 
   packages/compiler:
     specifiers:
-      '@openfn/describe-package': workspace:^0.0.11
-      '@openfn/logger': workspace:^0.0.8
+      '@openfn/describe-package': workspace:*
+      '@openfn/logger': workspace:*
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
       acorn: ^8.8.0
@@ -257,7 +257,7 @@ importers:
   packages/runtime:
     specifiers:
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/logger': workspace:^0.0.8
+      '@openfn/logger': workspace:*
       '@types/node': ^17.0.31
       ava: 5.1.0
       mock-fs: ^5.1.4
@@ -283,7 +283,8 @@ importers:
     specifiers:
       '@openfn/compiler': workspace:^0.0.19
       '@openfn/language-common': 2.0.0-rc3
-      '@openfn/runtime': workspace:^0.0.13
+      '@openfn/logger': workspace:*
+      '@openfn/runtime': workspace:*
       '@types/koa': ^2.13.5
       '@types/node': ^17.0.31
       '@types/workerpool': ^6.1.0
@@ -299,6 +300,7 @@ importers:
     dependencies:
       '@openfn/compiler': link:../compiler
       '@openfn/language-common': 2.0.0-rc3
+      '@openfn/logger': link:../logger
       '@openfn/runtime': link:../runtime
       '@types/koa': 2.13.5
       '@types/workerpool': 6.1.0
