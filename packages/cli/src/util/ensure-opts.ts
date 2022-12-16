@@ -88,6 +88,7 @@ export default function ensureOpts(
     stateStdin: opts.stateStdin,
     specifier: opts.specifier,
     strictOutput: opts.strictOutput ?? true,
+    skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     immutable: opts.immutable || false,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {

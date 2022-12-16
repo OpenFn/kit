@@ -6,6 +6,7 @@ import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
 import { install } from '../repo/handler';
 import { Opts, SafeOpts } from '../commands';
+import validateAdaptors from '../util/validate-adaptor';
 
 export const getAutoinstallTargets = (
   options: Pick<Opts, 'adaptors' | 'autoinstall'>
@@ -17,9 +18,10 @@ export const getAutoinstallTargets = (
 };
 
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
-  await printVersions(logger);
-
   const start = new Date().getTime();
+
+  await printVersions(logger);
+  await validateAdaptors(options, logger);
 
   const autoInstallTargets = getAutoinstallTargets(options);
   if (autoInstallTargets.length) {

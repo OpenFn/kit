@@ -27,6 +27,10 @@ const executeCommand = {
         alias: 'S',
         description: 'Read state from stdin (instead of a file)',
       })
+      .option('skip-adaptor-validation', {
+        boolean: true,
+        description: 'Skip adaptor validation warnings',
+      })
       .option('no-compile', {
         boolean: true,
         description: 'Skip compilation',
