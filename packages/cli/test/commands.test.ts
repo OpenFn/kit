@@ -47,6 +47,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   // This is needed to ensure that pnpm dependencies can be dynamically loaded
   // (for recast in particular)
   const pnpm = path.resolve('../../node_modules/.pnpm');
+  const pkgPath = path.resolve('./package.json');
 
   // Mock the file system in-memory
   if (!options.disableMock) {
@@ -59,6 +60,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
       '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
       //'node_modules': mock.load(path.resolve('node_modules/'), {}),
+      [pkgPath]: mock.load(pkgPath),
     });
   }
 

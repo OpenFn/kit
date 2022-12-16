@@ -3,7 +3,7 @@
   "version": "0.0.21",
   "description": "CLI devtools for the openfn toolchain.",
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "pnpm": ">=7"
   },
   "scripts": {
