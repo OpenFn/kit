@@ -1,11 +1,11 @@
-import pkg from '../../package.json' assert { type: 'json' };
 import { Logger } from './logger';
 import { mainSymbols } from 'figures';
 
 const { triangleRightSmall: t } = mainSymbols;
 
 const printVersions = async (logger: Logger) => {
-  const { version, dependencies } = pkg;
+  const pkg = await import('../../package.json', { assert: { type: 'json' } });
+  const { version, dependencies } = pkg.default;
 
   const compilerVersion = dependencies['@openfn/compiler'];
   const runtimeVersion = dependencies['@openfn/runtime'];

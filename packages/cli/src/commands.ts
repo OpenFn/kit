@@ -54,9 +54,7 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
-  version: async (_opts: SafeOpts, logger: Logger) => {
-    printVersions(logger);
-  },
+  version: async (_opts: SafeOpts, logger: Logger) => printVersions(logger),
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {
