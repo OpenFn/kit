@@ -6,7 +6,7 @@ import execute from '../execute/execute';
 import { SafeOpts } from '../commands';
 
 const testHandler = async (options: SafeOpts, logger: Logger) => {
-  await printVersions(logger);
+  printVersions(logger);
   logger.log('Running test job...');
 
   // This is a bit weird but it'll actually work!
