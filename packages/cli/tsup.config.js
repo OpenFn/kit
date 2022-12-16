@@ -6,4 +6,5 @@ export default {
     index: 'src/index.ts',
     'process/runner': 'src/process/runner.ts',
   },
+  external: ['../../package.json'],
 };
