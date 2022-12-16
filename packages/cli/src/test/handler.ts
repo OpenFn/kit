@@ -1,10 +1,12 @@
 import { createNullLogger, Logger } from '../util/logger';
+import printVersions from '../util/print-versions';
 import compile from '../compile/compile';
 import loadState from '../execute/load-state';
 import execute from '../execute/execute';
 import { SafeOpts } from '../commands';
 
 const testHandler = async (options: SafeOpts, logger: Logger) => {
+  await printVersions(logger);
   logger.log('Running test job...');
 
   // This is a bit weird but it'll actually work!
