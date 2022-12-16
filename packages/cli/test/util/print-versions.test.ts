@@ -2,9 +2,9 @@ import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
 import printVersions from '../../src/util/print-versions';
 
-test('print versions for node, cli, runtime and compiler', (t) => {
+test('print versions for node, cli, runtime and compiler', async (t) => {
   const logger = createMockLogger('', { level: 'info' });
-  printVersions(logger);
+  await printVersions(logger);
 
   const last = logger._parse(logger._last);
   const message = last.message as string;
