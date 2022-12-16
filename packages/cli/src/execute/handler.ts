@@ -17,7 +17,7 @@ export const getAutoinstallTargets = (
 };
 
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
-  await printVersions(logger);
+  printVersions(logger);
 
   const start = new Date().getTime();
 
