@@ -97,8 +97,18 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     process.exit(1);
   }
 
-  // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
-  return handler(opts, logger);
+  try {
+    // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
+    const result = await handler(opts, logger);
+    return result;
+  } catch (e: any) {
+    if (!process.exitCode) {
+      process.exitCode = e.exitCode || 1;
+    }
+    logger.break();
+    logger.error('Command failed!');
+    logger.error(e);
+  }
 };
 
 export default parse;

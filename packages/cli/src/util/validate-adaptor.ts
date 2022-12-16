@@ -1,8 +1,10 @@
+import { readFile } from 'node:fs/promises';
 import { Opts } from '../commands';
 import { Logger } from './logger';
+import { getModulePath, getNameAndVersion } from '@openfn/runtime';
 
-const validateAddaptors = async (
-  options: Pick<Opts, 'adaptors' | 'skipAdaptorValidation'>,
+const validateAdaptors = async (
+  options: Pick<Opts, 'adaptors' | 'skipAdaptorValidation' | 'autoinstall'>,
   logger: Logger
 ) => {
   if (options.skipAdaptorValidation) {
@@ -21,8 +23,28 @@ const validateAddaptors = async (
     logger.print('          openfn job.js -a common');
     logger.break();
   }
-
   // If there is an adaptor, check it exists or autoinstall is passed
+  else if (!options.autoinstall) {
+    let didError;
+    for (const a of options.adaptors) {
+      const path = await getModulePath(a);
+      if (!path) {
+        logger.error(`Adaptor ${a} not installed in repo`);
+        logger.error('Try adding -i to auto-install it');
+        didError = true;
+      }
+      // // Check for a matching package json too
+      // const { name, version } = getNameAndVersion(a);
+
+      // const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
+      // const pkg = JSON.parse(pkgRaw);
+
+      // Log the path and version of what we found!
+    }
+    if (didError) {
+      throw new Error('Failed to load adaptors');
+    }
+  }
 };
 
-export default validateAddaptors;
+export default validateAdaptors;
