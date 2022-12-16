@@ -1,12 +1,14 @@
+// diagnostic utility which prints version info
+import {
+  version,
+  dependencies,
+} from '../../package.json' assert { type: 'json' };
 import { Logger } from './logger';
 import { mainSymbols } from 'figures';
 
 const { triangleRightSmall: t } = mainSymbols;
 
-const printVersions = async (logger: Logger) => {
-  const pkg = await import('../../package.json', { assert: { type: 'json' } });
-  const { version, dependencies } = pkg.default;
-
+const printVersions = (logger: Logger) => {
   const compilerVersion = dependencies['@openfn/compiler'];
   const runtimeVersion = dependencies['@openfn/runtime'];
 

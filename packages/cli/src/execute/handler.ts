@@ -1,4 +1,5 @@
 import { Logger, printDuration } from '../util/logger';
+import printVersions from '../util/print-versions';
 import loadState from './load-state';
 import execute from './execute';
 import compile from '../compile/compile';
@@ -16,6 +17,8 @@ export const getAutoinstallTargets = (
 };
 
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
+  await printVersions(logger);
+
   const start = new Date().getTime();
 
   const autoInstallTargets = getAutoinstallTargets(options);
