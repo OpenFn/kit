@@ -29,7 +29,6 @@ const validateAdaptors = async (
     // If there is an adaptor, check it exists or autoinstall is passed
     let didError;
     for (const a of options.adaptors) {
-      console.log(a);
       const path = await getModulePath(a, options.repoDir);
 
       if (!options.autoinstall && !path) {
@@ -55,6 +54,7 @@ const validateAdaptors = async (
       logger.success(`Adaptor ${name}@${pkg.version || version}: OK`);
     }
     if (didError) {
+      console.log(' **** ');
       throw new Error('Failed to load adaptors');
     }
   }

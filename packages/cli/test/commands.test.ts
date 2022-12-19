@@ -68,6 +68,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.repoDir = options.repoDir;
 
   opts.log = ['none'];
+  opts.skipAdaptorValidation = true;
 
   await commandParser(jobPath, opts, logger);
 
