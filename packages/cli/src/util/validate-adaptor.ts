@@ -29,16 +29,19 @@ const validateAdaptors = async (
     // If there is an adaptor, check it exists or autoinstall is passed
     let didError;
     for (const a of options.adaptors) {
-      const path = await getModulePath(a, options.repoDir);
+      const [adaptor, userPath] = a.split('=');
+      let path = userPath;
+      if (!userPath) {
+        path = (await getModulePath(adaptor, options.repoDir)) || '';
 
-      if (!options.autoinstall && !path) {
-        logger.error(`Adaptor ${a} not installed in repo`);
-        logger.error('Try adding -i to auto-install it');
-        didError = true;
-        break;
+        if (!options.autoinstall && !path) {
+          logger.error(`Adaptor ${adaptor} not installed in repo`);
+          logger.error('Try adding -i to auto-install it');
+          didError = true;
+          break;
+        }
       }
-      const { name, version } = getNameAndVersion(a);
-
+      const { name, version } = getNameAndVersion(adaptor);
       try {
         const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
         const pkg = JSON.parse(pkgRaw);
@@ -58,10 +61,16 @@ const validateAdaptors = async (
         logger.success(`Adaptor ${name}@${pkg.version || version}: OK`);
       } catch (e) {
         // Expect read or parse file to throw here
-        logger.error(
-          `Failed to load adaptor from repo at ${path}/package.json`
-        );
-        logger.error(`Your repo may be corrupt`);
+        if (userPath) {
+          logger.error(
+            `Failed to load adaptor from path at ${path}/package.json`
+          );
+        } else {
+          logger.error(
+            `Failed to load adaptor from repo at ${path}/package.json`
+          );
+          logger.error(`Your repo may be corrupt`);
+        }
         logger.error(e);
         didError = true;
       }
