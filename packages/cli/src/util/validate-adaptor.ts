@@ -4,7 +4,10 @@ import { Logger } from './logger';
 import { getModulePath, getNameAndVersion } from '@openfn/runtime';
 
 const validateAdaptors = async (
-  options: Pick<Opts, 'adaptors' | 'skipAdaptorValidation' | 'autoinstall'>,
+  options: Pick<
+    Opts,
+    'adaptors' | 'skipAdaptorValidation' | 'autoinstall' | 'repoDir'
+  >,
   logger: Logger
 ) => {
   if (options.skipAdaptorValidation) {
@@ -22,24 +25,34 @@ const validateAdaptors = async (
     logger.break();
     logger.print('          openfn job.js -a common');
     logger.break();
-  }
-  // If there is an adaptor, check it exists or autoinstall is passed
-  else if (!options.autoinstall) {
+  } else {
+    // If there is an adaptor, check it exists or autoinstall is passed
     let didError;
     for (const a of options.adaptors) {
-      const path = await getModulePath(a);
-      if (!path) {
+      console.log(a);
+      const path = await getModulePath(a, options.repoDir);
+
+      if (!options.autoinstall && !path) {
         logger.error(`Adaptor ${a} not installed in repo`);
         logger.error('Try adding -i to auto-install it');
         didError = true;
+        break;
       }
-      // // Check for a matching package json too
-      // const { name, version } = getNameAndVersion(a);
+      const { name, version } = getNameAndVersion(a);
 
-      // const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
-      // const pkg = JSON.parse(pkgRaw);
+      const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
+      const pkg = JSON.parse(pkgRaw);
+
+      // Check for a matching package json too
+      // TODO this should work but is untested
+      // if (version && pkg.version !== version) {
+      //   logger.error('Adaptor version mismatch');
+      //   logger.error(`Looked in repo for ${name}@${version}, but found ${pkg.version}`);
+      //   didError = true;
+      // }
 
       // Log the path and version of what we found!
+      logger.success(`Adaptor ${name}@${pkg.version || version}: OK`);
     }
     if (didError) {
       throw new Error('Failed to load adaptors');
