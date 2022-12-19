@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "CLI devtools for the openfn toolchain.",
   "engines": {
     "node": ">=16",
