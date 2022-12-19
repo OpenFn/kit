@@ -10,11 +10,15 @@ const printVersions = async (logger: Logger) => {
   const compilerVersion = dependencies['@openfn/compiler'];
   const runtimeVersion = dependencies['@openfn/runtime'];
 
-  logger.info(`Versions:
-        ${t} Node.js   ${process.version.substring(1)}
-        ${t} cli       ${version}
-        ${t} runtime   ${runtimeVersion}
-        ${t} compiler  ${compilerVersion}`);
+  console.error(
+    `Versions:
+  ${t} Node.js   ${process.version.substring(1)}
+  ${t} cli       ${version}
+  ${t} runtime   ${runtimeVersion}
+  ${t} compiler  ${compilerVersion}`
+  );
+  console.log('_'.repeat(`  ${t} Node.js   11.11.11`.length + 5));
+  console.log();
 };
 
 export default printVersions;
