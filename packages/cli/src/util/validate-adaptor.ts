@@ -39,22 +39,34 @@ const validateAdaptors = async (
       }
       const { name, version } = getNameAndVersion(a);
 
-      const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
-      const pkg = JSON.parse(pkgRaw);
+      try {
+        const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
+        const pkg = JSON.parse(pkgRaw);
 
-      // Check for a matching package json too
-      // TODO this should work but is untested
-      // if (version && pkg.version !== version) {
-      //   logger.error('Adaptor version mismatch');
-      //   logger.error(`Looked in repo for ${name}@${version}, but found ${pkg.version}`);
-      //   didError = true;
-      // }
+        // Check for a matching package json too
+        // This may not be entirely helpful
+        if (version && pkg.version !== version) {
+          logger.error('Adaptor version mismatch');
+          logger.error(
+            `Looked in repo for ${name}@${version}, but found ${pkg.version}`
+          );
+          didError = true;
+          break;
+        }
 
-      // Log the path and version of what we found!
-      logger.success(`Adaptor ${name}@${pkg.version || version}: OK`);
+        // Log the path and version of what we found!
+        logger.success(`Adaptor ${name}@${pkg.version || version}: OK`);
+      } catch (e) {
+        // Expect read or parse file to throw here
+        logger.error(
+          `Failed to load adaptor from repo at ${path}/package.json`
+        );
+        logger.error(`Your repo may be corrupt`);
+        logger.error(e);
+        didError = true;
+      }
     }
     if (didError) {
-      console.log(' **** ');
       throw new Error('Failed to load adaptors');
     }
   }
