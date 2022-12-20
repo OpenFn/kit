@@ -67,6 +67,12 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
+  // A bit janky but in execute and test, always print version info FIRST
+  // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
+  if (opts.command === 'execute' || opts.command === 'test') {
+    await printVersions(logger);
+  }
+
   if (opts.adaptors && opts.expand) {
     // Note that we can't do this in ensureOpts because we don't have a logger configured yet
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
