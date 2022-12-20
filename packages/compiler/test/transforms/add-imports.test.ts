@@ -191,6 +191,13 @@ test('findAllDanglingIdentifiers: import * as fn from "fn"; fn;', (t) => {
   t.assert(Object.keys(result).length == 0);
 });
 
+test.only('findAllDanglingIdentifiers: const x = undefined;', (t) => {
+  const ast = parse('const x = undefined;');
+  const result = findAllDanglingIdentifiers(ast);
+  console.log(result);
+  t.assert(Object.keys(result).length == 0);
+});
+
 test('findAllDanglingIdentifiers: nested scoping', (t) => {
   const ast = parse(`fn((a) => {
     const x = 1;
