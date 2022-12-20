@@ -1,7 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { Opts } from '../commands';
 import { Logger } from './logger';
-import { getModulePath, getNameAndVersion } from '@openfn/runtime';
+import {
+  getModulePath,
+  getNameAndVersion,
+  getLatestVersion,
+} from '@openfn/runtime';
 
 const validateAdaptors = async (
   options: Pick<
@@ -30,18 +34,35 @@ const validateAdaptors = async (
     let didError;
     for (const a of options.adaptors) {
       const [adaptor, userPath] = a.split('=');
-      let path = userPath;
-      if (!userPath) {
-        path = (await getModulePath(adaptor, options.repoDir)) || '';
+      let { name, version } = getNameAndVersion(adaptor);
+      let didLookupLatest = false;
 
-        if (!options.autoinstall && !path) {
-          logger.error(`Adaptor ${adaptor} not installed in repo`);
-          logger.error('Try adding -i to auto-install it');
-          didError = true;
+      let path: string | null = userPath;
+      if (!userPath) {
+        if (!version) {
+          // TODO the difficulty of this is that we do the expensive version lookup here
+          // But that information is discarded, only to be looked up again further downstream
+          logger.info('No adaptor version info provided: looking up latest');
+          version = await getLatestVersion(adaptor);
+          logger.info(`Latest version of ${adaptor}: ${version}`);
+          didLookupLatest = true;
+        }
+
+        path = await getModulePath(`${name}@${version}`, options.repoDir);
+        if (!path) {
+          if (options.autoinstall) {
+            // if autoinstall is enabled, we can stop validation here and trust autoinstall to save it
+            logger.info(`Will auto-install ${adaptor}@${version}`);
+          } else {
+            logger.error(`Adaptor ${adaptor} not installed in repo`);
+            logger.error('Try adding -i to auto-install it');
+            didError = true;
+          }
           break;
         }
+        // TODO if there IS a path, maybe we should write it back to the adaptors array to
+        // save us looking it up again later
       }
-      const { name, version } = getNameAndVersion(adaptor);
       try {
         const pkgRaw = await readFile(`${path}/package.json`, 'utf8');
         const pkg = JSON.parse(pkgRaw);
@@ -58,7 +79,11 @@ const validateAdaptors = async (
         }
 
         // Log the path and version of what we found!
-        logger.success(`Adaptor ${name}@${pkg.version || version}: OK`);
+        logger.success(
+          `Adaptor ${name}@${pkg.version || version}${
+            didLookupLatest ? '(latest)' : ''
+          }: OK`
+        );
       } catch (e) {
         // Expect read or parse file to throw here
         if (userPath) {

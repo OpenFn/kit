@@ -12,6 +12,9 @@ test.afterEach(() => {
 
 const repoDir = '/repo/';
 
+// TODO I have to pass a version in explicitly now, which alters the test path heavily
+// But I don't want to call out to npm version for @latest...
+
 test.serial('should report the version if all is OK', async (t) => {
   mockfs({
     '/repo/package.json':
@@ -20,8 +23,7 @@ test.serial('should report the version if all is OK', async (t) => {
       '{ "name": "a", "version": "1.0.0" }',
   });
 
-  await validateAdaptors({ adaptors: ['a'], repoDir }, logger);
-
+  await validateAdaptors({ adaptors: ['a@1.0.0'], repoDir }, logger);
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
   t.is(message, 'Adaptor a@1.0.0: OK');
@@ -54,7 +56,8 @@ test.serial(
     });
 
     await t.throwsAsync(
-      async () => await validateAdaptors({ adaptors: ['a'], repoDir }, logger),
+      async () =>
+        await validateAdaptors({ adaptors: ['a@1.0.0'], repoDir }, logger),
       {
         message: 'Failed to load adaptors',
       }
@@ -89,7 +92,8 @@ test.serial(
     });
 
     await t.throwsAsync(
-      async () => await validateAdaptors({ adaptors: ['a'], repoDir }, logger),
+      async () =>
+        await validateAdaptors({ adaptors: ['a@1.0.0'], repoDir }, logger),
       {
         message: 'Failed to load adaptors',
       }
@@ -192,13 +196,13 @@ test.serial(
     });
 
     await t.throwsAsync(
-      async () => await validateAdaptors({ adaptors: ['a'] }, logger),
+      async () => await validateAdaptors({ adaptors: ['a@1.0.0'] }, logger),
       {
         message: 'Failed to load adaptors',
       }
     );
     const err = logger._parse(logger._history[logger._history.length - 2]);
-    t.is(err.message, 'Adaptor a not installed in repo');
+    t.is(err.message, 'Adaptor a@1.0.0 not installed in repo');
     t.is(err.level, 'error');
 
     const last = logger._parse(logger._last);
