@@ -3,9 +3,16 @@ import Monaco from "@monaco-editor/react";
 import type { EditorProps as MonacoProps } from  "@monaco-editor/react/lib/types";
 import meta from '../metadata.json' assert { type: 'json'};
 
+type X = {
+  name: string;
+  age: number;
+}
+
+const x: X = { }
+
 const code = `import { upsert } from '@openfn/language-salesforce';
 
-upsert();`
+upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c");`
 
 // Provide a fake dts for salesforce
 // This is copied from adaptors, but looks a but sus!
@@ -23,9 +30,10 @@ declare module '@openfn/language-salesforce' {
    * @param {String} sObject - API name of the sObject.
    * @paramLookup sObject .entities[] | select(.system != true).name
    * @param {String} externalId - ID.
-   * @paramLookup externalId .entities[] | select(.name == "{{args.sObject}}") | .entities[].name
+   * @paramLookup externalId .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId).name
    * @param {Object} attrs - Field attributes for the new object.
    * @param {State} state - Runtime state.
+   * @paramLookup attrs .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId == false).name
    * @returns {Operation}
    */
   export function upsert(sObject: string, externalId: string, attrs?: any, state?: any): Operation;
@@ -57,6 +65,8 @@ const options: MonacoProps['options'] = {
   }
 };
 
+const ensureArray = (x: any) => Array.isArray(x) ? x : [x];
+
 // get JQ must return an array of strings based on the metadata structure
 const getJq = (query: string) => {
   // cheating to get rid of system stuff (this should be done by config I think)
@@ -65,7 +75,7 @@ const getJq = (query: string) => {
   // JQ is installed as a global bundle
   // it is HUGE at 1.6 mb
   // There's a wasm bundle at almost 1mb which might be a little better
-  const suggestions = jq.json(meta, query).map((s:string) => ({
+  const suggestions = ensureArray(jq.json(meta, query)).map((s:string) => ({
     label: `"${s}"`,
     kind: monaco.languages.CompletionItemKind.Text,
     insertText: `"${s}"`
@@ -146,12 +156,18 @@ const getCompletionProvider = (monaco) => ({
     });
 
     if (lookup) {
+      // TODO if we're building a JSON object, the rules change:
+      // - insert a minimal object (what values?)
+      // - insert a key
+      // - insert a value (or at least provide some assistance)
+      // Actually, generating a dts would be more helpful, but how do we bind it?
+
       const [_name, expression] = lookup.text[0].text.split(nameRe)
       // Parse this function call's arguments and map any values we have
       const args = extractArguments(help, model);
       // Check the query expression for any placeholders (of the form arg.name)
       const finalExpression = replacePlaceholders(args, expression)
-      // If we have a valid expression, run it an return whatever results we get!
+      // If we have a valid expression, run it and return whatever results we get!
       if (finalExpression) {
         return getJq(finalExpression);
       }
