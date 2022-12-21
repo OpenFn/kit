@@ -5,6 +5,10 @@ import type { LinkerOptions } from './modules/linker';
 
 const TIMEOUT = 1000;
 
+export const ERR_TIMEOUT = 'timeout';
+// TODO maybe this is a job exception? Job fail?
+export const ERR_RUNTIME_EXCEPTION = 'runtime exception';
+
 export declare interface State<D = object, C = object> {
   configuration: C;
   data: D;
@@ -76,7 +80,7 @@ export default function run(
 
     const tid = setTimeout(() => {
       logger.error('Error: Timeout expired!');
-      reject(Error('timeout'));
+      reject(Error(ERR_TIMEOUT));
     }, timeout);
 
     try {
@@ -89,7 +93,7 @@ export default function run(
     } catch (e) {
       logger.error('Error in runtime execution!');
       logger.error(e);
-      reject(new Error('runtime exception'));
+      reject(new Error(ERR_RUNTIME_EXCEPTION));
     }
   });
 }
