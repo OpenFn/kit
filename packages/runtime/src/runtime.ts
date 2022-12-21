@@ -3,7 +3,7 @@ import { createMockLogger, Logger, printDuration } from '@openfn/logger';
 import loadModule from './modules/module-loader';
 import type { LinkerOptions } from './modules/linker';
 
-const TIMEOUT = 1000;
+const TIMEOUT = 5000;
 
 export const ERR_TIMEOUT = 'timeout';
 // TODO maybe this is a job exception? Job fail?
