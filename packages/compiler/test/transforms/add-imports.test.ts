@@ -191,6 +191,18 @@ test('findAllDanglingIdentifiers: import * as fn from "fn"; fn;', (t) => {
   t.assert(Object.keys(result).length == 0);
 });
 
+test('findAllDanglingIdentifiers: const x = undefined;', (t) => {
+  const ast = parse('const x = undefined;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 0);
+});
+
+test('findAllDanglingIdentifiers: const x = true | false | null | NaN;', (t) => {
+  const ast = parse('const x = true | false | null | NaN;');
+  const result = findAllDanglingIdentifiers(ast);
+  t.assert(Object.keys(result).length == 0);
+});
+
 test('findAllDanglingIdentifiers: nested scoping', (t) => {
   const ast = parse(`fn((a) => {
     const x = 1;

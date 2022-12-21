@@ -1,9 +1,9 @@
 {
   "name": "@openfn/cli",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "CLI devtools for the openfn toolchain.",
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "pnpm": ">=7"
   },
   "scripts": {
@@ -50,6 +50,7 @@
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
+    "figures": "^5.0.0",
     "rimraf": "^3.0.2",
     "treeify": "^1.1.0",
     "yargs": "^17.5.1"
