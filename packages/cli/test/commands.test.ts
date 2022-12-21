@@ -456,39 +456,71 @@ test.serial('docs should print documention with full names', async (t) => {
   t.is(message, 'Done!');
 });
 
-test.serial('docs should print documention with shorthand names', async (t) => {
+test.serial('docs adaptor should print list operations', async (t) => {
   mock({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
+      version: '1.0.0',
       functions: [
         {
           name: 'fn',
-          parameters: [],
+          parameters: [{ name: 'a' }, { name: 'b' }],
           examples: [],
         },
       ],
     }),
   });
 
-  const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
+  const opts = cmd.parse('docs common@1.0.0') as Opts;
   opts.repoDir = '/repo';
 
   await commandParser('', opts, logger);
-  const docs = logger._parse(logger._history[4]).message as string;
-  // match the signature
-  t.regex(docs, /\#\# fn\(\)/);
-  // Match usage examples
-  t.regex(docs, /\#\#\# Usage Examples/);
+  const docs = logger._parse(logger._history[3]).message as string;
   t.notRegex(docs, /\[object Object\]/);
-  t.regex(
-    docs,
-    /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
-  );
+  t.notRegex(docs, /\#\#\# Usage Examples/);
+  t.regex(docs, /fn\(a, b\)/);
 
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
   t.is(message, 'Done!');
 });
+
+test.serial(
+  'docs adaptor + operation should print documention with shorthand names',
+  async (t) => {
+    mock({
+      '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
+        name: 'test',
+        functions: [
+          {
+            name: 'fn',
+            parameters: [],
+            examples: [],
+          },
+        ],
+      }),
+    });
+
+    const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
+    opts.repoDir = '/repo';
+
+    await commandParser('', opts, logger);
+    const docs = logger._parse(logger._history[4]).message as string;
+    // match the signature
+    t.regex(docs, /\#\# fn\(\)/);
+    // Match usage examples
+    t.regex(docs, /\#\#\# Usage Examples/);
+    t.notRegex(docs, /\[object Object\]/);
+    t.regex(
+      docs,
+      /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
+    );
+
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'success');
+    t.is(message, 'Done!');
+  }
+);
 
 // TODO - need to work out a way to test agaist stdout
 // should return to stdout
