@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.13
+
+### Patch Changes
+
+- 1a2d04a: include caption fix in build
+
 ## 0.0.12
 
 ### Patch Changes
