@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.0.23
+
+### Patch Changes
+
+- b7265c8: Log version information
+- Updated dependencies [454a06b]
+  - @openfn/compiler@0.0.21
+
 ## 0.0.22
 
 ### Patch Changes
