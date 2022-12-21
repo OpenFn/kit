@@ -479,6 +479,7 @@ test.serial('docs should print documention with shorthand names', async (t) => {
   t.regex(docs, /\#\# fn\(\)/);
   // Match usage examples
   t.regex(docs, /\#\#\# Usage Examples/);
+  t.notRegex(docs, /\[object Object\]/);
   t.regex(
     docs,
     /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/

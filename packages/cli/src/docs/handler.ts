@@ -17,7 +17,18 @@ ${fn.description}
 
 ### Usage Examples
 
-${fn.examples.length ? fn.examples.map((eg) => eg).join('\n\n') : 'None'}
+${
+  fn.examples.length
+    ? fn.examples
+        .map(({ code, caption }) => {
+          if (caption) {
+            return `${caption}:\n${code}`;
+          }
+          return code;
+        })
+        .join('\n\n')
+    : 'None'
+}
 
 ### API Reference
 

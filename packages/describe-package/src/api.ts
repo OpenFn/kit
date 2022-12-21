@@ -40,7 +40,7 @@ export type FunctionDescription = {
 
 type ExampleDescription = {
   code: string;
-  cpation?: string;
+  caption?: string;
 };
 
 export type ParameterDescription = {
