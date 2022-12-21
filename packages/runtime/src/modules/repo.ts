@@ -118,7 +118,7 @@ export const getNameAndVersion = (specifier: string) => {
     name = specifier;
   }
 
-  return { name, version } as { name: string; version: string };
+  return { name, version } as { name: string; version?: string };
 };
 
 // If there's no version in the specifer, we'll use @latest

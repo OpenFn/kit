@@ -39,7 +39,7 @@ const docsHandler = async (
   let { name, version } = getNameAndVersion(adaptorName);
   if (!version) {
     logger.info('No version number provided, looking for latest...');
-    version = await getLatestVersion(version);
+    version = await getLatestVersion(name);
     logger.info('Found ', version);
     logger.success(`Showing docs for ${adaptorName} v${version}`);
   }
