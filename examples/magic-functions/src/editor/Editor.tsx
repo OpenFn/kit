@@ -3,16 +3,18 @@ import Monaco from "@monaco-editor/react";
 import type { EditorProps as MonacoProps } from  "@monaco-editor/react/lib/types";
 import meta from '../metadata.json' assert { type: 'json'};
 
-type X = {
-  name: string;
-  age: number;
-}
+// type X = {
+//   name: string;
+//   age: number;
+// }
 
-const x: X = { }
+// const x: X = {  }
 
 const code = `import { upsert } from '@openfn/language-salesforce';
 
-upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c");`
+upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c", {
+
+});`
 
 // Provide a fake dts for salesforce
 // This is copied from adaptors, but looks a but sus!
@@ -33,10 +35,10 @@ declare module '@openfn/language-salesforce' {
    * @paramLookup externalId .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId).name
    * @param {Object} attrs - Field attributes for the new object.
    * @param {State} state - Runtime state.
-   * @paramLookup attrs .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId == false).name
+   * @paramLookup attrs .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId == false)
    * @returns {Operation}
    */
-  export function upsert(sObject: string, externalId: string, attrs?: any, state?: any): Operation;
+  export function upsert(sObject: string, externalId: string, attrs?: object, state?: any): Operation;
 }
 `
 
@@ -80,6 +82,35 @@ const getJq = (query: string) => {
     kind: monaco.languages.CompletionItemKind.Text,
     insertText: `"${s}"`
   }));
+
+  return {
+    // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
+    suggestions
+  }
+
+}
+
+// different jq query it's an object type
+// give it a list of entities to represent props
+const getJqObject = (query: string) => {
+  // cheating to get rid of system stuff (this should be done by config I think)
+  // const filtered = meta.entities.filter(({ system }) => !system);
+
+  // JQ is installed as a global bundle
+  // it is HUGE at 1.6 mb
+  // There's a wasm bundle at almost 1mb which might be a little better
+  const suggestions = ensureArray(jq.json(meta, query)).map((prop: object) => {
+    // TODO rememeber not all props will have a label AND a name
+    // (and this may not even be the correct data structure)
+    return {
+      // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html#kind
+      label: `${prop.label}`,
+      // Are we creating a property or a value?
+      kind: monaco.languages.CompletionItemKind.Property,
+      insertText: `"${prop.name}":`,
+      detail: `${prop.name} (${prop.datatype})`
+    };
+  });
 
   return {
     // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
@@ -156,12 +187,6 @@ const getCompletionProvider = (monaco) => ({
     });
 
     if (lookup) {
-      // TODO if we're building a JSON object, the rules change:
-      // - insert a minimal object (what values?)
-      // - insert a key
-      // - insert a value (or at least provide some assistance)
-      // Actually, generating a dts would be more helpful, but how do we bind it?
-
       const [_name, expression] = lookup.text[0].text.split(nameRe)
       // Parse this function call's arguments and map any values we have
       const args = extractArguments(help, model);
@@ -169,6 +194,11 @@ const getCompletionProvider = (monaco) => ({
       const finalExpression = replacePlaceholders(args, expression)
       // If we have a valid expression, run it and return whatever results we get!
       if (finalExpression) {
+        // This is a real kludge - if this looks like an object type, use a different builder function
+        const { text, kind } = param.displayParts.at(-1)
+        if ( kind === 'keyword' && text === 'object') {
+          return getJqObject(finalExpression);  
+        }
         return getJq(finalExpression);
       }
     }
