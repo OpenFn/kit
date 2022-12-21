@@ -40,6 +40,7 @@ export type Opts = {
   packages?: string[];
   specifier?: string; // docgen
   repoDir?: string;
+  timeout?: number; // ms
   statePath?: string;
   stateStdin?: string;
 };

@@ -10,6 +10,7 @@ export default (code: string, state: any, opts: SafeOpts): Promise<any> => {
   // Then again, maybe that doesn't make sense
   // Maybe we have to feed a job logger in?
   return run(code, state, {
+    timeout: opts.timeout,
     immutableState: opts.immutable,
     logger: createLogger(RUNTIME, opts),
     jobLogger: createLogger(JOB, opts),
