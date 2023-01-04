@@ -121,6 +121,8 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       // If we fail to load from a path, fall back to loading from a specifier
     }
   }
+
+  throw new Error(`Failed to load module "${specifier}"`);
 };
 
 export default linker;
