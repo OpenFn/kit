@@ -33,8 +33,6 @@ export type Linker = (
   options?: LinkerOptions
 ) => Promise<Module>;
 
-// Quick note that the specifier coming in won't have version info because it's come straight for js code
-// So it's a module name really!
 const linker: Linker = async (specifier, context, options = {}) => {
   const { whitelist } = options;
   const log = options.log || defaultLogger;
@@ -95,15 +93,15 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     return import(specifier);
   }
 
-  // Lookup the path from an explicit specifier first
+  // Otherwise resolve the specifier to a path in the repo
   let path;
   let version;
+
   if (options.modules?.[specifier]) {
     ({ path, version } = options.modules?.[specifier]);
   }
 
   if (!path && options.repo) {
-    // Try and load a matching path from the repo
     const specifierWithVersion = version
       ? `${specifier}@${version}`
       : specifier;
@@ -111,14 +109,12 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   }
 
   if (path) {
-    // TODO: should we log WHY this path was used? Maybe this is enough for now
     log.debug(`[linker] Loading module ${specifier} from ${path}`);
     try {
       return import(path);
     } catch (e) {
       log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
       console.log(e);
-      // If we fail to load from a path, fall back to loading from a specifier
     }
   }
 

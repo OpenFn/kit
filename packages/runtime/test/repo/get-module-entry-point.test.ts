@@ -58,7 +58,9 @@ test.serial('default to index.js', async (t) => {
   t.assert(p?.endsWith('x_1.0.0/index.js'));
 });
 
-test.serial('prefer exports to main', async (t) => {
+// Issue! The ESM export fails in node19 if the import happens to have
+// directory imports (as lodash/fp does). So for now I'm disabling ESM imports.
+test.serial.skip('prefer exports to main', async (t) => {
   const pkg = {
     name: 'x',
     main: 'dist/index.cjs',
@@ -70,7 +72,7 @@ test.serial('prefer exports to main', async (t) => {
   t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
 });
 
-test.serial('prefer conditional export to main', async (t) => {
+test.serial.skip('prefer conditional export to main', async (t) => {
   const pkg = {
     name: 'x',
     main: 'dist/index.cjs',
@@ -84,7 +86,7 @@ test.serial('prefer conditional export to main', async (t) => {
   t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
 });
 
-test.serial('ignore non-main conditional exports', async (t) => {
+test.serial.skip('ignore non-main conditional exports', async (t) => {
   const pkg = {
     name: 'x',
     exports: {
@@ -101,7 +103,7 @@ test.serial('ignore non-main conditional exports', async (t) => {
 test.serial('support version number', async (t) => {
   const pkg = {
     name: 'x',
-    exports: './dist/index.js',
+    main: './dist/index.js',
   };
 
   mockRepo(pkg);
