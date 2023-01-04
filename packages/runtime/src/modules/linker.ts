@@ -5,7 +5,7 @@
  */
 import { createMockLogger, Logger } from '@openfn/logger';
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
-import { getModulePath } from './repo';
+import { getModuleEntryPoint } from './repo';
 
 const defaultLogger = createMockLogger();
 
@@ -90,6 +90,11 @@ const linker: Linker = async (specifier, context, options = {}) => {
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   const log = options.log || defaultLogger;
 
+  // If the specifier is a path, just import it
+  if (specifier.startsWith('/')) {
+    return import(specifier);
+  }
+
   // Lookup the path from an explicit specifier first
   let path;
   let version;
@@ -102,7 +107,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     const specifierWithVersion = version
       ? `${specifier}@${version}`
       : specifier;
-    path = await getModulePath(specifierWithVersion, options.repo);
+    path = await getModuleEntryPoint(specifierWithVersion, options.repo);
   }
 
   if (path) {

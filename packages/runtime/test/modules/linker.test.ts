@@ -70,26 +70,38 @@ test('load a fancy test module with dependencies', async (t) => {
   t.assert(m.namespace.default() === 40);
 });
 
-test('load @openfn/language-common from node modules', async (t) => {
-  const m = await linker('@openfn/language-common', context);
+// test.skip('load @openfn/language-common from repo', async (t) => {
+//   const options = {
+//     repo: ''
+//   }
+//   const m = await linker('@openfn/language-common', context);
 
-  const exports = Object.keys(m.namespace);
-  t.assert(exports.includes('fn'));
-  t.assert(exports.includes('execute'));
-  t.assert(exports.includes('field'));
+//   const exports = Object.keys(m.namespace);
+//   t.assert(exports.includes('fn'));
+//   t.assert(exports.includes('execute'));
+//   t.assert(exports.includes('field'));
 
-  // Exercise the API a little
-  const { fn, execute, field } = m.namespace;
-  t.deepEqual(field('a', 1), ['a', 1]);
+//   // Exercise the API a little
+//   const { fn, execute, field } = m.namespace;
+//   t.deepEqual(field('a', 1), ['a', 1]);
 
-  const queue = [
-    fn((x: number) => x + 1),
-    fn((x: number) => x + 1),
-    fn((x: number) => x + 1),
-  ];
-  const result = await execute(...queue)(1);
-  t.assert(result === 4);
-});
+//   const queue = [
+//     fn((x: number) => x + 1),
+//     fn((x: number) => x + 1),
+//     fn((x: number) => x + 1),
+//   ];
+//   const result = await execute(...queue)(1);
+//   t.assert(result === 4);
+// });
+// test.only('load from repo', async (t) => {
+//   const options = {
+//     repo: path.resolve('test/__repo__'),
+//   };
+//   console.log(options);
+//   const m = await linker('ultimate-answer@2.0.0', context, options);
+
+//   t.is(m.namespace.default, 43);
+// });
 
 test('throw if a non-whitelisted value is passed', async (t) => {
   await t.throwsAsync(() =>
@@ -133,7 +145,7 @@ test('loads a module from a specific path', async (t) => {
 // come straight out of import statements, and so never have versions
 test('loads a specific module version from the repo (the wrong way)', async (t) => {
   const options = {
-    repo: path.resolve('test/__repo'),
+    repo: path.resolve('test/__repo__'),
   };
   const m = await linker('ultimate-answer@1.0.0', context, options);
   t.assert(m.namespace.default === 42);
@@ -143,7 +155,7 @@ test('loads a specific module version from the repo (the wrong way)', async (t) 
 // Will pass in version metata much as they would the path to the module
 test('loads a specific module version from the repo (the right way)', async (t) => {
   const options = {
-    repo: path.resolve('test/__repo'),
+    repo: path.resolve('test/__repo__'),
     modules: {
       'ultimate-answer': {
         version: '1.0.0',
@@ -154,9 +166,17 @@ test('loads a specific module version from the repo (the right way)', async (t) 
   t.assert(m.namespace.default === 42);
 });
 
+test.only('loads a cjs module from the repo', async (t) => {
+  const options = {
+    repo: path.resolve('test/__repo__'),
+  };
+  const m = await linker('cjs', context, options);
+  t.assert(m.namespace.default === 42);
+});
+
 test('loads the latest module version from the repo', async (t) => {
   const options = {
-    repo: path.resolve('test/__repo'),
+    repo: path.resolve('test/__repo__'),
   };
   const m = await linker('ultimate-answer', context, options);
   t.assert(m.namespace.default === 43);

@@ -197,6 +197,42 @@ export const getModulePath = async (
   if (version) {
     // TODO: fuzzy semver match
     const a = getAliasedName(specifier);
+    console.log(a);
+    console.log(repoPath);
+    const pkg = await loadRepoPkg(repoPath);
+    console.log(pkg);
+    if (pkg && pkg.dependencies[a]) {
+      alias = a;
+    }
+  } else {
+    alias = await getLatestInstalledVersion(specifier, repoPath);
+  }
+
+  if (alias) {
+    const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
+    console.log('> ', p);
+    log.debug(`repo resolved ${specifier} path to ${p}`);
+    return p;
+  } else {
+    log.debug(`module not found in repo: ${specifier}`);
+  }
+  return null;
+};
+
+// ESM doesn't support importing directories, and from node 19 this is enforced
+// For a given specifier, this will return a path to the main index.js file
+// I don't think this will work for nested imports though
+export const getModuleEntryPoint = async (
+  specifier: string,
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger // TODO should this be a null logger?
+) => {
+  const { version } = getNameAndVersion(specifier);
+  let alias;
+
+  if (version) {
+    // TODO: fuzzy semver match
+    const a = getAliasedName(specifier);
     const pkg = await loadRepoPkg(repoPath);
     if (pkg && pkg.dependencies[a]) {
       alias = a;
@@ -207,8 +243,16 @@ export const getModulePath = async (
 
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
+    console.log('> ', p);
     log.debug(`repo resolved ${specifier} path to ${p}`);
-    return p;
+
+    const pkgRaw = await readFile(`${p}/package.json`, 'utf8');
+    const pkg = JSON.parse(pkgRaw);
+    // TODO need to handle the various formats for this, it might get complex
+    if (pkg.main) {
+      return `${p}/${pkg.main}`;
+    }
+    return `${p}/index.js`;
   } else {
     log.debug(`module not found in repo: ${specifier}`);
   }
