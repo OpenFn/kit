@@ -116,9 +116,6 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       // If we fail to load from a path, fall back to loading from a specifier
     }
   }
-
-  log.debug(`[linker] Loading ${specifier} using default import()`);
-  return import(specifier);
 };
 
 export default linker;
