@@ -3,7 +3,8 @@ import { Opts } from '../commands';
 
 const docgenCommand = {
   command: 'docgen <specifier>',
-  desc: 'Generate documentation into the repo. Specifier must include a version number.',
+  // Hide this command as it's not really for public usage
+  desc: false, // 'Generate documentation into the repo. Specifier must include a version number.'
   handler: (argv: Arguments<Opts>) => {
     argv.command = 'docgen';
   },
