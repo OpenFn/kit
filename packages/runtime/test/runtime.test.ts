@@ -167,3 +167,28 @@ test('calls execute if exported from a job', async (t) => {
 
   t.is(logger._history.length, 1);
 });
+
+test('Throws after default timeout', async (t) => {
+  const logger = createMockLogger(undefined, { level: 'info' });
+
+  const job = `export default [() => new Promise(() => {})];`;
+
+  const state = createState();
+  await t.throwsAsync(async () => run(job, state, { jobLogger: logger }), {
+    message: 'timeout',
+  });
+});
+
+test('Throws after custom timeout', async (t) => {
+  const logger = createMockLogger(undefined, { level: 'info' });
+
+  const job = `export default [() => new Promise((resolve) => setTimeout(resolve, 100))];`;
+
+  const state = createState();
+  await t.throwsAsync(
+    async () => run(job, state, { jobLogger: logger, timeout: 10 }),
+    {
+      message: 'timeout',
+    }
+  );
+});

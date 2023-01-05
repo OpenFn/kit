@@ -1,7 +1,13 @@
 // a suite of tests with various security concerns in mind
-
 import test from 'ava';
-import run from '../src/runtime';
+import run, { ERR_RUNTIME_EXCEPTION, ERR_TIMEOUT } from '../src/runtime';
+
+import { createMockLogger } from '@openfn/logger';
+
+const logger = createMockLogger(undefined, { level: 'default' });
+test.afterEach(() => {
+  logger._reset();
+});
 
 // TODO use of globalthis is kinda interesting - I expect global to be available?
 test.serial('jobs should not have access to global scope', async (t) => {
@@ -44,9 +50,16 @@ test.serial('jobs should each run in their own context', async (t) => {
 test.serial('jobs should not have a process object', async (t) => {
   const src = 'export default [() => process.pid]';
 
-  await t.throwsAsync(() => run(src), {
-    message: 'process is not defined',
+  await t.throwsAsync(() => run(src, undefined, { logger }), {
+    message: ERR_RUNTIME_EXCEPTION,
   });
+
+  // find the exception
+  const errLog = logger._history.at(-1);
+  const { message, level } = logger._parse(errLog);
+
+  t.is(level, 'error');
+  t.is((message as Error).message, 'process is not defined');
 });
 
 test.serial(
@@ -54,11 +67,19 @@ test.serial(
   async (t) => {
     const src = 'export default [() => setTimeout("hacking ur scriptz", 1)]';
 
-    await t.throwsAsync(() => run(src), {
-      instanceOf: TypeError,
-      message:
-        'The "callback" argument must be of type function. Received type string (\'hacking ur scriptz\')',
+    await t.throwsAsync(() => run(src, undefined, { logger }), {
+      message: ERR_RUNTIME_EXCEPTION,
     });
+
+    // find the exception
+    const errLog = logger._history.at(-1);
+    const { message, level } = logger._parse(errLog);
+
+    t.is(level, 'error');
+    t.is(
+      (message as Error).message,
+      'The "callback" argument must be of type function. Received type string (\'hacking ur scriptz\')'
+    );
   }
 );
 
