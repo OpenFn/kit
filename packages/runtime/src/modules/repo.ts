@@ -226,10 +226,11 @@ export const getModulePath = async (
 // I don't think this will work for nested imports though
 export const getModuleEntryPoint = async (
   specifier: string,
+  modulePath?: string,
   repoPath: string = defaultRepoPath,
   log = defaultLogger
 ) => {
-  const moduleRoot = await getModulePath(specifier, repoPath);
+  const moduleRoot = modulePath || (await getModulePath(specifier, repoPath));
 
   if (moduleRoot) {
     const pkgRaw = await readFile(`${moduleRoot}/package.json`, 'utf8');

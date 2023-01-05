@@ -3,7 +3,7 @@ import { createMockLogger, Logger, printDuration } from '@openfn/logger';
 import loadModule from './modules/module-loader';
 import type { LinkerOptions } from './modules/linker';
 
-const TIMEOUT = 5000;
+const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 export const ERR_TIMEOUT = 'timeout';
 // TODO maybe this is a job exception? Job fail?
@@ -79,7 +79,8 @@ export default function run(
     logger.debug(`Executing pipeline (${operations.length} operations)`);
 
     const tid = setTimeout(() => {
-      logger.error('Error: Timeout expired!');
+      logger.error(`Error: Timeout (${timeout}ms) expired!`);
+      logger.error('  Set a different timeout by passing "-t 10000" ms)');
       reject(Error(ERR_TIMEOUT));
     }, timeout);
 
