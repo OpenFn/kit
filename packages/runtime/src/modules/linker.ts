@@ -89,7 +89,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   const log = options.log || defaultLogger;
 
   // If the specifier is a path, just import it
-  if (specifier.startsWith('/')) {
+  if (specifier.startsWith('/') && specifier.endsWith('.js')) {
     return import(specifier);
   }
 
@@ -101,11 +101,16 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     ({ path, version } = options.modules?.[specifier]);
   }
 
-  if (!path && options.repo) {
+  if (path || options.repo) {
     const specifierWithVersion = version
       ? `${specifier}@${version}`
       : specifier;
-    path = await getModuleEntryPoint(specifierWithVersion, options.repo);
+    path = await getModuleEntryPoint(
+      specifierWithVersion,
+      path,
+      options.repo,
+      log
+    );
   }
 
   if (path) {

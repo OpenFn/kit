@@ -93,6 +93,18 @@ test('loads a cjs module from the repo', async (t) => {
   t.assert(m.namespace.default === 42);
 });
 
+test.only('loads a module from a path', async (t) => {
+  const m = await linker('ultimate-answer', context, {
+    modules: {
+      ['ultimate-answer']: {
+        path: path.resolve('test/__modules__/test'),
+        version: '0.0.1',
+      },
+    },
+  });
+  t.assert(m.namespace.default === 'test');
+});
+
 test('throw if a non-whitelisted value is passed', async (t) => {
   await t.throwsAsync(() =>
     linker('i-heart-hacking', context, { repo, whitelist: [/^@openfn\//] })

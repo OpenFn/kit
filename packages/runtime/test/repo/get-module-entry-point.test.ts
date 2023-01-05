@@ -15,6 +15,7 @@ const repoPath = path.resolve('test/__repo__');
 
 const mockRepo = (pkg: object) => {
   mock({
+    // Mock a repo with one module installed
     [`${repoPath}/package.json`]: JSON.stringify({
       name: 'test',
       private: true,
@@ -23,6 +24,9 @@ const mockRepo = (pkg: object) => {
       },
     }),
     [`${repoPath}/node_modules/x_1.0.0/package.json`]: JSON.stringify(pkg),
+
+    // Mock an arbitrary package
+    [`/repo/test2/package.json`]: JSON.stringify(pkg),
   });
 };
 
@@ -33,19 +37,19 @@ test.serial('use main', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', repoPath);
+  const p = await getModuleEntryPoint('x', undefined, repoPath);
   t.assert(p?.endsWith('x_1.0.0/index.js'));
 });
 
 test.serial('use main with path', async (t) => {
   const pkg = {
     name: 'x',
-    main: 'dist/index.js',
+    main: 'index.js',
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', repoPath);
-  t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
+  const p = await getModuleEntryPoint('x', '/repo/test2/');
+  t.is(p, '/repo/test2/index.js');
 });
 
 test.serial('default to index.js', async (t) => {
@@ -54,7 +58,7 @@ test.serial('default to index.js', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', repoPath);
+  const p = await getModuleEntryPoint('x', undefined, repoPath);
   t.assert(p?.endsWith('x_1.0.0/index.js'));
 });
 
@@ -68,7 +72,7 @@ test.serial.skip('prefer exports to main', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', repoPath);
+  const p = await getModuleEntryPoint('x', undefined, repoPath);
   t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
 });
 
@@ -82,7 +86,7 @@ test.serial.skip('prefer conditional export to main', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', repoPath);
+  const p = await getModuleEntryPoint('x', undefined, repoPath);
   t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
 });
 
@@ -96,7 +100,7 @@ test.serial.skip('ignore non-main conditional exports', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', repoPath);
+  const p = await getModuleEntryPoint('x', undefined, repoPath);
   t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
 });
 
@@ -107,6 +111,6 @@ test.serial('support version number', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x@1.0.0', repoPath);
+  const p = await getModuleEntryPoint('x@1.0.0', undefined, repoPath);
   t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
 });
