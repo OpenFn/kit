@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.14
+
+### Patch Changes
+
+- 74cc00f: Fix typing
+
 ## 0.0.13
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @openfn/cli
 
+## 0.0.24
+
+### Patch Changes
+
+- 74cc00f: Fix example display in docgen
+- 8ccb78d: Hide docgen command
+- 5d9dd10: Set job timeout through CLI
+- c1e24a5: Fix an issue when running the docs command with no version number
+- Updated dependencies [47ac1a9]
+- Updated dependencies [1695874]
+- Updated dependencies [74cc00f]
+  - @openfn/runtime@0.0.14
+  - @openfn/describe-package@0.0.14
+  - @openfn/compiler@0.0.22
+
 ## 0.0.23
 
 ### Patch Changes

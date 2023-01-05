@@ -27,6 +27,10 @@ const executeCommand = {
         alias: 'S',
         description: 'Read state from stdin (instead of a file)',
       })
+      .option('timeout', {
+        alias: '-t',
+        description: 'Set the timeout duration in MS',
+      })
       .option('no-compile', {
         boolean: true,
         description: 'Skip compilation',

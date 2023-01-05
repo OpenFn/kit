@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.0.22
+
+### Patch Changes
+
+- Updated dependencies [74cc00f]
+  - @openfn/describe-package@0.0.14
+
 ## 0.0.21
 
 ### Patch Changes
