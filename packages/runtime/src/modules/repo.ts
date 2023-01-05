@@ -186,24 +186,30 @@ export const getLatestInstalledVersion = async (
   return null;
 };
 
-export const getModulePath = async (
+const getRepoAlias = async (
   specifier: string,
-  repoPath: string = defaultRepoPath,
-  log = defaultLogger // TODO should this be a null logger?
+  repoPath: string = defaultRepoPath
 ) => {
   const { version } = getNameAndVersion(specifier);
-  let alias;
 
   if (version) {
     // TODO: fuzzy semver match
     const a = getAliasedName(specifier);
     const pkg = await loadRepoPkg(repoPath);
     if (pkg && pkg.dependencies[a]) {
-      alias = a;
+      return a;
     }
   } else {
-    alias = await getLatestInstalledVersion(specifier, repoPath);
+    return getLatestInstalledVersion(specifier, repoPath);
   }
+};
+
+export const getModulePath = async (
+  specifier: string,
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger
+) => {
+  const alias = await getRepoAlias(specifier, repoPath);
 
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
@@ -215,30 +221,44 @@ export const getModulePath = async (
   return null;
 };
 
-// Unused stuff I want to hang onto for now..
+// ESM doesn't support importing directories, and from node 19 this is enforced
+// For a given specifier, this will return a path to the main index.js file
+// I don't think this will work for nested imports though
+export const getModuleEntryPoint = async (
+  specifier: string,
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger
+) => {
+  const moduleRoot = await getModulePath(specifier, repoPath);
 
-// // This will alias the name of a specifier
-// // If no version is specified, it will look up the latest installed one
-// // If there is no version available then ???
-// // Note that it's up to the auto-installer to decide whether to pre-install a
-// // matching or latest verrsion
-// export const ensureAliasedName = async (
-//   specifier: string,
-//   repoPath: string = defaultRepoPath
-// ) => {
-//   let { name, version } = getNameAndVersion(specifier);
-//   if (!version) {
-//     // TODO what if this fails?
-//     return (await getLatestInstalledVersion(specifier, repoPath)) || 'UNKNOWN';
-//   }
-//   return `${name}_${version}`;
-// };
+  if (moduleRoot) {
+    const pkgRaw = await readFile(`${moduleRoot}/package.json`, 'utf8');
+    const pkg = JSON.parse(pkgRaw);
+    let main = 'index.js';
 
-// export const getModulePathFromAlias = (
-//   alias: string,
-//   repoPath: string = defaultRepoPath
-// ) => {
-//   // if there's no version specifier, we should take the latest available
-//   //... but how do we know what that is?
-//   return `${repoPath}/node_modules/${alias}`;
-// };
+    // TODO Turns out that importing the ESM format actually blows up
+    // (at least when we try to import lodash)
+    // if (pkg.exports) {
+    //   if (typeof pkg.exports === 'string') {
+    //     main = pkg.exports;
+    //   } else {
+    //     const defaultExport = pkg.exports['.']; // TODO what if this doesn't exist...
+    //     if (typeof defaultExport == 'string') {
+    //       main = defaultExport;
+    //     } else {
+    //       main = defaultExport.import;
+    //     }
+    //   }
+    // } else
+    // Safer for now to just use the CJS import
+    if (pkg.main) {
+      main = pkg.main;
+    }
+    const p = path.resolve(moduleRoot, main);
+    log.debug(`repo resolved ${specifier} entrypoint to ${p}`);
+    return p;
+  } else {
+    log.debug(`module not found in repo: ${specifier}`);
+  }
+  return null;
+};
