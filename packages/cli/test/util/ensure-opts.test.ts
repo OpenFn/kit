@@ -156,6 +156,16 @@ test('preserve force', (t) => {
   t.truthy(opts.force);
 });
 
+test('preserve timeout', (t) => {
+  const initialOpts = {
+    timeout: 999,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.is(opts.timeout, 999);
+});
+
 test('preserve noCompile', (t) => {
   const initialOpts = {
     noCompile: true,
@@ -352,6 +362,37 @@ test('log: set default and a specific option', (t) => {
 
   t.is(opts.log.default, 'none');
   t.is(opts.log.compiler, 'debug');
+});
+
+test('log: default to info for test', (t) => {
+  const initialOpts = {
+    command: 'test',
+  } as Opts;
+
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'info');
+});
+
+test('log: default to info for version', (t) => {
+  const initialOpts = {
+    command: 'version',
+  } as Opts;
+
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'info');
+});
+
+test('log: always info for version', (t) => {
+  const initialOpts = {
+    command: 'version',
+    log: ['debug'],
+  } as Opts;
+
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'info');
 });
 
 test.serial('preserve repoDir', (t) => {

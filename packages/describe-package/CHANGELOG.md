@@ -1,5 +1,23 @@
 # @openfn/describe-package
 
+## 0.0.14
+
+### Patch Changes
+
+- 74cc00f: Fix typing
+
+## 0.0.13
+
+### Patch Changes
+
+- 1a2d04a: include caption fix in build
+
+## 0.0.12
+
+### Patch Changes
+
+- 220fb95: Handle captions in examples
+
 ## 0.0.11
 
 ### Patch Changes

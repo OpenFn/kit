@@ -39,10 +39,18 @@ test('1 parameters in a 1-arity function', async (t) => {
   t.is(flavour.type, 'string');
 });
 
-test('Load the example', async (t) => {
+test('Load an example', async (t) => {
   const fn = get('traditional');
-  t.is(fn.examples[0], 'traditional()');
+  const [{ code }] = fn.examples;
+  t.is(code, 'traditional()');
   t.is(fn.parent, undefined);
+});
+
+test('Load an example with caption', async (t) => {
+  const fn = get('oneFlavour');
+  const [{ code, caption }] = fn.examples;
+  t.is(code, "oneFlavour('falafel')");
+  t.is(caption, 'cap');
 });
 
 test('Load common fn', async (t) => {

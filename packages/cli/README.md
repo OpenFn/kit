@@ -1,69 +1,101 @@
-# @openfn/cli (devtools)
+# @openfn/cli
 
-This package contains a new devtools CLI.
+This package contains a new devtools CLI for running openfn jobs.
 
-The CLI allows you to
+The new CLI includes:
 
-- Run a job (expression), writing output to disk or stdout
-- Compile a job
-- Install modules for jobs
-- Use local language adaptors to run the job
+* A new runtime for executing openfn jobs
+* A new compiler for making openfn jobs runnable
+* Improved, customisable logging output
+* Auto installation of language adaptors
+* Support for the adaptors monorepo
 
-The CLI reads a path as its main argument. That path should either point to a .js file or a folder.
+## Getting Started
 
-- If the path ends in .js, load as a job file and execute. State and output will be read/written relative to it.
-- If the path is a folder, the CLI will look for a job.js, state.json and write an output.json.
-
-From this input it will infer a working directory, from which state will be read and output will be written.
-
-All inputs and outputs can be configured with arguments.
-
-Run `pnpm openfn -h` to print usage help (the best source of truth right now).
-
-## Usage from the global CLI
-
-See Getting Started for more setup steps.
+To install:
 
 ```
-$ npm install -g @openfn/cli`
-$ openfn --help
-$ openfn path/to/expression.js`
+npm install -g @openfn/cli
 ```
 
-## Language Adaptors
-
-The old engine used to compile knowlede of langauge adaptors into the job file. We no longer do this.
-
-Generally the new runtime prefers to explictly import all dependencies - although the compiler will auto-insert imports from a given adaptor for you.
-
-You need to pass the name of an adaptor for the runtime to use. It will auto-insert an import statement for you.
+Make sure everything works by running the built-in test job:
 
 ```
-$ openfn job.js -a commmon
+openfn test
 ```
 
-You can use a short-hand name, like above, but longform names also work:
-```
-$ openfn job.js -a @openfn/language-commmon
-```
-
-You can pass an explicit version number too:
+Check the version:
 
 ```
-$ openfn job.js -a commmon@1.7.3
+openfn -v
 ```
 
-The adaptor also needs to be installed in the CLI's module repo. You can do this manually:
+Get help:
 
 ```
-$ openfn install commmon
+openfn help
 ```
-If no version is provided, the latest will be installed. Again, long and short-form names can be used.
 
-Alternatively, pass the -i flag when running a job (it's safe to do this redundantly):
+## Basic Usage
+
+You're probably here to run jobs (expressions), which the CLI makes easy:
+
 ```
-$ openfn job.js -i -a @openfn/language-commmon
+openfn path/to/job.js -ia adaptor-name
 ```
+
+You MUST specify which adaptor to use. Pass the `-i` flag to auto-install that adaptor (it's safe to do this redundantly).
+
+If output.json and state.json are not passed, the CLI will look for them next to the job.js file. You can pass a path to state by adding `-s path/to/state.json`, and output by passing `-o path/to/output.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
+
+The CLI can auto-install language adaptors to its own privately maintained repo. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo.
+
+You can specify adaptors with a shorthand (`http`) or use the full package name (`@openfn/language-http`). You can add a specific version like `http@2.0.0`. You can pass a path to a locally installed adaptor like `http=/repo/openfn/adaptors/my-http-build`. Set the OPENFN_ADAPTORS_REPO env var to load adaptors straight out of the monorepo (pass the `--no-adaptors-repo` flag to disable this for a single run).
+
+You can pass `--log info` to get more feedback about what's happening, or `--log debug` for more details than you could ever use.
+
+## Advanced Usage
+
+The CLI has actually has a number of commands (the first argument after openfn)
+
+* execute - run a job
+* compile - compile a job to a .js file
+* doc - show documentation for an adaptor function
+* repo - manage the repo of installed modules
+* docgen - generate JSON documentation for an adaptor based on its typescript
+
+If no command is specified, execute will run.
+
+To get more information about a command, including usage examples, run `openfn <command> help`, ie, `openfn compile help`.
+
+## Compilation
+
+The CLI will attempt to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:
+
+* The language adaptor will be imported into the file
+* The adaptor's execute function will be exported form the file
+* All top level operations will be added to an array
+* That array will be made the default export of the file
+
+The result of this is a lightweight, modern JS source file. It can be executed in any runtime environment: just execute each function in the exported array.
+
+The CLI uses openfn's own runtime to execute jobs in a safe environment.
+
+All jobs which work against `@openfn/core` will work in the new CLI and runtime environment (note: although this is a work in progress and we are actively looking for help to test this!).
+
+## New Runtime notes
+
+The new openfunction runtime basically does one thing: load a Javascript Module, find the default export, and execute the functions it holds.
+
+So long as your job has an array of functions as its default export, it will run in the new runtime.
+
+# Contributing
+
+First of all, thanks for helping! You're contributing to a digital public good that will always be free and open source and aimed at serving innovative NGOs, governments, and social impact organizations the world over! You rock. heart
+
+To get this started, you'll want to clone this repo.
+
+You also need to install `pnpm`.
 
 ## Usage from this repo
 
@@ -78,7 +110,7 @@ See test/execute.test.ts for more usage examples
 
 ## Installing globally
 
-To install the CLI globally from this repo (ie, to do `openfn job.js` instead of `pnpm openfn job.js`), run:
+To install the CLI globally from the build in repo:
 
 ```
 $ npm install -g .
@@ -94,24 +126,15 @@ You should set the OPENFN_REPO_DIR env var to something sensible.
 
 ```
 # In ~/.bashc or whatever
-export OPENFN_REPO_DIR=~/adaptors/@openfn
+export OPENFN_REPO_DIR=~/repo/openfn/cli-repo
 ```
 
-At the time of writing, teh env var name is about to change. Soon you will be able to pass the repo dir into the command line, but the env var is a much easier way to work.
+To run adaptors straight from the adaptors monorepo:
 
-Monorepo support is coming soon.
+export OPENFN_ADAPTORS_REPO=~/repo/openfn/adaptors
 
-## Automatic Imports
+## Contributing changes
 
-The v2 runtime requires explicit imports to be in the job file, or else the job will fail.
+Open a PR at https://github.com/openfn/kit. Include a changeset and a description of your change.
 
-The v2 compiler can automatically insert import statements, but it needs to be told which adaptor to use.
-
-```
-$ openfn job.js --adaptors @openfn/language-http
-$ openfn job.js --adaptors @openfn/language-http=path/to/adaptor
-```
-
-If a path is passed (relative to the working directory), that path will be used to load a local version of the adaptor (both at runtime and for import generation)
-
-If no path is passed, the currently deployed npm package will be used.
+See the root readme for more details about changests,

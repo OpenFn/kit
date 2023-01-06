@@ -1,5 +1,19 @@
 # @openfn/runtime
 
+## 0.0.15
+
+### Patch Changes
+
+- 986bf07: Allow modules to be imported from directories (lightning)
+- 5c6fde4: Increase default timeout
+
+## 0.0.14
+
+### Patch Changes
+
+- 47ac1a9: Add timeout
+- 1695874: Fix module loading in node 19
+
 ## 0.0.13
 
 ### Patch Changes

@@ -59,7 +59,6 @@ const globals = [
   'Map',
   'Math',
   'module', // ditto
-  'NaN',
   'Number',
   'Object',
   'parseFloat',
@@ -108,7 +107,11 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   const result: IdentifierList = {};
   visit(ast, {
     visitIdentifier: function (path) {
-      // If this is the top object of a member expression
+      // undefined and NaN are treated as a regular identifier
+      if (path.node.name === 'undefined' || path.node.name === 'NaN') {
+        return false;
+      }
+      // If this is the top object of a member expr
       if (n.MemberExpression.check(path.parentPath.node)) {
         // If this identifier is the subject of any part of an expression chain, it's not a dangler
         let target = path;
