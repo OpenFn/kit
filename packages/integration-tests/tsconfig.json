@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "experimentalSpecifierResolution": "node"
+  },
   "compilerOptions": {
     "module": "es2020",
     "moduleResolution": "node",
