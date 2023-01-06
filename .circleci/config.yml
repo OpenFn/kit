@@ -5,7 +5,7 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  test:
+  unit_test:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -37,9 +37,30 @@ jobs:
           name: Run Tests
           command: pnpm test
 
+jobs:
+  integration_test:
+    docker:
+      - image: cimg/node:18.12
+    resource_class: medium
+    steps:
+      - restore_cache:
+        keys:
+          - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+      # Build everything into a collection of self-referencing tarballs
+      - run:
+          - pnpm pack:local dist --no-version",
+      # Install those tarballs locally
+      - run:
+          - npm install -g dist/openfn-cli.tgz
+      # Run integration tests against the global cli
+      - run:
+          - pnpm -C packages/integration-tests test
+
+
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build_and_test:
     jobs:
-      - test
+      - unit_test
+      - integration_test

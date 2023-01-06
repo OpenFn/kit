@@ -11,6 +11,7 @@
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local packages/integration-tests/dist --no-version",
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
+    "test": "npx ava",
     "test:dev": "pnpm ava"
   },
   "dependencies": {
