@@ -5,17 +5,26 @@
  */
 const path = require('node:path');
 const fs = require('node:fs');
+const { mkdir } = require('node:fs/promises');
 const { createGzip } = require('node:zlib');
 const tarStream = require('tar-stream');
 const gunzip = require('gunzip-maybe');
 
+const outputPath = process.argv[2] || './dist';
+
+console.log(`Building local packages to ${outputPath}`);
+
+// Find built packages in the ./dist folder
 async function findPackages() {
   return new Promise((resolve) => {
-    fs.readdir(path.resolve('dist'), { encoding: 'utf8' }, (err, files) => {
+    fs.readdir(path.resolve('./dist'), { encoding: 'utf8' }, (err, files) => {
       resolve(files.filter((p) => !/(-local)/.test(p) && p.endsWith('tgz')));
     });
   });
 }
+
+const ensureOutputPath = async () =>
+  mkdir(path.resolve(outputPath), { recursive: true });
 
 const getLocalTarballName = (packagePath) =>
   packagePath.replace('.tgz', '-local.tgz');
@@ -63,7 +72,9 @@ function updatePkg(packageMap, filename) {
 
     // Pipe to a -local file name
     // Reading and writing to the same tarball seems to cause problems, funnily enough
-    const target = getLocalTarballName(pkgPath);
+    const target = getLocalTarballName(
+      `${path.resolve(outputPath)}/${filename}`
+    );
     const out = fs.createWriteStream(target);
     // Note that we have to start piping to the output stream immediately,
     // otherwise we get backpressure fails on the pack stream
@@ -83,7 +94,7 @@ const mapPackages = (files) => {
   return files.reduce((obj, file) => {
     const mapped = /openfn-(.+)-\d+\.\d+\.\d+\.tgz/.exec(file);
     if (mapped && mapped[1]) {
-      obj[`@openfn/${mapped[1]}`] = path.resolve('dist', file);
+      obj[`@openfn/${mapped[1]}`] = `./${file}`;
     }
     return obj;
   }, {});
@@ -91,12 +102,13 @@ const mapPackages = (files) => {
 
 findPackages().then(async (files) => {
   const pkgs = mapPackages(files);
+  await ensureOutputPath();
   Promise.all(files.map((f) => updatePkg(pkgs, f))).then(() => {
     const cliPath = getLocalTarballName(pkgs['@openfn/cli']);
     console.log();
     console.log('Build complete!');
-    console.log(`Install the CLI from ${cliPath} with the command below:`);
+    console.log(`Install the CLI  the command below:`);
     console.log();
-    console.log(`   npm install -g ${cliPath}`);
+    console.log(`   npm install -g ${path.resolve(outputPath, cliPath)}`);
   });
 });

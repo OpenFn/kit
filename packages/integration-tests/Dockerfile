@@ -6,7 +6,8 @@ WORKDIR /app
 
 COPY . .
 
-# Allso need to copy the bundles
+# Difficulty: how do we handle version numbers?
+RUN npm install -g ./dist/openfn-cli-0.0.25-local.tgz
 
 RUN npm install --production
 

@@ -7,7 +7,9 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "build": "docker run Dockerfile",
+    "build:pack": "cd ../.. && pnpm pack:local packages/integration-tests/dist",
+    "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
+    "start": "docker run cli-integration-tests",
     "test": "npx ava",
     "test:dev": "pnpm ava"
   },
