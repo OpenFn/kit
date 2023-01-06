@@ -5,7 +5,7 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  unit_test:
+  build_and_test:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -36,16 +36,6 @@ jobs:
       - run:
           name: Run Tests
           command: pnpm test
-
-  integration_test:
-    docker:
-      - image: cimg/node:18.12
-    resource_class: medium
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
       - run:
           name: Build local tarballs
           command: pnpm pack:local dist --no-version
@@ -61,5 +51,4 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - unit_test
-      - integration_test
+      - test
