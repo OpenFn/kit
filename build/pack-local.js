@@ -49,7 +49,6 @@ function updatePkg(packageMap, filename) {
 
   // The packer contains the new (gzipped) tarball
   const pack = tarStream.pack();
-  pack.pipe(createGzip());
 
   return new Promise((resolve) => {
     // The extractor streams the old tarball
@@ -65,11 +64,10 @@ function updatePkg(packageMap, filename) {
     // Pipe to a -local file name
     // Reading and writing to the same tarball seems to cause problems, funnily enough
     const target = getLocalTarballName(pkgPath);
-    console.log(target);
     const out = fs.createWriteStream(target);
     // Note that we have to start piping to the output stream immediately,
     // otherwise we get backpressure fails on the pack stream
-    pack.pipe(out);
+    pack.pipe(createGzip()).pipe(out);
 
     fs.createReadStream(pkgPath).pipe(gunzip()).pipe(extract);
 
