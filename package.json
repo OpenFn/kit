@@ -21,6 +21,6 @@
     "@changesets/cli": "^2.25.0",
     "gunzip-maybe": "^1.4.2",
     "rimraf": "^3.0.2",
-    "tar-stream": "^2.2.0"
+    "tar-stream": "^3.0.0"
   }
 }
