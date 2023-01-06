@@ -11,6 +11,7 @@ const tarStream = require('tar-stream');
 const gunzip = require('gunzip-maybe');
 
 const outputPath = process.argv[2] || './dist';
+const noVersion = process.argv[3] === '--no-version';
 
 console.log(`Building local packages to ${outputPath}`);
 
@@ -27,7 +28,9 @@ const ensureOutputPath = async () =>
   mkdir(path.resolve(outputPath), { recursive: true });
 
 const getLocalTarballName = (packagePath) =>
-  packagePath.replace('.tgz', '-local.tgz');
+  noVersion
+    ? packagePath.replace(/\-\d+.\d+.\d+.tgz/, '.tgz')
+    : packagePath.replace('.tgz', '-local.tgz');
 
 function processPackageJSON(stream, packageMap, pack) {
   return new Promise((resolve) => {
@@ -39,8 +42,9 @@ function processPackageJSON(stream, packageMap, pack) {
       const pkg = JSON.parse(buf.toString('utf8'));
       for (const dep in pkg.dependencies) {
         if (packageMap[dep]) {
-          console.log(`Mapping ${dep} to ${packageMap[dep]}`);
-          pkg.dependencies[dep] = getLocalTarballName(packageMap[dep]);
+          const mappedName = getLocalTarballName(packageMap[dep]);
+          console.log(`Mapping ${dep} to ${mappedName}`);
+          pkg.dependencies[dep] = mappedName;
         }
       }
       pack.entry(

@@ -7,7 +7,8 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "build:pack": "cd ../.. && pnpm pack:local packages/integration-tests/dist",
+    "clean": "rimraf dist",
+    "build:pack": "pnpm clean && cd ../.. && pnpm pack:local packages/integration-tests/dist --no-version",
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
     "test": "npx ava",
@@ -16,6 +17,7 @@
   "dependencies": {
     "@types/node": "^18.7.18",
     "ava": "5.1.0",
+    "rimraf": "^3.0.2",
     "ts-node": "10.8.1",
     "tslib": "^2.4.0",
     "typescript": "^4.8.3"
