@@ -222,7 +222,7 @@ test('findAllDanglingIdentifiers: nested scoping', (t) => {
   t.falsy(result['y']);
 });
 
-test.only('add imports for a test module', async (t) => {
+test('add imports for a test module', async (t) => {
   const ast = b.program([
     b.expressionStatement(b.identifier('x')),
     b.expressionStatement(b.identifier('y')),
