@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.16
+
+### Patch Changes
+
+- Fix imports for windows
+
 ## 0.0.15
 
 ### Patch Changes

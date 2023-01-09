@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.0.23
+
+### Patch Changes
+
+- Fix imports for windows
+
 ## 0.0.22
 
 ### Patch Changes
