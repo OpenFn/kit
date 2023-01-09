@@ -16,22 +16,22 @@ export const isPath = (pathOrCode: string) =>
 
 // Check if a path is a local file path (a relative specifier according to nodejs)
 export const isRelativeSpecifier = (specifier: string) =>
-  /^(\/|\.|~)/.test(specifier);
+  /^(\/|\.|~|\w\:\\)/.test(specifier);
 
 // Helper to load the exports of a given npm package
 // Can load from an unpkg specifier or a path to a local module
 export const preloadAdaptorExports = async (specifier: string) => {
   const project = new Project();
-
   let pkg;
   let types;
   // load the package from unpkg or the filesystem
   if (isRelativeSpecifier(specifier)) {
+    const prefix = process.platform == 'win32' ? 'file://' : '';
     // load locally
-    const pkgSrc = await readFile(`${specifier}/package.json`, 'utf8');
+    const pkgSrc = await readFile(`${prefix}${specifier}/package.json`, 'utf8');
     pkg = JSON.parse(pkgSrc);
     if (pkg.types) {
-      types = await readFile(`${specifier}/${pkg.types}`, 'utf8');
+      types = await readFile(`${prefix}${specifier}/${pkg.types}`, 'utf8');
     } else {
       // If there's no type information, we can safely return
       // TODO should we log a warning?
