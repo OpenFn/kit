@@ -87,10 +87,11 @@ const linker: Linker = async (specifier, context, options = {}) => {
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   const log = options.log || defaultLogger;
+  const prefix = process.platform == 'win32' ? 'file://' : '';
 
   // If the specifier is a path, just import it
   if (specifier.startsWith('/') && specifier.endsWith('.js')) {
-    return import(specifier);
+    return import(`${prefix}${specifier}`);
   }
 
   // Otherwise resolve the specifier to a path in the repo
@@ -116,7 +117,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   if (path) {
     log.debug(`[linker] Loading module ${specifier} from ${path}`);
     try {
-      return import(path);
+      return import(`${prefix}${path}`);
     } catch (e) {
       log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
       console.log(e);

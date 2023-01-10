@@ -16,13 +16,12 @@ export const isPath = (pathOrCode: string) =>
 
 // Check if a path is a local file path (a relative specifier according to nodejs)
 export const isRelativeSpecifier = (specifier: string) =>
-  /^(\/|\.|~)/.test(specifier);
+  /^(\/|\.|~|\w\:\\)/.test(specifier);
 
 // Helper to load the exports of a given npm package
 // Can load from an unpkg specifier or a path to a local module
 export const preloadAdaptorExports = async (specifier: string) => {
   const project = new Project();
-
   let pkg;
   let types;
   // load the package from unpkg or the filesystem
