@@ -25,6 +25,8 @@ export type LogOptions = {
 
   sanitiseState?: boolean; // defaults to true
   detectState?: boolean; // defaults to true
+
+  json?: boolean; // output as json objects
 };
 
 // TODO not crazy about the handling of this

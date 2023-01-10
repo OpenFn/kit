@@ -30,8 +30,16 @@ export const WARN = 'warn';
 export type LogArgs = any[];
 
 // TODO something is wrong with these typings
-// Trying to differntite user priority presets from log functions
+// Trying to differentiate user priority presets from log functions
 export type LogFns = 'debug' | 'info' | 'log' | 'warn' | 'error' | 'success';
+
+export type JSONLog = {
+  message: Array<string | object | any>;
+  level: LogFns;
+  name?: string;
+};
+
+export type StringLog = [LogFns | 'confirm' | 'print', ...any];
 
 // Design for a logger
 // some inputs:
@@ -117,8 +125,25 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   // This is what we actually pass the log strings to
   const emitter = opts.logger;
 
-  // main logger function
   const log = (level: LogFns, ...args: LogArgs) => {
+    if (options.json) {
+      logJSON(level, ...args);
+    } else {
+      logString(level, ...args);
+    }
+  };
+
+  const logJSON = (level: LogFns, ...args: LogArgs) => {
+    const output: JSONLog = {
+      level,
+      name,
+      message: args.map((o) => sanitize(o, options)),
+    };
+
+    emitter[level](output);
+  };
+
+  const logString = (level: LogFns, ...args: LogArgs) => {
     if (opts.level === NONE) return;
 
     const output = [];
@@ -150,6 +175,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
 
   // print() will log without any metadata/overhead/santization
   // basically a proxy for console.log
+  // TODO should this use json?
   const print = (...args: any[]) => {
     if (opts.level !== NONE) {
       emitter.info(...args);

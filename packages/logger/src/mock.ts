@@ -1,16 +1,16 @@
 // Mock logger which doesn't log anything
 // TODO built in an API to return the history - very useful in unit tests
-import createLogger, { Logger, LogFns } from './logger';
+import createLogger, { Logger, LogFns, JSONLog, StringLog } from './logger';
 import type { LogOptions, LogEmitter } from './options';
 
 // Each log message is saved as the level, then whatever was actually logged
-type LogMessage = [LogFns | 'confirm' | 'print', ...any[]];
+export type LogMessage = StringLog | JSONLog;
 
-type MockLogger = Logger & {
-  _last: LogMessage; // the last log message
-  _history: any[]; // everything logged
+type MockLogger<T> = Logger & {
+  _last: T; // the last log message
+  _history: T[]; // everything logged
   _reset: () => void; // reset history
-  _parse: (m: LogMessage) => {
+  _parse: (m: StringLog) => {
     level: string;
     namespace?: string;
     icon?: string;
@@ -19,9 +19,12 @@ type MockLogger = Logger & {
   };
 };
 
-// TODO options need to be namespaced
-const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
-  const history: LogMessage[] = [];
+// Take the log type (string or json) as a generic
+const mockLogger = <T = StringLog>(
+  name?: string,
+  opts: LogOptions = {}
+): MockLogger<T> => {
+  const history: T[] = [];
 
   const logger = {
     ...console,
@@ -30,7 +33,11 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
   ['log', 'info', 'success', 'debug', 'warn', 'error'].forEach((l) => {
     const level = l as LogFns;
     logger[level] = (...out: any[]) => {
-      history.push([level, ...out]);
+      if (opts.json) {
+        history.push(out[0] as T);
+      } else {
+        history.push([level, ...out] as T);
+      }
     };
   });
 
@@ -40,10 +47,12 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
   });
 
   // Type shenanegans while we append the mock APIs
-  const mock = m as MockLogger;
+  const mock = m as MockLogger<T>;
 
+  // TODO should this use json?
   mock.print = (...out: any[]) => {
     if (opts.level !== 'none') {
+      // @ts-ignore
       history.push(['print', ...out]);
     }
   };
@@ -56,7 +65,7 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
     history.splice(0, history.length);
   };
   // intelligently parse log output based on options
-  mock._parse = (log: LogMessage) => {
+  mock._parse = (log: StringLog) => {
     let level = '';
     let namespace = '';
     let icon = '';
@@ -107,7 +116,7 @@ const mockLogger = (name?: string, opts: LogOptions = {}): MockLogger => {
    * b) see a confirm message in the log history
    */
   mock.confirm = async (message: string) => {
-    history.push(['confirm', message]);
+    history.push(['confirm', message] as T);
     return true;
   };
 

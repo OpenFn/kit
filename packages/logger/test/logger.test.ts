@@ -1,6 +1,6 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { styleLevel, LogFns } from '../src/logger';
+import { styleLevel, LogFns, StringLog, JSONLog } from '../src/logger';
 import { defaults as defaultOptions, LogLevel } from '../src/options';
 import { SECRET } from '../src/sanitize';
 
@@ -22,7 +22,7 @@ chalk.level = 0;
 const { logger, ...defaultOptionsWithoutLogger } = defaultOptions;
 
 // parse log output into a consumable parts
-const parse = ([level, namespace, icon, ...rest]: string[]) => ({
+const parse = ([level, namespace, icon, ...rest]: StringLog) => ({
   level,
   namespace,
   icon,
@@ -106,6 +106,19 @@ test('returns custom options', (t) => {
     t.assert(_icon === icons[fn]);
     t.assert(_message === 'abc');
   });
+
+  test(`${level} - as json`, (t) => {
+    const options = { level, json: true };
+    const logger = createLogger<JSONLog>('x', options);
+    logger[fn]('abc');
+
+    const result = logger._last;
+    t.assert(Object.keys(result).length === 3);
+
+    t.assert(result.level === level);
+    t.assert(result.name === 'x');
+    t.assert(result.message[0] === 'abc');
+  });
 });
 
 test('print() should be barebones', (t) => {
@@ -123,7 +136,7 @@ test('print() should not log if level is none', (t) => {
   const logger = createLogger('x', options);
   logger.print('abc');
 
-  t.is(logger._last.length, 0);
+  t.is(logger._history.length, 0);
 });
 
 test('log() should behave like info', (t) => {
@@ -153,7 +166,7 @@ test('with level=none, logs nothing', (t) => {
 });
 
 test('with level=default, logs success, error and warning but not info and debug', (t) => {
-  const logger = createLogger('x', { level: 'default' });
+  const logger = createLogger<StringLog>('x', { level: 'default' });
 
   logger.debug('d');
   logger.info('i');
