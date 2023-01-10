@@ -186,6 +186,16 @@ test('preserve expand', (t) => {
   t.false(opts.expand);
 });
 
+test('preserve logJSon', (t) => {
+  const initialOpts = {
+    logJson: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+});
+
 test('preserve specifier', (t) => {
   const initialOpts = {
     specifier: '@openfn/language-common@1.0.0',
