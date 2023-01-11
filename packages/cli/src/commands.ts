@@ -71,10 +71,16 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
+  // In execute and test, always print version info FIRST
+  // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
+  if (opts.command === 'execute' || opts.command === 'test') {
+    await printVersions(logger);
+  }
+
   if (opts.monorepoPath) {
     if (opts.monorepoPath === 'ERR') {
       logger.error(
-        'ERROR: useAdaptorsMonrepo was set but OPENFN_ADAPTORS_REPO env var is undefined'
+        'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
       );
       logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
       // process.exit?
@@ -87,12 +93,6 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   } else if (opts.adaptors && opts.expand) {
     // Note that we can't do this in ensureOpts because we don't have a logger configured yet
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
-  }
-
-  // In execute and test, always print version info FIRST
-  // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
-  if (opts.command === 'execute' || opts.command === 'test') {
-    await printVersions(logger);
   }
 
   if (/^(test|version)$/.test(opts.command) && !opts.repoDir) {
