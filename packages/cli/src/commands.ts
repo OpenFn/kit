@@ -83,7 +83,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
         'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
       );
       logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
-      // process.exit?
+      process.exit(9); // invalid argument
     }
     opts.adaptors = await useAdaptorsRepo(
       opts.adaptors,
