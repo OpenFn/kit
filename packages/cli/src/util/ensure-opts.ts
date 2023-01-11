@@ -27,6 +27,9 @@ const isValidComponent = (v: string) =>
 
 const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
+  if (opts.command === 'version' || (opts.command === 'test' && !opts.log)) {
+    return { default: 'info' };
+  }
   if (opts.log) {
     // Parse and validate each incoming log argument
     opts.log.forEach((l: string) => {
@@ -83,6 +86,7 @@ export default function ensureOpts(
     operation: opts.operation,
     packages: opts.packages,
     stateStdin: opts.stateStdin,
+    timeout: opts.timeout,
     specifier: opts.specifier,
     strictOutput: opts.strictOutput ?? true,
     immutable: opts.immutable || false,

@@ -1,6 +1,6 @@
 {
   "name": "@openfn/runtime",
-  "version": "0.0.13",
+  "version": "0.0.16",
   "description": "Job processing runtime.",
   "type": "module",
   "exports": {
@@ -40,7 +40,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@openfn/logger": "workspace:^0.0.8",
+    "@openfn/logger": "workspace:*",
     "semver": "^7.3.8"
   }
 }

@@ -1,5 +1,58 @@
 # @openfn/cli
 
+## 0.0.26
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/compiler@0.0.23
+  - @openfn/runtime@0.0.16
+
+## 0.0.25
+
+### Patch Changes
+
+- Updated dependencies [986bf07]
+- Updated dependencies [5c6fde4]
+  - @openfn/runtime@0.0.15
+
+## 0.0.24
+
+### Patch Changes
+
+- 74cc00f: Fix example display in docgen
+- 8ccb78d: Hide docgen command
+- 5d9dd10: Set job timeout through CLI
+- c1e24a5: Fix an issue when running the docs command with no version number
+- Updated dependencies [47ac1a9]
+- Updated dependencies [1695874]
+- Updated dependencies [74cc00f]
+  - @openfn/runtime@0.0.14
+  - @openfn/describe-package@0.0.14
+  - @openfn/compiler@0.0.22
+
+## 0.0.23
+
+### Patch Changes
+
+- b7265c8: Log version information
+- Updated dependencies [454a06b]
+  - @openfn/compiler@0.0.21
+
+## 0.0.22
+
+### Patch Changes
+
+- Updated dependencies [1a2d04a]
+  - @openfn/describe-package@0.0.13
+  - @openfn/compiler@0.0.20
+
+## 0.0.21
+
+### Patch Changes
+
+- 4442a41: Forward spawned child process exit code to CLI process on exit
+
 ## 0.0.20
 
 ### Patch Changes

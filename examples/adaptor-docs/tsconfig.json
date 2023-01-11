@@ -1,7 +1,0 @@
-{
-  "extends": "../../tsconfig.common",
-  "include": ["src/**/*.tsx", "test/**/*.ts"],
-  "compilerOptions": {
-    "jsx": "react"
-  }
-}

@@ -8,9 +8,22 @@ import docs from './docs/handler';
 import { clean, install, pwd, list } from './repo/handler';
 import expandAdaptors from './util/expand-adaptors';
 import useAdaptorsRepo from './util/use-adaptors-repo';
+import printVersions from './util/print-versions';
+
+type CommandList =
+  | 'execute'
+  | 'compile'
+  | 'repo-clean'
+  | 'repo-install'
+  | 'repo-install'
+  | 'repo-pwd'
+  | 'version'
+  | 'docs'
+  | 'docgen'
+  | 'test';
 
 export type Opts = {
-  command?: string;
+  command?: CommandList;
 
   adaptor?: boolean | string;
   adaptors?: string[];
@@ -29,6 +42,7 @@ export type Opts = {
   packages?: string[];
   specifier?: string; // docgen
   repoDir?: string;
+  timeout?: number; // ms
   statePath?: string;
   stateStdin?: string;
 };
@@ -43,10 +57,12 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
+  version: async (_opts: SafeOpts, logger: Logger) => printVersions(logger),
 };
 
-export type SafeOpts = Required<Omit<Opts, 'log'>> & {
+export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {
   log: Record<string, LogLevel>;
+  adaptor: string | boolean;
 };
 
 // Top level command parser
@@ -65,7 +81,13 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
   }
 
-  if (opts.command! == 'test' && !opts.repoDir) {
+  // In execute and test, always print version info FIRST
+  // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
+  if (opts.command === 'execute' || opts.command === 'test') {
+    await printVersions(logger);
+  }
+
+  if (/^(test|version)$/.test(opts.command) && !opts.repoDir) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );
@@ -83,6 +105,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     process.exit(1);
   }
 
+  // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
   return handler(opts, logger);
 };
 

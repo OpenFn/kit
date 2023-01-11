@@ -3,6 +3,12 @@ import { createMockLogger, Logger, printDuration } from '@openfn/logger';
 import loadModule from './modules/module-loader';
 import type { LinkerOptions } from './modules/linker';
 
+const TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+export const ERR_TIMEOUT = 'timeout';
+// TODO maybe this is a job exception? Job fail?
+export const ERR_RUNTIME_EXCEPTION = 'runtime exception';
+
 export declare interface State<D = object, C = object> {
   configuration: C;
   data: D;
@@ -17,6 +23,8 @@ export declare interface Operation<T = Promise<State> | State> {
 type Options = {
   logger?: Logger;
   jobLogger?: Logger;
+
+  timeout?: number;
 
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
@@ -41,31 +49,54 @@ const defaultLogger = createMockLogger();
 const defaultState = { data: {}, configuration: {} };
 
 // TODO what if an operation throws?
-export default async function run(
+export default function run(
   incomingJobs: string | Operation[],
   initialState: State = defaultState,
   opts: Options = {}
 ) {
-  const logger = opts.logger || defaultLogger;
-  logger.debug('Intialising pipeline');
-  // Setup a shared execution context
-  const context = buildContext(initialState, opts);
+  return new Promise(async (resolve, reject) => {
+    const timeout = opts.timeout || TIMEOUT;
+    const logger = opts.logger || defaultLogger;
+    logger.debug('Intialising pipeline');
+    logger.debug(`Timeout set to ${timeout}ms`);
 
-  const { operations, execute } = await prepareJob(incomingJobs, context, opts);
-  // Create the main reducer function
-  const reducer = (execute || defaultExecute)(
-    ...operations.map((op, idx) =>
-      wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
-    )
-  );
+    // Setup a shared execution context
+    const context = buildContext(initialState, opts);
 
-  // Run the pipeline
-  logger.debug(`Executing pipeline (${operations.length} operations)`);
-  const result = await reducer(initialState);
-  logger.debug('Pipeline complete!');
-  logger.debug(result);
-  // return the final state
-  return result;
+    const { operations, execute } = await prepareJob(
+      incomingJobs,
+      context,
+      opts
+    );
+    // Create the main reducer function
+    const reducer = (execute || defaultExecute)(
+      ...operations.map((op, idx) =>
+        wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
+      )
+    );
+
+    // Run the pipeline
+    logger.debug(`Executing pipeline (${operations.length} operations)`);
+
+    const tid = setTimeout(() => {
+      logger.error(`Error: Timeout (${timeout}ms) expired!`);
+      logger.error('  Set a different timeout by passing "-t 10000" ms)');
+      reject(Error(ERR_TIMEOUT));
+    }, timeout);
+
+    try {
+      const result = await reducer(initialState);
+      clearTimeout(tid);
+      logger.debug('Pipeline complete!');
+      logger.debug(result);
+      // return the final state
+      resolve(result);
+    } catch (e) {
+      logger.error('Error in runtime execution!');
+      logger.error(e);
+      reject(new Error(ERR_RUNTIME_EXCEPTION));
+    }
+  });
 }
 
 // TODO I'm in the market for the best solution here - immer? deep-clone?

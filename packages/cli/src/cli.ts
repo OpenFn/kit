@@ -1,4 +1,4 @@
-import yargs from 'yargs';
+import yargs, { Arguments } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
 import { repo as repoCommand, install as installCommand } from './repo/command';
@@ -28,5 +28,10 @@ export const cmd = yargs(hideBin(process.argv))
     'openfn docs @openfn/language-common each',
     'Get more help on the common.each command'
   )
-  .alias('v', 'version')
+  .command({
+    command: 'version',
+    handler: (argv: Arguments<Opts>) => {
+      argv.command = 'version';
+    },
+  })
   .help() as yargs.Argv<Opts>;

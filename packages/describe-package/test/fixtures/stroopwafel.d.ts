@@ -10,7 +10,7 @@ export declare function traditional(): string;
  * Returns a flavoured stroopwafel
  * @public
  * @example
- * custom('falafel')
+ * <caption>cap</caption>oneFlavour('falafel')
  */
 export declare function oneFlavour(flavour: string): string;
 
@@ -18,7 +18,9 @@ export declare function oneFlavour(flavour: string): string;
  * Returns a many flavoured stroopwafel
  * @public
  * @example
- * custom(['strawberry', 'cream'])
+ * manyFlavours(['strawberry', 'cream'])
+ * @example
+ * manyFlavours(['garlic', 'chilli'])
  */
 export declare function manyFlavours(flavours: string[]): string;
 
