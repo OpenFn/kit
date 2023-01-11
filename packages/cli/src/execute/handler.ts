@@ -18,8 +18,8 @@ export const getAutoinstallTargets = (
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
 
-  const { repoDir, adaptorsRepo, autoinstall } = options;
-  if (adaptorsRepo && autoinstall) {
+  const { repoDir, monorepoPath, autoinstall } = options;
+  if (monorepoPath && autoinstall) {
     logger.warn('Skipping auto-install as monorepo is being used');
   } else if (autoinstall) {
     const autoInstallTargets = getAutoinstallTargets(options);

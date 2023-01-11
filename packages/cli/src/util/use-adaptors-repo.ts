@@ -11,8 +11,8 @@ export const validateMonoRepo = async (repoPath: string, log: Logger) => {
     const pkg = JSON.parse(raw);
     assert(pkg.name === 'adaptors');
   } catch (e) {
-    log.error(`ERROR: Monorepo not found at ${repoPath}`);
-    throw new Error('Monorepo not found');
+    log.error(`ERROR: Adaptors Monorepo not found at ${repoPath}`);
+    process.exit(9);
   }
 };
 
