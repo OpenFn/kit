@@ -1,6 +1,7 @@
 # dev
 *.code-workspace
-dist
+examples/**/dist
+packages/**/dist
 node_modules
 public/
 !public/index.html
