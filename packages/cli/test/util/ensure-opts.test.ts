@@ -279,49 +279,40 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
-test('adaptorsRepo: unset by default', (t) => {
+test('monorepoPath: unset by default', (t) => {
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.adaptorsRepo);
+  t.falsy(opts.useAdaptorsMonorepo);
 });
 
-test('adaptorsRepo: load from OPENFN_ADAPTORS_REPO', (t) => {
+test('monorepoPath: unset even if env var is set default', (t) => {
   process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
-  t.is(opts.adaptorsRepo, 'a/b/c');
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: unset if useAdaptorsMonorepo is false', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    useAdaptorsMonorepo: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: load from OPENFN_ADAPTORS_REPO', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    useAdaptorsMonorepo: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.is(opts.monorepoPath, 'a/b/c');
   delete process.env.OPENFN_ADAPTORS_REPO;
-});
-
-test('adaptorsRepo: accept as option', (t) => {
-  const initialOpts = {
-    adaptorsRepo: 'x/y/z',
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.is(opts.adaptorsRepo, 'x/y/z');
-});
-
-test('adaptorsRepo: prefer option to env var', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    adaptorsRepo: 'x/y/z',
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.is(opts.adaptorsRepo, 'x/y/z');
-});
-
-test("adaptorsRepo: isn't set if adaptorsRepo is false", (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    adaptorsRepo: false,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.adaptorsRepo);
 });
 
 test('log: add default options', (t) => {

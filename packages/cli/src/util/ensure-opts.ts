@@ -96,9 +96,8 @@ export default function ensureOpts(
     newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;
   };
 
-  const adaptorsRepo = opts.adaptorsRepo || process.env.OPENFN_ADAPTORS_REPO;
-  if (opts.adaptorsRepo !== false && adaptorsRepo) {
-    newOpts.adaptorsRepo = adaptorsRepo;
+  if (opts.useAdaptorsMonorepo) {
+    newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
   }
 
   let baseDir = basePath;

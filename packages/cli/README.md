@@ -50,7 +50,9 @@ If output.json and state.json are not passed, the CLI will look for them next to
 
 The CLI can auto-install language adaptors to its own privately maintained repo. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo.
 
-You can specify adaptors with a shorthand (`http`) or use the full package name (`@openfn/language-http`). You can add a specific version like `http@2.0.0`. You can pass a path to a locally installed adaptor like `http=/repo/openfn/adaptors/my-http-build`. Set the OPENFN_ADAPTORS_REPO env var to load adaptors straight out of the monorepo (pass the `--no-adaptors-repo` flag to disable this for a single run).
+You can specify adaptors with a shorthand (`http`) or use the full package name (`@openfn/language-http`). You can add a specific version like `http@2.0.0`. You can pass a path to a locally installed adaptor like `http=/repo/openfn/adaptors/my-http-build`.
+
+If you have the adaptors monorepo set up on your machine, you can also run from that. Pass the `-m` flag to load from the monorepo. Set the monorepo location by setting the OPENFN_ADAPTORS_REPO env var to a valid path.
 
 You can pass `--log info` to get more feedback about what's happening, or `--log debug` for more details than you could ever use.
 

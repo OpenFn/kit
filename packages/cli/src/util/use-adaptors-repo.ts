@@ -40,6 +40,7 @@ const useAdaptorsRepo = async (
   repoPath: string,
   log: Logger
 ) => {
+  await validateMonoRepo(repoPath, log);
   log.success(`Loading adaptors from monorepo at ${repoPath}`);
   const updatedAdaptors = adaptors.map((a) => {
     const p = updatePath(a, repoPath, log);

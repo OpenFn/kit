@@ -344,23 +344,11 @@ test.serial(
 );
 
 test.serial(
-  'load an adaptor from the monorepo directly: openfn job.js --adaptors-repo /monorepo/ -a common',
-  async (t) => {
-    const job = 'export default [alterState(() => 39)]';
-    const result = await run(
-      'openfn job.js --adaptors-repo /monorepo/ -a common',
-      job
-    );
-    t.assert(result === 39);
-  }
-);
-
-test.serial.only(
-  'load an adaptor from the monorepo env var: openfn job.js -a common',
+  'load an adaptor from the monorepo env var: openfn job.js -m -a common',
   async (t) => {
     process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
     const job = 'export default [alterState(() => 39)]';
-    const result = await run('openfn job.js -a common', job);
+    const result = await run('openfn job.js -m -a common', job);
     t.assert(result === 39);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }

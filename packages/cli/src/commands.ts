@@ -27,7 +27,7 @@ export type Opts = {
 
   adaptor?: boolean | string;
   adaptors?: string[];
-  adaptorsRepo?: string | false;
+  useAdaptorsMonorepo?: string | boolean;
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
   force?: boolean;
@@ -63,6 +63,7 @@ const handlers = {
 export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {
   log: Record<string, LogLevel>;
   adaptor: string | boolean;
+  monorepoPath?: string;
 };
 
 // Top level command parser
@@ -70,10 +71,17 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
-  if (opts.adaptorsRepo) {
+  if (opts.monorepoPath) {
+    if (opts.monorepoPath === 'ERR') {
+      logger.error(
+        'ERROR: useAdaptorsMonrepo was set but OPENFN_ADAPTORS_REPO env var is undefined'
+      );
+      logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
+      // process.exit?
+    }
     opts.adaptors = await useAdaptorsRepo(
       opts.adaptors,
-      opts.adaptorsRepo,
+      opts.monorepoPath,
       logger
     );
   } else if (opts.adaptors && opts.expand) {
