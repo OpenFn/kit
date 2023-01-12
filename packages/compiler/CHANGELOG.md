@@ -1,5 +1,24 @@
 # @openfn/compiler
 
+## 0.0.23
+
+### Patch Changes
+
+- Fix imports for windows
+
+## 0.0.22
+
+### Patch Changes
+
+- Updated dependencies [74cc00f]
+  - @openfn/describe-package@0.0.14
+
+## 0.0.21
+
+### Patch Changes
+
+- 454a06b: Fix to prevent import undefined
+
 ## 0.0.20
 
 ### Patch Changes

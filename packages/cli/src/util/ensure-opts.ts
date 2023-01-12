@@ -86,6 +86,7 @@ export default function ensureOpts(
     operation: opts.operation,
     packages: opts.packages,
     stateStdin: opts.stateStdin,
+    timeout: opts.timeout,
     specifier: opts.specifier,
     strictOutput: opts.strictOutput ?? true,
     skipAdaptorValidation: opts.skipAdaptorValidation ?? false,

@@ -43,6 +43,7 @@ export type Opts = {
   skipAdaptorValidation?: boolean;
   statePath?: string;
   stateStdin?: string;
+  timeout?: number; // ms
 };
 
 const handlers = {

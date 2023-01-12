@@ -156,6 +156,16 @@ test('preserve force', (t) => {
   t.truthy(opts.force);
 });
 
+test('preserve timeout', (t) => {
+  const initialOpts = {
+    timeout: 999,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.is(opts.timeout, 999);
+});
+
 test('preserve noCompile', (t) => {
   const initialOpts = {
     noCompile: true,

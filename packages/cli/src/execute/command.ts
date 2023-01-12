@@ -31,6 +31,10 @@ const executeCommand = {
         boolean: true,
         description: 'Skip adaptor validation warnings',
       })
+      .option('timeout', {
+        alias: '-t',
+        description: 'Set the timeout duration in MS',
+      })
       .option('no-compile', {
         boolean: true,
         description: 'Skip compilation',
