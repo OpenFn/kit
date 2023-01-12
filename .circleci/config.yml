@@ -43,6 +43,9 @@ jobs:
           name: install CLI globally
           command: npm install -g dist/openfn-cli.tgz
       - run:
+          name: Check install
+          command: openfn test --log info
+      - run:
           name: Run integration test suite
           command: pnpm -C packages/integration-tests test
 

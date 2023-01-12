@@ -11,8 +11,13 @@
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local packages/integration-tests/dist --no-version",
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
+<<<<<<< HEAD:packages/integration-tests/package.json
     "test": "npx ava",
     "test:dev": "pnpm ava"
+=======
+    "test": "npx ava -s --timeout 2m",
+    "test:dev": "pnpm ava -s"
+>>>>>>> 5fcf2fe (Increase timeout):tools/integration-tests/package.json
   },
   "dependencies": {
     "@types/node": "^18.7.18",
