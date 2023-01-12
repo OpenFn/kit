@@ -5,7 +5,7 @@ import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
 import { install } from '../repo/handler';
 import { Opts, SafeOpts } from '../commands';
-import validateAdaptors from '../util/validate-adaptor';
+import validateAdaptors from '../util/validate-adaptors';
 
 export const getAutoinstallTargets = (
   options: Pick<Opts, 'adaptors' | 'autoinstall'>

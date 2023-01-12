@@ -90,7 +90,7 @@ test.serial('print version information with version', async (t) => {
   const message = last.message as string;
   t.assert(message.length > 1);
   t.regex(message, /Versions:/);
-  t.regex(message, /Node.js/);
+  t.regex(message, /node.js/);
 });
 
 test.serial('run test job with default state', async (t) => {
