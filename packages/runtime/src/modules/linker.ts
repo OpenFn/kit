@@ -123,7 +123,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     try {
       const result = import(`${prefix}${path}`);
       if (specifier.startsWith('@openfn/language-')) {
-        log.success(`Resolved adaptor ${specifier} to version ${version}`);
+        log.info(`Resolved adaptor ${specifier} to version ${version}`);
       }
       return result;
     } catch (e) {
