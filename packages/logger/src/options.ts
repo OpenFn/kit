@@ -50,6 +50,7 @@ export const defaults: Required<LogOptions> = {
   sanitiseState: false,
   detectState: false,
   sanitizePaths: ['configuration'],
+  json: false,
 };
 
 // This will return a fully defined options object
