@@ -91,7 +91,9 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
 
   // If the specifier is a path, just import it
   if (specifier.startsWith('/') && specifier.endsWith('.js')) {
-    return import(`${prefix}${specifier}`);
+    const importPath = `${prefix}${specifier}`;
+    log.debug(`[linker] Loading module from path: ${importPath}`);
+    return import(importPath);
   }
 
   // Otherwise resolve the specifier to a path in the repo

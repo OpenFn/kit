@@ -34,6 +34,7 @@ const filterSpecifiers = async (
     let { name, version } = getNameAndVersion(s);
     if (!version) {
       version = await getLatestVersion(s);
+      log.info(`Looked up latest version of ${s}: found ${version}`);
     }
 
     const exists = await getModulePath(s, repoPath, log);
@@ -161,7 +162,8 @@ export const loadRepoPkg = async (repoPath: string = defaultRepoPath) => {
 export const getLatestInstalledVersion = async (
   specifier: string,
   repoPath: string = defaultRepoPath,
-  pkg?: object
+  pkg?: object,
+  log = defaultLogger
 ) => {
   if (!pkg) {
     pkg = await loadRepoPkg(repoPath);
@@ -180,6 +182,7 @@ export const getLatestInstalledVersion = async (
       }
     });
     if (latest) {
+      log.debug(`Using latest installed version of ${latest}`);
       return `${specifier}_${latest}`;
     }
   }
@@ -188,7 +191,8 @@ export const getLatestInstalledVersion = async (
 
 const getRepoAlias = async (
   specifier: string,
-  repoPath: string = defaultRepoPath
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger
 ) => {
   const { version } = getNameAndVersion(specifier);
 
@@ -200,7 +204,7 @@ const getRepoAlias = async (
       return a;
     }
   } else {
-    return getLatestInstalledVersion(specifier, repoPath);
+    return getLatestInstalledVersion(specifier, repoPath, undefined, log);
   }
 };
 
