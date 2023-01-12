@@ -72,7 +72,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   // A bit janky but in execute and test, always print version info FIRST
   // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
   if (opts.command === 'execute' || opts.command === 'test') {
-    await printVersions(logger);
+    await printVersions(logger, opts);
   }
 
   if (opts.adaptors && opts.expand) {
