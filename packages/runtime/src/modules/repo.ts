@@ -229,7 +229,7 @@ export const getModuleEntryPoint = async (
   modulePath?: string,
   repoPath: string = defaultRepoPath,
   log = defaultLogger
-) => {
+): Promise<{ path: string; version: string } | null> => {
   const moduleRoot = modulePath || (await getModulePath(specifier, repoPath));
 
   if (moduleRoot) {
@@ -257,7 +257,7 @@ export const getModuleEntryPoint = async (
     }
     const p = path.resolve(moduleRoot, main);
     log.debug(`repo resolved ${specifier} entrypoint to ${p}`);
-    return p;
+    return { path: p, version: pkg.version };
   } else {
     log.debug(`module not found in repo: ${specifier}`);
   }

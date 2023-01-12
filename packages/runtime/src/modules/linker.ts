@@ -106,18 +106,26 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     const specifierWithVersion = version
       ? `${specifier}@${version}`
       : specifier;
-    path = await getModuleEntryPoint(
+    const entry = await getModuleEntryPoint(
       specifierWithVersion,
       path,
       options.repo,
       log
     );
+    if (entry) {
+      path = entry.path;
+      version = entry.version;
+    }
   }
 
   if (path) {
     log.debug(`[linker] Loading module ${specifier} from ${path}`);
     try {
-      return import(`${prefix}${path}`);
+      const result = import(`${prefix}${path}`);
+      if (specifier.startsWith('@openfn/language-')) {
+        log.success(`Resolved adaptor ${specifier} to version ${version}`);
+      }
+      return result;
     } catch (e) {
       log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
       console.log(e);
