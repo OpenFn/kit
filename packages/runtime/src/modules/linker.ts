@@ -117,6 +117,8 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     if (entry) {
       path = entry.path;
       version = entry.version;
+    } else {
+      log.debug(`module not found in repo: ${specifier}`);
     }
   }
 
