@@ -3,7 +3,9 @@ import * as path from 'node:path';
 
 const isProd = process.env.NODE_ENV === 'production';
 
-const run = async (cmd: string) => {
+const run = async (
+  cmd: string
+): Promise<{ stdout: string; stderr?: string }> => {
   if (!isProd) {
     cmd = cmd.replace(/^openfn/, 'pnpm -C ../../packages/cli openfn');
   }
