@@ -181,10 +181,10 @@ test('print should include the message', async (t) => {
 
 test('log JSON', async (t) => {
   const logger = mockLogger<string>('a', { json: true });
-  logger.info('z');
+  logger.success('z');
 
   const { level, message, name } = JSON.parse(logger._last);
   t.is(name, 'a');
-  t.is(level, 'info');
+  t.is(level, 'success');
   t.is(message[0], 'z');
 });

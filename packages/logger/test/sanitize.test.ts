@@ -2,34 +2,32 @@ import test from 'ava';
 
 import sanitize, { SECRET } from '../src/sanitize';
 
-const options = {};
 test('simply return a string', (t) => {
-  const result = sanitize('x', options);
+  const result = sanitize('x');
   t.is(result, 'x');
 });
 
 test('simply return null', (t) => {
-  const result = sanitize(null, options);
+  const result = sanitize(null);
   t.true(result === null);
 });
 
 test('simply return a number', (t) => {
-  const result = sanitize(0, options);
+  const result = sanitize(0);
   t.true(result === 0);
 });
 
 test('simply return undefined', (t) => {
-  const result = sanitize(undefined, options);
+  const result = sanitize(undefined);
   t.deepEqual(result, undefined);
 });
 test('stringify an object', (t) => {
-  const result = sanitize({}, options);
-  console.log(result);
+  const result = sanitize({});
   t.is(result, '{}');
 });
 
 test('stringify an array', (t) => {
-  const result = sanitize([], options);
+  const result = sanitize([]);
   t.is(result, '[]');
 });
 
@@ -43,7 +41,7 @@ test('sanitize state.configuration', (t) => {
     data: { x: 1 },
   };
 
-  const result = sanitize(state, options);
+  const result = sanitize(state);
   const json = JSON.parse(result);
 
   t.deepEqual(json, expectedState);
@@ -57,7 +55,7 @@ test('sanitize if no data is passed', (t) => {
     configuration: { password: SECRET, username: SECRET },
   };
 
-  const result = sanitize(state, options);
+  const result = sanitize(state);
   const json = JSON.parse(result);
 
   t.deepEqual(json, expectedState);
@@ -73,7 +71,7 @@ test('preserve top level stuff after sanitizing', (t) => {
     jam: 'jar',
   };
 
-  const result = sanitize(state, options);
+  const result = sanitize(state);
   const json = JSON.parse(result);
 
   t.deepEqual(json, expectedState);

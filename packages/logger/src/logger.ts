@@ -140,7 +140,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     const output: JSONLog = {
       level,
       name,
-      message: args.map((o) => sanitize(o, options)),
+      message: args.map((o) => sanitize(o, { stringify: false })),
     };
 
     emitter[level](stringify(output));

@@ -1,15 +1,18 @@
 // Sanitize console output
 import stringify from 'fast-safe-stringify';
-
-import { LogOptions } from './options';
-
 export const SECRET = '****';
 
+type SanitizeOptions = {
+  stringify?: boolean;
+
+  sanitizePaths?: string[]; // unimplemented
+};
+
 // Node itself does a good job of circular references and functions
-const sanitize = (
-  item: any,
-  _options: Pick<LogOptions, 'sanitizePaths'> = {}
-) => {
+const sanitize = (item: any, options: SanitizeOptions = {}) => {
+  const maybeStringify = (o: any) =>
+    options.stringify === false ? o : stringify(o);
+
   if (
     Array.isArray(item) ||
     (isNaN(item) && item && typeof item !== 'string')
@@ -21,13 +24,13 @@ const sanitize = (
       for (const k in obj.configuration) {
         configuration[k] = SECRET;
       }
-      const cleaned = stringify({
+      const cleaned = maybeStringify({
         ...obj,
         configuration,
       });
       return cleaned;
     }
-    return stringify(obj);
+    return maybeStringify(obj);
   }
   return item;
 };

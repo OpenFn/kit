@@ -286,8 +286,7 @@ test('sanitize state in second arg', (t) => {
   t.is(stateObj.configuration.x, SECRET);
 });
 
-// TODO why is the message stringified here? Is it the mock?
-test.skip('sanitize state in json logging', (t) => {
+test('sanitize state in json logging', (t) => {
   const logger = createLogger<string>(undefined, { json: true });
   logger.success({
     configuration: {
@@ -295,7 +294,6 @@ test.skip('sanitize state in json logging', (t) => {
     },
     data: {},
   });
-  console.log(logger._last);
   const { message } = JSON.parse(logger._last);
   t.is(message[0].configuration.x, SECRET);
 });
@@ -340,7 +338,7 @@ test('log a circular object', async (t) => {
   t.is(message, '{"z":{"a":"[Circular]"}}');
 });
 
-test('log a circular as JSON', async (t) => {
+test('log a circular object as JSON', async (t) => {
   const z: any = {};
   const a = {
     z,
@@ -350,7 +348,11 @@ test('log a circular as JSON', async (t) => {
   logger.success(a);
 
   const { message } = JSON.parse(logger._last);
-  t.is(message[0], '{"z":{"a":"[Circular]"}}');
+  t.deepEqual(message[0], {
+    z: {
+      a: '[Circular]',
+    },
+  });
 });
 
 test('ignore functions on logged objects', async (t) => {
