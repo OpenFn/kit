@@ -61,12 +61,9 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
     ...opts,
   };
 
-  // TODO handle merging of arrays (ie sensitive paths)
-  // Maybe, this is actually a non trivial issue
-  // If the user sets a path list, is this an override or extension?
-  // Let's make it an extension
-
-  // Let's hard-code config sanitizing, then take an array of extra paths
+  if (process.env.OPENFN_LOG_JSON) {
+    options.json = true;
+  }
 
   return options;
 };

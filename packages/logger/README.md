@@ -22,6 +22,14 @@ info    - For power users. Shows everything default plus generally interesting h
 debug   - For devs debugging - really detailed output about stepping into and out of major operations. Includes data dumps.
 none    - don't show any log output
 
+## JSON Output
+
+Set the `json` object to a truthy value to output all logs as JSON objects of the following structure:
+```
+{ level: 'info', name: 'CLI', message: ['Loaded adaptor'] }
+```
+You can also set the OPENFN_LOG_JSON env var.
+
 ## Usage
 
 Import and create a logger:
