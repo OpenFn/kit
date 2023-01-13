@@ -301,16 +301,40 @@ test('timer: start a new timer with the same name', async (t) => {
   t.falsy(result);
 });
 
-// TODO hard to test this because it's the actual logger that truncates objects, not our logger
-test.skip('should log deeply nested objects', (t) => {
+test('log a circular object', async (t) => {
+  const z: any = {};
+  const a = {
+    z,
+  };
+  z.a = a;
   const logger = createLogger();
-
-  const obj = { a: { b: { c: { d: 22 } } } };
-  //logger.success(JSON.stringify(obj));
-  logger.success(obj);
-
-  // console.log(logger._last);
+  logger.success(a);
 
   const { message } = logger._parse(logger._last);
-  console.log(typeof message);
+  t.is(message, '{"z":{"a":"[Circular]"}}');
+});
+
+test('log a circular as JSON', async (t) => {
+  const z: any = {};
+  const a = {
+    z,
+  };
+  z.a = a;
+  const logger = createLogger<string>(undefined, { json: true });
+  logger.success(a);
+
+  const { message } = JSON.parse(logger._last);
+  t.is(message[0], '{"z":{"a":"[Circular]"}}');
+});
+
+test('ignore functions on logged objects', async (t) => {
+  const obj = {
+    a: 1,
+    z: () => {},
+  };
+  const logger = createLogger();
+  logger.success(obj);
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, '{"a":1}');
 });
