@@ -11,8 +11,8 @@
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local packages/integration-tests/dist --no-version",
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
-    "test": "npx ava -s --timeout 2m",
-    "test:dev": "pnpm ava -s"
+    "test": "node prelude.js && npx ava -s --timeout 2m",
+    "test:dev": "node prelude.js && pnpm ava -s"
   },
   "dependencies": {
     "@types/node": "^18.7.18",

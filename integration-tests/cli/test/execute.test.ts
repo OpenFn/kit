@@ -2,9 +2,9 @@ import test from 'ava';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { rm } from 'node:fs/promises';
-import run from './helpers/run';
+import run from '../src/run';
 
-const jobsPath = 'src/jobs';
+const jobsPath = path.resolve('jobs');
 
 // Note that these tests are STATEFUL
 // Ensure the repo is clean and clear before these tests run
@@ -13,7 +13,7 @@ test.before(async () => {
 });
 
 test.afterEach(async () => {
-  await rm('src/jobs/output.json');
+  await rm('jobs/output.json');
 });
 
 const getOutput = (name = 'output.json') => {
@@ -40,7 +40,7 @@ test.serial(
 );
 
 test.serial(
-  `openfn ${jobsPath}/chuck-norris.js -ia @openfn/language-http`,
+  `openfn ${jobsPath}/chuck.js -ia @openfn/language-http`,
   async (t) => {
     await run(t.title);
 

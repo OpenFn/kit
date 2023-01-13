@@ -7,7 +7,7 @@ export default {
     TS_NODE_TRANSPILE_ONLY: 'true',
   },
 
-  nodeArguments: ['--loader=ts-node/esm'],
+  nodeArguments: ['--loader=ts-node/esm', '--no-warnings'],
 
-  files: ['src/**/*test.ts'],
+  files: ['test/**/*test.ts'],
 };

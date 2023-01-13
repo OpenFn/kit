@@ -2,6 +2,7 @@
 *.code-workspace
 examples/**/dist
 packages/**/dist
+integration-tests/**/dist
 node_modules
 public/
 !public/index.html
