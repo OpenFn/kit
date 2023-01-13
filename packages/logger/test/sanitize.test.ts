@@ -21,6 +21,26 @@ test('simply return undefined', (t) => {
   const result = sanitize(undefined);
   t.deepEqual(result, undefined);
 });
+
+test('simply return an error', (t) => {
+  const e = new Error('test');
+  const result = sanitize(e);
+  t.deepEqual(result, e);
+});
+
+test('simply return a custom error', (t) => {
+  class CustomError extends Error {}
+  const e = new CustomError('test');
+  const result = sanitize(e);
+  t.deepEqual(result, e);
+});
+
+test('simply return a ReferenceError', (t) => {
+  const e = new ReferenceError('test');
+  const result = sanitize(e);
+  t.deepEqual(result, e);
+});
+
 test('stringify an object', (t) => {
   const result = sanitize({});
   t.is(result, '{}');

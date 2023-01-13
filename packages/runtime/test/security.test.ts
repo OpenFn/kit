@@ -71,6 +71,7 @@ test.serial(
       message: ERR_RUNTIME_EXCEPTION,
     });
 
+    t.log(logger._history);
     // find the exception
     const errLog = logger._history.at(-1);
     const { message, level } = logger._parse(errLog);

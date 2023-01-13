@@ -12,10 +12,13 @@ type SanitizeOptions = {
 const sanitize = (item: any, options: SanitizeOptions = {}) => {
   const maybeStringify = (o: any) =>
     options.stringify === false ? o : stringify(o);
-
   if (
     Array.isArray(item) ||
-    (isNaN(item) && item && typeof item !== 'string')
+    (isNaN(item) &&
+      item &&
+      typeof item !== 'string' &&
+      // duck type an error object (this is not tight enough!)
+      !(item.stack && item.message))
   ) {
     const obj = item as Record<string, unknown>;
     if (obj && obj.configuration) {
