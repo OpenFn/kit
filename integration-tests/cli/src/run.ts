@@ -11,7 +11,6 @@ const run = async (
   }
   return new Promise((resolve) => {
     const options = {
-      // cwd: isProd ? '.' : path.resolve('../..'),
       env: {
         ...process.env,
         OPENFN_REPO_DIR: path.resolve('repo'),
