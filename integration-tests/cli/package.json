@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist",
-    "build:pack": "pnpm clean && cd ../.. && pnpm pack:local packages/integration-tests/dist --no-version",
+    "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/cli/dist --no-version",
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
     "test": "node prelude.js && npx ava -s --timeout 2m",
