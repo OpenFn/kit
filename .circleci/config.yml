@@ -41,7 +41,7 @@ jobs:
           command: pnpm pack:local dist --no-version
       - run:
           name: install CLI globally
-          command: npm install -g dist/openfn-cli.tgz
+          command: sudo npm install -g dist/openfn-cli.tgz
       - run:
           name: Check install
           command: openfn test --log info
