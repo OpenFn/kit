@@ -8,6 +8,7 @@ import { SECRET } from '../src/sanitize';
 // Which is basically thin wrapper around the logger which bypasses
 // console and provides an inspection API
 import createLogger from '../src/mock';
+import { assert } from 'console';
 
 const wait = (ms: number) => {
   return new Promise((resolve) => {
@@ -63,6 +64,16 @@ test('returns custom options', (t) => {
     level: 'debug',
   };
   t.deepEqual(optionsWithoutLogger, expected);
+});
+
+test('should log objects', (t) => {
+  const logger = createLogger();
+
+  const obj = { a: 22 };
+  logger.success(obj);
+
+  const { message } = logger._parse(logger._last);
+  t.is((message as { a: number }).a, 22);
 });
 
 // Automated structural tests per level
@@ -285,4 +296,18 @@ test('timer: start a new timer with the same name', async (t) => {
 
   const result = logger.timer('t');
   t.falsy(result);
+});
+
+// TODO hard to test this because it's the actual logger that truncates objects, not our logger
+test.skip('should log deeply nested objects', (t) => {
+  const logger = createLogger();
+
+  const obj = { a: { b: { c: { d: 22 } } } };
+  //logger.success(JSON.stringify(obj));
+  logger.success(obj);
+
+  // console.log(logger._last);
+
+  const { message } = logger._parse(logger._last);
+  console.log(typeof message);
 });
