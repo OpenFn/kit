@@ -1,5 +1,6 @@
 import c from 'chalk';
 import iconfirm from '@inquirer/confirm';
+import stringify from 'fast-safe-stringify';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import getDurationString from './util/duration';
@@ -140,7 +141,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       message: args.map((o) => sanitize(o, options)),
     };
 
-    emitter[level](output);
+    emitter[level](stringify(output));
   };
 
   const logString = (level: LogFns, ...args: LogArgs) => {

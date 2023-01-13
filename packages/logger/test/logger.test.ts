@@ -66,14 +66,17 @@ test('returns custom options', (t) => {
   t.deepEqual(optionsWithoutLogger, expected);
 });
 
-test('should log objects', (t) => {
+test('should log objects as strings', (t) => {
   const logger = createLogger();
 
   const obj = { a: 22 };
   logger.success(obj);
 
   const { message } = logger._parse(logger._last);
-  t.is((message as { a: number }).a, 22);
+  t.is(message, '{"a":22}');
+
+  const messageObj = JSON.parse(message as string);
+  t.deepEqual(messageObj.a, 22);
 });
 
 // Automated structural tests per level
@@ -120,10 +123,10 @@ test('should log objects', (t) => {
 
   test(`${level} - as json`, (t) => {
     const options = { level, json: true };
-    const logger = createLogger<JSONLog>('x', options);
+    const logger = createLogger<string>('x', options);
     logger[fn]('abc');
 
-    const result = logger._last;
+    const result = JSON.parse(logger._last);
     t.assert(Object.keys(result).length === 3);
 
     t.assert(result.level === level);
@@ -251,8 +254,8 @@ test('sanitize state', (t) => {
   });
 
   const { message } = logger._parse(logger._last);
-  // @ts-ignore
-  t.is(message.configuration.x, SECRET);
+  const obj = JSON.parse(message as string);
+  t.is(obj.configuration.x, SECRET);
 });
 
 test('sanitize state in second arg', (t) => {
@@ -266,9 +269,9 @@ test('sanitize state in second arg', (t) => {
 
   const { messageRaw } = logger._parse(logger._last);
   const [message, state] = messageRaw;
-  // @ts-ignore
+  const stateObj = JSON.parse(state);
   t.is(message, 'state');
-  t.is(state.configuration.x, SECRET);
+  t.is(stateObj.configuration.x, SECRET);
 });
 
 test('timer: start', (t) => {

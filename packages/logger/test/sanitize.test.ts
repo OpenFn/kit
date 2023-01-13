@@ -10,17 +10,27 @@ test('simply return a string', (t) => {
 
 test('simply return null', (t) => {
   const result = sanitize(null, options);
-  t.is(result, null);
+  t.true(result === null);
+});
+
+test('simply return a number', (t) => {
+  const result = sanitize(0, options);
+  t.true(result === 0);
 });
 
 test('simply return undefined', (t) => {
   const result = sanitize(undefined, options);
-  t.is(result, undefined);
+  t.deepEqual(result, undefined);
+});
+test('stringify an object', (t) => {
+  const result = sanitize({}, options);
+  console.log(result);
+  t.is(result, '{}');
 });
 
-test('simply return an object', (t) => {
-  const result = sanitize({ a: 'x' }, options);
-  t.deepEqual(result, { a: 'x' });
+test('stringify an array', (t) => {
+  const result = sanitize([], options);
+  t.is(result, '[]');
 });
 
 test('sanitize state.configuration', (t) => {
@@ -32,8 +42,11 @@ test('sanitize state.configuration', (t) => {
     configuration: { password: SECRET, username: SECRET },
     data: { x: 1 },
   };
+
   const result = sanitize(state, options);
-  t.deepEqual(result, expectedState);
+  const json = JSON.parse(result);
+
+  t.deepEqual(json, expectedState);
 });
 
 test('sanitize if no data is passed', (t) => {
@@ -43,8 +56,11 @@ test('sanitize if no data is passed', (t) => {
   const expectedState = {
     configuration: { password: SECRET, username: SECRET },
   };
+
   const result = sanitize(state, options);
-  t.deepEqual(result, expectedState);
+  const json = JSON.parse(result);
+
+  t.deepEqual(json, expectedState);
 });
 
 test('preserve top level stuff after sanitizing', (t) => {
@@ -56,29 +72,9 @@ test('preserve top level stuff after sanitizing', (t) => {
     configuration: { password: SECRET, username: SECRET },
     jam: 'jar',
   };
+
   const result = sanitize(state, options);
-  t.deepEqual(result, expectedState);
+  const json = JSON.parse(result);
+
+  t.deepEqual(json, expectedState);
 });
-
-// TODO not implemented yet
-test.skip('sanitize a simple path', (t) => {
-  const result = sanitize({ a: 'x' }, { sanitizePaths: ['a'] });
-  t.deepEqual(result, { a: SECRET });
-});
-
-test.skip('sanitize state.configuration even if extra args are passed', () => {});
-
-test.skip("don't sanitize nested state-like objects", () => {});
-
-// TODO do some cool jsonpath stuff
-
-// TODO can we sanitize properly inside an each loop?
-// The adaptor may have to do some magic
-
-// How doe a job update the list of sensitive paths?
-
-// If I fetch data from the server and want to log each item,
-// how do I easily sanitise? Or test?
-// I can accept a jsonpath but they're not always easy...
-
-// What if someone wants to override sanitise rules for state.config? Eg to show the user name?

@@ -1,10 +1,10 @@
 // Mock logger which doesn't log anything
 // TODO built in an API to return the history - very useful in unit tests
-import createLogger, { Logger, LogFns, JSONLog, StringLog } from './logger';
+import createLogger, { Logger, LogFns, StringLog } from './logger';
 import type { LogOptions, LogEmitter } from './options';
 
 // Each log message is saved as the level, then whatever was actually logged
-export type LogMessage = StringLog | JSONLog;
+export type LogMessage = StringLog | string; // string is a string-encoded JSONLog
 
 type MockLogger<T> = Logger & {
   _last: T; // the last log message

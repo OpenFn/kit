@@ -1,4 +1,5 @@
-// Sanitize (but don't prettify) console output
+// Sanitize console output
+import stringify from 'fast-safe-stringify';
 
 import { LogOptions } from './options';
 
@@ -9,8 +10,10 @@ const sanitize = (
   item: any,
   _options: Pick<LogOptions, 'sanitizePaths'> = {}
 ) => {
-  // TODO what if the object contains functions?
-  if (typeof item !== 'string') {
+  if (
+    Array.isArray(item) ||
+    (isNaN(item) && item && typeof item !== 'string')
+  ) {
     const obj = item as Record<string, unknown>;
     if (obj && obj.configuration) {
       // This looks sensitive, so let's sanitize it
@@ -18,14 +21,13 @@ const sanitize = (
       for (const k in obj.configuration) {
         configuration[k] = SECRET;
       }
-      const cleaned = {
+      const cleaned = stringify({
         ...obj,
         configuration,
-      };
+      });
       return cleaned;
     }
-    // TODO I am less sure how to handle non-state objects
-    // I guess we just handle user provided json paths?
+    return stringify(obj);
   }
   return item;
 };
