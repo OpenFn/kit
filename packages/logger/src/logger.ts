@@ -127,10 +127,12 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   const emitter = opts.logger;
 
   const log = (level: LogFns, ...args: LogArgs) => {
-    if (options.json) {
-      logJSON(level, ...args);
-    } else {
-      logString(level, ...args);
+    if (priority[level] >= minLevel) {
+      if (options.json) {
+        logJSON(level, ...args);
+      } else {
+        logString(level, ...args);
+      }
     }
   };
 
@@ -147,30 +149,22 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   const logString = (level: LogFns, ...args: LogArgs) => {
     if (opts.level === NONE) return;
 
-    const output = [];
+    if (emitter.hasOwnProperty(level)) {
+      const output = [];
 
-    if (name && !opts.hideNamespace) {
-      // TODO how can we fix the with of the type column so that things
-      //      are nicely arranged in the CLI?
-      output.push(c.blue(`[${name}]`));
-    }
-    if (!opts.hideIcons) {
-      output.push(styleLevel(level));
-    }
-
-    output.push(...args);
-    // concatenate consecutive strings
-    // log objects by themselves, pretty printed
-
-    // TODO I'd really really like a nice way to visualise log('state': hugeJsonObject)
-    // This will take some effort I think
-
-    // how do we actually log?
-    if (priority[level] >= minLevel) {
-      if (emitter.hasOwnProperty(level)) {
-        const cleaned = output.map((o) => sanitize(o, options));
-        emitter[level](...cleaned);
+      if (name && !opts.hideNamespace) {
+        // TODO how can we fix the with of the type column so that things
+        //      are nicely arranged in the CLI?
+        output.push(c.blue(`[${name}]`));
       }
+      if (!opts.hideIcons) {
+        output.push(styleLevel(level));
+      }
+
+      output.push(...args);
+
+      const cleaned = output.map((o) => sanitize(o, options));
+      emitter[level](...cleaned);
     }
   };
 

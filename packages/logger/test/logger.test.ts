@@ -179,6 +179,18 @@ test('with level=none, logs nothing', (t) => {
   t.assert(logger._history.length === 0);
 });
 
+test('in json mode with level=none, logs nothing', (t) => {
+  const logger = createLogger(undefined, { level: 'none', json: true });
+  logger.success('a');
+  logger.info('b');
+  logger.debug('c');
+  logger.warn('d');
+  logger.error('e');
+  logger.log('e');
+
+  t.assert(logger._history.length === 0);
+});
+
 test('with level=default, logs success, error and warning but not info and debug', (t) => {
   const logger = createLogger<StringLog>('x', { level: 'default' });
 
@@ -272,6 +284,20 @@ test('sanitize state in second arg', (t) => {
   const stateObj = JSON.parse(state);
   t.is(message, 'state');
   t.is(stateObj.configuration.x, SECRET);
+});
+
+// TODO why is the message stringified here? Is it the mock?
+test.skip('sanitize state in json logging', (t) => {
+  const logger = createLogger<string>(undefined, { json: true });
+  logger.success({
+    configuration: {
+      x: 'y',
+    },
+    data: {},
+  });
+  console.log(logger._last);
+  const { message } = JSON.parse(logger._last);
+  t.is(message[0].configuration.x, SECRET);
 });
 
 test('timer: start', (t) => {
