@@ -8,6 +8,6 @@ export default (names: string[], log = nullLogger) =>
       return name;
     }
     const expanded = `@openfn/language-${name}`;
-    log.info(`Expanded adaptor ${name} to ${expanded}`);
+    log.debug(`Expanded adaptor ${name} to ${expanded}`);
     return expanded;
   });

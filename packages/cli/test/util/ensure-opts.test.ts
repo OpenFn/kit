@@ -277,6 +277,16 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
+test('perserve the skipAdaptorValidation flag', (t) => {
+  const initialOpts = {
+    skipAdaptorValidation: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.skipAdaptorValidation);
+});
+
 test('log: add default options', (t) => {
   const initialOpts = {} as Opts;
 

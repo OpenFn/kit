@@ -27,6 +27,10 @@ const executeCommand = {
         alias: 'S',
         description: 'Read state from stdin (instead of a file)',
       })
+      .option('skip-adaptor-validation', {
+        boolean: true,
+        description: 'Skip adaptor validation warnings',
+      })
       .option('timeout', {
         alias: '-t',
         description: 'Set the timeout duration in MS',

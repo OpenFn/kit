@@ -29,7 +29,7 @@ test('does not expand a full adaptor name', (t) => {
 });
 
 test('logs if it expands', (t) => {
-  const logger = createMockLogger('', { level: 'info' });
+  const logger = createMockLogger('', { level: 'debug' });
   const [a] = expandAdaptors(['common'], logger);
   t.is(a, '@openfn/language-common');
 
@@ -38,7 +38,7 @@ test('logs if it expands', (t) => {
 });
 
 test('do not log if it does not expand', (t) => {
-  const logger = createMockLogger('', { level: 'info' });
+  const logger = createMockLogger('', { level: 'debug' });
   const [a] = expandAdaptors(['@openfn/language-common'], logger);
 
   t.is(a, '@openfn/language-common');
