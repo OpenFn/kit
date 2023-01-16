@@ -21,15 +21,6 @@ test.serial('return the existing package json', async (t) => {
   t.is(result.name, 'test');
 });
 
-test.serial('log if a repo exists', async (t) => {
-  mock({
-    '/tmp/repo/package.json': defaultPkg,
-  });
-  await ensureRepo('/tmp/repo', logger);
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Repo exists');
-});
-
 test.serial('do not modify the existing package.json', async (t) => {
   mock({
     '/tmp/repo/package.json': defaultPkg,

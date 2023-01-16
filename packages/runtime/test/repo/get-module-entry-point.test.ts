@@ -30,36 +30,42 @@ const mockRepo = (pkg: object) => {
   });
 };
 
-test.serial('use main', async (t) => {
+test.serial('load from pkg.main', async (t) => {
   const pkg = {
     name: 'x',
     main: 'index.js',
+    version: '1.0.0',
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', undefined, repoPath);
-  t.assert(p?.endsWith('x_1.0.0/index.js'));
+  const result = await getModuleEntryPoint('x', undefined, repoPath);
+  t.assert(result?.path.endsWith('x_1.0.0/index.js'));
+  t.is(result?.version, '1.0.0');
 });
 
-test.serial('use main with path', async (t) => {
+test.serial('load from pkg.main with path', async (t) => {
   const pkg = {
     name: 'x',
     main: 'index.js',
+    version: '1.0.1',
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', '/repo/test2/');
-  t.is(p, '/repo/test2/index.js');
+  const result = await getModuleEntryPoint('x', '/repo/test2/');
+  t.is(result?.path, '/repo/test2/index.js');
+  t.is(result?.version, '1.0.1');
 });
 
 test.serial('default to index.js', async (t) => {
   const pkg = {
     name: 'x',
+    version: '1.0.2',
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', undefined, repoPath);
-  t.assert(p?.endsWith('x_1.0.0/index.js'));
+  const result = await getModuleEntryPoint('x', undefined, repoPath);
+  t.assert(result?.path.endsWith('x_1.0.0/index.js'));
+  t.is(result?.version, '1.0.2');
 });
 
 // Issue! The ESM export fails in node19 if the import happens to have
@@ -67,18 +73,21 @@ test.serial('default to index.js', async (t) => {
 test.serial.skip('prefer exports to main', async (t) => {
   const pkg = {
     name: 'x',
+    version: '1.0.4',
     main: 'dist/index.cjs',
     exports: './dist/index.js',
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', undefined, repoPath);
-  t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
+  const result = await getModuleEntryPoint('x', undefined, repoPath);
+  t.assert(result?.path.endsWith('x_1.0.0/dist/index.js'));
+  t.is(result?.version, '1.0.4');
 });
 
 test.serial.skip('prefer conditional export to main', async (t) => {
   const pkg = {
     name: 'x',
+    version: '1.0.5',
     main: 'dist/index.cjs',
     exports: {
       '.': './dist/index.js',
@@ -86,13 +95,15 @@ test.serial.skip('prefer conditional export to main', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', undefined, repoPath);
-  t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
+  const result = await getModuleEntryPoint('x', undefined, repoPath);
+  t.assert(result?.path.endsWith('x_1.0.0/dist/index.js'));
+  t.is(result?.version, '1.0.5');
 });
 
 test.serial.skip('ignore non-main conditional exports', async (t) => {
   const pkg = {
     name: 'x',
+    version: '1.0.6',
     exports: {
       './util.js': './dist/index.cjs',
       '.': './dist/index.js',
@@ -100,17 +111,20 @@ test.serial.skip('ignore non-main conditional exports', async (t) => {
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x', undefined, repoPath);
-  t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
+  const result = await getModuleEntryPoint('x', undefined, repoPath);
+  t.assert(result?.path.endsWith('x_1.0.0/dist/index.js'));
+  t.is(result?.version, '1.0.6');
 });
 
 test.serial('support version number', async (t) => {
   const pkg = {
     name: 'x',
+    version: '1.0.7',
     main: './dist/index.js',
   };
 
   mockRepo(pkg);
-  const p = await getModuleEntryPoint('x@1.0.0', undefined, repoPath);
-  t.assert(p?.endsWith('x_1.0.0/dist/index.js'));
+  const result = await getModuleEntryPoint('x@1.0.0', undefined, repoPath);
+  t.assert(result?.path.endsWith('x_1.0.0/dist/index.js'));
+  t.is(result?.version, '1.0.7');
 });
