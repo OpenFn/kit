@@ -1,24 +1,26 @@
-// Sanitize console output
 import stringify from 'fast-safe-stringify';
+
 export const SECRET = '****';
 
 type SanitizeOptions = {
-  stringify?: boolean;
+  stringify?: boolean; // true by default
 
   sanitizePaths?: string[]; // unimplemented
 };
 
-// Node itself does a good job of circular references and functions
+// Sanitize console output
 const sanitize = (item: any, options: SanitizeOptions = {}) => {
+  // Stringify output to ensure we show deep nesting
   const maybeStringify = (o: any) =>
     options.stringify === false ? o : stringify(o);
+
+  if (item instanceof Error) {
+    return item.toString();
+  }
+
   if (
     Array.isArray(item) ||
-    (isNaN(item) &&
-      item &&
-      typeof item !== 'string' &&
-      // duck type an error object (this is not tight enough!)
-      !(item.stack && item.message))
+    (isNaN(item) && item && typeof item !== 'string')
   ) {
     const obj = item as Record<string, unknown>;
     if (obj && obj.configuration) {
