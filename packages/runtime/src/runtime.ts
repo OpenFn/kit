@@ -91,9 +91,13 @@ export default function run(
       logger.debug(result);
       // return the final state
       resolve(result);
-    } catch (e) {
+    } catch (e: any) {
+      // Note: e will be some kind of serialized error object and not an instance of Error
+      // See https://github.com/OpenFn/kit/issues/143
       logger.error('Error in runtime execution!');
-      logger.error(e);
+      if (e.toString) {
+        logger.error(e.toString());
+      }
       reject(new Error(ERR_RUNTIME_EXCEPTION));
     }
   });
