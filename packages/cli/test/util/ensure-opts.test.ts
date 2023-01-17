@@ -186,7 +186,7 @@ test('preserve expand', (t) => {
   t.false(opts.expand);
 });
 
-test('preserve logJSon', (t) => {
+test('preserve logJson', (t) => {
   const initialOpts = {
     logJson: true,
   } as Opts;
