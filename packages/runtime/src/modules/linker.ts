@@ -91,7 +91,9 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
 
   // If the specifier is a path, just import it
   if (specifier.startsWith('/') && specifier.endsWith('.js')) {
-    return import(`${prefix}${specifier}`);
+    const importPath = `${prefix}${specifier}`;
+    log.debug(`[linker] Loading module from path: ${importPath}`);
+    return import(importPath);
   }
 
   // Otherwise resolve the specifier to a path in the repo
@@ -106,18 +108,28 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     const specifierWithVersion = version
       ? `${specifier}@${version}`
       : specifier;
-    path = await getModuleEntryPoint(
+    const entry = await getModuleEntryPoint(
       specifierWithVersion,
       path,
       options.repo,
       log
     );
+    if (entry) {
+      path = entry.path;
+      version = entry.version;
+    } else {
+      log.debug(`module not found in repo: ${specifier}`);
+    }
   }
 
   if (path) {
     log.debug(`[linker] Loading module ${specifier} from ${path}`);
     try {
-      return import(`${prefix}${path}`);
+      const result = import(`${prefix}${path}`);
+      if (specifier.startsWith('@openfn/language-')) {
+        log.info(`Resolved adaptor ${specifier} to version ${version}`);
+      }
+      return result;
     } catch (e) {
       log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
       console.log(e);

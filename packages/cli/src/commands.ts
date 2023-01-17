@@ -41,9 +41,10 @@ export type Opts = {
   packages?: string[];
   specifier?: string; // docgen
   repoDir?: string;
-  timeout?: number; // ms
+  skipAdaptorValidation?: boolean;
   statePath?: string;
   stateStdin?: string;
+  timeout?: number; // ms
 };
 
 const handlers = {
@@ -73,7 +74,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   // A bit janky but in execute and test, always print version info FIRST
   // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
   if (opts.command === 'execute' || opts.command === 'test') {
-    await printVersions(logger);
+    await printVersions(logger, opts);
   }
 
   if (opts.adaptors && opts.expand) {
@@ -99,8 +100,18 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     process.exit(1);
   }
 
-  // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
-  return handler(opts, logger);
+  try {
+    // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
+    const result = await handler(opts, logger);
+    return result;
+  } catch (e: any) {
+    if (!process.exitCode) {
+      process.exitCode = e.exitCode || 1;
+    }
+    logger.break();
+    logger.error('Command failed!');
+    logger.error(e);
+  }
 };
 
 export default parse;

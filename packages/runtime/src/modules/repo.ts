@@ -34,6 +34,7 @@ const filterSpecifiers = async (
     let { name, version } = getNameAndVersion(s);
     if (!version) {
       version = await getLatestVersion(s);
+      log.info(`Looked up latest version of ${s}: found ${version}`);
     }
 
     const exists = await getModulePath(s, repoPath, log);
@@ -97,7 +98,6 @@ export const ensureRepo = async (path: string, log: Logger = defaultLogger) => {
   try {
     const raw = await readFile(pkgPath, 'utf8');
     const pkg = JSON.parse(raw);
-    log.debug('Repo exists');
     return pkg;
   } catch (e) {
     log.debug(`Creating new repo at ${pkgPath}`);
@@ -161,7 +161,8 @@ export const loadRepoPkg = async (repoPath: string = defaultRepoPath) => {
 export const getLatestInstalledVersion = async (
   specifier: string,
   repoPath: string = defaultRepoPath,
-  pkg?: object
+  pkg?: object,
+  log = defaultLogger
 ) => {
   if (!pkg) {
     pkg = await loadRepoPkg(repoPath);
@@ -180,6 +181,7 @@ export const getLatestInstalledVersion = async (
       }
     });
     if (latest) {
+      log.debug(`Using latest installed version of ${specifier}: ${latest}`);
       return `${specifier}_${latest}`;
     }
   }
@@ -188,7 +190,8 @@ export const getLatestInstalledVersion = async (
 
 const getRepoAlias = async (
   specifier: string,
-  repoPath: string = defaultRepoPath
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger
 ) => {
   const { version } = getNameAndVersion(specifier);
 
@@ -200,7 +203,7 @@ const getRepoAlias = async (
       return a;
     }
   } else {
-    return getLatestInstalledVersion(specifier, repoPath);
+    return getLatestInstalledVersion(specifier, repoPath, undefined, log);
   }
 };
 
@@ -209,14 +212,11 @@ export const getModulePath = async (
   repoPath: string = defaultRepoPath,
   log = defaultLogger
 ) => {
-  const alias = await getRepoAlias(specifier, repoPath);
+  const alias = await getRepoAlias(specifier, repoPath, log);
 
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
-    log.debug(`repo resolved ${specifier} path to ${p}`);
     return p;
-  } else {
-    log.debug(`module not found in repo: ${specifier}`);
   }
   return null;
 };
@@ -229,8 +229,9 @@ export const getModuleEntryPoint = async (
   modulePath?: string,
   repoPath: string = defaultRepoPath,
   log = defaultLogger
-) => {
-  const moduleRoot = modulePath || (await getModulePath(specifier, repoPath));
+): Promise<{ path: string; version: string } | null> => {
+  const moduleRoot =
+    modulePath || (await getModulePath(specifier, repoPath, log));
 
   if (moduleRoot) {
     const pkgRaw = await readFile(`${moduleRoot}/package.json`, 'utf8');
@@ -256,10 +257,7 @@ export const getModuleEntryPoint = async (
       main = pkg.main;
     }
     const p = path.resolve(moduleRoot, main);
-    log.debug(`repo resolved ${specifier} entrypoint to ${p}`);
-    return p;
-  } else {
-    log.debug(`module not found in repo: ${specifier}`);
+    return { path: p, version: pkg.version };
   }
   return null;
 };

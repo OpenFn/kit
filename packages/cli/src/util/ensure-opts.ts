@@ -87,6 +87,7 @@ export default function ensureOpts(
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
     repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
     strictOutput: opts.strictOutput ?? true,

@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.17
+
+### Patch Changes
+
+- 19e9f31: Improve logging in linker
+
 ## 0.0.16
 
 ### Patch Changes
