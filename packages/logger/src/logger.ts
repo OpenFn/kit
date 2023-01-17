@@ -147,8 +147,6 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   };
 
   const logString = (level: LogFns, ...args: LogArgs) => {
-    if (opts.level === NONE) return;
-
     if (emitter.hasOwnProperty(level)) {
       const output = [];
 
