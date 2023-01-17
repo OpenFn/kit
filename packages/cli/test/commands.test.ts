@@ -69,6 +69,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.repoDir = options.repoDir;
 
   opts.log = ['none'];
+  opts.skipAdaptorValidation = true;
 
   await commandParser(jobPath, opts, logger);
 
@@ -90,7 +91,7 @@ test.serial('print version information with version', async (t) => {
   const message = last.message as string;
   t.assert(message.length > 1);
   t.regex(message, /Versions:/);
-  t.regex(message, /Node.js/);
+  t.regex(message, /node.js/);
 });
 
 test.serial('run test job with default state', async (t) => {

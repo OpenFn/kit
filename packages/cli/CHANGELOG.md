@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.0.27
+
+### Patch Changes
+
+- 4c57da1: Add validation checks for adaptor usage
+- Updated dependencies [19e9f31]
+  - @openfn/runtime@0.0.17
+
 ## 0.0.26
 
 ### Patch Changes

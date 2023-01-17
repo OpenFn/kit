@@ -5,6 +5,7 @@ import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
 import { install } from '../repo/handler';
 import { Opts, SafeOpts } from '../commands';
+import validateAdaptors from '../util/validate-adaptors';
 
 export const getAutoinstallTargets = (
   options: Pick<Opts, 'adaptors' | 'autoinstall'>
@@ -18,14 +19,18 @@ export const getAutoinstallTargets = (
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
 
+  await validateAdaptors(options, logger);
+
   const { repoDir, monorepoPath, autoinstall } = options;
-  if (monorepoPath && autoinstall) {
-    logger.warn('Skipping auto-install as monorepo is being used');
-  } else if (autoinstall) {
-    const autoInstallTargets = getAutoinstallTargets(options);
-    if (autoInstallTargets.length) {
-      logger.info('Auto-installing language adaptors');
-      await install({ packages: autoInstallTargets, repoDir }, logger);
+  if (autoinstall) {
+    if (monorepoPath) {
+      logger.warn('Skipping auto-install as monorepo is being used');
+    } else {
+      const autoInstallTargets = getAutoinstallTargets(options);
+      if (autoInstallTargets.length) {
+        logger.info('Auto-installing language adaptors');
+        await install({ packages: autoInstallTargets, repoDir }, logger);
+      }
     }
   }
 

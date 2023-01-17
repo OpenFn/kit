@@ -89,6 +89,7 @@ export default function ensureOpts(
     timeout: opts.timeout,
     specifier: opts.specifier,
     strictOutput: opts.strictOutput ?? true,
+    skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     immutable: opts.immutable || false,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {

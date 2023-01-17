@@ -70,6 +70,30 @@ If no command is specified, execute will run.
 
 To get more information about a command, including usage examples, run `openfn <command> help`, ie, `openfn compile help`.
 
+## Logging 
+
+The CLI is actually a collection of packages, each of which will log with slightly different rules. To help understand where logs are coming from, each package prints a namespace or prefix at the start of its log.
+
+* [CLI] - the CLI itself, responsible for parsing and validating user input, reading and writing to disk, and executing the correct functionality.
+* [CMP] - the Compiler will parse openfn jobs into executable Javascript, changing your code
+* [R/T] - the Runtime executes your job code in a secure sandboxed environment, one operation at a time
+* [JOB] - the actual job code that your wrote. Any console.log statements in your job will appear under this namespace.
+
+The CLI will log information at three different levels of verbosity: `default`, `info` and `debug` (`none` is also supported).
+
+To set the log level, pass `--log info` into your command. You can configure this for individual packages, ie `--log cmp=debug` will run the compiler with debug logging but leave everything else at default.
+
+Note that, unless explicitly overriden, jobs will always report at debug verbosity (meaning job logging will always be shown).
+
+If something unexpected happens during a command, your first step should be to re-run with info-level logging.
+
+`default` logging is designed to give high-level feedback about what you absolutely need to know. It will show any errors or warnings, as well as high-level reporting about what the command has actually done.
+
+`info` level logging is suitable for most developers. It is more verbose than default but still aims to provide high-level information about a command. It includes version numbers, key paths, and simple reporting about how the compiler changes your code (see below).
+
+`debug` level logging is highly verbose and aims to tell you everything that's going on under-the hood. This is aimed mostly at CLI/runtime developers and can be very useful for debugging problems.
+
+
 ## Compilation
 
 The CLI will attempt to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:

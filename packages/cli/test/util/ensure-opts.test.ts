@@ -313,6 +313,14 @@ test('monorepoPath: load from OPENFN_ADAPTORS_REPO', (t) => {
   const opts = ensureOpts('a', initialOpts);
   t.is(opts.monorepoPath, 'a/b/c');
   delete process.env.OPENFN_ADAPTORS_REPO;
+test('perserve the skipAdaptorValidation flag', (t) => {
+  const initialOpts = {
+    skipAdaptorValidation: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.truthy(opts.skipAdaptorValidation);
 });
 
 test('log: add default options', (t) => {
