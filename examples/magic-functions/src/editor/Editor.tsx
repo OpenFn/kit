@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Monaco from "@monaco-editor/react";
 import type { EditorProps as MonacoProps } from  "@monaco-editor/react/lib/types";
+
 import meta from '../metadata.json' assert { type: 'json'};
+import jp from 'jsonpath'
 
 // type X = {
 //   name: string;
@@ -11,6 +13,10 @@ import meta from '../metadata.json' assert { type: 'json'};
 // const x: X = {  }
 
 const code = `import { upsert } from '@openfn/language-salesforce';
+
+upsert()
+
+upsert("vera__Beneficiary__c", );
 
 upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c", {
 
@@ -30,18 +36,17 @@ declare module '@openfn/language-salesforce' {
    * })
    * @constructor
    * @param {String} sObject - API name of the sObject.
-   * @paramLookup sObject .entities[] | select(.system != true).name
+   * @paramLookup sObject $.entities[?(@.type=="sobject" && !@.system)].name
    * @param {String} externalId - ID.
-   * @paramLookup externalId .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId).name
+   * @paramLookup externalId $.entities[?(@.name=="{{args.sObject}}")].entities[?(@.meta.externalId)].name
    * @param {Object} attrs - Field attributes for the new object.
    * @param {State} state - Runtime state.
-   * @paramLookup attrs .entities[] | select(.name == "{{args.sObject}}") | .entities[] | select(.meta.externalId == false)
+   * @paramLookup attrs $.entities[?(@.name=="{{args.sObject}}")].entities[?(!@.meta.externalId)]
    * @returns {Operation}
    */
   export function upsert(sObject: string, externalId: string, attrs?: object, state?: any): Operation;
 }
 `
-
 const options: MonacoProps['options'] = {
   dragAndDrop: false,
   lineNumbersMinChars: 3,
@@ -69,15 +74,11 @@ const options: MonacoProps['options'] = {
 
 const ensureArray = (x: any) => Array.isArray(x) ? x : [x];
 
-// get JQ must return an array of strings based on the metadata structure
-const getJq = (query: string) => {
-  // cheating to get rid of system stuff (this should be done by config I think)
-  // const filtered = meta.entities.filter(({ system }) => !system);
+const query = (jsonPath:string) => ensureArray(jp.query(meta, jsonPath));
 
-  // JQ is installed as a global bundle
-  // it is HUGE at 1.6 mb
-  // There's a wasm bundle at almost 1mb which might be a little better
-  const suggestions = ensureArray(jq.json(meta, query)).map((s:string) => ({
+// Run a jsonpath query and return the results
+const lookupTextSuggestions = (jsonPath:string) => {
+  const suggestions = query(jsonPath).map((s:string) => ({
     label: `"${s}"`,
     kind: monaco.languages.CompletionItemKind.Text,
     insertText: `"${s}"`
@@ -87,25 +88,13 @@ const getJq = (query: string) => {
     // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
     suggestions
   }
-
 }
 
-// different jq query it's an object type
-// give it a list of entities to represent props
-const getJqObject = (query: string) => {
-  // cheating to get rid of system stuff (this should be done by config I think)
-  // const filtered = meta.entities.filter(({ system }) => !system);
-
-  // JQ is installed as a global bundle
-  // it is HUGE at 1.6 mb
-  // There's a wasm bundle at almost 1mb which might be a little better
-  const suggestions = ensureArray(jq.json(meta, query)).map((prop: object) => {
-    // TODO rememeber not all props will have a label AND a name
-    // (and this may not even be the correct data structure)
+const lookupPropertySuggestions = (jsonPath: string) => {
+  const suggestions = query(jsonPath).map((prop: object) => {
     return {
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html#kind
-      label: `${prop.label}`,
-      // Are we creating a property or a value?
+      label: `${prop.label || prop.name}`,
       kind: monaco.languages.CompletionItemKind.Property,
       insertText: `"${prop.name}":`,
       detail: `${prop.name} (${prop.datatype})`
@@ -191,15 +180,15 @@ const getCompletionProvider = (monaco) => ({
       // Parse this function call's arguments and map any values we have
       const args = extractArguments(help, model);
       // Check the query expression for any placeholders (of the form arg.name)
-      const finalExpression = replacePlaceholders(args, expression)
+      const finalExpression = replacePlaceholders(args, expression).trim()
       // If we have a valid expression, run it and return whatever results we get!
       if (finalExpression) {
         // This is a real kludge - if this looks like an object type, use a different builder function
         const { text, kind } = param.displayParts.at(-1)
         if ( kind === 'keyword' && text === 'object') {
-          return getJqObject(finalExpression);  
+          return lookupPropertySuggestions(finalExpression);  
         }
-        return getJq(finalExpression);
+        return lookupTextSuggestions(finalExpression);
       }
     }
 
