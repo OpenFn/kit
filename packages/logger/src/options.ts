@@ -61,10 +61,6 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
     ...opts,
   };
 
-  if (process.env.OPENFN_LOG_JSON) {
-    options.json = true;
-  }
-
   return options;
 };
 

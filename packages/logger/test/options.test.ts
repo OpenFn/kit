@@ -45,12 +45,3 @@ test("don't mutate default options", (t) => {
   // Ensure the defaults objects remains unchanged
   t.deepEqual(defaultCopy, defaults);
 });
-
-test('json should be set to true if the env var is prsent', (t) => {
-  process.env.OPENFN_LOG_JSON = 'true';
-
-  const opts = calculateOptions({});
-  t.true(opts.json);
-
-  delete process.env.OPENFN_LOG_JSON;
-});

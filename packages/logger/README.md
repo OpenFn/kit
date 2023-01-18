@@ -28,7 +28,6 @@ Set the `json` object to a truthy value to output all logs as JSON objects of th
 ```
 { level: 'info', name: 'CLI', message: ['Loaded adaptor'] }
 ```
-You can also set the OPENFN_LOG_JSON env var.
 
 ## Usage
 

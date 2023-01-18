@@ -91,6 +91,16 @@ If something unexpected happens during a command, your first step should be to r
 
 `debug` level logging is highly verbose and aims to tell you everything that's going on under-the hood. This is aimed mostly at CLI/runtime developers and can be very useful for debugging problems.
 
+## Structred/JSON logging
+
+By default all log will be printed as human-readable strings.
+
+For a more structured output, you can emit logs as JSON objects with `level`, `name` and `message` properties:
+```
+{ level: 'info', name: 'CLI', message: ['Loaded adaptor'] }
+```
+
+Pass `--log-json` to the CLI to do this. You can also set the OPENFN_LOG_JSON env var (and use `--no-log-json` to disable).
 
 ## Compilation
 
