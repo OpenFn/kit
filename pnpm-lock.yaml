@@ -6,12 +6,12 @@ importers:
     specifiers:
       '@changesets/cli': ^2.25.0
       gunzip-maybe: ^1.4.2
-      rimraf: ^3.0.2
+      rimraf: ^4.1.1
       tar-stream: ^3.0.0
     devDependencies:
       '@changesets/cli': 2.25.0
       gunzip-maybe: 1.4.2
-      rimraf: 3.0.2
+      rimraf: 4.1.1
       tar-stream: 3.0.0
 
   examples/dts-inspector:
@@ -4848,6 +4848,12 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+
+  /rimraf/4.1.1:
+    resolution: {integrity: sha512-Z4Y81w8atcvaJuJuBB88VpADRH66okZAuEm+Jtaufa+s7rZmIz+Hik2G53kGaNytE7lsfXyWktTmfVz0H9xuDg==}
+    engines: {node: '>=14'}
+    hasBin: true
+    dev: true
 
   /rollup/2.79.1:
     resolution: {integrity: sha512-uKxbd0IhMZOhjAiD5oAFp7BqvkA4Dv47qpOCtaNvng4HBwdbWtdOh8f5nZNuk2rp51PMGk3bzfWu5oayNEuYnw==}
