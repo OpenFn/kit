@@ -93,7 +93,7 @@ If something unexpected happens during a command, your first step should be to r
 
 ## Structred/JSON logging
 
-By default all log will be printed as human-readable strings.
+By default all logs will be printed as human-readable strings.
 
 For a more structured output, you can emit logs as JSON objects with `level`, `name` and `message` properties:
 ```
