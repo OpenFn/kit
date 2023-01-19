@@ -40,7 +40,12 @@ export default defineConfig({
     '../../packages/adaptor-docs/dist',
     '../../packages/describe-package/dist',
   ],
-  noExternal: ['@openfn/adaptor-docs', 'react', '@monaco-editor/react'],
+  noExternal: [
+    '@openfn/adaptor-docs',
+    'react',
+    '@monaco-editor/react',
+    'jsonpath',
+  ],
   esbuildPlugins: [
     copyStaticFiles({
       src: './static/',

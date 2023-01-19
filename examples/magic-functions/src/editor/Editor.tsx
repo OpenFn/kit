@@ -14,13 +14,17 @@ import jp from 'jsonpath'
 
 const code = `import { upsert } from '@openfn/language-salesforce';
 
-upsert()
+upsert()`;
 
-upsert("vera__Beneficiary__c", );
+// const code = `import { upsert } from '@openfn/language-salesforce';
 
-upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c", {
+// upsert()
 
-});`
+// upsert("vera__Beneficiary__c", );
+
+// upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c", {
+
+// });`
 
 // Provide a fake dts for salesforce
 // This is copied from adaptors, but looks a but sus!
