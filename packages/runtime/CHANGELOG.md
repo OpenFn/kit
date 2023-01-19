@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 0.0.18
+
+### Patch Changes
+
+- e43d3ba: serialize job errors
+- Updated dependencies [e43d3ba]
+  - @openfn/logger@0.0.9
+
 ## 0.0.17
 
 ### Patch Changes

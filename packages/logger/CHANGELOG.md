@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.9
+
+### Patch Changes
+
+- e43d3ba: Support logging to JSON
+
 ## 0.0.8
 
 ### Patch Changes

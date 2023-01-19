@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 0.0.28
+
+### Patch Changes
+
+- e43d3ba: Support logging to JSON
+- 0026846: Load adaptors from monorepo
+- Updated dependencies [e43d3ba]
+- Updated dependencies [e43d3ba]
+  - @openfn/logger@0.0.9
+  - @openfn/runtime@0.0.18
+  - @openfn/compiler@0.0.24
+
 ## 0.0.27
 
 ### Patch Changes

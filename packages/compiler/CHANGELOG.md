@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.0.24
+
+### Patch Changes
+
+- Updated dependencies [e43d3ba]
+  - @openfn/logger@0.0.9
+
 ## 0.0.23
 
 ### Patch Changes
