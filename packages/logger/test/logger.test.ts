@@ -1,6 +1,6 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { styleLevel, LogFns } from '../src/logger';
+import { styleLevel, LogFns, StringLog, JSONLog } from '../src/logger';
 import { defaults as defaultOptions, LogLevel } from '../src/options';
 import { SECRET } from '../src/sanitize';
 
@@ -8,6 +8,7 @@ import { SECRET } from '../src/sanitize';
 // Which is basically thin wrapper around the logger which bypasses
 // console and provides an inspection API
 import createLogger from '../src/mock';
+import { assert } from 'console';
 
 const wait = (ms: number) => {
   return new Promise((resolve) => {
@@ -22,7 +23,7 @@ chalk.level = 0;
 const { logger, ...defaultOptionsWithoutLogger } = defaultOptions;
 
 // parse log output into a consumable parts
-const parse = ([level, namespace, icon, ...rest]: string[]) => ({
+const parse = ([level, namespace, icon, ...rest]: StringLog) => ({
   level,
   namespace,
   icon,
@@ -63,6 +64,19 @@ test('returns custom options', (t) => {
     level: 'debug',
   };
   t.deepEqual(optionsWithoutLogger, expected);
+});
+
+test('should log objects as strings', (t) => {
+  const logger = createLogger();
+
+  const obj = { a: 22 };
+  logger.success(obj);
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, '{"a":22}');
+
+  const messageObj = JSON.parse(message as string);
+  t.deepEqual(messageObj.a, 22);
 });
 
 // Automated structural tests per level
@@ -106,6 +120,19 @@ test('returns custom options', (t) => {
     t.assert(_icon === icons[fn]);
     t.assert(_message === 'abc');
   });
+
+  test(`${level} - as json`, (t) => {
+    const options = { level, json: true };
+    const logger = createLogger<string>('x', options);
+    logger[fn]('abc');
+
+    const result = JSON.parse(logger._last);
+    t.assert(Object.keys(result).length === 3);
+
+    t.assert(result.level === level);
+    t.assert(result.name === 'x');
+    t.assert(result.message[0] === 'abc');
+  });
 });
 
 test('print() should be barebones', (t) => {
@@ -123,7 +150,7 @@ test('print() should not log if level is none', (t) => {
   const logger = createLogger('x', options);
   logger.print('abc');
 
-  t.is(logger._last.length, 0);
+  t.is(logger._history.length, 0);
 });
 
 test('log() should behave like info', (t) => {
@@ -152,8 +179,20 @@ test('with level=none, logs nothing', (t) => {
   t.assert(logger._history.length === 0);
 });
 
+test('in json mode with level=none, logs nothing', (t) => {
+  const logger = createLogger(undefined, { level: 'none', json: true });
+  logger.success('a');
+  logger.info('b');
+  logger.debug('c');
+  logger.warn('d');
+  logger.error('e');
+  logger.log('e');
+
+  t.assert(logger._history.length === 0);
+});
+
 test('with level=default, logs success, error and warning but not info and debug', (t) => {
-  const logger = createLogger('x', { level: 'default' });
+  const logger = createLogger<StringLog>('x', { level: 'default' });
 
   logger.debug('d');
   logger.info('i');
@@ -227,8 +266,8 @@ test('sanitize state', (t) => {
   });
 
   const { message } = logger._parse(logger._last);
-  // @ts-ignore
-  t.is(message.configuration.x, SECRET);
+  const obj = JSON.parse(message as string);
+  t.is(obj.configuration.x, SECRET);
 });
 
 test('sanitize state in second arg', (t) => {
@@ -242,9 +281,21 @@ test('sanitize state in second arg', (t) => {
 
   const { messageRaw } = logger._parse(logger._last);
   const [message, state] = messageRaw;
-  // @ts-ignore
+  const stateObj = JSON.parse(state);
   t.is(message, 'state');
-  t.is(state.configuration.x, SECRET);
+  t.is(stateObj.configuration.x, SECRET);
+});
+
+test('sanitize state in json logging', (t) => {
+  const logger = createLogger<string>(undefined, { json: true });
+  logger.success({
+    configuration: {
+      x: 'y',
+    },
+    data: {},
+  });
+  const { message } = JSON.parse(logger._last);
+  t.is(message[0].configuration.x, SECRET);
 });
 
 test('timer: start', (t) => {
@@ -272,4 +323,46 @@ test('timer: start a new timer with the same name', async (t) => {
 
   const result = logger.timer('t');
   t.falsy(result);
+});
+
+test('log a circular object', async (t) => {
+  const z: any = {};
+  const a = {
+    z,
+  };
+  z.a = a;
+  const logger = createLogger();
+  logger.success(a);
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, '{"z":{"a":"[Circular]"}}');
+});
+
+test('log a circular object as JSON', async (t) => {
+  const z: any = {};
+  const a = {
+    z,
+  };
+  z.a = a;
+  const logger = createLogger<string>(undefined, { json: true });
+  logger.success(a);
+
+  const { message } = JSON.parse(logger._last);
+  t.deepEqual(message[0], {
+    z: {
+      a: '[Circular]',
+    },
+  });
+});
+
+test('ignore functions on logged objects', async (t) => {
+  const obj = {
+    a: 1,
+    z: () => {},
+  };
+  const logger = createLogger();
+  logger.success(obj);
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, '{"a":1}');
 });

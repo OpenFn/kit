@@ -78,24 +78,32 @@ export default function ensureOpts(
     adaptors: opts.adaptors || [],
     autoinstall: opts.autoinstall,
     command: opts.command,
-    force: opts.force || false,
-    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
-    noCompile: Boolean(opts.noCompile),
     expand: opts.expand !== false,
-    outputStdout: Boolean(opts.outputStdout),
-    operation: opts.operation,
-    packages: opts.packages,
-    stateStdin: opts.stateStdin,
-    timeout: opts.timeout,
-    specifier: opts.specifier,
-    strictOutput: opts.strictOutput ?? true,
-    skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
+    force: opts.force || false,
     immutable: opts.immutable || false,
+    logJson:
+      typeof opts.logJson == 'boolean'
+        ? opts.logJson
+        : Boolean(process.env.OPENFN_LOG_JSON),
+    noCompile: Boolean(opts.noCompile),
+    operation: opts.operation,
+    outputStdout: Boolean(opts.outputStdout),
+    packages: opts.packages,
+    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
+    specifier: opts.specifier,
+    stateStdin: opts.stateStdin,
+    strictOutput: opts.strictOutput ?? true,
+    timeout: opts.timeout,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {
     // @ts-ignore TODO
     newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;
   };
+
+  if (opts.useAdaptorsMonorepo) {
+    newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
+  }
 
   let baseDir = basePath;
   if (basePath.endsWith('.js')) {

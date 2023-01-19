@@ -7,6 +7,7 @@ import docgen from './docgen/handler';
 import docs from './docs/handler';
 import { clean, install, pwd, list } from './repo/handler';
 import expandAdaptors from './util/expand-adaptors';
+import useAdaptorsRepo from './util/use-adaptors-repo';
 import printVersions from './util/print-versions';
 
 type CommandList =
@@ -26,12 +27,14 @@ export type Opts = {
 
   adaptor?: boolean | string;
   adaptors?: string[];
+  useAdaptorsMonorepo?: string | boolean;
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
   force?: boolean;
   immutable?: boolean;
   jobPath?: string;
   log?: string[];
+  logJson?: boolean;
   noCompile?: boolean;
   strictOutput?: boolean; // defaults to true
   outputPath?: string;
@@ -56,12 +59,14 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
-  version: async (_opts: SafeOpts, logger: Logger) => printVersions(logger),
+  version: async (opts: SafeOpts, logger: Logger) =>
+    printVersions(logger, opts),
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {
   log: Record<string, LogLevel>;
   adaptor: string | boolean;
+  monorepoPath?: string;
 };
 
 // Top level command parser
@@ -69,13 +74,26 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
-  // A bit janky but in execute and test, always print version info FIRST
+  // In execute and test, always print version info FIRST
   // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
   if (opts.command === 'execute' || opts.command === 'test') {
     await printVersions(logger, opts);
   }
 
-  if (opts.adaptors && opts.expand) {
+  if (opts.monorepoPath) {
+    if (opts.monorepoPath === 'ERR') {
+      logger.error(
+        'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
+      );
+      logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
+      process.exit(9); // invalid argument
+    }
+    opts.adaptors = await useAdaptorsRepo(
+      opts.adaptors,
+      opts.monorepoPath,
+      logger
+    );
+  } else if (opts.adaptors && opts.expand) {
     // Note that we can't do this in ensureOpts because we don't have a logger configured yet
     opts.adaptors = expandAdaptors(opts.adaptors, logger);
   }
@@ -94,7 +112,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     assertPath(basePath);
   }
   if (!handler) {
-    logger.error(`Unrecognise command: ${options.command}`);
+    logger.error(`Unrecognised command: ${options.command}`);
     process.exit(1);
   }
 

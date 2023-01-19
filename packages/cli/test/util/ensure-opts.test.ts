@@ -6,6 +6,8 @@ import ensureOpts, {
   ERROR_MESSAGE_LOG_COMPONENT,
 } from '../../src/util/ensure-opts';
 
+delete process.env.OPENFN_ADAPTORS_REPO;
+
 test('preserve the command name', (t) => {
   const initialOpts = {
     command: 'compile',
@@ -186,6 +188,40 @@ test('preserve expand', (t) => {
   t.false(opts.expand);
 });
 
+test('preserve logJson', (t) => {
+  const initialOpts = {
+    logJson: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+});
+
+test('default logJson to true if env var is set', (t) => {
+  process.env.OPENFN_LOG_JSON = 'true';
+
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+  delete process.env.OPENFN_LOG_JSON;
+});
+
+test('logJson argument overrides env var', (t) => {
+  process.env.OPENFN_LOG_JSON = 'true';
+
+  const initialOpts = {
+    logJson: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.false(opts.logJson);
+  delete process.env.OPENFN_LOG_JSON;
+});
+
 test('preserve specifier', (t) => {
   const initialOpts = {
     specifier: '@openfn/language-common@1.0.0',
@@ -275,6 +311,42 @@ test('update the default output with compile only', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.outputPath === 'a/output.js');
+});
+
+test('monorepoPath: unset by default', (t) => {
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: unset even if env var is set default', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: unset if useAdaptorsMonorepo is false', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    useAdaptorsMonorepo: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: load from OPENFN_ADAPTORS_REPO', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    useAdaptorsMonorepo: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.is(opts.monorepoPath, 'a/b/c');
+  delete process.env.OPENFN_ADAPTORS_REPO;
 });
 
 test('perserve the skipAdaptorValidation flag', (t) => {

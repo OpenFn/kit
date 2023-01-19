@@ -25,6 +25,8 @@ export type LogOptions = {
 
   sanitiseState?: boolean; // defaults to true
   detectState?: boolean; // defaults to true
+
+  json?: boolean; // output as json objects
 };
 
 // TODO not crazy about the handling of this
@@ -48,6 +50,7 @@ export const defaults: Required<LogOptions> = {
   sanitiseState: false,
   detectState: false,
   sanitizePaths: ['configuration'],
+  json: false,
 };
 
 // This will return a fully defined options object
@@ -57,13 +60,6 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
     ...defaults,
     ...opts,
   };
-
-  // TODO handle merging of arrays (ie sensitive paths)
-  // Maybe, this is actually a non trivial issue
-  // If the user sets a path list, is this an override or extension?
-  // Let's make it an extension
-
-  // Let's hard-code config sanitizing, then take an array of extra paths
 
   return options;
 };

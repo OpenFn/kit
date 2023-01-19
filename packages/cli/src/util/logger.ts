@@ -20,10 +20,13 @@ const namespaces: Record<string, string> = {
 
 export const createLogger = (
   name: string = '',
-  options: Pick<SafeOpts, 'log'>
+  options: Partial<Pick<SafeOpts, 'log' | 'logJson'>>
 ) => {
-  const logOptions = options.log || {};
+  const logOptions = options.log || { json: true };
   let level = logOptions[name] || logOptions.default || 'default';
+  if (options.logJson) {
+    logOptions.json = true;
+  }
   return actualCreateLogger(namespaces[name] || name, {
     level,
     ...logOptions,

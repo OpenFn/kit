@@ -1,16 +1,27 @@
-// Sanitize (but don't prettify) console output
-
-import { LogOptions } from './options';
+import stringify from 'fast-safe-stringify';
 
 export const SECRET = '****';
 
-// Node itself does a good job of circular references and functions
-const sanitize = (
-  item: any,
-  _options: Pick<LogOptions, 'sanitizePaths'> = {}
-) => {
-  // TODO what if the object contains functions?
-  if (typeof item !== 'string') {
+type SanitizeOptions = {
+  stringify?: boolean; // true by default
+
+  sanitizePaths?: string[]; // unimplemented
+};
+
+// Sanitize console output
+const sanitize = (item: any, options: SanitizeOptions = {}) => {
+  // Stringify output to ensure we show deep nesting
+  const maybeStringify = (o: any) =>
+    options.stringify === false ? o : stringify(o);
+
+  if (item instanceof Error) {
+    return item.toString();
+  }
+
+  if (
+    Array.isArray(item) ||
+    (isNaN(item) && item && typeof item !== 'string')
+  ) {
     const obj = item as Record<string, unknown>;
     if (obj && obj.configuration) {
       // This looks sensitive, so let's sanitize it
@@ -18,14 +29,13 @@ const sanitize = (
       for (const k in obj.configuration) {
         configuration[k] = SECRET;
       }
-      const cleaned = {
+      const cleaned = maybeStringify({
         ...obj,
         configuration,
-      };
+      });
       return cleaned;
     }
-    // TODO I am less sure how to handle non-state objects
-    // I guess we just handle user provided json paths?
+    return maybeStringify(obj);
   }
   return item;
 };
