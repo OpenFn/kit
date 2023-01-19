@@ -132,7 +132,6 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       return result;
     } catch (e) {
       log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
-      console.log(e);
     }
   }
 

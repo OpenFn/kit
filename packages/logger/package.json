@@ -29,6 +29,7 @@
   "dependencies": {
     "@inquirer/confirm": "0.0.28-alpha.0",
     "chalk": "^5.1.2",
+    "fast-safe-stringify": "^2.1.1",
     "figures": "^5.0.0"
   },
   "devDependencies": {

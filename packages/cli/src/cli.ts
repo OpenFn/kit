@@ -23,6 +23,10 @@ export const cmd = yargs(hideBin(process.argv))
     description: 'Set the default log level to none, default, info or debug',
     array: true,
   })
+  .option('log-json', {
+    description: 'Output all logs as JSON objects',
+    boolean: true,
+  })
   .example('openfn execute help', 'Show documentation for the execute command')
   .example(
     'openfn docs @openfn/language-common each',

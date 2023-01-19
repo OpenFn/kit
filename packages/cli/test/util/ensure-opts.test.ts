@@ -186,6 +186,40 @@ test('preserve expand', (t) => {
   t.false(opts.expand);
 });
 
+test('preserve logJson', (t) => {
+  const initialOpts = {
+    logJson: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+});
+
+test('default logJson to true if env var is set', (t) => {
+  process.env.OPENFN_LOG_JSON = 'true';
+
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+  delete process.env.OPENFN_LOG_JSON;
+});
+
+test('logJson argument overrides env var', (t) => {
+  process.env.OPENFN_LOG_JSON = 'true';
+
+  const initialOpts = {
+    logJson: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.false(opts.logJson);
+  delete process.env.OPENFN_LOG_JSON;
+});
+
 test('preserve specifier', (t) => {
   const initialOpts = {
     specifier: '@openfn/language-common@1.0.0',

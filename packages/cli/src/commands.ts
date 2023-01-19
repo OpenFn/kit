@@ -32,6 +32,7 @@ export type Opts = {
   immutable?: boolean;
   jobPath?: string;
   log?: string[];
+  logJson?: boolean;
   noCompile?: boolean;
   strictOutput?: boolean; // defaults to true
   outputPath?: string;
@@ -56,7 +57,8 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
-  version: async (_opts: SafeOpts, logger: Logger) => printVersions(logger),
+  version: async (opts: SafeOpts, logger: Logger) =>
+    printVersions(logger, opts),
 };
 
 export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {

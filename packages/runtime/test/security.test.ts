@@ -59,7 +59,7 @@ test.serial('jobs should not have a process object', async (t) => {
   const { message, level } = logger._parse(errLog);
 
   t.is(level, 'error');
-  t.is((message as Error).message, 'process is not defined');
+  t.regex(message, /process is not defined/);
 });
 
 test.serial(
@@ -76,10 +76,9 @@ test.serial(
     const { message, level } = logger._parse(errLog);
 
     t.is(level, 'error');
-    t.is(
-      (message as Error).message,
-      'The "callback" argument must be of type function. Received type string (\'hacking ur scriptz\')'
-    );
+    t.regex(message, /ERR_INVALID_ARG_TYPE/);
+    t.regex(message, /The "callback" argument must be of type function/);
+    t.regex(message, /Received type string \('hacking ur scriptz'\)/);
   }
 );
 
