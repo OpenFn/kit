@@ -47,7 +47,7 @@ jobs:
           command: openfn test --log info
       - run:
           name: Run integration test suite
-          command: pnpm test
+          command: pnpm test:integration
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
