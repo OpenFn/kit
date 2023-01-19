@@ -101,6 +101,10 @@ export default function ensureOpts(
     newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;
   };
 
+  if (opts.useAdaptorsMonorepo) {
+    newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
+  }
+
   let baseDir = basePath;
   if (basePath.endsWith('.js')) {
     baseDir = path.dirname(basePath);

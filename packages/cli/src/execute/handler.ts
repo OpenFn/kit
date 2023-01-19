@@ -10,7 +10,7 @@ import validateAdaptors from '../util/validate-adaptors';
 export const getAutoinstallTargets = (
   options: Pick<Opts, 'adaptors' | 'autoinstall'>
 ) => {
-  if (options.autoinstall && options.adaptors) {
+  if (options.adaptors) {
     return options.adaptors?.filter((a) => !/=/.test(a));
   }
   return [];
@@ -21,11 +21,17 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
 
   await validateAdaptors(options, logger);
 
-  const autoInstallTargets = getAutoinstallTargets(options);
-  if (autoInstallTargets.length) {
-    const { repoDir } = options;
-    logger.info('Auto-installing language adaptors');
-    await install({ packages: autoInstallTargets, repoDir }, logger);
+  const { repoDir, monorepoPath, autoinstall } = options;
+  if (autoinstall) {
+    if (monorepoPath) {
+      logger.warn('Skipping auto-install as monorepo is being used');
+    } else {
+      const autoInstallTargets = getAutoinstallTargets(options);
+      if (autoInstallTargets.length) {
+        logger.info('Auto-installing language adaptors');
+        await install({ packages: autoInstallTargets, repoDir }, logger);
+      }
+    }
   }
 
   const state = await loadState(options, logger);

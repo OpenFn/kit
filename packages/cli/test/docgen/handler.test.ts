@@ -5,11 +5,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import mockfs from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import docsHandler, {
-  DocGenFn,
-  ensurePath,
-  TIMEOUT_MS,
-} from '../../src/docgen/handler';
+import docsHandler, { DocGenFn, ensurePath } from '../../src/docgen/handler';
 
 const logger = createMockLogger();
 
