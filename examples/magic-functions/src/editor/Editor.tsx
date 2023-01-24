@@ -57,6 +57,8 @@ type Dhis2Data = {
 
   /** Tracked instance id */
   trackedEntityInstance?: string;
+
+  trackedEntityType?: string;
 };
 
 declare module '@openfn/language-dhis2' {
@@ -66,7 +68,8 @@ declare module '@openfn/language-dhis2' {
   * @constructor
   * @param {string} resourceType - Type of resource to create.
   * @param {Dhis2Data} data - Data that will be used to create a given instance of resource.
-  * @paramLookup data.orgUnit $.entities[0].entities[*]
+  * @paramLookup data.orgUnit $.orgUnits[*]
+  * @paramLookup data.trackedEntityType $.trackedEntityTypes[*]
   * @param {Object} [options] - Optional options to define URL parameters via params.
   * @param {function} [callback] - Optional callback to handle the response
   * @returns {Operation}
@@ -264,32 +267,43 @@ const getCompletionProvider = (monaco) => ({
     const nameRe = new RegExp(`^${param.name}`);
 
     // TODO there may be many matching lookups for an object definition (dhis2)
-    const lookup = help.items[0].tags.find(({ name, text }) => {
+    const lookups = help.items[0].tags.filter(({ name, text }) => {
       if (name.toLowerCase() == "paramlookup") {
         return nameRe.test(text[0].text);
       }
     });
-
-    if (lookup) {
+    console.log(lookups)
+    if (lookups.length) {
       // If looking up inside an object, this gets quite complicated
       // Am I looking for property names or property values right now?
       // My path inside the object could affect both lookups
       // If the name nas a . in it, it's a path
-
       let isPropertyValue;
-      const [name, ...expr] = lookup.text[0].text.split(/\s/)
-      if (name.match(/\./)) {
-        // the lookup is in a path
-        const parts = name.split('.')
-        parts.shift(); // first part is the parameter name, so ignore it
-        const left = findLeftPropertyName();
-        if (left != parts[0]) {
-          return;
+      const left = findLeftPropertyName();
+      let expression;
+
+      // Check all the matching lookups to find the appropriate one
+      // This is complicated because we may be inside an object definition with lookup values
+      lookups.find((l: string) => {
+        const [name, ...e] = l.text[0].text.split(/\s/)
+        if (name.match(/\./)) {
+          // the lookup is in a path
+          const parts = name.split('.')
+          parts.shift(); // first part is the parameter name, so ignore it
+          if (parts[0] === left) {
+            isPropertyValue = true;
+            expression = e.join(' ');
+            return true;
+          }
+        } else {
+          expression = e.join(' ');
+          return true;
         }
-        isPropertyValue = true;
+      });
+      if (!expression) {
+        return;
       }
-      // This is all a bit flaky
-      const expression = expr.join(" ")
+
       // Parse this function call's arguments and map any values we have
       const args = extractArguments(help, model);
       // Check the query expression for any placeholders (of the form arg.name)
