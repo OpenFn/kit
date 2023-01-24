@@ -2,19 +2,16 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Monaco from "@monaco-editor/react";
 import type { EditorProps as MonacoProps } from  "@monaco-editor/react/lib/types";
 
-import meta from '../metadata.json' assert { type: 'json'};
+import meta from '../metadata-dhis2.json' assert { type: 'json'};
 import jp from 'jsonpath'
 
-// type X = {
-//   name: string;
-//   age: number;
-// }
+const code = `import { create } from '@openfn/language-dhis2';
 
-// const x: X = {  }
+create('trackedEntityInstance',  {  })`;
 
-const code = `import { upsert } from '@openfn/language-salesforce';
+// const code = `import { upsert } from '@openfn/language-salesforce';
 
-upsert()`;
+// upsert()`;
 
 // const code = `import { upsert } from '@openfn/language-salesforce';
 
@@ -28,7 +25,7 @@ upsert()`;
 
 // Provide a fake dts for salesforce
 // This is copied from adaptors, but looks a but sus!
-const dts = `
+const dts_upsert = `
 declare module '@openfn/language-salesforce' {
   /**
    * Upsert an object.
@@ -44,11 +41,38 @@ declare module '@openfn/language-salesforce' {
    * @param {String} externalId - ID.
    * @paramLookup externalId $.entities[?(@.name=="{{args.sObject}}")].entities[?(@.meta.externalId)].name
    * @param {Object} attrs - Field attributes for the new object.
-   * @param {State} state - Runtime state.
    * @paramLookup attrs $.entities[?(@.name=="{{args.sObject}}")].entities[?(!@.meta.externalId)]
+   * @param {State} state - Runtime state.
    * @returns {Operation}
    */
   export function upsert(sObject: string, externalId: string, attrs?: object, state?: any): Operation;
+}
+`
+
+const dts_create = `
+// TODO let's pretend that the adaptor ships this type definition
+type Dhis2Data = {
+  /** The id of an organisation unit */
+  orgUnit?: string;
+
+  /** Tracked instance id */
+  trackedEntityInstance?: string;
+};
+
+declare module '@openfn/language-dhis2' {
+ /**
+  * Create a record
+  * @public
+  * @constructor
+  * @param {string} resourceType - Type of resource to create.
+  * @param {Dhis2Data} data - Data that will be used to create a given instance of resource.
+  * @paramLookup data.orgUnit $.entities[0].entities[*]
+  * @param {Object} [options] - Optional options to define URL parameters via params.
+  * @param {function} [callback] - Optional callback to handle the response
+  * @returns {Operation}
+  * 
+  */
+ export function create(resourceType: string, data: Dhis2Data, options = {}, callback = false): Operation;
 }
 `
 const options: MonacoProps['options'] = {
@@ -82,11 +106,47 @@ const query = (jsonPath:string) => ensureArray(jp.query(meta, jsonPath));
 
 // Run a jsonpath query and return the results
 const lookupTextSuggestions = (jsonPath:string) => {
-  const suggestions = query(jsonPath).map((s:string) => ({
-    label: `"${s}"`,
-    kind: monaco.languages.CompletionItemKind.Text,
-    insertText: `"${s}"`
-  }));
+  const suggestions = query(jsonPath).map((s:string) => {
+    let label;
+    let insertText;
+    if (typeof s  === 'string') {
+      insertText = label = `"${s}"`;
+    } else {
+      label = s.label || s.name;
+      insertText = `"${s.name}"`; // presumptuous - need a better system for this
+    }
+    return ({
+      label,
+      kind: monaco.languages.CompletionItemKind.Text,
+      insertText,
+    })
+  });
+
+  return {
+    // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
+    suggestions
+  }
+}
+
+const lookupValueSuggestions = (jsonPath:string) => {
+  const suggestions = query(jsonPath).map((s:string) => {
+    let label;
+    let insertText;
+    if (typeof s  === 'string') {
+      insertText = label = `"${s}"`;
+    } else {
+      label = s.label || s.name;
+      // For DHIS2 it might be nice to comment in the original value
+      // is this a user preferece? Language preference? Should we always do this?
+      insertText = `"${s.name}" /*${s.label}*/`; // presumptuous - need a better system for this
+    }
+    return ({
+      label,
+      kind: monaco.languages.CompletionItemKind.Value,
+      insertText,
+      detail: s.label ? s.name : ''
+    })
+  });
 
   return {
     // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html
@@ -95,6 +155,7 @@ const lookupTextSuggestions = (jsonPath:string) => {
 }
 
 const lookupPropertySuggestions = (jsonPath: string) => {
+  console.log('property suggest')
   const suggestions = query(jsonPath).map((prop: object) => {
     return {
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html#kind
@@ -153,6 +214,24 @@ const replacePlaceholders = (args, expression) => {
 
 const getCompletionProvider = (monaco) => ({
 	provideCompletionItems: async function (model, position, context) {
+    const offset = model.getOffsetAt(position);
+
+    // This really rough and inefficient function scans left for the
+    // first word it can find. This may or may not be an actual property name
+    const findLeftPropertyName = () => {
+      let pos = offset;
+      let word;
+      while (pos > 0 && !word) {
+        word = model.getWordAtPosition(model.getPositionAt(pos));
+        if (word) {
+          console.log('word: ', word)
+          return word.word
+        }
+        pos  -=1
+      }
+
+    }
+
     // model is ITextModel
     // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ITextModel.html
 
@@ -166,21 +245,51 @@ const getCompletionProvider = (monaco) => ({
     // const def = await worker.getDefinitionAtPosition('file:///job.js', model.getOffsetAt(position))
     // console.log(def);
 
+    
+    // How can I get the syntactic context of the cursor position?
+    // const info = await worker.getQuickInfoAtPosition('file:///job.js', model.getOffsetAt(position))
+    // if (info) {
+    //   console.log('info', info)
+    //   // if we're on a symbol already, don't bother to sugges anything (?)
+    //   return;
+    // }
+
     // This API gives us details about parameters defined in the signature AND gives us context
-    const help = await worker.getSignatureHelpItems('file:///job.js', model.getOffsetAt(position))
-
+    const help = await worker.getSignatureHelpItems('file:///job.js', offset)
+    console.log(help)
+  
     const param = help.items[0].parameters[help.argumentIndex]
-
+    
     // Check the lookup rule for this paramter
     const nameRe = new RegExp(`^${param.name}`);
+
+    // TODO there may be many matching lookups for an object definition (dhis2)
     const lookup = help.items[0].tags.find(({ name, text }) => {
-      if (name == "paramLookup") {
+      if (name.toLowerCase() == "paramlookup") {
         return nameRe.test(text[0].text);
       }
     });
 
     if (lookup) {
-      const [_name, expression] = lookup.text[0].text.split(nameRe)
+      // If looking up inside an object, this gets quite complicated
+      // Am I looking for property names or property values right now?
+      // My path inside the object could affect both lookups
+      // If the name nas a . in it, it's a path
+
+      let isPropertyValue;
+      const [name, ...expr] = lookup.text[0].text.split(/\s/)
+      if (name.match(/\./)) {
+        // the lookup is in a path
+        const parts = name.split('.')
+        parts.shift(); // first part is the parameter name, so ignore it
+        const left = findLeftPropertyName();
+        if (left != parts[0]) {
+          return;
+        }
+        isPropertyValue = true;
+      }
+      // This is all a bit flaky
+      const expression = expr.join(" ")
       // Parse this function call's arguments and map any values we have
       const args = extractArguments(help, model);
       // Check the query expression for any placeholders (of the form arg.name)
@@ -189,9 +298,15 @@ const getCompletionProvider = (monaco) => ({
       if (finalExpression) {
         // This is a real kludge - if this looks like an object type, use a different builder function
         const { text, kind } = param.displayParts.at(-1)
+        
+        if (isPropertyValue) {
+          return lookupValueSuggestions(finalExpression);  
+        }
+
         if ( kind === 'keyword' && text === 'object') {
           return lookupPropertySuggestions(finalExpression);  
         }
+
         return lookupTextSuggestions(finalExpression);
       }
     }
@@ -214,7 +329,7 @@ const Editor = () => {
       noLib: true,
     });
 
-    monaco.languages.typescript.javascriptDefaults.setExtraLibs([{ content: dts }]);
+    monaco.languages.typescript.javascriptDefaults.setExtraLibs([{ content: dts_create }]);
   }, []);
 
   return (<Monaco

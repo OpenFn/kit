@@ -1,0 +1,29 @@
+{
+  "datasource": "dhis2",
+  "entities": [
+    {
+      "name": "orgUnits",
+      "meta": {},
+      "entities": [
+        {
+          "name": "Rp268JB6Ne4",
+          "label": "Adonkia CHP",
+          "meta": {},
+          "entities": []
+        },
+        {
+          "name": "cDw53Ej8rju",
+          "label": "Afro Arab Clinic",
+          "meta": {},
+          "entities": []
+        },
+        {
+          "name": "GvFqTavdpGE",
+          "label": "Agape CHP",
+          "meta": {},
+          "entities": []
+        }
+      ]
+    }
+  ]
+}
