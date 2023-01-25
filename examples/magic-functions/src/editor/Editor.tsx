@@ -5,9 +5,40 @@ import type { EditorProps as MonacoProps } from  "@monaco-editor/react/lib/types
 import meta from '../metadata-dhis2.json' assert { type: 'json'};
 import jp from 'jsonpath'
 
+
+type Y = {
+  jam: string
+}
+
+type X = {
+  /** blah */
+  a: string;
+  y?: Y[]
+}
+
+const obj: X = {
+  a: "jam",
+  y: [{ jam: 'jar' }]
+}
+
 const code = `import { create } from '@openfn/language-dhis2';
 
-create('trackedEntityInstance',  {  })`;
+// hello world
+const obj: X = {
+  a: "jam",
+  y: [{  }]
+}
+const jam = 'jar';
+
+create('trackedEntityInstance',  {});
+
+create('trackedEntityInstance',  { 
+    orgUnit: "Rp268JB6Ne4",
+    attributes: [{
+
+    }]
+ })
+ `;
 
 // const code = `import { upsert } from '@openfn/language-salesforce';
 
@@ -22,6 +53,12 @@ create('trackedEntityInstance',  {  })`;
 // upsert("vera__Beneficiary__c", "vera__GHI_ID_Number__c", {
 
 // });`
+
+const dts_env = `
+// hacks to remove undefined and globalThis from code suggest
+// https://github.com/microsoft/monaco-editor/issues/2018
+declare module undefined 
+`
 
 // Provide a fake dts for salesforce
 // This is copied from adaptors, but looks a but sus!
@@ -49,12 +86,34 @@ declare module '@openfn/language-salesforce' {
 }
 `
 
-const dts_create = `
 // TODO let's pretend that the adaptor ships this type definition
+const dts_create = `
+// TODO are attributes bound to anything, like a particular org id or entity type?
+type Dhis2Attribute = {
+  
+  /**
+   * The attribute id
+   * @lookup $.attributes[*]
+   */
+  attribute: string;
+
+  value: any;
+}
+
+type Y = {
+  jam: string
+}
+
+type X = {
+  /** blah */
+  a: string;
+  y?: Y[]
+}
+
 type Dhis2Data = {
   /**
    * The id of an organisation unit
-   * @lookup data.orgUnit $.orgUnits[*]
+   * @lookup $.orgUnits[*]
    */
   orgUnit?: string;
 
@@ -65,9 +124,14 @@ type Dhis2Data = {
 
   /**
    * Tracked instance type
-   * @lookup data.trackedEntityType $.trackedEntityTypes[*]
+   * @lookup $.trackedEntityTypes[*]
    */
   trackedEntityType?: string;
+
+  /**
+   * List of attributes
+   */
+  attributes?: Dhis2Attribute[];
 };
 
 declare module '@openfn/language-dhis2' {
@@ -100,14 +164,19 @@ const options: MonacoProps['options'] = {
   overviewRulerBorder: false,
 
   codeLens: false,
-  wordBasedSuggestions: false,
-
-  parameterHints: {
-    enabled: false
-  },
+  
+  wordBasedSuggestions: false, 
+  
+  // parameterHints: {
+  //   enabled: false
+  // },
   suggest: {
     // Hide keywords
     showKeywords: false,
+    showModules: false, // hides global this
+    showFiles: false, // This hides property names ??
+    // showProperties: false, // seems to hide consts but show properties??
+
   }
 };
 
@@ -130,6 +199,8 @@ const lookupTextSuggestions = (jsonPath:string) => {
       label,
       kind: monaco.languages.CompletionItemKind.Text,
       insertText,
+      // Boost this up the autocomplete list
+      sortText: `00-${label}`
     })
   });
 
@@ -155,7 +226,9 @@ const lookupValueSuggestions = (jsonPath:string) => {
       label,
       kind: monaco.languages.CompletionItemKind.Value,
       insertText,
-      detail: s.label ? s.name : ''
+      detail: s.label ? s.name : '',
+      // Boost this up the autocomplete list
+      sortText: `00-${label}`
     })
   });
 
@@ -166,14 +239,16 @@ const lookupValueSuggestions = (jsonPath:string) => {
 }
 
 const lookupPropertySuggestions = (jsonPath: string) => {
-  console.log('property suggest')
   const suggestions = query(jsonPath).map((prop: object) => {
+    const label = `${prop.label || prop.name}`;
     return {
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItem.html#kind
-      label: `${prop.label || prop.name}`,
+      label,
       kind: monaco.languages.CompletionItemKind.Property,
       insertText: `"${prop.name}":`,
-      detail: `${prop.name} (${prop.datatype})`
+      detail: `${prop.name} (${prop.datatype})`,
+      // Boost this up the autocomplete list
+      sortText: `00-${label}`
     };
   });
 
@@ -228,36 +303,38 @@ const replacePlaceholders = (args, expression) => {
 const getParameterValueLookup = async (worker, model, offset) => {
   const help = await worker.getSignatureHelpItems('file:///job.js', offset)
 
-  const param = help.items[0].parameters[help.argumentIndex]
-  console.log(param)
+  if (help && help.items.length) {
+    const param = help.items[0].parameters[help.argumentIndex]
+    console.log(param)
 
-  if (param) {
-    // Check the lookup rule for this paramter
-    const nameRe = new RegExp(`^${param.name}`);
-    const lookup = help.items[0].tags.find(({ name, text }) => {
-      if (name.toLowerCase() == "paramlookup") {
-        return nameRe.test(text[0].text);
-      }
-    });
-    if (lookup) {
-      // Check all the matching lookups to find the appropriate one
-      // This is complicated because we may be inside an object definition with lookup values
-      const [_name, ...e] = lookup.text[0].text.split(/\s/)
-      const expression = e.join(' ');
-      console.log(expression)
-      // Parse this function call's arguments and map any values we have
-      // Check the query expression for any placeholders (of the form arg.name)
-      // If we have a valid expression, run it and return whatever results we get!
-      const args = extractArguments(help, model);
-      const finalExpression = replacePlaceholders(args, expression).trim()
+    if (param) {
+      // Check the lookup rule for this paramter
+      const nameRe = new RegExp(`^${param.name}`);
+      const lookup = help.items[0].tags.find(({ name, text }) => {
+        if (name.toLowerCase() == "paramlookup") {
+          return nameRe.test(text[0].text);
+        }
+      });
+      if (lookup) {
+        // Check all the matching lookups to find the appropriate one
+        // This is complicated because we may be inside an object definition with lookup values
+        const [_name, ...e] = lookup.text[0].text.split(/\s/)
+        const expression = e.join(' ');
+        console.log(expression)
+        // Parse this function call's arguments and map any values we have
+        // Check the query expression for any placeholders (of the form arg.name)
+        // If we have a valid expression, run it and return whatever results we get!
+        const args = extractArguments(help, model);
+        const finalExpression = replacePlaceholders(args, expression).trim()
+        
+        const { text, kind } = param.displayParts.at(-1)
+        if (kind === 'keyword' && text === 'object') {
+          // TODO I still wonder if we're better off generating a dts for this
+          return lookupPropertySuggestions(finalExpression);  
+        }
       
-      const { text, kind } = param.displayParts.at(-1)
-      if (kind === 'keyword' && text === 'object') {
-        // TODO I still wonder if we're better off generating a dts for this
-        return lookupPropertySuggestions(finalExpression);  
+        return lookupTextSuggestions(finalExpression);
       }
-    
-      return lookupTextSuggestions(finalExpression);
     }
   }
 }
@@ -269,24 +346,24 @@ const getParameterValueLookup = async (worker, model, offset) => {
 // (this will even work outside of the signature if there's a type definition)
 const getPropertyValueLookup = async (worker, model, offset) => {
   // find the word to the left
-  const pos = findLeftPropertyOffset(model, offset);
+  const pos = findleftWord(model, offset);
   if (pos) {
     const info = await worker.getQuickInfoAtPosition('file:///job.js', pos)
-    console.log(info);
-    if (info?.kind === 'property') {
+    if (info?.kind === 'property' && info.tags) {
       const lookup = info.tags.find(({ name }) => name === 'lookup')
       if (lookup) {
-        console.log(lookup)
-        const [name, ...expr] = lookup.text[0].text.split(/\s/)
+        const path = lookup.text[0].text;
         // TODO - swap out placeholders
-        return lookupValueSuggestions(expr.join());  
+        return lookupValueSuggestions(path);
       }
     }
   }
 
 }
 
-const findLeftPropertyOffset = (model, offset: number) => {
+// Find the word to the left of the offset
+// TODO: this should abort if it hits a closing delimiter ]})
+const findleftWord = (model, offset: number) => {
   let pos = offset;
   let word;
   while (pos > 0 && !word) {
@@ -332,7 +409,7 @@ const Editor = () => {
       noLib: true,
     });
 
-    monaco.languages.typescript.javascriptDefaults.setExtraLibs([{ content: dts_create }]);
+    monaco.languages.typescript.javascriptDefaults.setExtraLibs([{ content: dts_env }, { content: dts_create }]);
   }, []);
 
   return (<Monaco
