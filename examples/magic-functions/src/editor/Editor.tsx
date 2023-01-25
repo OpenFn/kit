@@ -52,12 +52,21 @@ declare module '@openfn/language-salesforce' {
 const dts_create = `
 // TODO let's pretend that the adaptor ships this type definition
 type Dhis2Data = {
-  /** The id of an organisation unit */
+  /**
+   * The id of an organisation unit
+   * @lookup data.orgUnit $.orgUnits[*]
+   */
   orgUnit?: string;
 
-  /** Tracked instance id */
+  /**
+   * Tracked instance id
+   */
   trackedEntityInstance?: string;
 
+  /**
+   * Tracked instance type
+   * @lookup data.trackedEntityType $.trackedEntityTypes[*]
+   */
   trackedEntityType?: string;
 };
 
@@ -67,9 +76,8 @@ declare module '@openfn/language-dhis2' {
   * @public
   * @constructor
   * @param {string} resourceType - Type of resource to create.
+  * @paramlookup resourceType $.resourceTypes[*]
   * @param {Dhis2Data} data - Data that will be used to create a given instance of resource.
-  * @paramLookup data.orgUnit $.orgUnits[*]
-  * @paramLookup data.trackedEntityType $.trackedEntityTypes[*]
   * @param {Object} [options] - Optional options to define URL parameters via params.
   * @param {function} [callback] - Optional callback to handle the response
   * @returns {Operation}
@@ -203,7 +211,6 @@ const replacePlaceholders = (args, expression) => {
         newExpression = newExpression.replace(q, val)
         return true;
       }
-      // Flag that somethingwent weont
       return false;
     });
     if (allOk) {
@@ -215,117 +222,99 @@ const replacePlaceholders = (args, expression) => {
   return expression;
 };
 
-const getCompletionProvider = (monaco) => ({
-	provideCompletionItems: async function (model, position, context) {
-    const offset = model.getOffsetAt(position);
 
-    // This really rough and inefficient function scans left for the
-    // first word it can find. This may or may not be an actual property name
-    const findLeftPropertyName = () => {
-      let pos = offset;
-      let word;
-      while (pos > 0 && !word) {
-        word = model.getWordAtPosition(model.getPositionAt(pos));
-        if (word) {
-          console.log('word: ', word)
-          return word.word
-        }
-        pos  -=1
-      }
+// find lookups for a parameter based on its lookup
+// (this is basically the original logic)
+const getParameterValueLookup = async (worker, model, offset) => {
+  const help = await worker.getSignatureHelpItems('file:///job.js', offset)
 
-    }
+  const param = help.items[0].parameters[help.argumentIndex]
+  console.log(param)
 
-    // model is ITextModel
-    // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ITextModel.html
-
-    const workerFactory = await monaco.languages.typescript.getJavaScriptWorker();
-    const worker = await workerFactory();
-    // console.log(worker)
-
-    // So if we're on a function, this will return a definition
-    // Tells us the container (@openfn/language-salesforce) and kind (function)
-    // Sadly this is useless right now!!
-    // const def = await worker.getDefinitionAtPosition('file:///job.js', model.getOffsetAt(position))
-    // console.log(def);
-
-    
-    // How can I get the syntactic context of the cursor position?
-    // const info = await worker.getQuickInfoAtPosition('file:///job.js', model.getOffsetAt(position))
-    // if (info) {
-    //   console.log('info', info)
-    //   // if we're on a symbol already, don't bother to sugges anything (?)
-    //   return;
-    // }
-
-    // This API gives us details about parameters defined in the signature AND gives us context
-    const help = await worker.getSignatureHelpItems('file:///job.js', offset)
-    console.log(help)
-  
-    const param = help.items[0].parameters[help.argumentIndex]
-    
+  if (param) {
     // Check the lookup rule for this paramter
     const nameRe = new RegExp(`^${param.name}`);
-
-    // TODO there may be many matching lookups for an object definition (dhis2)
-    const lookups = help.items[0].tags.filter(({ name, text }) => {
+    const lookup = help.items[0].tags.find(({ name, text }) => {
       if (name.toLowerCase() == "paramlookup") {
         return nameRe.test(text[0].text);
       }
     });
-    console.log(lookups)
-    if (lookups.length) {
-      // If looking up inside an object, this gets quite complicated
-      // Am I looking for property names or property values right now?
-      // My path inside the object could affect both lookups
-      // If the name nas a . in it, it's a path
-      let isPropertyValue;
-      const left = findLeftPropertyName();
-      let expression;
-
+    if (lookup) {
       // Check all the matching lookups to find the appropriate one
       // This is complicated because we may be inside an object definition with lookup values
-      lookups.find((l: string) => {
-        const [name, ...e] = l.text[0].text.split(/\s/)
-        if (name.match(/\./)) {
-          // the lookup is in a path
-          const parts = name.split('.')
-          parts.shift(); // first part is the parameter name, so ignore it
-          if (parts[0] === left) {
-            isPropertyValue = true;
-            expression = e.join(' ');
-            return true;
-          }
-        } else {
-          expression = e.join(' ');
-          return true;
-        }
-      });
-      if (!expression) {
-        return;
-      }
-
+      const [_name, ...e] = lookup.text[0].text.split(/\s/)
+      const expression = e.join(' ');
+      console.log(expression)
       // Parse this function call's arguments and map any values we have
-      const args = extractArguments(help, model);
       // Check the query expression for any placeholders (of the form arg.name)
-      const finalExpression = replacePlaceholders(args, expression).trim()
       // If we have a valid expression, run it and return whatever results we get!
-      if (finalExpression) {
-        // This is a real kludge - if this looks like an object type, use a different builder function
-        const { text, kind } = param.displayParts.at(-1)
-        
-        if (isPropertyValue) {
-          return lookupValueSuggestions(finalExpression);  
-        }
+      const args = extractArguments(help, model);
+      const finalExpression = replacePlaceholders(args, expression).trim()
+      
+      const { text, kind } = param.displayParts.at(-1)
+      if (kind === 'keyword' && text === 'object') {
+        // TODO I still wonder if we're better off generating a dts for this
+        return lookupPropertySuggestions(finalExpression);  
+      }
+    
+      return lookupTextSuggestions(finalExpression);
+    }
+  }
+}
 
-        if ( kind === 'keyword' && text === 'object') {
-          return lookupPropertySuggestions(finalExpression);  
-        }
-
-        return lookupTextSuggestions(finalExpression);
+// find lookups for an object
+// this is the new stuff for dhis2
+// This is quite robust now: find the symbol to the left, if it's a property,
+// try to finda  matching lookup
+// (this will even work outside of the signature if there's a type definition)
+const getPropertyValueLookup = async (worker, model, offset) => {
+  // find the word to the left
+  const pos = findLeftPropertyOffset(model, offset);
+  if (pos) {
+    const info = await worker.getQuickInfoAtPosition('file:///job.js', pos)
+    console.log(info);
+    if (info?.kind === 'property') {
+      const lookup = info.tags.find(({ name }) => name === 'lookup')
+      if (lookup) {
+        console.log(lookup)
+        const [name, ...expr] = lookup.text[0].text.split(/\s/)
+        // TODO - swap out placeholders
+        return lookupValueSuggestions(expr.join());  
       }
     }
+  }
 
-    return { suggestions: [] };
+}
+
+const findLeftPropertyOffset = (model, offset: number) => {
+  let pos = offset;
+  let word;
+  while (pos > 0 && !word) {
+    word = model.getWordAtPosition(model.getPositionAt(pos));
+    if (word) {
+      console.log('word: ', word)
+      return pos;
+    }
+    pos  -=1
+  }
+}
+
+const getCompletionProvider = (monaco) => ({
+  // model is ITextModel
+  // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ITextModel.html
+	provideCompletionItems: async function (model, position, context) {
+    const offset = model.getOffsetAt(position);
+
+
+    const workerFactory = await monaco.languages.typescript.getJavaScriptWorker();
+    const worker = await workerFactory();
+
+    
+    let suggestions = await getPropertyValueLookup(worker, model, offset);
+    if (!suggestions) {
+      suggestions = await getParameterValueLookup(worker, model, offset)
+    }
+    return suggestions;
 	}
 });
 
