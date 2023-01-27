@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 
-import meta from '../metadata.json' assert { type: 'json'};
+import meta from '../editor/data/metadata-salesforce.json' assert { type: 'json'};
 
 const Entity = ({ data }) => {
 
@@ -9,24 +9,24 @@ const Entity = ({ data }) => {
       {data.name}
       {data.datatype && <i>({data.datatype})</i>}
     </div>
-    {data.entities && 
-      <ul>{data.entities.map((e) => <Entity data={e} key={e.name}  />)}</ul>
+    {data.children && 
+      <ul>{data.children.map((e) => <Entity data={e} key={e.name}  />)}</ul>
     }
   </li>
 }
 
 export default () => {
   const [filter, setFilter] = useState({ hideSystem: true });
-  const [data, setData] = useState({ datasource: '', entities: [] });
+  const [data, setData] = useState({ children: [] });
 
   const update = useCallback(() => {
-    const filtered = meta.entities.filter((e) => {
+    const filtered = meta.children.filter((e) => {
       if (filter.hideSystem) {
-        return !e.system;
+        return !e.meta.system;
       }
       return true;
     })
-    setData({ ...meta, entities: filtered });
+    setData({ ...meta, children: filtered });
   }, [filter]);
 
   const toggleSystem = useCallback((evt) => {
@@ -38,13 +38,13 @@ export default () => {
   
   return (
     <>
-      <h1>{data.datasource}</h1>
+      <h1>{data.name}</h1>
       <p>
         <input type="checkbox" onChange={toggleSystem} />
-        Show system entities
+        Show system children
       </p>
-      <p>{data.entities.length} entities:</p>
-      <ul>{data.entities.map((e) => <Entity data={e} key={e.name} />)}</ul>
+      <p>{data.children.length} children:</p>
+      <ul>{data.children.map((e) => <Entity data={e} key={e.name} />)}</ul>
     </>
   )
 }
