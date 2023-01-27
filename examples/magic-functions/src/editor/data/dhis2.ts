@@ -5,7 +5,7 @@ type Dhis2Attribute = {
   
   /**
    * The attribute id
-   * @lookup $.attributes[*]
+   * @lookup $.children.attributes[*]
    */
   attribute: string;
 
@@ -15,7 +15,7 @@ type Dhis2Attribute = {
 type Dhis2Data = {
   /**
    * The id of an organisation unit
-   * @lookup $.orgUnits[*]
+   * @lookup $.children.orgUnits[*]
    */
   orgUnit?: string;
 
@@ -26,7 +26,7 @@ type Dhis2Data = {
 
   /**
    * Tracked instance type
-   * @lookup $.trackedEntityTypes[*]
+   * @lookup $.children.trackedEntityTypes[*]
    */
   trackedEntityType?: string;
 
@@ -42,7 +42,7 @@ declare module '@openfn/language-dhis2' {
   * @public
   * @constructor
   * @param {string} resourceType - Type of resource to create.
-  * @paramlookup resourceType $.resourceTypes[*]
+  * @paramlookup resourceType $.children.resourceTypes[*]
   * @param {Dhis2Data} data - Data that will be used to create a given instance of resource.
   * @param {Object} [options] - Optional options to define URL parameters via params.
   * @param {function} [callback] - Optional callback to handle the response
