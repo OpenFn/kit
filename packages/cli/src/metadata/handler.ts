@@ -4,6 +4,7 @@ import loadState from '../execute/load-state';
 import cache from './cache';
 
 const metadataHandler = async (options: SafeOpts, logger: Logger) => {
+  logger.success('Generating metadata');
   const state = await loadState(options, logger);
 
   // Note that the config will be sanitised, so logging it may not be terrible helpful
@@ -25,7 +26,7 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
   // the adaptor path should now be totally set by the common cli stuff
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0]; // TODO adaptor argument is a bit dodgy, need to refactor opts
-
+  console.log(' ** ', adaptor);
   // generate a hash for the config and check state
   const id = cache.generateKey(config);
   logger.debug('config hash: ', id);
@@ -36,8 +37,10 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
   }
 
   try {
+    // TODO add better support if a path is passed into the adaptor (maybe use repo.getModuleEntryPoint )
+    let adaptorPath = adaptor.match('=') ? adaptor.split('=')[1] : adaptor;
     // Import the adaptor
-    const mod = await import(adaptor);
+    const mod = await import(adaptorPath);
     // Does it export a metadata function?
     if (mod.metadata) {
       logger.info('Metadata function found. Generating metadata...');
