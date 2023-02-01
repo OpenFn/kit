@@ -1,9 +1,0 @@
-{
-  "name": "test-repo",
-  "private": true,
-  "version": "1.0.0",
-  "dependencies": {
-    "ultimate-answer_1.0.0": "@npm:ultimate-answer@1.0.0",
-    "ultimate-answer_2.0.0": "@npm:ultimate-answer@2.0.0"
-  }
-}

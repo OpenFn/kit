@@ -8,7 +8,7 @@ import { cmd } from '../src/cli';
 import commandParser, { Opts } from '../src/commands';
 import { DEFAULT_REPO_DIR } from '../src/util/ensure-opts';
 
-const logger = createMockLogger();
+const logger = createMockLogger('', { level: 'debug' });
 
 test.afterEach(() => {
   mock.restore();
@@ -47,6 +47,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   // This is needed to ensure that pnpm dependencies can be dynamically loaded
   // (for recast in particular)
   const pnpm = path.resolve('../../node_modules/.pnpm');
+  const pkgPath = path.resolve('./package.json');
 
   // Mock the file system in-memory
   if (!options.disableMock) {
@@ -59,6 +60,8 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       '/modules/': mock.load(path.resolve('test/__modules__/'), {}),
       '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
       '/monorepo/': mock.load(path.resolve('test/__monorepo__/'), {}),
+      //'node_modules': mock.load(path.resolve('node_modules/'), {}),
+      [pkgPath]: mock.load(pkgPath),
     });
   }
 
@@ -66,6 +69,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.repoDir = options.repoDir;
 
   opts.log = ['none'];
+  opts.skipAdaptorValidation = true;
 
   await commandParser(jobPath, opts, logger);
 
@@ -80,24 +84,14 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   }
 }
 
-// Skipped because we're relying on yargs.version
-test.serial.skip('print version information with -v', async (t) => {
-  const out: string[] = [];
-  const logger = {
-    log: (m: string) => out.push(m),
-  };
-  await run('openfn -v', '', { logger, disableMock: true });
-  t.assert(out.length > 0);
-});
+test.serial('print version information with version', async (t) => {
+  await run('version', '', { logger });
 
-// Skipped because we're relying on yargs.version
-test.serial.skip('print version information with --version', async (t) => {
-  const out: string[] = [];
-  const logger = {
-    log: (m: string) => out.push(m),
-  };
-  await run('openfn --version', '', { logger, disableMock: true });
-  t.assert(out.length > 0);
+  const last = logger._parse(logger._last);
+  const message = last.message as string;
+  t.assert(message.length > 1);
+  t.regex(message, /Versions:/);
+  t.regex(message, /node.js/);
 });
 
 test.serial('run test job with default state', async (t) => {
@@ -351,23 +345,11 @@ test.serial(
 );
 
 test.serial(
-  'load an adaptor from the monorepo directly: openfn job.js --adaptors-repo /monorepo/ -a common',
-  async (t) => {
-    const job = 'export default [alterState(() => 39)]';
-    const result = await run(
-      'openfn job.js --adaptors-repo /monorepo/ -a common',
-      job
-    );
-    t.assert(result === 39);
-  }
-);
-
-test.serial.only(
-  'load an adaptor from the monorepo env var: openfn job.js -a common',
+  'load an adaptor from the monorepo env var: openfn job.js -m -a common',
   async (t) => {
     process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
     const job = 'export default [alterState(() => 39)]';
-    const result = await run('openfn job.js -a common', job);
+    const result = await run('openfn job.js -m -a common', job);
     t.assert(result === 39);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
@@ -432,7 +414,7 @@ test.serial('list should return something', async (t) => {
   await run('repo list', '', options);
 
   // Rough check of the shape of the output
-  const [pwd, installed] = logger._history;
+  const [_dir, pwd, installed] = logger._history;
   t.is(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
 
   const message = logger._parse(installed).message as string;
@@ -472,9 +454,7 @@ test.serial('docs should print documentation with full names', async (t) => {
   opts.repoDir = '/repo';
 
   await commandParser('', opts, logger);
-
-  const [_a, b, c] = logger._history;
-  const docs = logger._parse(b).message as string;
+  const docs = logger._parse(logger._history[3]).message as string;
   // match the signature
   t.regex(docs, /\#\# fn\(\)/);
   // Match usage examples
@@ -484,45 +464,76 @@ test.serial('docs should print documentation with full names', async (t) => {
     /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
   );
 
-  const { message, level } = logger._parse(c);
+  const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
   t.is(message, 'Done!');
 });
 
-test.serial('docs should print documention with shorthand names', async (t) => {
+test.serial('docs adaptor should print list operations', async (t) => {
   mock({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
+      version: '1.0.0',
       functions: [
         {
           name: 'fn',
-          parameters: [],
+          parameters: [{ name: 'a' }, { name: 'b' }],
           examples: [],
         },
       ],
     }),
   });
 
-  const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
+  const opts = cmd.parse('docs common@1.0.0') as Opts;
   opts.repoDir = '/repo';
 
   await commandParser('', opts, logger);
+  const docs = logger._parse(logger._history[3]).message as string;
+  t.notRegex(docs, /\[object Object\]/);
+  t.notRegex(docs, /\#\#\# Usage Examples/);
+  t.regex(docs, /fn\(a, b\)/);
 
-  const [_a, b, c] = logger._history;
-  const docs = logger._parse(b).message as string;
-  // match the signature
-  t.regex(docs, /\#\# fn\(\)/);
-  // Match usage examples
-  t.regex(docs, /\#\#\# Usage Examples/);
-  t.regex(
-    docs,
-    /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
-  );
-
-  const { message, level } = logger._parse(c);
+  const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
   t.is(message, 'Done!');
 });
+
+test.serial(
+  'docs adaptor + operation should print documention with shorthand names',
+  async (t) => {
+    mock({
+      '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
+        name: 'test',
+        functions: [
+          {
+            name: 'fn',
+            parameters: [],
+            examples: [],
+          },
+        ],
+      }),
+    });
+
+    const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
+    opts.repoDir = '/repo';
+
+    await commandParser('', opts, logger);
+    const docs = logger._parse(logger._history[4]).message as string;
+    // match the signature
+    t.regex(docs, /\#\# fn\(\)/);
+    // Match usage examples
+    t.regex(docs, /\#\#\# Usage Examples/);
+    t.notRegex(docs, /\[object Object\]/);
+    t.regex(
+      docs,
+      /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
+    );
+
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'success');
+    t.is(message, 'Done!');
+  }
+);
 
 // TODO - need to work out a way to test agaist stdout
 // should return to stdout

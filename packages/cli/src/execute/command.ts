@@ -14,15 +14,11 @@ const executeCommand = {
         boolean: true,
         description: 'Treat state as immutable',
       })
-      .option('adaptors-repo', {
-        string: true,
-        description:
-          'Path to the adaptors monorepo. Adaptors will be loaded from here. You can also use env var OPENFN_ADAPTORS_REPO.',
-      })
-      .option('no-adaptors-repo', {
+      .option('use-adaptors-monorepo', {
+        alias: 'm',
         boolean: true,
         description:
-          'Set to disable using the adaptors repo through the env var',
+          'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
       })
       .option('autoinstall', {
         alias: 'i',
@@ -37,6 +33,14 @@ const executeCommand = {
         alias: 'S',
         description: 'Read state from stdin (instead of a file)',
       })
+      .option('skip-adaptor-validation', {
+        boolean: true,
+        description: 'Skip adaptor validation warnings',
+      })
+      .option('timeout', {
+        alias: '-t',
+        description: 'Set the timeout duration in MS',
+      })
       .option('no-compile', {
         boolean: true,
         description: 'Skip compilation',
@@ -44,7 +48,7 @@ const executeCommand = {
       .option('no-strict-output', {
         boolean: true,
         description:
-          'Allow properties other than data to be returned in the output.',
+          'Allow properties other than data to be returned in the output',
       })
       .example(
         'openfn foo/job.js',
@@ -80,7 +84,7 @@ export const applyExecuteOptions = (yargs: yargs.Argv) =>
     .option('adaptors', {
       alias: ['a', 'adaptor'],
       description:
-        'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build.',
+        'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build',
       array: true,
     })
     .option('no-expand', {

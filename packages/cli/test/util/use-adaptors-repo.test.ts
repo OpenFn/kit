@@ -42,7 +42,8 @@ test('updatePath: common=x/y/z', (t) => {
   t.is(result, `common=x/y/z`);
 });
 
-test('validate monorepo: log and throw if repo not found', async (t) => {
+// TODO can't test this in ava, have to use an integration test
+test.skip('validate monorepo: log and exit early if repo not found', async (t) => {
   mock({
     a: {},
   });
@@ -54,8 +55,6 @@ test('validate monorepo: log and throw if repo not found', async (t) => {
   t.is(level, 'error');
   t.is(message, `ERROR: Monorepo not found at ${REPO_PATH}`);
 });
-
-test.skip('validate monorepo: log and throw if adaptor not found', () => {});
 
 test('validate monorepo: all OK', async (t) => {
   mock({

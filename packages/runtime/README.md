@@ -31,14 +31,7 @@ The runtime provides no CLI. Use packages/cli (devtools) for this.
 
 ## Experimental VM Args
 
-For the runtime to work, the parent process needs two experimental vm args to be passed:
-
-```
---experimental-vm-modules
---experimental-specifier-resolution=node
-```
-
-You may also want to pass `--no-warnings` to suppress annoying console warnings.
+For the runtime to work, the parent process needs `--experimental-vm-modules` be passed. You may also want to pass `--no-warnings` to suppress annoying console warnings.
 
 ## Building
 

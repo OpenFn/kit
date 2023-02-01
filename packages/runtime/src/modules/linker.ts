@@ -5,7 +5,7 @@
  */
 import { createMockLogger, Logger } from '@openfn/logger';
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
-import { getModulePath } from './repo';
+import { getModuleEntryPoint } from './repo';
 
 const defaultLogger = createMockLogger();
 
@@ -33,8 +33,6 @@ export type Linker = (
   options?: LinkerOptions
 ) => Promise<Module>;
 
-// Quick note that the specifier coming in won't have version info because it's come straight for js code
-// So it's a module name really!
 const linker: Linker = async (specifier, context, options = {}) => {
   const { whitelist } = options;
   const log = options.log || defaultLogger;
@@ -89,36 +87,55 @@ const linker: Linker = async (specifier, context, options = {}) => {
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   const log = options.log || defaultLogger;
+  const prefix = process.platform == 'win32' ? 'file://' : '';
 
-  // Lookup the path from an explicit specifier first
+  // If the specifier is a path, just import it
+  if (specifier.startsWith('/') && specifier.endsWith('.js')) {
+    const importPath = `${prefix}${specifier}`;
+    log.debug(`[linker] Loading module from path: ${importPath}`);
+    return import(importPath);
+  }
+
+  // Otherwise resolve the specifier to a path in the repo
   let path;
   let version;
+
   if (options.modules?.[specifier]) {
     ({ path, version } = options.modules?.[specifier]);
   }
 
-  if (!path && options.repo) {
-    // Try and load a matching path from the repo
+  if (path || options.repo) {
     const specifierWithVersion = version
       ? `${specifier}@${version}`
       : specifier;
-    path = await getModulePath(specifierWithVersion, options.repo);
-  }
-
-  if (path) {
-    // TODO: should we log WHY this path was used? Maybe this is enough for now
-    log.debug(`[linker] Loading module ${specifier} from ${path}`);
-    try {
-      return import(path);
-    } catch (e) {
-      log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
-      console.log(e);
-      // If we fail to load from a path, fall back to loading from a specifier
+    const entry = await getModuleEntryPoint(
+      specifierWithVersion,
+      path,
+      options.repo,
+      log
+    );
+    if (entry) {
+      path = entry.path;
+      version = entry.version;
+    } else {
+      log.debug(`module not found in repo: ${specifier}`);
     }
   }
 
-  log.debug(`[linker] Loading ${specifier} using default import()`);
-  return import(specifier);
+  if (path) {
+    log.debug(`[linker] Loading module ${specifier} from ${path}`);
+    try {
+      const result = import(`${prefix}${path}`);
+      if (specifier.startsWith('@openfn/language-')) {
+        log.info(`Resolved adaptor ${specifier} to version ${version}`);
+      }
+      return result;
+    } catch (e) {
+      log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
+    }
+  }
+
+  throw new Error(`Failed to load module "${specifier}"`);
 };
 
 export default linker;

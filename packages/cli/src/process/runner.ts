@@ -10,7 +10,7 @@ type InitMessage = {
 process.on('message', ({ init, basePath, opts }: InitMessage) => {
   if (init) {
     parse(basePath, opts).then(() => {
-      process.send!({ done: true });
+      process.send!({ done: true, exitCode: process.exitCode });
     });
   }
 });

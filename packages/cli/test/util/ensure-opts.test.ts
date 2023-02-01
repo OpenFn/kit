@@ -158,6 +158,16 @@ test('preserve force', (t) => {
   t.truthy(opts.force);
 });
 
+test('preserve timeout', (t) => {
+  const initialOpts = {
+    timeout: 999,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.is(opts.timeout, 999);
+});
+
 test('preserve noCompile', (t) => {
   const initialOpts = {
     noCompile: true,
@@ -176,6 +186,40 @@ test('preserve expand', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.false(opts.expand);
+});
+
+test('preserve logJson', (t) => {
+  const initialOpts = {
+    logJson: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+});
+
+test('default logJson to true if env var is set', (t) => {
+  process.env.OPENFN_LOG_JSON = 'true';
+
+  const initialOpts = {} as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.true(opts.logJson);
+  delete process.env.OPENFN_LOG_JSON;
+});
+
+test('logJson argument overrides env var', (t) => {
+  process.env.OPENFN_LOG_JSON = 'true';
+
+  const initialOpts = {
+    logJson: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+
+  t.false(opts.logJson);
+  delete process.env.OPENFN_LOG_JSON;
 });
 
 test('preserve specifier', (t) => {
@@ -269,49 +313,50 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
-test('adaptorsRepo: unset by default', (t) => {
+test('monorepoPath: unset by default', (t) => {
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.adaptorsRepo);
+  t.falsy(opts.useAdaptorsMonorepo);
 });
 
-test('adaptorsRepo: load from OPENFN_ADAPTORS_REPO', (t) => {
+test('monorepoPath: unset even if env var is set default', (t) => {
   process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
-  t.is(opts.adaptorsRepo, 'a/b/c');
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: unset if useAdaptorsMonorepo is false', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    useAdaptorsMonorepo: false,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.falsy(opts.useAdaptorsMonorepo);
+});
+
+test('monorepoPath: load from OPENFN_ADAPTORS_REPO', (t) => {
+  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
+  const initialOpts = {
+    useAdaptorsMonorepo: true,
+  } as Opts;
+
+  const opts = ensureOpts('a', initialOpts);
+  t.is(opts.monorepoPath, 'a/b/c');
   delete process.env.OPENFN_ADAPTORS_REPO;
 });
 
-test('adaptorsRepo: accept as option', (t) => {
+test('perserve the skipAdaptorValidation flag', (t) => {
   const initialOpts = {
-    adaptorsRepo: 'x/y/z',
+    skipAdaptorValidation: true,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
-  t.is(opts.adaptorsRepo, 'x/y/z');
-});
 
-test('adaptorsRepo: prefer option to env var', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    adaptorsRepo: 'x/y/z',
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.is(opts.adaptorsRepo, 'x/y/z');
-});
-
-test("adaptorsRepo: isn't set if adaptorsRepo is false", (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    adaptorsRepo: false,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.adaptorsRepo);
+  t.truthy(opts.skipAdaptorValidation);
 });
 
 test('log: add default options', (t) => {
@@ -399,6 +444,37 @@ test('log: set default and a specific option', (t) => {
 
   t.is(opts.log.default, 'none');
   t.is(opts.log.compiler, 'debug');
+});
+
+test('log: default to info for test', (t) => {
+  const initialOpts = {
+    command: 'test',
+  } as Opts;
+
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'info');
+});
+
+test('log: default to info for version', (t) => {
+  const initialOpts = {
+    command: 'version',
+  } as Opts;
+
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'info');
+});
+
+test('log: always info for version', (t) => {
+  const initialOpts = {
+    command: 'version',
+    log: ['debug'],
+  } as Opts;
+
+  const opts = ensureOpts('', initialOpts);
+
+  t.is(opts.log.default, 'info');
 });
 
 test.serial('preserve repoDir', (t) => {

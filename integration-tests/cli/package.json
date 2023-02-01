@@ -1,0 +1,29 @@
+{
+  "name": "@openfn/integration-tests",
+  "private": true,
+  "version": "0.0.1",
+  "description": "CLI integration tests",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/cli/dist --no-version",
+    "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
+    "start": "docker run cli-integration-tests",
+    "test": "node prelude.js && npx ava -s --timeout 2m",
+    "test:dev": "node prelude.js && pnpm ava -s"
+  },
+  "dependencies": {
+    "@types/node": "^18.7.18",
+    "ava": "5.1.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "10.8.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

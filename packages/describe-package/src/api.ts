@@ -34,8 +34,13 @@ export type FunctionDescription = {
   isOperation: boolean; // Is this an Operation?
   parameters: ParameterDescription[];
   description: string;
-  examples: string[];
+  examples: ExampleDescription[];
   parent?: string;
+};
+
+type ExampleDescription = {
+  code: string;
+  caption?: string;
 };
 
 export type ParameterDescription = {
@@ -62,27 +67,34 @@ export const describePackage = async (
     // (I don't expect this to be permanent)
 
     // First work out the correct version
-    const pkg = await fetchFile(`${specifier}/package.json`);
-    const commonVersion = JSON.parse(pkg).dependencies?.[
-      '@openfn/language-common'
-    ].replace('^', '');
+    const pkgStr = await fetchFile(`${specifier}/package.json`);
+    const pkg = JSON.parse(pkgStr);
 
-    // fetch it
-    const common = await fetchDTSListing(
-      `@openfn/language-common@${commonVersion}`
-    );
-    // Load it into the project
-    for await (const fileName of common) {
-      const f = await fetchFile(`@openfn/language-common${fileName}`);
-      // Flatten the paths or else there's trouble
-      // TODO need to better understand this at some stage
-      const relativeFileName = fileName.split('/').pop();
-      project.addTypeDefinition('@openfn/language-common', f, relativeFileName);
+    if (pkg.dependencies['@openfn/language-common']) {
+      const commonSpecifier = `@openfn/language-common@${pkg.dependencies[
+        '@openfn/language-common'
+      ].replace('^', '')}`;
+
+      // fetch that specific version
+      const common = await fetchDTSListing(commonSpecifier);
+      // Load it into the project
+      for await (const fileName of common) {
+        const f = await fetchFile(`${commonSpecifier}${fileName}`);
+        // Flatten the paths or else there's trouble
+        // TODO need to better understand this at some stage
+        const relativeFileName = fileName.split('/').pop();
+        project.addTypeDefinition(
+          '@openfn/language-common',
+          f,
+          relativeFileName
+        );
+      }
     }
   }
 
   // Now fetch the listings for the actual package
   const files = await fetchDTSListing(specifier);
+
   const functions: FunctionDescription[] = [];
   for await (const fileName of files) {
     // Exclude the beta file

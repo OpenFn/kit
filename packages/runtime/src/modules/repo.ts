@@ -34,6 +34,7 @@ const filterSpecifiers = async (
     let { name, version } = getNameAndVersion(s);
     if (!version) {
       version = await getLatestVersion(s);
+      log.info(`Looked up latest version of ${s}: found ${version}`);
     }
 
     const exists = await getModulePath(s, repoPath, log);
@@ -97,7 +98,6 @@ export const ensureRepo = async (path: string, log: Logger = defaultLogger) => {
   try {
     const raw = await readFile(pkgPath, 'utf8');
     const pkg = JSON.parse(raw);
-    log.debug('Repo exists');
     return pkg;
   } catch (e) {
     log.debug(`Creating new repo at ${pkgPath}`);
@@ -118,7 +118,7 @@ export const getNameAndVersion = (specifier: string) => {
     name = specifier;
   }
 
-  return { name, version } as { name: string; version: string };
+  return { name, version } as { name: string; version?: string };
 };
 
 // If there's no version in the specifer, we'll use @latest
@@ -161,7 +161,8 @@ export const loadRepoPkg = async (repoPath: string = defaultRepoPath) => {
 export const getLatestInstalledVersion = async (
   specifier: string,
   repoPath: string = defaultRepoPath,
-  pkg?: object
+  pkg?: object,
+  log = defaultLogger
 ) => {
   if (!pkg) {
     pkg = await loadRepoPkg(repoPath);
@@ -180,65 +181,83 @@ export const getLatestInstalledVersion = async (
       }
     });
     if (latest) {
+      log.debug(`Using latest installed version of ${specifier}: ${latest}`);
       return `${specifier}_${latest}`;
     }
   }
   return null;
 };
 
-export const getModulePath = async (
+const getRepoAlias = async (
   specifier: string,
   repoPath: string = defaultRepoPath,
-  log = defaultLogger // TODO should this be a null logger?
+  log = defaultLogger
 ) => {
   const { version } = getNameAndVersion(specifier);
-  let alias;
 
   if (version) {
     // TODO: fuzzy semver match
     const a = getAliasedName(specifier);
     const pkg = await loadRepoPkg(repoPath);
     if (pkg && pkg.dependencies[a]) {
-      alias = a;
+      return a;
     }
   } else {
-    alias = await getLatestInstalledVersion(specifier, repoPath);
+    return getLatestInstalledVersion(specifier, repoPath, undefined, log);
   }
+};
+
+export const getModulePath = async (
+  specifier: string,
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger
+) => {
+  const alias = await getRepoAlias(specifier, repoPath, log);
 
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
-    log.debug(`repo resolved ${specifier} path to ${p}`);
     return p;
-  } else {
-    log.debug(`module not found in repo: ${specifier}`);
   }
   return null;
 };
 
-// Unused stuff I want to hang onto for now..
+// ESM doesn't support importing directories, and from node 19 this is enforced
+// For a given specifier, this will return a path to the main index.js file
+// I don't think this will work for nested imports though
+export const getModuleEntryPoint = async (
+  specifier: string,
+  modulePath?: string,
+  repoPath: string = defaultRepoPath,
+  log = defaultLogger
+): Promise<{ path: string; version: string } | null> => {
+  const moduleRoot =
+    modulePath || (await getModulePath(specifier, repoPath, log));
 
-// // This will alias the name of a specifier
-// // If no version is specified, it will look up the latest installed one
-// // If there is no version available then ???
-// // Note that it's up to the auto-installer to decide whether to pre-install a
-// // matching or latest verrsion
-// export const ensureAliasedName = async (
-//   specifier: string,
-//   repoPath: string = defaultRepoPath
-// ) => {
-//   let { name, version } = getNameAndVersion(specifier);
-//   if (!version) {
-//     // TODO what if this fails?
-//     return (await getLatestInstalledVersion(specifier, repoPath)) || 'UNKNOWN';
-//   }
-//   return `${name}_${version}`;
-// };
+  if (moduleRoot) {
+    const pkgRaw = await readFile(`${moduleRoot}/package.json`, 'utf8');
+    const pkg = JSON.parse(pkgRaw);
+    let main = 'index.js';
 
-// export const getModulePathFromAlias = (
-//   alias: string,
-//   repoPath: string = defaultRepoPath
-// ) => {
-//   // if there's no version specifier, we should take the latest available
-//   //... but how do we know what that is?
-//   return `${repoPath}/node_modules/${alias}`;
-// };
+    // TODO Turns out that importing the ESM format actually blows up
+    // (at least when we try to import lodash)
+    // if (pkg.exports) {
+    //   if (typeof pkg.exports === 'string') {
+    //     main = pkg.exports;
+    //   } else {
+    //     const defaultExport = pkg.exports['.']; // TODO what if this doesn't exist...
+    //     if (typeof defaultExport == 'string') {
+    //       main = defaultExport;
+    //     } else {
+    //       main = defaultExport.import;
+    //     }
+    //   }
+    // } else
+    // Safer for now to just use the CJS import
+    if (pkg.main) {
+      main = pkg.main;
+    }
+    const p = path.resolve(moduleRoot, main);
+    return { path: p, version: pkg.version };
+  }
+  return null;
+};

@@ -5,6 +5,7 @@ import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
 import { install } from '../repo/handler';
 import { Opts, SafeOpts } from '../commands';
+import validateAdaptors from '../util/validate-adaptors';
 
 export const getAutoinstallTargets = (
   options: Pick<Opts, 'adaptors' | 'autoinstall'>
@@ -18,25 +19,35 @@ export const getAutoinstallTargets = (
 const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const start = new Date().getTime();
 
-  const { repoDir, adaptorsRepo, autoinstall } = options;
-  if (adaptorsRepo && autoinstall) {
-    logger.warn('Skipping auto-install as monorepo is being used');
-  } else if (autoinstall) {
-    const autoInstallTargets = getAutoinstallTargets(options);
-    if (autoInstallTargets.length) {
-      logger.info('Auto-installing language adaptors');
-      await install({ packages: autoInstallTargets, repoDir }, logger);
+  await validateAdaptors(options, logger);
+
+  const { repoDir, monorepoPath, autoinstall } = options;
+  if (autoinstall) {
+    if (monorepoPath) {
+      logger.warn('Skipping auto-install as monorepo is being used');
+    } else {
+      const autoInstallTargets = getAutoinstallTargets(options);
+      if (autoInstallTargets.length) {
+        logger.info('Auto-installing language adaptors');
+        await install({ packages: autoInstallTargets, repoDir }, logger);
+      }
     }
   }
 
   const state = await loadState(options, logger);
   const code = await compile(options, logger);
-  const result = await execute(code, state, options);
+  try {
+    const result = await execute(code, state, options);
+    await serializeOutput(options, result, logger);
+    const duration = printDuration(new Date().getTime() - start);
+    logger.success(`Done in ${duration}! ✨`);
+  } catch (error) {
+    logger.error(error);
 
-  await serializeOutput(options, result, logger);
-
-  const duration = printDuration(new Date().getTime() - start);
-  logger.success(`Done in ${duration}! ✨`);
+    const duration = printDuration(new Date().getTime() - start);
+    logger.error(`Took ${duration}.`);
+    process.exitCode = 1;
+  }
 };
 
 export default executeHandler;

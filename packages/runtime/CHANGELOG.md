@@ -1,5 +1,39 @@
 # @openfn/runtime
 
+## 0.0.18
+
+### Patch Changes
+
+- e43d3ba: serialize job errors
+- Updated dependencies [e43d3ba]
+  - @openfn/logger@0.0.9
+
+## 0.0.17
+
+### Patch Changes
+
+- 19e9f31: Improve logging in linker
+
+## 0.0.16
+
+### Patch Changes
+
+- Fix imports for windows
+
+## 0.0.15
+
+### Patch Changes
+
+- 986bf07: Allow modules to be imported from directories (lightning)
+- 5c6fde4: Increase default timeout
+
+## 0.0.14
+
+### Patch Changes
+
+- 47ac1a9: Add timeout
+- 1695874: Fix module loading in node 19
+
 ## 0.0.13
 
 ### Patch Changes

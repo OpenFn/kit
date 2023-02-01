@@ -27,6 +27,9 @@ const isValidComponent = (v: string) =>
 
 const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
+  if (opts.command === 'version' || (opts.command === 'test' && !opts.log)) {
+    return { default: 'info' };
+  }
   if (opts.log) {
     // Parse and validate each incoming log argument
     opts.log.forEach((l: string) => {
@@ -75,26 +78,31 @@ export default function ensureOpts(
     adaptors: opts.adaptors || [],
     autoinstall: opts.autoinstall,
     command: opts.command,
-    force: opts.force || false,
-    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
-    noCompile: Boolean(opts.noCompile),
     expand: opts.expand !== false,
-    outputStdout: Boolean(opts.outputStdout),
-    operation: opts.operation,
-    packages: opts.packages,
-    stateStdin: opts.stateStdin,
-    specifier: opts.specifier,
-    strictOutput: opts.strictOutput ?? true,
+    force: opts.force || false,
     immutable: opts.immutable || false,
+    logJson:
+      typeof opts.logJson == 'boolean'
+        ? opts.logJson
+        : Boolean(process.env.OPENFN_LOG_JSON),
+    noCompile: Boolean(opts.noCompile),
+    operation: opts.operation,
+    outputStdout: Boolean(opts.outputStdout),
+    packages: opts.packages,
+    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
+    specifier: opts.specifier,
+    stateStdin: opts.stateStdin,
+    strictOutput: opts.strictOutput ?? true,
+    timeout: opts.timeout,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {
     // @ts-ignore TODO
     newOpts[key] = opts.hasOwnProperty(key) ? opts[key] : value;
   };
 
-  const adaptorsRepo = opts.adaptorsRepo || process.env.OPENFN_ADAPTORS_REPO;
-  if (opts.adaptorsRepo !== false && adaptorsRepo) {
-    newOpts.adaptorsRepo = adaptorsRepo;
+  if (opts.useAdaptorsMonorepo) {
+    newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
   }
 
   let baseDir = basePath;

@@ -6,6 +6,11 @@ import linker from '../../src/modules/linker';
 
 let context = vm.createContext();
 
+const repo = path.resolve('test/__repo__');
+const options = {
+  repo,
+};
+
 test.beforeEach(() => {
   context = vm.createContext();
 });
@@ -43,121 +48,86 @@ test('assert we can dynamically import @openfn/language-common from node_modules
 /**
  * Use the linker to load various modules
  */
-test('load a simple test module', async (t) => {
+test('load a simple test module from a path', async (t) => {
   const m = await linker(
     path.resolve('test/__modules__/number-export.js'),
-    context
+    context,
+    options
   );
 
   t.assert(m.namespace.default === 20);
 });
 
-test('load a fancy test module', async (t) => {
+test('load a fancy test module from a path', async (t) => {
   const m = await linker(
     path.resolve('test/__modules__/fn-export.js'),
-    context
+    context,
+    options
   );
 
   t.assert(m.namespace.fn() === 20);
 });
 
-test('load a fancy test module with dependencies', async (t) => {
+test('load a fancy test module with dependencies from a path', async (t) => {
   const m = await linker(
     path.resolve('test/__modules__/fn-export-with-deps.js'),
-    context
+    context,
+    options
   );
 
   t.assert(m.namespace.default() === 40);
 });
 
-test('load @openfn/language-common from node modules', async (t) => {
-  const m = await linker('@openfn/language-common', context);
+test('loads a specific module version from the repo', async (t) => {
+  const m = await linker('ultimate-answer@1.0.0', context, options);
+  t.assert(m.namespace.default === 42);
+});
 
-  const exports = Object.keys(m.namespace);
-  t.assert(exports.includes('fn'));
-  t.assert(exports.includes('execute'));
-  t.assert(exports.includes('field'));
+test('loads the latest available module from the repo', async (t) => {
+  const m = await linker('ultimate-answer', context, options);
+  t.assert(m.namespace.default === 43);
+});
 
-  // Exercise the API a little
-  const { fn, execute, field } = m.namespace;
-  t.deepEqual(field('a', 1), ['a', 1]);
+test('loads a cjs module from the repo', async (t) => {
+  const m = await linker('cjs', context, options);
+  t.assert(m.namespace.default === 42);
+});
 
-  const queue = [
-    fn((x: number) => x + 1),
-    fn((x: number) => x + 1),
-    fn((x: number) => x + 1),
-  ];
-  const result = await execute(...queue)(1);
-  t.assert(result === 4);
+test.only('loads a module from a path', async (t) => {
+  const m = await linker('ultimate-answer', context, {
+    modules: {
+      ['ultimate-answer']: {
+        path: path.resolve('test/__modules__/test'),
+        version: '0.0.1',
+      },
+    },
+  });
+  t.assert(m.namespace.default === 'test');
 });
 
 test('throw if a non-whitelisted value is passed', async (t) => {
   await t.throwsAsync(() =>
-    linker('i-heart-hacking', context, { whitelist: [/^@openfn\//] })
+    linker('i-heart-hacking', context, { repo, whitelist: [/^@openfn\//] })
   );
 });
 
 test('does not throw if an exact whitelisted value is passed', async (t) => {
   await t.notThrowsAsync(() =>
-    linker('@openfn/language-common', context, {
-      whitelist: [/^@openfn\/language-common$/],
+    linker('ultimate-answer', context, {
+      repo,
+      whitelist: [/^ultimate-answer$/],
     })
   );
 });
 
 test('does not throw if a partial whitelisted value is passed', async (t) => {
   await t.notThrowsAsync(() =>
-    linker('@openfn/language-common', context, { whitelist: [/^@openfn\//] })
+    linker('ultimate-answer', context, { repo, whitelist: [/^ultimate/] })
   );
 });
 
-test("Fails to load a module it can't find", async (t) => {
-  await t.throwsAsync(() =>
-    linker('ultimate-answer', context, { whitelist: [/^@openfn\//] })
-  );
-});
-
-test('loads a module from a specific path', async (t) => {
-  const options = {
-    modules: {
-      'ultimate-answer': {
-        path: path.resolve('test/__modules__/ultimate-answer'),
-      },
-    },
-  };
-  const m = await linker('ultimate-answer', context, options);
-  t.assert(m.namespace.default === 42);
-});
-
-// while this method technically works, it's not like to be ever used like this because the specifiers
-// come straight out of import statements, and so never have versions
-test('loads a specific module version from the repo (the wrong way)', async (t) => {
-  const options = {
-    repo: path.resolve('test/__repo'),
-  };
-  const m = await linker('ultimate-answer@1.0.0', context, options);
-  t.assert(m.namespace.default === 42);
-});
-
-// This is how we expect versioned modules to be loaded: someone (whether the CLI or a directive or whatever)
-// Will pass in version metata much as they would the path to the module
-test('loads a specific module version from the repo (the right way)', async (t) => {
-  const options = {
-    repo: path.resolve('test/__repo'),
-    modules: {
-      'ultimate-answer': {
-        version: '1.0.0',
-      },
-    },
-  };
-  const m = await linker('ultimate-answer', context, options);
-  t.assert(m.namespace.default === 42);
-});
-
-test('loads the latest module version from the repo', async (t) => {
-  const options = {
-    repo: path.resolve('test/__repo'),
-  };
-  const m = await linker('ultimate-answer', context, options);
-  t.assert(m.namespace.default === 43);
+test("Throws if it can't find a module", async (t) => {
+  await t.throwsAsync(() => linker('err', context, options), {
+    message: 'Failed to load module "err"',
+  });
 });

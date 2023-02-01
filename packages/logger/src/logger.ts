@@ -1,5 +1,6 @@
 import c from 'chalk';
 import iconfirm from '@inquirer/confirm';
+import stringify from 'fast-safe-stringify';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import getDurationString from './util/duration';
@@ -30,8 +31,16 @@ export const WARN = 'warn';
 export type LogArgs = any[];
 
 // TODO something is wrong with these typings
-// Trying to differntite user priority presets from log functions
+// Trying to differentiate user priority presets from log functions
 export type LogFns = 'debug' | 'info' | 'log' | 'warn' | 'error' | 'success';
+
+export type JSONLog = {
+  message: Array<string | object | any>;
+  level: LogFns;
+  name?: string;
+};
+
+export type StringLog = [LogFns | 'confirm' | 'print', ...any];
 
 // Design for a logger
 // some inputs:
@@ -117,39 +126,49 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   // This is what we actually pass the log strings to
   const emitter = opts.logger;
 
-  // main logger function
   const log = (level: LogFns, ...args: LogArgs) => {
-    if (opts.level === NONE) return;
-
-    const output = [];
-
-    if (name && !opts.hideNamespace) {
-      // TODO how can we fix the with of the type column so that things
-      //      are nicely arranged in the CLI?
-      output.push(c.blue(`[${name}]`));
-    }
-    if (!opts.hideIcons) {
-      output.push(styleLevel(level));
-    }
-
-    output.push(...args);
-    // concatenate consecutive strings
-    // log objects by themselves, pretty printed
-
-    // TODO I'd really really like a nice way to visualise log('state': hugeJsonObject)
-    // This will take some effort I think
-
-    // how do we actually log?
     if (priority[level] >= minLevel) {
-      if (emitter.hasOwnProperty(level)) {
-        const cleaned = output.map((o) => sanitize(o, options));
-        emitter[level](...cleaned);
+      if (options.json) {
+        logJSON(level, ...args);
+      } else {
+        logString(level, ...args);
       }
+    }
+  };
+
+  const logJSON = (level: LogFns, ...args: LogArgs) => {
+    const output: JSONLog = {
+      level,
+      name,
+      message: args.map((o) => sanitize(o, { stringify: false })),
+    };
+
+    emitter[level](stringify(output));
+  };
+
+  const logString = (level: LogFns, ...args: LogArgs) => {
+    if (emitter.hasOwnProperty(level)) {
+      const output = [];
+
+      if (name && !opts.hideNamespace) {
+        // TODO how can we fix the with of the type column so that things
+        //      are nicely arranged in the CLI?
+        output.push(c.blue(`[${name}]`));
+      }
+      if (!opts.hideIcons) {
+        output.push(styleLevel(level));
+      }
+
+      output.push(...args);
+
+      const cleaned = output.map((o) => sanitize(o, options));
+      emitter[level](...cleaned);
     }
   };
 
   // print() will log without any metadata/overhead/santization
   // basically a proxy for console.log
+  // TODO should this use json?
   const print = (...args: any[]) => {
     if (opts.level !== NONE) {
       emitter.info(...args);

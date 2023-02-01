@@ -1,6 +1,8 @@
 # dev
 *.code-workspace
-dist
+examples/**/dist
+packages/**/dist
+integration-tests/**/dist
 node_modules
 public/
 !public/index.html
@@ -28,3 +30,4 @@ tmp
 .vscode
 
 *.drawio.bkp
+.fuse
