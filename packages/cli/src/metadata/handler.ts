@@ -53,11 +53,6 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
     // TODO for now use the adaptors repo, but later we want to be smarter about path resolution
     throw new Error('monorepo not set');
   }
-  // // load the adaptor's execute function
-
-  // // call it
-
-  // // output into the repo
 };
 
 export default metadataHandler;
