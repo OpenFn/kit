@@ -1,14 +1,14 @@
-import { createNullLogger, Logger } from '../util/logger';
+import { Logger } from '../util/logger';
 import { SafeOpts } from '../commands';
 import loadState from '../execute/load-state';
-import { updatePath } from '../util/use-adaptors-repo';
 import cache from './cache';
 
 const metadataHandler = async (options: SafeOpts, logger: Logger) => {
   const state = await loadState(options, logger);
-  logger.info(state);
 
+  // Note that the config will be sanitised, so logging it may not be terrible helpful
   const config = state.configuration;
+  logger.info('config:', config);
 
   // validate the config object
   // must exist
@@ -22,36 +22,37 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
     logger.print(cache.getPath(repoDir, id));
   };
 
-  const { adaptorsRepo, repoDir, adaptor } = options;
+  // the adaptor path should now be totally set by the common cli stuff
+  const { repoDir, adaptors } = options;
+  const adaptor = adaptors[0]; // TODO adaptor argument is a bit dodgy, need to refactor opts
 
   // generate a hash for the config and check state
   const id = cache.generateKey(config);
   logger.debug('config hash: ', id);
   const cached = await cache.get(repoDir, id);
   if (cached) {
-    logger.success('Metadata in cache!');
+    logger.success('Returning metadata from cache');
     return finish();
   }
 
-  if (adaptorsRepo) {
-    // TODO yeah this isn't a good solution
-    const [_, path] = updatePath(adaptor as string, adaptorsRepo, logger).split(
-      '='
-    );
-    const mod = await import(path);
+  try {
+    // Import the adaptor
+    const mod = await import(adaptor);
+    // Does it export a metadata function?
     if (mod.metadata) {
-      logger.info('metadata function found');
-      logger.info('Generating...');
+      logger.info('Metadata function found. Generating metadata...');
       const result = await mod.metadata(config);
       await cache.set(repoDir, id, result);
       finish();
     } else {
       logger.error('No metadata helper found');
-      // This will happen a lot so I reckon we just want to write an error state
+
+      process.exit(1); // TODO what's the correct error code?
     }
-  } else {
-    // TODO for now use the adaptors repo, but later we want to be smarter about path resolution
-    throw new Error('monorepo not set');
+  } catch (e) {
+    logger.error('Exception while generating metadata');
+    logger.error(e);
+    process.exit(1);
   }
 };
 
