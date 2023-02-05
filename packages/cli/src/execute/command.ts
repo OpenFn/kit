@@ -1,68 +1,91 @@
 import yargs, { Arguments } from 'yargs';
 import { Opts } from '../commands';
 
+import * as o from '../options';
+
+
+// build helper to chain options
+const build = (opts) => (yargs) => opts.reduce(
+  (_y, o) => o.build(yargs),
+  yargs
+);
+
+// Mutate the incoming argv with defaults etc
+const ensure = (command, opts) => (yargs) => {
+  opts.command = command;
+  opts.forEach(
+    (opt) => {
+      opt.ensure(yargs);
+    },
+  );
+}
+
+const options = [
+  o.adaptors(),
+  o.immutable()
+]
+
 const executeCommand = {
   command: 'execute [path]',
   desc: `Run an openfn job. Get more help by running openfn <command> help`,
   aliases: ['$0'],
-  handler: (argv: Arguments<Opts>) => {
-    argv.command = 'execute';
-  },
-  builder: (yargs: yargs.Argv) => {
-    return applyExecuteOptions(yargs)
-      .option('immutable', {
-        boolean: true,
-        description: 'Treat state as immutable',
-      })
-      .option('use-adaptors-monorepo', {
-        alias: 'm',
-        boolean: true,
-        description:
-          'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
-      })
-      .option('autoinstall', {
-        alias: 'i',
-        boolean: true,
-        description: 'Auto-install the language adaptor',
-      })
-      .option('state-path', {
-        alias: 's',
-        description: 'Path to the state file',
-      })
-      .option('state-stdin', {
-        alias: 'S',
-        description: 'Read state from stdin (instead of a file)',
-      })
-      .option('skip-adaptor-validation', {
-        boolean: true,
-        description: 'Skip adaptor validation warnings',
-      })
-      .option('timeout', {
-        alias: '-t',
-        description: 'Set the timeout duration in MS',
-      })
-      .option('no-compile', {
-        boolean: true,
-        description: 'Skip compilation',
-      })
-      .option('no-strict-output', {
-        boolean: true,
-        description:
-          'Allow properties other than data to be returned in the output',
-      })
-      .example(
-        'openfn foo/job.js',
-        'Reads foo/job.js, looks for state and output in foo'
-      )
-      .example(
-        'openfn job.js -a common',
-        'Run job.js using @openfn/language-common'
-      )
-      .example(
-        'openfn install -a common',
-        'Install the latest version of language-common to the repo'
-      );
-  },
+  handler: ensure('execute', options), 
+  builder: build(options)
+    // return applyExecuteOptions(yargs)
+      // .option('immutable', {
+      //   boolean: true,
+      //   description: 'Treat state as immutable',
+      // })
+      // .option('use-adaptors-monorepo', {
+      //   alias: 'm',
+      //   boolean: true,
+      //   description:
+      //     'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
+      // })
+      // .option('autoinstall', {
+      //   alias: 'i',
+      //   boolean: true,
+      //   description: 'Auto-install the language adaptor',
+      // })
+      // .option('state-path', {
+      //   alias: 's',
+      //   description: 'Path to the state file',
+      // })
+      // .option('state-stdin', {
+      //   alias: 'S',
+      //   description: 'Read state from stdin (instead of a file)',
+      // })
+      // .option('skip-adaptor-validation', {
+      //   boolean: true,
+      //   description: 'Skip adaptor validation warnings',
+
+      // })
+      // .option('timeout', {
+      //   alias: '-t',
+      //   description: 'Set the timeout duration in MS',
+      // })
+      // .option('no-compile', {
+      //   boolean: true,
+      //   description: 'Skip compilation',
+      // })
+      // .option('no-strict-output', {
+      //   boolean: true,
+      //   description:
+      //     'Allow properties other than data to be returned in the output',
+      // })
+      // .example(
+      //   'openfn foo/job.js',
+      //   'Reads foo/job.js, looks for state and output in foo'
+      // )
+      // .example(
+      //   'openfn job.js -a common',
+      //   'Run job.js using @openfn/language-common'
+      // )
+      // .example(
+      //   'openfn install -a common',
+      //   'Install the latest version of language-common to the repo'
+      // );
+  // },
 } as yargs.CommandModule<Opts>;
 
 export const applyExecuteOptions = (yargs: yargs.Argv) =>

@@ -71,7 +71,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {
 
 // Top level command parser
 const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  const opts = ensureOpts(basePath, options);
+  // const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
   // In execute and test, always print version info FIRST
@@ -115,6 +115,10 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     logger.error(`Unrecognised command: ${options.command}`);
     process.exit(1);
   }
+
+  // tmp
+  console.log(opts)
+  return
 
   try {
     // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
