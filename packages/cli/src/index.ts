@@ -9,4 +9,6 @@ type YargsOpts = Opts & {
 };
 // TODO messy typings here
 const opts = cmd.parse() as unknown as YargsOpts;
-runInChildProcess(opts.path, opts);
+console.log(opts)
+console.log('EXITING EARLY')
+// runInChildProcess(opts.path, opts);
