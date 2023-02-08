@@ -6,7 +6,7 @@ import * as o from '../options';
 
 // build helper to chain options
 const build = (opts) => (yargs) => opts.reduce(
-  (_y, o) => o.build(yargs),
+  (_y, o) => yargs.option(o.name, o.yargs),
   yargs
 );
 
