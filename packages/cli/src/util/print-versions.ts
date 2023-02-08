@@ -25,7 +25,7 @@ const printVersions = async (
   logger: Logger,
   options: Partial<Pick<SafeOpts, 'adaptors' | 'logJson'>> = {}
   ) => {
-  const { adaptors } = options;
+  const { adaptors, logJson } = options;
   let adaptor = '';
   if (adaptors && adaptors.length) {
     adaptor = adaptors[0];
@@ -65,7 +65,7 @@ const printVersions = async (
   }
 
   let output: any;
-  if (options.logJson) {
+  if (logJson) {
     output = {
       versions: {
         'node.js': process.version.substring(1),
@@ -75,10 +75,7 @@ const printVersions = async (
       },
     };
     if (adaptorName) {
-      output.versions.adaptor = {
-        name: adaptorName,
-        version: adaptorVersion,
-      };
+      output.versions[adaptorName] = adaptorVersion;
     }
   } else {
     const adaptorVersionString = adaptorName

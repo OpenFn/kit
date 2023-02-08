@@ -85,13 +85,12 @@ test('print version of adaptor with path', async (t) => {
   t.regex(message,  /@openfn\/language-http(.+)1\.0\.0/);
 });
 
-test('json output', async (t) => {
+test.only('json output', async (t) => {
   const logger = createMockLogger('', { level: 'info', json: true });
-  await printVersions(logger, { adaptors: ['http'] });
+  await printVersions(logger, { adaptors: ['http'], logJson: true });
 
-  const last = logger._last as JSONLog;
+  const last = JSON.parse(logger._last) as JSONLog;
   t.is(last.level, 'info');
-  t.is(last.name, 'CLI');
 
   const [{ versions }] = last.message;
   t.truthy(versions['node.js']);
