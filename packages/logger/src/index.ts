@@ -9,5 +9,5 @@ export const defaultLogger = createLogger();
 
 export default createLogger;
 
-export type { Logger } from './logger';
+export type { Logger, JSONLog, StringLog } from './logger';
 export type { LogOptions, LogLevel } from './options';
