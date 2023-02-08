@@ -1,3 +1,4 @@
+import path from 'node:path';
 import yargs from 'yargs';
 import type { Opts } from './commands';
 import expandAdaptors from './util/expand-adaptors';
@@ -60,11 +61,49 @@ export const immutable: CLIOption = {
   },
 };
 
+export const basePath: CLIOption = {
+  name: 'basePath',
+  yargs: {
+    hidden: true,
+  },
+  ensure: (opts) => {
+    const basePath = opts.path ?? '.';
+    if (basePath.endsWith('.js')) {
+      opts.baseDir = path.dirname(basePath);
+    } else {
+      opts.baseDir = basePath;
+    }
+  },
+};
+
+// don't really like this
+// it's hard to unit test because it has this secret dependency on basePath
+export const jobPath: CLIOption = {
+  name: 'jobPath',
+  yargs: {
+    hidden: true,
+  },
+  ensure: (opts) => {
+    def(opts, 'jobPath', `${opts.baseDir}/job.js`);
+  },
+};
+
 export const statePath: CLIOption = {
   name: 'state-path',
   yargs: {
     alias: ['s'],
     description: 'Path to the state file',
+  },
+  ensure: () => {}
+};
+
+// TODO no unit tests yet
+// This is just a no-op, so what's the point in creating a near-empty test file?
+export const stateStdin: CLIOption = {
+  name: 'state-stdin',
+  yargs: {
+    alias: ['S'],
+    description: 'Read state from stdin (instead of a file)',
   },
   ensure: () => {}
 };
