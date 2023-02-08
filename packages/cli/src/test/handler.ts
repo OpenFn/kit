@@ -4,14 +4,16 @@ import loadState from '../execute/load-state';
 import execute from '../execute/execute';
 import { SafeOpts } from '../commands';
 
+const sillyMessage = 'Calculating the answer to life, the universe, and eveything...';
+
 const testHandler = async (options: SafeOpts, logger: Logger) => {
   logger.log('Running test job...');
 
   // This is a bit weird but it'll actually work!
-  options.jobPath = `const fn = () => state => state * 2; fn()`;
+  options.jobPath = `const fn = () => state => { console.log('${sillyMessage}'); return state * 2; } ; fn()`;
 
   if (!options.stateStdin) {
-    logger.warn('No state detected: pass -S <number> to provide some state');
+    logger.debug('No state provided: use -S <number> to provide some state');
     options.stateStdin = '21';
   }
 
