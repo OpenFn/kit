@@ -32,16 +32,6 @@ const executeCommand = {
   handler: ensure('execute', options), 
   builder: build(options)
     // return applyExecuteOptions(yargs)
-      // .option('immutable', {
-      //   boolean: true,
-      //   description: 'Treat state as immutable',
-      // })
-      // .option('use-adaptors-monorepo', {
-      //   alias: 'm',
-      //   boolean: true,
-      //   description:
-      //     'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
-      // })
       // .option('autoinstall', {
       //   alias: 'i',
       //   boolean: true,

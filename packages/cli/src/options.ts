@@ -11,7 +11,7 @@ type CLIOption<O = {}> = (opts?: O) => {
 // little util to default a value
 const def = (opts, key, value) => {
   const v = opts[key];
-  if (!isNaN(v) || !v) {
+  if (isNaN(v) && !v) {
     opts[key] = value;
   }
 }
@@ -41,10 +41,24 @@ export const adaptors: CLIOption<{ required?: boolean }> = ({ required } = {}) =
 export const immutable: CLIOption = () => ({
   name: 'immutable',
   yargs: {
-    description: 'Treat state as immutable',
+    description: 'Enforce immutabilty on state object',
+    boolean: true,
   },
-  boolean: true,
   ensure: (opts) => {
     def(opts, 'immutable', false)
+  },
+});
+
+export const useAdaptorsMonorepo: CLIOption = () => ({
+  name: 'use-adaptors-monorepo',
+  yargs: {
+    alias: ['m'],
+    boolean: true,
+    description: 'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
+  },
+  ensure: (opts) => {
+    if (opts.useAdaptorsMonorepo) {
+      opts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
+    }
   },
 });
