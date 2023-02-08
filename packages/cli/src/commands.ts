@@ -22,6 +22,8 @@ type CommandList =
   | 'docgen'
   | 'test';
 
+// TODO move into options.ts?
+// is there a good way to reduce duplication here?
 export type Opts = {
   command?: CommandList;
 
