@@ -78,6 +78,7 @@ export const basePath: CLIOption = {
 
 // don't really like this
 // it's hard to unit test because it has this secret dependency on basePath
+// Then again, working out job and output paths is specific to certain commands only
 export const jobPath: CLIOption = {
   name: 'jobPath',
   yargs: {
