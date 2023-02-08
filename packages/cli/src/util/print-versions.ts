@@ -1,10 +1,20 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { getNameAndVersion } from '@openfn/runtime';
 import { Logger } from './logger';
 import { mainSymbols } from 'figures';
-import { Opts } from '../commands';
 import { SafeOpts } from '../commands';
-import { getNameAndVersion } from '@openfn/runtime';
 
 const { triangleRightSmall: t } = mainSymbols;
+
+const loadVersionFromPath = (adaptorPath: string) => {
+  try {
+    const pkg = JSON.parse(readFileSync(path.resolve(adaptorPath, 'package.json'), 'utf8'));
+    return pkg.version
+  } catch(e) {
+    return 'unknown';
+  }
+}
 
 const printVersions = async (
   logger: Logger,
@@ -12,7 +22,7 @@ const printVersions = async (
 ) => {
   // Prefix and pad version numbers
   const prefix = (str: string) =>
-    `         ${t} ${str.padEnd(options.adaptors ? 16 : 8, ' ')}`;
+    `         ${t} ${str.padEnd(options.adaptors ? 24 : 8, ' ')}`;
 
   const pkg = await import('../../package.json', { assert: { type: 'json' } });
   const { version, dependencies } = pkg.default;
@@ -25,8 +35,14 @@ const printVersions = async (
   if (adaptors && adaptors.length === 1) {
     const [a] = adaptors;
     const { name, version } = getNameAndVersion(a);
-    adaptorName = name.replace(/^@openfn\/language-/, '');
-    adaptorVersion = version || 'latest';
+    if (name.match('=')) {
+      const [namePart, pathPart] = name.split('=');
+      adaptorVersion = loadVersionFromPath(pathPart);
+      adaptorName = namePart;
+    } else {
+      adaptorName = name;
+      adaptorVersion = version || 'latest';
+    }
   }
 
   let output: any;
@@ -47,7 +63,7 @@ const printVersions = async (
     }
   } else {
     const adaptorVersionString = adaptorName
-      ? `\n${prefix('adaptor ' + adaptorName)}${adaptorVersion}`
+      ? `\n${prefix(adaptorName)}${adaptorVersion}`
       : '';
 
     output = `Versions:
