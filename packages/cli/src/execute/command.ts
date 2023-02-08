@@ -20,9 +20,24 @@ const ensure = (command, opts) => (yargs) => {
   );
 }
 
+// override yargs properties for a command
+// (a better pattern than the functions)
+const override = (command, yargs) => {
+  return ({
+    ...commmand,
+    yargs: {
+      ...command.yargs || {},
+      ...yargs
+    }
+  })
+} 
+
 const options = [
-  o.adaptors(),
-  o.immutable()
+  o.adaptors,
+  o.immutable,
+  o.autoinstall,
+  o.useAdaptorsMonorepo,
+  o.statePath,
 ]
 
 const executeCommand = {

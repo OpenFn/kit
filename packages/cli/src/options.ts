@@ -2,7 +2,7 @@ import yargs from 'yargs';
 import type { Opts } from './commands';
 import expandAdaptors from './util/expand-adaptors';
 
-type CLIOption<O = {}> = (opts?: O) => {
+type CLIOption = {
   name: string;
   yargs?: yargs.Options;
   ensure: (opts: Opts) => void;
@@ -16,14 +16,13 @@ const def = (opts, key, value) => {
   }
 }
 
-export const adaptors: CLIOption<{ required?: boolean }> = ({ required } = {}) => ({
+export const adaptors: CLIOption = {
   name: 'adaptors',
   yargs: {
     alias: ['a', 'adaptor'],
     description:
       'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build',
-    array: true,
-    demandOption: required
+    array: true
   },
   ensure: (opts) => {
     // TODO what if an alias was passed?
@@ -36,9 +35,9 @@ export const adaptors: CLIOption<{ required?: boolean }> = ({ required } = {}) =
     }
     opts.adaptors = expandAdaptors(opts.adaptors);
   },
-});
+};
 
-export const autoinstall: CLIOption = () => ({
+export const autoinstall: CLIOption = {
   name: 'autoinstall',
   yargs: {
     alias: ['a'],
@@ -48,9 +47,9 @@ export const autoinstall: CLIOption = () => ({
   ensure: (opts) => {
     def(opts, 'autoinstall', false)
   },
-});
+};
 
-export const immutable: CLIOption = () => ({
+export const immutable: CLIOption = {
   name: 'immutable',
   yargs: {
     description: 'Enforce immutabilty on state object',
@@ -59,18 +58,18 @@ export const immutable: CLIOption = () => ({
   ensure: (opts) => {
     def(opts, 'immutable', false)
   },
-});
+};
 
-export const statePath: CLIOption = () => ({
+export const statePath: CLIOption = {
   name: 'state-path',
   yargs: {
     alias: ['s'],
     description: 'Path to the state file',
   },
   ensure: () => {}
-});
+};
 
-export const useAdaptorsMonorepo: CLIOption = () => ({
+export const useAdaptorsMonorepo: CLIOption = {
   name: 'use-adaptors-monorepo',
   yargs: {
     alias: ['m'],
@@ -82,4 +81,4 @@ export const useAdaptorsMonorepo: CLIOption = () => ({
       opts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
     }
   },
-});
+};

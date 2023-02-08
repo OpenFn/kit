@@ -1,8 +1,6 @@
 import test from 'ava';
-import { autoinstall as createOption } from '../../src/options';
+import { autoinstall } from '../../src/options';
 import { Opts } from '../../src/commands';
-
-const autoinstall = createOption();
 
 test('autoinstall defaults to false', (t) => {
   const opts = {} as Opts;

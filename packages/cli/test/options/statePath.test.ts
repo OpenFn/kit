@@ -1,8 +1,6 @@
 import test from 'ava';
-import { statePath as createOption } from '../../src/options';
+import { statePath } from '../../src/options';
 import { Opts } from '../../src/commands';
-
-const statePath = createOption();
 
 test('statePath defaults to undefined', (t) => {
   const opts = {} as Opts;
