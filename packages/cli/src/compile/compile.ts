@@ -4,11 +4,13 @@ import { getModulePath } from '@openfn/runtime';
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import type { SafeOpts } from '../commands';
 
+type CompilerOpts = SafeOpts & {
+  jobSource?: string; // secret option for test command
+}
+
 // Load and compile a job from a file, then return the result
 // This is designed to be re-used in different CLI steps
-// TODO - we should accept jobPath and jobSource as different arguments
-//        it makes reporting way ieaser
-export default async (opts: SafeOpts, log: Logger) => {
+export default async (opts: CompilerOpts, log: Logger) => {
   log.debug('Loading job...');
   let job;
   if (opts.noCompile) {
@@ -18,7 +20,7 @@ export default async (opts: SafeOpts, log: Logger) => {
   } else {
     const complilerOptions: Options = await loadTransformOptions(opts, log);
     complilerOptions.logger = createLogger(COMPILER, opts);
-    job = compile(opts.jobPath, complilerOptions);
+    job = compile(opts.jobSource || opts.jobPath, complilerOptions);
     if (opts.jobPath) {
       log.success(`Compiled job from ${opts.jobPath}`);
     } else {

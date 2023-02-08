@@ -9,8 +9,11 @@ const sillyMessage = 'Calculating the answer to life, the universe, and eveythin
 const testHandler = async (options: SafeOpts, logger: Logger) => {
   logger.log('Running test job...');
 
-  // This is a bit weird but it'll actually work!
-  options.jobPath = `const fn = () => state => { console.log('${sillyMessage}'); return state * 2; } ; fn()`;
+  // cheating a bit on pathing with this secret option
+  // @ts-ignore
+  options.jobSource = `const fn = () => state => { console.log('${sillyMessage}'); return state * 2; } ; fn()`;
+  // @ts-ignore
+  delete options.jobPath;
 
   if (!options.stateStdin) {
     logger.debug('No state provided: use -S <number> to provide some state');
@@ -21,10 +24,6 @@ const testHandler = async (options: SafeOpts, logger: Logger) => {
 
   const state = await loadState(options, silentLogger);
   const code = await compile(options, logger);
-  logger.break();
-  logger.info('Compiled job:', '\n', code); // TODO there's an ugly intend here
-  logger.break();
-  logger.info('Running job...');
   const result = await execute(code, state, options);
   logger.success(`Result: ${result}`);
   return result;
