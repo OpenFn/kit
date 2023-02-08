@@ -1,4 +1,4 @@
-import { createMockLogger } from '@openfn/logger';
+import { createMockLogger, JSONLog } from '@openfn/logger';
 import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
@@ -85,4 +85,18 @@ test('print version of adaptor with path', async (t) => {
   t.regex(message,  /@openfn\/language-http(.+)1\.0\.0/);
 });
 
-// TODO quick test of json output
+test('json output', async (t) => {
+  const logger = createMockLogger('', { level: 'info', json: true });
+  await printVersions(logger, { adaptors: ['http'] });
+
+  const last = logger._last as JSONLog;
+  t.is(last.level, 'info');
+  t.is(last.name, 'CLI');
+
+  const [{ versions }] = last.message;
+  t.truthy(versions['node.js']);
+  t.truthy(versions['cli']);
+  t.truthy(versions['runtime']);
+  t.truthy(versions['compiler']);
+  t.truthy(versions['http']);
+})
