@@ -11,6 +11,14 @@ test('statePath defaults to undefined', (t) => {
   t.assert(opts.statePath === undefined);
 });
 
+test('statePath ensure is a no-op', (t) => {
+  const opts = {} as Opts;
+
+  statePath.ensure(opts);
+
+  t.deepEqual(opts, {});
+})
+
 test('statePath can be set to a value', (t) => {
   const path = 'a/b/c.json';
   const opts = {

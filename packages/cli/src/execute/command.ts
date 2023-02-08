@@ -33,12 +33,17 @@ const override = (command, yargs) => {
 } 
 
 const options = [
+  o.basePath, // must run early
+
   o.adaptors,
-  o.immutable,
   o.autoinstall,
-  o.useAdaptorsMonorepo,
+  o.immutable,
   o.statePath,
+  o.useAdaptorsMonorepo,
 ]
+
+// TODO what's a nice way to pull out just the opts we need?
+type ExecuteOptions = Opts;
 
 const executeCommand = {
   command: 'execute [path]',
@@ -47,10 +52,6 @@ const executeCommand = {
   handler: ensure('execute', options), 
   builder: build(options)
     // return applyExecuteOptions(yargs)
-      // .option('state-stdin', {
-      //   alias: 'S',
-      //   description: 'Read state from stdin (instead of a file)',
-      // })
       // .option('skip-adaptor-validation', {
       //   boolean: true,
       //   description: 'Skip adaptor validation warnings',
@@ -82,7 +83,7 @@ const executeCommand = {
       //   'Install the latest version of language-common to the repo'
       // );
   // },
-} as yargs.CommandModule<Opts>;
+} as yargs.CommandModule<ExecuteOptions>;
 
 export const applyExecuteOptions = (yargs: yargs.Argv) =>
   yargs

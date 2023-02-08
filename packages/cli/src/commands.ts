@@ -26,6 +26,8 @@ type CommandList =
 // is there a good way to reduce duplication here?
 export type Opts = {
   command?: CommandList;
+  baseDir?: string;
+  path?: string;
 
   adaptor?: boolean | string;
   adaptors?: string[];
@@ -74,7 +76,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
 };
 
 // Top level command parser
-const parse = async (basePath: string, options: Opts, log?: Logger) => {
+const parse = async (basePath: string, opts: Opts, log?: Logger) => {
   // const opts = ensureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
