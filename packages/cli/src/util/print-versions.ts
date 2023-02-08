@@ -5,7 +5,7 @@ import { Logger } from './logger';
 import { mainSymbols } from 'figures';
 import { SafeOpts } from '../commands';
 
-const NODE = 'nodejs';
+const NODE = 'node.js';
 const CLI = 'cli';
 const RUNTIME = 'runtime';
 const COMPILER = 'compiler';
