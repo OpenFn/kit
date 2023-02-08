@@ -84,3 +84,5 @@ test('print version of adaptor with path', async (t) => {
 
   t.regex(message,  /@openfn\/language-http(.+)1\.0\.0/);
 });
+
+// TODO quick test of json output

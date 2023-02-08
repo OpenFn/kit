@@ -5,6 +5,11 @@ import { Logger } from './logger';
 import { mainSymbols } from 'figures';
 import { SafeOpts } from '../commands';
 
+const NODE = 'nodejs';
+const CLI = 'cli';
+const RUNTIME = 'runtime';
+const COMPILER = 'compiler';
+
 const { triangleRightSmall: t } = mainSymbols;
 
 const loadVersionFromPath = (adaptorPath: string) => {
@@ -19,22 +24,36 @@ const loadVersionFromPath = (adaptorPath: string) => {
 const printVersions = async (
   logger: Logger,
   options: Partial<Pick<SafeOpts, 'adaptors' | 'logJson'>> = {}
-) => {
+  ) => {
+  const { adaptors } = options;
+  let adaptor = '';
+  if (adaptors && adaptors.length) {
+    adaptor = adaptors[0];
+  }
+
+  // Work out the longest label
+  const longest = Math.max(...[
+    NODE,
+    CLI,
+    RUNTIME,
+    COMPILER,
+    adaptor,
+  ].map(s => s.length));
+  
   // Prefix and pad version numbers
   const prefix = (str: string) =>
-    `         ${t} ${str.padEnd(options.adaptors ? 24 : 8, ' ')}`;
+    `         ${t} ${str.padEnd(longest + 4, ' ')}`;
 
   const pkg = await import('../../package.json', { assert: { type: 'json' } });
   const { version, dependencies } = pkg.default;
-
+  
   const compilerVersion = dependencies['@openfn/compiler'];
   const runtimeVersion = dependencies['@openfn/runtime'];
-
-  const { adaptors } = options;
-  let adaptorName, adaptorVersion;
-  if (adaptors && adaptors.length === 1) {
-    const [a] = adaptors;
-    const { name, version } = getNameAndVersion(a);
+  
+  let adaptorVersion;
+  let adaptorName;
+  if (adaptor) {
+    const { name, version } = getNameAndVersion(adaptor);
     if (name.match('=')) {
       const [namePart, pathPart] = name.split('=');
       adaptorVersion = loadVersionFromPath(pathPart);
@@ -67,10 +86,10 @@ const printVersions = async (
       : '';
 
     output = `Versions:
-${prefix('node.js')}${process.version.substring(1)}
-${prefix('cli')}${version}
-${prefix('runtime')}${runtimeVersion}
-${prefix('compiler')}${compilerVersion}${adaptorVersionString}`;
+${prefix(NODE)}${process.version.substring(1)}
+${prefix(CLI)}${version}
+${prefix(RUNTIME)}${runtimeVersion}
+${prefix(COMPILER)}${compilerVersion}${adaptorVersionString}`;
   }
   logger.info(output);
 };
