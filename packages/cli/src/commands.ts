@@ -32,7 +32,7 @@ export type Opts = {
   expand?: boolean; // for unit tests really
   force?: boolean;
   immutable?: boolean;
-  jobPath?: string
+  jobPath?: string;
   log?: string[];
   logJson?: boolean;
   noCompile?: boolean;

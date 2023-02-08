@@ -4,8 +4,9 @@ import { getModulePath } from '@openfn/runtime';
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import type { SafeOpts } from '../commands';
 
-type CompilerOpts = SafeOpts & {
+export type CompilerOpts = Omit<SafeOpts, 'jobPath'> & {
   jobSource?: string; // secret option for test command
+  jobPath?: string;
 }
 
 // Load and compile a job from a file, then return the result
