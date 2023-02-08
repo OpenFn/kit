@@ -2,31 +2,34 @@ import fs from 'node:fs/promises';
 import type { Logger } from '@openfn/logger';
 import type { SafeOpts } from '../commands';
 
-export default async (opts: SafeOpts, log: Logger) => {
+export default async (
+  opts: Pick<SafeOpts, 'stateStdin' | 'statePath'>,
+  log: Logger) => {
+  const { stateStdin, statePath } = opts;
   log.debug('Load state...');
-  if (opts.stateStdin) {
+  if (stateStdin) {
     try {
-      const json = JSON.parse(opts.stateStdin);
+      const json = JSON.parse(stateStdin);
       log.success('Read state from stdin');
       log.debug('state:', json);
       return json;
     } catch (e) {
       log.error('Failed to load state from stdin');
-      log.error(opts.stateStdin);
+      log.error(stateStdin);
       log.error(e);
       process.exit(1);
     }
   }
 
-  if (opts.statePath) {
+  if (statePath) {
     try {
-      const str = await fs.readFile(opts.statePath, 'utf8');
+      const str = await fs.readFile(statePath, 'utf8');
       const json = JSON.parse(str);
-      log.success(`Loaded state from ${opts.statePath}`);
+      log.success(`Loaded state from ${statePath}`);
       log.debug('state:', json);
       return json;
     } catch (e) {
-      log.warn(`Error loading state from ${opts.statePath}`);
+      log.warn(`Error loading state from ${statePath}`);
       log.warn(e);
     }
   }
