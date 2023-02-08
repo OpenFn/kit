@@ -220,7 +220,7 @@ importers:
 
   packages/runtime-manager:
     specifiers:
-      '@openfn/compiler': workspace:^0.0.24
+      '@openfn/compiler': workspace:^0.0.25
       '@openfn/language-common': 2.0.0-rc3
       '@openfn/logger': workspace:*
       '@openfn/runtime': workspace:*

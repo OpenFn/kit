@@ -1,6 +1,6 @@
 {
   "name": "@openfn/runtime",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "Job processing runtime.",
   "type": "module",
   "exports": {

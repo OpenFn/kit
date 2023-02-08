@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.10
+
+### Patch Changes
+
+- 38ad73e: export extra typings
+
 ## 0.0.9
 
 ### Patch Changes

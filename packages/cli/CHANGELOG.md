@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 0.0.29
+
+### Patch Changes
+
+- 38ad73e: Support adaptor paths in version readout
+- 56af9d3: tidy test command output
+- 6c1eb8b: CLI no longer attempts to load state.json by default
+- Updated dependencies [38ad73e]
+  - @openfn/logger@0.0.10
+  - @openfn/compiler@0.0.25
+  - @openfn/runtime@0.0.19
+
 ## 0.0.28
 
 ### Patch Changes

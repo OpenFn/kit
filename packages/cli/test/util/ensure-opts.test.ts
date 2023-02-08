@@ -18,13 +18,12 @@ test('preserve the command name', (t) => {
   t.assert(opts.command === 'compile');
 });
 
-test('set job, state and output from a base path', (t) => {
+test('set job and state from a base path', (t) => {
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.jobPath === 'a/job.js');
-  t.assert(opts.statePath === 'a/state.json');
   t.assert(opts.outputPath === 'a/output.json');
 });
 
@@ -34,16 +33,14 @@ test("default base path to '.'", (t) => {
   const opts = ensureOpts(undefined, initialOpts);
 
   t.assert(opts.jobPath === './job.js');
-  t.assert(opts.statePath === './state.json');
   t.assert(opts.outputPath === './output.json');
 });
 
-test('should set state and output from a base path with an extension', (t) => {
+test('should output from a base path with an extension', (t) => {
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a/x.js', initialOpts);
   t.assert(opts.jobPath === 'a/x.js');
-  t.assert(opts.statePath === 'a/state.json');
   t.assert(opts.outputPath === 'a/output.json');
 });
 
@@ -54,7 +51,6 @@ test('should not set outputPath if stdout is requested', (t) => {
 
   const opts = ensureOpts('a/x.js', initialOpts);
   t.assert(opts.jobPath === 'a/x.js');
-  t.assert(opts.statePath === 'a/state.json');
   t.falsy(opts.outputPath);
 });
 
@@ -79,7 +75,6 @@ test("should use the user's output path", (t) => {
   const opts = ensureOpts('a', initialOpts);
   t.assert(opts.jobPath === 'a/job.js');
   t.assert(opts.outputPath === outputPath);
-  t.assert(opts.statePath === 'a/state.json');
 });
 
 test('preserve outputStdout', (t) => {

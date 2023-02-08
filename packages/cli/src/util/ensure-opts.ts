@@ -93,6 +93,7 @@ export default function ensureOpts(
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
     strictOutput: opts.strictOutput ?? true,
+    statePath: opts.statePath,
     timeout: opts.timeout,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {
