@@ -76,7 +76,6 @@ export default function ensureOpts(
   const newOpts = {
     adaptor: opts.adaptor, // only applies to install (a bit messy) (now applies to docs too)
     adaptors: opts.adaptors || [],
-    autoinstall: opts.autoinstall,
     command: opts.command,
     expand: opts.expand !== false,
     force: opts.force || false,

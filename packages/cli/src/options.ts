@@ -38,6 +38,18 @@ export const adaptors: CLIOption<{ required?: boolean }> = ({ required } = {}) =
   },
 });
 
+export const autoinstall: CLIOption = () => ({
+  name: 'autoinstall',
+  yargs: {
+    alias: ['a'],
+    boolean: true,
+    description: 'Auto-install the language adaptor',
+  },
+  ensure: (opts) => {
+    def(opts, 'autoinstall', false)
+  },
+});
+
 export const immutable: CLIOption = () => ({
   name: 'immutable',
   yargs: {
@@ -47,6 +59,15 @@ export const immutable: CLIOption = () => ({
   ensure: (opts) => {
     def(opts, 'immutable', false)
   },
+});
+
+export const statePath: CLIOption = () => ({
+  name: 'state-path',
+  yargs: {
+    alias: ['s'],
+    description: 'Path to the state file',
+  },
+  ensure: () => {}
 });
 
 export const useAdaptorsMonorepo: CLIOption = () => ({
