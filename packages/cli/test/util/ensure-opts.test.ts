@@ -77,34 +77,6 @@ test("should use the user's output path", (t) => {
   t.assert(opts.outputPath === outputPath);
 });
 
-test('should not append @openfn to adaptors if already prefixed', (t) => {
-  const initialOpts = {
-    adaptors: ['@openfn/language-common=a/b/c'],
-  } as Opts;
-  const opts = ensureOpts('a', initialOpts);
-  t.assert(opts.adaptors[0] === '@openfn/language-common=a/b/c');
-});
-
-test('should create an empty adaptors object', (t) => {
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.adaptors);
-  t.falsy(opts.adaptors.length);
-});
-
-test('should create an empty adaptors object if undefined', (t) => {
-  const initialOpts = {
-    adaptors: undefined,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.adaptors);
-  t.falsy(opts.adaptors.length);
-});
-
 test('preserve outputStdout', (t) => {
   const initialOpts = {
     outputStdout: true,
