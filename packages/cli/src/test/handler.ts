@@ -4,7 +4,7 @@ import loadState from '../execute/load-state';
 import execute from '../execute/execute';
 import { CompilerOpts } from '../compile/compile';
 
-const sillyMessage = 'Calculating the answer to life, the universe, and eveything...';
+const sillyMessage = 'Calculating the answer to life, the universe, and everything...';
 
 const testHandler = async (options: CompilerOpts, logger: Logger) => {
   logger.log('Running test job...');
@@ -13,7 +13,7 @@ const testHandler = async (options: CompilerOpts, logger: Logger) => {
   delete options.jobPath;
 
   if (!options.stateStdin) {
-    logger.debug('No state provided: use -S <number> to provide some state');
+    logger.debug('No state provided: try -S <number> to provide some state');
     options.stateStdin = '21';
   }
 
