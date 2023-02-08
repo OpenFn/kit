@@ -13,7 +13,7 @@ const testHandler = async (options: CompilerOpts, logger: Logger) => {
   delete options.jobPath;
 
   if (!options.stateStdin) {
-    logger.debug('No state provided: use -S <number> to provide some state');
+    logger.warn('No state provided: try -S <number> to provide some state');
     options.stateStdin = '21';
   }
 

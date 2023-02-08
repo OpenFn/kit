@@ -112,7 +112,6 @@ export default function ensureOpts(
   } else {
     set('jobPath', `${baseDir}/job.js`);
   }
-  set('statePath', `${baseDir}/state.json`);
 
   if (!opts.outputStdout) {
     set(

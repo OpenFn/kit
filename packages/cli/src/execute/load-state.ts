@@ -18,18 +18,20 @@ export default async (opts: SafeOpts, log: Logger) => {
     }
   }
 
-  try {
-    const str = await fs.readFile(opts.statePath, 'utf8');
-    const json = JSON.parse(str);
-    log.success(`Loaded state from ${opts.statePath}`);
-    log.debug('state:', json);
-    return json;
-  } catch (e) {
-    log.warn(`Error loading state from ${opts.statePath}`);
-    log.warn(e);
+  if (opts.statePath) {
+    try {
+      const str = await fs.readFile(opts.statePath, 'utf8');
+      const json = JSON.parse(str);
+      log.success(`Loaded state from ${opts.statePath}`);
+      log.debug('state:', json);
+      return json;
+    } catch (e) {
+      log.warn(`Error loading state from ${opts.statePath}`);
+      log.warn(e);
+    }
   }
 
-  log.warn('Using default state { data: {}, configuration: {}');
+  log.info('No state provided - using default state { data: {}, configuration: {}');
   return {
     data: {},
     configuration: {},
