@@ -46,7 +46,7 @@ openfn path/to/job.js -ia adaptor-name
 
 You MUST specify which adaptor to use. Pass the `-i` flag to auto-install that adaptor (it's safe to do this redundantly).
 
-If output.json and state.json are not passed, the CLI will look for them next to the job.js file. You can pass a path to state by adding `-s path/to/state.json`, and output by passing `-o path/to/output.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
+If output.json is not passed, the CLI will create an `output.json` next to the job file. You can pass a path to state by adding `-s path/to/state.json`, and output by passing `-o path/to/output.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
 
 The CLI can auto-install language adaptors to its own privately maintained repo. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo.
 
