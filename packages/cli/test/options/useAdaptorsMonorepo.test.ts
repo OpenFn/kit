@@ -1,9 +1,6 @@
 import test from 'ava';
-import { useAdaptorsMonorepo as createOption } from '../../src/options';
+import { useAdaptorsMonorepo } from '../../src/options';
 import { Opts } from '../../src/commands';
-
-
-const useAdaptorsMonorepo = createOption();
 
 test('monorepoPath is unset by default', (t) => {
   const opts = {} as Opts;

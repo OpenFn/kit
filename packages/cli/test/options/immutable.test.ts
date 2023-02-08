@@ -1,8 +1,6 @@
 import test from 'ava';
-import { immutable as createOption } from '../../src/options';
+import { immutable } from '../../src/options';
 import { Opts } from '../../src/commands';
-
-const immutable = createOption();
 
 test('immutable defaults to false', (t) => {
   const opts = {} as Opts;
