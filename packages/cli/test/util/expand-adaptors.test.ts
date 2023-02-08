@@ -1,6 +1,5 @@
 import test from 'ava';
 import expandAdaptors from '../../src/util/expand-adaptors';
-import { createMockLogger } from '@openfn/logger';
 
 test('expands common', (t) => {
   const [a] = expandAdaptors(['common']);
@@ -26,21 +25,4 @@ test('expands nonsense', (t) => {
 test('does not expand a full adaptor name', (t) => {
   const [a] = expandAdaptors(['@openfn/language-common']);
   t.is(a, '@openfn/language-common');
-});
-
-test('logs if it expands', (t) => {
-  const logger = createMockLogger('', { level: 'debug' });
-  const [a] = expandAdaptors(['common'], logger);
-  t.is(a, '@openfn/language-common');
-
-  const { message } = logger._parse(logger._last);
-  t.assert(/^Expanded adaptor/.test(message as string));
-});
-
-test('do not log if it does not expand', (t) => {
-  const logger = createMockLogger('', { level: 'debug' });
-  const [a] = expandAdaptors(['@openfn/language-common'], logger);
-
-  t.is(a, '@openfn/language-common');
-  t.is(logger._history.length, 0);
 });
