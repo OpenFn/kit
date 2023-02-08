@@ -63,10 +63,11 @@ const handlers = {
     printVersions(logger, opts),
 };
 
-export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor'>> & {
+export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   log: Record<string, LogLevel>;
   adaptor: string | boolean;
   monorepoPath?: string;
+  statePath?: string;
 };
 
 // Top level command parser
