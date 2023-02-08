@@ -32,15 +32,6 @@ const executeCommand = {
   handler: ensure('execute', options), 
   builder: build(options)
     // return applyExecuteOptions(yargs)
-      // .option('autoinstall', {
-      //   alias: 'i',
-      //   boolean: true,
-      //   description: 'Auto-install the language adaptor',
-      // })
-      // .option('state-path', {
-      //   alias: 's',
-      //   description: 'Path to the state file',
-      // })
       // .option('state-stdin', {
       //   alias: 'S',
       //   description: 'Read state from stdin (instead of a file)',
