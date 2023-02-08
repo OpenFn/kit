@@ -244,24 +244,6 @@ test('preserve stateStdin', (t) => {
   t.assert(opts.stateStdin === '{}');
 });
 
-test('preserve immutable', (t) => {
-  const initialOpts = {
-    immutable: true,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.assert(opts.immutable);
-});
-
-test('default immutable to false', (t) => {
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.assert(opts.immutable === false);
-});
-
 test('perserve the autoinstall flag', (t) => {
   const initialOpts = {
     autoinstall: true,
@@ -285,41 +267,6 @@ test('update the default output with compile only', (t) => {
   t.assert(opts.outputPath === 'a/output.js');
 });
 
-test('monorepoPath: unset by default', (t) => {
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.useAdaptorsMonorepo);
-});
-
-test('monorepoPath: unset even if env var is set default', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.useAdaptorsMonorepo);
-});
-
-test('monorepoPath: unset if useAdaptorsMonorepo is false', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    useAdaptorsMonorepo: false,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.useAdaptorsMonorepo);
-});
-
-test('monorepoPath: load from OPENFN_ADAPTORS_REPO', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    useAdaptorsMonorepo: true,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.is(opts.monorepoPath, 'a/b/c');
-  delete process.env.OPENFN_ADAPTORS_REPO;
-});
 
 test('perserve the skipAdaptorValidation flag', (t) => {
   const initialOpts = {

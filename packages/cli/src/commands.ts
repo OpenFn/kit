@@ -30,6 +30,7 @@ export type Opts = {
   adaptor?: boolean | string;
   adaptors?: string[];
   useAdaptorsMonorepo?: string | boolean;
+  monorepoPath?: string;
   autoinstall?: boolean;
   expand?: boolean; // for unit tests really
   force?: boolean;

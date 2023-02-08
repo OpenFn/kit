@@ -1,8 +1,8 @@
 import test from 'ava';
-import { adaptors as adaptorsOption } from '../../src/options';
+import { adaptors as createOption } from '../../src/options';
 import { Opts } from '../../src/commands';
 
-const adaptors = adaptorsOption();
+const adaptors = createOption();
 
 test('ensure should create an empty adaptors object', (t) => {
   const opts = {} as Opts;
@@ -22,21 +22,6 @@ test('should create an empty adaptors object if undefined', (t) => {
   t.assert(Array.isArray(opts.adaptors))
   t.assert(opts.adaptors!.length === 0);
 });
-
-// test('should dumbly ensure an array', (t) => {
-//   const stringValue = adaptors.ensure({ adaptors: 'a'});
-//   t.deepEqual(stringValue.adaptors, ['a']);
-
-//   const numberValue = adaptors.ensure({ adaptors: 1});
-//   t.deepEqual(numberValue.adaptors, [1]);
-
-//   const boolValue = adaptors.ensure({ adaptors: true });
-//   t.deepEqual(boolValue.adaptors, [true]);
-
-//   // Note: this will not create an array. But I don't think we care.
-//   const falseValue = adaptors.ensure({ adaptors: false });
-//   t.deepEqual(falseValue.adaptors, false);
-// });
 
 test('ensure should accept a valid longform value', (t) => {
   const initialValue = ['@openfn/language-http']
