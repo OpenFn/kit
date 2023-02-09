@@ -3,9 +3,9 @@ import yargs from 'yargs';
 import type { Opts } from './commands';
 import expandAdaptors from './util/expand-adaptors';
 
-type CLIOption = {
+export type CLIOption = {
   name: string;
-  yargs?: yargs.Options;
+  yargs: yargs.Options;
   ensure: (opts: Opts) => void;
 }
 
