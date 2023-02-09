@@ -12,7 +12,7 @@ const build = (opts: CLIOption[], yargs: yargs.Argv) => opts.reduce(
 
 // Mutate the incoming argv with defaults etc
 const ensure = (command, opts) => (yargs) => {
-  opts.command = command;
+  yargs.command = command;
   opts.forEach(
     (opt) => {
       opt.ensure(yargs);
@@ -38,12 +38,12 @@ const options = [
   o.compile,
   o.immutable,
   o.jobPath,
-  o.strictOutput,
+  o.skipAdaptorValidation,
   o.statePath,
   o.stateStdin,
+  o.strictOutput,
   o.timeout,
   o.useAdaptorsMonorepo,
-  o.skipAdaptorValidation,
 ]
 
 // TODO what's a nice way to pull out just the opts we need?

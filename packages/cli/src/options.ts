@@ -23,10 +23,12 @@ export const adaptors: CLIOption = {
     alias: ['a', 'adaptor'],
     description:
       'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build',
-    array: true
   },
   ensure: (opts) => {
-    // TODO what if an alias was passed?
+    // Note that we always handle adaptors as an array for future proofing
+    // But the CLI will only parse the first value
+    // You can specify multiple adaptors with -a common -a http
+    // (not that this is very useful at the moment)
     if (opts.adaptors) {
       if (!Array.isArray(opts.adaptors)) {
         opts.adaptors = [opts.adaptors];
@@ -35,13 +37,17 @@ export const adaptors: CLIOption = {
       opts.adaptors = [];
     }
     opts.adaptors = expandAdaptors(opts.adaptors);
+
+    // delete the aliases as they have not been massaged
+    delete opts.adaptor;
+    delete (opts as { a?: string[]}).a;
   },
 };
 
 export const autoinstall: CLIOption = {
   name: 'autoinstall',
   yargs: {
-    alias: ['a'],
+    alias: ['i'],
     boolean: true,
     description: 'Auto-install the language adaptor',
   },
