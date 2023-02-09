@@ -17,7 +17,6 @@ const loadVersionFromPath = (adaptorPath: string) => {
     const pkg = JSON.parse(readFileSync(path.resolve(adaptorPath, 'package.json'), 'utf8'));
     return pkg.version
   } catch(e) {
-    console.log(e)
     return 'unknown';
   }
 }
