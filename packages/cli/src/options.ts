@@ -50,6 +50,17 @@ export const autoinstall: CLIOption = {
   },
 };
 
+export const compile: CLIOption = {
+  name: 'no-compile',
+  yargs: {
+    boolean: true,
+    description: 'Allow properties other than data to be returned in the output',
+  },
+  ensure: (opts) => {
+    def(opts, 'compile', true)
+  }
+};
+
 export const immutable: CLIOption = {
   name: 'immutable',
   yargs: {
@@ -71,7 +82,7 @@ const getBaseDir = (opts: Opts) => {
 }
 
 export const jobPath: CLIOption = {
-  name: 'jobPath',
+  name: 'job-path',
   yargs: {
     hidden: true,
   },
@@ -84,6 +95,28 @@ export const jobPath: CLIOption = {
       def(opts, 'jobPath', path.resolve(base, 'job.js'));
     }
   },
+};
+
+export const strictOutput: CLIOption = {
+  name: 'no-strict-output',
+  yargs: {
+    boolean: true,
+    description: 'Allow properties other than data to be returned in the output',
+  },
+  ensure: (opts) => {
+    def(opts, 'strictOutput', true)
+  }
+};
+
+export const skipAdaptorValidation: CLIOption = {
+  name: 'skip-adaptor-validation',
+  yargs: {
+    boolean: true,
+    description: 'Suppress warning message for jobs which don\'t use an adaptor',
+  },
+  ensure: (opts) => {
+    def(opts, 'skipAdaptorValidation', false)
+  }
 };
 
 export const statePath: CLIOption = {
@@ -104,6 +137,18 @@ export const stateStdin: CLIOption = {
     description: 'Read state from stdin (instead of a file)',
   },
   ensure: () => {}
+};
+
+export const timeout: CLIOption = {
+  name: 'timeout',
+  yargs: {
+    alias: ['t'],
+    number: true,
+    description: 'Set the timeout duration (in milliseconds) [default: 5 minutes]',
+  },
+  ensure: (opts) => {
+    def(opts, 'timeout', 5 * 60 * 1000)
+  }
 };
 
 export const useAdaptorsMonorepo: CLIOption = {

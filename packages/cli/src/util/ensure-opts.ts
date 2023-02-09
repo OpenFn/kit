@@ -79,12 +79,10 @@ export default function ensureOpts(
     command: opts.command,
     expand: opts.expand !== false,
     force: opts.force || false,
-    immutable: opts.immutable || false,
     logJson:
       typeof opts.logJson == 'boolean'
         ? opts.logJson
         : Boolean(process.env.OPENFN_LOG_JSON),
-    noCompile: Boolean(opts.noCompile),
     operation: opts.operation,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
@@ -92,7 +90,6 @@ export default function ensureOpts(
     skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
-    strictOutput: opts.strictOutput ?? true,
     statePath: opts.statePath,
     timeout: opts.timeout,
   } as SafeOpts;

@@ -33,13 +33,14 @@ const override = (command, yargs) => {
 } 
 
 const options = [
-  o.basePath, // must run early
-
   o.adaptors,
   o.autoinstall,
   o.immutable,
+  o.jobPath,
   o.statePath,
+  o.stateStdin,
   o.useAdaptorsMonorepo,
+  o.skipAdaptorValidation,
 ]
 
 // TODO what's a nice way to pull out just the opts we need?
@@ -52,23 +53,9 @@ const executeCommand = {
   handler: ensure('execute', options), 
   builder: build(options)
     // return applyExecuteOptions(yargs)
-      // .option('skip-adaptor-validation', {
-      //   boolean: true,
-      //   description: 'Skip adaptor validation warnings',
-
-      // })
-      // .option('timeout', {
-      //   alias: '-t',
-      //   description: 'Set the timeout duration in MS',
-      // })
       // .option('no-compile', {
       //   boolean: true,
       //   description: 'Skip compilation',
-      // })
-      // .option('no-strict-output', {
-      //   boolean: true,
-      //   description:
-      //     'Allow properties other than data to be returned in the output',
       // })
       // .example(
       //   'openfn foo/job.js',

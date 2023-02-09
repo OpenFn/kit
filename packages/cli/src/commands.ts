@@ -40,7 +40,7 @@ export type Opts = {
   jobPath?: string;
   log?: string[];
   logJson?: boolean;
-  noCompile?: boolean;
+  compile?: boolean;
   strictOutput?: boolean; // defaults to true
   outputPath?: string;
   outputStdout?: boolean;
