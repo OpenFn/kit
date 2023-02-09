@@ -85,6 +85,21 @@ test('print version of adaptor with path', async (t) => {
   t.regex(message,  /@openfn\/language-http(.+)1\.0\.0/);
 });
 
+test('print version of adaptor with path and @', async (t) => {
+  mock({
+    '/repo/node_modules/@openfn/http/package.json': '{ "version": "1.0.0" }',
+    [root]: mock.load(root, {}) 
+  })
+
+  const logger = createMockLogger('', { level: 'info' });
+  await printVersions(logger, { adaptors: ['@openfn/language-http=/repo/node_modules/@openfn/http'] });
+
+  const last = logger._parse(logger._last);
+  const message = last.message as string;
+
+  t.regex(message,  /@openfn\/language-http(.+)1\.0\.0/);
+});
+
 test('json output', async (t) => {
   const logger = createMockLogger('', { level: 'info', json: true });
   await printVersions(logger, { adaptors: ['http'], logJson: true });

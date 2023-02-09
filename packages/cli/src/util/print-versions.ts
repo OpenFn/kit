@@ -31,17 +31,16 @@ const printVersions = async (
   if (adaptors && adaptors.length) {
     adaptor = adaptors[0];
   }
-  logger.debug('> ADAPTOR:', adaptor)
 
   let adaptorVersion;
   let adaptorName = '';
   if (adaptor) {
-    const { name, version } = getNameAndVersion(adaptor);
-    if (name.match('=')) {
-      const [namePart, pathPart] = name.split('=');
+    if (adaptor.match('=')) {
+      const [namePart, pathPart] = adaptor.split('=');
       adaptorVersion = loadVersionFromPath(pathPart);
-      adaptorName = namePart;
+      adaptorName = getNameAndVersion(namePart).name;
     } else {
+      const { name, version } = getNameAndVersion(adaptor);
       adaptorName = name;
       adaptorVersion = version || 'latest';
     }
