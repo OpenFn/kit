@@ -76,15 +76,6 @@ const executeCommand = {
 
 export const applyExecuteOptions = (yargs: yargs.Argv) =>
   yargs
-    .option('output-path', {
-      alias: 'o',
-      description: 'Path to the output file',
-    })
-    .option('output-stdout', {
-      alias: 'O',
-      boolean: true,
-      description: 'Print output to stdout (instead of a file)',
-    })
     .option('no-expand', {
       description: 'Don\t attempt to auto-expand adaptor shorthand names',
       boolean: true,
