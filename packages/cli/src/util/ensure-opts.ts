@@ -105,14 +105,6 @@ export default function ensureOpts(
     newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
   }
 
-  let baseDir = basePath;
-  if (basePath.endsWith('.js')) {
-    baseDir = path.dirname(basePath);
-    set('jobPath', basePath);
-  } else {
-    set('jobPath', `${baseDir}/job.js`);
-  }
-
   if (!opts.outputStdout) {
     set(
       'outputPath',

@@ -61,31 +61,28 @@ export const immutable: CLIOption = {
   },
 };
 
-export const basePath: CLIOption = {
-  name: 'basePath',
-  yargs: {
-    hidden: true,
-  },
-  ensure: (opts) => {
-    const basePath = opts.path ?? '.';
-    if (basePath.endsWith('.js')) {
-      opts.baseDir = path.dirname(basePath);
-    } else {
-      opts.baseDir = basePath;
-    }
-  },
-};
+const getBaseDir = (opts: Opts) => {
+  const basePath = opts.path ?? '.';
+  if (basePath.endsWith('.js')) {
+    return path.dirname(basePath);
+  }
+  return path.resolve(basePath);
+  
+}
 
-// don't really like this
-// it's hard to unit test because it has this secret dependency on basePath
-// Then again, working out job and output paths is specific to certain commands only
 export const jobPath: CLIOption = {
   name: 'jobPath',
   yargs: {
     hidden: true,
   },
   ensure: (opts) => {
-    def(opts, 'jobPath', `${opts.baseDir}/job.js`);
+    const { path: basePath } = opts;
+    if (basePath?.endsWith('.js')) {
+      opts.jobPath = basePath;
+    } else {
+      const base = getBaseDir(opts);
+      def(opts, 'jobPath', path.resolve(base, 'job.js'));
+    }
   },
 };
 
