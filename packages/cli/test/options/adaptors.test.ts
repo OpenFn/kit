@@ -68,3 +68,15 @@ test('ensure should accept a valid shortform value with a path', (t) => {
   t.deepEqual(opts.adaptors, ['@openfn/language-http=/repo/adaptors/http']);
 });
 
+test('ensure should remove aliased options', (t) => {
+  const opts = {
+    adaptors: ['http'],
+  } as Opts;
+
+  adaptors.ensure(opts);
+
+  // @ts-ignore
+  t.falsy(opts.a);
+  t.falsy(opts.adaptor);
+});
+
