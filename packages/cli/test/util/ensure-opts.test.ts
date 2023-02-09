@@ -135,16 +135,6 @@ test('preserve timeout', (t) => {
   t.is(opts.timeout, 999);
 });
 
-test('preserve noCompile', (t) => {
-  const initialOpts = {
-    noCompile: true,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.noCompile);
-});
-
 test('preserve expand', (t) => {
   const initialOpts = {
     expand: false,
