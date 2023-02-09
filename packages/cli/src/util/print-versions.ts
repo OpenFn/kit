@@ -54,7 +54,6 @@ const printVersions = async (
     COMPILER,
     adaptorName,
   ].map(s => s.length));
-  logger.debug('> LONGEST:', longest)
   
   // Prefix and pad version numbers
   const prefix = (str: string) =>
