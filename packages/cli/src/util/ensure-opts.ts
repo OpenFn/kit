@@ -102,15 +102,6 @@ export default function ensureOpts(
     newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
   }
 
-  if (!opts.outputStdout) {
-    set(
-      'outputPath',
-      newOpts.command === 'compile'
-        ? `${baseDir}/output.js`
-        : `${baseDir}/output.json`
-    );
-  }
-
   newOpts.log = ensureLogOpts(opts);
 
   return newOpts;

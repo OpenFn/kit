@@ -103,6 +103,41 @@ export const jobPath: CLIOption = {
   },
 };
 
+export const outputStdout: CLIOption = {
+  name: 'output-stdout',
+  yargs: {
+    alias: 'O',
+    boolean: true,
+    description: 'Print output to stdout (instead of a file)'
+  },
+  ensure: (opts) => {
+    def(opts, 'outputStdout', false);
+  }
+};
+
+export const outputPath: CLIOption = {
+  name: 'output-path',
+  yargs: {
+    alias: 'o',
+    description: 'Path to the output file',
+    default: 'state.json'
+  },
+  ensure: (opts) => {
+    // TODO when compile uses this option,
+    // it should output to a js file, not a json file
+    // It can do this by overriding the ensure function
+    // (Or I guess we take an outExtension option)
+    if (opts.outputStdout) {
+      delete opts.outputPath;
+    } else {
+      const base = getBaseDir(opts);
+      def(opts, 'outputPath', path.resolve(base, 'output.json'))
+    }
+    // remove the alias
+    delete (opts as  { o?: string }).o;
+  }
+};
+
 export const strictOutput: CLIOption = {
   name: 'no-strict-output',
   yargs: {
@@ -150,7 +185,8 @@ export const timeout: CLIOption = {
   yargs: {
     alias: ['t'],
     number: true,
-    description: 'Set the timeout duration (in milliseconds) [default: 5 minutes]',
+    description: 'Set the timeout duration (in milliseconds)',
+    default: '5 minutes',
   },
   ensure: (opts) => {
     def(opts, 'timeout', 5 * 60 * 1000)
