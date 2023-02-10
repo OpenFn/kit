@@ -25,7 +25,7 @@ const componentShorthands: Record<string, string> = {
 const isValidComponent = (v: string) =>
   /^(cli|runtime|compiler|job|default)$/i.test(v);
 
-const ensureLogOpts = (opts: Opts) => {
+export const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
   if (opts.command === 'version' || (opts.command === 'test' && !opts.log)) {
     return { default: 'info' };
