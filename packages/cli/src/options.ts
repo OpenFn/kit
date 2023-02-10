@@ -2,6 +2,7 @@ import path from 'node:path';
 import yargs from 'yargs';
 import type { Opts } from './commands';
 import doExpandAdaptors from './util/expand-adaptors';
+import  { DEFAULT_REPO_DIR } from './util/ensure-opts';
 
 export type CLIOption = {
   name: string;
@@ -10,6 +11,7 @@ export type CLIOption = {
 }
 
 // little util to default a value
+// TODO why not use yargs.default?
 const def = (opts, key, value) => {
   const v = opts[key];
   if (isNaN(v) && !v) {
@@ -114,6 +116,23 @@ export const jobPath: CLIOption = {
   },
 };
 
+// TODO this needs unit testing
+export const logJson: CLIOption = {
+  name: 'log-json',
+  yargs: {
+    description: 'Output all logs as JSON objects',
+    boolean: true,
+  },
+  ensure: (opts) => {
+    // TOOD not wild about this
+    if (!opts.log) {
+      opts.log = {}
+    }
+    opts.log.json = opts.logJson || false;
+    delete opts.logJson
+  },
+};
+
 export const outputStdout: CLIOption = {
   name: 'output-stdout',
   yargs: {
@@ -147,6 +166,15 @@ export const outputPath: CLIOption = {
     // remove the alias
     delete (opts as  { o?: string }).o;
   }
+};
+
+export const repoDir: CLIOption = {
+  name: 'repo-dir',
+  yargs: {
+    description: 'Provide a path to the repo root dir',
+    default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+  },
+  ensure: () => {}
 };
 
 export const strictOutput: CLIOption = {

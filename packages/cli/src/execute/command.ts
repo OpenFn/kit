@@ -1,36 +1,7 @@
-import yargs, { Arguments } from 'yargs';
+import yargs from 'yargs';
 import { Opts } from '../commands';
-
+import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
-import type { CLIOption } from '../options';
-
-// build helper to chain options
-const build = (opts: CLIOption[], yargs: yargs.Argv) => opts.reduce(
-  (_y, o) => yargs.option(o.name, o.yargs),
-  yargs
-);
-
-// Mutate the incoming argv with defaults etc
-const ensure = (command, opts) => (yargs) => {
-  yargs.command = command;
-  opts.forEach(
-    (opt) => {
-      opt.ensure(yargs);
-    },
-  );
-}
-
-// override yargs properties for a command
-// (a better pattern than the functions)
-const override = (command, yargs) => {
-  return ({
-    ...commmand,
-    yargs: {
-      ...command.yargs || {},
-      ...yargs
-    }
-  })
-} 
 
 const options = [
   o.adaptors,
@@ -39,8 +10,10 @@ const options = [
   o.expandAdaptors,
   o.immutable,
   o.jobPath,
+  o.logJson,
   o.outputPath,
   o.outputStdout,
+  o.repoDir,
   o.skipAdaptorValidation,
   o.statePath,
   o.stateStdin,
