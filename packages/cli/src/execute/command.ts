@@ -36,8 +36,11 @@ const options = [
   o.adaptors,
   o.autoinstall,
   o.compile,
+  o.expandAdaptors,
   o.immutable,
   o.jobPath,
+  o.outputPath,
+  o.outputStdout,
   o.skipAdaptorValidation,
   o.statePath,
   o.stateStdin,
@@ -73,12 +76,5 @@ const executeCommand = {
       'Install the latest version of language-common to the repo'
     )
 } as yargs.CommandModule<ExecuteOptions>;
-
-export const applyExecuteOptions = (yargs: yargs.Argv) =>
-  yargs
-    .option('no-expand', {
-      description: 'Don\t attempt to auto-expand adaptor shorthand names',
-      boolean: true,
-    });
 
 export default executeCommand;

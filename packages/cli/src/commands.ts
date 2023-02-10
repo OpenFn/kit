@@ -31,27 +31,27 @@ export type Opts = {
 
   adaptor?: boolean | string;
   adaptors?: string[];
-  useAdaptorsMonorepo?: string | boolean;
-  monorepoPath?: string;
   autoinstall?: boolean;
-  expand?: boolean; // for unit tests really
+  compile?: boolean;
+  expandAdaptors?: boolean; // for unit tests really
   force?: boolean;
   immutable?: boolean;
   jobPath?: string;
   log?: string[];
   logJson?: boolean;
-  compile?: boolean;
-  strictOutput?: boolean; // defaults to true
+  monorepoPath?: string;
+  operation?: string;
   outputPath?: string;
   outputStdout?: boolean;
-  operation?: string;
   packages?: string[];
-  specifier?: string; // docgen
   repoDir?: string;
   skipAdaptorValidation?: boolean;
+  specifier?: string; // docgen
   statePath?: string;
   stateStdin?: string;
+  strictOutput?: boolean; // defaults to true
   timeout?: number; // ms
+  useAdaptorsMonorepo?: string | boolean;
 };
 
 const handlers = {

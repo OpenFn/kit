@@ -1,7 +1,7 @@
 import path from 'node:path';
 import yargs from 'yargs';
 import type { Opts } from './commands';
-import expandAdaptors from './util/expand-adaptors';
+import doExpandAdaptors from './util/expand-adaptors';
 
 export type CLIOption = {
   name: string;
@@ -36,7 +36,7 @@ export const adaptors: CLIOption = {
     } else {
       opts.adaptors = [];
     }
-    opts.adaptors = expandAdaptors(opts.adaptors);
+    opts.adaptors = doExpandAdaptors(opts.adaptors);
 
     // delete the aliases as they have not been massaged
     delete opts.adaptor;
@@ -64,6 +64,17 @@ export const compile: CLIOption = {
   },
   ensure: (opts) => {
     def(opts, 'compile', true)
+  }
+};
+
+export const expandAdaptors: CLIOption = {
+  name: 'no-expand-adaptors',
+  yargs: {
+    boolean: true,
+    description: 'Don\t attempt to auto-expand adaptor shorthand names',
+  },
+  ensure: (opts) => {
+    def(opts, 'expandAdaptors', true)
   }
 };
 
