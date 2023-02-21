@@ -368,7 +368,7 @@ test.serial(
 
 test.serial('compile a job: openfn compile job.js to stdout', async (t) => {
   const options = {};
-  await run('compile test-job.js', 'fn(42);', options);
+  await run('compile job.js', 'fn(42);', options);
 
   const { message } = logger._parse(logger._last);
   t.regex(message, /export default/);
@@ -378,7 +378,7 @@ test.serial('compile a job: openfn compile job.js to file', async (t) => {
   const options = {
     outputPath: 'out.js',
   };
-  await run('compile test-job.js -o out.js', 'fn(42);', options);
+  await run('compile job.js -o out.js', 'fn(42);', options);
 
   const output = await fs.readFile('out.js', 'utf8');
   t.is(output, 'export default [fn(42)];');
@@ -489,7 +489,9 @@ test.serial('docs should print documentation with full names', async (t) => {
 });
 
 test.serial('docs adaptor should print list operations', async (t) => {
+  const pkgPath = path.resolve('./package.json');
   mock({
+    [pkgPath]: mock.load(pkgPath),
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
       version: '1.0.0',
@@ -507,7 +509,7 @@ test.serial('docs adaptor should print list operations', async (t) => {
   opts.repoDir = '/repo';
 
   await commandParser('', opts, logger);
-  const docs = logger._parse(logger._history[3]).message as string;
+  const docs = logger._parse(logger._history[2]).message as string;
   t.notRegex(docs, /\[object Object\]/);
   t.notRegex(docs, /\#\#\# Usage Examples/);
   t.regex(docs, /fn\(a, b\)/);
@@ -537,7 +539,7 @@ test.serial(
     opts.repoDir = '/repo';
 
     await commandParser('', opts, logger);
-    const docs = logger._parse(logger._history[4]).message as string;
+    const docs = logger._parse(logger._history[3]).message as string;
     // match the signature
     t.regex(docs, /\#\# fn\(\)/);
     // Match usage examples
