@@ -30,6 +30,7 @@ export const ensureLogOpts = (opts: Opts) => {
   if (!opts.log && /^(version|test)$/.test(opts.command!)) {
     // version and test log to info by default
     (opts as SafeOpts).log = { default: 'info' };
+    return opts;
   } else if (opts.log) {
     // Parse and validate each incoming log argument
     opts.log.forEach((l: string) => {
@@ -61,14 +62,12 @@ export const ensureLogOpts = (opts: Opts) => {
 
       components[component] = level as LogLevel;
     });
-
-    (opts as SafeOpts).log = {
-      ...defaultLoggerOptions,
-      ...components,
-    };
-  } else {
-    (opts as SafeOpts).log = {};
   }
+
+  (opts as SafeOpts).log = {
+    ...defaultLoggerOptions,
+    ...components,
+  };
 
   return opts as SafeOpts;
 };
