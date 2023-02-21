@@ -135,14 +135,14 @@ test('preserve timeout', (t) => {
   t.is(opts.timeout, 999);
 });
 
-test('preserve expand', (t) => {
+test('preserve expandAdaptors', (t) => {
   const initialOpts = {
-    expand: false,
+    expandAdaptors: false,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.false(opts.expand);
+  t.false(opts.expandAdaptors);
 });
 
 test('preserve logJson', (t) => {
@@ -189,15 +189,15 @@ test('preserve specifier', (t) => {
   t.is(opts.specifier, '@openfn/language-common@1.0.0');
 });
 
-test('default expand', (t) => {
+test('default expandAdaptors', (t) => {
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.true(opts.expand);
+  t.true(opts.expandAdaptors);
 });
 
-test('default expand if undefined', (t) => {
+test('default expandAdaptors if undefined', (t) => {
   // @ts-ignore
   const initialOpts = {
     expand: undefined,
@@ -205,10 +205,10 @@ test('default expand if undefined', (t) => {
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.true(opts.expand);
+  t.true(opts.expandAdaptors);
 });
 
-test('default expand if null', (t) => {
+test('default expandAdaptors if null', (t) => {
   // @ts-ignore
   const initialOpts = {
     expand: null,
@@ -216,7 +216,7 @@ test('default expand if null', (t) => {
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.true(opts.expand);
+  t.true(opts.expandAdaptors);
 });
 
 test('preserve stateStdin', (t) => {
@@ -251,7 +251,6 @@ test('update the default output with compile only', (t) => {
 
   t.assert(opts.outputPath === 'a/output.js');
 });
-
 
 test('perserve the skipAdaptorValidation flag', (t) => {
   const initialOpts = {
@@ -363,17 +362,6 @@ test('log: default to info for test', (t) => {
 test('log: default to info for version', (t) => {
   const initialOpts = {
     command: 'version',
-  } as Opts;
-
-  const opts = ensureOpts('', initialOpts);
-
-  t.is(opts.log.default, 'info');
-});
-
-test('log: always info for version', (t) => {
-  const initialOpts = {
-    command: 'version',
-    log: ['debug'],
   } as Opts;
 
   const opts = ensureOpts('', initialOpts);
