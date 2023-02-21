@@ -38,7 +38,9 @@ export const adaptors: CLIOption = {
     } else {
       opts.adaptors = [];
     }
-    opts.adaptors = doExpandAdaptors(opts.adaptors);
+    if (opts.expandAdaptors) {
+      opts.adaptors = doExpandAdaptors(opts.adaptors);
+    }
 
     // delete the aliases as they have not been massaged
     delete opts.adaptor;
