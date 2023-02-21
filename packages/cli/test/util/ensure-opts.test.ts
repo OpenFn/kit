@@ -401,4 +401,3 @@ test.serial('use prefer an explicit value for repoDirto an env var', (t) => {
 
   t.assert(opts.repoDir === 'a/b/c');
 });
-// TODO what if stdout and output path are set?

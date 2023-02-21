@@ -15,9 +15,9 @@ export default async (opts: CompilerOpts, log: Logger) => {
   log.debug('Loading job...');
   let job;
   if (opts.compile) {
-    const complilerOptions: Options = await loadTransformOptions(opts, log);
-    complilerOptions.logger = createLogger(COMPILER, opts);
-    job = compile(opts.jobSource || opts.jobPath, complilerOptions);
+    const compilerOptions: Options = await loadTransformOptions(opts, log);
+    compilerOptions.logger = createLogger(COMPILER, opts);
+    job = compile(opts.jobSource || opts.jobPath, compilerOptions);
     if (opts.jobPath) {
       log.success(`Compiled job from ${opts.jobPath}`);
     } else {
@@ -26,7 +26,7 @@ export default async (opts: CompilerOpts, log: Logger) => {
   } else {
     log.info('Skipping compilation as noCompile is set');
     if (opts.jobPath) {
-      job = fs.readFile(opts.jobPath, 'utf8');
+      job = await fs.readFile(opts.jobPath, 'utf8');
       log.success(`Loaded job from ${opts.jobPath} (no compilation)`);
     }
   }

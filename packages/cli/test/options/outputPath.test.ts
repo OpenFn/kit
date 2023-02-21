@@ -4,18 +4,18 @@ import { Opts } from '../../src/commands';
 
 test('outputPath defaults to base/output.json', (t) => {
   const opts = {
-    path: '/tmp/job.js'
+    path: '/tmp/job.js',
   } as Opts;
 
   outputPath.ensure(opts);
 
-  t.is(opts.outputPath, '/tmp/output.json')
+  t.is(opts.outputPath, '/tmp/output.json');
 });
 
 test('outputPath does not default if outputStdout is set', (t) => {
   const opts = {
     path: '/tmp/job.js',
-    outputStdout: true
+    outputStdout: true,
   } as Opts;
 
   outputPath.ensure(opts);
@@ -25,12 +25,23 @@ test('outputPath does not default if outputStdout is set', (t) => {
 
 test('outputPath can be set to a value', (t) => {
   const opts = {
-    outputPath: '/out.json'
+    outputPath: '/out.json',
   } as Opts;
 
   outputPath.ensure(opts);
 
-  t.is(opts.outputPath, '/out.json')
+  t.is(opts.outputPath, '/out.json');
+});
+
+test('outputPath can be set to a value with compile', (t) => {
+  const opts = {
+    command: 'compile',
+    outputPath: '/out.json',
+  } as Opts;
+
+  outputPath.ensure(opts);
+
+  t.is(opts.outputPath, '/out.json');
 });
 
 test('outputPath will be ignored if outputStdout is set', (t) => {
@@ -41,5 +52,18 @@ test('outputPath will be ignored if outputStdout is set', (t) => {
 
   outputPath.ensure(opts);
 
-  t.falsy(opts.outputPath)
+  t.falsy(opts.outputPath);
+});
+
+test('outputPath removes outputStdout for compile', (t) => {
+  const opts = {
+    command: 'compile',
+    outputPath: '/tmp/job-compiled.js',
+    outputStdout: true,
+  } as Opts;
+
+  outputPath.ensure(opts);
+
+  t.is(opts.outputPath, '/tmp/job-compiled.js');
+  t.falsy(opts.outputStdout);
 });
