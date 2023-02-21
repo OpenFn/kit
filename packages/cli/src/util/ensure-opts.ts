@@ -27,10 +27,10 @@ const isValidComponent = (v: string) =>
 
 export const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
-  if (opts.command === 'version' || (opts.command === 'test' && !opts.log)) {
-    return { default: 'info' };
-  }
-  if (opts.log) {
+  if (!opts.log && /^(version|test)$/.test(opts.command!)) {
+    // version and test log to info by default
+    (opts as SafeOpts).log = { default: 'info' };
+  } else if (opts.log) {
     // Parse and validate each incoming log argument
     opts.log.forEach((l: string) => {
       let component = '';
@@ -61,14 +61,19 @@ export const ensureLogOpts = (opts: Opts) => {
 
       components[component] = level as LogLevel;
     });
-    // TODO what if other log options are passed? Not really a concern right now
+
+    (opts as SafeOpts).log = {
+      ...defaultLoggerOptions,
+      ...components,
+    };
+  } else {
+    (opts as SafeOpts).log = {};
   }
-  return {
-    ...defaultLoggerOptions,
-    ...components,
-  };
+
+  return opts as SafeOpts;
 };
 
+// TODO this function is now deprecated and slowly being phased out
 export default function ensureOpts(
   basePath: string = '.',
   opts: Opts
@@ -76,13 +81,17 @@ export default function ensureOpts(
   const newOpts = {
     adaptor: opts.adaptor, // only applies to install (a bit messy) (now applies to docs too)
     adaptors: opts.adaptors || [],
+    autoinstall: opts.autoinstall,
     command: opts.command,
-    expand: opts.expand !== false,
+    expandAdaptors: opts.expandAdaptors !== false,
     force: opts.force || false,
+    immutable: opts.immutable || false,
+    log: opts.log as unknown, // TMP this will be overwritten later
     logJson:
       typeof opts.logJson == 'boolean'
         ? opts.logJson
         : Boolean(process.env.OPENFN_LOG_JSON),
+    compile: Boolean(opts.compile),
     operation: opts.operation,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
@@ -90,7 +99,7 @@ export default function ensureOpts(
     skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
-    statePath: opts.statePath,
+    strictOutput: opts.strictOutput ?? true,
     timeout: opts.timeout,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {
@@ -102,7 +111,25 @@ export default function ensureOpts(
     newOpts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
   }
 
-  newOpts.log = ensureLogOpts(opts);
+  let baseDir = basePath;
+  if (basePath.endsWith('.js')) {
+    baseDir = path.dirname(basePath);
+    set('jobPath', basePath);
+  } else {
+    set('jobPath', `${baseDir}/job.js`);
+  }
+  set('statePath', `${baseDir}/state.json`);
+
+  if (!opts.outputStdout) {
+    set(
+      'outputPath',
+      newOpts.command === 'compile'
+        ? `${baseDir}/output.js`
+        : `${baseDir}/output.json`
+    );
+  }
+
+  ensureLogOpts(newOpts as Opts);
 
   return newOpts;
 }

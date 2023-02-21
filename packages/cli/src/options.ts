@@ -2,13 +2,13 @@ import path from 'node:path';
 import yargs from 'yargs';
 import type { Opts } from './commands';
 import doExpandAdaptors from './util/expand-adaptors';
-import  { DEFAULT_REPO_DIR } from './util/ensure-opts';
+import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 
 export type CLIOption = {
   name: string;
   yargs: yargs.Options;
   ensure: (opts: Opts) => void;
-}
+};
 
 // little util to default a value
 // TODO why not use yargs.default?
@@ -17,7 +17,7 @@ const def = (opts, key, value) => {
   if (isNaN(v) && !v) {
     opts[key] = value;
   }
-}
+};
 
 export const adaptors: CLIOption = {
   name: 'adaptors',
@@ -42,7 +42,7 @@ export const adaptors: CLIOption = {
 
     // delete the aliases as they have not been massaged
     delete opts.adaptor;
-    delete (opts as { a?: string[]}).a;
+    delete (opts as { a?: string[] }).a;
   },
 };
 
@@ -54,7 +54,7 @@ export const autoinstall: CLIOption = {
     description: 'Auto-install the language adaptor',
   },
   ensure: (opts) => {
-    def(opts, 'autoinstall', false)
+    def(opts, 'autoinstall', false);
   },
 };
 
@@ -62,11 +62,11 @@ export const compile: CLIOption = {
   name: 'no-compile',
   yargs: {
     boolean: true,
-    description: 'Allow properties other than data to be returned in the output',
+    description: 'Disable compilation of the incoming source',
   },
   ensure: (opts) => {
-    def(opts, 'compile', true)
-  }
+    def(opts, 'compile', true);
+  },
 };
 
 export const expandAdaptors: CLIOption = {
@@ -76,8 +76,8 @@ export const expandAdaptors: CLIOption = {
     description: 'Don\t attempt to auto-expand adaptor shorthand names',
   },
   ensure: (opts) => {
-    def(opts, 'expandAdaptors', true)
-  }
+    def(opts, 'expandAdaptors', true);
+  },
 };
 
 export const immutable: CLIOption = {
@@ -87,7 +87,7 @@ export const immutable: CLIOption = {
     boolean: true,
   },
   ensure: (opts) => {
-    def(opts, 'immutable', false)
+    def(opts, 'immutable', false);
   },
 };
 
@@ -97,8 +97,7 @@ const getBaseDir = (opts: Opts) => {
     return path.dirname(basePath);
   }
   return path.resolve(basePath);
-  
-}
+};
 
 export const jobPath: CLIOption = {
   name: 'job-path',
@@ -123,14 +122,7 @@ export const logJson: CLIOption = {
     description: 'Output all logs as JSON objects',
     boolean: true,
   },
-  ensure: (opts) => {
-    // TOOD not wild about this
-    if (!opts.log) {
-      opts.log = {}
-    }
-    opts.log.json = opts.logJson || false;
-    delete opts.logJson
-  },
+  ensure: () => {},
 };
 
 export const outputStdout: CLIOption = {
@@ -138,11 +130,11 @@ export const outputStdout: CLIOption = {
   yargs: {
     alias: 'O',
     boolean: true,
-    description: 'Print output to stdout (instead of a file)'
+    description: 'Print output to stdout (instead of a file)',
   },
   ensure: (opts) => {
     def(opts, 'outputStdout', false);
-  }
+  },
 };
 
 export const outputPath: CLIOption = {
@@ -150,22 +142,24 @@ export const outputPath: CLIOption = {
   yargs: {
     alias: 'o',
     description: 'Path to the output file',
-    default: 'state.json'
   },
   ensure: (opts) => {
-    // TODO when compile uses this option,
-    // it should output to a js file, not a json file
-    // It can do this by overriding the ensure function
-    // (Or I guess we take an outExtension option)
-    if (opts.outputStdout) {
-      delete opts.outputPath;
+    if (opts.command == 'compile') {
+      if (opts.outputPath) {
+        // If a path is set, remove the stdout flag
+        delete opts.outputStdout;
+      }
     } else {
-      const base = getBaseDir(opts);
-      def(opts, 'outputPath', path.resolve(base, 'output.json'))
+      if (opts.outputStdout) {
+        delete opts.outputPath;
+      } else {
+        const base = getBaseDir(opts);
+        def(opts, 'outputPath', path.resolve(base, 'output.json'));
+      }
     }
     // remove the alias
-    delete (opts as  { o?: string }).o;
-  }
+    delete (opts as { o?: string }).o;
+  },
 };
 
 export const repoDir: CLIOption = {
@@ -174,29 +168,30 @@ export const repoDir: CLIOption = {
     description: 'Provide a path to the repo root dir',
     default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
   },
-  ensure: () => {}
+  ensure: () => {},
 };
 
 export const strictOutput: CLIOption = {
   name: 'no-strict-output',
   yargs: {
     boolean: true,
-    description: 'Allow properties other than data to be returned in the output',
+    description:
+      'Allow properties other than data to be returned in the output',
   },
   ensure: (opts) => {
-    def(opts, 'strictOutput', true)
-  }
+    def(opts, 'strictOutput', true);
+  },
 };
 
 export const skipAdaptorValidation: CLIOption = {
   name: 'skip-adaptor-validation',
   yargs: {
     boolean: true,
-    description: 'Suppress warning message for jobs which don\'t use an adaptor',
+    description: "Suppress warning message for jobs which don't use an adaptor",
   },
   ensure: (opts) => {
-    def(opts, 'skipAdaptorValidation', false)
-  }
+    def(opts, 'skipAdaptorValidation', false);
+  },
 };
 
 export const statePath: CLIOption = {
@@ -205,7 +200,7 @@ export const statePath: CLIOption = {
     alias: ['s'],
     description: 'Path to the state file',
   },
-  ensure: () => {}
+  ensure: () => {},
 };
 
 // TODO no unit tests yet
@@ -216,7 +211,7 @@ export const stateStdin: CLIOption = {
     alias: ['S'],
     description: 'Read state from stdin (instead of a file)',
   },
-  ensure: () => {}
+  ensure: () => {},
 };
 
 export const timeout: CLIOption = {
@@ -228,8 +223,8 @@ export const timeout: CLIOption = {
     default: '5 minutes',
   },
   ensure: (opts) => {
-    def(opts, 'timeout', 5 * 60 * 1000)
-  }
+    def(opts, 'timeout', 5 * 60 * 1000);
+  },
 };
 
 export const useAdaptorsMonorepo: CLIOption = {
@@ -237,7 +232,8 @@ export const useAdaptorsMonorepo: CLIOption = {
   yargs: {
     alias: ['m'],
     boolean: true,
-    description: 'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
+    description:
+      'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
   },
   ensure: (opts) => {
     if (opts.useAdaptorsMonorepo) {
