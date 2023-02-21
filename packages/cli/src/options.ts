@@ -110,6 +110,7 @@ export const jobPath: CLIOption = {
       opts.jobPath = basePath;
     } else {
       const base = getBaseDir(opts);
+      // TODO this resolve breaks unit tests...
       def(opts, 'jobPath', path.resolve(base, 'job.js'));
     }
   },
