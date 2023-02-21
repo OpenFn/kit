@@ -1,0 +1,9 @@
+export default [fn((state) => {
+  console.log('multiplying by two');
+  state.data.value *= 2;
+  return state;
+}), fn((state) => {
+  console.log('multiplying by three');
+  state.data.value *= 3;
+  return state;
+})];

@@ -75,14 +75,16 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   statePath?: string;
 };
 
+const maybeEnsureOpts = (basePath: string, options: Opts) =>
+  // If the command is compile or execute, just return the opts (yargs will do all the validation)
+  /^(execute|compile)$/.test(options.command!)
+    ? ensureLogOpts(options)
+    : // Otherwise  older commands still need to go through ensure opts
+      ensureOpts(basePath, options);
+
 // Top level command parser
 const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  const opts = /^(execute|compile$)/.test(options.command!)
-    // new option style should come in as SafeOpts, as validated by yargs
-    ? options as unknown as SafeOpts
-    // but older commands still need to go through ensure opts
-    : ensureOpts(basePath, options);
-
+  const opts = maybeEnsureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
   // In execute and test, always print version info FIRST
@@ -104,9 +106,9 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       opts.monorepoPath,
       logger
     );
-  } else if (opts.adaptors && opts.expand) {
-    // Note that we can't do this in ensureOpts because we don't have a logger configured yet
-    opts.adaptors = expandAdaptors(opts.adaptors, logger);
+  } else if (opts.adaptors && opts.expandAdaptors) {
+    // TODO this is safely redundant in execute and compile
+    opts.adaptors = expandAdaptors(opts.adaptors);
   }
 
   if (/^(test|version)$/.test(opts.command) && !opts.repoDir) {

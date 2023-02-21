@@ -7,7 +7,7 @@ import type { SafeOpts } from '../commands';
 export type CompilerOpts = Omit<SafeOpts, 'jobPath'> & {
   jobSource?: string; // secret option for test command
   jobPath?: string;
-}
+};
 
 // Load and compile a job from a file, then return the result
 // This is designed to be re-used in different CLI steps
@@ -25,8 +25,10 @@ export default async (opts: CompilerOpts, log: Logger) => {
     }
   } else {
     log.info('Skipping compilation as noCompile is set');
-    job = fs.readFile(opts.jobPath, 'utf8');
-    log.success(`Loaded job from ${opts.jobPath} (no compilation)`);
+    if (opts.jobPath) {
+      job = fs.readFile(opts.jobPath, 'utf8');
+      log.success(`Loaded job from ${opts.jobPath} (no compilation)`);
+    }
   }
   return job;
 };

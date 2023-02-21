@@ -4,11 +4,13 @@ import loadState from '../execute/load-state';
 import execute from '../execute/execute';
 import { CompilerOpts } from '../compile/compile';
 
-const sillyMessage = 'Calculating the answer to life, the universe, and everything...';
+const sillyMessage =
+  'Calculating the answer to life, the universe, and everything...';
 
 const testHandler = async (options: CompilerOpts, logger: Logger) => {
   logger.log('Running test job...');
 
+  options.compile = true;
   options.jobSource = `const fn = () => state => { console.log('${sillyMessage}'); return state * 2; } ; fn()`;
   delete options.jobPath;
 
