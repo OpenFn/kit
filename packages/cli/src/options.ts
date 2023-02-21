@@ -222,8 +222,7 @@ export const timeout: CLIOption = {
   yargs: {
     alias: ['t'],
     number: true,
-    description: 'Set the timeout duration (in milliseconds)',
-    default: '5 minutes',
+    description: 'Set the timeout duration (ms). Defaults to 5 minutes.',
   },
   ensure: (opts) => {
     def(opts, 'timeout', 5 * 60 * 1000);
