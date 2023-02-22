@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import docgen from '../docgen/handler';
-import { Opts } from '../commands';
+import { Opts } from '../options';
 import { createNullLogger } from '../util/logger';
 import type { Logger } from '../util/logger';
 import type {

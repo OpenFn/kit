@@ -1,4 +1,4 @@
-import { Opts } from '../commands';
+import { Opts } from '../options';
 import { Logger } from './logger';
 
 const validateAdaptors = async (

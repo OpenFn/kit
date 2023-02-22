@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import runInChildProcess from './process/spawn';
 import { cmd } from './cli';
-import { Opts } from './commands';
+import { Opts } from './options';
 
 type YargsOpts = Opts & {
   path: string;
