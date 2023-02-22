@@ -39,13 +39,11 @@ export type Opts = {
 export type CLIOption = {
   name: string;
   yargs: yargs.Options;
-  ensure: (opts: Opts) => void;
+  ensure?: (opts: Opts) => void;
 };
 
-// little util to default a value
-// TODO why not use yargs.default?
-const def = (opts, key, value) => {
-  const v = opts[key];
+const setDefaultValue = (opts: Opts, key: keyof Opts, value: any) => {
+  const v: any = opts[key];
   if (isNaN(v) && !v) {
     opts[key] = value;
   }
@@ -86,9 +84,7 @@ export const autoinstall: CLIOption = {
     alias: ['i'],
     boolean: true,
     description: 'Auto-install the language adaptor',
-  },
-  ensure: (opts) => {
-    def(opts, 'autoinstall', false);
+    default: false,
   },
 };
 
@@ -99,7 +95,7 @@ export const compile: CLIOption = {
     description: 'Disable compilation of the incoming source',
   },
   ensure: (opts) => {
-    def(opts, 'compile', true);
+    setDefaultValue(opts, 'compile', true);
   },
 };
 
@@ -110,7 +106,7 @@ export const expandAdaptors: CLIOption = {
     description: 'Don\t attempt to auto-expand adaptor shorthand names',
   },
   ensure: (opts) => {
-    def(opts, 'expandAdaptors', true);
+    setDefaultValue(opts, 'expandAdaptors', true);
   },
 };
 
@@ -119,9 +115,7 @@ export const immutable: CLIOption = {
   yargs: {
     description: 'Enforce immutabilty on state object',
     boolean: true,
-  },
-  ensure: (opts) => {
-    def(opts, 'immutable', false);
+    default: false,
   },
 };
 
@@ -130,7 +124,7 @@ const getBaseDir = (opts: Opts) => {
   if (basePath.endsWith('.js')) {
     return path.dirname(basePath);
   }
-  return path.resolve(basePath);
+  return basePath;
 };
 
 export const jobPath: CLIOption = {
@@ -144,8 +138,9 @@ export const jobPath: CLIOption = {
       opts.jobPath = basePath;
     } else {
       const base = getBaseDir(opts);
-      // TODO this resolve breaks unit tests...
-      def(opts, 'jobPath', path.resolve(base, 'job.js'));
+      // TODO are we sure this resolve is right?
+      // It's inconsistent with the other paths
+      setDefaultValue(opts, 'jobPath', path.resolve(base, 'job.js'));
     }
   },
 };
@@ -168,7 +163,7 @@ export const outputStdout: CLIOption = {
     description: 'Print output to stdout (instead of a file)',
   },
   ensure: (opts) => {
-    def(opts, 'outputStdout', false);
+    setDefaultValue(opts, 'outputStdout', false);
   },
 };
 
@@ -189,7 +184,7 @@ export const outputPath: CLIOption = {
         delete opts.outputPath;
       } else {
         const base = getBaseDir(opts);
-        def(opts, 'outputPath', path.resolve(base, 'output.json'));
+        setDefaultValue(opts, 'outputPath', path.join(base, 'output.json'));
       }
     }
     // remove the alias
@@ -203,7 +198,6 @@ export const repoDir: CLIOption = {
     description: 'Provide a path to the repo root dir',
     default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
   },
-  ensure: () => {},
 };
 
 export const strictOutput: CLIOption = {
@@ -214,7 +208,7 @@ export const strictOutput: CLIOption = {
       'Allow properties other than data to be returned in the output',
   },
   ensure: (opts) => {
-    def(opts, 'strictOutput', true);
+    setDefaultValue(opts, 'strictOutput', true);
   },
 };
 
@@ -223,9 +217,7 @@ export const skipAdaptorValidation: CLIOption = {
   yargs: {
     boolean: true,
     description: "Suppress warning message for jobs which don't use an adaptor",
-  },
-  ensure: (opts) => {
-    def(opts, 'skipAdaptorValidation', false);
+    default: false,
   },
 };
 
@@ -235,18 +227,14 @@ export const statePath: CLIOption = {
     alias: ['s'],
     description: 'Path to the state file',
   },
-  ensure: () => {},
 };
 
-// TODO no unit tests yet
-// This is just a no-op, so what's the point in creating a near-empty test file?
 export const stateStdin: CLIOption = {
   name: 'state-stdin',
   yargs: {
     alias: ['S'],
     description: 'Read state from stdin (instead of a file)',
   },
-  ensure: () => {},
 };
 
 export const timeout: CLIOption = {
@@ -255,9 +243,7 @@ export const timeout: CLIOption = {
     alias: ['t'],
     number: true,
     description: 'Set the timeout duration (ms). Defaults to 5 minutes.',
-  },
-  ensure: (opts) => {
-    def(opts, 'timeout', 5 * 60 * 1000);
+    default: 5 * 60 * 1000,
   },
 };
 
