@@ -77,7 +77,8 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       logger
     );
   } else if (opts.adaptors && opts.expandAdaptors) {
-    // TODO this is safely redundant in execute and compile
+    // TODO this will be removed once all options have been refactored
+    //      This is safely redundant in execute and compile
     opts.adaptors = expandAdaptors(opts.adaptors);
   }
 
