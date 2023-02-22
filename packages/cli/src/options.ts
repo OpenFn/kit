@@ -42,7 +42,7 @@ export const adaptors: CLIOption = {
       opts.adaptors = doExpandAdaptors(opts.adaptors);
     }
 
-    // delete the aliases as they have not been massaged
+    // delete the aliases as they have not been expanded
     delete opts.adaptor;
     delete (opts as { a?: string[] }).a;
   },
