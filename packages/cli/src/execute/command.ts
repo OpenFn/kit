@@ -3,25 +3,31 @@ import { Opts } from '../commands';
 import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
 
-export type ExecuteOptions = Pick<
-  Opts,
-  | 'adaptors'
-  | 'expandAdaptors'
-  | 'autoinstall'
-  | 'compile'
-  | 'immutable'
-  | 'jobPath'
-  | 'logJson'
-  | 'outputPath'
-  | 'outputStdout'
-  | 'repoDir'
-  | 'skipAdaptorValidation'
-  | 'statePath'
-  | 'stateStdin'
-  | 'strictOutput'
-  | 'timeout'
-  | 'useAdaptorsMonorepo'
->;
+export type ExecuteOptions = Required<
+  Pick<
+    Opts,
+    | 'adaptors'
+    | 'autoinstall'
+    | 'command'
+    | 'compile'
+    | 'expandAdaptors'
+    | 'immutable'
+    | 'jobPath'
+    | 'log'
+    | 'logJson'
+    | 'outputPath'
+    | 'outputStdout'
+    | 'path'
+    | 'repoDir'
+    | 'skipAdaptorValidation'
+    | 'statePath'
+    | 'stateStdin'
+    | 'strictOutput'
+    | 'timeout'
+    | 'useAdaptorsMonorepo'
+  >
+> &
+  Pick<Opts, 'monorepoPath' | 'repoDir'>;
 
 const options = [
   o.expandAdaptors, // order is important

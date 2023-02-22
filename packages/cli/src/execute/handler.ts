@@ -5,11 +5,12 @@ import execute from './execute';
 import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
 import { install } from '../repo/handler';
-import { Opts, SafeOpts } from '../commands';
+import type { ExecuteOptions } from './command';
 import validateAdaptors from '../util/validate-adaptors';
+import { CompileOptions } from '../compile/command';
 
 export const getAutoinstallTargets = (
-  options: Pick<Opts, 'adaptors' | 'autoinstall'>
+  options: Pick<ExecuteOptions, 'adaptors' | 'autoinstall'>
 ) => {
   if (options.adaptors) {
     return options.adaptors?.filter((a) => !/=/.test(a));
@@ -17,7 +18,7 @@ export const getAutoinstallTargets = (
   return [];
 };
 
-const executeHandler = async (options: SafeOpts, logger: Logger) => {
+const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
 
   await validateAdaptors(options, logger);
@@ -38,7 +39,7 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
   const state = await loadState(options, logger);
   let code = '';
   if (options.compile) {
-    code = await compile(options, logger);
+    code = await compile(options as CompileOptions, logger);
   } else {
     logger.info('Skipping compilation as noCompile is set');
     if (options.jobPath) {

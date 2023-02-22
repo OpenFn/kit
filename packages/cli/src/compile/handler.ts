@@ -1,10 +1,10 @@
 import { writeFile } from 'node:fs/promises';
-import { SafeOpts } from '../commands';
+import type { CompileOptions } from './command';
 import type { Logger } from '../util/logger';
 
 import compile from './compile';
 
-const compileHandler = async (options: SafeOpts, logger: Logger) => {
+const compileHandler = async (options: CompileOptions, logger: Logger) => {
   const code = await compile(options, logger);
   if (options.outputStdout) {
     logger.success('Compiled code:');
