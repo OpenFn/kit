@@ -1,13 +1,12 @@
 import test from 'ava';
-import { jobPath } from '../../../src/options';
-import { Opts } from '../../../src/commands';
+import { jobPath, Opts } from '../../../src/options';
 
 test('jobPath is set to path', (t) => {
   const opts = {
     path: 'jam.js',
   } as Opts;
 
-  jobPath.ensure(opts);
+  jobPath.ensure!(opts);
 
   t.is(opts.jobPath, 'jam.js');
 });
@@ -17,7 +16,7 @@ test('jobPath uses job.js if path is a folder', (t) => {
     path: '/jam',
   } as Opts;
 
-  jobPath.ensure(opts);
+  jobPath.ensure!(opts);
 
   t.is(opts.jobPath, '/jam/job.js');
 });
@@ -27,7 +26,7 @@ test('jobPath uses job.js if path is a folder (trailing slash)', (t) => {
     path: '/jam/',
   } as Opts;
 
-  jobPath.ensure(opts);
+  jobPath.ensure!(opts);
 
   t.is(opts.jobPath, '/jam/job.js');
 });

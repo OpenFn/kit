@@ -1,10 +1,9 @@
 import test from 'ava';
-import { adaptors } from '../../../src/options';
-import { Opts } from '../../../src/commands';
+import { adaptors, Opts } from '../../../src/options';
 
 test('ensure should create an empty adaptors object', (t) => {
   const opts = {} as Opts;
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.assert(opts.adaptors!.length === 0);
@@ -16,7 +15,7 @@ test('should create an empty adaptors object if undefined', (t) => {
     expandAdaptors: true,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.assert(opts.adaptors!.length === 0);
@@ -29,7 +28,7 @@ test('ensure should accept a valid longform value', (t) => {
     expandAdaptors: true,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.deepEqual(opts.adaptors, initialValue);
@@ -42,7 +41,7 @@ test('ensure should accept and expand a valid shortform value', (t) => {
     expandAdaptors: true,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.deepEqual(opts.adaptors, ['@openfn/language-http']);
@@ -55,7 +54,7 @@ test('ensure should not expand a shortform value of expandAdaptors is false', (t
     expandAdaptors: false,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.deepEqual(opts.adaptors, ['http']);
@@ -68,7 +67,7 @@ test('ensure should accept a valid longform value with a path', (t) => {
     expandAdaptors: true,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.deepEqual(opts.adaptors, initialValue);
@@ -80,7 +79,7 @@ test('ensure should accept a valid shortform value with a path', (t) => {
     expandAdaptors: true,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   t.assert(Array.isArray(opts.adaptors));
   t.deepEqual(opts.adaptors, ['@openfn/language-http=/repo/adaptors/http']);
@@ -92,7 +91,7 @@ test('ensure should remove aliased options', (t) => {
     expandAdaptors: true,
   } as Opts;
 
-  adaptors.ensure(opts);
+  adaptors.ensure!(opts);
 
   // @ts-ignore
   t.falsy(opts.a);

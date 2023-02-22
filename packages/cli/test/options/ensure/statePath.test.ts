@@ -1,11 +1,10 @@
 import test from 'ava';
-import { statePath } from '../../../src/options';
-import { Opts } from '../../../src/commands';
+import { statePath, Opts } from '../../../src/options';
 
 test('statePath defaults to undefined', (t) => {
   const opts = {} as Opts;
 
-  statePath.ensure(opts);
+  statePath.ensure!(opts);
 
   t.falsy(opts.statePath);
   t.assert(opts.statePath === undefined);
@@ -14,7 +13,7 @@ test('statePath defaults to undefined', (t) => {
 test('statePath ensure is a no-op', (t) => {
   const opts = {} as Opts;
 
-  statePath.ensure(opts);
+  statePath.ensure!(opts);
 
   t.deepEqual(opts, {});
 });
@@ -25,7 +24,7 @@ test('statePath can be set to a value', (t) => {
     statePath: path,
   } as Opts;
 
-  statePath.ensure(opts);
+  statePath.ensure!(opts);
 
   t.is(opts.statePath, path);
 });

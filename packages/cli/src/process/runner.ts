@@ -1,4 +1,5 @@
-import parse, { Opts } from '../commands';
+import parse from '../commands';
+import type { Opts } from '../options';
 
 type InitMessage = {
   init: true;
@@ -17,5 +18,5 @@ process.on('message', ({ init, basePath, opts }: InitMessage) => {
 
 // Tell the parent process we're awake and ready
 process.send!({
-  init: true
-})
+  init: true,
+});
