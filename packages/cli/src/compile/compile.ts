@@ -8,7 +8,7 @@ import type { CompileOptions } from './command';
 export default async (opts: CompileOptions, log: Logger) => {
   log.debug('Loading job...');
   const compilerOptions: Options = await loadTransformOptions(opts, log);
-  compilerOptions.logger = createLogger(COMPILER, opts as any); // TODO log options are a big flaky right now
+  compilerOptions.logger = createLogger(COMPILER, opts as any); // TODO log options are a bit flaky right now
 
   const job = compile(opts.jobSource || opts.jobPath, compilerOptions);
   if (opts.jobPath) {
