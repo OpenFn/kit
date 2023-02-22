@@ -13,22 +13,14 @@ export type CompilerOpts = Omit<SafeOpts, 'jobPath'> & {
 // This is designed to be re-used in different CLI steps
 export default async (opts: CompilerOpts, log: Logger) => {
   log.debug('Loading job...');
-  let job;
-  if (opts.compile) {
-    const compilerOptions: Options = await loadTransformOptions(opts, log);
-    compilerOptions.logger = createLogger(COMPILER, opts);
-    job = compile(opts.jobSource || opts.jobPath, compilerOptions);
-    if (opts.jobPath) {
-      log.success(`Compiled job from ${opts.jobPath}`);
-    } else {
-      log.success('Compiled job');
-    }
+  const compilerOptions: Options = await loadTransformOptions(opts, log);
+  compilerOptions.logger = createLogger(COMPILER, opts);
+
+  const job = compile(opts.jobSource || opts.jobPath, compilerOptions);
+  if (opts.jobPath) {
+    log.success(`Compiled job from ${opts.jobPath}`);
   } else {
-    log.info('Skipping compilation as noCompile is set');
-    if (opts.jobPath) {
-      job = await fs.readFile(opts.jobPath, 'utf8');
-      log.success(`Loaded job from ${opts.jobPath} (no compilation)`);
-    }
+    log.success('Compiled job');
   }
   return job;
 };
