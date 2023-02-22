@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Opts } from '../../src/commands';
+import { Opts } from '../../src/options';
 import ensureOpts, {
   defaultLoggerOptions,
   ERROR_MESSAGE_LOG_LEVEL,
@@ -401,3 +401,4 @@ test.serial('use prefer an explicit value for repoDirto an env var', (t) => {
 
   t.assert(opts.repoDir === 'a/b/c');
 });
+// TODO what if stdout and output path are set?

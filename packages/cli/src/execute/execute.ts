@@ -1,7 +1,6 @@
 import run, { getNameAndVersion } from '@openfn/runtime';
 import type { ModuleInfo, ModuleInfoMap } from '@openfn/runtime';
 import createLogger, { RUNTIME, JOB } from '../util/logger';
-import type { SafeOpts } from '../commands';
 import { ExecuteOptions } from './command';
 
 export default (
@@ -27,7 +26,7 @@ export default (
 };
 
 // TODO we should throw if the adaptor strings are invalid for any reason
-export function parseAdaptors(opts: Pick<SafeOpts, 'adaptors'>) {
+export function parseAdaptors(opts: Pick<ExecuteOptions, 'adaptors'>) {
   const adaptors: ModuleInfoMap = {};
   opts.adaptors.reduce((obj, exp) => {
     const [module, path] = exp.split('=');

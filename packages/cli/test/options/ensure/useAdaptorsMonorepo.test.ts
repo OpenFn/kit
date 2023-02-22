@@ -1,11 +1,10 @@
 import test from 'ava';
-import { useAdaptorsMonorepo } from '../../../src/options';
-import { Opts } from '../../../src/commands';
+import { useAdaptorsMonorepo, Opts } from '../../../src/options';
 
 test('monorepoPath is unset by default', (t) => {
   const opts = {} as Opts;
 
-  useAdaptorsMonorepo.ensure(opts);
+  useAdaptorsMonorepo.ensure!(opts);
 
   t.falsy(opts.useAdaptorsMonorepo);
   t.falsy(opts.monorepoPath);
@@ -15,7 +14,7 @@ test('monorepoPath is unset even if env var exists', (t) => {
   process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
   const opts = {} as Opts;
 
-  useAdaptorsMonorepo.ensure(opts);
+  useAdaptorsMonorepo.ensure!(opts);
 
   t.falsy(opts.useAdaptorsMonorepo);
   t.falsy(opts.monorepoPath);
@@ -27,7 +26,7 @@ test('monorepoPath is unset if useAdaptorsMonorepo is false', (t) => {
     useAdaptorsMonorepo: false,
   } as Opts;
 
-  useAdaptorsMonorepo.ensure(opts);
+  useAdaptorsMonorepo.ensure!(opts);
 
   t.falsy(opts.useAdaptorsMonorepo);
   t.falsy(opts.monorepoPath);
@@ -40,7 +39,7 @@ test('monorepoPath is set with a value from OPENFN_ADAPTORS_REPO', (t) => {
     useAdaptorsMonorepo: true,
   } as Opts;
 
-  useAdaptorsMonorepo.ensure(opts);
+  useAdaptorsMonorepo.ensure!(opts);
 
   t.is(opts.monorepoPath, 'a/b/c');
   delete process.env.OPENFN_ADAPTORS_REPO;
@@ -53,7 +52,7 @@ test('monorepoPath is set to an error value if OPENFN_ADAPTORS_REPO is not set',
     useAdaptorsMonorepo: true,
   } as Opts;
 
-  useAdaptorsMonorepo.ensure(opts);
+  useAdaptorsMonorepo.ensure!(opts);
 
   t.is(opts.monorepoPath, 'ERR');
 });

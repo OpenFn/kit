@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { Opts, SafeOpts } from '../commands';
+import { SafeOpts } from '../commands';
+import { Opts } from '../options';
 import { LogLevel, isValidLogLevel } from './logger';
 
 export const defaultLoggerOptions = {
@@ -25,11 +26,12 @@ const componentShorthands: Record<string, string> = {
 const isValidComponent = (v: string) =>
   /^(cli|runtime|compiler|job|default)$/i.test(v);
 
+// TODO the log typing is pretty messy (this is a wider issue)
 export const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
   if (!opts.log && /^(version|test)$/.test(opts.command!)) {
     // version and test log to info by default
-    (opts as SafeOpts).log = { default: 'info' };
+    (opts as any).log = { default: 'info' };
     return opts;
   } else if (opts.log) {
     // Parse and validate each incoming log argument
@@ -64,12 +66,13 @@ export const ensureLogOpts = (opts: Opts) => {
     });
   }
 
-  (opts as SafeOpts).log = {
+  (opts as any).log = {
     ...defaultLoggerOptions,
     ...components,
   };
 
-  return opts as SafeOpts;
+  // TODO messy typings because of log stuff
+  return opts as unknown as SafeOpts;
 };
 
 // TODO this function is now deprecated and slowly being phased out
@@ -128,7 +131,8 @@ export default function ensureOpts(
     );
   }
 
-  ensureLogOpts(newOpts as Opts);
+  // TODO another messy typing caused by the log stuff
+  ensureLogOpts(newOpts as any);
 
   return newOpts;
 }

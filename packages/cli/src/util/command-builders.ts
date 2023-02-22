@@ -1,6 +1,6 @@
 import yargs from 'yargs';
-import { Opts, CommandList } from '../commands';
-import type { CLIOption } from '../options';
+import { CommandList } from '../commands';
+import type { Opts, CLIOption } from '../options';
 
 // build helper to chain options
 export const build = (opts: CLIOption[], yargs: yargs.Argv) =>
@@ -13,7 +13,7 @@ export const ensure =
     opts
       .filter((opt) => opt.ensure)
       .forEach((opt) => {
-        opt.ensure(yargs);
+        opt.ensure!(yargs);
       });
   };
 
