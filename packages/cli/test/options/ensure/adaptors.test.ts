@@ -1,6 +1,6 @@
 import test from 'ava';
-import { adaptors } from '../../src/options';
-import { Opts } from '../../src/commands';
+import { adaptors } from '../../../src/options';
+import { Opts } from '../../../src/commands';
 
 test('ensure should create an empty adaptors object', (t) => {
   const opts = {} as Opts;

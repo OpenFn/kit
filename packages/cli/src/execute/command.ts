@@ -4,10 +4,11 @@ import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
 
 const options = [
+  o.expandAdaptors, // order is important
+
   o.adaptors,
   o.autoinstall,
   o.compile,
-  o.expandAdaptors,
   o.immutable,
   o.jobPath,
   o.logJson,
@@ -20,34 +21,35 @@ const options = [
   o.strictOutput,
   o.timeout,
   o.useAdaptorsMonorepo,
-]
+];
 
 // TODO what's a nice way to pull out just the opts we need?
-type ExecuteOptions = Opts;
+export type ExecuteOptions = Opts;
 
 const executeCommand = {
   command: 'execute [path]',
   desc: `Run an openfn job. Get more help by running openfn <command> help`,
   aliases: ['$0'],
-  handler: ensure('execute', options), 
-  builder: (yargs) => build(options, yargs)
-    .positional('path', {
-      describe:
-        'The path to load the job from (a .js file or a dir containing a job.js file)',
-      demandOption: true,
-    })
-    .example(
-      'openfn foo/job.js',
-      'Reads foo/job.js, looks for state and output in foo'
-    )
-    .example(
-      'openfn job.js -a common',
-      'Run job.js using @openfn/language-common'
-    )
-    .example(
-      'openfn install -a common',
-      'Install the latest version of language-common to the repo'
-    )
+  handler: ensure('execute', options),
+  builder: (yargs) =>
+    build(options, yargs)
+      .positional('path', {
+        describe:
+          'The path to load the job from (a .js file or a dir containing a job.js file)',
+        demandOption: true,
+      })
+      .example(
+        'openfn foo/job.js',
+        'Reads foo/job.js, looks for state and output in foo'
+      )
+      .example(
+        'openfn job.js -a common',
+        'Run job.js using @openfn/language-common'
+      )
+      .example(
+        'openfn install -a common',
+        'Install the latest version of language-common to the repo'
+      ),
 } as yargs.CommandModule<ExecuteOptions>;
 
 export default executeCommand;
