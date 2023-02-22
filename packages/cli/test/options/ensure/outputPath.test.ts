@@ -1,6 +1,6 @@
 import test from 'ava';
-import { outputPath } from '../../src/options';
-import { Opts } from '../../src/commands';
+import { outputPath } from '../../../src/options';
+import { Opts } from '../../../src/commands';
 
 test('outputPath defaults to base/output.json', (t) => {
   const opts = {

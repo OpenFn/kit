@@ -1,14 +1,25 @@
 import yargs from 'yargs';
+import { Opts } from '../commands';
 import * as o from '../options';
 import { build, ensure, override } from '../util/command-builders';
 
+export type CompileOptions = Pick<
+  Opts,
+  | 'adaptor'
+  | 'command'
+  | 'expandAdaptors'
+  | 'jobPath'
+  | 'logJson'
+  | 'outputPath'
+  | 'outputStdout'
+  | 'path'
+  | 'useAdaptorsMonorepo'
+>;
+
 const options = [
+  o.expandAdaptors, // order important
   o.adaptors,
-  o.expandAdaptors,
   o.jobPath,
-  override(o.compile, {
-    hidden: true,
-  }),
   o.logJson,
   override(o.outputStdout, {
     default: true,
@@ -36,6 +47,6 @@ const compileCommand = {
         'compile foo/job.js -o foo/job-compiled.js',
         'Compiles foo/job.js and saves the result to foo/job-compiled.js'
       ),
-} as yargs.CommandModule<{}>;
+} as yargs.CommandModule<CompileOptions>;
 
 export default compileCommand;

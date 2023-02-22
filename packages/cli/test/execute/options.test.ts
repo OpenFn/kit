@@ -21,6 +21,7 @@ test('correct default options', (t) => {
   t.is(options.skipAdaptorValidation, false);
   t.is(options.strictOutput, true);
   t.is(options.timeout, 300000);
+  t.falsy(options.useAdaptorsMonorepo);
 });
 
 test('pass an adaptor (longform)', (t) => {

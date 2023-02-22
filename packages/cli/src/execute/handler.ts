@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { Logger, printDuration } from '../util/logger';
 import loadState from './load-state';
 import execute from './execute';
@@ -35,7 +36,17 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
   }
 
   const state = await loadState(options, logger);
-  const code = await compile(options, logger);
+  let code = '';
+  if (options.compile) {
+    code = await compile(options, logger);
+  } else {
+    logger.info('Skipping compilation as noCompile is set');
+    if (options.jobPath) {
+      code = await readFile(options.jobPath, 'utf8');
+      logger.success(`Loaded job from ${options.jobPath} (no compilation)`);
+    }
+  }
+
   try {
     const result = await execute(code, state, options);
     await serializeOutput(options, result, logger);

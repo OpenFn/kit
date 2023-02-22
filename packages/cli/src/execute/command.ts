@@ -3,6 +3,26 @@ import { Opts } from '../commands';
 import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
 
+export type ExecuteOptions = Pick<
+  Opts,
+  | 'adaptors'
+  | 'expandAdaptors'
+  | 'autoinstall'
+  | 'compile'
+  | 'immutable'
+  | 'jobPath'
+  | 'logJson'
+  | 'outputPath'
+  | 'outputStdout'
+  | 'repoDir'
+  | 'skipAdaptorValidation'
+  | 'statePath'
+  | 'stateStdin'
+  | 'strictOutput'
+  | 'timeout'
+  | 'useAdaptorsMonorepo'
+>;
+
 const options = [
   o.expandAdaptors, // order is important
 
@@ -22,9 +42,6 @@ const options = [
   o.timeout,
   o.useAdaptorsMonorepo,
 ];
-
-// TODO what's a nice way to pull out just the opts we need?
-export type ExecuteOptions = Opts;
 
 const executeCommand = {
   command: 'execute [path]',
