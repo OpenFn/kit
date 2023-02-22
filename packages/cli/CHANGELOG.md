@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 0.0.30
+
+### Patch Changes
+
+- d128c98: Fix adaptor version string in lightning
+
 ## 0.0.29
 
 ### Patch Changes
