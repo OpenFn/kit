@@ -18,7 +18,7 @@ test('correct default options', (t) => {
   t.is(options.immutable, false);
   t.is(options.jobPath, 'job.js');
   t.falsy(options.logJson); // TODO this is undefined right now
-  t.assert(options.outputPath?.endsWith('output.json')); // TODO jobPath is relative, but outputPath is absolute. tricky.
+  t.is(options.outputPath, 'output.json');
   t.is(options.outputStdout, false);
   t.is(options.path, 'job.js');
   t.is(options.skipAdaptorValidation, false);
