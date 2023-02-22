@@ -10,8 +10,8 @@ import docsCommand from './docs/command';
 import { Opts } from './commands';
 
 export const cmd = yargs(hideBin(process.argv))
-  .command(executeCommand)
-  .command(compileCommand)
+  .command(executeCommand as any)
+  .command(compileCommand as any)
   .command(installCommand) // allow install to run from the top as well as repo
   .command(repoCommand)
   .command(testCommand)

@@ -3,18 +3,24 @@ import { Opts } from '../commands';
 import * as o from '../options';
 import { build, ensure, override } from '../util/command-builders';
 
-export type CompileOptions = Pick<
-  Opts,
-  | 'adaptor'
-  | 'command'
-  | 'expandAdaptors'
-  | 'jobPath'
-  | 'logJson'
-  | 'outputPath'
-  | 'outputStdout'
-  | 'path'
-  | 'useAdaptorsMonorepo'
->;
+export type CompileOptions = Required<
+  Pick<
+    Opts,
+    | 'adaptors'
+    | 'command'
+    | 'expandAdaptors'
+    | 'jobPath'
+    | 'logJson'
+    | 'log'
+    | 'outputPath'
+    | 'outputStdout'
+    | 'path'
+    | 'useAdaptorsMonorepo'
+  >
+> & {
+  repoDir?: string;
+  jobSource?: string; // accept jobs as a string of code (internal use only)
+};
 
 const options = [
   o.expandAdaptors, // order important

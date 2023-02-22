@@ -1,20 +1,14 @@
-import fs from 'node:fs/promises';
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 import createLogger, { COMPILER, Logger } from '../util/logger';
-import type { SafeOpts } from '../commands';
-
-export type CompilerOpts = Omit<SafeOpts, 'jobPath'> & {
-  jobSource?: string; // secret option for test command
-  jobPath?: string;
-};
+import type { CompileOptions } from './command';
 
 // Load and compile a job from a file, then return the result
 // This is designed to be re-used in different CLI steps
-export default async (opts: CompilerOpts, log: Logger) => {
+export default async (opts: CompileOptions, log: Logger) => {
   log.debug('Loading job...');
   const compilerOptions: Options = await loadTransformOptions(opts, log);
-  compilerOptions.logger = createLogger(COMPILER, opts);
+  compilerOptions.logger = createLogger(COMPILER, opts as any); // TODO log options are a big flaky right now
 
   const job = compile(opts.jobSource || opts.jobPath, compilerOptions);
   if (opts.jobPath) {
@@ -39,7 +33,7 @@ export const stripVersionSpecifier = (specifier: string) => {
 // Take a module path as provided by the CLI and convert it into a path
 export const resolveSpecifierPath = async (
   pattern: string,
-  repoDir: string,
+  repoDir: string | undefined,
   log: Logger
 ) => {
   const [specifier, path] = pattern.split('=');
@@ -58,7 +52,10 @@ export const resolveSpecifierPath = async (
 };
 
 // Mutate the opts object to write export information for the add-imports transformer
-export const loadTransformOptions = async (opts: SafeOpts, log: Logger) => {
+export const loadTransformOptions = async (
+  opts: CompileOptions,
+  log: Logger
+) => {
   const options: Options = {
     logger: log,
   };
