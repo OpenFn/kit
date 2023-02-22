@@ -138,9 +138,7 @@ export const jobPath: CLIOption = {
       opts.jobPath = basePath;
     } else {
       const base = getBaseDir(opts);
-      // TODO are we sure this resolve is right?
-      // It's inconsistent with the other paths
-      setDefaultValue(opts, 'jobPath', path.resolve(base, 'job.js'));
+      setDefaultValue(opts, 'jobPath', path.join(base, 'job.js'));
     }
   },
 };
