@@ -2,10 +2,13 @@ import test from 'ava';
 import yargs from 'yargs';
 import execute, { ExecuteOptions } from '../../src/execute/command';
 
-const cmd = yargs().command(execute);
+const cmd = yargs().command(execute as any);
+
+const parse = (command: string) =>
+  cmd.parse(command) as yargs.Arguments<ExecuteOptions>;
 
 test('correct default options', (t) => {
-  const options = cmd.parse('execute job.js') as ExecuteOptions;
+  const options = parse('execute job.js');
 
   t.deepEqual(options.adaptors, []);
   t.is(options.autoinstall, false);
@@ -25,21 +28,17 @@ test('correct default options', (t) => {
 });
 
 test('pass an adaptor (longform)', (t) => {
-  const options = cmd.parse(
-    'execute job.js --adaptor @openfn/language-common'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js --adaptor @openfn/language-common');
   t.deepEqual(options.adaptors, ['@openfn/language-common']);
 });
 
 test('pass an adaptor (shortform)', (t) => {
-  const options = cmd.parse('execute job.js -a common') as ExecuteOptions;
+  const options = parse('execute job.js -a common');
   t.deepEqual(options.adaptors, ['@openfn/language-common']);
 });
 
 test('pass multiple adaptors (shortform)', (t) => {
-  const options = cmd.parse(
-    'execute job.js -a common -a http'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js -a common -a http');
   t.deepEqual(options.adaptors, [
     '@openfn/language-common',
     '@openfn/language-http',
@@ -47,120 +46,104 @@ test('pass multiple adaptors (shortform)', (t) => {
 });
 
 test('enable autoinstall', (t) => {
-  const options = cmd.parse('execute job.js -i') as ExecuteOptions;
+  const options = parse('execute job.js -i');
   t.true(options.autoinstall);
 });
 
 test('enable autoinstall (longhand)', (t) => {
-  const options = cmd.parse('execute job.js --autoinstall') as ExecuteOptions;
+  const options = parse('execute job.js --autoinstall');
   t.true(options.autoinstall);
 });
 
 test('disable compile', (t) => {
-  const options = cmd.parse('execute job.js --no-compile') as ExecuteOptions;
+  const options = parse('execute job.js --no-compile');
   t.false(options.compile);
 });
 
 test('disable expand adaptors', (t) => {
-  const options = cmd.parse(
-    'execute job.js --no-expand-adaptors'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js --no-expand-adaptors');
   t.false(options.expandAdaptors);
 });
 
 test("don't expand adaptors if --no-expand-adaptors is set", (t) => {
-  const options = cmd.parse(
-    'execute job.js -a common --no-expand-adaptors'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js -a common --no-expand-adaptors');
   t.false(options.expandAdaptors);
   t.deepEqual(options.adaptors, ['common']);
 });
 
 test('enable immutability', (t) => {
-  const options = cmd.parse('execute job.js --immutable') as ExecuteOptions;
+  const options = parse('execute job.js --immutable');
   t.true(options.immutable);
 });
 
 test('default job path', (t) => {
-  const options = cmd.parse(
-    'execute /tmp/my-job/ --immutable'
-  ) as ExecuteOptions;
+  const options = parse('execute /tmp/my-job/ --immutable');
   t.is(options.path, '/tmp/my-job/');
   t.is(options.jobPath, '/tmp/my-job/job.js');
 });
 
 test('enable json logging', (t) => {
-  const options = cmd.parse('execute job.js --log-json') as ExecuteOptions;
+  const options = parse('execute job.js --log-json');
   t.true(options.logJson);
 });
 
 test('disable strict output', (t) => {
-  const options = cmd.parse(
-    'execute job.js --no-strict-output'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js --no-strict-output');
   t.false(options.strictOutput);
 });
 
 test('set an output path (short)', (t) => {
-  const options = cmd.parse(
-    'execute job.js -o /tmp/out.json'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js -o /tmp/out.json');
   t.is(options.outputPath, '/tmp/out.json');
 });
 
 test('set an output path (long)', (t) => {
-  const options = cmd.parse(
-    'execute job.js --output-path /tmp/out.json'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js --output-path /tmp/out.json');
   t.is(options.outputPath, '/tmp/out.json');
 });
 
 test('output to stdout (short)', (t) => {
-  const options = cmd.parse('execute job.js -O') as ExecuteOptions;
+  const options = parse('execute job.js -O');
   t.true(options.outputStdout);
 });
 
 test('output to stdout (long)', (t) => {
-  const options = cmd.parse('execute job.js --output-stdout') as ExecuteOptions;
+  const options = parse('execute job.js --output-stdout');
   t.true(options.outputStdout);
 });
 
 test('output to stdout overrides output path', (t) => {
-  const options = cmd.parse('execute job.js -O -o out.json') as ExecuteOptions;
+  const options = parse('execute job.js -O -o out.json');
   t.true(options.outputStdout);
   t.falsy(options.outputPath);
 });
 
 test('disable adaptor validation', (t) => {
-  const options = cmd.parse(
-    'execute job.js --skip-adaptor-validation'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js --skip-adaptor-validation');
   t.true(options.skipAdaptorValidation);
 });
 
 test('set state path (short)', (t) => {
-  const options = cmd.parse('execute job.js -s s.json') as ExecuteOptions;
+  const options = parse('execute job.js -s s.json');
   t.is(options.statePath, 's.json');
 });
 
 test('set state path (long)', (t) => {
-  const options = cmd.parse(
-    'execute job.js --state-path s.json'
-  ) as ExecuteOptions;
+  const options = parse('execute job.js --state-path s.json');
   t.is(options.statePath, 's.json');
 });
 
 test('set state via stdin (short)', (t) => {
-  const options = cmd.parse('execute job.js -S x') as ExecuteOptions;
+  const options = parse('execute job.js -S x');
   t.is(options.stateStdin, 'x');
 });
 
 test('set timeout (short)', (t) => {
-  const options = cmd.parse('execute job.js -t 1234') as ExecuteOptions;
+  const options = parse('execute job.js -t 1234');
   t.is(options.timeout, 1234);
 });
 
 test('set timeout (long)', (t) => {
-  const options = cmd.parse('execute job.js --timeout 1234') as ExecuteOptions;
+  const options = parse('execute job.js --timeout 1234');
   t.is(options.timeout, 1234);
 });
