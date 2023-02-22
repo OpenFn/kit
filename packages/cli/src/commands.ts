@@ -1,11 +1,13 @@
-import createLogger, { CLI, Logger, LogLevel } from './util/logger';
-import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
+import { Opts } from './options';
 import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
 import docgen from './docgen/handler';
 import docs from './docs/handler';
 import { clean, install, pwd, list } from './repo/handler';
+
+import createLogger, { CLI, Logger, LogLevel } from './util/logger';
+import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
 import expandAdaptors from './util/expand-adaptors';
 import useAdaptorsRepo from './util/use-adaptors-repo';
 import printVersions from './util/print-versions';
@@ -21,38 +23,6 @@ export type CommandList =
   | 'docs'
   | 'docgen'
   | 'test';
-
-// TODO move into options.ts?
-// is there a good way to reduce duplication here?
-export type Opts = {
-  command?: CommandList;
-  baseDir?: string;
-  path?: string;
-
-  adaptor?: boolean | string;
-  adaptors?: string[];
-  autoinstall?: boolean;
-  compile?: boolean;
-  expandAdaptors?: boolean; // for unit tests really
-  force?: boolean;
-  immutable?: boolean;
-  jobPath?: string;
-  log?: string[];
-  logJson?: boolean;
-  monorepoPath?: string;
-  operation?: string;
-  outputPath?: string;
-  outputStdout?: boolean;
-  packages?: string[];
-  repoDir?: string;
-  skipAdaptorValidation?: boolean;
-  specifier?: string; // docgen
-  statePath?: string;
-  stateStdin?: string;
-  strictOutput?: boolean; // defaults to true
-  timeout?: number; // ms
-  useAdaptorsMonorepo?: string | boolean;
-};
 
 const handlers = {
   execute,
@@ -156,22 +126,3 @@ const assertPath = (basePath?: string) => {
     process.exit(1);
   }
 };
-
-// This is disabled for now because
-// 1) Resolving paths relative to the install location of the module is tricky
-// 2) yargs does a pretty good job of reporting the CLI's version
-// export const version = async (options: Opts) => {
-//   // Note that this should ignore silent
-//   const logger = options.logger || console;
-//   const src = await fs.readFile(path.resolve('package.json'), 'utf8')
-//   const pkg = JSON.parse(src);
-//   logger.log(`@openfn/cli ${pkg.version}`)
-//   for (const d in pkg.dependencies) {
-//     if (d.startsWith('@openfn')) {
-//       const pkgpath = path.resolve(`node_modules/${d}/package.json`)
-//       const s = await fs.readFile(pkgpath, 'utf8')
-//       const p = JSON.parse(s);
-//       logger.log(` - ${d} ${p.version}`)
-//     }
-//   }
-// }

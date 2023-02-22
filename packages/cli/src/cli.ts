@@ -7,7 +7,7 @@ import compileCommand from './compile/command';
 import testCommand from './test/command';
 import docgenCommand from './docgen/command';
 import docsCommand from './docs/command';
-import { Opts } from './commands';
+import { Opts } from './options';
 
 export const cmd = yargs(hideBin(process.argv))
   .command(executeCommand as any)

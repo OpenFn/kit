@@ -1,5 +1,5 @@
 import yargs from 'yargs';
-import { Opts } from '../commands';
+import { Opts } from '../options';
 import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
 

@@ -1,8 +1,40 @@
 import path from 'node:path';
 import yargs from 'yargs';
-import type { Opts } from './commands';
 import doExpandAdaptors from './util/expand-adaptors';
 import { DEFAULT_REPO_DIR } from './util/ensure-opts';
+import type { CommandList } from './commands';
+
+// Central type definition for the main options
+// This is in flux as options are being refactoreds
+export type Opts = {
+  command?: CommandList;
+  baseDir?: string;
+  path?: string;
+
+  adaptor?: boolean | string;
+  adaptors?: string[];
+  autoinstall?: boolean;
+  compile?: boolean;
+  expandAdaptors?: boolean; // for unit tests really
+  force?: boolean;
+  immutable?: boolean;
+  jobPath?: string;
+  log?: string[];
+  logJson?: boolean;
+  monorepoPath?: string;
+  operation?: string;
+  outputPath?: string;
+  outputStdout?: boolean;
+  packages?: string[];
+  repoDir?: string;
+  skipAdaptorValidation?: boolean;
+  specifier?: string; // docgen
+  statePath?: string;
+  stateStdin?: string;
+  strictOutput?: boolean; // defaults to true
+  timeout?: number; // ms
+  useAdaptorsMonorepo?: string | boolean;
+};
 
 export type CLIOption = {
   name: string;

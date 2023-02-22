@@ -1,5 +1,5 @@
 import yargs, { Arguments } from 'yargs';
-import { Opts } from '../commands';
+import { Opts } from '../options';
 
 export default {
   command: 'docs <adaptor> [operation]',

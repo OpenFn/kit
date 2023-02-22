@@ -1,5 +1,5 @@
 import yargs, { Arguments } from 'yargs';
-import { Opts } from '../commands';
+import { Opts } from '../options';
 
 const docgenCommand = {
   command: 'docgen <specifier>',
