@@ -31,13 +31,27 @@ const printVersions = async (
     adaptor = adaptors[0];
   }
 
+  let adaptorVersion;
+  let adaptorName = '';
+  if (adaptor) {
+    if (adaptor.match('=')) {
+      const [namePart, pathPart] = adaptor.split('=');
+      adaptorVersion = loadVersionFromPath(pathPart);
+      adaptorName = getNameAndVersion(namePart).name;
+    } else {
+      const { name, version } = getNameAndVersion(adaptor);
+      adaptorName = name;
+      adaptorVersion = version || 'latest';
+    }
+  }
+
   // Work out the longest label
   const longest = Math.max(...[
     NODE,
     CLI,
     RUNTIME,
     COMPILER,
-    adaptor,
+    adaptorName,
   ].map(s => s.length));
   
   // Prefix and pad version numbers
@@ -50,19 +64,6 @@ const printVersions = async (
   const compilerVersion = dependencies['@openfn/compiler'];
   const runtimeVersion = dependencies['@openfn/runtime'];
   
-  let adaptorVersion;
-  let adaptorName;
-  if (adaptor) {
-    const { name, version } = getNameAndVersion(adaptor);
-    if (name.match('=')) {
-      const [namePart, pathPart] = name.split('=');
-      adaptorVersion = loadVersionFromPath(pathPart);
-      adaptorName = namePart;
-    } else {
-      adaptorName = name;
-      adaptorVersion = version || 'latest';
-    }
-  }
 
   let output: any;
   if (logJson) {
