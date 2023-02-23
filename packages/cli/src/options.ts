@@ -103,7 +103,7 @@ export const expandAdaptors: CLIOption = {
   name: 'no-expand-adaptors',
   yargs: {
     boolean: true,
-    description: 'Don\t attempt to auto-expand adaptor shorthand names',
+    description: "Don't attempt to auto-expand adaptor shorthand names",
   },
   ensure: (opts) => {
     setDefaultValue(opts, 'expandAdaptors', true);
