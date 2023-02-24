@@ -17,6 +17,10 @@ export default {
         alias: 'S',
         description: 'Read state from stdin (instead of a file)',
       })
+      .option('force', {
+        alias: 'f',
+        description: 'Force generation (ignore the cache)',
+      })
       .option('adaptors', {
         // TODO I have to map this to adaptors to get it to map properly
         alias: ['a'],
@@ -24,8 +28,6 @@ export default {
         description:
           'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build.',
       })
-      // TODO how can I make these more re-usable?
-      // Maybea  big list of options in one file, and each command just imports the one it wants?
       .option('use-adaptors-monorepo', {
         alias: 'm',
         boolean: true,

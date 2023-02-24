@@ -3,6 +3,11 @@ import { SafeOpts } from '../commands';
 import loadState from '../execute/load-state';
 import cache from './cache';
 
+// Add extra, uh, metadata to the, uh, metadata object
+const decorateMetadata = (metadata: any) => {
+  metadata.created = new Date().toISOString();
+};
+
 const metadataHandler = async (options: SafeOpts, logger: Logger) => {
   logger.success('Generating metadata');
   const state = await loadState(options, logger);
@@ -26,14 +31,17 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
   // the adaptor path should now be totally set by the common cli stuff
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0]; // TODO adaptor argument is a bit dodgy, need to refactor opts
-  console.log(' ** ', adaptor);
-  // generate a hash for the config and check state
-  const id = cache.generateKey(config);
-  logger.debug('config hash: ', id);
-  const cached = await cache.get(repoDir, id);
-  if (cached) {
-    logger.success('Returning metadata from cache');
-    return finish();
+
+  let id = '';
+  if (!options.force) {
+    // generate a hash for the config and check state
+    id = cache.generateKey(config);
+    logger.debug('config hash: ', id);
+    const cached = await cache.get(repoDir, id);
+    if (cached) {
+      logger.success('Returning metadata from cache');
+      return finish();
+    }
   }
 
   try {
@@ -45,7 +53,10 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
     if (mod.metadata) {
       logger.info('Metadata function found. Generating metadata...');
       const result = await mod.metadata(config);
-      await cache.set(repoDir, id, result);
+      decorateMetadata(result);
+      if (id) {
+        await cache.set(repoDir, id, result);
+      }
       finish();
     } else {
       logger.error('No metadata helper found');

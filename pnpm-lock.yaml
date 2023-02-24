@@ -45,6 +45,7 @@ importers:
     specifiers:
       '@types/node': ^18.7.18
       ava: 5.1.0
+      date-fns: ^2.29.3
       rimraf: ^3.0.2
       ts-node: 10.8.1
       tslib: ^2.4.0
@@ -52,6 +53,7 @@ importers:
     dependencies:
       '@types/node': 18.7.18
       ava: 5.1.0
+      date-fns: 2.29.3
       rimraf: 3.0.2
       ts-node: 10.8.1_bidgzm5cq2du6gnjtweqqjrrn4
       tslib: 2.4.0

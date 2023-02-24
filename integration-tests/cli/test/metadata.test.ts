@@ -1,6 +1,6 @@
 import test from 'ava';
 import path from 'node:path';
-
+import { differenceInMinutes } from 'date-fns';
 import run from '../src/run';
 import { getJSON } from './util';
 
@@ -22,6 +22,12 @@ test.serial(
     const metadata = getJSON(lastLine);
     t.is(metadata.name, 'test');
     t.is(metadata.type, 'model');
+
+    // Check the created timestamp
+    // As this is added at the very end, the created timestamp should be
+    // within seconds of the current date.
+    // We'll use a minute to give us plenty of leeway
+    t.assert(differenceInMinutes(new Date(metadata.created), new Date()) < 1);
   }
 );
 
