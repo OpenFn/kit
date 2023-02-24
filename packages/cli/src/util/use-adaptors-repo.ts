@@ -47,6 +47,7 @@ const useAdaptorsRepo = async (
     log.info(`Mapped adaptor ${a} to monorepo: ${p.split('=')[1]}`);
     return p;
   });
+  console.log(updatedAdaptors);
   return updatedAdaptors;
 };
 
