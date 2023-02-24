@@ -52,8 +52,13 @@ const mockLogger = <T = StringLog>(
   // TODO should this use json?
   mock.print = (...out: any[]) => {
     if (opts.level !== 'none') {
-      // @ts-ignore
-      history.push(['print', ...out]);
+      if (opts.json) {
+        // @ts-ignore
+        history.push(['print', { message: out }]);
+      } else {
+        // @ts-ignore
+        history.push(['print', ...out]);
+      }
     }
   };
 

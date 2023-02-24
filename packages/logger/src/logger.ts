@@ -168,10 +168,13 @@ export default function (name?: string, options: LogOptions = {}): Logger {
 
   // print() will log without any metadata/overhead/santization
   // basically a proxy for console.log
-  // TODO should this use json?
   const print = (...args: any[]) => {
     if (opts.level !== NONE) {
-      emitter.info(...args);
+      if (opts.json) {
+        emitter.info({ message: args });
+      } else {
+        emitter.info(...args);
+      }
     }
   };
 

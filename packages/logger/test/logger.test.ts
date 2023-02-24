@@ -1,6 +1,6 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { styleLevel, LogFns, StringLog, JSONLog } from '../src/logger';
+import { styleLevel, LogFns, StringLog } from '../src/logger';
 import { defaults as defaultOptions, LogLevel } from '../src/options';
 import { SECRET } from '../src/sanitize';
 
@@ -8,7 +8,6 @@ import { SECRET } from '../src/sanitize';
 // Which is basically thin wrapper around the logger which bypasses
 // console and provides an inspection API
 import createLogger from '../src/mock';
-import { assert } from 'console';
 
 const wait = (ms: number) => {
   return new Promise((resolve) => {
@@ -151,6 +150,16 @@ test('print() should not log if level is none', (t) => {
   logger.print('abc');
 
   t.is(logger._history.length, 0);
+});
+
+test('print() should log as json', (t) => {
+  const options = { json: true };
+  const logger = createLogger('x', options);
+  logger.print('abc');
+
+  const [level, message] = logger._last;
+  t.is(level, 'print');
+  t.deepEqual(message, { message: ['abc'] });
 });
 
 test('log() should behave like info', (t) => {
