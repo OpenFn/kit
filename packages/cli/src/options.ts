@@ -110,6 +110,16 @@ export const expandAdaptors: CLIOption = {
   },
 };
 
+export const force: CLIOption = {
+  name: 'force',
+  yargs: {
+    alias: ['f'],
+    boolean: true,
+    description: 'Force metadata to be regenerated',
+    default: false,
+  },
+};
+
 export const immutable: CLIOption = {
   name: 'immutable',
   yargs: {

@@ -14,16 +14,17 @@ import useAdaptorsRepo from './util/use-adaptors-repo';
 import printVersions from './util/print-versions';
 
 export type CommandList =
-  | 'execute'
   | 'compile'
+  | 'docgen'
+  | 'docs'
+  | 'execute'
+  | 'metadata'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-install'
   | 'repo-pwd'
-  | 'version'
-  | 'docs'
-  | 'docgen'
-  | 'test';
+  | 'test'
+  | 'version';
 
 const handlers = {
   execute,

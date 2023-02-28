@@ -1,41 +1,39 @@
-import yargs, { Arguments } from 'yargs';
-import { Opts } from '../commands';
+import yargs from 'yargs';
+import { build, ensure } from '../util/command-builders';
+import type { Opts } from '../options';
+import * as o from '../options';
+
+export type MetadataOpts = Pick<
+  Opts,
+  | 'adaptors'
+  | 'expandAdaptors'
+  | 'force'
+  | 'logJson'
+  | 'repoDir'
+  | 'statePath'
+  | 'stateStdin'
+  | 'useAdaptorsMonorepo'
+>;
+
+const options = [
+  o.expandAdaptors, // order is important
+
+  o.adaptors,
+  o.force,
+  o.logJson,
+  o.repoDir,
+  o.statePath,
+  o.stateStdin,
+  o.useAdaptorsMonorepo,
+];
 
 export default {
   command: 'metadata',
   desc: 'Generate metadata for an adaptor config',
-  handler: (argv: Arguments<Opts>) => {
-    argv.command = 'metadata';
-  },
-  builder: (yargs: yargs.Argv) =>
-    yargs
-      .option('state-path', {
-        alias: 's',
-        description: 'Path to the state file',
-      })
-      .option('state-stdin', {
-        alias: 'S',
-        description: 'Read state from stdin (instead of a file)',
-      })
-      .option('force', {
-        alias: 'f',
-        description: 'Force generation (ignore the cache)',
-      })
-      .option('adaptors', {
-        // TODO I have to map this to adaptors to get it to map properly
-        alias: ['a'],
-        array: true,
-        description:
-          'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build.',
-      })
-      .option('use-adaptors-monorepo', {
-        alias: 'm',
-        boolean: true,
-        description:
-          'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
-      })
-      .example(
-        'metadata -a salesforce -s tmp/state.json',
-        'Generate salesforce metadata from config in state.json'
-      ),
+  handler: ensure('metadata', options),
+  builder: (yargs) =>
+    build(options, yargs).example(
+      'metadata -a salesforce -s tmp/state.json',
+      'Generate salesforce metadata from config in state.json'
+    ),
 } as yargs.CommandModule<{}>;
