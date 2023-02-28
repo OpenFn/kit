@@ -3,7 +3,9 @@ import createLogger, { createNullLogger } from '../../src/util/logger';
 import type { SafeOpts } from '../../src/commands';
 
 test('creates a logger', (t) => {
-  const opts = {} as SafeOpts;
+  const opts = {
+    log: {},
+  } as SafeOpts;
   const logger = createLogger('x', opts);
   t.truthy(logger.success);
   t.truthy(logger.log);
@@ -13,7 +15,9 @@ test('creates a logger', (t) => {
 });
 
 test('uses default level', (t) => {
-  const opts = {} as SafeOpts;
+  const opts = {
+    log: {},
+  } as SafeOpts;
   const { options } = createLogger('x', opts);
   t.is(options.level, 'default');
 });

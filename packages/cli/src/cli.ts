@@ -8,11 +8,11 @@ import testCommand from './test/command';
 import docgenCommand from './docgen/command';
 import docsCommand from './docs/command';
 import metadataCommand from './metadata/command';
-import { Opts } from './commands';
+import { Opts } from './options';
 
 export const cmd = yargs(hideBin(process.argv))
-  .command(executeCommand)
-  .command(compileCommand)
+  .command(executeCommand as any)
+  .command(compileCommand as any)
   .command(installCommand) // allow install to run from the top as well as repo
   .command(repoCommand)
   .command(testCommand)

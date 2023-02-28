@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 0.0.31
+
+### Patch Changes
+
+- 64e8517: Refactor execute and compile commands
+
 ## 0.0.30
 
 ### Patch Changes

@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import { readFileSync, writeFileSync, mkdirSync, rmSync, fstat } from 'node:fs';
 import path from 'node:path';
 
-import { Opts } from '../commands';
+import { Opts } from '../options';
 import type { Logger } from '../util/logger';
 
 import { describePackage, PackageDescription } from '@openfn/describe-package';

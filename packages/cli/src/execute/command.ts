@@ -1,54 +1,65 @@
-import yargs, { Arguments } from 'yargs';
-import { Opts } from '../commands';
+import yargs from 'yargs';
+import { Opts } from '../options';
+import { build, ensure } from '../util/command-builders';
+import * as o from '../options';
+
+export type ExecuteOptions = Required<
+  Pick<
+    Opts,
+    | 'adaptors'
+    | 'autoinstall'
+    | 'command'
+    | 'compile'
+    | 'expandAdaptors'
+    | 'immutable'
+    | 'jobPath'
+    | 'log'
+    | 'logJson'
+    | 'outputPath'
+    | 'outputStdout'
+    | 'path'
+    | 'repoDir'
+    | 'skipAdaptorValidation'
+    | 'statePath'
+    | 'stateStdin'
+    | 'strictOutput'
+    | 'timeout'
+    | 'useAdaptorsMonorepo'
+  >
+> &
+  Pick<Opts, 'monorepoPath' | 'repoDir'>;
+
+const options = [
+  o.expandAdaptors, // order is important
+
+  o.adaptors,
+  o.autoinstall,
+  o.compile,
+  o.immutable,
+  o.jobPath,
+  o.logJson,
+  o.outputPath,
+  o.outputStdout,
+  o.repoDir,
+  o.skipAdaptorValidation,
+  o.statePath,
+  o.stateStdin,
+  o.strictOutput,
+  o.timeout,
+  o.useAdaptorsMonorepo,
+];
 
 const executeCommand = {
   command: 'execute [path]',
   desc: `Run an openfn job. Get more help by running openfn <command> help`,
   aliases: ['$0'],
-  handler: (argv: Arguments<Opts>) => {
-    argv.command = 'execute';
-  },
-  builder: (yargs: yargs.Argv) => {
-    return applyExecuteOptions(yargs)
-      .option('immutable', {
-        boolean: true,
-        description: 'Treat state as immutable',
-      })
-      .option('use-adaptors-monorepo', {
-        alias: 'm',
-        boolean: true,
-        description:
-          'Load adaptors from the monorepo. The OPENFN_ADAPTORS_REPO env var must be set to a valid path',
-      })
-      .option('autoinstall', {
-        alias: 'i',
-        boolean: true,
-        description: 'Auto-install the language adaptor',
-      })
-      .option('state-path', {
-        alias: 's',
-        description: 'Path to the state file',
-      })
-      .option('state-stdin', {
-        alias: 'S',
-        description: 'Read state from stdin (instead of a file)',
-      })
-      .option('skip-adaptor-validation', {
-        boolean: true,
-        description: 'Skip adaptor validation warnings',
-      })
-      .option('timeout', {
-        alias: '-t',
-        description: 'Set the timeout duration in MS',
-      })
-      .option('no-compile', {
-        boolean: true,
-        description: 'Skip compilation',
-      })
-      .option('no-strict-output', {
-        boolean: true,
-        description:
-          'Allow properties other than data to be returned in the output',
+  handler: ensure('execute', options),
+  builder: (yargs) =>
+    build(options, yargs)
+      .positional('path', {
+        describe:
+          'The path to load the job from (a .js file or a dir containing a job.js file)',
+        demandOption: true,
       })
       .example(
         'openfn foo/job.js',
@@ -61,35 +72,7 @@ const executeCommand = {
       .example(
         'openfn install -a common',
         'Install the latest version of language-common to the repo'
-      );
-  },
-} as yargs.CommandModule<Opts>;
-
-export const applyExecuteOptions = (yargs: yargs.Argv) =>
-  yargs
-    .positional('path', {
-      describe:
-        'The path to load the job from (a .js file or a dir containing a job.js file)',
-      demandOption: true,
-    })
-    .option('output-path', {
-      alias: 'o',
-      description: 'Path to the output file',
-    })
-    .option('output-stdout', {
-      alias: 'O',
-      boolean: true,
-      description: 'Print output to stdout (instead of a file)',
-    })
-    .option('adaptors', {
-      alias: ['a', 'adaptor'],
-      description:
-        'A language adaptor to use for the job. Short-form names are allowed. Can include an explicit path to a local adaptor build',
-      array: true,
-    })
-    .option('no-expand', {
-      description: 'Don\t attempt to auto-expand adaptor shorthand names',
-      boolean: true,
-    });
+      ),
+} as yargs.CommandModule<ExecuteOptions>;
 
 export default executeCommand;

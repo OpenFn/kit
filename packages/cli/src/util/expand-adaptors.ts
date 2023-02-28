@@ -1,13 +1,10 @@
-import { createNullLogger } from './logger';
-
-const nullLogger = createNullLogger();
-
-export default (names: string[], log = nullLogger) =>
+export default (names: string[]) =>
   names?.map((name) => {
-    if (name.startsWith('@openfn/language-')) {
-      return name;
+    if (typeof name === 'string') {
+      if (name.startsWith('@openfn/language-')) {
+        return name;
+      }
+      return `@openfn/language-${name}`;
     }
-    const expanded = `@openfn/language-${name}`;
-    log.debug(`Expanded adaptor ${name} to ${expanded}`);
-    return expanded;
+    return name;
   });

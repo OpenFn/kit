@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises';
 import type { Logger } from '@openfn/logger';
-import type { SafeOpts } from '../commands';
+import type { Opts } from '../options';
 
 export default async (
-  opts: Pick<SafeOpts, 'stateStdin' | 'statePath'>,
-  log: Logger) => {
+  opts: Pick<Opts, 'stateStdin' | 'statePath'>,
+  log: Logger
+) => {
   const { stateStdin, statePath } = opts;
   log.debug('Load state...');
   if (stateStdin) {
@@ -34,7 +35,9 @@ export default async (
     }
   }
 
-  log.info('No state provided - using default state { data: {}, configuration: {}');
+  log.info(
+    'No state provided - using default state { data: {}, configuration: {}'
+  );
   return {
     data: {},
     configuration: {},

@@ -1,5 +1,4 @@
-import createLogger, { CLI, Logger, LogLevel } from './util/logger';
-import ensureOpts from './util/ensure-opts';
+import { Opts } from './options';
 import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
@@ -7,11 +6,14 @@ import docgen from './docgen/handler';
 import docs from './docs/handler';
 import metadata from './metadata/handler';
 import { clean, install, pwd, list } from './repo/handler';
+
+import createLogger, { CLI, Logger, LogLevel } from './util/logger';
+import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
 import expandAdaptors from './util/expand-adaptors';
 import useAdaptorsRepo from './util/use-adaptors-repo';
 import printVersions from './util/print-versions';
 
-type CommandList =
+export type CommandList =
   | 'execute'
   | 'compile'
   | 'repo-clean'
@@ -22,33 +24,6 @@ type CommandList =
   | 'docs'
   | 'docgen'
   | 'test';
-
-export type Opts = {
-  command?: CommandList;
-
-  adaptor?: boolean | string;
-  adaptors?: string[];
-  useAdaptorsMonorepo?: string | boolean;
-  autoinstall?: boolean;
-  expand?: boolean; // for unit tests really
-  force?: boolean;
-  immutable?: boolean;
-  jobPath?: string;
-  log?: string[];
-  logJson?: boolean;
-  noCompile?: boolean;
-  strictOutput?: boolean; // defaults to true
-  outputPath?: string;
-  outputStdout?: boolean;
-  operation?: string;
-  packages?: string[];
-  specifier?: string; // docgen
-  repoDir?: string;
-  skipAdaptorValidation?: boolean;
-  statePath?: string;
-  stateStdin?: string;
-  timeout?: number; // ms
-};
 
 const handlers = {
   execute,
@@ -72,9 +47,16 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   statePath?: string;
 };
 
+const maybeEnsureOpts = (basePath: string, options: Opts) =>
+  // If the command is compile or execute, just return the opts (yargs will do all the validation)
+  /^(execute|compile)$/.test(options.command!)
+    ? ensureLogOpts(options)
+    : // Otherwise  older commands still need to go through ensure opts
+      ensureOpts(basePath, options);
+
 // Top level command parser
 const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  const opts = ensureOpts(basePath, options);
+  const opts = maybeEnsureOpts(basePath, options);
   const logger = log || createLogger(CLI, opts);
 
   // In execute and test, always print version info FIRST
@@ -96,9 +78,10 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       opts.monorepoPath,
       logger
     );
-  } else if (opts.adaptors && opts.expand) {
-    // Note that we can't do this in ensureOpts because we don't have a logger configured yet
-    opts.adaptors = expandAdaptors(opts.adaptors, logger);
+  } else if (opts.adaptors && opts.expandAdaptors) {
+    // TODO this will be removed once all options have been refactored
+    //      This is safely redundant in execute and compile
+    opts.adaptors = expandAdaptors(opts.adaptors);
   }
 
   if (/^(test|version)$/.test(opts.command) && !opts.repoDir) {
@@ -146,22 +129,3 @@ const assertPath = (basePath?: string) => {
     process.exit(1);
   }
 };
-
-// This is disabled for now because
-// 1) Resolving paths relative to the install location of the module is tricky
-// 2) yargs does a pretty good job of reporting the CLI's version
-// export const version = async (options: Opts) => {
-//   // Note that this should ignore silent
-//   const logger = options.logger || console;
-//   const src = await fs.readFile(path.resolve('package.json'), 'utf8')
-//   const pkg = JSON.parse(src);
-//   logger.log(`@openfn/cli ${pkg.version}`)
-//   for (const d in pkg.dependencies) {
-//     if (d.startsWith('@openfn')) {
-//       const pkgpath = path.resolve(`node_modules/${d}/package.json`)
-//       const s = await fs.readFile(pkgpath, 'utf8')
-//       const p = JSON.parse(s);
-//       logger.log(` - ${d} ${p.version}`)
-//     }
-//   }
-// }

@@ -1,14 +1,16 @@
+import { readFile } from 'node:fs/promises';
 import { Logger, printDuration } from '../util/logger';
 import loadState from './load-state';
 import execute from './execute';
 import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
 import { install } from '../repo/handler';
-import { Opts, SafeOpts } from '../commands';
+import type { ExecuteOptions } from './command';
 import validateAdaptors from '../util/validate-adaptors';
+import { CompileOptions } from '../compile/command';
 
 export const getAutoinstallTargets = (
-  options: Pick<Opts, 'adaptors' | 'autoinstall'>
+  options: Pick<ExecuteOptions, 'adaptors' | 'autoinstall'>
 ) => {
   if (options.adaptors) {
     return options.adaptors?.filter((a) => !/=/.test(a));
@@ -16,7 +18,7 @@ export const getAutoinstallTargets = (
   return [];
 };
 
-const executeHandler = async (options: SafeOpts, logger: Logger) => {
+const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
 
   await validateAdaptors(options, logger);
@@ -35,7 +37,17 @@ const executeHandler = async (options: SafeOpts, logger: Logger) => {
   }
 
   const state = await loadState(options, logger);
-  const code = await compile(options, logger);
+  let code = '';
+  if (options.compile) {
+    code = await compile(options as CompileOptions, logger);
+  } else {
+    logger.info('Skipping compilation as noCompile is set');
+    if (options.jobPath) {
+      code = await readFile(options.jobPath, 'utf8');
+      logger.success(`Loaded job from ${options.jobPath} (no compilation)`);
+    }
+  }
+
   try {
     const result = await execute(code, state, options);
     await serializeOutput(options, result, logger);

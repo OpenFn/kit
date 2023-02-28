@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { Opts, SafeOpts } from '../commands';
+import { SafeOpts } from '../commands';
+import { Opts } from '../options';
 import { LogLevel, isValidLogLevel } from './logger';
 
 export const defaultLoggerOptions = {
@@ -25,12 +26,14 @@ const componentShorthands: Record<string, string> = {
 const isValidComponent = (v: string) =>
   /^(cli|runtime|compiler|job|default)$/i.test(v);
 
-const ensureLogOpts = (opts: Opts) => {
+// TODO the log typing is pretty messy (this is a wider issue)
+export const ensureLogOpts = (opts: Opts) => {
   const components: Record<string, LogLevel> = {};
-  if (opts.command === 'version' || (opts.command === 'test' && !opts.log)) {
-    return { default: 'info' };
-  }
-  if (opts.log) {
+  if (!opts.log && /^(version|test)$/.test(opts.command!)) {
+    // version and test log to info by default
+    (opts as any).log = { default: 'info' };
+    return opts;
+  } else if (opts.log) {
     // Parse and validate each incoming log argument
     opts.log.forEach((l: string) => {
       let component = '';
@@ -61,14 +64,18 @@ const ensureLogOpts = (opts: Opts) => {
 
       components[component] = level as LogLevel;
     });
-    // TODO what if other log options are passed? Not really a concern right now
   }
-  return {
+
+  (opts as any).log = {
     ...defaultLoggerOptions,
     ...components,
   };
+
+  // TODO messy typings because of log stuff
+  return opts as unknown as SafeOpts;
 };
 
+// TODO this function is now deprecated and slowly being phased out
 export default function ensureOpts(
   basePath: string = '.',
   opts: Opts
@@ -78,14 +85,15 @@ export default function ensureOpts(
     adaptors: opts.adaptors || [],
     autoinstall: opts.autoinstall,
     command: opts.command,
-    expand: opts.expand !== false,
+    expandAdaptors: opts.expandAdaptors !== false,
     force: opts.force || false,
     immutable: opts.immutable || false,
+    log: opts.log as unknown, // TMP this will be overwritten later
     logJson:
       typeof opts.logJson == 'boolean'
         ? opts.logJson
         : Boolean(process.env.OPENFN_LOG_JSON),
-    noCompile: Boolean(opts.noCompile),
+    compile: Boolean(opts.compile),
     operation: opts.operation,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
@@ -94,7 +102,6 @@ export default function ensureOpts(
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
     strictOutput: opts.strictOutput ?? true,
-    statePath: opts.statePath,
     timeout: opts.timeout,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {
@@ -113,6 +120,7 @@ export default function ensureOpts(
   } else {
     set('jobPath', `${baseDir}/job.js`);
   }
+  set('statePath', `${baseDir}/state.json`);
 
   if (!opts.outputStdout) {
     set(
@@ -123,7 +131,8 @@ export default function ensureOpts(
     );
   }
 
-  newOpts.log = ensureLogOpts(opts);
+  // TODO another messy typing caused by the log stuff
+  ensureLogOpts(newOpts as any);
 
   return newOpts;
 }

@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Opts } from '../../src/commands';
+import { Opts } from '../../src/options';
 import ensureOpts, {
   defaultLoggerOptions,
   ERROR_MESSAGE_LOG_LEVEL,
@@ -77,34 +77,6 @@ test("should use the user's output path", (t) => {
   t.assert(opts.outputPath === outputPath);
 });
 
-test('should not append @openfn to adaptors if already prefixed', (t) => {
-  const initialOpts = {
-    adaptors: ['@openfn/language-common=a/b/c'],
-  } as Opts;
-  const opts = ensureOpts('a', initialOpts);
-  t.assert(opts.adaptors[0] === '@openfn/language-common=a/b/c');
-});
-
-test('should create an empty adaptors object', (t) => {
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.adaptors);
-  t.falsy(opts.adaptors.length);
-});
-
-test('should create an empty adaptors object if undefined', (t) => {
-  const initialOpts = {
-    adaptors: undefined,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.truthy(opts.adaptors);
-  t.falsy(opts.adaptors.length);
-});
-
 test('preserve outputStdout', (t) => {
   const initialOpts = {
     outputStdout: true,
@@ -163,24 +135,14 @@ test('preserve timeout', (t) => {
   t.is(opts.timeout, 999);
 });
 
-test('preserve noCompile', (t) => {
+test('preserve expandAdaptors', (t) => {
   const initialOpts = {
-    noCompile: true,
+    expandAdaptors: false,
   } as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.truthy(opts.noCompile);
-});
-
-test('preserve expand', (t) => {
-  const initialOpts = {
-    expand: false,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.false(opts.expand);
+  t.false(opts.expandAdaptors);
 });
 
 test('preserve logJson', (t) => {
@@ -227,15 +189,15 @@ test('preserve specifier', (t) => {
   t.is(opts.specifier, '@openfn/language-common@1.0.0');
 });
 
-test('default expand', (t) => {
+test('default expandAdaptors', (t) => {
   const initialOpts = {} as Opts;
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.true(opts.expand);
+  t.true(opts.expandAdaptors);
 });
 
-test('default expand if undefined', (t) => {
+test('default expandAdaptors if undefined', (t) => {
   // @ts-ignore
   const initialOpts = {
     expand: undefined,
@@ -243,10 +205,10 @@ test('default expand if undefined', (t) => {
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.true(opts.expand);
+  t.true(opts.expandAdaptors);
 });
 
-test('default expand if null', (t) => {
+test('default expandAdaptors if null', (t) => {
   // @ts-ignore
   const initialOpts = {
     expand: null,
@@ -254,7 +216,7 @@ test('default expand if null', (t) => {
 
   const opts = ensureOpts('a', initialOpts);
 
-  t.true(opts.expand);
+  t.true(opts.expandAdaptors);
 });
 
 test('preserve stateStdin', (t) => {
@@ -265,24 +227,6 @@ test('preserve stateStdin', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.stateStdin === '{}');
-});
-
-test('preserve immutable', (t) => {
-  const initialOpts = {
-    immutable: true,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.assert(opts.immutable);
-});
-
-test('default immutable to false', (t) => {
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-
-  t.assert(opts.immutable === false);
 });
 
 test('perserve the autoinstall flag', (t) => {
@@ -306,42 +250,6 @@ test('update the default output with compile only', (t) => {
   const opts = ensureOpts('a', initialOpts);
 
   t.assert(opts.outputPath === 'a/output.js');
-});
-
-test('monorepoPath: unset by default', (t) => {
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.useAdaptorsMonorepo);
-});
-
-test('monorepoPath: unset even if env var is set default', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {} as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.useAdaptorsMonorepo);
-});
-
-test('monorepoPath: unset if useAdaptorsMonorepo is false', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    useAdaptorsMonorepo: false,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.falsy(opts.useAdaptorsMonorepo);
-});
-
-test('monorepoPath: load from OPENFN_ADAPTORS_REPO', (t) => {
-  process.env.OPENFN_ADAPTORS_REPO = 'a/b/c';
-  const initialOpts = {
-    useAdaptorsMonorepo: true,
-  } as Opts;
-
-  const opts = ensureOpts('a', initialOpts);
-  t.is(opts.monorepoPath, 'a/b/c');
-  delete process.env.OPENFN_ADAPTORS_REPO;
 });
 
 test('perserve the skipAdaptorValidation flag', (t) => {
@@ -454,17 +362,6 @@ test('log: default to info for test', (t) => {
 test('log: default to info for version', (t) => {
   const initialOpts = {
     command: 'version',
-  } as Opts;
-
-  const opts = ensureOpts('', initialOpts);
-
-  t.is(opts.log.default, 'info');
-});
-
-test('log: always info for version', (t) => {
-  const initialOpts = {
-    command: 'version',
-    log: ['debug'],
   } as Opts;
 
   const opts = ensureOpts('', initialOpts);

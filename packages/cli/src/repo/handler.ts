@@ -2,7 +2,7 @@ import { exec } from 'node:child_process';
 // @ts-ignore
 import treeify from 'treeify';
 import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
-import type { Opts, SafeOpts } from '../commands';
+import type { Opts } from '../options';
 import { defaultLogger, Logger } from '../util/logger';
 import expandAdaptors from '../util/expand-adaptors';
 
@@ -18,7 +18,7 @@ export const install = async (
     log.success('Installing packages...'); // not really success but I want it to default
     log.debug('repoDir is set to:', repoDir);
     if (adaptor) {
-      packages = expandAdaptors(packages, log);
+      packages = expandAdaptors(packages);
     }
     await rtInstall(packages, repoDir, log);
     const duration = log.timer('install');
@@ -26,7 +26,7 @@ export const install = async (
   }
 };
 
-export const clean = async (options: SafeOpts, logger: Logger) => {
+export const clean = async (options: Opts, logger: Logger) => {
   if (options.repoDir) {
     const doIt = await logger.confirm(
       `This will remove everything at ${options.repoDir}. Do you wish to proceed?`,
@@ -47,13 +47,13 @@ export const clean = async (options: SafeOpts, logger: Logger) => {
   }
 };
 
-export const pwd = async (options: SafeOpts, logger: Logger) => {
+export const pwd = async (options: Opts, logger: Logger) => {
   // TODO should we report if modules home is set?
   logger.info(`OPENFN_REPO_DIR is set to ${process.env.OPENFN_REPO_DIR}`);
   logger.success(`Repo working directory is: ${options.repoDir}`);
 };
 
-export const getDependencyList = async (options: SafeOpts, _logger: Logger) => {
+export const getDependencyList = async (options: Opts, _logger: Logger) => {
   const pkg = await loadRepoPkg(options.repoDir);
   const result: Record<string, string[]> = {};
   if (pkg) {
@@ -67,7 +67,7 @@ export const getDependencyList = async (options: SafeOpts, _logger: Logger) => {
   }
   return result;
 };
-export const list = async (options: SafeOpts, logger: Logger) => {
+export const list = async (options: Opts, logger: Logger) => {
   const tree = await getDependencyList(options, logger);
   await pwd(options, logger);
 
