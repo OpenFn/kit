@@ -232,7 +232,6 @@ export const getModuleEntryPoint = async (
 ): Promise<{ path: string; version: string } | null> => {
   const moduleRoot =
     modulePath || (await getModulePath(specifier, repoPath, log));
-
   if (moduleRoot) {
     const pkgRaw = await readFile(`${moduleRoot}/package.json`, 'utf8');
     const pkg = JSON.parse(pkgRaw);

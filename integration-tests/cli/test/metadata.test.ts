@@ -7,7 +7,7 @@ import run, { clean } from '../src/run';
 import { extractLogs, getJSON } from './util';
 
 const state = '{ \\"configuration\\": { \\"url\\": \\"x\\" } }';
-const modulePath = path.resolve('modules/test/index.js'); // TODO need to build more leniency into this path
+const modulePath = path.resolve('modules/test'); // TODO need to build more leniency into this path
 
 let lastCreated: Date;
 
