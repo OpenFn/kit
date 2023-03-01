@@ -22,16 +22,21 @@ export const getAdaptorPath = async (
     adaptorSpecifier = parts[0];
     adaptorPath = parts[1];
   } else {
+    // If we've been given a full path, just return it
     if (adaptor.endsWith('.js')) {
       return adaptor;
     }
     adaptorSpecifier = adaptor;
+    // Check if we've been given a partial path (a path to a module)
+    if (adaptor.startsWith('/')) {
+      adaptorPath = adaptor;
+    }
   }
 
   if (!adaptorPath || !adaptorPath.endsWith('js')) {
     const entry = await getModuleEntryPoint(
       adaptorSpecifier,
-      adaptorPath || adaptorSpecifier,
+      adaptorPath,
       repoDir,
       logger
     );

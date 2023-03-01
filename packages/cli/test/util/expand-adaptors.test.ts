@@ -11,6 +11,11 @@ test('expands common with version', (t) => {
   t.is(a, '@openfn/language-common@1.0.0');
 });
 
+test('expands common with path', (t) => {
+  const [a] = expandAdaptors(['common=a/b/c']);
+  t.is(a, '@openfn/language-common=a/b/c');
+});
+
 test('expands http and dhis2', (t) => {
   const [a, b] = expandAdaptors(['common', 'dhis2']);
   t.is(a, '@openfn/language-common');
@@ -25,6 +30,11 @@ test('expands nonsense', (t) => {
 test('does not expand a full adaptor name', (t) => {
   const [a] = expandAdaptors(['@openfn/language-common']);
   t.is(a, '@openfn/language-common');
+});
+
+test('does not expand a full adaptor name with a path', (t) => {
+  const [a] = expandAdaptors(['@openfn/language-common=a/b/c']);
+  t.is(a, '@openfn/language-common=a/b/c');
 });
 
 test('does not expand a simple path', (t) => {

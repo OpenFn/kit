@@ -213,7 +213,6 @@ export const getModulePath = async (
   log = defaultLogger
 ) => {
   const alias = await getRepoAlias(specifier, repoPath, log);
-
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
     return p;
