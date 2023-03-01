@@ -31,7 +31,7 @@ export const getAdaptorPath = async (
   if (!adaptorPath || !adaptorPath.endsWith('js')) {
     const entry = await getModuleEntryPoint(
       adaptorSpecifier,
-      adaptorPath,
+      adaptorPath || adaptorSpecifier,
       repoDir,
       logger
     );

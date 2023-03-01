@@ -7,7 +7,7 @@ import run, { clean } from '../src/run';
 import { extractLogs, getJSON } from './util';
 
 const state = '{ \\"configuration\\": { \\"url\\": \\"x\\" } }';
-const modulePath = path.resolve('modules/test'); // TODO need to build more leniency into this path
+const modulePath = path.resolve('modules/test');
 
 let lastCreated: Date;
 
@@ -85,5 +85,30 @@ test.serial(
     // timestamp should have changed
     t.not(metadata.created, lastCreated);
     t.assert(differenceInMinutes(new Date(metadata.created), new Date()) < 1);
+  }
+);
+
+// Generate without an adaptor name
+test.serial(
+  `openfn metadata -f -S "${state}" -a ${modulePath} --log-json --log info`,
+  async (t) => {
+    const { stdout } = await run(t.title);
+
+    t.regex(stdout, /Generating metadata/);
+    t.regex(stdout, /Metadata function found. Generating metadata/);
+    t.notRegex(stdout, /Returning metadata from cache/);
+
+    const logJson = extractLogs(stdout);
+    const [outputPath] = logJson.at(-1).message;
+    t.regex(outputPath, /(repo\/meta\/)*(\.json)/);
+
+    const metadata = getJSON(outputPath);
+    t.is(metadata.name, 'test');
+    t.is(metadata.type, 'model');
+
+    t.assert(differenceInMinutes(new Date(metadata.created), new Date()) < 1);
+
+    // This affects the next test
+    lastCreated = metadata.created;
   }
 );

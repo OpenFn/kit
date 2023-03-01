@@ -26,3 +26,18 @@ test('does not expand a full adaptor name', (t) => {
   const [a] = expandAdaptors(['@openfn/language-common']);
   t.is(a, '@openfn/language-common');
 });
+
+test('does not expand a simple path', (t) => {
+  const [a] = expandAdaptors(['a/b']);
+  t.is(a, 'a/b');
+});
+
+test('does not expand an absolute path', (t) => {
+  const [a] = expandAdaptors(['/a/b/c']);
+  t.is(a, '/a/b/c');
+});
+
+test('does not expand a js file', (t) => {
+  const [a] = expandAdaptors(['my-adaptor.js']);
+  t.is(a, 'my-adaptor.js');
+});

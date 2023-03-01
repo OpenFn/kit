@@ -20,6 +20,13 @@ test('should resolve a full file path only', async (t) => {
   t.is(result, p);
 });
 
+// I'm not sure if we can or should handle relative paths - can we distinguish them from module names?
+test('should resolve an absolute a module path only', async (t) => {
+  const p = path.resolve('test/__modules__/@openfn/language-common');
+  const result = await getAdaptorPath(p, logger, undefined);
+  t.is(result, p);
+});
+
 test('should resolve a module path', async (t) => {
   const p = path.resolve('test/__modules__/@openfn/language-common');
   const result = await getAdaptorPath(`common=${p}`, logger, undefined);

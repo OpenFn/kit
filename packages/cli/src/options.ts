@@ -68,6 +68,7 @@ export const adaptors: CLIOption = {
     } else {
       opts.adaptors = [];
     }
+
     if (opts.expandAdaptors) {
       opts.adaptors = doExpandAdaptors(opts.adaptors);
     }
