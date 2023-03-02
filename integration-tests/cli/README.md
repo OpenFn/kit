@@ -6,7 +6,7 @@ The test suite is designed to be run in CircleCI, but can run locally or in a lo
 
 ## Running Tests
 
-During developingment, you can run the unit tests against a local build (ie, `packages/cli/dist`):
+During development, you can run the unit tests against a local build (ie, `packages/cli/dist`):
 
 `pnpm test:dev`
 

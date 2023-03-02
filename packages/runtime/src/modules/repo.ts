@@ -213,7 +213,6 @@ export const getModulePath = async (
   log = defaultLogger
 ) => {
   const alias = await getRepoAlias(specifier, repoPath, log);
-
   if (alias) {
     const p = path.resolve(`${repoPath}`, `node_modules/${alias}`);
     return p;
@@ -232,9 +231,11 @@ export const getModuleEntryPoint = async (
 ): Promise<{ path: string; version: string } | null> => {
   const moduleRoot =
     modulePath || (await getModulePath(specifier, repoPath, log));
-
   if (moduleRoot) {
-    const pkgRaw = await readFile(`${moduleRoot}/package.json`, 'utf8');
+    const pkgRaw = await readFile(
+      path.join(moduleRoot, 'package.json'),
+      'utf8'
+    );
     const pkg = JSON.parse(pkgRaw);
     let main = 'index.js';
 

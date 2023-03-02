@@ -3,6 +3,7 @@
     "experimentalSpecifierResolution": "node"
   },
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "module": "es2020",
     "moduleResolution": "node",
     "allowJs": true,
