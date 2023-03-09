@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.11
+
+### Patch Changes
+
+- d67f45a: print should log as json
+
 ## 0.0.10
 
 ### Patch Changes

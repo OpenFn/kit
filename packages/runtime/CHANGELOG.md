@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 0.0.20
+
+### Patch Changes
+
+- 60f695f: better path resolution
+- Updated dependencies [d67f45a]
+  - @openfn/logger@0.0.11
+
 ## 0.0.19
 
 ### Patch Changes
