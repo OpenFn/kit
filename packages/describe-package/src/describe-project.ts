@@ -32,11 +32,12 @@ const describeFunction = (
     // @ts-ignore symbol.parent
     [parent] = symbol.symbol.parent.escapedName.match(/(language-\w+)/);
   }
+
   return {
     name: moduleName ? `${moduleName}.${symbol.name}` : symbol.name,
     description: symbol.comment,
     parameters: symbol.parameters.map((p) => describeParameter(project, p)),
-    magic: false,
+    magic: symbol.jsDocTags.some((tag) => tag.tagName.escapedText === 'magic'),
     isOperation: false,
     examples: symbol.examples.map((eg: string) => {
       if (eg.startsWith('<caption>')) {
