@@ -68,6 +68,7 @@ export const adaptors: CLIOption = {
     } else {
       opts.adaptors = [];
     }
+
     if (opts.expandAdaptors) {
       opts.adaptors = doExpandAdaptors(opts.adaptors);
     }
@@ -107,6 +108,16 @@ export const expandAdaptors: CLIOption = {
   },
   ensure: (opts) => {
     setDefaultValue(opts, 'expandAdaptors', true);
+  },
+};
+
+export const force: CLIOption = {
+  name: 'force',
+  yargs: {
+    alias: ['f'],
+    boolean: true,
+    description: 'Force metadata to be regenerated',
+    default: false,
   },
 };
 

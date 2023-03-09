@@ -3,6 +3,7 @@ import { fstat, readFileSync, writeFileSync } from 'node:fs';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
+import { getJSON } from './util';
 
 const jobsPath = path.resolve('jobs');
 const tmpPath = path.resolve('tmp');
@@ -23,18 +24,10 @@ test.afterEach(async () => {
   } catch (e) {}
 });
 
-const getOutput = (pathToJson?: string) => {
-  if (!pathToJson) {
-    pathToJson = path.resolve('jobs', 'output.json');
-  }
-  const data = readFileSync(pathToJson, 'utf8');
-  return JSON.parse(data);
-};
-
 test.serial(`openfn ${jobsPath}/simple.js -ia common`, async (t) => {
   await run(t.title);
 
-  const out = getOutput();
+  const out = getJSON();
   t.is(out, 42);
 });
 
@@ -44,7 +37,7 @@ test.serial(
   async (t) => {
     await run(t.title);
 
-    const out = getOutput();
+    const out = getJSON();
     t.is(out, 42);
   }
 );
@@ -54,7 +47,7 @@ test.serial(
   async (t) => {
     await run(t.title);
 
-    const out = getOutput(`${tmpPath}/o.json`);
+    const out = getJSON(`${tmpPath}/o.json`);
     t.is(out, 42);
   }
 );
@@ -62,7 +55,7 @@ test.serial(
 test.serial(`openfn ${jobsPath}/simple.js -a common -O`, async (t) => {
   const { stdout } = await run(t.title);
 
-  await t.throws(() => getOutput());
+  await t.throws(() => getJSON());
   t.regex(stdout, /Result:/);
   t.regex(stdout, /42/);
 });
@@ -73,7 +66,7 @@ test.serial(
     await writeFileSync(`${tmpPath}/state.json`, '{ "data": 2 }');
     await run(t.title);
 
-    const out = getOutput();
+    const out = getJSON();
     t.is(out, 4);
   }
 );
@@ -83,7 +76,7 @@ test.serial(
   async (t) => {
     await run(t.title);
 
-    const out = getOutput();
+    const out = getJSON();
     t.is(out, 12);
   }
 );
@@ -93,7 +86,7 @@ test.serial(
   async (t) => {
     await run(t.title);
 
-    const out = getOutput();
+    const out = getJSON();
     t.truthy(out.data.value);
     t.regex(out.data.value, /chuck norris/i);
   }

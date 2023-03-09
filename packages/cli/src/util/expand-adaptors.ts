@@ -1,7 +1,9 @@
 export default (names: string[]) =>
   names?.map((name) => {
     if (typeof name === 'string') {
-      if (name.startsWith('@openfn/language-')) {
+      const [left] = name.split('=');
+      // don't expand adaptors which look like a path (or @openfn/language-)
+      if (left.match('/') || left.endsWith('.js')) {
         return name;
       }
       return `@openfn/language-${name}`;

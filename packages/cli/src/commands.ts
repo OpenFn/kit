@@ -4,6 +4,7 @@ import compile from './compile/handler';
 import test from './test/handler';
 import docgen from './docgen/handler';
 import docs from './docs/handler';
+import metadata from './metadata/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger, LogLevel } from './util/logger';
@@ -13,16 +14,17 @@ import useAdaptorsRepo from './util/use-adaptors-repo';
 import printVersions from './util/print-versions';
 
 export type CommandList =
-  | 'execute'
   | 'compile'
+  | 'docgen'
+  | 'docs'
+  | 'execute'
+  | 'metadata'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-install'
   | 'repo-pwd'
-  | 'version'
-  | 'docs'
-  | 'docgen'
-  | 'test';
+  | 'test'
+  | 'version';
 
 const handlers = {
   execute,
@@ -30,6 +32,7 @@ const handlers = {
   test,
   docgen,
   docs,
+  metadata,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,
