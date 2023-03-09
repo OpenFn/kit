@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.0.33
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/describe-package@0.0.15
+  - @openfn/compiler@0.0.27
+
 ## 0.0.32
 
 ### Patch Changes
