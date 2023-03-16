@@ -97,11 +97,12 @@ function createMock(
     return id;
   };
 
-  const startWorkflow = (jobs: string[]) => {
+  const startWorkflow = (workflowId: string) => {
+    // console.log('start-workflow', workflowId);
     // Get the execution plan from lightning
-    dispatch('workflow-start');
+    dispatch('workflow-start', { workflowId });
 
-    dispatch('workflow-end');
+    dispatch('workflow-end', { workflowId });
   };
 
   // return a list of jobs in progress

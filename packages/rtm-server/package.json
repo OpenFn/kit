@@ -10,15 +10,18 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts --no-splitting",
     "build:watch": "pnpm build --watch",
-    "serve": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/server/index.ts'"
+    "start": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/index.ts'"
   },
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "dependencies": {
+    "@koa/router": "^12.0.0",
+    "axios": "^1.3.4",
     "koa": "^2.13.4"
   },
   "devDependencies": {
     "@types/koa": "^2.13.5",
+    "@types/node": "^18.15.3",
     "ava": "5.1.0",
     "nodemon": "^2.0.19",
     "ts-node": "^10.9.1",
