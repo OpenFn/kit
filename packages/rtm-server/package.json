@@ -1,0 +1,30 @@
+{
+  "name": "@openfn/rtm-server",
+  "version": "0.0.1",
+  "description": "A REST API wrapper around a runtime manager",
+  "main": "index.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "pnpm ava",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts --no-splitting",
+    "build:watch": "pnpm build --watch",
+    "serve": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/server/index.ts'"
+  },
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.13.4"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.5",
+    "ava": "5.1.0",
+    "nodemon": "^2.0.19",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
+    "tsm": "^2.2.2",
+    "tsup": "^6.2.3",
+    "typescript": "^4.6.4"
+  }
+}

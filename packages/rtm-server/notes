@@ -1,0 +1,19 @@
+lightning must today have a model and execution plan for a workflow
+
+It needs to know where and when to start (triggers will still be handled by Lightning), and on completion, what to do next
+
+I'm gonna have to re-implement that in js]
+
+The more we speak to lightning, a) the tighter the coupling and b) the greater impact of downtime
+
+right now it looks like we have to:
+
+- Ask lightning for a workflow id
+- Now ask lightning for an execution plan
+- On each job, ask lightning for the expression an state
+
+Just not sure that make sense.
+
+I think the execution plan needs to be added to the queue and we read this off once.
+
+Should a runtime manager be responsible for keeping its own history? I dont think so, I think it should be stateless really. Makes scaling easier.
