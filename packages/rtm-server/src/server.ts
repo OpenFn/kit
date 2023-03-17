@@ -33,7 +33,7 @@ type ServerOptions = {
   backoff: number;
   maxWorkflows: number;
   port: number;
-  lightning: string; // url to lightning isnstance
+  lightning: string; // url to lightning instance
   rtm?: any;
 };
 

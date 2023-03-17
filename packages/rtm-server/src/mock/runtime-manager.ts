@@ -1,23 +1,19 @@
 import { EventEmitter } from 'node:events';
 
+import type { State, Job, Workflow } from '../types';
+
 // A mock runtime manager
 //
 
 // TODO do we mean job, or workflow?
 // I think we have both?
-type RTMEvent =
+export type RTMEvent =
   | 'job-start'
   | 'job-end'
   | 'job-log'
   | 'job-error'
   | 'workflow-start'
   | 'workflow-end';
-
-type State = any;
-
-type Workflow = any;
-
-type Job = { expression: string; state?: State };
 
 type FetchWorkflowFn = (workflowId: string) => Promise<Workflow>;
 
