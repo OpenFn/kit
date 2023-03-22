@@ -46,7 +46,7 @@ export const preloadAdaptorExports = async (
             project
           );
           if (common) {
-            common.forEach((name) => {
+            common.forEach(({ name }) => {
               functionDefs[name] = true;
             });
           }
@@ -56,7 +56,7 @@ export const preloadAdaptorExports = async (
       }
 
       const adaptor = await findExports(pathToModule, pkg.types, project);
-      adaptor.forEach((name) => {
+      adaptor.forEach(({ name }) => {
         functionDefs[name] = true;
       });
 
