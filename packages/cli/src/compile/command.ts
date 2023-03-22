@@ -15,6 +15,7 @@ export type CompileOptions = Required<
     | 'log'
     | 'outputPath'
     | 'outputStdout'
+    | 'repoDir'
     | 'path'
     | 'useAdaptorsMonorepo'
   >
@@ -33,6 +34,7 @@ const options = [
     default: true,
   }),
   o.outputPath,
+  o.repoDir,
   o.useAdaptorsMonorepo,
 ];
 

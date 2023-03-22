@@ -1,11 +1,11 @@
-import fs from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { Project, describeDts } from '@openfn/describe-package';
 import type { Logger } from '@openfn/logger';
 
 export const loadFile = (filePath: string) =>
-  fs.readFileSync(path.resolve(filePath), 'utf8');
+  readFileSync(path.resolve(filePath), 'utf8');
 
 // Detect if we've been handed a file path or some code
 // It's a path if it has no linebreaks and ends in .js
@@ -28,14 +28,16 @@ export const preloadAdaptorExports = async (
 ) => {
   const project = new Project();
   let pkg;
-  let types;
   // load the package from unpkg or the filesystem
   if (isRelativeSpecifier(pathToModule)) {
     // load locally
     const pkgSrc = await readFile(`${pathToModule}/package.json`, 'utf8');
     pkg = JSON.parse(pkgSrc);
     if (pkg.types) {
-      types = await readFile(`${pathToModule}/${pkg.types}`, 'utf8');
+      const functionDefs = await findExports(pathToModule, pkg.types, project);
+
+      // Return a flat array of names
+      return functionDefs.map(({ name }) => name);
     }
   } else {
     // Do not load absolute modules
@@ -45,18 +47,30 @@ export const preloadAdaptorExports = async (
     }
   }
 
-  if (types) {
-    // Setup the project so we can read the dts definitions
-    project.addToFS(types, pkg.types);
-    project.createFile(types, pkg.types);
-
-    // find the main dts
-    const functionDefs = describeDts(project, pkg.types, {
-      includePrivate: true,
-    });
-
-    // Return a flat array of names
-    return functionDefs.map(({ name }) => name);
-  }
   return [];
+};
+
+// TODO this should all be done by describe-package really, but that's too focused around jsdelivr
+// what about dependencies on common? Will we see the exports? We just need the names...
+const findExports = async (
+  moduleRoot: string,
+  types: string,
+  project: Project
+) => {
+  const typesRoot = path.dirname(types);
+  const files = await readdir(`${moduleRoot}/${typesRoot}`);
+  const dtsFiles = files.filter((f) => f.endsWith('.d.ts'));
+  const result = [];
+  for (const f of dtsFiles) {
+    const relPath = `${typesRoot}/${f}`;
+    const contents = await readFile(`${moduleRoot}/${relPath}`, 'utf8');
+    project.createFile(contents, relPath);
+
+    result.push(
+      ...describeDts(project, relPath, {
+        includePrivate: true,
+      })
+    );
+  }
+  return result;
 };

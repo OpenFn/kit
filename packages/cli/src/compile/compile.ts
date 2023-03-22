@@ -81,7 +81,7 @@ export const loadTransformOptions = async (
     }
 
     options['add-imports'] = {
-      ignore: opts.ignoreImports,
+      ignore: opts.ignoreImports as string[],
       adaptor: {
         name: stripVersionSpecifier(specifier),
         exports,
