@@ -73,9 +73,6 @@ export const preloadAdaptorExports = async (
   return [];
 };
 
-// TODO this should all be done by describe-package really, but that's too focused around jsdelivr
-// what about dependencies on common? Will we see the exports? We just need the names...
-// No, we don't see the exports :(
 const findExports = async (
   moduleRoot: string,
   types: string,

@@ -37,7 +37,7 @@ export type Opts = {
   useAdaptorsMonorepo?: string | boolean;
 };
 
-// Defintion of what Yargs returns (before ensure is called)
+// Definition of what Yargs returns (before ensure is called)
 export type UnparsedOpts = Opts & {
   ignoreImports?: boolean | string;
 };
