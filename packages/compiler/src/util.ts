@@ -34,10 +34,31 @@ export const preloadAdaptorExports = async (
     const pkgSrc = await readFile(`${pathToModule}/package.json`, 'utf8');
     pkg = JSON.parse(pkgSrc);
     if (pkg.types) {
-      const functionDefs = await findExports(pathToModule, pkg.types, project);
+      const functionDefs = [];
+
+      // load common into the project
+      // This assumes that common is installed as a sibling of the adaptor we need, which is weak
+      if (!pathToModule.match(/language-common/)) {
+        try {
+          const common = await findExports(
+            path.resolve(pathToModule, '../language-common'),
+            'types/index.d.ts',
+            project
+          );
+          if (common) {
+            functionDefs.push(...common.map(({ name }) => name));
+          }
+        } catch (e) {
+          log?.debug('Failed to load types from langauge common');
+        }
+      }
+
+      const mod = await findExports(pathToModule, pkg.types, project);
 
       // Return a flat array of names
-      return functionDefs.map(({ name }) => name);
+      functionDefs.push(...mod.map(({ name }) => name));
+
+      return functionDefs;
     }
   } else {
     // Do not load absolute modules
@@ -52,6 +73,7 @@ export const preloadAdaptorExports = async (
 
 // TODO this should all be done by describe-package really, but that's too focused around jsdelivr
 // what about dependencies on common? Will we see the exports? We just need the names...
+// No, we don't see the exports :(
 const findExports = async (
   moduleRoot: string,
   types: string,
