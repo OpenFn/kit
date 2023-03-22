@@ -85,3 +85,15 @@ test('output path overrides stdout', (t) => {
   t.falsy(options.outputStdout);
   t.is(options.outputPath, 'out.json');
 });
+
+test('disable all imports', (t) => {
+  const options = parse('compile job.js --ignore-imports');
+  t.true(options.ignoreImports);
+});
+
+test('disable some imports', (t) => {
+  const options = parse('compile job.js --ignore-imports=jam,jar');
+  const [a, b] = options.ignoreImports as string[];
+  t.is(a, 'jam');
+  t.is(b, 'jar');
+});

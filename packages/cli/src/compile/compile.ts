@@ -62,20 +62,17 @@ export const loadTransformOptions = async (
 
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
-  if (opts.adaptors?.length) {
+  if (opts.adaptors?.length && opts.ignoreImports != true) {
     let exports;
-    const [pattern] = opts.adaptors; // TODO add-imports only takes on adaptor, but the cli can take multiple
+    const [pattern] = opts.adaptors;
     const [specifier] = pattern.split('=');
 
     // Preload exports from a path, optionally logging errors in case of a failure
-    log.debug(`Attempting to preload typedefs for ${specifier}`);
+    log.debug(`Attempting to preload types for ${specifier}`);
     const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
     if (path) {
       try {
-        exports = await preloadAdaptorExports(path);
-        if (exports) {
-          log.info(`Loaded typedefs for ${specifier}`);
-        }
+        exports = await preloadAdaptorExports(path, log);
       } catch (e) {
         log.error(`Failed to load adaptor typedefs from path ${path}`);
         log.error(e);
@@ -87,6 +84,7 @@ export const loadTransformOptions = async (
     }
 
     options['add-imports'] = {
+      ignore: opts.ignoreImports,
       adaptor: {
         name: stripVersionSpecifier(specifier),
         exports,
@@ -94,5 +92,6 @@ export const loadTransformOptions = async (
       },
     };
   }
+
   return options;
 };

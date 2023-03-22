@@ -5,7 +5,7 @@ import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 import type { CommandList } from './commands';
 
 // Central type definition for the main options
-// This is in flux as options are being refactoreds
+// This is in flux as options are being refactored
 export type Opts = {
   command?: CommandList;
   baseDir?: string;
@@ -18,6 +18,7 @@ export type Opts = {
   expandAdaptors?: boolean; // for unit tests really
   force?: boolean;
   immutable?: boolean;
+  ignoreImports?: boolean | string[];
   jobPath?: string;
   log?: string[];
   logJson?: boolean;
@@ -34,6 +35,11 @@ export type Opts = {
   strictOutput?: boolean; // defaults to true
   timeout?: number; // ms
   useAdaptorsMonorepo?: string | boolean;
+};
+
+// Defintion of what Yargs returns (before ensure is called)
+export type UnparsedOpts = Opts & {
+  ignoreImports?: boolean | string;
 };
 
 export type CLIOption = {
@@ -127,6 +133,21 @@ export const immutable: CLIOption = {
     description: 'Enforce immutabilty on state object',
     boolean: true,
     default: false,
+  },
+};
+
+export const ignoreImports: CLIOption = {
+  name: 'ignore-imports',
+  yargs: {
+    description:
+      "Don't auto-import references in compiled code. Can take a list of names to ignore.",
+  },
+  ensure: (opts) => {
+    if (typeof opts.ignoreImports === 'string') {
+      opts.ignoreImports = (opts.ignoreImports as string)
+        .split(',')
+        .map((s) => s.trim());
+    }
   },
 };
 
