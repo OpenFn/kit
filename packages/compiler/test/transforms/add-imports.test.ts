@@ -421,6 +421,32 @@ test("don't auto add imports for node globals", (t) => {
   t.assert(imports[0].imported.name === 'x');
 });
 
+test("Don't add imports for ignored identifiers", async (t) => {
+  const ast = b.program([
+    b.expressionStatement(b.identifier('x')),
+    b.expressionStatement(b.identifier('y')),
+  ]);
+
+  const options = {
+    'add-imports': {
+      ignore: ['x'],
+      adaptor: {
+        name: 'test-adaptor',
+        exports: [],
+      },
+    },
+  };
+
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  const [first] = transformed.body;
+  t.assert(n.ImportDeclaration.check(first));
+  const imports = (first as n.ImportDeclaration)
+    .specifiers as n.ImportSpecifier[];
+  t.assert(imports.length === 1);
+  t.assert(imports[0].imported.name === 'y');
+});
+
 test('export everything from an adaptor', (t) => {
   const ast = b.program([b.expressionStatement(b.identifier('x'))]);
 

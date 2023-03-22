@@ -97,7 +97,7 @@ test('transform will stop if a visitor returns truthy', (t) => {
   t.assert(visitCount === 1);
 });
 
-test('ignore disabled visitors', (t) => {
+test('ignore visitors disabled in options', (t) => {
   const transformers = [{ id: TEST, types: ['Program'], visitor: noop }];
 
   const map = indexTransformers(transformers, { test: false });
