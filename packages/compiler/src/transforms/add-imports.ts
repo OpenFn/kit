@@ -165,7 +165,7 @@ function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
       const usedExports =
         exports && exports.length
           ? // If we have exports for this adaptor, import any dangling variables from the export list
-            exports.filter((e) => identifiers[e])
+            exports.filter((e) => !ignore[e] && identifiers[e])
           : // If we have no exports for this adaptor, import anything apart from a few choice globals
             Object.keys(identifiers).filter(
               (i) => !ignore[i] && !globalRE.test(i)
