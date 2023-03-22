@@ -38,6 +38,7 @@ export type JSONLog = {
   message: Array<string | object | any>;
   level: LogFns;
   name?: string;
+  time: number;
 };
 
 export type StringLog = [LogFns | 'confirm' | 'print', ...any];
@@ -141,6 +142,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       level,
       name,
       message: args.map((o) => sanitize(o, { stringify: false })),
+      time: Date.now(),
     };
 
     emitter[level](stringify(output));

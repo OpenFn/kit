@@ -126,11 +126,12 @@ test('should log objects as strings', (t) => {
     logger[fn]('abc');
 
     const result = JSON.parse(logger._last);
-    t.assert(Object.keys(result).length === 3);
+    t.assert(Object.keys(result).length === 4);
 
     t.assert(result.level === level);
     t.assert(result.name === 'x');
     t.assert(result.message[0] === 'abc');
+    t.true(!isNaN(result.time));
   });
 });
 
