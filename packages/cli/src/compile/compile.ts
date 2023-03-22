@@ -8,8 +8,6 @@ import type { CompileOptions } from './command';
 export default async (opts: CompileOptions, log: Logger) => {
   log.debug('Loading job...');
   const compilerOptions: Options = await loadTransformOptions(opts, log);
-  compilerOptions.logger = createLogger(COMPILER, opts as any); // TODO log options are a bit flaky right now
-
   const job = compile(opts.jobSource || opts.jobPath, compilerOptions);
   if (opts.jobPath) {
     log.success(`Compiled job from ${opts.jobPath}`);
@@ -57,9 +55,8 @@ export const loadTransformOptions = async (
   log: Logger
 ) => {
   const options: Options = {
-    logger: log,
+    logger: log || createLogger(COMPILER, opts as any),
   };
-
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
   if (opts.adaptors?.length && opts.ignoreImports != true) {
