@@ -50,7 +50,7 @@ const options = [
 ];
 
 const executeCommand = {
-  command: 'execute [path/to/job.js]',
+  command: 'execute [path]',
   desc: `Run an openfn job. Get more help by running openfn <command> help.
   \nExecute will run a job/expression and write the output state to disk (to ./state.json unless otherwise specified)
   \nBy default only state.data will be written to the output. Include --no-strict-output to write the entire state object.
