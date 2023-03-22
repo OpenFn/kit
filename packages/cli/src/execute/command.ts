@@ -50,8 +50,11 @@ const options = [
 ];
 
 const executeCommand = {
-  command: 'execute [path]',
-  desc: `Run an openfn job. Get more help by running openfn <command> help`,
+  command: 'execute [path/to/job.js]',
+  desc: `Run an openfn job. Get more help by running openfn <command> help.
+  \nExecute will run a job/expression and write the output state to disk (to ./state.json unless otherwise specified)
+  \nBy default only state.data will be written to the output. Include --no-strict-output to write the entire state object.
+  \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
   aliases: ['$0'],
   handler: ensure('execute', options),
   builder: (yargs) =>
@@ -63,15 +66,19 @@ const executeCommand = {
       })
       .example(
         'openfn foo/job.js',
-        'Reads foo/job.js, looks for state and output in foo'
+        'Execute foo/job.js with no adaptor and write the final state to foo/job.json'
       )
       .example(
-        'openfn job.js -a common',
-        'Run job.js using @openfn/language-common'
+        'openfn job.js -ia common',
+        'Execute job.js using @openfn/language-commom , with autoinstall enabled)'
       )
       .example(
-        'openfn install -a common',
-        'Install the latest version of language-common to the repo'
+        'openfn job.js -a common --log info',
+        'Execute job.js with common adaptor and info-level logging'
+      )
+      .example(
+        'openfn compile job.js -a http',
+        'Compile job.js with the http adaptor and print the code to stdout'
       ),
 } as yargs.CommandModule<ExecuteOptions>;
 
