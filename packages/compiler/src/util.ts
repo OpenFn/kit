@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Project, describeDts, fetchFile } from '@openfn/describe-package';
+import { Project, describeDts } from '@openfn/describe-package';
 import type { Logger } from '@openfn/logger';
 
 export const loadFile = (filePath: string) =>
