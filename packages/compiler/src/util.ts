@@ -34,7 +34,7 @@ export const preloadAdaptorExports = async (
     const pkgSrc = await readFile(`${pathToModule}/package.json`, 'utf8');
     pkg = JSON.parse(pkgSrc);
     if (pkg.types) {
-      const functionDefs = [];
+      const functionDefs = {} as Record<string, true>;
 
       // load common into the project
       // This assumes that common is installed as a sibling of the adaptor we need, which is weak
@@ -46,19 +46,21 @@ export const preloadAdaptorExports = async (
             project
           );
           if (common) {
-            functionDefs.push(...common.map(({ name }) => name));
+            common.forEach((name) => {
+              functionDefs[name] = true;
+            });
           }
         } catch (e) {
           log?.debug('Failed to load types from langauge common');
         }
       }
 
-      const mod = await findExports(pathToModule, pkg.types, project);
+      const adaptor = await findExports(pathToModule, pkg.types, project);
+      adaptor.forEach((name) => {
+        functionDefs[name] = true;
+      });
 
-      // Return a flat array of names
-      functionDefs.push(...mod.map(({ name }) => name));
-
-      return functionDefs;
+      return Object.keys(functionDefs);
     }
   } else {
     // Do not load absolute modules
