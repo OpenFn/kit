@@ -61,6 +61,22 @@ test.serial(`openfn ${jobsPath}/simple.js -a common -O`, async (t) => {
 });
 
 test.serial(
+  `openfn ${jobsPath}/simple.js -a common --ignore-imports`,
+  async (t) => {
+    const error = await t.throwsAsync(() => run(t.title));
+    t.regex(error.message, /(fn is not defined)/);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/simple.js -a common --ignore-imports=fn`,
+  async (t) => {
+    const error = await t.throwsAsync(() => run(t.title));
+    t.regex(error.message, /(fn is not defined)/);
+  }
+);
+
+test.serial(
   `openfn ${jobsPath}/simple.js -a @openfn/language-common -s ${tmpPath}/state.json`,
   async (t) => {
     await writeFileSync(`${tmpPath}/state.json`, '{ "data": 2 }');
