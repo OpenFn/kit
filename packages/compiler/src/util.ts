@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Project, describeDts, fetchFile } from '@openfn/describe-package';
+import type { Logger } from '@openfn/logger';
 
 export const loadFile = (filePath: string) =>
   fs.readFileSync(path.resolve(filePath), 'utf8');
@@ -19,41 +20,43 @@ export const isRelativeSpecifier = (specifier: string) =>
   /^(\/|\.|~|\w\:\\)/.test(specifier);
 
 // Helper to load the exports of a given npm package
-// Can load from an unpkg specifier or a path to a local module
-export const preloadAdaptorExports = async (specifier: string) => {
+// At the moment this expects to be passed a path to a local module,
+// But we may relax this  later.
+export const preloadAdaptorExports = async (
+  pathToModule: string,
+  log?: Logger
+) => {
   const project = new Project();
   let pkg;
   let types;
   // load the package from unpkg or the filesystem
-  if (isRelativeSpecifier(specifier)) {
+  if (isRelativeSpecifier(pathToModule)) {
     // load locally
-    const pkgSrc = await readFile(`${specifier}/package.json`, 'utf8');
+    const pkgSrc = await readFile(`${pathToModule}/package.json`, 'utf8');
     pkg = JSON.parse(pkgSrc);
     if (pkg.types) {
-      types = await readFile(`${specifier}/${pkg.types}`, 'utf8');
-    } else {
-      // If there's no type information, we can safely return
-      // TODO should we log a warning?
-      return [];
+      types = await readFile(`${pathToModule}/${pkg.types}`, 'utf8');
     }
   } else {
-    // TODO this should never be used right now - the CLI should always pass in a path
-
-    // TODO - if modules_home is set, we should look there for definitions before calling out to unpkg
-    // load from unpkg
-    const pkgSrc = await fetchFile(`${specifier}/package.json`);
-    pkg = JSON.parse(pkgSrc);
-    types = await fetchFile(`${specifier}/${pkg.types}`);
+    // Do not load absolute modules
+    // We can later do this with fetchFile(`${specifier}/package.json`)
+    if (log) {
+      log.info(`Skipping adaptor export preload for ${pathToModule}`);
+    }
   }
 
-  // Setup the project so we can read the dts definitions
-  project.addToFS(types, pkg.types);
-  project.createFile(types, pkg.types);
+  if (types) {
+    // Setup the project so we can read the dts definitions
+    project.addToFS(types, pkg.types);
+    project.createFile(types, pkg.types);
 
-  // find the main dts
-  const functionDefs = describeDts(project, pkg.types, {
-    includePrivate: true,
-  });
-  // Return a flat array of names
-  return functionDefs.map(({ name }) => name);
+    // find the main dts
+    const functionDefs = describeDts(project, pkg.types, {
+      includePrivate: true,
+    });
+
+    // Return a flat array of names
+    return functionDefs.map(({ name }) => name);
+  }
+  return [];
 };
