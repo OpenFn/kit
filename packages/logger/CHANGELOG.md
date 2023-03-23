@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.12
+
+### Patch Changes
+
+- 8dfc5bf: include a timestamp on json logs
+
 ## 0.0.11
 
 ### Patch Changes
