@@ -12,6 +12,7 @@ export type ExecuteOptions = Required<
     | 'compile'
     | 'expandAdaptors'
     | 'immutable'
+    | 'ignoreImports'
     | 'jobPath'
     | 'log'
     | 'logJson'
@@ -36,6 +37,7 @@ const options = [
   o.autoinstall,
   o.compile,
   o.immutable,
+  o.ignoreImports,
   o.jobPath,
   o.logJson,
   o.outputPath,

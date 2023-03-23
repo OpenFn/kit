@@ -92,6 +92,7 @@ const globals = [
 const globalRE = new RegExp(`^${globals.join('|')}$`);
 
 export type AddImportsOptions = {
+  ignore?: string[];
   // Adaptor MUST be pre-populated for this transformer to actually do anything
   adaptor: {
     name: string;
@@ -153,14 +154,22 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
 function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
   if (options.adaptor) {
     const { name, exports, exportAll } = options.adaptor;
+    const ignore =
+      options.ignore?.reduce((obj, key) => {
+        obj[key] = true;
+        return obj;
+      }, {} as Record<string, true>) ?? {};
+
     if (name) {
       const identifiers = findAllDanglingIdentifiers(path.node);
       const usedExports =
         exports && exports.length
           ? // If we have exports for this adaptor, import any dangling variables from the export list
-            exports.filter((e) => identifiers[e])
+            exports.filter((e) => !ignore[e] && identifiers[e])
           : // If we have no exports for this adaptor, import anything apart from a few choice globals
-            Object.keys(identifiers).filter((i) => !globalRE.test(i));
+            Object.keys(identifiers).filter(
+              (i) => !ignore[i] && !globalRE.test(i)
+            );
       if (usedExports.length) {
         // TODO maybe in trace output we can say WHY we're doing these things
         addUsedImports(path, usedExports, name);
