@@ -10,7 +10,9 @@ import docsCommand from './docs/command';
 import metadataCommand from './metadata/command';
 import { Opts } from './options';
 
-export const cmd = yargs(hideBin(process.argv))
+const y = yargs(hideBin(process.argv));
+
+export const cmd = y
   .command(executeCommand as any)
   .command(compileCommand as any)
   .command(installCommand) // allow install to run from the top as well as repo
@@ -40,4 +42,5 @@ export const cmd = yargs(hideBin(process.argv))
       argv.command = 'version';
     },
   })
+  .wrap(y.terminalWidth())
   .help() as yargs.Argv<Opts>;
