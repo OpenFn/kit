@@ -3,31 +3,33 @@ import path from 'node:path';
 
 import { preloadAdaptorExports } from '../../src/util';
 
-const TEST_ADAPTOR = path.resolve('test/__modules__/adaptor');
+const TEST_ADAPTOR_PATH = path.resolve('test/__modules__/adaptor');
 
 test('load exports from a path', async (t) => {
-  const result = await preloadAdaptorExports(TEST_ADAPTOR);
+  const result = await preloadAdaptorExports(TEST_ADAPTOR_PATH);
 
   t.assert(result.length === 2);
   t.assert(result.includes('x'));
   t.assert(result.includes('y'));
 });
 
-// This test is currently failing because a lot of the functions in the 2.0 common
-// aren't marked as public
-// But I think this test is redundant now that we have the repo and autoinstall - I don't
-// think we should be fetching from unpkg at all.
-// Raised an issue #103 to think about this with a clearer head
-test.skip('load exports from unpkg', async (t) => {
-  const result = await preloadAdaptorExports(
-    '@openfn/language-common@2.0.0-rc3'
-  );
+test('return an empty array from a bad path', async (t) => {
+  const result = await preloadAdaptorExports('jam/jar');
 
-  t.assert(result.length > 0);
-  t.assert(result.includes('fn'));
-  t.assert(result.includes('combine'));
-  t.assert(result.includes('execute'));
-  t.assert(result.includes('each'));
+  t.true(Array.isArray(result));
+  t.assert(result.length === 0);
 });
 
-// TODO test error handling
+test('return an empty array from an absolute path', async (t) => {
+  const result = await preloadAdaptorExports('jam');
+
+  t.true(Array.isArray(result));
+  t.assert(result.length === 0);
+});
+
+test('return an empty array from a namespaced absolute path', async (t) => {
+  const result = await preloadAdaptorExports('@openfn/jam');
+
+  t.true(Array.isArray(result));
+  t.assert(result.length === 0);
+});

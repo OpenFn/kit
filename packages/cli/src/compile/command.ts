@@ -9,11 +9,13 @@ export type CompileOptions = Required<
     | 'adaptors'
     | 'command'
     | 'expandAdaptors'
+    | 'ignoreImports'
     | 'jobPath'
     | 'logJson'
     | 'log'
     | 'outputPath'
     | 'outputStdout'
+    | 'repoDir'
     | 'path'
     | 'useAdaptorsMonorepo'
   >
@@ -25,12 +27,14 @@ export type CompileOptions = Required<
 const options = [
   o.expandAdaptors, // order important
   o.adaptors,
+  o.ignoreImports,
   o.jobPath,
   o.logJson,
   override(o.outputStdout, {
     default: true,
   }),
   o.outputPath,
+  o.repoDir,
   o.useAdaptorsMonorepo,
 ];
 

@@ -1,5 +1,22 @@
 # @openfn/compiler
 
+## 0.0.28
+
+### Patch Changes
+
+- f6d22ec: Don't lookup exports from absolute modules
+- 77bed12: Fix lookups of adaptor types
+- f4b9702: Allow add-imports transformer to ignore passed values
+- Updated dependencies [8dfc5bf]
+  - @openfn/logger@0.0.12
+
+## 0.0.27
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/describe-package@0.0.15
+
 ## 0.0.26
 
 ### Patch Changes

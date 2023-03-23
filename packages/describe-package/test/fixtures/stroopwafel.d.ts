@@ -9,6 +9,8 @@ export declare function traditional(): string;
 /**
  * Returns a flavoured stroopwafel
  * @public
+ * @param {string} flavour
+ * @magic flavour - $.children[*]
  * @example
  * <caption>cap</caption>oneFlavour('falafel')
  */

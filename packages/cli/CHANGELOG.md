@@ -1,5 +1,27 @@
 # @openfn/cli
 
+## 0.0.34
+
+### Patch Changes
+
+- f744f00: Update help
+- 02bcef5: Optionally disable auto-import
+- Updated dependencies [f6d22ec]
+- Updated dependencies [77bed12]
+- Updated dependencies [8dfc5bf]
+- Updated dependencies [f4b9702]
+  - @openfn/compiler@0.0.28
+  - @openfn/logger@0.0.12
+  - @openfn/runtime@0.0.21
+
+## 0.0.33
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/describe-package@0.0.15
+  - @openfn/compiler@0.0.27
+
 ## 0.0.32
 
 ### Patch Changes

@@ -147,3 +147,15 @@ test('set timeout (long)', (t) => {
   const options = parse('execute job.js --timeout 1234');
   t.is(options.timeout, 1234);
 });
+
+test('disable all imports', (t) => {
+  const options = parse('execute job.js --ignore-imports');
+  t.true(options.ignoreImports);
+});
+
+test('disable some imports', (t) => {
+  const options = parse('execute job.js --ignore-imports=jam,jar');
+  const [a, b] = options.ignoreImports as string[];
+  t.is(a, 'jam');
+  t.is(b, 'jar');
+});

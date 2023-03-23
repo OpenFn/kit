@@ -8,6 +8,7 @@ import {
   resolveSpecifierPath,
 } from '../../src/compile/compile';
 import type { SafeOpts } from '../../src/commands';
+import { CompileOptions } from '../../src/compile/command';
 
 const mockLog = createMockLogger();
 
@@ -17,6 +18,7 @@ test.afterEach(() => {
 
 type TransformOptionsWithImports = {
   ['add-imports']: {
+    ignore: true | string[];
     adaptor: {
       name: string;
       exports: string[];
@@ -133,7 +135,7 @@ test.serial(
     const opts = {
       // This should find the times-two module in test/__modules__
       adaptors: ['times-two=/modules/times-two'],
-    } as SafeOpts;
+    } as CompileOptions;
 
     const result = (await loadTransformOptions(
       opts,
@@ -156,7 +158,7 @@ test.serial(
     });
     const opts = {
       adaptors: ['times-two@1.0.0=/modules/times-two'],
-    } as SafeOpts;
+    } as CompileOptions;
     const result = (await loadTransformOptions(
       opts,
       mockLog
@@ -180,7 +182,7 @@ test.serial(
     const opts = {
       adaptors: ['times-two'],
       repoDir: '/repo/',
-    } as SafeOpts;
+    } as CompileOptions;
 
     const result = (await loadTransformOptions(
       opts,
@@ -195,5 +197,37 @@ test.serial(
     t.assert(exports.includes('byTwo'));
   }
 );
+
+test.serial('loadTransformOptions: ignore imports', async (t) => {
+  const opts = {
+    ignoreImports: true,
+    adaptors: ['times-two'],
+    repoDir: '/repo/',
+  } as CompileOptions;
+
+  const result = (await loadTransformOptions(
+    opts,
+    mockLog
+  )) as TransformOptionsWithImports;
+
+  t.falsy(result['add-imports']);
+});
+
+test.serial('loadTransformOptions: ignore some imports', async (t) => {
+  const opts = {
+    ignoreImports: ['a'],
+    adaptors: ['times-two'],
+    repoDir: '/repo/',
+  } as CompileOptions;
+
+  const result = (await loadTransformOptions(
+    opts,
+    mockLog
+  )) as TransformOptionsWithImports;
+
+  t.truthy(result['add-imports']);
+  const { ignore } = result['add-imports'];
+  t.deepEqual(ignore, ['a']);
+});
 
 // TODO test exception if the module can't be found

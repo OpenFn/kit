@@ -58,3 +58,9 @@ test('Load common fn', async (t) => {
   t.truthy(fn);
   t.is(fn.parent, 'language-common');
 });
+
+test('Recognise a magic function', async (t) => {
+  const fn = get('oneFlavour');
+  t.truthy(fn);
+  t.true(fn.magic);
+});

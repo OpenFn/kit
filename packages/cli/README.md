@@ -36,6 +36,14 @@ Get help:
 openfn help
 ```
 
+## Migrating from devtools
+
+If you're coming to the CLI from the old openfn devtools, here are a couple of key points to be aware of:
+
+* The CLI has a shorter, sleeker syntax, so your command should be much shorter
+* The CLI will automatically install adaptors for you (with full version control)
+* By default, the CLI will only write state.data to output. This is to encourage better state management. Pass `--no-strict-output` to save the entire state object.
+
 ## Basic Usage
 
 You're probably here to run jobs (expressions), which the CLI makes easy:
@@ -46,13 +54,13 @@ openfn path/to/job.js -ia adaptor-name
 
 You MUST specify which adaptor to use. Pass the `-i` flag to auto-install that adaptor (it's safe to do this redundantly).
 
-If output.json is not passed, the CLI will create an `output.json` next to the job file. You can pass a path to state by adding `-s path/to/state.json`, and output by passing `-o path/to/output.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
+When the job is finished, the CLI will write the `data` property of your state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout. To write the entire state object (not just `data`), pass `--no-strict-output`.
 
-The CLI can auto-install language adaptors to its own privately maintained repo. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo.
+The CLI can auto-install language adaptors to its own privately maintained repo, just include the `-i` flag in the command and your adaptors will be forever fully managed. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo.
 
 You can specify adaptors with a shorthand (`http`) or use the full package name (`@openfn/language-http`). You can add a specific version like `http@2.0.0`. You can pass a path to a locally installed adaptor like `http=/repo/openfn/adaptors/my-http-build`.
 
-If you have the adaptors monorepo set up on your machine, you can also run from that. Pass the `-m` flag to load from the monorepo. Set the monorepo location by setting the OPENFN_ADAPTORS_REPO env var to a valid path. This runs from the built package, so remember to build an adaptor before running!
+If you have the adaptors monorepo set up on your machine, you can also run adaptors straight from source. Pass the `-m <path>` flag to load from the monorepo. You can also set the monorepo location by setting the `OPENFN_ADAPTORS_REPO` env var to a valid path. After that just include `-m` to load from the monorepo. Remember that adaptors will be loaded from the BUILT package in `dist`, so remember to build an adaptor before running!
 
 You can pass `--log info` to get more feedback about what's happening, or `--log debug` for more details than you could ever use.
 
@@ -119,9 +127,11 @@ The CLI uses openfn's own runtime to execute jobs in a safe environment.
 
 All jobs which work against `@openfn/core` will work in the new CLI and runtime environment (note: although this is a work in progress and we are actively looking for help to test this!).
 
+If you want to see how the compiler is changing your job, run `openfn compile path/to/job -a <adaptor>` to return the compiled code to stdout. Add `-o path/to/output.js` to save the result to disk.
+
 ## New Runtime notes
 
-The new openfunction runtime basically does one thing: load a Javascript Module, find the default export, and execute the functions it holds.
+The new OpenFn runtime will create a secure sandboxed environemtn which loads a Javascript Module, finds the default export, and execute the functions held within it.
 
 So long as your job has an array of functions as its default export, it will run in the new runtime.
 
