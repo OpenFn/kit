@@ -1,115 +1,146 @@
 import test from 'ava';
 import axios from 'axios';
 
-import createLightningServer from '../../src/mock/lightning';
-import { wait } from '../util';
+import createLightningServer, { API_PREFIX } from '../../src/mock/lightning';
 
-const baseUrl = 'http://localhost:8888';
+const baseUrl = `http://localhost:8888${API_PREFIX}`;
 
-let server = createLightningServer({ port: 8888 });
+let server;
+
+test.beforeEach(() => {
+  server = createLightningServer({ port: 8888 });
+});
+
+test.afterEach(() => {
+  server.destroy();
+});
 
 const get = (path: string) => axios.get(`${baseUrl}/${path}`);
 const post = (path: string, data: any) =>
   axios.post(`${baseUrl}/${path}`, data);
 
-test.serial('GET /job - return 404 if no job', async (t) => {
+test.serial('GET /credential - return a credential', async (t) => {
+  const { status, data: job } = await get('credential/a');
+  t.is(status, 200);
+
+  t.is(job.user, 'bobby');
+  t.is(job.password, 'password1');
+});
+
+test.serial('GET /credential - return a new mock credential', async (t) => {
+  server.addCredential('b', { user: 'johnny', password: 'cash' });
+  const { status, data: job } = await get('credential/b');
+  t.is(status, 200);
+
+  t.is(job.user, 'johnny');
+  t.is(job.password, 'cash');
+});
+
+test.serial(
+  'GET /credential - return 404 if no credential found',
+  async (t) => {
+    try {
+      await get('credential/c');
+    } catch (e) {
+      t.is(e.response.status, 404);
+    }
+  }
+);
+
+test.serial(
+  'POST /attempts/next - return 204 for an empty queue',
+  async (t) => {
+    t.is(server.getQueueLength(), 0);
+    const { status, data } = await post('attempts/next', { id: 'x' });
+    t.is(status, 204);
+
+    t.falsy(data);
+  }
+);
+
+test.serial('POST /attempts/next - return 400 if no id provided', async (t) => {
   try {
-    await get('job/x');
+    await post('attempts/next', {});
   } catch (e) {
-    t.is(e.response.status, 404);
+    t.is(e.response.status, 400);
   }
 });
 
-test.serial('GET /job - return a job', async (t) => {
-  const { status, data: job } = await get('job/job-1');
-  t.is(status, 200);
-
-  t.is(job.id, 'job-1');
-  t.truthy(job.expression);
-});
-
-test.serial('GET /job - return a new mock job', async (t) => {
-  server.addJob({ id: 'jam' });
-  const { status, data: job } = await get('job/jam');
-  t.is(status, 200);
-
-  t.is(job.id, 'jam');
-});
-
-test.serial('GET /workflow - return 404 if no workflow', async (t) => {
-  try {
-    await get('workflow/x');
-  } catch (e) {
-    t.is(e.response.status, 404);
-  }
-});
-
-test.serial('GET /workflow - return a workflow', async (t) => {
-  const { status, data: workflow } = await get('workflow/workflow-1');
-  t.is(status, 200);
-
-  t.is(workflow.id, 'workflow-1');
-});
-
-test.serial('GET /workflow - return a new mock workflow', async (t) => {
-  server.addWorkflow({ id: 'jam' });
-  const { status, data: workflow } = await get('workflow/jam');
-  t.is(status, 200);
-
-  t.is(workflow.id, 'jam');
-});
-
-test.serial('GET /queue - return 204 for an empty queue', async (t) => {
-  const { status, data } = await get('queue');
-  t.is(status, 204);
-
-  t.falsy(data);
-});
-
-test.serial('GET /queue - return 200 with a workflow id', async (t) => {
-  server.addToQueue('workflow-1');
-  const { status, data } = await get('queue');
+test.serial('GET /attempts/next - return 200 with a workflow', async (t) => {
+  server.addToQueue('attempt-1');
+  t.is(server.getQueueLength(), 1);
+  const { status, data } = await post('attempts/next', { id: 'x' });
   t.is(status, 200);
 
   t.truthy(data);
-  t.is(data.workflowId, 'workflow-1');
+  t.true(Array.isArray(data));
+  t.is(data.length, 1);
+
+  // not interested in testing much against the attempt structure at this stage
+  const [attempt] = data;
+  t.is(attempt.id, 'attempt-1');
+  t.true(Array.isArray(attempt.plan));
+
+  t.is(server.getQueueLength(), 0);
 });
 
-test.serial('GET /queue - clear the queue after a request', async (t) => {
-  server.addToQueue('workflow-1');
-  const req1 = await get('queue');
-  t.is(req1.status, 200);
+test.serial('GET /attempts/next - return 200 with 2 workflows', async (t) => {
+  server.addToQueue('attempt-1');
+  server.addToQueue('attempt-1');
+  server.addToQueue('attempt-1');
+  t.is(server.getQueueLength(), 3);
+  const { status, data } = await post('attempts/next?count=2', { id: 'x' });
+  t.is(status, 200);
 
-  t.is(req1.data.workflowId, 'workflow-1');
+  t.truthy(data);
+  t.true(Array.isArray(data));
+  t.is(data.length, 2);
 
-  const req2 = await get('queue');
-  t.is(req2.status, 204);
-  t.falsy(req2.data);
+  t.is(server.getQueueLength(), 1);
 });
 
-test.serial('POST /notify - should return 202', async (t) => {
-  const { status } = await post('notify', {});
-  t.is(status, 202);
+test.serial(
+  'POST /attempts/next - clear the queue after a request',
+  async (t) => {
+    server.addToQueue('attempt-1');
+    const req1 = await post('attempts/next', { id: 'x' });
+    t.is(req1.status, 200);
+
+    t.is(req1.data.length, 1);
+
+    const req2 = await post('attempts/next', { id: 'x' });
+    t.is(req2.status, 204);
+    t.falsy(req2.data);
+  }
+);
+
+test.serial('POST /attempts/notify - should return 200', async (t) => {
+  const { status } = await post('attempts/notify/a', {});
+  t.is(status, 200);
 });
 
-test.serial('POST /notify - should echo to event emitter', async (t) => {
-  let evt;
-  let didCall = false;
-  //server.once('notify', (e) => (evt = e));
-  server.once('notify', (e) => {
-    didCall = true;
-    evt = e;
-  });
+test.serial(
+  'POST /attempts/notify - should echo to event emitter',
+  async (t) => {
+    let evt;
+    let didCall = false;
 
-  const { status } = await post('notify', {
-    event: 'job-start',
-    workflowId: 'workflow-1',
-  });
-  t.is(status, 202);
-  t.true(didCall);
-  // await wait(() => evt);
+    server.once('notify', (e) => {
+      didCall = true;
+      evt = e;
+    });
 
-  // t.truthy(evt);
-  // t.is(evt.workflowId, 'job-start');
-  // t.is(evt.workflowId, 'workflow-1');
-});
+    const { status } = await post('attempts/notify/a', {
+      event: 'job-start',
+      count: 101,
+    });
+    t.is(status, 200);
+    t.true(didCall);
+    // await wait(() => evt);
+
+    t.truthy(evt);
+    t.is(evt.id, 'a');
+    t.is(evt.name, 'job-start');
+    t.is(evt.count, 101);
+  }
+);
