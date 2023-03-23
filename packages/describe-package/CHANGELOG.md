@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.15
+
+### Patch Changes
+
+- Support magic flag for functions with @magic annotations
+
 ## 0.0.14
 
 ### Patch Changes
