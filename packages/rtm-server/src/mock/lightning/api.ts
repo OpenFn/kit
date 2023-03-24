@@ -35,9 +35,9 @@ export default (router: Router, state: ServerState) => {
   router.get(`${API_PREFIX}/attempts/:id`, unimplemented);
   router.get(`${API_PREFIX}/attempts/next`, unimplemented); // ?count=1
   router.get(`${API_PREFIX}/attempts/done`, unimplemented); // ?project=pid
+  router.get(`${API_PREFIX}/attempts/active`, unimplemented);
 
   router.get(`${API_PREFIX}/credential/:id`, unimplemented);
-  router.get(`${API_PREFIX}/attempts/active`, unimplemented);
 
   router.get(`${API_PREFIX}/workflows`, unimplemented);
   router.get(`${API_PREFIX}/workflows/:id`, unimplemented);
