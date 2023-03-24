@@ -1,49 +1,74 @@
 import { EventEmitter } from 'node:events';
 
-import type { State, Job, Workflow } from '../types';
+import type { State, Credential, ExecutionPlan, JobPlan } from '../types';
+import mockResolvers from './resolvers';
 
 // A mock runtime manager
-//
+// Runs ExecutionPlans(XPlans) in worker threads
+// May need to lazy-load resources
+// The mock RTM will return expression JSON as state
 
-// TODO do we mean job, or workflow?
-// I think we have both?
+type Resolver<T> = (id: string) => Promise<T>;
+
+// A list of helper functions which basically resolve ids into JSON
+// to lazy load assets
+export type LazyResolvers = {
+  credentials: Resolver<Credential>;
+  state: Resolver<State>;
+  expressions: Resolver<string>;
+};
+
 export type RTMEvent =
   | 'job-start'
-  | 'job-end'
+  | 'job-complete'
   | 'job-log'
   | 'job-error'
   | 'workflow-start'
-  | 'workflow-end';
+  | 'workflow-complete'
+  | 'workflow-error'; // ?
 
-type FetchWorkflowFn = (workflowId: string) => Promise<Workflow>;
+export type JobStartEvent = {
+  id: string; // job id
+  runId: string; // run id. Not sure we need this.
+};
 
-type FetchJobFn = (jobId: string) => Promise<Job>;
+export type JobCompleteEvent = {
+  id: string; // job id
+  runId: string; // run id. Not sure we need this.
+  state: State; // do we really want to publish the intermediate events? Could be important, but also could be sensitive
+  // I suppose at this level yes, we should publish it
+};
 
-const mockFetchWorkflow = (workflowId: string) =>
-  new Promise((resolve) => resolve({ job: 'job1', next: [] }));
+export type WorkflowStartEvent = {
+  id: string; // workflow id
+};
 
-const mockFetchJob = (jobId: string) =>
-  new Promise<Job>((resolve) =>
-    resolve({
-      expression: 'export default [s => s];',
-      state: {},
-    })
-  );
+export type WorkflowCompleteEvent = {
+  id: string; // workflow id
+  state?: object;
+  error?: any;
+};
 
-let id = 0;
-const getNewJobId = () => ++id;
+let jobId = 0;
+const getNewJobId = () => `${++jobId}`;
 
-// The mock will need some kind of helper function to get from a queue
-// This could call out to an endpoint or use something memory
-// actually i don't think that's right
+let autoServerId = 0;
+
+// Before we execute each job (expression), we have to build a state object
+// This means squashing together the input state and the credential
+// The crediential of course is the hard bit
+const assembleState = () => {};
+
+// Pre-process a plan
+// Validate it
+// Assign ids to jobs if they don't exist
+const preprocessPlan = (plan: ExecutionPlan) => plan;
+
 function createMock(
-  fetchWorkflow = mockFetchWorkflow,
-  fetchJob = mockFetchJob
+  serverId = autoServerId,
+  resolvers: LazyResolvers = mockResolvers
 ) {
-  const mockResults: Record<any, any> = {};
-
-  // This at the moment is an aspirational API - its what I think we want
-
+  const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
 
   const dispatch = (type: RTMEvent, args?: any) => {
@@ -54,69 +79,81 @@ function createMock(
   };
 
   const on = (event: RTMEvent, fn: (evt: any) => void) => {
-    bus.addListener(event, fn);
+    bus.on(event, fn);
+  };
+  const once = (event: RTMEvent, fn: (evt: any) => void) => {
+    bus.once(event, fn);
   };
 
-  // who handles workflows?
-  // a) we are given all the data about a workflow at once and we just chew through it
-  //    (may not be possible?)
-  // b) we call out to get the inputs to each workflow when we start
-  //    But who do we call out to?
-  //    Arch doc says lightning, but I need to decouple this here
-  // Right now this is a string of job ids
-  // A workflow isn't just an array btw, it's a graph
-  // That does actually need thinking through
-  // There's a jobID, which is what Lightning calls the job
-  // And there's like an executionID or a runId, which is what the RTM calls the instance run
-  // These ought to be UUIDs so they're unique across RTMs
-  const startJob = (jobId: string) => {
+  const executeJob = async (job: JobPlan) => {
+    // TODO maybe lazy load the job from an id
+    const { id, expression, credential } = job;
+
+    if (typeof credential === 'string') {
+      // Fetch the credntial but do nothing with it
+      // Maybe later we use it to assemble state
+      await resolvers.credentials(credential);
+    }
+
+    // Does a job reallly need its own id...? Maybe.
     const runId = getNewJobId();
 
     // Get the job details from lightning
-    fetchJob(jobId).then(() => {
-      // start instantly and emit as it goes
-      dispatch('job-start', { jobId, runId });
+    // start instantly and emit as it goes
+    dispatch('job-start', { id, runId });
 
-      // TODO random timeout
-      // What is a job log? Anything emitted by the RTM I guess?
-      // Namespaced to compile, r/t, job etc.
-      // It's the json output of the logger
-      dispatch('job-log', { jobId, runId });
+    // TODO random timeout
+    // What is a job log? Anything emitted by the RTM I guess?
+    // Namespaced to compile, r/t, job etc.
+    // It's the json output of the logger
+    dispatch('job-log', { id, runId });
 
-      // TODO random timeout
-      const finalState = mockResults.hasOwnProperty(jobId)
-        ? mockResults[jobId]
-        : {};
-      dispatch('job-end', { jobId, runId, state: finalState });
-    });
+    let state = {};
+    // Try and parse the expression as JSON, in which case we use it as the final state
+    try {
+      state = JSON.parse(expression);
+    } catch (e) {
+      // Do nothing, it's fine
+    }
 
-    return id;
+    dispatch('job-complete', { id, runId, state });
+
+    return state;
   };
 
-  const startWorkflow = (workflowId: string) => {
-    // console.log('start-workflow', workflowId);
-    // Get the execution plan from lightning
-    dispatch('workflow-start', { workflowId });
+  // Start executing an ExecutionPlan
+  // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
+  const execute = (xplan: ExecutionPlan) => {
+    const { id, plan } = preprocessPlan(xplan);
+    activeWorkflows[id] = true;
+    setTimeout(async () => {
+      dispatch('workflow-start', { id });
+      setTimeout(async () => {
+        // Run the first job
+        // TODO this need sto loop over all jobs
+        const state = await executeJob(plan[0]);
 
-    dispatch('workflow-end', { workflowId });
+        setTimeout(() => {
+          delete activeWorkflows[id];
+          dispatch('workflow-complete', { id, state });
+        }, 1);
+      }, 1);
+    }, 1);
   };
 
   // return a list of jobs in progress
-  const getStatus = () => {};
-
-  const _setJobResult = (jobId: string, result: any) => {
-    mockResults[jobId] = result;
+  const getStatus = () => {
+    return {
+      active: Object.keys(activeWorkflows).length,
+    };
   };
 
   return {
+    id: serverId || ++autoServerId,
     on,
-    // TODO runWorkflow? executeWorkflow?
-    startWorkflow,
-    startJob, // this is more of an internal API
+    once,
+    execute,
     getStatus,
-
-    // mock APIs
-    _setJobResult,
   };
 }
 

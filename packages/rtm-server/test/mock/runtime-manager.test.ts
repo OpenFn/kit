@@ -1,89 +1,127 @@
 import test from 'ava';
-import create from '../../src/mock/runtime-manager';
-
+import create, {
+  JobCompleteEvent,
+  JobStartEvent,
+  WorkflowCompleteEvent,
+  WorkflowStartEvent,
+} from '../../src/mock/runtime-manager';
+import { ExecutionPlan } from '../../src/types';
 import { wait } from '../util';
 
-test('It should create a mock runtime manager', (t) => {
-  const rtm = create();
+const sampleWorkflow = {
+  id: 'w1',
+  plan: [
+    {
+      id: 'j1',
+      adaptor: 'common@1.0.0',
+      expression: '{ "x": 10 }',
+    },
+  ],
+} as ExecutionPlan;
+
+const clone = (obj) => JSON.parse(JSON.stringify(obj));
+
+const waitForEvent = <T>(rtm, eventName) =>
+  new Promise<T>((resolve) => {
+    rtm.once(eventName, (e) => {
+      resolve(e);
+    });
+  });
+
+test('mock runtime manager should have an id', (t) => {
+  const rtm = create(22);
   const keys = Object.keys(rtm);
+  t.assert(rtm.id == 22);
+
+  // No need to test the full API, just make sure it smells right
   t.assert(keys.includes('on'));
-  t.assert(keys.includes('startWorkflow'));
-  t.assert(keys.includes('startJob'));
-  t.assert(keys.includes('getStatus'));
+  t.assert(keys.includes('execute'));
 });
 
-test('it should dispatch job-start events', async (t) => {
+test('getStatus() should should have no active workflows', (t) => {
+  const rtm = create(22);
+  const { active } = rtm.getStatus();
+
+  t.is(active, 0);
+});
+
+test('Dispatch start events for a new workflow', async (t) => {
   const rtm = create();
 
-  let evt;
+  rtm.execute(sampleWorkflow);
+  const evt = await waitForEvent<WorkflowStartEvent>(rtm, 'workflow-start');
+  t.truthy(evt);
+  t.is(evt.id, 'w1');
+});
 
-  rtm.on('job-start', (e) => {
-    evt = e;
-  });
+test('getStatus should report one active workflow', async (t) => {
+  const rtm = create();
+  rtm.execute(sampleWorkflow);
 
-  rtm.startJob('a');
+  const { active } = rtm.getStatus();
 
-  const didFire = await wait(() => evt);
-  t.true(didFire);
-  t.is(evt.jobId, 'a');
+  t.is(active, 1);
+});
+
+test('Dispatch complete events when a workflow completes', async (t) => {
+  const rtm = create();
+
+  rtm.execute(sampleWorkflow);
+  const evt = await waitForEvent<WorkflowCompleteEvent>(
+    rtm,
+    'workflow-complete'
+  );
+
+  t.truthy(evt);
+  t.is(evt.id, 'w1');
+  t.truthy(evt.state);
+});
+
+test('Dispatch start events for a job', async (t) => {
+  const rtm = create();
+
+  rtm.execute(sampleWorkflow);
+  const evt = await waitForEvent<JobStartEvent>(rtm, 'job-start');
+  t.truthy(evt);
+  t.is(evt.id, 'j1');
   t.truthy(evt.runId);
 });
 
-test('it should dispatch job-log events', async (t) => {
+test('Dispatch complete events for a job', async (t) => {
   const rtm = create();
 
-  let evt;
-
-  rtm.on('job-log', (e) => {
-    evt = e;
-  });
-
-  rtm.startJob('a');
-
-  const didFire = await wait(() => evt);
-
-  t.true(didFire);
-  t.is(evt.jobId, 'a');
-  t.truthy(evt.runId);
-});
-
-test('it should dispatch job-end events', async (t) => {
-  const rtm = create();
-
-  let evt;
-
-  rtm.on('job-end', (e) => {
-    evt = e;
-  });
-
-  rtm.startJob('a');
-
-  const didFire = await wait(() => evt);
-
-  t.true(didFire);
-  t.is(evt.jobId, 'a');
+  rtm.execute(sampleWorkflow);
+  const evt = await waitForEvent<JobCompleteEvent>(rtm, 'job-complete');
+  t.truthy(evt);
+  t.is(evt.id, 'j1');
   t.truthy(evt.runId);
   t.truthy(evt.state);
 });
 
-test('it should mock job state', async (t) => {
+test('mock should evaluate expressions as JSON', async (t) => {
   const rtm = create();
 
-  const result = 42;
+  rtm.execute(sampleWorkflow);
+  const evt = await waitForEvent<WorkflowCompleteEvent>(
+    rtm,
+    'workflow-complete'
+  );
+  t.deepEqual(evt.state, { x: 10 });
+});
 
-  rtm._setJobResult('a', result);
-  let evt;
+test('resolve credential before job-start if credential is a string', async (t) => {
+  const wf = clone(sampleWorkflow);
+  wf.plan[0].credential = 'x';
 
-  rtm.on('job-end', (e) => {
-    evt = e;
-  });
+  let didCallCredentials;
+  const credentials = async (_id) => {
+    didCallCredentials = true;
+    return {};
+  };
 
-  rtm.startJob('a');
+  const rtm = create(1, { credentials });
+  rtm.execute(wf);
 
-  const didFire = await wait(() => evt);
-
-  t.true(didFire);
-  t.is(evt.jobId, 'a');
-  t.truthy(evt.runId);
-  t.is(evt.state, result);
+  await waitForEvent<WorkflowCompleteEvent>(rtm, 'job-start');
+  t.true(didCallCredentials);
 });

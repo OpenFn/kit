@@ -20,10 +20,10 @@ test.before(() => {
 });
 
 // TODO get this working
-test.serial('should pick up a workflow in the queue', async (t) => {
+test.serial('should pick up an attempt in the queue', async (t) => {
   let found: false | string = false;
 
-  rtm.on('workflow-start', (e) => {
+  rtm.on('attempt-start', (e) => {
     // console.log(e);
     found = e.workflowId;
   });

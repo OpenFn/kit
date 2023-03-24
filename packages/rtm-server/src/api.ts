@@ -5,6 +5,8 @@ import healthcheck from './middleware/healthcheck';
 
 // So what is the API of this server?
 // It's mostly a pull model, apart from I think the healthcheck
+// So it doesn't need much
+
 const createAPI = () => {
   const router = new Router();
 

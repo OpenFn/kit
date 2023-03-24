@@ -13,11 +13,13 @@ import createAPI from './api';
 
 import createMockRTM from './mock/runtime-manager';
 
-// This loop will  call out to ask for work, with a backof
-const workerLoop = async (url: string, rtm: any) => {
+// This loop will  call out to ask for work, with a backoff
+const workBackoffLoop = async (lightningUrl: string, rtm: any) => {
   let timeout = 100; // TODO strange stuff happens if this has a low value
-  console.log(`${url}/queue`);
-  const result = await axios.get(`${url}/queue`);
+
+  const result = await axios.post(`${lightningUrl}/api/1/attempts`, {
+    id: rtm.id,
+  });
   if (result.data) {
     console.log(result.data);
     rtm.startWorkflow(result.data.workflowId);
@@ -25,19 +27,19 @@ const workerLoop = async (url: string, rtm: any) => {
     timeout = timeout * 2;
   }
   setTimeout(() => {
-    workerLoop(url, rtm);
+    workBackoffLoop(lightningUrl, rtm);
   }, timeout);
 };
 
 type ServerOptions = {
-  backoff: number;
-  maxWorkflows: number;
-  port: number;
-  lightning: string; // url to lightning instance
+  backoff?: number;
+  maxWorkflows?: number;
+  port?: number;
+  lightning?: string; // url to lightning instance
   rtm?: any;
 };
 
-function createServer(options = {}) {
+function createServer(options: ServerOptions = {}) {
   const app = new Koa();
 
   const rtm = options.rtm || new createMockRTM();
@@ -49,7 +51,7 @@ function createServer(options = {}) {
   app.listen(options.port || 1234);
 
   if (options.lightning) {
-    workerLoop(options.lightning, rtm);
+    workBackoffLoop(options.lightning, rtm);
   }
 
   // TMP doing this for tests but maybe its better done externally
