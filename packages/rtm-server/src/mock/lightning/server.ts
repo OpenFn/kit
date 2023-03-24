@@ -48,14 +48,20 @@ const createLightningServer = (options = {}) => {
   app.addAttempt = (attempt: LightningAttempt) => {
     state.attempts[attempt.id] = attempt;
   };
-  app.addToQueue = (attemptId: string) => {
-    if (state.attempts[attemptId]) {
-      state.queue.push(state.attempts[attemptId]);
+  app.addToQueue = (attempt: string | LightningAttempt) => {
+    if (typeof attempt == 'string') {
+      if (state.attempts[attempt]) {
+        state.queue.push(state.attempts[attempt]);
+        return true;
+      }
+      throw new Error(`attempt ${attempt} not found`);
+    } else if (attempt) {
+      state.queue.push(attempt);
       return true;
     }
-    return false;
   };
   app.getQueueLength = () => state.queue.length;
+  app.getResult = (attemptId: string) => state.results[attemptId];
   app.on = (event: 'notify', fn: (evt: any) => void) => {
     state.events.addListener(event, fn);
   };

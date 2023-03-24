@@ -6,7 +6,7 @@ import create, {
   WorkflowStartEvent,
 } from '../../src/mock/runtime-manager';
 import { ExecutionPlan } from '../../src/types';
-import { wait } from '../util';
+import { waitForEvent, clone } from '../util';
 
 const sampleWorkflow = {
   id: 'w1',
@@ -18,15 +18,6 @@ const sampleWorkflow = {
     },
   ],
 } as ExecutionPlan;
-
-const clone = (obj) => JSON.parse(JSON.stringify(obj));
-
-const waitForEvent = <T>(rtm, eventName) =>
-  new Promise<T>((resolve) => {
-    rtm.once(eventName, (e) => {
-      resolve(e);
-    });
-  });
 
 test('mock runtime manager should have an id', (t) => {
   const rtm = create(22);

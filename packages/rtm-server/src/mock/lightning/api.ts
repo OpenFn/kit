@@ -8,7 +8,7 @@ import {
 } from './middleware';
 import type { ServerState } from './server';
 
-export const API_PREFIX = `/api/v1`;
+export const API_PREFIX = `/api/1`;
 
 export default (router: Router, state: ServerState) => {
   // POST attempts/next:

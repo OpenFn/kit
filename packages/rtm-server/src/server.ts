@@ -17,18 +17,33 @@ import createMockRTM from './mock/runtime-manager';
 const workBackoffLoop = async (lightningUrl: string, rtm: any) => {
   let timeout = 100; // TODO strange stuff happens if this has a low value
 
-  const result = await axios.post(`${lightningUrl}/api/1/attempts`, {
+  const result = await axios.post(`${lightningUrl}/api/1/attempts/next`, {
     id: rtm.id,
   });
+
   if (result.data) {
-    console.log(result.data);
-    rtm.startWorkflow(result.data.workflowId);
+    // TODO handle multiple attempts
+    const [attempt] = result.data;
+    rtm.execute(attempt);
   } else {
     timeout = timeout * 2;
   }
   setTimeout(() => {
     workBackoffLoop(lightningUrl, rtm);
   }, timeout);
+};
+
+const postResult = async (
+  lightningUrl: string,
+  attemptId: string,
+  state: any
+) => {
+  const result = await axios.post(
+    `${lightningUrl}/api/1/attempts/complete/${attemptId}`,
+    state || {}
+  );
+  // TODO what if result is not 200?
+  // Backoff and try again?
 };
 
 type ServerOptions = {
@@ -52,10 +67,15 @@ function createServer(options: ServerOptions = {}) {
 
   if (options.lightning) {
     workBackoffLoop(options.lightning, rtm);
+
+    rtm.on('workflow-complete', ({ id, state }) => {
+      postResult(options.lightning!, id, state);
+    });
   }
 
   // TMP doing this for tests but maybe its better done externally
   app.on = (...args) => rtm.on(...args);
+  app.once = (...args) => rtm.once(...args);
 
   return app;
 

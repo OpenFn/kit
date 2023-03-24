@@ -71,10 +71,11 @@ export const createNotify = (state: ServerState) => (ctx: Koa.Context) => {
 };
 
 export const createComplete = (state: ServerState) => (ctx: Koa.Context) => {
-  const { results } = state;
-  const finalState = ctx.data as State;
-
+  const { results, events } = state;
+  const finalState = ctx.request.body as State;
   results[ctx.params.id] = finalState;
+
+  events.emit('complete', { id: ctx.params.id, state: finalState });
 
   ctx.status = 200;
 };

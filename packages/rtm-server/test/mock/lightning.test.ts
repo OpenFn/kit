@@ -84,6 +84,25 @@ test.serial('GET /attempts/next - return 200 with a workflow', async (t) => {
   t.is(server.getQueueLength(), 0);
 });
 
+test.serial(
+  'GET /attempts/next - return 200 with a workflow with an inline item',
+  async (t) => {
+    server.addToQueue({ id: 'abc' });
+    t.is(server.getQueueLength(), 1);
+    const { status, data } = await post('attempts/next', { id: 'x' });
+    t.is(status, 200);
+
+    t.truthy(data);
+    t.true(Array.isArray(data));
+    t.is(data.length, 1);
+
+    const [attempt] = data;
+    t.is(attempt.id, 'abc');
+
+    t.is(server.getQueueLength(), 0);
+  }
+);
+
 test.serial('GET /attempts/next - return 200 with 2 workflows', async (t) => {
   server.addToQueue('attempt-1');
   server.addToQueue('attempt-1');
@@ -144,3 +163,39 @@ test.serial(
     t.is(evt.count, 101);
   }
 );
+
+test.serial('POST /attempts/complete - return final state', async (t) => {
+  const { status } = await post('attempts/complete/a', {
+    x: 10,
+  });
+  t.is(status, 200);
+  const result = server.getResult('a');
+  t.deepEqual(result, { x: 10 });
+});
+
+test.serial(
+  'POST /attempts/complete - should echo to event emitter',
+  async (t) => {
+    let evt;
+    let didCall = false;
+
+    server.once('complete', (e) => {
+      didCall = true;
+      evt = e;
+    });
+
+    const { status } = await post('attempts/complete/a', {
+      data: {
+        answer: 42,
+      },
+    });
+    t.is(status, 200);
+    t.true(didCall);
+
+    t.truthy(evt);
+    t.is(evt.id, 'a');
+    t.deepEqual(evt.state, { data: { answer: 42 } });
+  }
+);
+
+// test lightning should get the finished state through a helper API
