@@ -1,7 +1,6 @@
-// these integration tests test the realy rtm server logic with a mock lightning and a mock rtm
+// these integration tests test the real rtm server logic with a mock lightning and a mock rtm
 // So maybe it's not really "integration" tests after all, but regular server tests
 import test from 'ava';
-import axios from 'axios';
 import createRTMServer from '../src/server';
 import createLightningServer from '../src/mock/lightning';
 

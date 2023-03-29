@@ -10,7 +10,7 @@
 import Koa from 'koa';
 import axios from 'axios';
 import createAPI from './api';
-
+import startWorkLoop from './work-loop';
 import createMockRTM from './mock/runtime-manager';
 
 // This loop will  call out to ask for work, with a backoff
@@ -66,11 +66,13 @@ function createServer(options: ServerOptions = {}) {
   app.listen(options.port || 1234);
 
   if (options.lightning) {
-    workBackoffLoop(options.lightning, rtm);
+    startWorkLoop(options.lightning, rtm);
 
     rtm.on('workflow-complete', ({ id, state }) => {
       postResult(options.lightning!, id, state);
     });
+
+    // TODO how about an 'all' so we can "route" events?
   }
 
   // TMP doing this for tests but maybe its better done externally
