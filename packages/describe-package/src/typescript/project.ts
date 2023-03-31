@@ -39,7 +39,7 @@ export class Project {
   env: VirtualTypeScriptEnvironment;
   system: ts.System;
   transformers: Array<
-    (program: ts.Program, options: {}) => ts.TansformerFactory<ts.SourceFile>
+    (program: ts.Program, options: {}) => ts.TransformerFactory<ts.SourceFile>
   >;
   transformOptions!: {};
   ts: typeof ts;

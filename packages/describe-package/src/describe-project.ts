@@ -68,7 +68,7 @@ const describeProject = (
   let symbols;
   try {
     symbols = project.getSymbol(sourceFile);
-  } catch (e) {
+  } catch (e: any) {
     if ((e.messsage = NO_SYMBOLS_FOUND)) {
       symbols = { exports: [] };
     } else {
