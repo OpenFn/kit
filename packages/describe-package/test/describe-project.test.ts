@@ -64,3 +64,9 @@ test('Recognise a magic function', async (t) => {
   t.truthy(fn);
   t.true(fn.magic);
 });
+
+test('Parse an empty file', async (t) => {
+  const project = await setupProject('empty');
+  const fns = await describeProject(project);
+  t.is(fns.length, 0);
+});

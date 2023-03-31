@@ -9,6 +9,8 @@ import {
 import { createSystem } from '../fs/fake-fs';
 import { WrappedSymbol } from './wrapped-symbol';
 
+export const NO_SYMBOLS_FOUND = 'Expected a symbol for location of SourceFile';
+
 export async function getDefaultMap(): Promise<Map<string, string>> {
   const shouldCache = true;
   // This caches the lib files in the site's localStorage
@@ -37,7 +39,7 @@ export class Project {
   env: VirtualTypeScriptEnvironment;
   system: ts.System;
   transformers: Array<
-    (program: ts.Program, options: {}) => ts.TransformerFactory<ts.SourceFile>
+    (program: ts.Program, options: {}) => ts.TansformerFactory<ts.SourceFile>
   >;
   transformOptions!: {};
   ts: typeof ts;
@@ -147,7 +149,7 @@ export class Project {
   getSymbol(sourceFile: ts.SourceFile): WrappedSymbol {
     const sfSymbol = this.typeChecker.getSymbolAtLocation(sourceFile);
     if (!sfSymbol) {
-      throw new Error('Expected a symbol for location of SourceFile');
+      throw new Error(NO_SYMBOLS_FOUND);
     }
 
     return new WrappedSymbol(this.typeChecker, sfSymbol);
