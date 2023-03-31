@@ -54,8 +54,8 @@ export const preloadAdaptorExports = async (
             });
           }
         } catch (e) {
-          console.log(e);
           log?.debug('Failed to load types from language common');
+          log?.debug(e);
         }
       }
 
