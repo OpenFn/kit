@@ -24,6 +24,7 @@ export const isRelativeSpecifier = (specifier: string) =>
 // But we may relax this  later.
 export const preloadAdaptorExports = async (
   pathToModule: string,
+  useMonorepo?: boolean,
   log?: Logger
 ) => {
   const project = new Project();
@@ -36,12 +37,14 @@ export const preloadAdaptorExports = async (
     if (pkg.types) {
       const functionDefs = {} as Record<string, true>;
 
-      // load common into the project
-      // This assumes that common is installed as a sibling of the adaptor we need, which is weak
-      if (!pathToModule.match(/language-common/)) {
+      // load common definitions into the project
+      if (pkg.name !== '@openfn/language-common') {
         try {
           const common = await findExports(
-            path.resolve(pathToModule, '../language-common'),
+            path.resolve(
+              pathToModule,
+              useMonorepo ? '../common' : '../language-common'
+            ),
             'types/index.d.ts',
             project
           );
@@ -51,7 +54,8 @@ export const preloadAdaptorExports = async (
             });
           }
         } catch (e) {
-          log?.debug('Failed to load types from langauge common');
+          console.log(e);
+          log?.debug('Failed to load types from language common');
         }
       }
 
