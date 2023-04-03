@@ -1,5 +1,13 @@
 # @openfn/compiler
 
+## 0.0.29
+
+### Patch Changes
+
+- 7df08d4: Support monorepo when looking for common
+- Updated dependencies [6c7a20c]
+  - @openfn/describe-package@0.0.16
+
 ## 0.0.28
 
 ### Patch Changes

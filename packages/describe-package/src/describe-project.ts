@@ -1,6 +1,7 @@
+import { WrappedSymbol } from './typescript/wrapped-symbol';
+import { NO_SYMBOLS_FOUND } from './typescript/project';
 import type { Project } from './typescript/project';
 import type { FunctionDescription, ParameterDescription } from './api';
-import { WrappedSymbol } from './typescript/wrapped-symbol';
 
 type DescribeOptions = {
   // Should we describe privately declared exports?
@@ -64,9 +65,18 @@ const describeProject = (
     throw new Error(`Couldn't find a SourceFile for: ${typesEntry}`);
   }
 
-  return project
-    .getSymbol(sourceFile)
-    .exports.filter((symbol) => {
+  let symbols;
+  try {
+    symbols = project.getSymbol(sourceFile);
+  } catch (e: any) {
+    if ((e.messsage = NO_SYMBOLS_FOUND)) {
+      symbols = { exports: [] };
+    } else {
+      throw e;
+    }
+  }
+  return symbols.exports
+    .filter((symbol) => {
       if (options.includePrivate) {
         // return everything if we want private members
         return true;

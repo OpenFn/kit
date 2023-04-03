@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.16
+
+### Patch Changes
+
+- 6c7a20c: Handle dts files with no exports
+
 ## 0.0.15
 
 ### Patch Changes
