@@ -1,6 +1,6 @@
 // a suite of tests with various security concerns in mind
 import test from 'ava';
-import run, { ERR_RUNTIME_EXCEPTION, ERR_TIMEOUT } from '../src/runtime';
+import run, { ERR_RUNTIME_EXCEPTION } from '../src/runtime';
 
 import { createMockLogger } from '@openfn/logger';
 
@@ -9,7 +9,6 @@ test.afterEach(() => {
   logger._reset();
 });
 
-// TODO use of globalthis is kinda interesting - I expect global to be available?
 test.serial('jobs should not have access to global scope', async (t) => {
   const src = 'export default [() => globalThis.x]';
   globalThis.x = 42;
@@ -21,16 +20,16 @@ test.serial('jobs should not have access to global scope', async (t) => {
 });
 
 test.serial('jobs should be able to read global state', async (t) => {
-  const src = 'export default [() => state.x]';
+  const src = 'export default [() => state.data.x]';
 
-  const result = await run(src, { x: 42 }); // typings are a bit tricky
+  const result = await run(src, { data: { x: 42 } }); // typings are a bit tricky
   t.is(result, 42);
 });
 
 test.serial('jobs should be able to mutate global state', async (t) => {
   const src = 'export default [() => { state.x = 22; return state.x; }]';
 
-  const result = await run(src, { x: 42 }); // typings are a bit tricky
+  const result = await run(src, { data: { x: 42 } }); // typings are a bit tricky
   t.is(result, 22);
 });
 
