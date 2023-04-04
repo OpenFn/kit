@@ -48,6 +48,9 @@ export type JobPlan = {
   configuration?: string | object; // credential can be inline or lazy loaded
   data?: State['data']; // initial state
 
+  // If no upstream, execute the next in the array
+  // This might not make sense in branching flows?
+  // How would we say "onsuccess: return"?
   upstream?:
     | JobPlanID // shorthand for { default }
     | {

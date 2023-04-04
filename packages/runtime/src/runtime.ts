@@ -35,12 +35,6 @@ const run = (
       jobs: [
         {
           expression: expressionOrXPlan,
-
-          // But what if there's non state stuff?
-          // But data is the contract between jobs, so that gets ignored
-          // Maybe this is correct
-          data: state.data,
-          configuration: state.configuration,
         },
       ],
     } as ExecutionPlan;
@@ -51,7 +45,7 @@ const run = (
     plan = expressionOrXPlan as ExecutionPlan;
   }
 
-  return executePlan(plan, opts, logger);
+  return executePlan(plan, state, opts, logger);
 };
 
 export default run;
