@@ -2,6 +2,7 @@ import type { Logger } from '@openfn/logger';
 import executeExpression from './expression';
 import type { ExecutionPlan, JobNodeID, Options, State } from '../types';
 import clone from '../util/clone';
+import validatePlan from '../util/validate-plan';
 
 type ExeContext = {
   plan: ExecutionPlan;
@@ -30,6 +31,17 @@ const executePlan = async (
   opts: Options,
   logger: Logger
 ) => {
+  try {
+    validatePlan(plan);
+  } catch (e: any) {
+    return {
+      error: {
+        code: 1, // TODO what error code is an invalid plan?
+        message: e.message,
+      },
+    };
+  }
+
   const { start } = plan;
 
   const ctx = {

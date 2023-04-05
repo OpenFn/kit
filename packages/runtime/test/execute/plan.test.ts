@@ -9,8 +9,66 @@ const logger = createMockLogger();
 const executePlan = (plan: ExecutionPlan, state = {}, options = opts) =>
   execute(plan, state, options, logger);
 
+test('report an error for a circular job', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+        next: { job2: true },
+      },
+      job2: {
+        expression: 'export default [s => s]',
+        next: { job1: true },
+      },
+    },
+  };
+  const result = await executePlan(plan);
+  t.assert(result.hasOwnProperty('error'));
+  t.regex(result.error.message, /circular dependency/i);
+});
+
+test('report an error for a job with multiple inputs', async (t) => {
+  // TODO maybe this isn't a good test - job1 and job2 both input to job3, but job2 never gets called
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+        next: { job3: true },
+      },
+      job2: {
+        expression: 'export default [s => s]',
+        next: { job3: true },
+      },
+      job3: {
+        expression: 'export default [s => s]',
+        next: {},
+      },
+    },
+  };
+  const result = await executePlan(plan);
+  t.assert(result.hasOwnProperty('error'));
+  t.regex(result.error.message, /multiple dependencies/i);
+});
+
+test('report an error for a plam which references an undefined job', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+        next: { job3: true },
+      },
+    },
+  };
+  const result = await executePlan(plan);
+  t.assert(result.hasOwnProperty('error'));
+  t.regex(result.error.message, /cannot find job/i);
+});
+
 test('execute a one-job execution plan with inline state', async (t) => {
-  const plan = {
+  const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
       job1: {
@@ -24,7 +82,7 @@ test('execute a one-job execution plan with inline state', async (t) => {
 });
 
 test('execute a one-job execution plan with initial state', async (t) => {
-  const plan = {
+  const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
       job1: {
@@ -37,7 +95,7 @@ test('execute a one-job execution plan with initial state', async (t) => {
 });
 
 test('execute a two-job execution plan', async (t) => {
-  const plan = {
+  const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
       job1: {
@@ -54,7 +112,7 @@ test('execute a two-job execution plan', async (t) => {
 });
 
 test('Return the result of the first expression without an edge', async (t) => {
-  const plan = {
+  const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
       job1: {
@@ -72,7 +130,7 @@ test('Return the result of the first expression without an edge', async (t) => {
 test.skip('execute a two-job execution plan from job 2', () => {});
 
 test('execute a 5 job execution plan', async (t) => {
-  const plan = {
+  const plan: ExecutionPlan = {
     start: '1',
     jobs: {},
   } as ExecutionPlan;
