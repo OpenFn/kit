@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 0.0.36
+
+### Patch Changes
+
+- b66217c: Tighten up credential logging in metadata service"
+
 ## 0.0.35
 
 ### Patch Changes
