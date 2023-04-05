@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import { compileConditions } from '../../src/execute/plan';
+import compileConditions from '../../src/execute/compile-conditions';
 
 test('should not recompile a functional precondition', (t) => {
   const plan = {
