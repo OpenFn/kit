@@ -8,11 +8,11 @@ const createState = (data = {}) => ({ data, configuration: {} });
 test('makes parseInt available inside the job', async (t) => {
   const job = `
     export default [
-      (s) => parseInt(s.data)
+      (s) => { s.data.count = parseInt(s.data.count); return s; }
     ];`;
 
-  const result = await run(job, createState('22'));
-  t.is(result, 22);
+  const result = await run(job, createState({ count: '22' }));
+  t.deepEqual(resul.data, { count: 22 });
 });
 
 test('makes Set available inside the job', async (t) => {
@@ -24,8 +24,8 @@ test('makes Set available inside the job', async (t) => {
       }
     ];`;
 
-  const result = await run(job, createState('33'));
-  t.is(result.data, '33');
+  const result = await run(job, createState({ count: '33' }));
+  t.deepEqual(result.data, { count: '33' });
 });
 
 test("doesn't allow process inside the job", async (t) => {
