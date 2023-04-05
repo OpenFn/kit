@@ -1,6 +1,6 @@
 import type { Logger } from '@openfn/logger';
 import executeExpression from './expression';
-import type { ExecutionPlan, Options } from '../types';
+import type { ExecutionPlan, JobNodeID, Options, State } from '../types';
 import clone from '../util/clone';
 
 type ExeContext = {
@@ -22,20 +22,6 @@ const assembleState = (
   data: Object.assign({}, initialState.data || {}, data),
 });
 
-let idCount = 0;
-
-const ensureIds = (plan) => {
-  plan.jobs.forEach((job) => {
-    if (!job.id) {
-      job.id = ++idCount;
-    }
-  });
-};
-
-// const indexJobsById = (plan) => {
-
-// }
-
 // TODO accept initial state
 // On the first job, merge state and initialState
 const executePlan = async (
@@ -44,7 +30,7 @@ const executePlan = async (
   opts: Options,
   logger: Logger
 ) => {
-  const { jobs } = plan;
+  const { start } = plan;
 
   const ctx = {
     plan,
@@ -52,15 +38,23 @@ const executePlan = async (
     logger,
   };
 
-  ensureIds(plan);
-
-  const first = jobs[0];
-  let next = first.id;
+  // TODO next needs to be an array now
+  // or soon
+  // If multiple branches, do we run serial? parallel? What order?
+  // should be concurrent really, promises can just sit active
+  const queue = [start];
 
   let lastState = initialState;
-  while (next) {
-    const result = await executeStep(ctx, next, clone(lastState));
-    next = result.next;
+  // TODO right now this executes in series, but we should parallelise
+  // Keep running until the queue is empty
+  while (queue.length) {
+    const next = queue.shift();
+    const result = await executeStep(ctx, next!, clone(lastState));
+    if (result.next) {
+      // if result.next > 1, we're in a parallel job and things are a bit more complicated
+      queue.push(...result.next);
+    }
+    // TODO lastState might get a bit hairy when we parallelise?
     lastState = result.state;
   }
 
@@ -71,33 +65,36 @@ const executeStep = async (
   ctx: ExeContext,
   stepId: string,
   initialState: State
-) => {
-  let next;
-  const job = ctx.plan.jobs.find(({ id }) => id === stepId);
+): Promise<{ next: JobNodeID[]; result: any }> => {
+  const next: string[] = [];
+  const job = ctx.plan.jobs[stepId];
 
   if (!job) {
     // TODO do something if we couldn't find this step in the plan
-    return { next: null, result: null };
+    return { next, result: null };
   }
 
   const state = assembleState(initialState, job.configuration, job.data);
 
+  // The expression SHOULD return state, but could return anything
   const result = await executeExpression(
     job.expression,
     state,
     ctx.logger,
     ctx.opts
   );
-  if (job.upstream) {
-    // TODO what about arbitary conditions?
-    // Maybe upstream is a priortised array of conditions against state
-    // First to pass wins
-    if (result && result.error) {
-      // error reported in the last state!
-      // call on error or fail
-      next = job?.upstream.error ?? null;
-    } else {
-      next = job?.upstream.success ?? job?.upstream.default ?? job?.upstream;
+  if (job.next) {
+    for (const nextJobId in job.next) {
+      const edge = job.next[nextJobId];
+      // TODO errors and acceptErrors
+      if (edge === true) {
+        next.push(nextJobId);
+      }
+      // @ ts-ignore
+      else if (edge.condition?.(result)) {
+        // TODO when and how do conditions get parsed?
+        next.push(nextJobId);
+      }
     }
   }
   return { next, state: result };

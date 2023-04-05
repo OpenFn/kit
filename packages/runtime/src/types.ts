@@ -33,41 +33,50 @@ export type Options = {
 };
 
 // TODO these are copied from rtm-server but they probably belong here no?
-export type JobPlanID = string;
+export type JobNodeID = string;
 export type RuntimeExecutionPlanID = string;
 
-// TODO this type should later be imported from the runtime
-export type JobPlan = {
-  id?: string;
+type JobEdge =
+  | true
+  | {
+      condition?: string; // Javascript expression (function body, not function)
+      label?: string;
+      acceptError: boolean; // maybe
+    };
 
+// TODO this type should later be imported from the runtime
+export type JobNode = {
   // Oh that's interesting! A compiled job doesn't have an adaptor, it just has a bunch of imports
   // So the CLI will need to handle compilation for every expression in a job plan.
+  // But the CLI Workflow and Lightning Attempt WILL have an adaptor here
   // adaptor: string;
 
-  expression: string; // the code we actually want to execute. Could be lazy loaded
-  configuration?: string | object; // credential can be inline or lazy loaded
-  data?: State['data']; // initial state
+  expression: string | Operation[]; // the code we actually want to execute. Could be lazy loaded
+  configuration?: object; // credential object
+  data?: State['data']; // initial state (globals)
 
-  // If no upstream, execute the next in the array
-  // This might not make sense in branching flows?
-  // How would we say "onsuccess: return"?
-  upstream?:
-    | JobPlanID // shorthand for { default }
-    | {
-        success: JobPlanID;
-        error: JobPlanID;
-        default: JobPlanID;
-      };
+  next?: Record<JobNodeID, JobEdge>;
+
+  // // If no upstream, execute the next in the array
+  // // This might not make sense in branching flows?
+  // // How would we say "onsuccess: return"?
+  // upstream?:
+  //   | JobNodeID // shorthand for { default }
+  //   | {
+  //       success: JobNodeID;
+  //       error: JobNodeID;
+  //       default: JobNodeID;
+  //     };
 };
 
 // A runtime manager execution plan
 export type ExecutionPlan = {
   id?: string; // UUID for this plan
-
+  start: JobNodeID;
   // should we save the initial and resulting status?
   // Should we have a status here, is this a living thing?
 
-  jobs: JobPlan[]; // TODO this type should later be imported from the runtime
+  jobs: Record<JobNodeID, JobNode>; // TODO this type should later be imported from the runtime
 };
 
 export type JobModule = {
