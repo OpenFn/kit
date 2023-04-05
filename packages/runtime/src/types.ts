@@ -36,13 +36,19 @@ export type Options = {
 export type JobNodeID = string;
 export type RuntimeExecutionPlanID = string;
 
-type JobEdge =
+type JobEdgeObject = {
+  condition?: string; // Javascript expression (function body, not function)
+  label?: string;
+  acceptError: boolean; // maybe
+};
+
+type JobEdge = true | JobEdgeObject;
+
+type CompiledJobEdge =
   | true
-  | {
-      condition?: string; // Javascript expression (function body, not function)
-      label?: string;
-      acceptError: boolean; // maybe
-    };
+  | (JobEdgeObject & {
+      condition?: Function;
+    });
 
 // TODO this type should later be imported from the runtime
 export type JobNode = {
@@ -69,14 +75,24 @@ export type JobNode = {
   //     };
 };
 
+export type CompiledJobNode = JobNode & {
+  next?: Record<JobNodeID, CompiledJobEdge>;
+};
+
 // A runtime manager execution plan
 export type ExecutionPlan = {
   id?: string; // UUID for this plan
   start: JobNodeID;
+  precondition: string;
   // should we save the initial and resulting status?
   // Should we have a status here, is this a living thing?
 
   jobs: Record<JobNodeID, JobNode>; // TODO this type should later be imported from the runtime
+};
+
+export type CompiledExecutionPlan = ExecutionPlan & {
+  precondition: Function;
+  jobs: Record<JobNodeID, CompiledJobNode>;
 };
 
 export type JobModule = {

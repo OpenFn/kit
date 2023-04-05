@@ -67,6 +67,34 @@ test('report an error for a plam which references an undefined job', async (t) =
   t.regex(result.error.message, /cannot find job/i);
 });
 
+test('report an error for an illegal precondition', async (t) => {
+  const plan: ExecutionPlan = {
+    precondition: '!!!!',
+    jobs: {},
+  };
+  const result = await executePlan(plan);
+  t.assert(result.hasOwnProperty('error'));
+  t.regex(result.error.message, /failed to compile plan precondition/i);
+});
+
+test('report an error for an edge condition', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: {
+      a: {
+        next: {
+          b: {
+            condition: '!!!!',
+          },
+        },
+      },
+      b: {},
+    },
+  };
+  const result = await executePlan(plan);
+  t.assert(result.hasOwnProperty('error'));
+  t.regex(result.error.message, /failed to compile edge condition/i);
+});
+
 test('execute a one-job execution plan with inline state', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
@@ -92,6 +120,54 @@ test('execute a one-job execution plan with initial state', async (t) => {
   };
   const result = await executePlan(plan, { data: { x: 33 } });
   t.is(result, 33);
+});
+
+test('merge initial and inline state', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+        data: { y: 11 },
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 33 } });
+  t.is(result.data.x, 33);
+  t.is(result.data.y, 11);
+});
+
+// Not sure this is correct at all!!
+test('inline state overwrites initial state', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+        data: { x: 11 },
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 33 } });
+  t.is(result.data.x, 11);
+});
+
+test('inline state overwrites initial state on the second job', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+        next: { job2: true },
+      },
+      job2: {
+        expression: 'export default [s => s]',
+        data: { x: 11 },
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 33 } });
+  t.is(result.data?.x, 11);
 });
 
 test('execute a two-job execution plan', async (t) => {
@@ -124,10 +200,25 @@ test('Return the result of the first expression without an edge', async (t) => {
     },
   };
   const result = await executePlan(plan, { data: { x: 0 } });
-  t.is(result.data.x, 1);
+  t.is(result.data?.x, 1);
 });
 
-test.skip('execute a two-job execution plan from job 2', () => {});
+test('execute a two-job execution plan from job 2', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job2',
+    jobs: {
+      job1: {
+        expression: 'export default [s => { s.data.y = 1; return s; } ]',
+      },
+      job2: {
+        expression: 'export default [s => { s.data.x = 1; return s; } ]',
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 0 } });
+  t.is(result.data?.x, 1);
+  t.is(result.data?.y, undefined);
+});
 
 test('execute a 5 job execution plan', async (t) => {
   const plan: ExecutionPlan = {

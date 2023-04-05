@@ -1,3 +1,4 @@
+import { Logger } from '@openfn/logger';
 import vm from 'node:vm';
 import type { Options, State } from '../types';
 
@@ -17,6 +18,20 @@ export default (state: State, options: Pick<Options, 'jobLogger'>) => {
       setInterval,
       setTimeout,
     },
+    {
+      codeGeneration: {
+        strings: false,
+        wasm: false,
+      },
+    }
+  );
+
+  return context;
+};
+
+export const preconditionContext = () => {
+  const context = vm.createContext(
+    {},
     {
       codeGeneration: {
         strings: false,

@@ -1,11 +1,19 @@
 import type { Logger } from '@openfn/logger';
 import executeExpression from './expression';
-import type { ExecutionPlan, JobNodeID, Options, State } from '../types';
+import type {
+  CompiledExecutionPlan,
+  ExecutionPlan,
+  JobNodeID,
+  Options,
+  State,
+} from '../types';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
+import compileFunction from '../modules/compile-function';
+import { preconditionContext } from './context';
 
 type ExeContext = {
-  plan: ExecutionPlan;
+  plan: CompiledExecutionPlan;
   logger: Logger;
   opts: Options;
 };
@@ -23,6 +31,39 @@ const assembleState = (
   data: Object.assign({}, initialState.data || {}, data),
 });
 
+export const compileConditions = (plan: ExecutionPlan) => {
+  const context = preconditionContext();
+
+  if (plan.precondition) {
+    try {
+      (plan as CompiledExecutionPlan).precondition = compileFunction(
+        plan.precondition,
+        context
+      );
+    } catch (e: any) {
+      throw new Error(`Failed to compile plan precondition (${e.message})`);
+    }
+  }
+  for (const jobId in plan.jobs) {
+    const job = plan.jobs[jobId];
+    if (job.next) {
+      for (const edgeId in job.next) {
+        try {
+          const edge = job.next[edgeId];
+          if (edge.condition) {
+            edge.condition = compileFunction(edge.condition, context);
+          }
+        } catch (e: any) {
+          throw new Error(
+            `Failed to compile edge condition on ${jobId}-${edgeId}(${e.message})`
+          );
+        }
+      }
+    }
+  }
+  return plan as CompiledExecutionPlan;
+};
+
 // TODO accept initial state
 // On the first job, merge state and initialState
 const executePlan = async (
@@ -31,8 +72,10 @@ const executePlan = async (
   opts: Options,
   logger: Logger
 ) => {
+  let compiledPlan;
   try {
     validatePlan(plan);
+    compiledPlan = compileConditions(plan);
   } catch (e: any) {
     return {
       error: {
@@ -42,31 +85,25 @@ const executePlan = async (
     };
   }
 
-  const { start } = plan;
+  const { start } = compiledPlan;
 
   const ctx = {
-    plan,
+    plan: compiledPlan,
     opts,
     logger,
   };
 
-  // TODO next needs to be an array now
-  // or soon
-  // If multiple branches, do we run serial? parallel? What order?
-  // should be concurrent really, promises can just sit active
   const queue = [start];
 
   let lastState = initialState;
-  // TODO right now this executes in series, but we should parallelise
-  // Keep running until the queue is empty
+
+  // Right now this executes in series, even if jobs are technically paralleliseds
   while (queue.length) {
     const next = queue.shift();
     const result = await executeStep(ctx, next!, clone(lastState));
     if (result.next) {
-      // if result.next > 1, we're in a parallel job and things are a bit more complicated
       queue.push(...result.next);
     }
-    // TODO lastState might get a bit hairy when we parallelise?
     lastState = result.state;
   }
 
