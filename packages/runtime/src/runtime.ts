@@ -1,6 +1,7 @@
 import { createMockLogger } from '@openfn/logger';
 import executePlan from './execute/plan';
 import type { Operation, ExecutionPlan, Options, State } from './types';
+import clone from './util/clone';
 
 export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
@@ -32,8 +33,9 @@ const run = (
   ) {
     // Build an execution plan for an incoming expression
     plan = {
+      start: 'default',
       jobs: {
-        job1: {
+        default: {
           expression: expressionOrXPlan,
         },
       },
@@ -45,7 +47,7 @@ const run = (
     plan = expressionOrXPlan as ExecutionPlan;
   }
 
-  return executePlan(plan, state, opts, logger);
+  return executePlan(plan, clone(state), opts, logger);
 };
 
 export default run;

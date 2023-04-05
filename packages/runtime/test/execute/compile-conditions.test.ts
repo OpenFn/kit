@@ -2,7 +2,21 @@ import test from 'ava';
 
 import { compileConditions } from '../../src/execute/plan';
 
-test('should compile a precondition', (t) => {
+test('should not recompile a functional precondition', (t) => {
+  const plan = {
+    precondition: function () {
+      return true;
+    },
+    jobs: {},
+  };
+
+  const compiledPlan = compileConditions(plan);
+
+  const result = compiledPlan.precondition({});
+  t.true(result);
+});
+
+test('should compile a truthy precondition', (t) => {
   const plan = {
     precondition: 'true',
     jobs: {},
@@ -12,6 +26,18 @@ test('should compile a precondition', (t) => {
 
   const result = compiledPlan.precondition({});
   t.true(result);
+});
+
+test('should compile a falsy precondition', (t) => {
+  const plan = {
+    precondition: 'false',
+    jobs: {},
+  };
+
+  const compiledPlan = compileConditions(plan);
+
+  const result = compiledPlan.precondition({});
+  t.false(result);
 });
 
 test('should compile a precondition with arithmetic', (t) => {
@@ -108,6 +134,46 @@ test('should compile an edge condition', (t) => {
 
   const result = compiledPlan.jobs.a.next.b.condition({ x: 10 });
   t.true(result);
+});
+
+test('should compile a falsy edge condition', (t) => {
+  const plan = {
+    jobs: {
+      a: {
+        next: {
+          b: {
+            condition: 'false',
+          },
+        },
+      },
+    },
+  };
+
+  const compiledPlan = compileConditions(plan);
+
+  const result = compiledPlan.jobs.a.next.b.condition({ x: 10 });
+  t.false(result);
+});
+
+test('should not recompile a functional edge condition', (t) => {
+  const plan = {
+    jobs: {
+      a: {
+        next: {
+          b: {
+            condition: function () {
+              return false;
+            },
+          },
+        },
+      },
+    },
+  };
+
+  const compiledPlan = compileConditions(plan);
+
+  const result = compiledPlan.jobs.a.next.b.condition({ x: 10 });
+  t.false(result);
 });
 
 test('edge condition should not eval', (t) => {

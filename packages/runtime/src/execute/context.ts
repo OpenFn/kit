@@ -31,7 +31,9 @@ export default (state: State, options: Pick<Options, 'jobLogger'>) => {
 
 export const preconditionContext = () => {
   const context = vm.createContext(
-    {},
+    {
+      console,
+    },
     {
       codeGeneration: {
         strings: false,

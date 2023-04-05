@@ -299,3 +299,30 @@ test('execute a 5 job execution plan', async (t) => {
   const result = await executePlan(plan, { data: { x: 0 } });
   t.is(result.data.x, 5);
 });
+
+test('execute multiple steps in "parallel"', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'start',
+    jobs: {
+      start: {
+        expression: 'export default [s => s]',
+        next: {
+          a: true,
+          b: true,
+          c: true,
+        },
+      },
+      a: {
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+      },
+      b: {
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+      },
+      c: {
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 0 } });
+  t.is(result.data.x, 3);
+});
