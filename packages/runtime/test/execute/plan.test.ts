@@ -122,6 +122,35 @@ test('execute a one-job execution plan with initial state', async (t) => {
   t.is(result, 33);
 });
 
+test('execute if the precondition is true', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    precondition: 'state.data.x === 10',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 10 } });
+  t.is(result.data.x, 10);
+});
+
+test("don't execute if the precondition is false", async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    precondition: 'state.data.x === 10',
+    jobs: {
+      job1: {
+        expression: 'export default [s => s]',
+      },
+    },
+  };
+  const state = { data: { x: 0 } };
+  const result = await executePlan(plan, state);
+  t.deepEqual(result, state);
+});
+
 test('merge initial and inline state', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
@@ -168,6 +197,42 @@ test('inline state overwrites initial state on the second job', async (t) => {
   };
   const result = await executePlan(plan, { data: { x: 33 } });
   t.is(result.data?.x, 11);
+});
+
+test('execute edge based on state in the condition', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        data: {},
+        expression: 'export default [(s) => { s.data.x = 10; return s;}]',
+        next: { job2: { condition: 'state.data.x === 10' } },
+      },
+      job2: {
+        expression: 'export default [() => ({ data: { y: 20 } })]',
+      },
+    },
+  };
+  const result = await executePlan(plan);
+  t.is(result.data?.y, 20);
+});
+
+test('skip edge based on state in the condition ', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: {
+      job1: {
+        data: {},
+        expression: 'export default [s => { s.data.x = 10; return s;}]',
+        next: { job2: { condition: 'false' } },
+      },
+      job2: {
+        expression: 'export default [() => ({ y: 20 })]',
+      },
+    },
+  };
+  const result = await executePlan(plan);
+  t.is(result.data?.x, 10);
 });
 
 test('execute a two-job execution plan', async (t) => {
@@ -234,28 +299,3 @@ test('execute a 5 job execution plan', async (t) => {
   const result = await executePlan(plan, { data: { x: 0 } });
   t.is(result.data.x, 5);
 });
-
-// TODO precondition true
-// TODO precondition false
-// TODO run multiple edges
-// TODO run no edges
-// TODO don't call { acceptError: false } on error
-// TODO do call { acceptError: false } on success
-// TODO trap errors
-
-// Redundant at the moment
-test.skip('follow a string upstream pointer', () => {});
-
-test.skip('follow a default upstream pointer', () => {});
-
-test.skip('follow an onSuccess upstream pointer', () => {});
-
-test.skip('follow an onError upstream pointer', () => {});
-
-test.skip('pass input state to the first job', () => {});
-
-test.skip('forward state to the second job', () => {});
-
-test.skip('assemble state and credentials', () => {});
-
-// error handling?

@@ -85,6 +85,11 @@ const executePlan = async (
     };
   }
 
+  if (compiledPlan.precondition && !compiledPlan.precondition(initialState)) {
+    // TODO should we do anything other than return initial state if the precondition fails?
+    return initialState;
+  }
+
   const { start } = compiledPlan;
 
   const ctx = {
@@ -138,10 +143,7 @@ const executeStep = async (
       // TODO errors and acceptErrors
       if (edge === true) {
         next.push(nextJobId);
-      }
-      // @ ts-ignore
-      else if (edge.condition?.(result)) {
-        // TODO when and how do conditions get parsed?
+      } else if (edge.condition?.(result)) {
         next.push(nextJobId);
       }
     }
