@@ -12,7 +12,7 @@ test('makes parseInt available inside the job', async (t) => {
     ];`;
 
   const result = await run(job, createState({ count: '22' }));
-  t.deepEqual(resul.data, { count: 22 });
+  t.deepEqual(result.data, { count: 22 });
 });
 
 test('makes Set available inside the job', async (t) => {

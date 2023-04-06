@@ -29,7 +29,9 @@ export default (state: State, options: Pick<Options, 'jobLogger'>) => {
   return context;
 };
 
-export const preconditionContext = () => {
+// Special, highly restricted cotext for a plan condition
+// Ie, a javascript expression
+export const conditionContext = () => {
   const context = vm.createContext(
     {
       console,

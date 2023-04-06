@@ -9,7 +9,7 @@ import type {
 } from '../types';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
-import compileConditions from './compile-conditions';
+import compileConditions from './compile-plan';
 
 type ExeContext = {
   plan: CompiledExecutionPlan;
@@ -44,25 +44,28 @@ const executePlan = async (
     return {
       error: {
         code: 1, // TODO what error code is an invalid plan?
-        message: e.message,
+        // TODO compilation may throw several errors, for now we'll just
+        // concatenate them into one big message
+        message: Array.isArray(e)
+          ? e.map((e: any) => e.message).join('\n')
+          : e.message,
       },
     };
   }
 
-  if (compiledPlan.precondition && !compiledPlan.precondition(initialState)) {
-    // TODO should we do anything other than return initial state if the precondition fails?
-    return initialState;
+  let queue = [];
+  for (const jobId in compiledPlan.start) {
+    const edge = compiledPlan.start[jobId];
+    if (!edge.condition || edge.condition(initialState)) {
+      queue.push(jobId);
+    }
   }
-
-  const { start } = compiledPlan;
 
   const ctx = {
     plan: compiledPlan,
     opts,
     logger,
   };
-
-  const queue = [start];
 
   let lastState = initialState;
 
@@ -101,14 +104,10 @@ const executeJob = async (
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];
-      // TODO errors and acceptErrors
-      if (edge === true) {
+      if (!edge.condition || edge.condition(result)) {
         next.push(nextJobId);
-      } else if (edge.condition) {
-        if (edge.condition?.(result)) {
-          next.push(nextJobId);
-        }
       }
+      // TODO errors and acceptErrors
     }
   }
   return { next, state: result };

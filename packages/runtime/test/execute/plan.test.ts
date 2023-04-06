@@ -52,7 +52,7 @@ test('report an error for a job with multiple inputs', async (t) => {
   t.regex(result.error.message, /multiple dependencies/i);
 });
 
-test('report an error for a plam which references an undefined job', async (t) => {
+test('report an error for a plan which references an undefined job', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
@@ -67,27 +67,32 @@ test('report an error for a plam which references an undefined job', async (t) =
   t.regex(result.error.message, /cannot find job/i);
 });
 
-test('report an error for an illegal precondition', async (t) => {
+test('report an error for an illegal start condition', async (t) => {
   const plan: ExecutionPlan = {
-    precondition: '!!!!',
+    start: { a: { condition: '!!!!' } },
     jobs: {},
   };
   const result = await executePlan(plan);
+  console.log(result);
   t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /failed to compile plan precondition/i);
+  t.regex(result.error.message, /failed to compile edge condition start->a/i);
 });
 
 test('report an error for an edge condition', async (t) => {
   const plan: ExecutionPlan = {
+    start: 'a',
     jobs: {
       a: {
+        expression: 'x',
         next: {
           b: {
             condition: '!!!!',
           },
         },
       },
-      b: {},
+      b: {
+        expression: 'x',
+      },
     },
   };
   const result = await executePlan(plan);
@@ -105,7 +110,7 @@ test('execute a one-job execution plan with inline state', async (t) => {
       },
     },
   };
-  const result = await executePlan(plan);
+  const result = (await executePlan(plan)) as unknown as number;
   t.is(result, 22);
 });
 
@@ -118,14 +123,19 @@ test('execute a one-job execution plan with initial state', async (t) => {
       },
     },
   };
-  const result = await executePlan(plan, { data: { x: 33 } });
+  const result = (await executePlan(plan, {
+    data: { x: 33 },
+  })) as unknown as number;
   t.is(result, 33);
 });
 
-test('execute if the precondition is true', async (t) => {
+test('execute if the start condition is true', async (t) => {
   const plan: ExecutionPlan = {
-    start: 'job1',
-    precondition: 'state.data.x === 10',
+    start: {
+      job1: {
+        condition: 'state.data.x === 10',
+      },
+    },
     jobs: {
       job1: {
         expression: 'export default [s => s]',
@@ -133,13 +143,16 @@ test('execute if the precondition is true', async (t) => {
     },
   };
   const result = await executePlan(plan, { data: { x: 10 } });
-  t.is(result.data.x, 10);
+  t.is((result.data as any).x, 10);
 });
 
-test("don't execute if the precondition is false", async (t) => {
+test("don't execute if the start condition is false", async (t) => {
   const plan: ExecutionPlan = {
-    start: 'job1',
-    precondition: 'state.data.x === 10',
+    start: {
+      job1: {
+        condition: 'state.data.x === 10',
+      },
+    },
     jobs: {
       job1: {
         expression: 'export default [s => s]',

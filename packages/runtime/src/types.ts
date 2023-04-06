@@ -36,19 +36,16 @@ export type Options = {
 export type JobNodeID = string;
 export type RuntimeExecutionPlanID = string;
 
-type JobEdgeObject = {
+export type JobEdge = {
   condition?: string; // Javascript expression (function body, not function)
   label?: string;
-  acceptError: boolean; // maybe
+  acceptError?: boolean; // maybe
 };
 
-type JobEdge = true | JobEdgeObject;
-
-type CompiledJobEdge =
-  | true
-  | (JobEdgeObject & {
-      condition?: Function;
-    });
+// Discard label information that we don't need here
+export type CompiledJobEdge = {
+  condition?: Function;
+};
 
 // TODO this type should later be imported from the runtime
 export type JobNode = {
@@ -61,37 +58,22 @@ export type JobNode = {
   configuration?: object; // credential object
   data?: State['data']; // initial state (globals)
 
-  next?: Record<JobNodeID, JobEdge>;
-
-  // // If no upstream, execute the next in the array
-  // // This might not make sense in branching flows?
-  // // How would we say "onsuccess: return"?
-  // upstream?:
-  //   | JobNodeID // shorthand for { default }
-  //   | {
-  //       success: JobNodeID;
-  //       error: JobNodeID;
-  //       default: JobNodeID;
-  //     };
+  next?: string | Record<JobNodeID, true | JobEdge>;
 };
 
-export type CompiledJobNode = JobNode & {
+export type CompiledJobNode = Omit<JobNode, 'next'> & {
   next?: Record<JobNodeID, CompiledJobEdge>;
 };
 
-// A runtime manager execution plan
 export type ExecutionPlan = {
   id?: string; // UUID for this plan
-  start: JobNodeID;
-  precondition: string;
-  // should we save the initial and resulting status?
-  // Should we have a status here, is this a living thing?
-
-  jobs: Record<JobNodeID, JobNode>; // TODO this type should later be imported from the runtime
+  start: JobNodeID | Record<JobNodeID, true | JobEdge>;
+  jobs: Record<JobNodeID, JobNode>;
 };
 
-export type CompiledExecutionPlan = ExecutionPlan & {
-  precondition: Function;
+export type CompiledExecutionPlan = {
+  id?: string;
+  start: Record<JobNodeID, CompiledJobEdge>;
   jobs: Record<JobNodeID, CompiledJobNode>;
 };
 
