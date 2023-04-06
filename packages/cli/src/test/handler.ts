@@ -11,12 +11,20 @@ const testHandler = async (options: CompilerOpts, logger: Logger) => {
   logger.log('Running test job...');
 
   options.compile = true;
-  options.jobSource = `const fn = () => state => { console.log('${sillyMessage}'); return state * 2; } ; fn()`;
+  options.jobSource = `
+  const fn = (fn) => fn;
+  fn((state) => {
+    state.data.count += state.data.count
+    return state;
+  })
+`;
   delete options.jobPath;
 
   if (!options.stateStdin) {
-    logger.debug('No state provided: try -S <number> to provide some state');
-    options.stateStdin = '21';
+    logger.debug(
+      'No state provided: pass an object with state.data.count to provide custom input'
+    );
+    options.stateStdin = '{ "data": { "count": 21 } }';
   }
 
   const silentLogger = createNullLogger();
@@ -24,7 +32,7 @@ const testHandler = async (options: CompilerOpts, logger: Logger) => {
   const state = await loadState(options, silentLogger);
   const code = await compile(options, logger);
   const result = await execute(code, state, options);
-  logger.success(`Result: ${result}`);
+  logger.success(`Result: ${result.data.count}`);
   return result;
 };
 

@@ -1,1 +1,4 @@
-export const byTwo = (state) => state * 2;
+export const byTwo = (state) => {
+  state.data.count = state.data.count * 2;
+  return state;
+};
