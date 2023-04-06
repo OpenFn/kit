@@ -44,10 +44,10 @@ test("doesn't allow process inside the job", async (t) => {
   });
 
   const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog);
+  const { message, level } = logger._parse(errLog!);
 
   t.is(level, 'error');
-  t.regex(message, /process is not defined/);
+  t.regex(message as string, /process is not defined/);
 });
 
 test("doesn't allow eval inside a job", async (t) => {
@@ -62,10 +62,13 @@ test("doesn't allow eval inside a job", async (t) => {
   });
 
   const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog);
+  const { message, level } = logger._parse(errLog!);
 
   t.is(level, 'error');
-  t.regex(message, /Code generation from strings disallowed for this context/);
+  t.regex(
+    message as string,
+    /Code generation from strings disallowed for this context/
+  );
 });
 
 // TODO exhaustive test of globals?

@@ -6,7 +6,7 @@ import execute from './../../src/execute/plan';
 const opts = {};
 const logger = createMockLogger();
 
-const executePlan = (plan: ExecutionPlan, state = {}, options = opts) =>
+const executePlan = (plan: ExecutionPlan, state = {}, options = opts): any =>
   execute(plan, state, options, logger);
 
 test('report an error for a circular job', async (t) => {
