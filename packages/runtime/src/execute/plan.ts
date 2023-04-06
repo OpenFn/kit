@@ -93,6 +93,7 @@ const executeJob = async (
     // TODO do something if we couldn't find this step in the plan
     return { next, state: null };
   }
+
   const state = assembleState(initialState, job.configuration, job.data);
   // The expression SHOULD return state, but could return anything
   const result = await executeExpression(
