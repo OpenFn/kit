@@ -1,6 +1,11 @@
-fn((state = {}) => {
-  if (!isNaN(state.data)) {
-    return state.data * 2;
+fn((state) => {
+  if (!state.data.count) {
+    return {
+      data: {
+        count: 42,
+      },
+    };
   }
-  return 42;
+  state.data.count = state.data.count * 2;
+  return state;
 });
