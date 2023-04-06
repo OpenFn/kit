@@ -1,10 +1,8 @@
-import { Logger } from '@openfn/logger';
 import vm from 'node:vm';
 import type { Options, State } from '../types';
 
 // Build a safe and helpful execution context
-// This will be shared by all operations
-// TODO is it possible for one operation to break the npm cache somehow?
+// This will be shared by all jobs
 export default (state: State, options: Pick<Options, 'jobLogger'>) => {
   const logger = options.jobLogger ?? console;
   const context = vm.createContext(

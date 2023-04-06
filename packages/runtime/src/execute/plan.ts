@@ -53,7 +53,7 @@ const executePlan = async (
     };
   }
 
-  let queue = [];
+  let queue: string[] = [];
   for (const jobId in compiledPlan.start) {
     const edge = compiledPlan.start[jobId];
     if (!edge.condition || edge.condition(initialState)) {
@@ -85,13 +85,13 @@ const executeJob = async (
   ctx: ExeContext,
   jobId: string,
   initialState: State
-): Promise<{ next: JobNodeID[]; result: any }> => {
+): Promise<{ next: JobNodeID[]; state: any }> => {
   const next: string[] = [];
   const job = ctx.plan.jobs[jobId];
 
   if (!job) {
     // TODO do something if we couldn't find this step in the plan
-    return { next, result: null };
+    return { next, state: null };
   }
   const state = assembleState(initialState, job.configuration, job.data);
   // The expression SHOULD return state, but could return anything
