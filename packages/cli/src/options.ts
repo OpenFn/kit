@@ -157,7 +157,7 @@ export const ignoreImports: CLIOption = {
 
 const getBaseDir = (opts: Opts) => {
   const basePath = opts.path ?? '.';
-  if (basePath.endsWith('.js')) {
+  if (/\.(jso?n?)$/.test(basePath)) {
     return path.dirname(basePath);
   }
   return basePath;

@@ -11,6 +11,16 @@ test('outputPath defaults to base/output.json', (t) => {
   t.is(opts.outputPath, '/tmp/output.json');
 });
 
+test('outputPath defaults to base/output.json for workflows', (t) => {
+  const opts = {
+    path: '/tmp/job.json',
+  } as Opts;
+
+  outputPath.ensure!(opts);
+
+  t.is(opts.outputPath, '/tmp/output.json');
+});
+
 test('outputPath does not default if outputStdout is set', (t) => {
   const opts = {
     path: '/tmp/job.js',
