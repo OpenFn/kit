@@ -30,3 +30,13 @@ test('jobPath uses job.js if path is a folder (trailing slash)', (t) => {
 
   t.is(opts.jobPath, '/jam/job.js');
 });
+
+test('jobPath sets the workflow', (t) => {
+  const opts = {
+    path: 'workflow.json',
+  } as Opts;
+
+  jobPath.ensure!(opts);
+
+  t.is(opts.workflow, 'workflow.json');
+});

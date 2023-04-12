@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { Logger, printDuration } from '../util/logger';
-import loadState from './load-state';
+import loadState from '../util/load-state';
 import execute from './execute';
 import compile from '../compile/compile';
 import serializeOutput from './serialize-output';
@@ -37,6 +37,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   }
 
   const state = await loadState(options, logger);
+  // const input = await loadInput(options, logger)
   let code = '';
   if (options.compile) {
     code = await compile(options as CompileOptions, logger);

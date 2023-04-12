@@ -1,5 +1,6 @@
 import path from 'node:path';
 import yargs from 'yargs';
+import type { ExecutionPlan } from '@openfn/runtime';
 import doExpandAdaptors from './util/expand-adaptors';
 import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 import type { CommandList } from './commands';
@@ -20,6 +21,7 @@ export type Opts = {
   immutable?: boolean;
   ignoreImports?: boolean | string[];
   jobPath?: string;
+  job?: string;
   log?: string[];
   logJson?: boolean;
   monorepoPath?: string;
@@ -35,6 +37,8 @@ export type Opts = {
   strictOutput?: boolean; // defaults to true
   timeout?: number; // ms
   useAdaptorsMonorepo?: string | boolean;
+  workflow?: ExecutionPlan;
+  workflowPath?: string;
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -159,14 +163,16 @@ const getBaseDir = (opts: Opts) => {
   return basePath;
 };
 
-export const jobPath: CLIOption = {
-  name: 'job-path',
+export const inputPath: CLIOption = {
+  name: 'input-path',
   yargs: {
     hidden: true,
   },
   ensure: (opts) => {
     const { path: basePath } = opts;
-    if (basePath?.endsWith('.js')) {
+    if (basePath?.endsWith('.json')) {
+      opts.workflowPath = basePath;
+    } else if (basePath?.endsWith('.js')) {
       opts.jobPath = basePath;
     } else {
       const base = getBaseDir(opts);

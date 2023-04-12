@@ -399,6 +399,27 @@ test.serial('compile a job: openfn compile job.js to file', async (t) => {
   t.is(output, 'export default [fn(42)];');
 });
 
+test.serial.only(
+  'compile a workflow: openfn compile wf.json to file',
+  async (t) => {
+    const options = {
+      outputPath: 'out.json',
+      jobPath: 'wf.json', // just to fool the test
+    };
+
+    const wf = JSON.stringify({
+      start: 'a',
+      jobs: { a: { expression: 'x()' } },
+    });
+    await run('compile wf.json -o out.json', wf, options);
+
+    const output = await fs.readFile('out.json', 'utf8');
+    const result = JSON.parse(output);
+    t.truthy(result);
+    t.is(result.jobs.a.expression, 'export default [x()];');
+  }
+);
+
 test.serial('pwd should return the default repo path', async (t) => {
   const dir = process.env.OPENFN_REPO_DIR;
   delete process.env.OPENFN_REPO_DIR; // ensure this is unset

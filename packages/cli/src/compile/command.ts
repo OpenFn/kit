@@ -3,32 +3,31 @@ import { Opts } from '../options';
 import * as o from '../options';
 import { build, ensure, override } from '../util/command-builders';
 
-export type CompileOptions = Required<
-  Pick<
-    Opts,
-    | 'adaptors'
-    | 'command'
-    | 'expandAdaptors'
-    | 'ignoreImports'
-    | 'jobPath'
-    | 'logJson'
-    | 'log'
-    | 'outputPath'
-    | 'outputStdout'
-    | 'repoDir'
-    | 'path'
-    | 'useAdaptorsMonorepo'
-  >
+export type CompileOptions = Pick<
+  Opts,
+  | 'adaptors'
+  | 'command'
+  | 'expandAdaptors'
+  | 'ignoreImports'
+  | 'jobPath'
+  | 'job'
+  | 'logJson'
+  | 'log'
+  | 'outputPath'
+  | 'outputStdout'
+  | 'repoDir'
+  | 'path'
+  | 'useAdaptorsMonorepo'
+  | 'workflow'
 > & {
   repoDir?: string;
-  jobSource?: string; // accept jobs as a string of code (internal use only)
 };
 
 const options = [
   o.expandAdaptors, // order important
   o.adaptors,
   o.ignoreImports,
-  o.jobPath,
+  o.inputPath,
   o.logJson,
   override(o.outputStdout, {
     default: true,
@@ -40,22 +39,22 @@ const options = [
 
 const compileCommand = {
   command: 'compile [path]',
-  desc: 'Compile an openfn job and print or save the resulting JavaScript.',
+  desc: 'Compile an openfn job or workflow and print or save the resulting JavaScript.',
   handler: ensure('compile', options),
   builder: (yargs) =>
     build(options, yargs)
       .positional('path', {
         describe:
-          'The path to load the job from (a .js file or a dir containing a job.js file)',
+          'The path to load the job or workflow from (a .js or .json file or a dir containing a job.js file)',
         demandOption: true,
       })
       .example(
-        'compile foo/job.js -O',
-        'Compiles foo/job.js and prints the result to stdout'
+        'compile foo/job.js',
+        'Compiles the job at foo/job.js and prints the result to stdout'
       )
       .example(
-        'compile foo/job.js -o foo/job-compiled.js',
-        'Compiles foo/job.js and saves the result to foo/job-compiled.js'
+        'compile foo/workflow.json -o foo/workflow-compiled.json',
+        'Compiles the workflow at foo/work.json and prints the result to -o foo/workflow-compiled.json'
       ),
 } as yargs.CommandModule<CompileOptions>;
 

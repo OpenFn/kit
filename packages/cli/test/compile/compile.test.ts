@@ -2,7 +2,7 @@ import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
-import {
+import compile, {
   stripVersionSpecifier,
   loadTransformOptions,
   resolveSpecifierPath,
@@ -25,6 +25,60 @@ type TransformOptionsWithImports = {
     };
   };
 };
+
+test('compile from source string', async (t) => {
+  const job = 'x();';
+
+  const opts = {
+    job,
+  } as CompileOptions;
+
+  const result = await compile(opts, mockLog);
+
+  const expected = 'export default [x()];';
+  t.is(result, expected);
+});
+
+test('compile from path', async (t) => {
+  const pnpm = path.resolve('../../node_modules/.pnpm');
+  mock({
+    [pnpm]: mock.load(pnpm, {}),
+    '/tmp/job.js': 'x();',
+  });
+
+  const jobPath = '/tmp/job.js';
+
+  const opts = {
+    jobPath,
+  } as CompileOptions;
+
+  const result = await compile(opts, mockLog);
+
+  const expected = 'export default [x()];';
+  t.is(result, expected);
+
+  mock.restore();
+});
+
+test.only('compile from workflow', async (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: {
+      a: { expression: 'x()' },
+      b: { expression: 'x()' },
+    },
+  };
+
+  const opts = {
+    workflow,
+  } as CompileOptions;
+
+  const result = await compile(opts, mockLog);
+
+  const expected = 'export default [x()]';
+  t.is(result.jobs.a.expression, expected);
+  t.is(result.jobs.b.expression, expected);
+});
 
 test('stripVersionSpecifier: remove version specifier from @openfn', (t) => {
   const specifier = '@openfn/language-commmon@3.0.0-rc2';

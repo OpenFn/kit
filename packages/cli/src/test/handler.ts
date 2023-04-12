@@ -1,25 +1,28 @@
 import { createNullLogger, Logger } from '../util/logger';
 import compile from '../compile/compile';
-import loadState from '../execute/load-state';
+import loadState from '../util/load-state';
 import execute from '../execute/execute';
-import { CompilerOpts } from '../compile/compile';
+import { ExecuteOptions } from '../execute/command';
 
 const sillyMessage =
   'Calculating the answer to life, the universe, and everything...';
 
-const testHandler = async (options: CompilerOpts, logger: Logger) => {
+// TODO something strange has happened to test
+// Come back and fix it
+const testHandler = async (options: ExecuteOptions, logger: Logger) => {
   logger.log('Running test job...');
 
   options.compile = true;
-  options.jobSource = `
+  options.job = `
   const fn = (fn) => fn;
   fn((state) => {
     state.data.count += state.data.count
     return state;
   })
 `;
-  delete options.jobPath;
+  // delete options.jobPath;
 
+  logger.info(sillyMessage);
   if (!options.stateStdin) {
     logger.debug(
       'No state provided: pass an object with state.data.count to provide custom input'
