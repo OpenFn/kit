@@ -7,7 +7,6 @@ export default async (
   log: Logger
 ) => {
   log.debug('Loading input...');
-  // but hang on, the workflow is just a json input
   const { jobPath, workflowPath } = opts;
   if (workflowPath) {
     log.debug(`Loading workflow from ${workflowPath}`);
@@ -18,6 +17,7 @@ export default async (
       return opts.workflow;
     } catch (e) {
       log.error(`Error loading workflow from ${workflowPath}`);
+      throw e;
     }
   } else if (jobPath) {
     log.debug(`Loading job from ${jobPath}`);

@@ -163,6 +163,7 @@ const getBaseDir = (opts: Opts) => {
   return basePath;
 };
 
+// Input path covers jobPath and workflowPath
 export const inputPath: CLIOption = {
   name: 'input-path',
   yargs: {

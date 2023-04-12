@@ -7,7 +7,7 @@ export default async (
   log: Logger
 ) => {
   const { stateStdin, statePath } = opts;
-  log.debug('Load state...');
+  log.debug('Loading state...');
   if (stateStdin) {
     try {
       const json = JSON.parse(stateStdin);

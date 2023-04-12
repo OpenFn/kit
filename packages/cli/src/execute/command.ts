@@ -26,6 +26,8 @@ export type ExecuteOptions = Required<
     | 'strictOutput'
     | 'timeout'
     | 'useAdaptorsMonorepo'
+    | 'workflowPath'
+    | 'workflow'
   >
 > &
   Pick<Opts, 'monorepoPath' | 'repoDir'>;
@@ -38,7 +40,7 @@ const options = [
   o.compile,
   o.immutable,
   o.ignoreImports,
-  o.jobPath,
+  o.inputPath,
   o.logJson,
   o.outputPath,
   o.outputStdout,

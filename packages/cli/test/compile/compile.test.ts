@@ -39,7 +39,7 @@ test('compile from source string', async (t) => {
   t.is(result, expected);
 });
 
-test('compile from path', async (t) => {
+test.serial('compile from path', async (t) => {
   const pnpm = path.resolve('../../node_modules/.pnpm');
   mock({
     [pnpm]: mock.load(pnpm, {}),
@@ -60,7 +60,7 @@ test('compile from path', async (t) => {
   mock.restore();
 });
 
-test.only('compile from workflow', async (t) => {
+test('compile from workflow', async (t) => {
   const workflow = {
     start: 'a',
     jobs: {
@@ -75,7 +75,7 @@ test.only('compile from workflow', async (t) => {
 
   const result = await compile(opts, mockLog);
 
-  const expected = 'export default [x()]';
+  const expected = 'export default [x()];';
   t.is(result.jobs.a.expression, expected);
   t.is(result.jobs.b.expression, expected);
 });
@@ -114,13 +114,16 @@ test('loadTransformOptions: do nothing', async (t) => {
   t.assert(JSON.stringify(result) === '{}');
 });
 
-test("resolveSpecifierPath: return null if the module can't be resolved locally", async (t) => {
-  mock({
-    '/repo': {},
-  });
-  const path = await resolveSpecifierPath('pkg', '/repo', mockLog);
-  t.assert(path === null);
-});
+test.serial(
+  "resolveSpecifierPath: return null if the module can't be resolved locally",
+  async (t) => {
+    mock({
+      '/repo': {},
+    });
+    const path = await resolveSpecifierPath('pkg', '/repo', mockLog);
+    t.assert(path === null);
+  }
+);
 
 test('resolveSpecifierPath: return a relative path if passed', async (t) => {
   const path = await resolveSpecifierPath('pkg=./a', '/repo', mockLog);
