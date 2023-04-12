@@ -31,7 +31,7 @@ test('do nothing if no path provided', async (t) => {
 
 test('return the workflow if already set ', async (t) => {
   const opts = {
-    workflow: { start: 'x ' },
+    workflow: { start: 'x' },
     job: 'j',
     jobPath: 'test/job.js',
   };
@@ -48,8 +48,7 @@ test('return the job if already set (and workflow is not)', async (t) => {
   };
 
   const result = await loadInput(opts, logger);
-  t.truthy(result);
-  t.is(result.start, 'x');
+  t.is(result, 'j');
 });
 
 test('load a job from a path and return the result', async (t) => {
@@ -83,7 +82,7 @@ test('load a workflow from a path and return the result as JSON', async (t) => {
 test('load a workflow from a path and mutate opts', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
-    workflow: {},
+    workflow: undefined,
   };
 
   await loadInput(opts, logger);

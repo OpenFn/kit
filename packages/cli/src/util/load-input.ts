@@ -8,8 +8,8 @@ export default async (
 ) => {
   log.debug('Loading input...');
   const { job, workflow, jobPath, workflowPath } = opts;
-  if (job) return job;
   if (workflow) return workflow;
+  if (job) return job;
 
   if (workflowPath) {
     log.debug(`Loading workflow from ${workflowPath}`);
