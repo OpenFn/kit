@@ -7,7 +7,10 @@ export default async (
   log: Logger
 ) => {
   log.debug('Loading input...');
-  const { jobPath, workflowPath } = opts;
+  const { job, workflow, jobPath, workflowPath } = opts;
+  if (job) return job;
+  if (workflow) return workflow;
+
   if (workflowPath) {
     log.debug(`Loading workflow from ${workflowPath}`);
     try {
