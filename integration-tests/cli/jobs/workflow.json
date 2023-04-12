@@ -1,0 +1,12 @@
+{
+  "start": "a",
+  "jobs": {
+    "a": {
+      "expression": "fn((state) => (state.data.count ? state : { data: { count: 21 } }));",
+      "next": { "b": true }
+    },
+    "b": {
+      "expression": "fn((state) => { state.data.count = state.data.count * 2; return state; });"
+    }
+  }
+}

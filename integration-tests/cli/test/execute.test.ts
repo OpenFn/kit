@@ -98,6 +98,26 @@ test.serial(
 );
 
 test.serial(
+  `openfn ${jobsPath}/workflow.json -a @openfn/language-common`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.count, 42);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/workflow.json -a @openfn/language-common -S "{ \\"data\\": { \\"count\\": 6 } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.count, 12);
+  }
+);
+
+test.serial(
   `openfn ${jobsPath}/chuck.js -ia @openfn/language-http`,
   async (t) => {
     await run(t.title);
