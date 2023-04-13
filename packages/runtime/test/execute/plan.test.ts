@@ -70,7 +70,9 @@ test('report an error for a plan which references an undefined job', async (t) =
 test('report an error for an illegal start condition', async (t) => {
   const plan: ExecutionPlan = {
     start: { a: { condition: '!!!!' } },
-    jobs: {},
+    jobs: {
+      a: {},
+    },
   };
   const result = await executePlan(plan);
   console.log(result);
@@ -338,4 +340,116 @@ test('execute multiple steps in "parallel"', async (t) => {
   };
   const result = await executePlan(plan, { data: { x: 0 } });
   t.is(result.data.x, 3);
+});
+
+test.serial('jobs do not share a local scope', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        // declare x in this expression's scope
+        expression: 'const x = 10; export default [s => s];',
+        next: {
+          b: true,
+        },
+      },
+      b: {
+        // x should not defined here and this will throw
+        expression: 'export default [s => { s.data.x = x; return s; }]',
+      },
+    },
+  };
+  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+
+  const last = logger._parse(logger._history.at(-1));
+  t.is(last.message, 'ReferenceError: x is not defined');
+});
+
+test.serial('jobs do not share a global scope', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        expression: 'export default [s => { x = 10; return s; }]',
+        next: {
+          b: true,
+        },
+      },
+      b: {
+        expression: 'export default [s => { s.data.x = x; return s; }]',
+      },
+    },
+  };
+  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+
+  const last = logger._parse(logger._history.at(-1));
+  t.is(last.message, 'ReferenceError: x is not defined');
+});
+
+test.serial('jobs do not share a this object', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        expression: 'export default [s => { this.x = 10; return s; }]',
+        next: {
+          b: true,
+        },
+      },
+      b: {
+        expression: 'export default [s => { s.data.x = this.x; return s; }]',
+      },
+    },
+  };
+  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+
+  const last = logger._parse(logger._history.at(-1));
+  t.is(
+    last.message,
+    "TypeError: Cannot set properties of undefined (setting 'x')"
+  );
+});
+
+// TODO this fails right now
+// That probably means we ought to freeze the context object
+// Although that causes everything to fail...
+test.skip('jobs cannot scribble on globals', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        expression: 'export default [s => { console.x = 10; return s; }]',
+        next: {
+          b: true,
+        },
+      },
+      b: {
+        expression: 'export default [s => { s.data.x = console.x; return s; }]',
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: {} });
+  t.falsy(result.data.x);
+});
+
+// TODO common won't load unless we do some special setup
+test.skip('jobs cannot scribble on adaptor functions', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        expression:
+          'import { fn } from "openfn/language-common"; fn.x = 10; export default [s => { global.x = 10; return s; }]',
+        next: {
+          b: true,
+        },
+      },
+      b: {
+        expression:
+          'import { fn } from "openfn/language-common"; export default [s => { s.data.x = fn.x; return s; }]',
+      },
+    },
+  };
+  const result = await executePlan(plan, { data: { x: 0 } });
+  t.falsy(result.data.x);
 });

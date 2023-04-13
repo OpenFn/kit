@@ -10,8 +10,9 @@ type Model = {
 };
 
 export default (plan: ExecutionPlan) => {
-  const model = buildModel(plan);
+  assertStart(plan);
 
+  const model = buildModel(plan);
   assertNoCircularReferences(model);
   assertSingletonDependencies(model);
 
@@ -45,6 +46,24 @@ export const buildModel = (plan: ExecutionPlan) => {
     }
   }
   return model;
+};
+
+const assertStart = (plan: ExecutionPlan) => {
+  if (!plan.start) {
+    throw new Error('No start job defined');
+  }
+
+  if (typeof plan.start === 'string') {
+    if (!plan.jobs[plan.start]) {
+      throw new Error(`Could not find start job: ${plan.start}`);
+    }
+  } else {
+    for (const startId in plan.start) {
+      if (!plan.jobs[startId]) {
+        throw new Error(`Could not find start job: ${startId}`);
+      }
+    }
+  }
 };
 
 // TODO this can be improved by reporting ALL circular references

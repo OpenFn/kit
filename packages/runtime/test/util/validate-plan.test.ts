@@ -57,6 +57,7 @@ test('builds a more complex model', (t) => {
 
 test('throws for a circular dependency', (t) => {
   const plan: any = {
+    start: 'a',
     jobs: {
       a: {
         next: { b: true },
@@ -74,9 +75,12 @@ test('throws for a circular dependency', (t) => {
 
 test('throws for an indirect circular dependency', (t) => {
   const plan: any = {
+    start: 'a',
+    start: 'a',
     jobs: {
       a: {
         next: { b: true },
+        start: 'a',
       },
       b: {
         next: { c: true },
@@ -94,6 +98,7 @@ test('throws for an indirect circular dependency', (t) => {
 
 test('throws for a multiple inputs', (t) => {
   const plan: any = {
+    start: 'a',
     jobs: {
       start: {
         next: { a: true, b: true },
@@ -114,6 +119,7 @@ test('throws for a multiple inputs', (t) => {
 
 test('throws for a an unknown job', (t) => {
   const plan: any = {
+    start: 'a',
     jobs: {
       a: {
         next: { z: true },
@@ -122,5 +128,40 @@ test('throws for a an unknown job', (t) => {
   };
   t.throws(() => validate(plan), {
     message: 'Cannot find job: z',
+  });
+});
+
+test('throws for no start', (t) => {
+  const plan: any = {
+    jobs: {
+      a: {},
+    },
+  };
+  t.throws(() => validate(plan), {
+    message: 'No start job defined',
+  });
+});
+
+test('throws for invalid string start', (t) => {
+  const plan: any = {
+    start: 'z',
+    jobs: {
+      a: {},
+    },
+  };
+  t.throws(() => validate(plan), {
+    message: 'Could not find start job: z',
+  });
+});
+
+test('throws for invalid start', (t) => {
+  const plan: any = {
+    start: { a: true, z: true },
+    jobs: {
+      a: {},
+    },
+  };
+  t.throws(() => validate(plan), {
+    message: 'Could not find start job: z',
   });
 });
