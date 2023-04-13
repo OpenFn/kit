@@ -50,3 +50,53 @@ test('parse @openfn/language-common@1.0.0=~/repo/modules/common', (t) => {
     },
   });
 });
+
+test('parse workflow', (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: {
+      a: {
+        adaptor: '@openfn/language-common',
+        expression: 'fn()',
+      },
+      b: {
+        adaptor: '@openfn/language-http@1.0.0',
+        expression: 'fn()',
+      },
+      c: {
+        adaptor: '@openfn/language-salesforce=a/b/c',
+        expression: 'fn()',
+      },
+    },
+  };
+  const result = parseAdaptors({ workflow });
+  t.assert(Object.keys(result).length === 3);
+  t.deepEqual(result, {
+    '@openfn/language-common': {},
+    '@openfn/language-http': {
+      version: '1.0.0',
+    },
+    '@openfn/language-salesforce': {
+      path: 'a/b/c',
+    },
+  });
+});
+
+// TODO we can't do this right now
+// We'd have to send different maps to different jobs
+// Which we can support but maybe I'm gonna push that out of scope
+test.skip('parse workflow with multiple versions of the same adaptor', (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: {
+      a: {
+        adaptor: '@openfn/language-common@1.0.0',
+        expression: 'fn()',
+      },
+      b: {
+        adaptor: '@openfn/language-common@2.0.0',
+        expression: 'fn()',
+      },
+    },
+  };
+});

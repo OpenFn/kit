@@ -80,7 +80,7 @@ export const adaptors: CLIOption = {
     }
 
     if (opts.expandAdaptors) {
-      opts.adaptors = doExpandAdaptors(opts.adaptors);
+      doExpandAdaptors(opts);
     }
 
     // delete the aliases as they have not been expanded

@@ -55,8 +55,8 @@ const options = [
 
 const executeCommand = {
   command: 'execute [path]',
-  desc: `Run an openfn job. Get more help by running openfn <command> help.
-  \nExecute will run a job/expression and write the output state to disk (to ./state.json unless otherwise specified)
+  desc: `Run an openfn job or workflow. Get more help by running openfn <command> help.
+  \nExecute will run a job/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
   \nBy default only state.data will be written to the output. Include --no-strict-output to write the entire state object.
   \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
   aliases: ['$0'],
@@ -65,7 +65,7 @@ const executeCommand = {
     build(options, yargs)
       .positional('path', {
         describe:
-          'The path to load the job from (a .js file or a dir containing a job.js file)',
+          'The path to load the job or workflow from (a .js or .json file or a dir containing a job.js file)',
         demandOption: true,
       })
       .example(
@@ -73,8 +73,8 @@ const executeCommand = {
         'Execute foo/job.js with no adaptor and write the final state to foo/job.json'
       )
       .example(
-        'openfn job.js -ia common',
-        'Execute job.js using @openfn/language-commom , with autoinstall enabled)'
+        'openfn workflow.json -ia common',
+        'Execute workflow.json using @openfn/language-commom (with autoinstall enabled)'
       )
       .example(
         'openfn job.js -a common --log info',

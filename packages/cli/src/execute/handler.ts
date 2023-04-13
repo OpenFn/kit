@@ -1,22 +1,14 @@
+import type { ExecuteOptions } from './command';
 import execute from './execute';
 import serializeOutput from './serialize-output';
+import getAutoinstallTargets from './get-autoinstall-targets';
 import { install } from '../repo/handler';
-import type { ExecuteOptions } from './command';
 import compile from '../compile/compile';
 import { CompileOptions } from '../compile/command';
 import { Logger, printDuration } from '../util/logger';
 import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadInput from '../util/load-input';
-
-export const getAutoinstallTargets = (
-  options: Pick<ExecuteOptions, 'adaptors' | 'autoinstall'>
-) => {
-  if (options.adaptors) {
-    return options.adaptors?.filter((a) => !/=/.test(a));
-  }
-  return [];
-};
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();

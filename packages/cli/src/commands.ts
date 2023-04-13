@@ -82,7 +82,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   } else if (opts.adaptors && opts.expandAdaptors) {
     // TODO this will be removed once all options have been refactored
     //      This is safely redundant in execute and compile
-    opts.adaptors = expandAdaptors(opts.adaptors);
+    expandAdaptors(opts);
   }
 
   if (!/^(test|version)$/.test(opts.command) && !opts.repoDir) {
