@@ -15,7 +15,7 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
     logger.success('Compiled code:');
     logger.success('\n' + result);
   } else {
-    await writeFile(options.outputPath!, result);
+    await writeFile(options.outputPath!, result as string);
     logger.success(`Compiled to ${options.outputPath}`);
   }
 };

@@ -21,7 +21,7 @@ export type CommandList =
   | 'metadata'
   | 'repo-clean'
   | 'repo-install'
-  | 'repo-install'
+  | 'repo-list'
   | 'repo-pwd'
   | 'test'
   | 'version';

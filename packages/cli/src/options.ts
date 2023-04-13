@@ -36,7 +36,7 @@ export type Opts = {
   stateStdin?: string;
   strictOutput?: boolean; // defaults to true
   timeout?: number; // ms
-  useAdaptorsMonorepo?: string | boolean;
+  useAdaptorsMonorepo?: boolean;
   workflow?: ExecutionPlan;
   workflowPath?: string;
 };

@@ -18,9 +18,10 @@ export const install = async (
     log.success('Installing packages...'); // not really success but I want it to default
     log.debug('repoDir is set to:', repoDir);
     if (adaptor) {
-      packages = expandAdaptors(packages);
+      const expanded = expandAdaptors({ adaptors: packages });
+      packages = expanded.adaptors;
     }
-    await rtInstall(packages, repoDir, log);
+    await rtInstall(packages ?? [], repoDir, log);
     const duration = log.timer('install');
     log.success(`Installation complete in ${duration}`);
   }

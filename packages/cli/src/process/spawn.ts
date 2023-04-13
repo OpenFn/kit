@@ -6,7 +6,7 @@ import path from 'node:path';
 import * as url from 'url';
 import { fork } from 'node:child_process';
 import process from 'node:process';
-import type { Opts } from '../commands';
+import type { Opts } from '../options';
 
 type Messages = { done?: boolean; init?: boolean; exitCode?: number };
 

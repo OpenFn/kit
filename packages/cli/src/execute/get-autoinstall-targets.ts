@@ -6,7 +6,7 @@ const getAutoinstallTargets = (
   >
 ) => {
   if (options.workflow) {
-    const adaptors = {};
+    const adaptors = {} as Record<string, true>;
     Object.values(options.workflow.jobs).forEach((job) => {
       if (job.adaptor) {
         adaptors[job.adaptor] = true;

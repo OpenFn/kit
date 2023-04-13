@@ -3,6 +3,10 @@ import type { ModuleInfo, ModuleInfoMap, ExecutionPlan } from '@openfn/runtime';
 import createLogger, { RUNTIME, JOB } from '../util/logger';
 import { ExecuteOptions } from './command';
 
+type ExtendedModuleInfo = ModuleInfo & {
+  name: string;
+};
+
 // TODO job and workflow are both on the options object, can we just take opts?
 export default (
   input: string | ExecutionPlan,
@@ -33,7 +37,7 @@ export function parseAdaptors(
   const extractInfo = (specifier: string) => {
     const [module, path] = specifier.split('=');
     const { name, version } = getNameAndVersion(module);
-    const info: ModuleInfo = {
+    const info: ExtendedModuleInfo = {
       name,
     };
     if (path) {

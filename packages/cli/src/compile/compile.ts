@@ -12,7 +12,7 @@ export default async (opts: CompileOptions, log: Logger) => {
     job = compileWorkflow(opts.workflow, opts, log);
   } else {
     const compilerOptions: Options = await loadTransformOptions(opts, log);
-    job = compile(opts.job || opts.jobPath, compilerOptions);
+    job = compile((opts.job || opts.jobPath) as string, compilerOptions);
   }
 
   if (opts.jobPath) {
@@ -39,7 +39,7 @@ const compileWorkflow = async (
     }
     const compilerOptions: Options = await loadTransformOptions(jobOpts, log);
 
-    job.expression = compile(job.expression, compilerOptions);
+    job.expression = compile(job.expression as string, compilerOptions);
   }
   return workflow;
 };

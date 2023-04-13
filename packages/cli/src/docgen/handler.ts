@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises';
-import { readFileSync, writeFileSync, mkdirSync, rmSync, fstat } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { Opts } from '../options';
