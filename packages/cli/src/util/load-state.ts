@@ -36,7 +36,7 @@ export default async (
   }
 
   log.info(
-    'No state provided - using default state { data: {}, configuration: {}'
+    'No state provided - using default state { data: {}, configuration: {} }'
   );
   return {
     data: {},
