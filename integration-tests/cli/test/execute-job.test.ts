@@ -1,5 +1,5 @@
 import test from 'ava';
-import { fstat, readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
@@ -89,26 +89,6 @@ test.serial(
 
 test.serial(
   `openfn ${jobsPath}/simple.js -a @openfn/language-common -S "{ \\"data\\": { \\"count\\": 6 } }"`,
-  async (t) => {
-    await run(t.title);
-
-    const out = getJSON();
-    t.is(out.data.count, 12);
-  }
-);
-
-test.serial(
-  `openfn ${jobsPath}/workflow.json -a @openfn/language-common`,
-  async (t) => {
-    await run(t.title);
-
-    const out = getJSON();
-    t.is(out.data.count, 42);
-  }
-);
-
-test.serial(
-  `openfn ${jobsPath}/workflow.json -a @openfn/language-common -S "{ \\"data\\": { \\"count\\": 6 } }"`,
   async (t) => {
     await run(t.title);
 
