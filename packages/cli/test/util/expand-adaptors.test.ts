@@ -80,8 +80,8 @@ test('expands adaptors in a workflow', (t) => {
     },
   };
   const newOpts = expandAdaptors({ workflow });
-  t.is(newOpts.workflow.jobs.a.adaptor, '@openfn/language-common');
-  t.is(newOpts.workflow.jobs.b.adaptor, '@openfn/language-http@1.0.0');
-  t.is(newOpts.workflow.jobs.c.adaptor, '@openfn/language-salesforce=a/b/c');
-  t.is(newOpts.workflow.jobs.d.adaptor, 'a/b/c/my-adaptor.js');
+  t.is(newOpts.workflow!.jobs.a.adaptor, '@openfn/language-common');
+  t.is(newOpts.workflow!.jobs.b.adaptor, '@openfn/language-http@1.0.0');
+  t.is(newOpts.workflow!.jobs.c.adaptor, '@openfn/language-salesforce=a/b/c');
+  t.is(newOpts.workflow!.jobs.d.adaptor, 'a/b/c/my-adaptor.js');
 });

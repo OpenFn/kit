@@ -1,6 +1,8 @@
 // bunch of unit tests on the execute function itself
 // so far this is only done in commmands.test.ts, which has the cli overhead
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
+import mock from 'mock-fs';
+import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
 import { ExecuteOptions } from '../../src/execute/command';
@@ -15,6 +17,7 @@ const defaultOptions = {
   adaptors: [],
   outputStdOut: true,
   compile: true,
+  repoDir: '/repo',
   log: {
     // TODO if I pass a mock logger into the handler, the handler then
     // goes and creates a real logger and passes it to the runtinme, which
@@ -28,6 +31,16 @@ const defaultOptions = {
 
 const fn = `const fn = (fn) => (s) => fn(s);
 `;
+
+test.before(() => {
+  const pnpm = path.resolve('../../node_modules/.pnpm');
+  mock({
+    '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
+    [pnpm]: mock.load(pnpm, {}),
+  });
+});
+
+test.after(() => mock.restore());
 
 test('run a job', async (t) => {
   const job = `${fn}fn(() => ({ data: 42 }));`;
@@ -114,6 +127,44 @@ test('run a workflow with initial state', async (t) => {
   };
   const result = await handler(options, logger);
   t.is(result.data.count, 12);
+});
+
+test('run a workflow with an adaptor (longform)', async (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: {
+      a: {
+        adaptor: '@openfn/language-common',
+        expression: `fn((state) => state);`,
+      },
+    },
+  };
+  const options = {
+    ...defaultOptions,
+    workflow,
+    stateStdin: JSON.stringify({ data: { count: 10 } }),
+  };
+  const result = await handler(options, logger);
+  t.is(result.data.count, 10);
+});
+
+test('run a workflow with an adaptor (shortform)', async (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: {
+      a: {
+        adaptor: 'common',
+        expression: `fn((state) => state);`,
+      },
+    },
+  };
+  const options = {
+    ...defaultOptions,
+    workflow,
+    stateStdin: JSON.stringify({ data: { count: 10 } }),
+  };
+  const result = await handler(options, logger);
+  t.is(result.data.count, 10);
 });
 
 test('run a job without compilation', async (t) => {

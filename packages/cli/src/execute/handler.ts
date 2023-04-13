@@ -9,6 +9,7 @@ import { Logger, printDuration } from '../util/logger';
 import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadInput from '../util/load-input';
+import expandAdaptors from '../util/expand-adaptors';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
@@ -30,6 +31,12 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   const state = await loadState(options, logger);
   let input = await loadInput(options, logger);
+
+  if (options.workflow) {
+    // expand shorthand adaptors in the workflow jobs
+    expandAdaptors(options);
+  }
+
   if (options.compile) {
     input = await compile(options as CompileOptions, logger);
   } else {
