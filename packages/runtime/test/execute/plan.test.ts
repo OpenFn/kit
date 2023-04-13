@@ -75,7 +75,6 @@ test('report an error for an illegal start condition', async (t) => {
     },
   };
   const result = await executePlan(plan);
-  console.log(result);
   t.assert(result.hasOwnProperty('error'));
   t.regex(result.error.message, /failed to compile edge condition start->a/i);
 });
