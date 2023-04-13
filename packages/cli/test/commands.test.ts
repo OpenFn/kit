@@ -372,13 +372,42 @@ test.serial(
 );
 
 test.serial(
-  'auto-import from language-common: openfn job.js -a @openfn/language-common',
+  'auto-import from language-common (job): openfn job.js -a @openfn/language-common',
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
     const result = await run('openfn -a @openfn/language-common', job, {
       repoDir: '/repo',
     });
-    t.truthy(result.data?.done);
+    t.true(result.data?.done);
+  }
+);
+
+test.serial(
+  'run a workflow using language-common: openfn wf.json',
+  async (t) => {
+    const workflow = {
+      start: 'job1',
+      jobs: {
+        job1: {
+          adaptor: '@openfn/language-common',
+          expression:
+            'fn((state) => { state.data.done = true; return state; });',
+        },
+      },
+    };
+
+    const options = {
+      outputPath: 'output.json',
+      jobPath: 'wf.json',
+      repoDir: '/repo',
+    };
+
+    const result = await run(
+      'openfn wf.json',
+      JSON.stringify(workflow),
+      options
+    );
+    t.true(result.data?.done);
   }
 );
 

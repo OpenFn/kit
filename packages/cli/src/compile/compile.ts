@@ -7,11 +7,11 @@ import type { CompileOptions } from './command';
 // This is designed to be re-used in different CLI steps
 export default async (opts: CompileOptions, log: Logger) => {
   log.debug('Compiling...');
-  const compilerOptions: Options = await loadTransformOptions(opts, log);
   let job;
   if (opts.workflow) {
-    job = compileWorkflow(opts.workflow, compilerOptions);
+    job = compileWorkflow(opts.workflow, opts, log);
   } else {
+    const compilerOptions: Options = await loadTransformOptions(opts, log);
     job = compile(opts.job || opts.jobPath, compilerOptions);
   }
 
@@ -24,12 +24,22 @@ export default async (opts: CompileOptions, log: Logger) => {
 };
 
 // Find every expression in the job and run the compiler on it
-const compileWorkflow = (workflow: ExecutionPlan, opts: Options) => {
+const compileWorkflow = async (
+  workflow: ExecutionPlan,
+  opts: CompileOptions,
+  log: Logger
+) => {
   for (const jobId in workflow.jobs) {
-    workflow.jobs[jobId].expression = compile(
-      workflow.jobs[jobId].expression,
-      opts
-    );
+    const job = workflow.jobs[jobId];
+    const jobOpts = {
+      ...opts,
+    };
+    if (job.adaptor) {
+      jobOpts.adaptors = [job.adaptor];
+    }
+    const compilerOptions: Options = await loadTransformOptions(jobOpts, log);
+
+    job.expression = compile(job.expression, compilerOptions);
   }
   return workflow;
 };
