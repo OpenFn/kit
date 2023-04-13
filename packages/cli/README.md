@@ -112,6 +112,50 @@ For a more structured output, you can emit logs as JSON objects with `level`, `n
 
 Pass `--log-json` to the CLI to do this. You can also set the OPENFN_LOG_JSON env var (and use `--no-log-json` to disable).
 
+## Workflows
+
+As of v0.0.35 the CLI supports running workflows as well as jobs.
+
+A workflow is in execution plan for running several jobs in a sequence, defined as a JSON structure.
+
+To see an example workflow, run the test command with `openfn test`.
+
+A workflow has a structure like this:
+
+```
+{
+  start: {
+    // set the starting point(s) for a workflow
+    // This can be a string instead of an object, which will always start from that job
+    a: true, // start from job a
+    b: {
+      condition: !state.error, // start from job b if the expression evaluates to true 
+    }
+  },
+  jobs: {
+    // Define a job called a
+    a: {
+      expression: "fn((state) => state)",
+      adaptor: "@openfn/language-common@1.75", // specifiy the adaptor to use (version optional)
+      data: {}, // optionally pre-populate the data object (this will override keys in previous state)
+      configuration: {}, // optionally pre-populate config object. Use this to pass credentials.
+      next: {
+        // This object defines which jobs to call next
+        // All edges returning true will run
+        // If there are no next edges, the workflow will end
+        b: true,
+        b: {
+          condition: "!state.error" // Not that this is an expression, not a function
+        }
+      }
+    },
+    b: {
+      expression: "fn((state) => state)",
+    }
+  }
+}
+```
+
 ## Compilation
 
 The CLI will attempt to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:
