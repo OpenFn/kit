@@ -47,12 +47,10 @@ export type CompiledJobEdge = {
   condition?: Function;
 };
 
-// TODO this type should later be imported from the runtime
 export type JobNode = {
-  // Oh that's interesting! A compiled job doesn't have an adaptor, it just has a bunch of imports
-  // So the CLI will need to handle compilation for every expression in a job plan.
-  // But the CLI Workflow and Lightning Attempt WILL have an adaptor here
-  // adaptor: string;
+  // The runtime itself will ignore the adaptor flag
+  // The adaptor import should be compiled in by the compiler, and dependency managed by the runtime manager
+  adaptor?: string;
 
   expression: string | Operation[]; // the code we actually want to execute. Could be lazy loaded
   configuration?: object; // credential object
