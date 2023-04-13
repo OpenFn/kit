@@ -5,9 +5,6 @@ const getAutoinstallTargets = (
     Pick<ExecuteOptions, 'adaptors' | 'autoinstall' | 'workflow'>
   >
 ) => {
-  if (options.adaptors) {
-    return options.adaptors?.filter((a) => !/=/.test(a));
-  }
   if (options.workflow) {
     const adaptors = {};
     Object.values(options.workflow.jobs).forEach((job) => {
@@ -16,6 +13,9 @@ const getAutoinstallTargets = (
       }
     });
     return Object.keys(adaptors);
+  }
+  if (options.adaptors) {
+    return options.adaptors?.filter((a) => !/=/.test(a));
   }
   return [];
 };

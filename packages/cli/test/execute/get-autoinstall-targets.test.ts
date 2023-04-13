@@ -137,6 +137,7 @@ test('workflow with duplicate adaptors', (t) => {
 
 test('workflow with one adaptor but different versions', (t) => {
   const result = getAutoinstallTargets({
+    adaptors: [],
     workflow: {
       start: 'a',
       jobs: {

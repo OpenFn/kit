@@ -16,6 +16,13 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   await validateAdaptors(options, logger);
 
+  let input = await loadInput(options, logger);
+
+  if (options.workflow) {
+    // expand shorthand adaptors in the workflow jobs
+    expandAdaptors(options);
+  }
+
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
     if (monorepoPath) {
@@ -30,12 +37,6 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   }
 
   const state = await loadState(options, logger);
-  let input = await loadInput(options, logger);
-
-  if (options.workflow) {
-    // expand shorthand adaptors in the workflow jobs
-    expandAdaptors(options);
-  }
 
   if (options.compile) {
     input = await compile(options as CompileOptions, logger);
