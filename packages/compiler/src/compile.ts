@@ -18,20 +18,17 @@ export type Options = TransformOptions & {
 
 export default function compile(pathOrSource: string, options: Options = {}) {
   const logger = options.logger || defaultLogger;
-  logger.debug('Starting compilation');
 
   let source = pathOrSource;
   if (isPath(pathOrSource)) {
-    logger.debug('Compiling from file at', pathOrSource);
+    logger.debug('Starting compilation from file at', pathOrSource);
     source = loadFile(pathOrSource);
   } else {
-    logger.debug('Compling from string');
+    logger.debug('Starting compilation from string');
   }
   const ast = parse(source);
-  logger.debug('Parsed source tree');
 
   const transformedAst = transform(ast, undefined, options);
-  logger.debug('Transformed source AST');
 
   const compiledSource = print(transformedAst).code;
   logger.debug('Compiled source:');
