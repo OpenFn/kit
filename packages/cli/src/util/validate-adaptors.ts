@@ -4,7 +4,11 @@ import { Logger } from './logger';
 const validateAdaptors = async (
   options: Pick<
     Opts,
-    'adaptors' | 'skipAdaptorValidation' | 'autoinstall' | 'repoDir'
+    | 'adaptors'
+    | 'skipAdaptorValidation'
+    | 'autoinstall'
+    | 'repoDir'
+    | 'workflowPath'
   >,
   logger: Logger
 ) => {
@@ -12,10 +16,20 @@ const validateAdaptors = async (
     return;
   }
 
+  const hasDeclaredAdaptors = options.adaptors && options.adaptors.length > 0;
+
+  if (options.workflowPath && hasDeclaredAdaptors) {
+    logger.error('ERROR: adaptor and workflow provided');
+    logger.error(
+      'This is probably not what you meant to do. A workflow should declare an adaptor for each job.'
+    );
+    throw new Error('adaptor and workflow provided');
+  }
+
   // If no adaptor is specified, pass a warning
   // (The runtime is happy to run without)
   // This can be overriden from options
-  if (!options.adaptors || options.adaptors.length === 0) {
+  if (!options.workflowPath && !hasDeclaredAdaptors) {
     logger.warn('WARNING: No adaptor provided!');
     logger.warn(
       'This job will probably fail. Pass an adaptor with the -a flag, eg:'
