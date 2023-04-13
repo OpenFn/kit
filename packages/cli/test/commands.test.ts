@@ -108,10 +108,10 @@ test.serial('run test job with default state', async (t) => {
 });
 
 test.serial('run test job with custom state', async (t) => {
-  const state = JSON.stringify({ data: { count: 1 } });
+  const state = JSON.stringify({ data: { answer: 1 } });
   await run(`test -S ${state}`, '', { logger });
   const { message } = logger._parse(logger._last);
-  t.assert(message === 'Result: 2');
+  t.assert(message === 'Result: 1');
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {

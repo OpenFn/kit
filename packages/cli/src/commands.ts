@@ -50,7 +50,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
 
 const maybeEnsureOpts = (basePath: string, options: Opts) =>
   // If the command is compile or execute, just return the opts (yargs will do all the validation)
-  /^(execute|compile)$/.test(options.command!)
+  /^(execute|compile|test)$/.test(options.command!)
     ? ensureLogOpts(options)
     : // Otherwise  older commands still need to go through ensure opts
       ensureOpts(basePath, options);
@@ -85,7 +85,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     opts.adaptors = expandAdaptors(opts.adaptors);
   }
 
-  if (/^(test|version)$/.test(opts.command) && !opts.repoDir) {
+  if (!/^(test|version)$/.test(opts.command) && !opts.repoDir) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );
