@@ -73,6 +73,7 @@ test('reject language common with specifier and path', (t) => {
 test('empty workflow', (t) => {
   const result = getAutoinstallTargets({
     workflow: {
+      start: 'a',
       jobs: {},
     },
   });
