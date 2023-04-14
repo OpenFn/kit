@@ -2,9 +2,9 @@ import test from 'ava';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
-import { getJSON } from './util';
+import { getJSON } from '../src/util';
 
-const jobsPath = path.resolve('jobs');
+const jobsPath = path.resolve('test/fixtures');
 
 // Note that these tests are STATEFUL
 // Ensure the repo is clean and clear before these tests run

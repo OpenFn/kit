@@ -3,9 +3,9 @@ import { writeFileSync } from 'node:fs';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
-import { getJSON } from './util';
+import { getJSON } from '../src/util';
 
-const jobsPath = path.resolve('jobs');
+const jobsPath = path.resolve('test/fixtures');
 const tmpPath = path.resolve('tmp');
 
 // Note that these tests are STATEFUL
@@ -17,7 +17,7 @@ test.before(async () => {
 
 test.afterEach(async () => {
   try {
-    await rm('jobs/output.json');
+    await rm('test/fixtures/output.json');
   } catch (e) {}
   try {
     await rm('tmp/.', { recursive: true });
