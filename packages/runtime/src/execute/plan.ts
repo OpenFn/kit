@@ -27,7 +27,7 @@ const assembleState = (
     initialState.configuration ?? {},
     configuration
   ),
-  data: Object.assign({}, initialState.data || {}, data),
+  data: Object.assign({}, data, initialState.data),
 });
 
 const executePlan = async (

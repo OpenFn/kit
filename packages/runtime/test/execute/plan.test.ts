@@ -71,7 +71,9 @@ test('report an error for an illegal start condition', async (t) => {
   const plan: ExecutionPlan = {
     start: { a: { condition: '!!!!' } },
     jobs: {
-      a: {},
+      a: {
+        expression: '.',
+      },
     },
   };
   const result = await executePlan(plan);
@@ -180,8 +182,7 @@ test('merge initial and inline state', async (t) => {
   t.is(result.data.y, 11);
 });
 
-// Not sure this is correct at all!!
-test('inline state overwrites initial state', async (t) => {
+test('Initial state overrides inline data', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
@@ -192,25 +193,28 @@ test('inline state overwrites initial state', async (t) => {
     },
   };
   const result = await executePlan(plan, { data: { x: 33 } });
-  t.is(result.data.x, 11);
+  t.is(result.data.x, 33);
 });
 
-test('inline state overwrites initial state on the second job', async (t) => {
+test('Previous state overrides inline data', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: {
+      // This will return x as 5
       job1: {
         expression: 'export default [s => s]',
-        next: { job2: true },
+        data: { x: 5 },
       },
+
+      // This will receive x as 5, prefer it to the default x as 88, and return x as 5
       job2: {
         expression: 'export default [s => s]',
-        data: { x: 11 },
+        data: { x: 88 },
       },
     },
   };
-  const result = await executePlan(plan, { data: { x: 33 } });
-  t.is(result.data?.x, 11);
+  const result = await executePlan(plan);
+  t.is(result.data.x, 5);
 });
 
 test('execute edge based on state in the condition', async (t) => {
