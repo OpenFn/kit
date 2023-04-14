@@ -40,3 +40,54 @@ test.serial(
     t.is(out.data.count, 12);
   }
 );
+
+// Multiple steps, shared array
+test.serial(`openfn ${jobsPath}/wf-array.json`, async (t) => {
+  await run(t.title);
+
+  const out = getJSON();
+  t.is(out.data.items.length, 2);
+  t.true(out.data.items.includes('a'));
+  t.true(out.data.items.includes('b'));
+});
+
+// Multiple steps, shared array, initial state
+test.serial(
+  `openfn ${jobsPath}/wf-array.json -S "{ \\"data\\": { \\"items\\": [\\"z\\"] } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.items.length, 3);
+    t.true(out.data.items.includes('z'));
+    t.true(out.data.items.includes('a'));
+    t.true(out.data.items.includes('b'));
+  }
+);
+
+test.serial(`openfn ${jobsPath}/wf-conditional.json`, async (t) => {
+  await run(t.title);
+
+  const out = getJSON();
+  t.is(out.data.result, 'small');
+});
+
+test.serial(
+  `openfn ${jobsPath}/wf-conditional.json -S "{ \\"data\\": { \\"number\\": 5 } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.result, 'small');
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/wf-conditional.json -S "{ \\"data\\": { \\"number\\": 20 } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.result, 'large');
+  }
+);

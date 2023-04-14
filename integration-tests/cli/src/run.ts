@@ -23,6 +23,7 @@ const run = async (
   return new Promise((resolve, reject) => {
     exec(mapOpenFnPath(cmd), options, (err, stdout, stderr) => {
       if (err) {
+        console.error(err);
         reject(err);
       }
       resolve({ stdout, stderr });
