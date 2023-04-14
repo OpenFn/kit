@@ -1,4 +1,5 @@
 import test from 'ava';
+import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import { ExecutionPlan, JobNode } from '../../src/types';
 import execute from './../../src/execute/plan';
@@ -414,8 +415,7 @@ test.serial('jobs do not share a this object', async (t) => {
 });
 
 // TODO this fails right now
-// That probably means we ought to freeze the context object
-// Although that causes everything to fail...
+// https://github.com/OpenFn/kit/issues/213
 test.skip('jobs cannot scribble on globals', async (t) => {
   const plan: ExecutionPlan = {
     start: 'a',
@@ -435,24 +435,37 @@ test.skip('jobs cannot scribble on globals', async (t) => {
   t.falsy(result.data.x);
 });
 
-// TODO common won't load unless we do some special setup
+// TODO this fails right now
+// https://github.com/OpenFn/kit/issues/213
 test.skip('jobs cannot scribble on adaptor functions', async (t) => {
   const plan: ExecutionPlan = {
     start: 'a',
     jobs: {
       a: {
         expression:
-          'import { fn } from "openfn/language-common"; fn.x = 10; export default [s => { global.x = 10; return s; }]',
+          'import { fn } from "@openfn/language-common"; fn.x = 10; export default [s => s]',
         next: {
           b: true,
         },
       },
       b: {
         expression:
-          'import { fn } from "openfn/language-common"; export default [s => { s.data.x = fn.x; return s; }]',
+          'import { fn } from "@openfn/language-common"; export default [s => { s.data.x = fn.x; return s; }]',
       },
     },
   };
-  const result = await executePlan(plan, { data: { x: 0 } });
+  const result = await executePlan(
+    plan,
+    { data: { x: 0 } },
+    {
+      linker: {
+        modules: {
+          '@openfn/language-common': {
+            path: path.resolve('test/__modules__/@openfn/language-common'),
+          },
+        },
+      },
+    }
+  );
   t.falsy(result.data.x);
 });

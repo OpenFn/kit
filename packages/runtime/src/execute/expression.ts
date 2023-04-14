@@ -17,7 +17,7 @@ export default (
     logger.debug('Intialising pipeline');
     logger.debug(`Timeout set to ${timeout}ms`);
 
-    // Setup a shared execution context
+    // Setup an execution context
     const context = buildContext(initialState, opts);
 
     const { operations, execute } = await prepareJob(expression, context, opts);
