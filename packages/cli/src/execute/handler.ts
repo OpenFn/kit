@@ -22,6 +22,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     // expand shorthand adaptors in the workflow jobs
     expandAdaptors(options);
   }
+  console.log(options.workflow);
 
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
