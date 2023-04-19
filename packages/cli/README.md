@@ -120,7 +120,7 @@ A workflow is in execution plan for running several jobs in a sequence, defined 
 
 To see an example workflow, run the test command with `openfn test`.
 
-A workflow has a structure like this:
+A workflow has a structure like this (better documentation is coming soon):
 
 ```
 {
@@ -135,7 +135,7 @@ A workflow has a structure like this:
   jobs: {
     // Define a job called a
     a: {
-      expression: "fn((state) => state)",
+      expression: "fn((state) => state)", // code or a path
       adaptor: "@openfn/language-common@1.75", // specifiy the adaptor to use (version optional)
       data: {}, // optionally pre-populate the data object (this will override keys in previous state)
       configuration: {}, // optionally pre-populate config object. Use this to pass credentials.
