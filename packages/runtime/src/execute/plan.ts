@@ -9,7 +9,7 @@ import type {
 } from '../types';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
-import compileConditions from './compile-plan';
+import compilePlan from './compile-plan';
 
 type ExeContext = {
   plan: CompiledExecutionPlan;
@@ -39,7 +39,7 @@ const executePlan = async (
   let compiledPlan;
   try {
     validatePlan(plan);
-    compiledPlan = compileConditions(plan);
+    compiledPlan = compilePlan(plan);
   } catch (e: any) {
     return {
       error: {
