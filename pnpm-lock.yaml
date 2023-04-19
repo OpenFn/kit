@@ -70,7 +70,6 @@ importers:
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
       ava: 5.1.0
-      fast-safe-stringify: ^2.1.1
       figures: ^5.0.0
       mock-fs: ^5.1.4
       rimraf: ^3.0.2
@@ -85,7 +84,6 @@ importers:
       '@openfn/describe-package': link:../describe-package
       '@openfn/logger': link:../logger
       '@openfn/runtime': link:../runtime
-      fast-safe-stringify: 2.1.1
       figures: 5.0.0
       rimraf: 3.0.2
       treeify: 1.1.0
