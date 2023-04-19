@@ -33,12 +33,11 @@ const run = (
   ) {
     // Build an execution plan for an incoming expression
     plan = {
-      start: 'default',
-      jobs: {
-        default: {
+      jobs: [
+        {
           expression: expressionOrXPlan,
         },
-      },
+      ],
     } as ExecutionPlan;
     logger.debug('Generated execution plan for incoming expression');
     // TODO how do we sanitise state.config?

@@ -53,13 +53,7 @@ const executePlan = async (
     };
   }
 
-  let queue: string[] = [];
-  for (const jobId in compiledPlan.start) {
-    const edge = compiledPlan.start[jobId];
-    if (!edge.condition || edge.condition(initialState)) {
-      queue.push(jobId);
-    }
-  }
+  let queue: string[] = [compiledPlan.start];
 
   const ctx = {
     plan: compiledPlan,

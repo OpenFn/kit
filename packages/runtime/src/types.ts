@@ -48,11 +48,12 @@ export type CompiledJobEdge = {
 };
 
 export type JobNode = {
+  id?: string;
   // The runtime itself will ignore the adaptor flag
   // The adaptor import should be compiled in by the compiler, and dependency managed by the runtime manager
   adaptor?: string;
 
-  expression: string | Operation[]; // the code we actually want to execute. Could be lazy loaded
+  expression?: string | Operation[]; // the code we actually want to execute. Could be lazy loaded
   configuration?: object; // credential object
   data?: State['data']; // initial state (globals)
 
@@ -65,13 +66,13 @@ export type CompiledJobNode = Omit<JobNode, 'next'> & {
 
 export type ExecutionPlan = {
   id?: string; // UUID for this plan
-  start: JobNodeID | Record<JobNodeID, true | JobEdge>;
-  jobs: Record<JobNodeID, JobNode>;
+  start?: JobNodeID;
+  jobs: JobNode[];
 };
 
 export type CompiledExecutionPlan = {
   id?: string;
-  start: Record<JobNodeID, CompiledJobEdge>;
+  start: JobNodeID;
   jobs: Record<JobNodeID, CompiledJobNode>;
 };
 

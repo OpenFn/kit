@@ -1,4 +1,4 @@
-import { ExecutionPlan } from '../types';
+import { ExecutionPlan, JobNode } from '../types';
 
 type ModelNode = {
   up: Record<string, true>;
@@ -21,10 +21,16 @@ export default (plan: ExecutionPlan) => {
 
 export const buildModel = (plan: ExecutionPlan) => {
   const model: Model = {};
-  const ensureModel = (jobId: string) => {
-    if (!plan.jobs[jobId]) {
-      throw new Error(`Cannot find job: ${jobId}`);
+
+  const jobIdx = plan.jobs.reduce((obj, item) => {
+    if (item.id) {
+      obj[item.id] = item;
     }
+    // TODO warn if there's no id? It's usually fine (until it isn't)
+    return obj;
+  }, {} as Record<string, JobNode>);
+
+  const ensureModel = (jobId: string) => {
     if (!model[jobId]) {
       model[jobId] = {
         up: {}, // ancestors / dependencies
@@ -34,34 +40,39 @@ export const buildModel = (plan: ExecutionPlan) => {
     return model[jobId];
   };
 
-  for (const jobId in plan.jobs) {
-    const job = plan.jobs[jobId];
-    const node = ensureModel(jobId);
+  const validateJob = (jobId: string) => {
+    const next = jobIdx[jobId];
+    if (!next) {
+      throw new Error(`Cannot find job: ${jobId}`);
+    }
+  };
 
-    for (const nextId in job.next) {
-      node.down[nextId] = true;
+  for (const job of plan.jobs) {
+    let node = job.id ? ensureModel(job.id) : { up: {}, down: {} };
+    if (typeof job.next === 'string') {
+      validateJob(job.next);
+    } else {
+      for (const nextId in job.next) {
+        validateJob(nextId);
 
-      const nextNode = ensureModel(nextId);
-      nextNode.up[jobId] = true;
+        node.down[nextId] = true;
+
+        const nextNode = ensureModel(nextId);
+        if (job.id) {
+          // TODO is this a big problem if a node is downstream of a node with no id?
+          // Probably not, as there's no way to loop back to it
+          nextNode.up[job.id] = true;
+        }
+      }
     }
   }
   return model;
 };
 
 const assertStart = (plan: ExecutionPlan) => {
-  if (!plan.start) {
-    throw new Error('No start job defined');
-  }
-
   if (typeof plan.start === 'string') {
-    if (!plan.jobs[plan.start]) {
+    if (!plan.jobs.find(({ id }) => id == plan.start)) {
       throw new Error(`Could not find start job: ${plan.start}`);
-    }
-  } else {
-    for (const startId in plan.start) {
-      if (!plan.jobs[startId]) {
-        throw new Error(`Could not find start job: ${startId}`);
-      }
     }
   }
 };

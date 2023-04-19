@@ -1,15 +1,19 @@
 import test from 'ava';
+import { ExecutionPlan } from '../../src';
 
 import validate, { buildModel } from '../../src/util/validate-plan';
 
 test('builds a simple model', (t) => {
-  const plan: any = {
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
         next: { b: true },
       },
-      b: {},
-    },
+      {
+        id: 'b',
+      },
+    ],
   };
 
   const model = buildModel(plan);
@@ -26,16 +30,18 @@ test('builds a simple model', (t) => {
 });
 
 test('builds a more complex model', (t) => {
-  const plan: any = {
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
         next: { b: true },
       },
-      b: {
+      {
+        id: 'b',
         next: { c: true, a: true },
       },
-      c: {},
-    },
+      { id: 'c' },
+    ],
   };
 
   const model = buildModel(plan);
@@ -56,16 +62,17 @@ test('builds a more complex model', (t) => {
 });
 
 test('throws for a circular dependency', (t) => {
-  const plan: any = {
-    start: 'a',
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
         next: { b: true },
       },
-      b: {
+      {
+        id: 'b',
         next: { a: true },
       },
-    },
+    ],
   };
 
   t.throws(() => validate(plan), {
@@ -74,21 +81,21 @@ test('throws for a circular dependency', (t) => {
 });
 
 test('throws for an indirect circular dependency', (t) => {
-  const plan: any = {
-    start: 'a',
-    start: 'a',
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
         next: { b: true },
-        start: 'a',
       },
-      b: {
+      {
+        id: 'b',
         next: { c: true },
       },
-      c: {
+      {
+        id: 'c',
         next: { a: true },
       },
-    },
+    ],
   };
 
   t.throws(() => validate(plan), {
@@ -97,20 +104,22 @@ test('throws for an indirect circular dependency', (t) => {
 });
 
 test('throws for a multiple inputs', (t) => {
-  const plan: any = {
-    start: 'a',
-    jobs: {
-      start: {
-        next: { a: true, b: true },
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        next: { b: true, c: true },
       },
-      a: {
+      {
+        id: 'b',
         next: { z: true },
       },
-      b: {
+      {
+        id: 'c',
         next: { z: true },
       },
-      z: {},
-    },
+      { id: 'z' },
+    ],
   };
   t.throws(() => validate(plan), {
     message: 'Multiple dependencies detected for: z',
@@ -118,48 +127,35 @@ test('throws for a multiple inputs', (t) => {
 });
 
 test('throws for a an unknown job', (t) => {
-  const plan: any = {
-    start: 'a',
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
         next: { z: true },
       },
-    },
+    ],
   };
   t.throws(() => validate(plan), {
     message: 'Cannot find job: z',
   });
 });
 
-test('throws for no start', (t) => {
-  const plan: any = {
-    jobs: {
-      a: {},
-    },
+test('throws for a an unknown job with shorthand syntax', (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: 'z',
+      },
+    ],
   };
   t.throws(() => validate(plan), {
-    message: 'No start job defined',
+    message: 'Cannot find job: z',
   });
 });
 
 test('throws for invalid string start', (t) => {
-  const plan: any = {
+  const plan: ExecutionPlan = {
     start: 'z',
-    jobs: {
-      a: {},
-    },
-  };
-  t.throws(() => validate(plan), {
-    message: 'Could not find start job: z',
-  });
-});
-
-test('throws for invalid start', (t) => {
-  const plan: any = {
-    start: { a: true, z: true },
-    jobs: {
-      a: {},
-    },
+    jobs: [{ id: 'a' }],
   };
   t.throws(() => validate(plan), {
     message: 'Could not find start job: z',

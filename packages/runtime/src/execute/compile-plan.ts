@@ -50,6 +50,8 @@ const compileEdges = (
 };
 
 export default (plan: ExecutionPlan) => {
+  let autoJobId = 0;
+  const generateJobId = () => `job-${++autoJobId}`;
   const context = conditionContext();
 
   const errs: Error[] = [];
@@ -70,14 +72,15 @@ export default (plan: ExecutionPlan) => {
 
   const newPlan = {
     jobs: {},
-  } as CompiledExecutionPlan;
+    start: plan.start,
+  } as Pick<CompiledExecutionPlan, 'jobs' | 'start'>;
 
-  trapErrors(() => {
-    newPlan.start = compileEdges('start', plan.start, context);
-  });
-
-  for (const jobId in plan.jobs) {
-    const job = plan.jobs[jobId];
+  for (const job of plan.jobs) {
+    const jobId = job.id || generateJobId();
+    if (!newPlan.start) {
+      // Default the start job to the first
+      newPlan.start = jobId;
+    }
     newPlan.jobs[jobId] = {
       expression: job.expression, // TODO we should compile this here
     };
