@@ -91,3 +91,13 @@ test.serial(
     t.is(out.data.result, 'large');
   }
 );
+
+test.serial(
+  `openfn ${jobsPath}/wf-simple.json -S "{ \\"data\\": { \\"count\\": 2 } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.count, 4);
+  }
+);

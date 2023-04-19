@@ -1,0 +1,9 @@
+{
+  "start": "a",
+  "jobs": {
+    "a": {
+      "adaptor": "common",
+      "expression": "simple.js"
+    }
+  }
+}
