@@ -59,6 +59,24 @@ test('jobs can handle a promise', async (t) => {
   t.deepEqual(state, result);
 });
 
+test('output state should be serializable', async (t) => {
+  const job = [async (s: State) => s];
+
+  const circular = {};
+  circular.self = circular;
+
+  const state = createState({
+    circular,
+    fn: () => {},
+  });
+  const result = await executeExpression(job, state);
+
+  t.notThrows(() => JSON.stringify(result));
+
+  t.is(result.data.circular.self, '[Circular]');
+  t.falsy(result.data.fn);
+});
+
 test('jobs run in series', async (t) => {
   const job = [
     (s: TestState) => {

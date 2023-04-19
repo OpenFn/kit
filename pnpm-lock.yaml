@@ -201,6 +201,7 @@ importers:
       '@openfn/logger': workspace:*
       '@types/node': ^17.0.31
       ava: 5.1.0
+      fast-safe-stringify: ^2.1.1
       mock-fs: ^5.1.4
       semver: ^7.3.8
       ts-node: ^10.9.1
@@ -209,6 +210,7 @@ importers:
       typescript: ^4.6.4
     dependencies:
       '@openfn/logger': link:../logger
+      fast-safe-stringify: 2.1.1
       semver: 7.3.8
     devDependencies:
       '@openfn/language-common': 2.0.0-rc3

@@ -469,3 +469,129 @@ test.skip('jobs cannot scribble on adaptor functions', async (t) => {
   );
   t.falsy(result.data.x);
 });
+
+test.serial(
+  'jobs can write circular references to state without blowing up downstream',
+  async (t) => {
+    const expression = `export default [(s) => {
+    const a  = {};
+    const b = { a };
+    a.b = b;
+    s.data = a
+
+    return s;
+  }]
+`;
+    const plan: ExecutionPlan = {
+      start: 'a',
+      jobs: {
+        a: {
+          expression,
+          next: { b: true },
+        },
+        b: {
+          expression: 'export default [(s => s)]',
+        },
+      },
+    };
+
+    const result = await executePlan(plan, { data: {} });
+
+    t.notThrows(() => JSON.stringify(result));
+    t.deepEqual(result, {
+      configuration: {},
+      data: {
+        b: {
+          a: '[Circular]',
+        },
+      },
+    });
+  }
+);
+
+test.serial('jobs cannot pass circular references to each other', async (t) => {
+  const expression = `export default [(s) => {
+    const a  = {};
+    const b = { a };
+    a.b = b;
+    s.data.ref = a
+
+    return s;
+  }]
+`;
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        expression,
+        next: { b: true },
+      },
+      b: {
+        expression: `export default [(s => {
+            s.data.answer = s.data.ref.b.a;
+            return s
+          })]`,
+      },
+    },
+  };
+
+  const result = await executePlan(plan, { data: {} });
+
+  t.notThrows(() => JSON.stringify(result));
+  t.is(result.data.answer, '[Circular]');
+});
+
+test.serial(
+  'jobs can write functions to state without blowing up downstream',
+  async (t) => {
+    const plan: ExecutionPlan = {
+      start: 'a',
+      jobs: {
+        a: {
+          next: { b: true },
+          expression: `export default [(s) => {
+            s.data = {
+              x: () => 22
+            }
+        
+            return s;
+          }]`,
+        },
+        b: {
+          expression: 'export default [(s) => s]',
+        },
+      },
+    };
+
+    const result = await executePlan(plan, { data: {} });
+
+    t.notThrows(() => JSON.stringify(result));
+    t.deepEqual(result, { data: {}, configuration: {} });
+  }
+);
+
+test.serial('jobs cannot pass functions to each other', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: {
+      a: {
+        next: { b: true },
+        expression: `export default [(s) => {
+            s.data = {
+              x: () => 22
+            }
+        
+            return s;
+          }]`,
+      },
+      b: {
+        expression: `export default [
+            (s) => { s.data.x(); return s; }
+          ]`,
+      },
+    },
+  };
+
+  // TODO this will throw right now, but in future it might just write an error to state
+  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+});

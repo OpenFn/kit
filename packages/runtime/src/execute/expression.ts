@@ -1,4 +1,5 @@
 import { printDuration, Logger } from '@openfn/logger';
+import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
 import { Operation, Options, JobModule, State } from '../types';
 import { ERR_TIMEOUT, ERR_RUNTIME_EXCEPTION, TIMEOUT } from '../runtime';
@@ -29,7 +30,7 @@ export default (
     );
 
     // Run the pipeline
-    logger.debug(`Executing pipeline (${operations.length} operations)`);
+    logger.debug(`Executing expression (${operations.length} operations)`);
 
     const tid = setTimeout(() => {
       logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -40,10 +41,10 @@ export default (
     try {
       const result = await reducer(initialState);
       clearTimeout(tid);
-      logger.debug('Pipeline complete!');
+      logger.debug('Expression complete!');
       logger.debug(result);
       // return the final state
-      resolve(result);
+      resolve(prepareFinalState(result));
     } catch (e: any) {
       // Note: e will be some kind of serialized error object and not an instance of Error
       // See https://github.com/OpenFn/kit/issues/143
@@ -98,4 +99,14 @@ const prepareJob = async (
     }
     return { operations: expression as Operation[] };
   }
+};
+
+// TODO this is suboptimal and may be slow on large objects
+// (especially as the result get stringified again downstream)
+const prepareFinalState = (state: any) => {
+  if (state) {
+    const cleanState = stringify(state);
+    return JSON.parse(cleanState);
+  }
+  return state;
 };
