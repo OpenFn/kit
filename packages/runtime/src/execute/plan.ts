@@ -1,5 +1,6 @@
 import type { Logger } from '@openfn/logger';
 import executeExpression from './expression';
+import compilePlan from './compile-plan';
 import type {
   CompiledExecutionPlan,
   ExecutionPlan,
@@ -9,7 +10,6 @@ import type {
 } from '../types';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
-import compilePlan from './compile-plan';
 
 type ExeContext = {
   plan: CompiledExecutionPlan;
@@ -89,13 +89,16 @@ const executeJob = async (
   }
 
   const state = assembleState(initialState, job.configuration, job.data);
-  // The expression SHOULD return state, but could return anything
-  const result = await executeExpression(
-    job.expression,
-    state,
-    ctx.logger,
-    ctx.opts
-  );
+  let result: any = state;
+  if (job.expression) {
+    // The expression SHOULD return state, but could return anything
+    result = await executeExpression(
+      job.expression,
+      state,
+      ctx.logger,
+      ctx.opts
+    );
+  }
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];

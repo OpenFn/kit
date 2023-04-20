@@ -140,46 +140,65 @@ test('execute a one-job execution plan with initial state', async (t) => {
   t.is(result, 33);
 });
 
-// TODO this needs a radical restructure
-// test('execute if the start condition is true', async (t) => {
-//   const plan: ExecutionPlan = {
-//     start: {
-//       {
-//         id: 'job1',
-//         condition: 'state.data.x === 10',
-//       },
-//     },
-//     jobs: [
-//       {
-//         id: 'job1',
-//         expression: 'export default [s => s]',
-//       },
-//     ],
-//   };
-//   const result = await executePlan(plan, { data: { x: 10 } });
-//   t.is((result.data as any).x, 10);
-// });
+test('execute a job with a simple truthy "precondition" or "trigger node"', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: {
+          job: {
+            condition: 'true',
+          },
+        },
+      },
+      {
+        id: 'job',
+        expression: 'export default [() => ({ data: { done: true } })]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.true(result.data.done);
+});
 
-// TODO this too
-// test("don't execute if the start condition is false", async (t) => {
-//   const plan: ExecutionPlan = {
-//     start: {
-//       {
-//         id: 'job1',
-//         condition: 'state.data.x === 10',
-//       },
-//     },
-//     jobs: [
-//       {
-//         id: 'job1',
-//         expression: 'export default [s => s]',
-//       },
-//     ],
-//   };
-//   const state = { data: { x: 0 } };
-//   const result = await executePlan(plan, state);
-//   t.deepEqual(result, state);
-// });
+test('do not execute a job with a simple falsy "precondition" or "trigger node"', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: {
+          job: {
+            condition: 'false',
+          },
+        },
+      },
+      {
+        id: 'job',
+        expression: 'export default [() => ({ data: { done: true } })]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.falsy(result.data.done);
+});
+
+test('execute a job with a valid "precondition" or "trigger node"', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: {
+          job: {
+            condition: 'state.data.x === 10',
+          },
+        },
+      },
+      {
+        id: 'job',
+        expression: 'export default [() => ({ data: { done: true } })]',
+      },
+    ],
+  };
+  const result = await executePlan(plan, { data: { x: 10 } });
+  t.true(result.data.done);
+});
 
 test('merge initial and inline state', async (t) => {
   const plan: ExecutionPlan = {
