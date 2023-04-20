@@ -16,6 +16,7 @@ export declare interface Operation<T = Promise<State> | State> {
 }
 
 export type Options = {
+  start?: JobNodeID;
   logger?: Logger;
   jobLogger?: Logger;
 

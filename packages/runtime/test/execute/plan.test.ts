@@ -290,24 +290,42 @@ test('execute a two-job execution plan', async (t) => {
   t.is(result.data.x, 2);
 });
 
-test('execute a two-job execution plan with custom start', async (t) => {
+test('execute a two-job execution plan with custom start in state', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job2',
     jobs: [
       {
         id: 'job1',
-        expression:
-          'export default [s => { if (s.data.x == 10) { s.data.x += 1; } return s; } ]',
+        expression: 'export default [() => ({ data: { result: 11 } }) ]',
       },
       {
         id: 'job2',
-        expression: 'export default [s => { s.data.x = 10; return s; } ]',
+        expression: 'export default [() => ({ data: { result: 1 } }) ]',
         next: { job1: true },
       },
     ],
   };
   const result = await executePlan(plan);
-  t.is(result.data.x, 11);
+  t.is(result.data.result, 11);
+});
+
+test('execute a two-job execution plan with custom start in options', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'job1',
+    jobs: [
+      {
+        id: 'job1',
+        expression: 'export default [() => ({ data: { result: 11 } }) ]',
+      },
+      {
+        id: 'job2',
+        expression: 'export default [() => ({ data: { result: 1 } }) ]',
+        next: { job1: true },
+      },
+    ],
+  };
+  const result = await executePlan(plan, {}, { start: 'job2' });
+  t.is(result.data.result, 11);
 });
 
 test('Return when there are no more edges', async (t) => {

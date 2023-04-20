@@ -53,7 +53,7 @@ const executePlan = async (
     };
   }
 
-  let queue: string[] = [compiledPlan.start];
+  let queue: string[] = [opts.start || compiledPlan.start];
 
   const ctx = {
     plan: compiledPlan,

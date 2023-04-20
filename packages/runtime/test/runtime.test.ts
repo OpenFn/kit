@@ -1,4 +1,5 @@
 import test from 'ava';
+import { ExecutionPlan } from '../src';
 import run from '../src/runtime';
 
 // High level examples of runtime usages
@@ -11,13 +12,10 @@ test('run simple expression', async (t) => {
 });
 
 test('run a simple workflow', async (t) => {
-  const plan = {
-    start: 'test-job',
-    jobs: {
-      'test-job': {
-        expression: 'export default [(s) => {s.data.done = true; return s}]',
-      },
-    },
+  const plan: ExecutionPlan = {
+    jobs: [
+      { expression: 'export default [(s) => ({ data: { done: true } })]' },
+    ],
   };
 
   const result: any = await run(plan);
@@ -25,10 +23,9 @@ test('run a simple workflow', async (t) => {
 });
 
 test('run a workflow with state and parallel branching', async (t) => {
-  const plan = {
-    start: 'a',
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
         expression:
           'export default [(s) => { s.data.count += 1; s.data.a = true; return s}]',
         next: {
@@ -36,15 +33,17 @@ test('run a workflow with state and parallel branching', async (t) => {
           c: true as const,
         },
       },
-      b: {
+      {
+        id: 'b',
         expression:
           'export default [(s) => { s.data.count += 1; s.data.b = true; return s}]',
       },
-      c: {
+      {
+        id: 'c',
         expression:
           'export default [(s) => { s.data.count += 1; s.data.c = true; return s}]',
       },
-    },
+    ],
   };
 
   const result: any = await run(plan, { data: { count: 0 } });
@@ -55,10 +54,9 @@ test('run a workflow with state and parallel branching', async (t) => {
 });
 
 test('run a workflow with state and conditional branching', async (t) => {
-  const plan = {
-    start: 'a',
-    jobs: {
-      a: {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
         expression: 'export default [(s) => { s.data.a = true; return s}]',
         next: {
           b: {
@@ -69,13 +67,15 @@ test('run a workflow with state and conditional branching', async (t) => {
           },
         },
       },
-      b: {
+      {
+        id: 'b',
         expression: 'export default [(s) => { s.data.b = true; return s}]',
       },
-      c: {
+      {
+        id: 'c',
         expression: 'export default [(s) => { s.data.c = true; return s}]',
       },
-    },
+    ],
   };
 
   const result1: any = await run(plan, { data: { count: 10 } });
@@ -89,4 +89,29 @@ test('run a workflow with state and conditional branching', async (t) => {
   t.falsy(result2.data.b);
   t.true(result2.data.c);
   t.is(result2.data.count, 0);
+});
+
+test('run a workflow with initial state and optional start', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        // won't run
+        id: 'a',
+        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+        next: { b: true },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+        next: { c: true },
+      },
+      {
+        id: 'c',
+        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+      },
+    ],
+  };
+
+  const result: any = await run(plan, { data: { count: 10 } }, { start: 'b' });
+  t.is(result.data.count, 12);
 });
