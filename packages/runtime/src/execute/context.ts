@@ -1,21 +1,32 @@
 import vm from 'node:vm';
 import type { Options, State } from '../types';
 
+const freezeAll = (obj: object, exclude: Record<string, true> = {}) => {
+  const copy = {};
+  for (const key in obj) {
+    copy[key] = exclude[key] ? obj[key] : Object.freeze(obj[key]);
+  }
+  return copy;
+};
+
 // Build a safe and helpful execution context
 // This will be shared by all jobs
 export default (state: State, options: Pick<Options, 'jobLogger'>) => {
   const logger = options.jobLogger ?? console;
   const context = vm.createContext(
-    {
-      console: logger,
-      state, // TODO I don't really want to pass global state through
-      clearInterval,
-      clearTimeout,
-      parseFloat,
-      parseInt,
-      setInterval,
-      setTimeout,
-    },
+    freezeAll(
+      {
+        console: logger,
+        clearInterval,
+        clearTimeout,
+        parseFloat,
+        parseInt,
+        setInterval,
+        setTimeout,
+        state, // TODO I don't really want to pass global state through
+      },
+      { state: true }
+    ),
     {
       codeGeneration: {
         strings: false,

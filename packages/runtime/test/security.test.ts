@@ -110,7 +110,9 @@ test.serial(
       ],
     };
 
-    const result: any = await run(plan);
-    t.falsy(result.data.x);
+    await t.throwsAsync(() => run(plan), {
+      // TODO this error handling is not good
+      message: 'runtime exception',
+    });
   }
 );
