@@ -66,15 +66,17 @@ test('run a job with initial state', async (t) => {
 test('run a workflow', async (t) => {
   const workflow = {
     start: 'a',
-    jobs: {
-      a: {
+    jobs: [
+      {
+        id: 'a',
         expression: `${fn}fn(() => ({ data: { count: 42 } }));`,
         next: { b: true },
       },
-      b: {
+      {
+        id: 'b',
         expression: `${fn}fn((state) => { state.data.count = state.data.count * 2; return state; });`,
       },
-    },
+    ],
   };
   const options = {
     ...defaultOptions,
@@ -87,17 +89,19 @@ test('run a workflow', async (t) => {
 test('run a workflow with state', async (t) => {
   const workflow = {
     start: 'a',
-    jobs: {
-      a: {
+    jobs: [
+      {
+        id: 'a',
         data: { count: 1 },
         expression: `${fn}fn((state) => { state.data.count += 1; return state;});`,
         next: { b: true },
       },
-      b: {
+      {
+        id: 'b',
         data: { diff: 2 },
         expression: `${fn}fn((state) => { state.data.count += state.data.diff; return state; });`,
       },
-    },
+    ],
   };
   const options = {
     ...defaultOptions,
@@ -110,15 +114,17 @@ test('run a workflow with state', async (t) => {
 test('run a workflow with initial state', async (t) => {
   const workflow = {
     start: 'a',
-    jobs: {
-      a: {
+    jobs: [
+      {
+        id: 'a',
         expression: `${fn}fn((state) => { state.data.count += 1; return state;});`,
         next: { b: true },
       },
-      b: {
+      {
+        id: 'b',
         expression: `${fn}fn((state) => { state.data.count += 1; return state; });`,
       },
-    },
+    ],
   };
   const options = {
     ...defaultOptions,
@@ -131,13 +137,12 @@ test('run a workflow with initial state', async (t) => {
 
 test('run a workflow with an adaptor (longform)', async (t) => {
   const workflow = {
-    start: 'a',
-    jobs: {
-      a: {
+    jobs: [
+      {
         adaptor: '@openfn/language-common',
         expression: `fn((state) => state);`,
       },
-    },
+    ],
   };
   const options = {
     ...defaultOptions,
@@ -150,13 +155,12 @@ test('run a workflow with an adaptor (longform)', async (t) => {
 
 test('run a workflow with an adaptor (shortform)', async (t) => {
   const workflow = {
-    start: 'a',
-    jobs: {
-      a: {
+    jobs: [
+      {
         adaptor: 'common',
         expression: `fn((state) => state);`,
       },
-    },
+    ],
   };
   const options = {
     ...defaultOptions,

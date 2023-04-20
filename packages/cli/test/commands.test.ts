@@ -121,17 +121,18 @@ test.serial('run a job with defaults: openfn job.js', async (t) => {
 
 test.serial('run a workflow', async (t) => {
   const workflow = {
-    start: 'job1',
-    jobs: {
-      job1: {
+    jobs: [
+      {
+        id: 'job1',
         data: { x: 0 },
         expression: 'export default [s => { s.data.x += 1; return s; } ]',
         next: { job2: true },
       },
-      job2: {
+      {
+        id: 'job2',
         expression: 'export default [s => { s.data.x += 1; return s; } ]',
       },
-    },
+    ],
   };
 
   const options = {
@@ -386,14 +387,13 @@ test.serial(
   'run a workflow using language-common: openfn wf.json',
   async (t) => {
     const workflow = {
-      start: 'job1',
-      jobs: {
-        job1: {
+      jobs: [
+        {
           adaptor: '@openfn/language-common',
           expression:
             'fn((state) => { state.data.done = true; return state; });',
         },
-      },
+      ],
     };
 
     const options = {
@@ -460,14 +460,14 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
 
   const wf = JSON.stringify({
     start: 'a',
-    jobs: { a: { expression: 'x()' } },
+    jobs: [{ expression: 'x()' }],
   });
   await run('compile wf.json -o out.json', wf, options);
 
   const output = await fs.readFile('out.json', 'utf8');
   const result = JSON.parse(output);
   t.truthy(result);
-  t.is(result.jobs.a.expression, 'export default [x()];');
+  t.is(result.jobs[0].expression, 'export default [x()];');
 });
 
 test.serial('pwd should return the default repo path', async (t) => {

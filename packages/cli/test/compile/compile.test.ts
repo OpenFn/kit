@@ -63,10 +63,10 @@ test.serial('compile from path', async (t) => {
 test('compile from workflow', async (t) => {
   const workflow = {
     start: 'a',
-    jobs: {
-      a: { expression: 'x()' },
-      b: { expression: 'x()' },
-    },
+    jobs: [
+      { id: 'a', expression: 'x()' },
+      { id: 'b', expression: 'x()' },
+    ],
   };
 
   const opts = {
@@ -76,8 +76,8 @@ test('compile from workflow', async (t) => {
   const result = await compile(opts, mockLog);
 
   const expected = 'export default [x()];';
-  t.is(result.jobs.a.expression, expected);
-  t.is(result.jobs.b.expression, expected);
+  t.is(result.jobs[0].expression, expected);
+  t.is(result.jobs[1].expression, expected);
 });
 
 test('stripVersionSpecifier: remove version specifier from @openfn', (t) => {

@@ -29,8 +29,7 @@ const compileWorkflow = async (
   opts: CompileOptions,
   log: Logger
 ) => {
-  for (const jobId in workflow.jobs) {
-    const job = workflow.jobs[jobId];
+  for (const job of workflow.jobs) {
     const jobOpts = {
       ...opts,
     };
@@ -39,7 +38,9 @@ const compileWorkflow = async (
     }
     const compilerOptions: Options = await loadTransformOptions(jobOpts, log);
 
-    job.expression = compile(job.expression as string, compilerOptions);
+    if (job.expression) {
+      job.expression = compile(job.expression as string, compilerOptions);
+    }
   }
   return workflow;
 };

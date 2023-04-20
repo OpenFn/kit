@@ -18,7 +18,6 @@ export default (
   // we can just listen to runtime events and do the logging ourselves here
   // Then again, maybe that doesn't make sense
   // Maybe we have to feed a job logger in?
-  console.log('execute', input);
   return run(input, state, {
     timeout: opts.timeout,
     immutableState: opts.immutable,
