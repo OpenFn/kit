@@ -119,6 +119,8 @@ Run `openfnx` to use this dev-version of the CLI without overriding your product
 
 This uses a similar technique to the release CLI below.
 
+To remove the dev cli, run `npm uninstall -g @openfn/clix`
+
 ## Testing the release CLI
 
 You can test the built CLI package to ensure it works before publishing it.

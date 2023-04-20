@@ -22,6 +22,7 @@ exec('git branch --show-current', {}, async (err, branchName) => {
   // This won't change the tarball name though
   const onPackage = (packageName, pkg) => {
     if (packageName == '@openfn/cli') {
+      pkg.name = `@openfn/clix`;
       pkg.bin = {
         openfnx: 'dist/index.js',
       };
