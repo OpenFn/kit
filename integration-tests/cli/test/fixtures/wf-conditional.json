@@ -1,7 +1,8 @@
 {
   "start": "start",
-  "jobs": {
-    "start": {
+  "jobs": [
+    {
+      "id": "start",
       "data": {
         "number": 1
       },
@@ -12,13 +13,15 @@
         "large": { "condition": "state.data.number >= 10" }
       }
     },
-    "small": {
+    {
+      "id": "small",
       "adaptor": "common",
       "expression": "fn((state) => { state.data.result = \"small\"; return state; });"
     },
-    "large": {
+    {
+      "id": "large",
       "adaptor": "common",
       "expression": "fn((state) => { state.data.result = \"large\"; return state; });"
     }
-  }
+  ]
 }

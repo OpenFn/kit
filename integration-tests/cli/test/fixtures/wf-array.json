@@ -1,18 +1,20 @@
 {
-  "start": "a",
-  "jobs": {
-    "a": {
+  "jobs": [
+    {
+      "id": "a",
       "adaptor": "common",
       "expression": "fn((state) => { if (!state.data.items) { state.data.items = []; } return state; });",
       "next": { "b": true, "c": true }
     },
-    "b": {
+    {
+      "id": "b",
       "adaptor": "common",
       "expression": "fn((state) => { state.data.items.push('a'); return state; });"
     },
-    "c": {
+    {
+      "id": "c",
       "adaptor": "common",
       "expression": "fn((state) => { state.data.items.push('b'); return state; });"
     }
-  }
+  ]
 }

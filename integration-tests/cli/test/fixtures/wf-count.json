@@ -1,14 +1,14 @@
 {
-  "start": "a",
-  "jobs": {
-    "a": {
+  "jobs": [
+    {
       "adaptor": "common",
       "expression": "fn((state) => (state.data.count ? state : { data: { count: 21 } }));",
       "next": { "b": true }
     },
-    "b": {
+    {
+      "id": "b",
       "adaptor": "common",
       "expression": "fn((state) => { state.data.count = state.data.count * 2; return state; });"
     }
-  }
+  ]
 }
