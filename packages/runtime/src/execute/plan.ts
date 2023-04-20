@@ -5,9 +5,9 @@ import type {
   CompiledExecutionPlan,
   ExecutionPlan,
   JobNodeID,
-  Options,
   State,
 } from '../types';
+import type { Options } from '../runtime';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
 
@@ -81,12 +81,9 @@ const executeJob = async (
   initialState: State
 ): Promise<{ next: JobNodeID[]; state: any }> => {
   const next: string[] = [];
-  const job = ctx.plan.jobs[jobId];
 
-  if (!job) {
-    // TODO do something if we couldn't find this step in the plan
-    return { next, state: null };
-  }
+  // We should by this point have validated the plan, so the job MUST exist
+  const job = ctx.plan.jobs[jobId];
 
   const state = assembleState(initialState, job.configuration, job.data);
   let result: any = state;
@@ -105,7 +102,7 @@ const executeJob = async (
       if (!edge.condition || edge.condition(result)) {
         next.push(nextJobId);
       }
-      // TODO errors and acceptErrors
+      // TODO errors
     }
   }
   return { next, state: result };

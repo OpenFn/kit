@@ -1,8 +1,12 @@
 import vm from 'node:vm';
-import type { Options, State } from '../types';
+import type { State } from '../types';
+import type { Options } from '../runtime';
 
-const freezeAll = (obj: object, exclude: Record<string, true> = {}) => {
-  const copy = {};
+const freezeAll = (
+  obj: Record<string, any>,
+  exclude: Record<string, true> = {}
+) => {
+  const copy: typeof obj = {};
   for (const key in obj) {
     copy[key] = exclude[key] ? obj[key] : Object.freeze(obj[key]);
   }
@@ -23,7 +27,7 @@ export default (state: State, options: Pick<Options, 'jobLogger'>) => {
         parseInt,
         setInterval,
         setTimeout,
-        state, // TODO I don't really want to pass global state through
+        state, // TODO will be dropped as a global one day, see https://github.com/OpenFn/kit/issues/17
       },
       { state: true }
     ),

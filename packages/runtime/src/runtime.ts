@@ -1,6 +1,8 @@
-import { createMockLogger } from '@openfn/logger';
+import { createMockLogger, Logger } from '@openfn/logger';
+
+import type { Operation, ExecutionPlan, State, JobNodeID } from './types';
+import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
-import type { Operation, ExecutionPlan, Options, State } from './types';
 import clone from './util/clone';
 
 export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -9,6 +11,24 @@ export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 export const ERR_TIMEOUT = 'timeout';
 // TODO maybe this is a job exception? Job fail?
 export const ERR_RUNTIME_EXCEPTION = 'runtime exception';
+
+export type Options = {
+  start?: JobNodeID;
+  logger?: Logger;
+  jobLogger?: Logger;
+
+  timeout?: number;
+
+  // Treat state as immutable (likely to break in legacy jobs)
+  immutableState?: boolean;
+
+  // TODO currently unused
+  // Ensure that all incoming jobs are sandboxed / loaded as text
+  // In practice this means throwing if someone tries to pass live js
+  forceSandbox?: boolean;
+
+  linker?: LinkerOptions;
+};
 
 const defaultState = { data: {}, configuration: {} };
 
