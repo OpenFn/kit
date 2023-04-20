@@ -115,3 +115,38 @@ test('run a workflow with initial state and optional start', async (t) => {
   const result: any = await run(plan, { data: { count: 10 } }, { start: 'b' });
   t.is(result.data.count, 12);
 });
+
+test('run a workflow with a trigger node', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: { b: { condition: 'state.data.age > 18 ' } },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => { s.data.done = true ; return s}]',
+      },
+    ],
+  };
+
+  const result: any = await run(plan, { data: { age: 28 } });
+  t.true(result.data.done);
+});
+
+test('prefer initial state to inline state', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        data: {
+          x: 20, // this will be overriden by the incoming state
+          y: 20, // This will be untouched
+        },
+        expression: 'export default [(s) => s]',
+      },
+    ],
+  };
+
+  const result: any = await run(plan, { data: { x: 40 } });
+  t.is(result.data.x, 40);
+  t.is(result.data.y, 20);
+});

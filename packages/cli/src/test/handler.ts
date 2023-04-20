@@ -12,30 +12,31 @@ const testHandler = async (options: ExecuteOptions, logger: Logger) => {
   options.adaptors = [];
 
   options.workflow = {
-    start: {
-      startup: true,
-    },
-    jobs: {
-      startup: {
+    start: 'start',
+    jobs: [
+      {
+        id: 'start',
         data: { defaultAnswer: 42 },
         expression:
           "const fn = () => (state) => { console.log('Starting computer...'); return state; }; fn()",
         next: {
-          calculate: true,
+          calculate: '!state.error',
         },
       },
-      calculate: {
+      {
+        id: 'calculate',
         expression:
           "const fn = () => (state) => { console.log('Calculating to life, the universe, and everything..'); return state }; fn()",
         next: {
           result: true,
         },
       },
-      result: {
+      {
+        id: 'result',
         expression:
           'const fn = () => (state) => ({ data: { answer: state.data.answer || state.data.defaultAnswer } }); fn()',
       },
-    },
+    ],
   };
 
   logger.break();
