@@ -13,6 +13,7 @@
     "test:types": "pnpm -r --filter './packages/*' run test:types",
     "pack": "pnpm -r run pack",
     "pack:local": "pnpm run pack && node ./build/pack-local.js",
+    "install:global": "pnpm run pack && node ./build/install-global.js",
     "export": "sh scripts/export.sh"
   },
   "keywords": [],
