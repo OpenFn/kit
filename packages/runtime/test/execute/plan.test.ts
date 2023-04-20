@@ -74,20 +74,25 @@ test('report an error for a plan which references an undefined job', async (t) =
   t.regex(result.error.message, /cannot find job/i);
 });
 
-//TODO move to edge if we dont have it
-// test.skip('report an error for an illegal start condition', async (t) => {
-//   const plan: ExecutionPlan = {
-//     start: { a: { condition: '!!!!' } },
-//     jobs: [
-//       {
-//         expression: '.',
-//       },
-//     ],
-//   };
-//   const result = await executePlan(plan);
-//   t.assert(result.hasOwnProperty('error'));
-//   t.regex(result.error.message, /failed to compile edge condition start->a/i);
-// });
+test('report an error for an illegal edge condition', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: '.',
+        next: {
+          b: {
+            condition: '!!!',
+          },
+        },
+      },
+      { id: 'b' },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.assert(result.hasOwnProperty('error'));
+  t.regex(result.error.message, /failed to compile edge condition a->b/i);
+});
 
 test('report an error for an edge condition', async (t) => {
   const plan: ExecutionPlan = {
@@ -522,15 +527,14 @@ test.serial(
     const result = await executePlan(plan, { data: {} });
 
     t.notThrows(() => JSON.stringify(result));
-    // t.deepEqual(result, {
-    //   configuration: {},
-    //   data: {
-    //     {
-    //       id: 'b',
-    //       a: '[Circular]',
-    //     },
-    //   },
-    // });
+    t.deepEqual(result, {
+      configuration: {},
+      data: {
+        b: {
+          a: '[Circular]',
+        },
+      },
+    });
   }
 );
 

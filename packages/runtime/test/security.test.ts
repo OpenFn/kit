@@ -90,28 +90,27 @@ test.serial('jobs should be able to use sensible timeouts', async (t) => {
   t.is(result, 22);
 });
 
-// This test passes to show current behaviour, but we probably don't want it to!
-// https://github.com/OpenFn/kit/issues/213
+// Relates to https://github.com/OpenFn/kit/issues/213
 test.serial(
-  'jobs in workflow can share data through globals (issue #213)',
+  'jobs in workflow cannot share data through globals (issue #213)',
   async (t) => {
     const plan: ExecutionPlan = {
-      start: 'a',
-      jobs: {
-        a: {
+      jobs: [
+        {
           expression: 'export default [s => { console.x = 10; return s; }]',
           next: {
             b: true,
           },
         },
-        b: {
+        {
+          id: 'b',
           expression:
             'export default [s => { s.data.x = console.x; return s; }]',
         },
-      },
+      ],
     };
 
     const result: any = await run(plan);
-    t.is(result.data.x, 10);
+    t.falsy(result.data.x);
   }
 );
