@@ -109,7 +109,17 @@ pnpm changeset publish --otp <OTP>
 git push --follow-tags
 ```
 
-## Testing the built package
+## Testing the CLI on a branch
+
+From the repo root, run `pnpm install:global`.
+
+This will build the CLI into `./dist`, set the version to the current branch name, and install it globally as `openfnx`.
+
+Run `openfnx` to use this dev-version of the CLI without overriding your production install.
+
+This uses a similar technique to the release CLI below.
+
+## Testing the release CLI
 
 You can test the built CLI package to ensure it works before publishing it.
 
