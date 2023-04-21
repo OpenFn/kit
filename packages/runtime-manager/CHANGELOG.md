@@ -1,5 +1,14 @@
 # runtime-manager
 
+## 0.0.32
+
+### Patch Changes
+
+- 91a3311: checked-in package-lock changes for language-common
+- Updated dependencies [91a3311]
+  - @openfn/compiler@0.0.31
+  - @openfn/runtime@0.0.23
+
 ## 0.0.31
 
 ### Patch Changes

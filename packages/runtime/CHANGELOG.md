@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.23
+
+### Patch Changes
+
+- 91a3311: checked-in package-lock changes for language-common
+
 ## 0.0.22
 
 ### Patch Changes

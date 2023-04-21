@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.0.31
+
+### Patch Changes
+
+- 91a3311: checked-in package-lock changes for language-common
+
 ## 0.0.30
 
 ### Patch Changes
