@@ -33,6 +33,7 @@ export type Opts = {
   repoDir?: string;
   skipAdaptorValidation?: boolean;
   specifier?: string; // docgen
+  start?: string; // workflow start node
   statePath?: string;
   stateStdin?: string;
   strictOutput?: boolean; // defaults to true
@@ -235,6 +236,14 @@ export const repoDir: CLIOption = {
   yargs: {
     description: 'Provide a path to the repo root dir',
     default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+  },
+};
+
+export const start: CLIOption = {
+  name: 'start',
+  yargs: {
+    string: true,
+    description: 'Specifiy the start node in a workflow',
   },
 };
 

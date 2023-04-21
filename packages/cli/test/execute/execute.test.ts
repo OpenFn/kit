@@ -186,6 +186,28 @@ test('run a workflow with config as a path', async (t) => {
   t.is(result.configuration.id, 'x');
 });
 
+test('run a workflow from a start node', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        id: 'a',
+        expression: `${fn}fn((state) => ({ data: { result: 'a' }}))`,
+      },
+      {
+        id: 'b',
+        expression: `${fn}fn((state) => ({ data: { result: 'b' }}))`,
+      },
+    ],
+  };
+  const options = {
+    ...defaultOptions,
+    workflow,
+    start: 'b',
+  };
+  const result = await handler(options, logger);
+  t.is(result.data.result, 'b');
+});
+
 test('run a workflow with an adaptor (longform)', async (t) => {
   const workflow = {
     jobs: [

@@ -19,6 +19,7 @@ export default (
   // Then again, maybe that doesn't make sense
   // Maybe we have to feed a job logger in?
   return run(input, state, {
+    start: opts.start,
     timeout: opts.timeout,
     immutableState: opts.immutable,
     logger: createLogger(RUNTIME, opts as any), // TODO log types are flaky right now

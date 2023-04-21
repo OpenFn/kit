@@ -21,6 +21,7 @@ export type ExecuteOptions = Required<
     | 'path'
     | 'repoDir'
     | 'skipAdaptorValidation'
+    | 'start'
     | 'statePath'
     | 'stateStdin'
     | 'strictOutput'
@@ -46,6 +47,7 @@ const options = [
   o.outputStdout,
   o.repoDir,
   o.skipAdaptorValidation,
+  o.start,
   o.statePath,
   o.stateStdin,
   o.strictOutput,
