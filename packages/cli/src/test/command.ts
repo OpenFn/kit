@@ -1,18 +1,16 @@
-import yargs, { Arguments } from 'yargs';
-import { Opts } from '../options';
+import yargs from 'yargs';
+import * as o from '../options';
+import type { Opts } from '../options';
+import { build, ensure } from '../util/command-builders';
+
+export type TestOptions = Pick<Opts, 'stateStdin'>;
+
+const options = [o.stateStdin];
 
 export default {
   command: 'test',
   desc: 'Compiles and runs a test job, printing the result to stdout',
-  handler: (argv: Arguments<Opts>) => {
-    argv.command = 'test';
-  },
-  builder: (yargs: yargs.Argv) =>
-    yargs
-      .option('state-stdin', {
-        alias: 'S',
-        description: 'Read state from stdin (instead of a file)',
-      })
-      .example('test', 'run the test script')
-      .example('test -S 42', 'run the test script with state 42'),
+  handler: ensure('test', options),
+  builder: (yargs) =>
+    build(options, yargs).example('test', 'Run the test script'),
 } as yargs.CommandModule<{}>;

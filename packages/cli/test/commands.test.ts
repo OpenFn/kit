@@ -16,8 +16,9 @@ test.afterEach(() => {
   logger._reset();
 });
 
-const JOB_EXPORT_42 = 'export default [() => 42];';
-const JOB_TIMES_2 = 'export default [(state) => state * 2];';
+const JOB_EXPORT_42 = 'export default [() => ({ data: { count: 42 } })];';
+const JOB_TIMES_2 =
+  'export default [(state) => { state.data.count = state.data.count * 2; return state; }];';
 const JOB_MOCK_ADAPTOR =
   'import { byTwo } from "times-two"; export default [byTwo];';
 const JOB_EXPORT_STATE =
@@ -107,14 +108,62 @@ test.serial('run test job with default state', async (t) => {
 });
 
 test.serial('run test job with custom state', async (t) => {
-  await run('test -S 1', '', { logger });
+  const state = JSON.stringify({ data: { answer: 1 } });
+  await run(`test -S ${state}`, '', { logger });
   const { message } = logger._parse(logger._last);
-  t.assert(message === 'Result: 2');
+  t.assert(message === 'Result: 1');
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
   const result = await run('openfn job.js', JOB_EXPORT_42);
-  t.assert(result === 42);
+  t.assert(result.data.count === 42);
+});
+
+test.serial('run a workflow', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        id: 'job1',
+        data: { x: 0 },
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+        next: { job2: true },
+      },
+      {
+        id: 'job2',
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+      },
+    ],
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    jobPath: 'wf.json', // just to fool the test
+  };
+
+  const result = await run('openfn wf.json', JSON.stringify(workflow), options);
+  t.assert(result.data.x === 2);
+});
+
+test.serial('run a workflow with config as a path', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        data: { x: 0 },
+        configuration: { y: 0 },
+        expression:
+          'export default [s => { s.data.y = s.configuration.y; return s}]',
+      },
+    ],
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    jobPath: 'wf.json', // just to fool the test
+  };
+  const result = await run('openfn wf.json', JSON.stringify(workflow), options);
+  t.deepEqual(result, {
+    data: { x: 0, y: 0 },
+  });
 });
 
 // TODO: this fails because of how paths are resolved in the test harness
@@ -156,10 +205,11 @@ test.serial(
       JOB_EXPORT_42,
       options
     );
-    t.assert(result === 42);
+    t.is(result.data.count, 42);
 
     const output = await fs.readFile('/tmp/my-output.json', 'utf8');
-    t.assert(output === '42');
+    const outputJson = JSON.parse(output);
+    t.is(outputJson.data.count, 42);
   }
 );
 
@@ -174,10 +224,11 @@ test.serial(
       JOB_EXPORT_42,
       options
     );
-    t.assert(result === 42);
+    t.is(result.data.count, 42);
 
     const output = await fs.readFile('/tmp/my-output.json', 'utf8');
-    t.assert(output === '42');
+    const outputJson = JSON.parse(output);
+    t.is(outputJson.data.count, 42);
   }
 );
 
@@ -230,14 +281,14 @@ test.serial(
   async (t) => {
     const options = {
       statePath: '/tmp/my-state.json',
-      state: '33',
+      state: { data: { count: 33 } },
     };
     const result = await run(
       'openfn job.js --state-path=/tmp/my-state.json',
       JOB_TIMES_2,
       options
     );
-    t.assert(result === 66);
+    t.assert(result.data.count === 66);
   }
 );
 
@@ -246,101 +297,139 @@ test.serial(
   async (t) => {
     const options = {
       statePath: '/tmp/my-state.json',
-      state: '33',
+      state: { data: { count: 33 } },
     };
     const result = await run(
       'openfn job.js -s /tmp/my-state.json',
       JOB_TIMES_2,
       options
     );
-    t.assert(result === 66);
+    t.assert(result.data.count === 66);
   }
 );
 
 test.serial(
-  'read state from stdin: openfn job.js --state-stdin=11',
+  'read state from stdin: openfn job.js --state-stdin=<obj>',
   async (t) => {
-    const result = await run('openfn job.js --state-stdin=11', JOB_TIMES_2);
-    t.assert(result === 22);
-  }
-);
-
-test.serial(
-  'read state from stdin with alias: openfn job.js -S 44',
-  async (t) => {
-    const result = await run('openfn job.js -S 44', JOB_TIMES_2);
-    t.assert(result === 88);
-  }
-);
-
-test.serial(
-  'override an adaptor: openfn --no-expand-adaptors -S 49.5 --adaptor times-two=/modules/times-two',
-  async (t) => {
+    const state = JSON.stringify({ data: { count: 11 } });
     const result = await run(
-      'openfn --no-expand-adaptors -S 49.5 --adaptor times-two=/modules/times-two',
+      `openfn job.js --state-stdin=${state}`,
+      JOB_TIMES_2
+    );
+    t.assert(result.data.count === 22);
+  }
+);
+
+test.serial(
+  'read state from stdin with alias: openfn job.js -S <obj>',
+  async (t) => {
+    const state = JSON.stringify({ data: { count: 44 } });
+    const result = await run(`openfn job.js -S ${state}`, JOB_TIMES_2);
+    t.assert(result.data.count === 88);
+  }
+);
+
+test.serial(
+  'override an adaptor: openfn --no-expand-adaptors -S <obj> --adaptor times-two=/modules/times-two',
+  async (t) => {
+    const state = JSON.stringify({ data: { count: 49.5 } });
+    const result = await run(
+      `openfn --no-expand-adaptors -S ${state} --adaptor times-two=/modules/times-two`,
       JOB_MOCK_ADAPTOR
     );
-    t.assert(result === 99);
+    t.assert(result.data.count === 99);
   }
 );
 
 test.serial(
-  'override adaptors: openfn --no-expand-adaptors -S 49.5 --adaptors times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand-adaptors -S <obj> --adaptors times-two=/modules/times-two',
   async (t) => {
+    const state = JSON.stringify({ data: { count: 49.5 } });
     const result = await run(
-      'openfn --no-expand-adaptors -S 49.5 --adaptors times-two=/modules/times-two',
+      `openfn --no-expand-adaptors -S ${state} --adaptors times-two=/modules/times-two`,
       JOB_MOCK_ADAPTOR
     );
-    t.assert(result === 99);
+    t.assert(result.data.count === 99);
   }
 );
 
 test.serial(
-  'override adaptors: openfn --no-expand-adaptors -S 49.5 -a times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand-adaptors -S <obj> -a times-two=/modules/times-two',
   async (t) => {
+    const state = JSON.stringify({ data: { count: 49.5 } });
     const result = await run(
-      'openfn --no-expand-adaptors -S 49.5 -a times-two=/modules/times-two',
+      `openfn --no-expand-adaptors -S ${state} -a times-two=/modules/times-two`,
       JOB_MOCK_ADAPTOR
     );
-    t.assert(result === 99);
+    t.assert(result.data.count === 99);
   }
 );
 
 test.serial(
-  'auto-import from test module with repoDir: openfn job.js -S 11 -a times-two',
+  'auto-import from test module with repoDir: openfn job.js -S <obj> -a times-two',
   async (t) => {
+    const state = JSON.stringify({ data: { count: 11 } });
     const job = 'export default [byTwo]';
     const result = await run(
-      'openfn --no-expand-adaptors -S 11 -a times-two',
+      `openfn --no-expand-adaptors -S ${state} -a times-two`,
       job,
       {
         repoDir: '/repo',
       }
     );
-    t.assert(result === 22);
+    t.assert(result.data.count === 22);
   }
 );
 
 test.serial(
-  'auto-import from test module with path: openfn job.js -S 11 -a times-two',
+  'auto-import from test module with path: openfn job.js -S <obj> -a times-two',
   async (t) => {
+    const state = JSON.stringify({ data: { count: 22 } });
     const job = 'export default [byTwo]';
     const result = await run(
-      'openfn -S 22 -a times-two=/modules/times-two',
+      `openfn -S ${state} -a times-two=/modules/times-two`,
       job
     );
-    t.assert(result === 44);
+    t.assert(result.data.count === 44);
   }
 );
 
 test.serial(
-  'auto-import from language-common: openfn job.js -a @openfn/language-common',
+  'auto-import from language-common (job): openfn job.js -a @openfn/language-common',
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
     const result = await run('openfn -a @openfn/language-common', job, {
       repoDir: '/repo',
     });
-    t.truthy(result.data?.done);
+    t.true(result.data?.done);
+  }
+);
+
+test.serial(
+  'run a workflow using language-common: openfn wf.json',
+  async (t) => {
+    const workflow = {
+      jobs: [
+        {
+          adaptor: '@openfn/language-common',
+          expression:
+            'fn((state) => { state.data.done = true; return state; });',
+        },
+      ],
+    };
+
+    const options = {
+      outputPath: 'output.json',
+      jobPath: 'wf.json',
+      repoDir: '/repo',
+    };
+
+    const result = await run(
+      'openfn wf.json',
+      JSON.stringify(workflow),
+      options
+    );
+    t.true(result.data?.done);
   }
 );
 
@@ -383,6 +472,24 @@ test.serial('compile a job: openfn compile job.js to file', async (t) => {
 
   const output = await fs.readFile('out.js', 'utf8');
   t.is(output, 'export default [fn(42)];');
+});
+
+test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
+  const options = {
+    outputPath: 'out.json',
+    jobPath: 'wf.json', // just to fool the test
+  };
+
+  const wf = JSON.stringify({
+    start: 'a',
+    jobs: [{ expression: 'x()' }],
+  });
+  await run('compile wf.json -o out.json', wf, options);
+
+  const output = await fs.readFile('out.json', 'utf8');
+  const result = JSON.parse(output);
+  t.truthy(result);
+  t.is(result.jobs[0].expression, 'export default [x()];');
 });
 
 test.serial('pwd should return the default repo path', async (t) => {

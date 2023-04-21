@@ -1,8 +1,10 @@
 import path from 'node:path';
 import yargs from 'yargs';
+import type { ExecutionPlan } from '@openfn/runtime';
 import doExpandAdaptors from './util/expand-adaptors';
 import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 import type { CommandList } from './commands';
+import { CLIExecutionPlan } from './types';
 
 // Central type definition for the main options
 // This is in flux as options are being refactored
@@ -20,6 +22,7 @@ export type Opts = {
   immutable?: boolean;
   ignoreImports?: boolean | string[];
   jobPath?: string;
+  job?: string;
   log?: string[];
   logJson?: boolean;
   monorepoPath?: string;
@@ -30,11 +33,14 @@ export type Opts = {
   repoDir?: string;
   skipAdaptorValidation?: boolean;
   specifier?: string; // docgen
+  start?: string; // workflow start node
   statePath?: string;
   stateStdin?: string;
   strictOutput?: boolean; // defaults to true
   timeout?: number; // ms
-  useAdaptorsMonorepo?: string | boolean;
+  useAdaptorsMonorepo?: boolean;
+  workflow?: CLIExecutionPlan | ExecutionPlan;
+  workflowPath?: string;
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -76,7 +82,7 @@ export const adaptors: CLIOption = {
     }
 
     if (opts.expandAdaptors) {
-      opts.adaptors = doExpandAdaptors(opts.adaptors);
+      doExpandAdaptors(opts);
     }
 
     // delete the aliases as they have not been expanded
@@ -153,20 +159,23 @@ export const ignoreImports: CLIOption = {
 
 const getBaseDir = (opts: Opts) => {
   const basePath = opts.path ?? '.';
-  if (basePath.endsWith('.js')) {
+  if (/\.(jso?n?)$/.test(basePath)) {
     return path.dirname(basePath);
   }
   return basePath;
 };
 
-export const jobPath: CLIOption = {
-  name: 'job-path',
+// Input path covers jobPath and workflowPath
+export const inputPath: CLIOption = {
+  name: 'input-path',
   yargs: {
     hidden: true,
   },
   ensure: (opts) => {
     const { path: basePath } = opts;
-    if (basePath?.endsWith('.js')) {
+    if (basePath?.endsWith('.json')) {
+      opts.workflowPath = basePath;
+    } else if (basePath?.endsWith('.js')) {
       opts.jobPath = basePath;
     } else {
       const base = getBaseDir(opts);
@@ -227,6 +236,14 @@ export const repoDir: CLIOption = {
   yargs: {
     description: 'Provide a path to the repo root dir',
     default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+  },
+};
+
+export const start: CLIOption = {
+  name: 'start',
+  yargs: {
+    string: true,
+    description: 'Specifiy the start node in a workflow',
   },
 };
 

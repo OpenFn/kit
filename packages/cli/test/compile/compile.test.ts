@@ -2,7 +2,7 @@ import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
-import {
+import compile, {
   stripVersionSpecifier,
   loadTransformOptions,
   resolveSpecifierPath,
@@ -25,6 +25,60 @@ type TransformOptionsWithImports = {
     };
   };
 };
+
+test('compile from source string', async (t) => {
+  const job = 'x();';
+
+  const opts = {
+    job,
+  } as CompileOptions;
+
+  const result = await compile(opts, mockLog);
+
+  const expected = 'export default [x()];';
+  t.is(result, expected);
+});
+
+test.serial('compile from path', async (t) => {
+  const pnpm = path.resolve('../../node_modules/.pnpm');
+  mock({
+    [pnpm]: mock.load(pnpm, {}),
+    '/tmp/job.js': 'x();',
+  });
+
+  const jobPath = '/tmp/job.js';
+
+  const opts = {
+    jobPath,
+  } as CompileOptions;
+
+  const result = await compile(opts, mockLog);
+
+  const expected = 'export default [x()];';
+  t.is(result, expected);
+
+  mock.restore();
+});
+
+test('compile from workflow', async (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: [
+      { id: 'a', expression: 'x()' },
+      { id: 'b', expression: 'x()' },
+    ],
+  };
+
+  const opts = {
+    workflow,
+  } as CompileOptions;
+
+  const result = await compile(opts, mockLog);
+
+  const expected = 'export default [x()];';
+  t.is(result.jobs[0].expression, expected);
+  t.is(result.jobs[1].expression, expected);
+});
 
 test('stripVersionSpecifier: remove version specifier from @openfn', (t) => {
   const specifier = '@openfn/language-commmon@3.0.0-rc2';
@@ -60,13 +114,16 @@ test('loadTransformOptions: do nothing', async (t) => {
   t.assert(JSON.stringify(result) === '{}');
 });
 
-test("resolveSpecifierPath: return null if the module can't be resolved locally", async (t) => {
-  mock({
-    '/repo': {},
-  });
-  const path = await resolveSpecifierPath('pkg', '/repo', mockLog);
-  t.assert(path === null);
-});
+test.serial(
+  "resolveSpecifierPath: return null if the module can't be resolved locally",
+  async (t) => {
+    mock({
+      '/repo': {},
+    });
+    const path = await resolveSpecifierPath('pkg', '/repo', mockLog);
+    t.assert(path === null);
+  }
+);
 
 test('resolveSpecifierPath: return a relative path if passed', async (t) => {
   const path = await resolveSpecifierPath('pkg=./a', '/repo', mockLog);

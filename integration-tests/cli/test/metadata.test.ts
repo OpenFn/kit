@@ -4,7 +4,7 @@ import { exec } from 'node:child_process';
 import { differenceInMinutes } from 'date-fns';
 
 import run, { clean } from '../src/run';
-import { extractLogs, getJSON } from './util';
+import { extractLogs, getJSON } from '../src/util';
 
 const state = '{ \\"configuration\\": { \\"url\\": \\"x\\" } }';
 const modulePath = path.resolve('modules/test');

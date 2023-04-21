@@ -1,6 +1,6 @@
 import { Logger } from '../util/logger';
 import { SafeOpts } from '../commands';
-import loadState from '../execute/load-state';
+import loadState from '../util/load-state';
 import cache from './cache';
 import { getModuleEntryPoint, getNameAndVersion } from '@openfn/runtime';
 

@@ -1,195 +1,152 @@
 import test from 'ava';
-import { fn } from '@openfn/language-common';
-import type { State, Operation } from '@openfn/language-common';
-import { createMockLogger } from '@openfn/logger';
+import { ExecutionPlan } from '../src';
 import run from '../src/runtime';
 
-type TestState = State & {
-  data: {
-    x: number;
+// High level examples of runtime usages
+
+test('run simple expression', async (t) => {
+  const expression = 'export default [(s) => {s.data.done = true; return s}]';
+
+  const result: any = await run(expression);
+  t.true(result.data.done);
+});
+
+test('run a simple workflow', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      { expression: 'export default [(s) => ({ data: { done: true } })]' },
+    ],
   };
-};
 
-const createState = (data = {}) => ({
-  data: data,
-  configuration: {},
+  const result: any = await run(plan);
+  t.true(result.data.done);
 });
 
-// Most of these unit tests pass in live JS code into the job pipeline
-// This is convenient in testing as it's easier to catch errors
-// Note that the linker and module loader do heavier testing of strings
+test('run a workflow with state and parallel branching', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression:
+          'export default [(s) => { s.data.count += 1; s.data.a = true; return s}]',
+        next: {
+          b: true as const,
+          c: true as const,
+        },
+      },
+      {
+        id: 'b',
+        expression:
+          'export default [(s) => { s.data.count += 1; s.data.b = true; return s}]',
+      },
+      {
+        id: 'c',
+        expression:
+          'export default [(s) => { s.data.count += 1; s.data.c = true; return s}]',
+      },
+    ],
+  };
 
-test('a live no-op job with one operation', async (t) => {
-  const job = [(s: State) => s];
-  const state = createState();
-  const result = await run(job, state);
-
-  t.deepEqual(state, result);
+  const result: any = await run(plan, { data: { count: 0 } });
+  t.true(result.data.a);
+  t.true(result.data.b);
+  t.true(result.data.c);
+  t.is(result.data.count, 3);
 });
 
-test('a stringified no-op job with one operation', async (t) => {
-  const job = 'export default [(s) => s]';
-  const state = createState();
-  const result = await run(job, state);
+test('run a workflow with state and conditional branching', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression: 'export default [(s) => { s.data.a = true; return s}]',
+        next: {
+          b: {
+            condition: 'state.data.count > 0',
+          },
+          c: {
+            condition: 'state.data.count == 0',
+          },
+        },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => { s.data.b = true; return s}]',
+      },
+      {
+        id: 'c',
+        expression: 'export default [(s) => { s.data.c = true; return s}]',
+      },
+    ],
+  };
 
-  t.deepEqual(state, result);
+  const result1: any = await run(plan, { data: { count: 10 } });
+  t.true(result1.data.a);
+  t.true(result1.data.b);
+  t.falsy(result1.data.c);
+  t.is(result1.data.count, 10);
+
+  const result2: any = await run(plan, { data: { count: 0 } });
+  t.true(result2.data.a);
+  t.falsy(result2.data.b);
+  t.true(result2.data.c);
+  t.is(result2.data.count, 0);
 });
 
-test('a live no-op job with @openfn/language-common.fn', async (t) => {
-  const job = [fn((s: State) => s)];
-  const state = createState();
-  const result = await run(job, state);
+test('run a workflow with initial state and optional start', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        // won't run
+        id: 'a',
+        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+        next: { b: true },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+        next: { c: true },
+      },
+      {
+        id: 'c',
+        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+      },
+    ],
+  };
 
-  t.deepEqual(state, result);
+  const result: any = await run(plan, { data: { count: 10 } }, { start: 'b' });
+  t.is(result.data.count, 12);
 });
 
-test('jobs can handle a promise', async (t) => {
-  const job = [async (s: State) => s];
-  const state = createState();
-  const result = await run(job, state);
+test('run a workflow with a trigger node', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: { b: { condition: 'state.data.age > 18 ' } },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => { s.data.done = true ; return s}]',
+      },
+    ],
+  };
 
-  t.deepEqual(state, result);
+  const result: any = await run(plan, { data: { age: 28 } });
+  t.true(result.data.done);
 });
 
-test('jobs run in series', async (t) => {
-  const job = [
-    (s: TestState) => {
-      s.data.x = 2;
-      return s;
-    },
-    (s: TestState) => {
-      s.data.x += 2;
-      return s;
-    },
-    (s: TestState) => {
-      s.data.x *= 3;
-      return s;
-    },
-  ] as Operation[];
+test('prefer initial state to inline state', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        data: {
+          x: 20, // this will be overriden by the incoming state
+          y: 20, // This will be untouched
+        },
+        expression: 'export default [(s) => s]',
+      },
+    ],
+  };
 
-  const state = createState();
-  // @ts-ignore
-  t.falsy(state.data.x);
-
-  const result = (await run(job, state)) as TestState;
-
-  t.is(result.data.x, 12);
-});
-
-test('jobs run in series with async operations', async (t) => {
-  const job = [
-    (s: TestState) => {
-      s.data.x = 2;
-      return s;
-    },
-    (s: TestState) =>
-      new Promise((resolve) => {
-        setTimeout(() => {
-          s.data.x += 2;
-          resolve(s);
-        }, 10);
-      }),
-    (s: TestState) => {
-      s.data.x *= 3;
-      return s;
-    },
-  ] as Operation[];
-
-  const state = createState();
-  // @ts-ignore
-  t.falsy(state.data.x);
-
-  const result = (await run(job, state)) as TestState;
-
-  t.is(result.data.x, 12);
-});
-
-test('jobs do mutate the original state', async (t) => {
-  const job = [
-    (s: TestState) => {
-      s.data.x = 2;
-      return s;
-    },
-  ] as Operation[];
-
-  const state = createState({ x: 1 }) as TestState;
-  const result = (await run(job, state, {
-    immutableState: false,
-  })) as TestState;
-
-  t.is(state.data.x, 2);
-  t.is(result.data.x, 2);
-});
-
-test('jobs do not mutate the original state', async (t) => {
-  const job = [
-    (s: TestState) => {
-      s.data.x = 2;
-      return s;
-    },
-  ] as Operation[];
-
-  const state = createState({ x: 1 }) as TestState;
-  const result = (await run(job, state, { immutableState: true })) as TestState;
-
-  t.is(state.data.x, 1);
-  t.is(result.data.x, 2);
-});
-
-test('forwards a logger to the console object inside a job', async (t) => {
-  const logger = createMockLogger(undefined, { level: 'info' });
-
-  // We must define this job as a module so that it binds to the sandboxed context
-  const job = `
-export default [
-  (s) => { console.log("x"); return s; }
-];`;
-
-  const state = createState();
-  await run(job, state, { jobLogger: logger });
-
-  const output = logger._parse(logger._last);
-  t.is(output.level, 'info');
-  t.is(output.message, 'x');
-});
-
-test('calls execute if exported from a job', async (t) => {
-  const logger = createMockLogger(undefined, { level: 'info' });
-
-  // The execute function, if called by the runtime, will send a specific
-  // message to console.log, which we can pick up here in the test
-  const source = `
-    export const execute = () => { console.log('x'); return () => ({}) };
-    export default [];
-  `;
-
-  await run(source, { configuration: {}, data: {} }, { jobLogger: logger });
-
-  t.is(logger._history.length, 1);
-});
-
-// Skipping for now as the default timeout is quite long
-test.skip('Throws after default timeout', async (t) => {
-  const logger = createMockLogger(undefined, { level: 'info' });
-
-  const job = `export default [() => new Promise(() => {})];`;
-
-  const state = createState();
-  await t.throwsAsync(async () => run(job, state, { jobLogger: logger }), {
-    message: 'timeout',
-  });
-});
-
-test('Throws after custom timeout', async (t) => {
-  const logger = createMockLogger(undefined, { level: 'info' });
-
-  const job = `export default [() => new Promise((resolve) => setTimeout(resolve, 100))];`;
-
-  const state = createState();
-  await t.throwsAsync(
-    async () => run(job, state, { jobLogger: logger, timeout: 10 }),
-    {
-      message: 'timeout',
-    }
-  );
+  const result: any = await run(plan, { data: { x: 40 } });
+  t.is(result.data.x, 40);
+  t.is(result.data.y, 20);
 });

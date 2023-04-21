@@ -28,3 +28,21 @@ test.serial(
     t.is(logger._history.length, 0);
   }
 );
+
+test.serial('should not warn if a workflow is being used', async (t) => {
+  await validateAdaptors({ adaptors: [], workflowPath: 'wf.json' }, logger);
+  t.is(logger._history.length, 0);
+});
+
+test.serial('should throw if adaptors and workflow are passed', async (t) => {
+  await t.throwsAsync(
+    () =>
+      validateAdaptors(
+        { adaptors: ['common'], workflowPath: 'wf.json' },
+        logger
+      ),
+    {
+      message: 'adaptor and workflow provided',
+    }
+  );
+});

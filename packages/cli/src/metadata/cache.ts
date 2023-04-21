@@ -30,7 +30,7 @@ const generateKey = (config: any, adaptor: string) => {
 
 const get = (repoPath: string, key: string) => {
   try {
-    const data = readFileSync(getPath(repoPath, key));
+    const data = readFileSync(getPath(repoPath, key), 'utf8');
     const json = JSON.parse(data);
     return json;
   } catch (e) {
@@ -40,7 +40,7 @@ const get = (repoPath: string, key: string) => {
 
 // lock the cache to prevent another process generating
 // this is very similar to how docgen works
-const lock = async (repoPath: string, key: string) => {};
+// /const lock = async (repoPath: string, key: string) => {};
 
 const set = async (repoPath: string, key: string, data: any) => {
   const fullPath = getPath(repoPath, key);

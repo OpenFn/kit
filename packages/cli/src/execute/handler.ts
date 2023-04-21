@@ -1,27 +1,27 @@
-import { readFile } from 'node:fs/promises';
-import { Logger, printDuration } from '../util/logger';
-import loadState from './load-state';
-import execute from './execute';
-import compile from '../compile/compile';
-import serializeOutput from './serialize-output';
-import { install } from '../repo/handler';
 import type { ExecuteOptions } from './command';
-import validateAdaptors from '../util/validate-adaptors';
+import execute from './execute';
+import serializeOutput from './serialize-output';
+import getAutoinstallTargets from './get-autoinstall-targets';
+import { install } from '../repo/handler';
+import compile from '../compile/compile';
 import { CompileOptions } from '../compile/command';
-
-export const getAutoinstallTargets = (
-  options: Pick<ExecuteOptions, 'adaptors' | 'autoinstall'>
-) => {
-  if (options.adaptors) {
-    return options.adaptors?.filter((a) => !/=/.test(a));
-  }
-  return [];
-};
+import { Logger, printDuration } from '../util/logger';
+import loadState from '../util/load-state';
+import validateAdaptors from '../util/validate-adaptors';
+import loadInput from '../util/load-input';
+import expandAdaptors from '../util/expand-adaptors';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
 
   await validateAdaptors(options, logger);
+
+  let input = await loadInput(options, logger);
+
+  if (options.workflow) {
+    // expand shorthand adaptors in the workflow jobs
+    expandAdaptors(options);
+  }
 
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
@@ -37,22 +37,19 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   }
 
   const state = await loadState(options, logger);
-  let code = '';
+
   if (options.compile) {
-    code = await compile(options as CompileOptions, logger);
+    input = await compile(options as CompileOptions, logger);
   } else {
     logger.info('Skipping compilation as noCompile is set');
-    if (options.jobPath) {
-      code = await readFile(options.jobPath, 'utf8');
-      logger.success(`Loaded job from ${options.jobPath} (no compilation)`);
-    }
   }
 
   try {
-    const result = await execute(code, state, options);
+    const result = await execute(input!, state, options);
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     logger.success(`Done in ${duration}! ✨`);
+    return result;
   } catch (error) {
     logger.error(error);
 

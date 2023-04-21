@@ -8,11 +8,11 @@ const createState = (data = {}) => ({ data, configuration: {} });
 test('makes parseInt available inside the job', async (t) => {
   const job = `
     export default [
-      (s) => parseInt(s.data)
+      (s) => { s.data.count = parseInt(s.data.count); return s; }
     ];`;
 
-  const result = await run(job, createState('22'));
-  t.is(result, 22);
+  const result = await run(job, createState({ count: '22' }));
+  t.deepEqual(result.data, { count: 22 });
 });
 
 test('makes Set available inside the job', async (t) => {
@@ -24,8 +24,8 @@ test('makes Set available inside the job', async (t) => {
       }
     ];`;
 
-  const result = await run(job, createState('33'));
-  t.is(result.data, '33');
+  const result = await run(job, createState({ count: '33' }));
+  t.deepEqual(result.data, { count: '33' });
 });
 
 test("doesn't allow process inside the job", async (t) => {
@@ -44,10 +44,10 @@ test("doesn't allow process inside the job", async (t) => {
   });
 
   const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog);
+  const { message, level } = logger._parse(errLog!);
 
   t.is(level, 'error');
-  t.regex(message, /process is not defined/);
+  t.regex(message as string, /process is not defined/);
 });
 
 test("doesn't allow eval inside a job", async (t) => {
@@ -62,10 +62,13 @@ test("doesn't allow eval inside a job", async (t) => {
   });
 
   const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog);
+  const { message, level } = logger._parse(errLog!);
 
   t.is(level, 'error');
-  t.regex(message, /Code generation from strings disallowed for this context/);
+  t.regex(
+    message as string,
+    /Code generation from strings disallowed for this context/
+  );
 });
 
 // TODO exhaustive test of globals?

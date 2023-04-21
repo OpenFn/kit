@@ -1,13 +1,13 @@
 # @openfn/cli
 
-This package contains a new devtools CLI for running openfn jobs.
+This package contains a new devtools CLI for running OpenFn jobs.
 
-The new CLI includes:
+The CLI includes:
 
-* A new runtime for executing openfn jobs
-* A new compiler for making openfn jobs runnable
-* Improved, customisable logging output
-* Auto installation of language adaptors
+* A secure runtime for executing OpenFn jobs and workflows
+* A compiler for making OpenFn jobs runnable
+* Configurable logging output
+* Auto-installation of language adaptors
 * Support for the adaptors monorepo
 
 ## Getting Started
@@ -36,6 +36,22 @@ Get help:
 openfn help
 ```
 
+## Updating
+
+You should be able to install a new version straight on top of your current installation:
+
+```
+npm install -g @openfn/cli
+```
+
+If this fails, try uninstalling the current version first:
+
+```
+npm uninstall -g @openfn/cli
+```
+
+And then re-installing.
+
 ## Migrating from devtools
 
 If you're coming to the CLI from the old openfn devtools, here are a couple of key points to be aware of:
@@ -46,31 +62,37 @@ If you're coming to the CLI from the old openfn devtools, here are a couple of k
 
 ## Basic Usage
 
-You're probably here to run jobs (expressions), which the CLI makes easy:
+You're probably here to run jobs (expressions) or workflows, which the CLI makes easy:
+
 
 ```
+openfn path/to/workflow.json
 openfn path/to/job.js -ia adaptor-name
 ```
 
-You MUST specify which adaptor to use. Pass the `-i` flag to auto-install that adaptor (it's safe to do this redundantly).
+If running a single job, you MUST specify which adaptor to use.
 
-When the job is finished, the CLI will write the `data` property of your state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout. To write the entire state object (not just `data`), pass `--no-strict-output`.
+Pass the `-i` flag to auto-install any required adaptors (it's safe to do this redundantly, although the run will be a little slower).
 
-The CLI can auto-install language adaptors to its own privately maintained repo, just include the `-i` flag in the command and your adaptors will be forever fully managed. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo.
+When the finished, the CLI will write the resulting state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
+
+Note that the CLI will only include the `state.data` key in the output. To write the entire state object (not just `data`), pass `--no-strict-output`.
+
+The CLI maintains a repo for auto-installed adaptors. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo. `openfn repo clean` will remove all adaptors from the repo. The repo also includes any documentation and metadata built with the CLI.
 
 You can specify adaptors with a shorthand (`http`) or use the full package name (`@openfn/language-http`). You can add a specific version like `http@2.0.0`. You can pass a path to a locally installed adaptor like `http=/repo/openfn/adaptors/my-http-build`.
 
-If you have the adaptors monorepo set up on your machine, you can also run adaptors straight from source. Pass the `-m <path>` flag to load from the monorepo. You can also set the monorepo location by setting the `OPENFN_ADAPTORS_REPO` env var to a valid path. After that just include `-m` to load from the monorepo. Remember that adaptors will be loaded from the BUILT package in `dist`, so remember to build an adaptor before running!
+If you have the adaptors monorepo set up on your machine, you can also run adaptors straight from the local build. Pass the `-m <path>` flag to load from the monorepo. You can also set the monorepo location by setting the `OPENFN_ADAPTORS_REPO` env var to a valid path. After that just include `-m` to load from the monorepo. Remember that adaptors will be loaded from the BUILT package in `dist`, so remember to build an adaptor before running!
 
 You can pass `--log info` to get more feedback about what's happening, or `--log debug` for more details than you could ever use.
 
 ## Advanced Usage
 
-The CLI has actually has a number of commands (the first argument after openfn)
+The CLI has a number of commands (the first argument after openfn)
 
 * execute - run a job
 * compile - compile a job to a .js file
-* doc - show documentation for an adaptor function
+* docs - show documentation for an adaptor function
 * repo - manage the repo of installed modules
 * docgen - generate JSON documentation for an adaptor based on its typescript
 
@@ -109,8 +131,41 @@ For a more structured output, you can emit logs as JSON objects with `level`, `n
 ```
 { level: 'info', name: 'CLI', message: ['Loaded adaptor'] }
 ```
-
 Pass `--log-json` to the CLI to do this. You can also set the OPENFN_LOG_JSON env var (and use `--no-log-json` to disable).
+
+## Workflows
+
+As of v0.0.35 the CLI supports running workflows as well as jobs.
+
+A workflow is in execution plan for running several jobs in a sequence. It is defined as a JSON structure.
+
+To see an example workflow, run the test command with `openfn test`.
+
+A workflow has a structure like this (better documentation is coming soon):
+
+```
+{
+  "start": "a", // optionally specify the start node (defaults to jobs[0])
+  "jobs": [
+    {
+      "id": "a",
+      "expression": "fn((state) => state)", // code or a path
+      "adaptor": "@openfn/language-common@1.75", // specifiy the adaptor to use (version optional)
+      "data": {}, // optionally pre-populate the data object (this will be overriden by keys in in previous state)
+      "configuration": {}, // Use this to pass credentials
+      "next": {
+        // This object defines which jobs to call next
+        // All edges returning true will run
+        // If there are no next edges, the workflow will end
+        "b": true,
+        "c": {
+          "condition": "!state.error" // Not that this is an expression, not a function
+        }
+      }
+    },
+  ]
+}
+```
 
 ## Compilation
 
@@ -128,12 +183,6 @@ The CLI uses openfn's own runtime to execute jobs in a safe environment.
 All jobs which work against `@openfn/core` will work in the new CLI and runtime environment (note: although this is a work in progress and we are actively looking for help to test this!).
 
 If you want to see how the compiler is changing your job, run `openfn compile path/to/job -a <adaptor>` to return the compiled code to stdout. Add `-o path/to/output.js` to save the result to disk.
-
-## New Runtime notes
-
-The new OpenFn runtime will create a secure sandboxed environemtn which loads a Javascript Module, finds the default export, and execute the functions held within it.
-
-So long as your job has an array of functions as its default export, it will run in the new runtime.
 
 # Contributing
 
@@ -170,8 +219,8 @@ The CLI will save and load adaptors from an arbitrary folder on your system.
 
 You should set the OPENFN_REPO_DIR env var to something sensible.
 
+In `~/.bashrc` (or whatever you use), add:
 ```
-# In ~/.bashc or whatever
 export OPENFN_REPO_DIR=~/repo/openfn/cli-repo
 ```
 

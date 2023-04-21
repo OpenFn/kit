@@ -145,6 +145,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       time: Date.now(),
     };
 
+    stringify(output);
     emitter[level](stringify(output));
   };
 

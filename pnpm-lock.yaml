@@ -70,7 +70,6 @@ importers:
       '@types/node': ^17.0.45
       '@types/yargs': ^17.0.12
       ava: 5.1.0
-      fast-safe-stringify: ^2.1.1
       figures: ^5.0.0
       mock-fs: ^5.1.4
       rimraf: ^3.0.2
@@ -85,7 +84,6 @@ importers:
       '@openfn/describe-package': link:../describe-package
       '@openfn/logger': link:../logger
       '@openfn/runtime': link:../runtime
-      fast-safe-stringify: 2.1.1
       figures: 5.0.0
       rimraf: 3.0.2
       treeify: 1.1.0
@@ -201,6 +199,7 @@ importers:
       '@openfn/logger': workspace:*
       '@types/node': ^17.0.31
       ava: 5.1.0
+      fast-safe-stringify: ^2.1.1
       mock-fs: ^5.1.4
       semver: ^7.3.8
       ts-node: ^10.9.1
@@ -209,6 +208,7 @@ importers:
       typescript: ^4.6.4
     dependencies:
       '@openfn/logger': link:../logger
+      fast-safe-stringify: 2.1.1
       semver: 7.3.8
     devDependencies:
       '@openfn/language-common': 2.0.0-rc3

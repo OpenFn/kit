@@ -1,0 +1,27 @@
+{
+  "start": "start",
+  "jobs": [
+    {
+      "id": "start",
+      "data": {
+        "number": 1
+      },
+      "adaptor": "common",
+      "expression": "fn((state) => state);",
+      "next": {
+        "small": { "condition": "state.data.number < 10" },
+        "large": { "condition": "state.data.number >= 10" }
+      }
+    },
+    {
+      "id": "small",
+      "adaptor": "common",
+      "expression": "fn((state) => { state.data.result = \"small\"; return state; });"
+    },
+    {
+      "id": "large",
+      "adaptor": "common",
+      "expression": "fn((state) => { state.data.result = \"large\"; return state; });"
+    }
+  ]
+}

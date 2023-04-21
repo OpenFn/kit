@@ -164,65 +164,6 @@ test('non-strict-mode: include other stuff', async (t) => {
   t.is(result, toString({ data: {}, _secret: 'true' }));
 });
 
-test('handle circular data', async (t) => {
-  const a: any = { name: 'a' };
-  a.ref = a;
-
-  const result = await serializeOutput(
-    {
-      outputStdout: true,
-    },
-    {
-      data: a,
-    },
-    logger
-  );
-  t.is(result, toString({ data: { name: 'a', ref: '[Circular]' } }));
-});
-
-test('handle nested circular data', async (t) => {
-  const a: any = {
-    x: {
-      y: {},
-    },
-  };
-  a.x.y.z = a;
-
-  const result = await serializeOutput(
-    {
-      outputStdout: true,
-    },
-    {
-      data: a,
-    },
-    logger
-  );
-
-  const expected = {
-    x: {
-      y: {
-        z: '[Circular]',
-      },
-    },
-  };
-  t.is(result, toString({ data: expected }));
-});
-
-test('ignore fuctions', async (t) => {
-  const a: any = { help: () => 'I need somebody' };
-
-  const result = await serializeOutput(
-    {
-      outputStdout: true,
-    },
-    {
-      data: a,
-    },
-    logger
-  );
-  t.is(result, toString({ data: {} }));
-});
-
 test('output to file', async (t) => {
   mockfs({
     'out.json': '',

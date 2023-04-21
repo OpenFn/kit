@@ -60,7 +60,8 @@ const docsHandler = async (
 
   // does the adaptor have a version? If not, fetch the latest
   // (docgen won't do this for us)
-  const [adaptorName] = expandAdaptors([adaptor], logger);
+  const { adaptors } = expandAdaptors({ adaptors: [adaptor] });
+  const [adaptorName] = adaptors!;
   let { name, version } = getNameAndVersion(adaptorName);
   if (!version) {
     logger.info('No version number provided, looking for latest...');
@@ -81,18 +82,23 @@ const docsHandler = async (
   );
 
   // If docgen succeeded, we should have a path to the metadata
+  let didError = false;
   if (path) {
     const source = await readFile(path, 'utf8');
-    const data = JSON.parse(source);
+    const data = JSON.parse(source) as PackageDescription;
 
     let desc;
     if (operation) {
       const fn = data.functions.find(({ name }) => name === operation);
-      logger.debug('Operation schema:', fn);
-      logger.success(`Documentation for ${name}.${operation} v${version}:\n`);
+      if (fn) {
+        logger.debug('Operation schema:', fn);
+        logger.success(`Documentation for ${name}.${operation} v${version}:\n`);
 
-      // Generate a documentation string
-      desc = describeFn(name, fn);
+        // Generate a documentation string
+        desc = describeFn(name, fn);
+      } else {
+        logger.error(`Failed to find ${operation} in ${name}`);
+      }
     } else {
       logger.debug('No operation provided, listing available operations');
       desc = describeLib(name, data);
@@ -100,7 +106,11 @@ const docsHandler = async (
     // Log the description without any ceremony/meta stuff from the logger
     logger.print(desc);
 
-    logger.success('Done!');
+    if (didError) {
+      logger.error('Error');
+    } else {
+      logger.success('Done!');
+    }
   } else {
     logger.error('Not found');
   }

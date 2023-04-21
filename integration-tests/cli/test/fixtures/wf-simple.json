@@ -1,0 +1,8 @@
+{
+  "jobs": [
+    {
+      "adaptor": "common",
+      "expression": "simple.js"
+    }
+  ]
+}

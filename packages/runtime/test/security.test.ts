@@ -1,36 +1,36 @@
 // a suite of tests with various security concerns in mind
 import test from 'ava';
-import run, { ERR_RUNTIME_EXCEPTION, ERR_TIMEOUT } from '../src/runtime';
+import run, { ERR_RUNTIME_EXCEPTION } from '../src/runtime';
 
 import { createMockLogger } from '@openfn/logger';
+import { ExecutionPlan } from '../src/types';
 
 const logger = createMockLogger(undefined, { level: 'default' });
 test.afterEach(() => {
   logger._reset();
 });
 
-// TODO use of globalthis is kinda interesting - I expect global to be available?
 test.serial('jobs should not have access to global scope', async (t) => {
   const src = 'export default [() => globalThis.x]';
   globalThis.x = 42;
 
-  const result = await run(src);
+  const result: any = await run(src);
   t.falsy(result);
 
   delete globalThis.x;
 });
 
 test.serial('jobs should be able to read global state', async (t) => {
-  const src = 'export default [() => state.x]';
+  const src = 'export default [() => state.data.x]';
 
-  const result = await run(src, { x: 42 }); // typings are a bit tricky
+  const result: any = await run(src, { data: { x: 42 } }); // typings are a bit tricky
   t.is(result, 42);
 });
 
 test.serial('jobs should be able to mutate global state', async (t) => {
   const src = 'export default [() => { state.x = 22; return state.x; }]';
 
-  const result = await run(src, { x: 42 }); // typings are a bit tricky
+  const result: any = await run(src, { data: { x: 42 } }); // typings are a bit tricky
   t.is(result, 22);
 });
 
@@ -40,10 +40,10 @@ test.serial('jobs should each run in their own context', async (t) => {
 
   await run(src1);
 
-  const r1 = await run(src1);
+  const r1 = (await run(src1)) as any;
   t.is(r1, 1);
 
-  const r2 = await run(src2);
+  const r2 = (await run(src2)) as any;
   t.is(r2, undefined);
 });
 
@@ -73,7 +73,7 @@ test.serial(
 
     // find the exception
     const errLog = logger._history.at(-1);
-    const { message, level } = logger._parse(errLog);
+    const { message, level } = logger._parse(errLog!);
 
     t.is(level, 'error');
     t.regex(message, /ERR_INVALID_ARG_TYPE/);
@@ -86,6 +86,33 @@ test.serial('jobs should be able to use sensible timeouts', async (t) => {
   const src =
     'export default [() => new Promise((resolve) => setTimeout(() => resolve(22), 1))]';
 
-  const result = await run(src);
+  const result: any = await run(src);
   t.is(result, 22);
 });
+
+// Relates to https://github.com/OpenFn/kit/issues/213
+test.serial(
+  'jobs in workflow cannot share data through globals (issue #213)',
+  async (t) => {
+    const plan: ExecutionPlan = {
+      jobs: [
+        {
+          expression: 'export default [s => { console.x = 10; return s; }]',
+          next: {
+            b: true,
+          },
+        },
+        {
+          id: 'b',
+          expression:
+            'export default [s => { s.data.x = console.x; return s; }]',
+        },
+      ],
+    };
+
+    await t.throwsAsync(() => run(plan), {
+      // TODO this error handling is not good
+      message: 'runtime exception',
+    });
+  }
+);

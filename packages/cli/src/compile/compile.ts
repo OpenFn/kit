@@ -1,20 +1,48 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
-import { getModulePath } from '@openfn/runtime';
+import { getModulePath, ExecutionPlan } from '@openfn/runtime';
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import type { CompileOptions } from './command';
 
 // Load and compile a job from a file, then return the result
 // This is designed to be re-used in different CLI steps
 export default async (opts: CompileOptions, log: Logger) => {
-  log.debug('Loading job...');
-  const compilerOptions: Options = await loadTransformOptions(opts, log);
-  const job = compile(opts.jobSource || opts.jobPath, compilerOptions);
+  log.debug('Compiling...');
+  let job;
+  if (opts.workflow) {
+    job = compileWorkflow(opts.workflow, opts, log);
+  } else {
+    const compilerOptions: Options = await loadTransformOptions(opts, log);
+    job = compile((opts.job || opts.jobPath) as string, compilerOptions);
+  }
+
   if (opts.jobPath) {
     log.success(`Compiled job from ${opts.jobPath}`);
   } else {
     log.success('Compiled job');
   }
   return job;
+};
+
+// Find every expression in the job and run the compiler on it
+const compileWorkflow = async (
+  workflow: ExecutionPlan,
+  opts: CompileOptions,
+  log: Logger
+) => {
+  for (const job of workflow.jobs) {
+    const jobOpts = {
+      ...opts,
+    };
+    if (job.adaptor) {
+      jobOpts.adaptors = [job.adaptor];
+    }
+    const compilerOptions: Options = await loadTransformOptions(jobOpts, log);
+
+    if (job.expression) {
+      job.expression = compile(job.expression as string, compilerOptions);
+    }
+  }
+  return workflow;
 };
 
 // TODO this is a bit of a temporary solution

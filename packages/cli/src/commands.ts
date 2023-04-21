@@ -21,7 +21,7 @@ export type CommandList =
   | 'metadata'
   | 'repo-clean'
   | 'repo-install'
-  | 'repo-install'
+  | 'repo-list'
   | 'repo-pwd'
   | 'test'
   | 'version';
@@ -50,7 +50,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
 
 const maybeEnsureOpts = (basePath: string, options: Opts) =>
   // If the command is compile or execute, just return the opts (yargs will do all the validation)
-  /^(execute|compile)$/.test(options.command!)
+  /^(execute|compile|test)$/.test(options.command!)
     ? ensureLogOpts(options)
     : // Otherwise  older commands still need to go through ensure opts
       ensureOpts(basePath, options);
@@ -82,10 +82,10 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   } else if (opts.adaptors && opts.expandAdaptors) {
     // TODO this will be removed once all options have been refactored
     //      This is safely redundant in execute and compile
-    opts.adaptors = expandAdaptors(opts.adaptors);
+    expandAdaptors(opts);
   }
 
-  if (/^(test|version)$/.test(opts.command) && !opts.repoDir) {
+  if (!/^(test|version)$/.test(opts.command) && !opts.repoDir) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );

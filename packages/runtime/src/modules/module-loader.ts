@@ -3,7 +3,7 @@
  */
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
-import type { Operation } from '../runtime';
+import type { Operation } from '../types';
 import { Logger } from '@openfn/logger';
 
 type Options = LinkerOptions & {

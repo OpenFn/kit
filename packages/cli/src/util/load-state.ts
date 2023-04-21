@@ -7,7 +7,7 @@ export default async (
   log: Logger
 ) => {
   const { stateStdin, statePath } = opts;
-  log.debug('Load state...');
+  log.debug('Loading state...');
   if (stateStdin) {
     try {
       const json = JSON.parse(stateStdin);
@@ -36,7 +36,7 @@ export default async (
   }
 
   log.info(
-    'No state provided - using default state { data: {}, configuration: {}'
+    'No state provided - using default state { data: {}, configuration: {} }'
   );
   return {
     data: {},
