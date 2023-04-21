@@ -112,3 +112,18 @@ test.serial(
     lastCreated = metadata.created;
   }
 );
+
+test.serial('does not log credentials', async (t) => {
+  const sensitiveValue = '8888888';
+  const state = `{ \\"configuration\\": { \\"pin_number\\": \\"${sensitiveValue}\\" } }`;
+  const command = `openfn metadata -f -S "${state}" -a ${modulePath} --log-json --log debug`;
+  const { stdout } = await run(command);
+
+  const logJson = extractLogs(stdout);
+  // trim the command from the logs because it contains the sensitive value
+  const logString = JSON.stringify(logJson);
+
+  // Should log the state object at least once
+  t.regex(logString, /(pin_number)/i);
+  t.notRegex(logString, new RegExp(sensitiveValue), 'i');
+});

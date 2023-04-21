@@ -55,9 +55,9 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
   logger.success(`Generating metadata`);
 
   // Note that the config will be sanitised, so logging it may not be terrible helpful
-  const config = state.configuration;
-  logger.info('config:', config);
+  logger.info('config:', state);
 
+  const config = state.configuration;
   if (!config || Object.keys(config).length === 0) {
     logger.error('ERROR: Invalid configuration passed');
     process.exit(1);
