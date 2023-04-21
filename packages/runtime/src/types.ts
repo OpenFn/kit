@@ -36,7 +36,6 @@ export type JobNode = {
 export type JobEdge = {
   condition?: string; // Javascript expression (function body, not function)
   label?: string;
-  acceptError?: boolean; // maybe
 };
 
 export type JobNodeID = string;
