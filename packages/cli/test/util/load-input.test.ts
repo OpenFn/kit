@@ -2,6 +2,7 @@ import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
 import loadInput from '../../src/util/load-input';
+import { ExecutionPlan } from '@openfn/runtime';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
@@ -14,9 +15,7 @@ mock({
   'test/job.js': 'x',
   'test/wf.json': JSON.stringify({
     start: 'a',
-    jobs: {
-      a: { expression: 'x()' },
-    },
+    jobs: [{ id: 'a', expression: 'x()' }],
   }),
   'test/wf-err.json': '!!!',
 });
@@ -31,12 +30,12 @@ test.serial('do nothing if no path provided', async (t) => {
 
 test.serial('return the workflow if already set ', async (t) => {
   const opts = {
-    workflow: { start: 'x' },
+    workflow: { start: 'x', jobs: [] },
     job: 'j',
     jobPath: 'test/job.js',
   };
 
-  const result = await loadInput(opts, logger);
+  const result = (await loadInput(opts, logger)) as ExecutionPlan;
   t.truthy(result);
   t.is(result.start, 'x');
 });
@@ -113,14 +112,11 @@ test.serial('prefer workflow to job if both are somehow set', async (t) => {
   t.is(result.start, 'a');
 });
 
-test.serial('resolve workflow paths (filename)', async (t) => {
+test.serial('resolve workflow expression paths (filename)', async (t) => {
   mock({
     '/test/job.js': 'x',
     '/test/wf.json': JSON.stringify({
-      start: 'a',
-      jobs: {
-        a: { expression: 'job.js' },
-      },
+      jobs: [{ expression: 'job.js' }],
     }),
   });
 
@@ -128,58 +124,56 @@ test.serial('resolve workflow paths (filename)', async (t) => {
     workflowPath: '/test/wf.json',
   };
 
-  const result = await loadInput(opts, logger);
-  t.is(result.jobs.a.expression, 'x');
+  const result = (await loadInput(opts, logger)) as ExecutionPlan;
+  t.is(result.jobs[0].expression, 'x');
 });
 
-test.serial('resolve workflow paths (relative same dir)', async (t) => {
-  mock({
-    '/test/job.js': 'x',
-    '/test/wf.json': JSON.stringify({
-      start: 'a',
-      jobs: {
-        a: { expression: './job.js' },
-      },
-    }),
-  });
+test.serial(
+  'resolve workflow expression paths (relative same dir)',
+  async (t) => {
+    mock({
+      '/test/job.js': 'x',
+      '/test/wf.json': JSON.stringify({
+        jobs: [{ expression: './job.js' }],
+      }),
+    });
 
-  const opts = {
-    workflowPath: '/test/wf.json',
-  };
+    const opts = {
+      workflowPath: '/test/wf.json',
+    };
 
-  const result = await loadInput(opts, logger);
-  t.is(result.jobs.a.expression, 'x');
-  mock.restore();
-});
+    const result = (await loadInput(opts, logger)) as ExecutionPlan;
+    t.is(result.jobs[0].expression, 'x');
+    mock.restore();
+  }
+);
 
-test.serial('resolve workflow paths (relative different dir)', async (t) => {
-  mock({
-    '/jobs/job.js': 'x',
-    '/test/wf.json': JSON.stringify({
-      start: 'a',
-      jobs: {
-        a: { expression: '../jobs/job.js' },
-      },
-    }),
-  });
+test.serial(
+  'resolve workflow expression paths (relative different dir)',
+  async (t) => {
+    mock({
+      '/jobs/job.js': 'x',
+      '/test/wf.json': JSON.stringify({
+        jobs: [{ expression: '../jobs/job.js' }],
+      }),
+    });
 
-  const opts = {
-    workflowPath: '/test/wf.json',
-  };
+    const opts = {
+      workflowPath: '/test/wf.json',
+    };
 
-  const result = await loadInput(opts, logger);
-  t.is(result.jobs.a.expression, 'x');
-  mock.restore();
-});
+    const result = (await loadInput(opts, logger)) as ExecutionPlan;
+    t.is(result.jobs[0].expression, 'x');
+    mock.restore();
+  }
+);
 
-test.serial('resolve workflow paths (absolute)', async (t) => {
+test.serial('resolve workflow expression paths (absolute)', async (t) => {
   mock({
     '/job.js': 'x',
     '/test/wf.json': JSON.stringify({
       start: 'a',
-      jobs: {
-        a: { expression: '/job.js' },
-      },
+      jobs: [{ expression: '/job.js' }],
     }),
   });
 
@@ -187,19 +181,16 @@ test.serial('resolve workflow paths (absolute)', async (t) => {
     workflowPath: '/test/wf.json',
   };
 
-  const result = await loadInput(opts, logger);
-  t.is(result.jobs.a.expression, 'x');
+  const result = (await loadInput(opts, logger)) as ExecutionPlan;
+  t.is(result.jobs[0].expression, 'x');
   mock.restore();
 });
 
-test.serial('resolve workflow paths (home)', async (t) => {
+test.serial('resolve workflow expression paths (home)', async (t) => {
   mock({
     '~/job.js': 'x',
     '/test/wf.json': JSON.stringify({
-      start: 'a',
-      jobs: {
-        a: { expression: '~/job.js' },
-      },
+      jobs: [{ expression: '~/job.js' }],
     }),
   });
 
@@ -207,7 +198,36 @@ test.serial('resolve workflow paths (home)', async (t) => {
     workflowPath: '/test/wf.json',
   };
 
-  const result = await loadInput(opts, logger);
-  t.is(result.jobs.a.expression, 'x');
+  const result = (await loadInput(opts, logger)) as ExecutionPlan;
+  t.is(result.jobs[0].expression, 'x');
   mock.restore();
+});
+
+// Less thorough testing on config because it goes through the same code
+test.serial('resolve workflow config paths (home)', async (t) => {
+  const cfg = { id: 'x' };
+  const cfgString = JSON.stringify(cfg);
+  mock({
+    '~/config.json': cfgString,
+    '/config.json': cfgString,
+    '/test/config.json': cfgString,
+    '/test/wf.json': JSON.stringify({
+      jobs: [
+        { configuration: '/config.json' },
+        { configuration: '~/config.json' },
+        { configuration: 'config.json' },
+        { configuration: './config.json' },
+      ],
+    }),
+  });
+
+  const opts = {
+    workflowPath: '/test/wf.json',
+  };
+
+  const result = (await loadInput(opts, logger)) as ExecutionPlan;
+  t.is(result.jobs.length, 4);
+  for (const job of result.jobs) {
+    t.deepEqual(job.configuration, cfg);
+  }
 });

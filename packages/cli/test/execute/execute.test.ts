@@ -37,6 +37,15 @@ test.before(() => {
   mock({
     '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
     [pnpm]: mock.load(pnpm, {}),
+    '/exp.js': `${fn}fn(() => ({ data: 42 }));`,
+    '/config.json': JSON.stringify({ id: 'x' }),
+    '/workflow.json': JSON.stringify({
+      jobs: [
+        {
+          expression: `${fn}fn(() => ({ data: { count: 42 } }));`,
+        },
+      ],
+    }),
   });
 });
 
@@ -61,6 +70,15 @@ test('run a job with initial state', async (t) => {
   };
   const result = await handler(options, logger);
   t.is(result.data.count, 10);
+});
+
+test('run a workflow from a path', async (t) => {
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+  };
+  const result = await handler(options, logger);
+  t.is(result.data.count, 42);
 });
 
 test('run a workflow', async (t) => {
@@ -133,6 +151,39 @@ test('run a workflow with initial state', async (t) => {
   };
   const result = await handler(options, logger);
   t.is(result.data.count, 12);
+});
+
+test('run a workflow with an expression as a path', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        expression: '/exp.js',
+      },
+    ],
+  };
+  const options = {
+    ...defaultOptions,
+    workflow,
+  };
+  const result = await handler(options, logger);
+  t.is(result.data, 42);
+});
+
+test('run a workflow with config as a path', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        configuration: '/config.json',
+        expression: `${fn}fn((state) => state)`,
+      },
+    ],
+  };
+  const options = {
+    ...defaultOptions,
+    workflow,
+  };
+  const result = await handler(options, logger);
+  t.is(result.configuration.id, 'x');
 });
 
 test('run a workflow with an adaptor (longform)', async (t) => {

@@ -144,6 +144,28 @@ test.serial('run a workflow', async (t) => {
   t.assert(result.data.x === 2);
 });
 
+test.serial('run a workflow with config as a path', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        data: { x: 0 },
+        configuration: { y: 0 },
+        expression:
+          'export default [s => { s.data.y = s.configuration.y; return s}]',
+      },
+    ],
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    jobPath: 'wf.json', // just to fool the test
+  };
+  const result = await run('openfn wf.json', JSON.stringify(workflow), options);
+  t.deepEqual(result, {
+    data: { x: 0, y: 0 },
+  });
+});
+
 // TODO: this fails because of how paths are resolved in the test harness
 //      We'll move it to an integration test soon
 test.serial.skip(

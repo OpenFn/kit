@@ -4,6 +4,7 @@ import type { ExecutionPlan } from '@openfn/runtime';
 import doExpandAdaptors from './util/expand-adaptors';
 import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 import type { CommandList } from './commands';
+import { CLIExecutionPlan } from './types';
 
 // Central type definition for the main options
 // This is in flux as options are being refactored
@@ -37,7 +38,7 @@ export type Opts = {
   strictOutput?: boolean; // defaults to true
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
-  workflow?: ExecutionPlan;
+  workflow?: CLIExecutionPlan | ExecutionPlan;
   workflowPath?: string;
 };
 
