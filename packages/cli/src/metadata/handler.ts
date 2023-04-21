@@ -2,7 +2,7 @@ import { Logger } from '../util/logger';
 import { SafeOpts } from '../commands';
 import loadState from '../execute/load-state';
 import cache from './cache';
-import { getModuleEntryPoint } from '@openfn/runtime';
+import { getModuleEntryPoint, getNameAndVersion } from '@openfn/runtime';
 
 // Add extra, uh, metadata to the, uh, metadata object
 const decorateMetadata = (metadata: any) => {
@@ -68,7 +68,7 @@ const metadataHandler = async (options: SafeOpts, logger: Logger) => {
     logger.print(cache.getPath(repoDir, id));
   };
 
-  const id = cache.generateKey(config);
+  const id = cache.generateKey(config, adaptor);
   if (!options.force) {
     // generate a hash for the config and check state
     logger.debug('config hash: ', id);
