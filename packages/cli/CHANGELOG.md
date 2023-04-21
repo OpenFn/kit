@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 0.0.37
+
+### Patch Changes
+
+- c341ff0: Update test command for new runtime
+- 1e6db3b: Don't use fast-safe-stringify
+- Workflow support
+- Updated dependencies [c341ff0]
+  - @openfn/compiler@0.0.30
+  - @openfn/runtime@0.0.22
+
 ## 0.0.36
 
 ### Patch Changes
@@ -11,7 +22,6 @@
 ### Patch Changes
 
 - 7df08d4: Support monorepo when looking for common
-- Updated dependencies [6c7a20c]
 - Updated dependencies [7df08d4]
   - @openfn/describe-package@0.0.16
   - @openfn/compiler@0.0.29
@@ -22,9 +32,6 @@
 
 - f744f00: Update help
 - 02bcef5: Optionally disable auto-import
-- Updated dependencies [f6d22ec]
-- Updated dependencies [77bed12]
-- Updated dependencies [8dfc5bf]
 - Updated dependencies [f4b9702]
   - @openfn/compiler@0.0.28
   - @openfn/logger@0.0.12

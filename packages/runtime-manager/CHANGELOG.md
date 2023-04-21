@@ -1,5 +1,13 @@
 # runtime-manager
 
+## 0.0.31
+
+### Patch Changes
+
+- Updated dependencies [c341ff0]
+  - @openfn/compiler@0.0.30
+  - @openfn/runtime@0.0.22
+
 ## 0.0.30
 
 ### Patch Changes
@@ -11,9 +19,6 @@
 
 ### Patch Changes
 
-- Updated dependencies [f6d22ec]
-- Updated dependencies [77bed12]
-- Updated dependencies [8dfc5bf]
 - Updated dependencies [f4b9702]
   - @openfn/compiler@0.0.28
   - @openfn/logger@0.0.12

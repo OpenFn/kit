@@ -1,5 +1,13 @@
 # @openfn/compiler
 
+## 0.0.30
+
+### Patch Changes
+
+- 70cfcca: Make is-path util a bit more permissive
+- cfd3c2b: Make debug logging a little less noisy
+- 5519e1b: Export more utility functions
+
 ## 0.0.29
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 0.0.22
+
+### Patch Changes
+
+- 1e6db3b: Ensure state returned from a job is serializable
+- 320c468: Export type definitions
+- c341ff0: Allow execution plans as input
+
 ## 0.0.21
 
 ### Patch Changes
