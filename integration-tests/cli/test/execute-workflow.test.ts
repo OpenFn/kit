@@ -47,8 +47,8 @@ test.serial(`openfn ${jobsPath}/wf-array.json`, async (t) => {
 
   const out = getJSON();
   t.is(out.data.items.length, 2);
-  t.true(out.data.items.includes('a'));
   t.true(out.data.items.includes('b'));
+  t.true(out.data.items.includes('c'));
 });
 
 // Multiple steps, shared array, initial state
@@ -60,7 +60,19 @@ test.serial(
     const out = getJSON();
     t.is(out.data.items.length, 3);
     t.true(out.data.items.includes('z'));
-    t.true(out.data.items.includes('a'));
+    t.true(out.data.items.includes('b'));
+    t.true(out.data.items.includes('c'));
+  }
+);
+
+// special start node
+test.serial(
+  `openfn ${jobsPath}/wf-array.json --start b -S "{ \\"data\\": { \\"items\\": [] } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.is(out.data.items.length, 1);
     t.true(out.data.items.includes('b'));
   }
 );

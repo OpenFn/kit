@@ -9,12 +9,12 @@
     {
       "id": "b",
       "adaptor": "common",
-      "expression": "fn((state) => { state.data.items.push('a'); return state; });"
+      "expression": "fn((state) => { state.data.items.push('b'); return state; });"
     },
     {
       "id": "c",
       "adaptor": "common",
-      "expression": "fn((state) => { state.data.items.push('b'); return state; });"
+      "expression": "fn((state) => { state.data.items.push('c'); return state; });"
     }
   ]
 }
