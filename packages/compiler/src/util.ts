@@ -13,7 +13,7 @@ export const isPath = (pathOrCode: string) =>
   // No line breaks
   !/(\r|\n|\r\n)/.test(pathOrCode) &&
   // End in .js or ojs
-  /(ts|js|ojs)$/.test(pathOrCode);
+  /(ts|jso?n?|ojs)$/.test(pathOrCode);
 
 // Check if a path is a local file path (a relative specifier according to nodejs)
 export const isRelativeSpecifier = (specifier: string) =>
