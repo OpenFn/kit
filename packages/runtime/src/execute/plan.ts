@@ -1,6 +1,7 @@
 import type { Logger } from '@openfn/logger';
 import executeExpression from './expression';
 import compilePlan from './compile-plan';
+import assembleState from '../util/assemble-state';
 import type {
   CompiledExecutionPlan,
   ExecutionPlan,
@@ -16,19 +17,6 @@ type ExeContext = {
   logger: Logger;
   opts: Options;
 };
-
-const assembleState = (
-  initialState: any = {},
-  configuration = {},
-  data = {}
-) => ({
-  configuration: Object.assign(
-    {},
-    initialState.configuration ?? {},
-    configuration
-  ),
-  data: Object.assign({}, data, initialState.data),
-});
 
 const executePlan = async (
   plan: ExecutionPlan,
@@ -85,7 +73,12 @@ const executeJob = async (
   // We should by this point have validated the plan, so the job MUST exist
   const job = ctx.plan.jobs[jobId];
 
-  const state = assembleState(initialState, job.configuration, job.data);
+  const state = assembleState(
+    initialState,
+    job.configuration,
+    job.data,
+    ctx.opts.strict
+  );
   let result: any = state;
   if (job.expression) {
     // The expression SHOULD return state, but could return anything

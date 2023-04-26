@@ -18,6 +18,7 @@ export type Options = {
   jobLogger?: Logger;
 
   timeout?: number;
+  strict?: boolean; // Be strict about handling of state returned from jobs
 
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
@@ -43,6 +44,11 @@ const run = (
   opts: Options = {}
 ) => {
   const logger = opts.logger || defaultLogger;
+
+  // Strict state handling by default
+  if (!opts.hasOwnProperty('strict')) {
+    opts.strict = true;
+  }
 
   // TODO the plan doesn't have an id, should it be given one?
   // Ditto the jobs?
