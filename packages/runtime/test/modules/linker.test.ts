@@ -93,7 +93,7 @@ test('loads a cjs module from the repo', async (t) => {
   t.assert(m.namespace.default === 42);
 });
 
-test.only('loads a module from a path', async (t) => {
+test('loads a module from a path', async (t) => {
   const m = await linker('ultimate-answer', context, {
     modules: {
       ['ultimate-answer']: {
