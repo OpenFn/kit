@@ -462,9 +462,13 @@ test.serial(
   async (t) => {
     const job =
       'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
-    const result = await run('openfn -a @openfn/language-postgres', job, {
-      repoDir: '/repo',
-    });
+    const result = await run(
+      'openfn -a @openfn/language-postgres --no-strict',
+      job,
+      {
+        repoDir: '/repo',
+      }
+    );
     t.assert(result === 'execute called!');
   }
 );
@@ -474,7 +478,7 @@ test.serial(
   async (t) => {
     process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
     const job = 'export default [alterState(() => 39)]';
-    const result = await run('openfn job.js -m -a common', job);
+    const result = await run('openfn job.js -m -a common --no-strict', job);
     t.assert(result === 39);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
