@@ -1,8 +1,8 @@
 {
+  "x": 22,
   "data": {
     "name": "jane"
   },
-  "x": 22,
   "references": [
     {
       "name": "bob"
