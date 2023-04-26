@@ -253,7 +253,7 @@ test.serial(
 );
 
 test.serial(
-  'output to file with non-strict state: openfn job.js --output-path=/tmp/my-output.json',
+  'output to file with non-strict state: openfn job.js --output-path=/tmp/my-output.json --no-strict-output',
   async (t) => {
     const options = {
       outputPath: '/tmp/my-output.json',
@@ -261,6 +261,30 @@ test.serial(
 
     const result = await run(
       'openfn job.js --output-path=/tmp/my-output.json --no-strict-output',
+      JOB_EXPORT_STATE,
+      options
+    );
+    t.deepEqual(result, { data: {}, foo: 'bar' });
+
+    const expectedFileContents = JSON.stringify(
+      { data: {}, foo: 'bar' },
+      null,
+      2
+    );
+    const output = await fs.readFile('/tmp/my-output.json', 'utf8');
+    t.assert(output === expectedFileContents);
+  }
+);
+
+test.serial(
+  'output to file with non-strict state: openfn job.js --output-path=/tmp/my-output.json --no-strict',
+  async (t) => {
+    const options = {
+      outputPath: '/tmp/my-output.json',
+    };
+
+    const result = await run(
+      'openfn job.js --output-path=/tmp/my-output.json --no-strict',
       JOB_EXPORT_STATE,
       options
     );

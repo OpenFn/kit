@@ -105,7 +105,7 @@ test('strict-mode: only output data', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
-      strictOutput: true,
+      strict: true,
     },
     {
       data: {},
@@ -138,7 +138,7 @@ test('non-strict-mode: exclude configuration', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
-      strictOutput: false,
+      strict: false,
     },
     {
       data: {},
@@ -153,7 +153,7 @@ test('non-strict-mode: include other stuff', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
-      strictOutput: false,
+      strict: false,
     },
     {
       data: {},

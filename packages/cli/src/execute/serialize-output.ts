@@ -2,8 +2,9 @@ import { writeFile } from 'node:fs/promises';
 import { Logger } from '../util/logger';
 import { Opts } from '../options';
 
+// TODO strictness will now be handled by the runtime itself
 const serializeOutput = async (
-  options: Pick<Opts, 'strictOutput' | 'outputStdout' | 'outputPath'>,
+  options: Pick<Opts, 'strict' | 'outputStdout' | 'outputPath'>,
   result: any,
   logger: Logger
 ) => {
@@ -11,7 +12,7 @@ const serializeOutput = async (
   if (output && (output.configuration || output.data)) {
     // handle an object. Probably need a better test.
     const { data, configuration, ...rest } = result;
-    if (options.strictOutput !== false) {
+    if (options.strict !== false) {
       output = { data };
     } else {
       output = {
