@@ -1,5 +1,11 @@
 {
   "data": {
-    "count": 4
-  }
+    "name": "jane"
+  },
+  "x": 22,
+  "references": [
+    {
+      "name": "bob"
+    }
+  ]
 }
