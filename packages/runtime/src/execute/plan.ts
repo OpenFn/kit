@@ -77,7 +77,7 @@ const executeJob = async (
   const job = ctx.plan.jobs[jobId];
 
   ctx.logger.timer('job');
-  ctx.logger.info('Starting job', jobId);
+  ctx.logger.always('Starting job', jobId);
 
   const state = assembleState(
     initialState,
