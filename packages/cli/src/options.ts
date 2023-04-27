@@ -36,7 +36,7 @@ export type Opts = {
   start?: string; // workflow start node
   statePath?: string;
   stateStdin?: string;
-  strictOutput?: boolean; // defaults to true
+  strict?: boolean; // Strict state handling (only forward state.data). Defaults to true
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
   workflow?: CLIExecutionPlan | ExecutionPlan;
@@ -247,15 +247,35 @@ export const start: CLIOption = {
   },
 };
 
+// Preserve this but hide it
 export const strictOutput: CLIOption = {
   name: 'no-strict-output',
   yargs: {
+    deprecated: true,
+    hidden: true,
+    boolean: true,
+  },
+  ensure: (opts: { strictOutput?: boolean; strict?: boolean }) => {
+    if (!opts.hasOwnProperty('strict')) {
+      // override strict not set
+      opts.strict = opts.strictOutput;
+    }
+    delete opts.strictOutput;
+  },
+};
+
+export const strict: CLIOption = {
+  name: 'no-strict',
+  yargs: {
+    default: true,
     boolean: true,
     description:
-      'Allow properties other than data to be returned in the output',
+      'Strict state handling, meaning only state.data is returned from a job.',
   },
   ensure: (opts) => {
-    setDefaultValue(opts, 'strictOutput', true);
+    if (!opts.hasOwnProperty('strictOutput')) {
+      setDefaultValue(opts, 'strict', true);
+    }
   },
 };
 

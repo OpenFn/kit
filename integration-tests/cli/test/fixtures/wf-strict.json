@@ -1,0 +1,17 @@
+{
+  "jobs": [
+    {
+      "id": "a",
+      "adaptor": "common",
+      "expression": "fn((state) => ({ x: 22, data: { name: 'bob' }, references: [] }));",
+      "next": {
+        "b": true
+      }
+    },
+    {
+      "id": "b",
+      "adaptor": "common",
+      "expression": "fn(state => composeNextState(state, { name: 'jane' }));"
+    }
+  ]
+}

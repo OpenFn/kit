@@ -77,6 +77,36 @@ test('output state should be serializable', async (t) => {
   t.falsy(result.data.fn);
 });
 
+test('output state is cleaned in strict mode', async (t) => {
+  const job = [
+    async () => ({
+      data: {},
+      references: [],
+      configuration: {},
+      x: true,
+    }),
+  ];
+
+  const result = await executeExpression(job, {}, { strict: true });
+  t.deepEqual(result, {
+    data: {},
+    references: [],
+  });
+});
+
+test('output state is left along in non-strict mode', async (t) => {
+  const state = {
+    data: {},
+    references: [],
+    configuration: {},
+    x: true,
+  };
+  const job = [async () => state];
+
+  const result = await executeExpression(job, {}, { strict: false });
+  t.deepEqual(result, state);
+});
+
 test('jobs run in series', async (t) => {
   const job = [
     (s: TestState) => {

@@ -113,3 +113,31 @@ test.serial(
     t.is(out.data.count, 4);
   }
 );
+
+test.serial(`openfn ${jobsPath}/wf-strict.json`, async (t) => {
+  await run(t.title);
+
+  const out = getJSON();
+  t.deepEqual(out, {
+    data: {
+      name: 'jane',
+    },
+  });
+});
+
+test.serial(`openfn ${jobsPath}/wf-strict.json --no-strict`, async (t) => {
+  await run(t.title);
+
+  const out = getJSON();
+  t.deepEqual(out, {
+    x: 22,
+    data: {
+      name: 'jane',
+    },
+    references: [
+      {
+        name: 'bob',
+      },
+    ],
+  });
+});

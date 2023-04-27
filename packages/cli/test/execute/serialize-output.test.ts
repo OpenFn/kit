@@ -101,24 +101,7 @@ test('output an object', async (t) => {
   t.is(result, '{}');
 });
 
-test('strict-mode: only output data', async (t) => {
-  const result = await serializeOutput(
-    {
-      outputStdout: true,
-      strictOutput: true,
-    },
-    {
-      data: {},
-      configuration: {},
-      foo: 'bar',
-      _secret: true,
-    },
-    logger
-  );
-  t.is(result, toString({ data: {} }));
-});
-
-test('strict-mode by default', async (t) => {
+test('exclude configuration', async (t) => {
   const result = await serializeOutput(
     {
       outputStdout: true,
@@ -131,37 +114,7 @@ test('strict-mode by default', async (t) => {
     },
     logger
   );
-  t.is(result, toString({ data: {} }));
-});
-
-test('non-strict-mode: exclude configuration', async (t) => {
-  const result = await serializeOutput(
-    {
-      outputStdout: true,
-      strictOutput: false,
-    },
-    {
-      data: {},
-      configuration: {},
-    },
-    logger
-  );
-  t.is(result, toString({ data: {} }));
-});
-
-test('non-strict-mode: include other stuff', async (t) => {
-  const result = await serializeOutput(
-    {
-      outputStdout: true,
-      strictOutput: false,
-    },
-    {
-      data: {},
-      _secret: 'true',
-    },
-    logger
-  );
-  t.is(result, toString({ data: {}, _secret: 'true' }));
+  t.is(result, toString({ data: {}, foo: 'bar', _secret: true }));
 });
 
 test('output to file', async (t) => {
