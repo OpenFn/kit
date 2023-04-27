@@ -9,8 +9,6 @@ export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 // TODO move error strings into one file
 export const ERR_TIMEOUT = 'timeout';
-// TODO maybe this is a job exception? Job fail?
-export const ERR_RUNTIME_EXCEPTION = 'runtime exception';
 
 export type Options = {
   start?: JobNodeID;

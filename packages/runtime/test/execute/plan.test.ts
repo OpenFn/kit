@@ -491,10 +491,12 @@ test.serial('jobs do not share a local scope', async (t) => {
       },
     ],
   };
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
 
-  const last = logger._parse(logger._history.at(-1));
-  t.is(last.message, 'ReferenceError: x is not defined');
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, 'x is not defined');
+  t.is(err.name, 'ReferenceError');
 });
 
 test.serial('jobs do not share a global scope', async (t) => {
@@ -512,10 +514,12 @@ test.serial('jobs do not share a global scope', async (t) => {
       },
     ],
   };
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
 
-  const last = logger._parse(logger._history.at(-1));
-  t.is(last.message, 'ReferenceError: x is not defined');
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, 'x is not defined');
+  t.is(err.name, 'ReferenceError');
 });
 
 test.serial('jobs do not share a this object', async (t) => {
@@ -533,13 +537,12 @@ test.serial('jobs do not share a this object', async (t) => {
       },
     ],
   };
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
 
-  const last = logger._parse(logger._history.at(-1));
-  t.is(
-    last.message,
-    "TypeError: Cannot set properties of undefined (setting 'x')"
-  );
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, "Cannot read properties of undefined (reading 'x')");
+  t.is(err.name, 'TypeError');
 });
 
 // TODO this fails right now
@@ -720,8 +723,11 @@ test.serial('jobs cannot pass functions to each other', async (t) => {
     ],
   };
 
-  // TODO this will throw right now, but in future it might just write an error to state
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, 's.data.x is not a function');
+  t.is(err.name, 'TypeError');
 });
 
 test.serial('Plans log for each job start and end', async (t) => {
@@ -735,9 +741,9 @@ test.serial('Plans log for each job start and end', async (t) => {
   };
   await executePlan(plan);
 
-  const start = logger._find('info', /starting job/i);
+  const start = logger._find('always', /starting job/i);
   t.is(start.message, 'Starting job a');
 
   const end = logger._find('success', /completed job/i);
-  t.regex(end.message, /Completed job "a" in \d+ms/);
+  t.regex(end.message, /Completed job a in \d+ms/);
 });
