@@ -16,9 +16,9 @@ export default async (opts: CompileOptions, log: Logger) => {
   }
 
   if (opts.jobPath) {
-    log.success(`Compiled job from ${opts.jobPath}`);
+    log.success(`Compiled from ${opts.jobPath}`);
   } else {
-    log.success('Compiled job');
+    log.success('Compilation complete');
   }
   return job;
 };
