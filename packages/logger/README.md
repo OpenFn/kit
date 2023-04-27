@@ -55,6 +55,7 @@ You can log to the following levels:
 ❯ debug
 ℹ info
 ✔ success
+♦ always
 ⚠ warn
 ✘ error
 
