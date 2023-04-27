@@ -96,25 +96,15 @@ const executeJob = async (
         ctx.logger,
         ctx.opts
       );
+      const duration = ctx.logger.timer('job');
+      ctx.logger.success(`Completed job ${jobId} in ${duration}`);
     } catch (e: any) {
-      // Can I tell the difference between:
-      // a) a deliberate throw in user code (ie, throw Error())
-      // b) an unexpected error in user code (ie state.data.undefined = 10)
-      // c) an error coming from an adaptor (or third party) (ie, HTTP 500)
-      // Report the error and carry on
-
-      let type = 'RuntimeException';
-      if (e.code) {
-        // if the error has a code, it's come from a library (adaptor)
-        type = 'AdaptorException';
-      }
-
-      ctx.report(state, jobId, type, e);
+      const duration = ctx.logger.timer('job');
+      ctx.logger.error(`Failed job ${jobId} after ${duration}`);
+      ctx.report(state, jobId, e);
     }
   }
 
-  const duration = ctx.logger.timer('job');
-  ctx.logger.success(`Completed job "${jobId}" in ${duration}`);
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];

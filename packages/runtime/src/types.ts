@@ -1,4 +1,5 @@
 // TMP just thinking through things
+// I dont think this is useufl? We can just use error.name of the error object
 export type ErrorTypes =
   | 'AdaptorNotFound' // probably a CLI validation thing
   | 'PackageNotFound' // Linker failed to load a dependency
@@ -7,12 +8,13 @@ export type ErrorTypes =
   | 'RuntimeException'; // Caused by an exception in a job. JobException? What about "expected" errors from adaptors?
 
 export type ErrorReport = {
-  type: ErrorTypes; // some kind of name like AdaptorNotFound. Need a
+  name: string; // The name/type of error, ie Error, TypeError
   message: string; // simple human readable message
   jobId: JobNodeID; // ID of the associated job
-  error: string; // Serialisation of the actual error object
+  error: Error; // the original underlying error object
 
-  stacktrace?: string; // not sure this is useful?
+  code?: string; // The error code, if any (found on node errors)
+  stack?: string; // not sure this is useful?
   data?: any; // General store for related error information
 };
 
