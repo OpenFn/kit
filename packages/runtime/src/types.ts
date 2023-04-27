@@ -1,8 +1,34 @@
+// TMP just thinking through things
+export type ErrorTypes =
+  | 'AdaptorNotFound' // probably a CLI validation thing
+  | 'PackageNotFound' // Linker failed to load a dependency
+  | 'ExpressionTimeout' // An expression (job) failed to return before the timeout
+  | 'AdaptorException' //  Bubbled out of adaptor code
+  | 'RuntimeException'; // Caused by an exception in a job. JobException? What about "expected" errors from adaptors?
+
+export type ErrorReport = {
+  type: ErrorTypes; // some kind of name like AdaptorNotFound. Need a
+  message: string; // simple human readable message
+  jobId: JobNodeID; // ID of the associated job
+  error: string; // Serialisation of the actual error object
+
+  stacktrace?: string; // not sure this is useful?
+  data?: any; // General store for related error information
+};
+
 export declare interface State<D = object, C = object> {
   configuration?: C;
   data?: D;
   references?: Array<any>;
   index?: number;
+
+  // New error capture object
+  // Synonyms: exceptions, problems, issues, err, failures
+  errors?: Record<JobNodeID, ErrorReport>;
+
+  // Legacy error property from old platform
+  // Adaptors may use this?
+  error?: any[];
 
   // Note that other properties written to state may be lost between jobs
   [other: string]: any;

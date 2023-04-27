@@ -35,29 +35,26 @@ export default (
     );
 
     // Run the pipeline
-    logger.debug(`Executing expression (${operations.length} operations)`);
-
-    const tid = setTimeout(() => {
-      logger.error(`Error: Timeout (${timeout}ms) expired!`);
-      logger.error('  Set a different timeout by passing "-t 10000" ms)');
-      reject(Error(ERR_TIMEOUT));
-    }, timeout);
-
     try {
+      logger.debug(`Executing expression (${operations.length} operations)`);
+
+      const tid = setTimeout(() => {
+        logger.error(`Error: Timeout (${timeout}ms) expired!`);
+        logger.error('  Set a different timeout by passing "-t 10000" ms)');
+        reject(Error(ERR_TIMEOUT));
+      }, timeout);
+
+      // Note that any errors will be trapped by the containing Job
       const result = await reducer(initialState);
+
       clearTimeout(tid);
       logger.debug('Expression complete!');
       logger.debug(result);
+
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
-      // Note: e will be some kind of serialized error object and not an instance of Error
-      // See https://github.com/OpenFn/kit/issues/143
-      logger.error('Error in runtime execution!');
-      if (e.toString) {
-        logger.error(e.toString());
-      }
-      reject(new Error(ERR_RUNTIME_EXCEPTION));
+      reject(e);
     }
   });
 

@@ -11,6 +11,9 @@ const serializeOutput = async (
   if (output && (output.configuration || output.data)) {
     if (options.strict) {
       output = { data: output.data };
+      if (result.errors) {
+        output.errors = result.errors;
+      }
     } else {
       const { configuration, ...rest } = result;
       output = rest;

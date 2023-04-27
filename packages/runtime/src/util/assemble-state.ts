@@ -9,6 +9,9 @@ const assembleState = (
   if (initialState.references) {
     obj.references = initialState.references;
   }
+  if (initialState.errors) {
+    obj.errors = initialState.errors;
+  }
   Object.assign(obj, {
     configuration: Object.assign(
       {},

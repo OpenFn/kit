@@ -46,12 +46,15 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   try {
     const result = await execute(input!, state, options);
+    // TODO if result.errors, report some kind of error feedback
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
-    logger.success(`Done in ${duration}! ✨`);
+    logger.success(`Done in ${duration}! ✨`); // TODO different emoji if error
     return result;
   } catch (error) {
-    logger.error(error);
+    // TODO this now should only be an unexpected error
+    // The runtime should handle most errors itself
+    // logger.error(error);
 
     const duration = printDuration(new Date().getTime() - start);
     logger.error(`Took ${duration}.`);

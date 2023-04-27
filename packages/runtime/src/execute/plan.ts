@@ -11,11 +11,13 @@ import type {
 import type { Options } from '../runtime';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
+import createErrorReporter, { ErrorReporter } from '../util/log-error';
 
 type ExeContext = {
   plan: CompiledExecutionPlan;
   logger: Logger;
   opts: Options;
+  report: ErrorReporter;
 };
 
 const executePlan = async (
@@ -47,6 +49,7 @@ const executePlan = async (
     plan: compiledPlan,
     opts,
     logger,
+    report: createErrorReporter(logger),
   };
 
   let lastState = initialState;
@@ -86,17 +89,32 @@ const executeJob = async (
   let result: any = state;
   if (job.expression) {
     // The expression SHOULD return state, but could return anything
-    result = await executeExpression(
-      job.expression,
-      state,
-      ctx.logger,
-      ctx.opts
-    );
+    try {
+      result = await executeExpression(
+        job.expression,
+        state,
+        ctx.logger,
+        ctx.opts
+      );
+    } catch (e: any) {
+      // Can I tell the difference between:
+      // a) a deliberate throw in user code (ie, throw Error())
+      // b) an unexpected error in user code (ie state.data.undefined = 10)
+      // c) an error coming from an adaptor (or third party) (ie, HTTP 500)
+      // Report the error and carry on
+
+      let type = 'RuntimeException';
+      if (e.code) {
+        // if the error has a code, it's come from a library (adaptor)
+        type = 'AdaptorException';
+      }
+
+      ctx.report(state, jobId, type, e);
+    }
   }
 
   const duration = ctx.logger.timer('job');
   ctx.logger.success(`Completed job "${jobId}" in ${duration}`);
-
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];
