@@ -16,6 +16,9 @@ export const NONE = 'none';
 // Top-level completions, errors and warnings
 export const SUCCESS = 'success'; // aka default
 
+// As success, but without the tick icon
+export const ALWAYS = 'always'; // aka default
+
 // For power users. Success + generally interesting high-level information about what's happening.
 // Ie, operations starting, compiler changes
 export const INFO = 'info';
@@ -32,7 +35,14 @@ export type LogArgs = any[];
 
 // TODO something is wrong with these typings
 // Trying to differentiate user priority presets from log functions
-export type LogFns = 'debug' | 'info' | 'log' | 'warn' | 'error' | 'success';
+export type LogFns =
+  | 'debug'
+  | 'info'
+  | 'log'
+  | 'warn'
+  | 'error'
+  | 'success'
+  | 'always';
 
 export type JSONLog = {
   message: Array<string | object | any>;
@@ -59,6 +69,7 @@ export interface Logger extends Console {
   warn(...args: any[]): void;
   error(...args: any[]): void;
   success(...args: any[]): void;
+  always(...args: any[]): void;
 
   // fancier log functions
   print(...args: any[]): void;
@@ -80,6 +91,7 @@ const priority: Record<LogFns | LogLevel, number> = {
   [INFO]: 1,
   log: 1,
   default: 2,
+  [ALWAYS]: 2,
   [WARN]: 2,
   [ERROR]: 2,
   [SUCCESS]: 2,
@@ -108,6 +120,8 @@ export const styleLevel = (level: LogFns) => {
       return c.yellow(symbols.warning);
     case SUCCESS:
       return c.green(symbols.tick);
+    case ALWAYS:
+      return c.white(symbols.lozenge);
     case DEBUG:
       return c.grey(symbols.pointer);
     default:
@@ -216,6 +230,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     error: wrap(ERROR),
     warn: wrap(WARN),
     success: wrap(SUCCESS),
+    always: wrap(ALWAYS),
     confirm,
     timer,
     print,

@@ -34,6 +34,7 @@ const icons: Record<LogFns, string> = {
   info: styleLevel('info'),
   debug: styleLevel('debug'),
   success: styleLevel('success'),
+  always: styleLevel('always'),
   warn: styleLevel('warn'),
   error: styleLevel('error'),
 };
@@ -79,7 +80,7 @@ test('should log objects as strings', (t) => {
 });
 
 // Automated structural tests per level
-['success', 'info', 'debug', 'error', 'warn'].forEach((l) => {
+['always', 'success', 'info', 'debug', 'error', 'warn'].forEach((l) => {
   // Set up some fiddly type aliases
   const level = l as LogLevel;
   const fn = l as LogFns;

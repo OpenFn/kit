@@ -1,6 +1,5 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { JSONLog } from '../src/logger';
 import mockLogger from '../src/mock';
 
 // disable chalk colours in unit tests

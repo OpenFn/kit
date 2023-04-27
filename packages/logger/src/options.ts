@@ -1,6 +1,9 @@
 export type LogLevel = 'debug' | 'info' | 'default' | 'none';
 
-export type LogEmitter = typeof console & { success: typeof console.log };
+export type LogEmitter = typeof console & {
+  success: typeof console.log;
+  always: typeof console.log;
+};
 
 export type LogOptions = {
   level?: LogLevel;
@@ -34,6 +37,7 @@ export type LogOptions = {
 const defaultEmitter = {
   ...console,
   success: (...args: any[]) => console.log(...args),
+  always: (...args: any[]) => console.log(...args),
 };
 
 export const defaults: Required<LogOptions> = {
