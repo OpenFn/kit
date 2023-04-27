@@ -681,5 +681,5 @@ test.serial('Plans log for each job start and end', async (t) => {
   t.is(start.message, 'Starting job a');
 
   const end = logger._find('success', /completed job/i);
-  t.is(end.message, 'Completed job a');
+  t.regex(end.message, /Completed job "a" in \d+ms/);
 });

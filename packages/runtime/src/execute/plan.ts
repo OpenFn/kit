@@ -85,6 +85,7 @@ const executeJob = async (
   // We should by this point have validated the plan, so the job MUST exist
   const job = ctx.plan.jobs[jobId];
 
+  ctx.logger.timer('job');
   ctx.logger.info('Starting job', jobId);
 
   const state = assembleState(initialState, job.configuration, job.data);
@@ -99,7 +100,8 @@ const executeJob = async (
     );
   }
 
-  ctx.logger.success('Completed job', jobId);
+  const duration = ctx.logger.timer('job');
+  ctx.logger.success(`Completed job "${jobId}" in ${duration}`);
 
   if (job.next) {
     for (const nextJobId in job.next) {
