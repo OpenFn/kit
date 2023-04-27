@@ -85,6 +85,8 @@ const executeJob = async (
   // We should by this point have validated the plan, so the job MUST exist
   const job = ctx.plan.jobs[jobId];
 
+  ctx.logger.info('Starting job', jobId);
+
   const state = assembleState(initialState, job.configuration, job.data);
   let result: any = state;
   if (job.expression) {
@@ -96,6 +98,9 @@ const executeJob = async (
       ctx.opts
     );
   }
+
+  ctx.logger.success('Completed job', jobId);
+
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];

@@ -5,10 +5,14 @@ import { ExecutionPlan, JobNode } from '../../src/types';
 import execute from './../../src/execute/plan';
 
 const opts = {};
-const logger = createMockLogger();
+const logger = createMockLogger(undefined, { level: 'debug' });
 
 const executePlan = (plan: ExecutionPlan, state = {}, options = opts): any =>
   execute(plan, state, options, logger);
+
+test.afterEach(() => {
+  logger._reset();
+});
 
 test('report an error for a circular job', async (t) => {
   const plan: ExecutionPlan = {
@@ -660,4 +664,22 @@ test.serial('jobs cannot pass functions to each other', async (t) => {
 
   // TODO this will throw right now, but in future it might just write an error to state
   await t.throwsAsync(() => executePlan(plan, { data: {} }));
+});
+
+test.serial('Plans log for each job start and end', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: 'export default [s => s]',
+      },
+    ],
+  };
+  await executePlan(plan);
+
+  const start = logger._find('info', /starting job/i);
+  t.is(start.message, 'Starting job a');
+
+  const end = logger._find('success', /completed job/i);
+  t.is(end.message, 'Completed job a');
 });
