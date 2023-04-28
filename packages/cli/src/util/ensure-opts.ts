@@ -101,7 +101,6 @@ export default function ensureOpts(
     skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
-    strictOutput: opts.strictOutput ?? true,
     timeout: opts.timeout,
   } as SafeOpts;
   const set = (key: keyof Opts, value: string) => {

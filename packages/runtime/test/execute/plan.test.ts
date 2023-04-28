@@ -239,18 +239,76 @@ test('Previous state overrides inline data', async (t) => {
         id: 'job1',
         expression: 'export default [s => s]',
         data: { x: 5 },
+        next: {
+          job2: true,
+        },
       },
 
-      // This will receive x as 5, prefer it to the default x as 88, and return x as 5
+      // This will receive x as 5, prefer it to the default x as 88, and return it plus 1
       {
         id: 'job2',
-        expression: 'export default [s => s]',
+        expression: 'export default [s => { s.data.x +=1 ; return s; }]',
         data: { x: 88 },
       },
     ],
   };
   const result = await executePlan(plan);
-  t.is(result.data.x, 5);
+  t.is(result.data.x, 6);
+});
+
+test('only allowed state is passed through in strict mode', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression:
+          'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
+        next: {
+          job2: true,
+        },
+      },
+
+      {
+        id: 'job2',
+        // Throw if we receive unexpected stuff in state
+        expression:
+          'export default [s => { if (s.x || s.y) { throw new Error() }; return s;}]',
+      },
+    ],
+  };
+  const result = await executePlan(plan, {}, { strict: true });
+  t.deepEqual(result, {
+    data: {},
+    references: [],
+  });
+});
+
+test('all state is passed through in non-strict mode', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression:
+          'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
+        next: {
+          job2: true,
+        },
+      },
+
+      {
+        id: 'job2',
+        // Throw if we receive unexpected stuff in state
+        expression:
+          'export default [s => { if (!s.x || !s.y || !s.references) { throw new Error() }; return s;}]',
+      },
+    ],
+  };
+  const result = await executePlan(plan, {}, { strict: false });
+  t.deepEqual(result, {
+    configuration: {}, // TODO should this still be excluded?
+    data: {},
+    references: [],
+    x: 22,
+    y: 33,
+  });
 });
 
 test('execute edge based on state in the condition', async (t) => {

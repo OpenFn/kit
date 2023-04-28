@@ -49,7 +49,7 @@ export default (
       logger.debug('Expression complete!');
       logger.debug(result);
       // return the final state
-      resolve(prepareFinalState(result));
+      resolve(prepareFinalState(opts, result));
     } catch (e: any) {
       // Note: e will be some kind of serialized error object and not an instance of Error
       // See https://github.com/OpenFn/kit/issues/143
@@ -103,10 +103,26 @@ const prepareJob = async (
   }
 };
 
+const assignKeys = (
+  source: Record<string, unknown>,
+  target: Record<string, unknown>,
+  keys: string[]
+) => {
+  keys.forEach((k) => {
+    if (source.hasOwnProperty(k)) {
+      target[k] = source[k];
+    }
+  });
+  return target;
+};
+
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
-const prepareFinalState = (state: any) => {
+const prepareFinalState = (opts: Options, state: any) => {
   if (state) {
+    if (opts.strict) {
+      state = assignKeys(state, {}, ['data', 'error', 'references']);
+    }
     const cleanState = stringify(state);
     return JSON.parse(cleanState);
   }

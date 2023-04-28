@@ -24,7 +24,7 @@ export type ExecuteOptions = Required<
     | 'start'
     | 'statePath'
     | 'stateStdin'
-    | 'strictOutput'
+    | 'strict'
     | 'timeout'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
@@ -50,6 +50,7 @@ const options = [
   o.start,
   o.statePath,
   o.stateStdin,
+  o.strict, // order important
   o.strictOutput,
   o.timeout,
   o.useAdaptorsMonorepo,
@@ -59,7 +60,7 @@ const executeCommand = {
   command: 'execute [path]',
   desc: `Run an openfn job or workflow. Get more help by running openfn <command> help.
   \nExecute will run a job/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
-  \nBy default only state.data will be written to the output. Include --no-strict-output to write the entire state object.
+  \nBy default only state.data will be returned fron a job. Include --no-strict to write the entire state object.
   \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
   aliases: ['$0'],
   handler: ensure('execute', options),

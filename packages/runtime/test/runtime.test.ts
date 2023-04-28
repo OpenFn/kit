@@ -150,3 +150,34 @@ test('prefer initial state to inline state', async (t) => {
   t.is(result.data.x, 40);
   t.is(result.data.y, 20);
 });
+
+test('do not pass extraneous state in strict mode', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression: 'export default [() => ({ x: 1, data: {}} )]',
+      },
+    ],
+  };
+
+  const result: any = await run(plan, {}, { strict: true });
+  t.deepEqual(result, {
+    data: {},
+  });
+});
+
+test('do pass extraneous state in non-strict mode', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression: 'export default [() => ({ x: 1, data: {}} )]',
+      },
+    ],
+  };
+
+  const result: any = await run(plan, {}, { strict: false });
+  t.deepEqual(result, {
+    x: 1,
+    data: {},
+  });
+});

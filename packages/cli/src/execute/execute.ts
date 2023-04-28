@@ -19,6 +19,7 @@ export default (
   // Then again, maybe that doesn't make sense
   // Maybe we have to feed a job logger in?
   return run(input, state, {
+    strict: opts.strict,
     start: opts.start,
     timeout: opts.timeout,
     immutableState: opts.immutable,

@@ -1,9 +1,13 @@
 // a suite of tests with various security concerns in mind
 import test from 'ava';
-import run, { ERR_RUNTIME_EXCEPTION } from '../src/runtime';
+import doRun, { ERR_RUNTIME_EXCEPTION } from '../src/runtime';
 
 import { createMockLogger } from '@openfn/logger';
 import { ExecutionPlan } from '../src/types';
+
+// Disable strict mode for all these tests
+const run = (job: any, state?: any, options: any = {}) =>
+  doRun(job, state, { ...options, strict: false });
 
 const logger = createMockLogger(undefined, { level: 'default' });
 test.afterEach(() => {
@@ -12,11 +16,13 @@ test.afterEach(() => {
 
 test.serial('jobs should not have access to global scope', async (t) => {
   const src = 'export default [() => globalThis.x]';
+  // @ts-ignore
   globalThis.x = 42;
 
   const result: any = await run(src);
   t.falsy(result);
 
+  // @ts-ignore
   delete globalThis.x;
 });
 
@@ -56,10 +62,10 @@ test.serial('jobs should not have a process object', async (t) => {
 
   // find the exception
   const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog);
+  const { message, level } = logger._parse(errLog!);
 
   t.is(level, 'error');
-  t.regex(message, /process is not defined/);
+  t.regex(message as string, /process is not defined/);
 });
 
 test.serial(
@@ -73,7 +79,10 @@ test.serial(
 
     // find the exception
     const errLog = logger._history.at(-1);
-    const { message, level } = logger._parse(errLog!);
+    const { message, level } = logger._parse(errLog!) as {
+      message: string;
+      level: string;
+    };
 
     t.is(level, 'error');
     t.regex(message, /ERR_INVALID_ARG_TYPE/);

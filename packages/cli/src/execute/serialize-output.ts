@@ -3,21 +3,17 @@ import { Logger } from '../util/logger';
 import { Opts } from '../options';
 
 const serializeOutput = async (
-  options: Pick<Opts, 'strictOutput' | 'outputStdout' | 'outputPath'>,
+  options: Pick<Opts, 'strict' | 'outputStdout' | 'outputPath'>,
   result: any,
   logger: Logger
 ) => {
   let output = result;
   if (output && (output.configuration || output.data)) {
-    // handle an object. Probably need a better test.
-    const { data, configuration, ...rest } = result;
-    if (options.strictOutput !== false) {
-      output = { data };
+    if (options.strict) {
+      output = { data: output.data };
     } else {
-      output = {
-        data,
-        ...rest,
-      };
+      const { configuration, ...rest } = result;
+      output = rest;
     }
   }
 
