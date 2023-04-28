@@ -13,6 +13,7 @@ const assertLog = (t: any, logs: any[], re: RegExp) =>
 test.serial('job not found', async (t) => {
   const { stdout, stderr, err } = await run('openfn blah.js --log-json');
   t.is(err.code, 1);
+
   const stdlogs = extractLogs(stdout);
   const errlogs = extractLogs(stderr);
 
@@ -24,6 +25,7 @@ test.serial('job not found', async (t) => {
 test.serial('workflow not found', async (t) => {
   const { stdout, stderr, err } = await run('openfn blah.json --log-json');
   t.is(err.code, 1);
+
   const stdlogs = extractLogs(stdout);
   const errlogs = extractLogs(stderr);
 
@@ -37,6 +39,7 @@ test.serial('job contains invalid js', async (t) => {
     `openfn ${jobsPath}/invalid.js --log-json`
   );
   t.is(err.code, 1);
+
   const stdlogs = extractLogs(stdout);
   const errlogs = extractLogs(stderr);
 
@@ -52,6 +55,7 @@ test.serial('workflow references a job with invalid js', async (t) => {
     `openfn ${jobsPath}/invalid-syntax.json --log-json`
   );
   t.is(err.code, 1);
+
   const stdlogs = extractLogs(stdout);
   const errlogs = extractLogs(stderr);
 
@@ -66,6 +70,7 @@ test.serial("can't find an expression referenced in a workflow", async (t) => {
     `openfn ${jobsPath}/invalid-exp-path.json --log-json`
   );
   t.is(err.code, 1);
+
   const stdlogs = extractLogs(stdout);
   const errlogs = extractLogs(stderr);
 
@@ -83,6 +88,7 @@ test.serial("can't find config referenced in a workflow", async (t) => {
     `openfn ${jobsPath}/invalid-config-path.json --log-json`
   );
   t.is(err.code, 1);
+
   const stdlogs = extractLogs(stdout);
   const errlogs = extractLogs(stderr);
 
@@ -95,20 +101,36 @@ test.serial("can't find config referenced in a workflow", async (t) => {
   assertLog(t, errlogs, /critical error: aborting command/i);
 });
 
-// test.serial.only('circular workflow', async (t) => {
-//   const { stdout, stderr, err } = await run(
-//     `openfn ${jobsPath}/circular.json --log-json`
-//   );
-//   t.is(err.code, 1);
-//   const stdlogs = extractLogs(stdout);
-//   const errlogs = extractLogs(stderr);
-//   console.log(stdlogs);
-//   console.log(errlogs);
-//   assertLog(t, errlogs, /File not found for job 1: does-not-exist.js/i);
-//   assertLog(
-//     t,
-//     stdlogs,
-//     /This workflow references a file which cannot be found at does-not-exist.js/i
-//   );
-//   assertLog(t, errlogs, /critical error: aborting command/i);
-// });
+test.serial('circular workflow', async (t) => {
+  const { stderr, err } = await run(
+    `openfn ${jobsPath}/circular.json --log-json`
+  );
+  t.is(err.code, 1);
+
+  const errlogs = extractLogs(stderr);
+  assertLog(t, errlogs, /Invalid workflow/i);
+  assertLog(t, errlogs, /circular dependency: b <-> a/i);
+});
+
+test.serial('multiple inputs', async (t) => {
+  const { stderr, err } = await run(
+    `openfn ${jobsPath}/multiple-inputs.json --log-json`
+  );
+  t.is(err.code, 1);
+
+  const errlogs = extractLogs(stderr);
+  assertLog(t, errlogs, /Invalid workflow/i);
+  assertLog(t, errlogs, /multiple dependencies detected for: c/i);
+});
+
+test.serial('invalid start', async (t) => {
+  const { stderr, err } = await run(
+    `openfn ${jobsPath}/invalid-start.json --log-json`
+  );
+  t.is(err.code, 1);
+
+  const errlogs = extractLogs(stderr);
+  console.log(errlogs);
+  assertLog(t, errlogs, /Invalid workflow/i);
+  assertLog(t, errlogs, /could not find start job: nope/i);
+});

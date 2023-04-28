@@ -141,3 +141,31 @@ test.serial(`openfn ${jobsPath}/wf-strict.json --no-strict`, async (t) => {
     ],
   });
 });
+
+test.serial(
+  `openfn ${jobsPath}/wf-errors.json -i -S "{ \\"data\\": { \\"number\\": 2 } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.deepEqual(out, {
+      data: {
+        number: 3,
+      },
+    });
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 32 } }"`,
+  async (t) => {
+    await run(t.title);
+
+    const out = getJSON();
+    t.deepEqual(out, {
+      data: {
+        number: 32,
+      },
+    });
+  }
+);
