@@ -1,0 +1,7 @@
+{
+  "jobs": [
+    {
+      "expression": "does-not-exist.js"
+    }
+  ]
+}
