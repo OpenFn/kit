@@ -550,13 +550,12 @@ test('log appopriately on error', async (t) => {
   };
 
   const logger = createMockLogger(undefined, { level: 'debug' });
-  const result = await executePlan(plan, {}, {}, logger);
-  t.log(result);
+
+  await executePlan(plan, {}, {}, logger);
 
   const err = logger._find('error', /failed job/i);
-  t.log(err);
   t.truthy(err);
-  t.regex(err.message, /Failed job job1 after \d+ms/i);
+  t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
 
   t.truthy(logger._find('debug', /error thrown by job job1/i));
   t.truthy(logger._find('error', /Error: e/));
