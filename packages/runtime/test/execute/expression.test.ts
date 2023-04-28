@@ -15,13 +15,17 @@ const createState = (data = {}) => ({
   configuration: {},
 });
 
-const logger = createMockLogger();
+const logger = createMockLogger(undefined, { level: 'debug' });
 
 const executeExpression = (
   job: string | Operation[],
   state: State,
   opts = {}
 ) => execute(job, state, logger, opts);
+
+test.afterEach(() => {
+  logger._reset();
+});
 
 // Most of these unit tests pass in live JS code into the job pipeline
 // This is convenient in testing as it's easier to catch errors
@@ -258,4 +262,16 @@ test('Throws after custom timeout', async (t) => {
       message: 'timeout',
     }
   );
+});
+
+test('Operations log on start and end', async (t) => {
+  const job = [(s: State) => s];
+  const state = createState();
+  await executeExpression(job, state);
+
+  const start = logger._find('debug', /starting operation /i);
+  t.truthy(start);
+
+  const end = logger._find('info', /operation 1 complete in \dms/i);
+  t.truthy(end);
 });

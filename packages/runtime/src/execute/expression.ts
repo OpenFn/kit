@@ -62,9 +62,6 @@ export default (
   });
 
 // Wrap an operation with various useful stuff
-// * A cloned state object so that prior state is always preserved
-// TODO: try/catch stuff
-// TODO: automated logging and metrics stuff
 const wrapOperation = (
   fn: Operation,
   logger: Logger,
@@ -77,7 +74,7 @@ const wrapOperation = (
     const newState = immutableState ? clone(state) : state;
     const result = await fn(newState);
     const duration = printDuration(new Date().getTime() - start);
-    logger.success(`Operation ${name} complete in ${duration}`);
+    logger.info(`Operation ${name} complete in ${duration}`);
     return result;
   };
 };

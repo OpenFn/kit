@@ -73,12 +73,16 @@ const executeJob = async (
   // We should by this point have validated the plan, so the job MUST exist
   const job = ctx.plan.jobs[jobId];
 
+  ctx.logger.timer('job');
+  ctx.logger.info('Starting job', jobId);
+
   const state = assembleState(
     initialState,
     job.configuration,
     job.data,
     ctx.opts.strict
   );
+
   let result: any = state;
   if (job.expression) {
     // The expression SHOULD return state, but could return anything
@@ -89,6 +93,10 @@ const executeJob = async (
       ctx.opts
     );
   }
+
+  const duration = ctx.logger.timer('job');
+  ctx.logger.success(`Completed job "${jobId}" in ${duration}`);
+
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];

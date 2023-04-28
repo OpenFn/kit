@@ -1,6 +1,5 @@
 import test from 'ava';
 import chalk from 'chalk';
-import { JSONLog } from '../src/logger';
 import mockLogger from '../src/mock';
 
 // disable chalk colours in unit tests
@@ -188,4 +187,64 @@ test('log JSON', async (t) => {
   t.is(level, 'success');
   t.is(message[0], 'z');
   t.true(!isNaN(time));
+});
+
+test('find a log', (t) => {
+  const logger = mockLogger('a');
+  logger.success('hello');
+
+  const result = logger._find('success', /hello/);
+
+  t.truthy(result);
+  t.is(result?.level, 'success');
+  t.is(result?.message, 'hello');
+});
+
+test('find a log with many entries', (t) => {
+  const logger = mockLogger('a');
+  logger.success('x');
+  logger.success('y');
+  logger.success('z');
+  logger.success('hello');
+
+  const result = logger._find('success', /hello/);
+
+  t.truthy(result);
+  t.is(result?.level, 'success');
+  t.is(result?.message, 'hello');
+});
+
+test('find a log at the right level', (t) => {
+  const logger = mockLogger('a', { level: 'debug' });
+  logger.info('hello i');
+  logger.debug('hello d');
+  logger.success('hello s');
+
+  const result = logger._find('debug', /hello/);
+
+  t.truthy(result);
+  t.is(result?.level, 'debug');
+  t.is(result?.message, 'hello d');
+});
+
+test('find the first matching log', (t) => {
+  const logger = mockLogger('a');
+  logger.success('x');
+  logger.success('hello a');
+  logger.success('hello b');
+
+  const result = logger._find('success', /hello/);
+
+  t.truthy(result);
+  t.is(result?.level, 'success');
+  t.is(result?.message, 'hello a');
+});
+
+test("return undefined if a log isn't found", (t) => {
+  const logger = mockLogger('a');
+  logger.info('hello');
+
+  const result = logger._find('success', /hello/);
+
+  t.falsy(result);
 });

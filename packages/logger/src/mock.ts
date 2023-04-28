@@ -6,17 +6,20 @@ import type { LogOptions, LogEmitter } from './options';
 // Each log message is saved as the level, then whatever was actually logged
 export type LogMessage = StringLog | string; // string is a string-encoded JSONLog
 
+type ParsedLog = {
+  level: string;
+  namespace?: string;
+  icon?: string;
+  message: string | object;
+  messageRaw: any[];
+};
+
 type MockLogger<T> = Logger & {
   _last: T; // the last log message
   _history: T[]; // everything logged
   _reset: () => void; // reset history
-  _parse: (m: StringLog) => {
-    level: string;
-    namespace?: string;
-    icon?: string;
-    message: string | object;
-    messageRaw: any[];
-  };
+  _parse: (m: StringLog) => ParsedLog;
+  _find: (level: string, pattern: RegExp) => ParsedLog | undefined;
 };
 
 // Take the log type (string or json) as a generic
@@ -30,16 +33,18 @@ const mockLogger = <T = StringLog>(
     ...console,
   } as LogEmitter;
 
-  ['log', 'info', 'success', 'debug', 'warn', 'error'].forEach((l) => {
-    const level = l as LogFns;
-    logger[level] = (...out: any[]) => {
-      if (opts.json) {
-        history.push(out[0] as T);
-      } else {
-        history.push([level, ...out] as T);
-      }
-    };
-  });
+  ['log', 'info', 'success', 'always', 'debug', 'warn', 'error'].forEach(
+    (l) => {
+      const level = l as LogFns;
+      logger[level] = (...out: any[]) => {
+        if (opts.json) {
+          history.push(out[0] as T);
+        } else {
+          history.push([level, ...out] as T);
+        }
+      };
+    }
+  );
 
   const m: unknown = createLogger(name, {
     logger,
@@ -113,6 +118,18 @@ const mockLogger = <T = StringLog>(
       message,
       messageRaw: messageParts,
     };
+  };
+
+  // @ts-ignore
+  mock._find = (level: string, re: RegExp) => {
+    for (const item of history) {
+      if (Array.isArray(item) && item[0] === level) {
+        const parsed = mock._parse(item as StringLog);
+        if (re.test(parsed.message as string)) {
+          return parsed;
+        }
+      }
+    }
   };
 
   /*
