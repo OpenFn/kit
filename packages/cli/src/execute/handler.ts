@@ -45,21 +45,21 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   }
 
   try {
-    const result = await execute(input!, state, options);
+    const result = await execute(input!, state, options, logger);
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     if (result.errors) {
       logger.warn(
         `Errors reported in ${Object.keys(result.errors).length} jobs`
       );
-    } else {
     }
     logger.success(`Finished in ${duration}${result.errors ? '' : ' ✨'}`);
     return result;
-  } catch (err) {
-    logger.error('Unexpected error in execution');
-    logger.error(err);
-
+  } catch (err: any) {
+    if (!err.handled) {
+      logger.error('Unexpected error in execution');
+      logger.error(err);
+    }
     const duration = printDuration(new Date().getTime() - start);
     logger.always(`Workflow failed in ${duration}.`);
     process.exitCode = 1;
