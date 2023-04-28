@@ -28,10 +28,11 @@ const serializeOutput = async (
 
   if (options.outputStdout) {
     logger.success(`Result: `);
-    logger.success(output);
+    logger.always(output);
   } else if (options.outputPath) {
-    logger.success(`Writing output to ${options.outputPath}`);
+    logger.debug(`Writing output to ${options.outputPath}`);
     await writeFile(options.outputPath, output);
+    logger.success(`State written to ${options.outputPath}`);
   }
 
   return output;

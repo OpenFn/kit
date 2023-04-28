@@ -46,18 +46,22 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   try {
     const result = await execute(input!, state, options);
-    // TODO if result.errors, report some kind of error feedback
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
-    logger.success(`Done in ${duration}! ✨`); // TODO different emoji if error
+    if (result.errors) {
+      logger.warn(
+        `Errors reported in ${Object.keys(result.errors).length} jobs`
+      );
+    } else {
+    }
+    logger.success(`Finished in ${duration}${result.errors ? '' : ' ✨'}`);
     return result;
-  } catch (error) {
-    // TODO this now should only be an unexpected error
-    // The runtime should handle most errors itself
-    // logger.error(error);
+  } catch (err) {
+    logger.error('Unexpected error in execution');
+    logger.error(err);
 
     const duration = printDuration(new Date().getTime() - start);
-    logger.error(`Took ${duration}.`);
+    logger.always(`Workflow failed in ${duration}.`);
     process.exitCode = 1;
   }
 };
