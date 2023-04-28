@@ -187,15 +187,12 @@ test('throw for a syntax error on a job edge', (t) => {
 
   try {
     compilePlan(plan);
-  } catch (errors: any) {
-    t.true(Array.isArray(errors));
-    t.is(errors.length, 1);
-    const err = errors[0];
+  } catch (err: any) {
     t.regex(err.message, /failed to compile(.*)a->b/i);
   }
 });
 
-test('throw for a multiple errors', (t) => {
+test('throw for multiple errors', (t) => {
   const plan = {
     jobs: [
       {
@@ -215,8 +212,10 @@ test('throw for a multiple errors', (t) => {
 
   try {
     compilePlan(plan);
-  } catch (errors: any) {
-    t.true(Array.isArray(errors));
-    t.is(errors.length, 2);
+  } catch (e) {
+    // the message will have have one error per line
+    const { message } = e;
+    const lines = message.split('\n\n');
+    t.is(lines.length, 2);
   }
 });

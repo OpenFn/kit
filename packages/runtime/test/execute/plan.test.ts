@@ -14,7 +14,7 @@ const executePlan = (
   logger = mockLogger
 ): any => execute(plan, state, options, logger);
 
-test('report an error for a circular job', async (t) => {
+test('throw for a circular job', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: [
@@ -30,12 +30,11 @@ test('report an error for a circular job', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /circular dependency/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /circular dependency/i);
 });
 
-test('report an error for a job with multiple inputs', async (t) => {
+test('throw for a job with multiple inputs', async (t) => {
   // TODO maybe this isn't a good test - job1 and job2 both input to job3, but job2 never gets called
   const plan: ExecutionPlan = {
     start: 'job1',
@@ -57,12 +56,11 @@ test('report an error for a job with multiple inputs', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /multiple dependencies/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /multiple dependencies/i);
 });
 
-test('report an error for a plan which references an undefined job', async (t) => {
+test('throw for a plan which references an undefined job', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: [
@@ -73,12 +71,11 @@ test('report an error for a plan which references an undefined job', async (t) =
       },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /cannot find job/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /cannot find job/i);
 });
 
-test('report an error for an illegal edge condition', async (t) => {
+test('throw for an illegal edge condition', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -93,12 +90,11 @@ test('report an error for an illegal edge condition', async (t) => {
       { id: 'b' },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /failed to compile edge condition a->b/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /failed to compile edge condition a->b/i);
 });
 
-test('report an error for an edge condition', async (t) => {
+test('throw for an edge condition', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -112,9 +108,8 @@ test('report an error for an edge condition', async (t) => {
       { id: 'b' },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /failed to compile edge condition/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /failed to compile edge condition/i);
 });
 
 test('execute a one-job execution plan with inline state', async (t) => {

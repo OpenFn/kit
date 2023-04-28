@@ -98,7 +98,9 @@ export default (plan: ExecutionPlan) => {
   }
 
   if (errs.length) {
-    throw errs;
+    const e = new Error('compilation error');
+    e.message = errs.map(({ message }) => message).join('\n\n');
+    throw e;
   }
 
   return newPlan as CompiledExecutionPlan;

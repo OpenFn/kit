@@ -31,16 +31,8 @@ const executePlan = async (
     validatePlan(plan);
     compiledPlan = compilePlan(plan);
   } catch (e: any) {
-    return {
-      error: {
-        code: 1, // TODO what error code is an invalid plan?
-        // TODO compilation may throw several errors, for now we'll just
-        // concatenate them into one big message
-        message: Array.isArray(e)
-          ? e.map((e: any) => e.message).join('\n')
-          : e.message,
-      },
-    };
+    // If the plan is invalid, abort before trying to execute
+    throw e;
   }
 
   let queue: string[] = [opts.start || compiledPlan.start];
