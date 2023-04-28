@@ -14,7 +14,6 @@ export default async (
   opts: Pick<Opts, 'jobPath' | 'workflowPath' | 'workflow' | 'job'>,
   log: Logger
 ) => {
-  log.debug('Loading input...');
   const { job, workflow, jobPath, workflowPath } = opts;
   if (workflow || workflowPath) {
     return loadWorkflow(opts as LoadWorkflowOpts, log);

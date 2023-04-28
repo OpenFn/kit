@@ -111,9 +111,14 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     if (!process.exitCode) {
       process.exitCode = e.exitCode || 1;
     }
-    logger.break();
-    logger.error('Command failed!');
-    logger.error(e);
+    if (e.handled) {
+      // If throwing an epected error from util/abort, we do nothing
+    } else {
+      // This is unexpected error and we should try to log something
+      logger.break();
+      logger.error('Command failed!');
+      logger.error(e);
+    }
   }
 };
 
