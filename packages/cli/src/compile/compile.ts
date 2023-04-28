@@ -58,7 +58,7 @@ const compileWorkflow = async (
     if (job.expression) {
       job.expression = await compileJob(
         job.expression as string,
-        opts,
+        jobOpts,
         log,
         job.id
       );

@@ -28,7 +28,7 @@ export default async (
       log.debug(`Loading job from ${jobPath}`);
       opts.job = await fs.readFile(jobPath, 'utf8');
       return opts.job;
-    } catch (e) {
+    } catch (e: any) {
       abort(
         log,
         'Job not found',
@@ -59,7 +59,7 @@ const loadWorkflow = async (opts: LoadWorkflowOpts, log: Logger) => {
   const parseWorkflow = (contents: string) => {
     try {
       return JSON.parse(contents);
-    } catch (e) {
+    } catch (e: any) {
       abort(
         log,
         'Invalid JSON in workflow',
@@ -98,7 +98,6 @@ const loadWorkflow = async (opts: LoadWorkflowOpts, log: Logger) => {
     if (workflowPath) {
       let workflowRaw = await readWorkflow();
       wf = parseWorkflow(workflowRaw!);
-
       if (!rootDir) {
         // TODO this may not be neccessary, but keeping just in case
         rootDir = path.dirname(workflowPath);
@@ -114,20 +113,22 @@ const loadWorkflow = async (opts: LoadWorkflowOpts, log: Logger) => {
     let idx = 0;
     for (const job of wf.jobs) {
       idx += 1;
-      const expression = job.expression?.trim();
-      const configuration = job.configuration?.trim();
-      if (typeof expression === 'string' && isPath(expression)) {
+      const expressionStr =
+        typeof job.expression === 'string' && job.expression?.trim();
+      const configurationStr =
+        typeof job.configuration === 'string' && job.configuration?.trim();
+      if (expressionStr && isPath(expressionStr)) {
         job.expression = await fetchWorkflowFile(
           job.id || `${idx}`,
           rootDir,
-          expression
+          expressionStr
         );
       }
-      if (typeof configuration === 'string' && isPath(configuration)) {
+      if (configurationStr && isPath(configurationStr)) {
         const configString = await fetchWorkflowFile(
           job.id || `${idx}`,
           rootDir,
-          configuration
+          configurationStr
         );
         job.configuration = JSON.parse(configString!);
       }
