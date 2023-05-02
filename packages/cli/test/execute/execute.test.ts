@@ -62,11 +62,16 @@ test('run a job', async (t) => {
 });
 
 test('run a job with initial state', async (t) => {
-  const job = `${fn}fn((state) => state);`;
+  const job = `${fn}fn((state) => {
+    // Can I count to zero?
+    const count = state.items.length
+    return { ...state, count };
+  });`;
+
   const options = {
     ...defaultOptions,
     job,
-    stateStdin: JSON.stringify({ data: { count: 10 } }),
+    stateStdin: JSON.stringify({ data: { count: 10 }, items: [] }),
   };
   const result = await handler(options, logger);
   t.is(result.data.count, 10);
