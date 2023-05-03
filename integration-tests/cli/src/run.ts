@@ -19,13 +19,10 @@ const mapOpenFnPath = (cmd) => {
 
 const run = async (
   cmd: string
-): Promise<{ stdout: string; stderr?: string }> => {
+): Promise<{ stdout: string; stderr?: string; err?: any }> => {
   return new Promise((resolve, reject) => {
     exec(mapOpenFnPath(cmd), options, (err, stdout, stderr) => {
-      if (err) {
-        reject(err);
-      }
-      resolve({ stdout, stderr });
+      resolve({ err, stdout, stderr });
     });
   });
 };

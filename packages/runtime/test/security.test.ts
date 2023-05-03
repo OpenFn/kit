@@ -1,6 +1,6 @@
 // a suite of tests with various security concerns in mind
 import test from 'ava';
-import doRun, { ERR_RUNTIME_EXCEPTION } from '../src/runtime';
+import doRun from '../src/runtime';
 
 import { createMockLogger } from '@openfn/logger';
 import { ExecutionPlan } from '../src/types';
@@ -56,16 +56,14 @@ test.serial('jobs should each run in their own context', async (t) => {
 test.serial('jobs should not have a process object', async (t) => {
   const src = 'export default [() => process.pid]';
 
-  await t.throwsAsync(() => run(src, undefined, { logger }), {
-    message: ERR_RUNTIME_EXCEPTION,
-  });
+  const result = await run(src);
 
-  // find the exception
-  const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog!);
+  t.truthy(result);
 
-  t.is(level, 'error');
-  t.regex(message as string, /process is not defined/);
+  const err = result.errors['job-1'];
+  t.truthy(err);
+  t.is(err.message, 'process is not defined');
+  t.is(err.name, 'ReferenceError');
 });
 
 test.serial(
@@ -73,21 +71,15 @@ test.serial(
   async (t) => {
     const src = 'export default [() => setTimeout("hacking ur scriptz", 1)]';
 
-    await t.throwsAsync(() => run(src, undefined, { logger }), {
-      message: ERR_RUNTIME_EXCEPTION,
-    });
+    const result = await run(src);
 
-    // find the exception
-    const errLog = logger._history.at(-1);
-    const { message, level } = logger._parse(errLog!) as {
-      message: string;
-      level: string;
-    };
+    t.truthy(result);
 
-    t.is(level, 'error');
-    t.regex(message, /ERR_INVALID_ARG_TYPE/);
-    t.regex(message, /The "callback" argument must be of type function/);
-    t.regex(message, /Received type string \('hacking ur scriptz'\)/);
+    const err = result.errors['job-1'];
+    t.truthy(err);
+    t.is(err.name, 'TypeError');
+    t.regex(err.message, /The "callback" argument must be of type function/);
+    t.regex(err.message, /Received type string \('hacking ur scriptz'\)/);
   }
 );
 
@@ -119,9 +111,12 @@ test.serial(
       ],
     };
 
-    await t.throwsAsync(() => run(plan), {
-      // TODO this error handling is not good
-      message: 'runtime exception',
-    });
+    const result = await run(plan);
+    t.truthy(result);
+
+    const err = result.errors['job-1'];
+    t.truthy(err);
+    t.is(err.name, 'TypeError');
+    t.is(err.message, 'Cannot add property x, object is not extensible');
   }
 );

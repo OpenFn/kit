@@ -1,3 +1,4 @@
+import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
 import { ExecutionPlan } from '../src';
 import run from '../src/runtime';
@@ -180,4 +181,70 @@ test('do pass extraneous state in non-strict mode', async (t) => {
     x: 1,
     data: {},
   });
+});
+
+test('log errors, write to state, and continue', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: 'export default [() => { throw new Error("test") }]',
+        next: { b: true },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => { s.x = 1; return s; }]',
+      },
+    ],
+  };
+
+  const logger = createMockLogger();
+  const result: any = await run(plan, {}, { strict: false, logger });
+  t.is(result.x, 1);
+
+  t.truthy(result.errors);
+  t.is(result.errors.a.message, 'test');
+  t.is(result.errors.a.name, 'Error');
+
+  t.truthy(logger._find('error', /failed job a/i));
+});
+
+test('error reports can be overwritten', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: 'export default [() => { throw new Error("test") }]',
+        next: { b: true },
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => ({ errors: 22 })]',
+      },
+    ],
+  };
+
+  const logger = createMockLogger();
+  const result: any = await run(plan, {}, { strict: false, logger });
+
+  t.is(result.errors, 22);
+});
+
+// This tracks current behaviour but I don't know if it's right
+test('stuff written to state before an error is preserved', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        data: { x: 0 },
+        expression:
+          'export default [(s) => { s.x = 1; throw new Error("test") }]',
+      },
+    ],
+  };
+
+  const logger = createMockLogger();
+  const result: any = await run(plan, {}, { strict: false, logger });
+
+  t.is(result.x, 1);
 });

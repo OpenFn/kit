@@ -11,11 +11,13 @@ import type {
 import type { Options } from '../runtime';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
+import createErrorReporter, { ErrorReporter } from '../util/log-error';
 
 type ExeContext = {
   plan: CompiledExecutionPlan;
   logger: Logger;
   opts: Options;
+  report: ErrorReporter;
 };
 
 const executePlan = async (
@@ -29,16 +31,8 @@ const executePlan = async (
     validatePlan(plan);
     compiledPlan = compilePlan(plan);
   } catch (e: any) {
-    return {
-      error: {
-        code: 1, // TODO what error code is an invalid plan?
-        // TODO compilation may throw several errors, for now we'll just
-        // concatenate them into one big message
-        message: Array.isArray(e)
-          ? e.map((e: any) => e.message).join('\n')
-          : e.message,
-      },
-    };
+    // If the plan is invalid, abort before trying to execute
+    throw e;
   }
 
   let queue: string[] = [opts.start || compiledPlan.start];
@@ -47,6 +41,7 @@ const executePlan = async (
     plan: compiledPlan,
     opts,
     logger,
+    report: createErrorReporter(logger),
   };
 
   let lastState = initialState;
@@ -74,7 +69,7 @@ const executeJob = async (
   const job = ctx.plan.jobs[jobId];
 
   ctx.logger.timer('job');
-  ctx.logger.info('Starting job', jobId);
+  ctx.logger.always('Starting job', jobId);
 
   const state = assembleState(
     initialState,
@@ -86,16 +81,21 @@ const executeJob = async (
   let result: any = state;
   if (job.expression) {
     // The expression SHOULD return state, but could return anything
-    result = await executeExpression(
-      job.expression,
-      state,
-      ctx.logger,
-      ctx.opts
-    );
+    try {
+      result = await executeExpression(
+        job.expression,
+        state,
+        ctx.logger,
+        ctx.opts
+      );
+      const duration = ctx.logger.timer('job');
+      ctx.logger.success(`Completed job ${jobId} in ${duration}`);
+    } catch (e: any) {
+      const duration = ctx.logger.timer('job');
+      ctx.logger.error(`Failed job ${jobId} after ${duration}`);
+      ctx.report(state, jobId, e);
+    }
   }
-
-  const duration = ctx.logger.timer('job');
-  ctx.logger.success(`Completed job "${jobId}" in ${duration}`);
 
   if (job.next) {
     for (const nextJobId in job.next) {

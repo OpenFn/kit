@@ -9,6 +9,7 @@ import compile, {
 } from '../../src/compile/compile';
 import type { SafeOpts } from '../../src/commands';
 import { CompileOptions } from '../../src/compile/command';
+import { ExecutionPlan } from '@openfn/runtime';
 
 const mockLog = createMockLogger();
 
@@ -56,8 +57,6 @@ test.serial('compile from path', async (t) => {
 
   const expected = 'export default [x()];';
   t.is(result, expected);
-
-  mock.restore();
 });
 
 test('compile from workflow', async (t) => {
@@ -73,11 +72,48 @@ test('compile from workflow', async (t) => {
     workflow,
   } as CompileOptions;
 
-  const result = await compile(opts, mockLog);
+  const result = (await compile(opts, mockLog)) as ExecutionPlan;
 
   const expected = 'export default [x()];';
   t.is(result.jobs[0].expression, expected);
   t.is(result.jobs[1].expression, expected);
+});
+
+test('throw an AbortError if a job is uncompilable', async (t) => {
+  const job = 'a b';
+
+  const opts = {
+    job,
+  } as CompileOptions;
+
+  const logger = createMockLogger();
+  await t.throwsAsync(() => compile(opts, logger), {
+    message: 'Failed to compile job',
+  });
+
+  t.assert(logger._find('error', /unexpected token/i));
+  t.assert(logger._find('always', /check the syntax of the job expression/i));
+  t.assert(logger._find('error', /critical error: aborting command/i));
+});
+
+test('throw an AbortError if a workflow contains an uncompilable jon', async (t) => {
+  const workflow = {
+    start: 'a',
+    jobs: [{ id: 'a', expression: 'x b' }],
+  };
+
+  const opts = {
+    workflow,
+  } as CompileOptions;
+
+  const logger = createMockLogger();
+  await t.throwsAsync(() => compile(opts, logger), {
+    message: 'Failed to compile job a',
+  });
+
+  t.assert(logger._find('error', /unexpected token/i));
+  t.assert(logger._find('always', /check the syntax of the job expression/i));
+  t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
 test('stripVersionSpecifier: remove version specifier from @openfn', (t) => {

@@ -1,6 +1,7 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath, ExecutionPlan } from '@openfn/runtime';
 import createLogger, { COMPILER, Logger } from '../util/logger';
+import abort from '../util/abort';
 import type { CompileOptions } from './command';
 
 // Load and compile a job from a file, then return the result
@@ -11,8 +12,7 @@ export default async (opts: CompileOptions, log: Logger) => {
   if (opts.workflow) {
     job = compileWorkflow(opts.workflow, opts, log);
   } else {
-    const compilerOptions: Options = await loadTransformOptions(opts, log);
-    job = compile((opts.job || opts.jobPath) as string, compilerOptions);
+    job = await compileJob((opts.job || opts.jobPath) as string, opts, log);
   }
 
   if (opts.jobPath) {
@@ -21,6 +21,25 @@ export default async (opts: CompileOptions, log: Logger) => {
     log.success('Compilation complete');
   }
   return job;
+};
+
+const compileJob = async (
+  job: string,
+  opts: CompileOptions,
+  log: Logger,
+  jobName?: string
+) => {
+  try {
+    const compilerOptions: Options = await loadTransformOptions(opts, log);
+    return compile(job, compilerOptions);
+  } catch (e: any) {
+    abort(
+      log,
+      `Failed to compile job ${jobName ?? ''}`.trim(),
+      e,
+      'Check the syntax of the job expression:\n\n' + job
+    );
+  }
 };
 
 // Find every expression in the job and run the compiler on it
@@ -36,10 +55,13 @@ const compileWorkflow = async (
     if (job.adaptor) {
       jobOpts.adaptors = [job.adaptor];
     }
-    const compilerOptions: Options = await loadTransformOptions(jobOpts, log);
-
     if (job.expression) {
-      job.expression = compile(job.expression as string, compilerOptions);
+      job.expression = await compileJob(
+        job.expression as string,
+        jobOpts,
+        log,
+        job.id
+      );
     }
   }
   return workflow;

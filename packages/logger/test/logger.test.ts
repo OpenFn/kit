@@ -377,3 +377,11 @@ test('ignore functions on logged objects', async (t) => {
   const { message } = logger._parse(logger._last);
   t.is(message, '{"a":1}');
 });
+
+test('log an error object', (t) => {
+  const logger = createLogger();
+  logger.error(new Error('err'));
+
+  const { message } = logger._parse(logger._last);
+  t.assert(message instanceof Error);
+});

@@ -1,5 +1,5 @@
 import test from 'ava';
-import run, { ERR_RUNTIME_EXCEPTION } from '../src/runtime';
+import run from '../src/runtime';
 
 import { createMockLogger } from '@openfn/logger';
 
@@ -39,15 +39,13 @@ test("doesn't allow process inside the job", async (t) => {
     ];`;
 
   const state = createState();
-  await t.throwsAsync(async () => await run(job, state, { logger }), {
-    message: ERR_RUNTIME_EXCEPTION,
-  });
+  const result = await run(job, state, { logger });
 
-  const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog!);
-
-  t.is(level, 'error');
-  t.regex(message as string, /process is not defined/);
+  t.truthy(result);
+  const err = result.errors['job-1'];
+  t.truthy(err);
+  t.is(err.message, 'process is not defined');
+  t.is(err.name, 'ReferenceError');
 });
 
 test("doesn't allow eval inside a job", async (t) => {
@@ -57,18 +55,14 @@ test("doesn't allow eval inside a job", async (t) => {
       (state) => eval('ok') // should throw
     ];`;
 
-  await t.throwsAsync(async () => await run(job, createState(), { logger }), {
-    message: ERR_RUNTIME_EXCEPTION,
-  });
+  const state = createState();
+  const result = await run(job, state, { logger });
 
-  const errLog = logger._history.at(-1);
-  const { message, level } = logger._parse(errLog!);
-
-  t.is(level, 'error');
-  t.regex(
-    message as string,
-    /Code generation from strings disallowed for this context/
-  );
+  t.truthy(result);
+  const err = result.errors['job-1'];
+  t.truthy(err);
+  t.is(err.message, 'Code generation from strings disallowed for this context');
+  t.is(err.name, 'EvalError');
 });
 
 // TODO exhaustive test of globals?

@@ -54,6 +54,8 @@ const mockLogger = <T = StringLog>(
   // Type shenanegans while we append the mock APIs
   const mock = m as MockLogger<T>;
 
+  mock.break = () => {}; // do nothing
+
   // TODO should this use json?
   mock.print = (...out: any[]) => {
     if (opts.level !== 'none') {

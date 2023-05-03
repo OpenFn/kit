@@ -15,7 +15,7 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
     options.stringify === false ? o : stringify(o);
 
   if (item instanceof Error) {
-    return item.toString();
+    return item;
   }
 
   if (

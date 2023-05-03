@@ -1,0 +1,7 @@
+{
+  "jobs": [
+    {
+      "configuration": "does-not-exist.json"
+    }
+  ]
+}

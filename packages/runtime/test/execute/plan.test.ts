@@ -5,16 +5,16 @@ import { ExecutionPlan, JobNode } from '../../src/types';
 import execute from './../../src/execute/plan';
 
 const opts = {};
-const logger = createMockLogger(undefined, { level: 'debug' });
+let mockLogger = createMockLogger(undefined, { level: 'debug' });
 
-const executePlan = (plan: ExecutionPlan, state = {}, options = opts): any =>
-  execute(plan, state, options, logger);
+const executePlan = (
+  plan: ExecutionPlan,
+  state = {},
+  options = opts,
+  logger = mockLogger
+): any => execute(plan, state, options, logger);
 
-test.afterEach(() => {
-  logger._reset();
-});
-
-test('report an error for a circular job', async (t) => {
+test('throw for a circular job', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: [
@@ -30,12 +30,11 @@ test('report an error for a circular job', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /circular dependency/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /circular dependency/i);
 });
 
-test('report an error for a job with multiple inputs', async (t) => {
+test('throw for a job with multiple inputs', async (t) => {
   // TODO maybe this isn't a good test - job1 and job2 both input to job3, but job2 never gets called
   const plan: ExecutionPlan = {
     start: 'job1',
@@ -57,12 +56,11 @@ test('report an error for a job with multiple inputs', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /multiple dependencies/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /multiple dependencies/i);
 });
 
-test('report an error for a plan which references an undefined job', async (t) => {
+test('throw for a plan which references an undefined job', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
     jobs: [
@@ -73,12 +71,11 @@ test('report an error for a plan which references an undefined job', async (t) =
       },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /cannot find job/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /cannot find job/i);
 });
 
-test('report an error for an illegal edge condition', async (t) => {
+test('throw for an illegal edge condition', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -93,12 +90,11 @@ test('report an error for an illegal edge condition', async (t) => {
       { id: 'b' },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /failed to compile edge condition a->b/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /failed to compile edge condition a->b/i);
 });
 
-test('report an error for an edge condition', async (t) => {
+test('throw for an edge condition', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -112,9 +108,8 @@ test('report an error for an edge condition', async (t) => {
       { id: 'b' },
     ],
   };
-  const result = await executePlan(plan);
-  t.assert(result.hasOwnProperty('error'));
-  t.regex(result.error.message, /failed to compile edge condition/i);
+  const e = await t.throwsAsync(() => executePlan(plan));
+  t.regex(e!.message, /failed to compile edge condition/i);
 });
 
 test('execute a one-job execution plan with inline state', async (t) => {
@@ -474,7 +469,95 @@ test('execute multiple steps in "parallel"', async (t) => {
   t.is(result.data.x, 3);
 });
 
-test.serial('jobs do not share a local scope', async (t) => {
+test('return an error in state', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        data: {},
+        expression: 'export default [s => { throw Error("e")}]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.truthy(result.errors);
+  t.is(result.errors.a.message, 'e');
+});
+
+test('keep executing after an error', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        data: {},
+        expression: 'export default [s => { throw Error("e"); state.x = 20 }]',
+        next: {
+          b: true,
+        },
+      },
+      {
+        id: 'b',
+        expression: 'export default [() => ({ y: 20 })]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.is(result.y, 20);
+  t.falsy(result.x);
+});
+
+test('simple on-error handler', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'job1',
+        data: {},
+        expression: 'export default [s => { throw Error("e")}]',
+        next: {
+          job2: { condition: 'state.errors' },
+          job3: { condition: '!state.errors' },
+        },
+      },
+      {
+        id: 'job2',
+        expression: 'export default [() => ({ y: 20 })]',
+      },
+      {
+        id: 'job3',
+        expression: 'export default [() => ({ x: 20 })]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.is(result.y, 20);
+  t.falsy(result.x);
+});
+
+test('log appopriately on error', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'job1',
+        data: {},
+        expression: 'export default [s => { throw Error("e")}]',
+      },
+    ],
+  };
+
+  const logger = createMockLogger(undefined, { level: 'debug' });
+
+  await executePlan(plan, {}, {}, logger);
+
+  const err = logger._find('error', /failed job/i);
+  t.truthy(err);
+  t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
+
+  t.truthy(logger._find('debug', /error thrown by job job1/i));
+  t.truthy(logger._find('error', /Error: e/));
+  t.truthy(logger._find('debug', /error written to state.errors.job1/i));
+});
+
+test('jobs do not share a local scope', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -491,13 +574,15 @@ test.serial('jobs do not share a local scope', async (t) => {
       },
     ],
   };
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
 
-  const last = logger._parse(logger._history.at(-1));
-  t.is(last.message, 'ReferenceError: x is not defined');
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, 'x is not defined');
+  t.is(err.name, 'ReferenceError');
 });
 
-test.serial('jobs do not share a global scope', async (t) => {
+test('jobs do not share a global scope', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -512,13 +597,15 @@ test.serial('jobs do not share a global scope', async (t) => {
       },
     ],
   };
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
 
-  const last = logger._parse(logger._history.at(-1));
-  t.is(last.message, 'ReferenceError: x is not defined');
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, 'x is not defined');
+  t.is(err.name, 'ReferenceError');
 });
 
-test.serial('jobs do not share a this object', async (t) => {
+test('jobs do not share a this object', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -533,13 +620,12 @@ test.serial('jobs do not share a this object', async (t) => {
       },
     ],
   };
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
 
-  const last = logger._parse(logger._history.at(-1));
-  t.is(
-    last.message,
-    "TypeError: Cannot set properties of undefined (setting 'x')"
-  );
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, "Cannot read properties of undefined (reading 'x')");
+  t.is(err.name, 'TypeError');
 });
 
 // TODO this fails right now
@@ -598,10 +684,8 @@ test.skip('jobs cannot scribble on adaptor functions', async (t) => {
   t.falsy(result.data.x);
 });
 
-test.serial(
-  'jobs can write circular references to state without blowing up downstream',
-  async (t) => {
-    const expression = `export default [(s) => {
+test('jobs can write circular references to state without blowing up downstream', async (t) => {
+  const expression = `export default [(s) => {
     const a  = {};
     const b = { a };
     a.b = b;
@@ -610,34 +694,33 @@ test.serial(
     return s;
   }]
 `;
-    const plan: ExecutionPlan = {
-      jobs: [
-        {
-          expression,
-          next: { b: true },
-        },
-        {
-          id: 'b',
-          expression: 'export default [(s => s)]',
-        },
-      ],
-    };
-
-    const result = await executePlan(plan, { data: {} });
-
-    t.notThrows(() => JSON.stringify(result));
-    t.deepEqual(result, {
-      configuration: {},
-      data: {
-        b: {
-          a: '[Circular]',
-        },
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression,
+        next: { b: true },
       },
-    });
-  }
-);
+      {
+        id: 'b',
+        expression: 'export default [(s => s)]',
+      },
+    ],
+  };
 
-test.serial('jobs cannot pass circular references to each other', async (t) => {
+  const result = await executePlan(plan, { data: {} });
+
+  t.notThrows(() => JSON.stringify(result));
+  t.deepEqual(result, {
+    configuration: {},
+    data: {
+      b: {
+        a: '[Circular]',
+      },
+    },
+  });
+});
+
+test('jobs cannot pass circular references to each other', async (t) => {
   const expression = `export default [(s) => {
     const a  = {};
     const b = { a };
@@ -669,36 +752,33 @@ test.serial('jobs cannot pass circular references to each other', async (t) => {
   t.is(result.data.answer, '[Circular]');
 });
 
-test.serial(
-  'jobs can write functions to state without blowing up downstream',
-  async (t) => {
-    const plan: ExecutionPlan = {
-      jobs: [
-        {
-          next: { b: true },
-          expression: `export default [(s) => {
+test('jobs can write functions to state without blowing up downstream', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        next: { b: true },
+        expression: `export default [(s) => {
             s.data = {
               x: () => 22
             }
         
             return s;
           }]`,
-        },
-        {
-          id: 'b',
-          expression: 'export default [(s) => s]',
-        },
-      ],
-    };
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => s]',
+      },
+    ],
+  };
 
-    const result = await executePlan(plan, { data: {} });
+  const result = await executePlan(plan, { data: {} });
 
-    t.notThrows(() => JSON.stringify(result));
-    t.deepEqual(result, { data: {}, configuration: {} });
-  }
-);
+  t.notThrows(() => JSON.stringify(result));
+  t.deepEqual(result, { data: {}, configuration: {} });
+});
 
-test.serial('jobs cannot pass functions to each other', async (t) => {
+test('jobs cannot pass functions to each other', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -720,11 +800,14 @@ test.serial('jobs cannot pass functions to each other', async (t) => {
     ],
   };
 
-  // TODO this will throw right now, but in future it might just write an error to state
-  await t.throwsAsync(() => executePlan(plan, { data: {} }));
+  const result = await executePlan(plan, { data: {} });
+  const err = result.errors['b'];
+  t.truthy(err);
+  t.is(err.message, 's.data.x is not a function');
+  t.is(err.name, 'TypeError');
 });
 
-test.serial('Plans log for each job start and end', async (t) => {
+test('Plans log for each job start and end', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
@@ -733,11 +816,12 @@ test.serial('Plans log for each job start and end', async (t) => {
       },
     ],
   };
-  await executePlan(plan);
+  const logger = createMockLogger(undefined, { level: 'debug' });
+  await executePlan(plan, {}, {}, logger);
 
-  const start = logger._find('info', /starting job/i);
+  const start = logger._find('always', /starting job/i);
   t.is(start.message, 'Starting job a');
 
   const end = logger._find('success', /completed job/i);
-  t.regex(end.message, /Completed job "a" in \d+ms/);
+  t.regex(end.message, /Completed job a in \d+ms/);
 });

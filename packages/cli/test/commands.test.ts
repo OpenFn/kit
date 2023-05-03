@@ -34,6 +34,7 @@ type RunOptions = {
     log: (s: string) => void;
   };
   disableMock?: boolean;
+  mockfs: object;
 };
 
 // Helper function to mock a file system with particular paths and values,
@@ -68,6 +69,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
       '/monorepo/': mock.load(path.resolve('test/__monorepo__/'), {}),
       //'node_modules': mock.load(path.resolve('node_modules/'), {}),
       [pkgPath]: mock.load(pkgPath),
+      ...(options.mockfs ?? {}),
     });
   }
 
@@ -144,7 +146,7 @@ test.serial('run a workflow', async (t) => {
   t.assert(result.data.x === 2);
 });
 
-test.serial('run a workflow with config as a path', async (t) => {
+test.serial('run a workflow with config as an object', async (t) => {
   const workflow = {
     jobs: [
       {
@@ -159,6 +161,31 @@ test.serial('run a workflow with config as a path', async (t) => {
   const options = {
     outputPath: 'output.json',
     jobPath: 'wf.json', // just to fool the test
+  };
+  const result = await run('openfn wf.json', JSON.stringify(workflow), options);
+  t.deepEqual(result, {
+    data: { x: 0, y: 0 },
+  });
+});
+
+test.serial('run a workflow with config as a path', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        data: { x: 0 },
+        configuration: '/config.json',
+        expression:
+          'export default [s => { s.data.y = s.configuration.y; return s}]',
+      },
+    ],
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    jobPath: 'wf.json', // just to fool the test
+    mockfs: {
+      '/config.json': JSON.stringify({ y: 0 }),
+    },
   };
   const result = await run('openfn wf.json', JSON.stringify(workflow), options);
   t.deepEqual(result, {

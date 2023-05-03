@@ -20,7 +20,7 @@ test.before(async () => {
 test.serial(
   `openfn metadata -S "${state}" -a test=${modulePath} --log-json --log info`,
   async (t) => {
-    const { stdout, stderr } = await run(t.title);
+    const { stdout } = await run(t.title);
 
     t.regex(stdout, /Generating metadata/);
     t.regex(stdout, /Metadata function found. Generating metadata/);
@@ -49,7 +49,7 @@ test.serial(
 test.serial(
   `openfn metadata -S "${state}" --adaptor test=${modulePath} --log-json --log info`,
   async (t) => {
-    const { stdout, stderr } = await run(t.title);
+    const { stdout } = await run(t.title);
     t.regex(stdout, /Generating metadata/);
     t.notRegex(stdout, /Metadata function found. Generating metadata/);
     t.regex(stdout, /Returning metadata from cache/);
@@ -70,7 +70,7 @@ test.serial(
 test.serial(
   `openfn metadata -S "${state}" --a test=${modulePath} -f --log-json --log info`,
   async (t) => {
-    const { stdout, stderr } = await run(t.title);
+    const { stdout } = await run(t.title);
 
     t.regex(stdout, /Generating metadata/);
     t.regex(stdout, /Metadata function found. Generating metadata/);

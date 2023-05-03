@@ -1,0 +1,9 @@
+{
+  "start": "nope",
+  "jobs": [
+    {
+      "id": "x",
+      "expression": "fn((state) => state)"
+    }
+  ]
+}

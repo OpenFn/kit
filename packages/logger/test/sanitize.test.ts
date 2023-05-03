@@ -22,23 +22,23 @@ test('simply return undefined', (t) => {
   t.deepEqual(result, undefined);
 });
 
-test('stringify an error', (t) => {
+test("don't stringify errors", (t) => {
   const e = new Error('test');
   const result = sanitize(e);
-  t.regex(result, /test/);
+  t.assert(result instanceof Error);
 });
 
-test('stringify ReferenceError', (t) => {
+test("Don't stringify ReferenceError", (t) => {
   const e = new ReferenceError('test');
   const result = sanitize(e);
-  t.regex(result, /ReferenceError/);
+  t.assert(result instanceof ReferenceError);
 });
 
-test('stringify a custom error', (t) => {
+test("Don't stringify a custom error", (t) => {
   class CustomError extends Error {}
   const e = new CustomError('test');
   const result = sanitize(e);
-  t.regex(result, /test/);
+  t.assert(result instanceof Error);
 });
 
 test('stringify an object', (t) => {
