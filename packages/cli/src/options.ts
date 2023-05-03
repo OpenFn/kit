@@ -267,14 +267,14 @@ export const strictOutput: CLIOption = {
 export const strict: CLIOption = {
   name: 'no-strict',
   yargs: {
-    default: true,
+    default: false,
     boolean: true,
     description:
       'Strict state handling, meaning only state.data is returned from a job.',
   },
   ensure: (opts) => {
     if (!opts.hasOwnProperty('strictOutput')) {
-      setDefaultValue(opts, 'strict', true);
+      setDefaultValue(opts, 'strict', false);
     }
   },
 };

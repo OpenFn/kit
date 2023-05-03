@@ -22,7 +22,7 @@ test('correct default options', (t) => {
   t.is(options.outputStdout, false);
   t.is(options.path, 'job.js');
   t.is(options.skipAdaptorValidation, false);
-  t.is(options.strict, true);
+  t.is(options.strict, false);
   t.is(options.timeout, 300000);
   t.falsy(options.useAdaptorsMonorepo);
 });
