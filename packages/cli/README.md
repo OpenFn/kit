@@ -58,7 +58,6 @@ If you're coming to the CLI from the old openfn devtools, here are a couple of k
 
 * The CLI has a shorter, sleeker syntax, so your command should be much shorter
 * The CLI will automatically install adaptors for you (with full version control)
-* By default, the runtime will only return `state.data` from the output of each job. This is to encourage better state management. Pass `--no-strict` to return the entire state object (often needed to run legacy jobs and workflows).
 
 ## Basic Usage
 
@@ -75,8 +74,6 @@ If running a single job, you MUST specify which adaptor to use.
 Pass the `-i` flag to auto-install any required adaptors (it's safe to do this redundantly, although the run will be a little slower).
 
 When the finished, the CLI will write the resulting state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
-
-Note that the runtime will only return `state.data` key from each job. To return the entire state object (not just `data`), pass `--no-strict`.
 
 The CLI maintains a repo for auto-installed adaptors. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo. `openfn repo clean` will remove all adaptors from the repo. The repo also includes any documentation and metadata built with the CLI.
 
