@@ -22,18 +22,18 @@ test('strictOutput: false should set strict', (t) => {
   t.falsy(opts.strictOutput);
 });
 
-test('strict should default to true', (t) => {
+test('strict should default to false', (t) => {
   const opts = {} as Opts;
   strict.ensure!(opts);
-  t.true(opts.strict);
+  t.false(opts.strict);
 });
 
-test('strict can be set to false', (t) => {
+test('strict can be set to true', (t) => {
   const opts = {
-    strict: false,
+    strict: true,
   } as Opts;
   strict.ensure!(opts);
-  t.false(opts.strict);
+  t.true(opts.strict);
 });
 
 test('strict overrides strictOutput', (t) => {
