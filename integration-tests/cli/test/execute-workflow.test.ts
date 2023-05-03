@@ -114,7 +114,7 @@ test.serial(
   }
 );
 
-test.serial(`openfn ${jobsPath}/wf-strict.json`, async (t) => {
+test.serial(`openfn ${jobsPath}/wf-strict.json --strict`, async (t) => {
   await run(t.title);
 
   const out = getJSON();
