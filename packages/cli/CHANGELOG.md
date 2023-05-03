@@ -1,5 +1,19 @@
 # @openfn/cli
 
+## 0.0.39
+
+### Patch Changes
+
+- f9b9e07: Tweak log output
+- 5b2a866: Run in non-strict mode by default
+- 8d5c405: Rename strict-output -> strict
+- 26024a7: Better error handling and reporting
+
+- Updated dependencies [6f51ce2]
+  - @openfn/logger@0.0.13
+  - @openfn/runtime@0.0.24
+  - @openfn/compiler@0.0.32
+
 ## 0.0.38
 
 ### Patch Changes

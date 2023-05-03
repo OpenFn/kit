@@ -1,5 +1,18 @@
 # @openfn/runtime
 
+## 0.0.24
+
+### Patch Changes
+
+- 8d5c405: Support strict mode
+- 0c5ee29: Throw when a workflow is invalid
+- 26024a7: Better error handling and reporting
+- 8d5c405: Better state handling in workflows
+- 79f6d7c: Log job start and end (with duration)
+  Demote operation timings down to info and debug
+- Updated dependencies [6f51ce2]
+  - @openfn/logger@0.0.13
+
 ## 0.0.23
 
 ### Patch Changes
