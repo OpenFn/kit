@@ -166,6 +166,14 @@ test.serial(
       data: {
         number: 32,
       },
+      errors: {
+        start: {
+          error: {},
+          jobId: 'start',
+          message: 'abort',
+          name: 'Error',
+        },
+      },
     });
   }
 );

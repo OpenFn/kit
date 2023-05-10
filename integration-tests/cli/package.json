@@ -7,12 +7,12 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "clean": "rimraf dist",
+    "clean": "rimraf dist repo",
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/cli/dist --no-version",
     "build": "pnpm build:pack && docker build --tag cli-integration-tests .",
     "start": "docker run cli-integration-tests",
-    "test": "node prelude.js && npx ava -s --timeout 2m",
-    "test:dev": "node prelude.js && pnpm ava -s"
+    "test": "node prelude.js && npx ava -s --timeout 2m && pnpm clean",
+    "test:dev": "node prelude.js && pnpm ava -s && pnpm clean"
   },
   "dependencies": {
     "@types/node": "^18.7.18",

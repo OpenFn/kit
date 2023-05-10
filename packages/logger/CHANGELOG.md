@@ -1,5 +1,14 @@
 # @openfn/logger
 
+## 0.0.13
+
+### Patch Changes
+
+- 2696581: Don't stringify error objects
+- 3cc4456: Add an 'always' log level
+- 92e9fdc: mock break() shoulnd't print anything
+- 6f51ce2: Add a \_find function to the mock
+
 ## 0.0.12
 
 ### Patch Changes

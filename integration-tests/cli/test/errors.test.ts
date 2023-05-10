@@ -130,7 +130,6 @@ test.serial('invalid start', async (t) => {
   t.is(err.code, 1);
 
   const errlogs = extractLogs(stderr);
-  console.log(errlogs);
   assertLog(t, errlogs, /Invalid workflow/i);
   assertLog(t, errlogs, /could not find start job: nope/i);
 });
