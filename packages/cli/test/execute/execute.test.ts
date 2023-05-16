@@ -1,5 +1,5 @@
 // bunch of unit tests on the execute function itself
-// so far this is only done in ands.test.ts, which has the cli overhead
+// so far this is only done in commands.test.ts, which has the cli overhead
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
 import mock from 'mock-fs';
 import path from 'node:path';
