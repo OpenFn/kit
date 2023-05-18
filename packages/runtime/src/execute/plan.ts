@@ -1,4 +1,6 @@
 import type { Logger } from '@openfn/logger';
+import { createDraft, finishDraft, isDraft, freeze } from 'immer';
+
 import executeExpression from './expression';
 import compilePlan from './compile-plan';
 import assembleState from '../util/assemble-state';
@@ -9,7 +11,6 @@ import type {
   State,
 } from '../types';
 import type { Options } from '../runtime';
-import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter, { ErrorReporter } from '../util/log-error';
 
@@ -49,11 +50,24 @@ const executePlan = async (
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift();
-    const result = await executeJob(ctx, next!, clone(lastState));
+    // find the upstream state
+    const draft = createDraft(lastState);
+    // console.log('draft:', lastState);
+    // What if a new state object is returned though?
+    console.log('isDraft:', isDraft(draft));
+    const result = await executeJob(ctx, next!, draft);
+    // console.log('result:', lastState);
     if (result.next) {
       queue.push(...result.next);
     }
-    lastState = result.state;
+    // save a clone state to the index
+    if (isDraft(result.state)) {
+      console.log('> finish draft');
+      lastState = finishDraft(result.state);
+    } else {
+      console.log('> freeze');
+      lastState = freeze(result.state);
+    }
   }
   return lastState;
 };
@@ -71,12 +85,14 @@ const executeJob = async (
   ctx.logger.timer('job');
   ctx.logger.always('Starting job', jobId);
 
-  const state = assembleState(
-    initialState,
-    job.configuration,
-    job.data,
-    ctx.opts.strict
-  );
+  // const state = assembleState(
+  //   initialState,
+  //   job.configuration,
+  //   job.data,
+  //   ctx.opts.strict
+  // );
+  // console.log('initial:', state);
+  const state = initialState;
 
   let result: any = state;
   if (job.expression) {

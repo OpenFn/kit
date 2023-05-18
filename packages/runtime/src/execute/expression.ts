@@ -64,6 +64,7 @@ const wrapOperation = (
     logger.debug(`Starting operation ${name}`);
     const start = new Date().getTime();
     const newState = immutableState ? clone(state) : state;
+    // const newState = state;
     const result = await fn(newState);
     const duration = printDuration(new Date().getTime() - start);
     logger.info(`Operation ${name} complete in ${duration}`);
@@ -110,13 +111,14 @@ const assignKeys = (
 
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
+// TODO lets write our own serializer, which ignores functions and circular references
 const prepareFinalState = (opts: Options, state: any) => {
-  if (state) {
-    if (opts.strict) {
-      state = assignKeys(state, {}, ['data', 'error', 'references']);
-    }
-    const cleanState = stringify(state);
-    return JSON.parse(cleanState);
-  }
+  // if (state) {
+  //   if (opts.strict) {
+  //     state = assignKeys(state, {}, ['data', 'error', 'references']);
+  //   }
+  //   const cleanState = stringify(state);
+  //   return JSON.parse(cleanState);
+  // }
   return state;
 };

@@ -42,6 +42,7 @@
   "dependencies": {
     "@openfn/logger": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
+    "immer": "^10.0.2",
     "semver": "^7.3.8"
   }
 }
