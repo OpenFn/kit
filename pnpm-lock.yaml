@@ -200,6 +200,7 @@ importers:
       '@types/node': ^17.0.31
       ava: 5.1.0
       fast-safe-stringify: ^2.1.1
+      immer: ^10.0.2
       mock-fs: ^5.1.4
       semver: ^7.3.8
       ts-node: ^10.9.1
@@ -209,6 +210,7 @@ importers:
     dependencies:
       '@openfn/logger': link:../logger
       fast-safe-stringify: 2.1.1
+      immer: 10.0.2
       semver: 7.3.8
     devDependencies:
       '@openfn/language-common': 2.0.0-rc3
@@ -3197,6 +3199,10 @@ packages:
   /ignore/5.2.0:
     resolution: {integrity: sha512-CmxgYGiEPCLhfLnpPp1MoRmifwEIOgjcHXxOBjv7mY96c+eWScsOP9c112ZyLdWHi0FxHjI+4uVhKYp/gcdRmQ==}
     engines: {node: '>= 4'}
+
+  /immer/10.0.2:
+    resolution: {integrity: sha512-Rx3CqeqQ19sxUtYV9CU911Vhy8/721wRFnJv3REVGWUmoAcIwzifTsdmJte/MV+0/XpM35LZdQMBGkRIoLPwQA==}
+    dev: false
 
   /imurmurhash/0.1.4:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
