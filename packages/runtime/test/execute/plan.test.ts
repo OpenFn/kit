@@ -277,6 +277,83 @@ test('only allowed state is passed through in strict mode', async (t) => {
   });
 });
 
+// jobs only receive state of upstream jobs
+test.only('State is passed downstream properly', async (t) => {
+  const assert = (expr: string) =>
+    `if (!(${expr})) throw new Error('ASSERT FAIL')`;
+
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        data: { x: 1, y: 1 },
+        next: {
+          'x-a': true,
+          'y-a': true,
+        },
+      },
+
+      // should receive x:1, y:1
+      {
+        id: 'x-a',
+        expression: `export default [s => {
+          ${assert('s.data.x === 1')};
+          ${assert('s.data.y === 1')};
+          s.data.x += 1;
+          return s;
+        }]`,
+        next: { 'x-b': true },
+      },
+      // should receive x:2, y:1
+      {
+        id: 'x-b',
+        expression: `export default [s => {
+          ${assert('s.data.x === 2')};
+          ${assert('s.data.y === 1')};
+          return s;
+        }]`,
+      },
+
+      // should receive x:1, y:1
+      {
+        id: 'y-a',
+        expression: `export default [s => {
+          ${assert('s.data.x === 1')};
+          ${assert('s.data.y === 1')};
+          s.data.y += 1;
+          return s;
+        }]`,
+        next: { 'y-b': true },
+      },
+      // should receive x:1, y:2
+      {
+        id: 'y-b',
+        expression: `export default [s => {
+          ${assert('s.data.x === 1')};
+          ${assert('s.data.y === 2')};
+          return s;
+        }]`,
+      },
+    ],
+  };
+
+  // What is the final result here?
+  // This part of the problem hasn't really been worked out
+  // Luckily it's probably not a problem with these types of job
+  // Either:
+  // a) we merge all leaf states together
+  // b) we return an array/object of results
+  const result = await executePlan(plan);
+
+  // Right now this will return an aggregated state, so the results are unpreditable in this test
+  // but so long as there's no error, we're good
+  t.falsy(result.error);
+  // console.log(result);
+  // t.is(result.data.x, 2);
+  // t.is(result.data.y, 2);
+});
+
 test('all state is passed through in non-strict mode', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [

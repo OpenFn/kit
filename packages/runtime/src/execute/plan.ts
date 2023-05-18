@@ -5,6 +5,7 @@ import assembleState from '../util/assemble-state';
 import type {
   CompiledExecutionPlan,
   ExecutionPlan,
+  JobNode,
   JobNodeID,
   State,
 } from '../types';
@@ -44,39 +45,57 @@ const executePlan = async (
     report: createErrorReporter(logger),
   };
 
-  let lastState = initialState;
+  const stateHistory = {};
+  const leaves = {};
 
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift();
-    const result = await executeJob(ctx, next!, clone(lastState));
+    const job = compiledPlan.jobs[next];
+
+    let prevState;
+    if (job.previous) {
+      prevState = stateHistory[job.previous] || {};
+    } else {
+      prevState = initialState;
+    }
+    const state = assembleState(
+      clone(prevState),
+      job.configuration,
+      job.data,
+      ctx.opts.strict
+    );
+
+    const result = await executeJob(ctx, job, state);
+    stateHistory[next] = Object.freeze(result.state);
+
+    if (!job.next) {
+      leaves[next] = stateHistory[next];
+    }
+
     if (result.next) {
       queue.push(...result.next);
     }
-    lastState = result.state;
   }
-  return lastState;
+
+  // Squash all the leaf states together and return
+  return Object.keys(leaves).reduce((agg, next) => {
+    Object.assign(agg, leaves[next]);
+    return agg;
+  }, {});
 };
 
 const executeJob = async (
   ctx: ExeContext,
-  jobId: string,
-  initialState: State
+  job: JobNode,
+  state: State
 ): Promise<{ next: JobNodeID[]; state: any }> => {
   const next: string[] = [];
 
   // We should by this point have validated the plan, so the job MUST exist
-  const job = ctx.plan.jobs[jobId];
 
   ctx.logger.timer('job');
-  ctx.logger.always('Starting job', jobId);
-
-  const state = assembleState(
-    initialState,
-    job.configuration,
-    job.data,
-    ctx.opts.strict
-  );
+  ctx.logger.always('Starting job', job.id);
 
   let result: any = state;
   if (job.expression) {
@@ -89,11 +108,11 @@ const executeJob = async (
         ctx.opts
       );
       const duration = ctx.logger.timer('job');
-      ctx.logger.success(`Completed job ${jobId} in ${duration}`);
+      ctx.logger.success(`Completed job ${job.id} in ${duration}`);
     } catch (e: any) {
       const duration = ctx.logger.timer('job');
-      ctx.logger.error(`Failed job ${jobId} after ${duration}`);
-      ctx.report(state, jobId, e);
+      ctx.logger.error(`Failed job ${job.id} after ${duration}`);
+      ctx.report(state, job.id, e);
     }
   }
 
