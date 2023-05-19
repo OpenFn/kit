@@ -9,11 +9,9 @@ export const repo = {
     yargs
       .command(clean)
       .command(install)
-      .command(pwd)
       .command(list)
       .example('repo install -a http', 'Install @openfn/language-http')
-      .example('repo clean', 'Remove everything from the repo working dir')
-      .example('repo pwd', 'Print the current repo working dir'),
+      .example('repo clean', 'Remove everything from the repo working dir'),
 } as unknown as yargs.CommandModule<{}>;
 
 const installOptions = [
@@ -66,15 +64,10 @@ export const clean = {
     ),
 } as yargs.CommandModule<{}>;
 
-export const pwd = {
-  command: 'pwd',
-  desc: "Print repo's current working directory",
-  handler: ensure('repo-pwd', []),
-} as yargs.CommandModule<{}>;
-
 export const list = {
   command: 'list',
   desc: 'Show a report on what is installed in the repo',
+  aliases: ['$0'],
   handler: ensure('repo-list', [o.repoDir]),
   builder: (yargs) => build([o.repoDir], yargs),
 } as yargs.CommandModule<{}>;
