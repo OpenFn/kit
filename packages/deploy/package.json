@@ -1,0 +1,52 @@
+{
+  "name": "@openfn/deploy",
+  "version": "0.0.1",
+  "description": "Deploy projects to Lightning instances",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "pnpm ava",
+    "test:watch": "pnpm ava -w",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "build": "tsup --config ../../tsup.config.js src/index.ts",
+    "build:watch": "pnpm build --watch",
+    "pack": "pnpm pack --pack-destination ../../dist"
+  },
+  "keywords": [],
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@inquirer/testing": "^1.0.4",
+    "@types/json-diff": "^1.0.0",
+    "@types/jsonpath": "^0.2.0",
+    "@types/node": "^18.7.14",
+    "ava": "5.1.0",
+    "jsonpath": "^1.1.1",
+    "mock-fs": "^5.1.4",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
+    "tsup": "^6.2.3",
+    "typescript": "^4.6.4"
+  },
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts",
+    "README.md"
+  ],
+  "dependencies": {
+    "@inquirer/prompts": "^1.1.4",
+    "@openfn/logger": "workspace:*",
+    "fast-json-patch": "^3.1.1",
+    "json-diff": "^1.0.6",
+    "yaml": "^2.2.2"
+  }
+}
