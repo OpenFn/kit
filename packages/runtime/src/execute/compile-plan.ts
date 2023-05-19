@@ -81,18 +81,26 @@ export default (plan: ExecutionPlan) => {
     }
   };
 
+  // ensure ids before we start
+  for (const job of plan.jobs) {
+    if (!job.id) {
+      job.id = generateJobId();
+    }
+  }
+
   const newPlan = {
     jobs: {},
     start: plan.start,
   } as Pick<CompiledExecutionPlan, 'jobs' | 'start'>;
 
   for (const job of plan.jobs) {
-    const jobId = job.id || generateJobId();
+    const jobId = job.id;
     if (!newPlan.start) {
       // Default the start job to the first
       newPlan.start = jobId;
     }
     const newJob = {
+      id: jobId,
       expression: job.expression, // TODO we should compile this here
     };
     if (job.data) {

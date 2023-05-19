@@ -45,31 +45,26 @@ const executePlan = async (
     report: createErrorReporter(logger),
   };
 
-  const stateHistory = {};
+  const stateHistory: Record<string, any> = {};
   const leaves = {};
 
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
-    const next = queue.shift();
+    const next = queue.shift()!;
     const job = compiledPlan.jobs[next];
 
-    let prevState;
-    if (job.previous) {
-      prevState = stateHistory[job.previous] || {};
-    } else {
-      prevState = initialState;
-    }
+    const prevState = stateHistory[job.previous || ''] ?? initialState;
+
     const state = assembleState(
       clone(prevState),
       job.configuration,
       job.data,
       ctx.opts.strict
     );
-
     const result = await executeJob(ctx, job, state);
-    stateHistory[next] = Object.freeze(result.state);
+    stateHistory[next] = result.state;
 
-    if (!job.next) {
+    if (!result.next.length) {
       leaves[next] = stateHistory[next];
     }
 
@@ -77,7 +72,6 @@ const executePlan = async (
       queue.push(...result.next);
     }
   }
-
   // If there are multiple leaf results, return them
   if (Object.keys(leaves).length > 1) {
     return leaves;

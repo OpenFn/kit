@@ -370,7 +370,6 @@ test('all state is passed through in non-strict mode', async (t) => {
   };
   const result = await executePlan(plan, {}, { strict: false });
   t.deepEqual(result, {
-    configuration: {}, // TODO should this still be excluded?
     data: {},
     references: [],
     x: 22,
@@ -538,7 +537,11 @@ test('execute multiple steps in "parallel"', async (t) => {
     ],
   };
   const result = await executePlan(plan, { data: { x: 0 } });
-  t.is(result.data.x, 3);
+  t.deepEqual(result, {
+    a: { data: { x: 1 } },
+    b: { data: { x: 1 } },
+    c: { data: { x: 1 } },
+  });
 });
 
 test('return an error in state', async (t) => {
@@ -783,7 +786,6 @@ test('jobs can write circular references to state without blowing up downstream'
 
   t.notThrows(() => JSON.stringify(result));
   t.deepEqual(result, {
-    configuration: {},
     data: {
       b: {
         a: '[Circular]',
@@ -847,7 +849,7 @@ test('jobs can write functions to state without blowing up downstream', async (t
   const result = await executePlan(plan, { data: {} });
 
   t.notThrows(() => JSON.stringify(result));
-  t.deepEqual(result, { data: {}, configuration: {} });
+  t.deepEqual(result, { data: {} });
 });
 
 test('jobs cannot pass functions to each other', async (t) => {

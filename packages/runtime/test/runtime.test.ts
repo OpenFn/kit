@@ -48,10 +48,22 @@ test('run a workflow with state and parallel branching', async (t) => {
   };
 
   const result: any = await run(plan, { data: { count: 0 } });
-  t.true(result.data.a);
-  t.true(result.data.b);
-  t.true(result.data.c);
-  t.is(result.data.count, 3);
+  t.deepEqual(result, {
+    b: {
+      data: {
+        count: 2,
+        a: true,
+        b: true,
+      },
+    },
+    c: {
+      data: {
+        count: 2,
+        a: true,
+        c: true,
+      },
+    },
+  });
 });
 
 test('run a workflow with state and conditional branching', async (t) => {
