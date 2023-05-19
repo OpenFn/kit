@@ -78,11 +78,12 @@ const executePlan = async (
     }
   }
 
-  // Squash all the leaf states together and return
-  return Object.keys(leaves).reduce((agg, next) => {
-    Object.assign(agg, leaves[next]);
-    return agg;
-  }, {});
+  // If there are multiple leaf results, return them
+  if (Object.keys(leaves).length > 1) {
+    return leaves;
+  }
+  // Return a single value
+  return Object.values(leaves)[0];
 };
 
 const executeJob = async (

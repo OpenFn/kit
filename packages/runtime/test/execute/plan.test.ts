@@ -277,8 +277,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
   });
 });
 
-// jobs only receive state of upstream jobs
-test.only('State is passed downstream properly', async (t) => {
+test('Jobs only receive state from upstream jobs', async (t) => {
   const assert = (expr: string) =>
     `if (!(${expr})) throw new Error('ASSERT FAIL')`;
 
@@ -338,20 +337,16 @@ test.only('State is passed downstream properly', async (t) => {
     ],
   };
 
-  // What is the final result here?
-  // This part of the problem hasn't really been worked out
-  // Luckily it's probably not a problem with these types of job
-  // Either:
-  // a) we merge all leaf states together
-  // b) we return an array/object of results
   const result = await executePlan(plan);
 
-  // Right now this will return an aggregated state, so the results are unpreditable in this test
-  // but so long as there's no error, we're good
+  // explicit check that no assertion failed and wrote an error to state
   t.falsy(result.error);
-  // console.log(result);
-  // t.is(result.data.x, 2);
-  // t.is(result.data.y, 2);
+
+  // Check there are two results
+  t.deepEqual(result, {
+    'x-b': { data: { x: 2, y: 1 } },
+    'y-b': { data: { x: 1, y: 2 } },
+  });
 });
 
 test('all state is passed through in non-strict mode', async (t) => {
