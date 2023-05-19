@@ -13,8 +13,7 @@ test.serial('openfn repo clean -f', async (t) => {
   t.regex(stdout, /Repo cleaned/);
 });
 
-// list empty repo
-test.serial('openfn repo list --log-json', async (t) => {
+test.serial('openfn repo --log-json', async (t) => {
   const { stdout } = await run(t.title);
 
   const stdlogs = extractLogs(stdout);
@@ -40,7 +39,6 @@ test.serial('openfn repo --help', async (t) => {
   t.regex(stdout, /repo install \[packages...\]/);
   t.regex(stdout, /repo clean/);
   t.regex(stdout, /repo list/);
-  t.regex(stdout, /repo pwd/);
 });
 
 test.serial('openfn repo install -a common --log-json', async (t) => {
@@ -61,7 +59,7 @@ test.serial('openfn repo install is-array --log-json', async (t) => {
   assertLog(t, stdlogs, /Installation complete in .*s/);
 });
 
-test.serial('openfn repo list --log-json --log default', async (t) => {
+test.serial('openfn repo list --log-json', async (t) => {
   const { stdout } = await run(t.title);
 
   const stdlogs = extractLogs(stdout);
