@@ -2,9 +2,10 @@ import path from 'node:path';
 import yargs from 'yargs';
 import type { ExecutionPlan } from '@openfn/runtime';
 import doExpandAdaptors from './util/expand-adaptors';
-import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 import type { CommandList } from './commands';
 import { CLIExecutionPlan } from './types';
+
+const DEFAULT_REPO_DIR = '/tmp/openfn/repo';
 
 // Central type definition for the main options
 // This is in flux as options are being refactored
