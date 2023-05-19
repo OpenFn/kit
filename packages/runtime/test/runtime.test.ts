@@ -195,6 +195,15 @@ test('do pass extraneous state in non-strict mode', async (t) => {
   });
 });
 
+test('Allow a job to return undefined', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [{ expression: 'export default [() => {}]' }],
+  };
+
+  const result: any = await run(plan);
+  t.falsy(result);
+});
+
 test('log errors, write to state, and continue', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
