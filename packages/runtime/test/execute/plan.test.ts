@@ -293,7 +293,6 @@ test('Jobs only receive state from upstream jobs', async (t) => {
         },
       },
 
-      // should receive x:1, y:1
       {
         id: 'x-a',
         expression: `export default [s => {
@@ -304,7 +303,6 @@ test('Jobs only receive state from upstream jobs', async (t) => {
         }]`,
         next: { 'x-b': true },
       },
-      // should receive x:2, y:1
       {
         id: 'x-b',
         expression: `export default [s => {
@@ -314,7 +312,6 @@ test('Jobs only receive state from upstream jobs', async (t) => {
         }]`,
       },
 
-      // should receive x:1, y:1
       {
         id: 'y-a',
         expression: `export default [s => {
@@ -325,7 +322,6 @@ test('Jobs only receive state from upstream jobs', async (t) => {
         }]`,
         next: { 'y-b': true },
       },
-      // should receive x:1, y:2
       {
         id: 'y-b',
         expression: `export default [s => {
