@@ -2,6 +2,7 @@ import { Opts } from './options';
 import execute from './execute/handler';
 import compile from './compile/handler';
 import test from './test/handler';
+import deploy from './deploy/handler';
 import docgen from './docgen/handler';
 import docs from './docs/handler';
 import metadata from './metadata/handler';
@@ -17,6 +18,7 @@ import printVersions from './util/print-versions';
 
 export type CommandList =
   | 'compile'
+  | 'deploy'
   | 'docgen'
   | 'docs'
   | 'execute'
@@ -32,6 +34,7 @@ const handlers = {
   execute,
   compile,
   test,
+  deploy,
   docgen,
   docs,
   metadata,

@@ -17,6 +17,7 @@ export type Opts = {
   adaptors?: string[];
   autoinstall?: boolean;
   compile?: boolean;
+  configPath?: string;
   expandAdaptors?: boolean; // for unit tests really
   force?: boolean;
   immutable?: boolean;
@@ -30,6 +31,7 @@ export type Opts = {
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
+  projectPath?: string;
   repoDir?: string;
   skipAdaptorValidation?: boolean;
   specifier?: string; // docgen
@@ -110,6 +112,18 @@ export const compile: CLIOption = {
   },
   ensure: (opts) => {
     setDefaultValue(opts, 'compile', true);
+  },
+};
+
+export const configPath: CLIOption = {
+  name: 'config',
+  yargs: {
+    alias: ['c'],
+    description: 'The location of your config file',
+    default: './config.json',
+  },
+  ensure: (opts) => {
+    setDefaultValue(opts, 'configPath', './.config.json');
   },
 };
 
@@ -232,6 +246,19 @@ export const outputPath: CLIOption = {
   },
 };
 
+export const projectPath: CLIOption = {
+  name: 'project-path',
+  yargs: {
+    string: true,
+    alias: ['p'],
+    description: 'The location of your project.yaml file',
+    default: './project.yaml',
+  },
+  ensure: (opts) => {
+    setDefaultValue(opts, 'projectPath', './project.yaml');
+  },
+};
+
 export const repoDir: CLIOption = {
   name: 'repo-dir',
   yargs: () => ({
@@ -294,6 +321,15 @@ export const statePath: CLIOption = {
   yargs: {
     alias: ['s'],
     description: 'Path to the state file',
+  },
+  ensure: (opts) => {
+    console.log(opts);
+    
+    // remove the alias
+    delete (opts as { s?: string }).s;
+    // if (opts.command == 'deploy') {
+    //   setDefaultValue(opts, 'statePath', './state.json');
+    // }
   },
 };
 
