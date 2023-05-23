@@ -174,7 +174,7 @@ test('run a workflow with config as a path', async (t) => {
     jobs: [
       {
         configuration: '/config.json',
-        expression: `${fn}fn((state) => state)`,
+        expression: `${fn}fn((state) => { state.cfg = state.configuration; return state; })`,
       },
     ],
   };
@@ -183,7 +183,7 @@ test('run a workflow with config as a path', async (t) => {
     workflow,
   };
   const result = await handler(options, logger);
-  t.is(result.configuration.id, 'x');
+  t.is(result.cfg.id, 'x');
 });
 
 test('run a workflow from a start node', async (t) => {

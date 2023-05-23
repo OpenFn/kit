@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SafeOpts } from '../commands';
+import { DEFAULT_REPO_DIR } from '../constants';
 import { Opts } from '../options';
 import { LogLevel, isValidLogLevel } from './logger';
 
@@ -95,7 +96,7 @@ export default function ensureOpts(
     operation: opts.operation,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
-    // repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
     skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
