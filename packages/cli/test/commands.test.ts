@@ -7,7 +7,7 @@ import { createMockLogger } from '@openfn/logger';
 import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
-import { DEFAULT_REPO_DIR } from '../src/util/ensure-opts';
+import { DEFAULT_REPO_DIR } from '../src/constants';
 
 const logger = createMockLogger('', { level: 'debug' });
 

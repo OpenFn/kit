@@ -14,8 +14,6 @@ export const ERROR_MESSAGE_LOG_LEVEL =
 export const ERROR_MESSAGE_LOG_COMPONENT =
   'Unknown log component. Valid components are cli, compiler, runtime and job.';
 
-export const DEFAULT_REPO_DIR = '/tmp/openfn/repo';
-
 const componentShorthands: Record<string, string> = {
   cmp: 'compiler',
   rt: 'runtime',
@@ -97,7 +95,7 @@ export default function ensureOpts(
     operation: opts.operation,
     outputStdout: Boolean(opts.outputStdout),
     packages: opts.packages,
-    repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
+    // repoDir: opts.repoDir || process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
     skipAdaptorValidation: opts.skipAdaptorValidation ?? false,
     specifier: opts.specifier,
     stateStdin: opts.stateStdin,
