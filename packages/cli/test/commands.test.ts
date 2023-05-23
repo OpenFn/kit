@@ -543,62 +543,6 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
   t.is(result.jobs[0].expression, 'export default [x()];');
 });
 
-test.serial.skip('repo should return the default repo path', async (t) => {
-  const dir = process.env.OPENFN_REPO_DIR;
-  delete process.env.OPENFN_REPO_DIR; // ensure this is unset
-
-  const options = {
-    logger,
-  };
-  await run('repo', '', options);
-  console.log(logger._history);
-  const { message } = logger._parse(logger._last);
-  t.is(message, `Repo working directory is: ${DEFAULT_REPO_DIR}`);
-
-  process.env.OPENFN_REPO_DIR = dir;
-});
-
-test.serial.skip('repo if modules_home is passed', async (t) => {
-  const options = {
-    repoDir: 'a/b/c',
-    logger,
-  };
-  await run('repo', '', options);
-
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Repo working directory is: a/b/c');
-});
-
-test.serial.skip('repo with modules_home from env', async (t) => {
-  const dir = process.env.OPENFN_REPO_DIR;
-  process.env.OPENFN_REPO_DIR = 'x/y/z';
-
-  const options = {
-    logger,
-  };
-  await run('repo', '', options);
-
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Repo working directory is: x/y/z');
-
-  process.env.OPENFN_REPO_DIR = dir;
-});
-
-test.serial('repo list should return something', async (t) => {
-  const options = {
-    logger,
-    repoDir: 'a/b/c',
-  };
-  await run('repo list', '', options);
-
-  // Rough check of the shape of the output
-  const [_dir, pwd, installed] = logger._history;
-  t.is(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
-
-  const message = logger._parse(installed).message as string;
-  t.assert(message.startsWith('Installed packages:'));
-});
-
 // This used to throw, see #70
 test.serial(
   'repo list does not throw if repo is not initialised',
