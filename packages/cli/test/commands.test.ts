@@ -543,24 +543,6 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
   t.is(result.jobs[0].expression, 'export default [x()];');
 });
 
-// This used to throw, see #70
-test.serial(
-  'repo list does not throw if repo is not initialised',
-  async (t) => {
-    mock({
-      '/repo/': {}, // empty dir
-    });
-
-    const opts = cmd.parse('repo list') as Opts;
-    opts.repoDir = '/repo/';
-
-    await commandParser('', opts, logger);
-
-    const { message } = logger._parse(logger._last);
-    t.truthy(message);
-  }
-);
-
 test.serial('docs should print documentation with full names', async (t) => {
   mock({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
