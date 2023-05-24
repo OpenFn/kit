@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.0.25
+
+### Patch Changes
+
+- 2024ce8: Ensure jobs only receive direct upstream state
+
 ## 0.0.24
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 0.0.40
+
+### Patch Changes
+
+- e5e1d7d: Refactor repo command
+- fd946a7: Fix CLI docs (strict mode, workflow with autoinstall)
+- Updated dependencies [2024ce8]
+  - @openfn/runtime@0.0.25
+
 ## 0.0.39
 
 ### Patch Changes
