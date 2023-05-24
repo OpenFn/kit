@@ -49,6 +49,17 @@ const compileEdges = (
   return result;
 };
 
+// find the upstream job for a given job
+// Inefficient but fine for now (note that validation does something similar)
+// Note that right now we only support one upstream job
+const findUpstream = (plan: ExecutionPlan, id: string) => {
+  for (const job of plan.jobs) {
+    if (job.next && job.next[id]) {
+      return job.id;
+    }
+  }
+};
+
 export default (plan: ExecutionPlan) => {
   let autoJobId = 0;
   const generateJobId = () => `job-${++autoJobId}`;
@@ -70,31 +81,41 @@ export default (plan: ExecutionPlan) => {
     }
   };
 
+  // ensure ids before we start
+  for (const job of plan.jobs) {
+    if (!job.id) {
+      job.id = generateJobId();
+    }
+  }
+
   const newPlan = {
     jobs: {},
     start: plan.start,
   } as Pick<CompiledExecutionPlan, 'jobs' | 'start'>;
 
   for (const job of plan.jobs) {
-    const jobId = job.id || generateJobId();
+    const jobId = job.id;
     if (!newPlan.start) {
       // Default the start job to the first
       newPlan.start = jobId;
     }
-    newPlan.jobs[jobId] = {
+    const newJob = {
+      id: jobId,
       expression: job.expression, // TODO we should compile this here
     };
     if (job.data) {
-      newPlan.jobs[jobId].data = job.data;
+      newJob.data = job.data;
     }
     if (job.configuration) {
-      newPlan.jobs[jobId].configuration = job.configuration;
+      newJob.configuration = job.configuration;
     }
     if (job.next) {
       trapErrors(() => {
-        newPlan.jobs[jobId].next = compileEdges(jobId, job.next!, context);
+        newJob.next = compileEdges(jobId, job.next!, context);
       });
     }
+    newJob.previous = findUpstream(plan, jobId);
+    newPlan.jobs[jobId] = newJob;
   }
 
   if (errs.length) {

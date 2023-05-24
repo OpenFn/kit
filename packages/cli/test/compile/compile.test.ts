@@ -117,9 +117,9 @@ test('throw an AbortError if a workflow contains an uncompilable job', async (t)
 });
 
 test('stripVersionSpecifier: remove version specifier from @openfn', (t) => {
-  const specifier = '@openfn/language-commmon@3.0.0-rc2';
+  const specifier = '@openfn/language-common@3.0.0-rc2';
   const transformed = stripVersionSpecifier(specifier);
-  const expected = '@openfn/language-commmon';
+  const expected = '@openfn/language-common';
   t.assert(transformed == expected);
 });
 
@@ -138,9 +138,9 @@ test('stripVersionSpecifier: remove version specifier from arbitrary namespaced 
 });
 
 test("stripVersionSpecifier: do nothing if there's no specifier", (t) => {
-  const specifier = '@openfn/language-commmon';
+  const specifier = '@openfn/language-common';
   const transformed = stripVersionSpecifier(specifier);
-  const expected = '@openfn/language-commmon';
+  const expected = '@openfn/language-common';
   t.assert(transformed == expected);
 });
 

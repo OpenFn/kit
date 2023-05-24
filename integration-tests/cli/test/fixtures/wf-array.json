@@ -4,12 +4,13 @@
       "id": "a",
       "adaptor": "common",
       "expression": "fn((state) => { if (!state.data.items) { state.data.items = []; } return state; });",
-      "next": { "b": true, "c": true }
+      "next": { "b": true }
     },
     {
       "id": "b",
       "adaptor": "common",
-      "expression": "fn((state) => { state.data.items.push('b'); return state; });"
+      "expression": "fn((state) => { state.data.items.push('b'); return state; });",
+      "next": { "c": true }
     },
     {
       "id": "c",
