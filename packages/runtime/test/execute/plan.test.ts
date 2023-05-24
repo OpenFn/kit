@@ -277,6 +277,74 @@ test('only allowed state is passed through in strict mode', async (t) => {
   });
 });
 
+test('Jobs only receive state from upstream jobs', async (t) => {
+  const assert = (expr: string) =>
+    `if (!(${expr})) throw new Error('ASSERT FAIL')`;
+
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        data: { x: 1, y: 1 },
+        next: {
+          'x-a': true,
+          'y-a': true,
+        },
+      },
+
+      {
+        id: 'x-a',
+        expression: `export default [s => {
+          ${assert('s.data.x === 1')};
+          ${assert('s.data.y === 1')};
+          s.data.x += 1;
+          return s;
+        }]`,
+        next: { 'x-b': true },
+      },
+      {
+        id: 'x-b',
+        expression: `export default [s => {
+          ${assert('s.data.x === 2')};
+          ${assert('s.data.y === 1')};
+          return s;
+        }]`,
+      },
+
+      {
+        id: 'y-a',
+        expression: `export default [s => {
+          ${assert('s.data.x === 1')};
+          ${assert('s.data.y === 1')};
+          s.data.y += 1;
+          return s;
+        }]`,
+        next: { 'y-b': true },
+      },
+      {
+        id: 'y-b',
+        expression: `export default [s => {
+          ${assert('s.data.x === 1')};
+          ${assert('s.data.y === 2')};
+          return s;
+        }]`,
+      },
+    ],
+  };
+
+  const result = await executePlan(plan);
+
+  // explicit check that no assertion failed and wrote an error to state
+  t.falsy(result.error);
+
+  // Check there are two results
+  t.deepEqual(result, {
+    'x-b': { data: { x: 2, y: 1 } },
+    'y-b': { data: { x: 1, y: 2 } },
+  });
+});
+
 test('all state is passed through in non-strict mode', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
@@ -298,7 +366,6 @@ test('all state is passed through in non-strict mode', async (t) => {
   };
   const result = await executePlan(plan, {}, { strict: false });
   t.deepEqual(result, {
-    configuration: {}, // TODO should this still be excluded?
     data: {},
     references: [],
     x: 22,
@@ -466,7 +533,11 @@ test('execute multiple steps in "parallel"', async (t) => {
     ],
   };
   const result = await executePlan(plan, { data: { x: 0 } });
-  t.is(result.data.x, 3);
+  t.deepEqual(result, {
+    a: { data: { x: 1 } },
+    b: { data: { x: 1 } },
+    c: { data: { x: 1 } },
+  });
 });
 
 test('return an error in state', async (t) => {
@@ -711,7 +782,6 @@ test('jobs can write circular references to state without blowing up downstream'
 
   t.notThrows(() => JSON.stringify(result));
   t.deepEqual(result, {
-    configuration: {},
     data: {
       b: {
         a: '[Circular]',
@@ -775,7 +845,7 @@ test('jobs can write functions to state without blowing up downstream', async (t
   const result = await executePlan(plan, { data: {} });
 
   t.notThrows(() => JSON.stringify(result));
-  t.deepEqual(result, { data: {}, configuration: {} });
+  t.deepEqual(result, { data: {} });
 });
 
 test('jobs cannot pass functions to each other', async (t) => {
