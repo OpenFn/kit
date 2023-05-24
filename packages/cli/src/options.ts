@@ -2,9 +2,9 @@ import path from 'node:path';
 import yargs from 'yargs';
 import type { ExecutionPlan } from '@openfn/runtime';
 import doExpandAdaptors from './util/expand-adaptors';
-import { DEFAULT_REPO_DIR } from './util/ensure-opts';
 import type { CommandList } from './commands';
 import { CLIExecutionPlan } from './types';
+import { DEFAULT_REPO_DIR } from './constants';
 
 // Central type definition for the main options
 // This is in flux as options are being refactored
@@ -50,7 +50,8 @@ export type UnparsedOpts = Opts & {
 
 export type CLIOption = {
   name: string;
-  yargs: yargs.Options;
+  // Allow this to take a function to lazy-evaluate env vars
+  yargs: yargs.Options | (() => yargs.Options);
   ensure?: (opts: Opts) => void;
 };
 
@@ -233,10 +234,10 @@ export const outputPath: CLIOption = {
 
 export const repoDir: CLIOption = {
   name: 'repo-dir',
-  yargs: {
+  yargs: () => ({
     description: 'Provide a path to the repo root dir',
     default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
-  },
+  }),
 };
 
 export const start: CLIOption = {

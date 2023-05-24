@@ -1,7 +1,8 @@
 import yargs from 'yargs';
-import { Opts } from '../options';
 import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
+
+import type { Opts } from '../options';
 
 export type ExecuteOptions = Required<
   Pick<

@@ -50,7 +50,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
 
 const maybeEnsureOpts = (basePath: string, options: Opts) =>
   // If the command is compile or execute, just return the opts (yargs will do all the validation)
-  /^(execute|compile|test)$/.test(options.command!)
+  /(^(execute|compile|test)$)|(repo-)/.test(options.command!)
     ? ensureLogOpts(options)
     : // Otherwise  older commands still need to go through ensure opts
       ensureOpts(basePath, options);

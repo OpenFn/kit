@@ -96,7 +96,7 @@ test('throw an AbortError if a job is uncompilable', async (t) => {
   t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
-test('throw an AbortError if a workflow contains an uncompilable jon', async (t) => {
+test('throw an AbortError if a workflow contains an uncompilable job', async (t) => {
   const workflow = {
     start: 'a',
     jobs: [{ id: 'a', expression: 'x b' }],

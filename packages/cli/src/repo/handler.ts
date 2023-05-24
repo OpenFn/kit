@@ -4,24 +4,20 @@ import treeify from 'treeify';
 import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
 import type { Opts } from '../options';
 import { defaultLogger, Logger } from '../util/logger';
-import expandAdaptors from '../util/expand-adaptors';
 
-type InstallOpts = Pick<Opts, 'packages' | 'adaptor' | 'repoDir'>;
+type InstallOpts = Pick<Opts, 'packages' | 'adaptors' | 'repoDir'>;
 
 export const install = async (
   opts: InstallOpts,
   log: Logger = defaultLogger
 ) => {
-  let { packages, adaptor, repoDir } = opts;
-  if (packages) {
+  let { packages, adaptors, repoDir } = opts;
+  const targets = ([] as string[]).concat(packages ?? [], adaptors ?? []);
+  if (targets) {
     log.timer('install');
     log.success('Installing packages...'); // not really success but I want it to default
     log.debug('repoDir is set to:', repoDir);
-    if (adaptor) {
-      const expanded = expandAdaptors({ adaptors: packages });
-      packages = expanded.adaptors;
-    }
-    await rtInstall(packages ?? [], repoDir, log);
+    await rtInstall(targets, repoDir, log);
     const duration = log.timer('install');
     log.success(`Installation complete in ${duration}`);
   }

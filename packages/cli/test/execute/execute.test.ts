@@ -174,7 +174,7 @@ test('run a workflow with config as a path', async (t) => {
     jobs: [
       {
         configuration: '/config.json',
-        expression: `${fn}fn((state) => { state.cfg = state.configuration; return state;})`,
+        expression: `${fn}fn((state) => { state.cfg = state.configuration; return state; })`,
       },
     ],
   };

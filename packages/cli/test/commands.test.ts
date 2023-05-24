@@ -7,7 +7,7 @@ import { createMockLogger } from '@openfn/logger';
 import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
-import { DEFAULT_REPO_DIR } from '../src/util/ensure-opts';
+import { DEFAULT_REPO_DIR } from '../src/constants';
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -541,77 +541,6 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
   const result = JSON.parse(output);
   t.truthy(result);
   t.is(result.jobs[0].expression, 'export default [x()];');
-});
-
-test.serial('pwd should return the default repo path', async (t) => {
-  const dir = process.env.OPENFN_REPO_DIR;
-  delete process.env.OPENFN_REPO_DIR; // ensure this is unset
-
-  const options = {
-    logger,
-  };
-  await run('repo pwd', '', options);
-
-  const { message } = logger._parse(logger._last);
-  t.is(message, `Repo working directory is: ${DEFAULT_REPO_DIR}`);
-
-  process.env.OPENFN_REPO_DIR = dir;
-});
-
-test.serial('pwd if modules_home is passed', async (t) => {
-  const options = {
-    repoDir: 'a/b/c',
-    logger,
-  };
-  await run('repo pwd', '', options);
-
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Repo working directory is: a/b/c');
-});
-
-test.serial('pwd with modules_home from env', async (t) => {
-  const dir = process.env.OPENFN_REPO_DIR;
-  process.env.OPENFN_REPO_DIR = 'x/y/z';
-
-  const options = {
-    logger,
-  };
-  await run('repo pwd', '', options);
-
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Repo working directory is: x/y/z');
-
-  process.env.OPENFN_REPO_DIR = dir;
-});
-
-test.serial('list should return something', async (t) => {
-  const options = {
-    logger,
-    repoDir: 'a/b/c',
-  };
-  await run('repo list', '', options);
-
-  // Rough check of the shape of the output
-  const [_dir, pwd, installed] = logger._history;
-  t.is(logger._parse(pwd).message, 'Repo working directory is: a/b/c');
-
-  const message = logger._parse(installed).message as string;
-  t.assert(message.startsWith('Installed packages:'));
-});
-
-// This used to throw, see #70
-test.serial('list does not throw if repo is not initialised', async (t) => {
-  mock({
-    '/repo/': {}, // empty dir
-  });
-
-  const opts = cmd.parse('repo list') as Opts;
-  opts.repoDir = '/repo/';
-
-  await commandParser('', opts, logger);
-
-  const { message } = logger._parse(logger._last);
-  t.truthy(message);
 });
 
 test.serial('docs should print documentation with full names', async (t) => {
