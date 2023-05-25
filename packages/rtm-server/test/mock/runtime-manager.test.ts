@@ -5,8 +5,8 @@ import create, {
   WorkflowCompleteEvent,
   WorkflowStartEvent,
 } from '../../src/mock/runtime-manager';
-import { ExecutionPlan } from '../../src/types';
-import { waitForEvent, clone } from '../util';
+import type { ExecutionPlan } from '@openfn/runtime';
+import { waitForEvent, clone } from '../util'; // ???
 
 const sampleWorkflow = {
   id: 'w1',

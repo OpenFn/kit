@@ -1,19 +1,52 @@
-lightning must today have a model and execution plan for a workflow
+The Runtime Manager Server provides a HTTP interface between Lightning and a Runtime Manager.
 
-It needs to know where and when to start (triggers will still be handled by Lightning), and on completion, what to do next
+It is a fairly thin layer between the two systems.
 
-I'm gonna have to re-implement that in js]
+It should ideally have zero persistence.
 
-The more we speak to lightning, a) the tighter the coupling and b) the greater impact of downtime
+## General Architecture
 
-right now it looks like we have to:
+Lightning provides an endpoint to fetch any pending jobs from a queue.
 
-- Ask lightning for a workflow id
-- Now ask lightning for an execution plan
-- On each job, ask lightning for the expression an state
+The RTM server polls this endpoint, with a backoff, constantly looking for work.
 
-Just not sure that make sense.
+Key lifecycle events (start, end, error) are published to Lightning via POST.
 
-I think the execution plan needs to be added to the queue and we read this off once.
+Runtime logs are sent to Lightning in batches via a websocket [TBD]
 
-Should a runtime manager be responsible for keeping its own history? I dont think so, I think it should be stateless really. Makes scaling easier.
+## Data Structures
+
+At the time of writing, the Runtime Manager server uses a Lightning Attempt and a Runtime Execution Plan
+
+This means it doesn't really "own" any of its datatypes - it just maps from one to another. Which is nice and feels appropriate to the architecture.
+
+The Attempt is of the form { jobs, triggers, nodes }, a reflection of the underlying workflow model.
+
+The Runtime must be able to convert a string configuration or state into an object (using a callback provided by the server, which calls out ot lightning to resolve the SHA/id). This happens just-in-time, after a workflow starts but before each job. At the time of writing it cannot do this. The CLI may need to implement similar functionality (it would be super cool for the CLI to be able to call out to lightning to fetch a credential, with zero persistence on the client machine).
+
+Issues:
+
+- I dunno, I think it's backwards. Lightning shouldn't expose its own internal data stucture in the attempt. Surely the process of creating an attempt means generating an execution plan from the Workflow model?
+- Also, Lightning needs to be able to do this conversion ANYWAY to enable users to download a workflow and run it in the CLI.
+- Forunately it's gonna be easy to conver (or not) the structures on the way in. So I'll just take a lighting-style attempt for now and we can drop it out later if we want
+
+## Zero Persistence
+
+So the RTM server grabs an attempt, it gets removed form the Lightning queue.
+
+The runtime starts processing the job.
+
+Then the host machine dies. Or loses connectivity. Or the runtime crashes, or hangs forever. Something BAD happens that we can't control.
+
+The RTM server is restarted. Memory is wiped.
+
+Now what? The jobs in progress are lost forever because nothing was persisted. Lightning is sitting waiting for the server to return a result - which it won't.
+
+Solutions:
+
+- Lightning has its own timeout. So if a job takes more than 5 minutes, it'll count as failed. It can be manually retried. This is not unreasonable.
+- Lightning could maintain a keepalive with the RTM server. When the keepalive dies, Lightning will know which jobs are outstanding. It can re-queue them.
+
+Other pitfalls:
+
+- What if the job half finished and posted some information to another server before it died? is re-running harmful? Surely this is up to the job writer to avoid duplicating data.

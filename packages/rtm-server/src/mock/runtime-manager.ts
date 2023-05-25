@@ -22,9 +22,9 @@ export type RTMEvent =
   | 'job-start'
   | 'job-complete'
   | 'job-log'
-  | 'job-error'
-  | 'workflow-start'
-  | 'workflow-complete'
+  //| 'job-error'
+  | 'workflow-start' // before compile
+  | 'workflow-complete' // after everything has run
   | 'workflow-error'; // ?
 
 export type JobStartEvent = {
@@ -56,7 +56,7 @@ let autoServerId = 0;
 
 // Before we execute each job (expression), we have to build a state object
 // This means squashing together the input state and the credential
-// The crediential of course is the hard bit
+// The credential of course is the hard bit
 const assembleState = () => {};
 
 // Pre-process a plan

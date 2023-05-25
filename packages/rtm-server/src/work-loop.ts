@@ -1,26 +1,21 @@
-// idk what to call this
-// Does it count as part of the API?
-// Is it a kind of middleware?
-// Is it one of many RTM helpers?
-
 import axios from 'axios';
-import { tryWithBackoff } from './util';
+import tryWithBackoff from './util/try-with-backoff';
+import { Attempt } from './types';
 
 // TODO how does this report errors, like if Lightning is down?
 // Or auth is bad?
-export default (lightningUrl: string, rtm: any) => {
+export default (
+  lightningUrl: string,
+  rtmId: string,
+  execute: (attempt: Attempt) => void
+) => {
   const fetchWork = async () => {
     // TODO what if this retuns like a 500?  Server down?
     const result = await axios.post(`${lightningUrl}/api/1/attempts/next`, {
-      id: rtm.id,
+      id: rtmId,
     });
     if (result.data) {
-      // TODO handle multiple attempts
-      const [attempt] = result.data;
-      // Start the job (but don't wtit for it)
-      rtm.execute(attempt);
-
-      // Return true t
+      result.data.forEach(execute);
       return true;
     }
     // return false to backoff and try again

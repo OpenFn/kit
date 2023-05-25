@@ -1,5 +1,7 @@
-// these integration tests test the real rtm server logic with a mock lightning and a mock rtm
-// So maybe it's not really "integration" tests after all, but regular server tests
+/*
+ * Tests of Lightning-RTM server integration, from Lightning's perspective
+ */
+
 import test from 'ava';
 import createRTMServer from '../src/server';
 import createLightningServer from '../src/mock/lightning';
@@ -19,35 +21,19 @@ test.before(() => {
   rtm = createRTMServer({ port: 4567, lightning: urls.lng });
 });
 
-test.serial('should pick up a default attempt in the queue', async (t) => {
-  lng.addToQueue('attempt-1');
-  const evt = await waitForEvent(rtm, 'workflow-start');
-  t.truthy(evt);
-  t.is(evt.id, 'attempt-1');
+// Really high level test
+test.serial('process an attempt', async (t) => {
+  lng.addAttempt('a1', {
+    // workflow goes here
+  });
+
+  lng.waitForResult('a1', (result) => {
+    // test the result here
+    t.is(result.answer, 42);
+  });
 });
 
-test.serial('should pick up a novel attempt in the queue', async (t) => {
-  lng.addToQueue({ id: 'x', plan: [{ expression: '{}' }] });
-  const evt = await waitForEvent(rtm, 'workflow-start');
-  t.truthy(evt);
-  t.is(evt.id, 'x');
-
-  // let the workflow finish processing
-  await waitForEvent(rtm, 'workflow-complete');
-});
-
-test.serial(
-  'should publish a workflow-complete event with state',
-  async (t) => {
-    // The mock RTM will evaluate the expression as JSON and return it
-    lng.addToQueue({ id: 'x', plan: [{ expression: '{ "answer": 42 }' }] });
-
-    const evt = await waitForEvent(rtm, 'workflow-complete');
-    t.truthy(evt);
-    t.is(evt.id, 'x');
-    t.deepEqual(evt.state, { answer: 42 });
-  }
-);
+// process multple attempts
 
 test.serial(
   'should post to attempts/complete with the final state',

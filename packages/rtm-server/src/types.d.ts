@@ -12,60 +12,69 @@ export type State = {
   [key: string]: any;
 };
 
-// An attempt object returned by Lightning
-// Lightning will build this wfrom a Workflow and Attempt
-export type LightningAttempt = {
+export type Node = {
   id: string;
-  input: Omit<State, 'configuration'>; // initial state
-  plan: LightningJob[];
+  body?: string;
+  adaptor?: string;
+  credential?: any; // TODO tighten this up, string or object
+  type?: 'webhook' | 'cron'; // trigger only
+};
+
+export interface Edge {
+  id: string;
+  source_job_id?: string;
+  source_trigger_id?: string;
+  target_job_id: string;
+  name?: string;
+  condition?: string;
+  error_path?: boolean;
+  errors?: any;
+}
+
+// An attempt object returned by Lightning
+// We may later drop this abstraction and just accept an excecution plan directly
+export type Attempt = {
+  id: string;
+
+  triggers: Node[];
+  jobs: Node[];
+  edges: Edge[];
 
   // these will probably be included by lightning but we don't care here
-  projectId: string;
-  status: string;
-  worker: string;
+  projectId?: string;
+  status?: string;
+  worker?: string;
 };
 
-export type LightningJob = {
-  adaptor: string;
-  expression: string; // the code we actually want to execute. Could be lazy loaded
-  credential: id;
+// type RuntimeExecutionPlanID = string;
 
-  upstream:
-    | LightningJob // shorthand for { default }
-    | {
-        success: LightningJob;
-        error: LightningJob;
-        default: LightningJob;
-      };
-};
+// type JobEdge = {
+//   condition?: string; // Javascript expression (function body, not function)
+//   label?: string;
+// };
 
-type RuntimeExecutionPlanID = string;
+// // TODO this type should later be imported from the runtime
+// // Well, it's not quite the same is it, because eg credential can be a string
+// type JobNode = {
+//   id?: string;
 
-// TODO this type should later be imported from the runtime
-type JobPlan = {
-  id: string;
-  adaptor: string;
-  expression: string; // the code we actually want to execute. Could be lazy loaded
-  credential: string | object; // credential can be inline or lazy loaded
-  state?: Omit<State, 'configuration'>; // initial state
+//   adaptor?: string;
 
-  upstream:
-    | JobPlanID // shorthand for { default }
-    | {
-        success: JobPlanID;
-        error: JobPlanID;
-        default: JobPlanID;
-      };
-};
+//   expression?: string | Operation[]; // the code we actually want to execute. Can be a path.
 
-// A runtime manager execution plan
-export type ExecutionPlan = {
-  id: string; // UUID for this plan
+//   configuration?: object | string;
+//   data?: State['data'] | string; // default state (globals)
 
-  // should we save the initial and resulting status?
-  // Should we have a status here, is this a living thing?
+//   next?: string | Record<JobNodeID, true | JobEdge>;
+// };
 
-  plan: JobPlan[]; // TODO this type should later be imported from the runtime
-};
+// // Note that if the runtime itself is capable of calling an endpoint
+// // To fetch credentials (and state?) just-in-time, then this is just a
+// // Runtime Exeuction Plan, and we can import it. This is nicer tbh.
+// export type ExecutionPlan = {
+//   id: string; // UUID for this plan
 
-export type Xplan = ExecutionPlan;
+//   start?: JobNodeID;
+
+//   plan: JobNode[]; // TODO this type should later be imported from the runtime
+// };
