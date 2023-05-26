@@ -47,19 +47,19 @@ test('convert a single job', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [createJob()],
+    jobs: [createJob()],
   });
 });
 
 test('Accept a partial attempt object', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [],
+    jobs: [],
   });
 });
 
@@ -74,7 +74,7 @@ test('convert a single trigger', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [
+    jobs: [
       {
         id: 't',
       },
@@ -94,7 +94,7 @@ test('ignore a single edge', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [],
+    jobs: [],
   });
 });
 
@@ -115,7 +115,7 @@ test('convert a single trigger with an edge', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [
+    jobs: [
       {
         id: 't',
         next: {
@@ -149,7 +149,7 @@ test('convert a single trigger with two edges', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [
+    jobs: [
       {
         id: 't',
         next: {
@@ -174,7 +174,7 @@ test('convert two linked jobs', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [createJob({ id: 'a', next: { b: true } }), createJob({ id: 'b' })],
+    jobs: [createJob({ id: 'a', next: { b: true } }), createJob({ id: 'b' })],
   });
 });
 
@@ -194,7 +194,7 @@ test('convert a job with two upstream jobs', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [
+    jobs: [
       createJob({ id: 'a', next: { x: true } }),
       createJob({ id: 'b', next: { x: true } }),
       createJob({ id: 'x' }),
@@ -214,7 +214,7 @@ test('convert two linked jobs with an edge condition', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    plan: [
+    jobs: [
       createJob({ id: 'a', next: { b: { expression: condition } } }),
       createJob({ id: 'b' }),
     ],

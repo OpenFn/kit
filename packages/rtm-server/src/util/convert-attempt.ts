@@ -2,9 +2,8 @@ import type { ExecutionPlan, JobNode, JobNodeID } from '@openfn/runtime';
 import { Attempt } from '../types';
 
 export default (attempt: Attempt): ExecutionPlan => {
-  const plan = {
+  const plan: Partial<ExecutionPlan> = {
     id: attempt.id,
-    plan: [],
   };
 
   const nodes: Record<JobNodeID, JobNode> = {};
@@ -59,7 +58,7 @@ export default (attempt: Attempt): ExecutionPlan => {
     });
   }
 
-  plan.plan = Object.values(nodes);
+  plan.jobs = Object.values(nodes);
 
-  return plan;
+  return plan as ExecutionPlan;
 };

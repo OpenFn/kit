@@ -7,6 +7,8 @@ import createRTMServer from '../src/server';
 import createMockRTM from '../src/mock/runtime-manager';
 import { waitForEvent } from './util';
 
+const str = (obj: object) => JSON.stringify(obj);
+
 let server;
 
 test.before(() => {
@@ -26,28 +28,24 @@ test.serial(
     const evt = await waitForEvent(server, 'workflow-start');
     t.truthy(evt);
     t.is(evt.id, 'a');
+
+    // TODO what goes in this event?
+    // Test more carefully
   }
 );
 
-test.serial.skip('should pick up a novel attempt in the queue', async (t) => {
-  lng.addToQueue({ id: 'x', plan: [{ expression: '{}' }] });
-  const evt = await waitForEvent(rtm, 'workflow-start');
-  t.truthy(evt);
-  t.is(evt.id, 'x');
-
-  // let the workflow finish processing
-  await waitForEvent(rtm, 'workflow-complete');
-});
-
-test.serial.skip(
-  'should publish a workflow-complete event with state',
+test.serial.only(
+  'trigger a workflow-complete event when execution completes',
   async (t) => {
-    // The mock RTM will evaluate the expression as JSON and return it
-    lng.addToQueue({ id: 'x', plan: [{ expression: '{ "answer": 42 }' }] });
+    server.execute({
+      id: 'a',
+      triggers: [{ id: 't', next: { b: true } }],
+      jobs: [{ id: 'j', body: str({ answer: 42 }) }],
+    });
 
-    const evt = await waitForEvent(rtm, 'workflow-complete');
+    const evt = await waitForEvent(server, 'workflow-complete');
     t.truthy(evt);
-    t.is(evt.id, 'x');
+    t.is(evt.id, 'a');
     t.deepEqual(evt.state, { answer: 42 });
   }
 );

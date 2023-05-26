@@ -329,6 +329,9 @@ importers:
       '@koa/router':
         specifier: ^12.0.0
         version: 12.0.0
+      '@openfn/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       axios:
         specifier: ^1.3.4
         version: 1.3.4

@@ -10,7 +10,7 @@ import { waitForEvent, clone } from '../util'; // ???
 
 const sampleWorkflow = {
   id: 'w1',
-  plan: [
+  jobs: [
     {
       id: 'j1',
       adaptor: 'common@1.0.0',
@@ -30,7 +30,7 @@ test('mock runtime manager should have an id', (t) => {
 });
 
 test('getStatus() should should have no active workflows', (t) => {
-  const rtm = create(22);
+  const rtm = create();
   const { active } = rtm.getStatus();
 
   t.is(active, 0);
@@ -102,7 +102,7 @@ test('mock should evaluate expressions as JSON', async (t) => {
 
 test('resolve credential before job-start if credential is a string', async (t) => {
   const wf = clone(sampleWorkflow);
-  wf.plan[0].credential = 'x';
+  wf.jobs[0].configuration = 'x';
 
   let didCallCredentials;
   const credentials = async (_id) => {

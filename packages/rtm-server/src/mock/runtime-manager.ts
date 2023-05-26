@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
+import type { ExecutionPlan } from '@openfn/runtime';
 
-import type { State, Credential, ExecutionPlan, JobPlan } from '../types';
+import type { State, Credential } from '../types';
 import mockResolvers from './resolvers';
 
 // A mock runtime manager
@@ -59,11 +60,6 @@ let autoServerId = 0;
 // The credential of course is the hard bit
 const assembleState = () => {};
 
-// Pre-process a plan
-// Validate it
-// Assign ids to jobs if they don't exist
-const preprocessPlan = (plan: ExecutionPlan) => plan;
-
 function createMock(
   serverId = autoServerId,
   resolvers: LazyResolvers = mockResolvers
@@ -85,14 +81,13 @@ function createMock(
     bus.once(event, fn);
   };
 
-  const executeJob = async (job: JobPlan) => {
+  const executeJob = async (job: JobPlan, initialState = {}) => {
     // TODO maybe lazy load the job from an id
-    const { id, expression, credential } = job;
-
-    if (typeof credential === 'string') {
+    const { id, expression, configuration } = job;
+    if (typeof configuration === 'string') {
       // Fetch the credntial but do nothing with it
       // Maybe later we use it to assemble state
-      await resolvers.credentials(credential);
+      await resolvers.credentials(configuration);
     }
 
     // Does a job reallly need its own id...? Maybe.
@@ -108,7 +103,7 @@ function createMock(
     // It's the json output of the logger
     dispatch('job-log', { id, runId });
 
-    let state = {};
+    let state = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
       state = JSON.parse(expression);
@@ -124,17 +119,18 @@ function createMock(
   // Start executing an ExecutionPlan
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
   const execute = (xplan: ExecutionPlan) => {
-    const { id, plan } = preprocessPlan(xplan);
-    activeWorkflows[id] = true;
+    const { id, jobs } = xplan;
+    activeWorkflows[id!] = true;
     setTimeout(async () => {
       dispatch('workflow-start', { id });
       setTimeout(async () => {
-        // Run the first job
-        // TODO this need sto loop over all jobs
-        const state = await executeJob(plan[0]);
-
+        let state = {};
+        // Trivial job reducer in our mock
+        for (const job of jobs) {
+          state = await executeJob(job, state);
+        }
         setTimeout(() => {
-          delete activeWorkflows[id];
+          delete activeWorkflows[id!];
           dispatch('workflow-complete', { id, state });
         }, 1);
       }, 1);

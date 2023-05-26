@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import { tryWithBackoff } from '../../src/util';
+import tryWithBackoff from '../../src/util/try-with-backoff';
 
 test('return immediately', async (t) => {
   let callCount = 0;
