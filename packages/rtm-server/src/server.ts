@@ -8,7 +8,6 @@
  */
 
 import Koa from 'koa';
-import axios from 'axios'; // TODO don't use axios
 import createAPI from './api';
 import startWorkLoop from './work-loop';
 import convertAttempt from './util/convert-attempt';
@@ -20,9 +19,12 @@ const postResult = async (
   state: any
 ) => {
   if (lightningUrl) {
-    const result = await axios.post(
+    const result = await fetch(
       `${lightningUrl}/api/1/attempts/complete/${attemptId}`,
-      state || {}
+      {
+        method: 'POST',
+        body: state || {},
+      }
     );
   }
   // TODO what if result is not 200?

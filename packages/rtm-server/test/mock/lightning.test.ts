@@ -1,5 +1,4 @@
 import test from 'ava';
-import axios from 'axios';
 
 import createLightningServer, { API_PREFIX } from '../../src/mock/lightning';
 
@@ -7,21 +6,34 @@ const baseUrl = `http://localhost:8888${API_PREFIX}`;
 
 let server;
 
-test.beforeEach(() => {
+test.before(() => {
   server = createLightningServer({ port: 8888 });
 });
 
 test.afterEach(() => {
+  server.resetQueue();
+});
+
+test.after(() => {
   server.destroy();
 });
 
-const get = (path: string) => axios.get(`${baseUrl}/${path}`);
+const get = (path: string) => fetch(`${baseUrl}/${path}`);
 const post = (path: string, data: any) =>
-  axios.post(`${baseUrl}/${path}`, data);
+  fetch(`${baseUrl}/${path}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
 
 test.serial('GET /credential - return a credential', async (t) => {
-  const { status, data: job } = await get('credential/a');
-  t.is(status, 200);
+  const res = await get('credential/a');
+  t.is(res.status, 200);
+
+  const job = await res.json();
 
   t.is(job.user, 'bobby');
   t.is(job.password, 'password1');
@@ -29,8 +41,11 @@ test.serial('GET /credential - return a credential', async (t) => {
 
 test.serial('GET /credential - return a new mock credential', async (t) => {
   server.addCredential('b', { user: 'johnny', password: 'cash' });
-  const { status, data: job } = await get('credential/b');
-  t.is(status, 200);
+
+  const res = await get('credential/b');
+  t.is(res.status, 200);
+
+  const job = await res.json();
 
   t.is(job.user, 'johnny');
   t.is(job.password, 'cash');
@@ -39,45 +54,40 @@ test.serial('GET /credential - return a new mock credential', async (t) => {
 test.serial(
   'GET /credential - return 404 if no credential found',
   async (t) => {
-    try {
-      await get('credential/c');
-    } catch (e) {
-      t.is(e.response.status, 404);
-    }
+    const res = await get('credential/c');
+    t.is(res.status, 404);
   }
 );
 
 test.serial(
-  'POST /attempts/next - return 204 for an empty queue',
+  'POST /attempts/next - return 204 and no body for an empty queue',
   async (t) => {
     t.is(server.getQueueLength(), 0);
-    const { status, data } = await post('attempts/next', { id: 'x' });
-    t.is(status, 204);
-
-    t.falsy(data);
+    const res = await post('attempts/next', { id: 'x' });
+    t.is(res.status, 204);
+    t.false(res.bodyUsed);
   }
 );
 
 test.serial('POST /attempts/next - return 400 if no id provided', async (t) => {
-  try {
-    await post('attempts/next', {});
-  } catch (e) {
-    t.is(e.response.status, 400);
-  }
+  const res = await post('attempts/next', {});
+  t.is(res.status, 400);
 });
 
 test.serial('GET /attempts/next - return 200 with a workflow', async (t) => {
   server.addToQueue('attempt-1');
   t.is(server.getQueueLength(), 1);
-  const { status, data } = await post('attempts/next', { id: 'x' });
-  t.is(status, 200);
 
-  t.truthy(data);
-  t.true(Array.isArray(data));
-  t.is(data.length, 1);
+  const res = await post('attempts/next', { id: 'x' });
+  const result = await res.json();
+  t.is(res.status, 200);
+
+  t.truthy(result);
+  t.true(Array.isArray(result));
+  t.is(result.length, 1);
 
   // not interested in testing much against the attempt structure at this stage
-  const [attempt] = data;
+  const [attempt] = result;
   t.is(attempt.id, 'attempt-1');
   t.true(Array.isArray(attempt.plan));
 
@@ -89,14 +99,16 @@ test.serial(
   async (t) => {
     server.addToQueue({ id: 'abc' });
     t.is(server.getQueueLength(), 1);
-    const { status, data } = await post('attempts/next', { id: 'x' });
-    t.is(status, 200);
 
-    t.truthy(data);
-    t.true(Array.isArray(data));
-    t.is(data.length, 1);
+    const res = await post('attempts/next', { id: 'x' });
+    t.is(res.status, 200);
 
-    const [attempt] = data;
+    const result = await res.json();
+    t.truthy(result);
+    t.true(Array.isArray(result));
+    t.is(result.length, 1);
+
+    const [attempt] = result;
     t.is(attempt.id, 'abc');
 
     t.is(server.getQueueLength(), 0);
@@ -108,12 +120,14 @@ test.serial('GET /attempts/next - return 200 with 2 workflows', async (t) => {
   server.addToQueue('attempt-1');
   server.addToQueue('attempt-1');
   t.is(server.getQueueLength(), 3);
-  const { status, data } = await post('attempts/next?count=2', { id: 'x' });
-  t.is(status, 200);
 
-  t.truthy(data);
-  t.true(Array.isArray(data));
-  t.is(data.length, 2);
+  const res = await post('attempts/next?count=2', { id: 'x' });
+  t.is(res.status, 200);
+
+  const result = await res.json();
+  t.truthy(result);
+  t.true(Array.isArray(result));
+  t.is(result.length, 2);
 
   t.is(server.getQueueLength(), 1);
 });
@@ -122,17 +136,18 @@ test.serial(
   'POST /attempts/next - clear the queue after a request',
   async (t) => {
     server.addToQueue('attempt-1');
-    const req1 = await post('attempts/next', { id: 'x' });
-    t.is(req1.status, 200);
+    const res1 = await post('attempts/next', { id: 'x' });
+    t.is(res1.status, 200);
 
-    t.is(req1.data.length, 1);
-
-    const req2 = await post('attempts/next', { id: 'x' });
-    t.is(req2.status, 204);
-    t.falsy(req2.data);
+    const result1 = await res1.json();
+    t.is(result1.length, 1);
+    const res2 = await post('attempts/next', { id: 'x' });
+    t.is(res2.status, 204);
+    t.falsy(res2.bodyUsed);
   }
 );
 
+// TODO this API is gonna be restructured
 test.serial('POST /attempts/notify - should return 200', async (t) => {
   const { status } = await post('attempts/notify/a', {});
   t.is(status, 200);

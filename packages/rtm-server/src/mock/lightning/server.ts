@@ -60,6 +60,7 @@ const createLightningServer = (options = {}) => {
       return true;
     }
   };
+  app.resetQueue = () => (state.queue = []);
   app.getQueueLength = () => state.queue.length;
   app.getResult = (attemptId: string) => state.results[attemptId];
   app.on = (event: 'notify', fn: (evt: any) => void) => {

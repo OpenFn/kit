@@ -1,5 +1,4 @@
 import test from 'ava';
-import axios from 'axios';
 
 import createServer from '../src/server';
 import createMockRTM from '../src/mock/runtime-manager';
@@ -17,7 +16,8 @@ test.beforeEach(() => {
 });
 
 test('healthcheck', async (t) => {
-  const result = await axios.get(`${url}/healthcheck`);
+  const result = await fetch(`${url}/healthcheck`);
   t.is(result.status, 200);
-  t.is(result.data, 'OK');
+  const body = await result.text();
+  t.is(body, 'OK');
 });

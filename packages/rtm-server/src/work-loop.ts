@@ -1,4 +1,3 @@
-import axios from 'axios';
 import tryWithBackoff from './util/try-with-backoff';
 import { Attempt } from './types';
 
@@ -11,8 +10,9 @@ export default (
 ) => {
   const fetchWork = async () => {
     // TODO what if this retuns like a 500?  Server down?
-    const result = await axios.post(`${lightningUrl}/api/1/attempts/next`, {
-      id: rtmId,
+    const result = await fetch(`${lightningUrl}/api/1/attempts/next`, {
+      method: 'POST',
+      body: { id: rtmId },
     });
     if (result.data) {
       result.data.forEach(execute);
