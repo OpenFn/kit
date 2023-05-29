@@ -1,14 +1,11 @@
 import test from 'ava';
 import path from 'node:path';
 import run from '../src/run';
-import { extractLogs } from '../src/util';
+import { extractLogs, assertLog } from '../src/util';
 
 const jobsPath = path.resolve('test/fixtures');
 
 // These are all errors that will stop the CLI from even running
-
-const assertLog = (t: any, logs: any[], re: RegExp) =>
-  t.assert(logs.find(({ message }) => re.test(message[0])));
 
 test.serial('job not found', async (t) => {
   const { stdout, stderr, err } = await run('openfn blah.js --log-json');

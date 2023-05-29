@@ -31,7 +31,7 @@ test.afterEach(() => {
 // This is convenient in testing as it's easier to catch errors
 // Note that the linker and module loader do heavier testing of strings
 
-test('a live no-op job with one operation', async (t) => {
+test('run a live no-op job with one operation', async (t) => {
   const job = [(s: State) => s];
   const state = createState();
   const result = await executeExpression(job, state);
@@ -39,7 +39,7 @@ test('a live no-op job with one operation', async (t) => {
   t.deepEqual(state, result);
 });
 
-test('a stringified no-op job with one operation', async (t) => {
+test('run a stringified no-op job with one operation', async (t) => {
   const job = 'export default [(s) => s]';
   const state = createState();
   const result = await executeExpression(job, state);
@@ -47,7 +47,7 @@ test('a stringified no-op job with one operation', async (t) => {
   t.deepEqual(state, result);
 });
 
-test('a live no-op job with @openfn/language-common.fn', async (t) => {
+test('run a live no-op job with @openfn/language-common.fn', async (t) => {
   const job = [fn((s: State) => s)] as Operation[];
   const state = createState();
   const result = await executeExpression(job, state);
@@ -81,6 +81,28 @@ test('output state should be serializable', async (t) => {
   t.falsy(result.data.fn);
 });
 
+test('config is removed from the result (strict)', async (t) => {
+  const job = [(s) => s];
+
+  const result = await executeExpression(
+    job,
+    { configuration: {} },
+    { strict: true }
+  );
+  t.deepEqual(result, {});
+});
+
+test('config is removed from the result (non-strict)', async (t) => {
+  const job = [(s) => s];
+
+  const result = await executeExpression(
+    job,
+    { configuration: {} },
+    { strict: false }
+  );
+  t.deepEqual(result, {});
+});
+
 test('output state is cleaned in strict mode', async (t) => {
   const job = [
     async () => ({
@@ -98,20 +120,24 @@ test('output state is cleaned in strict mode', async (t) => {
   });
 });
 
-test('output state is left along in non-strict mode', async (t) => {
+test('output state is left alone in non-strict mode', async (t) => {
   const state = {
     data: {},
     references: [],
     configuration: {},
     x: true,
   };
-  const job = [async () => state];
+  const job = [async () => ({ ...state })];
 
   const result = await executeExpression(job, {}, { strict: false });
-  t.deepEqual(result, state);
+  t.deepEqual(result, {
+    data: {},
+    references: [],
+    x: true,
+  });
 });
 
-test('jobs run in series', async (t) => {
+test('operations run in series', async (t) => {
   const job = [
     (s: TestState) => {
       s.data.x = 2;
@@ -136,7 +162,7 @@ test('jobs run in series', async (t) => {
   t.is(result.data.x, 12);
 });
 
-test('jobs run in series with async operations', async (t) => {
+test('async operations run in series', async (t) => {
   const job = [
     (s: TestState) => {
       s.data.x = 2;
@@ -164,7 +190,17 @@ test('jobs run in series with async operations', async (t) => {
   t.is(result.data.x, 12);
 });
 
-test('jobs do mutate the original state', async (t) => {
+test('jobs can return undefined', async (t) => {
+  // @ts-ignore violating the operation contract here
+  const job = [() => undefined] as Operation[];
+
+  const state = createState() as TestState;
+  const result = (await executeExpression(job, state, {})) as TestState;
+
+  t.assert(result === undefined);
+});
+
+test('jobs can mutate the original state', async (t) => {
   const job = [
     (s: TestState) => {
       s.data.x = 2;

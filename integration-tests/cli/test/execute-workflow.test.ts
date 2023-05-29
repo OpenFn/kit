@@ -24,7 +24,8 @@ test.afterEach(async () => {
 
 // Autoinstall adaptors
 test.serial(`openfn ${jobsPath}/wf-count.json -i`, async (t) => {
-  await run(t.title);
+  const { err } = await run(t.title);
+  t.falsy(err);
 
   const out = getJSON();
   t.is(out.data.count, 42);
@@ -34,7 +35,8 @@ test.serial(`openfn ${jobsPath}/wf-count.json -i`, async (t) => {
 test.serial(
   `openfn ${jobsPath}/wf-count.json -S "{ \\"data\\": { \\"count\\": 6 } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.is(out.data.count, 12);
@@ -43,7 +45,8 @@ test.serial(
 
 // Multiple steps, shared array
 test.serial(`openfn ${jobsPath}/wf-array.json`, async (t) => {
-  await run(t.title);
+  const { err } = await run(t.title);
+  t.falsy(err);
 
   const out = getJSON();
   t.is(out.data.items.length, 2);
@@ -55,7 +58,8 @@ test.serial(`openfn ${jobsPath}/wf-array.json`, async (t) => {
 test.serial(
   `openfn ${jobsPath}/wf-array.json -S "{ \\"data\\": { \\"items\\": [\\"z\\"] } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.is(out.data.items.length, 3);
@@ -69,16 +73,19 @@ test.serial(
 test.serial(
   `openfn ${jobsPath}/wf-array.json --start b -S "{ \\"data\\": { \\"items\\": [] } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
-    t.is(out.data.items.length, 1);
+    t.is(out.data.items.length, 2);
     t.true(out.data.items.includes('b'));
+    t.true(out.data.items.includes('c'));
   }
 );
 
 test.serial(`openfn ${jobsPath}/wf-conditional.json`, async (t) => {
-  await run(t.title);
+  const { err } = await run(t.title);
+  t.falsy(err);
 
   const out = getJSON();
   t.is(out.data.result, 'small');
@@ -87,7 +94,8 @@ test.serial(`openfn ${jobsPath}/wf-conditional.json`, async (t) => {
 test.serial(
   `openfn ${jobsPath}/wf-conditional.json -S "{ \\"data\\": { \\"number\\": 5 } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.is(out.data.result, 'small');
@@ -97,7 +105,8 @@ test.serial(
 test.serial(
   `openfn ${jobsPath}/wf-conditional.json -S "{ \\"data\\": { \\"number\\": 20 } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.is(out.data.result, 'large');
@@ -107,7 +116,8 @@ test.serial(
 test.serial(
   `openfn ${jobsPath}/wf-simple.json -S "{ \\"data\\": { \\"count\\": 2 } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.is(out.data.count, 4);
@@ -115,7 +125,8 @@ test.serial(
 );
 
 test.serial(`openfn ${jobsPath}/wf-strict.json --strict`, async (t) => {
-  await run(t.title);
+  const { err } = await run(t.title);
+  t.falsy(err);
 
   const out = getJSON();
   t.deepEqual(out, {
@@ -126,7 +137,8 @@ test.serial(`openfn ${jobsPath}/wf-strict.json --strict`, async (t) => {
 });
 
 test.serial(`openfn ${jobsPath}/wf-strict.json --no-strict`, async (t) => {
-  await run(t.title);
+  const { err } = await run(t.title);
+  t.falsy(err);
 
   const out = getJSON();
   t.deepEqual(out, {
@@ -143,9 +155,10 @@ test.serial(`openfn ${jobsPath}/wf-strict.json --no-strict`, async (t) => {
 });
 
 test.serial(
-  `openfn ${jobsPath}/wf-errors.json -i -S "{ \\"data\\": { \\"number\\": 2 } }"`,
+  `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 2 } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.deepEqual(out, {
@@ -159,7 +172,8 @@ test.serial(
 test.serial(
   `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 32 } }"`,
   async (t) => {
-    await run(t.title);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
     t.deepEqual(out, {

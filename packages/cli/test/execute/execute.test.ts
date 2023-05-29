@@ -1,5 +1,5 @@
 // bunch of unit tests on the execute function itself
-// so far this is only done in commmands.test.ts, which has the cli overhead
+// so far this is only done in commands.test.ts, which has the cli overhead
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
 import mock from 'mock-fs';
 import path from 'node:path';
@@ -174,7 +174,7 @@ test('run a workflow with config as a path', async (t) => {
     jobs: [
       {
         configuration: '/config.json',
-        expression: `${fn}fn((state) => state)`,
+        expression: `${fn}fn((state) => { state.cfg = state.configuration; return state; })`,
       },
     ],
   };
@@ -183,7 +183,7 @@ test('run a workflow with config as a path', async (t) => {
     workflow,
   };
   const result = await handler(options, logger);
-  t.is(result.configuration.id, 'x');
+  t.is(result.cfg.id, 'x');
 });
 
 test('run a workflow from a start node', async (t) => {

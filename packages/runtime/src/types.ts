@@ -59,6 +59,7 @@ export type JobNode = {
   data?: State['data']; // default state (globals)
 
   next?: string | Record<JobNodeID, true | JobEdge>;
+  previous?: JobNodeID;
 };
 
 export type JobEdge = {

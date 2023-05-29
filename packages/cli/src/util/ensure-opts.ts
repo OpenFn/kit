@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SafeOpts } from '../commands';
+import { DEFAULT_REPO_DIR } from '../constants';
 import { Opts } from '../options';
 import { LogLevel, isValidLogLevel } from './logger';
 
@@ -13,8 +14,6 @@ export const ERROR_MESSAGE_LOG_LEVEL =
   'Unknown log level. Valid levels are none, debug, info and default.';
 export const ERROR_MESSAGE_LOG_COMPONENT =
   'Unknown log component. Valid components are cli, compiler, runtime and job.';
-
-export const DEFAULT_REPO_DIR = '/tmp/openfn/repo';
 
 const componentShorthands: Record<string, string> = {
   cmp: 'compiler',

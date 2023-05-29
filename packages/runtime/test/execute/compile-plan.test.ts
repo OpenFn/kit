@@ -20,12 +20,22 @@ const planWithEdge = (edge: JobEdge) =>
 test('should convert jobs to an object', (t) => {
   const compiledPlan = compilePlan(testPlan);
   t.truthy(compiledPlan.jobs.a);
-  t.falsy(compiledPlan.jobs.a.id);
   t.is(compiledPlan.jobs.a.expression, 'x');
 
   t.truthy(compiledPlan.jobs.b);
-  t.falsy(compiledPlan.jobs.b.id);
   t.is(compiledPlan.jobs.b.expression, 'y');
+});
+
+test('should auto generate ids for jobs', (t) => {
+  const plan = {
+    start: 'a',
+    jobs: [{ expression: 'x' }, { expression: 'y' }],
+  };
+  const compiledPlan = compilePlan(plan);
+  const ids = Object.keys(compiledPlan.jobs);
+  t.truthy(ids[0]);
+  t.truthy(ids[1]);
+  t.assert(ids[0] !== ids[1]);
 });
 
 test('should convert jobs to an object with auto ids', (t) => {

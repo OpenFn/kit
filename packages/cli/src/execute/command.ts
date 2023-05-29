@@ -1,7 +1,8 @@
 import yargs from 'yargs';
-import { Opts } from '../options';
 import { build, ensure } from '../util/command-builders';
 import * as o from '../options';
+
+import type { Opts } from '../options';
 
 export type ExecuteOptions = Required<
   Pick<
@@ -76,8 +77,8 @@ const executeCommand = {
         'Execute foo/job.js with no adaptor and write the final state to foo/job.json'
       )
       .example(
-        'openfn workflow.json -ia common',
-        'Execute workflow.json using @openfn/language-commom (with autoinstall enabled)'
+        'openfn workflow.json -i',
+        'Execute workflow.json with autoinstall enabled'
       )
       .example(
         'openfn job.js -a common --log info',

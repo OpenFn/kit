@@ -114,6 +114,9 @@ const prepareFinalState = (opts: Options, state: any) => {
   if (state) {
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);
+    } else {
+      // TODO this is new and needs unit tests
+      delete state.configuration;
     }
     const cleanState = stringify(state);
     return JSON.parse(cleanState);
