@@ -23,15 +23,19 @@ test.before(() => {
 });
 
 // Really high level test
-test.serial.skip('process an attempt', async (t) => {
-  lng.addAttempt('a1', {
-    // workflow goes here
+test.serial('process an attempt', async (t) => {
+  lng.addToQueue({
+    id: 'a1',
+    jobs: [
+      {
+        adaptor: '@openfn/language-common@1.0.0',
+        body: JSON.stringify({ answer: 42 }),
+      },
+    ],
   });
 
-  lng.waitForResult('a1', (result) => {
-    // test the result here
-    t.is(result.answer, 42);
-  });
+  const { state } = await lng.waitForResult('a1');
+  t.is(state.answer, 42);
 });
 
 // process multple attempts

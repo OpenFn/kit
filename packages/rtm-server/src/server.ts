@@ -23,7 +23,11 @@ const postResult = async (
       `${lightningUrl}/api/1/attempts/complete/${attemptId}`,
       {
         method: 'POST',
-        body: state || {},
+        body: JSON.stringify(state || {}),
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
       }
     );
   }

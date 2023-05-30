@@ -1,5 +1,5 @@
 import test from 'ava';
-
+import { attempts } from '../../src/mock/data';
 import createLightningServer, { API_PREFIX } from '../../src/mock/lightning';
 
 const baseUrl = `http://localhost:8888${API_PREFIX}`;
@@ -29,20 +29,20 @@ const post = (path: string, data: any) =>
     },
   });
 
+const attempt1 = attempts()['attempt-1'];
+
+test.serial(
+  'GET /credential - return 404 if no credential found',
+  async (t) => {
+    const res = await get('credential/x');
+    t.is(res.status, 404);
+  }
+);
+
 test.serial('GET /credential - return a credential', async (t) => {
+  server.addCredential('a', { user: 'johnny', password: 'cash' });
+
   const res = await get('credential/a');
-  t.is(res.status, 200);
-
-  const job = await res.json();
-
-  t.is(job.user, 'bobby');
-  t.is(job.password, 'password1');
-});
-
-test.serial('GET /credential - return a new mock credential', async (t) => {
-  server.addCredential('b', { user: 'johnny', password: 'cash' });
-
-  const res = await get('credential/b');
   t.is(res.status, 200);
 
   const job = await res.json();
@@ -50,14 +50,6 @@ test.serial('GET /credential - return a new mock credential', async (t) => {
   t.is(job.user, 'johnny');
   t.is(job.password, 'cash');
 });
-
-test.serial(
-  'GET /credential - return 404 if no credential found',
-  async (t) => {
-    const res = await get('credential/c');
-    t.is(res.status, 404);
-  }
-);
 
 test.serial(
   'POST /attempts/next - return 204 and no body for an empty queue',
@@ -75,7 +67,7 @@ test.serial('POST /attempts/next - return 400 if no id provided', async (t) => {
 });
 
 test.serial('GET /attempts/next - return 200 with a workflow', async (t) => {
-  server.addToQueue('attempt-1');
+  server.addToQueue(attempt1);
   t.is(server.getQueueLength(), 1);
 
   const res = await post('attempts/next', { id: 'x' });
@@ -116,9 +108,9 @@ test.serial(
 );
 
 test.serial('GET /attempts/next - return 200 with 2 workflows', async (t) => {
-  server.addToQueue('attempt-1');
-  server.addToQueue('attempt-1');
-  server.addToQueue('attempt-1');
+  server.addToQueue(attempt1);
+  server.addToQueue(attempt1);
+  server.addToQueue(attempt1);
   t.is(server.getQueueLength(), 3);
 
   const res = await post('attempts/next?count=2', { id: 'x' });
@@ -135,7 +127,7 @@ test.serial('GET /attempts/next - return 200 with 2 workflows', async (t) => {
 test.serial(
   'POST /attempts/next - clear the queue after a request',
   async (t) => {
-    server.addToQueue('attempt-1');
+    server.addToQueue(attempt1);
     const res1 = await post('attempts/next', { id: 'x' });
     t.is(res1.status, 200);
 
@@ -194,7 +186,7 @@ test.serial(
     let evt;
     let didCall = false;
 
-    server.once('complete', (e) => {
+    server.once('workflow-complete', (e) => {
       didCall = true;
       evt = e;
     });

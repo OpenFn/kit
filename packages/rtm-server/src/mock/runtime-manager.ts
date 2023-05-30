@@ -121,7 +121,7 @@ function createMock(
   const execute = (xplan: ExecutionPlan) => {
     const { id, jobs } = xplan;
     activeWorkflows[id!] = true;
-    setTimeout(async () => {
+    setTimeout(() => {
       dispatch('workflow-start', { id });
       setTimeout(async () => {
         let state = {};

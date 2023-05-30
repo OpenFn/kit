@@ -33,7 +33,6 @@ export const createFetchNextJob =
       payload.push(queue.shift());
       count -= 1;
     }
-
     if (payload.length > 0) {
       ctx.body = JSON.stringify(payload);
       ctx.status = 200;
@@ -75,7 +74,7 @@ export const createComplete = (state: ServerState) => (ctx: Koa.Context) => {
   const finalState = ctx.request.body as State;
   results[ctx.params.id] = finalState;
 
-  events.emit('complete', { id: ctx.params.id, state: finalState });
+  events.emit('workflow-complete', { id: ctx.params.id, state: finalState });
 
   ctx.status = 200;
 };

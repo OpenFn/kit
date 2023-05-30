@@ -12,10 +12,16 @@ export default (
     // TODO what if this retuns like a 500?  Server down?
     const result = await fetch(`${lightningUrl}/api/1/attempts/next`, {
       method: 'POST',
-      body: { id: rtmId },
+      body: JSON.stringify({ id: rtmId }),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
     });
-    if (result.data) {
-      result.data.forEach(execute);
+    if (result.body) {
+      result.json().then((workflows) => {
+        workflows.forEach(execute);
+      });
       return true;
     }
     // return false to backoff and try again

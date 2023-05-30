@@ -11,8 +11,12 @@ import type { ServerState } from './server';
 export const API_PREFIX = `/api/1`;
 
 export default (router: Router, state: ServerState) => {
+  // Basically all requests must include an rtm id
+  // And probably later a security token
+
   // POST attempts/next:
-  // Removes Attempts from the queue and returns them to the calleer
+  // Removes Attempts from the queue and returns them to the caller
+  // Lightning should track who has each attempt
   //  200 - return an array of pending attempts
   //  204 - queue empty (no body)
   router.post(`${API_PREFIX}/attempts/next`, createFetchNextJob(state));
@@ -31,8 +35,10 @@ export default (router: Router, state: ServerState) => {
 
   // Notify an attempt has finished
   // Could be error or success state
+  // If a complete comes in from an unexpected source (ie a timed out job), this should throw
   // Error or state in payload
   // { data } | { error }
+  // TODO result needs to be { rtmId, state, meta } (meta to come, but timing, memory info etc)
   router.post(`${API_PREFIX}/attempts/complete/:id`, createComplete(state));
 
   // TODO i want this too: confirm that an attempt has started

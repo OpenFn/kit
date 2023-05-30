@@ -45,8 +45,23 @@ Now what? The jobs in progress are lost forever because nothing was persisted. L
 Solutions:
 
 - Lightning has its own timeout. So if a job takes more than 5 minutes, it'll count as failed. It can be manually retried. This is not unreasonable.
+- What if a RTM job returns after 10 minutes? Lightning probably needs to reject it. It actually needs to handshake
 - Lightning could maintain a keepalive with the RTM server. When the keepalive dies, Lightning will know which jobs are outstanding. It can re-queue them.
 
 Other pitfalls:
 
 - What if the job half finished and posted some information to another server before it died? is re-running harmful? Surely this is up to the job writer to avoid duplicating data.
+
+## Logging
+
+The RTM will publish a lot of logs.
+
+Usually, we can just return all the logs when they're done in batch.
+
+If someone happens to be watching, we may want to stream logs live. This will happen but less frequently.
+
+Should lightning and the RTM server maintain a web socket to pipe all logs through?
+
+Should logs be posted in batches? Every n-ms?
+
+I'm gonna keep it really simple for now, and send all the logs after completion in a single post.

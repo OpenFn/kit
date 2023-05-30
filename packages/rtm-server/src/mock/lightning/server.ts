@@ -4,8 +4,7 @@ import bodyParser from 'koa-bodyparser';
 import Router from '@koa/router';
 
 import createAPI from './api';
-import * as data from '../data';
-import { LightningAttempt } from '../../types';
+import { Attempt } from '../../types';
 import { RTMEvent } from '../runtime-manager';
 
 type NotifyEvent = {
@@ -17,7 +16,7 @@ type NotifyEvent = {
 export type ServerState = {
   credentials: Record<string, any>;
   attempts: Record<string, any>;
-  queue: LightningAttempt[];
+  queue: Attempt[];
   results: Record<string, any>;
   events: EventEmitter;
 };
@@ -26,9 +25,12 @@ export type ServerState = {
 const createLightningServer = (options = {}) => {
   // App state
   const state = {
-    credentials: data.credentials(),
-    attempts: data.attempts(),
-    queue: [] as LightningAttempt[],
+    credentials: {},
+    attempts: [],
+
+    // TODO for now, the queue will hold the actual Attempt data directly
+    // I think later we want it to just hold an id?
+    queue: [] as Attempt[],
     results: {},
     events: new EventEmitter(),
   } as ServerState;
@@ -45,10 +47,10 @@ const createLightningServer = (options = {}) => {
   app.addCredential = (id: string, cred: Credential) => {
     state.credentials[id] = cred;
   };
-  app.addAttempt = (attempt: LightningAttempt) => {
+  app.addAttempt = (attempt: Attempt) => {
     state.attempts[attempt.id] = attempt;
   };
-  app.addToQueue = (attempt: string | LightningAttempt) => {
+  app.addToQueue = (attempt: string | Attempt) => {
     if (typeof attempt == 'string') {
       if (state.attempts[attempt]) {
         state.queue.push(state.attempts[attempt]);
@@ -59,6 +61,17 @@ const createLightningServer = (options = {}) => {
       state.queue.push(attempt);
       return true;
     }
+  };
+  app.waitForResult = (workflowId: string) => {
+    return new Promise((resolve) => {
+      const handler = (evt) => {
+        if (evt.id === workflowId) {
+          state.events.removeListener('workflow-complete', handler);
+          resolve(evt);
+        }
+      };
+      state.events.addListener('workflow-complete', handler);
+    });
   };
   app.resetQueue = () => (state.queue = []);
   app.getQueueLength = () => state.queue.length;
