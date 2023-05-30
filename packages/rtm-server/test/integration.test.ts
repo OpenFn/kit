@@ -19,7 +19,10 @@ const urls = {
 
 test.before(() => {
   lng = createLightningServer({ port: 7654 });
-  rtm = createRTMServer(createMockRTM(), { port: 4567, lightning: urls.lng });
+  rtm = createRTMServer(createMockRTM('rtm'), {
+    port: 4567,
+    lightning: urls.lng,
+  });
 });
 
 // Really high level test

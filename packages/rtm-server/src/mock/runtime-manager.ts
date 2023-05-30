@@ -61,7 +61,7 @@ let autoServerId = 0;
 const assembleState = () => {};
 
 function createMock(
-  serverId = autoServerId,
+  serverId: string,
   resolvers: LazyResolvers = mockResolvers
 ) {
   const activeWorkflows = {} as Record<string, true>;
@@ -145,7 +145,7 @@ function createMock(
   };
 
   return {
-    id: serverId || ++autoServerId,
+    id: serverId || `${++autoServerId}`,
     on,
     once,
     execute,

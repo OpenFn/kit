@@ -17,7 +17,7 @@ export type ServerState = {
   credentials: Record<string, any>;
   attempts: Record<string, any>;
   queue: Attempt[];
-  results: Record<string, any>;
+  results: Record<string, { rtmId: string; state: null | any }>;
   events: EventEmitter;
 };
 
@@ -50,14 +50,16 @@ const createLightningServer = (options = {}) => {
   app.addAttempt = (attempt: Attempt) => {
     state.attempts[attempt.id] = attempt;
   };
-  app.addToQueue = (attempt: string | Attempt) => {
+  app.addToQueue = (attempt: string | Attempt, rtmId: string = 'rtm') => {
     if (typeof attempt == 'string') {
+      app.addPendingWorkflow(attempt, rtmId);
       if (state.attempts[attempt]) {
         state.queue.push(state.attempts[attempt]);
         return true;
       }
       throw new Error(`attempt ${attempt} not found`);
     } else if (attempt) {
+      app.addPendingWorkflow(attempt.id, rtmId);
       state.queue.push(attempt);
       return true;
     }
@@ -65,7 +67,7 @@ const createLightningServer = (options = {}) => {
   app.waitForResult = (workflowId: string) => {
     return new Promise((resolve) => {
       const handler = (evt) => {
-        if (evt.id === workflowId) {
+        if (evt.workflow_id === workflowId) {
           state.events.removeListener('workflow-complete', handler);
           resolve(evt);
         }
@@ -73,9 +75,18 @@ const createLightningServer = (options = {}) => {
       state.events.addListener('workflow-complete', handler);
     });
   };
-  app.resetQueue = () => (state.queue = []);
+  app.addPendingWorkflow = (workflowId: string, rtmId: string) => {
+    state.results[workflowId] = {
+      rtmId,
+      state: null,
+    };
+  };
+  app.reset = () => {
+    state.queue = [];
+    state.results = {};
+  };
   app.getQueueLength = () => state.queue.length;
-  app.getResult = (attemptId: string) => state.results[attemptId];
+  app.getResult = (attemptId: string) => state.results[attemptId]?.state;
   app.on = (event: 'notify', fn: (evt: any) => void) => {
     state.events.addListener(event, fn);
   };

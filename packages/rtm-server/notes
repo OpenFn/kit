@@ -65,3 +65,7 @@ Should lightning and the RTM server maintain a web socket to pipe all logs throu
 Should logs be posted in batches? Every n-ms?
 
 I'm gonna keep it really simple for now, and send all the logs after completion in a single post.
+
+# JSON style
+
+Should the Lightning interfaces use snake case in JSON objects? Probably? They'd be closer to lightning's native style

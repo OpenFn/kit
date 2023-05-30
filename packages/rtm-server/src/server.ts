@@ -14,6 +14,7 @@ import convertAttempt from './util/convert-attempt';
 import { Attempt } from './types';
 
 const postResult = async (
+  rtmId: string,
   lightningUrl: string,
   attemptId: string,
   state: any
@@ -23,7 +24,10 @@ const postResult = async (
       `${lightningUrl}/api/1/attempts/complete/${attemptId}`,
       {
         method: 'POST',
-        body: JSON.stringify(state || {}),
+        body: JSON.stringify({
+          rtm_id: rtmId,
+          state: state,
+        }),
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -67,7 +71,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
 
   // TODO how about an 'all' so we can "route" events?
   rtm.on('workflow-complete', ({ id, state }) => {
-    postResult(options.lightning!, id, state);
+    postResult(rtm.id, options.lightning!, id, state);
   });
 
   // TMP doing this for tests but maybe its better done externally

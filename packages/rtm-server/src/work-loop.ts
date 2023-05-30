@@ -12,7 +12,7 @@ export default (
     // TODO what if this retuns like a 500?  Server down?
     const result = await fetch(`${lightningUrl}/api/1/attempts/next`, {
       method: 'POST',
-      body: JSON.stringify({ id: rtmId }),
+      body: JSON.stringify({ rtm_id: rtmId }),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
