@@ -7,7 +7,6 @@ import { createMockLogger } from '@openfn/logger';
 import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
-import { DEFAULT_REPO_DIR } from '../src/constants';
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -34,7 +33,7 @@ type RunOptions = {
     log: (s: string) => void;
   };
   disableMock?: boolean;
-  mockfs: object;
+  mockfs?: object;
 };
 
 // Helper function to mock a file system with particular paths and values,
@@ -77,7 +76,8 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.path = jobPath;
   opts.repoDir = options.repoDir;
 
-  opts.log = ['none'];
+  // opts.log = ['none'];
+  opts.log = ['debug'];
   opts.skipAdaptorValidation = true;
 
   await commandParser(jobPath, opts, logger);
@@ -503,6 +503,29 @@ test.serial(
     const job = 'export default [alterState(() => 39)]';
     const result = await run('openfn job.js -m -a common', job);
     t.assert(result === 39);
+    delete process.env.OPENFN_ADAPTORS_REPO;
+  }
+);
+
+test.serial.only(
+  'load an workflow adaptor from the monorepo: openfn workflow.json -m',
+  async (t) => {
+    process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
+    const workflow = JSON.stringify({
+      jobs: [
+        {
+          adaptor: 'common',
+          data: { done: true },
+          expression: 'alterState(s => s)',
+        },
+      ],
+    });
+
+    const result = await run('openfn workflow.json -m', workflow, {
+      jobPath: 'workflow.json',
+    });
+    console.log(result);
+    t.true(result.done);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
 );
