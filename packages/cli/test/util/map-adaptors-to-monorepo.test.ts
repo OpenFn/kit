@@ -3,7 +3,10 @@ import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
 
-import { validateMonoRepo, updatePath } from '../../src/util/use-adaptors-repo';
+import mapAdaptorsToMonorepo, {
+  validateMonoRepo,
+  updatePath,
+} from '../../src/util/map-adaptors-to-monorepo';
 
 const REPO_PATH = 'a/b/c';
 const ABS_REPO_PATH = path.resolve(REPO_PATH);
@@ -62,4 +65,46 @@ test('validate monorepo: all OK', async (t) => {
   });
 
   await t.notThrowsAsync(async () => validateMonoRepo(REPO_PATH, logger));
+});
+
+test.serial('mapAdaptorsToMonorepo: map adaptors', async (t) => {
+  mock({
+    [`${REPO_PATH}/package.json`]: '{ "name": "adaptors" }',
+  });
+
+  const options = {
+    monorepoPath: REPO_PATH,
+    adaptors: ['common'],
+  };
+
+  const newOptions = await mapAdaptorsToMonorepo(options, logger);
+  t.deepEqual(newOptions.adaptors, [`common=${ABS_REPO_PATH}/packages/common`]);
+});
+
+test.serial('mapAdaptorsToMonorepo: map workflow', async (t) => {
+  mock({
+    [`${REPO_PATH}/package.json`]: '{ "name": "adaptors" }',
+  });
+
+  const options = {
+    monorepoPath: REPO_PATH,
+    workflow: {
+      id: 'x',
+      jobs: [
+        {
+          adaptor: 'common',
+        },
+      ],
+    },
+  };
+
+  const newOptions = await mapAdaptorsToMonorepo(options, logger);
+  t.deepEqual(newOptions.workflow, {
+    id: 'x',
+    jobs: [
+      {
+        adaptor: `common=${ABS_REPO_PATH}/packages/common`,
+      },
+    ],
+  });
 });

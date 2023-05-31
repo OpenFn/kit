@@ -4,9 +4,23 @@ import type { Logger } from '../util/logger';
 
 import compile from './compile';
 import loadInput from '../util/load-input';
+import expandAdaptors from '../util/expand-adaptors';
+import mapAdaptorsToMonorepo, {
+  MapAdaptorsToMonorepoOptions,
+} from '../util/map-adaptors-to-monorepo';
 
 const compileHandler = async (options: CompileOptions, logger: Logger) => {
   await loadInput(options, logger);
+
+  if (options.workflow) {
+    // expand shorthand adaptors in the workflow jobs
+    expandAdaptors(options);
+    await mapAdaptorsToMonorepo(
+      options as MapAdaptorsToMonorepoOptions,
+      logger
+    );
+  }
+
   let result = await compile(options, logger);
   if (options.workflow) {
     result = JSON.stringify(result);

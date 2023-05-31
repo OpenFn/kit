@@ -76,8 +76,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.path = jobPath;
   opts.repoDir = options.repoDir;
 
-  // opts.log = ['none'];
-  opts.log = ['debug'];
+  opts.log = ['none'];
   opts.skipAdaptorValidation = true;
 
   await commandParser(jobPath, opts, logger);
@@ -501,14 +500,14 @@ test.serial(
   async (t) => {
     process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
     const job = 'export default [alterState(() => 39)]';
-    const result = await run('openfn job.js -m -a common', job);
+    const result = await run('job.js -m -a common', job);
     t.assert(result === 39);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
 );
 
-test.serial.only(
-  'load an workflow adaptor from the monorepo: openfn workflow.json -m',
+test.serial(
+  'load a workflow adaptor from the monorepo: openfn workflow.json -m',
   async (t) => {
     process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
     const workflow = JSON.stringify({
@@ -521,11 +520,10 @@ test.serial.only(
       ],
     });
 
-    const result = await run('openfn workflow.json -m', workflow, {
+    const result = await run('workflow.json -m', workflow, {
       jobPath: 'workflow.json',
     });
-    console.log(result);
-    t.true(result.done);
+    t.true(result.data.done);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
 );
