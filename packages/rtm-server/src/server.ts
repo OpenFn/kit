@@ -8,10 +8,13 @@
  */
 
 import Koa from 'koa';
+import bodyParser from 'koa-bodyparser';
+
 import createAPI from './api';
 import startWorkLoop from './work-loop';
 import convertAttempt from './util/convert-attempt';
 import { Attempt } from './types';
+// import createLogger, { createMockLogger, Logger } from '@openfn/logger';
 
 const postResult = async (
   rtmId: string,
@@ -65,36 +68,54 @@ type ServerOptions = {
   port?: number;
   lightning?: string; // url to lightning instance
   rtm?: any;
+  logger?: Logger;
 };
 
 function createServer(rtm: any, options: ServerOptions = {}) {
+  // const logger = options.logger || createMockLogger();
+  const logger = console;
+  const port = options.port || 1234;
+
+  logger.info('Starting server');
   const app = new Koa();
+
+  app.use(bodyParser());
 
   const execute = (attempt: Attempt) => {
     const plan = convertAttempt(attempt);
     rtm.execute(plan);
   };
 
-  const apiRouter = createAPI();
+  // TODO actually it's a bit silly to pass everything through, why not just declare the route here?
+  // Or maybe I need a central controller/state object
+  const apiRouter = createAPI(logger, execute);
   app.use(apiRouter.routes());
   app.use(apiRouter.allowedMethods());
 
-  app.listen(options.port || 1234);
+  app.listen(port);
+  logger.info('Listening on', port);
 
   app.destroy = () => {
     // TODO close the work loop
+    logger.info('Closing server');
   };
 
   if (options.lightning) {
+    logger.log('Starting work loop at', options.lightning);
     startWorkLoop(options.lightning, rtm.id, execute);
+  } else {
+    logger.warn('No lightning URL provided');
   }
 
   // TODO how about an 'all' so we can "route" events?
   rtm.on('workflow-complete', ({ id, state }) => {
+    logger.log(`${id}: workflow complete: `, id);
+    logger.log(state);
     postResult(rtm.id, options.lightning!, id, state);
   });
 
   rtm.on('log', ({ id, messages }) => {
+    logger.log(`${id}: `, ...messages);
     postLog(rtm.id, options.lightning!, id, messages);
   });
 

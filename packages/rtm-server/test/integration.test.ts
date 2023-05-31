@@ -41,7 +41,7 @@ test.serial('process an attempt', async (t) => {
   t.is(state.answer, 42);
 });
 
-// process multple attempts
+// process multiple attempts
 
 test.serial.skip(
   'should post to attempts/complete with the final state',
