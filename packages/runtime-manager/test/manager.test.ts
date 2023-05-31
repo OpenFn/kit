@@ -1,5 +1,5 @@
 import test from 'ava';
-import Manager from '../src/Manager';
+import Manager from '../src/rtm';
 
 test('Should create a new manager', (t) => {
   const m = Manager();

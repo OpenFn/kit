@@ -14,7 +14,7 @@ import createAPI from './api';
 import startWorkLoop from './work-loop';
 import convertAttempt from './util/convert-attempt';
 import { Attempt } from './types';
-// import createLogger, { createMockLogger, Logger } from '@openfn/logger';
+import { createMockLogger, Logger } from '@openfn/logger';
 
 const postResult = async (
   rtmId: string,
@@ -23,20 +23,17 @@ const postResult = async (
   state: any
 ) => {
   if (lightningUrl) {
-    const result = await fetch(
-      `${lightningUrl}/api/1/attempts/complete/${attemptId}`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          rtm_id: rtmId,
-          state: state,
-        }),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    await fetch(`${lightningUrl}/api/1/attempts/complete/${attemptId}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        rtm_id: rtmId,
+        state: state,
+      }),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
   }
   // TODO what if result is not 200?
   // Backoff and try again?
@@ -72,8 +69,7 @@ type ServerOptions = {
 };
 
 function createServer(rtm: any, options: ServerOptions = {}) {
-  // const logger = options.logger || createMockLogger();
-  const logger = console;
+  const logger = options.logger || createMockLogger();
   const port = options.port || 1234;
 
   logger.info('Starting server');
@@ -95,7 +91,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   app.listen(port);
   logger.info('Listening on', port);
 
-  app.destroy = () => {
+  (app as any).destroy = () => {
     // TODO close the work loop
     logger.info('Closing server');
   };
@@ -108,13 +104,13 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   }
 
   // TODO how about an 'all' so we can "route" events?
-  rtm.on('workflow-complete', ({ id, state }) => {
+  rtm.on('workflow-complete', ({ id, state }: { id: string; state: any }) => {
     logger.log(`${id}: workflow complete: `, id);
     logger.log(state);
     postResult(rtm.id, options.lightning!, id, state);
   });
 
-  rtm.on('log', ({ id, messages }) => {
+  rtm.on('log', ({ id, messages }: { id: string; messages: any[] }) => {
     logger.log(`${id}: `, ...messages);
     postLog(rtm.id, options.lightning!, id, messages);
   });
@@ -126,6 +122,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   // debug API to run a workflow
   // Used in unit tests
   // Only loads in dev mode?
+  // @ts-ignore
   app.execute = execute;
 
   return app;

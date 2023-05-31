@@ -335,22 +335,31 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@openfn/runtime-manager':
+        specifier: workspace:*
+        version: link:../runtime-manager
       koa:
         specifier: ^2.13.4
         version: 2.13.4
       koa-bodyparser:
         specifier: ^4.4.0
         version: 4.4.0
-      yargs:
-        specifier: ^17.5.1
-        version: 17.7.2
     devDependencies:
       '@types/koa':
         specifier: ^2.13.5
         version: 2.13.5
+      '@types/koa-bodyparser':
+        specifier: ^4.3.10
+        version: 4.3.10
+      '@types/koa-router':
+        specifier: ^7.4.4
+        version: 7.4.4
       '@types/node':
         specifier: ^18.15.3
         version: 18.15.3
+      '@types/yargs':
+        specifier: ^17.0.12
+        version: 17.0.24
       ava:
         specifier: 5.1.0
         version: 5.1.0
@@ -363,15 +372,15 @@ importers:
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
-      tsm:
-        specifier: ^2.2.2
-        version: 2.2.2
       tsup:
         specifier: ^6.2.3
         version: 6.2.3(ts-node@10.9.1)(typescript@4.8.3)
       typescript:
         specifier: ^4.6.4
         version: 4.8.3
+      yargs:
+        specifier: ^17.6.2
+        version: 17.7.2
 
   packages/runtime:
     dependencies:
@@ -1281,10 +1290,22 @@ packages:
   /@types/keygrip@1.0.2:
     resolution: {integrity: sha512-GJhpTepz2udxGexqos8wgaBx4I/zWIDPh/KOGEwAqtuGDkOUJu5eFvwmdBX4AmB8Odsr+9pHCQqiAqDL/yKMKw==}
 
+  /@types/koa-bodyparser@4.3.10:
+    resolution: {integrity: sha512-6ae05pjhmrmGhUR8GYD5qr5p9LTEMEGfGXCsK8VaSL+totwigm8+H/7MHW7K4854CMeuwRAubT8qcc/EagaeIA==}
+    dependencies:
+      '@types/koa': 2.13.5
+    dev: true
+
   /@types/koa-compose@3.2.5:
     resolution: {integrity: sha512-B8nG/OoE1ORZqCkBVsup/AKcvjdgoHnfi4pZMn5UwAPCbhk/96xyv284eBYW8JlQbQ7zDmnpFr68I/40mFoIBQ==}
     dependencies:
       '@types/koa': 2.13.5
+
+  /@types/koa-router@7.4.4:
+    resolution: {integrity: sha512-3dHlZ6CkhgcWeF6wafEUvyyqjWYfKmev3vy1PtOmr0mBc3wpXPU5E8fBBd4YQo5bRpHPfmwC5yDaX7s4jhIN6A==}
+    dependencies:
+      '@types/koa': 2.13.5
+    dev: true
 
   /@types/koa@2.13.5:
     resolution: {integrity: sha512-HSUOdzKz3by4fnqagwthW/1w/yJspTgppyyalPVbgZf8jQWvdIXcVW5h2DGtw4zYntOaeRGx49r1hxoPWrD4aA==}

@@ -1,4 +1,6 @@
+// @ts-ignore
 import Router from '@koa/router';
+import type { Logger } from '@openfn/logger';
 
 import healthcheck from './middleware/healthcheck';
 import workflow from './middleware/workflow';
@@ -10,7 +12,7 @@ import workflow from './middleware/workflow';
 // Should have diagnostic and reporting APIs
 // maybe even a simple frontend?
 
-const createAPI = (logger, execute) => {
+const createAPI = (logger: Logger, execute: any) => {
   const router = new Router();
 
   router.get('/healthcheck', healthcheck);

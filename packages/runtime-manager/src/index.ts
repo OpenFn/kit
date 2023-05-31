@@ -1,5 +1,3 @@
-import Manager from './Manager';
+import createRTM from './rtm';
 
-// Not interested in exporting the sever stuff here, just the acutal runtime service
-
-export default Manager;
+export default createRTM;

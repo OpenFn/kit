@@ -15,7 +15,7 @@ type Options = {
 // under what circumstance should this function throw?
 // If it timesout
 // Can the inner function force a throw? An exit early?
-const tryWithBackoff = (fn, opts: Options = {}) => {
+const tryWithBackoff = (fn: any, opts: Options = {}) => {
   if (!opts.timeout) {
     opts.timeout = 100; // TODO errors occur if this is too low?
   }

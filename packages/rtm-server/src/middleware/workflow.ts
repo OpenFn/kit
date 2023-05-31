@@ -1,4 +1,4 @@
-export default (execute, logger) => (ctx) => {
+export default (execute: any, logger: any) => (ctx: any) => {
   logger.info('POST TO WORKFLOW');
   try {
     const attempt = ctx.request.body;
@@ -8,5 +8,6 @@ export default (execute, logger) => (ctx) => {
     ctx.status = 200;
   } catch (e: any) {
     logger.error('Error starting attempt');
+    console.log(e);
   }
 };

@@ -10,7 +10,7 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts --no-splitting",
     "build:watch": "pnpm build --watch",
-    "start": "tsm --experimental-vm-modules --no-warnings src/start.ts",
+    "start": "ts-node-esm  src/start.ts",
     "_start": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/index.ts'"
   },
   "author": "Open Function Group <admin@openfn.org>",
@@ -19,19 +19,22 @@
     "@koa/router": "^12.0.0",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
+    "@openfn/runtime-manager": "workspace:*",
     "koa": "^2.13.4",
-    "koa-bodyparser": "^4.4.0",
-    "yargs": "^17.5.1"
+    "koa-bodyparser": "^4.4.0"
   },
   "devDependencies": {
     "@types/koa": "^2.13.5",
+    "@types/koa-bodyparser": "^4.3.10",
+    "@types/koa-router": "^7.4.4",
     "@types/node": "^18.15.3",
+    "@types/yargs": "^17.0.12",
     "ava": "5.1.0",
     "nodemon": "^2.0.19",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
-    "tsm": "^2.2.2",
     "tsup": "^6.2.3",
-    "typescript": "^4.6.4"
+    "typescript": "^4.6.4",
+    "yargs": "^17.6.2"
   }
 }

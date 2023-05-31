@@ -1,7 +1,7 @@
 import koa from 'koa';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import Manager from '../Manager';
+import Manager from '../rtm';
 
 const loadJobs = async () => {
   for (const name of ['slow-random']) {

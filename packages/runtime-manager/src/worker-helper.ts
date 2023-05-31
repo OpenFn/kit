@@ -11,11 +11,11 @@ function publish(event: e.JobEvent) {
 
 // When the worker starts, it should report back its id
 // We need the runaround here because our worker pool obfuscates it
-function init(jobId: number) {
+function init(jobId: string) {
   publish({ type: e.ACCEPT_JOB, jobId, threadId });
 }
 
-async function helper(jobId: number, fn: () => Promise<any>) {
+async function helper(jobId: string, fn: () => Promise<any>) {
   init(jobId);
   try {
     const result = await fn();
