@@ -2,6 +2,19 @@ import Koa from 'koa';
 import type { ServerState } from './server';
 import { AttemptCompleteBody } from './api';
 
+// basically an author handler
+const shouldAcceptRequest = (
+  state: ServerState,
+  jobId: string,
+  request: Koa.Request
+) => {
+  const { results } = state;
+  if (request.body) {
+    const { rtm_id } = request.body;
+    return results[jobId] && results[jobId].rtmId === rtm_id;
+  }
+};
+
 export const unimplemented = (ctx: Koa.Context) => {
   ctx.status = 501;
 };
@@ -52,19 +65,21 @@ export const createGetCredential =
     }
   };
 
-export const createNotify = (state: ServerState) => (ctx: Koa.Context) => {
+export const createLog = (state: ServerState) => (ctx: Koa.Context) => {
   const { events } = state;
-  const { event: name, ...payload } = ctx.request.body;
+  if (shouldAcceptRequest(state, ctx.params.id, ctx.request)) {
+    const data = ctx.request.body;
+    const event = {
+      id: ctx.params.id,
+      logs: data.logs,
+    };
 
-  const event = {
-    id: ctx.params.id,
-    name,
-    ...payload, // spread payload?
-  };
+    events.emit('log', event);
 
-  events.emit('notify', event);
-
-  ctx.status = 200;
+    ctx.status = 200;
+  } else {
+    ctx.status = 400;
+  }
 };
 
 export const createComplete =
@@ -79,7 +94,7 @@ export const createComplete =
     const { results, events } = state;
     const { state: resultState, rtm_id } = ctx.request.body;
 
-    if (results[ctx.params.id] && results[ctx.params.id].rtmId === rtm_id) {
+    if (shouldAcceptRequest(state, ctx.params.id, ctx.request)) {
       results[ctx.params.id].state = resultState;
 
       events.emit('workflow-complete', {

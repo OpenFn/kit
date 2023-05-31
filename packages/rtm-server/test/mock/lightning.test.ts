@@ -139,35 +139,48 @@ test.serial(
   }
 );
 
-// TODO this API is gonna be restructured
-test.serial('POST /attempts/notify - should return 200', async (t) => {
-  const { status } = await post('attempts/notify/a', {});
+test.serial('POST /attempts/log - should return 200', async (t) => {
+  server.addPendingWorkflow('a', 'rtm');
+  const { status } = await post('attempts/log/a', {
+    rtm_id: 'rtm',
+    logs: [{ message: 'hello world' }],
+  });
   t.is(status, 200);
 });
 
 test.serial(
+  'POST /attempts/log - should return 400 if no rtm_id',
+  async (t) => {
+    const { status } = await post('attempts/log/a', {
+      rtm_id: 'rtm',
+      logs: [{ message: 'hello world' }],
+    });
+    t.is(status, 400);
+  }
+);
+
+test.serial(
   'POST /attempts/notify - should echo to event emitter',
   async (t) => {
+    server.addPendingWorkflow('a', 'rtm');
     let evt;
     let didCall = false;
 
-    server.once('notify', (e) => {
+    server.once('log', (e) => {
       didCall = true;
       evt = e;
     });
 
-    const { status } = await post('attempts/notify/a', {
-      event: 'job-start',
-      count: 101,
+    const { status } = await post('attempts/log/a', {
+      rtm_id: 'rtm',
+      logs: [{ message: 'hello world' }],
     });
     t.is(status, 200);
     t.true(didCall);
-    // await wait(() => evt);
 
     t.truthy(evt);
     t.is(evt.id, 'a');
-    t.is(evt.name, 'job-start');
-    t.is(evt.count, 101);
+    t.deepEqual(evt.logs, [{ message: 'hello world' }]);
   }
 );
 

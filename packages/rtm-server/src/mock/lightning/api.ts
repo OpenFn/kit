@@ -3,7 +3,7 @@ import {
   unimplemented,
   createFetchNextJob,
   createGetCredential,
-  createNotify,
+  createLog,
   createComplete,
 } from './middleware';
 import type { ServerState } from './server';
@@ -37,11 +37,10 @@ export default (router: Router, state: ServerState) => {
   // 404 - credential not found
   router.get(`${API_PREFIX}/credential/:id`, createGetCredential(state));
 
-  // Notify of some job update
-  // proxy to event emitter
-  // { event: 'event-name', ...data }
-  // TODO this should use a websocket to handle the high volume of logs
-  router.post(`${API_PREFIX}/attempts/notify/:id`, createNotify(state));
+  // Notify for a batch of job logs
+  // [{ rtm_id, logs: ['hello world' ] }]
+  // TODO this could use a websocket to handle the high volume of logs
+  router.post(`${API_PREFIX}/attempts/log/:id`, createLog(state));
 
   // Notify an attempt has finished
   // Could be error or success state

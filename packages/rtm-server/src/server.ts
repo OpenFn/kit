@@ -39,6 +39,26 @@ const postResult = async (
   // Backoff and try again?
 };
 
+// Send a batch of logs
+const postLog = async (
+  rtmId: string,
+  lightningUrl: string,
+  attemptId: string,
+  messages: any[]
+) => {
+  await fetch(`${lightningUrl}/api/1/attempts/log/${attemptId}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      rtm_id: rtmId,
+      logs: messages,
+    }),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
 type ServerOptions = {
   backoff?: number;
   maxWorkflows?: number;
@@ -72,6 +92,10 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   // TODO how about an 'all' so we can "route" events?
   rtm.on('workflow-complete', ({ id, state }) => {
     postResult(rtm.id, options.lightning!, id, state);
+  });
+
+  rtm.on('log', ({ id, messages }) => {
+    postLog(rtm.id, options.lightning!, id, messages);
   });
 
   // TMP doing this for tests but maybe its better done externally

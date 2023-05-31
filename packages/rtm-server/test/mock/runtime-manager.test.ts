@@ -20,9 +20,9 @@ const sampleWorkflow = {
 } as ExecutionPlan;
 
 test('mock runtime manager should have an id', (t) => {
-  const rtm = create(22);
+  const rtm = create('22');
   const keys = Object.keys(rtm);
-  t.assert(rtm.id == 22);
+  t.assert(rtm.id == '22');
 
   // No need to test the full API, just make sure it smells right
   t.assert(keys.includes('on'));
@@ -100,6 +100,14 @@ test('mock should evaluate expressions as JSON', async (t) => {
   t.deepEqual(evt.state, { x: 10 });
 });
 
+test('mock should dispatch log events when evaluating JSON', async (t) => {
+  const rtm = create();
+
+  rtm.execute(sampleWorkflow);
+  const evt = await waitForEvent<WorkflowCompleteEvent>(rtm, 'log');
+  t.deepEqual(evt.message, ['Parsing expression as JSON state']);
+});
+
 test('resolve credential before job-start if credential is a string', async (t) => {
   const wf = clone(sampleWorkflow);
   wf.jobs[0].configuration = 'x';
@@ -110,7 +118,7 @@ test('resolve credential before job-start if credential is a string', async (t) 
     return {};
   };
 
-  const rtm = create(1, { credentials });
+  const rtm = create('1', { credentials });
   rtm.execute(wf);
 
   await waitForEvent<WorkflowCompleteEvent>(rtm, 'job-start');

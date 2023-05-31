@@ -14,16 +14,15 @@ type Resolver<T> = (id: string) => Promise<T>;
 // A list of helper functions which basically resolve ids into JSON
 // to lazy load assets
 export type LazyResolvers = {
-  credentials: Resolver<Credential>;
-  state: Resolver<State>;
-  expressions: Resolver<string>;
+  credentials?: Resolver<Credential>;
+  state?: Resolver<State>;
+  expressions?: Resolver<string>;
 };
 
 export type RTMEvent =
   | 'job-start'
   | 'job-complete'
-  | 'job-log'
-  //| 'job-error'
+  | 'log' // this is a log from inside the VM
   | 'workflow-start' // before compile
   | 'workflow-complete' // after everything has run
   | 'workflow-error'; // ?
@@ -61,7 +60,7 @@ let autoServerId = 0;
 const assembleState = () => {};
 
 function createMock(
-  serverId: string,
+  serverId?: string,
   resolvers: LazyResolvers = mockResolvers
 ) {
   const activeWorkflows = {} as Record<string, true>;
@@ -97,16 +96,13 @@ function createMock(
     // start instantly and emit as it goes
     dispatch('job-start', { id, runId });
 
-    // TODO random timeout
-    // What is a job log? Anything emitted by the RTM I guess?
-    // Namespaced to compile, r/t, job etc.
-    // It's the json output of the logger
-    dispatch('job-log', { id, runId });
-
     let state = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
       state = JSON.parse(expression);
+      // What does this look like? Should be a logger object
+      dispatch('log', { message: ['Parsing expression as JSON state'] });
+      dispatch('log', { message: [state] });
     } catch (e) {
       // Do nothing, it's fine
     }

@@ -66,6 +66,22 @@ Should logs be posted in batches? Every n-ms?
 
 I'm gonna keep it really simple for now, and send all the logs after completion in a single post.
 
+For now, we're gonna keep it simple and post all the logs right away. But pass an array for future proofing.
+
+But there are different types of logs!
+
+There's system logs and reporting. Stuff that the runtime is doing.
+
+And there's job logs - things which cem right out of the job vm (including the adaptor)
+
+The logs from the RTM are different to the CLI logs, but there are similarites. Like the CLI will print out all the versions. How will the RTM do this? What do we actually want to log? And how does it feedback?
+
+Do we want `log-rtm` and `log-job` ?
+
+What about compiler logs? The compiler functionality is gonna be a bit different, espeicially when usng the cache.
+
+Ok, again, I'm gonna keep it simple. Just do log logging.
+
 # JSON style
 
 Should the Lightning interfaces use snake case in JSON objects? Probably? They'd be closer to lightning's native style
