@@ -1,3 +1,5 @@
+// Runs inside the worker
+
 // Dedicated worker for running jobs
 // Security thoughts: the process inherits the node command arguments
 // (it has to for experimental modules to work)
@@ -11,15 +13,26 @@
 // Suddenly it's a liability for the same environent in the same adaptor
 // to be running the same jobs - break out of the sandbox and who knows what you can get
 import workerpool from 'workerpool';
-import helper from './worker-helper';
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
+import createLogger from '@openfn/logger';
+import helper from './worker-helper';
 
-console.log('LOADING WORKER');
+// TODO how can we control the logger in here?
+// Need some kind of intitialisation function to set names and levels
+const logger = createLogger('R/T', { level: 'debug' });
+const jobLogger = createLogger('JOB', { level: 'debug' });
 
 workerpool.worker({
-  run: async (plan: ExecutionPlan) => {
-    console.log('running worker');
-    return helper(plan.id!, async () => run(plan));
+  run: (plan: ExecutionPlan, repoDir: string) => {
+    const options = {
+      logger,
+      jobLogger,
+      linker: {
+        repo: repoDir,
+      },
+    };
+
+    return helper(plan.id!, () => run(plan, {}, options));
   },
 });

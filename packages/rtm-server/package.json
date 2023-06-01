@@ -10,8 +10,8 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts --no-splitting",
     "build:watch": "pnpm build --watch",
-    "start": "ts-node-esm  src/start.ts",
-    "_start": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/index.ts'"
+    "start": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" ts-node-esm src/start.ts",
+    "start:watch": "nodemon -e ts,js --watch ../runtime-manager/dist --watch ./src --exec 'pnpm start'"
   },
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -20,8 +20,10 @@
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "@openfn/runtime-manager": "workspace:*",
+    "@types/koa-logger": "^3.1.2",
     "koa": "^2.13.4",
-    "koa-bodyparser": "^4.4.0"
+    "koa-bodyparser": "^4.4.0",
+    "koa-logger": "^3.2.1"
   },
   "devDependencies": {
     "@types/koa": "^2.13.5",

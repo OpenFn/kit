@@ -9,6 +9,7 @@ import { ExecutionPlan } from '@openfn/runtime';
 // import createAutoinstall from './runners/autoinstall';
 import createCompile from './runners/compile';
 import createExecute from './runners/execute';
+import createLogger, { Logger } from '@openfn/logger';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -40,12 +41,19 @@ export type LazyResolvers = {
   expressions?: Resolver<string>;
 };
 
-const createRTM = function (
-  serverId?: string,
-  _resolvers?: LazyResolvers,
-  useMock = false
-) {
+type RTMOptions = {
+  resolvers: LazyResolvers;
+  logger: Logger;
+  useMock: false;
+  repoDir: string;
+};
+
+const createRTM = function (serverId?: string, options: RTMOptions = {}) {
+  const { resolvers, useMock } = options;
+  let { repoDir } = options;
+
   const id = serverId || crypto.randomUUID();
+  const logger = options.logger || createLogger('RTM', { level: 'debug' });
 
   const jobsList: Map<string, JobStats> = new Map();
   const activeJobs: string[] = [];
@@ -58,10 +66,15 @@ const createRTM = function (
 
   const events = new EventEmitter();
 
+  if (!repoDir) {
+    repoDir = '/tmp/openfn/repo';
+    logger.info('Defaulting repoDir to ', repoDir);
+  }
+
   const acceptJob = (jobId: string, name: string, threadId: number) => {
-    console.log('>> Accept job');
+    logger.info('accept job ', jobId);
     if (jobsList.has(jobId)) {
-      throw new Error(`Job with id ${jobId} is already defined`);
+      throw new Error(`Job with id ${jobId} is already in progress`);
     }
     jobsList.set(jobId, {
       id: jobId,
@@ -75,7 +88,8 @@ const createRTM = function (
   };
 
   const completeJob = (jobId: string, state: any) => {
-    console.log('>> complete job');
+    logger.success('complete job ', jobId);
+    logger.info(state);
     if (!jobsList.has(jobId)) {
       throw new Error(`Job with id ${jobId} is not defined`);
     }
@@ -87,62 +101,32 @@ const createRTM = function (
     activeJobs.splice(idx, 1);
   };
 
-  const execute = createExecute(workers, acceptJob);
-  const compile = createCompile(console as any, '/tmp/openfn/repo');
+  // Create "runner" functions for execute and compile
+  const execute = createExecute(workers, repoDir, logger, {
+    accept: acceptJob,
+  });
+  const compile = createCompile(logger, repoDir);
 
   // How much of this happens inside the worker?
   // Shoud the main thread handle compilation? Has to if we want to cache
   // Unless we create a dedicated compiler worker
   // TODO error handling, timeout
   const handleExecute = async (plan: ExecutionPlan) => {
-    // autoinstall
-    // compile it
-    const compiledPlan = await compile(plan);
+    logger.debug('Executing plan ', plan.id);
 
+    // TODO autoinstall
+
+    const compiledPlan = await compile(plan);
+    logger.debug('plan compiled ', plan.id);
     const result = await execute(compiledPlan);
-    console.log('RESULT', result);
     completeJob(plan.id!, result);
 
+    logger.debug('finished executing plan ', plan.id);
     // Return the result
     // Note that the mock doesn't behave like ths
     // And tbf I don't think we should keep the promise open - there's no point?
     return result;
   };
-
-  // // Run a job in a worker
-  // // Accepts the name of a registered job
-  // const run = async (name: string, state?: any): Promise<JobStats> => {
-  //   const src = registry[name];
-  //   if (src) {
-  //     const thisJobId = ++jobid;
-
-  //     await workers.exec('run', [jobid, src, state], {
-  //       on: ({ type, ...args }: e.JobEvent) => {
-  //         if (type === e.ACCEPT_JOB) {
-  //           const { jobId, threadId } = args as e.AcceptJobEvent;
-  //           acceptJob(jobId, name, threadId);
-  //         } else if (type === e.COMPLETE_JOB) {
-  //           const { jobId, state } = args as e.CompleteJobEvent;
-  //           completeJob(jobId, state);
-  //         }
-  //       },
-  //     });
-  //     return jobsList.get(thisJobId) as JobStats;
-  //   }
-  //   throw new Error('Job not found: ' + name);
-  // };
-
-  // register a job to enable it to be run
-  // The job will be compiled
-  // const registerJob = (name: string, source: string) => {
-  //   if (registry[name]) {
-  //     throw new Error('Job already registered: ' + name);
-  //   }
-  //   registry[name] = compile(source);
-  // };
-
-  // const getRegisteredJobs = () => Object.keys(registry);
-
   const getActiveJobs = (): JobStats[] => {
     const jobs = activeJobs.map((id) => jobsList.get(id));
     return jobs.filter((j) => j) as JobStats[]; // no-op for typings
@@ -167,12 +151,6 @@ const createRTM = function (
     getCompletedJobs,
     getErroredJobs,
 
-    // TO REMOVE
-    // run,
-    // registerJob,
-    // getRegisteredJobs,
-
-    // For testing
     _registry: registry,
   };
 };

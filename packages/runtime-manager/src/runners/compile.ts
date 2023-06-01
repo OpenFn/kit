@@ -42,22 +42,18 @@ const compileJob = async (
   repoDir: string,
   logger: Logger
 ) => {
-  try {
-    // TODO I probably dont want to log this stuff
-    const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
-    const exports = await preloadAdaptorExports(pathToAdaptor!, false, logger);
-    const compilerOptions = {
-      logger,
-      ['add-imports']: {
-        adaptor: {
-          name: stripVersionSpecifier(adaptor),
-          exports,
-          exportAll: true,
-        },
+  // TODO I probably dont want to log this stuff
+  const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
+  const exports = await preloadAdaptorExports(pathToAdaptor!, false, logger);
+  const compilerOptions = {
+    logger,
+    ['add-imports']: {
+      adaptor: {
+        name: stripVersionSpecifier(adaptor),
+        exports,
+        exportAll: true,
       },
-    };
-    return compile(job, compilerOptions);
-  } catch (e: any) {
-    console.log(e);
-  }
+    },
+  };
+  return compile(job, compilerOptions);
 };

@@ -9,6 +9,7 @@
 
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
+import koaLogger from 'koa-logger';
 
 import createAPI from './api';
 import startWorkLoop from './work-loop';
@@ -76,6 +77,11 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   const app = new Koa();
 
   app.use(bodyParser());
+  app.use(
+    koaLogger((str, _args) => {
+      logger.debug(str);
+    })
+  );
 
   const execute = (attempt: Attempt) => {
     const plan = convertAttempt(attempt);
