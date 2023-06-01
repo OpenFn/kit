@@ -11,19 +11,24 @@ const execute = (workers: WorkerPool, onAcceptJob?, onLog?, onError?) => {
   return (plan: ExecutionPlan) => {
     return new Promise((resolve) => {
       console.log('executing...');
-      workers.exec('run', [plan], {
-        on: ({ type, ...args }: e.JobEvent) => {
-          if (type === e.ACCEPT_JOB) {
-            console.log('accept');
-            const { jobId, threadId } = args as e.AcceptJobEvent;
-            onAcceptJob?.(jobId, plan.id, threadId);
-          } else if (type === e.COMPLETE_JOB) {
-            console.log('complete');
-            const { jobId, state } = args as e.CompleteJobEvent;
-            resolve(state);
-          }
-        },
-      });
+      try {
+        workers.exec('run', [plan], {
+          on: ({ type, ...args }: e.JobEvent) => {
+            console.log('EVENT', type);
+            if (type === e.ACCEPT_JOB) {
+              console.log('accept');
+              const { jobId, threadId } = args as e.AcceptJobEvent;
+              onAcceptJob?.(jobId, plan.id, threadId);
+            } else if (type === e.COMPLETE_JOB) {
+              console.log('complete');
+              const { jobId, state } = args as e.CompleteJobEvent;
+              resolve(state);
+            }
+          },
+        });
+      } catch (e) {
+        console.log(e);
+      }
     });
   };
 };

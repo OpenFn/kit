@@ -1,11 +1,12 @@
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'url';
 import { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
 import { ExecutionPlan } from '@openfn/runtime';
 
-import * as e from './events';
-import createAutoinstall from './runners/autoinstall';
+// import * as e from './events';
+// import createAutoinstall from './runners/autoinstall';
 import createCompile from './runners/compile';
 import createExecute from './runners/execute';
 
@@ -16,12 +17,10 @@ type LiveJob = Array<(s: State) => State>;
 
 type JobRegistry = Record<string, string | LiveJob>;
 
-let jobid = 1000;
-
 // Archive of every job we've run
 // Fien to just keep in memory for now
 type JobStats = {
-  id: number;
+  id: string;
   name: string;
   status: 'pending' | 'done' | 'err';
   startTime: number;
@@ -43,22 +42,23 @@ export type LazyResolvers = {
 
 const createRTM = function (
   serverId?: string,
-  resolvers?: LazyResolvers,
+  _resolvers?: LazyResolvers,
   useMock = false
 ) {
   const id = serverId || crypto.randomUUID();
 
-  const jobsList: Map<number, JobStats> = new Map();
-  const activeJobs: number[] = [];
+  const jobsList: Map<string, JobStats> = new Map();
+  const activeJobs: string[] = [];
 
   const registry: JobRegistry = {};
-  const workers = workerpool.pool(
-    path.resolve(useMock ? './dist/mock-worker.js' : './dist/worker.js')
-  );
+
+  const dirname = path.dirname(fileURLToPath(import.meta.url));
+  const p = path.resolve(dirname, useMock ? './mock-worker.js' : './worker.js');
+  const workers = workerpool.pool(p);
 
   const events = new EventEmitter();
 
-  const acceptJob = (jobId: number, name: string, threadId: number) => {
+  const acceptJob = (jobId: string, name: string, threadId: number) => {
     console.log('>> Accept job');
     if (jobsList.has(jobId)) {
       throw new Error(`Job with id ${jobId} is already defined`);
@@ -74,7 +74,7 @@ const createRTM = function (
     activeJobs.push(jobId);
   };
 
-  const completeJob = (jobId: number, state: any) => {
+  const completeJob = (jobId: string, state: any) => {
     console.log('>> complete job');
     if (!jobsList.has(jobId)) {
       throw new Error(`Job with id ${jobId} is not defined`);
@@ -98,7 +98,6 @@ const createRTM = function (
     // autoinstall
     // compile it
     const compiledPlan = await compile(plan);
-    console.log(JSON.stringify(compiledPlan, null, 2));
 
     const result = await execute(compiledPlan);
     console.log('RESULT', result);

@@ -12,6 +12,8 @@ type Args = {
   lightning?: string;
 };
 
+const logger = createLogger('SRV');
+
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a runtime manager server')
   .option('port', {
@@ -27,10 +29,9 @@ const args = yargs(hideBin(process.argv))
   .parse() as Args;
 
 const rtm = createRTM();
-console.log('RTM created');
+logger.debug('RTM created');
 
 // TODO why is this blowing up??
-const logger = createLogger('SRV');
 
 createRTMServer(rtm, {
   port: args.port,

@@ -16,6 +16,7 @@ function init(jobId: string) {
 }
 
 async function helper(jobId: string, fn: () => Promise<any>) {
+  console.log('worker helper');
   init(jobId);
   try {
     const result = await fn();

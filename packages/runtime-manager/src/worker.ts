@@ -15,8 +15,11 @@ import helper from './worker-helper';
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
 
+console.log('LOADING WORKER');
+
 workerpool.worker({
   run: async (plan: ExecutionPlan) => {
+    console.log('running worker');
     return helper(plan.id!, async () => run(plan));
   },
 });
