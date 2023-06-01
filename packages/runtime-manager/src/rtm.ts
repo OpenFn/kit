@@ -13,22 +13,18 @@ import createLogger, { Logger } from '@openfn/logger';
 
 export type State = any; // TODO I want a nice state def with generics
 
-// hmm, may need to support this for unit tests (which does kind of make sense)
-type LiveJob = Array<(s: State) => State>;
-
-type JobRegistry = Record<string, string | LiveJob>;
-
-// Archive of every job we've run
-// Fien to just keep in memory for now
-type JobStats = {
+// Archive of every workflow we've run
+// Fine to just keep in memory for now
+type WorkflowStats = {
   id: string;
-  name: string;
+  name?: string; // TODO what is name? this is irrelevant?
   status: 'pending' | 'done' | 'err';
-  startTime: number;
-  threadId: number;
-  duration: number;
+  startTime?: number;
+  threadId?: number;
+  duration?: number;
   error?: string;
   result?: any; // State
+  plan: ExecutionPlan;
 };
 
 type Resolver<T> = (id: string) => Promise<T>;
@@ -55,10 +51,8 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   const id = serverId || crypto.randomUUID();
   const logger = options.logger || createLogger('RTM', { level: 'debug' });
 
-  const jobsList: Map<string, JobStats> = new Map();
-  const activeJobs: string[] = [];
-
-  const registry: JobRegistry = {};
+  const allWorkflows: Map<string, WorkflowStats> = new Map();
+  const activeWorkflows: string[] = [];
 
   const dirname = path.dirname(fileURLToPath(import.meta.url));
   const p = path.resolve(dirname, useMock ? './mock-worker.js' : './worker.js');
@@ -71,39 +65,40 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     logger.info('Defaulting repoDir to ', repoDir);
   }
 
-  const acceptJob = (jobId: string, name: string, threadId: number) => {
-    logger.info('accept job ', jobId);
-    if (jobsList.has(jobId)) {
-      throw new Error(`Job with id ${jobId} is already in progress`);
+  const onWorkflowStarted = (workflowId: string, threadId: number) => {
+    logger.info('starting workflow ', workflowId);
+
+    const workflow = allWorkflows.get(workflowId)!;
+    if (workflow.startTime) {
+      // TODO this shouldn't throw.. but what do we do?
+      // We shouldn't run a workflow that's been run
+      // Every workflow should have a unique id
+      // maybe the RTM doesn't care about this
+      throw new Error(`Workflow with id ${workflowId} is already started`);
     }
-    jobsList.set(jobId, {
-      id: jobId,
-      name,
-      status: 'pending',
-      threadId,
-      startTime: new Date().getTime(),
-      duration: -1,
-    });
-    activeJobs.push(jobId);
+    workflow.startTime = new Date().getTime();
+    workflow.duration = -1;
+    workflow.threadId = threadId;
+    activeWorkflows.push(workflowId);
   };
 
-  const completeJob = (jobId: string, state: any) => {
-    logger.success('complete job ', jobId);
+  const completeWorkflow = (workflowId: string, state: any) => {
+    logger.success('complete workflow ', workflowId);
     logger.info(state);
-    if (!jobsList.has(jobId)) {
-      throw new Error(`Job with id ${jobId} is not defined`);
+    if (!allWorkflows.has(workflowId)) {
+      throw new Error(`Workflow with id ${workflowId} is not defined`);
     }
-    const job = jobsList.get(jobId)!;
-    job.status = 'done';
-    job.result = state;
-    job.duration = new Date().getTime() - job.startTime;
-    const idx = activeJobs.findIndex((id) => id === jobId);
-    activeJobs.splice(idx, 1);
+    const workflow = allWorkflows.get(workflowId)!;
+    workflow.status = 'done';
+    workflow.result = state;
+    workflow.duration = new Date().getTime() - workflow.startTime;
+    const idx = activeWorkflows.findIndex((id) => id === workflowId);
+    activeWorkflows.splice(idx, 1);
   };
 
   // Create "runner" functions for execute and compile
   const execute = createExecute(workers, repoDir, logger, {
-    accept: acceptJob,
+    start: onWorkflowStarted,
   });
   const compile = createCompile(logger, repoDir);
 
@@ -112,33 +107,42 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   // Unless we create a dedicated compiler worker
   // TODO error handling, timeout
   const handleExecute = async (plan: ExecutionPlan) => {
-    logger.debug('Executing plan ', plan.id);
+    logger.debug('Executing workflow ', plan.id);
+
+    allWorkflows.set(plan.id, {
+      id: plan.id,
+      name: plan.name,
+      status: 'pending',
+      plan,
+    });
 
     // TODO autoinstall
 
     const compiledPlan = await compile(plan);
-    logger.debug('plan compiled ', plan.id);
+    logger.debug('workflow compiled ', plan.id);
     const result = await execute(compiledPlan);
-    completeJob(plan.id!, result);
+    logger.success(result);
+    completeWorkflow(plan.id!, result);
 
-    logger.debug('finished executing plan ', plan.id);
+    logger.debug('finished executing workflow ', plan.id);
     // Return the result
     // Note that the mock doesn't behave like ths
     // And tbf I don't think we should keep the promise open - there's no point?
     return result;
   };
-  const getActiveJobs = (): JobStats[] => {
-    const jobs = activeJobs.map((id) => jobsList.get(id));
-    return jobs.filter((j) => j) as JobStats[]; // no-op for typings
-  };
 
-  const getCompletedJobs = (): JobStats[] => {
-    return Array.from(jobsList.values()).filter((job) => job.status === 'done');
-  };
+  // const getActiveJobs = (): WorkflowStats[] => {
+  //   const jobs = allWorkflows.map((id) => workflowList.get(id));
+  //   return jobs.filter((j) => j) as WorkflowStats[]; // no-op for typings
+  // };
 
-  const getErroredJobs = (): JobStats[] => {
-    return Array.from(jobsList.values()).filter((job) => job.status === 'err');
-  };
+  // const getCompletedJobs = (): WorkflowStats[] => {
+  //   return Array.from(allWorkflows.values()).filter((workflow) => workflow.status === 'done');
+  // };
+
+  // const getErroredJobs = (): WorkflowStats[] => {
+  //   return Array.from(workflowsList.values()).filter((workflow) => workflow.status === 'err');
+  // };
 
   return {
     id,
@@ -147,11 +151,9 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     execute: handleExecute,
     // getStatus, // no tests on this yet, not sure if I want to commit to it
 
-    getActiveJobs,
-    getCompletedJobs,
-    getErroredJobs,
-
-    _registry: registry,
+    // getActiveJobs,
+    // getCompletedJobs,
+    // getErroredJobs,
   };
 };
 

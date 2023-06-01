@@ -1,27 +1,30 @@
-export const ACCEPT_JOB = 'accept-job';
+export const WORKFLOW_START = 'workflow-start';
 
-export const COMPLETE_JOB = 'complete-job';
+export const WORKFLOW_COMPLETE = 'workflow-complete';
 
-export const JOB_ERROR = 'job-error';
+export const WORKFLOW_ERROR = 'workflow-error';
 
 type State = any; // TODO
 
-export type AcceptJobEvent = {
-  type: typeof ACCEPT_JOB;
+export type AcceptWorkflowEvent = {
+  type: typeof WORKFLOW_START;
   jobId: string;
   threadId: number;
 };
 
-export type CompleteJobEvent = {
-  type: typeof COMPLETE_JOB;
+export type CompleteWorkflowEvent = {
+  type: typeof WORKFLOW_COMPLETE;
   jobId: string;
   state: State;
 };
 
-export type ErrJobEvent = {
-  type: typeof JOB_ERROR;
+export type ErrWorkflowEvent = {
+  type: typeof WORKFLOW_ERROR;
   jobId: string;
   message: string;
 };
 
-export type JobEvent = AcceptJobEvent | CompleteJobEvent | ErrJobEvent;
+export type WorkflowEvent =
+  | AcceptWorkflowEvent
+  | CompleteWorkflowEvent
+  | ErrWorkflowEvent;
