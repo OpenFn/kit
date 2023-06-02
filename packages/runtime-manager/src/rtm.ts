@@ -5,7 +5,7 @@ import { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
 import { ExecutionPlan } from '@openfn/runtime';
 
-// import * as e from './events';
+import * as e from './events';
 // import createAutoinstall from './runners/autoinstall';
 import createCompile from './runners/compile';
 import createExecute from './runners/execute';
@@ -38,15 +38,16 @@ export type LazyResolvers = {
 };
 
 type RTMOptions = {
-  resolvers: LazyResolvers;
-  logger: Logger;
-  useMock: false;
-  repoDir: string;
+  resolvers?: LazyResolvers;
+  logger?: Logger;
+  workerPath?: string;
+  repoDir?: string;
+  noCompile: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
 };
 
 const createRTM = function (serverId?: string, options: RTMOptions = {}) {
-  const { resolvers, useMock } = options;
-  let { repoDir } = options;
+  const { resolvers, noCompile } = options;
+  let { repoDir, workerPath } = options;
 
   const id = serverId || crypto.randomUUID();
   const logger = options.logger || createLogger('RTM', { level: 'debug' });
@@ -54,9 +55,17 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   const allWorkflows: Map<string, WorkflowStats> = new Map();
   const activeWorkflows: string[] = [];
 
-  const dirname = path.dirname(fileURLToPath(import.meta.url));
-  const p = path.resolve(dirname, useMock ? './mock-worker.js' : './worker.js');
-  const workers = workerpool.pool(p);
+  let resolvedWorkerPath;
+  if (workerPath) {
+    // If a path to the worker has been passed in, just use it verbatim
+    // We use this to pass a mock worker for testing purposes
+    resolvedWorkerPath = workerPath;
+  } else {
+    // By default, we load ./worker.js but can't rely on the working dir to find it
+    const dirname = path.dirname(fileURLToPath(import.meta.url));
+    resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
+  }
+  const workers = workerpool.pool(resolvedWorkerPath);
 
   const events = new EventEmitter();
 
@@ -80,6 +89,12 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     workflow.duration = -1;
     workflow.threadId = threadId;
     activeWorkflows.push(workflowId);
+
+    // forward the event on to any external listeners
+    events.emit(e.WORKFLOW_START, {
+      workflowId,
+      // Should we publish anything else here?
+    });
   };
 
   const completeWorkflow = (workflowId: string, state: any) => {
@@ -94,6 +109,13 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     workflow.duration = new Date().getTime() - workflow.startTime;
     const idx = activeWorkflows.findIndex((id) => id === workflowId);
     activeWorkflows.splice(idx, 1);
+
+    // forward the event on to any external listeners
+    events.emit(e.WORKFLOW_COMPLETE, {
+      workflowId,
+      duration: workflow.duration,
+      state,
+    });
   };
 
   // Create "runner" functions for execute and compile
@@ -117,7 +139,9 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
     // TODO autoinstall
 
-    const compiledPlan = await compile(plan);
+    // Don't compile if we're running a mock (not a fan of this)
+    const compiledPlan = noCompile ? plan : await compile(plan);
+
     logger.debug('workflow compiled ', plan.id);
     const result = await execute(compiledPlan);
     logger.success(result);
@@ -145,8 +169,8 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
   return {
     id,
-    on: events.on,
-    once: events.once,
+    on: (type: string, fn: (...args: any[]) => void) => events.on(type, fn),
+    once: (type: string, fn: (...args: any[]) => void) => events.once(type, fn),
     execute: handleExecute,
     // getStatus, // no tests on this yet, not sure if I want to commit to it
 

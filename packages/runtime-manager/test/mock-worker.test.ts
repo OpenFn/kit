@@ -9,23 +9,11 @@ import path from 'node:path';
 import test from 'ava';
 import workerpool from 'workerpool';
 
+import { createPlan } from './util';
+
 import * as e from '../src/events';
 
 const workers = workerpool.pool(path.resolve('dist/mock-worker.js'));
-
-const createPlan = (job?: {}) => ({
-  id: 'wf-1',
-  jobs: [
-    job || {
-      id: 'j1',
-      adaptor: 'common', // not used
-      credential: {}, // not used
-      data: {}, // Used if no expression
-      expression: JSON.stringify({ data: { answer: 42 } }), // Will be parsed
-      _delay: 1, // only used in the mock
-    },
-  ],
-});
 
 test('execute a mock plan inside a worker thread', async (t) => {
   const plan = createPlan();
