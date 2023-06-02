@@ -109,9 +109,8 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   const handleExecute = async (plan: ExecutionPlan) => {
     logger.debug('Executing workflow ', plan.id);
 
-    allWorkflows.set(plan.id, {
-      id: plan.id,
-      name: plan.name,
+    allWorkflows.set(plan.id!, {
+      id: plan.id!,
       status: 'pending',
       plan,
     });

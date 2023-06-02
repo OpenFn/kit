@@ -17,6 +17,9 @@ async function helper(jobId: string, fn: () => Promise<any>) {
     // But the output is very confusing!
     const result = await fn();
     publish({ type: e.WORKFLOW_COMPLETE, jobId, state: result });
+
+    // For tests
+    return result;
   } catch (err) {
     console.error(err);
     // @ts-ignore TODO sort out error typing

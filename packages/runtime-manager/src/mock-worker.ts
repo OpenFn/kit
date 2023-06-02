@@ -8,27 +8,50 @@
  * and reading instructions out of state object.
  */
 import workerpool from 'workerpool';
-
-// Yeah not sure this import is right
 import helper from './worker-helper';
 
-const defaultArgs = {
-  returnValue: 42,
-  throw: undefined, // an error to throw
-  timeout: 0, // a timeout to wait before throwing or returning
+type MockJob = {
+  id?: string;
+  adaptor?: string;
+  configuration?: any;
+
+  expression?: string; // will evaluate as JSON
+  data?: any; // data will be returned if there's no expression
+
+  // MS to delay the return by (underscored because it's a mock property)
+  _delay?: number;
 };
 
-async function mock(args = defaultArgs) {
-  const actualArgs = {
-    ...defaultArgs,
-    ...args,
-  };
+type MockExecutionPlan = {
+  id: string;
+  jobs: MockJob[];
+};
 
-  return actualArgs.returnValue;
+// This is a fake runtime handler which will return a fixed value, throw, and
+// optionally delay
+function mock(plan: MockExecutionPlan) {
+  const [job] = plan.jobs;
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let state: any = { data: job.data || {} };
+      if (job.expression) {
+        try {
+          state = JSON.parse(job.expression);
+        } catch (e) {
+          state = {
+            data: job.data || {},
+            error: {
+              [job.id || 'job']: e.message,
+            },
+          };
+        }
+      }
+      resolve(state);
+    }, job._delay || 1);
+  });
 }
 
 workerpool.worker({
-  run: async (jobId, _src, state) => {
-    return helper(jobId, async () => mock(state));
-  },
+  run: async (plan: MockExecutionPlan, _repoDir?: string) =>
+    helper(plan.id, () => mock(plan)),
 });

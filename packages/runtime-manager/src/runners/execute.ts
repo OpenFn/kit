@@ -20,12 +20,10 @@ const execute = (
       workers
         .exec('run', [plan, repoDir], {
           on: ({ type, ...args }: e.WorkflowEvent) => {
-            console.log(' >>>>>> ', type);
             if (type === e.WORKFLOW_START) {
               const { jobId, threadId } = args as e.AcceptWorkflowEvent;
               start?.(jobId, threadId);
             } else if (type === e.WORKFLOW_COMPLETE) {
-              console.log(' *** ');
               const { jobId, state } = args as e.CompleteWorkflowEvent;
               resolve(state);
             }
