@@ -402,3 +402,53 @@ test('log an error object', (t) => {
   const { message } = logger._parse(logger._last);
   t.assert(message instanceof Error);
 });
+
+test('proxy a json argument to string', (t) => {
+  const logger = createLogger('x');
+  logger.proxy({ name: 'y', level: 'success', message: ['hello'] });
+
+  const { namespace, level, message } = logger._parse(logger._last);
+  t.is(namespace, 'y');
+  t.is(level, 'success');
+  t.deepEqual(message, 'hello');
+});
+
+test('proxy string arguments to string', (t) => {
+  const logger = createLogger('x');
+  logger.proxy('y', 'success', ['hello']);
+
+  const { namespace, level, message } = logger._parse(logger._last);
+  t.is(namespace, 'y');
+  t.is(level, 'success');
+  t.deepEqual(message, 'hello');
+});
+
+test('proxy a json argument to json', (t) => {
+  const logger = createLogger('x', { json: true });
+  logger.proxy({ name: 'y', level: 'success', message: ['hello'] });
+
+  const { name, level, message } = JSON.parse(logger._last as any);
+  t.is(name, 'y');
+  t.is(level, 'success');
+  t.deepEqual(message, ['hello']);
+});
+
+test('proxy string arguments to json', (t) => {
+  const logger = createLogger('x', { json: true });
+  logger.proxy('y', 'success', ['hello']);
+
+  const { name, level, message } = JSON.parse(logger._last as any);
+  t.is(name, 'y');
+  t.is(level, 'success');
+  t.deepEqual(message, ['hello']);
+});
+
+test('proxy should respect log levels', (t) => {
+  const logger = createLogger('x', { level: 'default' });
+  logger.proxy({ level: 'debug', name: '', message: ['hidden'] });
+
+  // do nothing
+
+  const [last] = logger._last;
+  t.falsy(last);
+});
