@@ -3,7 +3,7 @@
 
 import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
-import createLogger from '@openfn/logger';
+import createLogger, { JSONLog } from '@openfn/logger';
 
 import * as e from './events';
 
@@ -11,12 +11,16 @@ function publish(event: e.WorkflowEvent) {
   workerpool.workerEmit(event);
 }
 
-export const createLoggers = () => {
-  const log = (jsonLog: any) => {
-    publish({ type: e.JOB_LOG, message: JSON.parse(jsonLog) });
+export const createLoggers = (workflowId: string) => {
+  const log = (jsonLog: string) => {
+    publish({
+      workflowId,
+      type: e.JOB_LOG,
+      message: JSON.parse(jsonLog) as JSONLog,
+    });
   };
 
-  const emitter = {
+  const emitter: any = {
     info: log,
     debug: log,
     log,
@@ -40,21 +44,21 @@ export const createLoggers = () => {
   return { logger, jobLogger };
 };
 
-async function helper(jobId: string, execute: () => Promise<any>) {
-  publish({ type: e.WORKFLOW_START, jobId, threadId });
+async function helper(workflowId: string, execute: () => Promise<any>) {
+  publish({ type: e.WORKFLOW_START, workflowId, threadId });
   try {
     // Note that the worker thread may fire logs after completion
-    // I think this is fine, it's jsut a log stream thing
+    // I think this is fine, it's just a log stream thing
     // But the output is very confusing!
     const result = await execute();
-    publish({ type: e.WORKFLOW_COMPLETE, jobId, state: result });
+    publish({ type: e.WORKFLOW_COMPLETE, workflowId, state: result });
 
     // For tests
     return result;
   } catch (err) {
     console.error(err);
     // @ts-ignore TODO sort out error typing
-    publish({ type: e.WORKFLOW_ERROR, jobId, message: err.message });
+    publish({ type: e.WORKFLOW_ERROR, workflowId, message: err.message });
   }
 }
 

@@ -17,10 +17,10 @@ import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
 import helper, { createLoggers } from './worker-helper';
 
-const { logger, jobLogger } = createLoggers();
-
 workerpool.worker({
   run: (plan: ExecutionPlan, repoDir: string) => {
+    const { logger, jobLogger } = createLoggers(plan.id!);
+
     const options = {
       logger,
       jobLogger,

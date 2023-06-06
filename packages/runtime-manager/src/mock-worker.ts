@@ -10,8 +10,6 @@
 import workerpool from 'workerpool';
 import helper, { createLoggers } from './worker-helper';
 
-const { jobLogger } = createLoggers();
-
 type MockJob = {
   id?: string;
   adaptor?: string;
@@ -33,6 +31,7 @@ type MockExecutionPlan = {
 // optionally delay
 function mock(plan: MockExecutionPlan) {
   const [job] = plan.jobs;
+  const { jobLogger } = createLoggers(plan.id!);
   return new Promise((resolve) => {
     setTimeout(async () => {
       // TODO this isn't data, but state - it's the whole state object (minus config)
@@ -49,7 +48,7 @@ function mock(plan: MockExecutionPlan) {
             jobLogger
           );
           state = await fn(state);
-        } catch (e) {
+        } catch (e: any) {
           state = {
             data: job.data || {},
             error: {

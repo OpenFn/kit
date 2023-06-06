@@ -76,8 +76,8 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
   const onWorkflowStarted = (workflowId: string, threadId: number) => {
     logger.info('starting workflow ', workflowId);
-
     const workflow = allWorkflows.get(workflowId)!;
+
     if (workflow.startTime) {
       // TODO this shouldn't throw.. but what do we do?
       // We shouldn't run a workflow that's been run

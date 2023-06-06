@@ -21,10 +21,10 @@ const execute = (
         .exec('run', [plan, repoDir], {
           on: ({ type, ...args }: e.WorkflowEvent) => {
             if (type === e.WORKFLOW_START) {
-              const { jobId, threadId } = args as e.AcceptWorkflowEvent;
-              start?.(jobId, threadId);
+              const { workflowId, threadId } = args as e.AcceptWorkflowEvent;
+              start?.(workflowId, threadId);
             } else if (type === e.WORKFLOW_COMPLETE) {
-              const { jobId, state } = args as e.CompleteWorkflowEvent;
+              const { workflowId, state } = args as e.CompleteWorkflowEvent;
               resolve(state);
             }
           },

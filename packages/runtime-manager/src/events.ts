@@ -1,3 +1,5 @@
+import { JSONLog } from '@openfn/logger';
+
 export const WORKFLOW_START = 'workflow-start';
 
 export const WORKFLOW_COMPLETE = 'workflow-complete';
@@ -10,26 +12,26 @@ type State = any; // TODO
 
 export type AcceptWorkflowEvent = {
   type: typeof WORKFLOW_START;
-  jobId: string;
+  workflowId: string;
   threadId: number;
 };
 
 export type CompleteWorkflowEvent = {
   type: typeof WORKFLOW_COMPLETE;
-  jobId: string;
+  workflowId: string;
   state: State;
 };
 
 export type ErrWorkflowEvent = {
   type: typeof WORKFLOW_ERROR;
-  jobId: string;
+  workflowId: string;
   message: string;
 };
 
 export type JobLogEvent = {
   type: typeof JOB_LOG;
-  jobId: string;
-  message: any; // TOD JSONLOG
+  workflowId: string;
+  message: JSONLog;
 };
 
 export type WorkflowEvent =
