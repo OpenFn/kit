@@ -13,7 +13,7 @@ const wait = async (time: number) =>
     setTimeout(resolve, time);
   });
 
-const compiledJob = compile('src/server/jobs/slow-random.js');
+const compiledJob = compile('src/jobs/slow-random.js');
 test('slowmo should return a value', async (t) => {
   const result = (await execute(compiledJob)) as SlowMoState;
 

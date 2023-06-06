@@ -86,7 +86,7 @@ test('events: workflow-complete', async (t) => {
 
   t.true(didCall);
   t.is(evt.workflowId, plan.id);
-  t.truthy(evt.duration);
+  t.assert(!isNaN(evt.duration));
   t.deepEqual(evt.state, { data: { answer: 42 } });
 });
 
