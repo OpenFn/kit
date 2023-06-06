@@ -122,3 +122,28 @@ test('Publish workflow-complete event with state', async (t) => {
   t.true(didFire);
   t.deepEqual(state, { data: { answer: 42 } });
 });
+
+test('Publish a job log event', async (t) => {
+  const plan = createPlan({
+    expression: `(s) => {
+      console.log('test')
+      return s;
+    }`,
+  });
+  let didFire = false;
+  let log;
+  await workers.exec('run', [plan], {
+    on: ({ type, message }) => {
+      if (type === e.JOB_LOG) {
+        didFire = true;
+        log = message;
+      }
+    },
+  });
+  t.true(didFire);
+
+  t.is(log.level, 'info');
+  t.deepEqual(log.message, ['test']);
+  t.is(log.name, 'JOB');
+  t.truthy(log.time);
+});

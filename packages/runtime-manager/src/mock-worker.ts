@@ -8,7 +8,9 @@
  * and reading instructions out of state object.
  */
 import workerpool from 'workerpool';
-import helper from './worker-helper';
+import helper, { createLoggers } from './worker-helper';
+
+const { jobLogger } = createLoggers();
 
 type MockJob = {
   id?: string;
@@ -41,7 +43,11 @@ function mock(plan: MockExecutionPlan) {
           // If someone setup an rtm with the mock worker enabled,
           // then all job code would be actually evalled
           // To be fair, actual jobs wouldn't run, so it's not like anyone can run a malicious proxy server
-          const fn = eval(job.expression);
+
+          // Override the console in the expression scope
+          const fn = new Function('console', 'return ' + job.expression)(
+            jobLogger
+          );
           state = await fn(state);
         } catch (e) {
           state = {

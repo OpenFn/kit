@@ -7,7 +7,7 @@
 // The sandbox should help
 
 // What about imports in a worker thread?
-// Is there an overjhead in reimporting stuff (presumably!)
+// Is there an overhead in reimporting stuff (presumably!)
 // Should we actually be pooling workers by adaptor[+version]
 // Does this increase the danger of sharing state between jobs?
 // Suddenly it's a liability for the same environent in the same adaptor
@@ -15,13 +15,9 @@
 import workerpool from 'workerpool';
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
-import createLogger from '@openfn/logger';
-import helper from './worker-helper';
+import helper, { createLoggers } from './worker-helper';
 
-// TODO how can we control the logger in here?
-// Need some kind of intitialisation function to set names and levels
-const logger = createLogger('R/T', { level: 'debug' });
-const jobLogger = createLogger('JOB', { level: 'debug' });
+const { logger, jobLogger } = createLoggers();
 
 workerpool.worker({
   run: (plan: ExecutionPlan, repoDir: string) => {
