@@ -6,7 +6,7 @@ export const WORKFLOW_COMPLETE = 'workflow-complete';
 
 export const WORKFLOW_ERROR = 'workflow-error';
 
-export const JOB_LOG = 'job-log';
+export const WORKFLOW_LOG = 'workflow-log';
 
 type State = any; // TODO
 
@@ -28,8 +28,8 @@ export type ErrWorkflowEvent = {
   message: string;
 };
 
-export type JobLogEvent = {
-  type: typeof JOB_LOG;
+export type WorkflowLogEvent = {
+  type: typeof WORKFLOW_LOG;
   workflowId: string;
   message: JSONLog;
 };
@@ -38,4 +38,4 @@ export type WorkflowEvent =
   | AcceptWorkflowEvent
   | CompleteWorkflowEvent
   | ErrWorkflowEvent
-  | JobLogEvent;
+  | WorkflowLogEvent;

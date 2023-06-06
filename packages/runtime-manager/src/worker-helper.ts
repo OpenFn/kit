@@ -15,7 +15,7 @@ export const createLoggers = (workflowId: string) => {
   const log = (jsonLog: string) => {
     publish({
       workflowId,
-      type: e.JOB_LOG,
+      type: e.WORKFLOW_LOG,
       message: JSON.parse(jsonLog) as JSONLog,
     });
   };

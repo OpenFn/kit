@@ -90,4 +90,23 @@ test('events: workflow-complete', async (t) => {
   t.deepEqual(evt.state, { data: { answer: 42 } });
 });
 
+test('events: workflow-log', async (t) => {
+  const rtm = Manager('x', options);
+
+  let didCall;
+  let evt;
+  rtm.on(e.WORKFLOW_COMPLETE, (e) => {
+    didCall = true;
+    evt = e;
+  });
+
+  const plan = createPlan();
+  await rtm.execute(plan);
+
+  t.true(didCall);
+  t.is(evt.workflowId, plan.id);
+  t.truthy(evt.duration);
+  t.deepEqual(evt.state, { data: { answer: 42 } });
+});
+
 // TODO events: logging. How will I test this with the mock?
