@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert';
-
 import { Logger } from '@openfn/logger';
 import { getNameAndVersion } from '@openfn/runtime';
+import type { Opts } from '../options';
 
 export const validateMonoRepo = async (repoPath: string, log: Logger) => {
   try {
@@ -35,19 +35,36 @@ export const updatePath = (adaptor: string, repoPath: string, log: Logger) => {
   return `${name}=${abspath}`;
 };
 
-const useAdaptorsRepo = async (
-  adaptors: string[],
-  repoPath: string,
+export type MapAdaptorsToMonorepoOptions = Pick<
+  Opts,
+  'monorepoPath' | 'adaptors' | 'workflow'
+>;
+
+// This will mutate options (adaptors, workflow) to support the monorepo
+const mapAdaptorsToMonorepo = async (
+  options: MapAdaptorsToMonorepoOptions,
   log: Logger
 ) => {
-  await validateMonoRepo(repoPath, log);
-  log.success(`Loading adaptors from monorepo at ${repoPath}`);
-  const updatedAdaptors = adaptors.map((a) => {
-    const p = updatePath(a, repoPath, log);
-    log.info(`Mapped adaptor ${a} to monorepo: ${p.split('=')[1]}`);
-    return p;
-  });
-  return updatedAdaptors;
+  const { adaptors, monorepoPath, workflow } = options;
+  if (monorepoPath) {
+    await validateMonoRepo(monorepoPath, log);
+    log.success(`Loading adaptors from monorepo at ${monorepoPath}`);
+    if (adaptors) {
+      options.adaptors = adaptors.map((a) => {
+        const p = updatePath(a, monorepoPath, log);
+        log.info(`Mapped adaptor ${a} to monorepo: ${p.split('=')[1]}`);
+        return p;
+      });
+    }
+    if (workflow) {
+      Object.values(workflow.jobs).forEach((job) => {
+        if (job.adaptor) {
+          job.adaptor = updatePath(job.adaptor, monorepoPath, log);
+        }
+      });
+    }
+  }
+  return options;
 };
 
-export default useAdaptorsRepo;
+export default mapAdaptorsToMonorepo;

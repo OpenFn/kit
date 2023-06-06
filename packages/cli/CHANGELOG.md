@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 0.0.41
+
+### Patch Changes
+
+- 8ac138f: Ensure workflows can use the monorepo
+
 ## 0.0.40
 
 ### Patch Changes

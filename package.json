@@ -14,6 +14,7 @@
     "pack": "pnpm -r run pack",
     "pack:local": "pnpm run pack && node ./build/pack-local.js",
     "install:global": "pnpm build && pnpm run pack && node ./build/install-global.js",
+    "install:openfnx": "pnpm install:global",
     "export": "sh scripts/export.sh"
   },
   "keywords": [],

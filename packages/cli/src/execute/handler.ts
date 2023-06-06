@@ -10,6 +10,9 @@ import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadInput from '../util/load-input';
 import expandAdaptors from '../util/expand-adaptors';
+import mapAdaptorsToMonorepo, {
+  MapAdaptorsToMonorepoOptions,
+} from '../util/map-adaptors-to-monorepo';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
@@ -21,6 +24,10 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   if (options.workflow) {
     // expand shorthand adaptors in the workflow jobs
     expandAdaptors(options);
+    await mapAdaptorsToMonorepo(
+      options as MapAdaptorsToMonorepoOptions,
+      logger
+    );
   }
 
   const { repoDir, monorepoPath, autoinstall } = options;

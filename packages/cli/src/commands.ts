@@ -10,7 +10,9 @@ import { clean, install, pwd, list } from './repo/handler';
 import createLogger, { CLI, Logger, LogLevel } from './util/logger';
 import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
 import expandAdaptors from './util/expand-adaptors';
-import useAdaptorsRepo from './util/use-adaptors-repo';
+import mapAdaptorsToMonorepo, {
+  MapAdaptorsToMonorepoOptions,
+} from './util/map-adaptors-to-monorepo';
 import printVersions from './util/print-versions';
 
 export type CommandList =
@@ -74,11 +76,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
       process.exit(9); // invalid argument
     }
-    opts.adaptors = await useAdaptorsRepo(
-      opts.adaptors,
-      opts.monorepoPath,
-      logger
-    );
+    await mapAdaptorsToMonorepo(opts as MapAdaptorsToMonorepoOptions, logger);
   } else if (opts.adaptors && opts.expandAdaptors) {
     // TODO this will be removed once all options have been refactored
     //      This is safely redundant in execute and compile
