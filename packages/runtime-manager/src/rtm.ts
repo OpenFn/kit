@@ -9,7 +9,7 @@ import * as e from './events';
 // import createAutoinstall from './runners/autoinstall';
 import createCompile from './runners/compile';
 import createExecute from './runners/execute';
-import createLogger, { Logger } from '@openfn/logger';
+import createLogger, { JSONLog, Logger } from '@openfn/logger';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -51,6 +51,8 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
   const id = serverId || crypto.randomUUID();
   const logger = options.logger || createLogger('RTM', { level: 'debug' });
+
+  const runtimeLogger = createLogger('R/T', { level: 'debug' });
 
   const allWorkflows: Map<string, WorkflowStats> = new Map();
   const activeWorkflows: string[] = [];
@@ -118,9 +120,23 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     });
   };
 
+  // Catch a log coming out of a job within a workflow
+  // Includes runtime logging (is this right?)
+  const onWorkflowLog = (workflowId: string, message: JSONLog) => {
+    // Seamlessly proxy the log to the local stdout
+    // TODO runtime logging probably needs to be at info level?
+    // Debug information is mostly irrelevant for lightning
+    logger.proxy(message);
+    events.emit(e.WORKFLOW_LOG, {
+      workflowId,
+      message,
+    });
+  };
+
   // Create "runner" functions for execute and compile
   const execute = createExecute(workers, repoDir, logger, {
     start: onWorkflowStarted,
+    log: onWorkflowLog,
   });
   const compile = createCompile(logger, repoDir);
 

@@ -28,7 +28,7 @@ export type ErrWorkflowEvent = {
   message: string;
 };
 
-export type WorkflowLogEvent = {
+export type LogWorkflowEvent = {
   type: typeof WORKFLOW_LOG;
   workflowId: string;
   message: JSONLog;
@@ -38,4 +38,4 @@ export type WorkflowEvent =
   | AcceptWorkflowEvent
   | CompleteWorkflowEvent
   | ErrWorkflowEvent
-  | WorkflowLogEvent;
+  | LogWorkflowEvent;

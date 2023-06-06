@@ -26,6 +26,9 @@ const execute = (
             } else if (type === e.WORKFLOW_COMPLETE) {
               const { workflowId, state } = args as e.CompleteWorkflowEvent;
               resolve(state);
+            } else if (type === e.WORKFLOW_LOG) {
+              const { workflowId, message } = args as e.LogWorkflowEvent;
+              log(workflowId, message);
             }
           },
         })
