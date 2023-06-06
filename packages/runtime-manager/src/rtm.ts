@@ -42,17 +42,15 @@ type RTMOptions = {
   logger?: Logger;
   workerPath?: string;
   repoDir?: string;
-  noCompile: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
+  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
 };
 
 const createRTM = function (serverId?: string, options: RTMOptions = {}) {
-  const { resolvers, noCompile } = options;
+  const { noCompile } = options;
   let { repoDir, workerPath } = options;
 
   const id = serverId || crypto.randomUUID();
   const logger = options.logger || createLogger('RTM', { level: 'debug' });
-
-  const runtimeLogger = createLogger('R/T', { level: 'debug' });
 
   const allWorkflows: Map<string, WorkflowStats> = new Map();
   const activeWorkflows: string[] = [];
@@ -108,7 +106,7 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     const workflow = allWorkflows.get(workflowId)!;
     workflow.status = 'done';
     workflow.result = state;
-    workflow.duration = new Date().getTime() - workflow.startTime;
+    workflow.duration = new Date().getTime() - workflow.startTime!;
     const idx = activeWorkflows.findIndex((id) => id === workflowId);
     activeWorkflows.splice(idx, 1);
 
