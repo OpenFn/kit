@@ -6,7 +6,7 @@ export const createPlan = (job = {}) => ({
       adaptor: 'common', // not used
       credential: {}, // not used
       data: {}, // Used if no expression
-      expression: JSON.stringify({ data: { answer: 42 } }), // Will be parsed
+      expression: '(s) => ({ data: { answer: s.data?.input || 42 } })',
       _delay: 1, // only used in the mock
 
       ...job,

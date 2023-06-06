@@ -32,11 +32,17 @@ type MockExecutionPlan = {
 function mock(plan: MockExecutionPlan) {
   const [job] = plan.jobs;
   return new Promise((resolve) => {
-    setTimeout(() => {
+    setTimeout(async () => {
+      // TODO this isn't data, but state - it's the whole state object (minus config)
       let state: any = { data: job.data || {} };
       if (job.expression) {
         try {
-          state = JSON.parse(job.expression);
+          // Security considerations of eval here?
+          // If someone setup an rtm with the mock worker enabled,
+          // then all job code would be actually evalled
+          // To be fair, actual jobs wouldn't run, so it's not like anyone can run a malicious proxy server
+          const fn = eval(job.expression);
+          state = await fn(state);
         } catch (e) {
           state = {
             data: job.data || {},

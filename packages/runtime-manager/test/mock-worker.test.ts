@@ -24,7 +24,7 @@ test('execute a mock plan inside a worker thread', async (t) => {
 test('execute a mock plan with data', async (t) => {
   const plan = createPlan({
     id: 'j2',
-    data: { answer: 44 },
+    data: { input: 44 },
   });
   const result = await workers.exec('run', [plan]);
   t.deepEqual(result, { data: { answer: 44 } });
@@ -33,7 +33,31 @@ test('execute a mock plan with data', async (t) => {
 test('execute a mock plan with an expression', async (t) => {
   const plan = createPlan({
     id: 'j2',
-    expression: JSON.stringify({ data: { answer: 46 } }),
+    expression: '() => ({ data: { answer: 46 } })',
+  });
+  const result = await workers.exec('run', [plan]);
+  t.deepEqual(result, { data: { answer: 46 } });
+});
+
+test('execute a mock plan with an expression which uses state', async (t) => {
+  const plan = createPlan({
+    id: 'j2',
+    data: { input: 2 },
+    expression: '(s) => ({ data: { answer: s.data.input * 2 } })',
+  });
+  const result = await workers.exec('run', [plan]);
+  t.deepEqual(result, { data: { answer: 4 } });
+});
+
+test('execute a mock plan with a promise expression', async (t) => {
+  const plan = createPlan({
+    id: 'j2',
+    expression: `(s) =>
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ data: { answer: 46 } })
+        }, 1);
+      })`,
   });
   const result = await workers.exec('run', [plan]);
   t.deepEqual(result, { data: { answer: 46 } });
@@ -43,7 +67,7 @@ test('expression state overrides data', async (t) => {
   const plan = createPlan({
     id: 'j2',
     data: { answer: 44 },
-    expression: JSON.stringify({ data: { agent: '007' } }),
+    expression: '() => ({ data: { agent: "007" } })',
   });
   const result = await workers.exec('run', [plan]);
   t.deepEqual(result, { data: { agent: '007' } });
