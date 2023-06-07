@@ -17,6 +17,7 @@ export type Opts = {
   adaptors?: string[];
   autoinstall?: boolean;
   compile?: boolean;
+  confirm?: boolean;
   configPath?: string;
   expandAdaptors?: boolean; // for unit tests really
   force?: boolean;
@@ -115,10 +116,21 @@ export const compile: CLIOption = {
   },
 };
 
+export const confirm: CLIOption = {
+  name: 'no-confirm',
+  yargs: {
+    boolean: true,
+    description: "Skip confirmation prompts (e.g. 'Are you sure?')",
+  },
+  ensure: (opts) => {
+    setDefaultValue(opts, 'confirm', true);
+  },
+};
+
 export const configPath: CLIOption = {
   name: 'config',
   yargs: {
-    alias: ['c'],
+    alias: ['c', 'config-path'],
     description: 'The location of your config file',
     default: './config.json',
   },
@@ -323,13 +335,8 @@ export const statePath: CLIOption = {
     description: 'Path to the state file',
   },
   ensure: (opts) => {
-    console.log(opts);
-    
     // remove the alias
     delete (opts as { s?: string }).s;
-    // if (opts.command == 'deploy') {
-    //   setDefaultValue(opts, 'statePath', './state.json');
-    // }
   },
 };
 

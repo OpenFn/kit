@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@openfn/compiler": "workspace:*",
+    "@openfn/deploy": "workspace:*",
     "@openfn/describe-package": "workspace:*",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",

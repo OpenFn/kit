@@ -1,5 +1,4 @@
 import test from 'ava';
-import crypto from 'crypto';
 import jp from 'jsonpath';
 import {
   mergeProjectPayloadIntoState,
@@ -81,7 +80,7 @@ test('toNextState adding a job', (t) => {
   });
 });
 
-function getItem(result, itemType, key) {
+function getItem(result: {}, itemType: string, key: string) {
   const items = jp.query(result, `$..workflows[*].${itemType}["${key}"]`);
 
   if (items.length === 0) {
@@ -371,13 +370,9 @@ test('mergeProjectIntoState with deletions', (t) => {
       {
         id: workflowOne.id,
         name: workflowOne.name,
-        jobs: [
-          getItem(existingState, 'jobs', 'job-a'),
-        ],
+        jobs: [getItem(existingState, 'jobs', 'job-a')],
         triggers: [getItem(existingState, 'triggers', 'trigger-one')],
-        edges: [
-          getItem(existingState, 'edges', 'trigger-one->job-a'),
-        ],
+        edges: [getItem(existingState, 'edges', 'trigger-one->job-a')],
       },
     ],
   };

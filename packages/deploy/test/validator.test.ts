@@ -1,5 +1,5 @@
 import test from 'ava';
-import { validate } from '../src/validator';
+import { parseAndValidate } from '../src/validator';
 
 function findError(errors: any[], message: string) {
   return errors.find((e) => e.message === message);
@@ -13,7 +13,7 @@ workflows:
   - name: workflow-two
   `;
 
-  let results = validate(doc);
+  let results = parseAndValidate(doc);
 
   t.truthy(
     results.errors.find((e) => e.message === 'workflows: must be a map')
@@ -38,7 +38,7 @@ workflows:
       - 2
   `;
 
-  results = validate(doc);
+  results = parseAndValidate(doc);
 
   t.truthy(findError(results.errors, 'duplicate key: workflow-one'));
 

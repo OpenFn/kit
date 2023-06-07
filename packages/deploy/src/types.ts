@@ -69,7 +69,8 @@ export interface ProjectPayload {
 
 type Concrete<Type> = Type & { id: string };
 
-export interface DeployOptions {
+export interface DeployConfig {
+  configPath?: string;
   specPath: string;
   statePath: string;
   endpoint: string;

@@ -10,7 +10,7 @@ export const uuidRegex = new RegExp(
 export function splitZip<
   L extends { [k: string]: any },
   R extends { [k: string]: any }
->(l: L, r: R): [string, L | null, R | null][] {
+>(l: L, r: R): [keyof L | keyof R, L[keyof L] | null, R[keyof R] | null][] {
   return concatKeys(l, r).map((key) => {
     return [key, l[key], r[key]];
   });
@@ -29,11 +29,11 @@ export function mapReduce<T, U>(
 }
 
 // Get all keys from all objects and ensure they are unique
-export function concatKeys<T extends Object>(...objs: T[]) {
+export function concatKeys(...objs: Object[]): string[] {
   return objs
-    .reduce((acc, obj) => {
+    .reduce<string[]>((acc, obj) => {
       return acc.concat(Object.keys(obj));
-    }, [] as string[])
+    }, [])
     .reduce<string[]>((acc, key) => {
       if (!acc.includes(key)) {
         acc.push(key);
