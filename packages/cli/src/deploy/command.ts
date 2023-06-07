@@ -1,24 +1,40 @@
-import yargs, { Arguments } from 'yargs';
-import { ensure } from '../util/command-builders';
+import yargs, { Argv } from 'yargs';
+import { build, ensure, override } from '../util/command-builders';
 import { Opts } from '../options';
 import * as o from '../options';
 
 export type DeployOptions = Required<
   Pick<
     Opts,
-    'command' | 'log' | 'logJson' | 'statePath' | 'projectPath' | 'configPath'
+    | 'command'
+    | 'log'
+    | 'logJson'
+    | 'statePath'
+    | 'projectPath'
+    | 'configPath'
+    | 'confirm'
   >
 >;
 
-const options = [o.logJson, o.statePath, o.projectPath, o.configPath];
+const options = [
+  o.logJson,
+  override(o.statePath, {
+    default: './.state.json',
+  }),
+  o.projectPath,
+  override(o.configPath, {
+    default: './.config.json',
+  }),
+  o.confirm,
+];
 
 const deployCommand = {
   command: 'deploy',
   desc: "Deploy a project's config to a remote Lightning instance",
-  handler: ensure('deploy', options),
-  builder: (yargs: yargs.Argv) => {
-    return yargs.example('deploy', '');
+  builder: (yargs: yargs.Argv<DeployOptions>) => {
+    return build(options, yargs).example('deploy', '');
   },
-} as yargs.CommandModule<DeployOptions>;
+  handler: ensure('deploy', options),
+};
 
 export default deployCommand;

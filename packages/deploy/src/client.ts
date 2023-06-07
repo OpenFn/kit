@@ -1,42 +1,100 @@
-import { DeployOptions } from './types';
+import { DeployConfig, ProjectPayload } from './types';
+import { DeployError } from './deployError';
 
-export async function getProject(config: DeployOptions, projectId: string) {
-  const response = await fetch(`${config.endpoint}/projects/${projectId}`, {
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      Accept: 'application/json',
-    },
-  });
+export async function getProject(
+  config: DeployConfig,
+  projectId: string
+): Promise<{ data: ProjectPayload | null }> {
+  const url = new URL(config.endpoint + `/${projectId}`);
 
-  // A 404 response means the project doesn't exist yet.
-  if (response.status === 404) {
-    return null;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        Accept: 'application/json',
+      },
+    });
+
+    // A 404 response means the project doesn't exist yet.
+    if (response.status === 404) {
+      return { data: null };
+    }
+
+    if (!response.ok) {
+      handle401(config, response);
+
+      throw new Error(
+        `Failed to fetch project ${projectId}: ${response.statusText}`
+      );
+    }
+
+    return response.json();
+  } catch (error: any) {
+    handleCommonErrors(config, error);
+
+    throw error;
   }
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch project ${projectId}: ${response.statusText}`
-    );
-  }
-
-  return response.json();
 }
 
-export async function deployProject(config: DeployOptions, payload: any) {
-  const response = await fetch(`${config.endpoint}/projects`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+export async function deployProject(
+  config: DeployConfig,
+  payload: any
+): Promise<{ data: ProjectPayload }> {
+  try {
+    const url = new URL(config.endpoint);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to deploy project ${payload.name}: ${response.statusText}`
+    if (!response.ok) {
+      if (response.status === 422) {
+        const body = await response.json();
+
+        throw new DeployError(
+          `Failed to deploy project ${payload.name}:\n${JSON.stringify(
+            body,
+            null,
+            2
+          )}`,
+          'DEPLOY_ERROR'
+        );
+      }
+
+      handle401(config, response);
+
+      throw new DeployError(
+        `Failed to deploy project ${payload.name}: ${response.statusText}`,
+        'DEPLOY_ERROR'
+      );
+    }
+
+    return response.json();
+  } catch (error: any) {
+    handleCommonErrors(config, error);
+
+    throw error;
+  }
+}
+
+function handle401(config, response: Response) {
+  if (response.status === 401) {
+    throw new DeployError(
+      `Failed to authorize request with endpoint ${config.endpoint}, got 401 Unauthorized.`,
+      'DEPLOY_ERROR'
     );
   }
+}
 
-  return response.json();
+function handleCommonErrors(config, error: any) {
+  if (error.cause?.code === 'ECONNREFUSED') {
+    throw new DeployError(
+      `Failed to connect to endpoint ${config.endpoint}, got ECONNREFUSED.`,
+      'DEPLOY_ERROR'
+    );
+  }
 }

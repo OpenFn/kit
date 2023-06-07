@@ -1,7 +1,8 @@
 import { confirm } from '@inquirer/prompts';
-import { DeployOptions, ProjectState } from './types';
+import { inspect } from 'node:util';
+import { DeployConfig, ProjectState } from './types';
 import { readFile, writeFile } from 'fs/promises';
-import { validate } from './validator';
+import { parseAndValidate } from './validator';
 import jsondiff from 'json-diff';
 import {
   mergeProjectPayloadIntoState,
@@ -9,39 +10,84 @@ import {
   toProjectPayload,
 } from './stateTransform';
 import { deployProject, getProject } from './client';
+import { DeployError } from './deployError';
+import { Logger } from '@openfn/logger';
 
 // =============== Configuration ===============
 
-const defaultOptions: DeployOptions = {
-  apiKey: null,
-  specPath: 'project.yaml',
-  statePath: '.state.json',
-  endpoint: 'https://app.openfn.org/api/provision',
-  requireConfirmation: true,
-  dryRun: false,
-};
+function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
+  return {
+    apiKey: null,
+    configPath: '.config.json',
+    specPath: 'project.yaml',
+    statePath: '.state.json',
+    endpoint: 'https://app.openfn.org/api/provision',
+    requireConfirmation: true,
+    dryRun: false,
+    ...options,
+  };
+}
 
-async function getConfig(path?: string): Promise<DeployOptions> {
-  // TODO: merge env vars into either defaultOptions or config file results
-  // TODO: validate config after merging/reading
+export async function getConfig(path?: string): Promise<DeployConfig> {
   try {
-    const config = await readFile(path ?? '.config.json', 'utf8');
-    return JSON.parse(config);
+    return mergeDefaultOptions(
+      JSON.parse(await readFile(path ?? '.config.json', 'utf8'))
+    );
   } catch (error) {
-    return defaultOptions;
+    return mergeDefaultOptions({});
   }
 }
 
-function validateConfig(config: DeployOptions) {
+export function validateConfig(config: DeployConfig) {
   if (!config.apiKey) {
-    throw new Error('Missing API key');
+    throw new DeployError('Missing API key', 'CONFIG_ERROR');
   }
 
   try {
     new URL(config.endpoint);
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 'ERR_INVALID_URL') {
-      throw new Error('Invalid endpoint');
+      throw new DeployError('Invalid endpoint', 'CONFIG_ERROR');
+    } else {
+      throw error;
+    }
+  }
+}
+
+// =================== State ===================
+
+async function readState(path: string) {
+  const state = await readFile(path, 'utf8');
+
+  return JSON.parse(state) as ProjectState;
+}
+
+async function getState(path: string) {
+  try {
+    return await readState(path);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      return { workflows: {} } as ProjectState;
+    } else {
+      throw error;
+    }
+  }
+}
+
+function writeState(config: DeployConfig, nextState: {}): Promise<void> {
+  return writeFile(config.statePath, JSON.stringify(nextState, null, 2));
+}
+
+// ==================== Spec ===================
+
+// Given a path to a project spec, read and validate it.
+async function getSpec(path: string) {
+  try {
+    const body = await readFile(path, 'utf8');
+    return parseAndValidate(body);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      throw new DeployError(`File not found: ${path}`, 'SPEC_ERROR');
     } else {
       throw error;
     }
@@ -50,66 +96,77 @@ function validateConfig(config: DeployOptions) {
 
 // =============================================
 
-export async function deploy(config: DeployOptions) {
+export async function deploy(config: DeployConfig, logger: Logger) {
   const [state, spec] = await Promise.all([
-    readState(config.statePath),
-    readSpec(config.specPath),
+    getState(config.statePath),
+    getSpec(config.specPath),
   ]);
 
+  logger.debug('spec', spec);
+  if (spec.errors.length > 0) {
+    spec.errors.forEach((e) => logger.warn(e.message));
+    throw new DeployError(`${config.specPath} has errors`, 'VALIDATION_ERROR');
+  }
   const nextState = mergeSpecIntoState(state, spec.doc);
 
   validateProjectState(nextState);
 
   // Convert the state to a payload for the API.
   const nextProject = toProjectPayload(nextState);
-  const currentProject = await getProject(config, nextState.id);
 
-  renderDiff(currentProject, nextProject);
+  logger.debug('Getting project from server...');
+  const { data: currentProject } = await getProject(config, nextState.id);
+
+  logger.debug(
+    'currentProject',
+    '\n' + inspect(currentProject, { colors: true })
+  );
+  logger.debug('nextProject', '\n' + inspect(nextProject, { colors: true }));
+
+  const diff = jsondiff.diffString(currentProject, nextProject);
+
+  if (!diff) {
+    logger.log('No changes to deploy.');
+    return true;
+  }
+
+  logger.info(diff);
 
   if (config.dryRun) {
-    return;
+    return true;
   }
 
   if (config.requireConfirmation) {
-    if (!(await confirm({ message: 'Deploy?' }))) {
-      console.log('Aborting.');
-      return;
+    if (!(await confirm({ message: 'Deploy?', default: false }))) {
+      logger.log('Cancelled.');
+      return false;
     }
   }
 
-  const deployedProject = await deployProject(config, nextProject);
+  const { data: deployedProject } = await deployProject(config, nextProject);
 
-  const deployedState = mergeProjectPayloadIntoState(nextState, deployedProject);
+  logger.debug('deployedProject', deployedProject);
+  const deployedState = mergeProjectPayloadIntoState(
+    nextState,
+    deployedProject
+  );
 
   // IDEA: perhaps before writing, we should check if the current project.yaml
   // merges into the deployed state to produce the current state. If not, we
   // should warn the user that the project.yaml is out of sync with the server?
 
   await writeState(config, deployedState);
+  return true;
 }
 
 function validateProjectState(state: ProjectState) {
   if (!state.workflows) {
-    throw new Error('Project state must have a workflows property');
+    throw new DeployError(
+      'Project state must have a workflows property',
+      'STATE_ERROR'
+    );
   }
 }
 
-// Given a path to a project spec, read and validate it.
-async function readSpec(path: string) {
-  const body = await readFile(path, 'utf8');
-  return validate(body);
-}
-
-async function readState(path: string) {
-  const state = await readFile(path, 'utf8');
-
-  return JSON.parse(state) as ProjectState;
-}
-
-function renderDiff(before: {}, after: {}) {
-  console.log(jsondiff.diffString(before, after));
-}
-
-function writeState(config: DeployOptions, nextState: {}): Promise<void> {
-  return writeFile(config.statePath, JSON.stringify(nextState, null, 2));
-}
+export type { DeployConfig, ProjectState };
+export { DeployError };

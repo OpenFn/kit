@@ -1,4 +1,4 @@
-import { ProjectSpec } from "../src/types";
+import { ProjectSpec } from '../src/types';
 
 export function fullExampleSpec() {
   return {

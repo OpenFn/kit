@@ -8,13 +8,16 @@ import {
   StateEdge,
   WorkflowSpec,
   WorkflowState,
-  Job,
 } from './types';
 import { isEmpty, pickKeys, splitZip } from './utils';
+import { DeployError } from './deployError';
 
-function mergeJobs(stateJobs, specJobs): WorkflowState['jobs'] {
+function mergeJobs(
+  stateJobs: WorkflowState['jobs'],
+  specJobs: WorkflowSpec['jobs']
+): WorkflowState['jobs'] {
   return Object.fromEntries(
-    splitZip(stateJobs, specJobs).map(([jobKey, stateJob, specJob]) => {
+    splitZip(stateJobs, specJobs || {}).map(([jobKey, stateJob, specJob]) => {
       if (specJob && !stateJob) {
         return [
           jobKey,
@@ -23,7 +26,7 @@ function mergeJobs(stateJobs, specJobs): WorkflowState['jobs'] {
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: specJob.body,
-            enabled: pickValue(specJob, stateJob, 'enabled', true),
+            enabled: pickValue(specJob, stateJob || {}, 'enabled', true),
           },
         ];
       }
@@ -32,16 +35,25 @@ function mergeJobs(stateJobs, specJobs): WorkflowState['jobs'] {
         return [jobKey, { id: stateJob.id, delete: true }];
       }
 
-      return [
-        jobKey,
-        {
-          id: stateJob.id,
-          name: specJob.name,
-          adaptor: specJob.adaptor,
-          body: specJob.body,
-          enabled: pickValue(specJob, stateJob, 'enabled', true),
-        },
-      ];
+      if (specJob && stateJob) {
+        return [
+          jobKey,
+          {
+            id: stateJob.id,
+            name: specJob.name,
+            adaptor: specJob.adaptor,
+            body: specJob.body,
+            enabled: pickValue(specJob, stateJob, 'enabled', true),
+          },
+        ];
+      }
+
+      throw new DeployError(
+        `Invalid job spec or corrupted state for job with key: ${String(
+          jobKey
+        )}`,
+        'VALIDATION_ERROR'
+      );
     })
   );
 }
@@ -138,8 +150,8 @@ function mergeEdges(
           return [
             edgeKey,
             {
-              id: crypto.randomUUID(),
               ...convertToStateEdge(jobs, triggers, specEdge),
+              id: crypto.randomUUID(),
             },
           ];
         }
@@ -151,8 +163,8 @@ function mergeEdges(
         return [
           edgeKey,
           {
-            id: stateEdge.id,
-            ...convertToStateEdge(jobs, triggers, specEdge),
+            ...convertToStateEdge(jobs, triggers, specEdge!),
+            id: stateEdge!.id,
           },
         ];
       }
@@ -202,6 +214,7 @@ export function mergeSpecIntoState(
         return [
           workflowKey,
           {
+            ...stateWorkflow,
             id: stateWorkflow.id,
             name: specWorkflow.name,
             jobs: nextJobs,
@@ -214,6 +227,7 @@ export function mergeSpecIntoState(
   );
 
   return {
+    ...oldState,
     id: oldState.id || crypto.randomUUID(),
     name: spec.name,
     workflows: nextWorkflows,
@@ -257,8 +271,7 @@ export function mergeProjectPayloadIntoState(
   );
 
   return {
-    id: project.id,
-    name: project.name,
+    ...project,
     workflows: nextWorkflows,
   };
 }
@@ -288,8 +301,7 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
     state.workflows
   ).map((workflow) => {
     return {
-      id: workflow.id,
-      name: workflow.name,
+      ...workflow,
       jobs: Object.values(
         workflow.jobs
       ) as ProjectPayload['workflows'][0]['jobs'],
@@ -303,8 +315,7 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   });
 
   return {
-    id: state.id,
-    name: state.name,
+    ...state,
     workflows,
   };
 }

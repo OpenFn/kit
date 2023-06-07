@@ -1,279 +1,103 @@
 // Test the actual functionality of docgen
 // ie, generate docs to a mock folder
 import test from 'ava';
-import { readFileSync, existsSync } from 'node:fs';
-import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import mockfs from 'mock-fs';
-import { createMockLogger } from '@openfn/logger';
-import deployHandler, { DeployFn, ensurePath } from '../../src/deploy/handler';
+import { Logger, createMockLogger } from '@openfn/logger';
+import deployHandler, { DeployFn } from '../../src/deploy/handler';
+
+import { DeployError, type DeployConfig } from '@openfn/deploy';
+import { DeployOptions } from '../../src/deploy/command';
 
 const logger = createMockLogger();
 
-const REPO_PATH = '/tmp/repo';
-const DOCS_PATH = `${REPO_PATH}/docs`;
+const originalEnv = process.env;
 
 test.beforeEach(() => {
   mockfs.restore();
   logger._reset();
   mockfs({
-    [DOCS_PATH]: {},
+    ['./config.json']: `{"apiKey": "123"}`,
+    ['./project.yaml']: `{"apiKey": "123"}`,
   });
+
+  process.env = originalEnv;
 });
 
-const loadJSON = async (path: string) => {
-  try {
-    const result = await fs.readFile(path, 'utf8');
-    if (result) {
-      return JSON.parse(result);
-    }
-  } catch (e) {}
+const exampleProject = readFileSync('./project.yaml', 'utf8');
+
+type Fn<Params extends unknown[] = any[], Result = any> = (
+  ...args: Params
+) => Result;
+
+const mockDeploy: Fn<Parameters<DeployFn>, Promise<DeployConfig>> = (
+  config: DeployConfig,
+  _logger: Logger
+) => {
+  return Promise.resolve(config);
 };
 
-// Mock doc gen function
-const mockGen: DeployFn = async () => ({
-  name: 'test',
-  version: '1.0.0',
-  functions: [
-    {
-      name: 'fn',
-      description: 'a function',
-      isOperation: true,
-      magic: false,
-      parameters: [],
-      examples: [],
-    },
-  ],
-});
-
-const specifier = 'test@1.0.0';
-
-const options = {
-  specifier,
-  repoDir: REPO_PATH,
+const options: DeployOptions = {
+  configPath: './config.json',
+  projectPath: './project.yaml',
+  statePath: './state.json',
+  command: 'deploy',
+  log: ['info'],
+  logJson: false,
+  confirm: false,
 };
 
-test.serial('generate mock docs', async (t) => {
-  const path = await deployHandler(options, logger, mockGen);
-  t.is(path, `${DOCS_PATH}/${specifier}.json`);
-
-  const docs = await loadJSON(path);
-
-  t.is(docs.name, 'test');
-  t.is(docs.version, '1.0.0');
+test.serial('reads in config file', async (t) => {
+  await deployHandler(options, logger, mockDeploy);
+  t.pass();
 });
 
-test.serial('log the result path', async (t) => {
-  await deployHandler(options, logger, mockGen);
+test.serial('uses confirm option for requireConfirmation', async (t) => {
+  let config = await deployHandler(options, logger, mockDeploy);
 
-  const { message } = logger._parse(logger._last);
-  t.is(message, `  ${DOCS_PATH}/${specifier}.json`);
-});
-
-test.serial("ensurePath if there's no repo", (t) => {
-  mockfs({
-    ['/tmp']: {},
-  });
-  ensurePath('/tmp/repo/docs/x.json');
-
-  t.true(existsSync('/tmp/repo/docs'));
-});
-
-test.serial("ensurePath if there's no docs folder", (t) => {
-  mockfs({
-    ['/tmp/repo']: {},
-  });
-  ensurePath('/tmp/repo/docs/x.json');
-
-  t.true(existsSync('/tmp/repo/docs'));
-});
-
-test.serial("ensurePath if there's a namespace", (t) => {
-  mockfs({
-    ['/tmp']: {},
-  });
-  ensurePath('/tmp/repo/docs/@openfn/language-common.json');
-
-  t.true(existsSync('/tmp/repo/docs/@openfn'));
-});
-
-test.serial('do not generate docs if they already exist', async (t) => {
-  let docgenCalled = false;
-
-  const docgen = (() => {
-    docgenCalled = true;
-    return {};
-  }) as unknown as DeployFn;
-
-  mockfs({
-    [`${DOCS_PATH}/${specifier}.json`]: '{ "name": "test" }',
-  });
-
-  const path = await deployHandler(options, logger, docgen);
-
-  t.false(docgenCalled);
-  t.is(path, `${DOCS_PATH}/${specifier}.json`);
-});
-
-test.serial('create a placeholder before generating the docs', async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
-
-  // a placeholder should not exist when we start
-  const empty = await loadJSON(path);
-  t.falsy(empty);
-
-  const docgen = (async () => {
-    // When docgen is called, a placeholder should now exist
-    const placeholder = await loadJSON(path);
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
-    t.assert(typeof placeholder.timestamp === 'number');
-
-    return {};
-  }) as unknown as DeployFn;
-
-  await deployHandler(options, logger, docgen);
+  t.is(config.requireConfirmation, false);
 });
 
 test.serial(
-  'synchronously create a placeholder before generating the docs',
+  'accepts env variables to override endpoint and api key',
   async (t) => {
-    const path = `${DOCS_PATH}/${specifier}.json`;
+    process.env['OPENFN_API_KEY'] = 'newkey';
+    let config = await deployHandler(options, logger, mockDeploy);
 
-    // a placeholder should not exist when we start
-    const empty = await loadJSON(path);
-    t.falsy(empty);
+    t.is(config.apiKey, 'newkey');
+    t.is(config.endpoint, 'https://app.openfn.org/api/provision');
 
-    const promise = deployHandler(options, logger, mockGen);
-    // the placeholder should already be created
+    process.env['OPENFN_ENDPOINT'] = 'http://other-endpoint.com';
+    config = await deployHandler(options, logger, mockDeploy);
 
-    const placeholder = JSON.parse(readFileSync(path, 'utf8'));
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
-    t.assert(typeof placeholder.timestamp === 'number');
-
-    // politely wait for the promise to run
-    await promise.then();
+    t.is(config.apiKey, 'newkey');
+    t.is(config.endpoint, 'http://other-endpoint.com');
   }
 );
 
-test.serial("remove the placeholder if there's an error", async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
+test.serial('sets the exit code to 0', async (t) => {
+  const origExitCode = process.exitCode;
+  await deployHandler(options, logger, () => Promise.resolve(true));
 
-  const docgen = (async () => {
-    // When docgen is called, a placeholder should now exist
-    const placeholder = await loadJSON(path);
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
-
-    throw new Error('test');
-  }) as unknown as DeployFn;
-
-  await deployHandler(options, logger, docgen);
-
-  // placeholder should be gone
-  const empty = await loadJSON(path);
-  t.falsy(empty);
+  t.is(process.exitCode, 0);
+  process.exitCode = origExitCode;
 });
 
-test.serial('wait for docs if a placeholder is present', async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
+test.serial('sets the exit code to 1', async (t) => {
+  const origExitCode = process.exitCode;
+  await deployHandler(options, logger, () => Promise.resolve(false));
 
-  mockfs({
-    [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
-  });
-
-  // After 100ms generate some docs and write to the file
-  setTimeout(async () => {
-    const docs = await mockGen('x');
-    fs.writeFile(path, JSON.stringify(docs));
-  }, 60);
-
-  let docgencalled = false;
-
-  const docgen = (async () => {
-    docgencalled = true;
-    return {};
-  }) as unknown as DeployFn;
-
-  await deployHandler(options, logger, docgen, 20);
-
-  // It should not call out to this docgen function
-  t.false(docgencalled);
-
-  // docs should be present and correct
-  const docs = await loadJSON(path);
-
-  t.is(docs.name, 'test');
-  t.is(docs.version, '1.0.0');
+  t.is(process.exitCode, 1);
+  process.exitCode = origExitCode;
 });
 
-test.serial("throw there's a timeout", async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
+test.serial('catches DeployErrors', async (t) => {
+  const origExitCode = process.exitCode;
 
-  mockfs({
-    [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
-  });
-
-  // This will timeout
-  const timeout = 2;
-  await t.throwsAsync(
-    async () => deployHandler(options, logger, async () => {}, timeout),
-    {
-      message: 'Timed out waiting for docs to load',
-    }
-  );
-});
-
-test.serial("don't remove the placeholder if there's a timeout", async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
-
-  mockfs({
-    [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
-  });
-
-  const timeout = 2;
-  await t.throwsAsync(
-    async () => deployHandler(options, logger, async () => {}, timeout),
-    {
-      message: 'Timed out waiting for docs to load',
-    }
+  await deployHandler(options, logger, () =>
+    Promise.reject(new DeployError('foo bar', 'STATE_ERROR'))
   );
 
-  // docs should be present and correct
-  const placeholder = await loadJSON(path);
-
-  t.truthy(placeholder);
-  t.true(placeholder.loading);
-});
-
-test.serial("reset the placeholder if it's old", async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
-
-  mockfs({
-    [path]: `{ "loading": true, "test", true, "timestamp": ${
-      Date.now() - 1001
-    } }`,
-  });
-
-  let docgencalled = false;
-  const docgen = (async (specifier: string) => {
-    // a new timestamp should be generated
-    const placeholder = await loadJSON(path);
-    t.true(placeholder.loading);
-    t.falsy(placeholder.test);
-
-    docgencalled = true;
-    return await mockGen(specifier);
-  }) as DeployFn;
-
-  await deployHandler(options, logger, docgen);
-
-  // It should call out to the docgen function
-  t.true(docgencalled);
-
-  // docs should be present and correct
-  const docs = await loadJSON(path);
-
-  t.is(docs.name, 'test');
-  t.is(docs.version, '1.0.0');
+  t.is(process.exitCode, 10);
+  process.exitCode = origExitCode;
 });

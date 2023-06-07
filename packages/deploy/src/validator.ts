@@ -12,8 +12,16 @@ interface Error {
   path?: string[];
 }
 
-export function validate(input: string): { errors: Error[]; doc: Project } {
-  let errors = [];
+export function parseAndValidate(input: string): {
+  errors: Error[];
+  doc: Project;
+} {
+  let errors: {
+    context: any;
+    message: string;
+    path?: string[];
+    range: [number, number, number];
+  }[] = [];
   let keys: string[] = [];
   const doc = YAML.parseDocument(input);
 
@@ -65,11 +73,37 @@ export function validate(input: string): { errors: Error[]; doc: Project } {
     }
   }
 
+  YAML.visit(doc, {
+    Pair(_, pair) {
+      if (pair.key && pair.key.value === 'workflows') {
+        if (pair.value.value === null) {
+          errors.push({
+            context: pair,
+            message: 'project: must provide at least one workflow',
+            path: ['workflows'],
+          });
+
+          return doc.createPair('workflows', {});
+        }
+      }
+
+      if (pair.key && pair.key.value === 'jobs') {
+        if (pair.value.value === null) {
+          errors.push({
+            context: pair,
+            message: 'jobs: must be a map',
+            range: pair.value.range,
+          });
+
+          return doc.createPair('jobs', {});
+        }
+      }
+    },
+  });
+
   if (!doc.has('name')) {
     errors.push({ context: doc, message: 'Project must have a name' });
   }
-
-  // console.log(doc);
 
   const workflows = doc.getIn(['workflows']);
   validateWorkflows(workflows);
