@@ -31,8 +31,6 @@ const args = yargs(hideBin(process.argv))
 const rtm = createRTM();
 logger.debug('RTM created');
 
-// TODO why is this blowing up??
-
 createRTMServer(rtm, {
   port: args.port,
   lightning: args.lightning,

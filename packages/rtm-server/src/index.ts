@@ -1,3 +1,1 @@
-import createServer from './server';
-
-const server = createServer();
+import './server';
