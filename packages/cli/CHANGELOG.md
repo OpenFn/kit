@@ -5,6 +5,8 @@
 ### Patch Changes
 
 - 8ac138f: Ensure workflows can use the monorepo
+- Updated dependencies
+  - @openfn/runtime@0.0.26
 
 ## 0.0.40
 
