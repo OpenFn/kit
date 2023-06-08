@@ -3,7 +3,7 @@ import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
 import Router from '@koa/router';
-import createLogger, { LogLevel, Logger } from '@openfn/logger';
+import { createMockLogger, LogLevel, Logger } from '@openfn/logger';
 
 import createAPI from './api';
 import createDevAPI from './api-dev';
@@ -22,14 +22,13 @@ export type ServerState = {
 export type LightningOptions = {
   logger?: Logger;
   logLevel?: LogLevel;
-  port?: string;
+  port?: string | number;
 };
 
 // a mock lightning server
 const createLightningServer = (options: LightningOptions = {}) => {
-  const logger =
-    options.logger ||
-    createLogger('LNG', { level: options.logLevel || 'info' });
+  const logger = options.logger || createMockLogger();
+
   // App state
   const state = {
     credentials: {},

@@ -8,8 +8,7 @@ const baseUrl = `http://localhost:8888${API_PREFIX}`;
 let server;
 
 test.before(() => {
-  const logger = createMockLogger();
-  server = createLightningServer({ port: 8888, logger });
+  server = createLightningServer({ port: 8888 });
 });
 
 test.afterEach(() => {

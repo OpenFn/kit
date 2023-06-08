@@ -27,7 +27,7 @@ test.before(() => {
 
 // Really high level test
 test.serial('process an attempt', async (t) => {
-  lng.addToQueue({
+  lng.enqueueAttempt({
     id: 'a1',
     jobs: [
       {
@@ -40,21 +40,3 @@ test.serial('process an attempt', async (t) => {
   const { state } = await lng.waitForResult('a1');
   t.is(state.answer, 42);
 });
-
-// process multiple attempts
-
-test.serial.skip(
-  'should post to attempts/complete with the final state',
-  async (t) => {
-    // The mock RTM will evaluate the expression as JSON and return it
-    lng.addToQueue({ id: 'y', plan: [{ expression: '{ "answer": 42 }' }] });
-
-    await waitForEvent(rtm, 'workflow-complete');
-
-    // The RMT server will post to attempts/complete/:id with the state, which should eventually
-    // be available to our little debug API here
-    const result = await wait(() => lng.getResult('y'));
-    t.truthy(result);
-    t.is(result.answer, 42);
-  }
-);
