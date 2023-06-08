@@ -25,6 +25,8 @@ const compileEdges = (
       const edge = edges[edgeId];
       if (typeof edge === 'boolean') {
         result[edgeId] = edge;
+      } else if (typeof edge === 'string') {
+        result[edgeId] = { condition: compileFunction(edge, context) };
       } else {
         const newEdge = {
           ...edge,
