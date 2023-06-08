@@ -64,6 +64,7 @@ export type JobNode = {
 
 export type JobEdge =
   | boolean
+  | string
   | {
       condition?: string; // Javascript expression (function body, not function)
       label?: string;
