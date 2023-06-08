@@ -16,7 +16,7 @@ const testHandler = async (options: ExecuteOptions, logger: Logger) => {
     jobs: [
       {
         id: 'start',
-        data: { defaultAnswer: 42 },
+        state: { data: { defaultAnswer: 42 } },
         expression:
           "const fn = () => (state) => { console.log('Starting computer...'); return state; }; fn()",
         next: {
@@ -55,7 +55,7 @@ const testHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   const state = await loadState(options, silentLogger);
   const code = await compile(options, logger);
-  const result = await execute(code, state, options);
+  const result = await execute(code, state, options, silentLogger);
   logger.success(`Result: ${result.data.answer}`);
   return result;
 };
