@@ -3,16 +3,13 @@ import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
 import Router from '@koa/router';
+import createLogger, { LogLevel, Logger } from '@openfn/logger';
 
 import createAPI from './api';
+import createDevAPI from './api-dev';
 import { Attempt } from '../../types';
-import { RTMEvent } from '../runtime-manager';
 
-type NotifyEvent = {
-  event: RTMEvent;
-  workflow: string; // workflow id
-  [key: string]: any;
-};
+export const API_PREFIX = '/api/1';
 
 export type ServerState = {
   credentials: Record<string, any>;
@@ -22,8 +19,17 @@ export type ServerState = {
   events: EventEmitter;
 };
 
+export type LightningOptions = {
+  logger?: Logger;
+  logLevel?: LogLevel;
+  port?: string;
+};
+
 // a mock lightning server
-const createLightningServer = (options = {}) => {
+const createLightningServer = (options: LightningOptions = {}) => {
+  const logger =
+    options.logger ||
+    createLogger('LNG', { level: options.logLevel || 'info' });
   // App state
   const state = {
     credentials: {},
@@ -40,67 +46,16 @@ const createLightningServer = (options = {}) => {
   const app = new Koa();
   app.use(bodyParser());
 
-  const logger = koaLogger();
+  const klogger = koaLogger((str) => logger.log(str));
+  app.use(klogger);
 
   // Mock API endpoints
-  const api = createAPI(new Router({ prefix: '/api/1' }), logger, state);
+  const api = createAPI(new Router({ prefix: API_PREFIX }), klogger, state);
   app.use(api.routes());
 
-  app.use(logger);
-
-  // Dev APIs for unit testing
-  app.addCredential = (id: string, cred: Credential) => {
-    state.credentials[id] = cred;
-  };
-  app.addAttempt = (attempt: Attempt) => {
-    state.attempts[attempt.id] = attempt;
-  };
-  app.addToQueue = (attempt: string | Attempt, rtmId: string = 'rtm') => {
-    if (typeof attempt == 'string') {
-      app.addPendingWorkflow(attempt, rtmId);
-      if (state.attempts[attempt]) {
-        state.queue.push(state.attempts[attempt]);
-        return true;
-      }
-      throw new Error(`attempt ${attempt} not found`);
-    } else if (attempt) {
-      app.addPendingWorkflow(attempt.id, rtmId);
-      state.queue.push(attempt);
-      return true;
-    }
-  };
-  app.waitForResult = (workflowId: string) => {
-    return new Promise((resolve) => {
-      const handler = (evt) => {
-        if (evt.workflow_id === workflowId) {
-          state.events.removeListener('workflow-complete', handler);
-          resolve(evt);
-        }
-      };
-      state.events.addListener('workflow-complete', handler);
-    });
-  };
-  app.addPendingWorkflow = (workflowId: string, rtmId: string) => {
-    state.results[workflowId] = {
-      rtmId,
-      state: null,
-    };
-  };
-  app.reset = () => {
-    state.queue = [];
-    state.results = {};
-  };
-  app.getQueueLength = () => state.queue.length;
-  app.getResult = (attemptId: string) => state.results[attemptId]?.state;
-  app.on = (event: 'notify', fn: (evt: any) => void) => {
-    state.events.addListener(event, fn);
-  };
-  app.once = (event: 'notify', fn: (evt: any) => void) => {
-    state.events.once(event, fn);
-  };
+  createDevAPI(app, state, logger);
 
   const server = app.listen(options.port || 8888);
-
   app.destroy = () => {
     server.close();
   };

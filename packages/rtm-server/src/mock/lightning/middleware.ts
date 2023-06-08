@@ -102,7 +102,7 @@ export const createComplete =
     if (shouldAcceptRequest(state, ctx.params.id, ctx.request)) {
       results[ctx.params.id].state = resultState;
 
-      events.emit('workflow-complete', {
+      events.emit('attempt-complete', {
         rtm_id,
         workflow_id: ctx.params.id,
         state: resultState,

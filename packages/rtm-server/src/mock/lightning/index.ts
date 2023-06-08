@@ -1,4 +1,4 @@
 import createLightningServer from './server';
 export default createLightningServer;
 
-export { API_PREFIX } from './api';
+export { API_PREFIX } from './server';
