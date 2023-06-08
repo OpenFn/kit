@@ -117,7 +117,7 @@ test('execute a one-job execution plan with inline state', async (t) => {
     jobs: [
       {
         expression: 'export default [s => s.data.x]',
-        data: { x: 22 }, // this is state.data, not state
+        state: { data: { x: 22 } },
       },
     ],
   };
@@ -204,7 +204,7 @@ test('merge initial and inline state', async (t) => {
     jobs: [
       {
         expression: 'export default [s => s]',
-        data: { y: 11 },
+        state: { data: { y: 11 } },
       },
     ],
   };
@@ -218,7 +218,7 @@ test('Initial state overrides inline data', async (t) => {
     jobs: [
       {
         expression: 'export default [s => s]',
-        data: { x: 11 },
+        state: { data: { x: 11 } },
       },
     ],
   };
@@ -233,7 +233,7 @@ test('Previous state overrides inline data', async (t) => {
       {
         id: 'job1',
         expression: 'export default [s => s]',
-        data: { x: 5 },
+        state: { data: { x: 5 } },
         next: {
           job2: true,
         },
@@ -243,7 +243,7 @@ test('Previous state overrides inline data', async (t) => {
       {
         id: 'job2',
         expression: 'export default [s => { s.data.x +=1 ; return s; }]',
-        data: { x: 88 },
+        state: { data: { x: 88 } },
       },
     ],
   };
@@ -286,7 +286,7 @@ test('Jobs only receive state from upstream jobs', async (t) => {
       {
         id: 'start',
         expression: 'export default [s => s]',
-        data: { x: 1, y: 1 },
+        state: { data: { x: 1, y: 1 } },
         next: {
           'x-a': true,
           'y-a': true,
@@ -378,7 +378,7 @@ test('execute edge based on state in the condition', async (t) => {
     jobs: [
       {
         id: 'job1',
-        data: {},
+        state: {},
         expression: 'export default [(s) => { s.data.x = 10; return s;}]',
         next: {
           job2: { condition: 'state.data.x === 10' },
@@ -399,7 +399,7 @@ test('skip edge based on state in the condition ', async (t) => {
     jobs: [
       {
         id: 'job1',
-        data: {},
+        state: {},
         expression: 'export default [s => { s.data.x = 10; return s;}]',
         next: {
           job2: { condition: 'false' },

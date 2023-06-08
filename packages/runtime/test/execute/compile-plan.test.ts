@@ -101,7 +101,7 @@ test('should compile a shorthand edge', (t) => {
   const compiledPlan = compilePlan(plan);
 
   t.deepEqual(compiledPlan.jobs.a.next!, {
-    y: {},
+    y: true,
   });
 });
 

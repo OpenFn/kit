@@ -150,9 +150,11 @@ test('prefer initial state to inline state', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {
-        data: {
-          x: 20, // this will be overriden by the incoming state
-          y: 20, // This will be untouched
+        state: {
+          data: {
+            x: 20, // this will be overriden by the incoming state
+            y: 20, // This will be untouched
+          },
         },
         expression: 'export default [(s) => s]',
       },

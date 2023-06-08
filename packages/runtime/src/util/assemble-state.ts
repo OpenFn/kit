@@ -2,10 +2,15 @@
 const assembleState = (
   initialState: any = {}, // previous or initial state
   configuration = {},
-  defaultData = {}, // This is default data provided by the job
+  defaultState: any = {}, // This is default state provided by the job
   strictState: boolean = true
 ) => {
-  const obj = strictState ? {} : { ...initialState };
+  const obj = strictState
+    ? {}
+    : {
+        ...defaultState,
+        ...initialState,
+      };
   if (initialState.references) {
     obj.references = initialState.references;
   }
@@ -18,7 +23,7 @@ const assembleState = (
       initialState.configuration ?? {},
       configuration
     ),
-    data: Object.assign({}, defaultData, initialState.data),
+    data: Object.assign({}, defaultState.data, initialState.data),
   });
   return obj;
 };

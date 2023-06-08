@@ -1,6 +1,7 @@
 import type {
   CompiledExecutionPlan,
   CompiledJobEdge,
+  CompiledJobNode,
   ExecutionPlan,
   JobEdge,
 } from '../types';
@@ -8,15 +9,13 @@ import type {
 import compileFunction from '../modules/compile-function';
 import { conditionContext, Context } from './context';
 
-// Compile a shorthand edge or set of edges
-// eg { start: 'a' }, { next: 'b' }, { start: { a: { condition: '!state.error' }}}
 const compileEdges = (
   from: string,
   edges: string | Record<string, boolean | JobEdge>,
   context: Context
 ) => {
   if (typeof edges === 'string') {
-    return { [edges]: {} };
+    return { [edges]: true };
   }
   const errs = [];
 
@@ -27,13 +26,13 @@ const compileEdges = (
       if (typeof edge === 'boolean') {
         result[edgeId] = edge;
       } else {
-        const compiledEdge = {} as CompiledJobEdge;
+        const newEdge = {
+          ...edge,
+        };
         if (typeof edge.condition === 'string') {
-          compiledEdge.condition = compileFunction(edge.condition, context);
-        } else {
-          compiledEdge.condition = edge.condition;
+          (newEdge as any).condition = compileFunction(edge.condition, context);
         }
-        result[edgeId] = compiledEdge;
+        result[edgeId] = newEdge as CompiledJobEdge;
       }
     } catch (e: any) {
       errs.push(
@@ -56,9 +55,14 @@ const compileEdges = (
 // Note that right now we only support one upstream job
 const findUpstream = (plan: ExecutionPlan, id: string) => {
   for (const job of plan.jobs) {
-    if (job.next && job.next[id]) {
-      return job.id;
-    }
+    if (job.next)
+      if (typeof job.next === 'string') {
+        if (job.next === id) {
+          return job.next;
+        }
+      } else if (job.next[id]) {
+        return job.id;
+      }
   }
 };
 
@@ -96,17 +100,17 @@ export default (plan: ExecutionPlan) => {
   } as Pick<CompiledExecutionPlan, 'jobs' | 'start'>;
 
   for (const job of plan.jobs) {
-    const jobId = job.id;
+    const jobId = job.id!;
     if (!newPlan.start) {
       // Default the start job to the first
       newPlan.start = jobId;
     }
-    const newJob = {
+    const newJob: CompiledJobNode = {
       id: jobId,
       expression: job.expression, // TODO we should compile this here
     };
-    if (job.data) {
-      newJob.data = job.data;
+    if (job.state) {
+      newJob.state = job.state;
     }
     if (job.configuration) {
       newJob.configuration = job.configuration;
