@@ -114,7 +114,7 @@ const executeJob = async (
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];
-      if (!edge.condition || edge.condition(result)) {
+      if (edge === true || !edge.condition || edge.condition(result)) {
         next.push(nextJobId);
       }
       // TODO errors

@@ -12,7 +12,7 @@ import { conditionContext, Context } from './context';
 // eg { start: 'a' }, { next: 'b' }, { start: { a: { condition: '!state.error' }}}
 const compileEdges = (
   from: string,
-  edges: string | Record<string, true | JobEdge>,
+  edges: string | Record<string, boolean | JobEdge>,
   context: Context
 ) => {
   if (typeof edges === 'string') {
@@ -20,19 +20,21 @@ const compileEdges = (
   }
   const errs = [];
 
-  const result = {} as Record<string, CompiledJobEdge>;
+  const result = {} as Record<string, boolean | CompiledJobEdge>;
   for (const edgeId in edges) {
     try {
       const edge = edges[edgeId];
-      const compiledEdge = {} as CompiledJobEdge;
-      if (edge !== true) {
+      if (typeof edge === 'boolean') {
+        result[edgeId] = edge;
+      } else {
+        const compiledEdge = {} as CompiledJobEdge;
         if (typeof edge.condition === 'string') {
           compiledEdge.condition = compileFunction(edge.condition, context);
         } else {
           compiledEdge.condition = edge.condition;
         }
+        result[edgeId] = compiledEdge;
       }
-      result[edgeId] = compiledEdge;
     } catch (e: any) {
       errs.push(
         new Error(

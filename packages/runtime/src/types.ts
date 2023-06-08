@@ -58,7 +58,7 @@ export type JobNode = {
   configuration?: object; // credential object
   data?: State['data']; // default state (globals)
 
-  next?: string | Record<JobNodeID, true | JobEdge>;
+  next?: Record<JobNodeID, boolean | JobEdge>;
   previous?: JobNodeID;
 };
 

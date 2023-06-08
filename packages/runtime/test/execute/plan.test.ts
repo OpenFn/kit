@@ -433,6 +433,24 @@ test('execute a two-job execution plan', async (t) => {
   t.is(result.data.x, 2);
 });
 
+test('only execute one job in a two-job execution plan', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'job1',
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+        next: { job2: false },
+      },
+      {
+        id: 'job2',
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+      },
+    ],
+  };
+  const result = await executePlan(plan, { data: { x: 0 } });
+  t.is(result.data.x, 1);
+});
+
 test('execute a two-job execution plan with custom start in state', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job2',
