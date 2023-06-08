@@ -256,7 +256,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
     jobs: [
       {
         expression:
-          'export default [s => ({ state: {}, references: [], x: 22, y: 33 })]',
+          'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
         next: {
           job2: true,
         },
@@ -272,7 +272,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
   };
   const result = await executePlan(plan, {}, { strict: true });
   t.deepEqual(result, {
-    state: {},
+    data: {},
     references: [],
   });
 });
@@ -350,7 +350,7 @@ test('all state is passed through in non-strict mode', async (t) => {
     jobs: [
       {
         expression:
-          'export default [s => ({ state: {}, references: [], x: 22, y: 33 })]',
+          'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
         next: {
           job2: true,
         },
@@ -366,7 +366,7 @@ test('all state is passed through in non-strict mode', async (t) => {
   };
   const result = await executePlan(plan, {}, { strict: false });
   t.deepEqual(result, {
-    state: {},
+    data: {},
     references: [],
     x: 22,
     y: 33,
