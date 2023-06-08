@@ -514,7 +514,7 @@ test.serial(
       jobs: [
         {
           adaptor: 'common',
-          data: { done: true },
+          state: { data: { done: true } },
           expression: 'alterState(s => s)',
         },
       ],
