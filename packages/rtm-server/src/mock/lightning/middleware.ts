@@ -53,6 +53,11 @@ export const createFetchNextJob =
     }
   };
 
+export const createListNextJob = (state: ServerState) => (ctx: Koa.Context) => {
+  ctx.body = state.queue.map(({ id }) => id);
+  ctx.status = 200;
+};
+
 export const createGetCredential =
   (state: ServerState) => (ctx: Koa.Context) => {
     const { credentials } = state;

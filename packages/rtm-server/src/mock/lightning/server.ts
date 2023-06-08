@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
+import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 
 import createAPI from './api';
@@ -37,11 +38,15 @@ const createLightningServer = (options = {}) => {
 
   // Server setup
   const app = new Koa();
-  const api = createAPI(new Router(), state);
   app.use(bodyParser());
 
+  const logger = koaLogger();
+
   // Mock API endpoints
+  const api = createAPI(new Router({ prefix: '/api/1' }), logger, state);
   app.use(api.routes());
+
+  app.use(logger);
 
   // Dev APIs for unit testing
   app.addCredential = (id: string, cred: Credential) => {

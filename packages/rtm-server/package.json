@@ -11,6 +11,7 @@
     "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts --no-splitting",
     "build:watch": "pnpm build --watch",
     "start": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" ts-node-esm src/start.ts",
+    "start:lightning": "ts-node-esm --transpile-only src/mock/lightning/start.ts",
     "start:watch": "nodemon -e ts,js --watch ../runtime-manager/dist --watch ./src --exec 'pnpm start'"
   },
   "author": "Open Function Group <admin@openfn.org>",
