@@ -256,7 +256,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
     jobs: [
       {
         expression:
-          'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
+          'export default [s => ({ state: {}, references: [], x: 22, y: 33 })]',
         next: {
           job2: true,
         },
@@ -272,7 +272,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
   };
   const result = await executePlan(plan, {}, { strict: true });
   t.deepEqual(result, {
-    data: {},
+    state: {},
     references: [],
   });
 });
@@ -350,7 +350,7 @@ test('all state is passed through in non-strict mode', async (t) => {
     jobs: [
       {
         expression:
-          'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
+          'export default [s => ({ state: {}, references: [], x: 22, y: 33 })]',
         next: {
           job2: true,
         },
@@ -366,7 +366,7 @@ test('all state is passed through in non-strict mode', async (t) => {
   };
   const result = await executePlan(plan, {}, { strict: false });
   t.deepEqual(result, {
-    data: {},
+    state: {},
     references: [],
     x: 22,
     y: 33,
@@ -563,7 +563,7 @@ test('return an error in state', async (t) => {
     jobs: [
       {
         id: 'a',
-        data: {},
+        state: {},
         expression: 'export default [s => { throw Error("e")}]',
       },
     ],
@@ -578,7 +578,7 @@ test('keep executing after an error', async (t) => {
     jobs: [
       {
         id: 'a',
-        data: {},
+        state: {},
         expression: 'export default [s => { throw Error("e"); state.x = 20 }]',
         next: {
           b: true,
@@ -600,7 +600,7 @@ test('simple on-error handler', async (t) => {
     jobs: [
       {
         id: 'job1',
-        data: {},
+        state: {},
         expression: 'export default [s => { throw Error("e")}]',
         next: {
           job2: { condition: 'state.errors' },
@@ -627,7 +627,7 @@ test('log appopriately on error', async (t) => {
     jobs: [
       {
         id: 'job1',
-        data: {},
+        state: {},
         expression: 'export default [s => { throw Error("e")}]',
       },
     ],
@@ -908,8 +908,8 @@ test('Plans log for each job start and end', async (t) => {
   await executePlan(plan, {}, {}, logger);
 
   const start = logger._find('always', /starting job/i);
-  t.is(start.message, 'Starting job a');
+  t.is(start!.message, 'Starting job a');
 
   const end = logger._find('success', /completed job/i);
-  t.regex(end.message, /Completed job a in \d+ms/);
+  t.regex(end!.message as string, /Completed job a in \d+ms/);
 });
