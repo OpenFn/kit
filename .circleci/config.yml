@@ -16,7 +16,7 @@ jobs:
     steps:
       - run:
           name: Install pnpm
-          command: sudo corepack enable && corepack prepare pnpm@7.14.2 --activate
+          command: sudo corepack enable && corepack prepare pnpm@8.6.0 --activate
       - checkout
       - restore_cache:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
