@@ -48,6 +48,7 @@ export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
 type Options = {
   repoDir: string;
   logger: Logger;
+  skipRepoValidation: boolean;
   handleInstall?(
     fn: string,
     options?: Pick<Options, 'repoDir' | 'logger'>
@@ -66,9 +67,10 @@ const createAutoInstall = (options: Options) => {
   const pending: Record<string, Promise<void>> = {};
 
   let didValidateRepo = false;
+  const { skipRepoValidation } = options;
 
   return async (plan: ExecutionPlan): Promise<ModulePaths> => {
-    if (!didValidateRepo && options.repoDir) {
+    if (!skipRepoValidation && !didValidateRepo && options.repoDir) {
       // TODO what if this throws?
       // Whole server probably needs to crash, so throwing is probably appropriate
       await ensureRepo(options.repoDir, options.logger);

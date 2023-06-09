@@ -114,7 +114,7 @@ test('autoinstall: only call install once if there are two concurrent install re
   t.is(callCount, 1);
 });
 
-test.only('autoinstall: return a map to modules', async (t) => {
+test('autoinstall: return a map to modules', async (t) => {
   const plan = {
     // Note that we have difficulty now if a workflow imports two versions of the same adaptor
     jobs: [
@@ -129,6 +129,7 @@ test.only('autoinstall: return a map to modules', async (t) => {
 
   const autoinstall = createAutoInstall({
     repoDir: 'a/b/c',
+    skipRepoValidation: true,
     handleInstall: async () => true,
     handleIsInstalled: async () => false,
   });
