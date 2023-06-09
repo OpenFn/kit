@@ -46,7 +46,7 @@ export default (attempt: Attempt): ExecutionPlan => {
 
       if (job.state) {
         // TODO this is likely to change
-        nodes[id].data = job.state;
+        nodes[id].state = job.state;
       }
 
       const next = edges
