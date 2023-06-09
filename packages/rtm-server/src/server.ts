@@ -109,12 +109,14 @@ function createServer(rtm: any, options: ServerOptions = {}) {
     logger.warn('No lightning URL provided');
   }
 
-  // TODO how about an 'all' so we can "route" events?
-  rtm.on('workflow-complete', ({ id, state }: { id: string; state: any }) => {
-    logger.log(`${id}: workflow complete: `, id);
-    logger.log(state);
-    postResult(rtm.id, options.lightning!, id, state);
-  });
+  rtm.on(
+    'workflow-complete',
+    ({ workflowId, state }: { workflowId: string; state: any }) => {
+      logger.log(`workflow complete: `, workflowId);
+      logger.log(state);
+      postResult(rtm.id, options.lightning!, workflowId, state);
+    }
+  );
 
   rtm.on('log', ({ id, messages }: { id: string; messages: any[] }) => {
     logger.log(`${id}: `, ...messages);

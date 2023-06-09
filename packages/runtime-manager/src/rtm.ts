@@ -175,7 +175,6 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
     logger.debug('workflow compiled ', plan.id);
     const result = await execute(compiledPlan);
-    logger.success(result);
     completeWorkflow(plan.id!, result);
 
     logger.debug('finished executing workflow ', plan.id);
