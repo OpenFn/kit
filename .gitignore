@@ -31,3 +31,5 @@ tmp
 
 *.drawio.bkp
 .fuse
+
+.state.json
