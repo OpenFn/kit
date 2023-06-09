@@ -18,10 +18,22 @@ const doHandleInstall = (specifier: string, options: Options) =>
 // TODO this should probably all be handled (and tested) in @openfn/runtime
 const doIsInstalled = async (specifier: string, options: Options) => {
   const alias = getAliasedName(specifier);
+  if (!alias.match('_')) {
+    // Note that if the adaptor has no version number, the alias will be "wrong"
+    // and we will count the adaptor as uninstalled
+    // The install function will later decide a version number and may, or may
+    // not, install for us.
+    // This log isn't terrible helpful as there's no attempt version info
+    options.logger.warn(
+      `adaptor ${specifier} does not have a version number - will attempt to auto-install`
+    );
+  }
   // TODO is it really appropriate to load this file each time?
   const pkg = await loadRepoPkg(options.repoDir);
   if (pkg) {
     const { dependencies } = pkg;
+    console.log(alias);
+    console.log(dependencies);
     return dependencies.hasOwnProperty(alias);
   }
 };

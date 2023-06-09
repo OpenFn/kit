@@ -133,7 +133,13 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     // Seamlessly proxy the log to the local stdout
     // TODO runtime logging probably needs to be at info level?
     // Debug information is mostly irrelevant for lightning
-    logger.proxy(message);
+    const newMessage = {
+      ...message,
+      // Prefix the job id in all local jobs
+      // I'm sure there are nicer, more elegant ways of doing this
+      message: [`[${workflowId}]`, ...message.message],
+    };
+    logger.proxy(newMessage);
     events.emit(e.WORKFLOW_LOG, {
       workflowId,
       message,
