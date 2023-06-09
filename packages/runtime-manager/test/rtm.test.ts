@@ -85,7 +85,7 @@ test('events: workflow-complete', async (t) => {
   await rtm.execute(plan);
 
   t.true(didCall);
-  t.is(evt.workflowId, plan.id);
+  t.is(evt.id, plan.id);
   t.assert(!isNaN(evt.duration));
   t.deepEqual(evt.state, { data: { answer: 42 } });
 });
