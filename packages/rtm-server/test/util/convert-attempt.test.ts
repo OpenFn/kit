@@ -64,7 +64,7 @@ test('convert a single job with data', (t) => {
 
   t.deepEqual(result, {
     id: 'w',
-    jobs: [createJob({ data: { data: { x: 22 } } })],
+    jobs: [createJob({ state: { data: { x: 22 } } })],
   });
 });
 
