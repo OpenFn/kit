@@ -44,7 +44,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const app = new Koa();
   app.use(bodyParser());
 
-  const klogger = koaLogger((str) => logger.log(str));
+  const klogger = koaLogger((str) => logger.debug(str));
   app.use(klogger);
 
   // Mock API endpoints

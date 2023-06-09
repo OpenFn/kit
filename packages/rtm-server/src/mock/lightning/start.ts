@@ -3,7 +3,7 @@ import createLogger from '@openfn/logger';
 
 const port = '8888';
 
-const logger = createLogger('LNG', { level: 'info' });
+const logger = createLogger('LNG', { level: 'debug' });
 
 createLightningServer({
   port,
