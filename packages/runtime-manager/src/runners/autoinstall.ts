@@ -32,8 +32,6 @@ const doIsInstalled = async (specifier: string, options: Options) => {
   const pkg = await loadRepoPkg(options.repoDir);
   if (pkg) {
     const { dependencies } = pkg;
-    console.log(alias);
-    console.log(dependencies);
     return dependencies.hasOwnProperty(alias);
   }
 };
