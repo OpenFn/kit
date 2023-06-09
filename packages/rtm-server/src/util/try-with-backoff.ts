@@ -1,6 +1,3 @@
-// re-usable function which will try a thing repeatedly
-// TODO take a timeout
-
 type Options = {
   attempts?: number;
   maxAttempts?: number;
@@ -8,23 +5,21 @@ type Options = {
   timeout?: number;
 };
 
-// what is the API to this?
-// Function should throw if it fails
-// but in the main work loop it's not reall a fail for no work
-// And we should back off
-// under what circumstance should this function throw?
-// If it timesout
-// Can the inner function force a throw? An exit early?
+const MAX_BACKOFF = 1000 * 60;
+
+// This function will try and call its first argument every {opts.timeout|100}ms
+// If the function throws, it will "backoff" and try again a little later
+// Right now it's a bit of a sketch, but it sort of works!
 const tryWithBackoff = (fn: any, opts: Options = {}) => {
   if (!opts.timeout) {
-    opts.timeout = 100; // TODO errors occur if this is too low?
+    opts.timeout = 100;
   }
   if (!opts.attempts) {
     opts.attempts = 1;
   }
   let { timeout, attempts, maxAttempts } = opts;
-  timeout = timeout || 1;
-  attempts = attempts || 1;
+  timeout = timeout;
+  attempts = attempts;
 
   return new Promise<void>(async (resolve, reject) => {
     try {
@@ -41,8 +36,9 @@ const tryWithBackoff = (fn: any, opts: Options = {}) => {
         const nextOpts = {
           maxAttempts,
           attempts: attempts + 1,
-          timeout: timeout * 2,
+          timeout: Math.min(MAX_BACKOFF, timeout * 1.2),
         };
+
         tryWithBackoff(fn, nextOpts).then(resolve).catch(reject);
       }, timeout);
     }

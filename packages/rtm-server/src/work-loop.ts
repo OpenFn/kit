@@ -19,13 +19,14 @@ export default (
       },
     });
     if (result.body) {
-      result.json().then((workflows) => {
+      const workflows = await result.json();
+      if (workflows.length) {
         workflows.forEach(execute);
-      });
-      return true;
+        return true;
+      }
     }
-    // return false to backoff and try again
-    return false;
+    // throw to backoff and try again
+    throw new Error('backoff');
   };
 
   const workLoop = () => {

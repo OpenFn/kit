@@ -2,6 +2,8 @@ import test from 'ava';
 
 import tryWithBackoff from '../../src/util/try-with-backoff';
 
+// TODO these unit tests are terrible and don't actually exercise the backoff or timeout interval
+
 test('return immediately', async (t) => {
   let callCount = 0;
   const fn = async () => {

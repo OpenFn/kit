@@ -18,15 +18,17 @@ The server will listen to start, end, and log events in the RTM and POST them ba
 
 ## Dev server
 
-You can start a dev server by running
+You can start a dev server by running:
 
 ```
 pnpm start:watch
 ```
 
-This will wrap a real runtime manager instance into the server. It will rebuild when the server or RTM code changes.
+This will wrap a real runtime manager instance into the server. It will rebuild when the server or RTM code changes (although you'll have to `pnpm build:watch` in `runtime-manager`)
 
-By default this does not connect to a lightning instance. [TODO need to enable this to talk to the default lightning mock server if it's enabled]
+To connect to a lightning instance, pass the `-l` flag. Use `-l mock` to connect to the default mock server from this repo, or pass your own url.
+
+The server will create a Runtime Manager instance using the repo at `OPENFN_RTM_REPO_DIR` or `/tmp/openfn/repo`.
 
 ## Lightning Mock
 

@@ -95,7 +95,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   app.use(apiRouter.allowedMethods());
 
   app.listen(port);
-  logger.info('Listening on', port);
+  logger.success('Listening on', port);
 
   (app as any).destroy = () => {
     // TODO close the work loop

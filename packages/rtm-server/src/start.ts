@@ -10,9 +10,10 @@ type Args = {
   _: string[];
   port?: number;
   lightning?: string;
+  repoDir?: string;
 };
 
-const logger = createLogger('SRV');
+const logger = createLogger('SRV', { level: 'info' });
 
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a runtime manager server')
@@ -24,11 +25,20 @@ const args = yargs(hideBin(process.argv))
   })
   .option('lightning', {
     alias: 'l',
-    description: 'Base url to Lightning',
+    description:
+      'Base url to Lightning, eg, http://localhost:1234. Set to "mock" to use the default mock server',
+  })
+  .option('repo-dir', {
+    alias: 'd',
+    description: 'Path to the runtime repo (where modules will be installed)',
   })
   .parse() as Args;
 
-const rtm = createRTM();
+if (args.lightning === 'mock') {
+  args.lightning = 'http://localhost:8888';
+}
+
+const rtm = createRTM('rtm', { repoDir: args.repoDir });
 logger.debug('RTM created');
 
 createRTMServer(rtm, {
