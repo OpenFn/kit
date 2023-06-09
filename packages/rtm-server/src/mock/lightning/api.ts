@@ -1,4 +1,4 @@
-import type Router from '@koa/router';
+import Router from '@koa/router';
 import {
   unimplemented,
   createListNextJob,
@@ -8,6 +8,8 @@ import {
   createComplete,
 } from './middleware';
 import type { ServerState } from './server';
+
+import { API_PREFIX } from './server';
 
 interface RTMBody {
   rtm_id: string;
@@ -19,11 +21,11 @@ export interface AttemptCompleteBody extends RTMBody {
   state: any; // JSON state object (undefined? null?)
 }
 
-export default (router: Router, logger, state: ServerState) => {
-  router.use(logger);
-
-  // Basically all requests must include an rtm_id
-  // And probably later a security token
+// Note that this API is hosted at api/1
+export default (state: ServerState) => {
+  const router = new Router({ prefix: API_PREFIX });
+  // Basically all requests must include an rtm_id (And probably later a security token)
+  // TODO actually, is this an RTM Id or an RTM Server id?
 
   // POST attempts/next
   // Removes Attempts from the queue and returns them to the caller
@@ -64,5 +66,5 @@ export default (router: Router, logger, state: ServerState) => {
   router.get('/workflows', unimplemented);
   router.get('/workflows/:id', unimplemented);
 
-  return router;
+  return router.routes();
 };

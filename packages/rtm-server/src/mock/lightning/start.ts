@@ -10,4 +10,4 @@ createLightningServer({
   logger,
 });
 
-console.log('Started mock Lightning server on ', port);
+logger.success('Started mock Lightning server on ', port);

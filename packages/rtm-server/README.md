@@ -30,6 +30,10 @@ By default this does not connect to a lightning instance. [TODO need to enable t
 
 ## Lightning Mock
 
+See `src/mock/lightning/api.ts` for an overview of the expected formal lightning API. This is the API that the RTM server will call.
+
+Additional dev-time API's can be found in `src/mock/lightning/api-dev.ts`. These are for testing purposes only and not expected to be part of the Lightning platform.
+
 You can start a Lightning mock server with:
 ```
 pnpm start:lightning

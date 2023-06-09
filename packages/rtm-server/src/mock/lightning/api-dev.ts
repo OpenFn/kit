@@ -80,7 +80,7 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger) => {
 
 // Set up some rest endpoints
 // Note that these are NOT prefixed
-const setupRestAPI = (app: DevApp, state: ServerState, logger) => {
+const setupRestAPI = (app: DevApp, _state: ServerState, logger: Logger) => {
   const router = new Router();
 
   router.post('/attempt', (ctx) => {
@@ -95,10 +95,10 @@ const setupRestAPI = (app: DevApp, state: ServerState, logger) => {
     ctx.response.status = 200;
   });
 
-  app.use(router.routes());
+  return router.routes();
 };
 
 export default (app: DevApp, state: ServerState, logger: Logger) => {
   setupDevAPI(app, state, logger);
-  setupRestAPI(app, state, logger);
+  return setupRestAPI(app, state, logger);
 };

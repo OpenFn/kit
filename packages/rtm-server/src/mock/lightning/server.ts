@@ -2,7 +2,6 @@ import { EventEmitter } from 'node:events';
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
-import Router from '@koa/router';
 import { createMockLogger, LogLevel, Logger } from '@openfn/logger';
 
 import createAPI from './api';
@@ -49,10 +48,8 @@ const createLightningServer = (options: LightningOptions = {}) => {
   app.use(klogger);
 
   // Mock API endpoints
-  const api = createAPI(new Router({ prefix: API_PREFIX }), klogger, state);
-  app.use(api.routes());
-
-  createDevAPI(app, state, logger);
+  app.use(createAPI(state));
+  app.use(createDevAPI(app as any, state, logger));
 
   const server = app.listen(options.port || 8888);
   app.destroy = () => {
