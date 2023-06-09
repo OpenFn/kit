@@ -44,6 +44,11 @@ export default (attempt: Attempt): ExecutionPlan => {
         adaptor: job.adaptor,
       };
 
+      if (job.state) {
+        // TODO this is likely to change
+        nodes[id].data = job.state;
+      }
+
       const next = edges
         .filter((e) => e.source_job_id === id)
         .reduce((obj, edge) => {

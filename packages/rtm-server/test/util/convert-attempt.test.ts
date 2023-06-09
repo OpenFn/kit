@@ -51,6 +51,23 @@ test('convert a single job', (t) => {
   });
 });
 
+// Note idk how lightningg will handle state/defaults on a job
+// but this is what we'll do right now
+test('convert a single job with data', (t) => {
+  const attempt: Attempt = {
+    id: 'w',
+    jobs: [createNode({ state: { data: { x: 22 } } })],
+    triggers: [],
+    edges: [],
+  };
+  const result = convertAttempt(attempt);
+
+  t.deepEqual(result, {
+    id: 'w',
+    jobs: [createJob({ data: { data: { x: 22 } } })],
+  });
+});
+
 test('Accept a partial attempt object', (t) => {
   const attempt: Partial<Attempt> = {
     id: 'w',

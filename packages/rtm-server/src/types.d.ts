@@ -18,6 +18,7 @@ export type Node = {
   adaptor?: string;
   credential?: any; // TODO tighten this up, string or object
   type?: 'webhook' | 'cron'; // trigger only
+  state?: any; // Initial state / defaults
 };
 
 export interface Edge {
