@@ -147,7 +147,7 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   };
 
   // Create "runner" functions for execute and compile
-  const execute = createExecute(workers, repoDir, logger, {
+  const execute = createExecute(workers, logger, {
     start: onWorkflowStarted,
     log: onWorkflowLog,
   });
@@ -168,13 +168,13 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
       plan,
     });
 
-    await autoinstall(plan);
+    const adaptorPaths = await autoinstall(plan);
 
     // Don't compile if we're running a mock (not a fan of this)
     const compiledPlan = noCompile ? plan : await compile(plan);
 
     logger.debug('workflow compiled ', plan.id);
-    const result = await execute(compiledPlan);
+    const result = await execute(compiledPlan, adaptorPaths);
     completeWorkflow(plan.id!, result);
 
     logger.debug('finished executing workflow ', plan.id);

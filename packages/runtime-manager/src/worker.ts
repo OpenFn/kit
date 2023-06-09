@@ -18,14 +18,16 @@ import type { ExecutionPlan } from '@openfn/runtime';
 import helper, { createLoggers } from './worker-helper';
 
 workerpool.worker({
-  run: (plan: ExecutionPlan, repoDir: string) => {
+  run: (
+    plan: ExecutionPlan,
+    adaptorPaths: Record<string, { path: string }>
+  ) => {
     const { logger, jobLogger } = createLoggers(plan.id!);
-
     const options = {
       logger,
       jobLogger,
       linker: {
-        repo: repoDir,
+        modules: adaptorPaths,
       },
     };
 

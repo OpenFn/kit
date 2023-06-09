@@ -113,3 +113,29 @@ test('autoinstall: only call install once if there are two concurrent install re
 
   t.is(callCount, 1);
 });
+
+test.only('autoinstall: return a map to modules', async (t) => {
+  const plan = {
+    // Note that we have difficulty now if a workflow imports two versions of the same adaptor
+    jobs: [
+      {
+        adaptor: 'common@1.0.0',
+      },
+      {
+        adaptor: 'http@1.0.0',
+      },
+    ],
+  };
+
+  const autoinstall = createAutoInstall({
+    repoDir: 'a/b/c',
+    handleInstall: async () => true,
+    handleIsInstalled: async () => false,
+  });
+
+  const result = await autoinstall(plan);
+  t.deepEqual(result, {
+    common: { path: 'a/b/c/node_modules/common_1.0.0' },
+    http: { path: 'a/b/c/node_modules/http_1.0.0' },
+  });
+});

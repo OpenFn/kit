@@ -4,6 +4,7 @@ import {
   ExecutionPlan,
   ensureRepo,
   getAliasedName,
+  getNameAndVersion,
   loadRepoPkg,
 } from '@openfn/runtime';
 import { install } from '@openfn/runtime';
@@ -57,6 +58,8 @@ type Options = {
   ): Promise<boolean>;
 };
 
+export type ModulePaths = Record<string, { path: string }>;
+
 const createAutoInstall = (options: Options) => {
   const install = options.handleInstall || doHandleInstall;
   const isInstalled = options.handleIsInstalled || doIsInstalled;
@@ -64,7 +67,7 @@ const createAutoInstall = (options: Options) => {
 
   let didValidateRepo = false;
 
-  return async (plan: ExecutionPlan): Promise<void> => {
+  return async (plan: ExecutionPlan): Promise<ModulePaths> => {
     if (!didValidateRepo && options.repoDir) {
       // TODO what if this throws?
       // Whole server probably needs to crash, so throwing is probably appropriate
@@ -72,10 +75,17 @@ const createAutoInstall = (options: Options) => {
       didValidateRepo = true;
     }
 
-    const adaptors = identifyAdaptors(plan);
+    const adaptors = Array.from(identifyAdaptors(plan));
     // TODO would rather do all this in parallel but this is fine for now
     // TODO set iteration is weirdly difficult?
-    for (const a of Array.from(adaptors)) {
+    const paths: ModulePaths = {};
+    for (const a of adaptors) {
+      // Return a path name to this module for the linker to use later
+      // TODO this is all a bit rushed
+      const alias = getAliasedName(a);
+      const { name } = getNameAndVersion(a);
+      paths[name] = { path: `${options.repoDir}/node_modules/${alias}` };
+
       const needsInstalling = !(await isInstalled(a, options));
       if (needsInstalling) {
         if (!pending[a]) {
@@ -86,6 +96,7 @@ const createAutoInstall = (options: Options) => {
         await pending[a].then();
       }
     }
+    return paths;
   };
 };
 
