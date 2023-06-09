@@ -10,6 +10,7 @@ import * as e from './events';
 import createCompile from './runners/compile';
 import createExecute from './runners/execute';
 import createLogger, { JSONLog, Logger } from '@openfn/logger';
+import createAutoInstall from './runners/autoinstall';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -146,6 +147,8 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   });
   const compile = createCompile(logger, repoDir);
 
+  const autoinstall = createAutoInstall({ repoDir, logger });
+
   // How much of this happens inside the worker?
   // Shoud the main thread handle compilation? Has to if we want to cache
   // Unless we create a dedicated compiler worker
@@ -159,7 +162,7 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
       plan,
     });
 
-    // TODO autoinstall
+    await autoinstall(plan);
 
     // Don't compile if we're running a mock (not a fan of this)
     const compiledPlan = noCompile ? plan : await compile(plan);
@@ -176,29 +179,11 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     return result;
   };
 
-  // const getActiveJobs = (): WorkflowStats[] => {
-  //   const jobs = allWorkflows.map((id) => workflowList.get(id));
-  //   return jobs.filter((j) => j) as WorkflowStats[]; // no-op for typings
-  // };
-
-  // const getCompletedJobs = (): WorkflowStats[] => {
-  //   return Array.from(allWorkflows.values()).filter((workflow) => workflow.status === 'done');
-  // };
-
-  // const getErroredJobs = (): WorkflowStats[] => {
-  //   return Array.from(workflowsList.values()).filter((workflow) => workflow.status === 'err');
-  // };
-
   return {
     id,
     on: (type: string, fn: (...args: any[]) => void) => events.on(type, fn),
     once: (type: string, fn: (...args: any[]) => void) => events.once(type, fn),
     execute: handleExecute,
-    // getStatus, // no tests on this yet, not sure if I want to commit to it
-
-    // getActiveJobs,
-    // getCompletedJobs,
-    // getErroredJobs,
   };
 };
 
