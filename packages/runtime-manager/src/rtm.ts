@@ -121,7 +121,7 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
     // forward the event on to any external listeners
     events.emit(e.WORKFLOW_COMPLETE, {
-      workflowId,
+      id: workflowId,
       duration: workflow.duration,
       state,
     });
@@ -175,7 +175,7 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
 
     logger.debug('workflow compiled ', plan.id);
     const result = await execute(compiledPlan, adaptorPaths);
-    completeWorkflow(plan.id!, result);
+    completeWorkflow(compiledPlan.id!, result);
 
     logger.debug('finished executing workflow ', plan.id);
     // Return the result
