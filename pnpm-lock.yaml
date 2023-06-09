@@ -428,7 +428,7 @@ importers:
   packages/runtime-manager:
     dependencies:
       '@openfn/compiler':
-        specifier: workspace:^0.0.34
+        specifier: workspace:*
         version: link:../compiler
       '@openfn/language-common':
         specifier: 2.0.0-rc3
@@ -439,12 +439,6 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@types/koa':
-        specifier: ^2.13.5
-        version: 2.13.5
-      '@types/workerpool':
-        specifier: ^6.1.0
-        version: 6.1.0
       koa:
         specifier: ^2.13.4
         version: 2.13.4
@@ -452,9 +446,15 @@ importers:
         specifier: ^6.2.1
         version: 6.2.1
     devDependencies:
+      '@types/koa':
+        specifier: ^2.13.5
+        version: 2.13.5
       '@types/node':
         specifier: ^17.0.31
         version: 17.0.45
+      '@types/workerpool':
+        specifier: ^6.1.0
+        version: 6.1.0
       ava:
         specifier: 5.1.0
         version: 5.1.0
@@ -1426,7 +1426,7 @@ packages:
     resolution: {integrity: sha512-C+J/c1BHyc351xJuiH2Jbe+V9hjf5mCzRP0UK4KEpF5SpuU+vJ/FC5GLZsCU/PJpp/3I6Uwtfm3DG7Lmrb7LOQ==}
     dependencies:
       '@types/node': 18.15.3
-    dev: false
+    dev: true
 
   /@types/wrap-ansi@3.0.0:
     resolution: {integrity: sha512-ltIpx+kM7g/MLRZfkbL7EsCEjfzCcScLpkg37eXEtx5kmrAKBkTJwd1GIAjDSL8wTpM6Hzn5YO4pSb91BEwu1g==}

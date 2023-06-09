@@ -48,7 +48,7 @@ export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
 type Options = {
   repoDir: string;
   logger: Logger;
-  skipRepoValidation: boolean;
+  skipRepoValidation?: boolean;
   handleInstall?(
     fn: string,
     options?: Pick<Options, 'repoDir' | 'logger'>
