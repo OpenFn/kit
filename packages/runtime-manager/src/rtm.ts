@@ -70,9 +70,17 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   const events = new EventEmitter();
 
   if (!repoDir) {
-    repoDir = '/tmp/openfn/repo';
-    logger.info('Defaulting repoDir to ', repoDir);
+    if (process.env.OPENFN_RTM_REPO_DIR) {
+      repoDir = process.env.OPENFN_RTM_REPO_DIR;
+    } else {
+      repoDir = '/tmp/openfn/repo';
+      logger.warn('Using default repodir');
+      logger.warn(
+        'Set env var OPENFN_RTM_REPO_DIR to use a different directory'
+      );
+    }
   }
+  logger.info('repoDir set to ', repoDir);
 
   const onWorkflowStarted = (workflowId: string, threadId: number) => {
     logger.info('starting workflow ', workflowId);
