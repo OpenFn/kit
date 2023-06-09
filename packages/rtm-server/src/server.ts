@@ -109,14 +109,11 @@ function createServer(rtm: any, options: ServerOptions = {}) {
     logger.warn('No lightning URL provided');
   }
 
-  rtm.on(
-    'workflow-complete',
-    ({ workflowId, state }: { workflowId: string; state: any }) => {
-      logger.log(`workflow complete: `, workflowId);
-      logger.log(state);
-      postResult(rtm.id, options.lightning!, workflowId, state);
-    }
-  );
+  rtm.on('workflow-complete', ({ id, state }: { id: string; state: any }) => {
+    logger.log(`workflow complete: `, id);
+    logger.log(state);
+    postResult(rtm.id, options.lightning!, id, state);
+  });
 
   rtm.on('log', ({ id, messages }: { id: string; messages: any[] }) => {
     logger.log(`${id}: `, ...messages);
