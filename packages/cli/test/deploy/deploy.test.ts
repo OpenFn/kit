@@ -1,7 +1,6 @@
 // Test the actual functionality of docgen
 // ie, generate docs to a mock folder
 import test from 'ava';
-import { readFileSync } from 'node:fs';
 import mockfs from 'mock-fs';
 import { Logger, createMockLogger } from '@openfn/logger';
 import deployHandler, { DeployFn } from '../../src/deploy/handler';
@@ -23,8 +22,6 @@ test.beforeEach(() => {
 
   process.env = originalEnv;
 });
-
-const exampleProject = readFileSync('./project.yaml', 'utf8');
 
 type Fn<Params extends unknown[] = any[], Result = any> = (
   ...args: Params
