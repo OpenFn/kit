@@ -16,6 +16,7 @@ ts.cache
 # Package management
 .yarn/*
 .pnp.*
+.pnpm-store
 
 !.yarn/patches
 !.yarn/plugins
@@ -31,5 +32,3 @@ tmp
 
 *.drawio.bkp
 .fuse
-
-.state.json
