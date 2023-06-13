@@ -1,5 +1,5 @@
-import yargs, { Argv } from 'yargs';
-import { build, ensure, override } from '../util/command-builders';
+import yargs from 'yargs';
+import { build, ensure } from '../util/command-builders';
 import { Opts } from '../options';
 import * as o from '../options';
 
@@ -16,17 +16,7 @@ export type DeployOptions = Required<
   >
 >;
 
-const options = [
-  o.logJson,
-  override(o.statePath, {
-    default: './.state.json',
-  }),
-  o.projectPath,
-  override(o.configPath, {
-    default: './.config.json',
-  }),
-  o.confirm,
-];
+const options = [o.statePath, o.projectPath, o.configPath, o.confirm];
 
 const deployCommand = {
   command: 'deploy',

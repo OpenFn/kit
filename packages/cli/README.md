@@ -1,16 +1,35 @@
 # @openfn/cli
 
-This package contains a new devtools CLI for running OpenFn jobs.
+This package contains a new devtools CLI for running and deploying OpenFn jobs.
 
 The CLI includes:
 
-* A secure runtime for executing OpenFn jobs and workflows
-* A compiler for making OpenFn jobs runnable
-* Configurable logging output
-* Auto-installation of language adaptors
-* Support for the adaptors monorepo
+- A secure runtime for executing OpenFn jobs and workflows
+- A compiler for making OpenFn jobs runnable
+- Configurable logging output
+- Auto-installation of language adaptors
+- Support for the adaptors monorepo
+- Deployment of workflows to OpenFn (and Lightning)
 
 ## Getting Started
+
+- [Installation](#installation)
+- [Updating](#updating)
+- [Migrating from devtools](#migrating-from-devtools)
+- [Basic Usage](#basic-usage)
+- [Advanced Usage](#advanced-usage)
+- [Deploying Workflows](#deploying-workflows)
+- [Logging](#logging)
+  - [Structured/JSON logging](#structuredjson-logging)
+- [Workflows](#workflows)
+- [Compilation](#compilation)
+- [Contributing](#contributing)
+  - [Usage from this repo](#usage-from-this-repo)
+  - [Installing globally](#installing-globally)
+  - [Repo Directory](#repo-directory)
+  - [Contribution changes](#contribution-changes)
+
+## Installation
 
 To install:
 
@@ -56,13 +75,12 @@ And then re-installing.
 
 If you're coming to the CLI from the old openfn devtools, here are a couple of key points to be aware of:
 
-* The CLI has a shorter, sleeker syntax, so your command should be much shorter
-* The CLI will automatically install adaptors for you (with full version control)
+- The CLI has a shorter, sleeker syntax, so your command should be much shorter
+- The CLI will automatically install adaptors for you (with full version control)
 
 ## Basic Usage
 
 You're probably here to run jobs (expressions) or workflows, which the CLI makes easy:
-
 
 ```
 openfn path/to/workflow.json
@@ -87,24 +105,123 @@ You can pass `--log info` to get more feedback about what's happening, or `--log
 
 The CLI has a number of commands (the first argument after openfn)
 
-* execute - run a job
-* compile - compile a job to a .js file
-* docs - show documentation for an adaptor function
-* repo - manage the repo of installed modules
-* docgen - generate JSON documentation for an adaptor based on its typescript
+- execute - run a job
+- compile - compile a job to a .js file
+- docs - show documentation for an adaptor function
+- repo - manage the repo of installed modules
+- docgen - generate JSON documentation for an adaptor based on its typescript
 
 If no command is specified, execute will run.
 
 To get more information about a command, including usage examples, run `openfn <command> help`, ie, `openfn compile help`.
 
-## Logging 
+## Deploying Workflows
+
+> ⚠️ This feature is still in active development. Expect breaking changes.
+
+The CLI can deploy workflows to OpenFn.org and instances of Lightning.
+
+In order to deploy a workflow, you need the follow:
+
+- A project file written in YAML
+- A config file (or env vars) with your OpenFn credentials
+
+Example project file:
+
+```yaml
+---
+name: my-new-project
+workflows:
+  workflow-one:
+    name: My New Workflow
+    jobs:
+      job-a:
+        name: My First Job
+        enabled: true # default
+        adaptor: @openfn/language-http@latest
+        body: |
+          alterState(state => {
+            console.log("Hello world!");
+            return state;
+          });
+      job-b:
+        name: My Second Job
+        adaptor: @openfn/language-common@latest
+        body: |
+          alterState(state => {
+            console.log("Hello world!");
+            return state;
+          });
+    triggers:
+      trigger-one:
+        type: webhook # default
+    edges:
+      webhook->job-a:
+        source_trigger: trigger-one
+        target_job: job-a
+      job-a->job-b:
+        source_job: job-a
+        target_job: job-b
+
+```
+
+Example config file:
+
+```jsonc
+{
+  // Required, can be overridden or set with `OPENFN_API_KEY` env var
+  "apiKey": "***",
+
+  // Optional: can be set using the -p, defaults to project.yaml
+  "specPath": "project.yaml",
+
+  // Optional: can be set using -s, defaults to .state.json
+  "statePath": ".state.json",
+
+  // Optional: defaults to OpenFn.org's API, can be overridden or set with
+  // `OPENFN_ENDPOINT` env var
+  "endpoint": "https://app.openfn.org/api/provision"
+}
+```
+
+**Environment Variables**
+
+You can also set the following environment variables to avoid using a config file:
+
+- `OPENFN_API_KEY` - your OpenFn/Lightning API key
+- `OPENFN_ENDPOINT` - the endpoint to deploy to (defaults to OpenFn.org)
+
+**Using the CLI**
+
+```bash
+OPENFN_API_KEY="***" \
+openfn deploy
+
+# [CLI] ♦ Changes:
+#  {
+# + ... diff
+# - ... diff
+#  }
+#
+# ? Deploy? yes
+# [CLI] ♦ Deployed.
+```
+
+**Flags and Options**
+
+- `-p, --project-path <path>` - path to the project file (defaults to `project.yaml`)
+- `-s, --state-path <path>` - path to the state file (defaults to `.state.json`)
+- `-c, --config, --config-path` - path to the config file (defaults to `config.json`)
+- `--no-confirm` - skip the confirmation prompt
+
+## Logging
 
 The CLI is actually a collection of packages, each of which will log with slightly different rules. To help understand where logs are coming from, each package prints a namespace or prefix at the start of its log.
 
-* [CLI] - the CLI itself, responsible for parsing and validating user input, reading and writing to disk, and executing the correct functionality.
-* [CMP] - the Compiler will parse openfn jobs into executable Javascript, changing your code
-* [R/T] - the Runtime executes your job code in a secure sandboxed environment, one operation at a time
-* [JOB] - the actual job code that your wrote. Any console.log statements in your job will appear under this namespace.
+- [CLI] - the CLI itself, responsible for parsing and validating user input, reading and writing to disk, and executing the correct functionality.
+- [CMP] - the Compiler will parse openfn jobs into executable Javascript, changing your code
+- [R/T] - the Runtime executes your job code in a secure sandboxed environment, one operation at a time
+- [JOB] - the actual job code that your wrote. Any console.log statements in your job will appear under this namespace.
 
 The CLI will log information at three different levels of verbosity: `default`, `info` and `debug` (`none` is also supported).
 
@@ -120,14 +237,18 @@ If something unexpected happens during a command, your first step should be to r
 
 `debug` level logging is highly verbose and aims to tell you everything that's going on under-the hood. This is aimed mostly at CLI/runtime developers and can be very useful for debugging problems.
 
-## Structred/JSON logging
+### Structred/JSON logging
 
 By default all logs will be printed as human-readable strings.
 
 For a more structured output, you can emit logs as JSON objects with `level`, `name` and `message` properties:
+
 ```
+
 { level: 'info', name: 'CLI', message: ['Loaded adaptor'] }
+
 ```
+
 Pass `--log-json` to the CLI to do this. You can also set the OPENFN_LOG_JSON env var (and use `--no-log-json` to disable).
 
 ## Workflows
@@ -141,37 +262,39 @@ To see an example workflow, run the test command with `openfn test`.
 A workflow has a structure like this (better documentation is coming soon):
 
 ```
+
 {
-  "start": "a", // optionally specify the start node (defaults to jobs[0])
-  "jobs": [
-    {
-      "id": "a",
-      "expression": "fn((state) => state)", // code or a path
-      "adaptor": "@openfn/language-common@1.75", // specifiy the adaptor to use (version optional)
-      "data": {}, // optionally pre-populate the data object (this will be overriden by keys in in previous state)
-      "configuration": {}, // Use this to pass credentials
-      "next": {
-        // This object defines which jobs to call next
-        // All edges returning true will run
-        // If there are no next edges, the workflow will end
-        "b": true,
-        "c": {
-          "condition": "!state.error" // Not that this is an expression, not a function
-        }
-      }
-    },
-  ]
+"start": "a", // optionally specify the start node (defaults to jobs[0])
+"jobs": [
+{
+"id": "a",
+"expression": "fn((state) => state)", // code or a path
+"adaptor": "@openfn/language-common@1.75", // specifiy the adaptor to use (version optional)
+"data": {}, // optionally pre-populate the data object (this will be overriden by keys in in previous state)
+"configuration": {}, // Use this to pass credentials
+"next": {
+// This object defines which jobs to call next
+// All edges returning true will run
+// If there are no next edges, the workflow will end
+"b": true,
+"c": {
+"condition": "!state.error" // Not that this is an expression, not a function
 }
+}
+},
+]
+}
+
 ```
 
 ## Compilation
 
 The CLI will attempt to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:
 
-* The language adaptor will be imported into the file
-* The adaptor's execute function will be exported form the file
-* All top level operations will be added to an array
-* That array will be made the default export of the file
+- The language adaptor will be imported into the file
+- The adaptor's execute function will be exported form the file
+- All top level operations will be added to an array
+- That array will be made the default export of the file
 
 The result of this is a lightweight, modern JS source file. It can be executed in any runtime environment: just execute each function in the exported array.
 
@@ -181,7 +304,7 @@ All jobs which work against `@openfn/core` will work in the new CLI and runtime 
 
 If you want to see how the compiler is changing your job, run `openfn compile path/to/job -a <adaptor>` to return the compiled code to stdout. Add `-o path/to/output.js` to save the result to disk.
 
-# Contributing
+## Contributing
 
 First of all, thanks for helping! You're contributing to a digital public good that will always be free and open source and aimed at serving innovative NGOs, governments, and social impact organizations the world over! You rock. heart
 
@@ -189,44 +312,55 @@ To get this started, you'll want to clone this repo.
 
 You also need to install `pnpm`.
 
-## Usage from this repo
+### Usage from this repo
 
 You can run the cli straight from source with `pnpm`
 
 ```
+
 $ pnpm openfn path/to/job.js
 $ pnpm openfn -h
+
 ```
 
 See test/execute.test.ts for more usage examples
 
-## Installing globally
+### Installing globally
 
 To install the CLI globally from the build in repo:
 
 ```
+
 $ npm install -g .
+
 ```
 
 Note that this will install the built source from `dist`
 
-## Repo Directory
+### Repo Directory
 
 The CLI will save and load adaptors from an arbitrary folder on your system.
 
 You should set the OPENFN_REPO_DIR env var to something sensible.
 
 In `~/.bashrc` (or whatever you use), add:
+
 ```
+
 export OPENFN_REPO_DIR=~/repo/openfn/cli-repo
+
 ```
 
 To run adaptors straight from the adaptors monorepo:
 
 export OPENFN_ADAPTORS_REPO=~/repo/openfn/adaptors
 
-## Contributing changes
+### Contributing changes
 
 Open a PR at https://github.com/openfn/kit. Include a changeset and a description of your change.
 
 See the root readme for more details about changests,
+
+```
+
+```
