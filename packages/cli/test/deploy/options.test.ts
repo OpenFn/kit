@@ -11,8 +11,8 @@ test('correct default options', (t) => {
   const options = parse('deploy');
 
   t.is(options.command, 'deploy');
-  t.is(options.statePath, './.state.json');
-  t.is(options.projectPath, './project.yaml');
+  t.is(options.statePath, undefined);
+  t.is(options.projectPath, undefined);
   t.is(options.configPath, './.config.json');
   t.falsy(options.logJson); // TODO this is undefined right now
 });

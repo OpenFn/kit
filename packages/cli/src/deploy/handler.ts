@@ -70,8 +70,6 @@ function mergeOverrides(
   config: DeployConfig,
   options: DeployOptions
 ): DeployConfig {
-  console.log({ config, options });
-
   return {
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),

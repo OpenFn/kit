@@ -132,7 +132,7 @@ export const configPath: CLIOption = {
   yargs: {
     alias: ['c', 'config-path'],
     description: 'The location of your config file',
-    default: './config.json',
+    default: './.config.json',
   }
 };
 
