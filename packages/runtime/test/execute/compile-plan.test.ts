@@ -101,7 +101,7 @@ test('should compile a shorthand edge', (t) => {
   const compiledPlan = compilePlan(plan);
 
   t.deepEqual(compiledPlan.jobs.a.next!, {
-    y: {},
+    y: true,
   });
 });
 
@@ -112,7 +112,8 @@ test('should not recompile a functional edge', (t) => {
   });
 
   const compiledPlan = compilePlan(plan);
-  const result = compiledPlan.jobs.a.next!.b.condition?.({});
+  // @ts-ignore
+  const result = compiledPlan.jobs.a.next!.b.condition({});
   t.true(result);
 });
 
@@ -121,7 +122,18 @@ test('should compile a truthy edge', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  const result = compiledPlan.jobs.a.next!.b.condition?.({});
+  // @ts-ignore
+  const result = compiledPlan.jobs.a.next!.b.condition({});
+  t.true(result);
+});
+
+test('should compile a string edge', (t) => {
+  const plan = planWithEdge('true');
+
+  const compiledPlan = compilePlan(plan);
+
+  // @ts-ignore
+  const result = compiledPlan.jobs.a.next!.b.condition();
   t.true(result);
 });
 
@@ -130,7 +142,8 @@ test('should compile a falsy edge', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  const result = compiledPlan.jobs.a.next!.b.condition?.({});
+  // @ts-ignore
+  const result = compiledPlan.jobs.a.next!.b.condition({});
   t.false(result);
 });
 
@@ -139,7 +152,8 @@ test('should compile an edge with arithmetic', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  const result = compiledPlan.jobs.a.next!.b.condition?.({});
+  // @ts-ignore
+  const result = compiledPlan.jobs.a.next!.b.condition({});
   t.is(result, 2);
 });
 
@@ -148,7 +162,8 @@ test('should compile an edge which uses state', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  const result = compiledPlan.jobs.a.next!.b.condition?.({});
+  // @ts-ignore
+  const result = compiledPlan.jobs.a.next!.b.condition({});
   t.true(result);
 });
 
@@ -157,7 +172,8 @@ test('condition cannot require', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  t.throws(() => compiledPlan.jobs.a.next!.b.condition?.({ data: {} }), {
+  // @ts-ignore
+  t.throws(() => compiledPlan.jobs.a.next!.b.condition({ data: {} }), {
     message: 'require is not defined',
   });
 });
@@ -167,7 +183,8 @@ test('condition cannot access process', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  t.throws(() => compiledPlan.jobs.a.next!.b.condition?.({ data: {} }), {
+  // @ts-ignore
+  t.throws(() => compiledPlan.jobs.a.next!.b.condition({ data: {} }), {
     message: 'process is not defined',
   });
 });
@@ -177,7 +194,8 @@ test('condition cannot access process #2', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  t.throws(() => compiledPlan.jobs.a.next!.b.condition?.({ data: {} }), {
+  // @ts-ignore
+  t.throws(() => compiledPlan.jobs.a.next!.b.condition({ data: {} }), {
     message: 'process is not defined',
   });
 });
@@ -187,7 +205,8 @@ test('condition cannot eval', (t) => {
 
   const compiledPlan = compilePlan(plan);
 
-  t.throws(() => compiledPlan.jobs.a.next!.b.condition?.({ data: {} }), {
+  // @ts-ignore
+  t.throws(() => compiledPlan.jobs.a.next!.b.condition({ data: {} }), {
     message: 'Code generation from strings disallowed for this context',
   });
 });

@@ -53,7 +53,7 @@ A workflow looks like this:
   jobs: [{
     id: 'a',
     expression: "source or path",
-    data: { /* default data */ },
+    state: { /* default state */ },
     configuration: { /* credentials */ },
     next: {
       'b': true, // edge to another job

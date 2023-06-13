@@ -3,8 +3,10 @@
   "jobs": [
     {
       "id": "start",
-      "data": {
-        "number": 1
+      "state": {
+        "data": {
+          "number": 1
+        }
       },
       "adaptor": "common",
       "expression": "fn((state) => state);",

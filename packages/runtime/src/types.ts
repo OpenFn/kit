@@ -18,9 +18,9 @@ export type ErrorReport = {
   data?: any; // General store for related error information
 };
 
-export declare interface State<D = object, C = object> {
+export declare interface State<S = object, C = object> {
   configuration?: C;
-  data?: D;
+  state?: S;
   references?: Array<any>;
   index?: number;
 
@@ -47,7 +47,7 @@ export type ExecutionPlan = {
 };
 
 export type JobNode = {
-  id?: string;
+  id?: JobNodeID;
 
   // The runtime itself will ignore the adaptor flag
   // The adaptor import should be compiled in by the compiler, and dependency managed by the runtime manager
@@ -56,25 +56,30 @@ export type JobNode = {
   expression?: string | Operation[]; // the code we actually want to execute. Can be a path.
 
   configuration?: object; // credential object
-  data?: State['data']; // default state (globals)
+  state?: Omit<State, 'configuration'>; // default state (globals)
 
-  next?: string | Record<JobNodeID, true | JobEdge>;
+  next?: string | Record<JobNodeID, JobEdge>;
   previous?: JobNodeID;
 };
 
-export type JobEdge = {
-  condition?: string; // Javascript expression (function body, not function)
-  label?: string;
-};
+export type JobEdge =
+  | boolean
+  | string
+  | {
+      condition?: string; // Javascript expression (function body, not function)
+      label?: string;
+    };
 
 export type JobNodeID = string;
 
-// Discard label information that we don't need here
-export type CompiledJobEdge = {
-  condition?: Function;
-};
+export type CompiledJobEdge =
+  | boolean
+  | {
+      condition?: Function;
+    };
 
 export type CompiledJobNode = Omit<JobNode, 'next'> & {
+  id: JobNodeID;
   next?: Record<JobNodeID, CompiledJobEdge>;
 };
 

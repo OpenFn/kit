@@ -125,7 +125,7 @@ test.serial('run a workflow', async (t) => {
     jobs: [
       {
         id: 'job1',
-        data: { x: 0 },
+        state: { data: { x: 0 } },
         expression: 'export default [s => { s.data.x += 1; return s; } ]',
         next: { job2: true },
       },
@@ -149,7 +149,7 @@ test.serial('run a workflow with config as an object', async (t) => {
   const workflow = {
     jobs: [
       {
-        data: { x: 0 },
+        state: { data: { x: 0 } },
         configuration: { y: 0 },
         expression:
           'export default [s => { s.data.y = s.configuration.y; return s}]',
@@ -171,7 +171,7 @@ test.serial('run a workflow with config as a path', async (t) => {
   const workflow = {
     jobs: [
       {
-        data: { x: 0 },
+        state: { data: { x: 0 } },
         configuration: '/config.json',
         expression:
           'export default [s => { s.data.y = s.configuration.y; return s}]',
@@ -514,7 +514,7 @@ test.serial(
       jobs: [
         {
           adaptor: 'common',
-          data: { done: true },
+          state: { data: { done: true } },
           expression: 'alterState(s => s)',
         },
       ],

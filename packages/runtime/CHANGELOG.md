@@ -1,5 +1,12 @@
 # @openfn/runtime
 
+## 0.0.26
+
+### Patch Changes
+
+- Workflow jobs take state, rather than data (eg job.data -> job.state)
+  Fix falsy edges (next: { job2: false })
+
 ## 0.0.25
 
 ### Patch Changes

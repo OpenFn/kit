@@ -110,13 +110,13 @@ test('run a workflow with state', async (t) => {
     jobs: [
       {
         id: 'a',
-        data: { count: 1 },
+        state: { data: { count: 1 } },
         expression: `${fn}fn((state) => { state.data.count += 1; return state;});`,
         next: { b: true },
       },
       {
         id: 'b',
-        data: { diff: 2 },
+        state: { data: { diff: 2 } },
         expression: `${fn}fn((state) => { state.data.count += state.data.diff; return state; });`,
       },
     ],

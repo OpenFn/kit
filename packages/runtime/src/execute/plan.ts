@@ -4,8 +4,8 @@ import compilePlan from './compile-plan';
 import assembleState from '../util/assemble-state';
 import type {
   CompiledExecutionPlan,
+  CompiledJobNode,
   ExecutionPlan,
-  JobNode,
   JobNodeID,
   State,
 } from '../types';
@@ -45,8 +45,11 @@ const executePlan = async (
     report: createErrorReporter(logger),
   };
 
-  const stateHistory: Record<string, any> = {};
-  const leaves = {};
+  type State = any;
+  // record of state returned by every job
+  const stateHistory: Record<string, State> = {};
+  // Record of state on lead nodes (nodes with no next)
+  const leaves: Record<string, State> = {};
 
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
@@ -58,7 +61,7 @@ const executePlan = async (
     const state = assembleState(
       clone(prevState),
       job.configuration,
-      job.data,
+      job.state,
       ctx.opts.strict
     );
     const result = await executeJob(ctx, job, state);
@@ -82,7 +85,7 @@ const executePlan = async (
 
 const executeJob = async (
   ctx: ExeContext,
-  job: JobNode,
+  job: CompiledJobNode,
   state: State
 ): Promise<{ next: JobNodeID[]; state: any }> => {
   const next: string[] = [];
@@ -114,7 +117,10 @@ const executeJob = async (
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];
-      if (!edge.condition || edge.condition(result)) {
+      if (
+        edge &&
+        (edge === true || !edge.condition || edge.condition(result))
+      ) {
         next.push(nextJobId);
       }
       // TODO errors

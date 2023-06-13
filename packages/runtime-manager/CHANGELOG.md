@@ -1,5 +1,12 @@
 # runtime-manager
 
+## 0.0.35
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/runtime@0.0.26
+
 ## 0.0.34
 
 ### Patch Changes
