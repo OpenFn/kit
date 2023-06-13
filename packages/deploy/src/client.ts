@@ -22,6 +22,7 @@ export async function getProject(
 
     if (!response.ok) {
       handle401(config, response);
+      handle403(config, response);
 
       throw new Error(
         `Failed to fetch project ${projectId}: ${response.statusText}`
@@ -66,6 +67,7 @@ export async function deployProject(
       }
 
       handle401(config, response);
+      handle403(config, response);
 
       throw new DeployError(
         `Failed to deploy project ${payload.name}: ${response.statusText}`,
@@ -85,6 +87,15 @@ function handle401(config, response: Response) {
   if (response.status === 401) {
     throw new DeployError(
       `Failed to authorize request with endpoint ${config.endpoint}, got 401 Unauthorized.`,
+      'DEPLOY_ERROR'
+    );
+  }
+}
+
+function handle403(config, response: Response) {
+  if (response.status === 403) {
+    throw new DeployError(
+      `Failed to authorize request with endpoint ${config.endpoint}, got 403 Forbidden.`,
       'DEPLOY_ERROR'
     );
   }
