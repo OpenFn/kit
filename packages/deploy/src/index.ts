@@ -114,7 +114,7 @@ export async function deploy(config: DeployConfig, logger: Logger) {
   // Convert the state to a payload for the API.
   const nextProject = toProjectPayload(nextState);
 
-  logger.debug('Getting project from server...');
+  logger.info('Getting project from server...');
   const { data: currentProject } = await getProject(config, nextState.id);
 
   logger.debug(
@@ -126,11 +126,11 @@ export async function deploy(config: DeployConfig, logger: Logger) {
   const diff = jsondiff.diffString(currentProject, nextProject);
 
   if (!diff) {
-    logger.log('No changes to deploy.');
+    logger.always('No changes to deploy.');
     return true;
   }
 
-  logger.info(diff);
+  logger.always(`Changes:\n${diff}`);
 
   if (config.dryRun) {
     return true;
@@ -138,7 +138,7 @@ export async function deploy(config: DeployConfig, logger: Logger) {
 
   if (config.requireConfirmation) {
     if (!(await confirm({ message: 'Deploy?', default: false }))) {
-      logger.log('Cancelled.');
+      logger.always('Cancelled.');
       return false;
     }
   }
@@ -156,6 +156,8 @@ export async function deploy(config: DeployConfig, logger: Logger) {
   // should warn the user that the project.yaml is out of sync with the server?
 
   await writeState(config, deployedState);
+
+  logger.always('Deployed.');
   return true;
 }
 

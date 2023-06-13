@@ -16,15 +16,17 @@ export type Trigger = {
 
 export type StateEdge = {
   id: string;
-  source_job_id: string;
-  source_trigger_id: string;
+  condition: string;
+  source_job_id: string | null;
+  source_trigger_id: string | null;
   target_job_id: string;
 };
 
 export type SpecEdge = {
-  source_job?: string;
-  source_trigger?: string;
-  target_job: string;
+  condition: string | null;
+  source_job?: string | null;
+  source_trigger?: string | null;
+  target_job: string | null;
 };
 
 export type WorkflowSpec = {

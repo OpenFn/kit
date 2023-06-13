@@ -130,18 +130,18 @@ function mergeEdges(
           triggers: WorkflowState['triggers'],
           specEdge: SpecEdge
         ): StateEdge {
-          let edge = {} as StateEdge;
-          if (specEdge.source_job) {
-            edge.source_job_id = jobs[specEdge.source_job].id;
-          }
-
-          if (specEdge.source_trigger) {
-            edge.source_trigger_id = triggers[specEdge.source_trigger].id;
-          }
-
-          if (specEdge.target_job) {
-            edge.target_job_id = jobs[specEdge.target_job].id;
-          }
+          let edge: StateEdge = {
+            condition: specEdge.condition || null,
+            source_job_id: specEdge.source_job
+              ? jobs[specEdge.source_job].id
+              : null,
+            source_trigger_id: specEdge.source_trigger
+              ? triggers[specEdge.source_trigger].id
+              : null,
+            target_job_id: specEdge.target_job
+              ? jobs[specEdge.target_job].id
+              : null,
+          };
 
           return edge;
         }
@@ -300,6 +300,8 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   const workflows: ProjectPayload['workflows'] = Object.values(
     state.workflows
   ).map((workflow) => {
+    console.log(workflow);
+
     return {
       ...workflow,
       jobs: Object.values(

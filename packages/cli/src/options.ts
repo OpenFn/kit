@@ -133,10 +133,7 @@ export const configPath: CLIOption = {
     alias: ['c', 'config-path'],
     description: 'The location of your config file',
     default: './config.json',
-  },
-  ensure: (opts) => {
-    setDefaultValue(opts, 'configPath', './.config.json');
-  },
+  }
 };
 
 export const expandAdaptors: CLIOption = {
@@ -264,11 +261,7 @@ export const projectPath: CLIOption = {
     string: true,
     alias: ['p'],
     description: 'The location of your project.yaml file',
-    default: './project.yaml',
-  },
-  ensure: (opts) => {
-    setDefaultValue(opts, 'projectPath', './project.yaml');
-  },
+  }
 };
 
 export const repoDir: CLIOption = {

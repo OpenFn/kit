@@ -1,4 +1,10 @@
-import { DeployError, deploy, getConfig, validateConfig } from '@openfn/deploy';
+import {
+  DeployConfig,
+  DeployError,
+  deploy,
+  getConfig,
+  validateConfig,
+} from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { DeployOptions } from './command';
 
@@ -19,8 +25,8 @@ async function deployHandler(
   deployFn = actualDeploy
 ) {
   try {
-    logger.debug('Deploying with options', JSON.stringify(options, null, 2));
-    const config = await getConfig(options.configPath);
+    const config = mergeOverrides(await getConfig(options.configPath), options);
+    logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
     if (options.confirm === false) {
       config.requireConfirmation = options.confirm;
@@ -42,14 +48,9 @@ async function deployHandler(
     validateConfig(config);
 
     const isOk = await deployFn(config, logger);
-    if (isOk) {
-      process.exitCode = 0;
-      logger.info(`Deployed`);
-      return isOk;
-    } else {
-      process.exitCode = 1;
-      return isOk;
-    }
+
+    process.exitCode = isOk ? 0 : 1;
+    return isOk;
   } catch (error: any) {
     if (error instanceof DeployError) {
       logger.error(error.message);
@@ -59,6 +60,30 @@ async function deployHandler(
 
     throw error;
   }
+}
+
+// Priority
+// Config
+// Env vars
+// Options
+function mergeOverrides(
+  config: DeployConfig,
+  options: DeployOptions
+): DeployConfig {
+  console.log({ config, options });
+
+  return {
+    ...config,
+    apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
+    endpoint: pickFirst(process.env['OPENFN_ENDPOINT'], config.endpoint),
+    statePath: pickFirst(options.statePath, config.statePath),
+    configPath: options.configPath,
+    requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
+  };
+}
+
+function pickFirst<T>(...args: (T | null | undefined)[]): T {
+  return args.find((arg) => arg !== undefined && arg !== null) as T;
 }
 
 export default deployHandler;
