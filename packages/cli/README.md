@@ -211,7 +211,7 @@ openfn deploy
 
 - `-p, --project-path <path>` - path to the project file (defaults to `project.yaml`)
 - `-s, --state-path <path>` - path to the state file (defaults to `.state.json`)
-- `-c, --config, --config-path` - path to the config file (defaults to `config.json`)
+- `-c, --config, --config-path` - path to the config file (defaults to `.config.json`)
 - `--no-confirm` - skip the confirmation prompt
 
 ## Logging
