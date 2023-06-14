@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 0.1.0
+
+### Minor Changes
+
+- c218a11: Added deploy command
+
+### Patch Changes
+
+- Updated dependencies [c218a11]
+  - @openfn/deploy@0.1.0
+
 ## 0.0.41
 
 ### Patch Changes
