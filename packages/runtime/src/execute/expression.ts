@@ -23,7 +23,7 @@ export default (
 
     const { operations, execute } = await prepareJob(expression, context, opts);
     // Create the main reducer function
-    const reducer = (execute || defaultExecute)(
+    const reducer = (execute || opts.globals?.execute || defaultExecute)(
       ...operations.map((op, idx) =>
         wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
       )
