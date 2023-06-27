@@ -281,3 +281,28 @@ test('inject globals', async (t) => {
   t.is(result.data.x, 90210);
 });
 
+test('injected globals can\'t override special functions', async (t) => {
+  const panic = () => { throw new Error('illegal override') }
+
+  const globals = {
+    console: panic,
+    clearInterval: panic,
+    clearTimeout: panic,
+    parseFloat: panic,
+    parseInt: panic,
+    setInterval: panic,
+    setTimeout: panic,
+  }
+  const expression = `export default [(s) => {
+    parseFloat();
+    parseInt();
+    const i = setInterval(() => {}, 1000);
+    clearInterval(i);
+    const t = setTimeout(() => {}, 1000);
+    clearTimeout(t);
+    return s;
+  }]`;
+
+  const result: any = await run(expression, {}, { globals });
+  t.falsy(result.errors);
+});
