@@ -27,6 +27,11 @@ export type Options = {
   forceSandbox?: boolean;
 
   linker?: LinkerOptions;
+
+  // inject stuff into the environment
+  // aka globals
+  // Used by unit tests. any security concerns?
+  globals?: any;
 };
 
 const defaultState = { data: {}, configuration: {} };

@@ -269,3 +269,15 @@ test('stuff written to state before an error is preserved', async (t) => {
 
   t.is(result.x, 1);
 });
+
+test('inject globals', async (t) => {
+  const expression = 'export default [(s) => Object.assign(s, { data: { x } })]';
+
+  const result: any = await run(expression, {}, {
+    globals: {
+      x: 90210
+    }
+  });
+  t.is(result.data.x, 90210);
+});
+
