@@ -10,6 +10,7 @@ import { fullExampleSpec, fullExampleState } from './fixtures';
 test('toNextState adding a job', (t) => {
   const spec = {
     name: 'project-name',
+    description: 'my test project',
     workflows: {
       'workflow-one': {
         name: 'workflow one',
@@ -47,6 +48,7 @@ test('toNextState adding a job', (t) => {
     },
     id: 'ecb683d1-5e5a-4c4f-9165-e143e2eeeb48',
     name: 'project-name',
+    description: 'my test project',
   };
 
   let result = mergeSpecIntoState(state, spec);
@@ -77,6 +79,7 @@ test('toNextState adding a job', (t) => {
     },
     id: 'ecb683d1-5e5a-4c4f-9165-e143e2eeeb48',
     name: 'project-name',
+    description: 'my test project',
   });
 });
 
@@ -102,6 +105,7 @@ test('toNextState with empty state', (t) => {
   const expected = {
     id: result.id,
     name: 'my project',
+    description: 'some helpful description',
     workflows: {
       'workflow-one': {
         id: jp.query(result, '$..workflows["workflow-one"].id')[0],
@@ -156,6 +160,7 @@ test('toNextState with no changes', (t) => {
   const state = {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
+    description: 'for the humans',
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -183,6 +188,7 @@ test('toNextState with no changes', (t) => {
 
   const spec = {
     name: 'my project',
+    description: 'for the humans',
     workflows: {
       'workflow-one': {
         name: 'workflow one',
@@ -213,6 +219,7 @@ test('toNextState with a new job', (t) => {
   const state = {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
+    description: 'for the humans',
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -236,6 +243,7 @@ test('toNextState with a new job', (t) => {
 
   const spec = {
     name: 'my project',
+    description: 'some other description',
     workflows: {
       'workflow-one': {
         name: 'workflow one',
@@ -264,6 +272,7 @@ test('toNextState with a new job', (t) => {
   t.deepEqual(result, {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
+    description: 'some other description',
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -330,6 +339,7 @@ test('mergeProjectIntoState with no changes', (t) => {
   let projectPayload: ProjectPayload = {
     id: existingState.id,
     name: 'my project',
+    description: 'some helpful description',
     workflows: [
       {
         id: workflowOne.id,
@@ -371,6 +381,7 @@ test('mergeProjectIntoState with deletions', (t) => {
   let projectPayload: ProjectPayload = {
     id: existingState.id,
     name: 'my project',
+    description: 'some helpful description',
     workflows: [
       {
         id: workflowOne.id,

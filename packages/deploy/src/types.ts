@@ -39,6 +39,7 @@ export type WorkflowSpec = {
 
 export interface ProjectSpec {
   name: string;
+  description: string;
   workflows: Record<string | symbol, WorkflowSpec>;
 }
 
@@ -54,12 +55,14 @@ export interface WorkflowState {
 export interface ProjectState {
   id: string;
   name: string;
+  description: string;
   workflows: Record<string | symbol, WorkflowState>;
 }
 
 export interface ProjectPayload {
   id: string;
   name: string;
+  description: string;
   workflows: {
     id: string;
     name: string;

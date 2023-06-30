@@ -233,6 +233,7 @@ export function mergeSpecIntoState(
     ...oldState,
     id: oldState.id || crypto.randomUUID(),
     name: spec.name,
+    description: spec.description,
     workflows: nextWorkflows,
   };
 }
