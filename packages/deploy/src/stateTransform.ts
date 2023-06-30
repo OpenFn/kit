@@ -87,6 +87,9 @@ function mergeTriggers(stateTriggers, specTriggers): WorkflowState['triggers'] {
             {
               id: crypto.randomUUID(),
               ...pickKeys(specTrigger, ['type']),
+              ...(specTrigger.type === 'cron'
+                ? { cron_expression: specTrigger.cron_expression }
+                : {}),
             },
           ];
         }
