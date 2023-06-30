@@ -126,6 +126,7 @@ test('toNextState with empty state', (t) => {
           'trigger-one': {
             id: getItem(result, 'triggers', 'trigger-one').id,
             type: 'cron',
+            cron_expression: '0 0 1 1 *',
           },
         },
         edges: {
