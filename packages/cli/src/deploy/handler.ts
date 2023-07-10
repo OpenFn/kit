@@ -3,6 +3,7 @@ import {
   DeployError,
   deploy,
   getConfig,
+  getYaml,
   validateConfig,
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
@@ -27,13 +28,12 @@ async function deployHandler(
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
     if(options.describe) {
-        logger.debug("Downloading project yaml from instance, with the following config")
-        logger.debug(config)
+        logger.always("Downloading project yaml from instance, with the following config")
+        await getYaml(config, logger)
         // Proceed to run the describe option here from the deploy package
-        process.exitCode = isOk ? 0 : 1;
-        return isOk;
-  }
+        return 1;
     }
+    
 
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
@@ -42,7 +42,7 @@ async function deployHandler(
     }
 
     if (process.env['OPENFN_API_KEY']) {
-      logger.info('Using OPENFN_API_KEY environment variable');
+      logger.info('Using OPENFN_API_KEY environment variable'); 
       config.apiKey = process.env['OPENFN_API_KEY'];
     }
 

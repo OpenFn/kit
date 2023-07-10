@@ -140,8 +140,12 @@ export const configPath: CLIOption = {
 export const describe: CLIOption = {
     name: 'describe',
     yargs : {
+        boolean: true,
         description: "Downloads the project yaml from the specified instance"
     },
+    ensure: (opts) => {
+    setDefaultValue(opts, 'describe', true);
+  },
 };
 
 

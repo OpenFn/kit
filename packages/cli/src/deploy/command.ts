@@ -13,10 +13,11 @@ export type DeployOptions = Required<
     | 'projectPath'
     | 'configPath'
     | 'confirm'
+    | 'describe'
   >
 >;
 
-const options = [o.statePath, o.projectPath, o.configPath, o.confirm];
+const options = [o.statePath, o.projectPath, o.configPath, o.confirm, o.describe];
 
 const deployCommand = {
   command: 'deploy',
