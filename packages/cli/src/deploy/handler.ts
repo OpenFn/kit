@@ -26,6 +26,15 @@ async function deployHandler(
 ) {
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
+    if(options.describe) {
+        logger.debug("Downloading project yaml from instance, with the following config")
+        logger.debug(config)
+        // Proceed to run the describe option here from the deploy package
+        process.exitCode = isOk ? 0 : 1;
+        return isOk;
+  }
+    }
+
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
     if (options.confirm === false) {
