@@ -94,6 +94,16 @@ async function getSpec(path: string) {
   }
 }
 
+// ==================== Describe a project ===================
+export async function describe(config: DeployConfig, logger: Logger){
+
+    logger.info("Getting project from server...");
+    const { data: currentProject } = await getProject(config, config.projectId);
+    logger.info(currentProject); 
+
+
+}
+
 // =============================================
 
 export async function deploy(config: DeployConfig, logger: Logger) {
