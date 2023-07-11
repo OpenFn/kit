@@ -30,8 +30,8 @@ async function deployHandler(
     if(options.describe) {
         logger.always("Downloading project yaml from instance, with the following config")
         await getYaml(config, logger)
-        // Proceed to run the describe option here from the deploy package
-        return 1;
+        process.exitCode = 0;
+        return true;
     }
     
 

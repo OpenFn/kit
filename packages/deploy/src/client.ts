@@ -3,7 +3,7 @@ import { DeployError } from './deployError';
 import { Readable }  from 'stream';
 import { finished } from 'stream/promises';
 import path from 'path';
-import fs from 'fs';
+import fs from 'node:fs/promises';
 
 
 export async function getProject(
@@ -46,17 +46,12 @@ export async function downloadSpec(
   config: DeployConfig,
   projectId: string
 ): Promise<{ data: ProjectPayload | null }> {
-  let base = new URL(config.endpoint).origin; 
-  let url = new URL(base + `/download/yaml`);
-  url.searchParams.set('id', projectId);
+  let url = new URL(`/download/yaml?id=${projectId}`, config.endpoint);
 
 
   try {
       const res = await fetch(url);
-      const destination = path.resolve(".", config.specPath);
-      const fileStream = fs.createWriteStream(destination, {flags: 'wx'});
-      const doc = await finished(Readable.fromWeb(res.body).pipe(fileStream));
-      return doc;
+      return fs.writeFile(path.resolve(config.specPath), res.body);
   } catch (error: any) {
     handleCommonErrors(config, error);
 
