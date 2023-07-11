@@ -9,7 +9,7 @@ import {
   mergeSpecIntoState,
   toProjectPayload,
 } from './stateTransform';
-import { deployProject, getProject } from './client';
+import { deployProject, downloadSpec,  getProject } from './client';
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger';
 
@@ -92,6 +92,21 @@ async function getSpec(path: string) {
       throw error;
     }
   }
+}
+
+// ==================== Download a project spec from an instance ===================
+export async function getYaml(config: DeployConfig, logger: Logger){
+    logger.always("Getting project yaml from server...");
+    logger.always(config)
+    const state = await getState(config.statePath);
+    logger.always(state);
+    try {
+        await downloadSpec(config, state.id)
+        return true;
+    } catch (error: any) {
+      throw error;
+    }
+
 }
 
 // =============================================

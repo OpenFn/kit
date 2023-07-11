@@ -1,5 +1,10 @@
 import { DeployConfig, ProjectPayload } from './types';
 import { DeployError } from './deployError';
+import { Readable }  from 'stream';
+import { finished } from 'stream/promises';
+import path from 'path';
+import fs from 'node:fs/promises';
+
 
 export async function getProject(
   config: DeployConfig,
@@ -36,6 +41,25 @@ export async function getProject(
     throw error;
   }
 }
+
+export async function downloadSpec(
+  config: DeployConfig,
+  projectId: string
+): Promise<{ data: ProjectPayload | null }> {
+  let url = new URL(`/download/yaml?id=${projectId}`, config.endpoint);
+
+
+  try {
+      const res = await fetch(url);
+      return fs.writeFile(path.resolve(config.specPath), res.body);
+  } catch (error: any) {
+    handleCommonErrors(config, error);
+
+    throw error;
+  }
+}
+
+
 
 export async function deployProject(
   config: DeployConfig,

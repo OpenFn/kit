@@ -18,6 +18,7 @@ export type Opts = {
   autoinstall?: boolean;
   compile?: boolean;
   confirm?: boolean;
+  describe: string;
   configPath?: string;
   expandAdaptors?: boolean; // for unit tests really
   force?: boolean;
@@ -135,6 +136,18 @@ export const configPath: CLIOption = {
     default: './.config.json',
   }
 };
+
+export const describe: CLIOption = {
+    name: 'describe',
+    yargs : {
+        boolean: true,
+        description: "Downloads the project yaml from the specified instance"
+    },
+    ensure: (opts) => {
+    setDefaultValue(opts, 'describe', true);
+  },
+};
+
 
 export const expandAdaptors: CLIOption = {
   name: 'no-expand-adaptors',
