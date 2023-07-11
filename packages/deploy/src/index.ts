@@ -97,7 +97,9 @@ async function getSpec(path: string) {
 // ==================== Download a project spec from an instance ===================
 export async function getYaml(config: DeployConfig, logger: Logger){
     logger.always("Getting project yaml from server...");
-    const [state] = await Promise.all([getState(config.statePath)]);
+    logger.always(config)
+    const state = await getState(config.statePath);
+    logger.always(state);
     try {
         await downloadSpec(config, state.id)
         return true;
