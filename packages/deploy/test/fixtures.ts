@@ -3,6 +3,7 @@ import { ProjectSpec } from '../src/types';
 export function fullExampleSpec() {
   return {
     name: 'my project',
+    description: 'some helpful description',
     workflows: {
       'workflow-one': {
         name: 'workflow one',
@@ -43,6 +44,7 @@ export function fullExampleState() {
   return {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
+    description: 'some helpful description',
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
