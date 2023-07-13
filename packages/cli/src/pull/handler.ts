@@ -1,5 +1,6 @@
 import {
   DeployConfig,
+  getProject,
   getConfig,
   getState ,
 } from '@openfn/deploy';
@@ -18,10 +19,13 @@ async function pullHandler(
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
     logger.always("Downloading project yaml and  state from instance");
-    const state = await getState(config.statePath); 
+    const state = await getState(config.statePath);
+    const { data: new_state } = await getProject(config, state.id);
     let url = new URL(`/download/yaml?id=${state.id}`, config.endpoint);
     const res = await fetch(url);
-    return fs.writeFile(path.resolve(config.specPath), res.body);
+    fs.writeFile(path.resolve(config.specPath), res.body);
+    fs.writeFile(path.resolve(config.statePath), new_state);
+    logger.always("Project pulled successfully");
     process.exitCode = 0;
     return true; 
   } catch (error: any) {

@@ -12,7 +12,6 @@ import {
 import { deployProject,  getProject } from './client';
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger';
-
 // =============== Configuration ===============
 
 function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
@@ -28,6 +27,8 @@ function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
   };
 }
 
+export { getProject }; 
+
 export async function getConfig(path?: string): Promise<DeployConfig> {
   try {
     return mergeDefaultOptions(
@@ -37,6 +38,8 @@ export async function getConfig(path?: string): Promise<DeployConfig> {
     return mergeDefaultOptions({});
   }
 }
+
+
 
 export function validateConfig(config: DeployConfig) {
   if (!config.apiKey) {
