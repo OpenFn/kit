@@ -27,13 +27,7 @@ async function deployHandler(
 ) {
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    if(options.describe) {
-        logger.always("Downloading project yaml from instance, with the following config")
-        await getYaml(config, logger)
-        process.exitCode = 0;
-        return true;
-    }
-    
+   
 
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
