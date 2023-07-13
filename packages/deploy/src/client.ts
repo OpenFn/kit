@@ -1,6 +1,5 @@
 import { DeployConfig, ProjectPayload } from './types';
 import { DeployError } from './deployError';
-import { Readable }  from 'stream';
 
 export async function getProject(
   config: DeployConfig,
@@ -37,8 +36,6 @@ export async function getProject(
     throw error;
   }
 }
-
-
 
 export async function deployProject(
   config: DeployConfig,
@@ -86,7 +83,7 @@ export async function deployProject(
   }
 }
 
-function handle401(config, response: Response) {
+function handle401(config: DeployConfig, response: Response) {
   if (response.status === 401) {
     throw new DeployError(
       `Failed to authorize request with endpoint ${config.endpoint}, got 401 Unauthorized.`,
@@ -95,7 +92,7 @@ function handle401(config, response: Response) {
   }
 }
 
-function handle403(config, response: Response) {
+function handle403(config: DeployConfig, response: Response) {
   if (response.status === 403) {
     throw new DeployError(
       `Failed to authorize request with endpoint ${config.endpoint}, got 403 Forbidden.`,
@@ -104,7 +101,7 @@ function handle403(config, response: Response) {
   }
 }
 
-function handleCommonErrors(config, error: any) {
+function handleCommonErrors(config: DeployConfig, error: any) {
   if (error.cause?.code === 'ECONNREFUSED') {
     throw new DeployError(
       `Failed to connect to endpoint ${config.endpoint}, got ECONNREFUSED.`,
