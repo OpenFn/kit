@@ -7,6 +7,7 @@ import docgenCommand from './docgen/command';
 import docsCommand from './docs/command';
 import executeCommand from './execute/command';
 import metadataCommand from './metadata/command';
+import pullCommand from './pull/command';
 import { Opts } from './options';
 import { install as installCommand, repo as repoCommand } from './repo/command';
 import testCommand from './test/command';
@@ -23,6 +24,7 @@ export const cmd = y
   .command(docsCommand)
   .command(metadataCommand)
   .command(docgenCommand)
+  .command(pullCommand)
   // Common options
   .option('log', {
     alias: ['l'],
