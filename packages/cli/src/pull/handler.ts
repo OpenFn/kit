@@ -32,7 +32,7 @@ async function pullHandler(
   }
 }
 
-// Priority
+// Priority of Merging
 // Config
 // Env vars
 // Options
