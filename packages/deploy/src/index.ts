@@ -9,10 +9,9 @@ import {
   mergeSpecIntoState,
   toProjectPayload,
 } from './stateTransform';
-import { deployProject, downloadSpec,  getProject } from './client';
+import { deployProject,  getProject } from './client';
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger';
-
 // =============== Configuration ===============
 
 function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
@@ -28,6 +27,8 @@ function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
   };
 }
 
+export { getProject }; 
+
 export async function getConfig(path?: string): Promise<DeployConfig> {
   try {
     return mergeDefaultOptions(
@@ -37,6 +38,8 @@ export async function getConfig(path?: string): Promise<DeployConfig> {
     return mergeDefaultOptions({});
   }
 }
+
+
 
 export function validateConfig(config: DeployConfig) {
   if (!config.apiKey) {
@@ -62,7 +65,7 @@ async function readState(path: string) {
   return JSON.parse(state) as ProjectState;
 }
 
-async function getState(path: string) {
+export async function getState(path: string) {
   try {
     return await readState(path);
   } catch (error: any) {
@@ -94,20 +97,7 @@ async function getSpec(path: string) {
   }
 }
 
-// ==================== Download a project spec from an instance ===================
-export async function getYaml(config: DeployConfig, logger: Logger){
-    logger.always("Getting project yaml from server...");
-    logger.always(config)
-    const state = await getState(config.statePath);
-    logger.always(state);
-    try {
-        await downloadSpec(config, state.id)
-        return true;
-    } catch (error: any) {
-      throw error;
-    }
 
-}
 
 // =============================================
 

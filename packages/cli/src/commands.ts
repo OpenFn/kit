@@ -6,6 +6,7 @@ import deploy from './deploy/handler';
 import docgen from './docgen/handler';
 import docs from './docs/handler';
 import metadata from './metadata/handler';
+import pull from './pull/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger, LogLevel } from './util/logger';
@@ -23,6 +24,7 @@ export type CommandList =
   | 'docs'
   | 'execute'
   | 'metadata'
+  | 'pull'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-list'
@@ -38,6 +40,7 @@ const handlers = {
   docgen,
   docs,
   metadata,
+  pull,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,
