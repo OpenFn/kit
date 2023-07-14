@@ -15,7 +15,7 @@ export type DeployOptions = Required<
   >
 >;
 
-const options = [o.statePath, o.configPath];
+const options = [o.statePath, o.projectPath, o.configPath];
 
 const pullCommand = {
   command: 'pull',
