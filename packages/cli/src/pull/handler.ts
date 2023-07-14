@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'node:fs/promises';
 import {
   DeployConfig,
   getProject,
@@ -6,9 +8,6 @@ import {
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { DeployOptions } from '../deploy/command';
-import path from 'path';
-import fs from 'node:fs/promises';
-
 
 
 
@@ -21,11 +20,11 @@ async function pullHandler(
     logger.always("Downloading project yaml and  state from instance");
     const state = await getState(config.statePath);
     const { data: new_state } = await getProject(config, state.id);
-    let url = new URL(`/download/yaml?id=${state.id}`, config.endpoint);
+    const url = new URL(`/download/yaml?id=${state.id}`, config.endpoint);
     const res = await fetch(url);
-    fs.writeFile(path.resolve(config.specPath), res.body);
-    fs.writeFile(path.resolve(config.statePath), new_state);
-    logger.always("Project pulled successfully");
+    await fs.writeFile(path.resolve(config.specPath), res.body);
+    await fs.writeFile(path.resolve(config.statePath), new_state);
+    logger.success("Project pulled successfully");
     process.exitCode = 0;
     return true; 
   } catch (error: any) {
@@ -45,7 +44,6 @@ function mergeOverrides(
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
     endpoint: pickFirst(process.env['OPENFN_ENDPOINT'], config.endpoint),
-    //statePath: pickFirst(options.statePath, config.statePath),
     configPath: options.configPath,
     requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
   };

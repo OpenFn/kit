@@ -15,13 +15,13 @@ export type DeployOptions = Required<
   >
 >;
 
-const options = [o.statePath, o.projectPath, o.configPath];
+const options = [o.statePath, o.configPath];
 
 const pullCommand = {
   command: 'pull',
-  desc:  "Pull a  project's state and spec from an instance to the local directory",
+  desc:  "Pull aproject's state and spec from a Lightning Instance to the local directory",
   builder: (yargs: yargs.Argv<DeployOptions>) => {
-    return build(options, yargs).example('pull', '');
+    return build(options, yargs).example('pull', 'Pull an updated copy of a project spec and state from a Lightning Instance');
   },
   handler: ensure('pull', options),
 };
