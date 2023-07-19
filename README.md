@@ -121,6 +121,8 @@ To manually run typesync, do `pnpm run typesync` from the repo root. Note that y
 
 [TODO] typesync will run automatically when a new package is installed.
 
+Note that @types packages only synchronise with the major and minor versions of a package. So for `@types/x@major.minor.patch`, `major` and `minor` refer to the versions of the corresponding package `x`, and `patch` is the verrsion number of the actual types package.
+
 ## Testing the CLI on a branch
 
 From the repo root, run `pnpm install:global`.
