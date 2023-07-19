@@ -26,5 +26,8 @@
   "files": [
     "dist",
     "README.md"
-  ]
+  ],
+  "devDependencies": {
+    "@types/rimraf": "^3.0.2"
+  }
 }
