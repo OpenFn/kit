@@ -1,5 +1,12 @@
 # dts-inspector
 
+## 1.0.14
+
+### Patch Changes
+
+- Updated dependencies [4c875b3]
+  - @openfn/describe-package@0.0.17
+
 ## 1.0.13
 
 ### Patch Changes

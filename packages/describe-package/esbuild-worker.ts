@@ -37,12 +37,9 @@ const watchOptions = {
   },
 };
 
-let watch = process.argv[2] === 'watch' ? watchOptions : false;
-
 const commonBuildOptions: BuildOptions = {
   bundle: true,
   write: true,
-  watch,
   format: 'esm',
   target: ['es2020'],
   outdir: './dist',
@@ -50,6 +47,11 @@ const commonBuildOptions: BuildOptions = {
   pure: ['console.log', 'console.time', 'console.timeEnd'],
   sourcemap: false,
 };
+
+// IMPORTANT NOTE
+// Watch mode has been disabled
+// We need to re-think the watch strategy after esbuild 17
+// see https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0170
 
 try {
   /**
