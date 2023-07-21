@@ -29,7 +29,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       );
     }
 
-    logger.error(`Check state.errors.${jobId}for details.`);
+    logger.error(`Check state.errors.${jobId} for details.`);
     logger.debug(error); // TODO the logger doesn't handle this very well
 
     if (!state.errors) {

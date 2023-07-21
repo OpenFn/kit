@@ -657,9 +657,8 @@ test('log appopriately on error', async (t) => {
   t.truthy(err);
   t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
 
-  t.truthy(logger._find('debug', /error thrown by job job1/i));
   t.truthy(logger._find('error', /Error: e/));
-  t.truthy(logger._find('debug', /error written to state.errors.job1/i));
+  t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 });
 
 test('jobs do not share a local scope', async (t) => {
