@@ -1,6 +1,6 @@
 {
   "name": "@openfn/describe-package",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Utilities to inspect an npm package.",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",

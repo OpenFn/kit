@@ -1,5 +1,15 @@
 # @openfn/compiler
 
+## 0.0.33
+
+### Patch Changes
+
+- 4c875b3: Remove yargs from prod dependencies
+- Updated dependencies [749afe8]
+- Updated dependencies [4c875b3]
+  - @openfn/logger@0.0.14
+  - @openfn/describe-package@0.0.17
+
 ## 0.0.32
 
 ### Patch Changes

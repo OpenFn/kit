@@ -1,5 +1,14 @@
 # @openfn/deploy
 
+## 0.2.1
+
+### Patch Changes
+
+- 4c875b3: minor version bumps
+- Updated dependencies [749afe8]
+- Updated dependencies [4c875b3]
+  - @openfn/logger@0.0.14
+
 ## 0.2.0
 
 ### Minor Changes
