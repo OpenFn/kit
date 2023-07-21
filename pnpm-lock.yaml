@@ -373,7 +373,7 @@ importers:
   packages/runtime-manager:
     dependencies:
       '@openfn/compiler':
-        specifier: workspace:^0.0.32
+        specifier: workspace:^0.0.33
         version: link:../compiler
       '@openfn/language-common':
         specifier: 2.0.0-rc3
