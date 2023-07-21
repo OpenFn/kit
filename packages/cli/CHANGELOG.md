@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 0.2.2
+
+### Patch Changes
+
+- faf1852: Downgrade tsup
+- Updated dependencies [faf1852]
+  - @openfn/compiler@0.0.34
+  - @openfn/deploy@0.2.2
+  - @openfn/describe-package@0.0.18
+  - @openfn/logger@0.0.15
+  - @openfn/runtime@0.0.28
+
 ## 0.2.1
 
 ### Patch Changes
