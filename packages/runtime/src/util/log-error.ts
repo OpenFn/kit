@@ -22,9 +22,14 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       report.code = error.code as string;
       report.stack = error.stack as string;
     }
-    logger.debug(`Error thrown by job ${jobId}`);
-    logger.error(`${report.code || report.name || 'error'}: ${report.message}`);
-    logger.debug(`Error written to state.errors.${jobId}`);
+
+    if (report.message) {
+      logger.error(
+        `${report.code || report.name || 'error'}: ${report.message}`
+      );
+    }
+
+    logger.error(`Check state.errors.${jobId}for details.`);
     logger.debug(error); // TODO the logger doesn't handle this very well
 
     if (!state.errors) {
