@@ -364,7 +364,7 @@ importers:
   packages/runtime-manager:
     dependencies:
       '@openfn/compiler':
-        specifier: workspace:^0.0.33
+        specifier: workspace:^0.0.34
         version: link:../compiler
       '@openfn/language-common':
         specifier: 2.0.0-rc3
@@ -4871,7 +4871,7 @@ packages:
       ts-node:
         optional: true
     dependencies:
-      lilconfig: 2.0.6
+      lilconfig: 2.1.0
       postcss: 8.4.16
       yaml: 1.10.2
     dev: true
