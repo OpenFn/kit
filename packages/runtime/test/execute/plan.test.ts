@@ -573,6 +573,22 @@ test('return an error in state', async (t) => {
   t.is(result.errors.a.message, 'e');
 });
 
+// Fix for https://github.com/OpenFn/kit/issues/317
+test('handle non-standard error objects', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        state: {},
+        expression: 'export default [s => { throw "wibble" }]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.truthy(result.errors);
+  t.is(result.errors.a.error, 'wibble');
+});
+
 test('keep executing after an error', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [

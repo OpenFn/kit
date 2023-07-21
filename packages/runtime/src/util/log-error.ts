@@ -1,15 +1,16 @@
 import { Logger } from '@openfn/logger';
-import { JobNodeID, State } from '../types';
+import type { Error } from '@types/node';
+import { ErrorReport, JobNodeID, State } from '../types';
 
 export type ErrorReporter = (
   state: State,
   jobId: JobNodeID,
   error: Error
-) => void;
+) => ErrorReport;
 
 const createErrorReporter = (logger: Logger): ErrorReporter => {
   return (state, jobId, error) => {
-    const report = {
+    const report: ErrorReport = {
       name: error.name,
       jobId,
       message: error.message,
@@ -21,9 +22,8 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       report.code = error.code as string;
       report.stack = error.stack as string;
     }
-
     logger.debug(`Error thrown by job ${jobId}`);
-    logger.error(`${error.code || error.name || type}: ${report.message}`);
+    logger.error(`${report.code || report.name || 'error'}: ${report.message}`);
     logger.debug(`Error written to state.errors.${jobId}`);
     logger.debug(error); // TODO the logger doesn't handle this very well
 
@@ -33,7 +33,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
 
     state.errors[jobId] = report;
 
-    return report;
+    return report as ErrorReport;
   };
 };
 
