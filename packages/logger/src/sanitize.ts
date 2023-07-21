@@ -12,7 +12,7 @@ type SanitizeOptions = {
 const sanitize = (item: any, options: SanitizeOptions = {}) => {
   // Stringify output to ensure we show deep nesting
   const maybeStringify = (o: any) =>
-    options.stringify === false ? o : stringify(o);
+    options.stringify === false ? o : stringify(o, null, 2);
 
   if (item instanceof Error) {
     return item;

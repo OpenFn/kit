@@ -73,7 +73,12 @@ test('should log objects as strings', (t) => {
   logger.success(obj);
 
   const { message } = logger._parse(logger._last);
-  t.is(message, '{"a":22}');
+  t.is(
+    message,
+    `{
+  "a": 22
+}`
+  );
 
   const messageObj = JSON.parse(message as string);
   t.deepEqual(messageObj.a, 22);
@@ -346,7 +351,14 @@ test('log a circular object', async (t) => {
   logger.success(a);
 
   const { message } = logger._parse(logger._last);
-  t.is(message, '{"z":{"a":"[Circular]"}}');
+  t.is(
+    message,
+    `{
+  "z": {
+    "a": "[Circular]"
+  }
+}`
+  );
 });
 
 test('log a circular object as JSON', async (t) => {
@@ -375,7 +387,12 @@ test('ignore functions on logged objects', async (t) => {
   logger.success(obj);
 
   const { message } = logger._parse(logger._last);
-  t.is(message, '{"a":1}');
+  t.is(
+    message,
+    `{
+  "a": 1
+}`
+  );
 });
 
 test('log an error object', (t) => {
