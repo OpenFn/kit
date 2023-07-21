@@ -169,9 +169,6 @@ importers:
       recast:
         specifier: ^0.21.2
         version: 0.21.2
-      yargs:
-        specifier: ^17.7.2
-        version: 17.7.2
     devDependencies:
       '@types/node':
         specifier: ^17.0.45
@@ -194,6 +191,9 @@ importers:
       typescript:
         specifier: ^4.7.4
         version: 4.7.4
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
 
   packages/deploy:
     dependencies:
