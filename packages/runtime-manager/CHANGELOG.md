@@ -1,5 +1,15 @@
 # runtime-manager
 
+## 0.0.37
+
+### Patch Changes
+
+- faf1852: Downgrade tsup
+- Updated dependencies [faf1852]
+  - @openfn/compiler@0.0.34
+  - @openfn/logger@0.0.15
+  - @openfn/runtime@0.0.28
+
 ## 0.0.36
 
 ### Patch Changes

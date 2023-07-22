@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.18
+
+### Patch Changes
+
+- faf1852: Downgrade tsup
+
 ## 0.0.17
 
 ### Patch Changes

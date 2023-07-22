@@ -1,5 +1,13 @@
 # @openfn/deploy
 
+## 0.2.2
+
+### Patch Changes
+
+- faf1852: Downgrade tsup
+- Updated dependencies [faf1852]
+  - @openfn/logger@0.0.15
+
 ## 0.2.1
 
 ### Patch Changes

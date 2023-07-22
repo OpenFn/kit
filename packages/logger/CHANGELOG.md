@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.15
+
+### Patch Changes
+
+- faf1852: Downgrade tsup
+
 ## 0.0.14
 
 ### Patch Changes
