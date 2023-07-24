@@ -44,7 +44,7 @@
     "@openfn/logger": "workspace:*",
     "acorn": "^8.8.0",
     "ast-types": "^0.14.2",
-    "recast": "^0.21.2"
+    "recast": "^0.23.3"
   },
   "files": [
     "dist",
