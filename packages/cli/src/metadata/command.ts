@@ -29,11 +29,11 @@ const options = [
 
 export default {
   command: 'metadata',
-  desc: 'Generate metadata for an adaptor config',
+  describe: 'Generate metadata for an adaptor config',
   handler: ensure('metadata', options),
   builder: (yargs) =>
     build(options, yargs).example(
       'metadata -a salesforce -s tmp/state.json',
       'Generate salesforce metadata from config in state.json'
     ),
-} as yargs.CommandModule<{}>;
+} as yargs.CommandModule<MetadataOpts>;

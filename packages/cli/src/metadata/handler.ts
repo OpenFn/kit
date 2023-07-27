@@ -2,7 +2,7 @@ import { Logger } from '../util/logger';
 import { SafeOpts } from '../commands';
 import loadState from '../util/load-state';
 import cache from './cache';
-import { getModuleEntryPoint, getNameAndVersion } from '@openfn/runtime';
+import { getModuleEntryPoint } from '@openfn/runtime';
 
 // Add extra, uh, metadata to the, uh, metadata object
 const decorateMetadata = (metadata: any) => {

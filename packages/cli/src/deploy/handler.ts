@@ -3,7 +3,6 @@ import {
   DeployError,
   deploy,
   getConfig,
-  getYaml,
   validateConfig,
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
@@ -27,7 +26,6 @@ async function deployHandler(
 ) {
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
-   
 
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
@@ -36,7 +34,7 @@ async function deployHandler(
     }
 
     if (process.env['OPENFN_API_KEY']) {
-      logger.info('Using OPENFN_API_KEY environment variable'); 
+      logger.info('Using OPENFN_API_KEY environment variable');
       config.apiKey = process.env['OPENFN_API_KEY'];
     }
 

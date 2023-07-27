@@ -57,9 +57,9 @@ const options = [
   o.useAdaptorsMonorepo,
 ];
 
-const executeCommand = {
+const executeCommand: yargs.CommandModule<ExecuteOptions> = {
   command: 'execute [path]',
-  desc: `Run an openfn job or workflow. Get more help by running openfn <command> help.
+  describe: `Run an openfn job or workflow. Get more help by running openfn <command> help.
   \nExecute will run a job/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
   \nBy default only state.data will be returned fron a job. Include --no-strict to write the entire state object.
   \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
@@ -88,6 +88,6 @@ const executeCommand = {
         'openfn compile job.js -a http',
         'Compile job.js with the http adaptor and print the code to stdout'
       ),
-} as yargs.CommandModule<ExecuteOptions>;
+};
 
 export default executeCommand;
