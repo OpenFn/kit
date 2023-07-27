@@ -16,7 +16,7 @@
     "install:global": "pnpm build && pnpm run pack && node ./build/install-global.js",
     "install:openfnx": "pnpm install:global",
     "export": "sh scripts/export.sh",
-    "typesync": "pnpm exec typesync && pnpm -r exec typesync"
+    "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
   },
   "keywords": [],
   "author": "Open Function Group",

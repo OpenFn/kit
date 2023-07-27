@@ -117,9 +117,7 @@ git push --follow-tags
 
 This repo uses `typesync` to ensure that all packages have an appropriate `@types/` package.
 
-To manually run typesync, do `pnpm run typesync` from the repo root. Note that you'll have to `pnpm install` afterwards because typesync only updates dependency lists, it doesn't actually install them.
-
-[TODO] typesync will run automatically when a new package is installed.
+On every add, update and remove. you should do `pnpm run typesync` from the repo root.
 
 Note that @types packages only synchronise with the major and minor versions of a package. So for `@types/x@major.minor.patch`, `major` and `minor` refer to the versions of the corresponding package `x`, and `patch` is the verrsion number of the actual types package.
 
