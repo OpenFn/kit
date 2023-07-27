@@ -4,17 +4,6 @@ An example runtime manager service.
 
 The runtime manager is designed as a long running node service that runs jobs as worker threads.
 
-## Demo Server
-
-Run `pnpm start` to start the manager as a web service. This gives a bit of an example of how the manager might be used.
-
-Go to `localhost:1234` to see a report on any active threads as well as the job history.
-
-Post anything to the server to run the test job. The test job will run for a random number of seconds and return a random number. Patent pending.
-
-The server will report usage statistics when any job finishes.
-~~Post to `/job` to spin out a new job.~~
-
 ## Usage
 
 To integrate the manager into your own application:
