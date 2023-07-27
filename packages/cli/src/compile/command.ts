@@ -38,7 +38,6 @@ const options = [
 ];
 
 const compileCommand: yargs.CommandModule<CompileOptions> = {
-  wibble: 'yum yum',
   command: 'compile [path]',
   describe:
     'Compile an openfn job or workflow and print or save the resulting JavaScript.',
