@@ -1,11 +1,10 @@
 import { Logger } from '@openfn/logger';
-import type { Error } from '@types/node';
 import { ErrorReport, JobNodeID, State } from '../types';
 
 export type ErrorReporter = (
   state: State,
   jobId: JobNodeID,
-  error: Error
+  error: NodeJS.ErrnoException
 ) => ErrorReport;
 
 const createErrorReporter = (logger: Logger): ErrorReporter => {

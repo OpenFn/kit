@@ -16,7 +16,7 @@
   "scripts": {
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
-    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "test:types": "pnpm tsc --project tsconfig.test.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts",
     "build:watch": "pnpm build --watch",
     "pack": "pnpm pack --pack-destination ../../dist"
