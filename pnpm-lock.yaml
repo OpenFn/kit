@@ -77,8 +77,8 @@ importers:
   integration-tests/cli:
     dependencies:
       '@types/node':
-        specifier: ^18.7.18
-        version: 18.7.18
+        specifier: ^18.15.13
+        version: 18.15.13
       ava:
         specifier: 5.3.1
         version: 5.3.1
@@ -90,7 +90,7 @@ importers:
         version: 3.0.2
       ts-node:
         specifier: 10.8.1
-        version: 10.8.1(@types/node@18.7.18)(typescript@4.8.3)
+        version: 10.8.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -139,8 +139,8 @@ importers:
         specifier: ^4.13.1
         version: 4.13.1
       '@types/node':
-        specifier: ^17.0.45
-        version: 17.0.45
+        specifier: ^18.15.13
+        version: 18.15.13
       '@types/rimraf':
         specifier: ^3.0.2
         version: 3.0.2
@@ -158,7 +158,7 @@ importers:
         version: 5.1.4
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@17.0.45)(typescript@4.8.3)
+        version: 10.9.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -188,8 +188,8 @@ importers:
         version: 0.21.5
     devDependencies:
       '@types/node':
-        specifier: ^17.0.45
-        version: 17.0.45
+        specifier: ^18.15.13
+        version: 18.15.13
       '@types/yargs':
         specifier: ^17.0.24
         version: 17.0.24
@@ -198,7 +198,7 @@ importers:
         version: 5.3.1
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@17.0.45)(typescript@4.7.4)
+        version: 10.9.1(@types/node@18.15.13)(typescript@4.7.4)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -243,8 +243,8 @@ importers:
         specifier: ^4.13.1
         version: 4.13.1
       '@types/node':
-        specifier: ^18.7.14
-        version: 18.15.3
+        specifier: ^18.15.13
+        version: 18.15.13
       ava:
         specifier: 5.3.1
         version: 5.3.1
@@ -256,7 +256,7 @@ importers:
         version: 5.1.4
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@18.15.3)(typescript@4.8.3)
+        version: 10.9.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -286,8 +286,8 @@ importers:
         specifier: 1.7.5
         version: 1.7.5
       '@types/node':
-        specifier: ^17.0.45
-        version: 17.0.45
+        specifier: ^18.15.13
+        version: 18.15.13
       '@types/node-localstorage':
         specifier: ^1.3.0
         version: 1.3.0
@@ -308,7 +308,7 @@ importers:
         version: 1.7.0
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@17.0.45)(typescript@4.8.3)
+        version: 10.9.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -335,14 +335,14 @@ importers:
         version: 5.0.0
     devDependencies:
       '@types/node':
-        specifier: ^18.7.18
-        version: 18.7.18
+        specifier: ^18.15.13
+        version: 18.15.13
       ava:
         specifier: 5.3.1
         version: 5.3.1
       ts-node:
         specifier: 10.8.1
-        version: 10.8.1(@types/node@18.7.18)(typescript@4.8.3)
+        version: 10.8.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -372,8 +372,8 @@ importers:
         specifier: ^4.13.1
         version: 4.13.1
       '@types/node':
-        specifier: ^17.0.45
-        version: 17.0.45
+        specifier: ^18.15.13
+        version: 18.15.13
       '@types/semver':
         specifier: ^7.5.0
         version: 7.5.0
@@ -385,7 +385,7 @@ importers:
         version: 5.1.4
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@17.0.45)(typescript@4.8.3)
+        version: 10.9.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -424,8 +424,8 @@ importers:
         version: 6.2.1
     devDependencies:
       '@types/node':
-        specifier: ^17.0.31
-        version: 17.0.45
+        specifier: ^18.15.13
+        version: 18.15.13
       '@types/nodemon':
         specifier: ^1.19.2
         version: 1.19.2
@@ -437,7 +437,7 @@ importers:
         version: 2.0.19
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@17.0.45)(typescript@4.8.3)
+        version: 10.9.1(@types/node@18.15.13)(typescript@4.8.3)
       tslib:
         specifier: ^2.4.0
         version: 2.4.0
@@ -1044,7 +1044,7 @@ packages:
     dependencies:
       '@inquirer/type': 1.1.1
       '@types/mute-stream': 0.0.1
-      '@types/node': 20.4.2
+      '@types/node': 20.4.5
       ansi-escapes: 4.3.2
       mute-stream: 1.0.0
       strip-ansi: 6.0.1
@@ -1200,20 +1200,20 @@ packages:
   /@types/accepts@1.3.5:
     resolution: {integrity: sha512-jOdnI/3qTpHABjM5cx1Hc0sKsPoYCp+DP/GJRGtDlPd7fiV9oXGGIcjW/ZOxLIvjGz8MA+uMZI9metHlgqbgwQ==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: false
 
   /@types/body-parser@1.19.2:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: false
 
   /@types/connect@3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: false
 
   /@types/content-disposition@0.5.5:
@@ -1226,7 +1226,7 @@ packages:
       '@types/connect': 3.4.35
       '@types/express': 4.17.13
       '@types/keygrip': 1.0.2
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: false
 
   /@types/events@3.0.0:
@@ -1236,7 +1236,7 @@ packages:
   /@types/express-serve-static-core@4.17.30:
     resolution: {integrity: sha512-gstzbTWro2/nFed1WXtf+TtrpwxH7Ggs4RLYTLbeVgIkUQOI3WG/JKjgeOU1zXDvezllupjrf8OPIdvTbIaVOQ==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
     dev: false
@@ -1305,7 +1305,7 @@ packages:
       '@types/http-errors': 1.8.2
       '@types/keygrip': 1.0.2
       '@types/koa-compose': 3.2.5
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: false
 
   /@types/live-server@1.2.1:
@@ -1327,13 +1327,13 @@ packages:
   /@types/mock-fs@4.13.1:
     resolution: {integrity: sha512-m6nFAJ3lBSnqbvDZioawRvpLXSaPyn52Srf7OfzjubYbYX8MTUdIgDxQl0wEapm4m/pNYSd9TXocpQ0TvZFlYA==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: true
 
   /@types/mute-stream@0.0.1:
     resolution: {integrity: sha512-0yQLzYhCqGz7CQPE3iDmYjhb7KMBFOP+tBkyw+/Y2YyDI5wpS7itXXxneN1zSsUwWx3Ji6YiVYrhAnpQGS/vkw==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
 
   /@types/node-localstorage@1.3.0:
     resolution: {integrity: sha512-9+s5CWGhkYitklhLgnbf4s5ncCEx0An2jhBuhvw/sh9WNQ+/WvNFkPLyLjXGy+Oeo8CjPl69oz6M2FzZH+KwWA==}
@@ -1345,32 +1345,20 @@ packages:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
     dev: true
 
-  /@types/node@17.0.45:
-    resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
-    dev: true
+  /@types/node@18.15.13:
+    resolution: {integrity: sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==}
 
   /@types/node@18.15.3:
     resolution: {integrity: sha512-p6ua9zBxz5otCmbpb5D3U4B5Nanw6Pk3PPyX05xnxbB/fRv71N7CPmORg7uAD5P70T0xmx1pzAx/FUfa5X+3cw==}
-
-  /@types/node@18.7.14:
-    resolution: {integrity: sha512-6bbDaETVi8oyIARulOE9qF1/Qdi/23z6emrUh0fNJRUmjznqrixD4MpGDdgOFk5Xb0m2H6Xu42JGdvAxaJR/wA==}
-    dev: false
-
-  /@types/node@18.7.18:
-    resolution: {integrity: sha512-m+6nTEOadJZuTPkKR/SYK3A2d7FZrgElol9UP1Kae90VVU4a6mxnPuLiIW1m4Cq4gZ/nWb9GrdVXJCoCazDAbg==}
-
-  /@types/node@20.4.2:
-    resolution: {integrity: sha512-Dd0BYtWgnWJKwO1jkmTrzofjK2QXXcai0dmtzvIBhcA+RsG5h8R3xlyta0kGOZRNfL9GuRtb1knmPEhQrePCEw==}
     dev: true
 
   /@types/node@20.4.5:
     resolution: {integrity: sha512-rt40Nk13II9JwQBdeYqmbn2Q6IVTA5uPhvSO+JVqdXw/6/4glI6oR9ezty/A9Hg5u7JH4OmYmuQ+XvjKm0Datg==}
-    dev: false
 
   /@types/nodemon@1.19.2:
     resolution: {integrity: sha512-4GWiTN3HevkxMIxEQ7OpD3MAHhlVsX2tairCMRmf8oYZxmhHw9+UpQpIdGdJrjsMT2Ty26FtJzUUcP/qM5fR8A==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: true
 
   /@types/normalize-package-data@2.4.1:
@@ -1434,7 +1422,7 @@ packages:
     resolution: {integrity: sha512-z5xyF6uh8CbjAu9760KDKsH2FcDxZ2tFCsA4HIMWE6IkiYMXfVoa+4f9KX+FN0ZLsaMw1WNG2ETLA6N+/YA+cg==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: false
 
   /@types/tar-stream@2.2.2:
@@ -1450,7 +1438,7 @@ packages:
   /@types/workerpool@6.1.0:
     resolution: {integrity: sha512-C+J/c1BHyc351xJuiH2Jbe+V9hjf5mCzRP0UK4KEpF5SpuU+vJ/FC5GLZsCU/PJpp/3I6Uwtfm3DG7Lmrb7LOQ==}
     dependencies:
-      '@types/node': 18.7.14
+      '@types/node': 18.15.13
     dev: false
 
   /@types/wrap-ansi@3.0.0:
@@ -5428,7 +5416,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.1.0
-      ts-node: 10.8.1(@types/node@18.7.18)(typescript@4.8.3)
+      ts-node: 10.8.1(@types/node@18.15.13)(typescript@4.8.3)
       yaml: 1.10.2
     dev: true
 
@@ -5445,7 +5433,7 @@ packages:
         optional: true
     dependencies:
       lilconfig: 2.1.0
-      ts-node: 10.9.1(@types/node@17.0.45)(typescript@4.8.3)
+      ts-node: 10.9.1(@types/node@18.15.13)(typescript@4.8.3)
       yaml: 1.10.2
     dev: true
 
@@ -6502,7 +6490,7 @@ packages:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
     dev: true
 
-  /ts-node@10.8.1(@types/node@18.7.18)(typescript@4.8.3):
+  /ts-node@10.8.1(@types/node@18.15.13)(typescript@4.8.3):
     resolution: {integrity: sha512-Wwsnao4DQoJsN034wePSg5nZiw4YKXf56mPIAeD6wVmiv+RytNSWqc2f3fKvcUoV+Yn2+yocD71VOfQHbmVX4g==}
     hasBin: true
     peerDependencies:
@@ -6521,7 +6509,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      '@types/node': 18.7.18
+      '@types/node': 18.15.13
       acorn: 8.8.1
       acorn-walk: 8.2.0
       arg: 4.1.3
@@ -6532,7 +6520,7 @@ packages:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  /ts-node@10.9.1(@types/node@17.0.45)(typescript@4.7.4):
+  /ts-node@10.9.1(@types/node@18.15.13)(typescript@4.7.4):
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -6551,7 +6539,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      '@types/node': 17.0.45
+      '@types/node': 18.15.13
       acorn: 8.8.0
       acorn-walk: 8.2.0
       arg: 4.1.3
@@ -6563,7 +6551,7 @@ packages:
       yn: 3.1.1
     dev: true
 
-  /ts-node@10.9.1(@types/node@17.0.45)(typescript@4.8.3):
+  /ts-node@10.9.1(@types/node@18.15.13)(typescript@4.8.3):
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -6582,38 +6570,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      '@types/node': 17.0.45
-      acorn: 8.8.0
-      acorn-walk: 8.2.0
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 4.8.3
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-    dev: true
-
-  /ts-node@10.9.1(@types/node@18.15.3)(typescript@4.8.3):
-    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
-    hasBin: true
-    peerDependencies:
-      '@swc/core': '>=1.2.50'
-      '@swc/wasm': '>=1.2.50'
-      '@types/node': '*'
-      typescript: '>=2.7'
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      '@swc/wasm':
-        optional: true
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.9
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.3
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
       acorn: 8.8.0
       acorn-walk: 8.2.0
       arg: 4.1.3

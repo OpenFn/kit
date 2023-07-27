@@ -29,7 +29,7 @@
     "@types/json-diff": "^1.0.0",
     "@types/jsonpath": "^0.2.0",
     "@types/mock-fs": "^4.13.1",
-    "@types/node": "^18.7.14",
+    "@types/node": "^18.15.13",
     "ava": "5.3.1",
     "jsonpath": "^1.1.1",
     "mock-fs": "^5.1.4",
