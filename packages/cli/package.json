@@ -35,7 +35,9 @@
   "devDependencies": {
     "@openfn/language-common": "2.0.0-rc3",
     "@types/mock-fs": "^4.13.1",
-    "@types/node": "^17.0.45",
+    "@types/node": "^18.15.13",
+    "@types/rimraf": "^3.0.2",
+    "@types/treeify": "^1.0.0",
     "@types/yargs": "^17.0.24",
     "ava": "5.3.1",
     "mock-fs": "^5.1.4",

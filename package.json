@@ -15,15 +15,22 @@
     "pack:local": "pnpm run pack && node ./build/pack-local.js",
     "install:global": "pnpm build && pnpm run pack && node ./build/install-global.js",
     "install:openfnx": "pnpm install:global",
-    "export": "sh scripts/export.sh"
+    "export": "sh scripts/export.sh",
+    "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
   },
   "keywords": [],
   "author": "Open Function Group",
   "license": "ISC",
   "devDependencies": {
     "@changesets/cli": "^2.25.0",
+    "@types/gunzip-maybe": "^1.4.0",
+    "@types/rimraf": "^3.0.2",
+    "@types/tar-stream": "^2.2.2",
     "gunzip-maybe": "^1.4.2",
     "rimraf": "^3.0.2",
     "tar-stream": "^3.0.0"
+  },
+  "dependencies": {
+    "typesync": "^0.11.1"
   }
 }
