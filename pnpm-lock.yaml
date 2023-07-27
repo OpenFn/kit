@@ -158,8 +158,8 @@ importers:
         specifier: ^0.14.2
         version: 0.14.2
       recast:
-        specifier: ^0.21.2
-        version: 0.21.2
+        specifier: ^0.21.5
+        version: 0.21.5
     devDependencies:
       '@types/node':
         specifier: ^17.0.45
@@ -5111,8 +5111,8 @@ packages:
     dependencies:
       picomatch: 2.3.1
 
-  /recast@0.21.2:
-    resolution: {integrity: sha512-jUR1+NtaBQdKDqBJ+qxwMm5zR8aLSNh268EfgAbY+EP4wcNEWb6hZFhFeYjaYanwgDahx5t47CH8db7X2NfKdQ==}
+  /recast@0.21.5:
+    resolution: {integrity: sha512-hjMmLaUXAm1hIuTqOdeYObMslq/q+Xff6QE3Y2P+uoHAg2nmVlLBps2hzh1UJDdMtDTMXOFewK6ky51JQIeECg==}
     engines: {node: '>= 4'}
     dependencies:
       ast-types: 0.15.2
