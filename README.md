@@ -117,9 +117,11 @@ git push --follow-tags
 
 This repo uses `typesync` to ensure that all packages have an appropriate `@types/` package.
 
+This must be run MANUALLY (See https://github.com/OpenFn/kit/issues/333)
+
 On every add, update and remove. you should do `pnpm run typesync` from the repo root.
 
-Note that @types packages only synchronise with the major and minor versions of a package. So for `@types/x@major.minor.patch`, `major` and `minor` refer to the versions of the corresponding package `x`, and `patch` is the verrsion number of the actual types package.
+Note that @types packages only synchronise with the major and minor versions of a package. So for `@types/x@major.minor.patch`, `major` and `minor` refer to the versions of the corresponding package `x`, and `patch` is the version number of the actual types package.
 
 ## Testing the CLI on a branch
 
