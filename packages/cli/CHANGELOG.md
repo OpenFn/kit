@@ -1,5 +1,32 @@
 # @openfn/cli
 
+## 0.2.2
+
+### Patch Changes
+
+- faf1852: Downgrade tsup
+- Updated dependencies [faf1852]
+  - @openfn/compiler@0.0.34
+  - @openfn/deploy@0.2.2
+  - @openfn/describe-package@0.0.18
+  - @openfn/logger@0.0.15
+  - @openfn/runtime@0.0.28
+
+## 0.2.1
+
+### Patch Changes
+
+- 4c875b3: Bump yargs version
+- Updated dependencies [749afe8]
+- Updated dependencies [614c86b]
+- Updated dependencies [4c875b3]
+- Updated dependencies [4c875b3]
+  - @openfn/logger@0.0.14
+  - @openfn/runtime@0.0.27
+  - @openfn/compiler@0.0.33
+  - @openfn/deploy@0.2.1
+  - @openfn/describe-package@0.0.17
+
 ## 0.2.0
 
 ### Minor Changes

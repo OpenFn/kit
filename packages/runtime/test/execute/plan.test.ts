@@ -573,6 +573,22 @@ test('return an error in state', async (t) => {
   t.is(result.errors.a.message, 'e');
 });
 
+// Fix for https://github.com/OpenFn/kit/issues/317
+test('handle non-standard error objects', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        state: {},
+        expression: 'export default [s => { throw "wibble" }]',
+      },
+    ],
+  };
+  const result = await executePlan(plan);
+  t.truthy(result.errors);
+  t.is(result.errors.a.error, 'wibble');
+});
+
 test('keep executing after an error', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
@@ -641,9 +657,8 @@ test('log appopriately on error', async (t) => {
   t.truthy(err);
   t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
 
-  t.truthy(logger._find('debug', /error thrown by job job1/i));
   t.truthy(logger._find('error', /Error: e/));
-  t.truthy(logger._find('debug', /error written to state.errors.job1/i));
+  t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 });
 
 test('jobs do not share a local scope', async (t) => {

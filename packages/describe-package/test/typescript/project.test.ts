@@ -1,6 +1,6 @@
 import test from 'ava';
-import { LocalStorage } from 'node-localstorage';
-global.localStorage = new LocalStorage('./tmp');
+// import { LocalStorage } from 'node-localstorage';
+// global.localStorage = new LocalStorage('./tmp');
 import { readFile } from 'node:fs/promises';
 import { Project, getDefaultMap } from '../../src/typescript/project';
 import { createDefaultMapFromNodeModules } from '@typescript/vfs';
