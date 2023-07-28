@@ -55,7 +55,8 @@ workflows:
   build_and_test:
     jobs:
       - test:
-        branches:
-          ignore:
-            - main
-            - main-tmp
+        filters:
+          branches:
+            ignore:
+              - main
+              - main-tmp

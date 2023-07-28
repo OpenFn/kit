@@ -25,6 +25,6 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: pnpm publish -r --report-summary --publish-branch main-tmp
-      - run: pnpm generate_slack_report
+      - run: pnpm run generate-slack-report
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
