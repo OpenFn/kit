@@ -59,4 +59,3 @@ workflows:
           branches:
             ignore:
               - main
-              - main-tmp
