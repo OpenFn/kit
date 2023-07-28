@@ -33,6 +33,9 @@ const getEngineeringMessage = (cliVersion, changes) => {
       versions.push(`${pkg.version.padEnd(10)} ${pkg.name}`);
     }
   });
+  if (versions.length === 0) {
+    versions.push('No other versions released.');
+  }
 
   const attachments = [
     {
