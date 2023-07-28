@@ -2,7 +2,7 @@ name: Publish
 
 on:
   push:
-    # branches: main-tmp
+    # branches: main
     branches: main-tmp
 
 jobs:
@@ -21,6 +21,9 @@ jobs:
       - run: pnpm install
       - run: pnpm build
       - run: pnpm test
-      - run: pnpm publish -r --dry-run --report-summary --publish-branch main-tmp
+      - run: pnpm publish -r --report-summary --publish-branch main-tmp
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: pnpm generate_slack_report
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.SLACK_TOKEN }}
