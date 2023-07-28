@@ -22,9 +22,9 @@ jobs:
       - run: pnpm build
       # - run: pnpm test
       - run: pnpm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
-      - run: pnpm publish -r --report-summary --publish-branch main-tmp
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: pnpm publish -r --report-summary --publish-branch main-tmp
       - run: pnpm generate_slack_report
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
