@@ -21,6 +21,6 @@ jobs:
       - run: pnpm install
       - run: pnpm build
       - run: pnpm test
-      - run: pnpm publish -r
+      - run: pnpm publish -r --dry-run --report-summary --publish-branch main-tmp
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
