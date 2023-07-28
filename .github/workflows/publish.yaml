@@ -23,7 +23,7 @@ jobs:
       - run: pnpm test
       - run: pnpm publish -r --report-summary --publish-branch main-tmp
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: pnpm generate_slack_report
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
