@@ -9,7 +9,7 @@
   "scripts": {
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
-    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "test:types": "pnpm tsc --project tsconfig.test.json",
     "build": "tsup --config ./tsup.config.js",
     "build:watch": "pnpm build --watch",
     "openfn": "node --no-warnings dist/index.js",
@@ -47,6 +47,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "@inquirer/prompts": "^1.1.4",
     "@openfn/compiler": "workspace:*",
     "@openfn/deploy": "workspace:*",
     "@openfn/describe-package": "workspace:*",

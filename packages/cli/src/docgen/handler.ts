@@ -129,7 +129,7 @@ const docgenHandler = (
     // Return or wait for the existing docs
     // If there's a timeout error, don't remove the placeholder
     return waitForDocs(json, path, logger, retryDuration);
-  } catch (e) {
+  } catch (e: any) {
     // Generate docs from scratch
     if (e.message !== 'TIMEOUT') {
       logger.info(`Docs JSON not found at ${path}`);

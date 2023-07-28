@@ -79,5 +79,7 @@ export const list = async (options: Opts, logger: Logger) => {
   });
 
   // Print with treeify (not very good really)
-  logger.success('Installed packages:\n\n' + treeify.asTree(output));
+  logger.success(
+    'Installed packages:\n\n' + treeify.asTree(output, false, false)
+  );
 };
