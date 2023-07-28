@@ -19,7 +19,7 @@ jobs:
           version: 8
       - run: pnpm install
       - run: pnpm build
-      - run: pnpm test:integration
+      - run: pnpm test
       - run: pnpm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
