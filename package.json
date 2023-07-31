@@ -21,7 +21,7 @@
   "author": "Open Function Group",
   "license": "ISC",
   "devDependencies": {
-    "@changesets/cli": "^2.25.0",
+    "@changesets/cli": "^2.26.2",
     "gunzip-maybe": "^1.4.2",
     "rimraf": "^3.0.2",
     "tar-stream": "^3.0.0"
