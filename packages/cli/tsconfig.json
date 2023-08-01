@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.common",
   "include": ["src/**/*.ts", "test/**/*.ts"],
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "esnext",
     "paths": {
       "@openfn/*": ["../*"]
     }

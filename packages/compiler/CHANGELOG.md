@@ -1,5 +1,13 @@
 # @openfn/compiler
 
+## 0.0.35
+
+### Patch Changes
+
+- 8f30ff8: Bump recast version
+- Updated dependencies [2a0aaa9]
+  - @openfn/logger@0.0.16
+
 ## 0.0.34
 
 ### Patch Changes

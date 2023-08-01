@@ -1,6 +1,6 @@
 {
   "name": "@openfn/compiler",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "description": "Compiler and language tooling for openfn jobs.",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -30,9 +30,9 @@
   },
   "keywords": [],
   "devDependencies": {
-    "@types/node": "^17.0.45",
+    "@types/node": "^18.15.13",
     "@types/yargs": "^17.0.24",
-    "ava": "5.1.0",
+    "ava": "5.3.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "tsup": "^6.2.3",
@@ -44,7 +44,7 @@
     "@openfn/logger": "workspace:*",
     "acorn": "^8.8.0",
     "ast-types": "^0.14.2",
-    "recast": "^0.21.2"
+    "recast": "^0.21.5"
   },
   "files": [
     "dist",

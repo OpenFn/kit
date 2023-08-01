@@ -13,19 +13,22 @@ export type DeployOptions = Required<
     | 'projectPath'
     | 'configPath'
     | 'confirm'
-    | 'describe'
   >
 >;
 
-const options = [o.statePath, o.projectPath, o.configPath, o.confirm, o.describe];
+const options = [
+  o.statePath,
+  o.projectPath,
+  o.configPath,
+  o.confirm,
+  o.describe,
+];
 
-const deployCommand = {
+const deployCommand: yargs.CommandModule<DeployOptions> = {
   command: 'deploy',
-  desc: "Deploy a project's config to a remote Lightning instance",
-  builder: (yargs: yargs.Argv<DeployOptions>) => {
-    return build(options, yargs).example('deploy', '');
-  },
+  describe: "Deploy a project's config to a remote Lightning instance",
   handler: ensure('deploy', options),
+  builder: (yargs) => build(options, yargs),
 };
 
 export default deployCommand;

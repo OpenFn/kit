@@ -37,9 +37,10 @@ const options = [
   o.useAdaptorsMonorepo,
 ];
 
-const compileCommand = {
+const compileCommand: yargs.CommandModule<CompileOptions> = {
   command: 'compile [path]',
-  desc: 'Compile an openfn job or workflow and print or save the resulting JavaScript.',
+  describe:
+    'Compile an openfn job or workflow and print or save the resulting JavaScript.',
   handler: ensure('compile', options),
   builder: (yargs) =>
     build(options, yargs)
@@ -56,6 +57,6 @@ const compileCommand = {
         'compile foo/workflow.json -o foo/workflow-compiled.json',
         'Compiles the workflow at foo/work.json and prints the result to -o foo/workflow-compiled.json'
       ),
-} as yargs.CommandModule<CompileOptions>;
+};
 
 export default compileCommand;

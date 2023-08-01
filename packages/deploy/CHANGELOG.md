@@ -1,5 +1,13 @@
 # @openfn/deploy
 
+## 0.2.3
+
+### Patch Changes
+
+- 2a0aaa9: Bump inquirer
+- Updated dependencies [2a0aaa9]
+  - @openfn/logger@0.0.16
+
 ## 0.2.2
 
 ### Patch Changes

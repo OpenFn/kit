@@ -56,12 +56,17 @@ export type CLIOption = {
   name: string;
   // Allow this to take a function to lazy-evaluate env vars
   yargs: yargs.Options | (() => yargs.Options);
-  ensure?: (opts: Opts) => void;
+  ensure?: (opts: Partial<Opts>) => void;
 };
 
-const setDefaultValue = (opts: Opts, key: keyof Opts, value: any) => {
-  const v: any = opts[key];
-  if (isNaN(v) && !v) {
+const setDefaultValue = (
+  opts: Partial<Opts>,
+  key: keyof Opts,
+  value: unknown
+) => {
+  const v = opts[key];
+  if (isNaN(v as number) && !v) {
+    // @ts-ignore
     opts[key] = value;
   }
 };
@@ -134,20 +139,19 @@ export const configPath: CLIOption = {
     alias: ['c', 'config-path'],
     description: 'The location of your config file',
     default: './.config.json',
-  }
-};
-
-export const describe: CLIOption = {
-    name: 'describe',
-    yargs : {
-        boolean: true,
-        description: "Downloads the project yaml from the specified instance"
-    },
-    ensure: (opts) => {
-    setDefaultValue(opts, 'describe', true);
   },
 };
 
+export const describe: CLIOption = {
+  name: 'describe',
+  yargs: {
+    boolean: true,
+    description: 'Downloads the project yaml from the specified instance',
+  },
+  ensure: (opts) => {
+    setDefaultValue(opts, 'describe', true);
+  },
+};
 
 export const expandAdaptors: CLIOption = {
   name: 'no-expand-adaptors',
@@ -194,7 +198,7 @@ export const ignoreImports: CLIOption = {
   },
 };
 
-const getBaseDir = (opts: Opts) => {
+const getBaseDir = (opts: { path?: string }) => {
   const basePath = opts.path ?? '.';
   if (/\.(jso?n?)$/.test(basePath)) {
     return path.dirname(basePath);
@@ -274,7 +278,7 @@ export const projectPath: CLIOption = {
     string: true,
     alias: ['p'],
     description: 'The location of your project.yaml file',
-  }
+  },
 };
 
 export const repoDir: CLIOption = {

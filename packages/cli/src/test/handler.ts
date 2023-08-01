@@ -55,7 +55,7 @@ const testHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   const state = await loadState(options, silentLogger);
   const code = await compile(options, logger);
-  const result = await execute(code, state, options, silentLogger);
+  const result = await execute(code!, state, options, silentLogger);
   logger.success(`Result: ${result.data.answer}`);
   return result;
 };

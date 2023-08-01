@@ -65,7 +65,7 @@ const maybeEnsureOpts = (basePath: string, options: Opts) =>
 
 // Top level command parser
 const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  const opts = maybeEnsureOpts(basePath, options);
+  const opts = maybeEnsureOpts(basePath, options) as SafeOpts;
   const logger = log || createLogger(CLI, opts);
 
   // In execute and test, always print version info FIRST

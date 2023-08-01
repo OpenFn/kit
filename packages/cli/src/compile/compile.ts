@@ -10,7 +10,8 @@ export default async (opts: CompileOptions, log: Logger) => {
   log.debug('Compiling...');
   let job;
   if (opts.workflow) {
-    job = compileWorkflow(opts.workflow, opts, log);
+    // Note that the workflow will be loaded into an object by this point
+    job = compileWorkflow(opts.workflow as ExecutionPlan, opts, log);
   } else {
     job = await compileJob((opts.job || opts.jobPath) as string, opts, log);
   }

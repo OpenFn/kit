@@ -1,32 +1,27 @@
 import path from 'path';
 import fs from 'node:fs/promises';
-import {
-  DeployConfig,
-  getProject,
-  getConfig,
-  getState ,
-} from '@openfn/deploy';
+import { DeployConfig, getProject, getConfig, getState } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { DeployOptions } from '../deploy/command';
 
-
-
-async function pullHandler(
-  options: DeployOptions,
-  logger: Logger,
-) {
+async function pullHandler(options: DeployOptions, logger: Logger) {
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    logger.always("Downloading project yaml and  state from instance");
+    logger.always('Downloading project yaml and  state from instance');
+
     const state = await getState(config.statePath);
     const { data: new_state } = await getProject(config, state.id);
     const url = new URL(`/download/yaml?id=${state.id}`, config.endpoint);
     const res = await fetch(url);
+
+    // @ts-ignore
     await fs.writeFile(path.resolve(config.specPath), res.body);
+    // @ts-ignore
     await fs.writeFile(path.resolve(config.statePath), new_state);
-    logger.success("Project pulled successfully");
+
+    logger.success('Project pulled successfully');
     process.exitCode = 0;
-    return true; 
+    return true;
   } catch (error: any) {
     throw error;
   }

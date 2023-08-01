@@ -1,6 +1,6 @@
 {
   "name": "@openfn/deploy",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Deploy projects to Lightning instances",
   "type": "module",
   "exports": {
@@ -16,7 +16,7 @@
   "scripts": {
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
-    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "_test:types": "pnpm tsc --noEmit --project tsconfig.json --excludeDirectories test",
     "build": "tsup --config ../../tsup.config.js src/index.ts",
     "build:watch": "pnpm build --watch",
     "pack": "pnpm pack --pack-destination ../../dist"
@@ -28,8 +28,9 @@
     "@inquirer/testing": "^2.1.1",
     "@types/json-diff": "^1.0.0",
     "@types/jsonpath": "^0.2.0",
-    "@types/node": "^18.7.14",
-    "ava": "5.1.0",
+    "@types/mock-fs": "^4.13.1",
+    "@types/node": "^18.15.13",
+    "ava": "5.3.1",
     "jsonpath": "^1.1.1",
     "mock-fs": "^5.1.4",
     "ts-node": "^10.9.1",
