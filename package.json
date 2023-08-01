@@ -4,18 +4,19 @@
   "private": true,
   "description": "Next-generation OpenFN tooling",
   "scripts": {
-    "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
     "build": "pnpm run clean && pnpm -r --filter=./packages/* run build",
-    "clean": "rimraf packages/*/dist",
     "clean:local": "rimraf dist/**/*",
-    "test": "pnpm -r --filter=./packages/* run test",
-    "test:integration": "pnpm -C integration-tests/cli test",
-    "test:types": "pnpm -r --filter=./packages/* run test:types",
-    "pack": "pnpm -r run pack",
-    "pack:local": "pnpm run pack && node ./build/pack-local.js",
+    "clean": "rimraf packages/*/dist",
+    "export": "sh scripts/export.sh",
+    "generate-slack-report": "node ./scripts/slack-publish-message.js",
     "install:global": "pnpm build && pnpm run pack && node ./build/install-global.js",
     "install:openfnx": "pnpm install:global",
-    "export": "sh scripts/export.sh",
+    "pack:local": "pnpm run pack && node ./build/pack-local.js",
+    "pack": "pnpm -r run pack",
+    "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
+    "test:integration": "pnpm -C integration-tests/cli test",
+    "test:types": "pnpm -r --filter=./packages/* run test:types",
+    "test": "pnpm -r --filter=./packages/* run test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
   },
   "keywords": [],
@@ -28,9 +29,8 @@
     "@types/tar-stream": "^2.2.2",
     "gunzip-maybe": "^1.4.2",
     "rimraf": "^3.0.2",
-    "tar-stream": "^3.0.0"
-  },
-  "dependencies": {
-    "typesync": "^0.11.1"
+    "tar-stream": "^3.0.0",
+    "typesync": "^0.11.1",
+    "@slack/web-api": "^6.8.1"
   }
 }

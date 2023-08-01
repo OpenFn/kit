@@ -1,6 +1,6 @@
 # @openfn/cli
 
-## 0.2.3
+## 0.2.4
 
 ### Patch Changes
 
@@ -9,6 +9,12 @@
   - @openfn/runtime@0.0.29
   - @openfn/deploy@0.2.3
   - @openfn/logger@0.0.16
+
+## 0.2.3
+
+### Patch Changes
+
+- Deploy test(no diff)
 
 ## 0.2.2
 
