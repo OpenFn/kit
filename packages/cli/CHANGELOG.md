@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 0.2.4
+
+### Patch Changes
+
+- Deploy test
+
+## 0.2.3
+
+### Patch Changes
+
+- Deploy test(no diff)
+
 ## 0.2.2
 
 ### Patch Changes
