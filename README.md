@@ -60,58 +60,14 @@ For example changeset notes, look in the `.changesets` folder.
 
 ### Releasing
 
-To release to npm:
+New releases will be published to npm automatically when merging into main.
 
-1. Update versions
+Before merging to main, check out the release branch locally and run the following steps:
 
-```
-pnpm changeset version
-```
-
-This will automatically update the version numbers of the affected packages.
-
-Commit the changes:
-
-```
-git commit -am "Updated changeset version"
-```
-
-2. Rebuild
-
-```
-pnpm install
-pnpm build
-```
-
-3. Test
-
-Build the test bundle:
-
-```
-$ pnpm clean:local
-$ pnpm pack:local
-```
-
-Install using command reported by pack:local (`npm install -g dist/openfn-cli-<version>-local.tgz`)
-
-Sanity check the version and ensure it works:
-
-```
-$ openfn --version
-$ openfn test
-```
-
-3. Publish
-
-```
-pnpm changeset publish --otp <OTP>
-```
-
-4. Push tags
-
-```
-git push --follow-tags
-```
+1. Update versions with `pnpm changeset version`
+2. Install to update dependencies `pnpm install`
+3. Check the release notes
+4. Commit and push (make sure to push tags too `git push --follow-tags`)
 
 ## TypeSync
 
