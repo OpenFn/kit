@@ -21,20 +21,21 @@ const componentShorthands: Record<string, string> = {
   'r/t': 'runtime',
 };
 
-// TODO what about shorthands?
-const isValidComponent = (v: string) =>
-  /^(cli|runtime|compiler|job|default)$/i.test(v);
-
 // TODO the log typing is pretty messy (this is a wider issue)
-export const ensureLogOpts = (opts: Opts) => {
+export const ensureLogOpts = (opts: Partial<Opts>) => {
   const components: Record<string, LogLevel> = {};
-  if (!opts.log && /^(version|test)$/.test(opts.command!)) {
+
+  // Note that incoming opts from yargs will be a string array
+  const incomingLogs = opts.log as unknown as string[];
+
+  // TODO find a neater way to handle defaults
+  if (!incomingLogs && /^(version|test)$/.test(opts.command!)) {
     // version and test log to info by default
-    (opts as any).log = { default: 'info' };
+    opts.log = { default: 'info' };
     return opts;
-  } else if (opts.log) {
+  } else if (incomingLogs) {
     // Parse and validate each incoming log argument
-    opts.log.forEach((l: string) => {
+    incomingLogs.forEach((l: string) => {
       let component = '';
       let level = '';
 
@@ -50,7 +51,7 @@ export const ensureLogOpts = (opts: Opts) => {
         level = l.toLowerCase() as LogLevel;
       }
 
-      if (!isValidComponent(component)) {
+      if (!/^(cli|runtime|compiler|job|default)$/i.test(component)) {
         throw new Error(ERROR_MESSAGE_LOG_COMPONENT);
       }
 
@@ -70,8 +71,7 @@ export const ensureLogOpts = (opts: Opts) => {
     ...components,
   };
 
-  // TODO messy typings because of log stuff
-  return opts as unknown as SafeOpts;
+  return opts;
 };
 
 // TODO this function is now deprecated and slowly being phased out

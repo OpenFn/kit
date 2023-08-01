@@ -10,7 +10,7 @@ import pull from './pull/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger, LogLevel } from './util/logger';
-import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
+// import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
 import expandAdaptors from './util/expand-adaptors';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
@@ -49,6 +49,7 @@ const handlers = {
     printVersions(logger, opts),
 };
 
+// TODO this type really doesn't make sense anymore either, since opts are typed to a particular command now
 export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   log: Record<string, LogLevel>;
   adaptor: string | boolean;
@@ -56,40 +57,43 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   statePath?: string;
 };
 
-const maybeEnsureOpts = (basePath: string, options: Opts) =>
-  // If the command is compile or execute, just return the opts (yargs will do all the validation)
-  /(^(deploy|execute|compile|test)$)|(repo-)/.test(options.command!)
-    ? ensureLogOpts(options)
-    : // Otherwise  older commands still need to go through ensure opts
-      ensureOpts(basePath, options);
+// const maybeEnsureOpts = (basePath: string, options: Opts) =>
+//   // If the command is compile or execute, just return the opts (yargs will do all the validation)
+//   /(^(deploy|execute|compile|test)$)|(repo-)/.test(options.command!)
+//     ? ensureLogOpts(options)
+//     : // Otherwise  older commands still need to go through ensure opts
+//       ensureOpts(basePath, options);
 
 // Top level command parser
-const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  const opts = maybeEnsureOpts(basePath, options) as SafeOpts;
-  const logger = log || createLogger(CLI, opts);
+const parse = async (basePath: string, options: SafeOpts, log?: Logger) => {
+  const logger = log || createLogger(CLI, options);
 
   // In execute and test, always print version info FIRST
   // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
-  if (opts.command === 'execute' || opts.command === 'test') {
-    await printVersions(logger, opts);
+  if (options.command === 'execute' || options.command === 'test') {
+    await printVersions(logger, options);
   }
 
-  if (opts.monorepoPath) {
-    if (opts.monorepoPath === 'ERR') {
+  if (options.monorepoPath) {
+    if (options.monorepoPath === 'ERR') {
       logger.error(
         'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
       );
       logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
       process.exit(9); // invalid argument
     }
-    await mapAdaptorsToMonorepo(opts as MapAdaptorsToMonorepoOptions, logger);
-  } else if (opts.adaptors && opts.expandAdaptors) {
+    await mapAdaptorsToMonorepo(
+      options as MapAdaptorsToMonorepoOptions,
+      logger
+    );
+  } else if (options.adaptors && options.expandAdaptors) {
     // TODO this will be removed once all options have been refactored
     //      This is safely redundant in execute and compile
-    expandAdaptors(opts);
+    expandAdaptors(options);
   }
 
-  if (!/^(deploy|test|version)$/.test(opts.command) && !opts.repoDir) {
+  // TODO do this in the repoDir option
+  if (!/^(deploy|test|version)$/.test(options.command) && !options.repoDir) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );
@@ -99,7 +103,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
   }
 
   const handler = options.command ? handlers[options.command] : execute;
-  if (!opts.command || /^(compile|execute)$/.test(opts.command)) {
+  if (!options.command || /^(compile|execute)$/.test(options.command)) {
     assertPath(basePath);
   }
   if (!handler) {
@@ -109,7 +113,7 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
 
   try {
     // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
-    const result = await handler(opts, logger);
+    const result = await handler(options, logger);
     return result;
   } catch (e: any) {
     if (!process.exitCode) {

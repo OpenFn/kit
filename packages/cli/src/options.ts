@@ -1,13 +1,15 @@
 import path from 'node:path';
 import yargs from 'yargs';
 import type { ExecutionPlan } from '@openfn/runtime';
-import doExpandAdaptors from './util/expand-adaptors';
 import type { CommandList } from './commands';
 import { CLIExecutionPlan } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
+import doExpandAdaptors from './util/expand-adaptors';
+import { ensureLogOpts } from './util/ensure-opts';
 
 // Central type definition for the main options
-// This is in flux as options are being refactored
+// This represents the types coming out of yargs,
+// after ensure() is called
 export type Opts = {
   command?: CommandList;
   baseDir?: string;
@@ -26,7 +28,7 @@ export type Opts = {
   ignoreImports?: boolean | string[];
   jobPath?: string;
   job?: string;
-  log?: string[];
+  log?: Record<string, string>;
   logJson?: boolean;
   monorepoPath?: string;
   operation?: string;
@@ -222,6 +224,18 @@ export const inputPath: CLIOption = {
       const base = getBaseDir(opts);
       setDefaultValue(opts, 'jobPath', path.join(base, 'job.js'));
     }
+  },
+};
+
+export const log: CLIOption = {
+  name: 'log',
+  yargs: {
+    alias: ['l'],
+    description: 'Set the log level',
+    array: true,
+  },
+  ensure: (opts) => {
+    ensureLogOpts(opts);
   },
 };
 

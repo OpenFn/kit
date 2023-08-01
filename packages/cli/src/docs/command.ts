@@ -3,6 +3,7 @@ import { Opts } from '../options';
 
 type DocsOptions = Partial<Opts>; // TODO
 
+// TODO import log option, repodir
 export default {
   command: 'docs <adaptor> [operation]',
   describe:

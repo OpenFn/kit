@@ -26,12 +26,12 @@ export const cmd = y
   .command(metadataCommand)
   .command(docgenCommand as any)
   .command(pullCommand as any)
-  // Common options
-  .option('log', {
-    alias: ['l'],
-    description: 'Set the default log level to none, default, info or debug',
-    array: true,
-  })
+  // // Common options
+  // .option('log', {
+  //   alias: ['l'],
+  //   description: 'Set the default log level to none, default, info or debug',
+  //   array: true,
+  // })
   // TODO there's a bit of confusion right now about where log json lives
   // Let's finish removing ensure-opts and sort this out there
   // .option('log-json', {

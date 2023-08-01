@@ -8,6 +8,7 @@ export type MetadataOpts = Pick<
   | 'adaptors'
   | 'expandAdaptors'
   | 'force'
+  | 'log'
   | 'logJson'
   | 'repoDir'
   | 'statePath'
@@ -20,6 +21,7 @@ const options = [
 
   o.adaptors,
   o.force,
+  o.log,
   o.logJson,
   o.repoDir,
   o.statePath,
