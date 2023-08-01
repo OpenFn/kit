@@ -4,8 +4,6 @@
 
 ### Patch Changes
 
-- Updated dependencies [8f30ff8]
-- Updated dependencies [2a0aaa9]
 - Updated dependencies [2a0aaa9]
   - @openfn/compiler@0.0.35
   - @openfn/runtime@0.0.29
