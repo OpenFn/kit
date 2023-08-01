@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.16
+
+### Patch Changes
+
+- 2a0aaa9: Bump inquirer
+
 ## 0.0.15
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 0.0.29
+
+### Patch Changes
+
+- 2a0aaa9: Bump semver
+- Updated dependencies [2a0aaa9]
+  - @openfn/logger@0.0.16
+
 ## 0.0.28
 
 ### Patch Changes
