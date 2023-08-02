@@ -9,7 +9,7 @@ import metadata from './metadata/handler';
 import pull from './pull/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
-import createLogger, { CLI, Logger, LogLevel } from './util/logger';
+import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
 } from './util/map-adaptors-to-monorepo';
@@ -44,15 +44,6 @@ const handlers = {
   ['repo-pwd']: pwd,
   ['repo-list']: list,
   version: async (opts: Opts, logger: Logger) => printVersions(logger, opts),
-};
-
-// TODO this type really doesn't make sense anymore either, since opts are typed to a particular command now
-// TODO yeah pretty sure we can remove this now (needs a little work)
-export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
-  log: Record<string, LogLevel>;
-  adaptor: string | boolean;
-  monorepoPath?: string;
-  statePath?: string;
 };
 
 // Top level command parser

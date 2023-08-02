@@ -1,5 +1,5 @@
 import { Logger } from '../util/logger';
-import { SafeOpts } from '../commands';
+import { MetadataOpts } from './command';
 import loadState from '../util/load-state';
 import cache from './cache';
 import { getModuleEntryPoint } from '@openfn/runtime';
@@ -47,7 +47,7 @@ export const getAdaptorPath = async (
   return adaptorPath;
 };
 
-const metadataHandler = async (options: SafeOpts, logger: Logger) => {
+const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0];
 

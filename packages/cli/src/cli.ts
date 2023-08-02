@@ -23,7 +23,7 @@ export const cmd = y
   .command(repoCommand)
   .command(testCommand)
   .command(docsCommand)
-  .command(metadataCommand)
+  .command(metadataCommand as any)
   .command(docgenCommand as any)
   .command(pullCommand as any)
   .command({
