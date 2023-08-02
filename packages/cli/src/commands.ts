@@ -92,8 +92,12 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     expandAdaptors(options);
   }
 
-  // TODO do this in the repoDir option
-  if (!/^(deploy|test|version)$/.test(options.command!) && !options.repoDir) {
+  // TODO it would be nice to do this in the repoDir option, but
+  // the logger isn't available yet
+  if (
+    !/^(pull|deploy|test|version)$/.test(options.command!) &&
+    !options.repoDir
+  ) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );
