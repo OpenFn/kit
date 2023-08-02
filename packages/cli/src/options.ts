@@ -6,6 +6,7 @@ import { CLIExecutionPlan } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
 import doExpandAdaptors from './util/expand-adaptors';
 import ensureLogOpts from './util/ensure-log-opts';
+import { LogLevel } from './util';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -28,7 +29,7 @@ export type Opts = {
   ignoreImports?: boolean | string[];
   jobPath?: string;
   job?: string;
-  log?: Record<string, string>;
+  log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
   operation?: string;

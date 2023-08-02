@@ -1,5 +1,5 @@
 // Wrapper around the logger API to load a namespaced logger with the right options
-import actualCreateLogger, { LogLevel, printDuration } from '@openfn/logger';
+import actualCreateLogger, { printDuration } from '@openfn/logger';
 import type { Opts } from '../options';
 
 export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
@@ -24,7 +24,7 @@ export const createLogger = (
 ) => {
   const logOptions = options.log || {};
   let json = false;
-  let level: LogLevel = logOptions[name] || logOptions.default || 'default';
+  let level = logOptions[name] || logOptions.default || 'default';
   if (options.logJson) {
     json = true;
   }
