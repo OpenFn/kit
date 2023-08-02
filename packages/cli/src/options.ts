@@ -20,7 +20,7 @@ export type Opts = {
   autoinstall?: boolean;
   compile?: boolean;
   confirm?: boolean;
-  describe: string;
+  describe?: string;
   configPath?: string;
   expandAdaptors?: boolean; // for unit tests really
   force?: boolean;

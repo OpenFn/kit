@@ -80,7 +80,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.log = { default: 'none ' };
   opts.skipAdaptorValidation = true;
 
-  await commandParser(jobPath, opts, logger);
+  await commandParser(opts, logger);
 
   try {
     // Try and load the result as json as a test convenience
@@ -582,7 +582,7 @@ test.serial('docs should print documentation with full names', async (t) => {
   const opts = cmd.parse('docs @openfn/language-common@1.0.0 fn') as Opts;
   opts.repoDir = '/repo';
 
-  await commandParser('', opts, logger);
+  await commandParser(opts, logger);
   const docs = logger._parse(logger._history[3]).message as string;
   // match the signature
   t.regex(docs, /\#\# fn\(\)/);
@@ -618,7 +618,7 @@ test.serial('docs adaptor should print list operations', async (t) => {
   const opts = cmd.parse('docs common@1.0.0') as Opts;
   opts.repoDir = '/repo';
 
-  await commandParser('', opts, logger);
+  await commandParser(opts, logger);
   const docs = logger._parse(logger._history[2]).message as string;
   t.notRegex(docs, /\[object Object\]/);
   t.notRegex(docs, /\#\#\# Usage Examples/);
@@ -648,7 +648,7 @@ test.serial(
     const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
     opts.repoDir = '/repo';
 
-    await commandParser('', opts, logger);
+    await commandParser(opts, logger);
     const docs = logger._parse(logger._history[3]).message as string;
     // match the signature
     t.regex(docs, /\#\# fn\(\)/);
@@ -665,10 +665,3 @@ test.serial(
     t.is(message, 'Done!');
   }
 );
-
-// TODO - need to work out a way to test agaist stdout
-// should return to stdout
-// should log stuff to console
-// should not log if silent is true
-
-// TODO how would we test skip compilation and no validation? I guess we pass illegal code?

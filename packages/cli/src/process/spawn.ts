@@ -11,7 +11,7 @@ import type { Opts } from '../options';
 type Messages = { done?: boolean; init?: boolean; exitCode?: number };
 
 // The default export will create a new child process which calls itself
-export default function (basePath: string, opts: Opts) {
+export default function (opts: Opts) {
   const execArgv = [
     // Suppress experimental argument warnings
     '--no-warnings',
@@ -25,7 +25,7 @@ export default function (basePath: string, opts: Opts) {
 
   child.on('message', ({ done, init, exitCode }: Messages) => {
     if (init) {
-      child.send({ init: true, basePath, opts });
+      child.send({ init: true, opts });
     }
 
     if (done) {

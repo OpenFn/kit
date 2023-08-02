@@ -35,4 +35,4 @@ export const cmd = y
     },
   })
   .wrap(y.terminalWidth())
-  .help() as yargs.Argv<Opts>;
+  .help();

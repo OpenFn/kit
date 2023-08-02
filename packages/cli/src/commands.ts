@@ -56,7 +56,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
 };
 
 // Top level command parser
-const parse = async (basePath: string, options: Opts, log?: Logger) => {
+const parse = async (options: Opts, log?: Logger) => {
   const logger = log || createLogger(CLI, options);
 
   // In execute and test, always print version info FIRST
@@ -93,10 +93,8 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     );
   }
 
-  const handler = options.command ? handlers[options.command] : execute;
-  if (!options.command || /^(compile|execute)$/.test(options.command)) {
-    assertPath(basePath);
-  }
+  const handler = handlers[options.command!];
+
   if (!handler) {
     logger.error(`Unrecognised command: ${options.command}`);
     process.exit(1);
@@ -122,15 +120,3 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
 };
 
 export default parse;
-
-// TODO probably this isn't neccessary and we just use cwd?
-const assertPath = (basePath?: string) => {
-  if (!basePath) {
-    console.error('ERROR: no path provided!');
-    console.error('\nUsage:');
-    console.error('  open path/to/job');
-    console.error('\nFor more help do:');
-    console.error('  openfn --help ');
-    process.exit(1);
-  }
-};

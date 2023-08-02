@@ -5,11 +5,13 @@ import type { Logger } from '../util/logger';
 import compile from './compile';
 import loadInput from '../util/load-input';
 import expandAdaptors from '../util/expand-adaptors';
+import assertPath from '../util/assert-path';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
 } from '../util/map-adaptors-to-monorepo';
 
 const compileHandler = async (options: CompileOptions, logger: Logger) => {
+  assertPath(options.path);
   await loadInput(options, logger);
 
   if (options.workflow) {

@@ -18,6 +18,7 @@ const defaultOptions = {
   outputStdOut: true,
   compile: true,
   repoDir: '/repo',
+  path: '.',
   log: {
     // TODO if I pass a mock logger into the handler, the handler then
     // goes and creates a real logger and passes it to the runtinme, which
