@@ -86,10 +86,6 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
       options as MapAdaptorsToMonorepoOptions,
       logger
     );
-  } else if (options.adaptors && options.expandAdaptors) {
-    // TODO this will be removed once all options have been refactored
-    //      This is safely redundant in execute and compile
-    expandAdaptors(options);
   }
 
   // TODO it would be nice to do this in the repoDir option, but
