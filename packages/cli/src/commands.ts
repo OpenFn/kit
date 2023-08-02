@@ -10,8 +10,6 @@ import pull from './pull/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger, LogLevel } from './util/logger';
-// import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
-import expandAdaptors from './util/expand-adaptors';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
 } from './util/map-adaptors-to-monorepo';
@@ -56,13 +54,6 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   monorepoPath?: string;
   statePath?: string;
 };
-
-// const maybeEnsureOpts = (basePath: string, options: Opts) =>
-//   // If the command is compile or execute, just return the opts (yargs will do all the validation)
-//   /(^(deploy|execute|compile|test)$)|(repo-)/.test(options.command!)
-//     ? ensureLogOpts(options)
-//     : // Otherwise  older commands still need to go through ensure opts
-//       ensureOpts(basePath, options);
 
 // Top level command parser
 const parse = async (basePath: string, options: Opts, log?: Logger) => {
