@@ -73,10 +73,11 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   }
 
   const opts = cmd.parse(command) as Opts;
+  // Override some options after the command has been parsed
   opts.path = jobPath;
   opts.repoDir = options.repoDir;
 
-  opts.log = ['none'];
+  opts.log = { default: 'none ' };
   opts.skipAdaptorValidation = true;
 
   await commandParser(jobPath, opts, logger);

@@ -5,7 +5,7 @@ import type { CommandList } from './commands';
 import { CLIExecutionPlan } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
 import doExpandAdaptors from './util/expand-adaptors';
-import { ensureLogOpts } from './util/ensure-opts';
+import ensureLogOpts from './util/ensure-log-opts';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -227,6 +227,7 @@ export const inputPath: CLIOption = {
   },
 };
 
+// TODO this needs unit testing
 export const log: CLIOption = {
   name: 'log',
   yargs: {
@@ -234,7 +235,7 @@ export const log: CLIOption = {
     description: 'Set the log level',
     array: true,
   },
-  ensure: (opts) => {
+  ensure: (opts: any) => {
     ensureLogOpts(opts);
   },
 };

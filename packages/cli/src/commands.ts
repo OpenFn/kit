@@ -45,11 +45,11 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
-  version: async (opts: SafeOpts, logger: Logger) =>
-    printVersions(logger, opts),
+  version: async (opts: Opts, logger: Logger) => printVersions(logger, opts),
 };
 
 // TODO this type really doesn't make sense anymore either, since opts are typed to a particular command now
+// TODO yeah pretty sure we can remove this now (needs a little work)
 export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
   log: Record<string, LogLevel>;
   adaptor: string | boolean;
@@ -65,7 +65,7 @@ export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
 //       ensureOpts(basePath, options);
 
 // Top level command parser
-const parse = async (basePath: string, options: SafeOpts, log?: Logger) => {
+const parse = async (basePath: string, options: Opts, log?: Logger) => {
   const logger = log || createLogger(CLI, options);
 
   // In execute and test, always print version info FIRST
@@ -93,7 +93,7 @@ const parse = async (basePath: string, options: SafeOpts, log?: Logger) => {
   }
 
   // TODO do this in the repoDir option
-  if (!/^(deploy|test|version)$/.test(options.command) && !options.repoDir) {
+  if (!/^(deploy|test|version)$/.test(options.command!) && !options.repoDir) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );
@@ -112,9 +112,9 @@ const parse = async (basePath: string, options: SafeOpts, log?: Logger) => {
   }
 
   try {
-    // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
-    const result = await handler(options, logger);
-    return result;
+    // TODO tighten up the typings on this signature
+    // @ts-ignore
+    return await handler(options, logger);
   } catch (e: any) {
     if (!process.exitCode) {
       process.exitCode = e.exitCode || 1;
