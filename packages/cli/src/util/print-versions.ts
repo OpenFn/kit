@@ -86,7 +86,7 @@ ${prefix(CLI)}${version}
 ${prefix(RUNTIME)}${runtimeVersion}
 ${prefix(COMPILER)}${compilerVersion}${adaptorVersionString}`;
   }
-  logger.info(output);
+  logger.always(output);
 };
 
 export default printVersions;
