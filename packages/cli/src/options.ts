@@ -241,14 +241,12 @@ export const log: CLIOption = {
   },
 };
 
-// TODO this needs unit testing
 export const logJson: CLIOption = {
   name: 'log-json',
   yargs: {
     description: 'Output all logs as JSON objects',
     boolean: true,
   },
-  ensure: () => {},
 };
 
 export const outputStdout: CLIOption = {
