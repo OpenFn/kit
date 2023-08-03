@@ -43,6 +43,7 @@ const options = [
   o.immutable,
   o.ignoreImports,
   o.inputPath,
+  o.log,
   o.logJson,
   o.outputPath,
   o.outputStdout,

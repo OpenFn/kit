@@ -2,9 +2,11 @@ import type { ExecuteOptions } from './command';
 import execute from './execute';
 import serializeOutput from './serialize-output';
 import getAutoinstallTargets from './get-autoinstall-targets';
+
 import { install } from '../repo/handler';
 import compile from '../compile/compile';
 import { CompileOptions } from '../compile/command';
+
 import { Logger, printDuration } from '../util/logger';
 import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
@@ -13,10 +15,11 @@ import expandAdaptors from '../util/expand-adaptors';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
 } from '../util/map-adaptors-to-monorepo';
+import assertPath from '../util/assert-path';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
-
+  assertPath(options.path);
   await validateAdaptors(options, logger);
 
   let input = await loadInput(options, logger);

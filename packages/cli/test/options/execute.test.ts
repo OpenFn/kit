@@ -4,7 +4,7 @@ import yargs from 'yargs';
 import execute from '../../src/execute/command';
 
 import type { Opts } from '../../src/options';
-import { DEFAULT_REPO_DIR } from '../../src/constants';
+import { ERROR_MESSAGE_LOG_LEVEL } from '../../src/util/ensure-log-opts';
 
 // Build the execute command and test the options it returns
 
@@ -27,28 +27,49 @@ test('execute: set outputPath to ./output.json', (t) => {
   t.assert(options.outputPath === '/result/out.json');
 });
 
-test('repoDir: use the built-in default if no env var', (t) => {
-  const dir = process.env.OPENFN_REPO_DIR;
-  delete process.env.OPENFN_REPO_DIR;
-
-  const options = parse('repo');
-
-  t.is(options.repoDir, DEFAULT_REPO_DIR);
-  process.env.OPENFN_REPO_DIR = dir;
+test('execute: log none', (t) => {
+  const options = parse('execute job.js --log none');
+  t.deepEqual(options.log, { default: 'none', job: 'debug' });
 });
 
-test('repoDir: use OPENFN_REPO_DIR env var if set', (t) => {
-  const dir = process.env.OPENFN_REPO_DIR;
-  process.env.OPENFN_REPO_DIR = 'x/y/z';
-
-  const options = parse('repo');
-
-  t.is(options.repoDir, 'x/y/z');
-  process.env.OPENFN_REPO_DIR = dir;
+test('execute: log default', (t) => {
+  const options = parse('execute job.js --log none');
+  t.deepEqual(options.log, { default: 'none', job: 'debug' });
 });
 
-test('repoDir: accept an argument', (t) => {
-  const options = parse('repo --repoDir=a/b/c');
+test('execute: log info', (t) => {
+  const options = parse('execute job.js --log info');
+  t.deepEqual(options.log, { default: 'info', job: 'debug' });
+});
 
-  t.is(options.repoDir, 'a/b/c');
+test('execute: log debug', (t) => {
+  const options = parse('execute job.js --log debug');
+  t.deepEqual(options.log, { default: 'debug', job: 'debug' });
+});
+
+// These aren't supposed to be exhaustive, just testing the surface a but
+test('execute: compiler & runtime in debug', (t) => {
+  const options = parse('execute job.js --log compiler=debug runtime=debug');
+  t.deepEqual(options.log, {
+    default: 'default',
+    compiler: 'debug',
+    runtime: 'debug',
+    job: 'debug',
+  });
+});
+
+test('execute: log debug by default but job none', (t) => {
+  const options = parse('execute job.js --log debug job=none');
+  t.deepEqual(options.log, { default: 'debug', job: 'none' });
+});
+
+test('execute: throw for invalid log', (t) => {
+  t.throws(() => parse('execute job.js --log wibble'), {
+    message: ERROR_MESSAGE_LOG_LEVEL,
+  });
+});
+
+test('execute: log json', (t) => {
+  const options = parse('execute job.js --log-json');
+  t.true(options.logJson);
 });

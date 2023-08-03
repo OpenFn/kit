@@ -3,9 +3,9 @@ import * as o from '../options';
 import type { Opts } from '../options';
 import { build, ensure } from '../util/command-builders';
 
-export type TestOptions = Pick<Opts, 'stateStdin'>;
+export type TestOptions = Pick<Opts, 'stateStdin' | 'log' | 'logJson'>;
 
-const options = [o.stateStdin];
+const options = [o.stateStdin, o.log, o.logJson];
 
 export default {
   command: 'test',

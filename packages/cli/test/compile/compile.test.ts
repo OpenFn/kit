@@ -7,7 +7,6 @@ import compile, {
   loadTransformOptions,
   resolveSpecifierPath,
 } from '../../src/compile/compile';
-import type { SafeOpts } from '../../src/commands';
 import { CompileOptions } from '../../src/compile/command';
 import { ExecutionPlan } from '@openfn/runtime';
 
@@ -145,7 +144,7 @@ test("stripVersionSpecifier: do nothing if there's no specifier", (t) => {
 });
 
 test('loadTransformOptions: do nothing', async (t) => {
-  const opts = {} as SafeOpts;
+  const opts = {};
   const result = loadTransformOptions(opts, mockLog);
   t.assert(JSON.stringify(result) === '{}');
 });

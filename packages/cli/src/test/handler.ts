@@ -1,17 +1,19 @@
+import { TestOptions } from './command';
 import { createNullLogger, Logger } from '../util/logger';
-import compile from '../compile/compile';
 import loadState from '../util/load-state';
+import compile from '../compile/compile';
 import execute from '../execute/execute';
 import { ExecuteOptions } from '../execute/command';
 
-const testHandler = async (options: ExecuteOptions, logger: Logger) => {
+const testHandler = async (options: TestOptions, logger: Logger) => {
   logger.log('Running test job...');
+  const opts: Partial<ExecuteOptions> = { ...options };
 
   // Preconfigure some options
-  options.compile = true;
-  options.adaptors = [];
+  opts.compile = true;
+  opts.adaptors = [];
 
-  options.workflow = {
+  opts.workflow = {
     start: 'start',
     jobs: [
       {
@@ -41,10 +43,10 @@ const testHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   logger.break();
   logger.info('Workflow object:');
-  logger.info(JSON.stringify(options.workflow, null, 2));
+  logger.info(JSON.stringify(opts.workflow, null, 2));
   logger.break();
 
-  if (!options.stateStdin) {
+  if (!opts.stateStdin) {
     logger.debug(
       'No state provided: pass an object with state.data.answer to provide custom input'
     );
@@ -53,9 +55,14 @@ const testHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   const silentLogger = createNullLogger();
 
-  const state = await loadState(options, silentLogger);
-  const code = await compile(options, logger);
-  const result = await execute(code!, state, options, silentLogger);
+  const state = await loadState(opts, silentLogger);
+  const code = await compile(opts, logger);
+  const result = await execute(
+    code!,
+    state,
+    opts as ExecuteOptions,
+    silentLogger
+  );
   logger.success(`Result: ${result.data.answer}`);
   return result;
 };

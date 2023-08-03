@@ -9,9 +9,7 @@ import metadata from './metadata/handler';
 import pull from './pull/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
-import createLogger, { CLI, Logger, LogLevel } from './util/logger';
-import ensureOpts, { ensureLogOpts } from './util/ensure-opts';
-import expandAdaptors from './util/expand-adaptors';
+import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
 } from './util/map-adaptors-to-monorepo';
@@ -45,51 +43,39 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
-  version: async (opts: SafeOpts, logger: Logger) =>
-    printVersions(logger, opts),
+  version: async (opts: Opts, logger: Logger) => printVersions(logger, opts),
 };
-
-export type SafeOpts = Required<Omit<Opts, 'log' | 'adaptor' | 'statePath'>> & {
-  log: Record<string, LogLevel>;
-  adaptor: string | boolean;
-  monorepoPath?: string;
-  statePath?: string;
-};
-
-const maybeEnsureOpts = (basePath: string, options: Opts) =>
-  // If the command is compile or execute, just return the opts (yargs will do all the validation)
-  /(^(deploy|execute|compile|test)$)|(repo-)/.test(options.command!)
-    ? ensureLogOpts(options)
-    : // Otherwise  older commands still need to go through ensure opts
-      ensureOpts(basePath, options);
 
 // Top level command parser
-const parse = async (basePath: string, options: Opts, log?: Logger) => {
-  const opts = maybeEnsureOpts(basePath, options) as SafeOpts;
-  const logger = log || createLogger(CLI, opts);
+const parse = async (options: Opts, log?: Logger) => {
+  const logger = log || createLogger(CLI, options);
 
   // In execute and test, always print version info FIRST
   // Should we ALwAYS just do this? It logs to info so you wouldn't usually see it on eg test, docs
-  if (opts.command === 'execute' || opts.command === 'test') {
-    await printVersions(logger, opts);
+  if (options.command === 'execute' || options.command === 'test') {
+    await printVersions(logger, options);
   }
 
-  if (opts.monorepoPath) {
-    if (opts.monorepoPath === 'ERR') {
+  if (options.monorepoPath) {
+    if (options.monorepoPath === 'ERR') {
       logger.error(
         'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
       );
       logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
       process.exit(9); // invalid argument
     }
-    await mapAdaptorsToMonorepo(opts as MapAdaptorsToMonorepoOptions, logger);
-  } else if (opts.adaptors && opts.expandAdaptors) {
-    // TODO this will be removed once all options have been refactored
-    //      This is safely redundant in execute and compile
-    expandAdaptors(opts);
+    await mapAdaptorsToMonorepo(
+      options as MapAdaptorsToMonorepoOptions,
+      logger
+    );
   }
 
-  if (!/^(deploy|test|version)$/.test(opts.command) && !opts.repoDir) {
+  // TODO it would be nice to do this in the repoDir option, but
+  // the logger isn't available yet
+  if (
+    !/^(pull|deploy|test|version)$/.test(options.command!) &&
+    !options.repoDir
+  ) {
     logger.warn(
       'WARNING: no repo module dir found! Using the default (/tmp/repo)'
     );
@@ -98,19 +84,17 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
     );
   }
 
-  const handler = options.command ? handlers[options.command] : execute;
-  if (!opts.command || /^(compile|execute)$/.test(opts.command)) {
-    assertPath(basePath);
-  }
+  const handler = handlers[options.command!];
+
   if (!handler) {
     logger.error(`Unrecognised command: ${options.command}`);
     process.exit(1);
   }
 
   try {
-    // @ts-ignore types on SafeOpts are too contradictory for ts, see #115
-    const result = await handler(opts, logger);
-    return result;
+    // TODO tighten up the typings on this signature
+    // @ts-ignore
+    return await handler(options, logger);
   } catch (e: any) {
     if (!process.exitCode) {
       process.exitCode = e.exitCode || 1;
@@ -127,15 +111,3 @@ const parse = async (basePath: string, options: Opts, log?: Logger) => {
 };
 
 export default parse;
-
-// TODO probably this isn't neccessary and we just use cwd?
-const assertPath = (basePath?: string) => {
-  if (!basePath) {
-    console.error('ERROR: no path provided!');
-    console.error('\nUsage:');
-    console.error('  open path/to/job');
-    console.error('\nFor more help do:');
-    console.error('  openfn --help ');
-    process.exit(1);
-  }
-};
