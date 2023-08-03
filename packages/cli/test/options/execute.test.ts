@@ -4,6 +4,7 @@ import yargs from 'yargs';
 import execute from '../../src/execute/command';
 
 import type { Opts } from '../../src/options';
+import { ERROR_MESSAGE_LOG_LEVEL } from '../../src/util/ensure-log-opts';
 
 // Build the execute command and test the options it returns
 
@@ -60,6 +61,12 @@ test('execute: compiler & runtime in debug', (t) => {
 test('execute: log debug by default but job none', (t) => {
   const options = parse('execute job.js --log debug job=none');
   t.deepEqual(options.log, { default: 'debug', job: 'none' });
+});
+
+test('execute: throw for invalid log', (t) => {
+  t.throws(() => parse('execute job.js --log wibble'), {
+    message: ERROR_MESSAGE_LOG_LEVEL,
+  });
 });
 
 test('execute: log json', (t) => {
