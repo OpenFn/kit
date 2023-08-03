@@ -1,0 +1,520 @@
+{
+  "name": "@openfn/language-http",
+  "version": "5.0.1",
+  "functions": [
+    {
+      "name": "get",
+      "description": "Make a GET request",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "params",
+          "optional": false,
+          "type": "object"
+        },
+        {
+          "name": "callback",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "get('/myEndpoint', {\n   query: {foo: 'bar', a: 1},\n   headers: {'content-type': 'application/json'},\n   authentication: {username: 'user', password: 'pass'}\n })"
+        }
+      ]
+    },
+    {
+      "name": "post",
+      "description": "Make a POST request",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "params",
+          "optional": false,
+          "type": "object"
+        },
+        {
+          "name": "callback",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "post('/myEndpoint', {\n   body: {'foo': 'bar'},\n   headers: {'content-type': 'application/json'},\n   authentication: {username: 'user', password: 'pass'}\n })"
+        }
+      ]
+    },
+    {
+      "name": "put",
+      "description": "Make a PUT request",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "params",
+          "optional": false,
+          "type": "object"
+        },
+        {
+          "name": "callback",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "put('/myEndpoint', {\n   body: {'foo': 'bar'},\n   headers: {'content-type': 'application/json'},\n   authentication: {username: 'user', password: 'pass'}\n })"
+        }
+      ]
+    },
+    {
+      "name": "patch",
+      "description": "Make a PATCH request",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "params",
+          "optional": false,
+          "type": "object"
+        },
+        {
+          "name": "callback",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "patch('/myEndpoint', {\n   body: {'foo': 'bar'},\n   headers: {'content-type': 'application/json'},\n   authentication: {username: 'user', password: 'pass'}\n })"
+        }
+      ]
+    },
+    {
+      "name": "del",
+      "description": "Make a DELETE request",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "params",
+          "optional": false,
+          "type": "object"
+        },
+        {
+          "name": "callback",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "del(`/myendpoint/${state => state.data.id}`, {\n   headers: {'content-type': 'application/json'}\n })"
+        }
+      ]
+    },
+    {
+      "name": "parseXML",
+      "description": "Parse XML with the Cheerio parser",
+      "parameters": [
+        {
+          "name": "body",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "script",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "parseXML(body, function($){\n   return $(\"table[class=your_table]\").parsetable(true, true, true);\n })"
+        }
+      ]
+    },
+    {
+      "name": "alterState",
+      "description": "alias for \"fn()\"",
+      "parameters": [
+        {
+          "name": "func",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [],
+      "parent": "language-common"
+    },
+    {
+      "name": "arrayToString",
+      "description": "Turns an array into a string, separated by X.",
+      "parameters": [
+        {
+          "name": "arr",
+          "optional": false,
+          "type": "{}"
+        },
+        {
+          "name": "separator",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "field(\"destination_string__c\", function(state) {\n  return arrayToString(dataValue(\"path_of_array\")(state), ', ')\n})"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "combine",
+      "description": "Combines two operations into one",
+      "parameters": [
+        {
+          "name": "operations",
+          "optional": false,
+          "type": "Operations"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "combine(\n  create('foo'),\n  delete('bar')\n)"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "dataPath",
+      "description": "Ensures a path points at the data.",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "dataPath('key')"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "dataValue",
+      "description": "Picks out a single value from the source data object—usually `state.data`.\nIf a JSONPath returns more than one value for the reference, the first\nitem will be returned.",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "dataValue('key')"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "each",
+      "description": "Scopes an array of data based on a JSONPath.\nUseful when the source data has `n` items you would like to map to\nan operation.\nThe operation will receive a slice of the data based of each item\nof the JSONPath provided.\n\nIt also ensures the results of an operation make their way back into\nthe state's references.",
+      "parameters": [
+        {
+          "name": "dataSource",
+          "optional": false,
+          "type": "DataSource"
+        },
+        {
+          "name": "operation",
+          "optional": false,
+          "type": "Operation"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "each(\"$.[*]\",\n  create(\"SObject\",\n    field(\"FirstName\", sourceValue(\"$.firstName\"))\n  )\n)"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "field",
+      "description": "Returns a key, value pair in an array.",
+      "parameters": [
+        {
+          "name": "key",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "optional": false,
+          "type": "Value"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "field('destination_field_name__c', 'value')"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "fields",
+      "description": "Zips key value pairs into an object.",
+      "parameters": [
+        {
+          "name": "fields",
+          "optional": false,
+          "type": "Fields"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "fields(list_of_fields)"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "fn",
+      "description": "Creates a custom step (or operation) for more flexible job writing.",
+      "parameters": [
+        {
+          "name": "func",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "fn(state => {\n  // do some things to state\n  return state;\n});"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "humanProper",
+      "description": "Substitutes underscores for spaces and proper-cases a string",
+      "parameters": [
+        {
+          "name": "str",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "field(\"destination_string__c\", humanProper(state.data.path_to_string))"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "lastReferenceValue",
+      "description": "Picks out the last reference value from source data.",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "lastReferenceValue('key')"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "merge",
+      "description": "Merges fields into each item in an array.",
+      "parameters": [
+        {
+          "name": "dataSource",
+          "optional": false,
+          "type": "DataSource"
+        },
+        {
+          "name": "fields",
+          "optional": false,
+          "type": "any"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "merge(\n  \"$.books[*]\",\n  fields(\n    field( \"publisher\", sourceValue(\"$.publisher\") )\n  )\n)"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "scrubEmojis",
+      "description": "Replaces emojis in a string.",
+      "parameters": [
+        {
+          "name": "text",
+          "optional": false,
+          "type": "string"
+        },
+        {
+          "name": "replacementChars",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "scrubEmojis('Dove🕊️⭐ 29')"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "sourceValue",
+      "description": "Picks out a single value from source data.\nIf a JSONPath returns more than one value for the reference, the first\nitem will be returned.",
+      "parameters": [
+        {
+          "name": "path",
+          "optional": false,
+          "type": "string"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "sourceValue('$.key')"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "splitKeys",
+      "description": "Splits an object into two objects based on a list of keys.\nThe first object contains the keys that are not in the list,\nand the second contains the keys that are.",
+      "parameters": [
+        {
+          "name": "obj",
+          "optional": false,
+          "type": "any"
+        },
+        {
+          "name": "keys",
+          "optional": false,
+          "type": "{}"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [],
+      "parent": "language-common"
+    },
+    {
+      "name": "toArray",
+      "description": "Ensures primitive data types are wrapped in an array.\nDoes not affect array objects.",
+      "parameters": [
+        {
+          "name": "arg",
+          "optional": false,
+          "type": "any"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [
+        {
+          "code": "each(function(state) {\n  return toArray( dataValue(\"path_of_array\")(state) )\n}, ...)"
+        }
+      ],
+      "parent": "language-common"
+    },
+    {
+      "name": "parseCsv",
+      "description": "Takes a CSV file string or stream and parsing options as input, and returns a promise that\nresolves to the parsed CSV data as an array of objects.\nOptions for `parsingOptions` include:\n- `delimiter` {string/Buffer/[string/Buffer]} - Defines the character(s) used to delineate the fields inside a record. Default: `','`\n- `quote` {string/Buffer/[string/Buffer]} - Defines the characters used to surround a field. Default: `'\"'`\n- `escape` {Buffer/string/null/boolean} - Set the escape character as one character/byte only. Default: `\"`\n- `columns` {boolean / array / function} - Generates record in the form of object literals. Default: `true`\n- `bom` {boolean} - Strips the {@link https://en.wikipedia.org/wiki/Byte_order_mark byte order mark (BOM)} from the input string or buffer. Default: `true`\n- `trim` {boolean} - Ignore whitespace characters immediately around the `delimiter`. Default: `true`\n- `ltrim` {boolean} - Ignore whitespace characters from the left side of a CSV field. Default: `true`\n- `rtrim` {boolean} - Ignore whitespace characters from the right side of a CSV field. Default: `true`\n- `chunkSize` {number} - The size of each chunk of CSV data. Default: `Infinity`\n- `skip_empty_lines` {boolean} - Ignore empty lines in the CSV file. Default: `true`",
+      "parameters": [
+        {
+          "name": "csvData",
+          "optional": false,
+          "type": "any"
+        },
+        {
+          "name": "parsingOptions",
+          "optional": false,
+          "type": "any"
+        },
+        {
+          "name": "callback",
+          "optional": false,
+          "type": "Function"
+        }
+      ],
+      "magic": false,
+      "isOperation": false,
+      "examples": [],
+      "parent": "language-common"
+    }
+  ]
+}
