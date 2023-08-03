@@ -228,7 +228,6 @@ export const inputPath: CLIOption = {
   },
 };
 
-// TODO this needs unit testing
 export const log: CLIOption = {
   name: 'log',
   yargs: {
