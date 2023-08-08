@@ -29,12 +29,12 @@ test('execute: set outputPath to ./output.json', (t) => {
 
 test('execute: log none', (t) => {
   const options = parse('execute job.js --log none');
-  t.deepEqual(options.log, { default: 'none', job: 'debug' });
+  t.deepEqual(options.log, { default: 'none', job: 'none' });
 });
 
 test('execute: log default', (t) => {
   const options = parse('execute job.js --log none');
-  t.deepEqual(options.log, { default: 'none', job: 'debug' });
+  t.deepEqual(options.log, { default: 'none', job: 'none' });
 });
 
 test('execute: log info', (t) => {

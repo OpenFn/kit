@@ -245,7 +245,7 @@ test('log() should behave like info', (t) => {
   t.assert(result.message === 'abc');
 });
 
-test('with level=none, logs nothing', (t) => {
+test('with level=none, logs errors only', (t) => {
   // TODO this doesn't give me very documentary-style tests
   // because the signature is actually quite misleading
   const logger = createLogger(undefined, { level: 'none' });
@@ -253,22 +253,26 @@ test('with level=none, logs nothing', (t) => {
   logger.info('b');
   logger.debug('c');
   logger.warn('d');
-  logger.error('e');
   logger.log('e');
 
   t.assert(logger._history.length === 0);
+
+  logger.error('e');
+  t.assert(logger._history.length === 1);
 });
 
-test('in json mode with level=none, logs nothing', (t) => {
+test('in json mode with level=none, logs errors only', (t) => {
   const logger = createLogger(undefined, { level: 'none', json: true });
   logger.success('a');
   logger.info('b');
   logger.debug('c');
   logger.warn('d');
-  logger.error('e');
   logger.log('e');
 
   t.assert(logger._history.length === 0);
+
+  logger.error('e');
+  t.assert(logger._history.length === 1);
 });
 
 test('with level=default, logs success, error and warning but not info and debug', (t) => {
