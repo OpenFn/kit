@@ -1,8 +1,8 @@
 const { readFileSync } = require('node:fs');
 const { WebClient } = require('@slack/web-api');
 
-const SLACK_DEV = 'C05JTEE22H5';
-const ENGINEERING = 'G2LJCFFDW';
+//const SLACK_DEV = 'C05JTEE22H5';
+const ENGINEERING = 'C05KZNPEJFN'; // this points to the new #devs channel
 const IMPLEMENTATION = 'C017ELVRSM8';
 
 const token = process.env.SLACK_TOKEN;
