@@ -53,6 +53,12 @@ const ensureLogOpts = (opts: IncomingOpts) => {
       } else {
         component = 'default';
         level = l.toLowerCase() as LogLevel;
+
+        if (level === 'none' && !parts.find((p) => p.startsWith('job'))) {
+          // if log is defaulted to none, and job hasn't explicitly seen set,
+          // don't log job logs
+          components['job'] = 'none';
+        }
       }
 
       if (!/^(cli|runtime|compiler|job|default)$/i.test(component)) {

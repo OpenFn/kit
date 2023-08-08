@@ -94,6 +94,39 @@ test('log: set default and a specific option', (t) => {
   t.is(opts.log!.compiler, 'debug');
 });
 
+test('log: if none, set job to none too', (t) => {
+  const initialOpts = {
+    log: ['none'],
+  };
+
+  const opts = ensureLogOpts(initialOpts);
+
+  t.is(opts.log!.default, 'none');
+  t.is(opts.log!.job, 'none');
+});
+
+test('log: if none, can still set job', (t) => {
+  const initialOpts = {
+    log: ['none', 'job=info'],
+  };
+
+  const opts = ensureLogOpts(initialOpts);
+
+  t.is(opts.log!.default, 'none');
+  t.is(opts.log!.job, 'info');
+});
+
+test('log: if none, can still set job (different order)', (t) => {
+  const initialOpts = {
+    log: ['job=info', 'none'],
+  };
+
+  const opts = ensureLogOpts(initialOpts);
+
+  t.is(opts.log!.default, 'none');
+  t.is(opts.log!.job, 'info');
+});
+
 test('log: default to info for test', (t) => {
   const initialOpts = {
     command: 'test',
