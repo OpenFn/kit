@@ -8,34 +8,28 @@ const IMPLEMENTATION = 'C017ELVRSM8';
 const token = process.env.SLACK_TOKEN;
 const slack = new WebClient(token);
 
-const getEngineeringMessage = (cliVersion, changes) => {
+const getEngineeringMessage = (changes) => {
   const blocks = [
     {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `🚀 *New CLI Release: ${cliVersion}*`,
+        text: `🚀 *New Releases in \`kit\``,
       },
     },
     {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: 'A new version of `openfn/cli` has just been released.\nUpgrade with `npm -g install @openfn/cli`',
+        text: 'Update the CLI with with `npm -g install @openfn/cli`',
       },
     },
     // TODO I'd like to link to a full changelog but we don't really have one
   ];
 
-  const versions = [];
   changes.publishedPackages.forEach((pkg) => {
-    if (pkg.name !== '@openfn/cli') {
-      versions.push(`${pkg.version.padEnd(10)} ${pkg.name}`);
-    }
+    versions.push(`${pkg.version.padEnd(10)} ${pkg.name}`);
   });
-  if (versions.length === 0) {
-    versions.push('No other versions released.');
-  }
 
   const attachments = [
     {
@@ -125,7 +119,6 @@ const getImplementationMessage = (cliVersion, changes) => {
   };
 };
 
-// TODO: ignore all dependency updates
 // If the returned changelog is empty, don't bother listing the changes
 const extractChangelog = (package, version) => {
   const [_, name] = package.split('@openfn/');
@@ -163,11 +156,12 @@ const file = readFileSync('pnpm-publish-summary.json');
 if (file) {
   const json = JSON.parse(file);
 
+  console.log('Generating slack post for all changes (devs)');
+  slack.chat.postMessage(getEngineeringMessage(json));
+
   const cli = json.publishedPackages.find(({ name }) => name === '@openfn/cli');
   if (cli) {
-    console.log('Generating slack post for CLI changes');
-
-    slack.chat.postMessage(getEngineeringMessage(cli.version, json));
+    console.log('Generating slack post for CLI changes (implementation)');
     slack.chat.postMessage(getImplementationMessage(cli.version, json));
   } else {
     console.log('No CLI changes detected, doing nothing');
