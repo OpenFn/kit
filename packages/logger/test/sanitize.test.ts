@@ -147,6 +147,16 @@ test('sanitize object with summarize', (t) => {
   t.is(result, '(object with keys a, b)');
 });
 
+test('sanitize empty array with summarize', (t) => {
+  const result = sanitize([], { policy: 'summarize' });
+  t.is(result, '(empty array)');
+});
+
+test('sanitize array with summarize', (t) => {
+  const result = sanitize([{}, {}, {}], { policy: 'summarize' });
+  t.is(result, '(array with 3 items)');
+});
+
 test('isObject: recognise an object', (t) => {
   t.true(isObject({}));
 

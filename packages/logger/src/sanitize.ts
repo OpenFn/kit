@@ -101,6 +101,13 @@ function remove(logItem: any): any {
 // // summarise the object
 // // ie, array with 31 items or object with keys z, y, x
 function summarize(logItem: any): any {
+  if (Array.isArray(logItem)) {
+    if (logItem.length) {
+      return `(array with ${logItem.length} items)`;
+    } else {
+      return '(empty array)';
+    }
+  }
   if (isObject(logItem)) {
     const keys = Object.keys(logItem);
     if (keys.length) {
