@@ -84,6 +84,23 @@ test('should log objects as strings', (t) => {
   t.deepEqual(messageObj.a, 22);
 });
 
+test("don't log null by itself", (t) => {
+  const logger = createLogger(undefined, { level: 'debug' });
+  logger.log(null);
+
+  t.is(logger._history.length, 0);
+});
+
+test('do log null after a string', (t) => {
+  const logger = createLogger(undefined, { level: 'debug' });
+  logger.log('result', null);
+
+  t.is(logger._history.length, 1);
+});
+
+// TODO add some sanitise tests here using the policies (including json)
+// TODO don't log null after sanitising
+
 // Automated structural tests per level
 ['always', 'success', 'info', 'debug', 'error', 'warn'].forEach((l) => {
   // Set up some fiddly type aliases

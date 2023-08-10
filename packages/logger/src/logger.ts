@@ -165,21 +165,28 @@ export default function (name?: string, options: LogOptions = {}): Logger {
 
   const logString = (level: LogFns, ...args: LogArgs) => {
     if (emitter.hasOwnProperty(level)) {
-      const output = [];
+      const cleanedArgs = args.map((o) => sanitize(o, options));
 
-      if (name && !opts.hideNamespace) {
-        // TODO how can we fix the with of the type column so that things
-        //      are nicely arranged in the CLI?
-        output.push(c.blue(`[${name}]`));
-      }
-      if (!opts.hideIcons) {
-        output.push(styleLevel(level));
+      if (cleanedArgs.length === 1 && cleanedArgs[0] === null) {
+        // Special case:
+        // If logging null only, don't log anything
+        // This enables the remove obfuscation policy to work properly
+        return;
       }
 
-      output.push(...args);
+      if (cleanedArgs.length) {
+        const output = [];
+        if (name && !opts.hideNamespace) {
+          // TODO how can we fix the with of the type column so that things
+          //      are nicely arranged in the CLI?
+          output.push(c.blue(`[${name}]`));
+        }
+        if (!opts.hideIcons) {
+          output.push(styleLevel(level));
+        }
 
-      const cleaned = output.map((o) => sanitize(o, options));
-      emitter[level](...cleaned);
+        emitter[level](...output.concat(cleanedArgs));
+      }
     }
   };
 
