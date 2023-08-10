@@ -7,21 +7,23 @@ export type DeployOptions = Required<
   Pick<
     Opts,
     | 'command'
-    | 'log'
-    | 'logJson'
-    | 'statePath'
-    | 'projectPath'
     | 'configPath'
     | 'confirm'
+    | 'log'
+    | 'logJson'
+    | 'projectPath'
+    | 'statePath'
   >
 >;
 
 const options = [
-  o.statePath,
-  o.projectPath,
   o.configPath,
   o.confirm,
   o.describe,
+  o.log,
+  o.logJson,
+  o.projectPath,
+  o.statePath,
 ];
 
 const deployCommand: yargs.CommandModule<DeployOptions> = {

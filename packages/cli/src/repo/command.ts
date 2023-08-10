@@ -15,6 +15,8 @@ export const repo = {
 } as yargs.CommandModule<{}>;
 
 const installOptions = [
+  o.log,
+  o.logJson,
   o.repoDir,
   override(o.expandAdaptors, {
     default: true,
@@ -44,31 +46,32 @@ export const install = {
       ),
 } as yargs.CommandModule<{}>;
 
+const cleanOptions = [
+  o.log,
+  o.logJson,
+  o.repoDir,
+  {
+    name: 'force',
+    yargs: {
+      alias: ['f'],
+      description: 'Skip the prompt and force deletion',
+      boolean: true,
+    },
+  },
+];
+
 export const clean = {
   command: 'clean',
   describe: 'Removes all modules from the runtime module repo',
-  handler: ensure('repo-clean', [o.repoDir]),
-  builder: (yargs) =>
-    build(
-      [
-        o.repoDir,
-        {
-          name: 'force',
-          yargs: {
-            alias: ['f'],
-            description: 'Skip the prompt and force deletion',
-            boolean: true,
-          },
-        },
-      ],
-      yargs
-    ),
+  handler: ensure('repo-clean', cleanOptions),
+  builder: (yargs) => build(cleanOptions, yargs),
 } as yargs.CommandModule<{}>;
 
+const listOptions = [o.repoDir, o.log, o.logJson];
 export const list = {
   command: 'list',
   describe: 'Show a report on what is installed in the repo',
   aliases: ['$0'],
-  handler: ensure('repo-list', [o.repoDir]),
-  builder: (yargs) => build([o.repoDir], yargs),
+  handler: ensure('repo-list', listOptions),
+  builder: (yargs) => build(listOptions, yargs),
 } as yargs.CommandModule<{}>;

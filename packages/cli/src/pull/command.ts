@@ -10,7 +10,7 @@ export type DeployOptions = Required<
   >
 >;
 
-const options = [o.statePath, o.projectPath, o.configPath];
+const options = [o.statePath, o.projectPath, o.configPath, o.log, o.logJson];
 
 const pullCommand: yargs.CommandModule<DeployOptions> = {
   command: 'pull',

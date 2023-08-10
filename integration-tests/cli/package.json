@@ -17,11 +17,11 @@
   "dependencies": {
     "@types/node": "^18.15.13",
     "ava": "5.3.1",
-    "date-fns": "^2.29.3",
+    "date-fns": "^2.30.0",
     "rimraf": "^3.0.2",
     "ts-node": "10.8.1",
     "tslib": "^2.4.0",
-    "typescript": "^4.8.3"
+    "typescript": "^5.1.6"
   },
   "files": [
     "dist",

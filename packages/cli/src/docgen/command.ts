@@ -1,7 +1,7 @@
 import yargs, { ArgumentsCamelCase } from 'yargs';
 import { Opts } from '../options';
 
-type DocGenOptions = Partial<Opts>; // TODO
+type DocGenOptions = Partial<Opts>;
 
 const docgenCommand: yargs.CommandModule<Opts> = {
   command: 'docgen <specifier>',

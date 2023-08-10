@@ -1,6 +1,6 @@
 // Wrapper around the logger API to load a namespaced logger with the right options
 import actualCreateLogger, { printDuration } from '@openfn/logger';
-import type { SafeOpts } from '../commands';
+import type { Opts } from '../options';
 
 export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
 export { isValidLogLevel, defaultLogger } from '@openfn/logger';
@@ -20,7 +20,7 @@ const namespaces: Record<string, string> = {
 
 export const createLogger = (
   name: string = '',
-  options: Partial<Pick<SafeOpts, 'log' | 'logJson'>>
+  options: Partial<Pick<Opts, 'log' | 'logJson'>>
 ) => {
   const logOptions = options.log || {};
   let json = false;

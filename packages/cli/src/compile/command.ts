@@ -28,6 +28,7 @@ const options = [
   o.adaptors,
   o.ignoreImports,
   o.inputPath,
+  o.log,
   o.logJson,
   override(o.outputStdout, {
     default: true,

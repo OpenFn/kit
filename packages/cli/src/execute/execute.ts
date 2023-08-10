@@ -20,8 +20,8 @@ export default async (
       start: opts.start,
       timeout: opts.timeout,
       immutableState: opts.immutable,
-      logger: createLogger(RUNTIME, opts as any), // TODO log types are flaky right now
-      jobLogger: createLogger(JOB, opts as any), // ditto
+      logger: createLogger(RUNTIME, opts),
+      jobLogger: createLogger(JOB, opts),
       linker: {
         repo: opts.repoDir,
         modules: parseAdaptors(opts),
