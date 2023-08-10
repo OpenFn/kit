@@ -1,11 +1,6 @@
 import test from 'ava';
 
-import sanitize, {
-  remove,
-  isObject,
-  replaceObject,
-  SECRET,
-} from '../src/sanitize';
+import sanitize, { isObject, replaceObject, SECRET } from '../src/sanitize';
 
 test('simply return a string', (t) => {
   const result = sanitize('x');
@@ -102,6 +97,56 @@ test('preserve top level stuff after sanitizing', (t) => {
   t.deepEqual(json, expectedState);
 });
 
+test('ignore a string with obfuscation', (t) => {
+  const result = sanitize('x', { policy: 'obfuscate' });
+  t.is(result, 'x');
+});
+
+test('sanitize array with obfuscation', (t) => {
+  const result = sanitize([], { policy: 'obfuscate' });
+  t.is(result, '[array]');
+});
+
+test('sanitize object with obfuscation', (t) => {
+  const result = sanitize({}, { policy: 'obfuscate' });
+  t.is(result, '[object]');
+});
+
+test('ignore a string with remove', (t) => {
+  const result = sanitize('x', { policy: 'remove' });
+  t.is(result, 'x');
+});
+
+test('sanitize array with remove', (t) => {
+  const result = sanitize([], { policy: 'remove' });
+  t.deepEqual(result, []);
+});
+
+test('sanitize array + items with remove', (t) => {
+  const result = sanitize([1, {}], { policy: 'remove' });
+  t.deepEqual(result, [1, null]);
+});
+
+test('sanitize object with remove', (t) => {
+  const result = sanitize({}, { policy: 'remove' });
+  t.is(result, null);
+});
+
+test('ignore a string with summarize', (t) => {
+  const result = sanitize('x', { policy: 'summarize' });
+  t.is(result, 'x');
+});
+
+test('sanitize empty object with summarize', (t) => {
+  const result = sanitize({}, { policy: 'summarize' });
+  t.is(result, '(empty object)');
+});
+
+test('sanitize object with summarize', (t) => {
+  const result = sanitize({ b: 1, a: 2 }, { policy: 'summarize' });
+  t.is(result, '(object with keys a, b)');
+});
+
 test('isObject: recognise an object', (t) => {
   t.true(isObject({}));
 
@@ -115,38 +160,33 @@ test('isObject: recognise an object', (t) => {
   t.false(isObject(new Error()));
 });
 
-test.only('replace object: one object', (t) => {
+test('replace object: one object', (t) => {
   const result = replaceObject('X', {});
 
-  t.deepEqual(result, ['X']);
+  t.deepEqual(result, 'X');
 });
 
-test.only('replace object: one array', (t) => {
+test('replace object: one array', (t) => {
   const result = replaceObject('X', []);
 
-  t.deepEqual(result, ['X']);
+  t.deepEqual(result, 'X');
 });
 
-test.only('replace object: ignore a string', (t) => {
+test('replace object: ignore a string', (t) => {
   const result = replaceObject('X', 'a');
 
-  t.deepEqual(result, ['a']);
+  t.deepEqual(result, 'a');
 });
 
-test.only('replace object: multiple items', (t) => {
-  const result = replaceObject('X', ['a'], {}, 'a', 2);
+test('replace object: use function', (t) => {
+  const fn = (x: any) => (Array.isArray(x) ? 'a' : 'o');
 
-  t.deepEqual(result, ['X', 'X', 'a', 2]);
+  t.deepEqual(replaceObject(fn, []), 'a');
+  t.deepEqual(replaceObject(fn, {}), 'o');
 });
 
-test.only('replace object: use function', (t) => {
-  const result = replaceObject((x) => (Array.isArray(x) ? 'a' : 'o'), [], {});
+// test('replace object with null', (t) => {
+//   const result = remove({});
 
-  t.deepEqual(result, ['a', 'o']);
-});
-
-test('replace object with null', (t) => {
-  const result = remove({});
-
-  t.is(result, null);
-});
+//   t.is(result, null);
+// });
