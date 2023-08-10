@@ -1,6 +1,11 @@
 import test from 'ava';
 
-import sanitize, { SECRET } from '../src/sanitize';
+import sanitize, {
+  remove,
+  isObject,
+  replaceObject,
+  SECRET,
+} from '../src/sanitize';
 
 test('simply return a string', (t) => {
   const result = sanitize('x');
@@ -95,4 +100,53 @@ test('preserve top level stuff after sanitizing', (t) => {
   const json = JSON.parse(result);
 
   t.deepEqual(json, expectedState);
+});
+
+test('isObject: recognise an object', (t) => {
+  t.true(isObject({}));
+
+  t.false(isObject(() => {}));
+  t.false(isObject(null));
+  t.false(isObject(undefined));
+  t.false(isObject(NaN));
+  t.false(isObject([]));
+  // what about errors, do they count?
+  // well, from a sanitisation point of view no, an error is not an object
+  t.false(isObject(new Error()));
+});
+
+test.only('replace object: one object', (t) => {
+  const result = replaceObject('X', {});
+
+  t.deepEqual(result, ['X']);
+});
+
+test.only('replace object: one array', (t) => {
+  const result = replaceObject('X', []);
+
+  t.deepEqual(result, ['X']);
+});
+
+test.only('replace object: ignore a string', (t) => {
+  const result = replaceObject('X', 'a');
+
+  t.deepEqual(result, ['a']);
+});
+
+test.only('replace object: multiple items', (t) => {
+  const result = replaceObject('X', ['a'], {}, 'a', 2);
+
+  t.deepEqual(result, ['X', 'X', 'a', 2]);
+});
+
+test.only('replace object: use function', (t) => {
+  const result = replaceObject((x) => (Array.isArray(x) ? 'a' : 'o'), [], {});
+
+  t.deepEqual(result, ['a', 'o']);
+});
+
+test('replace object with null', (t) => {
+  const result = remove({});
+
+  t.is(result, null);
 });

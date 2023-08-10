@@ -40,4 +40,46 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
   return item;
 };
 
+// TODO move to utils
+// Also create isArray,which will just be a shallow clone
+export const isObject = (thing: any) => {
+  if (Array.isArray(thing) || thing === null || thing instanceof Error) {
+    return false;
+  }
+
+  if (typeof thing === 'object') {
+    return true;
+  }
+  return false;
+};
+
+// replace an object with a string or the result of a function
+// But this affects arrays as well, argh
+export const replaceObject = (
+  replace: string | ((logItem: any) => string),
+  ...logItem: any[]
+): any[] =>
+  logItem.map((i: any) => {
+    if (isObject(i) || Array.isArray(i)) {
+      return typeof replace === 'function' ? replace(i) : replace;
+    }
+    return i;
+  });
+
+// sanitize policy subject to options
+
+// remove all objects from the output
+// Note that we should refuse to log if there is nothign left
+// does that mean the logger never logs null?
+export const remove = (logItem) => {
+  // TODO incoming is an argument to console.log
+};
+
+// // summarise the object
+// // ie, array with 31 items or object with keys z, y, x
+// const summarise = (logItem) => {};
+
+// // [object Object] or Array<Object>
+const obfuscate = (logItem) => {};
+
 export default sanitize;
