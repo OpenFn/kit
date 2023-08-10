@@ -155,7 +155,12 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     const output: JSONLog = {
       level,
       name,
-      message: args.map((o) => sanitize(o, { stringify: false })),
+      message: args.map((o) =>
+        sanitize(o, {
+          stringify: false,
+          policy: options.sanitize,
+        })
+      ),
       time: Date.now(),
     };
 
@@ -165,7 +170,13 @@ export default function (name?: string, options: LogOptions = {}): Logger {
 
   const logString = (level: LogFns, ...args: LogArgs) => {
     if (emitter.hasOwnProperty(level)) {
-      const cleanedArgs = args.map((o) => sanitize(o, options));
+      const cleanedArgs = args.map((o) =>
+        sanitize(o, {
+          stringify: true,
+          sanitizePaths: [],
+          policy: options.sanitize,
+        })
+      );
 
       if (cleanedArgs.length === 1 && cleanedArgs[0] === null) {
         // Special case:

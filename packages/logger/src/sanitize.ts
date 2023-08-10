@@ -2,7 +2,7 @@ import stringify from 'fast-safe-stringify';
 
 export const SECRET = '****';
 
-type SanitizePolicies = 'remove' | 'obfuscate' | 'summarize' | 'none';
+export type SanitizePolicies = 'remove' | 'obfuscate' | 'summarize' | 'none';
 
 type SanitizeOptions = {
   stringify?: boolean; // true by default
@@ -10,6 +10,9 @@ type SanitizeOptions = {
   sanitizePaths?: string[]; // unimplemented
 
   // sanitisation policies (by default do nothing)
+  // TODO throw if an invalid policy is passed
+  // This is potentially important so we do want to break
+  // but! we should throw in the CLI< not here.
   policy?: SanitizePolicies;
 };
 

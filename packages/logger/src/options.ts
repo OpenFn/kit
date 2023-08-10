@@ -1,3 +1,5 @@
+import { SanitizePolicies } from './sanitize';
+
 export type LogLevel = 'debug' | 'info' | 'default' | 'none';
 
 export type LogEmitter = typeof console & {
@@ -30,6 +32,8 @@ export type LogOptions = {
   detectState?: boolean; // defaults to true
 
   json?: boolean; // output as json objects
+
+  sanitise?: SanitizePolicies;
 };
 
 // TODO not crazy about the handling of this
