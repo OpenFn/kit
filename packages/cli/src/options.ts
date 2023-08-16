@@ -409,6 +409,8 @@ export const sanitize: CLIOption = {
     if (opts.sanitize?.match(/^(none|summarize|remove|obfuscate)$/)) {
       return;
     }
-    throw new Error('Unknown sanitize value provided: ' + sanitize);
+    const err = 'Unknown sanitize value provided: ' + opts.sanitize;
+    console.error(err);
+    throw new Error(err);
   },
 };
