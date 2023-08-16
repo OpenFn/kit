@@ -401,6 +401,7 @@ export const sanitize: CLIOption = {
   name: 'sanitize',
   yargs: {
     string: true,
+    alias: ['sanitise'],
     description:
       'Sanitize logging of objects and arrays: none (default), remove, summarize, obfuscate.',
     default: 'none',
