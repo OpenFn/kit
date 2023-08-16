@@ -1,23 +1,29 @@
 import path from 'path';
 import fs from 'node:fs/promises';
-import { DeployConfig, getProject, getConfig, getState } from '@openfn/deploy';
+import { DeployConfig, getProject, getConfig, getState, mergeSpecIntoState } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
-import { DeployOptions } from '../deploy/command';
+import { PullOptions } from '../pull/command';
+import assertPath from '../util/assert-path';
 
-async function pullHandler(options: DeployOptions, logger: Logger) {
+
+async function pullHandler(options:  PullOptions, logger: Logger) {
   try {
+    assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
     logger.always('Downloading project yaml and  state from instance');
 
     const state = await getState(config.statePath);
-    const { data: new_state } = await getProject(config, state.id);
-    const url = new URL(`/download/yaml?id=${state.id}`, config.endpoint);
+    const url = new URL(`/download/yaml?id=${options.projectId}`, config.endpoint);
     const res = await fetch(url);
 
     // @ts-ignore
     await fs.writeFile(path.resolve(config.specPath), res.body);
+
+
+    const { data: currentProject } = await getProject(config, options.projectId);
+    const nextState = mergeSpecIntoState(state, currentProject)
     // @ts-ignore
-    await fs.writeFile(path.resolve(config.statePath), new_state);
+    await fs.writeFile(path.resolve(config.statePath), JSON.stringify(nextState));
 
     logger.success('Project pulled successfully');
     process.exitCode = 0;
@@ -33,7 +39,7 @@ async function pullHandler(options: DeployOptions, logger: Logger) {
 // Options
 function mergeOverrides(
   config: DeployConfig,
-  options: DeployOptions
+  options: PullOptions
 ): DeployConfig {
   return {
     ...config,
