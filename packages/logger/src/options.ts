@@ -28,12 +28,12 @@ export type LogOptions = {
   // like if we on sensitive c in a.b.c, console.log(c) should
   sanitizePaths?: string[];
 
-  sanitiseState?: boolean; // defaults to true
+  sanitizeState?: boolean; // defaults to true
   detectState?: boolean; // defaults to true
 
   json?: boolean; // output as json objects
 
-  sanitise?: SanitizePolicies;
+  sanitize?: SanitizePolicies;
 };
 
 // TODO not crazy about the handling of this
@@ -55,7 +55,8 @@ export const defaults: Required<LogOptions> = {
   // Not implemented
   wrap: false,
   showTimestamps: false,
-  sanitiseState: false,
+  sanitizeState: false,
+  sanitize: 'none',
   detectState: false,
   sanitizePaths: ['configuration'],
   json: false,

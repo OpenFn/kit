@@ -73,3 +73,28 @@ test('execute: log json', (t) => {
   const options = parse('execute job.js --log-json');
   t.true(options.logJson);
 });
+
+test('execute: sanitize none (by default)', (t) => {
+  const options = parse('execute job.js');
+  t.is(options.sanitize, 'none');
+});
+
+test('execute: sanitize none (explicit)', (t) => {
+  const options = parse('execute job.js --sanitize=none');
+  t.is(options.sanitize, 'none');
+});
+
+test('execute: sanitize remove ', (t) => {
+  const options = parse('execute job.js --sanitize=remove');
+  t.is(options.sanitize, 'remove');
+});
+
+test('execute: sanitize obfuscate ', (t) => {
+  const options = parse('execute job.js --sanitize=obfuscate');
+  t.is(options.sanitize, 'obfuscate');
+});
+
+test('execute: sanitize summarize ', (t) => {
+  const options = parse('execute job.js --sanitize=summarize');
+  t.is(options.sanitize, 'summarize');
+});
