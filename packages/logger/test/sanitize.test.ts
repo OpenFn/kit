@@ -1,7 +1,6 @@
 import test from 'ava';
 
-import sanitize, { isObject, replaceObject, SECRET } from '../src/sanitize';
-
+import sanitize, { SECRET } from '../src/sanitize';
 test('simply return a string', (t) => {
   const result = sanitize('x');
   t.is(result, 'x');
@@ -117,19 +116,14 @@ test('ignore a string with remove', (t) => {
   t.is(result, 'x');
 });
 
-test('sanitize array with remove', (t) => {
-  const result = sanitize([], { policy: 'remove' });
-  t.deepEqual(result, []);
-});
-
-test('sanitize array + items with remove', (t) => {
-  const result = sanitize([1, {}], { policy: 'remove' });
-  t.deepEqual(result, [1, null]);
-});
-
 test('sanitize object with remove', (t) => {
   const result = sanitize({}, { policy: 'remove' });
   t.is(result, null);
+});
+
+test('sanitize array with remove', (t) => {
+  const result = sanitize([1, '2', null, {}], { policy: 'remove' });
+  t.deepEqual(result, null);
 });
 
 test('ignore a string with summarize', (t) => {
@@ -156,47 +150,3 @@ test('sanitize array with summarize', (t) => {
   const result = sanitize([{}, {}, {}], { policy: 'summarize' });
   t.is(result, '(array with 3 items)');
 });
-
-test('isObject: recognise an object', (t) => {
-  t.true(isObject({}));
-
-  t.false(isObject(() => {}));
-  t.false(isObject(null));
-  t.false(isObject(undefined));
-  t.false(isObject(NaN));
-  t.false(isObject([]));
-  // what about errors, do they count?
-  // well, from a sanitisation point of view no, an error is not an object
-  t.false(isObject(new Error()));
-});
-
-test('replace object: one object', (t) => {
-  const result = replaceObject('X', {});
-
-  t.deepEqual(result, 'X');
-});
-
-test('replace object: one array', (t) => {
-  const result = replaceObject('X', []);
-
-  t.deepEqual(result, 'X');
-});
-
-test('replace object: ignore a string', (t) => {
-  const result = replaceObject('X', 'a');
-
-  t.deepEqual(result, 'a');
-});
-
-test('replace object: use function', (t) => {
-  const fn = (x: any) => (Array.isArray(x) ? 'a' : 'o');
-
-  t.deepEqual(replaceObject(fn, []), 'a');
-  t.deepEqual(replaceObject(fn, {}), 'o');
-});
-
-// test('replace object with null', (t) => {
-//   const result = remove({});
-
-//   t.is(result, null);
-// });

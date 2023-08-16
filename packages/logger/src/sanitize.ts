@@ -1,4 +1,5 @@
 import stringify from 'fast-safe-stringify';
+import { isObject, isArray } from './util';
 
 export const SECRET = '****';
 
@@ -57,54 +58,21 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
   return item;
 };
 
-// TODO move to utils
-// Also create isArray,which will just be a shallow clone
-export const isObject = (thing: any) => {
-  if (Array.isArray(thing) || thing === null || thing instanceof Error) {
-    return false;
-  }
+// Sanitize helpers
 
-  if (typeof thing === 'object') {
-    return true;
-  }
-  return false;
-};
-
-// replace an object with a string or the result of a function
-// But this affects arrays as well, argh
-// TODO is this actually pointless now that we only take a singletone argument?
-export const replaceObject = (
-  replace: string | ((logItem: any) => string),
-  logItem: any
-): any => {
-  if (isObject(logItem) || Array.isArray(logItem)) {
-    return typeof replace === 'function' ? replace(logItem) : replace;
-  }
-  return logItem;
-};
-
-// sanitize policy subject to options
-
-// remove all objects from the output
-// Note that we should refuse to log if there is nothing left
-// does that mean the logger never logs null?
+// Replace objects and arrays with null
 function remove(logItem: any): any {
-  // TODO incoming is an argument to console.log
-  if (isObject(logItem)) {
+  if (isObject(logItem) || isArray(logItem)) {
     return null;
-  } else if (Array.isArray(logItem)) {
-    // TODO if we find an array, I think we should remove all the objects inside?
-    // Or do we just remove the whole thing?
-    return logItem.map(remove);
   }
 
   return logItem;
 }
 
-// // summarise the object
-// // ie, array with 31 items or object with keys z, y, x
+// summarise the object
+// ie, array with 31 items or object with keys z, y, x
 function summarize(logItem: any): any {
-  if (Array.isArray(logItem)) {
+  if (isArray(logItem)) {
     if (logItem.length) {
       return `(array with ${logItem.length} items)`;
     } else {
@@ -122,9 +90,9 @@ function summarize(logItem: any): any {
   return logItem;
 }
 
-// // [object Object] or Array<Object>
+// obfuscate an object or array with a simple string
 function obfuscate(logItem: any): any {
-  if (Array.isArray(logItem)) {
+  if (isArray(logItem)) {
     return '[array]';
   }
   if (isObject(logItem)) {
