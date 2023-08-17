@@ -1,31 +1,22 @@
 import YAML, { YAMLMap, isMap, isPair } from 'yaml';
-import { Project } from './types';
-import { uuidRegex } from './utils';
-
-function isUUID(_schema, data) {
-  return uuidRegex.test(data);
-}
+import { ProjectSpec } from './types';
 
 interface Error {
   context: any;
   message: string;
   path?: string[];
+  range?: [number, number, number];
 }
 
 export function parseAndValidate(input: string): {
   errors: Error[];
-  doc: Project;
+  doc: ProjectSpec;
 } {
-  let errors: {
-    context: any;
-    message: string;
-    path?: string[];
-    range: [number, number, number];
-  }[] = [];
+  let errors: Error[] = [];
   let keys: string[] = [];
   const doc = YAML.parseDocument(input);
 
-  function pushUniqueKey(context: YAML.Pair<unknown, unknown>, key: string) {
+  function pushUniqueKey(context: YAML.Pair, key: string) {
     if (keys.includes(key)) {
       errors.push({
         context,
@@ -43,7 +34,7 @@ export function parseAndValidate(input: string): {
       if (isMap(jobs)) {
         for (const job of jobs.items) {
           if (isPair(job)) {
-            pushUniqueKey(job, job.key.value);
+            pushUniqueKey(job, (job as any).key.value);
           }
         }
       } else {
@@ -55,13 +46,13 @@ export function parseAndValidate(input: string): {
     }
   }
 
-  function validateWorkflows(workflows: unknown) {
+  function validateWorkflows(workflows: any) {
     if (isMap(workflows)) {
       for (const workflow of workflows.items) {
         if (isPair(workflow)) {
-          pushUniqueKey(workflow, workflow.key.value);
+          pushUniqueKey(workflow, (workflow as any).key.value);
 
-          validateJobs(workflow.value);
+          validateJobs((workflow as any).value);
         }
       }
     } else {
@@ -74,7 +65,7 @@ export function parseAndValidate(input: string): {
   }
 
   YAML.visit(doc, {
-    Pair(_, pair) {
+    Pair(_, pair: any) {
       if (pair.key && pair.key.value === 'workflows') {
         if (pair.value.value === null) {
           errors.push({
@@ -111,5 +102,5 @@ export function parseAndValidate(input: string): {
   // TODO somehow merge or return errors found inside the yamlDoc
   //      or put our own errors in the yamlDoc
 
-  return { errors, doc: doc.toJSON() as Project };
+  return { errors, doc: doc.toJSON() as ProjectSpec };
 }
