@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
-import { getJSON } from '../src/util';
+import { assertLog, extractLogs, getJSON } from '../src/util';
 
 const jobsPath = path.resolve('test/fixtures');
 const tmpPath = path.resolve('tmp');
@@ -105,5 +105,17 @@ test.serial(
     const out = getJSON();
     t.truthy(out.data.value);
     t.regex(out.data.value, /chuck norris/i);
+  }
+);
+
+test.serial.only(
+  `openfn ${jobsPath}/log.js -ia @openfn/language-common --sanitize=obfuscate`,
+  async (t) => {
+    const { stdout } = await run(t.title);
+    console.log(stdout);
+
+    const stdlogs = extractLogs(stdout);
+
+    assertLog(t, stdlogs, /\[object\]/);
   }
 );
