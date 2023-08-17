@@ -407,7 +407,10 @@ export const sanitize: CLIOption = {
     default: 'none',
   },
   ensure: (opts) => {
-    if (opts.sanitize?.match(/^(none|summarize|remove|obfuscate)$/)) {
+    if (
+      !opts.sanitize ||
+      opts.sanitize?.match(/^(none|summarize|remove|obfuscate)$/)
+    ) {
       return;
     }
     const err = 'Unknown sanitize value provided: ' + opts.sanitize;
