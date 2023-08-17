@@ -310,15 +310,9 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
 
     return {
       ...workflow,
-      jobs: Object.values(
-        workflow.jobs
-      ) as ProjectPayload['workflows'][0]['jobs'],
-      triggers: Object.values(
-        workflow.triggers
-      ) as ProjectPayload['workflows'][0]['triggers'],
-      edges: Object.values(
-        workflow.edges
-      ) as ProjectPayload['workflows'][0]['edges'],
+      jobs: Object.values(workflow.jobs),
+      triggers: Object.values(workflow.triggers),
+      edges: Object.values(workflow.edges),
     };
   });
 
