@@ -10,7 +10,7 @@ During development, you can run the unit tests against a local build (ie, `packa
 
 `pnpm test:dev`
 
-You can run the test in isolation with a docker build. This can be useful while developign for CI, or if a test passes locally but fails in CI.
+You can run the test in isolation with a docker build. This can be useful while developing for CI, or if a test passes locally but fails in CI.
 
 `pnpm run build`
 `pnpm run start`
@@ -23,9 +23,9 @@ Test names should be the actual command under test. This makes it easy to reprod
 
 How it works:
 
-* Build and package the report into a set of tarballs. This uses `pack:local` so that the tarballs are self-referencing. 
-* Install the CLI globally in a clean environment from these tarballs.
-* Unit tests in ava will run commands against the global command (using child_process.exec). They assert against logging and JSON  output.
+- Build and package the report into a set of tarballs. This uses `pack:local` so that the tarballs are self-referencing.
+- Install the CLI globally in a clean environment from these tarballs.
+- Unit tests in ava will run commands against the global command (using child_process.exec). They assert against logging and JSON output.
 
 ## Creating tarballs
 

@@ -108,14 +108,78 @@ test.serial(
   }
 );
 
-test.serial.only(
-  `openfn ${jobsPath}/log.js -ia @openfn/language-common --sanitize=obfuscate`,
+test.serial(
+  `openfn ${jobsPath}/log.js -a @openfn/language-common --sanitize=obfuscate`,
   async (t) => {
     const { stdout } = await run(t.title);
-    console.log(stdout);
+
+    const jobLog = stdout.split(/\n/).find((l) => l.startsWith('[JOB]'));
+
+    t.truthy(jobLog);
+    t.true(jobLog.endsWith('[object]'));
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/log.js -a @openfn/language-common --sanitize=obfuscate --log-json`,
+  async (t) => {
+    const { stdout } = await run(t.title);
 
     const stdlogs = extractLogs(stdout);
 
-    assertLog(t, stdlogs, /\[object\]/);
+    const log = stdlogs.find(
+      ({ message, name }) => name === 'JOB' && message[0] === '[object]'
+    );
+    t.truthy(log);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/log.js -a @openfn/language-common --sanitize=remove`,
+  async (t) => {
+    const { stdout } = await run(t.title);
+
+    const jobLog = stdout.split(/\n/).find((l) => l.startsWith('[JOB]'));
+
+    t.falsy(jobLog);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/log.js -a @openfn/language-common --sanitize=remove --log-json`,
+  async (t) => {
+    const { stdout } = await run(t.title);
+
+    const stdlogs = extractLogs(stdout);
+
+    const log = stdlogs.find(({ name }) => name === 'JOB');
+    t.falsy(log);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/log.js -a @openfn/language-common --sanitize=summarize`,
+  async (t) => {
+    const { stdout } = await run(t.title);
+
+    const jobLog = stdout.split(/\n/).find((l) => l.startsWith('[JOB]'));
+    t.truthy(jobLog);
+    t.true(jobLog.endsWith('(object with keys configuration, data)'));
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/log.js -a @openfn/language-common --sanitize=summarize --log-json`,
+  async (t) => {
+    const { stdout } = await run(t.title);
+
+    const stdlogs = extractLogs(stdout);
+
+    const log = stdlogs.find(
+      ({ message, name }) =>
+        name === 'JOB' &&
+        message[0] === '(object with keys configuration, data)'
+    );
+    t.truthy(log);
   }
 );
