@@ -152,15 +152,22 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   };
 
   const logJSON = (level: LogFns, ...args: LogArgs) => {
+    const message = args.map((o) =>
+      sanitize(o, {
+        stringify: false,
+        policy: options.sanitize,
+      })
+    );
+    if (message.length === 1 && message[0] === null) {
+      // Special case:
+      // If logging null only, don't log anything
+      // This enables the remove obfuscation policy to work properly
+      return;
+    }
     const output: JSONLog = {
       level,
       name,
-      message: args.map((o) =>
-        sanitize(o, {
-          stringify: false,
-          policy: options.sanitize,
-        })
-      ),
+      message,
       time: Date.now(),
     };
 

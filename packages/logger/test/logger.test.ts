@@ -91,6 +91,13 @@ test("don't log null by itself", (t) => {
   t.is(logger._history.length, 0);
 });
 
+test("don't log null by itself in json", (t) => {
+  const logger = createLogger(undefined, { level: 'debug', json: true });
+  logger.log(null);
+
+  t.is(logger._history.length, 0);
+});
+
 test('do log null after a string', (t) => {
   const logger = createLogger(undefined, { level: 'debug' });
   logger.log('result', null);
@@ -116,9 +123,6 @@ test('sanitize: remove object after string', (t) => {
   logger.log('result', {});
 
   const { message } = logger._parse(logger._last);
-  // TODO should this say result null?
-  // I mean, the remove policy says remove the object, so not really
-  // In fact null is an implementation detail, so yes we should not see this
   t.is(message, 'result ');
 });
 
