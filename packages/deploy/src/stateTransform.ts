@@ -136,7 +136,7 @@ function mergeEdges(
         ): StateEdge {
           const edge: StateEdge = {
             id,
-            condition: specEdge.condition,
+            condition: specEdge.condition ?? null,
             source_job_id:
               (specEdge.source_job && jobs[specEdge.source_job].id) ?? null,
             source_trigger_id:
