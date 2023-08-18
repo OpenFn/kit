@@ -1,7 +1,7 @@
 import YAML, { YAMLMap, isMap, isPair } from 'yaml';
 import { ProjectSpec } from './types';
 
-interface Error {
+export interface Error {
   context: any;
   message: string;
   path?: string[];
