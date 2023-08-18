@@ -47,8 +47,8 @@ test('execute: log debug', (t) => {
   t.deepEqual(options.log, { default: 'debug', job: 'debug' });
 });
 
-// These aren't supposed to be exhaustive, just testing the surface a but
-test.only('execute: compiler & runtime in debug', (t) => {
+// These aren't supposed to be exhaustive, just testing the surface a bit
+test('execute: compiler & runtime in debug', (t) => {
   const options = parse('execute job.js --log compiler=debug,runtime=debug');
   t.deepEqual(options.log, {
     default: 'default',
@@ -58,12 +58,12 @@ test.only('execute: compiler & runtime in debug', (t) => {
   });
 });
 
-test.only('execute: log debug by default but job none', (t) => {
+test('execute: log debug by default but job none', (t) => {
   const options = parse('execute job.js --log debug,job=none');
   t.deepEqual(options.log, { default: 'debug', job: 'none' });
 });
 
-test.only("execute: log levels don't have to be at the end of a command", (t) => {
+test("execute: log levels don't have to be at the end of a command", (t) => {
   const options = parse('execute job.js --log debug,job=none --log-json');
   t.deepEqual(options.log, { default: 'debug', job: 'none' });
   t.true(options.logJson);

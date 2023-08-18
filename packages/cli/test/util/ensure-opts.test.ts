@@ -1,5 +1,4 @@
 import test from 'ava';
-import { Opts } from '../../src/options';
 import ensureLogOpts, {
   defaultLoggerOptions,
   ERROR_MESSAGE_LOG_LEVEL,
@@ -18,7 +17,7 @@ test('log: add default options', (t) => {
 
 test('log: override default options', (t) => {
   const initialOpts = {
-    log: ['debug'],
+    log: 'debug',
   };
 
   const opts = ensureLogOpts(initialOpts);
@@ -28,7 +27,7 @@ test('log: override default options', (t) => {
 
 test('log: set a specific option', (t) => {
   const initialOpts = {
-    log: ['compiler=debug'],
+    log: 'compiler=debug',
   };
 
   const opts = ensureLogOpts(initialOpts);
@@ -38,7 +37,7 @@ test('log: set a specific option', (t) => {
 
 test('log: throw if an unknown log level is passed', (t) => {
   const initialOpts = {
-    log: ['foo'],
+    log: 'foo',
   };
 
   const error = t.throws(() => ensureLogOpts(initialOpts));
@@ -47,7 +46,7 @@ test('log: throw if an unknown log level is passed', (t) => {
 
 test('log: throw if an unknown log level is passed to a component', (t) => {
   const initialOpts = {
-    log: ['cli=foo'],
+    log: 'cli=foo',
   };
 
   const error = t.throws(() => ensureLogOpts(initialOpts));
@@ -56,7 +55,7 @@ test('log: throw if an unknown log level is passed to a component', (t) => {
 
 test('log: throw if an unknown log component is passed', (t) => {
   const initialOpts = {
-    log: ['foo=debug'],
+    log: 'foo=debug',
   };
 
   const error = t.throws(() => ensureLogOpts(initialOpts));
@@ -65,7 +64,7 @@ test('log: throw if an unknown log component is passed', (t) => {
 
 test('log: accept short component names', (t) => {
   const initialOpts = {
-    log: ['cmp=debug', 'r/t=debug'],
+    log: 'cmp=debug,r/t=debug',
   };
 
   const opts = ensureLogOpts(initialOpts);
@@ -76,7 +75,7 @@ test('log: accept short component names', (t) => {
 
 test('log: arguments are case insensitive', (t) => {
   const initialOpts = {
-    log: ['ClI=InFo'],
+    log: 'ClI=InFo',
   };
 
   const opts = ensureLogOpts(initialOpts);
@@ -86,7 +85,7 @@ test('log: arguments are case insensitive', (t) => {
 
 test('log: set default and a specific option', (t) => {
   const initialOpts = {
-    log: ['none', 'compiler=debug'],
+    log: 'none,compiler=debug',
   };
 
   const opts = ensureLogOpts(initialOpts);

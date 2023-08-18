@@ -20,7 +20,7 @@ const componentShorthands: Record<string, string> = {
 
 type IncomingOpts = {
   command?: string;
-  log?: string[];
+  log?: string;
 };
 
 const ensureLogOpts = (opts: IncomingOpts) => {
@@ -36,9 +36,10 @@ const ensureLogOpts = (opts: IncomingOpts) => {
     return outgoingOpts;
   }
 
-  if (opts?.log) {
+  if (opts.log) {
     // Parse and validate each incoming log argument
-    opts.log!.forEach((l: string) => {
+    const parts = opts.log.split(',');
+    parts.forEach((l: string) => {
       let component = '';
       let level = '';
 
