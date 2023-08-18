@@ -84,7 +84,7 @@ function writeState(config: DeployConfig, nextState: {}): Promise<void> {
 // ==================== Spec ===================
 
 // Given a path to a project spec, read and validate it.
-async function getSpec(path: string) {
+export async function getSpec(path: string): Promise<any> {
   try {
     const body = await readFile(path, 'utf8');
     return parseAndValidate(body);
@@ -109,7 +109,7 @@ export async function deploy(config: DeployConfig, logger: Logger) {
 
   logger.debug('spec', spec);
   if (spec.errors.length > 0) {
-    spec.errors.forEach((e) => logger.warn(e.message));
+    spec.errors.forEach((e: any) => logger.warn(e.message));
     throw new DeployError(`${config.specPath} has errors`, 'VALIDATION_ERROR');
   }
   const nextState = mergeSpecIntoState(state, spec.doc);
