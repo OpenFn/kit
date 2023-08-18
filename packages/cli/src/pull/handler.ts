@@ -19,7 +19,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
 
     const state = await getState(config.statePath);
     const url = new URL(
-      `/download/yaml?id=${options.projectId}`,
+      `api/projectSpec?id=${options.projectId}`,
       config.endpoint
     );
     logger.debug('Fetching project spec from ', url)
