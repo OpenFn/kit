@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'node:fs/promises';
-import { DeployConfig, getConfig, getState, mergeProjectPayloadIntoState, getProject } from '@openfn/deploy';
+import { DeployConfig, getConfig, getState, mergeSpecIntoState, getSpec } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 import assertPath from '../util/assert-path';
@@ -18,10 +18,9 @@ async function pullHandler(options:  PullOptions, logger: Logger) {
 
     // @ts-ignore
     await fs.writeFile(path.resolve(config.specPath), res.body);
+    const spec = await getSpec(config.specPath);
 
-    const { data: currentProject } = await getProject(config, options.projectId);
-    const nextState = mergeProjectPayloadIntoState(state, currentProject)
-
+    const nextState = mergeSpecIntoState(state, spec)
     // @ts-ignore
     await fs.writeFile(path.resolve(config.statePath), JSON.stringify(nextState));
 
