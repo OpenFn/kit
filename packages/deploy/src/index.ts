@@ -27,7 +27,7 @@ function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
   };
 }
 
-export { getProject, mergeSpecIntoState}; 
+export { getProject, mergeProjectPayloadIntoState}; 
 
 export async function getConfig(path?: string): Promise<DeployConfig> {
   try {
