@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import url from 'node:url';
 import { getNameAndVersion } from '@openfn/runtime';
 import { Logger } from './logger';
 import { mainSymbols } from 'figures';
@@ -56,8 +57,12 @@ const printVersions = async (
   const prefix = (str: string) =>
     `         ${t} ${str.padEnd(longest + 4, ' ')}`;
 
-  const pkg = await import('../../package.json', { assert: { type: 'json' } });
-  const { version, dependencies } = pkg.default;
+  const dirname = path.dirname(url.fileURLToPath(import.meta.url));
+  // Note that this path is the same and src and build, even though this file will be
+  // built into process/runner.js
+
+  const pkg = JSON.parse(readFileSync(`${dirname}/../../package.json`, 'utf8'));
+  const { version, dependencies } = pkg;
 
   const compilerVersion = dependencies['@openfn/compiler'];
   const runtimeVersion = dependencies['@openfn/runtime'];

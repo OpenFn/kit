@@ -234,7 +234,7 @@ export const log: CLIOption = {
   yargs: {
     alias: ['l'],
     description: 'Set the log level',
-    array: true,
+    string: true,
   },
   ensure: (opts: any) => {
     ensureLogOpts(opts);

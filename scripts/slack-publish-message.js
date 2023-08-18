@@ -27,9 +27,9 @@ const getEngineeringMessage = (changes) => {
     // TODO I'd like to link to a full changelog but we don't really have one
   ];
 
-  changes.publishedPackages.forEach((pkg) => {
-    versions.push(`${pkg.version.padEnd(10)} ${pkg.name}`);
-  });
+  const versions = changes.publishedPackages.map(
+    (pkg) => `${pkg.version.padEnd(10)} ${pkg.name}`
+  );
 
   const attachments = [
     {
