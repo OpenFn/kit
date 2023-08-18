@@ -6,7 +6,7 @@ import * as o from '../options';
 export type PullOptions = Required<
   Pick<
     Opts,
-    'command' | 'log' | 'logJson' | 'statePath' | 'projectPath' | 'configPath' | 'projectId'
+    'command' | 'log' | 'logJson' | 'statePath' | 'projectPath' | 'configPath' | 'projectId' | 'confirm'
   >
 >;
 
