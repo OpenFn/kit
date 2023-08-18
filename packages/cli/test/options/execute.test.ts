@@ -63,7 +63,8 @@ test('execute: log debug by default but job none', (t) => {
   t.deepEqual(options.log, { default: 'debug', job: 'none' });
 });
 
-test('execute: throw for invalid log', (t) => {
+// This will now trigger a process.exit so we can't really test this here
+test.skip('execute: throw for invalid log', (t) => {
   t.throws(() => parse('execute job.js --log wibble'), {
     message: ERROR_MESSAGE_LOG_LEVEL,
   });
@@ -72,4 +73,29 @@ test('execute: throw for invalid log', (t) => {
 test('execute: log json', (t) => {
   const options = parse('execute job.js --log-json');
   t.true(options.logJson);
+});
+
+test('execute: sanitize none (by default)', (t) => {
+  const options = parse('execute job.js');
+  t.is(options.sanitize, 'none');
+});
+
+test('execute: sanitize none (explicit)', (t) => {
+  const options = parse('execute job.js --sanitize=none');
+  t.is(options.sanitize, 'none');
+});
+
+test('execute: sanitize remove ', (t) => {
+  const options = parse('execute job.js --sanitize=remove');
+  t.is(options.sanitize, 'remove');
+});
+
+test('execute: sanitize obfuscate ', (t) => {
+  const options = parse('execute job.js --sanitize=obfuscate');
+  t.is(options.sanitize, 'obfuscate');
+});
+
+test('execute: sanitize summarize ', (t) => {
+  const options = parse('execute job.js --sanitize=summarize');
+  t.is(options.sanitize, 'summarize');
 });

@@ -84,6 +84,70 @@ test('should log objects as strings', (t) => {
   t.deepEqual(messageObj.a, 22);
 });
 
+test("don't log null by itself", (t) => {
+  const logger = createLogger(undefined, { level: 'debug' });
+  logger.log(null);
+
+  t.is(logger._history.length, 0);
+});
+
+test("don't log null by itself in json", (t) => {
+  const logger = createLogger(undefined, { level: 'debug', json: true });
+  logger.log(null);
+
+  t.is(logger._history.length, 0);
+});
+
+test('do log null after a string', (t) => {
+  const logger = createLogger(undefined, { level: 'debug' });
+  logger.log('result', null);
+
+  t.is(logger._history.length, 1);
+});
+
+test('sanitize: remove object', (t) => {
+  const logger = createLogger(undefined, {
+    level: 'debug',
+    sanitize: 'remove',
+  });
+  logger.log({});
+
+  t.is(logger._history.length, 0);
+});
+
+test('sanitize: remove object after string', (t) => {
+  const logger = createLogger(undefined, {
+    level: 'debug',
+    sanitize: 'remove',
+  });
+  logger.log('result', {});
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, 'result ');
+});
+
+test('sanitize: obfuscate object', (t) => {
+  const logger = createLogger(undefined, {
+    level: 'debug',
+    sanitize: 'obfuscate',
+  });
+  logger.log({});
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, '[object]');
+});
+
+test('sanitize: summarise object', (t) => {
+  const logger = createLogger(undefined, {
+    level: 'debug',
+    sanitize: 'summarize',
+  });
+  logger.log({ a: 1 });
+
+  const { message } = logger._parse(logger._last);
+  t.is(message, '(object with keys a)');
+});
+
 // Automated structural tests per level
 ['always', 'success', 'info', 'debug', 'error', 'warn'].forEach((l) => {
   // Set up some fiddly type aliases

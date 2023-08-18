@@ -25,6 +25,7 @@ export type ExecuteOptions = Required<
     | 'start'
     | 'statePath'
     | 'stateStdin'
+    | 'sanitize'
     | 'strict'
     | 'timeout'
     | 'useAdaptorsMonorepo'
@@ -49,6 +50,7 @@ const options = [
   o.outputStdout,
   o.repoDir,
   o.skipAdaptorValidation,
+  o.sanitize,
   o.start,
   o.statePath,
   o.stateStdin,
