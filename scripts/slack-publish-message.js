@@ -155,15 +155,18 @@ const extractChangelog = (package, version) => {
 const file = readFileSync('pnpm-publish-summary.json');
 if (file) {
   const json = JSON.parse(file);
+  if (json.publishedPackages.length) {
+    console.log('Generating slack post for all changes (devs)');
+    slack.chat.postMessage(getEngineeringMessage(json));
 
-  console.log('Generating slack post for all changes (devs)');
-  slack.chat.postMessage(getEngineeringMessage(json));
-
-  const cli = json.publishedPackages.find(({ name }) => name === '@openfn/cli');
-  if (cli) {
-    console.log('Generating slack post for CLI changes (implementation)');
-    slack.chat.postMessage(getImplementationMessage(cli.version, json));
-  } else {
-    console.log('No CLI changes detected, doing nothing');
+    const cli = json.publishedPackages.find(
+      ({ name }) => name === '@openfn/cli'
+    );
+    if (cli) {
+      console.log('Generating slack post for CLI changes (implementation)');
+      slack.chat.postMessage(getImplementationMessage(cli.version, json));
+    } else {
+      console.log('No CLI changes detected, doing nothing');
+    }
   }
 }
