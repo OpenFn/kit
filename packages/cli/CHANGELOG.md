@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 0.3.0
+
+### Minor Changes
+
+- add a projectId option to pull, allowing to pull a project without a local state file
+
+### Patch Changes
+
+- 4b23423: Internal refactor of options
+- Updated dependencies
+  - @openfn/deploy@0.2.4
+
 ## 0.2.4
 
 ### Patch Changes
