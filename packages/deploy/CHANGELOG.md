@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.2.5
+
+### Patch Changes
+
+- Fix expected Lightning provisining path for versions greater than Lightning v0.7.3
+
 ## 0.2.4
 
 ### Patch Changes

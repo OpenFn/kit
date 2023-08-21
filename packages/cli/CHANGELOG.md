@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix expected Lightning provisining path for versions greater than Lightning v0.7.3
+- Updated dependencies
+  - @openfn/deploy@0.2.5
+
 ## 0.3.0
 
 ### Minor Changes
