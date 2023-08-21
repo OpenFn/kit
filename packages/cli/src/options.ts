@@ -1,4 +1,5 @@
 import path from 'node:path';
+
 import yargs from 'yargs';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { CommandList } from './commands';
@@ -48,6 +49,7 @@ export type Opts = {
   useAdaptorsMonorepo?: boolean;
   workflow?: CLIExecutionPlan | ExecutionPlan;
   workflowPath?: string;
+  projectId?: string;
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -208,6 +210,20 @@ const getBaseDir = (opts: { path?: string }) => {
   }
   return basePath;
 };
+
+export const projectId: CLIOption = {
+  name: 'project-id',
+  yargs: {
+    hidden: true,
+  },
+  ensure: (opts) => {
+      const projectId = opts.projectId;
+      //check that this is a uuid
+      return projectId;
+    },
+};
+
+
 
 // Input path covers jobPath and workflowPath
 export const inputPath: CLIOption = {
