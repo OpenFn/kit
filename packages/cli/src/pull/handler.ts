@@ -22,7 +22,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       `api/provision/yaml?id=${options.projectId}`,
       config.endpoint
     );
-    logger.debug('Fetching project spec from ', url)
+    logger.debug('Fetching project spec from', url);
 
     const res = await fetch(url, {
       headers: {
@@ -34,11 +34,11 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     // TODO - what if the request was denied (406) or 404?
 
     const resolvedPath = path.resolve(config.specPath);
-    logger.debug('reading spec from', resolvedPath)
+    logger.debug('reading spec from', resolvedPath);
     // @ts-ignore
     await fs.writeFile(resolvedPath, res.body!);
     const spec = await getSpec(config.specPath);
-    logger.debug('validated spec: ', spec)
+    logger.debug('validated spec: ', spec);
 
     if (spec.errors.length > 0) {
       logger.error('ERROR: invalid spec');
@@ -50,7 +50,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     const nextState = mergeSpecIntoState(state, spec.doc);
     await fs.writeFile(
       path.resolve(config.statePath),
-      JSON.stringify(nextState)
+      JSON.stringify(nextState, null, 2)
     );
 
     logger.success('Project pulled successfully');
