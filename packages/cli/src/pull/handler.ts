@@ -40,7 +40,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     const spec = await getSpec(config.specPath);
     logger.debug('validated spec: ', spec)
 
-    if (spec.errors) {
+    if (spec.errors.length > 0) {
       logger.error('ERROR: invalid spec');
       logger.error(spec.errors);
       process.exitCode = 1;
