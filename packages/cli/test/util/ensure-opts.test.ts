@@ -96,7 +96,7 @@ test('log: set default and a specific option', (t) => {
 
 test('log: if none, set job to none too', (t) => {
   const initialOpts = {
-    log: ['none'],
+    log: 'none',
   };
 
   const opts = ensureLogOpts(initialOpts);
@@ -107,7 +107,7 @@ test('log: if none, set job to none too', (t) => {
 
 test('log: if none, can still set job', (t) => {
   const initialOpts = {
-    log: ['none', 'job=info'],
+    log: 'none,job=info',
   };
 
   const opts = ensureLogOpts(initialOpts);
@@ -118,7 +118,7 @@ test('log: if none, can still set job', (t) => {
 
 test('log: if none, can still set job (different order)', (t) => {
   const initialOpts = {
-    log: ['job=info', 'none'],
+    log: 'job=info,none',
   };
 
   const opts = ensureLogOpts(initialOpts);

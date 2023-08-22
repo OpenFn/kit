@@ -26,10 +26,13 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.error(
         `${report.code || report.name || 'error'}: ${report.message}`
       );
+      logger.debug(error); // TODO the logger doesn't handle this very well
+    } else {
+      // This catches if a non-Error object is thrown, ie, `throw "e"`
+      logger.error('ERROR:', error);
     }
 
     logger.error(`Check state.errors.${jobId} for details.`);
-    logger.debug(error); // TODO the logger doesn't handle this very well
 
     if (!state.errors) {
       state.errors = {};
