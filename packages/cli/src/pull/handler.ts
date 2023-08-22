@@ -1,23 +1,57 @@
 import path from 'path';
 import fs from 'node:fs/promises';
-import { DeployConfig, getProject, getConfig, getState } from '@openfn/deploy';
+import {
+  DeployConfig,
+  getConfig,
+  getState,
+  mergeSpecIntoState,
+  getSpec,
+} from '@openfn/deploy';
 import type { Logger } from '../util/logger';
-import { DeployOptions } from '../deploy/command';
+import { PullOptions } from '../pull/command';
+import assertPath from '../util/assert-path';
 
-async function pullHandler(options: DeployOptions, logger: Logger) {
+async function pullHandler(options: PullOptions, logger: Logger) {
   try {
+    assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    logger.always('Downloading project yaml and  state from instance');
+    logger.always('Downloading project yaml and state from instance');
 
     const state = await getState(config.statePath);
-    const { data: new_state } = await getProject(config, state.id);
-    const url = new URL(`/download/yaml?id=${state.id}`, config.endpoint);
-    const res = await fetch(url);
+    const url = new URL(
+      `api/provision/yaml?id=${options.projectId}`,
+      config.endpoint
+    );
+    logger.debug('Fetching project spec from', url);
 
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        Accept: 'application/json',
+      },
+    });
+
+    // TODO - what if the request was denied (406) or 404?
+
+    const resolvedPath = path.resolve(config.specPath);
+    logger.debug('reading spec from', resolvedPath);
     // @ts-ignore
-    await fs.writeFile(path.resolve(config.specPath), res.body);
-    // @ts-ignore
-    await fs.writeFile(path.resolve(config.statePath), new_state);
+    await fs.writeFile(resolvedPath, res.body!);
+    const spec = await getSpec(config.specPath);
+    logger.debug('validated spec: ', spec);
+
+    if (spec.errors.length > 0) {
+      logger.error('ERROR: invalid spec');
+      logger.error(spec.errors);
+      process.exitCode = 1;
+      process.exit(1);
+    }
+
+    const nextState = mergeSpecIntoState(state, spec.doc);
+    await fs.writeFile(
+      path.resolve(config.statePath),
+      JSON.stringify(nextState, null, 2)
+    );
 
     logger.success('Project pulled successfully');
     process.exitCode = 0;
@@ -33,7 +67,7 @@ async function pullHandler(options: DeployOptions, logger: Logger) {
 // Options
 function mergeOverrides(
   config: DeployConfig,
-  options: DeployOptions
+  options: PullOptions
 ): DeployConfig {
   return {
     ...config,

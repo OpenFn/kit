@@ -9,7 +9,7 @@ import {
   mergeSpecIntoState,
   toProjectPayload,
 } from './stateTransform';
-import { deployProject,  getProject } from './client';
+import { deployProject, getProject } from './client';
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger';
 // =============== Configuration ===============
@@ -27,7 +27,7 @@ function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
   };
 }
 
-export { getProject }; 
+export { getProject, mergeSpecIntoState };
 
 export async function getConfig(path?: string): Promise<DeployConfig> {
   try {
@@ -38,8 +38,6 @@ export async function getConfig(path?: string): Promise<DeployConfig> {
     return mergeDefaultOptions({});
   }
 }
-
-
 
 export function validateConfig(config: DeployConfig) {
   if (!config.apiKey) {
@@ -84,7 +82,7 @@ function writeState(config: DeployConfig, nextState: {}): Promise<void> {
 // ==================== Spec ===================
 
 // Given a path to a project spec, read and validate it.
-async function getSpec(path: string) {
+export async function getSpec(path: string) {
   try {
     const body = await readFile(path, 'utf8');
     return parseAndValidate(body);
@@ -97,8 +95,6 @@ async function getSpec(path: string) {
   }
 }
 
-
-
 // =============================================
 
 export async function deploy(config: DeployConfig, logger: Logger) {
@@ -109,7 +105,7 @@ export async function deploy(config: DeployConfig, logger: Logger) {
 
   logger.debug('spec', spec);
   if (spec.errors.length > 0) {
-    spec.errors.forEach((e) => logger.warn(e.message));
+    spec.errors.forEach((e: any) => logger.warn(e.message));
     throw new DeployError(`${config.specPath} has errors`, 'VALIDATION_ERROR');
   }
   const nextState = mergeSpecIntoState(state, spec.doc);
