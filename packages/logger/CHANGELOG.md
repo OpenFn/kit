@@ -1,5 +1,13 @@
 # @openfn/logger
 
+## 0.0.17
+
+### Patch Changes
+
+- 102de2d: Always log errors (even if log=none)
+- 102de2d: If log=none, don't log job logs
+- 3995316: Don't log null
+
 ## 0.0.16
 
 ### Patch Changes

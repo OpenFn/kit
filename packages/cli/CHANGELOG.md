@@ -1,5 +1,21 @@
 # @openfn/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- d0a292f: Added sanitize option
+
+### Patch Changes
+
+- 102de2d: Always log errors (even if log=none)
+- Updated dependencies [102de2d]
+- Updated dependencies
+  - @openfn/logger@0.0.17
+  - @openfn/runtime@0.0.30
+  - @openfn/compiler@0.0.36
+  - @openfn/deploy@0.2.6
+
 ## 0.3.1
 
 ### Patch Changes

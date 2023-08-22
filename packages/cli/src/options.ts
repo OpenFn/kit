@@ -45,6 +45,7 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   strict?: boolean; // Strict state handling (only forward state.data). Defaults to true
+  sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
   workflow?: CLIExecutionPlan | ExecutionPlan;
@@ -409,5 +410,27 @@ export const useAdaptorsMonorepo: CLIOption = {
     if (opts.useAdaptorsMonorepo) {
       opts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
     }
+  },
+};
+
+export const sanitize: CLIOption = {
+  name: 'sanitize',
+  yargs: {
+    string: true,
+    alias: ['sanitise'],
+    description:
+      'Sanitize logging of objects and arrays: none (default), remove, summarize, obfuscate.',
+    default: 'none',
+  },
+  ensure: (opts) => {
+    if (
+      !opts.sanitize ||
+      opts.sanitize?.match(/^(none|summarize|remove|obfuscate)$/)
+    ) {
+      return;
+    }
+    const err = 'Unknown sanitize value provided: ' + opts.sanitize;
+    console.error(err);
+    throw new Error(err);
   },
 };

@@ -93,9 +93,9 @@ const priority: Record<LogFns | LogLevel, number> = {
   default: 2,
   [ALWAYS]: 2,
   [WARN]: 2,
-  [ERROR]: 2,
   [SUCCESS]: 2,
   [NONE]: 9,
+  [ERROR]: 100, // errors ALWAYS log
 };
 
 // // TODO I'd quite like each package to have its own colour, I think
@@ -152,10 +152,22 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   };
 
   const logJSON = (level: LogFns, ...args: LogArgs) => {
+    const message = args.map((o) =>
+      sanitize(o, {
+        stringify: false,
+        policy: options.sanitize,
+      })
+    );
+    if (message.length === 1 && message[0] === null) {
+      // Special case:
+      // If logging null only, don't log anything
+      // This enables the remove obfuscation policy to work properly
+      return;
+    }
     const output: JSONLog = {
       level,
       name,
-      message: args.map((o) => sanitize(o, { stringify: false })),
+      message,
       time: Date.now(),
     };
 
@@ -165,21 +177,34 @@ export default function (name?: string, options: LogOptions = {}): Logger {
 
   const logString = (level: LogFns, ...args: LogArgs) => {
     if (emitter.hasOwnProperty(level)) {
-      const output = [];
+      const cleanedArgs = args.map((o) =>
+        sanitize(o, {
+          stringify: true,
+          sanitizePaths: [],
+          policy: options.sanitize,
+        })
+      );
 
-      if (name && !opts.hideNamespace) {
-        // TODO how can we fix the with of the type column so that things
-        //      are nicely arranged in the CLI?
-        output.push(c.blue(`[${name}]`));
+      if (cleanedArgs.length === 1 && cleanedArgs[0] === null) {
+        // Special case:
+        // If logging null only, don't log anything
+        // This enables the remove obfuscation policy to work properly
+        return;
       }
-      if (!opts.hideIcons) {
-        output.push(styleLevel(level));
+
+      if (cleanedArgs.length) {
+        const output = [];
+        if (name && !opts.hideNamespace) {
+          // TODO how can we fix the with of the type column so that things
+          //      are nicely arranged in the CLI?
+          output.push(c.blue(`[${name}]`));
+        }
+        if (!opts.hideIcons) {
+          output.push(styleLevel(level));
+        }
+
+        emitter[level](...output.concat(cleanedArgs));
       }
-
-      output.push(...args);
-
-      const cleaned = output.map((o) => sanitize(o, options));
-      emitter[level](...cleaned);
     }
   };
 

@@ -77,7 +77,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   opts.path = jobPath;
   opts.repoDir = options.repoDir;
 
-  opts.log = { default: 'none ' };
+  opts.log = { default: 'none' };
   opts.skipAdaptorValidation = true;
 
   await commandParser(opts, logger);
@@ -94,7 +94,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
 }
 
 test.serial('print version information with version', async (t) => {
-  await run('version', '', { logger });
+  await run('version', '');
 
   const last = logger._parse(logger._last);
   const message = last.message as string;
@@ -104,14 +104,16 @@ test.serial('print version information with version', async (t) => {
 });
 
 test.serial('run test job with default state', async (t) => {
-  await run('test', '', { logger });
+  await run('test', '');
+
   const { message } = logger._parse(logger._last);
   t.assert(message === 'Result: 42');
 });
 
 test.serial('run test job with custom state', async (t) => {
   const state = JSON.stringify({ data: { answer: 1 } });
-  await run(`test -S ${state}`, '', { logger });
+
+  await run(`test -S ${state}`, '');
   const { message } = logger._parse(logger._last);
   t.assert(message === 'Result: 1');
 });
@@ -506,6 +508,24 @@ test.serial(
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
 );
+
+// TODO: dang, this doesn't work
+// I need to inspect the output of the job logger, but I can't really access it
+// because execute creates its own job logger and right now I have no means of
+// controlling that from here
+// I'll have to leave this as an integration test for now
+test.serial.skip('sanitize output', async (t) => {
+  const job = 'export default [() => {console.log({}); return 22}]';
+
+  const result = await run('job.js -a common --sanitize=obfuscate', job);
+  t.is(result, 22);
+
+  // console.log(logger._history);
+  const output = logger._find('debug', /$([object])^/);
+  // console.log(output);
+  t.truthy(output);
+  t.is(output?.namespace, 'job');
+});
 
 test.serial(
   'load a workflow adaptor from the monorepo: openfn workflow.json -m',

@@ -1,4 +1,6 @@
 import yargs, { ArgumentsCamelCase } from 'yargs';
+import c from 'chalk';
+
 import { CommandList } from '../commands';
 import type { Opts, CLIOption } from '../options';
 
@@ -25,7 +27,16 @@ export const ensure =
     opts
       .filter((opt) => opt.ensure)
       .forEach((opt) => {
-        opt.ensure!(yargs);
+        try {
+          opt.ensure!(yargs);
+        } catch (e) {
+          console.error(
+            c.red(`\nError parsing command arguments: ${command}.${opt.name}\n`)
+          );
+          console.error(c.red('Aborting'));
+          console.error();
+          process.exit(9); // invalid argument
+        }
       });
   };
 

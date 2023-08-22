@@ -2,6 +2,7 @@
 import actualCreateLogger, { printDuration } from '@openfn/logger';
 import type { Opts } from '../options';
 
+// TODO: add a "job" log level, which means, "only log job stuff"
 export type { Logger, LogOptions, LogLevel } from '@openfn/logger';
 export { isValidLogLevel, defaultLogger } from '@openfn/logger';
 
@@ -20,7 +21,7 @@ const namespaces: Record<string, string> = {
 
 export const createLogger = (
   name: string = '',
-  options: Partial<Pick<Opts, 'log' | 'logJson'>>
+  options: Partial<Pick<Opts, 'log' | 'logJson' | 'sanitize'>>
 ) => {
   const logOptions = options.log || {};
   let json = false;
@@ -31,6 +32,7 @@ export const createLogger = (
   return actualCreateLogger(namespaces[name] || name, {
     level,
     json,
+    sanitize: options.sanitize || 'none',
     ...logOptions,
   });
 };
