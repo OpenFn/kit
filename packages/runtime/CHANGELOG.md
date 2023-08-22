@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 0.0.30
+
+### Patch Changes
+
+- 81d83a9: better handling of non-Error errors
+- Updated dependencies
+  - @openfn/logger@0.0.17
+
 ## 0.0.29
 
 ### Patch Changes
