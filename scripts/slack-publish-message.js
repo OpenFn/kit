@@ -14,7 +14,7 @@ const getEngineeringMessage = (changes) => {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `🚀 *New Releases in \`kit\``,
+        text: `🚀 *New Releases in kit*`,
       },
     },
     {
