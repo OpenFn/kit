@@ -93,9 +93,9 @@ const priority: Record<LogFns | LogLevel, number> = {
   default: 2,
   [ALWAYS]: 2,
   [WARN]: 2,
-  [ERROR]: 2,
   [SUCCESS]: 2,
   [NONE]: 9,
+  [ERROR]: 100, // errors ALWAYS log
 };
 
 // // TODO I'd quite like each package to have its own colour, I think
