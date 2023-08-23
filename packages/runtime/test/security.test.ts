@@ -10,6 +10,7 @@ const run = (job: any, state?: any, options: any = {}) =>
   doRun(job, state, { ...options, strict: false });
 
 const logger = createMockLogger(undefined, { level: 'default' });
+
 test.afterEach(() => {
   logger._reset();
 });
@@ -82,6 +83,52 @@ test.serial(
     t.regex(err.message, /Received type string \('hacking ur scriptz'\)/);
   }
 );
+
+test.serial('code generation is disallowed (new Function)', async (t) => {
+  const src = 'export default [() => new Function("return process")()]';
+
+  const result = await run(src);
+
+  t.truthy(result);
+
+  const err = result.errors['job-1'];
+  t.is(err.name, 'EvalError');
+  t.regex(
+    err.message,
+    /Code generation from strings disallowed for this context/
+  );
+});
+
+test.serial('code generation is disallowed (constructor)', async (t) => {
+  const src =
+    'export default [() => ({}).constructor.constructor("console.log(process.env)")()]';
+
+  const result = await run(src);
+
+  t.truthy(result);
+
+  const err = result.errors['job-1'];
+  t.is(err.name, 'EvalError');
+  t.regex(
+    err.message,
+    /Code generation from strings disallowed for this context/
+  );
+});
+
+test.serial('code generation is disallowed (eval)', async (t) => {
+  const src = 'export default [() => eval("console.log(process.env)")]';
+
+  const result = await run(src);
+
+  t.truthy(result);
+
+  const err = result.errors['job-1'];
+  t.is(err.name, 'EvalError');
+  t.regex(
+    err.message,
+    /Code generation from strings disallowed for this context/
+  );
+});
 
 test.serial('jobs should be able to use sensible timeouts', async (t) => {
   const src =
