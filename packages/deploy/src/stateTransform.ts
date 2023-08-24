@@ -134,20 +134,27 @@ function mergeEdges(
           specEdge: SpecEdge,
           id: string
         ): StateEdge {
-          const edge: StateEdge = {
+          const edge: Partial<StateEdge> = {
             id,
             condition: specEdge.condition ?? null,
-            source_job_id:
-              (specEdge.source_job && jobs[specEdge.source_job].id) ?? null,
-            source_trigger_id:
-              (specEdge.source_trigger &&
-                triggers[specEdge.source_trigger].id) ??
-              null,
             target_job_id:
               (specEdge.target_job && jobs[specEdge.target_job].id) ?? '',
           };
 
-          return edge;
+          // Only write source ids if they exist, otherwise we get nully diffs when deploying
+          const source_job_id =
+            specEdge.source_job && jobs[specEdge.source_job].id;
+          if (source_job_id) {
+            edge.source_job_id = source_job_id;
+          }
+
+          const source_trigger_id =
+            specEdge.source_trigger && triggers[specEdge.source_trigger].id;
+          if (source_trigger_id) {
+            edge.source_trigger_id = source_trigger_id;
+          }
+
+          return edge as StateEdge;
         }
 
         if (specEdge && !stateEdge) {
@@ -222,13 +229,16 @@ export function mergeSpecIntoState(
     )
   );
 
-  return {
+  const projectState: Partial<ProjectState> = {
     ...oldState,
     id: oldState.id || crypto.randomUUID(),
     name: spec.name,
-    description: spec.description,
     workflows: nextWorkflows,
   };
+
+  if (spec.description) projectState.description = spec.description;
+
+  return projectState as ProjectState;
 }
 
 // Maps the server response to the state, merging the two together.
@@ -265,6 +275,7 @@ export function mergeProjectPayloadIntoState(
         return [
           key,
           {
+            ...nextWorkflow,
             id,
             name,
             jobs,

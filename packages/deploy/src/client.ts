@@ -1,11 +1,14 @@
 import { DeployConfig, ProjectPayload } from './types';
 import { DeployError } from './deployError';
 
+const getLightningUrl = (config: DeployConfig, path: string = '') =>
+  new URL(`/api/provision/${path}`, config.endpoint);
+
 export async function getProject(
   config: DeployConfig,
   projectId: string
 ): Promise<{ data: ProjectPayload | null }> {
-  const url = new URL(config.endpoint + `/${projectId}`);
+  const url = getLightningUrl(config, projectId);
 
   try {
     const response = await fetch(url, {
@@ -42,7 +45,8 @@ export async function deployProject(
   payload: any
 ): Promise<{ data: ProjectPayload }> {
   try {
-    const url = new URL(config.endpoint);
+    const url = getLightningUrl(config);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
