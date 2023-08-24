@@ -3,21 +3,26 @@ import fs from 'node:fs/promises';
 import {
   DeployConfig,
   getConfig,
-  getState,
+  getProject,
+  mergeProjectPayloadIntoState,
   mergeSpecIntoState,
   getSpec,
+  getStateFromProjectPayload,
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 import assertPath from '../util/assert-path';
+import { option } from 'yargs';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   try {
     assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    logger.always('Downloading project yaml and state from instance');
+    logger.always(
+      'Downloading project.yaml and projectState.json from instance'
+    );
 
-    const state = await getState(config.statePath);
+    // First get the project.yaml from Lightning
     const url = new URL(
       `api/provision/yaml?id=${options.projectId}`,
       config.endpoint
@@ -31,14 +36,41 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       },
     });
 
-    // TODO - what if the request was denied (406) or 404?
-
     const resolvedPath = path.resolve(config.specPath);
     logger.debug('reading spec from', resolvedPath);
-    // @ts-ignore
+
+    // Write the yaml down to disk
     await fs.writeFile(resolvedPath, res.body!);
-    const spec = await getSpec(config.specPath);
-    logger.debug('validated spec: ', spec);
+
+    // Read the spec back in a parsed yaml
+    const spec = await getSpec(resolvedPath);
+    // logger.debug('validated spec: ', JSON.stringify(spec.doc, null, 2));
+
+    // Get the latest project from Lightning
+    // TODO - what if the request was denied (406) or 404?
+    const { data: project } = await getProject(config, options.projectId);
+    console.log('the project from server:', JSON.stringify(project, null, 2));
+    const finalState = getStateFromProjectPayload(project);
+
+    // // Merge the spec into state
+    // // TODO Need to intialise new state with uuids from the project
+    // const finalState = mergeProjectPayloadIntoState(
+    //   getStateFromProjectPayload(project),
+    //   spec.doc
+    // );
+    console.log(JSON.stringify(finalState, null, 2));
+
+    // const finalState = mergeSpecIntoState(x, spec.doc);
+    // console.log(spec);
+    // console.log('newState ID:', JSON.stringify(newState.id));
+
+    // Now merge the project into the state
+
+    // And finally write the final, deployed state to disk
+    await fs.writeFile(
+      path.resolve(config.statePath),
+      JSON.stringify(finalState, null, 2)
+    );
 
     if (spec.errors.length > 0) {
       logger.error('ERROR: invalid spec');
@@ -46,12 +78,6 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       process.exitCode = 1;
       process.exit(1);
     }
-
-    const nextState = mergeSpecIntoState(state, spec.doc);
-    await fs.writeFile(
-      path.resolve(config.statePath),
-      JSON.stringify(nextState, null, 2)
-    );
 
     logger.success('Project pulled successfully');
     process.exitCode = 0;

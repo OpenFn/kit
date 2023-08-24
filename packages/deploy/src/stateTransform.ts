@@ -185,6 +185,7 @@ export function mergeSpecIntoState(
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
       ([workflowKey, stateWorkflow, specWorkflow]) => {
+        console.log(' >> spec workflow', specWorkflow);
         const nextJobs = mergeJobs(
           stateWorkflow?.jobs || {},
           specWorkflow?.jobs || {}
@@ -200,6 +201,8 @@ export function mergeSpecIntoState(
           stateWorkflow?.edges || {},
           specWorkflow?.edges || {}
         );
+
+        console.log('spec worfklow is whaat?', specWorkflow);
 
         if (specWorkflow && isEmpty(stateWorkflow || {})) {
           return [
@@ -239,6 +242,56 @@ export function mergeSpecIntoState(
   if (spec.description) projectState.description = spec.description;
 
   return projectState as ProjectState;
+}
+
+// convert array of { id, ...stuff } into object { id: stuff }
+// also allow a callback on stuff for further conversion
+const reduceByKey = (
+  key: string | ((obj: any) => string),
+  arr: [{ name: string }],
+  callback = (x: any) => x
+) => {
+  return arr.reduce((acc, obj) => {
+    const k = typeof key === 'function' ? key(obj) : obj[key];
+    const mapped = { ...obj };
+    console.log('k', k);
+    acc[k] = callback(mapped);
+    return acc;
+  }, {});
+};
+
+export function getStateFromProjectPayload(
+  project: ProjectPayload
+): ProjectState {
+  // console.log(' >> getStateFromProjectPayload');
+  const workflows = reduceByKey('name', project.workflows, (wf) => {
+    const mapped: any = {
+      ...wf,
+    };
+    mapped.triggers = reduceByKey('type', wf.triggers);
+    mapped.jobs = reduceByKey('name', wf.jobs);
+    mapped.edges = reduceByKey((edge) => {
+      let sourceName;
+      if (edge.source_trigger_id) {
+        const t = wf.triggers.find((t: any) => t.id === edge.source_trigger_id);
+        sourceName = t.type;
+      } else {
+        const job = wf.jobs.find((e: any) => e.id === edge.source_job_id);
+        sourceName = job.name;
+      }
+      const target = wf.jobs.find((j: any) => j.id === edge.target_job_id);
+      // console.log('tgt', target);
+      const x = `${sourceName}->${target.name}`;
+      console.log(x);
+      return x;
+    }, wf.edges);
+    return mapped;
+  });
+
+  return {
+    ...project,
+    workflows,
+  };
 }
 
 // Maps the server response to the state, merging the two together.
@@ -317,8 +370,6 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   const workflows: ProjectPayload['workflows'] = Object.values(
     state.workflows
   ).map((workflow) => {
-    console.log(workflow);
-
     return {
       ...workflow,
       jobs: Object.values(workflow.jobs),

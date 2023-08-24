@@ -8,6 +8,7 @@ import {
   mergeProjectPayloadIntoState,
   mergeSpecIntoState,
   toProjectPayload,
+  getStateFromProjectPayload,
 } from './stateTransform';
 import { deployProject, getProject } from './client';
 import { DeployError } from './deployError';
@@ -27,7 +28,12 @@ function mergeDefaultOptions(options: Partial<DeployConfig>): DeployConfig {
   };
 }
 
-export { getProject, mergeSpecIntoState, mergeProjectPayloadIntoState };
+export {
+  getProject,
+  mergeSpecIntoState,
+  mergeProjectPayloadIntoState,
+  getStateFromProjectPayload,
+};
 
 export async function getConfig(path?: string): Promise<DeployConfig> {
   try {
