@@ -9,7 +9,14 @@ import {
   WorkflowSpec,
   WorkflowState,
 } from './types';
-import { isEmpty, pickKeys, splitZip } from './utils';
+import {
+  isEmpty,
+  pickKeys,
+  splitZip,
+  hyphenate,
+  reduceByKey,
+  assignIfTruthy,
+} from './utils';
 import { DeployError } from './deployError';
 
 function mergeJobs(
@@ -134,27 +141,19 @@ function mergeEdges(
           specEdge: SpecEdge,
           id: string
         ): StateEdge {
-          const edge: Partial<StateEdge> = {
-            id,
-            condition: specEdge.condition ?? null,
-            target_job_id:
-              (specEdge.target_job && jobs[specEdge.target_job].id) ?? '',
-          };
+          const edge: StateEdge = assignIfTruthy(
+            {
+              id,
+              condition: specEdge.condition ?? null,
+              target_job_id: jobs[specEdge.target_job ?? -1]?.id ?? '',
+            },
+            {
+              source_job_id: jobs[specEdge.source_job ?? -1]?.id,
+              source_trigger_id: triggers[specEdge.source_trigger ?? -1]?.id,
+            }
+          );
 
-          // Only write source ids if they exist, otherwise we get nully diffs when deploying
-          const source_job_id =
-            specEdge.source_job && jobs[specEdge.source_job].id;
-          if (source_job_id) {
-            edge.source_job_id = source_job_id;
-          }
-
-          const source_trigger_id =
-            specEdge.source_trigger && triggers[specEdge.source_trigger].id;
-          if (source_trigger_id) {
-            edge.source_trigger_id = source_trigger_id;
-          }
-
-          return edge as StateEdge;
+          return edge;
         }
 
         if (specEdge && !stateEdge) {
@@ -244,26 +243,6 @@ export function mergeSpecIntoState(
   return projectState as ProjectState;
 }
 
-// convert array of { id, ...stuff } into object { id: stuff }
-// also allow a callback on stuff for further conversion
-const reduceByKey = (
-  key: string | ((obj: any) => string),
-  arr: [{ name: string }],
-  callback = (x: any) => x
-) => {
-  return arr.reduce((acc: any, obj: any) => {
-    const k = typeof key === 'function' ? key(obj) : obj[key];
-    const mapped = { ...obj };
-    console.log('k', k);
-    acc[hyphenate(k)] = callback(mapped);
-    return acc;
-  }, {});
-};
-
-const hyphenate = (str: any) => {
-  return str.replace(/\s+/g, '-');
-};
-
 export function getStateFromProjectPayload(
   project: ProjectPayload | any
 ): ProjectState {
@@ -273,7 +252,7 @@ export function getStateFromProjectPayload(
     };
     mapped.triggers = reduceByKey('type', wf.triggers);
     mapped.jobs = reduceByKey('name', wf.jobs);
-    mapped.edges = reduceByKey((edge) => {
+    mapped.edges = wf.edges.reduce((obj, edge) => {
       let sourceName;
       if (edge.source_trigger_id) {
         const t = wf.triggers.find((t: any) => t.id === edge.source_trigger_id);
@@ -284,9 +263,10 @@ export function getStateFromProjectPayload(
       }
       const target = wf.jobs.find((j: any) => j.id === edge.target_job_id);
 
-      const x = `${sourceName}->${hyphenate(target.name)}`;
-      return x;
-    }, wf.edges);
+      const name = hyphenate(`${sourceName}->${hyphenate(target.name)}`);
+      obj[name] = edge;
+      return obj;
+    }, {});
 
     console.log('mapped jobs', mapped.jobs);
 
