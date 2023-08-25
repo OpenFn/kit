@@ -40,6 +40,9 @@ export type LogOptions = {
 // but to support the success handler we need to alias console.log
 const defaultEmitter = {
   ...console,
+  // Direct error and warn logs to stdout, so that they appear in sequence
+  error: (...args: any[]) => console.log(...args),
+  warn: (...args: any[]) => console.log(...args),
   success: (...args: any[]) => console.log(...args),
   always: (...args: any[]) => console.log(...args),
 };

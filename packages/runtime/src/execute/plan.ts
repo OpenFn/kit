@@ -57,13 +57,13 @@ const executePlan = async (
     const job = compiledPlan.jobs[next];
 
     const prevState = stateHistory[job.previous || ''] ?? initialState;
-
     const state = assembleState(
       clone(prevState),
       job.configuration,
       job.state,
       ctx.opts.strict
     );
+
     const result = await executeJob(ctx, job, state);
     stateHistory[next] = result.state;
 
@@ -75,6 +75,7 @@ const executePlan = async (
       queue.push(...result.next);
     }
   }
+
   // If there are multiple leaf results, return them
   if (Object.keys(leaves).length > 1) {
     return leaves;

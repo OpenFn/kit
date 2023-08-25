@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import {
   DeployConfig,
   getConfig,
-  getState,
-  mergeSpecIntoState,
+  getProject,
   getSpec,
+  getStateFromProjectPayload,
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
@@ -15,9 +15,33 @@ async function pullHandler(options: PullOptions, logger: Logger) {
   try {
     assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    logger.always('Downloading project yaml and state from instance');
+    logger.always('Downloading existing project state (as JSON) from the server.');
 
-    const state = await getState(config.statePath);
+    // Get the project.json from Lightning
+    const { data: project } = await getProject(config, options.projectId);
+
+    if (!project) {
+      logger.error('ERROR: Project not found.');
+      logger.warn(
+        'Please check the UUID and verify your endpoint and apiKey in your config.'
+      );
+      process.exitCode = 1;
+      process.exit(1);
+    }
+
+    // Build the state.json
+    const state = getStateFromProjectPayload(project!);
+
+    // Write the final project state to disk
+    await fs.writeFile(
+      path.resolve(config.statePath),
+      JSON.stringify(state, null, 2)
+    );
+
+    logger.always(
+      'Downloading the project spec (as YAML) from the server.'
+    );
+    // Get the project.yaml from Lightning
     const url = new URL(
       `api/provision/yaml?id=${options.projectId}`,
       config.endpoint
@@ -31,14 +55,24 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       },
     });
 
-    // TODO - what if the request was denied (406) or 404?
+    if (res.status != 200) {
+      logger.error('ERROR: Project spec not retrieved.');
+      logger.warn(
+        'No YAML representation of this project could be retrieved from the server.'
+      );
+      process.exitCode = 1;
+      process.exit(1);
+    }
 
     const resolvedPath = path.resolve(config.specPath);
     logger.debug('reading spec from', resolvedPath);
+
+    // Write the yaml to disk
     // @ts-ignore
-    await fs.writeFile(resolvedPath, res.body!);
-    const spec = await getSpec(config.specPath);
-    logger.debug('validated spec: ', spec);
+    await fs.writeFile(resolvedPath, res.body);
+
+    // Read the spec back in a parsed yaml
+    const spec = await getSpec(resolvedPath);
 
     if (spec.errors.length > 0) {
       logger.error('ERROR: invalid spec');
@@ -46,12 +80,6 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       process.exitCode = 1;
       process.exit(1);
     }
-
-    const nextState = mergeSpecIntoState(state, spec.doc);
-    await fs.writeFile(
-      path.resolve(config.statePath),
-      JSON.stringify(nextState, null, 2)
-    );
 
     logger.success('Project pulled successfully');
     process.exitCode = 0;

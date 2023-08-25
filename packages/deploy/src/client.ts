@@ -1,11 +1,15 @@
 import { DeployConfig, ProjectPayload } from './types';
 import { DeployError } from './deployError';
 
+const getLightningUrl = (config: DeployConfig, path: string = '') =>
+  new URL(`/api/provision/${path}`, config.endpoint);
+
 export async function getProject(
   config: DeployConfig,
   projectId: string
 ): Promise<{ data: ProjectPayload | null }> {
-  const url = new URL(config.endpoint + `/${projectId}`);
+  const url = getLightningUrl(config, projectId);
+  console.log(`Checking ${url} for existing project.`);
 
   try {
     const response = await fetch(url, {
@@ -17,6 +21,7 @@ export async function getProject(
 
     // A 404 response means the project doesn't exist yet.
     if (response.status === 404) {
+      console.log('No existing project found.');
       return { data: null };
     }
 
@@ -29,6 +34,7 @@ export async function getProject(
       );
     }
 
+    console.log('Project found.');
     return response.json();
   } catch (error: any) {
     handleCommonErrors(config, error);
@@ -42,7 +48,8 @@ export async function deployProject(
   payload: any
 ): Promise<{ data: ProjectPayload }> {
   try {
-    const url = new URL(config.endpoint);
+    const url = getLightningUrl(config);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {

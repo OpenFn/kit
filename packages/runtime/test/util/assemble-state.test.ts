@@ -86,6 +86,23 @@ test('Initial data is prioritised over default data', (t) => {
   t.deepEqual(strict, nonStrict);
 });
 
+test('Initial data does not have to be an object', (t) => {
+  const initial = { data: [1] };
+  const defaultState = { data: {} };
+  const config = undefined;
+
+  const strict = assembleState(initial, config, defaultState, true);
+  t.deepEqual(strict, {
+    configuration: {},
+    data: [1],
+  });
+
+  // At this point I don't want any special handling for strict mode,
+  // see https://github.com/OpenFn/kit/issues/233
+  const nonStrict = assembleState(initial, config, defaultState, false);
+  t.deepEqual(strict, nonStrict);
+});
+
 test('merges default and initial config objects', (t) => {
   const initial = { configuration: { x: 1 } };
   const defaultState = undefined;
