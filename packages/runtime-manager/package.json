@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm ava",
-    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "_test": "pnpm ava",
+    "_test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts --no-splitting",
     "build:watch": "pnpm build --watch",
     "serve": "nodemon -e ts --exec 'tsm --experimental-vm-modules --no-warnings src/server/index.ts'"
