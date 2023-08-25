@@ -23,7 +23,8 @@ jobs:
       - run: pnpm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: pnpm changeset publish -r --report-summary --publish-branch main
+      - run: pnpm publish -r --report-summary --publish-branch main
+      - run: pnpm changeset tag
       - run: git push --tags
       - run: pnpm run generate-slack-report
         env:
