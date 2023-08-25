@@ -184,7 +184,6 @@ export function mergeSpecIntoState(
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
       ([workflowKey, stateWorkflow, specWorkflow]) => {
-        console.log(' >> spec workflow', specWorkflow);
         const nextJobs = mergeJobs(
           stateWorkflow?.jobs || {},
           specWorkflow?.jobs || {}
@@ -200,8 +199,6 @@ export function mergeSpecIntoState(
           stateWorkflow?.edges || {},
           specWorkflow?.edges || {}
         );
-
-        console.log('spec worfklow is whaat?', specWorkflow);
 
         if (specWorkflow && isEmpty(stateWorkflow || {})) {
           return [
@@ -247,12 +244,12 @@ export function getStateFromProjectPayload(
   project: ProjectPayload | any
 ): ProjectState {
   const workflows = reduceByKey('name', project.workflows, (wf) => {
-    const mapped: any = {
+    const stateWorkflow: any = {
       ...wf,
     };
-    mapped.triggers = reduceByKey('type', wf.triggers);
-    mapped.jobs = reduceByKey('name', wf.jobs);
-    mapped.edges = wf.edges.reduce((obj, edge) => {
+    stateWorkflow.triggers = reduceByKey('type', wf.triggers);
+    stateWorkflow.jobs = reduceByKey('name', wf.jobs);
+    stateWorkflow.edges = wf.edges.reduce((obj, edge) => {
       let sourceName;
       if (edge.source_trigger_id) {
         const t = wf.triggers.find((t: any) => t.id === edge.source_trigger_id);
@@ -268,9 +265,7 @@ export function getStateFromProjectPayload(
       return obj;
     }, {});
 
-    console.log('mapped jobs', mapped.jobs);
-
-    return mapped;
+    return stateWorkflow;
   });
 
   return {
