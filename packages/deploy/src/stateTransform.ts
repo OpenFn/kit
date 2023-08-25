@@ -244,9 +244,9 @@ export function getStateFromProjectPayload(
   project: ProjectPayload
 ): ProjectState {
   const workflows = reduceByKey('name', project.workflows, (wf) => {
+    const { triggers, jobs, edges, ...workflowData } = wf;
     const stateWorkflow = {
-      id: wf.id,
-      name: wf.name,
+      ...workflowData,
     } as Partial<WorkflowState>;
 
     stateWorkflow.triggers = reduceByKey('type', wf.triggers!);
