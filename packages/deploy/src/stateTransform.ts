@@ -260,10 +260,13 @@ const reduceByKey = (
   }, {});
 };
 
+const hyphenate = (str: any) => {
+  str.replace(/\s+/g, '-');
+};
+
 export function getStateFromProjectPayload(
   project: ProjectPayload
 ): ProjectState {
-  // console.log(' >> getStateFromProjectPayload');
   const workflows = reduceByKey('name', project.workflows, (wf) => {
     const mapped: any = {
       ...wf,
@@ -280,11 +283,13 @@ export function getStateFromProjectPayload(
         sourceName = job.name;
       }
       const target = wf.jobs.find((j: any) => j.id === edge.target_job_id);
-      // console.log('tgt', target);
-      const x = `${sourceName}->${target.name}`;
-      console.log(x);
+
+      const x = `${sourceName}->${hyphenate(target.name)}`;
       return x;
     }, wf.edges);
+
+    console.log('mapped jobs', mapped.jobs);
+
     return mapped;
   });
 
