@@ -279,7 +279,7 @@ test('data can be an array (expression)', async (t) => {
   t.deepEqual(result.data, [1, 2, 3]);
 });
 
-test.only('data can be an array (workflow)', async (t) => {
+test('data can be an array (workflow)', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {

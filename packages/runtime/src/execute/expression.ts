@@ -111,6 +111,8 @@ const assignKeys = (
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
 const prepareFinalState = (opts: Options, state: any) => {
+  // console.log('final state: ', state);
+  // console.log(opts.strict);
   if (state) {
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);

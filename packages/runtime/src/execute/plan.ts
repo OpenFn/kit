@@ -64,7 +64,9 @@ const executePlan = async (
       job.state,
       ctx.opts.strict
     );
+    console.log(job.id, state);
     const result = await executeJob(ctx, job, state);
+    console.log('result >', result);
     stateHistory[next] = result.state;
 
     if (!result.next.length) {
