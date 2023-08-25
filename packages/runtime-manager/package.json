@@ -4,6 +4,7 @@
   "description": "An example runtime manager service.",
   "main": "index.js",
   "type": "module",
+  "private": true,
   "scripts": {
     "test": "pnpm ava",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
