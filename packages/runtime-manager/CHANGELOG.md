@@ -2,7 +2,7 @@
 
 ## 0.0.41
 
-Testing auto-deplot, no changes
+Testing auto-deploy, no changes
 
 ## 0.0.40
 
