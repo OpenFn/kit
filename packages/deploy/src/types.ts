@@ -50,6 +50,11 @@ export interface WorkflowState {
   triggers: Record<string | symbol, Concrete<Trigger>>;
   edges: Record<string | symbol, Concrete<StateEdge>>;
   delete?: boolean;
+  project_id?: string;
+
+  inserted_at?: string;
+  updated_at?: string;
+  deleted_at?: string;
 }
 
 export interface ProjectState {
@@ -66,6 +71,7 @@ export interface ProjectPayload {
   workflows: {
     id: string;
     name: string;
+    project_id?: string;
     jobs: Concrete<Job>[];
     triggers: Concrete<Trigger>[];
     edges: Concrete<StateEdge>[];

@@ -1,11 +1,17 @@
 import test from 'ava';
 import jp from 'jsonpath';
 import {
+  getStateFromProjectPayload,
   mergeProjectPayloadIntoState,
   mergeSpecIntoState,
 } from '../src/stateTransform';
 import { ProjectPayload } from '../src/types';
-import { fullExampleSpec, fullExampleState } from './fixtures';
+import {
+  fullExampleSpec,
+  fullExampleState,
+  lightningProjectPayload,
+  lightningProjectState,
+} from './fixtures';
 
 test('toNextState adding a job', (t) => {
   const spec = {
@@ -138,14 +144,12 @@ test('toNextState with empty state', (t) => {
             id: getItem(result, 'edges', 'trigger-one->job-a').id,
             condition: null,
             source_trigger_id: getItem(result, 'triggers', 'trigger-one').id,
-            source_job_id: null,
             target_job_id: getItem(result, 'jobs', 'job-a').id,
           },
           'job-a->job-b': {
             id: getItem(result, 'edges', 'job-a->job-b').id,
             condition: null,
             source_job_id: getItem(result, 'jobs', 'job-a').id,
-            source_trigger_id: null,
             target_job_id: getItem(result, 'jobs', 'job-b').id,
           },
         },
@@ -396,4 +400,87 @@ test('mergeProjectIntoState with deletions', (t) => {
   let result = mergeProjectPayloadIntoState(existingState, projectPayload);
 
   t.deepEqual(result, existingState);
+});
+
+test('getStateFromProjectPayload with minimal project', (t) => {
+  // project payload from lightning sever
+  const project = {
+    id: 'xyz',
+    name: 'project',
+    workflows: [
+      {
+        id: 'wf-a',
+        name: 'a',
+        project_id: 'xyz',
+        triggers: [
+          {
+            id: 't1',
+            type: 'webhook',
+          },
+        ],
+        jobs: [
+          {
+            enabled: true,
+            id: 'job-1',
+            name: 'My job',
+            body: 'fn(state => state);',
+            adaptor: '@openfn/language-common@latest',
+          },
+        ],
+        edges: [
+          {
+            id: 't1-job-1',
+            target_job_id: 'job-1',
+            condition: 'on_job_failure',
+            source_trigger_id: 't1',
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = getStateFromProjectPayload(project);
+  t.deepEqual(state, {
+    id: 'xyz',
+    name: 'project',
+    workflows: {
+      a: {
+        id: 'wf-a',
+        name: 'a',
+        project_id: 'xyz',
+        triggers: {
+          webhook: {
+            id: 't1',
+            type: 'webhook',
+          },
+        },
+        jobs: {
+          'My-job': {
+            enabled: true,
+            id: 'job-1',
+            name: 'My job',
+            body: 'fn(state => state);',
+            adaptor: '@openfn/language-common@latest',
+          },
+        },
+        edges: {
+          'webhook->My-job': {
+            id: 't1-job-1',
+            target_job_id: 'job-1',
+            condition: 'on_job_failure',
+            source_trigger_id: 't1',
+          },
+        },
+      },
+    },
+  });
+});
+
+test('getStateFromProjectPayload with full lightning project', (t) => {
+  const project = lightningProjectPayload;
+  const expectedState = lightningProjectState;
+
+  const state = getStateFromProjectPayload(project);
+
+  t.deepEqual(state, expectedState);
 });
