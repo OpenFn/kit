@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- Fix an issue where state.data as an array would be corrupted
+- 7f4340d: Fixed resulting projectState.json from pull; fixed URLs in deploy
+- 10021f6: Handle 404s when trying to deploy; better logging/error messages
+- Updated dependencies
+  - @openfn/runtime@0.0.31
+  - @openfn/deploy@0.2.7
+
 ## 0.4.0
 
 ### Minor Changes

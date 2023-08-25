@@ -1,5 +1,12 @@
 # @openfn/deploy
 
+## 0.2.7
+
+### Patch Changes
+
+- 7f4340d: Fixed resulting projectState.json from pull; fixed URLs in deploy
+- 10021f6: Handle 404s when trying to deploy; better logging/error messages
+
 ## 0.2.6
 
 ### Patch Changes
