@@ -1,5 +1,9 @@
 # runtime-manager
 
+## 0.0.41
+
+Testing auto-deploy, no changes
+
 ## 0.0.40
 
 ### Patch Changes
