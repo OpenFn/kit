@@ -9,11 +9,11 @@ export const hyphenate = (str: any) => {
 
 // convert array of { id, ...stuff } into object { id: stuff }
 // also allow a callback on stuff for further conversion
-export const reduceByKey = (
-  key: string,
-  arr: [{ name: string }], // TODO how do we say [key]: name
-  callback = (x: any) => x
-) => {
+export const reduceByKey = <T, K = keyof T, X = T>(
+  key: K,
+  arr: T[],
+  callback: (x: T) => X | T = (x) => x
+): Record<string, X> => {
   return arr.reduce((acc: any, obj: any) => {
     const k = hyphenate(obj[key]);
     acc[k] = callback({ ...obj });
@@ -23,7 +23,7 @@ export const reduceByKey = (
 
 export const assignIfTruthy = (obj: any, incoming: any) => {
   Object.entries(incoming).forEach(([key, value]) => {
-    if (!isNaN(value) || value) {
+    if (!isNaN(value as number) || value) {
       obj[key] = value;
     }
   });

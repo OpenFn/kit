@@ -241,31 +241,33 @@ export function mergeSpecIntoState(
 }
 
 export function getStateFromProjectPayload(
-  project: ProjectPayload | any
+  project: ProjectPayload
 ): ProjectState {
   const workflows = reduceByKey('name', project.workflows, (wf) => {
-    const stateWorkflow: any = {
-      ...wf,
-    };
-    stateWorkflow.triggers = reduceByKey('type', wf.triggers);
+    const stateWorkflow = {
+      id: wf.id,
+      name: wf.name,
+    } as Partial<WorkflowState>;
+
+    stateWorkflow.triggers = reduceByKey('type', wf.triggers!);
     stateWorkflow.jobs = reduceByKey('name', wf.jobs);
     stateWorkflow.edges = wf.edges.reduce((obj, edge) => {
       let sourceName;
       if (edge.source_trigger_id) {
-        const t = wf.triggers.find((t: any) => t.id === edge.source_trigger_id);
+        const t = wf.triggers.find((t) => t.id === edge.source_trigger_id)!;
         sourceName = t.type;
       } else {
-        const job = wf.jobs.find((e: any) => e.id === edge.source_job_id);
+        const job = wf.jobs.find((e) => e.id === edge.source_job_id)!;
         sourceName = job.name;
       }
-      const target = wf.jobs.find((j: any) => j.id === edge.target_job_id);
+      const target = wf.jobs.find((j) => j.id === edge.target_job_id)!;
 
       const name = hyphenate(`${sourceName}->${hyphenate(target.name)}`);
       obj[name] = edge;
       return obj;
-    }, {});
+    }, {} as Record<string, StateEdge>);
 
-    return stateWorkflow;
+    return stateWorkflow as WorkflowState;
   });
 
   return {
