@@ -251,21 +251,21 @@ const reduceByKey = (
   arr: [{ name: string }],
   callback = (x: any) => x
 ) => {
-  return arr.reduce((acc, obj) => {
+  return arr.reduce((acc: any, obj: any) => {
     const k = typeof key === 'function' ? key(obj) : obj[key];
     const mapped = { ...obj };
     console.log('k', k);
-    acc[k] = callback(mapped);
+    acc[hyphenate(k)] = callback(mapped);
     return acc;
   }, {});
 };
 
 const hyphenate = (str: any) => {
-  str.replace(/\s+/g, '-');
+  return str.replace(/\s+/g, '-');
 };
 
 export function getStateFromProjectPayload(
-  project: ProjectPayload
+  project: ProjectPayload | any
 ): ProjectState {
   const workflows = reduceByKey('name', project.workflows, (wf) => {
     const mapped: any = {
