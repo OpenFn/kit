@@ -60,7 +60,7 @@ const findUpstream = (plan: ExecutionPlan, id: string) => {
     if (job.next)
       if (typeof job.next === 'string') {
         if (job.next === id) {
-          return job.next;
+          return job.id;
         }
       } else if (job.next[id]) {
         return job.id;

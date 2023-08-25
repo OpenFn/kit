@@ -295,5 +295,5 @@ test('data can be an array (workflow)', async (t) => {
   };
 
   const result: any = await run(plan, {}, { strict: false });
-  t.deepEqual(result, [1, 2, 3]);
+  t.deepEqual(result.data, [1, 2, 3]);
 });
