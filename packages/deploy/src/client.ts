@@ -9,6 +9,7 @@ export async function getProject(
   projectId: string
 ): Promise<{ data: ProjectPayload | null }> {
   const url = getLightningUrl(config, projectId);
+  console.log(`Checking ${url} for existing project.`);
 
   try {
     const response = await fetch(url, {
@@ -20,6 +21,7 @@ export async function getProject(
 
     // A 404 response means the project doesn't exist yet.
     if (response.status === 404) {
+      console.log('No existing project found.');
       return { data: null };
     }
 
@@ -32,6 +34,7 @@ export async function getProject(
       );
     }
 
+    console.log('Project found.');
     return response.json();
   } catch (error: any) {
     handleCommonErrors(config, error);

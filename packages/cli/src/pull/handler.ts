@@ -15,11 +15,33 @@ async function pullHandler(options: PullOptions, logger: Logger) {
   try {
     assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    logger.always(
-      'Downloading project.yaml and projectState.json from instance'
+    logger.always('Downloading existing project state (as JSON) from the server.');
+
+    // Get the project.json from Lightning
+    const { data: project } = await getProject(config, options.projectId);
+
+    if (!project) {
+      logger.error('ERROR: Project not found.');
+      logger.warn(
+        'Please check the UUID and verify your endpoint and apiKey in your config.'
+      );
+      process.exitCode = 1;
+      process.exit(1);
+    }
+
+    // Build the state.json
+    const state = getStateFromProjectPayload(project!);
+
+    // Write the final project state to disk
+    await fs.writeFile(
+      path.resolve(config.statePath),
+      JSON.stringify(state, null, 2)
     );
 
-    // First get the project.yaml from Lightning
+    logger.always(
+      'Downloading the project spec (as YAML) from the server.'
+    );
+    // Get the project.yaml from Lightning
     const url = new URL(
       `api/provision/yaml?id=${options.projectId}`,
       config.endpoint
@@ -33,26 +55,24 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       },
     });
 
+    if (res.status != 200) {
+      logger.error('ERROR: Project spec not retrieved.');
+      logger.warn(
+        'No YAML representation of this project could be retrieved from the server.'
+      );
+      process.exitCode = 1;
+      process.exit(1);
+    }
+
     const resolvedPath = path.resolve(config.specPath);
     logger.debug('reading spec from', resolvedPath);
 
-    // Write the yaml down to disk
+    // Write the yaml to disk
     // @ts-ignore
     await fs.writeFile(resolvedPath, res.body);
 
     // Read the spec back in a parsed yaml
     const spec = await getSpec(resolvedPath);
-
-    // Get the latest project from Lightning
-    // TODO - what if the request was denied (406) or 404?
-    const { data: project } = await getProject(config, options.projectId);
-    const state = getStateFromProjectPayload(project!);
-
-    // And finally write the final, deployed state to disk
-    await fs.writeFile(
-      path.resolve(config.statePath),
-      JSON.stringify(state, null, 2)
-    );
 
     if (spec.errors.length > 0) {
       logger.error('ERROR: invalid spec');
