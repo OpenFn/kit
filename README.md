@@ -1,5 +1,5 @@
-OpenFn Kit
-======================
+# OpenFn Kit
+
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/OpenFn/kit/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/OpenFn/kit/tree/main)
 
 **Kit** _noun_ _/kɪt/_
@@ -17,8 +17,8 @@ It is a kitbag of Javascript-based components to support Lightning.
 
 ## Prerequisities
 
-* [asdf](https://github.com/asdf-vm/asdf)
-* [pnpm](https://pnpm.io/installation)
+- [asdf](https://github.com/asdf-vm/asdf)
+- [pnpm](https://pnpm.io/installation)
 
 We use [asdf](https://github.com/asdf-vm/asdf) to configure our local
 environments and ensure consistency of versions.
@@ -60,54 +60,24 @@ For example changeset notes, look in the `.changesets` folder.
 
 ### Releasing
 
-To release to npm:
+New releases will be published to npm automatically when merging into main.
 
-1) Update versions
-```
-pnpm changeset version
-```
+Before merging to main, check out the release branch locally and run the following steps:
 
-This will automatically update the version numbers of the affected packages.
+1. Update versions with `pnpm changeset version`
+2. Install to update dependencies `pnpm install`
+3. Check the release notes
+4. Commit and push (make sure to push tags too `git push --follow-tags`)
 
-Commit the changes:
+## TypeSync
 
-```
-git commit -am "Updated changeset version"
-```
+This repo uses `typesync` to ensure that all packages have an appropriate `@types/` package.
 
-2) Rebuild
-```
-pnpm install
-pnpm build
-```
+This must be run MANUALLY (See https://github.com/OpenFn/kit/issues/333)
 
-3) Test
+On every add, update and remove. you should do `pnpm run typesync` from the repo root.
 
-Build the test bundle:
-```
-$ pnpm clean:local
-$ pnpm pack:local
-```
-
-Install using command reported by pack:local (`npm install -g dist/openfn-cli-<version>-local.tgz`)
-
-Sanity check the version and ensure it works:
-```
-$ openfn --version
-$ openfn test
-```
-
-3) Publish
-
-```
-pnpm changeset publish --otp <OTP>
-```
-
-4) Push tags
-
-```
-git push --follow-tags
-```
+Note that @types packages only synchronise with the major and minor versions of a package. So for `@types/x@major.minor.patch`, `major` and `minor` refer to the versions of the corresponding package `x`, and `patch` is the version number of the actual types package.
 
 ## Testing the CLI on a branch
 
@@ -126,9 +96,10 @@ To remove the dev cli, run `npm uninstall -g @openfn/clix`
 You can test the built CLI package to ensure it works before publishing it.
 
 The `build/pack-local` script is an overly complicated solution which:
-* Packs all the openfn packages
-* Updates the dependencies to use peer packages in dist, rather than module names
-* Creates `openfn-cli-<version>-local.tgz` which you can install globally.
+
+- Packs all the openfn packages
+- Updates the dependencies to use peer packages in dist, rather than module names
+- Creates `openfn-cli-<version>-local.tgz` which you can install globally.
 
 To run the test:
 
@@ -158,5 +129,3 @@ This will build adaptor-docs into a tarball and install it directly into Lightni
 
 For information on the history of the OpenFn internals and ideas for the future
 see [docs/future](docs/future).
-
-

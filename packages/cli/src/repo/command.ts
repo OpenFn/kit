@@ -4,7 +4,7 @@ import { build, ensure, override } from '../util/command-builders';
 
 export const repo = {
   command: 'repo [subcommand]',
-  desc: 'Run commands on the module repo (install|clean)',
+  describe: 'Run commands on the module repo (install|clean)',
   builder: (yargs: yargs.Argv) =>
     yargs
       .command(clean)
@@ -12,9 +12,11 @@ export const repo = {
       .command(list)
       .example('repo install -a http', 'Install @openfn/language-http')
       .example('repo clean', 'Remove everything from the repo working dir'),
-} as unknown as yargs.CommandModule<{}>;
+} as yargs.CommandModule<{}>;
 
 const installOptions = [
+  o.log,
+  o.logJson,
   o.repoDir,
   override(o.expandAdaptors, {
     default: true,
@@ -28,7 +30,8 @@ const installOptions = [
 
 export const install = {
   command: 'install [packages...]',
-  desc: 'install one or more packages to the runtime repo. Use -a to pass shorthand adaptor names.',
+  describe:
+    'install one or more packages to the runtime repo. Use -a to pass shorthand adaptor names.',
   handler: ensure('repo-install', installOptions),
   builder: (yargs) =>
     build(installOptions, yargs)
@@ -43,31 +46,32 @@ export const install = {
       ),
 } as yargs.CommandModule<{}>;
 
+const cleanOptions = [
+  o.log,
+  o.logJson,
+  o.repoDir,
+  {
+    name: 'force',
+    yargs: {
+      alias: ['f'],
+      description: 'Skip the prompt and force deletion',
+      boolean: true,
+    },
+  },
+];
+
 export const clean = {
   command: 'clean',
-  desc: 'Removes all modules from the runtime module repo',
-  handler: ensure('repo-clean', [o.repoDir]),
-  builder: (yargs) =>
-    build(
-      [
-        o.repoDir,
-        {
-          name: 'force',
-          yargs: {
-            alias: ['f'],
-            description: 'Skip the prompt and force deletion',
-            boolean: true,
-          },
-        },
-      ],
-      yargs
-    ),
+  describe: 'Removes all modules from the runtime module repo',
+  handler: ensure('repo-clean', cleanOptions),
+  builder: (yargs) => build(cleanOptions, yargs),
 } as yargs.CommandModule<{}>;
 
+const listOptions = [o.repoDir, o.log, o.logJson];
 export const list = {
   command: 'list',
-  desc: 'Show a report on what is installed in the repo',
+  describe: 'Show a report on what is installed in the repo',
   aliases: ['$0'],
-  handler: ensure('repo-list', [o.repoDir]),
-  builder: (yargs) => build([o.repoDir], yargs),
+  handler: ensure('repo-list', listOptions),
+  builder: (yargs) => build(listOptions, yargs),
 } as yargs.CommandModule<{}>;

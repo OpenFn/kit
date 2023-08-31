@@ -16,7 +16,7 @@ export type Trigger = {
 
 export type StateEdge = {
   id: string;
-  condition: string;
+  condition: string | null;
   source_job_id: string | null;
   source_trigger_id: string | null;
   target_job_id: string;
@@ -46,10 +46,15 @@ export interface ProjectSpec {
 export interface WorkflowState {
   id: string;
   name: string;
-  jobs: Record<string | symbol, Job>;
-  triggers: Record<string | symbol, Trigger>;
-  edges: Record<string | symbol, StateEdge>;
+  jobs: Record<string | symbol, Concrete<Job>>;
+  triggers: Record<string | symbol, Concrete<Trigger>>;
+  edges: Record<string | symbol, Concrete<StateEdge>>;
   delete?: boolean;
+  project_id?: string;
+
+  inserted_at?: string;
+  updated_at?: string;
+  deleted_at?: string;
 }
 
 export interface ProjectState {
@@ -66,6 +71,7 @@ export interface ProjectPayload {
   workflows: {
     id: string;
     name: string;
+    project_id?: string;
     jobs: Concrete<Job>[];
     triggers: Concrete<Trigger>[];
     edges: Concrete<StateEdge>[];

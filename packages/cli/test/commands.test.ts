@@ -73,13 +73,14 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   }
 
   const opts = cmd.parse(command) as Opts;
+  // Override some options after the command has been parsed
   opts.path = jobPath;
   opts.repoDir = options.repoDir;
 
-  opts.log = ['none'];
+  opts.log = { default: 'none' };
   opts.skipAdaptorValidation = true;
 
-  await commandParser(jobPath, opts, logger);
+  await commandParser(opts, logger);
 
   try {
     // Try and load the result as json as a test convenience
@@ -93,7 +94,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
 }
 
 test.serial('print version information with version', async (t) => {
-  await run('version', '', { logger });
+  await run('version', '');
 
   const last = logger._parse(logger._last);
   const message = last.message as string;
@@ -103,14 +104,16 @@ test.serial('print version information with version', async (t) => {
 });
 
 test.serial('run test job with default state', async (t) => {
-  await run('test', '', { logger });
+  await run('test', '');
+
   const { message } = logger._parse(logger._last);
   t.assert(message === 'Result: 42');
 });
 
 test.serial('run test job with custom state', async (t) => {
   const state = JSON.stringify({ data: { answer: 1 } });
-  await run(`test -S ${state}`, '', { logger });
+
+  await run(`test -S ${state}`, '');
   const { message } = logger._parse(logger._last);
   t.assert(message === 'Result: 1');
 });
@@ -506,6 +509,24 @@ test.serial(
   }
 );
 
+// TODO: dang, this doesn't work
+// I need to inspect the output of the job logger, but I can't really access it
+// because execute creates its own job logger and right now I have no means of
+// controlling that from here
+// I'll have to leave this as an integration test for now
+test.serial.skip('sanitize output', async (t) => {
+  const job = 'export default [() => {console.log({}); return 22}]';
+
+  const result = await run('job.js -a common --sanitize=obfuscate', job);
+  t.is(result, 22);
+
+  // console.log(logger._history);
+  const output = logger._find('debug', /$([object])^/);
+  // console.log(output);
+  t.truthy(output);
+  t.is(output?.namespace, 'job');
+});
+
 test.serial(
   'load a workflow adaptor from the monorepo: openfn workflow.json -m',
   async (t) => {
@@ -581,7 +602,7 @@ test.serial('docs should print documentation with full names', async (t) => {
   const opts = cmd.parse('docs @openfn/language-common@1.0.0 fn') as Opts;
   opts.repoDir = '/repo';
 
-  await commandParser('', opts, logger);
+  await commandParser(opts, logger);
   const docs = logger._parse(logger._history[3]).message as string;
   // match the signature
   t.regex(docs, /\#\# fn\(\)/);
@@ -617,7 +638,7 @@ test.serial('docs adaptor should print list operations', async (t) => {
   const opts = cmd.parse('docs common@1.0.0') as Opts;
   opts.repoDir = '/repo';
 
-  await commandParser('', opts, logger);
+  await commandParser(opts, logger);
   const docs = logger._parse(logger._history[2]).message as string;
   t.notRegex(docs, /\[object Object\]/);
   t.notRegex(docs, /\#\#\# Usage Examples/);
@@ -647,7 +668,7 @@ test.serial(
     const opts = cmd.parse('docs common@1.0.0 fn') as Opts;
     opts.repoDir = '/repo';
 
-    await commandParser('', opts, logger);
+    await commandParser(opts, logger);
     const docs = logger._parse(logger._history[3]).message as string;
     // match the signature
     t.regex(docs, /\#\# fn\(\)/);
@@ -664,10 +685,3 @@ test.serial(
     t.is(message, 'Done!');
   }
 );
-
-// TODO - need to work out a way to test agaist stdout
-// should return to stdout
-// should log stuff to console
-// should not log if silent is true
-
-// TODO how would we test skip compilation and no validation? I guess we pass illegal code?

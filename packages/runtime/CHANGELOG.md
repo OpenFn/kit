@@ -1,5 +1,28 @@
 # @openfn/runtime
 
+## 0.0.31
+
+### Patch Changes
+
+- 0ff4f98: Ensure data can be an array
+  Fix an issue where string next links in a workflow could use the wrong prior state
+
+## 0.0.30
+
+### Patch Changes
+
+- 81d83a9: better handling of non-Error errors
+- Updated dependencies
+  - @openfn/logger@0.0.17
+
+## 0.0.29
+
+### Patch Changes
+
+- 2a0aaa9: Bump semver
+- Updated dependencies [2a0aaa9]
+  - @openfn/logger@0.0.16
+
 ## 0.0.28
 
 ### Patch Changes

@@ -26,6 +26,74 @@ test('should convert jobs to an object', (t) => {
   t.is(compiledPlan.jobs.b.expression, 'y');
 });
 
+test('should set previous job with 2 jobs', (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: [
+      { id: 'a', expression: 'x', next: { b: true } },
+      { id: 'b', expression: 'y' },
+    ],
+  };
+  const compiledPlan = compilePlan(plan);
+  t.is(compiledPlan.jobs.a.previous, undefined);
+  t.is(compiledPlan.jobs.b.previous, 'a');
+});
+
+test('should set previous job with 2 jobs and shorthand syntax', (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: [
+      { id: 'a', expression: 'x', next: 'b' },
+      { id: 'b', expression: 'y' },
+    ],
+  };
+  const compiledPlan = compilePlan(plan);
+  t.is(compiledPlan.jobs.a.previous, undefined);
+  t.is(compiledPlan.jobs.b.previous, 'a');
+});
+
+test('should set previous job with 2 jobs and no start', (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      { id: 'a', expression: 'x', next: { b: true } },
+      { id: 'b', expression: 'y' },
+    ],
+  };
+  const compiledPlan = compilePlan(plan);
+  t.is(compiledPlan.jobs.a.previous, undefined);
+  t.is(compiledPlan.jobs.b.previous, 'a');
+});
+
+test('should set previous job with 3 jobs', (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: [
+      { id: 'a', expression: 'x', next: { b: true } },
+      { id: 'b', expression: 'y', next: { c: true } },
+      { id: 'c', expression: 'z' },
+    ],
+  };
+  const compiledPlan = compilePlan(plan);
+  t.is(compiledPlan.jobs.a.previous, undefined);
+  t.is(compiledPlan.jobs.b.previous, 'a');
+  t.is(compiledPlan.jobs.c.previous, 'b');
+});
+
+test('should set previous job with 3 jobs and shorthand syntax', (t) => {
+  const plan: ExecutionPlan = {
+    start: 'a',
+    jobs: [
+      { id: 'c', expression: 'z' },
+      { id: 'a', expression: 'x', next: 'b' },
+      { id: 'b', expression: 'y', next: 'c' },
+    ],
+  };
+  const compiledPlan = compilePlan(plan);
+  t.is(compiledPlan.jobs.a.previous, undefined);
+  t.is(compiledPlan.jobs.b.previous, 'a');
+  t.is(compiledPlan.jobs.c.previous, 'b');
+});
+
 test('should auto generate ids for jobs', (t) => {
   const plan = {
     start: 'a',

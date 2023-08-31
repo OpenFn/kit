@@ -1,5 +1,34 @@
 # runtime-manager
 
+## 0.0.41
+
+Testing auto-deploy, no changes
+
+## 0.0.40
+
+### Patch Changes
+
+- Updated dependencies [0ff4f98]
+  - @openfn/runtime@0.0.31
+
+## 0.0.39
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/logger@0.0.17
+  - @openfn/runtime@0.0.30
+  - @openfn/compiler@0.0.36
+
+## 0.0.38
+
+### Patch Changes
+
+- Updated dependencies [2a0aaa9]
+  - @openfn/compiler@0.0.35
+  - @openfn/runtime@0.0.29
+  - @openfn/logger@0.0.16
+
 ## 0.0.37
 
 ### Patch Changes

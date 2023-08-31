@@ -1,3 +1,5 @@
+import { SanitizePolicies } from './sanitize';
+
 export type LogLevel = 'debug' | 'info' | 'default' | 'none';
 
 export type LogEmitter = typeof console & {
@@ -26,16 +28,21 @@ export type LogOptions = {
   // like if we on sensitive c in a.b.c, console.log(c) should
   sanitizePaths?: string[];
 
-  sanitiseState?: boolean; // defaults to true
+  sanitizeState?: boolean; // defaults to true
   detectState?: boolean; // defaults to true
 
   json?: boolean; // output as json objects
+
+  sanitize?: SanitizePolicies;
 };
 
 // TODO not crazy about the handling of this
 // but to support the success handler we need to alias console.log
 const defaultEmitter = {
   ...console,
+  // Direct error and warn logs to stdout, so that they appear in sequence
+  error: (...args: any[]) => console.log(...args),
+  warn: (...args: any[]) => console.log(...args),
   success: (...args: any[]) => console.log(...args),
   always: (...args: any[]) => console.log(...args),
 };
@@ -51,7 +58,8 @@ export const defaults: Required<LogOptions> = {
   // Not implemented
   wrap: false,
   showTimestamps: false,
-  sanitiseState: false,
+  sanitizeState: false,
+  sanitize: 'none',
   detectState: false,
   sanitizePaths: ['configuration'],
   json: false,

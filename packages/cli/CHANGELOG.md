@@ -1,5 +1,68 @@
 # @openfn/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- Fix an issue where state.data as an array would be corrupted
+- 7f4340d: Fixed resulting projectState.json from pull; fixed URLs in deploy
+- 10021f6: Handle 404s when trying to deploy; better logging/error messages
+- Updated dependencies
+  - @openfn/runtime@0.0.31
+  - @openfn/deploy@0.2.7
+
+## 0.4.0
+
+### Minor Changes
+
+- d0a292f: Added sanitize option
+
+### Patch Changes
+
+- 102de2d: Always log errors (even if log=none)
+- Updated dependencies [102de2d]
+- Updated dependencies
+  - @openfn/logger@0.0.17
+  - @openfn/runtime@0.0.30
+  - @openfn/compiler@0.0.36
+  - @openfn/deploy@0.2.6
+
+## 0.3.1
+
+### Patch Changes
+
+- Fix expected Lightning provisining path for versions greater than Lightning v0.7.3
+- Updated dependencies
+  - @openfn/deploy@0.2.5
+
+## 0.3.0
+
+### Minor Changes
+
+- add a projectId option to pull, allowing to pull a project without a local state file
+
+### Patch Changes
+
+- 4b23423: Internal refactor of options
+- Updated dependencies
+  - @openfn/deploy@0.2.4
+
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [2a0aaa9]
+  - @openfn/compiler@0.0.35
+  - @openfn/runtime@0.0.29
+  - @openfn/deploy@0.2.3
+  - @openfn/logger@0.0.16
+
+## 0.2.3
+
+### Patch Changes
+
+- Deploy test(no diff)
+
 ## 0.2.2
 
 ### Patch Changes

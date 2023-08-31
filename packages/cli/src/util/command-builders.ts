@@ -1,4 +1,6 @@
-import yargs from 'yargs';
+import yargs, { ArgumentsCamelCase } from 'yargs';
+import c from 'chalk';
+
 import { CommandList } from '../commands';
 import type { Opts, CLIOption } from '../options';
 
@@ -10,7 +12,7 @@ const expandYargs = (y: {} | (() => any)) => {
 };
 
 // build helper to chain options
-export function build<T>(opts: CLIOption[], yargs: yargs.Argv<T>) {
+export function build(opts: CLIOption[], yargs: yargs.Argv<any>) {
   return opts.reduce(
     (_y, o) => yargs.option(o.name, expandYargs(o.yargs)),
     yargs
@@ -19,12 +21,22 @@ export function build<T>(opts: CLIOption[], yargs: yargs.Argv<T>) {
 
 // Mutate the incoming argv with defaults etc
 export const ensure =
-  (command: CommandList, opts: CLIOption[]) => (yargs: Opts) => {
+  (command: CommandList, opts: CLIOption[]) =>
+  (yargs: ArgumentsCamelCase<Partial<Opts>>) => {
     yargs.command = command;
     opts
       .filter((opt) => opt.ensure)
       .forEach((opt) => {
-        opt.ensure!(yargs);
+        try {
+          opt.ensure!(yargs);
+        } catch (e) {
+          console.error(
+            c.red(`\nError parsing command arguments: ${command}.${opt.name}\n`)
+          );
+          console.error(c.red('Aborting'));
+          console.error();
+          process.exit(9); // invalid argument
+        }
       });
   };
 

@@ -15,34 +15,22 @@ import testCommand from './test/command';
 const y = yargs(hideBin(process.argv));
 
 export const cmd = y
+  // TODO Typescipt hacks because signatures don't seem to align
   .command(executeCommand as any)
-  .command(compileCommand as any)
+  .command(compileCommand)
   .command(deployCommand as any)
   .command(installCommand) // allow install to run from the top as well as repo
   .command(repoCommand)
   .command(testCommand)
   .command(docsCommand)
-  .command(metadataCommand)
-  .command(docgenCommand)
-  .command(pullCommand)
-  // Common options
-  .option('log', {
-    alias: ['l'],
-    description: 'Set the default log level to none, default, info or debug',
-    array: true,
-  })
-  .option('log-json', {
-    description: 'Output all logs as JSON objects',
-    boolean: true,
-  })
-  .example('openfn execute help', 'Show documentation for the execute command')
-  .example(
-    'openfn docs @openfn/language-common each',
-    'Get more help on the common.each command'
-  )
+  .command(metadataCommand as any)
+  .command(docgenCommand as any)
+  .command(pullCommand as any)
   .command({
     command: 'version',
-    handler: (argv: Arguments<Opts>) => {
+    describe:
+      'Show the currently installed version of the CLI, compiler and runtime.',
+    handler: (argv: Arguments<Partial<Opts>>) => {
       argv.command = 'version';
     },
   })

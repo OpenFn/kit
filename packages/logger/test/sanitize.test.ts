@@ -1,7 +1,6 @@
 import test from 'ava';
 
 import sanitize, { SECRET } from '../src/sanitize';
-
 test('simply return a string', (t) => {
   const result = sanitize('x');
   t.is(result, 'x');
@@ -95,4 +94,59 @@ test('preserve top level stuff after sanitizing', (t) => {
   const json = JSON.parse(result);
 
   t.deepEqual(json, expectedState);
+});
+
+test('ignore a string with obfuscation', (t) => {
+  const result = sanitize('x', { policy: 'obfuscate' });
+  t.is(result, 'x');
+});
+
+test('sanitize array with obfuscation', (t) => {
+  const result = sanitize([], { policy: 'obfuscate' });
+  t.is(result, '[array]');
+});
+
+test('sanitize object with obfuscation', (t) => {
+  const result = sanitize({}, { policy: 'obfuscate' });
+  t.is(result, '[object]');
+});
+
+test('ignore a string with remove', (t) => {
+  const result = sanitize('x', { policy: 'remove' });
+  t.is(result, 'x');
+});
+
+test('sanitize object with remove', (t) => {
+  const result = sanitize({}, { policy: 'remove' });
+  t.is(result, null);
+});
+
+test('sanitize array with remove', (t) => {
+  const result = sanitize([1, '2', null, {}], { policy: 'remove' });
+  t.deepEqual(result, null);
+});
+
+test('ignore a string with summarize', (t) => {
+  const result = sanitize('x', { policy: 'summarize' });
+  t.is(result, 'x');
+});
+
+test('sanitize empty object with summarize', (t) => {
+  const result = sanitize({}, { policy: 'summarize' });
+  t.is(result, '(empty object)');
+});
+
+test('sanitize object with summarize', (t) => {
+  const result = sanitize({ b: 1, a: 2 }, { policy: 'summarize' });
+  t.is(result, '(object with keys a, b)');
+});
+
+test('sanitize empty array with summarize', (t) => {
+  const result = sanitize([], { policy: 'summarize' });
+  t.is(result, '(empty array)');
+});
+
+test('sanitize array with summarize', (t) => {
+  const result = sanitize([{}, {}, {}], { policy: 'summarize' });
+  t.is(result, '(array with 3 items)');
 });

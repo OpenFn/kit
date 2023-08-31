@@ -3,6 +3,33 @@ export const uuidRegex = new RegExp(
   'i'
 );
 
+export const hyphenate = (str: any) => {
+  return str.replace(/\s+/g, '-');
+};
+
+// convert array of { id, ...stuff } into object { id: stuff }
+// also allow a callback on stuff for further conversion
+export const reduceByKey = <T, K = keyof T, X = T>(
+  key: K,
+  arr: T[],
+  callback: (x: T) => X | T = (x) => x
+): Record<string, X> => {
+  return arr.reduce((acc: any, obj: any) => {
+    const k = hyphenate(obj[key]);
+    acc[k] = callback({ ...obj });
+    return acc;
+  }, {});
+};
+
+export const assignIfTruthy = (obj: any, incoming: any) => {
+  Object.entries(incoming).forEach(([key, value]) => {
+    if (!isNaN(value as number) || value) {
+      obj[key] = value;
+    }
+  });
+  return obj;
+};
+
 // Takes two objects and matches up their keys, returning an array of tuples
 // containing the key, the value from the left object, and the value from the
 // right object. If a key is missing from one object, the corresponding value

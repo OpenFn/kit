@@ -1,11 +1,11 @@
 import test from 'ava';
 import createLogger, { createNullLogger } from '../../src/util/logger';
-import type { SafeOpts } from '../../src/commands';
+import type { Opts } from '../../src/options';
 
 test('creates a logger', (t) => {
   const opts = {
     log: {},
-  } as SafeOpts;
+  };
   const logger = createLogger('x', opts);
   t.truthy(logger.success);
   t.truthy(logger.log);
@@ -17,30 +17,28 @@ test('creates a logger', (t) => {
 test('uses default level', (t) => {
   const opts = {
     log: {},
-  } as SafeOpts;
+  };
   const { options } = createLogger('x', opts);
   t.is(options.level, 'default');
 });
 
 test('uses default level if no namespace is provided', (t) => {
-  // @ts-ignore ???
-  const opts = {
+  const opts: Opts = {
     log: {
       default: 'info',
     },
-  } as SafeOpts;
+  };
   const { options } = createLogger('x', opts);
   t.is(options.level, 'info');
 });
 
 test('uses namespaced level', (t) => {
-  // @ts-ignore ???
-  const opts = {
+  const opts: Opts = {
     log: {
       default: 'none',
       x: 'debug',
     },
-  } as SafeOpts;
+  };
   const { options } = createLogger('x', opts);
   t.is(options.level, 'debug');
 });

@@ -1,5 +1,39 @@
 # @openfn/deploy
 
+## 0.2.7
+
+### Patch Changes
+
+- 7f4340d: Fixed resulting projectState.json from pull; fixed URLs in deploy
+- 10021f6: Handle 404s when trying to deploy; better logging/error messages
+
+## 0.2.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/logger@0.0.17
+
+## 0.2.5
+
+### Patch Changes
+
+- Fix expected Lightning provisining path for versions greater than Lightning v0.7.3
+
+## 0.2.4
+
+### Patch Changes
+
+- Update typings and some small refactoring
+
+## 0.2.3
+
+### Patch Changes
+
+- 2a0aaa9: Bump inquirer
+- Updated dependencies [2a0aaa9]
+  - @openfn/logger@0.0.16
+
 ## 0.2.2
 
 ### Patch Changes

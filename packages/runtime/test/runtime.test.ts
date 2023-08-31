@@ -271,3 +271,29 @@ test('stuff written to state before an error is preserved', async (t) => {
 
   t.is(result.x, 1);
 });
+
+test('data can be an array (expression)', async (t) => {
+  const expression = 'export default [() => ({ data: [1,2,3] })]';
+
+  const result: any = await run(expression, {}, { strict: false });
+  t.deepEqual(result.data, [1, 2, 3]);
+});
+
+test('data can be an array (workflow)', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: 'export default [() => ({ data: [1,2,3] })]',
+        next: 'b',
+      },
+      {
+        id: 'b',
+        expression: 'export default [(s) => s]',
+      },
+    ],
+  };
+
+  const result: any = await run(plan, {}, { strict: false });
+  t.deepEqual(result.data, [1, 2, 3]);
+});

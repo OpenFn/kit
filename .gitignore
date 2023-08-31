@@ -24,6 +24,8 @@ ts.cache
 !.yarn/sdks
 !.yarn/versions
 
+pnpm-publish-summary.json
+
 # OS
 .DS_Store
 

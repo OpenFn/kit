@@ -225,7 +225,7 @@ The CLI is actually a collection of packages, each of which will log with slight
 
 The CLI will log information at three different levels of verbosity: `default`, `info` and `debug` (`none` is also supported).
 
-To set the log level, pass `--log info` into your command. You can configure this for individual packages, ie `--log cmp=debug` will run the compiler with debug logging but leave everything else at default.
+To set the log level, pass `--log info` into your command. You can configure this for individual packages, ie `--log cmp=debug` will run the compiler with debug logging but leave everything else at default. To control multiple components, use comma-seperated values, ie, `--log debug,r/t=none,job=info`
 
 Note that, unless explicitly overriden, jobs will always report at debug verbosity (meaning job logging will always be shown).
 

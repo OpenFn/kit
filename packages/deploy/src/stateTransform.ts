@@ -9,7 +9,14 @@ import {
   WorkflowSpec,
   WorkflowState,
 } from './types';
-import { isEmpty, pickKeys, splitZip } from './utils';
+import {
+  isEmpty,
+  pickKeys,
+  splitZip,
+  hyphenate,
+  reduceByKey,
+  assignIfTruthy,
+} from './utils';
 import { DeployError } from './deployError';
 
 function mergeJobs(
@@ -77,9 +84,12 @@ function pickValue(
   return defaultValue;
 }
 
-function mergeTriggers(stateTriggers, specTriggers): WorkflowState['triggers'] {
+function mergeTriggers(
+  stateTriggers: WorkflowState['triggers'],
+  specTriggers: WorkflowSpec['triggers']
+): WorkflowState['triggers'] {
   return Object.fromEntries(
-    splitZip(stateTriggers, specTriggers).map(
+    splitZip(stateTriggers, specTriggers!).map(
       ([triggerKey, stateTrigger, specTrigger]) => {
         if (specTrigger && !stateTrigger) {
           return [
@@ -95,21 +105,18 @@ function mergeTriggers(stateTriggers, specTriggers): WorkflowState['triggers'] {
         }
 
         if (!specTrigger && stateTrigger) {
-          return [
-            triggerKey,
-            { ...pickKeys(stateTrigger, ['id']), delete: true },
-          ];
+          return [triggerKey, { id: stateTrigger!.id, delete: true }];
         }
 
         // prefer spec, but use state if spec is missing, or default
         return [
           triggerKey,
           {
-            id: stateTrigger.id,
+            id: stateTrigger!.id,
             ...{
-              type: pickValue(specTrigger, stateTrigger, 'type', 'webhook'),
-              ...(specTrigger.type === 'cron'
-                ? { cron_expression: specTrigger.cron_expression }
+              type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
+              ...(specTrigger!.type === 'cron'
+                ? { cron_expression: specTrigger!.cron_expression }
                 : {}),
             },
           },
@@ -131,20 +138,20 @@ function mergeEdges(
         function convertToStateEdge(
           jobs: WorkflowState['jobs'],
           triggers: WorkflowState['triggers'],
-          specEdge: SpecEdge
+          specEdge: SpecEdge,
+          id: string
         ): StateEdge {
-          let edge: StateEdge = {
-            condition: specEdge.condition || null,
-            source_job_id: specEdge.source_job
-              ? jobs[specEdge.source_job].id
-              : null,
-            source_trigger_id: specEdge.source_trigger
-              ? triggers[specEdge.source_trigger].id
-              : null,
-            target_job_id: specEdge.target_job
-              ? jobs[specEdge.target_job].id
-              : null,
-          };
+          const edge: StateEdge = assignIfTruthy(
+            {
+              id,
+              condition: specEdge.condition ?? null,
+              target_job_id: jobs[specEdge.target_job ?? -1]?.id ?? '',
+            },
+            {
+              source_job_id: jobs[specEdge.source_job ?? -1]?.id,
+              source_trigger_id: triggers[specEdge.source_trigger ?? -1]?.id,
+            }
+          );
 
           return edge;
         }
@@ -152,23 +159,17 @@ function mergeEdges(
         if (specEdge && !stateEdge) {
           return [
             edgeKey,
-            {
-              ...convertToStateEdge(jobs, triggers, specEdge),
-              id: crypto.randomUUID(),
-            },
+            convertToStateEdge(jobs, triggers, specEdge, crypto.randomUUID()),
           ];
         }
 
         if (!specEdge && stateEdge) {
-          return [edgeKey, { ...pickKeys(stateEdge, ['id']), delete: true }];
+          return [edgeKey, { id: stateEdge.id, delete: true }];
         }
 
         return [
           edgeKey,
-          {
-            ...convertToStateEdge(jobs, triggers, specEdge!),
-            id: stateEdge!.id,
-          },
+          convertToStateEdge(jobs, triggers, specEdge!, stateEdge!.id),
         ];
       }
     )
@@ -183,25 +184,23 @@ export function mergeSpecIntoState(
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
       ([workflowKey, stateWorkflow, specWorkflow]) => {
-        stateWorkflow = stateWorkflow || {};
-
         const nextJobs = mergeJobs(
-          stateWorkflow.jobs || {},
+          stateWorkflow?.jobs || {},
           specWorkflow?.jobs || {}
         );
 
         const nextTriggers = mergeTriggers(
-          stateWorkflow.triggers || {},
+          stateWorkflow?.triggers || {},
           specWorkflow?.triggers || {}
         );
 
         const nextEdges = mergeEdges(
           deepClone({ jobs: nextJobs, triggers: nextTriggers }),
-          stateWorkflow.edges || {},
+          stateWorkflow?.edges || {},
           specWorkflow?.edges || {}
         );
 
-        if (specWorkflow && isEmpty(stateWorkflow)) {
+        if (specWorkflow && isEmpty(stateWorkflow || {})) {
           return [
             workflowKey,
             {
@@ -218,8 +217,8 @@ export function mergeSpecIntoState(
           workflowKey,
           {
             ...stateWorkflow,
-            id: stateWorkflow.id,
-            name: specWorkflow.name,
+            id: stateWorkflow!.id,
+            name: specWorkflow!.name,
             jobs: nextJobs,
             triggers: nextTriggers,
             edges: nextEdges,
@@ -229,12 +228,51 @@ export function mergeSpecIntoState(
     )
   );
 
-  return {
+  const projectState: Partial<ProjectState> = {
     ...oldState,
     id: oldState.id || crypto.randomUUID(),
     name: spec.name,
-    description: spec.description,
     workflows: nextWorkflows,
+  };
+
+  if (spec.description) projectState.description = spec.description;
+
+  return projectState as ProjectState;
+}
+
+export function getStateFromProjectPayload(
+  project: ProjectPayload
+): ProjectState {
+  const workflows = reduceByKey('name', project.workflows, (wf) => {
+    const { triggers, jobs, edges, ...workflowData } = wf;
+    const stateWorkflow = {
+      ...workflowData,
+    } as Partial<WorkflowState>;
+
+    stateWorkflow.triggers = reduceByKey('type', wf.triggers!);
+    stateWorkflow.jobs = reduceByKey('name', wf.jobs);
+    stateWorkflow.edges = wf.edges.reduce((obj, edge) => {
+      let sourceName;
+      if (edge.source_trigger_id) {
+        const t = wf.triggers.find((t) => t.id === edge.source_trigger_id)!;
+        sourceName = t.type;
+      } else {
+        const job = wf.jobs.find((e) => e.id === edge.source_job_id)!;
+        sourceName = job.name;
+      }
+      const target = wf.jobs.find((j) => j.id === edge.target_job_id)!;
+
+      const name = hyphenate(`${sourceName}->${hyphenate(target.name)}`);
+      obj[name] = edge;
+      return obj;
+    }, {} as Record<string, StateEdge>);
+
+    return stateWorkflow as WorkflowState;
+  });
+
+  return {
+    ...project,
+    workflows,
   };
 }
 
@@ -251,25 +289,35 @@ export function mergeProjectPayloadIntoState(
   const nextWorkflows = Object.fromEntries(
     idKeyPairs(project.workflows, state.workflows).map(
       ([key, nextWorkflow, _state]) => {
-        nextWorkflow.jobs = Object.fromEntries(
+        const { id, name } = nextWorkflow;
+
+        const jobs = Object.fromEntries(
           idKeyPairs(nextWorkflow.jobs, state.workflows[key].jobs).map(
             ([key, nextJob, _state]) => [key, nextJob]
           )
         );
-
-        nextWorkflow.triggers = Object.fromEntries(
+        const triggers = Object.fromEntries(
           idKeyPairs(nextWorkflow.triggers, state.workflows[key].triggers).map(
             ([key, nextTrigger, _state]) => [key, nextTrigger]
           )
         );
-
-        nextWorkflow.edges = Object.fromEntries(
+        const edges = Object.fromEntries(
           idKeyPairs(nextWorkflow.edges, state.workflows[key].edges).map(
             ([key, nextEdge, _state]) => [key, nextEdge]
           )
         );
 
-        return [key, nextWorkflow];
+        return [
+          key,
+          {
+            ...nextWorkflow,
+            id,
+            name,
+            jobs,
+            triggers,
+            edges,
+          },
+        ];
       }
     )
   );
@@ -304,19 +352,11 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   const workflows: ProjectPayload['workflows'] = Object.values(
     state.workflows
   ).map((workflow) => {
-    console.log(workflow);
-
     return {
       ...workflow,
-      jobs: Object.values(
-        workflow.jobs
-      ) as ProjectPayload['workflows'][0]['jobs'],
-      triggers: Object.values(
-        workflow.triggers
-      ) as ProjectPayload['workflows'][0]['triggers'],
-      edges: Object.values(
-        workflow.edges
-      ) as ProjectPayload['workflows'][0]['edges'],
+      jobs: Object.values(workflow.jobs),
+      triggers: Object.values(workflow.triggers),
+      edges: Object.values(workflow.edges),
     };
   });
 

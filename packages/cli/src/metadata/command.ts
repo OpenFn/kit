@@ -3,23 +3,24 @@ import { build, ensure } from '../util/command-builders';
 import type { Opts } from '../options';
 import * as o from '../options';
 
-export type MetadataOpts = Pick<
-  Opts,
-  | 'adaptors'
-  | 'expandAdaptors'
-  | 'force'
-  | 'logJson'
-  | 'repoDir'
-  | 'statePath'
-  | 'stateStdin'
-  | 'useAdaptorsMonorepo'
->;
+export type MetadataOpts = Required<Pick<Opts, 'adaptors' | 'repoDir'>> &
+  Pick<
+    Opts,
+    | 'expandAdaptors'
+    | 'force'
+    | 'log'
+    | 'logJson'
+    | 'statePath'
+    | 'stateStdin'
+    | 'useAdaptorsMonorepo'
+  >;
 
 const options = [
   o.expandAdaptors, // order is important
 
   o.adaptors,
   o.force,
+  o.log,
   o.logJson,
   o.repoDir,
   o.statePath,
@@ -29,11 +30,11 @@ const options = [
 
 export default {
   command: 'metadata',
-  desc: 'Generate metadata for an adaptor config',
+  describe: 'Generate metadata for an adaptor config',
   handler: ensure('metadata', options),
   builder: (yargs) =>
     build(options, yargs).example(
       'metadata -a salesforce -s tmp/state.json',
       'Generate salesforce metadata from config in state.json'
     ),
-} as yargs.CommandModule<{}>;
+} as yargs.CommandModule<MetadataOpts>;

@@ -34,6 +34,9 @@ jobs:
           name: Build packages
           command: pnpm build
       - run:
+          name: Type check
+          command: pnpm test:types
+      - run:
           name: Run Tests
           command: pnpm test
       - run:
@@ -54,4 +57,8 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - test
+      - test:
+        filters:
+          branches:
+            ignore:
+              - main

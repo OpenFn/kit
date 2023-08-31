@@ -1,8 +1,8 @@
 import { Logger } from '../util/logger';
-import { SafeOpts } from '../commands';
+import { MetadataOpts } from './command';
 import loadState from '../util/load-state';
 import cache from './cache';
-import { getModuleEntryPoint, getNameAndVersion } from '@openfn/runtime';
+import { getModuleEntryPoint } from '@openfn/runtime';
 
 // Add extra, uh, metadata to the, uh, metadata object
 const decorateMetadata = (metadata: any) => {
@@ -47,7 +47,7 @@ export const getAdaptorPath = async (
   return adaptorPath;
 };
 
-const metadataHandler = async (options: SafeOpts, logger: Logger) => {
+const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0];
 

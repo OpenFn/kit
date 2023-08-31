@@ -1,13 +1,17 @@
 import path from 'node:path';
+
 import yargs from 'yargs';
 import type { ExecutionPlan } from '@openfn/runtime';
-import doExpandAdaptors from './util/expand-adaptors';
 import type { CommandList } from './commands';
 import { CLIExecutionPlan } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
+import doExpandAdaptors from './util/expand-adaptors';
+import ensureLogOpts from './util/ensure-log-opts';
+import { LogLevel } from './util';
 
 // Central type definition for the main options
-// This is in flux as options are being refactored
+// This represents the types coming out of yargs,
+// after ensure() is called
 export type Opts = {
   command?: CommandList;
   baseDir?: string;
@@ -18,7 +22,7 @@ export type Opts = {
   autoinstall?: boolean;
   compile?: boolean;
   confirm?: boolean;
-  describe: string;
+  describe?: string;
   configPath?: string;
   expandAdaptors?: boolean; // for unit tests really
   force?: boolean;
@@ -26,7 +30,7 @@ export type Opts = {
   ignoreImports?: boolean | string[];
   jobPath?: string;
   job?: string;
-  log?: string[];
+  log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
   operation?: string;
@@ -41,10 +45,12 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   strict?: boolean; // Strict state handling (only forward state.data). Defaults to true
+  sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
   workflow?: CLIExecutionPlan | ExecutionPlan;
   workflowPath?: string;
+  projectId?: string;
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -56,12 +62,17 @@ export type CLIOption = {
   name: string;
   // Allow this to take a function to lazy-evaluate env vars
   yargs: yargs.Options | (() => yargs.Options);
-  ensure?: (opts: Opts) => void;
+  ensure?: (opts: Partial<Opts>) => void;
 };
 
-const setDefaultValue = (opts: Opts, key: keyof Opts, value: any) => {
-  const v: any = opts[key];
-  if (isNaN(v) && !v) {
+const setDefaultValue = (
+  opts: Partial<Opts>,
+  key: keyof Opts,
+  value: unknown
+) => {
+  const v = opts[key];
+  if (isNaN(v as number) && !v) {
+    // @ts-ignore
     opts[key] = value;
   }
 };
@@ -134,20 +145,19 @@ export const configPath: CLIOption = {
     alias: ['c', 'config-path'],
     description: 'The location of your config file',
     default: './.config.json',
-  }
-};
-
-export const describe: CLIOption = {
-    name: 'describe',
-    yargs : {
-        boolean: true,
-        description: "Downloads the project yaml from the specified instance"
-    },
-    ensure: (opts) => {
-    setDefaultValue(opts, 'describe', true);
   },
 };
 
+export const describe: CLIOption = {
+  name: 'describe',
+  yargs: {
+    boolean: true,
+    description: 'Downloads the project yaml from the specified instance',
+  },
+  ensure: (opts) => {
+    setDefaultValue(opts, 'describe', true);
+  },
+};
 
 export const expandAdaptors: CLIOption = {
   name: 'no-expand-adaptors',
@@ -194,13 +204,27 @@ export const ignoreImports: CLIOption = {
   },
 };
 
-const getBaseDir = (opts: Opts) => {
+const getBaseDir = (opts: { path?: string }) => {
   const basePath = opts.path ?? '.';
   if (/\.(jso?n?)$/.test(basePath)) {
     return path.dirname(basePath);
   }
   return basePath;
 };
+
+export const projectId: CLIOption = {
+  name: 'project-id',
+  yargs: {
+    hidden: true,
+  },
+  ensure: (opts) => {
+      const projectId = opts.projectId;
+      //check that this is a uuid
+      return projectId;
+    },
+};
+
+
 
 // Input path covers jobPath and workflowPath
 export const inputPath: CLIOption = {
@@ -221,14 +245,24 @@ export const inputPath: CLIOption = {
   },
 };
 
-// TODO this needs unit testing
+export const log: CLIOption = {
+  name: 'log',
+  yargs: {
+    alias: ['l'],
+    description: 'Set the log level',
+    string: true,
+  },
+  ensure: (opts: any) => {
+    ensureLogOpts(opts);
+  },
+};
+
 export const logJson: CLIOption = {
   name: 'log-json',
   yargs: {
     description: 'Output all logs as JSON objects',
     boolean: true,
   },
-  ensure: () => {},
 };
 
 export const outputStdout: CLIOption = {
@@ -274,7 +308,7 @@ export const projectPath: CLIOption = {
     string: true,
     alias: ['p'],
     description: 'The location of your project.yaml file',
-  }
+  },
 };
 
 export const repoDir: CLIOption = {
@@ -376,5 +410,27 @@ export const useAdaptorsMonorepo: CLIOption = {
     if (opts.useAdaptorsMonorepo) {
       opts.monorepoPath = process.env.OPENFN_ADAPTORS_REPO || 'ERR';
     }
+  },
+};
+
+export const sanitize: CLIOption = {
+  name: 'sanitize',
+  yargs: {
+    string: true,
+    alias: ['sanitise'],
+    description:
+      'Sanitize logging of objects and arrays: none (default), remove, summarize, obfuscate.',
+    default: 'none',
+  },
+  ensure: (opts) => {
+    if (
+      !opts.sanitize ||
+      opts.sanitize?.match(/^(none|summarize|remove|obfuscate)$/)
+    ) {
+      return;
+    }
+    const err = 'Unknown sanitize value provided: ' + opts.sanitize;
+    console.error(err);
+    throw new Error(err);
   },
 };
