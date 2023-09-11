@@ -7,6 +7,7 @@ export type CompileOptions = Pick<
   Opts,
   | 'adaptors'
   | 'command'
+  | 'dumbImports'
   | 'expandAdaptors'
   | 'ignoreImports'
   | 'jobPath'
@@ -26,6 +27,7 @@ export type CompileOptions = Pick<
 const options = [
   o.expandAdaptors, // order important
   o.adaptors,
+  o.dumbImports,
   o.ignoreImports,
   o.inputPath,
   o.log,

@@ -115,24 +115,35 @@ export const loadTransformOptions = async (
     const [pattern] = opts.adaptors;
     const [specifier] = pattern.split('=');
 
-    // Preload exports from a path, optionally logging errors in case of a failure
-    log.debug(`Attempting to preload types for ${specifier}`);
-    const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
-    if (path) {
-      try {
-        exports = await preloadAdaptorExports(
-          path,
-          opts.useAdaptorsMonorepo,
-          log
-        );
-      } catch (e) {
-        log.error(`Failed to load adaptor typedefs from path ${path}`);
-        log.error(e);
+    /**
+     * In order to generate an accurate import statement for the job,
+     * the compiler needs to know what the adaptor's actual exports are
+     * But there's an issue in describe-package with resolving re-exported modules,
+     * which means that acutally we don't get a very accurate import statement at all,
+     * leading to loads of bugs.
+     * As a work-around, this option will dumbly associate all dangling non-global variables
+     * with the adaptor import
+     */
+    if (!opts.dumbImports) {
+      // Preload exports from a path, optionally logging errors in case of a failure
+      log.debug(`Attempting to preload types for ${specifier}`);
+      const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
+      if (path) {
+        try {
+          exports = await preloadAdaptorExports(
+            path,
+            opts.useAdaptorsMonorepo,
+            log
+          );
+        } catch (e) {
+          log.error(`Failed to load adaptor typedefs from path ${path}`);
+          log.error(e);
+        }
       }
-    }
 
-    if (!exports || exports.length === 0) {
-      log.debug(`No module exports found for ${pattern}`);
+      if (!exports || exports.length === 0) {
+        log.debug(`No module exports found for ${pattern}`);
+      }
     }
 
     options['add-imports'] = {
