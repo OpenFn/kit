@@ -549,7 +549,7 @@ test.serial(
   }
 );
 
-test.serial('compile a job: openfn compile job.js to stdout', async (t) => {
+test.serial('compile a job to stdout: openfn compile job.js', async (t) => {
   const options = {};
   await run('compile job.js', 'fn(42);', options);
 
@@ -557,7 +557,22 @@ test.serial('compile a job: openfn compile job.js to stdout', async (t) => {
   t.regex(message, /export default/);
 });
 
-test.serial('compile a job: openfn compile job.js to file', async (t) => {
+test.serial(
+  'compile a job with dumb imports: openfn compile job.js -a common',
+  async (t) => {
+    const options = {};
+    await run(
+      'compile job.js -a common --dumb-imports',
+      'wibble(42);',
+      options
+    );
+
+    const { message } = logger._parse(logger._last);
+    t.regex(message, /import { wibble } from "@openfn\/language-common";/);
+  }
+);
+
+test.serial('compile a job to file: openfn compile job.js', async (t) => {
   const options = {
     outputPath: 'out.js',
   };
@@ -567,23 +582,26 @@ test.serial('compile a job: openfn compile job.js to file', async (t) => {
   t.is(output, 'export default [fn(42)];');
 });
 
-test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
-  const options = {
-    outputPath: 'out.json',
-    jobPath: 'wf.json', // just to fool the test
-  };
+test.serial(
+  'compile a workflow to fikle: openfn compile wf.json',
+  async (t) => {
+    const options = {
+      outputPath: 'out.json',
+      jobPath: 'wf.json', // just to fool the test
+    };
 
-  const wf = JSON.stringify({
-    start: 'a',
-    jobs: [{ expression: 'x()' }],
-  });
-  await run('compile wf.json -o out.json', wf, options);
+    const wf = JSON.stringify({
+      start: 'a',
+      jobs: [{ expression: 'x()' }],
+    });
+    await run('compile wf.json -o out.json', wf, options);
 
-  const output = await fs.readFile('out.json', 'utf8');
-  const result = JSON.parse(output);
-  t.truthy(result);
-  t.is(result.jobs[0].expression, 'export default [x()];');
-});
+    const output = await fs.readFile('out.json', 'utf8');
+    const result = JSON.parse(output);
+    t.truthy(result);
+    t.is(result.jobs[0].expression, 'export default [x()];');
+  }
+);
 
 test.serial('docs should print documentation with full names', async (t) => {
   mock({
