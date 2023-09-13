@@ -69,6 +69,14 @@ type ServerOptions = {
   logger?: Logger;
 };
 
+// for now all I wanna do is say hello
+const connectToLightning = (url: string, id: string) => {
+  let socket = new Socket(url /*,{params: {userToken: "123"}}*/);
+  socket.connect();
+  const channel = socket.channel('worker');
+  channel.push('hello');
+};
+
 function createServer(rtm: any, options: ServerOptions = {}) {
   const logger = options.logger || createMockLogger();
   const port = options.port || 1234;
@@ -104,7 +112,8 @@ function createServer(rtm: any, options: ServerOptions = {}) {
 
   if (options.lightning) {
     logger.log('Starting work loop at', options.lightning);
-    startWorkLoop(options.lightning, rtm.id, execute);
+    connectToLightning(options.lightning, rtm.id);
+    //startWorkLoop(options.lightning, rtm.id, execute);
   } else {
     logger.warn('No lightning URL provided');
   }

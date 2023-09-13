@@ -21,7 +21,38 @@ export interface AttemptCompleteBody extends RTMBody {
   state: any; // JSON state object (undefined? null?)
 }
 
+// this new API is websocket based
+// Events map to handlers
+// can I even implement this in JS? Not with pheonix anyway. hmm.
+// dead at the first hurdle really.
+// what if I do the server side mock in koa, can I use the pheonix client to connect?
+const newApi = () => {
+  const noop = () => {};
+
+  // This may actually get split into a server bit and a an attempts bit, reflecting the different channels
+  const events = {
+    hello: noop,
+
+    'attempt:claim': noop,
+    'attempt:start': noop,
+    'attempt:complete': noop,
+    'attempt:get_credential': noop,
+    'attempt:credential': noop,
+    'attempt:get_dataclip': noop,
+    'attempt:dataclip': noop,
+
+    'run:start': noop,
+    'run:end': noop,
+    'run:log': noop,
+  };
+
+  const handleEvent = (name) => {};
+
+  return handleEvent;
+};
+
 // Note that this API is hosted at api/1
+// Deprecated
 export default (state: ServerState) => {
   const router = new Router({ prefix: API_PREFIX });
   // Basically all requests must include an rtm_id (And probably later a security token)
