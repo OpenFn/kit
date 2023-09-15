@@ -17,14 +17,11 @@ type PhoenixEvent = {
 type EventHandler = (event: string, payload: any) => void;
 
 function createServer() {
-  const channels: Record<Topic, EventHandler[]> = {};
+  const channels: Record<Topic, Set<EventHandler>> = {};
 
   const wsServer = new WebSocketServer({
     port: 8080,
   });
-
-  // util to send a response to a particular topic
-  const reply = () => {};
 
   const events = {
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
@@ -55,7 +52,9 @@ function createServer() {
         } else {
           // handle custom/user events
           if (channels[topic]) {
-            channels[topic].forEach((fn) => fn(event, payload));
+            channels[topic].forEach((fn) => {
+              fn(event, payload)}
+              );
           }
         }
       }
@@ -65,10 +64,28 @@ function createServer() {
   // debugAPI
   wsServer.listenToChannel = (topic: Topic, fn: EventHandler) => {
     if (!channels[topic]) {
-      channels[topic] = [];
+      channels[topic] = new Set()
     }
-    channels[topic].push(fn);
+
+    channels[topic].add(fn);
+
+    return {
+      unsubscribe: () => {
+        channels[topic].delete(fn)
+      }
+    };
   };
+
+  wsServer.waitForMessage = (topic: Topic, event: string) => {
+    return new Promise((resolve) => {
+      const listener =  wsServer.listenToChannel(topic, (e: string, payload: any) => {
+        if (e === event) { 
+          listener.unsubscribe();
+          resolve(payload)
+        }
+      })
+    })
+  }
 
   return wsServer;
 }
