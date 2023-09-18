@@ -8,9 +8,10 @@ import createServer from '../../src/mock/socket-server';
 let socket;
 let server;
 
-const wait = (duration = 10) => new Promise(resolve => {
-  setTimeout(resolve, duration)
-})
+const wait = (duration = 10) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, duration);
+  });
 
 test.beforeEach(() => {
   server = createServer();
@@ -64,25 +65,24 @@ test.serial('send a message only to one channel', async (t) => {
   y.join();
 
   server.listenToChannel('x', () => {
-    didCallX = true
+    didCallX = true;
   });
   server.listenToChannel('y', () => {
-    didCallY = true
+    didCallY = true;
   });
-
 
   x.push('hello', { x: 1 });
 
-  await wait()
+  await wait();
 
-  t.true(didCallX)
-  t.false(didCallY)
+  t.true(didCallX);
+  t.false(didCallY);
 });
 
 test.serial('unsubscribe', (t) => {
   return new Promise(async (resolve) => {
     let count = 0;
-  
+
     const channel = socket.channel('x', {});
     channel.join();
 
@@ -91,14 +91,14 @@ test.serial('unsubscribe', (t) => {
     });
 
     channel.push('hello', { x: 1 });
-    await wait(100)
+    await wait(100);
 
     t.is(count, 1);
 
     listener.unsubscribe();
 
     channel.push('hello', { x: 1 });
-    await wait()
+    await wait();
 
     t.is(count, 1);
 
@@ -106,13 +106,12 @@ test.serial('unsubscribe', (t) => {
   });
 });
 
-
 test.serial('wait for message', async (t) => {
-    const channel = socket.channel('x', {});
-    channel.join();
+  const channel = socket.channel('x', {});
+  channel.join();
 
-    channel.push('hello', { x: 1 });
+  channel.push('hello', { x: 1 });
 
-    const result = await server.waitForMessage('x', 'hello');
-    t.truthy(result)
+  const result = await server.waitForMessage('x', 'hello');
+  t.truthy(result);
 });

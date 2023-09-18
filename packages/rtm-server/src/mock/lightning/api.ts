@@ -1,4 +1,5 @@
 import Router from '@koa/router';
+import Socket, { WebSocketServer } from 'ws';
 import {
   unimplemented,
   createListNextJob,
@@ -10,6 +11,8 @@ import {
 import type { ServerState } from './server';
 
 import { API_PREFIX } from './server';
+
+import createPheonixMockSocketServer from '../socket-server';
 
 interface RTMBody {
   rtm_id: string;
@@ -26,7 +29,23 @@ export interface AttemptCompleteBody extends RTMBody {
 // can I even implement this in JS? Not with pheonix anyway. hmm.
 // dead at the first hurdle really.
 // what if I do the server side mock in koa, can I use the pheonix client to connect?
-const newApi = () => {
+export const createNewAPI = (state: ServerState, path: string, server) => {
+  // set up a websocket server to listen to connections
+  const wss = new WebSocketServer({
+    server,
+    path,
+  });
+
+  // pass that through to the phoenix mock
+  createPheonixMockSocketServer({ server: wss });
+  console.log('mock created');
+
+  // then do something clever to map events
+  // server.on({
+  //   'attempt:claim': noop,
+  //   'attempt:start': noop,
+  // })
+
   const noop = () => {};
 
   // This may actually get split into a server bit and a an attempts bit, reflecting the different channels
@@ -46,9 +65,14 @@ const newApi = () => {
     'run:log': noop,
   };
 
-  const handleEvent = (name) => {};
+  // const handleEvent = (name) => {};
 
-  return handleEvent;
+  // return handleEvent;
+
+  return (ctx) => {
+    // what does this actually do?
+    console.log(' >> ', ctx);
+  };
 };
 
 // Note that this API is hosted at api/1

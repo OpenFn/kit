@@ -16,16 +16,32 @@ type PhoenixEvent = {
 
 type EventHandler = (event: string, payload: any) => void;
 
-function createServer() {
+function createServer({ port = 8080, server } = {}) {
+  // console.log('ws listening on', port);
   const channels: Record<Topic, Set<EventHandler>> = {};
 
-  const wsServer = new WebSocketServer({
-    port: 8080,
-  });
+  const wsServer = server;
+  // server ||
+  // new WebSocketServer({
+  //   port,
+  // });
 
   const events = {
+    // testing (TODO shouldn't this be in a specific channel?)
+    ping: (ws, { topic, ref }) => {
+      console.log(' >> ping');
+      ws.send(
+        JSON.stringify({
+          topic,
+          ref,
+          event: 'pong',
+          payload: {},
+        })
+      );
+    },
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
     phx_join: (ws, { topic, ref }) => {
+      console.log('-- join --');
       ws.send(
         JSON.stringify({
           // here is the magic reply event
@@ -40,7 +56,9 @@ function createServer() {
   };
 
   wsServer.on('connection', function (ws: WS) {
+    console.log(' >> connect');
     ws.on('message', function (data: string) {
+      console.log(' >> message');
       const evt = JSON.parse(data) as PhoenixEvent;
       if (evt.topic) {
         // phx sends this info in each message
@@ -53,8 +71,8 @@ function createServer() {
           // handle custom/user events
           if (channels[topic]) {
             channels[topic].forEach((fn) => {
-              fn(event, payload)}
-              );
+              fn(event, payload);
+            });
           }
         }
       }
@@ -64,28 +82,31 @@ function createServer() {
   // debugAPI
   wsServer.listenToChannel = (topic: Topic, fn: EventHandler) => {
     if (!channels[topic]) {
-      channels[topic] = new Set()
+      channels[topic] = new Set();
     }
 
     channels[topic].add(fn);
 
     return {
       unsubscribe: () => {
-        channels[topic].delete(fn)
-      }
+        channels[topic].delete(fn);
+      },
     };
   };
 
   wsServer.waitForMessage = (topic: Topic, event: string) => {
     return new Promise((resolve) => {
-      const listener =  wsServer.listenToChannel(topic, (e: string, payload: any) => {
-        if (e === event) { 
-          listener.unsubscribe();
-          resolve(payload)
+      const listener = wsServer.listenToChannel(
+        topic,
+        (e: string, payload: any) => {
+          if (e === event) {
+            listener.unsubscribe();
+            resolve(payload);
+          }
         }
-      })
-    })
-  }
+      );
+    });
+  };
 
   return wsServer;
 }

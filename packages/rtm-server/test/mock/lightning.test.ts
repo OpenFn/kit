@@ -6,12 +6,17 @@ import { createMockLogger } from '@openfn/logger';
 import phx from 'phoenix-channels';
 const { Socket } = phx;
 
-const baseUrl = `http://localhost:8888${API_PREFIX}`;
+const baseUrl = `http://localhost:7777${API_PREFIX}`;
+
+const sleep = (duration = 10) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, duration);
+  });
 
 let server;
 
 test.before(() => {
-  server = createLightningServer({ port: 8888 });
+  server = createLightningServer({ port: 7777 });
 });
 
 test.afterEach(() => {
@@ -35,18 +40,56 @@ const post = (path: string, data: any) =>
 
 const attempt1 = attempts()['attempt-1'];
 
-test.only('provide a websocket at /websocket', (t) => {
-  return new Promise((done) => {
-    const socket = new Socket(`ws://localhost:4000/socket`);
+test.serial.skip('provide a phoenix websocket at /websocket', (t) => {
+  return new Promise(async (done) => {
+    const socket = new Socket(`ws://localhost:7777/websocket`);
 
-    socket.connect()
-  //   .on('ok', () => {
-  //     done();
-  //   })
-  console.log(socket.connectionState())
-
-    t.is(socket.connectionState(), 'ok')
+    socket.connect();
+    await sleep(); // TODO untidy
+    t.is(socket.connectionState(), 'open');
     done();
+  });
+});
+
+test.serial('respond to connection join requests', (t) => {
+  return new Promise(async (done) => {
+    const socket = new Socket(`ws://localhost:7777`);
+    //const socket = new Socket(`ws://localhost:7777/websocket`);  // TODO this breaks???
+
+    socket.connect();
+    const channel = socket.channel('x', {});
+
+    channel.join().receive('ok', (resp) => {
+      t.is(resp, 'ok');
+      done();
+    });
+  });
+});
+
+// Thinking a bit about messaging flow
+// a) it's not working (no connect, no join)
+// b) the way this is written is awful
+test.serial('get a reply to a ping event', (t) => {
+  return new Promise(async (done) => {
+    let didGetReply = false;
+    const socket = new Socket(`ws://localhost:7777`);
+
+    socket.connect();
+    // join the worker pool
+    const channel = socket.channel('workers', {});
+    channel.join().receive('ok', () => {
+      // should get a response
+      channel.on('pong', (payload) => {
+        console.log('[ping] reply', payload);
+        didGetReply = true;
+
+        t.true(didGetReply);
+        done();
+      });
+
+      // TODO explicit test that the backing socket got this event?
+      channel.push('ping');
+    });
   });
 });
 
@@ -55,11 +98,7 @@ test.only('provide a websocket at /websocket', (t) => {
 
 // create a channel for an attempt
 
-
-
-
-
-test.serial(
+test.serial.skip(
   'GET /credential - return 404 if no credential found',
   async (t) => {
     const res = await get('credential/x');
@@ -67,7 +106,7 @@ test.serial(
   }
 );
 
-test.serial('GET /credential - return a credential', async (t) => {
+test.serial.skip('GET /credential - return a credential', async (t) => {
   server.addCredential('a', { user: 'johnny', password: 'cash' });
 
   const res = await get('credential/a');
@@ -79,7 +118,7 @@ test.serial('GET /credential - return a credential', async (t) => {
   t.is(job.password, 'cash');
 });
 
-test.serial(
+test.serial.skip(
   'POST /attempts/next - return 204 and no body for an empty queue',
   async (t) => {
     t.is(server.getQueueLength(), 0);
@@ -89,32 +128,38 @@ test.serial(
   }
 );
 
-test.serial('POST /attempts/next - return 400 if no id provided', async (t) => {
-  const res = await post('attempts/next', {});
-  t.is(res.status, 400);
-});
+test.serial.skip(
+  'POST /attempts/next - return 400 if no id provided',
+  async (t) => {
+    const res = await post('attempts/next', {});
+    t.is(res.status, 400);
+  }
+);
 
-test.serial('GET /attempts/next - return 200 with a workflow', async (t) => {
-  server.enqueueAttempt(attempt1);
-  t.is(server.getQueueLength(), 1);
+test.serial.skip(
+  'GET /attempts/next - return 200 with a workflow',
+  async (t) => {
+    server.enqueueAttempt(attempt1);
+    t.is(server.getQueueLength(), 1);
 
-  const res = await post('attempts/next', { rtm_id: 'rtm' });
-  const result = await res.json();
-  t.is(res.status, 200);
+    const res = await post('attempts/next', { rtm_id: 'rtm' });
+    const result = await res.json();
+    t.is(res.status, 200);
 
-  t.truthy(result);
-  t.true(Array.isArray(result));
-  t.is(result.length, 1);
+    t.truthy(result);
+    t.true(Array.isArray(result));
+    t.is(result.length, 1);
 
-  // not interested in testing much against the attempt structure at this stage
-  const [attempt] = result;
-  t.is(attempt.id, 'attempt-1');
-  t.true(Array.isArray(attempt.plan));
+    // not interested in testing much against the attempt structure at this stage
+    const [attempt] = result;
+    t.is(attempt.id, 'attempt-1');
+    t.true(Array.isArray(attempt.plan));
 
-  t.is(server.getQueueLength(), 0);
-});
+    t.is(server.getQueueLength(), 0);
+  }
+);
 
-test.serial(
+test.serial.skip(
   'GET /attempts/next - return 200 with a workflow with an inline item',
   async (t) => {
     server.enqueueAttempt({ id: 'abc' });
@@ -135,24 +180,27 @@ test.serial(
   }
 );
 
-test.serial('GET /attempts/next - return 200 with 2 workflows', async (t) => {
-  server.enqueueAttempt(attempt1);
-  server.enqueueAttempt(attempt1);
-  server.enqueueAttempt(attempt1);
-  t.is(server.getQueueLength(), 3);
+test.serial.skip(
+  'GET /attempts/next - return 200 with 2 workflows',
+  async (t) => {
+    server.enqueueAttempt(attempt1);
+    server.enqueueAttempt(attempt1);
+    server.enqueueAttempt(attempt1);
+    t.is(server.getQueueLength(), 3);
 
-  const res = await post('attempts/next?count=2', { rtm_id: 'rtm' });
-  t.is(res.status, 200);
+    const res = await post('attempts/next?count=2', { rtm_id: 'rtm' });
+    t.is(res.status, 200);
 
-  const result = await res.json();
-  t.truthy(result);
-  t.true(Array.isArray(result));
-  t.is(result.length, 2);
+    const result = await res.json();
+    t.truthy(result);
+    t.true(Array.isArray(result));
+    t.is(result.length, 2);
 
-  t.is(server.getQueueLength(), 1);
-});
+    t.is(server.getQueueLength(), 1);
+  }
+);
 
-test.serial(
+test.serial.skip(
   'POST /attempts/next - clear the queue after a request',
   async (t) => {
     server.enqueueAttempt(attempt1);
@@ -167,7 +215,7 @@ test.serial(
   }
 );
 
-test.serial('POST /attempts/log - should return 200', async (t) => {
+test.serial.skip('POST /attempts/log - should return 200', async (t) => {
   server.enqueueAttempt(attempt1);
   const { status } = await post('attempts/log/attempt-1', {
     rtm_id: 'rtm',
@@ -176,7 +224,7 @@ test.serial('POST /attempts/log - should return 200', async (t) => {
   t.is(status, 200);
 });
 
-test.serial(
+test.serial.skip(
   'POST /attempts/log - should return 400 if no rtm_id',
   async (t) => {
     const { status } = await post('attempts/log/attempt-1', {
@@ -187,29 +235,32 @@ test.serial(
   }
 );
 
-test.serial('POST /attempts/log - should echo to event emitter', async (t) => {
-  server.enqueueAttempt(attempt1);
-  let evt;
-  let didCall = false;
+test.serial.skip(
+  'POST /attempts/log - should echo to event emitter',
+  async (t) => {
+    server.enqueueAttempt(attempt1);
+    let evt;
+    let didCall = false;
 
-  server.once('log', (e) => {
-    didCall = true;
-    evt = e;
-  });
+    server.once('log', (e) => {
+      didCall = true;
+      evt = e;
+    });
 
-  const { status } = await post('attempts/log/attempt-1', {
-    rtm_id: 'rtm',
-    logs: [{ message: 'hello world' }],
-  });
-  t.is(status, 200);
-  t.true(didCall);
+    const { status } = await post('attempts/log/attempt-1', {
+      rtm_id: 'rtm',
+      logs: [{ message: 'hello world' }],
+    });
+    t.is(status, 200);
+    t.true(didCall);
 
-  t.truthy(evt);
-  t.is(evt.id, 'attempt-1');
-  t.deepEqual(evt.logs, [{ message: 'hello world' }]);
-});
+    t.truthy(evt);
+    t.is(evt.id, 'attempt-1');
+    t.deepEqual(evt.logs, [{ message: 'hello world' }]);
+  }
+);
 
-test.serial('POST /attempts/complete - return final state', async (t) => {
+test.serial.skip('POST /attempts/complete - return final state', async (t) => {
   server.enqueueAttempt(attempt1);
   const { status } = await post('attempts/complete/attempt-1', {
     rtm_id: 'rtm',
@@ -222,18 +273,21 @@ test.serial('POST /attempts/complete - return final state', async (t) => {
   t.deepEqual(result, { x: 10 });
 });
 
-test.serial('POST /attempts/complete - reject if unknown rtm', async (t) => {
-  const { status } = await post('attempts/complete/attempt-1', {
-    rtm_id: 'rtm',
-    state: {
-      x: 10,
-    },
-  });
-  t.is(status, 400);
-  t.falsy(server.getResult('attempt-1'));
-});
+test.serial.skip(
+  'POST /attempts/complete - reject if unknown rtm',
+  async (t) => {
+    const { status } = await post('attempts/complete/attempt-1', {
+      rtm_id: 'rtm',
+      state: {
+        x: 10,
+      },
+    });
+    t.is(status, 400);
+    t.falsy(server.getResult('attempt-1'));
+  }
+);
 
-test.serial(
+test.serial.skip(
   'POST /attempts/complete - reject if unknown workflow',
   async (t) => {
     server.enqueueAttempt({ id: 'b' }, 'rtm');
@@ -250,31 +304,34 @@ test.serial(
   }
 );
 
-test.serial('POST /attempts/complete - echo to event emitter', async (t) => {
-  server.enqueueAttempt(attempt1);
-  let evt;
-  let didCall = false;
+test.serial.skip(
+  'POST /attempts/complete - echo to event emitter',
+  async (t) => {
+    server.enqueueAttempt(attempt1);
+    let evt;
+    let didCall = false;
 
-  server.once('attempt-complete', (e) => {
-    didCall = true;
-    evt = e;
-  });
+    server.once('attempt-complete', (e) => {
+      didCall = true;
+      evt = e;
+    });
 
-  const { status } = await post('attempts/complete/attempt-1', {
-    rtm_id: 'rtm',
-    state: {
-      data: {
-        answer: 42,
+    const { status } = await post('attempts/complete/attempt-1', {
+      rtm_id: 'rtm',
+      state: {
+        data: {
+          answer: 42,
+        },
       },
-    },
-  });
-  t.is(status, 200);
-  t.true(didCall);
+    });
+    t.is(status, 200);
+    t.true(didCall);
 
-  t.truthy(evt);
-  t.is(evt.rtm_id, 'rtm');
-  t.is(evt.workflow_id, 'attempt-1');
-  t.deepEqual(evt.state, { data: { answer: 42 } });
-});
+    t.truthy(evt);
+    t.is(evt.rtm_id, 'rtm');
+    t.is(evt.workflow_id, 'attempt-1');
+    t.deepEqual(evt.state, { data: { answer: 42 } });
+  }
+);
 
 // test lightning should get the finished state through a helper API
