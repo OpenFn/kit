@@ -3,6 +3,9 @@ import { attempts } from '../../src/mock/data';
 import createLightningServer, { API_PREFIX } from '../../src/mock/lightning';
 import { createMockLogger } from '@openfn/logger';
 
+import phx from 'phoenix-channels';
+const { Socket } = phx;
+
 const baseUrl = `http://localhost:8888${API_PREFIX}`;
 
 let server;
@@ -31,6 +34,30 @@ const post = (path: string, data: any) =>
   });
 
 const attempt1 = attempts()['attempt-1'];
+
+test.only('provide a websocket at /websocket', (t) => {
+  return new Promise((done) => {
+    const socket = new Socket(`ws://localhost:4000/socket`);
+
+    socket.connect()
+  //   .on('ok', () => {
+  //     done();
+  //   })
+  console.log(socket.connectionState())
+
+    t.is(socket.connectionState(), 'ok')
+    done();
+  });
+});
+
+// respond to a claim request with an id
+// uh does this stuff make any sense in the socket model?
+
+// create a channel for an attempt
+
+
+
+
 
 test.serial(
   'GET /credential - return 404 if no credential found',

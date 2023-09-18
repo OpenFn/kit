@@ -2,8 +2,11 @@ import { EventEmitter } from 'node:events';
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
+import websockify from 'koa-websocket';
+import route from 'koa-route';
 import { createMockLogger, LogLevel, Logger } from '@openfn/logger';
 
+import createServer from '../socket-server';
 import createAPI from './api';
 import createDevAPI from './api-dev';
 import { Attempt } from '../../types';
@@ -28,7 +31,7 @@ export type LightningOptions = {
 const createLightningServer = (options: LightningOptions = {}) => {
   const logger = options.logger || createMockLogger();
 
-  // App state
+  // App state websockify = require('koa-websocket');
   const state = {
     credentials: {},
     attempts: [],
@@ -41,8 +44,20 @@ const createLightningServer = (options: LightningOptions = {}) => {
   } as ServerState;
 
   // Server setup
-  const app = new Koa();
+  const app = websockify(new Koa());
   app.use(bodyParser());
+
+  // Using routes
+  app.ws.use(route.all('/test/:id', function (ctx) {
+    // `ctx` is the regular koa context created from the `ws` onConnection `socket.upgradeReq` object.
+    // the websocket is added to the context on `ctx.websocket`.
+    ctx.websocket.send('Hello World');
+    ctx.websocket.on('message', function(message) {
+      // do something with the message from client
+          console.log(message);
+    });
+  }));
+
 
   const klogger = koaLogger((str) => logger.debug(str));
   app.use(klogger);

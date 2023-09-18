@@ -35,6 +35,8 @@
     "@types/node": "^18.15.3",
     "@types/yargs": "^17.0.12",
     "ava": "5.1.0",
+    "koa-route": "^3.2.0",
+    "koa-websocket": "^7.0.0",
     "nodemon": "3.0.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
