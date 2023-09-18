@@ -44,52 +44,13 @@ const createLightningServer = (options: LightningOptions = {}) => {
     events: new EventEmitter(),
   } as ServerState;
 
-  // Server setup
-  // this seems to setup websockets to work at any path
-  // Maybe that's fine for the mock? Kind wierd
-  // mind you I still don't get a connect event
-  // const app = websockify(new Koa());
   const app = new Koa();
   app.use(bodyParser());
 
-  app.use((ctx) => {
-    // ths is needed to get the websocket to recognise the reques tpath
-    ctx.req.path = URL.parse(req.url).pathname;
-
-    console.log(' >> ', ctx.request.path);
-  });
-
-  // this router but doesn't really seem to work
-  // app.use(route.all('/websocket', createNewAPI(state, options.port || 8888)));
-
-  // Using routes (seems to not work - at least the api doesn't get)
-  // app.ws.use(
-  //   route.all('/websocket', (ctx) => createNewAPI(state, ctx.websocket))
-  // );
-
-  // this probaably isn;t right because it'll create a new API object
-  /// for each request
-
   const server = app.listen(options.port || 8888);
 
-  createNewAPI(state, '/websocket', server);
-
-  // I really don't think this should be hard
-  // we connect to a socket sitting at /socket
-  // then we sub to events on both sides
-
-  // app.ws.use(
-  //   route.all('/websocket', function (ctx) {
-  //     console.log(' >> WEBSOCKET ');
-  //     // `ctx` is the regular koa context created from the `ws` onConnection `socket.upgradeReq` object.
-  //     // the websocket is added to the context on `ctx.websocket`.
-  //     ctx.websocket.send('Hello World');
-  //     ctx.websocket.on('message', function (message) {
-  //       // do something with the message from client
-  //       console.log(message);
-  //     });
-  //   })
-  // );
+  // Setup the websocket API
+  createNewAPI(state, '/api', server);
 
   const klogger = koaLogger((str) => logger.debug(str));
   app.use(klogger);

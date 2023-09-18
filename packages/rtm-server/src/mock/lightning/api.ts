@@ -35,13 +35,12 @@ export const createNewAPI = (state: ServerState, path: string, server) => {
   const wss = new WebSocketServer({
     server,
 
-    // If  we set a path here, the websocket never seems to catch the connection
-    // path,
+    // Note: phoenix websocket will connect to <endpoint>/websocket
+    path: path ? `${path}/websocket` : undefined,
   });
 
   // pass that through to the phoenix mock
   createPheonixMockSocketServer({ server: wss });
-  console.log('mock created');
 
   // then do something clever to map events
   // server.on({
