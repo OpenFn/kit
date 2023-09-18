@@ -31,9 +31,12 @@ export interface AttemptCompleteBody extends RTMBody {
 // what if I do the server side mock in koa, can I use the pheonix client to connect?
 export const createNewAPI = (state: ServerState, path: string, server) => {
   // set up a websocket server to listen to connections
+  // console.log('path', path);
   const wss = new WebSocketServer({
     server,
-    path,
+
+    // If  we set a path here, the websocket never seems to catch the connection
+    // path,
   });
 
   // pass that through to the phoenix mock
@@ -69,10 +72,10 @@ export const createNewAPI = (state: ServerState, path: string, server) => {
 
   // return handleEvent;
 
-  return (ctx) => {
-    // what does this actually do?
-    console.log(' >> ', ctx);
-  };
+  // return (ctx) => {
+  //   // what does this actually do?
+  //   console.log(' >> ', ctx);
+  // };
 };
 
 // Note that this API is hosted at api/1

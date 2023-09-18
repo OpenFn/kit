@@ -40,9 +40,12 @@ const post = (path: string, data: any) =>
 
 const attempt1 = attempts()['attempt-1'];
 
-test.serial.skip('provide a phoenix websocket at /websocket', (t) => {
+test.serial.only('provide a phoenix websocket at /websocket', (t) => {
   return new Promise(async (done) => {
-    const socket = new Socket(`ws://localhost:7777/websocket`);
+    // await fetch('http://localhost:7777/websocket');
+    // in the mock the URL doesn't actually matter
+    // hang on, I think the pheonix socket my add /socket to the url or something?
+    const socket = new Socket(`ws://localhost:7777/jam`);
 
     socket.connect();
     await sleep(); // TODO untidy
@@ -51,7 +54,7 @@ test.serial.skip('provide a phoenix websocket at /websocket', (t) => {
   });
 });
 
-test.serial('respond to connection join requests', (t) => {
+test.serial.only('respond to connection join requests', (t) => {
   return new Promise(async (done) => {
     const socket = new Socket(`ws://localhost:7777`);
     //const socket = new Socket(`ws://localhost:7777/websocket`);  // TODO this breaks???
@@ -69,7 +72,7 @@ test.serial('respond to connection join requests', (t) => {
 // Thinking a bit about messaging flow
 // a) it's not working (no connect, no join)
 // b) the way this is written is awful
-test.serial('get a reply to a ping event', (t) => {
+test.serial.only('get a reply to a ping event', (t) => {
   return new Promise(async (done) => {
     let didGetReply = false;
     const socket = new Socket(`ws://localhost:7777`);

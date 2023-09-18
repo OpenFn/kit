@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import Koa from 'koa';
+import URL from 'node:url';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
 import websockify from 'koa-websocket';
@@ -51,6 +52,13 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const app = new Koa();
   app.use(bodyParser());
 
+  app.use((ctx) => {
+    // ths is needed to get the websocket to recognise the reques tpath
+    ctx.req.path = URL.parse(req.url).pathname;
+
+    console.log(' >> ', ctx.request.path);
+  });
+
   // this router but doesn't really seem to work
   // app.use(route.all('/websocket', createNewAPI(state, options.port || 8888)));
 
@@ -87,7 +95,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
   app.use(klogger);
 
   // Mock API endpoints
-  app.use(createAPI(state));
+  // app.use(createAPI(state));
   app.use(createDevAPI(app as any, state, logger));
 
   app.destroy = () => {

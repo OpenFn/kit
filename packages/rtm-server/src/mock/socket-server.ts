@@ -20,11 +20,11 @@ function createServer({ port = 8080, server } = {}) {
   // console.log('ws listening on', port);
   const channels: Record<Topic, Set<EventHandler>> = {};
 
-  const wsServer = server;
-  // server ||
-  // new WebSocketServer({
-  //   port,
-  // });
+  const wsServer =
+    server ||
+    new WebSocketServer({
+      port,
+    });
 
   const events = {
     // testing (TODO shouldn't this be in a specific channel?)
@@ -55,8 +55,12 @@ function createServer({ port = 8080, server } = {}) {
     },
   };
 
-  wsServer.on('connection', function (ws: WS) {
+  wsServer.on('connection', function (ws: WS, req) {
     console.log(' >> connect');
+    // console.log(ws);
+    // console.log(req);
+    console.log(req.url);
+    // console.log(req.path);
     ws.on('message', function (data: string) {
       console.log(' >> message');
       const evt = JSON.parse(data) as PhoenixEvent;

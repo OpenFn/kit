@@ -1,11 +1,23 @@
 // This attempt builds my own websocket into koa, only available at one path
 // Then I can use the connection handler myself to plug in my phoenix mock
+
 import Koa from 'koa';
+import Router from '@koa/router';
 import Socket, { WebSocketServer } from 'ws';
 
 const app = new Koa();
 
 const server = app.listen(3333);
+
+app.use((ctx) => {
+  ctx.res;
+  ponse.status = 200;
+  return;
+});
+
+const r = new Router();
+r.all('/', () => {});
+app.use(r.routes());
 
 const wss = new WebSocketServer({
   server,
