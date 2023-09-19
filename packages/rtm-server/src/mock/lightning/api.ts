@@ -11,9 +11,10 @@ import {
 import type { ServerState } from './server';
 
 import { API_PREFIX } from './server';
+import { extractAttemptId } from './util';
 
-import createPheonixMockSocketServer from '../socket-server';
-import { CLAIM } from '../../events';
+import createPheonixMockSocketServer from './socket-server';
+import { CLAIM, GET_ATTEMPT } from '../../events';
 
 interface RTMBody {
   rtm_id: string;
@@ -24,37 +25,6 @@ export interface FetchNextBody extends RTMBody {}
 export interface AttemptCompleteBody extends RTMBody {
   state: any; // JSON state object (undefined? null?)
 }
-
-// pull claim will try and pull a claim off the queue,
-// and reply with the response
-// the reply ensures that only the calling worker will get the attempt
-const pullClaim = (state, ws, evt) => {
-  const { ref, topic } = evt;
-  const { queue } = state;
-  let count = 1;
-
-  const payload = {
-    status: 'ok',
-    response: [],
-  };
-
-  while (count > 0 && queue.length) {
-    // TODO assign the worker id to the attempt
-    // Not needed by the mocks at the moment
-    const next = queue.shift();
-    payload.response.push(next.id);
-    count -= 1;
-  }
-
-  ws.send(
-    JSON.stringify({
-      event: `chan_reply_${ref}`,
-      ref,
-      topic,
-      payload,
-    })
-  );
-};
 
 // this new API is websocket based
 // Events map to handlers
@@ -72,39 +42,81 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
   });
 
   // pass that through to the phoenix mock
-  const wss = createPheonixMockSocketServer({ server });
+  const wss = createPheonixMockSocketServer({ server, state });
+
+  // pull claim will try and pull a claim off the queue,
+  // and reply with the response
+  // the reply ensures that only the calling worker will get the attempt
+  const pullClaim = (state, ws, evt) => {
+    const { ref, topic } = evt;
+    const { queue } = state;
+    let count = 1;
+
+    const payload = {
+      status: 'ok',
+      response: [],
+    };
+
+    while (count > 0 && queue.length) {
+      // TODO assign the worker id to the attempt
+      // Not needed by the mocks at the moment
+      const next = queue.shift();
+      payload.response.push(next.id);
+      count -= 1;
+
+      startAttempt(next.id);
+    }
+
+    ws.send(
+      JSON.stringify({
+        event: `chan_reply_${ref}`,
+        ref,
+        topic,
+        payload,
+      })
+    );
+  };
+
+  const getAttempt = (state, ws, evt) => {
+    const { ref, topic } = evt;
+    const attemptId = extractAttemptId(topic);
+    const attempt = state.attempts[attemptId];
+
+    ws.send(
+      JSON.stringify({
+        event: `chan_reply_${ref}`,
+        ref,
+        topic,
+        payload: {
+          status: 'ok',
+          response: attempt,
+        },
+      })
+    );
+  };
 
   wss.registerEvents('workers', {
     [CLAIM]: (ws, event) => pullClaim(state, ws, event),
+
+    // is this part of the general workers pool, or part of the attempt?
+    // probably part of the attempt because we can control permissions
   });
 
-  const noop = () => {};
+  const startAttempt = (attemptId) => {
+    // mark the attempt as started on the server
+    // TODO right now this duplicates logic in the dev API
+    state.pending[attemptId] = {
+      status: 'started',
+    };
 
-  // This may actually get split into a server bit and a an attempts bit, reflecting the different channels
-  const events = {
-    hello: noop,
-
-    'attempt:claim': noop,
-    'attempt:start': noop,
-    'attempt:complete': noop,
-    'attempt:get_credential': noop,
-    'attempt:credential': noop,
-    'attempt:get_dataclip': noop,
-    'attempt:dataclip': noop,
-
-    'run:start': noop,
-    'run:end': noop,
-    'run:log': noop,
+    wss.registerEvents(`attempt:${attemptId}`, {
+      [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
+    });
   };
 
-  // const handleEvent = (name) => {};
-
-  // return handleEvent;
-
-  // return (ctx) => {
-  //   // what does this actually do?
-  //   console.log(' >> ', ctx);
-  // };
+  return {
+    startAttempt,
+  };
 };
 
 // Note that this API is hosted at api/1

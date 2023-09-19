@@ -1,4 +1,6 @@
 import { WebSocketServer } from 'ws';
+import { ATTEMPT_PREFIX, extractAttemptId } from './util';
+
 // mock pheonix websocket server
 
 // - route messages to rooms
@@ -16,7 +18,7 @@ type PhoenixEvent = {
 
 type EventHandler = (event: string, payload: any) => void;
 
-function createServer({ port = 8080, server } = {}) {
+function createServer({ port = 8080, server, state } = {}) {
   // console.log('ws listening on', port);
   const channels: Record<Topic, Set<EventHandler>> = {};
 
@@ -39,14 +41,25 @@ function createServer({ port = 8080, server } = {}) {
       );
     },
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
-    phx_join: (ws, { topic, ref }) => {
+    phx_join: (ws, { event, topic, ref }) => {
+      let status = 'ok';
+      let response = 'ok';
+
+      // TODO is this logic in the right place?
+      if (topic.startsWith(ATTEMPT_PREFIX)) {
+        const attemptId = extractAttemptId(topic);
+        if (!state.pending[attemptId]) {
+          status = 'error';
+          response = 'invalid_attempt';
+        }
+      }
       ws.send(
         JSON.stringify({
           // here is the magic reply event
           // see channel.replyEventName
           event: `chan_reply_${ref}`,
           topic,
-          payload: { status: 'ok', response: 'ok' },
+          payload: { status, response },
           ref,
         })
       );
@@ -107,7 +120,6 @@ function createServer({ port = 8080, server } = {}) {
   // TODO how do we unsubscribe?
   wsServer.registerEvents = (topic: Topic, events) => {
     for (const evt in events) {
-      console.log(evt);
       wsServer.listenToChannel(topic, events[evt]);
     }
   };

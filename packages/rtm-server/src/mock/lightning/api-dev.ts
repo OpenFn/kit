@@ -23,7 +23,7 @@ export type DevApp = Koa & {
   once(event: LightningEvents, fn: (evt: any) => void): void;
 };
 
-const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger) => {
+const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
   // Dev APIs for unit testing
   app.addCredential = (id: string, cred: Credential) => {
     logger.info(`Add credential ${id}`);
@@ -65,6 +65,13 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger) => {
 
   app.getResult = (attemptId: string) => state.results[attemptId]?.state;
 
+  // TODO maybe onAttemptClaimed? or claim attempt?
+  app.startAttempt = (attemptId: string) => api.startAttempt(attemptId);
+
+  app.registerAttempt = (attempt: any) => {
+    state.attempts[attempt.id] = attempt;
+  };
+
   // TODO these are overriding koa's event handler - should I be doing something different?
 
   // @ts-ignore
@@ -98,7 +105,7 @@ const setupRestAPI = (app: DevApp, _state: ServerState, logger: Logger) => {
   return router.routes();
 };
 
-export default (app: DevApp, state: ServerState, logger: Logger) => {
-  setupDevAPI(app, state, logger);
+export default (app: DevApp, state: ServerState, logger: Logger, api) => {
+  setupDevAPI(app, state, logger, api);
   return setupRestAPI(app, state, logger);
 };

@@ -1,9 +1,7 @@
 import test from 'ava';
-
 import phx from 'phoenix-channels';
-const { Socket } = phx;
 
-import createServer from '../../src/mock/socket-server';
+import createServer from '../../src/mock/lightning/socket-server';
 
 let socket;
 let server;
@@ -16,7 +14,7 @@ const wait = (duration = 10) =>
 test.beforeEach(() => {
   server = createServer();
 
-  socket = new Socket('ws://localhost:8080');
+  socket = new phx.Socket('ws://localhost:8080');
   socket.connect();
 });
 

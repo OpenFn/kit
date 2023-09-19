@@ -5,7 +5,7 @@ import { createMockLogger } from '@openfn/logger';
 
 import phx from 'phoenix-channels';
 
-import { CLAIM } from '../../src/events';
+import { CLAIM, GET_ATTEMPT } from '../../src/events';
 
 const endpoint = 'ws://localhost:7777/api';
 
@@ -25,7 +25,7 @@ test.before(
     new Promise((done) => {
       server = createLightningServer({ port: 7777 });
 
-      client = new phx.Socket(endpoint);
+      client = new phx.Socket(endpoint, { timeout: 50 });
       client.connect();
       client.onOpen(done);
     })
@@ -40,11 +40,16 @@ test.after(() => {
 });
 
 const join = (channelName: string): Promise<typeof phx.Channel> =>
-  new Promise((done) => {
+  new Promise((done, reject) => {
     const channel = client.channel(channelName, {});
-    channel.join().receive('ok', () => {
-      done(channel);
-    });
+    channel
+      .join()
+      .receive('ok', () => {
+        done(channel);
+      })
+      .receive('error', (err) => {
+        reject(new Error(err));
+      });
   });
 
 const get = (path: string) => fetch(`${baseUrl}/${path}`);
@@ -66,11 +71,11 @@ test.serial('provide a phoenix websocket at /api', (t) => {
 });
 
 test.serial('respond to connection join requests', (t) => {
-  return new Promise(async (done) => {
+  return new Promise(async (done, reject) => {
     const channel = client.channel('x', {});
 
-    channel.join().receive('ok', (resp) => {
-      t.is(resp, 'ok');
+    channel.join().receive('ok', (res) => {
+      t.is(res, 'ok');
       done();
     });
   });
@@ -92,7 +97,7 @@ test.serial('get a reply to a ping event', (t) => {
   });
 });
 
-test.serial.only(
+test.serial(
   'claim attempt: reply for zero items if queue is empty',
   (t) =>
     new Promise(async (done) => {
@@ -111,7 +116,7 @@ test.serial.only(
     })
 );
 
-test.serial.only(
+test.serial(
   "claim attempt: reply with an attempt id if there's an attempt in the queue",
   (t) =>
     new Promise(async (done) => {
@@ -167,9 +172,33 @@ test.serial.skip(
     })
 );
 
-// TODO get execution plan
 // TODO get credentials
 // TODO get state
+
+test.serial('create a channel for an attempt', async (t) => {
+  server.startAttempt('wibble');
+  await join('attempt:wibble');
+  t.pass('connection ok');
+});
+
+test.serial('reject channels for attempts that are not started', async (t) => {
+  await t.throwsAsync(() => join('attempt:wibble'), {
+    message: 'invalid_attempt',
+  });
+});
+
+test.serial('get attempt data through the attempt channel', async (t) => {
+  return new Promise(async (done) => {
+    server.registerAttempt(attempt1);
+    server.startAttempt(attempt1.id);
+
+    const channel = await join(`attempt:${attempt1.id}`);
+    channel.push(GET_ATTEMPT).receive('ok', (p) => {
+      t.deepEqual(p, attempt1);
+      done();
+    });
+  });
+});
 
 test.serial.skip(
   'GET /credential - return 404 if no credential found',
