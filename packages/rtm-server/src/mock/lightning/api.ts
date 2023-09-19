@@ -14,7 +14,7 @@ import { API_PREFIX } from './server';
 import { extractAttemptId } from './util';
 
 import createPheonixMockSocketServer from './socket-server';
-import { CLAIM, GET_ATTEMPT } from '../../events';
+import { CLAIM, GET_ATTEMPT, GET_CREDENTIAL, GET_DATACLIP } from '../../events';
 
 interface RTMBody {
   rtm_id: string;
@@ -43,6 +43,11 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
 
   // pass that through to the phoenix mock
   const wss = createPheonixMockSocketServer({ server, state });
+
+  // TODO
+  // 1) Need to improve the abtraction of these, make messages easier to send
+  // 2) Also need to look at closures - I'd like a declarative central API
+  //    the need to call startAttempt makes things a bit harder
 
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
@@ -95,6 +100,41 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
     );
   };
 
+  const getCredential = (state, ws, evt) => {
+    const { ref, topic, payload, event } = evt;
+    const response = state.credentials[payload.id];
+    console.log(topic, event, response);
+    ws.send(
+      JSON.stringify({
+        event: `chan_reply_${ref}`,
+        ref,
+        topic,
+        payload: {
+          status: 'ok',
+          response,
+        },
+      })
+    );
+  };
+
+  const getDataclip = (state, ws, evt) => {
+    console.log(' getDataClip');
+    const { ref, topic, payload, event } = evt;
+    const response = state.dataclips[payload.id];
+    console.log(response);
+    ws.send(
+      JSON.stringify({
+        event: `chan_reply_${ref}`,
+        ref,
+        topic,
+        payload: {
+          status: 'ok',
+          response,
+        },
+      })
+    );
+  };
+
   wss.registerEvents('workers', {
     [CLAIM]: (ws, event) => pullClaim(state, ws, event),
 
@@ -109,8 +149,14 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
       status: 'started',
     };
 
+    // TODO do all these need extra auth, or is auth granted
+    // implicitly by channel membership?
+    // Right now the socket gets access to all server state
+    // But this is just a mock - Lightning can impose more restrictions if it wishes
     wss.registerEvents(`attempt:${attemptId}`, {
       [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
+      [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
+      [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
     });
   };
 

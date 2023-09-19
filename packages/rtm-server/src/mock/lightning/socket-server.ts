@@ -69,6 +69,7 @@ function createServer({ port = 8080, server, state } = {}) {
   wsServer.on('connection', function (ws: WS, req) {
     ws.on('message', function (data: string) {
       const evt = JSON.parse(data) as PhoenixEvent;
+
       if (evt.topic) {
         // phx sends this info in each message
         const { topic, event, payload, ref } = evt;

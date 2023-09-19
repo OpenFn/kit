@@ -30,6 +30,11 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
     state.credentials[id] = cred;
   };
 
+  app.addDataclip = (id: string, data: any) => {
+    logger.info(`Add dataclip ${id}`);
+    state.dataclips[id] = data;
+  };
+
   // Promise which returns when a workflow is complete
   app.waitForResult = (attemptId: string) => {
     return new Promise((resolve) => {

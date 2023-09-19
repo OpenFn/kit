@@ -12,6 +12,8 @@ export const CLAIM_REPLY = 'attempt:claim_reply'; // { server_id: 1, attempt_id:
 
 // or attempt_get ? I think there are several getters so maybe this makes sense
 export const GET_ATTEMPT = 'fetch:attempt';
+export const GET_CREDENTIAL = 'fetch:credential';
+export const GET_DATACLIP = 'fetch:dataclip';
 
 export const ATTEMPT_START = 'attempt:start'; // attemptId, timestamp
 export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats
