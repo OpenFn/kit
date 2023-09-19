@@ -56,11 +56,12 @@ const createLightningServer = (options: LightningOptions = {}) => {
   app.use(klogger);
 
   // Mock API endpoints
+  // TODO should we keep the REST interface for local debug?
+  // Maybe for the read-only stuff (like get all attempts)
   // app.use(createAPI(state));
   app.use(createDevAPI(app as any, state, logger));
 
   app.destroy = () => {
-    console.log('close');
     server.close();
   };
 

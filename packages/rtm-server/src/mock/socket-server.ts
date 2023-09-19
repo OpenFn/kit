@@ -29,7 +29,6 @@ function createServer({ port = 8080, server } = {}) {
   const events = {
     // testing (TODO shouldn't this be in a specific channel?)
     ping: (ws, { topic, ref }) => {
-      console.log(' >> ping');
       ws.send(
         JSON.stringify({
           topic,
@@ -41,7 +40,6 @@ function createServer({ port = 8080, server } = {}) {
     },
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
     phx_join: (ws, { topic, ref }) => {
-      console.log('-- join --');
       ws.send(
         JSON.stringify({
           // here is the magic reply event
@@ -56,13 +54,7 @@ function createServer({ port = 8080, server } = {}) {
   };
 
   wsServer.on('connection', function (ws: WS, req) {
-    console.log(' >> connect');
-    // console.log(ws);
-    // console.log(req);
-    console.log(req.url);
-    // console.log(req.path);
     ws.on('message', function (data: string) {
-      console.log(' >> message');
       const evt = JSON.parse(data) as PhoenixEvent;
       if (evt.topic) {
         // phx sends this info in each message
@@ -75,7 +67,7 @@ function createServer({ port = 8080, server } = {}) {
           // handle custom/user events
           if (channels[topic]) {
             channels[topic].forEach((fn) => {
-              fn(event, payload);
+              fn(ws, { event, topic, payload, ref });
             });
           }
         }
@@ -110,6 +102,14 @@ function createServer({ port = 8080, server } = {}) {
         }
       );
     });
+  };
+
+  // TODO how do we unsubscribe?
+  wsServer.registerEvents = (topic: Topic, events) => {
+    for (const evt in events) {
+      console.log(evt);
+      wsServer.listenToChannel(topic, events[evt]);
+    }
   };
 
   return wsServer;

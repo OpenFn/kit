@@ -4,7 +4,10 @@ import createLightningServer, { API_PREFIX } from '../../src/mock/lightning';
 import { createMockLogger } from '@openfn/logger';
 
 import phx from 'phoenix-channels';
-const { Socket } = phx;
+
+import { CLAIM } from '../../src/events';
+
+const endpoint = 'ws://localhost:7777/api';
 
 const baseUrl = `http://localhost:7777${API_PREFIX}`;
 
@@ -14,10 +17,19 @@ const sleep = (duration = 10) =>
   });
 
 let server;
+let client;
 
-test.before(() => {
-  server = createLightningServer({ port: 7777 });
-});
+// Set up a lightning server and a phoenix socket client before each test
+test.before(
+  () =>
+    new Promise((done) => {
+      server = createLightningServer({ port: 7777 });
+
+      client = new phx.Socket(endpoint);
+      client.connect();
+      client.onOpen(done);
+    })
+);
 
 test.afterEach(() => {
   server.reset();
@@ -26,6 +38,14 @@ test.afterEach(() => {
 test.after(() => {
   server.destroy();
 });
+
+const join = (channelName: string): Promise<typeof phx.Channel> =>
+  new Promise((done) => {
+    const channel = client.channel(channelName, {});
+    channel.join().receive('ok', () => {
+      done(channel);
+    });
+  });
 
 const get = (path: string) => fetch(`${baseUrl}/${path}`);
 const post = (path: string, data: any) =>
@@ -40,23 +60,14 @@ const post = (path: string, data: any) =>
 
 const attempt1 = attempts()['attempt-1'];
 
-test.serial('provide a phoenix websocket at /websocket', (t) => {
-  return new Promise(async (done) => {
-    const socket = new Socket(`ws://localhost:7777/api`);
-
-    socket.connect();
-    await sleep(); // TODO untidy
-    t.is(socket.connectionState(), 'open');
-    done();
-  });
+test.serial('provide a phoenix websocket at /api', (t) => {
+  // client should be connected before this test runs
+  t.is(client.connectionState(), 'open');
 });
 
 test.serial('respond to connection join requests', (t) => {
   return new Promise(async (done) => {
-    const socket = new Socket(`ws://localhost:7777/api`);
-
-    socket.connect();
-    const channel = socket.channel('x', {});
+    const channel = client.channel('x', {});
 
     channel.join().receive('ok', (resp) => {
       t.is(resp, 'ok');
@@ -65,37 +76,100 @@ test.serial('respond to connection join requests', (t) => {
   });
 });
 
-// Thinking a bit about messaging flow
-// a) it's not working (no connect, no join)
-// b) the way this is written is awful
+// TODO: only allow authorised workers to join workers
+// TODO: only allow authorised attemtps to join an attempt channel
+
 test.serial('get a reply to a ping event', (t) => {
   return new Promise(async (done) => {
-    let didGetReply = false;
-    const socket = new Socket(`ws://localhost:7777/api`);
+    const channel = await join('test');
 
-    socket.connect();
-    // join the worker pool
-    const channel = socket.channel('workers', {});
-    channel.join().receive('ok', () => {
-      // should get a response
-      channel.on('pong', (payload) => {
-        console.log('[ping] reply', payload);
-        didGetReply = true;
-
-        t.true(didGetReply);
-        done();
-      });
-
-      // TODO explicit test that the backing socket got this event?
-      channel.push('ping');
+    channel.on('pong', (payload) => {
+      t.pass('message received');
+      done();
     });
+
+    channel.push('ping');
   });
 });
 
-// respond to a claim request with an id
-// uh does this stuff make any sense in the socket model?
+test.serial.only(
+  'claim attempt: reply for zero items if queue is empty',
+  (t) =>
+    new Promise(async (done) => {
+      t.is(server.getQueueLength(), 0);
 
-// create a channel for an attempt
+      const channel = await join('workers');
+
+      // response is an array of attempt ids
+      channel.push(CLAIM).receive('ok', (response) => {
+        t.assert(Array.isArray(response));
+        t.is(response.length, 0);
+
+        t.is(server.getQueueLength(), 0);
+        done();
+      });
+    })
+);
+
+test.serial.only(
+  "claim attempt: reply with an attempt id if there's an attempt in the queue",
+  (t) =>
+    new Promise(async (done) => {
+      server.enqueueAttempt(attempt1);
+      t.is(server.getQueueLength(), 1);
+
+      // This uses a shared channel at all workers sit in
+      // They all yell from time to time to ask for work
+      // Lightning responds with an attempt id and server id (target)
+      // What if:
+      // a) each worker has its own channel, so claims are handed out privately
+      // b) we use the 'ok' status to return work in the response
+      // this b pattern is much nicer
+      const channel = await join('workers');
+
+      // response is an array of attempt ids
+      channel.push(CLAIM).receive('ok', (response) => {
+        t.truthy(response);
+        t.is(response.length, 1);
+        t.is(response[0], 'attempt-1');
+
+        // ensure the server state has changed
+        t.is(server.getQueueLength(), 0);
+        done();
+      });
+    })
+);
+
+// TODO is it even worth doing this? Easier for a socket to pull one at a time?
+// It would also ensure better distribution if 10 workers ask at the same time, they'll get
+// one each then come back for more
+test.serial.skip(
+  'claim attempt: reply with multiple attempt ids',
+  (t) =>
+    new Promise(async (done) => {
+      server.enqueueAttempt(attempt1);
+      server.enqueueAttempt(attempt1);
+      server.enqueueAttempt(attempt1);
+      t.is(server.getQueueLength(), 3);
+
+      const channel = await join('workers');
+
+      // // response is an array of attempt ids
+      // channel.push(CLAIM, { count: 3 }).receive('ok', (response) => {
+      //   t.truthy(response);
+      //   t.is(response.length, 1);
+      //   t.is(response[0], 'attempt-1');
+
+      //   // ensure the server state has changed
+      //   t.is(server.getQueueLength(), 0);
+      //   done();
+      // });
+    })
+);
+
+// TODO get execution plan
+// TODO get credentials
+// TODO get state
 
 test.serial.skip(
   'GET /credential - return 404 if no credential found',
@@ -116,24 +190,6 @@ test.serial.skip('GET /credential - return a credential', async (t) => {
   t.is(job.user, 'johnny');
   t.is(job.password, 'cash');
 });
-
-test.serial.skip(
-  'POST /attempts/next - return 204 and no body for an empty queue',
-  async (t) => {
-    t.is(server.getQueueLength(), 0);
-    const res = await post('attempts/next', { rtm_id: 'rtm' });
-    t.is(res.status, 204);
-    t.false(res.bodyUsed);
-  }
-);
-
-test.serial.skip(
-  'POST /attempts/next - return 400 if no id provided',
-  async (t) => {
-    const res = await post('attempts/next', {});
-    t.is(res.status, 400);
-  }
-);
 
 test.serial.skip(
   'GET /attempts/next - return 200 with a workflow',
@@ -176,41 +232,6 @@ test.serial.skip(
     t.is(attempt.id, 'abc');
 
     t.is(server.getQueueLength(), 0);
-  }
-);
-
-test.serial.skip(
-  'GET /attempts/next - return 200 with 2 workflows',
-  async (t) => {
-    server.enqueueAttempt(attempt1);
-    server.enqueueAttempt(attempt1);
-    server.enqueueAttempt(attempt1);
-    t.is(server.getQueueLength(), 3);
-
-    const res = await post('attempts/next?count=2', { rtm_id: 'rtm' });
-    t.is(res.status, 200);
-
-    const result = await res.json();
-    t.truthy(result);
-    t.true(Array.isArray(result));
-    t.is(result.length, 2);
-
-    t.is(server.getQueueLength(), 1);
-  }
-);
-
-test.serial.skip(
-  'POST /attempts/next - clear the queue after a request',
-  async (t) => {
-    server.enqueueAttempt(attempt1);
-    const res1 = await post('attempts/next', { rtm_id: 'rtm' });
-    t.is(res1.status, 200);
-
-    const result1 = await res1.json();
-    t.is(result1.length, 1);
-    const res2 = await post('attempts/next', { rtm_id: 'rtm' });
-    t.is(res2.status, 204);
-    t.falsy(res2.bodyUsed);
   }
 );
 

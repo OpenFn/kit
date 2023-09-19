@@ -3,7 +3,7 @@ import Socket, { WebSocketServer } from 'ws';
 import {
   unimplemented,
   createListNextJob,
-  createFetchNextJob,
+  createClaim,
   createGetCredential,
   createLog,
   createComplete,
@@ -13,6 +13,7 @@ import type { ServerState } from './server';
 import { API_PREFIX } from './server';
 
 import createPheonixMockSocketServer from '../socket-server';
+import { CLAIM } from '../../events';
 
 interface RTMBody {
   rtm_id: string;
@@ -24,29 +25,58 @@ export interface AttemptCompleteBody extends RTMBody {
   state: any; // JSON state object (undefined? null?)
 }
 
+// pull claim will try and pull a claim off the queue,
+// and reply with the response
+// the reply ensures that only the calling worker will get the attempt
+const pullClaim = (state, ws, evt) => {
+  const { ref, topic } = evt;
+  const { queue } = state;
+  let count = 1;
+
+  const payload = {
+    status: 'ok',
+    response: [],
+  };
+
+  while (count > 0 && queue.length) {
+    // TODO assign the worker id to the attempt
+    // Not needed by the mocks at the moment
+    const next = queue.shift();
+    payload.response.push(next.id);
+    count -= 1;
+  }
+
+  ws.send(
+    JSON.stringify({
+      event: `chan_reply_${ref}`,
+      ref,
+      topic,
+      payload,
+    })
+  );
+};
+
 // this new API is websocket based
 // Events map to handlers
 // can I even implement this in JS? Not with pheonix anyway. hmm.
 // dead at the first hurdle really.
 // what if I do the server side mock in koa, can I use the pheonix client to connect?
-export const createNewAPI = (state: ServerState, path: string, server) => {
+export const createNewAPI = (state: ServerState, path: string, httpServer) => {
   // set up a websocket server to listen to connections
   // console.log('path', path);
-  const wss = new WebSocketServer({
-    server,
+  const server = new WebSocketServer({
+    server: httpServer,
 
     // Note: phoenix websocket will connect to <endpoint>/websocket
     path: path ? `${path}/websocket` : undefined,
   });
 
   // pass that through to the phoenix mock
-  createPheonixMockSocketServer({ server: wss });
+  const wss = createPheonixMockSocketServer({ server });
 
-  // then do something clever to map events
-  // server.on({
-  //   'attempt:claim': noop,
-  //   'attempt:start': noop,
-  // })
+  wss.registerEvents('workers', {
+    [CLAIM]: (ws, event) => pullClaim(state, ws, event),
+  });
 
   const noop = () => {};
 
