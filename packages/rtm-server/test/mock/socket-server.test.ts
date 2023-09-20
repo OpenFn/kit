@@ -5,6 +5,7 @@ import createServer from '../../src/mock/lightning/socket-server';
 
 let socket;
 let server;
+let messages;
 
 const wait = (duration = 10) =>
   new Promise((resolve) => {
@@ -12,7 +13,8 @@ const wait = (duration = 10) =>
   });
 
 test.beforeEach(() => {
-  server = createServer();
+  messages = [];
+  server = createServer({ onMessage: (evt) => messages.push(evt) });
 
   socket = new phx.Socket('ws://localhost:8080');
   socket.connect();
@@ -113,3 +115,20 @@ test.serial('wait for message', async (t) => {
   const result = await server.waitForMessage('x', 'hello');
   t.truthy(result);
 });
+
+test.serial.only('onMessage', (t) => {
+  return new Promise((done) => {
+    const channel = socket.channel('x', {});
+    channel.join().receive('ok', async () => {
+      t.is(messages.length, 1)
+      t.is(messages[0].event, 'phx_join')
+
+      channel.push('hello', { x: 1 });
+      await server.waitForMessage('x', 'hello');
+      t.is(messages.length, 2)
+      t.is(messages[1].event, 'hello')
+      done()
+    })
+  })
+
+})

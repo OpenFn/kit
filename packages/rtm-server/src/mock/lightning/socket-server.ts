@@ -18,7 +18,7 @@ type PhoenixEvent = {
 
 type EventHandler = (event: string, payload: any) => void;
 
-function createServer({ port = 8080, server, state } = {}) {
+function createServer({ port = 8080, server, state, onMessage = () => {} } = {}) {
   // console.log('ws listening on', port);
   const channels: Record<Topic, Set<EventHandler>> = {};
 
@@ -69,6 +69,7 @@ function createServer({ port = 8080, server, state } = {}) {
   wsServer.on('connection', function (ws: WS, req) {
     ws.on('message', function (data: string) {
       const evt = JSON.parse(data) as PhoenixEvent;
+      onMessage(evt);
 
       if (evt.topic) {
         // phx sends this info in each message
@@ -108,10 +109,10 @@ function createServer({ port = 8080, server, state } = {}) {
     return new Promise((resolve) => {
       const listener = wsServer.listenToChannel(
         topic,
-        (e: string, payload: any) => {
-          if (e === event) {
+        (ws, e) => {
+          if (e.event === event) {
             listener.unsubscribe();
-            resolve(payload);
+            resolve(event);
           }
         }
       );
