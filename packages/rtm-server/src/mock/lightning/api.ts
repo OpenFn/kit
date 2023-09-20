@@ -103,7 +103,7 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
   const getCredential = (state, ws, evt) => {
     const { ref, topic, payload, event } = evt;
     const response = state.credentials[payload.id];
-    console.log(topic, event, response);
+    // console.log(topic, event, response);
     ws.send(
       JSON.stringify({
         event: `chan_reply_${ref}`,
@@ -135,7 +135,7 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
     );
   };
 
-  wss.registerEvents('workers', {
+  wss.registerEvents('attempts:queue', {
     [CLAIM]: (ws, event) => pullClaim(state, ws, event),
 
     // is this part of the general workers pool, or part of the attempt?

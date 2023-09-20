@@ -108,7 +108,7 @@ test.serial(
     new Promise(async (done) => {
       t.is(server.getQueueLength(), 0);
 
-      const channel = await join('workers');
+      const channel = await join('attempts:queue');
 
       // response is an array of attempt ids
       channel.push(CLAIM).receive('ok', (response) => {
@@ -135,7 +135,7 @@ test.serial(
       // a) each worker has its own channel, so claims are handed out privately
       // b) we use the 'ok' status to return work in the response
       // this b pattern is much nicer
-      const channel = await join('workers');
+      const channel = await join('attempts:queue');
 
       // response is an array of attempt ids
       channel.push(CLAIM).receive('ok', (response) => {
@@ -162,7 +162,7 @@ test.serial.skip(
       server.enqueueAttempt(attempt1);
       t.is(server.getQueueLength(), 3);
 
-      const channel = await join('workers');
+      const channel = await join('attempts:queue');
 
       // // response is an array of attempt ids
       // channel.push(CLAIM, { count: 3 }).receive('ok', (response) => {
@@ -207,7 +207,7 @@ test.serial('get attempt data through the attempt channel', async (t) => {
 });
 
 // TODO can't work out why this is failing - there's just no data in the response
-test.serial.skip('get credential through the attempt channel', async (t) => {
+test.serial.only('get credential through the attempt channel', async (t) => {
   return new Promise(async (done) => {
     server.startAttempt(attempt1.id);
     server.addCredential('a', credentials['a']);

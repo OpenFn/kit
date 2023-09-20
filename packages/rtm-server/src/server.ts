@@ -69,6 +69,12 @@ type ServerOptions = {
   logger?: Logger;
 };
 
+// this is the websocket API
+// basically a router
+const createAPI = (ws) => {
+  // register events against the socket
+};
+
 // for now all I wanna do is say hello
 const connectToLightning = (url: string, id: string) => {
   let socket = new Socket(url /*,{params: {userToken: "123"}}*/);
