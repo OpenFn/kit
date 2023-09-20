@@ -137,14 +137,10 @@ export const createNewAPI = (state: ServerState, path: string, httpServer) => {
 
   wss.registerEvents('attempts:queue', {
     [CLAIM]: (ws, event) => pullClaim(state, ws, event),
-
-    // is this part of the general workers pool, or part of the attempt?
-    // probably part of the attempt because we can control permissions
   });
 
   const startAttempt = (attemptId) => {
     // mark the attempt as started on the server
-    // TODO right now this duplicates logic in the dev API
     state.pending[attemptId] = {
       status: 'started',
     };

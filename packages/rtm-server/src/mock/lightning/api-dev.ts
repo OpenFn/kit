@@ -70,7 +70,6 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
 
   app.getResult = (attemptId: string) => state.results[attemptId]?.state;
 
-  // TODO maybe onAttemptClaimed? or claim attempt?
   app.startAttempt = (attemptId: string) => api.startAttempt(attemptId);
 
   app.registerAttempt = (attempt: any) => {

@@ -21,3 +21,6 @@ export const ATTEMPT_LOG = 'attempt:complete'; // level, namespace (job,runtime,
 
 // this should not happen - this is "could not execute" rather than "complete with errors"
 export const ATTEMPT_ERROR = 'attempt:error';
+
+export const RUN_START = 'run:start';
+export const RUN_COMPLETE = 'run:complete';

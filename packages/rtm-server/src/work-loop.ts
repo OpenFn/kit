@@ -9,22 +9,26 @@ export default (
   execute: (attempt: Attempt) => void
 ) => {
   const fetchWork = async () => {
-    // TODO what if this retuns like a 500?  Server down?
-    const result = await fetch(`${lightningUrl}/api/1/attempts/next`, {
-      method: 'POST',
-      body: JSON.stringify({ rtm_id: rtmId }),
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
-    if (result.body) {
-      const workflows = await result.json();
-      if (workflows.length) {
-        workflows.forEach(execute);
-        return true;
-      }
-    }
+    // TODO this needs to use the socket now
+    // use getWithReply to claim the attempt
+    // then call execute just with the id
+
+    // // TODO what if this retuns like a 500?  Server down?
+    // const result = await fetch(`${lightningUrl}/api/1/attempts/next`, {
+    //   method: 'POST',
+    //   body: JSON.stringify({ rtm_id: rtmId }),
+    //   headers: {
+    //     Accept: 'application/json',
+    //     'Content-Type': 'application/json',
+    //   },
+    // });
+    // if (result.body) {
+    //   const workflows = await result.json();
+    //   if (workflows.length) {
+    //     workflows.forEach(execute);
+    //     return true;
+    //   }
+    // }
     // throw to backoff and try again
     throw new Error('backoff');
   };

@@ -38,6 +38,12 @@ if (args.lightning === 'mock') {
   args.lightning = 'http://localhost:8888';
 }
 
+// TODO the rtm needs to take callbacks to load credential, and load state
+// these in turn should utilise the websocket
+// So either the server creates the runtime (which seems reasonable acutally?)
+// Or the server calls a setCalbacks({ credential, state }) function on the RTM
+// Each of these takes the attemptId as the firsdt argument
+// credential and state will lookup the right channel
 const rtm = createRTM('rtm', { repoDir: args.repoDir });
 logger.debug('RTM created');
 
