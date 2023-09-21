@@ -5,17 +5,25 @@
 // You can almost read this as a binding function and a bunch of handlers
 // it isn't an actual worker, but a BRIDGE between a worker and lightning
 import crypto from 'node:crypto';
-
+import phx from 'phoenix-channels';
+import { JSONLog } from '@openfn/logger';
 import convertAttempt from './util/convert-attempt';
 // this managers the worker
 //i would like functions to be testable, and I'd like the logic to be readable
 
-import { GET_ATTEMPT, RUN_START } from './events';
+import { ATTEMPT_LOG, GET_ATTEMPT, RUN_COMPLETE, RUN_START } from './events';
+import { Attempt } from './types';
 
-type Channel = any; // phx.Channel
+export type AttemptState = {
+  activeRun?: string;
+  activeJob?: string;
+  attempt: Attempt;
+};
+
+type Channel = typeof phx.Channel;
 
 // TODO move to util
-const getWithReply = (channel, event: string, payload?: any) =>
+const getWithReply = (channel: Channel, event: string, payload?: any) =>
   new Promise((resolve) => {
     channel.push(event, payload).receive('ok', (evt: any) => {
       resolve(evt);
@@ -23,27 +31,55 @@ const getWithReply = (channel, event: string, payload?: any) =>
     // TODO handle errors amd timeouts too
   });
 
-function onJobStart(channel, state, jobId) {
+export function onJobStart(
+  channel: Channel,
+  state: AttemptState,
+  jobId: string
+) {
   // generate a run id
   // write it to state
-  state.jobId = crypto.randomUUID();
+  state.activeRun = crypto.randomUUID();
+  state.activeJob = jobId;
 
   // post the correct event to the lightning via websocket
   // do we need to wait for a response? Well, not yet.
 
   channel.push(RUN_START, {
-    id: state.jobId,
-    job_id: jobId,
+    run_id: state.activeJob,
+    job_id: state.activeJob,
+
     // input_dataclip_id what about this guy?
   });
 }
 
-function onJobLog(channel, state) {
-  // we basically just forward the log to lightning
-  // but we also need to attach the log id
+export function onJobComplete(
+  channel: Channel,
+  state: AttemptState,
+  jobId: string
+) {
+  channel.push(RUN_COMPLETE, {
+    run_id: state.activeJob,
+    job_id: state.activeJob,
+    // input_dataclip_id what about this guy?
+  });
+
+  delete state.activeRun;
+  delete state.activeJob;
 }
 
-// TODO actually I think this is prepare
+export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
+  // we basically just forward the log to lightning
+  // but we also need to attach the log id
+  const evt = {
+    ...log,
+    attempt_id: state.attempt.id,
+  };
+  if (state.activeRun) {
+    evt.run_id = state.activeRun;
+  }
+  channel.push(ATTEMPT_LOG, evt);
+}
+
 export async function prepareAttempt(channel: Channel) {
   // first we get the attempt body through the socket
   const attemptBody = await getWithReply(channel, GET_ATTEMPT);
@@ -66,18 +102,21 @@ async function loadCredential(ws, attemptId, stateId) {}
 
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
-function execute(channel, rtm, attempt) {
+function execute(channel: Channel, rtm, attempt) {
   // tracking state for this attempt
-  const state = {
-    runId: '',
+  const state: AttemptState = {
+    attempt, // keep this on the state so that anyone can access it
   };
 
   // listen to rtm events
   // what if I can do this
   // this is super declarative
-  rtm.listen(attemptId, {
+  // TODO is there any danger of events coming through out of order?
+  // what if onJoblog takes 1 second to finish and before the runId is set, onJobLog comes through?
+  rtm.listen(attempt.id, {
     'job-start': (evt) => onJobStart(ws, state, evt),
-    'job-log': (evt) => onJobLog(ws, state),
+    'job-complete': (evt) => onJobComplete(ws, state, evt),
+    'job-log': (evt) => onJobLog(ws, state, evt),
   });
 
   rtm.execute(attempt);

@@ -1,7 +1,18 @@
 import test from 'ava';
-import { GET_ATTEMPT } from '../src/events';
-import { prepareAttempt } from '../src/worker';
+import {
+  GET_ATTEMPT,
+  RUN_START,
+  RUN_COMPLETE,
+  ATTEMPT_LOG,
+} from '../src/events';
+import {
+  prepareAttempt,
+  onJobStart,
+  onJobComplete,
+  onJobLog,
+} from '../src/worker';
 import { attempts } from './mock/data';
+import { JSONLog } from '@openfn/logger';
 
 // This is a fake/mock websocket used by mocks
 
@@ -65,6 +76,7 @@ test('prepareAttempt should get the attempt body', async (t) => {
     [GET_ATTEMPT]: () => {
       // TODO should be no payload (or empty payload)
       didCallGetAttempt = true;
+      return attempt;
     },
   });
 
@@ -93,6 +105,149 @@ test('prepareAttempt should return an execution plan', async (t) => {
   });
 });
 
-test.skip('jobStart should emit the run id', () => {});
+test('jobStart should set a run id and active job on state', async (t) => {
+  const attempt = attempts['attempt-1'];
+  const jobId = 'job-1';
+
+  const state = {
+    attempt,
+  };
+
+  const channel = mockChannel({});
+
+  onJobStart(channel, state, jobId);
+
+  t.is(state.activeJob, jobId);
+  t.truthy(state.activeRun);
+});
+
+test('jobStart should send a run:start event', async (t) => {
+  return new Promise((done) => {
+    const attempt = attempts['attempt-1'];
+    const jobId = 'job-1';
+
+    const state = {
+      attempt,
+    };
+
+    const channel = mockChannel({
+      [RUN_START]: (evt) => {
+        t.is(evt.job_id, jobId);
+        t.truthy(evt.run_id);
+
+        done();
+      },
+    });
+
+    onJobStart(channel, state, jobId);
+  });
+});
+
+test('jobEnd should clear the run id and active job on state', async (t) => {
+  const attempt = attempts['attempt-1'];
+  const jobId = 'job-1';
+
+  const state = {
+    attempt,
+    activeJob: jobId,
+    activeRun: 'b',
+  };
+
+  const channel = mockChannel({});
+
+  onJobComplete(channel, state, jobId);
+
+  t.falsy(state.activeJob);
+  t.falsy(state.activeRun);
+});
+
+test('jobComplete should send a run:complete event', async (t) => {
+  return new Promise((done) => {
+    const attempt = attempts['attempt-1'];
+    const jobId = 'job-1';
+
+    const state = {
+      attempt,
+      activeJob: jobId,
+      activeRun: 'b',
+    };
+
+    const channel = mockChannel({
+      [RUN_COMPLETE]: (evt) => {
+        t.is(evt.job_id, jobId);
+        t.truthy(evt.run_id);
+
+        done();
+      },
+    });
+
+    onJobComplete(channel, state, jobId);
+  });
+});
+
+test('jobLog should should send a log event outside a run', async (t) => {
+  return new Promise((done) => {
+    const attempt = attempts['attempt-1'];
+
+    const log: JSONLog = {
+      name: 'R/T',
+      level: 'info',
+      time: new Date().getTime(),
+      message: ['ping'],
+    };
+
+    const result = {
+      ...log,
+      attempt_id: attempt.id,
+    };
+
+    const state = {
+      attempt,
+      // No active run
+    };
+
+    const channel = mockChannel({
+      [ATTEMPT_LOG]: (evt) => {
+        t.deepEqual(evt, result);
+        done();
+      },
+    });
+
+    onJobLog(channel, state, log);
+  });
+});
+
+test('jobLog should should send a log event inside a run', async (t) => {
+  return new Promise((done) => {
+    const attempt = attempts['attempt-1'];
+    const jobId = 'job-1';
+
+    const log: JSONLog = {
+      name: 'R/T',
+      level: 'info',
+      time: new Date().getTime(),
+      message: ['ping'],
+    };
+
+    const state = {
+      attempt,
+      activeJob: jobId,
+      activeRun: 'b',
+    };
+
+    const channel = mockChannel({
+      [ATTEMPT_LOG]: (evt) => {
+        t.truthy(evt.run_id);
+        t.deepEqual(evt.message, log.message);
+        t.is(evt.level, log.level);
+        t.is(evt.name, log.name);
+        t.is(evt.time, log.time);
+        done();
+      },
+    });
+
+    onJobLog(channel, state, log);
+  });
+});
 
 // TODO test the whole execute workflow
