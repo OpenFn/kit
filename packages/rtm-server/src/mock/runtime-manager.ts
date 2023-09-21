@@ -84,7 +84,7 @@ function createMock(
     // TODO maybe lazy load the job from an id
     const { id, expression, configuration } = job;
     if (typeof configuration === 'string') {
-      // Fetch the credntial but do nothing with it
+      // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
       await resolvers.credentials(configuration);
     }
@@ -146,6 +146,9 @@ function createMock(
     once,
     execute,
     getStatus,
+    setResolvers: (r: LazyResolvers) => {
+      resolvers = r;
+    },
   };
 }
 

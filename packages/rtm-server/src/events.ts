@@ -24,3 +24,5 @@ export const ATTEMPT_ERROR = 'attempt:error';
 
 export const RUN_START = 'run:start';
 export const RUN_COMPLETE = 'run:complete';
+
+// TODO I'd like to create payload type for each event, so that we have a central definition

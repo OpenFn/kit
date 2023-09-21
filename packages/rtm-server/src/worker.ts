@@ -13,11 +13,12 @@ import convertAttempt from './util/convert-attempt';
 
 import { ATTEMPT_LOG, GET_ATTEMPT, RUN_COMPLETE, RUN_START } from './events';
 import { Attempt } from './types';
+import { ExecutionPlan } from '@openfn/runtime';
 
 export type AttemptState = {
   activeRun?: string;
   activeJob?: string;
-  attempt: Attempt;
+  plan: ExecutionPlan;
 };
 
 type Channel = typeof phx.Channel;
@@ -72,7 +73,7 @@ export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
   // but we also need to attach the log id
   const evt = {
     ...log,
-    attempt_id: state.attempt.id,
+    attempt_id: state.plan.id,
   };
   if (state.activeRun) {
     evt.run_id = state.activeRun;
@@ -82,7 +83,7 @@ export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
 
 export async function prepareAttempt(channel: Channel) {
   // first we get the attempt body through the socket
-  const attemptBody = await getWithReply(channel, GET_ATTEMPT);
+  const attemptBody = (await getWithReply(channel, GET_ATTEMPT)) as Attempt;
 
   // then we generate the execution plan
   const plan = convertAttempt(attemptBody);
@@ -102,10 +103,13 @@ async function loadCredential(ws, attemptId, stateId) {}
 
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
-function execute(channel: Channel, rtm, attempt) {
+// TODO actually this now is a Workflow or Execution plan
+// It's not an attempt anymore
+export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
   // tracking state for this attempt
   const state: AttemptState = {
-    attempt, // keep this on the state so that anyone can access it
+    //attempt, // keep this on the state so that anyone can access it
+    plan,
   };
 
   // listen to rtm events
@@ -113,11 +117,11 @@ function execute(channel: Channel, rtm, attempt) {
   // this is super declarative
   // TODO is there any danger of events coming through out of order?
   // what if onJoblog takes 1 second to finish and before the runId is set, onJobLog comes through?
-  rtm.listen(attempt.id, {
-    'job-start': (evt) => onJobStart(ws, state, evt),
-    'job-complete': (evt) => onJobComplete(ws, state, evt),
-    'job-log': (evt) => onJobLog(ws, state, evt),
+  rtm.listen(plan.id, {
+    'job-start': (evt) => onJobStart(plan, state, evt),
+    'job-complete': (evt) => onJobComplete(plan, state, evt),
+    'job-log': (evt) => onJobLog(plan, state, evt),
   });
 
-  rtm.execute(attempt);
+  rtm.execute(plan);
 }
