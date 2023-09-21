@@ -30,10 +30,24 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
     state.credentials[id] = cred;
   };
 
+  app.getCredential = (id: string) => state.credentials[id];
+
   app.addDataclip = (id: string, data: any) => {
     logger.info(`Add dataclip ${id}`);
     state.dataclips[id] = data;
   };
+
+  app.getDataclip = (id: string) => state.dataclips[id];
+
+  app.enqueueAttempt = (attempt: Attempt) => {
+    state.attempts[attempt.id] = attempt;
+    state.results[attempt.id] = {};
+    state.queue.push(attempt.id);
+  };
+
+  app.getAttempt = (id: string) => state.attempts[id];
+
+  app.getState = () => state;
 
   // Promise which returns when a workflow is complete
   app.waitForResult = (attemptId: string) => {
@@ -48,19 +62,6 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
     });
   };
 
-  // Add an attempt to the queue
-  // TODO actually it shouldn't take an rtm id until it's pulled off the attempt
-  // Something feels off here
-  app.enqueueAttempt = (attempt: Attempt, rtmId: string = 'rtm') => {
-    logger.info(`Add Attempt ${attempt.id}`);
-
-    state.results[attempt.id] = {
-      rtmId,
-      state: null,
-    };
-    state.queue.push(attempt);
-  };
-
   app.reset = () => {
     state.queue = [];
     state.results = {};
@@ -72,6 +73,7 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
 
   app.startAttempt = (attemptId: string) => api.startAttempt(attemptId);
 
+  // TODO probably remove?
   app.registerAttempt = (attempt: any) => {
     state.attempts[attempt.id] = attempt;
   };
@@ -91,17 +93,29 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
 
 // Set up some rest endpoints
 // Note that these are NOT prefixed
-const setupRestAPI = (app: DevApp, _state: ServerState, logger: Logger) => {
+const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
   const router = new Router();
 
   router.post('/attempt', (ctx) => {
-    const data = ctx.request.body;
-    const rtmId = 'rtm'; // TODO include this in the body maybe?
-    if (!data.id) {
-      data.id = crypto.randomUUID();
-      logger.info('Generating new id for incoming attempt:', data.id);
+    const attempt = ctx.request.body;
+
+    logger.info('Adding new attempt to queue:', attempt.id);
+
+    if (!attempt.id) {
+      attempt.id = crypto.randomUUID();
+      logger.info('Generating new id for incoming attempt:', attempt.id);
     }
-    app.enqueueAttempt(data, rtmId);
+
+    // convert credentials and dataclips
+    attempt.jobs.forEach((job) => {
+      if (job.credential) {
+        const cid = crypto.randomUUID();
+        state.credentials[cid] = job.credential;
+        job.credential = cid;
+      }
+    });
+
+    app.enqueueAttempt(attempt);
 
     ctx.response.status = 200;
   });

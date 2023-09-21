@@ -5,10 +5,15 @@ import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
 import websockify from 'koa-websocket';
 import route from 'koa-route';
-import { createMockLogger, LogLevel, Logger } from '@openfn/logger';
+import createLogger, {
+  createMockLogger,
+  LogLevel,
+  Logger,
+} from '@openfn/logger';
 
 import createServer from './socket-server';
-import createAPI, { createNewAPI } from './api';
+import createAPI from './api';
+import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 import { Attempt } from '../../types';
 
@@ -56,13 +61,25 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const app = new Koa();
   app.use(bodyParser());
 
-  const server = app.listen(options.port || 8888);
+  const port = options.port || 8888;
+  const server = app.listen(port);
+  logger.info('Listening on ', port);
 
   // Setup the websocket API
-  const api = createNewAPI(state, '/api', server);
+  const api = createWebSocketAPI(
+    state,
+    '/api',
+    server,
+    options.logger && logger
+  );
 
-  const klogger = koaLogger((str) => logger.debug(str));
-  app.use(klogger);
+  // Only create a http logger if there's a top-level logger passed
+  // This is a bit flaky really but whatever
+  if (options.logger) {
+    const httpLogger = createLogger('HTTP', { level: 'debug' });
+    const klogger = koaLogger((str) => httpLogger.debug(str));
+    app.use(klogger);
+  }
 
   // Mock API endpoints
   // TODO should we keep the REST interface for local debug?

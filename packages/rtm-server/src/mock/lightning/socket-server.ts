@@ -18,8 +18,14 @@ type PhoenixEvent = {
 
 type EventHandler = (event: string, payload: any) => void;
 
-function createServer({ port = 8080, server, state, onMessage = () => {} } = {}) {
-  // console.log('ws listening on', port);
+function createServer({
+  port = 8080,
+  server,
+  state,
+  logger,
+  onMessage = () => {},
+} = {}) {
+  logger?.info('pheonix mock websocket server listening on', port);
   const channels: Record<Topic, Set<EventHandler>> = {};
 
   const wsServer =
@@ -31,14 +37,12 @@ function createServer({ port = 8080, server, state, onMessage = () => {} } = {})
   const events = {
     // testing (TODO shouldn't this be in a specific channel?)
     ping: (ws, { topic, ref }) => {
-      ws.send(
-        JSON.stringify({
-          topic,
-          ref,
-          event: 'pong',
-          payload: {},
-        })
-      );
+      ws.sendJSON({
+        topic,
+        ref,
+        event: 'pong',
+        payload: {},
+      });
     },
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
     phx_join: (ws, { event, topic, ref }) => {
@@ -53,20 +57,44 @@ function createServer({ port = 8080, server, state, onMessage = () => {} } = {})
           response = 'invalid_attempt';
         }
       }
-      ws.send(
-        JSON.stringify({
-          // here is the magic reply event
-          // see channel.replyEventName
-          event: `chan_reply_${ref}`,
-          topic,
-          payload: { status, response },
-          ref,
-        })
-      );
+      ws.reply({
+        topic,
+        payload: { status, response },
+        ref,
+      });
     },
   };
 
   wsServer.on('connection', function (ws: WS, req) {
+    // TODO need to be logging here really
+    logger?.info('new connection');
+
+    ws.reply = ({ ref, topic, payload }: PhoenixEvent) => {
+      logger?.debug(
+        `<< [${topic}] chan_reply_${ref} ` + JSON.stringify(payload)
+      );
+      ws.send(
+        JSON.stringify({
+          event: `chan_reply_${ref}`,
+          ref,
+          topic,
+          payload,
+        })
+      );
+    };
+
+    ws.sendJSON = ({ event, ref, topic, payload }: PhoenixEvent) => {
+      logger?.debug(`<< [${topic}] ${event} ` + JSON.stringify(payload));
+      ws.send(
+        JSON.stringify({
+          event,
+          ref,
+          topic,
+          payload,
+        })
+      );
+    };
+
     ws.on('message', function (data: string) {
       const evt = JSON.parse(data) as PhoenixEvent;
       onMessage(evt);
@@ -74,6 +102,10 @@ function createServer({ port = 8080, server, state, onMessage = () => {} } = {})
       if (evt.topic) {
         // phx sends this info in each message
         const { topic, event, payload, ref } = evt;
+
+        logger?.debug(
+          `>> [${topic}] ${event} ${ref} :: ${JSON.stringify(payload)}`
+        );
 
         if (events[event]) {
           // handle system/phoenix events
@@ -107,15 +139,12 @@ function createServer({ port = 8080, server, state, onMessage = () => {} } = {})
 
   wsServer.waitForMessage = (topic: Topic, event: string) => {
     return new Promise((resolve) => {
-      const listener = wsServer.listenToChannel(
-        topic,
-        (ws, e) => {
-          if (e.event === event) {
-            listener.unsubscribe();
-            resolve(event);
-          }
+      const listener = wsServer.listenToChannel(topic, (ws, e) => {
+        if (e.event === event) {
+          listener.unsubscribe();
+          resolve(event);
         }
-      );
+      });
     });
   };
 
