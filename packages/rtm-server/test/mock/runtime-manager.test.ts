@@ -42,7 +42,7 @@ test('Dispatch start events for a new workflow', async (t) => {
   rtm.execute(sampleWorkflow);
   const evt = await waitForEvent<WorkflowStartEvent>(rtm, 'workflow-start');
   t.truthy(evt);
-  t.is(evt.id, 'w1');
+  t.is(evt.workflowId, 'w1');
 });
 
 test('getStatus should report one active workflow', async (t) => {
@@ -64,7 +64,7 @@ test('Dispatch complete events when a workflow completes', async (t) => {
   );
 
   t.truthy(evt);
-  t.is(evt.id, 'w1');
+  t.is(evt.workflowId, 'w1');
   t.truthy(evt.state);
 });
 
@@ -74,8 +74,8 @@ test('Dispatch start events for a job', async (t) => {
   rtm.execute(sampleWorkflow);
   const evt = await waitForEvent<JobStartEvent>(rtm, 'job-start');
   t.truthy(evt);
-  t.is(evt.id, 'j1');
-  t.truthy(evt.runId);
+  t.is(evt.workflowId, 'w1');
+  t.is(evt.jobId, 'j1');
 });
 
 test('Dispatch complete events for a job', async (t) => {
@@ -84,8 +84,8 @@ test('Dispatch complete events for a job', async (t) => {
   rtm.execute(sampleWorkflow);
   const evt = await waitForEvent<JobCompleteEvent>(rtm, 'job-complete');
   t.truthy(evt);
-  t.is(evt.id, 'j1');
-  t.truthy(evt.runId);
+  t.is(evt.workflowId, 'w1');
+  t.is(evt.jobId, 'j1');
   t.truthy(evt.state);
 });
 
@@ -123,4 +123,61 @@ test('resolve credential before job-start if credential is a string', async (t) 
 
   await waitForEvent<WorkflowCompleteEvent>(rtm, 'job-start');
   t.true(didCallCredentials);
+});
+
+test('listen to events', async (t) => {
+  const rtm = create();
+
+  const called = {
+    'job-start': false,
+    'job-complete': false,
+    log: false,
+    'workflow-start': false,
+    'workflow-complete': false,
+  };
+
+  rtm.listen(sampleWorkflow.id, {
+    'job-start': ({ workflowId, jobId }) => {
+      called['job-start'] = true;
+      t.is(workflowId, sampleWorkflow.id);
+      t.is(jobId, sampleWorkflow.jobs[0].id);
+    },
+    'job-complete': ({ workflowId, jobId }) => {
+      called['job-complete'] = true;
+      t.is(workflowId, sampleWorkflow.id);
+      t.is(jobId, sampleWorkflow.jobs[0].id);
+      // TODO includes state?
+    },
+    log: ({ workflowId, message }) => {
+      called['log'] = true;
+      t.is(workflowId, sampleWorkflow.id);
+      t.truthy(message);
+    },
+    'workflow-start': ({ workflowId }) => {
+      called['workflow-start'] = true;
+      t.is(workflowId, sampleWorkflow.id);
+    },
+    'workflow-complete': ({ workflowId }) => {
+      called['workflow-complete'] = true;
+      t.is(workflowId, sampleWorkflow.id);
+    },
+  });
+
+  rtm.execute(sampleWorkflow);
+  await waitForEvent<WorkflowCompleteEvent>(rtm, 'workflow-complete');
+  t.assert(Object.values(called).every((v) => v === true));
+});
+
+test('only listen to events for the correct workflow', async (t) => {
+  const rtm = create();
+
+  rtm.listen('bobby mcgee', {
+    'workflow-start': ({ workflowId }) => {
+      throw new Error('should not have called this!!');
+    },
+  });
+
+  rtm.execute(sampleWorkflow);
+  await waitForEvent<WorkflowCompleteEvent>(rtm, 'workflow-complete');
+  t.pass();
 });

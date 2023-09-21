@@ -28,26 +28,29 @@ export type RTMEvent =
   | 'workflow-error'; // ?
 
 export type JobStartEvent = {
-  id: string; // job id
+  workflowId: string;
+  jobId: string;
   runId: string; // run id. Not sure we need this.
 };
 
 export type JobCompleteEvent = {
-  id: string; // job id
-  runId: string; // run id. Not sure we need this.
+  workflowId: string;
+  jobId: string;
   state: State; // do we really want to publish the intermediate events? Could be important, but also could be sensitive
   // I suppose at this level yes, we should publish it
 };
 
 export type WorkflowStartEvent = {
-  id: string; // workflow id
+  workflowId: string;
 };
 
 export type WorkflowCompleteEvent = {
-  id: string; // workflow id
+  workflowId: string;
   state?: object;
   error?: any;
 };
+
+// TODO log event optionally has a job id
 
 let jobId = 0;
 const getNewJobId = () => `${++jobId}`;
@@ -65,8 +68,12 @@ function createMock(
 ) {
   const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
+  const listeners: Record<string, any> = {};
 
   const dispatch = (type: RTMEvent, args?: any) => {
+    if (args.workflowId) {
+      listeners[args.workflowId]?.[type]?.(args);
+    }
     // TODO add performance metrics to every event?
     bus.emit(type, args);
 
@@ -80,9 +87,19 @@ function createMock(
     bus.once(event, fn);
   };
 
-  const executeJob = async (job: JobPlan, initialState = {}) => {
+  // Listens to events for a particular workflow/execution plan
+  // TODO: Listeners will be removed when the plan is complete (?)
+  const listen = (
+    planId: string,
+    events: Record<keyof JobCompleteEvent, (evt: any) => void>
+  ) => {
+    listeners[planId] = events;
+  };
+
+  const executeJob = async (workflowId, job: JobPlan, initialState = {}) => {
     // TODO maybe lazy load the job from an id
     const { id, expression, configuration } = job;
+    const jobId = id;
     if (typeof configuration === 'string') {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
@@ -94,20 +111,24 @@ function createMock(
 
     // Get the job details from lightning
     // start instantly and emit as it goes
-    dispatch('job-start', { id, runId });
+    dispatch('job-start', { workflowId, jobId });
 
     let state = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
       state = JSON.parse(expression);
       // What does this look like? Should be a logger object
-      dispatch('log', { message: ['Parsing expression as JSON state'] });
-      dispatch('log', { message: [state] });
+      dispatch('log', {
+        workflowId,
+        jobId,
+        message: ['Parsing expression as JSON state'],
+      });
+      dispatch('log', { workflowId, jobId, message: [state] });
     } catch (e) {
       // Do nothing, it's fine
     }
 
-    dispatch('job-complete', { id, runId, state });
+    dispatch('job-complete', { workflowId, jobId, state });
 
     return state;
   };
@@ -116,18 +137,21 @@ function createMock(
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
   const execute = (xplan: ExecutionPlan) => {
     const { id, jobs } = xplan;
+    const workflowId = id;
     activeWorkflows[id!] = true;
     setTimeout(() => {
-      dispatch('workflow-start', { id });
+      dispatch('workflow-start', { workflowId });
       setTimeout(async () => {
         let state = {};
         // Trivial job reducer in our mock
         for (const job of jobs) {
-          state = await executeJob(job, state);
+          state = await executeJob(id, job, state);
         }
         setTimeout(() => {
           delete activeWorkflows[id!];
-          dispatch('workflow-complete', { id, state });
+          dispatch('workflow-complete', { workflowId, state });
+          // TODO on workflow complete we should maybe tidy the listeners?
+          // Doesn't really matter in the mock though
         }, 1);
       }, 1);
     }, 1);
@@ -149,6 +173,7 @@ function createMock(
     setResolvers: (r: LazyResolvers) => {
       resolvers = r;
     },
+    listen,
   };
 }
 
