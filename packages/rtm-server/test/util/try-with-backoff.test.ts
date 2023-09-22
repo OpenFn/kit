@@ -56,5 +56,41 @@ test('throw if maximum attempts (5) reached', async (t) => {
   t.is(callCount, 5);
 });
 
-// TODO allow to be cancelled
+test('cancel', async (t) => {
+  let callCount = 0;
+
+  const fn = () => {
+    callCount++;
+    throw new Error('test');
+  };
+
+  const p = tryWithBackoff(fn);
+  p.cancel();
+
+  return p.then(() => {
+    // Cancelling won't interrupt the first callback, but it will stop it being called again
+    t.is(callCount, 1);
+    t.pass();
+  });
+});
+
+test('cancel nested promise', async (t) => {
+  let callCount = 0;
+
+  const fn = () => {
+    callCount++;
+    if (callCount > 1) {
+      p.cancel();
+    }
+    throw new Error('test');
+  };
+
+  const p = tryWithBackoff(fn);
+
+  return p.then(() => {
+    t.is(callCount, 2);
+    t.pass();
+  });
+});
+
 // TODO test increasing backoffs

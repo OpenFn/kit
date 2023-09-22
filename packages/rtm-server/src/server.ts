@@ -10,12 +10,15 @@
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
+import phx from 'phoenix-channels';
+import { createMockLogger, Logger } from '@openfn/logger';
 
 import createAPI from './api';
-import startWorkLoop from './work-loop';
+// import startWorkLoop from './work-loop';
+import { tryWithBackoff } from './util';
 import convertAttempt from './util/convert-attempt';
 import { Attempt } from './types';
-import { createMockLogger, Logger } from '@openfn/logger';
+import { CLAIM } from './events';
 
 const postResult = async (
   rtmId: string,
@@ -75,12 +78,61 @@ const createAPI = (ws) => {
   // register events against the socket
 };
 
-// for now all I wanna do is say hello
-const connectToLightning = (url: string, id: string) => {
-  let socket = new Socket(url /*,{params: {userToken: "123"}}*/);
-  socket.connect();
-  const channel = socket.channel('worker');
-  channel.push('hello');
+// This will open up a websocket channel to lightning
+// TODO auth
+export const connectToLightning = (
+  endpoint: string,
+  id: string,
+  Socket = phx.Socket
+) => {
+  return new Promise((done) => {
+    let socket = new Socket(endpoint /*,{params: {userToken: "123"}}*/);
+    socket.connect();
+
+    // join the queue channel
+    const channel = socket.channel('attempts:queue');
+
+    channel.join().receive('ok', () => {
+      done(channel);
+    });
+  });
+};
+
+// TODO this needs to return some kind of cancel function
+export const startWorkloop = (channel, execute, delay = 100) => {
+  let promise;
+  let cancelled = false;
+
+  const request = () => {
+    channel.push(CLAIM).receive('ok', (attempts) => {
+      if (!attempts.length) {
+        // throw to backoff and try again
+        throw new Error('backoff');
+      }
+      attempts.forEach((attempt) => {
+        execute(attempt);
+      });
+    });
+  };
+
+  const workLoop = () => {
+    if (!cancelled) {
+      promise = tryWithBackoff(request, { timeout: delay });
+      // promise.then(workLoop).catch(() => {
+      //   // this means the backoff expired
+      //   // which right now it won't ever do
+      //   // but what's the plan?
+      //   // log and try again I guess?
+      //   workLoop();
+      // });
+    }
+  };
+  workLoop();
+
+  return () => {
+    cancelled = true;
+    promise.cancel();
+  };
 };
 
 function createServer(rtm: any, options: ServerOptions = {}) {

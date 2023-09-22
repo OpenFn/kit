@@ -1,3 +1,4 @@
+/// Thhis is basically deprecated
 import Koa from 'koa';
 import type { ServerState } from './server';
 import { AttemptCompleteBody } from './api';
