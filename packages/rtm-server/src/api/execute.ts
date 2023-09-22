@@ -7,12 +7,12 @@
 import crypto from 'node:crypto';
 import phx from 'phoenix-channels';
 import { JSONLog } from '@openfn/logger';
-import convertAttempt from './util/convert-attempt';
+import convertAttempt from '../util/convert-attempt';
 // this managers the worker
 //i would like functions to be testable, and I'd like the logic to be readable
 
-import { ATTEMPT_LOG, GET_ATTEMPT, RUN_COMPLETE, RUN_START } from './events';
-import { Attempt } from './types';
+import { ATTEMPT_LOG, GET_ATTEMPT, RUN_COMPLETE, RUN_START } from '../events';
+import { Attempt } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
 
 export type AttemptState = {
@@ -24,6 +24,7 @@ export type AttemptState = {
 type Channel = typeof phx.Channel;
 
 // TODO move to util
+
 const getWithReply = (channel: Channel, event: string, payload?: any) =>
   new Promise((resolve) => {
     channel.push(event, payload).receive('ok', (evt: any) => {
@@ -32,6 +33,7 @@ const getWithReply = (channel: Channel, event: string, payload?: any) =>
     // TODO handle errors amd timeouts too
   });
 
+// TODO maybe move all event handlers into api/events/*
 export function onJobStart(
   channel: Channel,
   state: AttemptState,

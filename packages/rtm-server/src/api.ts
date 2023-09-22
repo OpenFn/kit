@@ -12,13 +12,17 @@ import workflow from './middleware/workflow';
 // Should have diagnostic and reporting APIs
 // maybe even a simple frontend?
 
-const createAPI = (logger: Logger, execute: any) => {
+const createAPI = (app: any, logger: Logger) => {
   const router = new Router();
 
   router.get('/healthcheck', healthcheck);
 
   // Dev API to run a workflow
+  // This is totally wrong now
   router.post('/workflow', workflow(execute, logger));
+
+  app.use(router.routes());
+  app.use(router.allowedMethods());
 
   return router;
 };

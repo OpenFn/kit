@@ -1,13 +1,11 @@
+import { CancelablePromise } from '../types';
+
 type Options = {
   attempts?: number;
   maxAttempts?: number;
   maxBackoff?: number;
   timeout?: number;
   isCancelled?: () => boolean;
-};
-
-type CancelablePromise = Promise<void> & {
-  cancel: () => void;
 };
 
 const MAX_BACKOFF = 1000 * 60;

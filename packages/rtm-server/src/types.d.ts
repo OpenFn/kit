@@ -47,6 +47,10 @@ export type Attempt = {
   worker?: string;
 };
 
+export type CancelablePromise = Promise<void> & {
+  cancel: () => void;
+};
+
 // type RuntimeExecutionPlanID = string;
 
 // type JobEdge = {

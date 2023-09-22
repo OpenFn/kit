@@ -1,20 +1,22 @@
 import test from 'ava';
+import { JSONLog } from '@openfn/logger';
+
 import {
   GET_ATTEMPT,
   RUN_START,
   RUN_COMPLETE,
   ATTEMPT_LOG,
-} from '../src/events';
+} from '../../src/events';
 import {
   prepareAttempt,
   onJobStart,
   onJobComplete,
   onJobLog,
   execute,
-} from '../src/worker';
-import { attempts } from './mock/data';
-import { JSONLog } from '@openfn/logger';
-import createMockRTM from '../src/mock/runtime-manager';
+} from '../../src/api/execute';
+import createMockRTM from '../../src/mock/runtime-manager';
+import { attempts } from '../mock/data';
+import { mockChannel } from '../util';
 
 // This is a fake/mock websocket used by mocks
 

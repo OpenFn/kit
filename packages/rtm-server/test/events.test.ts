@@ -1,3 +1,4 @@
+// TODO This can all be removed
 /**
  * Unit tests on events published by the rtm-server
  * No lightning involved here
@@ -16,7 +17,7 @@ test.before(() => {
   server = createRTMServer(rtm, { port: 2626 });
 });
 
-test.serial(
+test.serial.skip(
   'trigger a workflow-start event when execution starts',
   async (t) => {
     server.execute({
@@ -34,7 +35,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial.skip(
   'trigger a workflow-complete event when execution completes',
   async (t) => {
     server.execute({
