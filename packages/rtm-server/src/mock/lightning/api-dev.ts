@@ -42,6 +42,9 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
   app.enqueueAttempt = (attempt: Attempt) => {
     state.attempts[attempt.id] = attempt;
     state.results[attempt.id] = {};
+    state.pending[attempt.id] = {
+      status: 'queued',
+    };
     state.queue.push(attempt.id);
   };
 
@@ -100,6 +103,7 @@ const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
     const attempt = ctx.request.body;
 
     logger.info('Adding new attempt to queue:', attempt.id);
+    logger.debug(attempt);
 
     if (!attempt.id) {
       attempt.id = crypto.randomUUID();

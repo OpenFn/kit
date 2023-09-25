@@ -19,7 +19,7 @@ const createAPI = (app: any, logger: Logger) => {
 
   // Dev API to run a workflow
   // This is totally wrong now
-  router.post('/workflow', workflow(execute, logger));
+  // router.post('/workflow', workflow(execute, logger));
 
   app.use(router.routes());
   app.use(router.allowedMethods());

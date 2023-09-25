@@ -8,13 +8,17 @@ const startWorkloop = (channel, execute, delay = 100) => {
   let cancelled = false;
 
   const request = () => {
-    channel.push(CLAIM).receive('ok', (attempts) => {
-      if (!attempts.length) {
-        // throw to backoff and try again
-        throw new Error('backoff');
-      }
-      attempts.forEach((attempt) => {
-        execute(attempt);
+    return new Promise<void>((resolve, reject) => {
+      channel.push(CLAIM).receive('ok', (attempts) => {
+        if (!attempts?.length) {
+          // throw to backoff and try again
+          return reject(new Error('backoff'));
+        }
+
+        attempts.forEach((attempt) => {
+          execute(attempt);
+          resolve();
+        });
       });
     });
   };

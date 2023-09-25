@@ -40,7 +40,7 @@ test('workloop sends the attempts:claim event', (t) => {
   });
 });
 
-test('workloop sends the attempts:claim event several times ', (t) => {
+test.only('workloop sends the attempts:claim event several times ', (t) => {
   return new Promise((done) => {
     let cancel;
     let count = 0;

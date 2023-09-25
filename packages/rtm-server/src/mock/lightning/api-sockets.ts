@@ -6,7 +6,13 @@ import type { ServerState } from './server';
 import { extractAttemptId } from './util';
 
 import createPheonixMockSocketServer from './socket-server';
-import { CLAIM, GET_ATTEMPT, GET_CREDENTIAL, GET_DATACLIP } from '../../events';
+import {
+  ATTEMPT_COMPLETE,
+  CLAIM,
+  GET_ATTEMPT,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
+} from '../../events';
 
 // this new API is websocket based
 // Events map to handlers
@@ -60,7 +66,7 @@ const createSocketAPI = (
       payload.response.push(next);
       count -= 1;
 
-      startAttempt(next.id);
+      startAttempt(next);
     }
     if (payload.response.length) {
       logger?.info(`Claiming ${payload.response.length} attempts`);
@@ -114,6 +120,30 @@ const createSocketAPI = (
     });
   };
 
+  // TODO why is this firing a million times?
+  const handleAttemptComplete = (state, ws, evt) => {
+    const { id, ref, topic, dataclip } = evt;
+
+    // TODO use proper logger
+    console.log('Completed attempted ', id);
+    console.log(dataclip);
+
+    // TODO what does the mock do here?
+    // well, we should acknowlege
+    // Should we error if there's no dataclip?
+    // but who does that help?
+    ws.reply({
+      ref,
+      topic,
+      payload: {
+        status: 'ok',
+        // response: {
+        //   dataclip,
+        // },
+      },
+    });
+  };
+
   wss.registerEvents('attempts:queue', {
     [CLAIM]: (ws, event) => pullClaim(state, ws, event),
   });
@@ -132,6 +162,8 @@ const createSocketAPI = (
       [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
       [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
       [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
+      [ATTEMPT_COMPLETE]: (ws, event) =>
+        handleAttemptComplete(state, ws, { id: attemptId, ...event }),
     });
   };
 

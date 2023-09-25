@@ -51,6 +51,7 @@ function createServer({
 
       // TODO is this logic in the right place?
       if (topic.startsWith(ATTEMPT_PREFIX)) {
+        console.log(state);
         const attemptId = extractAttemptId(topic);
         if (!state.pending[attemptId]) {
           status = 'error';

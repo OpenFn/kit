@@ -4,6 +4,7 @@ import { hideBin } from 'yargs/helpers';
 import createLogger from '@openfn/logger';
 
 import createRTM from '@openfn/runtime-manager';
+import createMockRTM from './mock/runtime-manager';
 import createRTMServer from './server';
 
 type Args = {
@@ -35,7 +36,7 @@ const args = yargs(hideBin(process.argv))
   .parse() as Args;
 
 if (args.lightning === 'mock') {
-  args.lightning = 'http://localhost:8888';
+  args.lightning = 'ws://localhost:8888/api';
 }
 
 // TODO the rtm needs to take callbacks to load credential, and load state
@@ -44,8 +45,12 @@ if (args.lightning === 'mock') {
 // Or the server calls a setCalbacks({ credential, state }) function on the RTM
 // Each of these takes the attemptId as the firsdt argument
 // credential and state will lookup the right channel
-const rtm = createRTM('rtm', { repoDir: args.repoDir });
-logger.debug('RTM created');
+// const rtm = createRTM('rtm', { repoDir: args.repoDir });
+// logger.debug('RTM created');
+
+// use the mock rtm for now
+const rtm = createMockRTM('rtm');
+logger.debug('Mock RTM created');
 
 createRTMServer(rtm, {
   port: args.port,

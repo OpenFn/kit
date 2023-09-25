@@ -27,14 +27,26 @@ export const connectToLightning = (
 ) => {
   return new Promise((done) => {
     let socket = new Socket(endpoint /*,{params: {userToken: "123"}}*/);
-    socket.connect();
 
-    // join the queue channel
-    const channel = socket.channel('attempts:queue');
+    // TODO need error & timeout handling (ie wrong endpoint or endpoint offline)
+    // Do we infinitely try to reconnect?
+    // Consider what happens when the connection drops
+    // Unit tests on all of these behaviours!
+    socket.onOpen(() => {
+      // join the queue channel
+      const channel = socket.channel('attempts:queue');
 
-    channel.join().receive('ok', () => {
-      done(channel);
+      channel
+        .join()
+        .receive('ok', () => {
+          done([socket, channel]);
+        })
+        .receive('error', (e) => {
+          console.log('ERROR', err);
+        });
     });
+
+    socket.connect();
   });
 };
 
@@ -63,17 +75,22 @@ function createServer(rtm: any, options: ServerOptions = {}) {
     logger.info('Closing server');
   };
 
-  const handleAttempt = async (channel, attempt) => {
-    const plan = await prepareAttempt(attempt);
-    execute(channel, rtm, plan);
+  // TODO this needs loads more unit testing - deffo need to pull it into its own funciton
+  const handleAttempt = async (socket, attempt) => {
+    const channel = socket.channel(`attempt:${attempt}`);
+    channel.join().receive('ok', async () => {
+      const plan = await prepareAttempt(channel);
+      console.log(plan);
+      execute(channel, rtm, plan);
+    });
   };
 
   if (options.lightning) {
     logger.log('Starting work loop at', options.lightning);
-    connectToLightning(options.lightning, rtm.id).then((channel) => {
+    connectToLightning(options.lightning, rtm.id).then(([socket, channel]) => {
       // TODO maybe pull this logic out so we can test it?
       startWorkloop(channel, (attempt) => {
-        handleAttempt(channel, attempt);
+        handleAttempt(socket, attempt);
       });
 
       // debug API to run a workflow
@@ -81,7 +98,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
       // Only loads in dev mode?
       // @ts-ignore
       app.execute = (attempt) => {
-        handleAttempt(channel, attempt);
+        handleAttempt(socket, attempt);
       };
     });
   } else {

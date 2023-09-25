@@ -46,8 +46,7 @@ export const mockChannel = (callbacks = {}) => {
 
       return {
         receive: (status, callback) => {
-          // TODO maybe do this asynchronously?
-          callback(result);
+          setTimeout(() => callback(result), 1);
         },
       };
     },
