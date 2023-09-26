@@ -20,10 +20,25 @@ import { Attempt } from '../../types';
 export const API_PREFIX = '/api/1';
 
 export type ServerState = {
+  queue: AttemptId[];
+
+  // list of credentials by id
   credentials: Record<string, any>;
+
+  // list of events by id
   attempts: Record<string, any>;
-  queue: Attempt[];
+
+  // list of dataclips by id
+  dataclips: Record<string, any>;
+
+  // Tracking state of known attempts
+  // TODO include the rtm id and token
+  pending: Record<string, { status: 'queued' | 'started' | 'complete' }>;
+
+  // Track all completed attempts here
   results: Record<string, { rtmId: string; state: null | any }>;
+
+  // event emitter for debugging and observability
   events: EventEmitter;
 };
 
@@ -40,17 +55,9 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const logger = options.logger || createMockLogger();
 
   const state = {
-    // list of credentials by id
     credentials: {},
-    // list of events by id
     attempts: {},
-
-    // list of dataclips by id
     dataclips: {},
-
-    // attempts which have been started
-    // probaby need to track status and maybe the rtm id?
-    // TODO maybe Active is a better word?
     pending: {},
 
     queue: [] as AttemptId[],

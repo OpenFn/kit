@@ -5,6 +5,7 @@ import phx from 'phoenix-channels';
 
 import { attempts, credentials, dataclips } from './data';
 import {
+  ATTEMPT_COMPLETE,
   CLAIM,
   GET_ATTEMPT,
   GET_CREDENTIAL,
@@ -233,6 +234,24 @@ test.serial('get attempt data through the attempt channel', async (t) => {
       t.deepEqual(p, attempt1);
       done();
     });
+  });
+});
+
+test.serial('complete an attempt through the attempt channel', async (t) => {
+  return new Promise(async (done) => {
+    const a = attempt1;
+    server.registerAttempt(a);
+    server.startAttempt(a.id);
+
+    const channel = await join(`attempt:${a.id}`);
+    channel
+      .push(ATTEMPT_COMPLETE, { dataclip: { answer: 42 } })
+      .receive('ok', () => {
+        const { pending, results } = server.getState();
+        t.deepEqual(pending[a.id], { status: 'complete' });
+        t.deepEqual(results[a.id], { answer: 42 });
+        done();
+      });
   });
 });
 

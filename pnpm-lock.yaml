@@ -384,6 +384,9 @@ importers:
       '@types/koa-logger':
         specifier: ^3.1.2
         version: 3.1.2
+      '@types/ws':
+        specifier: ^8.5.6
+        version: 8.5.6
       koa:
         specifier: ^2.13.4
         version: 2.13.4
@@ -1496,7 +1499,7 @@ packages:
     resolution: {integrity: sha512-DTuBFbqu4gGfajREEMrkq5jBhcnskinhr4+AnfJEk48zhVeEv3XnUKGIX98B74kxhYsIMfApGGySTn7V3b5yBA==}
     engines: {node: '>= 12.13.0', npm: '>= 6.12.0'}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: true
 
   /@slack/types@2.8.0:
@@ -1599,7 +1602,7 @@ packages:
     resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: true
 
   /@types/gunzip-maybe@1.4.0:
@@ -1623,7 +1626,7 @@ packages:
   /@types/is-stream@1.1.0:
     resolution: {integrity: sha512-jkZatu4QVbR60mpIzjINmtS1ZF4a/FqdTUTBeQDVOQ2PYyidtwFKr0B5G6ERukKwliq+7mIXvxyppwzG5EgRYg==}
     dependencies:
-      '@types/node': 18.15.3
+      '@types/node': 18.15.13
     dev: true
 
   /@types/json-diff@1.0.0:
@@ -1803,6 +1806,12 @@ packages:
 
   /@types/wrap-ansi@3.0.0:
     resolution: {integrity: sha512-ltIpx+kM7g/MLRZfkbL7EsCEjfzCcScLpkg37eXEtx5kmrAKBkTJwd1GIAjDSL8wTpM6Hzn5YO4pSb91BEwu1g==}
+    dev: false
+
+  /@types/ws@8.5.6:
+    resolution: {integrity: sha512-8B5EO9jLVCy+B58PLHvLDuOD8DRVMgQzq8d55SjLCOn9kqGyqOvy27exVaTio1q1nX5zLu8/6N0n2ThSxOM6tg==}
+    dependencies:
+      '@types/node': 18.15.13
     dev: false
 
   /@types/yargs-parser@21.0.0:

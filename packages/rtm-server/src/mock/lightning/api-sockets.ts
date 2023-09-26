@@ -5,7 +5,10 @@ import type { ServerState } from './server';
 
 import { extractAttemptId } from './util';
 
-import createPheonixMockSocketServer from './socket-server';
+import createPheonixMockSocketServer, {
+  DevSocket,
+  PhoenixEvent,
+} from './socket-server';
 import {
   ATTEMPT_COMPLETE,
   CLAIM,
@@ -13,6 +16,8 @@ import {
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../events';
+
+import type { Server } from 'http';
 
 // this new API is websocket based
 // Events map to handlers
@@ -22,11 +27,10 @@ import {
 const createSocketAPI = (
   state: ServerState,
   path: string,
-  httpServer,
+  httpServer: Server,
   logger?: Logger
 ) => {
   // set up a websocket server to listen to connections
-  // console.log('path', path);
   const server = new WebSocketServer({
     server: httpServer,
 
@@ -41,15 +45,37 @@ const createSocketAPI = (
     logger: logger && createLogger('PHX', { level: 'debug' }),
   });
 
-  // TODO
-  // 1) Need to improve the abstraction of these, make messages easier to send
-  // 2) Also need to look at closures - I'd like a declarative central API
-  //    the need to call startAttempt makes things a bit harder
+  wss.registerEvents('attempts:queue', {
+    [CLAIM]: (ws, event) => pullClaim(state, ws, event),
+  });
+
+  const startAttempt = (attemptId: string) => {
+    // mark the attempt as started on the server
+    state.pending[attemptId] = {
+      status: 'started',
+    };
+
+    // TODO do all these need extra auth, or is auth granted
+    // implicitly by channel membership?
+    // Right now the socket gets access to all server state
+    // But this is just a mock - Lightning can impose more restrictions if it wishes
+    wss.registerEvents(`attempt:${attemptId}`, {
+      [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
+      [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
+      [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
+      [ATTEMPT_COMPLETE]: (ws, event) =>
+        handleAttemptComplete(state, ws, event, attemptId),
+    });
+  };
+
+  return {
+    startAttempt,
+  };
 
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
   // the reply ensures that only the calling worker will get the attempt
-  const pullClaim = (state, ws, evt) => {
+  function pullClaim(state: ServerState, ws, evt) {
     const { ref, topic } = evt;
     const { queue } = state;
     let count = 1;
@@ -75,9 +101,9 @@ const createSocketAPI = (
     }
 
     ws.reply({ ref, topic, payload });
-  };
+  }
 
-  const getAttempt = (state, ws, evt) => {
+  function getAttempt(state: ServerState, ws, evt) {
     const { ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
     const attempt = state.attempts[attemptId];
@@ -90,12 +116,12 @@ const createSocketAPI = (
         response: attempt,
       },
     });
-  };
+  }
 
-  const getCredential = (state, ws, evt) => {
+  function getCredential(state: ServerState, ws, evt) {
     const { ref, topic, payload, event } = evt;
     const response = state.credentials[payload.id];
-    // console.log(topic, event, response);
+    console.log(topic, event, response);
     ws.reply({
       ref,
       topic,
@@ -104,12 +130,12 @@ const createSocketAPI = (
         response,
       },
     });
-  };
+  }
 
-  const getDataclip = (state, ws, evt) => {
-    const { ref, topic, payload, event } = evt;
+  function getDataclip(state: ServerState, ws, evt) {
+    const { ref, topic, payload } = evt;
     const response = state.dataclips[payload.id];
-    console.log(response);
+
     ws.reply({
       ref,
       topic,
@@ -118,58 +144,33 @@ const createSocketAPI = (
         response,
       },
     });
-  };
+  }
 
   // TODO why is this firing a million times?
-  const handleAttemptComplete = (state, ws, evt) => {
-    const { id, ref, topic, dataclip } = evt;
+  function handleAttemptComplete(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent,
+    attemptId: string
+  ) {
+    const { ref, topic, payload } = evt;
+    const { dataclip } = payload;
 
     // TODO use proper logger
-    console.log('Completed attempted ', id);
-    console.log(dataclip);
+    logger?.info('Completed attempted ', attemptId);
+    logger?.debug(dataclip);
 
-    // TODO what does the mock do here?
-    // well, we should acknowlege
-    // Should we error if there's no dataclip?
-    // but who does that help?
+    state.pending[attemptId].status = 'complete';
+    state.results[attemptId] = dataclip;
+
     ws.reply({
       ref,
       topic,
       payload: {
         status: 'ok',
-        // response: {
-        //   dataclip,
-        // },
       },
     });
-  };
-
-  wss.registerEvents('attempts:queue', {
-    [CLAIM]: (ws, event) => pullClaim(state, ws, event),
-  });
-
-  const startAttempt = (attemptId) => {
-    // mark the attempt as started on the server
-    state.pending[attemptId] = {
-      status: 'started',
-    };
-
-    // TODO do all these need extra auth, or is auth granted
-    // implicitly by channel membership?
-    // Right now the socket gets access to all server state
-    // But this is just a mock - Lightning can impose more restrictions if it wishes
-    wss.registerEvents(`attempt:${attemptId}`, {
-      [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
-      [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
-      [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
-      [ATTEMPT_COMPLETE]: (ws, event) =>
-        handleAttemptComplete(state, ws, { id: attemptId, ...event }),
-    });
-  };
-
-  return {
-    startAttempt,
-  };
+  }
 };
 
 export default createSocketAPI;
