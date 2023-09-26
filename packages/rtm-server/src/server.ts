@@ -5,7 +5,6 @@ import phx from 'phoenix-channels';
 import { createMockLogger, Logger } from '@openfn/logger';
 
 import createRestAPI from './api-rest';
-import convertAttempt from './util/convert-attempt';
 import startWorkloop from './api/workloop';
 import { execute, prepareAttempt } from './api/execute';
 
@@ -39,10 +38,14 @@ export const connectToLightning = (
       channel
         .join()
         .receive('ok', () => {
+          console.log('ok!');
           done([socket, channel]);
         })
         .receive('error', (e) => {
           console.log('ERROR', err);
+        })
+        .receive('timeout', (e) => {
+          console.log('TIMEOUT', err);
         });
     });
 

@@ -175,7 +175,7 @@ test.serial(
       channel.push(CLAIM).receive('ok', (response) => {
         t.truthy(response);
         t.is(response.length, 1);
-        t.is(response[0], 'attempt-1');
+        t.deepEqual(response[0], { id: 'attempt-1' });
 
         // ensure the server state has changed
         t.is(server.getQueueLength(), 0);

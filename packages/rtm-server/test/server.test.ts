@@ -1,7 +1,7 @@
 import test from 'ava';
 import WebSocket, { WebSocketServer } from 'ws';
 
-import createServer, { connectToLightning, startWorkloop } from '../src/server';
+import createServer, { connectToLightning } from '../src/server';
 import createMockRTM from '../src/mock/runtime-manager';
 import { mockChannel, mockSocket, sleep } from './util';
 import { CLAIM } from '../src/events';
@@ -33,11 +33,11 @@ test.skip('healthcheck', async (t) => {
 });
 
 // Not a very thorough test
-test('connects to lightning', async (t) => {
+test.only('connects to lightning', async (t) => {
   await connectToLightning('www', 'rtm', mockSocket);
   t.pass();
 
-  // TODO connections to hte same socket.channel should share listners, so I think I can test the channel
+  // TODO connections to the same socket.channel should share listners, so I think I can test the channel
 });
 
 // test('connects to websocket', (t) => {

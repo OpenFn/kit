@@ -8,11 +8,14 @@ import { extractAttemptId } from './util';
 import createPheonixMockSocketServer, {
   DevSocket,
   PhoenixEvent,
+  PhoenixReply,
 } from './socket-server';
 import {
   ATTEMPT_COMPLETE,
   ATTEMPT_LOG,
   CLAIM,
+  CLAIM_PAYLOAD,
+  CLAIM_REPLY_PAYLOAD,
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
@@ -47,7 +50,8 @@ const createSocketAPI = (
   });
 
   wss.registerEvents('attempts:queue', {
-    [CLAIM]: (ws, event) => pullClaim(state, ws, event),
+    [CLAIM]: (ws, event: PhoenixEvent<CLAIM_PAYLOAD>) =>
+      pullClaim(state, ws, event),
   });
 
   const startAttempt = (attemptId: string) => {
@@ -83,7 +87,11 @@ const createSocketAPI = (
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
   // the reply ensures that only the calling worker will get the attempt
-  function pullClaim(state: ServerState, ws: DevSocket, evt) {
+  function pullClaim(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<CLAIM_PAYLOAD>
+  ) {
     const { ref, topic } = evt;
     const { queue } = state;
     let count = 1;
@@ -91,16 +99,16 @@ const createSocketAPI = (
     const payload = {
       status: 'ok',
       response: [],
-    };
+    } as PhoenixReply<CLAIM_REPLY_PAYLOAD>['payload'];
 
     while (count > 0 && queue.length) {
       // TODO assign the worker id to the attempt
       // Not needed by the mocks at the moment
       const next = queue.shift();
-      payload.response.push(next);
+      payload.response.push({ id: next! });
       count -= 1;
 
-      startAttempt(next);
+      startAttempt(next!);
     }
     if (payload.response.length) {
       logger?.info(`Claiming ${payload.response.length} attempts`);

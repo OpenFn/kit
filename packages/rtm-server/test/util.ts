@@ -64,6 +64,9 @@ export const mockChannel = (callbacks = {}) => {
 export const mockSocket = () => {
   const channels = {};
   return {
+    onOpen: (callback) => {
+      setTimeout(callback, 1);
+    },
     connect: () => {
       // noop
       // TODO maybe it'd be helpful to throw if the channel isn't connected?

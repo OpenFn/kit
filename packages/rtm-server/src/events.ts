@@ -1,19 +1,18 @@
 // track socket event names as constants to keep refactoring easier
 
 export const CLAIM = 'attempt:claim';
+// this is the lightning payload
+export type CLAIM_PAYLOAD = { demand?: number };
+export type CLAIM_REPLY_PAYLOAD = Array<{ id: string; token?: string }>;
 
-// TODO does each worker connect to its own channel, ensuring a private claim steeam?
-// or is there a shared Workers channel
-
-// claim reply needs to include the id of the server and the attempt
-export const CLAIM_REPLY = 'attempt:claim_reply'; // { server_id: 1, attempt_id: 'a1' }
-
-// All attempt events are in a dedicated channel for that event
-
-// or attempt_get ? I think there are several getters so maybe this makes sense
 export const GET_ATTEMPT = 'fetch:attempt';
+export type GET_ATTEMPT_PAYLOAD = undefined; // no payload
+
 export const GET_CREDENTIAL = 'fetch:credential';
+// export type GET_CREDENTIAL_PAYLOAD =
+
 export const GET_DATACLIP = 'fetch:dataclip';
+// export type GET_DATACLIP_PAYLOAD =
 
 export const ATTEMPT_START = 'attempt:start'; // attemptId, timestamp
 export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats

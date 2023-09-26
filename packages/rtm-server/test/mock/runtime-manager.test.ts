@@ -103,9 +103,16 @@ test('mock should evaluate expressions as JSON', async (t) => {
 test('mock should dispatch log events when evaluating JSON', async (t) => {
   const rtm = create();
 
+  const logs = [];
+  rtm.on('log', (l) => {
+    logs.push(l);
+  });
+
   rtm.execute(sampleWorkflow);
-  const evt = await waitForEvent<WorkflowCompleteEvent>(rtm, 'log');
-  t.deepEqual(evt.message, ['Parsing expression as JSON state']);
+  await waitForEvent<WorkflowCompleteEvent>(rtm, 'workflow-complete');
+
+  t.deepEqual(logs[0].message, ['Running job j1']);
+  t.deepEqual(logs[1].message, ['Parsing expression as JSON state']);
 });
 
 test('resolve credential before job-start if credential is a string', async (t) => {
@@ -113,13 +120,14 @@ test('resolve credential before job-start if credential is a string', async (t) 
   wf.jobs[0].configuration = 'x';
 
   let didCallCredentials;
-  const credentials = async (_id) => {
+  const credential = async (_id) => {
     didCallCredentials = true;
     return {};
   };
 
-  const rtm = create('1', { credentials });
-  rtm.execute(wf);
+  const rtm = create('1');
+  // @ts-ignore
+  rtm.execute(wf, { credential });
 
   await waitForEvent<WorkflowCompleteEvent>(rtm, 'job-start');
   t.true(didCallCredentials);

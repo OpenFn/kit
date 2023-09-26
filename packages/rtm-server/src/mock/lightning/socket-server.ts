@@ -15,7 +15,7 @@ type Topic = string;
 
 // websocket with a couple of dev-friendly APIs
 export type DevSocket = WebSocket & {
-  reply: (evt: Pick<PhoenixEvent, 'payload' | 'topic' | 'ref'>) => void;
+  reply: <R = any>(evt: PhoenixReply<R>) => void;
   sendJSON: ({ event, topic, ref }: PhoenixEvent) => void;
 };
 
@@ -23,7 +23,16 @@ export type PhoenixEvent<P = any> = {
   topic: Topic;
   event: string;
   payload?: P;
-  ref?: string;
+  ref: string;
+};
+
+export type PhoenixReply<R = any> = {
+  topic: Topic;
+  payload: {
+    status: 'ok' | 'error' | 'timeout';
+    response: R;
+  };
+  ref: string;
 };
 
 type EventHandler = (ws: DevSocket, event: PhoenixEvent) => void;
@@ -99,11 +108,7 @@ function createServer({
   wsServer.on('connection', function (ws: DevSocket, _req: any) {
     logger?.info('new client connected');
 
-    ws.reply = ({
-      ref,
-      topic,
-      payload,
-    }: Pick<PhoenixEvent, 'payload' | 'topic' | 'ref'>) => {
+    ws.reply = <R = any>({ ref, topic, payload }: PhoenixReply<R>) => {
       logger?.debug(
         `<< [${topic}] chan_reply_${ref} ` + JSON.stringify(payload)
       );
