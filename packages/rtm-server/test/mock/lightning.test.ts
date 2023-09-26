@@ -6,12 +6,14 @@ import phx from 'phoenix-channels';
 import { attempts, credentials, dataclips } from './data';
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_LOG,
   CLAIM,
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
 import type { Attempt } from '../../src/types';
+import { JSONLog } from '@openfn/logger';
 
 const endpoint = 'ws://localhost:7777/api';
 
@@ -248,14 +250,37 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
       .push(ATTEMPT_COMPLETE, { dataclip: { answer: 42 } })
       .receive('ok', () => {
         const { pending, results } = server.getState();
-        t.deepEqual(pending[a.id], { status: 'complete' });
+        t.deepEqual(pending[a.id], { status: 'complete', logs: [] });
         t.deepEqual(results[a.id], { answer: 42 });
         done();
       });
   });
 });
 
-test.serial('unusubscribe after attempt complete', async (t) => {
+test.serial('logs are saved and acknowledged', async (t) => {
+  return new Promise(async (done) => {
+    server.registerAttempt(attempt1);
+    server.startAttempt(attempt1.id);
+
+    const log = {
+      attempt_id: attempt1.id,
+      level: 'info',
+      name: 'R/T',
+      message: ['Did the thing'],
+      time: new Date().getTime(),
+    } as JSONLog;
+
+    const channel = await join(`attempt:${attempt1.id}`);
+    channel.push(ATTEMPT_LOG, log).receive('ok', () => {
+      const { pending } = server.getState();
+      const [savedLog] = pending[attempt1.id].logs;
+      t.deepEqual(savedLog, log);
+      done();
+    });
+  });
+});
+
+test.serial('unsubscribe after attempt complete', async (t) => {
   return new Promise(async (done) => {
     const a = attempt1;
     server.registerAttempt(a);

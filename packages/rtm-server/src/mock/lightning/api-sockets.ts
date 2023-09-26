@@ -11,6 +11,7 @@ import createPheonixMockSocketServer, {
 } from './socket-server';
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_LOG,
   CLAIM,
   GET_ATTEMPT,
   GET_CREDENTIAL,
@@ -53,6 +54,7 @@ const createSocketAPI = (
     // mark the attempt as started on the server
     state.pending[attemptId] = {
       status: 'started',
+      logs: [],
     };
 
     // TODO do all these need extra auth, or is auth granted
@@ -63,10 +65,14 @@ const createSocketAPI = (
       [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
       [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
       [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
+      [ATTEMPT_LOG]: (ws, event) => handleLog(state, ws, event),
       [ATTEMPT_COMPLETE]: (ws, event) => {
         handleAttemptComplete(state, ws, event, attemptId);
         unsubscribe();
       },
+      // TODO
+      // [RUN_START]
+      // [RUN_COMPLETE]
     });
   };
 
@@ -77,7 +83,7 @@ const createSocketAPI = (
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
   // the reply ensures that only the calling worker will get the attempt
-  function pullClaim(state: ServerState, ws, evt) {
+  function pullClaim(state: ServerState, ws: DevSocket, evt) {
     const { ref, topic } = evt;
     const { queue } = state;
     let count = 1;
@@ -105,7 +111,7 @@ const createSocketAPI = (
     ws.reply({ ref, topic, payload });
   }
 
-  function getAttempt(state: ServerState, ws, evt) {
+  function getAttempt(state: ServerState, ws: DevSocket, evt) {
     const { ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
     const attempt = state.attempts[attemptId];
@@ -120,7 +126,7 @@ const createSocketAPI = (
     });
   }
 
-  function getCredential(state: ServerState, ws, evt) {
+  function getCredential(state: ServerState, ws: DevSocket, evt) {
     const { ref, topic, payload } = evt;
     const response = state.credentials[payload.id];
     // console.log(topic, event, response);
@@ -134,7 +140,7 @@ const createSocketAPI = (
     });
   }
 
-  function getDataclip(state: ServerState, ws, evt) {
+  function getDataclip(state: ServerState, ws: DevSocket, evt) {
     const { ref, topic, payload } = evt;
     const response = state.dataclips[payload.id];
 
@@ -148,7 +154,21 @@ const createSocketAPI = (
     });
   }
 
-  // TODO why is this firing a million times?
+  function handleLog(state: ServerState, ws: DevSocket, evt) {
+    const { ref, topic, payload } = evt;
+    const { attempt_id: attemptId } = payload;
+
+    state.pending[attemptId].logs.push(payload);
+
+    ws.reply({
+      ref,
+      topic,
+      payload: {
+        status: 'ok',
+      },
+    });
+  }
+
   function handleAttemptComplete(
     state: ServerState,
     ws: DevSocket,
@@ -158,8 +178,7 @@ const createSocketAPI = (
     const { ref, topic, payload } = evt;
     const { dataclip } = payload;
 
-    // TODO use proper logger
-    logger?.info('Completed attempted ', attemptId);
+    logger?.info('Completed attempt ', attemptId);
     logger?.debug(dataclip);
 
     state.pending[attemptId].status = 'complete';

@@ -17,7 +17,7 @@ export const GET_DATACLIP = 'fetch:dataclip';
 
 export const ATTEMPT_START = 'attempt:start'; // attemptId, timestamp
 export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats
-export const ATTEMPT_LOG = 'attempt:complete'; // level, namespace (job,runtime,adaptor), message, time
+export const ATTEMPT_LOG = 'attempt:log'; // level, namespace (job,runtime,adaptor), message, time
 
 // this should not happen - this is "could not execute" rather than "complete with errors"
 export const ATTEMPT_ERROR = 'attempt:error';

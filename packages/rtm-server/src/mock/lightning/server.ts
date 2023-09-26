@@ -1,23 +1,23 @@
 import { EventEmitter } from 'node:events';
 import Koa from 'koa';
-import URL from 'node:url';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
-import websockify from 'koa-websocket';
-import route from 'koa-route';
 import createLogger, {
   createMockLogger,
   LogLevel,
   Logger,
+  JSONLog,
 } from '@openfn/logger';
 
-import createServer from './socket-server';
-import createAPI from './api';
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
-import { Attempt } from '../../types';
 
 export const API_PREFIX = '/api/1';
+
+export type AttemptState = {
+  status: 'queued' | 'started' | 'complete';
+  logs: JSONLog[];
+};
 
 export type ServerState = {
   queue: AttemptId[];
@@ -33,7 +33,7 @@ export type ServerState = {
 
   // Tracking state of known attempts
   // TODO include the rtm id and token
-  pending: Record<string, { status: 'queued' | 'started' | 'complete' }>;
+  pending: Record<string, AttemptState>;
 
   // Track all completed attempts here
   results: Record<string, { rtmId: string; state: null | any }>;
