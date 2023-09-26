@@ -72,14 +72,6 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const server = app.listen(port);
   logger.info('Listening on ', port);
 
-  // Setup the websocket API
-  const api = createWebSocketAPI(
-    state,
-    '/api',
-    server,
-    options.logger && logger
-  );
-
   // Only create a http logger if there's a top-level logger passed
   // This is a bit flaky really but whatever
   if (options.logger) {
@@ -88,10 +80,14 @@ const createLightningServer = (options: LightningOptions = {}) => {
     app.use(klogger);
   }
 
-  // Mock API endpoints
-  // TODO should we keep the REST interface for local debug?
-  // Maybe for the read-only stuff (like get all attempts)
-  // app.use(createAPI(state));
+  // Setup the websocket API
+  const api = createWebSocketAPI(
+    state,
+    '/api',
+    server,
+    options.logger && logger
+  );
+
   app.use(createDevAPI(app as any, state, logger, api));
 
   app.destroy = () => {

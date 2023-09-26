@@ -4,11 +4,12 @@
  */
 import Koa from 'koa';
 import Router from '@koa/router';
-import { Logger } from '@openfn/logger';
+import { JSONLog, Logger } from '@openfn/logger';
 import crypto from 'node:crypto';
 
 import { Attempt } from '../../types';
 import { ServerState } from './server';
+import { ATTEMPT_COMPLETE } from '../../events';
 
 type LightningEvents = 'log' | 'attempt-complete';
 
@@ -44,6 +45,7 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
     state.results[attempt.id] = {};
     state.pending[attempt.id] = {
       status: 'queued',
+      logs: [],
     };
     state.queue.push(attempt.id);
   };
@@ -55,13 +57,18 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
   // Promise which returns when a workflow is complete
   app.waitForResult = (attemptId: string) => {
     return new Promise((resolve) => {
-      const handler = (evt: any) => {
-        if (evt.workflow_id === attemptId) {
-          state.events.removeListener('attempt-complete', handler);
+      const handler = (evt: {
+        attemptId: string;
+        dataclip: any;
+        logs: JSONLog[];
+      }) => {
+        if (evt.attemptId === attemptId) {
+          state.events.removeListener(ATTEMPT_COMPLETE, handler);
+
           resolve(evt);
         }
       };
-      state.events.addListener('attempt-complete', handler);
+      state.events.addListener(ATTEMPT_COMPLETE, handler);
     });
   };
 

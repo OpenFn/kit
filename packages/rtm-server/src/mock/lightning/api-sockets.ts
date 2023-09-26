@@ -184,6 +184,12 @@ const createSocketAPI = (
     state.pending[attemptId].status = 'complete';
     state.results[attemptId] = dataclip;
 
+    state.events.emit(ATTEMPT_COMPLETE, {
+      attemptId: attemptId,
+      dataclip,
+      logs: state.pending[attemptId].logs,
+    });
+
     ws.reply({
       ref,
       topic,

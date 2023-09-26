@@ -323,3 +323,30 @@ test.serial('get dataclip through the attempt channel', async (t) => {
     });
   });
 });
+
+// TODO test that all events are proxied out to server.on
+
+test.serial(
+  'waitForResult should return logs and dataclip when an attempt is completed',
+  async (t) => {
+    return new Promise(async (done) => {
+      server.startAttempt(attempt1.id);
+      server.addDataclip('d', dataclips['d']);
+      const result = { answer: 42 };
+
+      server
+        .waitForResult(attempt1.id)
+        .then(({ attemptId, dataclip, logs }) => {
+          t.is(attemptId, attempt1.id);
+          t.deepEqual(result, dataclip);
+          t.deepEqual(logs, []);
+          done();
+        });
+
+      const channel = await join(`attempt:${attempt1.id}`);
+      channel.push(ATTEMPT_COMPLETE, { dataclip: result });
+    });
+  }
+);
+
+// test.serial('getLogs should return logs', async (t) => {});
