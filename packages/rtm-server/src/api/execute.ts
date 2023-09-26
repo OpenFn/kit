@@ -146,9 +146,10 @@ export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
     // const context = { channel, state, logger }
 
     rtm.listen(plan.id, {
+      'workflow-start': (evt) => onWorkflowStart(channel),
       'job-start': (evt) => onJobStart(channel, state, evt),
       'job-complete': (evt) => onJobComplete(channel, state, evt),
-      'job-log': (evt) => onJobLog(channel, state, evt),
+      log: (evt) => onJobLog(channel, state, evt),
       'workflow-complete': (evt) => {
         onWorkflowComplete(channel, state, evt);
         resolve(evt.state);

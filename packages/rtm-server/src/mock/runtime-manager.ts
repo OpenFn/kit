@@ -77,16 +77,11 @@ function createMock(
     }
     // TODO add performance metrics to every event?
     bus.emit(type, args);
-
-    // TOOD return an unsubscribe API?
   };
 
-  const on = (event: RTMEvent, fn: (evt: any) => void) => {
-    bus.on(event, fn);
-  };
-  const once = (event: RTMEvent, fn: (evt: any) => void) => {
-    bus.once(event, fn);
-  };
+  const on = (event: RTMEvent, fn: (evt: any) => void) => bus.on(event, fn);
+
+  const once = (event: RTMEvent, fn: (evt: any) => void) => bus.once(event, fn);
 
   // Listens to events for a particular workflow/execution plan
   // TODO: Listeners will be removed when the plan is complete (?)
@@ -97,14 +92,23 @@ function createMock(
     listeners[planId] = events;
   };
 
-  const executeJob = async (workflowId, job: JobPlan, initialState = {}) => {
+  const executeJob = async (
+    workflowId: string,
+    job: JobPlan,
+    initialState = {}
+  ) => {
     // TODO maybe lazy load the job from an id
-    const { id, expression, configuration } = job;
+    const { id, expression, configuration, state } = job;
     const jobId = id;
     if (typeof configuration === 'string') {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
       await resolvers.credentials(configuration);
+    }
+    if (typeof state === 'string') {
+      // TODO right now we lazy load any state object
+      // but maybe we need to just do initial state?
+      await resolvers.state(state);
     }
 
     // Does a job reallly need its own id...? Maybe.
@@ -112,8 +116,9 @@ function createMock(
 
     // Get the job details from lightning
     // start instantly and emit as it goes
-    dispatch('job-start', { workflowId, jobId });
+    dispatch('job-start', { workflowId, jobId, runId });
 
+    dispatch('log', { workflowId, jobId, message: ['Running job ' + jobId] });
     let state = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
@@ -129,7 +134,7 @@ function createMock(
       // Do nothing, it's fine
     }
 
-    dispatch('job-complete', { workflowId, jobId, state });
+    dispatch('job-complete', { workflowId, jobId, state, runId });
 
     return state;
   };

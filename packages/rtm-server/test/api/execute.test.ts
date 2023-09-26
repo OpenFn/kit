@@ -8,6 +8,8 @@ import {
   ATTEMPT_LOG,
   ATTEMPT_START,
   ATTEMPT_COMPLETE,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
 } from '../../src/events';
 import {
   prepareAttempt,
@@ -258,20 +260,87 @@ test('execute should return the final result', async (t) => {
 
   t.deepEqual(result, { done: true });
 });
-// TODO test the whole execute workflow
 
-// run this against the mock - this just ensures that execute
-// binds all the events
-test.skip('execute should call all events', async (t) => {
+// TODO this is more of an RTM test really, but worth having I suppose
+test('execute should lazy-load a credential', async (t) => {
+  let didCallCredentials = false;
+
+  const channel = mockChannel();
+  const rtm = createMockRTM('rtm', {
+    credentials: (id) => {
+      t.truthy(id);
+      didCallCredentials = true;
+      return {};
+    },
+  });
+
+  const plan = {
+    id: 'a',
+    jobs: [
+      {
+        configuration: 'abc',
+        expression: JSON.stringify({ done: true }),
+      },
+    ],
+  };
+
+  await execute(channel, rtm, plan);
+
+  t.true(didCallCredentials);
+});
+
+// TODO this is more of an RTM test really, but worth having I suppose
+test('execute should lazy-load initial state', async (t) => {
+  let didCallState = false;
+
+  const channel = mockChannel();
+  const rtm = createMockRTM('rtm', {
+    state: (id) => {
+      t.truthy(id);
+      didCallState = true;
+      return {};
+    },
+  });
+
+  const plan = {
+    id: 'a',
+    jobs: [
+      {
+        state: 'abc',
+        expression: JSON.stringify({ done: true }),
+      },
+    ],
+  };
+
+  await execute(channel, rtm, plan);
+
+  t.true(didCallState);
+});
+
+test('execute should call all events on the socket', async (t) => {
   const events = {};
 
   const rtm = createMockRTM();
 
-  const channel = mockChannel({
-    [ATTEMPT_LOG]: (evt) => {
-      events[ATTEMPT_LOG] = evt;
-    },
-  });
+  const toEventMap = (obj, evt: string) => {
+    obj[evt] = (e) => {
+      events[evt] = e || true;
+    };
+    return obj;
+  };
+
+  const allEvents = [
+    // Note that these are listed in order but order isn not tested
+    // GET_CREDENTIAL, // TODO not implementated yet
+    // GET_DATACLIP, // TODO not implementated yet
+    ATTEMPT_START,
+    RUN_START,
+    ATTEMPT_LOG,
+    RUN_COMPLETE,
+    ATTEMPT_COMPLETE,
+  ];
+
+  const channel = mockChannel(allEvents.reduce(toEventMap, {}));
 
   const plan = {
     id: 'attempt-1',
@@ -285,11 +354,12 @@ test.skip('execute should call all events', async (t) => {
     ],
   };
 
-  const result = await execute(channel, rtm, plan);
+  await execute(channel, rtm, plan);
 
   // check result is what we expect
 
   // Check that events were passed to the socket
   // This is deliberately crude
-  t.truthy(events[ATTEMPT_LOG]);
+  console.log(events);
+  t.assert(allEvents.every((e) => events[e]));
 });
