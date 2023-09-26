@@ -14,6 +14,7 @@ const wait = (duration = 10) =>
 
 test.beforeEach(() => {
   messages = [];
+  // @ts-ignore I don't care about missing server options here
   server = createServer({ onMessage: (evt) => messages.push(evt) });
 
   socket = new phx.Socket('ws://localhost:8080');
@@ -41,7 +42,7 @@ test.serial('send a message', async (t) => {
   return new Promise((resolve) => {
     const channel = socket.channel('x', {});
 
-    server.listenToChannel('x', (event, payload) => {
+    server.listenToChannel('x', (_ws, { payload, event }) => {
       t.is(event, 'hello');
       t.deepEqual(payload, { x: 1 });
 
@@ -116,19 +117,18 @@ test.serial('wait for message', async (t) => {
   t.truthy(result);
 });
 
-test.serial.only('onMessage', (t) => {
+test.serial('onMessage', (t) => {
   return new Promise((done) => {
     const channel = socket.channel('x', {});
     channel.join().receive('ok', async () => {
-      t.is(messages.length, 1)
-      t.is(messages[0].event, 'phx_join')
+      t.is(messages.length, 1);
+      t.is(messages[0].event, 'phx_join');
 
       channel.push('hello', { x: 1 });
       await server.waitForMessage('x', 'hello');
-      t.is(messages.length, 2)
-      t.is(messages[1].event, 'hello')
-      done()
-    })
-  })
-
-})
+      t.is(messages.length, 2);
+      t.is(messages[1].event, 'hello');
+      done();
+    });
+  });
+});
