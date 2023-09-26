@@ -51,11 +51,16 @@ export const mockChannel = (callbacks = {}) => {
       };
     },
     join: () => {
-      return {
+      const receive = {
         receive: (status, callback) => {
-          callback();
+          if (status === 'ok') {
+            setTimeout(() => callback(), 1);
+          }
+          // TODO error and timeout?
+          return receive;
         },
       };
+      return receive;
     },
   };
   return c;
@@ -65,7 +70,7 @@ export const mockSocket = () => {
   const channels = {};
   return {
     onOpen: (callback) => {
-      setTimeout(callback, 1);
+      setTimeout(() => callback(), 1);
     },
     connect: () => {
       // noop

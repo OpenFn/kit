@@ -38,14 +38,13 @@ export const connectToLightning = (
       channel
         .join()
         .receive('ok', () => {
-          console.log('ok!');
           done([socket, channel]);
         })
-        .receive('error', (e) => {
-          console.log('ERROR', err);
+        .receive('error', (e: any) => {
+          console.log('ERROR', e);
         })
-        .receive('timeout', (e) => {
-          console.log('TIMEOUT', err);
+        .receive('timeout', (e: any) => {
+          console.log('TIMEOUT', e);
         });
     });
 
