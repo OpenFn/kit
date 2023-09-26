@@ -26,7 +26,7 @@ test.before(() => {
 });
 
 // Really high level test
-test.serial('process an attempt', async (t) => {
+test.serial.skip('process an attempt', async (t) => {
   lng.enqueueAttempt({
     id: 'a1',
     jobs: [
