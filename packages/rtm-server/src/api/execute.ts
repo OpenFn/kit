@@ -5,7 +5,6 @@
 // You can almost read this as a binding function and a bunch of handlers
 // it isn't an actual worker, but a BRIDGE between a worker and lightning
 import crypto from 'node:crypto';
-import phx from 'phoenix-channels';
 import { JSONLog } from '@openfn/logger';
 import convertAttempt from '../util/convert-attempt';
 // this managers the worker
@@ -16,11 +15,14 @@ import {
   ATTEMPT_LOG,
   ATTEMPT_START,
   GET_ATTEMPT,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
   RUN_COMPLETE,
   RUN_START,
 } from '../events';
-import { Attempt } from '../types';
+import { Attempt, Channel } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
+import { getWithReply } from '../util';
 
 export type AttemptState = {
   activeRun?: string;
@@ -32,19 +34,41 @@ export type AttemptState = {
   // TODO status?
 };
 
-type Channel = typeof phx.Channel;
+// pass a web socket connected to the attempt channel
+// this thing will do all the work
+export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
+  return new Promise((resolve) => {
+    // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
+    // tracking state for this attempt
+    const state: AttemptState = {
+      plan,
+    };
 
-// TODO move to util
+    // TODO
+    // const context = { channel, state, logger }
 
-const getWithReply = (channel: Channel, event: string, payload?: any) =>
-  new Promise((resolve) => {
-    channel.push(event, payload).receive('ok', (evt: any) => {
-      resolve(evt);
+    rtm.listen(plan.id, {
+      'workflow-start': (evt) => onWorkflowStart(channel),
+      'job-start': (evt) => onJobStart(channel, state, evt),
+      'job-complete': (evt) => onJobComplete(channel, state, evt),
+      log: (evt) => onJobLog(channel, state, evt),
+      'workflow-complete': (evt) => {
+        onWorkflowComplete(channel, state, evt);
+        resolve(evt.state);
+      },
     });
-    // TODO handle errors amd timeouts too
+
+    const resolvers = {
+      state: (id: string) => loadState(channel, id),
+      credential: (id: string) => loadCredential(channel, id),
+    };
+
+    rtm.execute(plan, resolvers);
   });
+}
 
 // TODO maybe move all event handlers into api/events/*
+
 export function onJobStart(
   channel: Channel,
   state: AttemptState,
@@ -124,38 +148,10 @@ export async function prepareAttempt(channel: Channel) {
   // then we call the excute function. Or return the promise and let someone else do that
 }
 
-// These are the functions that lazy load data from lightning
-// Is it appropriate first join the channel? Should there be some pooling?
-async function loadState(ws, attemptId, stateId) {}
+export async function loadState(channel: Channel, stateId: string) {
+  return getWithReply(channel, GET_DATACLIP, { dataclip_id: stateId });
+}
 
-async function loadCredential(ws, attemptId, stateId) {}
-
-// pass a web socket connected to the attempt channel
-// this thing will do all the work
-// TODO actually this now is a Workflow or Execution plan
-// It's not an attempt anymore
-export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
-  return new Promise((resolve) => {
-    // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
-    // tracking state for this attempt
-    const state: AttemptState = {
-      plan,
-    };
-
-    // TODO
-    // const context = { channel, state, logger }
-
-    rtm.listen(plan.id, {
-      'workflow-start': (evt) => onWorkflowStart(channel),
-      'job-start': (evt) => onJobStart(channel, state, evt),
-      'job-complete': (evt) => onJobComplete(channel, state, evt),
-      log: (evt) => onJobLog(channel, state, evt),
-      'workflow-complete': (evt) => {
-        onWorkflowComplete(channel, state, evt);
-        resolve(evt.state);
-      },
-    });
-
-    rtm.execute(plan);
-  });
+export async function loadCredential(channel: Channel, credentialId: string) {
+  return getWithReply(channel, GET_CREDENTIAL, { credential_id: credentialId });
 }

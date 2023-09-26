@@ -20,14 +20,12 @@ import {
   onWorkflowStart,
   onWorkflowComplete,
   AttemptState,
+  loadState,
+  loadCredential,
 } from '../../src/api/execute';
 import createMockRTM from '../../src/mock/runtime-manager';
 import { attempts } from '../mock/data';
 import { mockChannel } from '../util';
-
-// This is a fake/mock websocket used by mocks
-
-// TODO throw in the handler to get an error?
 
 test('prepareAttempt should get the attempt body', async (t) => {
   const attempt = attempts['attempt-1'];
@@ -243,6 +241,32 @@ test('workflowComplete should send an attempt:complete event', async (t) => {
   });
 });
 
+// TODO what if an error?
+test('loadState should fetch a dataclip', async (t) => {
+  const channel = mockChannel({
+    [GET_DATACLIP]: ({ dataclip_id }) => {
+      t.is(dataclip_id, 'xyz');
+      return { data: {} };
+    },
+  });
+
+  const state = await loadState(channel, 'xyz');
+  t.deepEqual(state, { data: {} });
+});
+
+// TODO what if an error?
+test('loadCredential should fetch a credential', async (t) => {
+  const channel = mockChannel({
+    [GET_CREDENTIAL]: ({ credential_id }) => {
+      t.is(credential_id, 'jfk');
+      return { apiKey: 'abc' };
+    },
+  });
+
+  const state = await loadCredential(channel, 'jfk');
+  t.deepEqual(state, { apiKey: 'abc' });
+});
+
 test('execute should return the final result', async (t) => {
   const channel = mockChannel();
   const rtm = createMockRTM();
@@ -265,14 +289,14 @@ test('execute should return the final result', async (t) => {
 test('execute should lazy-load a credential', async (t) => {
   let didCallCredentials = false;
 
-  const channel = mockChannel();
-  const rtm = createMockRTM('rtm', {
-    credentials: (id) => {
+  const channel = mockChannel({
+    [GET_CREDENTIAL]: (id) => {
       t.truthy(id);
       didCallCredentials = true;
       return {};
     },
   });
+  const rtm = createMockRTM('rtm');
 
   const plan = {
     id: 'a',
@@ -293,14 +317,14 @@ test('execute should lazy-load a credential', async (t) => {
 test('execute should lazy-load initial state', async (t) => {
   let didCallState = false;
 
-  const channel = mockChannel();
-  const rtm = createMockRTM('rtm', {
-    state: (id) => {
+  const channel = mockChannel({
+    [GET_DATACLIP]: (id) => {
       t.truthy(id);
       didCallState = true;
       return {};
     },
   });
+  const rtm = createMockRTM('rtm');
 
   const plan = {
     id: 'a',
@@ -360,6 +384,5 @@ test('execute should call all events on the socket', async (t) => {
 
   // Check that events were passed to the socket
   // This is deliberately crude
-  console.log(events);
   t.assert(allEvents.every((e) => events[e]));
 });

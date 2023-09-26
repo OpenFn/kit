@@ -62,10 +62,7 @@ let autoServerId = 0;
 // The credential of course is the hard bit
 const assembleState = () => {};
 
-function createMock(
-  serverId?: string,
-  resolvers: LazyResolvers = mockResolvers
-) {
+function createMock(serverId?: string) {
   const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
   const listeners: Record<string, any> = {};
@@ -95,7 +92,8 @@ function createMock(
   const executeJob = async (
     workflowId: string,
     job: JobPlan,
-    initialState = {}
+    initialState = {},
+    resolvers: LazyResolvers = mockResolvers
   ) => {
     // TODO maybe lazy load the job from an id
     const { id, expression, configuration, state } = job;
@@ -103,7 +101,7 @@ function createMock(
     if (typeof configuration === 'string') {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
-      await resolvers.credentials(configuration);
+      await resolvers.credential(configuration);
     }
     if (typeof state === 'string') {
       // TODO right now we lazy load any state object
@@ -141,7 +139,10 @@ function createMock(
 
   // Start executing an ExecutionPlan
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
-  const execute = (xplan: ExecutionPlan) => {
+  const execute = (
+    xplan: ExecutionPlan,
+    resolvers: LazyResolvers = mockResolvers
+  ) => {
     const { id, jobs } = xplan;
     const workflowId = id;
     activeWorkflows[id!] = true;
@@ -151,7 +152,7 @@ function createMock(
         let state = {};
         // Trivial job reducer in our mock
         for (const job of jobs) {
-          state = await executeJob(id, job, state);
+          state = await executeJob(id, job, state, resolvers);
         }
         setTimeout(() => {
           delete activeWorkflows[id!];

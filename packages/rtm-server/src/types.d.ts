@@ -1,3 +1,5 @@
+import phx from 'phoenix-channels';
+
 export type Credential = Record<string, any>;
 
 export type State = {
@@ -50,6 +52,8 @@ export type Attempt = {
 export type CancelablePromise = Promise<void> & {
   cancel: () => void;
 };
+
+export type Channel = typeof phx.Channel;
 
 // type RuntimeExecutionPlanID = string;
 
