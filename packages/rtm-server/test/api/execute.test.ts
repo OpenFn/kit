@@ -6,6 +6,8 @@ import {
   RUN_START,
   RUN_COMPLETE,
   ATTEMPT_LOG,
+  ATTEMPT_START,
+  ATTEMPT_COMPLETE,
 } from '../../src/events';
 import {
   prepareAttempt,
@@ -13,6 +15,9 @@ import {
   onJobComplete,
   onJobLog,
   execute,
+  onWorkflowStart,
+  onWorkflowComplete,
+  AttemptState,
 } from '../../src/api/execute';
 import createMockRTM from '../../src/mock/runtime-manager';
 import { attempts } from '../mock/data';
@@ -64,7 +69,7 @@ test('jobStart should set a run id and active job on state', async (t) => {
 
   const state = {
     plan,
-  };
+  } as AttemptState;
 
   const channel = mockChannel({});
 
@@ -81,7 +86,7 @@ test('jobStart should send a run:start event', async (t) => {
 
     const state = {
       plan,
-    };
+    } as AttemptState;
 
     const channel = mockChannel({
       [RUN_START]: (evt) => {
@@ -104,7 +109,7 @@ test('jobEnd should clear the run id and active job on state', async (t) => {
     plan,
     activeJob: jobId,
     activeRun: 'b',
-  };
+  } as AttemptState;
 
   const channel = mockChannel({});
 
@@ -123,7 +128,7 @@ test('jobComplete should send a run:complete event', async (t) => {
       plan,
       activeJob: jobId,
       activeRun: 'b',
-    };
+    } as AttemptState;
 
     const channel = mockChannel({
       [RUN_COMPLETE]: (evt) => {
@@ -157,7 +162,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
     const state = {
       plan,
       // No active run
-    };
+    } as AttemptState;
 
     const channel = mockChannel({
       [ATTEMPT_LOG]: (evt) => {
@@ -186,7 +191,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
       plan,
       activeJob: jobId,
       activeRun: 'b',
-    };
+    } as AttemptState;
 
     const channel = mockChannel({
       [ATTEMPT_LOG]: (evt) => {
@@ -203,6 +208,56 @@ test('jobLog should should send a log event inside a run', async (t) => {
   });
 });
 
+test('workflowStart should send an empty attempt:start event', async (t) => {
+  return new Promise((done) => {
+    const channel = mockChannel({
+      [ATTEMPT_START]: () => {
+        t.pass();
+
+        done();
+      },
+    });
+
+    onWorkflowStart(channel);
+  });
+});
+
+test('workflowComplete should send an attempt:complete event', async (t) => {
+  return new Promise((done) => {
+    const state = {} as AttemptState;
+
+    const result = { answer: 42 };
+
+    const channel = mockChannel({
+      [ATTEMPT_COMPLETE]: (evt) => {
+        t.deepEqual(evt.dataclip, result);
+        t.deepEqual(state.result, result);
+
+        done();
+      },
+    });
+
+    onWorkflowComplete(channel, state, { state: result });
+  });
+});
+
+test('execute should return the final result', async (t) => {
+  const channel = mockChannel();
+  const rtm = createMockRTM();
+
+  const plan = {
+    id: 'a',
+    jobs: [
+      {
+        expression: JSON.stringify({ done: true }),
+      },
+    ],
+  };
+
+  const result = await execute(channel, rtm, plan);
+
+  t.deepEqual(result, { done: true });
+});
 // TODO test the whole execute workflow
 
 // run this against the mock - this just ensures that execute

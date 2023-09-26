@@ -14,6 +14,7 @@ import convertAttempt from '../util/convert-attempt';
 import {
   ATTEMPT_COMPLETE,
   ATTEMPT_LOG,
+  ATTEMPT_START,
   GET_ATTEMPT,
   RUN_COMPLETE,
   RUN_START,
@@ -25,6 +26,10 @@ export type AttemptState = {
   activeRun?: string;
   activeJob?: string;
   plan: ExecutionPlan;
+  // final state/dataclip
+  result?: any;
+
+  // TODO status?
 };
 
 type Channel = typeof phx.Channel;
@@ -76,14 +81,20 @@ export function onJobComplete(
   delete state.activeJob;
 }
 
-export function onWorkflowComplete(channel: Channel, state, evt) {
+export function onWorkflowStart(channel: Channel) {
+  channel.push(ATTEMPT_START);
+}
+
+export function onWorkflowComplete(
+  channel: Channel,
+  state: AttemptState,
+  evt: any
+) {
+  state.result = evt.state;
+
   channel.push(ATTEMPT_COMPLETE, {
-    // no point in publishing the workflow id
-    // TODO include final data
     dataclip: evt.state,
   });
-
-  // TODO should I mark the state? Is there any point?
 }
 
 export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
@@ -102,7 +113,6 @@ export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
 export async function prepareAttempt(channel: Channel) {
   // first we get the attempt body through the socket
   const attemptBody = (await getWithReply(channel, GET_ATTEMPT)) as Attempt;
-  console.log(attemptBody);
 
   // then we generate the execution plan
   const plan = convertAttempt(attemptBody);
@@ -125,29 +135,26 @@ async function loadCredential(ws, attemptId, stateId) {}
 // TODO actually this now is a Workflow or Execution plan
 // It's not an attempt anymore
 export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
-  // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
-  console.log('execute', plan);
-  // tracking state for this attempt
-  const state: AttemptState = {
-    //attempt, // keep this on the state so that anyone can access it
-    plan,
-  };
+  return new Promise((resolve) => {
+    // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
+    // tracking state for this attempt
+    const state: AttemptState = {
+      plan,
+    };
 
-  // listen to rtm events
-  // what if I can do this
-  // this is super declarative
-  // TODO is there any danger of events coming through out of order?
-  // what if onJoblog takes 1 second to finish and before the runId is set, onJobLog comes through?
+    // TODO
+    // const context = { channel, state, logger }
 
-  // TODO
-  // const context = { channel, state }
+    rtm.listen(plan.id, {
+      'job-start': (evt) => onJobStart(channel, state, evt),
+      'job-complete': (evt) => onJobComplete(channel, state, evt),
+      'job-log': (evt) => onJobLog(channel, state, evt),
+      'workflow-complete': (evt) => {
+        onWorkflowComplete(channel, state, evt);
+        resolve(evt.state);
+      },
+    });
 
-  rtm.listen(plan.id, {
-    'job-start': (evt) => onJobStart(channel, state, evt),
-    'job-complete': (evt) => onJobComplete(channel, state, evt),
-    'job-log': (evt) => onJobLog(channel, state, evt),
-    'workflow-complete': (evt) => onWorkflowComplete(channel, state, evt),
+    rtm.execute(plan);
   });
-
-  rtm.execute(plan);
 }

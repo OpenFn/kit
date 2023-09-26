@@ -71,7 +71,7 @@ function createMock(
   const listeners: Record<string, any> = {};
 
   const dispatch = (type: RTMEvent, args?: any) => {
-    console.log(' > ', type, args);
+    // console.log(' > ', type, args);
     if (args.workflowId) {
       listeners[args.workflowId]?.[type]?.(args);
     }
@@ -137,13 +137,10 @@ function createMock(
   // Start executing an ExecutionPlan
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
   const execute = (xplan: ExecutionPlan) => {
-    console.log('[mockrtm] execute');
-    console.log(xplan);
     const { id, jobs } = xplan;
     const workflowId = id;
     activeWorkflows[id!] = true;
     setTimeout(() => {
-      console.log('[mockrtm] start');
       dispatch('workflow-start', { workflowId });
       setTimeout(async () => {
         let state = {};
@@ -153,8 +150,6 @@ function createMock(
         }
         setTimeout(() => {
           delete activeWorkflows[id!];
-          console.log('[mockrtm] complete');
-          console.log(state);
           dispatch('workflow-complete', { workflowId, state });
           // TODO on workflow complete we should maybe tidy the listeners?
           // Doesn't really matter in the mock though
