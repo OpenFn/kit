@@ -255,8 +255,25 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
   });
 });
 
-// TODO can't work out why this is failing - there's just no data in the response
-test.serial.skip('get credential through the attempt channel', async (t) => {
+test.serial('unusubscribe after attempt complete', async (t) => {
+  return new Promise(async (done) => {
+    const a = attempt1;
+    server.registerAttempt(a);
+    server.startAttempt(a.id);
+
+    const channel = await join(`attempt:${a.id}`);
+    channel.push(ATTEMPT_COMPLETE).receive('ok', () => {
+      // After the complete event, the listener should unsubscribe to the channel
+      // The mock will send an error to any unhandled events in that channel
+      channel.push(ATTEMPT_COMPLETE).receive('error', () => {
+        t.pass();
+        done();
+      });
+    });
+  });
+});
+
+test.serial('get credential through the attempt channel', async (t) => {
   return new Promise(async (done) => {
     server.startAttempt(attempt1.id);
     server.addCredential('a', credentials['a']);
@@ -269,8 +286,7 @@ test.serial.skip('get credential through the attempt channel', async (t) => {
   });
 });
 
-// TODO can't work out why this is failing - there's just no data in the response
-test.serial.skip('get dataclip through the attempt channel', async (t) => {
+test.serial('get dataclip through the attempt channel', async (t) => {
   return new Promise(async (done) => {
     server.startAttempt(attempt1.id);
     server.addDataclip('d', dataclips['d']);

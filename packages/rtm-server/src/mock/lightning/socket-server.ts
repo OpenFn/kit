@@ -43,7 +43,10 @@ type MockSocketServer = typeof WebSocketServer & {
     fn: EventHandler
   ) => { unsubscribe: () => void };
   waitForMessage: (topic: Topic, event: string) => Promise<PhoenixEvent>;
-  registerEvents: (topic: Topic, events: Record<string, EventHandler>) => void;
+  registerEvents: (
+    topic: Topic,
+    events: Record<string, EventHandler>
+  ) => { unsubscribe: () => void };
 };
 
 function createServer({
@@ -104,7 +107,6 @@ function createServer({
       logger?.debug(
         `<< [${topic}] chan_reply_${ref} ` + JSON.stringify(payload)
       );
-      // console.log('reply', topic, ref, payload);
       ws.send(
         JSON.stringify({
           event: `chan_reply_${ref}`,
@@ -144,9 +146,19 @@ function createServer({
           events[event](ws, { topic, payload, ref });
         } else {
           // handle custom/user events
-          if (channels[topic]) {
+          if (channels[topic] && channels[topic].size) {
             channels[topic].forEach((fn) => {
               fn(ws, { event, topic, payload, ref });
+            });
+          } else {
+            // This behaviour is just a convenience for unit tesdting
+            ws.reply({
+              ref,
+              topic,
+              payload: {
+                status: 'error',
+                response: `There are no listeners on channel ${topic}`,
+              },
             });
           }
         }
@@ -156,7 +168,8 @@ function createServer({
 
   const mockServer = wsServer as MockSocketServer;
 
-  // debugAPI
+  // debug API
+  // TODO should this in fact be (topic, event, fn)?
   mockServer.listenToChannel = (topic: Topic, fn: EventHandler) => {
     if (!channels[topic]) {
       channels[topic] = new Set();
@@ -182,11 +195,15 @@ function createServer({
     });
   };
 
-  // TODO how do we unsubscribe?
   mockServer.registerEvents = (topic: Topic, events) => {
-    for (const evt in events) {
-      mockServer.listenToChannel(topic, events[evt]);
-    }
+    // listen to all events in the channel
+    return mockServer.listenToChannel(topic, (ws, evt) => {
+      const { event } = evt;
+      // call the correct event handler for this event
+      if (events[event]) {
+        events[event](ws, evt);
+      }
+    });
   };
 
   return mockServer as MockSocketServer;

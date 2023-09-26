@@ -59,12 +59,14 @@ const createSocketAPI = (
     // implicitly by channel membership?
     // Right now the socket gets access to all server state
     // But this is just a mock - Lightning can impose more restrictions if it wishes
-    wss.registerEvents(`attempt:${attemptId}`, {
+    const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
       [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
       [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
       [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
-      [ATTEMPT_COMPLETE]: (ws, event) =>
-        handleAttemptComplete(state, ws, event, attemptId),
+      [ATTEMPT_COMPLETE]: (ws, event) => {
+        handleAttemptComplete(state, ws, event, attemptId);
+        unsubscribe();
+      },
     });
   };
 
@@ -119,9 +121,9 @@ const createSocketAPI = (
   }
 
   function getCredential(state: ServerState, ws, evt) {
-    const { ref, topic, payload, event } = evt;
+    const { ref, topic, payload } = evt;
     const response = state.credentials[payload.id];
-    console.log(topic, event, response);
+    // console.log(topic, event, response);
     ws.reply({
       ref,
       topic,
