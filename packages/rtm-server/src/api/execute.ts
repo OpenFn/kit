@@ -53,11 +53,12 @@ export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
     // const context = { channel, state, logger }
 
     rtm.listen(plan.id, {
-      'workflow-start': (evt) => onWorkflowStart(channel),
-      'job-start': (evt) => onJobStart(channel, state, evt),
-      'job-complete': (evt) => onJobComplete(channel, state, evt),
-      log: (evt) => onJobLog(channel, state, evt),
-      'workflow-complete': (evt) => {
+      // TODO load event types from runtime-manager
+      'workflow-start': (evt: any) => onWorkflowStart(channel),
+      'job-start': (evt: any) => onJobStart(channel, state, evt),
+      'job-complete': (evt: any) => onJobComplete(channel, state, evt),
+      log: (evt: any) => onJobLog(channel, state, evt),
+      'workflow-complete': (evt: any) => {
         onWorkflowComplete(channel, state, evt);
         resolve(evt.state);
       },

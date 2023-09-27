@@ -22,6 +22,21 @@ export const mockChannel = (callbacks: Record<string, EventHandler> = {}) => {
       };
     },
     join: () => {
+      if (callbacks.join) {
+        // This is an attempt to mock a join fail
+        // not sure it works that well...
+        // @ts-ignore
+        const { status, response } = callbacks.join();
+        const receive = {
+          receive: (requestedStatus: string, callback: EventHandler) => {
+            if (requestedStatus === status) {
+              setTimeout(() => callback(response), 1);
+            }
+            return receive;
+          },
+        };
+        return receive;
+      }
       const receive = {
         receive: (status: string, callback: EventHandler) => {
           if (status === 'ok') {
@@ -37,8 +52,10 @@ export const mockChannel = (callbacks: Record<string, EventHandler> = {}) => {
   return c;
 };
 
-export const mockSocket = () => {
-  const channels: Record<string, ReturnType<typeof mockChannel>> = {};
+type ChannelMap = Record<string, ReturnType<typeof mockChannel>>;
+
+export const mockSocket = (_endpoint: string, channels: ChannelMap) => {
+  const allChannels: ChannelMap = channels || {};
   return {
     onOpen: (callback: EventHandler) => {
       setTimeout(() => callback(), 1);
@@ -48,8 +65,10 @@ export const mockSocket = () => {
       // TODO maybe it'd be helpful to throw if the channel isn't connected?
     },
     channel: (topic: string) => {
-      channels[topic] = mockChannel();
-      return channels[topic];
+      if (!allChannels[topic]) {
+        allChannels[topic] = mockChannel();
+      }
+      return allChannels[topic];
     },
   };
 };

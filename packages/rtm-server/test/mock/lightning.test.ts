@@ -42,15 +42,19 @@ test.after(() => {
 
 const attempt1 = attempts['attempt-1'];
 
-const join = (channelName: string): Promise<typeof phx.Channel> =>
+const join = (
+  channelName: string,
+  params: any = {}
+): Promise<typeof phx.Channel> =>
   new Promise((done, reject) => {
-    const channel = client.channel(channelName, {});
+    const channel = client.channel(channelName, params);
     channel
       .join()
       .receive('ok', () => {
         done(channel);
       })
       .receive('error', (err) => {
+        // err will be the response message on the payload (ie, invalid_token, invalid_attempt_id etc)
         reject(new Error(err));
       });
   });
@@ -175,7 +179,7 @@ test.serial(
       channel.push(CLAIM).receive('ok', (response) => {
         t.truthy(response);
         t.is(response.length, 1);
-        t.deepEqual(response[0], { id: 'attempt-1' });
+        t.deepEqual(response[0], { id: 'attempt-1', token: 'x.y.z' });
 
         // ensure the server state has changed
         t.is(server.getQueueLength(), 0);
@@ -187,42 +191,26 @@ test.serial(
 // TODO is it even worth doing this? Easier for a socket to pull one at a time?
 // It would also ensure better distribution if 10 workers ask at the same time, they'll get
 // one each then come back for more
-test.serial.skip(
-  'claim attempt: reply with multiple attempt ids',
-  (t) =>
-    new Promise(async (done) => {
-      server.enqueueAttempt(attempt1);
-      server.enqueueAttempt(attempt1);
-      server.enqueueAttempt(attempt1);
-      t.is(server.getQueueLength(), 3);
-
-      const channel = await join('attempts:queue');
-
-      // // response is an array of attempt ids
-      // channel.push(CLAIM, { count: 3 }).receive('ok', (response) => {
-      //   t.truthy(response);
-      //   t.is(response.length, 1);
-      //   t.is(response[0], 'attempt-1');
-
-      //   // ensure the server state has changed
-      //   t.is(server.getQueueLength(), 0);
-      //   done();
-      // });
-    })
-);
-
-// TODO get credentials
-// TODO get state
+test.todo('claim attempt: reply with multiple attempt ids');
 
 test.serial('create a channel for an attempt', async (t) => {
   server.startAttempt('wibble');
-  await join('attempt:wibble');
+  await join('attempt:wibble', { token: 'a.b.c' });
   t.pass('connection ok');
 });
 
+test.serial('do not allow to join a channel without a token', async (t) => {
+  server.startAttempt('wibble');
+  await t.throwsAsync(() => join('attempt:wibble'), {
+    message: 'invalid_token',
+  });
+});
+
+test.todo('do not allow to join a channel without a valid token');
+
 test.serial('reject channels for attempts that are not started', async (t) => {
   await t.throwsAsync(() => join('attempt:xyz'), {
-    message: 'invalid_attempt',
+    message: 'invalid_attempt_id',
   });
 });
 
@@ -231,7 +219,7 @@ test.serial('get attempt data through the attempt channel', async (t) => {
     server.registerAttempt(attempt1);
     server.startAttempt(attempt1.id);
 
-    const channel = await join(`attempt:${attempt1.id}`);
+    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(GET_ATTEMPT).receive('ok', (p) => {
       t.deepEqual(p, attempt1);
       done();
@@ -245,7 +233,7 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
     server.registerAttempt(a);
     server.startAttempt(a.id);
 
-    const channel = await join(`attempt:${a.id}`);
+    const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
     channel
       .push(ATTEMPT_COMPLETE, { dataclip: { answer: 42 } })
       .receive('ok', () => {
@@ -270,7 +258,7 @@ test.serial('logs are saved and acknowledged', async (t) => {
       time: new Date().getTime(),
     } as JSONLog;
 
-    const channel = await join(`attempt:${attempt1.id}`);
+    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(ATTEMPT_LOG, log).receive('ok', () => {
       const { pending } = server.getState();
       const [savedLog] = pending[attempt1.id].logs;
@@ -286,7 +274,7 @@ test.serial('unsubscribe after attempt complete', async (t) => {
     server.registerAttempt(a);
     server.startAttempt(a.id);
 
-    const channel = await join(`attempt:${a.id}`);
+    const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
     channel.push(ATTEMPT_COMPLETE).receive('ok', () => {
       // After the complete event, the listener should unsubscribe to the channel
       // The mock will send an error to any unhandled events in that channel
@@ -303,7 +291,7 @@ test.serial('get credential through the attempt channel', async (t) => {
     server.startAttempt(attempt1.id);
     server.addCredential('a', credentials['a']);
 
-    const channel = await join(`attempt:${attempt1.id}`);
+    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(GET_CREDENTIAL, { id: 'a' }).receive('ok', (result) => {
       t.deepEqual(result, credentials['a']);
       done();
@@ -316,7 +304,7 @@ test.serial('get dataclip through the attempt channel', async (t) => {
     server.startAttempt(attempt1.id);
     server.addDataclip('d', dataclips['d']);
 
-    const channel = await join(`attempt:${attempt1.id}`);
+    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(GET_DATACLIP, { id: 'd' }).receive('ok', (result) => {
       t.deepEqual(result, dataclips['d']);
       done();
@@ -343,7 +331,7 @@ test.serial(
           done();
         });
 
-      const channel = await join(`attempt:${attempt1.id}`);
+      const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
       channel.push(ATTEMPT_COMPLETE, { dataclip: result });
     });
   }

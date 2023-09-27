@@ -76,6 +76,7 @@ const createSocketAPI = (
     // Right now the socket gets access to all server state
     // But this is just a mock - Lightning can impose more restrictions if it wishes
     const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
+      // TODO how will I validate the join in my mock?
       [GET_ATTEMPT]: (ws, event: PhoenixEvent<GET_ATTEMPT_PAYLOAD>) =>
         getAttempt(state, ws, event),
       [GET_CREDENTIAL]: (ws, event: PhoenixEvent<GET_CREDENTIAL_PAYLOAD>) =>
@@ -122,7 +123,9 @@ const createSocketAPI = (
       // TODO assign the worker id to the attempt
       // Not needed by the mocks at the moment
       const next = queue.shift();
-      payload.response.push({ id: next! });
+      // TODO the token in the mock is trivial because we're not going to do any validation on it yet
+      // TODO need to save the token associated with this attempt
+      payload.response.push({ id: next!, token: 'x.y.z' });
       count -= 1;
 
       startAttempt(next!);

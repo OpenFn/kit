@@ -13,6 +13,8 @@ import type { Logger } from '@openfn/logger';
 
 type Topic = string;
 
+export type PhoenixEventStatus = 'ok' | 'error' | 'timeout';
+
 // websocket with a couple of dev-friendly APIs
 export type DevSocket = WebSocket & {
   reply: <R = any>(evt: PhoenixReply<R>) => void;
@@ -29,7 +31,7 @@ export type PhoenixEvent<P = any> = {
 export type PhoenixReply<R = any> = {
   topic: Topic;
   payload: {
-    status: 'ok' | 'error' | 'timeout';
+    status: PhoenixEventStatus;
     response?: R;
   };
   ref: string;
@@ -85,16 +87,21 @@ function createServer({
       });
     },
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
-    phx_join: (ws: DevSocket, { topic, ref }: PhoenixEvent) => {
-      let status = 'ok';
+    phx_join: (ws: DevSocket, { topic, ref, payload }: PhoenixEvent) => {
+      let status: PhoenixEventStatus = 'ok';
       let response = 'ok';
 
+      // Validation on attempt:* channels
       // TODO is this logic in the right place?
       if (topic.startsWith(ATTEMPT_PREFIX)) {
         const attemptId = extractAttemptId(topic);
         if (!state.pending[attemptId]) {
           status = 'error';
-          response = 'invalid_attempt';
+          response = 'invalid_attempt_id';
+        } else if (!payload.token) {
+          // TODO better token validation here
+          status = 'error';
+          response = 'invalid_token';
         }
       }
       ws.reply({

@@ -1,9 +1,11 @@
 import test from 'ava';
 import WebSocket, { WebSocketServer } from 'ws';
 
-import createServer, { connectToLightning } from '../src/server';
+import createServer from '../src/server';
+import connectToLightning from '../src/api/connect';
 import createMockRTM from '../src/mock/runtime-manager';
-import { mockChannel, mockSocket, sleep } from './util';
+import { sleep } from './util';
+import { mockChannel, mockSocket } from '../src/mock/sockets';
 import { CLAIM } from '../src/events';
 
 // Unit tests against the RTM web server
