@@ -12,13 +12,18 @@ import convertAttempt from '../util/convert-attempt';
 
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_COMPLETE_PAYLOAD,
   ATTEMPT_LOG,
+  ATTEMPT_LOG_PAYLOAD,
   ATTEMPT_START,
+  ATTEMPT_START_PAYLOAD,
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
+  RUN_COMPLETE_PAYLOAD,
   RUN_START,
+  RUN_START_PAYLOAD,
 } from '../events';
 import { Attempt, Channel } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
@@ -74,18 +79,13 @@ export function onJobStart(
   state: AttemptState,
   jobId: string
 ) {
-  // generate a run id
-  // write it to state
+  // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
   state.activeJob = jobId;
 
-  // post the correct event to the lightning via websocket
-  // do we need to wait for a response? Well, not yet.
-
-  channel.push(RUN_START, {
+  channel.push<RUN_START_PAYLOAD>(RUN_START, {
     run_id: state.activeJob,
     job_id: state.activeJob,
-
     // input_dataclip_id what about this guy?
   });
 }
@@ -93,12 +93,12 @@ export function onJobStart(
 export function onJobComplete(
   channel: Channel,
   state: AttemptState,
-  jobId: string
+  _evt: any // TODO need to type the RTM events nicely
 ) {
-  channel.push(RUN_COMPLETE, {
-    run_id: state.activeJob,
-    job_id: state.activeJob,
-    // input_dataclip_id what about this guy?
+  channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
+    run_id: state.activeRun!,
+    job_id: state.activeJob!,
+    // output_dataclip what about this guy?
   });
 
   delete state.activeRun;
@@ -106,7 +106,7 @@ export function onJobComplete(
 }
 
 export function onWorkflowStart(channel: Channel) {
-  channel.push(ATTEMPT_START);
+  channel.push<ATTEMPT_START_PAYLOAD>(ATTEMPT_START);
 }
 
 export function onWorkflowComplete(
@@ -116,7 +116,7 @@ export function onWorkflowComplete(
 ) {
   state.result = evt.state;
 
-  channel.push(ATTEMPT_COMPLETE, {
+  channel.push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
     dataclip: evt.state,
   });
 }
@@ -124,14 +124,14 @@ export function onWorkflowComplete(
 export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
   // we basically just forward the log to lightning
   // but we also need to attach the log id
-  const evt = {
+  const evt: ATTEMPT_LOG_PAYLOAD = {
     ...log,
-    attempt_id: state.plan.id,
+    attempt_id: state.plan.id!,
   };
   if (state.activeRun) {
     evt.run_id = state.activeRun;
   }
-  channel.push(ATTEMPT_LOG, evt);
+  channel.push<ATTEMPT_LOG_PAYLOAD>(ATTEMPT_LOG, evt);
 }
 
 export async function prepareAttempt(channel: Channel) {

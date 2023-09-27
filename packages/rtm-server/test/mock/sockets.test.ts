@@ -1,5 +1,5 @@
 import test from 'ava';
-import { mockSocket, mockChannel } from './util';
+import { mockSocket, mockChannel } from '../../src/mock/sockets';
 
 test('mock channel: join', (t) => {
   return new Promise((done) => {

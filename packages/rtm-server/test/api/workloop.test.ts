@@ -1,6 +1,8 @@
 import test from 'ava';
-import { mockChannel, sleep } from '../util';
 
+import { sleep } from '../util';
+
+import { mockChannel } from '../../src/mock/sockets';
 import startWorkloop from '../../src/api/workloop';
 import { CLAIM } from '../../src/events';
 
@@ -40,7 +42,7 @@ test('workloop sends the attempts:claim event', (t) => {
   });
 });
 
-test.only('workloop sends the attempts:claim event several times ', (t) => {
+test('workloop sends the attempts:claim event several times ', (t) => {
   return new Promise((done) => {
     let cancel;
     let count = 0;

@@ -22,7 +22,7 @@ export type DevSocket = WebSocket & {
 export type PhoenixEvent<P = any> = {
   topic: Topic;
   event: string;
-  payload?: P;
+  payload: P;
   ref: string;
 };
 
@@ -30,7 +30,7 @@ export type PhoenixReply<R = any> = {
   topic: Topic;
   payload: {
     status: 'ok' | 'error' | 'timeout';
-    response: R;
+    response?: R;
   };
   ref: string;
 };

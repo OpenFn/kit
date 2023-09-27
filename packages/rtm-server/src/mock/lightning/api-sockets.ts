@@ -8,17 +8,26 @@ import { extractAttemptId } from './util';
 import createPheonixMockSocketServer, {
   DevSocket,
   PhoenixEvent,
-  PhoenixReply,
 } from './socket-server';
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_COMPLETE_PAYLOAD,
+  ATTEMPT_COMPLETE_REPLY,
   ATTEMPT_LOG,
+  ATTEMPT_LOG_PAYLOAD,
+  ATTEMPT_LOG_REPLY,
   CLAIM,
   CLAIM_PAYLOAD,
-  CLAIM_REPLY_PAYLOAD,
+  CLAIM_REPLY,
   GET_ATTEMPT,
+  GET_ATTEMPT_PAYLOAD,
+  GET_ATTEMPT_REPLY,
   GET_CREDENTIAL,
+  GET_CREDENTIAL_PAYLOAD,
+  GET_CREDENTIAL_REPLY,
   GET_DATACLIP,
+  GET_DATACLIP_PAYLOAD,
+  GET_DATACLIP_REPLY,
 } from '../../events';
 
 import type { Server } from 'http';
@@ -44,6 +53,7 @@ const createSocketAPI = (
 
   // pass that through to the phoenix mock
   const wss = createPheonixMockSocketServer({
+    // @ts-ignore server typings
     server,
     state,
     logger: logger && createLogger('PHX', { level: 'debug' }),
@@ -66,11 +76,18 @@ const createSocketAPI = (
     // Right now the socket gets access to all server state
     // But this is just a mock - Lightning can impose more restrictions if it wishes
     const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
-      [GET_ATTEMPT]: (ws, event) => getAttempt(state, ws, event),
-      [GET_CREDENTIAL]: (ws, event) => getCredential(state, ws, event),
-      [GET_DATACLIP]: (ws, event) => getDataclip(state, ws, event),
-      [ATTEMPT_LOG]: (ws, event) => handleLog(state, ws, event),
-      [ATTEMPT_COMPLETE]: (ws, event) => {
+      [GET_ATTEMPT]: (ws, event: PhoenixEvent<GET_ATTEMPT_PAYLOAD>) =>
+        getAttempt(state, ws, event),
+      [GET_CREDENTIAL]: (ws, event: PhoenixEvent<GET_CREDENTIAL_PAYLOAD>) =>
+        getCredential(state, ws, event),
+      [GET_DATACLIP]: (ws, event: PhoenixEvent<GET_DATACLIP_PAYLOAD>) =>
+        getDataclip(state, ws, event),
+      [ATTEMPT_LOG]: (ws, event: PhoenixEvent<ATTEMPT_LOG_PAYLOAD>) =>
+        handleLog(state, ws, event),
+      [ATTEMPT_COMPLETE]: (
+        ws,
+        event: PhoenixEvent<ATTEMPT_COMPLETE_PAYLOAD>
+      ) => {
         handleAttemptComplete(state, ws, event, attemptId);
         unsubscribe();
       },
@@ -97,9 +114,9 @@ const createSocketAPI = (
     let count = 1;
 
     const payload = {
-      status: 'ok',
-      response: [],
-    } as PhoenixReply<CLAIM_REPLY_PAYLOAD>['payload'];
+      status: 'ok' as const,
+      response: [] as CLAIM_REPLY,
+    };
 
     while (count > 0 && queue.length) {
       // TODO assign the worker id to the attempt
@@ -116,15 +133,19 @@ const createSocketAPI = (
       logger?.info('No claims (queue empty)');
     }
 
-    ws.reply({ ref, topic, payload });
+    ws.reply<CLAIM_REPLY>({ ref, topic, payload });
   }
 
-  function getAttempt(state: ServerState, ws: DevSocket, evt) {
+  function getAttempt(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<GET_ATTEMPT_PAYLOAD>
+  ) {
     const { ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
-    const attempt = state.attempts[attemptId];
+    const attempt = state.attempts[attemptId]; /// TODO this is badly typed
 
-    ws.reply({
+    ws.reply<GET_ATTEMPT_REPLY>({
       ref,
       topic,
       payload: {
@@ -134,11 +155,15 @@ const createSocketAPI = (
     });
   }
 
-  function getCredential(state: ServerState, ws: DevSocket, evt) {
+  function getCredential(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<GET_CREDENTIAL_PAYLOAD>
+  ) {
     const { ref, topic, payload } = evt;
     const response = state.credentials[payload.id];
     // console.log(topic, event, response);
-    ws.reply({
+    ws.reply<GET_CREDENTIAL_REPLY>({
       ref,
       topic,
       payload: {
@@ -148,11 +173,15 @@ const createSocketAPI = (
     });
   }
 
-  function getDataclip(state: ServerState, ws: DevSocket, evt) {
+  function getDataclip(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<GET_DATACLIP_PAYLOAD>
+  ) {
     const { ref, topic, payload } = evt;
     const response = state.dataclips[payload.id];
 
-    ws.reply({
+    ws.reply<GET_DATACLIP_REPLY>({
       ref,
       topic,
       payload: {
@@ -162,13 +191,17 @@ const createSocketAPI = (
     });
   }
 
-  function handleLog(state: ServerState, ws: DevSocket, evt) {
+  function handleLog(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<ATTEMPT_LOG_PAYLOAD>
+  ) {
     const { ref, topic, payload } = evt;
     const { attempt_id: attemptId } = payload;
 
     state.pending[attemptId].logs.push(payload);
 
-    ws.reply({
+    ws.reply<ATTEMPT_LOG_REPLY>({
       ref,
       topic,
       payload: {
@@ -180,7 +213,7 @@ const createSocketAPI = (
   function handleAttemptComplete(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent,
+    evt: PhoenixEvent<ATTEMPT_COMPLETE_PAYLOAD>,
     attemptId: string
   ) {
     const { ref, topic, payload } = evt;
@@ -198,7 +231,7 @@ const createSocketAPI = (
       logs: state.pending[attemptId].logs,
     });
 
-    ws.reply({
+    ws.reply<ATTEMPT_COMPLETE_REPLY>({
       ref,
       topic,
       payload: {

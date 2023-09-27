@@ -24,8 +24,8 @@ import {
   loadCredential,
 } from '../../src/api/execute';
 import createMockRTM from '../../src/mock/runtime-manager';
+import { mockChannel } from '../../src/mock/sockets';
 import { attempts } from '../mock/data';
-import { mockChannel } from '../util';
 
 test('prepareAttempt should get the attempt body', async (t) => {
   const attempt = attempts['attempt-1'];

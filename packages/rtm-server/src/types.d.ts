@@ -53,8 +53,20 @@ export type CancelablePromise = Promise<void> & {
   cancel: () => void;
 };
 
-export type Channel = typeof phx.Channel;
+type ReceiveHook = {
+  receive: (
+    status: 'ok' | 'timeout' | 'error',
+    callback: (payload?: any) => void
+  ) => ReceiveHook;
+};
 
+export type Channel = {
+  on: (event: string, fn: (evt: any) => void) => void;
+
+  // TODO it would be super nice to infer the event from the payload
+  push: <P>(event: string, payload?: P) => ReceiveHook;
+  join: <P>(event: string, payload?: P) => ReceiveHook;
+};
 // type RuntimeExecutionPlanID = string;
 
 // type JobEdge = {
