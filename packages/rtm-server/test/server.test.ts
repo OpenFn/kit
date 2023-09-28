@@ -34,13 +34,14 @@ test.skip('healthcheck', async (t) => {
   t.is(body, 'OK');
 });
 
+// TODO this isn't testing anything now, see test/api/connect.test.ts
 // Not a very thorough test
-test.only('connects to lightning', async (t) => {
-  await connectToLightning('www', 'rtm', mockSocket);
-  t.pass();
+// test.only('connects to lightning', async (t) => {
+//   await connectToLightning('www', 'rtm', mockSocket);
+//   t.pass();
 
-  // TODO connections to the same socket.channel should share listners, so I think I can test the channel
-});
+//   // TODO connections to the same socket.channel should share listners, so I think I can test the channel
+// });
 
 // test('connects to websocket', (t) => {
 //   let didSayHello;

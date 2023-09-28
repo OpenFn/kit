@@ -60,6 +60,12 @@ type ReceiveHook = {
   ) => ReceiveHook;
 };
 
+export declare class Socket {
+  constructor(endpoint: string, options: { params: any });
+  onOpen(callback: () => void): void;
+  connect(): void;
+}
+
 export type Channel = {
   on: (event: string, fn: (evt: any) => void) => void;
 

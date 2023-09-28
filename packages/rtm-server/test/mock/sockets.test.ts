@@ -93,10 +93,55 @@ test('mock socket: connect', (t) => {
   return new Promise((done) => {
     const socket = mockSocket();
 
-    // this is a noop
     socket.connect();
     t.pass('connected');
     done();
+  });
+});
+
+test('mock socket: connect and call onOpen', (t) => {
+  return new Promise((done) => {
+    const socket = mockSocket();
+
+    socket.onOpen(() => {
+      t.pass('called on open');
+      done();
+    });
+
+    socket.connect();
+  });
+});
+
+test('mock socket: call onOpen with customConnect', (t) => {
+  return new Promise((done) => {
+    let didCallConnect = false;
+
+    const socket = mockSocket('www', {}, async () => {
+      didCallConnect = true;
+    });
+
+    socket.onOpen(() => {
+      t.true(didCallConnect);
+      done();
+    });
+
+    socket.connect();
+  });
+});
+
+test('mock socket: call onError if connect throws', (t) => {
+  return new Promise((done) => {
+    const socket = mockSocket('www', {}, async () => {
+      throw 'err';
+    });
+
+    socket.onError((e) => {
+      t.is(e, 'err');
+      t.pass();
+      done();
+    });
+
+    socket.connect();
   });
 });
 

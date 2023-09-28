@@ -12,6 +12,7 @@ type Args = {
   port?: number;
   lightning?: string;
   repoDir?: string;
+  secret?: string;
 };
 
 const logger = createLogger('SRV', { level: 'info' });
@@ -33,10 +34,20 @@ const args = yargs(hideBin(process.argv))
     alias: 'd',
     description: 'Path to the runtime repo (where modules will be installed)',
   })
+  .option('secret', {
+    alias: 's',
+    description: 'Worker secret (comes from WORKER_SECRET by default)',
+  })
   .parse() as Args;
 
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/api';
+} else if (!args.secret) {
+  if (!process.env.WORKER_SECRET) {
+    console.error('WORKER_SECRET is not set');
+    process.exit(1);
+  }
+  args.secret = process.env.WORKER_SECRET;
 }
 
 // TODO the rtm needs to take callbacks to load credential, and load state
@@ -56,4 +67,5 @@ createRTMServer(rtm, {
   port: args.port,
   lightning: args.lightning,
   logger,
+  secret: args.secret,
 });

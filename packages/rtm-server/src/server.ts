@@ -17,6 +17,8 @@ type ServerOptions = {
   lightning?: string; // url to lightning instance
   rtm?: any;
   logger?: Logger;
+
+  secret: string; // worker secret
 };
 
 function createServer(rtm: any, options: ServerOptions = {}) {
@@ -51,7 +53,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
 
   if (options.lightning) {
     logger.log('Starting work loop at', options.lightning);
-    connectToLightning(options.lightning, rtm.id).then(
+    connectToLightning(options.lightning, rtm.id, options.secret).then(
       ({ socket, channel }) => {
         const startAttempt = async ({ id, token }: StartAttemptArgs) => {
           const { channel: attemptChannel, plan } = await joinAttemptChannel(

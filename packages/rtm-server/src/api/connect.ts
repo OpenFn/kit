@@ -1,20 +1,24 @@
 import phx from 'phoenix-channels';
-import { Channel } from '../types';
+import generateWorkerToken from '../util/worker-token';
+import type { Socket, Channel } from '../types';
 
 type SocketAndChannel = {
-  socket: phx.Socket;
+  socket: Socket;
   channel: Channel;
 };
 
-// This will open up a websocket channel to lightning
-// TODO auth
 export const connectToLightning = (
   endpoint: string,
-  _serverId: string,
-  Socket = phx.Socket
+  serverId: string,
+  secret: string,
+  SocketConstructor: Socket = phx.Socket
 ) => {
-  return new Promise<SocketAndChannel>((done) => {
-    let socket = new Socket(endpoint /*,{params: {userToken: "123"}}*/);
+  return new Promise<SocketAndChannel>(async (done, reject) => {
+    // TODO does this token need to be fed back anyhow?
+    // I think it's just used to connect and then forgotten?
+    // If we reconnect we need a new token I guess?
+    const token = await generateWorkerToken(secret, serverId);
+    const socket = new SocketConstructor(endpoint, { params: { token } });
 
     // TODO need error & timeout handling (ie wrong endpoint or endpoint offline)
     // Do we infinitely try to reconnect?
@@ -22,6 +26,7 @@ export const connectToLightning = (
     // Unit tests on all of these behaviours!
     socket.onOpen(() => {
       // join the queue channel
+      // TODO should this send the worker token?
       const channel = socket.channel('attempts:queue');
 
       channel
@@ -35,6 +40,11 @@ export const connectToLightning = (
         .receive('timeout', (e: any) => {
           console.log('TIMEOUT', e);
         });
+    });
+
+    // TODO what even happens if the connection fails?
+    socket.onError((e) => {
+      reject(e);
     });
 
     socket.connect();

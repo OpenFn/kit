@@ -112,6 +112,7 @@ function createServer({
     },
   };
 
+  // TODO need to verify jwt here
   wsServer.on('connection', function (ws: DevSocket, _req: any) {
     logger?.info('new client connected');
 

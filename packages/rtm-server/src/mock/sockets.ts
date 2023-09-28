@@ -54,15 +54,29 @@ export const mockChannel = (callbacks: Record<string, EventHandler> = {}) => {
 
 type ChannelMap = Record<string, ReturnType<typeof mockChannel>>;
 
-export const mockSocket = (_endpoint: string, channels: ChannelMap) => {
+export const mockSocket = (
+  _endpoint?: string,
+  channels?: ChannelMap,
+  connect: () => Promise<void> = async () => {}
+) => {
   const allChannels: ChannelMap = channels || {};
+
+  const callbacks: Record<string, EventHandler> = {};
   return {
     onOpen: (callback: EventHandler) => {
-      setTimeout(() => callback(), 1);
+      callbacks.onOpen = callback;
+    },
+    onError: (callback: EventHandler) => {
+      callbacks.onError = callback;
     },
     connect: () => {
-      // noop
-      // TODO maybe it'd be helpful to throw if the channel isn't connected?
+      connect()
+        .then(() => {
+          setTimeout(() => callbacks?.onOpen?.(), 1);
+        })
+        .catch((e) => {
+          setTimeout(() => callbacks?.onError?.(e), 1);
+        });
     },
     channel: (topic: string) => {
       if (!allChannels[topic]) {
