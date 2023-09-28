@@ -2,7 +2,6 @@ import test from 'ava';
 import { JSONLog } from '@openfn/logger';
 
 import {
-  GET_ATTEMPT,
   RUN_START,
   RUN_COMPLETE,
   ATTEMPT_LOG,
@@ -12,7 +11,6 @@ import {
   GET_DATACLIP,
 } from '../../src/events';
 import {
-  prepareAttempt,
   onJobStart,
   onJobComplete,
   onJobLog,
@@ -25,43 +23,6 @@ import {
 } from '../../src/api/execute';
 import createMockRTM from '../../src/mock/runtime-manager';
 import { mockChannel } from '../../src/mock/sockets';
-import { attempts } from '../mock/data';
-
-test('prepareAttempt should get the attempt body', async (t) => {
-  const attempt = attempts['attempt-1'];
-  let didCallGetAttempt = false;
-  const channel = mockChannel({
-    [GET_ATTEMPT]: () => {
-      // TODO should be no payload (or empty payload)
-      didCallGetAttempt = true;
-      return attempt;
-    },
-  });
-
-  await prepareAttempt(channel, 'a1');
-  t.true(didCallGetAttempt);
-});
-
-test('prepareAttempt should return an execution plan', async (t) => {
-  const attempt = attempts['attempt-1'];
-
-  const channel = mockChannel({
-    [GET_ATTEMPT]: () => attempt,
-  });
-
-  const plan = await prepareAttempt(channel, 'a1');
-  t.deepEqual(plan, {
-    id: 'attempt-1',
-    jobs: [
-      {
-        id: 'trigger',
-        configuration: 'a',
-        expression: 'fn(a => a)',
-        adaptor: '@openfn/language-common@1.0.0',
-      },
-    ],
-  });
-});
 
 test('jobStart should set a run id and active job on state', async (t) => {
   const plan = { id: 'attempt-1' };

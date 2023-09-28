@@ -2,6 +2,44 @@ import test from 'ava';
 import { mockSocket, mockChannel } from '../../src/mock/sockets';
 import joinAttemptChannel from '../../src/api/start-attempt';
 import { GET_ATTEMPT } from '../../src/events';
+import { loadAttempt } from '../../src/api/start-attempt';
+import { attempts } from '../mock/data';
+
+test('loadAttempt should get the attempt body', async (t) => {
+  const attempt = attempts['attempt-1'];
+  let didCallGetAttempt = false;
+  const channel = mockChannel({
+    [GET_ATTEMPT]: () => {
+      // TODO should be no payload (or empty payload)
+      didCallGetAttempt = true;
+      return attempt;
+    },
+  });
+
+  await loadAttempt(channel);
+  t.true(didCallGetAttempt);
+});
+
+test('loadAttempt should return an execution plan', async (t) => {
+  const attempt = attempts['attempt-1'];
+
+  const channel = mockChannel({
+    [GET_ATTEMPT]: () => attempt,
+  });
+
+  const plan = await loadAttempt(channel);
+  t.deepEqual(plan, {
+    id: 'attempt-1',
+    jobs: [
+      {
+        id: 'trigger',
+        configuration: 'a',
+        expression: 'fn(a => a)',
+        adaptor: '@openfn/language-common@1.0.0',
+      },
+    ],
+  });
+});
 
 test('should join an attempt channel with a token', async (t) => {
   const socket = mockSocket('www', {

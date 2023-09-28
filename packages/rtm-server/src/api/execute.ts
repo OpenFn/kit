@@ -6,7 +6,7 @@
 // it isn't an actual worker, but a BRIDGE between a worker and lightning
 import crypto from 'node:crypto';
 import { JSONLog } from '@openfn/logger';
-import convertAttempt from '../util/convert-attempt';
+
 // this managers the worker
 //i would like functions to be testable, and I'd like the logic to be readable
 
@@ -133,20 +133,6 @@ export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
     evt.run_id = state.activeRun;
   }
   channel.push<ATTEMPT_LOG_PAYLOAD>(ATTEMPT_LOG, evt);
-}
-
-export async function prepareAttempt(channel: Channel) {
-  // first we get the attempt body through the socket
-  const attemptBody = (await getWithReply(channel, GET_ATTEMPT)) as Attempt;
-
-  // then we generate the execution plan
-  const plan = convertAttempt(attemptBody);
-
-  return plan;
-  // difficulty: we need to tell the rtm how to callback for
-  // credentials and state (which should both be lazy and part of the run)
-  // I guess this is generic - given an attempt id I can lookup the channel and return this information
-  // then we call the excute function. Or return the promise and let someone else do that
 }
 
 export async function loadState(channel: Channel, stateId: string) {
