@@ -10,7 +10,7 @@ type Args = {
 };
 
 const args = yargs(hideBin(process.argv))
-  .command('server', 'Start a runtime manager server')
+  .command('server', 'Start a mock lighting server')
   .option('port', {
     alias: 'p',
     description: 'Port to run the server on',

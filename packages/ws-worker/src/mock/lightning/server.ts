@@ -32,11 +32,11 @@ export type ServerState = {
   dataclips: Record<string, any>;
 
   // Tracking state of known attempts
-  // TODO include the rtm id and token
+  // TODO include the engine id and token
   pending: Record<string, AttemptState>;
 
   // Track all completed attempts here
-  results: Record<string, { rtmId: string; state: null | any }>;
+  results: Record<string, { workerId: string; state: null | any }>;
 
   // event emitter for debugging and observability
   events: EventEmitter;

@@ -1,5 +1,5 @@
 import type { State, Credential } from '../types';
-import { LazyResolvers } from './runtime-manager';
+import { LazyResolvers } from './runtime-engine';
 
 const mockResolveCredential = (_credId: string) =>
   new Promise<Credential>((resolve) =>

@@ -3,22 +3,22 @@ import WebSocket, { WebSocketServer } from 'ws';
 
 import createServer from '../src/server';
 import connectToLightning from '../src/api/connect';
-import createMockRTM from '../src/mock/runtime-manager';
+import createMockRTE from '../src/mock/runtime-engine';
 import { sleep } from './util';
 import { mockChannel, mockSocket } from '../src/mock/sockets';
 import { CLAIM } from '../src/events';
 
-// Unit tests against the RTM web server
+// Unit tests against the worker server
 // I don't think there will ever be much here because the server is mostly a pull
 
-let rtm;
+let engine;
 let server;
 let cancel;
 
 const url = 'http://localhost:7777';
 
 test.beforeEach(() => {
-  rtm = createMockRTM();
+  engine = createMockRTE();
 });
 
 test.afterEach(() => {
@@ -27,7 +27,7 @@ test.afterEach(() => {
 });
 
 test.skip('healthcheck', async (t) => {
-  const server = createServer(rtm, { port: 7777 });
+  const server = createServer(engine, { port: 7777 });
   const result = await fetch(`${url}/healthcheck`);
   t.is(result.status, 200);
   const body = await result.text();
@@ -53,7 +53,7 @@ test.skip('healthcheck', async (t) => {
 //     didSayHello = true;
 //   });
 
-//   rtm = createMockRTM();
+//   rtm = createMockRTE();
 //   server = createServer(rtm, {
 //     port: 7777,
 //     lightning: 'ws://localhost:8080',

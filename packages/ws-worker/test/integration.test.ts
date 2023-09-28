@@ -1,25 +1,23 @@
 /*
- * Tests of Lightning-RTM server integration, from Lightning's perspective
+ * Tests of Lightning-Engine server integration, from Lightning's perspective
  */
 
 import test from 'ava';
-import createRTMServer from '../src/server';
+import createWorkerServer from '../src/server';
 import createLightningServer from '../src/mock/lightning';
-import createMockRTM from '../src/mock/runtime-manager';
-
-import { wait, waitForEvent } from './util';
+import createMockRTE from '../src/mock/runtime-engine';
 
 let lng;
-let rtm;
+let engine;
 
 const urls = {
-  rtm: 'http://localhost:4567',
+  engine: 'http://localhost:4567',
   lng: 'http://localhost:7654',
 };
 
 test.before(() => {
   lng = createLightningServer({ port: 7654 });
-  rtm = createRTMServer(createMockRTM('rtm'), {
+  engine = createWorkerServer(createMockRTE('engine'), {
     port: 4567,
     lightning: urls.lng,
   });

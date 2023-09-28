@@ -15,13 +15,12 @@ type ServerOptions = {
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
-  rtm?: any;
   logger?: Logger;
 
-  secret: string; // worker secret
+  secret?: string; // worker secret
 };
 
-function createServer(rtm: any, options: ServerOptions = {}) {
+function createServer(engine: any, options: ServerOptions = {}) {
   const logger = options.logger || createMockLogger();
   const port = options.port || 1234;
 
@@ -39,7 +38,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   createRestAPI(app, logger);
 
   app.listen(port);
-  logger.success('RTM server listening on', port);
+  logger.success('ws-worker listening on', port);
 
   (app as any).destroy = () => {
     // TODO close the work loop
@@ -53,7 +52,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
 
   if (options.lightning) {
     logger.log('Starting work loop at', options.lightning);
-    connectToLightning(options.lightning, rtm.id, options.secret).then(
+    connectToLightning(options.lightning, engine.id, options.secret!).then(
       ({ socket, channel }) => {
         const startAttempt = async ({ id, token }: StartAttemptArgs) => {
           const { channel: attemptChannel, plan } = await joinAttemptChannel(
@@ -61,7 +60,7 @@ function createServer(rtm: any, options: ServerOptions = {}) {
             token,
             id
           );
-          execute(attemptChannel, rtm, plan);
+          execute(attemptChannel, engine, plan);
         };
 
         // TODO maybe pull this logic out so we can test it?
@@ -77,8 +76,8 @@ function createServer(rtm: any, options: ServerOptions = {}) {
   }
 
   // TMP doing this for tests but maybe its better done externally
-  app.on = (...args) => rtm.on(...args);
-  app.once = (...args) => rtm.once(...args);
+  app.on = (...args) => engine.on(...args);
+  app.once = (...args) => engine.once(...args);
 
   return app;
 }

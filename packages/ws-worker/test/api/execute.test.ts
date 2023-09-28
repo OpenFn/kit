@@ -21,7 +21,7 @@ import {
   loadState,
   loadCredential,
 } from '../../src/api/execute';
-import createMockRTM from '../../src/mock/runtime-manager';
+import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify } from '../../src/util';
 
@@ -237,7 +237,7 @@ test('loadCredential should fetch a credential', async (t) => {
 
 test('execute should return the final result', async (t) => {
   const channel = mockChannel();
-  const rtm = createMockRTM();
+  const engine = createMockRTE();
 
   const plan = {
     id: 'a',
@@ -248,12 +248,12 @@ test('execute should return the final result', async (t) => {
     ],
   };
 
-  const result = await execute(channel, rtm, plan);
+  const result = await execute(channel, engine, plan);
 
   t.deepEqual(result, { done: true });
 });
 
-// TODO this is more of an RTM test really, but worth having I suppose
+// TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load a credential', async (t) => {
   let didCallCredentials = false;
 
@@ -264,7 +264,7 @@ test('execute should lazy-load a credential', async (t) => {
       return {};
     },
   });
-  const rtm = createMockRTM('rtm');
+  const engine = createMockRTE('rte');
 
   const plan = {
     id: 'a',
@@ -276,12 +276,12 @@ test('execute should lazy-load a credential', async (t) => {
     ],
   };
 
-  await execute(channel, rtm, plan);
+  await execute(channel, engine, plan);
 
   t.true(didCallCredentials);
 });
 
-// TODO this is more of an RTM test really, but worth having I suppose
+// TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load initial state', async (t) => {
   let didCallState = false;
 
@@ -292,7 +292,7 @@ test('execute should lazy-load initial state', async (t) => {
       return toArrayBuffer({});
     },
   });
-  const rtm = createMockRTM('rtm');
+  const engine = createMockRTE('rte');
 
   const plan = {
     id: 'a',
@@ -304,7 +304,7 @@ test('execute should lazy-load initial state', async (t) => {
     ],
   };
 
-  await execute(channel, rtm, plan);
+  await execute(channel, engine, plan);
 
   t.true(didCallState);
 });
@@ -312,7 +312,7 @@ test('execute should lazy-load initial state', async (t) => {
 test('execute should call all events on the socket', async (t) => {
   const events = {};
 
-  const rtm = createMockRTM();
+  const engine = createMockRTE();
 
   const toEventMap = (obj, evt: string) => {
     obj[evt] = (e) => {
@@ -346,7 +346,7 @@ test('execute should call all events on the socket', async (t) => {
     ],
   };
 
-  await execute(channel, rtm, plan);
+  await execute(channel, engine, plan);
 
   // check result is what we expect
 

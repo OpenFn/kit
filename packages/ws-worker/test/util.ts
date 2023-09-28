@@ -18,9 +18,9 @@ export const wait = (fn, maxAttempts = 100) =>
 
 export const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
-export const waitForEvent = <T>(rtm, eventName) =>
+export const waitForEvent = <T>(engine, eventName) =>
   new Promise<T>((resolve) => {
-    rtm.once(eventName, (e) => {
+    engine.once(eventName, (e) => {
       resolve(e);
     });
   });

@@ -3,9 +3,9 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import createLogger from '@openfn/logger';
 
-import createRTM from '@openfn/runtime-manager';
-import createMockRTM from './mock/runtime-manager';
-import createRTMServer from './server';
+// import createRTM from '@openfn/runtime-engine';
+import createMockRTE from './mock/runtime-engine';
+import createWorker from './server';
 
 type Args = {
   _: string[];
@@ -18,7 +18,7 @@ type Args = {
 const logger = createLogger('SRV', { level: 'info' });
 
 const args = yargs(hideBin(process.argv))
-  .command('server', 'Start a runtime manager server')
+  .command('server', 'Start a ws-worker server')
   .option('port', {
     alias: 'p',
     description: 'Port to run the server on',
@@ -50,20 +50,20 @@ if (args.lightning === 'mock') {
   args.secret = process.env.WORKER_SECRET;
 }
 
-// TODO the rtm needs to take callbacks to load credential, and load state
+// TODO the engine needs to take callbacks to load credential, and load state
 // these in turn should utilise the websocket
 // So either the server creates the runtime (which seems reasonable acutally?)
-// Or the server calls a setCalbacks({ credential, state }) function on the RTM
+// Or the server calls a setCalbacks({ credential, state }) function on the engine
 // Each of these takes the attemptId as the firsdt argument
 // credential and state will lookup the right channel
-// const rtm = createRTM('rtm', { repoDir: args.repoDir });
-// logger.debug('RTM created');
+// const engine = createEngine('rte', { repoDir: args.repoDir });
+// logger.debug('engine created');
 
 // use the mock rtm for now
-const rtm = createMockRTM('rtm');
+const engine = createMockRTE('rtm');
 logger.debug('Mock RTM created');
 
-createRTMServer(rtm, {
+createWorker(engine, {
   port: args.port,
   lightning: args.lightning,
   logger,

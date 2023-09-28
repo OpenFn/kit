@@ -1,6 +1,6 @@
 // TODO not crazy about this file name
 // This is the module responsible for interfacing between the Lightning websocket
-// and the RTM
+// and the rutnime engine
 // It's the actual meat and potatoes of the implementation
 // You can almost read this as a binding function and a bunch of handlers
 // it isn't an actual worker, but a BRIDGE between a worker and lightning
@@ -43,7 +43,7 @@ export type AttemptState = {
 
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
-export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
+export function execute(channel: Channel, engine, plan: ExecutionPlan) {
   return new Promise((resolve) => {
     // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
     // tracking state for this attempt
@@ -54,7 +54,7 @@ export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
     // TODO
     // const context = { channel, state, logger }
 
-    rtm.listen(plan.id, {
+    engine.listen(plan.id, {
       // TODO load event types from runtime-manager
       'workflow-start': (evt: any) => onWorkflowStart(channel),
       'job-start': (evt: any) => onJobStart(channel, state, evt),
@@ -71,7 +71,7 @@ export function execute(channel: Channel, rtm, plan: ExecutionPlan) {
       credential: (id: string) => loadCredential(channel, id),
     };
 
-    rtm.execute(plan, resolvers);
+    engine.execute(plan, resolvers);
   });
 }
 
@@ -96,7 +96,7 @@ export function onJobStart(
 export function onJobComplete(
   channel: Channel,
   state: AttemptState,
-  evt: any // TODO need to type the RTM events nicely
+  evt: any // TODO need to type the engine events nicely
 ) {
   channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
     run_id: state.activeRun!,

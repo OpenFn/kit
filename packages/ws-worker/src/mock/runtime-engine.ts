@@ -4,10 +4,11 @@ import type { ExecutionPlan } from '@openfn/runtime';
 import type { State, Credential } from '../types';
 import mockResolvers from './resolvers';
 
-// A mock runtime manager
+// A mock runtime engine
+
 // Runs ExecutionPlans(XPlans) in worker threads
 // May need to lazy-load resources
-// The mock RTM will return expression JSON as state
+// The mock engine will return expression JSON as state
 
 type Resolver<T> = (id: string) => Promise<T>;
 
@@ -19,7 +20,7 @@ export type LazyResolvers = {
   expressions?: Resolver<string>;
 };
 
-export type RTMEvent =
+export type EngineEvent =
   | 'job-start'
   | 'job-complete'
   | 'log' // this is a log from inside the VM
@@ -67,7 +68,7 @@ function createMock(serverId?: string) {
   const bus = new EventEmitter();
   const listeners: Record<string, any> = {};
 
-  const dispatch = (type: RTMEvent, args?: any) => {
+  const dispatch = (type: EngineEvent, args?: any) => {
     // console.log(' > ', type, args);
     if (args.workflowId) {
       listeners[args.workflowId]?.[type]?.(args);
@@ -76,9 +77,10 @@ function createMock(serverId?: string) {
     bus.emit(type, args);
   };
 
-  const on = (event: RTMEvent, fn: (evt: any) => void) => bus.on(event, fn);
+  const on = (event: EngineEvent, fn: (evt: any) => void) => bus.on(event, fn);
 
-  const once = (event: RTMEvent, fn: (evt: any) => void) => bus.once(event, fn);
+  const once = (event: EngineEvent, fn: (evt: any) => void) =>
+    bus.once(event, fn);
 
   // Listens to events for a particular workflow/execution plan
   // TODO: Listeners will be removed when the plan is complete (?)
