@@ -26,9 +26,11 @@ test.before(
     new Promise((done) => {
       server = createLightningServer({ port: 7777 });
 
-      client = new phx.Socket(endpoint, { timeout: 50 });
-      client.connect();
+      // Note that we need a token to connect, but the mock here
+      // doesn't (yet) do any validation on that token
+      client = new phx.Socket(endpoint, { params: { token: 'xyz' } });
       client.onOpen(done);
+      client.connect();
     })
 );
 
@@ -113,7 +115,19 @@ test.serial('provide a phoenix websocket at /api', (t) => {
   t.is(client.connectionState(), 'open');
 });
 
-test.serial('respond to connection join requests', (t) => {
+test.serial('reject ws connections without a token', (t) => {
+  return new Promise((done) => {
+    // client should be connected before this test runs
+    const socket = new phx.Socket(endpoint);
+    socket.onClose(() => {
+      t.pass();
+      done();
+    });
+    socket.connect();
+  });
+});
+
+test.serial('respond to channel join requests', (t) => {
   return new Promise(async (done, reject) => {
     const channel = client.channel('x', {});
 

@@ -40,6 +40,7 @@
     "koa-route": "^3.2.0",
     "koa-websocket": "^7.0.0",
     "nodemon": "3.0.1",
+    "query-string": "^8.1.0",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "tsup": "^6.2.3",

@@ -5,6 +5,7 @@
  * It also adds some dev and debug APIs, useful for unit testing
  */
 import { WebSocketServer, WebSocket } from 'ws';
+import querystring from 'query-string';
 
 import { ATTEMPT_PREFIX, extractAttemptId } from './util';
 import { ServerState } from './server';
@@ -112,9 +113,24 @@ function createServer({
     },
   };
 
-  // TODO need to verify jwt here
-  wsServer.on('connection', function (ws: DevSocket, _req: any) {
+  wsServer.on('connection', function (ws: DevSocket, req: any) {
     logger?.info('new client connected');
+
+    // Ensure that a JWT token is added to the
+    const [_path, query] = req.url.split('?');
+    const { token } = querystring.parse(query);
+
+    // TODO for now, there's no validation on the token in this mock
+
+    // If there is no token (or later, if invalid), close the connection immediately
+    if (!token) {
+      logger?.error('INVALID TOKEN');
+      ws.close();
+
+      // TODO I'd love to send back a 403 here, not sure how to do it
+      // (and it's not important in the mock really)
+      return;
+    }
 
     ws.reply = <R = any>({ ref, topic, payload }: PhoenixReply<R>) => {
       logger?.debug(
