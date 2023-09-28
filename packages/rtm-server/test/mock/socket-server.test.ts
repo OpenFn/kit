@@ -17,7 +17,9 @@ test.beforeEach(() => {
   // @ts-ignore I don't care about missing server options here
   server = createServer({ onMessage: (evt) => messages.push(evt) });
 
-  socket = new phx.Socket('ws://localhost:8080');
+  socket = new phx.Socket('ws://localhost:8080', {
+    params: { token: 'x.y.z' },
+  });
   socket.connect();
 });
 

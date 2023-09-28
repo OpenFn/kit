@@ -28,7 +28,7 @@ test.before(
 
       // Note that we need a token to connect, but the mock here
       // doesn't (yet) do any validation on that token
-      client = new phx.Socket(endpoint, { params: { token: 'xyz' } });
+      client = new phx.Socket(endpoint, { params: { token: 'x.y.z' } });
       client.onOpen(done);
       client.connect();
     })
