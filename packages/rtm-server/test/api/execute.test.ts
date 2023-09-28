@@ -23,6 +23,11 @@ import {
 } from '../../src/api/execute';
 import createMockRTM from '../../src/mock/runtime-manager';
 import { mockChannel } from '../../src/mock/sockets';
+import { stringify } from '../../src/util';
+
+const enc = new TextEncoder();
+
+const toArrayBuffer = (obj: any) => enc.encode(stringify(obj));
 
 test('jobStart should set a run id and active job on state', async (t) => {
   const plan = { id: 'attempt-1' };
@@ -209,7 +214,7 @@ test('loadState should fetch a dataclip', async (t) => {
   const channel = mockChannel({
     [GET_DATACLIP]: ({ dataclip_id }) => {
       t.is(dataclip_id, 'xyz');
-      return { data: {} };
+      return toArrayBuffer({ data: {} });
     },
   });
 
@@ -284,7 +289,7 @@ test('execute should lazy-load initial state', async (t) => {
     [GET_DATACLIP]: (id) => {
       t.truthy(id);
       didCallState = true;
-      return {};
+      return toArrayBuffer({});
     },
   });
   const rtm = createMockRTM('rtm');

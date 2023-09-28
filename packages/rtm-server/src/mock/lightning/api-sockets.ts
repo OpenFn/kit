@@ -31,6 +31,9 @@ import {
 } from '../../events';
 
 import type { Server } from 'http';
+import { stringify } from '../../util';
+
+const enc = new TextEncoder();
 
 // this new API is websocket based
 // Events map to handlers
@@ -146,14 +149,14 @@ const createSocketAPI = (
   ) {
     const { ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
-    const attempt = state.attempts[attemptId]; /// TODO this is badly typed
+    const response = state.attempts[attemptId]; /// TODO this is badly typed
 
     ws.reply<GET_ATTEMPT_REPLY>({
       ref,
       topic,
       payload: {
         status: 'ok',
-        response: attempt,
+        response,
       },
     });
   }
@@ -182,7 +185,10 @@ const createSocketAPI = (
     evt: PhoenixEvent<GET_DATACLIP_PAYLOAD>
   ) {
     const { ref, topic, payload } = evt;
-    const response = state.dataclips[payload.id];
+    const dataclip = state.dataclips[payload.id];
+
+    // Send the data as an ArrayBuffer (our stringify function will do this)
+    const response = enc.encode(stringify(dataclip));
 
     ws.reply<GET_DATACLIP_REPLY>({
       ref,

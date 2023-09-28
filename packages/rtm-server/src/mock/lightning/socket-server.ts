@@ -9,6 +9,7 @@ import querystring from 'query-string';
 
 import { ATTEMPT_PREFIX, extractAttemptId } from './util';
 import { ServerState } from './server';
+import { stringify } from '../../util';
 
 import type { Logger } from '@openfn/logger';
 
@@ -133,11 +134,9 @@ function createServer({
     }
 
     ws.reply = <R = any>({ ref, topic, payload }: PhoenixReply<R>) => {
-      logger?.debug(
-        `<< [${topic}] chan_reply_${ref} ` + JSON.stringify(payload)
-      );
+      logger?.debug(`<< [${topic}] chan_reply_${ref} ` + stringify(payload));
       ws.send(
-        JSON.stringify({
+        stringify({
           event: `chan_reply_${ref}`,
           ref,
           topic,
@@ -147,9 +146,9 @@ function createServer({
     };
 
     ws.sendJSON = ({ event, ref, topic, payload }: PhoenixEvent) => {
-      logger?.debug(`<< [${topic}] ${event} ` + JSON.stringify(payload));
+      logger?.debug(`<< [${topic}] ${event} ` + stringify(payload));
       ws.send(
-        JSON.stringify({
+        stringify({
           event,
           ref,
           topic,
@@ -166,9 +165,7 @@ function createServer({
         // phx sends this info in each message
         const { topic, event, payload, ref } = evt;
 
-        logger?.debug(
-          `>> [${topic}] ${event} ${ref} :: ${JSON.stringify(payload)}`
-        );
+        logger?.debug(`>> [${topic}] ${event} ${ref} :: ${stringify(payload)}`);
 
         if (events[event]) {
           // handle system/phoenix events

@@ -29,6 +29,8 @@ import { Attempt, Channel } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
 import { getWithReply } from '../util';
 
+const enc = new TextDecoder('utf-8');
+
 export type AttemptState = {
   activeRun?: string;
   activeJob?: string;
@@ -136,7 +138,11 @@ export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
 }
 
 export async function loadState(channel: Channel, stateId: string) {
-  return getWithReply(channel, GET_DATACLIP, { dataclip_id: stateId });
+  const result = await getWithReply<Uint8Array>(channel, GET_DATACLIP, {
+    dataclip_id: stateId,
+  });
+  const str = enc.decode(new Uint8Array(result));
+  return JSON.parse(str);
 }
 
 export async function loadCredential(channel: Channel, credentialId: string) {

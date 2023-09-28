@@ -17,6 +17,8 @@ import { JSONLog } from '@openfn/logger';
 
 const endpoint = 'ws://localhost:7777/api';
 
+const enc = new TextDecoder('utf-8');
+
 let server;
 let client;
 
@@ -234,8 +236,8 @@ test.serial('get attempt data through the attempt channel', async (t) => {
     server.startAttempt(attempt1.id);
 
     const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
-    channel.push(GET_ATTEMPT).receive('ok', (p) => {
-      t.deepEqual(p, attempt1);
+    channel.push(GET_ATTEMPT).receive('ok', (attempt) => {
+      t.deepEqual(attempt, attempt1);
       done();
     });
   });
@@ -320,7 +322,9 @@ test.serial('get dataclip through the attempt channel', async (t) => {
 
     const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(GET_DATACLIP, { id: 'd' }).receive('ok', (result) => {
-      t.deepEqual(result, dataclips['d']);
+      const str = enc.decode(new Uint8Array(result));
+      const dataclip = JSON.parse(str);
+      t.deepEqual(dataclip, dataclips['d']);
       done();
     });
   });

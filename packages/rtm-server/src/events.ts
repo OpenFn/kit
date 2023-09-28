@@ -10,7 +10,10 @@ export type CLAIM_REPLY = Array<{ id: string; token?: string }>;
 export const GET_ATTEMPT = 'fetch:attempt';
 export type GET_ATTEMPT_PAYLOAD = void; // no payload
 // This is basically the attempt, which needs defining properly
-export type GET_ATTEMPT_REPLY = {
+export type GET_ATTEMPT_REPLY = Uint8Array; // represents a json string Attempt
+
+// TODO
+type Attempt = {
   id: string;
   workflow: {};
   options: {};
