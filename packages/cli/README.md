@@ -180,7 +180,7 @@ Example config file:
 
   // Optional: defaults to OpenFn.org's API, can be overridden or set with
   // `OPENFN_ENDPOINT` env var
-  "endpoint": "https://app.openfn.org/api/provision"
+  "endpoint": "https://app.openfn.org"
 }
 ```
 
