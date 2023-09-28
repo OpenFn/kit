@@ -60,6 +60,6 @@ export type RUN_COMPLETE_PAYLOAD = {
   attempt_id?: string;
   job_id: string;
   run_id: string;
-  output_dataclip?: string; //hmm
+  output_dataclip?: string;
 };
 export type RUN_COMPLETE_REPLY = void;

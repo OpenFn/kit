@@ -94,12 +94,12 @@ export function onJobStart(
 export function onJobComplete(
   channel: Channel,
   state: AttemptState,
-  _evt: any // TODO need to type the RTM events nicely
+  evt: any // TODO need to type the RTM events nicely
 ) {
   channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
-    // output_dataclip what about this guy?
+    output_dataclip: JSON.stringify(evt.state),
   });
 
   delete state.activeRun;

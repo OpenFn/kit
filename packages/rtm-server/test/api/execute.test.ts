@@ -62,7 +62,7 @@ test('jobStart should send a run:start event', async (t) => {
   });
 });
 
-test('jobEnd should clear the run id and active job on state', async (t) => {
+test('jobComplete should clear the run id and active job on state', async (t) => {
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
 
@@ -74,7 +74,7 @@ test('jobEnd should clear the run id and active job on state', async (t) => {
 
   const channel = mockChannel({});
 
-  onJobComplete(channel, state, jobId);
+  onJobComplete(channel, state, { state: { x: 10 } });
 
   t.falsy(state.activeJob);
   t.falsy(state.activeRun);
@@ -84,6 +84,7 @@ test('jobComplete should send a run:complete event', async (t) => {
   return new Promise((done) => {
     const plan = { id: 'attempt-1' };
     const jobId = 'job-1';
+    const result = { x: 10 };
 
     const state = {
       plan,
@@ -95,12 +96,13 @@ test('jobComplete should send a run:complete event', async (t) => {
       [RUN_COMPLETE]: (evt) => {
         t.is(evt.job_id, jobId);
         t.truthy(evt.run_id);
+        t.is(evt.output_dataclip, JSON.stringify(result));
 
         done();
       },
     });
 
-    onJobComplete(channel, state, jobId);
+    onJobComplete(channel, state, { state: result });
   });
 });
 
