@@ -71,13 +71,13 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   const events = new EventEmitter();
 
   if (!repoDir) {
-    if (process.env.OPENFN_RTM_REPO_DIR) {
-      repoDir = process.env.OPENFN_RTM_REPO_DIR;
+    if (process.env.OPENFN_RTE_REPO_DIR) {
+      repoDir = process.env.OPENFN_RTE_REPO_DIR;
     } else {
       repoDir = '/tmp/openfn/repo';
       logger.warn('Using default repodir');
       logger.warn(
-        'Set env var OPENFN_RTM_REPO_DIR to use a different directory'
+        'Set env var OPENFN_RTE_REPO_DIR to use a different directory'
       );
     }
   }

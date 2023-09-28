@@ -1,7 +1,7 @@
 {
-  "name": "@openfn/rtm-server",
-  "version": "0.0.1",
-  "description": "A REST API wrapper around a runtime manager",
+  "name": "@openfn/ws-worker",
+  "version": "0.1.0",
+  "description": "A Websocket Worker to connect Lightning to a Runtime Engine",
   "main": "index.js",
   "type": "module",
   "private": true,
