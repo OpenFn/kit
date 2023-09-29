@@ -99,6 +99,20 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
   app.once = (event: LightningEvents, fn: (evt: any) => void) => {
     state.events.once(event, fn);
   };
+
+  app.onSocketEvent = (
+    event: LightningEvents,
+    attemptId: string,
+    fn: (evt: any) => void
+  ) => {
+    function handler(e: any) {
+      if (e.attemptId && e.attemptId === attemptId) {
+        state.events.removeListener(event, handler);
+        fn(e);
+      }
+    }
+    state.events.addListener(event, handler);
+  };
 };
 
 // Set up some rest endpoints

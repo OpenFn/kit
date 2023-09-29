@@ -28,7 +28,7 @@ const args = yargs(hideBin(process.argv))
   .option('lightning', {
     alias: 'l',
     description:
-      'Base url to Lightning, eg, http://localhost:1234. Set to "mock" to use the default mock server',
+      'Base url to Lightning websocket endpoint, eg, ws://locahost:4000/api. Set to "mock" to use the default mock server',
   })
   .option('repo-dir', {
     alias: 'd',

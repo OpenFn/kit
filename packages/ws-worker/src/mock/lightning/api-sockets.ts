@@ -33,6 +33,13 @@ import {
 import type { Server } from 'http';
 import { stringify } from '../../util';
 
+// dumb cloning id
+// just an idea for unit tests
+const clone = (state: ServerState) => {
+  const { events, ...rest } = state;
+  return JSON.parse(JSON.stringify(rest));
+};
+
 const enc = new TextEncoder();
 
 // this new API is websocket based
@@ -63,8 +70,16 @@ const createSocketAPI = (
   });
 
   wss.registerEvents('attempts:queue', {
-    [CLAIM]: (ws, event: PhoenixEvent<CLAIM_PAYLOAD>) =>
-      pullClaim(state, ws, event),
+    [CLAIM]: (ws, event: PhoenixEvent<CLAIM_PAYLOAD>) => {
+      const results = pullClaim(state, ws, event);
+      results.forEach((attempt) => {
+        state.events.emit(CLAIM, {
+          attemptId: attempt.id,
+          payload: attempt,
+          state: clone(state),
+        });
+      });
+    },
   });
 
   const startAttempt = (attemptId: string) => {
@@ -76,27 +91,35 @@ const createSocketAPI = (
       logs: [],
     };
 
-    // TODO do all these need extra auth, or is auth granted
-    // implicitly by channel membership?
-    // Right now the socket gets access to all server state
-    // But this is just a mock - Lightning can impose more restrictions if it wishes
+    const wrap = <T>(
+      handler: (
+        state: ServerState,
+        ws: DevSocket,
+        evt: PhoenixEvent<T>,
+        attemptId: string
+      ) => void
+    ) => {
+      return (ws: DevSocket, event: PhoenixEvent<T>) => {
+        handler(state, ws, event, attemptId);
+        // emit each event and the state after to the event handler, for debug
+        state.events.emit(event.event, {
+          attemptId,
+          payload: event.payload,
+          state: clone(state),
+        });
+      };
+    };
+
     const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
-      // TODO how will I validate the join in my mock?
-      [GET_ATTEMPT]: (ws, event: PhoenixEvent<GET_ATTEMPT_PAYLOAD>) =>
-        getAttempt(state, ws, event),
-      [GET_CREDENTIAL]: (ws, event: PhoenixEvent<GET_CREDENTIAL_PAYLOAD>) =>
-        getCredential(state, ws, event),
-      [GET_DATACLIP]: (ws, event: PhoenixEvent<GET_DATACLIP_PAYLOAD>) =>
-        getDataclip(state, ws, event),
-      [ATTEMPT_LOG]: (ws, event: PhoenixEvent<ATTEMPT_LOG_PAYLOAD>) =>
-        handleLog(state, ws, event),
-      [ATTEMPT_COMPLETE]: (
-        ws,
-        event: PhoenixEvent<ATTEMPT_COMPLETE_PAYLOAD>
-      ) => {
-        handleAttemptComplete(state, ws, event, attemptId);
+      [GET_ATTEMPT]: wrap(getAttempt),
+      [GET_CREDENTIAL]: wrap(getCredential),
+      [GET_DATACLIP]: wrap(getDataclip),
+      [ATTEMPT_LOG]: wrap(handleLog),
+      [ATTEMPT_COMPLETE]: wrap((...args) => {
+        handleAttemptComplete(...args);
         unsubscribe();
-      },
+      }),
+
       // TODO
       // [RUN_START]
       // [RUN_COMPLETE]
@@ -142,6 +165,7 @@ const createSocketAPI = (
     }
 
     ws.reply<CLAIM_REPLY>({ ref, topic, payload });
+    return payload.response;
   }
 
   function getAttempt(
@@ -235,12 +259,6 @@ const createSocketAPI = (
 
     state.pending[attemptId].status = 'complete';
     state.results[attemptId] = dataclip;
-
-    state.events.emit(ATTEMPT_COMPLETE, {
-      attemptId: attemptId,
-      dataclip,
-      logs: state.pending[attemptId].logs,
-    });
 
     ws.reply<ATTEMPT_COMPLETE_REPLY>({
       ref,
