@@ -3,7 +3,18 @@ import * as jose from 'jose';
 const alg = 'HS256';
 
 const generateWorkerToken = async (secret: string, workerId: string) => {
-  const encodedSecret = new TextEncoder().encode(secret);
+  if (!secret) {
+    // TODO use proper logger
+    // TODO is this even necessary?
+    console.warn();
+    console.warn('WARNING: Worker Secret not provided!');
+    console.warn(
+      'This worker will attempt to connect to Lightning with default secret'
+    );
+    console.warn();
+  }
+
+  const encodedSecret = new TextEncoder().encode(secret || '<secret>');
 
   const claims = {
     worker_id: workerId,
@@ -14,8 +25,8 @@ const generateWorkerToken = async (secret: string, workerId: string) => {
     .setIssuedAt()
     .setIssuer('urn:example:issuer')
     .setAudience('urn:example:audience')
-    // .setExpirationTime('2h')
     .sign(encodedSecret);
+  // .setExpirationTime('2h') // ??
 
   return jwt;
 };

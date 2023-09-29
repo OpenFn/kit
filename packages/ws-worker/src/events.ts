@@ -4,13 +4,15 @@ import { JSONLog } from '@openfn/logger';
 
 export const CLAIM = 'attempt:claim';
 // this is the lightning payload
+// TODO why are the types in all caps...?
 export type CLAIM_PAYLOAD = { demand?: number };
-export type CLAIM_REPLY = Array<{ id: string; token?: string }>;
+export type CLAIM_REPLY = Array<CLAIM_ATTEMPT>;
+export type CLAIM_ATTEMPT = { id: string; token: string };
 
 export const GET_ATTEMPT = 'fetch:attempt';
 export type GET_ATTEMPT_PAYLOAD = void; // no payload
 // This is basically the attempt, which needs defining properly
-export type GET_ATTEMPT_REPLY = Uint8Array; // represents a json string Attempt
+export type GET_ATTEMPT_REPLY = Attempt;
 
 // TODO
 type Attempt = {
@@ -27,8 +29,7 @@ export type GET_CREDENTIAL_REPLY = {};
 
 export const GET_DATACLIP = 'fetch:dataclip';
 export type GET_DATACLIP_PAYLOAD = { id: string };
-// dataclip in-line, no wrapper, arbitrary data
-export type GET_DATACLIP_REPLY = {};
+export type GET_DATACLIP_REPLY = Uint8Array; // represents a json string Attempt
 
 export const ATTEMPT_START = 'attempt:start'; // attemptId, timestamp
 export type ATTEMPT_START_PAYLOAD = void; // no payload

@@ -17,7 +17,6 @@ import {
   ATTEMPT_LOG_PAYLOAD,
   ATTEMPT_START,
   ATTEMPT_START_PAYLOAD,
-  GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
@@ -25,7 +24,7 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { Attempt, Channel } from '../types';
+import { Channel } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
 import { getWithReply } from '../util';
 

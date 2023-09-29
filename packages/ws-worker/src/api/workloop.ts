@@ -1,36 +1,61 @@
-import { CLAIM } from '../events';
-import { CancelablePromise } from '../types';
-import tryWithBackoff from '../util/try-with-backoff';
+import type { Logger } from '@openfn/logger';
+import { CLAIM, CLAIM_ATTEMPT, CLAIM_PAYLOAD, CLAIM_REPLY } from '../events';
+import tryWithBackoff, { Options } from '../util/try-with-backoff';
+
+import type { CancelablePromise, Channel } from '../types';
 
 // TODO this needs to return some kind of cancel function
-const startWorkloop = (channel, execute, delay = 100) => {
+const startWorkloop = (
+  channel: Channel,
+  execute: (attempt: CLAIM_ATTEMPT) => void,
+  logger: Logger,
+  options: Partial<Pick<Options, 'maxBackoff' | 'timeout'>> = {}
+) => {
   let promise: CancelablePromise;
   let cancelled = false;
 
   const request = () => {
     return new Promise<void>((resolve, reject) => {
-      channel.push(CLAIM).receive('ok', (attempts) => {
-        if (!attempts?.length) {
-          // throw to backoff and try again
-          return reject(new Error('backoff'));
-        }
+      logger.debug('pull claim');
+      channel
+        .push<CLAIM_PAYLOAD>(CLAIM, { demand: 1 })
+        .receive('ok', (attempts: CLAIM_REPLY) => {
+          // TODO what if we get here after we've been cancelled?
+          // the events have already been claimed...
 
-        attempts.forEach((attempt) => {
-          execute(attempt);
-          resolve();
+          if (!attempts?.length) {
+            logger.debug('no attempts, backing off');
+            // throw to backoff and try again
+            return reject(new Error('backoff'));
+          }
+
+          attempts.forEach((attempt) => {
+            logger.debug('starting attempt', attempt.id);
+            execute(attempt);
+            resolve();
+          });
         });
-      });
     });
   };
 
   const workLoop = () => {
     if (!cancelled) {
-      promise = tryWithBackoff(request, { timeout: delay });
+      promise = tryWithBackoff(request, {
+        timeout: options.delay,
+        maxBackoff: options.maxBackoff,
+      });
+      // TODO this needs more unit tests I think
+      promise.then(() => {
+        if (!cancelled) {
+          workLoop();
+        }
+      });
     }
   };
   workLoop();
 
   return () => {
+    logger.debug('cancelling workloop');
     cancelled = true;
     promise.cancel();
   };

@@ -70,7 +70,10 @@ function createServer({
   onMessage = () => {},
 }: CreateServerOptions) {
   logger?.info('pheonix mock websocket server listening on', port);
-  const channels: Record<Topic, Set<EventHandler>> = {};
+  const channels: Record<Topic, Set<EventHandler>> = {
+    // create a stub listener for pheonix to prevent errors
+    phoenix: new Set([() => null]),
+  };
 
   const wsServer =
     server ||

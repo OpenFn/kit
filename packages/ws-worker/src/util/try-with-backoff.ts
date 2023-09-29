@@ -1,24 +1,29 @@
 import { CancelablePromise } from '../types';
 
-type Options = {
+export type Options = {
   attempts?: number;
   maxAttempts?: number;
   maxBackoff?: number;
+
+  // these are provided internally
   timeout?: number;
   isCancelled?: () => boolean;
 };
 
-const MAX_BACKOFF = 1000 * 60;
+const MAX_BACKOFF = 1000 * 30;
 
 // This function will try and call its first argument every {opts.timeout|100}ms
 // If the function throws, it will "backoff" and try again a little later
 // Right now it's a bit of a sketch, but it sort of works!
 const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
   if (!opts.timeout) {
-    opts.timeout = 100;
+    opts.timeout = 100; // TODO take this as minBackoff or initialBackoff or something
   }
   if (!opts.attempts) {
     opts.attempts = 1;
+  }
+  if (!opts.maxBackoff) {
+    opts.maxBackoff = MAX_BACKOFF;
   }
   let { timeout, attempts, maxAttempts } = opts;
   timeout = timeout;
@@ -53,7 +58,7 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
         const nextOpts = {
           maxAttempts,
           attempts: attempts + 1,
-          timeout: Math.min(MAX_BACKOFF, timeout * 1.2),
+          timeout: Math.min(opts.maxBackoff!, timeout * 1.2),
           isCancelled: opts.isCancelled,
         };
 

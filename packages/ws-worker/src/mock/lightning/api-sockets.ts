@@ -68,6 +68,7 @@ const createSocketAPI = (
   });
 
   const startAttempt = (attemptId: string) => {
+    console.log(`START attempt:${attemptId}`);
     // mark the attempt as started on the server
     state.pending[attemptId] = {
       status: 'started',

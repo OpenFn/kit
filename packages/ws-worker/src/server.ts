@@ -9,9 +9,11 @@ import startWorkloop from './api/workloop';
 import { execute } from './api/execute';
 import joinAttemptChannel from './api/start-attempt';
 import connectToLightning from './api/connect';
+import { CLAIM_ATTEMPT } from './events';
 
 type ServerOptions = {
-  backoff?: number;
+  backoff?: number; // what is this?
+  maxBackoff?: number;
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -45,26 +47,28 @@ function createServer(engine: any, options: ServerOptions = {}) {
     logger.info('Closing server');
   };
 
-  type StartAttemptArgs = {
-    id: string;
-    token: string;
-  };
-
   if (options.lightning) {
-    logger.log('Starting work loop at', options.lightning);
+    logger.debug('Connecting to Lightning at', options.lightning);
+    // TODO this is too hard to unit test, need to pull it out
     connectToLightning(options.lightning, engine.id, options.secret!).then(
       ({ socket, channel }) => {
-        const startAttempt = async ({ id, token }: StartAttemptArgs) => {
+        logger.success('Connected to Lightning at', options.lightning);
+
+        const startAttempt = async ({ id, token }: CLAIM_ATTEMPT) => {
           const { channel: attemptChannel, plan } = await joinAttemptChannel(
             socket,
             token,
-            id
+            id,
+            logger
           );
           execute(attemptChannel, engine, plan);
         };
 
-        // TODO maybe pull this logic out so we can test it?
-        startWorkloop(channel, startAttempt);
+        logger.info('Starting workloop');
+        // TODO maybe namespace the workloop logger differently? It's a bit annoying
+        startWorkloop(channel, startAttempt, logger, {
+          maxBackoff: options.maxBackoff,
+        });
 
         // debug/unit test API to run a workflow
         // TODO Only loads in dev mode?

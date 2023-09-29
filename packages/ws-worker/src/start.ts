@@ -15,8 +15,6 @@ type Args = {
   secret?: string;
 };
 
-const logger = createLogger('SRV', { level: 'info' });
-
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a ws-worker server')
   .option('port', {
@@ -25,6 +23,8 @@ const args = yargs(hideBin(process.argv))
     type: 'number',
     default: 2222,
   })
+  // TODO maybe this is positional and required?
+  // frees up -l for the log
   .option('lightning', {
     alias: 'l',
     description:
@@ -36,18 +36,27 @@ const args = yargs(hideBin(process.argv))
   })
   .option('secret', {
     alias: 's',
-    description: 'Worker secret (comes from WORKER_SECRET by default)',
+    description: 'Worker secret (comes from OPENFN_WORKER_SECRET by default)',
+  })
+  .option('log', {
+    description: 'Worker secret (comes from OPENFN_WORKER_SECRET by default)',
+    default: 'info',
+    type: 'string',
   })
   .parse() as Args;
+
+const logger = createLogger('SRV', { level: args.log });
 
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/api';
 } else if (!args.secret) {
-  if (!process.env.WORKER_SECRET) {
-    console.error('WORKER_SECRET is not set');
+  const { OPENFN_WORKER_SECRET } = process.env;
+  if (!OPENFN_WORKER_SECRET) {
+    logger.error('OPENFN_WORKER_SECRET is not set');
     process.exit(1);
   }
-  args.secret = process.env.WORKER_SECRET;
+
+  args.secret = OPENFN_WORKER_SECRET;
 }
 
 // TODO the engine needs to take callbacks to load credential, and load state

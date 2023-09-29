@@ -16,7 +16,7 @@ type LightningEvents = 'log' | 'attempt-complete';
 export type DevApp = Koa & {
   addCredential(id: string, cred: Credential): void;
   waitForResult(attemptId: string): Promise<any>;
-  enqueueAttempt(attempt: Attempt, rtmId: string): void;
+  enqueueAttempt(attempt: Attempt): void;
   reset(): void;
   getQueueLength(): number;
   getResult(attemptId: string): any;
@@ -108,6 +108,11 @@ const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
 
   router.post('/attempt', (ctx) => {
     const attempt = ctx.request.body;
+
+    if (!attempt) {
+      ctx.response.status = 400;
+      return;
+    }
 
     logger.info('Adding new attempt to queue:', attempt.id);
     logger.debug(attempt);

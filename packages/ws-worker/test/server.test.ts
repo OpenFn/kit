@@ -34,6 +34,9 @@ test.skip('healthcheck', async (t) => {
   t.is(body, 'OK');
 });
 
+test.todo('do something if we fail to connect to lightning');
+test.todo("don't explode if no lightning endpoint is set (or maybe do?)");
+
 // TODO this isn't testing anything now, see test/api/connect.test.ts
 // Not a very thorough test
 // test.only('connects to lightning', async (t) => {
