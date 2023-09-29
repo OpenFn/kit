@@ -4,6 +4,7 @@ import joinAttemptChannel from '../../src/api/start-attempt';
 import { GET_ATTEMPT } from '../../src/events';
 import { loadAttempt } from '../../src/api/start-attempt';
 import { attempts } from '../mock/data';
+import { createMockLogger } from '@openfn/logger';
 
 test('loadAttempt should get the attempt body', async (t) => {
   const attempt = attempts['attempt-1'];
@@ -42,6 +43,7 @@ test('loadAttempt should return an execution plan', async (t) => {
 });
 
 test('should join an attempt channel with a token', async (t) => {
+  const logger = createMockLogger();
   const socket = mockSocket('www', {
     'attempt:a': mockChannel({
       // Note that the validation logic is all handled here
@@ -52,13 +54,19 @@ test('should join an attempt channel with a token', async (t) => {
     }),
   });
 
-  const { channel, plan } = await joinAttemptChannel(socket, 'x.y.z', 'a');
+  const { channel, plan } = await joinAttemptChannel(
+    socket,
+    'x.y.z',
+    'a',
+    logger
+  );
 
   t.truthy(channel);
   t.deepEqual(plan, { id: 'a', jobs: [] });
 });
 
 test('should fail to join an attempt channel with an invalid token', async (t) => {
+  const logger = createMockLogger();
   const socket = mockSocket('www', {
     'attempt:a': mockChannel({
       // Note that the validation logic is all handled here
@@ -72,7 +80,7 @@ test('should fail to join an attempt channel with an invalid token', async (t) =
 
   try {
     // ts-ignore
-    await joinAttemptChannel(socket, 'x.y.z', 'a');
+    await joinAttemptChannel(socket, 'x.y.z', 'a', logger);
   } catch (e) {
     // the error here is whatever is passed as the response to the receive-error event
     t.is(e, 'invalid-token');

@@ -1,5 +1,5 @@
 import test from 'ava';
-import { JSONLog } from '@openfn/logger';
+import { JSONLog, createMockLogger } from '@openfn/logger';
 
 import {
   RUN_START,
@@ -39,7 +39,7 @@ test('jobStart should set a run id and active job on state', async (t) => {
 
   const channel = mockChannel({});
 
-  onJobStart(channel, state, jobId);
+  onJobStart({ channel, state }, jobId);
 
   t.is(state.activeJob, jobId);
   t.truthy(state.activeRun);
@@ -63,7 +63,7 @@ test('jobStart should send a run:start event', async (t) => {
       },
     });
 
-    onJobStart(channel, state, jobId);
+    onJobStart({ channel, state }, jobId);
   });
 });
 
@@ -79,7 +79,8 @@ test('jobComplete should clear the run id and active job on state', async (t) =>
 
   const channel = mockChannel({});
 
-  onJobComplete(channel, state, { state: { x: 10 } });
+  const event = { state: { x: 10 } };
+  onJobComplete({ channel, state }, event);
 
   t.falsy(state.activeJob);
   t.falsy(state.activeRun);
@@ -107,7 +108,8 @@ test('jobComplete should send a run:complete event', async (t) => {
       },
     });
 
-    onJobComplete(channel, state, { state: result });
+    const event = { state: result };
+    onJobComplete({ channel, state }, event);
   });
 });
 
@@ -139,7 +141,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
       },
     });
 
-    onJobLog(channel, state, log);
+    onJobLog({ channel, state }, log);
   });
 });
 
@@ -172,7 +174,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
       },
     });
 
-    onJobLog(channel, state, log);
+    onJobLog({ channel, state }, log);
   });
 });
 
@@ -186,7 +188,7 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
       },
     });
 
-    onWorkflowStart(channel);
+    onWorkflowStart({ channel });
   });
 });
 
@@ -198,14 +200,40 @@ test('workflowComplete should send an attempt:complete event', async (t) => {
 
     const channel = mockChannel({
       [ATTEMPT_COMPLETE]: (evt) => {
-        t.deepEqual(evt.dataclip, result);
+        t.deepEqual(evt.dataclip, JSON.stringify(result));
         t.deepEqual(state.result, result);
 
         done();
       },
     });
 
-    onWorkflowComplete(channel, state, { state: result });
+    const event = { state: result };
+
+    const context = { channel, state, onComplete: () => {} };
+    onWorkflowComplete(context, event);
+  });
+});
+
+test('workflowComplete should call onComplete with state', async (t) => {
+  return new Promise((done) => {
+    const state = {} as AttemptState;
+
+    const result = { answer: 42 };
+
+    const channel = mockChannel();
+
+    const context = {
+      channel,
+      state,
+      onComplete: (finalState) => {
+        t.deepEqual(result, finalState);
+        done();
+      },
+    };
+
+    const event = { state: result };
+
+    onWorkflowComplete(context, event);
   });
 });
 
@@ -238,6 +266,7 @@ test('loadCredential should fetch a credential', async (t) => {
 test('execute should return the final result', async (t) => {
   const channel = mockChannel();
   const engine = createMockRTE();
+  const logger = createMockLogger();
 
   const plan = {
     id: 'a',
@@ -248,13 +277,14 @@ test('execute should return the final result', async (t) => {
     ],
   };
 
-  const result = await execute(channel, engine, plan);
+  const result = await execute(channel, engine, logger, plan);
 
   t.deepEqual(result, { done: true });
 });
 
 // TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load a credential', async (t) => {
+  const logger = createMockLogger();
   let didCallCredentials = false;
 
   const channel = mockChannel({
@@ -276,13 +306,14 @@ test('execute should lazy-load a credential', async (t) => {
     ],
   };
 
-  await execute(channel, engine, plan);
+  await execute(channel, engine, logger, plan);
 
   t.true(didCallCredentials);
 });
 
 // TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load initial state', async (t) => {
+  const logger = createMockLogger();
   let didCallState = false;
 
   const channel = mockChannel({
@@ -304,15 +335,16 @@ test('execute should lazy-load initial state', async (t) => {
     ],
   };
 
-  await execute(channel, engine, plan);
+  await execute(channel, engine, logger, plan);
 
   t.true(didCallState);
 });
 
 test('execute should call all events on the socket', async (t) => {
-  const events = {};
-
+  const logger = createMockLogger();
   const engine = createMockRTE();
+
+  const events = {};
 
   const toEventMap = (obj, evt: string) => {
     obj[evt] = (e) => {
@@ -346,7 +378,7 @@ test('execute should call all events on the socket', async (t) => {
     ],
   };
 
-  await execute(channel, engine, plan);
+  await execute(channel, engine, logger, plan);
 
   // check result is what we expect
 

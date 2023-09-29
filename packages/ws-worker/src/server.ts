@@ -61,7 +61,7 @@ function createServer(engine: any, options: ServerOptions = {}) {
             id,
             logger
           );
-          execute(attemptChannel, engine, plan);
+          execute(attemptChannel, engine, logger, plan);
         };
 
         logger.info('Starting workloop');

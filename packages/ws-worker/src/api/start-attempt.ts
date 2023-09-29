@@ -30,7 +30,7 @@ const joinAttemptChannel = (
         .receive('ok', async () => {
           logger.success(`connected to ${channelName}`);
           const plan = await loadAttempt(channel);
-          logger.debug('converted attempt as exuction plan:', plan);
+          logger.debug('converted attempt as execution plan:', plan);
           resolve({ channel, plan });
         })
         .receive('error', (err) => {

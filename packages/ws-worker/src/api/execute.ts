@@ -1,14 +1,4 @@
-// TODO not crazy about this file name
-// This is the module responsible for interfacing between the Lightning websocket
-// and the rutnime engine
-// It's the actual meat and potatoes of the implementation
-// You can almost read this as a binding function and a bunch of handlers
-// it isn't an actual worker, but a BRIDGE between a worker and lightning
 import crypto from 'node:crypto';
-import { JSONLog } from '@openfn/logger';
-
-// this managers the worker
-//i would like functions to be testable, and I'd like the logic to be readable
 
 import {
   ATTEMPT_COMPLETE,
@@ -25,8 +15,14 @@ import {
   RUN_START_PAYLOAD,
 } from '../events';
 import { Channel } from '../types';
-import { ExecutionPlan } from '@openfn/runtime';
-import { getWithReply } from '../util';
+import { getWithReply, stringify } from '../util';
+
+import type { ExecutionPlan } from '@openfn/runtime';
+import type { JSONLog, Logger } from '@openfn/logger';
+import {
+  WorkflowCompleteEvent,
+  WorkflowStartEvent,
+} from '../mock/runtime-engine';
 
 const enc = new TextDecoder('utf-8');
 
@@ -40,9 +36,21 @@ export type AttemptState = {
   // TODO status?
 };
 
+type Context = {
+  channel: Channel;
+  state: AttemptState;
+  logger: Logger;
+  onComplete: (result: any) => void;
+};
+
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
-export function execute(channel: Channel, engine, plan: ExecutionPlan) {
+export function execute(
+  channel: Channel,
+  engine: any, // TODO typing!
+  logger: Logger,
+  plan: ExecutionPlan
+) {
   return new Promise((resolve) => {
     // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
     // tracking state for this attempt
@@ -50,20 +58,38 @@ export function execute(channel: Channel, engine, plan: ExecutionPlan) {
       plan,
     };
 
-    // TODO
-    // const context = { channel, state, logger }
+    const context: Context = { channel, state, logger, onComplete: resolve };
 
-    engine.listen(plan.id, {
-      // TODO load event types from runtime-manager
-      'workflow-start': (evt: any) => onWorkflowStart(channel),
-      'job-start': (evt: any) => onJobStart(channel, state, evt),
-      'job-complete': (evt: any) => onJobComplete(channel, state, evt),
-      log: (evt: any) => onJobLog(channel, state, evt),
-      'workflow-complete': (evt: any) => {
-        onWorkflowComplete(channel, state, evt);
-        resolve(evt.state);
-      },
-    });
+    type EventHandler = (context: any, event: any) => void;
+
+    // Utility funciton to
+    // a) bind an event handler to a event
+    // b) pass the contexdt object into the hander
+    // c) log the event
+    const addEvent = (eventName: string, handler: EventHandler) => {
+      const wrappedFn = (event: any) => {
+        logger.info(`${plan.id} :: ${eventName}`);
+        handler(context, event);
+      };
+      return {
+        [eventName]: wrappedFn,
+      };
+    };
+
+    // TODO we should wait for each event to complete before sending the next one
+    // Eg wait for a large dataclip to upload back to lightning before starting the next job
+    // should we actually defer exeuction, or just the reporting?
+    // Does it matter if logs aren't sent back in order?
+    const listeners = Object.assign(
+      {},
+      addEvent('workflow-start', onWorkflowStart),
+      addEvent('job-start', onJobStart),
+      addEvent('job-complete', onJobComplete),
+      addEvent('log', onJobLog),
+      // This will also resolve the promise
+      addEvent('workflow-complete', onWorkflowComplete)
+    );
+    engine.listen(plan.id, listeners);
 
     const resolvers = {
       state: (id: string) => loadState(channel, id),
@@ -76,58 +102,57 @@ export function execute(channel: Channel, engine, plan: ExecutionPlan) {
 
 // TODO maybe move all event handlers into api/events/*
 
-export function onJobStart(
-  channel: Channel,
-  state: AttemptState,
-  jobId: string
-) {
+export function onJobStart({ channel, state }: Context, event: any) {
   // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
-  state.activeJob = jobId;
+  state.activeJob = event;
 
   channel.push<RUN_START_PAYLOAD>(RUN_START, {
-    run_id: state.activeJob,
-    job_id: state.activeJob,
+    run_id: state.activeJob!,
+    job_id: state.activeJob!,
     // input_dataclip_id what about this guy?
   });
 }
 
-export function onJobComplete(
-  channel: Channel,
-  state: AttemptState,
-  evt: any // TODO need to type the engine events nicely
-) {
+export function onJobComplete({ channel, state }: Context, event: any) {
   channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
-    output_dataclip: JSON.stringify(evt.state),
+    // TODO generate a dataclip id
+    output_dataclip: stringify(event.state),
   });
 
   delete state.activeRun;
   delete state.activeJob;
 }
 
-export function onWorkflowStart(channel: Channel) {
+export function onWorkflowStart(
+  { channel }: Context,
+  _event: WorkflowStartEvent
+) {
   channel.push<ATTEMPT_START_PAYLOAD>(ATTEMPT_START);
 }
 
 export function onWorkflowComplete(
-  channel: Channel,
-  state: AttemptState,
-  evt: any
+  { state, channel, onComplete }: Context,
+  event: WorkflowCompleteEvent
 ) {
-  state.result = evt.state;
+  state.result = event.state;
 
-  channel.push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
-    dataclip: evt.state,
-  });
+  channel
+    .push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
+      dataclip: stringify(event.state), // TODO this should just be dataclip id
+    })
+    .receive('ok', () => {
+      onComplete(state.result);
+    });
 }
 
-export function onJobLog(channel: Channel, state: AttemptState, log: JSONLog) {
+export function onJobLog({ channel, state }: Context, event: JSONLog) {
   // we basically just forward the log to lightning
   // but we also need to attach the log id
   const evt: ATTEMPT_LOG_PAYLOAD = {
-    ...log,
+    ...event,
     attempt_id: state.plan.id!,
   };
   if (state.activeRun) {
