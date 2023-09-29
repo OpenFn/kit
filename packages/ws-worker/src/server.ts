@@ -50,8 +50,8 @@ function createServer(engine: any, options: ServerOptions = {}) {
   if (options.lightning) {
     logger.debug('Connecting to Lightning at', options.lightning);
     // TODO this is too hard to unit test, need to pull it out
-    connectToLightning(options.lightning, engine.id, options.secret!).then(
-      ({ socket, channel }) => {
+    connectToLightning(options.lightning, engine.id, options.secret!)
+      .then(({ socket, channel }) => {
         logger.success('Connected to Lightning at', options.lightning);
 
         const startAttempt = async ({ id, token }: CLAIM_ATTEMPT) => {
@@ -73,8 +73,15 @@ function createServer(engine: any, options: ServerOptions = {}) {
         // debug/unit test API to run a workflow
         // TODO Only loads in dev mode?
         (app as any).execute = startAttempt;
-      }
-    );
+      })
+      .catch((e) => {
+        logger.error(
+          'CRITICAL ERROR: could not connect to lightning at',
+          options.lightning
+        );
+        logger.debug(e);
+        process.exit(1);
+      });
   } else {
     logger.warn('No lightning URL provided');
   }
