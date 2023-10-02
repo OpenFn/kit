@@ -24,6 +24,7 @@ import {
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify } from '../../src/util';
+import { ExecutionPlan } from '@openfn/runtime';
 
 const enc = new TextEncoder();
 
@@ -240,8 +241,8 @@ test('workflowComplete should call onComplete with state', async (t) => {
 // TODO what if an error?
 test('loadState should fetch a dataclip', async (t) => {
   const channel = mockChannel({
-    [GET_DATACLIP]: ({ dataclip_id }) => {
-      t.is(dataclip_id, 'xyz');
+    [GET_DATACLIP]: ({ id }) => {
+      t.is(id, 'xyz');
       return toArrayBuffer({ data: {} });
     },
   });
@@ -253,8 +254,8 @@ test('loadState should fetch a dataclip', async (t) => {
 // TODO what if an error?
 test('loadCredential should fetch a credential', async (t) => {
   const channel = mockChannel({
-    [GET_CREDENTIAL]: ({ credential_id }) => {
-      t.is(credential_id, 'jfk');
+    [GET_CREDENTIAL]: ({ id }) => {
+      t.is(id, 'jfk');
       return { apiKey: 'abc' };
     },
   });
@@ -311,7 +312,6 @@ test('execute should lazy-load a credential', async (t) => {
   t.true(didCallCredentials);
 });
 
-// TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load initial state', async (t) => {
   const logger = createMockLogger();
   let didCallState = false;
@@ -325,17 +325,18 @@ test('execute should lazy-load initial state', async (t) => {
   });
   const engine = createMockRTE('rte');
 
-  const plan = {
+  const plan: Partial<ExecutionPlan> = {
     id: 'a',
+    // @ts-ignore
+    initialState: 'abc',
     jobs: [
       {
-        state: 'abc',
         expression: JSON.stringify({ done: true }),
       },
     ],
   };
 
-  await execute(channel, engine, logger, plan);
+  await execute(channel, engine, logger, plan as ExecutionPlan);
 
   t.true(didCallState);
 });

@@ -9,6 +9,7 @@ import {
   ATTEMPT_START_PAYLOAD,
   GET_CREDENTIAL,
   GET_DATACLIP,
+  GET_DATACLIP_PAYLOAD,
   RUN_COMPLETE,
   RUN_COMPLETE_PAYLOAD,
   RUN_START,
@@ -51,7 +52,7 @@ export function execute(
   logger: Logger,
   plan: ExecutionPlan
 ) {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
     // tracking state for this attempt
     const state: AttemptState = {
@@ -92,9 +93,14 @@ export function execute(
     engine.listen(plan.id, listeners);
 
     const resolvers = {
-      state: (id: string) => loadState(channel, id),
       credential: (id: string) => loadCredential(channel, id),
+      // dataclip: (id: string) => loadState(channel, id),
+      // TODO not supported right now
     };
+
+    if (typeof plan.initialState === 'string') {
+      plan.initialState = await loadState(channel, plan.initialState);
+    }
 
     engine.execute(plan, resolvers);
   });
@@ -163,12 +169,12 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
 
 export async function loadState(channel: Channel, stateId: string) {
   const result = await getWithReply<Uint8Array>(channel, GET_DATACLIP, {
-    dataclip_id: stateId,
+    id: stateId,
   });
   const str = enc.decode(new Uint8Array(result));
   return JSON.parse(str);
 }
 
 export async function loadCredential(channel: Channel, credentialId: string) {
-  return getWithReply(channel, GET_CREDENTIAL, { credential_id: credentialId });
+  return getWithReply(channel, GET_CREDENTIAL, { id: credentialId });
 }

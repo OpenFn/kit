@@ -100,6 +100,47 @@ test('mock should evaluate expressions as JSON', async (t) => {
   t.deepEqual(evt.state, { x: 10 });
 });
 
+test('mock should return initial state as result state', async (t) => {
+  const engine = create();
+
+  const wf = {
+    initialState: { y: 22 },
+    jobs: [
+      {
+        adaptor: 'common@1.0.0',
+      },
+    ],
+  };
+  engine.execute(wf);
+
+  const evt = await waitForEvent<WorkflowCompleteEvent>(
+    engine,
+    'workflow-complete'
+  );
+  t.deepEqual(evt.state, { y: 22 });
+});
+
+test('mock prefers JSON state to initial state', async (t) => {
+  const engine = create();
+
+  const wf = {
+    initialState: { y: 22 },
+    jobs: [
+      {
+        adaptor: 'common@1.0.0',
+        expression: '{ "z": 33 }',
+      },
+    ],
+  };
+  engine.execute(wf);
+
+  const evt = await waitForEvent<WorkflowCompleteEvent>(
+    engine,
+    'workflow-complete'
+  );
+  t.deepEqual(evt.state, { z: 33 });
+});
+
 test('mock should dispatch log events when evaluating JSON', async (t) => {
   const engine = create();
 
@@ -189,3 +230,5 @@ test('only listen to events for the correct workflow', async (t) => {
   await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
   t.pass();
 });
+
+// test('inital dataclip')

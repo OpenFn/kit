@@ -175,7 +175,7 @@ const createSocketAPI = (
   ) {
     const { ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
-    const response = state.attempts[attemptId]; /// TODO this is badly typed
+    const response = state.attempts[attemptId];
 
     ws.reply<GET_ATTEMPT_REPLY>({
       ref,

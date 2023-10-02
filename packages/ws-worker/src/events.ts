@@ -1,4 +1,5 @@
 import { JSONLog } from '@openfn/logger';
+import { Attempt } from './types';
 
 // track socket event names as constants to keep refactoring easier
 
@@ -11,16 +12,7 @@ export type CLAIM_ATTEMPT = { id: string; token: string };
 
 export const GET_ATTEMPT = 'fetch:attempt';
 export type GET_ATTEMPT_PAYLOAD = void; // no payload
-// This is basically the attempt, which needs defining properly
 export type GET_ATTEMPT_REPLY = Attempt;
-
-// TODO
-type Attempt = {
-  id: string;
-  workflow: {};
-  options: {};
-  dataclip: string;
-};
 
 export const GET_CREDENTIAL = 'fetch:credential';
 export type GET_CREDENTIAL_PAYLOAD = { id: string };

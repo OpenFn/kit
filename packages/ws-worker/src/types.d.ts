@@ -35,18 +35,16 @@ export interface Edge {
 }
 
 // An attempt object returned by Lightning
-// We may later drop this abstraction and just accept an excecution plan directly
 export type Attempt = {
   id: string;
+  dataclip_id: string;
+  starting_node_id: string;
 
   triggers: Node[];
   jobs: Node[];
   edges: Edge[];
 
-  // these will probably be included by lightning but we don't care here
-  projectId?: string;
-  status?: string;
-  worker?: string;
+  options?: Record<string, any>; // TODO type the expected options
 };
 
 export type CancelablePromise = Promise<void> & {

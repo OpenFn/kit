@@ -7,6 +7,17 @@ export default (attempt: Attempt): ExecutionPlan => {
     id: attempt.id,
   };
 
+  if (attempt.dataclip_id) {
+    // This is tricky - we're assining a string to the XPlan
+    // which is fine becuase it'll be handled later
+    // I guess we need a new type for now? Like a lazy XPlan
+    // @ts-ignore
+    plan.initialState = attempt.dataclip_id;
+  }
+  if (attempt.starting_node_id) {
+    plan.start = attempt.starting_node_id;
+  }
+
   const nodes: Record<JobNodeID, JobNode> = {};
 
   const edges = attempt.edges ?? [];

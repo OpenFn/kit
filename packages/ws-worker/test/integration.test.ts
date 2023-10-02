@@ -39,6 +39,10 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   ...ext,
 });
 
+// these are really just tests of the mock architecture, but worth having
+test.todo('should run an attempt which returns from json');
+test.todo('should run an attempt which returns intial state');
+
 // A basic high level integration test to ensure the whole loop works
 // This checks the events received by the lightning websocket
 test.serial(
@@ -102,7 +106,7 @@ test.serial(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.GET_ATTEMPT, attempt.id, (evt) => {
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
         t.true(didCallEvent);
         done();
       });
@@ -131,7 +135,7 @@ test.serial(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.GET_CREDENTIAL, attempt.id, (evt) => {
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
         t.true(didCallEvent);
         done();
       });
@@ -141,21 +145,27 @@ test.serial(
   }
 );
 
-test.serial.skip(
+test.serial(
   `events: lightning should receive a ${e.GET_DATACLIP} event`,
   (t) => {
     return new Promise((done) => {
+      lng.addDataclip('abc', { result: true });
+
       const attempt = getAttempt({
-        dataclip_id: 'abc', // TODO this isn't implemented yet
+        dataclip_id: 'abc',
       });
 
       let didCallEvent = false;
       lng.onSocketEvent(e.GET_DATACLIP, attempt.id, ({ payload }) => {
-        // again there's no way to check the right credential was returned
+        // payload is the incoming/request payload - this tells us which dataclip
+        // the worker is asking for
+        // Note that it doesn't tell us much about what is returned
+        // (and we can't tell from this event either)
+        t.is(payload.id, 'abc');
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.GET_DATACLIP, attempt.id, (evt) => {
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
         t.true(didCallEvent);
         done();
       });
@@ -178,7 +188,7 @@ test.serial.skip(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.RUN_START, attempt.id, (evt) => {
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
         t.true(didCallEvent);
         done();
       });

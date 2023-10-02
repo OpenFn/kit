@@ -33,6 +33,7 @@ test('loadAttempt should return an execution plan', async (t) => {
     id: 'attempt-1',
     jobs: [
       {
+        id: 'job-1',
         configuration: 'a',
         expression: 'fn(a => a)',
         adaptor: '@openfn/language-common@1.0.0',

@@ -37,13 +37,13 @@ const createJob = (props = {}) => ({
 });
 
 test('convert a single job', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     jobs: [createNode()],
     triggers: [],
     edges: [],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -54,13 +54,13 @@ test('convert a single job', (t) => {
 // Note idk how lightningg will handle state/defaults on a job
 // but this is what we'll do right now
 test('convert a single job with data', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     jobs: [createNode({ state: { data: { x: 22 } } })],
     triggers: [],
     edges: [],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -80,14 +80,42 @@ test('Accept a partial attempt object', (t) => {
   });
 });
 
+test('handle dataclip_id', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    dataclip_id: 'xyz',
+  };
+  const result = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(result, {
+    id: 'w',
+    initialState: 'xyz',
+    jobs: [],
+  });
+});
+
+test('handle starting_node_id', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    starting_node_id: 'j1',
+  };
+  const result = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(result, {
+    id: 'w',
+    start: 'j1',
+    jobs: [],
+  });
+});
+
 test('convert a single trigger', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [],
     edges: [],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -101,13 +129,13 @@ test('convert a single trigger', (t) => {
 
 // This exhibits current behaviour. This should never happen though
 test('ignore a single edge', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     jobs: [],
     triggers: [],
     edges: [createEdge('a', 'b')],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -116,7 +144,7 @@ test('ignore a single edge', (t) => {
 });
 
 test('convert a single trigger with an edge', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode()],
@@ -128,7 +156,7 @@ test('convert a single trigger with an edge', (t) => {
       },
     ],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -145,7 +173,7 @@ test('convert a single trigger with an edge', (t) => {
 });
 
 test('convert a single trigger with two edges', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
@@ -162,7 +190,7 @@ test('convert a single trigger with two edges', (t) => {
       },
     ],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -181,13 +209,13 @@ test('convert a single trigger with two edges', (t) => {
 });
 
 test('convert two linked jobs', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b')],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -197,7 +225,7 @@ test('convert two linked jobs', (t) => {
 
 // This isn't supported by the runtime, but it'll survive the conversion
 test('convert a job with two upstream jobs', (t) => {
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     jobs: [
       createNode({ id: 'a' }),
@@ -207,7 +235,7 @@ test('convert a job with two upstream jobs', (t) => {
     triggers: [],
     edges: [createEdge('a', 'x'), createEdge('b', 'x')],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',
@@ -221,13 +249,13 @@ test('convert a job with two upstream jobs', (t) => {
 
 test('convert two linked jobs with an edge condition', (t) => {
   const condition = 'state.age > 10';
-  const attempt: Attempt = {
+  const attempt: Partial<Attempt> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition })],
   };
-  const result = convertAttempt(attempt);
+  const result = convertAttempt(attempt as Attempt);
 
   t.deepEqual(result, {
     id: 'w',

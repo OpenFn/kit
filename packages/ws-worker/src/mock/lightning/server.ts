@@ -11,6 +11,7 @@ import createLogger, {
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
+import { Attempt } from '../../types';
 
 export const API_PREFIX = '/api/1';
 
@@ -25,8 +26,8 @@ export type ServerState = {
   // list of credentials by id
   credentials: Record<string, any>;
 
-  // list of events by id
-  attempts: Record<string, any>;
+  // list of attempts by id
+  attempts: Record<string, Attempt>;
 
   // list of dataclips by id
   dataclips: Record<string, any>;

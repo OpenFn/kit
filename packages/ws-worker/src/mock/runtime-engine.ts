@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ExecutionPlan } from '@openfn/runtime';
+import type { ExecutionPlan, JobNode } from '@openfn/runtime';
 
 import type { State, Credential } from '../types';
 import mockResolvers from './resolvers';
@@ -51,17 +51,10 @@ export type WorkflowCompleteEvent = {
   error?: any;
 };
 
-// TODO log event optionally has a job id
-
 let jobId = 0;
 const getNewJobId = () => `${++jobId}`;
 
 let autoServerId = 0;
-
-// Before we execute each job (expression), we have to build a state object
-// This means squashing together the input state and the credential
-// The credential of course is the hard bit
-const assembleState = () => {};
 
 function createMock(serverId?: string) {
   const activeWorkflows = {} as Record<string, true>;
@@ -93,7 +86,7 @@ function createMock(serverId?: string) {
 
   const executeJob = async (
     workflowId: string,
-    job: JobPlan,
+    job: JobNode,
     initialState = {},
     resolvers: LazyResolvers = mockResolvers
   ) => {
@@ -104,11 +97,6 @@ function createMock(serverId?: string) {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
       await resolvers.credential(configuration);
-    }
-    if (typeof state === 'string') {
-      // TODO right now we lazy load any state object
-      // but maybe we need to just do initial state?
-      await resolvers.state(state);
     }
 
     // Does a job reallly need its own id...? Maybe.
@@ -123,10 +111,11 @@ function createMock(serverId?: string) {
       message: ['Running job ' + jobId],
       level: 'info',
     });
-    let state = initialState;
+    let nextState = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
-      state = JSON.parse(expression);
+      // @ts-ignore
+      nextState = JSON.parse(expression);
       // What does this look like? Should be a logger object
       dispatch('log', {
         workflowId,
@@ -134,32 +123,43 @@ function createMock(serverId?: string) {
         message: ['Parsing expression as JSON state'],
         level: 'info',
       });
-      dispatch('log', { workflowId, jobId, message: [state], level: 'info' });
+      dispatch('log', {
+        workflowId,
+        jobId,
+        message: [nextState],
+        level: 'info',
+      });
     } catch (e) {
       // Do nothing, it's fine
+      nextState = initialState;
     }
 
-    dispatch('job-complete', { workflowId, jobId, state, runId });
+    dispatch('job-complete', { workflowId, jobId, state: nextState, runId });
 
-    return state;
+    return nextState;
   };
 
   // Start executing an ExecutionPlan
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
-  const execute = (
+  const execute = async (
     xplan: ExecutionPlan,
     resolvers: LazyResolvers = mockResolvers
   ) => {
-    const { id, jobs } = xplan;
+    const { id, jobs, initialState } = xplan;
     const workflowId = id;
     activeWorkflows[id!] = true;
+
+    // TODO do we want to load a dataclip from job.state here?
+    // This isn't supported right now
+    // We would need to use resolvers.dataclip if we wanted it
+
     setTimeout(() => {
       dispatch('workflow-start', { workflowId });
       setTimeout(async () => {
-        let state = {};
+        let state = initialState || {};
         // Trivial job reducer in our mock
         for (const job of jobs) {
-          state = await executeJob(id, job, state, resolvers);
+          state = await executeJob(id!, job, state, resolvers);
         }
         setTimeout(() => {
           delete activeWorkflows[id!];
