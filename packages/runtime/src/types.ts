@@ -42,8 +42,9 @@ export declare interface Operation<T = Promise<State> | State> {
 
 export type ExecutionPlan = {
   id?: string; // UUID for this plan
-  start?: JobNodeID;
   jobs: JobNode[];
+  start?: JobNodeID;
+  initialState?: State; // TODO adding initial state to the plan changes how the runtime expects to receive initial state
 };
 
 export type JobNode = {
