@@ -28,7 +28,10 @@ export type ATTEMPT_START_PAYLOAD = void; // no payload
 export type ATTEMPT_START_REPLY = void; // no payload
 
 export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats
-export type ATTEMPT_COMPLETE_PAYLOAD = { dataclip: any; stats?: any }; // TODO dataclip -> result? output_dataclip?
+export type ATTEMPT_COMPLETE_PAYLOAD = {
+  final_dataclip_id: string;
+  stats?: any;
+}; // TODO dataclip -> result? output_dataclip?
 export type ATTEMPT_COMPLETE_REPLY = undefined;
 
 export const ATTEMPT_LOG = 'attempt:log'; // level, namespace (job,runtime,adaptor), message, time
@@ -57,5 +60,6 @@ export type RUN_COMPLETE_PAYLOAD = {
   job_id: string;
   run_id: string;
   output_dataclip?: string;
+  output_dataclip_id?: string;
 };
 export type RUN_COMPLETE_REPLY = void;

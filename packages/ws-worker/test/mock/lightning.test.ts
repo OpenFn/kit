@@ -6,6 +6,7 @@ import phx from 'phoenix-channels';
 import { attempts, credentials, dataclips } from './data';
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_COMPLETE_PAYLOAD,
   ATTEMPT_LOG,
   CLAIM,
   GET_ATTEMPT,
@@ -336,17 +337,20 @@ test.serial(
   'waitForResult should return logs and dataclip when an attempt is completed',
   async (t) => {
     return new Promise(async (done) => {
-      server.startAttempt(attempt1.id);
-      server.addDataclip('d', dataclips['d']);
       const result = { answer: 42 };
 
-      server.waitForResult(attempt1.id).then(({ attemptId, dataclip }) => {
+      server.startAttempt(attempt1.id);
+      server.addDataclip('result', result);
+
+      server.waitForResult(attempt1.id).then((dataclip) => {
         t.deepEqual(result, dataclip);
         done();
       });
 
       const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
-      channel.push(ATTEMPT_COMPLETE, { dataclip: result });
+      channel.push(ATTEMPT_COMPLETE, {
+        final_dataclip_id: 'result',
+      } as ATTEMPT_COMPLETE_PAYLOAD);
     });
   }
 );

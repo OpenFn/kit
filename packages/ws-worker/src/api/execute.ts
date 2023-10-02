@@ -31,10 +31,10 @@ export type AttemptState = {
   activeRun?: string;
   activeJob?: string;
   plan: ExecutionPlan;
-  // final state/dataclip
-  result?: any;
+  dataclips: Record<string, any>;
 
-  // TODO status?
+  // final dataclip id
+  result?: string;
 };
 
 type Context = {
@@ -121,12 +121,27 @@ export function onJobStart({ channel, state }: Context, event: any) {
 }
 
 export function onJobComplete({ channel, state }: Context, event: any) {
+  const dataclipId = crypto.randomUUID();
+
   channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
-    // TODO generate a dataclip id
+    output_dataclip_id: dataclipId,
     output_dataclip: stringify(event.state),
   });
+
+  if (!state.dataclips) {
+    state.dataclips = {};
+  }
+  state.dataclips[dataclipId] = event.state;
+
+  // TODO right now, the last job to run will be the result for the attempt
+  // this may not stand up in the future
+  // I'd feel happer if the runtime could judge what the final result is
+  // (taking into account branches and stuff)
+  // The problem is that the runtime will return the object, not an id,
+  // so we have a bit of a mapping problem
+  state.result = dataclipId;
 
   delete state.activeRun;
   delete state.activeJob;
@@ -141,16 +156,16 @@ export function onWorkflowStart(
 
 export function onWorkflowComplete(
   { state, channel, onComplete }: Context,
-  event: WorkflowCompleteEvent
+  _event: WorkflowCompleteEvent
 ) {
-  state.result = event.state;
+  const result = state.dataclips[state.result!];
 
   channel
     .push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
-      dataclip: stringify(event.state), // TODO this should just be dataclip id
+      final_dataclip_id: state.result!,
     })
     .receive('ok', () => {
-      onComplete(state.result);
+      onComplete(result);
     });
 }
 

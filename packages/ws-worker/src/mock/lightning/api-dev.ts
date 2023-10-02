@@ -65,8 +65,8 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
       }) => {
         if (evt.attemptId === attemptId) {
           state.events.removeListener(ATTEMPT_COMPLETE, handler);
-
-          resolve(evt.payload);
+          const result = state.dataclips[evt.payload.final_dataclip_id];
+          resolve(result);
         }
       };
       state.events.addListener(ATTEMPT_COMPLETE, handler);

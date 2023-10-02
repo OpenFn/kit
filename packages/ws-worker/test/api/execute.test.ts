@@ -87,6 +87,28 @@ test('jobComplete should clear the run id and active job on state', async (t) =>
   t.falsy(state.activeRun);
 });
 
+test('jobComplete should save the dataclip to state', async (t) => {
+  const plan = { id: 'attempt-1' };
+  const jobId = 'job-1';
+
+  const state = {
+    plan,
+    activeJob: jobId,
+    activeRun: 'b',
+    dataclips: {},
+    result: undefined,
+  } as AttemptState;
+
+  const channel = mockChannel({});
+
+  const event = { state: { x: 10 } };
+  onJobComplete({ channel, state }, event);
+
+  t.is(Object.keys(state.dataclips).length, 1);
+  const [dataclip] = Object.values(state.dataclips);
+  t.deepEqual(dataclip, event.state);
+});
+
 test('jobComplete should send a run:complete event', async (t) => {
   return new Promise((done) => {
     const plan = { id: 'attempt-1' };
@@ -103,6 +125,7 @@ test('jobComplete should send a run:complete event', async (t) => {
       [RUN_COMPLETE]: (evt) => {
         t.is(evt.job_id, jobId);
         t.truthy(evt.run_id);
+        t.truthy(evt.output_dataclip_id);
         t.is(evt.output_dataclip, JSON.stringify(result));
 
         done();
@@ -195,31 +218,40 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
 
 test('workflowComplete should send an attempt:complete event', async (t) => {
   return new Promise((done) => {
-    const state = {} as AttemptState;
-
     const result = { answer: 42 };
+
+    const state = {
+      dataclips: {
+        x: result,
+      },
+      result: 'x',
+    };
 
     const channel = mockChannel({
       [ATTEMPT_COMPLETE]: (evt) => {
-        t.deepEqual(evt.dataclip, JSON.stringify(result));
-        t.deepEqual(state.result, result);
+        t.deepEqual(evt.final_dataclip_id, 'x');
 
         done();
       },
     });
 
-    const event = { state: result };
+    const event = {};
 
     const context = { channel, state, onComplete: () => {} };
     onWorkflowComplete(context, event);
   });
 });
 
-test('workflowComplete should call onComplete with state', async (t) => {
+test('workflowComplete should call onComplete with final dataclip', async (t) => {
   return new Promise((done) => {
-    const state = {} as AttemptState;
-
     const result = { answer: 42 };
+
+    const state = {
+      dataclips: {
+        x: result,
+      },
+      result: 'x',
+    };
 
     const channel = mockChannel();
 

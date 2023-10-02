@@ -63,9 +63,7 @@ test('Dispatch complete events when a workflow completes', async (t) => {
     'workflow-complete'
   );
 
-  t.truthy(evt);
-  t.is(evt.workflowId, 'w1');
-  t.truthy(evt.state);
+  t.deepEqual(evt, { workflowId: 'w1' });
 });
 
 test('Dispatch start events for a job', async (t) => {
@@ -93,10 +91,7 @@ test('mock should evaluate expressions as JSON', async (t) => {
   const engine = create();
 
   engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<WorkflowCompleteEvent>(
-    engine,
-    'workflow-complete'
-  );
+  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
   t.deepEqual(evt.state, { x: 10 });
 });
 
@@ -113,10 +108,7 @@ test('mock should return initial state as result state', async (t) => {
   };
   engine.execute(wf);
 
-  const evt = await waitForEvent<WorkflowCompleteEvent>(
-    engine,
-    'workflow-complete'
-  );
+  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
   t.deepEqual(evt.state, { y: 22 });
 });
 
@@ -134,10 +126,7 @@ test('mock prefers JSON state to initial state', async (t) => {
   };
   engine.execute(wf);
 
-  const evt = await waitForEvent<WorkflowCompleteEvent>(
-    engine,
-    'workflow-complete'
-  );
+  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
   t.deepEqual(evt.state, { z: 33 });
 });
 

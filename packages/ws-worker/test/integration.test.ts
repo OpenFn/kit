@@ -40,8 +40,52 @@ const getAttempt = (ext = {}, jobs?: any) => ({
 });
 
 // these are really just tests of the mock architecture, but worth having
-test.todo('should run an attempt which returns from json');
-test.todo('should run an attempt which returns intial state');
+test.serial(
+  'should run an attempt through the mock runtime which returns an expression as JSON',
+  async (t) => {
+    return new Promise((done) => {
+      const attempt = {
+        id: 'attempt-1',
+        jobs: [
+          {
+            body: JSON.stringify({ count: 122 }),
+          },
+        ],
+      };
+
+      lng.waitForResult(attempt.id).then((result) => {
+        t.deepEqual(result, { count: 122 });
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+test.serial('should run an attempt which returns intial state', async (t) => {
+  return new Promise((done) => {
+    lng.addDataclip('x', {
+      route: 66,
+    });
+
+    const attempt = {
+      id: 'attempt-1',
+      dataclip_id: 'x',
+      jobs: [
+        {
+          body: 'whatever',
+        },
+      ],
+    };
+
+    lng.waitForResult(attempt.id).then((result) => {
+      t.deepEqual(result, { route: 66 });
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
 
 // A basic high level integration test to ensure the whole loop works
 // This checks the events received by the lightning websocket
@@ -51,8 +95,8 @@ test.serial(
     return new Promise((done) => {
       const attempt = getAttempt();
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-        // TODO we should validate the result event here, but it's not quite decided
-        // I think it should be { attempt_id, dataclip_id }
+        const { final_dataclip_id } = evt.payload;
+        t.assert(typeof final_dataclip_id === 'string');
         t.pass('attempt complete event received');
         done();
       });

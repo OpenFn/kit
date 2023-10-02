@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { ExecutionPlan, JobNode } from '@openfn/runtime';
 
@@ -47,12 +48,8 @@ export type WorkflowStartEvent = {
 
 export type WorkflowCompleteEvent = {
   workflowId: string;
-  state?: object;
   error?: any;
 };
-
-let jobId = 0;
-const getNewJobId = () => `${++jobId}`;
 
 let autoServerId = 0;
 
@@ -90,17 +87,16 @@ function createMock(serverId?: string) {
     initialState = {},
     resolvers: LazyResolvers = mockResolvers
   ) => {
-    // TODO maybe lazy load the job from an id
-    const { id, expression, configuration, state } = job;
+    const { id, expression, configuration } = job;
+
+    const runId = crypto.randomUUID();
+
     const jobId = id;
     if (typeof configuration === 'string') {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
       await resolvers.credential(configuration);
     }
-
-    // Does a job reallly need its own id...? Maybe.
-    const runId = getNewJobId();
 
     // Get the job details from lightning
     // start instantly and emit as it goes
@@ -149,7 +145,7 @@ function createMock(serverId?: string) {
     const workflowId = id;
     activeWorkflows[id!] = true;
 
-    // TODO do we want to load a dataclip from job.state here?
+    // TODO do we want to load a globals dataclip from job.state here?
     // This isn't supported right now
     // We would need to use resolvers.dataclip if we wanted it
 
@@ -163,7 +159,7 @@ function createMock(serverId?: string) {
         }
         setTimeout(() => {
           delete activeWorkflows[id!];
-          dispatch('workflow-complete', { workflowId, state });
+          dispatch('workflow-complete', { workflowId });
           // TODO on workflow complete we should maybe tidy the listeners?
           // Doesn't really matter in the mock though
         }, 1);

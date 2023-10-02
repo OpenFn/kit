@@ -28,6 +28,11 @@ import {
   GET_DATACLIP,
   GET_DATACLIP_PAYLOAD,
   GET_DATACLIP_REPLY,
+  RUN_COMPLETE,
+  RUN_COMPLETE_PAYLOAD,
+  RUN_START,
+  RUN_START_PAYLOAD,
+  RUN_START_REPLY,
 } from '../../events';
 
 import type { Server } from 'http';
@@ -114,15 +119,13 @@ const createSocketAPI = (
       [GET_ATTEMPT]: wrap(getAttempt),
       [GET_CREDENTIAL]: wrap(getCredential),
       [GET_DATACLIP]: wrap(getDataclip),
+      [RUN_START]: wrap(handleRunStart),
       [ATTEMPT_LOG]: wrap(handleLog),
+      [RUN_COMPLETE]: wrap(handleRunComplete),
       [ATTEMPT_COMPLETE]: wrap((...args) => {
         handleAttemptComplete(...args);
         unsubscribe();
       }),
-
-      // TODO
-      // [RUN_START]
-      // [RUN_COMPLETE]
     });
   };
 
@@ -260,6 +263,52 @@ const createSocketAPI = (
     state.pending[attemptId].status = 'complete';
     state.results[attemptId] = dataclip;
 
+    ws.reply<ATTEMPT_COMPLETE_REPLY>({
+      ref,
+      topic,
+      payload: {
+        status: 'ok',
+        // TODO final dataclip id
+        // this is kind of awkward to work out
+        // we gotta sha every dataclip, find a match, then return
+      },
+    });
+  }
+
+  function handleRunStart(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<RUN_START_PAYLOAD>
+  ) {
+    const { ref, topic } = evt;
+    if (!state.dataclips) {
+      state.dataclips = {};
+    }
+    ws.reply<RUN_START_REPLY>({
+      ref,
+      topic,
+      payload: {
+        status: 'ok',
+      },
+    });
+  }
+
+  function handleRunComplete(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<RUN_COMPLETE_PAYLOAD>
+  ) {
+    const { ref, topic, payload } = evt;
+    const { output_dataclip_id, output_dataclip } = evt.payload;
+
+    if (output_dataclip_id) {
+      if (!state.dataclips) {
+        state.dataclips = {};
+      }
+      state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip);
+    }
+
+    // be polite and acknowledge the event
     ws.reply<ATTEMPT_COMPLETE_REPLY>({
       ref,
       topic,
