@@ -117,8 +117,12 @@ function createMock(serverId?: string) {
     // Get the job details from lightning
     // start instantly and emit as it goes
     dispatch('job-start', { workflowId, jobId, runId });
-
-    dispatch('log', { workflowId, jobId, message: ['Running job ' + jobId] });
+    dispatch('log', {
+      workflowId,
+      jobId,
+      message: ['Running job ' + jobId],
+      level: 'info',
+    });
     let state = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
@@ -128,8 +132,9 @@ function createMock(serverId?: string) {
         workflowId,
         jobId,
         message: ['Parsing expression as JSON state'],
+        level: 'info',
       });
-      dispatch('log', { workflowId, jobId, message: [state] });
+      dispatch('log', { workflowId, jobId, message: [state], level: 'info' });
     } catch (e) {
       // Do nothing, it's fine
     }

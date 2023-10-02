@@ -28,7 +28,7 @@ test.before(() => {
 
 let rollingAttemptId = 0;
 
-const getAttempt = (ext = {}, jobs = {}) => ({
+const getAttempt = (ext = {}, jobs?: any) => ({
   id: `a${++rollingAttemptId}`,
   jobs: jobs || [
     {
@@ -58,6 +58,8 @@ test.serial(
   }
 );
 
+test.todo(`events: lightning should receive a ${e.ATTEMPT_START} event`);
+
 // Now run detailed checks of every event
 // for each event we can see a copy of the server state
 // (if that helps anything?)
@@ -86,4 +88,154 @@ test.serial(`events: lightning should receive a ${e.CLAIM} event`, (t) => {
   });
 });
 
-// should run multiple concurrently
+test.serial(
+  `events: lightning should receive a ${e.GET_ATTEMPT} event`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt();
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.GET_ATTEMPT, attempt.id, ({ payload }) => {
+        // This doesn't test that the correct attempt gets sent back
+        // We'd have to add an event to the engine for that
+        // (not a bad idea)
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(e.GET_ATTEMPT, attempt.id, (evt) => {
+        t.true(didCallEvent);
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+test.serial(
+  `events: lightning should receive a ${e.GET_CREDENTIAL} event`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt({}, [
+        {
+          id: 'some-job',
+          credential: 'a',
+          adaptor: '@openfn/language-common@1.0.0',
+          body: JSON.stringify({ answer: 42 }),
+        },
+      ]);
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.GET_CREDENTIAL, attempt.id, ({ payload }) => {
+        // again there's no way to check the right credential was returned
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(e.GET_CREDENTIAL, attempt.id, (evt) => {
+        t.true(didCallEvent);
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+test.serial.skip(
+  `events: lightning should receive a ${e.GET_DATACLIP} event`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt({
+        dataclip_id: 'abc', // TODO this isn't implemented yet
+      });
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.GET_DATACLIP, attempt.id, ({ payload }) => {
+        // again there's no way to check the right credential was returned
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(e.GET_DATACLIP, attempt.id, (evt) => {
+        t.true(didCallEvent);
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+// TODO not implemented yet
+test.serial.skip(
+  `events: lightning should receive a ${e.RUN_START} event`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt();
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.RUN_START, attempt.id, ({ payload }) => {
+        // TODO what can we test here?
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(e.RUN_START, attempt.id, (evt) => {
+        t.true(didCallEvent);
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+test.serial(
+  `events: lightning should receive a ${e.ATTEMPT_LOG} event`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt();
+
+      let didCallEvent = false;
+
+      // The mock runtime will put out a default log
+      lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+        const log = payload;
+
+        t.is(log.level, 'info');
+        t.truthy(log.attempt_id);
+        t.truthy(log.run_id);
+        t.truthy(log.message);
+        t.assert(log.message[0].startsWith('Running job'));
+
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.true(didCallEvent);
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+test.todo(`events: lightning should receive a ${e.RUN_COMPLETE} event`);
+
+// This is well tested elsewhere but including here for completeness
+test.serial(
+  `events: lightning should receive a ${e.ATTEMPT_COMPLETE} event`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt();
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.pass('called attempt:complete');
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+test.todo(`should run multiple attempts`);

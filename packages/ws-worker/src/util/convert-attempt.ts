@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { ExecutionPlan, JobNode, JobNodeID } from '@openfn/runtime';
 import { Attempt } from '../types';
 
@@ -35,7 +36,7 @@ export default (attempt: Attempt): ExecutionPlan => {
 
   if (attempt.jobs?.length) {
     attempt.jobs.forEach((job) => {
-      const id = job.id || 'trigger';
+      const id = job.id || crypto.randomUUID();
 
       nodes[id] = {
         id,
