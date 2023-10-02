@@ -355,8 +355,8 @@ test('execute should call all events on the socket', async (t) => {
 
   const allEvents = [
     // Note that these are listed in order but order isn not tested
-    // GET_CREDENTIAL, // TODO not implementated yet
-    // GET_DATACLIP, // TODO not implementated yet
+    GET_CREDENTIAL,
+    // GET_DATACLIP, // TODO not really implemented properly yet
     ATTEMPT_START,
     RUN_START,
     ATTEMPT_LOG,

@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 
 import { Attempt } from '../../types';
 import { ServerState } from './server';
-import { ATTEMPT_COMPLETE } from '../../events';
+import { ATTEMPT_COMPLETE, ATTEMPT_COMPLETE_PAYLOAD } from '../../events';
 
 type LightningEvents = 'log' | 'attempt-complete';
 
@@ -58,14 +58,15 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
   app.waitForResult = (attemptId: string) => {
     return new Promise((resolve) => {
       const handler = (evt: {
+        payload: ATTEMPT_COMPLETE_PAYLOAD;
         attemptId: string;
+        _state: ServerState;
         dataclip: any;
-        logs: JSONLog[];
       }) => {
         if (evt.attemptId === attemptId) {
           state.events.removeListener(ATTEMPT_COMPLETE, handler);
 
-          resolve(evt);
+          resolve(evt.payload);
         }
       };
       state.events.addListener(ATTEMPT_COMPLETE, handler);

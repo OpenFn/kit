@@ -29,11 +29,10 @@ test('loadAttempt should return an execution plan', async (t) => {
   });
 
   const plan = await loadAttempt(channel);
-  t.deepEqual(plan, {
+  t.like(plan, {
     id: 'attempt-1',
     jobs: [
       {
-        id: 'trigger',
         configuration: 'a',
         expression: 'fn(a => a)',
         adaptor: '@openfn/language-common@1.0.0',

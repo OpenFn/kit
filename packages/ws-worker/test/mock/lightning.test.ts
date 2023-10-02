@@ -340,14 +340,10 @@ test.serial(
       server.addDataclip('d', dataclips['d']);
       const result = { answer: 42 };
 
-      server
-        .waitForResult(attempt1.id)
-        .then(({ attemptId, dataclip, logs }) => {
-          t.is(attemptId, attempt1.id);
-          t.deepEqual(result, dataclip);
-          t.deepEqual(logs, []);
-          done();
-        });
+      server.waitForResult(attempt1.id).then(({ attemptId, dataclip }) => {
+        t.deepEqual(result, dataclip);
+        done();
+      });
 
       const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
       channel.push(ATTEMPT_COMPLETE, { dataclip: result });
