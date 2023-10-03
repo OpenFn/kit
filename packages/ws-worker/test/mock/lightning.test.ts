@@ -16,7 +16,7 @@ import {
 import type { Attempt } from '../../src/types';
 import { JSONLog } from '@openfn/logger';
 
-const endpoint = 'ws://localhost:7777/api';
+const endpoint = 'ws://localhost:7777/worker';
 
 const enc = new TextDecoder('utf-8');
 
@@ -113,7 +113,7 @@ test.serial('should setup an attempt at /POST /attempt', async (t) => {
   t.is(c.user, 'john');
 });
 
-test.serial('provide a phoenix websocket at /api', (t) => {
+test.serial('provide a phoenix websocket at /worker', (t) => {
   // client should be connected before this test runs
   t.is(client.connectionState(), 'open');
 });

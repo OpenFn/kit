@@ -13,8 +13,6 @@ import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 import { Attempt } from '../../types';
 
-export const API_PREFIX = '/api/1';
-
 export type AttemptState = {
   status: 'queued' | 'started' | 'complete';
   logs: JSONLog[];
@@ -84,7 +82,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
   // Setup the websocket API
   const api = createWebSocketAPI(
     state,
-    '/api',
+    '/worker', // TODO I should option drive this
     server,
     options.logger && logger
   );

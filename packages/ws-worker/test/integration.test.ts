@@ -13,7 +13,7 @@ let engine;
 
 const urls = {
   engine: 'http://localhost:4567',
-  lng: 'ws://localhost:7654/api',
+  lng: 'ws://localhost:7654/worker',
 };
 
 test.before(() => {

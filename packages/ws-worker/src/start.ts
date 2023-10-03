@@ -28,7 +28,7 @@ const args = yargs(hideBin(process.argv))
   .option('lightning', {
     alias: 'l',
     description:
-      'Base url to Lightning websocket endpoint, eg, ws://locahost:4000/api. Set to "mock" to use the default mock server',
+      'Base url to Lightning websocket endpoint, eg, ws://locahost:4000/worker. Set to "mock" to use the default mock server',
   })
   .option('repo-dir', {
     alias: 'd',
@@ -48,7 +48,7 @@ const args = yargs(hideBin(process.argv))
 const logger = createLogger('SRV', { level: args.log });
 
 if (args.lightning === 'mock') {
-  args.lightning = 'ws://localhost:8888/api';
+  args.lightning = 'ws://localhost:8888/worker';
 } else if (!args.secret) {
   const { WORKER_SECRET } = process.env;
   if (!WORKER_SECRET) {

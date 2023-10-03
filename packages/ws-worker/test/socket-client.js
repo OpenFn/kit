@@ -2,7 +2,7 @@
 // run from the commandline ie `node test/socket-client.js`
 import phx from 'phoenix-channels';
 
-const endpoint = 'ws://localhost:8888/api';
+const endpoint = 'ws://localhost:8888/worker';
 
 console.log('connecting to socket at ', endpoint);
 const socket = new phx.Socket(endpoint);
