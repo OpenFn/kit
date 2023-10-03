@@ -36,10 +36,10 @@ const args = yargs(hideBin(process.argv))
   })
   .option('secret', {
     alias: 's',
-    description: 'Worker secret (comes from OPENFN_WORKER_SECRET by default)',
+    description: 'Worker secret (comes from WORKER_SECRET by default)',
   })
   .option('log', {
-    description: 'Worker secret (comes from OPENFN_WORKER_SECRET by default)',
+    description: 'Worker secret (comes from WORKER_SECRET by default)',
     default: 'info',
     type: 'string',
   })
@@ -50,13 +50,13 @@ const logger = createLogger('SRV', { level: args.log });
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/api';
 } else if (!args.secret) {
-  const { OPENFN_WORKER_SECRET } = process.env;
-  if (!OPENFN_WORKER_SECRET) {
-    logger.error('OPENFN_WORKER_SECRET is not set');
+  const { WORKER_SECRET } = process.env;
+  if (!WORKER_SECRET) {
+    logger.error('WORKER_SECRET is not set');
     process.exit(1);
   }
 
-  args.secret = OPENFN_WORKER_SECRET;
+  args.secret = WORKER_SECRET;
 }
 
 // TODO the engine needs to take callbacks to load credential, and load state

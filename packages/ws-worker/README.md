@@ -17,7 +17,7 @@ The mock services allow lightweight and controlled testing of the interfaces bet
 
 There are several components you may want to run to get started.
 
-If you're running a local lightning server, remember to set OPENFN_WORKER_SECRET.
+If you're running a local lightning server, remember to set WORKER_SECRET.
 
 ### WS Server
 
