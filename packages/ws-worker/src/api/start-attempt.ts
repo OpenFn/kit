@@ -21,17 +21,24 @@ const joinAttemptChannel = (
 ) => {
   return new Promise<{ channel: Channel; plan: ExecutionPlan }>(
     (resolve, reject) => {
+      // TMP - lightning seems to be sending two responses to me
+      // just for now, I'm gonna gate the handling here
+      let didReceiveOk = false;
+
       // TODO use proper logger
       const channelName = `attempt:${attemptId}`;
       logger.debug('connecting to ', channelName);
       const channel = socket.channel(channelName, { token });
       channel
         .join()
-        .receive('ok', async () => {
-          logger.success(`connected to ${channelName}`);
-          const plan = await loadAttempt(channel);
-          logger.debug('converted attempt as execution plan:', plan);
-          resolve({ channel, plan });
+        .receive('ok', async (e) => {
+          if (!didReceiveOk) {
+            didReceiveOk = true;
+            logger.success(`connected to ${channelName}`, e);
+            const plan = await loadAttempt(channel);
+            logger.debug('converted attempt as execution plan:', plan);
+            resolve({ channel, plan });
+          }
         })
         .receive('error', (err) => {
           logger.error(`error connecting to ${channelName}`, err);

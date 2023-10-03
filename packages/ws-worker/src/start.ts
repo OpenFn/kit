@@ -76,8 +76,8 @@ if (args.lightning === 'mock') {
 // logger.debug('engine created');
 
 // use the mock rtm for now
-const engine = createMockRTE('rtm');
-logger.debug('Mock RTM created');
+const engine = createMockRTE('rte');
+logger.debug('Mock RTE created');
 
 createWorker(engine, {
   port: args.port,

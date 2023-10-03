@@ -53,6 +53,7 @@ export function execute(
   plan: ExecutionPlan
 ) {
   return new Promise(async (resolve) => {
+    logger.info('execute..');
     // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
     // tracking state for this attempt
     const state: AttemptState = {
@@ -99,7 +100,9 @@ export function execute(
     };
 
     if (typeof plan.initialState === 'string') {
+      logger.info('loading dataclip ', plan.initialState);
       plan.initialState = await loadState(channel, plan.initialState);
+      logger.success('dataclip loaded');
     }
 
     engine.execute(plan, resolvers);

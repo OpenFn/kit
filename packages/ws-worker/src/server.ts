@@ -25,7 +25,6 @@ type ServerOptions = {
 };
 
 function createServer(engine: any, options: ServerOptions = {}) {
-  console.log(options);
   const logger = options.logger || createMockLogger();
   const port = options.port || 1234;
 
@@ -88,8 +87,9 @@ function createServer(engine: any, options: ServerOptions = {}) {
         router.post('/claim', async (ctx) => {
           logger.info('triggering claim from POST request');
           return claim(channel, startAttempt, logger)
-            .then(() => {
-              logger.info('claim complete: attempt processed');
+            .then(({ id, token }) => {
+              logger.info('claim complete: 1 attempt claimed');
+              startAttempt({ id, token });
               ctx.body = 'complete';
               ctx.status = 200;
             })
