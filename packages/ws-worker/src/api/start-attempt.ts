@@ -10,7 +10,7 @@ import type { Logger } from '@openfn/logger';
 
 // TODO what happens if this channel join fails?
 // Lightning could vanish, channel could error on its side, or auth could be wrong
-// We don't have a good feedback mechanism yet - attempts:queue is the only channel
+// We don't have a good feedback mechanism yet - worker:queue is the only channel
 // we can feedback to
 // Maybe we need a general errors channel
 const joinAttemptChannel = (

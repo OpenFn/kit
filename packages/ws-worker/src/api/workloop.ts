@@ -1,8 +1,10 @@
-import type { Logger } from '@openfn/logger';
-import { CLAIM, CLAIM_ATTEMPT, CLAIM_PAYLOAD, CLAIM_REPLY } from '../events';
+import { CLAIM_ATTEMPT } from '../events';
 import tryWithBackoff, { Options } from '../util/try-with-backoff';
 
 import type { CancelablePromise, Channel } from '../types';
+import type { Logger } from '@openfn/logger';
+
+import claim from './claim';
 
 // TODO this needs to return some kind of cancel function
 const startWorkloop = (
@@ -14,34 +16,10 @@ const startWorkloop = (
   let promise: CancelablePromise;
   let cancelled = false;
 
-  const request = () => {
-    return new Promise<void>((resolve, reject) => {
-      logger.debug('pull claim');
-      channel
-        .push<CLAIM_PAYLOAD>(CLAIM, { demand: 1 })
-        .receive('ok', (attempts: CLAIM_REPLY) => {
-          // TODO what if we get here after we've been cancelled?
-          // the events have already been claimed...
-
-          if (!attempts?.length) {
-            logger.debug('no attempts, backing off');
-            // throw to backoff and try again
-            return reject(new Error('backoff'));
-          }
-
-          attempts.forEach((attempt) => {
-            logger.debug('starting attempt', attempt.id);
-            execute(attempt);
-            resolve();
-          });
-        });
-    });
-  };
-
   const workLoop = () => {
     if (!cancelled) {
-      promise = tryWithBackoff(request, {
-        timeout: options.delay,
+      promise = tryWithBackoff(() => claim(channel, execute, logger), {
+        timeout: options.timeout,
         maxBackoff: options.maxBackoff,
       });
       // TODO this needs more unit tests I think

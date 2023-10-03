@@ -13,6 +13,7 @@ type Args = {
   lightning?: string;
   repoDir?: string;
   secret?: string;
+  loop?: boolean;
 };
 
 const args = yargs(hideBin(process.argv))
@@ -29,6 +30,7 @@ const args = yargs(hideBin(process.argv))
     alias: 'l',
     description:
       'Base url to Lightning websocket endpoint, eg, ws://locahost:4000/worker. Set to "mock" to use the default mock server',
+    default: 'http://localhost:4000/worker',
   })
   .option('repo-dir', {
     alias: 'd',
@@ -42,6 +44,11 @@ const args = yargs(hideBin(process.argv))
     description: 'Worker secret (comes from WORKER_SECRET by default)',
     default: 'info',
     type: 'string',
+  })
+  .option('loop', {
+    description: 'Disable the claims loop',
+    default: true,
+    type: 'boolean',
   })
   .parse() as Args;
 
@@ -77,4 +84,5 @@ createWorker(engine, {
   lightning: args.lightning,
   logger,
   secret: args.secret,
+  noLoop: !args.loop,
 });

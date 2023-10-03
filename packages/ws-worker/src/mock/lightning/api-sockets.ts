@@ -19,6 +19,7 @@ import {
   CLAIM,
   CLAIM_PAYLOAD,
   CLAIM_REPLY,
+  CLAIM_ATTEMPT,
   GET_ATTEMPT,
   GET_ATTEMPT_PAYLOAD,
   GET_ATTEMPT_REPLY,
@@ -74,10 +75,10 @@ const createSocketAPI = (
     logger: logger && createLogger('PHX', { level: 'debug' }),
   });
 
-  wss.registerEvents('attempts:queue', {
+  wss.registerEvents('worker:queue', {
     [CLAIM]: (ws, event: PhoenixEvent<CLAIM_PAYLOAD>) => {
-      const results = pullClaim(state, ws, event);
-      results.forEach((attempt) => {
+      const { attempts } = pullClaim(state, ws, event);
+      attempts.forEach((attempt) => {
         state.events.emit(CLAIM, {
           attemptId: attempt.id,
           payload: attempt,
@@ -145,9 +146,10 @@ const createSocketAPI = (
     const { queue } = state;
     let count = 1;
 
+    const attempts: CLAIM_ATTEMPT[] = [];
     const payload = {
       status: 'ok' as const,
-      response: [] as CLAIM_REPLY,
+      response: { attempts } as CLAIM_REPLY,
     };
 
     while (count > 0 && queue.length) {
@@ -156,13 +158,13 @@ const createSocketAPI = (
       const next = queue.shift();
       // TODO the token in the mock is trivial because we're not going to do any validation on it yet
       // TODO need to save the token associated with this attempt
-      payload.response.push({ id: next!, token: 'x.y.z' });
+      attempts.push({ id: next!, token: 'x.y.z' });
       count -= 1;
 
       startAttempt(next!);
     }
-    if (payload.response.length) {
-      logger?.info(`Claiming ${payload.response.length} attempts`);
+    if (attempts.length) {
+      logger?.info(`Claiming ${attempts.length} attempts`);
     } else {
       logger?.info('No claims (queue empty)');
     }

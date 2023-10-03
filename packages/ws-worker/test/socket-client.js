@@ -10,7 +10,7 @@ const socket = new phx.Socket(endpoint);
 socket.onOpen(() => {
   console.log('socket open!');
 
-  const channel = socket.channel('attempts:queue');
+  const channel = socket.channel('worker:queue');
   channel.join().receive('ok', () => {
     console.log('connected to attempts queue');
 

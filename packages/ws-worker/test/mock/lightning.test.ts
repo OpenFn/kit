@@ -163,12 +163,13 @@ test.serial(
     new Promise(async (done) => {
       t.is(server.getQueueLength(), 0);
 
-      const channel = await join('attempts:queue');
+      const channel = await join('worker:queue');
 
       // response is an array of attempt ids
       channel.push(CLAIM).receive('ok', (response) => {
-        t.assert(Array.isArray(response));
-        t.is(response.length, 0);
+        const { attempts } = response;
+        t.assert(Array.isArray(attempts));
+        t.is(attempts.length, 0);
 
         t.is(server.getQueueLength(), 0);
         done();
@@ -183,20 +184,14 @@ test.serial(
       server.enqueueAttempt(attempt1);
       t.is(server.getQueueLength(), 1);
 
-      // This uses a shared channel at all workers sit in
-      // They all yell from time to time to ask for work
-      // Lightning responds with an attempt id and server id (target)
-      // What if:
-      // a) each worker has its own channel, so claims are handed out privately
-      // b) we use the 'ok' status to return work in the response
-      // this b pattern is much nicer
-      const channel = await join('attempts:queue');
+      const channel = await join('worker:queue');
 
       // response is an array of attempt ids
       channel.push(CLAIM).receive('ok', (response) => {
-        t.truthy(response);
-        t.is(response.length, 1);
-        t.deepEqual(response[0], { id: 'attempt-1', token: 'x.y.z' });
+        const { attempts } = response;
+        t.truthy(attempts);
+        t.is(attempts.length, 1);
+        t.deepEqual(attempts[0], { id: 'attempt-1', token: 'x.y.z' });
 
         // ensure the server state has changed
         t.is(server.getQueueLength(), 0);

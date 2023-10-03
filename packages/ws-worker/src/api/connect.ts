@@ -27,7 +27,7 @@ export const connectToLightning = (
     socket.onOpen(() => {
       // join the queue channel
       // TODO should this send the worker token?
-      const channel = socket.channel('attempts:queue');
+      const channel = socket.channel('worker:queue');
 
       channel
         .join()

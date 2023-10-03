@@ -3,11 +3,12 @@ import { Attempt } from './types';
 
 // track socket event names as constants to keep refactoring easier
 
-export const CLAIM = 'attempt:claim';
+export const CLAIM = 'claim';
+
 // this is the lightning payload
 // TODO why are the types in all caps...?
 export type CLAIM_PAYLOAD = { demand?: number };
-export type CLAIM_REPLY = Array<CLAIM_ATTEMPT>;
+export type CLAIM_REPLY = { attempts: Array<CLAIM_ATTEMPT> };
 export type CLAIM_ATTEMPT = { id: string; token: string };
 
 export const GET_ATTEMPT = 'fetch:attempt';
