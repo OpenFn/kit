@@ -18,7 +18,7 @@ import {
   onWorkflowStart,
   onWorkflowComplete,
   AttemptState,
-  loadState,
+  loadDataclip,
   loadCredential,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
@@ -271,7 +271,7 @@ test('workflowComplete should call onComplete with final dataclip', async (t) =>
 });
 
 // TODO what if an error?
-test('loadState should fetch a dataclip', async (t) => {
+test('loadDataclip should fetch a dataclip', async (t) => {
   const channel = mockChannel({
     [GET_DATACLIP]: ({ id }) => {
       t.is(id, 'xyz');
@@ -279,7 +279,7 @@ test('loadState should fetch a dataclip', async (t) => {
     },
   });
 
-  const state = await loadState(channel, 'xyz');
+  const state = await loadDataclip(channel, 'xyz');
   t.deepEqual(state, { data: {} });
 });
 

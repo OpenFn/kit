@@ -96,14 +96,14 @@ export function execute(
 
     const resolvers = {
       credential: (id: string) => loadCredential(channel, id),
-      // dataclip: (id: string) => loadState(channel, id),
+      // dataclip: (id: string) => loadDataclip(channel, id),
       // TODO not supported right now
     };
 
     if (typeof plan.initialState === 'string') {
-      logger.info('loading dataclip ', plan.initialState);
-      plan.initialState = await loadState(channel, plan.initialState);
+      plan.initialState = await loadDataclip(channel, plan.initialState);
       logger.success('dataclip loaded');
+      logger.debug(plan.initialState);
     }
 
     engine.execute(plan, resolvers);
@@ -167,6 +167,7 @@ export function onWorkflowComplete(
   channel
     .push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
       final_dataclip_id: state.result!,
+      status: 'success', // TODO
     })
     .receive('ok', () => {
       onComplete(result);
@@ -186,7 +187,7 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   channel.push<ATTEMPT_LOG_PAYLOAD>(ATTEMPT_LOG, evt);
 }
 
-export async function loadState(channel: Channel, stateId: string) {
+export async function loadDataclip(channel: Channel, stateId: string) {
   const result = await getWithReply<Uint8Array>(channel, GET_DATACLIP, {
     id: stateId,
   });

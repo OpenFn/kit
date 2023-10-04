@@ -1,5 +1,3 @@
-import phx from 'phoenix-channels';
-
 export type Credential = Record<string, any>;
 
 export type State = {
@@ -62,6 +60,7 @@ export declare class Socket {
   constructor(endpoint: string, options: { params: any });
   onOpen(callback: () => void): void;
   connect(): void;
+  channel(channelName: string, params: any): Channel;
 }
 
 export type Channel = {
@@ -69,7 +68,7 @@ export type Channel = {
 
   // TODO it would be super nice to infer the event from the payload
   push: <P>(event: string, payload?: P) => ReceiveHook;
-  join: <P>(event: string, payload?: P) => ReceiveHook;
+  join: () => ReceiveHook;
 };
 // type RuntimeExecutionPlanID = string;
 

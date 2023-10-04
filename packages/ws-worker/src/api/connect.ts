@@ -1,4 +1,5 @@
-import phx from 'phoenix-channels';
+import { Socket as PhxSocket } from 'phoenix';
+import { WebSocket } from 'ws';
 import generateWorkerToken from '../util/worker-token';
 import type { Socket, Channel } from '../types';
 
@@ -11,14 +12,17 @@ export const connectToLightning = (
   endpoint: string,
   serverId: string,
   secret: string,
-  SocketConstructor: Socket = phx.Socket
+  SocketConstructor: Socket = PhxSocket
 ) => {
   return new Promise<SocketAndChannel>(async (done, reject) => {
     // TODO does this token need to be fed back anyhow?
     // I think it's just used to connect and then forgotten?
     // If we reconnect we need a new token I guess?
     const token = await generateWorkerToken(secret, serverId);
-    const socket = new SocketConstructor(endpoint, { params: { token } });
+    const socket = new SocketConstructor(endpoint, {
+      params: { token },
+      transport: WebSocket,
+    });
 
     // TODO need error & timeout handling (ie wrong endpoint or endpoint offline)
     // Do we infinitely try to reconnect?

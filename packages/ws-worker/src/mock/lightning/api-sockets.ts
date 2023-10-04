@@ -34,6 +34,7 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
   RUN_START_REPLY,
+  RUN_COMPLETE_REPLY,
 } from '../../events';
 
 import type { Server } from 'http';
@@ -142,7 +143,7 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<CLAIM_PAYLOAD>
   ) {
-    const { ref, topic } = evt;
+    const { ref, join_ref, topic } = evt;
     const { queue } = state;
     let count = 1;
 
@@ -169,7 +170,7 @@ const createSocketAPI = (
       logger?.info('No claims (queue empty)');
     }
 
-    ws.reply<CLAIM_REPLY>({ ref, topic, payload });
+    ws.reply<CLAIM_REPLY>({ ref, join_ref, topic, payload });
     return payload.response;
   }
 
@@ -178,12 +179,13 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<GET_ATTEMPT_PAYLOAD>
   ) {
-    const { ref, topic } = evt;
+    const { ref, join_ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
     const response = state.attempts[attemptId];
 
     ws.reply<GET_ATTEMPT_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -197,11 +199,12 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<GET_CREDENTIAL_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic, payload } = evt;
     const response = state.credentials[payload.id];
     // console.log(topic, event, response);
     ws.reply<GET_CREDENTIAL_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -210,24 +213,34 @@ const createSocketAPI = (
     });
   }
 
+  // TODO this mock function is broken in the phoenix package update
+  // (I am not TOO worried, the actual integration works fine)
   function getDataclip(
     state: ServerState,
     ws: DevSocket,
     evt: PhoenixEvent<GET_DATACLIP_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
-    const dataclip = state.dataclips[payload.id];
+    const { ref, topic, join_ref } = evt;
+    const dataclip = state.dataclips[evt.payload.id];
 
     // Send the data as an ArrayBuffer (our stringify function will do this)
-    const response = enc.encode(stringify(dataclip));
+    const data = enc.encode(
+      stringify({
+        status: 'ok',
+        response: dataclip,
+      })
+    );
 
+    // If I encode the status & response into the payload,
+    // then this will correctly encode as binary data
+    // But! the reply system doesn't seem to work because we don't get the response status when it's encoded
+    // seems kinda odd
     ws.reply<GET_DATACLIP_REPLY>({
       ref,
+      join_ref,
       topic,
-      payload: {
-        status: 'ok',
-        response,
-      },
+      // payload: data.buffer,
+      payload: { status: 'ok', response: {} },
     });
   }
 
@@ -236,13 +249,14 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<ATTEMPT_LOG_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic, payload } = evt;
     const { attempt_id: attemptId } = payload;
 
     state.pending[attemptId].logs.push(payload);
 
     ws.reply<ATTEMPT_LOG_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -256,7 +270,7 @@ const createSocketAPI = (
     evt: PhoenixEvent<ATTEMPT_COMPLETE_PAYLOAD>,
     attemptId: string
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic, payload } = evt;
     const { dataclip } = payload;
 
     logger?.info('Completed attempt ', attemptId);
@@ -267,12 +281,10 @@ const createSocketAPI = (
 
     ws.reply<ATTEMPT_COMPLETE_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
-        // TODO final dataclip id
-        // this is kind of awkward to work out
-        // we gotta sha every dataclip, find a match, then return
       },
     });
   }
@@ -282,12 +294,13 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<RUN_START_PAYLOAD>
   ) {
-    const { ref, topic } = evt;
+    const { ref, join_ref, topic } = evt;
     if (!state.dataclips) {
       state.dataclips = {};
     }
     ws.reply<RUN_START_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -300,7 +313,7 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<RUN_COMPLETE_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic, payload } = evt;
     const { output_dataclip_id, output_dataclip } = evt.payload;
 
     if (output_dataclip_id) {
@@ -311,8 +324,9 @@ const createSocketAPI = (
     }
 
     // be polite and acknowledge the event
-    ws.reply<ATTEMPT_COMPLETE_REPLY>({
+    ws.reply<RUN_COMPLETE_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',

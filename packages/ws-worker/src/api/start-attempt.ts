@@ -1,8 +1,6 @@
-import phx from 'phoenix-channels';
-
 import convertAttempt from '../util/convert-attempt';
 import { getWithReply } from '../util';
-import { Attempt, Channel } from '../types';
+import { Attempt, Channel, Socket } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
 import { GET_ATTEMPT } from '../events';
 
@@ -14,7 +12,7 @@ import type { Logger } from '@openfn/logger';
 // we can feedback to
 // Maybe we need a general errors channel
 const joinAttemptChannel = (
-  socket: phx.Socket,
+  socket: Socket,
   token: string,
   attemptId: string,
   logger: Logger
