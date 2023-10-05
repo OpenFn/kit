@@ -78,12 +78,12 @@ function createServer(engine: any, options: ServerOptions = {}) {
             // timeout: 1000 * 60, // TMP debug poll once per minute
           });
         } else {
-          logger.info();
-          logger.info('Workloop not starting');
+          logger.break();
+          logger.warn('Workloop not starting');
           logger.info('This server will not auto-pull work from lightning.');
-          logger.info('You can manually claim by posting to /claim');
-          logger.info(`curl -X POST http://locahost:${port}/claim`);
-          logger.info();
+          logger.info('You can manually claim by posting to /claim, eg:');
+          logger.info(`  curl -X POST http://locahost:${port}/claim`);
+          logger.break();
         }
 
         // debug/unit test API to run a workflow
