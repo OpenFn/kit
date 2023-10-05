@@ -118,7 +118,7 @@ export function onJobStart({ channel, state }: Context, event: any) {
   state.activeJob = event;
 
   channel.push<RUN_START_PAYLOAD>(RUN_START, {
-    run_id: state.activeJob!,
+    run_id: state.activeRun!,
     job_id: state.activeJob!,
     // input_dataclip_id what about this guy?
   });
