@@ -4,7 +4,6 @@ import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { createMockLogger, Logger } from '@openfn/logger';
 
-import createRestAPI from './api-rest';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { execute } from './api/execute';
@@ -38,8 +37,6 @@ function createServer(engine: any, options: ServerOptions = {}) {
       logger.debug(str);
     })
   );
-
-  createRestAPI(app, logger);
 
   app.listen(port);
   logger.success('ws-worker listening on', port);
@@ -94,13 +91,12 @@ function createServer(engine: any, options: ServerOptions = {}) {
         router.post('/claim', async (ctx) => {
           logger.info('triggering claim from POST request');
           return claim(channel, startAttempt, logger)
-            .then(({ id, token }) => {
+            .then(() => {
               logger.info('claim complete: 1 attempt claimed');
-              startAttempt({ id, token });
               ctx.body = 'complete';
               ctx.status = 200;
             })
-            .catch((e) => {
+            .catch(() => {
               logger.info('claim complete: no attempts');
               ctx.body = 'no attempts';
               ctx.status = 204;

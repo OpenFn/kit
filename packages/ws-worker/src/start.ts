@@ -1,7 +1,7 @@
 // start the server in a local CLI
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import createLogger from '@openfn/logger';
+import createLogger, { LogLevel } from '@openfn/logger';
 
 // import createRTM from '@openfn/runtime-engine';
 import createMockRTE from './mock/runtime-engine';
@@ -14,6 +14,7 @@ type Args = {
   repoDir?: string;
   secret?: string;
   loop?: boolean;
+  log: LogLevel;
 };
 
 const args = yargs(hideBin(process.argv))

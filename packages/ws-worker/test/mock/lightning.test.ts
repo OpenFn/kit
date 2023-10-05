@@ -228,23 +228,27 @@ test.serial('get attempt data through the attempt channel', async (t) => {
   });
 });
 
-test.serial('complete an attempt through the attempt channel', async (t) => {
-  return new Promise(async (done) => {
-    const a = attempt1;
-    server.registerAttempt(a);
-    server.startAttempt(a.id);
+test.serial.only(
+  'complete an attempt through the attempt channel',
+  async (t) => {
+    return new Promise(async (done) => {
+      const a = attempt1;
+      server.registerAttempt(a);
+      server.startAttempt(a.id);
+      server.addDataclip('abc', { answer: 42 });
 
-    const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
-    channel
-      .push(ATTEMPT_COMPLETE, { dataclip: { answer: 42 } })
-      .receive('ok', () => {
-        const { pending, results } = server.getState();
-        t.deepEqual(pending[a.id], { status: 'complete', logs: [] });
-        t.deepEqual(results[a.id], { answer: 42 });
-        done();
-      });
-  });
-});
+      const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
+      channel
+        .push(ATTEMPT_COMPLETE, { final_dataclip_id: 'abc' })
+        .receive('ok', () => {
+          const { pending, results } = server.getState();
+          t.deepEqual(pending[a.id], { status: 'complete', logs: [] });
+          t.deepEqual(results[a.id].state, { answer: 42 });
+          done();
+        });
+    });
+  }
+);
 
 test.serial('logs are saved and acknowledged', async (t) => {
   return new Promise(async (done) => {

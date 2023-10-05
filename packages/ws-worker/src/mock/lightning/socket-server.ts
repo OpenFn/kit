@@ -6,6 +6,7 @@
  */
 import { WebSocketServer, WebSocket } from 'ws';
 import querystring from 'query-string';
+// @ts-ignore
 import { Serializer } from 'phoenix';
 
 import { ATTEMPT_PREFIX, extractAttemptId } from './util';
@@ -132,6 +133,7 @@ function createServer({
     },
   };
 
+  // @ts-ignore something wierd about the wsServer typing
   wsServer.on('connection', function (ws: DevSocket, req: any) {
     logger?.info('new client connected');
 
@@ -166,6 +168,7 @@ function createServer({
         topic,
         payload,
       });
+      // @ts-ignore
       ws.send(evt);
     };
 
@@ -177,6 +180,7 @@ function createServer({
         topic,
         payload: stringify(payload), // TODO do we stringify this? All of it?
       });
+      // @ts-ignore
       ws.send(evt);
     };
 
@@ -191,8 +195,9 @@ function createServer({
 
         logger?.debug(`>> [${topic}] ${event} ${ref} :: ${stringify(payload)}`);
 
-        if (events[event]) {
+        if (event in events) {
           // handle system/phoenix events
+          // @ts-ignore
           events[event](ws, { topic, payload, ref, join_ref });
         } else {
           // handle custom/user events

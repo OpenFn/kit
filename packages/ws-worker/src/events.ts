@@ -1,4 +1,3 @@
-import { JSONLog } from '@openfn/logger';
 import { Attempt } from './types';
 
 // track socket event names as constants to keep refactoring easier

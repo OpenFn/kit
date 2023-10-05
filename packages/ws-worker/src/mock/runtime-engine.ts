@@ -16,7 +16,7 @@ type Resolver<T> = (id: string) => Promise<T>;
 // A list of helper functions which basically resolve ids into JSON
 // to lazy load assets
 export type LazyResolvers = {
-  credentials?: Resolver<Credential>;
+  credential?: Resolver<Credential>;
   state?: Resolver<State>;
   expressions?: Resolver<string>;
 };
@@ -101,7 +101,7 @@ function createMock(serverId?: string) {
     if (typeof configuration === 'string') {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
-      await resolvers.credential(configuration);
+      await resolvers.credential?.(configuration);
     }
 
     const info = (...message: any[]) => {
@@ -181,9 +181,6 @@ function createMock(serverId?: string) {
     once,
     execute,
     getStatus,
-    setResolvers: (r: LazyResolvers) => {
-      resolvers = r;
-    },
     listen,
   };
 }

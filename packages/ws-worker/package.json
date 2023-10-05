@@ -34,8 +34,12 @@
   "devDependencies": {
     "@types/koa": "^2.13.5",
     "@types/koa-bodyparser": "^4.3.10",
-    "@types/koa-router": "^7.4.4",
+    "@types/koa-route": "^3.2.6",
+    "@types/koa-websocket": "^5.0.8",
+    "@types/koa__router": "^12.0.1",
     "@types/node": "^18.15.3",
+    "@types/nodemon": "1.19.3",
+    "@types/phoenix": "^1.6.2",
     "@types/yargs": "^17.0.12",
     "ava": "5.1.0",
     "koa-route": "^3.2.0",

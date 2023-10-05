@@ -9,7 +9,6 @@ import {
   ATTEMPT_START_PAYLOAD,
   GET_CREDENTIAL,
   GET_DATACLIP,
-  GET_DATACLIP_PAYLOAD,
   RUN_COMPLETE,
   RUN_COMPLETE_PAYLOAD,
   RUN_START,
@@ -44,6 +43,15 @@ type Context = {
   onComplete: (result: any) => void;
 };
 
+// mapping engine events to lightning events
+const eventMap = {
+  'workflow-start': ATTEMPT_START,
+  'job-start': RUN_START,
+  'job-complete': RUN_COMPLETE,
+  log: ATTEMPT_LOG,
+  'workflow-complete': ATTEMPT_COMPLETE,
+};
+
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
 export function execute(
@@ -55,31 +63,35 @@ export function execute(
 ) {
   return new Promise(async (resolve) => {
     logger.info('execute..');
-    // TODO add proper logger (maybe channel, rtm and logger comprise a context object)
-    // tracking state for this attempt
+
     const state: AttemptState = {
       plan,
       // set the result data clip id (which needs renaming)
       // to the initial state
       lastDataclipId: plan.initialState as string | undefined,
+      dataclips: {},
     };
 
     const context: Context = { channel, state, logger, onComplete: resolve };
 
     type EventHandler = (context: any, event: any) => void;
 
-    // Utility funciton to
-    // a) bind an event handler to a event
-    // b) pass the contexdt object into the hander
-    // c) log the event
+    // Utility function to:
+    // a) bind an event handler to a runtime-engine event
+    // b) pass the context object into the hander
+    // c) log the response from the websocket from lightning
     const addEvent = (eventName: string, handler: EventHandler) => {
       const wrappedFn = async (event: any) => {
+        // @ts-ignore
+        const lightningEvent = eventMap[eventName];
         try {
           await handler(context, event);
-          logger.info(`${plan.id} :: ${eventName} :: OK`);
+          logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
         } catch (e: any) {
           logger.error(
-            `${plan.id} :: ${eventName} :: ERR: ${e.message || e.toString()}`
+            `${plan.id} :: ${lightningEvent} :: ERR: ${
+              e.message || e.toString()
+            }`
           );
           logger.error(e);
         }
@@ -132,7 +144,7 @@ export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
     channel
       .push<T>(event, payload)
       .receive('error', reject)
-      .receive('timeout', reject)
+      .receive('timeout', () => reject(new Error('timeout')))
       .receive('ok', resolve);
   });
 

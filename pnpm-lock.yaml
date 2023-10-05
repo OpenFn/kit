@@ -513,12 +513,24 @@ importers:
       '@types/koa-bodyparser':
         specifier: ^4.3.10
         version: 4.3.10
-      '@types/koa-router':
-        specifier: ^7.4.4
-        version: 7.4.4
+      '@types/koa-route':
+        specifier: ^3.2.6
+        version: 3.2.6
+      '@types/koa-websocket':
+        specifier: ^5.0.8
+        version: 5.0.8
+      '@types/koa__router':
+        specifier: ^12.0.1
+        version: 12.0.1
       '@types/node':
         specifier: ^18.15.3
         version: 18.15.13
+      '@types/nodemon':
+        specifier: 1.19.3
+        version: 1.19.3
+      '@types/phoenix':
+        specifier: ^1.6.2
+        version: 1.6.2
       '@types/yargs':
         specifier: ^17.0.12
         version: 17.0.24
@@ -1666,10 +1678,19 @@ packages:
       '@types/koa': 2.13.5
     dev: false
 
-  /@types/koa-router@7.4.4:
-    resolution: {integrity: sha512-3dHlZ6CkhgcWeF6wafEUvyyqjWYfKmev3vy1PtOmr0mBc3wpXPU5E8fBBd4YQo5bRpHPfmwC5yDaX7s4jhIN6A==}
+  /@types/koa-route@3.2.6:
+    resolution: {integrity: sha512-g7alI5btLD5AjoWsZeLmcZe0Ey9ozxHqpG6T+N8+bHvp/QF+nKM5iHeIMMWxSk9AUlGeH6fO9p6K/3C7h6Cd8A==}
     dependencies:
       '@types/koa': 2.13.5
+      path-to-regexp: 1.8.0
+    dev: true
+
+  /@types/koa-websocket@5.0.8:
+    resolution: {integrity: sha512-KHHsgUrdBn4utRFZqlsVPOC0HqxWrnt4rVvuxw0NLb15e8KmVC9xtRru1A4NsquLNJg3hXddWsEf4+x5+NrJXg==}
+    dependencies:
+      '@types/koa': 2.13.5
+      '@types/koa-compose': 3.2.5
+      '@types/ws': 8.5.6
     dev: true
 
   /@types/koa@2.13.5:
@@ -1683,6 +1704,12 @@ packages:
       '@types/keygrip': 1.0.2
       '@types/koa-compose': 3.2.5
       '@types/node': 18.15.13
+
+  /@types/koa__router@12.0.1:
+    resolution: {integrity: sha512-uqV+v6pCsfLZwK+Ar6XavKSZ6Cbsgw12bCEX9L0IKHj81LTWXcrayxJWkLtez5vOMQlq+ax+lZcuCyh9CgxYGw==}
+    dependencies:
+      '@types/koa': 2.13.5
+    dev: true
 
   /@types/live-server@1.2.1:
     resolution: {integrity: sha512-Yind497JdcZT8L9FF7u73nq44KmamiDitsZJEwrAi/pgBhFHThNvtR+2Z/YGNSMjyUoDBFdvhVSQmod06yd1Ng==}
@@ -1736,8 +1763,18 @@ packages:
       '@types/node': 18.15.13
     dev: true
 
+  /@types/nodemon@1.19.3:
+    resolution: {integrity: sha512-LcKdWgch8uHOF73yYpdE7YPVLT0HnFI60zyNBpJyfAiDDwPy3WAxReQeB84UseE8e8qdJsBqmFXWbjxv7jlXBg==}
+    dependencies:
+      '@types/node': 18.15.13
+    dev: true
+
   /@types/normalize-package-data@2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
+    dev: true
+
+  /@types/phoenix@1.6.2:
+    resolution: {integrity: sha512-I3mm7x5XIi+5NsIY3nfreY+H4PmQdyBwJ84SiUSOxSg1axwEPNmkKWYVm56y+emDpPPUL3cPzrLcgRWSd9gI7g==}
     dev: true
 
   /@types/prop-types@15.7.5:
@@ -1821,7 +1858,6 @@ packages:
     resolution: {integrity: sha512-8B5EO9jLVCy+B58PLHvLDuOD8DRVMgQzq8d55SjLCOn9kqGyqOvy27exVaTio1q1nX5zLu8/6N0n2ThSxOM6tg==}
     dependencies:
       '@types/node': 18.15.13
-    dev: false
 
   /@types/yargs-parser@21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}

@@ -16,12 +16,11 @@ const claim = (
     channel
       .push<CLAIM_PAYLOAD>(CLAIM, { demand: 1 })
       .receive('ok', ({ attempts }: CLAIM_REPLY) => {
-        logger.debug('pull ok', attempts);
+        logger.debug(`pulled ${attempts.length} attempts`);
         // TODO what if we get here after we've been cancelled?
         // the events have already been claimed...
 
         if (!attempts?.length) {
-          logger.debug('no attempts, backing off');
           // throw to backoff and try again
           return reject(new Error('claim failed'));
         }
@@ -31,15 +30,15 @@ const claim = (
           execute(attempt);
           resolve();
         });
-      })
-      // TODO need implementations for both of these really
-      // What do we do if we fail to join the worker channel?
-      .receive('error', (r) => {
-        logger.debug('pull err');
-      })
-      .receive('timeout', (r) => {
-        logger.debug('pull timeout');
       });
+    // // TODO need implementations for both of these really
+    // // What do we do if we fail to join the worker channel?
+    // .receive('error', () => {
+    //   logger.debug('pull err');
+    // })
+    // .receive('timeout', () => {
+    //   logger.debug('pull timeout');
+    // });
   });
 };
 

@@ -265,13 +265,16 @@ const createSocketAPI = (
     attemptId: string
   ) {
     const { ref, join_ref, topic, payload } = evt;
-    const { dataclip } = payload;
+    const { final_dataclip_id } = payload;
 
     logger?.info('Completed attempt ', attemptId);
-    logger?.debug(dataclip);
+    logger?.debug(final_dataclip_id);
 
     state.pending[attemptId].status = 'complete';
-    state.results[attemptId] = dataclip;
+    if (!state.results[attemptId]) {
+      state.results[attemptId] = { state: null, workerId: 'mock' };
+    }
+    state.results[attemptId].state = state.dataclips[final_dataclip_id];
 
     ws.reply<ATTEMPT_COMPLETE_REPLY>({
       ref,
@@ -307,14 +310,14 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<RUN_COMPLETE_PAYLOAD>
   ) {
-    const { ref, join_ref, topic, payload } = evt;
+    const { ref, join_ref, topic } = evt;
     const { output_dataclip_id, output_dataclip } = evt.payload;
 
     if (output_dataclip_id) {
       if (!state.dataclips) {
         state.dataclips = {};
       }
-      state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip);
+      state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip!);
     }
 
     // be polite and acknowledge the event

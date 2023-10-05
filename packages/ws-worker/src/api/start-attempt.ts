@@ -29,7 +29,7 @@ const joinAttemptChannel = (
       const channel = socket.channel(channelName, { token });
       channel
         .join()
-        .receive('ok', async (e) => {
+        .receive('ok', async (e: any) => {
           if (!didReceiveOk) {
             didReceiveOk = true;
             logger.success(`connected to ${channelName}`, e);
@@ -38,7 +38,7 @@ const joinAttemptChannel = (
             resolve({ channel, plan });
           }
         })
-        .receive('error', (err) => {
+        .receive('error', (err: any) => {
           logger.error(`error connecting to ${channelName}`, err);
           reject(err);
         });

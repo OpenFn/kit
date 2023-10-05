@@ -1,3 +1,7 @@
+import type { Socket as PhxSocket, Channel as PhxChannel } from 'phoenix';
+
+export { Socket };
+
 export type Credential = Record<string, any>;
 
 export type State = {
@@ -56,20 +60,20 @@ type ReceiveHook = {
   ) => ReceiveHook;
 };
 
-export declare class Socket {
-  constructor(endpoint: string, options: { params: any });
-  onOpen(callback: () => void): void;
-  connect(): void;
-  channel(channelName: string, params: any): Channel;
-}
+// export declare class Socket extends PhxSocket {
+//   constructor(endpoint: string, options: { params: any });
+//   onOpen(callback: () => void): void;
+//   connect(): void;
+//   channel(channelName: string, params: any): Channel;
+// }
 
-export type Channel = {
-  on: (event: string, fn: (evt: any) => void) => void;
+export interface Channel extends PhxChannel {
+  // on: (event: string, fn: (evt: any) => void) => void;
 
   // TODO it would be super nice to infer the event from the payload
-  push: <P>(event: string, payload?: P) => ReceiveHook;
-  join: () => ReceiveHook;
-};
+  push: <P = any>(event: string, payload?: P) => ReceiveHook;
+  // join: () => ReceiveHook;
+}
 // type RuntimeExecutionPlanID = string;
 
 // type JobEdge = {
