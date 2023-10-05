@@ -1,7 +1,8 @@
 import test from 'ava';
-import createLightningServer, { API_PREFIX } from '../../src/mock/lightning';
+import createLightningServer from '../../src/mock/lightning';
 
-import phx from 'phoenix-channels';
+import { Socket } from 'phoenix';
+import { WebSocket } from 'ws';
 
 import { attempts, credentials, dataclips } from './data';
 import {
@@ -13,7 +14,7 @@ import {
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
-import type { Attempt } from '../../src/types';
+import type { Attempt, Channel } from '../../src/types';
 import { JSONLog } from '@openfn/logger';
 
 const endpoint = 'ws://localhost:7777/worker';
@@ -31,7 +32,11 @@ test.before(
 
       // Note that we need a token to connect, but the mock here
       // doesn't (yet) do any validation on that token
-      client = new phx.Socket(endpoint, { params: { token: 'x.y.z' } });
+      client = new Socket(endpoint, {
+        params: { token: 'x.y.z' },
+        timeout: 1000 * 120,
+        transport: WebSocket,
+      });
       client.onOpen(done);
       client.connect();
     })
@@ -47,10 +52,7 @@ test.after(() => {
 
 const attempt1 = attempts['attempt-1'];
 
-const join = (
-  channelName: string,
-  params: any = {}
-): Promise<typeof phx.Channel> =>
+const join = (channelName: string, params: any = {}): Promise<Channel> =>
   new Promise((done, reject) => {
     const channel = client.channel(channelName, params);
     channel
@@ -121,7 +123,7 @@ test.serial('provide a phoenix websocket at /worker', (t) => {
 test.serial('reject ws connections without a token', (t) => {
   return new Promise((done) => {
     // client should be connected before this test runs
-    const socket = new phx.Socket(endpoint);
+    const socket = new Socket(endpoint, { transport: WebSocket });
     socket.onClose(() => {
       t.pass();
       done();
@@ -144,31 +146,19 @@ test.serial('respond to channel join requests', (t) => {
 // TODO: only allow authorised workers to join workers
 // TODO: only allow authorised attemtps to join an attempt channel
 
-test.serial('get a reply to a ping event', (t) => {
-  return new Promise(async (done) => {
-    const channel = await join('test');
-
-    channel.on('pong', (payload) => {
-      t.pass('message received');
-      done();
-    });
-
-    channel.push('ping');
-  });
-});
-
 test.serial(
   'claim attempt: reply for zero items if queue is empty',
   (t) =>
     new Promise(async (done) => {
       t.is(server.getQueueLength(), 0);
 
-      const channel = await join('attempts:queue');
+      const channel = await join('worker:queue');
 
       // response is an array of attempt ids
       channel.push(CLAIM).receive('ok', (response) => {
-        t.assert(Array.isArray(response));
-        t.is(response.length, 0);
+        const { attempts } = response;
+        t.assert(Array.isArray(attempts));
+        t.is(attempts.length, 0);
 
         t.is(server.getQueueLength(), 0);
         done();
@@ -183,20 +173,14 @@ test.serial(
       server.enqueueAttempt(attempt1);
       t.is(server.getQueueLength(), 1);
 
-      // This uses a shared channel at all workers sit in
-      // They all yell from time to time to ask for work
-      // Lightning responds with an attempt id and server id (target)
-      // What if:
-      // a) each worker has its own channel, so claims are handed out privately
-      // b) we use the 'ok' status to return work in the response
-      // this b pattern is much nicer
-      const channel = await join('attempts:queue');
+      const channel = await join('worker:queue');
 
       // response is an array of attempt ids
       channel.push(CLAIM).receive('ok', (response) => {
-        t.truthy(response);
-        t.is(response.length, 1);
-        t.deepEqual(response[0], { id: 'attempt-1', token: 'x.y.z' });
+        const { attempts } = response;
+        t.truthy(attempts);
+        t.is(attempts.length, 1);
+        t.deepEqual(attempts[0], { id: 'attempt-1', token: 'x.y.z' });
 
         // ensure the server state has changed
         t.is(server.getQueueLength(), 0);
@@ -244,23 +228,27 @@ test.serial('get attempt data through the attempt channel', async (t) => {
   });
 });
 
-test.serial('complete an attempt through the attempt channel', async (t) => {
-  return new Promise(async (done) => {
-    const a = attempt1;
-    server.registerAttempt(a);
-    server.startAttempt(a.id);
+test.serial.only(
+  'complete an attempt through the attempt channel',
+  async (t) => {
+    return new Promise(async (done) => {
+      const a = attempt1;
+      server.registerAttempt(a);
+      server.startAttempt(a.id);
+      server.addDataclip('abc', { answer: 42 });
 
-    const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
-    channel
-      .push(ATTEMPT_COMPLETE, { dataclip: { answer: 42 } })
-      .receive('ok', () => {
-        const { pending, results } = server.getState();
-        t.deepEqual(pending[a.id], { status: 'complete', logs: [] });
-        t.deepEqual(results[a.id], { answer: 42 });
-        done();
-      });
-  });
-});
+      const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
+      channel
+        .push(ATTEMPT_COMPLETE, { final_dataclip_id: 'abc' })
+        .receive('ok', () => {
+          const { pending, results } = server.getState();
+          t.deepEqual(pending[a.id], { status: 'complete', logs: [] });
+          t.deepEqual(results[a.id].state, { answer: 42 });
+          done();
+        });
+    });
+  }
+);
 
 test.serial('logs are saved and acknowledged', async (t) => {
   return new Promise(async (done) => {

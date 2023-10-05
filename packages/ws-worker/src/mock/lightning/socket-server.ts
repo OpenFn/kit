@@ -6,6 +6,8 @@
  */
 import { WebSocketServer, WebSocket } from 'ws';
 import querystring from 'query-string';
+// @ts-ignore
+import { Serializer } from 'phoenix';
 
 import { ATTEMPT_PREFIX, extractAttemptId } from './util';
 import { ServerState } from './server';
@@ -14,6 +16,20 @@ import { stringify } from '../../util';
 import type { Logger } from '@openfn/logger';
 
 type Topic = string;
+
+const decoder = Serializer.decode.bind(Serializer);
+const decode = (data: any) => new Promise((done) => decoder(data, done));
+
+const encoder = Serializer.encode.bind(Serializer);
+const encode = (data: any) =>
+  new Promise((done) => {
+    if (data.payload?.response && data.payload.response instanceof Uint8Array) {
+      // special encoding logic if the payload is a buffer
+      // (we need to do this for dataclips)
+      data.payload.response = Array.from(data.payload.response);
+    }
+    encoder(data, done);
+  });
 
 export type PhoenixEventStatus = 'ok' | 'error' | 'timeout';
 
@@ -28,6 +44,7 @@ export type PhoenixEvent<P = any> = {
   event: string;
   payload: P;
   ref: string;
+  join_ref: string;
 };
 
 export type PhoenixReply<R = any> = {
@@ -37,6 +54,7 @@ export type PhoenixReply<R = any> = {
     response?: R;
   };
   ref: string;
+  join_ref: string;
 };
 
 type EventHandler = (ws: DevSocket, event: PhoenixEvent) => void;
@@ -85,17 +103,11 @@ function createServer({
   }
 
   const events = {
-    // testing (TODO shouldn't this be in a specific channel?)
-    ping: (ws: DevSocket, { topic, ref }: PhoenixEvent) => {
-      ws.sendJSON({
-        topic,
-        ref,
-        event: 'pong',
-        payload: {},
-      });
-    },
     // When joining a channel, we need to send a chan_reply_{ref} message back to the socket
-    phx_join: (ws: DevSocket, { topic, ref, payload }: PhoenixEvent) => {
+    phx_join: (
+      ws: DevSocket,
+      { topic, ref, payload, join_ref }: PhoenixEvent
+    ) => {
       let status: PhoenixEventStatus = 'ok';
       let response = 'ok';
 
@@ -116,10 +128,12 @@ function createServer({
         topic,
         payload: { status, response },
         ref,
+        join_ref,
       });
     },
   };
 
+  // @ts-ignore something wierd about the wsServer typing
   wsServer.on('connection', function (ws: DevSocket, req: any) {
     logger?.info('new client connected');
 
@@ -139,53 +153,63 @@ function createServer({
       return;
     }
 
-    ws.reply = <R = any>({ ref, topic, payload }: PhoenixReply<R>) => {
+    ws.reply = async <R = any>({
+      ref,
+      topic,
+      payload,
+      join_ref,
+    }: PhoenixReply<R>) => {
+      // TODO only stringify payload if not a buffer
       logger?.debug(`<< [${topic}] chan_reply_${ref} ` + stringify(payload));
-      ws.send(
-        stringify({
-          event: `chan_reply_${ref}`,
-          ref,
-          topic,
-          payload,
-        })
-      );
+      const evt = await encode({
+        event: `chan_reply_${ref}`,
+        ref,
+        join_ref,
+        topic,
+        payload,
+      });
+      // @ts-ignore
+      ws.send(evt);
     };
 
-    ws.sendJSON = ({ event, ref, topic, payload }: PhoenixEvent) => {
+    ws.sendJSON = async ({ event, ref, topic, payload }: PhoenixEvent) => {
       logger?.debug(`<< [${topic}] ${event} ` + stringify(payload));
-      ws.send(
-        stringify({
-          event,
-          ref,
-          topic,
-          payload,
-        })
-      );
+      const evt = await encode({
+        event,
+        ref,
+        topic,
+        payload: stringify(payload), // TODO do we stringify this? All of it?
+      });
+      // @ts-ignore
+      ws.send(evt);
     };
 
-    ws.on('message', function (data: string) {
-      const evt = JSON.parse(data) as PhoenixEvent;
+    ws.on('message', async function (data: string) {
+      // decode  the data
+      const evt = (await decode(data)) as PhoenixEvent;
       onMessage(evt);
 
       if (evt.topic) {
         // phx sends this info in each message
-        const { topic, event, payload, ref } = evt;
+        const { topic, event, payload, ref, join_ref } = evt;
 
         logger?.debug(`>> [${topic}] ${event} ${ref} :: ${stringify(payload)}`);
 
-        if (events[event]) {
+        if (event in events) {
           // handle system/phoenix events
-          events[event](ws, { topic, payload, ref });
+          // @ts-ignore
+          events[event](ws, { topic, payload, ref, join_ref });
         } else {
           // handle custom/user events
           if (channels[topic] && channels[topic].size) {
             channels[topic].forEach((fn) => {
-              fn(ws, { event, topic, payload, ref });
+              fn(ws, { event, topic, payload, ref, join_ref });
             });
           } else {
             // This behaviour is just a convenience for unit tesdting
             ws.reply({
               ref,
+              join_ref,
               topic,
               payload: {
                 status: 'error',

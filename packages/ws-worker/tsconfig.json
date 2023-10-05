@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.common",
-  "include": ["src/**/*.ts", "test/mock/data.ts"],
+  "include": ["src/**/*.ts", "test/mock/data.ts", "src/api/channels/attempts"],
   "compilerOptions": {
     "module": "ESNext"
   }

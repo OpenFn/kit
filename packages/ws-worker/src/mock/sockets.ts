@@ -8,18 +8,31 @@ export const mockChannel = (callbacks: Record<string, EventHandler> = {}) => {
       callbacks[event] = fn;
     },
     push: <P>(event: string, payload?: P) => {
+      const responses = {} as Record<'ok' | 'error' | 'timeout', EventHandler>;
+
       // if a callback was registered, trigger it
       // otherwise do nothing
-      let result: any;
-      if (callbacks[event]) {
-        result = callbacks[event](payload);
-      }
+      setTimeout(() => {
+        if (callbacks[event]) {
+          try {
+            const result = callbacks[event](payload);
+            responses.ok?.(result);
+          } catch (e) {
+            responses.error?.(e);
+          }
+        }
+      }, 1);
 
-      return {
-        receive: (_status: string, callback: EventHandler) => {
-          setTimeout(() => callback(result), 1);
+      const receive = {
+        receive: (
+          status: 'ok' | 'error' | 'timeout' = 'ok',
+          callback: EventHandler
+        ) => {
+          responses[status] = callback;
+          return receive;
         },
       };
+      return receive;
     },
     join: () => {
       if (callbacks.join) {

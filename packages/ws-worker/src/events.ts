@@ -1,13 +1,13 @@
-import { JSONLog } from '@openfn/logger';
 import { Attempt } from './types';
 
 // track socket event names as constants to keep refactoring easier
 
-export const CLAIM = 'attempt:claim';
+export const CLAIM = 'claim';
+
 // this is the lightning payload
 // TODO why are the types in all caps...?
 export type CLAIM_PAYLOAD = { demand?: number };
-export type CLAIM_REPLY = Array<CLAIM_ATTEMPT>;
+export type CLAIM_REPLY = { attempts: Array<CLAIM_ATTEMPT> };
 export type CLAIM_ATTEMPT = { id: string; token: string };
 
 export const GET_ATTEMPT = 'fetch:attempt';
@@ -30,20 +30,22 @@ export type ATTEMPT_START_REPLY = void; // no payload
 export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats
 export type ATTEMPT_COMPLETE_PAYLOAD = {
   final_dataclip_id: string;
+  status: 'success' | 'fail' | 'crash' | 'timeout';
   stats?: any;
 }; // TODO dataclip -> result? output_dataclip?
 export type ATTEMPT_COMPLETE_REPLY = undefined;
 
 export const ATTEMPT_LOG = 'attempt:log'; // level, namespace (job,runtime,adaptor), message, time
-export type ATTEMPT_LOG_PAYLOAD = JSONLog & {
+export type ATTEMPT_LOG_PAYLOAD = {
+  message: Array<string | object>;
+  timestamp: number;
   attempt_id: string;
+  level?: string;
+  source?: string; // namespace
   job_id?: string;
   run_id?: string;
 };
 export type ATTEMPT_LOG_REPLY = void;
-
-// this should not happen - this is "could not execute" rather than "complete with errors"
-export const ATTEMPT_ERROR = 'attempt:error';
 
 export const RUN_START = 'run:start';
 export type RUN_START_PAYLOAD = {

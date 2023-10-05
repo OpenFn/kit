@@ -1,7 +1,7 @@
 // start the server in a local CLI
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import createLogger from '@openfn/logger';
+import createLogger, { LogLevel } from '@openfn/logger';
 
 // import createRTM from '@openfn/runtime-engine';
 import createMockRTE from './mock/runtime-engine';
@@ -13,6 +13,8 @@ type Args = {
   lightning?: string;
   repoDir?: string;
   secret?: string;
+  loop?: boolean;
+  log: LogLevel;
 };
 
 const args = yargs(hideBin(process.argv))
@@ -29,6 +31,7 @@ const args = yargs(hideBin(process.argv))
     alias: 'l',
     description:
       'Base url to Lightning websocket endpoint, eg, ws://locahost:4000/worker. Set to "mock" to use the default mock server',
+    default: 'ws://localhost:4000/worker',
   })
   .option('repo-dir', {
     alias: 'd',
@@ -42,6 +45,11 @@ const args = yargs(hideBin(process.argv))
     description: 'Worker secret (comes from WORKER_SECRET by default)',
     default: 'info',
     type: 'string',
+  })
+  .option('loop', {
+    description: 'Disable the claims loop',
+    default: true,
+    type: 'boolean',
   })
   .parse() as Args;
 
@@ -69,12 +77,13 @@ if (args.lightning === 'mock') {
 // logger.debug('engine created');
 
 // use the mock rtm for now
-const engine = createMockRTE('rtm');
-logger.debug('Mock RTM created');
+const engine = createMockRTE('rte');
+logger.debug('Mock RTE created');
 
 createWorker(engine, {
   port: args.port,
   lightning: args.lightning,
   logger,
   secret: args.secret,
+  noLoop: !args.loop,
 });

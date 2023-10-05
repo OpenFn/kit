@@ -1,11 +1,11 @@
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
-
+import Router from '@koa/router';
 import { createMockLogger, Logger } from '@openfn/logger';
 
-import createRestAPI from './api-rest';
 import startWorkloop from './api/workloop';
+import claim from './api/claim';
 import { execute } from './api/execute';
 import joinAttemptChannel from './api/start-attempt';
 import connectToLightning from './api/connect';
@@ -18,6 +18,7 @@ type ServerOptions = {
   port?: number;
   lightning?: string; // url to lightning instance
   logger?: Logger;
+  noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
 };
@@ -37,8 +38,6 @@ function createServer(engine: any, options: ServerOptions = {}) {
     })
   );
 
-  createRestAPI(app, logger);
-
   app.listen(port);
   logger.success('ws-worker listening on', port);
 
@@ -46,6 +45,9 @@ function createServer(engine: any, options: ServerOptions = {}) {
     // TODO close the work loop
     logger.info('Closing server');
   };
+
+  const router = new Router();
+  app.use(router.routes());
 
   if (options.lightning) {
     logger.debug('Connecting to Lightning at', options.lightning);
@@ -55,6 +57,7 @@ function createServer(engine: any, options: ServerOptions = {}) {
         logger.success('Connected to Lightning at', options.lightning);
 
         const startAttempt = async ({ id, token }: CLAIM_ATTEMPT) => {
+          // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
           const { channel: attemptChannel, plan } = await joinAttemptChannel(
             socket,
             token,
@@ -64,15 +67,41 @@ function createServer(engine: any, options: ServerOptions = {}) {
           execute(attemptChannel, engine, logger, plan);
         };
 
-        logger.info('Starting workloop');
-        // TODO maybe namespace the workloop logger differently? It's a bit annoying
-        startWorkloop(channel, startAttempt, logger, {
-          maxBackoff: options.maxBackoff,
-        });
+        if (!options.noLoop) {
+          logger.info('Starting workloop');
+          // TODO maybe namespace the workloop logger differently? It's a bit annoying
+          startWorkloop(channel, startAttempt, logger, {
+            maxBackoff: options.maxBackoff,
+            // timeout: 1000 * 60, // TMP debug poll once per minute
+          });
+        } else {
+          logger.break();
+          logger.warn('Workloop not starting');
+          logger.info('This server will not auto-pull work from lightning.');
+          logger.info('You can manually claim by posting to /claim, eg:');
+          logger.info(`  curl -X POST http://locahost:${port}/claim`);
+          logger.break();
+        }
 
         // debug/unit test API to run a workflow
         // TODO Only loads in dev mode?
         (app as any).execute = startAttempt;
+
+        // Debug API to manually trigger a claim
+        router.post('/claim', async (ctx) => {
+          logger.info('triggering claim from POST request');
+          return claim(channel, startAttempt, logger)
+            .then(() => {
+              logger.info('claim complete: 1 attempt claimed');
+              ctx.body = 'complete';
+              ctx.status = 200;
+            })
+            .catch(() => {
+              logger.info('claim complete: no attempts');
+              ctx.body = 'no attempts';
+              ctx.status = 204;
+            });
+        });
       })
       .catch((e) => {
         logger.error(

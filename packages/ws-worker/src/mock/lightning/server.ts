@@ -6,16 +6,16 @@ import createLogger, {
   createMockLogger,
   LogLevel,
   Logger,
-  JSONLog,
 } from '@openfn/logger';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 import { Attempt } from '../../types';
+import { ATTEMPT_LOG_PAYLOAD } from '../../events';
 
 export type AttemptState = {
   status: 'queued' | 'started' | 'complete';
-  logs: JSONLog[];
+  logs: ATTEMPT_LOG_PAYLOAD[];
 };
 
 export type ServerState = {
@@ -89,7 +89,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
 
   app.use(createDevAPI(app as any, state, logger, api));
 
-  app.destroy = () => {
+  (app as any).destroy = () => {
     server.close();
   };
 

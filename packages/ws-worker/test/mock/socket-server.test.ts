@@ -1,5 +1,6 @@
 import test from 'ava';
-import phx from 'phoenix-channels';
+import { Socket } from 'phoenix';
+import { WebSocket } from 'ws';
 
 import createServer from '../../src/mock/lightning/socket-server';
 
@@ -12,16 +13,23 @@ const wait = (duration = 10) =>
     setTimeout(resolve, duration);
   });
 
-test.beforeEach(() => {
-  messages = [];
-  // @ts-ignore I don't care about missing server options here
-  server = createServer({ onMessage: (evt) => messages.push(evt) });
+test.beforeEach(
+  () =>
+    new Promise((done) => {
+      messages = [];
+      // @ts-ignore I don't care about missing server options here
+      server = createServer({ onMessage: (evt) => messages.push(evt) });
 
-  socket = new phx.Socket('ws://localhost:8080', {
-    params: { token: 'x.y.z' },
-  });
-  socket.connect();
-});
+      socket = new Socket('ws://localhost:8080', {
+        transport: WebSocket,
+        params: { token: 'x.y.z' },
+      });
+
+      socket.onOpen(done);
+
+      socket.connect();
+    })
+);
 
 test.afterEach(() => {
   server.close();
@@ -31,12 +39,17 @@ test.serial('respond to connection join requests', async (t) => {
   return new Promise((resolve) => {
     const channel = socket.channel('x', {});
 
-    channel.join().receive('ok', (resp) => {
-      t.is(resp, 'ok');
+    channel
+      .join()
+      .receive('ok', (resp) => {
+        t.is(resp, 'ok');
 
-      channel.push('hello');
-      resolve();
-    });
+        channel.push('hello');
+        resolve();
+      })
+      .receive('error', (e) => {
+        console.log(e);
+      });
   });
 });
 

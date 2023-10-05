@@ -4,7 +4,7 @@
  */
 import Koa from 'koa';
 import Router from '@koa/router';
-import { JSONLog, Logger } from '@openfn/logger';
+import { Logger } from '@openfn/logger';
 import crypto from 'node:crypto';
 
 import { Attempt } from '../../types';
@@ -13,18 +13,41 @@ import { ATTEMPT_COMPLETE, ATTEMPT_COMPLETE_PAYLOAD } from '../../events';
 
 type LightningEvents = 'log' | 'attempt-complete';
 
+type DataClip = any;
+
 export type DevApp = Koa & {
   addCredential(id: string, cred: Credential): void;
-  waitForResult(attemptId: string): Promise<any>;
+  addDataclip(id: string, data: DataClip): void;
   enqueueAttempt(attempt: Attempt): void;
-  reset(): void;
+  getAttempt(id: string): Attempt;
+  getCredential(id: string): Credential;
+  getDataclip(id: string): DataClip;
   getQueueLength(): number;
   getResult(attemptId: string): any;
+  getState(): ServerState;
   on(event: LightningEvents, fn: (evt: any) => void): void;
   once(event: LightningEvents, fn: (evt: any) => void): void;
+  onSocketEvent(
+    event: LightningEvents,
+    attemptId: string,
+    fn: (evt: any) => void
+  ): void;
+  registerAttempt(attempt: Attempt): void;
+  reset(): void;
+  startAttempt(id: string): any;
+  waitForResult(attemptId: string): Promise<any>;
 };
 
-const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
+type Api = {
+  startAttempt(attemptId: string): void;
+};
+
+const setupDevAPI = (
+  app: DevApp,
+  state: ServerState,
+  logger: Logger,
+  api: Api
+) => {
   // Dev APIs for unit testing
   app.addCredential = (id: string, cred: Credential) => {
     logger.info(`Add credential ${id}`);
@@ -40,9 +63,12 @@ const setupDevAPI = (app: DevApp, state: ServerState, logger: Logger, api) => {
 
   app.getDataclip = (id: string) => state.dataclips[id];
 
-  app.enqueueAttempt = (attempt: Attempt) => {
+  app.enqueueAttempt = (attempt: Attempt, workerId = 'rtm') => {
     state.attempts[attempt.id] = attempt;
-    state.results[attempt.id] = {};
+    state.results[attempt.id] = {
+      workerId, // TODO
+      state: null,
+    };
     state.pending[attempt.id] = {
       status: 'queued',
       logs: [],
@@ -122,7 +148,7 @@ const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
   const router = new Router();
 
   router.post('/attempt', (ctx) => {
-    const attempt = ctx.request.body;
+    const attempt = ctx.request.body as Attempt;
 
     if (!attempt) {
       ctx.response.status = 400;
@@ -154,7 +180,7 @@ const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
   return router.routes();
 };
 
-export default (app: DevApp, state: ServerState, logger: Logger, api) => {
+export default (app: DevApp, state: ServerState, logger: Logger, api: Api) => {
   setupDevAPI(app, state, logger, api);
   return setupRestAPI(app, state, logger);
 };

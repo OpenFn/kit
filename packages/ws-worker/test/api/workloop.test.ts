@@ -23,6 +23,7 @@ test('workloop can be cancelled', async (t) => {
     [CLAIM]: () => {
       count++;
       cancel();
+      return { attempts: [] };
     },
   });
 
@@ -40,6 +41,7 @@ test('workloop sends the attempts:claim event', (t) => {
       [CLAIM]: () => {
         t.pass();
         done();
+        return { attempts: [] };
       },
     });
     cancel = startWorkloop(channel, () => {}, logger);
@@ -57,6 +59,7 @@ test('workloop sends the attempts:claim event several times ', (t) => {
           t.pass();
           done();
         }
+        return { attempts: [] };
       },
     });
     cancel = startWorkloop(channel, () => {}, logger);
@@ -67,13 +70,13 @@ test('workloop calls execute if attempts:claim returns attempts', (t) => {
   return new Promise((done) => {
     let cancel;
     const channel = mockChannel({
-      [CLAIM]: () => {
-        return [{ id: 'a' }];
-      },
+      [CLAIM]: () => ({
+        attempts: [{ id: 'a', token: 'x.y.z' }],
+      }),
     });
 
     const execute = (attempt) => {
-      t.deepEqual(attempt, { id: 'a' });
+      t.deepEqual(attempt, { id: 'a', token: 'x.y.z' });
       t.pass();
       done();
     };

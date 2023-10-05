@@ -16,7 +16,7 @@ type Resolver<T> = (id: string) => Promise<T>;
 // A list of helper functions which basically resolve ids into JSON
 // to lazy load assets
 export type LazyResolvers = {
-  credentials?: Resolver<Credential>;
+  credential?: Resolver<Credential>;
   state?: Resolver<State>;
   expressions?: Resolver<string>;
 };
@@ -87,7 +87,13 @@ function createMock(serverId?: string) {
     initialState = {},
     resolvers: LazyResolvers = mockResolvers
   ) => {
-    const { id, expression, configuration } = job;
+    const { id, expression, configuration, adaptor } = job;
+
+    // If no expression or adaptor, this is (probably) a trigger node.
+    // Silently do nothing
+    if (!expression && !adaptor) {
+      return initialState;
+    }
 
     const runId = crypto.randomUUID();
 
@@ -95,36 +101,31 @@ function createMock(serverId?: string) {
     if (typeof configuration === 'string') {
       // Fetch the credential but do nothing with it
       // Maybe later we use it to assemble state
-      await resolvers.credential(configuration);
+      await resolvers.credential?.(configuration);
     }
+
+    const info = (...message: any[]) => {
+      dispatch('log', {
+        workflowId,
+        message: message,
+        level: 'info',
+        timestamp: Date.now(),
+        name: 'mck',
+      });
+    };
 
     // Get the job details from lightning
     // start instantly and emit as it goes
     dispatch('job-start', { workflowId, jobId, runId });
-    dispatch('log', {
-      workflowId,
-      jobId,
-      message: ['Running job ' + jobId],
-      level: 'info',
-    });
+    info('Running job ' + jobId);
     let nextState = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
       // @ts-ignore
       nextState = JSON.parse(expression);
       // What does this look like? Should be a logger object
-      dispatch('log', {
-        workflowId,
-        jobId,
-        message: ['Parsing expression as JSON state'],
-        level: 'info',
-      });
-      dispatch('log', {
-        workflowId,
-        jobId,
-        message: [nextState],
-        level: 'info',
-      });
+      info('Parsing expression as JSON state');
+      info(nextState);
     } catch (e) {
       // Do nothing, it's fine
       nextState = initialState;
@@ -180,9 +181,6 @@ function createMock(serverId?: string) {
     once,
     execute,
     getStatus,
-    setResolvers: (r: LazyResolvers) => {
-      resolvers = r;
-    },
     listen,
   };
 }

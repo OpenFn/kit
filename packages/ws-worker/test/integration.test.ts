@@ -62,6 +62,7 @@ test.serial(
     });
   }
 );
+
 test.serial('should run an attempt which returns intial state', async (t) => {
   return new Promise((done) => {
     lng.addDataclip('x', {
@@ -69,7 +70,7 @@ test.serial('should run an attempt which returns intial state', async (t) => {
     });
 
     const attempt = {
-      id: 'attempt-1',
+      id: 'attempt-2',
       dataclip_id: 'x',
       jobs: [
         {

@@ -220,4 +220,40 @@ test('only listen to events for the correct workflow', async (t) => {
   t.pass();
 });
 
-// test('inital dataclip')
+test('do nothing for a job if no expression and adaptor (trigger node)', async (t) => {
+  const workflow = {
+    id: 'w1',
+    jobs: [
+      {
+        id: 'j1',
+      },
+    ],
+  } as ExecutionPlan;
+
+  const engine = create();
+
+  let didCallEvent = false;
+
+  engine.listen(workflow.id, {
+    'job-start': () => {
+      didCallEvent = true;
+    },
+    'job-complete': () => {
+      didCallEvent = true;
+    },
+    log: () => {
+      didCallEvent = true;
+    },
+    'workflow-start': () => {
+      // this can be called
+    },
+    'workflow-complete': () => {
+      // and this
+    },
+  });
+
+  engine.execute(workflow);
+  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+
+  t.false(didCallEvent);
+});

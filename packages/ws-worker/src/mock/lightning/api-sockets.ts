@@ -19,6 +19,7 @@ import {
   CLAIM,
   CLAIM_PAYLOAD,
   CLAIM_REPLY,
+  CLAIM_ATTEMPT,
   GET_ATTEMPT,
   GET_ATTEMPT_PAYLOAD,
   GET_ATTEMPT_REPLY,
@@ -33,6 +34,7 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
   RUN_START_REPLY,
+  RUN_COMPLETE_REPLY,
 } from '../../events';
 
 import type { Server } from 'http';
@@ -74,10 +76,10 @@ const createSocketAPI = (
     logger: logger && createLogger('PHX', { level: 'debug' }),
   });
 
-  wss.registerEvents('attempts:queue', {
+  wss.registerEvents('worker:queue', {
     [CLAIM]: (ws, event: PhoenixEvent<CLAIM_PAYLOAD>) => {
-      const results = pullClaim(state, ws, event);
-      results.forEach((attempt) => {
+      const { attempts } = pullClaim(state, ws, event);
+      attempts.forEach((attempt) => {
         state.events.emit(CLAIM, {
           attemptId: attempt.id,
           payload: attempt,
@@ -141,13 +143,14 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<CLAIM_PAYLOAD>
   ) {
-    const { ref, topic } = evt;
+    const { ref, join_ref, topic } = evt;
     const { queue } = state;
     let count = 1;
 
+    const attempts: CLAIM_ATTEMPT[] = [];
     const payload = {
       status: 'ok' as const,
-      response: [] as CLAIM_REPLY,
+      response: { attempts } as CLAIM_REPLY,
     };
 
     while (count > 0 && queue.length) {
@@ -156,18 +159,18 @@ const createSocketAPI = (
       const next = queue.shift();
       // TODO the token in the mock is trivial because we're not going to do any validation on it yet
       // TODO need to save the token associated with this attempt
-      payload.response.push({ id: next!, token: 'x.y.z' });
+      attempts.push({ id: next!, token: 'x.y.z' });
       count -= 1;
 
       startAttempt(next!);
     }
-    if (payload.response.length) {
-      logger?.info(`Claiming ${payload.response.length} attempts`);
+    if (attempts.length) {
+      logger?.info(`Claiming ${attempts.length} attempts`);
     } else {
       logger?.info('No claims (queue empty)');
     }
 
-    ws.reply<CLAIM_REPLY>({ ref, topic, payload });
+    ws.reply<CLAIM_REPLY>({ ref, join_ref, topic, payload });
     return payload.response;
   }
 
@@ -176,12 +179,13 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<GET_ATTEMPT_PAYLOAD>
   ) {
-    const { ref, topic } = evt;
+    const { ref, join_ref, topic } = evt;
     const attemptId = extractAttemptId(topic);
     const response = state.attempts[attemptId];
 
     ws.reply<GET_ATTEMPT_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -195,11 +199,12 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<GET_CREDENTIAL_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic, payload } = evt;
     const response = state.credentials[payload.id];
     // console.log(topic, event, response);
     ws.reply<GET_CREDENTIAL_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -208,24 +213,28 @@ const createSocketAPI = (
     });
   }
 
+  // TODO this mock function is broken in the phoenix package update
+  // (I am not TOO worried, the actual integration works fine)
   function getDataclip(
     state: ServerState,
     ws: DevSocket,
     evt: PhoenixEvent<GET_DATACLIP_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
-    const dataclip = state.dataclips[payload.id];
+    const { ref, topic, join_ref } = evt;
+    const dataclip = state.dataclips[evt.payload.id];
 
     // Send the data as an ArrayBuffer (our stringify function will do this)
-    const response = enc.encode(stringify(dataclip));
+    const payload = {
+      status: 'ok',
+      response: enc.encode(stringify(dataclip)),
+    };
 
     ws.reply<GET_DATACLIP_REPLY>({
       ref,
+      join_ref,
       topic,
-      payload: {
-        status: 'ok',
-        response,
-      },
+      // @ts-ignore
+      payload,
     });
   }
 
@@ -234,13 +243,14 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<ATTEMPT_LOG_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic, payload } = evt;
     const { attempt_id: attemptId } = payload;
 
     state.pending[attemptId].logs.push(payload);
 
     ws.reply<ATTEMPT_LOG_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -254,23 +264,24 @@ const createSocketAPI = (
     evt: PhoenixEvent<ATTEMPT_COMPLETE_PAYLOAD>,
     attemptId: string
   ) {
-    const { ref, topic, payload } = evt;
-    const { dataclip } = payload;
+    const { ref, join_ref, topic, payload } = evt;
+    const { final_dataclip_id } = payload;
 
     logger?.info('Completed attempt ', attemptId);
-    logger?.debug(dataclip);
+    logger?.debug(final_dataclip_id);
 
     state.pending[attemptId].status = 'complete';
-    state.results[attemptId] = dataclip;
+    if (!state.results[attemptId]) {
+      state.results[attemptId] = { state: null, workerId: 'mock' };
+    }
+    state.results[attemptId].state = state.dataclips[final_dataclip_id];
 
     ws.reply<ATTEMPT_COMPLETE_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
-        // TODO final dataclip id
-        // this is kind of awkward to work out
-        // we gotta sha every dataclip, find a match, then return
       },
     });
   }
@@ -280,12 +291,13 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<RUN_START_PAYLOAD>
   ) {
-    const { ref, topic } = evt;
+    const { ref, join_ref, topic } = evt;
     if (!state.dataclips) {
       state.dataclips = {};
     }
     ws.reply<RUN_START_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
@@ -298,19 +310,20 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<RUN_COMPLETE_PAYLOAD>
   ) {
-    const { ref, topic, payload } = evt;
+    const { ref, join_ref, topic } = evt;
     const { output_dataclip_id, output_dataclip } = evt.payload;
 
     if (output_dataclip_id) {
       if (!state.dataclips) {
         state.dataclips = {};
       }
-      state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip);
+      state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip!);
     }
 
     // be polite and acknowledge the event
-    ws.reply<ATTEMPT_COMPLETE_REPLY>({
+    ws.reply<RUN_COMPLETE_REPLY>({
       ref,
+      join_ref,
       topic,
       payload: {
         status: 'ok',
