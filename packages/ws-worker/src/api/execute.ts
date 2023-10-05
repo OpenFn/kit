@@ -177,6 +177,7 @@ export function onJobComplete({ channel, state }: Context, event: any) {
     job_id,
     output_dataclip_id: dataclipId,
     output_dataclip: stringify(event.state),
+    reason: 'success',
   });
 }
 
