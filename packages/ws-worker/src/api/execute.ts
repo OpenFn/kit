@@ -73,9 +73,16 @@ export function execute(
     // b) pass the contexdt object into the hander
     // c) log the event
     const addEvent = (eventName: string, handler: EventHandler) => {
-      const wrappedFn = (event: any) => {
-        logger.info(`${plan.id} :: ${eventName}`);
-        handler(context, event);
+      const wrappedFn = async (event: any) => {
+        try {
+          await handler(context, event);
+          logger.info(`${plan.id} :: ${eventName} :: OK`);
+        } catch (e: any) {
+          logger.error(
+            `${plan.id} :: ${eventName} :: ERR: ${e.message || e.toString()}`
+          );
+          logger.error(e);
+        }
       };
       return {
         [eventName]: wrappedFn,
@@ -86,6 +93,10 @@ export function execute(
     // Eg wait for a large dataclip to upload back to lightning before starting the next job
     // should we actually defer exeuction, or just the reporting?
     // Does it matter if logs aren't sent back in order?
+    // There are some practical requirements
+    // like we can't post a log until the job start has been acknowledged by Lightning
+    // (ie until the run was created at lightning's end)
+    // that probably means we need to cache here rather than slow down the runtime?
     const listeners = Object.assign(
       {},
       addEvent('workflow-start', onWorkflowStart),
@@ -114,32 +125,36 @@ export function execute(
   });
 }
 
+// async/await wrapper to push to a channel
+// TODO move into utils I think?
+export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
+  new Promise((resolve, reject) => {
+    channel
+      .push<T>(event, payload)
+      .receive('error', reject)
+      .receive('timeout', reject)
+      .receive('ok', resolve);
+  });
+
 // TODO maybe move all event handlers into api/events/*
 
 export function onJobStart({ channel, state }: Context, event: any) {
   // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
   state.activeJob = event.jobId;
-  const evt = {
+
+  return sendEvent<RUN_START_PAYLOAD>(channel, RUN_START, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
     input_dataclip_id: state.lastDataclipId,
-  };
-  console.log('>>', evt);
-  channel.push<RUN_START_PAYLOAD>(RUN_START, evt).receive('error', (e) => {
-    console.error('run start error', e);
   });
 }
 
 export function onJobComplete({ channel, state }: Context, event: any) {
   const dataclipId = crypto.randomUUID();
 
-  channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
-    run_id: event.jobId,
-    job_id: state.activeJob!,
-    output_dataclip_id: dataclipId,
-    output_dataclip: stringify(event.state),
-  });
+  const run_id = state.activeRun;
+  const job_id = state.activeJob;
 
   if (!state.dataclips) {
     state.dataclips = {};
@@ -156,52 +171,51 @@ export function onJobComplete({ channel, state }: Context, event: any) {
 
   delete state.activeRun;
   delete state.activeJob;
+
+  return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
+    run_id,
+    job_id,
+    output_dataclip_id: dataclipId,
+    output_dataclip: stringify(event.state),
+  });
 }
 
 export function onWorkflowStart(
   { channel }: Context,
   _event: WorkflowStartEvent
 ) {
-  channel.push<ATTEMPT_START_PAYLOAD>(ATTEMPT_START);
+  return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
 }
 
-export function onWorkflowComplete(
+export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
   const result = state.dataclips[state.lastDataclipId!];
 
-  channel
-    .push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
-      final_dataclip_id: state.lastDataclipId!,
-      status: 'success', // TODO
-    })
-    .receive('ok', () => {
-      onComplete(result);
-    });
+  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+    final_dataclip_id: state.lastDataclipId!,
+    status: 'success', // TODO
+  });
+
+  onComplete(result);
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
-  console.log(event);
-
   // lightning-friendly log object
-  const newLog: ATTEMPT_LOG_PAYLOAD = {
+  const log: ATTEMPT_LOG_PAYLOAD = {
     attempt_id: state.plan.id!,
     message: event.message,
     source: event.name,
+    level: event.level,
     timestamp: event.time || Date.now(),
   };
+
   if (state.activeRun) {
-    newLog.run_id = state.activeRun;
+    log.run_id = state.activeRun;
   }
 
-  // TODO wrap a push with standard error and ok handlers
-  // like, maybe we only log after hte log was sent? Or log once for sending and once for acknowledged (either way)?
-  channel
-    .push<ATTEMPT_LOG_PAYLOAD>(ATTEMPT_LOG, newLog)
-    .receive('error', (e) => {
-      console.error('log error', e);
-    });
+  return sendEvent<ATTEMPT_LOG_PAYLOAD>(channel, ATTEMPT_LOG, log);
 }
 
 export async function loadDataclip(channel: Channel, stateId: string) {

@@ -20,6 +20,7 @@ import {
   AttemptState,
   loadDataclip,
   loadCredential,
+  sendEvent,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
@@ -30,6 +31,37 @@ const enc = new TextEncoder();
 
 const toArrayBuffer = (obj: any) => enc.encode(stringify(obj));
 
+const noop = () => true;
+
+const mockEventHandlers = {
+  [ATTEMPT_START]: noop,
+  [RUN_START]: noop,
+  [ATTEMPT_LOG]: noop,
+  [RUN_COMPLETE]: noop,
+  [ATTEMPT_COMPLETE]: noop,
+};
+
+test('send event should resolve when the event is acknowledged', async (t) => {
+  const channel = mockChannel({
+    echo: (x) => x,
+  });
+
+  const result = await sendEvent(channel, 'echo', 22);
+  t.is(result, 22);
+});
+
+test('send event should throw if the event errors', async (t) => {
+  const channel = mockChannel({
+    echo: (x) => {
+      throw new Error('err');
+    },
+  });
+
+  await t.throwsAsync(() => sendEvent(channel, 'echo', 22), {
+    message: 'err',
+  });
+});
+
 test('jobStart should set a run id and active job on state', async (t) => {
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
@@ -38,34 +70,35 @@ test('jobStart should set a run id and active job on state', async (t) => {
     plan,
   } as AttemptState;
 
-  const channel = mockChannel({});
+  const channel = mockChannel({
+    [RUN_START]: (x) => x,
+  });
 
-  onJobStart({ channel, state }, jobId);
+  await onJobStart({ channel, state }, { jobId });
 
   t.is(state.activeJob, jobId);
   t.truthy(state.activeRun);
 });
 
 test('jobStart should send a run:start event', async (t) => {
-  return new Promise((done) => {
-    const plan = { id: 'attempt-1' };
-    const jobId = 'job-1';
+  const plan = { id: 'attempt-1' };
+  const jobId = 'job-1';
 
-    const state = {
-      plan,
-    } as AttemptState;
+  const state = {
+    plan,
+    lastDataclipId: 'abc', // this will be set to initial state by execute
+  } as AttemptState;
 
-    const channel = mockChannel({
-      [RUN_START]: (evt) => {
-        t.is(evt.job_id, jobId);
-        t.truthy(evt.run_id);
-
-        done();
-      },
-    });
-
-    onJobStart({ channel, state }, jobId);
+  const channel = mockChannel({
+    [RUN_START]: (evt) => {
+      t.is(evt.job_id, jobId);
+      t.is(evt.input_dataclip_id, state.lastDataclipId);
+      t.truthy(evt.run_id);
+      return true;
+    },
   });
+
+  await onJobStart({ channel, state }, { jobId });
 });
 
 test('jobComplete should clear the run id and active job on state', async (t) => {
@@ -78,17 +111,19 @@ test('jobComplete should clear the run id and active job on state', async (t) =>
     activeRun: 'b',
   } as AttemptState;
 
-  const channel = mockChannel({});
+  const channel = mockChannel({
+    [RUN_COMPLETE]: () => true,
+  });
 
   const event = { state: { x: 10 } };
-  onJobComplete({ channel, state }, event);
+  await onJobComplete({ channel, state }, event);
 
   t.falsy(state.activeJob);
   t.falsy(state.activeRun);
 });
 
 test('jobComplete should save the dataclip to state', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'attempt-1' } as ExecutionPlan;
   const jobId = 'job-1';
 
   const state = {
@@ -99,10 +134,12 @@ test('jobComplete should save the dataclip to state', async (t) => {
     result: undefined,
   } as AttemptState;
 
-  const channel = mockChannel({});
+  const channel = mockChannel({
+    [RUN_COMPLETE]: () => true,
+  });
 
   const event = { state: { x: 10 } };
-  onJobComplete({ channel, state }, event);
+  await onJobComplete({ channel, state }, event);
 
   t.is(Object.keys(state.dataclips).length, 1);
   const [dataclip] = Object.values(state.dataclips);
@@ -110,164 +147,148 @@ test('jobComplete should save the dataclip to state', async (t) => {
 });
 
 test('jobComplete should send a run:complete event', async (t) => {
-  return new Promise((done) => {
-    const plan = { id: 'attempt-1' };
-    const jobId = 'job-1';
-    const result = { x: 10 };
+  const plan = { id: 'attempt-1' };
+  const jobId = 'job-1';
+  const result = { x: 10 };
 
-    const state = {
-      plan,
-      activeJob: jobId,
-      activeRun: 'b',
-    } as AttemptState;
+  const state = {
+    plan,
+    activeJob: jobId,
+    activeRun: 'b',
+  } as AttemptState;
 
-    const channel = mockChannel({
-      [RUN_COMPLETE]: (evt) => {
-        t.is(evt.job_id, jobId);
-        t.truthy(evt.run_id);
-        t.truthy(evt.output_dataclip_id);
-        t.is(evt.output_dataclip, JSON.stringify(result));
-
-        done();
-      },
-    });
-
-    const event = { state: result };
-    onJobComplete({ channel, state }, event);
+  const channel = mockChannel({
+    [RUN_COMPLETE]: (evt) => {
+      t.is(evt.job_id, jobId);
+      t.truthy(evt.run_id);
+      t.truthy(evt.output_dataclip_id);
+      t.is(evt.output_dataclip, JSON.stringify(result));
+    },
   });
+
+  const event = { state: result };
+  await onJobComplete({ channel, state }, event);
 });
 
 test('jobLog should should send a log event outside a run', async (t) => {
-  return new Promise((done) => {
-    const plan = { id: 'attempt-1' };
+  const plan = { id: 'attempt-1' };
 
-    const log: JSONLog = {
-      name: 'R/T',
-      level: 'info',
-      time: new Date().getTime(),
-      message: ['ping'],
-    };
+  const log: JSONLog = {
+    name: 'R/T',
+    level: 'info',
+    time: Date.now(),
+    message: ['ping'],
+  };
 
-    const result = {
-      ...log,
-      attempt_id: plan.id,
-    };
+  const result = {
+    attempt_id: plan.id,
+    message: log.message,
+    timestamp: log.time,
+    level: log.level,
+    source: log.name,
+  };
 
-    const state = {
-      plan,
-      // No active run
-    } as AttemptState;
+  const state = {
+    plan,
+    // No active run
+  } as AttemptState;
 
-    const channel = mockChannel({
-      [ATTEMPT_LOG]: (evt) => {
-        t.deepEqual(evt, result);
-        done();
-      },
-    });
-
-    onJobLog({ channel, state }, log);
+  const channel = mockChannel({
+    [ATTEMPT_LOG]: (evt) => {
+      t.deepEqual(evt, result);
+    },
   });
+
+  await onJobLog({ channel, state }, log);
 });
 
 test('jobLog should should send a log event inside a run', async (t) => {
-  return new Promise((done) => {
-    const plan = { id: 'attempt-1' };
-    const jobId = 'job-1';
+  const plan = { id: 'attempt-1' };
+  const jobId = 'job-1';
 
-    const log: JSONLog = {
-      name: 'R/T',
-      level: 'info',
-      time: new Date().getTime(),
-      message: ['ping'],
-    };
+  const log: JSONLog = {
+    name: 'R/T',
+    level: 'info',
+    time: new Date().getTime(),
+    message: ['ping'],
+  };
 
-    const state = {
-      plan,
-      activeJob: jobId,
-      activeRun: 'b',
-    } as AttemptState;
+  const state = {
+    plan,
+    activeJob: jobId,
+    activeRun: 'b',
+  } as AttemptState;
 
-    const channel = mockChannel({
-      [ATTEMPT_LOG]: (evt) => {
-        t.truthy(evt.run_id);
-        t.deepEqual(evt.message, log.message);
-        t.is(evt.level, log.level);
-        t.is(evt.name, log.name);
-        t.is(evt.time, log.time);
-        done();
-      },
-    });
-
-    onJobLog({ channel, state }, log);
+  const channel = mockChannel({
+    [ATTEMPT_LOG]: (evt) => {
+      t.truthy(evt.run_id);
+      t.deepEqual(evt.message, log.message);
+      t.is(evt.level, log.level);
+      t.is(evt.source, log.name);
+      t.is(evt.timestamp, log.time);
+    },
   });
+
+  await onJobLog({ channel, state }, log);
 });
 
 test('workflowStart should send an empty attempt:start event', async (t) => {
-  return new Promise((done) => {
-    const channel = mockChannel({
-      [ATTEMPT_START]: () => {
-        t.pass();
-
-        done();
-      },
-    });
-
-    onWorkflowStart({ channel });
+  const channel = mockChannel({
+    [ATTEMPT_START]: () => {
+      t.pass();
+    },
   });
+
+  await onWorkflowStart({ channel });
 });
 
 test('workflowComplete should send an attempt:complete event', async (t) => {
-  return new Promise((done) => {
-    const result = { answer: 42 };
+  const result = { answer: 42 };
 
-    const state = {
-      dataclips: {
-        x: result,
-      },
-      result: 'x',
-    };
+  const state = {
+    dataclips: {
+      x: result,
+    },
+    lastDataclipId: 'x',
+  };
 
-    const channel = mockChannel({
-      [ATTEMPT_COMPLETE]: (evt) => {
-        t.deepEqual(evt.final_dataclip_id, 'x');
-
-        done();
-      },
-    });
-
-    const event = {};
-
-    const context = { channel, state, onComplete: () => {} };
-    onWorkflowComplete(context, event);
+  const channel = mockChannel({
+    [ATTEMPT_COMPLETE]: (evt) => {
+      t.deepEqual(evt.final_dataclip_id, 'x');
+    },
   });
+
+  const event = {};
+
+  const context = { channel, state, onComplete: () => {} };
+  await onWorkflowComplete(context, event);
 });
 
 test('workflowComplete should call onComplete with final dataclip', async (t) => {
-  return new Promise((done) => {
-    const result = { answer: 42 };
+  const result = { answer: 42 };
 
-    const state = {
-      dataclips: {
-        x: result,
-      },
-      result: 'x',
-    };
+  const state = {
+    dataclips: {
+      x: result,
+    },
+    lastDataclipId: 'x',
+  };
 
-    const channel = mockChannel();
-
-    const context = {
-      channel,
-      state,
-      onComplete: (finalState) => {
-        t.deepEqual(result, finalState);
-        done();
-      },
-    };
-
-    const event = { state: result };
-
-    onWorkflowComplete(context, event);
+  const channel = mockChannel({
+    [ATTEMPT_COMPLETE]: () => true,
   });
+
+  const context = {
+    channel,
+    state,
+    onComplete: (finalState) => {
+      t.deepEqual(result, finalState);
+    },
+  };
+
+  const event = { state: result };
+
+  await onWorkflowComplete(context, event);
 });
 
 // TODO what if an error?
@@ -297,7 +318,7 @@ test('loadCredential should fetch a credential', async (t) => {
 });
 
 test('execute should return the final result', async (t) => {
-  const channel = mockChannel();
+  const channel = mockChannel(mockEventHandlers);
   const engine = createMockRTE();
   const logger = createMockLogger();
 
@@ -321,6 +342,7 @@ test('execute should lazy-load a credential', async (t) => {
   let didCallCredentials = false;
 
   const channel = mockChannel({
+    ...mockEventHandlers,
     [GET_CREDENTIAL]: (id) => {
       t.truthy(id);
       didCallCredentials = true;
@@ -349,6 +371,7 @@ test('execute should lazy-load initial state', async (t) => {
   let didCallState = false;
 
   const channel = mockChannel({
+    ...mockEventHandlers,
     [GET_DATACLIP]: (id) => {
       t.truthy(id);
       didCallState = true;
