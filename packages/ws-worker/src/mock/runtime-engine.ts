@@ -87,7 +87,13 @@ function createMock(serverId?: string) {
     initialState = {},
     resolvers: LazyResolvers = mockResolvers
   ) => {
-    const { id, expression, configuration } = job;
+    const { id, expression, configuration, adaptor } = job;
+
+    // If no expression or adaptor, this is (probably) a trigger node.
+    // Silently do nothing
+    if (!expression && !adaptor) {
+      return initialState;
+    }
 
     const runId = crypto.randomUUID();
 
