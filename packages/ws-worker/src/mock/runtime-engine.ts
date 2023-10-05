@@ -103,8 +103,8 @@ function createMock(serverId?: string) {
         workflowId,
         message: message,
         level: 'info',
-        times: Date.now(),
-        name: 'mock',
+        timestamp: Date.now(),
+        name: 'mck',
       });
     };
 
