@@ -98,33 +98,28 @@ function createMock(serverId?: string) {
       await resolvers.credential(configuration);
     }
 
+    const info = (...message: any[]) => {
+      dispatch('log', {
+        workflowId,
+        message: message,
+        level: 'info',
+        times: Date.now(),
+        name: 'mock',
+      });
+    };
+
     // Get the job details from lightning
     // start instantly and emit as it goes
     dispatch('job-start', { workflowId, jobId, runId });
-    dispatch('log', {
-      workflowId,
-      jobId,
-      message: ['Running job ' + jobId],
-      level: 'info',
-    });
+    info('Running job ' + jobId);
     let nextState = initialState;
     // Try and parse the expression as JSON, in which case we use it as the final state
     try {
       // @ts-ignore
       nextState = JSON.parse(expression);
       // What does this look like? Should be a logger object
-      dispatch('log', {
-        workflowId,
-        jobId,
-        message: ['Parsing expression as JSON state'],
-        level: 'info',
-      });
-      dispatch('log', {
-        workflowId,
-        jobId,
-        message: [nextState],
-        level: 'info',
-      });
+      info('Parsing expression as JSON state');
+      info(nextState);
     } catch (e) {
       // Do nothing, it's fine
       nextState = initialState;

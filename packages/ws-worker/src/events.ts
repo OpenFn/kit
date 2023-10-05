@@ -36,8 +36,11 @@ export type ATTEMPT_COMPLETE_PAYLOAD = {
 export type ATTEMPT_COMPLETE_REPLY = undefined;
 
 export const ATTEMPT_LOG = 'attempt:log'; // level, namespace (job,runtime,adaptor), message, time
-export type ATTEMPT_LOG_PAYLOAD = JSONLog & {
+export type ATTEMPT_LOG_PAYLOAD = {
+  message: Array<string | object>;
+  timestamp: number;
   attempt_id: string;
+  source?: string; // namespace
   job_id?: string;
   run_id?: string;
 };

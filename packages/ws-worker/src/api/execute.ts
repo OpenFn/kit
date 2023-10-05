@@ -34,7 +34,7 @@ export type AttemptState = {
   dataclips: Record<string, any>;
 
   // final dataclip id
-  result?: string;
+  lastDataclipId?: string;
 };
 
 type Context = {
@@ -50,7 +50,7 @@ export function execute(
   channel: Channel,
   engine: any, // TODO typing!
   logger: Logger,
-  // TODO firsdt thing we'll do here is pull the plan
+  // TODO first thing we'll do here is pull the plan
   plan: ExecutionPlan
 ) {
   return new Promise(async (resolve) => {
@@ -59,6 +59,9 @@ export function execute(
     // tracking state for this attempt
     const state: AttemptState = {
       plan,
+      // set the result data clip id (which needs renaming)
+      // to the initial state
+      lastDataclipId: plan.initialState as string | undefined,
     };
 
     const context: Context = { channel, state, logger, onComplete: resolve };
@@ -101,6 +104,7 @@ export function execute(
     };
 
     if (typeof plan.initialState === 'string') {
+      logger.debug('loading dataclip', plan.initialState);
       plan.initialState = await loadDataclip(channel, plan.initialState);
       logger.success('dataclip loaded');
       logger.debug(plan.initialState);
@@ -115,12 +119,15 @@ export function execute(
 export function onJobStart({ channel, state }: Context, event: any) {
   // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
-  state.activeJob = event;
-
-  channel.push<RUN_START_PAYLOAD>(RUN_START, {
+  state.activeJob = event.jobId;
+  const evt = {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
-    // input_dataclip_id what about this guy?
+    input_dataclip_id: state.lastDataclipId,
+  };
+  console.log('>>', evt);
+  channel.push<RUN_START_PAYLOAD>(RUN_START, evt).receive('error', (e) => {
+    console.error('run start error', e);
   });
 }
 
@@ -128,7 +135,7 @@ export function onJobComplete({ channel, state }: Context, event: any) {
   const dataclipId = crypto.randomUUID();
 
   channel.push<RUN_COMPLETE_PAYLOAD>(RUN_COMPLETE, {
-    run_id: state.activeRun!,
+    run_id: event.jobId,
     job_id: state.activeJob!,
     output_dataclip_id: dataclipId,
     output_dataclip: stringify(event.state),
@@ -145,7 +152,7 @@ export function onJobComplete({ channel, state }: Context, event: any) {
   // (taking into account branches and stuff)
   // The problem is that the runtime will return the object, not an id,
   // so we have a bit of a mapping problem
-  state.result = dataclipId;
+  state.lastDataclipId = dataclipId;
 
   delete state.activeRun;
   delete state.activeJob;
@@ -162,11 +169,11 @@ export function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
-  const result = state.dataclips[state.result!];
+  const result = state.dataclips[state.lastDataclipId!];
 
   channel
     .push<ATTEMPT_COMPLETE_PAYLOAD>(ATTEMPT_COMPLETE, {
-      final_dataclip_id: state.result!,
+      final_dataclip_id: state.lastDataclipId!,
       status: 'success', // TODO
     })
     .receive('ok', () => {
@@ -175,16 +182,26 @@ export function onWorkflowComplete(
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
-  // we basically just forward the log to lightning
-  // but we also need to attach the log id
-  const evt: ATTEMPT_LOG_PAYLOAD = {
-    ...event,
+  console.log(event);
+
+  // lightning-friendly log object
+  const newLog: ATTEMPT_LOG_PAYLOAD = {
     attempt_id: state.plan.id!,
+    message: event.message,
+    source: event.name,
+    timestamp: event.time || Date.now(),
   };
   if (state.activeRun) {
-    evt.run_id = state.activeRun;
+    newLog.run_id = state.activeRun;
   }
-  channel.push<ATTEMPT_LOG_PAYLOAD>(ATTEMPT_LOG, evt);
+
+  // TODO wrap a push with standard error and ok handlers
+  // like, maybe we only log after hte log was sent? Or log once for sending and once for acknowledged (either way)?
+  channel
+    .push<ATTEMPT_LOG_PAYLOAD>(ATTEMPT_LOG, newLog)
+    .receive('error', (e) => {
+      console.error('log error', e);
+    });
 }
 
 export async function loadDataclip(channel: Channel, stateId: string) {
