@@ -16,30 +16,19 @@ import type { Logger } from '@openfn/logger';
 
 type Topic = string;
 
-// copied from pheonix/assets/j/pheonix/serializer.js - we could implement both encoders manually!
-// encode(msg, callback){
-//   if(msg.payload.constructor === ArrayBuffer){
-//     return callback(this.binaryEncode(msg))
-//   } else {
-//     let payload = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload]
-//     return callback(JSON.stringify(payload))
-//   }
-// },
-
-// decode(rawPayload, callback){
-//   if(rawPayload.constructor === ArrayBuffer){
-//     return callback(this.binaryDecode(rawPayload))
-//   } else {
-//     let [join_ref, ref, topic, event, payload] = JSON.parse(rawPayload)
-//     return callback({join_ref, ref, topic, event, payload})
-//   }
-// },
-
 const decoder = Serializer.decode.bind(Serializer);
 const decode = (data: any) => new Promise((done) => decoder(data, done));
 
 const encoder = Serializer.encode.bind(Serializer);
-const encode = (data: any) => new Promise((done) => encoder(data, done));
+const encode = (data: any) =>
+  new Promise((done) => {
+    if (data.payload?.response && data.payload.response instanceof Uint8Array) {
+      // special encoding logic if the payload is a buffer
+      // (we need to do this for dataclips)
+      data.payload.response = Array.from(data.payload.response);
+    }
+    encoder(data, done);
+  });
 
 export type PhoenixEventStatus = 'ok' | 'error' | 'timeout';
 

@@ -300,9 +300,7 @@ test.serial('get credential through the attempt channel', async (t) => {
   });
 });
 
-// Skipping because the handling of the dataclip is broken right now
-// since updating the phoenix module
-test.serial.skip('get dataclip through the attempt channel', async (t) => {
+test.serial('get dataclip through the attempt channel', async (t) => {
   return new Promise(async (done) => {
     server.startAttempt(attempt1.id);
     server.addDataclip('d', dataclips['d']);

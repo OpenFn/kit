@@ -70,13 +70,18 @@ function createServer(engine: any, options: ServerOptions = {}) {
           execute(attemptChannel, engine, logger, plan);
         };
 
-        logger.info('Starting workloop');
         if (!options.noLoop) {
+          logger.info('Starting workloop');
           // TODO maybe namespace the workloop logger differently? It's a bit annoying
           startWorkloop(channel, startAttempt, logger, {
             maxBackoff: options.maxBackoff,
             // timeout: 1000 * 60, // TMP debug poll once per minute
           });
+        } else {
+          logger.info('Workloop not starting');
+          logger.info('This server will not auto-pull work from lightning.');
+          logger.info('You can manually claim by posting to /claim');
+          logger.info(`curl -X POST http://locahost:${port}/claim`);
         }
 
         // debug/unit test API to run a workflow

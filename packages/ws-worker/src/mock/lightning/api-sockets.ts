@@ -224,23 +224,17 @@ const createSocketAPI = (
     const dataclip = state.dataclips[evt.payload.id];
 
     // Send the data as an ArrayBuffer (our stringify function will do this)
-    const data = enc.encode(
-      stringify({
-        status: 'ok',
-        response: dataclip,
-      })
-    );
+    const payload = {
+      status: 'ok',
+      response: enc.encode(stringify(dataclip)),
+    };
 
-    // If I encode the status & response into the payload,
-    // then this will correctly encode as binary data
-    // But! the reply system doesn't seem to work because we don't get the response status when it's encoded
-    // seems kinda odd
     ws.reply<GET_DATACLIP_REPLY>({
       ref,
       join_ref,
       topic,
-      // payload: data.buffer,
-      payload: { status: 'ok', response: {} },
+      // @ts-ignore
+      payload,
     });
   }
 
