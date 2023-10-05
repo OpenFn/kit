@@ -139,6 +139,7 @@ export function onJobComplete({ channel, state }: Context, event: any) {
     job_id: state.activeJob!,
     output_dataclip_id: dataclipId,
     output_dataclip: stringify(event.state),
+    reason: "success"  // HAND WAVE, change me!
   });
 
   if (!state.dataclips) {
