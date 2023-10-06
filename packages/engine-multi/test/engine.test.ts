@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import { createPlan } from './util';
 
-import Manager from '../src/rtm';
+import Manager from '../src/engine';
 import * as e from '../src/events';
 
 const logger = createMockLogger('', { level: 'debug' });

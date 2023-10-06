@@ -138,7 +138,7 @@ function createMock(serverId?: string) {
 
   // Start executing an ExecutionPlan
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
-  const execute = async (
+  const execute = (
     xplan: ExecutionPlan,
     resolvers: LazyResolvers = mockResolvers
   ) => {
