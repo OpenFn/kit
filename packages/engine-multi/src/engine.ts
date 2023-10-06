@@ -4,13 +4,12 @@ import { fileURLToPath } from 'url';
 import { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
 import { ExecutionPlan } from '@openfn/runtime';
+import createLogger, { JSONLog, Logger } from '@openfn/logger';
 
 import * as e from './events';
-// import createAutoinstall from './runners/autoinstall';
-import createCompile from './runners/compile';
-import createExecute from './runners/execute';
-import createLogger, { JSONLog, Logger } from '@openfn/logger';
-import createAutoInstall from './runners/autoinstall';
+import compile from './runners/compile';
+import execute from './runners/execute';
+import autoinstall from './runners/autoinstall';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -146,20 +145,16 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
     });
   };
 
-  // Create "runner" functions for execute and compile
-  const execute = createExecute(workers, logger, {
-    start: onWorkflowStarted,
-    log: onWorkflowLog,
-  });
-  const compile = createCompile(logger, repoDir);
-
-  const autoinstall = createAutoInstall({ repoDir, logger });
-
   // How much of this happens inside the worker?
   // Shoud the main thread handle compilation? Has to if we want to cache
   // Unless we create a dedicated compiler worker
   // TODO error handling, timeout
   const handleExecute = async (plan: ExecutionPlan) => {
+    const options = {
+      repoDir,
+    };
+    const context = { plan, logger, workers, options /* api */ };
+
     logger.debug('Executing workflow ', plan.id);
 
     allWorkflows.set(plan.id!, {
@@ -168,14 +163,18 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
       plan,
     });
 
-    const adaptorPaths = await autoinstall(plan);
+    const adaptorPaths = await autoinstall(context);
 
-    // Don't compile if we're running a mock (not a fan of this)
-    const compiledPlan = noCompile ? plan : await compile(plan);
+    if (!noCompile) {
+      context.plan = await compile(context);
+    }
 
     logger.debug('workflow compiled ', plan.id);
-    const result = await execute(compiledPlan, adaptorPaths);
-    completeWorkflow(compiledPlan.id!, result);
+    const result = await execute(context, adaptorPaths, {
+      start: onWorkflowStarted,
+      log: onWorkflowLog,
+    });
+    completeWorkflow(plan.id!, result);
 
     logger.debug('finished executing workflow ', plan.id);
     // Return the result

@@ -3,31 +3,32 @@
 // being compiled twice
 
 import type { Logger } from '@openfn/logger';
-import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
+import compile, { preloadAdaptorExports } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 
-const createCompile = (logger: Logger, repoDir: string) => {
-  const cache = {};
-  return async (plan) => {
-    // Compile each job in the exeuction plan
-    // A bit like the CLI
-    for (const job of plan.jobs) {
-      if (job.expression) {
-        job.expression = await compileJob(
-          job.expression as string,
-          job.adaptor, // TODO need to expand this. Or do I?
-          repoDir,
-          logger
-        );
-      }
+// TODO this compiler is going to change anyway to run just in time
+// the runtime will have an onCompile hook
+// We'll keep this for now though while we get everything else working
+export default async (context: any) => {
+  const { logger, options, plan } = context;
+  const { repoDir } = options;
+
+  for (const job of plan.jobs) {
+    if (job.expression) {
+      job.expression = await compileJob(
+        job.expression as string,
+        job.adaptor, // TODO need to expand this. Or do I?
+        repoDir,
+        logger
+      );
     }
-    return plan;
-  };
+  }
+  return plan;
 };
 
-export default createCompile;
-
-// TODO copied out of CLI
+// TODO copied out of CLI - how can we share code here?
+// engine should not have a dependency on the cli
+// maybe this is a runtime  util
 const stripVersionSpecifier = (specifier: string) => {
   const idx = specifier.lastIndexOf('@');
   if (idx > 0) {

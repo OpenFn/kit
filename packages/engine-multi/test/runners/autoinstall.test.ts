@@ -1,7 +1,5 @@
 import test from 'ava';
-import createAutoInstall, {
-  identifyAdaptors,
-} from '../../src/runners/autoinstall';
+import autoinstall, { identifyAdaptors } from '../../src/runners/autoinstall';
 
 const mockIsInstalled = (pkg) => async (specifier: string) => {
   const alias = specifier.split('@').join('_');
@@ -63,7 +61,7 @@ test('identifyAdaptors: pick out adaptors and remove duplicates', (t) => {
 });
 
 // This doesn't do anything except check that the mocks are installed
-test('autoinstall: should call both mock functions', (t) => {
+test('autoinstall: should call both mock functions', async (t) => {
   let didCallIsInstalled = false;
   let didCallInstall = true;
 
@@ -76,19 +74,21 @@ test('autoinstall: should call both mock functions', (t) => {
     return;
   };
 
-  const autoinstall = createAutoInstall({
-    handleInstall: mockInstall,
-    handleIsInstalled: mockIsInstalled,
-  });
-
-  autoinstall({
-    jobs: [{ adaptor: 'x@1.0.0' }],
+  await autoinstall({
+    options: {
+      handleInstall: mockInstall,
+      handleIsInstalled: mockIsInstalled,
+    },
+    plan: {
+      jobs: [{ adaptor: 'x@1.0.0' }],
+    },
   });
 
   t.true(didCallIsInstalled);
   t.true(didCallInstall);
 });
 
+// TODO a problem with this test is that pending state is shared across tests
 test('autoinstall: only call install once if there are two concurrent install requests', async (t) => {
   let callCount = 0;
 
@@ -98,18 +98,27 @@ test('autoinstall: only call install once if there are two concurrent install re
       setTimeout(() => resolve(), 20);
     });
 
-  const autoinstall = createAutoInstall({
-    handleInstall: mockInstall,
-    handleIsInstalled: async () => false,
-  });
+  await Promise.all([
+    autoinstall({
+      options: {
+        handleInstall: mockInstall,
+        handleIsInstalled: async () => false,
+      },
+      plan: {
+        jobs: [{ adaptor: 'z@1.0.0' }],
+      },
+    }),
 
-  autoinstall({
-    jobs: [{ adaptor: 'x@1.0.0' }],
-  });
-
-  await autoinstall({
-    jobs: [{ adaptor: 'x@1.0.0' }],
-  });
+    autoinstall({
+      options: {
+        handleInstall: mockInstall,
+        handleIsInstalled: async () => false,
+      },
+      plan: {
+        jobs: [{ adaptor: 'z@1.0.0' }],
+      },
+    }),
+  ]);
 
   t.is(callCount, 1);
 });
@@ -127,14 +136,16 @@ test('autoinstall: return a map to modules', async (t) => {
     ],
   };
 
-  const autoinstall = createAutoInstall({
-    repoDir: 'a/b/c',
-    skipRepoValidation: true,
-    handleInstall: async () => true,
-    handleIsInstalled: async () => false,
+  const result = await autoinstall({
+    plan,
+    options: {
+      repoDir: 'a/b/c',
+      skipRepoValidation: true,
+      handleInstall: async () => true,
+      handleIsInstalled: async () => false,
+    },
   });
 
-  const result = await autoinstall(plan);
   t.deepEqual(result, {
     common: { path: 'a/b/c/node_modules/common_1.0.0' },
     http: { path: 'a/b/c/node_modules/http_1.0.0' },
