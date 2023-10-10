@@ -80,9 +80,11 @@ export type WorkerCompletePayload = {
   state: any;
 };
 
+// TODO confusion over this and events.ts
 export type WORKER_LOG = 'worker-log';
-export type WorkerLogPayload = JSONLog & {
+export type WorkerLogPayload = {
   workflowId: string;
+  message: JSONLog;
 };
 
 type EventHandler = <T extends EngineEvents>(

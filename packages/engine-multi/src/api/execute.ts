@@ -12,8 +12,12 @@ import { workflowStart, workflowComplete, log } from './lifecycle';
 // Is it better to just return the handler?
 // But then this function really isn't doing so much
 // (I guess that's true anyway)
-const execute = async (api: EngineAPI, state: WorkflowState, options) => {
-  const adaptorPaths = await autoinstall(api, state, options);
+const execute = async (
+  api: EngineAPI,
+  state: WorkflowState,
+  options: RTEOptions
+) => {
+  const adaptorPaths = await autoinstall(api, state, options.autoinstall);
   await compile(api, state, options);
 
   const events = {
@@ -28,10 +32,12 @@ const execute = async (api: EngineAPI, state: WorkflowState, options) => {
     },
   };
 
-  return api.callWorker('run', [plan, adaptorPaths], events).catch((e) => {
-    // TODO what about errors then?
-    api.logger.error(e);
-  });
+  return api
+    .callWorker('run', [state.plan, adaptorPaths], events)
+    .catch((e) => {
+      // TODO what about errors then?
+      api.logger.error(e);
+    });
 };
 
 export default execute;

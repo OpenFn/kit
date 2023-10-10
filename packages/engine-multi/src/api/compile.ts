@@ -6,6 +6,7 @@ import type { Logger } from '@openfn/logger';
 import compile, { preloadAdaptorExports } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 import { EngineAPI, WorkflowState } from '../types';
+import { RTEOptions } from '../engine';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook
@@ -13,22 +14,25 @@ import { EngineAPI, WorkflowState } from '../types';
 export default async (
   api: EngineAPI,
   state: WorkflowState,
-  options: { repoDir: string }
+  options: Pick<RTEOptions, 'repoDir' | 'noCompile'> = {}
 ) => {
   const { logger } = api;
   const { plan } = state;
-  const { repoDir } = options;
+  const { repoDir, noCompile } = options;
 
-  for (const job of plan.jobs) {
-    if (job.expression) {
-      job.expression = await compileJob(
-        job.expression as string,
-        job.adaptor, // TODO need to expand this. Or do I?
-        repoDir,
-        logger
-      );
+  if (!noCompile) {
+    for (const job of plan.jobs) {
+      if (job.expression) {
+        job.expression = await compileJob(
+          job.expression as string,
+          job.adaptor, // TODO need to expand this. Or do I?
+          repoDir,
+          logger
+        );
+      }
     }
   }
+
   return plan;
 };
 

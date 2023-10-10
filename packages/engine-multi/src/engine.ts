@@ -9,7 +9,7 @@ import createLogger, { JSONLog, Logger } from '@openfn/logger';
 import * as e from './events';
 import compile from './api/compile';
 import execute from './runners/execute';
-import autoinstall from './api/autoinstall';
+import autoinstall, { AutoinstallOptions } from './api/autoinstall';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -37,15 +37,17 @@ export type LazyResolvers = {
   expressions?: Resolver<string>;
 };
 
-type RTMOptions = {
+export type RTEOptions = {
   resolvers?: LazyResolvers;
   logger?: Logger;
   workerPath?: string;
   repoDir?: string;
   noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
+
+  autoinstall: AutoinstallOptions;
 };
 
-const createRTM = function (serverId?: string, options: RTMOptions = {}) {
+const createRTM = function (serverId?: string, options: RTEOptions = {}) {
   const { noCompile } = options;
   let { repoDir, workerPath } = options;
 

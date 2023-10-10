@@ -1,7 +1,7 @@
 // TODO remove ths file in favour of types
 
 // TODO mayberename event constants
-// import { JSONLog } from '@openfn/logger';
+import { JSONLog } from '@openfn/logger';
 
 // Top level API events - these are what the engine publishes
 

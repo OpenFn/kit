@@ -68,7 +68,7 @@ test(`workflowComplete: emits ${e.WORKFLOW_COMPLETE}`, (t) => {
     const event = { workflowId, state: result };
 
     api.on(e.WORKFLOW_COMPLETE, (evt) => {
-      t.is(evt.id, workflowId);
+      t.is(evt.workflowId, workflowId);
       t.deepEqual(evt.state, result);
       t.assert(evt.duration > 0);
       done();
@@ -105,16 +105,19 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
     } as WorkflowState;
 
     const event = {
-      level: 'info',
-      name: 'job',
-      message: ['oh hai'],
-      time: Date.now() - 100,
+      workflowId,
+      message: {
+        level: 'info',
+        name: 'job',
+        message: ['oh hai'],
+        time: Date.now() - 100,
+      },
     };
 
     api.on(e.WORKFLOW_LOG, (evt) => {
       t.deepEqual(evt, {
         workflowId: state.id,
-        ...event,
+        ...event.message,
       });
       done();
     });

@@ -67,7 +67,7 @@ export const workflowComplete = (
 
   // forward the event on to any external listeners
   api.emit(WORKFLOW_COMPLETE, {
-    id: workflowId,
+    workflowId: workflowId,
     duration: state.duration,
     state: result,
   });
@@ -86,11 +86,11 @@ export const log = (
   //   // I'm sure there are nicer, more elegant ways of doing this
   //   message: [`[${workflowId}]`, ...message.message],
   // };
-  api.logger.proxy(event);
+  api.logger.proxy(event.message);
 
   api.emit(WORKFLOW_LOG, {
     workflowId: id,
-    ...event,
+    ...event.message,
   });
 };
 

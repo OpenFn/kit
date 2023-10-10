@@ -12,7 +12,7 @@ import type { Logger } from '@openfn/logger';
 import { EngineAPI, WorkflowState } from '../types';
 
 // none of these options should be on the plan actually
-type Options = {
+export type AutoinstallOptions = {
   repoDir?: string;
   skipRepoValidation?: boolean;
   handleInstall?(fn: string, repoDir: string, logger: Logger): Promise<void>;
@@ -28,7 +28,7 @@ const pending: Record<string, Promise<void>> = {};
 const autoinstall = async (
   api: EngineAPI,
   state: WorkflowState,
-  options: Options
+  options: AutoinstallOptions
 ): Promise<ModulePaths> => {
   const { logger } = api;
   const { plan } = state;

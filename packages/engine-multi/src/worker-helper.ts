@@ -12,11 +12,13 @@ function publish(event: e.WorkflowEvent) {
 }
 
 export const createLoggers = (workflowId: string) => {
-  const log = (message: JSONLog) => {
+  const log = (message: string) => {
+    // hmm, the json log stringifies the message
+    // i don't really want it to do that
     publish({
       workflowId,
       type: e.WORKFLOW_LOG,
-      message,
+      message: JSON.parse(message),
     });
   };
 
