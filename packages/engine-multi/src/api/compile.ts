@@ -5,12 +5,18 @@
 import type { Logger } from '@openfn/logger';
 import compile, { preloadAdaptorExports } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
+import { EngineAPI, WorkflowState } from '../types';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook
 // We'll keep this for now though while we get everything else working
-export default async (context: any) => {
-  const { logger, options, plan } = context;
+export default async (
+  api: EngineAPI,
+  state: WorkflowState,
+  options: { repoDir: string }
+) => {
+  const { logger } = api;
+  const { plan } = state;
   const { repoDir } = options;
 
   for (const job of plan.jobs) {

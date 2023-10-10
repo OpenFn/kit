@@ -9,25 +9,29 @@ import {
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
+import { EngineAPI, WorkflowState } from '../types';
 
+// none of these options should be on the plan actually
 type Options = {
-  repoDir: string;
-  logger: Logger;
+  repoDir?: string;
   skipRepoValidation?: boolean;
-  handleInstall?(
-    fn: string,
-    options?: Pick<Options, 'repoDir' | 'logger'>
-  ): Promise<void>;
+  handleInstall?(fn: string, repoDir: string, logger: Logger): Promise<void>;
   handleIsInstalled?(
     fn: string,
-    options?: Pick<Options, 'repoDir' | 'logger'>
+    repoDir: string,
+    logger: Logger
   ): Promise<boolean>;
 };
 
 const pending: Record<string, Promise<void>> = {};
 
-const autoinstall = async (context: any): Promise<ModulePaths> => {
-  const { options, plan, logger } = context;
+const autoinstall = async (
+  api: EngineAPI,
+  state: WorkflowState,
+  options: Options
+): Promise<ModulePaths> => {
+  const { logger } = api;
+  const { plan } = state;
   const { repoDir } = options;
 
   const installFn = options.handleInstall || install;
@@ -39,7 +43,7 @@ const autoinstall = async (context: any): Promise<ModulePaths> => {
   if (!skipRepoValidation && !didValidateRepo && options.repoDir) {
     // TODO what if this throws?
     // Whole server probably needs to crash, so throwing is probably appropriate
-    await ensureRepo(options.repoDir, options.logger);
+    await ensureRepo(options.repoDir, logger);
     didValidateRepo = true;
   }
 
@@ -54,7 +58,7 @@ const autoinstall = async (context: any): Promise<ModulePaths> => {
     const { name } = getNameAndVersion(a);
     paths[name] = { path: `${repoDir}/node_modules/${alias}` };
 
-    const needsInstalling = !(await isInstalledFn(a, options.repoDir, logger));
+    const needsInstalling = !(await isInstalledFn(a, repoDir, logger));
     if (needsInstalling) {
       if (!pending[a]) {
         // add a promise to the pending array

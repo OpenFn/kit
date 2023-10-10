@@ -1,7 +1,15 @@
 import test from 'ava';
-import autoinstall, { identifyAdaptors } from '../../src/runners/autoinstall';
+import { createMockLogger } from '@openfn/logger';
 
-const mockIsInstalled = (pkg) => async (specifier: string) => {
+import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
+import { EngineAPI, WorkflowState } from '../../src/types';
+
+type PackageJson = {
+  name: string;
+  [x: string]: any;
+};
+
+const mockIsInstalled = (pkg: PackageJson) => async (specifier: string) => {
   const alias = specifier.split('@').join('_');
   return pkg.dependencies.hasOwnProperty(alias);
 };
@@ -10,6 +18,12 @@ const mockIsInstalled = (pkg) => async (specifier: string) => {
 // I don't think there's any need
 const mockHandleInstall = async (specifier: string): Promise<void> =>
   new Promise<void>((r) => r()).then();
+
+const mockLogger = createMockLogger();
+
+const api = {
+  logger: mockLogger,
+} as unknown as EngineAPI;
 
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
@@ -61,7 +75,7 @@ test('identifyAdaptors: pick out adaptors and remove duplicates', (t) => {
 });
 
 // This doesn't do anything except check that the mocks are installed
-test('autoinstall: should call both mock functions', async (t) => {
+test.serial('autoinstall: should call both mock functions', async (t) => {
   let didCallIsInstalled = false;
   let didCallInstall = true;
 
@@ -74,77 +88,77 @@ test('autoinstall: should call both mock functions', async (t) => {
     return;
   };
 
-  await autoinstall({
-    options: {
-      handleInstall: mockInstall,
-      handleIsInstalled: mockIsInstalled,
-    },
+  const state = {
     plan: {
       jobs: [{ adaptor: 'x@1.0.0' }],
     },
-  });
+  } as WorkflowState;
+
+  const options = {
+    handleInstall: mockInstall,
+    handleIsInstalled: mockIsInstalled,
+  };
+
+  await autoinstall(api, state, options);
 
   t.true(didCallIsInstalled);
   t.true(didCallInstall);
 });
 
-// TODO a problem with this test is that pending state is shared across tests
-test('autoinstall: only call install once if there are two concurrent install requests', async (t) => {
-  let callCount = 0;
+test.serial(
+  'autoinstall: only call install once if there are two concurrent install requests',
+  async (t) => {
+    let callCount = 0;
 
-  const mockInstall = (specififer: string) =>
-    new Promise<void>((resolve) => {
-      callCount++;
-      setTimeout(() => resolve(), 20);
-    });
+    const mockInstall = (specififer: string) =>
+      new Promise<void>((resolve) => {
+        callCount++;
+        setTimeout(() => resolve(), 20);
+      });
 
-  await Promise.all([
-    autoinstall({
-      options: {
-        handleInstall: mockInstall,
-        handleIsInstalled: async () => false,
-      },
+    const options = {
+      handleInstall: mockInstall,
+      handleIsInstalled: async () => false,
+    };
+
+    const state = {
       plan: {
         jobs: [{ adaptor: 'z@1.0.0' }],
       },
-    }),
+    } as WorkflowState;
 
-    autoinstall({
-      options: {
-        handleInstall: mockInstall,
-        handleIsInstalled: async () => false,
-      },
-      plan: {
-        jobs: [{ adaptor: 'z@1.0.0' }],
-      },
-    }),
-  ]);
+    await Promise.all([
+      autoinstall(api, state, options),
+      autoinstall(api, state, options),
+    ]);
 
-  t.is(callCount, 1);
-});
+    t.is(callCount, 1);
+  }
+);
 
-test('autoinstall: return a map to modules', async (t) => {
-  const plan = {
-    // Note that we have difficulty now if a workflow imports two versions of the same adaptor
-    jobs: [
-      {
-        adaptor: 'common@1.0.0',
-      },
-      {
-        adaptor: 'http@1.0.0',
-      },
-    ],
+test.serial('autoinstall: return a map to modules', async (t) => {
+  const state = {
+    plan: {
+      // Note that we have difficulty now if a workflow imports two versions of the same adaptor
+      jobs: [
+        {
+          adaptor: 'common@1.0.0',
+        },
+        {
+          adaptor: 'http@1.0.0',
+        },
+      ],
+    },
+  } as WorkflowState;
+
+  const options = {
+    repoDir: 'a/b/c',
+    skipRepoValidation: true,
+    handleInstall: async () => true,
+    handleIsInstalled: async () => false,
   };
 
-  const result = await autoinstall({
-    plan,
-    options: {
-      repoDir: 'a/b/c',
-      skipRepoValidation: true,
-      handleInstall: async () => true,
-      handleIsInstalled: async () => false,
-    },
-  });
+  const result = await autoinstall(api, state, options);
 
   t.deepEqual(result, {
     common: { path: 'a/b/c/node_modules/common_1.0.0' },

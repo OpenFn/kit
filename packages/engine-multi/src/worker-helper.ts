@@ -12,11 +12,11 @@ function publish(event: e.WorkflowEvent) {
 }
 
 export const createLoggers = (workflowId: string) => {
-  const log = (jsonLog: string) => {
+  const log = (message: JSONLog) => {
     publish({
       workflowId,
       type: e.WORKFLOW_LOG,
-      message: JSON.parse(jsonLog) as JSONLog,
+      message,
     });
   };
 

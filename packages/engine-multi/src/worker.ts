@@ -1,4 +1,5 @@
 // Runs inside the worker
+// TODO maybe this is
 
 // Dedicated worker for running jobs
 // Security thoughts: the process inherits the node command arguments

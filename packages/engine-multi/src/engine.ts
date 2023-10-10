@@ -7,9 +7,9 @@ import { ExecutionPlan } from '@openfn/runtime';
 import createLogger, { JSONLog, Logger } from '@openfn/logger';
 
 import * as e from './events';
-import compile from './runners/compile';
+import compile from './api/compile';
 import execute from './runners/execute';
-import autoinstall from './runners/autoinstall';
+import autoinstall from './api/autoinstall';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -55,17 +55,28 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   const allWorkflows: Map<string, WorkflowStats> = new Map();
   const activeWorkflows: string[] = [];
 
-  let resolvedWorkerPath;
-  if (workerPath) {
-    // If a path to the worker has been passed in, just use it verbatim
-    // We use this to pass a mock worker for testing purposes
-    resolvedWorkerPath = workerPath;
-  } else {
-    // By default, we load ./worker.js but can't rely on the working dir to find it
-    const dirname = path.dirname(fileURLToPath(import.meta.url));
-    resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
-  }
-  const workers = workerpool.pool(resolvedWorkerPath);
+  // TODO we want to get right down to this
+
+  // Create the internal API
+  const api = createApi();
+
+  // Return the external API
+  return {
+    execute: api.execute,
+    listen: api.listen,
+  };
+
+  // let resolvedWorkerPath;
+  // if (workerPath) {
+  //   // If a path to the worker has been passed in, just use it verbatim
+  //   // We use this to pass a mock worker for testing purposes
+  //   resolvedWorkerPath = workerPath;
+  // } else {
+  //   // By default, we load ./worker.js but can't rely on the working dir to find it
+  //   const dirname = path.dirname(fileURLToPath(import.meta.url));
+  //   resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
+  // }
+  // const workers = workerpool.pool(resolvedWorkerPath);
 
   const events = new EventEmitter();
 
@@ -82,68 +93,68 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   }
   logger.info('repoDir set to ', repoDir);
 
-  const onWorkflowStarted = (workflowId: string, threadId: number) => {
-    logger.info('starting workflow ', workflowId);
-    const workflow = allWorkflows.get(workflowId)!;
+  // const onWorkflowStarted = (workflowId: string, threadId: number) => {
+  //   logger.info('starting workflow ', workflowId);
+  //   const workflow = allWorkflows.get(workflowId)!;
 
-    if (workflow.startTime) {
-      // TODO this shouldn't throw.. but what do we do?
-      // We shouldn't run a workflow that's been run
-      // Every workflow should have a unique id
-      // maybe the RTM doesn't care about this
-      throw new Error(`Workflow with id ${workflowId} is already started`);
-    }
-    workflow.startTime = new Date().getTime();
-    workflow.duration = -1;
-    workflow.threadId = threadId;
-    activeWorkflows.push(workflowId);
+  //   if (workflow.startTime) {
+  //     // TODO this shouldn't throw.. but what do we do?
+  //     // We shouldn't run a workflow that's been run
+  //     // Every workflow should have a unique id
+  //     // maybe the RTM doesn't care about this
+  //     throw new Error(`Workflow with id ${workflowId} is already started`);
+  //   }
+  //   workflow.startTime = new Date().getTime();
+  //   workflow.duration = -1;
+  //   workflow.threadId = threadId;
+  //   activeWorkflows.push(workflowId);
 
-    // forward the event on to any external listeners
-    events.emit(e.WORKFLOW_START, {
-      workflowId,
-      // Should we publish anything else here?
-    });
-  };
+  //   // forward the event on to any external listeners
+  //   events.emit(e.WORKFLOW_START, {
+  //     workflowId,
+  //     // Should we publish anything else here?
+  //   });
+  // };
 
-  const completeWorkflow = (workflowId: string, state: any) => {
-    logger.success('complete workflow ', workflowId);
-    logger.info(state);
-    if (!allWorkflows.has(workflowId)) {
-      throw new Error(`Workflow with id ${workflowId} is not defined`);
-    }
-    const workflow = allWorkflows.get(workflowId)!;
-    workflow.status = 'done';
-    workflow.result = state;
-    workflow.duration = new Date().getTime() - workflow.startTime!;
-    const idx = activeWorkflows.findIndex((id) => id === workflowId);
-    activeWorkflows.splice(idx, 1);
+  // const completeWorkflow = (workflowId: string, state: any) => {
+  //   logger.success('complete workflow ', workflowId);
+  //   logger.info(state);
+  //   if (!allWorkflows.has(workflowId)) {
+  //     throw new Error(`Workflow with id ${workflowId} is not defined`);
+  //   }
+  //   const workflow = allWorkflows.get(workflowId)!;
+  //   workflow.status = 'done';
+  //   workflow.result = state;
+  //   workflow.duration = new Date().getTime() - workflow.startTime!;
+  //   const idx = activeWorkflows.findIndex((id) => id === workflowId);
+  //   activeWorkflows.splice(idx, 1);
 
-    // forward the event on to any external listeners
-    events.emit(e.WORKFLOW_COMPLETE, {
-      id: workflowId,
-      duration: workflow.duration,
-      state,
-    });
-  };
+  //   // forward the event on to any external listeners
+  //   events.emit(e.WORKFLOW_COMPLETE, {
+  //     id: workflowId,
+  //     duration: workflow.duration,
+  //     state,
+  //   });
+  // };
 
-  // Catch a log coming out of a job within a workflow
-  // Includes runtime logging (is this right?)
-  const onWorkflowLog = (workflowId: string, message: JSONLog) => {
-    // Seamlessly proxy the log to the local stdout
-    // TODO runtime logging probably needs to be at info level?
-    // Debug information is mostly irrelevant for lightning
-    const newMessage = {
-      ...message,
-      // Prefix the job id in all local jobs
-      // I'm sure there are nicer, more elegant ways of doing this
-      message: [`[${workflowId}]`, ...message.message],
-    };
-    logger.proxy(newMessage);
-    events.emit(e.WORKFLOW_LOG, {
-      workflowId,
-      message,
-    });
-  };
+  // // Catch a log coming out of a job within a workflow
+  // // Includes runtime logging (is this right?)
+  // const onWorkflowLog = (workflowId: string, message: JSONLog) => {
+  //   // Seamlessly proxy the log to the local stdout
+  //   // TODO runtime logging probably needs to be at info level?
+  //   // Debug information is mostly irrelevant for lightning
+  //   const newMessage = {
+  //     ...message,
+  //     // Prefix the job id in all local jobs
+  //     // I'm sure there are nicer, more elegant ways of doing this
+  //     message: [`[${workflowId}]`, ...message.message],
+  //   };
+  //   logger.proxy(newMessage);
+  //   events.emit(e.WORKFLOW_LOG, {
+  //     workflowId,
+  //     message,
+  //   });
+  // };
 
   // How much of this happens inside the worker?
   // Shoud the main thread handle compilation? Has to if we want to cache
