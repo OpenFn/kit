@@ -102,6 +102,50 @@ test('execute with test worker and trigger workflow-complete', (t) => {
   });
 });
 
+test('execute does not return internal state stuff', (t) => {
+  return new Promise((done) => {
+    const p = path.resolve('test/worker-functions.js');
+    const engine = createEngine(
+      {
+        logger,
+        noCompile: true,
+        autoinstall: {
+          handleIsInstalled: async () => true,
+        },
+      },
+      p
+    );
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: '22',
+        },
+      ],
+    };
+
+    const result = engine.execute(plan);
+    // Execute returns an event listener
+    t.truthy(result.on);
+    t.truthy(result.once);
+    t.truthy(result.off);
+
+    // ...but not en event emitter
+    t.falsy(result['emit']);
+    t.falsy(result['dispatch']);
+
+    // and no other execution context
+    t.falsy(result['state']);
+    t.falsy(result['logger']);
+    t.falsy(result['callWorker']);
+    t.falsy(result['options']);
+
+    done();
+    // TODO is this still running? Does it matter?
+  });
+});
+
 test('listen to workflow-complete', (t) => {
   return new Promise((done) => {
     const p = path.resolve('test/worker-functions.js');
