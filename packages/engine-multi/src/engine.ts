@@ -14,7 +14,10 @@ import type {
   EngineEvents,
   EventHandler,
   WorkflowState,
+  CallWorker,
+  ExecutionContextConstructor,
 } from './types';
+import { Logger } from '@openfn/logger';
 
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
@@ -54,11 +57,21 @@ class Engine extends EventEmitter {}
 // TODO this is actually the api that each execution gets
 // its nice to separate that from the engine a bit
 class ExecutionContext extends EventEmitter {
-  constructor(workflowState, logger, callWorker, options) {
+  state: WorkflowState;
+  logger: Logger;
+  callWorker: CallWorker;
+  options: RTEOptions;
+
+  constructor({
+    state,
+    logger,
+    callWorker,
+    options,
+  }: ExecutionContextConstructor) {
     super();
     this.logger = logger;
     this.callWorker = callWorker;
-    this.state = workflowState;
+    this.state = state;
     this.options = options;
   }
 }
@@ -66,12 +79,10 @@ class ExecutionContext extends EventEmitter {
 // This creates the internal API
 // tbh this is actually the engine, right, this is where stuff happens
 // the api file is more about the public api I think
+// TOOD options MUST have a logger
 const createEngine = (options: RTEOptions, workerPath?: string) => {
-  // TODO  this is probably states now, although contexts sort of subsumes it
-  const allWorkflows: Map<string, WorkflowState> = new Map();
-
-  // TODO this contexts now
-  const listeners = {};
+  const states: Record<string, WorkflowState> = {};
+  const contexts: Record<string, ExecutionContext> = {};
   // TODO I think this is for later
   //const activeWorkflows: string[] = [];
 
@@ -85,7 +96,7 @@ const createEngine = (options: RTEOptions, workerPath?: string) => {
     const dirname = path.dirname(fileURLToPath(import.meta.url));
     resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
   }
-  options.logger.debug('Loading workers from ', resolvedWorkerPath);
+  options.logger!.debug('Loading workers from ', resolvedWorkerPath);
 
   const engine = new Engine() as EngineAPI;
 
@@ -99,35 +110,40 @@ const createEngine = (options: RTEOptions, workerPath?: string) => {
   const registerWorkflow = (plan: ExecutionPlan) => {
     // TODO throw if already registered?
     const state = createState(plan);
-    allWorkflows[state.id] = state;
+    states[state.id] = state;
     return state;
   };
 
-  const getWorkflowState = (workflowId: string) => allWorkflows[workflowId];
+  const getWorkflowState = (workflowId: string) => states[workflowId];
 
-  const getWorkflowStatus = (workflowId: string) =>
-    allWorkflows[workflowId]?.status;
+  const getWorkflowStatus = (workflowId: string) => states[workflowId]?.status;
 
   // TODO are we totally sure this takes a standard xplan?
+  // Well, it MUST have an ID or there's trouble
   const executeWrapper = (plan: ExecutionPlan) => {
+    const workflowId = plan.id!;
+    // TODO throw if plan is invalid
+    // Wait, don't throw because the server will die
+    // Maybe return null instead
     const state = registerWorkflow(plan);
 
-    const context = new ExecutionContext(
+    const context = new ExecutionContext({
       state,
-      options.logger,
-      engine.callWorker,
-      options
-    );
+      logger: options.logger!,
+      callWorker: engine.callWorker,
+      options,
+    });
 
-    listeners[plan.id] = createWorkflowEvents(engine, context, engine, plan.id);
+    contexts[workflowId] = createWorkflowEvents(engine, context, workflowId);
 
+    // TODO typing between the class and interface isn't right
     execute(context);
 
     // hmm. Am I happy to pass the internal workflow state OUT of the handler?
     // I'd rather have like a proxy emitter or something
     // also I really only want passive event handlers, I don't want interference from outside
     return {
-      on: (...args) => context.on(...args),
+      on: (...args: any[]) => context.on(...args),
       once: context.once,
       off: context.off,
     };
@@ -138,7 +154,7 @@ const createEngine = (options: RTEOptions, workerPath?: string) => {
     workflowId: string,
     handlers: Record<EngineEvents, EventHandler>
   ) => {
-    const events = listeners[workflowId];
+    const events = contexts[workflowId];
     for (const evt in handlers) {
       events.on(evt, handlers[evt]);
     }

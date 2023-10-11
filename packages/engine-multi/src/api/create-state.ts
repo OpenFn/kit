@@ -1,5 +1,8 @@
-export default (plan) => ({
-  id: plan.id,
+import { ExecutionPlan } from '@openfn/runtime';
+import { WorkflowState } from '../types';
+
+export default (plan: ExecutionPlan, options = {}): WorkflowState => ({
+  id: plan.id!,
   status: 'pending',
   plan,
 
@@ -9,7 +12,9 @@ export default (plan) => ({
   error: undefined,
   result: undefined,
 
-  // yeah not sure about options right now
+  // this is wf-specific options
+  // but they should be on context, rather than state
+  options,
   // options: {
   //   ...options,
   //   repoDir,

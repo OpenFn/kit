@@ -116,22 +116,33 @@ export type WorkflowState = {
   error?: string;
   result?: any; // State
   plan: ExecutionPlan; // this doesn't include options
-  options: any; // TODO this is general engine options and workflow options
+  options: any; // TODO this is wf specific options, like logging policy
 };
 
-// this is the internal engine API
+export type CallWorker = (
+  task: string,
+  args: any[] = [],
+  events: any = {}
+) => workerpool.Promise;
+
+export type ExecutionContextConstructor = {
+  state: WorkflowState;
+  logger: Logger;
+  callWorker: CallWorker;
+  options: RTEOptions;
+};
+
 export interface ExecutionContext extends EventEmitter {
+  constructor(args: ExecutionContextConstructor);
   options: RTEOptions; // TODO maybe. bring them in here?
   state: WorkflowState;
   logger: Logger;
-  callWorker: (
-    task: string,
-    args: any[] = [],
-    events: any = {}
-  ) => workerpool.Promise;
+  callWorker: CallWorker;
 }
 
-export interface EngineAPI extends EventEmitter {}
+export interface EngineAPI extends EventEmitter {
+  callWorker: CallWorker;
+}
 
 interface RuntimeEngine extends EventEmitter {
   //id: string // human readable instance id
