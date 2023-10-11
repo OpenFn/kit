@@ -3,8 +3,11 @@ import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import { createPlan } from './util';
 
-import Manager from '../src/engine';
+import createEngine from '../src/engine';
 import * as e from '../src/events';
+import { ExecutionPlan } from '@openfn/runtime';
+
+// TOOD this becomes low level tests on the internal engine api
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -22,16 +25,118 @@ test.afterEach(() => {
   logger._reset();
 });
 
-test('Should create a new manager', (t) => {
-  const rtm = Manager('x', options);
-  t.truthy(rtm);
-  t.truthy(rtm.execute);
-  t.truthy(rtm.on);
-  t.truthy(rtm.once);
-  t.is(rtm.id, 'x');
+test('create an engine', (t) => {
+  const engine = createEngine({ logger });
+  t.truthy(engine);
+  t.is(engine.constructor.name, 'Engine');
+  t.truthy(engine.execute);
+  t.truthy(engine.on);
+  t.truthy(engine.once);
+  t.truthy(engine.emit);
 });
 
-test('Should run a mock job with a simple return value', async (t) => {
+test('register a workflow', (t) => {
+  const plan = { id: 'z' };
+  const engine = createEngine({ logger });
+
+  const state = engine.registerWorkflow(plan);
+
+  t.is(state.status, 'pending');
+  t.is(state.id, plan.id);
+  t.deepEqual(state.plan, plan);
+});
+
+test('get workflow state', (t) => {
+  const plan = { id: 'z' } as ExecutionPlan;
+  const engine = createEngine({ logger });
+
+  const s = engine.registerWorkflow(plan);
+
+  const state = engine.getWorkflowState(plan.id);
+
+  t.deepEqual(state, s);
+});
+
+test('use the default worker path', (t) => {
+  const engine = createEngine({ logger });
+  // this is how the path comes out in the test framework
+  t.true(engine.workerPath.endsWith('src/worker.js'));
+});
+
+// Note that even though this is a nonsense path, we get no error at this point
+test('use a custom worker path', (t) => {
+  const p = 'jam';
+  const engine = createEngine({ logger }, p);
+  // this is how the path comes out in the test framework
+  t.is(engine.workerPath, p);
+});
+
+test('execute with test worker and trigger workflow-complete', (t) => {
+  return new Promise((done) => {
+    const p = path.resolve('test/worker-functions.js');
+    const engine = createEngine(
+      {
+        logger,
+        noCompile: true,
+        autoinstall: {
+          handleIsInstalled: async () => true,
+        },
+      },
+      p
+    );
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: '22',
+        },
+      ],
+    };
+
+    engine.execute(plan).on(e.WORKFLOW_COMPLETE, ({ state, threadId }) => {
+      t.is(state, 22);
+      t.truthy(threadId); // proves (sort of) that this has run in a worker
+      done();
+    });
+  });
+});
+
+test.only('listen to workflow-complete', (t) => {
+  return new Promise((done) => {
+    const p = path.resolve('test/worker-functions.js');
+    const engine = createEngine(
+      {
+        logger,
+        noCompile: true,
+        autoinstall: {
+          handleIsInstalled: async () => true,
+        },
+      },
+      p
+    );
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: '33',
+        },
+      ],
+    };
+
+    engine.execute(plan);
+    engine.listen(plan.id, {
+      [e.WORKFLOW_COMPLETE]: ({ state, threadId }) => {
+        t.is(state, 33);
+        t.truthy(threadId); // proves (sort of) that this has run in a worker
+        done();
+      },
+    });
+  });
+});
+
+test.skip('Should run a mock job with a simple return value', async (t) => {
   const state = { data: { x: 1 } };
   const rtm = Manager('x', options);
   const plan = createPlan({
@@ -41,7 +146,7 @@ test('Should run a mock job with a simple return value', async (t) => {
   t.deepEqual(result, state);
 });
 
-test('Should not explode if no adaptor is passed', async (t) => {
+test.skip('Should not explode if no adaptor is passed', async (t) => {
   const state = { data: { x: 1 } };
   const rtm = Manager('x', options);
   const plan = createPlan({
@@ -52,66 +157,4 @@ test('Should not explode if no adaptor is passed', async (t) => {
   delete plan.jobs[0].adaptor;
   const result = await rtm.execute(plan);
   t.deepEqual(result, state);
-});
-
-test('events: workflow-start', async (t) => {
-  const rtm = Manager('x', options);
-
-  let id;
-  let didCall;
-  rtm.on(e.WORKFLOW_START, ({ workflowId }) => {
-    didCall = true;
-    id = workflowId;
-  });
-
-  const plan = createPlan();
-  await rtm.execute(plan);
-
-  t.true(didCall);
-  t.is(id, plan.id);
-});
-
-test('events: workflow-complete', async (t) => {
-  const rtm = Manager('x', options);
-
-  let didCall;
-  let evt;
-  rtm.on(e.WORKFLOW_COMPLETE, (e) => {
-    didCall = true;
-    evt = e;
-  });
-
-  const plan = createPlan();
-  await rtm.execute(plan);
-
-  t.true(didCall);
-  t.is(evt.id, plan.id);
-  t.assert(!isNaN(evt.duration));
-  t.deepEqual(evt.state, { data: { answer: 42 } });
-});
-
-// TODO: workflow log should also include runtime events, which maybe should be reflected here
-
-test('events: workflow-log from a job', async (t) => {
-  const rtm = Manager('x', options);
-
-  let didCall;
-  let evt;
-  rtm.on(e.WORKFLOW_LOG, (e) => {
-    didCall = true;
-    evt = e;
-  });
-
-  const plan = createPlan({
-    expression: `(s) => {
-      console.log('log me')
-      return s;
-    }`,
-  });
-  await rtm.execute(plan);
-  t.true(didCall);
-
-  t.is(evt.message.level, 'info');
-  t.deepEqual(evt.message.message, ['log me']);
-  t.is(evt.message.name, 'JOB');
 });

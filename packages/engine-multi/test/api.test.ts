@@ -1,8 +1,9 @@
 import test from 'ava';
 
-import createAPI from '../src/api';
+import createAPI from '../src/__api';
 
-// thes are tests on the api functions generally
+// thes are tests on the public api functions generally
+// so these are very high level tests
 
 // no need to test the event stuff - startworkflow etc
 // maybe we can check the keys exist, although we'll quickly know if we dont

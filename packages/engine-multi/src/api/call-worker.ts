@@ -11,8 +11,9 @@ type WorkerEvent = {
 
 // Adds a `callWorker` function to the API object, which will execute a task in a worker
 export default function initWorkers(api: EngineAPI, workerPath: string) {
+  // TODO can we verify the worker path and throw if it's invalid?
+  // workerpool won't complain if we give it a nonsense path
   const workers = createWorkers(workerPath);
-
   api.callWorker = (task: string, args: any[] = [], events: any = {}) =>
     workers.exec(task, args, {
       on: ({ type, ...args }: WorkerEvent) => {

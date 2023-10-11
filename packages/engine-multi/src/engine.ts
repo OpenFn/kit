@@ -1,207 +1,171 @@
-import path from 'node:path';
-import crypto from 'node:crypto';
-import { fileURLToPath } from 'url';
 import { EventEmitter } from 'node:events';
-import workerpool from 'workerpool';
-import { ExecutionPlan } from '@openfn/runtime';
-import createLogger, { JSONLog, Logger } from '@openfn/logger';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { ExecutionPlan } from '@openfn/runtime';
 
-import * as e from './events';
-import compile from './api/compile';
-import execute from './runners/execute';
-import autoinstall, { AutoinstallOptions } from './api/autoinstall';
+import { WORKFLOW_COMPLETE, WORKFLOW_LOG, WORKFLOW_START } from './events';
+import initWorkers from './api/call-worker';
+import createState from './api/create-state';
+import execute from './api/execute';
 
-export type State = any; // TODO I want a nice state def with generics
+import type { RTEOptions } from './api';
+import type {
+  EngineAPI,
+  EngineEvents,
+  EventHandler,
+  WorkflowState,
+} from './types';
 
-// Archive of every workflow we've run
-// Fine to just keep in memory for now
-type WorkflowStats = {
-  id: string;
-  name?: string; // TODO what is name? this is irrelevant?
-  status: 'pending' | 'done' | 'err';
-  startTime?: number;
-  threadId?: number;
-  duration?: number;
-  error?: string;
-  result?: any; // State
-  plan: ExecutionPlan;
-};
-
-type Resolver<T> = (id: string) => Promise<T>;
-
-// A list of helper functions which basically resolve ids into JSON
-// to lazy load assets
-export type LazyResolvers = {
-  credentials?: Resolver<Credential>;
-  state?: Resolver<State>;
-  expressions?: Resolver<string>;
-};
-
-export type RTEOptions = {
-  resolvers?: LazyResolvers;
-  logger?: Logger;
-  workerPath?: string;
-  repoDir?: string;
-  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
-
-  autoinstall: AutoinstallOptions;
-};
-
-const createRTM = function (serverId?: string, options: RTEOptions = {}) {
-  const { noCompile } = options;
-  let { repoDir, workerPath } = options;
-
-  const id = serverId || crypto.randomUUID();
-  const logger = options.logger || createLogger('RTM', { level: 'debug' });
-
-  const allWorkflows: Map<string, WorkflowStats> = new Map();
-  const activeWorkflows: string[] = [];
-
-  // TODO we want to get right down to this
-
-  // Create the internal API
-  const api = createApi();
-
-  // Return the external API
-  return {
-    execute: api.execute,
-    listen: api.listen,
-  };
-
-  // let resolvedWorkerPath;
-  // if (workerPath) {
-  //   // If a path to the worker has been passed in, just use it verbatim
-  //   // We use this to pass a mock worker for testing purposes
-  //   resolvedWorkerPath = workerPath;
-  // } else {
-  //   // By default, we load ./worker.js but can't rely on the working dir to find it
-  //   const dirname = path.dirname(fileURLToPath(import.meta.url));
-  //   resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
-  // }
-  // const workers = workerpool.pool(resolvedWorkerPath);
-
+// For each workflow, create an API object with its own event emitter
+// this is a bt wierd - what if the emitter went on state instead?
+const createWorkflowEvents = (api: EngineAPI, workflowId: string) => {
+  //create a bespoke event emitter
   const events = new EventEmitter();
 
-  if (!repoDir) {
-    if (process.env.OPENFN_RTE_REPO_DIR) {
-      repoDir = process.env.OPENFN_RTE_REPO_DIR;
-    } else {
-      repoDir = '/tmp/openfn/repo';
-      logger.warn('Using default repodir');
-      logger.warn(
-        'Set env var OPENFN_RTE_REPO_DIR to use a different directory'
-      );
-    }
+  // proxy all events to the main emitter
+  // uh actually there may be no point in this
+  function proxy(event: string) {
+    events.on(event, (evt) => {
+      // ensure the attempt id is on the event
+      evt.workflowId = workflowId;
+      const newEvt = {
+        ...evt,
+        workflowId: workflowId,
+      };
+
+      api.emit(event, newEvt);
+    });
   }
-  logger.info('repoDir set to ', repoDir);
+  proxy(WORKFLOW_START);
+  proxy(WORKFLOW_COMPLETE);
+  // proxy(JOB_START);
+  // proxy(JOB_COMPLETE);
+  proxy(WORKFLOW_LOG);
 
-  // const onWorkflowStarted = (workflowId: string, threadId: number) => {
-  //   logger.info('starting workflow ', workflowId);
-  //   const workflow = allWorkflows.get(workflowId)!;
-
-  //   if (workflow.startTime) {
-  //     // TODO this shouldn't throw.. but what do we do?
-  //     // We shouldn't run a workflow that's been run
-  //     // Every workflow should have a unique id
-  //     // maybe the RTM doesn't care about this
-  //     throw new Error(`Workflow with id ${workflowId} is already started`);
-  //   }
-  //   workflow.startTime = new Date().getTime();
-  //   workflow.duration = -1;
-  //   workflow.threadId = threadId;
-  //   activeWorkflows.push(workflowId);
-
-  //   // forward the event on to any external listeners
-  //   events.emit(e.WORKFLOW_START, {
-  //     workflowId,
-  //     // Should we publish anything else here?
-  //   });
-  // };
-
-  // const completeWorkflow = (workflowId: string, state: any) => {
-  //   logger.success('complete workflow ', workflowId);
-  //   logger.info(state);
-  //   if (!allWorkflows.has(workflowId)) {
-  //     throw new Error(`Workflow with id ${workflowId} is not defined`);
-  //   }
-  //   const workflow = allWorkflows.get(workflowId)!;
-  //   workflow.status = 'done';
-  //   workflow.result = state;
-  //   workflow.duration = new Date().getTime() - workflow.startTime!;
-  //   const idx = activeWorkflows.findIndex((id) => id === workflowId);
-  //   activeWorkflows.splice(idx, 1);
-
-  //   // forward the event on to any external listeners
-  //   events.emit(e.WORKFLOW_COMPLETE, {
-  //     id: workflowId,
-  //     duration: workflow.duration,
-  //     state,
-  //   });
-  // };
-
-  // // Catch a log coming out of a job within a workflow
-  // // Includes runtime logging (is this right?)
-  // const onWorkflowLog = (workflowId: string, message: JSONLog) => {
-  //   // Seamlessly proxy the log to the local stdout
-  //   // TODO runtime logging probably needs to be at info level?
-  //   // Debug information is mostly irrelevant for lightning
-  //   const newMessage = {
-  //     ...message,
-  //     // Prefix the job id in all local jobs
-  //     // I'm sure there are nicer, more elegant ways of doing this
-  //     message: [`[${workflowId}]`, ...message.message],
-  //   };
-  //   logger.proxy(newMessage);
-  //   events.emit(e.WORKFLOW_LOG, {
-  //     workflowId,
-  //     message,
-  //   });
-  // };
-
-  // How much of this happens inside the worker?
-  // Shoud the main thread handle compilation? Has to if we want to cache
-  // Unless we create a dedicated compiler worker
-  // TODO error handling, timeout
-  const handleExecute = async (plan: ExecutionPlan) => {
-    const options = {
-      repoDir,
-    };
-    const context = { plan, logger, workers, options /* api */ };
-
-    logger.debug('Executing workflow ', plan.id);
-
-    allWorkflows.set(plan.id!, {
-      id: plan.id!,
-      status: 'pending',
-      plan,
-    });
-
-    const adaptorPaths = await autoinstall(context);
-
-    if (!noCompile) {
-      context.plan = await compile(context);
-    }
-
-    logger.debug('workflow compiled ', plan.id);
-    const result = await execute(context, adaptorPaths, {
-      start: onWorkflowStarted,
-      log: onWorkflowLog,
-    });
-    completeWorkflow(plan.id!, result);
-
-    logger.debug('finished executing workflow ', plan.id);
-    // Return the result
-    // Note that the mock doesn't behave like ths
-    // And tbf I don't think we should keep the promise open - there's no point?
-    return result;
-  };
-
-  return {
-    id,
-    on: (type: string, fn: (...args: any[]) => void) => events.on(type, fn),
-    once: (type: string, fn: (...args: any[]) => void) => events.once(type, fn),
-    execute: handleExecute,
-  };
+  return events;
 };
 
-export default createRTM;
+// TODO this is a quick and dirty to get my own claass name in the console
+// (rather than EventEmitter)
+// But I should probably lean in to the class more for typing and stuff
+class Engine extends EventEmitter {}
+
+// TODO this is actually the api that each execution gets
+// its nice to separate that from the engine a bit
+class ExecutionContext extends EventEmitter {
+  constructor(workflowState, logger, callWorker) {
+    super();
+    this.logger = logger;
+    this.callWorker = callWorker;
+    this.state = workflowState;
+  }
+}
+
+// This creates the internal API
+// tbh this is actually the engine, right, this is where stuff happens
+// the api file is more about the public api I think
+const createEngine = (options: RTEOptions, workerPath?: string) => {
+  // internal state
+  const allWorkflows: Map<string, WorkflowState> = new Map();
+  const listeners = {};
+  // TODO I think this is for later
+  //const activeWorkflows: string[] = [];
+
+  let resolvedWorkerPath;
+  if (workerPath) {
+    // If a path to the worker has been passed in, just use it verbatim
+    // We use this to pass a mock worker for testing purposes
+    resolvedWorkerPath = workerPath;
+  } else {
+    // By default, we load ./worker.js but can't rely on the working dir to find it
+    const dirname = path.dirname(fileURLToPath(import.meta.url));
+    resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
+  }
+  options.logger.debug('Loading workers from ', resolvedWorkerPath);
+
+  const engine = new Engine() as EngineAPI;
+
+  initWorkers(engine, resolvedWorkerPath);
+
+  // TODO I think this needs to be like:
+  // take a plan
+  // create, register and return  a state object
+  // should it also load the initial data clip?
+  // when does that happen? No, that's inside execute
+  const registerWorkflow = (plan: ExecutionPlan) => {
+    // TODO throw if already registered?
+    const state = createState(plan);
+    allWorkflows[state.id] = state;
+    return state;
+  };
+
+  const getWorkflowState = (workflowId: string) => allWorkflows[workflowId];
+
+  const getWorkflowStatus = (workflowId: string) =>
+    allWorkflows[workflowId]?.status;
+
+  // TODO are we totally sure this takes a standard xplan?
+  const executeWrapper = (plan: ExecutionPlan) => {
+    const state = registerWorkflow(plan);
+
+    const events = createWorkflowEvents(engine, plan.id);
+    listeners[plan.id] = events;
+
+    // this context API thing is the internal api / engine
+    // each has a bespoke event emitter but otherwise a common interface
+    // const api: EngineAPI = {
+    //   ...engine,
+    //   ...events,
+    // };
+    // yeah this feels nasty
+    // also in debugging the name will be wrong
+    // i think maybe we just do new Engine(state)
+    // and that creates an API with shared state
+    // also this internal engine is a bit different
+    // i think it's just logger and events?
+    // so I'm back to it being a context. Interesting.
+    // Ok so now we have an executioncontext, which I'll create soon
+    // maybe it should just have state on it
+    const api = Object.assign(events, {
+      // workerPath: resolvedWorkerPath,
+      logger: options.logger,
+      callWorker: engine.callWorker,
+      // registerWorkflow,
+      // getWorkflowState,
+      // getWorkflowStatus,
+      // execute: executeWrapper,
+      // listen,
+    });
+
+    execute(api, state, options);
+
+    // return the event emitter
+    return events;
+  };
+
+  const listen = (
+    workflowId: string,
+    handlers: Record<EngineEvents, EventHandler>
+  ) => {
+    const events = listeners[workflowId];
+    for (const evt in handlers) {
+      events.on(evt, handlers[evt]);
+    }
+
+    // TODO return unsubscribe handle
+  };
+
+  engine.emit('test');
+
+  return Object.assign(engine, {
+    workerPath: resolvedWorkerPath,
+    logger: options.logger,
+    registerWorkflow,
+    getWorkflowState,
+    getWorkflowStatus,
+    execute: executeWrapper,
+    listen,
+  });
+};
+
+export default createEngine;

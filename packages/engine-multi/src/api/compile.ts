@@ -6,7 +6,7 @@ import type { Logger } from '@openfn/logger';
 import compile, { preloadAdaptorExports } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 import { EngineAPI, WorkflowState } from '../types';
-import { RTEOptions } from '../engine';
+import { RTEOptions } from '../__engine';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook

@@ -47,7 +47,7 @@ export const workflowComplete = (
   state: WorkflowState, // mutable workflow state
   event: WorkerCompletePayload // the event published by the runtime itself ({ workflowId, threadId })
 ) => {
-  const { workflowId, state: result } = event;
+  const { workflowId, state: result, threadId } = event;
 
   api.logger.success('complete workflow ', workflowId);
   api.logger.info(state);
@@ -68,6 +68,7 @@ export const workflowComplete = (
   // forward the event on to any external listeners
   api.emit(WORKFLOW_COMPLETE, {
     workflowId: workflowId,
+    threadId,
     duration: state.duration,
     state: result,
   });

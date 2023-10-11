@@ -14,35 +14,34 @@ workerpool.worker({
 
     return result;
   },
-  // // very basic simulation of a run
-  // hmm, don't use this, use mock worker instead
-  // run: (plan, adaptorPaths) => {
-  //   workerpool.workerEmit({ type: e.WORKFLOW_START, workflowId, threadId });
-  //   try {
-  //     // TODO
-  //     // workerpool.workerEmit({
-  //     //   type: e.WORKFLOW_LOG,
-  //     // });
+  // very very simple intepretation of a run function
+  // Most tests should use the mock-worker instead
+  run: (plan, adaptorPaths) => {
+    const workflowId = plan.id;
+    workerpool.workerEmit({
+      type: 'workflow-start',
+      workflowId,
+      threadId,
+    });
+    try {
+      const [job] = plan.jobs;
+      const result = eval(job.expression);
 
-  //     // or something
-  //     const result = eval(plan);
-
-  //     workerpool.workerEmit({
-  //       type: e.WORKFLOW_COMPLETE,
-  //       workflowId,
-  //       state: result,
-  //     });
-
-  //     // For tests
-  //     return result;
-  //   } catch (err) {
-  //     console.error(err);
-  //     // @ts-ignore TODO sort out error typing
-  //     workerpool.workerEmit({
-  //       type: e.WORKFLOW_ERROR,
-  //       workflowId,
-  //       message: err.message,
-  //     });
-  //   }
-  // },
+      workerpool.workerEmit({
+        type: 'workflow-complete',
+        workflowId,
+        state: result,
+        threadId,
+      });
+    } catch (err) {
+      console.error(err);
+      // @ts-ignore TODO sort out error typing
+      workerpool.workerEmit({
+        type: 'workflow-error',
+        workflowId,
+        message: err.message,
+        threadId,
+      });
+    }
+  },
 });

@@ -1,119 +1,84 @@
+// Creates the public/external API to the runtime
+
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { ExecutionPlan } from '@openfn/runtime';
 import createLogger, { JSONLog, Logger } from '@openfn/logger';
-import { EngineAPI, EngineEvents, EventHandler } from './types';
-import { EventEmitter } from 'node:events';
-import { WORKFLOW_COMPLETE, WORKFLOW_START } from './events';
 
-import initWorkers from './api/call-worker';
+import type { AutoinstallOptions } from './api/autoinstall';
 
-// For each workflow, create an API object with its own event emitter
-// this is a bt wierd - what if the emitter went on state instead?
-const createWorkflowEvents = (api: EngineAPI) => {
-  //create a bespoke event emitter
-  const events = new EventEmitter();
+export type State = any; // TODO I want a nice state def with generics
 
-  // TODO need this in closure really
-  // listeners[workflowId] = events;
-
-  // proxy all events to the main emitter
-  // uh actually there may be no point in this
-  function proxy(event: string) {
-    events.on(event, (evt) => {
-      // ensure the attempt id is on the event
-      evt.workflowId = workflowId;
-      const newEvt = {
-        ...evt,
-        workflowId: workflowId,
-      };
-
-      api.emit(event, newEvt);
-    });
-  }
-  proxy(WORKFLOW_START);
-  proxy(WORKFLOW_COMPLETE);
-  proxy(JOB_START);
-  proxy(JOB_COMPLETE);
-  proxy(LOG);
-
-  return events;
+// Archive of every workflow we've run
+// Fine to just keep in memory for now
+type WorkflowStats = {
+  id: string;
+  name?: string; // TODO what is name? this is irrelevant?
+  status: 'pending' | 'done' | 'err';
+  startTime?: number;
+  threadId?: number;
+  duration?: number;
+  error?: string;
+  result?: any; // State
+  plan: ExecutionPlan;
 };
 
-const createAPI = (repoDir: string, options) => {
-  const listeners = {};
+type Resolver<T> = (id: string) => Promise<T>;
 
-  // but this is more like an internal api, right?
-  // maybe this is like the workflow context
-  const state = {
-    workflows: {},
-  }; // TODO maybe this sits in another file
-  // the state has apis for getting/setting workflow state
-  // maybe actually each execute setsup its own state object
+// A list of helper functions which basically resolve ids into JSON
+// to lazy load assets
+export type LazyResolvers = {
+  credentials?: Resolver<Credential>;
+  state?: Resolver<State>;
+  expressions?: Resolver<string>;
+};
 
-  // TODO I think there's an internal and external API
-  // api is the external thing that other people call
-  // engine is the internal thing
-  const api = new EventEmitter() as EngineAPI;
+export type RTEOptions = {
+  resolvers?: LazyResolvers;
+  logger?: Logger;
+  workerPath?: string; // TODO maybe the public API doesn't expose this
+  repoDir?: string;
+  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
 
-  api.logger = options.logger || createLogger('RTE', { level: 'debug' });
+  autoinstall: AutoinstallOptions;
+};
 
-  api.registerWorkflow = (state) => {
-    state.workflows[plan.id] = state;
+// Create the engine and handle user-facing stuff, like options parsing
+// and defaulting
+const createAPI = function (serverId?: string, options: RTEOptions = {}) {
+  let { repoDir } = options;
+
+  const logger = options.logger || createLogger('RTE', { level: 'debug' });
+
+  if (!repoDir) {
+    if (process.env.OPENFN_RTE_REPO_DIR) {
+      repoDir = process.env.OPENFN_RTE_REPO_DIR;
+    } else {
+      repoDir = '/tmp/openfn/repo';
+      logger.warn('Using default repodir');
+      logger.warn(
+        'Set env var OPENFN_RTE_REPO_DIR to use a different directory'
+      );
+    }
+  }
+
+  logger.info('repoDir set to ', repoDir);
+
+  // TODO I dunno, does the engine have an id?
+  // I think that's a worker concern, especially
+  // as there's a 1:1 worker:engine mapping
+  // const id = serverId || crypto.randomUUID();
+
+  // TODO we want to get right down to this
+
+  // Create the internal API
+  const engine = createApi(options);
+
+  // Return the external API
+  return {
+    execute: engine.execute,
+    listen: engine.listen,
   };
-
-  // what if this returns a bespoke event listener?
-  // i don't need to to execute(); listen, i can just excute
-  // it's kinda slick but you still need two lines of code and it doesn't  buy anyone anything
-  // also this is nevver gonna get used externally so it doesn't need to be slick
-  api.execute = (executionPlan) => {
-    const workflowId = plan.id;
-
-    // Pull options out of the plan so that all options are in one place
-    const { options, ...plan } = executionPlan;
-
-    // initial state for this workflow run
-    // TODO let's create a util function for this (nice for testing)
-    const state = createState(plan);
-    // the engine does need to be able to report on the state of each workflow
-    api.registerWorkflow(state);
-
-    const events = createWorkflowEvents(api);
-
-    listeners[workflowId] = events;
-
-    // this context API thing is the internal api / engine
-    // each has a bespoke event emitter but otherwise a common interface
-    const contextAPI: EngineAPI = {
-      ...api,
-      ...events,
-    };
-
-    execute(contextAPI, state, options);
-
-    // return the event emitter (not the full engine API though)
-    return events;
-  };
-
-  // // how will this actually work?
-  // api.listen = (
-  //   attemptId: string,
-  //   listeners: Record<EngineEvents, EventHandler>
-  // ) => {
-  //   // const handler = (eventName) => {
-  //   //   if ()
-  //   // }
-  //   const events = listeners[workflowId];
-  //   for (const evt of listeners) {
-  //     events.on(evt, listeners[evt]);
-  //   }
-
-  //   // TODO return unsubscribe handle
-  // };
-
-  // we can have global reporting like this
-  api.getStatus = (workflowId) => state.workflows[workflowId].status;
-
-  initWorkers(api);
-
-  return api;
 };
 
 export default createAPI;
