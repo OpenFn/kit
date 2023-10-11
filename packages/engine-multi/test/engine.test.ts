@@ -102,7 +102,7 @@ test('execute with test worker and trigger workflow-complete', (t) => {
   });
 });
 
-test.only('listen to workflow-complete', (t) => {
+test('listen to workflow-complete', (t) => {
   return new Promise((done) => {
     const p = path.resolve('test/worker-functions.js');
     const engine = createEngine(

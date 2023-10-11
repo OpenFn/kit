@@ -5,23 +5,17 @@
 import type { Logger } from '@openfn/logger';
 import compile, { preloadAdaptorExports } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
-import { EngineAPI, WorkflowState } from '../types';
-import { RTEOptions } from '../__engine';
+import { ExecutionContext } from '../types';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook
 // We'll keep this for now though while we get everything else working
-export default async (
-  api: EngineAPI,
-  state: WorkflowState,
-  options: Pick<RTEOptions, 'repoDir' | 'noCompile'> = {}
-) => {
-  const { logger } = api;
-  const { plan } = state;
+export default async (context: ExecutionContext) => {
+  const { logger, state, options } = context;
   const { repoDir, noCompile } = options;
 
-  if (!noCompile) {
-    for (const job of plan.jobs) {
+  if (!noCompile && state.plan?.jobs?.length) {
+    for (const job of state.plan.jobs) {
       if (job.expression) {
         job.expression = await compileJob(
           job.expression as string,
@@ -32,8 +26,6 @@ export default async (
       }
     }
   }
-
-  return plan;
 };
 
 // TODO copied out of CLI - how can we share code here?

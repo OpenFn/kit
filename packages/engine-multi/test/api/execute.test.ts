@@ -1,7 +1,7 @@
 import path from 'node:path';
 import test from 'ava';
 import { EventEmitter } from 'node:events';
-import { EngineAPI } from '../../src/types';
+import { EngineAPI, ExecutionContext, WorkflowState } from '../../src/types';
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
 import { createMockLogger } from '@openfn/logger';
@@ -10,18 +10,21 @@ import {
   WORKFLOW_LOG,
   WORKFLOW_START,
 } from '../../src/events';
+import { RTEOptions } from '../../src/api';
 
 const workerPath = path.resolve('dist/mock-worker.js');
 
-// Mock API object
-let api;
-
-test.before(() => {
-  api = new EventEmitter() as EngineAPI;
-  api.logger = createMockLogger();
-
+const createContext = ({ state, options }: Partial<ExecutionContext> = {}) => {
+  const api = new EventEmitter();
+  Object.assign(api, {
+    logger: createMockLogger(),
+    state: state || {},
+    options,
+    // logger: not used
+  }) as unknown as ExecutionContext;
   initWorkers(api, workerPath);
-});
+  return api;
+};
 
 const plan = {
   id: 'x',
@@ -36,39 +39,34 @@ const plan = {
 const options = {
   noCompile: true,
   autoinstall: {
-    handleInstall: async () => false,
+    handleInstall: async () => {},
     handleIsInstalled: async () => false,
   },
-};
+} as RTEOptions;
 
 test.serial('execute should run a job and return the result', async (t) => {
   const state = {
     plan,
-  };
+  } as WorkflowState;
 
-  const options = {
-    noCompile: true,
-    autoinstall: {
-      handleInstall: async () => false,
-      handleIsInstalled: async () => false,
-    },
-  };
+  const context = createContext({ state, options });
 
-  const result = await execute(api, state, options);
+  const result = await execute(context);
   t.is(result, 22);
 });
 
 // we can check the state object after each of these is returned
 test.serial('should emit a workflow-start event', async (t) => {
-  let workflowStart;
-
-  api.once(WORKFLOW_START, (evt) => (workflowStart = evt));
-
   const state = {
     plan,
-  };
+  } as WorkflowState;
+  let workflowStart;
 
-  await execute(api, state, options);
+  const context = createContext({ state, options });
+
+  context.once(WORKFLOW_START, (evt) => (workflowStart = evt));
+
+  await execute(context);
 
   // No need to do a deep test of the event payload here
   t.is(workflowStart.workflowId, 'x');
@@ -76,14 +74,15 @@ test.serial('should emit a workflow-start event', async (t) => {
 
 test.serial('should emit a workflow-complete event', async (t) => {
   let workflowComplete;
-
-  api.once(WORKFLOW_COMPLETE, (evt) => (workflowComplete = evt));
-
   const state = {
     plan,
-  };
+  } as WorkflowState;
 
-  await execute(api, state, options);
+  const context = createContext({ state, options });
+
+  context.once(WORKFLOW_COMPLETE, (evt) => (workflowComplete = evt));
+
+  await execute(context);
 
   t.is(workflowComplete.workflowId, 'x');
   t.is(workflowComplete.state, 22);
@@ -91,9 +90,6 @@ test.serial('should emit a workflow-complete event', async (t) => {
 
 test.serial('should emit a log event', async (t) => {
   let workflowLog;
-
-  api.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
-
   const plan = {
     id: 'y',
     jobs: [
@@ -105,9 +101,12 @@ test.serial('should emit a log event', async (t) => {
   const state = {
     id: 'y',
     plan,
-  };
+  } as WorkflowState;
 
-  await execute(api, state, options);
+  const context = createContext({ state, options });
+  context.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
+
+  await execute(context);
 
   t.is(workflowLog.workflowId, 'y');
   t.is(workflowLog.message[0], 'hi');

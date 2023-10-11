@@ -3,6 +3,7 @@ import { JSONLog, Logger } from '@openfn/logger';
 import { ExecutionPlan } from '@openfn/runtime';
 import type { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
+import { RTEOptions } from './api';
 
 // These are the external events published but he api and listen
 type WorkflowStartEvent = 'workflow-start';
@@ -76,6 +77,7 @@ export type WorkerStartPayload = {
 
 export type WORKER_COMPLETE = 'worker-complete';
 export type WorkerCompletePayload = {
+  threadId: string;
   workflowId: string;
   state: any;
 };
@@ -83,6 +85,7 @@ export type WorkerCompletePayload = {
 // TODO confusion over this and events.ts
 export type WORKER_LOG = 'worker-log';
 export type WorkerLogPayload = {
+  threadId: string;
   workflowId: string;
   message: JSONLog;
 };
@@ -117,15 +120,18 @@ export type WorkflowState = {
 };
 
 // this is the internal engine API
-export interface EngineAPI extends EventEmitter {
+export interface ExecutionContext extends EventEmitter {
+  options: RTEOptions; // TODO maybe. bring them in here?
+  state: WorkflowState;
   logger: Logger;
-
   callWorker: (
     task: string,
     args: any[] = [],
     events: any = {}
   ) => workerpool.Promise;
 }
+
+export interface EngineAPI extends EventEmitter {}
 
 interface RuntimeEngine extends EventEmitter {
   //id: string // human readable instance id

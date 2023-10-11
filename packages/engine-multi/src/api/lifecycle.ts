@@ -1,6 +1,7 @@
 import { WORKFLOW_COMPLETE, WORKFLOW_LOG, WORKFLOW_START } from '../events';
 import {
   EngineAPI,
+  ExecutionContext,
   WorkerCompletePayload,
   WorkerLogPayload,
   WorkerStartPayload,
@@ -8,13 +9,13 @@ import {
 } from '../types';
 
 export const workflowStart = (
-  api: EngineAPI, // general API
-  state: WorkflowState, // mutable workflow state
+  context: ExecutionContext,
   event: WorkerStartPayload // the event published by the runtime itself ({ workflowId, threadId })
 ) => {
+  const { state, logger } = context;
   const { workflowId, threadId } = event;
 
-  api.logger.info('starting workflow ', workflowId);
+  logger.info('starting workflow ', workflowId);
 
   // where would this throw get caught?
   if (state.startTime) {
@@ -36,21 +37,21 @@ export const workflowStart = (
   // api.activeWorkflows.push(workflowId);
 
   // forward the event on to any external listeners
-  api.emit(WORKFLOW_START, {
+  context.emit(WORKFLOW_START, {
     workflowId, // if this is a bespoke emitter it can be implied, which is nice
     // Should we publish anything else here?
   });
 };
 
 export const workflowComplete = (
-  api: EngineAPI, // general API
-  state: WorkflowState, // mutable workflow state
+  context: ExecutionContext,
   event: WorkerCompletePayload // the event published by the runtime itself ({ workflowId, threadId })
 ) => {
+  const { logger, state } = context;
   const { workflowId, state: result, threadId } = event;
 
-  api.logger.success('complete workflow ', workflowId);
-  api.logger.info(state);
+  logger.success('complete workflow ', workflowId);
+  logger.info(state);
 
   // TODO I don't know how we'd get here in this architecture
   // if (!allWorkflows.has(workflowId)) {
@@ -66,7 +67,7 @@ export const workflowComplete = (
   // activeWorkflows.splice(idx, 1);
 
   // forward the event on to any external listeners
-  api.emit(WORKFLOW_COMPLETE, {
+  context.emit(WORKFLOW_COMPLETE, {
     workflowId: workflowId,
     threadId,
     duration: state.duration,
@@ -75,11 +76,10 @@ export const workflowComplete = (
 };
 
 export const log = (
-  api: EngineAPI, // general API
-  state: WorkflowState, // mutable workflow state
+  context: ExecutionContext,
   event: WorkerLogPayload // the event published by the runtime itself ({ workflowId, threadId })
 ) => {
-  const { id } = state;
+  const { id } = context.state;
   // // TODO not sure about this stuff, I think we can drop it?
   // const newMessage = {
   //   ...message,
@@ -87,9 +87,9 @@ export const log = (
   //   // I'm sure there are nicer, more elegant ways of doing this
   //   message: [`[${workflowId}]`, ...message.message],
   // };
-  api.logger.proxy(event.message);
+  context.logger.proxy(event.message);
 
-  api.emit(WORKFLOW_LOG, {
+  context.emit(WORKFLOW_LOG, {
     workflowId: id,
     ...event.message,
   });

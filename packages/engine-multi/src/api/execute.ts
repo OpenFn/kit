@@ -1,8 +1,6 @@
-// this replaces the runner
-
 // Execute a compiled workflow
 import * as e from '../events';
-import { EngineAPI, WorkflowState } from '../types';
+import { ExecutionContext } from '../types';
 
 import autoinstall from './autoinstall';
 import compile from './compile';
@@ -12,32 +10,28 @@ import { workflowStart, workflowComplete, log } from './lifecycle';
 // Is it better to just return the handler?
 // But then this function really isn't doing so much
 // (I guess that's true anyway)
-const execute = async (
-  api: EngineAPI,
-  state: WorkflowState,
-  options: RTEOptions
-) => {
-  const adaptorPaths = await autoinstall(api, state, options.autoinstall);
-  await compile(api, state, options);
+const execute = async (context: ExecutionContext) => {
+  const { state, callWorker, logger } = context;
+
+  const adaptorPaths = await autoinstall(context);
+  await compile(context);
 
   const events = {
     [e.WORKFLOW_START]: (evt) => {
-      workflowStart(api, state, evt);
+      workflowStart(context, evt);
     },
     [e.WORKFLOW_COMPLETE]: (evt) => {
-      workflowComplete(api, state, evt);
+      workflowComplete(context, evt);
     },
     [e.WORKFLOW_LOG]: (evt) => {
-      log(api, state, evt);
+      log(context, evt);
     },
   };
 
-  return api
-    .callWorker('run', [state.plan, adaptorPaths], events)
-    .catch((e) => {
-      // TODO what about errors then?
-      api.logger.error(e);
-    });
+  return callWorker('run', [state.plan, adaptorPaths], events).catch((e) => {
+    // TODO what about errors then?
+    logger.error(e);
+  });
 };
 
 export default execute;

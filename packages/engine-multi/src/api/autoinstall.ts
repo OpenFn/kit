@@ -9,11 +9,10 @@ import {
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
-import { EngineAPI, WorkflowState } from '../types';
+import { EngineAPI, ExecutionContext, WorkflowState } from '../types';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
-  repoDir?: string;
   skipRepoValidation?: boolean;
   handleInstall?(fn: string, repoDir: string, logger: Logger): Promise<void>;
   handleIsInstalled?(
@@ -25,25 +24,22 @@ export type AutoinstallOptions = {
 
 const pending: Record<string, Promise<void>> = {};
 
-const autoinstall = async (
-  api: EngineAPI,
-  state: WorkflowState,
-  options: AutoinstallOptions
-): Promise<ModulePaths> => {
-  const { logger } = api;
+const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
+  const { logger, state, options } = context;
   const { plan } = state;
   const { repoDir } = options;
+  const autoinstallOptions = options.autoinstall || {};
 
-  const installFn = options.handleInstall || install;
-  const isInstalledFn = options.handleIsInstalled || isInstalled;
+  const installFn = autoinstallOptions?.handleInstall || install;
+  const isInstalledFn = autoinstallOptions?.handleIsInstalled || isInstalled;
 
   let didValidateRepo = false;
-  const { skipRepoValidation } = options;
+  const { skipRepoValidation } = autoinstallOptions;
 
-  if (!skipRepoValidation && !didValidateRepo && options.repoDir) {
+  if (!skipRepoValidation && !didValidateRepo && repoDir) {
     // TODO what if this throws?
     // Whole server probably needs to crash, so throwing is probably appropriate
-    await ensureRepo(options.repoDir, logger);
+    await ensureRepo(repoDir, logger);
     didValidateRepo = true;
   }
 
@@ -62,7 +58,9 @@ const autoinstall = async (
     if (needsInstalling) {
       if (!pending[a]) {
         // add a promise to the pending array
-        pending[a] = installFn(a, options.repoDir, logger);
+        pending[a] = installFn(a, repoDir, logger).then(() => {
+          delete pending[a];
+        });
       }
       // Return the pending promise (safe to do this multiple times)
       await pending[a].then();

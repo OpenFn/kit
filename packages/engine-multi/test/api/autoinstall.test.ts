@@ -2,7 +2,7 @@ import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
 
 import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
-import { EngineAPI, WorkflowState } from '../../src/types';
+import { EngineAPI, ExecutionContext, WorkflowState } from '../../src/types';
 
 type PackageJson = {
   name: string;
@@ -14,16 +14,26 @@ const mockIsInstalled = (pkg: PackageJson) => async (specifier: string) => {
   return pkg.dependencies.hasOwnProperty(alias);
 };
 
-// TODO should this write to package json?
-// I don't think there's any need
 const mockHandleInstall = async (specifier: string): Promise<void> =>
   new Promise<void>((r) => r()).then();
 
-const mockLogger = createMockLogger();
+const logger = createMockLogger();
 
-const api = {
-  logger: mockLogger,
-} as unknown as EngineAPI;
+const createContext = (autoinstallOpts?, jobs?: any[]) =>
+  ({
+    logger,
+    state: {
+      plan: {
+        jobs: jobs || [{ adaptor: 'x@1.0.0' }],
+      },
+    },
+    options: {
+      autoinstall: autoinstallOpts || {
+        handleInstall: mockHandleInstall,
+        handleIsInstalled: mockIsInstalled,
+      },
+    },
+  } as unknown as ExecutionContext);
 
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
@@ -88,18 +98,13 @@ test.serial('autoinstall: should call both mock functions', async (t) => {
     return;
   };
 
-  const state = {
-    plan: {
-      jobs: [{ adaptor: 'x@1.0.0' }],
-    },
-  } as WorkflowState;
-
-  const options = {
+  const autoinstallOpts = {
     handleInstall: mockInstall,
     handleIsInstalled: mockIsInstalled,
   };
+  const context = createContext(autoinstallOpts);
 
-  await autoinstall(api, state, options);
+  await autoinstall(context);
 
   t.true(didCallIsInstalled);
   t.true(didCallInstall);
@@ -117,48 +122,40 @@ test.serial(
       });
 
     const options = {
+      skipRepoValidation: true,
       handleInstall: mockInstall,
       handleIsInstalled: async () => false,
     };
 
-    const state = {
-      plan: {
-        jobs: [{ adaptor: 'z@1.0.0' }],
-      },
-    } as WorkflowState;
+    const context = createContext(options);
 
-    await Promise.all([
-      autoinstall(api, state, options),
-      autoinstall(api, state, options),
-    ]);
+    await Promise.all([autoinstall(context), autoinstall(context)]);
 
     t.is(callCount, 1);
   }
 );
 
 test.serial('autoinstall: return a map to modules', async (t) => {
-  const state = {
-    plan: {
-      // Note that we have difficulty now if a workflow imports two versions of the same adaptor
-      jobs: [
-        {
-          adaptor: 'common@1.0.0',
-        },
-        {
-          adaptor: 'http@1.0.0',
-        },
-      ],
+  const jobs = [
+    {
+      adaptor: 'common@1.0.0',
     },
-  } as WorkflowState;
+    {
+      adaptor: 'http@1.0.0',
+    },
+  ];
 
-  const options = {
+  const context = createContext(null, jobs);
+  context.options = {
     repoDir: 'a/b/c',
-    skipRepoValidation: true,
-    handleInstall: async () => true,
-    handleIsInstalled: async () => false,
+    autoinstall: {
+      skipRepoValidation: true,
+      handleInstall: async () => {},
+      handleIsInstalled: async () => false,
+    },
   };
 
-  const result = await autoinstall(api, state, options);
+  const result = await autoinstall(context);
 
   t.deepEqual(result, {
     common: { path: 'a/b/c/node_modules/common_1.0.0' },

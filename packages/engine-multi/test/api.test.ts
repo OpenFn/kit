@@ -14,8 +14,8 @@ test.todo('execute should proxy events');
 test.todo('listen');
 test.todo('log');
 
-test('callWorker', (t) => {
-  const api = createAPI();
+// test('callWorker', (t) => {
+//   const api = createAPI();
 
-  t.pass();
-});
+//   t.pass();
+// });
