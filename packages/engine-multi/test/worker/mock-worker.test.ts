@@ -9,9 +9,9 @@ import path from 'node:path';
 import test from 'ava';
 import workerpool from 'workerpool';
 
-import { createPlan } from './util';
+import { createPlan } from '../../src/test/util';
 
-import * as e from '../src/events';
+import * as e from '../../src/events';
 
 const workers = workerpool.pool(path.resolve('dist/mock-worker.js'));
 

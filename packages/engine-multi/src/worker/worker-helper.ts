@@ -5,7 +5,7 @@ import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
 import createLogger from '@openfn/logger';
 
-import * as e from './events';
+import * as e from '../events';
 
 function publish(event: e.WorkflowEvent) {
   workerpool.workerEmit(event);

@@ -7,7 +7,7 @@ import { EngineAPI } from '../../src/types';
 let api = {} as EngineAPI;
 
 test.before(() => {
-  const workerPath = path.resolve('test/worker-functions.js');
+  const workerPath = path.resolve('src/test/worker-functions.js');
   initWorkers(api, workerPath);
 });
 

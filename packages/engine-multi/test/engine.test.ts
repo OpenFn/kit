@@ -1,7 +1,7 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
-import { createPlan } from './util';
+import { createPlan } from '../src/test/util';
 
 import createEngine from '../src/engine';
 import * as e from '../src/events';
@@ -73,7 +73,7 @@ test('use a custom worker path', (t) => {
 
 test('execute with test worker and trigger workflow-complete', (t) => {
   return new Promise((done) => {
-    const p = path.resolve('test/worker-functions.js');
+    const p = path.resolve('src/test/worker-functions.js');
     const engine = createEngine(
       {
         logger,
@@ -104,7 +104,7 @@ test('execute with test worker and trigger workflow-complete', (t) => {
 
 test('execute does not return internal state stuff', (t) => {
   return new Promise((done) => {
-    const p = path.resolve('test/worker-functions.js');
+    const p = path.resolve('src/test/worker-functions.js');
     const engine = createEngine(
       {
         logger,
@@ -148,7 +148,7 @@ test('execute does not return internal state stuff', (t) => {
 
 test('listen to workflow-complete', (t) => {
   return new Promise((done) => {
-    const p = path.resolve('test/worker-functions.js');
+    const p = path.resolve('src/test/worker-functions.js');
     const engine = createEngine(
       {
         logger,

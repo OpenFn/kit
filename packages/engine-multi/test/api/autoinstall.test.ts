@@ -28,6 +28,7 @@ const createContext = (autoinstallOpts?, jobs?: any[]) =>
       },
     },
     options: {
+      repoDir: '.',
       autoinstall: autoinstallOpts || {
         handleInstall: mockHandleInstall,
         handleIsInstalled: mockIsInstalled,
@@ -115,7 +116,7 @@ test.serial(
   async (t) => {
     let callCount = 0;
 
-    const mockInstall = (specififer: string) =>
+    const mockInstall = () =>
       new Promise<void>((resolve) => {
         callCount++;
         setTimeout(() => resolve(), 20);
