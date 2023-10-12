@@ -1,21 +1,91 @@
 import test from 'ava';
 
-import createAPI from '../src/__api';
+import createAPI from '../src/api';
+import { createMockLogger } from '@openfn/logger';
 
 // thes are tests on the public api functions generally
-// so these are very high level tests
+// so these are very high level tests and don't allow mock workers or anything
 
-// no need to test the event stuff - startworkflow etc
-// maybe we can check the keys exist, although we'll quickly know if we dont
+const logger = createMockLogger();
 
-test.todo('execute');
-test.todo('execute should return an event emitter');
-test.todo('execute should proxy events');
-test.todo('listen');
-test.todo('log');
+test.afterEach(() => {
+  logger._reset();
+});
 
-// test('callWorker', (t) => {
-//   const api = createAPI();
+test('create a default engine api without throwing', (t) => {
+  createAPI();
+  t.pass();
+});
 
-//   t.pass();
-// });
+test('create an engine api with options without throwing', (t) => {
+  createAPI({ logger });
+
+  // just a token test to see if the logger is accepted and used
+  t.assert(logger._history.length > 0);
+});
+
+test('create an engine api with a limited surface', (t) => {
+  const api = createAPI({ logger });
+  const keys = Object.keys(api);
+
+  // TODO the api will actually probably get a bit bigger than this
+  t.deepEqual(keys, ['execute', 'listen']);
+});
+
+test('execute should return an event listener and receive workflow-complete', (t) => {
+  return new Promise((done) => {
+    const api = createAPI({
+      logger,
+      // Disable compilation
+      compile: {
+        skip: true,
+      },
+    });
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: 's => s',
+          // with no adaptor it shouldn't try to autoinstall
+        },
+      ],
+    };
+
+    const listener = api.execute(plan);
+    listener.on('workflow-complete', () => {
+      t.pass('workflow completed');
+      done();
+    });
+  });
+});
+
+test('should listen to workflow-complete', (t) => {
+  return new Promise((done) => {
+    const api = createAPI({
+      logger,
+      // Disable compilation
+      compile: {
+        skip: true,
+      },
+    });
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: 's => s',
+          // with no adaptor it shouldn't try to autoinstall
+        },
+      ],
+    };
+
+    api.execute(plan);
+    api.listen(plan.id, {
+      'workflow-complete': () => {
+        t.pass('workflow completed');
+        done();
+      },
+    });
+  });
+});

@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { ExecutionPlan } from '@openfn/runtime';
 import createLogger, { JSONLog, Logger } from '@openfn/logger';
 
+import createEngine from './engine';
 import type { AutoinstallOptions } from './api/autoinstall';
 
 export type State = any; // TODO I want a nice state def with generics
@@ -36,16 +37,19 @@ export type LazyResolvers = {
 export type RTEOptions = {
   resolvers?: LazyResolvers;
   logger?: Logger;
-  workerPath?: string; // TODO maybe the public API doesn't expose this
   repoDir?: string;
-  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
 
-  autoinstall: AutoinstallOptions;
+  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
+  compile?: {
+    skip: true;
+  };
+
+  autoinstall?: AutoinstallOptions;
 };
 
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
-const createAPI = function (serverId?: string, options: RTEOptions = {}) {
+const createAPI = function (options: RTEOptions = {}) {
   let { repoDir } = options;
 
   const logger = options.logger || createLogger('RTE', { level: 'debug' });
@@ -64,20 +68,30 @@ const createAPI = function (serverId?: string, options: RTEOptions = {}) {
 
   logger.info('repoDir set to ', repoDir);
 
-  // TODO I dunno, does the engine have an id?
-  // I think that's a worker concern, especially
-  // as there's a 1:1 worker:engine mapping
-  // const id = serverId || crypto.randomUUID();
+  const engineOptions = {
+    logger,
+    resolvers: options.resolvers, // TODO should probably default these?
+    repoDir,
 
-  // TODO we want to get right down to this
+    // TODO should map this down into compile.
+    noCompile: options.compile?.skip ?? false,
+    // TODO should we disable autoinstall overrides?
+    autoinstall: options.autoinstall,
+  };
 
   // Create the internal API
-  const engine = createApi(options);
+  // TMP: use the mock worker for now
+  const engine = createEngine(
+    engineOptions,
+    path.resolve('dist/mock-worker.js')
+  );
 
   // Return the external API
   return {
     execute: engine.execute,
     listen: engine.listen,
+
+    // TODO what about a general on or once?
   };
 };
 

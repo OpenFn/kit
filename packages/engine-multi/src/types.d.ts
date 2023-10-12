@@ -149,10 +149,7 @@ interface RuntimeEngine extends EventEmitter {
   // actually I think the id is on the worker, not the engine
 
   // TODO should return an unsubscribe hook
-  listen(
-    attemptId: string,
-    listeners: Record<EngineEvents, EventHandler>
-  ): void;
+  listen(attemptId: string, listeners: any): void;
 
   // TODO return a promise?
   // Kinda convenient but not actually needed

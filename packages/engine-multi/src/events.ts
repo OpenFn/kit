@@ -3,8 +3,9 @@
 // TODO mayberename event constants
 import { JSONLog } from '@openfn/logger';
 
-// Top level API events - these are what the engine publishes
-
+// Top level API events - these are what the engine publishes externally
+// should it just be start, log, job-start, job-complete, end etc?
+// What about engine-level logging? CLI-level stuff?
 export const WORKFLOW_START = 'workflow-start';
 
 export const WORKFLOW_COMPLETE = 'workflow-complete';

@@ -179,26 +179,3 @@ test('listen to workflow-complete', (t) => {
     });
   });
 });
-
-test.skip('Should run a mock job with a simple return value', async (t) => {
-  const state = { data: { x: 1 } };
-  const rtm = Manager('x', options);
-  const plan = createPlan({
-    expression: `() => (${JSON.stringify(state)})`,
-  });
-  const result = await rtm.execute(plan);
-  t.deepEqual(result, state);
-});
-
-test.skip('Should not explode if no adaptor is passed', async (t) => {
-  const state = { data: { x: 1 } };
-  const rtm = Manager('x', options);
-  const plan = createPlan({
-    expression: `() => (${JSON.stringify(state)})`,
-  });
-
-  // @ts-ignore
-  delete plan.jobs[0].adaptor;
-  const result = await rtm.execute(plan);
-  t.deepEqual(result, state);
-});

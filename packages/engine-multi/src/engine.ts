@@ -8,7 +8,7 @@ import initWorkers from './api/call-worker';
 import createState from './api/create-state';
 import execute from './api/execute';
 
-import type { RTEOptions } from './api';
+import type { LazyResolvers, RTEOptions } from './api';
 import type {
   EngineAPI,
   EngineEvents,
@@ -18,6 +18,7 @@ import type {
   ExecutionContextConstructor,
 } from './types';
 import { Logger } from '@openfn/logger';
+import { AutoinstallOptions } from './api/autoinstall';
 
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
@@ -76,11 +77,22 @@ class ExecutionContext extends EventEmitter {
   }
 }
 
+// The enigne is way more strict about options
+export type EngineOptions = {
+  repoDir: string;
+  logger: Logger;
+
+  resolvers: LazyResolvers;
+
+  compile?: {}; // TODO
+  autoinstall?: AutoinstallOptions;
+};
+
 // This creates the internal API
 // tbh this is actually the engine, right, this is where stuff happens
 // the api file is more about the public api I think
 // TOOD options MUST have a logger
-const createEngine = (options: RTEOptions, workerPath?: string) => {
+const createEngine = (options: EngineOptions, workerPath?: string) => {
   const states: Record<string, WorkflowState> = {};
   const contexts: Record<string, ExecutionContext> = {};
   // TODO I think this is for later
@@ -152,7 +164,8 @@ const createEngine = (options: RTEOptions, workerPath?: string) => {
 
   const listen = (
     workflowId: string,
-    handlers: Record<EngineEvents, EventHandler>
+    //handlers: Partial<Record<EngineEvents, EventHandler>>
+    handlers: Record<string, EventHandler>
   ) => {
     const events = contexts[workflowId];
     for (const evt in handlers) {
