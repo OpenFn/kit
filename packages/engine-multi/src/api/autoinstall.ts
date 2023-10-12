@@ -8,8 +8,9 @@ import {
   loadRepoPkg,
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
+
 import type { Logger } from '@openfn/logger';
-import { EngineAPI, ExecutionContext, WorkflowState } from '../types';
+import type { ExecutionContext } from '../types';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -36,7 +37,12 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   let didValidateRepo = false;
   const { skipRepoValidation } = autoinstallOptions;
 
-  if (!skipRepoValidation && !didValidateRepo && repoDir) {
+  if (!repoDir) {
+    logger.warn('WARNING: skipping autoinstall because repoDir is not set');
+    return {};
+  }
+
+  if (!skipRepoValidation && !didValidateRepo) {
     // TODO what if this throws?
     // Whole server probably needs to crash, so throwing is probably appropriate
     await ensureRepo(repoDir, logger);

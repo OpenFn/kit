@@ -1,11 +1,9 @@
 import { WORKFLOW_COMPLETE, WORKFLOW_LOG, WORKFLOW_START } from '../events';
 import {
-  EngineAPI,
   ExecutionContext,
   WorkerCompletePayload,
   WorkerLogPayload,
   WorkerStartPayload,
-  WorkflowState,
 } from '../types';
 
 export const workflowStart = (

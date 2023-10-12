@@ -17,21 +17,24 @@ const execute = async (context: ExecutionContext) => {
   await compile(context);
 
   const events = {
-    [e.WORKFLOW_START]: (evt) => {
+    // TODO typings
+    [e.WORKFLOW_START]: (evt: any) => {
       workflowStart(context, evt);
     },
-    [e.WORKFLOW_COMPLETE]: (evt) => {
+    [e.WORKFLOW_COMPLETE]: (evt: any) => {
       workflowComplete(context, evt);
     },
-    [e.WORKFLOW_LOG]: (evt) => {
+    [e.WORKFLOW_LOG]: (evt: any) => {
       log(context, evt);
     },
   };
 
-  return callWorker('run', [state.plan, adaptorPaths], events).catch((e) => {
-    // TODO what about errors then?
-    logger.error(e);
-  });
+  return callWorker('run', [state.plan, adaptorPaths], events).catch(
+    (e: any) => {
+      // TODO what about errors then?
+      logger.error(e);
+    }
+  );
 };
 
 export default execute;

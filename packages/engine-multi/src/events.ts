@@ -46,5 +46,5 @@ export type LogWorkflowEvent = {
 export type WorkflowEvent =
   | AcceptWorkflowEvent
   | CompleteWorkflowEvent
-  | ErrWorkflowEvent;
-//   | LogWorkflowEvent;
+  | ErrWorkflowEvent
+  | LogWorkflowEvent;

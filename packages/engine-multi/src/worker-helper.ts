@@ -3,7 +3,7 @@
 
 import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
-import createLogger, { JSONLog } from '@openfn/logger';
+import createLogger from '@openfn/logger';
 
 import * as e from './events';
 

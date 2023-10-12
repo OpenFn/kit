@@ -8,10 +8,9 @@ import initWorkers from './api/call-worker';
 import createState from './api/create-state';
 import execute from './api/execute';
 
-import type { LazyResolvers, RTEOptions } from './api';
+import type { LazyResolvers } from './api';
 import type {
   EngineAPI,
-  EngineEvents,
   EventHandler,
   WorkflowState,
   CallWorker,
@@ -61,7 +60,7 @@ class ExecutionContext extends EventEmitter {
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;
-  options: RTEOptions;
+  options: EngineOptions;
 
   constructor({
     state,
@@ -77,12 +76,12 @@ class ExecutionContext extends EventEmitter {
   }
 }
 
-// The enigne is way more strict about options
+// The engine is way more strict about options
 export type EngineOptions = {
   repoDir: string;
   logger: Logger;
 
-  resolvers: LazyResolvers;
+  resolvers?: LazyResolvers;
 
   compile?: {}; // TODO
   autoinstall?: AutoinstallOptions;
@@ -149,15 +148,17 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
     contexts[workflowId] = createWorkflowEvents(engine, context, workflowId);
 
     // TODO typing between the class and interface isn't right
+    // @ts-ignore
     execute(context);
 
     // hmm. Am I happy to pass the internal workflow state OUT of the handler?
     // I'd rather have like a proxy emitter or something
     // also I really only want passive event handlers, I don't want interference from outside
     return {
-      on: (...args: any[]) => context.on(...args),
-      once: context.once,
-      off: context.off,
+      on: (evt: string, fn: (...args: any[]) => void) => context.on(evt, fn),
+      once: (evt: string, fn: (...args: any[]) => void) =>
+        context.once(evt, fn),
+      off: (evt: string, fn: (...args: any[]) => void) => context.off(evt, fn),
     };
     // return context;
   };

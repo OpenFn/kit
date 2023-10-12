@@ -3,7 +3,7 @@
 // being compiled twice
 
 import type { Logger } from '@openfn/logger';
-import compile, { preloadAdaptorExports } from '@openfn/compiler';
+import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 import { ExecutionContext } from '../types';
 
@@ -19,9 +19,9 @@ export default async (context: ExecutionContext) => {
       if (job.expression) {
         job.expression = await compileJob(
           job.expression as string,
-          job.adaptor, // TODO need to expand this. Or do I?
+          logger,
           repoDir,
-          logger
+          job.adaptor // TODO need to expand this. Or do I?
         );
       }
     }
@@ -41,22 +41,25 @@ const stripVersionSpecifier = (specifier: string) => {
 
 const compileJob = async (
   job: string,
-  adaptor: string,
-  repoDir: string,
-  logger: Logger
+  logger: Logger,
+  repoDir?: string,
+  adaptor?: string
 ) => {
-  // TODO I probably dont want to log this stuff
-  const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
-  const exports = await preloadAdaptorExports(pathToAdaptor!, false, logger);
-  const compilerOptions = {
+  const compilerOptions: Options = {
     logger,
-    ['add-imports']: {
+  };
+
+  if (adaptor && repoDir) {
+    // TODO I probably dont want to log this stuff
+    const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
+    const exports = await preloadAdaptorExports(pathToAdaptor!, false, logger);
+    compilerOptions['add-imports'] = {
       adaptor: {
         name: stripVersionSpecifier(adaptor),
         exports,
         exportAll: true,
       },
-    },
-  };
+    };
+  }
   return compile(job, compilerOptions);
 };

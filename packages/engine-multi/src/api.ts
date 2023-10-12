@@ -1,28 +1,13 @@
 // Creates the public/external API to the runtime
+// Basically a thin wrapper, with validation, around the engine
 
 import path from 'node:path';
-import crypto from 'node:crypto';
-import { ExecutionPlan } from '@openfn/runtime';
-import createLogger, { JSONLog, Logger } from '@openfn/logger';
+import createLogger, { Logger } from '@openfn/logger';
 
 import createEngine from './engine';
 import type { AutoinstallOptions } from './api/autoinstall';
 
 export type State = any; // TODO I want a nice state def with generics
-
-// Archive of every workflow we've run
-// Fine to just keep in memory for now
-type WorkflowStats = {
-  id: string;
-  name?: string; // TODO what is name? this is irrelevant?
-  status: 'pending' | 'done' | 'err';
-  startTime?: number;
-  threadId?: number;
-  duration?: number;
-  error?: string;
-  result?: any; // State
-  plan: ExecutionPlan;
-};
 
 type Resolver<T> = (id: string) => Promise<T>;
 
@@ -66,6 +51,10 @@ const createAPI = function (options: RTEOptions = {}) {
     }
   }
 
+  // re logging, for example, where does this go?
+  // it's not an attempt log
+  // it probably shouldnt be sent to the worker
+  // but it is an important bit of debugging
   logger.info('repoDir set to ', repoDir);
 
   const engineOptions = {

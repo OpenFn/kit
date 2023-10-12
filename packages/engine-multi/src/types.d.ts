@@ -129,7 +129,7 @@ export type ExecutionContextConstructor = {
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;
-  options: RTEOptions;
+  options: EngineOptions;
 };
 
 export interface ExecutionContext extends EventEmitter {

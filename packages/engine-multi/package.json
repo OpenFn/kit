@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "test": "pnpm ava",
-    "_test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts src/worker.ts --no-splitting --transpile-only",
     "_build": "tsup --config ../../tsup.config.js src/mock-worker.ts --no-splitting",
     "build:watch": "pnpm build --watch"
