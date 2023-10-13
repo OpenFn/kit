@@ -1,13 +1,7 @@
 import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
-import {
-  Operation,
-  JobModule,
-  State,
-  ExecutionCallbacks,
-  ExecutionContext,
-} from '../types';
+import { Operation, JobModule, State, ExecutionContext } from '../types';
 import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
@@ -25,10 +19,6 @@ export default (
     logger.debug('Intialising pipeline');
     logger.debug(`Timeout set to ${timeout}ms`);
 
-    // let initDuration = Date.now();
-
-    // callbacks.onInitStart?.();
-
     // Setup an execution context
     const context = buildContext(initialState, opts);
 
@@ -39,11 +29,6 @@ export default (
         wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
       )
     );
-    // initDuration = Date.now() - initDuration;
-
-    // TODO actually we're going to do the init stuff in job.ts
-    // But I will notify() for how long it takes to load the job module
-    // callbacks.onInitComplete?.({ duration: initDuration });
 
     // Run the pipeline
     try {
@@ -98,11 +83,6 @@ const prepareJob = async (
   context: Context,
   opts: Options = {}
 ): Promise<JobModule> => {
-  // TODO resolve credential
-  // TODO resolve initial state
-
-  // difficulty here that credential isn't passed in
-
   if (typeof expression === 'string') {
     const exports = await loadModule(expression, {
       ...opts.linker,
@@ -141,8 +121,7 @@ const prepareFinalState = (opts: Options, state: any) => {
   if (state) {
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);
-    } else {
-      // TODO this is new and needs unit tests
+    } else if (opts.deleteConfiguration !== false) {
       delete state.configuration;
     }
     const cleanState = stringify(state);

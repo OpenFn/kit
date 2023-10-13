@@ -1,10 +1,9 @@
 import type { Logger } from '@openfn/logger';
 import executeJob from './job';
 import compilePlan from './compile-plan';
-import assembleState from '../util/assemble-state';
+
 import type { ExecutionPlan, State } from '../types';
 import type { Options } from '../runtime';
-import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
 
@@ -39,20 +38,16 @@ const executePlan = async (
   // Record of state on lead nodes (nodes with no next)
   const leaves: Record<string, State> = {};
 
+  // TODO: maybe lazy load intial state and notify about it
+
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift()!;
     const job = compiledPlan.jobs[next];
 
     const prevState = stateHistory[job.previous || ''] ?? initialState;
-    const state = assembleState(
-      clone(prevState),
-      job.configuration,
-      job.state,
-      ctx.opts.strict
-    );
 
-    const result = await executeJob(ctx, job, state);
+    const result = await executeJob(ctx, job, prevState);
     stateHistory[next] = result.state;
 
     if (!result.next.length) {

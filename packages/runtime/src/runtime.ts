@@ -23,6 +23,7 @@ export type Options = {
 
   timeout?: number;
   strict?: boolean; // Be strict about handling of state returned from jobs
+  deleteConfiguration?: boolean;
 
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
@@ -54,6 +55,9 @@ const run = (
   // Strict state handling by default
   if (!opts.hasOwnProperty('strict')) {
     opts.strict = true;
+  }
+  if (!opts.hasOwnProperty('deleteConfiguration')) {
+    opts.deleteConfiguration = true;
   }
 
   // TODO the plan doesn't have an id, should it be given one?

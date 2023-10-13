@@ -139,6 +139,37 @@ test('execute a one-job execution plan with initial state', async (t) => {
   t.is(result, 33);
 });
 
+test('execute a one-job execution plan and notify init-start and init-complete', async (t) => {
+  let notifications: Record<string, any> = {};
+
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression: 'export default [s => s.data.x]',
+      },
+    ],
+  };
+
+  const notify = (event: string, payload: any) => {
+    if (notifications[event]) {
+      throw new Error(`event ${event} called twice!`);
+    }
+    notifications[event] = payload || true;
+  };
+
+  const options = { callbacks: { notify } };
+
+  const state = {
+    data: { x: 33 },
+  };
+
+  await executePlan(plan, state, options);
+
+  t.truthy(notifications['init-start']);
+  t.truthy(notifications['init-complete']);
+  t.assert(!isNaN(notifications['init-complete'].duration));
+});
+
 test('execute a job with a simple truthy "precondition" or "trigger node"', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
@@ -928,3 +959,10 @@ test('Plans log for each job start and end', async (t) => {
   const end = logger._find('success', /completed job/i);
   t.regex(end!.message as string, /Completed job a in \d+ms/);
 });
+
+// TODO these are part of job.ts really, should we split tests up into plan and job?
+// There's quite a big overlap really in test terms
+test.todo('lazy load credentials');
+test.todo("throw if credentials are a string and there's no resolver");
+test.todo('lazy load state');
+test.todo("throw if state is a string and there's no resolver");

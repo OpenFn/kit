@@ -61,8 +61,8 @@ export type JobNode = {
 
   expression?: string | Operation[]; // the code we actually want to execute. Can be a path.
 
-  configuration?: object; // credential object
-  state?: Omit<State, 'configuration'>; // default state (globals)
+  configuration?: object | string; // credential object
+  state?: Omit<State, 'configuration'> | string; // default state (globals)
 
   next?: string | Record<JobNodeID, JobEdge>;
   previous?: JobNodeID;
@@ -110,17 +110,20 @@ export type ExecutionContext = {
   notify: (evt: NotifyEvents, payload?: any) => void;
 };
 
+// External notifications to reveal what's happening
+// All are passed through the notify handler
 export type NotifyEvents =
-  | 'init-start'
+  | 'init-start' // The job is being initialised (ie, credentials lazy-loading)
   | 'init-complete'
   | 'job-start'
   | 'job-complete';
+// module-load
 
 // I'm not wild about the callbacks pattern, events would be simpler
 // but a) the resolvers MUST be a callback and b) we don't currently have an event emitter API
 // no, ok, we're going to have a notify function which does the callbacks
 export type ExecutionCallbacks = {
-  notify(event: NotifyEvents, payload: any): void;
-  resolveState?: (state: string) => any;
-  resolveCredential?: (state: string) => any;
+  notify?(event: NotifyEvents, payload: any): void;
+  resolveState?: (stateId: string) => Promise<any>;
+  resolveCredential?: (credentialId: string) => Promise<any>;
 };

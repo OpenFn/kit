@@ -27,12 +27,6 @@ const createContext = (args = {}) =>
     ...args,
   } as unknown as ExecutionContext);
 
-// const executeExpression = (
-//   job: string | Operation[],
-//   state: State,
-//   opts = {}
-// ) => execute(job, state, logger, opts);
-
 test.afterEach(() => {
   logger._reset();
 });
@@ -72,49 +66,6 @@ test('run a live no-op job with @openfn/language-common.fn', async (t) => {
   t.deepEqual(state, result);
 });
 
-// TODO all these need implementing
-// do they happen in expression.ts or elsewhere?
-// I think this is fine
-
-// on-start is called before things are resolved
-// it means "i'm about to start processing this job"
-// does duration include state loading?
-// it's tricky, from the user's point of view it should just be execution time
-// ok, fine, we're gonna say that start is literally just execution
-// but we'll add like a job-initialise event, with a duration
-// test('call the on-intialise callback', async (t) => {
-//   let didCallCallback = false;
-
-//   const job = [(s: State) => s];
-//   const state = createState();
-
-//   const callbacks = {
-//     onInitStart: () => {
-//       didCallCallback = true;
-//     },
-//   };
-
-//   await execute(context, job, state, { callbacks });
-//   t.true(didCallCallback);
-// });
-
-// test('call the on-intialise-complete callback', async (t) => {
-//   let didCallCallback = false;
-
-//   const job = [(s: State) => s];
-//   const state = createState();
-
-//   const callbacks = {
-//     onInitComplete: ({ duration }: any) => {
-//       t.assert(!isNaN(duration));
-//       didCallCallback = true;
-//     },
-//   };
-
-//   await execute(context, job, state, { callbacks });
-//   t.true(didCallCallback);
-// });
-
 test('notify job-start', async (t) => {
   let didCallCallback = false;
 
@@ -153,9 +104,6 @@ test('call the on-complete callback', async (t) => {
   await execute(context, job, state);
   t.true(didCallCallback);
 });
-
-test.todo('resolve a credential');
-test.todo('resolve starting state');
 
 test('jobs can handle a promise', async (t) => {
   const job = [async (s: State) => s];
