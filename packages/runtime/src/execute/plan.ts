@@ -1,25 +1,12 @@
 import type { Logger } from '@openfn/logger';
-import executeExpression from './expression';
+import executeJob from './job';
 import compilePlan from './compile-plan';
 import assembleState from '../util/assemble-state';
-import type {
-  CompiledExecutionPlan,
-  CompiledJobNode,
-  ExecutionPlan,
-  JobNodeID,
-  State,
-} from '../types';
+import type { ExecutionPlan, State } from '../types';
 import type { Options } from '../runtime';
 import clone from '../util/clone';
 import validatePlan from '../util/validate-plan';
-import createErrorReporter, { ErrorReporter } from '../util/log-error';
-
-type ExeContext = {
-  plan: CompiledExecutionPlan;
-  logger: Logger;
-  opts: Options;
-  report: ErrorReporter;
-};
+import createErrorReporter from '../util/log-error';
 
 const executePlan = async (
   plan: ExecutionPlan,
@@ -43,6 +30,7 @@ const executePlan = async (
     opts,
     logger,
     report: createErrorReporter(logger),
+    notify: opts.callbacks?.notify,
   };
 
   type State = any;
@@ -82,52 +70,6 @@ const executePlan = async (
   }
   // Return a single value
   return Object.values(leaves)[0];
-};
-
-const executeJob = async (
-  ctx: ExeContext,
-  job: CompiledJobNode,
-  state: State
-): Promise<{ next: JobNodeID[]; state: any }> => {
-  const next: string[] = [];
-
-  // We should by this point have validated the plan, so the job MUST exist
-
-  ctx.logger.timer('job');
-  ctx.logger.always('Starting job', job.id);
-
-  let result: any = state;
-  if (job.expression) {
-    // The expression SHOULD return state, but could return anything
-    try {
-      result = await executeExpression(
-        job.expression,
-        state,
-        ctx.logger,
-        ctx.opts
-      );
-      const duration = ctx.logger.timer('job');
-      ctx.logger.success(`Completed job ${job.id} in ${duration}`);
-    } catch (e: any) {
-      const duration = ctx.logger.timer('job');
-      ctx.logger.error(`Failed job ${job.id} after ${duration}`);
-      ctx.report(state, job.id, e);
-    }
-  }
-
-  if (job.next) {
-    for (const nextJobId in job.next) {
-      const edge = job.next[nextJobId];
-      if (
-        edge &&
-        (edge === true || !edge.condition || edge.condition(result))
-      ) {
-        next.push(nextJobId);
-      }
-      // TODO errors
-    }
-  }
-  return { next, state: result };
 };
 
 export default executePlan;

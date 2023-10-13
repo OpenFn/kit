@@ -1,4 +1,9 @@
 // TMP just thinking through things
+
+import { Logger } from '@openfn/logger';
+import { Options } from './runtime';
+import { ErrorReporter } from './util/log-error';
+
 // I dont think this is useufl? We can just use error.name of the error object
 export type ErrorTypes =
   | 'AdaptorNotFound' // probably a CLI validation thing
@@ -96,14 +101,26 @@ export type JobModule = {
   // TODO lifecycle hooks
 };
 
+// TODO difficulty: this is not the same as a vm execution context
+export type ExecutionContext = {
+  plan: CompiledExecutionPlan;
+  logger: Logger;
+  opts: Options;
+  report: ErrorReporter;
+  notify: (evt: NotifyEvents, payload?: any) => void;
+};
+
+export type NotifyEvents =
+  | 'init-start'
+  | 'init-complete'
+  | 'job-start'
+  | 'job-complete';
+
 // I'm not wild about the callbacks pattern, events would be simpler
 // but a) the resolvers MUST be a callback and b) we don't currently have an event emitter API
+// no, ok, we're going to have a notify function which does the callbacks
 export type ExecutionCallbacks = {
-  onInitStart?: () => void;
-  onInitComplete?: (args: { duration: number }) => void;
-  onStart?: () => void;
-  onComplete?: (args: { duration: number; state: any }) => void;
-
+  notify(event: NotifyEvents, payload: any): void;
   resolveState?: (state: string) => any;
   resolveCredential?: (state: string) => any;
 };

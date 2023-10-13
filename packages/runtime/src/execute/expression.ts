@@ -1,27 +1,33 @@
 import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
-import { Operation, JobModule, State, ExecutionCallbacks } from '../types';
+import {
+  Operation,
+  JobModule,
+  State,
+  ExecutionCallbacks,
+  ExecutionContext,
+} from '../types';
 import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
 
 export default (
+  ctx: ExecutionContext,
   expression: string | Operation[],
-  initialState: State,
-  logger: Logger,
-  opts: Options = {}
+  initialState: State
 ) =>
   new Promise(async (resolve, reject) => {
-    const { callbacks = {} } = opts;
+    const { logger, notify = () => {}, opts = {} } = ctx;
     const timeout = opts.timeout || TIMEOUT;
 
     logger.debug('Intialising pipeline');
     logger.debug(`Timeout set to ${timeout}ms`);
 
-    let initDuration = Date.now();
-    callbacks.onInitStart?.();
+    // let initDuration = Date.now();
+
+    // callbacks.onInitStart?.();
 
     // Setup an execution context
     const context = buildContext(initialState, opts);
@@ -33,15 +39,17 @@ export default (
         wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
       )
     );
-    initDuration = Date.now() - initDuration;
+    // initDuration = Date.now() - initDuration;
 
-    callbacks.onInitComplete?.({ duration: initDuration });
+    // TODO actually we're going to do the init stuff in job.ts
+    // But I will notify() for how long it takes to load the job module
+    // callbacks.onInitComplete?.({ duration: initDuration });
 
     // Run the pipeline
     try {
       logger.debug(`Executing expression (${operations.length} operations)`);
       let exeDuration = Date.now();
-      callbacks.onStart?.();
+      notify('job-start');
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -58,7 +66,7 @@ export default (
 
       exeDuration = Date.now() - exeDuration;
 
-      callbacks.onComplete?.({ duration: exeDuration, state: result });
+      notify('job-complete', { duration: exeDuration, state: result });
 
       // return the final state
       resolve(prepareFinalState(opts, result));
@@ -92,6 +100,9 @@ const prepareJob = async (
 ): Promise<JobModule> => {
   // TODO resolve credential
   // TODO resolve initial state
+
+  // difficulty here that credential isn't passed in
+
   if (typeof expression === 'string') {
     const exports = await loadModule(expression, {
       ...opts.linker,
