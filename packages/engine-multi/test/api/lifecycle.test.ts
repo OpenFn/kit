@@ -23,7 +23,7 @@ test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
     const event = { workflowId, threadId: '123' };
 
     context.on(e.WORKFLOW_START, (evt) => {
-      t.deepEqual(evt, { workflowId });
+      t.deepEqual(evt, event);
       done();
     });
 

@@ -15,7 +15,7 @@ export const createLoggers = (workflowId: string) => {
   const log = (message: string) => {
     // hmm, the json log stringifies the message
     // i don't really want it to do that
-    publish({
+    workerpool.workerEmit({
       workflowId,
       type: e.WORKFLOW_LOG,
       message: JSON.parse(message),
@@ -46,21 +46,32 @@ export const createLoggers = (workflowId: string) => {
   return { logger, jobLogger };
 };
 
+// TODO use bespoke event names here
+// maybe thread:workflow-start
 async function helper(workflowId: string, execute: () => Promise<any>) {
-  publish({ type: e.WORKFLOW_START, workflowId, threadId });
+  function publish(type: string, payload: any = {}) {
+    workerpool.workerEmit({
+      workflowId,
+      threadId,
+      type,
+      ...payload,
+    } as e.WorkflowEvent);
+  }
+
+  publish(e.WORKFLOW_START);
   try {
     // Note that the worker thread may fire logs after completion
     // I think this is fine, it's just a log stream thing
     // But the output is very confusing!
     const result = await execute();
-    publish({ type: e.WORKFLOW_COMPLETE, workflowId, state: result });
+    publish(e.WORKFLOW_COMPLETE, { state: result });
 
     // For tests
     return result;
   } catch (err) {
     console.error(err);
     // @ts-ignore TODO sort out error typing
-    publish({ type: e.WORKFLOW_ERROR, workflowId, message: err.message });
+    publish(e.WORKFLOW_ERROR, { message: err.message });
   }
 }
 

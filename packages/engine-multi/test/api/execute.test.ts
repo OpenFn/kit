@@ -12,7 +12,7 @@ import {
 } from '../../src/events';
 import { RTEOptions } from '../../src/api';
 
-const workerPath = path.resolve('dist/mock-worker.js');
+const workerPath = path.resolve('dist/worker/mock.js');
 
 const createContext = ({ state, options }: Partial<ExecutionContext> = {}) => {
   const api = new EventEmitter();

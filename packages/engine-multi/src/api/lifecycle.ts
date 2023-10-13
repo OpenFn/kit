@@ -36,6 +36,7 @@ export const workflowStart = (
 
   // forward the event on to any external listeners
   context.emit(WORKFLOW_START, {
+    threadId,
     workflowId, // if this is a bespoke emitter it can be implied, which is nice
     // Should we publish anything else here?
   });
@@ -66,7 +67,7 @@ export const workflowComplete = (
 
   // forward the event on to any external listeners
   context.emit(WORKFLOW_COMPLETE, {
-    workflowId: workflowId,
+    workflowId,
     threadId,
     duration: state.duration,
     state: result,

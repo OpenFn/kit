@@ -13,7 +13,7 @@ import { createPlan } from '../../src/test/util';
 
 import * as e from '../../src/events';
 
-const workers = workerpool.pool(path.resolve('dist/mock-worker.js'));
+const workers = workerpool.pool(path.resolve('dist/worker/mock.js'));
 
 test('execute a mock plan inside a worker thread', async (t) => {
   const plan = createPlan();

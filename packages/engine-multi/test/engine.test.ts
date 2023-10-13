@@ -59,15 +59,13 @@ test('get workflow state', (t) => {
 
 test('use the default worker path', (t) => {
   const engine = createEngine({ logger, repoDir: '.' });
-  // this is how the path comes out in the test framework
-  t.true(engine.workerPath.endsWith('src/worker/worker.js'));
+  t.true(engine.workerPath.endsWith('worker/worker.js'));
 });
 
 // Note that even though this is a nonsense path, we get no error at this point
 test('use a custom worker path', (t) => {
   const p = 'jam';
   const engine = createEngine(options, p);
-  // this is how the path comes out in the test framework
   t.is(engine.workerPath, p);
 });
 
