@@ -17,7 +17,7 @@ const options = {
   // Just not the runtime logic
   workerPath: path.resolve('dist/mock-worker.js'),
   logger,
-  repoDir: '', // doesn't matter for the mock
+  repoDir: '.', // doesn't matter for the mock
   noCompile: true, // messy - needed to allow an expression to be passed as json
 };
 
@@ -26,7 +26,7 @@ test.afterEach(() => {
 });
 
 test('create an engine', (t) => {
-  const engine = createEngine({ logger });
+  const engine = createEngine(options);
   t.truthy(engine);
   t.is(engine.constructor.name, 'Engine');
   t.truthy(engine.execute);
@@ -37,7 +37,7 @@ test('create an engine', (t) => {
 
 test('register a workflow', (t) => {
   const plan = { id: 'z' };
-  const engine = createEngine({ logger });
+  const engine = createEngine(options);
 
   const state = engine.registerWorkflow(plan);
 
@@ -48,7 +48,7 @@ test('register a workflow', (t) => {
 
 test('get workflow state', (t) => {
   const plan = { id: 'z' } as ExecutionPlan;
-  const engine = createEngine({ logger });
+  const engine = createEngine(options);
 
   const s = engine.registerWorkflow(plan);
 
@@ -58,15 +58,15 @@ test('get workflow state', (t) => {
 });
 
 test('use the default worker path', (t) => {
-  const engine = createEngine({ logger });
+  const engine = createEngine({ logger, repoDir: '.' });
   // this is how the path comes out in the test framework
-  t.true(engine.workerPath.endsWith('src/worker.js'));
+  t.true(engine.workerPath.endsWith('src/worker/worker.js'));
 });
 
 // Note that even though this is a nonsense path, we get no error at this point
 test('use a custom worker path', (t) => {
   const p = 'jam';
-  const engine = createEngine({ logger }, p);
+  const engine = createEngine(options, p);
   // this is how the path comes out in the test framework
   t.is(engine.workerPath, p);
 });

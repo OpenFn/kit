@@ -97,6 +97,8 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
   // TODO I think this is for later
   //const activeWorkflows: string[] = [];
 
+  // TOOD I wonder if the engine should a) always accept a worker path
+  // and b) validate it before it runs
   let resolvedWorkerPath;
   if (workerPath) {
     // If a path to the worker has been passed in, just use it verbatim
@@ -105,7 +107,12 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
   } else {
     // By default, we load ./worker.js but can't rely on the working dir to find it
     const dirname = path.dirname(fileURLToPath(import.meta.url));
-    resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
+    resolvedWorkerPath = path.resolve(
+      dirname,
+      // TODO there are too many assumptions here, it's an argument for the path just to be
+      // passed by the mian api or the unit test
+      workerPath || '../dist/worker/worker.js'
+    );
   }
   options.logger!.debug('Loading workers from ', resolvedWorkerPath);
 
@@ -165,7 +172,6 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
 
   const listen = (
     workflowId: string,
-    //handlers: Partial<Record<EngineEvents, EventHandler>>
     handlers: Record<string, EventHandler>
   ) => {
     const events = contexts[workflowId];

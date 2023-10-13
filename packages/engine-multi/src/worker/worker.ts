@@ -1,6 +1,3 @@
-// Runs inside the worker
-// TODO maybe this is
-
 // Dedicated worker for running jobs
 // Security thoughts: the process inherits the node command arguments
 // (it has to for experimental modules to work)
@@ -19,6 +16,10 @@ import type { ExecutionPlan } from '@openfn/runtime';
 import helper, { createLoggers } from './worker-helper';
 
 workerpool.worker({
+  // TODO: add a startup script to ensure the worker is ok
+  // if we can't call init, there's something wrong with the worker
+  // and then we have to abort the engine or something
+  //init: () => {},
   run: (
     plan: ExecutionPlan,
     adaptorPaths: Record<string, { path: string }>

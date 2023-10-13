@@ -35,5 +35,13 @@ export function createWorkers(workerPath: string) {
     resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
   }
 
-  return workerpool.pool(resolvedWorkerPath);
+  return workerpool.pool(resolvedWorkerPath, {
+    workerThreadOpts: {
+      // Note that we have to pass this explicitly to run in ava's test runner
+      execArgv: ['--no-warnings', '--experimental-vm-modules'],
+      //   // TODO if this unset, can the thread read the parent env?
+      // Also todo I think this hides experimental vm modules so it all breaks
+      //   env: {},
+    },
+  });
 }

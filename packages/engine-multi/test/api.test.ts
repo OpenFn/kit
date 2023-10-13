@@ -1,5 +1,4 @@
 import test from 'ava';
-
 import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
 
@@ -32,6 +31,10 @@ test('create an engine api with a limited surface', (t) => {
   t.deepEqual(keys, ['execute', 'listen']);
 });
 
+// Note that this runs with the actual runtime worker
+// I won't want to do deep testing on execute here - I just want to make sure the basic
+// exeuction functionality is working. It's more a test of the api surface than the inner
+// workings of the job
 test('execute should return an event listener and receive workflow-complete', (t) => {
   return new Promise((done) => {
     const api = createAPI({
@@ -46,7 +49,7 @@ test('execute should return an event listener and receive workflow-complete', (t
       id: 'a',
       jobs: [
         {
-          expression: 's => s',
+          expression: 'export default [s => s]',
           // with no adaptor it shouldn't try to autoinstall
         },
       ],
@@ -74,7 +77,7 @@ test('should listen to workflow-complete', (t) => {
       id: 'a',
       jobs: [
         {
-          expression: 's => s',
+          expression: 'export default [s => s]',
           // with no adaptor it shouldn't try to autoinstall
         },
       ],

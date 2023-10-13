@@ -90,7 +90,7 @@ export type WorkerLogPayload = {
   message: JSONLog;
 };
 
-type EventHandler = <T extends EngineEvents>(
+export type EventHandler = <T extends EngineEvents>(
   event: EventPayloadLookup[T]
 ) => void;
 

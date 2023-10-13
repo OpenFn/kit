@@ -8,8 +8,7 @@
   "scripts": {
     "test": "pnpm ava",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
-    "build": "tsup --config ../../tsup.config.js src/index.ts src/mock-worker.ts src/worker.ts --no-splitting --transpile-only",
-    "_build": "tsup --config ../../tsup.config.js src/mock-worker.ts --no-splitting",
+    "build": "tsup --config ./tsup.config.js",
     "build:watch": "pnpm build --watch",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
@@ -21,13 +20,13 @@
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "koa": "^2.13.4",
-    "workerpool": "^6.2.1"
+    "workerpool": "^6.5.1"
   },
   "devDependencies": {
     "@types/koa": "^2.13.5",
     "@types/node": "^18.15.13",
     "@types/nodemon": "^1.19.2",
-    "@types/workerpool": "^6.1.0",
+    "@types/workerpool": "^6.4.4",
     "ava": "5.3.1",
     "nodemon": "^2.0.19",
     "ts-node": "^10.9.1",

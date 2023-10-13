@@ -1,7 +1,6 @@
 // Creates the public/external API to the runtime
 // Basically a thin wrapper, with validation, around the engine
 
-import path from 'node:path';
 import createLogger, { Logger } from '@openfn/logger';
 
 import createEngine from './engine';
@@ -68,12 +67,9 @@ const createAPI = function (options: RTEOptions = {}) {
     autoinstall: options.autoinstall,
   };
 
-  // Create the internal API
-  // TMP: use the mock worker for now
-  const engine = createEngine(
-    engineOptions,
-    path.resolve('dist/mock-worker.js')
-  );
+  // Note that the engine here always uses the standard worker, the real one
+  // To use a mock, create the engine directly
+  const engine = createEngine(engineOptions);
 
   // Return the external API
   return {

@@ -32,6 +32,11 @@ const execute = async (context: ExecutionContext) => {
   return callWorker('run', [state.plan, adaptorPaths], events).catch(
     (e: any) => {
       // TODO what about errors then?
+
+      // If the worker file can't be found, we get:
+      // code: MODULE_NOT_FOUND
+      // message: cannot find modulle <path> (worker.js)
+
       logger.error(e);
     }
   );
