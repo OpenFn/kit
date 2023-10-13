@@ -95,3 +95,15 @@ export type JobModule = {
   execute?: (...operations: Operation[]) => (state: any) => any;
   // TODO lifecycle hooks
 };
+
+// I'm not wild about the callbacks pattern, events would be simpler
+// but a) the resolvers MUST be a callback and b) we don't currently have an event emitter API
+export type ExecutionCallbacks = {
+  onInitStart?: () => void;
+  onInitComplete?: (args: { duration: number }) => void;
+  onStart?: () => void;
+  onComplete?: (args: { duration: number; state: any }) => void;
+
+  resolveState?: (state: string) => any;
+  resolveCredential?: (state: string) => any;
+};

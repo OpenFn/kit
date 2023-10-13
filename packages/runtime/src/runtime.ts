@@ -1,6 +1,12 @@
 import { createMockLogger, Logger } from '@openfn/logger';
 
-import type { Operation, ExecutionPlan, State, JobNodeID } from './types';
+import type {
+  Operation,
+  ExecutionPlan,
+  State,
+  JobNodeID,
+  ExecutionCallbacks,
+} from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import clone from './util/clone';
@@ -27,6 +33,8 @@ export type Options = {
   forceSandbox?: boolean;
 
   linker?: LinkerOptions;
+
+  callbacks?: ExecutionCallbacks;
 };
 
 const defaultState = { data: {}, configuration: {} };

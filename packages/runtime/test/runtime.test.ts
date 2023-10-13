@@ -23,6 +23,75 @@ test('run a simple workflow', async (t) => {
   t.true(result.data.done);
 });
 
+test('run a workflow and call callbacks', async (t) => {
+  const counts: Record<string, number> = {};
+  const increment = (name: string) => {
+    return {
+      [name]: () => {
+        if (!counts[name]) {
+          counts[name] = 0;
+        }
+        counts[name] += 1;
+      },
+    };
+  };
+
+  const callbacks = Object.assign(
+    {},
+    increment('onInitStart'),
+    increment('onInitComplete'),
+    increment('onStart'),
+    increment('onComplete')
+  );
+
+  const plan: ExecutionPlan = {
+    jobs: [{ expression: 'export default [(s) => s]' }],
+  };
+
+  await run(plan, {}, { callbacks });
+
+  t.is(counts.onInitStart, 1);
+  t.is(counts.onInitComplete, 1);
+  t.is(counts.onStart, 1);
+  t.is(counts.onComplete, 1);
+});
+
+test('run a workflow with two jobs and call callbacks', async (t) => {
+  const counts: Record<string, number> = {};
+  const increment = (name: string) => {
+    return {
+      [name]: () => {
+        if (!counts[name]) {
+          counts[name] = 0;
+        }
+        counts[name] += 1;
+      },
+    };
+  };
+
+  const callbacks = Object.assign(
+    {},
+    increment('onInitStart'),
+    increment('onInitComplete'),
+    increment('onStart'),
+    increment('onComplete')
+  );
+
+  const plan: ExecutionPlan = {
+    jobs: [
+      { id: 'a', expression: 'export default [(s) => s]', next: { b: true } },
+      { id: 'b', expression: 'export default [(s) => s]' },
+    ],
+  };
+
+  await run(plan, {}, { callbacks });
+
+  t.is(counts.onInitStart, 2);
+  t.is(counts.onInitComplete, 2);
+  t.is(counts.onStart, 2);
+  t.is(counts.onComplete, 2);
+});
+
 test('run a workflow with state and parallel branching', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [

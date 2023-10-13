@@ -48,12 +48,93 @@ test('run a stringified no-op job with one operation', async (t) => {
 });
 
 test('run a live no-op job with @openfn/language-common.fn', async (t) => {
-  const job = [fn((s: State) => s)] as Operation[];
+  // @ts-ignore
+  const job = [fn((s) => s)];
   const state = createState();
   const result = await executeExpression(job, state);
 
   t.deepEqual(state, result);
 });
+
+// TODO all these need implementing
+// do they happen in expression.ts or elsewhere?
+// I think this is fine
+
+// on-start is called before things are resolved
+// it means "i'm about to start processing this job"
+// does duration include state loading?
+// it's tricky, from the user's point of view it should just be execution time
+// ok, fine, we're gonna say that start is literally just execution
+// but we'll add like a job-initialise event, with a duration
+test('call the on-intialise callback', async (t) => {
+  let didCallCallback = false;
+
+  const job = [(s: State) => s];
+  const state = createState();
+
+  const callbacks = {
+    onInitStart: () => {
+      didCallCallback = true;
+    },
+  };
+
+  await executeExpression(job, state, { callbacks });
+  t.true(didCallCallback);
+});
+
+test('call the on-intialise-complete callback', async (t) => {
+  let didCallCallback = false;
+
+  const job = [(s: State) => s];
+  const state = createState();
+
+  const callbacks = {
+    onInitComplete: ({ duration }: any) => {
+      t.assert(!isNaN(duration));
+      didCallCallback = true;
+    },
+  };
+
+  await executeExpression(job, state, { callbacks });
+  t.true(didCallCallback);
+});
+
+test('call the on-start callback', async (t) => {
+  let didCallCallback = false;
+
+  const job = [(s: State) => s];
+  const state = createState();
+
+  const callbacks = {
+    onStart: () => {
+      didCallCallback = true;
+    },
+  };
+
+  await executeExpression(job, state, { callbacks });
+  t.true(didCallCallback);
+});
+
+test('call the on-complete callback', async (t) => {
+  let didCallCallback = false;
+
+  const job = [(s: State) => s];
+  const state = createState();
+
+  const callbacks = {
+    onComplete: ({ duration, state }: any) => {
+      t.assert(!isNaN(duration));
+      t.truthy(state);
+      didCallCallback = true;
+    },
+  };
+
+  await executeExpression(job, state, { callbacks });
+  t.true(didCallCallback);
+});
+
+test.todo('resolve a credential');
+test.todo('resolve starting state');
 
 test('jobs can handle a promise', async (t) => {
   const job = [async (s: State) => s];

@@ -1,7 +1,7 @@
 import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
-import { Operation, JobModule, State } from '../types';
+import { Operation, JobModule, State, ExecutionCallbacks } from '../types';
 import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
@@ -14,9 +14,14 @@ export default (
   opts: Options = {}
 ) =>
   new Promise(async (resolve, reject) => {
+    const { callbacks = {} } = opts;
     const timeout = opts.timeout || TIMEOUT;
+
     logger.debug('Intialising pipeline');
     logger.debug(`Timeout set to ${timeout}ms`);
+
+    let initDuration = Date.now();
+    callbacks.onInitStart?.();
 
     // Setup an execution context
     const context = buildContext(initialState, opts);
@@ -28,10 +33,15 @@ export default (
         wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
       )
     );
+    initDuration = Date.now() - initDuration;
+
+    callbacks.onInitComplete?.({ duration: initDuration });
 
     // Run the pipeline
     try {
       logger.debug(`Executing expression (${operations.length} operations)`);
+      let exeDuration = Date.now();
+      callbacks.onStart?.();
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -45,6 +55,10 @@ export default (
       clearTimeout(tid);
       logger.debug('Expression complete!');
       logger.debug(result);
+
+      exeDuration = Date.now() - exeDuration;
+
+      callbacks.onComplete?.({ duration: exeDuration, state: result });
 
       // return the final state
       resolve(prepareFinalState(opts, result));
@@ -76,6 +90,8 @@ const prepareJob = async (
   context: Context,
   opts: Options = {}
 ): Promise<JobModule> => {
+  // TODO resolve credential
+  // TODO resolve initial state
   if (typeof expression === 'string') {
     const exports = await loadModule(expression, {
       ...opts.linker,
