@@ -5,92 +5,10 @@ import type { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
 import { RTEOptions } from './api';
 
-// These are the external events published but he api and listen
-type WorkflowStartEvent = 'workflow-start';
-type WorkflowStartPayload = {
-  workflowId: string;
-};
+import { ExternalEvents, EventMap } from './events';
 
-type WorkflowCompleteEvent = 'workflow-complete';
-type WorkflowCompletePayload = {
-  workflowId: string;
-};
-
-// This occurs when a critical error causes the workflow to be aborted
-// ie crash, syntax error
-type WorkflowErrorEvent = 'workflow-error';
-type WorkflowErrorPayload = {
-  workflowId: string;
-  type: string;
-  message: string;
-};
-
-type JobStartEvent = 'job-start';
-type JobStartPayload = {
-  workflowId: string;
-  jobId: string;
-};
-
-type JobCompleteEvent = 'job-complete';
-type JobCompletePayload = {
-  workflowId: string;
-  jobId: string;
-  state: any; // the result start
-};
-
-// a log message coming out of the engine, adaptor or job
-type LogEvent = 'job-complete';
-type LogPayload = JSONLog & {
-  workflowId: string;
-};
-
-// TODO
-type EdgeResolvedEvent = 'edge-resolved';
-type EdgeResolvedPayload = {
-  workflowId: string;
-  edgeId: string; // interesting, we don't really have this yet. Is index more appropriate? key? yeah, it's target node basically
-  result: boolean;
-};
-
-type EngineEvents =
-  | WorkflowStartEvent
-  | WorkflowCompleteEvent
-  | JobStartEvent
-  | JobCompleteEvent
-  | LogEvent;
-
-type EventPayloadLookup = {
-  [WorkflowStartEvent]: WorkflowStartPayload;
-  [WorkflowCompleteEvent]: WorkflowCompletePayload;
-  [JobStartEvent]: JobStartPayload;
-  [JobCompleteEvent]: JobCompletePayload;
-  [LogEvent]: LogPayload;
-};
-
-// These are events from the internal worker (& runtime)
-
-export type WORKER_START = 'worker-start';
-export type WorkerStartPayload = {
-  threadId: string;
-  workflowId: string;
-};
-
-export type WORKER_COMPLETE = 'worker-complete';
-export type WorkerCompletePayload = {
-  threadId: string;
-  workflowId: string;
-  state: any;
-};
-
-// TODO confusion over this and events.ts
-export type WORKER_LOG = 'worker-log';
-export type WorkerLogPayload = {
-  threadId: string;
-  workflowId: string;
-  message: JSONLog;
-};
-
-export type EventHandler = <T extends EngineEvents>(
+// TODO hmm, not sure about this - event handler for what?
+export type EventHandler = <T extends /*EngineEvents*/ any>(
   event: EventPayloadLookup[T]
 ) => void;
 
@@ -138,6 +56,8 @@ export interface ExecutionContext extends EventEmitter {
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;
+
+  emit<T extends ExternalEvents>(event: T, payload: EventMap[T]): boolean;
 }
 
 export interface EngineAPI extends EventEmitter {

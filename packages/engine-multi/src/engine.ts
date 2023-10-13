@@ -83,6 +83,7 @@ export type EngineOptions = {
 
   resolvers?: LazyResolvers;
 
+  noCompile?: boolean;
   compile?: {}; // TODO
   autoinstall?: AutoinstallOptions;
 };

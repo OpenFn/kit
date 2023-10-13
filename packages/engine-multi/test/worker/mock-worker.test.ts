@@ -11,7 +11,7 @@ import workerpool from 'workerpool';
 
 import { createPlan } from '../../src/test/util';
 
-import * as e from '../../src/events';
+import * as e from '../../src/worker/events';
 
 const workers = workerpool.pool(path.resolve('dist/worker/mock.js'));
 
@@ -135,7 +135,7 @@ test('Publish a job log event', async (t) => {
   let id;
   await workers.exec('run', [plan], {
     on: ({ workflowId, type, message }) => {
-      if (type === e.WORKFLOW_LOG) {
+      if (type === e.LOG) {
         didFire = true;
         log = message;
         id = workflowId;

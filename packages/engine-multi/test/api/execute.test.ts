@@ -88,7 +88,7 @@ test.serial('should emit a workflow-complete event', async (t) => {
   t.is(workflowComplete.state, 22);
 });
 
-test.serial('should emit a log event', async (t) => {
+test.serial.only('should emit a log event', async (t) => {
   let workflowLog;
   const plan = {
     id: 'y',

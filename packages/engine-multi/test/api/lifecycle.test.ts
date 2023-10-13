@@ -100,6 +100,7 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
 
     const event = {
       workflowId,
+      threadId: 'a',
       message: {
         level: 'info',
         name: 'job',
@@ -111,6 +112,7 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
     context.on(e.WORKFLOW_LOG, (evt) => {
       t.deepEqual(evt, {
         workflowId: state.id,
+        threadId: 'a',
         ...event.message,
       });
       done();

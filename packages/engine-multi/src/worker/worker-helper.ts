@@ -5,21 +5,17 @@ import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
 import createLogger from '@openfn/logger';
 
-import * as e from '../events';
-
-function publish(event: e.WorkflowEvent) {
-  workerpool.workerEmit(event);
-}
+import * as workerEvents from './events';
 
 export const createLoggers = (workflowId: string) => {
   const log = (message: string) => {
-    // hmm, the json log stringifies the message
-    // i don't really want it to do that
+    // Apparently the json log stringifies the message
+    // We don't really want it to do that
     workerpool.workerEmit({
       workflowId,
-      type: e.WORKFLOW_LOG,
+      type: workerEvents.LOG,
       message: JSON.parse(message),
-    });
+    } as workerEvents.LogEvent);
   };
 
   const emitter: any = {
@@ -49,29 +45,32 @@ export const createLoggers = (workflowId: string) => {
 // TODO use bespoke event names here
 // maybe thread:workflow-start
 async function helper(workflowId: string, execute: () => Promise<any>) {
-  function publish(type: string, payload: any = {}) {
+  function publish<T extends workerEvents.WorkerEvents>(
+    type: T,
+    payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
+  ) {
     workerpool.workerEmit({
       workflowId,
       threadId,
       type,
       ...payload,
-    } as e.WorkflowEvent);
+    });
   }
 
-  publish(e.WORKFLOW_START);
+  publish(workerEvents.WORKFLOW_START, {});
+
   try {
     // Note that the worker thread may fire logs after completion
     // I think this is fine, it's just a log stream thing
     // But the output is very confusing!
     const result = await execute();
-    publish(e.WORKFLOW_COMPLETE, { state: result });
+    publish(workerEvents.WORKFLOW_COMPLETE, { state: result });
 
     // For tests
     return result;
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    // @ts-ignore TODO sort out error typing
-    publish(e.WORKFLOW_ERROR, { message: err.message });
+    publish(workerEvents.ERROR, { workflowId, threadId, message: err.message });
   }
 }
 

@@ -12,39 +12,70 @@ export const WORKFLOW_COMPLETE = 'workflow-complete';
 
 export const WORKFLOW_ERROR = 'workflow-error';
 
+export const JOB_START = 'job-start';
+
+export const JOB_COMPLETE = 'job-complete';
+
 export const WORKFLOW_LOG = 'workflow-log';
 
-// Internal runtime events - these are what the worker thread publishes
-// to the engine
+export const WORKFLOW_EDGE_RESOLVED = 'workflow-edge-resolved';
 
-type State = any; // TODO
-
-export type AcceptWorkflowEvent = {
-  type: typeof WORKFLOW_START;
-  workflowId: string;
-  threadId: number;
+export type EventMap = {
+  [WORKFLOW_START]: WorkflowStartPayload;
+  [WORKFLOW_COMPLETE]: WorkflowCompletePayload;
+  [JOB_START]: JobStartPayload;
+  [JOB_COMPLETE]: JobCompletePayload;
+  [WORKFLOW_LOG]: WorkerLogPayload;
+  [WORKFLOW_ERROR]: WorkflowErrorPayload;
 };
 
-export type CompleteWorkflowEvent = {
-  type: typeof WORKFLOW_COMPLETE;
-  workflowId: string;
-  state: State;
-};
+export type ExternalEvents = keyof EventMap;
 
-export type ErrWorkflowEvent = {
-  type: typeof WORKFLOW_ERROR;
+interface ExternalEvent {
+  threadId: string;
   workflowId: string;
+}
+
+export interface WorkflowStartPayload extends ExternalEvent {
+  threadId: string;
+  workflowId: string;
+}
+
+export interface WorkflowCompletePayload extends ExternalEvent {
+  threadId: string;
+  workflowId: string;
+  state: any;
+  duration: number;
+}
+
+export interface WorkflowErrorPayload extends ExternalEvent {
+  threadId: string;
+  workflowId: string;
+  type: string;
   message: string;
-};
+}
 
-export type LogWorkflowEvent = {
-  type: typeof WORKFLOW_LOG;
+export interface JobStartPayload extends ExternalEvent {
+  threadId: string;
   workflowId: string;
-  message: JSONLog;
-};
+  jobId: string;
+}
 
-export type WorkflowEvent =
-  | AcceptWorkflowEvent
-  | CompleteWorkflowEvent
-  | ErrWorkflowEvent
-  | LogWorkflowEvent;
+export interface JobCompletePayload extends ExternalEvent {
+  threadId: string;
+  workflowId: string;
+  jobId: string;
+  state: any; // the result state
+}
+
+export interface WorkerLogPayload extends ExternalEvent, JSONLog {
+  threadId: string;
+  workflowId: string;
+}
+
+export interface EdgeResolvedPayload extends ExternalEvent {
+  threadId: string;
+  workflowId: string;
+  edgeId: string; // interesting, we don't really have this yet. Is index more appropriate? key? yeah, it's target node basically
+  result: boolean;
+}

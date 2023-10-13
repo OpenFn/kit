@@ -75,6 +75,7 @@ test('execute with test worker and trigger workflow-complete', (t) => {
     const engine = createEngine(
       {
         logger,
+        repoDir: '.',
         noCompile: true,
         autoinstall: {
           handleIsInstalled: async () => true,

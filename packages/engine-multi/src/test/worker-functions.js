@@ -19,7 +19,7 @@ workerpool.worker({
   run: (plan, adaptorPaths) => {
     const workflowId = plan.id;
     workerpool.workerEmit({
-      type: 'workflow-start',
+      type: 'worker:workflow-start',
       workflowId,
       threadId,
     });
@@ -28,7 +28,7 @@ workerpool.worker({
       const result = eval(job.expression);
 
       workerpool.workerEmit({
-        type: 'workflow-complete',
+        type: 'worker:workflow-complete',
         workflowId,
         state: result,
         threadId,
@@ -37,7 +37,7 @@ workerpool.worker({
       console.error(err);
       // @ts-ignore TODO sort out error typing
       workerpool.workerEmit({
-        type: 'workflow-error',
+        type: 'worker:workflow-error',
         workflowId,
         message: err.message,
         threadId,

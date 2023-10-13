@@ -1,14 +1,11 @@
-import { WORKFLOW_COMPLETE, WORKFLOW_LOG, WORKFLOW_START } from '../events';
-import {
-  ExecutionContext,
-  WorkerCompletePayload,
-  WorkerLogPayload,
-  WorkerStartPayload,
-} from '../types';
+// here's here things get a bit complex event wise
+import * as externalEvents from '../events';
+import * as internalEvents from '../worker/events';
+import { ExecutionContext } from '../types';
 
 export const workflowStart = (
   context: ExecutionContext,
-  event: WorkerStartPayload // the event published by the runtime itself ({ workflowId, threadId })
+  event: internalEvents.WorkflowStartEvent
 ) => {
   const { state, logger } = context;
   const { workflowId, threadId } = event;
@@ -35,7 +32,7 @@ export const workflowStart = (
   // api.activeWorkflows.push(workflowId);
 
   // forward the event on to any external listeners
-  context.emit(WORKFLOW_START, {
+  context.emit(externalEvents.WORKFLOW_START, {
     threadId,
     workflowId, // if this is a bespoke emitter it can be implied, which is nice
     // Should we publish anything else here?
@@ -44,7 +41,7 @@ export const workflowStart = (
 
 export const workflowComplete = (
   context: ExecutionContext,
-  event: WorkerCompletePayload // the event published by the runtime itself ({ workflowId, threadId })
+  event: internalEvents.WorkflowCompleteEvent
 ) => {
   const { logger, state } = context;
   const { workflowId, state: result, threadId } = event;
@@ -66,7 +63,7 @@ export const workflowComplete = (
   // activeWorkflows.splice(idx, 1);
 
   // forward the event on to any external listeners
-  context.emit(WORKFLOW_COMPLETE, {
+  context.emit(externalEvents.WORKFLOW_COMPLETE, {
     workflowId,
     threadId,
     duration: state.duration,
@@ -76,9 +73,9 @@ export const workflowComplete = (
 
 export const log = (
   context: ExecutionContext,
-  event: WorkerLogPayload // the event published by the runtime itself ({ workflowId, threadId })
+  event: internalEvents.LogEvent
 ) => {
-  const { id } = context.state;
+  const { workflowId, threadId } = event;
   // // TODO not sure about this stuff, I think we can drop it?
   // const newMessage = {
   //   ...message,
@@ -88,8 +85,9 @@ export const log = (
   // };
   context.logger.proxy(event.message);
 
-  context.emit(WORKFLOW_LOG, {
-    workflowId: id,
+  context.emit(externalEvents.WORKFLOW_LOG, {
+    workflowId,
+    threadId,
     ...event.message,
   });
 };

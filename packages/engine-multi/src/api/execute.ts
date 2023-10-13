@@ -1,15 +1,11 @@
 // Execute a compiled workflow
-import * as e from '../events';
+import * as workerEvents from '../worker/events';
 import { ExecutionContext } from '../types';
 
 import autoinstall from './autoinstall';
 import compile from './compile';
 import { workflowStart, workflowComplete, log } from './lifecycle';
 
-// A lot of callbacks needed here
-// Is it better to just return the handler?
-// But then this function really isn't doing so much
-// (I guess that's true anyway)
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger } = context;
 
@@ -17,14 +13,15 @@ const execute = async (context: ExecutionContext) => {
   await compile(context);
 
   const events = {
-    // TODO typings
-    [e.WORKFLOW_START]: (evt: any) => {
+    [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
       workflowStart(context, evt);
     },
-    [e.WORKFLOW_COMPLETE]: (evt: any) => {
+    [workerEvents.WORKFLOW_COMPLETE]: (
+      evt: workerEvents.WorkflowCompleteEvent
+    ) => {
       workflowComplete(context, evt);
     },
-    [e.WORKFLOW_LOG]: (evt: any) => {
+    [workerEvents.LOG]: (evt: workerEvents.LogEvent) => {
       log(context, evt);
     },
   };
