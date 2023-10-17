@@ -80,6 +80,7 @@ class ExecutionContext extends EventEmitter {
 export type EngineOptions = {
   repoDir: string;
   logger: Logger;
+  runtimelogger?: Logger;
 
   resolvers?: LazyResolvers;
 

@@ -83,6 +83,8 @@ export const log = (
   //   // I'm sure there are nicer, more elegant ways of doing this
   //   message: [`[${workflowId}]`, ...message.message],
   // };
+  // TODO: if these are logs from within the runtime,
+  // should we use context.runtimeLogger ?
   context.logger.proxy(event.message);
 
   context.emit(externalEvents.WORKFLOW_LOG, {
