@@ -2,7 +2,7 @@ import type { Logger } from '@openfn/logger';
 import executeJob from './job';
 import compilePlan from './compile-plan';
 
-import type { ExecutionPlan, State } from '../types';
+import type { ExecutionPlan } from '../types';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
@@ -29,7 +29,7 @@ const executePlan = async (
     opts,
     logger,
     report: createErrorReporter(logger),
-    notify: opts.callbacks?.notify,
+    notify: opts.callbacks?.notify ?? (() => {}),
   };
 
   type State = any;
@@ -38,14 +38,14 @@ const executePlan = async (
   // Record of state on lead nodes (nodes with no next)
   const leaves: Record<string, State> = {};
 
-  const { initialState } = compiledPlan;
+  let { initialState } = compiledPlan;
 
   if (typeof initialState === 'string') {
     const id = initialState;
     const startTime = Date.now();
     logger.debug(`fetching intial state ${id}`);
 
-    initialState = await opts.callbacks?.resolveState(id);
+    initialState = await opts.callbacks?.resolveState?.(id);
 
     const duration = Date.now() - startTime;
     opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, id });
