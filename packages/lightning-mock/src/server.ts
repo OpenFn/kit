@@ -91,6 +91,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
 
   (app as any).destroy = () => {
     server.close();
+    api.close();
   };
 
   return app;

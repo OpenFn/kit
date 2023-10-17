@@ -5,6 +5,13 @@ import { Attempt } from './types';
  * There is a danger of them diverging
  */
 
+// new client connected
+export const CONNECT = 'socket:connect';
+
+// client left or joined a channel
+export const CHANNEL_JOIN = 'socket:channel-join';
+export const CHANNEL_LEAVE = 'socket:channel-leave';
+
 export const CLAIM = 'claim';
 
 export type ClaimPayload = { demand?: number };

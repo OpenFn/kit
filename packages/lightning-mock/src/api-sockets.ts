@@ -133,6 +133,10 @@ const createSocketAPI = (
 
   return {
     startAttempt,
+    close: () => {
+      server.close();
+      wss.close();
+    },
   };
 
   // pull claim will try and pull a claim off the queue,

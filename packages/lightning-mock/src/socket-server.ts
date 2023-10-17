@@ -14,6 +14,7 @@ import { ServerState } from './server';
 import { stringify } from './util';
 
 import type { Logger } from '@openfn/logger';
+import { CHANNEL_JOIN, CONNECT } from './events';
 
 type Topic = string;
 
@@ -124,6 +125,7 @@ function createServer({
           response = 'invalid_token';
         }
       }
+      state.events.emit(CHANNEL_JOIN, { channel: topic });
       ws.reply({
         topic,
         payload: { status, response },
@@ -136,6 +138,7 @@ function createServer({
   // @ts-ignore something wierd about the wsServer typing
   wsServer.on('connection', function (ws: DevSocket, req: any) {
     logger?.info('new client connected');
+    state.events.emit(CONNECT); // todo client details maybe
 
     // Ensure that a JWT token is added to the
     const [_path, query] = req.url.split('?');
@@ -187,6 +190,9 @@ function createServer({
     ws.on('message', async function (data: string) {
       // decode  the data
       const evt = (await decode(data)) as PhoenixEvent;
+      if (evt.event !== 'claim') {
+        console.log(evt);
+      }
       onMessage(evt);
 
       if (evt.topic) {
