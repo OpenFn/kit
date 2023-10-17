@@ -38,12 +38,16 @@ function createServer(engine: any, options: ServerOptions = {}) {
     })
   );
 
-  app.listen(port);
+  const server = app.listen(port);
   logger.success('ws-worker listening on', port);
+
+  let killWorkloop;
 
   (app as any).destroy = () => {
     // TODO close the work loop
     logger.info('Closing server');
+    server.close();
+    killWorkloop?.();
   };
 
   const router = new Router();
@@ -70,7 +74,7 @@ function createServer(engine: any, options: ServerOptions = {}) {
         if (!options.noLoop) {
           logger.info('Starting workloop');
           // TODO maybe namespace the workloop logger differently? It's a bit annoying
-          startWorkloop(channel, startAttempt, logger, {
+          killWorkloop = startWorkloop(channel, startAttempt, logger, {
             maxBackoff: options.maxBackoff,
             // timeout: 1000 * 60, // TMP debug poll once per minute
           });

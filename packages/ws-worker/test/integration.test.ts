@@ -9,17 +9,17 @@ import createMockRTE from '../src/mock/runtime-engine';
 import * as e from '../src/events';
 
 let lng;
-let engine;
+let worker;
 
 const urls = {
-  engine: 'http://localhost:4567',
+  worker: 'http://localhost:4567',
   lng: 'ws://localhost:7654/worker',
 };
 
 test.before(() => {
   // TODO give lightning the same secret and do some validation
   lng = createLightningServer({ port: 7654 });
-  engine = createWorkerServer(createMockRTE('engine'), {
+  worker = createWorkerServer(createMockRTE('engine'), {
     port: 4567,
     lightning: urls.lng,
     secret: 'abc',
