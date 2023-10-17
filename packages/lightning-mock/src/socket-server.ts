@@ -190,9 +190,9 @@ function createServer({
     ws.on('message', async function (data: string) {
       // decode  the data
       const evt = (await decode(data)) as PhoenixEvent;
-      if (evt.event !== 'claim') {
-        console.log(evt);
-      }
+      // if (evt.event !== 'claim') {
+      //   console.log(evt);
+      // }
       onMessage(evt);
 
       if (evt.topic) {
