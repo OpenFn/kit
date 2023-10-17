@@ -1,0 +1,37 @@
+{
+  "name": "@openfn/integration-tests-worker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Lightning WOrker integration tests",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf dist repo",
+    "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/worker/dist --no-version",
+    "build": "pnpm build:pack && docker build --tag worker-integration-tests .",
+    "start": "docker run worker-integration-tests",
+    "test": "npx ava -s --timeout 2m && pnpm clean",
+    "test:dev": "pnpm ava -s && pnpm clean"
+  },
+  "dependencies": {
+    "@openfn/engine-multi": "workspace:^",
+    "@openfn/lightning-mock": "workspace:^",
+    "@openfn/logger": "workspace:^",
+    "@openfn/ws-worker": "workspace:^",
+    "@types/node": "^18.15.13",
+    "ava": "5.3.1",
+    "date-fns": "^2.30.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "10.8.1",
+    "tslib": "^2.4.0",
+    "typescript": "^5.1.6"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/rimraf": "^3.0.2"
+  }
+}
