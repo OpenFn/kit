@@ -80,7 +80,7 @@ const executeJob = async (
   if (job.expression) {
     // The expression SHOULD return state, but could return anything
     try {
-      result = await executeExpression(ctx, job.expression, state);
+      result = await executeExpression(ctx, job.expression, state, job.id);
       const duration = logger.timer('job');
       logger.success(`Completed job ${job.id} in ${duration}`);
     } catch (e: any) {

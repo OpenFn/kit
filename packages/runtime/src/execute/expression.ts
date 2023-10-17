@@ -10,7 +10,8 @@ import clone from '../util/clone';
 export default (
   ctx: ExecutionContext,
   expression: string | Operation[],
-  initialState: State
+  initialState: State,
+  id?: string
 ) =>
   new Promise(async (resolve, reject) => {
     const { logger, notify = () => {}, opts = {} } = ctx;
@@ -34,7 +35,7 @@ export default (
     try {
       logger.debug(`Executing expression (${operations.length} operations)`);
       let exeDuration = Date.now();
-      notify('job-start');
+      notify('job-start', { jobId: id });
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -51,7 +52,11 @@ export default (
 
       exeDuration = Date.now() - exeDuration;
 
-      notify('job-complete', { duration: exeDuration, state: result });
+      notify('job-complete', {
+        duration: exeDuration,
+        state: result,
+        jobId: id,
+      });
 
       // return the final state
       resolve(prepareFinalState(opts, result));

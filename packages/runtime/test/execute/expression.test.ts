@@ -69,39 +69,41 @@ test('run a live no-op job with @openfn/language-common.fn', async (t) => {
 test('notify job-start', async (t) => {
   let didCallCallback = false;
 
-  const job = [(s: State) => s];
+  const expression = [(s: State) => s];
   const state = createState();
 
-  const notify = (event: string, _payload?: any) => {
+  const notify = (event: string, payload?: any) => {
     if (event === 'job-start') {
       didCallCallback = true;
     }
+    t.is(payload.jobId, 'j');
   };
 
   const context = createContext({ notify });
 
-  await execute(context, job, state);
+  await execute(context, expression, state, 'j');
   t.true(didCallCallback);
 });
 
-test('call the on-complete callback', async (t) => {
+test('notifu job-complete', async (t) => {
   let didCallCallback = false;
 
-  const job = [(s: State) => s];
+  const expression = [(s: State) => s];
   const state = createState();
 
   const notify = (event: string, payload: any) => {
     if (event === 'job-complete') {
-      const { state, duration } = payload;
+      const { state, duration, jobId } = payload;
       didCallCallback = true;
       t.truthy(state);
       t.assert(!isNaN(duration));
+      t.is(jobId, 'j');
     }
   };
 
   const context = createContext({ notify });
 
-  await execute(context, job, state);
+  await execute(context, expression, state, 'j');
   t.true(didCallCallback);
 });
 
