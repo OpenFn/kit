@@ -95,6 +95,8 @@ export type EngineOptions = {
 const createEngine = (options: EngineOptions, workerPath?: string) => {
   const states: Record<string, WorkflowState> = {};
   const contexts: Record<string, ExecutionContext> = {};
+  const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
+
   // TODO I think this is for later
   //const activeWorkflows: string[] = [];
 
@@ -140,6 +142,7 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
   // TODO are we totally sure this takes a standard xplan?
   // Well, it MUST have an ID or there's trouble
   const executeWrapper = (plan: ExecutionPlan) => {
+    options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid
     // Wait, don't throw because the server will die
@@ -154,6 +157,12 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
     });
 
     contexts[workflowId] = createWorkflowEvents(engine, context, workflowId);
+
+    // Hook up any listeners passed to listen() that were called before execute
+    if (deferredListeners[workflowId]) {
+      deferredListeners[workflowId].forEach((l) => listen(workflowId, l));
+      delete deferredListeners[workflowId];
+    }
 
     // TODO typing between the class and interface isn't right
     // @ts-ignore
@@ -176,11 +185,21 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
     handlers: Record<string, EventHandler>
   ) => {
     const events = contexts[workflowId];
-    for (const evt in handlers) {
-      events.on(evt, handlers[evt]);
+    if (events) {
+      // If execute() was called, we'll have a context and we can subscribe directly
+      for (const evt in handlers) {
+        events.on(evt, handlers[evt]);
+      }
+    } else {
+      // if execute() wasn't called yet, cache the listeners and we'll hook them up later
+      if (!deferredListeners[workflowId]) {
+        deferredListeners[workflowId] = [];
+      }
+      deferredListeners[workflowId].push(handlers);
     }
 
-    // TODO return unsubscribe handle
+    // TODO return unsubscribe handle?
+    // How does this work if deferred?
   };
 
   engine.emit('test');

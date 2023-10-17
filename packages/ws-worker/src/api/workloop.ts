@@ -6,7 +6,6 @@ import type { Logger } from '@openfn/logger';
 
 import claim from './claim';
 
-// TODO this needs to return some kind of cancel function
 const startWorkloop = (
   channel: Channel,
   execute: (attempt: CLAIM_ATTEMPT) => void,

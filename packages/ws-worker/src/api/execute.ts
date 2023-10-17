@@ -62,7 +62,7 @@ export function execute(
   plan: ExecutionPlan
 ) {
   return new Promise(async (resolve) => {
-    logger.info('execute..');
+    logger.info('execute...');
 
     const state: AttemptState = {
       plan,

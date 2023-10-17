@@ -19,6 +19,9 @@ const options = {
   logger,
   repoDir: '.', // doesn't matter for the mock
   noCompile: true, // messy - needed to allow an expression to be passed as json
+  autoinstall: {
+    handleIsInstalled: async () => true,
+  },
 };
 
 test.afterEach(() => {
@@ -72,17 +75,7 @@ test('use a custom worker path', (t) => {
 test('execute with test worker and trigger workflow-complete', (t) => {
   return new Promise((done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(
-      {
-        logger,
-        repoDir: '.',
-        noCompile: true,
-        autoinstall: {
-          handleIsInstalled: async () => true,
-        },
-      },
-      p
-    );
+    const engine = createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -104,16 +97,7 @@ test('execute with test worker and trigger workflow-complete', (t) => {
 test('execute does not return internal state stuff', (t) => {
   return new Promise((done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(
-      {
-        logger,
-        noCompile: true,
-        autoinstall: {
-          handleIsInstalled: async () => true,
-        },
-      },
-      p
-    );
+    const engine = createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -148,16 +132,7 @@ test('execute does not return internal state stuff', (t) => {
 test('listen to workflow-complete', (t) => {
   return new Promise((done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(
-      {
-        logger,
-        noCompile: true,
-        autoinstall: {
-          handleIsInstalled: async () => true,
-        },
-      },
-      p
-    );
+    const engine = createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -176,5 +151,29 @@ test('listen to workflow-complete', (t) => {
         done();
       },
     });
+  });
+});
+
+test('call listen before execute', (t) => {
+  return new Promise((done) => {
+    const p = path.resolve('src/test/worker-functions.js');
+    const engine = createEngine(options, p);
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: '34',
+        },
+      ],
+    };
+
+    engine.listen(plan.id, {
+      [e.WORKFLOW_COMPLETE]: ({ state }) => {
+        t.is(state, 34);
+        done();
+      },
+    });
+    engine.execute(plan);
   });
 });

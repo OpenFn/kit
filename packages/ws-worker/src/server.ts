@@ -41,7 +41,7 @@ function createServer(engine: any, options: ServerOptions = {}) {
   const server = app.listen(port);
   logger.success('ws-worker listening on', port);
 
-  let killWorkloop;
+  let killWorkloop: () => void;
 
   (app as any).destroy = () => {
     // TODO close the work loop
