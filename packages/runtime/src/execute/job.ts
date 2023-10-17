@@ -16,8 +16,8 @@ const loadCredentials = async (
   resolver: (id: string) => Promise<any>
 ) => {
   if (typeof job.configuration === 'string') {
-    // TODO let's log something useful if we're lazy loading
-    // TODO throw a controlled error if there's no reoslved
+    // TODO let's log and notify something useful if we're lazy loading
+    // TODO throw a controlled error if there's no reoslver
     return resolver(job.configuration);
   }
   return job.configuration;
@@ -28,7 +28,7 @@ const loadState = async (
   resolver: (id: string) => Promise<any>
 ) => {
   if (typeof job.state === 'string') {
-    // TODO let's log something useful if we're lazy loading
+    // TODO let's log and notify something useful if we're lazy loading
     // TODO throw a controlled error if there's no resolver
     return resolver(job.state);
   }
@@ -41,7 +41,7 @@ const loadState = async (
 const executeJob = async (
   ctx: ExecutionContext,
   job: CompiledJobNode,
-  initialState: State
+  initialState: State = {}
 ): Promise<{ next: JobNodeID[]; state: any }> => {
   const next: string[] = [];
 

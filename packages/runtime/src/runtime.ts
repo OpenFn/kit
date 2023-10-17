@@ -81,8 +81,11 @@ const run = (
   } else {
     plan = expressionOrXPlan as ExecutionPlan;
   }
+  if (state) {
+    plan.initialState = clone(state);
+  }
 
-  return executePlan(plan, clone(state), opts, logger);
+  return executePlan(plan, opts, logger);
 };
 
 export default run;

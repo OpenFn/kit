@@ -4,15 +4,7 @@ import { createMockLogger } from '@openfn/logger';
 import { ExecutionPlan, JobNode } from '../../src/types';
 import execute from './../../src/execute/plan';
 
-const opts = {};
 let mockLogger = createMockLogger(undefined, { level: 'debug' });
-
-const executePlan = (
-  plan: ExecutionPlan,
-  state = {},
-  options = opts,
-  logger = mockLogger
-): any => execute(plan, state, options, logger);
 
 test('throw for a circular job', async (t) => {
   const plan: ExecutionPlan = {
@@ -30,7 +22,7 @@ test('throw for a circular job', async (t) => {
       },
     ],
   };
-  const e = await t.throwsAsync(() => executePlan(plan));
+  const e = await t.throwsAsync(() => execute(plan, {}, mockLogger));
   t.regex(e!.message, /circular dependency/i);
 });
 
@@ -56,7 +48,7 @@ test('throw for a job with multiple inputs', async (t) => {
       },
     ],
   };
-  const e = await t.throwsAsync(() => executePlan(plan));
+  const e = await t.throwsAsync(() => execute(plan, {}, mockLogger));
   t.regex(e!.message, /multiple dependencies/i);
 });
 
@@ -71,7 +63,7 @@ test('throw for a plan which references an undefined job', async (t) => {
       },
     ],
   };
-  const e = await t.throwsAsync(() => executePlan(plan));
+  const e = await t.throwsAsync(() => execute(plan, {}, mockLogger));
   t.regex(e!.message, /cannot find job/i);
 });
 
@@ -90,7 +82,7 @@ test('throw for an illegal edge condition', async (t) => {
       { id: 'b' },
     ],
   };
-  const e = await t.throwsAsync(() => executePlan(plan));
+  const e = await t.throwsAsync(() => execute(plan, {}, mockLogger));
   t.regex(e!.message, /failed to compile edge condition a->b/i);
 });
 
@@ -108,7 +100,7 @@ test('throw for an edge condition', async (t) => {
       { id: 'b' },
     ],
   };
-  const e = await t.throwsAsync(() => executePlan(plan));
+  const e = await t.throwsAsync(() => execute(plan, {}, mockLogger));
   t.regex(e!.message, /failed to compile edge condition/i);
 });
 
@@ -121,28 +113,53 @@ test('execute a one-job execution plan with inline state', async (t) => {
       },
     ],
   };
-  const result = (await executePlan(plan)) as unknown as number;
+  const result = (await execute(plan, {}, mockLogger)) as unknown as number;
   t.is(result, 22);
 });
 
 test('execute a one-job execution plan with initial state', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: {
+      data: { x: 33 },
+    },
     jobs: [
       {
         expression: 'export default [s => s.data.x]',
       },
     ],
   };
-  const result = (await executePlan(plan, {
-    data: { x: 33 },
-  })) as unknown as number;
+  const result = (await execute(plan, {}, mockLogger)) as unknown as number;
   t.is(result, 33);
 });
+
+test('lazy load initial state', async (t) => {
+  const plan: ExecutionPlan = {
+    initialState: 's1',
+    jobs: [{ id: 'a', expression: 'export default [s => s]' }],
+  };
+  const states = { s1: { data: { result: 42 } } };
+  const options = {
+    callbacks: {
+      resolveState: (id: string) => states[id],
+    },
+  };
+
+  const result = await execute(plan, options, mockLogger);
+  t.deepEqual(result, states.s1);
+});
+
+test.todo('lazy load initial state with log');
+test.todo('lazy load initial state with notify');
 
 test('execute a one-job execution plan and notify init-start and init-complete', async (t) => {
   let notifications: Record<string, any> = {};
 
+  const state = {
+    data: { x: 33 },
+  };
+
   const plan: ExecutionPlan = {
+    initialState: state,
     jobs: [
       {
         expression: 'export default [s => s.data.x]',
@@ -159,11 +176,7 @@ test('execute a one-job execution plan and notify init-start and init-complete',
 
   const options = { callbacks: { notify } };
 
-  const state = {
-    data: { x: 33 },
-  };
-
-  await executePlan(plan, state, options);
+  await execute(plan, options, mockLogger);
 
   t.truthy(notifications['init-start']);
   t.truthy(notifications['init-complete']);
@@ -186,7 +199,7 @@ test('execute a job with a simple truthy "precondition" or "trigger node"', asyn
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.true(result.data.done);
 });
 
@@ -206,12 +219,13 @@ test('do not execute a job with a simple falsy "precondition" or "trigger node"'
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.falsy(result.data.done);
 });
 
 test('execute a job with a valid "precondition" or "trigger node"', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 10 } },
     jobs: [
       {
         next: {
@@ -226,12 +240,13 @@ test('execute a job with a valid "precondition" or "trigger node"', async (t) =>
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 10 } });
+  const result = await execute(plan, {}, mockLogger);
   t.true(result.data.done);
 });
 
 test('merge initial and inline state', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 33 } },
     jobs: [
       {
         expression: 'export default [s => s]',
@@ -239,13 +254,14 @@ test('merge initial and inline state', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 33 } });
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.x, 33);
   t.is(result.data.y, 11);
 });
 
 test('Initial state overrides inline data', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 34 } },
     jobs: [
       {
         expression: 'export default [s => s]',
@@ -253,8 +269,8 @@ test('Initial state overrides inline data', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 33 } });
-  t.is(result.data.x, 33);
+  const result = await execute(plan, {}, mockLogger);
+  t.is(result.data.x, 34);
 });
 
 test('Previous state overrides inline data', async (t) => {
@@ -278,7 +294,7 @@ test('Previous state overrides inline data', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.x, 6);
 });
 
@@ -301,7 +317,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, {}, { strict: true });
+  const result = await execute(plan, { strict: true }, mockLogger);
   t.deepEqual(result, {
     data: {},
     references: [],
@@ -364,7 +380,7 @@ test('Jobs only receive state from upstream jobs', async (t) => {
     ],
   };
 
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
 
   // explicit check that no assertion failed and wrote an error to state
   t.falsy(result.error);
@@ -395,7 +411,7 @@ test('all state is passed through in non-strict mode', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, {}, { strict: false });
+  const result = await execute(plan, { strict: false }, mockLogger);
   t.deepEqual(result, {
     data: {},
     references: [],
@@ -421,7 +437,7 @@ test('execute edge based on state in the condition', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data?.y, 20);
 });
 
@@ -442,12 +458,13 @@ test('skip edge based on state in the condition ', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data?.x, 10);
 });
 
 test('execute a two-job execution plan', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 0 } },
     jobs: [
       {
         id: 'job1',
@@ -460,12 +477,13 @@ test('execute a two-job execution plan', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 0 } });
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.x, 2);
 });
 
 test('only execute one job in a two-job execution plan', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 0 } },
     jobs: [
       {
         id: 'job1',
@@ -478,7 +496,7 @@ test('only execute one job in a two-job execution plan', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 0 } });
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.x, 1);
 });
 
@@ -497,13 +515,14 @@ test('execute a two-job execution plan with custom start in state', async (t) =>
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.result, 11);
 });
 
 test('execute a two-job execution plan with custom start in options', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
+    initialState: { start: 'job2' },
     jobs: [
       {
         id: 'job1',
@@ -516,13 +535,14 @@ test('execute a two-job execution plan with custom start in options', async (t) 
       },
     ],
   };
-  const result = await executePlan(plan, {}, { start: 'job2' });
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.result, 11);
 });
 
 test('Return when there are no more edges', async (t) => {
   const plan: ExecutionPlan = {
     start: 'job1',
+    initialState: { data: { x: 0 } },
     jobs: [
       {
         id: 'job1',
@@ -534,12 +554,13 @@ test('Return when there are no more edges', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 0 } });
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data?.x, 1);
 });
 
 test('execute a 5 job execution plan', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 0 } },
     start: '1',
     jobs: [],
   } as ExecutionPlan;
@@ -550,13 +571,14 @@ test('execute a 5 job execution plan', async (t) => {
       next: i === 5 ? null : { [`${i + 1}`]: true },
     } as JobNode);
   }
-  const result = await executePlan(plan, { data: { x: 0 } });
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.data.x, 5);
 });
 
 test('execute multiple steps in "parallel"', async (t) => {
   const plan: ExecutionPlan = {
     start: 'start',
+    initialState: { data: { x: 0 } },
     jobs: [
       {
         id: 'start',
@@ -581,7 +603,7 @@ test('execute multiple steps in "parallel"', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: { x: 0 } });
+  const result = await execute(plan, {}, mockLogger);
   t.deepEqual(result, {
     a: { data: { x: 1 } },
     b: { data: { x: 1 } },
@@ -599,7 +621,7 @@ test('return an error in state', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.truthy(result.errors);
   t.is(result.errors.a.message, 'e');
 });
@@ -615,7 +637,7 @@ test('handle non-standard error objects', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.truthy(result.errors);
   t.is(result.errors.a.error, 'wibble');
 });
@@ -637,7 +659,7 @@ test('keep executing after an error', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.y, 20);
   t.falsy(result.x);
 });
@@ -664,7 +686,7 @@ test('simple on-error handler', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan);
+  const result = await execute(plan, {}, mockLogger);
   t.is(result.y, 20);
   t.falsy(result.x);
 });
@@ -682,7 +704,7 @@ test('log appopriately on error', async (t) => {
 
   const logger = createMockLogger(undefined, { level: 'debug' });
 
-  await executePlan(plan, {}, {}, logger);
+  await execute(plan, {}, logger);
 
   const err = logger._find('error', /failed job/i);
   t.truthy(err);
@@ -694,6 +716,7 @@ test('log appopriately on error', async (t) => {
 
 test('jobs do not share a local scope', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         // declare x in this expression's scope
@@ -709,7 +732,7 @@ test('jobs do not share a local scope', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
 
   const err = result.errors['b'];
   t.truthy(err);
@@ -719,6 +742,7 @@ test('jobs do not share a local scope', async (t) => {
 
 test('jobs do not share a global scope', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         expression: 'export default [s => { x = 10; return s; }]',
@@ -732,7 +756,7 @@ test('jobs do not share a global scope', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
 
   const err = result.errors['b'];
   t.truthy(err);
@@ -742,6 +766,7 @@ test('jobs do not share a global scope', async (t) => {
 
 test('jobs do not share a this object', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         expression: 'export default [s => { this.x = 10; return s; }]',
@@ -755,7 +780,7 @@ test('jobs do not share a this object', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
 
   const err = result.errors['b'];
   t.truthy(err);
@@ -767,6 +792,7 @@ test('jobs do not share a this object', async (t) => {
 // https://github.com/OpenFn/kit/issues/213
 test.skip('jobs cannot scribble on globals', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         expression: 'export default [s => { console.x = 10; return s; }]',
@@ -780,7 +806,7 @@ test.skip('jobs cannot scribble on globals', async (t) => {
       },
     ],
   };
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
   t.falsy(result.data.x);
 });
 
@@ -788,6 +814,7 @@ test.skip('jobs cannot scribble on globals', async (t) => {
 // https://github.com/OpenFn/kit/issues/213
 test.skip('jobs cannot scribble on adaptor functions', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: { x: 0 } },
     jobs: [
       {
         expression:
@@ -803,19 +830,17 @@ test.skip('jobs cannot scribble on adaptor functions', async (t) => {
       },
     ],
   };
-  const result = await executePlan(
-    plan,
-    { data: { x: 0 } },
-    {
-      linker: {
-        modules: {
-          '@openfn/language-common': {
-            path: path.resolve('test/__modules__/@openfn/language-common'),
-          },
+  const options = {
+    linker: {
+      modules: {
+        '@openfn/language-common': {
+          path: path.resolve('test/__modules__/@openfn/language-common'),
         },
       },
-    }
-  );
+    },
+  };
+
+  const result = await execute(plan, options, mockLogger);
   t.falsy(result.data.x);
 });
 
@@ -830,6 +855,7 @@ test('jobs can write circular references to state without blowing up downstream'
   }]
 `;
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         expression,
@@ -842,7 +868,7 @@ test('jobs can write circular references to state without blowing up downstream'
     ],
   };
 
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
 
   t.notThrows(() => JSON.stringify(result));
   t.deepEqual(result, {
@@ -865,6 +891,7 @@ test('jobs cannot pass circular references to each other', async (t) => {
   }]
 `;
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         expression,
@@ -880,7 +907,7 @@ test('jobs cannot pass circular references to each other', async (t) => {
     ],
   };
 
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
 
   t.notThrows(() => JSON.stringify(result));
   t.is(result.data.answer, '[Circular]');
@@ -888,6 +915,7 @@ test('jobs cannot pass circular references to each other', async (t) => {
 
 test('jobs can write functions to state without blowing up downstream', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         next: { b: true },
@@ -906,7 +934,7 @@ test('jobs can write functions to state without blowing up downstream', async (t
     ],
   };
 
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
 
   t.notThrows(() => JSON.stringify(result));
   t.deepEqual(result, { data: {} });
@@ -914,6 +942,7 @@ test('jobs can write functions to state without blowing up downstream', async (t
 
 test('jobs cannot pass functions to each other', async (t) => {
   const plan: ExecutionPlan = {
+    initialState: { data: {} },
     jobs: [
       {
         next: { b: true },
@@ -934,7 +963,7 @@ test('jobs cannot pass functions to each other', async (t) => {
     ],
   };
 
-  const result = await executePlan(plan, { data: {} });
+  const result = await execute(plan, {}, mockLogger);
   const err = result.errors['b'];
   t.truthy(err);
   t.is(err.message, 's.data.x is not a function');
@@ -951,7 +980,7 @@ test('Plans log for each job start and end', async (t) => {
     ],
   };
   const logger = createMockLogger(undefined, { level: 'debug' });
-  await executePlan(plan, {}, {}, logger);
+  await execute(plan, {}, logger);
 
   const start = logger._find('always', /starting job/i);
   t.is(start!.message, 'Starting job a');
@@ -959,10 +988,3 @@ test('Plans log for each job start and end', async (t) => {
   const end = logger._find('success', /completed job/i);
   t.regex(end!.message as string, /Completed job a in \d+ms/);
 });
-
-// TODO these are part of job.ts really, should we split tests up into plan and job?
-// There's quite a big overlap really in test terms
-test.todo('lazy load credentials');
-test.todo("throw if credentials are a string and there's no resolver");
-test.todo('lazy load state');
-test.todo("throw if state is a string and there's no resolver");

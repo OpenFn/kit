@@ -49,7 +49,7 @@ export type ExecutionPlan = {
   id?: string; // UUID for this plan
   jobs: JobNode[];
   start?: JobNodeID;
-  initialState?: State; // TODO adding initial state to the plan changes how the runtime expects to receive initial state
+  initialState?: State | string;
 };
 
 export type JobNode = {
@@ -62,6 +62,8 @@ export type JobNode = {
   expression?: string | Operation[]; // the code we actually want to execute. Can be a path.
 
   configuration?: object | string; // credential object
+
+  // TODO strings aren't actually suppored here yet
   state?: Omit<State, 'configuration'> | string; // default state (globals)
 
   next?: string | Record<JobNodeID, JobEdge>;
@@ -93,6 +95,7 @@ export type CompiledExecutionPlan = {
   id?: string;
   start: JobNodeID;
   jobs: Record<JobNodeID, CompiledJobNode>;
+  initialState?: State | string;
 };
 
 export type JobModule = {
@@ -112,11 +115,13 @@ export type ExecutionContext = {
 
 // External notifications to reveal what's happening
 // All are passed through the notify handler
+// TODO I'd prefer to load the strings from notify.ts and reflect the types here
 export type NotifyEvents =
   | 'init-start' // The job is being initialised (ie, credentials lazy-loading)
   | 'init-complete'
   | 'job-start'
-  | 'job-complete';
+  | 'job-complete'
+  | 'load-state';
 // module-load
 
 // I'm not wild about the callbacks pattern, events would be simpler

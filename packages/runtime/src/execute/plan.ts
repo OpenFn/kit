@@ -6,10 +6,10 @@ import type { ExecutionPlan, State } from '../types';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
+import { NOTIFY_STATE_LOAD } from '../util/notify';
 
 const executePlan = async (
   plan: ExecutionPlan,
-  initialState: State = {},
   opts: Options,
   logger: Logger
 ) => {
@@ -38,7 +38,21 @@ const executePlan = async (
   // Record of state on lead nodes (nodes with no next)
   const leaves: Record<string, State> = {};
 
-  // TODO: maybe lazy load intial state and notify about it
+  const { initialState } = compiledPlan;
+
+  if (typeof initialState === 'string') {
+    const id = initialState;
+    const startTime = Date.now();
+    logger.debug(`fetching intial state ${id}`);
+
+    initialState = await opts.callbacks?.resolveState(id);
+
+    const duration = Date.now() - startTime;
+    opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, id });
+    logger.success(`loaded state for ${id} in ${duration}ms`);
+
+    // TODO catch and re-throw
+  }
 
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
