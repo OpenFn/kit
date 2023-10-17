@@ -34,8 +34,6 @@ export const workflowStart = (
   // forward the event on to any external listeners
   context.emit(externalEvents.WORKFLOW_START, {
     threadId,
-    workflowId, // if this is a bespoke emitter it can be implied, which is nice
-    // Should we publish anything else here?
   });
 };
 
@@ -64,7 +62,6 @@ export const workflowComplete = (
 
   // forward the event on to any external listeners
   context.emit(externalEvents.WORKFLOW_COMPLETE, {
-    workflowId,
     threadId,
     duration: state.duration,
     state: result,
@@ -75,7 +72,7 @@ export const log = (
   context: ExecutionContext,
   event: internalEvents.LogEvent
 ) => {
-  const { workflowId, threadId } = event;
+  const { threadId } = event;
   // // TODO not sure about this stuff, I think we can drop it?
   // const newMessage = {
   //   ...message,
@@ -88,7 +85,6 @@ export const log = (
   context.logger.proxy(event.message);
 
   context.emit(externalEvents.WORKFLOW_LOG, {
-    workflowId,
     threadId,
     ...event.message,
   });

@@ -1,25 +1,24 @@
 import test from 'ava';
-import { EventEmitter } from 'node:events';
 
 import * as e from '../../src/events';
 import { createMockLogger } from '@openfn/logger';
 import { log, workflowComplete, workflowStart } from '../../src/api/lifecycle';
-import { EngineAPI, ExecutionContext, WorkflowState } from '../../src/types';
+import { WorkflowState } from '../../src/types';
+import { ExecutionContext } from '../../src/engine';
 
-const createContext = ({ state }: Partial<ExecutionContext> = {}) => {
-  const api = new EventEmitter();
-  return Object.assign(api, {
+const createContext = (workflowId: string, state?: any) =>
+  new ExecutionContext({
+    state: state || { id: workflowId },
     logger: createMockLogger(),
-    state: state || {},
-    // logger: not used
-  }) as unknown as ExecutionContext;
-};
+    callWorker: () => {},
+    options: {},
+  });
 
 test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
 
-    const context = createContext();
+    const context = createContext(workflowId);
     const event = { workflowId, threadId: '123' };
 
     context.on(e.WORKFLOW_START, (evt) => {
@@ -34,7 +33,7 @@ test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
 test('onWorkflowStart: updates state', (t) => {
   const workflowId = 'a';
 
-  const context = createContext();
+  const context = createContext(workflowId);
   const event = { workflowId, threadId: '123' };
 
   workflowStart(context, event);
@@ -55,9 +54,10 @@ test(`workflowComplete: emits ${e.WORKFLOW_COMPLETE}`, (t) => {
     const result = { a: 777 };
 
     const state = {
+      id: workflowId,
       startTime: Date.now() - 1000,
     } as WorkflowState;
-    const context = createContext({ state });
+    const context = createContext(workflowId, state);
 
     const event = { workflowId, state: result, threadId: '1' };
 
@@ -77,9 +77,10 @@ test('workflowComplete: updates state', (t) => {
   const result = { a: 777 };
 
   const state = {
+    id: workflowId,
     startTime: Date.now() - 1000,
   } as WorkflowState;
-  const context = createContext({ state });
+  const context = createContext(workflowId, state);
   const event = { workflowId, state: result, threadId: '1' };
 
   workflowComplete(context, event);
@@ -93,10 +94,7 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
 
-    const state = {
-      id: workflowId,
-    } as WorkflowState;
-    const context = createContext({ state });
+    const context = createContext(workflowId);
 
     const event = {
       workflowId,
@@ -111,7 +109,7 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
 
     context.on(e.WORKFLOW_LOG, (evt) => {
       t.deepEqual(evt, {
-        workflowId: state.id,
+        workflowId,
         threadId: 'a',
         ...event.message,
       });

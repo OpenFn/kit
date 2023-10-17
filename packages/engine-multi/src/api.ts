@@ -76,7 +76,9 @@ const createAPI = function (options: RTEOptions = {}) {
     execute: engine.execute,
     listen: engine.listen,
 
-    // TODO what about a general on or once?
+    // expose a hook to listen to internal events
+    // @ts-ignore
+    // on: (...args) => engine.on(...args),
   };
 };
 

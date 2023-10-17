@@ -11,7 +11,7 @@ import { install as runtimeInstall } from '@openfn/runtime';
 
 import type { Logger } from '@openfn/logger';
 import type { ExecutionContext } from '../types';
-import { AUTOINSTALL_COMPLETE } from '../events';
+import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -64,23 +64,35 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     const needsInstalling = !(await isInstalledFn(a, repoDir, logger));
     if (needsInstalling) {
       if (!pending[a]) {
+        // TODO because autoinstall can take a while, we should emit that we're starting
         // add a promise to the pending array
         const startTime = Date.now();
-        pending[a] = installFn(a, repoDir, logger).then(() => {
-          const duration = Date.now() - startTime;
+        pending[a] = installFn(a, repoDir, logger)
+          .then(() => {
+            const duration = Date.now() - startTime;
 
-          logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
-          context.emit(AUTOINSTALL_COMPLETE, {
-            module: name,
-            version: version!,
-            duration,
+            logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
+            context.emit(AUTOINSTALL_COMPLETE, {
+              module: name,
+              version: version!,
+              duration,
+            });
+            delete pending[a];
+          })
+          .catch((e) => {
+            const duration = Date.now() - startTime;
+            console.log('AUTOINSTALL ERROR');
+            console.log(e);
+            context.emit(AUTOINSTALL_ERROR, {
+              module: name,
+              version: version!,
+              duration,
+              message: e.message || e.toString(),
+            });
           });
-          delete pending[a];
-        });
-        // TODO catch, log and emit
-        // This should trigger a crash state
       }
       // Return the pending promise (safe to do this multiple times)
+      // TODO if this is a chained promise, emit something like "using cache for ${name}"
       await pending[a].then();
     }
   }

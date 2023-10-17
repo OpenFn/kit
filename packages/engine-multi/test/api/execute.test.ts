@@ -1,7 +1,7 @@
 import path from 'node:path';
 import test from 'ava';
 import { EventEmitter } from 'node:events';
-import { EngineAPI, ExecutionContext, WorkflowState } from '../../src/types';
+import { WorkflowState } from '../../src/types';
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
 import { createMockLogger } from '@openfn/logger';
@@ -11,19 +11,19 @@ import {
   WORKFLOW_START,
 } from '../../src/events';
 import { RTEOptions } from '../../src/api';
+import { ExecutionContext } from '../../src/engine';
 
 const workerPath = path.resolve('dist/worker/mock.js');
 
-const createContext = ({ state, options }: Partial<ExecutionContext> = {}) => {
-  const api = new EventEmitter();
-  Object.assign(api, {
-    logger: createMockLogger(),
+const createContext = ({ state, options }) => {
+  const ctx = new ExecutionContext({
     state: state || {},
+    logger: createMockLogger(),
+    callWorker: () => {},
     options,
-    // logger: not used
-  }) as unknown as ExecutionContext;
-  initWorkers(api, workerPath);
-  return api;
+  });
+  initWorkers(ctx, workerPath);
+  return ctx;
 };
 
 const plan = {

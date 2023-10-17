@@ -11,7 +11,6 @@ const execute = async (context: ExecutionContext) => {
 
   const adaptorPaths = await autoinstall(context);
   await compile(context);
-
   const events = {
     [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
       workflowStart(context, evt);

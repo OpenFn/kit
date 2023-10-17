@@ -32,12 +32,13 @@ export type EventMap = {
   [WORKFLOW_LOG]: WorkerLogPayload;
   [WORKFLOW_ERROR]: WorkflowErrorPayload;
   [AUTOINSTALL_COMPLETE]: AutoinstallCompletePayload;
+  [AUTOINSTALL_ERROR]: AutoinstallErrorPayload;
 };
 
 export type ExternalEvents = keyof EventMap;
 
 interface ExternalEvent {
-  threadId: string;
+  threadId?: string;
   workflowId: string;
 }
 
@@ -69,9 +70,15 @@ export interface EdgeResolvedPayload extends ExternalEvent {
   result: boolean;
 }
 
-// workflow id doesn't really help here?
-export interface AutoinstallCompletePayload {
+export interface AutoinstallCompletePayload extends ExternalEvent {
   module: string;
   version: string;
   duration: number;
+}
+
+export interface AutoinstallErrorPayload extends ExternalEvent {
+  module: string;
+  version: string;
+  duration: number;
+  message: string;
 }

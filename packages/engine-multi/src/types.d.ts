@@ -57,7 +57,10 @@ export interface ExecutionContext extends EventEmitter {
   logger: Logger;
   callWorker: CallWorker;
 
-  emit<T extends ExternalEvents>(event: T, payload: EventMap[T]): boolean;
+  emit<T extends ExternalEvents>(
+    event: T,
+    payload: Omit<EventMap[T], 'workflowId'>
+  ): boolean;
 }
 
 export interface EngineAPI extends EventEmitter {

@@ -74,6 +74,13 @@ export class ExecutionContext extends EventEmitter {
     this.state = state;
     this.options = options;
   }
+
+  // override emit to add the workflowId to all events
+  // @ts-ignore
+  emit(event, payload) {
+    payload.workflowId = this.state.id;
+    super.emit(event, payload);
+  }
 }
 
 // The engine is way more strict about options
