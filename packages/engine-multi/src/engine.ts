@@ -56,7 +56,7 @@ class Engine extends EventEmitter {}
 
 // TODO this is actually the api that each execution gets
 // its nice to separate that from the engine a bit
-class ExecutionContext extends EventEmitter {
+export class ExecutionContext extends EventEmitter {
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;

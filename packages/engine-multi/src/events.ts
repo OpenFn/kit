@@ -20,6 +20,10 @@ export const WORKFLOW_LOG = 'workflow-log';
 
 export const WORKFLOW_EDGE_RESOLVED = 'workflow-edge-resolved';
 
+export const AUTOINSTALL_COMPLETE = 'autoinstall-complete';
+
+export const AUTOINSTALL_ERROR = 'autoinstall-error';
+
 export type EventMap = {
   [WORKFLOW_START]: WorkflowStartPayload;
   [WORKFLOW_COMPLETE]: WorkflowCompletePayload;
@@ -27,6 +31,7 @@ export type EventMap = {
   [JOB_COMPLETE]: JobCompletePayload;
   [WORKFLOW_LOG]: WorkerLogPayload;
   [WORKFLOW_ERROR]: WorkflowErrorPayload;
+  [AUTOINSTALL_COMPLETE]: AutoinstallCompletePayload;
 };
 
 export type ExternalEvents = keyof EventMap;
@@ -36,46 +41,37 @@ interface ExternalEvent {
   workflowId: string;
 }
 
-export interface WorkflowStartPayload extends ExternalEvent {
-  threadId: string;
-  workflowId: string;
-}
+export interface WorkflowStartPayload extends ExternalEvent {}
 
 export interface WorkflowCompletePayload extends ExternalEvent {
-  threadId: string;
-  workflowId: string;
   state: any;
   duration: number;
 }
 
 export interface WorkflowErrorPayload extends ExternalEvent {
-  threadId: string;
-  workflowId: string;
   type: string;
   message: string;
 }
 
 export interface JobStartPayload extends ExternalEvent {
-  threadId: string;
-  workflowId: string;
   jobId: string;
 }
 
 export interface JobCompletePayload extends ExternalEvent {
-  threadId: string;
-  workflowId: string;
   jobId: string;
   state: any; // the result state
 }
 
-export interface WorkerLogPayload extends ExternalEvent, JSONLog {
-  threadId: string;
-  workflowId: string;
-}
+export interface WorkerLogPayload extends ExternalEvent, JSONLog {}
 
 export interface EdgeResolvedPayload extends ExternalEvent {
-  threadId: string;
-  workflowId: string;
   edgeId: string; // interesting, we don't really have this yet. Is index more appropriate? key? yeah, it's target node basically
   result: boolean;
+}
+
+// workflow id doesn't really help here?
+export interface AutoinstallCompletePayload {
+  module: string;
+  version: string;
+  duration: number;
 }

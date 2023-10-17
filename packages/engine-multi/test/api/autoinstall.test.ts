@@ -2,7 +2,8 @@ import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
 
 import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
-import { EngineAPI, ExecutionContext, WorkflowState } from '../../src/types';
+import { AUTOINSTALL_COMPLETE } from '../../src/events';
+import { ExecutionContext } from '../../src/engine';
 
 type PackageJson = {
   name: string;
@@ -20,21 +21,25 @@ const mockHandleInstall = async (specifier: string): Promise<void> =>
 const logger = createMockLogger();
 
 const createContext = (autoinstallOpts?, jobs?: any[]) =>
-  ({
-    logger,
+  new ExecutionContext({
     state: {
+      id: 'x',
+      status: 'pending',
+      options: {},
       plan: {
         jobs: jobs || [{ adaptor: 'x@1.0.0' }],
       },
     },
+    logger,
+    callWorker: () => {},
     options: {
-      repoDir: '.',
+      repoDir: 'tmp/repo',
       autoinstall: autoinstallOpts || {
         handleInstall: mockHandleInstall,
         handleIsInstalled: mockIsInstalled,
       },
     },
-  } as unknown as ExecutionContext);
+  });
 
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
@@ -146,20 +151,46 @@ test.serial('autoinstall: return a map to modules', async (t) => {
     },
   ];
 
-  const context = createContext(null, jobs);
-  context.options = {
-    repoDir: 'a/b/c',
-    autoinstall: {
-      skipRepoValidation: true,
-      handleInstall: async () => {},
-      handleIsInstalled: async () => false,
-    },
+  const autoinstallOpts = {
+    skipRepoValidation: true,
+    handleInstall: async () => {},
+    handleIsInstalled: async () => false,
   };
+  const context = createContext(autoinstallOpts, jobs);
 
   const result = await autoinstall(context);
 
   t.deepEqual(result, {
-    common: { path: 'a/b/c/node_modules/common_1.0.0' },
-    http: { path: 'a/b/c/node_modules/http_1.0.0' },
+    common: { path: 'tmp/repo/node_modules/common_1.0.0' },
+    http: { path: 'tmp/repo/node_modules/http_1.0.0' },
   });
 });
+
+test.serial('autoinstall: emit an event on completion', async (t) => {
+  let event;
+  const jobs = [
+    {
+      adaptor: 'common@1.0.0',
+    },
+  ];
+
+  const autoinstallOpts = {
+    skipRepoValidation: true,
+    handleInstall: async () => new Promise((done) => setTimeout(done, 50)),
+    handleIsInstalled: async () => false,
+  };
+  const context = createContext(autoinstallOpts, jobs);
+
+  context.on(AUTOINSTALL_COMPLETE, (evt) => {
+    event = evt;
+  });
+
+  await autoinstall(context);
+
+  t.truthy(event);
+  t.is(event.module, 'common');
+  t.is(event.version, '1.0.0');
+  t.assert(event.duration >= 50);
+});
+
+test.todo('autoinstall: emit on error');

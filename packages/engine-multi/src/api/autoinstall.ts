@@ -11,6 +11,7 @@ import { install as runtimeInstall } from '@openfn/runtime';
 
 import type { Logger } from '@openfn/logger';
 import type { ExecutionContext } from '../types';
+import { AUTOINSTALL_COMPLETE } from '../events';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -57,16 +58,27 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     // Return a path name to this module for the linker to use later
     // TODO this is all a bit rushed
     const alias = getAliasedName(a);
-    const { name } = getNameAndVersion(a);
+    const { name, version } = getNameAndVersion(a);
     paths[name] = { path: `${repoDir}/node_modules/${alias}` };
 
     const needsInstalling = !(await isInstalledFn(a, repoDir, logger));
     if (needsInstalling) {
       if (!pending[a]) {
         // add a promise to the pending array
+        const startTime = Date.now();
         pending[a] = installFn(a, repoDir, logger).then(() => {
+          const duration = Date.now() - startTime;
+
+          logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
+          context.emit(AUTOINSTALL_COMPLETE, {
+            module: name,
+            version: version!,
+            duration,
+          });
           delete pending[a];
         });
+        // TODO catch, log and emit
+        // This should trigger a crash state
       }
       // Return the pending promise (safe to do this multiple times)
       await pending[a].then();
