@@ -3,8 +3,8 @@
  */
 
 import test from 'ava';
+import createLightningServer from '@openfn/lightning-mock';
 import createWorkerServer from '../src/server';
-import createLightningServer from '../src/mock/lightning';
 import createMockRTE from '../src/mock/runtime-engine';
 import * as e from '../src/events';
 
