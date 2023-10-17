@@ -6,6 +6,8 @@ import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
 import { createMockLogger } from '@openfn/logger';
 import {
+  JOB_COMPLETE,
+  JOB_START,
   WORKFLOW_COMPLETE,
   WORKFLOW_LOG,
   WORKFLOW_START,
@@ -17,7 +19,7 @@ const workerPath = path.resolve('dist/worker/mock.js');
 
 const createContext = ({ state, options }) => {
   const ctx = new ExecutionContext({
-    state: state || {},
+    state: state || { workflowId: 'x' },
     logger: createMockLogger(),
     callWorker: () => {},
     options,
@@ -30,6 +32,7 @@ const plan = {
   id: 'x',
   jobs: [
     {
+      id: 'j',
       // this will basically be evalled
       expression: '() => 22',
     },
@@ -46,6 +49,7 @@ const options = {
 
 test.serial('execute should run a job and return the result', async (t) => {
   const state = {
+    id: 'x',
     plan,
   } as WorkflowState;
 
@@ -58,6 +62,7 @@ test.serial('execute should run a job and return the result', async (t) => {
 // we can check the state object after each of these is returned
 test.serial('should emit a workflow-start event', async (t) => {
   const state = {
+    id: 'x',
     plan,
   } as WorkflowState;
   let workflowStart;
@@ -75,6 +80,7 @@ test.serial('should emit a workflow-start event', async (t) => {
 test.serial('should emit a workflow-complete event', async (t) => {
   let workflowComplete;
   const state = {
+    id: 'x',
     plan,
   } as WorkflowState;
 
@@ -88,7 +94,43 @@ test.serial('should emit a workflow-complete event', async (t) => {
   t.is(workflowComplete.state, 22);
 });
 
-test.serial.only('should emit a log event', async (t) => {
+test.serial('should emit a job-start event', async (t) => {
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  let event;
+
+  const context = createContext({ state, options });
+
+  context.once(JOB_START, (evt) => (event = evt));
+
+  await execute(context);
+
+  t.is(event.jobId, 'j');
+});
+
+test.serial('should emit a job-complete event', async (t) => {
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  let event;
+
+  const context = createContext({ state, options });
+
+  context.once(JOB_COMPLETE, (evt) => (event = evt));
+
+  await execute(context);
+
+  t.is(event.jobId, 'j');
+  t.is(event.state, 22);
+  t.assert(!isNaN(event.duration));
+});
+
+test.serial('should emit a log event', async (t) => {
   let workflowLog;
   const plan = {
     id: 'y',

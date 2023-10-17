@@ -24,6 +24,7 @@ const createPlan = (jobs?: any[]) => ({
   id: `${++idgen}`,
   jobs: jobs || [
     {
+      id: 'j1',
       expression: 'export default [s => s]',
     },
   ],
@@ -49,7 +50,7 @@ test('trigger workflow-start', (t) => {
   });
 });
 
-test.skip('trigger job-start', (t) => {
+test('trigger job-start', (t) => {
   return new Promise((done) => {
     const api = createAPI({
       logger,
@@ -67,7 +68,7 @@ test.skip('trigger job-start', (t) => {
   });
 });
 
-test.skip('trigger job-complete', (t) => {
+test('trigger job-complete', (t) => {
   return new Promise((done) => {
     const api = createAPI({
       logger,

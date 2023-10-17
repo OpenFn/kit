@@ -42,35 +42,40 @@ export const createLoggers = (workflowId: string) => {
   return { logger, jobLogger };
 };
 
+export function publish<T extends workerEvents.WorkerEvents>(
+  workflowId: string,
+  type: T,
+  payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
+) {
+  workerpool.workerEmit({
+    workflowId,
+    threadId,
+    type,
+    ...payload,
+  });
+}
+
 // TODO use bespoke event names here
 // maybe thread:workflow-start
 async function helper(workflowId: string, execute: () => Promise<any>) {
-  function publish<T extends workerEvents.WorkerEvents>(
-    type: T,
-    payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
-  ) {
-    workerpool.workerEmit({
-      workflowId,
-      threadId,
-      type,
-      ...payload,
-    });
-  }
-
-  publish(workerEvents.WORKFLOW_START, {});
+  publish(workflowId, workerEvents.WORKFLOW_START, {});
 
   try {
     // Note that the worker thread may fire logs after completion
     // I think this is fine, it's just a log stream thing
     // But the output is very confusing!
     const result = await execute();
-    publish(workerEvents.WORKFLOW_COMPLETE, { state: result });
+    publish(workflowId, workerEvents.WORKFLOW_COMPLETE, { state: result });
 
     // For tests
     return result;
   } catch (err: any) {
     console.error(err);
-    publish(workerEvents.ERROR, { workflowId, threadId, message: err.message });
+    publish(workflowId, workerEvents.ERROR, {
+      workflowId,
+      threadId,
+      message: err.message,
+    });
   }
 }
 

@@ -13,7 +13,8 @@
 import workerpool from 'workerpool';
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
-import helper, { createLoggers } from './worker-helper';
+import helper, { createLoggers, publish } from './worker-helper';
+import type { WorkerEvents } from './events';
 
 workerpool.worker({
   // TODO: add a startup script to ensure the worker is ok
@@ -30,6 +31,16 @@ workerpool.worker({
       jobLogger,
       linker: {
         modules: adaptorPaths,
+      },
+      callbacks: {
+        // TODO load state (maybe)
+        // TODO load credential
+        notify: (name: WorkerEvents, payload: any) => {
+          // Event handling here is a bit sketchy
+          // the runtime will publish eg job-start, but we need to map it to worker:job-start
+          // @ts-ignore
+          publish(plan.id, `worker:${name}`, payload);
+        },
       },
     };
 

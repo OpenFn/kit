@@ -34,9 +34,15 @@ export interface WorkflowCompleteEvent extends InternalEvent {
   state: any;
 }
 
-export interface JobStartEvent extends InternalEvent {}
+export interface JobStartEvent extends InternalEvent {
+  jobId: string;
+}
 
-export interface JobCompleteEvent extends InternalEvent {}
+export interface JobCompleteEvent extends InternalEvent {
+  jobId: string;
+  state: any;
+  duration: number;
+}
 
 export interface LogEvent extends InternalEvent {
   message: JSONLog;

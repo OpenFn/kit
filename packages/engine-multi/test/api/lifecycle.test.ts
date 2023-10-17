@@ -2,7 +2,13 @@ import test from 'ava';
 
 import * as e from '../../src/events';
 import { createMockLogger } from '@openfn/logger';
-import { log, workflowComplete, workflowStart } from '../../src/api/lifecycle';
+import {
+  log,
+  workflowComplete,
+  workflowStart,
+  jobStart,
+  jobComplete,
+} from '../../src/api/lifecycle';
 import { WorkflowState } from '../../src/types';
 import ExecutionContext from '../../src/classes/ExecutionContext';
 
@@ -88,6 +94,66 @@ test('workflowComplete: updates state', (t) => {
   t.is(state.status, 'done');
   t.assert(state.duration! > 0);
   t.deepEqual(state.result, result);
+});
+
+test(`job-start: emits ${e.JOB_START}`, (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+
+    const context = createContext(workflowId, state);
+
+    const event = {
+      workflowId,
+      threadId: '1',
+      jobId: 'j',
+    };
+
+    context.on(e.JOB_START, (evt) => {
+      t.is(evt.workflowId, workflowId);
+      t.is(evt.threadId, '1');
+      t.is(evt.jobId, 'j');
+      done();
+    });
+
+    jobStart(context, event);
+  });
+});
+
+test(`job-complete: emits ${e.JOB_COMPLETE}`, (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+
+    const context = createContext(workflowId, state);
+
+    const event = {
+      workflowId,
+      threadId: '1',
+      jobId: 'j',
+      duration: 200,
+      state: 22,
+    };
+
+    context.on(e.JOB_COMPLETE, (evt) => {
+      t.is(evt.workflowId, workflowId);
+      t.is(evt.threadId, '1');
+      t.is(evt.jobId, 'j');
+      t.is(evt.state, 22);
+      t.is(evt.duration, 200);
+      done();
+    });
+
+    jobComplete(context, event);
+  });
 });
 
 test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {

@@ -4,7 +4,13 @@ import { ExecutionContext } from '../types';
 
 import autoinstall from './autoinstall';
 import compile from './compile';
-import { workflowStart, workflowComplete, log } from './lifecycle';
+import {
+  workflowStart,
+  workflowComplete,
+  log,
+  jobStart,
+  jobComplete,
+} from './lifecycle';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger } = context;
@@ -19,6 +25,12 @@ const execute = async (context: ExecutionContext) => {
       evt: workerEvents.WorkflowCompleteEvent
     ) => {
       workflowComplete(context, evt);
+    },
+    [workerEvents.JOB_START]: (evt: workerEvents.JobStartEvent) => {
+      jobStart(context, evt);
+    },
+    [workerEvents.JOB_COMPLETE]: (evt: workerEvents.JobCompleteEvent) => {
+      jobComplete(context, evt);
     },
     [workerEvents.LOG]: (evt: workerEvents.LogEvent) => {
       log(context, evt);

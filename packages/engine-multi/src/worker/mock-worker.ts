@@ -8,7 +8,8 @@
  * and reading instructions out of state object.
  */
 import workerpool from 'workerpool';
-import helper, { createLoggers } from './worker-helper';
+import helper, { createLoggers, publish } from './worker-helper';
+import * as workerEvents from './events';
 
 type MockJob = {
   id?: string;
@@ -33,7 +34,9 @@ function mock(plan: MockExecutionPlan) {
   const [job] = plan.jobs;
   const { jobLogger } = createLoggers(plan.id!);
   return new Promise((resolve) => {
+    const jobId = job.id || '<job>';
     setTimeout(async () => {
+      publish(plan.id, workerEvents.JOB_START, { jobId });
       // TODO this isn't data, but state - it's the whole state object (minus config)
       let state: any = { data: job.data || {} };
       if (job.expression) {
@@ -57,6 +60,11 @@ function mock(plan: MockExecutionPlan) {
           };
         }
       }
+      publish(plan.id, workerEvents.JOB_COMPLETE, {
+        jobId,
+        duration: 100,
+        state,
+      });
       resolve(state);
     }, job._delay || 1);
   });

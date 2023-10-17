@@ -68,6 +68,32 @@ export const workflowComplete = (
   });
 };
 
+export const jobStart = (
+  context: ExecutionContext,
+  event: internalEvents.JobStartEvent
+) => {
+  const { threadId, jobId } = event;
+
+  context.emit(externalEvents.JOB_START, {
+    jobId,
+    threadId,
+  });
+};
+
+export const jobComplete = (
+  context: ExecutionContext,
+  event: internalEvents.JobCompleteEvent
+) => {
+  const { threadId, state, duration, jobId } = event;
+
+  context.emit(externalEvents.JOB_COMPLETE, {
+    threadId,
+    state,
+    duration,
+    jobId,
+  });
+};
+
 export const log = (
   context: ExecutionContext,
   event: internalEvents.LogEvent
@@ -89,6 +115,3 @@ export const log = (
     ...event.message,
   });
 };
-
-// TODO jobstart
-// TODO jobcomplete
