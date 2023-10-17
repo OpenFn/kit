@@ -3,7 +3,7 @@ import { createMockLogger } from '@openfn/logger';
 
 import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
 import { AUTOINSTALL_COMPLETE } from '../../src/events';
-import { ExecutionContext } from '../../src/engine';
+import ExecutionContext from '../../src/classes/ExecutionContext';
 
 type PackageJson = {
   name: string;

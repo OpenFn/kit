@@ -7,15 +7,10 @@ import { WORKFLOW_COMPLETE, WORKFLOW_LOG, WORKFLOW_START } from './events';
 import initWorkers from './api/call-worker';
 import createState from './api/create-state';
 import execute from './api/execute';
+import ExecutionContext from './classes/ExecutionContext';
 
 import type { LazyResolvers } from './api';
-import type {
-  EngineAPI,
-  EventHandler,
-  WorkflowState,
-  CallWorker,
-  ExecutionContextConstructor,
-} from './types';
+import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import { Logger } from '@openfn/logger';
 import { AutoinstallOptions } from './api/autoinstall';
 
@@ -53,35 +48,6 @@ const createWorkflowEvents = (
 // (rather than EventEmitter)
 // But I should probably lean in to the class more for typing and stuff
 class Engine extends EventEmitter {}
-
-// TODO this is actually the api that each execution gets
-// its nice to separate that from the engine a bit
-export class ExecutionContext extends EventEmitter {
-  state: WorkflowState;
-  logger: Logger;
-  callWorker: CallWorker;
-  options: EngineOptions;
-
-  constructor({
-    state,
-    logger,
-    callWorker,
-    options,
-  }: ExecutionContextConstructor) {
-    super();
-    this.logger = logger;
-    this.callWorker = callWorker;
-    this.state = state;
-    this.options = options;
-  }
-
-  // override emit to add the workflowId to all events
-  // @ts-ignore
-  emit(event, payload) {
-    payload.workflowId = this.state.id;
-    super.emit(event, payload);
-  }
-}
 
 // The engine is way more strict about options
 export type EngineOptions = {

@@ -11,7 +11,7 @@ import {
   WORKFLOW_START,
 } from '../../src/events';
 import { RTEOptions } from '../../src/api';
-import { ExecutionContext } from '../../src/engine';
+import ExecutionContext from '../../src/classes/ExecutionContext';
 
 const workerPath = path.resolve('dist/worker/mock.js');
 

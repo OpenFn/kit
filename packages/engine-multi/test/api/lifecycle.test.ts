@@ -4,7 +4,7 @@ import * as e from '../../src/events';
 import { createMockLogger } from '@openfn/logger';
 import { log, workflowComplete, workflowStart } from '../../src/api/lifecycle';
 import { WorkflowState } from '../../src/types';
-import { ExecutionContext } from '../../src/engine';
+import ExecutionContext from '../../src/classes/ExecutionContext';
 
 const createContext = (workflowId: string, state?: any) =>
   new ExecutionContext({
