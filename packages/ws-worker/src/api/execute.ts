@@ -21,6 +21,7 @@ import type { ExecutionPlan } from '@openfn/runtime';
 import type { JSONLog, Logger } from '@openfn/logger';
 import {
   WorkflowCompleteEvent,
+  WorkflowErrorEvent,
   WorkflowStartEvent,
 } from '../mock/runtime-engine';
 
