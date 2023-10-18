@@ -136,6 +136,9 @@ importers:
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
+      koa:
+        specifier: ^2.13.4
+        version: 2.13.4
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2
@@ -154,6 +157,9 @@ importers:
       '@openfn/language-common_latest':
         specifier: npm:@openfn/language-common@^1.11.1
         version: /@openfn/language-common@1.11.1
+      lodash_latest:
+        specifier: npm:lodash@^4.17.21
+        version: /lodash@4.17.21
 
   packages/cli:
     dependencies:

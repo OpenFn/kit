@@ -1,6 +1,7 @@
 import test from 'ava';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import Koa from 'koa';
 
 import createLightningServer from '@openfn/lightning-mock';
 
@@ -219,6 +220,73 @@ test('run a job with initial state', (t) => {
   });
 });
 
+// TODO this sort of works but the server side of it does not
+// Will work on it more
+test('run a job with credentials', (t) => {
+  // Set up a little web server to receive a request
+  // (there are easier ways to do this, but this is an INTEGRATION test right??)
+  const PORT = 4826;
+  const createServer = () => {
+    const app = new Koa();
+
+    app.use(async (ctx, next) => {
+      console.log('GET!');
+      // TODO check basic credential
+      ctx.body = '{ message: "ok" }';
+      ctx.response.headers['Content-Type'] = 'application/json';
+      ctx.response.status = 200;
+    });
+
+    return app.listen(PORT);
+  };
+
+  return new Promise((done) => {
+    const server = createServer();
+    const config = {
+      username: 'logan',
+      password: 'jeangr3y',
+    };
+
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-http@latest',
+          body: `fn((s) => {
+            console.log(s);
+            return s
+          })`,
+          // body: `get("http://localhost:${PORT}")
+          // fn((s) => {
+          //   console.log(s);
+          //   return s;
+          // })`,
+          credential: 'c',
+        },
+      ],
+    };
+
+    initLightning();
+
+    lightning.addCredential('c', config);
+
+    lightning.on('attempt:complete', () => {
+      try {
+        const result = lightning.getResult(attempt.id);
+        t.deepEqual(result.configuration, config);
+
+        server.close();
+      } catch (e) {
+        console.log(e);
+      }
+      done();
+    });
+
+    initWorker();
+    lightning.enqueueAttempt(attempt);
+  });
+});
+
 test('blacklist a non-openfn adaptor', (t) => {
   return new Promise((done) => {
     const attempt = {
@@ -283,8 +351,3 @@ test.todo('return some kind of error on compilation error');
 //   });
 // });
 // });
-
-// maybe create a http server with basic auth on the endpoint
-// use http adaptor to call the server
-// obviously credential is lazy loaded
-test.todo('run a job which requires credentials');

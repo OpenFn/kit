@@ -53,8 +53,6 @@ const execute = async (context: ExecutionContext) => {
       // DO I know which job I'm on?
       // DO I know the thread id?
       // Do I know where the error came from?
-      // console.log(' *** EXECUTE ERROR ***');
-      // console.log(e);
 
       error(context, { workflowId: state.plan.id, error: e });
 
@@ -63,8 +61,6 @@ const execute = async (context: ExecutionContext) => {
       // message: cannot find module <path> (worker.js)
 
       logger.error(e);
-
-      // probbaly have to call complete write now and set the reason
     }
   );
 };

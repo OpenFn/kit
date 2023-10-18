@@ -24,6 +24,7 @@ import {
   WorkflowErrorEvent,
   WorkflowStartEvent,
 } from '../mock/runtime-engine';
+import type { RuntimeEngine } from '@openfn/engine-multi';
 
 const enc = new TextDecoder('utf-8');
 
@@ -57,7 +58,7 @@ const eventMap = {
 // this thing will do all the work
 export function execute(
   channel: Channel,
-  engine: any, // TODO typing!
+  engine: RuntimeEngine,
   logger: Logger,
   // TODO first thing we'll do here is pull the plan
   plan: ExecutionPlan
@@ -130,7 +131,7 @@ export function execute(
     engine.listen(plan.id, listeners);
 
     const resolvers = {
-      credential: (id: string) => loadCredential(channel, id),
+      credentials: (id: string) => loadCredential(channel, id),
 
       // TODO not supported right now
       // dataclip: (id: string) => loadDataclip(channel, id),
@@ -144,7 +145,7 @@ export function execute(
       logger.success('dataclip loaded');
       logger.debug(plan.initialState);
     }
-    engine.execute(plan, resolvers);
+    engine.execute(plan, { resolvers });
   });
 }
 
