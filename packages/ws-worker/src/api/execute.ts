@@ -117,22 +117,30 @@ export function execute(
       addEvent('log', onJobLog),
       // This will also resolve the promise
       addEvent('workflow-complete', onWorkflowComplete)
+
+      // TODO send autoinstall logs
+      // are these associated with a workflow...?
+      // well, I guess they can be!
+      // Or is this just a log?
+      // Or a generic metric?
     );
     engine.listen(plan.id, listeners);
 
     const resolvers = {
       credential: (id: string) => loadCredential(channel, id),
-      // dataclip: (id: string) => loadDataclip(channel, id),
+
       // TODO not supported right now
+      // dataclip: (id: string) => loadDataclip(channel, id),
     };
 
+    // TODO we nede to remove this from here nad let the runtime take care of it through
+    // the resolver. See https://github.com/OpenFn/kit/issues/403
     if (typeof plan.initialState === 'string') {
       logger.debug('loading dataclip', plan.initialState);
       plan.initialState = await loadDataclip(channel, plan.initialState);
       logger.success('dataclip loaded');
       logger.debug(plan.initialState);
     }
-
     engine.execute(plan, resolvers);
   });
 }

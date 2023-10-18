@@ -44,6 +44,7 @@ workerpool.worker({
       },
     };
 
+    // @ts-ignore options events
     return helper(plan.id!, () => run(plan, {}, options));
   },
 });

@@ -36,7 +36,6 @@ const execute = async (context: ExecutionContext) => {
       log(context, evt);
     },
   };
-
   return callWorker('run', [state.plan, adaptorPaths], events).catch(
     (e: any) => {
       // TODO what about errors then?

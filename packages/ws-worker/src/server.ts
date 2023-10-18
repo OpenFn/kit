@@ -120,8 +120,9 @@ function createServer(engine: any, options: ServerOptions = {}) {
   }
 
   // TMP doing this for tests but maybe its better done externally
-  app.on = (...args) => engine.on(...args);
-  app.once = (...args) => engine.once(...args);
+  app.on = (...args) => {
+    return engine.on(...args);
+  };
 
   return app;
 }

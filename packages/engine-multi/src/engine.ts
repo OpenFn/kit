@@ -3,7 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ExecutionPlan } from '@openfn/runtime';
 
-import { WORKFLOW_COMPLETE, WORKFLOW_LOG, WORKFLOW_START } from './events';
+import {
+  JOB_COMPLETE,
+  JOB_START,
+  WORKFLOW_COMPLETE,
+  WORKFLOW_LOG,
+  WORKFLOW_START,
+} from './events';
 import initWorkers from './api/call-worker';
 import createState from './api/create-state';
 import execute from './api/execute';
@@ -11,8 +17,8 @@ import ExecutionContext from './classes/ExecutionContext';
 
 import type { LazyResolvers } from './api';
 import type { EngineAPI, EventHandler, WorkflowState } from './types';
-import { Logger } from '@openfn/logger';
-import { AutoinstallOptions } from './api/autoinstall';
+import type { Logger } from '@openfn/logger';
+import type { AutoinstallOptions } from './api/autoinstall';
 
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
@@ -37,8 +43,8 @@ const createWorkflowEvents = (
   }
   proxy(WORKFLOW_START);
   proxy(WORKFLOW_COMPLETE);
-  // proxy(JOB_START);
-  // proxy(JOB_COMPLETE);
+  proxy(JOB_START);
+  proxy(JOB_COMPLETE);
   proxy(WORKFLOW_LOG);
 
   return context;
