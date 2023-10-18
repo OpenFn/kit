@@ -60,6 +60,7 @@ export interface JobStartPayload extends ExternalEvent {
 
 export interface JobCompletePayload extends ExternalEvent {
   jobId: string;
+  duration: number;
   state: any; // the result state
 }
 

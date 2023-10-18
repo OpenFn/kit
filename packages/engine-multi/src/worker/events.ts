@@ -60,6 +60,11 @@ export type EventMap = {
   [JOB_COMPLETE]: JobCompleteEvent;
   [LOG]: LogEvent;
   [ERROR]: ErrorEvent;
+
+  // TOO - extra events that aren't really designed yet
+  ['worker:init-start']: any;
+  ['worker:init-complete']: any;
+  ['worker:load-state']: any;
 };
 
 export type WorkerEvents = keyof EventMap;

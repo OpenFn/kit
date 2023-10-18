@@ -47,7 +47,7 @@ const defaultLogger = createMockLogger();
 // so maybe state becomes an option in the opts object
 const run = (
   expressionOrXPlan: string | Operation[] | ExecutionPlan,
-  state: State,
+  state?: State,
   opts: Options = {}
 ) => {
   const logger = opts.logger || defaultLogger;

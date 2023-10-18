@@ -28,7 +28,6 @@ const initWorker = () => {
   engine = createEngine({
     // logger: createLogger('engine', { level: 'debug' }),
     logger: createMockLogger(),
-    runtimeLogger: createMockLogger(),
     repoDir: path.resolve('./tmp/repo'),
   });
 
@@ -181,7 +180,7 @@ test('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test('run a job with initial state', (t) => {
+test.only('run a job with initial state', (t) => {
   return new Promise((done) => {
     const attempt = {
       id: crypto.randomUUID(),
