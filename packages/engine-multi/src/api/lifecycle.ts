@@ -115,3 +115,13 @@ export const log = (
     ...event.message,
   });
 };
+
+export const error = (context: ExecutionContext, event: any) => {
+  const { threadId = '-', error } = event;
+
+  context.emit(externalEvents.WORKFLOW_ERROR, {
+    threadId,
+    type: error.type || error.name || 'ERROR',
+    message: error.message || error.toString(),
+  });
+};

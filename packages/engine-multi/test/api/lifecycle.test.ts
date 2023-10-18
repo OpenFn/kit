@@ -8,6 +8,7 @@ import {
   workflowStart,
   jobStart,
   jobComplete,
+  error,
 } from '../../src/api/lifecycle';
 import { WorkflowState } from '../../src/types';
 import ExecutionContext from '../../src/classes/ExecutionContext';
@@ -183,5 +184,24 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
     });
 
     log(context, event);
+  });
+});
+
+// TODO not a very thorough test, still not really sure what I'm doing here
+test(`error: emits ${e.WORKFLOW_ERROR}`, (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const context = createContext(workflowId);
+    context.on(e.WORKFLOW_ERROR, (evt) => {
+      t.is(evt.message, 'test');
+      t.is(evt.workflowId, 'a');
+
+      done();
+    });
+
+    const err = new Error('test');
+
+    error(context, { error: err });
   });
 });

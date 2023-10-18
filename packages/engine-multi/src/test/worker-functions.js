@@ -34,14 +34,16 @@ workerpool.worker({
         threadId,
       });
     } catch (err) {
-      console.error(err);
-      // @ts-ignore TODO sort out error typing
-      workerpool.workerEmit({
-        type: 'worker:workflow-error',
-        workflowId,
-        message: err.message,
-        threadId,
-      });
+      // console.error(err);
+      // // @ts-ignore TODO sort out error typing
+      // workerpool.workerEmit({
+      //   type: 'worker:workflow-error',
+      //   workflowId,
+      //   message: err.message,
+      //   threadId,
+      // });
+      // actually, just throw the error back out
+      throw err;
     }
   },
 });

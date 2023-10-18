@@ -177,3 +177,28 @@ test('call listen before execute', (t) => {
     engine.execute(plan);
   });
 });
+
+test.only('catch and emit errors', (t) => {
+  return new Promise((done) => {
+    const p = path.resolve('src/test/worker-functions.js');
+    const engine = createEngine(options, p);
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: 'throw new Error("test")',
+        },
+      ],
+    };
+
+    engine.execute(plan);
+
+    engine.listen(plan.id, {
+      [e.WORKFLOW_ERROR]: ({ message }) => {
+        t.is(message, 'test');
+        done();
+      },
+    });
+  });
+});

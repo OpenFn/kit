@@ -31,6 +31,7 @@ workerpool.worker({
       jobLogger,
       linker: {
         modules: adaptorPaths,
+        whitelist: [/^@openfn/],
       },
       callbacks: {
         notify: (name: NotifyEvents, payload: any) => {

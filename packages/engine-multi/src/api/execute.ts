@@ -10,6 +10,7 @@ import {
   log,
   jobStart,
   jobComplete,
+  error,
 } from './lifecycle';
 
 const execute = async (context: ExecutionContext) => {
@@ -38,13 +39,22 @@ const execute = async (context: ExecutionContext) => {
   };
   return callWorker('run', [state.plan, adaptorPaths], events).catch(
     (e: any) => {
-      // TODO what about errors then?
+      // TODO what information can I usefully provide here?
+      // DO I know which job I'm on?
+      // DO I know the thread id?
+      // Do I know where the error came from?
+      // console.log(' *** EXECUTE ERROR ***');
+      // console.log(e);
+
+      error(context, { workflowId: state.plan.id, error: e });
 
       // If the worker file can't be found, we get:
       // code: MODULE_NOT_FOUND
-      // message: cannot find modulle <path> (worker.js)
+      // message: cannot find module <path> (worker.js)
 
       logger.error(e);
+
+      // probbaly have to call complete write now and set the reason
     }
   );
 };
