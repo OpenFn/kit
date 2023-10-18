@@ -119,8 +119,13 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
 
   const getWorkflowStatus = (workflowId: string) => states[workflowId]?.status;
 
+  // TODO too much logic in this execute function, needs farming out
+  // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
-  const executeWrapper = (plan: ExecutionPlan, opts: EngineOptions) => {
+  const executeWrapper = (
+    plan: ExecutionPlan,
+    opts: Partial<EngineOptions>
+  ) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid

@@ -128,7 +128,7 @@ export function execute(
       // Or is this just a log?
       // Or a generic metric?
     );
-    engine.listen(plan.id, listeners);
+    engine.listen(plan.id!, listeners);
 
     const resolvers = {
       credentials: (id: string) => loadCredential(channel, id),

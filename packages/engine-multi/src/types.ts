@@ -71,7 +71,7 @@ export interface RuntimeEngine extends EventEmitter {
   // Kinda convenient but not actually needed
   execute(
     plan: ExecutionPlan,
-    options: EngineOptions
+    options?: Partial<EngineOptions>
   ): Pick<EventEmitter, 'on' | 'off' | 'once'>;
 
   // TODO my want some maintenance APIs, like getStatus. idk
