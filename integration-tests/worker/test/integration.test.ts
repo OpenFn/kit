@@ -64,7 +64,7 @@ test('should join attempts queue channel', (t) => {
   });
 });
 
-test('should run a simple job with no compilation', (t) => {
+test('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise((done) => {
     initLightning();
     lightning.on('attempt:complete', (evt) => {
@@ -180,7 +180,7 @@ test('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test.only('run a job with initial state', (t) => {
+test('run a job with initial state', (t) => {
   return new Promise((done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -218,6 +218,36 @@ test.only('run a job with initial state', (t) => {
     lightning.enqueueAttempt(attempt);
   });
 });
+
+test('blacklist a non-openfn adaptor', (t) => {
+  return new Promise((done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: 'lodash@latest',
+          body: 'import _ from "lodash"',
+        },
+      ],
+    };
+
+    initLightning();
+
+    // At the moment the error comes back to on complete
+    lightning.on('attempt:complete', (event) => {
+      const { payload } = event;
+      t.is(payload.reason, 'fail');
+      t.is(payload.message, 'Error: module blacklisted: lodash');
+      done();
+    });
+
+    initWorker();
+
+    lightning.enqueueAttempt(attempt);
+  });
+});
+
+test.todo('return some kind of error on compilation error');
 
 // test('run a job with complex behaviours (initial state, branching)', (t) => {
 //   const attempt = {
