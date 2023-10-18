@@ -1,7 +1,7 @@
 import test from 'ava';
+import EventEmitter from 'node:events';
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
-
 import createSocketServer from '../src/socket-server';
 
 let socket;
@@ -19,6 +19,9 @@ test.beforeEach(
       messages = [];
       // @ts-ignore I don't care about missing server options here
       server = createSocketServer({
+        state: {
+          events: new EventEmitter(),
+        },
         onMessage: (evt) => {
           messages.push(evt);
         },

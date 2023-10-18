@@ -342,4 +342,28 @@ test.serial(
   }
 );
 
+// TODO this should probably return reason AND state?
+test.serial(
+  'getResult should return the correct resulting dataclip',
+  async (t) => {
+    return new Promise(async (done) => {
+      const result = { answer: 42 };
+
+      server.startAttempt(attempt1.id);
+      server.addDataclip('result', result);
+
+      server.waitForResult(attempt1.id).then(() => {
+        const dataclip = server.getResult(attempt1.id);
+        t.deepEqual(result, dataclip);
+        done();
+      });
+
+      const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
+      channel.push(ATTEMPT_COMPLETE, {
+        final_dataclip_id: 'result',
+      } as AttemptCompletePayload);
+    });
+  }
+);
+
 // test.serial('getLogs should return logs', async (t) => {});
