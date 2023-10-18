@@ -39,7 +39,6 @@ const executePlan = async (
   const leaves: Record<string, State> = {};
 
   let { initialState } = compiledPlan;
-
   if (typeof initialState === 'string') {
     const id = initialState;
     const startTime = Date.now();
