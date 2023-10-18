@@ -19,16 +19,6 @@ const sampleWorkflow = {
   ],
 } as ExecutionPlan;
 
-test('mock runtime engine should have an id', (t) => {
-  const engine = create('22');
-  const keys = Object.keys(engine);
-  t.assert(engine.id == '22');
-
-  // No need to test the full API, just make sure it smells right
-  t.assert(keys.includes('on'));
-  t.assert(keys.includes('execute'));
-});
-
 test('getStatus() should should have no active workflows', (t) => {
   const engine = create();
   const { active } = engine.getStatus();

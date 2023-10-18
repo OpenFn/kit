@@ -51,9 +51,7 @@ export type WorkflowCompleteEvent = {
   error?: any;
 };
 
-let autoServerId = 0;
-
-function createMock(serverId?: string) {
+function createMock() {
   const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
   const listeners: Record<string, any> = {};
@@ -176,7 +174,6 @@ function createMock(serverId?: string) {
   };
 
   return {
-    id: serverId || `${++autoServerId}`,
     on,
     once,
     execute,

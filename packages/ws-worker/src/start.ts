@@ -74,10 +74,10 @@ if (args.lightning === 'mock') {
 }
 let engine;
 if (args.mock) {
-  engine = createMockRTE('rte');
+  engine = createMockRTE();
   logger.debug('Mock engine created');
 } else {
-  engine = createRTE('rte', { repoDir: args.repoDir });
+  engine = createRTE({ repoDir: args.repoDir });
   logger.debug('engine created');
 }
 
