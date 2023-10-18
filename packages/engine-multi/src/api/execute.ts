@@ -12,12 +12,22 @@ import {
   jobComplete,
   error,
 } from './lifecycle';
+import preloadCredentials from './preload-credentials';
 
 const execute = async (context: ExecutionContext) => {
-  const { state, callWorker, logger } = context;
+  const { state, callWorker, logger, options } = context;
 
   const adaptorPaths = await autoinstall(context);
   await compile(context);
+
+  // unfortunately we have to preload all credentials
+  // I don't know any way to send data back into the worker once started
+  // there is a shared memory thing but I'm not sure how it works yet
+  // and not convinced we can use it for two way communication
+  if (options.resolvers?.credentials) {
+    await preloadCredentials(state.plan as any, options.resolvers?.credentials);
+  }
+
   const events = {
     [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
       workflowStart(context, evt);

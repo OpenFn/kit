@@ -187,5 +187,41 @@ test('evaluate conditional edges', (t) => {
   });
 });
 
+test('preload credentials', (t) => {
+  return new Promise((done) => {
+    let didCallLoader = true;
+
+    const loader = (id: string) =>
+      new Promise<any>((resolve) => {
+        setTimeout(() => {
+          didCallLoader = true;
+          t.is(id, 'secret');
+          resolve({});
+        }, 100);
+      });
+
+    const api = createAPI({
+      logger,
+      resolvers: {
+        credentials: loader,
+      },
+    });
+
+    const jobs = [
+      {
+        id: 'a',
+        configuration: 'secret',
+      },
+    ];
+
+    const plan = createPlan(jobs);
+
+    api.execute(plan).on('workflow-complete', ({ state }) => {
+      t.true(didCallLoader);
+      done();
+    });
+  });
+});
+
 test.todo('should report an error');
 test.todo('various workflow options (start, initial state)');

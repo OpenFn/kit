@@ -34,6 +34,10 @@ workerpool.worker({
         whitelist: [/^@openfn/],
       },
       callbacks: {
+        // TODO: this won't actually work across the worker boundary
+        // For now I am preloading credentials
+        // resolveCredential: async (id: string) => {
+        // },
         notify: (name: NotifyEvents, payload: any) => {
           // convert runtime notify events to internal engine events
           publish(plan.id!, `worker:${name}`, payload);
