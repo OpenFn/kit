@@ -135,7 +135,7 @@ const createSocketAPI = (
     startAttempt,
     close: () => {
       server.close();
-      wss.close();
+      (wss as any).close();
     },
   };
 
