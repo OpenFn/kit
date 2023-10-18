@@ -11,7 +11,7 @@
     "build": "tsup --config ../../tsup.config.js src/index.ts --no-splitting",
     "build:watch": "pnpm build --watch",
     "start": "ts-node-esm --transpile-only src/start.ts",
-    "_pack": "pnpm pack --pack-destination ../../dist"
+    "pack": "pnpm pack --pack-destination ../../dist"
   },
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
