@@ -116,7 +116,9 @@ export function execute(
       addEvent('job-complete', onJobComplete),
       addEvent('log', onJobLog),
       // This will also resolve the promise
-      addEvent('workflow-complete', onWorkflowComplete)
+      addEvent('workflow-complete', onWorkflowComplete),
+
+      addEvent('workflow-error', onWorkflowError)
 
       // TODO send autoinstall logs
       // are these associated with a workflow...?
@@ -217,9 +219,25 @@ export async function onWorkflowComplete(
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
     status: 'success', // TODO
+    reason: 'ok', // Also TODO
   });
 
   onComplete(result);
+}
+
+// On errorr, for now, we just post to workflow complete
+// No unit tests on this (not least because I think it'll change soon)
+export async function onWorkflowError(
+  { state, channel, onComplete }: Context,
+  event: WorkflowErrorEvent
+) {
+  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+    reason: 'fail', // TODO
+    final_dataclip_id: state.lastDataclipId!,
+    message: event.message,
+  });
+
+  onComplete({});
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {

@@ -48,7 +48,12 @@ export type WorkflowStartEvent = {
 
 export type WorkflowCompleteEvent = {
   workflowId: string;
-  error?: any;
+  error?: any; // hmm maybe not
+};
+
+export type WorkflowErrorEvent = {
+  workflowId: string;
+  message: string;
 };
 
 function createMock() {
