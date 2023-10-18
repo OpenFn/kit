@@ -1,28 +1,21 @@
 // ok first of allI want to capture the key interfaces
-import { JSONLog, Logger } from '@openfn/logger';
+import { Logger } from '@openfn/logger';
 import { ExecutionPlan } from '@openfn/runtime';
 import type { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
 import { RTEOptions } from './api';
 
 import { ExternalEvents, EventMap } from './events';
+import { EngineOptions } from './engine';
 
-// TODO hmm, not sure about this - event handler for what?
-export type EventHandler = <T extends /*EngineEvents*/ any>(
-  event: EventPayloadLookup[T]
-) => void;
+export type Resolver<T> = (id: string) => Promise<T>;
 
-type Resolver<T> = (id: string) => Promise<T>;
-
-type Resolvers = {
+export type Resolvers = {
   credential?: Resolver<Credential>;
-  state?: Resolver<State>;
+  state?: Resolver<any>;
 };
 
-type ExecuteOptions = {
-  sanitize: any; // log sanitise options
-  noCompile: any; // skip compilation (useful in test)
-};
+export type EventHandler = (event: any) => void;
 
 export type WorkflowState = {
   id: string;
@@ -37,11 +30,11 @@ export type WorkflowState = {
   options: any; // TODO this is wf specific options, like logging policy
 };
 
-export type CallWorker = (
+export type CallWorker = <T = any>(
   task: string,
-  args: any[] = [],
-  events: any = {}
-) => workerpool.Promise;
+  args: any[],
+  events: any
+) => workerpool.Promise<T>;
 
 export type ExecutionContextConstructor = {
   state: WorkflowState;
@@ -51,7 +44,7 @@ export type ExecutionContextConstructor = {
 };
 
 export interface ExecutionContext extends EventEmitter {
-  constructor(args: ExecutionContextConstructor);
+  constructor(args: ExecutionContextConstructor): ExecutionContext;
   options: RTEOptions; // TODO maybe. bring them in here?
   state: WorkflowState;
   logger: Logger;
@@ -67,7 +60,7 @@ export interface EngineAPI extends EventEmitter {
   callWorker: CallWorker;
 }
 
-interface RuntimeEngine extends EventEmitter {
+export interface RuntimeEngine extends EventEmitter {
   //id: string // human readable instance id
   // actually I think the id is on the worker, not the engine
 
@@ -78,9 +71,8 @@ interface RuntimeEngine extends EventEmitter {
   // Kinda convenient but not actually needed
   execute(
     plan: ExecutionPlan,
-    resolvers: Resolvers,
-    options: ExecuteOptions = {}
-  );
+    options: EngineOptions
+  ): Pick<EventEmitter, 'on' | 'off' | 'once'>;
 
   // TODO my want some maintenance APIs, like getStatus. idk
 }

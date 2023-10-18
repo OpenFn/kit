@@ -119,9 +119,8 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
 
   const getWorkflowStatus = (workflowId: string) => states[workflowId]?.status;
 
-  // TODO are we totally sure this takes a standard xplan?
-  // Well, it MUST have an ID or there's trouble
-  const executeWrapper = (plan: ExecutionPlan) => {
+  // TODO maybe engine options is too broad?
+  const executeWrapper = (plan: ExecutionPlan, opts: EngineOptions) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid
@@ -133,7 +132,10 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
       state,
       logger: options.logger!,
       callWorker: engine.callWorker,
-      options,
+      options: {
+        ...options,
+        ...opts,
+      },
     });
 
     contexts[workflowId] = createWorkflowEvents(engine, context, workflowId);
