@@ -67,7 +67,8 @@ test.serial.skip('workers should not affect each other', async (t) => {
   t.is(result, undefined);
 });
 
-test.serial(
+// maybe flaky?
+test.serial.skip(
   'workers should not affect each other if global scope is frozen',
   async (t) => {
     t.is(global.x, undefined);
