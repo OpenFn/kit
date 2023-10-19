@@ -73,7 +73,7 @@ if (args.lightning === 'mock') {
   args.secret = WORKER_SECRET;
 }
 
-function engineReady(engine) {
+function engineReady(engine: any) {
   createWorker(engine, {
     port: args.port,
     lightning: args.lightning,
@@ -83,7 +83,6 @@ function engineReady(engine) {
   });
 }
 
-let engine;
 if (args.mock) {
   createMockRTE().then((engine) => {
     logger.debug('Mock engine created');
