@@ -25,8 +25,8 @@ const initLightning = () => {
   lightning = createLightningServer({ port: 9999 });
 };
 
-const initWorker = () => {
-  engine = createEngine({
+const initWorker = async () => {
+  engine = await createEngine({
     // logger: createLogger('engine', { level: 'debug' }),
     logger: createMockLogger(),
     repoDir: path.resolve('./tmp/repo'),
@@ -66,7 +66,7 @@ test('should join attempts queue channel', (t) => {
 });
 
 test('should run a simple job with no compilation or adaptor', (t) => {
-  return new Promise((done) => {
+  return new Promise(async (done) => {
     initLightning();
     lightning.on('attempt:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
@@ -76,7 +76,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
       t.pass('completed attempt');
       done();
     });
-    initWorker();
+    await initWorker();
 
     lightning.enqueueAttempt({
       id: 'a1',
@@ -93,7 +93,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
 // todo ensure repo is clean
 // check how we manage the env in cli tests
 test('run a job with autoinstall of common', (t) => {
-  return new Promise((done) => {
+  return new Promise(async (done) => {
     initLightning();
 
     let autoinstallEvent;
@@ -117,7 +117,7 @@ test('run a job with autoinstall of common', (t) => {
       }
     });
 
-    initWorker();
+    await initWorker();
 
     // listen to events for this attempt
     engine.listen('a33', {
@@ -141,7 +141,7 @@ test('run a job with autoinstall of common', (t) => {
 
 // this depends on prior test!
 test('run a job which does NOT autoinstall common', (t) => {
-  return new Promise((done, _fail) => {
+  return new Promise(async (done, _fail) => {
     initLightning();
 
     lightning.on('attempt:complete', (evt) => {
@@ -157,7 +157,7 @@ test('run a job which does NOT autoinstall common', (t) => {
       }
     });
 
-    initWorker();
+    await initWorker();
 
     // listen to events for this attempt
     engine.listen('a10', {
@@ -182,7 +182,7 @@ test('run a job which does NOT autoinstall common', (t) => {
 });
 
 test('run a job with initial state', (t) => {
-  return new Promise((done) => {
+  return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
       dataclip_id: 's1',
@@ -209,7 +209,7 @@ test('run a job with initial state', (t) => {
       done();
     });
 
-    initWorker();
+    await initWorker();
 
     // TODO: is there any way I can test the worker behaviour here?
     // I think I can listen to load-state right?
@@ -240,7 +240,7 @@ test('run a job with credentials', (t) => {
     return app.listen(PORT);
   };
 
-  return new Promise((done) => {
+  return new Promise(async (done) => {
     const server = createServer();
     const config = {
       username: 'logan',
@@ -282,13 +282,13 @@ test('run a job with credentials', (t) => {
       done();
     });
 
-    initWorker();
+    await initWorker();
     lightning.enqueueAttempt(attempt);
   });
 });
 
 test('blacklist a non-openfn adaptor', (t) => {
-  return new Promise((done) => {
+  return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
       jobs: [
@@ -309,7 +309,7 @@ test('blacklist a non-openfn adaptor', (t) => {
       done();
     });
 
-    initWorker();
+    await initWorker();
 
     lightning.enqueueAttempt(attempt);
   });
