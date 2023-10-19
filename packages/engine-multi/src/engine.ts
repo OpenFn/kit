@@ -13,18 +13,13 @@ import {
 import initWorkers from './api/call-worker';
 import createState from './api/create-state';
 import execute from './api/execute';
+import validateWorker from './api/validate-worker';
 import ExecutionContext from './classes/ExecutionContext';
 
 import type { LazyResolvers } from './api';
 import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
-
-// TODO let me deal with the fallout first
-const validateworker = (_path?: string) =>
-  new Promise<void>((resolve) => {
-    setTimeout(() => resolve(), 10);
-  });
 
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
@@ -104,13 +99,13 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     );
   }
 
-  await validateworker(workerPath);
-
   options.logger!.debug('Loading workers from ', resolvedWorkerPath);
 
   const engine = new Engine() as EngineAPI;
 
   initWorkers(engine, resolvedWorkerPath);
+
+  await validateWorker(engine);
 
   // TODO I think this needs to be like:
   // take a plan

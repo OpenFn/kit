@@ -67,11 +67,10 @@ test('use the default worker path', async (t) => {
   t.true(engine.workerPath.endsWith('worker/worker.js'));
 });
 
-// Note that even though this is a nonsense path, we get no error at this point
 test('use a custom worker path', async (t) => {
-  const p = 'jam';
-  const engine = await createEngine(options, p);
-  t.is(engine.workerPath, p);
+  const workerPath = path.resolve('src/test/worker-functions.js');
+  const engine = await createEngine(options, workerPath);
+  t.is(engine.workerPath, workerPath);
 });
 
 test('execute with test worker and trigger workflow-complete', async (t) => {

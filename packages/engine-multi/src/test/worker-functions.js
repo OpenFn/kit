@@ -2,6 +2,7 @@ import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
 
 workerpool.worker({
+  handshake: () => true,
   test: (result = 42) => {
     const { pid, scribble } = process;
 

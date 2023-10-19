@@ -17,10 +17,9 @@ import helper, { createLoggers, publish } from './worker-helper';
 import { NotifyEvents } from '@openfn/runtime';
 
 workerpool.worker({
-  // TODO: add a startup script to ensure the worker is ok
-  // if we can't call init, there's something wrong with the worker
-  // and then we have to abort the engine or something
-  //init: () => {},
+  // startup validation script
+  handshake: () => true,
+
   run: (
     plan: ExecutionPlan,
     adaptorPaths: Record<string, { path: string }>
