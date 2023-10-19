@@ -28,8 +28,8 @@ test.afterEach(() => {
   logger._reset();
 });
 
-test('create an engine', (t) => {
-  const engine = createEngine(options);
+test('create an engine', async (t) => {
+  const engine = await createEngine(options);
   t.truthy(engine);
   t.is(engine.constructor.name, 'Engine');
   t.truthy(engine.execute);
@@ -38,9 +38,11 @@ test('create an engine', (t) => {
   t.truthy(engine.emit);
 });
 
-test('register a workflow', (t) => {
+test.todo('throw if the worker is invalid');
+
+test('register a workflow', async (t) => {
   const plan = { id: 'z' };
-  const engine = createEngine(options);
+  const engine = await createEngine(options);
 
   const state = engine.registerWorkflow(plan);
 
@@ -49,9 +51,9 @@ test('register a workflow', (t) => {
   t.deepEqual(state.plan, plan);
 });
 
-test('get workflow state', (t) => {
+test('get workflow state', async (t) => {
   const plan = { id: 'z' } as ExecutionPlan;
-  const engine = createEngine(options);
+  const engine = await createEngine(options);
 
   const s = engine.registerWorkflow(plan);
 
@@ -60,22 +62,22 @@ test('get workflow state', (t) => {
   t.deepEqual(state, s);
 });
 
-test('use the default worker path', (t) => {
-  const engine = createEngine({ logger, repoDir: '.' });
+test('use the default worker path', async (t) => {
+  const engine = await createEngine({ logger, repoDir: '.' });
   t.true(engine.workerPath.endsWith('worker/worker.js'));
 });
 
 // Note that even though this is a nonsense path, we get no error at this point
-test('use a custom worker path', (t) => {
+test('use a custom worker path', async (t) => {
   const p = 'jam';
-  const engine = createEngine(options, p);
+  const engine = await createEngine(options, p);
   t.is(engine.workerPath, p);
 });
 
-test('execute with test worker and trigger workflow-complete', (t) => {
-  return new Promise((done) => {
+test('execute with test worker and trigger workflow-complete', async (t) => {
+  return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(options, p);
+    const engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -94,10 +96,10 @@ test('execute with test worker and trigger workflow-complete', (t) => {
   });
 });
 
-test('execute does not return internal state stuff', (t) => {
-  return new Promise((done) => {
+test('execute does not return internal state stuff', async (t) => {
+  return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(options, p);
+    const engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -108,7 +110,7 @@ test('execute does not return internal state stuff', (t) => {
       ],
     };
 
-    const result = engine.execute(plan);
+    const result = engine.execute(plan, {});
     // Execute returns an event listener
     t.truthy(result.on);
     t.truthy(result.once);
@@ -129,10 +131,10 @@ test('execute does not return internal state stuff', (t) => {
   });
 });
 
-test('listen to workflow-complete', (t) => {
-  return new Promise((done) => {
+test('listen to workflow-complete', async (t) => {
+  return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(options, p);
+    const engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -154,10 +156,10 @@ test('listen to workflow-complete', (t) => {
   });
 });
 
-test('call listen before execute', (t) => {
-  return new Promise((done) => {
+test('call listen before execute', async (t) => {
+  return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(options, p);
+    const engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -178,10 +180,10 @@ test('call listen before execute', (t) => {
   });
 });
 
-test.only('catch and emit errors', (t) => {
-  return new Promise((done) => {
+test('catch and emit errors', async (t) => {
+  return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = createEngine(options, p);
+    const engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',

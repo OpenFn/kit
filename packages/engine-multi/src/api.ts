@@ -33,7 +33,7 @@ export type RTEOptions = {
 
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
-const createAPI = function (options: RTEOptions = {}) {
+const createAPI = async function (options: RTEOptions = {}) {
   let { repoDir } = options;
 
   const logger = options.logger || createLogger('RTE', { level: 'debug' });
@@ -69,7 +69,7 @@ const createAPI = function (options: RTEOptions = {}) {
 
   // Note that the engine here always uses the standard worker, the real one
   // To use a mock, create the engine directly
-  const engine = createEngine(engineOptions);
+  const engine = await createEngine(engineOptions);
 
   // Return the external API
   return {

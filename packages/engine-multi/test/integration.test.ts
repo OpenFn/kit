@@ -30,9 +30,9 @@ const createPlan = (jobs?: any[]) => ({
   ],
 });
 
-test('trigger workflow-start', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('trigger workflow-start', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -50,9 +50,9 @@ test('trigger workflow-start', (t) => {
   });
 });
 
-test('trigger job-start', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('trigger job-start', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -68,9 +68,9 @@ test('trigger job-start', (t) => {
   });
 });
 
-test('trigger job-complete', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('trigger job-complete', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -88,9 +88,9 @@ test('trigger job-complete', (t) => {
 
 test.todo('trigger multiple job-completes');
 
-test('trigger workflow-complete', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('trigger workflow-complete', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -110,9 +110,9 @@ test('trigger workflow-complete', (t) => {
   });
 });
 
-test('trigger workflow-log for job logs', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('trigger workflow-log for job logs', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -135,9 +135,9 @@ test('trigger workflow-log for job logs', (t) => {
   });
 });
 
-test('compile and run', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('compile and run', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
     });
 
@@ -154,9 +154,9 @@ test('compile and run', (t) => {
   });
 });
 
-test('evaluate conditional edges', (t) => {
-  return new Promise((done) => {
-    const api = createAPI({
+test.serial('evaluate conditional edges', (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
       logger,
     });
 
@@ -187,8 +187,8 @@ test('evaluate conditional edges', (t) => {
   });
 });
 
-test('preload credentials', (t) => {
-  return new Promise((done) => {
+test.serial('preload credentials', (t) => {
+  return new Promise(async (done) => {
     let didCallLoader = true;
 
     const loader = (id: string) =>
@@ -200,7 +200,7 @@ test('preload credentials', (t) => {
         }, 100);
       });
 
-    const api = createAPI({
+    const api = await createAPI({
       logger,
       resolvers: {
         credential: loader,

@@ -20,6 +20,12 @@ import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
+// TODO let me deal with the fallout first
+const validateworker = (_path?: string) =>
+  new Promise<void>((resolve) => {
+    setTimeout(() => resolve(), 10);
+  });
+
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
 const createWorkflowEvents = (
@@ -72,7 +78,7 @@ export type EngineOptions = {
 // tbh this is actually the engine, right, this is where stuff happens
 // the api file is more about the public api I think
 // TOOD options MUST have a logger
-const createEngine = (options: EngineOptions, workerPath?: string) => {
+const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const states: Record<string, WorkflowState> = {};
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
@@ -97,6 +103,9 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
       workerPath || '../dist/worker/worker.js'
     );
   }
+
+  await validateworker(workerPath);
+
   options.logger!.debug('Loading workers from ', resolvedWorkerPath);
 
   const engine = new Engine() as EngineAPI;
@@ -124,7 +133,7 @@ const createEngine = (options: EngineOptions, workerPath?: string) => {
   // TODO maybe engine options is too broad?
   const executeWrapper = (
     plan: ExecutionPlan,
-    opts: Partial<EngineOptions>
+    opts: Partial<EngineOptions> = {}
   ) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
