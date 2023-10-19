@@ -34,6 +34,7 @@ export interface Edge {
   condition?: string;
   error_path?: boolean;
   errors?: any;
+  enabled?: boolean;
 }
 
 // An attempt object returned by Lightning

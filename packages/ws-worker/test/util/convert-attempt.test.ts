@@ -265,3 +265,21 @@ test('convert two linked jobs with an edge condition', (t) => {
     ],
   });
 });
+
+test('convert two linked jobs with a disabled edge', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
+    triggers: [],
+    edges: [createEdge('a', 'b', { enabled: false })],
+  };
+  const result = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(result, {
+    id: 'w',
+    jobs: [
+      createJob({ id: 'a', next: { b: { disabled: true } } }),
+      createJob({ id: 'b' }),
+    ],
+  });
+});

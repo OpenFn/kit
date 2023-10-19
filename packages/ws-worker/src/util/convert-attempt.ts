@@ -1,5 +1,10 @@
 import crypto from 'node:crypto';
-import type { ExecutionPlan, JobNode, JobNodeID } from '@openfn/runtime';
+import type {
+  ExecutionPlan,
+  JobNode,
+  JobNodeID,
+  JobEdge,
+} from '@openfn/runtime';
 import { Attempt } from '../types';
 
 export default (attempt: Attempt): ExecutionPlan => {
@@ -35,8 +40,10 @@ export default (attempt: Attempt): ExecutionPlan => {
       const connectedEdges = edges.filter((e) => e.source_trigger_id === id);
       if (connectedEdges.length) {
         nodes[id].next = connectedEdges.reduce((obj, edge) => {
-          // @ts-ignore
-          obj[edge.target_job_id] = true;
+          if (!edge.disabled) {
+            // @ts-ignore
+            obj[edge.target_job_id] = true;
+          }
           return obj;
         }, {});
       } else {
@@ -51,7 +58,7 @@ export default (attempt: Attempt): ExecutionPlan => {
 
       nodes[id] = {
         id,
-        configuration: job.credential, // TODO runtime needs to support string credentials
+        configuration: job.credential,
         expression: job.body,
         adaptor: job.adaptor,
       };
@@ -64,12 +71,18 @@ export default (attempt: Attempt): ExecutionPlan => {
       const next = edges
         .filter((e) => e.source_job_id === id)
         .reduce((obj, edge) => {
-          // @ts-ignore
-          obj[edge.target_job_id] = edge.condition
-            ? { expression: edge.condition }
+          const newEdge: JobEdge = {};
+          if (edge.condition) {
+            newEdge.expression = edge.condition;
+          }
+          if (edge.enabled === false) {
+            newEdge.disabled = true;
+          }
+          obj[edge.target_job_id] = Object.keys(newEdge).length
+            ? newEdge
             : true;
           return obj;
-        }, {});
+        }, {} as Record<string, JobEdge>);
 
       if (Object.keys(next).length) {
         nodes[id].next = next;
