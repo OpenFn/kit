@@ -16,10 +16,11 @@ const urls = {
   lng: 'ws://localhost:7654/worker',
 };
 
-test.before(() => {
+test.before(async () => {
+  const engine = await createMockRTE();
   // TODO give lightning the same secret and do some validation
   lng = createLightningServer({ port: 7654 });
-  worker = createWorkerServer(createMockRTE('engine'), {
+  worker = createWorkerServer(engine, {
     port: 4567,
     lightning: urls.lng,
     secret: 'abc',

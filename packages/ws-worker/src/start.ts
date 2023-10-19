@@ -72,19 +72,26 @@ if (args.lightning === 'mock') {
 
   args.secret = WORKER_SECRET;
 }
-let engine;
-if (args.mock) {
-  engine = createMockRTE();
-  logger.debug('Mock engine created');
-} else {
-  engine = createRTE({ repoDir: args.repoDir });
-  logger.debug('engine created');
+
+function engineReady(engine) {
+  createWorker(engine, {
+    port: args.port,
+    lightning: args.lightning,
+    logger,
+    secret: args.secret,
+    noLoop: !args.loop,
+  });
 }
 
-createWorker(engine, {
-  port: args.port,
-  lightning: args.lightning,
-  logger,
-  secret: args.secret,
-  noLoop: !args.loop,
-});
+let engine;
+if (args.mock) {
+  createMockRTE().then((engine) => {
+    logger.debug('Mock engine created');
+    engineReady(engine);
+  });
+} else {
+  createRTE({ repoDir: args.repoDir }).then((engine) => {
+    logger.debug('engine created');
+    engineReady(engine);
+  });
+}

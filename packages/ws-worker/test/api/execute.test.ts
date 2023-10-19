@@ -319,7 +319,7 @@ test('loadCredential should fetch a credential', async (t) => {
 
 test('execute should return the final result', async (t) => {
   const channel = mockChannel(mockEventHandlers);
-  const engine = createMockRTE();
+  const engine = await createMockRTE();
   const logger = createMockLogger();
 
   const plan = {
@@ -349,7 +349,7 @@ test.only('execute should lazy-load a credential', async (t) => {
       return {};
     },
   });
-  const engine = createMockRTE();
+  const engine = await createMockRTE();
 
   const plan = {
     id: 'a',
@@ -378,7 +378,7 @@ test('execute should lazy-load initial state', async (t) => {
       return toArrayBuffer({});
     },
   });
-  const engine = createMockRTE();
+  const engine = await createMockRTE();
 
   const plan: Partial<ExecutionPlan> = {
     id: 'a',
@@ -398,7 +398,7 @@ test('execute should lazy-load initial state', async (t) => {
 
 test('execute should call all events on the socket', async (t) => {
   const logger = createMockLogger();
-  const engine = createMockRTE();
+  const engine = await createMockRTE();
 
   const events = {};
 

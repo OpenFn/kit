@@ -40,7 +40,7 @@ export type WorkflowErrorEvent = {
   message: string;
 };
 
-function createMock() {
+async function createMock() {
   const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
   const listeners: Record<string, any> = {};
