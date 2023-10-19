@@ -24,7 +24,7 @@ import {
   WorkflowErrorEvent,
   WorkflowStartEvent,
 } from '../mock/runtime-engine';
-import type { RuntimeEngine } from '@openfn/engine-multi';
+import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
 
 const enc = new TextDecoder('utf-8');
 
@@ -131,11 +131,11 @@ export function execute(
     engine.listen(plan.id!, listeners);
 
     const resolvers = {
-      credentials: (id: string) => loadCredential(channel, id),
+      credential: (id: string) => loadCredential(channel, id),
 
       // TODO not supported right now
       // dataclip: (id: string) => loadDataclip(channel, id),
-    };
+    } as Resolvers;
 
     // TODO we nede to remove this from here nad let the runtime take care of it through
     // the resolver. See https://github.com/OpenFn/kit/issues/403

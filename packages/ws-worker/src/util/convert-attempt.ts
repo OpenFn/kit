@@ -40,7 +40,7 @@ export default (attempt: Attempt): ExecutionPlan => {
       const connectedEdges = edges.filter((e) => e.source_trigger_id === id);
       if (connectedEdges.length) {
         nodes[id].next = connectedEdges.reduce((obj, edge) => {
-          if (!edge.disabled) {
+          if (edge.enabled !== false) {
             // @ts-ignore
             obj[edge.target_job_id] = true;
           }

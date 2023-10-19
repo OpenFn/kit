@@ -145,9 +145,9 @@ test('resolve credential before job-start if credential is a string', async (t) 
     return {};
   };
 
-  const engine = create('1');
+  const engine = create();
   // @ts-ignore
-  engine.execute(wf, { credential });
+  engine.execute(wf, { resolvers: { credential } });
 
   await waitForEvent<WorkflowCompleteEvent>(engine, 'job-start');
   t.true(didCallCredentials);

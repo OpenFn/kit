@@ -1,5 +1,5 @@
 import type { State, Credential } from '../types';
-import { LazyResolvers } from './runtime-engine';
+import { Resolvers } from '@openfn/engine-multi';
 
 const mockResolveCredential = (_credId: string) =>
   new Promise<Credential>((resolve) =>
@@ -23,4 +23,4 @@ export default {
   credentials: mockResolveCredential,
   state: mockResolveState,
   expressions: mockResolveExpressions,
-} as LazyResolvers;
+} as Resolvers;

@@ -208,6 +208,34 @@ test('convert a single trigger with two edges', (t) => {
   });
 });
 
+test('convert a disabled trigger', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    triggers: [createTrigger()],
+    jobs: [createNode({ id: 'a' })],
+    edges: [
+      {
+        id: 't-a',
+        source_trigger_id: 't',
+        target_job_id: 'a',
+        enabled: false,
+      },
+    ],
+  };
+  const result = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(result, {
+    id: 'w',
+    jobs: [
+      {
+        id: 't',
+        next: {},
+      },
+      createJob({ id: 'a' }),
+    ],
+  });
+});
+
 test('convert two linked jobs', (t) => {
   const attempt: Partial<Attempt> = {
     id: 'w',

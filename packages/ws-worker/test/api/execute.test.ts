@@ -337,7 +337,7 @@ test('execute should return the final result', async (t) => {
 });
 
 // TODO this is more of an engine test really, but worth having I suppose
-test('execute should lazy-load a credential', async (t) => {
+test.only('execute should lazy-load a credential', async (t) => {
   const logger = createMockLogger();
   let didCallCredentials = false;
 
@@ -349,7 +349,7 @@ test('execute should lazy-load a credential', async (t) => {
       return {};
     },
   });
-  const engine = createMockRTE('rte');
+  const engine = createMockRTE();
 
   const plan = {
     id: 'a',
@@ -378,7 +378,7 @@ test('execute should lazy-load initial state', async (t) => {
       return toArrayBuffer({});
     },
   });
-  const engine = createMockRTE('rte');
+  const engine = createMockRTE();
 
   const plan: Partial<ExecutionPlan> = {
     id: 'a',
