@@ -462,6 +462,29 @@ test('skip edge based on state in the condition ', async (t) => {
   t.is(result.data?.x, 10);
 });
 
+test('do not traverse a disabled edge', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        id: 'job1',
+        expression: 'export default [(s) => { s.data.x = 10; return s;}]',
+        next: {
+          job2: {
+            disabled: true,
+            condition: 'true',
+          },
+        },
+      },
+      {
+        id: 'job2',
+        expression: 'export default [() => ({ data: { x: 20 } })]',
+      },
+    ],
+  };
+  const result = await execute(plan, {}, mockLogger);
+  t.is(result.data?.x, 10);
+});
+
 test('execute a two-job execution plan', async (t) => {
   const plan: ExecutionPlan = {
     initialState: { data: { x: 0 } },

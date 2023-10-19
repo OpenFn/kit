@@ -76,6 +76,7 @@ export type JobEdge =
   | {
       condition?: string; // Javascript expression (function body, not function)
       label?: string;
+      disabled?: boolean;
     };
 
 export type JobNodeID = string;
@@ -84,6 +85,7 @@ export type CompiledJobEdge =
   | boolean
   | {
       condition?: Function;
+      disabled?: boolean;
     };
 
 export type CompiledJobNode = Omit<JobNode, 'next'> & {

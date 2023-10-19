@@ -93,12 +93,15 @@ const executeJob = async (
   if (job.next) {
     for (const nextJobId in job.next) {
       const edge = job.next[nextJobId];
-      if (
-        edge &&
-        (edge === true || !edge.condition || edge.condition(result))
-      ) {
-        next.push(nextJobId);
+      if (!edge) {
+        continue;
       }
+      if (typeof edge == 'object') {
+        if (edge.disabled || !edge.condition || !edge.condition(result)) {
+          continue;
+        }
+      }
+      next.push(nextJobId);
       // TODO errors
     }
   }
