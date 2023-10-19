@@ -203,7 +203,7 @@ test('preload credentials', (t) => {
     const api = createAPI({
       logger,
       resolvers: {
-        credentials: loader,
+        credential: loader,
       },
     });
 

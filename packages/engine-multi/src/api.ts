@@ -13,7 +13,7 @@ type Resolver<T> = (id: string) => Promise<T>;
 // A list of helper functions which basically resolve ids into JSON
 // to lazy load assets
 export type LazyResolvers = {
-  credentials?: Resolver<Credential>;
+  credential?: Resolver<Credential>;
   state?: Resolver<State>;
   expressions?: Resolver<string>;
 };

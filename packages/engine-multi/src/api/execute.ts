@@ -24,8 +24,8 @@ const execute = async (context: ExecutionContext) => {
   // I don't know any way to send data back into the worker once started
   // there is a shared memory thing but I'm not sure how it works yet
   // and not convinced we can use it for two way communication
-  if (options.resolvers?.credentials) {
-    await preloadCredentials(state.plan as any, options.resolvers?.credentials);
+  if (options.resolvers?.credential) {
+    await preloadCredentials(state.plan as any, options.resolvers?.credential);
   }
 
   const events = {
