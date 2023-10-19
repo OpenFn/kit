@@ -25,6 +25,10 @@ export default function initWorkers(
         events[type]?.(args);
       },
     });
+
+  api.closeWorkers = () => {
+    workers.terminate();
+  };
 }
 
 export function createWorkers(workerPath: string, env: any) {

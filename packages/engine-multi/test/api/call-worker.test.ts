@@ -12,6 +12,10 @@ test.before(() => {
   initWorkers(api, workerPath);
 });
 
+test.after(() => {
+  api.closeWorkers();
+});
+
 // TODO should I be tearing down the pool each time?
 
 test('initWorkers should add a callWorker function', (t) => {
@@ -79,6 +83,8 @@ test('If no env is passed, worker thread should be able to access parent env', a
 
   // voila
   t.is(result, code);
+
+  badAPI.closeWorkers();
 });
 
 test('By default, worker thread cannot access parent env if env not set', async (t) => {
@@ -94,6 +100,8 @@ test('By default, worker thread cannot access parent env if env not set', async 
 
   // No fish
   t.is(result, undefined);
+
+  defaultAPI.closeWorkers();
 });
 
 test('Worker thread cannot access parent env if custom env is passted', async (t) => {
@@ -112,4 +120,6 @@ test('Worker thread cannot access parent env if custom env is passted', async (t
 
   const result2 = await customAPI.callWorker('readEnv', ['NODE_ENV']);
   t.is(result2, 'production');
+
+  customAPI.closeWorkers();
 });
