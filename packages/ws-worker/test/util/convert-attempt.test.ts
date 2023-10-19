@@ -288,7 +288,7 @@ test('convert two linked jobs with an edge condition', (t) => {
   t.deepEqual(result, {
     id: 'w',
     jobs: [
-      createJob({ id: 'a', next: { b: { expression: condition } } }),
+      createJob({ id: 'a', next: { b: { condition } } }),
       createJob({ id: 'b' }),
     ],
   });

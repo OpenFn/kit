@@ -73,7 +73,7 @@ export default (attempt: Attempt): ExecutionPlan => {
         .reduce((obj, edge) => {
           const newEdge: JobEdge = {};
           if (edge.condition) {
-            newEdge.expression = edge.condition;
+            newEdge.condition = edge.condition;
           }
           if (edge.enabled === false) {
             newEdge.disabled = true;

@@ -127,7 +127,7 @@ function createMock() {
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
   const execute = (
     xplan: ExecutionPlan,
-    { resolvers }: { resolvers: Resolvers } = mockResolvers
+    { resolvers }: { resolvers?: Resolvers } = { resolvers: mockResolvers }
   ) => {
     const { id, jobs, initialState } = xplan;
     const workflowId = id;
