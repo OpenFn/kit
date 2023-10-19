@@ -10,10 +10,14 @@ type WorkerEvent = {
 };
 
 // Adds a `callWorker` function to the API object, which will execute a task in a worker
-export default function initWorkers(api: EngineAPI, workerPath: string) {
+export default function initWorkers(
+  api: EngineAPI,
+  workerPath: string,
+  env = {}
+) {
   // TODO can we verify the worker path and throw if it's invalid?
   // workerpool won't complain if we give it a nonsense path
-  const workers = createWorkers(workerPath);
+  const workers = createWorkers(workerPath, env);
   api.callWorker = (task: string, args: any[] = [], events: any = {}) =>
     workers.exec(task, args, {
       on: ({ type, ...args }: WorkerEvent) => {
@@ -23,7 +27,7 @@ export default function initWorkers(api: EngineAPI, workerPath: string) {
     });
 }
 
-export function createWorkers(workerPath: string) {
+export function createWorkers(workerPath: string, env: any) {
   let resolvedWorkerPath;
   if (workerPath) {
     // If a path to the worker has been passed in, just use it verbatim
@@ -39,9 +43,8 @@ export function createWorkers(workerPath: string) {
     workerThreadOpts: {
       // Note that we have to pass this explicitly to run in ava's test runner
       execArgv: ['--no-warnings', '--experimental-vm-modules'],
-      //   // TODO if this unset, can the thread read the parent env?
-      // Also todo I think this hides experimental vm modules so it all breaks
-      //   env: {},
+      // Important to override the child env so that it cannot access the parent env
+      env,
     },
   });
 }

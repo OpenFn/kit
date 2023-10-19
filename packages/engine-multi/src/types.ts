@@ -33,7 +33,7 @@ export type WorkflowState = {
 export type CallWorker = <T = any>(
   task: string,
   args: any[],
-  events: any
+  events?: any
 ) => workerpool.Promise<T>;
 
 export type ExecutionContextConstructor = {

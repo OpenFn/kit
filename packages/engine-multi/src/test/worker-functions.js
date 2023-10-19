@@ -14,6 +14,12 @@ workerpool.worker({
 
     return result;
   },
+  readEnv: (key) => {
+    if (key) {
+      return process.env[key];
+    }
+    return process.env;
+  },
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
   run: (plan, adaptorPaths) => {
