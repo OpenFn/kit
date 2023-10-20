@@ -7,8 +7,10 @@ const workerPath = path.resolve('src/test/worker-functions.js');
 let pool;
 
 const createPool = () => workerpool.pool({ maxWorkers: 1 });
-const createPoolWithFunctions = () =>
-  workerpool.pool(workerPath, { maxWorkers: 1 });
+
+// note that a dedicated pool does not allow arbitrary code execution
+const createDedicatedPool = (opts = {}) =>
+  workerpool.pool(workerPath, { maxWorkers: 1, ...opts });
 
 test.afterEach(() => pool.terminate());
 
@@ -23,7 +25,7 @@ test.serial('run an expression inside a worker', async (t) => {
 });
 
 test.serial('expressions should have the same threadId', async (t) => {
-  pool = createPoolWithFunctions();
+  pool = createDedicatedPool();
 
   const ids = {};
 
@@ -47,6 +49,37 @@ test.serial('expressions should have the same threadId', async (t) => {
 
   t.is(allUsedIds.length, 1);
   t.is(ids[allUsedIds[0]], 4);
+});
+
+// This is only true by default and is easily overridable
+test.serial('thread has access to parent env', async (t) => {
+  pool = createDedicatedPool();
+
+  process.env.TEST = 'foobar';
+
+  const result = await pool.exec('readEnv', ['TEST']);
+
+  t.is(result, 'foobar');
+
+  delete process.env.TEST;
+});
+
+test.serial('parent env can be hidden from thread', async (t) => {
+  pool = createDedicatedPool({
+    workerThreadOpts: {
+      env: { PRIVATE: 'xyz' },
+    },
+  });
+
+  process.env.TEST = 'foobar';
+
+  const result = await pool.exec('readEnv', ['TEST']);
+  t.is(result, undefined);
+
+  const result2 = await pool.exec('readEnv', ['PRIVATE']);
+  t.is(result2, 'xyz');
+
+  delete process.env.TEST;
 });
 
 test.serial('worker should not have access to host globals', async (t) => {
@@ -100,37 +133,55 @@ test.serial('workers share a global scope', async (t) => {
   t.is(result, 9);
 });
 
-test.serial(
-  'workers should not affect each other if global scope is frozen',
-  async (t) => {
-    pool = createPool();
+test.serial('get/set global x', async (t) => {
+  pool = createDedicatedPool();
 
-    t.is(global.x, undefined);
+  await pool.exec('setGlobalX', [11]);
+  const result = await pool.exec('getGlobalX');
 
-    const fn1 = () => {
-      Object.freeze(global);
-      global.x = 9;
-    };
+  t.is(result, 11);
+});
 
-    // Set a global inside the worker
-    await pool.exec(fn1, []);
+test.serial('get/set global error', async (t) => {
+  pool = createDedicatedPool();
 
-    // (should not affect us outside)
-    t.is(global.x, undefined);
+  await pool.exec('writeToGlobalError', [{ y: 222 }]);
+  const result = await pool.exec('getFromGlobalError', ['y']);
 
-    const fn2 = () => global.x;
+  t.is(result, 222);
+});
 
-    // Call into the same worker and check the scope is still there
-    const result = await pool.exec(fn2, []);
+test.serial('freeze prevents global scope being mutated', async (t) => {
+  pool = createDedicatedPool();
 
-    t.is(result, undefined);
-  }
-);
+  // Freeze the scope
+  await pool.exec('freeze', []);
+
+  t.is(global.x, undefined);
+
+  await t.throwsAsync(pool.exec('setGlobalX', [11]), {
+    message: 'Cannot add property x, object is not extensible',
+  });
+});
+
+test.serial('freeze does not prevent global Error being mutated', async (t) => {
+  pool = createDedicatedPool();
+
+  // Freeze the scope
+  await pool.exec('freeze', []);
+
+  t.is(global.x, undefined);
+
+  await pool.exec('writeToGlobalError', [{ y: 222 }]);
+  const result = await pool.exec('getFromGlobalError', ['y']);
+
+  t.is(result, 222);
+});
 
 // test imports inside the worker
 // this is basically testing that imported modules do not get re-intialised
 test.serial('static imports should share state across runs', async (t) => {
-  pool = createPoolWithFunctions();
+  pool = createDedicatedPool();
 
   const count1 = await pool.exec('incrementStatic', []);
   t.is(count1, 1);
@@ -143,7 +194,7 @@ test.serial('static imports should share state across runs', async (t) => {
 });
 
 test.serial('dynamic imports should share state across runs', async (t) => {
-  pool = createPoolWithFunctions();
+  pool = createDedicatedPool();
 
   const count1 = await pool.exec('incrementDynamic', []);
   t.is(count1, 1);
