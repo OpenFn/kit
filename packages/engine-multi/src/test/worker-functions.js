@@ -24,7 +24,6 @@ workerpool.worker({
     }
     return process.env;
   },
-  readParentEnv: () => process.parent.env,
   threadId: () => threadId,
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
