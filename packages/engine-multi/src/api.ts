@@ -35,14 +35,12 @@ const createAPI = async function (options: RTEOptions = {}) {
   const logger = options.logger || createLogger('RTE', { level: 'debug' });
 
   if (!repoDir) {
-    if (process.env.OPENFN_RTE_REPO_DIR) {
-      repoDir = process.env.OPENFN_RTE_REPO_DIR;
+    if (process.env.ENGINE_REPO_DIR) {
+      repoDir = process.env.ENGINE_REPO_DIR;
     } else {
       repoDir = '/tmp/openfn/repo';
       logger.warn('Using default repodir');
-      logger.warn(
-        'Set env var OPENFN_RTE_REPO_DIR to use a different directory'
-      );
+      logger.warn('Set env var ENGINE_REPO_DIR to use a different directory');
     }
   }
 
