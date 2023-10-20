@@ -16,27 +16,33 @@ import type { ExecutionPlan } from '@openfn/runtime';
 import helper, { createLoggers, publish } from './worker-helper';
 import { NotifyEvents } from '@openfn/runtime';
 
+type RunOptions = {
+  adaptorPaths: Record<string, { path: string }>;
+  whitelist?: RegExp[];
+
+  // TODO sanitize policy (gets fed to loggers)
+  // TODO timeout
+};
+
 workerpool.worker({
   // startup validation script
   handshake: () => true,
 
-  run: (
-    plan: ExecutionPlan,
-    adaptorPaths: Record<string, { path: string }>
-  ) => {
+  run: (plan: ExecutionPlan, runOptions: RunOptions) => {
+    const { adaptorPaths, whitelist } = runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!);
+
     const options = {
       logger,
       jobLogger,
       linker: {
         modules: adaptorPaths,
-        whitelist: [/^@openfn/],
+        whitelist,
       },
       callbacks: {
         // TODO: this won't actually work across the worker boundary
         // For now I am preloading credentials
-        // resolveCredential: async (id: string) => {
-        // },
+        // resolveCredential: async (id: string) => {},
         notify: (name: NotifyEvents, payload: any) => {
           // convert runtime notify events to internal engine events
           publish(plan.id!, `worker:${name}`, payload);

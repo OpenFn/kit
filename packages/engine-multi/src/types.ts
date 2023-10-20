@@ -3,7 +3,6 @@ import { Logger } from '@openfn/logger';
 import { ExecutionPlan } from '@openfn/runtime';
 import type { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
-import { RTEOptions } from './api';
 
 import { ExternalEvents, EventMap } from './events';
 import { EngineOptions } from './engine';
@@ -45,7 +44,7 @@ export type ExecutionContextConstructor = {
 
 export interface ExecutionContext extends EventEmitter {
   constructor(args: ExecutionContextConstructor): ExecutionContext;
-  options: RTEOptions; // TODO maybe. bring them in here?
+  options: EngineOptions;
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;

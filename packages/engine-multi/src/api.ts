@@ -1,10 +1,9 @@
 // Creates the public/external API to the runtime
 // Basically a thin wrapper, with validation, around the engine
 
-import createLogger, { Logger } from '@openfn/logger';
+import createLogger from '@openfn/logger';
 
-import createEngine from './engine';
-import type { AutoinstallOptions } from './api/autoinstall';
+import createEngine, { EngineOptions } from './engine';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -18,21 +17,14 @@ export type LazyResolvers = {
   expressions?: Resolver<string>;
 };
 
-export type RTEOptions = {
-  resolvers?: LazyResolvers;
-  logger?: Logger;
-  repoDir?: string;
-
-  minWorkers?: number;
-  maxWorkers?: number;
-
-  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
-  compile?: {
-    skip: true;
-  };
-
-  autoinstall?: AutoinstallOptions;
-};
+export type RTEOptions = Partial<
+  Omit<EngineOptions, 'whitelist' | 'noCompile'> & {
+    // Needed here for unit tests to support json expressions. Would rather exclude tbh
+    compile?: {
+      skip?: boolean;
+    };
+  }
+>;
 
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
@@ -63,6 +55,8 @@ const createAPI = async function (options: RTEOptions = {}) {
     logger,
     resolvers: options.resolvers, // TODO should probably default these?
     repoDir,
+    // Only allow @openfn/ modules to be imported into runs
+    whitelist: [/^@openfn/],
 
     // TODO should map this down into compile.
     noCompile: options.compile?.skip ?? false,
@@ -81,10 +75,6 @@ const createAPI = async function (options: RTEOptions = {}) {
   return {
     execute: engine.execute,
     listen: engine.listen,
-
-    // expose a hook to listen to internal events
-    // @ts-ignore
-    // on: (...args) => engine.on(...args),
   };
 };
 

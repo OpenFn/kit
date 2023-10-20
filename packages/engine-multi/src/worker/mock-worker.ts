@@ -71,6 +71,6 @@ function mock(plan: MockExecutionPlan) {
 }
 
 workerpool.worker({
-  run: async (plan: MockExecutionPlan, _repoDir?: string) =>
+  run: async (plan: MockExecutionPlan, _options?: any) =>
     helper(plan.id, () => mock(plan)),
 });

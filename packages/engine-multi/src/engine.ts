@@ -64,12 +64,18 @@ export type EngineOptions = {
 
   resolvers?: LazyResolvers;
 
-  noCompile?: boolean;
-  compile?: {}; // TODO
+  noCompile?: boolean; // TODO deprecate in favour of compile
+
+  // compile?: { // TODO no support yet
+  //   skip?: boolean;
+  // };
+
   autoinstall?: AutoinstallOptions;
 
   minWorkers?: number;
   maxWorkers?: number;
+
+  whitelist?: RegExp[];
 };
 
 // This creates the internal API
@@ -202,6 +208,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   engine.emit('test'); // TODO remove
 
   return Object.assign(engine, {
+    options,
     workerPath: resolvedWorkerPath,
     logger: options.logger,
     registerWorkflow,

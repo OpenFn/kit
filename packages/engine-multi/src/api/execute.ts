@@ -28,6 +28,11 @@ const execute = async (context: ExecutionContext) => {
     await preloadCredentials(state.plan as any, options.resolvers?.credential);
   }
 
+  const runOptions = {
+    adaptorPaths,
+    whitelist: options.whitelist,
+  };
+
   const events = {
     [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
       workflowStart(context, evt);
@@ -47,22 +52,15 @@ const execute = async (context: ExecutionContext) => {
       log(context, evt);
     },
   };
-  return callWorker('run', [state.plan, adaptorPaths], events).catch(
-    (e: any) => {
-      // TODO what information can I usefully provide here?
-      // DO I know which job I'm on?
-      // DO I know the thread id?
-      // Do I know where the error came from?
+  return callWorker('run', [state.plan, runOptions], events).catch((e: any) => {
+    // TODO what information can I usefully provide here?
+    // DO I know which job I'm on?
+    // DO I know the thread id?
+    // Do I know where the error came from?
 
-      error(context, { workflowId: state.plan.id, error: e });
-
-      // If the worker file can't be found, we get:
-      // code: MODULE_NOT_FOUND
-      // message: cannot find module <path> (worker.js)
-
-      logger.error(e);
-    }
-  );
+    error(context, { workflowId: state.plan.id, error: e });
+    logger.error(e);
+  });
 };
 
 export default execute;
