@@ -13,14 +13,14 @@
 import workerpool from 'workerpool';
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
+import type { SanitizePolicies } from '@openfn/logger';
 import helper, { createLoggers, publish } from './worker-helper';
 import { NotifyEvents } from '@openfn/runtime';
 
 type RunOptions = {
   adaptorPaths: Record<string, { path: string }>;
   whitelist?: RegExp[];
-
-  // TODO sanitize policy (gets fed to loggers)
+  sanitize: SanitizePolicies;
   // TODO timeout
 };
 
@@ -29,8 +29,8 @@ workerpool.worker({
   handshake: () => true,
 
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
-    const { adaptorPaths, whitelist } = runOptions;
-    const { logger, jobLogger } = createLoggers(plan.id!);
+    const { adaptorPaths, whitelist, sanitize } = runOptions;
+    const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
 
     const options = {
       logger,

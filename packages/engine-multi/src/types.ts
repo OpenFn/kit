@@ -1,11 +1,12 @@
 // ok first of allI want to capture the key interfaces
-import { Logger } from '@openfn/logger';
-import { ExecutionPlan } from '@openfn/runtime';
-import type { EventEmitter } from 'node:events';
 import workerpool from 'workerpool';
 
-import { ExternalEvents, EventMap } from './events';
-import { EngineOptions } from './engine';
+import type { Logger, SanitizePolicies } from '@openfn/logger';
+import type { ExecutionPlan } from '@openfn/runtime';
+import type { EventEmitter } from 'node:events';
+
+import type { ExternalEvents, EventMap } from './events';
+import type { EngineOptions } from './engine';
 
 export type Resolver<T> = (id: string) => Promise<T>;
 
@@ -39,7 +40,11 @@ export type ExecutionContextConstructor = {
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;
-  options: EngineOptions;
+  options: ExecutionContextOptions;
+};
+
+export type ExecutionContextOptions = EngineOptions & {
+  sanitize?: SanitizePolicies;
 };
 
 export interface ExecutionContext extends EventEmitter {

@@ -202,10 +202,13 @@ test.serial('preload credentials', (t) => {
 
     const api = await createAPI({
       logger,
+    });
+
+    const options = {
       resolvers: {
         credential: loader,
       },
-    });
+    };
 
     const jobs = [
       {
@@ -216,7 +219,7 @@ test.serial('preload credentials', (t) => {
 
     const plan = createPlan(jobs);
 
-    api.execute(plan).on('workflow-complete', ({ state }) => {
+    api.execute(plan, options).on('workflow-complete', ({ state }) => {
       t.true(didCallLoader);
       done();
     });

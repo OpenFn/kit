@@ -2,7 +2,6 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ExecutionPlan } from '@openfn/runtime';
-
 import {
   JOB_COMPLETE,
   JOB_START,
@@ -16,6 +15,7 @@ import execute from './api/execute';
 import validateWorker from './api/validate-worker';
 import ExecutionContext from './classes/ExecutionContext';
 
+import type { SanitizePolicies } from '@openfn/logger';
 import type { LazyResolvers } from './api';
 import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
@@ -78,6 +78,11 @@ export type EngineOptions = {
   whitelist?: RegExp[];
 };
 
+export type ExecuteOptions = {
+  sanitize?: SanitizePolicies;
+  resolvers?: LazyResolvers;
+};
+
 // This creates the internal API
 // tbh this is actually the engine, right, this is where stuff happens
 // the api file is more about the public api I think
@@ -138,10 +143,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   // TODO too much logic in this execute function, needs farming out
   // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
-  const executeWrapper = (
-    plan: ExecutionPlan,
-    opts: Partial<EngineOptions> = {}
-  ) => {
+  const executeWrapper = (plan: ExecutionPlan, opts: ExecuteOptions = {}) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid
@@ -155,7 +157,8 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       callWorker: engine.callWorker,
       options: {
         ...options,
-        ...opts,
+        sanitize: opts.sanitize,
+        resolvers: opts.resolvers,
       },
     });
 

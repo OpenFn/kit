@@ -52,7 +52,10 @@ const createAPI = async function (options: RTEOptions = {}) {
 
   const engineOptions = {
     logger,
-    resolvers: options.resolvers, // TODO should probably default these?
+
+    // TODO should resolvers be set here on passed to execute?
+    // They do feel more "global"
+    // resolvers: options.resolvers, // TODO should probably default these?
     repoDir,
     // Only allow @openfn/ modules to be imported into runs
     whitelist,

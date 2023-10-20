@@ -3,11 +3,14 @@
 
 import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
-import createLogger from '@openfn/logger';
+import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from './events';
 
-export const createLoggers = (workflowId: string) => {
+export const createLoggers = (
+  workflowId: string,
+  sanitize?: SanitizePolicies
+) => {
   const log = (message: string) => {
     // Apparently the json log stringifies the message
     // We don't really want it to do that
@@ -32,11 +35,13 @@ export const createLoggers = (workflowId: string) => {
     logger: emitter,
     level: 'debug',
     json: true,
+    sanitize,
   });
   const jobLogger = createLogger('JOB', {
     logger: emitter,
     level: 'debug',
     json: true,
+    sanitize,
   });
 
   return { logger, jobLogger };

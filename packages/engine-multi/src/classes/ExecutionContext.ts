@@ -4,9 +4,9 @@ import type {
   WorkflowState,
   CallWorker,
   ExecutionContextConstructor,
+  ExecutionContextOptions,
 } from '../types';
 import type { Logger } from '@openfn/logger';
-import type { EngineOptions } from '../engine';
 
 /**
  * The ExeuctionContext class wraps an event emitter with some useful context
@@ -20,7 +20,7 @@ export default class ExecutionContext extends EventEmitter {
   state: WorkflowState;
   logger: Logger;
   callWorker: CallWorker;
-  options: EngineOptions;
+  options: ExecutionContextOptions;
 
   constructor({
     state,
