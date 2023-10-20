@@ -4,6 +4,7 @@ import { createMockLogger } from '@openfn/logger';
 import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
 import { AUTOINSTALL_COMPLETE } from '../../src/events';
 import ExecutionContext from '../../src/classes/ExecutionContext';
+import whitelist from '../../src/whitelist';
 
 type PackageJson = {
   name: string;
@@ -20,19 +21,26 @@ const mockHandleInstall = async (specifier: string): Promise<void> =>
 
 const logger = createMockLogger();
 
-const createContext = (autoinstallOpts?, jobs?: any[]) =>
+const createContext = (
+  autoinstallOpts?,
+  jobs?: any[],
+  customWhitelist?: RegExp[]
+) =>
   new ExecutionContext({
     state: {
       id: 'x',
       status: 'pending',
       options: {},
       plan: {
-        jobs: jobs || [{ adaptor: 'x@1.0.0' }],
+        jobs: jobs || [{ adaptor: '@openfn/language-common@1.0.0' }],
       },
     },
     logger,
-    callWorker: () => {},
+    // @ts-ignore
+    callWorker: async () => {},
     options: {
+      logger,
+      whitelist: customWhitelist || whitelist,
       repoDir: 'tmp/repo',
       autoinstall: autoinstallOpts || {
         handleInstall: mockHandleInstall,
@@ -40,6 +48,10 @@ const createContext = (autoinstallOpts?, jobs?: any[]) =>
       },
     },
   });
+
+test.afterEach(() => {
+  logger._reset();
+});
 
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
@@ -141,13 +153,44 @@ test.serial(
   }
 );
 
+test.serial(
+  'autoinstall: do not try to install blacklisted modules',
+  async (t) => {
+    let callCount = 0;
+
+    const mockInstall = () =>
+      new Promise<void>((resolve) => {
+        callCount++;
+        setTimeout(() => resolve(), 20);
+      });
+
+    const job = [
+      {
+        adaptor: 'lodash@1.0.0',
+      },
+    ];
+
+    const options = {
+      skipRepoValidation: true,
+      handleInstall: mockInstall,
+      handleIsInstalled: async () => false,
+    };
+
+    const context = createContext(options, job);
+
+    await autoinstall(context);
+
+    t.is(callCount, 0);
+  }
+);
+
 test.serial('autoinstall: return a map to modules', async (t) => {
   const jobs = [
     {
-      adaptor: 'common@1.0.0',
+      adaptor: '@openfn/language-common@1.0.0',
     },
     {
-      adaptor: 'http@1.0.0',
+      adaptor: '@openfn/language-http@1.0.0',
     },
   ];
 
@@ -161,8 +204,41 @@ test.serial('autoinstall: return a map to modules', async (t) => {
   const result = await autoinstall(context);
 
   t.deepEqual(result, {
-    common: { path: 'tmp/repo/node_modules/common_1.0.0' },
-    http: { path: 'tmp/repo/node_modules/http_1.0.0' },
+    '@openfn/language-common': {
+      path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
+    },
+    '@openfn/language-http': {
+      path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
+    },
+  });
+});
+
+test.serial('autoinstall: support custom whitelist', async (t) => {
+  const whitelist = [/^y/];
+  const jobs = [
+    {
+      // will be ignored
+      adaptor: 'x@1.0.0',
+    },
+    {
+      // will be installed
+      adaptor: 'y@1.0.0',
+    },
+  ];
+
+  const autoinstallOpts = {
+    skipRepoValidation: true,
+    handleInstall: async () => {},
+    handleIsInstalled: async () => false,
+  };
+  const context = createContext(autoinstallOpts, jobs, whitelist);
+
+  const result = await autoinstall(context);
+
+  t.deepEqual(result, {
+    y: {
+      path: 'tmp/repo/node_modules/y_1.0.0',
+    },
   });
 });
 
@@ -170,7 +246,7 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
   let event;
   const jobs = [
     {
-      adaptor: 'common@1.0.0',
+      adaptor: '@openfn/language-common@1.0.0',
     },
   ];
 
@@ -188,7 +264,7 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
   await autoinstall(context);
 
   t.truthy(event);
-  t.is(event.module, 'common');
+  t.is(event.module, '@openfn/language-common');
   t.is(event.version, '1.0.0');
   t.assert(event.duration >= 50);
 });

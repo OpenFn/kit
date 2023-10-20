@@ -29,7 +29,7 @@ const pending: Record<string, Promise<void>> = {};
 const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   const { logger, state, options } = context;
   const { plan } = state;
-  const { repoDir } = options;
+  const { repoDir, whitelist } = options;
   const autoinstallOptions = options.autoinstall || {};
 
   const installFn = autoinstallOptions?.handleInstall || install;
@@ -55,6 +55,13 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   // TODO set iteration is weirdly difficult?
   const paths: ModulePaths = {};
   for (const a of adaptors) {
+    // Ensure that this is not blacklisted
+    // TODO what if it is? For now we'll log and skip it
+    if (whitelist && !whitelist.find((r) => r.exec(a))) {
+      logger.warn('WARNING: autoinstall skipping blacklisted module ', a);
+      continue;
+    }
+
     // Return a path name to this module for the linker to use later
     // TODO this is all a bit rushed
     const alias = getAliasedName(a);

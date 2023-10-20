@@ -3,6 +3,7 @@
 
 import createLogger from '@openfn/logger';
 
+import whitelist from './whitelist';
 import createEngine, { EngineOptions } from './engine';
 
 export type State = any; // TODO I want a nice state def with generics
@@ -56,7 +57,7 @@ const createAPI = async function (options: RTEOptions = {}) {
     resolvers: options.resolvers, // TODO should probably default these?
     repoDir,
     // Only allow @openfn/ modules to be imported into runs
-    whitelist: [/^@openfn/],
+    whitelist,
 
     // TODO should map this down into compile.
     noCompile: options.compile?.skip ?? false,
