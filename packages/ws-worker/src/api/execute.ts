@@ -14,10 +14,9 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { Channel } from '../types';
+import { AttemptOptions, Channel } from '../types';
 import { getWithReply, stringify } from '../util';
 
-import type { ExecutionPlan } from '@openfn/runtime';
 import type { JSONLog, Logger } from '@openfn/logger';
 import {
   WorkflowCompleteEvent,
@@ -25,6 +24,7 @@ import {
   WorkflowStartEvent,
 } from '../mock/runtime-engine';
 import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
+import { ExecutionPlan } from '@openfn/runtime';
 
 const enc = new TextDecoder('utf-8');
 
@@ -32,6 +32,7 @@ export type AttemptState = {
   activeRun?: string;
   activeJob?: string;
   plan: ExecutionPlan;
+  options: AttemptOptions;
   dataclips: Record<string, any>;
 
   // final dataclip id
@@ -60,10 +61,10 @@ export function execute(
   channel: Channel,
   engine: RuntimeEngine,
   logger: Logger,
-  // TODO first thing we'll do here is pull the plan
-  plan: ExecutionPlan
+  plan: ExecutionPlan,
+  options: AttemptOptions = {}
 ) {
-  return new Promise(async (resolve) => {
+  return new Promise(async (resolve, reject) => {
     logger.info('execute...');
 
     const state: AttemptState = {
@@ -72,6 +73,7 @@ export function execute(
       // to the initial state
       lastDataclipId: plan.initialState as string | undefined,
       dataclips: {},
+      options,
     };
 
     const context: Context = { channel, state, logger, onComplete: resolve };
@@ -145,7 +147,15 @@ export function execute(
       logger.success('dataclip loaded');
       logger.debug(plan.initialState);
     }
-    engine.execute(plan, { resolvers });
+
+    try {
+      engine.execute(plan, { resolvers, ...options });
+    } catch (e: any) {
+      // TODO what if there's an error?
+      onWorkflowError(context, { workflowId: plan.id!, message: e.message });
+      // are we sure we want to re-throw?
+      reject(e);
+    }
   });
 }
 

@@ -127,8 +127,16 @@ async function createMock() {
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
   const execute = (
     xplan: ExecutionPlan,
-    { resolvers }: { resolvers?: Resolvers } = { resolvers: mockResolvers }
+    options: { resolvers?: Resolvers; throw?: boolean } = {
+      resolvers: mockResolvers,
+    }
   ) => {
+    // This is just an easy way to test the options gets fed through to execute
+    // Also lets me test error handling!
+    if (options.throw) {
+      throw new Error('test error');
+    }
+
     const { id, jobs, initialState } = xplan;
     const workflowId = id;
     activeWorkflows[id!] = true;
@@ -143,7 +151,7 @@ async function createMock() {
         let state = initialState || {};
         // Trivial job reducer in our mock
         for (const job of jobs) {
-          state = await executeJob(id!, job, state, resolvers);
+          state = await executeJob(id!, job, state, options.resolvers);
         }
         setTimeout(() => {
           delete activeWorkflows[id!];

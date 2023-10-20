@@ -1,13 +1,16 @@
 import crypto from 'node:crypto';
 import type {
-  ExecutionPlan,
   JobNode,
   JobNodeID,
   JobEdge,
+  ExecutionPlan,
 } from '@openfn/runtime';
-import { Attempt } from '../types';
+import { Attempt, AttemptOptions } from '../types';
 
-export default (attempt: Attempt): ExecutionPlan => {
+export default (
+  attempt: Attempt
+): { plan: ExecutionPlan; options: AttemptOptions } => {
+  const options = attempt.options || {};
   const plan: Partial<ExecutionPlan> = {
     id: attempt.id,
   };
@@ -92,5 +95,8 @@ export default (attempt: Attempt): ExecutionPlan => {
 
   plan.jobs = Object.values(nodes);
 
-  return plan as ExecutionPlan;
+  return {
+    plan: plan as ExecutionPlan,
+    options,
+  };
 };

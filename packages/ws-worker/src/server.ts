@@ -62,13 +62,12 @@ function createServer(engine: any, options: ServerOptions = {}) {
 
         const startAttempt = async ({ id, token }: CLAIM_ATTEMPT) => {
           // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
-          const { channel: attemptChannel, plan } = await joinAttemptChannel(
-            socket,
-            token,
-            id,
-            logger
-          );
-          execute(attemptChannel, engine, logger, plan);
+          const {
+            channel: attemptChannel,
+            plan,
+            options,
+          } = await joinAttemptChannel(socket, token, id, logger);
+          execute(attemptChannel, engine, logger, plan, options);
         };
 
         if (!options.noLoop) {

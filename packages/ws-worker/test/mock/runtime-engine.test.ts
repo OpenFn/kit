@@ -135,6 +135,22 @@ test('mock should dispatch log events when evaluating JSON', async (t) => {
   t.deepEqual(logs[1].message, ['Parsing expression as JSON state']);
 });
 
+test('mock should throw if the magic option is passed', async (t) => {
+  const engine = await create();
+
+  const logs = [];
+  engine.on('log', (l) => {
+    logs.push(l);
+  });
+
+  await t.throwsAsync(
+    async () => engine.execute(sampleWorkflow, { throw: true }),
+    {
+      message: 'test error',
+    }
+  );
+});
+
 test('resolve credential before job-start if credential is a string', async (t) => {
   const wf = clone(sampleWorkflow);
   wf.jobs[0].configuration = 'x';
