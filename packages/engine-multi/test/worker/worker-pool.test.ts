@@ -1,18 +1,20 @@
+import path from 'node:path';
 import test from 'ava';
 import workerpool from 'workerpool';
 
-//some tests of worker stuff
+const workerPath = path.resolve('src/test/worker-functions.js');
+
 let pool;
 
-test.beforeEach(() => {
-  pool = workerpool.pool({ maxWorkers: 1 });
-});
+const createPool = () => workerpool.pool({ maxWorkers: 1 });
+const createPoolWithFunctions = () =>
+  workerpool.pool(workerPath, { maxWorkers: 1 });
 
-test.afterEach(() => {
-  pool.terminate();
-});
+test.afterEach(() => pool.terminate());
 
 test.serial('run an expression inside a worker', async (t) => {
+  pool = createPool();
+
   const fn = () => 42;
 
   const result = await pool.exec(fn, []);
@@ -20,8 +22,35 @@ test.serial('run an expression inside a worker', async (t) => {
   t.is(result, 42);
 });
 
+test.serial('expressions should have the same threadId', async (t) => {
+  pool = createPoolWithFunctions();
+
+  const ids = {};
+
+  const saveThreadId = (id: string) => {
+    if (!ids[id]) {
+      ids[id] = 0;
+    }
+    ids[id]++;
+  };
+
+  // Run 4 jobs and return the threadId for each
+  // With only one worker thread they should all be the same
+  await Promise.all([
+    pool.exec('threadId', []).then(saveThreadId),
+    pool.exec('threadId', []).then(saveThreadId),
+    pool.exec('threadId', []).then(saveThreadId),
+    pool.exec('threadId', []).then(saveThreadId),
+  ]);
+
+  const allUsedIds = Object.keys(ids);
+
+  t.is(allUsedIds.length, 1);
+  t.is(ids[allUsedIds[0]], 4);
+});
+
 test.serial('worker should not have access to host globals', async (t) => {
-  const pool = workerpool.pool({ maxWorkers: 1 });
+  pool = createPool();
   global.x = 22;
 
   const fn = () => global.x;
@@ -33,6 +62,8 @@ test.serial('worker should not have access to host globals', async (t) => {
 });
 
 test.serial('worker should not mutate host global scope', async (t) => {
+  pool = createPool();
+
   t.is(global.x, undefined);
 
   const fn = () => {
@@ -44,8 +75,10 @@ test.serial('worker should not mutate host global scope', async (t) => {
   t.is(global.x, undefined);
 });
 
-// fails! This is a problem
-test.serial.skip('workers should not affect each other', async (t) => {
+// This is potentially a security concern for jobs which escape the runtime sandbox
+test.serial('workers share a global scope', async (t) => {
+  pool = createPool();
+
   t.is(global.x, undefined);
 
   const fn1 = () => {
@@ -60,17 +93,18 @@ test.serial.skip('workers should not affect each other', async (t) => {
 
   const fn2 = () => global.x;
 
-  // Call into the same worker and check the scope is still there
+  // Call into the same worker and reads the global scope again
   const result = await pool.exec(fn2, []);
 
-  // Fails - result is 9
-  t.is(result, undefined);
+  // And yes, the internal global x has a value of 9
+  t.is(result, 9);
 });
 
-// maybe flaky?
-test.serial.skip(
+test.serial(
   'workers should not affect each other if global scope is frozen',
   async (t) => {
+    pool = createPool();
+
     t.is(global.x, undefined);
 
     const fn1 = () => {
@@ -92,3 +126,31 @@ test.serial.skip(
     t.is(result, undefined);
   }
 );
+
+// test imports inside the worker
+// this is basically testing that imported modules do not get re-intialised
+test.serial('static imports should share state across runs', async (t) => {
+  pool = createPoolWithFunctions();
+
+  const count1 = await pool.exec('incrementStatic', []);
+  t.is(count1, 1);
+
+  const count2 = await pool.exec('incrementStatic', []);
+  t.is(count2, 2);
+
+  const count3 = await pool.exec('incrementStatic', []);
+  t.is(count3, 3);
+});
+
+test.serial('dynamic imports should share state across runs', async (t) => {
+  pool = createPoolWithFunctions();
+
+  const count1 = await pool.exec('incrementDynamic', []);
+  t.is(count1, 1);
+
+  const count2 = await pool.exec('incrementDynamic', []);
+  t.is(count2, 2);
+
+  const count3 = await pool.exec('incrementDynamic', []);
+  t.is(count3, 3);
+});
