@@ -9,15 +9,21 @@ type WorkerEvent = {
   [key: string]: any;
 };
 
+type WorkerOptions = {
+  minWorkers?: number;
+  maxWorkers?: number;
+  env?: any;
+};
+
 // Adds a `callWorker` function to the API object, which will execute a task in a worker
 export default function initWorkers(
   api: EngineAPI,
   workerPath: string,
-  env = {}
+  options: WorkerOptions = {}
 ) {
   // TODO can we verify the worker path and throw if it's invalid?
   // workerpool won't complain if we give it a nonsense path
-  const workers = createWorkers(workerPath, env);
+  const workers = createWorkers(workerPath, options);
   api.callWorker = (task: string, args: any[] = [], events: any = {}) =>
     workers.exec(task, args, {
       on: ({ type, ...args }: WorkerEvent) => {
@@ -26,13 +32,18 @@ export default function initWorkers(
       },
     });
 
-  api.closeWorkers = () => {
-    workers.terminate();
-  };
+  api.closeWorkers = () => workers.terminate();
 }
 
-export function createWorkers(workerPath: string, env: any) {
+export function createWorkers(workerPath: string, options: WorkerOptions) {
+  const {
+    env = {},
+    minWorkers = 0,
+    maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
+  } = options;
+
   let resolvedWorkerPath;
+
   if (workerPath) {
     // If a path to the worker has been passed in, just use it verbatim
     // We use this to pass a mock worker for testing purposes
@@ -44,6 +55,8 @@ export function createWorkers(workerPath: string, env: any) {
   }
 
   return workerpool.pool(resolvedWorkerPath, {
+    minWorkers,
+    maxWorkers,
     workerThreadOpts: {
       // Note that we have to pass this explicitly to run in ava's test runner
       execArgv: ['--no-warnings', '--experimental-vm-modules'],

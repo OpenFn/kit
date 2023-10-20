@@ -12,9 +12,7 @@ test.before(() => {
   initWorkers(api, workerPath);
 });
 
-test.after(() => {
-  api.closeWorkers();
-});
+test.after(() => api.closeWorkers());
 
 // TODO should I be tearing down the pool each time?
 
@@ -70,9 +68,10 @@ test('callWorker should execute in a different process', async (t) => {
   });
 });
 
-test('If no env is passed, worker thread should be able to access parent env', async (t) => {
+test('If null env is passed, worker thread should be able to access parent env', async (t) => {
   const badAPI = {} as EngineAPI;
-  initWorkers(badAPI, workerPath, null!);
+  const env = null;
+  initWorkers(badAPI, workerPath, { env });
 
   // Set up a special key on process.env
   const code = '76ytghjs';
@@ -81,15 +80,34 @@ test('If no env is passed, worker thread should be able to access parent env', a
   // try and read that key inside the thread
   const result = await badAPI.callWorker('readEnv', ['TEST']);
 
-  // voila
+  // voila, the kingdom is yours
   t.is(result, code);
 
   badAPI.closeWorkers();
 });
 
-test('By default, worker thread cannot access parent env if env not set', async (t) => {
+test('By default, worker thread cannot access parent env if env not set (no options arg)', async (t) => {
   const defaultAPI = {} as EngineAPI;
-  initWorkers(defaultAPI, workerPath, undefined);
+
+  initWorkers(defaultAPI, workerPath /* no options passed*/);
+
+  // Set up a special key on process.env
+  const code = '76ytghjs';
+  process.env.TEST = code;
+
+  // try and read that key inside the thread
+  const result = await defaultAPI.callWorker('readEnv', ['TEST']);
+
+  // No fish
+  t.is(result, undefined);
+
+  defaultAPI.closeWorkers();
+});
+
+test('By default, worker thread cannot access parent env if env not set (with options arg)', async (t) => {
+  const defaultAPI = {} as EngineAPI;
+
+  initWorkers(defaultAPI, workerPath, { maxWorkers: 1 });
 
   // Set up a special key on process.env
   const code = '76ytghjs';
@@ -106,7 +124,8 @@ test('By default, worker thread cannot access parent env if env not set', async 
 
 test('Worker thread cannot access parent env if custom env is passted', async (t) => {
   const customAPI = {} as EngineAPI;
-  initWorkers(customAPI, workerPath, { NODE_ENV: 'production' });
+  const env = { NODE_ENV: 'production' };
+  initWorkers(customAPI, workerPath, { env });
 
   // Set up a special key on process.env
   const code = '76ytghjs';

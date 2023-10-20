@@ -23,6 +23,9 @@ export type RTEOptions = {
   logger?: Logger;
   repoDir?: string;
 
+  minWorkers?: number;
+  maxWorkers?: number;
+
   noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
   compile?: {
     skip: true;
@@ -65,6 +68,9 @@ const createAPI = async function (options: RTEOptions = {}) {
     noCompile: options.compile?.skip ?? false,
     // TODO should we disable autoinstall overrides?
     autoinstall: options.autoinstall,
+
+    minWorkers: options.minWorkers,
+    maxWorkers: options.maxWorkers,
   };
 
   // Note that the engine here always uses the standard worker, the real one

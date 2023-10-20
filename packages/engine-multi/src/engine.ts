@@ -67,6 +67,9 @@ export type EngineOptions = {
   noCompile?: boolean;
   compile?: {}; // TODO
   autoinstall?: AutoinstallOptions;
+
+  minWorkers?: number;
+  maxWorkers?: number;
 };
 
 // This creates the internal API
@@ -103,7 +106,10 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
 
   const engine = new Engine() as EngineAPI;
 
-  initWorkers(engine, resolvedWorkerPath);
+  initWorkers(engine, resolvedWorkerPath, {
+    minWorkers: options.minWorkers,
+    maxWorkers: options.maxWorkers,
+  });
 
   await validateWorker(engine);
 
