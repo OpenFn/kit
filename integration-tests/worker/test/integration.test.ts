@@ -25,11 +25,12 @@ const initLightning = () => {
   lightning = createLightningServer({ port: 9999 });
 };
 
-const initWorker = async () => {
+const initWorker = async (engineArgs = {}) => {
   engine = await createEngine({
     // logger: createLogger('engine', { level: 'debug' }),
     logger: createMockLogger(),
     repoDir: path.resolve('./tmp/repo'),
+    ...engineArgs,
   });
 
   worker = createWorkerServer(engine, {
@@ -240,7 +241,7 @@ test('run a job with credentials', (t) => {
     return app.listen(PORT);
   };
 
-  return new Promise(async (done) => {
+  return new Promise<void>(async (done) => {
     const server = createServer();
     const config = {
       username: 'logan',
@@ -351,3 +352,40 @@ test.todo('return some kind of error on compilation error');
 //   });
 // });
 // });
+
+
+// set repodir to use the dummy repo
+test.only('stateful adaptor should create a new client for each job', (t) => {
+  return new Promise(async (done) => {
+    const engineArgs = {
+      repoDir: path.resolve('./dummy-repo'),
+      // Important to ensure a single worker. Is there any way I can verify this is is working?
+      // the job should export a thread id, so let's try that
+      maxWorkers: 1
+    }
+
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/stateful-test@1.0.0',
+          body: `fn(() => {
+            return { threadId, clientId }
+          })`,
+        },
+      ],
+    };
+
+    initLightning()
+
+    lightning.waitForResult(attempt.id, (result) => {
+      console.log(result)
+      t.pass()
+      done()
+    })
+
+    await initWorker(engineArgs);
+
+    lightning.enqueueAttempt(attempt);
+  })
+})
