@@ -354,14 +354,10 @@ test.todo('return some kind of error on compilation error');
 // });
 
 
-// This test fails, which is a problem!
-// the test module does not re-initialise
-test.skip('stateful adaptor should create a new client for each job', (t) => {
+test.only('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),
-      // Important to ensure a single worker. Is there any way I can verify this is is working?
-      // the job should export a thread id, so let's try that
       maxWorkers: 1
     }
 
@@ -393,11 +389,9 @@ test.skip('stateful adaptor should create a new client for each job', (t) => {
       if (id === attempt2.id) {
         const one = results[attempt1.id]
         const two = results[attempt2.id]
-
+        // The module should be isolated within the same thread
         t.is(one.threadId, two.threadId);
 
-        // Bugger! The two jobs shared a client
-        // That's bad, init
         t.not(one.clientId, two.clientId);
 
         done();
