@@ -38,6 +38,20 @@ The runtime provides no CLI. Use packages/cli (devtools) for this.
 
 For the runtime to work, the parent process needs `--experimental-vm-modules` be passed. You may also want to pass `--no-warnings` to suppress annoying console warnings.
 
+## Module Caching
+
+If running in a long-lived process (such as inside ws-worker), the runtime may import cached modules.
+
+This can be a problem for isolation even within the sandbox, because state can be shared by two workflows using the same adaptor. This is a security and stability concern.
+
+To address this, the runtime accepts a cacheKey on the linker options. If set, this will be appended to the linker's imports (ie, top-level job imports). All jobs in the same workflow will use the same cacheKey, so a module is cached between jobs, but NOT between workflows.
+
+Long-running worker processes should pass a unique cache key with each run.
+
+IMPORTANT: This will leak memory, because loaded but "stale" modules will NOT be garbage collected.
+
+It is expected that that long-running runtimes will have some kind of purge functionality to reclaim memory (for example, engine-multi will regulaly burn worker threads)
+
 ## Execution Plans
 
 The runtime can accept an Execution Plan (or workflow) as an input. 

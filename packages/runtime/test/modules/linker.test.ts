@@ -105,6 +105,54 @@ test('loads a module from a path', async (t) => {
   t.assert(m.namespace.default === 'test');
 });
 
+test('imports with a cacheKey', async (t) => {
+  const opts = {
+    ...options,
+    cacheKey: 'abc'
+  };
+  const m = await linker('ultimate-answer', context, opts);
+  t.assert(m.namespace.default === 43);
+});
+
+test('modules will be cached by default', async (t) => {
+  const modulePath = path.resolve('test/__modules__/number-export.js');
+  const m1 = await linker(modulePath, context, options);
+
+  t.is(m1.namespace.getNumber(), 20);
+
+  const result = m1.namespace.increment()
+
+  t.is(result, 21)
+
+  const m2 = await linker(modulePath, context, options);
+
+  t.is(m2.namespace.getNumber(), 21);
+});
+
+test('cachekey busts the module cache', async (t) => {
+  const modulePath = path.resolve('test/__modules__/number-export.js');
+
+  const opts1 = {
+    ...options,
+    cacheKey: 'a'
+  }
+  const m1 = await linker(modulePath, context, opts1);
+
+  t.is(m1.namespace.getNumber(), 20);
+
+  const result = m1.namespace.increment()
+
+  t.is(result, 21)
+
+  const opts2 = {
+    ...options,
+    cacheKey: 'b'
+  }
+  const m2 = await linker(modulePath, context, opts2);
+
+  t.is(m2.namespace.getNumber(), 20);
+});
+
 test('throw if a non-whitelisted value is passed', async (t) => {
   await t.throwsAsync(() =>
     linker('i-heart-hacking', context, { repo, whitelist: [/^@openfn\//] })
