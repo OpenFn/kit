@@ -205,3 +205,29 @@ test.serial('dynamic imports should share state across runs', async (t) => {
   const count3 = await pool.exec('incrementDynamic', []);
   t.is(count3, 3);
 });
+
+
+// This is kinda done in the tests above, it's just to setup the next test
+test.serial('module scope is shared within a thread', async (t) => {
+  pool = createDedicatedPool({ maxWorkers: 1 });
+
+  const result = await Promise.all([
+    pool.exec('incrementDynamic', []),
+    pool.exec('incrementDynamic', []),
+    pool.exec('incrementDynamic', []),
+  ])
+
+  t.deepEqual(result, [1, 2, 3])
+});
+
+test.serial('module scope is isolated across threads', async (t) => {
+  pool = createDedicatedPool({ maxWorkers: 3 });
+
+  const result = await Promise.all([
+    pool.exec('incrementDynamic', []),
+    pool.exec('incrementDynamic', []),
+    pool.exec('incrementDynamic', []),
+  ])
+
+  t.deepEqual(result, [1,1,1])
+});
