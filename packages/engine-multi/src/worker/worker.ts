@@ -31,13 +31,13 @@ workerpool.worker({
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
     const { adaptorPaths, whitelist, sanitize } = runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
-
     const options = {
       logger,
       jobLogger,
       linker: {
         modules: adaptorPaths,
         whitelist,
+        cacheKey: plan.id,
       },
       callbacks: {
         // TODO: this won't actually work across the worker boundary
