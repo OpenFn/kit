@@ -24,13 +24,22 @@ export default function initWorkers(
   // TODO can we verify the worker path and throw if it's invalid?
   // workerpool won't complain if we give it a nonsense path
   const workers = createWorkers(workerPath, options);
-  api.callWorker = (task: string, args: any[] = [], events: any = {}) =>
-    workers.exec(task, args, {
+  api.callWorker = (task: string, args: any[] = [], events: any = {}) => {
+    const promise = workers.exec(task, args, {
       on: ({ type, ...args }: WorkerEvent) => {
         // just call the callback
         events[type]?.(args);
       },
     });
+    // Tinfoil hat for https://github.com/OpenFn/kit/issues/410
+    // Calling this after every job starts will terminate the worker thread AFTER
+    // the job has executed
+    // This ensures, for now, that each workflow runs in a clean context
+    // will this stop jobs returning? Surely not...?
+    // Will it stop pending jobs running? yes
+    workers.terminate()
+    return promise;
+  }
 
   api.closeWorkers = () => workers.terminate();
 }

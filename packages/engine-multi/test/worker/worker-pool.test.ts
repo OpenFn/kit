@@ -231,3 +231,25 @@ test.serial('module scope is isolated across threads', async (t) => {
 
   t.deepEqual(result, [1,1,1])
 });
+
+// hmm, problematic
+test.serial.only('a terminated pool will not return', async (t) => {
+  return new Promise(done => {
+  pool = createDedicatedPool({ maxWorkers: 1 });
+  
+  pool.exec('incrementDynamic', []).then(result => {
+    console.log('result', result)
+  }).catch(e => {
+    console.log('error', e)
+
+  })
+  pool.terminate()
+})
+
+  // const result = await Promise.all([
+  //   pool.exec('incrementDynamic', []),
+  //   pool.exec('incrementDynamic', []),
+  // ])
+
+  // t.deepEqual(result, [1, 2, 3])
+})
