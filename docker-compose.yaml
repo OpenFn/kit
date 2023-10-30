@@ -1,0 +1,8 @@
+services:
+  ws-worker:
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+    ports:
+      - 2222:2222
