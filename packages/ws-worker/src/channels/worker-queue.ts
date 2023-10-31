@@ -1,5 +1,6 @@
 import { Socket as PhxSocket } from 'phoenix';
 import { WebSocket } from 'ws';
+
 import generateWorkerToken from '../util/worker-token';
 import type { Socket, Channel } from '../types';
 
@@ -8,7 +9,7 @@ type SocketAndChannel = {
   channel: Channel;
 };
 
-export const connectToLightning = (
+const connectToWorkerQueue = (
   endpoint: string,
   serverId: string,
   secret: string,
@@ -66,4 +67,4 @@ export const connectToLightning = (
   });
 };
 
-export default connectToLightning;
+export default connectToWorkerQueue;

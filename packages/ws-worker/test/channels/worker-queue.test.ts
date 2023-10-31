@@ -1,10 +1,15 @@
 import test from 'ava';
 import * as jose from 'jose';
-import connect from '../../src/api/connect';
+import connectToWorkerQueue from '../../src/channels/worker-queue';
 import { mockSocket } from '../../src/mock/sockets';
 
 test('should connect', async (t) => {
-  const { socket, channel } = await connect('www', 'a', 'secret', mockSocket);
+  const { socket, channel } = await connectToWorkerQueue(
+    'www',
+    'a',
+    'secret',
+    mockSocket
+  );
 
   t.truthy(socket);
   t.truthy(socket.connect);
@@ -27,7 +32,7 @@ test('should connect with an auth token', async (t) => {
 
     return socket;
   }
-  const { socket, channel } = await connect(
+  const { socket, channel } = await connectToWorkerQueue(
     'www',
     workerId,
     secret,
@@ -59,9 +64,12 @@ test('should fail to connect with an invalid auth token', async (t) => {
     return socket;
   }
 
-  await t.throwsAsync(connect('www', workerId, 'wrong-secret!', createSocket), {
-    message: 'auth_fail',
-  });
+  await t.throwsAsync(
+    connectToWorkerQueue('www', workerId, 'wrong-secret!', createSocket),
+    {
+      message: 'auth_fail',
+    }
+  );
 });
 
 // TODO maybe?

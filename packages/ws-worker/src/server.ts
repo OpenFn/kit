@@ -9,7 +9,7 @@ import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { execute } from './api/execute';
 import joinAttemptChannel from './api/start-attempt';
-import connectToLightning from './api/connect';
+import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
 
 type ServerOptions = {
@@ -45,7 +45,7 @@ function connect(
 ) {
   logger.debug('Connecting to Lightning at', options.lightning);
 
-  connectToLightning(options.lightning!, engine.id, options.secret!)
+  connectToWorkerQueue(options.lightning!, engine.id, options.secret!)
     .then(({ socket, channel }) => {
       logger.success('Connected to Lightning at', options.lightning);
 
