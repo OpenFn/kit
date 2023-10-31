@@ -213,8 +213,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     // How does this work if deferred?
   };
 
-  engine.emit('test'); // TODO remove
-
   return Object.assign(engine, {
     options,
     workerPath: resolvedWorkerPath,
