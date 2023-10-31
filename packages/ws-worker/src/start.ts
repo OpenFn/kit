@@ -63,6 +63,10 @@ const logger = createLogger('SRV', { level: args.log });
 
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';
+  if (!args.secret) {
+    // Set a fake secret to stop the console warning
+    args.secret = 'abdefg';
+  }
 } else if (!args.secret) {
   const { WORKER_SECRET } = process.env;
   if (!WORKER_SECRET) {
