@@ -93,7 +93,7 @@ The main implementation is in engine.ts, which exposes a much broader interface,
 
 When execute is called and passed a plan, the engine first generates an execution context. This contains an event emitter just for that workflower and some contextualised state.
 
-## Security Considerations
+## Security Considerations & Memory Management
 
 The engine uses workerpool to maintain a pool of worker threads.
 
@@ -101,10 +101,13 @@ As workflows come in to be executed, they are passed to workerpool which will pi
 
 workerpool has no natural environment hardening, which means workflows running in the same thread will share an environment. Globals set in workflow A will be available to workflow B, and by the same token an adaptor loaded for workflow A will be shared with workflow B.
 
-We have two mitigations to this:
+Also, because the thread is long-lived, modules imported into the sandbox will be shared.
+
+We have several mitgations against this, ensuring a safe, secure and stable execution environment:
 
 - The runtime sandbox itself ensures that each job runs in an isolated context. If a job escapes the sandbox, it will have access to the thread's global scope
-- Inside the worker thread, we freeze the global scope. This basically means that jobs are unable to write data to the global scope.
+- Each workflow appends a unique id to all its imports, busting the node cache and forcing each module to be re-initialised. This means workers cannot share adaptors and all state is reset.
+- To preserve memory, worker threads are regularly purged, meaning destroyed (note that this comes with a performance hit and undermines the use of worker pooling entirely!). When each workflow is complete, if there are no pending tasks to execute, all worker threads are destroyed.
 
 Inside the worker thread, we ensure that:
 
