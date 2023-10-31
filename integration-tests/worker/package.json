@@ -11,8 +11,7 @@
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/worker/dist --no-version",
     "build": "pnpm build:pack && docker build --tag worker-integration-tests .",
     "start": "docker run worker-integration-tests",
-    "_test": "pnpm clean && npx ava -s --timeout 2m",
-    "test": "npx ava -s --timeout 2m"
+    "test": "pnpm clean && npx ava -s --timeout 2m"
   },
   "dependencies": {
     "@openfn/engine-multi": "workspace:^",

@@ -69,6 +69,7 @@ test('should join attempts queue channel', (t) => {
 test('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
     initLightning();
+
     lightning.on('attempt:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
       const result = lightning.getResult('a1');
@@ -77,6 +78,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
       t.pass('completed attempt');
       done();
     });
+
     await initWorker();
 
     lightning.enqueueAttempt({
@@ -91,8 +93,6 @@ test('should run a simple job with no compilation or adaptor', (t) => {
   });
 });
 
-// todo ensure repo is clean
-// check how we manage the env in cli tests
 test('run a job with autoinstall of common', (t) => {
   return new Promise(async (done) => {
     initLightning();
@@ -353,13 +353,12 @@ test.todo('return some kind of error on compilation error');
 // });
 // });
 
-
-test.only('stateful adaptor should create a new client for each attempt', (t) => {
+test('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),
-      maxWorkers: 1
-    }
+      maxWorkers: 1,
+    };
 
     const attempt1 = {
       id: crypto.randomUUID(),
@@ -377,18 +376,18 @@ test.only('stateful adaptor should create a new client for each attempt', (t) =>
     const attempt2 = {
       ...attempt1,
       id: crypto.randomUUID(),
-    }
-    let results = {}
+    };
+    let results = {};
 
-    initLightning()
+    initLightning();
 
     lightning.on('attempt:complete', (evt) => {
       const id = evt.attemptId;
-      results[id] =  lightning.getResult(id);
+      results[id] = lightning.getResult(id);
 
       if (id === attempt2.id) {
-        const one = results[attempt1.id]
-        const two = results[attempt2.id]
+        const one = results[attempt1.id];
+        const two = results[attempt2.id];
         // The module should be isolated within the same thread
         t.is(one.threadId, two.threadId);
 
@@ -399,7 +398,7 @@ test.only('stateful adaptor should create a new client for each attempt', (t) =>
     });
 
     // Note that this API doesn't work!!
-    // shaeme, it would be useful 
+    // shaeme, it would be useful
     // lightning.waitForResult(attempt.id, (result) => {
     //   console.log(result)
     //   t.pass()
@@ -410,5 +409,5 @@ test.only('stateful adaptor should create a new client for each attempt', (t) =>
 
     lightning.enqueueAttempt(attempt1);
     lightning.enqueueAttempt(attempt2);
-  })
-})
+  });
+});
