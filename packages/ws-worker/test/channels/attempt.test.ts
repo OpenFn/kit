@@ -1,8 +1,7 @@
 import test from 'ava';
 import { mockSocket, mockChannel } from '../../src/mock/sockets';
-import joinAttemptChannel from '../../src/api/start-attempt';
+import joinAttemptChannel, { loadAttempt } from '../../src/channels/attempt';
 import { GET_ATTEMPT } from '../../src/events';
-import { loadAttempt } from '../../src/api/start-attempt';
 import { attempts } from '../mock/data';
 import { createMockLogger } from '@openfn/logger';
 

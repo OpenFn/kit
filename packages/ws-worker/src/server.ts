@@ -8,7 +8,7 @@ import { RuntimeEngine } from '@openfn/engine-multi';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { execute } from './api/execute';
-import joinAttemptChannel from './api/start-attempt';
+import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
 
