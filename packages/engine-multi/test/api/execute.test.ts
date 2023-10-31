@@ -1,6 +1,5 @@
 import path from 'node:path';
 import test from 'ava';
-import { EventEmitter } from 'node:events';
 import { WorkflowState } from '../../src/types';
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
@@ -9,6 +8,7 @@ import {
   JOB_COMPLETE,
   JOB_START,
   WORKFLOW_COMPLETE,
+  WORKFLOW_ERROR,
   WORKFLOW_LOG,
   WORKFLOW_START,
 } from '../../src/events';
@@ -153,6 +153,36 @@ test.serial('should emit a log event', async (t) => {
   t.is(workflowLog.workflowId, 'y');
   t.is(workflowLog.message[0], 'hi');
   t.is(workflowLog.level, 'info');
+});
+
+test.serial('should emit error on timeout', async (t) => {
+  const state = {
+    id: 'zz',
+    plan: {
+      jobs: [
+        {
+          expression: '() => { while(true) {} }',
+        },
+      ],
+    },
+  } as WorkflowState;
+
+  const wfOptions = {
+    ...options,
+    timeout: 10,
+  };
+
+  let event;
+
+  const context = createContext({ state, options: wfOptions });
+
+  context.once(WORKFLOW_ERROR, (evt) => (event = evt));
+
+  await execute(context);
+
+  t.truthy(event.threadId);
+  t.is(event.type, 'TimeoutError');
+  t.assert(event.message.match(/Promise timed out after/));
 });
 
 // how will we test compilation?

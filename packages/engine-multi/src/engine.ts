@@ -76,11 +76,15 @@ export type EngineOptions = {
   maxWorkers?: number;
 
   whitelist?: RegExp[];
+
+  // Timeout for the whole workflow
+  timeout?: number;
 };
 
 export type ExecuteOptions = {
   sanitize?: SanitizePolicies;
   resolvers?: LazyResolvers;
+  timeout?: number;
 };
 
 // This creates the internal API
@@ -159,6 +163,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
+        timeout: opts.timeout,
       },
     });
 

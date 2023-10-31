@@ -1,6 +1,6 @@
 import test from 'ava';
 import path from 'node:path';
-
+import { Promise as WorkerPoolPromise } from 'workerpool';
 import initWorkers, { createWorkers } from '../../src/api/call-worker';
 import { EngineAPI } from '../../src/types';
 
@@ -38,6 +38,12 @@ test('callWorker should trigger an event callback', async (t) => {
     };
 
     api.callWorker('test', [11], { message: onCallback });
+  });
+});
+
+test('callWorker should throw TimeoutError if it times out', async (t) => {
+  await t.throwsAsync(() => api.callWorker('timeout', [11], {}, 10), {
+    instanceOf: WorkerPoolPromise.TimeoutError,
   });
 });
 

@@ -5,7 +5,7 @@ import { createMockLogger } from '@openfn/logger';
 // thes are tests on the public api functions generally
 // so these are very high level tests and don't allow mock workers or anything
 
-const logger = createMockLogger();
+const logger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
   logger._reset();
@@ -19,7 +19,7 @@ test.serial('create a default engine api without throwing', async (t) => {
 test.serial('create an engine api with options without throwing', async (t) => {
   await createAPI({ logger });
   // just a token test to see if the logger is accepted and used
-  t.assert(logger._history.length > 0);
+  t.true(logger._history.length > 0);
 });
 
 test.serial('create an engine api with a limited surface', async (t) => {

@@ -16,7 +16,6 @@ import preloadCredentials from './preload-credentials';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
-
   const adaptorPaths = await autoinstall(context);
   await compile(context);
 
@@ -52,12 +51,20 @@ const execute = async (context: ExecutionContext) => {
       log(context, evt);
     },
   };
-  return callWorker('run', [state.plan, runOptions], events).catch((e: any) => {
+  return callWorker(
+    'run',
+    [state.plan, runOptions],
+    events,
+    options.timeout
+  ).catch((e: any) => {
+    // E could be:
+    // A timeout
+    // An crash error within the job
+
     // TODO what information can I usefully provide here?
     // DO I know which job I'm on?
     // DO I know the thread id?
     // Do I know where the error came from?
-
     error(context, { workflowId: state.plan.id, error: e });
     logger.error(e);
   });

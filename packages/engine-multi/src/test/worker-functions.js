@@ -37,7 +37,6 @@ workerpool.worker({
     try {
       const [job] = plan.jobs;
       const result = eval(job.expression);
-
       workerpool.workerEmit({
         type: 'worker:workflow-complete',
         workflowId,
@@ -56,6 +55,10 @@ workerpool.worker({
       // actually, just throw the error back out
       throw err;
     }
+  },
+
+  timeout: () => {
+    while (true) {}
   },
 
   // Experiments with freezing the global scope

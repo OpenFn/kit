@@ -43,11 +43,6 @@ const createAPI = async function (options: RTEOptions = {}) {
       logger.warn('Set env var ENGINE_REPO_DIR to use a different directory');
     }
   }
-
-  // re logging, for example, where does this go?
-  // it's not an attempt log
-  // it probably shouldnt be sent to the worker
-  // but it is an important bit of debugging
   logger.info('repoDir set to ', repoDir);
 
   const engineOptions = {

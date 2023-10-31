@@ -203,3 +203,33 @@ test('catch and emit errors', async (t) => {
     });
   });
 });
+
+test('timeout the whole attempt and emit an error', async (t) => {
+  return new Promise(async (done) => {
+    const p = path.resolve('src/test/worker-functions.js');
+    const engine = await createEngine(options, p);
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: 'while(true) {}',
+        },
+      ],
+    };
+
+    const opts = {
+      timeout: 10,
+    };
+
+    engine.execute(plan, opts);
+
+    engine.listen(plan.id, {
+      [e.WORKFLOW_ERROR]: ({ message, type }) => {
+        t.is(type, 'TimeoutError');
+        t.is(message, 'Promise timed out after 10 ms');
+        done();
+      },
+    });
+  });
+});
