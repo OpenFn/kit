@@ -14,7 +14,7 @@
     "pack:local": "pnpm run pack && node ./build/pack-local.js",
     "pack": "pnpm -r run pack",
     "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
-    "test:integration": "pnpm -C integration-tests/cli test",
+    "test:integration": "pnpm -r --filter=./integration-tests/* run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
     "test": "pnpm -r --filter=./packages/* run test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"

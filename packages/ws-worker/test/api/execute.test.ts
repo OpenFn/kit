@@ -319,7 +319,7 @@ test('loadCredential should fetch a credential', async (t) => {
 
 test('execute should return the final result', async (t) => {
   const channel = mockChannel(mockEventHandlers);
-  const engine = createMockRTE();
+  const engine = await createMockRTE();
   const logger = createMockLogger();
 
   const plan = {
@@ -336,6 +336,35 @@ test('execute should return the final result', async (t) => {
   t.deepEqual(result, { done: true });
 });
 
+test('execute should feed options to the engine', async (t) => {
+  const channel = mockChannel(mockEventHandlers);
+  const engine = await createMockRTE();
+  const logger = createMockLogger();
+
+  const plan = {
+    id: 'a',
+    jobs: [
+      {
+        expression: JSON.stringify({ done: true }),
+      },
+    ],
+  };
+
+  const options = {
+    throw: true,
+  };
+
+  // TODO what do we actually want to do if engine.execute throws?
+  // Need to to someting...
+
+  try {
+    await execute(channel, engine, logger, plan, options);
+  } catch (e) {
+    t.is(e.message, 'test error');
+    t.pass();
+  }
+});
+
 // TODO this is more of an engine test really, but worth having I suppose
 test('execute should lazy-load a credential', async (t) => {
   const logger = createMockLogger();
@@ -349,7 +378,7 @@ test('execute should lazy-load a credential', async (t) => {
       return {};
     },
   });
-  const engine = createMockRTE('rte');
+  const engine = await createMockRTE();
 
   const plan = {
     id: 'a',
@@ -378,7 +407,7 @@ test('execute should lazy-load initial state', async (t) => {
       return toArrayBuffer({});
     },
   });
-  const engine = createMockRTE('rte');
+  const engine = await createMockRTE();
 
   const plan: Partial<ExecutionPlan> = {
     id: 'a',
@@ -398,7 +427,7 @@ test('execute should lazy-load initial state', async (t) => {
 
 test('execute should call all events on the socket', async (t) => {
   const logger = createMockLogger();
-  const engine = createMockRTE();
+  const engine = await createMockRTE();
 
   const events = {};
 

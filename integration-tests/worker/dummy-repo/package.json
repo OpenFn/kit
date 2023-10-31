@@ -1,0 +1,8 @@
+{
+  "name": "test-repo",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@openfn/stateful-test_1.0.0": "@npm:@openfn/stateful-test@1.0.0"
+  }
+}

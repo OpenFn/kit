@@ -21,14 +21,20 @@ test('loadAttempt should get the attempt body', async (t) => {
   t.true(didCallGetAttempt);
 });
 
-test('loadAttempt should return an execution plan', async (t) => {
-  const attempt = attempts['attempt-1'];
+test('loadAttempt should return an execution plan and options', async (t) => {
+  const attempt = {
+    ...attempts['attempt-1'],
+    options: {
+      sanitize: 'obfuscate',
+      timeout: 10,
+    },
+  };
 
   const channel = mockChannel({
     [GET_ATTEMPT]: () => attempt,
   });
 
-  const plan = await loadAttempt(channel);
+  const { plan, options } = await loadAttempt(channel);
   t.like(plan, {
     id: 'attempt-1',
     jobs: [
@@ -40,6 +46,7 @@ test('loadAttempt should return an execution plan', async (t) => {
       },
     ],
   });
+  t.deepEqual(options, attempt.options);
 });
 
 test('should join an attempt channel with a token', async (t) => {
@@ -50,11 +57,12 @@ test('should join an attempt channel with a token', async (t) => {
       join: () => ({ status: 'ok' }),
       [GET_ATTEMPT]: () => ({
         id: 'a',
+        options: { timeout: 10 },
       }),
     }),
   });
 
-  const { channel, plan } = await joinAttemptChannel(
+  const { channel, plan, options } = await joinAttemptChannel(
     socket,
     'x.y.z',
     'a',
@@ -63,6 +71,7 @@ test('should join an attempt channel with a token', async (t) => {
 
   t.truthy(channel);
   t.deepEqual(plan, { id: 'a', jobs: [] });
+  t.deepEqual(options, { timeout: 10 });
 });
 
 test('should fail to join an attempt channel with an invalid token', async (t) => {

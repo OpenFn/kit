@@ -38,12 +38,16 @@ function createServer(engine: any, options: ServerOptions = {}) {
     })
   );
 
-  app.listen(port);
+  const server = app.listen(port);
   logger.success('ws-worker listening on', port);
+
+  let killWorkloop: () => void;
 
   (app as any).destroy = () => {
     // TODO close the work loop
     logger.info('Closing server');
+    server.close();
+    killWorkloop?.();
   };
 
   const router = new Router();
@@ -58,19 +62,18 @@ function createServer(engine: any, options: ServerOptions = {}) {
 
         const startAttempt = async ({ id, token }: CLAIM_ATTEMPT) => {
           // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
-          const { channel: attemptChannel, plan } = await joinAttemptChannel(
-            socket,
-            token,
-            id,
-            logger
-          );
-          execute(attemptChannel, engine, logger, plan);
+          const {
+            channel: attemptChannel,
+            plan,
+            options,
+          } = await joinAttemptChannel(socket, token, id, logger);
+          execute(attemptChannel, engine, logger, plan, options);
         };
 
         if (!options.noLoop) {
           logger.info('Starting workloop');
           // TODO maybe namespace the workloop logger differently? It's a bit annoying
-          startWorkloop(channel, startAttempt, logger, {
+          killWorkloop = startWorkloop(channel, startAttempt, logger, {
             maxBackoff: options.maxBackoff,
             // timeout: 1000 * 60, // TMP debug poll once per minute
           });
@@ -116,8 +119,9 @@ function createServer(engine: any, options: ServerOptions = {}) {
   }
 
   // TMP doing this for tests but maybe its better done externally
-  app.on = (...args) => engine.on(...args);
-  app.once = (...args) => engine.once(...args);
+  app.on = (...args) => {
+    return engine.on(...args);
+  };
 
   return app;
 }

@@ -3,7 +3,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import createLogger, { LogLevel } from '@openfn/logger';
 
-// import createRTM from '@openfn/runtime-engine';
+import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker from './server';
 
@@ -15,6 +15,7 @@ type Args = {
   secret?: string;
   loop?: boolean;
   log: LogLevel;
+  mock: boolean;
 };
 
 const args = yargs(hideBin(process.argv))
@@ -51,6 +52,11 @@ const args = yargs(hideBin(process.argv))
     default: true,
     type: 'boolean',
   })
+  .option('mock', {
+    description: 'Use a mock runtime engine',
+    default: false,
+    type: 'boolean',
+  })
   .parse() as Args;
 
 const logger = createLogger('SRV', { level: args.log });
@@ -67,23 +73,24 @@ if (args.lightning === 'mock') {
   args.secret = WORKER_SECRET;
 }
 
-// TODO the engine needs to take callbacks to load credential, and load state
-// these in turn should utilise the websocket
-// So either the server creates the runtime (which seems reasonable acutally?)
-// Or the server calls a setCalbacks({ credential, state }) function on the engine
-// Each of these takes the attemptId as the firsdt argument
-// credential and state will lookup the right channel
-// const engine = createEngine('rte', { repoDir: args.repoDir });
-// logger.debug('engine created');
+function engineReady(engine: any) {
+  createWorker(engine, {
+    port: args.port,
+    lightning: args.lightning,
+    logger,
+    secret: args.secret,
+    noLoop: !args.loop,
+  });
+}
 
-// use the mock rtm for now
-const engine = createMockRTE('rte');
-logger.debug('Mock RTE created');
-
-createWorker(engine, {
-  port: args.port,
-  lightning: args.lightning,
-  logger,
-  secret: args.secret,
-  noLoop: !args.loop,
-});
+if (args.mock) {
+  createMockRTE().then((engine) => {
+    logger.debug('Mock engine created');
+    engineReady(engine);
+  });
+} else {
+  createRTE({ repoDir: args.repoDir }).then((engine) => {
+    logger.debug('engine created');
+    engineReady(engine);
+  });
+}

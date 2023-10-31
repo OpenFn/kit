@@ -1,61 +1,106 @@
-import path from 'node:path';
-import crypto from 'node:crypto';
-import { fileURLToPath } from 'url';
 import { EventEmitter } from 'node:events';
-import workerpool from 'workerpool';
-import { ExecutionPlan } from '@openfn/runtime';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { ExecutionPlan } from '@openfn/runtime';
+import {
+  JOB_COMPLETE,
+  JOB_START,
+  WORKFLOW_COMPLETE,
+  WORKFLOW_LOG,
+  WORKFLOW_START,
+} from './events';
+import initWorkers from './api/call-worker';
+import createState from './api/create-state';
+import execute from './api/execute';
+import validateWorker from './api/validate-worker';
+import ExecutionContext from './classes/ExecutionContext';
 
-import * as e from './events';
-// import createAutoinstall from './runners/autoinstall';
-import createCompile from './runners/compile';
-import createExecute from './runners/execute';
-import createLogger, { JSONLog, Logger } from '@openfn/logger';
-import createAutoInstall from './runners/autoinstall';
+import type { SanitizePolicies } from '@openfn/logger';
+import type { LazyResolvers } from './api';
+import type { EngineAPI, EventHandler, WorkflowState } from './types';
+import type { Logger } from '@openfn/logger';
+import type { AutoinstallOptions } from './api/autoinstall';
 
-export type State = any; // TODO I want a nice state def with generics
+// For each workflow, create an API object with its own event emitter
+// this is a bt wierd - what if the emitter went on state instead?
+const createWorkflowEvents = (
+  engine: EngineAPI,
+  context: ExecutionContext,
+  workflowId: string
+) => {
+  // proxy all events to the main emitter
+  // uh actually there may be no point in this
+  function proxy(event: string) {
+    context.on(event, (evt) => {
+      // ensure the attempt id is on the event
+      evt.workflowId = workflowId;
+      const newEvt = {
+        ...evt,
+        workflowId: workflowId,
+      };
 
-// Archive of every workflow we've run
-// Fine to just keep in memory for now
-type WorkflowStats = {
-  id: string;
-  name?: string; // TODO what is name? this is irrelevant?
-  status: 'pending' | 'done' | 'err';
-  startTime?: number;
-  threadId?: number;
-  duration?: number;
-  error?: string;
-  result?: any; // State
-  plan: ExecutionPlan;
+      engine.emit(event, newEvt);
+    });
+  }
+  proxy(WORKFLOW_START);
+  proxy(WORKFLOW_COMPLETE);
+  proxy(JOB_START);
+  proxy(JOB_COMPLETE);
+  proxy(WORKFLOW_LOG);
+
+  return context;
 };
 
-type Resolver<T> = (id: string) => Promise<T>;
+// TODO this is a quick and dirty to get my own claass name in the console
+// (rather than EventEmitter)
+// But I should probably lean in to the class more for typing and stuff
+class Engine extends EventEmitter {}
 
-// A list of helper functions which basically resolve ids into JSON
-// to lazy load assets
-export type LazyResolvers = {
-  credentials?: Resolver<Credential>;
-  state?: Resolver<State>;
-  expressions?: Resolver<string>;
-};
+// The engine is way more strict about options
+export type EngineOptions = {
+  repoDir: string;
+  logger: Logger;
+  runtimelogger?: Logger;
 
-type RTMOptions = {
   resolvers?: LazyResolvers;
-  logger?: Logger;
-  workerPath?: string;
-  repoDir?: string;
-  noCompile?: boolean; // Needed for unit tests to support json expressions. Maybe we shouldn't do this?
+
+  noCompile?: boolean; // TODO deprecate in favour of compile
+
+  // compile?: { // TODO no support yet
+  //   skip?: boolean;
+  // };
+
+  autoinstall?: AutoinstallOptions;
+
+  minWorkers?: number;
+  maxWorkers?: number;
+
+  whitelist?: RegExp[];
+
+  // Timeout for the whole workflow
+  timeout?: number;
 };
 
-const createRTM = function (serverId?: string, options: RTMOptions = {}) {
-  const { noCompile } = options;
-  let { repoDir, workerPath } = options;
+export type ExecuteOptions = {
+  sanitize?: SanitizePolicies;
+  resolvers?: LazyResolvers;
+  timeout?: number;
+};
 
-  const id = serverId || crypto.randomUUID();
-  const logger = options.logger || createLogger('RTM', { level: 'debug' });
+// This creates the internal API
+// tbh this is actually the engine, right, this is where stuff happens
+// the api file is more about the public api I think
+// TOOD options MUST have a logger
+const createEngine = async (options: EngineOptions, workerPath?: string) => {
+  const states: Record<string, WorkflowState> = {};
+  const contexts: Record<string, ExecutionContext> = {};
+  const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
-  const allWorkflows: Map<string, WorkflowStats> = new Map();
-  const activeWorkflows: string[] = [];
+  // TODO I think this is for later
+  //const activeWorkflows: string[] = [];
 
+  // TOOD I wonder if the engine should a) always accept a worker path
+  // and b) validate it before it runs
   let resolvedWorkerPath;
   if (workerPath) {
     // If a path to the worker has been passed in, just use it verbatim
@@ -64,132 +109,125 @@ const createRTM = function (serverId?: string, options: RTMOptions = {}) {
   } else {
     // By default, we load ./worker.js but can't rely on the working dir to find it
     const dirname = path.dirname(fileURLToPath(import.meta.url));
-    resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
+    resolvedWorkerPath = path.resolve(
+      dirname,
+      // TODO there are too many assumptions here, it's an argument for the path just to be
+      // passed by the mian api or the unit test
+      workerPath || '../dist/worker/worker.js'
+    );
   }
-  const workers = workerpool.pool(resolvedWorkerPath);
 
-  const events = new EventEmitter();
+  options.logger!.debug('Loading workers from ', resolvedWorkerPath);
 
-  if (!repoDir) {
-    if (process.env.OPENFN_RTE_REPO_DIR) {
-      repoDir = process.env.OPENFN_RTE_REPO_DIR;
-    } else {
-      repoDir = '/tmp/openfn/repo';
-      logger.warn('Using default repodir');
-      logger.warn(
-        'Set env var OPENFN_RTE_REPO_DIR to use a different directory'
-      );
-    }
-  }
-  logger.info('repoDir set to ', repoDir);
+  const engine = new Engine() as EngineAPI;
 
-  const onWorkflowStarted = (workflowId: string, threadId: number) => {
-    logger.info('starting workflow ', workflowId);
-    const workflow = allWorkflows.get(workflowId)!;
+  initWorkers(
+    engine,
+    resolvedWorkerPath,
+    {
+      minWorkers: options.minWorkers,
+      maxWorkers: options.maxWorkers,
+    },
+    options.logger
+  );
 
-    if (workflow.startTime) {
-      // TODO this shouldn't throw.. but what do we do?
-      // We shouldn't run a workflow that's been run
-      // Every workflow should have a unique id
-      // maybe the RTM doesn't care about this
-      throw new Error(`Workflow with id ${workflowId} is already started`);
-    }
-    workflow.startTime = new Date().getTime();
-    workflow.duration = -1;
-    workflow.threadId = threadId;
-    activeWorkflows.push(workflowId);
+  await validateWorker(engine);
 
-    // forward the event on to any external listeners
-    events.emit(e.WORKFLOW_START, {
-      workflowId,
-      // Should we publish anything else here?
-    });
+  // TODO I think this needs to be like:
+  // take a plan
+  // create, register and return  a state object
+  // should it also load the initial data clip?
+  // when does that happen? No, that's inside execute
+  const registerWorkflow = (plan: ExecutionPlan) => {
+    // TODO throw if already registered?
+    const state = createState(plan);
+    states[state.id] = state;
+    return state;
   };
 
-  const completeWorkflow = (workflowId: string, state: any) => {
-    logger.success('complete workflow ', workflowId);
-    logger.info(state);
-    if (!allWorkflows.has(workflowId)) {
-      throw new Error(`Workflow with id ${workflowId} is not defined`);
-    }
-    const workflow = allWorkflows.get(workflowId)!;
-    workflow.status = 'done';
-    workflow.result = state;
-    workflow.duration = new Date().getTime() - workflow.startTime!;
-    const idx = activeWorkflows.findIndex((id) => id === workflowId);
-    activeWorkflows.splice(idx, 1);
+  const getWorkflowState = (workflowId: string) => states[workflowId];
 
-    // forward the event on to any external listeners
-    events.emit(e.WORKFLOW_COMPLETE, {
-      id: workflowId,
-      duration: workflow.duration,
+  const getWorkflowStatus = (workflowId: string) => states[workflowId]?.status;
+
+  // TODO too much logic in this execute function, needs farming out
+  // I don't mind having a wrapper here but it must be super thin
+  // TODO maybe engine options is too broad?
+  const executeWrapper = (plan: ExecutionPlan, opts: ExecuteOptions = {}) => {
+    options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
+    const workflowId = plan.id!;
+    // TODO throw if plan is invalid
+    // Wait, don't throw because the server will die
+    // Maybe return null instead
+    const state = registerWorkflow(plan);
+
+    const context = new ExecutionContext({
       state,
+      logger: options.logger!,
+      callWorker: engine.callWorker,
+      options: {
+        ...options,
+        sanitize: opts.sanitize,
+        resolvers: opts.resolvers,
+        timeout: opts.timeout,
+      },
     });
-  };
 
-  // Catch a log coming out of a job within a workflow
-  // Includes runtime logging (is this right?)
-  const onWorkflowLog = (workflowId: string, message: JSONLog) => {
-    // Seamlessly proxy the log to the local stdout
-    // TODO runtime logging probably needs to be at info level?
-    // Debug information is mostly irrelevant for lightning
-    const newMessage = {
-      ...message,
-      // Prefix the job id in all local jobs
-      // I'm sure there are nicer, more elegant ways of doing this
-      message: [`[${workflowId}]`, ...message.message],
+    contexts[workflowId] = createWorkflowEvents(engine, context, workflowId);
+
+    // Hook up any listeners passed to listen() that were called before execute
+    if (deferredListeners[workflowId]) {
+      deferredListeners[workflowId].forEach((l) => listen(workflowId, l));
+      delete deferredListeners[workflowId];
+    }
+
+    // TODO typing between the class and interface isn't right
+    // @ts-ignore
+    execute(context);
+
+    // hmm. Am I happy to pass the internal workflow state OUT of the handler?
+    // I'd rather have like a proxy emitter or something
+    // also I really only want passive event handlers, I don't want interference from outside
+    return {
+      on: (evt: string, fn: (...args: any[]) => void) => context.on(evt, fn),
+      once: (evt: string, fn: (...args: any[]) => void) =>
+        context.once(evt, fn),
+      off: (evt: string, fn: (...args: any[]) => void) => context.off(evt, fn),
     };
-    logger.proxy(newMessage);
-    events.emit(e.WORKFLOW_LOG, {
-      workflowId,
-      message,
-    });
+    // return context;
   };
 
-  // Create "runner" functions for execute and compile
-  const execute = createExecute(workers, logger, {
-    start: onWorkflowStarted,
-    log: onWorkflowLog,
+  const listen = (
+    workflowId: string,
+    handlers: Record<string, EventHandler>
+  ) => {
+    const events = contexts[workflowId];
+    if (events) {
+      // If execute() was called, we'll have a context and we can subscribe directly
+      for (const evt in handlers) {
+        events.on(evt, handlers[evt]);
+      }
+    } else {
+      // if execute() wasn't called yet, cache the listeners and we'll hook them up later
+      if (!deferredListeners[workflowId]) {
+        deferredListeners[workflowId] = [];
+      }
+      deferredListeners[workflowId].push(handlers);
+    }
+
+    // TODO return unsubscribe handle?
+    // How does this work if deferred?
+  };
+
+  return Object.assign(engine, {
+    options,
+    workerPath: resolvedWorkerPath,
+    logger: options.logger,
+    registerWorkflow,
+    getWorkflowState,
+    getWorkflowStatus,
+    execute: executeWrapper,
+    listen,
   });
-  const compile = createCompile(logger, repoDir);
-
-  const autoinstall = createAutoInstall({ repoDir, logger });
-
-  // How much of this happens inside the worker?
-  // Shoud the main thread handle compilation? Has to if we want to cache
-  // Unless we create a dedicated compiler worker
-  // TODO error handling, timeout
-  const handleExecute = async (plan: ExecutionPlan) => {
-    logger.debug('Executing workflow ', plan.id);
-
-    allWorkflows.set(plan.id!, {
-      id: plan.id!,
-      status: 'pending',
-      plan,
-    });
-
-    const adaptorPaths = await autoinstall(plan);
-
-    // Don't compile if we're running a mock (not a fan of this)
-    const compiledPlan = noCompile ? plan : await compile(plan);
-
-    logger.debug('workflow compiled ', plan.id);
-    const result = await execute(compiledPlan, adaptorPaths);
-    completeWorkflow(compiledPlan.id!, result);
-
-    logger.debug('finished executing workflow ', plan.id);
-    // Return the result
-    // Note that the mock doesn't behave like ths
-    // And tbf I don't think we should keep the promise open - there's no point?
-    return result;
-  };
-
-  return {
-    id,
-    on: (type: string, fn: (...args: any[]) => void) => events.on(type, fn),
-    once: (type: string, fn: (...args: any[]) => void) => events.once(type, fn),
-    execute: handleExecute,
-  };
 };
 
-export default createRTM;
+export default createEngine;

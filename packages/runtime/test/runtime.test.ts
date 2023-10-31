@@ -23,6 +23,105 @@ test('run a simple workflow', async (t) => {
   t.true(result.data.done);
 });
 
+test('run a workflow and notify major events', async (t) => {
+  const counts: Record<string, number> = {};
+  const notify = (name: string) => {
+    if (!counts[name]) {
+      counts[name] = 0;
+    }
+    counts[name] += 1;
+  };
+
+  const callbacks = {
+    notify,
+  };
+
+  const plan: ExecutionPlan = {
+    jobs: [{ expression: 'export default [(s) => s]' }],
+  };
+
+  await run(plan, {}, { callbacks });
+
+  t.is(counts['init-start'], 1);
+  t.is(counts['init-complete'], 1);
+  t.is(counts['job-start'], 1);
+  t.is(counts['job-complete'], 1);
+});
+
+test('resolve a credential', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression: 'export default [(s) => s]',
+        configuration: 'ccc',
+      },
+    ],
+  };
+
+  const options = {
+    strict: false,
+    deleteConfiguration: false,
+    callbacks: {
+      resolveCredential: async () => ({ password: 'password1' }),
+    },
+  };
+
+  const result: any = await run(plan, {}, options);
+  t.truthy(result);
+  t.deepEqual(result.configuration, { password: 'password1' });
+});
+
+test.todo('resolve intial state');
+
+test('resolve initial state', async (t) => {
+  const plan: ExecutionPlan = {
+    jobs: [
+      {
+        expression: 'export default [(s) => s]',
+        state: 'abc',
+      },
+    ],
+  };
+
+  const options = {
+    callbacks: {
+      resolveState: async () => ({ data: { foo: 'bar' } }),
+    },
+  };
+
+  const result: any = await run(plan, {}, options);
+  t.truthy(result);
+  t.deepEqual(result.data, { foo: 'bar' });
+});
+
+test('run a workflow with two jobs and call callbacks', async (t) => {
+  const counts: Record<string, number> = {};
+  const notify = (name: string) => {
+    if (!counts[name]) {
+      counts[name] = 0;
+    }
+    counts[name] += 1;
+  };
+
+  const callbacks = {
+    notify,
+  };
+
+  const plan: ExecutionPlan = {
+    jobs: [
+      { id: 'a', expression: 'export default [(s) => s]', next: { b: true } },
+      { id: 'b', expression: 'export default [(s) => s]' },
+    ],
+  };
+
+  await run(plan, {}, { callbacks });
+
+  t.is(counts['init-start'], 2);
+  t.is(counts['init-complete'], 2);
+  t.is(counts['job-start'], 2);
+  t.is(counts['job-complete'], 2);
+});
+
 test('run a workflow with state and parallel branching', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [

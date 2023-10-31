@@ -17,6 +17,25 @@ const planWithEdge = (edge: JobEdge) =>
     jobs: [{ id: 'a', next: { b: edge } }],
   } as ExecutionPlan);
 
+test('should preserve initial state as an object', (t) => {
+  const state = { x: 123 };
+  const compiledPlan = compilePlan({
+    id: 'a',
+    initialState: state,
+    jobs: [],
+  });
+  t.deepEqual(state, compiledPlan.initialState);
+});
+
+test('should preserve initial state a string', (t) => {
+  const compiledPlan = compilePlan({
+    id: 'a',
+    initialState: 'abc',
+    jobs: [],
+  });
+  t.is(compiledPlan.initialState, 'abc');
+});
+
 test('should convert jobs to an object', (t) => {
   const compiledPlan = compilePlan(testPlan);
   t.truthy(compiledPlan.jobs.a);

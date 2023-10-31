@@ -1,25 +1,9 @@
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { ExecutionPlan, JobNode } from '@openfn/runtime';
-
-import type { State, Credential } from '../types';
+import type { Resolvers } from '@openfn/engine-multi';
+import type { State } from '../types';
 import mockResolvers from './resolvers';
-
-// A mock runtime engine
-
-// Runs ExecutionPlans(XPlans) in worker threads
-// May need to lazy-load resources
-// The mock engine will return expression JSON as state
-
-type Resolver<T> = (id: string) => Promise<T>;
-
-// A list of helper functions which basically resolve ids into JSON
-// to lazy load assets
-export type LazyResolvers = {
-  credential?: Resolver<Credential>;
-  state?: Resolver<State>;
-  expressions?: Resolver<string>;
-};
 
 export type EngineEvent =
   | 'job-start'
@@ -48,12 +32,15 @@ export type WorkflowStartEvent = {
 
 export type WorkflowCompleteEvent = {
   workflowId: string;
-  error?: any;
+  error?: any; // hmm maybe not
 };
 
-let autoServerId = 0;
+export type WorkflowErrorEvent = {
+  workflowId: string;
+  message: string;
+};
 
-function createMock(serverId?: string) {
+async function createMock() {
   const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
   const listeners: Record<string, any> = {};
@@ -85,7 +72,7 @@ function createMock(serverId?: string) {
     workflowId: string,
     job: JobNode,
     initialState = {},
-    resolvers: LazyResolvers = mockResolvers
+    resolvers: Resolvers = mockResolvers
   ) => {
     const { id, expression, configuration, adaptor } = job;
 
@@ -138,10 +125,18 @@ function createMock(serverId?: string) {
 
   // Start executing an ExecutionPlan
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
-  const execute = async (
+  const execute = (
     xplan: ExecutionPlan,
-    resolvers: LazyResolvers = mockResolvers
+    options: { resolvers?: Resolvers; throw?: boolean } = {
+      resolvers: mockResolvers,
+    }
   ) => {
+    // This is just an easy way to test the options gets fed through to execute
+    // Also lets me test error handling!
+    if (options.throw) {
+      throw new Error('test error');
+    }
+
     const { id, jobs, initialState } = xplan;
     const workflowId = id;
     activeWorkflows[id!] = true;
@@ -156,7 +151,7 @@ function createMock(serverId?: string) {
         let state = initialState || {};
         // Trivial job reducer in our mock
         for (const job of jobs) {
-          state = await executeJob(id!, job, state, resolvers);
+          state = await executeJob(id!, job, state, options.resolvers);
         }
         setTimeout(() => {
           delete activeWorkflows[id!];
@@ -176,7 +171,6 @@ function createMock(serverId?: string) {
   };
 
   return {
-    id: serverId || `${++autoServerId}`,
     on,
     once,
     execute,

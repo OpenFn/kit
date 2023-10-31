@@ -1,6 +1,12 @@
 import { createMockLogger, Logger } from '@openfn/logger';
 
-import type { Operation, ExecutionPlan, State, JobNodeID } from './types';
+import type {
+  Operation,
+  ExecutionPlan,
+  State,
+  JobNodeID,
+  ExecutionCallbacks,
+} from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import clone from './util/clone';
@@ -15,8 +21,9 @@ export type Options = {
   logger?: Logger;
   jobLogger?: Logger;
 
-  timeout?: number;
+  timeout?: number; // this is timeout used per job, not per workflow
   strict?: boolean; // Be strict about handling of state returned from jobs
+  deleteConfiguration?: boolean;
 
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
@@ -27,6 +34,8 @@ export type Options = {
   forceSandbox?: boolean;
 
   linker?: LinkerOptions;
+
+  callbacks?: ExecutionCallbacks;
 };
 
 const defaultState = { data: {}, configuration: {} };
@@ -38,7 +47,7 @@ const defaultLogger = createMockLogger();
 // so maybe state becomes an option in the opts object
 const run = (
   expressionOrXPlan: string | Operation[] | ExecutionPlan,
-  state: State = defaultState,
+  state?: State,
   opts: Options = {}
 ) => {
   const logger = opts.logger || defaultLogger;
@@ -46,6 +55,9 @@ const run = (
   // Strict state handling by default
   if (!opts.hasOwnProperty('strict')) {
     opts.strict = true;
+  }
+  if (!opts.hasOwnProperty('deleteConfiguration')) {
+    opts.deleteConfiguration = true;
   }
 
   // TODO the plan doesn't have an id, should it be given one?
@@ -70,7 +82,13 @@ const run = (
     plan = expressionOrXPlan as ExecutionPlan;
   }
 
-  return executePlan(plan, clone(state), opts, logger);
+  if (state) {
+    plan.initialState = clone(state);
+  } else if (!plan.initialState) {
+    plan.initialState = defaultState;
+  }
+
+  return executePlan(plan, opts, logger);
 };
 
 export default run;

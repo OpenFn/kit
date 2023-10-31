@@ -14,15 +14,17 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { Channel } from '../types';
+import { AttemptOptions, Channel } from '../types';
 import { getWithReply, stringify } from '../util';
 
-import type { ExecutionPlan } from '@openfn/runtime';
 import type { JSONLog, Logger } from '@openfn/logger';
 import {
   WorkflowCompleteEvent,
+  WorkflowErrorEvent,
   WorkflowStartEvent,
 } from '../mock/runtime-engine';
+import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
+import { ExecutionPlan } from '@openfn/runtime';
 
 const enc = new TextDecoder('utf-8');
 
@@ -30,6 +32,7 @@ export type AttemptState = {
   activeRun?: string;
   activeJob?: string;
   plan: ExecutionPlan;
+  options: AttemptOptions;
   dataclips: Record<string, any>;
 
   // final dataclip id
@@ -56,13 +59,13 @@ const eventMap = {
 // this thing will do all the work
 export function execute(
   channel: Channel,
-  engine: any, // TODO typing!
+  engine: RuntimeEngine,
   logger: Logger,
-  // TODO first thing we'll do here is pull the plan
-  plan: ExecutionPlan
+  plan: ExecutionPlan,
+  options: AttemptOptions = {}
 ) {
-  return new Promise(async (resolve) => {
-    logger.info('execute..');
+  return new Promise(async (resolve, reject) => {
+    logger.info('execute...');
 
     const state: AttemptState = {
       plan,
@@ -70,6 +73,7 @@ export function execute(
       // to the initial state
       lastDataclipId: plan.initialState as string | undefined,
       dataclips: {},
+      options,
     };
 
     const context: Context = { channel, state, logger, onComplete: resolve };
@@ -116,16 +120,27 @@ export function execute(
       addEvent('job-complete', onJobComplete),
       addEvent('log', onJobLog),
       // This will also resolve the promise
-      addEvent('workflow-complete', onWorkflowComplete)
+      addEvent('workflow-complete', onWorkflowComplete),
+
+      addEvent('workflow-error', onWorkflowError)
+
+      // TODO send autoinstall logs
+      // are these associated with a workflow...?
+      // well, I guess they can be!
+      // Or is this just a log?
+      // Or a generic metric?
     );
-    engine.listen(plan.id, listeners);
+    engine.listen(plan.id!, listeners);
 
     const resolvers = {
       credential: (id: string) => loadCredential(channel, id),
-      // dataclip: (id: string) => loadDataclip(channel, id),
-      // TODO not supported right now
-    };
 
+      // TODO not supported right now
+      // dataclip: (id: string) => loadDataclip(channel, id),
+    } as Resolvers;
+
+    // TODO we nede to remove this from here nad let the runtime take care of it through
+    // the resolver. See https://github.com/OpenFn/kit/issues/403
     if (typeof plan.initialState === 'string') {
       logger.debug('loading dataclip', plan.initialState);
       plan.initialState = await loadDataclip(channel, plan.initialState);
@@ -133,7 +148,14 @@ export function execute(
       logger.debug(plan.initialState);
     }
 
-    engine.execute(plan, resolvers);
+    try {
+      engine.execute(plan, { resolvers, ...options });
+    } catch (e: any) {
+      // TODO what if there's an error?
+      onWorkflowError(context, { workflowId: plan.id!, message: e.message });
+      // are we sure we want to re-throw?
+      reject(e);
+    }
   });
 }
 
@@ -209,9 +231,25 @@ export async function onWorkflowComplete(
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
     status: 'success', // TODO
+    reason: 'ok', // Also TODO
   });
 
   onComplete(result);
+}
+
+// On errorr, for now, we just post to workflow complete
+// No unit tests on this (not least because I think it'll change soon)
+export async function onWorkflowError(
+  { state, channel, onComplete }: Context,
+  event: WorkflowErrorEvent
+) {
+  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+    reason: 'fail', // TODO
+    final_dataclip_id: state.lastDataclipId!,
+    message: event.message,
+  });
+
+  onComplete({});
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {

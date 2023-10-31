@@ -1,3 +1,4 @@
+import { SanitizePolicies } from '@openfn/logger';
 import type { Socket as PhxSocket, Channel as PhxChannel } from 'phoenix';
 
 export { Socket };
@@ -34,6 +35,7 @@ export interface Edge {
   condition?: string;
   error_path?: boolean;
   errors?: any;
+  enabled?: boolean;
 }
 
 // An attempt object returned by Lightning
@@ -46,7 +48,12 @@ export type Attempt = {
   jobs: Node[];
   edges: Edge[];
 
-  options?: Record<string, any>; // TODO type the expected options
+  options?: AttemptOptions;
+};
+
+export type AttemptOptions = {
+  timeout?: number;
+  sanitize?: SanitizePolicies;
 };
 
 export type CancelablePromise = Promise<void> & {
