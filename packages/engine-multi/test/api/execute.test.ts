@@ -182,7 +182,7 @@ test.serial('should emit error on timeout', async (t) => {
 
   t.truthy(event.threadId);
   t.is(event.type, 'TimeoutError');
-  t.assert(event.message.match(/Promise timed out after/));
+  t.regex(event.message, /failed to return within 10ms/);
 });
 
 // how will we test compilation?

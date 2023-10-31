@@ -227,7 +227,7 @@ test('timeout the whole attempt and emit an error', async (t) => {
     engine.listen(plan.id, {
       [e.WORKFLOW_ERROR]: ({ message, type }) => {
         t.is(type, 'TimeoutError');
-        t.is(message, 'Promise timed out after 10 ms');
+        t.regex(message, /failed to return within 10ms/);
         done();
       },
     });

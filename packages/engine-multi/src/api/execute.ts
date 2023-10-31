@@ -1,4 +1,6 @@
 // Execute a compiled workflow
+import { Promise as WorkerPoolPromise } from 'workerpool';
+
 import * as workerEvents from '../worker/events';
 import { ExecutionContext } from '../types';
 
@@ -13,6 +15,7 @@ import {
   error,
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
+import { TimeoutError } from '../errors';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -57,9 +60,14 @@ const execute = async (context: ExecutionContext) => {
     events,
     options.timeout
   ).catch((e: any) => {
-    // E could be:
-    // A timeout
-    // An crash error within the job
+    // An error here is basically a crash state
+
+    if (e instanceof WorkerPoolPromise.TimeoutError) {
+      // Map the workerpool error to our own
+      e = new TimeoutError(options.timeout!);
+    }
+
+    // TODO: map anything else to an executionError
 
     // TODO what information can I usefully provide here?
     // DO I know which job I'm on?
