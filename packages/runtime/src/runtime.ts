@@ -21,7 +21,7 @@ export type Options = {
   logger?: Logger;
   jobLogger?: Logger;
 
-  timeout?: number;
+  timeout?: number; // this is timeout used per job, not per workflow
   strict?: boolean; // Be strict about handling of state returned from jobs
   deleteConfiguration?: boolean;
 
