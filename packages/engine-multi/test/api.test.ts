@@ -1,6 +1,7 @@
 import test from 'ava';
 import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
+import { PURGE } from '../src/events';
 
 // thes are tests on the public api functions generally
 // so these are very high level tests and don't allow mock workers or anything
@@ -27,7 +28,7 @@ test.serial('create an engine api with a limited surface', async (t) => {
   const keys = Object.keys(api);
 
   // TODO the api will actually probably get a bit bigger than this
-  t.deepEqual(keys, ['execute', 'listen']);
+  t.deepEqual(keys, ['execute', 'listen', 'on']);
 });
 
 // Note that this runs with the actual runtime worker
@@ -92,5 +93,34 @@ test.serial('should listen to workflow-complete', async (t) => {
         done();
       },
     });
+  });
+});
+
+test.serial('should purge workers after a single run', async (t) => {
+  return new Promise(async (done) => {
+    const api = await createAPI({
+      logger,
+      // Disable compilation
+      compile: {
+        skip: true,
+      },
+    });
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: 'export default [s => s]',
+          // with no adaptor it shouldn't try to autoinstall
+        },
+      ],
+    };
+
+    api.on(PURGE, () => {
+      t.pass('workers purged');
+      done();
+    });
+
+    api.execute(plan);
   });
 });

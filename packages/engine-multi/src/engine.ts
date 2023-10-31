@@ -121,10 +121,15 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
 
   const engine = new Engine() as EngineAPI;
 
-  initWorkers(engine, resolvedWorkerPath, {
-    minWorkers: options.minWorkers,
-    maxWorkers: options.maxWorkers,
-  });
+  initWorkers(
+    engine,
+    resolvedWorkerPath,
+    {
+      minWorkers: options.minWorkers,
+      maxWorkers: options.maxWorkers,
+    },
+    options.logger
+  );
 
   await validateWorker(engine);
 

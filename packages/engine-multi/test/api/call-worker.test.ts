@@ -1,10 +1,13 @@
 import test from 'ava';
 import path from 'node:path';
+import EventEmitter from 'node:events';
 import { Promise as WorkerPoolPromise } from 'workerpool';
-import initWorkers, { createWorkers } from '../../src/api/call-worker';
-import { EngineAPI } from '../../src/types';
 
-let api = {} as EngineAPI;
+import initWorkers from '../../src/api/call-worker';
+import { EngineAPI } from '../../src/types';
+import { PURGE } from '../../src/events';
+
+let api = new EventEmitter() as EngineAPI;
 
 const workerPath = path.resolve('src/test/worker-functions.js');
 
@@ -71,6 +74,17 @@ test('callWorker should execute in a different process', async (t) => {
     };
 
     api.callWorker('test', [], { message: onCallback });
+  });
+});
+
+test('callWorker should try to purge workers on complete', async (t) => {
+  return new Promise((done) => {
+    api.on(PURGE, () => {
+      t.pass('purge event called');
+      done();
+    });
+
+    api.callWorker('test', []);
   });
 });
 

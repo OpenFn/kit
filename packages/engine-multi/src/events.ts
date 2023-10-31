@@ -24,6 +24,8 @@ export const AUTOINSTALL_COMPLETE = 'autoinstall-complete';
 
 export const AUTOINSTALL_ERROR = 'autoinstall-error';
 
+export const PURGE = 'purge-workers';
+
 export type EventMap = {
   [WORKFLOW_START]: WorkflowStartPayload;
   [WORKFLOW_COMPLETE]: WorkflowCompletePayload;
@@ -33,6 +35,7 @@ export type EventMap = {
   [WORKFLOW_ERROR]: WorkflowErrorPayload;
   [AUTOINSTALL_COMPLETE]: AutoinstallCompletePayload;
   [AUTOINSTALL_ERROR]: AutoinstallErrorPayload;
+  [PURGE]: null;
 };
 
 export type ExternalEvents = keyof EventMap;

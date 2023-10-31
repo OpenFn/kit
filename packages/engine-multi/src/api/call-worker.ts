@@ -1,7 +1,11 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import workerpool from 'workerpool';
-import { EngineAPI } from '../types';
+
+import { PURGE } from '../events';
+
+import type { EngineAPI } from '../types';
+import type { Logger } from '@openfn/logger';
 
 // All events coming out of the worker need to include a type key
 type WorkerEvent = {
@@ -20,7 +24,8 @@ type WorkerOptions = {
 export default function initWorkers(
   api: EngineAPI,
   workerPath: string,
-  options: WorkerOptions = {}
+  options: WorkerOptions = {},
+  logger?: Logger
 ) {
   // TODO can we verify the worker path and throw if it's invalid?
   // workerpool won't complain if we give it a nonsense path
@@ -41,6 +46,15 @@ export default function initWorkers(
     if (timeout) {
       promise.timeout(timeout);
     }
+
+    promise.then(() => {
+      const { pendingTasks } = workers.stats();
+      if (pendingTasks == 0) {
+        logger?.debug('Purging workers');
+        api.emit(PURGE);
+        workers.terminate();
+      }
+    });
 
     return promise;
   };
