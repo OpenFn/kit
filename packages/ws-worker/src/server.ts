@@ -38,7 +38,7 @@ interface ServerApp extends Koa {
 
 const DEFAULT_PORT = 1234;
 
-// TODO move out into another file, make testable
+// TODO move out into another file, make testable, test in isolation
 function connect(
   app: ServerApp,
   engine: RuntimeEngine,
