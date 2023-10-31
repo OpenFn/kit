@@ -25,11 +25,15 @@ export const connectToLightning = (
       transport: WebSocket,
     });
 
+    let didOpen = false;
+
     // TODO need error & timeout handling (ie wrong endpoint or endpoint offline)
     // Do we infinitely try to reconnect?
     // Consider what happens when the connection drops
     // Unit tests on all of these behaviours!
     socket.onOpen(() => {
+      didOpen = true;
+
       // join the queue channel
       // TODO should this send the worker token?
       const channel = socket.channel('worker:queue') as Channel;
@@ -47,9 +51,15 @@ export const connectToLightning = (
         });
     });
 
-    // TODO what even happens if the connection fails?
+    // if we fail to connect
     socket.onError((e: any) => {
-      reject(e);
+      // If we failed to connect, reject the promise
+      // The server will try and reconnect itself.s
+      if (!didOpen) {
+        reject(e);
+      }
+      // Note that if we DID manage to connect once, the socket should re-negotiate
+      // wihout us having to do anything
     });
 
     socket.connect();
