@@ -47,7 +47,7 @@ function connect(
 ) {
   logger.debug('Connecting to Lightning at', options.lightning);
 
-  connectToWorkerQueue(options.lightning!, engine.id, options.secret!)
+  connectToWorkerQueue(options.lightning!, app.id, options.secret!)
     .then(({ socket, channel }) => {
       logger.success('Connected to Lightning at', options.lightning);
 
