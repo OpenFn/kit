@@ -2,6 +2,7 @@ import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
 import Router from '@koa/router';
+import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
 import { RuntimeEngine } from '@openfn/engine-multi';
 
@@ -26,6 +27,7 @@ type ServerOptions = {
 
 // this is the server/koa API
 interface ServerApp extends Koa {
+  id: string;
   socket: any;
   channel: any;
 
@@ -95,6 +97,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   logger.debug('Starting server');
 
   const app = new Koa() as ServerApp;
+  app.id = humanId({ separator: '-', capitalize: false });
   const router = new Router();
 
   app.use(bodyParser());
@@ -105,7 +108,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   );
 
   const server = app.listen(port);
-  logger.success('ws-worker listening on', port);
+  logger.success(`ws-worker ${app.id} listening on ${port}`);
 
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: CLAIM_ATTEMPT) => {

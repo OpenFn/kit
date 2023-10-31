@@ -23,6 +23,7 @@
     "@types/koa-logger": "^3.1.2",
     "@types/ws": "^8.5.6",
     "fast-safe-stringify": "^2.1.1",
+    "human-id": "^4.1.0",
     "jose": "^4.14.6",
     "koa": "^2.13.4",
     "koa-bodyparser": "^4.4.0",
@@ -31,6 +32,7 @@
     "ws": "^8.14.1"
   },
   "devDependencies": {
+    "@openfn/lightning-mock": "workspace:*",
     "@types/koa": "^2.13.5",
     "@types/koa-bodyparser": "^4.3.10",
     "@types/koa-route": "^3.2.6",
@@ -40,7 +42,6 @@
     "@types/nodemon": "1.19.3",
     "@types/phoenix": "^1.6.2",
     "@types/yargs": "^17.0.12",
-    "@openfn/lightning-mock": "workspace:*",
     "ava": "5.1.0",
     "koa-route": "^3.2.0",
     "koa-websocket": "^7.0.0",
