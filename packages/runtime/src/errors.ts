@@ -16,6 +16,24 @@ export function isRuntimeError(e: any) {
   // Note: assertion error would be a user error
 }
 
+export function isAdaptorError(e: any) {
+  if (e.stack) {
+    // parse the stack
+    const frames = e.stack.split('\n');
+    frames.shift(); // remove the first line
+
+    const first = frames.shift();
+
+    // For now, we assume this is adaptor code if it has not come directly from the vm
+    // TODO: how reliable is this? Can we get a better heuristic?
+    if (!first.match(/at vm:module\(0\)/)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Generic runtime execution error
 // This is a wrapper around any node/js error thrown during execution
 // Should log without stack trace, with RuntimeError type,
@@ -89,7 +107,23 @@ export class InputError extends Error {
 }
 
 // How would we know if an error came from an adaptor?
-export class AdaptorError extends Error {}
+export class AdaptorError extends Error {
+  name = 'AdaptorError';
+  source = 'runtime';
+  severity = 'fail';
+  message: string;
+  constructor(error: any) {
+    super();
+    // TODO we want the stack trace from the vm downwards
+    Error.captureStackTrace(this, AdaptorError.constructor);
+
+    if (typeof error === 'string') {
+      this.message = error;
+    } else if (error.message) {
+      this.message = error.message;
+    }
+  }
+}
 
 // custom user error trow new Error() or throw {}
 export class UserError extends Error {

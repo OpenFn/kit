@@ -1,4 +1,5 @@
 import test from 'ava';
+import path from 'node:path';
 import run from '../src/runtime';
 import { RuntimeError } from '../src/errors';
 
@@ -26,6 +27,11 @@ import { RuntimeError } from '../src/errors';
 
   Later we'll do stacktraces and positions and stuff but not now. Maybe for a JobError I guess?
  */
+
+test.todo('eval/codegen');
+test.todo("linker error (load a module we don't have)");
+test.todo('timeout');
+test.todo('input errors');
 
 // TODO I don't like the way ANY of these errors serialize
 // Which is quite importnat for the CLI and for lightning
@@ -130,4 +136,51 @@ test('fail on user error with throw "abort"', async (t) => {
 
   t.is(error.name, 'UserError');
   t.is(error.message, 'abort');
+});
+
+test('fail on adaptor error (with throw new Error())', async (t) => {
+  const expression = `
+  import { err } from 'x';
+  export default [(s) => err()];
+  `;
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  const error = result.errors['job-1'];
+  t.is(error.name, 'AdaptorError');
+  t.is(error.message, 'adaptor err');
+});
+
+test('adaptor error with no stack trace will be a user error', async (t) => {
+  // this will throw "adaptor err"
+  // Since it has no stack trace, we don't really know a lot about it
+  // How can we handle a case like this?
+  const expression = `
+  import { err2 } from 'x';
+  export default [(s) => err2()];
+  `;
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  const error = result.errors['job-1'];
+  t.is(error.name, 'UserError');
+  t.is(error.message, 'adaptor err');
 });

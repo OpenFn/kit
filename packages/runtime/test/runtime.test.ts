@@ -1,5 +1,6 @@
-import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
+import path from 'node:path';
+import { createMockLogger } from '@openfn/logger';
 import { ExecutionPlan } from '../src';
 import run from '../src/runtime';
 
@@ -395,4 +396,25 @@ test('data can be an array (workflow)', async (t) => {
 
   const result: any = await run(plan, {}, { strict: false });
   t.deepEqual(result.data, [1, 2, 3]);
+});
+
+test('import from a module', async (t) => {
+  const expression = `
+  import { x } from 'x';
+  export default [(s) => ({ data: x })];
+  `;
+
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  t.is(result.data, 'test');
 });

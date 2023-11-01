@@ -6,7 +6,14 @@ import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
-import { InputError, RuntimeError, UserError, isRuntimeError } from '../errors';
+import {
+  AdaptorError,
+  InputError,
+  RuntimeError,
+  UserError,
+  isAdaptorError,
+  isRuntimeError,
+} from '../errors';
 
 export default (
   ctx: ExecutionContext,
@@ -66,16 +73,18 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
+      //console.log(e);
       if (e.severity && e.source) {
         // If the error is already handled, just throw it
         reject(e);
-      }
-      if (isRuntimeError(e)) {
+      } else if (isRuntimeError(e)) {
         reject(new RuntimeError(e));
+      } else if (isAdaptorError(e)) {
+        reject(new AdaptorError(e));
+      } else {
+        //  This is a fail!
+        reject(new UserError(e));
       }
-      //  This is a fail!
-      // TODO adaptor errpr?
-      reject(new UserError(e));
     }
   });
 
