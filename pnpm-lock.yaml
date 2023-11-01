@@ -389,31 +389,19 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
-      koa:
-        specifier: ^2.13.4
-        version: 2.13.4
       workerpool:
         specifier: ^6.5.1
         version: 6.5.1
     devDependencies:
-      '@types/koa':
-        specifier: ^2.13.5
-        version: 2.13.5
       '@types/node':
         specifier: ^18.15.13
         version: 18.15.13
-      '@types/nodemon':
-        specifier: ^1.19.2
-        version: 1.19.2
       '@types/workerpool':
         specifier: ^6.4.4
         version: 6.4.4
       ava:
         specifier: 5.3.1
         version: 5.3.1
-      nodemon:
-        specifier: ^2.0.19
-        version: 2.0.19
       ts-node:
         specifier: ^10.9.1
         version: 10.9.1(@types/node@18.15.13)(typescript@5.1.6)
@@ -662,12 +650,6 @@ importers:
       '@types/koa-bodyparser':
         specifier: ^4.3.10
         version: 4.3.10
-      '@types/koa-route':
-        specifier: ^3.2.6
-        version: 3.2.6
-      '@types/koa-websocket':
-        specifier: ^5.0.8
-        version: 5.0.8
       '@types/koa__router':
         specifier: ^12.0.1
         version: 12.0.1
@@ -686,18 +668,9 @@ importers:
       ava:
         specifier: 5.1.0
         version: 5.1.0
-      koa-route:
-        specifier: ^3.2.0
-        version: 3.2.0
-      koa-websocket:
-        specifier: ^7.0.0
-        version: 7.0.0
       nodemon:
         specifier: 3.0.1
         version: 3.0.1
-      query-string:
-        specifier: ^8.1.0
-        version: 8.1.0
       ts-node:
         specifier: ^10.9.1
         version: 10.9.1(@types/node@18.15.13)(typescript@4.6.4)
@@ -1908,12 +1881,6 @@ packages:
 
   /@types/node@20.4.5:
     resolution: {integrity: sha512-rt40Nk13II9JwQBdeYqmbn2Q6IVTA5uPhvSO+JVqdXw/6/4glI6oR9ezty/A9Hg5u7JH4OmYmuQ+XvjKm0Datg==}
-
-  /@types/nodemon@1.19.2:
-    resolution: {integrity: sha512-4GWiTN3HevkxMIxEQ7OpD3MAHhlVsX2tairCMRmf8oYZxmhHw9+UpQpIdGdJrjsMT2Ty26FtJzUUcP/qM5fR8A==}
-    dependencies:
-      '@types/node': 18.15.13
-    dev: true
 
   /@types/nodemon@1.19.3:
     resolution: {integrity: sha512-LcKdWgch8uHOF73yYpdE7YPVLT0HnFI60zyNBpJyfAiDDwPy3WAxReQeB84UseE8e8qdJsBqmFXWbjxv7jlXBg==}
@@ -5784,24 +5751,6 @@ packages:
       whatwg-url: 5.0.0
     dev: false
 
-  /nodemon@2.0.19:
-    resolution: {integrity: sha512-4pv1f2bMDj0Eeg/MhGqxrtveeQ5/G/UVe9iO6uTZzjnRluSA4PVWf8CW99LUPwGB3eNIA7zUFoP77YuI7hOc0A==}
-    engines: {node: '>=8.10.0'}
-    hasBin: true
-    requiresBuild: true
-    dependencies:
-      chokidar: 3.5.3
-      debug: 3.2.7(supports-color@5.5.0)
-      ignore-by-default: 1.0.1
-      minimatch: 3.1.2
-      pstree.remy: 1.1.8
-      semver: 5.7.2
-      simple-update-notifier: 1.0.7
-      supports-color: 5.5.0
-      touch: 3.1.0
-      undefsafe: 2.0.5
-    dev: true
-
   /nodemon@3.0.1:
     resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
     engines: {node: '>=10'}
@@ -6826,11 +6775,6 @@ packages:
     hasBin: true
     dev: true
 
-  /semver@7.0.0:
-    resolution: {integrity: sha512-+GB6zVA9LWh6zovYQLALHwv5rb2PHGlJi3lfiqIHxR0uuwCgefcOJc59v9fv1w8GbStwxuuqqAjI9NMAOOgq1A==}
-    hasBin: true
-    dev: true
-
   /semver@7.5.4:
     resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
     engines: {node: '>=10'}
@@ -6939,13 +6883,6 @@ packages:
   /signal-exit@4.0.2:
     resolution: {integrity: sha512-MY2/qGx4enyjprQnFaZsHib3Yadh3IXyV2C321GY0pjGfVBu4un0uDJkwgdxqO+Rdx8JMT8IfJIRwbYVz3Ob3Q==}
     engines: {node: '>=14'}
-
-  /simple-update-notifier@1.0.7:
-    resolution: {integrity: sha512-BBKgR84BJQJm6WjWFMHgLVuo61FBDSj1z/xSFUIozqO6wO7ii0JxCqlIud7Enr/+LhlbNI0whErq96P2qHNWew==}
-    engines: {node: '>=8.10.0'}
-    dependencies:
-      semver: 7.0.0
-    dev: true
 
   /simple-update-notifier@2.0.0:
     resolution: {integrity: sha512-a2B9Y0KlNXl9u/vsW6sTIu9vGEpfKu2wRV6l1H3XEas/0gUIzGzBoP/IouTcUQbm9JWZLH3COxyn03TYlFax6w==}
