@@ -19,6 +19,7 @@ const executePlan = async (
     compiledPlan = compilePlan(plan);
   } catch (e: any) {
     // If the plan is invalid, abort before trying to execute
+    // TODO wrap in input error
     throw e;
   }
 

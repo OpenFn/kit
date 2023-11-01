@@ -87,6 +87,12 @@ const executeJob = async (
       const duration = logger.timer('job');
       logger.error(`Failed job ${job.id} after ${duration}`);
       report(state, job.id, e);
+
+      // TODO this will break, like, everything
+      // yay
+      if (e.severity === 'crash') {
+        throw e;
+      }
     }
   }
 

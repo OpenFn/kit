@@ -6,6 +6,7 @@ import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
+import { InputError, RuntimeError, UserError, isRuntimeError } from '../errors';
 
 export default (
   ctx: ExecutionContext,
@@ -14,25 +15,29 @@ export default (
   id?: string
 ) =>
   new Promise(async (resolve, reject) => {
-    const { logger, notify = () => {}, opts = {} } = ctx;
-    const timeout = opts.timeout || TIMEOUT;
-
-    logger.debug('Intialising pipeline');
-    logger.debug(`Timeout set to ${timeout}ms`);
-
-    // Setup an execution context
-    const context = buildContext(initialState, opts);
-
-    const { operations, execute } = await prepareJob(expression, context, opts);
-    // Create the main reducer function
-    const reducer = (execute || defaultExecute)(
-      ...operations.map((op, idx) =>
-        wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
-      )
-    );
-
-    // Run the pipeline
     try {
+      const { logger, notify = () => {}, opts = {} } = ctx;
+      const timeout = opts.timeout || TIMEOUT;
+
+      logger.debug('Intialising pipeline');
+      logger.debug(`Timeout set to ${timeout}ms`);
+
+      // Setup an execution context
+      const context = buildContext(initialState, opts);
+
+      const { operations, execute } = await prepareJob(
+        expression,
+        context,
+        opts
+      );
+      // Create the main reducer function
+      const reducer = (execute || defaultExecute)(
+        ...operations.map((op, idx) =>
+          wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
+        )
+      );
+
+      // Run the pipeline
       logger.debug(`Executing expression (${operations.length} operations)`);
       let exeDuration = Date.now();
       notify('job-start', { jobId: id });
@@ -61,7 +66,16 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
-      reject(e);
+      if (e.severity && e.source) {
+        // If the error is already handled, just throw it
+        reject(e);
+      }
+      if (isRuntimeError(e)) {
+        reject(new RuntimeError(e));
+      }
+      //  This is a fail!
+      // TODO adaptor errpr?
+      reject(new UserError(e));
     }
   });
 
@@ -101,7 +115,7 @@ const prepareJob = async (
     } as JobModule;
   } else {
     if (opts.forceSandbox) {
-      throw new Error('Invalid arguments: jobs must be strings');
+      throw new InputError('Invalid arguments: jobs must be strings');
     }
     return { operations: expression as Operation[] };
   }

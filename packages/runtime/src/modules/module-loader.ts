@@ -3,8 +3,10 @@
  */
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
+
+import { RuntimeError } from '../errors';
 import type { Operation } from '../types';
-import { Logger } from '@openfn/logger';
+import type { Logger } from '@openfn/logger';
 
 type Options = LinkerOptions & {
   context?: Context;
@@ -34,9 +36,16 @@ export default async (
   const context = opts.context || vm.createContext();
   const linker = opts.linker || mainLinker;
 
-  const module = new vm.SourceTextModule(src, {
-    context,
-  });
+  let module;
+  try {
+    module = new vm.SourceTextModule(src, {
+      context,
+    });
+  } catch (e: any) {
+    // This is probably a syntax error
+    // We'll just lump it under runtime error for now though
+    throw new RuntimeError(e);
+  }
 
   // We need to provide a linker to handle import statements
   // https://nodejs.org/api/vm.html#modulelinklinker

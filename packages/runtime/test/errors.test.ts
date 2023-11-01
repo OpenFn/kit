@@ -1,3 +1,7 @@
+import test from 'ava';
+import run from '../src/runtime';
+import { RuntimeError } from '../src/errors';
+
 /**
   reproduce various errors and test how the runtime responds
   it should basically throw with a set of expected error cases
@@ -22,6 +26,108 @@
 
   Later we'll do stacktraces and positions and stuff but not now. Maybe for a JobError I guess?
  */
-import test from 'ava';
 
-test.todo('errors');
+// TODO I don't like the way ANY of these errors serialize
+// Which is quite importnat for the CLI and for lightning
+// Also this is raising the spectre of stack traces, which I don't particularly
+// want to get into right now
+
+test('crash on runtime error with SyntaxError', async (t) => {
+  const expression = 'export default [(s) => ~@]2q1j]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.subtype, 'SyntaxError');
+  t.is(error.message, 'SyntaxError: Invalid or unexpected token');
+});
+
+// this is a syntax error too
+//const expression = 'export default [(s) => throw new Error("abort")]';
+
+test('crash on runtime error with ReferenceError', async (t) => {
+  const expression = 'export default [(s) => x]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    // console.log(e);
+    // console.log(e.toString());
+    error = e;
+  }
+
+  // t.true(error instanceof RuntimeError);
+  t.is(error.severity, 'crash');
+  t.is(error.subtype, 'ReferenceError');
+  t.is(error.message, 'ReferenceError: x is not defined');
+});
+
+test('crash on runtime error with TypeError', async (t) => {
+  const expression = 'export default [(s) => s.x.y]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.subtype, 'TypeError');
+  t.is(
+    error.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+});
+
+test('crash on runtime error with RangeError', async (t) => {
+  const expression =
+    'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.subtype, 'RangeError');
+  t.is(
+    error.message,
+    'RangeError: toFixed() digits argument must be between 0 and 100'
+  );
+});
+
+test.todo('crash on input error if a function is passed with forceSandbox');
+
+test('fail on user error with new Error()', async (t) => {
+  const expression = 'export default [(s) => {throw new Error("abort")}]';
+
+  const result = await run(expression);
+
+  const error = result.errors['job-1'];
+
+  t.is(error.name, 'UserError');
+  t.is(error.message, 'abort');
+});
+
+test('fail on user error with throw "abort"', async (t) => {
+  const expression = 'export default [(s) => {throw "abort"}]';
+
+  const result = await run(expression);
+
+  const error = result.errors['job-1'];
+
+  t.is(error.name, 'UserError');
+  t.is(error.message, 'abort');
+});
