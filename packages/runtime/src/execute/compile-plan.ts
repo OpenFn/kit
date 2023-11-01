@@ -99,6 +99,7 @@ export default (plan: ExecutionPlan) => {
   const newPlan = {
     jobs: {},
     start: plan.start,
+    initialState: plan.initialState,
   } as Pick<CompiledExecutionPlan, 'jobs' | 'start'>;
 
   for (const job of plan.jobs) {

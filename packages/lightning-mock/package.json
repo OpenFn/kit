@@ -1,0 +1,53 @@
+{
+  "name": "@openfn/lightning-mock",
+  "version": "1.0.1",
+  "private": true,
+  "description": "A mock Lightning server",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "pnpm ava --serial",
+    "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "build": "tsup --config ../../tsup.config.js src/index.ts --no-splitting",
+    "build:watch": "pnpm build --watch",
+    "start": "ts-node-esm --transpile-only src/start.ts",
+    "pack": "pnpm pack --pack-destination ../../dist"
+  },
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "dependencies": {
+    "@koa/router": "^12.0.0",
+    "@openfn/engine-multi": "workspace:*",
+    "@openfn/logger": "workspace:*",
+    "@openfn/runtime": "workspace:*",
+    "@types/koa-logger": "^3.1.2",
+    "@types/ws": "^8.5.6",
+    "fast-safe-stringify": "^2.1.1",
+    "jose": "^4.14.6",
+    "koa": "^2.13.4",
+    "koa-bodyparser": "^4.4.0",
+    "koa-logger": "^3.2.1",
+    "phoenix": "^1.7.7",
+    "ws": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.5",
+    "@types/koa-bodyparser": "^4.3.10",
+    "@types/koa-route": "^3.2.6",
+    "@types/koa-websocket": "^5.0.8",
+    "@types/koa__router": "^12.0.1",
+    "@types/node": "^18.15.3",
+    "@types/nodemon": "1.19.3",
+    "@types/phoenix": "^1.6.2",
+    "@types/yargs": "^17.0.12",
+    "ava": "5.1.0",
+    "koa-route": "^3.2.0",
+    "koa-websocket": "^7.0.0",
+    "query-string": "^8.1.0",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
+    "tsup": "^6.2.3",
+    "typescript": "^4.6.4",
+    "yargs": "^17.6.2"
+  }
+}

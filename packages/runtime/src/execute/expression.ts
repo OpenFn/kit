@@ -1,20 +1,22 @@
 import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
-import { Operation, JobModule, State } from '../types';
+import { Operation, JobModule, State, ExecutionContext } from '../types';
 import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
 
 export default (
+  ctx: ExecutionContext,
   expression: string | Operation[],
   initialState: State,
-  logger: Logger,
-  opts: Options = {}
+  id?: string
 ) =>
   new Promise(async (resolve, reject) => {
+    const { logger, notify = () => {}, opts = {} } = ctx;
     const timeout = opts.timeout || TIMEOUT;
+
     logger.debug('Intialising pipeline');
     logger.debug(`Timeout set to ${timeout}ms`);
 
@@ -32,6 +34,8 @@ export default (
     // Run the pipeline
     try {
       logger.debug(`Executing expression (${operations.length} operations)`);
+      let exeDuration = Date.now();
+      notify('job-start', { jobId: id });
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -45,6 +49,14 @@ export default (
       clearTimeout(tid);
       logger.debug('Expression complete!');
       logger.debug(result);
+
+      exeDuration = Date.now() - exeDuration;
+
+      notify('job-complete', {
+        duration: exeDuration,
+        state: result,
+        jobId: id,
+      });
 
       // return the final state
       resolve(prepareFinalState(opts, result));
@@ -114,8 +126,7 @@ const prepareFinalState = (opts: Options, state: any) => {
   if (state) {
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);
-    } else {
-      // TODO this is new and needs unit tests
+    } else if (opts.deleteConfiguration !== false) {
       delete state.configuration;
     }
     const cleanState = stringify(state);

@@ -1,6 +1,6 @@
 import test from 'ava';
 import { fn } from '@openfn/language-common';
-import type { State, Operation } from '../../src/types';
+import type { State, Operation, ExecutionContext } from '../../src/types';
 import { createMockLogger } from '@openfn/logger';
 import execute from '../../src/execute/expression';
 
@@ -17,11 +17,15 @@ const createState = (data = {}) => ({
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
-const executeExpression = (
-  job: string | Operation[],
-  state: State,
-  opts = {}
-) => execute(job, state, logger, opts);
+const createContext = (args = {}) =>
+  ({
+    logger,
+    plan: {},
+    opts: {},
+    notify: () => {},
+    report: () => {},
+    ...args,
+  } as unknown as ExecutionContext);
 
 test.afterEach(() => {
   logger._reset();
@@ -34,7 +38,10 @@ test.afterEach(() => {
 test('run a live no-op job with one operation', async (t) => {
   const job = [(s: State) => s];
   const state = createState();
-  const result = await executeExpression(job, state);
+
+  const context = createContext();
+
+  const result = await execute(context, job, state);
 
   t.deepEqual(state, result);
 });
@@ -42,23 +49,70 @@ test('run a live no-op job with one operation', async (t) => {
 test('run a stringified no-op job with one operation', async (t) => {
   const job = 'export default [(s) => s]';
   const state = createState();
-  const result = await executeExpression(job, state);
+  const context = createContext();
+
+  const result = await execute(context, job, state);
 
   t.deepEqual(state, result);
 });
 
 test('run a live no-op job with @openfn/language-common.fn', async (t) => {
-  const job = [fn((s: State) => s)] as Operation[];
+  const job = [fn((s) => s)];
   const state = createState();
-  const result = await executeExpression(job, state);
+  const context = createContext();
+
+  const result = await execute(context, job, state);
 
   t.deepEqual(state, result);
+});
+
+test('notify job-start', async (t) => {
+  let didCallCallback = false;
+
+  const expression = [(s: State) => s];
+  const state = createState();
+
+  const notify = (event: string, payload?: any) => {
+    if (event === 'job-start') {
+      didCallCallback = true;
+    }
+    t.is(payload.jobId, 'j');
+  };
+
+  const context = createContext({ notify });
+
+  await execute(context, expression, state, 'j');
+  t.true(didCallCallback);
+});
+
+test('notifu job-complete', async (t) => {
+  let didCallCallback = false;
+
+  const expression = [(s: State) => s];
+  const state = createState();
+
+  const notify = (event: string, payload: any) => {
+    if (event === 'job-complete') {
+      const { state, duration, jobId } = payload;
+      didCallCallback = true;
+      t.truthy(state);
+      t.assert(!isNaN(duration));
+      t.is(jobId, 'j');
+    }
+  };
+
+  const context = createContext({ notify });
+
+  await execute(context, expression, state, 'j');
+  t.true(didCallCallback);
 });
 
 test('jobs can handle a promise', async (t) => {
   const job = [async (s: State) => s];
   const state = createState();
-  const result = await executeExpression(job, state);
+  const context = createContext();
+
+  const result = await execute(context, job, state);
 
   t.deepEqual(state, result);
 });
@@ -73,7 +127,10 @@ test('output state should be serializable', async (t) => {
     circular,
     fn: () => {},
   });
-  const result = await executeExpression(job, state);
+
+  const context = createContext();
+
+  const result = await execute(context, job, state);
 
   t.notThrows(() => JSON.stringify(result));
 
@@ -82,24 +139,17 @@ test('output state should be serializable', async (t) => {
 });
 
 test('config is removed from the result (strict)', async (t) => {
-  const job = [(s) => s];
+  const job = [async (s: State) => s];
+  const context = createContext({ opts: { strict: true } });
 
-  const result = await executeExpression(
-    job,
-    { configuration: {} },
-    { strict: true }
-  );
+  const result = await execute(context, job, { configuration: {} });
   t.deepEqual(result, {});
 });
 
 test('config is removed from the result (non-strict)', async (t) => {
-  const job = [(s) => s];
-
-  const result = await executeExpression(
-    job,
-    { configuration: {} },
-    { strict: false }
-  );
+  const job = [async (s: State) => s];
+  const context = createContext({ opts: { strict: false } });
+  const result = await execute(context, job, { configuration: {} });
   t.deepEqual(result, {});
 });
 
@@ -113,7 +163,9 @@ test('output state is cleaned in strict mode', async (t) => {
     }),
   ];
 
-  const result = await executeExpression(job, {}, { strict: true });
+  const context = createContext({ opts: { strict: true } });
+
+  const result = await execute(context, job, {});
   t.deepEqual(result, {
     data: {},
     references: [],
@@ -129,7 +181,9 @@ test('output state is left alone in non-strict mode', async (t) => {
   };
   const job = [async () => ({ ...state })];
 
-  const result = await executeExpression(job, {}, { strict: false });
+  const context = createContext({ opts: { strict: false } });
+
+  const result = await execute(context, job, {});
   t.deepEqual(result, {
     data: {},
     references: [],
@@ -153,11 +207,12 @@ test('operations run in series', async (t) => {
     },
   ] as Operation[];
 
+  const context = createContext();
   const state = createState();
   // @ts-ignore
   t.falsy(state.data.x);
 
-  const result = (await executeExpression(job, state)) as TestState;
+  const result = (await execute(context, job, state)) as TestState;
 
   t.is(result.data.x, 12);
 });
@@ -182,10 +237,12 @@ test('async operations run in series', async (t) => {
   ] as Operation[];
 
   const state = createState();
+  const context = createContext();
+
   // @ts-ignore
   t.falsy(state.data.x);
 
-  const result = (await executeExpression(job, state)) as TestState;
+  const result = (await execute(context, job, state)) as TestState;
 
   t.is(result.data.x, 12);
 });
@@ -195,7 +252,9 @@ test('jobs can return undefined', async (t) => {
   const job = [() => undefined] as Operation[];
 
   const state = createState() as TestState;
-  const result = (await executeExpression(job, state, {})) as TestState;
+  const context = createContext();
+
+  const result = (await execute(context, job, state, {})) as TestState;
 
   t.assert(result === undefined);
 });
@@ -209,9 +268,8 @@ test('jobs can mutate the original state', async (t) => {
   ] as Operation[];
 
   const state = createState({ x: 1 }) as TestState;
-  const result = (await executeExpression(job, state, {
-    immutableState: false,
-  })) as TestState;
+  const context = createContext({ opts: { immutableState: false } });
+  const result = (await execute(context, job, state)) as TestState;
 
   t.is(state.data.x, 2);
   t.is(result.data.x, 2);
@@ -226,9 +284,8 @@ test('jobs do not mutate the original state', async (t) => {
   ] as Operation[];
 
   const state = createState({ x: 1 }) as TestState;
-  const result = (await executeExpression(job, state, {
-    immutableState: true,
-  })) as TestState;
+  const context = createContext({ opts: { immutableState: true } });
+  const result = (await execute(context, job, state)) as TestState;
 
   t.is(state.data.x, 1);
   t.is(result.data.x, 2);
@@ -244,7 +301,8 @@ export default [
 ];`;
 
   const state = createState();
-  await executeExpression(job, state, { jobLogger: logger });
+  const context = createContext({ opts: { jobLogger: logger } });
+  await execute(context, job, state);
 
   const output = logger._parse(logger._last);
   t.is(output.level, 'info');
@@ -260,12 +318,8 @@ test('calls execute if exported from a job', async (t) => {
     export const execute = () => { console.log('x'); return () => ({}) };
     export default [];
   `;
-
-  await executeExpression(
-    source,
-    { configuration: {}, data: {} },
-    { jobLogger: logger }
-  );
+  const context = createContext({ opts: { jobLogger: logger } });
+  await execute(context, source, { configuration: {}, data: {} });
 
   t.is(logger._history.length, 1);
 });
@@ -277,12 +331,10 @@ test.skip('Throws after default timeout', async (t) => {
   const job = `export default [() => new Promise(() => {})];`;
 
   const state = createState();
-  await t.throwsAsync(
-    async () => executeExpression(job, state, { jobLogger: logger }),
-    {
-      message: 'timeout',
-    }
-  );
+  const context = createContext({ opts: { jobLogger: logger } });
+  await t.throwsAsync(async () => execute(context, job, state), {
+    message: 'timeout',
+  });
 });
 
 test('Throws after custom timeout', async (t) => {
@@ -290,20 +342,20 @@ test('Throws after custom timeout', async (t) => {
 
   const job = `export default [() => new Promise((resolve) => setTimeout(resolve, 100))];`;
 
+  const context = createContext({
+    opts: { jobLogger: logger, timeout: 10 },
+  });
   const state = createState();
-  await t.throwsAsync(
-    async () =>
-      executeExpression(job, state, { jobLogger: logger, timeout: 10 }),
-    {
-      message: 'timeout',
-    }
-  );
+  await t.throwsAsync(async () => execute(context, job, state), {
+    message: 'timeout',
+  });
 });
 
 test('Operations log on start and end', async (t) => {
   const job = [(s: State) => s];
   const state = createState();
-  await executeExpression(job, state);
+  const context = createContext();
+  await execute(context, job, state);
 
   const start = logger._find('debug', /starting operation /i);
   t.truthy(start);

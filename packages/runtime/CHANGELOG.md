@@ -1,5 +1,18 @@
 # @openfn/runtime
 
+## 0.0.32
+
+### Patch Changes
+
+- Add support to lazy load intial state and config
+- d2360d4: Support a cacheKey to bust cached modules in long-running processes
+- Add notify api
+- 195f098: Trigger callbacks on job start, complete and init
+- add deleteConfiguration option
+- Fix intial state handling
+- Updated dependencies [7e4529e]
+  - @openfn/logger@0.0.18
+
 ## 0.0.31
 
 ### Patch Changes

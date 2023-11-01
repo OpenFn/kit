@@ -1,7 +1,7 @@
 {
-  "name": "@openfn/integration-tests",
+  "name": "@openfn/integration-tests-cli",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "CLI integration tests",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",

@@ -25,6 +25,11 @@ export type LinkerOptions = {
   repo?: string;
 
   whitelist?: RegExp[]; // whitelist packages which the linker allows to be imported
+  
+  // use this to add a cache-busting id to all imports
+  // Used in long-running processes to ensure that each job has an isolated
+  // top module scope for all imports
+  cacheKey?: string;
 };
 
 export type Linker = (
@@ -91,7 +96,10 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
 
   // If the specifier is a path, just import it
   if (specifier.startsWith('/') && specifier.endsWith('.js')) {
-    const importPath = `${prefix}${specifier}`;
+    let importPath = `${prefix}${specifier}`;
+    if (options.cacheKey) {
+      importPath += '?cache=' + options.cacheKey;
+    }
     log.debug(`[linker] Loading module from path: ${importPath}`);
     return import(importPath);
   }
@@ -125,6 +133,9 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   if (path) {
     log.debug(`[linker] Loading module ${specifier} from ${path}`);
     try {
+      if (options.cacheKey) {
+        path += '?cache=' + options.cacheKey;
+      }
       const result = import(`${prefix}${path}`);
       if (specifier.startsWith('@openfn/language-')) {
         log.info(`Resolved adaptor ${specifier} to version ${version}`);

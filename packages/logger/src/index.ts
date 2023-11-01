@@ -11,3 +11,4 @@ export default createLogger;
 
 export type { Logger, JSONLog, StringLog } from './logger';
 export type { LogOptions, LogLevel } from './options';
+export type { SanitizePolicies } from './sanitize';

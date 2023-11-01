@@ -1,5 +1,12 @@
 # @openfn/logger
 
+## 0.0.18
+
+### Patch Changes
+
+- 7e4529e: Export SanitizePolicies type
+- 1b6fa8e: Add proxy function
+
 ## 0.0.17
 
 ### Patch Changes

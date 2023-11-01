@@ -72,6 +72,8 @@ export interface Logger extends Console {
   always(...args: any[]): void;
 
   // fancier log functions
+  proxy(obj: Partial<JSONLog>): void;
+  proxy(name: string, level: string, message: any[]): void;
   print(...args: any[]): void;
   confirm(message: string, force?: boolean): Promise<boolean>;
   timer(name: string): string | undefined;
@@ -141,17 +143,21 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   // This is what we actually pass the log strings to
   const emitter = opts.logger;
 
-  const log = (level: LogFns, ...args: LogArgs) => {
+  const log = (name: string | undefined, level: LogFns, ...args: LogArgs) => {
     if (priority[level] >= minLevel) {
       if (options.json) {
-        logJSON(level, ...args);
+        logJSON(name, level, ...args);
       } else {
-        logString(level, ...args);
+        logString(name, level, ...args);
       }
     }
   };
 
-  const logJSON = (level: LogFns, ...args: LogArgs) => {
+  const logJSON = (
+    name: string | undefined,
+    level: LogFns,
+    ...args: LogArgs
+  ) => {
     const message = args.map((o) =>
       sanitize(o, {
         stringify: false,
@@ -175,7 +181,11 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     emitter[level](stringify(output));
   };
 
-  const logString = (level: LogFns, ...args: LogArgs) => {
+  const logString = (
+    name: string | undefined,
+    level: LogFns,
+    ...args: LogArgs
+  ) => {
     if (emitter.hasOwnProperty(level)) {
       const cleanedArgs = args.map((o) =>
         sanitize(o, {
@@ -206,6 +216,20 @@ export default function (name?: string, options: LogOptions = {}): Logger {
         emitter[level](...output.concat(cleanedArgs));
       }
     }
+  };
+
+  // "forward" a log event from another logger as if it came from this one
+  const proxy = function (...args: any[]) {
+    let j;
+    if (args.length === 3) {
+      const [name, level, message] = args;
+      j = { name, level, message };
+    } else {
+      j = args[0];
+    }
+    j = j as JSONLog;
+
+    log(j.name, j.level, ...j.message);
   };
 
   // print() will log without any metadata/overhead/santization
@@ -245,7 +269,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   const wrap =
     (level: LogFns) =>
     (...args: LogArgs) =>
-      log(level, ...args);
+      log(name, level, ...args);
 
   // TODO this does not yet cover the full console API
   const logger = {
@@ -259,6 +283,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     confirm,
     timer,
     print,
+    proxy,
 
     // possible convenience APIs
     force: () => {}, // force the next lines to log (even if silent)
