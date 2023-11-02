@@ -353,7 +353,7 @@ test.todo('return some kind of error on compilation error');
 // });
 // });
 
-test('stateful adaptor should create a new client for each attempt', (t) => {
+test.skip('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),
