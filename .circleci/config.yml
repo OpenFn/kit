@@ -29,9 +29,9 @@ jobs:
           paths:
             - node_modules
       - persist_to_workspace:
-        root: ~/project
-        paths:
-          - .
+          root: ~/project
+          paths:
+            - .
 
   build:
     docker:
@@ -39,7 +39,7 @@ jobs:
     resource_class: medium
     steps:
       - attach_workspace:
-        at: ~/project
+          at: ~/project
       - run:
           name: Build packages
           command: pnpm build
