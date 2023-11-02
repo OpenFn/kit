@@ -17,7 +17,7 @@ type Args = {
   log: LogLevel;
   mock: boolean;
 };
-console.log(process.argv);
+
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a ws-worker server')
   .option('port', {
@@ -58,8 +58,6 @@ const args = yargs(hideBin(process.argv))
     type: 'boolean',
   })
   .parse() as Args;
-
-console.log(args);
 
 const logger = createLogger('SRV', { level: args.log });
 
