@@ -392,6 +392,7 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
         t.is(one.threadId, two.threadId);
 
         t.not(one.clientId, two.clientId);
+        done();
       }
     });
 
