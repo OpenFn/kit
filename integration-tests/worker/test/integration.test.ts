@@ -14,9 +14,9 @@ let lightning;
 let worker;
 let engine;
 
-test.afterEach(() => {
+test.afterEach(async () => {
   lightning.destroy();
-  worker.destroy();
+  await worker.destroy();
 });
 
 const initLightning = () => {
@@ -353,7 +353,7 @@ test.todo('return some kind of error on compilation error');
 // });
 // });
 
-test.skip('stateful adaptor should create a new client for each attempt', (t) => {
+test('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),
@@ -393,7 +393,11 @@ test.skip('stateful adaptor should create a new client for each attempt', (t) =>
 
         t.not(one.clientId, two.clientId);
 
-        done();
+        // Give some time for everything to finish before stopping this job
+        // Otherwise workerpool blows up
+        setTimeout(() => {
+          done();
+        }, 1000);
       }
     });
 

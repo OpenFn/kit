@@ -60,7 +60,14 @@ export default function initWorkers(
   };
 
   // This will force termination instantly
-  api.closeWorkers = () => workers.terminate(true);
+  api.closeWorkers = () => {
+    workers.terminate(true);
+
+    // Defer the return to allow workerpool to close down
+    return new Promise((done) => {
+      setTimeout(done, 1);
+    });
+  };
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {

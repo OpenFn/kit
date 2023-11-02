@@ -26,13 +26,9 @@ const options = {
 
 let engine;
 
-test.afterEach(() => {
+test.afterEach(async () => {
   logger._reset();
-  engine?.destroy();
-  // Give a grace period after each test to allow workerpool to close
-  return new Promise((done) => {
-    setTimeout(done, 1);
-  });
+  await engine?.destroy();
 });
 
 test.serial('create an engine', async (t) => {
