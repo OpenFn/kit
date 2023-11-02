@@ -392,12 +392,6 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
         t.is(one.threadId, two.threadId);
 
         t.not(one.clientId, two.clientId);
-
-        // Give some time for everything to finish before stopping this job
-        // Otherwise workerpool blows up
-        setTimeout(() => {
-          done();
-        }, 1000);
       }
     });
 
