@@ -1,5 +1,13 @@
 import util from 'node:util';
 
+// TODO: what if we add a "fix" to each eror?
+// Maybe adminFix and userFix?
+// This would be a human readable hint about what to do
+// Or maybe summary/detail is a nicer approach
+// message/explanation
+// It would be nice for the detail to be in the error, not the code
+// But that probably requires more detailed error types
+
 // This lets us distinguish runtime errors - which are crash
 // - to user and adaptor errors, which are a fail
 // See https://nodejs.org/api/errors.html for errors
@@ -111,7 +119,7 @@ export class AdaptorError extends Error {
   name = 'AdaptorError';
   source = 'runtime';
   severity = 'fail';
-  message: string;
+  message: string = '';
   constructor(error: any) {
     super();
     // TODO we want the stack trace from the vm downwards
@@ -130,7 +138,7 @@ export class UserError extends Error {
   name = 'UserError';
   source = 'runtime';
   severity = 'fail';
-  message: string;
+  message: string = '';
   constructor(error: any) {
     super();
     Error.captureStackTrace(this, UserError.constructor);
@@ -140,5 +148,21 @@ export class UserError extends Error {
     } else if (error.message) {
       this.message = error.message;
     }
+  }
+}
+
+// Import error represents some kind of fail importing a module/adaptor
+// The message will add context
+// Some of these may need a stack trace for admins (but not for users)
+export class ImportError extends Error {
+  name = 'ImportError';
+  source = 'runtime';
+  severity = 'crash';
+  message: string;
+  constructor(message: string) {
+    super();
+    Error.captureStackTrace(this, ImportError.constructor);
+
+    this.message = message;
   }
 }

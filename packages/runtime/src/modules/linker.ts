@@ -6,6 +6,7 @@
 import { createMockLogger, Logger } from '@openfn/logger';
 import vm, { Module, SyntheticModule, Context } from './experimental-vm';
 import { getModuleEntryPoint } from './repo';
+import { ImportError } from '../errors';
 
 const defaultLogger = createMockLogger();
 
@@ -25,7 +26,7 @@ export type LinkerOptions = {
   repo?: string;
 
   whitelist?: RegExp[]; // whitelist packages which the linker allows to be imported
-  
+
   // use this to add a cache-busting id to all imports
   // Used in long-running processes to ensure that each job has an isolated
   // top module scope for all imports
@@ -127,6 +128,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       version = entry.version;
     } else {
       log.debug(`module not found in repo: ${specifier}`);
+      // throw new ImportError(`${specifier} not found in repo`);
     }
   }
 
@@ -141,12 +143,19 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
         log.info(`Resolved adaptor ${specifier} to version ${version}`);
       }
       return result;
-    } catch (e) {
-      log.debug(`[linker] Failed to load module ${specifier} from ${path}`);
+    } catch (e: any) {
+      log.debug(`[linker] Failed to import module ${specifier} from ${path}`);
+      // This means we resolved the module to a path, but for some reason failed to import
+      throw new ImportError(
+        `Failed to import module ${specifier} from ${path} (${
+          e.message || 'reason unknown'
+        })`
+      );
     }
   }
 
-  throw new Error(`Failed to load module "${specifier}"`);
+  // Generic error (we should never get here)
+  throw new ImportError(`Failed to import module "${specifier}"`);
 };
 
 export default linker;

@@ -116,6 +116,27 @@ test('crash on runtime error with RangeError', async (t) => {
 
 test.todo('crash on input error if a function is passed with forceSandbox');
 
+// I think I'm gonna keep this broad for now, not catch too many cases
+// I'll add a tech debt issue go through and add really tight handling
+// so that if something goes wrong, we know exactly what
+test('crash on import error: module path provided', async (t) => {
+  const expression = 'import x from "blah"; export default [(s) => x]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.name, 'ImportError');
+  t.is(error.message, 'Failed to import module "blah"');
+});
+
+test.todo('crash on blacklisted module');
+
 test('fail on user error with new Error()', async (t) => {
   const expression = 'export default [(s) => {throw new Error("abort")}]';
 
