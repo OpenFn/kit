@@ -3,10 +3,13 @@ import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
 
 const logger = createMockLogger();
+let api;
 
 test.afterEach(() => {
   logger._reset();
+  api.destroy()
 });
+
 
 // this tests the full API with the actual runtime
 // note that it won't test autoinstall
@@ -32,7 +35,7 @@ const createPlan = (jobs?: any[]) => ({
 
 test.serial('trigger workflow-start', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -52,7 +55,7 @@ test.serial('trigger workflow-start', (t) => {
 
 test.serial('trigger job-start', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -70,7 +73,7 @@ test.serial('trigger job-start', (t) => {
 
 test.serial('trigger job-complete', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -90,7 +93,7 @@ test.todo('trigger multiple job-completes');
 
 test.serial('trigger workflow-complete', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -112,7 +115,7 @@ test.serial('trigger workflow-complete', (t) => {
 
 test.serial('trigger workflow-log for job logs', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       compile: {
         skip: true,
@@ -137,7 +140,7 @@ test.serial('trigger workflow-log for job logs', (t) => {
 
 test.serial('compile and run', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
     });
 
@@ -156,7 +159,7 @@ test.serial('compile and run', (t) => {
 
 test.serial('evaluate conditional edges', (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
     });
 
@@ -200,7 +203,7 @@ test.serial('preload credentials', (t) => {
         }, 100);
       });
 
-    const api = await createAPI({
+    api = await createAPI({
       logger,
     });
 

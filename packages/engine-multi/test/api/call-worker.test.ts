@@ -17,8 +17,6 @@ test.before(() => {
 
 test.after(() => api.closeWorkers());
 
-// TODO should I be tearing down the pool each time?
-
 test('initWorkers should add a callWorker function', (t) => {
   t.assert(typeof api.callWorker === 'function');
 });

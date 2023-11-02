@@ -7,24 +7,26 @@ import { PURGE } from '../src/events';
 // so these are very high level tests and don't allow mock workers or anything
 
 const logger = createMockLogger(undefined, { level: 'debug' });
+let api;
 
 test.afterEach(() => {
   logger._reset();
+  api?.destroy()
 });
 
 test.serial('create a default engine api without throwing', async (t) => {
-  await createAPI();
+  api = await createAPI();
   t.pass();
 });
 
 test.serial('create an engine api with options without throwing', async (t) => {
-  await createAPI({ logger });
+  api = await createAPI({ logger });
   // just a token test to see if the logger is accepted and used
   t.true(logger._history.length > 0);
 });
 
 test.serial('create an engine api with a limited surface', async (t) => {
-  const api = await createAPI({ logger });
+  api = await createAPI({ logger });
   const keys = Object.keys(api).sort();
 
   // TODO the api will actually probably get a bit bigger than this
@@ -39,7 +41,7 @@ test.serial(
   'execute should return an event listener and receive workflow-complete',
   async (t) => {
     return new Promise(async (done) => {
-      const api = await createAPI({
+      api = await createAPI({
         logger,
         // Disable compilation
         compile: {
@@ -68,7 +70,7 @@ test.serial(
 
 test.serial('should listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       // Disable compilation
       compile: {
@@ -98,7 +100,7 @@ test.serial('should listen to workflow-complete', async (t) => {
 
 test.serial('should purge workers after a single run', async (t) => {
   return new Promise(async (done) => {
-    const api = await createAPI({
+    api = await createAPI({
       logger,
       // Disable compilation
       compile: {
