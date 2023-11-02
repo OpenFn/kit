@@ -148,7 +148,6 @@ test('listen to workflow-complete', async (t) => {
       ],
     };
 
-    engine.execute(plan);
     engine.listen(plan.id, {
       [e.WORKFLOW_COMPLETE]: ({ state, threadId }) => {
         t.is(state, 33);
@@ -156,6 +155,7 @@ test('listen to workflow-complete', async (t) => {
         done();
       },
     });
+    engine.execute(plan);
   });
 });
 
@@ -197,14 +197,15 @@ test('catch and emit errors', async (t) => {
       ],
     };
 
-    engine.execute(plan);
-
+    
     engine.listen(plan.id, {
       [e.WORKFLOW_ERROR]: ({ message }) => {
         t.is(message, 'test');
         done();
       },
     });
+
+    engine.execute(plan);
   });
 });
 
@@ -226,8 +227,6 @@ test('timeout the whole attempt and emit an error', async (t) => {
       timeout: 10,
     };
 
-    engine.execute(plan, opts);
-
     engine.listen(plan.id, {
       [e.WORKFLOW_ERROR]: ({ message, type }) => {
         t.is(type, 'TimeoutError');
@@ -235,5 +234,7 @@ test('timeout the whole attempt and emit an error', async (t) => {
         done();
       },
     });
+
+    engine.execute(plan, opts);
   });
 });
