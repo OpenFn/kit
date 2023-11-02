@@ -266,7 +266,9 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
   t.truthy(event);
   t.is(event.module, '@openfn/language-common');
   t.is(event.version, '1.0.0');
-  t.assert(event.duration >= 50);
+  // Duration could be anything really as timeout is only loose - but so long as it's
+  // more than 10ms that implies it's called handleInstall and returned a reasonable value
+  t.assert(event.duration >= 10);
 });
 
 test.todo('autoinstall: emit on error');

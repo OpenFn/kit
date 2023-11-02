@@ -36,7 +36,7 @@ You may want to add `--log debug` or disable the work loop, see below.
 
 The default settings will try and connect to lightning at `localhost:4000`.
 
-Pass a custom lightining url with `-l ws://localhost:1234`. You need to include the websocket endpoint, which at the time of writing is `/worker`.
+Pass a custom lightining url with `-l ws://localhost:1234/worker`. (Note that you need to include the websocket endpoint, which at the time of writing is `/worker`.)
 
 Use `-l mock` to connect to a lightning mock server (on the default port).
 

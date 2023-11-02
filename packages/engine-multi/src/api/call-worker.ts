@@ -59,7 +59,8 @@ export default function initWorkers(
     return promise;
   };
 
-  api.closeWorkers = () => workers.terminate();
+  // This will force termination instantly
+  api.closeWorkers = () => workers.terminate(true);
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {
@@ -85,7 +86,6 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
     minWorkers,
     maxWorkers,
     workerThreadOpts: {
-      // Note that we have to pass this explicitly to run in ava's test runner
       execArgv: ['--no-warnings', '--experimental-vm-modules'],
       // Important to override the child env so that it cannot access the parent env
       env,

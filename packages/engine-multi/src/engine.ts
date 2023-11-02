@@ -218,6 +218,10 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     // How does this work if deferred?
   };
 
+  const destroy = () => {
+    engine.closeWorkers()
+  }
+
   return Object.assign(engine, {
     options,
     workerPath: resolvedWorkerPath,
@@ -227,6 +231,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     getWorkflowStatus,
     execute: executeWrapper,
     listen,
+    destroy,
   });
 };
 

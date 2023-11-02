@@ -12,7 +12,7 @@ const createPool = () => workerpool.pool({ maxWorkers: 1 });
 const createDedicatedPool = (opts = {}) =>
   workerpool.pool(workerPath, { maxWorkers: 1, ...opts });
 
-test.afterEach(() => pool.terminate());
+test.afterEach(() => pool.terminate(true));
 
 test.serial('run an expression inside a worker', async (t) => {
   pool = createPool();

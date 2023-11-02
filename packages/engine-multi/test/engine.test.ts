@@ -24,12 +24,16 @@ const options = {
   },
 };
 
+let engine;
+
 test.afterEach(() => {
   logger._reset();
+  engine?.destroy();
 });
 
+
 test('create an engine', async (t) => {
-  const engine = await createEngine(options);
+  engine = await createEngine(options);
   t.truthy(engine);
   t.is(engine.constructor.name, 'Engine');
   t.truthy(engine.execute);
@@ -42,7 +46,7 @@ test.todo('throw if the worker is invalid');
 
 test('register a workflow', async (t) => {
   const plan = { id: 'z' };
-  const engine = await createEngine(options);
+  engine = await createEngine(options);
 
   const state = engine.registerWorkflow(plan);
 
@@ -53,7 +57,7 @@ test('register a workflow', async (t) => {
 
 test('get workflow state', async (t) => {
   const plan = { id: 'z' } as ExecutionPlan;
-  const engine = await createEngine(options);
+  engine = await createEngine(options);
 
   const s = engine.registerWorkflow(plan);
 
@@ -63,20 +67,20 @@ test('get workflow state', async (t) => {
 });
 
 test('use the default worker path', async (t) => {
-  const engine = await createEngine({ logger, repoDir: '.' });
+  engine = await createEngine({ logger, repoDir: '.' });
   t.true(engine.workerPath.endsWith('worker/worker.js'));
 });
 
 test('use a custom worker path', async (t) => {
   const workerPath = path.resolve('src/test/worker-functions.js');
-  const engine = await createEngine(options, workerPath);
+  engine = await createEngine(options, workerPath);
   t.is(engine.workerPath, workerPath);
 });
 
 test('execute with test worker and trigger workflow-complete', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = await createEngine(options, p);
+    engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -98,7 +102,7 @@ test('execute with test worker and trigger workflow-complete', async (t) => {
 test('execute does not return internal state stuff', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = await createEngine(options, p);
+    engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -133,7 +137,7 @@ test('execute does not return internal state stuff', async (t) => {
 test('listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = await createEngine(options, p);
+    engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -144,7 +148,6 @@ test('listen to workflow-complete', async (t) => {
       ],
     };
 
-    engine.execute(plan);
     engine.listen(plan.id, {
       [e.WORKFLOW_COMPLETE]: ({ state, threadId }) => {
         t.is(state, 33);
@@ -152,13 +155,14 @@ test('listen to workflow-complete', async (t) => {
         done();
       },
     });
+    engine.execute(plan);
   });
 });
 
 test('call listen before execute', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = await createEngine(options, p);
+    engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -182,7 +186,7 @@ test('call listen before execute', async (t) => {
 test('catch and emit errors', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = await createEngine(options, p);
+    engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -193,21 +197,22 @@ test('catch and emit errors', async (t) => {
       ],
     };
 
-    engine.execute(plan);
-
+    
     engine.listen(plan.id, {
       [e.WORKFLOW_ERROR]: ({ message }) => {
         t.is(message, 'test');
         done();
       },
     });
+
+    engine.execute(plan);
   });
 });
 
 test('timeout the whole attempt and emit an error', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
-    const engine = await createEngine(options, p);
+    engine = await createEngine(options, p);
 
     const plan = {
       id: 'a',
@@ -222,8 +227,6 @@ test('timeout the whole attempt and emit an error', async (t) => {
       timeout: 10,
     };
 
-    engine.execute(plan, opts);
-
     engine.listen(plan.id, {
       [e.WORKFLOW_ERROR]: ({ message, type }) => {
         t.is(type, 'TimeoutError');
@@ -231,5 +234,7 @@ test('timeout the whole attempt and emit an error', async (t) => {
         done();
       },
     });
+
+    engine.execute(plan, opts);
   });
 });

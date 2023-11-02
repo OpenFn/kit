@@ -72,6 +72,7 @@ const createAPI = async function (options: RTEOptions = {}) {
   return {
     execute: engine.execute,
     listen: engine.listen,
+    destroy: engine.destroy,
     on: (evt: string, fn: (...args: any[]) => void) => engine.on(evt, fn),
   };
 };

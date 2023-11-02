@@ -104,12 +104,6 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
 
-  integration-tests/cli/repo:
-    dependencies:
-      '@openfn/language-common_1.11.1':
-        specifier: npm:@openfn/language-common@^1.11.1
-        version: /@openfn/language-common@1.11.1
-
   integration-tests/worker:
     dependencies:
       '@openfn/engine-multi':
@@ -151,6 +145,12 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
+
+  integration-tests/worker/tmp/repo:
+    dependencies:
+      '@openfn/language-common_latest':
+        specifier: npm:@openfn/language-common@^1.11.1
+        version: /@openfn/language-common@1.11.1
 
   packages/cli:
     dependencies:
@@ -417,8 +417,6 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
-
-  packages/engine-multi/tmp/a/b/c: {}
 
   packages/engine-multi/tmp/repo: {}
 

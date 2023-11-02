@@ -1,4 +1,4 @@
-// start the server in a local CLI
+#!/usr/bin/env node
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import createLogger, { LogLevel } from '@openfn/logger';
@@ -31,7 +31,7 @@ const args = yargs(hideBin(process.argv))
   .option('lightning', {
     alias: 'l',
     description:
-      'Base url to Lightning websocket endpoint, eg, ws://locahost:4000/worker. Set to "mock" to use the default mock server',
+      'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server',
     default: 'ws://localhost:4000/worker',
   })
   .option('repo-dir', {
