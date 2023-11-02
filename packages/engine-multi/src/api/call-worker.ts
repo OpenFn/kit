@@ -85,7 +85,6 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
     minWorkers,
     maxWorkers,
     workerThreadOpts: {
-      // Note that we have to pass this explicitly to run in ava's test runner
       execArgv: ['--no-warnings', '--experimental-vm-modules'],
       // Important to override the child env so that it cannot access the parent env
       env,
