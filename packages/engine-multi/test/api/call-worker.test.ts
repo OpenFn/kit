@@ -17,21 +17,21 @@ test.before(() => {
 
 test.after(() => api.closeWorkers());
 
-test('initWorkers should add a callWorker function', (t) => {
+test.serial('initWorkers should add a callWorker function', (t) => {
   t.assert(typeof api.callWorker === 'function');
 });
 
-test('callWorker should return the default result', async (t) => {
+test.serial('callWorker should return the default result', async (t) => {
   const result = await api.callWorker('test', []);
   t.is(result, 42);
 });
 
-test('callWorker should return a custom result', async (t) => {
+test.serial('callWorker should return a custom result', async (t) => {
   const result = await api.callWorker('test', [84]);
   t.is(result, 84);
 });
 
-test('callWorker should trigger an event callback', async (t) => {
+test.serial('callWorker should trigger an event callback', async (t) => {
   return new Promise((done) => {
     const onCallback = ({ result }) => {
       t.is(result, 11);
@@ -42,11 +42,14 @@ test('callWorker should trigger an event callback', async (t) => {
   });
 });
 
-test('callWorker should throw TimeoutError if it times out', async (t) => {
-  await t.throwsAsync(() => api.callWorker('timeout', [11], {}, 10), {
-    instanceOf: WorkerPoolPromise.TimeoutError,
-  });
-});
+test.serial(
+  'callWorker should throw TimeoutError if it times out',
+  async (t) => {
+    await t.throwsAsync(() => api.callWorker('timeout', [11], {}, 10), {
+      instanceOf: WorkerPoolPromise.TimeoutError,
+    });
+  }
+);
 
 // Dang, this doesn't work, the worker threads run in the same process
 test.skip('callWorker should execute with a different process id', async (t) => {
@@ -60,7 +63,7 @@ test.skip('callWorker should execute with a different process id', async (t) => 
   });
 });
 
-test('callWorker should execute in a different process', async (t) => {
+test.serial('callWorker should execute in a different process', async (t) => {
   return new Promise((done) => {
     // @ts-ignore
     process.scribble = 'xyz';
@@ -75,7 +78,7 @@ test('callWorker should execute in a different process', async (t) => {
   });
 });
 
-test('callWorker should try to purge workers on complete', async (t) => {
+test.serial('callWorker should try to purge workers on complete', async (t) => {
   return new Promise((done) => {
     api.on(PURGE, () => {
       t.pass('purge event called');
@@ -86,77 +89,89 @@ test('callWorker should try to purge workers on complete', async (t) => {
   });
 });
 
-test('If null env is passed, worker thread should be able to access parent env', async (t) => {
-  const badAPI = {} as EngineAPI;
-  const env = null;
-  initWorkers(badAPI, workerPath, { env });
+test.serial(
+  'If null env is passed, worker thread should be able to access parent env',
+  async (t) => {
+    const badAPI = {} as EngineAPI;
+    const env = null;
+    initWorkers(badAPI, workerPath, { env });
 
-  // Set up a special key on process.env
-  const code = '76ytghjs';
-  process.env.TEST = code;
+    // Set up a special key on process.env
+    const code = '76ytghjs';
+    process.env.TEST = code;
 
-  // try and read that key inside the thread
-  const result = await badAPI.callWorker('readEnv', ['TEST']);
+    // try and read that key inside the thread
+    const result = await badAPI.callWorker('readEnv', ['TEST']);
 
-  // voila, the kingdom is yours
-  t.is(result, code);
+    // voila, the kingdom is yours
+    t.is(result, code);
 
-  badAPI.closeWorkers();
-});
+    badAPI.closeWorkers();
+  }
+);
 
-test('By default, worker thread cannot access parent env if env not set (no options arg)', async (t) => {
-  const defaultAPI = {} as EngineAPI;
+test.serial(
+  'By default, worker thread cannot access parent env if env not set (no options arg)',
+  async (t) => {
+    const defaultAPI = {} as EngineAPI;
 
-  initWorkers(defaultAPI, workerPath /* no options passed*/);
+    initWorkers(defaultAPI, workerPath /* no options passed*/);
 
-  // Set up a special key on process.env
-  const code = '76ytghjs';
-  process.env.TEST = code;
+    // Set up a special key on process.env
+    const code = '76ytghjs';
+    process.env.TEST = code;
 
-  // try and read that key inside the thread
-  const result = await defaultAPI.callWorker('readEnv', ['TEST']);
+    // try and read that key inside the thread
+    const result = await defaultAPI.callWorker('readEnv', ['TEST']);
 
-  // No fish
-  t.is(result, undefined);
+    // No fish
+    t.is(result, undefined);
 
-  defaultAPI.closeWorkers();
-});
+    defaultAPI.closeWorkers();
+  }
+);
 
-test('By default, worker thread cannot access parent env if env not set (with options arg)', async (t) => {
-  const defaultAPI = {} as EngineAPI;
+test.serial(
+  'By default, worker thread cannot access parent env if env not set (with options arg)',
+  async (t) => {
+    const defaultAPI = {} as EngineAPI;
 
-  initWorkers(defaultAPI, workerPath, { maxWorkers: 1 });
+    initWorkers(defaultAPI, workerPath, { maxWorkers: 1 });
 
-  // Set up a special key on process.env
-  const code = '76ytghjs';
-  process.env.TEST = code;
+    // Set up a special key on process.env
+    const code = '76ytghjs';
+    process.env.TEST = code;
 
-  // try and read that key inside the thread
-  const result = await defaultAPI.callWorker('readEnv', ['TEST']);
+    // try and read that key inside the thread
+    const result = await defaultAPI.callWorker('readEnv', ['TEST']);
 
-  // No fish
-  t.is(result, undefined);
+    // No fish
+    t.is(result, undefined);
 
-  defaultAPI.closeWorkers();
-});
+    defaultAPI.closeWorkers();
+  }
+);
 
-test('Worker thread cannot access parent env if custom env is passted', async (t) => {
-  const customAPI = {} as EngineAPI;
-  const env = { NODE_ENV: 'production' };
-  initWorkers(customAPI, workerPath, { env });
+test.serial(
+  'Worker thread cannot access parent env if custom env is passted',
+  async (t) => {
+    const customAPI = {} as EngineAPI;
+    const env = { NODE_ENV: 'production' };
+    initWorkers(customAPI, workerPath, { env });
 
-  // Set up a special key on process.env
-  const code = '76ytghjs';
-  process.env.TEST = code;
+    // Set up a special key on process.env
+    const code = '76ytghjs';
+    process.env.TEST = code;
 
-  // try and read that key inside the thread
-  const result = await customAPI.callWorker('readEnv', ['TEST']);
+    // try and read that key inside the thread
+    const result = await customAPI.callWorker('readEnv', ['TEST']);
 
-  // No fish
-  t.is(result, undefined);
+    // No fish
+    t.is(result, undefined);
 
-  const result2 = await customAPI.callWorker('readEnv', ['NODE_ENV']);
-  t.is(result2, 'production');
+    const result2 = await customAPI.callWorker('readEnv', ['NODE_ENV']);
+    t.is(result2, 'production');
 
-  customAPI.closeWorkers();
-});
+    customAPI.closeWorkers();
+  }
+);
