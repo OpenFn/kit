@@ -85,7 +85,7 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - install
+      - install:
         filters:
           branches:
             ignore:
