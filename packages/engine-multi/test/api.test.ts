@@ -25,10 +25,10 @@ test.serial('create an engine api with options without throwing', async (t) => {
 
 test.serial('create an engine api with a limited surface', async (t) => {
   const api = await createAPI({ logger });
-  const keys = Object.keys(api);
+  const keys = Object.keys(api).sort();
 
   // TODO the api will actually probably get a bit bigger than this
-  t.deepEqual(keys, ['execute', 'listen', 'on']);
+  t.deepEqual(keys, ['execute', 'listen', 'on', 'destroy'].sort());
 });
 
 // Note that this runs with the actual runtime worker
