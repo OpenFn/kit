@@ -5,7 +5,7 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  test:
+  install:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -30,15 +30,43 @@ jobs:
           key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
           paths:
             - node_modules
+
+  build:
+    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+    docker:
+      - image: cimg/node:18.18
+    resource_class: medium
+    # Add steps to the job
+    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+    steps:
       - run:
           name: Build packages
           command: pnpm build
-      - run:
-          name: Type check
-          command: pnpm test:types
+
+  unit_test:
+    docker:
+      - image: cimg/node:18.18
+    resource_class: medium
+    steps:
       - run:
           name: Run Tests
           command: pnpm test
+
+  type_check:
+    docker:
+      - image: cimg/node:18.18
+    resource_class: medium
+    steps:
+      - run:
+          name: Type check
+          command: pnpm test:types
+
+  integration_test:
+    docker:
+      - image: cimg/node:18.18
+    resource_class: medium
+    steps:
       - run:
           name: Build local tarballs
           command: pnpm pack:local dist --no-version
@@ -56,9 +84,21 @@ jobs:
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build_and_test:
+    filters:
+      branches:
+        ignore:
+          - main
     jobs:
-      - test:
-        filters:
-          branches:
-            ignore:
-              - main
+      - install
+      - build
+        requires:
+          - install
+      - unit_test:
+          requires:
+            - build
+      - type_check:
+          requires:
+            - build
+      - integration_test:
+          requires:
+            - unit_test
