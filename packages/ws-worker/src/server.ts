@@ -145,6 +145,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.destroy = () => {
     logger.info('Closing server...');
     server.close();
+    engine.destroy();
     app.killWorkloop?.();
     logger.success('Server closed');
   };

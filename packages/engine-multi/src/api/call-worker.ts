@@ -59,7 +59,8 @@ export default function initWorkers(
     return promise;
   };
 
-  api.closeWorkers = () => workers.terminate();
+  // This will force termination instantly
+  api.closeWorkers = () => workers.terminate(true);
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {
