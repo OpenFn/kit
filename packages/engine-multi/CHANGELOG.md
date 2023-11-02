@@ -1,5 +1,11 @@
 # engine-multi
 
+## 0.1.1
+
+### Patch Changes
+
+- Destroy workers on close
+
 ## 0.1.0
 
 First release of the multi-threaded runtime engine.
