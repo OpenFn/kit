@@ -84,12 +84,12 @@ jobs:
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build_and_test:
-    filters:
-      branches:
-        ignore:
-          - main
     jobs:
       - install
+        filters:
+          branches:
+            ignore:
+              - main
       - build:
           requires:
             - install
