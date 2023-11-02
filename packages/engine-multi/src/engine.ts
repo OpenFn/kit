@@ -182,7 +182,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
 
     // execute(context);
 
-    // Run the execute on a timeout so that consumers have a change
+    // Run the execute on a timeout so that consumers have a chance
     // to register listeners
     setTimeout(() => {
       // TODO typing between the class and interface isn't right
