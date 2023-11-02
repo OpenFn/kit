@@ -43,13 +43,18 @@ jobs:
       - run:
           name: Build packages
           command: pnpm build
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
 
   unit_test:
     docker:
       - image: cimg/node:18.18
     resource_class: medium
     steps:
-      - checkout
+      - attach_workspace:
+          at: ~/project
       - run:
           name: Run Tests
           command: pnpm test
@@ -59,7 +64,8 @@ jobs:
       - image: cimg/node:18.18
     resource_class: medium
     steps:
-      - checkout
+      - attach_workspace:
+          at: ~/project
       - run:
           name: Type check
           command: pnpm test:types
@@ -69,7 +75,8 @@ jobs:
       - image: cimg/node:18.18
     resource_class: medium
     steps:
-      - checkout
+      - attach_workspace:
+          at: ~/project
       - run:
           name: Build local tarballs
           command: pnpm pack:local dist --no-version
