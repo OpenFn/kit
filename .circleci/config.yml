@@ -111,4 +111,4 @@ workflows:
             - build
       - integration_test:
           requires:
-            - unit_test
+            - build
