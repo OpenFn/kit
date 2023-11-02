@@ -90,9 +90,9 @@ workflows:
           - main
     jobs:
       - install
-      - build
-        requires:
-          - install
+      - build:
+          requires:
+            - install
       - unit_test:
           requires:
             - build
