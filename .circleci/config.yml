@@ -32,33 +32,21 @@ jobs:
             - node_modules
 
   build:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
       - image: cimg/node:18.18
     resource_class: medium
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
-      - restore_cache:
-          keys:
-            - build-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+      - checkout
       - run:
           name: Build packages
           command: pnpm build
-      - save_cache:
-          key: build-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
-          paths:
-            - node_modules
 
   unit_test:
     docker:
       - image: cimg/node:18.18
     resource_class: medium
     steps:
-      - restore_cache:
-          keys:
-            - build-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+      - checkout
       - run:
           name: Run Tests
           command: pnpm test
@@ -68,9 +56,7 @@ jobs:
       - image: cimg/node:18.18
     resource_class: medium
     steps:
-      - restore_cache:
-          keys:
-            - build-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+      - checkout
       - run:
           name: Type check
           command: pnpm test:types
@@ -80,9 +66,7 @@ jobs:
       - image: cimg/node:18.18
     resource_class: medium
     steps:
-      - restore_cache:
-          keys:
-            - build-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
+      - checkout
       - run:
           name: Build local tarballs
           command: pnpm pack:local dist --no-version
