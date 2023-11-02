@@ -24,7 +24,7 @@ WORKDIR /app/packages/ws-worker
 # ------------------------------------------------------------------------------
 
 EXPOSE 2222
-CMD [ "pnpm", "start"]
+CMD [ "pnpm", "start:prod"]
 
 # TODO: determine how to pass in the -l from `docker run` for running on mac m1
 # CMD [ "pnpm", "start", "-l", "ws://host.docker.internal:4000"]
