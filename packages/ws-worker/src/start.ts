@@ -1,4 +1,4 @@
-// start the server in a local CLI
+#!/usr/bin/env -S node --experimental-modules --no-warnings
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import createLogger, { LogLevel } from '@openfn/logger';
