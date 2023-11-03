@@ -180,9 +180,15 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       delete deferredListeners[workflowId];
     }
 
-    // TODO typing between the class and interface isn't right
-    // @ts-ignore
-    execute(context);
+    // execute(context);
+
+    // Run the execute on a timeout so that consumers have a chance
+    // to register listeners
+    setTimeout(() => {
+      // TODO typing between the class and interface isn't right
+      // @ts-ignore
+      execute(context);
+    }, 1);
 
     // hmm. Am I happy to pass the internal workflow state OUT of the handler?
     // I'd rather have like a proxy emitter or something
@@ -218,9 +224,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     // How does this work if deferred?
   };
 
-  const destroy = () => {
-    engine.closeWorkers()
-  }
+  const destroy = () => engine.closeWorkers();
 
   return Object.assign(engine, {
     options,

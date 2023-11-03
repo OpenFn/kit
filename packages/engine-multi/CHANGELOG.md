@@ -1,5 +1,12 @@
 # engine-multi
 
+## 0.1.2
+
+### Patch Changes
+
+- d255f32: Defer execution to allow listeners to attach
+- f241348: Make destroy async
+
 ## 0.1.1
 
 ### Patch Changes

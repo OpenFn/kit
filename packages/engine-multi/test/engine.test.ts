@@ -26,13 +26,12 @@ const options = {
 
 let engine;
 
-test.afterEach(() => {
+test.afterEach(async () => {
   logger._reset();
-  engine?.destroy();
+  await engine?.destroy();
 });
 
-
-test('create an engine', async (t) => {
+test.serial('create an engine', async (t) => {
   engine = await createEngine(options);
   t.truthy(engine);
   t.is(engine.constructor.name, 'Engine');
@@ -44,7 +43,7 @@ test('create an engine', async (t) => {
 
 test.todo('throw if the worker is invalid');
 
-test('register a workflow', async (t) => {
+test.serial('register a workflow', async (t) => {
   const plan = { id: 'z' };
   engine = await createEngine(options);
 
@@ -55,7 +54,7 @@ test('register a workflow', async (t) => {
   t.deepEqual(state.plan, plan);
 });
 
-test('get workflow state', async (t) => {
+test.serial('get workflow state', async (t) => {
   const plan = { id: 'z' } as ExecutionPlan;
   engine = await createEngine(options);
 
@@ -66,40 +65,43 @@ test('get workflow state', async (t) => {
   t.deepEqual(state, s);
 });
 
-test('use the default worker path', async (t) => {
+test.serial('use the default worker path', async (t) => {
   engine = await createEngine({ logger, repoDir: '.' });
   t.true(engine.workerPath.endsWith('worker/worker.js'));
 });
 
-test('use a custom worker path', async (t) => {
+test.serial('use a custom worker path', async (t) => {
   const workerPath = path.resolve('src/test/worker-functions.js');
   engine = await createEngine(options, workerPath);
   t.is(engine.workerPath, workerPath);
 });
 
-test('execute with test worker and trigger workflow-complete', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(options, p);
+test.serial(
+  'execute with test worker and trigger workflow-complete',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('src/test/worker-functions.js');
+      engine = await createEngine(options, p);
 
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: '22',
-        },
-      ],
-    };
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: '22',
+          },
+        ],
+      };
 
-    engine.execute(plan).on(e.WORKFLOW_COMPLETE, ({ state, threadId }) => {
-      t.is(state, 22);
-      t.truthy(threadId); // proves (sort of) that this has run in a worker
-      done();
+      engine.execute(plan).on(e.WORKFLOW_COMPLETE, ({ state, threadId }) => {
+        t.is(state, 22);
+        t.truthy(threadId); // proves (sort of) that this has run in a worker
+        done();
+      });
     });
-  });
-});
+  }
+);
 
-test('execute does not return internal state stuff', async (t) => {
+test.serial('execute does not return internal state stuff', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
     engine = await createEngine(options, p);
@@ -134,7 +136,7 @@ test('execute does not return internal state stuff', async (t) => {
   });
 });
 
-test('listen to workflow-complete', async (t) => {
+test.serial('listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
     engine = await createEngine(options, p);
@@ -159,7 +161,7 @@ test('listen to workflow-complete', async (t) => {
   });
 });
 
-test('call listen before execute', async (t) => {
+test.serial('call listen before execute', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
     engine = await createEngine(options, p);
@@ -183,7 +185,7 @@ test('call listen before execute', async (t) => {
   });
 });
 
-test('catch and emit errors', async (t) => {
+test.serial('catch and emit errors', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
     engine = await createEngine(options, p);
@@ -197,7 +199,6 @@ test('catch and emit errors', async (t) => {
       ],
     };
 
-    
     engine.listen(plan.id, {
       [e.WORKFLOW_ERROR]: ({ message }) => {
         t.is(message, 'test');
@@ -209,7 +210,7 @@ test('catch and emit errors', async (t) => {
   });
 });
 
-test('timeout the whole attempt and emit an error', async (t) => {
+test.serial('timeout the whole attempt and emit an error', async (t) => {
   return new Promise(async (done) => {
     const p = path.resolve('src/test/worker-functions.js');
     engine = await createEngine(options, p);
