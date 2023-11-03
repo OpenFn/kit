@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Added docker image and bin stub
 - Destroy workers on close
 - Updated dependencies
   - @openfn/engine-multi@0.1.1
