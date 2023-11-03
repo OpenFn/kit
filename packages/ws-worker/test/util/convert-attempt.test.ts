@@ -333,3 +333,47 @@ test('convert two linked jobs with a disabled edge', (t) => {
     ],
   });
 });
+
+test('convert edge condition on_job_success', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
+    triggers: [],
+    edges: [createEdge('a', 'b', { condition: 'on_job_success' })],
+  };
+  const { plan } = convertAttempt(attempt as Attempt);
+
+  const [job] = plan.jobs;
+
+  t.truthy(job.next?.b);
+  t.is(job.next.b.condition, '!state.errors');
+});
+
+test('convert edge condition on_job_failure', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
+    triggers: [],
+    edges: [createEdge('a', 'b', { condition: 'on_job_failure' })],
+  };
+  const { plan } = convertAttempt(attempt as Attempt);
+
+  const [job] = plan.jobs;
+
+  t.truthy(job.next?.b);
+  t.is(job.next.b.condition, 'state.errors');
+});
+
+test('convert edge condition always', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
+    triggers: [],
+    edges: [createEdge('a', 'b', { condition: 'always' })],
+  };
+  const { plan } = convertAttempt(attempt as Attempt);
+
+  const [job] = plan.jobs;
+
+  t.false(job.next.b.hasOwnProperty('condition'));
+});

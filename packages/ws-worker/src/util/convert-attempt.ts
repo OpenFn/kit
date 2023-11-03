@@ -7,6 +7,19 @@ import type {
 } from '@openfn/runtime';
 import { Attempt, AttemptOptions } from '../types';
 
+const conditions: Record<string, any> = {
+  on_job_success: '!state.errors',
+  on_job_failure: 'state.errors',
+  always: null,
+};
+
+const mapEdgeCondition = (condition: string) => {
+  if (condition in conditions) {
+    return conditions[condition];
+  }
+  return condition;
+};
+
 export default (
   attempt: Attempt
 ): { plan: ExecutionPlan; options: AttemptOptions } => {
@@ -75,8 +88,10 @@ export default (
         .filter((e) => e.source_job_id === id)
         .reduce((obj, edge) => {
           const newEdge: JobEdge = {};
-          if (edge.condition) {
-            newEdge.condition = edge.condition;
+
+          const condition = mapEdgeCondition(edge.condition);
+          if (condition) {
+            newEdge.condition = condition;
           }
           if (edge.enabled === false) {
             newEdge.disabled = true;
