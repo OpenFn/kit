@@ -13,8 +13,8 @@ const conditions: Record<string, any> = {
   always: null,
 };
 
-const mapEdgeCondition = (condition: string) => {
-  if (condition in conditions) {
+const mapEdgeCondition = (condition?: string) => {
+  if (condition && condition in conditions) {
     return conditions[condition];
   }
   return condition;
