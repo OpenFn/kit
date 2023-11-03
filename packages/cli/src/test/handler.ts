@@ -53,16 +53,9 @@ const testHandler = async (options: TestOptions, logger: Logger) => {
     logger.debug('eg: -S "{ "data": { "answer": 33 }  }"');
   }
 
-  const silentLogger = createNullLogger();
-
-  const state = await loadState(opts, silentLogger);
+  const state = await loadState(opts, createNullLogger());
   const code = await compile(opts, logger);
-  const result = await execute(
-    code!,
-    state,
-    opts as ExecuteOptions,
-    silentLogger
-  );
+  const result = await execute(code!, state, opts as ExecuteOptions);
   logger.success(`Result: ${result.data.answer}`);
   return result;
 };

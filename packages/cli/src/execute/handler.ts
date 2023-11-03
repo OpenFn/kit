@@ -55,7 +55,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   }
 
   try {
-    const result = await execute(input!, state, options, logger);
+    const result = await execute(input!, state, options);
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     if (result.errors) {
