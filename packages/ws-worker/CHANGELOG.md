@@ -1,5 +1,14 @@
 # ws-worker
 
+## 0.1.2
+
+### Patch Changes
+
+- f241348: Make destroy async
+- Updated dependencies [d255f32]
+- Updated dependencies [f241348]
+  - @openfn/engine-multi@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
