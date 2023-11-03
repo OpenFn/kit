@@ -14,9 +14,9 @@ let lightning;
 let worker;
 let engine;
 
-test.afterEach(() => {
+test.afterEach(async () => {
   lightning.destroy();
-  worker.destroy();
+  await worker.destroy();
 });
 
 const initLightning = () => {
@@ -380,7 +380,6 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     let results = {};
 
     initLightning();
-
     lightning.on('attempt:complete', (evt) => {
       const id = evt.attemptId;
       results[id] = lightning.getResult(id);
@@ -392,7 +391,6 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
         t.is(one.threadId, two.threadId);
 
         t.not(one.clientId, two.clientId);
-
         done();
       }
     });

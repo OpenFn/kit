@@ -142,10 +142,10 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       });
   });
 
-  app.destroy = () => {
+  app.destroy = async () => {
     logger.info('Closing server...');
     server.close();
-    engine.destroy();
+    await engine.destroy();
     app.killWorkloop?.();
     logger.success('Server closed');
   };
