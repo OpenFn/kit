@@ -108,7 +108,7 @@ test('loads a module from a path', async (t) => {
 test('imports with a cacheKey', async (t) => {
   const opts = {
     ...options,
-    cacheKey: 'abc'
+    cacheKey: 'abc',
   };
   const m = await linker('ultimate-answer', context, opts);
   t.assert(m.namespace.default === 43);
@@ -120,9 +120,9 @@ test('modules will be cached by default', async (t) => {
 
   t.is(m1.namespace.getNumber(), 20);
 
-  const result = m1.namespace.increment()
+  const result = m1.namespace.increment();
 
-  t.is(result, 21)
+  t.is(result, 21);
 
   const m2 = await linker(modulePath, context, options);
 
@@ -134,20 +134,20 @@ test('cachekey busts the module cache', async (t) => {
 
   const opts1 = {
     ...options,
-    cacheKey: 'a'
-  }
+    cacheKey: 'a',
+  };
   const m1 = await linker(modulePath, context, opts1);
 
   t.is(m1.namespace.getNumber(), 20);
 
-  const result = m1.namespace.increment()
+  const result = m1.namespace.increment();
 
-  t.is(result, 21)
+  t.is(result, 21);
 
   const opts2 = {
     ...options,
-    cacheKey: 'b'
-  }
+    cacheKey: 'b',
+  };
   const m2 = await linker(modulePath, context, opts2);
 
   t.is(m2.namespace.getNumber(), 20);
@@ -176,6 +176,7 @@ test('does not throw if a partial whitelisted value is passed', async (t) => {
 
 test("Throws if it can't find a module", async (t) => {
   await t.throwsAsync(() => linker('err', context, options), {
-    message: 'Failed to load module "err"',
+    message: 'Failed to import module "err"',
+    name: 'ImportError',
   });
 });

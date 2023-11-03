@@ -102,6 +102,9 @@ const executeJob = async (
         continue;
       }
       if (typeof edge === 'object') {
+        if (edge.disabled || !edge.condition) {
+          continue;
+        }
         if (typeof edge.condition === 'function') {
           try {
             if (!edge.condition(result)) {
@@ -110,8 +113,6 @@ const executeJob = async (
           } catch (e: any) {
             throw new EdgeConditionError(e.message);
           }
-        } else if (edge.disabled || !edge.condition) {
-          continue;
         }
       }
       next.push(nextJobId);

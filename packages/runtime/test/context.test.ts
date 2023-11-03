@@ -39,13 +39,11 @@ test("doesn't allow process inside the job", async (t) => {
     ];`;
 
   const state = createState();
-  const result = await run(job, state, { logger });
 
-  t.truthy(result);
-  const err = result.errors['job-1'];
-  t.truthy(err);
-  t.is(err.message, 'process is not defined');
-  t.is(err.name, 'ReferenceError');
+  await t.throwsAsync(() => run(job, state, { logger }), {
+    name: 'RuntimeError',
+    message: 'ReferenceError: process is not defined',
+  });
 });
 
 test("doesn't allow eval inside a job", async (t) => {
@@ -56,13 +54,10 @@ test("doesn't allow eval inside a job", async (t) => {
     ];`;
 
   const state = createState();
-  const result = await run(job, state, { logger });
-
-  t.truthy(result);
-  const err = result.errors['job-1'];
-  t.truthy(err);
-  t.is(err.message, 'Code generation from strings disallowed for this context');
-  t.is(err.name, 'EvalError');
+  await t.throwsAsync(() => run(job, state, { logger }), {
+    name: 'SecurityError',
+    message: /Illegal eval statement detected/,
+  });
 });
 
 // TODO exhaustive test of globals?

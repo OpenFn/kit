@@ -347,7 +347,8 @@ test('Throws after custom timeout', async (t) => {
   });
   const state = createState();
   await t.throwsAsync(async () => execute(context, job, state), {
-    message: 'timeout',
+    message: 'Job took longer than 10ms to complete',
+    name: 'TimeoutError',
   });
 });
 

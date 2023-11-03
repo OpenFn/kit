@@ -662,7 +662,9 @@ test('handle non-standard error objects', async (t) => {
   };
   const result = await execute(plan, {}, mockLogger);
   t.truthy(result.errors);
-  t.is(result.errors.a.error, 'wibble');
+  const err = result.errors.a;
+  t.is(err.name, 'UserError');
+  t.is(err.message, 'wibble');
 });
 
 test('keep executing after an error', async (t) => {
@@ -755,12 +757,10 @@ test('jobs do not share a local scope', async (t) => {
       },
     ],
   };
-  const result = await execute(plan, {}, mockLogger);
-
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, 'x is not defined');
-  t.is(err.name, 'ReferenceError');
+  await t.throwsAsync(() => execute(plan, {}, mockLogger), {
+    message: 'ReferenceError: x is not defined',
+    name: 'RuntimeError',
+  });
 });
 
 test('jobs do not share a global scope', async (t) => {
@@ -779,12 +779,11 @@ test('jobs do not share a global scope', async (t) => {
       },
     ],
   };
-  const result = await execute(plan, {}, mockLogger);
 
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, 'x is not defined');
-  t.is(err.name, 'ReferenceError');
+  await t.throwsAsync(() => execute(plan, {}, mockLogger), {
+    message: 'ReferenceError: x is not defined',
+    name: 'RuntimeError',
+  });
 });
 
 test('jobs do not share a this object', async (t) => {
@@ -803,12 +802,10 @@ test('jobs do not share a this object', async (t) => {
       },
     ],
   };
-  const result = await execute(plan, {}, mockLogger);
-
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, "Cannot read properties of undefined (reading 'x')");
-  t.is(err.name, 'TypeError');
+  await t.throwsAsync(() => execute(plan, {}, mockLogger), {
+    message: "TypeError: Cannot set properties of undefined (setting 'x')",
+    name: 'RuntimeError',
+  });
 });
 
 // TODO this fails right now
@@ -986,11 +983,10 @@ test('jobs cannot pass functions to each other', async (t) => {
     ],
   };
 
-  const result = await execute(plan, {}, mockLogger);
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, 's.data.x is not a function');
-  t.is(err.name, 'TypeError');
+  await t.throwsAsync(() => execute(plan, {}, mockLogger), {
+    message: 'TypeError: s.data.x is not a function',
+    name: 'RuntimeError',
+  });
 });
 
 test('Plans log for each job start and end', async (t) => {
