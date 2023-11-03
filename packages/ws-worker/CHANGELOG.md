@@ -1,5 +1,15 @@
 # ws-worker
 
+## 0.2.0
+
+### Minor Changes
+
+- 4766331: Added docker image and bin stub
+
+### Patch Changes
+
+- Map edge conditions
+
 ## 0.1.1
 
 ### Patch Changes
