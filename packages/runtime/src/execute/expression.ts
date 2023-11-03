@@ -10,6 +10,8 @@ import {
   AdaptorError,
   InputError,
   RuntimeError,
+  SecurityError,
+  TimeoutError,
   UserError,
   isAdaptorError,
   isRuntimeError,
@@ -52,7 +54,7 @@ export default (
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
         logger.error('  Set a different timeout by passing "-t 10000" ms)');
-        reject(Error(ERR_TIMEOUT));
+        reject(new TimeoutError(timeout));
       }, timeout);
 
       // Note that any errors will be trapped by the containing Job
@@ -73,8 +75,9 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
-      //console.log(e);
-      if (e.severity && e.source) {
+      if (e.constructor.name === 'EvalError') {
+        reject(new SecurityError('Illegal eval statement detected'));
+      } else if (e.severity && e.source) {
         // If the error is already handled, just throw it
         reject(e);
       } else if (isRuntimeError(e)) {
@@ -82,7 +85,6 @@ export default (
       } else if (isAdaptorError(e)) {
         reject(new AdaptorError(e));
       } else {
-        //  This is a fail!
         reject(new UserError(e));
       }
     }

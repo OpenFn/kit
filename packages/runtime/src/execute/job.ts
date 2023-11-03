@@ -10,6 +10,7 @@ import type {
   JobNodeID,
   State,
 } from '../types';
+import { EdgeConditionError } from '../errors';
 
 const loadCredentials = async (
   job: CompiledJobNode,
@@ -88,8 +89,6 @@ const executeJob = async (
       logger.error(`Failed job ${job.id} after ${duration}`);
       report(state, job.id, e);
 
-      // TODO this will break, like, everything
-      // yay
       if (e.severity === 'crash') {
         throw e;
       }
@@ -102,9 +101,16 @@ const executeJob = async (
       if (!edge) {
         continue;
       }
-      if (typeof edge == 'object') {
-        // TODO need to catch edge condition errors! V important
-        if (edge.disabled || !edge.condition || !edge.condition(result)) {
+      if (typeof edge === 'object') {
+        if (typeof edge.condition === 'function') {
+          try {
+            if (!edge.condition(result)) {
+              continue;
+            }
+          } catch (e: any) {
+            throw new EdgeConditionError(e.message);
+          }
+        } else if (edge.disabled || !edge.condition) {
           continue;
         }
       }

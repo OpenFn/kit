@@ -45,7 +45,7 @@ const linker: Linker = async (specifier, context, options = {}) => {
   log.debug(`[linker] loading module ${specifier}`);
 
   if (whitelist && !whitelist.find((r) => r.exec(specifier))) {
-    throw new Error(`Error: module blacklisted: ${specifier}`);
+    throw new ImportError(`module blacklisted: ${specifier}`);
   }
 
   const exports = await loadActualModule(specifier, options);

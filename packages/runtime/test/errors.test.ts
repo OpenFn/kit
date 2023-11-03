@@ -1,42 +1,31 @@
 import test from 'ava';
 import path from 'node:path';
 import run from '../src/runtime';
-import { RuntimeError } from '../src/errors';
 
-/**
-  reproduce various errors and test how the runtime responds
-  it should basically throw with a set of expected error cases
-  
-  InputError - the workflow structure failed validation
-  RuntimeError - error while executing. This could have a subtype like TypeError, ReferenceError
-                 It is a bit of a confusing name, is  JobError, ExpressionError or ExeuctionError better?
-  CompileError - error while compiling code, probably a syntax error
-  LinkerError - basically a problem loading any dependency (probably the adaptor)
-                ModuleError? DependencyError? ImportError?
-  TimeoutError - a job ran for too long
-  ResolveError - a state or credential resolver failed (is this an input error?)
-  
-  what about code generation errors? That'll be a RuntimeError, should we treat it spedcially?
-  SecurityError maybe?
-
-  Note that there are errors we can't catch here, like memory or diskspace blowups, infinite loops.
-  It's the worker's job to catch those and report the crash
-
-  We'll have a RuntimeError type which has as reason string (that gets forwarded to the worker)
-  a type and subtype, and a message
-
-  Later we'll do stacktraces and positions and stuff but not now. Maybe for a JobError I guess?
- */
-
-test.todo('eval/codegen');
-test.todo("linker error (load a module we don't have)");
-test.todo('timeout');
-test.todo('input errors');
+// This is irrelevant now as state and credentials are preloaded
+test.todo('lazy state & credential loading');
 
 // TODO I don't like the way ANY of these errors serialize
-// Which is quite importnat for the CLI and for lightning
+// Which is quite important for the CLI and for lightning
 // Also this is raising the spectre of stack traces, which I don't particularly
 // want to get into right now
+
+test('crash on timeout', async (t) => {
+  const expression = 'export default [(s) => new Promise((resolve) => {})]';
+
+  let error;
+  try {
+    await run(expression, {}, { timeout: 1 });
+  } catch (e) {
+    console.log(e);
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.name, 'TimeoutError');
+  t.is(error.message, 'Job took longer than 1ms to complete');
+});
 
 test('crash on runtime error with SyntaxError', async (t) => {
   const expression = 'export default [(s) => ~@]2q1j]';
@@ -53,9 +42,6 @@ test('crash on runtime error with SyntaxError', async (t) => {
   t.is(error.subtype, 'SyntaxError');
   t.is(error.message, 'SyntaxError: Invalid or unexpected token');
 });
-
-// this is a syntax error too
-//const expression = 'export default [(s) => throw new Error("abort")]';
 
 test('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
@@ -114,6 +100,51 @@ test('crash on runtime error with RangeError', async (t) => {
   );
 });
 
+test('crash on eval with SecurityError', async (t) => {
+  const expression = 'export default [(s) => eval("process.exit()")]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.name, 'SecurityError');
+  t.is(error.message, 'Illegal eval statement detected');
+});
+
+test('crash on edge condition error with EdgeConditionError', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        id: 'a',
+        next: {
+          b: {
+            // Will throw a reference error
+            condition: 'wibble',
+          },
+        },
+      },
+      { id: 'b' },
+    ],
+  };
+
+  let error;
+  try {
+    await run(workflow);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'EdgeConditionError');
+  t.is(error.message, 'wibble is not defined');
+});
+
 test.todo('crash on input error if a function is passed with forceSandbox');
 
 // I think I'm gonna keep this broad for now, not catch too many cases
@@ -135,7 +166,29 @@ test('crash on import error: module path provided', async (t) => {
   t.is(error.message, 'Failed to import module "blah"');
 });
 
-test.todo('crash on blacklisted module');
+test('crash on blacklisted module', async (t) => {
+  const expression = 'import x from "blah"; export default [(s) => x]';
+
+  let error;
+  try {
+    await run(
+      expression,
+      {},
+      {
+        linker: {
+          whitelist: [/^@opennfn/],
+        },
+      }
+    );
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.name, 'ImportError');
+  t.is(error.message, 'module blacklisted: blah');
+});
 
 test('fail on user error with new Error()', async (t) => {
   const expression = 'export default [(s) => {throw new Error("abort")}]';

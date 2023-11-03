@@ -99,6 +99,21 @@ export class RuntimeError extends Error {
   // }
 }
 
+export class EdgeConditionError extends Error {
+  source = 'runtime';
+
+  severity = 'crash';
+
+  type = 'EdgeConditionError';
+
+  message: string;
+
+  constructor(message: string) {
+    super();
+    this.message = message;
+  }
+}
+
 export class InputError extends Error {
   source = 'runtime';
 
@@ -134,6 +149,7 @@ export class AdaptorError extends Error {
 }
 
 // custom user error trow new Error() or throw {}
+// Maybe JobError or Expression Error?
 export class UserError extends Error {
   name = 'UserError';
   source = 'runtime';
@@ -164,5 +180,32 @@ export class ImportError extends Error {
     Error.captureStackTrace(this, ImportError.constructor);
 
     this.message = message;
+  }
+}
+
+// Eval (and maybe other security stuff)
+export class SecurityError extends Error {
+  name = 'SecurityError';
+  source = 'runtime';
+  severity = 'crash';
+  message: string;
+  constructor(message: string) {
+    super();
+    Error.captureStackTrace(this, SecurityError.constructor);
+
+    this.message = message;
+  }
+}
+
+export class TimeoutError extends Error {
+  name = 'TimeoutError';
+  source = 'runtime';
+  severity = 'crash';
+  message: string;
+  constructor(duration: number) {
+    super();
+    Error.captureStackTrace(this, TimeoutError.constructor);
+
+    this.message = `Job took longer than ${duration}ms to complete`;
   }
 }
