@@ -1,3 +1,4 @@
+import { ValidationError } from '../errors';
 import { ExecutionPlan, JobNode } from '../types';
 
 type ModelNode = {
@@ -43,7 +44,7 @@ export const buildModel = (plan: ExecutionPlan) => {
   const validateJob = (jobId: string) => {
     const next = jobIdx[jobId];
     if (!next) {
-      throw new Error(`Cannot find job: ${jobId}`);
+      throw new ValidationError(`Cannot find job: ${jobId}`);
     }
   };
 
@@ -72,7 +73,7 @@ export const buildModel = (plan: ExecutionPlan) => {
 const assertStart = (plan: ExecutionPlan) => {
   if (typeof plan.start === 'string') {
     if (!plan.jobs.find(({ id }) => id == plan.start)) {
-      throw new Error(`Could not find start job: ${plan.start}`);
+      throw new ValidationError(`Could not find start job: ${plan.start}`);
     }
   }
 };
@@ -90,7 +91,9 @@ const assertNoCircularReferences = (model: Model) => {
     const stream = node[key];
     for (const nextId in stream) {
       if (nextId === targetId) {
-        throw new Error(`Circular dependency: ${from} <-> ${targetId}`);
+        throw new ValidationError(
+          `Circular dependency: ${from} <-> ${targetId}`
+        );
       }
       search(nextId, targetId, key);
     }
@@ -105,7 +108,7 @@ const assertSingletonDependencies = (model: Model) => {
   for (const id in model) {
     const node = model[id];
     if (Object.keys(node.up).length > 1) {
-      throw new Error(`Multiple dependencies detected for: ${id}`);
+      throw new ValidationError(`Multiple dependencies detected for: ${id}`);
     }
   }
 };

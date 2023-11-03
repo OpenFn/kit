@@ -70,6 +70,18 @@ export class RTError extends Error {
   }
 }
 
+// Error thrown when validating a workflow (or something else?)
+// TODO we should take a path to the invalid bit
+export class ValidationError extends RTError {
+  severity = 'crash';
+  name = 'ValidationError';
+
+  constructor(message: string) {
+    super();
+    this.message = message;
+  }
+}
+
 // Generic runtime execution error
 // This is a wrapper around any node/js error thrown during execution
 // Should log without stack trace, with RuntimeError type,

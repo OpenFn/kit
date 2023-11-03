@@ -185,7 +185,7 @@ test.serial(
           error: {},
           jobId: 'start',
           message: 'abort',
-          name: 'Error',
+          name: 'UserError',
         },
       },
     });

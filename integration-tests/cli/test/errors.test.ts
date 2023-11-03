@@ -122,6 +122,7 @@ test.serial('invalid start', async (t) => {
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /Invalid workflow/i);
+  assertLog(t, stdlogs, /Error validating execution plan/i);
   assertLog(t, stdlogs, /could not find start job: nope/i);
+  assertLog(t, stdlogs, /Workflow failed/i);
 });

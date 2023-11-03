@@ -18,8 +18,9 @@ const executePlan = async (
     validatePlan(plan);
     compiledPlan = compilePlan(plan);
   } catch (e: any) {
-    // If the plan is invalid, abort before trying to execute
-    // TODO wrap in input error
+    logger.error('Error validating execution plan');
+    logger.error(e);
+    logger.error('Aborting');
     throw e;
   }
 
