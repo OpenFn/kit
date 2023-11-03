@@ -5,11 +5,6 @@ import run from '../src/runtime';
 // This is irrelevant now as state and credentials are preloaded
 test.todo('lazy state & credential loading');
 
-// TODO I don't like the way ANY of these errors serialize
-// Which is quite important for the CLI and for lightning
-// Also this is raising the spectre of stack traces, which I don't particularly
-// want to get into right now
-
 test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
@@ -17,7 +12,6 @@ test('crash on timeout', async (t) => {
   try {
     await run(expression, {}, { timeout: 1 });
   } catch (e) {
-    console.log(e);
     error = e;
   }
 
@@ -39,6 +33,7 @@ test('crash on runtime error with SyntaxError', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
+  t.is(error.name, 'RuntimeError');
   t.is(error.subtype, 'SyntaxError');
   t.is(error.message, 'SyntaxError: Invalid or unexpected token');
 });
@@ -50,13 +45,14 @@ test('crash on runtime error with ReferenceError', async (t) => {
   try {
     await run(expression);
   } catch (e) {
-    // console.log(e);
+    // console.log(e)
     // console.log(e.toString());
     error = e;
   }
 
   // t.true(error instanceof RuntimeError);
   t.is(error.severity, 'crash');
+  t.is(error.name, 'RuntimeError');
   t.is(error.subtype, 'ReferenceError');
   t.is(error.message, 'ReferenceError: x is not defined');
 });
@@ -73,6 +69,7 @@ test('crash on runtime error with TypeError', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
+  t.is(error.name, 'RuntimeError');
   t.is(error.subtype, 'TypeError');
   t.is(
     error.message,
@@ -93,6 +90,7 @@ test('crash on runtime error with RangeError', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
+  t.is(error.name, 'RuntimeError');
   t.is(error.subtype, 'RangeError');
   t.is(
     error.message,
@@ -141,7 +139,7 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
-  t.is(error.type, 'EdgeConditionError');
+  t.is(error.name, 'EdgeConditionError');
   t.is(error.message, 'wibble is not defined');
 });
 

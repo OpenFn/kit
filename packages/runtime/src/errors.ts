@@ -42,70 +42,53 @@ export function isAdaptorError(e: any) {
   return false;
 }
 
+// Abstract error supertype
+export class RTError extends Error {
+  source = 'runtime';
+  includeStackTrace = false;
+  name: string = 'JAM';
+
+  constructor() {
+    super();
+
+    // automatically limit the stacktrace (?)
+    Error.captureStackTrace(this, RTError.constructor);
+
+    // Provide custom rendering of the error in node
+    // TODO we should include some kind of context where it makes sense
+    // eg, if the error is associated with a job, show the job code
+    // eg, if the error came from an expression, show the source and location
+    // eg, if this came from our code, it doesn't help the user to see it but it does help us!
+    // @ts-ignore
+    this[util.inspect.custom] = (_depth, _options, _inspect) => {
+      const str = `[${this.name}] ${this.message}`;
+
+      // TODO include stack trace if the error demands it
+
+      return str;
+    };
+  }
+}
+
 // Generic runtime execution error
 // This is a wrapper around any node/js error thrown during execution
 // Should log without stack trace, with RuntimeError type,
 // and with a message (including subtype)
-export class RuntimeError extends Error {
-  source = 'runtime';
-
+export class RuntimeError extends RTError {
   severity = 'crash';
-
+  subtype: string;
   name = 'RuntimeError';
 
-  subtype = 'unknown';
-
-  // error: Error;
-
-  // stackTraceLimit = -1;
-
-  // We want to get a stack trace relative to user code, not runtime code, for these
   constructor(error: Error) {
     super();
-
-    // hack to stop a stack trace being generated
-    // const { stackTraceLimit } = Error;
-    // Error.stackTraceLimit = 0;
-    // super();
-    // Error.stackTraceLimit = stackTraceLimit;
-    // console.log(error);
-
-    // this.stack = 'wibble'; // clear the stack
-
-    Error.captureStackTrace(this, RuntimeError.constructor);
-
     this.subtype = error.constructor.name;
-    // this.error = error;
-    // this.name = 'RuntimeError';
     this.message = `${this.subtype}: ${error.message}`;
   }
-
-  // get [Symbol.toStringTag]() {
-  //   return 'bar';
-  // }
-
-  // This is how we customise the error's logging in node
-  // TODO how does this affect json logging?
-  // Maybe we can provide a toJSON?
-  // TODO why does this not get called when I extend error?
-  // [util.inspect.custom](_depth, _options, _inspect) {
-  //   // console.log(depth);
-  //   // console.log(options);
-
-  //   // TODO we should report
-  //   const str = `[${this.name}] ${this.subtype}: ${this.message}`;
-
-  //   return str;
-  // }
 }
 
-export class EdgeConditionError extends Error {
-  source = 'runtime';
-
+export class EdgeConditionError extends RTError {
   severity = 'crash';
-
-  type = 'EdgeConditionError';
-
+  name = 'EdgeConditionError';
   message: string;
 
   constructor(message: string) {
@@ -114,13 +97,9 @@ export class EdgeConditionError extends Error {
   }
 }
 
-export class InputError extends Error {
-  source = 'runtime';
-
+export class InputError extends RTError {
   severity = 'crash';
-
-  type = 'InputError';
-
+  name = 'InputError';
   message: string;
 
   constructor(message: string) {
@@ -129,16 +108,12 @@ export class InputError extends Error {
   }
 }
 
-// How would we know if an error came from an adaptor?
-export class AdaptorError extends Error {
+export class AdaptorError extends RTError {
   name = 'AdaptorError';
-  source = 'runtime';
   severity = 'fail';
   message: string = '';
   constructor(error: any) {
     super();
-    // TODO we want the stack trace from the vm downwards
-    Error.captureStackTrace(this, AdaptorError.constructor);
 
     if (typeof error === 'string') {
       this.message = error;
@@ -150,14 +125,12 @@ export class AdaptorError extends Error {
 
 // custom user error trow new Error() or throw {}
 // Maybe JobError or Expression Error?
-export class UserError extends Error {
+export class UserError extends RTError {
   name = 'UserError';
-  source = 'runtime';
   severity = 'fail';
   message: string = '';
   constructor(error: any) {
     super();
-    Error.captureStackTrace(this, UserError.constructor);
 
     if (typeof error === 'string') {
       this.message = error;
@@ -170,42 +143,33 @@ export class UserError extends Error {
 // Import error represents some kind of fail importing a module/adaptor
 // The message will add context
 // Some of these may need a stack trace for admins (but not for users)
-export class ImportError extends Error {
+export class ImportError extends RTError {
   name = 'ImportError';
-  source = 'runtime';
   severity = 'crash';
   message: string;
   constructor(message: string) {
     super();
-    Error.captureStackTrace(this, ImportError.constructor);
-
     this.message = message;
   }
 }
 
 // Eval (and maybe other security stuff)
-export class SecurityError extends Error {
+export class SecurityError extends RTError {
   name = 'SecurityError';
-  source = 'runtime';
   severity = 'crash';
   message: string;
   constructor(message: string) {
     super();
-    Error.captureStackTrace(this, SecurityError.constructor);
-
     this.message = message;
   }
 }
 
-export class TimeoutError extends Error {
+export class TimeoutError extends RTError {
   name = 'TimeoutError';
-  source = 'runtime';
   severity = 'crash';
   message: string;
   constructor(duration: number) {
     super();
-    Error.captureStackTrace(this, TimeoutError.constructor);
-
     this.message = `Job took longer than ${duration}ms to complete`;
   }
 }
