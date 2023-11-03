@@ -65,7 +65,7 @@ export default function initWorkers(
 
     // Defer the return to allow workerpool to close down
     return new Promise((done) => {
-      setTimeout(done, 100);
+      setTimeout(done, 20);
     });
   };
 }

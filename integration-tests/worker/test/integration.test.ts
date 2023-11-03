@@ -380,11 +380,8 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     let results = {};
 
     initLightning();
-    console.log('>> naughty test: 1)', attempt1.id);
-    console.log('>> naughty test: 2)', attempt2.id);
     lightning.on('attempt:complete', (evt) => {
       const id = evt.attemptId;
-      console.log('>>> completed naughty test', id);
       results[id] = lightning.getResult(id);
 
       if (id === attempt2.id) {
