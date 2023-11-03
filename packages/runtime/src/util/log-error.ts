@@ -4,7 +4,7 @@ import { ErrorReport, JobNodeID, State } from '../types';
 export type ErrorReporter = (
   state: State,
   jobId: JobNodeID,
-  error: NodeJS.ErrnoException
+  error: NodeJS.ErrnoException & { severity?: string; handled?: boolean }
 ) => ErrorReport;
 
 const createErrorReporter = (logger: Logger): ErrorReporter => {
@@ -22,6 +22,10 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       report.stack = error.stack as string;
     }
 
+    if (error.severity === 'crash') {
+      logger.error('CRITICAL ERROR! Aborting execution');
+    }
+
     if (report.message) {
       logger.error(
         `${report.code || report.name || 'error'}: ${report.message}`
@@ -29,10 +33,12 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.debug(error); // TODO the logger doesn't handle this very well
     } else {
       // This catches if a non-Error object is thrown, ie, `throw "e"`
-      logger.error('ERROR:', error);
+      logger.error(error);
     }
 
-    logger.error(`Check state.errors.${jobId} for details.`);
+    if (error.severity === 'fail') {
+      logger.error(`Check state.errors.${jobId} for details.`);
+    }
 
     if (!state.errors) {
       state.errors = {};
