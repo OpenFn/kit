@@ -7,25 +7,31 @@ type ExtendedModuleInfo = ModuleInfo & {
   name: string;
 };
 
-// Call's runtime.run
-// This may throw in the event of a crash
 export default async (
   input: string | ExecutionPlan,
   state: any,
   opts: Omit<ExecuteOptions, 'jobPath'>
-): Promise<any> =>
-  run(input, state, {
-    strict: opts.strict,
-    start: opts.start,
-    timeout: opts.timeout,
-    immutableState: opts.immutable,
-    logger: createLogger(RUNTIME, opts),
-    jobLogger: createLogger(JOB, opts),
-    linker: {
-      repo: opts.repoDir,
-      modules: parseAdaptors(opts),
-    },
-  });
+): Promise<any> => {
+  try {
+    const result = await run(input, state, {
+      strict: opts.strict,
+      start: opts.start,
+      timeout: opts.timeout,
+      immutableState: opts.immutable,
+      logger: createLogger(RUNTIME, opts),
+      jobLogger: createLogger(JOB, opts),
+      linker: {
+        repo: opts.repoDir,
+        modules: parseAdaptors(opts),
+      },
+    });
+    return result;
+  } catch (e: any) {
+    // Any error coming out of the runtime should be handled and reported already
+    e.handled = true;
+    throw e;
+  }
+};
 
 // TODO we should throw if the adaptor strings are invalid for any reason
 export function parseAdaptors(
