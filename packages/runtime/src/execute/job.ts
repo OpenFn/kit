@@ -103,6 +103,7 @@ const executeJob = async (
         continue;
       }
       if (typeof edge == 'object') {
+        // TODO need to catch edge condition errors! V important
         if (edge.disabled || !edge.condition || !edge.condition(result)) {
           continue;
         }
