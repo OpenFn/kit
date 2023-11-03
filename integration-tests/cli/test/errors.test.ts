@@ -98,8 +98,11 @@ test.serial('circular workflow', async (t) => {
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /Invalid workflow/i);
-  assertLog(t, stdlogs, /circular dependency: b <-> a/i);
+  assertLog(t, stdlogs, /Error validating execution plan/i);
+  assertLog(t, stdlogs, /Workflow failed/i);
+
+  const error = stdlogs.find((l) => l.message[0].severity);
+  t.regex(error.message[0].message, /circular dependency: b <-> a/i);
 });
 
 test.serial('multiple inputs', async (t) => {
@@ -110,8 +113,11 @@ test.serial('multiple inputs', async (t) => {
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /Invalid workflow/i);
-  assertLog(t, stdlogs, /multiple dependencies detected for: c/i);
+  assertLog(t, stdlogs, /Error validating execution plan/i);
+  assertLog(t, stdlogs, /Workflow failed/i);
+
+  const error = stdlogs.find((l) => l.message[0].severity);
+  t.regex(error.message[0].message, /multiple dependencies detected for: c/i);
 });
 
 test.serial('invalid start', async (t) => {
@@ -123,6 +129,9 @@ test.serial('invalid start', async (t) => {
   const stdlogs = extractLogs(stdout);
 
   assertLog(t, stdlogs, /Error validating execution plan/i);
-  assertLog(t, stdlogs, /could not find start job: nope/i);
   assertLog(t, stdlogs, /Workflow failed/i);
+
+  // Find the error obejct which is logged out
+  const error = stdlogs.find((l) => l.message[0].severity);
+  t.regex(error.message[0].message, /could not find start job: nope/i);
 });
