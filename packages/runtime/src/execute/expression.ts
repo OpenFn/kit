@@ -2,7 +2,7 @@ import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
 import { Operation, JobModule, State, ExecutionContext } from '../types';
-import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
+import { Options, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
