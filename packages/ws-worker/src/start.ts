@@ -59,8 +59,8 @@ const args = yargs(hideBin(process.argv))
     type: 'boolean',
   })
   .option('backoff', {
-    description: 'Claim backoff rules: min/max (ms)',
-    default: '1000/10000',
+    description: 'Claim backoff rules: min/max (s)',
+    default: '1/10',
   })
   .parse() as Args;
 
@@ -83,7 +83,9 @@ if (args.lightning === 'mock') {
 }
 const [minBackoff, maxBackoff] = args.backoff
   .split('/')
-  .map((n: string) => parseInt(n, 10));
+  .map((n: string) => parseInt(n, 10) * 1000);
+
+console.log(minBackoff, maxBackoff);
 
 function engineReady(engine: any) {
   createWorker(engine, {
