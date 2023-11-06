@@ -14,6 +14,7 @@ type WorkerEvent = {
 };
 
 type WorkerOptions = {
+  purge?: boolean;
   minWorkers?: number;
   maxWorkers?: number;
   env?: any;
@@ -47,14 +48,16 @@ export default function initWorkers(
       promise.timeout(timeout);
     }
 
-    promise.then(() => {
-      const { pendingTasks } = workers.stats();
-      if (pendingTasks == 0) {
-        logger?.debug('Purging workers');
-        api.emit(PURGE);
-        workers.terminate();
-      }
-    });
+    if (options.purge) {
+      promise.then(() => {
+        const { pendingTasks } = workers.stats();
+        if (pendingTasks == 0) {
+          logger?.debug('Purging workers');
+          api.emit(PURGE);
+          workers.terminate();
+        }
+      });
+    }
 
     return promise;
   };

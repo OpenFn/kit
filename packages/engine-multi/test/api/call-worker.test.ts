@@ -12,7 +12,7 @@ let api = new EventEmitter() as EngineAPI;
 const workerPath = path.resolve('src/test/worker-functions.js');
 
 test.before(() => {
-  initWorkers(api, workerPath);
+  initWorkers(api, workerPath, { purge: true });
 });
 
 test.after(() => api.closeWorkers());

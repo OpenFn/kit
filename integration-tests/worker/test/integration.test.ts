@@ -358,6 +358,7 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),
       maxWorkers: 1,
+      purge: false,
     };
 
     const attempt1 = {

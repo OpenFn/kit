@@ -79,6 +79,8 @@ export type EngineOptions = {
 
   // Timeout for the whole workflow
   timeout?: number;
+
+  purge?: boolean;
 };
 
 export type ExecuteOptions = {
@@ -127,6 +129,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     {
       minWorkers: options.minWorkers,
       maxWorkers: options.maxWorkers,
+      purge: options.purge,
     },
     options.logger
   );
