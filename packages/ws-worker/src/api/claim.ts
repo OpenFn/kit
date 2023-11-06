@@ -12,6 +12,11 @@ const claim = (
   logger: Logger = mockLogger
 ) => {
   return new Promise<void>((resolve, reject) => {
+    // If the server is at capacity, throw
+    // This will increment the timeout duration
+    // So a busy server may well hit max timeout while jobs complete
+    // A good optimisation here is to reset the workloop or something when the job is complete
+    // Or, kill the workloop, listen for the next complete or error event, and restart it
     logger.debug('requesting attempt...');
     channel
       .push<CLAIM_PAYLOAD>(CLAIM, { demand: 1 })
