@@ -205,7 +205,7 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<GetCredentialPayload>
   ) {
-    const { ref, join_ref, topic, payload } = evt;
+    const { ref, join_ref, topic } = evt;
     ws.reply<GetCredentialReply>({
       ref,
       join_ref,
