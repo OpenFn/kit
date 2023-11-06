@@ -8,7 +8,7 @@ import { RuntimeEngine } from '@openfn/engine-multi';
 
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
-import { execute } from './api/execute';
+import { Context, execute } from './api/execute';
 import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
@@ -33,6 +33,7 @@ interface ServerApp extends Koa {
   id: string;
   socket: any;
   channel: any;
+  workflows: Record<string, Context>;
 
   execute: ({ id, token }: CLAIM_ATTEMPT) => Promise<void>;
   destroy: () => void;
@@ -120,6 +121,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
+  app.workflows = {};
+
   const server = app.listen(port);
   logger.success(`ws-worker ${app.id} listening on ${port}`);
 
@@ -132,7 +135,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         plan,
         options,
       } = await joinAttemptChannel(app.socket, token, id, logger);
-      execute(attemptChannel, engine, logger, plan, options);
+      const context = execute(attemptChannel, engine, logger, plan, options);
+      app.workflows[id] = context;
     } else {
       logger.error('No lightning socket established');
       // TODO something else. Throw? Emit?
