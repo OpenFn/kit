@@ -22,8 +22,14 @@ List any considerations/cases/advice for testing/QA here.
 
 ## Release branch checklist
 
-If this is a release branch:
+Delete this section if this is not a release PR.
 
-- [ ] Ensure versions have been bumped in package.json
-- [ ] Run `pnpm install` after bumping versions
-- [ ] Ensure tags have been pushed
+If this IS a release branch:
+
+- [ ] Run `pnpm changeset` from root to bump versions
+- [ ] Run `pnpm install`
+- [ ] Commit the new version numbers
+- [ ] Run `pnpm changeset tag` to generate tags
+- [ ] Push tags `git push --tags`
+
+Tags may need updating if commits come in after the tags are first generated.
