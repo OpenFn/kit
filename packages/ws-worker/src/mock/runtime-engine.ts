@@ -111,7 +111,7 @@ async function createMock() {
     if (expression?.startsWith?.('wait@')) {
       const [_, delay] = (expression as string).split('@');
       nextState = initialState;
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         setTimeout(() => resolve(), parseInt(delay));
       });
     } else {
