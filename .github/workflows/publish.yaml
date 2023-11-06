@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
@@ -23,9 +23,8 @@ jobs:
       - run: pnpm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: pnpm changeset tag
-      - run: git push --tags
-      - run: pnpm publish -r --report-summary --publish-branch main --access=public
+      - run: pnpm changeset publish --report-summary --publish-branch main --access=public
+      - run: git push --follow-tags
       - run: pnpm run generate-slack-report
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}

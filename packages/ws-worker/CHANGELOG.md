@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.1.4
+
+### Patch Changes
+
+- Accept backoff as startup command
+
 ## 0.1.3
 
 ### Patch Changes

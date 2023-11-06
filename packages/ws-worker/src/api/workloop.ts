@@ -1,5 +1,5 @@
 import { CLAIM_ATTEMPT } from '../events';
-import tryWithBackoff, { Options } from '../util/try-with-backoff';
+import tryWithBackoff from '../util/try-with-backoff';
 
 import type { CancelablePromise, Channel } from '../types';
 import type { Logger } from '@openfn/logger';
@@ -10,7 +10,8 @@ const startWorkloop = (
   channel: Channel,
   execute: (attempt: CLAIM_ATTEMPT) => void,
   logger: Logger,
-  options: Partial<Pick<Options, 'maxBackoff' | 'timeout'>> = {}
+  minBackoff: number,
+  maxBackoff: number
 ) => {
   let promise: CancelablePromise;
   let cancelled = false;
@@ -18,8 +19,8 @@ const startWorkloop = (
   const workLoop = () => {
     if (!cancelled) {
       promise = tryWithBackoff(() => claim(channel, execute, logger), {
-        timeout: options.timeout,
-        maxBackoff: options.maxBackoff,
+        min: minBackoff,
+        max: maxBackoff,
       });
       // TODO this needs more unit tests I think
       promise.then(() => {

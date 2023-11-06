@@ -14,8 +14,6 @@ import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
 
 type ServerOptions = {
-  backoff?: number; // what is this?
-  maxBackoff?: number;
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -23,6 +21,11 @@ type ServerOptions = {
   noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
+
+  backoff?: {
+    min?: number;
+    max?: number;
+  };
 };
 
 // this is the server/koa API
@@ -37,6 +40,8 @@ interface ServerApp extends Koa {
 }
 
 const DEFAULT_PORT = 1234;
+const MIN_BACKOFF = 1000;
+const MAX_BACKOFF = 1000 * 30;
 
 // TODO move out into another file, make testable, test in isolation
 function connect(
@@ -57,12 +62,20 @@ function connect(
 
       // trigger the workloop
       if (!options.noLoop) {
+        if (app.killWorkloop) {
+          logger.info('Terminating old workloop');
+          app.killWorkloop();
+        }
+
         logger.info('Starting workloop');
         // TODO maybe namespace the workloop logger differently? It's a bit annoying
-        app.killWorkloop = startWorkloop(channel, app.execute, logger, {
-          maxBackoff: options.maxBackoff,
-          // timeout: 1000 * 60, // TMP debug poll once per minute
-        });
+        app.killWorkloop = startWorkloop(
+          channel,
+          app.execute,
+          logger,
+          options.backoff?.min || MIN_BACKOFF,
+          options.backoff?.max || MAX_BACKOFF
+        );
       } else {
         logger.break();
         logger.warn('Workloop not starting');
