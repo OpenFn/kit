@@ -1,5 +1,14 @@
 # ws-worker
 
+## 0.1.6
+
+### Patch Changes
+
+- 5037c68: Support maxWorkers flag
+  Enforce minBackoff before claiming the next job
+- Updated dependencies [ac7b0ca]
+  - @openfn/engine-multi@0.1.4
+
 ## 0.1.5
 
 ### Patch Changes

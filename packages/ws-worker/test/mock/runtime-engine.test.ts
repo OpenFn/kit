@@ -85,6 +85,24 @@ test('mock should evaluate expressions as JSON', async (t) => {
   t.deepEqual(evt.state, { x: 10 });
 });
 
+test('mock should wait if expression starts with @wait', async (t) => {
+  const engine = await create();
+  const wf = {
+    id: 'w1',
+    jobs: [
+      {
+        id: 'j1',
+        expression: 'wait@100',
+      },
+    ],
+  } as ExecutionPlan;
+  engine.execute(wf);
+  const start = Date.now();
+  const evt = await waitForEvent<JobCompleteEvent>(engine, 'workflow-complete');
+  const end = Date.now() - start;
+  t.true(end > 90);
+});
+
 test('mock should return initial state as result state', async (t) => {
   const engine = await create();
 

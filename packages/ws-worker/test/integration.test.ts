@@ -24,6 +24,7 @@ test.before(async () => {
     port: 4567,
     lightning: urls.lng,
     secret: 'abc',
+    maxWorkflows: 1,
   });
 });
 
@@ -293,5 +294,82 @@ test.serial(
     });
   }
 );
+
+test('should register and de-register attempts to the server', async (t) => {
+  return new Promise((done) => {
+    const attempt = {
+      id: 'attempt-1',
+      jobs: [
+        {
+          body: JSON.stringify({ count: 122 }),
+        },
+      ],
+    };
+
+    worker.on(e.ATTEMPT_START, () => {
+      t.truthy(worker.workflows[attempt.id]);
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      t.truthy(worker.workflows[attempt.id]);
+      // Tidyup is done AFTER lightning receives the event
+      // This timeout is crude but should work
+      setTimeout(() => {
+        t.falsy(worker.workflows[attempt.id]);
+        done();
+      }, 10);
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
+
+// What I am testing here is that the first job completes
+// before the second job starts
+test('should not claim while at capacity', async (t) => {
+  return new Promise((done) => {
+    const attempt1 = {
+      id: 'attempt-1',
+      jobs: [
+        {
+          body: 'wait@500',
+        },
+      ],
+    };
+
+    const attempt2 = {
+      ...attempt1,
+      id: 'attempt-2',
+    };
+
+    let attempt1Start;
+
+    // When the first attempt starts, we should only have attempt 1 in progress
+    lng.onSocketEvent(e.ATTEMPT_START, attempt1.id, (evt) => {
+      attempt1Start = Date.now();
+
+      t.truthy(worker.workflows[attempt1.id]);
+      t.falsy(worker.workflows[attempt2.id]);
+    });
+
+    // When the second attempt starts, we should only have attempt 2 in progress
+    lng.onSocketEvent(e.ATTEMPT_START, attempt2.id, (evt) => {
+      const duration = Date.now() - attempt1Start;
+      t.true(duration > 490);
+
+      t.falsy(worker.workflows[attempt1.id]);
+      t.truthy(worker.workflows[attempt2.id]);
+
+      // also, the now date should be around 500 ms after the first start
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt2.id, (evt) => {
+      done();
+    });
+
+    lng.enqueueAttempt(attempt1);
+    lng.enqueueAttempt(attempt2);
+  });
+});
 
 test.todo(`should run multiple attempts`);

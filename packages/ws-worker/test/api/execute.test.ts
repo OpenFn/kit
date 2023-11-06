@@ -317,7 +317,7 @@ test('loadCredential should fetch a credential', async (t) => {
   t.deepEqual(state, { apiKey: 'abc' });
 });
 
-test('execute should return the final result', async (t) => {
+test('execute should pass the final result to onComplete', async (t) => {
   const channel = mockChannel(mockEventHandlers);
   const engine = await createMockRTE();
   const logger = createMockLogger();
@@ -331,12 +331,17 @@ test('execute should return the final result', async (t) => {
     ],
   };
 
-  const result = await execute(channel, engine, logger, plan);
+  const options = {};
 
-  t.deepEqual(result, { done: true });
+  return new Promise((done) => {
+    execute(channel, engine, logger, plan, options, (result) => {
+      t.deepEqual(result, { done: true });
+      done();
+    });
+  });
 });
 
-test('execute should feed options to the engine', async (t) => {
+test('execute should return a context object', async (t) => {
   const channel = mockChannel(mockEventHandlers);
   const engine = await createMockRTE();
   const logger = createMockLogger();
@@ -350,19 +355,24 @@ test('execute should feed options to the engine', async (t) => {
     ],
   };
 
-  const options = {
-    throw: true,
-  };
+  const options = {};
 
-  // TODO what do we actually want to do if engine.execute throws?
-  // Need to to someting...
-
-  try {
-    await execute(channel, engine, logger, plan, options);
-  } catch (e) {
-    t.is(e.message, 'test error');
-    t.pass();
-  }
+  return new Promise((done) => {
+    const context = execute(
+      channel,
+      engine,
+      logger,
+      plan,
+      options,
+      (result) => {
+        done();
+      }
+    );
+    t.truthy(context.state);
+    t.deepEqual(context.state.options, options);
+    t.deepEqual(context.channel, channel);
+    t.deepEqual(context.logger, logger);
+  });
 });
 
 // TODO this is more of an engine test really, but worth having I suppose
@@ -390,9 +400,14 @@ test('execute should lazy-load a credential', async (t) => {
     ],
   };
 
-  await execute(channel, engine, logger, plan);
+  const options = {};
 
-  t.true(didCallCredentials);
+  return new Promise((done) => {
+    execute(channel, engine, logger, plan, options, (result) => {
+      t.true(didCallCredentials);
+      done();
+    });
+  });
 });
 
 test('execute should lazy-load initial state', async (t) => {
@@ -420,9 +435,14 @@ test('execute should lazy-load initial state', async (t) => {
     ],
   };
 
-  await execute(channel, engine, logger, plan as ExecutionPlan);
+  const options = {};
 
-  t.true(didCallState);
+  return new Promise((done) => {
+    execute(channel, engine, logger, plan, options, (result) => {
+      t.true(didCallState);
+      done();
+    });
+  });
 });
 
 test('execute should call all events on the socket', async (t) => {
@@ -463,11 +483,14 @@ test('execute should call all events on the socket', async (t) => {
     ],
   };
 
-  await execute(channel, engine, logger, plan);
+  const options = {};
 
-  // check result is what we expect
-
-  // Check that events were passed to the socket
-  // This is deliberately crude
-  t.assert(allEvents.every((e) => events[e]));
+  return new Promise((done) => {
+    execute(channel, engine, logger, plan, options, (result) => {
+      // Check that events were passed to the socket
+      // This is deliberately crude
+      t.assert(allEvents.every((e) => events[e]));
+      done();
+    });
+  });
 });
