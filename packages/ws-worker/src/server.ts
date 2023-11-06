@@ -14,8 +14,6 @@ import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
 
 type ServerOptions = {
-  backoff?: number; // what is this?
-  maxBackoff?: number;
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -23,6 +21,11 @@ type ServerOptions = {
   noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
+
+  backoff?: {
+    min?: number;
+    max?: number;
+  };
 };
 
 // this is the server/koa API
@@ -37,6 +40,8 @@ interface ServerApp extends Koa {
 }
 
 const DEFAULT_PORT = 1234;
+const MIN_BACKOFF = 1000;
+const MAX_BACKOFF = 1000 * 30;
 
 // TODO move out into another file, make testable, test in isolation
 function connect(
