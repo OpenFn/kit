@@ -60,7 +60,7 @@ const args = yargs(hideBin(process.argv))
   })
   .option('backoff', {
     description: 'Claim backoff rules: min/max (ms)',
-    default: '1/10',
+    default: '1000/10000',
   })
   .parse() as Args;
 

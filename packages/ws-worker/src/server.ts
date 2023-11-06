@@ -62,12 +62,20 @@ function connect(
 
       // trigger the workloop
       if (!options.noLoop) {
+        if (app.killWorkloop) {
+          logger.info('Terminating old workloop');
+          app.killWorkloop();
+        }
+
         logger.info('Starting workloop');
         // TODO maybe namespace the workloop logger differently? It's a bit annoying
-        app.killWorkloop = startWorkloop(channel, app.execute, logger, {
-          maxBackoff: options.maxBackoff,
-          // timeout: 1000 * 60, // TMP debug poll once per minute
-        });
+        app.killWorkloop = startWorkloop(
+          channel,
+          app.execute,
+          logger,
+          options.backoff?.min || MIN_BACKOFF,
+          options.backoff?.max || MAX_BACKOFF
+        );
       } else {
         logger.break();
         logger.warn('Workloop not starting');

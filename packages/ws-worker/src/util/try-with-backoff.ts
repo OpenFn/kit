@@ -13,6 +13,9 @@ export type Options = {
   isCancelled?: () => boolean;
 };
 
+// Rate at which timeouts are increased
+const BACKOFF_MULTIPLIER = 1.15;
+
 // This function will try and call its first argument every {opts.timeout|100}ms
 // If the function throws, it will "backoff" and try again a little later
 // Right now it's a bit of a sketch, but it sort of works!
@@ -48,11 +51,11 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
         const nextOpts = {
           maxAttempts,
           attempts: attempts + 1,
-          min: Math.min(max, min * 1.2),
+          min: Math.min(max, min * BACKOFF_MULTIPLIER),
           max: max,
           isCancelled: opts.isCancelled,
         };
-
+        //console.log('trying again in ', nextOpts.min);
         tryWithBackoff(fn, nextOpts).then(resolve).catch(reject);
       }, min);
     }
