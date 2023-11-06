@@ -109,6 +109,9 @@ importers:
       '@openfn/language-common_1.11.1':
         specifier: npm:@openfn/language-common@^1.11.1
         version: /@openfn/language-common@1.11.1
+      is-array_1.0.1:
+        specifier: npm:is-array@^1.0.1
+        version: /is-array@1.0.1
 
   integration-tests/worker:
     dependencies:
@@ -4944,6 +4947,10 @@ packages:
     dependencies:
       kind-of: 6.0.3
     dev: true
+
+  /is-array@1.0.1:
+    resolution: {integrity: sha512-gxiZ+y/u67AzpeFmAmo4CbtME/bs7J2C++su5zQzvQyaxUqVzkh69DI+jN+KZuSO6JaH6TIIU6M6LhqxMjxEpw==}
+    dev: false
 
   /is-arrayish@0.2.1:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==}

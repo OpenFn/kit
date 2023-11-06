@@ -35,6 +35,7 @@ import {
   RunStart,
   RunStartReply,
   RunCompleteReply,
+  ATTEMPT_START,
 } from './events';
 
 import type { Server } from 'http';
@@ -119,6 +120,7 @@ const createSocketAPI = (
 
     const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
       [GET_ATTEMPT]: wrap(getAttempt),
+      [ATTEMPT_START]: wrap(handleStartAttempt),
       [GET_CREDENTIAL]: wrap(getCredential),
       [GET_DATACLIP]: wrap(getDataclip),
       [RUN_START]: wrap(handleRunStart),
@@ -194,6 +196,22 @@ const createSocketAPI = (
       payload: {
         status: 'ok',
         response,
+      },
+    });
+  }
+
+  function handleStartAttempt(
+    _state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<GetCredentialPayload>
+  ) {
+    const { ref, join_ref, topic } = evt;
+    ws.reply<GetCredentialReply>({
+      ref,
+      join_ref,
+      topic,
+      payload: {
+        status: 'ok',
       },
     });
   }

@@ -118,7 +118,7 @@ export function execute(
       addEvent('workflow-start', onWorkflowStart),
       addEvent('job-start', onJobStart),
       addEvent('job-complete', onJobComplete),
-      addEvent('log', onJobLog),
+      addEvent('workflow-log', onJobLog),
       // This will also resolve the promise
       addEvent('workflow-complete', onWorkflowComplete),
 
