@@ -1,5 +1,5 @@
 import { CLAIM_ATTEMPT } from '../events';
-import tryWithBackoff, { Options } from '../util/try-with-backoff';
+import tryWithBackoff from '../util/try-with-backoff';
 
 import type { CancelablePromise, Channel } from '../types';
 import type { Logger } from '@openfn/logger';
