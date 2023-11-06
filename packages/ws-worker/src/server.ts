@@ -13,6 +13,8 @@ import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
 
+import type { Channel } from './types';
+
 type ServerOptions = {
   maxWorkflows?: number;
   port?: number;
@@ -29,11 +31,11 @@ type ServerOptions = {
 };
 
 // this is the server/koa API
-interface ServerApp extends Koa {
+export interface ServerApp extends Koa {
   id: string;
   socket: any;
-  channel: any;
-  workflows: Record<string, Context>;
+  channel: Channel;
+  workflows: Record<string, true | Context>;
 
   execute: ({ id, token }: CLAIM_ATTEMPT) => Promise<void>;
   destroy: () => void;
@@ -71,11 +73,11 @@ function connect(
         logger.info('Starting workloop');
         // TODO maybe namespace the workloop logger differently? It's a bit annoying
         app.killWorkloop = startWorkloop(
-          channel,
-          app.execute,
+          app,
           logger,
           options.backoff?.min || MIN_BACKOFF,
-          options.backoff?.max || MAX_BACKOFF
+          options.backoff?.max || MAX_BACKOFF,
+          options.maxWorkflows
         );
       } else {
         logger.break();
@@ -129,13 +131,28 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: CLAIM_ATTEMPT) => {
     if (app.socket) {
+      app.workflows[id] = true;
+
       // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
       const {
         channel: attemptChannel,
         plan,
         options,
       } = await joinAttemptChannel(app.socket, token, id, logger);
-      const context = execute(attemptChannel, engine, logger, plan, options);
+
+      // Callback to be triggered when the work is done (including errors)
+      const onComplete = () => {
+        delete app.workflows[id];
+      };
+      const context = execute(
+        attemptChannel,
+        engine,
+        logger,
+        plan,
+        options,
+        onComplete
+      );
+
       app.workflows[id] = context;
     } else {
       logger.error('No lightning socket established');
@@ -146,7 +163,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // Debug API to manually trigger a claim
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    return claim(app.channel, app.execute, logger)
+    return claim(app, logger, options.maxWorkflows)
       .then(() => {
         logger.info('claim complete: 1 attempt claimed');
         ctx.body = 'complete';

@@ -106,16 +106,26 @@ async function createMock() {
     dispatch('job-start', { workflowId, jobId, runId });
     info('Running job ' + jobId);
     let nextState = initialState;
-    // Try and parse the expression as JSON, in which case we use it as the final state
-    try {
-      // @ts-ignore
-      nextState = JSON.parse(expression);
-      // What does this look like? Should be a logger object
-      info('Parsing expression as JSON state');
-      info(nextState);
-    } catch (e) {
-      // Do nothing, it's fine
+
+    // @ts-ignore
+    if (expression?.startsWith?.('wait@')) {
+      const [_, delay] = (expression as string).split('@');
       nextState = initialState;
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(), parseInt(delay));
+      });
+    } else {
+      // Try and parse the expression as JSON, in which case we use it as the final state
+      try {
+        // @ts-ignore
+        nextState = JSON.parse(expression);
+        // What does this look like? Should be a logger object
+        info('Parsing expression as JSON state');
+        info(nextState);
+      } catch (e) {
+        // Do nothing, it's fine
+        nextState = initialState;
+      }
     }
 
     dispatch('job-complete', { workflowId, jobId, state: nextState, runId });

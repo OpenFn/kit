@@ -84,6 +84,7 @@ export function execute(
   // a) bind an event handler to a runtime-engine event
   // b) pass the context object into the hander
   // c) log the response from the websocket from lightning
+  // TODO for debugging and monitoring, we should also send events to the worker's event emitter
   const addEvent = (eventName: string, handler: EventHandler) => {
     const wrappedFn = async (event: any) => {
       // @ts-ignore
