@@ -1,5 +1,11 @@
 # engine-multi
 
+## 0.1.3
+
+### Patch Changes
+
+- Export event types
+
 ## 0.1.2
 
 ### Patch Changes

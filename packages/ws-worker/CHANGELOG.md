@@ -1,5 +1,13 @@
 # ws-worker
 
+## 0.1.3
+
+### Patch Changes
+
+- Fix log event mapping
+- Updated dependencies
+  - @openfn/engine-multi@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
