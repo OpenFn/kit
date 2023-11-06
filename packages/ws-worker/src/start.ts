@@ -17,6 +17,7 @@ type Args = {
   log: LogLevel;
   mock: boolean;
   backoff: string;
+  capacity?: number;
 };
 
 const args = yargs(hideBin(process.argv))
@@ -62,6 +63,11 @@ const args = yargs(hideBin(process.argv))
     description: 'Claim backoff rules: min/max (s)',
     default: '1/10',
   })
+  .option('capacity', {
+    description: 'max concurrent workers',
+    default: 5,
+    type: 'number',
+  })
   .parse() as Args;
 
 const logger = createLogger('SRV', { level: args.log });
@@ -99,6 +105,7 @@ function engineReady(engine: any) {
       min: minBackoff,
       max: maxBackoff,
     },
+    maxWorkflows: args.capacity,
   });
 }
 
