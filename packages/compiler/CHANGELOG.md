@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.0.38
+
+### Patch Changes
+
+- Updated dependencies [ca701e8]
+  - @openfn/logger@0.0.19
+
 ## 0.0.37
 
 ### Patch Changes

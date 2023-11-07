@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 0.0.19
+
+### Patch Changes
+
+- ca701e8: Log json with high-resolution timestamp
+
 ## 0.0.18
 
 ### Patch Changes

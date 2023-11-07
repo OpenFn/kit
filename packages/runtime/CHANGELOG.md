@@ -1,5 +1,12 @@
 # @openfn/runtime
 
+## 0.0.33
+
+### Patch Changes
+
+- Updated dependencies [ca701e8]
+  - @openfn/logger@0.0.19
+
 ## 0.0.32
 
 ### Patch Changes
