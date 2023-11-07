@@ -178,7 +178,7 @@ test.serial('log events are timestamped in hr time', async (t) => {
 
   // Note: The time we get here is NOT a bigint because it's been serialized
   t.true(typeof time === 'string');
-  t.is(time.length, 16);
+  t.is(time.length, 19);
 });
 
 test.serial('should emit error on timeout', async (t) => {
