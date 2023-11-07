@@ -16,7 +16,7 @@ export const JOB_START = 'job-start';
 
 export const JOB_COMPLETE = 'job-complete';
 
-// TO be fair this is just a log, not neccesarily a workflow log
+// TODO To be fair this is just a log, not neccesarily a workflow log
 // A log line may have a workflow and job id
 export const WORKFLOW_LOG = 'workflow-log';
 

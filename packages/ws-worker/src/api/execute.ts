@@ -93,7 +93,6 @@ export function execute(
         await handler(context, event);
         logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
       } catch (e: any) {
-        console.log(e);
         logger.error(
           `${plan.id} :: ${lightningEvent} :: ERR: ${e.message || e.toString()}`
         );
