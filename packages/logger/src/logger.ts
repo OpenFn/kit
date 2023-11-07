@@ -49,7 +49,7 @@ export type JSONLog = {
   message: Array<string | object | any>;
   level: LogFns;
   name?: string;
-  time: bigint;
+  time: string;
 };
 
 export type StringLog = [LogFns | 'confirm' | 'print', ...any];
@@ -175,16 +175,10 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       level,
       name,
       message,
-      time: hrtimestamp(),
+      time: hrtimestamp().toString(),
     };
 
-    const replacer = (_key: string, value: any) => {
-      if (typeof value === 'bigint') {
-        return value.toString();
-      }
-      return value;
-    };
-    emitter[level](stringify(output, replacer));
+    emitter[level](stringify(output));
   };
 
   const logString = (
