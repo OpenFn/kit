@@ -62,6 +62,8 @@ const createAPI = async function (options: RTEOptions = {}) {
 
     minWorkers: options.minWorkers,
     maxWorkers: options.maxWorkers,
+
+    purge: options.hasOwnProperty('purge') ? options.purge : true,
   };
 
   // Note that the engine here always uses the standard worker, the real one

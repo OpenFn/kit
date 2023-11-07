@@ -1,5 +1,20 @@
 # @openfn/lightning-mock
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [ac7b0ca]
+  - @openfn/engine-multi@0.1.4
+
+## 1.0.4
+
+### Patch Changes
+
+- 06f2f75: Acknowledge attempt start
+- Updated dependencies
+  - @openfn/engine-multi@0.1.3
+
 ## 1.0.3
 
 ### Patch Changes

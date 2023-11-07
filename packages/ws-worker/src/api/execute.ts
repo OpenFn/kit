@@ -39,7 +39,7 @@ export type AttemptState = {
   lastDataclipId?: string;
 };
 
-type Context = {
+export type Context = {
   channel: Channel;
   state: AttemptState;
   logger: Logger;
@@ -62,101 +62,94 @@ export function execute(
   engine: RuntimeEngine,
   logger: Logger,
   plan: ExecutionPlan,
-  options: AttemptOptions = {}
+  options: AttemptOptions = {},
+  onComplete = (_result: any) => {}
 ) {
-  return new Promise(async (resolve, reject) => {
-    logger.info('execute...');
+  logger.info('execute...');
 
-    const state: AttemptState = {
-      plan,
-      // set the result data clip id (which needs renaming)
-      // to the initial state
-      lastDataclipId: plan.initialState as string | undefined,
-      dataclips: {},
-      options,
+  const state: AttemptState = {
+    plan,
+    // set the result data clip id (which needs renaming)
+    // to the initial state
+    lastDataclipId: plan.initialState as string | undefined,
+    dataclips: {},
+    options,
+  };
+
+  const context: Context = { channel, state, logger, onComplete };
+
+  type EventHandler = (context: any, event: any) => void;
+
+  // Utility function to:
+  // a) bind an event handler to a runtime-engine event
+  // b) pass the context object into the hander
+  // c) log the response from the websocket from lightning
+  // TODO for debugging and monitoring, we should also send events to the worker's event emitter
+  const addEvent = (eventName: string, handler: EventHandler) => {
+    const wrappedFn = async (event: any) => {
+      // @ts-ignore
+      const lightningEvent = eventMap[eventName];
+      try {
+        await handler(context, event);
+        logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
+      } catch (e: any) {
+        logger.error(
+          `${plan.id} :: ${lightningEvent} :: ERR: ${e.message || e.toString()}`
+        );
+        logger.error(e);
+      }
     };
-
-    const context: Context = { channel, state, logger, onComplete: resolve };
-
-    type EventHandler = (context: any, event: any) => void;
-
-    // Utility function to:
-    // a) bind an event handler to a runtime-engine event
-    // b) pass the context object into the hander
-    // c) log the response from the websocket from lightning
-    const addEvent = (eventName: string, handler: EventHandler) => {
-      const wrappedFn = async (event: any) => {
-        // @ts-ignore
-        const lightningEvent = eventMap[eventName];
-        try {
-          await handler(context, event);
-          logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
-        } catch (e: any) {
-          logger.error(
-            `${plan.id} :: ${lightningEvent} :: ERR: ${
-              e.message || e.toString()
-            }`
-          );
-          logger.error(e);
-        }
-      };
-      return {
-        [eventName]: wrappedFn,
-      };
+    return {
+      [eventName]: wrappedFn,
     };
+  };
 
-    // TODO we should wait for each event to complete before sending the next one
-    // Eg wait for a large dataclip to upload back to lightning before starting the next job
-    // should we actually defer exeuction, or just the reporting?
-    // Does it matter if logs aren't sent back in order?
-    // There are some practical requirements
-    // like we can't post a log until the job start has been acknowledged by Lightning
-    // (ie until the run was created at lightning's end)
-    // that probably means we need to cache here rather than slow down the runtime?
-    const listeners = Object.assign(
-      {},
-      addEvent('workflow-start', onWorkflowStart),
-      addEvent('job-start', onJobStart),
-      addEvent('job-complete', onJobComplete),
-      addEvent('log', onJobLog),
-      // This will also resolve the promise
-      addEvent('workflow-complete', onWorkflowComplete),
+  const listeners = Object.assign(
+    {},
+    addEvent('workflow-start', onWorkflowStart),
+    addEvent('job-start', onJobStart),
+    addEvent('job-complete', onJobComplete),
+    addEvent('workflow-log', onJobLog),
+    // This will also resolve the promise
+    addEvent('workflow-complete', onWorkflowComplete),
 
-      addEvent('workflow-error', onWorkflowError)
+    addEvent('workflow-error', onWorkflowError)
 
-      // TODO send autoinstall logs
-      // are these associated with a workflow...?
-      // well, I guess they can be!
-      // Or is this just a log?
-      // Or a generic metric?
-    );
-    engine.listen(plan.id!, listeners);
+    // TODO send autoinstall logs
+  );
+  engine.listen(plan.id!, listeners);
 
-    const resolvers = {
-      credential: (id: string) => loadCredential(channel, id),
+  const resolvers = {
+    credential: (id: string) => loadCredential(channel, id),
 
-      // TODO not supported right now
-      // dataclip: (id: string) => loadDataclip(channel, id),
-    } as Resolvers;
+    // TODO not supported right now
+    // dataclip: (id: string) => loadDataclip(channel, id),
+  } as Resolvers;
 
-    // TODO we nede to remove this from here nad let the runtime take care of it through
-    // the resolver. See https://github.com/OpenFn/kit/issues/403
-    if (typeof plan.initialState === 'string') {
-      logger.debug('loading dataclip', plan.initialState);
-      plan.initialState = await loadDataclip(channel, plan.initialState);
-      logger.success('dataclip loaded');
-      logger.debug(plan.initialState);
-    }
+  Promise.resolve()
+    // Optionally resolve initial state
+    .then(async () => {
+      // TODO we need to remove this from here nad let the runtime take care of it through
+      // the resolver. See https://github.com/OpenFn/kit/issues/403
+      if (typeof plan.initialState === 'string') {
+        logger.debug('loading dataclip', plan.initialState);
+        plan.initialState = await loadDataclip(channel, plan.initialState);
+        logger.success('dataclip loaded');
+        logger.debug(plan.initialState);
+      }
+      return plan;
+    })
+    // Execute (which we have to wrap in a promise chain to handle initial state)
+    .then(() => {
+      try {
+        engine.execute(plan, { resolvers, ...options });
+      } catch (e: any) {
+        // TODO what if there's an error?
+        onWorkflowError(context, { workflowId: plan.id!, message: e.message });
+      }
+    });
 
-    try {
-      engine.execute(plan, { resolvers, ...options });
-    } catch (e: any) {
-      // TODO what if there's an error?
-      onWorkflowError(context, { workflowId: plan.id!, message: e.message });
-      // are we sure we want to re-throw?
-      reject(e);
-    }
-  });
+  return context;
 }
 
 // async/await wrapper to push to a channel

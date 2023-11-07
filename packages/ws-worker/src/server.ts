@@ -8,14 +8,14 @@ import { RuntimeEngine } from '@openfn/engine-multi';
 
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
-import { execute } from './api/execute';
+import { Context, execute } from './api/execute';
 import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
 import { CLAIM_ATTEMPT } from './events';
 
+import type { Channel } from './types';
+
 type ServerOptions = {
-  backoff?: number; // what is this?
-  maxBackoff?: number;
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -23,13 +23,19 @@ type ServerOptions = {
   noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
+
+  backoff?: {
+    min?: number;
+    max?: number;
+  };
 };
 
 // this is the server/koa API
-interface ServerApp extends Koa {
+export interface ServerApp extends Koa {
   id: string;
   socket: any;
-  channel: any;
+  channel: Channel;
+  workflows: Record<string, true | Context>;
 
   execute: ({ id, token }: CLAIM_ATTEMPT) => Promise<void>;
   destroy: () => void;
@@ -37,6 +43,8 @@ interface ServerApp extends Koa {
 }
 
 const DEFAULT_PORT = 1234;
+const MIN_BACKOFF = 1000;
+const MAX_BACKOFF = 1000 * 30;
 
 // TODO move out into another file, make testable, test in isolation
 function connect(
@@ -57,12 +65,20 @@ function connect(
 
       // trigger the workloop
       if (!options.noLoop) {
+        if (app.killWorkloop) {
+          logger.info('Terminating old workloop');
+          app.killWorkloop();
+        }
+
         logger.info('Starting workloop');
         // TODO maybe namespace the workloop logger differently? It's a bit annoying
-        app.killWorkloop = startWorkloop(channel, app.execute, logger, {
-          maxBackoff: options.maxBackoff,
-          // timeout: 1000 * 60, // TMP debug poll once per minute
-        });
+        app.killWorkloop = startWorkloop(
+          app,
+          logger,
+          options.backoff?.min || MIN_BACKOFF,
+          options.backoff?.max || MAX_BACKOFF,
+          options.maxWorkflows
+        );
       } else {
         logger.break();
         logger.warn('Workloop not starting');
@@ -107,19 +123,37 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
+  app.workflows = {};
+
   const server = app.listen(port);
   logger.success(`ws-worker ${app.id} listening on ${port}`);
 
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: CLAIM_ATTEMPT) => {
     if (app.socket) {
+      app.workflows[id] = true;
+
       // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
       const {
         channel: attemptChannel,
         plan,
         options,
       } = await joinAttemptChannel(app.socket, token, id, logger);
-      execute(attemptChannel, engine, logger, plan, options);
+
+      // Callback to be triggered when the work is done (including errors)
+      const onComplete = () => {
+        delete app.workflows[id];
+      };
+      const context = execute(
+        attemptChannel,
+        engine,
+        logger,
+        plan,
+        options,
+        onComplete
+      );
+
+      app.workflows[id] = context;
     } else {
       logger.error('No lightning socket established');
       // TODO something else. Throw? Emit?
@@ -129,7 +163,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // Debug API to manually trigger a claim
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    return claim(app.channel, app.execute, logger)
+    return claim(app, logger, options.maxWorkflows)
       .then(() => {
         logger.info('claim complete: 1 attempt claimed');
         ctx.body = 'complete';

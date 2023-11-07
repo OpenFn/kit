@@ -1,19 +1,20 @@
 import { Logger, createMockLogger } from '@openfn/logger';
-import { CLAIM, CLAIM_ATTEMPT, CLAIM_PAYLOAD, CLAIM_REPLY } from '../events';
+import { CLAIM, CLAIM_PAYLOAD, CLAIM_REPLY } from '../events';
 
-import type { Channel } from '../types';
+import type { ServerApp } from '../server';
 
 const mockLogger = createMockLogger();
 
 // TODO: this needs standalone unit tests now that it's bene moved
-const claim = (
-  channel: Channel,
-  execute: (attempt: CLAIM_ATTEMPT) => void,
-  logger: Logger = mockLogger
-) => {
+const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
   return new Promise<void>((resolve, reject) => {
+    const activeWorkers = Object.keys(app.workflows).length;
+    if (activeWorkers >= maxWorkers) {
+      return reject(new Error('Server at capacity'));
+    }
+
     logger.debug('requesting attempt...');
-    channel
+    app.channel
       .push<CLAIM_PAYLOAD>(CLAIM, { demand: 1 })
       .receive('ok', ({ attempts }: CLAIM_REPLY) => {
         logger.debug(`pulled ${attempts.length} attempts`);
@@ -22,12 +23,12 @@ const claim = (
 
         if (!attempts?.length) {
           // throw to backoff and try again
-          return reject(new Error('claim failed'));
+          return reject(new Error('No attempts returned'));
         }
 
         attempts.forEach((attempt) => {
           logger.debug('starting attempt', attempt.id);
-          execute(attempt);
+          app.execute(attempt);
           resolve();
         });
       });

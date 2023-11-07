@@ -85,6 +85,24 @@ test('mock should evaluate expressions as JSON', async (t) => {
   t.deepEqual(evt.state, { x: 10 });
 });
 
+test('mock should wait if expression starts with @wait', async (t) => {
+  const engine = await create();
+  const wf = {
+    id: 'w1',
+    jobs: [
+      {
+        id: 'j1',
+        expression: 'wait@100',
+      },
+    ],
+  } as ExecutionPlan;
+  engine.execute(wf);
+  const start = Date.now();
+  const evt = await waitForEvent<JobCompleteEvent>(engine, 'workflow-complete');
+  const end = Date.now() - start;
+  t.true(end > 90);
+});
+
 test('mock should return initial state as result state', async (t) => {
   const engine = await create();
 
@@ -124,7 +142,7 @@ test('mock should dispatch log events when evaluating JSON', async (t) => {
   const engine = await create();
 
   const logs = [];
-  engine.on('log', (l) => {
+  engine.on('workflow-log', (l) => {
     logs.push(l);
   });
 
@@ -139,7 +157,7 @@ test('mock should throw if the magic option is passed', async (t) => {
   const engine = await create();
 
   const logs = [];
-  engine.on('log', (l) => {
+  engine.on('workflow-log', (l) => {
     logs.push(l);
   });
 
@@ -175,7 +193,7 @@ test('listen to events', async (t) => {
   const called = {
     'job-start': false,
     'job-complete': false,
-    log: false,
+    'workflow-log': false,
     'workflow-start': false,
     'workflow-complete': false,
   };
@@ -192,8 +210,8 @@ test('listen to events', async (t) => {
       t.is(jobId, sampleWorkflow.jobs[0].id);
       // TODO includes state?
     },
-    log: ({ workflowId, message }) => {
-      called['log'] = true;
+    'workflow-log': ({ workflowId, message }) => {
+      called['workflow-log'] = true;
       t.is(workflowId, sampleWorkflow.id);
       t.truthy(message);
     },
@@ -247,14 +265,14 @@ test('do nothing for a job if no expression and adaptor (trigger node)', async (
     'job-complete': () => {
       didCallEvent = true;
     },
-    log: () => {
-      didCallEvent = true;
-    },
-    'workflow-start': () => {
+    'workflow-log': () => {
       // this can be called
     },
+    'workflow-start': () => {
+      // ditto
+    },
     'workflow-complete': () => {
-      // and this
+      // ditto
     },
   });
 

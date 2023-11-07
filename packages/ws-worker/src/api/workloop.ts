@@ -1,30 +1,30 @@
-import { CLAIM_ATTEMPT } from '../events';
-import tryWithBackoff, { Options } from '../util/try-with-backoff';
-
-import type { CancelablePromise, Channel } from '../types';
-import type { Logger } from '@openfn/logger';
-
+import tryWithBackoff from '../util/try-with-backoff';
 import claim from './claim';
 
+import type { ServerApp } from '../server';
+import type { CancelablePromise } from '../types';
+import type { Logger } from '@openfn/logger';
+
 const startWorkloop = (
-  channel: Channel,
-  execute: (attempt: CLAIM_ATTEMPT) => void,
+  app: ServerApp,
   logger: Logger,
-  options: Partial<Pick<Options, 'maxBackoff' | 'timeout'>> = {}
+  minBackoff: number,
+  maxBackoff: number,
+  maxWorkers?: number
 ) => {
   let promise: CancelablePromise;
   let cancelled = false;
 
   const workLoop = () => {
     if (!cancelled) {
-      promise = tryWithBackoff(() => claim(channel, execute, logger), {
-        timeout: options.timeout,
-        maxBackoff: options.maxBackoff,
+      promise = tryWithBackoff(() => claim(app, logger, maxWorkers), {
+        min: minBackoff,
+        max: maxBackoff,
       });
       // TODO this needs more unit tests I think
       promise.then(() => {
         if (!cancelled) {
-          workLoop();
+          setTimeout(workLoop, minBackoff);
         }
       });
     }

@@ -1,17 +1,17 @@
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { ExecutionPlan, JobNode } from '@openfn/runtime';
-import type { Resolvers } from '@openfn/engine-multi';
+import * as engine from '@openfn/engine-multi';
 import type { State } from '../types';
 import mockResolvers from './resolvers';
 
 export type EngineEvent =
-  | 'job-start'
-  | 'job-complete'
-  | 'log' // this is a log from inside the VM
-  | 'workflow-start' // before compile
-  | 'workflow-complete' // after everything has run
-  | 'workflow-error'; // ?
+  | typeof engine.JOB_COMPLETE
+  | typeof engine.JOB_START
+  | typeof engine.WORKFLOW_COMPLETE
+  | typeof engine.WORKFLOW_ERROR
+  | typeof engine.WORKFLOW_LOG
+  | typeof engine.WORKFLOW_START;
 
 export type JobStartEvent = {
   workflowId: string;
@@ -72,7 +72,7 @@ async function createMock() {
     workflowId: string,
     job: JobNode,
     initialState = {},
-    resolvers: Resolvers = mockResolvers
+    resolvers: engine.Resolvers = mockResolvers
   ) => {
     const { id, expression, configuration, adaptor } = job;
 
@@ -92,7 +92,7 @@ async function createMock() {
     }
 
     const info = (...message: any[]) => {
-      dispatch('log', {
+      dispatch('workflow-log', {
         workflowId,
         message: message,
         level: 'info',
@@ -106,16 +106,26 @@ async function createMock() {
     dispatch('job-start', { workflowId, jobId, runId });
     info('Running job ' + jobId);
     let nextState = initialState;
-    // Try and parse the expression as JSON, in which case we use it as the final state
-    try {
-      // @ts-ignore
-      nextState = JSON.parse(expression);
-      // What does this look like? Should be a logger object
-      info('Parsing expression as JSON state');
-      info(nextState);
-    } catch (e) {
-      // Do nothing, it's fine
+
+    // @ts-ignore
+    if (expression?.startsWith?.('wait@')) {
+      const [_, delay] = (expression as string).split('@');
       nextState = initialState;
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), parseInt(delay));
+      });
+    } else {
+      // Try and parse the expression as JSON, in which case we use it as the final state
+      try {
+        // @ts-ignore
+        nextState = JSON.parse(expression);
+        // What does this look like? Should be a logger object
+        info('Parsing expression as JSON state');
+        info(nextState);
+      } catch (e) {
+        // Do nothing, it's fine
+        nextState = initialState;
+      }
     }
 
     dispatch('job-complete', { workflowId, jobId, state: nextState, runId });
@@ -127,7 +137,7 @@ async function createMock() {
   // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
   const execute = (
     xplan: ExecutionPlan,
-    options: { resolvers?: Resolvers; throw?: boolean } = {
+    options: { resolvers?: engine.Resolvers; throw?: boolean } = {
       resolvers: mockResolvers,
     }
   ) => {

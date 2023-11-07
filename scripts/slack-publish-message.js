@@ -17,13 +17,6 @@ const getEngineeringMessage = (changes) => {
         text: `🚀 *New Releases in kit*`,
       },
     },
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: 'Update the CLI with with `npm -g install @openfn/cli`',
-      },
-    },
     // TODO I'd like to link to a full changelog but we don't really have one
   ];
 

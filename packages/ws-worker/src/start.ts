@@ -16,6 +16,8 @@ type Args = {
   loop?: boolean;
   log: LogLevel;
   mock: boolean;
+  backoff: string;
+  capacity?: number;
 };
 
 const args = yargs(hideBin(process.argv))
@@ -57,6 +59,15 @@ const args = yargs(hideBin(process.argv))
     default: false,
     type: 'boolean',
   })
+  .option('backoff', {
+    description: 'Claim backoff rules: min/max (s)',
+    default: '1/10',
+  })
+  .option('capacity', {
+    description: 'max concurrent workers',
+    default: 5,
+    type: 'number',
+  })
   .parse() as Args;
 
 const logger = createLogger('SRV', { level: args.log });
@@ -76,6 +87,11 @@ if (args.lightning === 'mock') {
 
   args.secret = WORKER_SECRET;
 }
+const [minBackoff, maxBackoff] = args.backoff
+  .split('/')
+  .map((n: string) => parseInt(n, 10) * 1000);
+
+console.log(minBackoff, maxBackoff);
 
 function engineReady(engine: any) {
   createWorker(engine, {
@@ -84,6 +100,12 @@ function engineReady(engine: any) {
     logger,
     secret: args.secret,
     noLoop: !args.loop,
+    // TODO need to feed this through properly
+    backoff: {
+      min: minBackoff,
+      max: maxBackoff,
+    },
+    maxWorkflows: args.capacity,
   });
 }
 

@@ -1,5 +1,17 @@
 # engine-multi
 
+## 0.1.4
+
+### Patch Changes
+
+- ac7b0ca: Add purge option
+
+## 0.1.3
+
+### Patch Changes
+
+- Export event types
+
 ## 0.1.2
 
 ### Patch Changes
