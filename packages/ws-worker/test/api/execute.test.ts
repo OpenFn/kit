@@ -42,7 +42,7 @@ const mockEventHandlers = {
 };
 
 // This is a nonsense timestamp but it's fine for the test (and easy to convert)
-const getBigIntTimestamp = () => (BigInt(Date.now()) * BigInt(1e3)).toString();
+const getBigIntTimestamp = () => (BigInt(Date.now()) * BigInt(1e6)).toString();
 
 test('send event should resolve when the event is acknowledged', async (t) => {
   const channel = mockChannel({
@@ -183,14 +183,15 @@ test('jobLog should should send a log event outside a run', async (t) => {
     message: ['ping'],
   };
 
-  t.is(log.time.length, 16);
+  // The logger should print in nanoseconds (19 digits)
+  t.is(log.time.length, 19);
 
   const result = {
     attempt_id: plan.id,
     message: log.message,
     // Conveniently this won't have rounding errors because the last
     // 3 digits are always 000, because of how we generate the stamp above
-    timestamp: log.time.substring(0, 13),
+    timestamp: log.time.substring(0, 16),
     level: log.level,
     source: log.name,
   };
@@ -220,6 +221,9 @@ test('jobLog should should send a log event inside a run', async (t) => {
     message: ['ping'],
   };
 
+  // The logger should print in nanoseconds (19 digits)
+  t.is(log.time.length, 19);
+
   const state = {
     plan,
     activeJob: jobId,
@@ -232,7 +236,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
       t.deepEqual(evt.message, log.message);
       t.is(evt.level, log.level);
       t.is(evt.source, log.name);
-      t.is(evt.timestamp, log.time.substring(0, 13));
+      t.is(evt.timestamp, log.time.substring(0, 16));
     },
   });
 
