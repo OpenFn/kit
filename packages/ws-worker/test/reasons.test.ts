@@ -40,7 +40,7 @@ test.after(async () => engine.destroy());
 
 // Wrap up an execute call, capture the on complete state
 const execute = async (plan) =>
-  new Promise((done) => {
+  new Promise<{ reason: string; state: any }>((done) => {
     // Ignore all channel events
     // In these test we assume that the correct messages are sent to the channel
     const channel = mockChannel({
@@ -68,4 +68,13 @@ test('ok', async (t) => {
 
   const { reason } = await execute(plan);
   t.is(reason, 'ok');
+});
+
+test('fail', async (t) => {
+  const plan = createPlan({
+    expression: 'export default [(s) => ({ errors: { "a": "err" } })]',
+  });
+
+  const { reason } = await execute(plan);
+  t.is(reason, 'fail');
 });

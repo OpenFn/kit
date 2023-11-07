@@ -177,6 +177,9 @@ export function onJobStart({ channel, state }: Context, event: any) {
   });
 }
 
+// OK, what we need to do now is:
+// a) generate a reason string for the job
+// b) save the reason for each job to state for later
 export function onJobComplete({ channel, state }: Context, event: any) {
   const dataclipId = crypto.randomUUID();
 
@@ -215,17 +218,24 @@ export function onWorkflowStart(
   return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
 }
 
+// TODO what this needs to do is look at all the job states
+// find the higher priority
+// And retturn that as the highest exit reason
 export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
-  const reason = 'ok';
+  const result = state.dataclips[state.lastDataclipId!];
+
+  let reason = 'ok';
+  if (result.errors) {
+    reason = 'fail';
+  }
 
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
     reason,
   });
-  const result = state.dataclips[state.lastDataclipId!];
   onComplete({ reason, state: result });
 }
 
