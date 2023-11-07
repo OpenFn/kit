@@ -26,8 +26,8 @@ let engine;
 let logger;
 
 test.before(async () => {
-  //logger = createMockLogger();
-  logger = createLogger(null, { level: 'debug' });
+  logger = createMockLogger();
+  // logger = createLogger(null, { level: 'debug' });
 
   engine = await createRTE({
     maxWorkers: 1,
@@ -35,6 +35,8 @@ test.before(async () => {
     logger,
   });
 });
+
+test.after(async () => engine.destroy());
 
 // Wrap up an execute call, capture the on complete state
 const execute = async (plan) =>
@@ -50,16 +52,11 @@ const execute = async (plan) =>
     });
 
     const onComplete = (result) => {
-      console.log(' >>>>>> RESULT ');
-      // wait is there a reason here?
-      // there is not...
-      // but we can pass it, no biggity
-
       done(result);
     };
 
     // @ts-ignore
-    doExecute(channel, engine, logger, plan, { onComplete });
+    doExecute(channel, engine, logger, plan, {}, onComplete);
   });
 
 test('ok', async (t) => {
@@ -69,8 +66,6 @@ test('ok', async (t) => {
 
   plan.initialState = { data: { result: 42 } };
 
-  const result = await execute(plan);
-  console.log(result);
-  const { reason } = result;
+  const { reason } = await execute(plan);
   t.is(reason, 'ok');
 });

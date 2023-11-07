@@ -219,16 +219,13 @@ export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
-  console.log(' **** ON WORKFLOW COMPLETE');
   const reason = 'ok';
 
-  // await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
-  //   final_dataclip_id: state.lastDataclipId!,
-  //   reason,
-  // });
-  console.log(onComplete);
+  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+    final_dataclip_id: state.lastDataclipId!,
+    reason,
+  });
   const result = state.dataclips[state.lastDataclipId!];
-  console.log(result);
   onComplete({ reason, state: result });
 }
 
