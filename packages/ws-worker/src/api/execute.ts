@@ -226,15 +226,17 @@ export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
+  console.log(' **** ON WORKFLOW COMPLETE');
+  const reason = 'ok';
+
+  // await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+  //   final_dataclip_id: state.lastDataclipId!,
+  //   reason,
+  // });
+  console.log(onComplete);
   const result = state.dataclips[state.lastDataclipId!];
-
-  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
-    final_dataclip_id: state.lastDataclipId!,
-    status: 'success', // TODO
-    reason: 'ok', // Also TODO
-  });
-
-  onComplete(result);
+  console.log(result);
+  onComplete({ reason, state: result });
 }
 
 // On errorr, for now, we just post to workflow complete
