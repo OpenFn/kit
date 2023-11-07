@@ -217,7 +217,7 @@ test(`JSON timestamps are bigints representing sensible times`, (t) => {
   const { time } = JSON.parse(logger._last);
   // The time we get here is NOT a bigint because it's been serialized
   t.true(typeof time === 'string');
-  t.is(time.length, 16);
+  t.is(time.length, 19);
 
   // But we can convert it and check the value is sensible
   const endTime = BigInt(time);
