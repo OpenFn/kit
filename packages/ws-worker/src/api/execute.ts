@@ -93,6 +93,7 @@ export function execute(
         await handler(context, event);
         logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
       } catch (e: any) {
+        console.log(e);
         logger.error(
           `${plan.id} :: ${lightningEvent} :: ERR: ${e.message || e.toString()}`
         );
@@ -246,13 +247,15 @@ export async function onWorkflowError(
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
+  const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
+
   // lightning-friendly log object
   const log: ATTEMPT_LOG_PAYLOAD = {
     attempt_id: state.plan.id!,
     message: event.message,
     source: event.name,
     level: event.level,
-    timestamp: event.time || Date.now(),
+    timestamp: timeInMicroseconds.toString(),
   };
 
   if (state.activeRun) {

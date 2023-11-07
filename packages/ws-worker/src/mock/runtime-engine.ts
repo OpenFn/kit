@@ -96,7 +96,7 @@ async function createMock() {
         workflowId,
         message: message,
         level: 'info',
-        timestamp: Date.now(),
+        time: (BigInt(Date.now()) * BigInt(1e3)).toString(),
         name: 'mck',
       });
     };
