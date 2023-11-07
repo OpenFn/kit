@@ -4,6 +4,7 @@ import stringify from 'fast-safe-stringify';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import getDurationString from './util/duration';
+import hrtimestamp from './util/timestamp';
 import ensureOptions, { LogOptions, LogLevel } from './options';
 
 // Nice clean log level definitions
@@ -48,7 +49,7 @@ export type JSONLog = {
   message: Array<string | object | any>;
   level: LogFns;
   name?: string;
-  time: number;
+  time: bigint;
 };
 
 export type StringLog = [LogFns | 'confirm' | 'print', ...any];
@@ -174,11 +175,16 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       level,
       name,
       message,
-      time: Date.now(),
+      time: hrtimestamp(),
     };
 
-    stringify(output);
-    emitter[level](stringify(output));
+    const replacer = (_key: string, value: any) => {
+      if (typeof value === 'bigint') {
+        return value.toString();
+      }
+      return value;
+    };
+    emitter[level](stringify(output, replacer));
   };
 
   const logString = (

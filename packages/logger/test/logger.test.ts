@@ -2,12 +2,14 @@ import test from 'ava';
 import chalk from 'chalk';
 import { styleLevel, LogFns, StringLog } from '../src/logger';
 import { defaults as defaultOptions, LogLevel } from '../src/options';
+import hrtimestamp from '../src/util/timestamp';
 import { SECRET } from '../src/sanitize';
 
 // We're going to run all these tests against the mock logger
 // Which is basically thin wrapper around the logger which bypasses
 // console and provides an inspection API
 import createLogger from '../src/mock';
+import { timestampToDate } from '../src/util/timestamp';
 
 const wait = (ms: number) => {
   return new Promise((resolve) => {
@@ -201,8 +203,44 @@ test('sanitize: summarise object', (t) => {
     t.assert(result.level === level);
     t.assert(result.name === 'x');
     t.assert(result.message[0] === 'abc');
-    t.true(!isNaN(result.time));
+    t.is(typeof result.time, 'string');
   });
+});
+
+test(`JSON timestamps are bigints representing sensible times`, (t) => {
+  const startTime = hrtimestamp();
+
+  const options = { level: 'info' as const, json: true };
+  const logger = createLogger<string>('x', options);
+  logger.info("what's the time mr wolf");
+
+  const { time } = JSON.parse(logger._last);
+  // The time we get here is NOT a bigint because it's been serialized
+  t.true(typeof time === 'string');
+  t.is(time.length, 16);
+
+  // But we can convert it and check the value is sensible
+  const endTime = BigInt(time);
+
+  const endDate = timestampToDate(endTime);
+
+  // These dates, captured at different resolutions and converte to ms,
+  // are probabably identical, maybe <3ms difference
+  t.log(`log time: ${new Date().toISOString()}
+big start time: ${timestampToDate(startTime).toISOString()},
+big end time: ${endDate.toISOString()}`);
+
+  // tinfoil hat: make sure the result is the same day at least
+  // Maybe a time diff < 1e6 is a better test but this is really belt and braces
+  const today = new Date();
+  t.is(today.getDate(), endDate.getDate());
+  t.is(today.getFullYear(), endDate.getFullYear());
+  t.is(today.getMonth(), endDate.getMonth());
+
+  t.true(endTime >= startTime);
+
+  // Check the elapsed time is less than, say, 10ms (should be super super quick!)
+  t.true(endTime - startTime < 10e3);
 });
 
 test('print() should be barebones', (t) => {
