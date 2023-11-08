@@ -16,10 +16,13 @@ jobs:
         run: |
           SOURCE_TAG=${GITHUB_REF#refs/tags/}
           echo Source Tag: $SOURCE_TAG
+
           VERSION_TAG=${SOURCE_TAG#@openfn/ws-worker}
           echo Version Tag: $VERSION_TAG
+          
           DOCKER_TAG=${VERSION_TAG#@}
           echo Docker Tag: $DOCKER_TAG
+          
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
