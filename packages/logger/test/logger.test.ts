@@ -243,6 +243,24 @@ big end time: ${endDate.toISOString()}`);
   t.true(endTime - startTime < 10e3);
 });
 
+test('timestamps increase in time', async (t) => {
+  const options = { level: 'info' as const, json: true };
+  const logger = createLogger<string>('x', options);
+
+  for(const i = 0; i < 10; i += 1) {
+    await new Promise(done => setTimeout(done, 2))
+    logger.info("what's the time mr wolf");
+  }
+
+  let last = 0;
+  logger._history.forEach(l => {
+    const { time } =  JSON.parse(l);
+    t.log(time)
+    t.true(time > last)
+    last = time;
+  })
+})
+
 test('print() should be barebones', (t) => {
   const options = { level: 'default' as const };
   const logger = createLogger('x', options);
