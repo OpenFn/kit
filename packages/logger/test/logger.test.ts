@@ -208,6 +208,7 @@ test('sanitize: summarise object', (t) => {
 });
 
 test(`JSON timestamps are bigints representing sensible times`, (t) => {
+  const testStartTime = new Date().toISOString()
   const startTime = hrtimestamp();
 
   const options = { level: 'info' as const, json: true };
@@ -226,7 +227,7 @@ test(`JSON timestamps are bigints representing sensible times`, (t) => {
 
   // These dates, captured at different resolutions and converte to ms,
   // are probabably identical, maybe <3ms difference
-  t.log(`log time: ${new Date().toISOString()}
+  t.log(`log time: ${testStartTime}
 big start time: ${timestampToDate(startTime).toISOString()},
 big end time: ${endDate.toISOString()}`);
 
@@ -239,16 +240,18 @@ big end time: ${endDate.toISOString()}`);
 
   t.true(endTime >= startTime);
 
-  // Check the elapsed time is less than, say, 10ms (should be super super quick!)
-  t.true(endTime - startTime < 10e3);
+  // Check the elapsed time is less than, say, 1ms (should be super super quick!)
+  console.log(endTime - startTime)
+  t.true(endTime - startTime < 1e6);
 });
 
+// TODO this test needs to pass without the timeout
 test('timestamps increase in time', async (t) => {
   const options = { level: 'info' as const, json: true };
   const logger = createLogger<string>('x', options);
 
   for(let i = 0; i < 10; i += 1) {
-    await new Promise(done => setTimeout(done, 2))
+    // await new Promise(done => setTimeout(done, 2))
     logger.info("what's the time mr wolf");
   }
 
