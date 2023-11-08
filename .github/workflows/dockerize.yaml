@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Branch name
+      - name: Manipulate tag for docker
         id: branch_name
         run: |
           SOURCE_TAG=${GITHUB_REF#refs/tags/}
