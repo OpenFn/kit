@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.1.8
+
+### Patch Changes
+
+- b8fd13d: Fix undefined log output
+
 ## 0.1.7
 
 ### Patch Changes
