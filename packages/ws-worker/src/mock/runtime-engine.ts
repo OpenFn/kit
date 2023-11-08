@@ -46,7 +46,6 @@ async function createMock() {
   const listeners: Record<string, any> = {};
 
   const dispatch = (type: EngineEvent, args?: any) => {
-    // console.log(' > ', type, args);
     if (args.workflowId) {
       listeners[args.workflowId]?.[type]?.(args);
     }

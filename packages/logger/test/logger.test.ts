@@ -241,7 +241,6 @@ big end time: ${endDate.toISOString()}`);
   t.true(endTime >= startTime);
 
   // Check the elapsed time is less than, say, 1ms (should be super super quick!)
-  console.log(endTime - startTime)
   t.true(endTime - startTime < 1e6);
 });
 

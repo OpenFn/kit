@@ -276,6 +276,60 @@ test.serial(
   }
 );
 
+
+test.serial(
+  `events: logs should have increasing timestamps`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt({}, [
+        { body: '{ x: 1 }', adaptor: 'common' },
+        { body: '{ x: 1 }', adaptor: 'common' },
+        { body: '{ x: 1 }', adaptor: 'common' },
+        { body: '{ x: 1 }', adaptor: 'common' },
+        { body: '{ x: 1 }', adaptor: 'common' },
+        { body: '{ x: 1 }', adaptor: 'common' },
+        { body: '{ x: 1 }', adaptor: 'common' },
+      ]);
+
+      const history: bigint[] = [];
+
+      // Track the timestamps on any logs that come out
+      lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+        history.push(BigInt(payload.timestamp))
+      }, false);
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.log(history)
+        let last = BigInt(0);
+
+
+        // There is a significant chance that some logs will come out with
+        // the same timestamp
+        // So we add some leniency
+        let lives = 2;
+
+        history.forEach(time => {
+          if (time === last) {
+            lives -=1
+            t.true(lives > 0);
+            // skip
+            return
+          }
+          // @ts-ignore
+          t.true(time > last)
+          lives = 2
+          last = time;
+        })
+
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+
 test.todo(`events: lightning should receive a ${e.RUN_COMPLETE} event`);
 
 // This is well tested elsewhere but including here for completeness
