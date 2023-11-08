@@ -14,7 +14,7 @@ jobs:
       - name: Branch name
         id: tag
         run: |
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/:1}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
