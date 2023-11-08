@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Removed log line
 - Updated dependencies [ca701e8]
   - @openfn/logger@0.0.19
 
