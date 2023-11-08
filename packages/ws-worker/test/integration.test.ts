@@ -315,7 +315,6 @@ test.serial(
             // skip
             return
           }
-          // @ts-ignore
           t.true(time > last)
           lives = 2
           last = time;
