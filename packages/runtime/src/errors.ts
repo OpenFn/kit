@@ -1,6 +1,6 @@
 import util from 'node:util';
 
-// TODO: what if we add a "fix" to each eror?
+// TODO: what if we add a "fix" to each error?
 // Maybe adminFix and userFix?
 // This would be a human readable hint about what to do
 // Or maybe summary/detail is a nicer approach
@@ -11,18 +11,22 @@ import util from 'node:util';
 // This lets us distinguish runtime errors - which are crash
 // - to user and adaptor errors, which are a fail
 // See https://nodejs.org/api/errors.html for errors
-export function isRuntimeError(e: any) {
-  return (
-    e.constructor.name === 'ReferenceError' ||
-    e.constructor.name === 'TypeError' ||
-    e.constructor.name === 'RangeError' ||
-    e.constructor.name === 'SyntaxError' // compiler would be expected to catch these first
-    // @ts-ignore
-    // || e instanceof SystemError
-  ); // nodejs error - fairly unlikely but possible, and definitely a crash state
 
-  // Note: assertion error would be a user error
+export function assertRuntimeError(e: any) {
+  // Type errors occur so frequently, and are so likely to be
+  // soft user errors, that we'll fail them
+  if (e.type?.match(/RangeError|TypeError/)) {
+    throw new RuntimeError(e)
+  }
 }
+
+export function assertRuntimeCrash(e: any) {
+  // ignore  instanceof SystemError, AssertionError
+  if (
+    e.constructor.name.match(/ReferenceError|SyntaxError/)) {
+      throw new RuntimeCrash(e)
+    }
+  }
 
 export function isAdaptorError(e: any) {
   if (e.stack) {
@@ -87,9 +91,21 @@ export class ValidationError extends RTError {
 // Should log without stack trace, with RuntimeError type,
 // and with a message (including subtype)
 export class RuntimeError extends RTError {
-  severity = 'crash';
+  severity = 'fail';
   subtype: string;
   name = 'RuntimeError';
+
+  constructor(error: Error) {
+    super();
+    this.subtype = error.constructor.name;
+    this.message = `${this.subtype}: ${error.message}`;
+  }
+}
+
+export class RuntimeCrash extends RTError {
+  severity = 'crash';
+  subtype: string;
+  name = 'RuntimeCrash';
 
   constructor(error: Error) {
     super();

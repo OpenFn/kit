@@ -7,10 +7,13 @@ export type ErrorReporter = (
   error: NodeJS.ErrnoException & { severity?: string; handled?: boolean }
 ) => ErrorReport;
 
+// TODO this is really over complicated now
+// Because we're taking closer control of errors
+// we should be able to report more simply
 const createErrorReporter = (logger: Logger): ErrorReporter => {
   return (state, jobId, error) => {
     const report: ErrorReport = {
-      name: error.name,
+      type: error.name,
       jobId,
       message: error.message,
       error: error,

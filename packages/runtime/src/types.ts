@@ -13,7 +13,7 @@ export type ErrorTypes =
   | 'RuntimeException'; // Caused by an exception in a job. JobException? What about "expected" errors from adaptors?
 
 export type ErrorReport = {
-  name: string; // The name/type of error, ie Error, TypeError
+  type: string; // The name/type of error, ie Error, TypeError
   message: string; // simple human readable message
   jobId: JobNodeID; // ID of the associated job
   error: Error; // the original underlying error object

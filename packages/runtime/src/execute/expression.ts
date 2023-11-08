@@ -9,12 +9,12 @@ import clone from '../util/clone';
 import {
   AdaptorError,
   InputError,
-  RuntimeError,
   SecurityError,
   TimeoutError,
   UserError,
+  assertRuntimeCrash,
+  assertRuntimeError,
   isAdaptorError,
-  isRuntimeError,
 } from '../errors';
 
 export default (
@@ -66,6 +66,8 @@ export default (
 
       exeDuration = Date.now() - exeDuration;
 
+      // If the above code throws, we wont notify a job complete
+      // Do we notify a job error?
       notify('job-complete', {
         duration: exeDuration,
         state: result,
@@ -75,13 +77,22 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
+      console.log(e)
+      try {
+        assertRuntimeError(e);
+        assertRuntimeCrash(e);
+      } catch(e) {
+        console.log(e)
+        reject(e)
+      }
+      
+      // TODO finish the assert pattern
       if (e.constructor.name === 'EvalError') {
         reject(new SecurityError('Illegal eval statement detected'));
       } else if (e.severity && e.source) {
+        console.log('*** rethrow')
         // If the error is already handled, just throw it
         reject(e);
-      } else if (isRuntimeError(e)) {
-        reject(new RuntimeError(e));
       } else if (isAdaptorError(e)) {
         reject(new AdaptorError(e));
       } else {

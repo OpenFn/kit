@@ -21,7 +21,7 @@ test('crash on timeout', async (t) => {
   t.is(error.message, 'Job took longer than 1ms to complete');
 });
 
-test('crash on runtime error with SyntaxError', async (t) => {
+test.only('crash on runtime error with SyntaxError', async (t) => {
   const expression = 'export default [(s) => ~@]2q1j]';
 
   let error;
@@ -30,6 +30,7 @@ test('crash on runtime error with SyntaxError', async (t) => {
   } catch (e) {
     error = e;
   }
+  console.log(error)
 
   t.truthy(error);
   t.is(error.severity, 'crash');
@@ -55,26 +56,6 @@ test('crash on runtime error with ReferenceError', async (t) => {
   t.is(error.name, 'RuntimeError');
   t.is(error.subtype, 'ReferenceError');
   t.is(error.message, 'ReferenceError: x is not defined');
-});
-
-test('crash on runtime error with TypeError', async (t) => {
-  const expression = 'export default [(s) => s.x.y]';
-
-  let error;
-  try {
-    await run(expression);
-  } catch (e) {
-    error = e;
-  }
-
-  t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.name, 'RuntimeError');
-  t.is(error.subtype, 'TypeError');
-  t.is(
-    error.message,
-    "TypeError: Cannot read properties of undefined (reading 'y')"
-  );
 });
 
 test('crash on runtime error with RangeError', async (t) => {
@@ -187,6 +168,22 @@ test('crash on blacklisted module', async (t) => {
   t.is(error.name, 'ImportError');
   t.is(error.message, 'module blacklisted: blah');
 });
+
+
+test('fail on runtime TypeError', async (t) => {
+  const expression = 'export default [(s) => s.x.y]';
+
+  const result = await run(expression);
+  const error = result.errors['job-1'];
+
+  t.truthy(error);
+  t.is(error.name, 'TypeError');
+  t.is(
+    error.message,
+    "Cannot read properties of undefined (reading 'y')"
+  );
+});
+
 
 test('fail on user error with new Error()', async (t) => {
   const expression = 'export default [(s) => {throw new Error("abort")}]';
