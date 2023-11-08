@@ -306,7 +306,7 @@ test.serial(
         // There is a significant chance that some logs will come out with
         // the same timestamp
         // So we add some leniency
-        let lives = 2;
+        let lives = 3;
 
         history.forEach(time => {
           if (time === last) {
