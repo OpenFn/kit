@@ -2,8 +2,9 @@ import createLogger from './logger';
 import createMockLogger from './mock';
 import isValidLogLevel from './util/is-valid-log-level';
 import printDuration from './util/duration';
+import timestamp from './util/timestamp'
 
-export { createMockLogger, isValidLogLevel, printDuration };
+export { createMockLogger, isValidLogLevel, printDuration, timestamp };
 
 export const defaultLogger = createLogger();
 
