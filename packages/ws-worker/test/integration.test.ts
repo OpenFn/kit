@@ -302,21 +302,8 @@ test.serial(
         t.log(history)
         let last = BigInt(0);
 
-
-        // There is a significant chance that some logs will come out with
-        // the same timestamp
-        // So we add some leniency
-        let lives = 3;
-
         history.forEach(time => {
-          if (time === last) {
-            lives -=1
-            t.true(lives > 0);
-            // skip
-            return
-          }
           t.true(time > last)
-          lives = 2
           last = time;
         })
 

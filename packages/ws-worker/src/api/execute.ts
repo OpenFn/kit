@@ -246,15 +246,13 @@ export async function onWorkflowError(
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
-  const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
-
   // lightning-friendly log object
   const log: ATTEMPT_LOG_PAYLOAD = {
     attempt_id: state.plan.id!,
     message: event.message,
     source: event.name,
     level: event.level,
-    timestamp: timeInMicroseconds.toString(),
+    timestamp: event.time,
   };
 
   if (state.activeRun) {

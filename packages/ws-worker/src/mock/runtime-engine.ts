@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { ExecutionPlan, JobNode } from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
+import { timestamp } from '@openfn/logger';
+
 import type { State } from '../types';
 import mockResolvers from './resolvers';
 
@@ -95,7 +97,7 @@ async function createMock() {
         workflowId,
         message: message,
         level: 'info',
-        time: (BigInt(Date.now()) * BigInt(1e3)).toString(),
+        time: timestamp().toString(),
         name: 'mck',
       });
     };
