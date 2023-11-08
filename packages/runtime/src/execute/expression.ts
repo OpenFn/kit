@@ -48,7 +48,6 @@ export default (
 
       clearTimeout(tid);
       logger.debug('Expression complete!');
-      logger.debug(result);
 
       exeDuration = Date.now() - exeDuration;
 

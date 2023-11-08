@@ -1,5 +1,21 @@
 # ws-worker
 
+## 0.1.8
+
+### Patch Changes
+
+- b8fd13d: Fix undefined log output
+
+## 0.1.7
+
+### Patch Changes
+
+- 8f7f57b: Send timestamps as strings in microsecond precision
+- Updated dependencies [ca701e8]
+  - @openfn/logger@0.0.19
+  - @openfn/engine-multi@0.1.5
+  - @openfn/runtime@0.0.33
+
 ## 0.1.6
 
 ### Patch Changes

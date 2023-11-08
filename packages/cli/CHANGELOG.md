@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 0.4.3
+
+### Patch Changes
+
+- Updated dependencies [ca701e8]
+  - @openfn/logger@0.0.19
+  - @openfn/compiler@0.0.38
+  - @openfn/deploy@0.2.9
+  - @openfn/runtime@0.0.33
+
 ## 0.4.2
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # engine-multi
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [ca701e8]
+  - @openfn/logger@0.0.19
+  - @openfn/compiler@0.0.38
+  - @openfn/runtime@0.0.33
+
 ## 0.1.4
 
 ### Patch Changes

@@ -41,6 +41,9 @@ const mockEventHandlers = {
   [ATTEMPT_COMPLETE]: noop,
 };
 
+// This is a nonsense timestamp but it's fine for the test (and easy to convert)
+const getBigIntTimestamp = () => (BigInt(Date.now()) * BigInt(1e6)).toString();
+
 test('send event should resolve when the event is acknowledged', async (t) => {
   const channel = mockChannel({
     echo: (x) => x,
@@ -176,14 +179,19 @@ test('jobLog should should send a log event outside a run', async (t) => {
   const log: JSONLog = {
     name: 'R/T',
     level: 'info',
-    time: Date.now(),
+    time: getBigIntTimestamp(),
     message: ['ping'],
   };
+
+  // The logger should print in nanoseconds (19 digits)
+  t.is(log.time.length, 19);
 
   const result = {
     attempt_id: plan.id,
     message: log.message,
-    timestamp: log.time,
+    // Conveniently this won't have rounding errors because the last
+    // 3 digits are always 000, because of how we generate the stamp above
+    timestamp: log.time.substring(0, 16),
     level: log.level,
     source: log.name,
   };
@@ -209,9 +217,12 @@ test('jobLog should should send a log event inside a run', async (t) => {
   const log: JSONLog = {
     name: 'R/T',
     level: 'info',
-    time: new Date().getTime(),
+    time: getBigIntTimestamp(),
     message: ['ping'],
   };
+
+  // The logger should print in nanoseconds (19 digits)
+  t.is(log.time.length, 19);
 
   const state = {
     plan,
@@ -225,7 +236,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
       t.deepEqual(evt.message, log.message);
       t.is(evt.level, log.level);
       t.is(evt.source, log.name);
-      t.is(evt.timestamp, log.time);
+      t.is(evt.timestamp, log.time.substring(0, 16));
     },
   });
 
@@ -459,12 +470,12 @@ test('execute should call all events on the socket', async (t) => {
   };
 
   const allEvents = [
-    // Note that these are listed in order but order isn not tested
+    // Note that these are listed in order but order is not tested
     GET_CREDENTIAL,
     // GET_DATACLIP, // TODO not really implemented properly yet
     ATTEMPT_START,
     RUN_START,
-    ATTEMPT_LOG,
+    ATTEMPT_LOG, // This won't log with the mock logger
     RUN_COMPLETE,
     ATTEMPT_COMPLETE,
   ];
@@ -487,6 +498,7 @@ test('execute should call all events on the socket', async (t) => {
 
   return new Promise((done) => {
     execute(channel, engine, logger, plan, options, (result) => {
+      // console.log(events);
       // Check that events were passed to the socket
       // This is deliberately crude
       t.assert(allEvents.every((e) => events[e]));
