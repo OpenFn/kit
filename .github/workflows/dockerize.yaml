@@ -16,7 +16,7 @@ jobs:
         run: |
           SOURCE_TAG=${GITHUB_REF#refs/tags/}
           echo Source Tag: $SOURCE_TAG
-          DOCKER_VERSION_TAG=${SOURCE_TAG#@}
+          DOCKER_VERSION_TAG=${SOURCE_TAG#@openfn/ws-worker}
           echo Version Tag: $DOCKER_VERSION_TAG
           echo "DOCKER_VERSION_TAG=$DOCKER_VERSION_TAG" >> $GITHUB_ENV
       - name: Set up QEMU
@@ -36,4 +36,4 @@ jobs:
           target: ws-worker
           tags: |
             openfn/ws-worker:latest
-            ${{ env.DOCKER_VERSION_TAG }}
+            openfn/ws-worker:${{ env.DOCKER_VERSION_TAG }}
