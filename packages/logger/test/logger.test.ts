@@ -247,7 +247,7 @@ test('timestamps increase in time', async (t) => {
   const options = { level: 'info' as const, json: true };
   const logger = createLogger<string>('x', options);
 
-  for(const i = 0; i < 10; i += 1) {
+  for(let i = 0; i < 10; i += 1) {
     await new Promise(done => setTimeout(done, 2))
     logger.info("what's the time mr wolf");
   }
