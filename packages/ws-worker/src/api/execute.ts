@@ -19,6 +19,7 @@ import { getWithReply, stringify } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
 import {
+  JobCompleteEvent,
   WorkflowCompleteEvent,
   WorkflowErrorEvent,
   WorkflowStartEvent,
@@ -180,7 +181,7 @@ export function onJobStart({ channel, state }: Context, event: any) {
 // OK, what we need to do now is:
 // a) generate a reason string for the job
 // b) save the reason for each job to state for later
-export function onJobComplete({ channel, state }: Context, event: any) {
+export function onJobComplete({ channel, state }: Context, event: JobCompleteEvent) {
   const dataclipId = crypto.randomUUID();
 
   const run_id = state.activeRun;
@@ -239,7 +240,7 @@ export async function onWorkflowComplete(
   onComplete({ reason, state: result });
 }
 
-// On errorr, for now, we just post to workflow complete
+// On error, for now, we just post to workflow complete
 // No unit tests on this (not least because I think it'll change soon)
 export async function onWorkflowError(
   { state, channel, onComplete }: Context,
