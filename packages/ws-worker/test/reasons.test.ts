@@ -83,15 +83,58 @@ test('fail: error on state', async (t) => {
   t.is(reason.error_type, 'Error');
 });
 
-test.skip('fail: type error', async (t) => {
+test('fail: type error', async (t) => {
   const plan = createPlan({
     expression: 'export default [(s) => { s.data = s.data.err.y; return s; }]',
   });
 
   const { reason } = await execute(plan);
-  console.log(reason);
   t.is(reason.reason, 'fail');
-  t.is(reason.mess, 'fail');
+  t.is(
+    reason.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+  t.is(reason.error_type, 'TypeError');
+});
+
+test('fail: user error', async (t) => {
+  const plan = createPlan({
+    expression: 'export default [(s) => { throw "abort!"; }]',
+  });
+
+  const { reason } = await execute(plan);
+  t.is(reason.reason, 'fail');
+  t.is(reason.message, 'abort!');
+  t.is(reason.error_type, 'UserError');
+});
+
+test('crash: reference error', async (t) => {
+  const plan = createPlan({
+    expression: 'export default [() => s]',
+  });
+
+  const { reason } = await execute(plan);
+  t.is(reason.reason, 'crash');
+  t.is(reason.message, 'ReferenceError: s is not defined');
+  t.is(reason.error_type, 'ReferenceError');
 });
 
 // TODO there's something very wrong with syntax errors
+test.skip('crash: syntax error', async (t) => {
+  const plan = createPlan({
+    expression: 's lmkafekg a',
+  });
+
+  const { reason } = await execute(plan);
+  t.is(reason.reason, 'crash');
+  t.is(reason.error_type, 'SyntaxError');
+  t.is(reason.message, 'ReferenceError: s is not defined');
+});
+
+test.todo('crash: workflow validation error');
+test.todo('fail: adaptor error');
+test.todo('crash: import error');
+test.todo('crash: no state returned'); // crash or fail? it'll break downstream stuff anyway, so crash
+
+test.todo('kill: timeout error');
+test.todo('kill: security error');
