@@ -65,6 +65,9 @@ export const workflowComplete = (
     threadId,
     duration: state.duration,
     state: result,
+
+    ...reason,
+    // TODO add the id of the RUN that generated this reason
   });
 };
 

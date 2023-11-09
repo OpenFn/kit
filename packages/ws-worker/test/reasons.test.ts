@@ -13,6 +13,7 @@ import {
   ATTEMPT_START,
   ATTEMPT_COMPLETE,
 } from '../src/events';
+import { ExitReason } from '../src/types';
 
 // Explicit tests of exit reasons coming out of the worker
 // these test the onComplete callback
@@ -40,7 +41,7 @@ test.after(async () => engine.destroy());
 
 // Wrap up an execute call, capture the on complete state
 const execute = async (plan) =>
-  new Promise<{ reason: string; state: any }>((done) => {
+  new Promise<{ reason: ExitReason; state: any }>((done) => {
     // Ignore all channel events
     // In these test we assume that the correct messages are sent to the channel
     const channel = mockChannel({
@@ -59,7 +60,7 @@ const execute = async (plan) =>
     doExecute(channel, engine, logger, plan, {}, onComplete);
   });
 
-test('ok', async (t) => {
+test('success', async (t) => {
   const plan = createPlan({
     expression: '(s) => s',
   });
@@ -67,14 +68,30 @@ test('ok', async (t) => {
   plan.initialState = { data: { result: 42 } };
 
   const { reason } = await execute(plan);
-  t.is(reason, 'ok');
+  t.is(reason.reason, 'success');
 });
 
-test('fail', async (t) => {
+test('fail: error on state', async (t) => {
   const plan = createPlan({
-    expression: 'export default [(s) => ({ errors: { "a": "err" } })]',
+    expression:
+      'export default [(s) => ({ errors: { "job-1": { "message": "err", "type": "Error" } } })]',
   });
 
   const { reason } = await execute(plan);
-  t.is(reason, 'fail');
+  t.is(reason.reason, 'fail');
+  t.is(reason.message, 'err');
+  t.is(reason.error_type, 'Error');
 });
+
+test.skip('fail: type error', async (t) => {
+  const plan = createPlan({
+    expression: 'export default [(s) => { s.data = s.data.err.y; return s; }]',
+  });
+
+  const { reason } = await execute(plan);
+  console.log(reason);
+  t.is(reason.reason, 'fail');
+  t.is(reason.mess, 'fail');
+});
+
+// TODO there's something very wrong with syntax errors

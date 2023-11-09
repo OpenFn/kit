@@ -12,9 +12,29 @@ export type State = {
   configuration?: {
     [key: string]: any;
   };
+  errors?: {
+    [jobId: string]: {
+      type: string;
+      message: string;
+    };
+  };
 
   // technically there should be nothing here
   [key: string]: any;
+};
+
+export type ExitReasonStrings =
+  | 'success'
+  | 'fail'
+  | 'crash'
+  | 'kill'
+  | 'cancel'
+  | 'exception';
+
+export type ExitReason = {
+  reason: ExitReasonStrings;
+  message: string | null;
+  error_type: string | null;
 };
 
 export type Node = {

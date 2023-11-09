@@ -60,8 +60,6 @@ export function publish<T extends workerEvents.WorkerEvents>(
   });
 }
 
-// TODO use bespoke event names here
-// maybe thread:workflow-start
 async function helper(workflowId: string, execute: () => Promise<any>) {
   publish(workflowId, workerEvents.WORKFLOW_START, {});
 

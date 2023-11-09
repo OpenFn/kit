@@ -1,80 +1,79 @@
 import test from 'ava';
-import { calculateJobReason } from '../../src/api/reasons';
-
-const nil = '-';
+import { RuntimeCrash } from '@openfn/runtime';
+import { calculateJobExitReason } from '../../src/api/reasons';
 
 test('success', (t) => {
   const jobId = 'a';
   const state = {};
   const error = undefined;
-  const r = calculateJobReason(jobId, state, error);
+  const r = calculateJobExitReason(jobId, state, error);
 
-  t.is(r.reason,'success')
-  t.is(r.error_type, nil)
-  t.is(r.message, nil)
-  t.is(r.source, nil)
-})
+  t.is(r.reason, 'success');
+  t.is(r.error_type, null);
+  t.is(r.message, null);
+});
 
 test('still success if a prior job has errors', (t) => {
   const jobId = 'a';
   const state = {
     errors: {
-      'b': {
+      b: {
         type: 'RuntimeError',
         message: '.',
         severity: 'fail',
-      }
-    }
+      },
+    },
   };
   const error = undefined;
-  const r = calculateJobReason(jobId, state, error);
+  const r = calculateJobExitReason(jobId, state, error);
 
-  t.is(r.reason,'success')
-  t.is(r.error_type, nil)
-  t.is(r.message, nil)
-  t.is(r.source, nil)
-})
+  t.is(r.reason, 'success');
+  t.is(r.error_type, null);
+  t.is(r.message, null);
+});
 
 test('fail', (t) => {
   const jobId = 'a';
   const state = {
     errors: {
       a: {
-        // reminder: the runtime generates this error object
         type: 'RuntimeError',
         message: "TypeError: Cannot read properties of undefined (reading 'y')",
-      }
-    }
+      },
+    },
   };
   const error = undefined;
-  const r = calculateJobReason(jobId, state, error);
+  const r = calculateJobExitReason(jobId, state, error);
 
-  t.is(r.reason,'fail')
-  t.is(r.error_type, state.errors.a.type)
-  t.is(r.message, state.errors.a.message)
-  t.is(r.source, nil)
-})
+  t.is(r.reason, 'fail');
+  t.is(r.error_type, state.errors.a.type);
+  t.is(r.message, state.errors.a.message);
+});
 
-// If this is a crash, surely it shouldn't write to state.errors!
-test.skip('crash', (t) => {
+test('crash', (t) => {
+  const jobId = 'a';
+  const state = {};
+  const error = new RuntimeCrash(new ReferenceError('x is not defined'));
+  const r = calculateJobExitReason(jobId, state, error);
+
+  t.is(r.reason, 'crash');
+  t.is(r.error_type, 'ReferenceError');
+  t.is(r.message, 'ReferenceError: x is not defined');
+});
+
+test('crash has priority over fail', (t) => {
   const jobId = 'a';
   const state = {
     errors: {
-      a: {
-        // reminder: the runtime generates this error object
+      b: {
         type: 'RuntimeError',
-        message: 'ReferenceError: x is not defined',
-        severity: 'crash'
-      }
-    }
+        message: '.',
+        severity: 'fail',
+      },
+    },
   };
-  const error = undefined;
-  const r = calculateJobReason(jobId, state, error);
+  const error = new RuntimeCrash(new ReferenceError('x is not defined'));
+  const r = calculateJobExitReason(jobId, state, error);
 
-  t.is(r.reason,'crash')
-  t.is(r.error_type, state.errors.a.type)
-  t.is(r.message, state.errors.a.message)
-  t.is(r.source, nil)
-})
-
-test.todo('report the error object over state.error')
+  t.is(r.reason, 'crash');
+});

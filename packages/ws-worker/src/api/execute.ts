@@ -14,7 +14,7 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { AttemptOptions, Channel } from '../types';
+import { AttemptOptions, Channel, ExitReason } from '../types';
 import { getWithReply, stringify } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
@@ -26,6 +26,7 @@ import {
 } from '../mock/runtime-engine';
 import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
+import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
 const enc = new TextDecoder('utf-8');
 
@@ -35,6 +36,7 @@ export type AttemptState = {
   plan: ExecutionPlan;
   options: AttemptOptions;
   dataclips: Record<string, any>;
+  reasons: Record<string, ExitReason>;
 
   // final dataclip id
   lastDataclipId?: string;
@@ -56,6 +58,19 @@ const eventMap = {
   'workflow-complete': ATTEMPT_COMPLETE,
 };
 
+export const createAttemptState = (
+  plan: ExecutionPlan,
+  options: AttemptOptions = {}
+): AttemptState => ({
+  plan,
+  // set the result data clip id (which needs renaming)
+  // to the initial state
+  lastDataclipId: plan.initialState as string | undefined,
+  dataclips: {},
+  reasons: {},
+  options,
+});
+
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
 export function execute(
@@ -68,14 +83,7 @@ export function execute(
 ) {
   logger.info('execute...');
 
-  const state: AttemptState = {
-    plan,
-    // set the result data clip id (which needs renaming)
-    // to the initial state
-    lastDataclipId: plan.initialState as string | undefined,
-    dataclips: {},
-    options,
-  };
+  const state = createAttemptState(plan, options);
 
   const context: Context = { channel, state, logger, onComplete };
 
@@ -181,11 +189,14 @@ export function onJobStart({ channel, state }: Context, event: any) {
 // OK, what we need to do now is:
 // a) generate a reason string for the job
 // b) save the reason for each job to state for later
-export function onJobComplete({ channel, state }: Context, event: JobCompleteEvent) {
+export function onJobComplete(
+  { channel, state }: Context,
+  event: JobCompleteEvent
+) {
   const dataclipId = crypto.randomUUID();
 
-  const run_id = state.activeRun;
-  const job_id = state.activeJob;
+  const run_id = state.activeRun as string;
+  const job_id = state.activeJob as string;
 
   if (!state.dataclips) {
     state.dataclips = {};
@@ -203,12 +214,22 @@ export function onJobComplete({ channel, state }: Context, event: JobCompleteEve
   delete state.activeRun;
   delete state.activeJob;
 
+  const { reason, message, error_type } = calculateJobExitReason(
+    job_id,
+    event.state
+    /* error */ // soo where does this come from?
+  );
+  state.reasons[job_id] = { reason, message, error_type };
+
   return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
     run_id,
     job_id,
     output_dataclip_id: dataclipId,
     output_dataclip: stringify(event.state),
-    reason: 'success',
+
+    reason,
+    message,
+    error_type,
   });
 }
 
@@ -221,21 +242,18 @@ export function onWorkflowStart(
 
 // TODO what this needs to do is look at all the job states
 // find the higher priority
-// And retturn that as the highest exit reason
+// And return that as the highest exit reason
 export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
   const result = state.dataclips[state.lastDataclipId!];
 
-  let reason = 'ok';
-  if (result.errors) {
-    reason = 'fail';
-  }
+  const reason = calculateAttemptExitReason(state);
 
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
-    reason,
+    ...reason,
   });
   onComplete({ reason, state: result });
 }
