@@ -186,6 +186,7 @@ test.serial(
             includeStackTrace: false,
             message: 'abort',
             type: 'UserError',
+            name: 'UserError',
             severity: 'fail',
             source: 'runtime',
           },

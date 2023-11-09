@@ -16,11 +16,7 @@ import {
   assertRuntimeError,
   assertSecurityKill,
 } from '../errors';
-import {
-  NOTIFY_JOB_COMPLETE,
-  NOTIFY_JOB_ERROR,
-  NOTIFY_JOB_START,
-} from '../events';
+import { NOTIFY_JOB_COMPLETE, NOTIFY_JOB_START } from '../events';
 
 export default (
   ctx: ExecutionContext,
