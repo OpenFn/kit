@@ -19,10 +19,6 @@ import { ExitReason } from '../src/types';
 // these test the onComplete callback
 // uses the real runtime engine
 
-// WAIT is this JOB reasons or ATTEMPT reasons?
-// Or both?
-// If the attempt reason is just a job reason.... maybe we're just testing the final
-
 let engine;
 let logger;
 
