@@ -24,15 +24,17 @@ const calculateJobExitReason = (
 };
 
 const calculateAttemptExitReason = (state: AttemptState) => {
-  // look at the job history and return the highest priority reason and message
-  // TODO need to calculate this properly
-  // Cheating for now so I can test job reasons
-  // TODO actually we may need to key on run id, it's more useful
   if (state.reasons) {
-    const [reason] = Object.values(state.reasons) as ExitReason[];
+    // A crash or greater will trigger an error, and the error
+    // basically becomes the exit reason
 
-    // TODO include run id too
-    return reason;
+    // So If we get here, we basically just need to look for the first fail
+    // otherwise we return ok
+    const fail = Object.values(state.reasons).find(
+      ({ reason }) => reason === 'fail'
+    );
+
+    return fail || { reason: 'success', error_type: null, error_message: null };
   }
   // TODO what if somehow there are no runs?
 };

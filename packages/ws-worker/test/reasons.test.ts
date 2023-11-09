@@ -108,6 +108,30 @@ test('fail: user error', async (t) => {
   t.is(reason.error_type, 'UserError');
 });
 
+test.only('fail: user error in the third job', async (t) => {
+  const plan = createPlan(
+    {
+      id: 'a',
+      expression: 'export default [(s) => s ]',
+      next: { b: true },
+    },
+    {
+      id: 'b',
+      expression: 'export default [(s) => s]',
+      next: { c: true },
+    },
+    {
+      id: 'c',
+      expression: 'export default [(s) => { throw "abort!"; }]',
+    }
+  );
+
+  const { reason } = await execute(plan);
+  t.is(reason.reason, 'fail');
+  t.is(reason.error_message, 'abort!');
+  t.is(reason.error_type, 'UserError');
+});
+
 test('crash: reference error', async (t) => {
   const plan = createPlan({
     expression: 'export default [() => s]',
