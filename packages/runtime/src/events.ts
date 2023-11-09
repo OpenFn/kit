@@ -1,20 +1,6 @@
-// module to help with events
-
-export default {};
-
-/*
-pipeline start
-pipeline end
-  duration
-  memory
-
-operation start
-operation complete
-  duration
-  memory
-
-job exception
-job log
-  level
-  message
-*/
+export const NOTIFY_START = 'init-start';
+export const NOTIFY_COMPLETE = 'init-complete';
+export const NOTIFY_JOB_START = 'job-start';
+export const NOTIFY_JOB_COMPLETE = 'job-complete';
+export const NOTIFY_JOB_ERROR = 'job-error';
+export const NOTIFY_STATE_LOAD = 'load-state';

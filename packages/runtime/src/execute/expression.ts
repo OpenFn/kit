@@ -7,9 +7,7 @@ import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
 import {
-  AdaptorError,
   InputError,
-  SecurityError,
   TimeoutError,
   UserError,
   assertAdaptorError,
@@ -17,8 +15,12 @@ import {
   assertRuntimeCrash,
   assertRuntimeError,
   assertSecurityKill,
-  isAdaptorError,
 } from '../errors';
+import {
+  NOTIFY_JOB_COMPLETE,
+  NOTIFY_JOB_ERROR,
+  NOTIFY_JOB_START,
+} from '../events';
 
 export default (
   ctx: ExecutionContext,
@@ -27,8 +29,9 @@ export default (
   id?: string
 ) =>
   new Promise(async (resolve, reject) => {
+    let duration = Date.now();
+    const { logger, notify = () => {}, opts = {} } = ctx;
     try {
-      const { logger, notify = () => {}, opts = {} } = ctx;
       const timeout = opts.timeout || TIMEOUT;
 
       logger.debug('Intialising pipeline');
@@ -51,8 +54,7 @@ export default (
 
       // Run the pipeline
       logger.debug(`Executing expression (${operations.length} operations)`);
-      let exeDuration = Date.now();
-      notify('job-start', { jobId: id });
+      notify(NOTIFY_JOB_START, { jobId: id });
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -67,12 +69,10 @@ export default (
       logger.debug('Expression complete!');
       logger.debug(result);
 
-      exeDuration = Date.now() - exeDuration;
+      duration = Date.now() - duration;
 
-      // If the above code throws, we wont notify a job complete
-      // Do we notify a job error?
-      notify('job-complete', {
-        duration: exeDuration,
+      notify(NOTIFY_JOB_COMPLETE, {
+        duration,
         state: result,
         jobId: id,
       });
@@ -80,18 +80,25 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
-      // console.log(e);
+      duration = Date.now() - duration;
+      let finalError;
       try {
         assertImportError(e);
         assertRuntimeError(e);
         assertRuntimeCrash(e);
         assertSecurityKill(e);
         assertAdaptorError(e);
+        finalError = new UserError(e);
       } catch (e) {
-        return reject(e);
+        finalError = e;
       }
 
-      reject(new UserError(e));
+      notify(NOTIFY_JOB_ERROR, {
+        duration: duration,
+        error: finalError,
+        jobId: id,
+      });
+      reject(finalError);
     }
   });
 

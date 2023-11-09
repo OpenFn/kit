@@ -3,6 +3,14 @@
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
 import { ErrorReporter } from './util/log-error';
+import {
+  NOTIFY_COMPLETE,
+  NOTIFY_JOB_COMPLETE,
+  NOTIFY_JOB_ERROR,
+  NOTIFY_JOB_START,
+  NOTIFY_START,
+  NOTIFY_STATE_LOAD,
+} from './events';
 
 // I dont think this is useufl? We can just use error.name of the error object
 export type ErrorTypes =
@@ -115,20 +123,14 @@ export type ExecutionContext = {
   notify: (evt: NotifyEvents, payload?: any) => void;
 };
 
-// External notifications to reveal what's happening
-// All are passed through the notify handler
-// TODO I'd prefer to load the strings from notify.ts and reflect the types here
 export type NotifyEvents =
-  | 'init-start' // The job is being initialised (ie, credentials lazy-loading)
-  | 'init-complete'
-  | 'job-start'
-  | 'job-complete'
-  | 'load-state';
-// module-load
+  | typeof NOTIFY_START
+  | typeof NOTIFY_COMPLETE
+  | typeof NOTIFY_JOB_START
+  | typeof NOTIFY_JOB_COMPLETE
+  | typeof NOTIFY_JOB_ERROR
+  | typeof NOTIFY_STATE_LOAD;
 
-// I'm not wild about the callbacks pattern, events would be simpler
-// but a) the resolvers MUST be a callback and b) we don't currently have an event emitter API
-// no, ok, we're going to have a notify function which does the callbacks
 export type ExecutionCallbacks = {
   notify?(event: NotifyEvents, payload: any): void;
   resolveState?: (stateId: string) => Promise<any>;

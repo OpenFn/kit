@@ -3,6 +3,7 @@ import { fn } from '@openfn/language-common';
 import type { State, Operation, ExecutionContext } from '../../src/types';
 import { createMockLogger } from '@openfn/logger';
 import execute from '../../src/execute/expression';
+import { NOTIFY_JOB_COMPLETE, NOTIFY_JOB_START } from '../../src';
 
 type TestState = State & {
   data: {
@@ -66,14 +67,14 @@ test('run a live no-op job with @openfn/language-common.fn', async (t) => {
   t.deepEqual(state, result);
 });
 
-test('notify job-start', async (t) => {
+test(`notify ${NOTIFY_JOB_START}`, async (t) => {
   let didCallCallback = false;
 
   const expression = [(s: State) => s];
   const state = createState();
 
   const notify = (event: string, payload?: any) => {
-    if (event === 'job-start') {
+    if (event === NOTIFY_JOB_START) {
       didCallCallback = true;
     }
     t.is(payload.jobId, 'j');
@@ -85,14 +86,14 @@ test('notify job-start', async (t) => {
   t.true(didCallCallback);
 });
 
-test('notifu job-complete', async (t) => {
+test(`notify ${NOTIFY_JOB_COMPLETE}`, async (t) => {
   let didCallCallback = false;
 
   const expression = [(s: State) => s];
   const state = createState();
 
   const notify = (event: string, payload: any) => {
-    if (event === 'job-complete') {
+    if (event === NOTIFY_JOB_COMPLETE) {
       const { state, duration, jobId } = payload;
       didCallCallback = true;
       t.truthy(state);

@@ -6,7 +6,7 @@ import type { ExecutionPlan } from '../types';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
-import { NOTIFY_STATE_LOAD } from '../util/notify';
+import { NOTIFY_STATE_LOAD } from '../events';
 
 const executePlan = async (
   plan: ExecutionPlan,
