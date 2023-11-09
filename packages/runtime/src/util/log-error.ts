@@ -46,13 +46,13 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
 
     if (error.severity === 'fail') {
       logger.error(`Check state.errors.${jobId} for details.`);
-    }
 
-    if (!state.errors) {
-      state.errors = {};
-    }
+      if (!state.errors) {
+        state.errors = {};
+      }
 
-    state.errors[jobId] = report;
+      state.errors[jobId] = report;
+    }
 
     return report as ErrorReport;
   };
