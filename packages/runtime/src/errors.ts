@@ -15,20 +15,25 @@ import util from 'node:util';
 export function assertRuntimeError(e: any) {
   // Type errors occur so frequently, and are so likely to be
   // soft user errors, that we'll fail them
-  if (e.type?.match(/RangeError|TypeError/)) {
-    throw new RuntimeError(e)
+  if (e.constructor.name?.match(/RangeError|TypeError/)) {
+    throw new RuntimeError(e);
   }
 }
 
 export function assertRuntimeCrash(e: any) {
   // ignore  instanceof SystemError, AssertionError
-  if (
-    e.constructor.name.match(/ReferenceError|SyntaxError/)) {
-      throw new RuntimeCrash(e)
-    }
+  if (e.constructor.name.match(/ReferenceError|SyntaxError/)) {
+    throw new RuntimeCrash(e);
   }
+}
 
-export function isAdaptorError(e: any) {
+export function assertSecurityKill(e: any) {
+  if (e.constructor.name === 'EvalError') {
+    throw new SecurityError('Illegal eval statement detected');
+  }
+}
+
+export function assertAdaptorError(e: any) {
   if (e.stack) {
     // parse the stack
     const frames = e.stack.split('\n');
@@ -39,18 +44,16 @@ export function isAdaptorError(e: any) {
     // For now, we assume this is adaptor code if it has not come directly from the vm
     // TODO: how reliable is this? Can we get a better heuristic?
     if (!first.match(/at vm:module\(0\)/)) {
-      return true;
+      throw new AdaptorError(e);
     }
   }
-
-  return false;
 }
 
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';
   includeStackTrace = false;
-  name: string = 'JAM';
+  type: string = '-';
 
   constructor() {
     super();
@@ -78,7 +81,7 @@ export class RTError extends Error {
 // TODO we should take a path to the invalid bit
 export class ValidationError extends RTError {
   severity = 'crash';
-  name = 'ValidationError';
+  type = 'ValidationError';
 
   constructor(message: string) {
     super();
@@ -90,10 +93,14 @@ export class ValidationError extends RTError {
 // This is a wrapper around any node/js error thrown during execution
 // Should log without stack trace, with RuntimeError type,
 // and with a message (including subtype)
+
+// A runtime error traps a non-critical fail state
+// The error is written to state and
+// we can continue executing the workflow
 export class RuntimeError extends RTError {
   severity = 'fail';
   subtype: string;
-  name = 'RuntimeError';
+  type = 'RuntimeError';
 
   constructor(error: Error) {
     super();
@@ -102,10 +109,13 @@ export class RuntimeError extends RTError {
   }
 }
 
+// A Runtime crash is a critical error which
+// means the whole workflow is aborted
+// The main runtime.run function should throw
 export class RuntimeCrash extends RTError {
   severity = 'crash';
   subtype: string;
-  name = 'RuntimeCrash';
+  type = 'RuntimeCrash';
 
   constructor(error: Error) {
     super();
@@ -116,7 +126,7 @@ export class RuntimeCrash extends RTError {
 
 export class EdgeConditionError extends RTError {
   severity = 'crash';
-  name = 'EdgeConditionError';
+  type = 'EdgeConditionError';
   message: string;
 
   constructor(message: string) {
@@ -127,7 +137,7 @@ export class EdgeConditionError extends RTError {
 
 export class InputError extends RTError {
   severity = 'crash';
-  name = 'InputError';
+  type = 'InputError';
   message: string;
 
   constructor(message: string) {
@@ -137,7 +147,7 @@ export class InputError extends RTError {
 }
 
 export class AdaptorError extends RTError {
-  name = 'AdaptorError';
+  type = 'AdaptorError';
   severity = 'fail';
   message: string = '';
   constructor(error: any) {
@@ -154,7 +164,7 @@ export class AdaptorError extends RTError {
 // custom user error trow new Error() or throw {}
 // Maybe JobError or Expression Error?
 export class UserError extends RTError {
-  name = 'UserError';
+  type = 'UserError';
   severity = 'fail';
   message: string = '';
   constructor(error: any) {
@@ -172,7 +182,7 @@ export class UserError extends RTError {
 // The message will add context
 // Some of these may need a stack trace for admins (but not for users)
 export class ImportError extends RTError {
-  name = 'ImportError';
+  type = 'ImportError';
   severity = 'crash';
   message: string;
   constructor(message: string) {
@@ -183,8 +193,10 @@ export class ImportError extends RTError {
 
 // Eval (and maybe other security stuff)
 export class SecurityError extends RTError {
-  name = 'SecurityError';
-  severity = 'crash';
+  type = 'SecurityError';
+  // TODO I wonder if severity really is a concern for later.
+  // The runtime just needs to decide whether to throw or trap any errors
+  severity = 'kill';
   message: string;
   constructor(message: string) {
     super();
@@ -193,7 +205,7 @@ export class SecurityError extends RTError {
 }
 
 export class TimeoutError extends RTError {
-  name = 'TimeoutError';
+  type = 'TimeoutError';
   severity = 'crash';
   message: string;
   constructor(duration: number) {

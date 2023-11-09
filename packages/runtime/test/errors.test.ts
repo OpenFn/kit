@@ -17,11 +17,11 @@ test('crash on timeout', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
-  t.is(error.name, 'TimeoutError');
+  t.is(error.type, 'TimeoutError');
   t.is(error.message, 'Job took longer than 1ms to complete');
 });
 
-test.only('crash on runtime error with SyntaxError', async (t) => {
+test('crash on runtime error with SyntaxError', async (t) => {
   const expression = 'export default [(s) => ~@]2q1j]';
 
   let error;
@@ -30,11 +30,10 @@ test.only('crash on runtime error with SyntaxError', async (t) => {
   } catch (e) {
     error = e;
   }
-  console.log(error)
 
   t.truthy(error);
   t.is(error.severity, 'crash');
-  t.is(error.name, 'RuntimeError');
+  t.is(error.type, 'RuntimeCrash');
   t.is(error.subtype, 'SyntaxError');
   t.is(error.message, 'SyntaxError: Invalid or unexpected token');
 });
@@ -46,37 +45,14 @@ test('crash on runtime error with ReferenceError', async (t) => {
   try {
     await run(expression);
   } catch (e) {
-    // console.log(e)
-    // console.log(e.toString());
     error = e;
   }
 
   // t.true(error instanceof RuntimeError);
   t.is(error.severity, 'crash');
-  t.is(error.name, 'RuntimeError');
+  t.is(error.type, 'RuntimeCrash');
   t.is(error.subtype, 'ReferenceError');
   t.is(error.message, 'ReferenceError: x is not defined');
-});
-
-test('crash on runtime error with RangeError', async (t) => {
-  const expression =
-    'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
-
-  let error;
-  try {
-    await run(expression);
-  } catch (e) {
-    error = e;
-  }
-
-  t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.name, 'RuntimeError');
-  t.is(error.subtype, 'RangeError');
-  t.is(
-    error.message,
-    'RangeError: toFixed() digits argument must be between 0 and 100'
-  );
 });
 
 test('crash on eval with SecurityError', async (t) => {
@@ -90,8 +66,8 @@ test('crash on eval with SecurityError', async (t) => {
   }
 
   t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.name, 'SecurityError');
+  t.is(error.severity, 'kill');
+  t.is(error.type, 'SecurityError');
   t.is(error.message, 'Illegal eval statement detected');
 });
 
@@ -120,7 +96,7 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
-  t.is(error.name, 'EdgeConditionError');
+  t.is(error.type, 'EdgeConditionError');
   t.is(error.message, 'wibble is not defined');
 });
 
@@ -141,7 +117,7 @@ test('crash on import error: module path provided', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
-  t.is(error.name, 'ImportError');
+  t.is(error.type, 'ImportError');
   t.is(error.message, 'Failed to import module "blah"');
 });
 
@@ -165,10 +141,9 @@ test('crash on blacklisted module', async (t) => {
 
   t.truthy(error);
   t.is(error.severity, 'crash');
-  t.is(error.name, 'ImportError');
+  t.is(error.type, 'ImportError');
   t.is(error.message, 'module blacklisted: blah');
 });
-
 
 test('fail on runtime TypeError', async (t) => {
   const expression = 'export default [(s) => s.x.y]';
@@ -177,13 +152,28 @@ test('fail on runtime TypeError', async (t) => {
   const error = result.errors['job-1'];
 
   t.truthy(error);
-  t.is(error.name, 'TypeError');
+  t.is(error.type, 'TypeError');
   t.is(
     error.message,
-    "Cannot read properties of undefined (reading 'y')"
+    "TypeError: Cannot read properties of undefined (reading 'y')"
   );
 });
 
+// TODO not totally convinced on this one actually
+test('fail on runtime error with RangeError', async (t) => {
+  const expression =
+    'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
+
+  const result = await run(expression);
+  const error = result.errors['job-1'];
+
+  t.truthy(error);
+  t.is(error.type, 'RangeError');
+  t.is(
+    error.message,
+    'RangeError: toFixed() digits argument must be between 0 and 100'
+  );
+});
 
 test('fail on user error with new Error()', async (t) => {
   const expression = 'export default [(s) => {throw new Error("abort")}]';
@@ -192,7 +182,7 @@ test('fail on user error with new Error()', async (t) => {
 
   const error = result.errors['job-1'];
 
-  t.is(error.name, 'UserError');
+  t.is(error.type, 'UserError');
   t.is(error.message, 'abort');
 });
 
@@ -203,7 +193,7 @@ test('fail on user error with throw "abort"', async (t) => {
 
   const error = result.errors['job-1'];
 
-  t.is(error.name, 'UserError');
+  t.is(error.type, 'UserError');
   t.is(error.message, 'abort');
 });
 
@@ -225,7 +215,7 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.name, 'AdaptorError');
+  t.is(error.type, 'AdaptorError');
   t.is(error.message, 'adaptor err');
 });
 
@@ -250,6 +240,6 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.name, 'UserError');
+  t.is(error.type, 'UserError');
   t.is(error.message, 'adaptor err');
 });

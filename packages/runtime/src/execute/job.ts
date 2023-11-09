@@ -89,7 +89,7 @@ const executeJob = async (
       logger.error(`Failed job ${job.id} after ${duration}`);
       report(state, job.id, e);
 
-      if (e.severity === 'crash') {
+      if (e.severity === 'crash' || e.severity === 'kill') {
         throw e;
       }
     }

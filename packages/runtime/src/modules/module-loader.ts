@@ -4,7 +4,7 @@
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
 
-import { RuntimeError } from '../errors';
+import { RuntimeCrash } from '../errors';
 import type { Operation } from '../types';
 import type { Logger } from '@openfn/logger';
 
@@ -44,7 +44,7 @@ export default async (
   } catch (e: any) {
     // This is probably a syntax error
     // We'll just lump it under runtime error for now though
-    throw new RuntimeError(e);
+    throw new RuntimeCrash(e);
   }
 
   // We need to provide a linker to handle import statements

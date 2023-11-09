@@ -4,7 +4,12 @@ import { ErrorReport, JobNodeID, State } from '../types';
 export type ErrorReporter = (
   state: State,
   jobId: JobNodeID,
-  error: NodeJS.ErrnoException & { severity?: string; handled?: boolean }
+  error: NodeJS.ErrnoException & {
+    severity?: string;
+    handled?: boolean;
+    type?: string;
+    subtype?: string;
+  }
 ) => ErrorReport;
 
 // TODO this is really over complicated now
@@ -13,7 +18,7 @@ export type ErrorReporter = (
 const createErrorReporter = (logger: Logger): ErrorReporter => {
   return (state, jobId, error) => {
     const report: ErrorReport = {
-      type: error.name,
+      type: error.subtype || error.type || error.name,
       jobId,
       message: error.message,
       error: error,

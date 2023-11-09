@@ -12,8 +12,10 @@ import {
   SecurityError,
   TimeoutError,
   UserError,
+  assertAdaptorError,
   assertRuntimeCrash,
   assertRuntimeError,
+  assertSecurityKill,
   isAdaptorError,
 } from '../errors';
 
@@ -77,27 +79,22 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
-      console.log(e)
+      // console.log(e);
+      if (e.severity && e.source) {
+        // If the error is already handled, just throw it
+        return reject(e);
+      }
+
       try {
         assertRuntimeError(e);
         assertRuntimeCrash(e);
-      } catch(e) {
-        console.log(e)
-        reject(e)
+        assertSecurityKill(e);
+        assertAdaptorError(e);
+      } catch (e) {
+        return reject(e);
       }
-      
-      // TODO finish the assert pattern
-      if (e.constructor.name === 'EvalError') {
-        reject(new SecurityError('Illegal eval statement detected'));
-      } else if (e.severity && e.source) {
-        console.log('*** rethrow')
-        // If the error is already handled, just throw it
-        reject(e);
-      } else if (isAdaptorError(e)) {
-        reject(new AdaptorError(e));
-      } else {
-        reject(new UserError(e));
-      }
+
+      reject(new UserError(e));
     }
   });
 

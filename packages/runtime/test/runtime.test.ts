@@ -372,6 +372,9 @@ test('stuff written to state before an error is preserved', async (t) => {
   t.is(result.x, 1);
 });
 
+test.todo('notify job complete even after fail');
+test.todo('notify job complete even after crash');
+
 test('data can be an array (expression)', async (t) => {
   const expression = 'export default [() => ({ data: [1,2,3] })]';
 
