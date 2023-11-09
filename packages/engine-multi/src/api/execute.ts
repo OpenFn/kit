@@ -57,6 +57,10 @@ const execute = async (context: ExecutionContext) => {
     [workerEvents.LOG]: (evt: workerEvents.LogEvent) => {
       log(context, evt);
     },
+    // TODO this is also untested
+    [workerEvents.ERROR]: (evt: workerEvents.ErrorEvent) => {
+      error(context, { workflowId: state.plan.id, error: evt.error });
+    },
   };
   return callWorker(
     'run',

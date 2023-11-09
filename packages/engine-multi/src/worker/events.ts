@@ -57,9 +57,13 @@ export interface LogEvent extends InternalEvent {
   message: JSONLog;
 }
 
-// TODO not really sure what errors look like yet
 export interface ErrorEvent extends InternalEvent {
-  [key: string]: any;
+  jobId?: string;
+  error: {
+    message: string;
+    type: string;
+    severity: string;
+  };
 }
 
 export type EventMap = {
