@@ -9,18 +9,18 @@ const calculateJobExitReason = (
 ): ExitReason => {
   let reason: ExitReasonStrings = 'success';
   let error_type = null;
-  let message = null;
+  let error_message = null;
   //let source = null; // TODO unused right now
 
   if (error) {
     reason = error.severity ?? 'crash';
-    message = error.message;
+    error_message = error.message;
     error_type = error.subtype || error.type || error.name;
   } else if (state.errors?.[jobId]) {
     reason = 'fail';
-    ({ message, type: error_type } = state.errors[jobId]);
+    ({ message: error_message, type: error_type } = state.errors[jobId]);
   }
-  return { reason, error_type, message };
+  return { reason, error_type, error_message };
 };
 
 const calculateAttemptExitReason = (state: AttemptState) => {

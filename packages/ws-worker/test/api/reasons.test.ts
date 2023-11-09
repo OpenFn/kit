@@ -10,7 +10,7 @@ test('success', (t) => {
 
   t.is(r.reason, 'success');
   t.is(r.error_type, null);
-  t.is(r.message, null);
+  t.is(r.error_message, null);
 });
 
 test('still success if a prior job has errors', (t) => {
@@ -29,7 +29,7 @@ test('still success if a prior job has errors', (t) => {
 
   t.is(r.reason, 'success');
   t.is(r.error_type, null);
-  t.is(r.message, null);
+  t.is(r.error_message, null);
 });
 
 test('fail', (t) => {
@@ -47,7 +47,7 @@ test('fail', (t) => {
 
   t.is(r.reason, 'fail');
   t.is(r.error_type, state.errors.a.type);
-  t.is(r.message, state.errors.a.message);
+  t.is(r.error_message, state.errors.a.message);
 });
 
 test('crash', (t) => {
@@ -58,7 +58,7 @@ test('crash', (t) => {
 
   t.is(r.reason, 'crash');
   t.is(r.error_type, 'ReferenceError');
-  t.is(r.message, 'ReferenceError: x is not defined');
+  t.is(r.error_message, 'ReferenceError: x is not defined');
 });
 
 test('crash has priority over fail', (t) => {

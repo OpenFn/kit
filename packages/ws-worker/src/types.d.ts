@@ -33,7 +33,7 @@ export type ExitReasonStrings =
 
 export type ExitReason = {
   reason: ExitReasonStrings;
-  message: string | null;
+  error_message: string | null;
   error_type: string | null;
 };
 

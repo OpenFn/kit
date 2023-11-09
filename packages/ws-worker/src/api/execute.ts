@@ -237,12 +237,12 @@ export function onJobComplete(
 
   delete state.activeRun;
   delete state.activeJob;
-  const { reason, message, error_type } = calculateJobExitReason(
+  const { reason, error_message, error_type } = calculateJobExitReason(
     job_id,
     event.state,
     error
   );
-  state.reasons[job_id] = { reason, message, error_type };
+  state.reasons[job_id] = { reason, error_message, error_type };
 
   return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
     run_id,
@@ -251,7 +251,7 @@ export function onJobComplete(
     output_dataclip: stringify(event.state),
 
     reason,
-    message,
+    error_message,
     error_type,
   });
 }

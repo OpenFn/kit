@@ -165,7 +165,7 @@ test('jobComplete should write a reason to state', async (t) => {
   t.deepEqual(state.reasons[jobId], {
     reason: 'success',
     error_type: null,
-    message: null,
+    error_message: null,
   });
 });
 
@@ -190,7 +190,7 @@ test('jobComplete should generate an exit reason: success', async (t) => {
   t.truthy(event);
   t.is(event.reason, 'success');
   t.is(event.error_type, null);
-  t.is(event.message, null);
+  t.is(event.error_message, null);
 });
 
 test('jobComplete should send a run:complete event', async (t) => {
