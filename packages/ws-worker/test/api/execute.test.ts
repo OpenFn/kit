@@ -299,6 +299,7 @@ test('workflowComplete should send an attempt:complete event', async (t) => {
   const result = { answer: 42 };
 
   const state = {
+    reasons: {},
     dataclips: {
       x: result,
     },
@@ -321,6 +322,7 @@ test('workflowComplete should call onComplete with final dataclip', async (t) =>
   const result = { answer: 42 };
 
   const state = {
+    reasons: {},
     dataclips: {
       x: result,
     },

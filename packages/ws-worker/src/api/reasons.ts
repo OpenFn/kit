@@ -28,13 +28,13 @@ const calculateAttemptExitReason = (state: AttemptState) => {
   // TODO need to calculate this properly
   // Cheating for now so I can test job reasons
   // TODO actually we may need to key on run id, it's more useful
-  const [reason] = Object.values(state.reasons) as ExitReason[];
+  if (state.reasons) {
+    const [reason] = Object.values(state.reasons) as ExitReason[];
 
-  // TODO include run id too
-
+    // TODO include run id too
+    return reason;
+  }
   // TODO what if somehow there are no runs?
-
-  return reason;
 };
 
 export { calculateJobExitReason, calculateAttemptExitReason };
