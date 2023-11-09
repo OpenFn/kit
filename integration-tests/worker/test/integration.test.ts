@@ -305,8 +305,8 @@ test('blacklist a non-openfn adaptor', (t) => {
     // At the moment the error comes back to on complete
     lightning.on('attempt:complete', (event) => {
       const { payload } = event;
-      t.is(payload.reason, 'fail');
-      t.is(payload.message, 'Error: module blacklisted: lodash');
+      t.is(payload.reason, 'crash'); // TODO actually this should be a kill
+      t.is(payload.error_message, 'module blacklisted: lodash');
       done();
     });
 

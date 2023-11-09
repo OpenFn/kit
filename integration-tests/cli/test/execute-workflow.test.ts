@@ -185,13 +185,13 @@ test.serial(
           error: {
             includeStackTrace: false,
             message: 'abort',
-            name: 'UserError',
+            type: 'UserError',
             severity: 'fail',
             source: 'runtime',
           },
           jobId: 'start',
           message: 'abort',
-          name: 'UserError',
+          type: 'UserError',
         },
       },
     });
