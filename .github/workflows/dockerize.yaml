@@ -41,4 +41,4 @@ jobs:
           target: ws-worker
           tags: |
             openfn/ws-worker:latest
-            openfn/ws-worker:${{ env.DOCKER_TAG }}
+            openfn/ws-worker:v${{ env.DOCKER_TAG }}
