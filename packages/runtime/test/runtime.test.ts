@@ -327,7 +327,7 @@ test('log errors, write to state, and continue', async (t) => {
 
   t.truthy(result.errors);
   t.is(result.errors.a.message, 'test');
-  t.is(result.errors.a.name, 'UserError');
+  t.is(result.errors.a.type, 'UserError');
 
   t.truthy(logger._find('error', /failed job a/i));
 });

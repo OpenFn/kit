@@ -61,7 +61,7 @@ test.serial('jobs should not have a process object', async (t) => {
 
   await t.throwsAsync(() => run(src), {
     message: 'ReferenceError: process is not defined',
-    name: 'RuntimeError',
+    name: 'RuntimeCrash',
   });
 });
 
@@ -70,10 +70,10 @@ test.serial(
   async (t) => {
     const src = 'export default [() => setTimeout("hacking ur scriptz", 1)]';
 
-    await t.throwsAsync(() => run(src), {
-      name: 'RuntimeError',
-      message: /The "callback" argument must be of type function/,
-    });
+    const result = await run(src);
+    const error = result.errors['job-1'];
+    t.is(error.type, 'TypeError');
+    t.regex(error.message, /The "callback" argument must be of type function/);
   }
 );
 
@@ -133,6 +133,7 @@ test.serial(
     const plan: ExecutionPlan = {
       jobs: [
         {
+          id: 'a',
           expression: 'export default [s => { console.x = 10; return s; }]',
           next: {
             b: true,
@@ -146,9 +147,12 @@ test.serial(
       ],
     };
 
-    await t.throwsAsync(() => run(plan), {
-      name: 'RuntimeError',
-      message: 'TypeError: Cannot add property x, object is not extensible',
-    });
+    const result = await run(plan);
+    const error = result.errors.a;
+    t.is(error.type, 'TypeError');
+    t.is(
+      error.message,
+      'TypeError: Cannot add property x, object is not extensible'
+    );
   }
 );

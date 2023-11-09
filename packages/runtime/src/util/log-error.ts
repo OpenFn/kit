@@ -36,7 +36,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
 
     if (report.message) {
       logger.error(
-        `${report.code || report.name || 'error'}: ${report.message}`
+        `${report.code || report.type || 'Error'}: ${report.message}`
       );
       logger.debug(error); // TODO the logger doesn't handle this very well
     } else {

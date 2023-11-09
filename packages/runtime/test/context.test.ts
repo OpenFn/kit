@@ -41,7 +41,7 @@ test("doesn't allow process inside the job", async (t) => {
   const state = createState();
 
   await t.throwsAsync(() => run(job, state, { logger }), {
-    name: 'RuntimeError',
+    name: 'RuntimeCrash',
     message: 'ReferenceError: process is not defined',
   });
 });
