@@ -16,6 +16,8 @@ export const WORKFLOW_COMPLETE = 'worker:workflow-complete';
 
 export const JOB_START = 'worker:job-start';
 
+export const JOB_ERROR = 'worker:job-error';
+
 export const JOB_COMPLETE = 'worker:job-complete';
 
 export const ERROR = 'worker:error';
@@ -44,6 +46,13 @@ export interface JobCompleteEvent extends InternalEvent {
   duration: number;
 }
 
+export interface JobErrorEvent extends InternalEvent {
+  jobId: string;
+  state: any;
+  error: any; // TODO this should be one of our errors
+  duration: number;
+}
+
 export interface LogEvent extends InternalEvent {
   message: JSONLog;
 }
@@ -58,6 +67,7 @@ export type EventMap = {
   [WORKFLOW_COMPLETE]: WorkflowCompleteEvent;
   [JOB_START]: JobStartEvent;
   [JOB_COMPLETE]: JobCompleteEvent;
+  [JOB_ERROR]: JobErrorEvent;
   [LOG]: LogEvent;
   [ERROR]: ErrorEvent;
 

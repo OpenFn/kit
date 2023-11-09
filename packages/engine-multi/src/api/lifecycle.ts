@@ -65,9 +65,6 @@ export const workflowComplete = (
     threadId,
     duration: state.duration,
     state: result,
-
-    ...reason,
-    // TODO add the id of the RUN that generated this reason
   });
 };
 
@@ -92,6 +89,23 @@ export const jobComplete = (
   context.emit(externalEvents.JOB_COMPLETE, {
     threadId,
     state,
+    duration,
+    jobId,
+  });
+};
+
+// TODO this is not unit tested
+// (and not likely to be today)
+export const jobError = (
+  context: ExecutionContext,
+  event: internalEvents.JobErrorEvent
+) => {
+  const { threadId, state, error, duration, jobId } = event;
+
+  context.emit(externalEvents.JOB_ERROR, {
+    threadId,
+    state,
+    error,
     duration,
     jobId,
   });

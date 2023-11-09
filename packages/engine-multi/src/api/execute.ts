@@ -13,6 +13,7 @@ import {
   jobStart,
   jobComplete,
   error,
+  jobError,
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
 import { TimeoutError } from '../errors';
@@ -49,6 +50,9 @@ const execute = async (context: ExecutionContext) => {
     },
     [workerEvents.JOB_COMPLETE]: (evt: workerEvents.JobCompleteEvent) => {
       jobComplete(context, evt);
+    },
+    [workerEvents.JOB_ERROR]: (evt: workerEvents.JobErrorEvent) => {
+      jobError(context, evt);
     },
     [workerEvents.LOG]: (evt: workerEvents.LogEvent) => {
       log(context, evt);

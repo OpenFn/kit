@@ -14,6 +14,8 @@ export const WORKFLOW_ERROR = 'workflow-error';
 
 export const JOB_START = 'job-start';
 
+export const JOB_ERROR = 'job-error';
+
 export const JOB_COMPLETE = 'job-complete';
 
 export const WORKFLOW_LOG = 'workflow-log';
@@ -30,6 +32,7 @@ export type EventMap = {
   [WORKFLOW_START]: WorkflowStartPayload;
   [WORKFLOW_COMPLETE]: WorkflowCompletePayload;
   [JOB_START]: JobStartPayload;
+  [JOB_ERROR]: JobErrorPayload;
   [JOB_COMPLETE]: JobCompletePayload;
   [WORKFLOW_LOG]: WorkerLogPayload;
   [WORKFLOW_ERROR]: WorkflowErrorPayload;
@@ -65,6 +68,13 @@ export interface JobCompletePayload extends ExternalEvent {
   jobId: string;
   duration: number;
   state: any; // the result state
+}
+
+export interface JobErrorPayload extends ExternalEvent {
+  jobId: string;
+  duration: number;
+  state: any; // the result state
+  error: any;
 }
 
 export interface WorkerLogPayload extends ExternalEvent, JSONLog {}
