@@ -46,7 +46,6 @@ async function createMock() {
   const listeners: Record<string, any> = {};
 
   const dispatch = (type: EngineEvent, args?: any) => {
-    // console.log(' > ', type, args);
     if (args.workflowId) {
       listeners[args.workflowId]?.[type]?.(args);
     }
@@ -96,7 +95,7 @@ async function createMock() {
         workflowId,
         message: message,
         level: 'info',
-        timestamp: Date.now(),
+        time: (BigInt(Date.now()) * BigInt(1e3)).toString(),
         name: 'mck',
       });
     };

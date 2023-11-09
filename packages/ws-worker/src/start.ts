@@ -91,8 +91,6 @@ const [minBackoff, maxBackoff] = args.backoff
   .split('/')
   .map((n: string) => parseInt(n, 10) * 1000);
 
-console.log(minBackoff, maxBackoff);
-
 function engineReady(engine: any) {
   createWorker(engine, {
     port: args.port,

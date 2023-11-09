@@ -11,11 +11,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: openfn/ws-worker
+      - name: Manipulate tag for docker
+        id: branch_name
+        run: |
+          SOURCE_TAG=${GITHUB_REF#refs/tags/}
+          echo Source Tag: $SOURCE_TAG
+
+          VERSION_TAG=${SOURCE_TAG#@openfn/ws-worker}
+          echo Version Tag: $VERSION_TAG
+          
+          DOCKER_TAG=${VERSION_TAG#@}
+          echo Docker Tag: $DOCKER_TAG
+          
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -31,5 +39,6 @@ jobs:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           target: ws-worker
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            openfn/ws-worker:latest
+            openfn/ws-worker:v${{ env.DOCKER_TAG }}

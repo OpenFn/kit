@@ -54,7 +54,7 @@ const eventMap = {
   'workflow-start': ATTEMPT_START,
   'job-start': RUN_START,
   'job-complete': RUN_COMPLETE,
-  log: ATTEMPT_LOG,
+  'workflow-log': ATTEMPT_LOG,
   'workflow-complete': ATTEMPT_COMPLETE,
 };
 
@@ -97,7 +97,7 @@ export function execute(
   const addEvent = (eventName: string, handler: EventHandler) => {
     const wrappedFn = async (event: any) => {
       // @ts-ignore
-      const lightningEvent = eventMap[eventName];
+      const lightningEvent = eventMap[eventName] ?? eventName;
       try {
         await handler(context, event);
         logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
@@ -301,13 +301,15 @@ export async function onWorkflowError(
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
+  const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
+
   // lightning-friendly log object
   const log: ATTEMPT_LOG_PAYLOAD = {
     attempt_id: state.plan.id!,
     message: event.message,
     source: event.name,
     level: event.level,
-    timestamp: event.time || Date.now(),
+    timestamp: timeInMicroseconds.toString(),
   };
 
   if (state.activeRun) {

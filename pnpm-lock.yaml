@@ -1619,7 +1619,7 @@ packages:
       date-fns: 2.30.0
       jsonpath-plus: 4.0.0
       lodash: 4.17.21
-      undici: 5.27.0
+      undici: 5.27.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -7738,8 +7738,8 @@ packages:
     resolution: {integrity: sha512-hEQt0+ZLDVUMhebKxL4x1BTtDY7bavVofhZ9KZ4aI26X9SRaE+Y3m83XUL1UP2jn8ynjndwCCpEHdUG+9pP1Tw==}
     dev: true
 
-  /undici@5.27.0:
-    resolution: {integrity: sha512-l3ydWhlhOJzMVOYkymLykcRRXqbUaQriERtR70B9LzNkZ4bX52Fc8wbTDneMiwo8T+AemZXvXaTx+9o5ROxrXg==}
+  /undici@5.27.2:
+    resolution: {integrity: sha512-iS857PdOEy/y3wlM3yRp+6SNQQ6xU0mmZcwRSriqk+et/cwWAtwmIGf6WkoDN2EK/AMdCO/dfXzIwi+rFMrjjQ==}
     engines: {node: '>=14.0'}
     dependencies:
       '@fastify/busboy': 2.0.0

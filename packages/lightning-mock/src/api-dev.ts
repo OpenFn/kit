@@ -130,11 +130,14 @@ const setupDevAPI = (
   app.onSocketEvent = (
     event: LightningEvents,
     attemptId: string,
-    fn: (evt: any) => void
+    fn: (evt: any) => void,
+    once = true,
   ) => {
     function handler(e: any) {
       if (e.attemptId && e.attemptId === attemptId) {
-        state.events.removeListener(event, handler);
+        if (once) {
+          state.events.removeListener(event, handler);
+        }
         fn(e);
       }
     }

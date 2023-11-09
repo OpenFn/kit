@@ -2,12 +2,14 @@ import test from 'ava';
 import chalk from 'chalk';
 import { styleLevel, LogFns, StringLog } from '../src/logger';
 import { defaults as defaultOptions, LogLevel } from '../src/options';
+import hrtimestamp from '../src/util/timestamp';
 import { SECRET } from '../src/sanitize';
 
 // We're going to run all these tests against the mock logger
 // Which is basically thin wrapper around the logger which bypasses
 // console and provides an inspection API
 import createLogger from '../src/mock';
+import { timestampToDate } from '../src/util/timestamp';
 
 const wait = (ms: number) => {
   return new Promise((resolve) => {
@@ -201,9 +203,65 @@ test('sanitize: summarise object', (t) => {
     t.assert(result.level === level);
     t.assert(result.name === 'x');
     t.assert(result.message[0] === 'abc');
-    t.true(!isNaN(result.time));
+    t.is(typeof result.time, 'string');
   });
 });
+
+test(`JSON timestamps are bigints representing sensible times`, (t) => {
+  const testStartTime = new Date().toISOString()
+  const startTime = hrtimestamp();
+
+  const options = { level: 'info' as const, json: true };
+  const logger = createLogger<string>('x', options);
+  logger.info("what's the time mr wolf");
+
+  const { time } = JSON.parse(logger._last);
+  // The time we get here is NOT a bigint because it's been serialized
+  t.true(typeof time === 'string');
+  t.is(time.length, 19);
+
+  // But we can convert it and check the value is sensible
+  const endTime = BigInt(time);
+
+  const endDate = timestampToDate(endTime);
+
+  // These dates, captured at different resolutions and converte to ms,
+  // are probabably identical, maybe <3ms difference
+  t.log(`log time: ${testStartTime}
+big start time: ${timestampToDate(startTime).toISOString()},
+big end time: ${endDate.toISOString()}`);
+
+  // tinfoil hat: make sure the result is the same day at least
+  // Maybe a time diff < 1e6 is a better test but this is really belt and braces
+  const today = new Date();
+  t.is(today.getDate(), endDate.getDate());
+  t.is(today.getFullYear(), endDate.getFullYear());
+  t.is(today.getMonth(), endDate.getMonth());
+
+  t.true(endTime >= startTime);
+
+  // Check the elapsed time is less than, say, 1ms (should be super super quick!)
+  t.true(endTime - startTime < 1e6);
+});
+
+// TODO this test needs to pass without the timeout
+test('timestamps increase in time', async (t) => {
+  const options = { level: 'info' as const, json: true };
+  const logger = createLogger<string>('x', options);
+
+  for(let i = 0; i < 10; i += 1) {
+    // await new Promise(done => setTimeout(done, 2))
+    logger.info("what's the time mr wolf");
+  }
+
+  let last = 0;
+  logger._history.forEach(l => {
+    const { time } =  JSON.parse(l);
+    t.log(time)
+    t.true(time > last)
+    last = time;
+  })
+})
 
 test('print() should be barebones', (t) => {
   const options = { level: 'default' as const };

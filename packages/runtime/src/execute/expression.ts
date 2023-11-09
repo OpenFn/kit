@@ -67,7 +67,6 @@ export default (
 
       clearTimeout(tid);
       logger.debug('Expression complete!');
-      logger.debug(result);
 
       duration = Date.now() - duration;
 

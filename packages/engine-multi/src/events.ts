@@ -18,6 +18,8 @@ export const JOB_ERROR = 'job-error';
 
 export const JOB_COMPLETE = 'job-complete';
 
+// TODO To be fair this is just a log, not neccesarily a workflow log
+// A log line may have a workflow and job id
 export const WORKFLOW_LOG = 'workflow-log';
 
 export const WORKFLOW_EDGE_RESOLVED = 'workflow-edge-resolved';

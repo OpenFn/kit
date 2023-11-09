@@ -155,6 +155,32 @@ test.serial('should emit a log event', async (t) => {
   t.is(workflowLog.level, 'info');
 });
 
+test.serial('log events are timestamped in hr time', async (t) => {
+  let workflowLog;
+  const plan = {
+    id: 'y',
+    jobs: [
+      {
+        expression: '() => { console.log("hi"); return 33 }',
+      },
+    ],
+  };
+  const state = {
+    id: 'y',
+    plan,
+  } as WorkflowState;
+
+  const context = createContext({ state, options });
+  context.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
+
+  await execute(context);
+  const { time } = workflowLog;
+
+  // Note: The time we get here is NOT a bigint because it's been serialized
+  t.true(typeof time === 'string');
+  t.is(time.length, 19);
+});
+
 test.serial('should emit error on timeout', async (t) => {
   const state = {
     id: 'zz',
