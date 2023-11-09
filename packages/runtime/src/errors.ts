@@ -8,9 +8,16 @@ import util from 'node:util';
 // It would be nice for the detail to be in the error, not the code
 // But that probably requires more detailed error types
 
-// This lets us distinguish runtime errors - which are crash
-// - to user and adaptor errors, which are a fail
-// See https://nodejs.org/api/errors.html for errors
+// TODO it's annoying that for builtin errors I use constructor.name,
+// but for my errors I use type
+// I guess I'm happy to present a type to other consumers, but it does feel a little messy
+// Note that I can't just use name either on the subclass because constructor.name is always Error
+
+export function assertImportError(e: any) {
+  if (e.type === 'ImportError') {
+    throw e;
+  }
+}
 
 export function assertRuntimeError(e: any) {
   // Type errors occur so frequently, and are so likely to be
@@ -20,6 +27,7 @@ export function assertRuntimeError(e: any) {
   }
 }
 
+// See https://nodejs.org/api/errors.html for errors
 export function assertRuntimeCrash(e: any) {
   // ignore  instanceof SystemError, AssertionError
   if (e.constructor.name.match(/ReferenceError|SyntaxError/)) {

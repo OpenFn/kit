@@ -4,7 +4,6 @@
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
 
-import { RuntimeCrash } from '../errors';
 import type { Operation } from '../types';
 import type { Logger } from '@openfn/logger';
 
@@ -36,16 +35,9 @@ export default async (
   const context = opts.context || vm.createContext();
   const linker = opts.linker || mainLinker;
 
-  let module;
-  try {
-    module = new vm.SourceTextModule(src, {
-      context,
-    });
-  } catch (e: any) {
-    // This is probably a syntax error
-    // We'll just lump it under runtime error for now though
-    throw new RuntimeCrash(e);
-  }
+  const module = new vm.SourceTextModule(src, {
+    context,
+  });
 
   // We need to provide a linker to handle import statements
   // https://nodejs.org/api/vm.html#modulelinklinker
@@ -56,6 +48,8 @@ export default async (
         return result;
       }
     }
+
+    // TODO where does this throw to...?
     throw new Error(`module loader cannot resolve dependency: ${specifier}`);
   });
   // Run the module - exports are written to module.namespace

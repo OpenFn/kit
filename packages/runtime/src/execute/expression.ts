@@ -13,6 +13,7 @@ import {
   TimeoutError,
   UserError,
   assertAdaptorError,
+  assertImportError,
   assertRuntimeCrash,
   assertRuntimeError,
   assertSecurityKill,
@@ -80,12 +81,8 @@ export default (
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
       // console.log(e);
-      if (e.severity && e.source) {
-        // If the error is already handled, just throw it
-        return reject(e);
-      }
-
       try {
+        assertImportError(e);
         assertRuntimeError(e);
         assertRuntimeCrash(e);
         assertSecurityKill(e);
