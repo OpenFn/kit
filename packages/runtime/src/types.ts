@@ -4,11 +4,11 @@ import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
 import { ErrorReporter } from './util/log-error';
 import {
-  NOTIFY_COMPLETE,
+  NOTIFY_INIT_COMPLETE,
   NOTIFY_JOB_COMPLETE,
   NOTIFY_JOB_ERROR,
   NOTIFY_JOB_START,
-  NOTIFY_START,
+  NOTIFY_INIT_START,
   NOTIFY_STATE_LOAD,
 } from './events';
 
@@ -124,8 +124,8 @@ export type ExecutionContext = {
 };
 
 export type NotifyEvents =
-  | typeof NOTIFY_START
-  | typeof NOTIFY_COMPLETE
+  | typeof NOTIFY_INIT_START
+  | typeof NOTIFY_INIT_COMPLETE
   | typeof NOTIFY_JOB_START
   | typeof NOTIFY_JOB_COMPLETE
   | typeof NOTIFY_JOB_ERROR

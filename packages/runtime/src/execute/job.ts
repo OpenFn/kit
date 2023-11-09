@@ -11,6 +11,11 @@ import type {
   State,
 } from '../types';
 import { EdgeConditionError } from '../errors';
+import {
+  NOTIFY_INIT_COMPLETE,
+  NOTIFY_INIT_START,
+  NOTIFY_JOB_ERROR,
+} from '../events';
 
 const loadCredentials = async (
   job: CompiledJobNode,
@@ -50,7 +55,7 @@ const executeJob = async (
 
   const duration = Date.now();
 
-  notify?.('init-start');
+  notify(NOTIFY_INIT_START);
 
   // lazy load config and state
   const configuration = await loadCredentials(
@@ -70,16 +75,17 @@ const executeJob = async (
     opts.strict
   );
 
-  notify?.('init-complete', { duration: Date.now() - duration });
+  notify(NOTIFY_INIT_COMPLETE, { duration: Date.now() - duration });
 
   // We should by this point have validated the plan, so the job MUST exist
 
   logger.timer('job');
   logger.always('Starting job', job.id);
 
+  // The expression SHOULD return state, but COULD return anything
   let result: any = state;
   if (job.expression) {
-    // The expression SHOULD return state, but could return anything
+    const startTime = Date.now();
     try {
       result = await executeExpression(ctx, job.expression, state, job.id);
       const duration = logger.timer('job');
@@ -89,6 +95,14 @@ const executeJob = async (
       logger.error(`Failed job ${job.id} after ${duration}`);
       report(state, job.id, e);
 
+      notify(NOTIFY_JOB_ERROR, {
+        duration: Date.now() - startTime,
+        error: e,
+        state,
+        jobId: job.id,
+      });
+
+      // Stop executing if the error is sufficiently severe
       if (e.severity === 'crash' || e.severity === 'kill') {
         throw e;
       }

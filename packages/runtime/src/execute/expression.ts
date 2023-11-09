@@ -93,11 +93,6 @@ export default (
         finalError = e;
       }
 
-      notify(NOTIFY_JOB_ERROR, {
-        duration: duration,
-        error: finalError,
-        jobId: id,
-      });
       reject(finalError);
     }
   });

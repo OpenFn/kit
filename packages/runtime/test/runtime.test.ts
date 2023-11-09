@@ -3,11 +3,11 @@ import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import {
   ExecutionPlan,
-  NOTIFY_COMPLETE,
+  NOTIFY_INIT_COMPLETE,
   NOTIFY_JOB_COMPLETE,
   NOTIFY_JOB_ERROR,
   NOTIFY_JOB_START,
-  NOTIFY_START,
+  NOTIFY_INIT_START,
 } from '../src';
 import run from '../src/runtime';
 
@@ -50,8 +50,8 @@ test('run a workflow and notify major events', async (t) => {
 
   await run(plan, {}, { callbacks });
 
-  t.is(counts[NOTIFY_START], 1);
-  t.is(counts[NOTIFY_COMPLETE], 1);
+  t.is(counts[NOTIFY_INIT_START], 1);
+  t.is(counts[NOTIFY_INIT_COMPLETE], 1);
   t.is(counts[NOTIFY_JOB_START], 1);
   t.is(counts[NOTIFY_JOB_COMPLETE], 1);
 });
@@ -129,8 +129,6 @@ test('resolve a credential', async (t) => {
   t.truthy(result);
   t.deepEqual(result.configuration, { password: 'password1' });
 });
-
-test.todo('resolve intial state');
 
 test('resolve initial state', async (t) => {
   const plan: ExecutionPlan = {
