@@ -4,16 +4,16 @@ import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
-import { RuntimeEngine } from '@openfn/engine-multi';
 
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
-import { CLAIM_ATTEMPT } from './events';
 
-import type { Channel } from './types';
+import type { RuntimeEngine } from '@openfn/engine-multi';
+import type { Socket, Channel } from './types';
+import type { CLAIM_ATTEMPT } from './events';
 
 type ServerOptions = {
   maxWorkflows?: number;
@@ -39,71 +39,79 @@ export interface ServerApp extends Koa {
 
   execute: ({ id, token }: CLAIM_ATTEMPT) => Promise<void>;
   destroy: () => void;
-  killWorkloop: () => void;
+  killWorkloop?: () => void;
 }
+
+type SocketAndChannel = {
+  socket: Socket;
+  channel: Channel;
+};
 
 const DEFAULT_PORT = 1234;
 const MIN_BACKOFF = 1000;
 const MAX_BACKOFF = 1000 * 30;
 
 // TODO move out into another file, make testable, test in isolation
-function connect(
-  app: ServerApp,
-  engine: RuntimeEngine,
-  logger: Logger,
-  options: ServerOptions = {}
-) {
+function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   logger.debug('Connecting to Lightning at', options.lightning);
 
-  connectToWorkerQueue(options.lightning!, app.id, options.secret!)
-    .then(({ socket, channel }) => {
-      logger.success('Connected to Lightning at', options.lightning);
+  // A new connection made to the queue
+  const onConnect = ({ socket, channel }: SocketAndChannel) => {
+    logger.success('Connected to Lightning at', options.lightning);
 
-      // save the channel and socket
-      app.socket = socket;
-      app.channel = channel;
+    // save the channel and socket
+    app.socket = socket;
+    app.channel = channel;
 
-      // trigger the workloop
-      if (!options.noLoop) {
-        if (app.killWorkloop) {
-          logger.info('Terminating old workloop');
-          app.killWorkloop();
-        }
-
-        logger.info('Starting workloop');
-        // TODO maybe namespace the workloop logger differently? It's a bit annoying
-        app.killWorkloop = startWorkloop(
-          app,
-          logger,
-          options.backoff?.min || MIN_BACKOFF,
-          options.backoff?.max || MAX_BACKOFF,
-          options.maxWorkflows
-        );
-      } else {
-        logger.break();
-        logger.warn('Workloop not starting');
-        logger.info('This server will not auto-pull work from lightning.');
-        logger.info('You can manually claim by posting to /claim, eg:');
-        logger.info(
-          `  curl -X POST http://locahost:${options.port || DEFAULT_PORT}/claim`
-        );
-        logger.break();
-      }
-    })
-    .catch((e) => {
-      logger.error(
-        'CRITICAL ERROR: could not connect to lightning at',
-        options.lightning
+    // trigger the workloop
+    if (!options.noLoop) {
+      logger.info('Starting workloop');
+      // TODO maybe namespace the workloop logger differently? It's a bit annoying
+      app.killWorkloop = startWorkloop(
+        app,
+        logger,
+        options.backoff?.min || MIN_BACKOFF,
+        options.backoff?.max || MAX_BACKOFF,
+        options.maxWorkflows
       );
-      logger.debug(e);
+    } else {
+      logger.break();
+      logger.warn('Workloop not starting');
+      logger.info('This server will not auto-pull work from lightning.');
+      logger.info('You can manually claim by posting to /claim, eg:');
+      logger.info(
+        `  curl -X POST http://locahost:${options.port || DEFAULT_PORT}/claim`
+      );
+      logger.break();
+    }
+  };
 
-      app.killWorkloop?.();
+  // We were disconnected from the queue
+  const onDisconnect = () => {
+    if (app.killWorkloop) {
+      app.killWorkloop();
+      delete app.killWorkloop;
+      logger.info('Connection to lightning lost.');
+      logger.info(
+        'Worker will automatically reconnect when lightning is back online.'
+      );
+      // So far as I know, the socket will try and reconnect in the background forever
+    }
+  };
 
-      // Try to Reconnect after 10 seconds
-      setTimeout(() => {
-        connect(app, engine, logger, options);
-      }, 1e4);
-    });
+  // We failed to connect to the queue
+  const onError = (e: any) => {
+    logger.error(
+      'CRITICAL ERROR: could not connect to lightning at',
+      options.lightning
+    );
+    logger.debug(e);
+  };
+
+  connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger)
+    .on('connect', onConnect)
+    .on('disconnect', onDisconnect)
+    .on('error', onError);
 }
 
 function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
@@ -187,7 +195,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.use(router.routes());
 
   if (options.lightning) {
-    connect(app, engine, logger, options);
+    connect(app, logger, options);
   } else {
     logger.warn('No lightning URL provided');
   }
