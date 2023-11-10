@@ -25,7 +25,14 @@ const execute = async (context: ExecutionContext) => {
     const adaptorPaths = await autoinstall(context);
 
     // TODO catch and "throw" nice clean compile errors
-    await compile(context);
+    try {
+      await compile(context);
+    } catch (e: any) {
+      if (e.type === 'CompileError') {
+        return error(context, { workflowId: state.plan.id, error: e });
+      }
+      throw e;
+    }
 
     // unfortunately we have to preload all credentials
     // I don't know any way to send data back into the worker once started

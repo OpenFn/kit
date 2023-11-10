@@ -104,7 +104,7 @@ test('fail: user error', async (t) => {
   t.is(reason.error_type, 'UserError');
 });
 
-test.only('fail: user error in the third job', async (t) => {
+test('fail: user error in the third job', async (t) => {
   const plan = createPlan(
     {
       id: 'a',
@@ -139,16 +139,16 @@ test('crash: reference error', async (t) => {
   t.is(reason.error_type, 'ReferenceError');
 });
 
-// TODO there's something very wrong with syntax errors
-test.skip('crash: syntax error', async (t) => {
+test('crash: syntax error', async (t) => {
   const plan = createPlan({
+    id: 'a',
     expression: 's lmkafekg a',
   });
 
   const { reason } = await execute(plan);
   t.is(reason.reason, 'crash');
-  t.is(reason.error_type, 'SyntaxError');
-  t.is(reason.error_message, 'ReferenceError: s is not defined');
+  t.is(reason.error_type, 'CompileError');
+  t.is(reason.error_message, 'a: Unexpected token (1:2)');
 });
 
 test.todo('crash: workflow validation error');

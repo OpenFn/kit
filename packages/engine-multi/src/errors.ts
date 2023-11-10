@@ -41,6 +41,21 @@ export class ExecutionError extends EngineError {
   }
 }
 
-// SyntaxError (crash)
+export class CompileError extends EngineError {
+  severity = 'crash'; // Syntax errors are crashes, but what if we get a module resolution thing?
+  type = 'CompileError';
+  subtype;
+  message;
+  jobId;
+
+  constructor(error: any, jobId: string) {
+    super();
+
+    this.jobId = jobId;
+    this.message = `${jobId}: ${error.message}`;
+    this.subtype = error.type || error.constructor.name;
+  }
+}
+
 // Autoinstall Error (exception)
 // CredentialsError (exception)
