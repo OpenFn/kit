@@ -53,7 +53,7 @@ export function assertAdaptorError(e: any) {
 
     // For now, we assume this is adaptor code if it has not come directly from the vm
     // TODO: how reliable is this? Can we get a better heuristic?
-    if (!first.match(/at vm:module\(0\)/)) {
+    if (first && !first.match(/at vm:module\(0\)/)) {
       throw new AdaptorError(e);
     }
   }

@@ -87,8 +87,8 @@ const executeJob = async (
   if (job.expression) {
     const startTime = Date.now();
     try {
-      result = await executeExpression(ctx, job.expression, state, job.id);
       const duration = logger.timer('job');
+      result = await executeExpression(ctx, job.expression, state, job.id);
       logger.success(`Completed job ${job.id} in ${duration}`);
     } catch (e: any) {
       const duration = logger.timer('job');
