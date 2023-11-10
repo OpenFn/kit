@@ -108,7 +108,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     logger.debug(e);
   };
 
-  connectToWorkerQueue(options.lightning!, app.id, options.secret!)
+  connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger)
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
     .on('error', onError);

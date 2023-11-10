@@ -2,10 +2,13 @@ import test from 'ava';
 import * as jose from 'jose';
 import connectToWorkerQueue from '../../src/channels/worker-queue';
 import { mockSocket } from '../../src/mock/sockets';
+import { createMockLogger } from '@openfn/logger';
+
+const logger = createMockLogger();
 
 test('should connect', async (t) => {
   return new Promise((done) => {
-    connectToWorkerQueue('www', 'a', 'secret', mockSocket).on(
+    connectToWorkerQueue('www', 'a', 'secret', logger, mockSocket).on(
       'connect',
       ({ socket, channel }) => {
         t.truthy(socket);
@@ -35,7 +38,7 @@ test('should connect with an auth token', async (t) => {
 
       return socket;
     }
-    connectToWorkerQueue('www', workerId, secret, createSocket).on(
+    connectToWorkerQueue('www', workerId, secret, logger, createSocket).on(
       'connect',
       ({ socket, channel }) => {
         t.truthy(socket);
@@ -69,14 +72,17 @@ test('should fail to connect with an invalid auth token', async (t) => {
       return socket;
     }
 
-    connectToWorkerQueue('www', workerId, 'wrong-secret!', createSocket).on(
-      'error',
-      (e) => {
-        t.is(e, 'auth_fail');
-        t.pass('error thrown');
-        done();
-      }
-    );
+    connectToWorkerQueue(
+      'www',
+      workerId,
+      'wrong-secret!',
+      logger,
+      createSocket
+    ).on('error', (e) => {
+      t.is(e, 'auth_fail');
+      t.pass('error thrown');
+      done();
+    });
   });
 });
 
