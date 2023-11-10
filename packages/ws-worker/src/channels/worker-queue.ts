@@ -1,14 +1,9 @@
+import EventEmitter from 'node:events';
 import { Socket as PhxSocket } from 'phoenix';
 import { WebSocket } from 'ws';
 
 import generateWorkerToken from '../util/worker-token';
-import type { Socket, Channel } from '../types';
-import EventEmitter from 'events';
-
-type SocketAndChannel = {
-  socket: Socket;
-  channel: Channel;
-};
+import type { Channel } from '../types';
 
 // TODO pass a proper logger please
 // (this will break tests so I'll do it later)

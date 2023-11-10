@@ -4,16 +4,16 @@ import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
-import { RuntimeEngine } from '@openfn/engine-multi';
 
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
-import { CLAIM_ATTEMPT } from './events';
 
-import type { Channel } from './types';
+import type { RuntimeEngine } from '@openfn/engine-multi';
+import type { Socket, Channel } from './types';
+import type { CLAIM_ATTEMPT } from './events';
 
 type ServerOptions = {
   maxWorkflows?: number;
@@ -39,8 +39,13 @@ export interface ServerApp extends Koa {
 
   execute: ({ id, token }: CLAIM_ATTEMPT) => Promise<void>;
   destroy: () => void;
-  killWorkloop: () => void;
+  killWorkloop?: () => void;
 }
+
+type SocketAndChannel = {
+  socket: Socket;
+  channel: Channel;
+};
 
 const DEFAULT_PORT = 1234;
 const MIN_BACKOFF = 1000;
@@ -51,7 +56,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   logger.debug('Connecting to Lightning at', options.lightning);
 
   // A new connection made to the queue
-  const onConnect = ({ socket, channel }) => {
+  const onConnect = ({ socket, channel }: SocketAndChannel) => {
     logger.success('Connected to Lightning at', options.lightning);
 
     // save the channel and socket
@@ -95,7 +100,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   };
 
   // We failed to connect to the queue
-  const onError = (e) => {
+  const onError = (e: any) => {
     logger.error(
       'CRITICAL ERROR: could not connect to lightning at',
       options.lightning
