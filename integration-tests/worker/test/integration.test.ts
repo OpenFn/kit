@@ -221,6 +221,46 @@ test('run a job with initial state', (t) => {
   });
 });
 
+test.only('run a job with initial state #2', (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      dataclip_id: 's1',
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) => s)',
+        },
+      ],
+    };
+
+    initLightning();
+
+    const initialState = { name: 'Professor X' };
+
+    lightning.addDataclip('s1', initialState);
+
+    lightning.on('attempt:complete', () => {
+      const result = lightning.getResult(attempt.id);
+      console.log(result);
+      t.deepEqual(result, {
+        ...initialState,
+        configuration: {},
+      });
+      done();
+    });
+
+    await initWorker();
+
+    // TODO: is there any way I can test the worker behaviour here?
+    // I think I can listen to load-state right?
+    // well, not really, not yet, not from the worker
+    // see https://github.com/OpenFn/kit/issues/402
+
+    lightning.enqueueAttempt(attempt);
+  });
+});
+
 // TODO this sort of works but the server side of it does not
 // Will work on it more
 test('run a job with credentials', (t) => {
