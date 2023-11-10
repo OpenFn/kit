@@ -730,7 +730,6 @@ test('log appopriately on error', async (t) => {
   const logger = createMockLogger(undefined, { level: 'debug' });
 
   await execute(plan, {}, logger);
-
   const err = logger._find('error', /failed job/i);
   t.truthy(err);
   t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
