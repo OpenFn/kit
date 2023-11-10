@@ -1,7 +1,7 @@
 // This will eventually contain all the error classes thrown by the engine
 
 export class EngineError extends Error {
-  source = 'worker';
+  source = 'engine';
 
   severity = '-'; // subclasses MUST provide this!
 }
@@ -26,10 +26,36 @@ export class TimeoutError extends EngineError {
 
 // This is a catch-all error thrown during execution
 export class ExecutionError extends EngineError {
-  severity = 'crash';
+  severity = 'exception';
+  type = 'ExecutionError';
+  subtype;
+  message;
+
   original: any; // this is the original error
   constructor(original: any) {
     super();
     this.original = original;
+
+    this.message = original.message;
+    this.subtype = original.type || original.constructor.name;
   }
 }
+
+export class CompileError extends EngineError {
+  severity = 'crash'; // Syntax errors are crashes, but what if we get a module resolution thing?
+  type = 'CompileError';
+  subtype;
+  message;
+  jobId;
+
+  constructor(error: any, jobId: string) {
+    super();
+
+    this.jobId = jobId;
+    this.message = `${jobId}: ${error.message}`;
+    this.subtype = error.type || error.constructor.name;
+  }
+}
+
+// Autoinstall Error (exception)
+// CredentialsError (exception)

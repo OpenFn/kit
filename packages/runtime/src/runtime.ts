@@ -13,9 +13,6 @@ import clone from './util/clone';
 
 export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
-// TODO move error strings into one file
-export const ERR_TIMEOUT = 'timeout';
-
 export type Options = {
   start?: JobNodeID;
   logger?: Logger;

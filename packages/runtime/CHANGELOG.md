@@ -1,5 +1,12 @@
 # @openfn/runtime
 
+## 0.1.0
+
+### Minor Changes
+
+- a540888: Allow to crash on error
+  Start fine-tuning error handling
+
 ## 0.0.33
 
 ### Patch Changes

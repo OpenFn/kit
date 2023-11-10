@@ -6,7 +6,7 @@ import type { ExecutionPlan } from '../types';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
-import { NOTIFY_STATE_LOAD } from '../util/notify';
+import { NOTIFY_STATE_LOAD } from '../events';
 
 const executePlan = async (
   plan: ExecutionPlan,
@@ -18,7 +18,9 @@ const executePlan = async (
     validatePlan(plan);
     compiledPlan = compilePlan(plan);
   } catch (e: any) {
-    // If the plan is invalid, abort before trying to execute
+    logger.error('Error validating execution plan');
+    logger.error(e);
+    logger.error('Aborting');
     throw e;
   }
 

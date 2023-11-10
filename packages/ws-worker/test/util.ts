@@ -1,3 +1,6 @@
+import { ExecutionPlan } from '@openfn/runtime';
+import crypto from 'node:crypto';
+
 export const wait = (fn, maxAttempts = 100) =>
   new Promise<any>((resolve) => {
     let count = 0;
@@ -29,3 +32,9 @@ export const sleep = (delay = 100) =>
   new Promise((resolve) => {
     setTimeout(resolve, delay);
   });
+
+export const createPlan = (...jobs) =>
+  ({
+    id: crypto.randomUUID(),
+    jobs: [...jobs],
+  } as ExecutionPlan);

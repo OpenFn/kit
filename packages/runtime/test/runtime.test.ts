@@ -1,6 +1,14 @@
-import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
-import { ExecutionPlan } from '../src';
+import path from 'node:path';
+import { createMockLogger } from '@openfn/logger';
+import {
+  ExecutionPlan,
+  NOTIFY_INIT_COMPLETE,
+  NOTIFY_JOB_COMPLETE,
+  NOTIFY_JOB_ERROR,
+  NOTIFY_JOB_START,
+  NOTIFY_INIT_START,
+} from '../src';
 import run from '../src/runtime';
 
 // High level examples of runtime usages
@@ -42,10 +50,61 @@ test('run a workflow and notify major events', async (t) => {
 
   await run(plan, {}, { callbacks });
 
-  t.is(counts['init-start'], 1);
-  t.is(counts['init-complete'], 1);
-  t.is(counts['job-start'], 1);
-  t.is(counts['job-complete'], 1);
+  t.is(counts[NOTIFY_INIT_START], 1);
+  t.is(counts[NOTIFY_INIT_COMPLETE], 1);
+  t.is(counts[NOTIFY_JOB_START], 1);
+  t.is(counts[NOTIFY_JOB_COMPLETE], 1);
+});
+
+test('notify job error even after fail', async (t) => {
+  const notify = (name: string, event: any) => {
+    if (name === NOTIFY_JOB_ERROR) {
+      t.is(event.jobId, 'a');
+      t.true(!isNaN(event.duration));
+      t.is(event.error.type, 'RuntimeError');
+      t.is(event.error.subtype, 'TypeError');
+      t.regex(event.error.message, /Cannot read properties of undefined/);
+      t.pass('called job erorr');
+    }
+  };
+  const callbacks = {
+    notify,
+  };
+
+  const plan: ExecutionPlan = {
+    jobs: [
+      { id: 'a', expression: 'export default [(s) => s.data.x = s.err.z ]' },
+    ],
+  };
+
+  await run(plan, {}, { callbacks });
+});
+
+test('notify job error even after crash', async (t) => {
+  const notify = (name: string, event: any) => {
+    if (name === NOTIFY_JOB_ERROR) {
+      t.is(event.jobId, 'a');
+      t.true(!isNaN(event.duration));
+      t.is(event.error.type, 'RuntimeCrash');
+      t.is(event.error.subtype, 'ReferenceError');
+      t.regex(event.error.message, /s is not defined/);
+      t.pass('called job erorr');
+    }
+  };
+  const callbacks = {
+    notify,
+  };
+
+  const plan: ExecutionPlan = {
+    jobs: [{ id: 'a', expression: 'export default [() => s]' }],
+  };
+
+  try {
+    await run(plan, {}, { callbacks });
+  } catch (e) {
+    // this will throw, it's fine
+    // don't assert on it, I only wnat to assert in on-error
+  }
 });
 
 test('resolve a credential', async (t) => {
@@ -70,8 +129,6 @@ test('resolve a credential', async (t) => {
   t.truthy(result);
   t.deepEqual(result.configuration, { password: 'password1' });
 });
-
-test.todo('resolve intial state');
 
 test('resolve initial state', async (t) => {
   const plan: ExecutionPlan = {
@@ -326,7 +383,7 @@ test('log errors, write to state, and continue', async (t) => {
 
   t.truthy(result.errors);
   t.is(result.errors.a.message, 'test');
-  t.is(result.errors.a.name, 'Error');
+  t.is(result.errors.a.type, 'UserError');
 
   t.truthy(logger._find('error', /failed job a/i));
 });
@@ -395,4 +452,25 @@ test('data can be an array (workflow)', async (t) => {
 
   const result: any = await run(plan, {}, { strict: false });
   t.deepEqual(result.data, [1, 2, 3]);
+});
+
+test('import from a module', async (t) => {
+  const expression = `
+  import { x } from 'x';
+  export default [(s) => ({ data: x })];
+  `;
+
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  t.is(result.data, 'test');
 });

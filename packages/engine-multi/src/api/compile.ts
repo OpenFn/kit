@@ -6,6 +6,7 @@ import type { Logger } from '@openfn/logger';
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 import { ExecutionContext } from '../types';
+import { CompileError } from '../errors';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook
@@ -17,12 +18,16 @@ export default async (context: ExecutionContext) => {
   if (!noCompile && state.plan?.jobs?.length) {
     for (const job of state.plan.jobs) {
       if (job.expression) {
-        job.expression = await compileJob(
-          job.expression as string,
-          logger,
-          repoDir,
-          job.adaptor // TODO need to expand this. Or do I?
-        );
+        try {
+          job.expression = await compileJob(
+            job.expression as string,
+            logger,
+            repoDir,
+            job.adaptor // TODO need to expand this. Or do I?
+          );
+        } catch (e) {
+          throw new CompileError(e, job.id!);
+        }
       }
     }
   }

@@ -1,7 +1,6 @@
 import run, { getNameAndVersion } from '@openfn/runtime';
 import type { ModuleInfo, ModuleInfoMap, ExecutionPlan } from '@openfn/runtime';
-import createLogger, { RUNTIME, JOB, Logger } from '../util/logger';
-import abort from '../util/abort';
+import createLogger, { RUNTIME, JOB } from '../util/logger';
 import { ExecuteOptions } from './command';
 
 type ExtendedModuleInfo = ModuleInfo & {
@@ -11,8 +10,7 @@ type ExtendedModuleInfo = ModuleInfo & {
 export default async (
   input: string | ExecutionPlan,
   state: any,
-  opts: Omit<ExecuteOptions, 'jobPath'>,
-  logger: Logger
+  opts: Omit<ExecuteOptions, 'jobPath'>
 ): Promise<any> => {
   try {
     const result = await run(input, state, {
@@ -29,9 +27,9 @@ export default async (
     });
     return result;
   } catch (e: any) {
-    // The runtime will throw if it's give something it can't execute
-    // TODO Right now we assume this is a validation error (compilation errors should be caught already)
-    abort(logger, 'Invalid workflow', e);
+    // Any error coming out of the runtime should be handled and reported already
+    e.handled = true;
+    throw e;
   }
 };
 

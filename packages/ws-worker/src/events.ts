@@ -1,6 +1,4 @@
-import { Attempt } from './types';
-
-// track socket event names as constants to keep refactoring easier
+import { Attempt, ExitReason } from './types';
 
 export const CLAIM = 'claim';
 
@@ -57,7 +55,7 @@ export type RUN_START_PAYLOAD = {
 export type RUN_START_REPLY = void;
 
 export const RUN_COMPLETE = 'run:complete';
-export type RUN_COMPLETE_PAYLOAD = {
+export type RUN_COMPLETE_PAYLOAD = ExitReason & {
   attempt_id?: string;
   job_id: string;
   run_id: string;

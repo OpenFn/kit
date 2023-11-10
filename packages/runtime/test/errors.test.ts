@@ -1,27 +1,245 @@
-/**
-  reproduce various errors and test how the runtime responds
-  it should basically throw with a set of expected error cases
-  
-  InputError - the workflow structure failed validation
-  RuntimeError - error while executing. This could have a subtype like TypeError, ReferenceError
-                 It is a bit of a confusing name, is  JobError, ExpressionError or ExeuctionError better?
-  CompileError - error while compiling code, probably a syntax error
-  LinkerError - basically a problem loading any dependency (probably the adaptor)
-                ModuleError? DependencyError? ImportError?
-  TimeoutError - a job ran for too long
-  ResolveError - a state or credential resolver failed (is this an input error?)
-  
-  what about code generation errors? That'll be a RuntimeError, should we treat it spedcially?
-  SecurityError maybe?
-
-  Note that there are errors we can't catch here, like memory or diskspace blowups, infinite loops.
-  It's the worker's job to catch those and report the crash
-
-  We'll have a RuntimeError type which has as reason string (that gets forwarded to the worker)
-  a type and subtype, and a message
-
-  Later we'll do stacktraces and positions and stuff but not now. Maybe for a JobError I guess?
- */
 import test from 'ava';
+import path from 'node:path';
+import run from '../src/runtime';
 
-test.todo('errors');
+// This is irrelevant now as state and credentials are preloaded
+test.todo('lazy state & credential loading');
+
+test('crash on timeout', async (t) => {
+  const expression = 'export default [(s) => new Promise((resolve) => {})]';
+
+  let error;
+  try {
+    await run(expression, {}, { timeout: 1 });
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'TimeoutError');
+  t.is(error.message, 'Job took longer than 1ms to complete');
+});
+
+test('crash on runtime error with SyntaxError', async (t) => {
+  const expression = 'export default [(s) => ~@]2q1j]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'RuntimeCrash');
+  t.is(error.subtype, 'SyntaxError');
+  t.is(error.message, 'SyntaxError: Invalid or unexpected token');
+});
+
+test('crash on runtime error with ReferenceError', async (t) => {
+  const expression = 'export default [(s) => x]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  // t.true(error instanceof RuntimeError);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'RuntimeCrash');
+  t.is(error.subtype, 'ReferenceError');
+  t.is(error.message, 'ReferenceError: x is not defined');
+});
+
+test('crash on eval with SecurityError', async (t) => {
+  const expression = 'export default [(s) => eval("process.exit()")]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'kill');
+  t.is(error.type, 'SecurityError');
+  t.is(error.message, 'Illegal eval statement detected');
+});
+
+test('crash on edge condition error with EdgeConditionError', async (t) => {
+  const workflow = {
+    jobs: [
+      {
+        id: 'a',
+        next: {
+          b: {
+            // Will throw a reference error
+            condition: 'wibble',
+          },
+        },
+      },
+      { id: 'b' },
+    ],
+  };
+
+  let error;
+  try {
+    await run(workflow);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'EdgeConditionError');
+  t.is(error.message, 'wibble is not defined');
+});
+
+test.todo('crash on input error if a function is passed with forceSandbox');
+
+// I think I'm gonna keep this broad for now, not catch too many cases
+// I'll add a tech debt issue go through and add really tight handling
+// so that if something goes wrong, we know exactly what
+test('crash on import error: module path provided', async (t) => {
+  const expression = 'import x from "blah"; export default [(s) => x]';
+
+  let error;
+  try {
+    await run(expression);
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'ImportError');
+  t.is(error.message, 'Failed to import module "blah"');
+});
+
+test('crash on blacklisted module', async (t) => {
+  const expression = 'import x from "blah"; export default [(s) => x]';
+
+  let error;
+  try {
+    await run(
+      expression,
+      {},
+      {
+        linker: {
+          whitelist: [/^@opennfn/],
+        },
+      }
+    );
+  } catch (e) {
+    error = e;
+  }
+
+  t.truthy(error);
+  t.is(error.severity, 'crash');
+  t.is(error.type, 'ImportError');
+  t.is(error.message, 'module blacklisted: blah');
+});
+
+test('fail on runtime TypeError', async (t) => {
+  const expression = 'export default [(s) => s.x.y]';
+
+  const result = await run(expression);
+  const error = result.errors['job-1'];
+
+  t.truthy(error);
+  t.is(error.type, 'TypeError');
+  t.is(
+    error.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+});
+
+// TODO not totally convinced on this one actually
+test('fail on runtime error with RangeError', async (t) => {
+  const expression =
+    'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
+
+  const result = await run(expression);
+  const error = result.errors['job-1'];
+
+  t.truthy(error);
+  t.is(error.type, 'RangeError');
+  t.is(
+    error.message,
+    'RangeError: toFixed() digits argument must be between 0 and 100'
+  );
+});
+
+test('fail on user error with new Error()', async (t) => {
+  const expression = 'export default [(s) => {throw new Error("abort")}]';
+
+  const result = await run(expression);
+
+  const error = result.errors['job-1'];
+
+  t.is(error.type, 'UserError');
+  t.is(error.message, 'abort');
+});
+
+test('fail on user error with throw "abort"', async (t) => {
+  const expression = 'export default [(s) => {throw "abort"}]';
+
+  const result = await run(expression);
+
+  const error = result.errors['job-1'];
+
+  t.is(error.type, 'UserError');
+  t.is(error.message, 'abort');
+});
+
+test('fail on adaptor error (with throw new Error())', async (t) => {
+  const expression = `
+  import { err } from 'x';
+  export default [(s) => err()];
+  `;
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  const error = result.errors['job-1'];
+  t.is(error.type, 'AdaptorError');
+  t.is(error.message, 'adaptor err');
+});
+
+test('adaptor error with no stack trace will be a user error', async (t) => {
+  // this will throw "adaptor err"
+  // Since it has no stack trace, we don't really know a lot about it
+  // How can we handle a case like this?
+  const expression = `
+  import { err2 } from 'x';
+  export default [(s) => err2()];
+  `;
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  const error = result.errors['job-1'];
+  t.is(error.type, 'UserError');
+  t.is(error.message, 'adaptor err');
+});

@@ -3,8 +3,9 @@
  */
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
+
 import type { Operation } from '../types';
-import { Logger } from '@openfn/logger';
+import type { Logger } from '@openfn/logger';
 
 type Options = LinkerOptions & {
   context?: Context;
@@ -47,6 +48,8 @@ export default async (
         return result;
       }
     }
+
+    // TODO where does this throw to...?
     throw new Error(`module loader cannot resolve dependency: ${specifier}`);
   });
   // Run the module - exports are written to module.namespace

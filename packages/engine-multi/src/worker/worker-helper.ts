@@ -60,8 +60,6 @@ export function publish<T extends workerEvents.WorkerEvents>(
   });
 }
 
-// TODO use bespoke event names here
-// maybe thread:workflow-start
 async function helper(workflowId: string, execute: () => Promise<any>) {
   publish(workflowId, workerEvents.WORKFLOW_START, {});
 
@@ -75,11 +73,18 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
     // For tests
     return result;
   } catch (err: any) {
-    console.error(err);
     publish(workflowId, workerEvents.ERROR, {
+      // @ts-ignore
       workflowId,
       threadId,
-      message: err.message,
+
+      // Map the error out of the thread in a serializable format
+      error: {
+        message: err.message,
+        type: err.subtype || err.type || err.name,
+        severity: err.severity || 'crash',
+      },
+      // TODO job id maybe
     });
   }
 }

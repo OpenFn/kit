@@ -2,10 +2,21 @@ import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
 import loadModule from '../modules/module-loader';
 import { Operation, JobModule, State, ExecutionContext } from '../types';
-import { Options, ERR_TIMEOUT, TIMEOUT } from '../runtime';
+import { Options, TIMEOUT } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
+import {
+  InputError,
+  TimeoutError,
+  UserError,
+  assertAdaptorError,
+  assertImportError,
+  assertRuntimeCrash,
+  assertRuntimeError,
+  assertSecurityKill,
+} from '../errors';
+import { NOTIFY_JOB_COMPLETE, NOTIFY_JOB_START } from '../events';
 
 export default (
   ctx: ExecutionContext,
@@ -14,33 +25,37 @@ export default (
   id?: string
 ) =>
   new Promise(async (resolve, reject) => {
+    let duration = Date.now();
     const { logger, notify = () => {}, opts = {} } = ctx;
-    const timeout = opts.timeout || TIMEOUT;
-
-    logger.debug('Intialising pipeline');
-    logger.debug(`Timeout set to ${timeout}ms`);
-
-    // Setup an execution context
-    const context = buildContext(initialState, opts);
-
-    const { operations, execute } = await prepareJob(expression, context, opts);
-    // Create the main reducer function
-    const reducer = (execute || defaultExecute)(
-      ...operations.map((op, idx) =>
-        wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
-      )
-    );
-
-    // Run the pipeline
     try {
+      const timeout = opts.timeout || TIMEOUT;
+
+      logger.debug('Intialising pipeline');
+      logger.debug(`Timeout set to ${timeout}ms`);
+
+      // Setup an execution context
+      const context = buildContext(initialState, opts);
+
+      const { operations, execute } = await prepareJob(
+        expression,
+        context,
+        opts
+      );
+      // Create the main reducer function
+      const reducer = (execute || defaultExecute)(
+        ...operations.map((op, idx) =>
+          wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
+        )
+      );
+
+      // Run the pipeline
       logger.debug(`Executing expression (${operations.length} operations)`);
-      let exeDuration = Date.now();
-      notify('job-start', { jobId: id });
+      notify(NOTIFY_JOB_START, { jobId: id });
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
         logger.error('  Set a different timeout by passing "-t 10000" ms)');
-        reject(Error(ERR_TIMEOUT));
+        reject(new TimeoutError(timeout));
       }, timeout);
 
       // Note that any errors will be trapped by the containing Job
@@ -49,10 +64,10 @@ export default (
       clearTimeout(tid);
       logger.debug('Expression complete!');
 
-      exeDuration = Date.now() - exeDuration;
+      duration = Date.now() - duration;
 
-      notify('job-complete', {
-        duration: exeDuration,
+      notify(NOTIFY_JOB_COMPLETE, {
+        duration,
         state: result,
         jobId: id,
       });
@@ -60,7 +75,20 @@ export default (
       // return the final state
       resolve(prepareFinalState(opts, result));
     } catch (e: any) {
-      reject(e);
+      duration = Date.now() - duration;
+      let finalError;
+      try {
+        assertImportError(e);
+        assertRuntimeError(e);
+        assertRuntimeCrash(e);
+        assertSecurityKill(e);
+        assertAdaptorError(e);
+        finalError = new UserError(e);
+      } catch (e) {
+        finalError = e;
+      }
+
+      reject(finalError);
     }
   });
 
@@ -100,7 +128,7 @@ const prepareJob = async (
     } as JobModule;
   } else {
     if (opts.forceSandbox) {
-      throw new Error('Invalid arguments: jobs must be strings');
+      throw new InputError('Invalid arguments: jobs must be strings');
     }
     return { operations: expression as Operation[] };
   }

@@ -14,17 +14,19 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { AttemptOptions, Channel } from '../types';
+import { AttemptOptions, Channel, ExitReason } from '../types';
 import { getWithReply, stringify } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
 import {
+  JobCompleteEvent,
   WorkflowCompleteEvent,
   WorkflowErrorEvent,
   WorkflowStartEvent,
 } from '../mock/runtime-engine';
 import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
+import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
 const enc = new TextDecoder('utf-8');
 
@@ -34,6 +36,7 @@ export type AttemptState = {
   plan: ExecutionPlan;
   options: AttemptOptions;
   dataclips: Record<string, any>;
+  reasons: Record<string, ExitReason>;
 
   // final dataclip id
   lastDataclipId?: string;
@@ -55,6 +58,19 @@ const eventMap = {
   'workflow-complete': ATTEMPT_COMPLETE,
 };
 
+export const createAttemptState = (
+  plan: ExecutionPlan,
+  options: AttemptOptions = {}
+): AttemptState => ({
+  plan,
+  // set the result data clip id (which needs renaming)
+  // to the initial state
+  lastDataclipId: plan.initialState as string | undefined,
+  dataclips: {},
+  reasons: {},
+  options,
+});
+
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
 export function execute(
@@ -67,14 +83,7 @@ export function execute(
 ) {
   logger.info('execute...');
 
-  const state: AttemptState = {
-    plan,
-    // set the result data clip id (which needs renaming)
-    // to the initial state
-    lastDataclipId: plan.initialState as string | undefined,
-    dataclips: {},
-    options,
-  };
+  const state = createAttemptState(plan, options);
 
   const context: Context = { channel, state, logger, onComplete };
 
@@ -109,6 +118,7 @@ export function execute(
     addEvent('workflow-start', onWorkflowStart),
     addEvent('job-start', onJobStart),
     addEvent('job-complete', onJobComplete),
+    addEvent('job-error', onJobError),
     addEvent('workflow-log', onJobLog),
     // This will also resolve the promise
     addEvent('workflow-complete', onWorkflowComplete),
@@ -169,7 +179,6 @@ export function onJobStart({ channel, state }: Context, event: any) {
   // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
   state.activeJob = event.jobId;
-
   return sendEvent<RUN_START_PAYLOAD>(channel, RUN_START, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
@@ -177,11 +186,41 @@ export function onJobStart({ channel, state }: Context, event: any) {
   });
 }
 
-export function onJobComplete({ channel, state }: Context, event: any) {
+// Called on job fail or crash
+// If this was a crash, it'll also trigger a workflow error
+// But first we update the reason for this failed job
+export function onJobError(context: Context, event: any) {
+  // Error is the same as complete, but we might report
+  // a different complete reason
+
+  // akward error handling
+  // If the error is written to state, it's a fail,
+  // and we don't want to send that to onJobComplete
+  // because it'll count it as a crash
+  // This isn't very good: maybe we shouldn't trigger an error
+  // at all for a fail state?
+  const { state, error, jobId } = event;
+  // This test is horrible too
+  if (state.errors?.[jobId]?.message === error.message) {
+    onJobComplete(context, event);
+  } else {
+    onJobComplete(context, event, event.error);
+  }
+}
+
+// OK, what we need to do now is:
+// a) generate a reason string for the job
+// b) save the reason for each job to state for later
+export function onJobComplete(
+  { channel, state }: Context,
+  event: JobCompleteEvent,
+  // TODO this isn't terribly graceful, but accept an error for crashes
+  error?: any
+) {
   const dataclipId = crypto.randomUUID();
 
-  const run_id = state.activeRun;
-  const job_id = state.activeJob;
+  const run_id = state.activeRun as string;
+  const job_id = state.activeJob as string;
 
   if (!state.dataclips) {
     state.dataclips = {};
@@ -198,13 +237,22 @@ export function onJobComplete({ channel, state }: Context, event: any) {
 
   delete state.activeRun;
   delete state.activeJob;
+  const { reason, error_message, error_type } = calculateJobExitReason(
+    job_id,
+    event.state,
+    error
+  );
+  state.reasons[job_id] = { reason, error_message, error_type };
 
   return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
     run_id,
     job_id,
     output_dataclip_id: dataclipId,
     output_dataclip: stringify(event.state),
-    reason: 'success',
+
+    reason,
+    error_message,
+    error_type,
   });
 }
 
@@ -215,34 +263,41 @@ export function onWorkflowStart(
   return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
 }
 
+// TODO what this needs to do is look at all the job states
+// find the higher priority
+// And return that as the highest exit reason
 export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
   const result = state.dataclips[state.lastDataclipId!];
-
+  const reason = calculateAttemptExitReason(state);
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
-    status: 'success', // TODO
-    reason: 'ok', // Also TODO
+    ...reason,
   });
-
-  onComplete(result);
+  onComplete({ reason, state: result });
 }
 
-// On errorr, for now, we just post to workflow complete
+// On error, for now, we just post to workflow complete
 // No unit tests on this (not least because I think it'll change soon)
+// NB this is a crash state!
 export async function onWorkflowError(
   { state, channel, onComplete }: Context,
   event: WorkflowErrorEvent
 ) {
+  // Should we not just report this reason?
+  // Nothing more severe can have happened downstream, right?
+  // const reason = calculateAttemptExitReason(state);
+
+  // Ok, let's try that, let's just generate a reason from the event
+  const reason = calculateJobExitReason('', { data: {} }, event);
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
-    reason: 'fail', // TODO
     final_dataclip_id: state.lastDataclipId!,
-    message: event.message,
+    ...reason,
   });
 
-  onComplete({});
+  onComplete({ reason });
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {

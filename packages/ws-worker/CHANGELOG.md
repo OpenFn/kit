@@ -1,5 +1,19 @@
 # ws-worker
 
+## 0.2.0
+
+### Minor Changes
+
+- 0e8e20c: BREAKING: Updated exit reasons to `{ reason: "success", error_type, error_message }`
+  Add exit reasons to job and attempt complete
+
+### Patch Changes
+
+- Updated dependencies [a540888]
+- Updated dependencies [0e8e20c]
+  - @openfn/runtime@0.1.0
+  - @openfn/engine-multi@0.1.6
+
 ## 0.1.8
 
 ### Patch Changes

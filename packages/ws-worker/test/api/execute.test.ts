@@ -21,6 +21,7 @@ import {
   loadDataclip,
   loadCredential,
   sendEvent,
+  createAttemptState,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
@@ -87,10 +88,10 @@ test('jobStart should send a run:start event', async (t) => {
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
 
-  const state = {
-    plan,
-    lastDataclipId: 'abc', // this will be set to initial state by execute
-  } as AttemptState;
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
+  state.lastDataclipId = 'abc'; // this will be set to initial state by execute
 
   const channel = mockChannel({
     [RUN_START]: (evt) => {
@@ -108,11 +109,9 @@ test('jobComplete should clear the run id and active job on state', async (t) =>
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
 
-  const state = {
-    plan,
-    activeJob: jobId,
-    activeRun: 'b',
-  } as AttemptState;
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
 
   const channel = mockChannel({
     [RUN_COMPLETE]: () => true,
@@ -129,13 +128,9 @@ test('jobComplete should save the dataclip to state', async (t) => {
   const plan = { id: 'attempt-1' } as ExecutionPlan;
   const jobId = 'job-1';
 
-  const state = {
-    plan,
-    activeJob: jobId,
-    activeRun: 'b',
-    dataclips: {},
-    result: undefined,
-  } as AttemptState;
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
 
   const channel = mockChannel({
     [RUN_COMPLETE]: () => true,
@@ -149,16 +144,63 @@ test('jobComplete should save the dataclip to state', async (t) => {
   t.deepEqual(dataclip, event.state);
 });
 
+test('jobComplete should write a reason to state', async (t) => {
+  const plan = { id: 'attempt-1' } as ExecutionPlan;
+  const jobId = 'job-1';
+
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
+
+  t.is(Object.keys(state.reasons).length, 0);
+
+  const channel = mockChannel({
+    [RUN_COMPLETE]: () => true,
+  });
+
+  const event = { state: { x: 10 } };
+  await onJobComplete({ channel, state }, event);
+
+  t.is(Object.keys(state.reasons).length, 1);
+  t.deepEqual(state.reasons[jobId], {
+    reason: 'success',
+    error_type: null,
+    error_message: null,
+  });
+});
+
+test('jobComplete should generate an exit reason: success', async (t) => {
+  const plan = { id: 'attempt-1' } as ExecutionPlan;
+  const jobId = 'job-1';
+
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
+
+  let event;
+
+  const channel = mockChannel({
+    [RUN_COMPLETE]: (e) => {
+      event = e;
+    },
+  });
+
+  await onJobComplete({ channel, state }, { state: { x: 10 } });
+
+  t.truthy(event);
+  t.is(event.reason, 'success');
+  t.is(event.error_type, null);
+  t.is(event.error_message, null);
+});
+
 test('jobComplete should send a run:complete event', async (t) => {
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
   const result = { x: 10 };
 
-  const state = {
-    plan,
-    activeJob: jobId,
-    activeRun: 'b',
-  } as AttemptState;
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
 
   const channel = mockChannel({
     [RUN_COMPLETE]: (evt) => {
@@ -257,6 +299,7 @@ test('workflowComplete should send an attempt:complete event', async (t) => {
   const result = { answer: 42 };
 
   const state = {
+    reasons: {},
     dataclips: {
       x: result,
     },
@@ -279,6 +322,7 @@ test('workflowComplete should call onComplete with final dataclip', async (t) =>
   const result = { answer: 42 };
 
   const state = {
+    reasons: {},
     dataclips: {
       x: result,
     },
@@ -292,7 +336,7 @@ test('workflowComplete should call onComplete with final dataclip', async (t) =>
   const context = {
     channel,
     state,
-    onComplete: (finalState) => {
+    onComplete: ({ state: finalState }) => {
       t.deepEqual(result, finalState);
     },
   };
@@ -346,7 +390,7 @@ test('execute should pass the final result to onComplete', async (t) => {
 
   return new Promise((done) => {
     execute(channel, engine, logger, plan, options, (result) => {
-      t.deepEqual(result, { done: true });
+      t.deepEqual(result.state, { done: true });
       done();
     });
   });

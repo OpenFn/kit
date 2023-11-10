@@ -211,10 +211,57 @@ test.serial('should emit error on timeout', async (t) => {
   t.regex(event.message, /failed to return within 10ms/);
 });
 
-// how will we test compilation?
-// compile will call the actual runtime
-// maybe that's fine?
-test.todo('should compile');
+test.serial(
+  'should emit ExecutionError if something unexpected throws',
+  async (t) => {
+    const state = {
+      id: 'baa',
+      plan: {},
+    } as WorkflowState;
+    const context = createContext({ state, options });
+
+    context.once(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.workflowId, state.id);
+      // This occured in the main thread, good to know!
+      t.is(evt.threadId, '-');
+
+      t.is(evt.type, 'ExecutionError');
+      t.is(
+        evt.message,
+        "Cannot read properties of undefined (reading 'repoDir')"
+      );
+
+      t.pass('error thrown');
+    });
+
+    // @ts-ignore
+    delete context.options; // this will make it throw, poor little guy
+
+    await execute(context);
+  }
+);
+
+test.serial('should emit CompileError if compilation fails', async (t) => {
+  const state = {
+    id: 'baa',
+    plan: {
+      jobs: [{ id: 'j', expression: 'la la la' }],
+    },
+  } as WorkflowState;
+  const context = createContext({ state, options: {} });
+
+  context.once(WORKFLOW_ERROR, (evt) => {
+    t.is(evt.workflowId, state.id);
+    t.is(evt.threadId, '-');
+
+    t.is(evt.type, 'CompileError');
+    t.is(evt.message, 'j: Unexpected token (1:3)');
+
+    t.pass('error thrown');
+  });
+
+  await execute(context);
+});
 
 // what are we actually testing here?
 // ideally we wouldc ensure that autoinstall is called with the corret aguments

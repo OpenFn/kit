@@ -104,6 +104,8 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
 
+  integration-tests/cli/repo: {}
+
   integration-tests/worker:
     dependencies:
       '@openfn/engine-multi':
@@ -411,6 +413,8 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
+
+  packages/engine-multi/tmp/a/b/c: {}
 
   packages/engine-multi/tmp/repo: {}
 

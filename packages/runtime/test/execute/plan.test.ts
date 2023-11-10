@@ -662,7 +662,9 @@ test('handle non-standard error objects', async (t) => {
   };
   const result = await execute(plan, {}, mockLogger);
   t.truthy(result.errors);
-  t.is(result.errors.a.error, 'wibble');
+  const err = result.errors.a;
+  t.is(err.type, 'UserError');
+  t.is(err.message, 'wibble');
 });
 
 test('keep executing after an error', async (t) => {
@@ -733,7 +735,7 @@ test('log appopriately on error', async (t) => {
   t.truthy(err);
   t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
 
-  t.truthy(logger._find('error', /Error: e/));
+  t.truthy(logger._find('error', /UserError: e/));
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 });
 
@@ -755,12 +757,10 @@ test('jobs do not share a local scope', async (t) => {
       },
     ],
   };
-  const result = await execute(plan, {}, mockLogger);
-
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, 'x is not defined');
-  t.is(err.name, 'ReferenceError');
+  await t.throwsAsync(() => execute(plan, {}, mockLogger), {
+    message: 'ReferenceError: x is not defined',
+    name: 'RuntimeCrash',
+  });
 });
 
 test('jobs do not share a global scope', async (t) => {
@@ -779,36 +779,32 @@ test('jobs do not share a global scope', async (t) => {
       },
     ],
   };
-  const result = await execute(plan, {}, mockLogger);
 
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, 'x is not defined');
-  t.is(err.name, 'ReferenceError');
+  await t.throwsAsync(() => execute(plan, {}, mockLogger), {
+    message: 'ReferenceError: x is not defined',
+    name: 'RuntimeCrash',
+  });
 });
 
-test('jobs do not share a this object', async (t) => {
+test('jobs do not share a globalThis object', async (t) => {
   const plan: ExecutionPlan = {
     initialState: { data: {} },
     jobs: [
       {
-        expression: 'export default [s => { this.x = 10; return s; }]',
+        expression: 'export default [(s) => { globalThis.x = 10; return s; }]',
         next: {
           b: true,
         },
       },
       {
         id: 'b',
-        expression: 'export default [s => { s.data.x = this.x; return s; }]',
+        expression:
+          'export default [(s) => { s.data.x = globalThis.x; return s; }]',
       },
     ],
   };
   const result = await execute(plan, {}, mockLogger);
-
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, "Cannot read properties of undefined (reading 'x')");
-  t.is(err.name, 'TypeError');
+  t.deepEqual(result, { data: {} });
 });
 
 // TODO this fails right now
@@ -987,10 +983,10 @@ test('jobs cannot pass functions to each other', async (t) => {
   };
 
   const result = await execute(plan, {}, mockLogger);
-  const err = result.errors['b'];
-  t.truthy(err);
-  t.is(err.message, 's.data.x is not a function');
-  t.is(err.name, 'TypeError');
+
+  const error = result.errors.b;
+  t.is(error.type, 'TypeError');
+  t.is(error.message, 'TypeError: s.data.x is not a function');
 });
 
 test('Plans log for each job start and end', async (t) => {

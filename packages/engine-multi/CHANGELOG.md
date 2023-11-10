@@ -1,5 +1,14 @@
 # engine-multi
 
+## 0.1.6
+
+### Patch Changes
+
+- 0e8e20c: Forward error events from the runtime
+- Trap better errors
+- Updated dependencies [a540888]
+  - @openfn/runtime@0.1.0
+
 ## 0.1.5
 
 ### Patch Changes

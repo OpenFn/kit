@@ -94,6 +94,23 @@ export const jobComplete = (
   });
 };
 
+// TODO this is not unit tested
+// (and not likely to be today)
+export const jobError = (
+  context: ExecutionContext,
+  event: internalEvents.JobErrorEvent
+) => {
+  const { threadId, state, error, duration, jobId } = event;
+
+  context.emit(externalEvents.JOB_ERROR, {
+    threadId,
+    state,
+    error,
+    duration,
+    jobId,
+  });
+};
+
 export const log = (
   context: ExecutionContext,
   event: internalEvents.LogEvent
