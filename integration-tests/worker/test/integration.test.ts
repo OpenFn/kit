@@ -182,7 +182,7 @@ test('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test('run a job with initial state', (t) => {
+test('run a job with initial state (with data)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -221,7 +221,7 @@ test('run a job with initial state', (t) => {
   });
 });
 
-test.only('run a job with initial state #2', (t) => {
+test('run a job with initial state (no top level keys)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -242,9 +242,9 @@ test.only('run a job with initial state #2', (t) => {
 
     lightning.on('attempt:complete', () => {
       const result = lightning.getResult(attempt.id);
-      console.log(result);
       t.deepEqual(result, {
         ...initialState,
+        data: {},
         configuration: {},
       });
       done();
