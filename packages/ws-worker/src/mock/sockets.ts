@@ -82,6 +82,10 @@ export const mockSocket = (
     onError: (callback: EventHandler) => {
       callbacks.onError = callback;
     },
+    onClose: (callback: EventHandler) => {
+      // TODO this isn't actually hooked up right now
+      callbacks.onClose = callback;
+    },
     connect: () => {
       connect()
         .then(() => {

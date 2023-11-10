@@ -31,15 +31,16 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
           app.execute(attempt);
           resolve();
         });
+      })
+      // // TODO need implementations for both of these really
+      // // What do we do if we fail to join the worker channel?
+      .receive('error', () => {
+        logger.debug('pull err');
+      })
+      .receive('timeout', () => {
+        logger.debug('pull timeout');
+        reject(new Error('timeout'));
       });
-    // // TODO need implementations for both of these really
-    // // What do we do if we fail to join the worker channel?
-    // .receive('error', () => {
-    //   logger.debug('pull err');
-    // })
-    // .receive('timeout', () => {
-    //   logger.debug('pull timeout');
-    // });
   });
 };
 

@@ -3,23 +3,24 @@ import { WebSocket } from 'ws';
 
 import generateWorkerToken from '../util/worker-token';
 import type { Socket, Channel } from '../types';
+import EventEmitter from 'events';
 
 type SocketAndChannel = {
   socket: Socket;
   channel: Channel;
 };
 
+// TODO pass a proper logger please
+// (this will break tests so I'll do it later)
 const connectToWorkerQueue = (
   endpoint: string,
   serverId: string,
   secret: string,
   SocketConstructor = PhxSocket
 ) => {
-  return new Promise<SocketAndChannel>(async (done, reject) => {
-    // TODO does this token need to be fed back anyhow?
-    // I think it's just used to connect and then forgotten?
-    // If we reconnect we need a new token I guess?
-    const token = await generateWorkerToken(secret, serverId);
+  const events = new EventEmitter();
+
+  generateWorkerToken(secret, serverId).then((token) => {
     // @ts-ignore ts doesn't like the constructor here at all
     const socket = new SocketConstructor(endpoint, {
       params: { token },
@@ -42,7 +43,7 @@ const connectToWorkerQueue = (
       channel
         .join()
         .receive('ok', () => {
-          done({ socket, channel });
+          events.emit('connect', { socket, channel });
         })
         .receive('error', (e: any) => {
           console.log('ERROR', e);
@@ -52,12 +53,22 @@ const connectToWorkerQueue = (
         });
     });
 
-    // if we fail to connect
+    // On close, the socket will try and reconnect itself
+    // Forever, so far as I can tell
+    socket.onClose((e: any) => {
+      // console.log('SOCKET CLOSED');
+      // console.log(e);
+      events.emit('disconnect');
+    });
+
+    // if we fail to connect, the socket will try to reconnect
+    /// forever (?) with backoff
     socket.onError((e: any) => {
       // If we failed to connect, reject the promise
       // The server will try and reconnect itself.s
       if (!didOpen) {
-        reject(e);
+        events.emit('error', e.message);
+        didOpen = false;
       }
       // Note that if we DID manage to connect once, the socket should re-negotiate
       // wihout us having to do anything
@@ -65,6 +76,8 @@ const connectToWorkerQueue = (
 
     socket.connect();
   });
+
+  return events;
 };
 
 export default connectToWorkerQueue;
