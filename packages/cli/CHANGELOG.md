@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.4.4
+
+### Patch Changes
+
+- bff64f7: Updated error reporting
+- Updated dependencies [a540888]
+  - @openfn/runtime@0.1.0
+
 ## 0.4.3
 
 ### Patch Changes
