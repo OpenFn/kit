@@ -34,6 +34,7 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   id: `a${++rollingAttemptId}`,
   jobs: jobs || [
     {
+      id: 'j',
       adaptor: '@openfn/language-common@1.0.0',
       body: JSON.stringify({ answer: 42 }),
     },
@@ -222,21 +223,39 @@ test.serial(
   }
 );
 
-// TODO not implemented yet
-test.serial.skip(
-  `events: lightning should receive a ${e.RUN_START} event`,
+test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
+  return new Promise((done) => {
+    const attempt = getAttempt();
+
+    lng.onSocketEvent(e.RUN_START, attempt.id, ({ payload }) => {
+      t.is(payload.job_id, 'j');
+      t.truthy(payload.run_id);
+      t.pass('called run start');
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
+
+test.serial(
+  `events: lightning should receive a ${e.RUN_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
 
-      let didCallEvent = false;
-      lng.onSocketEvent(e.RUN_START, attempt.id, ({ payload }) => {
-        // TODO what can we test here?
-        didCallEvent = true;
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
+        t.is(payload.job_id, 'j');
+        t.truthy(payload.run_id);
+        t.truthy(payload.output_dataclip);
+        t.truthy(payload.output_dataclip_id);
+        t.pass('called run complete');
       });
 
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-        t.true(didCallEvent);
         done();
       });
 
@@ -276,62 +295,59 @@ test.serial(
   }
 );
 
-
 // Skipping because this is flaky at microsecond resolution
 // See branch hrtime-send-nanoseconds-to-lightning where this should be more robust
-test.serial.skip(
-  `events: logs should have increasing timestamps`,
-  (t) => {
-    return new Promise((done) => {
-      const attempt = getAttempt({}, [
-        { body: '{ x: 1 }', adaptor: 'common' },
-        { body: '{ x: 1 }', adaptor: 'common' },
-        { body: '{ x: 1 }', adaptor: 'common' },
-        { body: '{ x: 1 }', adaptor: 'common' },
-        { body: '{ x: 1 }', adaptor: 'common' },
-        { body: '{ x: 1 }', adaptor: 'common' },
-        { body: '{ x: 1 }', adaptor: 'common' },
-      ]);
+test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
+  return new Promise((done) => {
+    const attempt = getAttempt({}, [
+      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: '{ x: 1 }', adaptor: 'common' },
+    ]);
 
-      const history: bigint[] = [];
+    const history: bigint[] = [];
 
-      // Track the timestamps on any logs that come out
-      lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
-        history.push(BigInt(payload.timestamp))
-      }, false);
+    // Track the timestamps on any logs that come out
+    lng.onSocketEvent(
+      e.ATTEMPT_LOG,
+      attempt.id,
+      ({ payload }) => {
+        history.push(BigInt(payload.timestamp));
+      },
+      false
+    );
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-        t.log(history)
-        let last = BigInt(0);
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      t.log(history);
+      let last = BigInt(0);
 
+      // There is a significant chance that some logs will come out with
+      // the same timestamp
+      // So we add some leniency
+      let lives = 3;
 
-        // There is a significant chance that some logs will come out with
-        // the same timestamp
-        // So we add some leniency
-        let lives = 3;
-
-        history.forEach(time => {
-          if (time === last) {
-            lives -=1
-            t.true(lives > 0);
-            // skip
-            return
-          }
-          t.true(time > last)
-          lives = 2
-          last = time;
-        })
-
-        done();
+      history.forEach((time) => {
+        if (time === last) {
+          lives -= 1;
+          t.true(lives > 0);
+          // skip
+          return;
+        }
+        t.true(time > last);
+        lives = 2;
+        last = time;
       });
 
-      lng.enqueueAttempt(attempt);
+      done();
     });
-  }
-);
 
-
-test.todo(`events: lightning should receive a ${e.RUN_COMPLETE} event`);
+    lng.enqueueAttempt(attempt);
+  });
+});
 
 // This is well tested elsewhere but including here for completeness
 test.serial(

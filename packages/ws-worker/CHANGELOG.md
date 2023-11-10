@@ -1,5 +1,13 @@
 # ws-worker
 
+## 0.2.1
+
+### Patch Changes
+
+- ad8f6e9: Improve robustness of server connectivity
+- Updated dependencies [704e7b6]
+  - @openfn/engine-multi@0.1.7
+
 ## 0.2.0
 
 ### Minor Changes

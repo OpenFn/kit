@@ -182,7 +182,7 @@ test('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test('run a job with initial state', (t) => {
+test('run a job with initial state (with data)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -205,6 +205,46 @@ test('run a job with initial state', (t) => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
+        configuration: {},
+      });
+      done();
+    });
+
+    await initWorker();
+
+    // TODO: is there any way I can test the worker behaviour here?
+    // I think I can listen to load-state right?
+    // well, not really, not yet, not from the worker
+    // see https://github.com/OpenFn/kit/issues/402
+
+    lightning.enqueueAttempt(attempt);
+  });
+});
+
+test('run a job with initial state (no top level keys)', (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      dataclip_id: 's1',
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) => s)',
+        },
+      ],
+    };
+
+    initLightning();
+
+    const initialState = { name: 'Professor X' };
+
+    lightning.addDataclip('s1', initialState);
+
+    lightning.on('attempt:complete', () => {
+      const result = lightning.getResult(attempt.id);
+      t.deepEqual(result, {
+        ...initialState,
+        data: {},
         configuration: {},
       });
       done();

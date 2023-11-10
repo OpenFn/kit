@@ -1,5 +1,11 @@
 # engine-multi
 
+## 0.1.7
+
+### Patch Changes
+
+- 704e7b6: Use the runtime in non-strict mode
+
 ## 0.1.6
 
 ### Patch Changes

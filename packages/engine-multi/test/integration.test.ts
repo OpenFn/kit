@@ -7,9 +7,8 @@ let api;
 
 test.afterEach(() => {
   logger._reset();
-  api.destroy()
+  api.destroy();
 });
-
 
 // this tests the full API with the actual runtime
 // note that it won't test autoinstall
@@ -222,8 +221,28 @@ test.serial('preload credentials', (t) => {
 
     const plan = createPlan(jobs);
 
-    api.execute(plan, options).on('workflow-complete', ({ state }) => {
+    api.execute(plan, options).on('workflow-complete', () => {
       t.true(didCallLoader);
+      done();
+    });
+  });
+});
+
+test.serial('accept initial state', (t) => {
+  return new Promise((done) => {
+    const plan = createPlan();
+
+    // important!  The runtime  must use both x and y as initial state
+    // if we run the runtime in strict mode, x will be ignored
+    plan.initialState = {
+      x: 1,
+      data: {
+        y: 1,
+      },
+    };
+
+    api.execute(plan).on('workflow-complete', ({ state }) => {
+      t.deepEqual(state, plan.initialState);
       done();
     });
   });
