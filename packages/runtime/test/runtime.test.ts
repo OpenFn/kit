@@ -260,7 +260,7 @@ test('run a workflow with state and conditional branching', async (t) => {
   t.is(result2.data.count, 0);
 });
 
-test('run a workflow with initial state and optional start', async (t) => {
+test('run a workflow with initial state (data key) and optional start', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {

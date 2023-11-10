@@ -32,6 +32,7 @@ workerpool.worker({
     const { adaptorPaths, whitelist, sanitize } = runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
     const options = {
+      strict: false,
       logger,
       jobLogger,
       linker: {
