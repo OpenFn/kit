@@ -75,7 +75,7 @@ export type EventMap = {
   [LOG]: LogEvent;
   [ERROR]: ErrorEvent;
 
-  // TOO - extra events that aren't really designed yet
+  // TODO - extra events that aren't really designed yet
   ['worker:init-start']: any;
   ['worker:init-complete']: any;
   ['worker:load-state']: any;

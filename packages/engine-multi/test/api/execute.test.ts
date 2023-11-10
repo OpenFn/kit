@@ -211,6 +211,36 @@ test.serial('should emit error on timeout', async (t) => {
   t.regex(event.message, /failed to return within 10ms/);
 });
 
+test.serial(
+  'should emit ExecutionError if something unexpectedl throws',
+  async (t) => {
+    const state = {
+      id: 'baa',
+      plan: {},
+    } as WorkflowState;
+    const context = createContext({ state, options });
+
+    context.once(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.workflowId, state.id);
+      // This occured in the main thread, good to know!
+      t.is(evt.threadId, '-');
+
+      t.is(evt.type, 'ExecutionError');
+      t.is(
+        evt.message,
+        "Cannot read properties of undefined (reading 'repoDir')"
+      );
+
+      t.pass('error thrown');
+    });
+
+    // @ts-ignore
+    delete context.options; // this will make it throw, poor little guy
+
+    await execute(context);
+  }
+);
+
 // how will we test compilation?
 // compile will call the actual runtime
 // maybe that's fine?
