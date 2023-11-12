@@ -66,14 +66,16 @@ export default (
 
       duration = Date.now() - duration;
 
+      const finalState = prepareFinalState(opts, result);
+
       notify(NOTIFY_JOB_COMPLETE, {
         duration,
-        state: result,
+        state: finalState,
         jobId: id,
       });
 
       // return the final state
-      resolve(prepareFinalState(opts, result));
+      resolve(finalState);
     } catch (e: any) {
       duration = Date.now() - duration;
       let finalError;
