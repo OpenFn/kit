@@ -25,7 +25,7 @@ export const attempts = {
         id: 'job-1',
         adaptor: '@openfn/language-common@1.0.0',
         body: 'fn(a => a)',
-        credential: 'a',
+        credential_id: 'a',
       },
     ],
   },
