@@ -1,6 +1,8 @@
 import { AttemptState } from './execute';
 import type { ExitReason, ExitReasonStrings, State } from '../types';
 
+import type { JobNode } from '@openfn/runtime';
+
 // This takes the result state and error from the job
 const calculateJobExitReason = (
   jobId: string,
@@ -23,6 +25,18 @@ const calculateJobExitReason = (
   return { reason, error_type, error_message };
 };
 
+// It has next jobs, but they weren't executed
+const isLeafNode = (state: AttemptState, job: JobNode) => {
+  // A node is a leaf if:
+  // It has no `next` jobs at all
+  if (!job.next || Object.keys(job.next).length == 0) {
+    return true;
+  }
+  // It has next jobs, but not of them were executed
+  const hasDownstream = Object.keys(job.next).find((id) => state.reasons[id]);
+  return !hasDownstream;
+};
+
 const calculateAttemptExitReason = (state: AttemptState) => {
   if (state.plan && state.reasons) {
     // A crash or greater will trigger an error, and the error
@@ -30,7 +44,7 @@ const calculateAttemptExitReason = (state: AttemptState) => {
     // So If we get here, we basically just need to look to see if there's a fail on a leaf node
     // (we ignore fails on non-leaf nodes)
     const leafJobReasons = state.plan.jobs
-      .filter(({ next }) => !next || Object.keys(next).length == 0)
+      .filter((job) => isLeafNode(state, job))
       // TODO what if somehow there is no exit reason for a job?
       // This implies some kind of exception error, no?
       .map(({ id }) => state.reasons[id!]);
