@@ -183,7 +183,6 @@ test.serial(
       errors: {
         start: {
           error: {
-            includeStackTrace: false,
             message: 'abort',
             type: 'UserError',
             name: 'UserError',
