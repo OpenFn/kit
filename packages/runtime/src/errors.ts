@@ -178,9 +178,9 @@ export class AdaptorError extends RTError {
 
 // custom user error trow new Error() or throw {}
 // Maybe JobError or Expression Error?
-export class UserError extends RTError {
-  type = 'UserError';
-  name = 'UserError';
+export class JobError extends RTError {
+  type = 'JobError';
+  name = 'JobError';
   severity = 'fail';
   message: string = '';
   constructor(error: any) {

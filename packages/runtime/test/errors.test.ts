@@ -182,7 +182,7 @@ test('fail on user error with new Error()', async (t) => {
 
   const error = result.errors['job-1'];
 
-  t.is(error.type, 'UserError');
+  t.is(error.type, 'JobError');
   t.is(error.message, 'abort');
 });
 
@@ -193,7 +193,7 @@ test('fail on user error with throw "abort"', async (t) => {
 
   const error = result.errors['job-1'];
 
-  t.is(error.type, 'UserError');
+  t.is(error.type, 'JobError');
   t.is(error.message, 'abort');
 });
 
@@ -240,6 +240,6 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.type, 'UserError');
+  t.is(error.type, 'JobError');
   t.is(error.message, 'adaptor err');
 });

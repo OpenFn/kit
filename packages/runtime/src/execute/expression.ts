@@ -9,7 +9,7 @@ import clone from '../util/clone';
 import {
   InputError,
   TimeoutError,
-  UserError,
+  JobError,
   assertAdaptorError,
   assertImportError,
   assertRuntimeCrash,
@@ -92,7 +92,7 @@ export default (
         assertRuntimeCrash(e);
         assertSecurityKill(e);
         assertAdaptorError(e);
-        finalError = new UserError(e);
+        finalError = new JobError(e);
       } catch (e) {
         finalError = e;
       }
