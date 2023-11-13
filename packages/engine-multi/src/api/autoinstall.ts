@@ -88,8 +88,6 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
           })
           .catch((e) => {
             const duration = Date.now() - startTime;
-            console.log('AUTOINSTALL ERROR');
-            console.log(e);
             context.emit(AUTOINSTALL_ERROR, {
               module: name,
               version: version!,

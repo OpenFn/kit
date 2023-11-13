@@ -3,74 +3,31 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import Koa from 'koa';
 
-import createLightningServer from '@openfn/lightning-mock';
-
-import createEngine from '@openfn/engine-multi';
-import createWorkerServer from '@openfn/ws-worker';
-
-import createLogger, { createMockLogger } from '@openfn/logger';
+import { initLightning, initWorker, randomPort } from '../src/init';
 
 let lightning;
 let worker;
 let engine;
+let lightningPort;
 
-test.afterEach(async () => {
+test.before(async () => {
+  lightningPort = randomPort();
+  lightning = initLightning(lightningPort);
+  ({ worker, engine } = await initWorker(lightningPort, {
+    maxWorkers: 1,
+    purge: false,
+    repoDir: path.resolve('tmp/openfn/repo/integration'),
+  }));
+});
+
+test.after(async () => {
   lightning.destroy();
   await worker.destroy();
 });
 
-const initLightning = () => {
-  // TODO the lightning mock right now doesn't use the secret
-  // but we may want to add tests against this
-  lightning = createLightningServer({ port: 9999 });
-};
-
-const initWorker = async (engineArgs = {}) => {
-  engine = await createEngine({
-    // logger: createLogger('engine', { level: 'debug' }),
-    logger: createMockLogger(),
-    repoDir: path.resolve('./tmp/repo'),
-    ...engineArgs,
-  });
-
-  worker = createWorkerServer(engine, {
-    logger: createMockLogger(),
-    // logger: createLogger('worker', { level: 'debug' }),
-    port: 2222,
-    lightning: 'ws://localhost:9999/worker',
-    secret: crypto.randomUUID(),
-  });
-};
-
-test('should connect to lightning', (t) => {
-  return new Promise((done) => {
-    initLightning();
-    lightning.on('socket:connect', () => {
-      t.pass('connection recieved');
-      done();
-    });
-    initWorker();
-  });
-});
-
-test('should join attempts queue channel', (t) => {
-  return new Promise((done) => {
-    initLightning();
-    lightning.on('socket:channel-join', ({ channel }) => {
-      if (channel === 'worker:queue') {
-        t.pass('joined channel');
-        done();
-      }
-    });
-    initWorker();
-  });
-});
-
 test('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
-    initLightning();
-
-    lightning.on('attempt:complete', (evt) => {
+    lightning.once('attempt:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
       const result = lightning.getResult('a1');
       t.deepEqual(result, { data: { answer: 42 } });
@@ -78,8 +35,6 @@ test('should run a simple job with no compilation or adaptor', (t) => {
       t.pass('completed attempt');
       done();
     });
-
-    await initWorker();
 
     lightning.enqueueAttempt({
       id: 'a1',
@@ -95,11 +50,9 @@ test('should run a simple job with no compilation or adaptor', (t) => {
 
 test('run a job with autoinstall of common', (t) => {
   return new Promise(async (done) => {
-    initLightning();
-
     let autoinstallEvent;
 
-    lightning.on('attempt:complete', (evt) => {
+    lightning.once('attempt:complete', (evt) => {
       try {
         t.truthy(autoinstallEvent);
         t.is(autoinstallEvent.module, '@openfn/language-common');
@@ -117,8 +70,6 @@ test('run a job with autoinstall of common', (t) => {
         done();
       }
     });
-
-    await initWorker();
 
     // listen to events for this attempt
     engine.listen('a33', {
@@ -142,10 +93,8 @@ test('run a job with autoinstall of common', (t) => {
 
 // this depends on prior test!
 test('run a job which does NOT autoinstall common', (t) => {
-  return new Promise(async (done, _fail) => {
-    initLightning();
-
-    lightning.on('attempt:complete', (evt) => {
+  return new Promise(async (done) => {
+    lightning.once('attempt:complete', () => {
       try {
         // This will fetch the final dataclip from the attempt
         const result = lightning.getResult('a10');
@@ -157,8 +106,6 @@ test('run a job which does NOT autoinstall common', (t) => {
         done();
       }
     });
-
-    await initWorker();
 
     // listen to events for this attempt
     engine.listen('a10', {
@@ -195,21 +142,17 @@ test('run a job with initial state (with data)', (t) => {
       ],
     };
 
-    initLightning();
-
     const initialState = { data: { name: 'Professor X' } };
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.on('attempt:complete', () => {
+    lightning.once('attempt:complete', () => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
       });
       done();
     });
-
-    await initWorker();
 
     // TODO: is there any way I can test the worker behaviour here?
     // I think I can listen to load-state right?
@@ -233,13 +176,11 @@ test('run a job with initial state (no top level keys)', (t) => {
       ],
     };
 
-    initLightning();
-
     const initialState = { name: 'Professor X' };
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.on('attempt:complete', () => {
+    lightning.once('attempt:complete', () => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
@@ -247,8 +188,6 @@ test('run a job with initial state (no top level keys)', (t) => {
       });
       done();
     });
-
-    await initWorker();
 
     // TODO: is there any way I can test the worker behaviour here?
     // I think I can listen to load-state right?
@@ -271,9 +210,7 @@ test('run a http adaptor job', (t) => {
       ],
     };
 
-    initLightning();
-
-    lightning.on('attempt:complete', () => {
+    lightning.once('attempt:complete', () => {
       const result = lightning.getResult(attempt.id);
 
       t.truthy(result.response);
@@ -289,8 +226,6 @@ test('run a http adaptor job', (t) => {
 
       done();
     });
-
-    await initWorker();
 
     lightning.enqueueAttempt(attempt);
   });
@@ -360,7 +295,6 @@ test.skip('run a job with credentials', (t) => {
       done();
     });
 
-    await initWorker();
     lightning.enqueueAttempt(attempt);
   });
 });
@@ -377,23 +311,16 @@ test('blacklist a non-openfn adaptor', (t) => {
       ],
     };
 
-    initLightning();
-
-    // At the moment the error comes back to on complete
-    lightning.on('attempt:complete', (event) => {
+    lightning.once('attempt:complete', (event) => {
       const { payload } = event;
       t.is(payload.reason, 'crash'); // TODO actually this should be a kill
       t.is(payload.error_message, 'module blacklisted: lodash');
       done();
     });
 
-    await initWorker();
-
     lightning.enqueueAttempt(attempt);
   });
 });
-
-test.todo('return some kind of error on compilation error');
 
 // test('run a job with complex behaviours (initial state, branching)', (t) => {
 //   const attempt = {
@@ -430,13 +357,12 @@ test.todo('return some kind of error on compilation error');
 // });
 // });
 
+// TODO this probably needs to move out into another test file
+// not going to do it now as I've changed too much too quickly already...
 test('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
-    const engineArgs = {
-      repoDir: path.resolve('./dummy-repo'),
-      maxWorkers: 1,
-      purge: false,
-    };
+    // We want to create our own special worker here
+    await worker.destroy();
 
     const attempt1 = {
       id: crypto.randomUUID(),
@@ -457,7 +383,6 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     };
     let results = {};
 
-    initLightning();
     lightning.on('attempt:complete', (evt) => {
       const id = evt.attemptId;
       results[id] = lightning.getResult(id);
@@ -481,9 +406,17 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     //   done()
     // })
 
-    await initWorker(engineArgs);
+    const engineArgs = {
+      repoDir: path.resolve('./dummy-repo'),
+      maxWorkers: 1,
+      purge: false,
+    };
+    await initWorker(lightningPort, engineArgs);
 
     lightning.enqueueAttempt(attempt1);
     lightning.enqueueAttempt(attempt2);
   });
 });
+
+// REMEMBER the default worker was destroyed at this point!
+// If you want to use a worker, you'll have to create your own
