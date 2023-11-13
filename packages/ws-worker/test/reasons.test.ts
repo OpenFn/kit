@@ -157,6 +157,24 @@ test('success: error in the second job, but ok in the third', async (t) => {
   t.is(reason.error_type, null);
 });
 
+test('fail: error in the first job, with downstream job that is not run', async (t) => {
+  const plan = createPlan(
+    {
+      id: 'a',
+      expression: 'export default [(s) => {throw "abort!"}]',
+      next: { b: true },
+    },
+    {
+      id: 'b',
+    }
+  );
+
+  const { reason } = await execute(plan);
+  t.is(reason.reason, 'fail');
+  t.is(reason.error_message, 'abort!');
+  t.is(reason.error_type, 'UserError');
+});
+
 test('crash: reference error', async (t) => {
   const plan = createPlan({
     expression: 'export default [() => s]',
