@@ -1,7 +1,7 @@
 {
   "name": "@openfn/integration-tests-worker",
   "private": true,
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Lightning WOrker integration tests",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
