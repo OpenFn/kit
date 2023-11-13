@@ -663,7 +663,7 @@ test('handle non-standard error objects', async (t) => {
   const result = await execute(plan, {}, mockLogger);
   t.truthy(result.errors);
   const err = result.errors.a;
-  t.is(err.type, 'UserError');
+  t.is(err.type, 'JobError');
   t.is(err.message, 'wibble');
 });
 
@@ -734,7 +734,7 @@ test('log appopriately on error', async (t) => {
   t.truthy(err);
   t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
 
-  t.truthy(logger._find('error', /UserError: e/));
+  t.truthy(logger._find('error', /JobError: e/));
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 });
 

@@ -105,7 +105,7 @@ test('fail: user error', async (t) => {
   const { reason } = await execute(plan);
   t.is(reason.reason, 'fail');
   t.is(reason.error_message, 'abort!');
-  t.is(reason.error_type, 'UserError');
+  t.is(reason.error_type, 'JobError');
 });
 
 test('fail: user error in the third job', async (t) => {
@@ -129,7 +129,7 @@ test('fail: user error in the third job', async (t) => {
   const { reason } = await execute(plan);
   t.is(reason.reason, 'fail');
   t.is(reason.error_message, 'abort!');
-  t.is(reason.error_type, 'UserError');
+  t.is(reason.error_type, 'JobError');
 });
 
 // We should ignore fails on non-leaf nodes (because a downstream leaf may anticipate and correct the error)

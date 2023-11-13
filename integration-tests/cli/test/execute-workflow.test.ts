@@ -183,16 +183,15 @@ test.serial(
       errors: {
         start: {
           error: {
-            includeStackTrace: false,
             message: 'abort',
-            type: 'UserError',
-            name: 'UserError',
+            type: 'JobError',
+            name: 'JobError',
             severity: 'fail',
             source: 'runtime',
           },
           jobId: 'start',
           message: 'abort',
-          type: 'UserError',
+          type: 'JobError',
         },
       },
     });

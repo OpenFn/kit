@@ -1,6 +1,6 @@
 // TODO hmm. I have a horrible feeling that the callbacks should go here
 // at least the resolvesrs
-import executeExpression from './expression';
+import executeExpression, { ExecutionErrorWrapper } from './expression';
 
 import clone from '../util/clone';
 import assembleState from '../util/assemble-state';
@@ -91,19 +91,29 @@ const executeJob = async (
       const duration = logger.timer('job');
       logger.success(`Completed job ${job.id} in ${duration}`);
     } catch (e: any) {
-      const duration = logger.timer('job');
-      logger.error(`Failed job ${job.id} after ${duration}`);
-      report(state, job.id, e);
+      if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
+        const { error, state } = e as ExecutionErrorWrapper;
 
-      notify(NOTIFY_JOB_ERROR, {
-        duration: Date.now() - startTime,
-        error: e,
-        state,
-        jobId: job.id,
-      });
+        // Whatever the final state was, save that as the intial state to the next thing
+        result = state;
 
-      // Stop executing if the error is sufficiently severe
-      if (e.severity === 'crash' || e.severity === 'kill') {
+        const duration = logger.timer('job');
+        logger.error(`Failed job ${job.id} after ${duration}`);
+        report(state, job.id, error);
+
+        notify(NOTIFY_JOB_ERROR, {
+          duration: Date.now() - startTime,
+          error,
+          state,
+          jobId: job.id,
+        });
+
+        // Stop executing if the error is sufficiently severe
+        if (error.severity === 'crash' || error.severity === 'kill') {
+          throw error;
+        }
+      } else {
+        // It should be impossible to get here
         throw e;
       }
     }

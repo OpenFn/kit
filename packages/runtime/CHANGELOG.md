@@ -1,5 +1,12 @@
 # @openfn/runtime
 
+## 0.1.2
+
+### Patch Changes
+
+- 419f276: Clean state after error
+- 0e66f5a: Rename JobError to JobError
+
 ## 0.1.1
 
 ### Patch Changes
