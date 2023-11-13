@@ -172,7 +172,7 @@ test('fail: error in the first job, with downstream job that is not run', async 
   const { reason } = await execute(plan);
   t.is(reason.reason, 'fail');
   t.is(reason.error_message, 'abort!');
-  t.is(reason.error_type, 'UserError');
+  t.is(reason.error_type, 'JobError');
 });
 
 test('crash: reference error', async (t) => {
