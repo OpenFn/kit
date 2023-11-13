@@ -15,7 +15,7 @@ test.afterEach(() => {
   logger._reset();
 });
 
-test.serial.only(
+test.serial(
   'config should be scrubbed from the result state by default',
   async (t) => {
     const src = 'export default [(s) => s]';
@@ -32,7 +32,7 @@ test.serial.only(
   }
 );
 
-test.serial.only(
+test.serial(
   'config should be scrubbed from the result state in strict mode',
   async (t) => {
     const src = 'export default [(s) => s]';
@@ -49,7 +49,7 @@ test.serial.only(
   }
 );
 
-test.serial.only(
+test.serial(
   'config should be scrubbed from the result state in non-strict mode',
   async (t) => {
     const src = 'export default [(s) => s]';
@@ -66,7 +66,7 @@ test.serial.only(
   }
 );
 
-test.serial.only(
+test.serial(
   'config should be scrubbed from the result state after error',
   async (t) => {
     const src = 'export default [(s) => { throw "err" }]';
