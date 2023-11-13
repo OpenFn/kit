@@ -8,7 +8,7 @@ const createNode = (props = {}) =>
     id: 'a',
     body: 'x',
     adaptor: 'common',
-    credential: 'y',
+    credential_id: 'y',
     ...props,
   } as Node);
 
