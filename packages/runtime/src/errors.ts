@@ -62,7 +62,6 @@ export function assertAdaptorError(e: any) {
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';
-  includeStackTrace = false;
   type: string = '-';
 
   constructor() {

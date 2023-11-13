@@ -18,6 +18,11 @@ import {
 } from '../errors';
 import { NOTIFY_JOB_COMPLETE, NOTIFY_JOB_START } from '../events';
 
+export type ExecutionErrorWrapper = {
+  state: any;
+  error: any;
+};
+
 export default (
   ctx: ExecutionContext,
   expression: string | Operation[],
@@ -77,6 +82,8 @@ export default (
       // return the final state
       resolve(finalState);
     } catch (e: any) {
+      // whatever initial state looks like now, clean it and report it back
+      const finalState = prepareFinalState(opts, initialState);
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -90,7 +97,7 @@ export default (
         finalError = e;
       }
 
-      reject(finalError);
+      reject({ state: finalState, error: finalError } as ExecutionErrorWrapper);
     }
   });
 

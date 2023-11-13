@@ -4,8 +4,6 @@ import doRun from '../src/runtime';
 
 import { createMockLogger } from '@openfn/logger';
 import { ExecutionPlan } from '../src/types';
-import { RuntimeError } from '../src/errors';
-import { platform } from 'os';
 
 // Disable strict mode for all these tests
 const run = (job: any, state?: any, options: any = {}) =>
@@ -16,6 +14,75 @@ const logger = createMockLogger(undefined, { level: 'default' });
 test.afterEach(() => {
   logger._reset();
 });
+
+test.serial.only(
+  'config should be scrubbed from the result state by default',
+  async (t) => {
+    const src = 'export default [(s) => s]';
+
+    const state = {
+      data: true,
+      configuration: {
+        password: 'secret',
+      },
+    };
+    const result: any = await run(src, state);
+    t.is(result.data, true);
+    t.is(result.configuration, undefined);
+  }
+);
+
+test.serial.only(
+  'config should be scrubbed from the result state in strict mode',
+  async (t) => {
+    const src = 'export default [(s) => s]';
+
+    const state = {
+      data: true,
+      configuration: {
+        password: 'secret',
+      },
+    };
+    const result: any = await run(src, state, { strict: true });
+    t.is(result.data, true);
+    t.is(result.configuration, undefined);
+  }
+);
+
+test.serial.only(
+  'config should be scrubbed from the result state in non-strict mode',
+  async (t) => {
+    const src = 'export default [(s) => s]';
+
+    const state = {
+      data: true,
+      configuration: {
+        password: 'secret',
+      },
+    };
+    const result: any = await run(src, state, { strict: false });
+    t.is(result.data, true);
+    t.is(result.configuration, undefined);
+  }
+);
+
+test.serial.only(
+  'config should be scrubbed from the result state after error',
+  async (t) => {
+    const src = 'export default [(s) => { throw "err" }]';
+
+    const state = {
+      data: true,
+      configuration: {
+        password: 'secret',
+      },
+    };
+    const result: any = await run(src, state, { strict: false });
+    t.truthy(result.errors);
+    t.is(result.data, true);
+    t.is(result.configuration, undefined);
+  }
+);
 
 test.serial('jobs should not have access to global scope', async (t) => {
   const src = 'export default [() => globalThis.x]';
