@@ -1,5 +1,14 @@
 # ws-worker
 
+## 0.2.2
+
+### Patch Changes
+
+- ead672a: Fix credential mapping from Lightning
+- Updated dependencies [c448a23]
+  - @openfn/runtime@0.1.1
+  - @openfn/engine-multi@0.1.8
+
 ## 0.2.1
 
 ### Patch Changes

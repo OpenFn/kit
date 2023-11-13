@@ -171,7 +171,7 @@ test.serial(
       const attempt = getAttempt({}, [
         {
           id: 'some-job',
-          credential: 'a',
+          credential_id: 'a',
           adaptor: '@openfn/language-common@1.0.0',
           body: JSON.stringify({ answer: 42 }),
         },
