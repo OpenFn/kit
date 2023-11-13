@@ -97,6 +97,7 @@ test(`notify ${NOTIFY_JOB_COMPLETE}`, async (t) => {
       const { state, duration, jobId } = payload;
       didCallCallback = true;
       t.truthy(state);
+      t.deepEqual(state, state);
       t.assert(!isNaN(duration));
       t.is(jobId, 'j');
     }
@@ -106,6 +107,27 @@ test(`notify ${NOTIFY_JOB_COMPLETE}`, async (t) => {
 
   await execute(context, expression, state, 'j');
   t.true(didCallCallback);
+});
+
+test(`notify ${NOTIFY_JOB_COMPLETE} should publish serializable state`, async (t) => {
+  // Promises will trigger an exception if you try to serialize them
+  // If we don't return finalState in  execute/expression, this test will fail
+  const resultState = { x: new Promise((r) => r), y: 22 };
+  const expression = [(s: State) => resultState];
+  const state = createState();
+
+  const notify = (event: string, payload: any) => {
+    if (event === NOTIFY_JOB_COMPLETE) {
+      const { state, duration, jobId } = payload;
+      t.truthy(state);
+      t.assert(!isNaN(duration));
+      t.is(jobId, 'j');
+    }
+  };
+
+  const context = createContext({ notify });
+
+  await execute(context, expression, state, 'j');
 });
 
 test('jobs can handle a promise', async (t) => {
