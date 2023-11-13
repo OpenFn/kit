@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.2.5
+
+### Patch Changes
+
+- 36337d7: When calculating exit reasons, include non-executed downstream nodes in leaf calculation
+
 ## 0.2.4
 
 ### Patch Changes
