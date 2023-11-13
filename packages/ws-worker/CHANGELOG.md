@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.2.3
+
+### Patch Changes
+
+- 7d350d9: Only consider leaf nodes when calculating attempt fail reasons
+
 ## 0.2.2
 
 ### Patch Changes
