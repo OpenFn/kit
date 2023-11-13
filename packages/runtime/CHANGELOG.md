@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.1.1
+
+### Patch Changes
+
+- c448a23: Fix an issue where expression result state is not serialized before being broadcast, causing blowups
+
 ## 0.1.0
 
 ### Minor Changes
