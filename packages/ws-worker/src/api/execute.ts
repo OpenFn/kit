@@ -237,23 +237,27 @@ export function onJobComplete(
 
   delete state.activeRun;
   delete state.activeJob;
-  const { reason, error_message, error_type } = calculateJobExitReason(
-    job_id,
-    event.state,
-    error
-  );
-  state.reasons[job_id] = { reason, error_message, error_type };
+  try {
+    const { reason, error_message, error_type } = calculateJobExitReason(
+      job_id,
+      event.state,
+      error
+    );
+    state.reasons[job_id] = { reason, error_message, error_type };
 
-  return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
-    run_id,
-    job_id,
-    output_dataclip_id: dataclipId,
-    output_dataclip: stringify(event.state),
+    return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
+      run_id,
+      job_id,
+      output_dataclip_id: dataclipId,
+      output_dataclip: stringify(event.state),
 
-    reason,
-    error_message,
-    error_type,
-  });
+      reason,
+      error_message,
+      error_type,
+    });
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 export function onWorkflowStart(

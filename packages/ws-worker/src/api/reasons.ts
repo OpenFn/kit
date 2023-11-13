@@ -4,7 +4,7 @@ import type { ExitReason, ExitReasonStrings, State } from '../types';
 // This takes the result state and error from the job
 const calculateJobExitReason = (
   jobId: string,
-  state: State,
+  state: State = { data: {} }, // If somehow there is no state with the job, this function must not explode
   error?: any
 ): ExitReason => {
   let reason: ExitReasonStrings = 'success';
@@ -24,19 +24,23 @@ const calculateJobExitReason = (
 };
 
 const calculateAttemptExitReason = (state: AttemptState) => {
-  if (state.reasons) {
+  if (state.plan && state.reasons) {
     // A crash or greater will trigger an error, and the error
     // basically becomes the exit reason
+    // So If we get here, we basically just need to look to see if there's a fail on a leaf node
+    // (we ignore fails on non-leaf nodes)
+    const leafJobReasons = state.plan.jobs
+      .filter(({ next }) => !next || Object.keys(next).length == 0)
+      // TODO what if somehow there is no exit reason for a job?
+      // This implies some kind of exception error, no?
+      .map(({ id }) => state.reasons[id!]);
 
-    // So If we get here, we basically just need to look for the first fail
-    // otherwise we return ok
-    const fail = Object.values(state.reasons).find(
-      ({ reason }) => reason === 'fail'
-    );
-
-    return fail || { reason: 'success', error_type: null, error_message: null };
+    const fail = leafJobReasons.find((r) => r && r.reason === 'fail');
+    if (fail) {
+      return fail;
+    }
   }
-  // TODO what if somehow there are no runs?
+  return { reason: 'success', error_type: null, error_message: null };
 };
 
 export { calculateJobExitReason, calculateAttemptExitReason };

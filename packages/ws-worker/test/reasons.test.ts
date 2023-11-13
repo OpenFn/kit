@@ -58,6 +58,7 @@ const execute = async (plan) =>
 
 test('success', async (t) => {
   const plan = createPlan({
+    id: 'y',
     expression: '(s) => s',
   });
 
@@ -69,8 +70,9 @@ test('success', async (t) => {
 
 test('fail: error on state', async (t) => {
   const plan = createPlan({
+    id: 'x',
     expression:
-      'export default [(s) => ({ errors: { "job-1": { "message": "err", "type": "Error" } } })]',
+      'export default [(s) => ({ errors: { "x": { "message": "err", "type": "Error" } } })]',
   });
 
   const { reason } = await execute(plan);
@@ -81,6 +83,7 @@ test('fail: error on state', async (t) => {
 
 test('fail: type error', async (t) => {
   const plan = createPlan({
+    id: 'z',
     expression: 'export default [(s) => { s.data = s.data.err.y; return s; }]',
   });
 
@@ -95,6 +98,7 @@ test('fail: type error', async (t) => {
 
 test('fail: user error', async (t) => {
   const plan = createPlan({
+    id: 'w',
     expression: 'export default [(s) => { throw "abort!"; }]',
   });
 
@@ -126,6 +130,31 @@ test('fail: user error in the third job', async (t) => {
   t.is(reason.reason, 'fail');
   t.is(reason.error_message, 'abort!');
   t.is(reason.error_type, 'UserError');
+});
+
+// We should ignore fails on non-leaf nodes (because a downstream leaf may anticipate and correct the error)
+test('success: error in the second job, but ok in the third', async (t) => {
+  const plan = createPlan(
+    {
+      id: 'a',
+      expression: 'export default [(s) => s ]',
+      next: { b: true },
+    },
+    {
+      id: 'b',
+      expression: 'export default [(s) => {throw "abort!"}]',
+      next: { c: true },
+    },
+    {
+      id: 'c',
+      expression: 'export default [(s) => { s }]',
+    }
+  );
+
+  const { reason } = await execute(plan);
+  t.is(reason.reason, 'success');
+  t.is(reason.error_message, null);
+  t.is(reason.error_type, null);
 });
 
 test('crash: reference error', async (t) => {

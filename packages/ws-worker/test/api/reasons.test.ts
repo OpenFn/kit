@@ -77,3 +77,28 @@ test('crash has priority over fail', (t) => {
 
   t.is(r.reason, 'crash');
 });
+
+// This means a job didn't return state, which isn't great
+// (and actually soon may be a fail)
+// But it should not stop us calculating a reason
+test('success if no state is passed', (t) => {
+  const jobId = 'a';
+  const state = undefined;
+  const error = undefined;
+  const r = calculateJobExitReason(jobId, state, error);
+
+  t.is(r.reason, 'success');
+  t.is(r.error_type, null);
+  t.is(r.error_message, null);
+});
+
+test('success if boolean state is passed', (t) => {
+  const jobId = 'a';
+  const state = true;
+  const error = undefined;
+  const r = calculateJobExitReason(jobId, state, error);
+
+  t.is(r.reason, 'success');
+  t.is(r.error_type, null);
+  t.is(r.error_message, null);
+});
