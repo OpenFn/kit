@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.2.5
+
+### Patch Changes
+
+- 36337d7: When calculating exit reasons, exclude non-executed downstream nodes in leaf calculation. (i.e., look at the final executed node in each branch when determining the attempt exit reason.)
+
 ## 0.2.4
 
 ### Patch Changes

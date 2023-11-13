@@ -1,6 +1,6 @@
 {
   "name": "@openfn/ws-worker",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A Websocket Worker to connect Lightning to a Runtime Engine",
   "main": "dist/index.js",
   "type": "module",
