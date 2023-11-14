@@ -81,7 +81,7 @@ export function execute(
   options: AttemptOptions = {},
   onComplete = (_result: any) => {}
 ) {
-  logger.info('execute...');
+  logger.info('executing ', plan.id);
 
   const state = createAttemptState(plan, options);
 
@@ -139,7 +139,7 @@ export function execute(
   Promise.resolve()
     // Optionally resolve initial state
     .then(async () => {
-      // TODO we need to remove this from here nad let the runtime take care of it through
+      // TODO we need to remove this from here and let the runtime take care of it through
       // the resolver. See https://github.com/OpenFn/kit/issues/403
       if (typeof plan.initialState === 'string') {
         logger.debug('loading dataclip', plan.initialState);
