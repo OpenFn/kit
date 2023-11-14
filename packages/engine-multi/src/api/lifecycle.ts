@@ -45,7 +45,7 @@ export const workflowComplete = (
   const { workflowId, state: result, threadId } = event;
 
   logger.success('complete workflow ', workflowId);
-  logger.info(state);
+  //logger.info(event.state);
 
   // TODO I don't know how we'd get here in this architecture
   // if (!allWorkflows.has(workflowId)) {
