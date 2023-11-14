@@ -49,7 +49,7 @@ const executePlan = async (
     initialState = await opts.callbacks?.resolveState?.(id);
 
     const duration = Date.now() - startTime;
-    opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, id });
+    opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, jobId: id });
     logger.success(`loaded state for ${id} in ${duration}ms`);
 
     // TODO catch and re-throw
