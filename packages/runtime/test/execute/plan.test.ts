@@ -664,6 +664,49 @@ test('isolate state in "parallel" execution', async (t) => {
   t.falsy(result.errors);
 });
 
+test('isolate state in "parallel" execution with deeper trees', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'start',
+    initialState: { data: { x: 0 } },
+    jobs: [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        next: {
+          // fudge the order a bit
+          c: true,
+          b: true,
+        },
+      },
+      {
+        id: 'c2',
+        expression:
+          'export default [s => { if (s.data.b) { throw "e" }; s.data.c = true; return s }]',
+      },
+      {
+        id: 'b',
+        expression:
+          'export default [s => { if (s.data.c) { throw "e" }; s.data.b = true; return s }]',
+        next: { b2: true },
+      },
+      {
+        id: 'c',
+        expression:
+          'export default [s => { if (s.data.b) { throw "e" }; s.data.c = true; return s }]',
+        next: { c2: true },
+      },
+      {
+        id: 'b2',
+        expression:
+          'export default [s => { if (s.data.c) { throw "e" }; s.data.b = true; return s }]',
+      },
+    ],
+  };
+
+  const result = await execute(plan, {}, mockLogger);
+  t.falsy(result.errors);
+});
+
 test('"parallel" execution with multiple leaves should write multiple results to state', async (t) => {
   const plan: ExecutionPlan = {
     start: 'start',
