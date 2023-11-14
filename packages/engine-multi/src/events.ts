@@ -70,6 +70,7 @@ export interface JobCompletePayload extends ExternalEvent {
   jobId: string;
   duration: number;
   state: any; // the result state
+  next: string[]; // downstream jobs
 }
 
 export interface JobErrorPayload extends ExternalEvent {
@@ -77,6 +78,7 @@ export interface JobErrorPayload extends ExternalEvent {
   duration: number;
   state: any; // the result state
   error: any;
+  next: string[]; // downstream jobs
 }
 
 export interface WorkerLogPayload extends ExternalEvent, JSONLog {}
