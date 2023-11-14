@@ -1,9 +1,8 @@
 import test from 'ava';
 import { fn } from '@openfn/language-common';
-import type { State, Operation, ExecutionContext } from '../../src/types';
 import { createMockLogger } from '@openfn/logger';
 import execute from '../../src/execute/expression';
-import { NOTIFY_JOB_COMPLETE, NOTIFY_JOB_START } from '../../src';
+import type { State, Operation, ExecutionContext } from '../../src/types';
 
 type TestState = State & {
   data: {
@@ -65,69 +64,6 @@ test('run a live no-op job with @openfn/language-common.fn', async (t) => {
   const result = await execute(context, job, state);
 
   t.deepEqual(state, result);
-});
-
-test(`notify ${NOTIFY_JOB_START}`, async (t) => {
-  let didCallCallback = false;
-
-  const expression = [(s: State) => s];
-  const state = createState();
-
-  const notify = (event: string, payload?: any) => {
-    if (event === NOTIFY_JOB_START) {
-      didCallCallback = true;
-    }
-    t.is(payload.jobId, 'j');
-  };
-
-  const context = createContext({ notify });
-
-  await execute(context, expression, state, 'j');
-  t.true(didCallCallback);
-});
-
-test(`notify ${NOTIFY_JOB_COMPLETE}`, async (t) => {
-  let didCallCallback = false;
-
-  const expression = [(s: State) => s];
-  const state = createState();
-
-  const notify = (event: string, payload: any) => {
-    if (event === NOTIFY_JOB_COMPLETE) {
-      const { state, duration, jobId } = payload;
-      didCallCallback = true;
-      t.truthy(state);
-      t.deepEqual(state, state);
-      t.assert(!isNaN(duration));
-      t.is(jobId, 'j');
-    }
-  };
-
-  const context = createContext({ notify });
-
-  await execute(context, expression, state, 'j');
-  t.true(didCallCallback);
-});
-
-test(`notify ${NOTIFY_JOB_COMPLETE} should publish serializable state`, async (t) => {
-  // Promises will trigger an exception if you try to serialize them
-  // If we don't return finalState in  execute/expression, this test will fail
-  const resultState = { x: new Promise((r) => r), y: 22 };
-  const expression = [(s: State) => resultState];
-  const state = createState();
-
-  const notify = (event: string, payload: any) => {
-    if (event === NOTIFY_JOB_COMPLETE) {
-      const { state, duration, jobId } = payload;
-      t.truthy(state);
-      t.assert(!isNaN(duration));
-      t.is(jobId, 'j');
-    }
-  };
-
-  const context = createContext({ notify });
-
-  await execute(context, expression, state, 'j');
 });
 
 test('jobs can handle a promise', async (t) => {

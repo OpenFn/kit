@@ -14,7 +14,9 @@ import { EdgeConditionError } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
   NOTIFY_INIT_START,
+  NOTIFY_JOB_COMPLETE,
   NOTIFY_JOB_ERROR,
+  NOTIFY_JOB_START,
 } from '../events';
 
 const loadCredentials = async (
@@ -87,9 +89,19 @@ const executeJob = async (
   if (job.expression) {
     const startTime = Date.now();
     try {
-      result = await executeExpression(ctx, job.expression, state, job.id);
-      const duration = logger.timer('job');
-      logger.success(`Completed job ${job.id} in ${duration}`);
+      // TODO include the upstream job
+      notify(NOTIFY_JOB_START, { jobId: job.id });
+      result = await executeExpression(ctx, job.expression, state);
+      const humanDuration = logger.timer('job');
+      logger.success(`Completed job ${job.id} in ${humanDuration}`);
+
+      // TODO should we also include the downstream jobs here?
+      // That's a little bit more complicated to work out
+      notify(NOTIFY_JOB_COMPLETE, {
+        duration,
+        state: result,
+        jobId: job.id,
+      });
     } catch (e: any) {
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
         const { error, state } = e as ExecutionErrorWrapper;

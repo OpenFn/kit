@@ -16,7 +16,6 @@ import {
   assertRuntimeError,
   assertSecurityKill,
 } from '../errors';
-import { NOTIFY_JOB_COMPLETE, NOTIFY_JOB_START } from '../events';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -26,12 +25,11 @@ export type ExecutionErrorWrapper = {
 export default (
   ctx: ExecutionContext,
   expression: string | Operation[],
-  initialState: State,
-  id?: string
+  initialState: State
 ) =>
   new Promise(async (resolve, reject) => {
     let duration = Date.now();
-    const { logger, notify = () => {}, opts = {} } = ctx;
+    const { logger, opts = {} } = ctx;
     try {
       const timeout = opts.timeout || TIMEOUT;
 
@@ -55,7 +53,6 @@ export default (
 
       // Run the pipeline
       logger.debug(`Executing expression (${operations.length} operations)`);
-      notify(NOTIFY_JOB_START, { jobId: id });
 
       const tid = setTimeout(() => {
         logger.error(`Error: Timeout (${timeout}ms) expired!`);
@@ -72,12 +69,6 @@ export default (
       duration = Date.now() - duration;
 
       const finalState = prepareFinalState(opts, result);
-
-      notify(NOTIFY_JOB_COMPLETE, {
-        duration,
-        state: finalState,
-        jobId: id,
-      });
 
       // return the final state
       resolve(finalState);
