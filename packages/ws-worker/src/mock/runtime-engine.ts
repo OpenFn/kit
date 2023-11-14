@@ -2,7 +2,6 @@ import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { ExecutionPlan, JobNode } from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
-import type { State } from '../types';
 import mockResolvers from './resolvers';
 
 export type EngineEvent =
@@ -12,19 +11,6 @@ export type EngineEvent =
   | typeof engine.WORKFLOW_ERROR
   | typeof engine.WORKFLOW_LOG
   | typeof engine.WORKFLOW_START;
-
-export type JobStartEvent = {
-  workflowId: string;
-  jobId: string;
-  runId: string; // run id. Not sure we need this.
-};
-
-// export type JobCompleteEvent = {
-//   workflowId: string;
-//   jobId: string;
-//   state: State; // do we really want to publish the intermediate events? Could be important, but also could be sensitive
-//   // I suppose at this level yes, we should publish it
-// };
 
 export type WorkflowStartEvent = {
   workflowId: string;
@@ -62,7 +48,7 @@ async function createMock() {
   // TODO: Listeners will be removed when the plan is complete (?)
   const listen = (
     planId: string,
-    events: Record<keyof JobCompleteEvent, (evt: any) => void>
+    events: Record<keyof engine.EventMap, (evt: any) => void>
   ) => {
     listeners[planId] = events;
   };

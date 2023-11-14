@@ -21,10 +21,10 @@ import type { JSONLog, Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
-  JobCompleteEvent,
-  WorkflowCompleteEvent,
-  WorkflowErrorEvent,
-  WorkflowStartEvent,
+  JobCompletePayload,
+  WorkflowCompletePayload,
+  WorkflowErrorPayload,
+  WorkflowStartPayload,
 } from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
 import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
@@ -77,6 +77,7 @@ export const createAttemptState = (
 
   if (typeof plan.initialState === 'string') {
     const startJobId = plan.start ?? plan.jobs[0].id;
+    // @ts-ignore
     state.inputDataclips[startJobId] = plan.initialState;
   } else {
     // what if initial state is an object?
@@ -171,7 +172,11 @@ export function execute(
         engine.execute(plan, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
-        onWorkflowError(context, { workflowId: plan.id!, message: e.message });
+        onWorkflowError(context, {
+          workflowId: plan.id!,
+          message: e.message,
+          type: e.type,
+        });
       }
     });
 
@@ -232,7 +237,7 @@ export function onJobError(context: Context, event: any) {
 // b) save the reason for each job to state for later
 export function onJobComplete(
   { channel, state }: Context,
-  event: JobCompleteEvent,
+  event: JobCompletePayload,
   // TODO this isn't terribly graceful, but accept an error for crashes
   error?: any
 ) {
@@ -286,14 +291,14 @@ export function onJobComplete(
 
 export function onWorkflowStart(
   { channel }: Context,
-  _event: WorkflowStartEvent
+  _event: WorkflowStartPayload
 ) {
   return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
 }
 
 export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
-  _event: WorkflowCompleteEvent
+  _event: WorkflowCompletePayload
 ) {
   // TODO I dont think the attempt final dataclip IS the last job dataclip
   // Especially not in parallelisation
@@ -311,7 +316,7 @@ export async function onWorkflowComplete(
 // NB this is a crash state!
 export async function onWorkflowError(
   { state, channel, onComplete }: Context,
-  event: WorkflowErrorEvent
+  event: WorkflowErrorPayload
 ) {
   // Should we not just report this reason?
   // Nothing more severe can have happened downstream, right?
