@@ -64,6 +64,7 @@ function mock(plan: MockExecutionPlan) {
         jobId,
         duration: 100,
         state,
+        next: [],
       });
       resolve(state);
     }, job._delay || 1);
