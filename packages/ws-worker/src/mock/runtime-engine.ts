@@ -19,12 +19,12 @@ export type JobStartEvent = {
   runId: string; // run id. Not sure we need this.
 };
 
-export type JobCompleteEvent = {
-  workflowId: string;
-  jobId: string;
-  state: State; // do we really want to publish the intermediate events? Could be important, but also could be sensitive
-  // I suppose at this level yes, we should publish it
-};
+// export type JobCompleteEvent = {
+//   workflowId: string;
+//   jobId: string;
+//   state: State; // do we really want to publish the intermediate events? Could be important, but also could be sensitive
+//   // I suppose at this level yes, we should publish it
+// };
 
 export type WorkflowStartEvent = {
   workflowId: string;
@@ -127,7 +127,13 @@ async function createMock() {
       }
     }
 
-    dispatch('job-complete', { workflowId, jobId, state: nextState, runId });
+    dispatch('job-complete', {
+      workflowId,
+      jobId,
+      state: nextState,
+      runId,
+      next: [], // TODO hmm. I think we need to do better than this.
+    });
 
     return nextState;
   };

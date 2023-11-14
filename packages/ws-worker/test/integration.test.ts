@@ -443,4 +443,7 @@ test('should not claim while at capacity', async (t) => {
   });
 });
 
+// hmm, i don't even think I can test this in the mock runtime
+test.skip('should pass the right dataclip when running in parallel', () => {});
+
 test.todo(`should run multiple attempts`);

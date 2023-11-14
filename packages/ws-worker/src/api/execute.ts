@@ -10,7 +10,7 @@ import {
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
-  RUN_COMPLETE_PAYLOAD,
+  RunCompletePayload,
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
@@ -18,13 +18,14 @@ import { AttemptOptions, Channel, ExitReason } from '../types';
 import { getWithReply, stringify } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
-import {
+import type {
+  RuntimeEngine,
+  Resolvers,
   JobCompleteEvent,
   WorkflowCompleteEvent,
   WorkflowErrorEvent,
   WorkflowStartEvent,
-} from '../mock/runtime-engine';
-import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
+} from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
 import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
@@ -36,6 +37,9 @@ export type AttemptState = {
   plan: ExecutionPlan;
   options: AttemptOptions;
   dataclips: Record<string, any>;
+  // For each run, map the input ids
+  // TODO better name maybe?
+  inputDataclips: Record<string, string>;
   reasons: Record<string, ExitReason>;
 
   // final dataclip id
@@ -61,15 +65,27 @@ const eventMap = {
 export const createAttemptState = (
   plan: ExecutionPlan,
   options: AttemptOptions = {}
-): AttemptState => ({
-  plan,
-  // set the result data clip id (which needs renaming)
-  // to the initial state
-  lastDataclipId: plan.initialState as string | undefined,
-  dataclips: {},
-  reasons: {},
-  options,
-});
+): AttemptState => {
+  const state = {
+    plan,
+    lastDataclipId: '',
+    dataclips: {},
+    inputDataclips: {},
+    reasons: {},
+    options,
+  } as AttemptState;
+
+  if (typeof plan.initialState === 'string') {
+    const startJobId = plan.start ?? plan.jobs[0].id;
+    state.inputDataclips[startJobId] = plan.initialState;
+  } else {
+    // what if initial state is an object?
+    // In practice I don't think this will happen,
+    // but the first input_state_id will be messed up
+  }
+
+  return state;
+};
 
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
@@ -179,10 +195,13 @@ export function onJobStart({ channel, state }: Context, event: any) {
   // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
   state.activeJob = event.jobId;
+
+  const input_dataclip_id = state.inputDataclips[event.jobId];
+
   return sendEvent<RUN_START_PAYLOAD>(channel, RUN_START, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
-    input_dataclip_id: state.lastDataclipId,
+    input_dataclip_id,
   });
 }
 
@@ -235,6 +254,11 @@ export function onJobComplete(
   // so we have a bit of a mapping problem
   state.lastDataclipId = dataclipId;
 
+  // Set the input dataclip id for downstream jobs
+  event.next?.forEach((nextJobId) => {
+    state.inputDataclips[nextJobId] = dataclipId;
+  });
+
   delete state.activeRun;
   delete state.activeJob;
   try {
@@ -245,7 +269,7 @@ export function onJobComplete(
     );
     state.reasons[job_id] = { reason, error_message, error_type };
 
-    return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
+    return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, {
       run_id,
       job_id,
       output_dataclip_id: dataclipId,
@@ -267,13 +291,12 @@ export function onWorkflowStart(
   return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
 }
 
-// TODO what this needs to do is look at all the job states
-// find the higher priority
-// And return that as the highest exit reason
 export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
   _event: WorkflowCompleteEvent
 ) {
+  // TODO I dont think the attempt final dataclip IS the last job dataclip
+  // Especially not in parallelisation
   const result = state.dataclips[state.lastDataclipId!];
   const reason = calculateAttemptExitReason(state);
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
