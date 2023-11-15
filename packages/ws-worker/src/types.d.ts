@@ -76,6 +76,22 @@ export type AttemptOptions = {
   sanitize?: SanitizePolicies;
 };
 
+// Internal server state for each attempt
+export type AttemptState = {
+  activeRun?: string;
+  activeJob?: string;
+  plan: ExecutionPlan;
+  options: AttemptOptions;
+  dataclips: Record<string, any>;
+  // For each run, map the input ids
+  // TODO better name maybe?
+  inputDataclips: Record<string, string>;
+  reasons: Record<string, ExitReason>;
+
+  // final dataclip id
+  lastDataclipId?: string;
+};
+
 export type CancelablePromise = Promise<void> & {
   cancel: () => void;
 };

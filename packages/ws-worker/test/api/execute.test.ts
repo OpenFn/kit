@@ -17,16 +17,15 @@ import {
   execute,
   onWorkflowStart,
   onWorkflowComplete,
-  AttemptState,
   loadDataclip,
   loadCredential,
   sendEvent,
-  createAttemptState,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
-import { stringify } from '../../src/util';
+import { stringify, createAttemptState } from '../../src/util';
 import { ExecutionPlan } from '@openfn/runtime';
+import type { AttemptState } from '../../src/types';
 
 const enc = new TextEncoder();
 
@@ -44,24 +43,6 @@ const mockEventHandlers = {
 
 // This is a nonsense timestamp but it's fine for the test (and easy to convert)
 const getBigIntTimestamp = () => (BigInt(Date.now()) * BigInt(1e6)).toString();
-
-test('createAttemptState: set initial input dataclip for job[0]', (t) => {
-  const plan = { initialState: 'x', jobs: [{ id: 'a' }] };
-  const attempt = createAttemptState(plan);
-
-  t.deepEqual(attempt.inputDataclips, { a: 'x' });
-});
-
-test('createAttemptState: set initial input dataclip for attempt.start', (t) => {
-  const plan = {
-    initialState: 'x',
-    start: 'a',
-    jobs: [{ id: 'b' }, { id: 'a' }],
-  };
-  const attempt = createAttemptState(plan);
-
-  t.deepEqual(attempt.inputDataclips, { a: 'x' });
-});
 
 test('send event should resolve when the event is acknowledged', async (t) => {
   const channel = mockChannel({

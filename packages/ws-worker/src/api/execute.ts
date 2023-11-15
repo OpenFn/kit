@@ -14,8 +14,8 @@ import {
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { AttemptOptions, Channel, ExitReason } from '../types';
-import { getWithReply, stringify } from '../util';
+import { AttemptOptions, Channel, AttemptState } from '../types';
+import { getWithReply, stringify, createAttemptState } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
 import type {
@@ -31,21 +31,6 @@ import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
 const enc = new TextDecoder('utf-8');
 
-export type AttemptState = {
-  activeRun?: string;
-  activeJob?: string;
-  plan: ExecutionPlan;
-  options: AttemptOptions;
-  dataclips: Record<string, any>;
-  // For each run, map the input ids
-  // TODO better name maybe?
-  inputDataclips: Record<string, string>;
-  reasons: Record<string, ExitReason>;
-
-  // final dataclip id
-  lastDataclipId?: string;
-};
-
 export type Context = {
   channel: Channel;
   state: AttemptState;
@@ -60,32 +45,6 @@ const eventMap = {
   'job-complete': RUN_COMPLETE,
   'workflow-log': ATTEMPT_LOG,
   'workflow-complete': ATTEMPT_COMPLETE,
-};
-
-export const createAttemptState = (
-  plan: ExecutionPlan,
-  options: AttemptOptions = {}
-): AttemptState => {
-  const state = {
-    plan,
-    lastDataclipId: '',
-    dataclips: {},
-    inputDataclips: {},
-    reasons: {},
-    options,
-  } as AttemptState;
-
-  if (typeof plan.initialState === 'string') {
-    const startJobId = plan.start ?? plan.jobs[0].id;
-    // @ts-ignore
-    state.inputDataclips[startJobId] = plan.initialState;
-  } else {
-    // what if initial state is an object?
-    // In practice I don't think this will happen,
-    // but the first input_state_id will be messed up
-  }
-
-  return state;
 };
 
 // pass a web socket connected to the attempt channel
