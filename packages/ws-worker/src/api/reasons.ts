@@ -1,5 +1,9 @@
-import { AttemptState } from './execute';
-import type { ExitReason, ExitReasonStrings, State } from '../types';
+import type {
+  ExitReason,
+  ExitReasonStrings,
+  State,
+  AttemptState,
+} from '../types';
 
 import type { JobNode } from '@openfn/runtime';
 
@@ -43,11 +47,11 @@ const calculateAttemptExitReason = (state: AttemptState) => {
     // basically becomes the exit reason
     // So If we get here, we basically just need to look to see if there's a fail on a leaf node
     // (we ignore fails on non-leaf nodes)
-    const leafJobReasons = state.plan.jobs
-      .filter((job) => isLeafNode(state, job))
+    const leafJobReasons: ExitReason[] = state.plan.jobs
+      .filter((job: JobNode) => isLeafNode(state, job))
       // TODO what if somehow there is no exit reason for a job?
       // This implies some kind of exception error, no?
-      .map(({ id }) => state.reasons[id!]);
+      .map(({ id }: JobNode) => state.reasons[id!]);
 
     const fail = leafJobReasons.find((r) => r && r.reason === 'fail');
     if (fail) {
