@@ -72,6 +72,11 @@ export function execute(
   // TODO for debugging and monitoring, we should also send events to the worker's event emitter
   const addEvent = (eventName: string, handler: EventHandler) => {
     const wrappedFn = async (event: any) => {
+      // TODO this logging is in the wrong place
+      // This actually logs errors coming out of the worker
+      // But it presents as logging from messages being send to lightning
+      // really this messaging should move into send event
+
       // @ts-ignore
       const lightningEvent = eventMap[eventName] ?? eventName;
       try {
@@ -271,21 +276,25 @@ export async function onWorkflowComplete(
 // No unit tests on this (not least because I think it'll change soon)
 // NB this is a crash state!
 export async function onWorkflowError(
-  { state, channel, onFinish }: Context,
+  { state, channel, logger, onFinish }: Context,
   event: WorkflowErrorPayload
 ) {
   // Should we not just report this reason?
   // Nothing more severe can have happened downstream, right?
   // const reason = calculateAttemptExitReason(state);
+  try {
+    // Ok, let's try that, let's just generate a reason from the event
+    const reason = calculateJobExitReason('', { data: {} }, event);
+    await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+      final_dataclip_id: state.lastDataclipId!,
+      ...reason,
+    });
 
-  // Ok, let's try that, let's just generate a reason from the event
-  const reason = calculateJobExitReason('', { data: {} }, event);
-  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
-    final_dataclip_id: state.lastDataclipId!,
-    ...reason,
-  });
-
-  onFinish({ reason });
+    onFinish({ reason });
+  } catch (e: any) {
+    logger.error('ERROR in workflow-error handler:', e.message);
+    logger.error(e);
+  }
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
