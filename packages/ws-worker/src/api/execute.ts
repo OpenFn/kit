@@ -140,6 +140,7 @@ export function execute(
           workflowId: plan.id!,
           message: e.message,
           type: e.type,
+          severity: e.severity,
         });
       }
     });
