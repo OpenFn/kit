@@ -100,7 +100,7 @@ const execute = async (context: ExecutionContext) => {
       logger.error(e);
     });
   } catch (e: any) {
-    if (!error.severity) {
+    if (!e.severity) {
       e = new ExecutionError(e);
     }
     error(context, { workflowId: state.plan.id, error: e });

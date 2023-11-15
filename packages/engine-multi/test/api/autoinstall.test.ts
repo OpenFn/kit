@@ -289,6 +289,7 @@ test.serial('autoinstall: throw on error', async (t) => {
   });
 });
 
+// TODO this is a bit flaky apparently
 test.serial('autoinstall: throw on error twice if pending', async (t) => {
   return new Promise((done) => {
     let callCount = 0;
@@ -297,7 +298,7 @@ test.serial('autoinstall: throw on error twice if pending', async (t) => {
     const mockInstall = async () => {
       callCount++;
       return new Promise((_resolve, reject) => {
-        setTimeout(() => reject(new Error('err')), 50);
+        setTimeout(() => reject(new Error('err')), 100);
       });
     };
 

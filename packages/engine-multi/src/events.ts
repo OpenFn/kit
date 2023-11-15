@@ -60,6 +60,7 @@ export interface WorkflowCompletePayload extends ExternalEvent {
 export interface WorkflowErrorPayload extends ExternalEvent {
   type: string;
   message: string;
+  severity: string;
 }
 
 export interface JobStartPayload extends ExternalEvent {
