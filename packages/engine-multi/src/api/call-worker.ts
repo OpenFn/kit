@@ -48,18 +48,17 @@ export default function initWorkers(
       promise.timeout(timeout);
     }
 
-    if (options.purge) {
-      promise.then(() => {
-        const { pendingTasks } = workers.stats();
-        if (pendingTasks == 0) {
-          logger?.debug('Purging workers');
-          api.emit(PURGE);
-          workers.terminate();
-        }
-      });
-    }
-
     return promise;
+  };
+
+  // @ts-ignore
+  api.purge = () => {
+    const { pendingTasks } = workers.stats();
+    if (pendingTasks == 0) {
+      logger?.debug('Purging workers');
+      api.emit(PURGE);
+      workers.terminate();
+    }
   };
 
   // This will force termination instantly

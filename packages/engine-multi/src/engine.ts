@@ -183,14 +183,19 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       delete deferredListeners[workflowId];
     }
 
-    // execute(context);
-
     // Run the execute on a timeout so that consumers have a chance
     // to register listeners
     setTimeout(() => {
       // TODO typing between the class and interface isn't right
       // @ts-ignore
-      execute(context);
+      execute(context).finally(() => {
+        delete contexts[workflowId];
+        // @ts-ignore
+        if (Object.keys(contexts).length === 0) {
+          // @ts-ignore
+          engine.purge?.();
+        }
+      });
     }, 1);
 
     // hmm. Am I happy to pass the internal workflow state OUT of the handler?
