@@ -156,16 +156,16 @@ const executeJob = async (
         throw e;
       }
     }
-  }
 
-  if (!didError) {
-    next = calculateNext(job, result);
-    notify(NOTIFY_JOB_COMPLETE, {
-      duration: Date.now() - duration,
-      state: result,
-      jobId,
-      next,
-    });
+    if (!didError) {
+      next = calculateNext(job, result);
+      notify(NOTIFY_JOB_COMPLETE, {
+        duration: Date.now() - duration,
+        state: result,
+        jobId,
+        next,
+      });
+    }
   }
 
   return { next, state: result };
