@@ -2,7 +2,7 @@ import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
 
 import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
-import { AUTOINSTALL_COMPLETE } from '../../src/events';
+import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../../src/events';
 import ExecutionContext from '../../src/classes/ExecutionContext';
 import whitelist from '../../src/whitelist';
 
@@ -271,4 +271,113 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
   t.assert(event.duration >= 10);
 });
 
-test.todo('autoinstall: emit on error');
+test.serial('autoinstall: throw on error', async (t) => {
+  const mockIsInstalled = async () => false;
+  const mockInstall = async () => {
+    throw new Error('err');
+  };
+
+  const autoinstallOpts = {
+    handleInstall: mockInstall,
+    handleIsInstalled: mockIsInstalled,
+  };
+  const context = createContext(autoinstallOpts);
+
+  await t.throwsAsync(() => autoinstall(context), {
+    name: 'AutoinstallError',
+    message: 'Error installing @openfn/language-common@1.0.0: err',
+  });
+});
+
+test.serial('autoinstall: throw on error twice if pending', async (t) => {
+  return new Promise((done) => {
+    let callCount = 0;
+    let errCount = 0;
+    const mockIsInstalled = async () => false;
+    const mockInstall = async () => {
+      callCount++;
+      return new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error('err')), 50);
+      });
+    };
+
+    const autoinstallOpts = {
+      handleInstall: mockInstall,
+      handleIsInstalled: mockIsInstalled,
+    };
+    const context = createContext(autoinstallOpts);
+
+    autoinstall(context).catch((e) => {
+      t.is(e.name, 'AutoinstallError');
+      errCount += 1;
+    });
+
+    autoinstall(context).catch((e) => {
+      errCount += 1;
+      t.is(e.name, 'AutoinstallError');
+      t.is(callCount, 1);
+      t.is(errCount, 2);
+      t.pass('threw twice!');
+      done();
+    });
+  });
+});
+
+test.serial('autoinstall: emit on error', async (t) => {
+  let evt;
+  const mockIsInstalled = async () => false;
+  const mockInstall = async () => {
+    throw new Error('err');
+  };
+
+  const autoinstallOpts = {
+    handleInstall: mockInstall,
+    handleIsInstalled: mockIsInstalled,
+  };
+  const context = createContext(autoinstallOpts);
+
+  context.on(AUTOINSTALL_ERROR, (e) => {
+    evt = e;
+  });
+
+  try {
+    await autoinstall(context);
+  } catch (e) {
+    // do nothing
+  }
+
+  t.is(evt.module, '@openfn/language-common');
+  t.is(evt.version, '1.0.0');
+  t.is(evt.message, 'err');
+  t.true(!isNaN(evt.duration));
+});
+
+test.serial('autoinstall: throw twice in a ror', async (t) => {
+  let callCount = 0;
+
+  const mockIsInstalled = async () => false;
+  const mockInstall = async () => {
+    callCount++;
+    return new Promise((_resolve, reject) => {
+      setTimeout(() => reject(new Error('err')), 1);
+    });
+  };
+
+  const autoinstallOpts = {
+    handleInstall: mockInstall,
+    handleIsInstalled: mockIsInstalled,
+  };
+  const context = createContext(autoinstallOpts);
+
+  await t.throwsAsync(() => autoinstall(context), {
+    name: 'AutoinstallError',
+    message: 'Error installing @openfn/language-common@1.0.0: err',
+  });
+  t.is(callCount, 1);
+
+  await t.throwsAsync(() => autoinstall(context), {
+    name: 'AutoinstallError',
+    message: 'Error installing @openfn/language-common@1.0.0: err',
+  });
+  t.is(callCount, 2);
+});

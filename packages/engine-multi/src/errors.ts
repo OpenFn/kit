@@ -60,6 +60,7 @@ export class CompileError extends EngineError {
 export class AutoinstallError extends EngineError {
   severity = 'exception'; // Syntax errors are crashes, but what if we get a module resolution thing?
   type = 'AutoinstallError';
+  name = 'AutoinstallError';
   message;
 
   constructor(specifier: string, error: any) {
