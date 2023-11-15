@@ -395,6 +395,7 @@ test('should register and de-register attempts to the server', async (t) => {
   });
 });
 
+// TODO this is a server test
 // What I am testing here is that the first job completes
 // before the second job starts
 test('should not claim while at capacity', async (t) => {
