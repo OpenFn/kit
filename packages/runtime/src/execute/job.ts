@@ -166,6 +166,9 @@ const executeJob = async (
         next,
       });
     }
+  } else {
+    // calculate next for trigger nodes
+    next = calculateNext(job, result);
   }
 
   return { next, state: result };

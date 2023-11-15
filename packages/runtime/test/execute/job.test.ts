@@ -31,6 +31,52 @@ test.afterEach(() => {
   logger._reset();
 });
 
+test('resolve and return next for a simple job', async (t) => {
+  const job = {
+    id: 'j',
+    expression: [(s: State) => s],
+    next: { k: true, a: false },
+  };
+  const initialState = createState();
+  const context = createContext();
+  const { next, state } = await execute(context, job, initialState);
+
+  t.deepEqual(state, { data: {} });
+  t.deepEqual(next, ['k']);
+});
+
+test('resolve and return next for a trigger-style job', async (t) => {
+  const job = {
+    id: 'j',
+    next: { k: true, a: false },
+  };
+  const initialState = createState();
+  const context = createContext();
+  const { next, state } = await execute(context, job, initialState);
+
+  t.deepEqual(state, initialState);
+  t.deepEqual(next, ['k']);
+});
+
+test('resolve and return next for a failed job', async (t) => {
+  const job = {
+    id: 'j',
+    expression: [
+      () => {
+        throw 'e';
+      },
+    ],
+    next: { k: true, a: false },
+  };
+  const initialState = createState();
+  const context = createContext();
+  const { next, state } = await execute(context, job, initialState);
+
+  // Config should still be scrubbed from data
+  t.deepEqual(state, { data: {} });
+  t.deepEqual(next, ['k']);
+});
+
 test(`notify ${NOTIFY_JOB_START}`, async (t) => {
   const job = {
     id: 'j',
@@ -47,6 +93,24 @@ test(`notify ${NOTIFY_JOB_START}`, async (t) => {
   const context = createContext({ notify });
 
   await execute(context, job, state);
+});
+
+test(`don't notify ${NOTIFY_JOB_START} for trigger-style jobs`, async (t) => {
+  const job = {
+    id: 'j',
+  };
+  const state = createState();
+
+  const notify = (event: string, payload?: any) => {
+    if (event === NOTIFY_JOB_START) {
+      t.fail('should not notify job-start for trigger nodes');
+    }
+  };
+
+  const context = createContext({ notify });
+
+  await execute(context, job, state);
+  t.pass('all ok');
 });
 
 test(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
@@ -98,6 +162,24 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
   const context = createContext({ notify });
 
   await execute(context, job, state);
+});
+
+test(`don't notify ${NOTIFY_JOB_COMPLETE} for trigger-style jobs`, async (t) => {
+  const job = {
+    id: 'j',
+  };
+  const state = createState();
+
+  const notify = (event: string) => {
+    if (event === NOTIFY_JOB_COMPLETE) {
+      t.fail('should not notify job-start for trigger nodes');
+    }
+  };
+
+  const context = createContext({ notify });
+
+  await execute(context, job, state);
+  t.pass('all ok');
 });
 
 test(`notify ${NOTIFY_JOB_COMPLETE} should publish serializable state`, async (t) => {
