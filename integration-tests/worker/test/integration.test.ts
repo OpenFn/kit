@@ -16,7 +16,7 @@ test.before(async () => {
   ({ worker, engine } = await initWorker(lightningPort, {
     maxWorkers: 1,
     purge: false,
-    repoDir: path.resolve('tmp/openfn/repo/integration'),
+    repoDir: path.resolve('tmp/repo/integration'),
   }));
 });
 

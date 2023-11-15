@@ -13,7 +13,7 @@ test.before(async () => {
   lightning = initLightning(lightningPort);
 
   ({ worker } = await initWorker(lightningPort, {
-    repoDir: path.resolve('tmp/openfn/repo/exit-reason'),
+    repoDir: path.resolve('tmp/repo/exit-reason'),
   }));
 });
 

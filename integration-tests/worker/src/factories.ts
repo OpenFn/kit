@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 
-export const createAttempt = (jobs, edges, args) => ({
+export const createAttempt = (triggers, jobs, edges, args) => ({
   id: crypto.randomUUID(),
+  triggers,
   jobs,
   edges,
   ...args,
@@ -10,15 +11,25 @@ export const createAttempt = (jobs, edges, args) => ({
 export const createJob = (args) => ({
   id: crypto.randomUUID(),
   adaptor: '@openfn/language-common@latest',
-  expression: 'fn((s) => s)',
+  body: 'fn((s) => s)',
   ...args,
 });
 
-export const createEdge = (a: any, b: any, condition?: string) => ({
+export const createTrigger = () => ({
   id: crypto.randomUUID(),
-  source_job_id: a.id,
-  target_job_id: b.id,
-  // condition,
 });
+
+export const createEdge = (a: any, b: any, condition?: string) => {
+  const edge: any = {
+    id: crypto.randomUUID(),
+    target_job_id: b.id,
+  };
+  if (!a.body) {
+    edge.source_trigger_id = a.id;
+  } else {
+    edge.source_job_id = a.id;
+  }
+  return edge;
+};
 
 export default createAttempt;

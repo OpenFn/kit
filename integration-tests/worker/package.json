@@ -7,7 +7,7 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "clean": "rimraf dist tmp/repo/*",
+    "clean": "rimraf dist tmp/repo/**",
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/worker/dist --no-version",
     "build": "pnpm build:pack && docker build --tag worker-integration-tests .",
     "start": "docker run worker-integration-tests",

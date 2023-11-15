@@ -1,7 +1,12 @@
 import test from 'ava';
 import path from 'node:path';
 
-import { createAttempt, createEdge, createJob } from '../src/factories';
+import {
+  createAttempt,
+  createEdge,
+  createJob,
+  createTrigger,
+} from '../src/factories';
 import { initLightning, initWorker } from '../src/init';
 
 let lightning;
@@ -13,7 +18,7 @@ test.before(async () => {
   lightning = initLightning(lightningPort);
 
   ({ worker } = await initWorker(lightningPort, {
-    repoDir: path.resolve('tmp/openfn/repo/attempts'),
+    repoDir: path.resolve('tmp/repo/attempts'),
   }));
 });
 
@@ -43,7 +48,7 @@ test('echo initial state', async (t) => {
   lightning.addDataclip('s1', initialState);
 
   const job = createJob({ body: 'fn((s) => s)' });
-  const attempt = createAttempt([job], [], {
+  const attempt = createAttempt([], [job], [], {
     dataclip_id: 's1',
   });
 
@@ -54,6 +59,45 @@ test('echo initial state', async (t) => {
       count: 22,
     },
   });
+});
+
+test('start from a trigger node', async (t) => {
+  let runStartEvent;
+  let runCompleteEvent;
+
+  const initialState = { data: { count: 22 } };
+
+  lightning.addDataclip('s1', initialState);
+
+  const trigger = createTrigger();
+  const job = createJob({ body: 'fn((s) => s)' });
+  const edge = createEdge(trigger, job);
+  const attempt = createAttempt([trigger], [job], [edge], {
+    dataclip_id: 's1',
+  });
+
+  lightning.once('run:start', (evt) => {
+    runStartEvent = evt.payload;
+  });
+
+  lightning.once('run:complete', (evt) => {
+    runCompleteEvent = evt.payload;
+  });
+
+  await run(attempt);
+
+  t.truthy(runStartEvent);
+  t.is(runStartEvent.job_id, job.id);
+  t.truthy(runStartEvent.run_id);
+  t.is(runStartEvent.input_dataclip_id, 's1');
+
+  t.truthy(runCompleteEvent);
+  t.is(runCompleteEvent.reason, 'success');
+  t.is(runCompleteEvent.error_message, null);
+  t.is(runCompleteEvent.error_type, null);
+  t.is(runCompleteEvent.job_id, job.id);
+  t.truthy(runCompleteEvent.output_dataclip_id);
+  t.is(runCompleteEvent.output_dataclip, JSON.stringify(initialState));
 });
 
 // hmm this event feels a bit fine-grained for this
@@ -77,7 +121,7 @@ test('run parallel jobs', async (t) => {
   const jobs = [a, x, y];
   const edges = [ax, ay];
 
-  const attempt = createAttempt(jobs, edges, {
+  const attempt = createAttempt([], jobs, edges, {
     dataclip_id: 's1',
   });
 
