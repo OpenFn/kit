@@ -16,7 +16,7 @@ import {
 import { ExitReason } from '../src/types';
 
 // Explicit tests of exit reasons coming out of the worker
-// these test the onComplete callback
+// these test the onFinish callback
 // uses the real runtime engine
 
 let engine;
@@ -48,12 +48,12 @@ const execute = async (plan) =>
       [ATTEMPT_COMPLETE]: async () => true,
     });
 
-    const onComplete = (result) => {
+    const onFinish = (result) => {
       done(result);
     };
 
     // @ts-ignore
-    doExecute(channel, engine, logger, plan, {}, onComplete);
+    doExecute(channel, engine, logger, plan, {}, onFinish);
   });
 
 test('success', async (t) => {

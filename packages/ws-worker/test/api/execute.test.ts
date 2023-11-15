@@ -340,11 +340,11 @@ test('workflowComplete should send an attempt:complete event', async (t) => {
 
   const event = {};
 
-  const context = { channel, state, onComplete: () => {} };
+  const context = { channel, state, onFinish: () => {} };
   await onWorkflowComplete(context, event);
 });
 
-test('workflowComplete should call onComplete with final dataclip', async (t) => {
+test('workflowComplete should call onFinish with final dataclip', async (t) => {
   const result = { answer: 42 };
 
   const state = {
@@ -362,7 +362,7 @@ test('workflowComplete should call onComplete with final dataclip', async (t) =>
   const context = {
     channel,
     state,
-    onComplete: ({ state: finalState }) => {
+    onFinish: ({ state: finalState }) => {
       t.deepEqual(result, finalState);
     },
   };
@@ -398,7 +398,7 @@ test('loadCredential should fetch a credential', async (t) => {
   t.deepEqual(state, { apiKey: 'abc' });
 });
 
-test('execute should pass the final result to onComplete', async (t) => {
+test('execute should pass the final result to onFinish', async (t) => {
   const channel = mockChannel(mockEventHandlers);
   const engine = await createMockRTE();
   const logger = createMockLogger();
