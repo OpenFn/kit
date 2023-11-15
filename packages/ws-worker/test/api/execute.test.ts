@@ -66,7 +66,7 @@ test('send event should throw if the event errors', async (t) => {
 });
 
 test('jobStart should set a run id and active job on state', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'attempt-1', jobs: [{ id: 'job-1' }] };
   const jobId = 'job-1';
 
   const state = createAttemptState(plan);
@@ -85,7 +85,10 @@ test('jobStart should send a run:start event', async (t) => {
   const plan = {
     id: 'attempt-1',
     initialState: 'abc',
-    jobs: [{ id: 'job-1' }, { id: 'job-2' }],
+    jobs: [
+      { id: 'job-1', expression: '.' },
+      { id: 'job-2', expression: '.' },
+    ],
   };
   const jobId = 'job-1';
 
