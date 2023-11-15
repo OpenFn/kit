@@ -12,6 +12,7 @@ import { install as runtimeInstall } from '@openfn/runtime';
 import type { Logger } from '@openfn/logger';
 import type { ExecutionContext } from '../types';
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
+import { AutoinstallError } from '../errors';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -54,6 +55,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   // TODO would rather do all this in parallel but this is fine for now
   // TODO set iteration is weirdly difficult?
   const paths: ModulePaths = {};
+
   for (const a of adaptors) {
     // Ensure that this is not blacklisted
     // TODO what if it is? For now we'll log and skip it
@@ -86,7 +88,11 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
             });
             delete pending[a];
           })
-          .catch((e) => {
+          .catch((e: any) => {
+            delete pending[a];
+
+            logger.error(`ERROR autoinstalling ${a}: ${e.message}`);
+            logger.error(e);
             const duration = Date.now() - startTime;
             context.emit(AUTOINSTALL_ERROR, {
               module: name,
@@ -94,6 +100,9 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
               duration,
               message: e.message || e.toString(),
             });
+
+            // wrap and re-throw the error
+            throw new AutoinstallError(a, e);
           });
       }
       // Return the pending promise (safe to do this multiple times)

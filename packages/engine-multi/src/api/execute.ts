@@ -99,11 +99,11 @@ const execute = async (context: ExecutionContext) => {
       error(context, { workflowId: state.plan.id, error: e });
       logger.error(e);
     });
-  } catch (e) {
-    // generic error wrapper
-    // this will catch anything you!
-    const wrappedError = new ExecutionError(e);
-    error(context, { workflowId: state.plan.id, error: wrappedError });
+  } catch (e: any) {
+    if (!error.severity) {
+      e = new ExecutionError(e);
+    }
+    error(context, { workflowId: state.plan.id, error: e });
   }
 };
 
