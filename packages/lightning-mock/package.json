@@ -1,6 +1,6 @@
 {
   "name": "@openfn/lightning-mock",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "private": true,
   "description": "A mock Lightning server",
   "main": "dist/index.js",

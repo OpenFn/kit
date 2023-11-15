@@ -1,5 +1,13 @@
 # engine-multi
 
+## 0.1.10
+
+### Patch Changes
+
+- c8e9d51: Forward next from job complete
+- Updated dependencies [7f352d2]
+  - @openfn/runtime@0.1.3
+
 ## 0.1.9
 
 ### Patch Changes
