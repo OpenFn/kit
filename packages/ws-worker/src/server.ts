@@ -149,8 +149,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       } = await joinAttemptChannel(app.socket, token, id, logger);
 
       // Callback to be triggered when the work is done (including errors)
-      const onComplete = () => {
+      const onFinish = () => {
         delete app.workflows[id];
+        attemptChannel.leave();
       };
       const context = execute(
         attemptChannel,
@@ -158,7 +159,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         logger,
         plan,
         options,
-        onComplete
+        onFinish
       );
 
       app.workflows[id] = context;
