@@ -73,8 +73,6 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     const needsInstalling = !(await isInstalledFn(a, repoDir, logger));
     if (needsInstalling) {
       if (!pending[a]) {
-        // TODO because autoinstall can take a while, we should emit that we're starting
-        // add a promise to the pending array
         const startTime = Date.now();
         pending[a] = installFn(a, repoDir, logger)
           .then(() => {
@@ -104,6 +102,10 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
             // wrap and re-throw the error
             throw new AutoinstallError(a, e);
           });
+      } else {
+        logger.info(
+          `autoinstall waiting for previous promise for ${a} to resolve...`
+        );
       }
       // Return the pending promise (safe to do this multiple times)
       // TODO if this is a chained promise, emit something like "using cache for ${name}"
