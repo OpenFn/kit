@@ -1,5 +1,15 @@
 # ws-worker
 
+## 0.2.6
+
+### Patch Changes
+
+- 0fb2d58: correctly handle input_dataclip_id for runs
+- Updated dependencies [c8e9d51]
+- Updated dependencies [7f352d2]
+  - @openfn/engine-multi@0.1.10
+  - @openfn/runtime@0.1.3
+
 ## 0.2.5
 
 ### Patch Changes

@@ -50,16 +50,17 @@ export type RUN_START_PAYLOAD = {
   job_id: string;
   run_id: string;
   attempt_id?: string;
-  input_dataclip_id?: string; //hmm
+  input_dataclip_id?: string;
 };
 export type RUN_START_REPLY = void;
 
 export const RUN_COMPLETE = 'run:complete';
-export type RUN_COMPLETE_PAYLOAD = ExitReason & {
+export type RunCompletePayload = ExitReason & {
   attempt_id?: string;
   job_id: string;
   run_id: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
+  next_job_ids: string[];
 };
-export type RUN_COMPLETE_REPLY = void;
+export type RunCompleteReply = void;

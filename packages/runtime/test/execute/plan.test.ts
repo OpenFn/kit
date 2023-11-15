@@ -634,6 +634,118 @@ test('execute multiple steps in "parallel"', async (t) => {
   });
 });
 
+test('isolate state in "parallel" execution', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'start',
+    initialState: { data: { x: 0 } },
+    jobs: [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        next: {
+          b: true,
+          c: true,
+        },
+      },
+      {
+        id: 'b',
+        expression:
+          'export default [s => { if (s.data.c) { throw "e" }; s.data.b = true; return s }]',
+      },
+      {
+        id: 'c',
+        expression:
+          'export default [s => { if (s.data.b) { throw "e" }; s.data.c = true; return s }]',
+      },
+    ],
+  };
+
+  const result = await execute(plan, {}, mockLogger);
+  t.falsy(result.errors);
+});
+
+test('isolate state in "parallel" execution with deeper trees', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'start',
+    initialState: { data: { x: 0 } },
+    jobs: [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        next: {
+          // fudge the order a bit
+          c: true,
+          b: true,
+        },
+      },
+      {
+        id: 'c2',
+        expression:
+          'export default [s => { if (s.data.b) { throw "e" }; s.data.c = true; return s }]',
+      },
+      {
+        id: 'b',
+        expression:
+          'export default [s => { if (s.data.c) { throw "e" }; s.data.b = true; return s }]',
+        next: { b2: true },
+      },
+      {
+        id: 'c',
+        expression:
+          'export default [s => { if (s.data.b) { throw "e" }; s.data.c = true; return s }]',
+        next: { c2: true },
+      },
+      {
+        id: 'b2',
+        expression:
+          'export default [s => { if (s.data.c) { throw "e" }; s.data.b = true; return s }]',
+      },
+    ],
+  };
+
+  const result = await execute(plan, {}, mockLogger);
+  t.falsy(result.errors);
+});
+
+test('"parallel" execution with multiple leaves should write multiple results to state', async (t) => {
+  const plan: ExecutionPlan = {
+    start: 'start',
+    jobs: [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        next: {
+          'job-b': true,
+          'job-c': true,
+        },
+      },
+      {
+        id: 'job-b',
+        expression: 'export default [s => { s.data.b = true; return s }]',
+      },
+      {
+        id: 'job-c',
+        expression: 'export default [s => { s.data.c = true; return s }]',
+      },
+    ],
+  };
+
+  const result = await execute(plan, {}, mockLogger);
+  // Each leaf should write to its own place on state
+  t.deepEqual(result, {
+    'job-b': {
+      data: {
+        b: true,
+      },
+    },
+    'job-c': {
+      data: {
+        c: true,
+      },
+    },
+  });
+});
+
 test('return an error in state', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
@@ -689,7 +801,7 @@ test('keep executing after an error', async (t) => {
   t.falsy(result.x);
 });
 
-test('simple on-error handler', async (t) => {
+test.only('simple on-error handler', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {

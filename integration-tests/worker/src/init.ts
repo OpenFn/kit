@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import createLightningServer from '@openfn/lightning-mock';
 import createEngine from '@openfn/engine-multi';
 import createWorkerServer from '@openfn/ws-worker';
-import { createMockLogger } from '@openfn/logger';
+import createLogger, { createMockLogger } from '@openfn/logger';
 
 export const randomPort = () => parseInt(2000 + Math.random() * 1000);
 

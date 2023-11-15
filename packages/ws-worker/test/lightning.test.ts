@@ -395,6 +395,7 @@ test('should register and de-register attempts to the server', async (t) => {
   });
 });
 
+// TODO this is a server test
 // What I am testing here is that the first job completes
 // before the second job starts
 test('should not claim while at capacity', async (t) => {
@@ -442,5 +443,8 @@ test('should not claim while at capacity', async (t) => {
     lng.enqueueAttempt(attempt2);
   });
 });
+
+// hmm, i don't even think I can test this in the mock runtime
+test.skip('should pass the right dataclip when running in parallel', () => {});
 
 test.todo(`should run multiple attempts`);

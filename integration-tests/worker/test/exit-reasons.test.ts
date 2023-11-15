@@ -13,7 +13,7 @@ test.before(async () => {
   lightning = initLightning(lightningPort);
 
   ({ worker } = await initWorker(lightningPort, {
-    repoDir: path.resolve('tmp/openfn/repo/exit-reason'),
+    repoDir: path.resolve('tmp/repo/exit-reason'),
   }));
 });
 
@@ -24,7 +24,7 @@ test.after(async () => {
 
 const run = async (attempt) => {
   return new Promise<any>(async (done) => {
-    lightning.on('attempt:complete', (evt) => {
+    lightning.once('attempt:complete', (evt) => {
       if (attempt.id === evt.attemptId) {
         done(evt.payload);
       }

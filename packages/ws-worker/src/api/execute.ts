@@ -10,37 +10,26 @@ import {
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
-  RUN_COMPLETE_PAYLOAD,
+  RunCompletePayload,
   RUN_START,
   RUN_START_PAYLOAD,
 } from '../events';
-import { AttemptOptions, Channel, ExitReason } from '../types';
-import { getWithReply, stringify } from '../util';
+import { AttemptOptions, Channel, AttemptState } from '../types';
+import { getWithReply, stringify, createAttemptState } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
-import {
-  JobCompleteEvent,
-  WorkflowCompleteEvent,
-  WorkflowErrorEvent,
-  WorkflowStartEvent,
-} from '../mock/runtime-engine';
-import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
+import type {
+  RuntimeEngine,
+  Resolvers,
+  JobCompletePayload,
+  WorkflowCompletePayload,
+  WorkflowErrorPayload,
+  WorkflowStartPayload,
+} from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
 import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
 const enc = new TextDecoder('utf-8');
-
-export type AttemptState = {
-  activeRun?: string;
-  activeJob?: string;
-  plan: ExecutionPlan;
-  options: AttemptOptions;
-  dataclips: Record<string, any>;
-  reasons: Record<string, ExitReason>;
-
-  // final dataclip id
-  lastDataclipId?: string;
-};
 
 export type Context = {
   channel: Channel;
@@ -57,19 +46,6 @@ const eventMap = {
   'workflow-log': ATTEMPT_LOG,
   'workflow-complete': ATTEMPT_COMPLETE,
 };
-
-export const createAttemptState = (
-  plan: ExecutionPlan,
-  options: AttemptOptions = {}
-): AttemptState => ({
-  plan,
-  // set the result data clip id (which needs renaming)
-  // to the initial state
-  lastDataclipId: plan.initialState as string | undefined,
-  dataclips: {},
-  reasons: {},
-  options,
-});
 
 // pass a web socket connected to the attempt channel
 // this thing will do all the work
@@ -155,7 +131,11 @@ export function execute(
         engine.execute(plan, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
-        onWorkflowError(context, { workflowId: plan.id!, message: e.message });
+        onWorkflowError(context, {
+          workflowId: plan.id!,
+          message: e.message,
+          type: e.type,
+        });
       }
     });
 
@@ -179,10 +159,13 @@ export function onJobStart({ channel, state }: Context, event: any) {
   // generate a run id and write it to state
   state.activeRun = crypto.randomUUID();
   state.activeJob = event.jobId;
+
+  const input_dataclip_id = state.inputDataclips[event.jobId];
+
   return sendEvent<RUN_START_PAYLOAD>(channel, RUN_START, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
-    input_dataclip_id: state.lastDataclipId,
+    input_dataclip_id,
   });
 }
 
@@ -213,7 +196,7 @@ export function onJobError(context: Context, event: any) {
 // b) save the reason for each job to state for later
 export function onJobComplete(
   { channel, state }: Context,
-  event: JobCompleteEvent,
+  event: JobCompletePayload,
   // TODO this isn't terribly graceful, but accept an error for crashes
   error?: any
 ) {
@@ -235,45 +218,46 @@ export function onJobComplete(
   // so we have a bit of a mapping problem
   state.lastDataclipId = dataclipId;
 
+  // Set the input dataclip id for downstream jobs
+  event.next?.forEach((nextJobId) => {
+    state.inputDataclips[nextJobId] = dataclipId;
+  });
+
   delete state.activeRun;
   delete state.activeJob;
-  try {
-    const { reason, error_message, error_type } = calculateJobExitReason(
-      job_id,
-      event.state,
-      error
-    );
-    state.reasons[job_id] = { reason, error_message, error_type };
+  const { reason, error_message, error_type } = calculateJobExitReason(
+    job_id,
+    event.state,
+    error
+  );
+  state.reasons[job_id] = { reason, error_message, error_type };
 
-    return sendEvent<RUN_COMPLETE_PAYLOAD>(channel, RUN_COMPLETE, {
-      run_id,
-      job_id,
-      output_dataclip_id: dataclipId,
-      output_dataclip: stringify(event.state),
+  const evt = {
+    run_id,
+    job_id,
+    output_dataclip_id: dataclipId,
+    output_dataclip: stringify(event.state),
 
-      reason,
-      error_message,
-      error_type,
-    });
-  } catch (e) {
-    console.log(e);
-  }
+    reason,
+    error_message,
+    error_type,
+  };
+  return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, evt);
 }
 
 export function onWorkflowStart(
   { channel }: Context,
-  _event: WorkflowStartEvent
+  _event: WorkflowStartPayload
 ) {
   return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
 }
 
-// TODO what this needs to do is look at all the job states
-// find the higher priority
-// And return that as the highest exit reason
 export async function onWorkflowComplete(
   { state, channel, onComplete }: Context,
-  _event: WorkflowCompleteEvent
+  _event: WorkflowCompletePayload
 ) {
+  // TODO I dont think the attempt final dataclip IS the last job dataclip
+  // Especially not in parallelisation
   const result = state.dataclips[state.lastDataclipId!];
   const reason = calculateAttemptExitReason(state);
   await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
@@ -288,7 +272,7 @@ export async function onWorkflowComplete(
 // NB this is a crash state!
 export async function onWorkflowError(
   { state, channel, onComplete }: Context,
-  event: WorkflowErrorEvent
+  event: WorkflowErrorPayload
 ) {
   // Should we not just report this reason?
   // Nothing more severe can have happened downstream, right?

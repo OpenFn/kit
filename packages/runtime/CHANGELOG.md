@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.1.3
+
+### Patch Changes
+
+- 7f352d2: Broadcast next steps with job-complete and error events
+
 ## 0.1.2
 
 ### Patch Changes

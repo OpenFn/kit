@@ -45,7 +45,7 @@ export const workflowComplete = (
   const { workflowId, state: result, threadId } = event;
 
   logger.success('complete workflow ', workflowId);
-  logger.info(state);
+  //logger.info(event.state);
 
   // TODO I don't know how we'd get here in this architecture
   // if (!allWorkflows.has(workflowId)) {
@@ -84,13 +84,14 @@ export const jobComplete = (
   context: ExecutionContext,
   event: internalEvents.JobCompleteEvent
 ) => {
-  const { threadId, state, duration, jobId } = event;
+  const { threadId, state, duration, jobId, next } = event;
 
   context.emit(externalEvents.JOB_COMPLETE, {
     threadId,
     state,
     duration,
     jobId,
+    next,
   });
 };
 
@@ -100,7 +101,7 @@ export const jobError = (
   context: ExecutionContext,
   event: internalEvents.JobErrorEvent
 ) => {
-  const { threadId, state, error, duration, jobId } = event;
+  const { threadId, state, error, duration, jobId, next } = event;
 
   context.emit(externalEvents.JOB_ERROR, {
     threadId,
@@ -108,6 +109,7 @@ export const jobError = (
     error,
     duration,
     jobId,
+    next,
   });
 };
 

@@ -17,16 +17,15 @@ import {
   execute,
   onWorkflowStart,
   onWorkflowComplete,
-  AttemptState,
   loadDataclip,
   loadCredential,
   sendEvent,
-  createAttemptState,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
-import { stringify } from '../../src/util';
+import { stringify, createAttemptState } from '../../src/util';
 import { ExecutionPlan } from '@openfn/runtime';
+import type { AttemptState } from '../../src/types';
 
 const enc = new TextEncoder();
 
@@ -67,12 +66,10 @@ test('send event should throw if the event errors', async (t) => {
 });
 
 test('jobStart should set a run id and active job on state', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'attempt-1', jobs: [{ id: 'job-1' }] };
   const jobId = 'job-1';
 
-  const state = {
-    plan,
-  } as AttemptState;
+  const state = createAttemptState(plan);
 
   const channel = mockChannel({
     [RUN_START]: (x) => x,
@@ -85,18 +82,24 @@ test('jobStart should set a run id and active job on state', async (t) => {
 });
 
 test('jobStart should send a run:start event', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = {
+    id: 'attempt-1',
+    initialState: 'abc',
+    jobs: [
+      { id: 'job-1', expression: '.' },
+      { id: 'job-2', expression: '.' },
+    ],
+  };
   const jobId = 'job-1';
 
   const state = createAttemptState(plan);
   state.activeJob = jobId;
   state.activeRun = 'b';
-  state.lastDataclipId = 'abc'; // this will be set to initial state by execute
 
   const channel = mockChannel({
     [RUN_START]: (evt) => {
       t.is(evt.job_id, jobId);
-      t.is(evt.input_dataclip_id, state.lastDataclipId);
+      t.is(evt.input_dataclip_id, plan.initialState);
       t.truthy(evt.run_id);
       return true;
     },
@@ -122,6 +125,29 @@ test('jobComplete should clear the run id and active job on state', async (t) =>
 
   t.falsy(state.activeJob);
   t.falsy(state.activeRun);
+});
+
+test('jobComplete should setup input mappings on on state', async (t) => {
+  let lightningEvent;
+  const plan = { id: 'attempt-1' };
+  const jobId = 'job-1';
+
+  const state = createAttemptState(plan);
+  state.activeJob = jobId;
+  state.activeRun = 'b';
+
+  const channel = mockChannel({
+    [RUN_COMPLETE]: (evt) => {
+      lightningEvent = evt;
+    },
+  });
+
+  const engineEvent = { state: { x: 10 }, next: ['job-2'] };
+  await onJobComplete({ channel, state }, engineEvent);
+
+  t.deepEqual(state.inputDataclips, {
+    ['job-2']: lightningEvent.output_dataclip_id,
+  });
 });
 
 test('jobComplete should save the dataclip to state', async (t) => {
@@ -211,7 +237,7 @@ test('jobComplete should send a run:complete event', async (t) => {
     },
   });
 
-  const event = { state: result };
+  const event = { state: result, next: ['a'] };
   await onJobComplete({ channel, state }, event);
 });
 

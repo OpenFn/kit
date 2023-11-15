@@ -44,6 +44,7 @@ export interface JobCompleteEvent extends InternalEvent {
   jobId: string;
   state: any;
   duration: number;
+  next: string[];
 }
 
 export interface JobErrorEvent extends InternalEvent {
@@ -51,6 +52,7 @@ export interface JobErrorEvent extends InternalEvent {
   state: any;
   error: any; // TODO this should be one of our errors
   duration: number;
+  next: string[];
 }
 
 export interface LogEvent extends InternalEvent {
