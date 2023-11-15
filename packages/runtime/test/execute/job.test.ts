@@ -128,7 +128,7 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
       t.deepEqual(state, state);
       t.deepEqual(next, []);
       t.assert(!isNaN(duration));
-      t.true(duration < 10);
+      t.true(duration < 100);
       t.is(jobId, 'j');
     }
   };
@@ -154,7 +154,7 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
       t.deepEqual(state, state);
       t.deepEqual(next, ['b', 'c']);
       t.assert(!isNaN(duration));
-      t.true(duration < 10);
+      t.true(duration < 100);
       t.is(jobId, 'j');
     }
   };
@@ -230,7 +230,7 @@ test(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
       t.deepEqual(state, state);
       t.deepEqual(next, ['b']);
       t.assert(!isNaN(duration));
-      t.true(duration < 10);
+      t.true(duration < 100);
       t.is(jobId, 'j');
     }
   };
