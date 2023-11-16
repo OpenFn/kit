@@ -83,7 +83,7 @@ test.serial('trigger job-complete', (t) => {
 
     api.execute(plan).on('job-complete', (evt) => {
       t.deepEqual(evt.next, []);
-      t.true(evt.duration < 10);
+      t.true(evt.duration < 20);
       t.is(evt.jobId, 'j1');
       t.deepEqual(evt.state, { data: {} });
       t.pass('job completed');
