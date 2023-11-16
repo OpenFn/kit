@@ -1,48 +1,28 @@
 import test from 'ava';
-import createLightningServer from '../../src/server';
 
-import { Socket } from 'phoenix';
-import { WebSocket } from 'ws';
-
+import { setup } from '../util';
 import { attempts, credentials, dataclips } from '../data';
 import {
   ATTEMPT_COMPLETE,
   AttemptCompletePayload,
   ATTEMPT_LOG,
-  CLAIM,
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
-import type { Attempt } from '../../src/types';
 import { JSONLog } from '@openfn/logger';
-
-const endpoint = 'ws://localhost:7777/worker';
 
 const enc = new TextDecoder('utf-8');
 
 type Channel = any;
 
+const port = 7777;
+
 let server;
 let client;
 
 // Set up a lightning server and a phoenix socket client before each test
-test.before(
-  () =>
-    new Promise((done) => {
-      server = createLightningServer({ port: 7777 });
-
-      // Note that we need a token to connect, but the mock here
-      // doesn't (yet) do any validation on that token
-      client = new Socket(endpoint, {
-        params: { token: 'x.y.z' },
-        timeout: 1000 * 120,
-        transport: WebSocket,
-      });
-      client.onOpen(done);
-      client.connect();
-    })
-);
+test.before(async () => ({ server, client } = await setup(port)));
 
 test.afterEach(() => {
   server.reset();

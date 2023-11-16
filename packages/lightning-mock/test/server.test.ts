@@ -1,10 +1,9 @@
 // Tests of the lightning websever
 import test from 'ava';
-import createLightningServer from '../src/server';
-
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
 
+import { setup } from './util';
 import type { Attempt } from '../src/types';
 
 let server;
@@ -14,23 +13,7 @@ const port = 3333;
 
 const endpoint = `ws://localhost:${port}/worker`;
 
-// Set up a lightning server and a phoenix socket client before each test
-test.before(
-  () =>
-    new Promise((done) => {
-      server = createLightningServer({ port });
-
-      // Note that we need a token to connect, but the mock here
-      // doesn't (yet) do any validation on that token
-      client = new Socket(endpoint, {
-        params: { token: 'x.y.z' },
-        timeout: 1000 * 120,
-        transport: WebSocket,
-      });
-      client.onOpen(done);
-      client.connect();
-    })
-);
+test.before(async () => ({ server, client } = await setup(port)));
 
 test.serial('should setup an attempt at /POST /attempt', async (t) => {
   const state = server.getState();
