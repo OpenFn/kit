@@ -53,3 +53,26 @@ test('crash: syntax error', async (t) => {
   t.is(error_type, 'CompileError');
   t.regex(error_message, /Unexpected token \(1:9\)$/);
 });
+
+test('exception: autoinstall error', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        adaptor: '@openfn/language-worker-integration-tests@9.9.9',
+        body: 'fn((s) => s)',
+      },
+    ],
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+
+  t.is(reason, 'exception');
+  t.is(error_type, 'AutoinstallError');
+  t.regex(
+    error_message,
+    /Error installing @openfn\/language-worker-integration-tests@9.9.9/
+  );
+});

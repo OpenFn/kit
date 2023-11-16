@@ -135,12 +135,18 @@ export const log = (
   });
 };
 
-export const error = (context: ExecutionContext, event: any) => {
+export const error = (
+  context: ExecutionContext,
+  event: internalEvents.ErrorEvent
+) => {
   const { threadId = '-', error } = event;
 
   context.emit(externalEvents.WORKFLOW_ERROR, {
     threadId,
+    // @ts-ignore
     type: error.type || error.name || 'ERROR',
     message: error.message || error.toString(),
+    // default to exception because if we don't know, it's our fault
+    severity: error.severity || 'exception',
   });
 };

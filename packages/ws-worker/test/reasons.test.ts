@@ -16,7 +16,7 @@ import {
 import { ExitReason } from '../src/types';
 
 // Explicit tests of exit reasons coming out of the worker
-// these test the onComplete callback
+// these test the onFinish callback
 // uses the real runtime engine
 
 let engine;
@@ -30,6 +30,13 @@ test.before(async () => {
     maxWorkers: 1,
     purge: false,
     logger,
+    autoinstall: {
+      handleIsInstalled: async () => false,
+      handleInstall: () =>
+        new Promise((_resolve, reject) => {
+          setTimeout(() => reject(new Error('not the way to amarillo')), 1);
+        }),
+    },
   });
 });
 
@@ -48,12 +55,12 @@ const execute = async (plan) =>
       [ATTEMPT_COMPLETE]: async () => true,
     });
 
-    const onComplete = (result) => {
+    const onFinish = (result) => {
       done(result);
     };
 
     // @ts-ignore
-    doExecute(channel, engine, logger, plan, {}, onComplete);
+    doExecute(channel, engine, logger, plan, {}, onFinish);
   });
 
 test('success', async (t) => {
@@ -196,6 +203,26 @@ test('crash: syntax error', async (t) => {
   t.is(reason.reason, 'crash');
   t.is(reason.error_type, 'CompileError');
   t.is(reason.error_message, 'a: Unexpected token (1:2)');
+});
+
+test('exception: autoinstall error', async (t) => {
+  const plan = createPlan({
+    id: 'a',
+    expression: '.',
+    adaptor: '@openfn/language-common@1.0.0',
+  });
+
+  // TODO I also need to ensure that this calls attempt:complete
+  // I think that test lives elsewhere though
+  // I *think* I need to change the mock engine first though...
+  const { reason } = await execute(plan);
+
+  t.is(reason.reason, 'exception');
+  t.is(reason.error_type, 'AutoinstallError');
+  t.is(
+    reason.error_message,
+    'Error installing @openfn/language-common@1.0.0: not the way to amarillo'
+  );
 });
 
 test.todo('crash: workflow validation error');

@@ -1,5 +1,14 @@
 # engine-multi
 
+## 0.1.11
+
+### Patch Changes
+
+- 793d523: Updated purge strategy
+- f17fb4a: Better error handling in autoinstall
+- Updated dependencies [857c42b]
+  - @openfn/runtime@0.1.4
+
 ## 0.1.10
 
 ### Patch Changes

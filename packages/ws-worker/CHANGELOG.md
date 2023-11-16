@@ -1,5 +1,16 @@
 # ws-worker
 
+## 0.2.7
+
+### Patch Changes
+
+- d542aa9: worker: leave attempt channel when finished working
+- Updated dependencies [793d523]
+- Updated dependencies [857c42b]
+- Updated dependencies [f17fb4a]
+  - @openfn/engine-multi@0.1.11
+  - @openfn/runtime@0.1.4
+
 ## 0.2.6
 
 ### Patch Changes

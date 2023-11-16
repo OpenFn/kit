@@ -239,3 +239,18 @@ test(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
 
   await execute(context, job, state);
 });
+
+test('log duration of execution', async (t) => {
+  const job = {
+    id: 'j',
+    expression: [(s: State) => s],
+  };
+  const initialState = createState();
+  const context = createContext();
+
+  await execute(context, job, initialState);
+
+  const duration = logger._find('success', /completed job /i);
+
+  t.regex(duration?.message, /completed job j in \d\d?ms/i);
+});

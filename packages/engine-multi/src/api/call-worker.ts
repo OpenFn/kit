@@ -23,7 +23,7 @@ type WorkerOptions = {
 
 // Adds a `callWorker` function to the API object, which will execute a task in a worker
 export default function initWorkers(
-  api: EngineAPI,
+  engine: EngineAPI,
   workerPath: string,
   options: WorkerOptions = {},
   logger?: Logger
@@ -31,7 +31,7 @@ export default function initWorkers(
   // TODO can we verify the worker path and throw if it's invalid?
   // workerpool won't complain if we give it a nonsense path
   const workers = createWorkers(workerPath, options);
-  api.callWorker = (
+  engine.callWorker = (
     task: string,
     args: any[] = [],
     events: any = {},
@@ -48,22 +48,20 @@ export default function initWorkers(
       promise.timeout(timeout);
     }
 
-    if (options.purge) {
-      promise.then(() => {
-        const { pendingTasks } = workers.stats();
-        if (pendingTasks == 0) {
-          logger?.debug('Purging workers');
-          api.emit(PURGE);
-          workers.terminate();
-        }
-      });
-    }
-
     return promise;
   };
 
+  engine.purge = () => {
+    const { pendingTasks } = workers.stats();
+    if (pendingTasks == 0) {
+      logger?.debug('Purging workers');
+      engine.emit(PURGE);
+      workers.terminate();
+    }
+  };
+
   // This will force termination instantly
-  api.closeWorkers = () => {
+  engine.closeWorkers = () => {
     workers.terminate(true);
 
     // Defer the return to allow workerpool to close down

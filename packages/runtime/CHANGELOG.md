@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.1.4
+
+### Patch Changes
+
+- 857c42b: Fix log output for job duration
+
 ## 0.1.3
 
 ### Patch Changes

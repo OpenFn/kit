@@ -64,6 +64,7 @@ export interface ExecutionContext extends EventEmitter {
 export interface EngineAPI extends EventEmitter {
   callWorker: CallWorker;
   closeWorkers: () => void;
+  purge?: () => void;
 }
 
 export interface RuntimeEngine extends EventEmitter {

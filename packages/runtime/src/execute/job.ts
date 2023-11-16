@@ -110,7 +110,8 @@ const executeJob = async (
 
   // We should by this point have validated the plan, so the job MUST exist
 
-  logger.timer('job');
+  const timerId = `job-${jobId}`;
+  logger.timer(timerId);
   logger.always('Starting job', jobId);
 
   // The expression SHOULD return state, but COULD return anything
@@ -123,7 +124,7 @@ const executeJob = async (
       // TODO include the upstream job
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(ctx, job.expression, state);
-      const humanDuration = logger.timer('job');
+      const humanDuration = logger.timer(timerId);
       logger.success(`Completed job ${jobId} in ${humanDuration}`);
     } catch (e: any) {
       didError = true;
@@ -133,7 +134,7 @@ const executeJob = async (
         // Whatever the final state was, save that as the intial state to the next thing
         result = state;
 
-        const duration = logger.timer('job');
+        const duration = logger.timer(timerId);
         logger.error(`Failed job ${jobId} after ${duration}`);
         report(state, jobId, error);
 

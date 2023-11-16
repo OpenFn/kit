@@ -35,7 +35,7 @@ export type Context = {
   channel: Channel;
   state: AttemptState;
   logger: Logger;
-  onComplete: (result: any) => void;
+  onFinish: (result: any) => void;
 };
 
 // mapping engine events to lightning events
@@ -55,13 +55,13 @@ export function execute(
   logger: Logger,
   plan: ExecutionPlan,
   options: AttemptOptions = {},
-  onComplete = (_result: any) => {}
+  onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);
 
   const state = createAttemptState(plan, options);
 
-  const context: Context = { channel, state, logger, onComplete };
+  const context: Context = { channel, state, logger, onFinish };
 
   type EventHandler = (context: any, event: any) => void;
 
@@ -72,6 +72,11 @@ export function execute(
   // TODO for debugging and monitoring, we should also send events to the worker's event emitter
   const addEvent = (eventName: string, handler: EventHandler) => {
     const wrappedFn = async (event: any) => {
+      // TODO this logging is in the wrong place
+      // This actually logs errors coming out of the worker
+      // But it presents as logging from messages being send to lightning
+      // really this messaging should move into send event
+
       // @ts-ignore
       const lightningEvent = eventMap[eventName] ?? eventName;
       try {
@@ -135,6 +140,7 @@ export function execute(
           workflowId: plan.id!,
           message: e.message,
           type: e.type,
+          severity: e.severity,
         });
       }
     });
@@ -253,7 +259,7 @@ export function onWorkflowStart(
 }
 
 export async function onWorkflowComplete(
-  { state, channel, onComplete }: Context,
+  { state, channel, onFinish }: Context,
   _event: WorkflowCompletePayload
 ) {
   // TODO I dont think the attempt final dataclip IS the last job dataclip
@@ -264,28 +270,32 @@ export async function onWorkflowComplete(
     final_dataclip_id: state.lastDataclipId!,
     ...reason,
   });
-  onComplete({ reason, state: result });
+  onFinish({ reason, state: result });
 }
 
 // On error, for now, we just post to workflow complete
 // No unit tests on this (not least because I think it'll change soon)
 // NB this is a crash state!
 export async function onWorkflowError(
-  { state, channel, onComplete }: Context,
+  { state, channel, logger, onFinish }: Context,
   event: WorkflowErrorPayload
 ) {
   // Should we not just report this reason?
   // Nothing more severe can have happened downstream, right?
   // const reason = calculateAttemptExitReason(state);
+  try {
+    // Ok, let's try that, let's just generate a reason from the event
+    const reason = calculateJobExitReason('', { data: {} }, event);
+    await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+      final_dataclip_id: state.lastDataclipId!,
+      ...reason,
+    });
 
-  // Ok, let's try that, let's just generate a reason from the event
-  const reason = calculateJobExitReason('', { data: {} }, event);
-  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
-    final_dataclip_id: state.lastDataclipId!,
-    ...reason,
-  });
-
-  onComplete({ reason });
+    onFinish({ reason });
+  } catch (e: any) {
+    logger.error('ERROR in workflow-error handler:', e.message);
+    logger.error(e);
+  }
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
