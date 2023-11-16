@@ -51,7 +51,6 @@ export default function initWorkers(
     return promise;
   };
 
-  // @ts-ignore
   engine.purge = () => {
     const { pendingTasks } = workers.stats();
     if (pendingTasks == 0) {
