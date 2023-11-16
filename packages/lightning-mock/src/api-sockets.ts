@@ -1,9 +1,6 @@
 import { WebSocketServer } from 'ws';
 import createLogger, { Logger } from '@openfn/logger';
-
-import type { ServerState } from './server';
-
-import { extractAttemptId } from './util';
+import type { Server } from 'http';
 
 import createPheonixMockSocketServer, {
   DevSocket,
@@ -21,9 +18,9 @@ import {
   RUN_COMPLETE,
   RUN_START,
 } from './events';
-import type { Server } from 'http';
-import { stringify } from './util';
+import { extractAttemptId, stringify } from './util';
 
+import type { ServerState } from './server';
 import type {
   AttemptStartPayload,
   AttemptStartReply,
@@ -44,7 +41,7 @@ import type {
   RunCompleteReply,
   RunStartPayload,
   RunStartReply,
-} from '@openfn/ws-worker';
+} from './types';
 
 // dumb cloning id
 // just an idea for unit tests

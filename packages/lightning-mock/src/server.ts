@@ -11,8 +11,7 @@ import createLogger, {
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 
-import type { AttemptLogPayload } from '@openfn/ws-worker';
-import type { Attempt, DevServer } from './types';
+import type { AttemptLogPayload, Attempt, DevServer } from './types';
 
 type RunId = string;
 type JobId = string;

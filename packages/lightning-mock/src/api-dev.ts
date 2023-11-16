@@ -9,8 +9,12 @@ import { ATTEMPT_COMPLETE } from './events';
 
 import { ServerState } from './server';
 
-import type { Attempt, DevServer, LightningEvents } from './types';
-import type { AttemptCompletePayload } from '@openfn/ws-worker';
+import type {
+  AttemptCompletePayload,
+  Attempt,
+  DevServer,
+  LightningEvents,
+} from './types';
 
 type Api = {
   startAttempt(attemptId: string): void;
