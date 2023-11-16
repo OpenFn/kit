@@ -54,6 +54,27 @@ const clone = (state: ServerState) => {
 
 const enc = new TextEncoder();
 
+const validateReasons = (evt: any) => {
+  const { reason, error_message, error_type } = evt;
+  if (!reason) {
+    return {
+      status: 'error',
+      response: `No exit reason`,
+    };
+  } else if (!/^(success|fail|crash|exception|kill)$/.test(reason)) {
+    return {
+      status: 'error',
+      response: `Unrecognised reason ${reason}`,
+    };
+  } else if (reason === 'success' && (error_type || error_message)) {
+    return {
+      status: 'error',
+      response: `Inconsistent reason (success and error type or message)`,
+    };
+  }
+  return { status: 'ok' };
+};
+
 // this new API is websocket based
 // Events map to handlers
 // can I even implement this in JS? Not with pheonix anyway. hmm.
@@ -318,31 +339,13 @@ const createSocketAPI = (
       state.results[attemptId].state = state.dataclips[final_dataclip_id];
     }
 
-    let payload: any = {
-      status: 'ok',
-    };
+    let payload: any = validateReasons(evt.payload);
 
     const invalidKeys = Object.keys(rest);
-
-    if (!reason) {
-      payload = {
-        status: 'error',
-        response: `No exit reason`,
-      };
-    } else if (!/^(success|fail|crash|exception|kill)$/.test(reason)) {
-      payload = {
-        status: 'error',
-        response: `Unrecognised reason ${reason}`,
-      };
-    } else if (invalidKeys.length) {
+    if (payload.status !== 'ok' && invalidKeys.length) {
       payload = {
         status: 'error',
         response: `Unexpected keys: ${invalidKeys.join(',')}`,
-      };
-    } else if (reason === 'success' && (error_type || error_message)) {
-      payload = {
-        status: 'error',
-        response: `Inconsistent reason (success and error type or message)`,
       };
     }
 
@@ -405,11 +408,23 @@ const createSocketAPI = (
     const { ref, join_ref, topic } = evt;
     const { output_dataclip_id, output_dataclip } = evt.payload;
 
-    if (output_dataclip_id) {
+    let payload: any = validateReasons(evt.payload);
+
+    if (!output_dataclip) {
+      payload = {
+        status: 'error',
+        response: 'no output_dataclip',
+      };
+    } else if (output_dataclip_id) {
       if (!state.dataclips) {
         state.dataclips = {};
       }
       state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip!);
+    } else {
+      payload = {
+        status: 'error',
+        response: 'no output_dataclip_id',
+      };
     }
 
     // be polite and acknowledge the event
@@ -417,9 +432,7 @@ const createSocketAPI = (
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 };
