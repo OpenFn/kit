@@ -13,7 +13,7 @@ import connectToWorkerQueue from './channels/worker-queue';
 
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
-import type { CLAIM_ATTEMPT } from './events';
+import type { ClaimAttempt } from './events';
 
 type ServerOptions = {
   maxWorkflows?: number;
@@ -37,7 +37,7 @@ export interface ServerApp extends Koa {
   channel: Channel;
   workflows: Record<string, true | Context>;
 
-  execute: ({ id, token }: CLAIM_ATTEMPT) => Promise<void>;
+  execute: ({ id, token }: ClaimAttempt) => Promise<void>;
   destroy: () => void;
   killWorkloop?: () => void;
 }
@@ -137,7 +137,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   logger.success(`ws-worker ${app.id} listening on ${port}`);
 
   // TODO this probably needs to move into ./api/ somewhere
-  app.execute = async ({ id, token }: CLAIM_ATTEMPT) => {
+  app.execute = async ({ id, token }: ClaimAttempt) => {
     if (app.socket) {
       app.workflows[id] = true;
 
