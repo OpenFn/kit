@@ -1,10 +1,10 @@
 import test from 'ava';
-import createLightningServer from '../src/server';
+import createLightningServer from '../../src/server';
 
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
 
-import { attempts, credentials, dataclips } from './data';
+import { attempts, credentials, dataclips } from '../data';
 import {
   ATTEMPT_COMPLETE,
   AttemptCompletePayload,
@@ -13,8 +13,8 @@ import {
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
-} from '../src/events';
-import type { Attempt } from '../src/types';
+} from '../../src/events';
+import type { Attempt } from '../../src/types';
 import { JSONLog } from '@openfn/logger';
 
 const endpoint = 'ws://localhost:7777/worker';
@@ -68,134 +68,6 @@ const join = (channelName: string, params: any = {}): Promise<Channel> =>
       });
   });
 
-// Test some dev hooks
-// enqueue attempt should add id to the queue and register the state, credentials and body
-test.serial('should setup an attempt at /POST /attempt', async (t) => {
-  const state = server.getState();
-
-  t.is(Object.keys(state.credentials).length, 0);
-  t.is(Object.keys(state.attempts).length, 0);
-  t.is(Object.keys(state.attempts).length, 0);
-
-  const attempt: Attempt = {
-    id: 'a',
-    triggers: [],
-    jobs: [
-      {
-        body: 'abc',
-        dataclip: {}, // not sure how this will work on the attempt yet
-        credential: {
-          // this will be converted into a string for lazy loading
-          user: 'john',
-          password: 'rambo',
-        },
-      },
-    ],
-    edges: [],
-  };
-
-  await fetch('http://localhost:7777/attempt', {
-    method: 'POST',
-    body: JSON.stringify(attempt),
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-
-  const newState = server.getState();
-  t.is(Object.keys(newState.attempts).length, 1);
-  const a = server.getAttempt('a');
-  t.truthy(a);
-  t.is(server.getQueueLength(), 1);
-
-  t.is(Object.keys(newState.credentials).length, 1);
-
-  const job = a.jobs[0];
-  t.assert(typeof job.credential === 'string');
-  const c = server.getCredential(job.credential);
-  t.is(c.user, 'john');
-});
-
-test.serial('provide a phoenix websocket at /worker', (t) => {
-  // client should be connected before this test runs
-  t.is(client.connectionState(), 'open');
-});
-
-test.serial('reject ws connections without a token', (t) => {
-  return new Promise((done) => {
-    // client should be connected before this test runs
-    const socket = new Socket(endpoint, { transport: WebSocket });
-    socket.onClose(() => {
-      t.pass();
-      done();
-    });
-    socket.connect();
-  });
-});
-
-test.serial('respond to channel join requests', (t) => {
-  return new Promise(async (done, reject) => {
-    const channel = client.channel('x', {});
-
-    channel.join().receive('ok', (res) => {
-      t.is(res, 'ok');
-      done();
-    });
-  });
-});
-
-// TODO: only allow authorised workers to join workers
-// TODO: only allow authorised attemtps to join an attempt channel
-
-test.serial(
-  'claim attempt: reply for zero items if queue is empty',
-  (t) =>
-    new Promise(async (done) => {
-      t.is(server.getQueueLength(), 0);
-
-      const channel = await join('worker:queue');
-
-      // response is an array of attempt ids
-      channel.push(CLAIM).receive('ok', (response) => {
-        const { attempts } = response;
-        t.assert(Array.isArray(attempts));
-        t.is(attempts.length, 0);
-
-        t.is(server.getQueueLength(), 0);
-        done();
-      });
-    })
-);
-
-test.serial(
-  "claim attempt: reply with an attempt id if there's an attempt in the queue",
-  (t) =>
-    new Promise(async (done) => {
-      server.enqueueAttempt(attempt1);
-      t.is(server.getQueueLength(), 1);
-
-      const channel = await join('worker:queue');
-
-      // response is an array of attempt ids
-      channel.push(CLAIM).receive('ok', (response) => {
-        const { attempts } = response;
-        t.truthy(attempts);
-        t.is(attempts.length, 1);
-        t.deepEqual(attempts[0], { id: 'attempt-1', token: 'x.y.z' });
-
-        // ensure the server state has changed
-        t.is(server.getQueueLength(), 0);
-        done();
-      });
-    })
-);
-
-// TODO is it even worth doing this? Easier for a socket to pull one at a time?
-// It would also ensure better distribution if 10 workers ask at the same time, they'll get
-// one each then come back for more
-test.todo('claim attempt: reply with multiple attempt ids');
-
 test.serial('create a channel for an attempt', async (t) => {
   server.startAttempt('wibble');
   await join('attempt:wibble', { token: 'a.b.c' });
@@ -208,8 +80,6 @@ test.serial('do not allow to join a channel without a token', async (t) => {
     message: 'invalid_token',
   });
 });
-
-test.todo('do not allow to join a channel without a valid token');
 
 test.serial('reject channels for attempts that are not started', async (t) => {
   await t.throwsAsync(() => join('attempt:xyz'), {
