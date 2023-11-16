@@ -7,11 +7,11 @@ import createLogger, {
   LogLevel,
   Logger,
 } from '@openfn/logger';
+import type { AttemptLogPayload } from '@openfn/ws-worker';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 import { Attempt } from './types';
-import { AttemptLogPayload } from './events';
 
 export type AttemptState = {
   status: 'queued' | 'started' | 'complete';

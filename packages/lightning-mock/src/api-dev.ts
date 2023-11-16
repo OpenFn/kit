@@ -6,10 +6,10 @@ import Koa from 'koa';
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
 import crypto from 'node:crypto';
+import { ATTEMPT_COMPLETE, AttemptCompletePayload } from '@openfn/ws-worker';
 
 import { Attempt } from './types';
 import { ServerState } from './server';
-import { ATTEMPT_COMPLETE, AttemptCompletePayload } from './events';
 
 type LightningEvents = 'log' | 'attempt-complete';
 
@@ -91,7 +91,7 @@ const setupDevAPI = (
       }) => {
         if (evt.attemptId === attemptId) {
           state.events.removeListener(ATTEMPT_COMPLETE, handler);
-          const result = state.dataclips[evt.payload.final_dataclip_id];
+          const result = state.dataclips[evt.payload.final_dataclip_id!];
           resolve(result);
         }
       };
@@ -131,7 +131,7 @@ const setupDevAPI = (
     event: LightningEvents,
     attemptId: string,
     fn: (evt: any) => void,
-    once = true,
+    once = true
   ) => {
     function handler(e: any) {
       if (e.attemptId && e.attemptId === attemptId) {

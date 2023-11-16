@@ -9,34 +9,35 @@ import createPheonixMockSocketServer, {
   DevSocket,
   PhoenixEvent,
 } from './socket-server';
+
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_LOG,
+  ATTEMPT_START,
   AttemptCompletePayload,
   AttemptCompleteReply,
-  ATTEMPT_LOG,
   AttemptLogPayload,
   AttemptLogReply,
   CLAIM,
+  ClaimAttempt,
   ClaimPayload,
   ClaimReply,
-  ClaimAttempt,
   GET_ATTEMPT,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
   GetAttemptPayload,
   GetAttemptReply,
-  GET_CREDENTIAL,
   GetCredentialPayload,
   GetCredentialReply,
-  GET_DATACLIP,
   GetDataclipPayload,
   GetDataClipReply,
   RUN_COMPLETE,
-  RunCompletePayload,
   RUN_START,
-  RunStart,
-  RunStartReply,
+  RunCompletePayload,
   RunCompleteReply,
-  ATTEMPT_START,
-} from './events';
+  RunStartPayload,
+  RunStartReply,
+} from '@openfn/ws-worker';
 
 import type { Server } from 'http';
 import { stringify } from './util';
@@ -296,7 +297,9 @@ const createSocketAPI = (
     if (!state.results[attemptId]) {
       state.results[attemptId] = { state: null, workerId: 'mock' };
     }
-    state.results[attemptId].state = state.dataclips[final_dataclip_id];
+    if (final_dataclip_id) {
+      state.results[attemptId].state = state.dataclips[final_dataclip_id];
+    }
 
     ws.reply<AttemptCompleteReply>({
       ref,
@@ -311,7 +314,7 @@ const createSocketAPI = (
   function handleRunStart(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<RunStart>
+    evt: PhoenixEvent<RunStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
     if (!state.dataclips) {
