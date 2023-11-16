@@ -430,6 +430,9 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@openfn/ws-worker':
+        specifier: workspace:^
+        version: link:../ws-worker
       '@types/koa-logger':
         specifier: ^3.1.2
         version: 3.1.2
