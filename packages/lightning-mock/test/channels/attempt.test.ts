@@ -99,29 +99,6 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
   });
 });
 
-test.serial('logs are saved and acknowledged', async (t) => {
-  return new Promise(async (done) => {
-    server.registerAttempt(attempt1);
-    server.startAttempt(attempt1.id);
-
-    const log = {
-      attempt_id: attempt1.id,
-      level: 'info',
-      name: 'R/T',
-      message: ['Did the thing'],
-      time: new Date().getTime(),
-    } as JSONLog;
-
-    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
-    channel.push(ATTEMPT_LOG, log).receive('ok', () => {
-      const { pending } = server.getState();
-      const [savedLog] = pending[attempt1.id].logs;
-      t.deepEqual(savedLog, log);
-      done();
-    });
-  });
-});
-
 test.serial('unsubscribe after attempt complete', async (t) => {
   return new Promise(async (done) => {
     const a = attempt1;

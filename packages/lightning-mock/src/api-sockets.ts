@@ -301,18 +301,32 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<AttemptLogPayload>
   ) {
-    const { ref, join_ref, topic, payload } = evt;
-    const { attempt_id: attemptId } = payload;
+    const { ref, join_ref, topic } = evt;
+    const { attempt_id: attemptId } = evt.payload;
 
-    state.pending[attemptId].logs.push(payload);
+    state.pending[attemptId].logs.push(evt.payload);
+
+    let payload: any = {
+      status: 'ok',
+    };
+
+    if (
+      !evt.payload.message ||
+      !evt.payload.source ||
+      !evt.payload.timestamp ||
+      !evt.payload.level
+    ) {
+      payload = {
+        status: 'error',
+        response: 'Missing property on log',
+      };
+    }
 
     ws.reply<AttemptLogReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 

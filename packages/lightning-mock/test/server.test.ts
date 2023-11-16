@@ -3,7 +3,7 @@ import test from 'ava';
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
 
-import { setup } from './util';
+import { createAttempt, setup } from './util';
 import type { Attempt } from '../src/types';
 
 let server;
