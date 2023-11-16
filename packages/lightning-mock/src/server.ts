@@ -13,9 +13,13 @@ import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 import { Attempt, DevServer } from './types';
 
+type RunId = string;
+type JobId = string;
+
 export type AttemptState = {
   status: 'queued' | 'started' | 'complete';
   logs: AttemptLogPayload[];
+  runs: Record<JobId, RunId>;
 };
 
 export type ServerState = {

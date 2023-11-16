@@ -101,6 +101,7 @@ const createSocketAPI = (
     state.pending[attemptId] = {
       status: 'started',
       logs: [],
+      runs: {},
     };
 
     const wrap = <T>(
@@ -359,16 +360,40 @@ const createSocketAPI = (
     evt: PhoenixEvent<RunStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
+    const { run_id, job_id, input_dataclip_id } = evt.payload;
+
+    const [_, attemptId] = topic.split(':');
     if (!state.dataclips) {
       state.dataclips = {};
     }
+    state.pending[attemptId].runs[job_id] = run_id;
+
+    let payload: any = {
+      status: 'ok',
+    };
+
+    if (!run_id) {
+      payload = {
+        status: 'error',
+        response: 'no run_id',
+      };
+    } else if (!job_id) {
+      payload = {
+        status: 'error',
+        response: 'no job_id',
+      };
+    } else if (!input_dataclip_id) {
+      payload = {
+        status: 'error',
+        response: 'no input_dataclip_id',
+      };
+    }
+
     ws.reply<RunStartReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
