@@ -1,8 +1,12 @@
-import createLightningServer from '../src/server';
-
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
+import crypto from 'node:crypto';
+
+import createLightningServer from '../src/server';
 import type { DevServer } from '../src/types';
+import { attempts } from './data';
+
+type Channel = any; // TODO
 
 export const setup = (port: number) => {
   return new Promise<{ server: DevServer; client: any }>((done) => {
@@ -20,3 +24,21 @@ export const setup = (port: number) => {
     client.connect();
   });
 };
+
+export const join = (client: any, attemptId: string): Promise<Channel> =>
+  new Promise((done, reject) => {
+    const channel = client.channel(`attempt:${attemptId}`, { token: 'a.b.c' });
+    channel
+      .join()
+      .receive('ok', () => {
+        done(channel);
+      })
+      .receive('error', (err) => {
+        reject(new Error(err));
+      });
+  });
+
+export const createAttempt = () => ({
+  ...attempts['attempt-1'],
+  id: crypto.randomUUID(),
+});

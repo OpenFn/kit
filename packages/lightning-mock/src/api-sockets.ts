@@ -300,13 +300,16 @@ const createSocketAPI = (
     evt: PhoenixEvent<AttemptCompletePayload>,
     attemptId: string
   ) {
-    const { ref, join_ref, topic, payload } = evt;
-    const { final_dataclip_id } = payload;
+    const { ref, join_ref, topic } = evt;
+    const { final_dataclip_id, reason, error_type, error_message, ...rest } =
+      evt.payload;
 
     logger?.info('Completed attempt ', attemptId);
     logger?.debug(final_dataclip_id);
 
     state.pending[attemptId].status = 'complete';
+
+    // TODO we'll remove this stuff soon
     if (!state.results[attemptId]) {
       state.results[attemptId] = { state: null, workerId: 'mock' };
     }
@@ -314,13 +317,39 @@ const createSocketAPI = (
       state.results[attemptId].state = state.dataclips[final_dataclip_id];
     }
 
+    let payload: any = {
+      status: 'ok',
+    };
+
+    const invalidKeys = Object.keys(rest);
+
+    if (!reason) {
+      payload = {
+        status: 'error',
+        response: `No exit reason`,
+      };
+    } else if (!/^(success|fail|crash|exception|kill)$/.test(reason)) {
+      payload = {
+        status: 'error',
+        response: `Unrecognised reason ${reason}`,
+      };
+    } else if (invalidKeys.length) {
+      payload = {
+        status: 'error',
+        response: `Unexpected keys: ${invalidKeys.join(',')}`,
+      };
+    } else if (reason === 'success' && (error_type || error_message)) {
+      payload = {
+        status: 'error',
+        response: `Inconsistent reason (success and error type or message)`,
+      };
+    }
+
     ws.reply<AttemptCompleteReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
