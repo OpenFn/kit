@@ -1,7 +1,6 @@
 import test from 'ava';
-
 import { join, setup, createAttempt } from '../util';
-import { ATTEMPT_START } from '@openfn/ws-worker';
+import { ATTEMPT_START } from '../../src/events';
 
 let server;
 let client;

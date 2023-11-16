@@ -5,10 +5,12 @@
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
 import crypto from 'node:crypto';
-import { ATTEMPT_COMPLETE, AttemptCompletePayload } from '@openfn/ws-worker';
+import { ATTEMPT_COMPLETE } from './events';
 
-import { Attempt, DevServer, LightningEvents } from './types';
 import { ServerState } from './server';
+
+import type { Attempt, DevServer, LightningEvents } from './types';
+import type { AttemptCompletePayload } from '@openfn/ws-worker';
 
 type Api = {
   startAttempt(attemptId: string): void;
@@ -44,6 +46,7 @@ const setupDevAPI = (
     state.pending[attempt.id] = {
       status: 'queued',
       logs: [],
+      runs: {},
     };
     state.queue.push(attempt.id);
   };

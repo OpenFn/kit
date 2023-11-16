@@ -1,5 +1,5 @@
 import test from 'ava';
-import { ATTEMPT_LOG } from '@openfn/ws-worker';
+import { ATTEMPT_LOG } from '../../src/events';
 
 import { join, setup, createAttempt } from '../util';
 

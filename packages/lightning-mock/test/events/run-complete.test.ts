@@ -1,5 +1,5 @@
 import test from 'ava';
-import { RUN_COMPLETE } from '@openfn/ws-worker';
+import { RUN_COMPLETE } from '../../src/events';
 
 import { join, setup, createAttempt } from '../util';
 

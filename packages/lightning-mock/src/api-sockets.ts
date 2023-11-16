@@ -10,40 +10,41 @@ import createPheonixMockSocketServer, {
   PhoenixEvent,
   PhoenixEventStatus,
 } from './socket-server';
-
 import {
   ATTEMPT_COMPLETE,
   ATTEMPT_LOG,
   ATTEMPT_START,
+  CLAIM,
+  GET_ATTEMPT,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
+  RUN_COMPLETE,
+  RUN_START,
+} from './events';
+import type { Server } from 'http';
+import { stringify } from './util';
+
+import type {
+  AttemptStartPayload,
+  AttemptStartReply,
   AttemptCompletePayload,
   AttemptCompleteReply,
   AttemptLogPayload,
   AttemptLogReply,
-  CLAIM,
   ClaimAttempt,
   ClaimPayload,
   ClaimReply,
-  GET_ATTEMPT,
-  GET_CREDENTIAL,
-  GET_DATACLIP,
   GetAttemptPayload,
   GetAttemptReply,
   GetCredentialPayload,
   GetCredentialReply,
   GetDataclipPayload,
   GetDataClipReply,
-  RUN_COMPLETE,
-  RUN_START,
   RunCompletePayload,
   RunCompleteReply,
   RunStartPayload,
   RunStartReply,
 } from '@openfn/ws-worker';
-
-import type { Server } from 'http';
-import { stringify } from './util';
-import { AttemptStartPayload } from '@openfn/ws-worker';
-import { AttemptStartReply } from '@openfn/ws-worker';
 
 // dumb cloning id
 // just an idea for unit tests
@@ -356,7 +357,7 @@ const createSocketAPI = (
     let payload: any = validateReasons(evt.payload);
 
     const invalidKeys = Object.keys(rest);
-    if (payload.status !== 'ok' && invalidKeys.length) {
+    if (payload.status === 'ok' && invalidKeys.length) {
       payload = {
         status: 'error',
         response: `Unexpected keys: ${invalidKeys.join(',')}`,

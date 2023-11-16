@@ -7,11 +7,12 @@ import createLogger, {
   LogLevel,
   Logger,
 } from '@openfn/logger';
-import type { AttemptLogPayload } from '@openfn/ws-worker';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
-import { Attempt, DevServer } from './types';
+
+import type { AttemptLogPayload } from '@openfn/ws-worker';
+import type { Attempt, DevServer } from './types';
 
 type RunId = string;
 type JobId = string;

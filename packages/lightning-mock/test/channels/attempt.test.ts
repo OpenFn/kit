@@ -4,13 +4,12 @@ import { setup } from '../util';
 import { attempts, credentials, dataclips } from '../data';
 import {
   ATTEMPT_COMPLETE,
-  AttemptCompletePayload,
-  ATTEMPT_LOG,
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
-import { JSONLog } from '@openfn/logger';
+
+import { AttemptCompletePayload } from '@openfn/ws-worker';
 
 const enc = new TextDecoder('utf-8');
 
@@ -89,10 +88,14 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
 
     const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
     channel
-      .push(ATTEMPT_COMPLETE, { final_dataclip_id: 'abc' })
+      .push(ATTEMPT_COMPLETE, { reason: 'success', final_dataclip_id: 'abc' })
       .receive('ok', () => {
         const { pending, results } = server.getState();
-        t.deepEqual(pending[a.id], { status: 'complete', logs: [] });
+        t.deepEqual(pending[a.id], {
+          status: 'complete',
+          logs: [],
+          runs: {},
+        });
         t.deepEqual(results[a.id].state, { answer: 42 });
         done();
       });
@@ -106,7 +109,7 @@ test.serial('unsubscribe after attempt complete', async (t) => {
     server.startAttempt(a.id);
 
     const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
-    channel.push(ATTEMPT_COMPLETE).receive('ok', () => {
+    channel.push(ATTEMPT_COMPLETE, { reason: 'success' }).receive('ok', () => {
       // After the complete event, the listener should unsubscribe to the channel
       // The mock will send an error to any unhandled events in that channel
       channel.push(ATTEMPT_COMPLETE).receive('error', () => {
