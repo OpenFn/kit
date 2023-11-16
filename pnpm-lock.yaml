@@ -146,8 +146,6 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
 
-  integration-tests/worker/tmp/repo/exit-reason: {}
-
   packages/cli:
     dependencies:
       '@inquirer/prompts':
