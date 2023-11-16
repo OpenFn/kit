@@ -1,8 +1,9 @@
 import test from 'ava';
+import crypto from 'node:crypto';
 
 import { setup } from '../util';
 import { attempts } from '../data';
-import { ATTEMPT_START } from '../../src/events';
+import { ATTEMPT_START } from '@openfn/ws-worker';
 
 let server;
 let client;
@@ -14,6 +15,11 @@ const attempt1 = attempts['attempt-1'];
 type Channel = any; // TODO
 
 test.before(async () => ({ server, client } = await setup(port)));
+
+const createAttempt = () => ({
+  ...attempt1,
+  id: crypto.randomUUID(),
+});
 
 const join = (attemptId: string): Promise<Channel> =>
   new Promise((done, reject) => {
@@ -30,12 +36,13 @@ const join = (attemptId: string): Promise<Channel> =>
 
 test.serial('acknowledge attempt:start', async (t) => {
   return new Promise(async (done) => {
-    server.registerAttempt(attempt1);
-    server.startAttempt(attempt1.id);
+    const attempt = createAttempt();
+
+    server.startAttempt(attempt.id);
 
     const event = {};
 
-    const channel = await join(attempt1.id);
+    const channel = await join(attempt.id);
 
     channel.push(ATTEMPT_START, event).receive('ok', () => {
       t.pass('event acknowledged');
@@ -44,18 +51,41 @@ test.serial('acknowledge attempt:start', async (t) => {
   });
 });
 
-// TODO idk how much sense this makes as we have to join the channel first?
-// I guess it covers a case where get in the channel but then something goes wrong
-// like maybe we send two starts, one after completion
 test.serial('reject attempt:start for an unknown attempt', async (t) => {
   return new Promise(async (done) => {
+    const attempt = createAttempt();
     const event = {};
 
-    // Note that the mock is currently lenient here
-    const channel = await join(attempt1.id);
+    server.startAttempt(attempt.id);
 
-    channel.push(ATTEMPT_START, event).receive('ok', () => {
-      t.pass('event acknowledged');
+    // Note that the mock is currently lenient here
+    const channel = await join(attempt.id);
+
+    // Sneak into the server and kill the state for this attempt
+    delete server.state.pending[attempt.id];
+
+    channel.push(ATTEMPT_START, event).receive('error', () => {
+      t.pass('event rejected');
+      done();
+    });
+  });
+});
+
+test.serial('reject attempt:start for a completed attempt', async (t) => {
+  return new Promise(async (done) => {
+    const attempt = createAttempt();
+    const event = {};
+
+    server.startAttempt(attempt.id);
+
+    // Note that the mock is currently lenient here
+    const channel = await join(attempt.id);
+
+    // Sneak into the server and update the state for this attempt
+    server.state.pending[attempt.id].status = 'completed';
+
+    channel.push(ATTEMPT_START, event).receive('error', () => {
+      t.pass('event rejected');
       done();
     });
   });

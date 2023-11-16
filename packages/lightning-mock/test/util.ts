@@ -2,11 +2,11 @@ import createLightningServer from '../src/server';
 
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
+import type { DevServer } from '../src/types';
 
 export const setup = (port: number) => {
-  return new Promise<{ server: any; client: any }>((done) => {
+  return new Promise<{ server: DevServer; client: any }>((done) => {
     const server = createLightningServer({ port });
-
     // Note that we need a token to connect, but the mock here
     // doesn't (yet) do any validation on that token
     const client = new Socket(`ws://localhost:${port}/worker`, {

@@ -1,3 +1,6 @@
+import Koa from 'koa';
+import type { ServerState } from './server';
+
 export type Node = {
   id: string;
   body?: string;
@@ -29,4 +32,33 @@ export type Attempt = {
   edges: Edge[];
 
   options?: Record<string, any>; // TODO type the expected options
+};
+
+export type LightningEvents = 'log' | 'attempt-complete';
+
+export type DataClip = any;
+
+export type DevServer = Koa & {
+  state: ServerState;
+  addCredential(id: string, cred: Credential): void;
+  addDataclip(id: string, data: DataClip): void;
+  enqueueAttempt(attempt: Attempt): void;
+  destroy: () => void;
+  getAttempt(id: string): Attempt;
+  getCredential(id: string): Credential;
+  getDataclip(id: string): DataClip;
+  getQueueLength(): number;
+  getResult(attemptId: string): any;
+  getState(): ServerState;
+  on(event: LightningEvents, fn: (evt: any) => void): void;
+  once(event: LightningEvents, fn: (evt: any) => void): void;
+  onSocketEvent(
+    event: LightningEvents,
+    attemptId: string,
+    fn: (evt: any) => void
+  ): void;
+  registerAttempt(attempt: Attempt): void;
+  reset(): void;
+  startAttempt(id: string): any;
+  waitForResult(attemptId: string): Promise<any>;
 };

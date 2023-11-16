@@ -8,6 +8,7 @@ import { extractAttemptId } from './util';
 import createPheonixMockSocketServer, {
   DevSocket,
   PhoenixEvent,
+  PhoenixEventStatus,
 } from './socket-server';
 
 import {
@@ -41,6 +42,8 @@ import {
 
 import type { Server } from 'http';
 import { stringify } from './util';
+import { AttemptStartPayload } from '@openfn/ws-worker';
+import { AttemptStartReply } from '@openfn/ws-worker';
 
 // dumb cloning id
 // just an idea for unit tests
@@ -204,16 +207,26 @@ const createSocketAPI = (
   function handleStartAttempt(
     _state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<GetCredentialPayload>
+    evt: PhoenixEvent<AttemptStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    ws.reply<GetCredentialReply>({
+    const [_, attemptId] = topic.split(':');
+    let payload = {
+      status: 'ok' as PhoenixEventStatus,
+    };
+    if (
+      !state.pending[attemptId] ||
+      state.pending[attemptId].status !== 'started'
+    ) {
+      payload = {
+        status: 'error',
+      };
+    }
+    ws.reply<AttemptStartReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
