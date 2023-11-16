@@ -53,14 +53,14 @@ test('send event should resolve when the event is acknowledged', async (t) => {
   t.is(result, 22);
 });
 
-test('send event should throw if the event errors', async (t) => {
+test('send event should throw if an event errors', async (t) => {
   const channel = mockChannel({
-    echo: (x) => {
+    throw: (x) => {
       throw new Error('err');
     },
   });
 
-  await t.throwsAsync(() => sendEvent(channel, 'echo', 22), {
+  await t.throwsAsync(() => sendEvent(channel, 'throw', 22), {
     message: 'err',
   });
 });

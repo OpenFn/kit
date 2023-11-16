@@ -59,8 +59,9 @@ export interface LogEvent extends InternalEvent {
   message: JSONLog;
 }
 
-export interface ErrorEvent extends InternalEvent {
-  jobId?: string;
+export interface ErrorEvent {
+  threadId?: string;
+  workflowId?: string;
   error: {
     message: string;
     type: string;
