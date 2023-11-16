@@ -22,6 +22,7 @@ const options = {
   autoinstall: {
     handleIsInstalled: async () => true,
   },
+  purge: true,
 };
 
 let engine;
@@ -283,5 +284,39 @@ test.serial('Purge workers when run errors', async (t) => {
     });
 
     engine.execute(plan);
+  });
+});
+
+test.serial("Don't purge if purge is false", async (t) => {
+  return new Promise(async (done) => {
+    const p = path.resolve('src/test/worker-functions.js');
+    engine = await createEngine(
+      {
+        ...options,
+        purge: false,
+      },
+      p
+    );
+
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: '34',
+        },
+      ],
+    };
+
+    engine.on(e.PURGE, () => {
+      t.fail('purge event called');
+      done();
+    });
+
+    engine.execute(plan).on(e.WORKFLOW_COMPLETE, () => {
+      setTimeout(() => {
+        t.pass('no purge called within 50ms');
+        done();
+      }, 50);
+    });
   });
 });

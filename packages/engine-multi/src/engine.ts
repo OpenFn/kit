@@ -185,7 +185,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
-        if (Object.keys(contexts).length === 0) {
+        if (options.purge && Object.keys(contexts).length === 0) {
           engine.purge?.();
         }
       });
