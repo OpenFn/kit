@@ -2,48 +2,26 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
-import Koa from 'koa';
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
 import crypto from 'node:crypto';
+import { ATTEMPT_COMPLETE } from './events';
 
-import { Attempt } from './types';
 import { ServerState } from './server';
-import { ATTEMPT_COMPLETE, AttemptCompletePayload } from './events';
 
-type LightningEvents = 'log' | 'attempt-complete';
-
-type DataClip = any;
-
-export type DevApp = Koa & {
-  addCredential(id: string, cred: Credential): void;
-  addDataclip(id: string, data: DataClip): void;
-  enqueueAttempt(attempt: Attempt): void;
-  getAttempt(id: string): Attempt;
-  getCredential(id: string): Credential;
-  getDataclip(id: string): DataClip;
-  getQueueLength(): number;
-  getResult(attemptId: string): any;
-  getState(): ServerState;
-  on(event: LightningEvents, fn: (evt: any) => void): void;
-  once(event: LightningEvents, fn: (evt: any) => void): void;
-  onSocketEvent(
-    event: LightningEvents,
-    attemptId: string,
-    fn: (evt: any) => void
-  ): void;
-  registerAttempt(attempt: Attempt): void;
-  reset(): void;
-  startAttempt(id: string): any;
-  waitForResult(attemptId: string): Promise<any>;
-};
+import type {
+  AttemptCompletePayload,
+  Attempt,
+  DevServer,
+  LightningEvents,
+} from './types';
 
 type Api = {
   startAttempt(attemptId: string): void;
 };
 
 const setupDevAPI = (
-  app: DevApp,
+  app: DevServer,
   state: ServerState,
   logger: Logger,
   api: Api
@@ -72,6 +50,7 @@ const setupDevAPI = (
     state.pending[attempt.id] = {
       status: 'queued',
       logs: [],
+      runs: {},
     };
     state.queue.push(attempt.id);
   };
@@ -91,7 +70,7 @@ const setupDevAPI = (
       }) => {
         if (evt.attemptId === attemptId) {
           state.events.removeListener(ATTEMPT_COMPLETE, handler);
-          const result = state.dataclips[evt.payload.final_dataclip_id];
+          const result = state.dataclips[evt.payload.final_dataclip_id!];
           resolve(result);
         }
       };
@@ -131,7 +110,7 @@ const setupDevAPI = (
     event: LightningEvents,
     attemptId: string,
     fn: (evt: any) => void,
-    once = true,
+    once = true
   ) => {
     function handler(e: any) {
       if (e.attemptId && e.attemptId === attemptId) {
@@ -147,7 +126,7 @@ const setupDevAPI = (
 
 // Set up some rest endpoints
 // Note that these are NOT prefixed
-const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
+const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
   const router = new Router();
 
   router.post('/attempt', (ctx) => {
@@ -183,7 +162,12 @@ const setupRestAPI = (app: DevApp, state: ServerState, logger: Logger) => {
   return router.routes();
 };
 
-export default (app: DevApp, state: ServerState, logger: Logger, api: Api) => {
+export default (
+  app: DevServer,
+  state: ServerState,
+  logger: Logger,
+  api: Api
+) => {
   setupDevAPI(app, state, logger, api);
   return setupRestAPI(app, state, logger);
 };

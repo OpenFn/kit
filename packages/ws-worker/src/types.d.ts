@@ -103,13 +103,6 @@ type ReceiveHook = {
   ) => ReceiveHook;
 };
 
-// export declare class Socket extends PhxSocket {
-//   constructor(endpoint: string, options: { params: any });
-//   onOpen(callback: () => void): void;
-//   connect(): void;
-//   channel(channelName: string, params: any): Channel;
-// }
-
 export interface Channel extends PhxChannel {
   // on: (event: string, fn: (evt: any) => void) => void;
 
@@ -117,35 +110,3 @@ export interface Channel extends PhxChannel {
   push: <P = any>(event: string, payload?: P) => ReceiveHook;
   // join: () => ReceiveHook;
 }
-// type RuntimeExecutionPlanID = string;
-
-// type JobEdge = {
-//   condition?: string; // Javascript expression (function body, not function)
-//   label?: string;
-// };
-
-// // TODO this type should later be imported from the runtime
-// // Well, it's not quite the same is it, because eg credential can be a string
-// type JobNode = {
-//   id?: string;
-
-//   adaptor?: string;
-
-//   expression?: string | Operation[]; // the code we actually want to execute. Can be a path.
-
-//   configuration?: object | string;
-//   data?: State['data'] | string; // default state (globals)
-
-//   next?: string | Record<JobNodeID, true | JobEdge>;
-// };
-
-// // Note that if the runtime itself is capable of calling an endpoint
-// // To fetch credentials (and state?) just-in-time, then this is just a
-// // Runtime Exeuction Plan, and we can import it. This is nicer tbh.
-// export type ExecutionPlan = {
-//   id: string; // UUID for this plan
-
-//   start?: JobNodeID;
-
-//   plan: JobNode[]; // TODO this type should later be imported from the runtime
-// };

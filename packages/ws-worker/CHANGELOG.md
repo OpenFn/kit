@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.2.8
+
+### Patch Changes
+
+- Tweak typings
+
 ## 0.2.7
 
 ### Patch Changes

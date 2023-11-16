@@ -1,45 +1,47 @@
 import { WebSocketServer } from 'ws';
 import createLogger, { Logger } from '@openfn/logger';
-
-import type { ServerState } from './server';
-
-import { extractAttemptId } from './util';
+import type { Server } from 'http';
 
 import createPheonixMockSocketServer, {
   DevSocket,
   PhoenixEvent,
+  PhoenixEventStatus,
 } from './socket-server';
 import {
   ATTEMPT_COMPLETE,
+  ATTEMPT_LOG,
+  ATTEMPT_START,
+  CLAIM,
+  GET_ATTEMPT,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
+  RUN_COMPLETE,
+  RUN_START,
+} from './events';
+import { extractAttemptId, stringify } from './util';
+
+import type { ServerState } from './server';
+import type {
+  AttemptStartPayload,
+  AttemptStartReply,
   AttemptCompletePayload,
   AttemptCompleteReply,
-  ATTEMPT_LOG,
   AttemptLogPayload,
   AttemptLogReply,
-  CLAIM,
+  ClaimAttempt,
   ClaimPayload,
   ClaimReply,
-  ClaimAttempt,
-  GET_ATTEMPT,
   GetAttemptPayload,
   GetAttemptReply,
-  GET_CREDENTIAL,
   GetCredentialPayload,
   GetCredentialReply,
-  GET_DATACLIP,
   GetDataclipPayload,
   GetDataClipReply,
-  RUN_COMPLETE,
   RunCompletePayload,
-  RUN_START,
-  RunStart,
-  RunStartReply,
   RunCompleteReply,
-  ATTEMPT_START,
-} from './events';
-
-import type { Server } from 'http';
-import { stringify } from './util';
+  RunStartPayload,
+  RunStartReply,
+} from './types';
 
 // dumb cloning id
 // just an idea for unit tests
@@ -49,6 +51,27 @@ const clone = (state: ServerState) => {
 };
 
 const enc = new TextEncoder();
+
+const validateReasons = (evt: any) => {
+  const { reason, error_message, error_type } = evt;
+  if (!reason) {
+    return {
+      status: 'error',
+      response: `No exit reason`,
+    };
+  } else if (!/^(success|fail|crash|exception|kill)$/.test(reason)) {
+    return {
+      status: 'error',
+      response: `Unrecognised reason ${reason}`,
+    };
+  } else if (reason === 'success' && (error_type || error_message)) {
+    return {
+      status: 'error',
+      response: `Inconsistent reason (success and error type or message)`,
+    };
+  }
+  return { status: 'ok' };
+};
 
 // this new API is websocket based
 // Events map to handlers
@@ -97,6 +120,7 @@ const createSocketAPI = (
     state.pending[attemptId] = {
       status: 'started',
       logs: [],
+      runs: {},
     };
 
     const wrap = <T>(
@@ -203,16 +227,26 @@ const createSocketAPI = (
   function handleStartAttempt(
     _state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<GetCredentialPayload>
+    evt: PhoenixEvent<AttemptStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    ws.reply<GetCredentialReply>({
+    const [_, attemptId] = topic.split(':');
+    let payload = {
+      status: 'ok' as PhoenixEventStatus,
+    };
+    if (
+      !state.pending[attemptId] ||
+      state.pending[attemptId].status !== 'started'
+    ) {
+      payload = {
+        status: 'error',
+      };
+    }
+    ws.reply<AttemptStartReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
@@ -265,18 +299,32 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<AttemptLogPayload>
   ) {
-    const { ref, join_ref, topic, payload } = evt;
-    const { attempt_id: attemptId } = payload;
+    const { ref, join_ref, topic } = evt;
+    const { attempt_id: attemptId } = evt.payload;
 
-    state.pending[attemptId].logs.push(payload);
+    state.pending[attemptId].logs.push(evt.payload);
+
+    let payload: any = {
+      status: 'ok',
+    };
+
+    if (
+      !evt.payload.message ||
+      !evt.payload.source ||
+      !evt.payload.timestamp ||
+      !evt.payload.level
+    ) {
+      payload = {
+        status: 'error',
+        response: 'Missing property on log',
+      };
+    }
 
     ws.reply<AttemptLogReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
@@ -286,44 +334,81 @@ const createSocketAPI = (
     evt: PhoenixEvent<AttemptCompletePayload>,
     attemptId: string
   ) {
-    const { ref, join_ref, topic, payload } = evt;
-    const { final_dataclip_id } = payload;
+    const { ref, join_ref, topic } = evt;
+    const { final_dataclip_id, reason, error_type, error_message, ...rest } =
+      evt.payload;
 
     logger?.info('Completed attempt ', attemptId);
     logger?.debug(final_dataclip_id);
 
     state.pending[attemptId].status = 'complete';
+
+    // TODO we'll remove this stuff soon
     if (!state.results[attemptId]) {
       state.results[attemptId] = { state: null, workerId: 'mock' };
     }
-    state.results[attemptId].state = state.dataclips[final_dataclip_id];
+    if (final_dataclip_id) {
+      state.results[attemptId].state = state.dataclips[final_dataclip_id];
+    }
+
+    let payload: any = validateReasons(evt.payload);
+
+    const invalidKeys = Object.keys(rest);
+    if (payload.status === 'ok' && invalidKeys.length) {
+      payload = {
+        status: 'error',
+        response: `Unexpected keys: ${invalidKeys.join(',')}`,
+      };
+    }
 
     ws.reply<AttemptCompleteReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
   function handleRunStart(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<RunStart>
+    evt: PhoenixEvent<RunStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
+    const { run_id, job_id, input_dataclip_id } = evt.payload;
+
+    const [_, attemptId] = topic.split(':');
     if (!state.dataclips) {
       state.dataclips = {};
     }
+    state.pending[attemptId].runs[job_id] = run_id;
+
+    let payload: any = {
+      status: 'ok',
+    };
+
+    if (!run_id) {
+      payload = {
+        status: 'error',
+        response: 'no run_id',
+      };
+    } else if (!job_id) {
+      payload = {
+        status: 'error',
+        response: 'no job_id',
+      };
+    } else if (!input_dataclip_id) {
+      payload = {
+        status: 'error',
+        response: 'no input_dataclip_id',
+      };
+    }
+
     ws.reply<RunStartReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 
@@ -335,11 +420,23 @@ const createSocketAPI = (
     const { ref, join_ref, topic } = evt;
     const { output_dataclip_id, output_dataclip } = evt.payload;
 
-    if (output_dataclip_id) {
+    let payload: any = validateReasons(evt.payload);
+
+    if (!output_dataclip) {
+      payload = {
+        status: 'error',
+        response: 'no output_dataclip',
+      };
+    } else if (output_dataclip_id) {
       if (!state.dataclips) {
         state.dataclips = {};
       }
       state.dataclips[output_dataclip_id] = JSON.parse(output_dataclip!);
+    } else {
+      payload = {
+        status: 'error',
+        response: 'no output_dataclip_id',
+      };
     }
 
     // be polite and acknowledge the event
@@ -347,9 +444,7 @@ const createSocketAPI = (
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-      },
+      payload,
     });
   }
 };

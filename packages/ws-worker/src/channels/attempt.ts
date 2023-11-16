@@ -2,7 +2,7 @@ import convertAttempt from '../util/convert-attempt';
 import { getWithReply } from '../util';
 import { Attempt, AttemptOptions, Channel, Socket } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
-import { GET_ATTEMPT } from '../events';
+import { GET_ATTEMPT, GetAttemptReply } from '../events';
 
 import type { Logger } from '@openfn/logger';
 
@@ -52,7 +52,7 @@ export default joinAttemptChannel;
 
 export async function loadAttempt(channel: Channel) {
   // first we get the attempt body through the socket
-  const attemptBody = await getWithReply(channel, GET_ATTEMPT);
+  const attemptBody = await getWithReply<GetAttemptReply>(channel, GET_ATTEMPT);
   // then we generate the execution plan
   return convertAttempt(attemptBody as Attempt);
 }
