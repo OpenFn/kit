@@ -289,7 +289,6 @@ test.serial('autoinstall: throw on error', async (t) => {
   });
 });
 
-// TODO this is a bit flaky apparently
 test.serial('autoinstall: throw on error twice if pending', async (t) => {
   return new Promise((done) => {
     let callCount = 0;
@@ -298,7 +297,7 @@ test.serial('autoinstall: throw on error twice if pending', async (t) => {
     const mockInstall = async () => {
       callCount++;
       return new Promise((_resolve, reject) => {
-        setTimeout(() => reject(new Error('err')), 100);
+        setTimeout(() => reject(new Error('err')), 10);
       });
     };
 
@@ -308,19 +307,23 @@ test.serial('autoinstall: throw on error twice if pending', async (t) => {
     };
     const context = createContext(autoinstallOpts);
 
-    autoinstall(context).catch((e) => {
-      t.is(e.name, 'AutoinstallError');
-      errCount += 1;
-    });
+    autoinstall(context).catch(assertCatches);
 
-    autoinstall(context).catch((e) => {
-      errCount += 1;
+    autoinstall(context).catch(assertCatches);
+
+    // The two catches won't neccessarily return in order
+    // (shrug asynchronous code?)
+    // So this catch-all callback will resolve the test when both
+    // promises have resolved
+    function assertCatches(e) {
       t.is(e.name, 'AutoinstallError');
-      t.is(callCount, 1);
-      t.is(errCount, 2);
-      t.pass('threw twice!');
-      done();
-    });
+      errCount += 1;
+      if (errCount === 2) {
+        t.is(callCount, 1);
+        t.pass('threw twice!');
+        done();
+      }
+    }
   });
 });
 
