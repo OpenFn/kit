@@ -98,11 +98,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
-  // TODO I think this is for later
-  //const activeWorkflows: string[] = [];
-
-  // TOOD I wonder if the engine should a) always accept a worker path
-  // and b) validate it before it runs
   let resolvedWorkerPath;
   if (workerPath) {
     // If a path to the worker has been passed in, just use it verbatim
@@ -190,9 +185,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
-        // @ts-ignore
         if (Object.keys(contexts).length === 0) {
-          // @ts-ignore
           engine.purge?.();
         }
       });
@@ -207,7 +200,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         context.once(evt, fn),
       off: (evt: string, fn: (...args: any[]) => void) => context.off(evt, fn),
     };
-    // return context;
   };
 
   const listen = (

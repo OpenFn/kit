@@ -12,7 +12,7 @@ let api = new EventEmitter() as EngineAPI;
 const workerPath = path.resolve('src/test/worker-functions.js');
 
 test.before(() => {
-  initWorkers(api, workerPath, { purge: true });
+  initWorkers(api, workerPath);
 });
 
 test.after(() => api.closeWorkers());
@@ -75,17 +75,6 @@ test.serial('callWorker should execute in a different process', async (t) => {
     };
 
     api.callWorker('test', [], { message: onCallback });
-  });
-});
-
-test.serial('callWorker should try to purge workers on complete', async (t) => {
-  return new Promise((done) => {
-    api.on(PURGE, () => {
-      t.pass('purge event called');
-      done();
-    });
-
-    api.callWorker('test', []);
   });
 });
 
