@@ -21,7 +21,7 @@ export type GetDataClipReply = Uint8Array; // represents a json string Attempt
 
 export const ATTEMPT_START = 'attempt:start'; // attemptId, timestamp
 export type AttemptStartPayload = void; // no payload
-export type AttemptStartReply = void; // no payload
+export type AttemptStartReply = {}; // no payload
 
 export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats
 export type AttemptCompletePayload = ExitReason & {
@@ -57,6 +57,5 @@ export type RunCompletePayload = ExitReason & {
   run_id: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
-  //next_job_ids: string[]; // ?
 };
 export type RunCompleteReply = void;
