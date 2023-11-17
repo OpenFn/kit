@@ -14,10 +14,16 @@ const sampleWorkflow = {
     {
       id: 'j1',
       adaptor: 'common@1.0.0',
-      expression: '{ "x": 10 }',
+      expression: 'export default [() => ({ x: 10 })]',
     },
   ],
 } as ExecutionPlan;
+
+// rethinking these tests, I think I want
+// - fake adaptor functions, fn & wait
+// - deeper testing on the engine events
+// - fake compilation
+// - do we do anything about adaptors?
 
 test('getStatus() should should have no active workflows', async (t) => {
   const engine = await create();
@@ -85,7 +91,11 @@ test('mock should evaluate expressions as JSON', async (t) => {
   t.deepEqual(evt.state, { x: 10 });
 });
 
-test('mock should wait if expression starts with @wait', async (t) => {
+// well, maybe it shouldn't
+// We should have real looking expressions
+// albiet with no compilation
+// we could fake compilation though
+test.skip('mock should wait if expression starts with @wait', async (t) => {
   const engine = await create();
   const wf = {
     id: 'w1',
@@ -103,7 +113,8 @@ test('mock should wait if expression starts with @wait', async (t) => {
   t.true(end > 90);
 });
 
-test('mock should return initial state as result state', async (t) => {
+// nope
+test.skip('mock should return initial state as result state', async (t) => {
   const engine = await create();
 
   const wf = {
@@ -120,7 +131,8 @@ test('mock should return initial state as result state', async (t) => {
   t.deepEqual(evt.state, { y: 22 });
 });
 
-test('mock prefers JSON state to initial state', async (t) => {
+// nope
+test.skip('mock prefers JSON state to initial state', async (t) => {
   const engine = await create();
 
   const wf = {
@@ -138,7 +150,8 @@ test('mock prefers JSON state to initial state', async (t) => {
   t.deepEqual(evt.state, { z: 33 });
 });
 
-test('mock should dispatch log events when evaluating JSON', async (t) => {
+// logs yes, json no
+test.skip('mock should dispatch log events when evaluating JSON', async (t) => {
   const engine = await create();
 
   const logs = [];
@@ -153,7 +166,8 @@ test('mock should dispatch log events when evaluating JSON', async (t) => {
   t.deepEqual(logs[1].message, ['Parsing expression as JSON state']);
 });
 
-test('mock should throw if the magic option is passed', async (t) => {
+// nope, the engine should not throw at all
+test.skip('mock should throw if the magic option is passed', async (t) => {
   const engine = await create();
 
   const logs = [];
@@ -198,34 +212,45 @@ test('listen to events', async (t) => {
     'workflow-complete': false,
   };
 
-  engine.listen(sampleWorkflow.id, {
+  const wf = {
+    id: 'wibble',
+    jobs: [
+      {
+        id: 'j1',
+        adaptor: 'common@1.0.0',
+        expression: 'export default [() => { console.log("x"); }]',
+      },
+    ],
+  } as ExecutionPlan;
+
+  engine.listen(wf.id, {
     'job-start': ({ workflowId, jobId }) => {
       called['job-start'] = true;
-      t.is(workflowId, sampleWorkflow.id);
-      t.is(jobId, sampleWorkflow.jobs[0].id);
+      t.is(workflowId, wf.id);
+      t.is(jobId, wf.jobs[0].id);
     },
     'job-complete': ({ workflowId, jobId }) => {
       called['job-complete'] = true;
-      t.is(workflowId, sampleWorkflow.id);
-      t.is(jobId, sampleWorkflow.jobs[0].id);
+      t.is(workflowId, wf.id);
+      t.is(jobId, wf.jobs[0].id);
       // TODO includes state?
     },
     'workflow-log': ({ workflowId, message }) => {
       called['workflow-log'] = true;
-      t.is(workflowId, sampleWorkflow.id);
+      t.is(workflowId, wf.id);
       t.truthy(message);
     },
     'workflow-start': ({ workflowId }) => {
       called['workflow-start'] = true;
-      t.is(workflowId, sampleWorkflow.id);
+      t.is(workflowId, wf.id);
     },
     'workflow-complete': ({ workflowId }) => {
       called['workflow-complete'] = true;
-      t.is(workflowId, sampleWorkflow.id);
+      t.is(workflowId, wf.id);
     },
   });
 
-  engine.execute(sampleWorkflow);
+  engine.execute(wf);
   await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
   t.assert(Object.values(called).every((v) => v === true));
 });
@@ -244,12 +269,13 @@ test('only listen to events for the correct workflow', async (t) => {
   t.pass();
 });
 
-test('do nothing for a job if no expression and adaptor (trigger node)', async (t) => {
+test.skip('do nothing for a job if no expression and adaptor (trigger node)', async (t) => {
   const workflow = {
     id: 'w1',
     jobs: [
       {
         id: 'j1',
+        expression: 'export default [() => console.log("x"); )]',
       },
     ],
   } as ExecutionPlan;
@@ -278,6 +304,8 @@ test('do nothing for a job if no expression and adaptor (trigger node)', async (
 
   engine.execute(workflow);
   await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+
+  console.log();
 
   t.false(didCallEvent);
 });
