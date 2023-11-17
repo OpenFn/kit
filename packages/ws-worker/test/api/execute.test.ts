@@ -24,7 +24,8 @@ import {
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify, createAttemptState } from '../../src/util';
-import { ExecutionPlan } from '@openfn/runtime';
+
+import type { ExecutionPlan } from '@openfn/runtime';
 import type { AttemptState } from '../../src/types';
 
 const enc = new TextEncoder();
