@@ -27,10 +27,11 @@ export type WorkflowErrorEvent = {
 
 // this is basically a fake adaptor
 // these functions will be injected into scope
-// maybe
-// needs me to add the globals option to the runtime
-// (which is fine)
-const helpers = {};
+const helpers = {
+  fn: (f: Function) => (s: any) => f(s),
+  wait: (duration: number) => (s: any) =>
+    new Promise((resolve) => setTimeout(resolve, duration)),
+};
 
 // The mock runtime engine creates a fake engine interface
 // around a real runtime engine
@@ -80,6 +81,11 @@ async function createMock() {
           job.configuration
         );
       }
+
+      // Fake compilation
+      if (job.expression && !job.expression.match(/export default \[/)) {
+        job.expression = `export default [${job.expression}];`;
+      }
     }
 
     // TODO do I need a more sophisticated solution here?
@@ -99,6 +105,7 @@ async function createMock() {
       strict: false,
       jobLogger,
       ...options,
+      globals: helpers,
       callbacks: {
         notify: (name: NotifyEvents, payload: any) => {
           // TODO events need to be mapped into runtime engine events (noot runtime events)

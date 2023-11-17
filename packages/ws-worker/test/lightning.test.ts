@@ -30,18 +30,13 @@ test.before(async () => {
 
 let rollingAttemptId = 0;
 
-// simulate an fn operation without compilation
-// TODO even better to mock cmompilation tbh
-const fn = (expression: string) =>
-  `const fn = (f) => (s) => f(s); export default [${expression}]`;
-
 const getAttempt = (ext = {}, jobs?: any) => ({
   id: `a${++rollingAttemptId}`,
   jobs: jobs || [
     {
       id: 'j',
       adaptor: '@openfn/language-common@1.0.0',
-      body: fn('() => ({ answer: 42 })'),
+      body: 'fn(() => ({ answer: 42 }))',
     },
   ],
   ...ext,
@@ -56,7 +51,7 @@ test.serial(
         id: 'attempt-1',
         jobs: [
           {
-            body: fn('() => ({ count: 122 })'),
+            body: 'fn(() => ({ count: 122 }))',
           },
         ],
       };
@@ -82,7 +77,7 @@ test.serial('should run an attempt which returns intial state', async (t) => {
       dataclip_id: 'x',
       jobs: [
         {
-          body: fn('(s) => s'),
+          body: 'fn((s) => s)',
         },
       ],
     };
@@ -178,7 +173,7 @@ test.serial(
           id: 'some-job',
           credential_id: 'a',
           adaptor: '@openfn/language-common@1.0.0',
-          body: fn('() => ({ answer: 42 })'),
+          body: 'fn(() => ({ answer: 42 }))',
         },
       ]);
 
@@ -277,7 +272,7 @@ test.serial(
         id: 'attempt-1',
         jobs: [
           {
-            body: fn('(s) => { console.log("x"); return s }'),
+            body: 'fn((s) => { console.log("x"); return s })',
           },
         ],
       };
@@ -306,13 +301,14 @@ test.serial(
 test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
   return new Promise((done) => {
     const attempt = getAttempt({}, [
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
-      { body: fn('() => ({ data: 1 })'), adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
     ]);
 
     const history: bigint[] = [];
@@ -378,7 +374,7 @@ test('should register and de-register attempts to the server', async (t) => {
       id: 'attempt-1',
       jobs: [
         {
-          body: fn('() => ({ count: 122 })'),
+          body: 'fn(() => ({ count: 122 }))',
         },
       ],
     };
@@ -411,7 +407,7 @@ test.skip('should not claim while at capacity', async (t) => {
       id: 'attempt-1',
       jobs: [
         {
-          body: 'wait@500',
+          body: 'wait(500)',
         },
       ],
     };
@@ -453,5 +449,3 @@ test.skip('should not claim while at capacity', async (t) => {
 
 // hmm, i don't even think I can test this in the mock runtime
 test.skip('should pass the right dataclip when running in parallel', () => {});
-
-test.todo(`should run multiple attempts`);

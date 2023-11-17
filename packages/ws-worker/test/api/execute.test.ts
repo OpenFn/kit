@@ -408,8 +408,7 @@ test('execute should pass the final result to onFinish', async (t) => {
     id: 'a',
     jobs: [
       {
-        // TODO use new fn helper
-        expression: 'export default [() => ({ done: true })]',
+        expression: 'fn(() => ({ done: true }))',
       },
     ],
   };
@@ -433,8 +432,7 @@ test('execute should return a context object', async (t) => {
     id: 'a',
     jobs: [
       {
-        // TODO use new fn helper
-        expression: 'export default [() => ({ done: true })]',
+        expression: 'fn(() => ({ done: true }))',
       },
     ],
   };
@@ -479,8 +477,7 @@ test('execute should lazy-load a credential', async (t) => {
     jobs: [
       {
         configuration: 'abc',
-        // TODO use new fn helper
-        expression: 'export default [() => ({ done: true })]',
+        expression: 'fn(() => ({ done: true }))',
       },
     ],
   };
@@ -515,8 +512,7 @@ test('execute should lazy-load initial state', async (t) => {
     initialState: 'abc',
     jobs: [
       {
-        // TODO use new fn helper
-        expression: 'export default [() => ({ done: true })]',
+        expression: 'fn(() => ({ done: true }))',
       },
     ],
   };
@@ -550,7 +546,7 @@ test('execute should call all events on the socket', async (t) => {
     // GET_DATACLIP, // TODO not really implemented properly yet
     ATTEMPT_START,
     RUN_START,
-    ATTEMPT_LOG, // This won't log with the mock logger
+    ATTEMPT_LOG,
     RUN_COMPLETE,
     ATTEMPT_COMPLETE,
   ];
@@ -564,7 +560,7 @@ test('execute should call all events on the socket', async (t) => {
         id: 'trigger',
         configuration: 'a',
         adaptor: '@openfn/language-common@1.0.0',
-        expression: 'export default [() => console.log("x")]',
+        expression: 'fn(() => console.log("x"))',
       },
     ],
   };
@@ -573,7 +569,6 @@ test('execute should call all events on the socket', async (t) => {
 
   return new Promise((done) => {
     execute(channel, engine, logger, plan, options, (result) => {
-      // console.log(events);
       // Check that events were passed to the socket
       // This is deliberately crude
       t.assert(allEvents.every((e) => events[e]));
