@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import run, { ExecutionPlan, NotifyEvents } from '@openfn/runtime';
+import run, { ExecutionPlan } from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
 import mockResolvers from './resolvers';
 
@@ -30,7 +30,7 @@ export type WorkflowErrorEvent = {
 const helpers = {
   fn: (f: Function) => (s: any) => f(s),
   wait: (duration: number) => (s: any) =>
-    new Promise((resolve) => setTimeout(resolve, duration)),
+    new Promise((resolve) => setTimeout(() => resolve(s), duration)),
 };
 
 // The mock runtime engine creates a fake engine interface
@@ -77,20 +77,23 @@ async function createMock() {
     for (const job of jobs) {
       if (typeof job.configuration === 'string') {
         // Call the crendtial callback, but don't do anything with it
-        job.configuration = await options.resolvers.credential?.(
+        job.configuration = await options.resolvers?.credential?.(
           job.configuration
         );
       }
 
       // Fake compilation
-      if (job.expression && !job.expression.match(/export default \[/)) {
+      if (
+        typeof job.expression === 'string' &&
+        !(job.expression as string).match(/export default \[/)
+      ) {
         job.expression = `export default [${job.expression}];`;
       }
     }
 
     // TODO do I need a more sophisticated solution here?
     const jobLogger = {
-      log: (...args) => {
+      log: (...args: any[]) => {
         dispatch('workflow-log', {
           workflowId: id,
           level: 'info',
@@ -107,11 +110,10 @@ async function createMock() {
       ...options,
       globals: helpers,
       callbacks: {
-        notify: (name: NotifyEvents, payload: any) => {
-          // TODO events need to be mapped into runtime engine events (noot runtime events)
+        notify: (name: any, payload: any) => {
           dispatch(name, {
             workflowId: id,
-            ...payload, // ?
+            ...payload,
           });
         },
       },
@@ -120,9 +122,8 @@ async function createMock() {
       dispatch('workflow-start', { workflowId: id });
 
       try {
-        await run(xplan, undefined, opts);
+        await run(xplan, undefined, opts as any);
       } catch (e: any) {
-        // TODO I have no test on this
         dispatch('workflow-error', {
           workflowId: id,
           type: e.name,
