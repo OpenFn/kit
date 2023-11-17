@@ -91,6 +91,7 @@ async function createMock() {
           level: 'info',
           json: true,
           message: args,
+          time: Date.now(),
         });
       },
     };
@@ -115,7 +116,16 @@ async function createMock() {
     setTimeout(async () => {
       dispatch('workflow-start', { workflowId: id });
 
-      await run(xplan, undefined, opts);
+      try {
+        await run(xplan, undefined, opts);
+      } catch (e: any) {
+        // TODO I have no test on this
+        dispatch('workflow-error', {
+          workflowId: id,
+          type: e.name,
+          message: e.message,
+        });
+      }
 
       delete activeWorkflows[id!];
       dispatch('workflow-complete', { workflowId: id });

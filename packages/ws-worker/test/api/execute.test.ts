@@ -407,7 +407,8 @@ test('execute should pass the final result to onFinish', async (t) => {
     id: 'a',
     jobs: [
       {
-        expression: JSON.stringify({ done: true }),
+        // TODO use new fn helper
+        expression: 'export default [() => ({ done: true })]',
       },
     ],
   };
@@ -431,7 +432,8 @@ test('execute should return a context object', async (t) => {
     id: 'a',
     jobs: [
       {
-        expression: JSON.stringify({ done: true }),
+        // TODO use new fn helper
+        expression: 'export default [() => ({ done: true })]',
       },
     ],
   };
@@ -476,7 +478,8 @@ test('execute should lazy-load a credential', async (t) => {
     jobs: [
       {
         configuration: 'abc',
-        expression: JSON.stringify({ done: true }),
+        // TODO use new fn helper
+        expression: 'export default [() => ({ done: true })]',
       },
     ],
   };
@@ -511,7 +514,8 @@ test('execute should lazy-load initial state', async (t) => {
     initialState: 'abc',
     jobs: [
       {
-        expression: JSON.stringify({ done: true }),
+        // TODO use new fn helper
+        expression: 'export default [() => ({ done: true })]',
       },
     ],
   };
@@ -558,8 +562,8 @@ test('execute should call all events on the socket', async (t) => {
       {
         id: 'trigger',
         configuration: 'a',
-        expression: 'fn(a => a)',
         adaptor: '@openfn/language-common@1.0.0',
+        expression: 'export default [() => console.log("x")]',
       },
     ],
   };
