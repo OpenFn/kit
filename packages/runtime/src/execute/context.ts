@@ -15,11 +15,14 @@ const freezeAll = (
 
 // Build a safe and helpful execution context
 // This will be shared by all jobs
-export default (state: State, options: Pick<Options, 'jobLogger'>) => {
+export default (state: State, options: Pick<Options, 'jobLogger' | 'globals'>) => {
   const logger = options.jobLogger ?? console;
+  const globals = options.globals || {};
   const context = vm.createContext(
     freezeAll(
       {
+        ...globals,
+        // Note that these globals will be overridden
         console: logger,
         clearInterval,
         clearTimeout,

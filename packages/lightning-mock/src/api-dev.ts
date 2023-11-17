@@ -111,16 +111,18 @@ const setupDevAPI = (
     attemptId: string,
     fn: (evt: any) => void,
     once = true
-  ) => {
+  ): (() => void) => {
+    const unsubscribe = () => state.events.removeListener(event, handler);
     function handler(e: any) {
       if (e.attemptId && e.attemptId === attemptId) {
         if (once) {
-          state.events.removeListener(event, handler);
+          unsubscribe();
         }
         fn(e);
       }
     }
     state.events.addListener(event, handler);
+    return unsubscribe;
   };
 };
 
