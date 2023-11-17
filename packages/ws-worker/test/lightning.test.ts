@@ -447,5 +447,85 @@ test.skip('should not claim while at capacity', async (t) => {
   });
 });
 
-// hmm, i don't even think I can test this in the mock runtime
-test.skip('should pass the right dataclip when running in parallel', () => {});
+test('should pass the right dataclip when running in parallel', (t) => {
+  return new Promise((done) => {
+    const job = (id: string, next?: string) => ({
+      id,
+      body: `fn((s) => {  s.data.${id} = true; return s; })`,
+    });
+
+    const edge = (from: string, to: string) => ({
+      id: `${from}-${to}`,
+      source_job_id: from,
+      target_job_id: to,
+    });
+
+    const outputDataclipIds = {};
+    const inputDataclipIds = {};
+    const outputs = {};
+    const a = {
+      id: 'a',
+      body: 'fn(() => ({ data: { a: true } }))',
+      next: { j: true, k: true },
+    };
+
+    const j = job('j', 'x');
+    const k = job('k', 'y');
+    const x = job('x');
+    const y = job('y');
+
+    const attempt = {
+      id: 'p1',
+      jobs: [a, j, k, x, y],
+      edges: [edge('a', 'j'), edge('a', 'k'), edge('j', 'x'), edge('k', 'y')],
+    };
+
+    // Save all the input dataclip ids for each job
+    const unsub2 = lng.onSocketEvent(
+      e.RUN_START,
+      attempt.id,
+      ({ payload }) => {
+        inputDataclipIds[payload.job_id] = payload.input_dataclip_id;
+      },
+      false
+    );
+
+    // Save all the output dataclips & ids for each job
+    const unsub1 = lng.onSocketEvent(
+      e.RUN_COMPLETE,
+      attempt.id,
+      ({ payload }) => {
+        outputDataclipIds[payload.job_id] = payload.output_dataclip_id;
+        outputs[payload.job_id] = JSON.parse(payload.output_dataclip);
+      },
+      false
+    );
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      unsub1();
+      unsub2();
+
+      // Now check everything was correct
+
+      // Job a we don't really care about, but check the output anyway
+      t.deepEqual(outputs.a.data, { a: true });
+
+      // a feeds in to j and k
+      t.deepEqual(inputDataclipIds.j, outputDataclipIds.a);
+      t.deepEqual(inputDataclipIds.k, outputDataclipIds.a);
+
+      // j feeds into x
+      t.deepEqual(inputDataclipIds.x, outputDataclipIds.j);
+
+      // k feeds into y
+      t.deepEqual(inputDataclipIds.y, outputDataclipIds.k);
+
+      // x and y should have divergent states
+      t.deepEqual(outputs.x.data, { a: true, j: true, x: true });
+      t.deepEqual(outputs.y.data, { a: true, k: true, y: true });
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
