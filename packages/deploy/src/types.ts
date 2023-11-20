@@ -2,7 +2,6 @@ export type Job = {
   id?: string;
   name: string;
   adaptor: string;
-  enabled?: boolean;
   body: string;
   delete?: boolean;
 };
@@ -20,6 +19,7 @@ export type StateEdge = {
   source_job_id: string | null;
   source_trigger_id: string | null;
   target_job_id: string;
+  enabled?: boolean;
 };
 
 export type SpecEdge = {
@@ -27,6 +27,7 @@ export type SpecEdge = {
   source_job?: string | null;
   source_trigger?: string | null;
   target_job: string | null;
+  enabled?: boolean;
 };
 
 export type WorkflowSpec = {

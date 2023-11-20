@@ -33,7 +33,6 @@ function mergeJobs(
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: specJob.body,
-            enabled: pickValue(specJob, stateJob || {}, 'enabled', true),
           },
         ];
       }
@@ -50,7 +49,6 @@ function mergeJobs(
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: specJob.body,
-            enabled: pickValue(specJob, stateJob, 'enabled', true),
           },
         ];
       }
@@ -146,6 +144,7 @@ function mergeEdges(
               id,
               condition: specEdge.condition ?? null,
               target_job_id: jobs[specEdge.target_job ?? -1]?.id ?? '',
+              enabled: pickValue(specEdge, stateEdge || {}, 'enabled', true),
             },
             {
               source_job_id: jobs[specEdge.source_job ?? -1]?.id,
