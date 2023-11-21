@@ -118,16 +118,9 @@ export const log = (
   event: internalEvents.LogEvent
 ) => {
   const { threadId } = event;
-  // // TODO not sure about this stuff, I think we can drop it?
-  // const newMessage = {
-  //   ...message,
-  //   // Prefix the job id in all local jobs
-  //   // I'm sure there are nicer, more elegant ways of doing this
-  //   message: [`[${workflowId}]`, ...message.message],
-  // };
-  // TODO: if these are logs from within the runtime,
-  // should we use context.runtimeLogger ?
-  context.logger.proxy(event.message);
+
+  // Note: we do not log job stuff to stdout
+  // https://github.com/OpenFn/kit/issues/499
 
   context.emit(externalEvents.WORKFLOW_LOG, {
     threadId,
