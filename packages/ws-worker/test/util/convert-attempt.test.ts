@@ -1,5 +1,5 @@
 import test from 'ava';
-import convertAttempt from '../../src/util/convert-attempt';
+import convertAttempt, { conditions } from '../../src/util/convert-attempt';
 import { Attempt, Node } from '../../src/types';
 
 // Creates a lightning node (job or trigger)
@@ -35,6 +35,11 @@ const createJob = (props = {}) => ({
   configuration: 'y',
   ...props,
 });
+
+const testEdgeCondition = (expr, state) => {
+  const fn = new Function('state', 'return ' + expr);
+  return fn(state);
+};
 
 test('convert a single job', (t) => {
   const attempt: Partial<Attempt> = {
@@ -334,6 +339,84 @@ test('convert two linked jobs with a disabled edge', (t) => {
   });
 });
 
+test('on_job_success condition: return true if no errors', (t) => {
+  const condition = conditions.on_job_success('a');
+
+  const state = {};
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, true);
+});
+
+test('on_job_success condition: return true if unconnected upstream errors', (t) => {
+  const condition = conditions.on_job_success('a');
+
+  const state = {
+    errors: {
+      c: {
+        // some error that occured upstream
+      },
+    },
+  };
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, true);
+});
+
+test('on_job_success condition: return false if the upstream job errored', (t) => {
+  const condition = conditions.on_job_success('a');
+
+  const state = {
+    errors: {
+      a: {
+        // some error that occured upstream
+      },
+    },
+  };
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, false);
+});
+
+test('on_job_failure condition: return true if error immediately upstream', (t) => {
+  const condition = conditions.on_job_failure('a');
+
+  const state = {
+    errors: {
+      a: {
+        // some error that occured upstream
+      },
+    },
+  };
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, true);
+});
+
+test('on_job_failure condition: return false if unrelated error upstream', (t) => {
+  const condition = conditions.on_job_failure('a');
+
+  const state = {
+    errors: {
+      b: {
+        // some error that occured upstream
+      },
+    },
+  };
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, false);
+});
+
+test('on_job_failure condition: return false if no errors', (t) => {
+  const condition = conditions.on_job_failure('a');
+
+  const state = {};
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, false);
+});
+
 test('convert edge condition on_job_success', (t) => {
   const attempt: Partial<Attempt> = {
     id: 'w',
@@ -346,7 +429,7 @@ test('convert edge condition on_job_success', (t) => {
   const [job] = plan.jobs;
 
   t.truthy(job.next?.b);
-  t.is(job.next.b.condition, '!state.errors');
+  t.is(job.next.b.condition, conditions.on_job_success('a'));
 });
 
 test('convert edge condition on_job_failure', (t) => {
@@ -361,7 +444,7 @@ test('convert edge condition on_job_failure', (t) => {
   const [job] = plan.jobs;
 
   t.truthy(job.next?.b);
-  t.is(job.next.b.condition, 'state.errors');
+  t.is(job.next.b.condition, conditions.on_job_failure('a'));
 });
 
 test('convert edge condition always', (t) => {

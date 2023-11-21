@@ -4,6 +4,9 @@
 
 import test from 'ava';
 import createLightningServer from '@openfn/lightning-mock';
+
+import { createAttempt, createEdge, createJob } from './util';
+
 import createWorkerServer from '../src/server';
 import createMockRTE from '../src/mock/runtime-engine';
 import * as e from '../src/events';
@@ -42,9 +45,8 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   ...ext,
 });
 
-// these are really just tests of the mock architecture, but worth having
 test.serial(
-  'should run an attempt through the mock runtime which returns an expression as JSON',
+  'should run an attempt which returns an expression as JSON',
   async (t) => {
     return new Promise((done) => {
       const attempt = {
@@ -449,15 +451,9 @@ test.skip('should not claim while at capacity', async (t) => {
 
 test('should pass the right dataclip when running in parallel', (t) => {
   return new Promise((done) => {
-    const job = (id: string, next?: string) => ({
+    const job = (id: string) => ({
       id,
       body: `fn((s) => {  s.data.${id} = true; return s; })`,
-    });
-
-    const edge = (from: string, to: string) => ({
-      id: `${from}-${to}`,
-      source_job_id: from,
-      target_job_id: to,
     });
 
     const outputDataclipIds = {};
@@ -469,15 +465,20 @@ test('should pass the right dataclip when running in parallel', (t) => {
       next: { j: true, k: true },
     };
 
-    const j = job('j', 'x');
-    const k = job('k', 'y');
+    const j = job('j');
+    const k = job('k');
     const x = job('x');
     const y = job('y');
 
     const attempt = {
       id: 'p1',
       jobs: [a, j, k, x, y],
-      edges: [edge('a', 'j'), edge('a', 'k'), edge('j', 'x'), edge('k', 'y')],
+      edges: [
+        createEdge('a', 'j'),
+        createEdge('a', 'k'),
+        createEdge('j', 'x'),
+        createEdge('k', 'y'),
+      ],
     };
 
     // Save all the input dataclip ids for each job
@@ -523,6 +524,49 @@ test('should pass the right dataclip when running in parallel', (t) => {
       // x and y should have divergent states
       t.deepEqual(outputs.x.data, { a: true, j: true, x: true });
       t.deepEqual(outputs.y.data, { a: true, k: true, y: true });
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
+
+test.only('should correctly convert edge conditions to handle downstream errors', (t) => {
+  return new Promise((done) => {
+    const a = createJob('fn(() => { throw "err" } )', 'a');
+    // b should always fire
+    const b = createJob('fn((s) => ({ ...s, data: 33 }) )', 'b');
+    // c should only fire if b didn't error
+    const c = createJob('fn((s) => ({ ...s, data: 66 }) )', 'c');
+
+    const ab = createEdge('a', 'b');
+    const bc = createEdge('b', 'c');
+    bc.condition = 'on_job_success';
+
+    const attempt = createAttempt([a, b, c], [ab, bc]);
+
+    const results: Record<string, any> = {};
+
+    // If job C completes, we're good here
+    const unsub = lng.onSocketEvent(
+      e.RUN_COMPLETE,
+      attempt.id,
+      (evt) => {
+        results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
+      },
+      false
+    );
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      t.is(evt.payload.reason, 'success');
+
+      // What we REALLY care about is that the b-c edge condition
+      // resolved to true and c executed with a result
+      t.deepEqual(results.c.data, 66);
+      // And that there's still an error registered for a
+      t.truthy(results.c.errors.a);
+
+      unsub();
       done();
     });
 
