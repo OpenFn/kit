@@ -21,6 +21,11 @@ const mockHandleInstall = async (specifier: string): Promise<void> =>
 
 const logger = createMockLogger();
 
+const wait = (duration = 10) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, duration);
+  });
+
 const createContext = (
   autoinstallOpts?,
   jobs?: any[],
@@ -205,7 +210,11 @@ test.serial('autoinstall: install in sequence', async (t) => {
   const c2 = createContext(options, [{ adaptor: '@openfn/language-common@2' }]);
   const c3 = createContext(options, [{ adaptor: '@openfn/language-common@3' }]);
 
-  await Promise.all([autoinstall(c1), autoinstall(c2), autoinstall(c3)]);
+  autoinstall(c1);
+  await wait(1);
+  autoinstall(c2);
+  await wait(1);
+  await autoinstall(c3);
 
   const s1 = states['@openfn/language-common@1'];
   const s2 = states['@openfn/language-common@2'];

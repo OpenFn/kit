@@ -8,16 +8,21 @@ import { initLightning, initWorker, randomPort } from '../src/init';
 let lightning;
 let worker;
 let engine;
+let engineLogger;
 let lightningPort;
 
 test.before(async () => {
   lightningPort = randomPort();
   lightning = initLightning(lightningPort);
-  ({ worker, engine } = await initWorker(lightningPort, {
+  ({ worker, engine, engineLogger } = await initWorker(lightningPort, {
     maxWorkers: 1,
     purge: false,
     repoDir: path.resolve('tmp/repo/integration'),
   }));
+});
+
+test.afterEach(() => {
+  engineLogger._reset();
 });
 
 test.after(async () => {
@@ -126,6 +131,39 @@ test('run a job which does NOT autoinstall common', (t) => {
         },
       ],
     });
+  });
+});
+
+test("Don't send job logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  { console.log("@@@"); return s })',
+        },
+      ],
+    };
+
+    lightning.once('attempt:complete', () => {
+      const jsonLogs = engineLogger._history.map((l) => JSON.parse(l));
+
+      // The engine logger shouldn't print out any job logs
+      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'R/T' && l.message[0].match(/completed job/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueAttempt(attempt);
   });
 });
 
