@@ -31,6 +31,7 @@ test('toNextState adding a job', (t) => {
           'trigger-one': {
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: false,
           },
         },
         edges: {},
@@ -46,6 +47,7 @@ test('toNextState adding a job', (t) => {
         triggers: {
           'trigger-one': {
             id: '57912d4a-13e5-4857-8e1b-473be3816fd8',
+            enabled: true,
           },
         },
         edges: {},
@@ -69,7 +71,6 @@ test('toNextState adding a job', (t) => {
             name: 'new job',
             adaptor: '@openfn/language-adaptor',
             body: 'foo()',
-            enabled: true,
           },
         },
         triggers: {
@@ -77,6 +78,7 @@ test('toNextState adding a job', (t) => {
             id: '57912d4a-13e5-4857-8e1b-473be3816fd8',
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: false,
           },
         },
         edges: {},
@@ -122,14 +124,12 @@ test('toNextState with empty state', (t) => {
             adaptor: '@openfn/language-common@latest',
             name: 'job a',
             body: '',
-            enabled: true,
           },
           'job-b': {
             id: getItem(result, 'jobs', 'job-b').id,
             adaptor: '@openfn/language-common@latest',
             name: 'job b',
             body: '',
-            enabled: true,
           },
         },
         triggers: {
@@ -137,6 +137,7 @@ test('toNextState with empty state', (t) => {
             id: getItem(result, 'triggers', 'trigger-one').id,
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: true,
           },
         },
         edges: {
@@ -145,12 +146,14 @@ test('toNextState with empty state', (t) => {
             condition: null,
             source_trigger_id: getItem(result, 'triggers', 'trigger-one').id,
             target_job_id: getItem(result, 'jobs', 'job-a').id,
+            enabled: true,
           },
           'job-a->job-b': {
             id: getItem(result, 'edges', 'job-a->job-b').id,
             condition: null,
             source_job_id: getItem(result, 'jobs', 'job-a').id,
             target_job_id: getItem(result, 'jobs', 'job-b').id,
+            enabled: true,
           },
         },
       },
@@ -175,7 +178,6 @@ test('toNextState with no changes', (t) => {
             name: 'new job',
             adaptor: '@openfn/language-adaptor',
             body: 'foo()',
-            enabled: true,
           },
         },
         triggers: {
@@ -183,6 +185,7 @@ test('toNextState with no changes', (t) => {
             id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: true,
           },
         },
         edges: {},
@@ -207,6 +210,7 @@ test('toNextState with no changes', (t) => {
           'trigger-one': {
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: true,
           },
         },
         edges: {},
@@ -285,7 +289,6 @@ test('toNextState with a new job', (t) => {
           'job-a': {
             id: '68e172b8-1cca-4085-aadf-8534761ef7c2',
             name: 'job a',
-            enabled: false,
             body: 'foo()',
             adaptor: '@openfn/language-adaptor',
           },
@@ -293,7 +296,6 @@ test('toNextState with a new job', (t) => {
             id: getItem(result, 'jobs', 'job-b').id,
             name: 'job b',
             adaptor: undefined,
-            enabled: true,
             body: undefined,
           },
         },
@@ -301,6 +303,7 @@ test('toNextState with a new job', (t) => {
           'trigger-one': {
             id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
             type: 'webhook',
+            enabled: true,
           },
         },
         edges: {},
@@ -420,7 +423,6 @@ test('getStateFromProjectPayload with minimal project', (t) => {
         ],
         jobs: [
           {
-            enabled: true,
             id: 'job-1',
             name: 'My job',
             body: 'fn(state => state);',
@@ -433,6 +435,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
             target_job_id: 'job-1',
             condition: 'on_job_failure',
             source_trigger_id: 't1',
+            enabled: true,
           },
         ],
       },
@@ -456,7 +459,6 @@ test('getStateFromProjectPayload with minimal project', (t) => {
         },
         jobs: {
           'My-job': {
-            enabled: true,
             id: 'job-1',
             name: 'My job',
             body: 'fn(state => state);',
@@ -469,6 +471,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
             target_job_id: 'job-1',
             condition: 'on_job_failure',
             source_trigger_id: 't1',
+            enabled: true,
           },
         },
       },
