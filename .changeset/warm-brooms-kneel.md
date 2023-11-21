@@ -2,4 +2,4 @@
 '@openfn/deploy': patch
 ---
 
-Move the "enabled" flag from Jobs to Edges, in-line with Lightning changes
+Remove the `enabled` flag from Jobs, and add to Triggers and Edges
