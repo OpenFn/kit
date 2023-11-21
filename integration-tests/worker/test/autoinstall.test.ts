@@ -24,7 +24,6 @@ const run = async (attempt) => {
   return new Promise<any>(async (done, reject) => {
     lightning.on('attempt:complete', (evt) => {
       if (attempt.id === evt.attemptId) {
-        console.log(evt.payload);
         done(lightning.getResult(attempt.id));
       }
     });
@@ -54,7 +53,6 @@ test('autoinstall three things at once', async (t) => {
   const c = generate('googlesheets', '2.2.2');
 
   const [ra, rb, rc] = await Promise.all([run(a), run(b), run(c)]);
-  console.log(ra);
 
   t.is(ra.data, 'common');
   t.is(rb.data, 'http');
