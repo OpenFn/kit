@@ -48,7 +48,7 @@ You can start a dev server (which rebuilds on save) by running:
 pnpm start:watch
 ```
 
-This will wrap a real runtime engine into the server (?). It will rebuild when the Worker Engine code changes (although you'll have to `pnpm build:watch` in `runtime-manager`). This will use the repo at `ENGINE_REPO_DIR` or `/tmp/openfn/repo`.
+This will wrap a real runtime engine into the server. It will rebuild when the Worker Engine code changes (although you'll have to `pnpm build:watch` in `runtime-manager`). This will use the repo at `WORKER_REPO_DIR` (or a default path in /tmp)
 
 ### Disabling auto-fetch
 
