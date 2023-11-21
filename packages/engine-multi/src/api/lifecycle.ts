@@ -119,8 +119,9 @@ export const log = (
 ) => {
   const { threadId } = event;
 
-  // Note: we do not log job stuff to stdout
-  // https://github.com/OpenFn/kit/issues/499
+  if (event.message.name !== 'JOB') {
+    context.logger.proxy(event.message);
+  }
 
   context.emit(externalEvents.WORKFLOW_LOG, {
     threadId,
