@@ -1,5 +1,17 @@
 # engine-multi
 
+## 0.2.0
+
+### Minor Changes
+
+- 6f78b7a: Remove ENGINE_REPO_DIR - the repo must be passed directly now
+
+### Patch Changes
+
+- 4a17048: Queue autoinstall requests to ensure we only install one thing at a time
+- Updated dependencies [40ffc22]
+  - @openfn/runtime@0.2.0
+
 ## 0.1.11
 
 ### Patch Changes

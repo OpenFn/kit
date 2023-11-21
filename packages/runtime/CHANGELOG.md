@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.2.0
+
+### Minor Changes
+
+- 40ffc22: Allow globals to be passed into the execution environment
+
 ## 0.1.4
 
 ### Patch Changes
