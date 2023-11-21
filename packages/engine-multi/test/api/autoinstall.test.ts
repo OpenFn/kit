@@ -53,6 +53,25 @@ test.afterEach(() => {
   logger._reset();
 });
 
+// maybe keep this as a simple high level test?
+// should work
+test.skip('new test', async (t) => {
+  const autoinstallOpts = {
+    handleInstall: mockHandleInstall,
+    handleIsInstalled: async () => false,
+  };
+  const context = createContext(autoinstallOpts);
+
+  const result = await autoinstall(context);
+  console.log(result);
+});
+
+// TODO
+// error handling
+// Queue for multiple installs
+// Queue for multiple installs of the same version
+// don't autoinstall if it's already there
+
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
     name: 'repo',
@@ -356,7 +375,7 @@ test.serial('autoinstall: emit on error', async (t) => {
   t.true(!isNaN(evt.duration));
 });
 
-test.serial('autoinstall: throw twice in a ror', async (t) => {
+test.serial('autoinstall: throw twice in a row', async (t) => {
   let callCount = 0;
 
   const mockIsInstalled = async () => false;
