@@ -20,6 +20,8 @@ type Args = {
   capacity?: number;
 };
 
+const { WORKER_REPO_DIR, WORKER_SECRET } = process.env;
+
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a ws-worker server')
   .option('port', {
@@ -39,6 +41,7 @@ const args = yargs(hideBin(process.argv))
   .option('repo-dir', {
     alias: 'd',
     description: 'Path to the runtime repo (where modules will be installed)',
+    default: WORKER_REPO_DIR,
   })
   .option('secret', {
     alias: 's',
@@ -79,7 +82,6 @@ if (args.lightning === 'mock') {
     args.secret = 'abdefg';
   }
 } else if (!args.secret) {
-  const { WORKER_SECRET } = process.env;
   if (!WORKER_SECRET) {
     logger.error('WORKER_SECRET is not set');
     process.exit(1);
