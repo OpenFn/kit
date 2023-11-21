@@ -33,7 +33,7 @@ The server exposes a small dev API allowing you to post an Attempt.
 You can add an attempt (`{ jobs, triggers, edges }`) to the queue with:
 
 ```
-curl -X POST http://localhost:8888/attempt -d @tmp/my-attempt.json -H "Content-Type: application/json"
+curl http://localhost:8888/attempt --json @tmp/attempt.json
 ```
 
 Here's an example attempt:
