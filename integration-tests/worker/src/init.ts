@@ -18,7 +18,7 @@ export const initWorker = async (lightningPort, engineArgs = {}) => {
   const workerPort = randomPort();
 
   const engine = await createEngine({
-    // logger: createLogger('engine', { level: 'debug' }),
+    logger: createLogger('engine', { level: 'debug' }),
     logger: createMockLogger(),
     repoDir: path.resolve('./tmp/repo/default'),
     ...engineArgs,
