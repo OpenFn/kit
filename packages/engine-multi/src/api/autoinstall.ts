@@ -35,6 +35,9 @@ const enqueue = (adaptors: string[]) =>
     queue.push({ adaptors, callback: resolve });
   });
 
+// Install any modules for an Execution Plan that are not already installed
+// This will enforce a queue ensuring only one module is installed at a time
+// This fixes https://github.com/OpenFn/kit/issues/503
 const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   // TODO not a huge fan of these functions in the closure, but it's ok for now
   const processQueue = async () => {
@@ -50,8 +53,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     }
   };
 
-  // This will actually do the autoinstall for an attempt
-  // it will install one or more adaptors
+  // This will actually do the autoinstall for an attempt (all adaptors)
   const doAutoinstall = async (
     adaptors: string[],
     onComplete: (err?: any) => void

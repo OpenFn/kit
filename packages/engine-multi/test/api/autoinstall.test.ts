@@ -53,24 +53,20 @@ test.afterEach(() => {
   logger._reset();
 });
 
-// maybe keep this as a simple high level test?
-// should work
-test.skip('new test', async (t) => {
+test('Autoinstall basically works', async (t) => {
   const autoinstallOpts = {
     handleInstall: mockHandleInstall,
     handleIsInstalled: async () => false,
   };
   const context = createContext(autoinstallOpts);
 
-  const result = await autoinstall(context);
-  console.log(result);
+  const paths = await autoinstall(context);
+  t.deepEqual(paths, {
+    '@openfn/language-common': {
+      path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
+    },
+  });
 });
-
-// TODO
-// error handling
-// Queue for multiple installs
-// Queue for multiple installs of the same version
-// don't autoinstall if it's already there
 
 test('mock is installed: should be installed', async (t) => {
   const isInstalled = mockIsInstalled({
@@ -147,13 +143,22 @@ test.serial('autoinstall: should call both mock functions', async (t) => {
   t.true(didCallInstall);
 });
 
+// TODO
+// error handling
+// Queue for multiple installs
+// Queue for multiple installs of the same version
+// don't autoinstall if it's already there
+
 test.serial(
   'autoinstall: only call install once if there are two concurrent install requests',
   async (t) => {
     let callCount = 0;
 
-    const mockInstall = () =>
+    const installed = {};
+
+    const mockInstall = (name) =>
       new Promise<void>((resolve) => {
+        installed[name] = true;
         callCount++;
         setTimeout(() => resolve(), 20);
       });
@@ -161,7 +166,7 @@ test.serial(
     const options = {
       skipRepoValidation: true,
       handleInstall: mockInstall,
-      handleIsInstalled: async () => false,
+      handleIsInstalled: async (name) => name in installed,
     };
 
     const context = createContext(options);
@@ -171,6 +176,78 @@ test.serial(
     t.is(callCount, 1);
   }
 );
+
+test.serial('autoinstall: install in sequence', async (t) => {
+  const installed = {};
+
+  const states = {};
+
+  const mockInstall = (name) =>
+    new Promise<void>((resolve) => {
+      // Each time install is called,
+      // record the time the call was made
+      // and the install state
+      states[name] = {
+        time: new Date().getTime(),
+        installed: Object.keys(installed).map((s) => s.split('common@')[1]),
+      };
+      installed[name] = true;
+      setTimeout(() => resolve(), 50);
+    });
+
+  const options = {
+    skipRepoValidation: true,
+    handleInstall: mockInstall,
+    handleIsInstalled: false,
+  };
+
+  const c1 = createContext(options, [{ adaptor: '@openfn/language-common@1' }]);
+  const c2 = createContext(options, [{ adaptor: '@openfn/language-common@2' }]);
+  const c3 = createContext(options, [{ adaptor: '@openfn/language-common@3' }]);
+
+  await Promise.all([autoinstall(c1), autoinstall(c2), autoinstall(c3)]);
+
+  const s1 = states['@openfn/language-common@1'];
+  const s2 = states['@openfn/language-common@2'];
+  const s3 = states['@openfn/language-common@3'];
+
+  // Check that modules are installed in sequence
+  t.deepEqual(s1.installed, []);
+  t.deepEqual(s2.installed, ['1']);
+  t.deepEqual(s3.installed, ['1', '2']);
+
+  // And check for a time gap between installs
+  t.true(s3.time - s2.time > 40);
+  t.true(s2.time - s1.time > 40);
+});
+
+test('autoinstall: handle two seperate, non-overlapping installs', async (t) => {
+  const options = {
+    handleInstall: mockHandleInstall,
+    handleIsInstalled: async () => false,
+  };
+
+  const c1 = createContext(options, [
+    { adaptor: '@openfn/language-dhis2@1.0.0' },
+  ]);
+  const c2 = createContext(options, [
+    { adaptor: '@openfn/language-http@1.0.0' },
+  ]);
+
+  const p1 = await autoinstall(c1);
+  t.deepEqual(p1, {
+    '@openfn/language-dhis2': {
+      path: 'tmp/repo/node_modules/@openfn/language-dhis2_1.0.0',
+    },
+  });
+
+  const p2 = await autoinstall(c2);
+  t.deepEqual(p2, {
+    '@openfn/language-http': {
+      path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
+    },
+  });
+});
 
 test.serial(
   'autoinstall: do not try to install blacklisted modules',
@@ -330,15 +407,11 @@ test.serial('autoinstall: throw on error twice if pending', async (t) => {
 
     autoinstall(context).catch(assertCatches);
 
-    // The two catches won't neccessarily return in order
-    // (shrug asynchronous code?)
-    // So this catch-all callback will resolve the test when both
-    // promises have resolved
     function assertCatches(e) {
       t.is(e.name, 'AutoinstallError');
       errCount += 1;
       if (errCount === 2) {
-        t.is(callCount, 1);
+        t.is(callCount, 2);
         t.pass('threw twice!');
         done();
       }
