@@ -11,6 +11,7 @@ export type Trigger = {
   type?: string;
   cron_expression?: string;
   delete?: boolean;
+  enabled?: boolean;
 };
 
 export type StateEdge = {

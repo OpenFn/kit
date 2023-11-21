@@ -71,11 +71,11 @@ function pickValue(
   key: string,
   defaultValue: any
 ): any {
-  if (typeof first[key] !== 'undefined') {
+  if (key in first) {
     return first[key];
   }
 
-  if (second && typeof second[key] !== 'undefined') {
+  if (key in second) {
     return second[key];
   }
 
@@ -94,7 +94,7 @@ function mergeTriggers(
             triggerKey,
             {
               id: crypto.randomUUID(),
-              ...pickKeys(specTrigger, ['type']),
+              ...pickKeys(specTrigger, ['type', 'enabled']),
               ...(specTrigger.type === 'cron'
                 ? { cron_expression: specTrigger.cron_expression }
                 : {}),
@@ -113,6 +113,7 @@ function mergeTriggers(
             id: stateTrigger!.id,
             ...{
               type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
+              enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
               ...(specTrigger!.type === 'cron'
                 ? { cron_expression: specTrigger!.cron_expression }
                 : {}),

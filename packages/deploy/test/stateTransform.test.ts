@@ -31,6 +31,7 @@ test('toNextState adding a job', (t) => {
           'trigger-one': {
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: false,
           },
         },
         edges: {},
@@ -46,6 +47,7 @@ test('toNextState adding a job', (t) => {
         triggers: {
           'trigger-one': {
             id: '57912d4a-13e5-4857-8e1b-473be3816fd8',
+            enabled: true,
           },
         },
         edges: {},
@@ -76,6 +78,7 @@ test('toNextState adding a job', (t) => {
             id: '57912d4a-13e5-4857-8e1b-473be3816fd8',
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: false,
           },
         },
         edges: {},
@@ -134,6 +137,7 @@ test('toNextState with empty state', (t) => {
             id: getItem(result, 'triggers', 'trigger-one').id,
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: true,
           },
         },
         edges: {
@@ -181,6 +185,7 @@ test('toNextState with no changes', (t) => {
             id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: true,
           },
         },
         edges: {},
@@ -205,6 +210,7 @@ test('toNextState with no changes', (t) => {
           'trigger-one': {
             type: 'cron',
             cron_expression: '0 0 1 1 *',
+            enabled: true,
           },
         },
         edges: {},
@@ -297,6 +303,7 @@ test('toNextState with a new job', (t) => {
           'trigger-one': {
             id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
             type: 'webhook',
+            enabled: true,
           },
         },
         edges: {},
