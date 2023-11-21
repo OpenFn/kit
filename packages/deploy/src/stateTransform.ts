@@ -33,7 +33,6 @@ function mergeJobs(
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: specJob.body,
-            enabled: pickValue(specJob, stateJob || {}, 'enabled', true),
           },
         ];
       }
@@ -50,7 +49,6 @@ function mergeJobs(
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: specJob.body,
-            enabled: pickValue(specJob, stateJob, 'enabled', true),
           },
         ];
       }
@@ -73,11 +71,11 @@ function pickValue(
   key: string,
   defaultValue: any
 ): any {
-  if (typeof first[key] !== 'undefined') {
+  if (key in first) {
     return first[key];
   }
 
-  if (second && typeof second[key] !== 'undefined') {
+  if (key in second) {
     return second[key];
   }
 
@@ -96,7 +94,7 @@ function mergeTriggers(
             triggerKey,
             {
               id: crypto.randomUUID(),
-              ...pickKeys(specTrigger, ['type']),
+              ...pickKeys(specTrigger, ['type', 'enabled']),
               ...(specTrigger.type === 'cron'
                 ? { cron_expression: specTrigger.cron_expression }
                 : {}),
@@ -115,6 +113,7 @@ function mergeTriggers(
             id: stateTrigger!.id,
             ...{
               type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
+              enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
               ...(specTrigger!.type === 'cron'
                 ? { cron_expression: specTrigger!.cron_expression }
                 : {}),
@@ -146,6 +145,7 @@ function mergeEdges(
               id,
               condition: specEdge.condition ?? null,
               target_job_id: jobs[specEdge.target_job ?? -1]?.id ?? '',
+              enabled: pickValue(specEdge, stateEdge || {}, 'enabled', true),
             },
             {
               source_job_id: jobs[specEdge.source_job ?? -1]?.id,

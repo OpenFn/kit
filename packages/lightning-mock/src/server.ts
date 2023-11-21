@@ -10,12 +10,16 @@ import createLogger, {
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
-import { Attempt } from './types';
-import { AttemptLogPayload } from './events';
+
+import type { AttemptLogPayload, Attempt, DevServer } from './types';
+
+type RunId = string;
+type JobId = string;
 
 export type AttemptState = {
   status: 'queued' | 'started' | 'complete';
   logs: AttemptLogPayload[];
+  runs: Record<JobId, RunId>;
 };
 
 export type ServerState = {
@@ -64,8 +68,10 @@ const createLightningServer = (options: LightningOptions = {}) => {
     events: new EventEmitter(),
   } as ServerState;
 
-  const app = new Koa();
+  const app = new Koa() as DevServer;
   app.use(bodyParser());
+
+  app.state = state;
 
   const port = options.port || 8888;
   const server = app.listen(port);
@@ -89,11 +95,10 @@ const createLightningServer = (options: LightningOptions = {}) => {
 
   app.use(createDevAPI(app as any, state, logger, api));
 
-  (app as any).destroy = () => {
+  app.destroy = () => {
     server.close();
     api.close();
   };
-
   return app;
 };
 

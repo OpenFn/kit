@@ -65,7 +65,7 @@ The engine has an auto-install feature. This will ensure that all required adapt
 
 Blacklisted modules are not installed.
 
-You can pass the local repo dir through the `repoDir` argument in `createEngine`, or by setting the `ENGINE_REPO_DIR` env var.
+You can pass a path to local repo dir through the `repoDir` argument in `createEngine`. If no path is provided, it will use a default value (see the logs).
 
 ## Resolving Execution Plans
 

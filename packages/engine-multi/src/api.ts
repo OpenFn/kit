@@ -27,6 +27,8 @@ export type RTEOptions = Partial<
   }
 >;
 
+const DEFAULT_REPO_DIR = '/tmp/openfn/worker/repo';
+
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
 const createAPI = async function (options: RTEOptions = {}) {
@@ -35,13 +37,8 @@ const createAPI = async function (options: RTEOptions = {}) {
   const logger = options.logger || createLogger('RTE', { level: 'debug' });
 
   if (!repoDir) {
-    if (process.env.ENGINE_REPO_DIR) {
-      repoDir = process.env.ENGINE_REPO_DIR;
-    } else {
-      repoDir = '/tmp/openfn/repo';
-      logger.warn('Using default repodir');
-      logger.warn('Set env var ENGINE_REPO_DIR to use a different directory');
-    }
+    repoDir = DEFAULT_REPO_DIR;
+    logger.warn('Using default repo directory: ', DEFAULT_REPO_DIR);
   }
   logger.info('repoDir set to ', repoDir);
 

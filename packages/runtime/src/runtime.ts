@@ -33,6 +33,9 @@ export type Options = {
   linker?: LinkerOptions;
 
   callbacks?: ExecutionCallbacks;
+
+  // inject globals into the environment
+  globals?: any;
 };
 
 const defaultState = { data: {}, configuration: {} };

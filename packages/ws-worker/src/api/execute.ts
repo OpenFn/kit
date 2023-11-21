@@ -2,17 +2,17 @@ import crypto from 'node:crypto';
 
 import {
   ATTEMPT_COMPLETE,
-  ATTEMPT_COMPLETE_PAYLOAD,
+  AttemptCompletePayload,
   ATTEMPT_LOG,
-  ATTEMPT_LOG_PAYLOAD,
+  AttemptLogPayload,
   ATTEMPT_START,
-  ATTEMPT_START_PAYLOAD,
+  AttemptStartPayload,
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
   RunCompletePayload,
   RUN_START,
-  RUN_START_PAYLOAD,
+  RunStartPayload,
 } from '../events';
 import { AttemptOptions, Channel, AttemptState } from '../types';
 import { getWithReply, stringify, createAttemptState } from '../util';
@@ -168,7 +168,7 @@ export function onJobStart({ channel, state }: Context, event: any) {
 
   const input_dataclip_id = state.inputDataclips[event.jobId];
 
-  return sendEvent<RUN_START_PAYLOAD>(channel, RUN_START, {
+  return sendEvent<RunStartPayload>(channel, RUN_START, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
     input_dataclip_id,
@@ -255,7 +255,7 @@ export function onWorkflowStart(
   { channel }: Context,
   _event: WorkflowStartPayload
 ) {
-  return sendEvent<ATTEMPT_START_PAYLOAD>(channel, ATTEMPT_START);
+  return sendEvent<AttemptStartPayload>(channel, ATTEMPT_START);
 }
 
 export async function onWorkflowComplete(
@@ -266,7 +266,7 @@ export async function onWorkflowComplete(
   // Especially not in parallelisation
   const result = state.dataclips[state.lastDataclipId!];
   const reason = calculateAttemptExitReason(state);
-  await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+  await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
     ...reason,
   });
@@ -286,7 +286,7 @@ export async function onWorkflowError(
   try {
     // Ok, let's try that, let's just generate a reason from the event
     const reason = calculateJobExitReason('', { data: {} }, event);
-    await sendEvent<ATTEMPT_COMPLETE_PAYLOAD>(channel, ATTEMPT_COMPLETE, {
+    await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,
       ...reason,
     });
@@ -302,7 +302,7 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
 
   // lightning-friendly log object
-  const log: ATTEMPT_LOG_PAYLOAD = {
+  const log: AttemptLogPayload = {
     attempt_id: state.plan.id!,
     message: event.message,
     source: event.name,
@@ -314,7 +314,7 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
     log.run_id = state.activeRun;
   }
 
-  return sendEvent<ATTEMPT_LOG_PAYLOAD>(channel, ATTEMPT_LOG, log);
+  return sendEvent<AttemptLogPayload>(channel, ATTEMPT_LOG, log);
 }
 
 export async function loadDataclip(channel: Channel, stateId: string) {

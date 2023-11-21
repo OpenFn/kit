@@ -1,5 +1,3 @@
-// https://github.com/OpenFn/kit/issues/251
-
 import {
   ExecutionPlan,
   ensureRepo,
@@ -9,10 +7,11 @@ import {
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
 
-import type { Logger } from '@openfn/logger';
-import type { ExecutionContext } from '../types';
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
+
+import type { Logger } from '@openfn/logger';
+import type { ExecutionContext } from '../types';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -27,7 +26,76 @@ export type AutoinstallOptions = {
 
 const pending: Record<string, Promise<void>> = {};
 
+let busy = false;
+
+const queue: Array<{ adaptors: string[]; callback: (err?: any) => void }> = [];
+
+const enqueue = (adaptors: string[]) =>
+  new Promise((resolve) => {
+    queue.push({ adaptors, callback: resolve });
+  });
+
+// Install any modules for an Execution Plan that are not already installed
+// This will enforce a queue ensuring only one module is installed at a time
+// This fixes https://github.com/OpenFn/kit/issues/503
 const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
+  // TODO not a huge fan of these functions in the closure, but it's ok for now
+  const processQueue = async () => {
+    const next = queue.shift();
+    if (next) {
+      busy = true;
+      const { adaptors, callback } = next;
+      await doAutoinstall(adaptors, callback);
+      processQueue();
+    } else {
+      // do nothing
+      busy = false;
+    }
+  };
+
+  // This will actually do the autoinstall for an attempt (all adaptors)
+  const doAutoinstall = async (
+    adaptors: string[],
+    onComplete: (err?: any) => void
+  ) => {
+    // Check whether we still need to do any work
+    for (const a of adaptors) {
+      const { name, version } = getNameAndVersion(a);
+      if (await isInstalledFn(a, repoDir, logger)) {
+        continue;
+      }
+
+      const startTime = Date.now();
+      try {
+        await installFn(a, repoDir, logger);
+
+        const duration = Date.now() - startTime;
+        logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
+        context.emit(AUTOINSTALL_COMPLETE, {
+          module: name,
+          version: version!,
+          duration,
+        });
+      } catch (e: any) {
+        delete pending[a];
+
+        logger.error(`ERROR autoinstalling ${a}: ${e.message}`);
+        logger.error(e);
+        const duration = Date.now() - startTime;
+        context.emit(AUTOINSTALL_ERROR, {
+          module: name,
+          version: version!,
+          duration,
+          message: e.message || e.toString(),
+        });
+
+        // Abort on the first error
+        return onComplete(new AutoinstallError(a, e));
+      }
+    }
+    onComplete();
+  };
+
   const { logger, state, options } = context;
   const { plan } = state;
   const { repoDir, whitelist } = options;
@@ -47,71 +115,49 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   if (!skipRepoValidation && !didValidateRepo) {
     // TODO what if this throws?
     // Whole server probably needs to crash, so throwing is probably appropriate
+    // TODO do we need to do it on EVERY call? Can we not cache it?
     await ensureRepo(repoDir, logger);
     didValidateRepo = true;
   }
 
   const adaptors = Array.from(identifyAdaptors(plan));
-  // TODO would rather do all this in parallel but this is fine for now
-  // TODO set iteration is weirdly difficult?
   const paths: ModulePaths = {};
 
+  const adaptorsToLoad = [];
   for (const a of adaptors) {
     // Ensure that this is not blacklisted
-    // TODO what if it is? For now we'll log and skip it
     if (whitelist && !whitelist.find((r) => r.exec(a))) {
+      // TODO what if it is? For now we'll log and skip it
+      // TODO actually we should throw a security error in this case
       logger.warn('WARNING: autoinstall skipping blacklisted module ', a);
       continue;
     }
 
-    // Return a path name to this module for the linker to use later
-    // TODO this is all a bit rushed
     const alias = getAliasedName(a);
-    const { name, version } = getNameAndVersion(a);
+    const { name } = getNameAndVersion(a);
     paths[name] = { path: `${repoDir}/node_modules/${alias}` };
 
-    const needsInstalling = !(await isInstalledFn(a, repoDir, logger));
-    if (needsInstalling) {
-      if (!pending[a]) {
-        const startTime = Date.now();
-        pending[a] = installFn(a, repoDir, logger)
-          .then(() => {
-            const duration = Date.now() - startTime;
-
-            logger.success(`autoinstalled ${a} in ${duration / 1000}s`);
-            context.emit(AUTOINSTALL_COMPLETE, {
-              module: name,
-              version: version!,
-              duration,
-            });
-            delete pending[a];
-          })
-          .catch((e: any) => {
-            delete pending[a];
-
-            logger.error(`ERROR autoinstalling ${a}: ${e.message}`);
-            logger.error(e);
-            const duration = Date.now() - startTime;
-            context.emit(AUTOINSTALL_ERROR, {
-              module: name,
-              version: version!,
-              duration,
-              message: e.message || e.toString(),
-            });
-
-            // wrap and re-throw the error
-            throw new AutoinstallError(a, e);
-          });
-      } else {
-        logger.info(
-          `autoinstall waiting for previous promise for ${a} to resolve...`
-        );
-      }
-      // Return the pending promise (safe to do this multiple times)
-      // TODO if this is a chained promise, emit something like "using cache for ${name}"
-      await pending[a].then();
+    if (!(await isInstalledFn(a, repoDir, logger))) {
+      adaptorsToLoad.push(a);
     }
   }
+
+  if (adaptorsToLoad.length) {
+    // Add this to the queue
+    const p = enqueue(adaptorsToLoad);
+
+    if (!busy) {
+      processQueue();
+    }
+
+    return p.then((err) => {
+      if (err) {
+        throw err;
+      }
+      return paths;
+    });
+  }
+
   return paths;
 };
 

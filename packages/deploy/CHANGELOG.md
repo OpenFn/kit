@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.2.10
+
+### Patch Changes
+
+- 3c2de85: Remove the `enabled` flag from Jobs, and add to Triggers and Edges
+
 ## 0.2.9
 
 ### Patch Changes

@@ -1,6 +1,5 @@
-import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import type { ExecutionPlan, JobNode } from '@openfn/runtime';
+import run, { ExecutionPlan } from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
 import mockResolvers from './resolvers';
 
@@ -26,6 +25,19 @@ export type WorkflowErrorEvent = {
   message: string;
 };
 
+// this is basically a fake adaptor
+// these functions will be injected into scope
+const helpers = {
+  fn: (f: Function) => (s: any) => f(s),
+  wait: (duration: number) => (s: any) =>
+    new Promise((resolve) => setTimeout(() => resolve(s), duration)),
+};
+
+// The mock runtime engine creates a fake engine interface
+// around a real runtime engine
+// Note that it  does not dispatch runtime logs and only supports console.log
+// This gives us real eventing in the worker tests
+// TODO - even better would be to re-use the engine's event map or something
 async function createMock() {
   const activeWorkflows = {} as Record<string, true>;
   const bus = new EventEmitter();
@@ -53,115 +65,78 @@ async function createMock() {
     listeners[planId] = events;
   };
 
-  const executeJob = async (
-    workflowId: string,
-    job: JobNode,
-    initialState = {},
-    resolvers: engine.Resolvers = mockResolvers
-  ) => {
-    const { id, expression, configuration, adaptor } = job;
-
-    // If no expression or adaptor, this is (probably) a trigger node.
-    // Silently do nothing
-    if (!expression && !adaptor) {
-      return initialState;
-    }
-
-    const runId = crypto.randomUUID();
-
-    const jobId = id;
-    if (typeof configuration === 'string') {
-      // Fetch the credential but do nothing with it
-      // Maybe later we use it to assemble state
-      await resolvers.credential?.(configuration);
-    }
-
-    const info = (...message: any[]) => {
-      dispatch('workflow-log', {
-        workflowId,
-        message: message,
-        level: 'info',
-        time: (BigInt(Date.now()) * BigInt(1e3)).toString(),
-        name: 'mck',
-      });
-    };
-
-    // Get the job details from lightning
-    // start instantly and emit as it goes
-    dispatch('job-start', { workflowId, jobId, runId });
-    info('Running job ' + jobId);
-    let nextState = initialState;
-
-    // @ts-ignore
-    if (expression?.startsWith?.('wait@')) {
-      const [_, delay] = (expression as string).split('@');
-      nextState = initialState;
-      await new Promise<void>((resolve) => {
-        setTimeout(() => resolve(), parseInt(delay));
-      });
-    } else {
-      // Try and parse the expression as JSON, in which case we use it as the final state
-      try {
-        // @ts-ignore
-        nextState = JSON.parse(expression);
-        // What does this look like? Should be a logger object
-        info('Parsing expression as JSON state');
-        info(nextState);
-      } catch (e) {
-        // Do nothing, it's fine
-        nextState = initialState;
-      }
-    }
-
-    dispatch('job-complete', {
-      workflowId,
-      jobId,
-      state: nextState,
-      runId,
-      next: [], // TODO hmm. I think we need to do better than this.
-    });
-
-    return nextState;
-  };
-
-  // Start executing an ExecutionPlan
-  // The mock uses lots of timeouts to make testing a bit easier and simulate asynchronicity
-  const execute = (
+  const execute = async (
     xplan: ExecutionPlan,
     options: { resolvers?: engine.Resolvers; throw?: boolean } = {
       resolvers: mockResolvers,
     }
   ) => {
-    // This is just an easy way to test the options gets fed through to execute
-    // Also lets me test error handling!
-    if (options.throw) {
-      throw new Error('test error');
-    }
-
-    const { id, jobs, initialState } = xplan;
-    const workflowId = id;
+    const { id, jobs } = xplan;
     activeWorkflows[id!] = true;
 
-    // TODO do we want to load a globals dataclip from job.state here?
-    // This isn't supported right now
-    // We would need to use resolvers.dataclip if we wanted it
+    for (const job of jobs) {
+      if (typeof job.configuration === 'string') {
+        // Call the crendtial callback, but don't do anything with it
+        job.configuration = await options.resolvers?.credential?.(
+          job.configuration
+        );
+      }
 
-    setTimeout(() => {
-      dispatch('workflow-start', { workflowId });
-      setTimeout(async () => {
-        let state = initialState || {};
-        // Trivial job reducer in our mock
-        for (const job of jobs) {
-          state = await executeJob(id!, job, state, options.resolvers);
-        }
-        setTimeout(() => {
-          delete activeWorkflows[id!];
-          dispatch('workflow-complete', { workflowId });
-          // TODO on workflow complete we should maybe tidy the listeners?
-          // Doesn't really matter in the mock though
-        }, 1);
-      }, 1);
+      // Fake compilation
+      if (
+        typeof job.expression === 'string' &&
+        !(job.expression as string).match(/export default \[/)
+      ) {
+        job.expression = `export default [${job.expression}];`;
+      }
+    }
+
+    // TODO do I need a more sophisticated solution here?
+    const jobLogger = {
+      log: (...args: any[]) => {
+        dispatch('workflow-log', {
+          workflowId: id,
+          level: 'info',
+          json: true,
+          message: args,
+          time: Date.now(),
+        });
+      },
+    };
+
+    const opts = {
+      strict: false,
+      jobLogger,
+      ...options,
+      globals: helpers,
+      callbacks: {
+        notify: (name: any, payload: any) => {
+          dispatch(name, {
+            workflowId: id,
+            ...payload,
+          });
+        },
+      },
+    };
+    setTimeout(async () => {
+      dispatch('workflow-start', { workflowId: id });
+
+      try {
+        await run(xplan, undefined, opts as any);
+      } catch (e: any) {
+        dispatch('workflow-error', {
+          workflowId: id,
+          type: e.name,
+          message: e.message,
+        });
+      }
+
+      delete activeWorkflows[id!];
+      dispatch('workflow-complete', { workflowId: id });
     }, 1);
+
+    // Technically the engine should return an event emitter
+    // But as I don't think we use it, I'm happy to ignore this
   };
 
   // return a list of jobs in progress

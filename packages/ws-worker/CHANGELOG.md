@@ -1,5 +1,21 @@
 # ws-worker
 
+## 0.2.9
+
+### Patch Changes
+
+- 54d0017: Start ws-worker using node (not pnpm) by default
+- 6f78b7a: Add env var for WORKER_REPO_DIR
+- Updated dependencies [4a17048]
+  - @openfn/engine-multi@0.2.0
+  - @openfn/runtime@0.2.0
+
+## 0.2.8
+
+### Patch Changes
+
+- Tweak typings
+
 ## 0.2.7
 
 ### Patch Changes

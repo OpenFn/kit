@@ -1,5 +1,5 @@
 import { Logger, createMockLogger } from '@openfn/logger';
-import { CLAIM, CLAIM_PAYLOAD, CLAIM_REPLY } from '../events';
+import { CLAIM, ClaimPayload, ClaimReply } from '../events';
 
 import type { ServerApp } from '../server';
 
@@ -15,8 +15,8 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
 
     logger.debug('requesting attempt...');
     app.channel
-      .push<CLAIM_PAYLOAD>(CLAIM, { demand: 1 })
-      .receive('ok', ({ attempts }: CLAIM_REPLY) => {
+      .push<ClaimPayload>(CLAIM, { demand: 1 })
+      .receive('ok', ({ attempts }: ClaimReply) => {
         logger.debug(`pulled ${attempts.length} attempts`);
         // TODO what if we get here after we've been cancelled?
         // the events have already been claimed...

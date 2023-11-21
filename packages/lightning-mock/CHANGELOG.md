@@ -1,5 +1,30 @@
 # @openfn/lightning-mock
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [4a17048]
+  - @openfn/engine-multi@0.2.0
+  - @openfn/runtime@0.2.0
+
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/ws-worker@0.2.8
+
+## 1.1.0
+
+### Minor Changes
+
+- 9bf94f8: Add validation to endpoints
+
+### Patch Changes
+
+- @openfn/ws-worker@0.2.7
+
 ## 1.0.12
 
 ### Patch Changes

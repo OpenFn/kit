@@ -14,21 +14,24 @@ const sampleWorkflow = {
     {
       id: 'j1',
       adaptor: 'common@1.0.0',
-      expression: '{ "x": 10 }',
+      expression: 'fn(() => ({ data: { x: 10 } }))',
     },
   ],
 } as ExecutionPlan;
 
+let engine;
+
+test.before(async () => {
+  engine = await create();
+});
+
 test('getStatus() should should have no active workflows', async (t) => {
-  const engine = await create();
   const { active } = engine.getStatus();
 
   t.is(active, 0);
 });
 
 test('Dispatch start events for a new workflow', async (t) => {
-  const engine = await create();
-
   engine.execute(sampleWorkflow);
   const evt = await waitForEvent<WorkflowStartEvent>(engine, 'workflow-start');
   t.truthy(evt);
@@ -36,7 +39,6 @@ test('Dispatch start events for a new workflow', async (t) => {
 });
 
 test('getStatus should report one active workflow', async (t) => {
-  const engine = await create();
   engine.execute(sampleWorkflow);
 
   const { active } = engine.getStatus();
@@ -45,8 +47,6 @@ test('getStatus should report one active workflow', async (t) => {
 });
 
 test('Dispatch complete events when a workflow completes', async (t) => {
-  const engine = await create();
-
   engine.execute(sampleWorkflow);
   const evt = await waitForEvent<WorkflowCompleteEvent>(
     engine,
@@ -57,8 +57,6 @@ test('Dispatch complete events when a workflow completes', async (t) => {
 });
 
 test('Dispatch start events for a job', async (t) => {
-  const engine = await create();
-
   engine.execute(sampleWorkflow);
   const evt = await waitForEvent<JobStartEvent>(engine, 'job-start');
   t.truthy(evt);
@@ -67,106 +65,51 @@ test('Dispatch start events for a job', async (t) => {
 });
 
 test('Dispatch complete events for a job', async (t) => {
-  const engine = await create();
-
   engine.execute(sampleWorkflow);
   const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
   t.truthy(evt);
   t.is(evt.workflowId, 'w1');
   t.is(evt.jobId, 'j1');
-  t.truthy(evt.state);
+  t.deepEqual(evt.state, { data: { x: 10 } });
 });
 
-test('mock should evaluate expressions as JSON', async (t) => {
-  const engine = await create();
+test('Dispatch error event for a crash', async (t) => {
+  const wf = {
+    id: 'xyz',
+    jobs: [
+      {
+        id: 'j1',
+        adaptor: 'common@1.0.0',
+        expression: 'fn(() => ( @~!"@£!4 )',
+      },
+    ],
+  } as ExecutionPlan;
 
-  engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
-  t.deepEqual(evt.state, { x: 10 });
+  engine.execute(wf);
+  const evt = await waitForEvent<JobCompleteEvent>(engine, 'workflow-error');
+
+  t.is(evt.workflowId, 'xyz');
+  t.is(evt.type, 'RuntimeCrash');
+  t.regex(evt.message, /invalid or unexpected token/i);
 });
 
-test('mock should wait if expression starts with @wait', async (t) => {
-  const engine = await create();
+test('wait function', async (t) => {
   const wf = {
     id: 'w1',
     jobs: [
       {
         id: 'j1',
-        expression: 'wait@100',
+        expression: 'wait(100)',
       },
     ],
   } as ExecutionPlan;
   engine.execute(wf);
   const start = Date.now();
-  const evt = await waitForEvent<JobCompleteEvent>(engine, 'workflow-complete');
+
+  await waitForEvent<JobCompleteEvent>(engine, 'workflow-complete');
+
   const end = Date.now() - start;
   t.true(end > 90);
-});
-
-test('mock should return initial state as result state', async (t) => {
-  const engine = await create();
-
-  const wf = {
-    initialState: { y: 22 },
-    jobs: [
-      {
-        adaptor: 'common@1.0.0',
-      },
-    ],
-  };
-  engine.execute(wf);
-
-  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
-  t.deepEqual(evt.state, { y: 22 });
-});
-
-test('mock prefers JSON state to initial state', async (t) => {
-  const engine = await create();
-
-  const wf = {
-    initialState: { y: 22 },
-    jobs: [
-      {
-        adaptor: 'common@1.0.0',
-        expression: '{ "z": 33 }',
-      },
-    ],
-  };
-  engine.execute(wf);
-
-  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
-  t.deepEqual(evt.state, { z: 33 });
-});
-
-test('mock should dispatch log events when evaluating JSON', async (t) => {
-  const engine = await create();
-
-  const logs = [];
-  engine.on('workflow-log', (l) => {
-    logs.push(l);
-  });
-
-  engine.execute(sampleWorkflow);
-  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
-
-  t.deepEqual(logs[0].message, ['Running job j1']);
-  t.deepEqual(logs[1].message, ['Parsing expression as JSON state']);
-});
-
-test('mock should throw if the magic option is passed', async (t) => {
-  const engine = await create();
-
-  const logs = [];
-  engine.on('workflow-log', (l) => {
-    logs.push(l);
-  });
-
-  await t.throwsAsync(
-    async () => engine.execute(sampleWorkflow, { throw: true }),
-    {
-      message: 'test error',
-    }
-  );
 });
 
 test('resolve credential before job-start if credential is a string', async (t) => {
@@ -179,7 +122,6 @@ test('resolve credential before job-start if credential is a string', async (t) 
     return {};
   };
 
-  const engine = await create();
   // @ts-ignore
   engine.execute(wf, { resolvers: { credential } });
 
@@ -188,8 +130,6 @@ test('resolve credential before job-start if credential is a string', async (t) 
 });
 
 test('listen to events', async (t) => {
-  const engine = await create();
-
   const called = {
     'job-start': false,
     'job-complete': false,
@@ -198,41 +138,50 @@ test('listen to events', async (t) => {
     'workflow-complete': false,
   };
 
-  engine.listen(sampleWorkflow.id, {
+  const wf = {
+    id: 'wibble',
+    jobs: [
+      {
+        id: 'j1',
+        adaptor: 'common@1.0.0',
+        expression: 'export default [() => { console.log("x"); }]',
+      },
+    ],
+  } as ExecutionPlan;
+
+  engine.listen(wf.id, {
     'job-start': ({ workflowId, jobId }) => {
       called['job-start'] = true;
-      t.is(workflowId, sampleWorkflow.id);
-      t.is(jobId, sampleWorkflow.jobs[0].id);
+      t.is(workflowId, wf.id);
+      t.is(jobId, wf.jobs[0].id);
     },
     'job-complete': ({ workflowId, jobId }) => {
       called['job-complete'] = true;
-      t.is(workflowId, sampleWorkflow.id);
-      t.is(jobId, sampleWorkflow.jobs[0].id);
+      t.is(workflowId, wf.id);
+      t.is(jobId, wf.jobs[0].id);
       // TODO includes state?
     },
     'workflow-log': ({ workflowId, message }) => {
       called['workflow-log'] = true;
-      t.is(workflowId, sampleWorkflow.id);
+      t.is(workflowId, wf.id);
       t.truthy(message);
     },
     'workflow-start': ({ workflowId }) => {
       called['workflow-start'] = true;
-      t.is(workflowId, sampleWorkflow.id);
+      t.is(workflowId, wf.id);
     },
     'workflow-complete': ({ workflowId }) => {
       called['workflow-complete'] = true;
-      t.is(workflowId, sampleWorkflow.id);
+      t.is(workflowId, wf.id);
     },
   });
 
-  engine.execute(sampleWorkflow);
+  engine.execute(wf);
   await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
   t.assert(Object.values(called).every((v) => v === true));
 });
 
 test('only listen to events for the correct workflow', async (t) => {
-  const engine = await create();
-
   engine.listen('bobby mcgee', {
     'workflow-start': ({ workflowId }) => {
       throw new Error('should not have called this!!');
@@ -250,11 +199,10 @@ test('do nothing for a job if no expression and adaptor (trigger node)', async (
     jobs: [
       {
         id: 'j1',
+        adaptor: '@openfn/language-common@1.0.0',
       },
     ],
   } as ExecutionPlan;
-
-  const engine = await create();
 
   let didCallEvent = false;
 

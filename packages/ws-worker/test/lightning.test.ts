@@ -36,7 +36,7 @@ const getAttempt = (ext = {}, jobs?: any) => ({
     {
       id: 'j',
       adaptor: '@openfn/language-common@1.0.0',
-      body: JSON.stringify({ answer: 42 }),
+      body: 'fn(() => ({ answer: 42 }))',
     },
   ],
   ...ext,
@@ -51,7 +51,7 @@ test.serial(
         id: 'attempt-1',
         jobs: [
           {
-            body: JSON.stringify({ count: 122 }),
+            body: 'fn(() => ({ count: 122 }))',
           },
         ],
       };
@@ -69,7 +69,7 @@ test.serial(
 test.serial('should run an attempt which returns intial state', async (t) => {
   return new Promise((done) => {
     lng.addDataclip('x', {
-      route: 66,
+      data: 66,
     });
 
     const attempt = {
@@ -77,13 +77,13 @@ test.serial('should run an attempt which returns intial state', async (t) => {
       dataclip_id: 'x',
       jobs: [
         {
-          body: 'whatever',
+          body: 'fn((s) => s)',
         },
       ],
     };
 
     lng.waitForResult(attempt.id).then((result) => {
-      t.deepEqual(result, { route: 66 });
+      t.deepEqual(result, { data: 66 });
       done();
     });
 
@@ -173,17 +173,17 @@ test.serial(
           id: 'some-job',
           credential_id: 'a',
           adaptor: '@openfn/language-common@1.0.0',
-          body: JSON.stringify({ answer: 42 }),
+          body: 'fn(() => ({ answer: 42 }))',
         },
       ]);
 
       let didCallEvent = false;
-      lng.onSocketEvent(e.GET_CREDENTIAL, attempt.id, ({ payload }) => {
+      lng.onSocketEvent(e.GET_CREDENTIAL, attempt.id, () => {
         // again there's no way to check the right credential was returned
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
         t.true(didCallEvent);
         done();
       });
@@ -268,11 +268,15 @@ test.serial(
   `events: lightning should receive a ${e.ATTEMPT_LOG} event`,
   (t) => {
     return new Promise((done) => {
-      const attempt = getAttempt();
+      const attempt = {
+        id: 'attempt-1',
+        jobs: [
+          {
+            body: 'fn((s) => { console.log("x"); return s })',
+          },
+        ],
+      };
 
-      let didCallEvent = false;
-
-      // The mock runtime will put out a default log
       lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
         const log = payload;
 
@@ -280,13 +284,10 @@ test.serial(
         t.truthy(log.attempt_id);
         t.truthy(log.run_id);
         t.truthy(log.message);
-        t.assert(log.message[0].startsWith('Running job'));
-
-        didCallEvent = true;
+        t.deepEqual(log.message, ['x']);
       });
 
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-        t.true(didCallEvent);
         done();
       });
 
@@ -300,13 +301,14 @@ test.serial(
 test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
   return new Promise((done) => {
     const attempt = getAttempt({}, [
-      { body: '{ x: 1 }', adaptor: 'common' },
-      { body: '{ x: 1 }', adaptor: 'common' },
-      { body: '{ x: 1 }', adaptor: 'common' },
-      { body: '{ x: 1 }', adaptor: 'common' },
-      { body: '{ x: 1 }', adaptor: 'common' },
-      { body: '{ x: 1 }', adaptor: 'common' },
-      { body: '{ x: 1 }', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
+      { body: 'fn(() => ({ data: 1 }))', adaptor: 'common' },
     ]);
 
     const history: bigint[] = [];
@@ -372,7 +374,7 @@ test('should register and de-register attempts to the server', async (t) => {
       id: 'attempt-1',
       jobs: [
         {
-          body: JSON.stringify({ count: 122 }),
+          body: 'fn(() => ({ count: 122 }))',
         },
       ],
     };
@@ -398,13 +400,14 @@ test('should register and de-register attempts to the server', async (t) => {
 // TODO this is a server test
 // What I am testing here is that the first job completes
 // before the second job starts
-test('should not claim while at capacity', async (t) => {
+// TODO add wait helper
+test.skip('should not claim while at capacity', async (t) => {
   return new Promise((done) => {
     const attempt1 = {
       id: 'attempt-1',
       jobs: [
         {
-          body: 'wait@500',
+          body: 'wait(500)',
         },
       ],
     };
@@ -444,7 +447,85 @@ test('should not claim while at capacity', async (t) => {
   });
 });
 
-// hmm, i don't even think I can test this in the mock runtime
-test.skip('should pass the right dataclip when running in parallel', () => {});
+test('should pass the right dataclip when running in parallel', (t) => {
+  return new Promise((done) => {
+    const job = (id: string, next?: string) => ({
+      id,
+      body: `fn((s) => {  s.data.${id} = true; return s; })`,
+    });
 
-test.todo(`should run multiple attempts`);
+    const edge = (from: string, to: string) => ({
+      id: `${from}-${to}`,
+      source_job_id: from,
+      target_job_id: to,
+    });
+
+    const outputDataclipIds = {};
+    const inputDataclipIds = {};
+    const outputs = {};
+    const a = {
+      id: 'a',
+      body: 'fn(() => ({ data: { a: true } }))',
+      next: { j: true, k: true },
+    };
+
+    const j = job('j', 'x');
+    const k = job('k', 'y');
+    const x = job('x');
+    const y = job('y');
+
+    const attempt = {
+      id: 'p1',
+      jobs: [a, j, k, x, y],
+      edges: [edge('a', 'j'), edge('a', 'k'), edge('j', 'x'), edge('k', 'y')],
+    };
+
+    // Save all the input dataclip ids for each job
+    const unsub2 = lng.onSocketEvent(
+      e.RUN_START,
+      attempt.id,
+      ({ payload }) => {
+        inputDataclipIds[payload.job_id] = payload.input_dataclip_id;
+      },
+      false
+    );
+
+    // Save all the output dataclips & ids for each job
+    const unsub1 = lng.onSocketEvent(
+      e.RUN_COMPLETE,
+      attempt.id,
+      ({ payload }) => {
+        outputDataclipIds[payload.job_id] = payload.output_dataclip_id;
+        outputs[payload.job_id] = JSON.parse(payload.output_dataclip);
+      },
+      false
+    );
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      unsub1();
+      unsub2();
+
+      // Now check everything was correct
+
+      // Job a we don't really care about, but check the output anyway
+      t.deepEqual(outputs.a.data, { a: true });
+
+      // a feeds in to j and k
+      t.deepEqual(inputDataclipIds.j, outputDataclipIds.a);
+      t.deepEqual(inputDataclipIds.k, outputDataclipIds.a);
+
+      // j feeds into x
+      t.deepEqual(inputDataclipIds.x, outputDataclipIds.j);
+
+      // k feeds into y
+      t.deepEqual(inputDataclipIds.y, outputDataclipIds.k);
+
+      // x and y should have divergent states
+      t.deepEqual(outputs.x.data, { a: true, j: true, x: true });
+      t.deepEqual(outputs.y.data, { a: true, k: true, y: true });
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
