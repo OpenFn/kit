@@ -136,6 +136,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   const server = app.listen(port);
   logger.success(`ws-worker ${app.id} listening on ${port}`);
 
+  process.send?.('READY');
+
+  router.get('/', async (ctx) => {
+    ctx.status = 200;
+  });
+
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimAttempt) => {
     if (app.socket) {
@@ -187,9 +193,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.destroy = async () => {
     logger.info('Closing server...');
+    app.killWorkloop?.();
     server.close();
     await engine.destroy();
-    app.killWorkloop?.();
     logger.success('Server closed');
   };
 
@@ -200,6 +206,15 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   } else {
     logger.warn('No lightning URL provided');
   }
+
+  const gracefulShutdown = async (signal: string) => {
+    logger.always(`${signal} RECEIVED: CLOSING SERVER`);
+    await app.destroy();
+    process.exit();
+  };
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
   // TMP doing this for tests but maybe its better done externally?
   // @ts-ignore
