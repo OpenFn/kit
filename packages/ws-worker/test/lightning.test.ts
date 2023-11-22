@@ -391,34 +391,37 @@ test.serial(
   }
 );
 
-test('should register and de-register attempts to the server', async (t) => {
-  return new Promise((done) => {
-    const attempt = {
-      id: 'attempt-1',
-      jobs: [
-        {
-          body: 'fn(() => ({ count: 122 }))',
-        },
-      ],
-    };
+test.serial(
+  'should register and de-register attempts to the server',
+  async (t) => {
+    return new Promise((done) => {
+      const attempt = {
+        id: 'attempt-1',
+        jobs: [
+          {
+            body: 'fn(() => ({ count: 122 }))',
+          },
+        ],
+      };
 
-    worker.on(e.ATTEMPT_START, () => {
-      t.truthy(worker.workflows[attempt.id]);
+      worker.on(e.ATTEMPT_START, () => {
+        t.truthy(worker.workflows[attempt.id]);
+      });
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.truthy(worker.workflows[attempt.id]);
+        // Tidyup is done AFTER lightning receives the event
+        // This timeout is crude but should work
+        setTimeout(() => {
+          t.falsy(worker.workflows[attempt.id]);
+          done();
+        }, 10);
+      });
+
+      lng.enqueueAttempt(attempt);
     });
-
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-      t.truthy(worker.workflows[attempt.id]);
-      // Tidyup is done AFTER lightning receives the event
-      // This timeout is crude but should work
-      setTimeout(() => {
-        t.falsy(worker.workflows[attempt.id]);
-        done();
-      }, 10);
-    });
-
-    lng.enqueueAttempt(attempt);
-  });
-});
+  }
+);
 
 // TODO this is a server test
 // What I am testing here is that the first job completes
@@ -470,7 +473,7 @@ test.skip('should not claim while at capacity', async (t) => {
   });
 });
 
-test('should pass the right dataclip when running in parallel', (t) => {
+test.serial('should pass the right dataclip when running in parallel', (t) => {
   return new Promise((done) => {
     const job = (id: string) => ({
       id,
@@ -598,7 +601,7 @@ test('should correctly convert edge conditions to handle downstream errors', (t)
 // Note that this test HAS to be last
 // Remember this uses the mock engine, so it's not a good test of workerpool's behaviours
 test.serial(
-  `events: lightning should not not receive claim ${e.CLAIM} events when the worker is stopped`,
+  `events: lightning should not receive ${e.CLAIM} events when the worker is stopped`,
   (t) => {
     return new Promise(async (done) => {
       await worker.destroy();

@@ -33,9 +33,10 @@ type ServerOptions = {
 // this is the server/koa API
 export interface ServerApp extends Koa {
   id: string;
-  socket: any;
-  channel: Channel;
+  socket?: any;
+  channel?: Channel;
   workflows: Record<string, true | Context>;
+  destroyed: boolean;
 
   execute: ({ id, token }: ClaimAttempt) => Promise<void>;
   destroy: () => void;
@@ -132,6 +133,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   );
 
   app.workflows = {};
+  app.destroyed = false;
 
   const server = app.listen(port);
   logger.success(`ws-worker ${app.id} listening on ${port}`);
@@ -193,6 +195,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.destroy = async () => {
     logger.info('Closing server...');
+    app.destroyed = true;
+    app.socket?.disconnect();
     app.killWorkloop?.();
     server.close();
     await engine.destroy();

@@ -37,7 +37,7 @@ const startWorkloop = (
     // This ought to be pulled out of the server
     cancelled = true;
     promise.cancel();
-    app.channel.leave();
+    app.channel?.leave();
   };
 };
 

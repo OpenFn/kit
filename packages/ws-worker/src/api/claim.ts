@@ -13,6 +13,10 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
       return reject(new Error('Server at capacity'));
     }
 
+    if (!app.channel) {
+      return reject(new Error('No websocket available'));
+    }
+
     logger.debug('requesting attempt...');
     app.channel
       .push<ClaimPayload>(CLAIM, { demand: 1 })

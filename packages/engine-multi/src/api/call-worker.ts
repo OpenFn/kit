@@ -28,8 +28,6 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger?: Logger
 ) {
-  // TODO can we verify the worker path and throw if it's invalid?
-  // workerpool won't complain if we give it a nonsense path
   const workers = createWorkers(workerPath, options);
   engine.callWorker = (
     task: string,
