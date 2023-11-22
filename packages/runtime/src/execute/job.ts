@@ -159,12 +159,23 @@ const executeJob = async (
     }
 
     if (!didError) {
+      const { heapUsed, rss } = process.memoryUsage();
+      const used = heapUsed / 1024 / 1024;
+      const humanUsed = Math.round(used);
+      const humanRSS = Math.round(rss / 1024 / 1024);
+      console.log(`Job ${jobId} heap ${humanUsed} MB`);
+      console.log(`Job ${jobId} rss ${humanRSS} MB`);
+
       next = calculateNext(job, result);
       notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
         jobId,
         next,
+        mem: {
+          heapUsedMb: used,
+          totalMb: rss / 1024 / 1024,
+        },
       });
     }
   } else {
