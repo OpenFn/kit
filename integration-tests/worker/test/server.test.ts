@@ -16,7 +16,7 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
     // We use fork because we want IPC messaging with the processing
     workerProcess = fork(
       './node_modules/@openfn/ws-worker/dist/start.js',
-      [`-l ws://localhost:${port}/worker`, ...args],
+      [`-l ws://localhost:${port}/worker`, '--backoff 0.001/0.01', ...args],
       options
     );
 
@@ -108,12 +108,21 @@ test('allow a job to complete after receiving a sigterm', (t) => {
 
       // Give the server some time to shut down
       setTimeout(async () => {
-        // Server should be dead now
+        // The webserver should not respond
         await t.throwsAsync(() => fetch('http://localhost:2222/'), {
           message: 'fetch failed',
         });
 
-        done();
+        const finishTimeout = setTimeout(() => {
+          done();
+        }, 500);
+
+        // Lightning should receive no more claims
+        lightning.on('claim', () => {
+          clearTimeout(finishTimeout);
+          t.fail();
+          done();
+        });
       }, 10);
     });
 
