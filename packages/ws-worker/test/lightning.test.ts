@@ -552,7 +552,7 @@ test('should pass the right dataclip when running in parallel', (t) => {
   });
 });
 
-test.only('should correctly convert edge conditions to handle downstream errors', (t) => {
+test('should correctly convert edge conditions to handle downstream errors', (t) => {
   return new Promise((done) => {
     const a = createJob('fn(() => { throw "err" } )', 'a');
     // b should always fire
@@ -594,3 +594,25 @@ test.only('should correctly convert edge conditions to handle downstream errors'
     lng.enqueueAttempt(attempt);
   });
 });
+
+// Note that this test HAS to be last
+// Remember this uses the mock engine, so it's not a good test of workerpool's behaviours
+test.serial(
+  `events: lightning should not not receive claim ${e.CLAIM} events when the worker is stopped`,
+  (t) => {
+    return new Promise(async (done) => {
+      await worker.destroy();
+
+      let timeout = setTimeout(() => {
+        t.pass('no more claims');
+        done();
+      }, 2000);
+
+      lng.on(e.CLAIM, () => {
+        t.fail('claim event received');
+        clearTimeout(timeout);
+        done();
+      });
+    });
+  }
+);

@@ -61,9 +61,7 @@ export default function initWorkers(
   };
 
   // This will force termination (with grace period if allowed)
-  engine.closeWorkers = async (instant?: boolean) => {
-    await workers.terminate(instant);
-  };
+  engine.closeWorkers = async (instant?: boolean) => workers.terminate(instant);
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {
