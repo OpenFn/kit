@@ -50,7 +50,6 @@ export type DevServer = Koa & {
   getQueueLength(): number;
   getResult(attemptId: string): any;
   getState(): ServerState;
-  off(fn: (evt: any) => void): void;
   on(event: LightningEvents, fn: (evt: any) => void): void;
   once(event: LightningEvents, fn: (evt: any) => void): void;
   onSocketEvent(

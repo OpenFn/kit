@@ -101,10 +101,7 @@ const setupDevAPI = (
     state.events.addListener(event, fn);
   };
 
-  app.off = (fn) => {
-    state.events.removeListener(fn);
-  };
-
+  // @ts-ignore
   app.removeAllListeners = () => {
     state.events.removeAllListeners();
   };
