@@ -31,6 +31,10 @@ test.before(async () => {
   });
 });
 
+test.afterEach(() => {
+  lng.removeAllListeners();
+});
+
 let rollingAttemptId = 0;
 
 const getAttempt = (ext = {}, jobs?: any) => ({
@@ -44,6 +48,47 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   ],
   ...ext,
 });
+
+test.serial(
+  `events: lightning should respond to a claim ${e.CLAIM} event`,
+  (t) => {
+    return new Promise((done) => {
+      lng.on(e.CLAIM, (evt) => {
+        const response = evt.payload;
+        t.deepEqual(response, []);
+        done();
+      });
+    });
+  }
+);
+
+test.serial(
+  `events: lightning should respond to a ${e.CLAIM} event with an attempt id and token`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt();
+      let response;
+
+      lng.on(e.CLAIM, ({ payload }) => {
+        if (payload.length) {
+          response = payload[0];
+        }
+      });
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+        const { id, token } = response;
+        // Note that the payload here is what will be sent back to the worker
+        t.truthy(id);
+        t.truthy(token);
+        t.assert(typeof token === 'string');
+
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
 
 test.serial(
   'should run an attempt which returns an expression as JSON',
@@ -117,30 +162,6 @@ test.todo(`events: lightning should receive a ${e.ATTEMPT_START} event`);
 // Now run detailed checks of every event
 // for each event we can see a copy of the server state
 // (if that helps anything?)
-
-test.serial(`events: lightning should receive a ${e.CLAIM} event`, (t) => {
-  return new Promise((done) => {
-    const attempt = getAttempt();
-    let didCallEvent = false;
-    lng.onSocketEvent(e.CLAIM, attempt.id, ({ payload }) => {
-      const { id, token } = payload;
-      // Note that the payload here is what will be sent back to the worker
-      // TODO check there's a token
-      t.truthy(id);
-      t.truthy(token);
-      t.assert(typeof token === 'string');
-
-      didCallEvent = true;
-    });
-
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-      t.true(didCallEvent);
-      done();
-    });
-
-    lng.enqueueAttempt(attempt);
-  });
-});
 
 test.serial(
   `events: lightning should receive a ${e.GET_ATTEMPT} event`,
