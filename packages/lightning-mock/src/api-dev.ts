@@ -101,6 +101,14 @@ const setupDevAPI = (
     state.events.addListener(event, fn);
   };
 
+  app.off = (fn) => {
+    state.events.removeListener(fn);
+  };
+
+  app.removeAllListeners = () => {
+    state.events.removeAllListeners();
+  };
+
   // @ts-ignore
   app.once = (event: LightningEvents, fn: (evt: any) => void) => {
     state.events.once(event, fn);
