@@ -430,6 +430,8 @@ test('convert edge condition on_job_success', (t) => {
 
   t.truthy(job.next?.b);
   t.is(job.next.b.condition, conditions.on_job_success('a'));
+
+  t.true(testEdgeCondition(job.next.b.condition, {}));
 });
 
 test('convert edge condition on_job_failure', (t) => {
@@ -445,6 +447,31 @@ test('convert edge condition on_job_failure', (t) => {
 
   t.truthy(job.next?.b);
   t.is(job.next.b.condition, conditions.on_job_failure('a'));
+
+  // Check that this is valid js
+  t.true(
+    testEdgeCondition(job.next.b.condition, {
+      errors: { a: {} },
+    })
+  );
+});
+
+test('convert edge condition on_job_success with a funky id', (t) => {
+  const id_a = 'a-b-c@ # {} !£';
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    jobs: [createNode({ id: id_a }), createNode({ id: 'b' })],
+    triggers: [],
+    edges: [createEdge(id_a, 'b', { condition: 'on_job_success' })],
+  };
+  const { plan } = convertAttempt(attempt as Attempt);
+  const [job] = plan.jobs;
+
+  t.truthy(job.next?.b);
+  t.is(job.next.b.condition, conditions.on_job_success(id_a));
+
+  // Check that this is valid js
+  t.true(testEdgeCondition(job.next.b.condition, {}));
 });
 
 test('convert edge condition always', (t) => {
