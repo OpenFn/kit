@@ -33,8 +33,11 @@ const startWorkloop = (
 
   return () => {
     logger.debug('cancelling workloop');
+    // TODO there's too much logic here now
+    // This ought to be pulled out of the server
     cancelled = true;
     promise.cancel();
+    app.channel.leave();
   };
 };
 
