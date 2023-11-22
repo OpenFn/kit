@@ -319,3 +319,6 @@ test.serial("Don't purge if purge is false", async (t) => {
     });
   });
 });
+
+test.todo('destroy immediately, killing active workflows');
+test.todo('destroy gracefully, allowing active workflows to complete');

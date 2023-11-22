@@ -60,14 +60,9 @@ export default function initWorkers(
     }
   };
 
-  // This will force termination instantly
-  engine.closeWorkers = () => {
-    workers.terminate(true);
-
-    // Defer the return to allow workerpool to close down
-    return new Promise((done) => {
-      setTimeout(done, 20);
-    });
+  // This will force termination (with grace period if allowed)
+  engine.closeWorkers = async (instant?: boolean) => {
+    await workers.terminate(instant);
   };
 }
 
