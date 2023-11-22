@@ -207,10 +207,15 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     logger.warn('No lightning URL provided');
   }
 
+  let shutdown = false;
+
   const gracefulShutdown = async (signal: string) => {
-    logger.always(`${signal} RECEIVED: CLOSING SERVER`);
-    await app.destroy();
-    process.exit();
+    if (!shutdown) {
+      shutdown = true;
+      logger.always(`${signal} RECEIVED: CLOSING SERVER`);
+      await app.destroy();
+      process.exit();
+    }
   };
 
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
