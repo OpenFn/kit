@@ -119,6 +119,8 @@ const setupDevAPI = (
           unsubscribe();
         }
         fn(e);
+      } else {
+        fn(e);
       }
     }
     state.events.addListener(event, handler);
