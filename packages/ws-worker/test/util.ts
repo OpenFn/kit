@@ -38,3 +38,21 @@ export const createPlan = (...jobs) =>
     id: crypto.randomUUID(),
     jobs: [...jobs],
   } as ExecutionPlan);
+
+export const createEdge = (from: string, to: string) => ({
+  id: `${from}-${to}`,
+  source_job_id: from,
+  target_job_id: to,
+});
+
+export const createJob = (body?: string, id?: string) => ({
+  id: id || crypto.randomUUID(),
+  body: body || `fn((s) => s)`,
+});
+
+export const createAttempt = (jobs = [], edges = [], triggers = []) => ({
+  id: crypto.randomUUID(),
+  jobs,
+  edges,
+  triggers,
+});
