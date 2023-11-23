@@ -11,6 +11,7 @@ import destroy from './api/destroy';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
+import healthcheck from './middleware/healthcheck';
 import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
 
@@ -149,9 +150,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   process.send?.('READY');
 
-  router.get('/', async (ctx) => {
-    ctx.status = 200;
-  });
+  router.get('/livez', healthcheck);
+
+  router.get('/', healthcheck);
 
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimAttempt) => {
