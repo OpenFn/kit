@@ -32,9 +32,12 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
     });
 
     // Uncomment for logs
-    // workerProcess.stdout.on('data', (data) => {
-    //   console.log(data.toString());
-    // });
+    workerProcess.stdout.on('data', (data) => {
+      console.log(data.toString());
+    });
+    workerProcess.stderr.on('data', (data) => {
+      console.log('err:', data.toString());
+    });
   });
 };
 
@@ -48,20 +51,23 @@ let portgen = 3000;
 const getPort = () => ++portgen;
 
 // note that lightning isnt available here, and this is fine
-test.serial('worker should start, respond to 200, and close', async (t) => {
-  workerProcess = await spawnServer();
+test.serial.only(
+  'worker should start, respond to 200, and close',
+  async (t) => {
+    workerProcess = await spawnServer();
 
-  // The runnign server should respond to a get at root
-  let { status } = await fetch('http://localhost:2222/');
-  t.is(status, 200);
+    // The runnign server should respond to a get at root
+    let { status } = await fetch('http://localhost:2222/');
+    t.is(status, 200);
 
-  workerProcess.kill('SIGTERM');
+    workerProcess.kill('SIGTERM');
 
-  // After being killed, the fetch should fail
-  await t.throwsAsync(() => fetch('http://localhost:2222/'), {
-    message: 'fetch failed',
-  });
-});
+    // After being killed, the fetch should fail
+    await t.throwsAsync(() => fetch('http://localhost:2222/'), {
+      message: 'fetch failed',
+    });
+  }
+);
 
 test.serial('should connect to lightning', (t) => {
   return new Promise(async (done) => {
