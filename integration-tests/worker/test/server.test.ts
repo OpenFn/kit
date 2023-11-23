@@ -20,6 +20,7 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
         `-l ws://localhost:${port}/worker`,
         '--backoff 0.001/0.01',
         '--log debug',
+        '-s secretsquirrel',
         ...args,
       ],
       options
