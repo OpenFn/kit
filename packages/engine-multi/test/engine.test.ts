@@ -320,5 +320,7 @@ test.serial("Don't purge if purge is false", async (t) => {
   });
 });
 
+// I'm not actually going to use the destroy API (not for graceful shutdown anyway)
+// So it doesn't feel too important to implement these tests
 test.todo('destroy immediately, killing active workflows');
 test.todo('destroy gracefully, allowing active workflows to complete');
