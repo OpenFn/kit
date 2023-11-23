@@ -16,7 +16,12 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
     // We use fork because we want IPC messaging with the processing
     workerProcess = fork(
       './node_modules/@openfn/ws-worker/dist/start.js',
-      [`-l ws://localhost:${port}/worker`, '--backoff 0.001/0.01', ...args],
+      [
+        `-l ws://localhost:${port}/worker`,
+        '--backoff 0.001/0.01',
+        '--log debug',
+        ...args,
+      ],
       options
     );
 
