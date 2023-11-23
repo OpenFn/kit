@@ -95,7 +95,9 @@ test.serial(
       engine.execute(plan).on(e.WORKFLOW_COMPLETE, ({ state, threadId }) => {
         t.is(state, 22);
         t.truthy(threadId); // proves (sort of) that this has run in a worker
-        done();
+
+        // Apparently engine.destroy won't resolve if we return immediately
+        setTimeout(done, 1);
       });
     });
   }
@@ -154,7 +156,9 @@ test.serial('listen to workflow-complete', async (t) => {
       [e.WORKFLOW_COMPLETE]: ({ state, threadId }) => {
         t.is(state, 33);
         t.truthy(threadId); // proves (sort of) that this has run in a worker
-        done();
+
+        // Apparently engine.destroy won't resolve if we return immediately
+        setTimeout(done, 1);
       },
     });
     engine.execute(plan);
@@ -178,7 +182,9 @@ test.serial('call listen before execute', async (t) => {
     engine.listen(plan.id, {
       [e.WORKFLOW_COMPLETE]: ({ state }) => {
         t.is(state, 34);
-        done();
+
+        // Apparently engine.destroy won't resolve if we return immediately
+        setTimeout(done, 1);
       },
     });
     engine.execute(plan);
