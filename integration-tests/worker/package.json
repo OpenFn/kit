@@ -11,7 +11,7 @@
     "build:pack": "pnpm clean && cd ../.. && pnpm pack:local integration-tests/worker/dist --no-version",
     "build": "pnpm build:pack && docker build --tag worker-integration-tests .",
     "start": "docker run worker-integration-tests",
-    "test": "pnpm clean && npx ava -s --timeout 2m test/server.test.ts",
+    "test": "pnpm clean && npx ava -s --timeout 2m",
     "test:cache": "npx ava -s --timeout 2m"
   },
   "dependencies": {
