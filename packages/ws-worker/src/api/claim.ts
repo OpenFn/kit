@@ -13,12 +13,12 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
       return reject(new Error('Server at capacity'));
     }
 
-    if (!app.channel) {
+    if (!app.queueChannel) {
       return reject(new Error('No websocket available'));
     }
 
     logger.debug('requesting attempt...');
-    app.channel
+    app.queueChannel
       .push<ClaimPayload>(CLAIM, { demand: 1 })
       .receive('ok', ({ attempts }: ClaimReply) => {
         logger.debug(`pulled ${attempts.length} attempts`);
@@ -38,7 +38,7 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
       })
       // // TODO need implementations for both of these really
       // // What do we do if we fail to join the worker channel?
-      .receive('error', () => {
+      .receive('error', (e) => {
         logger.debug('pull err');
       })
       .receive('timeout', () => {

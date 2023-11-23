@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
@@ -5,15 +6,17 @@ import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
 
+import { INTERNAL_ATTEMPT_COMPLETE, ClaimAttempt } from './events';
+import destroy from './api/destroy';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import joinAttemptChannel from './channels/attempt';
 import connectToWorkerQueue from './channels/worker-queue';
 
+import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
-import type { ClaimAttempt } from './events';
 
 type ServerOptions = {
   maxWorkflows?: number;
@@ -34,9 +37,12 @@ type ServerOptions = {
 export interface ServerApp extends Koa {
   id: string;
   socket?: any;
-  channel?: Channel;
+  queueChannel?: Channel;
   workflows: Record<string, true | Context>;
   destroyed: boolean;
+  events: EventEmitter;
+  server: Server;
+  engine: RuntimeEngine;
 
   execute: ({ id, token }: ClaimAttempt) => Promise<void>;
   destroy: () => void;
@@ -62,7 +68,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
     // save the channel and socket
     app.socket = socket;
-    app.channel = channel;
+    app.queueChannel = channel;
 
     // trigger the workloop
     if (!options.noLoop) {
@@ -125,6 +131,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.id = humanId({ separator: '-', capitalize: false });
   const router = new Router();
 
+  app.events = new EventEmitter();
+  app.engine = engine;
+
   app.use(bodyParser());
   app.use(
     koaLogger((str, _args) => {
@@ -135,7 +144,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.workflows = {};
   app.destroyed = false;
 
-  const server = app.listen(port);
+  app.server = app.listen(port);
   logger.success(`ws-worker ${app.id} listening on ${port}`);
 
   process.send?.('READY');
@@ -160,6 +169,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       const onFinish = () => {
         delete app.workflows[id];
         attemptChannel.leave();
+
+        app.events.emit(INTERNAL_ATTEMPT_COMPLETE);
       };
       const context = execute(
         attemptChannel,
@@ -193,15 +204,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       });
   });
 
-  app.destroy = async () => {
-    logger.info('Closing server...');
-    app.destroyed = true;
-    app.socket?.disconnect();
-    app.killWorkloop?.();
-    server.close();
-    await engine.destroy();
-    logger.success('Server closed');
-  };
+  app.destroy = () => destroy(app, logger);
 
   app.use(router.routes());
 
@@ -213,7 +216,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   let shutdown = false;
 
-  const gracefulShutdown = async (signal: string) => {
+  const exit = async (signal: string) => {
     if (!shutdown) {
       shutdown = true;
       logger.always(`${signal} RECEIVED: CLOSING SERVER`);
@@ -222,8 +225,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     }
   };
 
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => exit('SIGINT'));
+  process.on('SIGTERM', () => exit('SIGTERM'));
 
   // TMP doing this for tests but maybe its better done externally?
   // @ts-ignore

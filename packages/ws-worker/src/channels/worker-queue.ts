@@ -16,7 +16,7 @@ const connectToWorkerQueue = (
 ) => {
   const events = new EventEmitter();
 
-  generateWorkerToken(secret, serverId).then((token) => {
+  generateWorkerToken(secret, serverId, logger).then((token) => {
     // @ts-ignore ts doesn't like the constructor here at all
     const socket = new SocketConstructor(endpoint, {
       params: { token },
