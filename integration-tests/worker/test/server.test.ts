@@ -48,7 +48,7 @@ let portgen = 3000;
 const getPort = () => ++portgen;
 
 // note that lightning isnt available here, and this is fine
-test('worker should start, respond to 200, and close', async (t) => {
+test.serial('worker should start, respond to 200, and close', async (t) => {
   workerProcess = await spawnServer();
 
   // The runnign server should respond to a get at root
@@ -63,7 +63,7 @@ test('worker should start, respond to 200, and close', async (t) => {
   });
 });
 
-test('should connect to lightning', (t) => {
+test.serial('should connect to lightning', (t) => {
   return new Promise(async (done) => {
     const port = getPort();
     lightning = initLightning(port);
@@ -77,7 +77,7 @@ test('should connect to lightning', (t) => {
   });
 });
 
-test('should join attempts queue channel', (t) => {
+test.serial('should join attempts queue channel', (t) => {
   return new Promise(async (done) => {
     const port = getPort();
     lightning = initLightning(port);
@@ -93,7 +93,7 @@ test('should join attempts queue channel', (t) => {
   });
 });
 
-test('allow a job to complete after receiving a sigterm', (t) => {
+test.serial('allow a job to complete after receiving a sigterm', (t) => {
   return new Promise(async (done) => {
     let didKill = false;
     const port = getPort();
@@ -143,4 +143,9 @@ test('allow a job to complete after receiving a sigterm', (t) => {
   });
 });
 
-test.todo('healthcheck');
+test.serial('healthcheck', async (t) => {
+  workerProcess = await spawnServer();
+
+  let { status } = await fetch('http://localhost:2222/livez');
+  t.is(status, 200);
+});
