@@ -84,7 +84,9 @@ test.serial('trigger job-complete', (t) => {
     api.execute(plan).on('job-complete', (evt) => {
       t.deepEqual(evt.next, []);
       t.log('duration:', evt.duration);
-      t.true(evt.duration < 50);
+      // Very lenient duration test - this often comes in around 200ms in CI
+      // (because of parelleisation in the tests I think)
+      t.true(evt.duration < 200);
       t.is(evt.jobId, 'j1');
       t.deepEqual(evt.state, { data: {} });
       t.pass('job completed');
