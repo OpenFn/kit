@@ -2,4 +2,4 @@
 '@openfn/ws-worker': patch
 ---
 
-Respond 200 requests GET requests at the server route
+Add a healthcheck at /livez and respond with 200 at root
