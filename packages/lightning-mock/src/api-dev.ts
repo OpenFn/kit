@@ -81,6 +81,7 @@ const setupDevAPI = (
   app.reset = () => {
     state.queue = [];
     state.results = {};
+    state.events.removeAllListeners();
   };
 
   app.getQueueLength = () => state.queue.length;
