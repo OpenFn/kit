@@ -555,48 +555,51 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
   });
 });
 
-test('should correctly convert edge conditions to handle downstream errors', (t) => {
-  return new Promise((done) => {
-    const a = createJob('fn(() => { throw "err" } )', 'a');
-    // b should always fire
-    const b = createJob('fn((s) => ({ ...s, data: 33 }) )', 'b');
-    // c should only fire if b didn't error
-    const c = createJob('fn((s) => ({ ...s, data: 66 }) )', 'c');
+test.serial(
+  'should correctly convert edge conditions to handle downstream errors',
+  (t) => {
+    return new Promise((done) => {
+      const a = createJob('fn(() => { throw "err" } )', 'a');
+      // b should always fire
+      const b = createJob('fn((s) => ({ ...s, data: 33 }) )', 'b');
+      // c should only fire if b didn't error
+      const c = createJob('fn((s) => ({ ...s, data: 66 }) )', 'c');
 
-    const ab = createEdge('a', 'b');
-    const bc = createEdge('b', 'c');
-    bc.condition = 'on_job_success';
+      const ab = createEdge('a', 'b');
+      const bc = createEdge('b', 'c');
+      bc.condition = 'on_job_success';
 
-    const attempt = createAttempt([a, b, c], [ab, bc]);
+      const attempt = createAttempt([a, b, c], [ab, bc]);
 
-    const results: Record<string, any> = {};
+      const results: Record<string, any> = {};
 
-    // If job C completes, we're good here
-    const unsub = lng.onSocketEvent(
-      e.RUN_COMPLETE,
-      attempt.id,
-      (evt) => {
-        results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
-      },
-      false
-    );
+      // If job C completes, we're good here
+      const unsub = lng.onSocketEvent(
+        e.RUN_COMPLETE,
+        attempt.id,
+        (evt) => {
+          results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
+        },
+        false
+      );
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-      t.is(evt.payload.reason, 'success');
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.is(evt.payload.reason, 'success');
 
-      // What we REALLY care about is that the b-c edge condition
-      // resolved to true and c executed with a result
-      t.deepEqual(results.c.data, 66);
-      // And that there's still an error registered for a
-      t.truthy(results.c.errors.a);
+        // What we REALLY care about is that the b-c edge condition
+        // resolved to true and c executed with a result
+        t.deepEqual(results.c.data, 66);
+        // And that there's still an error registered for a
+        t.truthy(results.c.errors.a);
 
-      unsub();
-      done();
+        unsub();
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
     });
-
-    lng.enqueueAttempt(attempt);
-  });
-});
+  }
+);
 
 // Note that this test HAS to be last
 // Remember this uses the mock engine, so it's not a good test of workerpool's behaviours
