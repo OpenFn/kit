@@ -23,6 +23,14 @@ import callRuntime from '../src/runtime';
  * We burn the thread so it still doesn't matter much/
  */
 
+test.afterEach(() => {
+  // Force gc to try and better isolate tests
+  // THis may not work and maybe we need to use threads or something to ensure a pristine environment
+  // Certainly runs seem to affect each other in the same process (no suprise there)
+  // @ts-ignore
+  global.gc();
+});
+
 type Mem = {
   job: number; // heapUsed in bytes
   system: number; // rss in bytes
@@ -31,11 +39,12 @@ type Mem = {
 // This helper will run a workflow and return
 // memory usage per run
 const run = async (t, workflow: ExecutionPlan) => {
-  const useage: Record<string, Mem> = {};
+  const mem: Record<string, Mem> = {};
 
   const notify = (evt: string, payload: NotifyJobCompletePayload) => {
     if (evt === NOTIFY_JOB_COMPLETE) {
-      useage[payload.jobId] = payload.mem;
+      mem[payload.jobId] = payload.mem;
+      logUsage(t, payload.mem, `final ${payload.jobId}:`);
     }
   };
 
@@ -45,10 +54,14 @@ const run = async (t, workflow: ExecutionPlan) => {
     {
       strict: false,
       callbacks: { notify },
+      globals: {
+        process: {
+          memoryUsage: () => process.memoryUsage(),
+        },
+      },
     }
   );
-  logUsage(t, useage.a);
-  return { state, useage };
+  return { state, mem };
 };
 
 const logUsage = (t: any, mem: Mem, label = '') => {
@@ -72,9 +85,29 @@ const expressions = {
     s[jobName] = { job: mem.heapUsed, system: mem.rss };
     return s;
   },
+  createArray: (numberofElements: number) => (s: any) => {
+    s.data = Array(numberofElements).fill('bowser');
+    return s;
+  },
 };
 
-test('emit memory usage to job-complete', async (t) => {
+// assert that b is within tolerance% of the value of a
+const roughlyEqual = (a: number, b: number, tolerance: number) => {
+  const diff = Math.abs(a - b);
+  return diff <= a * tolerance;
+};
+
+test.serial('roughly equal', (t) => {
+  t.true(roughlyEqual(10, 10, 0)); // exactly equal, no tolerance
+  t.false(roughlyEqual(10, 11, 0)); // not equal, no tolerance
+  t.false(roughlyEqual(10, 9, 0)); // not equal, no tolerance
+
+  t.true(roughlyEqual(10, 11, 0.1)); // roughly equal with 10% tolerance
+  t.true(roughlyEqual(10, 9, 0.1)); // roughly equal with 10% tolerance
+  t.false(roughlyEqual(10, 12, 0.1)); // not equal with 10% tolerance
+});
+
+test.serial('emit memory usage to job-complete', async (t) => {
   const plan = {
     jobs: [
       {
@@ -85,13 +118,13 @@ test('emit memory usage to job-complete', async (t) => {
     ],
   };
 
-  const { useage } = await run(t, plan);
-  t.true(!isNaN(useage.a.job));
-  t.true(!isNaN(useage.a.system));
-  t.true(useage.a.job < useage.a.system);
+  const { mem } = await run(t, plan);
+  t.true(!isNaN(mem.a.job));
+  t.true(!isNaN(mem.a.system));
+  t.true(mem.a.job < mem.a.system);
 });
 
-test('report memory usage for a job to state', async (t) => {
+test.serial('report memory usage for a job to state', async (t) => {
   const plan = {
     jobs: [
       {
@@ -102,9 +135,139 @@ test('report memory usage for a job to state', async (t) => {
   };
 
   const { state } = await run(t, plan);
-  logUsage(t, state.a, 'state: ');
+  logUsage(t, state.a, 'state:');
 
   t.true(!isNaN(state.a.job));
   t.true(!isNaN(state.a.system));
   t.true(state.a.job < state.a.system);
 });
+
+test.serial('report memory usage multiple times', async (t) => {
+  const plan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: [
+          expressions.readMemory('a'), // ~56mb
+          expressions.readMemory('b'),
+          expressions.readMemory('c'),
+          expressions.readMemory('d'),
+        ],
+      },
+    ],
+  };
+
+  const { state, mem } = await run(t, plan);
+  logUsage(t, state.a, 'state a:');
+  logUsage(t, state.b, 'state b:');
+  logUsage(t, state.c, 'state c:');
+  logUsage(t, state.d, 'state d:');
+
+  // Each job should use basically the same memory interally (within 2%)
+  t.true(roughlyEqual(state.a.job, state.d.job, 0.002));
+
+  // The total memory should be about the last job's memory
+  t.true(roughlyEqual(mem.a.job, state.d.job, 0.002));
+});
+
+test.serial('create a large array in a job', async (t) => {
+  const plan = {
+    jobs: [
+      {
+        id: 'a',
+        expression: [
+          expressions.readMemory('a1'), // ~56mb
+          expressions.createArray(10e6), // 10 million ~76mb
+          expressions.readMemory('a2'), // ~133mb
+        ],
+      },
+    ],
+  };
+
+  const { state, mem } = await run(t, plan);
+  logUsage(t, state.a1, 'state a1:');
+  logUsage(t, state.a2, 'state a2:');
+
+  // The second read should have more memory
+  t.true(state.a2.job > state.a1.job);
+
+  // The final job memory is a lot bigger because  AFTER the job we serialize state.data
+  // Which of course has a huge array on it - so memory baloons¬
+  t.true(mem.a.job > state.a1.job + state.a2.job);
+});
+
+// as before but without using closures (implications for gc I think)
+// The result is basically the same (worth knowing!)
+test.serial('create a large array in a job without closures', async (t) => {
+  const f1 = `(s) => {
+    const mem = process.memoryUsage();
+    s.a = { job: mem.heapUsed, system: mem.rss };
+    return s;
+  }`;
+
+  const f2 = `(s) => {
+    s.data = Array(10e6).fill('bowser');
+    return s;
+  }`;
+
+  const f3 = `(s) => {
+    const mem = process.memoryUsage();
+    s.b = { job: mem.heapUsed, system: mem.rss };
+    return s;
+  }`;
+
+  const expression = `export default [${f1}, ${f2}, ${f3}]`;
+
+  const plan = {
+    jobs: [
+      {
+        id: 'a',
+        expression,
+      },
+    ],
+  };
+
+  const { state, mem } = await run(t, plan);
+  logUsage(t, state.a, 'state a:');
+  logUsage(t, state.b, 'state b:');
+
+  // The second read should have more memory
+  t.true(state.b.job > state.a.job);
+
+  // The final job memory is a lot bigger because  AFTER the job we serialize state.data
+  // Which of course has a huge array on it - so memory baloons
+  t.true(mem.a.job > state.a.job + state.b.job);
+});
+
+test.serial(
+  "create a large array in a job but don't write it to state",
+  async (t) => {
+    const plan = {
+      jobs: [
+        {
+          id: 'a',
+          expression: [
+            expressions.readMemory('a1'), // ~56mb
+            expressions.createArray(10e6), // 10 million ~76mb
+            (s) => {
+              delete s.data;
+              return s;
+            },
+            expressions.readMemory('a2'), // ~133mb
+          ],
+        },
+      ],
+    };
+
+    const { state, mem } = await run(t, plan);
+    logUsage(t, state.a1, 'state a1:');
+    logUsage(t, state.a2, 'state a2:');
+
+    // The second read should have more memory
+    t.true(state.a2.job > state.a1.job);
+
+    // In this example, because we didn't return state,
+    // the final memory is basically the same as the last operation
+    t.true(roughlyEqual(mem.a.job, state.a2.job, 0.001));
+  }
+);

@@ -157,6 +157,10 @@ const executeJob = async (
     }
 
     if (!didError) {
+      // Take a memory snapshot
+      // IMPORTANT: this runs after the state object has been serialized
+      // Which has a big impact on memory
+      // This is reasonable I think because your final state is part of the job!
       const { heapUsed, rss } = process.memoryUsage();
       const humanDuration = logger.timer(timerId);
 
