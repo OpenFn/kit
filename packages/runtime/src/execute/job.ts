@@ -157,20 +157,22 @@ const executeJob = async (
     }
 
     if (!didError) {
+      const humanDuration = logger.timer(timerId);
+      logger.success(`Completed job ${jobId} in ${humanDuration}`);
+
       // Take a memory snapshot
-      // IMPORTANT: this runs after the state object has been serialized
+      // IMPORTANT: this runs _after_ the state object has been serialized
       // Which has a big impact on memory
       // This is reasonable I think because your final state is part of the job!
       const { heapUsed, rss } = process.memoryUsage();
-      const humanDuration = logger.timer(timerId);
 
       const jobMemory = heapUsed;
       const systemMemory = rss;
 
       const humanJobMemory = Math.round(jobMemory / 1024 / 1024);
-      // TODO is this something we want to always log?
-      logger.success(
-        `Completed job ${jobId} in ${humanDuration} (used ${humanJobMemory}mb)`
+      const humanSystemMemory = Math.round(systemMemory / 1024 / 1024);
+      logger.debug(
+        `Final memory usage: [job ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
       );
 
       next = calculateNext(job, result);

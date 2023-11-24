@@ -31,7 +31,7 @@ test.afterEach(() => {
   logger._reset();
 });
 
-test('resolve and return next for a simple job', async (t) => {
+test.serial('resolve and return next for a simple job', async (t) => {
   const job = {
     id: 'j',
     expression: [(s: State) => s],
@@ -45,7 +45,7 @@ test('resolve and return next for a simple job', async (t) => {
   t.deepEqual(next, ['k']);
 });
 
-test('resolve and return next for a trigger-style job', async (t) => {
+test.serial('resolve and return next for a trigger-style job', async (t) => {
   const job = {
     id: 'j',
     next: { k: true, a: false },
@@ -58,7 +58,7 @@ test('resolve and return next for a trigger-style job', async (t) => {
   t.deepEqual(next, ['k']);
 });
 
-test('resolve and return next for a failed job', async (t) => {
+test.serial('resolve and return next for a failed job', async (t) => {
   const job = {
     id: 'j',
     expression: [
@@ -77,7 +77,7 @@ test('resolve and return next for a failed job', async (t) => {
   t.deepEqual(next, ['k']);
 });
 
-test(`notify ${NOTIFY_JOB_START}`, async (t) => {
+test.serial(`notify ${NOTIFY_JOB_START}`, async (t) => {
   const job = {
     id: 'j',
     expression: [(s: State) => s],
@@ -95,25 +95,28 @@ test(`notify ${NOTIFY_JOB_START}`, async (t) => {
   await execute(context, job, state);
 });
 
-test(`don't notify ${NOTIFY_JOB_START} for trigger-style jobs`, async (t) => {
-  const job = {
-    id: 'j',
-  };
-  const state = createState();
+test.serial(
+  `don't notify ${NOTIFY_JOB_START} for trigger-style jobs`,
+  async (t) => {
+    const job = {
+      id: 'j',
+    };
+    const state = createState();
 
-  const notify = (event: string, payload?: any) => {
-    if (event === NOTIFY_JOB_START) {
-      t.fail('should not notify job-start for trigger nodes');
-    }
-  };
+    const notify = (event: string, payload?: any) => {
+      if (event === NOTIFY_JOB_START) {
+        t.fail('should not notify job-start for trigger nodes');
+      }
+    };
 
-  const context = createContext({ notify });
+    const context = createContext({ notify });
 
-  await execute(context, job, state);
-  t.pass('all ok');
-});
+    await execute(context, job, state);
+    t.pass('all ok');
+  }
+);
 
-test(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
+test.serial(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
   const job = {
     id: 'j',
     expression: [(s: State) => s],
@@ -139,7 +142,7 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
   await execute(context, job, state);
 });
 
-test(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
+test.serial(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
   const job = {
     id: 'j',
     expression: [(s: State) => s],
@@ -165,49 +168,55 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
   await execute(context, job, state);
 });
 
-test(`don't notify ${NOTIFY_JOB_COMPLETE} for trigger-style jobs`, async (t) => {
-  const job = {
-    id: 'j',
-  };
-  const state = createState();
+test.serial(
+  `don't notify ${NOTIFY_JOB_COMPLETE} for trigger-style jobs`,
+  async (t) => {
+    const job = {
+      id: 'j',
+    };
+    const state = createState();
 
-  const notify = (event: string) => {
-    if (event === NOTIFY_JOB_COMPLETE) {
-      t.fail('should not notify job-start for trigger nodes');
-    }
-  };
+    const notify = (event: string) => {
+      if (event === NOTIFY_JOB_COMPLETE) {
+        t.fail('should not notify job-start for trigger nodes');
+      }
+    };
 
-  const context = createContext({ notify });
+    const context = createContext({ notify });
 
-  await execute(context, job, state);
-  t.pass('all ok');
-});
+    await execute(context, job, state);
+    t.pass('all ok');
+  }
+);
 
-test(`notify ${NOTIFY_JOB_COMPLETE} should publish serializable state`, async (t) => {
-  // Promises will trigger an exception if you try to serialize them
-  // If we don't return finalState in  execute/expression, this test will fail
-  const resultState = { x: new Promise((r) => r), y: 22 };
-  const job = {
-    id: 'j',
-    expression: [() => resultState],
-  };
-  const state = createState();
+test.serial(
+  `notify ${NOTIFY_JOB_COMPLETE} should publish serializable state`,
+  async (t) => {
+    // Promises will trigger an exception if you try to serialize them
+    // If we don't return finalState in  execute/expression, this test will fail
+    const resultState = { x: new Promise((r) => r), y: 22 };
+    const job = {
+      id: 'j',
+      expression: [() => resultState],
+    };
+    const state = createState();
 
-  const notify = (event: string, payload: any) => {
-    if (event === NOTIFY_JOB_COMPLETE) {
-      const { state, duration, jobId } = payload;
-      t.truthy(state);
-      t.assert(!isNaN(duration));
-      t.is(jobId, 'j');
-    }
-  };
+    const notify = (event: string, payload: any) => {
+      if (event === NOTIFY_JOB_COMPLETE) {
+        const { state, duration, jobId } = payload;
+        t.truthy(state);
+        t.assert(!isNaN(duration));
+        t.is(jobId, 'j');
+      }
+    };
 
-  const context = createContext({ notify });
+    const context = createContext({ notify });
 
-  await execute(context, job, state);
-});
+    await execute(context, job, state);
+  }
+);
 
-test(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
+test.serial(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
   const job = {
     id: 'j',
     expression: [
@@ -241,9 +250,9 @@ test(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
   await execute(context, job, state);
 });
 
-test('log duration of execution', async (t) => {
+test.serial('log duration of execution', async (t) => {
   const job = {
-    id: 'j',
+    id: 'y',
     expression: [(s: State) => s],
   };
   const initialState = createState();
@@ -253,5 +262,22 @@ test('log duration of execution', async (t) => {
 
   const duration = logger._find('success', /completed job /i);
 
-  t.regex(duration?.message, /completed job j in \d\d?ms/i);
+  t.regex(duration?.message, /completed job y in \d\d?ms/i);
+});
+
+test.serial('log memory usage', async (t) => {
+  const job = {
+    id: 'z',
+    expression: [(s: State) => s],
+  };
+  const initialState = createState();
+  const context = createContext();
+
+  await execute(context, job, initialState);
+
+  const memory = logger._find('debug', /final memory usage/i);
+
+  // All we're looking for here is two strings of numbers in mb
+  // the rest is for the birds
+  t.regex(memory?.message, /\d+mb(.+)\d+mb/i);
 });
