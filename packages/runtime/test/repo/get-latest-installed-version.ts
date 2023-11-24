@@ -47,7 +47,7 @@ test('return the higher if order is changed', async (t) => {
 test('should read package json from disk', async (t) => {
   const result = await getLatestInstalledVersion(
     'ultimate-answer',
-    path.resolve('test/__repo')
+    path.resolve('test/__repo__')
   );
   t.assert(result === 'ultimate-answer_2.0.0');
 });

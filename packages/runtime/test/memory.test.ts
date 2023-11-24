@@ -1,3 +1,8 @@
+/**
+ * IGNORED BY AVA
+ * RUN WITH pnpm test:memory
+ * */
+
 import test from 'ava';
 
 import {
@@ -314,3 +319,5 @@ test.serial(
     t.true(roughlyEqual(mem.a.job, state.a.job, 0.01));
   }
 );
+
+test.todo('will gc run if we leave a long timeout?');

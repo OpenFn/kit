@@ -129,7 +129,7 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
       t.deepEqual(next, []);
       t.assert(!isNaN(duration));
       t.true(duration < 100);
-      t.true(mem);
+      t.truthy(mem);
       t.is(jobId, 'j');
     }
   };
