@@ -31,18 +31,16 @@ test.after(async () => {
   await worker.destroy();
 });
 
-const humanMb = (sizeInBytes: number) =>
-  `${Math.round(sizeInBytes / 1024 / 1024)}mb`;
+const humanMb = (sizeInBytes: number) => Math.round(sizeInBytes / 1024 / 1024);
 
 const run = async (t, attempt) => {
   return new Promise<any>(async (done, reject) => {
     lightning.on('run:complete', ({ payload }) => {
-      // TODO I'd actually love to include the thread id here, but we don't send it :( Maybe soon?
-      // TODO ditto duration!! omg how am I not sending that?
+      // TODO friendlier job names for this would be nice (rather than run ids)
       t.log(
-        `${payload.job_id}: ${humanMb(payload.mem.job)} (${humanMb(
-          payload.mem.system
-        )})`
+        `run ${payload.run_id} done in ${payload.duration / 1000}s [${humanMb(
+          payload.mem.job
+        )} / ${humanMb(payload.mem.system)}mb] [thread ${payload.thread_id}]`
       );
     });
     lightning.on('attempt:complete', (evt) => {
