@@ -247,7 +247,10 @@ export function onJobComplete(
     reason,
     error_message,
     error_type,
+
     mem: event.mem,
+    duration: event.duration,
+    thread_id: event.threadId,
   };
   return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, evt);
 }
