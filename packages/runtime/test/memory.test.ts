@@ -44,7 +44,7 @@ const run = async (t, workflow: ExecutionPlan) => {
   const notify = (evt: string, payload: NotifyJobCompletePayload) => {
     if (evt === NOTIFY_JOB_COMPLETE) {
       mem[payload.jobId] = payload.mem;
-      logUsage(t, payload.mem, `final ${payload.jobId}:`);
+      logUsage(t, payload.mem, `job ${payload.jobId}`);
     }
   };
 
@@ -70,7 +70,7 @@ const logUsage = (t: any, mem: Mem, label = '') => {
   // I mean you could lose nearly 500kb of accuracy, that's a lot!
   const job = (mem.job / 1024 / 1024).toFixed(2);
   const system = (mem.system / 1024 / 1024).toFixed(2);
-  t.log(`${label} job: ${job}mb / system ${system}mb`);
+  t.log(`${label}: ${job}mb / system ${system}mb`);
 };
 
 // const jobs = {
@@ -158,10 +158,10 @@ test.serial('report memory usage multiple times', async (t) => {
   };
 
   const { state, mem } = await run(t, plan);
-  logUsage(t, state.a, 'state a:');
-  logUsage(t, state.b, 'state b:');
-  logUsage(t, state.c, 'state c:');
-  logUsage(t, state.d, 'state d:');
+  logUsage(t, state.a, 'state a');
+  logUsage(t, state.b, 'state b');
+  logUsage(t, state.c, 'state c');
+  logUsage(t, state.d, 'state d');
 
   // Each job should use basically the same memory interally (within 2%)
   t.true(roughlyEqual(state.a.job, state.d.job, 0.002));
@@ -170,6 +170,7 @@ test.serial('report memory usage multiple times', async (t) => {
   t.true(roughlyEqual(mem.a.job, state.d.job, 0.002));
 });
 
+// This test shows that creating a large array will increase the memory used by a job
 test.serial('create a large array in a job', async (t) => {
   const plan = {
     jobs: [
@@ -185,8 +186,8 @@ test.serial('create a large array in a job', async (t) => {
   };
 
   const { state, mem } = await run(t, plan);
-  logUsage(t, state.a1, 'state a1:');
-  logUsage(t, state.a2, 'state a2:');
+  logUsage(t, state.a1, 'state a1');
+  logUsage(t, state.a2, 'state a2');
 
   // The second read should have more memory
   t.true(state.a2.job > state.a1.job);
@@ -196,8 +197,8 @@ test.serial('create a large array in a job', async (t) => {
   t.true(mem.a.job > state.a1.job + state.a2.job);
 });
 
-// as before but without using closures (implications for gc I think)
-// The result is basically the same (worth knowing!)
+// This test proves that running a job from a string or by passing in a function
+// doesn't really affect memory usage
 test.serial('create a large array in a job without closures', async (t) => {
   const f1 = `(s) => {
     const mem = process.memoryUsage();
@@ -228,8 +229,8 @@ test.serial('create a large array in a job without closures', async (t) => {
   };
 
   const { state, mem } = await run(t, plan);
-  logUsage(t, state.a, 'state a:');
-  logUsage(t, state.b, 'state b:');
+  logUsage(t, state.a, 'state a');
+  logUsage(t, state.b, 'state b');
 
   // The second read should have more memory
   t.true(state.b.job > state.a.job);
@@ -239,6 +240,8 @@ test.serial('create a large array in a job without closures', async (t) => {
   t.true(mem.a.job > state.a.job + state.b.job);
 });
 
+// This test proves that writing a lot of data to state dramatically increases final memory
+// Note that we can surely optimise the serialisation step, but that's another story
 test.serial(
   "create a large array in a job but don't write it to state",
   async (t) => {
@@ -260,8 +263,8 @@ test.serial(
     };
 
     const { state, mem } = await run(t, plan);
-    logUsage(t, state.a1, 'state a1:');
-    logUsage(t, state.a2, 'state a2:');
+    logUsage(t, state.a1, 'state a1');
+    logUsage(t, state.a2, 'state a2');
 
     // The second read should have more memory
     t.true(state.a2.job > state.a1.job);
@@ -269,5 +272,45 @@ test.serial(
     // In this example, because we didn't return state,
     // the final memory is basically the same as the last operation
     t.true(roughlyEqual(mem.a.job, state.a2.job, 0.001));
+  }
+);
+
+// This test basically comfirms that final memory is not peak memory
+// because GC can dramatically change the reported memory usage (thank goodness!)
+test.serial(
+  'create a large array in a job, run gc, compare peak and  final memory',
+  async (t) => {
+    const plan = {
+      jobs: [
+        {
+          id: 'a',
+          expression: [
+            (s) => {
+              // clean up first
+              global.gc();
+              return s;
+            },
+            expressions.readMemory('a'),
+            expressions.createArray(10e6), // 10 million ~76mb
+            expressions.readMemory('b'),
+            (s) => {
+              delete s.data;
+              global.gc();
+              return s;
+            },
+            expressions.readMemory('c'),
+          ],
+        },
+      ],
+    };
+
+    const { state, mem } = await run(t, plan);
+    logUsage(t, state.b, 'peak');
+
+    // The first job should use over 100mb
+    t.true(state.b.job > 100 * 1024 * 1024);
+
+    // the final state should be the intial state
+    t.true(roughlyEqual(mem.a.job, state.a.job, 0.01));
   }
 );
