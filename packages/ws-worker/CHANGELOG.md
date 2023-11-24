@@ -1,5 +1,16 @@
 # ws-worker
 
+## 0.2.10
+
+### Patch Changes
+
+- 30da946: Better conversion of edge conditions to only take the upstream job into account
+- c1aa9b3: Leave attempt queue channel on disconnect
+  Allow outstanding work to finish before closing down on SIGTERM
+- 60b6fba: Add a healthcheck at /livez and respond with 200 at root
+- Updated dependencies [a6dd44b]
+  - @openfn/engine-multi@0.2.1
+
 ## 0.2.9
 
 ### Patch Changes
