@@ -216,6 +216,8 @@ export function onJobComplete(
   }
   state.dataclips[dataclipId] = event.state;
 
+  delete state.activeRun;
+  delete state.activeJob;
   // TODO right now, the last job to run will be the result for the attempt
   // this may not stand up in the future
   // I'd feel happer if the runtime could judge what the final result is
@@ -229,8 +231,6 @@ export function onJobComplete(
     state.inputDataclips[nextJobId] = dataclipId;
   });
 
-  delete state.activeRun;
-  delete state.activeJob;
   const { reason, error_message, error_type } = calculateJobExitReason(
     job_id,
     event.state,
@@ -247,6 +247,7 @@ export function onJobComplete(
     reason,
     error_message,
     error_type,
+    mem: event.mem,
   };
   return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, evt);
 }

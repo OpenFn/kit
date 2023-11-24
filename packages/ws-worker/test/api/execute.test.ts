@@ -235,10 +235,11 @@ test('jobComplete should send a run:complete event', async (t) => {
       t.truthy(evt.run_id);
       t.truthy(evt.output_dataclip_id);
       t.is(evt.output_dataclip, JSON.stringify(result));
+      t.deepEqual(evt.mem, event.mem);
     },
   });
 
-  const event = { state: result, next: ['a'] };
+  const event = { state: result, next: ['a'], mem: { job: 1, system: 10 } };
   await onJobComplete({ channel, state }, event);
 });
 

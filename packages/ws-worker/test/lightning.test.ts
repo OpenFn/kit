@@ -275,6 +275,9 @@ test.serial(
         t.truthy(payload.run_id);
         t.truthy(payload.output_dataclip);
         t.truthy(payload.output_dataclip_id);
+        t.truthy(payload.mem.job);
+        t.truthy(payload.mem.system);
+        t.true(payload.mem.system > payload.mem.job);
         t.pass('called run complete');
       });
 
