@@ -19,7 +19,7 @@ test('workloop can be cancelled', async (t) => {
   let count = 0;
   let cancel;
   const app = {
-    channel: mockChannel({
+    queueChannel: mockChannel({
       [CLAIM]: () => {
         count++;
         cancel();
@@ -42,7 +42,7 @@ test('workloop sends the attempts:claim event', (t) => {
 
     const app = {
       workflows: {},
-      channel: mockChannel({
+      queueChannel: mockChannel({
         [CLAIM]: () => {
           t.pass();
           done();
@@ -61,7 +61,7 @@ test('workloop sends the attempts:claim event several times ', (t) => {
     let count = 0;
     const app = {
       workflows: {},
-      channel: mockChannel({
+      queueChannel: mockChannel({
         [CLAIM]: () => {
           count++;
           if (count === 5) {
@@ -83,7 +83,7 @@ test('workloop calls execute if attempts:claim returns attempts', (t) => {
 
     const app = {
       workflows: {},
-      channel: mockChannel({
+      queueChannel: mockChannel({
         [CLAIM]: () => ({
           attempts: [{ id: 'a', token: 'x.y.z' }],
         }),

@@ -1,5 +1,7 @@
 import { Attempt, ExitReason } from './types';
 
+// These are worker-lightning events, used in the websocket
+
 export const CLAIM = 'claim';
 
 export type ClaimPayload = { demand?: number };
@@ -59,3 +61,8 @@ export type RunCompletePayload = ExitReason & {
   output_dataclip_id?: string;
 };
 export type RunCompleteReply = void;
+
+// These are internal server events
+// Explicitly (and awkwardly) namespaced to avoid confusion
+
+export const INTERNAL_ATTEMPT_COMPLETE = 'server:attempt-complete';

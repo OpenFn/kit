@@ -35,6 +35,7 @@ const startWorkloop = (
     logger.debug('cancelling workloop');
     cancelled = true;
     promise.cancel();
+    app.queueChannel?.leave();
   };
 };
 

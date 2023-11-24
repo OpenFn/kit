@@ -31,6 +31,10 @@ test.before(async () => {
   });
 });
 
+test.afterEach(() => {
+  lng.removeAllListeners();
+});
+
 let rollingAttemptId = 0;
 
 const getAttempt = (ext = {}, jobs?: any) => ({
@@ -44,6 +48,47 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   ],
   ...ext,
 });
+
+test.serial(
+  `events: lightning should respond to a claim ${e.CLAIM} event`,
+  (t) => {
+    return new Promise((done) => {
+      lng.on(e.CLAIM, (evt) => {
+        const response = evt.payload;
+        t.deepEqual(response, []);
+        done();
+      });
+    });
+  }
+);
+
+test.serial(
+  `events: lightning should respond to a ${e.CLAIM} event with an attempt id and token`,
+  (t) => {
+    return new Promise((done) => {
+      const attempt = getAttempt();
+      let response;
+
+      lng.on(e.CLAIM, ({ payload }) => {
+        if (payload.length) {
+          response = payload[0];
+        }
+      });
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+        const { id, token } = response;
+        // Note that the payload here is what will be sent back to the worker
+        t.truthy(id);
+        t.truthy(token);
+        t.assert(typeof token === 'string');
+
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
 
 test.serial(
   'should run an attempt which returns an expression as JSON',
@@ -117,30 +162,6 @@ test.todo(`events: lightning should receive a ${e.ATTEMPT_START} event`);
 // Now run detailed checks of every event
 // for each event we can see a copy of the server state
 // (if that helps anything?)
-
-test.serial(`events: lightning should receive a ${e.CLAIM} event`, (t) => {
-  return new Promise((done) => {
-    const attempt = getAttempt();
-    let didCallEvent = false;
-    lng.onSocketEvent(e.CLAIM, attempt.id, ({ payload }) => {
-      const { id, token } = payload;
-      // Note that the payload here is what will be sent back to the worker
-      // TODO check there's a token
-      t.truthy(id);
-      t.truthy(token);
-      t.assert(typeof token === 'string');
-
-      didCallEvent = true;
-    });
-
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-      t.true(didCallEvent);
-      done();
-    });
-
-    lng.enqueueAttempt(attempt);
-  });
-});
 
 test.serial(
   `events: lightning should receive a ${e.GET_ATTEMPT} event`,
@@ -370,34 +391,37 @@ test.serial(
   }
 );
 
-test('should register and de-register attempts to the server', async (t) => {
-  return new Promise((done) => {
-    const attempt = {
-      id: 'attempt-1',
-      jobs: [
-        {
-          body: 'fn(() => ({ count: 122 }))',
-        },
-      ],
-    };
+test.serial(
+  'should register and de-register attempts to the server',
+  async (t) => {
+    return new Promise((done) => {
+      const attempt = {
+        id: 'attempt-1',
+        jobs: [
+          {
+            body: 'fn(() => ({ count: 122 }))',
+          },
+        ],
+      };
 
-    worker.on(e.ATTEMPT_START, () => {
-      t.truthy(worker.workflows[attempt.id]);
+      worker.on(e.ATTEMPT_START, () => {
+        t.truthy(worker.workflows[attempt.id]);
+      });
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.truthy(worker.workflows[attempt.id]);
+        // Tidyup is done AFTER lightning receives the event
+        // This timeout is crude but should work
+        setTimeout(() => {
+          t.falsy(worker.workflows[attempt.id]);
+          done();
+        }, 10);
+      });
+
+      lng.enqueueAttempt(attempt);
     });
-
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-      t.truthy(worker.workflows[attempt.id]);
-      // Tidyup is done AFTER lightning receives the event
-      // This timeout is crude but should work
-      setTimeout(() => {
-        t.falsy(worker.workflows[attempt.id]);
-        done();
-      }, 10);
-    });
-
-    lng.enqueueAttempt(attempt);
-  });
-});
+  }
+);
 
 // TODO this is a server test
 // What I am testing here is that the first job completes
@@ -449,7 +473,7 @@ test.skip('should not claim while at capacity', async (t) => {
   });
 });
 
-test('should pass the right dataclip when running in parallel', (t) => {
+test.serial('should pass the right dataclip when running in parallel', (t) => {
   return new Promise((done) => {
     const job = (id: string) => ({
       id,
@@ -531,45 +555,70 @@ test('should pass the right dataclip when running in parallel', (t) => {
   });
 });
 
-test.only('should correctly convert edge conditions to handle downstream errors', (t) => {
-  return new Promise((done) => {
-    const a = createJob('fn(() => { throw "err" } )', 'a');
-    // b should always fire
-    const b = createJob('fn((s) => ({ ...s, data: 33 }) )', 'b');
-    // c should only fire if b didn't error
-    const c = createJob('fn((s) => ({ ...s, data: 66 }) )', 'c');
+test.serial(
+  'should correctly convert edge conditions to handle downstream errors',
+  (t) => {
+    return new Promise((done) => {
+      const a = createJob('fn(() => { throw "err" } )', 'a');
+      // b should always fire
+      const b = createJob('fn((s) => ({ ...s, data: 33 }) )', 'b');
+      // c should only fire if b didn't error
+      const c = createJob('fn((s) => ({ ...s, data: 66 }) )', 'c');
 
-    const ab = createEdge('a', 'b');
-    const bc = createEdge('b', 'c');
-    bc.condition = 'on_job_success';
+      const ab = createEdge('a', 'b');
+      const bc = createEdge('b', 'c');
+      bc.condition = 'on_job_success';
 
-    const attempt = createAttempt([a, b, c], [ab, bc]);
+      const attempt = createAttempt([a, b, c], [ab, bc]);
 
-    const results: Record<string, any> = {};
+      const results: Record<string, any> = {};
 
-    // If job C completes, we're good here
-    const unsub = lng.onSocketEvent(
-      e.RUN_COMPLETE,
-      attempt.id,
-      (evt) => {
-        results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
-      },
-      false
-    );
+      // If job C completes, we're good here
+      const unsub = lng.onSocketEvent(
+        e.RUN_COMPLETE,
+        attempt.id,
+        (evt) => {
+          results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
+        },
+        false
+      );
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-      t.is(evt.payload.reason, 'success');
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        t.is(evt.payload.reason, 'success');
 
-      // What we REALLY care about is that the b-c edge condition
-      // resolved to true and c executed with a result
-      t.deepEqual(results.c.data, 66);
-      // And that there's still an error registered for a
-      t.truthy(results.c.errors.a);
+        // What we REALLY care about is that the b-c edge condition
+        // resolved to true and c executed with a result
+        t.deepEqual(results.c.data, 66);
+        // And that there's still an error registered for a
+        t.truthy(results.c.errors.a);
 
-      unsub();
-      done();
+        unsub();
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
     });
+  }
+);
 
-    lng.enqueueAttempt(attempt);
-  });
-});
+// Note that this test HAS to be last
+// Remember this uses the mock engine, so it's not a good test of workerpool's behaviours
+test.serial(
+  `events: lightning should not receive ${e.CLAIM} events when the worker is stopped`,
+  (t) => {
+    return new Promise(async (done) => {
+      await worker.destroy();
+
+      let timeout = setTimeout(() => {
+        t.pass('no more claims');
+        done();
+      }, 2000);
+
+      lng.on(e.CLAIM, () => {
+        t.fail('claim event received');
+        clearTimeout(timeout);
+        done();
+      });
+    });
+  }
+);
