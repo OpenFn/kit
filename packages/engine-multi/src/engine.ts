@@ -224,7 +224,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     // How does this work if deferred?
   };
 
-  const destroy = () => engine.closeWorkers();
+  const destroy = (instant?: boolean) => engine.closeWorkers(instant);
 
   return Object.assign(engine, {
     options,

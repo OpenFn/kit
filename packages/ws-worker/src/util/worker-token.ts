@@ -1,17 +1,20 @@
+import { Logger } from '@openfn/logger';
 import * as jose from 'jose';
 
 const alg = 'HS256';
 
-const generateWorkerToken = async (secret: string, workerId: string) => {
+const generateWorkerToken = async (
+  secret: string,
+  workerId: string,
+  logger: Logger
+) => {
   if (!secret) {
-    // TODO use proper logger
-    // TODO is this even necessary?
-    console.warn();
-    console.warn('WARNING: Worker Secret not provided!');
-    console.warn(
+    logger.warn();
+    logger.warn('WARNING: Worker Secret not provided!');
+    logger.warn(
       'This worker will attempt to connect to Lightning with default secret'
     );
-    console.warn();
+    logger.warn();
   }
 
   const encodedSecret = new TextEncoder().encode(secret || '<secret>');

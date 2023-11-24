@@ -103,12 +103,9 @@ const createSocketAPI = (
   wss.registerEvents('worker:queue', {
     [CLAIM]: (ws, event: PhoenixEvent<ClaimPayload>) => {
       const { attempts } = pullClaim(state, ws, event);
-      attempts.forEach((attempt) => {
-        state.events.emit(CLAIM, {
-          attemptId: attempt.id,
-          payload: attempt,
-          state: clone(state),
-        });
+      state.events.emit(CLAIM, {
+        payload: attempts,
+        state: clone(state),
       });
     },
   });

@@ -74,7 +74,6 @@ const args = yargs(hideBin(process.argv))
   .parse() as Args;
 
 const logger = createLogger('SRV', { level: args.log });
-
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';
   if (!args.secret) {

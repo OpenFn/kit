@@ -81,6 +81,7 @@ const setupDevAPI = (
   app.reset = () => {
     state.queue = [];
     state.results = {};
+    state.events.removeAllListeners();
   };
 
   app.getQueueLength = () => state.queue.length;
@@ -102,6 +103,11 @@ const setupDevAPI = (
   };
 
   // @ts-ignore
+  app.removeAllListeners = () => {
+    state.events.removeAllListeners();
+  };
+
+  // @ts-ignore
   app.once = (event: LightningEvents, fn: (evt: any) => void) => {
     state.events.once(event, fn);
   };
@@ -118,6 +124,8 @@ const setupDevAPI = (
         if (once) {
           unsubscribe();
         }
+        fn(e);
+      } else {
         fn(e);
       }
     }

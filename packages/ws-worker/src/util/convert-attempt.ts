@@ -5,17 +5,22 @@ import type {
   JobEdge,
   ExecutionPlan,
 } from '@openfn/runtime';
-import { Attempt, AttemptOptions } from '../types';
+import { Attempt, AttemptOptions, Edge } from '../types';
 
-const conditions: Record<string, any> = {
-  on_job_success: '!state.errors',
-  on_job_failure: 'state.errors',
-  always: null,
-};
+export const conditions: Record<string, (upstreamId: string) => string | null> =
+  {
+    on_job_success: (upstreamId: string) =>
+      `Boolean(!state.errors?.["${upstreamId}"] ?? true)`,
+    on_job_failure: (upstreamId: string) =>
+      `Boolean(state.errors && state.errors["${upstreamId}"])`,
+    always: (_upstreamId: string) => null,
+  };
 
-const mapEdgeCondition = (condition?: string) => {
+const mapEdgeCondition = (edge: Edge) => {
+  const { condition } = edge;
   if (condition && condition in conditions) {
-    return conditions[condition];
+    const upstream = (edge.source_job_id || edge.source_trigger_id) as string;
+    return conditions[condition](upstream);
   }
   return condition;
 };
@@ -89,7 +94,7 @@ export default (
         .reduce((obj, edge) => {
           const newEdge: JobEdge = {};
 
-          const condition = mapEdgeCondition(edge.condition);
+          const condition = mapEdgeCondition(edge);
           if (condition) {
             newEdge.condition = condition;
           }

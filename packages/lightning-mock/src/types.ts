@@ -58,6 +58,7 @@ export type DevServer = Koa & {
     fn: (evt: any) => void
   ): void;
   registerAttempt(attempt: Attempt): void;
+  removeAllListeners(): void;
   reset(): void;
   startAttempt(id: string): any;
   waitForResult(attemptId: string): Promise<any>;

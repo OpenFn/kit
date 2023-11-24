@@ -146,12 +146,15 @@ async function createMock() {
     };
   };
 
+  const destroy = async () => true;
+
   return {
     on,
     once,
     execute,
     getStatus,
     listen,
+    destroy,
   };
 }
 

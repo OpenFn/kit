@@ -1,5 +1,12 @@
 # engine-multi
 
+## 0.2.1
+
+### Patch Changes
+
+- 5fdd699: Don't direct job logs to stdout
+- a6dd44b: Allow graceful termination of worker threads
+
 ## 0.2.0
 
 ### Minor Changes
