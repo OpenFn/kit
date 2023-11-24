@@ -124,8 +124,6 @@ const executeJob = async (
       // TODO include the upstream job
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(ctx, job.expression, state);
-      const humanDuration = logger.timer(timerId);
-      logger.success(`Completed job ${jobId} in ${humanDuration}`);
     } catch (e: any) {
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
@@ -160,11 +158,16 @@ const executeJob = async (
 
     if (!didError) {
       const { heapUsed, rss } = process.memoryUsage();
-      const used = heapUsed / 1024 / 1024;
-      const humanUsed = Math.round(used);
-      const humanRSS = Math.round(rss / 1024 / 1024);
-      console.log(`Job ${jobId} heap ${humanUsed} MB`);
-      console.log(`Job ${jobId} rss ${humanRSS} MB`);
+      const humanDuration = logger.timer(timerId);
+
+      const jobMemory = heapUsed;
+      const systemMemory = rss;
+
+      const humanJobMemory = Math.round(jobMemory / 1024 / 1024);
+      // TODO is this something we want to always log?
+      logger.success(
+        `Completed job ${jobId} in ${humanDuration} (used ${humanJobMemory}mb)`
+      );
 
       next = calculateNext(job, result);
       notify(NOTIFY_JOB_COMPLETE, {
@@ -173,8 +176,8 @@ const executeJob = async (
         jobId,
         next,
         mem: {
-          heapUsedMb: used,
-          totalMb: rss / 1024 / 1024,
+          job: jobMemory,
+          system: systemMemory,
         },
       });
     }

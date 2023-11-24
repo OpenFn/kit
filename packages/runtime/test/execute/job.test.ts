@@ -123,12 +123,13 @@ test(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
 
   const notify = (event: string, payload: any) => {
     if (event === NOTIFY_JOB_COMPLETE) {
-      const { state, duration, jobId, next } = payload;
+      const { state, duration, jobId, next, mem } = payload;
       t.truthy(state);
       t.deepEqual(state, state);
       t.deepEqual(next, []);
       t.assert(!isNaN(duration));
       t.true(duration < 100);
+      t.true(mem);
       t.is(jobId, 'j');
     }
   };
