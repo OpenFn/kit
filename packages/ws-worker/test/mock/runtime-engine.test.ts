@@ -53,7 +53,8 @@ test('Dispatch complete events when a workflow completes', async (t) => {
     'workflow-complete'
   );
 
-  t.deepEqual(evt, { workflowId: 'w1' });
+  t.is(evt.workflowId, 'w1');
+  t.truthy(evt.threadId);
 });
 
 test('Dispatch start events for a job', async (t) => {

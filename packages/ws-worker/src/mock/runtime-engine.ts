@@ -15,15 +15,18 @@ export type EngineEvent =
 
 export type WorkflowStartEvent = {
   workflowId: string;
+  threadId: string;
 };
 
 export type WorkflowCompleteEvent = {
   workflowId: string;
   error?: any; // hmm maybe not
+  threadId: string;
 };
 
 export type WorkflowErrorEvent = {
   workflowId: string;
+  threadId: string;
   message: string;
 };
 
