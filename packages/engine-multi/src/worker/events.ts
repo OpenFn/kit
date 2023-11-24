@@ -45,6 +45,10 @@ export interface JobCompleteEvent extends InternalEvent {
   state: any;
   duration: number;
   next: string[];
+  mem: {
+    job: number;
+    system: number;
+  };
 }
 
 export interface JobErrorEvent extends InternalEvent {
