@@ -30,7 +30,7 @@ import callRuntime from '../src/runtime';
 
 test.afterEach(() => {
   // Force gc to try and better isolate tests
-  // THis may not work and maybe we need to use threads or something to ensure a pristine environment
+  // This may not work and maybe we need to use threads or something to ensure a pristine environment
   // Certainly runs seem to affect each other in the same process (no suprise there)
   // @ts-ignore
   global.gc();
@@ -41,8 +41,7 @@ type Mem = {
   system: number; // rss in bytes
 };
 
-// This helper will run a workflow and return
-// memory usage per run
+// This helper will run a workflow and return memory usage per run
 const run = async (t, workflow: ExecutionPlan) => {
   const mem: Record<string, Mem> = {};
 
@@ -70,22 +69,14 @@ const run = async (t, workflow: ExecutionPlan) => {
 };
 
 const logUsage = (t: any, mem: Mem, label = '') => {
-  // What kind of rounding should I Do?
-  // Rounding to an integer is best for humans but I think in these tests we lose a lot of fidelity
-  // I mean you could lose nearly 500kb of accuracy, that's a lot!
   const job = (mem.job / 1024 / 1024).toFixed(2);
   const system = (mem.system / 1024 / 1024).toFixed(2);
   t.log(`${label}: ${job}mb / system ${system}mb`);
 };
 
-// const jobs = {
-//   fn: () => 'export default [(s) => s]',
-
-// };
-
 const expressions = {
   readMemory: (jobName: string) => (s: any) => {
-    // Hmm, the rounded human number actually looks quite different to theactual reported number
+    // Hmm, the rounded human number actually looks quite different to the actual reported number
     const mem = process.memoryUsage();
     s[jobName] = { job: mem.heapUsed, system: mem.rss };
     return s;
@@ -94,6 +85,12 @@ const expressions = {
     s.data = Array(numberofElements).fill('bowser');
     return s;
   },
+  wait:
+    (duration = 100) =>
+    (s: any) =>
+      new Promise((resolve) => {
+        setTimeout(() => resolve(s), duration);
+      }),
 };
 
 // assert that b is within tolerance% of the value of a
@@ -118,7 +115,7 @@ test.serial('emit memory usage to job-complete', async (t) => {
       {
         id: 'a',
         // This seems to use ~55mb of heap (job)
-        expression: [(s) => s],
+        expression: [(s: any) => s],
       },
     ],
   };
@@ -198,7 +195,7 @@ test.serial('create a large array in a job', async (t) => {
   t.true(state.a2.job > state.a1.job);
 
   // The final job memory is a lot bigger because  AFTER the job we serialize state.data
-  // Which of course has a huge array on it - so memory baloons¬
+  // Which of course has a huge array on it - so memory baloons
   t.true(mem.a.job > state.a1.job + state.a2.job);
 });
 
@@ -320,4 +317,38 @@ test.serial(
   }
 );
 
-test.todo('will gc run if we leave a long timeout?');
+// This one is pretty inconsisent - about a 50% pass rate
+// Does that imply that sometimes GC is running during the timeout?
+test.serial.skip(
+  'create a large array in a job, wait on timeout, read final memory',
+  async (t) => {
+    const plan = {
+      jobs: [
+        {
+          id: 'a',
+          expression: [
+            expressions.createArray(10e6), // 10 million ~76mb
+            expressions.readMemory('a'),
+
+            // will garbage collection run?
+            // I dont think so because it's based on # of allocations
+            expressions.wait(500),
+
+            expressions.readMemory('b'),
+          ],
+        },
+      ],
+    };
+
+    const { state } = await run(t, plan);
+    logUsage(t, state.a, 'peak');
+    t.log(state.a.job);
+    t.log(state.b.job);
+
+    // The first job should use over 100mb
+    t.true(state.a.job > 100 * 1024 * 1024);
+
+    // The two memory snapshots should be about the same
+    t.true(roughlyEqual(state.a.job, state.b.job, 0.02));
+  }
+);
