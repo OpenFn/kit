@@ -235,23 +235,12 @@ test.serial('module scope is isolated across threads', async (t) => {
 test.serial('worker should die if it blows the memory limit', async (t) => {
   pool = createDedicatedPool({
     workerThreadOpts: {
+      // See resourceLimits for more docs
       // Note for the record that these limits do NOT include arraybuffers
       resourceLimits: {
-        // These are values I can set
-
-        // And I think this is the one I care about:
-        // The maximum size of the main heap in MB.
+        // This is basically heap size
         // Note that this needs to be at least like 200mb to not blow up in test
         maxOldGenerationSizeMb: 100,
-
-        // // The maximum size of a heap space for recently created objects.
-        // maxYoungGenerationSizeMb: 10,
-
-        // // The size of a pre-allocated memory range used for generated code.
-        // codeRangeSizeMb: 20,
-
-        // The default maximum stack size for the thread. Small values may lead to unusable Worker instances. Default: 4
-        // stackSizeMb: 4,
       },
     },
   });

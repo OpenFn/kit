@@ -95,7 +95,7 @@ workerpool.worker({
   },
 
   // Creating a big enough array with  `Array(1e9).fill('mario')`
-  // is enoguh to OOM the _process_, taking the whole engine out
+  // is enghuh to OOM the _process_, taking the whole engine out
   // This function should blow the thread's memory without
   // killing the parent process
   blowMemory: () => {
@@ -103,11 +103,13 @@ workerpool.worker({
     while (true) {
       data.push(Array(1e6).fill('mario'));
     }
+
+    // This is too extreme and will kill the process
+    // Array(1e9).fill('mario')
   },
 
   // Some useful code
   // const stats = v8.getHeapStatistics();
-
   // console.log(
   //   `node heap limit = ${
   //     stats.heap_size_limit / 1024 / 1024
