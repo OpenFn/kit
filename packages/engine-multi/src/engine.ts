@@ -74,6 +74,7 @@ export type EngineOptions = {
 
   minWorkers?: number;
   maxWorkers?: number;
+  memoryLimitMb?: number;
 
   whitelist?: RegExp[];
 
@@ -125,6 +126,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       minWorkers: options.minWorkers,
       maxWorkers: options.maxWorkers,
       purge: options.purge,
+      memoryLimitMb: options.memoryLimitMb,
     },
     options.logger
   );

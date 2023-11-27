@@ -29,6 +29,8 @@ export type RTEOptions = Partial<
 
 const DEFAULT_REPO_DIR = '/tmp/openfn/worker/repo';
 
+const DEFAULT_MEMORY_LIMIT = 500;
+
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
 const createAPI = async function (options: RTEOptions = {}) {
@@ -59,15 +61,14 @@ const createAPI = async function (options: RTEOptions = {}) {
 
     minWorkers: options.minWorkers,
     maxWorkers: options.maxWorkers,
+    memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
 
     purge: options.hasOwnProperty('purge') ? options.purge : true,
   };
+  logger.info(`memory limit set to ${options.memoryLimitMb}mb`);
 
-  // Note that the engine here always uses the standard worker, the real one
-  // To use a mock, create the engine directly
   const engine = await createEngine(engineOptions);
 
-  // Return the external API
   return {
     execute: engine.execute,
     listen: engine.listen,

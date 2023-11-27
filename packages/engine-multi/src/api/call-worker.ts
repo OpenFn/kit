@@ -19,6 +19,7 @@ type WorkerOptions = {
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
+  memoryLimitMb?: number;
 };
 
 // Adds a `callWorker` function to the API object, which will execute a task in a worker
@@ -67,6 +68,7 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
     env = {},
     minWorkers = 0,
     maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
+    memoryLimitMb,
   } = options;
 
   let resolvedWorkerPath;
@@ -88,6 +90,11 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
       execArgv: ['--no-warnings', '--experimental-vm-modules'],
       // Important to override the child env so that it cannot access the parent env
       env,
+      resourceLimits: {
+        // This is a fair approximation for heapsize
+        // Note that it's still possible to OOM the process without hitting this limit
+        maxOldGenerationSizeMb: memoryLimitMb,
+      },
     },
   });
 }
