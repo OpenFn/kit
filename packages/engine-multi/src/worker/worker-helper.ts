@@ -6,6 +6,7 @@ import { threadId } from 'node:worker_threads';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from './events';
+import { ExecutionError } from '../errors';
 
 export const createLoggers = (
   workflowId: string,
@@ -63,16 +64,7 @@ export function publish<T extends workerEvents.WorkerEvents>(
 async function helper(workflowId: string, execute: () => Promise<any>) {
   publish(workflowId, workerEvents.WORKFLOW_START, {});
 
-  try {
-    // Note that the worker thread may fire logs after completion
-    // I think this is fine, it's just a log stream thing
-    // But the output is very confusing!
-    const result = await execute();
-    publish(workflowId, workerEvents.WORKFLOW_COMPLETE, { state: result });
-
-    // For tests
-    return result;
-  } catch (err: any) {
+  const handleError = (err: any) => {
     publish(workflowId, workerEvents.ERROR, {
       // @ts-ignore
       workflowId,
@@ -86,6 +78,32 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
       },
       // TODO job id maybe
     });
+  };
+
+  // catch-all for any uncaught errors, which likely come from asynchronous code
+  // (probably in an adaptor)
+  // Note that if this occurs after the execute promise resolved,
+  // it'll be ignored (ie the workerEmit call will fail)
+  process.on('uncaughtException', async (err: any) => {
+    // For now, we'll write this off as a crash-level generic execution error
+    // TODO did this come from job or adaptor code?
+    const e = new ExecutionError(err);
+    e.severity = 'crash'; // Downgrade this to a crash becuase it's likely not our fault
+    handleError(e);
+    process.exit(1);
+  });
+
+  try {
+    // Note that the worker thread may fire logs after completion
+    // I think this is fine, it's just a log stream thing
+    // But the output is very confusing!
+    const result = await execute();
+    publish(workflowId, workerEvents.WORKFLOW_COMPLETE, { state: result });
+
+    // For tests
+    return result;
+  } catch (err: any) {
+    handleError(err);
   }
 }
 
