@@ -299,7 +299,6 @@ export async function onWorkflowError(
 
     onFinish({ reason });
   } catch (e: any) {
-    console.log(e);
     logger.error('ERROR in workflow-error handler:', e.message);
     logger.error(e);
   }
