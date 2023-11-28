@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.2.1
+
+### Patch Changes
+
+- Report on memory usage at the end of job
+
 ## 0.2.0
 
 ### Minor Changes
