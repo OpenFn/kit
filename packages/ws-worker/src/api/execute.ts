@@ -188,7 +188,7 @@ export function onJobError(context: Context, event: any) {
   // because it'll count it as a crash
   // This isn't very good: maybe we shouldn't trigger an error
   // at all for a fail state?
-  const { state, error, jobId } = event;
+  const { state = {}, error, jobId } = event;
   // This test is horrible too
   if (state.errors?.[jobId]?.message === error.message) {
     onJobComplete(context, event);
@@ -277,19 +277,21 @@ export async function onWorkflowComplete(
   onFinish({ reason, state: result });
 }
 
-// On error, for now, we just post to workflow complete
-// No unit tests on this (not least because I think it'll change soon)
-// NB this is a crash state!
 export async function onWorkflowError(
-  { state, channel, logger, onFinish }: Context,
+  context: Context,
   event: WorkflowErrorPayload
 ) {
-  // Should we not just report this reason?
-  // Nothing more severe can have happened downstream, right?
-  // const reason = calculateAttemptExitReason(state);
+  const { state, channel, logger, onFinish } = context;
+
   try {
     // Ok, let's try that, let's just generate a reason from the event
     const reason = calculateJobExitReason('', { data: {} }, event);
+
+    // If there's a job still running, make sure it gets marked complete
+    if (state.activeJob) {
+      await onJobError(context, event);
+    }
+
     await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,
       ...reason,
@@ -297,6 +299,7 @@ export async function onWorkflowError(
 
     onFinish({ reason });
   } catch (e: any) {
+    console.log(e);
     logger.error('ERROR in workflow-error handler:', e.message);
     logger.error(e);
   }

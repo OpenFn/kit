@@ -17,6 +17,7 @@ import {
   execute,
   onWorkflowStart,
   onWorkflowComplete,
+  onWorkflowError,
   loadDataclip,
   loadCredential,
   sendEvent,
@@ -27,6 +28,11 @@ import { stringify, createAttemptState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { AttemptState } from '../../src/types';
+import {
+  JOB_COMPLETE,
+  JOB_ERROR,
+  WORKFLOW_COMPLETE,
+} from '@openfn/engine-multi';
 
 const enc = new TextEncoder();
 
@@ -220,7 +226,7 @@ test('jobComplete should generate an exit reason: success', async (t) => {
   t.is(event.error_message, null);
 });
 
-test.only('jobComplete should send a run:complete event', async (t) => {
+test('jobComplete should send a run:complete event', async (t) => {
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
   const result = { x: 10 };
@@ -381,6 +387,45 @@ test('workflowComplete should call onFinish with final dataclip', async (t) => {
 
   await onWorkflowComplete(context, event);
 });
+
+test.only('workflowError should trigger runComplete with a reason', async (t) => {
+  const plan = { id: 'attempt-1' };
+  const jobId = 'job-1';
+
+  const state = {
+    reasons: {},
+    dataclips: {},
+    lastDataclipId: 'x',
+    activeJob: jobId,
+    activeRun: 'b',
+    errors: {},
+  };
+
+  const channel = mockChannel({
+    [RUN_COMPLETE]: (evt) => {
+      t.is(evt.reason, 'crash');
+      t.pass('called job complete');
+      return true;
+    },
+    [ATTEMPT_COMPLETE]: () => true,
+  });
+
+  const event = {
+    error: {
+      severity: 'crash',
+      type: 'Err',
+      message: 'it crashed',
+    },
+    state: {},
+  };
+
+  const context = { channel, state, onFinish: () => {} };
+
+  await onWorkflowError(context, event);
+});
+
+test.todo('send the reason to onFinish');
+test.todo("don't call complete if the job is not active ");
 
 // TODO what if an error?
 test('loadDataclip should fetch a dataclip', async (t) => {
