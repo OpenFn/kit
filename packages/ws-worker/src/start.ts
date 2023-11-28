@@ -18,9 +18,10 @@ type Args = {
   mock: boolean;
   backoff: string;
   capacity?: number;
+  runMemory?: number;
 };
 
-const { WORKER_REPO_DIR, WORKER_SECRET } = process.env;
+const { WORKER_REPO_DIR, WORKER_SECRET, MAX_RUN_MEMORY } = process.env;
 
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a ws-worker server')
@@ -71,6 +72,11 @@ const args = yargs(hideBin(process.argv))
     default: 5,
     type: 'number',
   })
+  .option('run-memory', {
+    description: 'Maximum memory allocated to a single run, in mb',
+    type: 'number',
+    default: MAX_RUN_MEMORY ? parseInt(MAX_RUN_MEMORY) : 500,
+  })
   .parse() as Args;
 
 const logger = createLogger('SRV', { level: args.log });
@@ -114,8 +120,10 @@ if (args.mock) {
     engineReady(engine);
   });
 } else {
-  createRTE({ repoDir: args.repoDir }).then((engine) => {
-    logger.debug('engine created');
-    engineReady(engine);
-  });
+  createRTE({ repoDir: args.repoDir, memoryLimitMb: args.runMemory }).then(
+    (engine) => {
+      logger.debug('engine created');
+      engineReady(engine);
+    }
+  );
 }

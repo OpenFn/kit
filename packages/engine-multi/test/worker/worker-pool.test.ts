@@ -1,5 +1,6 @@
 import path from 'node:path';
 import test from 'ava';
+import v8 from 'v8';
 import workerpool from 'workerpool';
 
 const workerPath = path.resolve('src/test/worker-functions.js');
@@ -206,7 +207,6 @@ test.serial('dynamic imports should share state across runs', async (t) => {
   t.is(count3, 3);
 });
 
-
 // This is kinda done in the tests above, it's just to setup the next test
 test.serial('module scope is shared within a thread', async (t) => {
   pool = createDedicatedPool({ maxWorkers: 1 });
@@ -215,9 +215,9 @@ test.serial('module scope is shared within a thread', async (t) => {
     pool.exec('incrementDynamic', []),
     pool.exec('incrementDynamic', []),
     pool.exec('incrementDynamic', []),
-  ])
+  ]);
 
-  t.deepEqual(result, [1, 2, 3])
+  t.deepEqual(result, [1, 2, 3]);
 });
 
 test.serial('module scope is isolated across threads', async (t) => {
@@ -227,7 +227,29 @@ test.serial('module scope is isolated across threads', async (t) => {
     pool.exec('incrementDynamic', []),
     pool.exec('incrementDynamic', []),
     pool.exec('incrementDynamic', []),
-  ])
+  ]);
 
-  t.deepEqual(result, [1,1,1])
+  t.deepEqual(result, [1, 1, 1]);
 });
+
+test.serial('worker should die if it blows the memory limit', async (t) => {
+  pool = createDedicatedPool({
+    workerThreadOpts: {
+      // See resourceLimits for more docs
+      // Note for the record that these limits do NOT include arraybuffers
+      resourceLimits: {
+        // This is basically heap size
+        // Note that this needs to be at least like 200mb to not blow up in test
+        maxOldGenerationSizeMb: 100,
+      },
+    },
+  });
+
+  await t.throwsAsync(() => pool.exec('blowMemory', []), {
+    code: 'ERR_WORKER_OUT_OF_MEMORY',
+    message:
+      'Worker terminated due to reaching memory limit: JS heap out of memory',
+  });
+});
+
+test.todo('threads should all have the same rss memory');

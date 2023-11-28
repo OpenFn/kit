@@ -70,4 +70,17 @@ export class AutoinstallError extends EngineError {
   }
 }
 
+export class OOMError extends EngineError {
+  severity = 'kill';
+  type = 'OOMError';
+  name = 'OOMError';
+  message;
+
+  constructor() {
+    super();
+
+    this.message = `Run exceeded maximum memory usage`;
+  }
+}
+
 // CredentialsError (exception)
