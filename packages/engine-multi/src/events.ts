@@ -72,6 +72,10 @@ export interface JobCompletePayload extends ExternalEvent {
   duration: number;
   state: any; // the result state
   next: string[]; // downstream jobs
+  mem: {
+    job: number;
+    system: number;
+  };
 }
 
 export interface JobErrorPayload extends ExternalEvent {

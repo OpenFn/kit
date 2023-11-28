@@ -124,8 +124,6 @@ const executeJob = async (
       // TODO include the upstream job
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(ctx, job.expression, state);
-      const humanDuration = logger.timer(timerId);
-      logger.success(`Completed job ${jobId} in ${humanDuration}`);
     } catch (e: any) {
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
@@ -159,12 +157,34 @@ const executeJob = async (
     }
 
     if (!didError) {
+      const humanDuration = logger.timer(timerId);
+      logger.success(`Completed job ${jobId} in ${humanDuration}`);
+
+      // Take a memory snapshot
+      // IMPORTANT: this runs _after_ the state object has been serialized
+      // Which has a big impact on memory
+      // This is reasonable I think because your final state is part of the job!
+      const { heapUsed, rss } = process.memoryUsage();
+
+      const jobMemory = heapUsed;
+      const systemMemory = rss;
+
+      const humanJobMemory = Math.round(jobMemory / 1024 / 1024);
+      const humanSystemMemory = Math.round(systemMemory / 1024 / 1024);
+      logger.debug(
+        `Final memory usage: [job ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
+      );
+
       next = calculateNext(job, result);
       notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
         jobId,
         next,
+        mem: {
+          job: jobMemory,
+          system: systemMemory,
+        },
       });
     }
   } else {

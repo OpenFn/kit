@@ -220,7 +220,7 @@ test('jobComplete should generate an exit reason: success', async (t) => {
   t.is(event.error_message, null);
 });
 
-test('jobComplete should send a run:complete event', async (t) => {
+test.only('jobComplete should send a run:complete event', async (t) => {
   const plan = { id: 'attempt-1' };
   const jobId = 'job-1';
   const result = { x: 10 };
@@ -235,10 +235,19 @@ test('jobComplete should send a run:complete event', async (t) => {
       t.truthy(evt.run_id);
       t.truthy(evt.output_dataclip_id);
       t.is(evt.output_dataclip, JSON.stringify(result));
+      t.deepEqual(evt.mem, event.mem);
+      t.is(evt.duration, event.duration);
+      t.is(evt.thread_id, event.threadId);
     },
   });
 
-  const event = { state: result, next: ['a'] };
+  const event = {
+    state: result,
+    next: ['a'],
+    mem: { job: 1, system: 10 },
+    duration: 61,
+    threadId: 'abc',
+  };
   await onJobComplete({ channel, state }, event);
 });
 

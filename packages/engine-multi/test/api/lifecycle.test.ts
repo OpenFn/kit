@@ -142,6 +142,8 @@ test(`job-complete: emits ${e.JOB_COMPLETE}`, (t) => {
       jobId: 'j',
       duration: 200,
       state: 22,
+      next: [],
+      mem: { job: 100, system: 1000 },
     };
 
     context.on(e.JOB_COMPLETE, (evt) => {
@@ -150,6 +152,8 @@ test(`job-complete: emits ${e.JOB_COMPLETE}`, (t) => {
       t.is(evt.jobId, 'j');
       t.is(evt.state, 22);
       t.is(evt.duration, 200);
+      t.deepEqual(evt.next, []);
+      t.deepEqual(evt.mem, event.mem);
       done();
     });
 

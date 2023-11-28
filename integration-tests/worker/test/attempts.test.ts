@@ -22,14 +22,28 @@ test.before(async () => {
   }));
 });
 
+test.afterEach(async () => {
+  lightning.destroy();
+});
+
 test.after(async () => {
   lightning.destroy();
   await worker.destroy();
 });
 
-const run = async (attempt) => {
+const humanMb = (sizeInBytes: number) => Math.round(sizeInBytes / 1024 / 1024);
+
+const run = async (t, attempt) => {
   return new Promise<any>(async (done, reject) => {
-    lightning.once('attempt:complete', (evt) => {
+    lightning.on('run:complete', ({ payload }) => {
+      // TODO friendlier job names for this would be nice (rather than run ids)
+      t.log(
+        `run ${payload.run_id} done in ${payload.duration / 1000}s [${humanMb(
+          payload.mem.job
+        )} / ${humanMb(payload.mem.system)}mb] [thread ${payload.thread_id}]`
+      );
+    });
+    lightning.on('attempt:complete', (evt) => {
       if (attempt.id === evt.attemptId) {
         done(lightning.getResult(attempt.id));
       } else {
@@ -42,7 +56,7 @@ const run = async (attempt) => {
   });
 };
 
-test('echo initial state', async (t) => {
+test.serial('echo initial state', async (t) => {
   const initialState = { data: { count: 22 } };
 
   lightning.addDataclip('s1', initialState);
@@ -52,7 +66,7 @@ test('echo initial state', async (t) => {
     dataclip_id: 's1',
   });
 
-  const result = await run(attempt);
+  const result = await run(t, attempt);
 
   t.deepEqual(result, {
     data: {
@@ -61,7 +75,7 @@ test('echo initial state', async (t) => {
   });
 });
 
-test('start from a trigger node', async (t) => {
+test.serial('start from a trigger node', async (t) => {
   let runStartEvent;
   let runCompleteEvent;
 
@@ -84,7 +98,7 @@ test('start from a trigger node', async (t) => {
     runCompleteEvent = evt.payload;
   });
 
-  await run(attempt);
+  await run(t, attempt);
 
   t.truthy(runStartEvent);
   t.is(runStartEvent.job_id, job.id);
@@ -103,7 +117,7 @@ test('start from a trigger node', async (t) => {
 // hmm this event feels a bit fine-grained for this
 // This file should just be about input-output
 // TODO maybe move it into integrations later
-test('run parallel jobs', async (t) => {
+test.serial('run parallel jobs', async (t) => {
   const initialState = { data: { count: 22 } };
 
   lightning.addDataclip('s1', initialState);
@@ -144,7 +158,7 @@ test('run parallel jobs', async (t) => {
     outputJson[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
   });
 
-  const result = await run(attempt);
+  await run(t, attempt);
 
   t.deepEqual(outputJson[x.id].data, {
     a: true,
@@ -168,4 +182,24 @@ test('run parallel jobs', async (t) => {
   //     y: true,
   //   },
   // });
+});
+
+test('run a http adaptor job', async (t) => {
+  const job = createJob({
+    adaptor: '@openfn/language-http@5.0.4',
+    body: 'get("https://jsonplaceholder.typicode.com/todos/1");',
+  });
+  const attempt = createAttempt([], [job], []);
+  const result = await run(t, attempt);
+
+  t.truthy(result.response);
+  t.is(result.response.status, 200);
+  t.truthy(result.response.headers);
+
+  t.deepEqual(result.data, {
+    userId: 1,
+    id: 1,
+    title: 'delectus aut autem',
+    completed: false,
+  });
 });

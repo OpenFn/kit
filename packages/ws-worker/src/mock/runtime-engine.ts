@@ -1,6 +1,8 @@
 import { EventEmitter } from 'node:events';
+import crypto from 'node:crypto';
 import run, { ExecutionPlan } from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
+
 import mockResolvers from './resolvers';
 
 export type EngineEvent =
@@ -13,15 +15,18 @@ export type EngineEvent =
 
 export type WorkflowStartEvent = {
   workflowId: string;
+  threadId: string;
 };
 
 export type WorkflowCompleteEvent = {
   workflowId: string;
   error?: any; // hmm maybe not
+  threadId: string;
 };
 
 export type WorkflowErrorEvent = {
   workflowId: string;
+  threadId: string;
   message: string;
 };
 
@@ -74,6 +79,8 @@ async function createMock() {
     const { id, jobs } = xplan;
     activeWorkflows[id!] = true;
 
+    const threadId = crypto.randomUUID();
+
     for (const job of jobs) {
       if (typeof job.configuration === 'string') {
         // Call the crendtial callback, but don't do anything with it
@@ -96,6 +103,7 @@ async function createMock() {
       log: (...args: any[]) => {
         dispatch('workflow-log', {
           workflowId: id,
+          threadId: threadId,
           level: 'info',
           json: true,
           message: args,
@@ -113,18 +121,20 @@ async function createMock() {
         notify: (name: any, payload: any) => {
           dispatch(name, {
             workflowId: id,
+            threadId: threadId,
             ...payload,
           });
         },
       },
     };
     setTimeout(async () => {
-      dispatch('workflow-start', { workflowId: id });
+      dispatch('workflow-start', { workflowId: id, threadId: threadId });
 
       try {
         await run(xplan, undefined, opts as any);
       } catch (e: any) {
         dispatch('workflow-error', {
+          threadId: threadId,
           workflowId: id,
           type: e.name,
           message: e.message,
@@ -132,7 +142,7 @@ async function createMock() {
       }
 
       delete activeWorkflows[id!];
-      dispatch('workflow-complete', { workflowId: id });
+      dispatch('workflow-complete', { workflowId: id, threadId: threadId });
     }, 1);
 
     // Technically the engine should return an event emitter
