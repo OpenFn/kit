@@ -90,6 +90,8 @@ test.serial('trigger job-complete', (t) => {
       t.is(evt.jobId, 'j1');
       t.deepEqual(evt.state, { data: {} });
       t.pass('job completed');
+      t.truthy(evt.mem.job);
+      t.truthy(evt.mem.system);
       done();
     });
   });

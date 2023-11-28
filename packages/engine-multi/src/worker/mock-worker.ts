@@ -65,6 +65,7 @@ function mock(plan: MockExecutionPlan) {
         duration: 100,
         state,
         next: [],
+        mem: { job: 100, system: 1000 },
       });
       resolve(state);
     }, job._delay || 1);

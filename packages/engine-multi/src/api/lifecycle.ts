@@ -84,7 +84,7 @@ export const jobComplete = (
   context: ExecutionContext,
   event: internalEvents.JobCompleteEvent
 ) => {
-  const { threadId, state, duration, jobId, next } = event;
+  const { threadId, state, duration, jobId, next, mem } = event;
 
   context.emit(externalEvents.JOB_COMPLETE, {
     threadId,
@@ -92,6 +92,7 @@ export const jobComplete = (
     duration,
     jobId,
     next,
+    mem,
   });
 };
 

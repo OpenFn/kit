@@ -14,13 +14,18 @@ export const initLightning = (port = 4000) => {
   return createLightningServer({ port });
 };
 
-export const initWorker = async (lightningPort, engineArgs = {}) => {
+export const initWorker = async (
+  lightningPort,
+  engineArgs = {},
+  workerArgs = {}
+) => {
   const workerPort = randomPort();
 
   const engineLogger = createMockLogger('engine', {
     level: 'debug',
     json: true,
   });
+
   const engine = await createEngine({
     logger: engineLogger,
     repoDir: path.resolve('./tmp/repo/default'),
@@ -33,6 +38,7 @@ export const initWorker = async (lightningPort, engineArgs = {}) => {
     port: workerPort,
     lightning: `ws://localhost:${lightningPort}/worker`,
     secret: crypto.randomUUID(),
+    ...workerArgs,
   });
 
   return { engine, engineLogger, worker };

@@ -1,5 +1,14 @@
 # engine-multi
 
+## 0.2.2
+
+### Patch Changes
+
+- 22339c6: Enforce memory limit on workflows
+- 5991622: Include memory usage in job-complete events
+- Updated dependencies
+  - @openfn/runtime@0.2.1
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@openfn/runtime",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Job processing runtime.",
   "type": "module",
   "exports": {
@@ -17,6 +17,7 @@
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --project tsconfig.test.json",
+    "test:memory": "pnpm ava --config memtest.ava.config.cjs",
     "build": "tsup --config ../../tsup.config.js src/index.ts",
     "build:watch": "pnpm build --watch",
     "pack": "pnpm pack --pack-destination ../../dist"

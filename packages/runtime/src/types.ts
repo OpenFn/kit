@@ -150,6 +150,10 @@ export type NotifyJobCompletePayload = {
   state: any;
   jobId: string;
   next: string[];
+  mem: {
+    job: number;
+    system: number;
+  };
 };
 
 export type NotifyJobErrorPayload = {

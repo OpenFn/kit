@@ -264,17 +264,21 @@ test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
   });
 });
 
-test.serial(
+test.serial.only(
   `events: lightning should receive a ${e.RUN_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
 
       lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
+        console.log(payload);
         t.is(payload.job_id, 'j');
         t.truthy(payload.run_id);
         t.truthy(payload.output_dataclip);
         t.truthy(payload.output_dataclip_id);
+        t.truthy(payload.mem.job);
+        t.truthy(payload.mem.system);
+        t.true(payload.mem.system > payload.mem.job);
         t.pass('called run complete');
       });
 

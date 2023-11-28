@@ -1,6 +1,7 @@
 import path from 'node:path';
 import workerpool from 'workerpool';
 import { threadId } from 'node:worker_threads';
+import v8 from 'v8';
 
 import { increment } from './counter.js';
 
@@ -92,4 +93,26 @@ workerpool.worker({
     const { increment } = await import(path.resolve('src/test/counter.js'));
     return increment();
   },
+
+  // Creating a big enough array with  `Array(1e9).fill('mario')`
+  // is enghuh to OOM the _process_, taking the whole engine out
+  // This function should blow the thread's memory without
+  // killing the parent process
+  blowMemory: () => {
+    let data = [];
+    while (true) {
+      data.push(Array(1e6).fill('mario'));
+    }
+
+    // This is too extreme and will kill the process
+    // Array(1e9).fill('mario')
+  },
+
+  // Some useful code
+  // const stats = v8.getHeapStatistics();
+  // console.log(
+  //   `node heap limit = ${
+  //     stats.heap_size_limit / 1024 / 1024
+  //   } Mb\n heap used = ${hprocess.memoryUsage().heapUsed / 1024 / 1024}mb`
+  // );
 });

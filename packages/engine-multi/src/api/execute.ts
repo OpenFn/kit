@@ -16,7 +16,7 @@ import {
   jobError,
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
-import { ExecutionError, TimeoutError } from '../errors';
+import { ExecutionError, OOMError, TimeoutError } from '../errors';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -84,8 +84,9 @@ const execute = async (context: ExecutionContext) => {
       options.timeout
     ).catch((e: any) => {
       // An error here is basically a crash state
-
-      if (e instanceof WorkerPoolPromise.TimeoutError) {
+      if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
+        e = new OOMError();
+      } else if (e instanceof WorkerPoolPromise.TimeoutError) {
         // Map the workerpool error to our own
         e = new TimeoutError(options.timeout!);
       }
