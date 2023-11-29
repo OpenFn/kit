@@ -1,7 +1,9 @@
 import test from 'ava';
+import path from 'node:path';
+
 import createEngine, { EngineOptions } from '../src/engine';
 import { createMockLogger } from '@openfn/logger';
-import { WORKFLOW_ERROR } from '../src/events';
+import { WORKFLOW_COMPLETE, WORKFLOW_ERROR } from '../src/events';
 
 let engine;
 
@@ -10,7 +12,7 @@ test.before(async () => {
 
   const options: EngineOptions = {
     logger,
-    repoDir: '.',
+    repoDir: path.resolve('./test/__repo__'),
     autoinstall: {
       // disable autoinstall
       handleIsInstalled: async () => true,
@@ -115,6 +117,28 @@ test.serial('execution error from async code', (t) => {
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'ExecutionError');
       t.is(evt.severity, 'crash');
+      done();
+    });
+  });
+});
+
+// This passes standaloen but fails alongside others? Curious
+test.serial.skip('process.exit', (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          adaptor: 'helper@1.0.0',
+          expression: `export default [exit()]`,
+        },
+      ],
+    };
+
+    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.type, 'ExitError');
+      t.is(evt.severity, 'kill');
+      t.is(evt.message, 'Process exited with code: 42');
       done();
     });
   });

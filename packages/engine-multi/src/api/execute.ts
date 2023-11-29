@@ -16,7 +16,7 @@ import {
   jobError,
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
-import { ExecutionError, OOMError, TimeoutError } from '../errors';
+import { ExecutionError, ExitError, OOMError, TimeoutError } from '../errors';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -84,20 +84,18 @@ const execute = async (context: ExecutionContext) => {
       events,
       options.timeout
     ).catch((e: any) => {
-      // An error here is basically a crash state
-      if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
+      // Catch process.exit from inside the thread
+      // This approach is not pretty - we are banking on replacing workerpool soon
+      if (e.message.match(/^Workerpool Worker terminated Unexpectedly/)) {
+        const exitCode = e.message.match(/exitCode: `(\d+)`/);
+        e = new ExitError(parseInt(exitCode[1]));
+      } else if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
         e = new OOMError();
       } else if (e instanceof WorkerPoolPromise.TimeoutError) {
         // Map the workerpool error to our own
         e = new TimeoutError(options.timeout!);
       }
 
-      // TODO: map anything else to an executionError
-
-      // TODO what information can I usefully provide here?
-      // DO I know which job I'm on?
-      // DO I know the thread id?
-      // Do I know where the error came from?
       error(context, { workflowId: state.plan.id, error: e });
       logger.error(e);
     });

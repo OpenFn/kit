@@ -96,5 +96,9 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
         maxOldGenerationSizeMb: memoryLimitMb,
       },
     },
+    onTerminateWorker: (evt) => {
+      console.log(' **** worker terminated ');
+      console.log(evt);
+    },
   });
 }

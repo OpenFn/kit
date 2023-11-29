@@ -6,7 +6,7 @@ import { threadId } from 'node:worker_threads';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from './events';
-import { ExecutionError } from '../errors';
+import { ExecutionError, ExitError } from '../errors';
 
 export const createLoggers = (
   workflowId: string,
@@ -90,7 +90,6 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
     const e = new ExecutionError(err);
     e.severity = 'crash'; // Downgrade this to a crash becuase it's likely not our fault
     handleError(e);
-    process.exit(1);
   });
 
   try {
