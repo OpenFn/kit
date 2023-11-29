@@ -11,12 +11,6 @@ import {
 } from '../src';
 import run from '../src/runtime';
 
-// High level examples of runtime usages
-
-// TODO create memory test
-// create large arrays or something to inflate memory usage
-// https://www.valentinog.com/blog/node-usage/
-
 test('run simple expression', async (t) => {
   const expression = 'export default [(s) => {s.data.done = true; return s}]';
 
