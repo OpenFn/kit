@@ -17,7 +17,7 @@ import run from '../src/runtime';
 // create large arrays or something to inflate memory usage
 // https://www.valentinog.com/blog/node-usage/
 
-test.only('run simple expression', async (t) => {
+test('run simple expression', async (t) => {
   const expression = 'export default [(s) => {s.data.done = true; return s}]';
 
   const result: any = await run(expression);
