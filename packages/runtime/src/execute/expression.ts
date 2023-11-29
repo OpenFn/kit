@@ -73,6 +73,7 @@ export default (
       // return the final state
       resolve(finalState);
     } catch (e: any) {
+      console.log('@@ RUNTIME:', e);
       // whatever initial state looks like now, clean it and report it back
       const finalState = prepareFinalState(opts, initialState);
       duration = Date.now() - duration;
@@ -93,7 +94,7 @@ export default (
   });
 
 // Wrap an operation with various useful stuff
-const wrapOperation = (
+export const wrapOperation = (
   fn: Operation,
   logger: Logger,
   name: string,
