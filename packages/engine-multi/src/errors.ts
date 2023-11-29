@@ -28,7 +28,7 @@ export class TimeoutError extends EngineError {
 export class ExecutionError extends EngineError {
   severity = 'exception';
   type = 'ExecutionError';
-  subtype;
+  name = 'ExecutionError';
   message;
 
   original: any; // this is the original error
@@ -37,7 +37,6 @@ export class ExecutionError extends EngineError {
     this.original = original;
 
     this.message = original.message;
-    this.subtype = original.type || original.constructor.name;
   }
 }
 

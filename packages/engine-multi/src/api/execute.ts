@@ -77,6 +77,7 @@ const execute = async (context: ExecutionContext) => {
         error(context, { workflowId: state.plan.id, error: evt.error });
       },
     };
+
     return callWorker(
       'run',
       [state.plan, runOptions],

@@ -24,7 +24,7 @@ test.before(async () => {
 });
 
 // This should exit gracefully with a compile error
-test('syntax error: missing bracket', (t) => {
+test.serial('syntax error: missing bracket', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'a',
@@ -47,7 +47,7 @@ test('syntax error: missing bracket', (t) => {
   });
 });
 
-test('syntax error: illegal throw', (t) => {
+test.serial('syntax error: illegal throw', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'b',
@@ -70,7 +70,7 @@ test('syntax error: illegal throw', (t) => {
   });
 });
 
-test('syntax error: oom error', (t) => {
+test.serial('syntax error: oom error', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'a',
@@ -90,6 +90,31 @@ test('syntax error: oom error', (t) => {
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'OOMError');
       t.is(evt.severity, 'kill');
+      done();
+    });
+  });
+});
+
+// https://github.com/OpenFn/kit/issues/509
+test.serial('execution error from async code', (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: `export default [(s) => new Promise((r) => {
+            // this error will throw within the promise, and so before the job completes
+            // But REALLY naughty code could throw after the job has finished
+            // In which case it'll be ignored
+            setTimeout(() => { throw new Error(\"e\");r () }, 1)
+            })]`,
+        },
+      ],
+    };
+
+    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.type, 'ExecutionError');
+      t.is(evt.severity, 'crash');
       done();
     });
   });
