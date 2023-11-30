@@ -132,6 +132,7 @@ async function createMock() {
 
       try {
         await run(xplan, undefined, opts as any);
+        dispatch('workflow-complete', { workflowId: id, threadId: threadId });
       } catch (e: any) {
         dispatch('workflow-error', {
           threadId: threadId,
@@ -139,10 +140,9 @@ async function createMock() {
           type: e.name,
           message: e.message,
         });
+      } finally {
+        delete activeWorkflows[id!];
       }
-
-      delete activeWorkflows[id!];
-      dispatch('workflow-complete', { workflowId: id, threadId: threadId });
     }, 1);
 
     // Technically the engine should return an event emitter
