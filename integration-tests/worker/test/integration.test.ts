@@ -327,8 +327,7 @@ test('blacklist a non-openfn adaptor', (t) => {
   });
 });
 
-// TODO this fails, I think this is a wider timeout problem but I don't really want to get into it now
-test.skip('a timeout error should still call run-complete', (t) => {
+test('a timeout error should still call run-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -345,12 +344,10 @@ test.skip('a timeout error should still call run-complete', (t) => {
     };
 
     lightning.once('run:complete', (event) => {
-      console.log(event.payload);
       t.is(event.payload.reason, 'kill');
     });
 
     lightning.once('attempt:complete', (event) => {
-      console.log(event.payload);
       done();
     });
 
@@ -358,7 +355,7 @@ test.skip('a timeout error should still call run-complete', (t) => {
   });
 });
 
-test.only('an OOM error should still call run-complete', (t) => {
+test('an OOM error should still call run-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -377,13 +374,11 @@ test.only('an OOM error should still call run-complete', (t) => {
       ],
     };
 
-    // lightning.once('run:complete', (event) => {
-    //   console.log(event.payload);
-    //   t.is(event.payload.reason, 'kill');
-    // });
+    lightning.once('run:complete', (event) => {
+      t.is(event.payload.reason, 'kill');
+    });
 
     lightning.once('attempt:complete', (event) => {
-      console.log(event.payload);
       done();
     });
 
