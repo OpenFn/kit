@@ -11,13 +11,7 @@ import {
 } from '../src';
 import run from '../src/runtime';
 
-// High level examples of runtime usages
-
-// TODO create memory test
-// create large arrays or something to inflate memory usage
-// https://www.valentinog.com/blog/node-usage/
-
-test.only('run simple expression', async (t) => {
+test('run simple expression', async (t) => {
   const expression = 'export default [(s) => {s.data.done = true; return s}]';
 
   const result: any = await run(expression);
@@ -521,4 +515,48 @@ test("injected globals can't override special functions", async (t) => {
 
   const result: any = await run(expression, {}, { globals });
   t.falsy(result.errors);
+});
+
+test('run from an adaptor', async (t) => {
+  const expression = `
+    import { call } from 'x';
+    export default [call(() => 22)];
+  `;
+
+  const result: any = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  t.deepEqual(result, { data: 22 });
+});
+
+// https://github.com/OpenFn/kit/issues/520
+test('run from an adaptor with error', async (t) => {
+  const expression = `
+    import { call } from 'x';
+    export default [call("22")];
+  `;
+
+  const result: any = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+    }
+  );
+
+  // This should safely return with an error
+  t.truthy(result.errors['job-1']);
 });
