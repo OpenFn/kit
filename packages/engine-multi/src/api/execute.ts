@@ -97,7 +97,7 @@ const execute = async (context: ExecutionContext) => {
       }
 
       error(context, { workflowId: state.plan.id, error: e });
-      logger.error(e);
+      logger.error(`Critical error thrown by ${state.plan.id}`, e);
     });
   } catch (e: any) {
     if (!e.severity) {
