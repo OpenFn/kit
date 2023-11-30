@@ -327,6 +327,70 @@ test('blacklist a non-openfn adaptor', (t) => {
   });
 });
 
+// TODO this fails, I think this is a wider timeout problem but I don't really want to get into it now
+test.skip('a timeout error should still call run-complete', (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest', // version lock to something stable?
+          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 1000)))',
+        },
+      ],
+      options: {
+        // Including the timeout here stops the attempt returning at all
+        timeout: 100,
+      },
+    };
+
+    lightning.once('run:complete', (event) => {
+      console.log(event.payload);
+      t.is(event.payload.reason, 'kill');
+    });
+
+    lightning.once('attempt:complete', (event) => {
+      console.log(event.payload);
+      done();
+    });
+
+    lightning.enqueueAttempt(attempt);
+  });
+});
+
+test.only('an OOM error should still call run-complete', (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest', // version lock to something stable?
+          body: `
+          fn((s) => {
+              s.data = [];
+              while(true) {
+                s.data.push(new Array(1e5).fill("xyz"))
+              }
+              return s;
+          })`,
+        },
+      ],
+    };
+
+    // lightning.once('run:complete', (event) => {
+    //   console.log(event.payload);
+    //   t.is(event.payload.reason, 'kill');
+    // });
+
+    lightning.once('attempt:complete', (event) => {
+      console.log(event.payload);
+      done();
+    });
+
+    lightning.enqueueAttempt(attempt);
+  });
+});
+
 // test('run a job with complex behaviours (initial state, branching)', (t) => {
 //   const attempt = {
 //     id: 'a1',

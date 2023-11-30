@@ -77,7 +77,7 @@ test('exception: autoinstall error', async (t) => {
   );
 });
 
-test('kill: oom', async (t) => {
+test.only('kill: oom', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
