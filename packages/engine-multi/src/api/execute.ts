@@ -87,8 +87,13 @@ const execute = async (context: ExecutionContext) => {
       // Catch process.exit from inside the thread
       // This approach is not pretty - we are banking on replacing workerpool soon
       if (e.message.match(/^Workerpool Worker terminated Unexpectedly/)) {
-        const exitCode = e.message.match(/exitCode: `(\d+)`/);
-        e = new ExitError(parseInt(exitCode[1]));
+        const [_match, exitCode] = e.message.match(/exitCode: `(\d+)`/);
+        if (exitCode === '111111') {
+          // This means a controlled exit from inside the worker
+          // The error has already been reported and we should do nothing
+          return;
+        }
+        e = new ExitError(parseInt(exitCode));
       } else if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
         e = new OOMError();
       } else if (e instanceof WorkerPoolPromise.TimeoutError) {
