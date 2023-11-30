@@ -6,7 +6,7 @@ import { threadId } from 'node:worker_threads';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from './events';
-import { ExecutionError, ExitError } from '../errors';
+import { ExecutionError } from '../errors';
 
 export const createLoggers = (
   workflowId: string,
