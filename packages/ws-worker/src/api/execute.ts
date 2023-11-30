@@ -289,7 +289,7 @@ export async function onWorkflowError(
 
     // If there's a job still running, make sure it gets marked complete
     if (state.activeJob) {
-      await onJobError(context, event);
+      await onJobError(context, { error: event });
     }
 
     await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
@@ -301,6 +301,8 @@ export async function onWorkflowError(
   } catch (e: any) {
     logger.error('ERROR in workflow-error handler:', e.message);
     logger.error(e);
+
+    onFinish({});
   }
 }
 

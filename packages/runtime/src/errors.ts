@@ -225,7 +225,7 @@ export class SecurityError extends RTError {
 export class TimeoutError extends RTError {
   type = 'TimeoutError';
   name = 'TimeoutError';
-  severity = 'crash';
+  severity = 'kill';
   message: string;
   constructor(duration: number) {
     super();
