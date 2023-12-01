@@ -3,15 +3,18 @@ import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
 import { PURGE } from '../src/events';
 
+import pkg from '../package.json' assert { type: 'json' };
+import { RuntimeEngine } from '../src/types';
+
 // thes are tests on the public api functions generally
 // so these are very high level tests and don't allow mock workers or anything
 
 const logger = createMockLogger(undefined, { level: 'debug' });
-let api;
+let api: RuntimeEngine;
 
 test.afterEach(() => {
   logger._reset();
-  api?.destroy()
+  api?.destroy();
 });
 
 test.serial('create a default engine api without throwing', async (t) => {
@@ -30,7 +33,12 @@ test.serial('create an engine api with a limited surface', async (t) => {
   const keys = Object.keys(api).sort();
 
   // TODO the api will actually probably get a bit bigger than this
-  t.deepEqual(keys, ['execute', 'listen', 'on', 'destroy'].sort());
+  t.deepEqual(keys, ['execute', 'listen', 'on', 'destroy', 'version'].sort());
+});
+
+test.serial('engine api includes a version number', async (t) => {
+  api = await createAPI({ logger });
+  t.is(api.version, pkg.version);
 });
 
 // Note that this runs with the actual runtime worker

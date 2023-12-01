@@ -39,6 +39,6 @@ export default class ExecutionContext extends EventEmitter {
   // @ts-ignore
   emit(event: string, payload: any) {
     payload.workflowId = this.state.id;
-    super.emit(event, payload);
+    return super.emit(event, payload);
   }
 }

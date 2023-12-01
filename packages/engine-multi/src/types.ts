@@ -67,21 +67,20 @@ export interface EngineAPI extends EventEmitter {
   purge?: () => void;
 }
 
-export interface RuntimeEngine extends EventEmitter {
-  //id: string // human readable instance id
-  // actually I think the id is on the worker, not the engine
+export interface RuntimeEngine {
+  version: string;
 
   // TODO should return an unsubscribe hook
   listen(attemptId: string, listeners: any): void;
 
-  // TODO return a promise?
-  // Kinda convenient but not actually needed
   execute(
     plan: ExecutionPlan,
     options?: Partial<EngineOptions>
   ): Pick<EventEmitter, 'on' | 'off' | 'once'>;
 
   destroy(): void;
+
+  on: (evt: string, fn: (...args: any[]) => void) => void;
 
   // TODO my want some maintenance APIs, like getStatus. idk
 }
