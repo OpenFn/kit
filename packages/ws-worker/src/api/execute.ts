@@ -29,13 +29,24 @@ import type {
 import { ExecutionPlan } from '@openfn/runtime';
 import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
+// TODO: I want to move all event handlers out into their own files
+// I've just done jobecomplete now because it's getting way too big
+// TODO just export the index yeah?
+import onJobComplete from '../events/on-job-complete';
+import onJobStart from '../events/on-job-start';
+
 const enc = new TextDecoder('utf-8');
+
+export { onJobComplete, onJobStart };
 
 export type Context = {
   channel: Channel;
   state: AttemptState;
   logger: Logger;
+  engine: RuntimeEngine;
   onFinish: (result: any) => void;
+
+  // maybe its better for version numbers to be scribbled here as we go?
 };
 
 // mapping engine events to lightning events
@@ -61,7 +72,7 @@ export function execute(
 
   const state = createAttemptState(plan, options);
 
-  const context: Context = { channel, state, logger, onFinish };
+  const context: Context = { channel, state, logger, engine, onFinish };
 
   type EventHandler = (context: any, event: any) => void;
 
@@ -159,21 +170,7 @@ export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
       .receive('ok', resolve);
   });
 
-// TODO maybe move all event handlers into api/events/*
-
-export function onJobStart({ channel, state }: Context, event: any) {
-  // generate a run id and write it to state
-  state.activeRun = crypto.randomUUID();
-  state.activeJob = event.jobId;
-
-  const input_dataclip_id = state.inputDataclips[event.jobId];
-
-  return sendEvent<RunStartPayload>(channel, RUN_START, {
-    run_id: state.activeRun!,
-    job_id: state.activeJob!,
-    input_dataclip_id,
-  });
-}
+// TODO move all event handlers into api/events/*
 
 // Called on job fail or crash
 // If this was a crash, it'll also trigger a workflow error
@@ -195,64 +192,6 @@ export function onJobError(context: Context, event: any) {
   } else {
     onJobComplete(context, event, event.error);
   }
-}
-
-// OK, what we need to do now is:
-// a) generate a reason string for the job
-// b) save the reason for each job to state for later
-export function onJobComplete(
-  { channel, state }: Context,
-  event: JobCompletePayload,
-  // TODO this isn't terribly graceful, but accept an error for crashes
-  error?: any
-) {
-  const dataclipId = crypto.randomUUID();
-
-  const run_id = state.activeRun as string;
-  const job_id = state.activeJob as string;
-
-  if (!state.dataclips) {
-    state.dataclips = {};
-  }
-  state.dataclips[dataclipId] = event.state;
-
-  delete state.activeRun;
-  delete state.activeJob;
-  // TODO right now, the last job to run will be the result for the attempt
-  // this may not stand up in the future
-  // I'd feel happer if the runtime could judge what the final result is
-  // (taking into account branches and stuff)
-  // The problem is that the runtime will return the object, not an id,
-  // so we have a bit of a mapping problem
-  state.lastDataclipId = dataclipId;
-
-  // Set the input dataclip id for downstream jobs
-  event.next?.forEach((nextJobId) => {
-    state.inputDataclips[nextJobId] = dataclipId;
-  });
-
-  const { reason, error_message, error_type } = calculateJobExitReason(
-    job_id,
-    event.state,
-    error
-  );
-  state.reasons[job_id] = { reason, error_message, error_type };
-
-  const evt = {
-    run_id,
-    job_id,
-    output_dataclip_id: dataclipId,
-    output_dataclip: stringify(event.state),
-
-    reason,
-    error_message,
-    error_type,
-
-    mem: event.mem,
-    duration: event.duration,
-    thread_id: event.threadId,
-  };
-  return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, evt);
 }
 
 export function onWorkflowStart(
