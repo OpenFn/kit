@@ -1,0 +1,8 @@
+{
+  "name": "test-repo",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "helper_1.0.0": "@npm:helper@1.0.0"
+  }
+}

@@ -82,4 +82,21 @@ export class OOMError extends EngineError {
   }
 }
 
+export class ExitError extends EngineError {
+  severity = 'crash';
+  type = 'ExitError';
+  name = 'ExitError';
+  code;
+  message;
+
+  constructor(code: number) {
+    super();
+    this.code = code;
+    this.message = `Process exited with code: ${code}`;
+    // Remove the stack trace
+    // It contains no useful information
+    this.stack = '';
+  }
+}
+
 // CredentialsError (exception)
