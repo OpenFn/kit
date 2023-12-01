@@ -801,7 +801,7 @@ test('keep executing after an error', async (t) => {
   t.falsy(result.x);
 });
 
-test.only('simple on-error handler', async (t) => {
+test('simple on-error handler', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {

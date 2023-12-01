@@ -290,7 +290,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   `events: lightning should receive a ${e.RUN_COMPLETE} event even if the attempt fails`,
   (t) => {
     return new Promise((done) => {
