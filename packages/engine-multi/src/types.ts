@@ -55,6 +55,12 @@ export interface ExecutionContext extends EventEmitter {
   logger: Logger;
   callWorker: CallWorker;
 
+  // .... maybe
+  // I think I'll ignore runtime and compiler until someone asks for it
+  // because they're tied to the engine
+  // I do want to track adaptor versions, but they're more tied to a Run
+  versions: Record<string, string>;
+
   emit<T extends ExternalEvents>(
     event: T,
     payload: Omit<EventMap[T], 'workflowId'>

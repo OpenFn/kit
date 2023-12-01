@@ -21,6 +21,7 @@ export default class ExecutionContext extends EventEmitter {
   logger: Logger;
   callWorker: CallWorker;
   options: ExecutionContextOptions;
+  versions = {};
 
   constructor({
     state,

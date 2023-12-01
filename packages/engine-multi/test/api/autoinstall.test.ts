@@ -486,3 +486,15 @@ test.serial('autoinstall: throw twice in a row', async (t) => {
   });
   t.is(callCount, 2);
 });
+
+test('write versions to context', async (t) => {
+  const autoinstallOpts = {
+    handleInstall: mockHandleInstall,
+    handleIsInstalled: async () => false,
+  };
+  const context = createContext(autoinstallOpts);
+
+  await autoinstall(context);
+
+  t.is(context.versions['@openfn/language-common'], '1.0.0');
+});

@@ -74,6 +74,8 @@ export const jobStart = (
 ) => {
   const { threadId, jobId } = event;
 
+  // TODO include any adaptor versions here
+
   context.emit(externalEvents.JOB_START, {
     jobId,
     threadId,

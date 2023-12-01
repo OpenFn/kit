@@ -67,6 +67,14 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
 
       const startTime = Date.now();
       try {
+        // My theory was to track autoinstall versions asclose to source as possible
+        // Maybe even read back the package.json, although I'm going off that idea
+        // But is doing THIS any better than just reporting the adaptor version on the job?
+        // Like is it any mor robust? It's certainly more effort.
+
+        const { name, version } = getNameAndVersion(a);
+        context.versions[name] = version;
+
         await installFn(a, repoDir, logger);
 
         const duration = Date.now() - startTime;
@@ -134,8 +142,8 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     }
 
     const alias = getAliasedName(a);
-    const { name } = getNameAndVersion(a);
-    paths[name] = { path: `${repoDir}/node_modules/${alias}` };
+    const { name, version } = getNameAndVersion(a);
+    paths[name] = { path: `${repoDir}/node_modules/${alias}`, version };
 
     if (!(await isInstalledFn(a, repoDir, logger))) {
       adaptorsToLoad.push(a);
