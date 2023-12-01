@@ -403,18 +403,16 @@ test('workflowError should trigger runComplete with a reason', async (t) => {
   const channel = mockChannel({
     [RUN_COMPLETE]: (evt) => {
       t.is(evt.reason, 'crash');
+      t.is(evt.error_message, 'it crashed');
       return true;
     },
     [ATTEMPT_COMPLETE]: () => true,
   });
 
   const event = {
-    error: {
-      severity: 'crash',
-      type: 'Err',
-      message: 'it crashed',
-    },
-    state: {},
+    severity: 'crash',
+    type: 'Err',
+    message: 'it crashed',
   };
 
   const context = { channel, state, onFinish: () => {} };

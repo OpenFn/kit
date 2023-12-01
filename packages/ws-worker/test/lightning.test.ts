@@ -304,7 +304,6 @@ test.serial(
       ]);
 
       lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
-        console.log(payload);
         t.not(payload.reason, 'success');
         t.pass('called run complete');
       });
