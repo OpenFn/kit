@@ -100,3 +100,23 @@ test('kill: oom', async (t) => {
   t.is(error_type, 'OOMError');
   t.is(error_message, 'Run exceeded maximum memory usage');
 });
+
+test('crash: process.exit() triggered by postgres', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        adaptor: '@openfn/language-postgresql@4.1.8', // version number is important
+        body: "sql('select * from food_hygiene_interview');",
+      },
+    ],
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+
+  t.is(reason, 'crash');
+  t.is(error_type, 'ExitError');
+  t.regex(error_message, /Process exited with code: 1/i);
+});
