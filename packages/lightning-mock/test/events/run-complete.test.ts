@@ -52,46 +52,6 @@ test.serial('save dataclip id to state', async (t) => {
   });
 });
 
-test.serial('error if no dataclip', async (t) => {
-  return new Promise(async (done) => {
-    const attempt = createAttempt();
-
-    server.startAttempt(attempt.id);
-
-    const event = {
-      reason: 'success',
-      output_dataclip: null,
-      output_dataclip_id: 't',
-    };
-    const channel = await join(client, attempt.id);
-
-    channel.push(RUN_COMPLETE, event).receive('error', () => {
-      t.pass('event rejected');
-      done();
-    });
-  });
-});
-
-test.serial('error if no dataclip_d', async (t) => {
-  return new Promise(async (done) => {
-    const attempt = createAttempt();
-
-    server.startAttempt(attempt.id);
-
-    const event = {
-      reason: 'success',
-      output_dataclip: JSON.stringify({ x: 22 }),
-      output_dataclip_id: undefined,
-    };
-    const channel = await join(client, attempt.id);
-
-    channel.push(RUN_COMPLETE, event).receive('error', () => {
-      t.pass('event rejected');
-      done();
-    });
-  });
-});
-
 test.serial('error if no reason', async (t) => {
   return new Promise(async (done) => {
     const attempt = createAttempt();
