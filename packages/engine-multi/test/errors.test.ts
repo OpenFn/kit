@@ -124,7 +124,7 @@ test.serial('execution error from async code', (t) => {
   });
 });
 
-test.serial('emit a kill error on process.exit()', (t) => {
+test.serial('emit a crash error on process.exit()', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'z',
@@ -138,7 +138,7 @@ test.serial('emit a kill error on process.exit()', (t) => {
 
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'ExitError');
-      t.is(evt.severity, 'kill');
+      t.is(evt.severity, 'crash');
       t.is(evt.message, 'Process exited with code: 42');
       done();
     });

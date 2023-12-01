@@ -83,7 +83,7 @@ export class OOMError extends EngineError {
 }
 
 export class ExitError extends EngineError {
-  severity = 'kill';
+  severity = 'crash';
   type = 'ExitError';
   name = 'ExitError';
   code;
