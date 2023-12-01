@@ -16,7 +16,7 @@ test('crash on timeout', async (t) => {
   }
 
   t.truthy(error);
-  t.is(error.severity, 'crash');
+  t.is(error.severity, 'kill');
   t.is(error.type, 'TimeoutError');
   t.is(error.message, 'Job took longer than 1ms to complete');
 });
