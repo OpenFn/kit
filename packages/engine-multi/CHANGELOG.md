@@ -1,5 +1,12 @@
 # engine-multi
 
+## 0.2.3
+
+### Patch Changes
+
+- 05ccc10b: Handle async errors in the runtime
+- 7235bf5e: Throw a better error on process.exit
+
 ## 0.2.2
 
 ### Patch Changes

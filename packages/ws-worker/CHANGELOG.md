@@ -1,5 +1,14 @@
 # ws-worker
 
+## 0.2.12
+
+### Patch Changes
+
+- 6c3e9e42: Ensure capacity is also set on the engine
+- Updated dependencies [05ccc10b]
+- Updated dependencies [7235bf5e]
+  - @openfn/engine-multi@0.2.3
+
 ## 0.2.11
 
 ### Patch Changes
