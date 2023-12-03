@@ -120,10 +120,12 @@ if (args.mock) {
     engineReady(engine);
   });
 } else {
-  createRTE({ repoDir: args.repoDir, memoryLimitMb: args.runMemory }).then(
-    (engine) => {
-      logger.debug('engine created');
-      engineReady(engine);
-    }
-  );
+  createRTE({
+    repoDir: args.repoDir,
+    memoryLimitMb: args.runMemory,
+    maxWorkers: args.capacity,
+  }).then((engine) => {
+    logger.debug('engine created');
+    engineReady(engine);
+  });
 }

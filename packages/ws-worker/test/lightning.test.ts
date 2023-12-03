@@ -264,14 +264,13 @@ test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
   });
 });
 
-test.serial.only(
+test.serial(
   `events: lightning should receive a ${e.RUN_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
 
       lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
-        console.log(payload);
         t.is(payload.job_id, 'j');
         t.truthy(payload.run_id);
         t.truthy(payload.output_dataclip);
@@ -283,6 +282,34 @@ test.serial.only(
       });
 
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+        done();
+      });
+
+      lng.enqueueAttempt(attempt);
+    });
+  }
+);
+
+test.serial(
+  `events: lightning should receive a ${e.RUN_COMPLETE} event even if the attempt fails`,
+  (t) => {
+    return new Promise((done) => {
+      // This attempt should timeout
+      const attempt = getAttempt({ options: { timeout: 100 } }, [
+        {
+          id: 'z',
+          adaptor: '@openfn/language-common@1.0.0',
+          body: 'wait(1000)',
+        },
+      ]);
+
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
+        t.not(payload.reason, 'success');
+        t.pass('called run complete');
+      });
+
+      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, ({ payload }) => {
+        t.not(payload.reason, 'success');
         done();
       });
 

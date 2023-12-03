@@ -1,7 +1,9 @@
 import test from 'ava';
+import path from 'node:path';
+
 import createEngine, { EngineOptions } from '../src/engine';
 import { createMockLogger } from '@openfn/logger';
-import { WORKFLOW_ERROR } from '../src/events';
+import { WORKFLOW_COMPLETE, WORKFLOW_ERROR } from '../src/events';
 
 let engine;
 
@@ -10,7 +12,7 @@ test.before(async () => {
 
   const options: EngineOptions = {
     logger,
-    repoDir: '.',
+    repoDir: path.resolve('./test/__repo__'),
     autoinstall: {
       // disable autoinstall
       handleIsInstalled: async () => true,
@@ -102,11 +104,12 @@ test.serial('execution error from async code', (t) => {
       id: 'a',
       jobs: [
         {
+          // this error will throw within the promise, and so before the job completes
+          // But REALLY naughty code could throw after the job has finished
+          // In which case it'll be ignored
+          // Also note that the wrapping promise will never resolve
           expression: `export default [(s) => new Promise((r) => {
-            // this error will throw within the promise, and so before the job completes
-            // But REALLY naughty code could throw after the job has finished
-            // In which case it'll be ignored
-            setTimeout(() => { throw new Error(\"e\");r () }, 1)
+            setTimeout(() => { throw new Error(\"e1324\"); r() }, 10)
             })]`,
         },
       ],
@@ -115,6 +118,28 @@ test.serial('execution error from async code', (t) => {
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'ExecutionError');
       t.is(evt.severity, 'crash');
+
+      done();
+    });
+  });
+});
+
+test.serial('emit a crash error on process.exit()', (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'z',
+      jobs: [
+        {
+          adaptor: 'helper@1.0.0',
+          expression: `export default [exit()]`,
+        },
+      ],
+    };
+
+    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.type, 'ExitError');
+      t.is(evt.severity, 'crash');
+      t.is(evt.message, 'Process exited with code: 42');
       done();
     });
   });

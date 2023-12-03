@@ -64,7 +64,7 @@ New releases will be published to npm automatically when merging into main.
 
 Before merging to main, check out the release branch locally and run the following steps:
 
-1. Run `pnpm changeset` from root to bump versions
+1. Run `pnpm changeset version` from root to bump versions
 1. Run `pnpm install`
 1. Commit the new version numbers
 1. Run `pnpm changeset tag` to generate tags

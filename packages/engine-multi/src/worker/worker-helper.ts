@@ -88,15 +88,19 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
     // For now, we'll write this off as a crash-level generic execution error
     // TODO did this come from job or adaptor code?
     const e = new ExecutionError(err);
-    e.severity = 'crash'; // Downgrade this to a crash becuase it's likely not our fault
+    e.severity = 'crash'; // Downgrade this to a crash because it's likely not our fault
     handleError(e);
-    process.exit(1);
+
+    // Close down the process justto be 100% sure that all async code stops
+    // This is in a timeout to give the emitted message time to escape
+    // There is a TINY WINDOW in which async code can still run and affect the next attempt
+    // This should all go away when we replace workerpool
+    setTimeout(() => {
+      process.exit(111111);
+    }, 2);
   });
 
   try {
-    // Note that the worker thread may fire logs after completion
-    // I think this is fine, it's just a log stream thing
-    // But the output is very confusing!
     const result = await execute();
     publish(workflowId, workerEvents.WORKFLOW_COMPLETE, { state: result });
 

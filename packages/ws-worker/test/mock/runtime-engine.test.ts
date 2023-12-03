@@ -6,7 +6,7 @@ import create, {
   WorkflowStartEvent,
 } from '../../src/mock/runtime-engine';
 import type { ExecutionPlan } from '@openfn/runtime';
-import { waitForEvent, clone } from '../util'; // ???
+import { waitForEvent, clone } from '../util';
 
 const sampleWorkflow = {
   id: 'w1',
@@ -229,4 +229,19 @@ test('do nothing for a job if no expression and adaptor (trigger node)', async (
   await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
 
   t.false(didCallEvent);
+});
+
+test('timeout', async (t) => {
+  const wf = clone(sampleWorkflow);
+  wf.jobs[0].expression = 'wait(1000)';
+  // wf.options = { timeout: 10 };
+
+  // @ts-ignore
+  engine.execute(wf, { timeout: 10 });
+
+  const evt = await waitForEvent<WorkflowCompleteEvent>(
+    engine,
+    'workflow-error'
+  );
+  t.is(evt.type, 'TimeoutError');
 });

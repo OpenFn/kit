@@ -93,7 +93,7 @@ export default (
   });
 
 // Wrap an operation with various useful stuff
-const wrapOperation = (
+export const wrapOperation = (
   fn: Operation,
   logger: Logger,
   name: string,
