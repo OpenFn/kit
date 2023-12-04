@@ -10,7 +10,7 @@ import {
   WORKFLOW_START,
 } from './events';
 import initWorkers from './api/call-worker';
-import createState from './api/create-state';
+import createState from './util/create-state';
 import execute from './api/execute';
 import validateWorker from './api/validate-worker';
 import ExecutionContext from './classes/ExecutionContext';

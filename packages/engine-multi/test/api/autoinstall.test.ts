@@ -69,6 +69,7 @@ test('Autoinstall basically works', async (t) => {
   t.deepEqual(paths, {
     '@openfn/language-common': {
       path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
+      version: '1.0.0',
     },
   });
 });
@@ -247,6 +248,7 @@ test('autoinstall: handle two seperate, non-overlapping installs', async (t) => 
   t.deepEqual(p1, {
     '@openfn/language-dhis2': {
       path: 'tmp/repo/node_modules/@openfn/language-dhis2_1.0.0',
+      version: '1.0.0',
     },
   });
 
@@ -254,6 +256,7 @@ test('autoinstall: handle two seperate, non-overlapping installs', async (t) => 
   t.deepEqual(p2, {
     '@openfn/language-http': {
       path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
+      version: '1.0.0',
     },
   });
 });
@@ -311,9 +314,11 @@ test.serial('autoinstall: return a map to modules', async (t) => {
   t.deepEqual(result, {
     '@openfn/language-common': {
       path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
+      version: '1.0.0',
     },
     '@openfn/language-http': {
       path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
+      version: '1.0.0',
     },
   });
 });
@@ -343,6 +348,7 @@ test.serial('autoinstall: support custom whitelist', async (t) => {
   t.deepEqual(result, {
     y: {
       path: 'tmp/repo/node_modules/y_1.0.0',
+      version: '1.0.0',
     },
   });
 });
@@ -352,6 +358,7 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
   const jobs = [
     {
       adaptor: '@openfn/language-common@1.0.0',
+      version: '1.0.0',
     },
   ];
 

@@ -7,6 +7,7 @@ import type {
   ExecutionContextOptions,
 } from '../types';
 import type { Logger } from '@openfn/logger';
+import loadVersions from '../util/load-versions';
 
 /**
  * The ExeuctionContext class wraps an event emitter with some useful context
@@ -34,6 +35,7 @@ export default class ExecutionContext extends EventEmitter {
     this.callWorker = callWorker;
     this.state = state;
     this.options = options;
+    this.versions = loadVersions();
   }
 
   // override emit to add the workflowId to all events
