@@ -1,5 +1,3 @@
-import crypto from 'node:crypto';
-
 import {
   ATTEMPT_COMPLETE,
   AttemptCompletePayload,
@@ -10,18 +8,15 @@ import {
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
-  RunCompletePayload,
   RUN_START,
-  RunStartPayload,
 } from '../events';
 import { AttemptOptions, Channel, AttemptState } from '../types';
-import { getWithReply, stringify, createAttemptState } from '../util';
+import { getWithReply, createAttemptState } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
-  JobCompletePayload,
   WorkflowCompletePayload,
   WorkflowErrorPayload,
   WorkflowStartPayload,

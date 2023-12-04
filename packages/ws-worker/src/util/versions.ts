@@ -28,4 +28,4 @@ export const calculateVersions = async (
   };
 };
 
-export const calculateVersionString = (versions: Versions) => {};
+export const calculateVersionString = (_versions: Versions) => {};

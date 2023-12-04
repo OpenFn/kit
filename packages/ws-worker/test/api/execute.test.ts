@@ -11,7 +11,6 @@ import {
   GET_DATACLIP,
 } from '../../src/events';
 import {
-  onJobStart,
   onJobComplete,
   onJobLog,
   execute,
@@ -70,49 +69,6 @@ test('send event should throw if an event errors', async (t) => {
   await t.throwsAsync(() => sendEvent(channel, 'throw', 22), {
     message: 'err',
   });
-});
-
-test('jobStart should set a run id and active job on state', async (t) => {
-  const plan = { id: 'attempt-1', jobs: [{ id: 'job-1' }] };
-  const jobId = 'job-1';
-
-  const state = createAttemptState(plan);
-
-  const channel = mockChannel({
-    [RUN_START]: (x) => x,
-  });
-
-  await onJobStart({ channel, state }, { jobId });
-
-  t.is(state.activeJob, jobId);
-  t.truthy(state.activeRun);
-});
-
-test('jobStart should send a run:start event', async (t) => {
-  const plan = {
-    id: 'attempt-1',
-    initialState: 'abc',
-    jobs: [
-      { id: 'job-1', expression: '.' },
-      { id: 'job-2', expression: '.' },
-    ],
-  };
-  const jobId = 'job-1';
-
-  const state = createAttemptState(plan);
-  state.activeJob = jobId;
-  state.activeRun = 'b';
-
-  const channel = mockChannel({
-    [RUN_START]: (evt) => {
-      t.is(evt.job_id, jobId);
-      t.is(evt.input_dataclip_id, plan.initialState);
-      t.truthy(evt.run_id);
-      return true;
-    },
-  });
-
-  await onJobStart({ channel, state }, { jobId });
 });
 
 test('jobComplete should clear the run id and active job on state', async (t) => {

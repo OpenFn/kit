@@ -36,7 +36,7 @@ export default async function onJobStart(
     // this is a little difficult to simulate
     // Maybe I should use the logger more directly?
     time: Date.now().toString(),
-    message: versionMessage,
+    message: [versionMessage],
     level: 'info',
     name: 'VER',
   });
