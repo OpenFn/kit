@@ -1,31 +1,95 @@
 import test from 'ava';
-import pkg from '../../package.json' assert { type: 'json' };
 
-import { calculateVersions } from '../../src/util/versions';
-import { Context } from '../../src/api/execute';
+import calculateVersionString from '../../src/util/versions';
 
-// Create just enough context for tests to pass
-const context = {
-  engine: {
-    version: '1.0.0',
-  },
-} as unknown as Context;
+// keys in this obejct are scrambled on purpose
+const versions = {
+  worker: '2',
+  compiler: '4',
+  node: '1',
+  engine: '3',
+};
 
-test('calculates node version', async (t) => {
-  const versions = await calculateVersions(context);
+// Util function to parse a version string into something easier to test
+// This purposefully makes a lot of assumptions about the shape of the string!
+const parse = (str: string) => {
+  const lines = str.split('\n');
+  lines.shift(); // remove the "Versions:" line
+  return lines.map((l) =>
+    // remove indent
+    l
+      .trim()
+      // remove special char and space
+      .substring(2)
+      // split into a tuple on whitespace
+      .split(/\s+/)
+  );
+};
 
-  t.is(versions.node, process.version);
+test('calculate version string', (t) => {
+  const str = calculateVersionString(versions);
+  // Formatting is super fussy in this test but it's sort of OK
+  t.is(
+    str,
+    `Versions:
+      ▸ node.js     1
+      ▸ worker      2
+      ▸ engine      3
+      ▸ compiler    4`
+  );
 });
 
-test('calculates worker version', async (t) => {
-  const versions = await calculateVersions(context);
-  t.is(versions.worker, pkg.version);
+test('helper should parse a version string and return the correct order', (t) => {
+  const str = calculateVersionString(versions);
+
+  const parsed = parse(str);
+  t.deepEqual(parsed, [
+    ['node.js', '1'],
+    ['worker', '2'],
+    ['engine', '3'],
+    ['compiler', '4'],
+  ]);
 });
 
-test('calculates engine version', async (t) => {
-  const versions = await calculateVersions(context);
-  t.is(versions.engine, context.engine.version);
+test("show unknown if a version isn't passed", (t) => {
+  // @ts-ignore
+  const str = calculateVersionString({});
+
+  const parsed = parse(str);
+  t.deepEqual(parsed, [
+    ['node.js', 'unknown'],
+    ['worker', 'unknown'],
+    ['engine', 'unknown'],
+    ['compiler', 'unknown'],
+  ]);
 });
 
-// this test does everything at once
-test.todo('calculates all versions');
+test('show adaptors last', (t) => {
+  const str = calculateVersionString({
+    '@openfn/language-common': '1.0.0',
+    ...versions,
+  });
+
+  const parsed = parse(str);
+  const common = parsed[4];
+  t.deepEqual(common, ['@openfn/language-common', '1.0.0']);
+});
+
+test('sort and list multiple adaptors', (t) => {
+  const str = calculateVersionString({
+    j: '2',
+    z: '3',
+    a: '1',
+    ...versions,
+  });
+
+  const parsed = parse(str);
+
+  const a = parsed[4];
+  const j = parsed[5];
+  const z = parsed[6];
+
+  t.deepEqual(a, ['a', '1']);
+  t.deepEqual(j, ['j', '2']);
+  t.deepEqual(z, ['z', '3']);
+});

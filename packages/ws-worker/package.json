@@ -27,6 +27,7 @@
     "@types/koa-logger": "^3.1.2",
     "@types/ws": "^8.5.6",
     "fast-safe-stringify": "^2.1.1",
+    "figures": "^5.0.0",
     "human-id": "^4.1.0",
     "jose": "^4.14.6",
     "koa": "^2.13.4",

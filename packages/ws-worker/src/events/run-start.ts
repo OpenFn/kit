@@ -4,6 +4,7 @@ import { JobStartPayload } from '@openfn/engine-multi';
 import pkg from '../../package.json' assert { type: 'json' };
 import { RUN_START, RunStartPayload } from '../events';
 import { sendEvent, Context, onJobLog } from '../api/execute';
+import calculateVersionString from '../util/versions';
 
 export default async function onRunStart(
   context: Context,
@@ -30,7 +31,7 @@ export default async function onRunStart(
     versions,
   });
 
-  const versionMessage = 'TODO'; //calculateVersionString(versions);
+  const versionMessage = calculateVersionString(versions);
 
   return onJobLog(context, {
     // this is a little difficult to simulate

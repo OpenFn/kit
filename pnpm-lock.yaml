@@ -649,6 +649,9 @@ importers:
       fast-safe-stringify:
         specifier: ^2.1.1
         version: 2.1.1
+      figures:
+        specifier: ^5.0.0
+        version: 5.0.0
       human-id:
         specifier: ^4.1.0
         version: 4.1.0

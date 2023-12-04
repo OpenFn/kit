@@ -1,5 +1,6 @@
-import pkg from '../../package.json' assert { type: 'json' };
-import { Context } from '../api/execute';
+import { mainSymbols } from 'figures';
+
+const { triangleRightSmall: t } = mainSymbols;
 
 export type Versions = {
   node: string;
@@ -9,23 +10,30 @@ export type Versions = {
   [adaptor: string]: string;
 };
 
-export const calculateVersions = async (
-  context: Context
-): Promise<Versions> => {
-  return {
-    node: process.version,
-    worker: pkg.version,
-    engine: context.engine.version || 'unknown',
+export default (versions: Versions) => {
+  let longest = 'compiler'.length; // Bit wierdly defensive but ensure padding is reasonable even if version has no props
+  for (const v in versions) {
+    longest = Math.max(v.length, longest);
+  }
 
-    // ... adaptors: read from the autoinstall paths
-    // But wait, this is deep in the engine too
-    // Well OK, should then the ENGINE calculate versions?
+  const { node, compiler, engine, worker, ...adaptors } = versions;
+  // Prefix and pad version numbers
+  const prefix = (str: string) => `    ${t} ${str.padEnd(longest + 4, ' ')}`;
 
-    // Ok, so we can't really report these easily, but they are
-    // implied by the engine version!
-    // compiler: tricky, this is embedded deep in the engine
-    // runtime: also tricky as it's ebedded in the engine
-  };
+  let str = `Versions:
+  ${prefix('node.js')}${versions.node || 'unknown'}
+  ${prefix('worker')}${versions.worker || 'unknown'}
+  ${prefix('engine')}${versions.engine || 'unknown'}
+  ${prefix('compiler')}${versions.compiler || 'unknown'}`;
+
+  if (Object.keys(adaptors).length) {
+    str +=
+      '\n' +
+      Object.keys(adaptors)
+        .sort()
+        .map((adaptorName) => `${prefix(adaptorName)}${adaptors[adaptorName]}`)
+        .join('\n');
+  }
+
+  return str;
 };
-
-export const calculateVersionString = (_versions: Versions) => {};
