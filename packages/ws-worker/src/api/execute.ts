@@ -160,7 +160,10 @@ export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
     channel
       .push<T>(event, payload)
       .receive('error', reject)
-      .receive('timeout', () => reject(new Error('timeout')))
+      .receive('timeout', (e) => {
+        console.log(e);
+        reject(new Error('timeout'));
+      })
       .receive('ok', resolve);
   });
 

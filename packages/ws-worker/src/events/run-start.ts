@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { JobStartPayload } from '@openfn/engine-multi';
+import { timestamp } from '@openfn/logger';
 
 import pkg from '../../package.json' assert { type: 'json' };
 import { RUN_START, RunStartPayload } from '../events';
@@ -34,9 +35,7 @@ export default async function onRunStart(
   const versionMessage = calculateVersionString(versions);
 
   return onJobLog(context, {
-    // this is a little difficult to simulate
-    // Maybe I should use the logger more directly?
-    time: Date.now().toString(),
+    time: timestamp().toString(),
     message: [versionMessage],
     level: 'info',
     name: 'VER',
