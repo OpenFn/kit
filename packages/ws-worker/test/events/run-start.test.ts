@@ -1,5 +1,5 @@
 import test from 'ava';
-import onJobStart from '../../src/events/on-job-start';
+import handleRunStart from '../../src/events/run-start';
 
 import { JobStartPayload } from '@openfn/engine-multi';
 
@@ -20,7 +20,7 @@ test('set a run id and active job on state', async (t) => {
     [ATTEMPT_LOG]: (x) => x,
   });
 
-  await onJobStart({ channel, state }, { jobId });
+  await handleRunStart({ channel, state }, { jobId });
 
   t.is(state.activeJob, jobId);
   t.truthy(state.activeRun);
@@ -51,7 +51,7 @@ test('send a run:start event', async (t) => {
     [ATTEMPT_LOG]: () => true,
   });
 
-  await onJobStart({ channel, state }, { jobId });
+  await handleRunStart({ channel, state }, { jobId });
 });
 
 test('run:start event should include versions', async (t) => {
@@ -92,7 +92,7 @@ test('run:start event should include versions', async (t) => {
     [ATTEMPT_LOG]: () => true,
   });
 
-  await onJobStart({ channel, state }, event);
+  await handleRunStart({ channel, state }, event);
 });
 
 test.todo('also logs the version number');

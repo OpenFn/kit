@@ -25,14 +25,13 @@ import { ExecutionPlan } from '@openfn/runtime';
 import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
 // TODO: I want to move all event handlers out into their own files
-// I've just done jobecomplete now because it's getting way too big
 // TODO just export the index yeah?
-import onJobComplete from '../events/on-job-complete';
-import onJobStart from '../events/on-job-start';
+import handleRunComplete from '../events/run-complete';
+import handleRunStart from '../events/run-start';
 
 const enc = new TextDecoder('utf-8');
 
-export { onJobComplete, onJobStart };
+export { handleRunComplete, handleRunStart };
 
 export type Context = {
   channel: Channel;
@@ -103,8 +102,8 @@ export function execute(
   const listeners = Object.assign(
     {},
     addEvent('workflow-start', onWorkflowStart),
-    addEvent('job-start', onJobStart),
-    addEvent('job-complete', onJobComplete),
+    addEvent('job-start', handleRunStart),
+    addEvent('job-complete', handleRunComplete),
     addEvent('job-error', onJobError),
     addEvent('workflow-log', onJobLog),
     // This will also resolve the promise
@@ -174,18 +173,18 @@ export function onJobError(context: Context, event: any) {
   // Error is the same as complete, but we might report
   // a different complete reason
 
-  // akward error handling
+  // awkward error handling
   // If the error is written to state, it's a fail,
-  // and we don't want to send that to onJobComplete
+  // and we don't want to send that to handleRunComplete
   // because it'll count it as a crash
   // This isn't very good: maybe we shouldn't trigger an error
   // at all for a fail state?
   const { state = {}, error, jobId } = event;
   // This test is horrible too
   if (state.errors?.[jobId]?.message === error.message) {
-    onJobComplete(context, event);
+    handleRunComplete(context, event);
   } else {
-    onJobComplete(context, event, event.error);
+    handleRunComplete(context, event, event.error);
   }
 }
 

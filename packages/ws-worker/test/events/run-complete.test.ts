@@ -1,5 +1,5 @@
 import test from 'ava';
-import onJobComplete from '../../src/events/on-job-complete';
+import handleRunStart from '../../src/events/run-complete';
 
 import { mockChannel } from '../../src/mock/sockets';
 import { createAttemptState } from '../../src/util';
@@ -20,7 +20,7 @@ test('clear the run id and active job on state', async (t) => {
   });
 
   const event = { state: { x: 10 } };
-  await onJobComplete({ channel, state }, event);
+  await handleRunStart({ channel, state }, event);
 
   t.falsy(state.activeJob);
   t.falsy(state.activeRun);
@@ -42,7 +42,7 @@ test('setup input mappings on on state', async (t) => {
   });
 
   const engineEvent = { state: { x: 10 }, next: ['job-2'] };
-  await onJobComplete({ channel, state }, engineEvent);
+  await handleRunStart({ channel, state }, engineEvent);
 
   t.deepEqual(state.inputDataclips, {
     ['job-2']: lightningEvent.output_dataclip_id,
@@ -62,7 +62,7 @@ test('save the dataclip to state', async (t) => {
   });
 
   const event = { state: { x: 10 } };
-  await onJobComplete({ channel, state }, event);
+  await handleRunStart({ channel, state }, event);
 
   t.is(Object.keys(state.dataclips).length, 1);
   const [dataclip] = Object.values(state.dataclips);
@@ -84,7 +84,7 @@ test('write a reason to state', async (t) => {
   });
 
   const event = { state: { x: 10 } };
-  await onJobComplete({ channel, state }, event);
+  await handleRunStart({ channel, state }, event);
 
   t.is(Object.keys(state.reasons).length, 1);
   t.deepEqual(state.reasons[jobId], {
@@ -110,7 +110,7 @@ test('generate an exit reason: success', async (t) => {
     },
   });
 
-  await onJobComplete({ channel, state }, { state: { x: 10 } });
+  await handleRunStart({ channel, state }, { state: { x: 10 } });
 
   t.truthy(event);
   t.is(event.reason, 'success');
@@ -146,5 +146,5 @@ test('send a run:complete event', async (t) => {
     duration: 61,
     threadId: 'abc',
   };
-  await onJobComplete({ channel, state }, event);
+  await handleRunStart({ channel, state }, event);
 });

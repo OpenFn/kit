@@ -5,7 +5,7 @@ import pkg from '../../package.json' assert { type: 'json' };
 import { RUN_START, RunStartPayload } from '../events';
 import { sendEvent, Context, onJobLog } from '../api/execute';
 
-export default async function onJobStart(
+export default async function onRunStart(
   context: Context,
   event: JobStartPayload
 ) {

@@ -7,7 +7,7 @@ import { sendEvent, Context } from '../api/execute';
 
 import type { JobCompletePayload } from '@openfn/engine-multi';
 
-export default function onJobComplete(
+export default function onRunComplete(
   { channel, state }: Context,
   event: JobCompletePayload,
   // TODO this isn't terribly graceful, but accept an error for crashes
