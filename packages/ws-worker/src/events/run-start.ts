@@ -11,6 +11,10 @@ export default async function onRunStart(
   context: Context,
   event: JobStartPayload
 ) {
+  // Cheat on the timestamp time to make sure this is the first thing in the log
+  // this doesn't work in streaming
+  const time = (timestamp() - BigInt(1e6)).toString();
+
   const { channel, state } = context;
 
   // generate a run id and write it to state
@@ -35,7 +39,7 @@ export default async function onRunStart(
   const versionMessage = calculateVersionString(versions);
 
   return onJobLog(context, {
-    time: timestamp().toString(),
+    time,
     message: [versionMessage],
     level: 'info',
     name: 'VER',
