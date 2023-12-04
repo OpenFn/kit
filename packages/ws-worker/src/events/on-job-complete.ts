@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { RUN_COMPLETE, RunCompletePayload } from '../events';
 import { stringify } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
