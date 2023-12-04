@@ -73,7 +73,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
         // Like is it any mor robust? It's certainly more effort.
 
         const { name, version } = getNameAndVersion(a);
-        context.versions[name] = version;
+        context.versions[name] = version || 'unknown';
 
         await installFn(a, repoDir, logger);
 
@@ -143,7 +143,10 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
 
     const alias = getAliasedName(a);
     const { name, version } = getNameAndVersion(a);
-    paths[name] = { path: `${repoDir}/node_modules/${alias}`, version };
+    paths[name] = {
+      path: `${repoDir}/node_modules/${alias}`,
+      version: version || 'unknown',
+    };
 
     if (!(await isInstalledFn(a, repoDir, logger))) {
       adaptorsToLoad.push(a);
@@ -210,4 +213,4 @@ export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
   return adaptors;
 };
 
-export type ModulePaths = Record<string, { path: string }>;
+export type ModulePaths = Record<string, { path: string; version: string }>;
