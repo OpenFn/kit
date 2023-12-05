@@ -121,7 +121,9 @@ const executeJob = async (
   if (job.expression) {
     const startTime = Date.now();
     try {
-      // TODO include the upstream job
+      // TODO include the upstream job?
+      // TODO: consider awaiting the notify call before continuing execution
+      // (right now the engine cannot support this)
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(ctx, job.expression, state);
     } catch (e: any) {

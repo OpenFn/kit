@@ -28,6 +28,18 @@ export default async function onRunStart(
     ...event.versions,
   };
 
+  // Send the log with its own little state object
+  // to preserve the run id
+  // Otherwise, by the time the log sends,
+  // the activerun could have changed
+  const versionLogContext = {
+    ...context,
+    state: {
+      ...state,
+      activeRun: state.activeRun,
+    },
+  };
+
   await sendEvent<RunStartPayload>(channel, RUN_START, {
     run_id: state.activeRun!,
     job_id: state.activeJob!,
@@ -38,7 +50,7 @@ export default async function onRunStart(
 
   const versionMessage = calculateVersionString(versions);
 
-  return onJobLog(context, {
+  return await onJobLog(versionLogContext, {
     time,
     message: [versionMessage],
     level: 'info',

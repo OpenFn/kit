@@ -105,7 +105,7 @@ export function execute(
     addEvent('job-start', handleRunStart),
     addEvent('job-complete', handleRunComplete),
     addEvent('job-error', onJobError),
-    addEvent('workflow-log', onJobLog),
+    // addEvent('workflow-log', onJobLog),
     // This will also resolve the promise
     addEvent('workflow-complete', onWorkflowComplete),
 
@@ -257,6 +257,8 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   if (state.activeRun) {
     log.run_id = state.activeRun;
   }
+
+  console.log(log);
 
   return sendEvent<AttemptLogPayload>(channel, ATTEMPT_LOG, log);
 }
