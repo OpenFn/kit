@@ -205,6 +205,20 @@ test('crash: syntax error', async (t) => {
   t.is(reason.error_message, 'a: Unexpected token (1:2)');
 });
 
+test('crash: unterminated string', async (t) => {
+  const plan = createPlan({
+    id: 'a',
+    expression: `const x = 'and its `,
+  });
+
+  const { reason } = await execute(plan);
+  t.deepEqual(reason, {
+    error_message: 'a: Unterminated string constant (1:10)',
+    error_type: 'CompileError',
+    reason: 'crash',
+  });
+});
+
 test('exception: autoinstall error', async (t) => {
   const plan = createPlan({
     id: 'a',

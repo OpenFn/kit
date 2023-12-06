@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 
 import { initLightning, initWorker } from '../src/init';
+import createAttempt, { createJob } from '../src/factories';
 
 let lightning;
 let worker;
@@ -52,6 +53,24 @@ test('crash: syntax error', async (t) => {
   t.is(reason, 'crash');
   t.is(error_type, 'CompileError');
   t.regex(error_message, /Unexpected token \(1:9\)$/);
+});
+
+test('crash: unterminated string', async (t) => {
+  const job = createJob({
+    body: `fn(state => {
+      console.log('and its 'basic auth' form blah');
+      return state;
+    });`,
+  });
+  const attempt = createAttempt([], [job], []);
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+
+  t.is(reason, 'crash');
+  t.is(error_type, 'CompileError');
+  t.regex(error_message, /Unexpected token \(2:28\)$/);
 });
 
 test('exception: autoinstall error', async (t) => {
