@@ -334,7 +334,7 @@ test('a timeout error should still call run-complete', (t) => {
       jobs: [
         {
           adaptor: '@openfn/language-common@latest', // version lock to something stable?
-          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 000)))',
+          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 1000)))',
         },
       ],
       options: {
