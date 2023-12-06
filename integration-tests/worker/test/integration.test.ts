@@ -334,17 +334,17 @@ test('a timeout error should still call run-complete', (t) => {
       jobs: [
         {
           adaptor: '@openfn/language-common@latest', // version lock to something stable?
-          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 1000)))',
+          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 000)))',
         },
       ],
       options: {
-        // Including the timeout here stops the attempt returning at all
         timeout: 100,
       },
     };
 
     lightning.once('run:complete', (event) => {
       t.is(event.payload.reason, 'kill');
+      t.is(event.payload.error_type, 'TimeoutError');
     });
 
     lightning.once('attempt:complete', (event) => {

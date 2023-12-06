@@ -190,7 +190,7 @@ export function onJobError(context: Context, event: any) {
   // at all for a fail state?
   const { state, error, jobId } = event;
   // This test is horrible too
-  if (state.errors?.[jobId]?.message === error.message) {
+  if (state?.errors?.[jobId]?.message === error.message) {
     return onJobComplete(context, event);
   } else {
     return onJobComplete(context, event, event.error);
@@ -215,8 +215,10 @@ export function onJobComplete(
     state.dataclips = {};
   }
 
+  const outputState = event.state || {};
+
   // Ensure the event has some minimal state to report back to lightning
-  state.dataclips[dataclipId] = event.state || {};
+  state.dataclips[dataclipId] = outputState;
 
   delete state.activeRun;
   delete state.activeJob;
@@ -235,7 +237,7 @@ export function onJobComplete(
 
   const { reason, error_message, error_type } = calculateJobExitReason(
     job_id,
-    event.state,
+    outputState,
     error
   );
   state.reasons[job_id] = { reason, error_message, error_type };
@@ -244,7 +246,7 @@ export function onJobComplete(
     run_id,
     job_id,
     output_dataclip_id: dataclipId,
-    output_dataclip: stringify(event.state),
+    output_dataclip: stringify(outputState),
 
     reason,
     error_message,
