@@ -123,6 +123,12 @@ test.serial('run a job with defaults: openfn job.js', async (t) => {
   t.assert(result.data.count === 42);
 });
 
+test.only('run a job which does not return state', async (t) => {
+  const result = await run('openfn job.js', 'export default [s => {}]');
+
+  t.is(result.data, 42);
+});
+
 test.serial('run a workflow', async (t) => {
   const workflow = {
     jobs: [
