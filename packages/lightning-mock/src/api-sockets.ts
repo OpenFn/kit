@@ -419,7 +419,17 @@ const createSocketAPI = (
 
     let payload: any = validateReasons(evt.payload);
 
-    if (output_dataclip_id && output_dataclip) {
+    if (!output_dataclip) {
+      payload = {
+        status: 'error',
+        response: 'no output_dataclip',
+      };
+    } else if (!output_dataclip_id) {
+      payload = {
+        status: 'error',
+        response: 'no output_dataclip_id',
+      };
+    } else {
       if (!state.dataclips) {
         state.dataclips = {};
       }
