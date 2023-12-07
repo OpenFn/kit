@@ -74,3 +74,43 @@ test.serial('error if no reason', async (t) => {
 
 // reason validation code is shared with attempt:complete
 // It's fine not to test further here
+
+test.serial('error if no output dataclip', async (t) => {
+  return new Promise(async (done) => {
+    const attempt = createAttempt();
+
+    server.startAttempt(attempt.id);
+
+    const event = {
+      reason: 'success',
+      output_dataclip: undefined,
+      output_dataclip_id: 'x',
+    };
+    const channel = await join(client, attempt.id);
+
+    channel.push(RUN_COMPLETE, event).receive('error', (e) => {
+      t.is(e.toString(), 'no output_dataclip');
+      done();
+    });
+  });
+});
+
+test.serial('error if no output dataclip_id', async (t) => {
+  return new Promise(async (done) => {
+    const attempt = createAttempt();
+
+    server.startAttempt(attempt.id);
+
+    const event = {
+      reason: 'success',
+      output_dataclip: {},
+      output_dataclip_id: undefined,
+    };
+    const channel = await join(client, attempt.id);
+
+    channel.push(RUN_COMPLETE, event).receive('error', (e) => {
+      t.is(e.toString(), 'no output_dataclip_id');
+      done();
+    });
+  });
+});

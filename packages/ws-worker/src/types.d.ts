@@ -41,7 +41,8 @@ export type Node = {
   id: string;
   body?: string;
   adaptor?: string;
-  credential_id?: any; // TODO tighten this up, string or object
+  credential?: object;
+  credential_id?: string;
   type?: 'webhook' | 'cron'; // trigger only
   state?: any; // Initial state / defaults
 };

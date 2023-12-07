@@ -21,13 +21,14 @@ import {
   loadDataclip,
   loadCredential,
   sendEvent,
+  onJobError,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify, createAttemptState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
-import type { AttemptState } from '../../src/types';
+import type { Attempt, AttemptState } from '../../src/types';
 import {
   JOB_COMPLETE,
   JOB_ERROR,
@@ -325,6 +326,53 @@ test('jobLog should should send a log event inside a run', async (t) => {
   });
 
   await onJobLog({ channel, state }, log);
+});
+
+test('jobError should trigger run:complete with a reason', async (t) => {
+  let runCompleteEvent;
+
+  const state = createAttemptState({ id: 'attempt-23' } as Attempt);
+  state.activeJob = 'job-1';
+  state.activeRun = 'b';
+
+  const channel = mockChannel({
+    [RUN_COMPLETE]: (evt) => {
+      runCompleteEvent = evt;
+      return true;
+    },
+  });
+
+  const exitState = { x: 1 };
+  const event = {
+    error: { message: 'nope', severity: 'kill', type: 'TEST' },
+    state: exitState,
+  };
+  await onJobError({ channel, state }, event);
+
+  t.is(runCompleteEvent.reason, 'kill');
+  t.is(runCompleteEvent.error_message, 'nope');
+  t.is(runCompleteEvent.error_type, 'TEST');
+  t.deepEqual(runCompleteEvent.output_dataclip, JSON.stringify(exitState));
+});
+
+test('jobError should trigger run:complete with a reason and default state', async (t) => {
+  let runCompleteEvent;
+
+  const state = createAttemptState({ id: 'attempt-23' } as Attempt);
+
+  const channel = mockChannel({
+    [RUN_COMPLETE]: (evt) => {
+      runCompleteEvent = evt;
+      return true;
+    },
+  });
+
+  const event = {
+    error: { message: 'nope', severity: 'kill', type: 'TEST' },
+  };
+  await onJobError({ channel, state }, event);
+
+  t.deepEqual(runCompleteEvent.output_dataclip, '{}');
 });
 
 test('workflowStart should send an empty attempt:start event', async (t) => {
