@@ -25,7 +25,7 @@ const loadCredentials = async (
 ) => {
   if (typeof job.configuration === 'string') {
     // TODO let's log and notify something useful if we're lazy loading
-    // TODO throw a controlled error if there's no reoslver
+    // TODO throw a controlled error if there's no resolver
     return resolver(job.configuration);
   }
   return job.configuration;
@@ -122,8 +122,6 @@ const executeJob = async (
     const startTime = Date.now();
     try {
       // TODO include the upstream job?
-      // TODO: consider awaiting the notify call before continuing execution
-      // (right now the engine cannot support this)
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(ctx, job.expression, state);
     } catch (e: any) {
