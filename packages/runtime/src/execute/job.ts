@@ -192,6 +192,12 @@ const executeJob = async (
     next = calculateNext(job, result);
   }
 
+  if (next.length && !didError && !result) {
+    logger.warn(
+      `WARNING: job ${jobId} did not return a state object. This may cause downstream jobs to fail.`
+    );
+  }
+
   return { next, state: result };
 };
 

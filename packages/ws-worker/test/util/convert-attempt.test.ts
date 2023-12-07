@@ -348,6 +348,17 @@ test('on_job_success condition: return true if no errors', (t) => {
   t.is(result, true);
 });
 
+// You can argue this both ways, but a job which returned no state is technically not in error
+// Mostly I dont want it to blow up
+test('on_job_success condition: return true if state is undefined', (t) => {
+  const condition = conditions.on_job_success('a');
+
+  const state = undefined;
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, true);
+});
+
 test('on_job_success condition: return true if unconnected upstream errors', (t) => {
   const condition = conditions.on_job_success('a');
 
@@ -412,6 +423,15 @@ test('on_job_failure condition: return false if no errors', (t) => {
   const condition = conditions.on_job_failure('a');
 
   const state = {};
+  const result = testEdgeCondition(condition, state);
+
+  t.is(result, false);
+});
+
+test('on_job_failure condition: return false if state is undefined', (t) => {
+  const condition = conditions.on_job_failure('a');
+
+  const state = undefined;
   const result = testEdgeCondition(condition, state);
 
   t.is(result, false);
