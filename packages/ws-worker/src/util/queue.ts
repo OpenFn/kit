@@ -46,9 +46,7 @@ const createThrottler = () => {
     }
   };
 
-  return {
-    add,
-  };
+  return add;
 };
 
 export default createThrottler;

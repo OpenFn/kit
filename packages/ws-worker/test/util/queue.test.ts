@@ -3,36 +3,36 @@ import test from 'ava';
 import createThrottler from '../../src/util/queue';
 
 test('invoke a throttled function immediately', (t) => {
-  const queue = createThrottler();
+  const throttle = createThrottler();
 
   const fn = async () => {
     t.pass('called the callback');
   };
 
-  const wrapped = queue.add(fn);
+  const wrapped = throttle(fn);
 
   wrapped();
 });
 
 test('throttled function should return', async (t) => {
-  const queue = createThrottler();
+  const throttle = createThrottler();
 
   const fn = async () => 1;
 
-  const wrapped = queue.add(fn);
+  const wrapped = throttle(fn);
 
   const result = await wrapped();
   t.is(result, 1);
 });
 
 test('throttled function should throw', async (t) => {
-  const queue = createThrottler();
+  const throttle = createThrottler();
 
   const fn = async () => {
     throw new Error('e');
   };
 
-  const wrapped = queue.add(fn);
+  const wrapped = throttle(fn);
 
   await t.throwsAsync(() => wrapped(), {
     message: 'e',
@@ -40,7 +40,7 @@ test('throttled function should throw', async (t) => {
 });
 
 test('throttled function should wait for previous to finish', async (t) => {
-  const queue = createThrottler();
+  const throttle = createThrottler();
 
   let times: number[] = [];
 
@@ -50,7 +50,7 @@ test('throttled function should wait for previous to finish', async (t) => {
       setTimeout(() => resolve(), 20);
     });
 
-  const wrapped = queue.add(fn);
+  const wrapped = throttle(fn);
 
   await Promise.all([wrapped(), wrapped()]);
 
@@ -63,7 +63,7 @@ test('throttled function should wait for previous to finish', async (t) => {
 });
 
 test('process of queue of items', async (t) => {
-  const queue = createThrottler();
+  const throttle = createThrottler();
   let count = 0;
 
   const fn = () =>
@@ -74,9 +74,9 @@ test('process of queue of items', async (t) => {
       }, 10);
     });
 
-  const a = queue.add(fn);
-  const b = queue.add(fn);
-  const c = queue.add(fn);
+  const a = throttle(fn);
+  const b = throttle(fn);
+  const c = throttle(fn);
 
   await Promise.all([a(), b(), c()]);
 
@@ -84,7 +84,7 @@ test('process of queue of items', async (t) => {
 });
 
 test('return in order', async (t) => {
-  const queue = createThrottler();
+  const throttle = createThrottler();
 
   const results: string[] = [];
 
@@ -96,7 +96,7 @@ test('return in order', async (t) => {
       }, Math.random() * 500);
     });
 
-  const wrapped = queue.add(fn);
+  const wrapped = throttle(fn);
 
   await Promise.all([
     wrapped('a', 200),
