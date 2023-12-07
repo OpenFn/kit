@@ -10,7 +10,7 @@ import {
   WORKFLOW_START,
 } from './events';
 import initWorkers from './api/call-worker';
-import createState from './api/create-state';
+import createState from './util/create-state';
 import execute from './api/execute';
 import validateWorker from './api/validate-worker';
 import ExecutionContext from './classes/ExecutionContext';
@@ -152,7 +152,10 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   // TODO too much logic in this execute function, needs farming out
   // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
-  const executeWrapper = (plan: ExecutionPlan, opts: ExecuteOptions = {}) => {
+  const executeWrapper = (
+    plan: ExecutionPlan,
+    opts: Partial<ExecuteOptions> = {}
+  ) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid

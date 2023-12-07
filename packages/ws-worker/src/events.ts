@@ -49,6 +49,7 @@ export type RunStartPayload = {
   run_id: string;
   attempt_id?: string;
   input_dataclip_id?: string;
+  versions: Record<string, string>;
 };
 export type RunStartReply = void;
 

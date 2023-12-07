@@ -63,7 +63,11 @@ test.serial('trigger job-start', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan).on('job-start', () => {
+    api.execute(plan).on('job-start', (e) => {
+      t.is(e.workflowId, '2');
+      t.is(e.jobId, 'j1');
+      t.truthy(e.threadId);
+      t.truthy(e.versions);
       t.pass('job started');
       done();
     });

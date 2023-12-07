@@ -77,6 +77,7 @@ export const jobStart = (
   context.emit(externalEvents.JOB_START, {
     jobId,
     threadId,
+    versions: context.versions,
   });
 };
 

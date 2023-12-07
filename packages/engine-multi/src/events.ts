@@ -2,6 +2,7 @@
 
 // TODO mayberename event constants
 import { JSONLog } from '@openfn/logger';
+import { Versions } from './types';
 
 // Top level API events - these are what the engine publishes externally
 // should it just be start, log, job-start, job-complete, end etc?
@@ -65,6 +66,7 @@ export interface WorkflowErrorPayload extends ExternalEvent {
 
 export interface JobStartPayload extends ExternalEvent {
   jobId: string;
+  versions: Versions;
 }
 
 export interface JobCompletePayload extends ExternalEvent {

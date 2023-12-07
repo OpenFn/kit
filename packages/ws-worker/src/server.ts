@@ -232,6 +232,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // TMP doing this for tests but maybe its better done externally?
   // @ts-ignore
   app.on = (...args) => {
+    // @ts-ignore
     return engine.on(...args);
   };
 

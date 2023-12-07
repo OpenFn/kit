@@ -6,6 +6,10 @@ import createLogger from '@openfn/logger';
 import whitelist from './whitelist';
 import createEngine, { EngineOptions } from './engine';
 
+import pkg from '../package.json' assert { type: 'json' };
+
+import type { RuntimeEngine } from './types';
+
 export type State = any; // TODO I want a nice state def with generics
 
 type Resolver<T> = (id: string) => Promise<T>;
@@ -33,7 +37,9 @@ const DEFAULT_MEMORY_LIMIT = 500;
 
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
-const createAPI = async function (options: RTEOptions = {}) {
+const createAPI = async function (
+  options: RTEOptions = {}
+): Promise<RuntimeEngine> {
   let { repoDir } = options;
 
   const logger = options.logger || createLogger('RTE', { level: 'debug' });
@@ -70,6 +76,7 @@ const createAPI = async function (options: RTEOptions = {}) {
   const engine = await createEngine(engineOptions);
 
   return {
+    version: pkg.version,
     execute: engine.execute,
     listen: engine.listen,
     destroy: engine.destroy,
