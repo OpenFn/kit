@@ -28,6 +28,7 @@ import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 // TODO just export the index yeah?
 import handleRunComplete from '../events/run-complete';
 import handleRunStart from '../events/run-start';
+import createThrottler from '../util/queue';
 
 const enc = new TextDecoder('utf-8');
 
@@ -68,6 +69,8 @@ export function execute(
 
   const context: Context = { channel, state, logger, engine, onFinish };
 
+  const throttle = createThrottler();
+
   type EventHandler = (context: any, event: any) => void;
 
   // Utility function to:
@@ -103,15 +106,15 @@ export function execute(
   // so that they send in order
   const listeners = Object.assign(
     {},
-    addEvent('workflow-start', onWorkflowStart),
-    addEvent('job-start', handleRunStart),
-    addEvent('job-complete', handleRunComplete),
-    addEvent('job-error', onJobError),
+    addEvent('workflow-start', throttle(onWorkflowStart)),
+    addEvent('job-start', throttle(handleRunStart)),
+    addEvent('job-complete', throttle(handleRunComplete)),
+    addEvent('job-error', throttle(onJobError)),
     // addEvent('workflow-log', onJobLog),
     // This will also resolve the promise
-    addEvent('workflow-complete', onWorkflowComplete),
+    addEvent('workflow-complete', throttle(onWorkflowComplete)),
 
-    addEvent('workflow-error', onWorkflowError)
+    addEvent('workflow-error', throttle(onWorkflowError))
 
     // TODO send autoinstall logs
   );
@@ -162,8 +165,7 @@ export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
     channel
       .push<T>(event, payload)
       .receive('error', reject)
-      .receive('timeout', (e) => {
-        console.log(e);
+      .receive('timeout', () => {
         reject(new Error('timeout'));
       })
       .receive('ok', resolve);
@@ -187,9 +189,9 @@ export function onJobError(context: Context, event: any) {
   const { state = {}, error, jobId } = event;
   // This test is horrible too
   if (state.errors?.[jobId]?.message === error.message) {
-    handleRunComplete(context, event);
+    return handleRunComplete(context, event);
   } else {
-    handleRunComplete(context, event, event.error);
+    return handleRunComplete(context, event, event.error);
   }
 }
 
