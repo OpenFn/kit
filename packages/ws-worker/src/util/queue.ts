@@ -1,7 +1,7 @@
 // bottleneck
 // pipeline
 // throttle
-
+// fifo
 const createThrottler = () => {
   type DeferredFunction = {
     fn: Promise<any>;
@@ -25,23 +25,7 @@ const createThrottler = () => {
     return new Promise((resolve, reject) => {
       q.push({ fn, args, resolve, reject });
       shift();
-      // if (activePromise) {
-      // } else {
-      //   activePromise = fn(...args).then(shift);
-      // }
     });
-
-    // const promise = new Promise((resolve) => {
-    //   // note I don't want this to execute immediately!!
-    //   fn(args).then(resolve);
-    // });
-
-    // // is it better to chain to the promise?
-    // if (activePromise) {
-    //   q.push([fn, args]);
-    // } else {
-    //   activePromise = fn(...args).then(shift);
-    // }
   };
 
   const shift = () => {
@@ -68,35 +52,3 @@ const createThrottler = () => {
 };
 
 export default createThrottler;
-
-// // executes functions in series
-// // Any functions in the same
-
-// // returns a function
-// // the function will execute in series
-
-// // What if a throw?
-
-// const createQueue = () => {
-//   // a queue of functions to execute
-//   const q = [];
-
-//   const add = (fn) => {
-//     return (...args) => {
-//       queue.push([fn, args]);
-//       shift();
-//     };
-//   };
-
-//   const shift = async () => {
-//     const [fn, args] = q.shift();
-
-//     await fn(args);
-
-//     shift();
-//   };
-
-//   return {};
-// };
-
-// const queue = () => {};
