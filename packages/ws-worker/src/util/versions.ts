@@ -23,9 +23,11 @@ export default (runId: string, versions: Versions, adaptor?: string) => {
   let str = `Versions for run ${runId}:
 ${prefix('node.js')}${versions.node || 'unknown'}
 ${prefix('worker')}${versions.worker || 'unknown'}
-${prefix('engine')}${versions.engine || 'unknown'}
-${prefix('runtime')}${versions.runtime || 'unknown'}
-${prefix('compiler')}${versions.compiler || 'unknown'}`;
+${prefix('engine')}${versions.engine || 'unknown'}`;
+
+  // Unfortunately the runtime and compiler versions get reported as workspace:* in prod right now
+  // ${prefix('runtime')}${versions.runtime || 'unknown'}
+  // ${prefix('compiler')}${versions.compiler || 'unknown'}`;
 
   if (Object.keys(adaptors).length) {
     let allAdaptors = Object.keys(adaptors);
