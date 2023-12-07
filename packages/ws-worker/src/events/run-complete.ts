@@ -21,10 +21,13 @@ export default function onRunComplete(
   if (!state.dataclips) {
     state.dataclips = {};
   }
+  const outputState = event.state || {};
+
   state.dataclips[dataclipId] = event.state;
 
   delete state.activeRun;
   delete state.activeJob;
+
   // TODO right now, the last job to run will be the result for the attempt
   // this may not stand up in the future
   // I'd feel happer if the runtime could judge what the final result is
@@ -49,7 +52,7 @@ export default function onRunComplete(
     run_id,
     job_id,
     output_dataclip_id: dataclipId,
-    output_dataclip: stringify(event.state),
+    output_dataclip: stringify(outputState),
 
     reason,
     error_message,

@@ -58,12 +58,12 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     const result = await execute(input!, state, options);
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
-    if (result.errors) {
+    if (result?.errors) {
       logger.warn(
         `Errors reported in ${Object.keys(result.errors).length} jobs`
       );
     }
-    logger.success(`Finished in ${duration}${result.errors ? '' : ' ✨'}`);
+    logger.success(`Finished in ${duration}${result?.errors ? '' : ' ✨'}`);
     return result;
   } catch (err: any) {
     if (!err.handled) {

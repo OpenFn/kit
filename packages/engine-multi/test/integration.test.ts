@@ -169,6 +169,29 @@ test.serial('compile and run', (t) => {
   });
 });
 
+test.serial('run without error if no state is returned', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const plan = createPlan([
+      {
+        expression: `${withFn}fn(() => {})`,
+      },
+    ]);
+
+    api.execute(plan).on('workflow-complete', ({ state }) => {
+      t.falsy(state);
+
+      // Ensure there are no error logs
+      const err = logger._find('error', /./);
+      t.falsy(err);
+      done();
+    });
+  });
+});
+
 test.serial('evaluate conditional edges', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({

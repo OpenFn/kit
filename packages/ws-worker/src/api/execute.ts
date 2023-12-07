@@ -186,9 +186,9 @@ export function onJobError(context: Context, event: any) {
   // because it'll count it as a crash
   // This isn't very good: maybe we shouldn't trigger an error
   // at all for a fail state?
-  const { state = {}, error, jobId } = event;
+  const { state, error, jobId } = event;
   // This test is horrible too
-  if (state.errors?.[jobId]?.message === error.message) {
+  if (state?.errors?.[jobId]?.message === error.message) {
     return handleRunComplete(context, event);
   } else {
     return handleRunComplete(context, event, event.error);
