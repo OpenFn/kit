@@ -69,7 +69,6 @@ export default (
       duration = Date.now() - duration;
 
       const finalState = prepareFinalState(opts, result);
-
       // return the final state
       resolve(finalState);
     } catch (e: any) {
@@ -104,6 +103,8 @@ export const wrapOperation = (
     const start = new Date().getTime();
     const newState = immutableState ? clone(state) : state;
     const result = await fn(newState);
+    // TODO should we warn if an operation does not return state?
+    // the trick is saying WHICH operation without source mapping
     const duration = printDuration(new Date().getTime() - start);
     logger.info(`Operation ${name} complete in ${duration}`);
     return result;

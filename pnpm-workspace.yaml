@@ -1,6 +1,7 @@
 packages:
   # exclude the integration test repo
   - '!integration-tests/worker/dummy-repo/**'
+  - '!integration-tests/worker/tmp/**'
 
   # all packages in subdirs of packages/ and components/
   - 'packages/**'

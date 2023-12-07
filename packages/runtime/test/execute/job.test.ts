@@ -281,3 +281,59 @@ test.serial('log memory usage', async (t) => {
   // the rest is for the birds
   t.regex(memory?.message, /\d+mb(.+)\d+mb/i);
 });
+
+test.serial('warn if a non-leaf job does not return state', async (t) => {
+  const job = {
+    id: 'k',
+    expression: [(s: State) => {}],
+    next: { l: true },
+  };
+
+  const context = createContext();
+  const state = createState();
+
+  // @ts-ignore ts complains that the job does not return state
+  const result = await execute(context, job, state);
+  const warn = logger._find('warn', /did not return a state object/);
+  t.truthy(warn);
+});
+
+test.serial('do not warn if a leaf job does not return state', async (t) => {
+  const job = {
+    id: 'k',
+    expression: [(s: State) => {}],
+  };
+
+  const context = createContext();
+  const state = createState();
+
+  // @ts-ignore ts complains that the job does not return state
+  const result = await execute(context, job, state);
+
+  const warn = logger._find('warn', /did not return a state object/);
+  t.falsy(warn);
+});
+
+test.serial(
+  'do not warn a non-leaf job does not return state and there was an error',
+  async (t) => {
+    const job = {
+      id: 'k',
+      expression: [
+        (s: State) => {
+          throw 'e';
+        },
+      ],
+      next: { l: true },
+    };
+
+    const context = createContext();
+    const state = createState();
+
+    // @ts-ignore ts complains that the job does not return state
+    const result = await execute(context, job, state);
+
+    const warn = logger._find('warn', /did not return a state object/);
+    t.falsy(warn);
+  }
+);
