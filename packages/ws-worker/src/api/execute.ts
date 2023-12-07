@@ -99,6 +99,8 @@ export function execute(
     };
   };
 
+  // TODO listeners need to be called in a strict queue
+  // so that they send in order
   const listeners = Object.assign(
     {},
     addEvent('workflow-start', onWorkflowStart),

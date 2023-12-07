@@ -10,7 +10,7 @@ export type Versions = {
   [adaptor: string]: string;
 };
 
-export default (versions: Versions) => {
+export default (runId: string, versions: Versions) => {
   let longest = 'compiler'.length; // Bit wierdly defensive but ensure padding is reasonable even if version has no props
   for (const v in versions) {
     longest = Math.max(v.length, longest);
@@ -20,7 +20,7 @@ export default (versions: Versions) => {
   // Prefix and pad version numbers
   const prefix = (str: string) => `    ${t} ${str.padEnd(longest + 4, ' ')}`;
 
-  let str = `Versions:
+  let str = `${runId} versions:
   ${prefix('node.js')}${versions.node || 'unknown'}
   ${prefix('worker')}${versions.worker || 'unknown'}
   ${prefix('engine')}${versions.engine || 'unknown'}
