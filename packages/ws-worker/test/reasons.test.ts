@@ -1,6 +1,6 @@
 import test from 'ava';
 import createRTE from '@openfn/engine-multi';
-import createLogger, { createMockLogger } from '@openfn/logger';
+import { createMockLogger } from '@openfn/logger';
 
 import { createPlan } from './util';
 import { execute as doExecute } from '../src/api/execute';
@@ -15,10 +15,6 @@ import {
 } from '../src/events';
 import { ExitReason } from '../src/types';
 
-// Explicit tests of exit reasons coming out of the worker
-// these test the onFinish callback
-// uses the real runtime engine
-
 let engine;
 let logger;
 
@@ -26,6 +22,7 @@ test.before(async () => {
   logger = createMockLogger();
   // logger = createLogger(null, { level: 'debug' });
 
+  // Note: this is the REAL engine, not a mock
   engine = await createRTE({
     maxWorkers: 1,
     purge: false,

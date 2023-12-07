@@ -3,6 +3,7 @@
  */
 
 import { JSONLog } from '@openfn/logger';
+import { Versions } from '../types';
 
 // These events are basically duplicates of the externally published ones
 // (ie those consumed by the lightning worker)
@@ -38,6 +39,7 @@ export interface WorkflowCompleteEvent extends InternalEvent {
 
 export interface JobStartEvent extends InternalEvent {
   jobId: string;
+  versions: Versions;
 }
 
 export interface JobCompleteEvent extends InternalEvent {

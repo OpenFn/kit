@@ -1,5 +1,19 @@
 # ws-worker
 
+## 0.3.0
+
+### Minor Changes
+
+- 419d310: Throttle attempt events to better preserve their sequencing
+
+### Patch Changes
+
+- 598c669: Make edge conditions more stable if state is not passed
+- 6e906a7: Better handling of job-error
+- Updated dependencies [02ab459]
+  - @openfn/runtime@0.2.2
+  - @openfn/engine-multi@0.2.4
+
 ## 0.2.12
 
 ### Patch Changes

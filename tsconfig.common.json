@@ -10,7 +10,7 @@
     "declaration": true,
     "esModuleInterop": true,
     // This is needed to support the import.meta statement
-    "module": "es2020",
+    "module": "esnext",
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "incremental": false,

@@ -36,7 +36,10 @@ function mock(plan: MockExecutionPlan) {
   return new Promise((resolve) => {
     const jobId = job.id || '<job>';
     setTimeout(async () => {
-      publish(plan.id, workerEvents.JOB_START, { jobId });
+      publish(plan.id, workerEvents.JOB_START, {
+        jobId,
+        versions: { node: '1', runtime: '1', compiler: '1', engine: '1' },
+      });
       // TODO this isn't data, but state - it's the whole state object (minus config)
       let state: any = { data: job.data || {} };
       if (job.expression) {

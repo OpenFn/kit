@@ -134,8 +134,18 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     }
 
     const alias = getAliasedName(a);
-    const { name } = getNameAndVersion(a);
-    paths[name] = { path: `${repoDir}/node_modules/${alias}` };
+    const { name, version } = getNameAndVersion(a);
+
+    const v = version || 'unknown';
+
+    // Write the adaptor version to the context
+    // This is a reasonably accurate, but not totally bulletproof, report
+    context.versions[name] = v;
+
+    paths[name] = {
+      path: `${repoDir}/node_modules/${alias}`,
+      version: v,
+    };
 
     if (!(await isInstalledFn(a, repoDir, logger))) {
       adaptorsToLoad.push(a);
@@ -202,4 +212,4 @@ export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
   return adaptors;
 };
 
-export type ModulePaths = Record<string, { path: string }>;
+export type ModulePaths = Record<string, { path: string; version: string }>;

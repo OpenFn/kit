@@ -338,13 +338,13 @@ test('a timeout error should still call run-complete', (t) => {
         },
       ],
       options: {
-        // Including the timeout here stops the attempt returning at all
         timeout: 100,
       },
     };
 
     lightning.once('run:complete', (event) => {
       t.is(event.payload.reason, 'kill');
+      t.is(event.payload.error_type, 'TimeoutError');
     });
 
     lightning.once('attempt:complete', (event) => {

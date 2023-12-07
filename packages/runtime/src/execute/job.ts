@@ -25,7 +25,7 @@ const loadCredentials = async (
 ) => {
   if (typeof job.configuration === 'string') {
     // TODO let's log and notify something useful if we're lazy loading
-    // TODO throw a controlled error if there's no reoslver
+    // TODO throw a controlled error if there's no resolver
     return resolver(job.configuration);
   }
   return job.configuration;
@@ -121,7 +121,7 @@ const executeJob = async (
   if (job.expression) {
     const startTime = Date.now();
     try {
-      // TODO include the upstream job
+      // TODO include the upstream job?
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(ctx, job.expression, state);
     } catch (e: any) {
@@ -190,6 +190,12 @@ const executeJob = async (
   } else {
     // calculate next for trigger nodes
     next = calculateNext(job, result);
+  }
+
+  if (next.length && !didError && !result) {
+    logger.warn(
+      `WARNING: job ${jobId} did not return a state object. This may cause downstream jobs to fail.`
+    );
   }
 
   return { next, state: result };

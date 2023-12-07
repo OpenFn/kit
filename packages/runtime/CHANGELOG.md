@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.2.2
+
+### Patch Changes
+
+- 02ab459: Warn if a non-leaf job does not return state
+
 ## 0.2.1
 
 ### Patch Changes

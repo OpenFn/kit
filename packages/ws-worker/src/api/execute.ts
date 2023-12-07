@@ -1,5 +1,3 @@
-import crypto from 'node:crypto';
-
 import {
   ATTEMPT_COMPLETE,
   AttemptCompletePayload,
@@ -10,18 +8,15 @@ import {
   GET_CREDENTIAL,
   GET_DATACLIP,
   RUN_COMPLETE,
-  RunCompletePayload,
   RUN_START,
-  RunStartPayload,
 } from '../events';
 import { AttemptOptions, Channel, AttemptState } from '../types';
-import { getWithReply, stringify, createAttemptState } from '../util';
+import { getWithReply, createAttemptState } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
-  JobCompletePayload,
   WorkflowCompletePayload,
   WorkflowErrorPayload,
   WorkflowStartPayload,
@@ -29,13 +24,24 @@ import type {
 import { ExecutionPlan } from '@openfn/runtime';
 import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
+// TODO: I want to move all event handlers out into their own files
+// TODO just export the index yeah?
+import handleRunComplete from '../events/run-complete';
+import handleRunStart from '../events/run-start';
+import createThrottler from '../util/throttle';
+
 const enc = new TextDecoder('utf-8');
+
+export { handleRunComplete, handleRunStart };
 
 export type Context = {
   channel: Channel;
   state: AttemptState;
   logger: Logger;
+  engine: RuntimeEngine;
   onFinish: (result: any) => void;
+
+  // maybe its better for version numbers to be scribbled here as we go?
 };
 
 // mapping engine events to lightning events
@@ -61,7 +67,9 @@ export function execute(
 
   const state = createAttemptState(plan, options);
 
-  const context: Context = { channel, state, logger, onFinish };
+  const context: Context = { channel, state, logger, engine, onFinish };
+
+  const throttle = createThrottler();
 
   type EventHandler = (context: any, event: any) => void;
 
@@ -94,17 +102,19 @@ export function execute(
     };
   };
 
+  // TODO listeners need to be called in a strict queue
+  // so that they send in order
   const listeners = Object.assign(
     {},
-    addEvent('workflow-start', onWorkflowStart),
-    addEvent('job-start', onJobStart),
-    addEvent('job-complete', onJobComplete),
-    addEvent('job-error', onJobError),
-    addEvent('workflow-log', onJobLog),
+    addEvent('workflow-start', throttle(onWorkflowStart)),
+    addEvent('job-start', throttle(handleRunStart)),
+    addEvent('job-complete', throttle(handleRunComplete)),
+    addEvent('job-error', throttle(onJobError)),
+    addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
-    addEvent('workflow-complete', onWorkflowComplete),
+    addEvent('workflow-complete', throttle(onWorkflowComplete)),
 
-    addEvent('workflow-error', onWorkflowError)
+    addEvent('workflow-error', throttle(onWorkflowError))
 
     // TODO send autoinstall logs
   );
@@ -155,25 +165,13 @@ export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
     channel
       .push<T>(event, payload)
       .receive('error', reject)
-      .receive('timeout', () => reject(new Error('timeout')))
+      .receive('timeout', () => {
+        reject(new Error('timeout'));
+      })
       .receive('ok', resolve);
   });
 
-// TODO maybe move all event handlers into api/events/*
-
-export function onJobStart({ channel, state }: Context, event: any) {
-  // generate a run id and write it to state
-  state.activeRun = crypto.randomUUID();
-  state.activeJob = event.jobId;
-
-  const input_dataclip_id = state.inputDataclips[event.jobId];
-
-  return sendEvent<RunStartPayload>(channel, RUN_START, {
-    run_id: state.activeRun!,
-    job_id: state.activeJob!,
-    input_dataclip_id,
-  });
-}
+// TODO move all event handlers into api/events/*
 
 // Called on job fail or crash
 // If this was a crash, it'll also trigger a workflow error
@@ -182,77 +180,19 @@ export function onJobError(context: Context, event: any) {
   // Error is the same as complete, but we might report
   // a different complete reason
 
-  // akward error handling
+  // awkward error handling
   // If the error is written to state, it's a fail,
-  // and we don't want to send that to onJobComplete
+  // and we don't want to send that to handleRunComplete
   // because it'll count it as a crash
   // This isn't very good: maybe we shouldn't trigger an error
   // at all for a fail state?
-  const { state = {}, error, jobId } = event;
+  const { state, error, jobId } = event;
   // This test is horrible too
-  if (state.errors?.[jobId]?.message === error.message) {
-    onJobComplete(context, event);
+  if (state?.errors?.[jobId]?.message === error.message) {
+    return handleRunComplete(context, event);
   } else {
-    onJobComplete(context, event, event.error);
+    return handleRunComplete(context, event, event.error);
   }
-}
-
-// OK, what we need to do now is:
-// a) generate a reason string for the job
-// b) save the reason for each job to state for later
-export function onJobComplete(
-  { channel, state }: Context,
-  event: JobCompletePayload,
-  // TODO this isn't terribly graceful, but accept an error for crashes
-  error?: any
-) {
-  const dataclipId = crypto.randomUUID();
-
-  const run_id = state.activeRun as string;
-  const job_id = state.activeJob as string;
-
-  if (!state.dataclips) {
-    state.dataclips = {};
-  }
-  state.dataclips[dataclipId] = event.state;
-
-  delete state.activeRun;
-  delete state.activeJob;
-  // TODO right now, the last job to run will be the result for the attempt
-  // this may not stand up in the future
-  // I'd feel happer if the runtime could judge what the final result is
-  // (taking into account branches and stuff)
-  // The problem is that the runtime will return the object, not an id,
-  // so we have a bit of a mapping problem
-  state.lastDataclipId = dataclipId;
-
-  // Set the input dataclip id for downstream jobs
-  event.next?.forEach((nextJobId) => {
-    state.inputDataclips[nextJobId] = dataclipId;
-  });
-
-  const { reason, error_message, error_type } = calculateJobExitReason(
-    job_id,
-    event.state,
-    error
-  );
-  state.reasons[job_id] = { reason, error_message, error_type };
-
-  const evt = {
-    run_id,
-    job_id,
-    output_dataclip_id: dataclipId,
-    output_dataclip: stringify(event.state),
-
-    reason,
-    error_message,
-    error_type,
-
-    mem: event.mem,
-    duration: event.duration,
-    thread_id: event.threadId,
-  };
-  return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, evt);
 }
 
 export function onWorkflowStart(

@@ -14,6 +14,7 @@ import {
 } from '../../src/events';
 import { RTEOptions } from '../../src/api';
 import ExecutionContext from '../../src/classes/ExecutionContext';
+import loadVersions from '../../src/util/load-versions';
 
 const workerPath = path.resolve('dist/worker/mock.js');
 
@@ -23,6 +24,7 @@ const createContext = ({ state, options }) => {
     logger: createMockLogger(),
     callWorker: () => {},
     options,
+    versions: loadVersions(),
   });
   initWorkers(ctx, workerPath);
   return ctx;
@@ -109,6 +111,9 @@ test.serial('should emit a job-start event', async (t) => {
   await execute(context);
 
   t.is(event.jobId, 'j');
+  t.truthy(event.versions);
+  // Just a shallow test on the actual version object to verify that it's been attached
+  t.regex(event.versions.node, new RegExp(/(\d+).(\d+).\d+/));
 });
 
 test.serial('should emit a job-complete event', async (t) => {
@@ -262,9 +267,3 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
 
   await execute(context);
 });
-
-// what are we actually testing here?
-// ideally we wouldc ensure that autoinstall is called with the corret aguments
-// we can pass in mock autoinstall handlers and ensure they're invoked
-// maybe we can also test that the correct adaptorpaths are passed in to execute
-test.todo('should autoinstall');

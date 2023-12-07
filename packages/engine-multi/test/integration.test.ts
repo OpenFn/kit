@@ -63,7 +63,11 @@ test.serial('trigger job-start', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan).on('job-start', () => {
+    api.execute(plan).on('job-start', (e) => {
+      t.is(e.workflowId, '2');
+      t.is(e.jobId, 'j1');
+      t.truthy(e.threadId);
+      t.truthy(e.versions);
       t.pass('job started');
       done();
     });
@@ -160,6 +164,29 @@ test.serial('compile and run', (t) => {
 
     api.execute(plan).on('workflow-complete', ({ state }) => {
       t.deepEqual(state.data, 42);
+      done();
+    });
+  });
+});
+
+test.serial('run without error if no state is returned', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const plan = createPlan([
+      {
+        expression: `${withFn}fn(() => {})`,
+      },
+    ]);
+
+    api.execute(plan).on('workflow-complete', ({ state }) => {
+      t.falsy(state);
+
+      // Ensure there are no error logs
+      const err = logger._find('error', /./);
+      t.falsy(err);
       done();
     });
   });
