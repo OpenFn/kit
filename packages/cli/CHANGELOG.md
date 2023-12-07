@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 0.4.11
+
+### Patch Changes
+
+- 2ccee70: Fix an issue where an error is thrown if a job does not return state
+- Updated dependencies [02ab459]
+  - @openfn/runtime@0.2.2
+
 ## 0.4.10
 
 ### Patch Changes
