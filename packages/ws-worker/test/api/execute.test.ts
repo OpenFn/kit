@@ -746,36 +746,3 @@ test('execute should call all events on the socket', async (t) => {
     });
   });
 });
-
-// // TODO these are really difficult cases: what SHOULD we do here?
-// test.only('execute should not blow up if run:start throws', async (t) => {
-//   const logger = createMockLogger();
-//   const engine = await createMockRTE();
-
-//   const channel = mockChannel({
-//     [ATTEMPT_START]: () => true,
-//     [ATTEMPT_LOG]: () => true,
-//     [RUN_START]: (id) => {
-//       console.log('*** throwing up ***');
-//       throw new Error('nope');
-//     },
-//   });
-
-//   const plan = {
-//     id: 'attempt-1',
-//     jobs: [
-//       {
-//         id: 'trigger',
-//         expression: 'fn(() => console.log("x"))',
-//       },
-//     ],
-//   };
-
-//   const options = {};
-
-//   return new Promise((done) => {
-//     execute(channel, engine, logger, plan, options, (result) => {
-//       done();
-//     });
-//   });
-// });
