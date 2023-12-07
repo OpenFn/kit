@@ -21,6 +21,8 @@ export default async function onRunStart(
   state.activeRun = crypto.randomUUID();
   state.activeJob = event.jobId;
 
+  const job = state.plan.jobs.find(({ id }) => id === event.jobId);
+
   const input_dataclip_id = state.inputDataclips[event.jobId];
 
   const versions = {
@@ -51,7 +53,8 @@ export default async function onRunStart(
 
   const versionMessage = calculateVersionString(
     versionLogContext.state.activeRun,
-    versions
+    versions,
+    job?.adaptor
   );
 
   return await onJobLog(versionLogContext, {

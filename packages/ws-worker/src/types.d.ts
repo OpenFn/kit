@@ -1,5 +1,6 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { Channel as PhxChannel } from 'phoenix';
+import type { ExecutionPlan } from '@openfn/runtime';
 
 export { Socket };
 
