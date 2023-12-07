@@ -12,8 +12,7 @@ export default async function onRunStart(
   event: JobStartPayload
 ) {
   // Cheat on the timestamp time to make sure this is the first thing in the log
-  // this doesn't work in streaming
-  const time = (timestamp() - BigInt(1e6)).toString();
+  const time = (timestamp() - BigInt(10e6)).toString();
 
   const { channel, state } = context;
 
@@ -57,10 +56,11 @@ export default async function onRunStart(
     job?.adaptor
   );
 
-  return await onJobLog(versionLogContext, {
+  await onJobLog(versionLogContext, {
     time,
     message: [versionMessage],
     level: 'info',
     name: 'VER',
   });
+  return;
 }
