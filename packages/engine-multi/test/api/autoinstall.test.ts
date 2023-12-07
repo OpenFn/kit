@@ -505,3 +505,15 @@ test('write versions to context', async (t) => {
 
   t.is(context.versions['@openfn/language-common'], '1.0.0');
 });
+
+test("write versions to context even if we don't install", async (t) => {
+  const autoinstallOpts = {
+    handleInstall: mockHandleInstall,
+    handleIsInstalled: async () => true,
+  };
+  const context = createContext(autoinstallOpts);
+
+  await autoinstall(context);
+
+  t.is(context.versions['@openfn/language-common'], '1.0.0');
+});
