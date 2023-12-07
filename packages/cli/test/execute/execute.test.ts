@@ -255,3 +255,16 @@ test('run a job without compilation', async (t) => {
   const result = await handler(options, logger);
   t.is(result.data.count, 42);
 });
+
+test('run a job which does not return state', async (t) => {
+  const job = `${fn}fn(() => {});`;
+  const options = {
+    ...defaultOptions,
+    job,
+  };
+  const result = await handler(options, logger);
+  t.falsy(result);
+
+  // Check that no error messages have been logged
+  t.is(logger._history.length, 0);
+});
