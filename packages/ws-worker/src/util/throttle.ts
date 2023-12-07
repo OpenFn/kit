@@ -1,7 +1,3 @@
-// bottleneck
-// pipeline
-// throttle
-// fifo
 type ThrottledFunction = (...args: any[]) => Promise<any>;
 
 const createThrottler = () => {
