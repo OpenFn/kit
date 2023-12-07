@@ -79,7 +79,7 @@ export default (
 
       nodes[id] = {
         id,
-        configuration: job.credential || job.credential_id,
+        configuration: job.credential_id,
         expression: job.body,
         adaptor: job.adaptor,
       };
