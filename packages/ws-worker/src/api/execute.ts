@@ -110,7 +110,7 @@ export function execute(
     addEvent('job-start', throttle(handleRunStart)),
     addEvent('job-complete', throttle(handleRunComplete)),
     addEvent('job-error', throttle(onJobError)),
-    // addEvent('workflow-log', onJobLog),
+    addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
     addEvent('workflow-complete', throttle(onWorkflowComplete)),
 
@@ -261,8 +261,6 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   if (state.activeRun) {
     log.run_id = state.activeRun;
   }
-
-  console.log(log);
 
   return sendEvent<AttemptLogPayload>(channel, ATTEMPT_LOG, log);
 }
