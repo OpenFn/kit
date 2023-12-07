@@ -49,7 +49,10 @@ export default async function onRunStart(
     versions,
   });
 
-  const versionMessage = calculateVersionString(versions);
+  const versionMessage = calculateVersionString(
+    versionLogContext.state.activeRun,
+    versions
+  );
 
   return await onJobLog(versionLogContext, {
     time,

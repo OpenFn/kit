@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import createThrottler from '../../src/util/queue';
+import createThrottler from '../../src/util/throttle';
 
 test('invoke a throttled function immediately', (t) => {
   const throttle = createThrottler();

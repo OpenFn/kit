@@ -28,7 +28,7 @@ import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 // TODO just export the index yeah?
 import handleRunComplete from '../events/run-complete';
 import handleRunStart from '../events/run-start';
-import createThrottler from '../util/queue';
+import createThrottler from '../util/throttle';
 
 const enc = new TextDecoder('utf-8');
 
