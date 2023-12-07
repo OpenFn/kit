@@ -10,9 +10,9 @@ import { Attempt, AttemptOptions, Edge } from '../types';
 export const conditions: Record<string, (upstreamId: string) => string | null> =
   {
     on_job_success: (upstreamId: string) =>
-      `Boolean(!state.errors?.["${upstreamId}"] ?? true)`,
+      `Boolean(!state?.errors?.["${upstreamId}"] ?? true)`,
     on_job_failure: (upstreamId: string) =>
-      `Boolean(state.errors && state.errors["${upstreamId}"])`,
+      `Boolean(state?.errors && state.errors["${upstreamId}"])`,
     always: (_upstreamId: string) => null,
   };
 
@@ -79,7 +79,7 @@ export default (
 
       nodes[id] = {
         id,
-        configuration: job.credential_id,
+        configuration: job.credential || job.credential_id,
         expression: job.body,
         adaptor: job.adaptor,
       };
