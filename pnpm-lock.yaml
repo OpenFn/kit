@@ -146,12 +146,6 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
 
-  integration-tests/worker/tmp/repo/integration:
-    dependencies:
-      '@openfn/language-common_latest':
-        specifier: npm:@openfn/language-common@^1.11.1
-        version: /@openfn/language-common@1.11.1
-
   packages/cli:
     dependencies:
       '@inquirer/prompts':
