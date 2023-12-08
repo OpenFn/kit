@@ -4,7 +4,7 @@
 
 **Kit** _noun_ _/kɪt/_
 
-A set of articles or equipment needed for a specific purpose.
+A set of articles or equipment needed for a specific purpose
 
 1. _a football kit_
 1. _the next-generation openfn data integration kit_
