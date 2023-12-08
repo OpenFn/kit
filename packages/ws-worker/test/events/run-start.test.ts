@@ -139,5 +139,5 @@ test('also logs the version number', async (t) => {
   t.log(message);
   // This just a light test of the string to make sure it's here
   // It uses src/util/versions, which is tested elsewhere
-  t.regex(message, /(node\.js).+(worker).+(engine).+(compiler)/is);
+  t.regex(message, /(node\.js).+(worker).+(engine)/is);
 });
