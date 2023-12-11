@@ -34,7 +34,6 @@
   },
   "devDependencies": {
     "@types/node": "^18.15.13",
-    "ava": "5.3.1",
     "ts-node": "10.8.1",
     "tslib": "^2.4.0",
     "tsup": "^7.2.0",

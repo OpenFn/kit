@@ -45,7 +45,6 @@
     "@types/nodemon": "1.19.3",
     "@types/phoenix": "^1.6.2",
     "@types/yargs": "^17.0.12",
-    "ava": "5.1.0",
     "nodemon": "3.0.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
