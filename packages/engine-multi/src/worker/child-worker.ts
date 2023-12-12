@@ -65,7 +65,7 @@ export const createLoggers = (sanitize?: SanitizePolicies) => {
 // TODO there's no error handling at all here
 async function run() {
   const { adaptorPaths, whitelist, sanitize } = options;
-  const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
+  const { logger, jobLogger } = createLoggers(sanitize);
   const opts = {
     strict: false,
     logger,

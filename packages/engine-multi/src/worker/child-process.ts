@@ -1,5 +1,7 @@
 import child_process from 'node:child_process';
 
+import EventEmitter from 'node:events';
+
 // make the API look like workerpool
 // (it's just an easier integration for how)
 const api = {
@@ -7,9 +9,7 @@ const api = {
   // (basically we'll just return true)
   _handshake: () => {},
 
-  _run: async (plan: any, options: any) => {
-    return runInChildProcess(plan, options);
-  },
+  _run: (plan: any, options: any) => runInChildProcess(plan, options),
 
   exec: (task: string, args: any[]) => {
     if (task === 'run') {
@@ -20,7 +20,10 @@ const api = {
 
 function runInChildProcess(plan: any, options: any) {
   console.log('*', process.pid);
-  return new Promise((resolve, reject) => {
+
+  const events = new EventEmitter();
+
+  const p = new Promise((resolve, reject) => {
     console.log('starting child process....');
     const p = child_process.fork(
       './dist/worker/child_worker.js',
@@ -32,19 +35,29 @@ function runInChildProcess(plan: any, options: any) {
     );
 
     p.on('message', (e) => {
-      console.log(e);
-      if (e.type === 'worker:workflow-complete') {
-        console.log('heard workflow complete!');
+      const { type, ...payload } = e;
+      // console.log(' > emitting ', type);
+      events.emit(type, payload);
+
+      // console.log(e);
+      if (type === 'worker:workflow-complete') {
+        // console.log('heard workflow complete!');
         const state = e.state;
 
-        p.disconnect();
-
         resolve(state);
+
+        setTimeout(() => {
+          p.disconnect();
+        }, 1);
       }
 
       // TODO kill the process now
     });
   });
+
+  p.on = (...args) => events.on(...args);
+
+  return p;
 }
 
 export default api;

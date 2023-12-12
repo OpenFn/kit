@@ -7,6 +7,8 @@ import { PURGE } from '../events';
 import type { EngineAPI } from '../types';
 import type { Logger } from '@openfn/logger';
 
+import childprocessWorkers from '../worker/child-process';
+
 // All events coming out of the worker need to include a type key
 type WorkerEvent = {
   type: string;
@@ -29,14 +31,14 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger?: Logger
 ) {
-  const workers = createWorkers(workerPath, options);
+  // const workers = createWorkers(workerPath, options);
   engine.callWorker = (
     task: string,
     args: any[] = [],
     events: any = {},
     timeout?: number
   ) => {
-    const promise = workers.exec(task, args, {
+    const promise = childprocessWorkers.exec(task, args, {
       on: ({ type, ...args }: WorkerEvent) => {
         // just call the callback
         events[type]?.(args);

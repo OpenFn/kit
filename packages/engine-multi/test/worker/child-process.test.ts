@@ -23,3 +23,23 @@ test('run a workflow', async (t) => {
 
   t.deepEqual(result, { x: 1 });
 });
+
+test('listen to an event', async (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: 'export default [(s) => ({ x: 1 })]',
+        },
+      ],
+    };
+
+    const options = {};
+
+    workers.exec('run', [plan, options]).on('worker:job-complete', () => {
+      t.pass();
+      done();
+    });
+  });
+});
