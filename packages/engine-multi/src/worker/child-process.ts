@@ -29,8 +29,13 @@ function runInChildProcess(plan: any, options: any, events: any = {}) {
   const p = new Promise((resolve, reject) => {
     console.log('starting child process....');
 
-    const dirname = path.dirname(fileURLToPath(import.meta.url));
-    // console.log(' >> ', dirname);
+    let dirname = path.dirname(fileURLToPath(import.meta.url));
+
+    // // nasty hack to sort out pathing
+    if (dirname.endsWith('/dist')) {
+      dirname += '/worker';
+    }
+    console.log(' >> ', dirname);
     const p = child_process.fork(
       // TODO I dont think this path is right
       path.resolve(dirname, '../../dist/worker/child_worker.js'),
