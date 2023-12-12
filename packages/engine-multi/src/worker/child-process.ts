@@ -22,12 +22,12 @@ const api = {
 };
 
 function runInChildProcess(plan: any, options: any, events: any = {}) {
-  console.log('*', process.pid);
+  // console.log('*', process.pid);
 
   // const events = new EventEmitter();
 
   const p = new Promise((resolve, reject) => {
-    console.log('starting child process....');
+    // console.log('starting child process....');
 
     let dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,12 +35,13 @@ function runInChildProcess(plan: any, options: any, events: any = {}) {
     if (dirname.endsWith('/dist')) {
       dirname += '/worker';
     }
-    console.log(' >> ', dirname);
+    // console.log(' >> ', dirname);
     const p = child_process.fork(
       // TODO I dont think this path is right
       path.resolve(dirname, '../../dist/worker/child_worker.js'),
       [JSON.stringify(plan), JSON.stringify(options)],
       {
+        execArgv: ['--experimental-vm-modules', '--no-warnings'],
         detached: true, // child will live if parent dies.
         // although tbf, what's the point?
       }

@@ -4,7 +4,7 @@ import execute, { NotifyEvents } from '@openfn/runtime';
 
 import * as workerEvents from './events';
 
-console.log('hello from inside the child', process.pid);
+console.log('child process', process.pid);
 // This is what runs inside the node child processs
 
 // Pull the run arguments from the incoming command
@@ -72,7 +72,7 @@ async function run() {
     jobLogger,
     linker: {
       modules: adaptorPaths,
-      whitelist,
+      whitelist: undefined, // TODO - major issue, whitelist regexes get turned into objects for some reason??
       cacheKey: plan.id,
     },
     callbacks: {
@@ -85,7 +85,7 @@ async function run() {
       },
     },
   };
-
+  //console.log(' >> WHITELIST', opts.linker?.whitelist);
   publish(workerEvents.WORKFLOW_START, {});
 
   const result = await execute(plan, undefined, opts);
