@@ -37,9 +37,13 @@ test('listen to an event', async (t) => {
 
     const options = {};
 
-    workers.exec('run', [plan, options]).on('worker:job-complete', () => {
-      t.pass();
-      done();
+    workers.exec('run', [plan, options], {
+      on: (evt) => {
+        if (evt.type === 'worker:job-complete') {
+          t.pass();
+          done();
+        }
+      },
     });
   });
 });

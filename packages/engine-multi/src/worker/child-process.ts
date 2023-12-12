@@ -1,5 +1,6 @@
 import child_process from 'node:child_process';
-
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import EventEmitter from 'node:events';
 
 // make the API look like workerpool
@@ -9,24 +10,30 @@ const api = {
   // (basically we'll just return true)
   _handshake: () => {},
 
-  _run: (plan: any, options: any) => runInChildProcess(plan, options),
+  _run: (plan: any, options: any, events: any) =>
+    runInChildProcess(plan, options, events),
 
-  exec: (task: string, args: any[]) => {
+  exec: (task: string, args: any[], events: any) => {
     if (task === 'run') {
-      return api._run(...args);
+      const [plan, options] = args;
+      return api._run(plan, options, events);
     }
   },
 };
 
-function runInChildProcess(plan: any, options: any) {
+function runInChildProcess(plan: any, options: any, events: any = {}) {
   console.log('*', process.pid);
 
-  const events = new EventEmitter();
+  // const events = new EventEmitter();
 
   const p = new Promise((resolve, reject) => {
     console.log('starting child process....');
+
+    const dirname = path.dirname(fileURLToPath(import.meta.url));
+    // console.log(' >> ', dirname);
     const p = child_process.fork(
-      './dist/worker/child_worker.js',
+      // TODO I dont think this path is right
+      path.resolve(dirname, '../../dist/worker/child_worker.js'),
       [JSON.stringify(plan), JSON.stringify(options)],
       {
         detached: true, // child will live if parent dies.
@@ -37,7 +44,7 @@ function runInChildProcess(plan: any, options: any) {
     p.on('message', (e) => {
       const { type, ...payload } = e;
       // console.log(' > emitting ', type);
-      events.emit(type, payload);
+      events.on?.(e);
 
       // console.log(e);
       if (type === 'worker:workflow-complete') {
@@ -46,16 +53,16 @@ function runInChildProcess(plan: any, options: any) {
 
         resolve(state);
 
-        setTimeout(() => {
-          p.disconnect();
-        }, 1);
+        // setTimeout(() => {
+        //   p.disconnect();
+        // }, 1);
       }
 
       // TODO kill the process now
     });
   });
 
-  p.on = (...args) => events.on(...args);
+  // p.on = (...args) => events.on(...args);
 
   return p;
 }

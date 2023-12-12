@@ -53,6 +53,7 @@ const execute = async (context: ExecutionContext) => {
 
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
+        console.log('WORKFLOW START', evt);
         workflowStart(context, evt);
       },
       [workerEvents.WORKFLOW_COMPLETE]: (

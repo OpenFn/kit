@@ -53,16 +53,17 @@ export default function initWorkers(
   };
 
   engine.purge = () => {
-    const { pendingTasks } = workers.stats();
-    if (pendingTasks == 0) {
-      logger?.debug('Purging workers');
-      engine.emit(PURGE);
-      workers.terminate();
-    }
+    // const { pendingTasks } = workers.stats();
+    // if (pendingTasks == 0) {
+    //   logger?.debug('Purging workers');
+    //   engine.emit(PURGE);
+    //   workers.terminate();
+    // }
   };
 
   // This will force termination (with grace period if allowed)
-  engine.closeWorkers = async (instant?: boolean) => workers.terminate(instant);
+  // engine.closeWorkers = async (instant?: boolean) => workers.terminate(instant);
+  engine.closeWorkers = async () => {};
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {
