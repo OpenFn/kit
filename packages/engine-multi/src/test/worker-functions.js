@@ -1,24 +1,36 @@
 import path from 'node:path';
-import workerpool from 'workerpool';
-import { threadId } from 'node:worker_threads';
-import v8 from 'v8';
 
 import { increment } from './counter.js';
 
-workerpool.worker({
+const publish = (evt) => {
+  process.send(evt);
+};
+
+const threadId = process.pid;
+
+const run = (task, args = []) => tasks[task](...args);
+
+process.on('message', async (evt) => {
+  if (evt.type === 'engine:run_task') {
+    const result = await run(evt.task, evt.args);
+
+    publish({
+      type: 'engine:resolve_task',
+      result,
+    });
+  }
+});
+
+const tasks = {
   handshake: () => true,
   test: (result = 42) => {
     const { pid, scribble } = process;
-
-    workerpool.workerEmit({
-      type: 'message',
-      result,
-      pid,
-      scribble,
-    });
-
     return result;
   },
+  wait: (duration = 500) =>
+    new Promise((resolve) => {
+      setTimeout(() => resolve(), duration);
+    }),
   readEnv: (key) => {
     if (key) {
       return process.env[key];
@@ -30,7 +42,7 @@ workerpool.worker({
   // Most tests should use the mock-worker instead
   run: (plan, _adaptorPaths) => {
     const workflowId = plan.id;
-    workerpool.workerEmit({
+    publish({
       type: 'worker:workflow-start',
       workflowId,
       threadId,
@@ -38,7 +50,7 @@ workerpool.worker({
     try {
       const [job] = plan.jobs;
       const result = eval(job.expression);
-      workerpool.workerEmit({
+      publish({
         type: 'worker:workflow-complete',
         workflowId,
         state: result,
@@ -47,7 +59,7 @@ workerpool.worker({
     } catch (err) {
       // console.error(err);
       // // @ts-ignore TODO sort out error typing
-      // workerpool.workerEmit({
+      // publish({
       //   type: 'worker:workflow-error',
       //   workflowId,
       //   message: err.message,
@@ -115,4 +127,4 @@ workerpool.worker({
   //     stats.heap_size_limit / 1024 / 1024
   //   } Mb\n heap used = ${hprocess.memoryUsage().heapUsed / 1024 / 1024}mb`
   // );
-});
+};
