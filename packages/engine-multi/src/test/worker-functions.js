@@ -2,9 +2,12 @@ import path from 'node:path';
 
 import { increment } from './counter.js';
 
-const publish = (evt) => {
-  process.send(evt);
-};
+const publish = (evt) =>
+  new Promise((resolve) => {
+    process.send(evt, undefined, {}, () => {
+      resolve();
+    });
+  });
 
 const threadId = process.pid;
 
@@ -23,13 +26,17 @@ process.on('message', async (evt) => {
 
 const tasks = {
   handshake: () => true,
-  test: (result = 42) => {
-    const { pid, scribble } = process;
+  test: async (result = 42) => {
+    await publish({
+      type: 'test-message',
+      result,
+    });
+
     return result;
   },
   wait: (duration = 500) =>
     new Promise((resolve) => {
-      setTimeout(() => resolve(), duration);
+      setTimeout(() => resolve(1), duration);
     }),
   readEnv: (key) => {
     if (key) {

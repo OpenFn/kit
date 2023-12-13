@@ -93,3 +93,126 @@ test('run through a queue of tasks', async (t) => {
   t.is(pool._queue.length, 0);
   t.is(pool._pool.length, capacity);
 });
+
+test('destroy should handle un-initialised workers', async (t) => {
+  const pool = createPool(workerPath, { capacity: 10 });
+  pool.destroy();
+  t.is(pool._pool.length, 0);
+});
+
+test('destroy should close all child processes', async (t) => {
+  // warm up a pool
+  const pool = createPool(workerPath, { capacity: 10 });
+
+  const queue = new Array(10).fill(true).map(() => pool.exec('test'));
+  await Promise.all(queue);
+
+  const workers = Object.values(pool._allWorkers);
+
+  // now destroy it
+  pool.destroy();
+
+  // check that every child is disconnected
+  t.true(workers.every((child) => child.killed));
+
+  // the pool should be empty
+  t.is(pool._pool.length, 0);
+});
+
+test('destroy gracefully', (t) => {
+  return new Promise((done) => {
+    const pool = createPool(workerPath);
+    const workers = Object.values(pool._allWorkers);
+
+    t.is(pool._pool.length, 5);
+
+    pool.exec('wait', [100]).then((result) => {
+      t.is(result, 1);
+      setTimeout(() => {
+        t.true(workers.every((child) => child.killed));
+        t.is(pool._pool.length, 0);
+
+        done();
+      }, 1);
+    });
+
+    pool.destroy();
+
+    t.is(pool._pool.length, 0);
+  });
+});
+
+// TODO should the worker throw on sigterm?
+test('destroy immediately', (t) => {
+  return new Promise((done) => {
+    const pool = createPool(workerPath);
+
+    t.is(pool._pool.length, 5);
+
+    // this should not return
+    pool.exec('wait', [100]).then(() => {
+      t.fail('Task should not have returned!');
+    });
+
+    pool.destroy(true);
+
+    t.is(pool._pool.length, 0);
+
+    setTimeout(() => {
+      t.pass();
+      done();
+    }, 1000); // not sure why but this needs to be quite a long delay
+  });
+});
+
+// TODO is this right?
+// If we've claimed and the claimed attempt is waiting, we should probably run it
+// so this is invalid
+test.skip("don't process the queue after destroy", () => {
+  const pool = createPool(workerPath, { capacity: 1 });
+
+  pool.exec('wait', [100]);
+  pool.exec('wait', [100]);
+});
+
+test('throw on exec if destroyed', (t) => {
+  const pool = createPool(workerPath);
+
+  t.is(pool._pool.length, 5);
+
+  pool.destroy(true);
+
+  t.throws(() => pool.exec('test'), {
+    message: 'Worker destroyed',
+  });
+});
+
+test('listen to an event', async (t) => {
+  const pool = createPool(workerPath);
+
+  await pool.exec('test', [20], {
+    on: (evt) => {
+      if (evt.type === 'test-message') {
+        t.log(evt);
+        t.pass();
+      }
+    },
+  });
+});
+// test.only('listeners are removed from a worker after a task executes', async (t) => {
+//   const events = [];
+
+//   const pool = createPool(workerPath, { capacity: 1 });
+//   t.is(pool._pool.length, 1);
+
+//   const p1 = await pool.exec('wait', []);
+//   pool.on('message', (evt) => {
+//     events.push(evt);
+//   });
+
+//   console.log(events);
+
+//   t.true(events.length > 0);
+// });
+
+test.todo('timeout');

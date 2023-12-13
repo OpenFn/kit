@@ -27,7 +27,7 @@ type Pool = {
 };
 
 type PoolOptions = {
-  capacity: number; // defaults to 5
+  capacity?: number; // defaults to 5
 };
 
 type RunTaskEvent = {
@@ -37,37 +37,58 @@ type RunTaskEvent = {
 };
 
 // creates a new pool of workers which use the same script
-function createPool(script: string, options = {}) {
+function createPool(script: string, options: PoolOptions = {}) {
   const { capacity = 5 } = options;
+
+  let destroyed = false;
 
   // a pool of processes
   const pool = new Array(capacity).fill(false);
 
   const queue: any[] = [];
 
+  // Keep track of all the workers we created
+  const allWorkers = {};
+
   const init = (child: any) => {
     if (!child) {
       // create a new child process and load the module script into it
-      return fork(script, [], {
+      child = fork(script, [], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
         detached: true, // child will live if parent dies.
         // although tbf, what's the point?
       });
+
+      allWorkers[child.pid] = child;
     }
     return child;
   };
 
   const finish = (worker) => {
-    // restore the worker to the pool
-    pool.splice(0, 0, worker);
+    worker.removeAllListeners();
 
-    if (queue.length) {
-      const { task, args, resolve } = queue.shift();
-      exec(task, args).then(resolve);
+    if (destroyed) {
+      killWorker(worker);
+    } else {
+      // restore the worker to the pool
+      pool.splice(0, 0, worker);
+
+      if (queue.length) {
+        // TODO actually I think if there's a queue we should empty it first
+        const { task, args, resolve } = queue.shift();
+
+        // TODO don't process the queue if destroyed
+        exec(task, args).then(resolve);
+      }
     }
   };
 
-  const exec = (task: string, args: any[], opts: any) => {
+  const exec = (task: string, args: any[], opts?: any = {}) => {
+    // TODO Throw if destroyed
+    if (destroyed) {
+      throw new Error('Worker destroyed');
+    }
+
     const promise = new Promise((resolve) => {
       if (!pool.length) {
         return queue.push({ task, args, resolve });
@@ -83,7 +104,9 @@ function createPool(script: string, options = {}) {
         task,
       } as RunTaskEvent);
 
-      worker.once('message', (evt) => {
+      worker.on('message', (evt) => {
+        // forward the message out of the pool witt his nasty api
+        opts.on?.(evt);
         if (evt.type === events.RESOLVE_TASK) {
           resolve(evt.result);
 
@@ -97,12 +120,37 @@ function createPool(script: string, options = {}) {
     return promise;
   };
 
+  const killWorker = (worker) => {
+    if (worker) {
+      worker.kill();
+      allWorkers[worker.pid].kill();
+      delete allWorkers[worker.pid];
+    }
+  };
+
+  const destroy = (immediate = false) => {
+    destroyed = true;
+
+    // Drain the pool
+    while (pool.length) {
+      killWorker(pool.pop());
+    }
+
+    if (immediate) {
+      Object.values(allWorkers).forEach(killWorker);
+    }
+
+    // set a timeout and force any outstanding workers to die
+  };
+
   const api = {
     exec,
+    destroy,
 
     // for debugging and testing
     _pool: pool,
     _queue: queue,
+    _allWorkers: allWorkers,
   };
 
   return api;
