@@ -235,6 +235,60 @@ test('listen to an event', async (t) => {
     },
   });
 });
+
+test('listen to an event in two successive tasks', async (t) => {
+  const pool = createPool(workerPath, { capacity: 1 });
+
+  let count = 0;
+
+  await pool.exec('test', [20], {
+    on: (evt) => {
+      if (evt.type === 'test-message') {
+        count++;
+      }
+    },
+  });
+
+  await pool.exec('test', [20], {
+    on: (evt) => {
+      if (evt.type === 'test-message') {
+        count++;
+      }
+    },
+  });
+
+  t.is(count, 2);
+});
+
+test('listen to an event in two successive tasks after a queue', async (t) => {
+  return new Promise((done) => {
+    const pool = createPool(workerPath, { capacity: 1 });
+
+    let count = 0;
+
+    pool.exec('test', [20], {
+      on: (evt) => {
+        if (evt.type === 'test-message') {
+          count++;
+        }
+      },
+    });
+
+    pool
+      .exec('test', [20], {
+        on: (evt) => {
+          if (evt.type === 'test-message') {
+            count++;
+          }
+        },
+      })
+      .then(() => {
+        t.is(count, 2);
+        done();
+      });
+    t.is(pool._queue.length, 1);
+  });
+});
 // test.only('listeners are removed from a worker after a task executes', async (t) => {
 //   const events = [];
 

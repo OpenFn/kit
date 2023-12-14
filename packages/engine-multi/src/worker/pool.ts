@@ -73,7 +73,7 @@ function createPool(script: string, options: PoolOptions = {}) {
 
         // don't inherit the parent's stdout
         // maybe good in prod, maybe bad for dev
-        silent: true,
+        // silent: true,
       });
 
       allWorkers[child.pid] = child;
@@ -92,10 +92,10 @@ function createPool(script: string, options: PoolOptions = {}) {
 
       if (queue.length) {
         // TODO actually I think if there's a queue we should empty it first
-        const { task, args, resolve } = queue.shift();
+        const { task, args, resolve, opts } = queue.shift();
 
         // TODO don't process the queue if destroyed
-        exec(task, args).then(resolve);
+        exec(task, args, opts).then(resolve);
       }
     }
   };
@@ -115,7 +115,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       let timeout: NodeJS.Timeout;
       let didTimeout = false;
       if (!pool.length) {
-        return queue.push({ task, args, resolve });
+        return queue.push({ task, args, opts, resolve });
       }
 
       // what happens if the queue is full?
