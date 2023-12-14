@@ -60,7 +60,6 @@ export default function initWorkers(
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {
-  console.log(' >> ', workerPath);
   const {
     env = {},
     minWorkers = 0,

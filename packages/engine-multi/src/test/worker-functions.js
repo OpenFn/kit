@@ -39,7 +39,7 @@ process.on('message', async (evt) => {
 });
 
 const tasks = {
-  handshake: () => true,
+  handshake: async () => true,
   test: async (result = 42) => {
     await publish({
       type: 'test-message',

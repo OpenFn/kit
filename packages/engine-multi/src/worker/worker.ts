@@ -1,20 +1,8 @@
 // Dedicated worker for running jobs
-// Security thoughts: the process inherits the node command arguments
-// (it has to for experimental modules to work)
-// Is this a concern? If secrets are passed in they could be visible
-// The sandbox should help
-
-// What about imports in a worker thread?
-// Is there an overhead in reimporting stuff (presumably!)
-// Should we actually be pooling workers by adaptor[+version]
-// Does this increase the danger of sharing state between jobs?
-// Suddenly it's a liability for the same environent in the same adaptor
-// to be running the same jobs - break out of the sandbox and who knows what you can get
-import workerpool from 'workerpool';
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { SanitizePolicies } from '@openfn/logger';
-import helper, { createLoggers, publish } from './worker-helper';
+import helper, { register, createLoggers, publish } from './worker-helper';
 import { NotifyEvents } from '@openfn/runtime';
 
 type RunOptions = {
@@ -24,15 +12,7 @@ type RunOptions = {
   // TODO timeout
 };
 
-// TODO
-// I need to register the handshake and run tasks
-// to a common helper function
-// register({ handshake, run })
-
-workerpool.worker({
-  // startup validation script
-  handshake: () => true,
-
+register({
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
     const { adaptorPaths, whitelist, sanitize } = runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
