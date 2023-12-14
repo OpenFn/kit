@@ -115,9 +115,12 @@ const tasks = {
 
   writeToGlobalError: async (obj) => {
     Object.assign(Error, obj);
+    console.log(Error.y);
   },
 
-  getFromGlobalError: async (key) => Error[key],
+  getFromGlobalError: async (key) => {
+    return Error[key];
+  },
 
   // Tests of module state across executions
   // Ie, does a module get re-initialised between runs? (No.)

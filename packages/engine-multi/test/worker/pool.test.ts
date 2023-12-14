@@ -25,6 +25,12 @@ test('run a task and return the result', async (t) => {
   t.is(result, 42);
 });
 
+test('run a task with arguments and return the result', async (t) => {
+  const pool = createPool(workerPath);
+  const result = await pool.exec('test', [22]);
+  t.is(result, 22);
+});
+
 test('task runs inside a different process id', async (t) => {
   const pool = createPool(workerPath);
   const parentPid = process.pid;
@@ -75,6 +81,23 @@ test('add tasks to a queue if the pool is empty', async (t) => {
 
   t.is(pool._queue.length, 0);
   t.is(pool._pool.length, 1);
+});
+
+test('add tasks with args to a queue if the pool is empty', async (t) => {
+  const pool = createPool(workerPath, { capacity: 1 });
+  t.is(pool._pool.length, 1);
+
+  const p1 = pool.exec('wait', []);
+  t.is(pool._queue.length, 0);
+  t.is(pool._pool.length, 0);
+
+  const p2 = pool.exec('test', [11]);
+  t.is(pool._queue.length, 1);
+  t.is(pool._pool.length, 0);
+
+  const [_r1, r2] = await Promise.all([p1, p2]);
+
+  t.is(r2, 11);
 });
 
 test('run through a queue of tasks', async (t) => {

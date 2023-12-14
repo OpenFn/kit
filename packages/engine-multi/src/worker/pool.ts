@@ -28,6 +28,8 @@ type Pool = {
 
 type PoolOptions = {
   capacity?: number; // defaults to 5
+  maxWorkers?: number; // alias for capacity. Which is best?
+  env?: Record<string, string>; // default environment for workers
 };
 
 type RunTaskEvent = {
@@ -45,7 +47,7 @@ type ExecOpts = {
 
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}) {
-  const { capacity = 5 } = options;
+  const capacity = options.capacity || options.maxWorkers || 5;
 
   let destroyed = false;
 
@@ -62,8 +64,16 @@ function createPool(script: string, options: PoolOptions = {}) {
       // create a new child process and load the module script into it
       child = fork(script, [], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
-        detached: true, // child will live if parent dies.
+
+        // child will live if parent dies.
         // although tbf, what's the point?
+        detached: true,
+
+        env: options.env || {},
+
+        // don't inherit the parent's stdout
+        // maybe good in prod, maybe bad for dev
+        silent: true,
       });
 
       allWorkers[child.pid] = child;
@@ -125,6 +135,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       worker.send({
         type: events.RUN_TASK,
         task,
+        args,
       } as RunTaskEvent);
 
       worker.on('message', (evt) => {
@@ -144,7 +155,10 @@ function createPool(script: string, options: PoolOptions = {}) {
           // Actual engine errors should return a workflow:error event and resolve
           clearTimeout(timeout);
           if (!didTimeout) {
-            reject(evt.error);
+            const e = new Error(evt.error.message);
+            e.severity = evt.error.severity;
+            e.name = evt.type;
+            reject(e);
 
             finish(worker);
           }
