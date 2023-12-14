@@ -277,7 +277,7 @@ A workflow has a structure like this (better documentation is coming soon):
         // If there are no next edges, the workflow will end
         "b": true,
         "c": {
-          "condition": "!state.error" // Not that this is an expression, not a function
+          "condition": "!state.error" // Note that this is an expression, not a function
         }
       }
     }
