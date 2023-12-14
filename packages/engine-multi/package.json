@@ -17,8 +17,7 @@
     "@openfn/compiler": "workspace:*",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/logger": "workspace:*",
-    "@openfn/runtime": "workspace:*",
-    "workerpool": "^6.5.1"
+    "@openfn/runtime": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^18.15.13",

@@ -1,6 +1,3 @@
-// Execute a compiled workflow
-import { Promise as WorkerPoolPromise } from 'workerpool';
-
 import * as workerEvents from '../worker/events';
 import { ExecutionContext } from '../types';
 
@@ -84,6 +81,7 @@ const execute = async (context: ExecutionContext) => {
       events,
       options.timeout
     ).catch((e: any) => {
+      // TODO need to update tests on this
       // Catch process.exit from inside the thread
       // This approach is not pretty - we are banking on replacing workerpool soon
       if (e.message.match(/^Workerpool Worker terminated Unexpectedly/)) {
@@ -96,10 +94,10 @@ const execute = async (context: ExecutionContext) => {
         e = new ExitError(parseInt(exitCode));
       } else if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
         e = new OOMError();
-      } else if (e instanceof WorkerPoolPromise.TimeoutError) {
-        // Map the workerpool error to our own
-        e = new TimeoutError(options.timeout!);
       }
+
+      // TODO are timeout errors being handled nicely here?
+      // actually I think the occur outside of here, in the pool
 
       error(context, { workflowId: state.plan.id, error: e });
       logger.error(`Critical error thrown by ${state.plan.id}`, e);

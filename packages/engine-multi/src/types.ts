@@ -1,6 +1,3 @@
-// ok first of allI want to capture the key interfaces
-import workerpool from 'workerpool';
-
 import type { Logger, SanitizePolicies } from '@openfn/logger';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { EventEmitter } from 'node:events';
@@ -35,7 +32,7 @@ export type CallWorker = <T = any>(
   args: any[],
   events?: any,
   timeout?: number
-) => workerpool.Promise<T>;
+) => Promise<T>;
 
 export type ExecutionContextConstructor = {
   state: WorkflowState;

@@ -1,6 +1,5 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import workerpool from 'workerpool';
 
 import type { EngineAPI } from '../types';
 import type { Logger } from '@openfn/logger';
