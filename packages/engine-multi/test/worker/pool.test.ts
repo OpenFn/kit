@@ -215,4 +215,28 @@ test('listen to an event', async (t) => {
 //   t.true(events.length > 0);
 // });
 
-test.todo('timeout');
+test('throw if task times out', async (t) => {
+  const pool = createPool(workerPath);
+
+  await t.throwsAsync(() => pool.exec('test', [], { timeout: 5 }), {
+    name: 'TimeoutError',
+    message: 'Workflow failed to return within 5ms',
+  });
+});
+
+test('after timeout, destroy the worker and reset the pool', async (t) => {
+  return new Promise((done) => {
+    const pool = createPool(workerPath, { capacity: 2 });
+    t.deepEqual(pool._pool, [false, false]);
+
+    pool.exec('test', [], { timeout: 5 }).catch(() => {
+      t.true(worker.killed);
+      t.deepEqual(pool._pool, [false, false]);
+      done();
+    });
+
+    t.not(pool._pool, [false, false]);
+    let [worker] = Object.values(pool._allWorkers);
+    t.false(worker.killed);
+  });
+});

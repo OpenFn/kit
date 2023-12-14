@@ -1,4 +1,5 @@
 import { fork } from 'node:child_process';
+import { TimeoutError } from '../errors';
 
 // creates a pool of child process workers
 
@@ -7,16 +8,14 @@ import { fork } from 'node:child_process';
 const CAPACITY_FULL = 'full';
 const CAPACITY_AVAILABLE = 'available';
 
+// NB this is the ATTEMPT timeout
+const DEFAULT_TIMEOUT = 1000 * 60 * 10;
+
 const events = {
   CAPACITY_CHANGE: 'capacaity-change', // triggered when full or available
 
   RUN_TASK: 'engine:run_task',
   RESOLVE_TASK: 'engine:resolve_task',
-};
-
-type ExecOpts = {
-  // callback which will be called on event
-  on: (evt: any) => void;
 };
 
 type Pool = {
@@ -34,6 +33,13 @@ type RunTaskEvent = {
   type: 'engine:run_task';
   task: string;
   args: any[];
+};
+
+type ExecOpts = {
+  // for parity with workerpool, but this will change later
+  on: (event: any) => void;
+
+  timeout?: number; // ms
 };
 
 // creates a new pool of workers which use the same script
@@ -89,7 +95,14 @@ function createPool(script: string, options: PoolOptions = {}) {
       throw new Error('Worker destroyed');
     }
 
-    const promise = new Promise((resolve) => {
+    // Use a timeout by default
+    if (isNaN(opts.timeout)) {
+      opts.timeout = DEFAULT_TIMEOUT;
+    }
+
+    const promise = new Promise((resolve, reject) => {
+      let timeout: NodeJS.Timeout;
+      let didTimeout = false;
       if (!pool.length) {
         return queue.push({ task, args, resolve });
       }
@@ -99,18 +112,32 @@ function createPool(script: string, options: PoolOptions = {}) {
       // workerpool would queue it for us I think
       // but I think the worker is more responsible for this.  hmm.
       const worker = init(pool.pop());
+
+      // Start a timeout running
+      if (opts.timeout && opts.timeout !== Infinity) {
+        timeout = setTimeout(() => {
+          timeoutWorker(worker);
+          reject(new TimeoutError(opts.timeout));
+        }, opts.timeout);
+      }
+
       worker.send({
         type: events.RUN_TASK,
         task,
       } as RunTaskEvent);
 
       worker.on('message', (evt) => {
-        // forward the message out of the pool witt his nasty api
+        // forward the message out of the pool
         opts.on?.(evt);
-        if (evt.type === events.RESOLVE_TASK) {
-          resolve(evt.result);
 
-          finish(worker);
+        // Listen to a complete event to know the work is done
+        if (evt.type === events.RESOLVE_TASK) {
+          clearTimeout(timeout);
+          if (!didTimeout) {
+            resolve(evt.result);
+
+            finish(worker);
+          }
         }
       });
     });
@@ -120,10 +147,18 @@ function createPool(script: string, options: PoolOptions = {}) {
     return promise;
   };
 
+  // This will basically kill the worker to stop execution
+  // it must also replace the worker in the pool
+  // TODO maybe later the timeout will be handled inside the worker,
+  // and we'll just kill the thread, rather than the process
+  const timeoutWorker = (worker) => {
+    killWorker(worker);
+    pool.splice(0, 0, false);
+  };
+
   const killWorker = (worker) => {
     if (worker) {
       worker.kill();
-      allWorkers[worker.pid].kill();
       delete allWorkers[worker.pid];
     }
   };
