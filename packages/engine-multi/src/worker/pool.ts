@@ -16,6 +16,7 @@ const events = {
 
   RUN_TASK: 'engine:run_task',
   RESOLVE_TASK: 'engine:resolve_task',
+  REJECT_TASK: 'engine:reject_task',
 };
 
 type Pool = {
@@ -135,6 +136,15 @@ function createPool(script: string, options: PoolOptions = {}) {
           clearTimeout(timeout);
           if (!didTimeout) {
             resolve(evt.result);
+
+            finish(worker);
+          }
+        } else if (evt.type === events.REJECT_TASK) {
+          // Note that this is an unexpected error
+          // Actual engine errors should return a workflow:error event and resolve
+          clearTimeout(timeout);
+          if (!didTimeout) {
+            reject(evt.error);
 
             finish(worker);
           }

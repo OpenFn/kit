@@ -11,16 +11,26 @@ const publish = (evt) =>
 
 const threadId = process.pid;
 
-const run = (task, args = []) => tasks[task](...args);
-
 process.on('message', async (evt) => {
   if (evt.type === 'engine:run_task') {
-    const result = await run(evt.task, evt.args);
-
-    publish({
-      type: 'engine:resolve_task',
-      result,
-    });
+    const args = evt.args || [];
+    tasks[evt.task](...args)
+      .then((result) => {
+        publish({
+          type: 'engine:resolve_task',
+          result,
+        });
+      })
+      .catch((e) => {
+        publish({
+          type: 'engine:reject_task',
+          error: {
+            severity: e.severity || 'crash',
+            message: e.message,
+            type: e.type || e.name,
+          },
+        });
+      });
   }
 });
 
@@ -38,16 +48,16 @@ const tasks = {
     new Promise((resolve) => {
       setTimeout(() => resolve(1), duration);
     }),
-  readEnv: (key) => {
+  readEnv: async (key) => {
     if (key) {
       return process.env[key];
     }
     return process.env;
   },
-  threadId: () => threadId,
+  threadId: async () => threadId,
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
-  run: (plan, _adaptorPaths) => {
+  run: async (plan, _adaptorPaths) => {
     const workflowId = plan.id;
     publish({
       type: 'worker:workflow-start',
@@ -77,13 +87,17 @@ const tasks = {
     }
   },
 
-  timeout: () => {
+  timeout: async () => {
     while (true) {}
+  },
+
+  throw: async () => {
+    throw new Error('test_error');
   },
 
   // Experiments with freezing the global scope
   // We may do this in the actual worker
-  freeze: () => {
+  freeze: async () => {
     // This is not a deep freeze, so eg global.Error is not frozen
     // Also some things like Uint8Array are not freezable, so these remain ways to scribble
     Object.freeze(global);
@@ -93,21 +107,21 @@ const tasks = {
     Object.freeze(this);
   },
 
-  setGlobalX: (newValue = 42) => {
+  setGlobalX: async (newValue = 42) => {
     global.x = newValue;
   },
 
-  getGlobalX: () => global.x,
+  getGlobalX: async () => global.x,
 
-  writeToGlobalError: (obj) => {
+  writeToGlobalError: async (obj) => {
     Object.assign(Error, obj);
   },
 
-  getFromGlobalError: (key) => Error[key],
+  getFromGlobalError: async (key) => Error[key],
 
   // Tests of module state across executions
   // Ie, does a module get re-initialised between runs? (No.)
-  incrementStatic: () => increment(),
+  incrementStatic: async () => increment(),
   incrementDynamic: async () => {
     const { increment } = await import(path.resolve('src/test/counter.js'));
     return increment();
@@ -117,7 +131,7 @@ const tasks = {
   // is enghuh to OOM the _process_, taking the whole engine out
   // This function should blow the thread's memory without
   // killing the parent process
-  blowMemory: () => {
+  blowMemory: async () => {
     let data = [];
     while (true) {
       data.push(Array(1e6).fill('mario'));

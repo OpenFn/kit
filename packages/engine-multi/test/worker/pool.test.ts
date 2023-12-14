@@ -94,6 +94,19 @@ test('run through a queue of tasks', async (t) => {
   t.is(pool._pool.length, capacity);
 });
 
+// This might be a bit of an artificial test
+// because the actual inner runtime should never throw
+test('throw if the task throws', async (t) => {
+  const pool = createPool(workerPath);
+
+  try {
+    await pool.exec('throw', []);
+  } catch (e) {
+    // NB e is not an error isntance
+    t.is(e.message, 'test_error');
+  }
+});
+
 test('destroy should handle un-initialised workers', async (t) => {
   const pool = createPool(workerPath, { capacity: 10 });
   pool.destroy();
