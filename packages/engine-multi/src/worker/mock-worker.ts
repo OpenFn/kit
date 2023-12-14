@@ -7,8 +7,7 @@
  * This mock handler does nothing and returns after a while, ignoring the source argument
  * and reading instructions out of state object.
  */
-import workerpool from 'workerpool';
-import helper, { createLoggers, publish } from './worker-helper';
+import helper, { register, createLoggers, publish } from './worker-helper';
 import * as workerEvents from './events';
 
 type MockJob = {
@@ -75,7 +74,7 @@ function mock(plan: MockExecutionPlan) {
   });
 }
 
-workerpool.worker({
+register({
   run: async (plan: MockExecutionPlan, _options?: any) =>
     helper(plan.id, () => mock(plan)),
 });

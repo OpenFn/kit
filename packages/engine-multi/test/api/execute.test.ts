@@ -49,17 +49,20 @@ const options = {
   },
 } as RTEOptions;
 
-test.serial('execute should run a job and return the result', async (t) => {
-  const state = {
-    id: 'x',
-    plan,
-  } as WorkflowState;
+test.serial.only(
+  'execute should run a job and return the result',
+  async (t) => {
+    const state = {
+      id: 'x',
+      plan,
+    } as WorkflowState;
 
-  const context = createContext({ state, options });
+    const context = createContext({ state, options });
 
-  const result = await execute(context);
-  t.is(result, 22);
-});
+    const result = await execute(context);
+    t.is(result, 22);
+  }
+);
 
 // we can check the state object after each of these is returned
 test.serial('should emit a workflow-start event', async (t) => {

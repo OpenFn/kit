@@ -38,7 +38,7 @@ test.serial('callWorker should trigger an event callback', async (t) => {
       done();
     };
 
-    api.callWorker('test', [11], { message: onCallback });
+    api.callWorker('test', [11], { 'test-message': onCallback });
   });
 });
 
@@ -46,22 +46,24 @@ test.serial(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
     await t.throwsAsync(() => api.callWorker('timeout', [11], {}, 10), {
-      instanceOf: WorkerPoolPromise.TimeoutError,
+      name: 'TimeoutError',
     });
   }
 );
 
-// Dang, this doesn't work, the worker threads run in the same process
-test.skip('callWorker should execute with a different process id', async (t) => {
-  return new Promise((done) => {
-    const onCallback = ({ pid }) => {
-      t.not(process.pid, pid);
-      done();
-    };
+test.serial(
+  'callWorker should execute with a different process id',
+  async (t) => {
+    return new Promise((done) => {
+      const onCallback = ({ pid }) => {
+        t.not(process.pid, pid);
+        done();
+      };
 
-    api.callWorker('test', [], { message: onCallback });
-  });
-});
+      api.callWorker('test', [], { 'test-message': onCallback });
+    });
+  }
+);
 
 test.serial('callWorker should execute in a different process', async (t) => {
   return new Promise((done) => {
@@ -74,12 +76,12 @@ test.serial('callWorker should execute in a different process', async (t) => {
       done();
     };
 
-    api.callWorker('test', [], { message: onCallback });
+    api.callWorker('test', [], { 'test-message': onCallback });
   });
 });
 
 test.serial(
-  'If null env is passed, worker thread should be able to access parent env',
+  'Even if null env is passed, worker thread should not be able to access parent env',
   async (t) => {
     const badAPI = {} as EngineAPI;
     const env = null;
@@ -92,8 +94,8 @@ test.serial(
     // try and read that key inside the thread
     const result = await badAPI.callWorker('readEnv', ['TEST']);
 
-    // voila, the kingdom is yours
-    t.is(result, code);
+    // Sorry pal, no dice
+    t.not(result, code);
 
     badAPI.closeWorkers();
   }

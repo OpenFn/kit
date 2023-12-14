@@ -11,26 +11,30 @@ const publish = (evt) =>
 
 const threadId = process.pid;
 
+const run = (task, args) => {
+  tasks[task](...args)
+    .then((result) => {
+      publish({
+        type: 'engine:resolve_task',
+        result,
+      });
+    })
+    .catch((e) => {
+      publish({
+        type: 'engine:reject_task',
+        error: {
+          severity: e.severity || 'crash',
+          message: e.message,
+          type: e.type || e.name,
+        },
+      });
+    });
+};
+
 process.on('message', async (evt) => {
   if (evt.type === 'engine:run_task') {
     const args = evt.args || [];
-    tasks[evt.task](...args)
-      .then((result) => {
-        publish({
-          type: 'engine:resolve_task',
-          result,
-        });
-      })
-      .catch((e) => {
-        publish({
-          type: 'engine:reject_task',
-          error: {
-            severity: e.severity || 'crash',
-            message: e.message,
-            type: e.type || e.name,
-          },
-        });
-      });
+    run(evt.task, args);
   }
 });
 

@@ -1,12 +1,69 @@
 // utilities to run inside the worker
 // This is designed to minimize the amount of code we have to mock
 
-import workerpool from 'workerpool';
-import { threadId } from 'node:worker_threads';
+import process from 'node:process';
+
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from './events';
 import { ExecutionError } from '../errors';
+
+type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
+
+type WorkerEvent = {
+  type: string;
+
+  [key: string]: any;
+};
+
+const threadId = process.pid;
+
+const tasks: TaskRegistry = {
+  // startup validation script
+  handshake: async () => true,
+};
+
+export const register = (newTasks: TaskRegistry) => {
+  Object.assign(tasks, newTasks);
+};
+
+process.on('message', async (evt: WorkerEvent) => {
+  if (evt.type === 'engine:run_task') {
+    const args = evt.args || [];
+    run(evt.task, args);
+  }
+});
+
+const run = (task: string, args: any[] = []) => {
+  if (!tasks[task]) {
+    return process.send?.({
+      type: 'engine:reject_task',
+      error: {
+        severity: 'exception',
+        message: `task ${task} not found`,
+        type: 'TaskNotFoundError',
+      },
+    });
+  }
+
+  tasks[task](...args)
+    .then((result) => {
+      process.send?.({
+        type: 'engine:resolve_task',
+        result,
+      });
+    })
+    .catch((e) => {
+      process.send?.({
+        type: 'engine:reject_task',
+        error: {
+          severity: e.severity || 'crash',
+          message: e.message,
+          type: e.type || e.name,
+        },
+      });
+    });
+};
 
 export const createLoggers = (
   workflowId: string,
@@ -15,9 +72,7 @@ export const createLoggers = (
   const log = (message: string) => {
     // Apparently the json log stringifies the message
     // We don't really want it to do that
-    workerpool.workerEmit({
-      workflowId,
-      type: workerEvents.LOG,
+    publish(workflowId, workerEvents.LOG, {
       message: JSON.parse(message),
     } as workerEvents.LogEvent);
   };
@@ -53,11 +108,16 @@ export function publish<T extends workerEvents.WorkerEvents>(
   type: T,
   payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
 ) {
-  workerpool.workerEmit({
+  const event = {
     workflowId,
     threadId,
     type,
     ...payload,
+  };
+  return new Promise<void>((resolve) => {
+    process.send?.(event, undefined, {}, () => {
+      resolve();
+    });
   });
 }
 

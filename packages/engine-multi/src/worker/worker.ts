@@ -24,6 +24,11 @@ type RunOptions = {
   // TODO timeout
 };
 
+// TODO
+// I need to register the handshake and run tasks
+// to a common helper function
+// register({ handshake, run })
+
 workerpool.worker({
   // startup validation script
   handshake: () => true,

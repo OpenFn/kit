@@ -2,12 +2,10 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import workerpool from 'workerpool';
 
-import { PURGE } from '../events';
-
 import type { EngineAPI } from '../types';
 import type { Logger } from '@openfn/logger';
 
-import childprocessWorkers from '../worker/child-process';
+import createPool from '../worker/pool';
 
 // All events coming out of the worker need to include a type key
 type WorkerEvent = {
@@ -31,27 +29,24 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger?: Logger
 ) {
-  // const workers = createWorkers(workerPath, options);
+  const workers = createWorkers(workerPath, options);
+
   engine.callWorker = (
     task: string,
     args: any[] = [],
     events: any = {},
     timeout?: number
-  ) => {
-    const promise = childprocessWorkers.exec(task, args, {
+  ) =>
+    workers.exec(task, args, {
+      timeout,
       on: ({ type, ...args }: WorkerEvent) => {
         // just call the callback
         events[type]?.(args);
       },
     });
 
-    if (timeout) {
-      promise.timeout(timeout);
-    }
-
-    return promise;
-  };
-
+  // TODO remove alll traces of purge, we don't need it now
+  // (hurrah!)
   engine.purge = () => {
     // const { pendingTasks } = workers.stats();
     // if (pendingTasks == 0) {
@@ -61,12 +56,11 @@ export default function initWorkers(
     // }
   };
 
-  // This will force termination (with grace period if allowed)
-  // engine.closeWorkers = async (instant?: boolean) => workers.terminate(instant);
-  engine.closeWorkers = async () => {};
+  engine.closeWorkers = async (instant?: boolean) => workers.destroy(instant);
 }
 
 export function createWorkers(workerPath: string, options: WorkerOptions) {
+  console.log(' >> ', workerPath);
   const {
     env = {},
     minWorkers = 0,
@@ -86,18 +80,16 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
     resolvedWorkerPath = path.resolve(dirname, workerPath || './worker.js');
   }
 
-  return workerpool.pool(resolvedWorkerPath, {
-    minWorkers,
+  return createPool(resolvedWorkerPath, {
+    // minWorkers,
     maxWorkers,
-    workerThreadOpts: {
-      execArgv: ['--no-warnings', '--experimental-vm-modules'],
-      // Important to override the child env so that it cannot access the parent env
-      env,
-      resourceLimits: {
-        // This is a fair approximation for heapsize
-        // Note that it's still possible to OOM the process without hitting this limit
-        maxOldGenerationSizeMb: memoryLimitMb,
-      },
-    },
+    env,
+
+    // TODO need to support this
+    // resourceLimits: {
+    //   // This is a fair approximation for heapsize
+    //   // Note that it's still possible to OOM the process without hitting this limit
+    //   maxOldGenerationSizeMb: memoryLimitMb,
+    // },
   });
 }
