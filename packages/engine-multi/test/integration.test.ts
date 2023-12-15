@@ -265,7 +265,14 @@ test.serial('preload credentials', (t) => {
 });
 
 test.serial('accept initial state', (t) => {
-  return new Promise((done) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+      compile: {
+        skip: true,
+      },
+    });
+
     const plan = createPlan();
 
     // important!  The runtime  must use both x and y as initial state
