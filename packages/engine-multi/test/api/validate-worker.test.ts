@@ -19,7 +19,14 @@ test('validate should not throw if the worker path is valid', async (t) => {
 });
 
 test('validate should throw if the worker path is invalid', async (t) => {
-  initWorkers(api, 'a/b/c.js');
+  initWorkers(api, 'a/b/c.js', { silent: true });
+  await t.throwsAsync(() => validateWorker(api), {
+    message: 'Invalid worker path',
+  });
+});
+
+test('validate should throw if the worker does not respond to a handshake', async (t) => {
+  initWorkers(api, path.resolve('src/test/bad-worker.js'));
   await t.throwsAsync(() => validateWorker(api), {
     message: 'Invalid worker path',
   });

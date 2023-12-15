@@ -19,6 +19,8 @@ type WorkerOptions = {
   env?: any;
   timeout?: number; // ms
   memoryLimitMb?: number;
+
+  silent?: boolean; // don't forward stdout to the parent
 };
 
 // Adds a `callWorker` function to the API object, which will execute a task in a worker
@@ -64,6 +66,7 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
     minWorkers = 0,
     maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
     memoryLimitMb,
+    silent,
   } = options;
 
   let resolvedWorkerPath;
@@ -82,6 +85,7 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
     // minWorkers,
     maxWorkers,
     env,
+    silent,
 
     // TODO need to support this
     // resourceLimits: {
