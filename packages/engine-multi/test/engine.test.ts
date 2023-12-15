@@ -21,7 +21,6 @@ const options = {
   autoinstall: {
     handleIsInstalled: async () => true,
   },
-  purge: true,
 };
 
 let engine;
@@ -245,88 +244,3 @@ test.serial('timeout the whole attempt and emit an error', async (t) => {
     engine.execute(plan, opts);
   });
 });
-
-test.serial('Purge workers when a run is complete', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(options, p);
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: '34',
-        },
-      ],
-    };
-
-    engine.on(e.PURGE, () => {
-      t.pass('purge event called');
-      done();
-    });
-
-    engine.execute(plan);
-  });
-});
-
-test.serial('Purge workers when run errors', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(options, p);
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'throw new Error("test")',
-        },
-      ],
-    };
-
-    engine.on(e.PURGE, () => {
-      t.pass('purge event called');
-      done();
-    });
-
-    engine.execute(plan);
-  });
-});
-
-test.serial("Don't purge if purge is false", async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(
-      {
-        ...options,
-        purge: false,
-      },
-      p
-    );
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: '34',
-        },
-      ],
-    };
-
-    engine.on(e.PURGE, () => {
-      t.fail('purge event called');
-      done();
-    });
-
-    engine.execute(plan).on(e.WORKFLOW_COMPLETE, () => {
-      setTimeout(() => {
-        t.pass('no purge called within 50ms');
-        done();
-      }, 50);
-    });
-  });
-});
-
-// I'm not actually going to use the destroy API (not for graceful shutdown anyway)
-// So it doesn't feel too important to implement these tests
-test.todo('destroy immediately, killing active workflows');
-test.todo('destroy gracefully, allowing active workflows to complete');

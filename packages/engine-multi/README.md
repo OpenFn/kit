@@ -107,7 +107,6 @@ We have several mitgations against this, ensuring a safe, secure and stable exec
 
 - The runtime sandbox itself ensures that each job runs in an isolated context. If a job escapes the sandbox, it will have access to the thread's global scope
 - Each workflow appends a unique id to all its imports, busting the node cache and forcing each module to be re-initialised. This means workers cannot share adaptors and all state is reset.
-- To preserve memory, worker threads are regularly purged, meaning destroyed (note that this comes with a performance hit and undermines the use of worker pooling entirely!). When each workflow is complete, if there are no pending tasks to execute, all worker threads are destroyed.
 
 Inside the worker thread, we ensure that:
 

@@ -1,11 +1,9 @@
 import test from 'ava';
 import path from 'node:path';
 import EventEmitter from 'node:events';
-import { Promise as WorkerPoolPromise } from 'workerpool';
 
 import initWorkers from '../../src/api/call-worker';
 import { EngineAPI } from '../../src/types';
-import { PURGE } from '../../src/events';
 
 let api = new EventEmitter() as EngineAPI;
 

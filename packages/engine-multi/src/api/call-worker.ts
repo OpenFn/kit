@@ -13,7 +13,6 @@ type WorkerEvent = {
 };
 
 type WorkerOptions = {
-  purge?: boolean;
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
@@ -44,17 +43,6 @@ export default function initWorkers(
         events[type]?.(args);
       },
     });
-
-  // TODO remove alll traces of purge, we don't need it now
-  // (hurrah!)
-  engine.purge = () => {
-    // const { pendingTasks } = workers.stats();
-    // if (pendingTasks == 0) {
-    //   logger?.debug('Purging workers');
-    //   engine.emit(PURGE);
-    //   workers.terminate();
-    // }
-  };
 
   engine.closeWorkers = async (instant?: boolean) => workers.destroy(instant);
 }

@@ -79,8 +79,6 @@ export type EngineOptions = {
 
   // Timeout for the whole workflow
   timeout?: number;
-
-  purge?: boolean;
 };
 
 export type ExecuteOptions = {
@@ -123,7 +121,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
-      purge: options.purge,
       memoryLimitMb: options.memoryLimitMb,
     },
     options.logger
@@ -188,9 +185,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
-        if (options.purge && Object.keys(contexts).length === 0) {
-          engine.purge?.();
-        }
       });
     }, 1);
 

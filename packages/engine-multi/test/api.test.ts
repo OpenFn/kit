@@ -1,7 +1,6 @@
 import test from 'ava';
 import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
-import { PURGE } from '../src/events';
 
 import pkg from '../package.json' assert { type: 'json' };
 import { RuntimeEngine } from '../src/types';
@@ -103,34 +102,5 @@ test.serial('should listen to workflow-complete', async (t) => {
         done();
       },
     });
-  });
-});
-
-test.serial('should purge workers after a single run', async (t) => {
-  return new Promise(async (done) => {
-    api = await createAPI({
-      logger,
-      // Disable compilation
-      compile: {
-        skip: true,
-      },
-    });
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'export default [s => s]',
-          // with no adaptor it shouldn't try to autoinstall
-        },
-      ],
-    };
-
-    api.on(PURGE, () => {
-      t.pass('workers purged');
-      done();
-    });
-
-    api.execute(plan);
   });
 });

@@ -67,9 +67,8 @@ const createAPI = async function (
 
     maxWorkers: options.maxWorkers,
     memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
-
-    purge: options.hasOwnProperty('purge') ? options.purge : true,
   };
+
   logger.info(`memory limit set to ${options.memoryLimitMb}mb`);
 
   const engine = await createEngine(engineOptions);
