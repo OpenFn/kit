@@ -132,11 +132,16 @@ function createPool(script: string, options: PoolOptions = {}) {
         }, opts.timeout);
       }
 
-      worker.send({
-        type: events.RUN_TASK,
-        task,
-        args,
-      } as RunTaskEvent);
+      try {
+        worker.send({
+          type: events.RUN_TASK,
+          task,
+          args,
+        } as RunTaskEvent);
+      } catch (e) {
+        // swallow errors here
+        // this may occur if the inner worker is invalid
+      }
 
       worker.on('message', (evt) => {
         // forward the message out of the pool
