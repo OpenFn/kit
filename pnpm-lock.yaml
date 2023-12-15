@@ -383,9 +383,6 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
-      workerpool:
-        specifier: ^6.5.1
-        version: 6.5.1
     devDependencies:
       '@types/node':
         specifier: ^18.15.13
@@ -7821,10 +7818,6 @@ packages:
 
   /wordwrap@1.0.0:
     resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
-    dev: false
-
-  /workerpool@6.5.1:
-    resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
     dev: false
 
   /wrap-ansi@6.2.0:
