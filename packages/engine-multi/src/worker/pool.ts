@@ -1,12 +1,5 @@
-import { fork } from 'node:child_process';
+import { ChildProcess, fork } from 'node:child_process';
 import { TimeoutError } from '../errors';
-
-// creates a pool of child process workers
-
-// notifies capacity changes
-
-const CAPACITY_FULL = 'full';
-const CAPACITY_AVAILABLE = 'available';
 
 // NB this is the ATTEMPT timeout
 const DEFAULT_TIMEOUT = 1000 * 60 * 10;
@@ -17,13 +10,6 @@ const events = {
   RUN_TASK: 'engine:run_task',
   RESOLVE_TASK: 'engine:resolve_task',
   REJECT_TASK: 'engine:reject_task',
-};
-
-type Pool = {
-  // For now this uses the workerpool API worker.exec(task, args, options )
-  // I am likely to come back in and refactor/optimise later
-  // task must refer to a function loaded by the script
-  exec: (task: string, args: any[], opts: any) => void;
 };
 
 type PoolOptions = {
@@ -42,7 +28,7 @@ type RunTaskEvent = {
 
 type ExecOpts = {
   // for parity with workerpool, but this will change later
-  on: (event: any) => void;
+  on?: (event: any) => void;
 
   timeout?: number; // ms
 };
@@ -59,7 +45,7 @@ function createPool(script: string, options: PoolOptions = {}) {
   const queue: any[] = [];
 
   // Keep track of all the workers we created
-  const allWorkers = {};
+  const allWorkers: Record<number, ChildProcess> = {};
 
   const init = (child: any) => {
     if (!child) {
@@ -101,14 +87,14 @@ function createPool(script: string, options: PoolOptions = {}) {
     }
   };
 
-  const exec = (task: string, args: any[], opts?: any = {}) => {
+  const exec = (task: string, args: any[], opts: ExecOpts = {}) => {
     // TODO Throw if destroyed
     if (destroyed) {
       throw new Error('Worker destroyed');
     }
 
     // Use a timeout by default
-    if (isNaN(opts.timeout)) {
+    if (isNaN(opts.timeout!)) {
       opts.timeout = DEFAULT_TIMEOUT;
     }
 
@@ -128,7 +114,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       if (opts.timeout && opts.timeout !== Infinity) {
         timeout = setTimeout(() => {
           timeoutWorker(worker);
-          reject(new TimeoutError(opts.timeout));
+          reject(new TimeoutError(opts.timeout!));
         }, opts.timeout);
       }
 
@@ -143,7 +129,7 @@ function createPool(script: string, options: PoolOptions = {}) {
         // this may occur if the inner worker is invalid
       }
 
-      worker.on('message', (evt) => {
+      worker.on('message', (evt: any) => {
         // forward the message out of the pool
         opts.on?.(evt);
 
@@ -161,6 +147,7 @@ function createPool(script: string, options: PoolOptions = {}) {
           clearTimeout(timeout);
           if (!didTimeout) {
             const e = new Error(evt.error.message);
+            // @ts-ignore
             e.severity = evt.error.severity;
             e.name = evt.type;
             reject(e);
@@ -180,15 +167,15 @@ function createPool(script: string, options: PoolOptions = {}) {
   // it must also replace the worker in the pool
   // TODO maybe later the timeout will be handled inside the worker,
   // and we'll just kill the thread, rather than the process
-  const timeoutWorker = (worker) => {
+  const timeoutWorker = (worker: ChildProcess | false) => {
     killWorker(worker);
     pool.splice(0, 0, false);
   };
 
-  const killWorker = (worker) => {
+  const killWorker = (worker: ChildProcess | false) => {
     if (worker) {
       worker.kill();
-      delete allWorkers[worker.pid];
+      delete allWorkers[worker.pid!];
     }
   };
 
