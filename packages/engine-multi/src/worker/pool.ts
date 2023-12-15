@@ -61,26 +61,26 @@ function createPool(script: string, options: PoolOptions = {}) {
   // Keep track of all the workers we created
   const allWorkers = {};
 
-  const init = async (child: any) =>
-    new Promise((resolve, reject) => {
-      if (!child) {
-        // create a new child process and load the module script into it
-        child = fork(script, [], {
-          execArgv: ['--experimental-vm-modules', '--no-warnings'],
+  const init = (child: any) => {
+    if (!child) {
+      // create a new child process and load the module script into it
+      child = fork(script, [], {
+        execArgv: ['--experimental-vm-modules', '--no-warnings'],
 
-          // child will live if parent dies.
-          // although tbf, what's the point?
-          detached: true,
+        // child will live if parent dies.
+        // although tbf, what's the point?
+        detached: true,
 
-          env: options.env || {},
+        env: options.env || {},
 
-          // don't inherit the parent's stdout
-          // maybe good in prod, maybe bad for dev
-          silent: options.silent,
-        });
-      }
-      resolve(child);
-    });
+        // don't inherit the parent's stdout
+        // maybe good in prod, maybe bad for dev
+        silent: options.silent,
+      });
+      allWorkers[child.pid] = child;
+    }
+    return child;
+  };
 
   const finish = (worker) => {
     worker.removeAllListeners();
@@ -123,7 +123,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       // Do we throw?
       // workerpool would queue it for us I think
       // but I think the worker is more responsible for this.  hmm.
-      const worker = await init(pool.pop());
+      const worker = init(pool.pop());
       // Start a timeout running
       if (opts.timeout && opts.timeout !== Infinity) {
         timeout = setTimeout(() => {
