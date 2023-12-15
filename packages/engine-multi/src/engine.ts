@@ -72,7 +72,6 @@ export type EngineOptions = {
 
   autoinstall?: AutoinstallOptions;
 
-  minWorkers?: number;
   maxWorkers?: number;
   memoryLimitMb?: number;
 
@@ -123,7 +122,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     engine,
     resolvedWorkerPath,
     {
-      minWorkers: options.minWorkers,
       maxWorkers: options.maxWorkers,
       purge: options.purge,
       memoryLimitMb: options.memoryLimitMb,

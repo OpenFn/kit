@@ -65,7 +65,6 @@ const createAPI = async function (
     // TODO should we disable autoinstall overrides?
     autoinstall: options.autoinstall,
 
-    minWorkers: options.minWorkers,
     maxWorkers: options.maxWorkers,
     memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
 

@@ -14,7 +14,6 @@ type WorkerEvent = {
 
 type WorkerOptions = {
   purge?: boolean;
-  minWorkers?: number;
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
@@ -63,7 +62,6 @@ export default function initWorkers(
 export function createWorkers(workerPath: string, options: WorkerOptions) {
   const {
     env = {},
-    minWorkers = 0,
     maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
     memoryLimitMb,
     silent,
@@ -82,7 +80,6 @@ export function createWorkers(workerPath: string, options: WorkerOptions) {
   }
 
   return createPool(resolvedWorkerPath, {
-    // minWorkers,
     maxWorkers,
     env,
     silent,
