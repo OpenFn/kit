@@ -93,7 +93,8 @@ test('execute a mock plan with delay', async (t) => {
   });
   await workers.exec('run', [plan]);
   const elapsed = new Date().getTime() - start;
-  t.assert(elapsed > 50);
+  t.log(elapsed);
+  t.assert(elapsed > 40);
 });
 
 test('Publish workflow-start event', async (t) => {

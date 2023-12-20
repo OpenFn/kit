@@ -131,7 +131,6 @@ function createPool(script: string, options: PoolOptions = {}) {
       }
 
       worker.on('exit', (code: number) => {
-        console.log(' >>> ', code);
         if (code !== HANDLED_EXIT_CODE) {
           clearTimeout(timeout);
           reject(new ExitError(code));
