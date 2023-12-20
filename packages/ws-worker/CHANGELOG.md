@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.3.2
+
+### Patch Changes
+
+- Add git to worker image
+
 ## 0.3.1
 
 ### Patch Changes
