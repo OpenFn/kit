@@ -387,9 +387,6 @@ importers:
       '@types/node':
         specifier: ^18.15.13
         version: 18.15.13
-      '@types/workerpool':
-        specifier: ^6.4.4
-        version: 6.4.4
       ava:
         specifier: 5.3.1
         version: 5.3.1
@@ -1918,12 +1915,6 @@ packages:
 
   /@types/treeify@1.0.0:
     resolution: {integrity: sha512-ONpcZAEYlbPx4EtJwfTyCDQJGUpKf4sEcuySdCVjK5Fj/3vHp5HII1fqa1/+qrsLnpYELCQTfVW/awsGJePoIg==}
-    dev: true
-
-  /@types/workerpool@6.4.4:
-    resolution: {integrity: sha512-rpYFug3QyKzQ7+y/x8BCTEseMorTyr9DiY3ao5KxzWJPtFyx/HL0SSLtJlRjUSpBeaMd/zn7hnLaWOb8WRFnnQ==}
-    dependencies:
-      '@types/node': 18.15.13
     dev: true
 
   /@types/wrap-ansi@3.0.0:
