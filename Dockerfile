@@ -18,9 +18,8 @@ WORKDIR /app
 
 # TODO: remove simple build once prod optimized build is working ---------------
 FROM base AS ws-worker
+RUN apk add --no-cache git
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN apt-get -y update
-RUN apt-get -y install git
 RUN pnpm build
 WORKDIR /app/packages/ws-worker
 # ------------------------------------------------------------------------------
