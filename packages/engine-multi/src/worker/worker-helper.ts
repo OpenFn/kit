@@ -8,6 +8,8 @@ import createLogger, { SanitizePolicies } from '@openfn/logger';
 import * as workerEvents from './events';
 import { ExecutionError } from '../errors';
 
+export const HANDLED_EXIT_CODE = 111111;
+
 type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
 
 type WorkerEvent = {
@@ -156,7 +158,7 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
     // There is a TINY WINDOW in which async code can still run and affect the next attempt
     // This should all go away when we replace workerpool
     setTimeout(() => {
-      process.exit(111111);
+      process.exit(HANDLED_EXIT_CODE);
     }, 2);
   });
 

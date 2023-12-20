@@ -1,5 +1,6 @@
 import { ChildProcess, fork } from 'node:child_process';
-import { TimeoutError } from '../errors';
+import { ExitError, TimeoutError } from '../errors';
+import { HANDLED_EXIT_CODE } from './worker-helper';
 
 // NB this is the ATTEMPT timeout
 const DEFAULT_TIMEOUT = 1000 * 60 * 10;
@@ -128,6 +129,15 @@ function createPool(script: string, options: PoolOptions = {}) {
         // swallow errors here
         // this may occur if the inner worker is invalid
       }
+
+      worker.on('exit', (code: number) => {
+        console.log(' >>> ', code);
+        if (code !== HANDLED_EXIT_CODE) {
+          clearTimeout(timeout);
+          reject(new ExitError(code));
+          finish(worker);
+        }
+      });
 
       worker.on('message', (evt: any) => {
         // forward the message out of the pool
