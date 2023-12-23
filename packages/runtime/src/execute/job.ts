@@ -10,6 +10,7 @@ import type {
   JobNodeID,
   State,
 } from '../types';
+import { Logger } from '@openfn/logger';
 import { EdgeConditionError } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
@@ -43,7 +44,7 @@ const loadState = async (
   return job.state;
 };
 
-const calculateNext = (job: CompiledJobNode, result: any, logger: any) => {
+const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
   const next: string[] = [];
   if (job.next) {
     for (const nextJobId in job.next) {
