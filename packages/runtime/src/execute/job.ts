@@ -43,7 +43,7 @@ const loadState = async (
   return job.state;
 };
 
-const calculateNext = (job: CompiledJobNode, result: any) => {
+const calculateNext = (job: CompiledJobNode, result: any, logger: any) => {
   const next: string[] = [];
   if (job.next) {
     for (const nextJobId in job.next) {
@@ -58,6 +58,9 @@ const calculateNext = (job: CompiledJobNode, result: any) => {
         if (typeof edge.condition === 'function') {
           try {
             if (!edge.condition(result)) {
+              logger.always(
+                `Edge ${edge.condition.toString()} evaluated to FALSE; will not start job ${nextJobId}`
+              );
               continue;
             }
           } catch (e: any) {
@@ -65,6 +68,9 @@ const calculateNext = (job: CompiledJobNode, result: any) => {
           }
         }
       }
+      logger.always(
+        `Edge ${edge.condition.toString()} evaluated to true; will execute job ${nextJobId} next`
+      );
       next.push(nextJobId);
       // TODO errors
     }
@@ -136,7 +142,7 @@ const executeJob = async (
         logger.error(`Failed job ${jobId} after ${duration}`);
         report(state, jobId, error);
 
-        next = calculateNext(job, result);
+        next = calculateNext(job, result, logger);
 
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
@@ -175,7 +181,7 @@ const executeJob = async (
         `Final memory usage: [job ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
       );
 
-      next = calculateNext(job, result);
+      next = calculateNext(job, result, logger);
       notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
@@ -189,7 +195,7 @@ const executeJob = async (
     }
   } else {
     // calculate next for trigger nodes
-    next = calculateNext(job, result);
+    next = calculateNext(job, result, logger);
   }
 
   if (next.length && !didError && !result) {

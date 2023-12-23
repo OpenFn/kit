@@ -63,7 +63,7 @@ export default (
         nodes[id].next = connectedEdges.reduce((obj, edge) => {
           if (edge.enabled !== false) {
             // @ts-ignore
-            obj[edge.target_job_id] = true;
+            obj[edge.target_job_id] = edge.condition;
           }
           return obj;
         }, {});
