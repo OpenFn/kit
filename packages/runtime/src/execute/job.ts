@@ -67,11 +67,11 @@ const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
           } catch (e: any) {
             throw new EdgeConditionError(e.message);
           }
+          logger.always(
+            `Edge ${edge.condition.toString()} evaluated to true; will execute job ${nextJobId} next`
+          );
         }
       }
-      logger.always(
-        `Edge ${edge.condition.toString()} evaluated to true; will execute job ${nextJobId} next`
-      );
       next.push(nextJobId);
       // TODO errors
     }
