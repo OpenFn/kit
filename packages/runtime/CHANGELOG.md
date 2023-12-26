@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.2.3
+
+### Patch Changes
+
+- f228fd5: Add support for initial edge conditions in worker and add edge evaluation logging to runtime
+
 ## 0.2.2
 
 ### Patch Changes
