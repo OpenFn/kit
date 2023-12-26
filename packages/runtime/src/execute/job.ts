@@ -60,7 +60,7 @@ const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
           try {
             if (!edge.condition(result)) {
               logger.always(
-                `Edge ${edge.condition.toString()} evaluated to FALSE; will not start job ${nextJobId}`
+                `Edge ${edge.condition.toString()} returned false; ${nextJobId} will NOT be executed`
               );
               continue;
             }
@@ -68,7 +68,7 @@ const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
             throw new EdgeConditionError(e.message);
           }
           logger.always(
-            `Edge ${edge.condition.toString()} evaluated to true; will execute job ${nextJobId} next`
+            `Edge ${edge.condition.toString()} returned true; ${nextJobId} will be executed next`
           );
         }
       }
