@@ -25,6 +25,14 @@ const mapEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
+const mapTriggerEdgeCondition = (edge: Edge) => {
+  const { condition } = edge;
+  // This handles cron triggers with undefined conditions and the 'always' string.
+  if (condition === undefined || condition === 'always') return true;
+  // Otherwise, we will return the condition and assume it's a valid JS expression.
+  return condition;
+};
+
 export default (
   attempt: Attempt
 ): { plan: ExecutionPlan; options: AttemptOptions } => {
@@ -63,8 +71,7 @@ export default (
         nodes[id].next = connectedEdges.reduce((obj, edge) => {
           if (edge.enabled !== false) {
             // @ts-ignore
-            obj[edge.target_job_id] =
-              edge.condition == 'always' ? true : edge.condition;
+            obj[edge.target_job_id] = mapTriggerEdgeCondition(edge);
           }
           return obj;
         }, {});
