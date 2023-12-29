@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- f228fd5: Add support for initial edge conditions in worker and add edge evaluation logging to runtime
+- f228fd5: Add support for initial edge conditions in worker
 
 ### Patch Changes
 
