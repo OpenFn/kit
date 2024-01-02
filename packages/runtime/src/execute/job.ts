@@ -10,6 +10,7 @@ import type {
   JobNodeID,
   State,
 } from '../types';
+import { Logger } from '@openfn/logger';
 import { EdgeConditionError } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
@@ -43,7 +44,7 @@ const loadState = async (
   return job.state;
 };
 
-const calculateNext = (job: CompiledJobNode, result: any) => {
+const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
   const next: string[] = [];
   if (job.next) {
     for (const nextJobId in job.next) {
@@ -58,11 +59,17 @@ const calculateNext = (job: CompiledJobNode, result: any) => {
         if (typeof edge.condition === 'function') {
           try {
             if (!edge.condition(result)) {
+              logger.debug(
+                `Edge ${edge.condition.toString()} returned false; ${nextJobId} will NOT be executed`
+              );
               continue;
             }
           } catch (e: any) {
             throw new EdgeConditionError(e.message);
           }
+          logger.debug(
+            `Edge ${edge.condition.toString()} returned true; ${nextJobId} will be executed next`
+          );
         }
       }
       next.push(nextJobId);
@@ -136,7 +143,7 @@ const executeJob = async (
         logger.error(`Failed job ${jobId} after ${duration}`);
         report(state, jobId, error);
 
-        next = calculateNext(job, result);
+        next = calculateNext(job, result, logger);
 
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
@@ -175,7 +182,7 @@ const executeJob = async (
         `Final memory usage: [job ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
       );
 
-      next = calculateNext(job, result);
+      next = calculateNext(job, result, logger);
       notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
@@ -189,7 +196,7 @@ const executeJob = async (
     }
   } else {
     // calculate next for trigger nodes
-    next = calculateNext(job, result);
+    next = calculateNext(job, result, logger);
   }
 
   if (next.length && !didError && !result) {

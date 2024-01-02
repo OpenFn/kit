@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.2.3
+
+### Patch Changes
+
+- f228fd5: Add edge evaluation logging to runtime
+
 ## 0.2.2
 
 ### Patch Changes
