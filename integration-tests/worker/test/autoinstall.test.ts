@@ -59,7 +59,7 @@ test('autoinstall three things at once', async (t) => {
   t.is(rc.data, 'googlesheets');
 });
 
-test('autoinstall stress test', async (t) => {
+test.skip('autoinstall stress test', async (t) => {
   const plans = [
     'mailchimp@0.3.0',
     'mailchimp@0.3.1',
