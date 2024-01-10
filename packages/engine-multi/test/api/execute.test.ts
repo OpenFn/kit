@@ -35,7 +35,6 @@ const plan = {
   jobs: [
     {
       id: 'j',
-      // this will basically be evalled
       expression: '() => 22',
     },
   ],
