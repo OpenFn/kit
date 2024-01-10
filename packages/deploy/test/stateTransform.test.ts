@@ -143,14 +143,18 @@ test('toNextState with empty state', (t) => {
         edges: {
           'trigger-one->job-a': {
             id: getItem(result, 'edges', 'trigger-one->job-a').id,
-            condition: null,
+            condition_type: null,
+            condition_expression: null,
+            condition_label: null,
             source_trigger_id: getItem(result, 'triggers', 'trigger-one').id,
             target_job_id: getItem(result, 'jobs', 'job-a').id,
             enabled: true,
           },
           'job-a->job-b': {
             id: getItem(result, 'edges', 'job-a->job-b').id,
-            condition: null,
+            condition_type: 'always',
+            condition_expression: null,
+            condition_label: null,
             source_job_id: getItem(result, 'jobs', 'job-a').id,
             target_job_id: getItem(result, 'jobs', 'job-b').id,
             enabled: true,
@@ -433,7 +437,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
           {
             id: 't1-job-1',
             target_job_id: 'job-1',
-            condition: 'on_job_failure',
+            condition_type: 'on_job_failure',
             source_trigger_id: 't1',
             enabled: true,
           },
@@ -469,7 +473,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
           'webhook->My-job': {
             id: 't1-job-1',
             target_job_id: 'job-1',
-            condition: 'on_job_failure',
+            condition_type: 'on_job_failure',
             source_trigger_id: 't1',
             enabled: true,
           },

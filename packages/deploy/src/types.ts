@@ -16,7 +16,9 @@ export type Trigger = {
 
 export type StateEdge = {
   id: string;
-  condition: string | null;
+  condition_type: string | null;
+  condition_expression: string | null;
+  condition_label: string | null;
   source_job_id: string | null;
   source_trigger_id: string | null;
   target_job_id: string;
@@ -24,7 +26,9 @@ export type StateEdge = {
 };
 
 export type SpecEdge = {
-  condition: string | null;
+  condition_type: string;
+  condition_expression: string | null;
+  condition_label: string | null;
   source_job?: string | null;
   source_trigger?: string | null;
   target_job: string | null;
