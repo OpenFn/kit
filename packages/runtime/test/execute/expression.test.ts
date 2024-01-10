@@ -147,7 +147,7 @@ test('no props are removed from state if a falsy value is passed to statePropsTo
   t.deepEqual(result, state);
 });
 
-test.skip('config is removed from the result (strict)', async (t) => {
+test('config is removed from the result (strict)', async (t) => {
   const job = [async (s: State) => s];
   const context = createContext({ opts: { strict: true } });
 
@@ -155,7 +155,7 @@ test.skip('config is removed from the result (strict)', async (t) => {
   t.deepEqual(result, {});
 });
 
-test.skip('config is removed from the result (non-strict)', async (t) => {
+test('config is removed from the result (non-strict)', async (t) => {
   const job = [async (s: State) => s];
   const context = createContext({ opts: { strict: false } });
   const result = await execute(context, job, { configuration: {} });

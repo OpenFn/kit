@@ -162,8 +162,6 @@ const prepareFinalState = (opts: Options, state: any, logger: Logger) => {
     }
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);
-    } else if (opts.deleteConfiguration !== false) {
-      delete state.configuration;
     }
     const cleanState = stringify(state);
     return JSON.parse(cleanState);

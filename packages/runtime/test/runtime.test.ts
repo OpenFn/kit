@@ -117,7 +117,7 @@ test('resolve a credential', async (t) => {
 
   const options = {
     strict: false,
-    deleteConfiguration: false,
+    stateKeysToRemove: [],
     callbacks: {
       resolveCredential: async () => ({ password: 'password1' }),
     },
