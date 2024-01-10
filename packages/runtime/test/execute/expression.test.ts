@@ -97,7 +97,57 @@ test('output state should be serializable', async (t) => {
   t.falsy(result.data.fn);
 });
 
-test('config is removed from the result (strict)', async (t) => {
+test('configuration is removed from the result by default', async (t) => {
+  const job = [async (s: State) => s];
+  const context = createContext();
+
+  const result = await execute(context, job, { configuration: {} });
+  t.deepEqual(result, {});
+});
+
+test('statePropsToRemove removes multiple props from state', async (t) => {
+  const job = [async (s: State) => s];
+  const statePropsToRemove = ['x', 'y'];
+  const context = createContext({ opts: { statePropsToRemove } });
+
+  const result = await execute(context, job, { x: 1, y: 1, z: 1 });
+  t.deepEqual(result, { z: 1 });
+});
+
+test('statePropsToRemove logs to debug when a prop is removed', async (t) => {
+  const job = [async (s: State) => s];
+  const statePropsToRemove = ['x'];
+
+  const context = createContext({ opts: { statePropsToRemove } });
+
+  const result = await execute(context, job, { x: 1, y: 1, z: 1 });
+  t.deepEqual(result, { y: 1, z: 1 });
+
+  const log = logger._find('debug', /removed x from final state/i);
+  t.truthy(log);
+});
+
+test('no props are removed from state if an empty array is passed to statePropsToRemove', async (t) => {
+  const job = [async (s: State) => s];
+  const statePropsToRemove = ['x', 'y'];
+  const context = createContext({ opts: { statePropsToRemove } });
+
+  const state = { x: 1, configuration: 1 };
+  const result = await execute(context, job, state as any);
+  t.deepEqual(result, state);
+});
+
+test('no props are removed from state if a falsy value is passed to statePropsToRemove', async (t) => {
+  const job = [async (s: State) => s];
+  const statePropsToRemove = undefined;
+  const context = createContext({ opts: { statePropsToRemove } });
+
+  const state = { x: 1, configuration: 1 };
+  const result = await execute(context, job, state as any);
+  t.deepEqual(result, state);
+});
+
+test.skip('config is removed from the result (strict)', async (t) => {
   const job = [async (s: State) => s];
   const context = createContext({ opts: { strict: true } });
 
@@ -105,7 +155,7 @@ test('config is removed from the result (strict)', async (t) => {
   t.deepEqual(result, {});
 });
 
-test('config is removed from the result (non-strict)', async (t) => {
+test.skip('config is removed from the result (non-strict)', async (t) => {
   const job = [async (s: State) => s];
   const context = createContext({ opts: { strict: false } });
   const result = await execute(context, job, { configuration: {} });

@@ -68,12 +68,12 @@ export default (
 
       duration = Date.now() - duration;
 
-      const finalState = prepareFinalState(opts, result);
+      const finalState = prepareFinalState(opts, result, logger);
       // return the final state
       resolve(finalState);
     } catch (e: any) {
       // whatever initial state looks like now, clean it and report it back
-      const finalState = prepareFinalState(opts, initialState);
+      const finalState = prepareFinalState(opts, initialState, logger);
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -150,8 +150,16 @@ const assignKeys = (
 
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
-const prepareFinalState = (opts: Options, state: any) => {
+const prepareFinalState = (opts: Options, state: any, logger: Logger) => {
   if (state) {
+    if (opts.statePropsToRemove && opts.statePropsToRemove.length) {
+      opts.statePropsToRemove.forEach((prop) => {
+        if (state.hasOwnProperty(prop)) {
+          delete state[prop];
+          logger.debug(`Removed ${prop} from final state`);
+        }
+      });
+    }
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);
     } else if (opts.deleteConfiguration !== false) {

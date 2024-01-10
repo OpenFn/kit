@@ -20,6 +20,9 @@ export type Options = {
 
   timeout?: number; // this is timeout used per job, not per workflow
   strict?: boolean; // Be strict about handling of state returned from jobs
+
+  // TODO deprecate this!
+  // It doesn't appear to be used outside this repof
   deleteConfiguration?: boolean;
 
   // Treat state as immutable (likely to break in legacy jobs)
@@ -36,6 +39,9 @@ export type Options = {
 
   // inject globals into the environment
   globals?: any;
+
+  // all listed props will be removed from the state object at the end of a job
+  statePropsToRemove?: string[];
 };
 
 const defaultState = { data: {}, configuration: {} };
@@ -58,6 +64,9 @@ const run = (
   }
   if (!opts.hasOwnProperty('deleteConfiguration')) {
     opts.deleteConfiguration = true;
+  }
+  if (!opts.hasOwnProperty('statePropsToRemove')) {
+    opts.statePropsToRemove = ['configuration'];
   }
 
   // TODO the plan doesn't have an id, should it be given one?
