@@ -1,5 +1,13 @@
 # engine-multi
 
+## 0.2.6
+
+### Patch Changes
+
+- 5c45e1e: Remove response key from state
+- Updated dependencies [56b6e44]
+  - @openfn/runtime@0.2.4
+
 ## 0.2.5
 
 ### Patch Changes
