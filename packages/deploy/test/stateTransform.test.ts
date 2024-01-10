@@ -143,7 +143,7 @@ test('toNextState with empty state', (t) => {
         edges: {
           'trigger-one->job-a': {
             id: getItem(result, 'edges', 'trigger-one->job-a').id,
-            condition_type: null,
+            condition_type: 'always',
             condition_expression: null,
             condition_label: null,
             source_trigger_id: getItem(result, 'triggers', 'trigger-one').id,
@@ -152,9 +152,9 @@ test('toNextState with empty state', (t) => {
           },
           'job-a->job-b': {
             id: getItem(result, 'edges', 'job-a->job-b').id,
-            condition_type: 'always',
-            condition_expression: null,
-            condition_label: null,
+            condition_type: 'js_expression',
+            condition_expression: 'state.data > 18',
+            condition_label: 'not-minor',
             source_job_id: getItem(result, 'jobs', 'job-a').id,
             target_job_id: getItem(result, 'jobs', 'job-b').id,
             enabled: true,

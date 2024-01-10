@@ -16,7 +16,7 @@ export type Trigger = {
 
 export type StateEdge = {
   id: string;
-  condition_type: string | null;
+  condition_type: string;
   condition_expression: string | null;
   condition_label: string | null;
   source_job_id: string | null;

@@ -28,11 +28,14 @@ export function fullExampleSpec() {
         },
         edges: {
           'trigger-one->job-a': {
+            condition_type: 'always',
             source_trigger: 'trigger-one',
             target_job: 'job-a',
           },
           'job-a->job-b': {
-            condition_type: 'always',
+            condition_type: 'js_expression',
+            condition_expression: 'state.data > 18',
+            condition_label: 'not-minor',
             source_job: 'job-a',
             target_job: 'job-b',
           },
@@ -76,7 +79,7 @@ export function fullExampleState() {
         edges: {
           'trigger-one->job-a': {
             id: 'ea264d6d-9767-4a2c-810f-deb10961a6dc',
-            condition_type: null,
+            condition_type: 'always',
             condition_expression: null,
             condition_label: null,
             source_trigger_id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
@@ -85,9 +88,9 @@ export function fullExampleState() {
           },
           'job-a->job-b': {
             id: '7132f768-e8e8-4167-8fc2-8d422244281f',
-            condition_type: 'always',
-            condition_expression: null,
-            condition_label: null,
+            condition_type: 'js_expression',
+            condition_expression: 'state.data > 18',
+            condition_label: 'not-minor',
             source_job_id: '68e172b8-1cca-4085-aadf-8534761ef7c2',
             target_job_id: 'e1bf76a8-4deb-44ff-9881-fbf676537b37',
             enabled: true,
