@@ -152,8 +152,17 @@ const assignKeys = (
 // (especially as the result get stringified again downstream)
 const prepareFinalState = (opts: Options, state: any, logger: Logger) => {
   if (state) {
-    if (opts.statePropsToRemove && opts.statePropsToRemove.length) {
-      opts.statePropsToRemove.forEach((prop) => {
+    let statePropsToRemove;
+    if (opts.hasOwnProperty('statePropsToRemove')) {
+      ({ statePropsToRemove } = opts);
+    } else {
+      // As a strict default, remove the configuration key
+      // tbh this should happen higher up in the stack but it causes havoc in unit testing
+      statePropsToRemove = ['configuration'];
+    }
+
+    if (statePropsToRemove && statePropsToRemove.forEach) {
+      statePropsToRemove.forEach((prop) => {
         if (state.hasOwnProperty(prop)) {
           delete state[prop];
           logger.debug(`Removed ${prop} from final state`);
