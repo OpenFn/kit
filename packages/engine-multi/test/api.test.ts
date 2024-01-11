@@ -5,7 +5,6 @@ import { PURGE } from '../src/events';
 
 import pkg from '../package.json' assert { type: 'json' };
 import { RuntimeEngine } from '../src/types';
-import whitelist from '../src/whitelist';
 
 // thes are tests on the public api functions generally
 // so these are very high level tests and don't allow mock workers or anything
