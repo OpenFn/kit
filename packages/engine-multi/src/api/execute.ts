@@ -49,7 +49,7 @@ const execute = async (context: ExecutionContext) => {
     const runOptions = {
       adaptorPaths,
       whitelist: options.whitelist,
-      statePropsToRemove: ['configuration', 'response'],
+      statePropsToRemove: options.statePropsToRemove,
     };
 
     const events = {

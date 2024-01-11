@@ -215,6 +215,27 @@ test.serial(
   }
 );
 
+test.serial('use custom state-props-to-remove', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+      statePropsToRemove: ['x'],
+    });
+
+    const plan = createPlan([
+      {
+        id: 'j',
+        expression: `${withFn}fn(() => ({ x: 1, configuration: {}, response: {} }))`,
+      },
+    ]);
+
+    api.execute(plan).on('workflow-complete', ({ state }) => {
+      t.deepEqual(state, { configuration: {}, response: {} });
+      done();
+    });
+  });
+});
+
 test.serial('evaluate conditional edges', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({

@@ -82,6 +82,8 @@ export type EngineOptions = {
   timeout?: number;
 
   purge?: boolean;
+
+  statePropsToRemove?: string[];
 };
 
 export type ExecuteOptions = {
