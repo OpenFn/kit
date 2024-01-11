@@ -143,11 +143,13 @@ function mergeEdges(
           const edge: StateEdge = assignIfTruthy(
             {
               id,
-              condition: specEdge.condition ?? null,
+              condition_type: specEdge.condition_type ?? null,
               target_job_id: jobs[specEdge.target_job ?? -1]?.id ?? '',
               enabled: pickValue(specEdge, stateEdge || {}, 'enabled', true),
             },
             {
+              condition_expression: specEdge.condition_expression,
+              condition_label: specEdge.condition_label,
               source_job_id: jobs[specEdge.source_job ?? -1]?.id,
               source_trigger_id: triggers[specEdge.source_trigger ?? -1]?.id,
             }
