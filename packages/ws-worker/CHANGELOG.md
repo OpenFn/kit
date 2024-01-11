@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.5.0
+
+### Minor Changes
+
+- Add state-props-to-remove option
+
 ## 0.4.1
 
 ### Patch Changes
