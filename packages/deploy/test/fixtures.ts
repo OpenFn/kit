@@ -80,8 +80,6 @@ export function fullExampleState() {
           'trigger-one->job-a': {
             id: 'ea264d6d-9767-4a2c-810f-deb10961a6dc',
             condition_type: 'always',
-            condition_expression: null,
-            condition_label: null,
             source_trigger_id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
             target_job_id: '68e172b8-1cca-4085-aadf-8534761ef7c2',
             enabled: true,

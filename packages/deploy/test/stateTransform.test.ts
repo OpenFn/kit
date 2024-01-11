@@ -144,8 +144,6 @@ test('toNextState with empty state', (t) => {
           'trigger-one->job-a': {
             id: getItem(result, 'edges', 'trigger-one->job-a').id,
             condition_type: 'always',
-            condition_expression: null,
-            condition_label: null,
             source_trigger_id: getItem(result, 'triggers', 'trigger-one').id,
             target_job_id: getItem(result, 'jobs', 'job-a').id,
             enabled: true,
