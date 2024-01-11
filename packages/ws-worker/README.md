@@ -24,8 +24,6 @@ The worker will use the WORKER_SECRET env var (which you should have set for Lig
 mix lightning.gen_worker_keys
 ```
 
-### WS Server
-
 To start a `ws-worker` server, run:
 
 ```
@@ -39,6 +37,10 @@ The default settings will try and connect to lightning at `localhost:4000`.
 Pass a custom lightining url with `-l ws://localhost:1234/worker`. (Note that you need to include the websocket endpoint, which at the time of writing is `/worker`.)
 
 Use `-l mock` to connect to a lightning mock server (on the default port).
+
+## Options
+
+For a list of supported worker and engine options, see src/start.ts
 
 ## Watched Server
 
