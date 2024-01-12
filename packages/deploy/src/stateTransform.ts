@@ -148,6 +148,7 @@ function mergeEdges(
               enabled: pickValue(specEdge, stateEdge || {}, 'enabled', true),
             },
             {
+              condition_type: specEdge.condition_type,
               condition_expression: specEdge.condition_expression,
               condition_label: specEdge.condition_label,
               source_job_id: jobs[specEdge.source_job ?? -1]?.id,
