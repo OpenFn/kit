@@ -1,5 +1,18 @@
 # @openfn/runtime
 
+## 0.2.4
+
+### Patch Changes
+
+- 6ca87a1: Remove deleteConfiguration option
+- 56b6e44: Add statePropsToRemove option
+
+## 0.2.3
+
+### Patch Changes
+
+- f228fd5: Add edge evaluation logging to runtime
+
 ## 0.2.2
 
 ### Patch Changes

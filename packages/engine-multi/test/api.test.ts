@@ -32,12 +32,26 @@ test.serial('create an engine api with a limited surface', async (t) => {
   const keys = Object.keys(api).sort();
 
   // TODO the api will actually probably get a bit bigger than this
-  t.deepEqual(keys, ['execute', 'listen', 'on', 'destroy', 'version'].sort());
+  t.deepEqual(
+    keys,
+    ['execute', 'listen', 'on', 'options', 'destroy', 'version'].sort()
+  );
 });
 
 test.serial('engine api includes a version number', async (t) => {
   api = await createAPI({ logger });
   t.is(api.version, pkg.version);
+});
+
+test.serial('engine api uses default options', async (t) => {
+  api = await createAPI({ logger });
+
+  t.truthy(api.options);
+
+  t.deepEqual(api.options.statePropsToRemove, ['configuration', 'response']);
+  t.false(api.options.noCompile);
+  t.true(api.options.purge);
+  t.truthy(api.options.whitelist);
 });
 
 // Note that this runs with the actual runtime worker

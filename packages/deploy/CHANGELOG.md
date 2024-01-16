@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.3.0
+
+### Minor Changes
+
+- 3f0010e: add support for javascript edge conditions
+
 ## 0.2.10
 
 ### Patch Changes

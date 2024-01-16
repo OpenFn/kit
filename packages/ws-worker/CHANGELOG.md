@@ -1,5 +1,32 @@
 # ws-worker
 
+## 0.5.0
+
+### Minor Changes
+
+- Add state-props-to-remove option
+- Updated dependencies [56b6e44]
+  - @openfn/engine-multi@0.2.6
+  - @openfn/runtime@0.2.4
+
+## 0.4.0
+
+### Minor Changes
+
+- f228fd5: Add support for initial edge conditions in worker
+
+### Patch Changes
+
+- Updated dependencies [f228fd5]
+  - @openfn/runtime@0.2.3
+  - @openfn/engine-multi@0.2.5
+
+## 0.3.2
+
+### Patch Changes
+
+- Add git to worker image
+
 ## 0.3.1
 
 ### Patch Changes

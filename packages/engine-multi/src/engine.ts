@@ -79,6 +79,8 @@ export type EngineOptions = {
 
   // Timeout for the whole workflow
   timeout?: number;
+
+  statePropsToRemove?: string[];
 };
 
 export type ExecuteOptions = {

@@ -67,13 +67,20 @@ const createAPI = async function (
 
     maxWorkers: options.maxWorkers,
     memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
+
+    statePropsToRemove: options.statePropsToRemove ?? [
+      'configuration',
+      'response',
+    ],
   };
 
   logger.info(`memory limit set to ${options.memoryLimitMb}mb`);
+  logger.info(`statePropsToRemove set to: `, engineOptions.statePropsToRemove);
 
   const engine = await createEngine(engineOptions);
 
   return {
+    options: engineOptions,
     version: pkg.version,
     execute: engine.execute,
     listen: engine.listen,

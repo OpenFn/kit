@@ -67,6 +67,8 @@ export interface EngineAPI extends EventEmitter {
 export interface RuntimeEngine {
   version: string;
 
+  options: EngineOptions;
+
   // TODO should return an unsubscribe hook
   listen(attemptId: string, listeners: any): void;
 

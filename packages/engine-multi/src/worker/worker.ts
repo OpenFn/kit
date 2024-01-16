@@ -9,12 +9,14 @@ type RunOptions = {
   adaptorPaths: Record<string, { path: string }>;
   whitelist?: RegExp[];
   sanitize: SanitizePolicies;
+  statePropsToRemove?: string[];
   // TODO timeout
 };
 
 register({
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
-    const { adaptorPaths, whitelist, sanitize } = runOptions;
+    const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
+      runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
     const options = {
       strict: false,
@@ -25,6 +27,7 @@ register({
         whitelist,
         cacheKey: plan.id,
       },
+      statePropsToRemove,
       callbacks: {
         // TODO: this won't actually work across the worker boundary
         // For now I am preloading credentials

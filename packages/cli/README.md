@@ -237,7 +237,7 @@ If something unexpected happens during a command, your first step should be to r
 
 `debug` level logging is highly verbose and aims to tell you everything that's going on under-the hood. This is aimed mostly at CLI/runtime developers and can be very useful for debugging problems.
 
-### Structred/JSON logging
+### Structured/JSON logging
 
 By default all logs will be printed as human-readable strings.
 
@@ -277,7 +277,7 @@ A workflow has a structure like this (better documentation is coming soon):
         // If there are no next edges, the workflow will end
         "b": true,
         "c": {
-          "condition": "!state.error" // Not that this is an expression, not a function
+          "condition": "!state.error" // Note that this is an expression, not a function
         }
       }
     }

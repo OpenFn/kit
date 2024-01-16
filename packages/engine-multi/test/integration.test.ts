@@ -192,6 +192,50 @@ test.serial('run without error if no state is returned', (t) => {
   });
 });
 
+test.serial(
+  'execute should remove the configuration and response keys',
+  (t) => {
+    return new Promise(async (done) => {
+      api = await createAPI({
+        logger,
+      });
+
+      const plan = createPlan([
+        {
+          id: 'j',
+          expression: `${withFn}fn(() => ({ a: 1, configuration: {}, response: {} }))`,
+        },
+      ]);
+
+      api.execute(plan).on('workflow-complete', ({ state }) => {
+        t.deepEqual(state, { a: 1 });
+        done();
+      });
+    });
+  }
+);
+
+test.serial('use custom state-props-to-remove', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+      statePropsToRemove: ['x'],
+    });
+
+    const plan = createPlan([
+      {
+        id: 'j',
+        expression: `${withFn}fn(() => ({ x: 1, configuration: {}, response: {} }))`,
+      },
+    ]);
+
+    api.execute(plan).on('workflow-complete', ({ state }) => {
+      t.deepEqual(state, { configuration: {}, response: {} });
+      done();
+    });
+  });
+});
+
 test.serial('evaluate conditional edges', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({

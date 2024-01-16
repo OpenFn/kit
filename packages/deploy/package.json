@@ -1,6 +1,6 @@
 {
   "name": "@openfn/deploy",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "description": "Deploy projects to Lightning instances",
   "type": "module",
   "exports": {

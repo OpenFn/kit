@@ -68,12 +68,12 @@ export default (
 
       duration = Date.now() - duration;
 
-      const finalState = prepareFinalState(opts, result);
+      const finalState = prepareFinalState(opts, result, logger);
       // return the final state
       resolve(finalState);
     } catch (e: any) {
       // whatever initial state looks like now, clean it and report it back
-      const finalState = prepareFinalState(opts, initialState);
+      const finalState = prepareFinalState(opts, initialState, logger);
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -150,12 +150,27 @@ const assignKeys = (
 
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
-const prepareFinalState = (opts: Options, state: any) => {
+const prepareFinalState = (opts: Options, state: any, logger: Logger) => {
   if (state) {
+    let statePropsToRemove;
+    if (opts.hasOwnProperty('statePropsToRemove')) {
+      ({ statePropsToRemove } = opts);
+    } else {
+      // As a strict default, remove the configuration key
+      // tbh this should happen higher up in the stack but it causes havoc in unit testing
+      statePropsToRemove = ['configuration'];
+    }
+
+    if (statePropsToRemove && statePropsToRemove.forEach) {
+      statePropsToRemove.forEach((prop) => {
+        if (state.hasOwnProperty(prop)) {
+          delete state[prop];
+          logger.debug(`Removed ${prop} from final state`);
+        }
+      });
+    }
     if (opts.strict) {
       state = assignKeys(state, {}, ['data', 'error', 'references']);
-    } else if (opts.deleteConfiguration !== false) {
-      delete state.configuration;
     }
     const cleanState = stringify(state);
     return JSON.parse(cleanState);

@@ -19,9 +19,15 @@ type Args = {
   backoff: string;
   capacity?: number;
   runMemory?: number;
+  statePropsToRemove?: string[];
 };
 
-const { WORKER_REPO_DIR, WORKER_SECRET, MAX_RUN_MEMORY } = process.env;
+const {
+  WORKER_REPO_DIR,
+  WORKER_SECRET,
+  MAX_RUN_MEMORY,
+  STATE_PROPS_TO_REMOVE,
+} = process.env;
 
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a ws-worker server')
@@ -71,6 +77,12 @@ const args = yargs(hideBin(process.argv))
     description: 'max concurrent workers',
     default: 5,
     type: 'number',
+  })
+  .option('state-props-to-remove', {
+    description:
+      'A list of properties to remove from the final state returned by a job',
+    default: STATE_PROPS_TO_REMOVE ?? ['configuration', 'response'],
+    type: 'array',
   })
   .option('run-memory', {
     description: 'Maximum memory allocated to a single run, in mb',
@@ -124,6 +136,7 @@ if (args.mock) {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
     maxWorkers: args.capacity,
+    statePropsToRemove: args.statePropsToRemove,
   }).then((engine) => {
     logger.debug('engine created');
     engineReady(engine);
