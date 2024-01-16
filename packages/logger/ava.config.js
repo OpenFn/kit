@@ -13,18 +13,19 @@ export default {
     rewritePaths: {
       'src/': 'dist/',
     },
-    compile: 'tsc',
+    // compile: 'tsc',
+    compile: false,
   },
 
   // environmentVariables: {
   //   TS_NODE_TRANSPILE_ONLY: 'true',
   // },
 
-  nodeArguments: [
-    // '--loader=ts-node/esm',
-    '--no-warnings', // Disable experimental module warnings
-    '--experimental-vm-modules',
-  ],
+  // nodeArguments: [
+  //   // '--loader=ts-node/esm',
+  //   '--no-warnings', // Disable experimental module warnings
+  //   '--experimental-vm-modules',
+  // ],
 
-  files: ['test/**/*test.ts'],
+  // files: ['test/**/*test.ts'],
 };

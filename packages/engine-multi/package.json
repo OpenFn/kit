@@ -23,7 +23,6 @@
   "devDependencies": {
     "@types/node": "^18.15.13",
     "@types/workerpool": "^6.4.4",
-    "ava": "5.3.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "tsm": "^2.2.2",

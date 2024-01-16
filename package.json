@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Next-generation OpenFN tooling",
+  "type": "module",
   "scripts": {
     "build": "pnpm run clean && pnpm -r --filter=./packages/* run build",
     "clean:local": "rimraf dist/**/*",
@@ -23,11 +24,13 @@
   "author": "Open Function Group",
   "license": "ISC",
   "devDependencies": {
+    "@ava/typescript": "^4.1.0",
     "@changesets/cli": "^2.27.1",
     "@slack/web-api": "^6.8.1",
     "@types/gunzip-maybe": "^1.4.0",
     "@types/rimraf": "^3.0.2",
     "@types/tar-stream": "^2.2.2",
+    "ava": "6.0.1",
     "gunzip-maybe": "^1.4.2",
     "rimraf": "^3.0.2",
     "tar-stream": "^3.0.0",

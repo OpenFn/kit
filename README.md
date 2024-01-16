@@ -1,4 +1,4 @@
-# OpenFn Kit
+# OpenFn Kit.
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/OpenFn/kit/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/OpenFn/kit/tree/main)
 
