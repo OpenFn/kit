@@ -14,7 +14,7 @@ const options = {
   // This uses the mock worker, not the actual runtime
   // It will still exercise all the lifecycle logic found in the worker-helper,
   // Just not the runtime logic
-  workerPath: path.resolve('dist/mock-worker.js'),
+  workerPath: path.resolve('dist/test/mock-run.js'),
   logger,
   repoDir: '.', // doesn't matter for the mock
   noCompile: true, // messy - needed to allow an expression to be passed as json
@@ -66,11 +66,11 @@ test.serial('get workflow state', async (t) => {
 
 test.serial('use the default worker path', async (t) => {
   engine = await createEngine({ logger, repoDir: '.' });
-  t.true(engine.workerPath.endsWith('worker/worker.js'));
+  t.true(engine.workerPath.endsWith('worker/thread/run.js'));
 });
 
 test.serial('use a custom worker path', async (t) => {
-  const workerPath = path.resolve('src/test/worker-functions.js');
+  const workerPath = path.resolve('dist/test/worker-functions.js');
   engine = await createEngine(options, workerPath);
   t.is(engine.workerPath, workerPath);
 });
@@ -79,7 +79,7 @@ test.serial(
   'execute with test worker and trigger workflow-complete',
   async (t) => {
     return new Promise(async (done) => {
-      const p = path.resolve('src/test/worker-functions.js');
+      const p = path.resolve('dist/test/worker-functions.js');
       engine = await createEngine(options, p);
 
       const plan = {
@@ -104,7 +104,7 @@ test.serial(
 
 test.serial('execute does not return internal state stuff', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -139,7 +139,7 @@ test.serial('execute does not return internal state stuff', async (t) => {
 
 test.serial('listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -166,7 +166,7 @@ test.serial('listen to workflow-complete', async (t) => {
 
 test.serial('call listen before execute', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -192,7 +192,7 @@ test.serial('call listen before execute', async (t) => {
 
 test.serial('catch and emit errors', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -217,7 +217,7 @@ test.serial('catch and emit errors', async (t) => {
 
 test.serial('timeout the whole attempt and emit an error', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {

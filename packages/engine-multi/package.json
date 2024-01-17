@@ -30,9 +30,7 @@
   },
   "files": [
     "dist/index.js",
-    "dist/worker/worker.js",
-    "dist/worker/child",
-    "dist/worker/thread",
+    "dist/worker/",
     "README.md",
     "CHANGELOG.md"
   ]

@@ -130,6 +130,7 @@ function createPool(script: string, options: PoolOptions = {}) {
         // this may occur if the inner worker is invalid
       }
 
+      // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       worker.on('exit', (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
           clearTimeout(timeout);

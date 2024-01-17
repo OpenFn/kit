@@ -6,7 +6,7 @@ import process from 'node:process';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from '../events';
-import { ExecutionError } from '../../errors';
+import { ExecutionError, ExitError } from '../../errors';
 
 import { publish } from './runtime';
 
@@ -56,10 +56,6 @@ export const execute = async (
   workflowId: string,
   executeFn: () => Promise<any>
 ) => {
-  publish(workerEvents.WORKFLOW_START, {
-    workflowId,
-  });
-
   const handleError = (err: any) => {
     publish(workerEvents.ERROR, {
       // @ts-ignore
@@ -73,6 +69,12 @@ export const execute = async (
       // TODO job id maybe
     });
   };
+
+  process.on('exit', (code: number) => {
+    if (code !== HANDLED_EXIT_CODE) {
+      handleError(new ExitError(code));
+    }
+  });
 
   // catch-all for any uncaught errors, which likely come from asynchronous code
   // (probably in an adaptor)
@@ -92,6 +94,10 @@ export const execute = async (
     setTimeout(() => {
       process.exit(HANDLED_EXIT_CODE);
     }, 2);
+  });
+
+  publish(workerEvents.WORKFLOW_START, {
+    workflowId,
   });
 
   try {

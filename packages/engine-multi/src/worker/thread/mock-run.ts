@@ -7,9 +7,9 @@
  * This mock handler does nothing and returns after a while, ignoring the source argument
  * and reading instructions out of state object.
  */
-import { register, publish } from './thread/runtime';
-import { execute, createLoggers } from './thread/helpers';
-import * as workerEvents from './events';
+import { register, publish } from './runtime';
+import { execute, createLoggers } from './helpers';
+import * as workerEvents from '../events';
 
 type MockJob = {
   id?: string;

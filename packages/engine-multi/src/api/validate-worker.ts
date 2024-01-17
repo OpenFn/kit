@@ -8,8 +8,10 @@ import { EngineAPI } from '../types';
 
 export default async (api: EngineAPI) => {
   try {
-    await api.callWorker('handshake', [], {}, 100);
+    // TODO argument drive this
+    await api.callWorker('handshake', [], {}, 500);
   } catch (e) {
+    console.log(e);
     // If the handshake function isn't available, this will timeout
     // Throw a nice error if the worker isn't valid
     throw new Error('Invalid worker path');

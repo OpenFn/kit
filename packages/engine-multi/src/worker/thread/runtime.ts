@@ -12,7 +12,9 @@ export const threadId = process.pid;
 
 const tasks: TaskRegistry = {
   // startup validation script
-  handshake: async () => true,
+  handshake: async () => {
+    return true;
+  },
 };
 
 export const register = (newTasks: TaskRegistry) => {

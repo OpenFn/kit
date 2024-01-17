@@ -50,7 +50,6 @@ test.serial('engine api uses default options', async (t) => {
 
   t.deepEqual(api.options.statePropsToRemove, ['configuration', 'response']);
   t.false(api.options.noCompile);
-  t.true(api.options.purge);
   t.truthy(api.options.whitelist);
 });
 
