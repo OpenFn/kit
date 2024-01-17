@@ -71,20 +71,25 @@ const tasks = {
   },
 
   setGlobalX: async (newValue = 42) => {
+    // @ts-ignore
     global.x = newValue;
   },
 
   getGlobalX: async () => {
-    console.log(' >> ', global.x);
+    // @ts-ignore
     return global.x;
   },
 
+  // @ts-ignore
   writeToGlobalError: async (obj) => {
     Object.assign(Error, obj);
+
+    // @ts-ignore
     console.log(Error.y);
   },
 
-  getFromGlobalError: async (key) => {
+  getFromGlobalError: async (key: string) => {
+    // @ts-ignore
     return Error[key];
   },
 

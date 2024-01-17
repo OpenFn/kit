@@ -35,7 +35,7 @@ export const publish = (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>
 ) =>
-  parentPort.postMessage({
+  parentPort!.postMessage({
     type,
     threadId,
     ...payload,
@@ -47,7 +47,7 @@ export const publish = (
 //     });
 //   });
 
-const run = (task, args) => {
+const run = (task: string, args: any[]) => {
   tasks[task](...args)
     .then((result) => {
       publish(ENGINE_RESOLVE_TASK, {
@@ -65,7 +65,7 @@ const run = (task, args) => {
     });
 };
 
-parentPort.on('message', async (evt) => {
+parentPort!.on('message', async (evt) => {
   if (evt.type === ENGINE_RUN_TASK) {
     const args = evt.args || [];
     run(evt.task, args);

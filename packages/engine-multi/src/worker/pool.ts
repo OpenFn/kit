@@ -69,7 +69,7 @@ function createPool(script: string, options: PoolOptions = {}) {
     return child;
   };
 
-  const finish = (worker) => {
+  const finish = (worker: any) => {
     worker.removeAllListeners();
 
     if (destroyed) {
