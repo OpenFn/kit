@@ -1,6 +1,6 @@
 import { ChildProcess, fork } from 'node:child_process';
 import { ExitError, TimeoutError } from '../errors';
-import { HANDLED_EXIT_CODE } from './worker-helper';
+import { HANDLED_EXIT_CODE } from './thread/helpers';
 import path from 'node:path';
 import {
   ENGINE_REJECT_TASK,

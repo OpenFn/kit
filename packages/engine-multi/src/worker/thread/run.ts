@@ -1,9 +1,10 @@
-// Dedicated worker for running jobs
+// This is the run command that will be executed inside the worker thread
+// Most of the heavy lifting is actually handled by execute
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { SanitizePolicies } from '@openfn/logger';
-import { register, publish } from '../worker/thread/runtime';
-import helper, { createLoggers } from './worker-helper';
+import { register, publish } from './runtime';
+import { execute, createLoggers } from './helpers';
 import { NotifyEvents } from '@openfn/runtime';
 
 type RunOptions = {
@@ -19,6 +20,8 @@ register({
     const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
       runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
+
+    // TODO I would like to pull these options out of here
     const options = {
       strict: false,
       logger,
@@ -43,6 +46,6 @@ register({
       },
     };
 
-    return helper(plan.id!, () => run(plan, undefined, options));
+    return execute(plan.id!, () => run(plan, undefined, options));
   },
 });

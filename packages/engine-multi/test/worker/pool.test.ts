@@ -186,9 +186,17 @@ test('destroy immediately', (t) => {
     t.is(pool._pool.length, 5);
 
     // this should not return
-    pool.exec('wait', [100]).then(() => {
-      t.fail('Task should not have returned!');
-    });
+    pool
+      .exec('wait', [100])
+      .then(() => {
+        t.fail('Task should not have returned!');
+      })
+      .catch((e) => {
+        // TODO the pool currnetly throws an ExitError if it is interrupted
+        // Is this correct?
+        t.log(e);
+        // console.log(e);
+      });
 
     pool.destroy(true);
 
@@ -289,7 +297,7 @@ test('listen to an event in two successive tasks after a queue', async (t) => {
     t.is(pool._queue.length, 1);
   });
 });
-// test.only('listeners are removed from a worker after a task executes', async (t) => {
+// test('listeners are removed from a worker after a task executes', async (t) => {
 //   const events = [];
 
 //   const pool = createPool(workerPath, { capacity: 1 });

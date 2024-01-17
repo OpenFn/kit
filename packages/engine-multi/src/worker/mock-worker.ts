@@ -8,7 +8,7 @@
  * and reading instructions out of state object.
  */
 import { register, publish } from './thread/runtime';
-import helper, { createLoggers } from './worker-helper';
+import { execute, createLoggers } from './thread/helpers';
 import * as workerEvents from './events';
 
 type MockJob = {
@@ -30,7 +30,7 @@ type MockExecutionPlan = {
 
 // This is a fake runtime handler which will return a fixed value, throw, and
 // optionally delay
-function mock(plan: MockExecutionPlan) {
+function mockRun(plan: MockExecutionPlan) {
   const [job] = plan.jobs;
   const { jobLogger } = createLoggers(plan.id!);
   const workflowId = plan.id;
@@ -79,5 +79,5 @@ function mock(plan: MockExecutionPlan) {
 
 register({
   run: async (plan: MockExecutionPlan, _options?: any) =>
-    helper(plan.id, () => mock(plan)),
+    execute(plan.id, () => mockRun(plan)),
 });

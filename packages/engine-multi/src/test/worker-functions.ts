@@ -5,8 +5,7 @@ import { increment } from './counter.js';
 
 const tasks = {
   test: async (result = 42) => {
-    publish({
-      type: 'test-message',
+    publish('test-message', {
       result,
     });
 
@@ -27,19 +26,15 @@ const tasks = {
   // Most tests should use the mock-worker instead
   run: async (plan: any, _adaptorPaths: any) => {
     const workflowId = plan.id;
-    publish({
-      type: 'worker:workflow-start',
+    publish('worker:workflow-start', {
       workflowId,
-      threadId,
     });
     try {
       const [job] = plan.jobs;
       const result = eval(job.expression);
-      publish({
-        type: 'worker:workflow-complete',
+      publish('worker:workflow-complete', {
         workflowId,
         state: result,
-        threadId,
       });
     } catch (err) {
       // console.error(err);

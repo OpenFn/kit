@@ -5,10 +5,10 @@ import process from 'node:process';
 
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
-import * as workerEvents from './events';
-import { ExecutionError } from '../errors';
+import * as workerEvents from '../events';
+import { ExecutionError } from '../../errors';
 
-import { publish } from '../worker/thread/runtime';
+import { publish } from './runtime';
 
 export const HANDLED_EXIT_CODE = 111111;
 
@@ -51,7 +51,11 @@ export const createLoggers = (
   return { logger, jobLogger };
 };
 
-async function helper(workflowId: string, execute: () => Promise<any>) {
+// Execute wrapper function
+export const execute = async (
+  workflowId: string,
+  executeFn: () => Promise<any>
+) => {
   publish(workerEvents.WORKFLOW_START, {
     workflowId,
   });
@@ -91,7 +95,7 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
   });
 
   try {
-    const result = await execute();
+    const result = await executeFn();
     publish(workerEvents.WORKFLOW_COMPLETE, { workflowId, state: result });
 
     // For tests
@@ -99,6 +103,4 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
   } catch (err: any) {
     handleError(err);
   }
-}
-
-export default helper;
+};
