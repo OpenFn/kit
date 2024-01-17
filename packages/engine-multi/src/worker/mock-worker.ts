@@ -7,7 +7,8 @@
  * This mock handler does nothing and returns after a while, ignoring the source argument
  * and reading instructions out of state object.
  */
-import helper, { register, createLoggers, publish } from './worker-helper';
+import { register, publish } from './thread/runtime';
+import helper, { createLoggers } from './worker-helper';
 import * as workerEvents from './events';
 
 type MockJob = {
@@ -32,10 +33,12 @@ type MockExecutionPlan = {
 function mock(plan: MockExecutionPlan) {
   const [job] = plan.jobs;
   const { jobLogger } = createLoggers(plan.id!);
+  const workflowId = plan.id;
   return new Promise((resolve) => {
     const jobId = job.id || '<job>';
     setTimeout(async () => {
-      publish(plan.id, workerEvents.JOB_START, {
+      publish(workerEvents.JOB_START, {
+        workflowId,
         jobId,
         versions: { node: '1', runtime: '1', compiler: '1', engine: '1' },
       });
@@ -62,8 +65,8 @@ function mock(plan: MockExecutionPlan) {
           };
         }
       }
-      publish(plan.id, workerEvents.JOB_COMPLETE, {
-        jobId,
+      publish(workerEvents.JOB_COMPLETE, {
+        workflowId,
         duration: 100,
         state,
         next: [],

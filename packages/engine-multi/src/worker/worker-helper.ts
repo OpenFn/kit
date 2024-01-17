@@ -8,64 +8,9 @@ import createLogger, { SanitizePolicies } from '@openfn/logger';
 import * as workerEvents from './events';
 import { ExecutionError } from '../errors';
 
+import { publish } from '../worker/thread/runtime';
+
 export const HANDLED_EXIT_CODE = 111111;
-
-type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
-
-type WorkerEvent = {
-  type: string;
-
-  [key: string]: any;
-};
-
-const threadId = process.pid;
-
-const tasks: TaskRegistry = {
-  // startup validation script
-  handshake: async () => true,
-};
-
-export const register = (newTasks: TaskRegistry) => {
-  Object.assign(tasks, newTasks);
-};
-
-process.on('message', async (evt: WorkerEvent) => {
-  if (evt.type === 'engine:run_task') {
-    const args = evt.args || [];
-    run(evt.task, args);
-  }
-});
-
-const run = (task: string, args: any[] = []) => {
-  if (!tasks[task]) {
-    return process.send?.({
-      type: 'engine:reject_task',
-      error: {
-        severity: 'exception',
-        message: `task ${task} not found`,
-        type: 'TaskNotFoundError',
-      },
-    });
-  }
-
-  tasks[task](...args)
-    .then((result) => {
-      process.send?.({
-        type: 'engine:resolve_task',
-        result,
-      });
-    })
-    .catch((e) => {
-      process.send?.({
-        type: 'engine:reject_task',
-        error: {
-          severity: e.severity || 'crash',
-          message: e.message,
-          type: e.type || e.name,
-        },
-      });
-    });
-};
 
 export const createLoggers = (
   workflowId: string,
@@ -74,7 +19,8 @@ export const createLoggers = (
   const log = (message: string) => {
     // Apparently the json log stringifies the message
     // We don't really want it to do that
-    publish(workflowId, workerEvents.LOG, {
+    publish(workerEvents.LOG, {
+      workflowId,
       message: JSON.parse(message),
     } as workerEvents.LogEvent);
   };
@@ -105,33 +51,15 @@ export const createLoggers = (
   return { logger, jobLogger };
 };
 
-export function publish<T extends workerEvents.WorkerEvents>(
-  workflowId: string,
-  type: T,
-  payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
-) {
-  const event = {
-    workflowId,
-    threadId,
-    type,
-    ...payload,
-  };
-  return new Promise<void>((resolve) => {
-    process.send?.(event, undefined, {}, () => {
-      resolve();
-    });
-  });
-}
-
 async function helper(workflowId: string, execute: () => Promise<any>) {
-  publish(workflowId, workerEvents.WORKFLOW_START, {});
+  publish(workerEvents.WORKFLOW_START, {
+    workflowId,
+  });
 
   const handleError = (err: any) => {
-    publish(workflowId, workerEvents.ERROR, {
+    publish(workerEvents.ERROR, {
       // @ts-ignore
       workflowId,
-      threadId,
-
       // Map the error out of the thread in a serializable format
       error: {
         message: err.message,
@@ -164,7 +92,7 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
 
   try {
     const result = await execute();
-    publish(workflowId, workerEvents.WORKFLOW_COMPLETE, { state: result });
+    publish(workerEvents.WORKFLOW_COMPLETE, { workflowId, state: result });
 
     // For tests
     return result;

@@ -1,3 +1,5 @@
+// TODO what do I do with this? Some tests are useful
+// some are security minded
 import path from 'node:path';
 import test from 'ava';
 import v8 from 'v8';
@@ -7,7 +9,7 @@ import v8 from 'v8';
 // import workerpool from 'workerpool';
 import actualCreatePool from '../../src/worker/pool';
 
-const workerPath = path.resolve('src/test/worker-functions.js');
+const workerPath = path.resolve('dist/test/worker-functions.js');
 
 let pool;
 

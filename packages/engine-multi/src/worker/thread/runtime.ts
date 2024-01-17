@@ -6,8 +6,6 @@ import {
   ENGINE_RUN_TASK,
 } from '../events';
 
-export const HANDLED_EXIT_CODE = 111111;
-
 type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
 
 export const threadId = process.pid;
@@ -21,8 +19,25 @@ export const register = (newTasks: TaskRegistry) => {
   Object.assign(tasks, newTasks);
 };
 
+type Event = {
+  type: string;
+  threadId: number;
+  [key: string]: any;
+};
+
 // TODO can't really be a promise any more unless I implement an acknowledgement
-export const publish = (evt) => parentPort.postMessage(evt);
+
+// payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
+
+export const publish = (
+  type: string,
+  payload: Omit<Event, 'threadId' | 'type'>
+) =>
+  parentPort.postMessage({
+    type,
+    threadId,
+    ...payload,
+  });
 // export const publish = (evt) =>
 //   new Promise((resolve) => {
 //     process.postMessage(evt, undefined, {}, () => {
@@ -33,14 +48,12 @@ export const publish = (evt) => parentPort.postMessage(evt);
 const run = (task, args) => {
   tasks[task](...args)
     .then((result) => {
-      publish({
-        type: ENGINE_RESOLVE_TASK,
+      publish(ENGINE_RESOLVE_TASK, {
         result,
       });
     })
     .catch((e) => {
-      publish({
-        type: ENGINE_REJECT_TASK,
+      publish(ENGINE_REJECT_TASK, {
         error: {
           severity: e.severity || 'crash',
           message: e.message,

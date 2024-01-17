@@ -2,7 +2,8 @@
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { SanitizePolicies } from '@openfn/logger';
-import helper, { register, createLoggers, publish } from './worker-helper';
+import { register, publish } from '../worker/thread/runtime';
+import helper, { createLoggers } from './worker-helper';
 import { NotifyEvents } from '@openfn/runtime';
 
 type RunOptions = {
@@ -34,7 +35,10 @@ register({
         // resolveCredential: async (id: string) => {},
         notify: (name: NotifyEvents, payload: any) => {
           // convert runtime notify events to internal engine events
-          publish(plan.id!, `worker:${name}`, payload);
+          publish(`worker:${name}`, {
+            workflowId: plan.id,
+            ...payload,
+          });
         },
       },
     };
