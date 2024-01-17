@@ -13,7 +13,7 @@ import { createPlan } from '../../src/test/util';
 
 import * as e from '../../src/worker/events';
 
-const workers = createPool(path.resolve('dist/worker/mock.js'), {
+const workers = createPool(path.resolve('dist/test/mock-run.js'), {
   capacity: 1,
 });
 

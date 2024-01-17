@@ -16,7 +16,7 @@ import { RTEOptions } from '../../src/api';
 import ExecutionContext from '../../src/classes/ExecutionContext';
 import loadVersions from '../../src/util/load-versions';
 
-const workerPath = path.resolve('dist/worker/mock.js');
+const workerPath = path.resolve('dist/test/mock-run.js');
 
 const createContext = ({ state, options }) => {
   const ctx = new ExecutionContext({
