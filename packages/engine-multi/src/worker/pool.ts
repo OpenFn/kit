@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { ChildProcess, fork } from 'node:child_process';
 import { ExitError, TimeoutError } from '../errors';
 import { HANDLED_EXIT_CODE } from './thread/helpers';
@@ -32,7 +33,8 @@ type ExecOpts = {
   timeout?: number; // ms
 };
 
-const envPath = path.resolve('./dist/worker/child/runner.js');
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(dirname, 'worker/child/runner.js');
 
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}) {
