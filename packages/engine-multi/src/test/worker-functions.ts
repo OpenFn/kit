@@ -74,7 +74,10 @@ const tasks = {
     global.x = newValue;
   },
 
-  getGlobalX: async () => global.x,
+  getGlobalX: async () => {
+    console.log(' >> ', global.x);
+    return global.x;
+  },
 
   writeToGlobalError: async (obj) => {
     Object.assign(Error, obj);

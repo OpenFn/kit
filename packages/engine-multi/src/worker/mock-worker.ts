@@ -67,6 +67,7 @@ function mockRun(plan: MockExecutionPlan) {
       }
       publish(workerEvents.JOB_COMPLETE, {
         workflowId,
+        jobId,
         duration: 100,
         state,
         next: [],

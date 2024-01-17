@@ -7,7 +7,7 @@ import { EngineAPI } from '../../src/types';
 
 let api = new EventEmitter() as EngineAPI;
 
-const workerPath = path.resolve('src/test/worker-functions.js');
+const workerPath = path.resolve('dist/test/worker-functions.js');
 
 test.before(() => {
   initWorkers(api, workerPath);

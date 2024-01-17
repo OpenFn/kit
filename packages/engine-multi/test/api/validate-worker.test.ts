@@ -7,7 +7,7 @@ import validateWorker from '../../src/api/validate-worker';
 
 let api = {} as EngineAPI;
 
-const workerPath = path.resolve('src/test/worker-functions.js');
+const workerPath = path.resolve('dist/test/worker-functions.js');
 
 test.beforeEach(() => {
   api = {} as EngineAPI;

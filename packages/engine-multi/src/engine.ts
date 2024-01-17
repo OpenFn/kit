@@ -110,7 +110,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       dirname,
       // TODO there are too many assumptions here, it's an argument for the path just to be
       // passed by the mian api or the unit test
-      workerPath || '../dist/worker/worker.js'
+      workerPath || '../dist/worker/thread/run.js'
     );
   }
 
