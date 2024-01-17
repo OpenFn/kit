@@ -1,17 +1,15 @@
 import { ChildProcess, fork } from 'node:child_process';
 import { ExitError, TimeoutError } from '../errors';
 import { HANDLED_EXIT_CODE } from './worker-helper';
+import path from 'node:path';
+import {
+  ENGINE_REJECT_TASK,
+  ENGINE_RESOLVE_TASK,
+  ENGINE_RUN_TASK,
+} from './events';
 
 // NB this is the ATTEMPT timeout
 const DEFAULT_TIMEOUT = 1000 * 60 * 10;
-
-const events = {
-  CAPACITY_CHANGE: 'capacaity-change', // triggered when full or available
-
-  RUN_TASK: 'engine:run_task',
-  RESOLVE_TASK: 'engine:resolve_task',
-  REJECT_TASK: 'engine:reject_task',
-};
 
 type PoolOptions = {
   capacity?: number; // defaults to 5
@@ -22,7 +20,7 @@ type PoolOptions = {
 };
 
 type RunTaskEvent = {
-  type: 'engine:run_task';
+  type: typeof ENGINE_RUN_TASK;
   task: string;
   args: any[];
 };
@@ -33,6 +31,8 @@ type ExecOpts = {
 
   timeout?: number; // ms
 };
+
+const envPath = path.resolve('./dist/worker/child/runner.js');
 
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}) {
@@ -51,12 +51,12 @@ function createPool(script: string, options: PoolOptions = {}) {
   const init = (child: any) => {
     if (!child) {
       // create a new child process and load the module script into it
-      child = fork(script, [], {
+      child = fork(envPath, [script], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
 
         // child will live if parent dies.
         // although tbf, what's the point?
-        detached: true,
+        // detached: true,
 
         env: options.env || {},
 
@@ -121,7 +121,7 @@ function createPool(script: string, options: PoolOptions = {}) {
 
       try {
         worker.send({
-          type: events.RUN_TASK,
+          type: ENGINE_RUN_TASK,
           task,
           args,
         } as RunTaskEvent);
@@ -143,14 +143,14 @@ function createPool(script: string, options: PoolOptions = {}) {
         opts.on?.(evt);
 
         // Listen to a complete event to know the work is done
-        if (evt.type === events.RESOLVE_TASK) {
+        if (evt.type === ENGINE_RESOLVE_TASK) {
           clearTimeout(timeout);
           if (!didTimeout) {
             resolve(evt.result);
 
             finish(worker);
           }
-        } else if (evt.type === events.REJECT_TASK) {
+        } else if (evt.type === ENGINE_REJECT_TASK) {
           // Note that this is an unexpected error
           // Actual engine errors should return a workflow:error event and resolve
           clearTimeout(timeout);

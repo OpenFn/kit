@@ -7,7 +7,7 @@ import type { Logger } from '@openfn/logger';
 import createPool from '../worker/pool';
 
 // All events coming out of the worker need to include a type key
-type WorkerEvent = {
+export type WorkerEvent = {
   type: string;
   [key: string]: any;
 };

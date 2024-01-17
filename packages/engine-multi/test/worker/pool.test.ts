@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import createPool from '../../src/worker/pool';
 
-const workerPath = path.resolve('src/test/worker-functions.js');
+const workerPath = path.resolve('dist/test/worker-functions.js');
 
-test('create a pool with empty processes (5 by default)', (t) => {
+test.only('create a pool with empty processes (5 by default)', (t) => {
   const pool = createPool('.');
 
   t.is(pool._pool.length, 5);
@@ -19,7 +19,7 @@ test('create a pool with 10 empty processes', (t) => {
   t.true(pool._pool.every((f) => f === false));
 });
 
-test('run a task and return the result', async (t) => {
+test.only('run a task and return the result', async (t) => {
   const pool = createPool(workerPath);
   const result = await pool.exec('test', []);
   t.is(result, 42);

@@ -1,47 +1,11 @@
 import path from 'node:path';
 
+import { register, publish, threadId } from '../worker/thread/runtime';
 import { increment } from './counter.js';
 
-const publish = (evt) =>
-  new Promise((resolve) => {
-    process.send(evt, undefined, {}, () => {
-      resolve();
-    });
-  });
-
-const threadId = process.pid;
-
-const run = (task, args) => {
-  tasks[task](...args)
-    .then((result) => {
-      publish({
-        type: 'engine:resolve_task',
-        result,
-      });
-    })
-    .catch((e) => {
-      publish({
-        type: 'engine:reject_task',
-        error: {
-          severity: e.severity || 'crash',
-          message: e.message,
-          type: e.type || e.name,
-        },
-      });
-    });
-};
-
-process.on('message', async (evt) => {
-  if (evt.type === 'engine:run_task') {
-    const args = evt.args || [];
-    run(evt.task, args);
-  }
-});
-
 const tasks = {
-  handshake: async () => true,
   test: async (result = 42) => {
-    await publish({
+    publish({
       type: 'test-message',
       result,
     });
@@ -52,7 +16,7 @@ const tasks = {
     new Promise((resolve) => {
       setTimeout(() => resolve(1), duration);
     }),
-  readEnv: async (key) => {
+  readEnv: async (key: string) => {
     if (key) {
       return process.env[key];
     }
@@ -61,7 +25,7 @@ const tasks = {
   threadId: async () => threadId,
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
-  run: async (plan, _adaptorPaths) => {
+  run: async (plan: any, _adaptorPaths: any) => {
     const workflowId = plan.id;
     publish({
       type: 'worker:workflow-start',
@@ -156,3 +120,5 @@ const tasks = {
   //   } Mb\n heap used = ${hprocess.memoryUsage().heapUsed / 1024 / 1024}mb`
   // );
 };
+
+register(tasks);
