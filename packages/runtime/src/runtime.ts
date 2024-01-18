@@ -29,7 +29,9 @@ export type Options = {
   // In practice this means throwing if someone tries to pass live js
   forceSandbox?: boolean;
 
-  linker?: LinkerOptions;
+  linker?: Omit<LinkerOptions, 'whitelist'> & {
+    whitelist: Array<RegExp | string>;
+  };
 
   callbacks?: ExecutionCallbacks;
 
@@ -60,6 +62,14 @@ const run = (
   }
   if (!opts.hasOwnProperty('statePropsToRemove')) {
     opts.statePropsToRemove = ['configuration'];
+  }
+  if (opts.linker?.whitelist) {
+    opts.linker.whitelist = opts.linker.whitelist.map((w) => {
+      if (typeof w === 'string') {
+        return new RegExp(w);
+      }
+      return w;
+    });
   }
 
   // TODO the plan doesn't have an id, should it be given one?

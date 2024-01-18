@@ -560,3 +560,51 @@ test('run from an adaptor with error', async (t) => {
   // This should safely return with an error
   t.truthy(result.errors['job-1']);
 });
+
+test('accept a whitelist as a regex', async (t) => {
+  const expression = `
+    import { call } from 'blah';
+    export default [call("22")];
+  `;
+
+  try {
+    await run(
+      expression,
+      {},
+      {
+        linker: {
+          whitelist: [/^@opennfn/],
+        },
+      }
+    );
+  } catch (error) {
+    t.truthy(error);
+    t.is(error.severity, 'crash');
+    t.is(error.type, 'ImportError');
+    t.is(error.message, 'module blacklisted: blah');
+  }
+});
+
+test('accept a whitelist as a string', async (t) => {
+  const expression = `
+    import { call } from 'blah';
+    export default [call("22")];
+  `;
+
+  try {
+    await run(
+      expression,
+      {},
+      {
+        linker: {
+          whitelist: ['/^@opennfn/'],
+        },
+      }
+    );
+  } catch (error) {
+    t.truthy(error);
+    t.is(error.severity, 'crash');
+    t.is(error.type, 'ImportError');
+    t.is(error.message, 'module blacklisted: blah');
+  }
+});
