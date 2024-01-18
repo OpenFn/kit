@@ -30,7 +30,7 @@ export type Options = {
   forceSandbox?: boolean;
 
   linker?: Omit<LinkerOptions, 'whitelist'> & {
-    whitelist: Array<RegExp | string>;
+    whitelist?: Array<RegExp | string>;
   };
 
   callbacks?: ExecutionCallbacks;
