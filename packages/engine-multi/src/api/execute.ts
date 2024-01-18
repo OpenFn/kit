@@ -13,7 +13,7 @@ import {
   jobError,
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
-import { ExecutionError, OOMError } from '../errors';
+import { ExecutionError } from '../errors';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;

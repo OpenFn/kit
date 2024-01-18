@@ -1,7 +1,7 @@
 // creates a worker thread
 
 import { Worker } from 'node:worker_threads';
-import { ENGINE_RESOLVE_TASK, ENGINE_RUN_TASK } from '../events';
+import { ENGINE_RUN_TASK } from '../events';
 
 const scriptPath = process.argv[2];
 const memoryLimit = parseInt(process.argv[3] || '500');

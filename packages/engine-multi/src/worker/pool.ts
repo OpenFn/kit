@@ -59,7 +59,7 @@ function createPool(script: string, options: PoolOptions = {}) {
   const init = (child: any) => {
     if (!child) {
       // create a new child process and load the module script into it
-      child = fork(envPath, [script, memoryLimit], {
+      child = fork(envPath, [script, `${memoryLimit}`], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
 
         // child will live if parent dies.
