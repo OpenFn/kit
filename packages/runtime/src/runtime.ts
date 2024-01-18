@@ -30,9 +30,7 @@ export type Options = {
   // In practice this means throwing if someone tries to pass live js
   forceSandbox?: boolean;
 
-  linker?: Omit<LinkerOptions, 'whitelist'> & {
-    whitelist?: Array<RegExp | string>;
-  };
+  linker?: LinkerOptions;
 
   callbacks?: ExecutionCallbacks;
 
@@ -41,6 +39,12 @@ export type Options = {
 
   // all listed props will be removed from the state object at the end of a job
   statePropsToRemove?: string[];
+};
+
+type RawOptions = Omit<Options, 'linker'> & {
+  linker?: Omit<LinkerOptions, 'whitelist'> & {
+    whitelist?: Array<RegExp | string>;
+  };
 };
 
 const defaultState = { data: {}, configuration: {} };
@@ -53,7 +57,7 @@ const defaultLogger = createMockLogger();
 const run = (
   expressionOrXPlan: string | Operation[] | ExecutionPlan,
   state?: State,
-  opts: Options = {}
+  opts: RawOptions = {}
 ) => {
   const logger = opts.logger || defaultLogger;
 
@@ -101,7 +105,7 @@ const run = (
     plan.initialState = defaultState;
   }
 
-  return executePlan(plan, opts, logger);
+  return executePlan(plan, opts as Options, logger);
 };
 
 export default run;
