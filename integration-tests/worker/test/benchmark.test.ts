@@ -8,7 +8,7 @@ import { run, humanMb } from '../src/util';
 let lightning;
 let worker;
 
-const maxConcurrency = 20;
+const maxConcurrency = 1;
 
 test.before(async () => {
   const lightningPort = 4322;

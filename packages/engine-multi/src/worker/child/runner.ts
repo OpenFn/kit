@@ -21,6 +21,7 @@ const run = async (task: string, args: any[]) => {
   const thread = createThread(task, args);
 
   thread.on('error', (e) => {
+    // @ts-ignore
     if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
       e = new OOMError();
 
