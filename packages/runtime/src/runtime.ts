@@ -10,6 +10,7 @@ import type {
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import clone from './util/clone';
+import parseRegex from './util/regex';
 
 export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
@@ -66,7 +67,7 @@ const run = (
   if (opts.linker?.whitelist) {
     opts.linker.whitelist = opts.linker.whitelist.map((w) => {
       if (typeof w === 'string') {
-        return new RegExp(w);
+        return parseRegex(w);
       }
       return w;
     });
