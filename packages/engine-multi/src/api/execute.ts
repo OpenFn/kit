@@ -79,16 +79,13 @@ const execute = async (context: ExecutionContext) => {
       },
     };
 
+    // TODO in the new world order, what sorts of errors are being caught here?
     return callWorker(
       'run',
       [state.plan, runOptions],
       events,
       options.timeout
     ).catch((e: any) => {
-      if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
-        e = new OOMError();
-      }
-
       // TODO are timeout errors being handled nicely here?
       // actually I think the occur outside of here, in the pool
 

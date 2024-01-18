@@ -72,9 +72,7 @@ test.serial('syntax error: illegal throw', (t) => {
   });
 });
 
-// TODO need to think about how to catch the error here
-// Look at how workerpool does it
-test.serial.skip('syntax error: oom error', (t) => {
+test.serial('syntax error: oom error', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'a',
@@ -94,6 +92,7 @@ test.serial.skip('syntax error: oom error', (t) => {
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'OOMError');
       t.is(evt.severity, 'kill');
+      t.is(evt.message, 'Run exceeded maximum memory usage');
       done();
     });
   });

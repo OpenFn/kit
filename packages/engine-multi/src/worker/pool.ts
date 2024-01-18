@@ -18,6 +18,8 @@ type PoolOptions = {
   env?: Record<string, string>; // default environment for workers
 
   silent?: boolean;
+
+  memoryLimitMb?: number;
 };
 
 type RunTaskEvent = {
@@ -42,6 +44,7 @@ const envPath = path.resolve(root, 'dist/worker/child/runner.js');
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}) {
   const capacity = options.capacity || options.maxWorkers || 5;
+  const memoryLimit = options.memoryLimitMb || 500;
 
   let destroyed = false;
 
@@ -56,7 +59,7 @@ function createPool(script: string, options: PoolOptions = {}) {
   const init = (child: any) => {
     if (!child) {
       // create a new child process and load the module script into it
-      child = fork(envPath, [script], {
+      child = fork(envPath, [script, memoryLimit], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
 
         // child will live if parent dies.
@@ -164,7 +167,7 @@ function createPool(script: string, options: PoolOptions = {}) {
             const e = new Error(evt.error.message);
             // @ts-ignore
             e.severity = evt.error.severity;
-            e.name = evt.type;
+            e.name = evt.error.type;
             reject(e);
 
             finish(worker);
