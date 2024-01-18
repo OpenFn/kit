@@ -3,9 +3,12 @@
 import run from '@openfn/runtime';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { SanitizePolicies } from '@openfn/logger';
+import type { NotifyEvents } from '@openfn/runtime';
+
 import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
-import { NotifyEvents } from '@openfn/runtime';
+import serializeError from '../../util/serialize-error';
+import { JobErrorPayload } from '../../events';
 
 type RunOptions = {
   adaptorPaths: Record<string, { path: string }>;
@@ -13,6 +16,13 @@ type RunOptions = {
   sanitize: SanitizePolicies;
   statePropsToRemove?: string[];
   // TODO timeout
+};
+
+const eventMap = {
+  'job-error': (evt: JobErrorPayload) => ({
+    ...evt,
+    error: serializeError(evt.error),
+  }),
 };
 
 register({
@@ -37,10 +47,11 @@ register({
         // For now I am preloading credentials
         // resolveCredential: async (id: string) => {},
         notify: (name: NotifyEvents, payload: any) => {
-          // convert runtime notify events to internal engine events
+          // @ts-ignore
+          const mappedPayload = eventMap[name]?.(payload) ?? payload;
           publish(`worker:${name}`, {
             workflowId: plan.id,
-            ...payload,
+            ...mappedPayload,
           });
         },
       },

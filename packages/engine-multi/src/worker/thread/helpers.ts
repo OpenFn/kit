@@ -9,6 +9,7 @@ import * as workerEvents from '../events';
 import { ExecutionError, ExitError } from '../../errors';
 
 import { publish } from './runtime';
+import serializeError from '../../util/serialize-error';
 
 export const HANDLED_EXIT_CODE = 111111;
 
@@ -61,11 +62,7 @@ export const execute = async (
       // @ts-ignore
       workflowId,
       // Map the error out of the thread in a serializable format
-      error: {
-        message: err.message,
-        type: err.subtype || err.type || err.name,
-        severity: err.severity || 'crash',
-      },
+      error: serializeError(err),
       // TODO job id maybe
     });
   };
@@ -87,7 +84,7 @@ export const execute = async (
     e.severity = 'crash'; // Downgrade this to a crash because it's likely not our fault
     handleError(e);
 
-    // Close down the process justto be 100% sure that all async code stops
+    // Close down the process just to be 100% sure that all async code stops
     // This is in a timeout to give the emitted message time to escape
     // There is a TINY WINDOW in which async code can still run and affect the next attempt
     // This should all go away when we replace workerpool

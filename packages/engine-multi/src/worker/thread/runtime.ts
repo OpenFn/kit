@@ -34,12 +34,13 @@ type Event = {
 export const publish = (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>
-) =>
+) => {
   parentPort!.postMessage({
     type,
     threadId,
     ...payload,
   });
+};
 // export const publish = (evt) =>
 //   new Promise((resolve) => {
 //     process.postMessage(evt, undefined, {}, () => {

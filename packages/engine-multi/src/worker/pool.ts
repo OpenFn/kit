@@ -33,8 +33,11 @@ type ExecOpts = {
   timeout?: number; // ms
 };
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(dirname, 'worker/child/runner.js');
+let root = path.dirname(fileURLToPath(import.meta.url));
+while (!root.endsWith('engine-multi')) {
+  root = path.resolve(root, '..');
+}
+const envPath = path.resolve(root, 'dist/worker/child/runner.js');
 
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}) {

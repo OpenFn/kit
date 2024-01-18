@@ -192,6 +192,30 @@ test.serial('run without error if no state is returned', (t) => {
   });
 });
 
+test.serial('errors get nicely serialized', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const plan = createPlan([
+      {
+        expression: `${withFn}fn((s) => s.data.x.y)`,
+      },
+    ]);
+
+    api.execute(plan).on('job-error', (evt) => {
+      t.is(evt.error.type, 'TypeError');
+      t.is(evt.error.severity, 'fail');
+      t.is(
+        evt.error.message,
+        "TypeError: Cannot read properties of undefined (reading 'y')"
+      );
+      done();
+    });
+  });
+});
+
 test.serial(
   'execute should remove the configuration and response keys',
   (t) => {
