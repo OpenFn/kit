@@ -266,3 +266,27 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
 
   await execute(context);
 });
+
+test.serial('should stringify the whitelist array', async (t) => {
+  let passedOptions;
+
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  const opts = {
+    ...options,
+    whitelist: [/abc/],
+  };
+
+  const context = createContext({ state, options: opts });
+  context.callWorker = (_command, args) => {
+    passedOptions = args[1];
+  };
+
+  await execute(context);
+
+  t.truthy(passedOptions);
+  t.deepEqual(passedOptions.whitelist, ['/abc/']);
+});

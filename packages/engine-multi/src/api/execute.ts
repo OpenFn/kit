@@ -43,9 +43,12 @@ const execute = async (context: ExecutionContext) => {
       );
     }
 
+    // Map any regexes in the whitelist to strings
+    const whitelist = options.whitelist?.map((w) => w.toString());
+
     const runOptions = {
       adaptorPaths,
-      whitelist: options.whitelist,
+      whitelist,
       statePropsToRemove: options.statePropsToRemove,
     };
 
