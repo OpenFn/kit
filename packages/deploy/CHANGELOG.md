@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.4.0
+
+### Minor Changes
+
+- 2f7148c: Support `condition_expression` on edges
+
 ## 0.3.0
 
 ### Minor Changes
