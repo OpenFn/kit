@@ -21,9 +21,12 @@ export const initWorker = async (
 ) => {
   const workerPort = randomPort();
 
-  const engineLogger = createMockLogger('engine', {
+  // const engineLogger = createMockLogger('engine', {
+  //   level: 'debug',
+  //   json: true,
+  // });
+  const engineLogger = createLogger('engine', {
     level: 'debug',
-    json: true,
   });
 
   const engine = await createEngine({
@@ -33,8 +36,8 @@ export const initWorker = async (
   });
 
   const worker = createWorkerServer(engine, {
-    logger: createMockLogger(),
-    // logger: createLogger('worker', { level: 'debug' }),
+    // logger: createMockLogger(),
+    logger: createLogger('worker', { level: 'debug' }),
     port: workerPort,
     lightning: `ws://localhost:${lightningPort}/worker`,
     secret: crypto.randomUUID(),
