@@ -6,12 +6,11 @@ import process from 'node:process';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from '../events';
+import { HANDLED_EXIT_CODE } from '../../events';
 import { ExecutionError, ExitError } from '../../errors';
 
 import { publish } from './runtime';
 import serializeError from '../../util/serialize-error';
-
-export const HANDLED_EXIT_CODE = 111111;
 
 export const createLoggers = (
   workflowId: string,

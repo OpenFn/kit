@@ -1,13 +1,14 @@
 import { fileURLToPath } from 'node:url';
 import { ChildProcess, fork } from 'node:child_process';
-import { ExitError, TimeoutError } from '../errors';
-import { HANDLED_EXIT_CODE } from './thread/helpers';
 import path from 'node:path';
+
+import { ExitError, TimeoutError } from '../errors';
 import {
   ENGINE_REJECT_TASK,
   ENGINE_RESOLVE_TASK,
   ENGINE_RUN_TASK,
 } from './events';
+import { HANDLED_EXIT_CODE } from '../events';
 
 // NB this is the ATTEMPT timeout
 const DEFAULT_TIMEOUT = 1000 * 60 * 10;
