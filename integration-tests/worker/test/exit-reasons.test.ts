@@ -48,7 +48,6 @@ test('crash: syntax error', async (t) => {
   const result = await run(attempt);
 
   const { reason, error_type, error_message } = result;
-
   t.is(reason, 'crash');
   t.is(error_type, 'CompileError');
   t.regex(error_message, /Unexpected token \(1:9\)$/);

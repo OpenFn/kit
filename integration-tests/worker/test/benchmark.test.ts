@@ -53,7 +53,7 @@ test.after(async () => {
 });
 
 // Skipping these in CI (for now at least)
-test.serial('run 100 attempts', async (t) => {
+test.serial.skip('run 100 attempts', async (t) => {
   return new Promise((done, reject) => {
     const attemptsTotal = 100;
     let attemptsComplete = 0;

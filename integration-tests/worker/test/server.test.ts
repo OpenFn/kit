@@ -52,7 +52,7 @@ const getPort = () => ++portgen;
 test.serial('worker should start, respond to 200, and close', async (t) => {
   workerProcess = await spawnServer();
 
-  // The runnign server should respond to a get at root
+  // The running server should respond to a get at root
   let { status } = await fetch('http://localhost:2222/');
   t.is(status, 200);
 
