@@ -53,6 +53,7 @@ export function parseAndValidate(input: string): {
           pushUniqueKey(workflow, (workflow as any).key.value);
 
           validateJobs((workflow as any).value);
+          // validateEdges((workflow as any).value);
         }
       }
     } else {
@@ -87,6 +88,12 @@ export function parseAndValidate(input: string): {
           });
 
           return doc.createPair('jobs', {});
+        }
+      }
+
+      if (pair.key && pair.key.value === 'condition_expression') {
+        if (typeof pair.value.value !== 'string') {
+          pair.value.value = String(pair.value.value);
         }
       }
     },
