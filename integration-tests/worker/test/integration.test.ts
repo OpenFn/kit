@@ -327,14 +327,14 @@ test('blacklist a non-openfn adaptor', (t) => {
   });
 });
 
-test.only('a timeout error should still call run-complete', (t) => {
+test('a timeout error should still call run-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
       jobs: [
         {
-          adaptor: '@openfn/language-common@latest', // version lock to something stable?
-          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 2000)))',
+          // don't try to autoinstall an adaptor because it'll count in the timeout
+          body: 'export default [(s) => new Promise((resolve) => setTimeout(() => resolve(s), 2000))]',
         },
       ],
       options: {
