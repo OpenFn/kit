@@ -327,7 +327,7 @@ test('blacklist a non-openfn adaptor', (t) => {
   });
 });
 
-test('a timeout error should still call run-complete', (t) => {
+test.only('a timeout error should still call run-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
