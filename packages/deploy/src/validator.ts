@@ -53,7 +53,6 @@ export function parseAndValidate(input: string): {
           pushUniqueKey(workflow, (workflow as any).key.value);
 
           validateJobs((workflow as any).value);
-          // validateEdges((workflow as any).value);
         }
       }
     } else {
