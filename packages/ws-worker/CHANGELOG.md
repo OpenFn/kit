@@ -86,8 +86,8 @@
 ### Patch Changes
 
 - 22339c6: Add MAX_RUN_MEMORY env var and option to limit the memory available to each run
-- 04ac3cc: Include duration and threadid in run-complete
-- 340b96e: Send memory usage to lightning on run:complete
+- 04ac3cc: Include duration and threadid in step-complete
+- 340b96e: Send memory usage to lightning on step:complete
 - Updated dependencies
   - @openfn/engine-multi@0.2.2
   - @openfn/runtime@0.2.1

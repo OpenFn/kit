@@ -94,7 +94,7 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
         t.deepEqual(pending[a.id], {
           status: 'complete',
           logs: [],
-          runs: {},
+          steps: {},
         });
         t.deepEqual(results[a.id].state, { answer: 42 });
         done();

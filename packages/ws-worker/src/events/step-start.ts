@@ -3,11 +3,11 @@ import { JobStartPayload } from '@openfn/engine-multi';
 import { timestamp } from '@openfn/logger';
 
 import pkg from '../../package.json' assert { type: 'json' };
-import { RUN_START, RunStartPayload } from '../events';
+import { STEP_START, StepStartPayload } from '../events';
 import { sendEvent, Context, onJobLog } from '../api/execute';
 import calculateVersionString from '../util/versions';
 
-export default async function onRunStart(
+export default async function onStepStart(
   context: Context,
   event: JobStartPayload
 ) {
@@ -17,7 +17,7 @@ export default async function onRunStart(
   const { channel, state } = context;
 
   // generate a run id and write it to state
-  state.activeRun = crypto.randomUUID();
+  state.activeStep = crypto.randomUUID();
   state.activeJob = event.jobId;
 
   const job = state.plan.jobs.find(({ id }) => id === event.jobId);
@@ -32,18 +32,18 @@ export default async function onRunStart(
   // Send the log with its own little state object
   // to preserve the run id
   // Otherwise, by the time the log sends,
-  // the activerun could have changed
+  // the activestep could have changed
   // TODO if I fix ordering I think I can kill this
   const versionLogContext = {
     ...context,
     state: {
       ...state,
-      activeRun: state.activeRun,
+      activeStep: state.activeStep,
     },
   };
 
-  await sendEvent<RunStartPayload>(channel, RUN_START, {
-    run_id: state.activeRun!,
+  await sendEvent<StepStartPayload>(channel, STEP_START, {
+    step_id: state.activeStep!,
     job_id: state.activeJob!,
     input_dataclip_id,
 
@@ -51,7 +51,7 @@ export default async function onRunStart(
   });
 
   const versionMessage = calculateVersionString(
-    versionLogContext.state.activeRun,
+    versionLogContext.state.activeStep,
     versions,
     job?.adaptor
   );

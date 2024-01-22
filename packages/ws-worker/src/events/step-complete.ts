@@ -1,13 +1,13 @@
 import crypto from 'node:crypto';
 
-import { RUN_COMPLETE, RunCompletePayload } from '../events';
+import { STEP_COMPLETE, StepCompletePayload } from '../events';
 import { stringify } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
 import { sendEvent, Context } from '../api/execute';
 
 import type { JobCompletePayload } from '@openfn/engine-multi';
 
-export default function onRunComplete(
+export default function onStepComplete(
   { channel, state }: Context,
   event: JobCompletePayload,
   // TODO this isn't terribly graceful, but accept an error for crashes
@@ -15,7 +15,7 @@ export default function onRunComplete(
 ) {
   const dataclipId = crypto.randomUUID();
 
-  const run_id = state.activeRun as string;
+  const step_id = state.activeStep as string;
   const job_id = state.activeJob as string;
 
   if (!state.dataclips) {
@@ -25,7 +25,7 @@ export default function onRunComplete(
 
   state.dataclips[dataclipId] = event.state;
 
-  delete state.activeRun;
+  delete state.activeStep;
   delete state.activeJob;
 
   // TODO right now, the last job to run will be the result for the attempt
@@ -49,7 +49,7 @@ export default function onRunComplete(
   state.reasons[job_id] = { reason, error_message, error_type };
 
   const evt = {
-    run_id,
+    step_id,
     job_id,
     output_dataclip_id: dataclipId,
     output_dataclip: stringify(outputState),
@@ -62,5 +62,5 @@ export default function onRunComplete(
     duration: event.duration,
     thread_id: event.threadId,
   };
-  return sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, evt);
+  return sendEvent<StepCompletePayload>(channel, STEP_COMPLETE, evt);
 }

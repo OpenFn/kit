@@ -6,8 +6,8 @@ import {
   AttemptStartPayload,
   GET_CREDENTIAL,
   GET_DATACLIP,
-  RUN_COMPLETE,
-  RUN_START,
+  STEP_COMPLETE,
+  STEP_START,
 } from '../events';
 import { AttemptOptions, Channel, AttemptState } from '../types';
 import { getWithReply, createAttemptState } from '../util';
@@ -22,15 +22,15 @@ import { ExecutionPlan } from '@openfn/runtime';
 
 // TODO: I want to move all event handlers out into their own files
 // TODO just export the index yeah?
-import handleRunComplete from '../events/run-complete';
-import handleRunStart from '../events/run-start';
+import handleStepComplete from '../events/step-complete';
+import handleStepStart from '../events/step-start';
 import handleAttemptComplete from '../events/atttempt-complete';
 import handleAttemptError from '../events/attempt-error';
 import createThrottler from '../util/throttle';
 
 const enc = new TextDecoder('utf-8');
 
-export { handleRunComplete, handleRunStart };
+export { handleStepComplete, handleStepStart };
 
 export type Context = {
   channel: Channel;
@@ -45,8 +45,8 @@ export type Context = {
 // mapping engine events to lightning events
 const eventMap = {
   'workflow-start': ATTEMPT_START,
-  'job-start': RUN_START,
-  'job-complete': RUN_COMPLETE,
+  'job-start': STEP_START,
+  'job-complete': STEP_COMPLETE,
   'workflow-log': ATTEMPT_LOG,
   'workflow-complete': ATTEMPT_COMPLETE,
 };
@@ -105,8 +105,8 @@ export function execute(
   const listeners = Object.assign(
     {},
     addEvent('workflow-start', throttle(onWorkflowStart)),
-    addEvent('job-start', throttle(handleRunStart)),
-    addEvent('job-complete', throttle(handleRunComplete)),
+    addEvent('job-start', throttle(handleStepStart)),
+    addEvent('job-complete', throttle(handleStepComplete)),
     addEvent('job-error', throttle(onJobError)),
     addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
@@ -180,16 +180,16 @@ export function onJobError(context: Context, event: any) {
 
   // awkward error handling
   // If the error is written to state, it's a fail,
-  // and we don't want to send that to handleRunComplete
+  // and we don't want to send that to handleStepComplete
   // because it'll count it as a crash
   // This isn't very good: maybe we shouldn't trigger an error
   // at all for a fail state?
   const { state, error, jobId } = event;
   // This test is horrible too
   if (state?.errors?.[jobId]?.message === error.message) {
-    return handleRunComplete(context, event);
+    return handleStepComplete(context, event);
   } else {
-    return handleRunComplete(context, event, event.error);
+    return handleStepComplete(context, event, event.error);
   }
 }
 
@@ -212,8 +212,8 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
     timestamp: timeInMicroseconds.toString(),
   };
 
-  if (state.activeRun) {
-    log.run_id = state.activeRun;
+  if (state.activeStep) {
+    log.step_id = state.activeStep;
   }
 
   return sendEvent<AttemptLogPayload>(channel, ATTEMPT_LOG, log);

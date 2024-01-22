@@ -7,8 +7,8 @@ import { execute as doExecute } from '../src/api/execute';
 import { mockChannel } from '../src/mock/sockets';
 
 import {
-  RUN_START,
-  RUN_COMPLETE,
+  STEP_START,
+  STEP_COMPLETE,
   ATTEMPT_LOG,
   ATTEMPT_START,
   ATTEMPT_COMPLETE,
@@ -45,9 +45,9 @@ const execute = async (plan, options = {}) =>
     // In these test we assume that the correct messages are sent to the channel
     const channel = mockChannel({
       [ATTEMPT_START]: async () => true,
-      [RUN_START]: async () => true,
+      [STEP_START]: async () => true,
       [ATTEMPT_LOG]: async () => true,
-      [RUN_COMPLETE]: async () => true,
+      [STEP_COMPLETE]: async () => true,
       [ATTEMPT_COMPLETE]: async () => true,
     });
 

@@ -35,10 +35,10 @@ const humanMb = (sizeInBytes: number) => Math.round(sizeInBytes / 1024 / 1024);
 
 const run = async (t, attempt) => {
   return new Promise<any>(async (done, reject) => {
-    lightning.on('run:complete', ({ payload }) => {
+    lightning.on('step:complete', ({ payload }) => {
       // TODO friendlier job names for this would be nice (rather than run ids)
       t.log(
-        `run ${payload.run_id} done in ${payload.duration / 1000}s [${humanMb(
+        `run ${payload.step_id} done in ${payload.duration / 1000}s [${humanMb(
           payload.mem.job
         )} / ${humanMb(payload.mem.system)}mb] [thread ${payload.thread_id}]`
       );
@@ -90,11 +90,11 @@ test.serial('start from a trigger node', async (t) => {
     dataclip_id: 's1',
   });
 
-  lightning.once('run:start', (evt) => {
+  lightning.once('step:start', (evt) => {
     runStartEvent = evt.payload;
   });
 
-  lightning.once('run:complete', (evt) => {
+  lightning.once('step:complete', (evt) => {
     runCompleteEvent = evt.payload;
   });
 
@@ -102,7 +102,7 @@ test.serial('start from a trigger node', async (t) => {
 
   t.truthy(runStartEvent);
   t.is(runStartEvent.job_id, job.id);
-  t.truthy(runStartEvent.run_id);
+  t.truthy(runStartEvent.step_id);
   t.is(runStartEvent.input_dataclip_id, 's1');
 
   t.truthy(runCompleteEvent);
@@ -145,14 +145,14 @@ test.serial('run parallel jobs', async (t) => {
   // This saves the dataclip returned by a job
   const outputId = {};
 
-  lightning.on('run:start', (evt) => {
+  lightning.on('step:start', (evt) => {
     // x and y should both be passed the dataclip produced by job a
-    if (evt.payload.run_id === x.id || evt.payload.run_id === y.id) {
+    if (evt.payload.step_id === x.id || evt.payload.step_id === y.id) {
       evt.payload.input_dataclip_id = outputId[a.id];
     }
   });
 
-  lightning.on('run:complete', (evt) => {
+  lightning.on('step:complete', (evt) => {
     // save the output dataclip
     outputJson[evt.payload.job_id] = evt.payload.output_dataclip_id;
     outputJson[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);

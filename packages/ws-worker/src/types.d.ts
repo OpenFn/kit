@@ -91,7 +91,7 @@ export type AttemptOptions = {
 
 // Internal server state for each attempt
 export type AttemptState = {
-  activeRun?: string;
+  activeStep?: string;
   activeJob?: string;
   plan: ExecutionPlan;
   options: AttemptOptions;

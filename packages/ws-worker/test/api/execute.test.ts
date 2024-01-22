@@ -2,8 +2,8 @@ import test from 'ava';
 import { JSONLog, createMockLogger } from '@openfn/logger';
 
 import {
-  RUN_START,
-  RUN_COMPLETE,
+  STEP_START,
+  STEP_COMPLETE,
   ATTEMPT_LOG,
   ATTEMPT_START,
   ATTEMPT_COMPLETE,
@@ -34,9 +34,9 @@ const noop = () => true;
 
 const mockEventHandlers = {
   [ATTEMPT_START]: noop,
-  [RUN_START]: noop,
+  [STEP_START]: noop,
   [ATTEMPT_LOG]: noop,
-  [RUN_COMPLETE]: noop,
+  [STEP_COMPLETE]: noop,
   [ATTEMPT_COMPLETE]: noop,
 };
 
@@ -118,12 +118,12 @@ test('jobLog should should send a log event inside a run', async (t) => {
   const state = {
     plan,
     activeJob: jobId,
-    activeRun: 'b',
+    activeStep: 'b',
   } as AttemptState;
 
   const channel = mockChannel({
     [ATTEMPT_LOG]: (evt) => {
-      t.truthy(evt.run_id);
+      t.truthy(evt.step_id);
       t.deepEqual(evt.message, log.message);
       t.is(evt.level, log.level);
       t.is(evt.source, log.name);
@@ -134,16 +134,16 @@ test('jobLog should should send a log event inside a run', async (t) => {
   await onJobLog({ channel, state }, log);
 });
 
-test('jobError should trigger run:complete with a reason', async (t) => {
-  let runCompleteEvent;
+test('jobError should trigger step:complete with a reason', async (t) => {
+  let stepCompleteEvent;
 
   const state = createAttemptState({ id: 'attempt-23' } as Attempt);
   state.activeJob = 'job-1';
-  state.activeRun = 'b';
+  state.activeStep = 'b';
 
   const channel = mockChannel({
-    [RUN_COMPLETE]: (evt) => {
-      runCompleteEvent = evt;
+    [STEP_COMPLETE]: (evt) => {
+      stepCompleteEvent = evt;
       return true;
     },
   });
@@ -155,20 +155,20 @@ test('jobError should trigger run:complete with a reason', async (t) => {
   };
   await onJobError({ channel, state }, event);
 
-  t.is(runCompleteEvent.reason, 'kill');
-  t.is(runCompleteEvent.error_message, 'nope');
-  t.is(runCompleteEvent.error_type, 'TEST');
-  t.deepEqual(runCompleteEvent.output_dataclip, JSON.stringify(exitState));
+  t.is(stepCompleteEvent.reason, 'kill');
+  t.is(stepCompleteEvent.error_message, 'nope');
+  t.is(stepCompleteEvent.error_type, 'TEST');
+  t.deepEqual(stepCompleteEvent.output_dataclip, JSON.stringify(exitState));
 });
 
-test('jobError should trigger run:complete with a reason and default state', async (t) => {
-  let runCompleteEvent;
+test('jobError should trigger step:complete with a reason and default state', async (t) => {
+  let stepCompleteEvent;
 
   const state = createAttemptState({ id: 'attempt-23' } as Attempt);
 
   const channel = mockChannel({
-    [RUN_COMPLETE]: (evt) => {
-      runCompleteEvent = evt;
+    [STEP_COMPLETE]: (evt) => {
+      stepCompleteEvent = evt;
       return true;
     },
   });
@@ -178,7 +178,7 @@ test('jobError should trigger run:complete with a reason and default state', asy
   };
   await onJobError({ channel, state }, event);
 
-  t.deepEqual(runCompleteEvent.output_dataclip, '{}');
+  t.deepEqual(stepCompleteEvent.output_dataclip, '{}');
 });
 
 test('workflowStart should send an empty attempt:start event', async (t) => {
@@ -414,9 +414,9 @@ test('execute should call all events on the socket', async (t) => {
     GET_CREDENTIAL,
     // GET_DATACLIP, // TODO not really implemented properly yet
     ATTEMPT_START,
-    RUN_START,
+    STEP_START,
     ATTEMPT_LOG,
-    RUN_COMPLETE,
+    STEP_COMPLETE,
     ATTEMPT_COMPLETE,
   ];
 

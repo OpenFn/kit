@@ -12,5 +12,5 @@ export const GET_DATACLIP = 'fetch:dataclip';
 export const ATTEMPT_START = 'attempt:start';
 export const ATTEMPT_COMPLETE = 'attempt:complete';
 export const ATTEMPT_LOG = 'attempt:log';
-export const RUN_START = 'run:start';
-export const RUN_COMPLETE = 'run:complete';
+export const STEP_START = 'step:start';
+export const STEP_COMPLETE = 'step:complete';

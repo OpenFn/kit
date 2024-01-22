@@ -114,23 +114,23 @@ export type AttemptLogPayload = {
   level?: string;
   source?: string; // namespace
   job_id?: string;
-  run_id?: string;
+  step_id?: string;
 };
 export type AttemptLogReply = void;
 
-export type RunStartPayload = {
+export type StepStartPayload = {
   job_id: string;
-  run_id: string;
+  step_id: string;
   attempt_id?: string;
   input_dataclip_id?: string;
 };
-export type RunStartReply = void;
+export type StepStartReply = void;
 
-export type RunCompletePayload = ExitReason & {
+export type StepCompletePayload = ExitReason & {
   attempt_id?: string;
   job_id: string;
-  run_id: string;
+  step_id: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
 };
-export type RunCompleteReply = void;
+export type StepCompleteReply = void;

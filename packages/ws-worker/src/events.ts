@@ -39,29 +39,29 @@ export type AttemptLogPayload = {
   level?: string;
   source?: string; // namespace
   job_id?: string;
-  run_id?: string;
+  step_id?: string;
 };
 export type AttemptLogReply = void;
 
-export const RUN_START = 'run:start';
-export type RunStartPayload = {
+export const STEP_START = 'step:start';
+export type StepStartPayload = {
   job_id: string;
-  run_id: string;
+  step_id: string;
   attempt_id?: string;
   input_dataclip_id?: string;
   versions: Record<string, string>;
 };
-export type RunStartReply = void;
+export type StepStartReply = void;
 
-export const RUN_COMPLETE = 'run:complete';
-export type RunCompletePayload = ExitReason & {
+export const STEP_COMPLETE = 'step:complete';
+export type StepCompletePayload = ExitReason & {
   attempt_id?: string;
   job_id: string;
-  run_id: string;
+  step_id: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
 };
-export type RunCompleteReply = void;
+export type StepCompleteReply = void;
 
 // These are internal server events
 // Explicitly (and awkwardly) namespaced to avoid confusion

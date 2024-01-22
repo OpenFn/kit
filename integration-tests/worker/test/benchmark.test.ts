@@ -88,7 +88,7 @@ test.serial.skip('run 100 attempts', async (t) => {
       lightning.enqueueAttempt(attempt);
     }
 
-    lightning.on('run:complete', (evt) => {
+    lightning.on('step:complete', (evt) => {
       // May want to disable this  but it's nice feedback
       t.log('Completed ', evt.attemptId);
 

@@ -15,8 +15,8 @@ import {
   GET_ATTEMPT,
   GET_CREDENTIAL,
   GET_DATACLIP,
-  RUN_COMPLETE,
-  RUN_START,
+  STEP_COMPLETE,
+  STEP_START,
 } from './events';
 import { extractAttemptId, stringify } from './util';
 
@@ -37,10 +37,10 @@ import type {
   GetCredentialReply,
   GetDataclipPayload,
   GetDataClipReply,
-  RunCompletePayload,
-  RunCompleteReply,
-  RunStartPayload,
-  RunStartReply,
+  StepCompletePayload,
+  StepCompleteReply,
+  StepStartPayload,
+  StepStartReply,
 } from './types';
 
 // dumb cloning id
@@ -118,7 +118,7 @@ const createSocketAPI = (
     state.pending[attemptId] = {
       status: 'started',
       logs: [],
-      runs: {},
+      steps: {},
     };
 
     const wrap = <T>(
@@ -145,9 +145,9 @@ const createSocketAPI = (
       [ATTEMPT_START]: wrap(handleStartAttempt),
       [GET_CREDENTIAL]: wrap(getCredential),
       [GET_DATACLIP]: wrap(getDataclip),
-      [RUN_START]: wrap(handleRunStart),
+      [STEP_START]: wrap(handleStepStart),
       [ATTEMPT_LOG]: wrap(handleLog),
-      [RUN_COMPLETE]: wrap(handleRunComplete),
+      [STEP_COMPLETE]: wrap(handleStepComplete),
       [ATTEMPT_COMPLETE]: wrap((...args) => {
         handleAttemptComplete(...args);
         unsubscribe();
@@ -369,28 +369,28 @@ const createSocketAPI = (
     });
   }
 
-  function handleRunStart(
+  function handleStepStart(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<RunStartPayload>
+    evt: PhoenixEvent<StepStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { run_id, job_id, input_dataclip_id } = evt.payload;
+    const { step_id, job_id, input_dataclip_id } = evt.payload;
 
     const [_, attemptId] = topic.split(':');
     if (!state.dataclips) {
       state.dataclips = {};
     }
-    state.pending[attemptId].runs[job_id] = run_id;
+    state.pending[attemptId].runs[job_id] = step_id;
 
     let payload: any = {
       status: 'ok',
     };
 
-    if (!run_id) {
+    if (!step_id) {
       payload = {
         status: 'error',
-        response: 'no run_id',
+        response: 'no step_id',
       };
     } else if (!job_id) {
       payload = {
@@ -404,7 +404,7 @@ const createSocketAPI = (
       };
     }
 
-    ws.reply<RunStartReply>({
+    ws.reply<StepStartReply>({
       ref,
       join_ref,
       topic,
@@ -412,10 +412,10 @@ const createSocketAPI = (
     });
   }
 
-  function handleRunComplete(
+  function handleStepComplete(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<RunCompletePayload>
+    evt: PhoenixEvent<StepCompletePayload>
   ) {
     const { ref, join_ref, topic } = evt;
     const { output_dataclip_id, output_dataclip } = evt.payload;
@@ -440,7 +440,7 @@ const createSocketAPI = (
     }
 
     // be polite and acknowledge the event
-    ws.reply<RunCompleteReply>({
+    ws.reply<StepCompleteReply>({
       ref,
       join_ref,
       topic,
