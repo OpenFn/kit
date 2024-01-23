@@ -1,38 +1,44 @@
 import test from 'ava';
 import path from 'node:path';
 
-import createPool from '../../src/worker/pool';
+import createPool, {
+  ChildProcessPool,
+  returnToPool,
+} from '../../src/worker/pool';
+import { createMockLogger } from '@openfn/logger';
 
 const workerPath = path.resolve('dist/test/worker-functions.js');
 
+const logger = createMockLogger();
+
 test('create a pool with empty processes (5 by default)', (t) => {
-  const pool = createPool('.');
+  const pool = createPool('.', {}, logger);
 
   t.is(pool._pool.length, 5);
   t.true(pool._pool.every((f) => f === false));
 });
 
 test('create a pool with 10 empty processes', (t) => {
-  const pool = createPool('.', { capacity: 10 });
+  const pool = createPool('.', { capacity: 10 }, logger);
 
   t.is(pool._pool.length, 10);
   t.true(pool._pool.every((f) => f === false));
 });
 
 test('run a task and return the result', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
   const result = await pool.exec('test', []);
   t.is(result, 42);
 });
 
 test('run a task with arguments and return the result', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
   const result = await pool.exec('test', [22]);
   t.is(result, 22);
 });
 
 test('task runs inside a different process id', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
   const parentPid = process.pid;
 
   const childPid = await pool.exec('threadId', []);
@@ -46,7 +52,7 @@ test('task runs inside a different process id', async (t) => {
 });
 
 test('Remove a worker from the pool and release it when finished', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
 
   t.is(pool._pool.length, 5);
   const p = pool.exec('test', []);
@@ -60,13 +66,13 @@ test('Remove a worker from the pool and release it when finished', async (t) => 
 });
 
 test('run a wait task', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
   await pool.exec('wait', []);
   t.pass();
 });
 
 test('add tasks to a queue if the pool is empty', async (t) => {
-  const pool = createPool(workerPath, { capacity: 1 });
+  const pool = createPool(workerPath, { capacity: 1 }, logger);
   t.is(pool._pool.length, 1);
 
   const p1 = pool.exec('wait', []);
@@ -84,7 +90,7 @@ test('add tasks to a queue if the pool is empty', async (t) => {
 });
 
 test('add tasks with args to a queue if the pool is empty', async (t) => {
-  const pool = createPool(workerPath, { capacity: 1 });
+  const pool = createPool(workerPath, { capacity: 1 }, logger);
   t.is(pool._pool.length, 1);
 
   const p1 = pool.exec('wait', []);
@@ -104,7 +110,7 @@ test('run through a queue of tasks', async (t) => {
   const count = 30;
   const capacity = 10;
 
-  const pool = createPool(workerPath, { capacity: capacity });
+  const pool = createPool(workerPath, { capacity }, logger);
   t.is(pool._queue.length, 0);
   t.is(pool._pool.length, capacity);
 
@@ -120,7 +126,7 @@ test('run through a queue of tasks', async (t) => {
 // This might be a bit of an artificial test
 // because the actual inner runtime should never throw
 test('throw if the task throws', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
 
   try {
     await pool.exec('throw', []);
@@ -131,14 +137,14 @@ test('throw if the task throws', async (t) => {
 });
 
 test('destroy should handle un-initialised workers', async (t) => {
-  const pool = createPool(workerPath, { capacity: 10 });
+  const pool = createPool(workerPath, { capacity: 10 }, logger);
   pool.destroy();
   t.is(pool._pool.length, 0);
 });
 
 test('destroy should close all child processes', async (t) => {
   // warm up a pool
-  const pool = createPool(workerPath, { capacity: 10 });
+  const pool = createPool(workerPath, { capacity: 10 }, logger);
 
   const queue = new Array(10).fill(true).map(() => pool.exec('test'));
   await Promise.all(queue);
@@ -157,7 +163,7 @@ test('destroy should close all child processes', async (t) => {
 
 test('destroy gracefully', (t) => {
   return new Promise((done) => {
-    const pool = createPool(workerPath);
+    const pool = createPool(workerPath, {}, logger);
     const workers = Object.values(pool._allWorkers);
 
     t.is(pool._pool.length, 5);
@@ -181,7 +187,7 @@ test('destroy gracefully', (t) => {
 // TODO should the worker throw on sigterm?
 test('destroy immediately', (t) => {
   return new Promise((done) => {
-    const pool = createPool(workerPath);
+    const pool = createPool(workerPath, {}, logger);
 
     t.is(pool._pool.length, 5);
 
@@ -213,14 +219,14 @@ test('destroy immediately', (t) => {
 // If we've claimed and the claimed attempt is waiting, we should probably run it
 // so this is invalid
 test.skip("don't process the queue after destroy", () => {
-  const pool = createPool(workerPath, { capacity: 1 });
+  const pool = createPool(workerPath, { capacity: 1 }, logger);
 
   pool.exec('wait', [100]);
   pool.exec('wait', [100]);
 });
 
 test('throw on exec if destroyed', (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
 
   t.is(pool._pool.length, 5);
 
@@ -232,7 +238,7 @@ test('throw on exec if destroyed', (t) => {
 });
 
 test('listen to an event', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
 
   await pool.exec('test', [20], {
     on: (evt) => {
@@ -245,7 +251,7 @@ test('listen to an event', async (t) => {
 });
 
 test('listen to an event in two successive tasks', async (t) => {
-  const pool = createPool(workerPath, { capacity: 1 });
+  const pool = createPool(workerPath, { capacity: 1 }, logger);
 
   let count = 0;
 
@@ -270,7 +276,7 @@ test('listen to an event in two successive tasks', async (t) => {
 
 test('listen to an event in two successive tasks after a queue', async (t) => {
   return new Promise((done) => {
-    const pool = createPool(workerPath, { capacity: 1 });
+    const pool = createPool(workerPath, { capacity: 1 }, logger);
 
     let count = 0;
 
@@ -300,7 +306,7 @@ test('listen to an event in two successive tasks after a queue', async (t) => {
 // test('listeners are removed from a worker after a task executes', async (t) => {
 //   const events = [];
 
-//   const pool = createPool(workerPath, { capacity: 1 });
+//   const pool = createPool(workerPath, { capacity: 1 }, logger);
 //   t.is(pool._pool.length, 1);
 
 //   const p1 = await pool.exec('wait', []);
@@ -314,7 +320,7 @@ test('listen to an event in two successive tasks after a queue', async (t) => {
 // });
 
 test('throw if task times out', async (t) => {
-  const pool = createPool(workerPath);
+  const pool = createPool(workerPath, {}, logger);
 
   await t.throwsAsync(() => pool.exec('test', [], { timeout: 5 }), {
     name: 'TimeoutError',
@@ -324,7 +330,7 @@ test('throw if task times out', async (t) => {
 
 test('after timeout, destroy the worker and reset the pool', async (t) => {
   return new Promise((done) => {
-    const pool = createPool(workerPath, { capacity: 2 });
+    const pool = createPool(workerPath, { capacity: 2 }, logger);
     t.deepEqual(pool._pool, [false, false]);
 
     pool.exec('test', [], { timeout: 5 }).catch(() => {
@@ -337,4 +343,33 @@ test('after timeout, destroy the worker and reset the pool', async (t) => {
     let [worker] = Object.values(pool._allWorkers);
     t.false(worker.killed);
   });
+});
+
+test('returnToPool: add to the start of a full pool', (t) => {
+  const pool = [
+    { pid: 1 },
+    { pid: 2 },
+    { pid: 3 },
+    { pid: 4 },
+  ] as ChildProcessPool;
+
+  returnToPool(pool, { pid: 5 } as any);
+
+  t.deepEqual(pool[0], { pid: 5 });
+});
+
+test('returnToPool: add to the end of an empty pool', (t) => {
+  const pool = [false, false, false, false] as ChildProcessPool;
+
+  returnToPool(pool, { pid: 5 } as any);
+
+  t.deepEqual(pool[4], { pid: 5 });
+});
+
+test('returnToPool: add to the middle of a empty pool', (t) => {
+  const pool = [false, false, { pid: 1 }, { pid: 2 }] as ChildProcessPool;
+
+  returnToPool(pool, { pid: 5 } as any);
+
+  t.deepEqual(pool[2], { pid: 5 });
 });

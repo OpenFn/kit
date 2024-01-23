@@ -37,11 +37,28 @@ type ExecOpts = {
   timeout?: number; // ms
 };
 
+export type ChildProcessPool = Array<ChildProcess | false>;
+
+type QueuedTask = {
+  task: string;
+  args: any[];
+  opts: ExecOpts;
+  resolve: (...args: any[]) => any;
+};
+
 let root = path.dirname(fileURLToPath(import.meta.url));
 while (!root.endsWith('engine-multi')) {
   root = path.resolve(root, '..');
 }
 const envPath = path.resolve(root, 'dist/worker/child/runner.js');
+
+// Restore a child at the first non-child process position
+// this encourages the child to be reused before creating a new one
+export const returnToPool = (pool: ChildProcessPool, worker: ChildProcess) => {
+  let idx = pool.findIndex((child) => child?.pid);
+  if (idx === -1) idx = pool.length;
+  pool.splice(idx, 0, worker);
+};
 
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
@@ -52,22 +69,18 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   let destroyed = false;
 
   // a pool of processes
-  const pool = new Array(capacity).fill(false);
+  const pool: ChildProcessPool = new Array(capacity).fill(false);
 
-  const queue: any[] = [];
+  const queue: QueuedTask[] = [];
 
   // Keep track of all the workers we created
   const allWorkers: Record<number, ChildProcess> = {};
 
-  const init = (child: any) => {
+  const init = (child: ChildProcess | false) => {
     if (!child) {
       // create a new child process and load the module script into it
       child = fork(envPath, [script, `${memoryLimit}`], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
-
-        // child will live if parent dies.
-        // although tbf, what's the point?
-        // detached: true,
 
         env: options.env || {},
 
@@ -76,7 +89,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         silent: options.silent,
       });
       logger.debug('pool: Created new child process', child.pid);
-      allWorkers[child.pid] = child;
+      allWorkers[child.pid!] = child;
     } else {
       logger.debug('pool: Using existing child process', child.pid);
     }
@@ -89,12 +102,12 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     if (destroyed) {
       killWorker(worker);
     } else {
-      // restore the worker to the pool
-      pool.splice(0, 0, worker);
+      returnToPool(pool, worker);
 
-      if (queue.length) {
+      const next = queue.pop();
+      if (next) {
         // TODO actually I think if there's a queue we should empty it first
-        const { task, args, resolve, opts } = queue.shift();
+        const { task, args, resolve, opts } = next;
         logger.debug('pool: Picking up deferred task', task);
 
         // TODO don't process the queue if destroyed
@@ -103,7 +116,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     }
   };
 
-  const exec = (task: string, args: any[], opts: ExecOpts = {}) => {
+  const exec = (task: string, args: any[] = [], opts: ExecOpts = {}) => {
     // TODO Throw if destroyed
     if (destroyed) {
       throw new Error('Worker destroyed');
