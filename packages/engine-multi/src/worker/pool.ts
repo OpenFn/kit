@@ -62,10 +62,12 @@ export const returnToPool = (pool: ChildProcessPool, worker: ChildProcess) => {
 
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
-  logger.debug('pool: Creating new child process pool');
   const capacity = options.capacity || options.maxWorkers || 5;
   const memoryLimit = options.memoryLimitMb || 500;
 
+  logger.debug(
+    `pool: Creating new child process pool | capacity: ${capacity} | memory: ${memoryLimit}`
+  );
   let destroyed = false;
 
   // a pool of processes
@@ -128,6 +130,16 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     }
 
     const promise = new Promise(async (resolve, reject) => {
+      // TODO what should we do if a process in the pool dies, perhaps due to OOM?
+      const onExit = (code: number) => {
+        if (code !== HANDLED_EXIT_CODE) {
+          logger.debug('pool: Worker exited unexpectedly', task);
+          clearTimeout(timeout);
+          reject(new ExitError(code));
+          finish(worker);
+        }
+      };
+
       let timeout: NodeJS.Timeout;
       let didTimeout = false;
       if (!pool.length) {
@@ -135,16 +147,26 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         return queue.push({ task, args, opts, resolve });
       }
 
-      // what happens if the queue is full?
-      // Do we throw?
-      // workerpool would queue it for us I think
-      // but I think the worker is more responsible for this.  hmm.
       const worker = init(pool.pop()!);
+
       // Start a timeout running
       if (opts.timeout && opts.timeout !== Infinity) {
-        timeout = setTimeout(() => {
-          timeoutWorker(worker);
+        // Setup a handler to kill the running worker after the timeout expires
+        const timeoutWorker = () => {
+          // Disconnect the on-exit handler
+          worker.off('exit', onExit);
+
+          // Kill the worker, just in case it's still processing away
+          killWorker(worker);
+
+          // Restore a placeholder in the pool
+          pool.splice(0, 0, false);
+
           reject(new TimeoutError(opts.timeout!));
+        };
+
+        timeout = setTimeout(() => {
+          timeoutWorker();
         }, opts.timeout);
       }
 
@@ -159,15 +181,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         // this may occur if the inner worker is invalid
       }
 
-      // TODO what should we do if a process in the pool dies, perhaps due to OOM?
-      worker.on('exit', (code: number) => {
-        if (code !== HANDLED_EXIT_CODE) {
-          logger.debug('pool: Worker exited unexpectedly', task);
-          clearTimeout(timeout);
-          reject(new ExitError(code));
-          finish(worker);
-        }
-      });
+      worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
         // forward the message out of the pool
@@ -198,18 +212,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       });
     });
 
-    // TODO need a comms channel on the promise
-
     return promise;
-  };
-
-  // This will basically kill the worker to stop execution
-  // it must also replace the worker in the pool
-  // TODO maybe later the timeout will be handled inside the worker,
-  // and we'll just kill the thread, rather than the process
-  const timeoutWorker = (worker: ChildProcess | false) => {
-    killWorker(worker);
-    pool.splice(0, 0, false);
   };
 
   const killWorker = (worker: ChildProcess | false) => {
@@ -230,8 +233,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     if (immediate) {
       Object.values(allWorkers).forEach(killWorker);
     }
-
-    // set a timeout and force any outstanding workers to die
+    // TODO set a timeout and force any outstanding workers to die
   };
 
   const api = {

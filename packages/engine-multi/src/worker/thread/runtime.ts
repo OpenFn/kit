@@ -1,5 +1,5 @@
 // this is the core runtime for inside the thread
-import { parentPort } from 'node:worker_threads';
+import { parentPort, threadId } from 'node:worker_threads';
 import {
   ENGINE_REJECT_TASK,
   ENGINE_RESOLVE_TASK,
@@ -8,7 +8,9 @@ import {
 
 type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
 
-export const threadId = process.pid;
+export const processId = process.pid;
+
+export { threadId } from 'node:worker_threads';
 
 const tasks: TaskRegistry = {
   // startup validation script
@@ -24,6 +26,7 @@ export const register = (newTasks: TaskRegistry) => {
 type Event = {
   type: string;
   threadId: number;
+  processId: number;
   [key: string]: any;
 };
 
@@ -38,6 +41,7 @@ export const publish = (
   parentPort!.postMessage({
     type,
     threadId,
+    processId,
     ...payload,
   });
 };
@@ -72,3 +76,5 @@ parentPort!.on('message', async (evt) => {
     run(evt.task, args);
   }
 });
+
+// process.on('S');

@@ -12,7 +12,13 @@ const workerPath = path.resolve('dist/test/worker-functions.js');
 const logger = createMockLogger();
 
 test.before(() => {
-  const { callWorker, closeWorkers } = initWorkers(workerPath, {}, logger);
+  const { callWorker, closeWorkers } = initWorkers(
+    workerPath,
+    {
+      maxWorkers: 1,
+    },
+    logger
+  );
   engine.callWorker = callWorker;
   engine.closeWorkers = closeWorkers;
 });
@@ -44,10 +50,7 @@ test.serial('callWorker should trigger an event callback', async (t) => {
   });
 });
 
-// TODO Important: the throw here causes the channel to close,
-// stopping other tests from running. Must investigate
-// it should have no side effects!
-test.serial.skip(
+test.serial(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
     await t.throwsAsync(() => engine.callWorker('timeout', [11], {}, 10), {
@@ -57,33 +60,57 @@ test.serial.skip(
 );
 
 test.serial(
-  'callWorker should execute with a different process id',
+  'callWorker should not freak out after a timeout error',
   async (t) => {
-    return new Promise((done) => {
-      const onCallback = ({ pid }) => {
-        t.not(process.pid, pid);
-        done();
-      };
-
-      engine.callWorker('test', [], { 'test-message': onCallback });
+    await t.throwsAsync(() => engine.callWorker('timeout', [11], {}, 10), {
+      name: 'TimeoutError',
     });
+
+    const onCallback = (evt) => {
+      t.log(evt);
+      t.pass('all ok');
+    };
+
+    await engine.callWorker('test', [], { 'test-message': onCallback });
   }
 );
 
-// TODO this fails with others, but passes standalone
-test.serial('callWorker should execute in a different process', async (t) => {
-  return new Promise((done) => {
-    // @ts-ignore
-    process.scribble = 'xyz';
+test.serial('callWorker should execute in one process', async (t) => {
+  const ids: number[] = [];
 
-    const onCallback = ({ scribble }) => {
-      // @ts-ignore
-      t.not(process.scribble, scribble);
-      done();
-    };
-
-    engine.callWorker('test', [], { 'test-message': onCallback });
+  await engine.callWorker('test', [], {
+    'test-message': ({ processId }) => {
+      ids.push(processId);
+    },
   });
+
+  await engine.callWorker('test', [], {
+    'test-message': ({ processId }) => {
+      ids.push(processId);
+    },
+  });
+
+  t.log(ids);
+  t.is(ids[0], ids[1]);
+});
+
+test.serial('callWorker should execute in two different threads', async (t) => {
+  const ids: number[] = [];
+
+  await engine.callWorker('test', [], {
+    'test-message': ({ threadId }) => {
+      ids.push(threadId);
+    },
+  });
+
+  await engine.callWorker('test', [], {
+    'test-message': ({ threadId }) => {
+      ids.push(threadId);
+    },
+  });
+
+  t.log(ids);
+  t.not(ids[0], ids[1]);
 });
 
 test.serial(

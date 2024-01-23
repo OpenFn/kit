@@ -345,6 +345,11 @@ test('after timeout, destroy the worker and reset the pool', async (t) => {
   });
 });
 
+// there is something here like: after timeout,
+// only reject once
+// because after timeout we do worker.kill
+// and that does its own stuff
+
 test('returnToPool: add to the start of a full pool', (t) => {
   const pool = [
     { pid: 1 },
