@@ -22,6 +22,7 @@ const tasks = {
     return process.env;
   },
   threadId: async () => threadId,
+  processId: async () => process.pid,
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
   run: async (plan: any, _adaptorPaths: any) => {

@@ -33,25 +33,25 @@ test.serial('run an expression inside a worker', async (t) => {
   t.is(result, 42);
 });
 
-test.serial('expressions should have the same threadId', async (t) => {
+test.serial('expressions should have the same processId', async (t) => {
   pool = createDedicatedPool();
 
   const ids = {};
 
-  const saveThreadId = (id: string) => {
+  const saveProcessId = (id: string) => {
     if (!ids[id]) {
       ids[id] = 0;
     }
     ids[id]++;
   };
 
-  // Run 4 jobs and return the threadId for each
+  // Run 4 jobs and return the processId for each
   // With only one worker thread they should all be the same
   await Promise.all([
-    pool.exec('threadId', []).then(saveThreadId),
-    pool.exec('threadId', []).then(saveThreadId),
-    pool.exec('threadId', []).then(saveThreadId),
-    pool.exec('threadId', []).then(saveThreadId),
+    pool.exec('processId', []).then(saveProcessId),
+    pool.exec('processId', []).then(saveProcessId),
+    pool.exec('processId', []).then(saveProcessId),
+    pool.exec('processId', []).then(saveProcessId),
   ]);
 
   const allUsedIds = Object.keys(ids);
