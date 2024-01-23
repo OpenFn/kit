@@ -1,6 +1,6 @@
 import path from 'node:path';
 import test from 'ava';
-import { WorkflowState } from '../../src/types';
+import { EngineAPI, WorkflowState } from '../../src/types';
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
 import { createMockLogger } from '@openfn/logger';
@@ -14,19 +14,22 @@ import {
 } from '../../src/events';
 import { RTEOptions } from '../../src/api';
 import ExecutionContext from '../../src/classes/ExecutionContext';
-import loadVersions from '../../src/util/load-versions';
 
 const workerPath = path.resolve('dist/test/mock-run.js');
 
 const createContext = ({ state, options }) => {
+  const logger = createMockLogger();
+  const { callWorker } = initWorkers(workerPath, {}, logger);
+
   const ctx = new ExecutionContext({
     state: state || { workflowId: 'x' },
-    logger: createMockLogger(),
-    callWorker: () => {},
+    logger,
+    callWorker,
     options,
-    versions: loadVersions(),
   });
-  initWorkers(ctx, workerPath);
+
+  ctx.callWorker = callWorker;
+
   return ctx;
 };
 

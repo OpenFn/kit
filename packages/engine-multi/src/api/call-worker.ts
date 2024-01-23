@@ -1,5 +1,4 @@
 import { Logger } from '@openfn/logger';
-import type { EngineAPI } from '../types';
 import createPool from '../worker/pool';
 
 // All events coming out of the worker need to include a type key
@@ -17,9 +16,9 @@ type WorkerOptions = {
   silent?: boolean; // don't forward stdout to the parent
 };
 
-// Adds a `callWorker` function to the API object, which will execute a task in a worker
+// Create a worker pool and return helper functions
+// to use and destroy it
 export default function initWorkers(
-  engine: EngineAPI,
   workerPath: string,
   options: WorkerOptions = {},
   logger: Logger
@@ -48,7 +47,7 @@ export default function initWorkers(
     logger
   );
 
-  engine.callWorker<any> = (
+  const callWorker = (
     task: string,
     args: any[] = [],
     events: any = {},
@@ -62,5 +61,7 @@ export default function initWorkers(
       },
     });
 
-  engine.closeWorkers = async (instant?: boolean) => workers.destroy(instant);
+  const closeWorkers = async (instant?: boolean) => workers.destroy(instant);
+
+  return { callWorker, closeWorkers };
 }

@@ -27,12 +27,12 @@ export type WorkflowState = {
   options: any; // TODO this is wf specific options, like logging policy
 };
 
-export type CallWorker = <T = any>(
+export type CallWorker = (
   task: string,
   args: any[],
   events?: any,
   timeout?: number
-) => Promise<T>;
+) => Promise<any>;
 
 export type ExecutionContextConstructor = {
   state: WorkflowState;

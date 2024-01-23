@@ -8,14 +8,16 @@ import v8 from 'v8';
 // But to simplify the tests we should merge them into one file, or generally reorganise
 // import workerpool from 'workerpool';
 import actualCreatePool from '../../src/worker/pool';
+import { createMockLogger } from '@openfn/logger';
 
 const workerPath = path.resolve('dist/test/worker-functions.js');
+const logger = createMockLogger('', { level: 'debug' });
 
 let pool;
 
 // note that a dedicated pool does not allow arbitrary code execution
 const createDedicatedPool = (opts = {}) =>
-  actualCreatePool(workerPath, { maxWorkers: 1, ...opts });
+  actualCreatePool(workerPath, { maxWorkers: 1, ...opts }, logger);
 
 // The dedicated thing doesn't matter anymore
 // TODO simplify all this

@@ -12,10 +12,17 @@ import createPool from '../../src/worker/pool';
 import { createPlan } from '../../src/test/util';
 
 import * as e from '../../src/worker/events';
+import { createMockLogger } from '@openfn/logger';
 
-const workers = createPool(path.resolve('dist/test/mock-run.js'), {
-  capacity: 1,
-});
+const logger = createMockLogger('', { level: 'debug' });
+
+const workers = createPool(
+  path.resolve('dist/test/mock-run.js'),
+  {
+    capacity: 1,
+  },
+  logger
+);
 
 test('execute a mock plan inside a worker thread', async (t) => {
   const plan = createPlan();

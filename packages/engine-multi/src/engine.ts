@@ -118,8 +118,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
 
   const engine = new Engine() as EngineAPI;
 
-  initWorkers(
-    engine,
+  const { callWorker, closeWorkers } = initWorkers(
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
@@ -127,6 +126,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     },
     options.logger
   );
+  engine.callWorker = callWorker;
 
   await validateWorker(engine);
 
@@ -163,7 +163,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     const context = new ExecutionContext({
       state,
       logger: options.logger!,
-      callWorker: engine.callWorker,
+      callWorker,
       options: {
         ...options,
         sanitize: opts.sanitize,
@@ -223,7 +223,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     // How does this work if deferred?
   };
 
-  const destroy = (instant?: boolean) => engine.closeWorkers(instant);
+  const destroy = (instant?: boolean) => closeWorkers(instant);
 
   return Object.assign(engine, {
     options,

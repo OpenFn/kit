@@ -55,7 +55,7 @@ const envPath = path.resolve(root, 'dist/worker/child/runner.js');
 // Restore a child at the first non-child process position
 // this encourages the child to be reused before creating a new one
 export const returnToPool = (pool: ChildProcessPool, worker: ChildProcess) => {
-  let idx = pool.findIndex((child) => child?.pid);
+  let idx = pool.findIndex((child) => child);
   if (idx === -1) idx = pool.length;
   pool.splice(idx, 0, worker);
 };
@@ -139,7 +139,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // Do we throw?
       // workerpool would queue it for us I think
       // but I think the worker is more responsible for this.  hmm.
-      const worker = init(pool.pop());
+      const worker = init(pool.pop()!);
       // Start a timeout running
       if (opts.timeout && opts.timeout !== Infinity) {
         timeout = setTimeout(() => {
@@ -224,7 +224,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
     // Drain the pool
     while (pool.length) {
-      killWorker(pool.pop());
+      killWorker(pool.pop()!);
     }
 
     if (immediate) {
