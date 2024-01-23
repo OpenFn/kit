@@ -1,3 +1,4 @@
+import { Logger } from '@openfn/logger';
 import type { EngineAPI } from '../types';
 import createPool from '../worker/pool';
 
@@ -20,7 +21,8 @@ type WorkerOptions = {
 export default function initWorkers(
   engine: EngineAPI,
   workerPath: string,
-  options: WorkerOptions = {}
+  options: WorkerOptions = {},
+  logger: Logger
 ) {
   const {
     env = {},
@@ -29,18 +31,22 @@ export default function initWorkers(
     silent,
   } = options;
 
-  const workers = createPool(workerPath, {
-    maxWorkers,
-    env,
-    silent,
+  const workers = createPool(
+    workerPath,
+    {
+      maxWorkers,
+      env,
+      silent,
 
-    // TODO need to support this
-    // resourceLimits: {
-    //   // This is a fair approximation for heapsize
-    //   // Note that it's still possible to OOM the process without hitting this limit
-    //   maxOldGenerationSizeMb: memoryLimitMb,
-    // },
-  });
+      // TODO need to support this
+      // resourceLimits: {
+      //   // This is a fair approximation for heapsize
+      //   // Note that it's still possible to OOM the process without hitting this limit
+      //   maxOldGenerationSizeMb: memoryLimitMb,
+      // },
+    },
+    logger
+  );
 
   engine.callWorker<any> = (
     task: string,

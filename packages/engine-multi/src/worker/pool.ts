@@ -9,6 +9,7 @@ import {
   ENGINE_RUN_TASK,
 } from './events';
 import { HANDLED_EXIT_CODE } from '../events';
+import { Logger } from '@openfn/logger';
 
 // NB this is the ATTEMPT timeout
 const DEFAULT_TIMEOUT = 1000 * 60 * 10;
@@ -43,7 +44,8 @@ while (!root.endsWith('engine-multi')) {
 const envPath = path.resolve(root, 'dist/worker/child/runner.js');
 
 // creates a new pool of workers which use the same script
-function createPool(script: string, options: PoolOptions = {}) {
+function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
+  logger.debug('pool: Creating new child process pool');
   const capacity = options.capacity || options.maxWorkers || 5;
   const memoryLimit = options.memoryLimitMb || 500;
 
@@ -73,7 +75,10 @@ function createPool(script: string, options: PoolOptions = {}) {
         // maybe good in prod, maybe bad for dev
         silent: options.silent,
       });
+      logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid] = child;
+    } else {
+      logger.debug('pool: Using existing child process', child.pid);
     }
     return child;
   };
@@ -90,6 +95,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       if (queue.length) {
         // TODO actually I think if there's a queue we should empty it first
         const { task, args, resolve, opts } = queue.shift();
+        logger.debug('pool: Picking up deferred task', task);
 
         // TODO don't process the queue if destroyed
         exec(task, args, opts).then(resolve);
@@ -112,6 +118,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       let timeout: NodeJS.Timeout;
       let didTimeout = false;
       if (!pool.length) {
+        logger.debug('pool: Deferring task', task);
         return queue.push({ task, args, opts, resolve });
       }
 
@@ -142,6 +149,7 @@ function createPool(script: string, options: PoolOptions = {}) {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       worker.on('exit', (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
+          logger.debug('pool: Worker exited unexpectedly', task);
           clearTimeout(timeout);
           reject(new ExitError(code));
           finish(worker);
