@@ -4,6 +4,7 @@ import type { EventEmitter } from 'node:events';
 
 import type { ExternalEvents, EventMap } from './events';
 import type { EngineOptions } from './engine';
+import type { ExecOpts } from './worker/pool';
 
 export type Resolver<T> = (id: string) => Promise<T>;
 
@@ -31,7 +32,7 @@ export type CallWorker = (
   task: string,
   args: any[],
   events?: any,
-  timeout?: number
+  options?: Omit<ExecOpts, 'on'>
 ) => Promise<any>;
 
 export type ExecutionContextConstructor = {

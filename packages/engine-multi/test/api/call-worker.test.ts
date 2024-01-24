@@ -53,18 +53,24 @@ test.serial('callWorker should trigger an event callback', async (t) => {
 test.serial(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
-    await t.throwsAsync(() => engine.callWorker('timeout', [11], {}, 10), {
-      name: 'TimeoutError',
-    });
+    await t.throwsAsync(
+      () => engine.callWorker('timeout', [11], {}, { timeout: 10 }),
+      {
+        name: 'TimeoutError',
+      }
+    );
   }
 );
 
 test.serial(
   'callWorker should not freak out after a timeout error',
   async (t) => {
-    await t.throwsAsync(() => engine.callWorker('timeout', [11], {}, 10), {
-      name: 'TimeoutError',
-    });
+    await t.throwsAsync(
+      () => engine.callWorker('timeout', [11], {}, { timeout: 10 }),
+      {
+        name: 'TimeoutError',
+      }
+    );
 
     const onCallback = (evt) => {
       t.log(evt);

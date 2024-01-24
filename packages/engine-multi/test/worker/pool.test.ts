@@ -352,21 +352,6 @@ test('listen to an event in two successive tasks after a queue', async (t) => {
     t.is(pool._queue.length, 1);
   });
 });
-// test('listeners are removed from a worker after a task executes', async (t) => {
-//   const events = [];
-
-//   const pool = createPool(workerPath, { capacity: 1 }, logger);
-//   t.is(pool._pool.length, 1);
-
-//   const p1 = await pool.exec('wait', []);
-//   pool.on('message', (evt) => {
-//     events.push(evt);
-//   });
-
-//   console.log(events);
-
-//   t.true(events.length > 0);
-// });
 
 test('throw if task times out', async (t) => {
   const pool = createPool(workerPath, {}, logger);
@@ -393,11 +378,6 @@ test('after timeout, destroy the worker and reset the pool', async (t) => {
     t.false(worker.killed);
   });
 });
-
-// there is something here like: after timeout,
-// only reject once
-// because after timeout we do worker.kill
-// and that does its own stuff
 
 test('returnToPool: add to the start of a full pool', (t) => {
   const pool = [

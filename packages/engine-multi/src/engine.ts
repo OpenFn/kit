@@ -21,6 +21,11 @@ import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
+// NB this is the ATTEMPT timeout
+const DEFAULT_TIMEOUT = 1000 * 60 * 10;
+
+const DEFAULT_MEMORY_LIMIT_MB = 500;
+
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
 const createWorkflowEvents = (
@@ -87,6 +92,7 @@ export type ExecuteOptions = {
   sanitize?: SanitizePolicies;
   resolvers?: LazyResolvers;
   timeout?: number;
+  memoryLimitMb?: number;
 };
 
 // This creates the internal API
@@ -122,7 +128,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
-      memoryLimitMb: options.memoryLimitMb,
     },
     options.logger
   );
@@ -168,7 +173,8 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        timeout: opts.timeout,
+        timeout: opts.timeout || DEFAULT_TIMEOUT,
+        memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
       },
     });
 

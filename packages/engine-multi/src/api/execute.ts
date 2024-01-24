@@ -52,6 +52,11 @@ const execute = async (context: ExecutionContext) => {
       statePropsToRemove: options.statePropsToRemove,
     };
 
+    const workerOptions = {
+      memoryLimitMb: options.memoryLimitMb,
+      timeout: options.timeout,
+    };
+
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
         workflowStart(context, evt);
@@ -84,7 +89,7 @@ const execute = async (context: ExecutionContext) => {
       'run',
       [state.plan, runOptions],
       events,
-      options.timeout
+      workerOptions
     ).catch((e: any) => {
       // TODO are timeout errors being handled nicely here?
       // actually I think the occur outside of here, in the pool

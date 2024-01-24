@@ -1,5 +1,6 @@
 import { Logger } from '@openfn/logger';
 import createPool from '../worker/pool';
+import { CallWorker } from '../types';
 
 // All events coming out of the worker need to include a type key
 export type WorkerEvent = {
@@ -11,8 +12,6 @@ type WorkerOptions = {
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
-  memoryLimitMb?: number;
-
   silent?: boolean; // don't forward stdout to the parent
 };
 
@@ -23,12 +22,7 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger: Logger
 ) {
-  const {
-    env = {},
-    maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
-    silent,
-    memoryLimitMb,
-  } = options;
+  const { env = {}, maxWorkers = 5, silent } = options;
 
   const workers = createPool(
     workerPath,
@@ -36,19 +30,13 @@ export default function initWorkers(
       maxWorkers,
       env,
       silent,
-      memoryLimitMb,
     },
     logger
   );
 
-  const callWorker = (
-    task: string,
-    args: any[] = [],
-    events: any = {},
-    timeout?: number
-  ) =>
+  const callWorker: CallWorker = (task, args = [], events = [], options = {}) =>
     workers.exec(task, args, {
-      timeout,
+      ...options,
       on: ({ type, ...args }: WorkerEvent) => {
         // just call the callback
         events[type]?.(args);

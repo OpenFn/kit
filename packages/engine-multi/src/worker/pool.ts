@@ -11,19 +11,12 @@ import {
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
 
-// NB this is the ATTEMPT timeout
-const DEFAULT_TIMEOUT = 1000 * 60 * 10;
-
-const DEFAULT_MEMORY_LIMIT_MB = 500;
-
 type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
   env?: Record<string, string>; // default environment for workers
 
   silent?: boolean;
-
-  memoryLimitMb?: number;
 };
 
 type RunTaskEvent = {
@@ -32,14 +25,13 @@ type RunTaskEvent = {
   args: any[];
 };
 
-type ExecOpts = {
+export type ExecOpts = {
   // for parity with workerpool, but this will change later
   on?: (event: any) => void;
 
   timeout?: number; // ms
 
   memoryLimitMb?: number;
-  // TODO: support memory limit here
 };
 
 export type ChildProcessPool = Array<ChildProcess | false>;
@@ -68,11 +60,8 @@ export const returnToPool = (pool: ChildProcessPool, worker: ChildProcess) => {
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const capacity = options.capacity || options.maxWorkers || 5;
-  const memoryLimit = options.memoryLimitMb || 500;
 
-  logger.debug(
-    `pool: Creating new child process pool | capacity: ${capacity} | memory: ${memoryLimit}`
-  );
+  logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
   // a pool of processes
@@ -129,11 +118,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       throw new Error('Worker destroyed');
     }
 
-    // Use a timeout by default
-    if (isNaN(opts.timeout!)) {
-      opts.timeout = DEFAULT_TIMEOUT;
-    }
-
     const promise = new Promise(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = (code: number) => {
@@ -181,8 +165,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           task,
           args,
           options: {
-            memoryLimitMb:
-              opts.memoryLimitMb || memoryLimit || DEFAULT_MEMORY_LIMIT_MB,
+            memoryLimitMb: opts.memoryLimitMb,
           },
         } as RunTaskEvent);
       } catch (e) {
