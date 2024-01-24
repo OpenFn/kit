@@ -27,11 +27,6 @@ import { stringify, createAttemptState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { Attempt, AttemptState } from '../../src/types';
-import {
-  JOB_COMPLETE,
-  JOB_ERROR,
-  WORKFLOW_COMPLETE,
-} from '@openfn/engine-multi';
 
 const enc = new TextEncoder();
 
