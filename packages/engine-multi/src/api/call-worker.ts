@@ -11,6 +11,7 @@ type WorkerOptions = {
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
+  memoryLimitMb?: number;
 
   silent?: boolean; // don't forward stdout to the parent
 };
@@ -26,6 +27,7 @@ export default function initWorkers(
     env = {},
     maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
     silent,
+    memoryLimitMb,
   } = options;
 
   const workers = createPool(
@@ -34,6 +36,7 @@ export default function initWorkers(
       maxWorkers,
       env,
       silent,
+      memoryLimitMb,
     },
     logger
   );

@@ -86,7 +86,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const init = (child: ChildProcess | false) => {
     if (!child) {
       // create a new child process and load the module script into it
-      child = fork(envPath, [script, `${memoryLimit}`], {
+      child = fork(envPath, [script], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
 
         env: options.env || {},
@@ -181,7 +181,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           task,
           args,
           options: {
-            memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
+            memoryLimitMb:
+              opts.memoryLimitMb || memoryLimit || DEFAULT_MEMORY_LIMIT_MB,
           },
         } as RunTaskEvent);
       } catch (e) {
