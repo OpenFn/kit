@@ -6,10 +6,10 @@ import { EngineAPI } from '../types';
 // Call a handshake task in a worker thread
 // This really jsut validates that the worker path exists
 
-export default async (api: EngineAPI) => {
+export default async (api: EngineAPI, timeout = 5000) => {
   try {
     // TODO argument drive this
-    await api.callWorker('handshake', [], {}, { timeout: 5000 });
+    await api.callWorker('handshake', [], {}, { timeout });
   } catch (e) {
     console.error(e);
     throw new Error('Invalid worker path');
