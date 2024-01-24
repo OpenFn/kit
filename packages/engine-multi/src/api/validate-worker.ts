@@ -9,7 +9,7 @@ import { EngineAPI } from '../types';
 export default async (api: EngineAPI) => {
   try {
     // TODO argument drive this
-    await api.callWorker('handshake', [], {}, { timeout: 500 });
+    await api.callWorker('handshake', [], {}, { timeout: 5000 });
   } catch (e) {
     console.error(e);
     throw new Error('Invalid worker path');
