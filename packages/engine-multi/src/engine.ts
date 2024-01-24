@@ -22,7 +22,7 @@ import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
 // NB this is the ATTEMPT timeout
-const DEFAULT_TIMEOUT = 1000 * 60 * 10;
+const DEFAULT_ATTEMPT_TIMEOUT = 1000 * 60 * 10;
 
 const DEFAULT_MEMORY_LIMIT_MB = 500;
 
@@ -83,7 +83,11 @@ export type EngineOptions = {
   whitelist?: RegExp[];
 
   // Timeout for the whole workflow
-  timeout?: number;
+  // timeout?: number;
+
+  // Default timeouts (used if an attempt does not provide its own)
+  attemptTimeout?: number;
+  runTimeout?: number;
 
   statePropsToRemove?: string[];
 };
@@ -91,7 +95,13 @@ export type EngineOptions = {
 export type ExecuteOptions = {
   sanitize?: SanitizePolicies;
   resolvers?: LazyResolvers;
-  timeout?: number;
+
+  // timeout?: number; // DEPRECATED
+
+  // NB this deliberately uses old terminology
+  attemptTimeout?: number;
+  runTimeout?: number;
+
   memoryLimitMb?: number;
 };
 
@@ -154,10 +164,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   // TODO too much logic in this execute function, needs farming out
   // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
-  const executeWrapper = (
-    plan: ExecutionPlan,
-    opts: Partial<ExecuteOptions> = {}
-  ) => {
+  const executeWrapper = (plan: ExecutionPlan, opts: ExecuteOptions = {}) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid
@@ -173,7 +180,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        timeout: opts.timeout || DEFAULT_TIMEOUT,
+        attemptTimeout: opts.attemptTimeout || DEFAULT_ATTEMPT_TIMEOUT,
         memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
       },
     });
