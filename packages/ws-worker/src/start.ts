@@ -23,14 +23,14 @@ type Args = {
 };
 
 const {
+  BACKOFF,
+  CAPACITY,
+  LOG_LEVEL,
+  MAX_RUN_MEMORY,
+  PORT,
+  STATE_PROPS_TO_REMOVE,
   WORKER_REPO_DIR,
   WORKER_SECRET,
-  MAX_RUN_MEMORY,
-  STATE_PROPS_TO_REMOVE,
-  CAPACITY,
-  BACKOFF,
-  LOG_LEVEL,
-  PORT,
 } = process.env;
 
 const args = yargs(hideBin(process.argv))
