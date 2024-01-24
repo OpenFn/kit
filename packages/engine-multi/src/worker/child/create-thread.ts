@@ -19,6 +19,10 @@ const createThread = (
       maxOldGenerationSizeMb: options.memoryLimitMb,
     },
   });
+  worker.on('error', (err) => {
+    console.log('**** WORKER THREAD ERROR');
+    console.log(err);
+  });
 
   worker.postMessage({
     type: ENGINE_RUN_TASK,

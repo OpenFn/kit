@@ -84,6 +84,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         // maybe good in prod, maybe bad for dev
         silent: options.silent,
       });
+      child.on('error', (err) => {
+        console.log('**** CHiLD PROCESS ERROR');
+        console.log(err);
+      });
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
     } else {
