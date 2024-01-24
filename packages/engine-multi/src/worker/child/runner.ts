@@ -12,13 +12,13 @@ import serializeError from '../../util/serialize-error';
 
 process.on('message', async (evt: WorkerEvent) => {
   if (evt.type === ENGINE_RUN_TASK) {
-    const args = evt.args || [];
-    run(evt.task, args);
+    const { args, options } = evt;
+    run(evt.task, args, options);
   }
 });
 
-const run = async (task: string, args: any[]) => {
-  const thread = createThread(task, args);
+const run = async (task: string, args: any[] = [], options = {}) => {
+  const thread = createThread(task, args, options);
 
   thread.on('error', (e) => {
     // @ts-ignore

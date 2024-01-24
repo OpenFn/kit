@@ -14,6 +14,8 @@ import { Logger } from '@openfn/logger';
 // NB this is the ATTEMPT timeout
 const DEFAULT_TIMEOUT = 1000 * 60 * 10;
 
+const DEFAULT_MEMORY_LIMIT_MB = 500;
+
 type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
@@ -36,6 +38,7 @@ type ExecOpts = {
 
   timeout?: number; // ms
 
+  memoryLimitMb?: number;
   // TODO: support memory limit here
 };
 
@@ -177,6 +180,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           type: ENGINE_RUN_TASK,
           task,
           args,
+          options: {
+            memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
+          },
         } as RunTaskEvent);
       } catch (e) {
         // swallow errors here

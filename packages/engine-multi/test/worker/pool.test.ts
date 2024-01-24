@@ -175,11 +175,10 @@ test('throw if the task throws', async (t) => {
 });
 
 test('throw if memory limit is exceeded', async (t) => {
-  // TODO as soon as this is working I'm gonna refactor it, but it on the exec call
-  const pool = createPool(workerPath, { memoryLimitMb: 100 }, logger);
+  const pool = createPool(workerPath, {}, logger);
 
   try {
-    await pool.exec('blowMemory', [], {});
+    await pool.exec('blowMemory', [], { memoryLimitMb: 100 });
   } catch (e) {
     t.is(e.message, 'Run exceeded maximum memory usage');
     t.is(e.name, 'OOMError');
