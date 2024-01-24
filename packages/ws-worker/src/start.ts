@@ -27,6 +27,10 @@ const {
   WORKER_SECRET,
   MAX_RUN_MEMORY,
   STATE_PROPS_TO_REMOVE,
+  CAPACITY,
+  BACKOFF,
+  LOG_LEVEL,
+  PORT,
 } = process.env;
 
 const args = yargs(hideBin(process.argv))
@@ -35,7 +39,7 @@ const args = yargs(hideBin(process.argv))
     alias: 'p',
     description: 'Port to run the server on',
     type: 'number',
-    default: 2222,
+    default: PORT || 2222,
   })
   // TODO maybe this is positional and required?
   // frees up -l for the log
@@ -55,8 +59,9 @@ const args = yargs(hideBin(process.argv))
     description: 'Worker secret (comes from WORKER_SECRET by default)',
   })
   .option('log', {
-    description: 'Worker secret (comes from WORKER_SECRET by default)',
-    default: 'info',
+    description:
+      'Set the log level for stdout (default to info, set to debug for verbose output)',
+    default: LOG_LEVEL || 'debug',
     type: 'string',
   })
   .option('loop', {
@@ -71,11 +76,11 @@ const args = yargs(hideBin(process.argv))
   })
   .option('backoff', {
     description: 'Claim backoff rules: min/max (s)',
-    default: '1/10',
+    default: BACKOFF || '1/10',
   })
   .option('capacity', {
     description: 'max concurrent workers',
-    default: 5,
+    default: CAPACITY ? parseInt(CAPACITY) : 5,
     type: 'number',
   })
   .option('state-props-to-remove', {
@@ -106,12 +111,15 @@ if (args.lightning === 'mock') {
 
   args.secret = WORKER_SECRET;
 }
+
 const [minBackoff, maxBackoff] = args.backoff
   .split('/')
   .map((n: string) => parseInt(n, 10) * 1000);
 
 function engineReady(engine: any) {
-  createWorker(engine, {
+  logger.debug('Creating worker server...');
+
+  const workerOptions = {
     port: args.port,
     lightning: args.lightning,
     logger,
@@ -123,7 +131,11 @@ function engineReady(engine: any) {
       max: maxBackoff,
     },
     maxWorkflows: args.capacity,
-  });
+  };
+  const { logger: _l, secret: _s, ...humanOptions } = workerOptions;
+  logger.debug('Worker options:', humanOptions);
+
+  createWorker(engine, workerOptions);
 }
 
 if (args.mock) {
@@ -132,13 +144,17 @@ if (args.mock) {
     engineReady(engine);
   });
 } else {
-  createRTE({
+  const engineOptions = {
     repoDir: args.repoDir,
     memoryLimitMb: args.runMemory,
     maxWorkers: args.capacity,
     statePropsToRemove: args.statePropsToRemove,
-  }).then((engine) => {
-    logger.debug('engine created');
+  };
+  logger.debug('Creating runtime engine...');
+  logger.debug('Engine options:', engineOptions);
+
+  createRTE(engineOptions).then((engine) => {
+    logger.debug('Engine created!');
     engineReady(engine);
   });
 }
