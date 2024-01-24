@@ -2,7 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 
-import createEngine from '../src/engine';
+import createEngine, { ExecuteOptions } from '../src/engine';
 import * as e from '../src/events';
 import { ExecutionPlan } from '@openfn/runtime';
 
@@ -229,8 +229,8 @@ test.serial('timeout the whole attempt and emit an error', async (t) => {
       ],
     };
 
-    const opts = {
-      timeout: 10,
+    const opts: ExecuteOptions = {
+      attemptTimeout: 10,
     };
 
     engine.listen(plan.id, {

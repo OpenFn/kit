@@ -1,6 +1,5 @@
 import path from 'node:path';
 import test from 'ava';
-import { EngineAPI, WorkflowState } from '../../src/types';
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
 import { createMockLogger } from '@openfn/logger';
@@ -12,8 +11,11 @@ import {
   WORKFLOW_LOG,
   WORKFLOW_START,
 } from '../../src/events';
-import { RTEOptions } from '../../src/api';
 import ExecutionContext from '../../src/classes/ExecutionContext';
+
+import type { RTEOptions } from '../../src/api';
+import type { WorkflowState } from '../../src/types';
+import { ExecuteOptions } from '../../src/engine';
 
 const workerPath = path.resolve('dist/test/mock-run.js');
 
@@ -226,9 +228,9 @@ test.serial('should emit error on timeout', async (t) => {
     },
   } as WorkflowState;
 
-  const wfOptions = {
+  const wfOptions: ExecuteOptions = {
     ...options,
-    timeout: 10,
+    attemptTimeout: 10,
   };
 
   let event;
