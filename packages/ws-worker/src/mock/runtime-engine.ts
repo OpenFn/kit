@@ -36,6 +36,9 @@ const helpers = {
   fn: (f: Function) => (s: any) => f(s),
   wait: (duration: number) => (s: any) =>
     new Promise((resolve) => setTimeout(() => resolve(s), duration)),
+  err: () => {
+    throw new Error('test_err');
+  },
 };
 
 // The mock runtime engine creates a fake engine interface

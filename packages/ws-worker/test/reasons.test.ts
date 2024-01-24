@@ -25,7 +25,6 @@ test.before(async () => {
   // Note: this is the REAL engine, not a mock
   engine = await createRTE({
     maxWorkers: 1,
-    purge: false,
     logger,
     autoinstall: {
       handleIsInstalled: async () => false,
@@ -40,7 +39,7 @@ test.before(async () => {
 test.after(async () => engine.destroy());
 
 // Wrap up an execute call, capture the on complete state
-const execute = async (plan) =>
+const execute = async (plan, options = {}) =>
   new Promise<{ reason: ExitReason; state: any }>((done) => {
     // Ignore all channel events
     // In these test we assume that the correct messages are sent to the channel
@@ -57,7 +56,7 @@ const execute = async (plan) =>
     };
 
     // @ts-ignore
-    doExecute(channel, engine, logger, plan, {}, onFinish);
+    doExecute(channel, engine, logger, plan, options, onFinish);
   });
 
 test('success', async (t) => {
@@ -220,6 +219,22 @@ test('exception: autoinstall error', async (t) => {
     reason.error_message,
     'Error installing @openfn/language-common@1.0.0: not the way to amarillo'
   );
+});
+
+test('kill: timeout', async (t) => {
+  const plan = createPlan({
+    id: 'x',
+    expression: 'export default [(s) => { while(true) { } }]',
+  });
+
+  const options = {
+    attemptTimeout: 100,
+  };
+
+  const { reason } = await execute(plan, options);
+  t.is(reason.reason, 'kill');
+  t.is(reason.error_type, 'TimeoutError');
+  t.is(reason.error_message, 'Workflow failed to return within 100ms');
 });
 
 test.todo('crash: workflow validation error');
