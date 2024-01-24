@@ -1,6 +1,7 @@
-import * as workerEvents from '../worker/events';
-import { ExecutionContext } from '../types';
+import { timestamp } from '@openfn/logger';
 
+import * as workerEvents from '../worker/events';
+import type { ExecutionContext } from '../types';
 import autoinstall from './autoinstall';
 import compile from './compile';
 import {
@@ -56,6 +57,24 @@ const execute = async (context: ExecutionContext) => {
       memoryLimitMb: options.memoryLimitMb,
       timeout: options.timeout,
     };
+
+    // Put out a log with the memory limit for the attempt
+    // This is a bit annoying but the log needs to be associated with the attempt
+    // and not just emitted to stdout
+    // The runtime can't do it because it doesn't know the memory limit
+    if (workerOptions.memoryLimitMb) {
+      log(context, {
+        type: workerEvents.LOG,
+        workflowId: state.plan.id!,
+        threadId: '-', // no thread at this point
+        message: {
+          level: 'debug',
+          message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
+          name: 'RTE',
+          time: timestamp().toString(),
+        },
+      });
+    }
 
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {

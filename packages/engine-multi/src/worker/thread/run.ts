@@ -31,6 +31,7 @@ register({
       runOptions;
     const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
     // TODO I would like to pull these options out of here
+
     const options = {
       strict: false,
       logger,

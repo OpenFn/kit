@@ -81,6 +81,32 @@ test.serial('should emit a workflow-start event', async (t) => {
   t.is(workflowStart.workflowId, 'x');
 });
 
+test.serial('should emit a log event with the memory limit', async (t) => {
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  const logs = [];
+
+  const context = createContext({
+    state,
+    options: {
+      ...options,
+      memoryLimitMb: 666,
+    },
+  });
+
+  context.on(WORKFLOW_LOG, (evt) => {
+    logs.push(evt);
+  });
+
+  await execute(context);
+
+  const log = logs.find(({ name }) => name === 'RTE');
+  t.is(log.message[0], 'Memory limit: 666mb');
+});
+
 test.serial('should emit a workflow-complete event', async (t) => {
   let workflowComplete;
   const state = {
