@@ -11,8 +11,7 @@ export default async (api: EngineAPI) => {
     // TODO argument drive this
     await api.callWorker('handshake', [], {}, { timeout: 500 });
   } catch (e) {
-    // If the handshake function isn't available, this will timeout
-    // Throw a nice error if the worker isn't valid
+    console.error(e);
     throw new Error('Invalid worker path');
   }
 };
