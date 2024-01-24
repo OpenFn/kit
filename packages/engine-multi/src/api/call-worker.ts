@@ -11,7 +11,6 @@ type WorkerOptions = {
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
-  memoryLimitMb?: number;
 
   silent?: boolean; // don't forward stdout to the parent
 };
@@ -26,7 +25,6 @@ export default function initWorkers(
   const {
     env = {},
     maxWorkers = 5, // what's a good default here? Keeping it low to be conservative
-    // memoryLimitMb, // TOOD need to restore this
     silent,
   } = options;
 
@@ -36,13 +34,6 @@ export default function initWorkers(
       maxWorkers,
       env,
       silent,
-
-      // TODO need to support this
-      // resourceLimits: {
-      //   // This is a fair approximation for heapsize
-      //   // Note that it's still possible to OOM the process without hitting this limit
-      //   maxOldGenerationSizeMb: memoryLimitMb,
-      // },
     },
     logger
   );

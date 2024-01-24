@@ -35,6 +35,8 @@ type ExecOpts = {
   on?: (event: any) => void;
 
   timeout?: number; // ms
+
+  // TODO: support memory limit here
 };
 
 export type ChildProcessPool = Array<ChildProcess | false>;

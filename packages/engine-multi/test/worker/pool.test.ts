@@ -37,7 +37,7 @@ test('run a task with arguments and return the result', async (t) => {
   t.is(result, 22);
 });
 
-test('task runs inside a different process id', async (t) => {
+test('task runs inside a different process id to the parent', async (t) => {
   const pool = createPool(workerPath, {}, logger);
   const parentPid = process.pid;
 
@@ -50,6 +50,44 @@ test('task runs inside a different process id', async (t) => {
   t.truthy(childPid);
   t.not(parentPid, childPid);
 });
+
+test.serial(
+  'tasks in the same worker should have the same processId',
+  async (t) => {
+    const pool = createPool(workerPath, { maxWorkers: 1 }, logger);
+
+    const ids = {};
+
+    const saveProcessId = (id: string) => {
+      if (!ids[id]) {
+        ids[id] = 0;
+      }
+      ids[id]++;
+    };
+
+    // Run 4 jobs and return the processId for each
+    // With only one worker thread they should all be the same
+    await Promise.all([
+      pool
+        .exec('processId', [])
+        .then((id: unknown) => saveProcessId(id as string)),
+      pool
+        .exec('processId', [])
+        .then((id: unknown) => saveProcessId(id as string)),
+      pool
+        .exec('processId', [])
+        .then((id: unknown) => saveProcessId(id as string)),
+      pool
+        .exec('processId', [])
+        .then((id: unknown) => saveProcessId(id as string)),
+    ]);
+
+    const allUsedIds = Object.keys(ids);
+
+    t.is(allUsedIds.length, 1);
+    t.is(ids[allUsedIds[0]], 4);
+  }
+);
 
 test('Remove a worker from the pool and release it when finished', async (t) => {
   const pool = createPool(workerPath, {}, logger);
@@ -133,6 +171,18 @@ test('throw if the task throws', async (t) => {
   } catch (e) {
     // NB e is not an error isntance
     t.is(e.message, 'test_error');
+  }
+});
+
+test('throw if memory limit is exceeded', async (t) => {
+  // TODO as soon as this is working I'm gonna refactor it, but it on the exec call
+  const pool = createPool(workerPath, { memoryLimitMb: 100 }, logger);
+
+  try {
+    await pool.exec('blowMemory', [], {});
+  } catch (e) {
+    t.is(e.message, 'Run exceeded maximum memory usage');
+    t.is(e.name, 'OOMError');
   }
 });
 
