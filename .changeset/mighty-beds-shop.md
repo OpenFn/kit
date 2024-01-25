@@ -2,4 +2,4 @@
 '@openfn/engine-multi': patch
 ---
 
-Replace timeout option with attemptTimeout
+Replace timeout option with attemptTimeoutMs
