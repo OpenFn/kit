@@ -4,6 +4,34 @@ A runtime engine which runs multiple jobs in worker threads.
 
 A long-running node service, suitable for integration with a Worker, for executing workflows.
 
+# Architecture
+
+The engine runs in the main process and exposes an `execute` function, which can be called by some wrapping service (ie, the Lightning Worker).
+
+The engine maintains a pool of long-lived child processes. For every `execute` call, the engine will pick an idle child process from the pool and execute the workflow within it.
+
+Inside the child process, we actually execute the runtime inside a worker thread. Each child process has exactly one worker, which is created on demand and destroyed on completion.
+
+So the process tree looks a bit like this:
+
+```
+-- main thread (execute, compile, autoinstall)
+ -- child_process (spawn worker)
+  -- worker_thread (@openfn/runtime)
+```
+
+Pooled child-processes are lazily spawned. If a worker never needs to run more than one task concurrently, it will only have one child process.
+
+![architecture diagram](docs/architecture.png)
+
+This architecture has several benefits:
+
+- Each run executes in a clean sandbox inside a worker_thread /inside/ a child process. A double-buffered sandbox.
+- The child process can always control the thread, even if the thread locks the CPU, to shut it down
+- If the worker thread blows its memory limit, other runs will be unaffected as they are in different child processes
+
+At the time of writing, compilation and autoinstall are run on the main thread - not in the child process.
+
 ## Usage
 
 The Engine runs Workflows or Execution Plans. A plan MUST have an id.
@@ -82,36 +110,3 @@ engine.execute(plan, { resolvers });
 ```
 
 Initial state and credentials are at the moment pre-loaded, with a "fully resolved" state object passed into the runtime. The Runtime has the ability to lazy load but implementing lazy loading across the worker_thread interface has proven tricky.
-
-## Architecture
-
-The Engine uses a dedicated worker found in src/worker/worker.ts. Most of the actual logic is in worker-helper.ts, and is shared by both the real worker (which calls out to @openfn/runtime), and the mock worker (which simulates and evals a run). The mock worker is mostly used in unit tests.
-
-The main interface to the engine, API, exposes a very limited and controlled interface to consumers. api.ts provides the main export and is a thin API wrapper around the main implementation, providing defauls and validation.
-
-The main implementation is in engine.ts, which exposes a much broader interface, with more options. This is potentially dangerous to consumers, but is extremely useful for unit testing here. For example, the dedicated worker path can be set here, as can the whitelist.
-
-When execute is called and passed a plan, the engine first generates an execution context. This contains an event emitter just for that workflower and some contextualised state.
-
-## Security Considerations & Memory Management
-
-The engine uses workerpool to maintain a pool of worker threads.
-
-As workflows come in to be executed, they are passed to workerpool which will pick an idle worker and execute the workflow within it.
-
-workerpool has no natural environment hardening, which means workflows running in the same thread will share an environment. Globals set in workflow A will be available to workflow B, and by the same token an adaptor loaded for workflow A will be shared with workflow B.
-
-Also, because the thread is long-lived, modules imported into the sandbox will be shared.
-
-We have several mitgations against this, ensuring a safe, secure and stable execution environment:
-
-- The runtime sandbox itself ensures that each job runs in an isolated context. If a job escapes the sandbox, it will have access to the thread's global scope
-- Each workflow appends a unique id to all its imports, busting the node cache and forcing each module to be re-initialised. This means workers cannot share adaptors and all state is reset.
-
-Inside the worker thread, we ensure that:
-
-- The parent `process.env` is not visible (by default in workerpool the woker will "inherit" the parent env)
-- The parent process is not accessible (check this)
-- The parent scope is not visible (this is innate in workerpool design).
-
-After initialisation, the only way that the parent process and child thread can communicate is a) through the sendMessage() interface (which really means the child can only send messages that the parent is expecting), b) through a shared memory buffer (usage of which is limited and controlled by the parent), and c) returning a value from a function execution.
