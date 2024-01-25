@@ -72,7 +72,7 @@ test.serial('syntax error: illegal throw', (t) => {
   });
 });
 
-test.serial('syntax error: oom error', (t) => {
+test.serial('thread oom error', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'a',
@@ -90,6 +90,33 @@ test.serial('syntax error: oom error', (t) => {
     };
 
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.type, 'OOMError');
+      t.is(evt.severity, 'kill');
+      t.is(evt.message, 'Run exceeded maximum memory usage');
+      done();
+    });
+  });
+});
+
+test.serial('vm oom error', (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'a',
+      jobs: [
+        {
+          expression: `export default [(s) => {
+              s.a = [];
+              while(true) {
+                s.a.push(new Array(1e9).fill("oom"));
+              }
+              return s;
+            }]`,
+        },
+      ],
+    };
+
+    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+      console.log(evt);
       t.is(evt.type, 'OOMError');
       t.is(evt.severity, 'kill');
       t.is(evt.message, 'Run exceeded maximum memory usage');

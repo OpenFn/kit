@@ -2,7 +2,9 @@ import { fileURLToPath } from 'node:url';
 import { ChildProcess, fork } from 'node:child_process';
 import path from 'node:path';
 
-import { ExitError, TimeoutError } from '../errors';
+import readline from 'node:readline/promises';
+
+import { ExitError, OOMError, TimeoutError } from '../errors';
 import {
   ENGINE_REJECT_TASK,
   ENGINE_RESOLVE_TASK,
@@ -80,14 +82,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
         env: options.env || {},
 
-        // don't inherit the parent's stdout
-        // maybe good in prod, maybe bad for dev
-        silent: options.silent,
+        // This pipes the stderr stream onto the child, so we can read it later
+        stdio: ['ipc', 'ignore', 'pipe'],
       });
-      child.on('error', (err) => {
-        console.log('**** CHiLD PROCESS ERROR');
-        console.log(err);
-      });
+
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
     } else {
@@ -124,11 +122,32 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
     const promise = new Promise(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
-      const onExit = (code: number) => {
+      const onExit = async (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
           logger.debug('pool: Worker exited unexpectedly', task);
           clearTimeout(timeout);
-          reject(new ExitError(code));
+
+          // Read the stderr stream from the worked to see if this looks like an OOM error
+          const rl = readline.createInterface({
+            input: worker.stderr!,
+            crlfDelay: Infinity,
+          });
+
+          let error;
+
+          // TODO should we log the stderr?
+          try {
+            for await (const line of rl) {
+              if (line.match(/JavaScript heap out of memory/)) {
+                error = new OOMError();
+                break;
+              }
+            }
+          } catch (e) {
+            // do nothing
+          }
+
+          reject(error || new ExitError(code));
           finish(worker);
         }
       };
@@ -176,6 +195,11 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         // swallow errors here
         // this may occur if the inner worker is invalid
       }
+
+      // TODO idk if we should keep this
+      worker.on('error', (e) => {
+        console.log(e);
+      });
 
       worker.on('exit', onExit);
 
