@@ -1,9 +1,7 @@
-// Execute a compiled workflow
-import { Promise as WorkerPoolPromise } from 'workerpool';
+import { timestamp } from '@openfn/logger';
 
 import * as workerEvents from '../worker/events';
-import { ExecutionContext } from '../types';
-
+import type { ExecutionContext } from '../types';
 import autoinstall from './autoinstall';
 import compile from './compile';
 import {
@@ -16,7 +14,7 @@ import {
   jobError,
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
-import { ExecutionError, ExitError, OOMError, TimeoutError } from '../errors';
+import { ExecutionError } from '../errors';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -46,11 +44,37 @@ const execute = async (context: ExecutionContext) => {
       );
     }
 
+    // Map any regexes in the whitelist to strings
+    const whitelist = options.whitelist?.map((w) => w.toString());
+
     const runOptions = {
       adaptorPaths,
-      whitelist: options.whitelist,
+      whitelist,
       statePropsToRemove: options.statePropsToRemove,
     };
+
+    const workerOptions = {
+      memoryLimitMb: options.memoryLimitMb,
+      timeout: options.timeout,
+    };
+
+    // Put out a log with the memory limit for the attempt
+    // This is a bit annoying but the log needs to be associated with the attempt
+    // and not just emitted to stdout
+    // The runtime can't do it because it doesn't know the memory limit
+    if (workerOptions.memoryLimitMb) {
+      log(context, {
+        type: workerEvents.LOG,
+        workflowId: state.plan.id!,
+        threadId: '-', // no thread at this point
+        message: {
+          level: 'debug',
+          message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
+          name: 'RTE',
+          time: timestamp().toString(),
+        },
+      });
+    }
 
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
@@ -79,28 +103,15 @@ const execute = async (context: ExecutionContext) => {
       },
     };
 
+    // TODO in the new world order, what sorts of errors are being caught here?
     return callWorker(
       'run',
       [state.plan, runOptions],
       events,
-      options.timeout
+      workerOptions
     ).catch((e: any) => {
-      // Catch process.exit from inside the thread
-      // This approach is not pretty - we are banking on replacing workerpool soon
-      if (e.message.match(/^Workerpool Worker terminated Unexpectedly/)) {
-        const [_match, exitCode] = e.message.match(/exitCode: `(\d+)`/);
-        if (exitCode === '111111') {
-          // This means a controlled exit from inside the worker
-          // The error has already been reported and we should do nothing
-          return;
-        }
-        e = new ExitError(parseInt(exitCode));
-      } else if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
-        e = new OOMError();
-      } else if (e instanceof WorkerPoolPromise.TimeoutError) {
-        // Map the workerpool error to our own
-        e = new TimeoutError(options.timeout!);
-      }
+      // TODO are timeout errors being handled nicely here?
+      // actually I think the occur outside of here, in the pool
 
       error(context, { workflowId: state.plan.id, error: e });
       logger.error(`Critical error thrown by ${state.plan.id}`, e);

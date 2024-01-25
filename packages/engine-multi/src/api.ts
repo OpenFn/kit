@@ -65,17 +65,15 @@ const createAPI = async function (
     // TODO should we disable autoinstall overrides?
     autoinstall: options.autoinstall,
 
-    minWorkers: options.minWorkers,
     maxWorkers: options.maxWorkers,
     memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
-
-    purge: options.hasOwnProperty('purge') ? options.purge : true,
 
     statePropsToRemove: options.statePropsToRemove ?? [
       'configuration',
       'response',
     ],
   };
+
   logger.info(`memory limit set to ${options.memoryLimitMb}mb`);
   logger.info(`statePropsToRemove set to: `, engineOptions.statePropsToRemove);
 

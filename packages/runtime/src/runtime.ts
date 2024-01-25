@@ -10,6 +10,7 @@ import type {
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import clone from './util/clone';
+import parseRegex from './util/regex';
 
 export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
@@ -40,6 +41,12 @@ export type Options = {
   statePropsToRemove?: string[];
 };
 
+type RawOptions = Omit<Options, 'linker'> & {
+  linker?: Omit<LinkerOptions, 'whitelist'> & {
+    whitelist?: Array<RegExp | string>;
+  };
+};
+
 const defaultState = { data: {}, configuration: {} };
 
 // Log nothing by default
@@ -50,7 +57,7 @@ const defaultLogger = createMockLogger();
 const run = (
   expressionOrXPlan: string | Operation[] | ExecutionPlan,
   state?: State,
-  opts: Options = {}
+  opts: RawOptions = {}
 ) => {
   const logger = opts.logger || defaultLogger;
 
@@ -60,6 +67,14 @@ const run = (
   }
   if (!opts.hasOwnProperty('statePropsToRemove')) {
     opts.statePropsToRemove = ['configuration'];
+  }
+  if (opts.linker?.whitelist) {
+    opts.linker.whitelist = opts.linker.whitelist.map((w) => {
+      if (typeof w === 'string') {
+        return parseRegex(w);
+      }
+      return w;
+    });
   }
 
   // TODO the plan doesn't have an id, should it be given one?
@@ -90,7 +105,7 @@ const run = (
     plan.initialState = defaultState;
   }
 
-  return executePlan(plan, opts, logger);
+  return executePlan(plan, opts as Options, logger);
 };
 
 export default run;

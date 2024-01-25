@@ -104,7 +104,6 @@ export const jobError = (
   event: internalEvents.JobErrorEvent
 ) => {
   const { threadId, state, error, duration, jobId, next } = event;
-
   context.emit(externalEvents.JOB_ERROR, {
     threadId,
     state,

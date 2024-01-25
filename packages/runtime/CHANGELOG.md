@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 0.2.5
+
+### Patch Changes
+
+- 0f22694: Accept the linker's whitelist as strings
+
 ## 0.2.4
 
 ### Patch Changes

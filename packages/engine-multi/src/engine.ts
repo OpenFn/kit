@@ -21,6 +21,11 @@ import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
+// NB this is the ATTEMPT timeout
+const DEFAULT_TIMEOUT = 1000 * 60 * 10;
+
+const DEFAULT_MEMORY_LIMIT_MB = 500;
+
 // For each workflow, create an API object with its own event emitter
 // this is a bt wierd - what if the emitter went on state instead?
 const createWorkflowEvents = (
@@ -72,7 +77,6 @@ export type EngineOptions = {
 
   autoinstall?: AutoinstallOptions;
 
-  minWorkers?: number;
   maxWorkers?: number;
   memoryLimitMb?: number;
 
@@ -81,8 +85,6 @@ export type EngineOptions = {
   // Timeout for the whole workflow
   timeout?: number;
 
-  purge?: boolean;
-
   statePropsToRemove?: string[];
 };
 
@@ -90,6 +92,7 @@ export type ExecuteOptions = {
   sanitize?: SanitizePolicies;
   resolvers?: LazyResolvers;
   timeout?: number;
+  memoryLimitMb?: number;
 };
 
 // This creates the internal API
@@ -113,7 +116,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       dirname,
       // TODO there are too many assumptions here, it's an argument for the path just to be
       // passed by the mian api or the unit test
-      workerPath || '../dist/worker/worker.js'
+      workerPath || '../dist/worker/thread/run.js'
     );
   }
 
@@ -121,17 +124,14 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
 
   const engine = new Engine() as EngineAPI;
 
-  initWorkers(
-    engine,
+  const { callWorker, closeWorkers } = initWorkers(
     resolvedWorkerPath,
     {
-      minWorkers: options.minWorkers,
       maxWorkers: options.maxWorkers,
-      purge: options.purge,
-      memoryLimitMb: options.memoryLimitMb,
     },
     options.logger
   );
+  engine.callWorker = callWorker;
 
   await validateWorker(engine);
 
@@ -168,12 +168,13 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     const context = new ExecutionContext({
       state,
       logger: options.logger!,
-      callWorker: engine.callWorker,
+      callWorker,
       options: {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        timeout: opts.timeout,
+        timeout: opts.timeout || DEFAULT_TIMEOUT,
+        memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
       },
     });
 
@@ -192,9 +193,6 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
-        if (options.purge && Object.keys(contexts).length === 0) {
-          engine.purge?.();
-        }
       });
     }, 1);
 
@@ -231,7 +229,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
     // How does this work if deferred?
   };
 
-  const destroy = (instant?: boolean) => engine.closeWorkers(instant);
+  const destroy = (instant?: boolean) => closeWorkers(instant);
 
   return Object.assign(engine, {
     options,

@@ -1,5 +1,18 @@
 # ws-worker
 
+## 0.6.0
+
+### Minor Changes
+
+- 9b9ca0c: New worker pool engine
+
+### Patch Changes
+
+- Updated dependencies [0f22694]
+- Updated dependencies [9b9ca0c]
+  - @openfn/runtime@0.2.5
+  - @openfn/engine-multi@0.3.0
+
 ## 0.5.0
 
 ### Minor Changes

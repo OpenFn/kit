@@ -1,5 +1,16 @@
 # engine-multi
 
+## 0.3.0
+
+### Minor Changes
+
+- 9b9ca0c: Replace workerpool with new child_process pool implementation
+
+### Patch Changes
+
+- Updated dependencies [0f22694]
+  - @openfn/runtime@0.2.5
+
 ## 0.2.6
 
 ### Patch Changes

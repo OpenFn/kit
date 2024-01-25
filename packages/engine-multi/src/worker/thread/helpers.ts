@@ -1,12 +1,16 @@
 // utilities to run inside the worker
 // This is designed to minimize the amount of code we have to mock
 
-import workerpool from 'workerpool';
-import { threadId } from 'node:worker_threads';
+import process from 'node:process';
+
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
-import * as workerEvents from './events';
-import { ExecutionError } from '../errors';
+import * as workerEvents from '../events';
+import { HANDLED_EXIT_CODE } from '../../events';
+import { ExecutionError, ExitError } from '../../errors';
+
+import { publish } from './runtime';
+import serializeError from '../../util/serialize-error';
 
 export const createLoggers = (
   workflowId: string,
@@ -15,9 +19,8 @@ export const createLoggers = (
   const log = (message: string) => {
     // Apparently the json log stringifies the message
     // We don't really want it to do that
-    workerpool.workerEmit({
+    publish(workerEvents.LOG, {
       workflowId,
-      type: workerEvents.LOG,
       message: JSON.parse(message),
     } as workerEvents.LogEvent);
   };
@@ -48,37 +51,26 @@ export const createLoggers = (
   return { logger, jobLogger };
 };
 
-export function publish<T extends workerEvents.WorkerEvents>(
+// Execute wrapper function
+export const execute = async (
   workflowId: string,
-  type: T,
-  payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
-) {
-  workerpool.workerEmit({
-    workflowId,
-    threadId,
-    type,
-    ...payload,
-  });
-}
-
-async function helper(workflowId: string, execute: () => Promise<any>) {
-  publish(workflowId, workerEvents.WORKFLOW_START, {});
-
+  executeFn: () => Promise<any>
+) => {
   const handleError = (err: any) => {
-    publish(workflowId, workerEvents.ERROR, {
+    publish(workerEvents.ERROR, {
       // @ts-ignore
       workflowId,
-      threadId,
-
       // Map the error out of the thread in a serializable format
-      error: {
-        message: err.message,
-        type: err.subtype || err.type || err.name,
-        severity: err.severity || 'crash',
-      },
+      error: serializeError(err),
       // TODO job id maybe
     });
   };
+
+  process.on('exit', (code: number) => {
+    if (code !== HANDLED_EXIT_CODE) {
+      handleError(new ExitError(code));
+    }
+  });
 
   // catch-all for any uncaught errors, which likely come from asynchronous code
   // (probably in an adaptor)
@@ -91,24 +83,26 @@ async function helper(workflowId: string, execute: () => Promise<any>) {
     e.severity = 'crash'; // Downgrade this to a crash because it's likely not our fault
     handleError(e);
 
-    // Close down the process justto be 100% sure that all async code stops
+    // Close down the process just to be 100% sure that all async code stops
     // This is in a timeout to give the emitted message time to escape
     // There is a TINY WINDOW in which async code can still run and affect the next attempt
     // This should all go away when we replace workerpool
     setTimeout(() => {
-      process.exit(111111);
+      process.exit(HANDLED_EXIT_CODE);
     }, 2);
   });
 
+  publish(workerEvents.WORKFLOW_START, {
+    workflowId,
+  });
+
   try {
-    const result = await execute();
-    publish(workflowId, workerEvents.WORKFLOW_COMPLETE, { state: result });
+    const result = await executeFn();
+    publish(workerEvents.WORKFLOW_COMPLETE, { workflowId, state: result });
 
     // For tests
     return result;
   } catch (err: any) {
     handleError(err);
   }
-}
-
-export default helper;
+};

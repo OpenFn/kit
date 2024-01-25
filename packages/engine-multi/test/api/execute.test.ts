@@ -1,6 +1,6 @@
 import path from 'node:path';
 import test from 'ava';
-import { WorkflowState } from '../../src/types';
+import { EngineAPI, WorkflowState } from '../../src/types';
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
 import { createMockLogger } from '@openfn/logger';
@@ -14,19 +14,22 @@ import {
 } from '../../src/events';
 import { RTEOptions } from '../../src/api';
 import ExecutionContext from '../../src/classes/ExecutionContext';
-import loadVersions from '../../src/util/load-versions';
 
-const workerPath = path.resolve('dist/worker/mock.js');
+const workerPath = path.resolve('dist/test/mock-run.js');
 
 const createContext = ({ state, options }) => {
+  const logger = createMockLogger();
+  const { callWorker } = initWorkers(workerPath, {}, logger);
+
   const ctx = new ExecutionContext({
     state: state || { workflowId: 'x' },
-    logger: createMockLogger(),
-    callWorker: () => {},
+    logger,
+    callWorker,
     options,
-    versions: loadVersions(),
   });
-  initWorkers(ctx, workerPath);
+
+  ctx.callWorker = callWorker;
+
   return ctx;
 };
 
@@ -76,6 +79,32 @@ test.serial('should emit a workflow-start event', async (t) => {
 
   // No need to do a deep test of the event payload here
   t.is(workflowStart.workflowId, 'x');
+});
+
+test.serial('should emit a log event with the memory limit', async (t) => {
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  const logs = [];
+
+  const context = createContext({
+    state,
+    options: {
+      ...options,
+      memoryLimitMb: 666,
+    },
+  });
+
+  context.on(WORKFLOW_LOG, (evt) => {
+    logs.push(evt);
+  });
+
+  await execute(context);
+
+  const log = logs.find(({ name }) => name === 'RTE');
+  t.is(log.message[0], 'Memory limit: 666mb');
 });
 
 test.serial('should emit a workflow-complete event', async (t) => {
@@ -265,4 +294,28 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
   });
 
   await execute(context);
+});
+
+test.serial('should stringify the whitelist array', async (t) => {
+  let passedOptions;
+
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  const opts = {
+    ...options,
+    whitelist: [/abc/],
+  };
+
+  const context = createContext({ state, options: opts });
+  context.callWorker = (_command, args) => {
+    passedOptions = args[1];
+  };
+
+  await execute(context);
+
+  t.truthy(passedOptions);
+  t.deepEqual(passedOptions.whitelist, ['/abc/']);
 });

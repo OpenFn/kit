@@ -1,12 +1,10 @@
-// ok first of allI want to capture the key interfaces
-import workerpool from 'workerpool';
-
 import type { Logger, SanitizePolicies } from '@openfn/logger';
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { EventEmitter } from 'node:events';
 
 import type { ExternalEvents, EventMap } from './events';
 import type { EngineOptions } from './engine';
+import type { ExecOpts } from './worker/pool';
 
 export type Resolver<T> = (id: string) => Promise<T>;
 
@@ -30,12 +28,12 @@ export type WorkflowState = {
   options: any; // TODO this is wf specific options, like logging policy
 };
 
-export type CallWorker = <T = any>(
+export type CallWorker = (
   task: string,
   args: any[],
   events?: any,
-  timeout?: number
-) => workerpool.Promise<T>;
+  options?: Omit<ExecOpts, 'on'>
+) => Promise<any>;
 
 export type ExecutionContextConstructor = {
   state: WorkflowState;
@@ -65,7 +63,6 @@ export interface ExecutionContext extends EventEmitter {
 export interface EngineAPI extends EventEmitter {
   callWorker: CallWorker;
   closeWorkers: (instant?: boolean) => void;
-  purge?: () => void;
 }
 
 export interface RuntimeEngine {

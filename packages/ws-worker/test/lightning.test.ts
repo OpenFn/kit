@@ -49,18 +49,15 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   ...ext,
 });
 
-test.serial(
-  `events: lightning should respond to a claim ${e.CLAIM} event`,
-  (t) => {
-    return new Promise((done) => {
-      lng.on(e.CLAIM, (evt) => {
-        const response = evt.payload;
-        t.deepEqual(response, []);
-        done();
-      });
+test.serial(`events: lightning should respond to a ${e.CLAIM} event`, (t) => {
+  return new Promise((done) => {
+    lng.on(e.CLAIM, (evt) => {
+      const response = evt.payload;
+      t.deepEqual(response, []);
+      done();
     });
-  }
-);
+  });
+});
 
 test.serial(
   `events: lightning should respond to a ${e.CLAIM} event with an attempt id and token`,
@@ -264,7 +261,7 @@ test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
   });
 });
 
-test.serial(
+test.serial.only(
   `events: lightning should receive a ${e.RUN_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {

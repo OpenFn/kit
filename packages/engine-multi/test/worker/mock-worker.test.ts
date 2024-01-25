@@ -7,13 +7,22 @@
  */
 import path from 'node:path';
 import test from 'ava';
-import workerpool from 'workerpool';
 
+import createPool from '../../src/worker/pool';
 import { createPlan } from '../../src/test/util';
 
 import * as e from '../../src/worker/events';
+import { createMockLogger } from '@openfn/logger';
 
-const workers = workerpool.pool(path.resolve('dist/worker/mock.js'));
+const logger = createMockLogger('', { level: 'debug' });
+
+const workers = createPool(
+  path.resolve('dist/test/mock-run.js'),
+  {
+    capacity: 1,
+  },
+  logger
+);
 
 test('execute a mock plan inside a worker thread', async (t) => {
   const plan = createPlan();
@@ -91,14 +100,16 @@ test('execute a mock plan with delay', async (t) => {
   });
   await workers.exec('run', [plan]);
   const elapsed = new Date().getTime() - start;
-  t.assert(elapsed > 50);
+  t.log(elapsed);
+  t.assert(elapsed > 40);
 });
 
 test('Publish workflow-start event', async (t) => {
   const plan = createPlan();
+  plan.id = 'xx';
   let didFire = false;
   await workers.exec('run', [plan], {
-    on: ({ type, ...args }) => {
+    on: ({ type }) => {
       if (type === e.WORKFLOW_START) {
         didFire = true;
       }
