@@ -39,7 +39,7 @@ const mapOptions = (options: AttemptOptions): AttemptOptions => {
   const to = runTimeout || attemptTimeout || timeout;
 
   if (to) {
-    (opts as AttemptOptions).attemptTimeout = to;
+    (opts as AttemptOptions).attemptTimeoutMs = to;
   }
 
   return opts;

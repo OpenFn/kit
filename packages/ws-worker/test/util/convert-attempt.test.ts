@@ -64,7 +64,7 @@ test('convert a single job with options', (t) => {
     edges: [],
     options: {
       sanitize: 'obfuscate',
-      attemptTimeout: 10,
+      attemptTimeoutMs: 10,
     },
   };
   const { plan, options } = convertAttempt(attempt as Attempt);
@@ -531,7 +531,7 @@ test('convert options, mapping timeout', (t) => {
   };
   const { options } = convertAttempt(attempt as Attempt);
 
-  t.deepEqual(options, { attemptTimeout: 123 });
+  t.deepEqual(options, { attemptTimeoutMs: 123 });
 });
 
 test('convert options, mapping runTimeout', (t) => {
@@ -543,7 +543,7 @@ test('convert options, mapping runTimeout', (t) => {
   };
   const { options } = convertAttempt(attempt as Attempt);
 
-  t.deepEqual(options, { attemptTimeout: 123 });
+  t.deepEqual(options, { attemptTimeoutMs: 123 });
 });
 
 test('convert options, preferring runTimeout', (t) => {
@@ -551,11 +551,11 @@ test('convert options, preferring runTimeout', (t) => {
     id: 'w',
     options: {
       runTimeout: 123,
-      attemptTimeout: 456,
+      attemptTimeoutMs: 456,
       timeout: 789,
     },
   };
   const { options } = convertAttempt(attempt as Attempt);
 
-  t.deepEqual(options, { attemptTimeout: 123 });
+  t.deepEqual(options, { attemptTimeoutMs: 123 });
 });

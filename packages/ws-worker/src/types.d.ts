@@ -79,7 +79,9 @@ export type AttemptOptions = {
   runTimeout?: number;
 
   // this is the internal old terminology, which will be deprecated soon
-  attemptTimeout?: number;
+  attemptTimeoutMs?: number;
+
+  attemptTimeout?: number; // deprecated
 
   // deprecated alias for timeout. Maps to "attemptTimeout" internally
   timeout?: number;
