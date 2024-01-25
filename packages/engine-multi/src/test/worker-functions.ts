@@ -51,10 +51,6 @@ const tasks = {
     }
   },
 
-  timeout: async () => {
-    while (true) {}
-  },
-
   throw: async () => {
     throw new Error('test_error');
   },

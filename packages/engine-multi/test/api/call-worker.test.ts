@@ -54,7 +54,7 @@ test.serial(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
     await t.throwsAsync(
-      () => engine.callWorker('timeout', [11], {}, { timeout: 10 }),
+      () => engine.callWorker('wait', [5000], {}, { timeout: 10 }),
       {
         name: 'TimeoutError',
       }
