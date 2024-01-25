@@ -53,7 +53,7 @@ test.after(async () => {
 });
 
 // Skipping these in CI (for now at least)
-test.serial.skip('run 100 attempts', async (t) => {
+test.serial('run 100 attempts', async (t) => {
   return new Promise((done, reject) => {
     const attemptsTotal = 100;
     let attemptsComplete = 0;
@@ -90,7 +90,7 @@ test.serial.skip('run 100 attempts', async (t) => {
 
     lightning.on('run:complete', (evt) => {
       // May want to disable this  but it's nice feedback
-      console.log('Completed ', evt.attemptId);
+      t.log('Completed ', evt.attemptId);
 
       if (evt.payload.reason !== 'success') {
         t.log('Atempt failed:');
