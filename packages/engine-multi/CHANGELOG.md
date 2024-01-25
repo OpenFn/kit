@@ -5,6 +5,7 @@
 ### Minor Changes
 
 - 9b9ca0c: Replace workerpool with new child_process pool implementation
+- 281391b: Replace timeout option with attemptTimeoutMs
 
 ### Patch Changes
 
