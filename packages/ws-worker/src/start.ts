@@ -29,7 +29,7 @@ const {
   WORKER_LIGHTNING_SERVICE_URL,
   WORKER_LOG_LEVEL,
   WORKER_MAX_RUN_DURATION_SECONDS,
-  WORKER_MAX_RUN_MEMORY,
+  WORKER_MAX_RUN_MEMORY_MB,
   WORKER_PORT,
   WORKER_REPO_DIR,
   WORKER_SECRET,
@@ -97,9 +97,11 @@ const args = yargs(hideBin(process.argv))
   })
   .option('run-memory', {
     description:
-      'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY',
+      'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY_MB',
     type: 'number',
-    default: WORKER_MAX_RUN_MEMORY ? parseInt(WORKER_MAX_RUN_MEMORY) : 500,
+    default: WORKER_MAX_RUN_MEMORY_MB
+      ? parseInt(WORKER_MAX_RUN_MEMORY_MB)
+      : 500,
   })
   .option('max-run-duration-seconds', {
     alias: 't',
