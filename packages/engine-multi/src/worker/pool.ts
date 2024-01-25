@@ -53,7 +53,10 @@ const envPath = path.resolve(root, 'dist/worker/child/runner.js');
 
 // Restore a child at the first non-child process position
 // this encourages the child to be reused before creating a new one
-export const returnToPool = (pool: ChildProcessPool, worker: ChildProcess) => {
+export const returnToPool = (
+  pool: ChildProcessPool,
+  worker: ChildProcess | false
+) => {
   let idx = pool.findIndex((child) => child);
   if (idx === -1) idx = pool.length;
   pool.splice(idx, 0, worker);
@@ -94,8 +97,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     return child;
   };
 
-  const finish = (worker: any) => {
-    worker.removeAllListeners();
+  const finish = (worker: ChildProcess | false) => {
+    if (worker) {
+      worker.removeAllListeners();
+    }
 
     if (destroyed) {
       killWorker(worker);
@@ -133,22 +138,26 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             crlfDelay: Infinity,
           });
 
-          let error;
-
           // TODO should we log the stderr?
           try {
             for await (const line of rl) {
               if (line.match(/JavaScript heap out of memory/)) {
-                error = new OOMError();
-                break;
+                reject(new OOMError());
+
+                killWorker(worker);
+                // restore a placeholder to the queue
+                finish(false);
+                return;
               }
             }
           } catch (e) {
             // do nothing
           }
 
-          reject(error || new ExitError(code));
+          reject(new ExitError(code));
           finish(worker);
+        } else {
+          console.log(' >>> HANDLED');
         }
       };
 

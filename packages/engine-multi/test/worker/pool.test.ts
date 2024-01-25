@@ -379,6 +379,35 @@ test('after timeout, destroy the worker and reset the pool', async (t) => {
   });
 });
 
+// Ie, running two tasks in the same worker process should isolate events properly
+test('events should disconnect between executions', (t) => {
+  return new Promise(async (done) => {
+    const pool = createPool(workerPath, { capacity: 1 }, logger);
+
+    const counts = {
+      a: 0,
+      b: 0,
+      c: 0,
+    };
+
+    const on = (event) => {
+      if (event.type === 'test-message') {
+        counts[event.result] += 1;
+      }
+    };
+
+    await pool.exec('test', ['a'], { on });
+    await pool.exec('test', ['b'], { on });
+    await pool.exec('test', ['c'], { on });
+
+    t.is(counts.a, 1);
+    t.is(counts.b, 1);
+    t.is(counts.c, 1);
+
+    done();
+  });
+});
+
 test('returnToPool: add to the start of a full pool', (t) => {
   const pool = [
     { pid: 1 },

@@ -101,7 +101,7 @@ test.serial('thread oom error', (t) => {
 test.serial('vm oom error', (t) => {
   return new Promise((done) => {
     const plan = {
-      id: 'a',
+      id: 'b',
       jobs: [
         {
           expression: `export default [(s) => {
@@ -116,7 +116,6 @@ test.serial('vm oom error', (t) => {
     };
 
     engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
-      console.log(evt);
       t.is(evt.type, 'OOMError');
       t.is(evt.severity, 'kill');
       t.is(evt.message, 'Run exceeded maximum memory usage');
