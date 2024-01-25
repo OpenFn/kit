@@ -45,4 +45,34 @@ workflows:
   t.truthy(findError(results.errors, 'duplicate key: foo'));
 
   t.truthy(findError(results.errors, 'jobs: must be a map'));
+
+  doc = `
+name: project-name
+workflows:
+  workflow-one:
+    name: workflow one
+    jobs:
+      Transform-data-to-FHIR-standard:
+        name: Transform data to FHIR standard
+        adaptor: '@openfn/language-http@latest'
+        body: |
+          fn(state => state);
+
+    triggers:
+      webhook:
+        type: webhook
+        enabled: true
+    edges:
+      webhook->Transform-data-to-FHIR-standard:
+        condition_type: js_expression
+        condition_expression: true
+  `;
+
+  results = parseAndValidate(doc);
+
+  t.assert(
+    results.doc.workflows['workflow-one'].edges![
+      'webhook->Transform-data-to-FHIR-standard'
+    ].condition_expression === 'true'
+  );
 });
