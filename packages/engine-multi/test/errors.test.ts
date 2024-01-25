@@ -107,7 +107,7 @@ test.serial('vm oom error', (t) => {
           expression: `export default [(s) => {
               s.a = [];
               while(true) {
-                s.a.push(new Array(1e9).fill("oom"));
+                s.a.push(new Array(1e8).fill("oom"));
               }
               return s;
             }]`,
