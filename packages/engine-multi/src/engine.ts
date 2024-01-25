@@ -21,8 +21,7 @@ import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
-// NB this is the ATTEMPT timeout
-const DEFAULT_ATTEMPT_TIMEOUT = 1000 * 60 * 10;
+const DEFAULT_ATTEMPT_TIMEOUT = 1000 * 60 * 10; // ms
 
 const DEFAULT_MEMORY_LIMIT_MB = 500;
 
@@ -85,9 +84,9 @@ export type EngineOptions = {
   // Timeout for the whole workflow
   // timeout?: number;
 
-  // Default timeouts (used if an attempt does not provide its own)
-  attemptTimeout?: number;
-  runTimeout?: number;
+  // Default timeouts in ms(used if an attempt does not provide its own)
+  attemptTimeoutMs?: number;
+  runTimeoutMs?: number;
 
   statePropsToRemove?: string[];
 };
@@ -99,7 +98,7 @@ export type ExecuteOptions = {
   // timeout?: number; // DEPRECATED
 
   // NB this deliberately uses old terminology
-  attemptTimeout?: number;
+  attemptTimeoutMs?: number;
   runTimeout?: number;
 
   memoryLimitMb?: number;
@@ -114,7 +113,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
-  const defaultTimeout = options.attemptTimeout || DEFAULT_ATTEMPT_TIMEOUT;
+  const defaultTimeout = options.attemptTimeoutMs || DEFAULT_ATTEMPT_TIMEOUT;
 
   let resolvedWorkerPath;
   if (workerPath) {
@@ -182,7 +181,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        attemptTimeout: opts.attemptTimeout ?? defaultTimeout,
+        attemptTimeoutMs: opts.attemptTimeoutMs ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
       },
     });

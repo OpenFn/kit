@@ -232,7 +232,7 @@ test.serial(
       };
 
       const opts: ExecuteOptions = {
-        attemptTimeout: 10,
+        attemptTimeoutMs: 10,
       };
 
       engine.listen(plan.id, {
@@ -256,7 +256,7 @@ test.serial(
       engine = await createEngine(
         {
           ...options,
-          attemptTimeout: 22,
+          attemptTimeoutMs: 22,
         },
         p
       );
