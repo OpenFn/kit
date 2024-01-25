@@ -1,6 +1,5 @@
 import {
   ATTEMPT_COMPLETE,
-  AttemptCompletePayload,
   ATTEMPT_LOG,
   AttemptLogPayload,
   ATTEMPT_START,
@@ -17,17 +16,16 @@ import type { JSONLog, Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
-  WorkflowErrorPayload,
   WorkflowStartPayload,
 } from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
-import { calculateJobExitReason } from './reasons';
 
 // TODO: I want to move all event handlers out into their own files
 // TODO just export the index yeah?
 import handleRunComplete from '../events/run-complete';
 import handleRunStart from '../events/run-start';
 import handleAttemptComplete from '../events/atttempt-complete';
+import handleAttemptError from '../events/attempt-error';
 import createThrottler from '../util/throttle';
 
 const enc = new TextDecoder('utf-8');
@@ -114,7 +112,7 @@ export function execute(
     // This will also resolve the promise
     addEvent('workflow-complete', throttle(handleAttemptComplete)),
 
-    addEvent('workflow-error', throttle(onWorkflowError))
+    addEvent('workflow-error', throttle(handleAttemptError))
 
     // TODO send autoinstall logs
   );
@@ -200,35 +198,6 @@ export function onWorkflowStart(
   _event: WorkflowStartPayload
 ) {
   return sendEvent<AttemptStartPayload>(channel, ATTEMPT_START);
-}
-
-export async function onWorkflowError(
-  context: Context,
-  event: WorkflowErrorPayload
-) {
-  const { state, channel, logger, onFinish } = context;
-
-  try {
-    // Ok, let's try that, let's just generate a reason from the event
-    const reason = calculateJobExitReason('', { data: {} }, event);
-
-    // If there's a job still running, make sure it gets marked complete
-    if (state.activeJob) {
-      await onJobError(context, { error: event });
-    }
-
-    await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
-      final_dataclip_id: state.lastDataclipId!,
-      ...reason,
-    });
-
-    onFinish({ reason });
-  } catch (e: any) {
-    logger.error('ERROR in workflow-error handler:', e.message);
-    logger.error(e);
-
-    onFinish({});
-  }
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
