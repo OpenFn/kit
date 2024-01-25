@@ -31,6 +31,7 @@ const {
   STATE_PROPS_TO_REMOVE,
   WORKER_REPO_DIR,
   WORKER_SECRET,
+  ATTEMPT_TIMEOUT_SECONDS,
 } = process.env;
 
 const args = yargs(hideBin(process.argv))
@@ -93,6 +94,12 @@ const args = yargs(hideBin(process.argv))
     description: 'Maximum memory allocated to a single run, in mb',
     type: 'number',
     default: MAX_RUN_MEMORY ? parseInt(MAX_RUN_MEMORY) : 500,
+  })
+  .option('attempt-timeout-seconds', {
+    alias: 't',
+    description: 'Default attempt timeout for the server, in seconds',
+    type: 'number',
+    default: ATTEMPT_TIMEOUT_SECONDS,
   })
   .parse() as Args;
 
