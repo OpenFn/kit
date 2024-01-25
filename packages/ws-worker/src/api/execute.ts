@@ -144,7 +144,7 @@ export function execute(
         engine.execute(plan, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
-        onWorkflowError(context, {
+        handleAttemptError(context, {
           workflowId: plan.id!,
           message: e.message,
           type: e.type,
