@@ -81,7 +81,7 @@ export type AttemptOptions = {
   // this is the internal old terminology, which will be deprecated soon
   attemptTimeout?: number;
 
-  // deprecared alias for timeout. Maps to "attemptTimeout" internally
+  // deprecated alias for timeout. Maps to "attemptTimeout" internally
   timeout?: number;
 
   sanitize?: SanitizePolicies;

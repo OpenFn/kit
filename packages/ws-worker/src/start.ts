@@ -162,7 +162,7 @@ if (args.mock) {
     memoryLimitMb: args.runMemory,
     maxWorkers: args.capacity,
     statePropsToRemove: args.statePropsToRemove,
-    attemptTimeout: args.maxRunDurationSeconds * 1000,
+    attemptTimeoutMs: args.maxRunDurationSeconds * 1000,
   };
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);
