@@ -2,7 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 
-import createEngine from '../src/engine';
+import createEngine, { ExecuteOptions } from '../src/engine';
 import * as e from '../src/events';
 import { ExecutionPlan } from '@openfn/runtime';
 
@@ -215,32 +215,70 @@ test.serial('catch and emit errors', async (t) => {
   });
 });
 
-test.serial('timeout the whole attempt and emit an error', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('dist/test/worker-functions.js');
-    engine = await createEngine(options, p);
+test.serial(
+  'timeout the whole attempt and emit an error (timeout on attempt)',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(options, p);
 
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'while(true) {}',
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: 'while(true) {}',
+          },
+        ],
+      };
+
+      const opts: ExecuteOptions = {
+        attemptTimeoutMs: 10,
+      };
+
+      engine.listen(plan.id, {
+        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+          t.is(type, 'TimeoutError');
+          t.regex(message, /failed to return within 10ms/);
+          done();
         },
-      ],
-    };
+      });
 
-    const opts = {
-      timeout: 10,
-    };
-
-    engine.listen(plan.id, {
-      [e.WORKFLOW_ERROR]: ({ message, type }) => {
-        t.is(type, 'TimeoutError');
-        t.regex(message, /failed to return within 10ms/);
-        done();
-      },
+      engine.execute(plan, opts);
     });
+  }
+);
 
-    engine.execute(plan, opts);
-  });
-});
+test.serial(
+  'timeout the whole attempt and emit an error (default engine timeout) ',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(
+        {
+          ...options,
+          attemptTimeoutMs: 22,
+        },
+        p
+      );
+
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: 'while(true) {}',
+          },
+        ],
+      };
+
+      engine.listen(plan.id, {
+        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+          t.is(type, 'TimeoutError');
+          t.regex(message, /failed to return within 22ms/);
+          done();
+        },
+      });
+
+      engine.execute(plan);
+    });
+  }
+);

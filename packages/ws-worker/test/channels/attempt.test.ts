@@ -25,7 +25,7 @@ test('loadAttempt should return an execution plan and options', async (t) => {
     ...attempts['attempt-1'],
     options: {
       sanitize: 'obfuscate',
-      timeout: 10,
+      attemptTimeout: 10,
     },
   };
 
@@ -56,7 +56,7 @@ test('should join an attempt channel with a token', async (t) => {
       join: () => ({ status: 'ok' }),
       [GET_ATTEMPT]: () => ({
         id: 'a',
-        options: { timeout: 10 },
+        options: { attemptTimeout: 10 },
       }),
     }),
   });
@@ -70,7 +70,7 @@ test('should join an attempt channel with a token', async (t) => {
 
   t.truthy(channel);
   t.deepEqual(plan, { id: 'a', jobs: [] });
-  t.deepEqual(options, { timeout: 10 });
+  t.deepEqual(options, { attemptTimeout: 10 });
 });
 
 test('should fail to join an attempt channel with an invalid token', async (t) => {

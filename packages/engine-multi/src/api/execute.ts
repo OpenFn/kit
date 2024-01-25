@@ -55,7 +55,7 @@ const execute = async (context: ExecutionContext) => {
 
     const workerOptions = {
       memoryLimitMb: options.memoryLimitMb,
-      timeout: options.timeout,
+      timeout: options.attemptTimeoutMs,
     };
 
     // Put out a log with the memory limit for the attempt

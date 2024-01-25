@@ -338,7 +338,7 @@ test('a timeout error should still call run-complete', (t) => {
         },
       ],
       options: {
-        timeout: 500,
+        runTimeout: 500,
       },
     };
 

@@ -291,22 +291,20 @@ test.serial(
   `events: lightning should receive a ${e.RUN_COMPLETE} event even if the attempt fails`,
   (t) => {
     return new Promise((done) => {
-      // This attempt should timeout
-      const attempt = getAttempt({ options: { timeout: 100 } }, [
+      const attempt = getAttempt({}, [
         {
           id: 'z',
           adaptor: '@openfn/language-common@1.0.0',
-          body: 'wait(1000)',
+          body: 'err()',
         },
       ]);
 
       lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
-        t.not(payload.reason, 'success');
+        t.is(payload.reason, 'fail');
         t.pass('called run complete');
       });
 
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, ({ payload }) => {
-        t.not(payload.reason, 'success');
         done();
       });
 

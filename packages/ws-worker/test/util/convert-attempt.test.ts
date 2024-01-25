@@ -64,7 +64,7 @@ test('convert a single job with options', (t) => {
     edges: [],
     options: {
       sanitize: 'obfuscate',
-      timeout: 10,
+      attemptTimeoutMs: 10,
     },
   };
   const { plan, options } = convertAttempt(attempt as Attempt);
@@ -506,4 +506,56 @@ test('convert edge condition always', (t) => {
   const [job] = plan.jobs;
 
   t.false(job.next.b.hasOwnProperty('condition'));
+});
+
+test('convert random options', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    options: {
+      a: 1,
+      b: 2,
+      c: 3,
+    },
+  };
+  const { options } = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(options, { a: 1, b: 2, c: 3 });
+});
+
+test('convert options, mapping timeout', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    options: {
+      timeout: 123,
+    },
+  };
+  const { options } = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(options, { attemptTimeoutMs: 123 });
+});
+
+test('convert options, mapping runTimeout', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    options: {
+      runTimeout: 123,
+    },
+  };
+  const { options } = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(options, { attemptTimeoutMs: 123 });
+});
+
+test('convert options, preferring runTimeout', (t) => {
+  const attempt: Partial<Attempt> = {
+    id: 'w',
+    options: {
+      runTimeout: 123,
+      attemptTimeoutMs: 456,
+      timeout: 789,
+    },
+  };
+  const { options } = convertAttempt(attempt as Attempt);
+
+  t.deepEqual(options, { attemptTimeoutMs: 123 });
 });
