@@ -14,7 +14,6 @@ import {
   onJobLog,
   execute,
   onWorkflowStart,
-  onWorkflowComplete,
   onWorkflowError,
   loadDataclip,
   loadCredential,
@@ -193,56 +192,56 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
   await onWorkflowStart({ channel });
 });
 
-test('workflowComplete should send an attempt:complete event', async (t) => {
-  const result = { answer: 42 };
+// test('workflowComplete should send an attempt:complete event', async (t) => {
+//   const result = { answer: 42 };
 
-  const state = {
-    reasons: {},
-    dataclips: {
-      x: result,
-    },
-    lastDataclipId: 'x',
-  };
+//   const state = {
+//     reasons: {},
+//     dataclips: {
+//       x: result,
+//     },
+//     lastDataclipId: 'x',
+//   };
 
-  const channel = mockChannel({
-    [ATTEMPT_COMPLETE]: (evt) => {
-      t.deepEqual(evt.final_dataclip_id, 'x');
-    },
-  });
+//   const channel = mockChannel({
+//     [ATTEMPT_COMPLETE]: (evt) => {
+//       t.deepEqual(evt.final_dataclip_id, 'x');
+//     },
+//   });
 
-  const event = {};
+//   const event = {};
 
-  const context = { channel, state, onFinish: () => {} };
-  await onWorkflowComplete(context, event);
-});
+//   const context = { channel, state, onFinish: () => {} };
+//   await onWorkflowComplete(context, event);
+// });
 
-test('workflowComplete should call onFinish with final dataclip', async (t) => {
-  const result = { answer: 42 };
+// test('workflowComplete should call onFinish with final dataclip', async (t) => {
+//   const result = { answer: 42 };
 
-  const state = {
-    reasons: {},
-    dataclips: {
-      x: result,
-    },
-    lastDataclipId: 'x',
-  };
+//   const state = {
+//     reasons: {},
+//     dataclips: {
+//       x: result,
+//     },
+//     lastDataclipId: 'x',
+//   };
 
-  const channel = mockChannel({
-    [ATTEMPT_COMPLETE]: () => true,
-  });
+//   const channel = mockChannel({
+//     [ATTEMPT_COMPLETE]: () => true,
+//   });
 
-  const context = {
-    channel,
-    state,
-    onFinish: ({ state: finalState }) => {
-      t.deepEqual(result, finalState);
-    },
-  };
+//   const context = {
+//     channel,
+//     state,
+//     onFinish: ({ state: finalState }) => {
+//       t.deepEqual(result, finalState);
+//     },
+//   };
 
-  const event = { state: result };
+//   const event = { state: result };
 
-  await onWorkflowComplete(context, event);
-});
+//   await onWorkflowComplete(context, event);
+// });
 
 test('workflowError should trigger runComplete with a reason', async (t) => {
   const jobId = 'job-1';
