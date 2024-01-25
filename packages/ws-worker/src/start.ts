@@ -20,49 +20,54 @@ type Args = {
   capacity?: number;
   runMemory?: number;
   statePropsToRemove?: string[];
+  maxRunDurationSeconds: number;
 };
 
 const {
-  BACKOFF,
-  CAPACITY,
-  LOG_LEVEL,
-  MAX_RUN_MEMORY,
-  PORT,
-  STATE_PROPS_TO_REMOVE,
+  WORKER_BACKOFF,
+  WORKER_CAPACITY,
+  WORKER_LIGHTNING_SERVICE_URL,
+  WORKER_LOG_LEVEL,
+  WORKER_MAX_RUN_DURATION_SECONDS,
+  WORKER_MAX_RUN_MEMORY,
+  WORKER_PORT,
   WORKER_REPO_DIR,
   WORKER_SECRET,
-  ATTEMPT_TIMEOUT_SECONDS,
+  WORKER_STATE_PROPS_TO_REMOVE,
 } = process.env;
 
 const args = yargs(hideBin(process.argv))
   .command('server', 'Start a ws-worker server')
   .option('port', {
     alias: 'p',
-    description: 'Port to run the server on',
+    description: 'Port to run the server on. Env: WORKER_PORT',
     type: 'number',
-    default: PORT || 2222,
+    default: WORKER_PORT || 2222,
   })
   // TODO maybe this is positional and required?
   // frees up -l for the log
   .option('lightning', {
-    alias: 'l',
+    alias: ['l', 'lightnin-service-url'],
     description:
-      'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server',
-    default: 'ws://localhost:4000/worker',
+      'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server. Env: WORKER_LIGHTNING_SERVICE_URL',
+    default: WORKER_LIGHTNING_SERVICE_URL || 'ws://localhost:4000/worker',
   })
   .option('repo-dir', {
     alias: 'd',
-    description: 'Path to the runtime repo (where modules will be installed)',
+    description:
+      'Path to the runtime repo (where modules will be installed). Env: WORKER_REPO_DIR',
     default: WORKER_REPO_DIR,
   })
   .option('secret', {
     alias: 's',
-    description: 'Worker secret (comes from WORKER_SECRET by default)',
+    description:
+      'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
+    default: WORKER_SECRET,
   })
   .option('log', {
     description:
-      'Set the log level for stdout (default to info, set to debug for verbose output)',
-    default: LOG_LEVEL || 'debug',
+      'Set the log level for stdout (default to info, set to debug for verbose output). Env: WORKER_LOG_LEVEL',
+    default: WORKER_LOG_LEVEL || 'debug',
     type: 'string',
   })
   .option('loop', {
@@ -76,34 +81,37 @@ const args = yargs(hideBin(process.argv))
     type: 'boolean',
   })
   .option('backoff', {
-    description: 'Claim backoff rules: min/max (s)',
-    default: BACKOFF || '1/10',
+    description: 'Claim backoff rules: min/max (s). Env: WORKER_BACKOFF',
+    default: WORKER_BACKOFF || '1/10',
   })
   .option('capacity', {
-    description: 'max concurrent workers',
-    default: CAPACITY ? parseInt(CAPACITY) : 5,
+    description: 'max concurrent workers. Env: WORKER_CAPACITY',
+    default: WORKER_CAPACITY ? parseInt(WORKER_CAPACITY) : 5,
     type: 'number',
   })
   .option('state-props-to-remove', {
     description:
-      'A list of properties to remove from the final state returned by a job',
-    default: STATE_PROPS_TO_REMOVE ?? ['configuration', 'response'],
+      'A list of properties to remove from the final state returned by a job. Env: WORKER_STATE_PROPS_TO_REMOVE',
+    default: WORKER_STATE_PROPS_TO_REMOVE ?? ['configuration', 'response'],
     type: 'array',
   })
   .option('run-memory', {
-    description: 'Maximum memory allocated to a single run, in mb',
+    description:
+      'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY',
     type: 'number',
-    default: MAX_RUN_MEMORY ? parseInt(MAX_RUN_MEMORY) : 500,
+    default: WORKER_MAX_RUN_MEMORY ? parseInt(WORKER_MAX_RUN_MEMORY) : 500,
   })
-  .option('attempt-timeout-seconds', {
+  .option('max-run-duration-seconds', {
     alias: 't',
-    description: 'Default attempt timeout for the server, in seconds',
+    description:
+      'Default attempt timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
     type: 'number',
-    default: ATTEMPT_TIMEOUT_SECONDS,
+    default: WORKER_MAX_RUN_DURATION_SECONDS || 60 * 5, // 5 minutes
   })
   .parse() as Args;
 
 const logger = createLogger('SRV', { level: args.log });
+
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';
   if (!args.secret) {
@@ -111,12 +119,8 @@ if (args.lightning === 'mock') {
     args.secret = 'abdefg';
   }
 } else if (!args.secret) {
-  if (!WORKER_SECRET) {
-    logger.error('WORKER_SECRET is not set');
-    process.exit(1);
-  }
-
-  args.secret = WORKER_SECRET;
+  logger.error('WORKER_SECRET is not set');
+  process.exit(1);
 }
 
 const [minBackoff, maxBackoff] = args.backoff
@@ -156,6 +160,7 @@ if (args.mock) {
     memoryLimitMb: args.runMemory,
     maxWorkers: args.capacity,
     statePropsToRemove: args.statePropsToRemove,
+    attemptTimeout: args.maxRunDurationSeconds * 1000,
   };
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);
