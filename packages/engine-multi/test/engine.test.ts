@@ -215,32 +215,70 @@ test.serial('catch and emit errors', async (t) => {
   });
 });
 
-test.serial('timeout the whole attempt and emit an error', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('dist/test/worker-functions.js');
-    engine = await createEngine(options, p);
+test.serial(
+  'timeout the whole attempt and emit an error (timeout on attempt)',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(options, p);
 
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'while(true) {}',
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: 'while(true) {}',
+          },
+        ],
+      };
+
+      const opts: ExecuteOptions = {
+        attemptTimeout: 10,
+      };
+
+      engine.listen(plan.id, {
+        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+          t.is(type, 'TimeoutError');
+          t.regex(message, /failed to return within 10ms/);
+          done();
         },
-      ],
-    };
+      });
 
-    const opts: ExecuteOptions = {
-      attemptTimeout: 10,
-    };
-
-    engine.listen(plan.id, {
-      [e.WORKFLOW_ERROR]: ({ message, type }) => {
-        t.is(type, 'TimeoutError');
-        t.regex(message, /failed to return within 10ms/);
-        done();
-      },
+      engine.execute(plan, opts);
     });
+  }
+);
 
-    engine.execute(plan, opts);
-  });
-});
+test.serial(
+  'timeout the whole attempt and emit an error (default engine timeout) ',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(
+        {
+          ...options,
+          attemptTimeout: 22,
+        },
+        p
+      );
+
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: 'while(true) {}',
+          },
+        ],
+      };
+
+      engine.listen(plan.id, {
+        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+          t.is(type, 'TimeoutError');
+          t.regex(message, /failed to return within 22ms/);
+          done();
+        },
+      });
+
+      engine.execute(plan);
+    });
+  }
+);

@@ -114,6 +114,8 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
+  const defaultTimeout = options.attemptTimeout || DEFAULT_ATTEMPT_TIMEOUT;
+
   let resolvedWorkerPath;
   if (workerPath) {
     // If a path to the worker has been passed in, just use it verbatim
@@ -180,7 +182,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        attemptTimeout: opts.attemptTimeout || DEFAULT_ATTEMPT_TIMEOUT,
+        attemptTimeout: opts.attemptTimeout ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
       },
     });
