@@ -261,7 +261,7 @@ test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
   });
 });
 
-test.serial.only(
+test.serial(
   `events: lightning should receive a ${e.RUN_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {
@@ -628,6 +628,63 @@ test.serial(
     });
   }
 );
+
+test.serial(`worker should send a success reason in the logs`, (t) => {
+  return new Promise((done) => {
+    let log;
+
+    const attempt = {
+      id: 'attempt-1',
+      jobs: [
+        {
+          body: 'fn((s) => { return s })',
+        },
+      ],
+    };
+
+    lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+      if (payload.message[0].match(/Run complete with status: success/)) {
+        log = payload.message[0];
+      }
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      t.truthy(log);
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
+
+test.serial(`worker should send a fail reason in the logs`, (t) => {
+  return new Promise((done) => {
+    let log;
+
+    const attempt = {
+      id: 'attempt-1',
+      jobs: [
+        {
+          body: 'fn((s) => { throw "blah" })',
+        },
+      ],
+    };
+
+    lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+      if (payload.message[0].match(/Run complete with status: fail/)) {
+        log = payload.message[0];
+      }
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      t.truthy(log);
+      t.regex(log, /JobError: blah/i);
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
 
 // Note that this test HAS to be last
 // Remember this uses the mock engine, so it's not a good test of workerpool's behaviours
