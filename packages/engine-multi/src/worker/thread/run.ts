@@ -34,7 +34,7 @@ register({
 
     const options = {
       // disable the run/step timeout
-      timeout: false,
+      timeout: 0,
       strict: false,
       logger,
       jobLogger,
