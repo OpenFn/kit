@@ -50,7 +50,6 @@ test.serial('callWorker should trigger an event callback', async (t) => {
   });
 });
 
-// Skipping because this routinely fails in CI
 test.serial(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
