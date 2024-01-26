@@ -24,7 +24,7 @@ import { ExecutionPlan } from '@openfn/runtime';
 // TODO just export the index yeah?
 import handleRunComplete from '../events/run-complete';
 import handleRunStart from '../events/run-start';
-import handleAttemptComplete from '../events/atttempt-complete';
+import handleAttemptComplete from '../events/attempt-complete';
 import handleAttemptError from '../events/attempt-error';
 import createThrottler from '../util/throttle';
 
