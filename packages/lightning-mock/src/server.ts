@@ -13,13 +13,13 @@ import createDevAPI from './api-dev';
 
 import type { AttemptLogPayload, Attempt, DevServer } from './types';
 
-type RunId = string;
+type StepId = string;
 type JobId = string;
 
 export type AttemptState = {
   status: 'queued' | 'started' | 'complete';
   logs: AttemptLogPayload[];
-  runs: Record<JobId, RunId>;
+  steps: Record<JobId, StepId>;
 };
 
 export type ServerState = {

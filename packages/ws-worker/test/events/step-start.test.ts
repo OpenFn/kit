@@ -1,32 +1,32 @@
 import test from 'ava';
-import handleRunStart from '../../src/events/run-start';
+import handleStepStart from '../../src/events/step-start';
 
 import { JobStartPayload } from '@openfn/engine-multi';
 
 import { mockChannel } from '../../src/mock/sockets';
 import { createAttemptState } from '../../src/util';
-import { ATTEMPT_LOG, RUN_START } from '../../src/events';
+import { ATTEMPT_LOG, STEP_START } from '../../src/events';
 
 import pkg from '../../package.json' assert { type: 'json' };
 
-test('set a run id and active job on state', async (t) => {
+test('set a step id and active job on state', async (t) => {
   const plan = { id: 'attempt-1', jobs: [{ id: 'job-1' }] };
   const jobId = 'job-1';
 
   const state = createAttemptState(plan);
 
   const channel = mockChannel({
-    [RUN_START]: (x) => x,
+    [STEP_START]: (x) => x,
     [ATTEMPT_LOG]: (x) => x,
   });
 
-  await handleRunStart({ channel, state }, { jobId });
+  await handleStepStart({ channel, state }, { jobId });
 
   t.is(state.activeJob, jobId);
-  t.truthy(state.activeRun);
+  t.truthy(state.activeStep);
 });
 
-test('send a run:start event', async (t) => {
+test('send a step:start event', async (t) => {
   const plan = {
     id: 'attempt-1',
     initialState: 'abc',
@@ -39,22 +39,22 @@ test('send a run:start event', async (t) => {
 
   const state = createAttemptState(plan);
   state.activeJob = jobId;
-  state.activeRun = 'b';
+  state.activeStep = 'b';
 
   const channel = mockChannel({
-    [RUN_START]: (evt) => {
+    [STEP_START]: (evt) => {
       t.is(evt.job_id, jobId);
       t.is(evt.input_dataclip_id, plan.initialState);
-      t.truthy(evt.run_id);
+      t.truthy(evt.step_id);
       return true;
     },
     [ATTEMPT_LOG]: () => true,
   });
 
-  await handleRunStart({ channel, state }, { jobId });
+  await handleStepStart({ channel, state }, { jobId });
 });
 
-test('run:start event should include versions', async (t) => {
+test('step:start event should include versions', async (t) => {
   const plan = {
     id: 'attempt-1',
     initialState: 'abc',
@@ -78,10 +78,10 @@ test('run:start event should include versions', async (t) => {
 
   const state = createAttemptState(plan);
   state.activeJob = jobId;
-  state.activeRun = 'b';
+  state.activeStep = 'b';
 
   const channel = mockChannel({
-    [RUN_START]: (evt) => {
+    [STEP_START]: (evt) => {
       t.deepEqual(evt.versions, {
         ...versions,
         worker: pkg.version,
@@ -91,7 +91,7 @@ test('run:start event should include versions', async (t) => {
     [ATTEMPT_LOG]: () => true,
   });
 
-  await handleRunStart({ channel, state }, event);
+  await handleStepStart({ channel, state }, event);
 });
 
 test('also logs the version number', async (t) => {
@@ -119,10 +119,10 @@ test('also logs the version number', async (t) => {
 
   const state = createAttemptState(plan);
   state.activeJob = jobId;
-  state.activeRun = 'b';
+  state.activeStep = 'b';
 
   const channel = mockChannel({
-    [RUN_START]: (evt) => true,
+    [STEP_START]: (evt) => true,
     [ATTEMPT_LOG]: (evt) => {
       if (evt.source === 'VER') {
         logEvent = evt;
@@ -131,7 +131,7 @@ test('also logs the version number', async (t) => {
     },
   });
 
-  await handleRunStart({ channel, state }, event);
+  await handleStepStart({ channel, state }, event);
 
   t.truthy(logEvent);
   t.is(logEvent.level, 'info');

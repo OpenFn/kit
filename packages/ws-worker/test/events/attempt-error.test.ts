@@ -2,7 +2,7 @@ import test from 'ava';
 import onAttemptError from '../../src/events/attempt-error';
 
 import { mockChannel } from '../../src/mock/sockets';
-import { ATTEMPT_COMPLETE, ATTEMPT_LOG, RUN_COMPLETE } from '../../src/events';
+import { ATTEMPT_COMPLETE, ATTEMPT_LOG, STEP_COMPLETE } from '../../src/events';
 import { createAttemptState } from '../../src/util';
 
 const plan = { id: 'attempt-1', jobs: [] };
@@ -12,12 +12,12 @@ test('attemptError should trigger runComplete with a reason', async (t) => {
 
   const state = createAttemptState(plan);
   state.lastDataclipId = 'x';
-  state.activeRun = 'b';
+  state.activeStep = 'b';
   state.activeJob = jobId;
 
   const channel = mockChannel({
     [ATTEMPT_LOG]: () => true,
-    [RUN_COMPLETE]: (evt) => {
+    [STEP_COMPLETE]: (evt) => {
       t.is(evt.reason, 'crash');
       t.is(evt.error_message, 'it crashed');
       return true;
@@ -41,12 +41,12 @@ test('workflow error should send reason to onFinish', async (t) => {
 
   const state = createAttemptState(plan);
   state.lastDataclipId = 'x';
-  state.activeRun = 'b';
+  state.activeStep = 'b';
   state.activeJob = jobId;
 
   const channel = mockChannel({
     [ATTEMPT_LOG]: () => true,
-    [RUN_COMPLETE]: (evt) => true,
+    [STEP_COMPLETE]: (evt) => true,
     [ATTEMPT_COMPLETE]: () => true,
   });
 
@@ -76,7 +76,7 @@ test('attemptError should not call job complete if the job is not active', async
 
   const channel = mockChannel({
     [ATTEMPT_LOG]: () => true,
-    [RUN_COMPLETE]: (evt) => {
+    [STEP_COMPLETE]: (evt) => {
       t.fail('should not call!');
       return true;
     },
@@ -111,7 +111,7 @@ test('attemptError should log the reason', async (t) => {
     jobs: [{ id: 'job-1' }],
   });
   state.lastDataclipId = 'x';
-  state.activeRun = 'b';
+  state.activeStep = 'b';
   state.activeJob = jobId;
 
   const event = {
@@ -127,7 +127,7 @@ test('attemptError should log the reason', async (t) => {
     [ATTEMPT_LOG]: (e) => {
       logEvent = e;
     },
-    [RUN_COMPLETE]: (evt) => true,
+    [STEP_COMPLETE]: (evt) => true,
     [ATTEMPT_COMPLETE]: () => true,
   });
 

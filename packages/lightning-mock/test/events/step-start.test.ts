@@ -1,6 +1,5 @@
 import test from 'ava';
-import { RUN_COMPLETE } from '../../src/events';
-
+import { STEP_START } from '../../src/events';
 import { join, setup, createAttempt } from '../util';
 
 let server;
@@ -17,99 +16,101 @@ test.serial('acknowledge valid message', async (t) => {
     server.startAttempt(attempt.id);
 
     const event = {
-      reason: 'success',
-      output_dataclip: JSON.stringify({ x: 22 }),
-      output_dataclip_id: 't',
+      job_id: 'a',
+      step_id: 'r:a',
+      input_dataclip_id: 'x',
     };
 
     const channel = await join(client, attempt.id);
 
-    channel.push(RUN_COMPLETE, event).receive('ok', (evt) => {
+    channel.push(STEP_START, event).receive('ok', () => {
       t.pass('event acknowledged');
       done();
     });
   });
 });
 
-test.serial('save dataclip id to state', async (t) => {
+test.serial('save run id to state', async (t) => {
   return new Promise(async (done) => {
     const attempt = createAttempt();
 
     server.startAttempt(attempt.id);
 
     const event = {
-      reason: 'success',
-      output_dataclip: JSON.stringify({ x: 22 }),
-      output_dataclip_id: 't',
+      job_id: 'a',
+      step_id: 'r:a',
+      input_dataclip_id: 'x',
     };
 
     const channel = await join(client, attempt.id);
 
-    channel.push(RUN_COMPLETE, event).receive('ok', () => {
-      t.deepEqual(server.state.dataclips.t, JSON.parse(event.output_dataclip));
+    channel.push(STEP_START, event).receive('ok', () => {
+      t.deepEqual(server.state.pending[attempt.id].steps, {
+        [event.job_id]: event.step_id,
+      });
       done();
     });
   });
 });
 
-test.serial('error if no reason', async (t) => {
+test.serial('error if no step_id', async (t) => {
   return new Promise(async (done) => {
     const attempt = createAttempt();
 
     server.startAttempt(attempt.id);
 
     const event = {
-      reason: undefined,
-      output_dataclip: JSON.stringify({ x: 22 }),
-      output_dataclip_id: undefined,
+      job_id: 'a',
+      step_id: undefined,
+      input_dataclip_id: 'x',
     };
+
     const channel = await join(client, attempt.id);
 
-    channel.push(RUN_COMPLETE, event).receive('error', () => {
+    channel.push(STEP_START, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
   });
 });
 
-// reason validation code is shared with attempt:complete
-// It's fine not to test further here
-
-test.serial('error if no output dataclip', async (t) => {
+test.serial('error if no job_id', async (t) => {
   return new Promise(async (done) => {
     const attempt = createAttempt();
 
     server.startAttempt(attempt.id);
 
     const event = {
-      reason: 'success',
-      output_dataclip: undefined,
-      output_dataclip_id: 'x',
+      job_id: undefined,
+      step_id: 'r:a',
+      input_dataclip_id: 'x',
     };
+
     const channel = await join(client, attempt.id);
 
-    channel.push(RUN_COMPLETE, event).receive('error', (e) => {
-      t.is(e.toString(), 'no output_dataclip');
+    channel.push(STEP_START, event).receive('error', () => {
+      t.pass('event rejected');
       done();
     });
   });
 });
 
-test.serial('error if no output dataclip_id', async (t) => {
+test.serial('error if no input_dataclip_id', async (t) => {
   return new Promise(async (done) => {
     const attempt = createAttempt();
 
     server.startAttempt(attempt.id);
 
     const event = {
-      reason: 'success',
-      output_dataclip: {},
-      output_dataclip_id: undefined,
+      job_id: 'a',
+      step_id: 'r:a',
+      input_dataclip_id: undefined,
     };
+
     const channel = await join(client, attempt.id);
 
-    channel.push(RUN_COMPLETE, event).receive('error', (e) => {
-      t.is(e.toString(), 'no output_dataclip_id');
+    channel.push(STEP_START, event).receive('error', () => {
+      t.pass('event rejected');
       done();
     });
   });

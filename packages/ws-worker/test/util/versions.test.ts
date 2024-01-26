@@ -28,11 +28,11 @@ const parse = (str: string) => {
 };
 
 test('calculate version string', (t) => {
-  const str = calculateVersionString('run-1', versions);
+  const str = calculateVersionString('step-1', versions);
   // Formatting is super fussy in this test but it's sort of OK
   t.is(
     str,
-    `Versions for run run-1:
+    `Versions for step step-1:
     ▸ node.js     1
     ▸ worker      2
     ▸ engine      3`
@@ -40,7 +40,7 @@ test('calculate version string', (t) => {
 });
 
 test('helper should parse a version string and return the correct order', (t) => {
-  const str = calculateVersionString('run-1', versions);
+  const str = calculateVersionString('step-1', versions);
 
   const parsed = parse(str);
   t.deepEqual(parsed, [
@@ -52,7 +52,7 @@ test('helper should parse a version string and return the correct order', (t) =>
 
 test("show unknown if a version isn't passed", (t) => {
   // @ts-ignore
-  const str = calculateVersionString('run-1', {});
+  const str = calculateVersionString('step-1', {});
 
   const parsed = parse(str);
   t.deepEqual(parsed, [
@@ -63,7 +63,7 @@ test("show unknown if a version isn't passed", (t) => {
 });
 
 test('show adaptors last', (t) => {
-  const str = calculateVersionString('run-1', {
+  const str = calculateVersionString('step-1', {
     '@openfn/language-common': '1.0.0',
     ...versions,
   });
@@ -74,7 +74,7 @@ test('show adaptors last', (t) => {
 });
 
 test('sort and list multiple adaptors', (t) => {
-  const str = calculateVersionString('run-1', {
+  const str = calculateVersionString('step-1', {
     j: '2',
     z: '3',
     a: '1',

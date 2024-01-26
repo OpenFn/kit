@@ -15,14 +15,14 @@ test('create attempt', (t) => {
   t.deepEqual(attempt.options, options);
 });
 
-test('Set initial input dataclip if no explicit start and first job is a run', (t) => {
+test('Set initial input dataclip if no explicit start and first job is a step', (t) => {
   const plan = { initialState: 'x', jobs: [{ id: 'a', expression: '.' }] };
   const attempt = createAttemptState(plan);
 
   t.deepEqual(attempt.inputDataclips, { a: 'x' });
 });
 
-test('Set initial input dataclip if the explicit start is a run', (t) => {
+test('Set initial input dataclip if the explicit start is a step', (t) => {
   const plan = {
     initialState: 'x',
     start: 'a',

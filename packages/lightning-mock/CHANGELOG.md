@@ -1,5 +1,11 @@
 # @openfn/lightning-mock
 
+## 1.1.11
+
+### Patch Changes
+
+- 39af8e1: Ensure that we refer to the child of a 'run' (aka attempt) as a 'step'
+
 ## 1.1.10
 
 ### Patch Changes

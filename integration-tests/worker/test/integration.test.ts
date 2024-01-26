@@ -327,7 +327,7 @@ test('blacklist a non-openfn adaptor', (t) => {
   });
 });
 
-test('a timeout error should still call run-complete', (t) => {
+test('a timeout error should still call step-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -346,7 +346,7 @@ test('a timeout error should still call run-complete', (t) => {
       t.log('attempt started');
     });
 
-    lightning.once('run:complete', (event) => {
+    lightning.once('step:complete', (event) => {
       t.is(event.payload.reason, 'kill');
       t.is(event.payload.error_type, 'TimeoutError');
     });
@@ -359,7 +359,7 @@ test('a timeout error should still call run-complete', (t) => {
   });
 });
 
-test('an OOM error should still call run-complete', (t) => {
+test('an OOM error should still call step-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -378,7 +378,7 @@ test('an OOM error should still call run-complete', (t) => {
       ],
     };
 
-    lightning.once('run:complete', (event) => {
+    lightning.once('step:complete', (event) => {
       t.is(event.payload.reason, 'kill');
     });
 

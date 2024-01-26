@@ -243,13 +243,13 @@ test.serial(
   }
 );
 
-test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
+test.serial(`events: lightning should receive a ${e.STEP_START} event`, (t) => {
   return new Promise((done) => {
     const attempt = getAttempt();
 
-    lng.onSocketEvent(e.RUN_START, attempt.id, ({ payload }) => {
+    lng.onSocketEvent(e.STEP_START, attempt.id, ({ payload }) => {
       t.is(payload.job_id, 'j');
-      t.truthy(payload.run_id);
+      t.truthy(payload.step_id);
       t.pass('called run start');
     });
 
@@ -262,14 +262,14 @@ test.serial(`events: lightning should receive a ${e.RUN_START} event`, (t) => {
 });
 
 test.serial(
-  `events: lightning should receive a ${e.RUN_COMPLETE} event`,
+  `events: lightning should receive a ${e.STEP_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
 
-      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
+      lng.onSocketEvent(e.STEP_COMPLETE, attempt.id, ({ payload }) => {
         t.is(payload.job_id, 'j');
-        t.truthy(payload.run_id);
+        t.truthy(payload.step_id);
         t.truthy(payload.output_dataclip);
         t.truthy(payload.output_dataclip_id);
         t.truthy(payload.mem.job);
@@ -288,7 +288,7 @@ test.serial(
 );
 
 test.serial(
-  `events: lightning should receive a ${e.RUN_COMPLETE} event even if the attempt fails`,
+  `events: lightning should receive a ${e.STEP_COMPLETE} event even if the attempt fails`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt({}, [
@@ -299,9 +299,9 @@ test.serial(
         },
       ]);
 
-      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
+      lng.onSocketEvent(e.STEP_COMPLETE, attempt.id, ({ payload }) => {
         t.is(payload.reason, 'fail');
-        t.pass('called run complete');
+        t.pass('called step complete');
       });
 
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, ({ payload }) => {
@@ -331,7 +331,7 @@ test.serial(
 
         t.is(log.level, 'info');
         t.truthy(log.attempt_id);
-        t.truthy(log.run_id);
+        t.truthy(log.step_id);
         t.truthy(log.message);
         t.deepEqual(log.message, ['x']);
       });
@@ -533,7 +533,7 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
 
     // Save all the input dataclip ids for each job
     const unsub2 = lng.onSocketEvent(
-      e.RUN_START,
+      e.STEP_START,
       attempt.id,
       ({ payload }) => {
         inputDataclipIds[payload.job_id] = payload.input_dataclip_id;
@@ -543,7 +543,7 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
 
     // Save all the output dataclips & ids for each job
     const unsub1 = lng.onSocketEvent(
-      e.RUN_COMPLETE,
+      e.STEP_COMPLETE,
       attempt.id,
       ({ payload }) => {
         outputDataclipIds[payload.job_id] = payload.output_dataclip_id;
@@ -601,7 +601,7 @@ test.serial(
 
       // If job C completes, we're good here
       const unsub = lng.onSocketEvent(
-        e.RUN_COMPLETE,
+        e.STEP_COMPLETE,
         attempt.id,
         (evt) => {
           results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);

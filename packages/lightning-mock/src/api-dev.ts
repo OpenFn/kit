@@ -50,7 +50,7 @@ const setupDevAPI = (
     state.pending[attempt.id] = {
       status: 'queued',
       logs: [],
-      runs: {},
+      steps: {},
     };
     state.queue.push(attempt.id);
   };

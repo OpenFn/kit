@@ -1,5 +1,11 @@
 # ws-worker
 
+## 0.7.0
+
+### Minor Changes
+
+- 39af8e1: Ensure that we refer to the child of a 'run' (aka attempt) as a 'step'
+
 ## 0.6.0
 
 ### Patch Changes
