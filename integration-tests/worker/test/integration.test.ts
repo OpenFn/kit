@@ -333,14 +333,18 @@ test('a timeout error should still call run-complete', (t) => {
       id: crypto.randomUUID(),
       jobs: [
         {
-          adaptor: '@openfn/language-common@latest', // version lock to something stable?
-          body: 'fn((s) => new Promise((resolve) => setTimeout(() => resolve(s), 1000)))',
+          // don't try to autoinstall an adaptor because it'll count in the timeout
+          body: 'export default [(s) => new Promise((resolve) => setTimeout(() => resolve(s), 2000))]',
         },
       ],
       options: {
-        timeout: 100,
+        runTimeout: 500,
       },
     };
+
+    lightning.once('attempt:start', (event) => {
+      t.log('attempt started');
+    });
 
     lightning.once('run:complete', (event) => {
       t.is(event.payload.reason, 'kill');
@@ -421,8 +425,8 @@ test('an OOM error should still call run-complete', (t) => {
 // });
 // });
 
-// TODO this probably needs to move out into another test file
-// not going to do it now as I've changed too much too quickly already...
+// TODO this test is a bit different now
+// I think it's worth keeping
 test('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     // We want to create our own special worker here
@@ -454,21 +458,14 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
       if (id === attempt2.id) {
         const one = results[attempt1.id];
         const two = results[attempt2.id];
-        // The module should be isolated within the same thread
-        t.is(one.threadId, two.threadId);
 
+        // The two attempts should run in different threads
+        t.not(one.threadId, two.threadId);
         t.not(one.clientId, two.clientId);
+
         done();
       }
     });
-
-    // Note that this API doesn't work!!
-    // shaeme, it would be useful
-    // lightning.waitForResult(attempt.id, (result) => {
-    //   console.log(result)
-    //   t.pass()
-    //   done()
-    // })
 
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),

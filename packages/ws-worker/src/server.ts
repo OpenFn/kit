@@ -126,8 +126,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   const logger = options.logger || createMockLogger();
   const port = options.port || DEFAULT_PORT;
 
-  logger.debug('Starting server');
-
   const app = new Koa() as ServerApp;
   app.id = humanId({ separator: '-', capitalize: false });
   const router = new Router();
@@ -146,7 +144,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.destroyed = false;
 
   app.server = app.listen(port);
-  logger.success(`ws-worker ${app.id} listening on ${port}`);
+  logger.success(`Worker ${app.id} listening on ${port}`);
 
   process.send?.('READY');
 

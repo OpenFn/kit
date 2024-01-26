@@ -14,8 +14,6 @@ import {
   onJobLog,
   execute,
   onWorkflowStart,
-  onWorkflowComplete,
-  onWorkflowError,
   loadDataclip,
   loadCredential,
   sendEvent,
@@ -27,11 +25,6 @@ import { stringify, createAttemptState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
 import type { Attempt, AttemptState } from '../../src/types';
-import {
-  JOB_COMPLETE,
-  JOB_ERROR,
-  WORKFLOW_COMPLETE,
-} from '@openfn/engine-multi';
 
 const enc = new TextEncoder();
 
@@ -198,163 +191,56 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
   await onWorkflowStart({ channel });
 });
 
-test('workflowComplete should send an attempt:complete event', async (t) => {
-  const result = { answer: 42 };
+// test('workflowComplete should send an attempt:complete event', async (t) => {
+//   const result = { answer: 42 };
 
-  const state = {
-    reasons: {},
-    dataclips: {
-      x: result,
-    },
-    lastDataclipId: 'x',
-  };
+//   const state = {
+//     reasons: {},
+//     dataclips: {
+//       x: result,
+//     },
+//     lastDataclipId: 'x',
+//   };
 
-  const channel = mockChannel({
-    [ATTEMPT_COMPLETE]: (evt) => {
-      t.deepEqual(evt.final_dataclip_id, 'x');
-    },
-  });
+//   const channel = mockChannel({
+//     [ATTEMPT_COMPLETE]: (evt) => {
+//       t.deepEqual(evt.final_dataclip_id, 'x');
+//     },
+//   });
 
-  const event = {};
+//   const event = {};
 
-  const context = { channel, state, onFinish: () => {} };
-  await onWorkflowComplete(context, event);
-});
+//   const context = { channel, state, onFinish: () => {} };
+//   await onWorkflowComplete(context, event);
+// });
 
-test('workflowComplete should call onFinish with final dataclip', async (t) => {
-  const result = { answer: 42 };
+// test('workflowComplete should call onFinish with final dataclip', async (t) => {
+//   const result = { answer: 42 };
 
-  const state = {
-    reasons: {},
-    dataclips: {
-      x: result,
-    },
-    lastDataclipId: 'x',
-  };
+//   const state = {
+//     reasons: {},
+//     dataclips: {
+//       x: result,
+//     },
+//     lastDataclipId: 'x',
+//   };
 
-  const channel = mockChannel({
-    [ATTEMPT_COMPLETE]: () => true,
-  });
+//   const channel = mockChannel({
+//     [ATTEMPT_COMPLETE]: () => true,
+//   });
 
-  const context = {
-    channel,
-    state,
-    onFinish: ({ state: finalState }) => {
-      t.deepEqual(result, finalState);
-    },
-  };
+//   const context = {
+//     channel,
+//     state,
+//     onFinish: ({ state: finalState }) => {
+//       t.deepEqual(result, finalState);
+//     },
+//   };
 
-  const event = { state: result };
+//   const event = { state: result };
 
-  await onWorkflowComplete(context, event);
-});
-
-test('workflowError should trigger runComplete with a reason', async (t) => {
-  const jobId = 'job-1';
-
-  const state = {
-    reasons: {},
-    dataclips: {},
-    lastDataclipId: 'x',
-    activeJob: jobId,
-    activeRun: 'b',
-    errors: {},
-  };
-
-  const channel = mockChannel({
-    [RUN_COMPLETE]: (evt) => {
-      t.is(evt.reason, 'crash');
-      t.is(evt.error_message, 'it crashed');
-      return true;
-    },
-    [ATTEMPT_COMPLETE]: () => true,
-  });
-
-  const event = {
-    severity: 'crash',
-    type: 'Err',
-    message: 'it crashed',
-  };
-
-  const context = { channel, state, onFinish: () => {} };
-
-  await onWorkflowError(context, event);
-});
-
-test('workflow error should send reason to onFinish', async (t) => {
-  const jobId = 'job-1';
-
-  const state = {
-    reasons: {},
-    dataclips: {},
-    lastDataclipId: 'x',
-    activeJob: jobId,
-    activeRun: 'b',
-    errors: {},
-  };
-
-  const channel = mockChannel({
-    [RUN_COMPLETE]: (evt) => true,
-    [ATTEMPT_COMPLETE]: () => true,
-  });
-
-  const event = {
-    error: {
-      severity: 'crash',
-      type: 'Err',
-      message: 'it crashed',
-    },
-    state: {},
-  };
-
-  const context = {
-    channel,
-    state,
-    onFinish: (evt) => {
-      t.is(evt.reason.reason, 'crash');
-    },
-  };
-
-  await onWorkflowError(context, event);
-});
-
-test('workflowError should not call job complete if the job is not active', async (t) => {
-  const state = {
-    reasons: {},
-    dataclips: {},
-    lastDataclipId: 'x',
-    activeJob: undefined,
-    activeRun: undefined,
-    errors: {},
-  };
-
-  const channel = mockChannel({
-    [RUN_COMPLETE]: (evt) => {
-      t.fail('should not call!');
-      return true;
-    },
-    [ATTEMPT_COMPLETE]: () => true,
-  });
-
-  const event = {
-    error: {
-      severity: 'crash',
-      type: 'Err',
-      message: 'it crashed',
-    },
-    state: {},
-  };
-
-  const context = {
-    channel,
-    state,
-    onFinish: () => {
-      t.pass();
-    },
-  };
-
-  await onWorkflowError(context, event);
-});
+//   await onWorkflowComplete(context, event);
+// });
 
 // TODO what if an error?
 test('loadDataclip should fetch a dataclip', async (t) => {

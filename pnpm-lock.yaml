@@ -383,16 +383,10 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
-      workerpool:
-        specifier: ^6.5.1
-        version: 6.5.1
     devDependencies:
       '@types/node':
         specifier: ^18.15.13
         version: 18.15.13
-      '@types/workerpool':
-        specifier: ^6.4.4
-        version: 6.4.4
       ava:
         specifier: 5.3.1
         version: 5.3.1
@@ -411,6 +405,8 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
+
+  packages/engine-multi/tmp/a/b/c: {}
 
   packages/engine-multi/tmp/repo: {}
 
@@ -1919,12 +1915,6 @@ packages:
 
   /@types/treeify@1.0.0:
     resolution: {integrity: sha512-ONpcZAEYlbPx4EtJwfTyCDQJGUpKf4sEcuySdCVjK5Fj/3vHp5HII1fqa1/+qrsLnpYELCQTfVW/awsGJePoIg==}
-    dev: true
-
-  /@types/workerpool@6.4.4:
-    resolution: {integrity: sha512-rpYFug3QyKzQ7+y/x8BCTEseMorTyr9DiY3ao5KxzWJPtFyx/HL0SSLtJlRjUSpBeaMd/zn7hnLaWOb8WRFnnQ==}
-    dependencies:
-      '@types/node': 18.15.13
     dev: true
 
   /@types/wrap-ansi@3.0.0:
@@ -7819,10 +7809,6 @@ packages:
 
   /wordwrap@1.0.0:
     resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
-    dev: false
-
-  /workerpool@6.5.1:
-    resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
     dev: false
 
   /wrap-ansi@6.2.0:

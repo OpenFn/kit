@@ -1,5 +1,30 @@
 # ws-worker
 
+## 0.6.0
+
+### Patch Changes
+
+- eb10b1f: Updated start env vars and arguments
+- 281391b: Support attemptTimeoutMs in attempt options
+  Better server logging at startup
+  Support start arguments from the environment (but prefer CLI)
+- 2857fe6: Send the exit reason to the attempt logs
+- Updated dependencies [281391b]
+  - @openfn/engine-multi@0.3.0
+
+## 0.6.0
+
+### Minor Changes
+
+- 9b9ca0c: New worker pool engine
+
+### Patch Changes
+
+- Updated dependencies [0f22694]
+- Updated dependencies [9b9ca0c]
+  - @openfn/runtime@0.2.5
+  - @openfn/engine-multi@0.3.0
+
 ## 0.5.0
 
 ### Minor Changes

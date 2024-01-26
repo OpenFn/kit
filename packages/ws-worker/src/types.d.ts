@@ -74,7 +74,18 @@ export type Attempt = {
 };
 
 export type AttemptOptions = {
+  // This is what Lightning will ssend us
+  // Note that this is the NEW terminology, so it's the timeout  for the whole "attempt"
+  runTimeout?: number;
+
+  // this is the internal old terminology, which will be deprecated soon
+  attemptTimeoutMs?: number;
+
+  attemptTimeout?: number; // deprecated
+
+  // deprecated alias for timeout. Maps to "attemptTimeout" internally
   timeout?: number;
+
   sanitize?: SanitizePolicies;
 };
 

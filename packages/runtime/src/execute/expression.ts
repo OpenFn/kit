@@ -31,10 +31,7 @@ export default (
     let duration = Date.now();
     const { logger, opts = {} } = ctx;
     try {
-      const timeout = opts.timeout || TIMEOUT;
-
-      logger.debug('Intialising pipeline');
-      logger.debug(`Timeout set to ${timeout}ms`);
+      const timeout = opts.timeout ?? TIMEOUT;
 
       // Setup an execution context
       const context = buildContext(initialState, opts);
@@ -52,13 +49,16 @@ export default (
       );
 
       // Run the pipeline
+      let tid;
       logger.debug(`Executing expression (${operations.length} operations)`);
+      if (timeout) {
+        logger.debug(`Timeout set to ${timeout}ms`);
 
-      const tid = setTimeout(() => {
-        logger.error(`Error: Timeout (${timeout}ms) expired!`);
-        logger.error('  Set a different timeout by passing "-t 10000" ms)');
-        reject(new TimeoutError(timeout));
-      }, timeout);
+        tid = setTimeout(() => {
+          logger.error(`Error: Timeout expired (${timeout}ms)`);
+          reject(new TimeoutError(timeout));
+        }, timeout);
+      }
 
       // Note that any errors will be trapped by the containing Job
       const result = await reducer(initialState);

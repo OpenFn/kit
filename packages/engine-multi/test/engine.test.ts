@@ -2,7 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 
-import createEngine from '../src/engine';
+import createEngine, { ExecuteOptions } from '../src/engine';
 import * as e from '../src/events';
 import { ExecutionPlan } from '@openfn/runtime';
 
@@ -14,14 +14,13 @@ const options = {
   // This uses the mock worker, not the actual runtime
   // It will still exercise all the lifecycle logic found in the worker-helper,
   // Just not the runtime logic
-  workerPath: path.resolve('dist/mock-worker.js'),
+  workerPath: path.resolve('dist/test/mock-run.js'),
   logger,
   repoDir: '.', // doesn't matter for the mock
   noCompile: true, // messy - needed to allow an expression to be passed as json
   autoinstall: {
     handleIsInstalled: async () => true,
   },
-  purge: true,
 };
 
 let engine;
@@ -67,11 +66,11 @@ test.serial('get workflow state', async (t) => {
 
 test.serial('use the default worker path', async (t) => {
   engine = await createEngine({ logger, repoDir: '.' });
-  t.true(engine.workerPath.endsWith('worker/worker.js'));
+  t.true(engine.workerPath.endsWith('worker/thread/run.js'));
 });
 
 test.serial('use a custom worker path', async (t) => {
-  const workerPath = path.resolve('src/test/worker-functions.js');
+  const workerPath = path.resolve('dist/test/worker-functions.js');
   engine = await createEngine(options, workerPath);
   t.is(engine.workerPath, workerPath);
 });
@@ -80,7 +79,7 @@ test.serial(
   'execute with test worker and trigger workflow-complete',
   async (t) => {
     return new Promise(async (done) => {
-      const p = path.resolve('src/test/worker-functions.js');
+      const p = path.resolve('dist/test/worker-functions.js');
       engine = await createEngine(options, p);
 
       const plan = {
@@ -105,7 +104,7 @@ test.serial(
 
 test.serial('execute does not return internal state stuff', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -140,7 +139,7 @@ test.serial('execute does not return internal state stuff', async (t) => {
 
 test.serial('listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -167,7 +166,7 @@ test.serial('listen to workflow-complete', async (t) => {
 
 test.serial('call listen before execute', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -193,7 +192,7 @@ test.serial('call listen before execute', async (t) => {
 
 test.serial('catch and emit errors', async (t) => {
   return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
+    const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
     const plan = {
@@ -216,117 +215,70 @@ test.serial('catch and emit errors', async (t) => {
   });
 });
 
-test.serial('timeout the whole attempt and emit an error', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(options, p);
+test.serial(
+  'timeout the whole attempt and emit an error (timeout on attempt)',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(options, p);
 
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'while(true) {}',
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: 'while(true) {}',
+          },
+        ],
+      };
+
+      const opts: ExecuteOptions = {
+        attemptTimeoutMs: 10,
+      };
+
+      engine.listen(plan.id, {
+        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+          t.is(type, 'TimeoutError');
+          t.regex(message, /failed to return within 10ms/);
+          done();
         },
-      ],
-    };
+      });
 
-    const opts = {
-      timeout: 10,
-    };
-
-    engine.listen(plan.id, {
-      [e.WORKFLOW_ERROR]: ({ message, type }) => {
-        t.is(type, 'TimeoutError');
-        t.regex(message, /failed to return within 10ms/);
-        done();
-      },
+      engine.execute(plan, opts);
     });
+  }
+);
 
-    engine.execute(plan, opts);
-  });
-});
-
-test.serial('Purge workers when a run is complete', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(options, p);
-
-    const plan = {
-      id: 'a',
-      jobs: [
+test.serial(
+  'timeout the whole attempt and emit an error (default engine timeout) ',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(
         {
-          expression: '34',
+          ...options,
+          attemptTimeoutMs: 22,
         },
-      ],
-    };
+        p
+      );
 
-    engine.on(e.PURGE, () => {
-      t.pass('purge event called');
-      done();
-    });
+      const plan = {
+        id: 'a',
+        jobs: [
+          {
+            expression: 'while(true) {}',
+          },
+        ],
+      };
 
-    engine.execute(plan);
-  });
-});
-
-test.serial('Purge workers when run errors', async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(options, p);
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'throw new Error("test")',
+      engine.listen(plan.id, {
+        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+          t.is(type, 'TimeoutError');
+          t.regex(message, /failed to return within 22ms/);
+          done();
         },
-      ],
-    };
+      });
 
-    engine.on(e.PURGE, () => {
-      t.pass('purge event called');
-      done();
+      engine.execute(plan);
     });
-
-    engine.execute(plan);
-  });
-});
-
-test.serial("Don't purge if purge is false", async (t) => {
-  return new Promise(async (done) => {
-    const p = path.resolve('src/test/worker-functions.js');
-    engine = await createEngine(
-      {
-        ...options,
-        purge: false,
-      },
-      p
-    );
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: '34',
-        },
-      ],
-    };
-
-    engine.on(e.PURGE, () => {
-      t.fail('purge event called');
-      done();
-    });
-
-    engine.execute(plan).on(e.WORKFLOW_COMPLETE, () => {
-      setTimeout(() => {
-        t.pass('no purge called within 50ms');
-        done();
-      }, 50);
-    });
-  });
-});
-
-// I'm not actually going to use the destroy API (not for graceful shutdown anyway)
-// So it doesn't feel too important to implement these tests
-test.todo('destroy immediately, killing active workflows');
-test.todo('destroy gracefully, allowing active workflows to complete');
+  }
+);

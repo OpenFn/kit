@@ -22,7 +22,7 @@ export type LazyResolvers = {
   expressions?: Resolver<string>;
 };
 
-export type RTEOptions = Partial<
+export type APIOptions = Partial<
   Omit<EngineOptions, 'whitelist' | 'noCompile'> & {
     // Needed here for unit tests to support json expressions. Would rather exclude tbh
     compile?: {
@@ -38,7 +38,7 @@ const DEFAULT_MEMORY_LIMIT = 500;
 // Create the engine and handle user-facing stuff, like options parsing
 // and defaulting
 const createAPI = async function (
-  options: RTEOptions = {}
+  options: APIOptions = {}
 ): Promise<RuntimeEngine> {
   let { repoDir } = options;
 
@@ -50,7 +50,7 @@ const createAPI = async function (
   }
   logger.info('repoDir set to ', repoDir);
 
-  const engineOptions = {
+  const engineOptions: EngineOptions = {
     logger,
 
     // TODO should resolvers be set here on passed to execute?
@@ -65,17 +65,16 @@ const createAPI = async function (
     // TODO should we disable autoinstall overrides?
     autoinstall: options.autoinstall,
 
-    minWorkers: options.minWorkers,
     maxWorkers: options.maxWorkers,
     memoryLimitMb: options.memoryLimitMb || DEFAULT_MEMORY_LIMIT,
-
-    purge: options.hasOwnProperty('purge') ? options.purge : true,
+    attemptTimeoutMs: options.attemptTimeoutMs,
 
     statePropsToRemove: options.statePropsToRemove ?? [
       'configuration',
       'response',
     ],
   };
+
   logger.info(`memory limit set to ${options.memoryLimitMb}mb`);
   logger.info(`statePropsToRemove set to: `, engineOptions.statePropsToRemove);
 

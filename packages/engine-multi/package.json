@@ -1,11 +1,11 @@
 {
   "name": "@openfn/engine-multi",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "Multi-process runtime engine",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm ava",
+    "test": "pnpm ava --serial",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ./tsup.config.js",
     "build:watch": "pnpm build --watch",
@@ -17,12 +17,10 @@
     "@openfn/compiler": "workspace:*",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/logger": "workspace:*",
-    "@openfn/runtime": "workspace:*",
-    "workerpool": "^6.5.1"
+    "@openfn/runtime": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^18.15.13",
-    "@types/workerpool": "^6.4.4",
     "ava": "5.3.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
@@ -31,7 +29,8 @@
     "typescript": "^5.1.6"
   },
   "files": [
-    "dist",
+    "dist/index.js",
+    "dist/worker/",
     "README.md",
     "CHANGELOG.md"
   ]

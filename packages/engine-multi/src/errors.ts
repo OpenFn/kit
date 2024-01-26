@@ -11,6 +11,7 @@ export class EngineError extends Error {
 export class TimeoutError extends EngineError {
   severity = 'kill';
   type = 'TimeoutError';
+  name = 'TimeoutError';
   duration;
   constructor(durationInMs: number) {
     super();

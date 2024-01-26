@@ -5,6 +5,12 @@
 import { JSONLog } from '@openfn/logger';
 import { Versions } from '../types';
 
+// events used by the internal thread runtime
+
+export const ENGINE_RUN_TASK = 'engine:run_task';
+export const ENGINE_RESOLVE_TASK = 'engine:resolve_task';
+export const ENGINE_REJECT_TASK = 'engine:reject_task';
+
 // These events are basically duplicates of the externally published ones
 // (ie those consumed by the lightning worker)
 // But I want them to be explicity named and typed to avoid confusion

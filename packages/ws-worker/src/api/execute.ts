@@ -1,6 +1,5 @@
 import {
   ATTEMPT_COMPLETE,
-  AttemptCompletePayload,
   ATTEMPT_LOG,
   AttemptLogPayload,
   ATTEMPT_START,
@@ -17,17 +16,16 @@ import type { JSONLog, Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
-  WorkflowCompletePayload,
-  WorkflowErrorPayload,
   WorkflowStartPayload,
 } from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
-import { calculateAttemptExitReason, calculateJobExitReason } from './reasons';
 
 // TODO: I want to move all event handlers out into their own files
 // TODO just export the index yeah?
 import handleRunComplete from '../events/run-complete';
 import handleRunStart from '../events/run-start';
+import handleAttemptComplete from '../events/atttempt-complete';
+import handleAttemptError from '../events/attempt-error';
 import createThrottler from '../util/throttle';
 
 const enc = new TextDecoder('utf-8');
@@ -112,9 +110,9 @@ export function execute(
     addEvent('job-error', throttle(onJobError)),
     addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
-    addEvent('workflow-complete', throttle(onWorkflowComplete)),
+    addEvent('workflow-complete', throttle(handleAttemptComplete)),
 
-    addEvent('workflow-error', throttle(onWorkflowError))
+    addEvent('workflow-error', throttle(handleAttemptError))
 
     // TODO send autoinstall logs
   );
@@ -146,7 +144,7 @@ export function execute(
         engine.execute(plan, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
-        onWorkflowError(context, {
+        handleAttemptError(context, {
           workflowId: plan.id!,
           message: e.message,
           type: e.type,
@@ -200,50 +198,6 @@ export function onWorkflowStart(
   _event: WorkflowStartPayload
 ) {
   return sendEvent<AttemptStartPayload>(channel, ATTEMPT_START);
-}
-
-export async function onWorkflowComplete(
-  { state, channel, onFinish }: Context,
-  _event: WorkflowCompletePayload
-) {
-  // TODO I dont think the attempt final dataclip IS the last job dataclip
-  // Especially not in parallelisation
-  const result = state.dataclips[state.lastDataclipId!];
-  const reason = calculateAttemptExitReason(state);
-  await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
-    final_dataclip_id: state.lastDataclipId!,
-    ...reason,
-  });
-  onFinish({ reason, state: result });
-}
-
-export async function onWorkflowError(
-  context: Context,
-  event: WorkflowErrorPayload
-) {
-  const { state, channel, logger, onFinish } = context;
-
-  try {
-    // Ok, let's try that, let's just generate a reason from the event
-    const reason = calculateJobExitReason('', { data: {} }, event);
-
-    // If there's a job still running, make sure it gets marked complete
-    if (state.activeJob) {
-      await onJobError(context, { error: event });
-    }
-
-    await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
-      final_dataclip_id: state.lastDataclipId!,
-      ...reason,
-    });
-
-    onFinish({ reason });
-  } catch (e: any) {
-    logger.error('ERROR in workflow-error handler:', e.message);
-    logger.error(e);
-
-    onFinish({});
-  }
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {

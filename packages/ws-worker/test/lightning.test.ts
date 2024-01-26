@@ -49,18 +49,15 @@ const getAttempt = (ext = {}, jobs?: any) => ({
   ...ext,
 });
 
-test.serial(
-  `events: lightning should respond to a claim ${e.CLAIM} event`,
-  (t) => {
-    return new Promise((done) => {
-      lng.on(e.CLAIM, (evt) => {
-        const response = evt.payload;
-        t.deepEqual(response, []);
-        done();
-      });
+test.serial(`events: lightning should respond to a ${e.CLAIM} event`, (t) => {
+  return new Promise((done) => {
+    lng.on(e.CLAIM, (evt) => {
+      const response = evt.payload;
+      t.deepEqual(response, []);
+      done();
     });
-  }
-);
+  });
+});
 
 test.serial(
   `events: lightning should respond to a ${e.CLAIM} event with an attempt id and token`,
@@ -294,22 +291,20 @@ test.serial(
   `events: lightning should receive a ${e.RUN_COMPLETE} event even if the attempt fails`,
   (t) => {
     return new Promise((done) => {
-      // This attempt should timeout
-      const attempt = getAttempt({ options: { timeout: 100 } }, [
+      const attempt = getAttempt({}, [
         {
           id: 'z',
           adaptor: '@openfn/language-common@1.0.0',
-          body: 'wait(1000)',
+          body: 'err()',
         },
       ]);
 
       lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
-        t.not(payload.reason, 'success');
+        t.is(payload.reason, 'fail');
         t.pass('called run complete');
       });
 
       lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, ({ payload }) => {
-        t.not(payload.reason, 'success');
         done();
       });
 
@@ -631,6 +626,63 @@ test.serial(
     });
   }
 );
+
+test.serial(`worker should send a success reason in the logs`, (t) => {
+  return new Promise((done) => {
+    let log;
+
+    const attempt = {
+      id: 'attempt-1',
+      jobs: [
+        {
+          body: 'fn((s) => { return s })',
+        },
+      ],
+    };
+
+    lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+      if (payload.message[0].match(/Run complete with status: success/)) {
+        log = payload.message[0];
+      }
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      t.truthy(log);
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
+
+test.serial(`worker should send a fail reason in the logs`, (t) => {
+  return new Promise((done) => {
+    let log;
+
+    const attempt = {
+      id: 'attempt-1',
+      jobs: [
+        {
+          body: 'fn((s) => { throw "blah" })',
+        },
+      ],
+    };
+
+    lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+      if (payload.message[0].match(/Run complete with status: fail/)) {
+        log = payload.message[0];
+      }
+    });
+
+    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      t.truthy(log);
+      t.regex(log, /JobError: blah/i);
+      done();
+    });
+
+    lng.enqueueAttempt(attempt);
+  });
+});
 
 // Note that this test HAS to be last
 // Remember this uses the mock engine, so it's not a good test of workerpool's behaviours

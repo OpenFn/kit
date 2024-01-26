@@ -4,6 +4,10 @@
 import { JSONLog } from '@openfn/logger';
 import { Versions } from './types';
 
+// If the worker thread exists a process safely, it'll return this error code
+// any other error code is unexpected
+export const HANDLED_EXIT_CODE = 111111;
+
 // Top level API events - these are what the engine publishes externally
 // should it just be start, log, job-start, job-complete, end etc?
 // What about engine-level logging? CLI-level stuff?
@@ -29,8 +33,6 @@ export const AUTOINSTALL_COMPLETE = 'autoinstall-complete';
 
 export const AUTOINSTALL_ERROR = 'autoinstall-error';
 
-export const PURGE = 'purge-workers';
-
 export type EventMap = {
   [WORKFLOW_START]: WorkflowStartPayload;
   [WORKFLOW_COMPLETE]: WorkflowCompletePayload;
@@ -41,7 +43,6 @@ export type EventMap = {
   [WORKFLOW_ERROR]: WorkflowErrorPayload;
   [AUTOINSTALL_COMPLETE]: AutoinstallCompletePayload;
   [AUTOINSTALL_ERROR]: AutoinstallErrorPayload;
-  [PURGE]: null;
 };
 
 export type ExternalEvents = keyof EventMap;

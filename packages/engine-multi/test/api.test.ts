@@ -1,7 +1,6 @@
 import test from 'ava';
 import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
-import { PURGE } from '../src/events';
 
 import pkg from '../package.json' assert { type: 'json' };
 import { RuntimeEngine } from '../src/types';
@@ -51,8 +50,35 @@ test.serial('engine api uses default options', async (t) => {
 
   t.deepEqual(api.options.statePropsToRemove, ['configuration', 'response']);
   t.false(api.options.noCompile);
-  t.true(api.options.purge);
   t.truthy(api.options.whitelist);
+});
+
+test.serial('engine api uses custom options', async (t) => {
+  const options = {
+    logger, // no test
+
+    repoDir: 'a/b/c',
+    whitelist: ['/@openfn/'],
+
+    // noCompile
+    // autoinstall
+
+    maxWorkers: 29,
+    memoryLimitMb: 99,
+    attemptTimeoutMs: 33,
+    statePropsToRemove: ['z'],
+  };
+
+  api = await createAPI(options);
+
+  t.truthy(api.options);
+
+  t.is(api.options.repoDir, 'a/b/c');
+  t.true(api.options.whitelist![0] instanceof RegExp);
+  t.is(api.options.maxWorkers, 29);
+  t.is(api.options.memoryLimitMb, 99);
+  t.is(api.options.attemptTimeoutMs, 33);
+  t.deepEqual(api.options.statePropsToRemove, ['z']);
 });
 
 // Note that this runs with the actual runtime worker
@@ -117,34 +143,5 @@ test.serial('should listen to workflow-complete', async (t) => {
         done();
       },
     });
-  });
-});
-
-test.serial('should purge workers after a single run', async (t) => {
-  return new Promise(async (done) => {
-    api = await createAPI({
-      logger,
-      // Disable compilation
-      compile: {
-        skip: true,
-      },
-    });
-
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: 'export default [s => s]',
-          // with no adaptor it shouldn't try to autoinstall
-        },
-      ],
-    };
-
-    api.on(PURGE, () => {
-      t.pass('workers purged');
-      done();
-    });
-
-    api.execute(plan);
   });
 });

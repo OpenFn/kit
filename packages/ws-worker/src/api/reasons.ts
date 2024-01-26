@@ -41,7 +41,7 @@ const isLeafNode = (state: AttemptState, job: JobNode) => {
   return !hasDownstream;
 };
 
-const calculateAttemptExitReason = (state: AttemptState) => {
+const calculateAttemptExitReason = (state: AttemptState): ExitReason => {
   if (state.plan && state.reasons) {
     // A crash or greater will trigger an error, and the error
     // basically becomes the exit reason

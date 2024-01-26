@@ -48,7 +48,6 @@ test('crash: syntax error', async (t) => {
   const result = await run(attempt);
 
   const { reason, error_type, error_message } = result;
-
   t.is(reason, 'crash');
   t.is(error_type, 'CompileError');
   t.regex(error_message, /Unexpected token \(1:9\)$/);
@@ -77,7 +76,7 @@ test('exception: autoinstall error', async (t) => {
   );
 });
 
-test('kill: oom', async (t) => {
+test('kill: oom (small, kill worker)', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),
     jobs: [
@@ -86,7 +85,31 @@ test('kill: oom', async (t) => {
         body: `fn((s) => {
           s.data = [];
           while(true) {
-            s.data.push(new Array(1e5).fill("xyz"))
+            s.data.push(new Array(1e6).fill("xyz"))
+          }
+        })`,
+      },
+    ],
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+  t.is(reason, 'kill');
+  t.is(error_type, 'OOMError');
+  t.is(error_message, 'Run exceeded maximum memory usage');
+});
+
+test('kill: oom (large, kill vm)', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        adaptor: '@openfn/language-common@latest',
+        body: `fn((s) => {
+          s.data = [];
+          while(true) {
+            s.data.push(new Array(1e9).fill("xyz"))
           }
         })`,
       },

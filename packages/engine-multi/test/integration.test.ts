@@ -192,6 +192,30 @@ test.serial('run without error if no state is returned', (t) => {
   });
 });
 
+test.serial('errors get nicely serialized', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const plan = createPlan([
+      {
+        expression: `${withFn}fn((s) => s.data.x.y)`,
+      },
+    ]);
+
+    api.execute(plan).on('job-error', (evt) => {
+      t.is(evt.error.type, 'TypeError');
+      t.is(evt.error.severity, 'fail');
+      t.is(
+        evt.error.message,
+        "TypeError: Cannot read properties of undefined (reading 'y')"
+      );
+      done();
+    });
+  });
+});
+
 test.serial(
   'execute should remove the configuration and response keys',
   (t) => {
@@ -309,7 +333,14 @@ test.serial('preload credentials', (t) => {
 });
 
 test.serial('accept initial state', (t) => {
-  return new Promise((done) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+      compile: {
+        skip: true,
+      },
+    });
+
     const plan = createPlan();
 
     // important!  The runtime  must use both x and y as initial state
