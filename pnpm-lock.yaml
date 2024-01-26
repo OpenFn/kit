@@ -406,8 +406,6 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
 
-  packages/engine-multi/tmp/a/b/c: {}
-
   packages/engine-multi/tmp/repo: {}
 
   packages/lightning-mock:
