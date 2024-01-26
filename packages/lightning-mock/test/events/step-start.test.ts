@@ -45,7 +45,7 @@ test.serial('save run id to state', async (t) => {
     const channel = await join(client, attempt.id);
 
     channel.push(STEP_START, event).receive('ok', () => {
-      t.deepEqual(server.state.pending[attempt.id].runs, {
+      t.deepEqual(server.state.pending[attempt.id].steps, {
         [event.job_id]: event.step_id,
       });
       done();

@@ -381,7 +381,7 @@ const createSocketAPI = (
     if (!state.dataclips) {
       state.dataclips = {};
     }
-    state.pending[attemptId].runs[job_id] = step_id;
+    state.pending[attemptId].steps[job_id] = step_id;
 
     let payload: any = {
       status: 'ok',
