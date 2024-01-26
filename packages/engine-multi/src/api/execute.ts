@@ -63,13 +63,26 @@ const execute = async (context: ExecutionContext) => {
     // and not just emitted to stdout
     // The runtime can't do it because it doesn't know the memory limit
     if (workerOptions.memoryLimitMb) {
-      log(context, {
+      await log(context, {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
         message: {
           level: 'debug',
           message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
+          name: 'RTE',
+          time: timestamp().toString(),
+        },
+      });
+    }
+    if (workerOptions.timeout) {
+      await log(context, {
+        type: workerEvents.LOG,
+        workflowId: state.plan.id!,
+        threadId: '-', // no thread at this point
+        message: {
+          level: 'debug',
+          message: [`Timeout: ${workerOptions.timeout / 1000}s`],
           name: 'RTE',
           time: timestamp().toString(),
         },

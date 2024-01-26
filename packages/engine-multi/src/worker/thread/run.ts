@@ -33,6 +33,8 @@ register({
     // TODO I would like to pull these options out of here
 
     const options = {
+      // disable the run/step timeout
+      timeout: false,
       strict: false,
       logger,
       jobLogger,

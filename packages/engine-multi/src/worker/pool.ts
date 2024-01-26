@@ -138,8 +138,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             crlfDelay: Infinity,
           });
 
-          // TODO should we log the stderr?
-          // TODO: yes
           try {
             for await (const line of rl) {
               logger.debug(line);
@@ -158,8 +156,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
           reject(new ExitError(code));
           finish(worker);
-        } else {
-          console.log(' >>> HANDLED');
         }
       };
 
@@ -206,11 +202,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         // swallow errors here
         // this may occur if the inner worker is invalid
       }
-
-      // TODO idk if we should keep this
-      worker.on('error', (e) => {
-        console.log(e);
-      });
 
       worker.on('exit', onExit);
 

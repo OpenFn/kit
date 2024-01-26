@@ -53,6 +53,34 @@ test.serial('engine api uses default options', async (t) => {
   t.truthy(api.options.whitelist);
 });
 
+test.serial('engine api uses custom options', async (t) => {
+  const options = {
+    logger, // no test
+
+    repoDir: 'a/b/c',
+    whitelist: ['/@openfn/'],
+
+    // noCompile
+    // autoinstall
+
+    maxWorkers: 29,
+    memoryLimitMb: 99,
+    attemptTimeoutMs: 33,
+    statePropsToRemove: ['z'],
+  };
+
+  api = await createAPI(options);
+
+  t.truthy(api.options);
+
+  t.is(api.options.repoDir, 'a/b/c');
+  t.true(api.options.whitelist![0] instanceof RegExp);
+  t.is(api.options.maxWorkers, 29);
+  t.is(api.options.memoryLimitMb, 99);
+  t.is(api.options.attemptTimeoutMs, 33);
+  t.deepEqual(api.options.statePropsToRemove, ['z']);
+});
+
 // Note that this runs with the actual runtime worker
 // I won't want to do deep testing on execute here - I just want to make sure the basic
 // exeuction functionality is working. It's more a test of the api surface than the inner

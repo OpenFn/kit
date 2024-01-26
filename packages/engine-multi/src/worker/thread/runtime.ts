@@ -30,10 +30,6 @@ type Event = {
   [key: string]: any;
 };
 
-// TODO can't really be a promise any more unless I implement an acknowledgement
-
-// payload: Omit<workerEvents.EventMap[T], 'type' | 'workflowId' | 'threadId'>
-
 export const publish = (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>
@@ -45,12 +41,6 @@ export const publish = (
     ...payload,
   });
 };
-// export const publish = (evt) =>
-//   new Promise((resolve) => {
-//     process.postMessage(evt, undefined, {}, () => {
-//       resolve();
-//     });
-//   });
 
 const run = (task: string, args: any[]) => {
   tasks[task](...args)
@@ -76,5 +66,3 @@ parentPort!.on('message', async (evt) => {
     run(evt.task, args);
   }
 });
-
-// process.on('S');
