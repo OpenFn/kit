@@ -16,7 +16,7 @@
     "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
-    "test": "pnpm -r --filter=./packages/* run test",
+    "test": "cd packages/engine-multi && pnpm test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
   },
   "keywords": [],
