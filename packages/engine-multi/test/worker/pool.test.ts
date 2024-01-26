@@ -362,6 +362,20 @@ test('throw if task times out', async (t) => {
   });
 });
 
+test('throw if a deferred task times out', async (t) => {
+  const pool = createPool(workerPath, { capacity: 1 }, logger);
+
+  // start one task off
+  pool.exec('wait', [100]);
+
+  // now add a second to the queue
+  // this should still throw
+  await t.throwsAsync(() => pool.exec('test', [], { timeout: 5 }), {
+    name: 'TimeoutError',
+    message: 'Workflow failed to return within 5ms',
+  });
+});
+
 test('after timeout, destroy the worker and reset the pool', async (t) => {
   return new Promise((done) => {
     const pool = createPool(workerPath, { capacity: 2 }, logger);
