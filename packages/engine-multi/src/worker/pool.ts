@@ -129,7 +129,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
-          logger.debug('pool: Worker exited unexpectedly', task);
+          logger.debug('pool: Worker exited unexpectedly');
           clearTimeout(timeout);
 
           // Read the stderr stream from the worked to see if this looks like an OOM error
@@ -139,8 +139,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           });
 
           // TODO should we log the stderr?
+          // TODO: yes
           try {
             for await (const line of rl) {
+              logger.debug(line);
               if (line.match(/JavaScript heap out of memory/)) {
                 reject(new OOMError());
 
