@@ -1,5 +1,5 @@
 import { WebSocketServer } from 'ws';
-import createLogger, { Logger } from '@openfn/logger';
+import createLogger, { LogLevel, Logger } from '@openfn/logger';
 import type { Server } from 'http';
 
 import createPheonixMockSocketServer, {
@@ -83,7 +83,7 @@ const createSocketAPI = (
   path: string,
   httpServer: Server,
   logger?: Logger,
-  logLevel?: string
+  logLevel?: LogLevel
 ) => {
   // set up a websocket server to listen to connections
   const server = new WebSocketServer({
@@ -318,7 +318,7 @@ const createSocketAPI = (
       };
     }
 
-    logger.info(`LOG [${attemptId}] ${evt.payload.message[0]}`);
+    logger?.info(`LOG [${attemptId}] ${evt.payload.message[0]}`);
 
     ws.reply<AttemptLogReply>({
       ref,

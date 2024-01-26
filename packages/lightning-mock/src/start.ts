@@ -1,13 +1,13 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import createLogger from '@openfn/logger';
+import createLogger, { LogLevel } from '@openfn/logger';
 
 import createLightningServer from './server';
 
 type Args = {
   _: string[];
   port?: number;
-  log?: string;
+  log?: LogLevel;
 };
 
 const args = yargs(hideBin(process.argv))
