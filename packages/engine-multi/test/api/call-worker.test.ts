@@ -51,11 +51,11 @@ test.serial('callWorker should trigger an event callback', async (t) => {
 });
 
 // Skipping because this routinely fails in CI
-test.serial.skip(
+test.serial(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
     await t.throwsAsync(
-      () => engine.callWorker('wait', [5000], {}, { timeout: 10 }),
+      () => engine.callWorker('wait', [5000], {}, { timeout: 100 }),
       {
         name: 'TimeoutError',
       }
@@ -67,14 +67,13 @@ test.serial(
   'callWorker should not freak out after a timeout error',
   async (t) => {
     await t.throwsAsync(
-      () => engine.callWorker('timeout', [11], {}, { timeout: 10 }),
+      () => engine.callWorker('wait', [5000], {}, { timeout: 100 }),
       {
         name: 'TimeoutError',
       }
     );
 
     const onCallback = (evt) => {
-      t.log(evt);
       t.pass('all ok');
     };
 
