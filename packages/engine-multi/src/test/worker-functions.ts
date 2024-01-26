@@ -13,7 +13,11 @@ const tasks = {
   },
   wait: (duration = 500) =>
     new Promise((resolve) => {
-      setTimeout(() => resolve(1), duration);
+      console.log(`> waiting for ${duration}ms...`);
+      setTimeout(() => {
+        console.log('> done!');
+        resolve(1);
+      }, duration);
     }),
   readEnv: async (key: string) => {
     if (key) {

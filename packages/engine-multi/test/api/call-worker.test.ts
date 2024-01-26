@@ -1,7 +1,7 @@
 import test from 'ava';
 import path from 'node:path';
 import EventEmitter from 'node:events';
-import { createMockLogger } from '@openfn/logger';
+import createlogger from '@openfn/logger';
 
 import initWorkers from '../../src/api/call-worker';
 import { EngineAPI } from '../../src/types';
@@ -9,7 +9,7 @@ import { EngineAPI } from '../../src/types';
 let engine = new EventEmitter() as EngineAPI;
 
 const workerPath = path.resolve('dist/test/worker-functions.js');
-const logger = createMockLogger();
+const logger = createlogger(null, { level: 'debug' });
 
 test.before(() => {
   const { callWorker, closeWorkers } = initWorkers(
@@ -51,7 +51,7 @@ test.serial('callWorker should trigger an event callback', async (t) => {
 });
 
 // Skipping because this routinely fails in CI
-test.serial(
+test.serial.only(
   'callWorker should throw TimeoutError if it times out',
   async (t) => {
     await t.throwsAsync(

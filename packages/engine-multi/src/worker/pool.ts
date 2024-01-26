@@ -89,6 +89,14 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         stdio: ['ipc', 'ignore', 'pipe'],
       });
 
+      // // TMP
+      // // although we should work out how to redirect the stdout
+      // // to the runtime log
+      // child.stdio[2].on('data', (data) => {
+      //   console.log('> ', data);
+      // });
+      // // console.log(child.stdio);
+
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
     } else {
@@ -172,6 +180,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       if (opts.timeout && opts.timeout !== Infinity) {
         // Setup a handler to kill the running worker after the timeout expires
         const timeoutWorker = () => {
+          logger.debug('pool: timed out task in worker', worker.pid);
           // Disconnect the on-exit handler
           worker.off('exit', onExit);
 
