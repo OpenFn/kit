@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - 0f22694: Accept the linker's whitelist as strings
+- ignore timeout if it has a value of 0 or false
 
 ## 0.2.4
 

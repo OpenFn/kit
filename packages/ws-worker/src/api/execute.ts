@@ -20,12 +20,11 @@ import type {
 } from '@openfn/engine-multi';
 import { ExecutionPlan } from '@openfn/runtime';
 
-// TODO: I want to move all event handlers out into their own files
-// TODO just export the index yeah?
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
-import handleAttemptComplete from '../events/atttempt-complete';
+import handleAttemptComplete from '../events/attempt-complete';
 import handleAttemptError from '../events/attempt-error';
+
 import createThrottler from '../util/throttle';
 
 const enc = new TextDecoder('utf-8');
