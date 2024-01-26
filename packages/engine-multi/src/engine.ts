@@ -114,6 +114,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
   const defaultTimeout = options.attemptTimeoutMs || DEFAULT_ATTEMPT_TIMEOUT;
+  const defaultMemoryLimit = options.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB;
 
   let resolvedWorkerPath;
   if (workerPath) {
@@ -182,7 +183,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
         attemptTimeoutMs: opts.attemptTimeoutMs ?? defaultTimeout,
-        memoryLimitMb: opts.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB,
+        memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
       },
     });
 
