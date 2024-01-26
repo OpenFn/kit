@@ -47,7 +47,7 @@ const args = yargs(hideBin(process.argv))
   // TODO maybe this is positional and required?
   // frees up -l for the log
   .option('lightning', {
-    alias: ['l', 'lightnin-service-url'],
+    alias: ['l', 'lightning-service-url'],
     description:
       'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server. Env: WORKER_LIGHTNING_SERVICE_URL',
     default: WORKER_LIGHTNING_SERVICE_URL || 'ws://localhost:4000/worker',
@@ -81,7 +81,8 @@ const args = yargs(hideBin(process.argv))
     type: 'boolean',
   })
   .option('backoff', {
-    description: 'Claim backoff rules: min/max (s). Env: WORKER_BACKOFF',
+    description:
+      'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
     default: WORKER_BACKOFF || '1/10',
   })
   .option('capacity', {
