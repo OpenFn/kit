@@ -43,6 +43,7 @@ type QueuedTask = {
   args: any[];
   opts: ExecOpts;
   resolve: (...args: any[]) => any;
+  reject: (...args: any[]) => any;
 };
 
 let root = path.dirname(fileURLToPath(import.meta.url));
@@ -99,6 +100,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
   const finish = (worker: ChildProcess | false) => {
     if (worker) {
+      logger.debug('pool: finished task in worker', worker.pid);
       worker.removeAllListeners();
     }
 
@@ -110,11 +112,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       const next = queue.pop();
       if (next) {
         // TODO actually I think if there's a queue we should empty it first
-        const { task, args, resolve, opts } = next;
+        const { task, args, resolve, reject, opts } = next;
         logger.debug('pool: Picking up deferred task', task);
 
-        // TODO don't process the queue if destroyed
-        exec(task, args, opts).then(resolve);
+        exec(task, args, opts).then(resolve).catch(reject);
       }
     }
   };
@@ -163,7 +164,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       let didTimeout = false;
       if (!pool.length) {
         logger.debug('pool: Deferring task', task);
-        return queue.push({ task, args, opts, resolve });
+        return queue.push({ task, args, opts, resolve, reject });
       }
 
       const worker = init(pool.pop()!);
@@ -172,6 +173,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       if (opts.timeout && opts.timeout !== Infinity) {
         // Setup a handler to kill the running worker after the timeout expires
         const timeoutWorker = () => {
+          logger.debug(
+            `pool: Timed out task "${task}" in worker ${worker.pid} (${opts.timeout}ms)`
+          );
           // Disconnect the on-exit handler
           worker.off('exit', onExit);
 
@@ -190,6 +194,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       }
 
       try {
+        logger.debug(`pool: Running task "${task}" in worker ${worker.pid}`);
         worker.send({
           type: ENGINE_RUN_TASK,
           task,
@@ -239,6 +244,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
   const killWorker = (worker: ChildProcess | false) => {
     if (worker) {
+      logger.debug('pool: destroying worker ', worker.pid);
       worker.kill();
       delete allWorkers[worker.pid!];
     }

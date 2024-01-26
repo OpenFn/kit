@@ -40,14 +40,11 @@ test.serial('callWorker should return a custom result', async (t) => {
 });
 
 test.serial('callWorker should trigger an event callback', async (t) => {
-  return new Promise((done) => {
-    const onCallback = ({ result }) => {
-      t.is(result, 11);
-      done();
-    };
+  const onCallback = ({ result }) => {
+    t.is(result, 11);
+  };
 
-    engine.callWorker('test', [11], { 'test-message': onCallback });
-  });
+  await engine.callWorker('test', [11], { 'test-message': onCallback });
 });
 
 test.serial(
