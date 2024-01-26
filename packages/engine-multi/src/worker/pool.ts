@@ -86,7 +86,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         env: options.env || {},
 
         // This pipes the stderr stream onto the child, so we can read it later
-        // stdio: ['ipc', 'ignore', 'pipe'],
+        stdio: ['ipc', 'ignore', 'pipe'],
       });
 
       // // TMP
