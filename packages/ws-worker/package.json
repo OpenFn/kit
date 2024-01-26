@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm ava --serial test/errors.test.ts",
+    "test": "pnpm ava --serial",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config tsup.config.js",
     "build:watch": "pnpm build --watch",

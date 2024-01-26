@@ -2,13 +2,13 @@ import test from 'ava';
 import path from 'node:path';
 
 import createEngine, { EngineOptions } from '../src/engine';
-import { createMockLogger } from '@openfn/logger';
+import createLogger /* { createMockLogger }*/ from '@openfn/logger';
 import { WORKFLOW_COMPLETE, WORKFLOW_ERROR } from '../src/events';
 
 let engine;
 
 test.before(async () => {
-  const logger = createMockLogger('', { level: 'debug' });
+  const logger = createLogger('ENG', { level: 'debug' });
 
   const options: EngineOptions = {
     logger,
