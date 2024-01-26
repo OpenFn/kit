@@ -32,7 +32,7 @@ export default async function onStepStart(
   // Send the log with its own little state object
   // to preserve the run id
   // Otherwise, by the time the log sends,
-  // the activestep could have changed
+  // the active step could have changed
   // TODO if I fix ordering I think I can kill this
   const versionLogContext = {
     ...context,
