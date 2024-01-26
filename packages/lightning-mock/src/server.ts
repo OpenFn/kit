@@ -80,7 +80,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
   // Only create a http logger if there's a top-level logger passed
   // This is a bit flaky really but whatever
   if (options.logger) {
-    const httpLogger = createLogger('HTTP', { level: 'debug' });
+    const httpLogger = createLogger('HTTP', { level: options.logLevel });
     const klogger = koaLogger((str) => httpLogger.debug(str));
     app.use(klogger);
   }
@@ -90,7 +90,8 @@ const createLightningServer = (options: LightningOptions = {}) => {
     state,
     '/worker', // TODO I should option drive this
     server,
-    options.logger && logger
+    options.logger,
+    options.logLevel
   );
 
   app.use(createDevAPI(app as any, state, logger, api));

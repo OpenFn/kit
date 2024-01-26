@@ -82,7 +82,8 @@ const createSocketAPI = (
   state: ServerState,
   path: string,
   httpServer: Server,
-  logger?: Logger
+  logger?: Logger,
+  logLevel?: string
 ) => {
   // set up a websocket server to listen to connections
   const server = new WebSocketServer({
@@ -97,7 +98,7 @@ const createSocketAPI = (
     // @ts-ignore server typings
     server,
     state,
-    logger: logger && createLogger('PHX', { level: 'debug' }),
+    logger: logger && createLogger('PHX', { level: logLevel }),
   });
 
   wss.registerEvents('worker:queue', {
@@ -111,7 +112,7 @@ const createSocketAPI = (
   });
 
   const startAttempt = (attemptId: string) => {
-    logger && logger.debug(`joining channel attempt:${attemptId}`);
+    logger?.info(`joining channel attempt:${attemptId}`);
 
     // mark the attempt as started on the server
     state.pending[attemptId] = {
@@ -194,7 +195,7 @@ const createSocketAPI = (
     if (attempts.length) {
       logger?.info(`Claiming ${attempts.length} attempts`);
     } else {
-      logger?.info('No claims (queue empty)');
+      logger?.debug('No claims (queue empty)');
     }
 
     ws.reply<ClaimReply>({ ref, join_ref, topic, payload });
@@ -316,6 +317,8 @@ const createSocketAPI = (
         response: 'Missing property on log',
       };
     }
+
+    logger.info(`LOG [${attemptId}] ${evt.payload.message[0]}`);
 
     ws.reply<AttemptLogReply>({
       ref,
