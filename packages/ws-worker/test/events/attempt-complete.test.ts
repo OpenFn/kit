@@ -1,5 +1,5 @@
 import test from 'ava';
-import handleAttemptComplete from '../../src/events/atttempt-complete';
+import handleAttemptComplete from '../../src/events/attempt-complete';
 
 import { mockChannel } from '../../src/mock/sockets';
 import { ATTEMPT_COMPLETE, ATTEMPT_LOG } from '../../src/events';
