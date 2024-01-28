@@ -193,7 +193,7 @@ const isInstalled = async (
     // not, install for us.
     // This log isn't terrible helpful as there's no attempt version info
     logger.warn(
-      `adaptor ${specifier} does not have a version number - will attempt to auto-install`
+      `adaptor ${specifier} does not have a version number - will try to auto-install`
     );
   }
   // TODO is it really appropriate to load this file each time?

@@ -6,7 +6,7 @@ import type { Logger } from '@openfn/logger';
 const destroy = async (app: ServerApp, logger: Logger) => {
   logger.info('Closing server...');
 
-  // Close the server AND wait for attempts to complete in parallel
+  // Close the server AND wait for runs to complete in parallel
   // The http server can take a moment to close and the two
   // close conditions are unrelated - so this just speeds things up a bit
   await Promise.all([

@@ -287,7 +287,7 @@ A workflow has a structure like this (better documentation is coming soon):
 
 ## Compilation
 
-The CLI will attempt to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:
+The CLI will try to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:
 
 - The language adaptor will be imported into the file
 - The adaptor's execute function will be exported form the file
