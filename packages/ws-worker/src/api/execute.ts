@@ -1,8 +1,8 @@
 import {
-  ATTEMPT_COMPLETE,
-  ATTEMPT_LOG,
+  RUN_COMPLETE,
+  RUN_LOG,
   AttemptLogPayload,
-  ATTEMPT_START,
+  RUN_START,
   AttemptStartPayload,
   GET_CREDENTIAL,
   GET_DATACLIP,
@@ -43,11 +43,11 @@ export type Context = {
 
 // mapping engine events to lightning events
 const eventMap = {
-  'workflow-start': ATTEMPT_START,
+  'workflow-start': RUN_START,
   'job-start': STEP_START,
   'job-complete': STEP_COMPLETE,
-  'workflow-log': ATTEMPT_LOG,
-  'workflow-complete': ATTEMPT_COMPLETE,
+  'workflow-log': RUN_LOG,
+  'workflow-complete': RUN_COMPLETE,
 };
 
 // pass a web socket connected to the attempt channel
@@ -196,7 +196,7 @@ export function onWorkflowStart(
   { channel }: Context,
   _event: WorkflowStartPayload
 ) {
-  return sendEvent<AttemptStartPayload>(channel, ATTEMPT_START);
+  return sendEvent<AttemptStartPayload>(channel, RUN_START);
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
@@ -215,7 +215,7 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
     log.step_id = state.activeStep;
   }
 
-  return sendEvent<AttemptLogPayload>(channel, ATTEMPT_LOG, log);
+  return sendEvent<AttemptLogPayload>(channel, RUN_LOG, log);
 }
 
 export async function loadDataclip(channel: Channel, stateId: string) {

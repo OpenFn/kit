@@ -1,7 +1,7 @@
 import test from 'ava';
 import { mockSocket, mockChannel } from '../../src/mock/sockets';
 import joinAttemptChannel, { loadAttempt } from '../../src/channels/attempt';
-import { GET_ATTEMPT } from '../../src/events';
+import { GET_RUN } from '../../src/events';
 import { attempts } from '../mock/data';
 import { createMockLogger } from '@openfn/logger';
 
@@ -9,7 +9,7 @@ test('loadAttempt should get the attempt body', async (t) => {
   const attempt = attempts['attempt-1'];
   let didCallGetAttempt = false;
   const channel = mockChannel({
-    [GET_ATTEMPT]: () => {
+    [GET_RUN]: () => {
       // TODO should be no payload (or empty payload)
       didCallGetAttempt = true;
       return attempt;
@@ -30,7 +30,7 @@ test('loadAttempt should return an execution plan and options', async (t) => {
   };
 
   const channel = mockChannel({
-    [GET_ATTEMPT]: () => attempt,
+    [GET_RUN]: () => attempt,
   });
 
   const { plan, options } = await loadAttempt(channel);
@@ -55,7 +55,7 @@ test('should join an attempt channel with a token', async (t) => {
     'attempt:a': mockChannel({
       // Note that the validation logic is all handled here
       join: () => ({ status: 'ok' }),
-      [GET_ATTEMPT]: () => ({
+      [GET_RUN]: () => ({
         id: 'a',
         options: { runTimeout: 10 },
       }),
@@ -81,7 +81,7 @@ test('should fail to join an attempt channel with an invalid token', async (t) =
       // Note that the validation logic is all handled here
       // We're not testing token validation, we're testing how we respond to auth fails
       join: () => ({ status: 'error', response: 'invalid-token' }),
-      [GET_ATTEMPT]: () => ({
+      [GET_RUN]: () => ({
         id: 'a',
       }),
     }),

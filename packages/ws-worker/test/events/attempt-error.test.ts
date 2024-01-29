@@ -2,7 +2,7 @@ import test from 'ava';
 import onAttemptError from '../../src/events/attempt-error';
 
 import { mockChannel } from '../../src/mock/sockets';
-import { ATTEMPT_COMPLETE, ATTEMPT_LOG, STEP_COMPLETE } from '../../src/events';
+import { RUN_COMPLETE, RUN_LOG, STEP_COMPLETE } from '../../src/events';
 import { createAttemptState } from '../../src/util';
 
 const plan = { id: 'attempt-1', jobs: [] };
@@ -16,13 +16,13 @@ test('attemptError should trigger runComplete with a reason', async (t) => {
   state.activeJob = jobId;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
     [STEP_COMPLETE]: (evt) => {
       t.is(evt.reason, 'crash');
       t.is(evt.error_message, 'it crashed');
       return true;
     },
-    [ATTEMPT_COMPLETE]: () => true,
+    [RUN_COMPLETE]: () => true,
   });
 
   const event = {
@@ -45,9 +45,9 @@ test('workflow error should send reason to onFinish', async (t) => {
   state.activeJob = jobId;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
     [STEP_COMPLETE]: (evt) => true,
-    [ATTEMPT_COMPLETE]: () => true,
+    [RUN_COMPLETE]: () => true,
   });
 
   const event = {
@@ -75,12 +75,12 @@ test('attemptError should not call job complete if the job is not active', async
   state.lastDataclipId = 'x';
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
     [STEP_COMPLETE]: (evt) => {
       t.fail('should not call!');
       return true;
     },
-    [ATTEMPT_COMPLETE]: () => true,
+    [RUN_COMPLETE]: () => true,
   });
 
   const event = {
@@ -124,11 +124,11 @@ test('attemptError should log the reason', async (t) => {
   let logEvent;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: (e) => {
+    [RUN_LOG]: (e) => {
       logEvent = e;
     },
     [STEP_COMPLETE]: (evt) => true,
-    [ATTEMPT_COMPLETE]: () => true,
+    [RUN_COMPLETE]: () => true,
   });
 
   const context = { channel, state, onFinish: () => {} };

@@ -2,10 +2,10 @@ import test from 'ava';
 import handleAttemptComplete from '../../src/events/attempt-complete';
 
 import { mockChannel } from '../../src/mock/sockets';
-import { ATTEMPT_COMPLETE, ATTEMPT_LOG } from '../../src/events';
+import { RUN_COMPLETE, RUN_LOG } from '../../src/events';
 import { createAttemptState } from '../../src/util';
 
-test('should send an attempt:complete event', async (t) => {
+test('should send an run:complete event', async (t) => {
   const result = { answer: 42 };
   const plan = { id: 'attempt-1', jobs: [] };
 
@@ -16,8 +16,8 @@ test('should send an attempt:complete event', async (t) => {
   state.lastDataclipId = 'x';
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: () => true,
-    [ATTEMPT_COMPLETE]: (evt) => {
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
       t.deepEqual(evt.final_dataclip_id, 'x');
     },
   });
@@ -39,8 +39,8 @@ test('should call onFinish with final dataclip', async (t) => {
   state.lastDataclipId = 'x';
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: () => true,
-    [ATTEMPT_COMPLETE]: () => true,
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: () => true,
   });
 
   const context = {
@@ -70,10 +70,10 @@ test('should send a reason log and return reason for success', async (t) => {
   let completeEvent;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: (e) => {
+    [RUN_LOG]: (e) => {
       logEvent = e;
     },
-    [ATTEMPT_COMPLETE]: (e) => {
+    [RUN_COMPLETE]: (e) => {
       completeEvent = e;
     },
   });
@@ -117,10 +117,10 @@ test('should send a reason log and return reason for fail', async (t) => {
   let completeEvent;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: (e) => {
+    [RUN_LOG]: (e) => {
       logEvent = e;
     },
-    [ATTEMPT_COMPLETE]: (e) => {
+    [RUN_COMPLETE]: (e) => {
       completeEvent = e;
     },
   });

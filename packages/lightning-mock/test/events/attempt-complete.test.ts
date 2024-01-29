@@ -1,6 +1,6 @@
 import test from 'ava';
 import { join, setup, createAttempt } from '../util';
-import { ATTEMPT_COMPLETE } from '../../src/events';
+import { RUN_COMPLETE } from '../../src/events';
 
 let server;
 let client;
@@ -23,7 +23,7 @@ test.serial('acknowledge valid message', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('ok', () => {
+    channel.push(RUN_COMPLETE, event).receive('ok', () => {
       t.pass('event acknowledged');
       done();
     });
@@ -44,7 +44,7 @@ test.serial('set server state to complete', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('ok', () => {
+    channel.push(RUN_COMPLETE, event).receive('ok', () => {
       t.is(server.state.pending[attempt.id].status, 'complete');
       done();
     });
@@ -65,7 +65,7 @@ test.serial('error if no reason', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('error', () => {
+    channel.push(RUN_COMPLETE, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -86,7 +86,7 @@ test.serial('error reason:success and an error', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('error', () => {
+    channel.push(RUN_COMPLETE, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -108,7 +108,7 @@ test.serial('error if surplus keys', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('error', () => {
+    channel.push(RUN_COMPLETE, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -130,7 +130,7 @@ test.serial('error if unknown reason', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('error', () => {
+    channel.push(RUN_COMPLETE, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -152,7 +152,7 @@ test.serial('error if unknown reason 2', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_COMPLETE, event).receive('error', () => {
+    channel.push(RUN_COMPLETE, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });

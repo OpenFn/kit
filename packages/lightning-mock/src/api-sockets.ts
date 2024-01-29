@@ -8,11 +8,11 @@ import createPheonixMockSocketServer, {
   PhoenixEventStatus,
 } from './socket-server';
 import {
-  ATTEMPT_COMPLETE,
-  ATTEMPT_LOG,
-  ATTEMPT_START,
+  RUN_COMPLETE,
+  RUN_LOG,
+  RUN_START,
   CLAIM,
-  GET_ATTEMPT,
+  GET_RUN,
   GET_CREDENTIAL,
   GET_DATACLIP,
   STEP_COMPLETE,
@@ -112,7 +112,7 @@ const createSocketAPI = (
   });
 
   const startAttempt = (attemptId: string) => {
-    logger?.info(`joining channel attempt:${attemptId}`);
+    logger?.info(`joining channel run:${attemptId}`);
 
     // mark the attempt as started on the server
     state.pending[attemptId] = {
@@ -140,15 +140,15 @@ const createSocketAPI = (
       };
     };
 
-    const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
-      [GET_ATTEMPT]: wrap(getAttempt),
-      [ATTEMPT_START]: wrap(handleStartAttempt),
+    const { unsubscribe } = wss.registerEvents(`run:${attemptId}`, {
+      [GET_RUN]: wrap(getAttempt),
+      [RUN_START]: wrap(handleStartAttempt),
       [GET_CREDENTIAL]: wrap(getCredential),
       [GET_DATACLIP]: wrap(getDataclip),
       [STEP_START]: wrap(handleStepStart),
-      [ATTEMPT_LOG]: wrap(handleLog),
+      [RUN_LOG]: wrap(handleLog),
       [STEP_COMPLETE]: wrap(handleStepComplete),
-      [ATTEMPT_COMPLETE]: wrap((...args) => {
+      [RUN_COMPLETE]: wrap((...args) => {
         handleAttemptComplete(...args);
         unsubscribe();
       }),

@@ -3,8 +3,8 @@ import test from 'ava';
 import { setup } from '../util';
 import { attempts, credentials, dataclips } from '../data';
 import {
-  ATTEMPT_COMPLETE,
-  GET_ATTEMPT,
+  RUN_COMPLETE,
+  GET_RUN,
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
@@ -71,8 +71,8 @@ test.serial('get attempt data through the attempt channel', async (t) => {
     server.registerAttempt(attempt1);
     server.startAttempt(attempt1.id);
 
-    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
-    channel.push(GET_ATTEMPT).receive('ok', (attempt) => {
+    const channel = await join(`run:${attempt1.id}`, { token: 'a.b.c' });
+    channel.push(GET_RUN).receive('ok', (attempt) => {
       t.deepEqual(attempt, attempt1);
       done();
     });
@@ -86,9 +86,9 @@ test.serial('complete an attempt through the attempt channel', async (t) => {
     server.startAttempt(a.id);
     server.addDataclip('abc', { answer: 42 });
 
-    const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
+    const channel = await join(`run:${a.id}`, { token: 'a.b.c' });
     channel
-      .push(ATTEMPT_COMPLETE, { reason: 'success', final_dataclip_id: 'abc' })
+      .push(RUN_COMPLETE, { reason: 'success', final_dataclip_id: 'abc' })
       .receive('ok', () => {
         const { pending, results } = server.getState();
         t.deepEqual(pending[a.id], {
@@ -108,11 +108,11 @@ test.serial('unsubscribe after attempt complete', async (t) => {
     server.registerAttempt(a);
     server.startAttempt(a.id);
 
-    const channel = await join(`attempt:${a.id}`, { token: 'a.b.c' });
-    channel.push(ATTEMPT_COMPLETE, { reason: 'success' }).receive('ok', () => {
+    const channel = await join(`run:${a.id}`, { token: 'a.b.c' });
+    channel.push(RUN_COMPLETE, { reason: 'success' }).receive('ok', () => {
       // After the complete event, the listener should unsubscribe to the channel
       // The mock will send an error to any unhandled events in that channel
-      channel.push(ATTEMPT_COMPLETE).receive('error', () => {
+      channel.push(RUN_COMPLETE).receive('error', () => {
         t.pass();
         done();
       });
@@ -125,7 +125,7 @@ test.serial('get credential through the attempt channel', async (t) => {
     server.startAttempt(attempt1.id);
     server.addCredential('a', credentials['a']);
 
-    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
+    const channel = await join(`run:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(GET_CREDENTIAL, { id: 'a' }).receive('ok', (result) => {
       t.deepEqual(result, credentials['a']);
       done();
@@ -138,7 +138,7 @@ test.serial('get dataclip through the attempt channel', async (t) => {
     server.startAttempt(attempt1.id);
     server.addDataclip('d', dataclips['d']);
 
-    const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
+    const channel = await join(`run:${attempt1.id}`, { token: 'a.b.c' });
     channel.push(GET_DATACLIP, { id: 'd' }).receive('ok', (result) => {
       const str = enc.decode(new Uint8Array(result));
       const dataclip = JSON.parse(str);
@@ -164,8 +164,8 @@ test.serial(
         done();
       });
 
-      const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
-      channel.push(ATTEMPT_COMPLETE, {
+      const channel = await join(`run:${attempt1.id}`, { token: 'a.b.c' });
+      channel.push(RUN_COMPLETE, {
         final_dataclip_id: 'result',
       } as AttemptCompletePayload);
     });
@@ -188,8 +188,8 @@ test.serial(
         done();
       });
 
-      const channel = await join(`attempt:${attempt1.id}`, { token: 'a.b.c' });
-      channel.push(ATTEMPT_COMPLETE, {
+      const channel = await join(`run:${attempt1.id}`, { token: 'a.b.c' });
+      channel.push(RUN_COMPLETE, {
         final_dataclip_id: 'result',
       } as AttemptCompletePayload);
     });

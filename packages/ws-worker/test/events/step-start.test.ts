@@ -5,7 +5,7 @@ import { JobStartPayload } from '@openfn/engine-multi';
 
 import { mockChannel } from '../../src/mock/sockets';
 import { createAttemptState } from '../../src/util';
-import { ATTEMPT_LOG, STEP_START } from '../../src/events';
+import { RUN_LOG, STEP_START } from '../../src/events';
 
 import pkg from '../../package.json' assert { type: 'json' };
 
@@ -17,7 +17,7 @@ test('set a step id and active job on state', async (t) => {
 
   const channel = mockChannel({
     [STEP_START]: (x) => x,
-    [ATTEMPT_LOG]: (x) => x,
+    [RUN_LOG]: (x) => x,
   });
 
   await handleStepStart({ channel, state }, { jobId });
@@ -48,7 +48,7 @@ test('send a step:start event', async (t) => {
       t.truthy(evt.step_id);
       return true;
     },
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
   });
 
   await handleStepStart({ channel, state }, { jobId });
@@ -88,7 +88,7 @@ test('step:start event should include versions', async (t) => {
       });
       return true;
     },
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
   });
 
   await handleStepStart({ channel, state }, event);
@@ -123,7 +123,7 @@ test('also logs the version number', async (t) => {
 
   const channel = mockChannel({
     [STEP_START]: (evt) => true,
-    [ATTEMPT_LOG]: (evt) => {
+    [RUN_LOG]: (evt) => {
       if (evt.source === 'VER') {
         logEvent = evt;
       }

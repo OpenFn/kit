@@ -8,7 +8,7 @@ export type ClaimPayload = { demand?: number };
 export type ClaimReply = { attempts: Array<ClaimAttempt> };
 export type ClaimAttempt = { id: string; token: string };
 
-export const GET_ATTEMPT = 'fetch:attempt';
+export const GET_RUN = 'fetch:run';
 export type GetAttemptPayload = void; // no payload
 export type GetAttemptReply = Attempt;
 
@@ -21,17 +21,17 @@ export const GET_DATACLIP = 'fetch:dataclip';
 export type GetDataclipPayload = { id: string };
 export type GetDataClipReply = Uint8Array; // represents a json string Attempt
 
-export const ATTEMPT_START = 'attempt:start'; // attemptId, timestamp
+export const RUN_START = 'run:start'; // attemptId, timestamp
 export type AttemptStartPayload = void; // no payload
 export type AttemptStartReply = {}; // no payload
 
-export const ATTEMPT_COMPLETE = 'attempt:complete'; // attemptId, timestamp, result, stats
+export const RUN_COMPLETE = 'run:complete'; // attemptId, timestamp, result, stats
 export type AttemptCompletePayload = ExitReason & {
   final_dataclip_id?: string; // TODO this will be removed soon
 };
 export type AttemptCompleteReply = undefined;
 
-export const ATTEMPT_LOG = 'attempt:log'; // level, namespace (job,runtime,adaptor), message, time
+export const RUN_LOG = 'run:log'; // level, namespace (job,runtime,adaptor), message, time
 export type AttemptLogPayload = {
   message: Array<string | object>;
   timestamp: string;

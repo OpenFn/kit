@@ -72,7 +72,7 @@ test.serial(
         }
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, () => {
         const { id, token } = response;
         // Note that the payload here is what will be sent back to the worker
         t.truthy(id);
@@ -142,7 +142,7 @@ test.serial(
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
         const { final_dataclip_id } = evt.payload;
         t.assert(typeof final_dataclip_id === 'string');
         t.pass('attempt complete event received');
@@ -154,27 +154,27 @@ test.serial(
   }
 );
 
-test.todo(`events: lightning should receive a ${e.ATTEMPT_START} event`);
+test.todo(`events: lightning should receive a ${e.RUN_START} event`);
 
 // Now run detailed checks of every event
 // for each event we can see a copy of the server state
 // (if that helps anything?)
 
 test.serial(
-  `events: lightning should receive a ${e.GET_ATTEMPT} event`,
+  `events: lightning should receive a ${e.GET_RUN} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
 
       let didCallEvent = false;
-      lng.onSocketEvent(e.GET_ATTEMPT, attempt.id, ({ payload }) => {
+      lng.onSocketEvent(e.GET_RUN, attempt.id, ({ payload }) => {
         // This doesn't test that the correct attempt gets sent back
         // We'd have to add an event to the engine for that
         // (not a bad idea)
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
         t.true(didCallEvent);
         done();
       });
@@ -203,7 +203,7 @@ test.serial(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, () => {
         t.true(didCallEvent);
         done();
       });
@@ -233,7 +233,7 @@ test.serial(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, () => {
         t.true(didCallEvent);
         done();
       });
@@ -253,7 +253,7 @@ test.serial(`events: lightning should receive a ${e.STEP_START} event`, (t) => {
       t.pass('called run start');
     });
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
       done();
     });
 
@@ -278,7 +278,7 @@ test.serial(
         t.pass('called run complete');
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
         done();
       });
 
@@ -304,7 +304,7 @@ test.serial(
         t.pass('called step complete');
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, ({ payload }) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, ({ payload }) => {
         done();
       });
 
@@ -314,7 +314,7 @@ test.serial(
 );
 
 test.serial(
-  `events: lightning should receive a ${e.ATTEMPT_LOG} event`,
+  `events: lightning should receive a ${e.RUN_LOG} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = {
@@ -326,7 +326,7 @@ test.serial(
         ],
       };
 
-      lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+      lng.onSocketEvent(e.RUN_LOG, attempt.id, ({ payload }) => {
         const log = payload;
 
         t.is(log.level, 'info');
@@ -336,7 +336,7 @@ test.serial(
         t.deepEqual(log.message, ['x']);
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
         done();
       });
 
@@ -364,7 +364,7 @@ test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
 
     // Track the timestamps on any logs that come out
     lng.onSocketEvent(
-      e.ATTEMPT_LOG,
+      e.RUN_LOG,
       attempt.id,
       ({ payload }) => {
         history.push(BigInt(payload.timestamp));
@@ -372,7 +372,7 @@ test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
       false
     );
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
       t.log(history);
       let last = BigInt(0);
 
@@ -402,13 +402,13 @@ test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
 
 // This is well tested elsewhere but including here for completeness
 test.serial(
-  `events: lightning should receive a ${e.ATTEMPT_COMPLETE} event`,
+  `events: lightning should receive a ${e.RUN_COMPLETE} event`,
   (t) => {
     return new Promise((done) => {
       const attempt = getAttempt();
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
-        t.pass('called attempt:complete');
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
+        t.pass('called run:complete');
         done();
       });
 
@@ -430,11 +430,11 @@ test.serial(
         ],
       };
 
-      worker.on(e.ATTEMPT_START, () => {
+      worker.on(e.RUN_START, () => {
         t.truthy(worker.workflows[attempt.id]);
       });
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
         t.truthy(worker.workflows[attempt.id]);
         // Tidyup is done AFTER lightning receives the event
         // This timeout is crude but should work
@@ -472,7 +472,7 @@ test.skip('should not claim while at capacity', async (t) => {
     let attempt1Start;
 
     // When the first attempt starts, we should only have attempt 1 in progress
-    lng.onSocketEvent(e.ATTEMPT_START, attempt1.id, (evt) => {
+    lng.onSocketEvent(e.RUN_START, attempt1.id, (evt) => {
       attempt1Start = Date.now();
 
       t.truthy(worker.workflows[attempt1.id]);
@@ -480,7 +480,7 @@ test.skip('should not claim while at capacity', async (t) => {
     });
 
     // When the second attempt starts, we should only have attempt 2 in progress
-    lng.onSocketEvent(e.ATTEMPT_START, attempt2.id, (evt) => {
+    lng.onSocketEvent(e.RUN_START, attempt2.id, (evt) => {
       const duration = Date.now() - attempt1Start;
       t.true(duration > 490);
 
@@ -490,7 +490,7 @@ test.skip('should not claim while at capacity', async (t) => {
       // also, the now date should be around 500 ms after the first start
     });
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt2.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, attempt2.id, (evt) => {
       done();
     });
 
@@ -552,7 +552,7 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
       false
     );
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
       unsub1();
       unsub2();
 
@@ -609,7 +609,7 @@ test.serial(
         false
       );
 
-      lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, (evt) => {
         t.is(evt.payload.reason, 'success');
 
         // What we REALLY care about is that the b-c edge condition
@@ -640,13 +640,13 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+    lng.onSocketEvent(e.RUN_LOG, attempt.id, ({ payload }) => {
       if (payload.message[0].match(/Run complete with status: success/)) {
         log = payload.message[0];
       }
     });
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+    lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, () => {
       t.truthy(log);
       done();
     });
@@ -668,13 +668,13 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.ATTEMPT_LOG, attempt.id, ({ payload }) => {
+    lng.onSocketEvent(e.RUN_LOG, attempt.id, ({ payload }) => {
       if (payload.message[0].match(/Run complete with status: fail/)) {
         log = payload.message[0];
       }
     });
 
-    lng.onSocketEvent(e.ATTEMPT_COMPLETE, attempt.id, () => {
+    lng.onSocketEvent(e.RUN_COMPLETE, attempt.id, () => {
       t.truthy(log);
       t.regex(log, /JobError: blah/i);
       done();

@@ -43,7 +43,7 @@ const run = async (t, attempt) => {
         )} / ${humanMb(payload.mem.system)}mb] [thread ${payload.thread_id}]`
       );
     });
-    lightning.on('attempt:complete', (evt) => {
+    lightning.on('run:complete', (evt) => {
       if (attempt.id === evt.attemptId) {
         done(lightning.getResult(attempt.id));
       } else {

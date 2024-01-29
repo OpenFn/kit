@@ -5,7 +5,7 @@
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
 import crypto from 'node:crypto';
-import { ATTEMPT_COMPLETE } from './events';
+import { RUN_COMPLETE } from './events';
 
 import { ServerState } from './server';
 
@@ -69,12 +69,12 @@ const setupDevAPI = (
         dataclip: any;
       }) => {
         if (evt.attemptId === attemptId) {
-          state.events.removeListener(ATTEMPT_COMPLETE, handler);
+          state.events.removeListener(RUN_COMPLETE, handler);
           const result = state.dataclips[evt.payload.final_dataclip_id!];
           resolve(result);
         }
       };
-      state.events.addListener(ATTEMPT_COMPLETE, handler);
+      state.events.addListener(RUN_COMPLETE, handler);
     });
   };
 

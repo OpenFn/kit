@@ -1,5 +1,5 @@
 import test from 'ava';
-import { ATTEMPT_LOG } from '../../src/events';
+import { RUN_LOG } from '../../src/events';
 
 import { join, setup, createAttempt } from '../util';
 
@@ -26,7 +26,7 @@ test.serial('acknowledge valid message (attempt log)', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('ok', (evt) => {
+    channel.push(RUN_LOG, event).receive('ok', (evt) => {
       t.pass('event acknowledged');
       done();
     });
@@ -50,7 +50,7 @@ test.serial('acknowledge valid message (job log)', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('ok', (evt) => {
+    channel.push(RUN_LOG, event).receive('ok', (evt) => {
       t.pass('event acknowledged');
       done();
     });
@@ -74,7 +74,7 @@ test.serial('save log to state', async (t) => {
 
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('ok', () => {
+    channel.push(RUN_LOG, event).receive('ok', () => {
       const { pending } = server.getState();
       const [savedLog] = pending[attempt.id].logs;
       t.deepEqual(savedLog, event);
@@ -98,7 +98,7 @@ test.serial('error if no message', async (t) => {
     };
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('error', () => {
+    channel.push(RUN_LOG, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -120,7 +120,7 @@ test.serial('error if no source', async (t) => {
     };
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('error', () => {
+    channel.push(RUN_LOG, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -141,7 +141,7 @@ test.serial('error if no timestamp', async (t) => {
     };
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('error', () => {
+    channel.push(RUN_LOG, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });
@@ -163,7 +163,7 @@ test.serial('error if no level', async (t) => {
     };
     const channel = await join(client, attempt.id);
 
-    channel.push(ATTEMPT_LOG, event).receive('error', () => {
+    channel.push(RUN_LOG, event).receive('error', () => {
       t.pass('event rejected');
       done();
     });

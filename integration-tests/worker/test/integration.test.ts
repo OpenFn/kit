@@ -32,7 +32,7 @@ test.after(async () => {
 
 test('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
-    lightning.once('attempt:complete', (evt) => {
+    lightning.once('run:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
       const result = lightning.getResult('a1');
       t.deepEqual(result, { data: { answer: 42 } });
@@ -57,7 +57,7 @@ test('run a job with autoinstall of common', (t) => {
   return new Promise(async (done) => {
     let autoinstallEvent;
 
-    lightning.once('attempt:complete', (evt) => {
+    lightning.once('run:complete', (evt) => {
       try {
         t.truthy(autoinstallEvent);
         t.is(autoinstallEvent.module, '@openfn/language-common');
@@ -99,7 +99,7 @@ test('run a job with autoinstall of common', (t) => {
 // this depends on prior test!
 test('run a job which does NOT autoinstall common', (t) => {
   return new Promise(async (done) => {
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       try {
         // This will fetch the final dataclip from the attempt
         const result = lightning.getResult('a10');
@@ -146,7 +146,7 @@ test("Don't send job logs to stdout", (t) => {
       ],
     };
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       const jsonLogs = engineLogger._history.map((l) => JSON.parse(l));
 
       // The engine logger shouldn't print out any job logs
@@ -184,7 +184,7 @@ test('run a job with initial state (with data)', (t) => {
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
@@ -218,7 +218,7 @@ test('run a job with initial state (no top level keys)', (t) => {
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
@@ -288,7 +288,7 @@ test.skip('run a job with credentials', (t) => {
 
     lightning.addCredential('c', config);
 
-    lightning.on('attempt:complete', () => {
+    lightning.on('run:complete', () => {
       try {
         const result = lightning.getResult(attempt.id);
         t.deepEqual(result.configuration, config);
@@ -316,7 +316,7 @@ test('blacklist a non-openfn adaptor', (t) => {
       ],
     };
 
-    lightning.once('attempt:complete', (event) => {
+    lightning.once('run:complete', (event) => {
       const { payload } = event;
       t.is(payload.reason, 'crash'); // TODO actually this should be a kill
       t.is(payload.error_message, 'module blacklisted: lodash');
@@ -342,7 +342,7 @@ test('a timeout error should still call step-complete', (t) => {
       },
     };
 
-    lightning.once('attempt:start', (event) => {
+    lightning.once('run:start', (event) => {
       t.log('attempt started');
     });
 
@@ -351,7 +351,7 @@ test('a timeout error should still call step-complete', (t) => {
       t.is(event.payload.error_type, 'TimeoutError');
     });
 
-    lightning.once('attempt:complete', (event) => {
+    lightning.once('run:complete', (event) => {
       done();
     });
 
@@ -382,7 +382,7 @@ test('an OOM error should still call step-complete', (t) => {
       t.is(event.payload.reason, 'kill');
     });
 
-    lightning.once('attempt:complete', (event) => {
+    lightning.once('run:complete', (event) => {
       done();
     });
 
@@ -403,7 +403,7 @@ test('an OOM error should still call step-complete', (t) => {
 //   }
 
 //   initLightning();
-//   lightning.on('attempt:complete', (evt) => {
+//   lightning.on('run:complete', (evt) => {
 //     // This will fetch the final dataclip from the attempt
 //     const result = lightning.getResult('a1');
 //     t.deepEqual(result, { data: { answer: 42 } });
@@ -451,7 +451,7 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     };
     let results = {};
 
-    lightning.on('attempt:complete', (evt) => {
+    lightning.on('run:complete', (evt) => {
       const id = evt.attemptId;
       results[id] = lightning.getResult(id);
 

@@ -22,7 +22,7 @@ let worker;
 
 const run = async (attempt) => {
   return new Promise<any>(async (done, reject) => {
-    lightning.on('attempt:complete', (evt) => {
+    lightning.on('run:complete', (evt) => {
       if (attempt.id === evt.attemptId) {
         done(lightning.getResult(attempt.id));
       }

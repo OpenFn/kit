@@ -72,7 +72,7 @@ test.serial('error if no reason', async (t) => {
   });
 });
 
-// reason validation code is shared with attempt:complete
+// reason validation code is shared with run:complete
 // It's fine not to test further here
 
 test.serial('error if no output dataclip', async (t) => {

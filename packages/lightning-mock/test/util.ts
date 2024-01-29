@@ -27,7 +27,7 @@ export const setup = (port: number) => {
 
 export const join = (client: any, attemptId: string): Promise<Channel> =>
   new Promise((done, reject) => {
-    const channel = client.channel(`attempt:${attemptId}`, { token: 'a.b.c' });
+    const channel = client.channel(`run:${attemptId}`, { token: 'a.b.c' });
     channel
       .join()
       .receive('ok', () => {

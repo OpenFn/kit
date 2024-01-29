@@ -1,6 +1,6 @@
 import type { WorkflowCompletePayload } from '@openfn/engine-multi';
 
-import { ATTEMPT_COMPLETE, AttemptCompletePayload } from '../events';
+import { RUN_COMPLETE, AttemptCompletePayload } from '../events';
 import { calculateAttemptExitReason } from '../api/reasons';
 import { sendEvent, Context } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
@@ -18,7 +18,7 @@ export default async function onWorkflowComplete(
   const reason = calculateAttemptExitReason(state);
   await logFinalReason(context, reason);
 
-  await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
+  await sendEvent<AttemptCompletePayload>(channel, RUN_COMPLETE, {
     final_dataclip_id: state.lastDataclipId!,
     ...reason,
   });

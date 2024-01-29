@@ -107,7 +107,7 @@ test.serial('allow a job to complete after receiving a sigterm', (t) => {
     });
     const attempt = createAttempt([], [job], []);
 
-    lightning.once('attempt:complete', (evt) => {
+    lightning.once('run:complete', (evt) => {
       t.true(didKill); // Did we kill the server before this returned?
       t.is(evt.payload.reason, 'success'); // did the attempt succeed?
       t.pass('ok');

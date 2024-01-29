@@ -2,7 +2,7 @@ import { calculateJobExitReason } from '../api/reasons';
 
 import type { WorkflowErrorPayload } from '@openfn/engine-multi';
 
-import { ATTEMPT_COMPLETE, AttemptCompletePayload } from '../events';
+import { RUN_COMPLETE, AttemptCompletePayload } from '../events';
 import { sendEvent, Context, onJobError } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
 
@@ -22,7 +22,7 @@ export default async function onAttemptError(
 
     await logFinalReason(context, reason);
 
-    await sendEvent<AttemptCompletePayload>(channel, ATTEMPT_COMPLETE, {
+    await sendEvent<AttemptCompletePayload>(channel, RUN_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,
       ...reason,
     });

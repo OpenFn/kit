@@ -113,7 +113,7 @@ test.serial('destroy a worker while one attempt is active', async (t) => {
       }, 2);
     });
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       didFinish = true;
     });
     lightning.enqueueAttempt(createAttempt());
@@ -141,7 +141,7 @@ test.serial(
         done();
       };
 
-      lightning.on('attempt:start', () => {
+      lightning.on('run:start', () => {
         startCount++;
 
         // Let all three workflows start before we kill the server
@@ -150,7 +150,7 @@ test.serial(
         }
       });
 
-      lightning.on('attempt:complete', () => {
+      lightning.on('run:complete', () => {
         completeCount++;
       });
 
@@ -181,7 +181,7 @@ test("don't claim after destroy", (t) => {
       }, 2);
     });
 
-    lightning.on('attempt:complete', () => {
+    lightning.on('run:complete', () => {
       completeCount++;
     });
 
