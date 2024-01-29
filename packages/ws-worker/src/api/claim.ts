@@ -20,19 +20,19 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
     logger.debug('requesting attempt...');
     app.queueChannel
       .push<ClaimPayload>(CLAIM, { demand: 1 })
-      .receive('ok', ({ attempts }: ClaimReply) => {
-        logger.debug(`pulled ${attempts.length} attempts`);
+      .receive('ok', ({ runs }: ClaimReply) => {
+        logger.debug(`pulled ${runs.length} runs`);
         // TODO what if we get here after we've been cancelled?
         // the events have already been claimed...
 
-        if (!attempts?.length) {
+        if (!runs?.length) {
           // throw to backoff and try again
-          return reject(new Error('No attempts returned'));
+          return reject(new Error('No runs returned'));
         }
 
-        attempts.forEach((attempt) => {
-          logger.debug('starting attempt', attempt.id);
-          app.execute(attempt);
+        runs.forEach((run) => {
+          logger.debug('starting attempt', run.id);
+          app.execute(run);
           resolve();
         });
       })
