@@ -338,7 +338,7 @@ test.skip('a timeout error should still call step-complete', (t) => {
         },
       ],
       options: {
-        attemptTimeoutMs: 500,
+        runTimeoutMs: 500,
       },
     };
 
