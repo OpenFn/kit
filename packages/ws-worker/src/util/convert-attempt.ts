@@ -34,15 +34,7 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
 };
 
 const mapOptions = (options: AttemptOptions): AttemptOptions => {
-  const { attemptTimeout, timeout, runTimeout, ...opts } = options;
-
-  const to = runTimeout || attemptTimeout || timeout;
-
-  if (to) {
-    (opts as AttemptOptions).attemptTimeoutMs = to;
-  }
-
-  return opts;
+  return options;
 };
 
 export default (

@@ -25,7 +25,7 @@ test('loadAttempt should return an execution plan and options', async (t) => {
     ...attempts['attempt-1'],
     options: {
       sanitize: 'obfuscate',
-      runTimeout: 10,
+      attemptTimeoutMs: 10,
     },
   };
 
@@ -57,7 +57,7 @@ test('should join an attempt channel with a token', async (t) => {
       join: () => ({ status: 'ok' }),
       [GET_RUN]: () => ({
         id: 'a',
-        options: { runTimeout: 10 },
+        options: { attemptTimeoutMs: 10 },
       }),
     }),
   });

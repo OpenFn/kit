@@ -338,7 +338,7 @@ test('a timeout error should still call step-complete', (t) => {
         },
       ],
       options: {
-        runTimeout: 500,
+        attemptTimeoutMs: 500,
       },
     };
 

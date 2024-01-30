@@ -81,12 +81,8 @@ export type EngineOptions = {
 
   whitelist?: RegExp[];
 
-  // Timeout for the whole workflow
-  // timeout?: number;
-
   // Default timeouts in ms(used if an attempt does not provide its own)
   attemptTimeoutMs?: number;
-  runTimeoutMs?: number;
 
   statePropsToRemove?: string[];
 };
@@ -99,7 +95,6 @@ export type ExecuteOptions = {
 
   // NB this deliberately uses old terminology
   attemptTimeoutMs?: number;
-  runTimeout?: number;
 
   memoryLimitMb?: number;
 };
