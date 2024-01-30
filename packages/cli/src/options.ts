@@ -20,6 +20,7 @@ export type Opts = {
   adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
+  dumbImports?: boolean;
   compile?: boolean;
   confirm?: boolean;
   describe?: string;
@@ -114,6 +115,16 @@ export const autoinstall: CLIOption = {
     boolean: true,
     description: 'Auto-install the language adaptor',
     default: false,
+  },
+};
+
+export const dumbImports: CLIOption = {
+  name: 'dumb-imports',
+  yargs: {
+    boolean: true,
+    description:
+      'Use simple imports when compiling (assumes dangling identifiers come from the adaptor)',
+    default: true,
   },
 };
 
@@ -218,13 +229,11 @@ export const projectId: CLIOption = {
     hidden: true,
   },
   ensure: (opts) => {
-      const projectId = opts.projectId;
-      //check that this is a uuid
-      return projectId;
-    },
+    const projectId = opts.projectId;
+    //check that this is a uuid
+    return projectId;
+  },
 };
-
-
 
 // Input path covers jobPath and workflowPath
 export const inputPath: CLIOption = {

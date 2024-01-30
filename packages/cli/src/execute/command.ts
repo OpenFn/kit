@@ -9,6 +9,7 @@ export type ExecuteOptions = Required<
     Opts,
     | 'adaptors'
     | 'autoinstall'
+    | 'dumbImports'
     | 'command'
     | 'compile'
     | 'expandAdaptors'
@@ -41,6 +42,7 @@ const options = [
   o.adaptors,
   o.autoinstall,
   o.compile,
+  o.dumbImports,
   o.immutable,
   o.ignoreImports,
   o.inputPath,
