@@ -2,7 +2,7 @@ import convertRun from '../util/convert-run';
 import { getWithReply } from '../util';
 import { Run, RunOptions, Channel, Socket } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
-import { GET_RUN, GetRunReply } from '../events';
+import { GET_PLAN, GetPlanReply } from '../events';
 
 import type { Logger } from '@openfn/logger';
 
@@ -52,7 +52,7 @@ export default joinRunChannel;
 
 export async function loadRun(channel: Channel) {
   // first we get the run body through the socket
-  const runBody = await getWithReply<GetRunReply>(channel, GET_RUN);
+  const runBody = await getWithReply<GetPlanReply>(channel, GET_PLAN);
   // then we generate the execution plan
   return convertRun(runBody as Run);
 }

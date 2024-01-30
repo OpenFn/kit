@@ -12,7 +12,7 @@ import {
   RUN_LOG,
   RUN_START,
   CLAIM,
-  GET_RUN,
+  GET_PLAN,
   GET_CREDENTIAL,
   GET_DATACLIP,
   STEP_COMPLETE,
@@ -31,8 +31,8 @@ import type {
   ClaimRun,
   ClaimPayload,
   ClaimReply,
-  GetRunPayload,
-  GetRunReply,
+  GetPlanPayload,
+  GetPlanReply,
   GetCredentialPayload,
   GetCredentialReply,
   GetDataclipPayload,
@@ -141,7 +141,7 @@ const createSocketAPI = (
     };
 
     const { unsubscribe } = wss.registerEvents(`run:${runId}`, {
-      [GET_RUN]: wrap(getRun),
+      [GET_PLAN]: wrap(getRun),
       [RUN_START]: wrap(handleStartRun),
       [GET_CREDENTIAL]: wrap(getCredential),
       [GET_DATACLIP]: wrap(getDataclip),
@@ -205,13 +205,13 @@ const createSocketAPI = (
   function getRun(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<GetRunPayload>
+    evt: PhoenixEvent<GetPlanPayload>
   ) {
     const { ref, join_ref, topic } = evt;
     const runId = extractRunId(topic);
     const response = state.runs[runId];
 
-    ws.reply<GetRunReply>({
+    ws.reply<GetPlanReply>({
       ref,
       join_ref,
       topic,

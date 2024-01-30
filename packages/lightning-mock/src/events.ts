@@ -6,7 +6,7 @@ export const CHANNEL_JOIN = 'socket:channel-join';
 export const CHANNEL_LEAVE = 'socket:channel-leave';
 
 export const CLAIM = 'claim';
-export const GET_RUN = 'fetch:run';
+export const GET_PLAN = 'fetch:plan';
 export const GET_CREDENTIAL = 'fetch:credential';
 export const GET_DATACLIP = 'fetch:dataclip';
 export const RUN_START = 'run:start';

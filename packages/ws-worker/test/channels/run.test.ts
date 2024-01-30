@@ -1,7 +1,7 @@
 import test from 'ava';
 import { mockSocket, mockChannel } from '../../src/mock/sockets';
 import joinRunChannel, { loadRun } from '../../src/channels/run';
-import { GET_RUN } from '../../src/events';
+import { GET_PLAN } from '../../src/events';
 import { runs } from '../mock/data';
 import { createMockLogger } from '@openfn/logger';
 
@@ -9,7 +9,7 @@ test('loadRun should get the run body', async (t) => {
   const run = runs['run-1'];
   let didCallGetRun = false;
   const channel = mockChannel({
-    [GET_RUN]: () => {
+    [GET_PLAN]: () => {
       // TODO should be no payload (or empty payload)
       didCallGetRun = true;
       return run;
@@ -30,7 +30,7 @@ test('loadRun should return an execution plan and options', async (t) => {
   };
 
   const channel = mockChannel({
-    [GET_RUN]: () => run,
+    [GET_PLAN]: () => run,
   });
 
   const { plan, options } = await loadRun(channel);
@@ -55,7 +55,7 @@ test('should join an run channel with a token', async (t) => {
     'run:a': mockChannel({
       // Note that the validation logic is all handled here
       join: () => ({ status: 'ok' }),
-      [GET_RUN]: () => ({
+      [GET_PLAN]: () => ({
         id: 'a',
         options: { runTimeoutMs: 10 },
       }),
@@ -81,7 +81,7 @@ test('should fail to join an run channel with an invalid token', async (t) => {
       // Note that the validation logic is all handled here
       // We're not testing token validation, we're testing how we respond to auth fails
       join: () => ({ status: 'error', response: 'invalid-token' }),
-      [GET_RUN]: () => ({
+      [GET_PLAN]: () => ({
         id: 'a',
       }),
     }),

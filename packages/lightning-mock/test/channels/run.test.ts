@@ -4,7 +4,7 @@ import { setup } from '../util';
 import { runs, credentials, dataclips } from '../data';
 import {
   RUN_COMPLETE,
-  GET_RUN,
+  GET_PLAN,
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
@@ -72,7 +72,7 @@ test.serial('get run data through the run channel', async (t) => {
     server.startRun(run1.id);
 
     const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
-    channel.push(GET_RUN).receive('ok', (run) => {
+    channel.push(GET_PLAN).receive('ok', (run) => {
       t.deepEqual(run, run1);
       done();
     });

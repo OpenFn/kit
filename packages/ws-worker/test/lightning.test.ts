@@ -161,13 +161,13 @@ test.todo(`events: lightning should receive a ${e.RUN_START} event`);
 // (if that helps anything?)
 
 test.serial(
-  `events: lightning should receive a ${e.GET_RUN} event`,
+  `events: lightning should receive a ${e.GET_PLAN} event`,
   (t) => {
     return new Promise((done) => {
       const run = getRun();
 
       let didCallEvent = false;
-      lng.onSocketEvent(e.GET_RUN, run.id, ({ payload }) => {
+      lng.onSocketEvent(e.GET_PLAN, run.id, ({ payload }) => {
         // This doesn't test that the correct run gets sent back
         // We'd have to add an event to the engine for that
         // (not a bad idea)

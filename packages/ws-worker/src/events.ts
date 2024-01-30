@@ -8,9 +8,9 @@ export type ClaimPayload = { demand?: number };
 export type ClaimReply = { runs: Array<ClaimRun> };
 export type ClaimRun = { id: string; token: string };
 
-export const GET_RUN = 'fetch:run';
-export type GetRunPayload = void; // no payload
-export type GetRunReply = Run;
+export const GET_PLAN = 'fetch:plan';
+export type GetPlanPayload = void; // no payload
+export type GetPlanReply = Run;
 
 export const GET_CREDENTIAL = 'fetch:credential';
 export type GetCredentialPayload = { id: string };

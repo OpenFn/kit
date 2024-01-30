@@ -89,8 +89,8 @@ export type ClaimPayload = { demand?: number };
 export type ClaimReply = { runs: Array<ClaimRun> };
 export type ClaimRun = { id: string; token: string };
 
-export type GetRunPayload = void; // no payload
-export type GetRunReply = Run;
+export type GetPlanPayload = void; // no payload
+export type GetPlanReply = Run;
 
 export type GetCredentialPayload = { id: string };
 // credential in-line, no wrapper, arbitrary data
