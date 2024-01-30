@@ -6,7 +6,7 @@ import test from 'ava';
 import path from 'node:path';
 
 import { initLightning, initWorker } from '../src/init';
-import { createAttempt, createJob } from '../src/factories';
+import { createRun, createJob } from '../src/factories';
 
 const generate = (adaptor, version) => {
   const specifier = `@openfn/language-${adaptor}@${version}`;
@@ -14,7 +14,7 @@ const generate = (adaptor, version) => {
     body: `fn(() => ({ data: "${adaptor}" }))`,
     adaptor: specifier,
   });
-  return createAttempt([], [job], []);
+  return createRun([], [job], []);
 };
 
 let lightning;
