@@ -228,7 +228,7 @@ test('kill: timeout', async (t) => {
   });
 
   const options = {
-    attemptTimeoutMs: 100,
+    runTimeoutMs: 100,
   };
 
   const { reason } = await execute(plan, options);

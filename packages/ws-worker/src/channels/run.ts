@@ -1,8 +1,8 @@
-import convertAttempt from '../util/convert-attempt';
+import convertRun from '../util/convert-run';
 import { getWithReply } from '../util';
-import { Attempt, AttemptOptions, Channel, Socket } from '../types';
+import { Run, RunOptions, Channel, Socket } from '../types';
 import { ExecutionPlan } from '@openfn/runtime';
-import { GET_RUN, GetAttemptReply } from '../events';
+import { GET_RUN, GetRunReply } from '../events';
 
 import type { Logger } from '@openfn/logger';
 
@@ -11,23 +11,23 @@ import type { Logger } from '@openfn/logger';
 // We don't have a good feedback mechanism yet - worker:queue is the only channel
 // we can feedback to
 // Maybe we need a general errors channel
-const joinAttemptChannel = (
+const joinRunChannel = (
   socket: Socket,
   token: string,
-  attemptId: string,
+  runId: string,
   logger: Logger
 ) => {
   return new Promise<{
     channel: Channel;
     plan: ExecutionPlan;
-    options: AttemptOptions;
+    options: RunOptions;
   }>((resolve, reject) => {
     // TMP - lightning seems to be sending two responses to me
     // just for now, I'm gonna gate the handling here
     let didReceiveOk = false;
 
     // TODO use proper logger
-    const channelName = `run:${attemptId}`;
+    const channelName = `run:${runId}`;
     logger.debug('connecting to ', channelName);
     const channel = socket.channel(channelName, { token });
     channel
@@ -36,8 +36,8 @@ const joinAttemptChannel = (
         if (!didReceiveOk) {
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
-          const { plan, options } = await loadAttempt(channel);
-          logger.debug('converted attempt as execution plan:', plan);
+          const { plan, options } = await loadRun(channel);
+          logger.debug('converted run as execution plan:', plan);
           resolve({ channel, plan, options });
         }
       })
@@ -48,11 +48,11 @@ const joinAttemptChannel = (
   });
 };
 
-export default joinAttemptChannel;
+export default joinRunChannel;
 
-export async function loadAttempt(channel: Channel) {
-  // first we get the attempt body through the socket
-  const attemptBody = await getWithReply<GetAttemptReply>(channel, GET_RUN);
+export async function loadRun(channel: Channel) {
+  // first we get the run body through the socket
+  const runBody = await getWithReply<GetRunReply>(channel, GET_RUN);
   // then we generate the execution plan
-  return convertAttempt(attemptBody as Attempt);
+  return convertRun(runBody as Run);
 }

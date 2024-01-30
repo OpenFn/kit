@@ -1,25 +1,25 @@
 import test from 'ava';
 
-import { createAttemptState } from '../../src/util';
+import { createRunState } from '../../src/util';
 
-test('create attempt', (t) => {
+test('create run', (t) => {
   const options = { timeout: 666 };
   const plan = { jobs: [{ id: 'a' }] };
-  const attempt = createAttemptState(plan, options);
+  const run = createRunState(plan, options);
 
-  t.deepEqual(attempt.plan, plan);
-  t.deepEqual(attempt.lastDataclipId, '');
-  t.deepEqual(attempt.dataclips, {});
-  t.deepEqual(attempt.inputDataclips, {});
-  t.deepEqual(attempt.reasons, {});
-  t.deepEqual(attempt.options, options);
+  t.deepEqual(run.plan, plan);
+  t.deepEqual(run.lastDataclipId, '');
+  t.deepEqual(run.dataclips, {});
+  t.deepEqual(run.inputDataclips, {});
+  t.deepEqual(run.reasons, {});
+  t.deepEqual(run.options, options);
 });
 
 test('Set initial input dataclip if no explicit start and first job is a step', (t) => {
   const plan = { initialState: 'x', jobs: [{ id: 'a', expression: '.' }] };
-  const attempt = createAttemptState(plan);
+  const run = createRunState(plan);
 
-  t.deepEqual(attempt.inputDataclips, { a: 'x' });
+  t.deepEqual(run.inputDataclips, { a: 'x' });
 });
 
 test('Set initial input dataclip if the explicit start is a step', (t) => {
@@ -31,9 +31,9 @@ test('Set initial input dataclip if the explicit start is a step', (t) => {
       { id: 'a', expression: '.' },
     ],
   };
-  const attempt = createAttemptState(plan);
+  const run = createRunState(plan);
 
-  t.deepEqual(attempt.inputDataclips, { a: 'x' });
+  t.deepEqual(run.inputDataclips, { a: 'x' });
 });
 
 test('Set initial input dataclip if the start is a trigger (simple)', (t) => {
@@ -45,9 +45,9 @@ test('Set initial input dataclip if the start is a trigger (simple)', (t) => {
       { id: 'a', expression: '.' },
     ],
   };
-  const attempt = createAttemptState(plan);
+  const run = createRunState(plan);
 
-  t.deepEqual(attempt.inputDataclips, { a: 's' });
+  t.deepEqual(run.inputDataclips, { a: 's' });
 });
 
 test('Set initial input dataclip if the start is a trigger (complex)', (t) => {
@@ -62,9 +62,9 @@ test('Set initial input dataclip if the start is a trigger (complex)', (t) => {
       { id: 't', next: { c: true } },
     ],
   };
-  const attempt = createAttemptState(plan);
+  const run = createRunState(plan);
 
-  t.deepEqual(attempt.inputDataclips, { c: 's' });
+  t.deepEqual(run.inputDataclips, { c: 's' });
 });
 
 test('Set initial input dataclip with a trigger as implicit start', (t) => {
@@ -78,9 +78,9 @@ test('Set initial input dataclip with a trigger as implicit start', (t) => {
       { id: 'd', expression: '.' },
     ],
   };
-  const attempt = createAttemptState(plan);
+  const run = createRunState(plan);
 
-  t.deepEqual(attempt.inputDataclips, { c: 's' });
+  t.deepEqual(run.inputDataclips, { c: 's' });
 });
 
 test('Set initial input dataclip with a trigger with multiple downstream jobs', (t) => {
@@ -95,7 +95,7 @@ test('Set initial input dataclip with a trigger with multiple downstream jobs', 
       { id: 'd', expression: '.' },
     ],
   };
-  const attempt = createAttemptState(plan);
+  const run = createRunState(plan);
 
-  t.deepEqual(attempt.inputDataclips, { a: 's', b: 's', c: 's' });
+  t.deepEqual(run.inputDataclips, { a: 's', b: 's', c: 's' });
 });

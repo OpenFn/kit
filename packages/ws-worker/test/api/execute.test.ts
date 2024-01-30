@@ -21,10 +21,10 @@ import {
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
-import { stringify, createAttemptState } from '../../src/util';
+import { stringify, createRunState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
-import type { Attempt, AttemptState } from '../../src/types';
+import type { Run, RunState } from '../../src/types';
 
 const enc = new TextEncoder();
 
@@ -65,7 +65,7 @@ test('send event should throw if an event errors', async (t) => {
 });
 
 test('jobLog should should send a log event outside a run', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
 
   const log: JSONLog = {
     name: 'R/T',
@@ -78,7 +78,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
   t.is(log.time.length, 19);
 
   const result = {
-    attempt_id: plan.id,
+    run_id: plan.id,
     message: log.message,
     // Conveniently this won't have rounding errors because the last
     // 3 digits are always 000, because of how we generate the stamp above
@@ -90,7 +90,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
   const state = {
     plan,
     // No active run
-  } as AttemptState;
+  } as RunState;
 
   const channel = mockChannel({
     [RUN_LOG]: (evt) => {
@@ -102,7 +102,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
 });
 
 test('jobLog should should send a log event inside a run', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
   const jobId = 'job-1';
 
   const log: JSONLog = {
@@ -119,7 +119,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
     plan,
     activeJob: jobId,
     activeStep: 'b',
-  } as AttemptState;
+  } as RunState;
 
   const channel = mockChannel({
     [RUN_LOG]: (evt) => {
@@ -137,7 +137,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
 test('jobError should trigger step:complete with a reason', async (t) => {
   let stepCompleteEvent;
 
-  const state = createAttemptState({ id: 'attempt-23' } as Attempt);
+  const state = createRunState({ id: 'run-23' } as Run);
   state.activeJob = 'job-1';
   state.activeStep = 'b';
 
@@ -164,7 +164,7 @@ test('jobError should trigger step:complete with a reason', async (t) => {
 test('jobError should trigger step:complete with a reason and default state', async (t) => {
   let stepCompleteEvent;
 
-  const state = createAttemptState({ id: 'attempt-23' } as Attempt);
+  const state = createRunState({ id: 'run-23' } as Run);
 
   const channel = mockChannel({
     [STEP_COMPLETE]: (evt) => {
@@ -423,7 +423,7 @@ test('execute should call all events on the socket', async (t) => {
   const channel = mockChannel(allEvents.reduce(toEventMap, {}));
 
   const plan = {
-    id: 'attempt-1',
+    id: 'run-1',
     jobs: [
       {
         id: 'trigger',

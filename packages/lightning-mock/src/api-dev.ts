@@ -10,14 +10,14 @@ import { RUN_COMPLETE } from './events';
 import { ServerState } from './server';
 
 import type {
-  AttemptCompletePayload,
-  Attempt,
+  RunCompletePayload,
+  Run,
   DevServer,
   LightningEvents,
 } from './types';
 
 type Api = {
-  startAttempt(attemptId: string): void;
+  startRun(runId: string): void;
 };
 
 const setupDevAPI = (
@@ -41,34 +41,34 @@ const setupDevAPI = (
 
   app.getDataclip = (id: string) => state.dataclips[id];
 
-  app.enqueueAttempt = (attempt: Attempt, workerId = 'rte') => {
-    state.attempts[attempt.id] = attempt;
-    state.results[attempt.id] = {
+  app.enqueueRun = (run: Run, workerId = 'rte') => {
+    state.runs[run.id] = run;
+    state.results[run.id] = {
       workerId, // TODO
       state: null,
     };
-    state.pending[attempt.id] = {
+    state.pending[run.id] = {
       status: 'queued',
       logs: [],
       steps: {},
     };
-    state.queue.push(attempt.id);
+    state.queue.push(run.id);
   };
 
-  app.getAttempt = (id: string) => state.attempts[id];
+  app.getRun = (id: string) => state.runs[id];
 
   app.getState = () => state;
 
   // Promise which returns when a workflow is complete
-  app.waitForResult = (attemptId: string) => {
+  app.waitForResult = (runId: string) => {
     return new Promise((resolve) => {
       const handler = (evt: {
-        payload: AttemptCompletePayload;
-        attemptId: string;
+        payload: RunCompletePayload;
+        runId: string;
         _state: ServerState;
         dataclip: any;
       }) => {
-        if (evt.attemptId === attemptId) {
+        if (evt.runId === runId) {
           state.events.removeListener(RUN_COMPLETE, handler);
           const result = state.dataclips[evt.payload.final_dataclip_id!];
           resolve(result);
@@ -86,13 +86,13 @@ const setupDevAPI = (
 
   app.getQueueLength = () => state.queue.length;
 
-  app.getResult = (attemptId: string) => state.results[attemptId]?.state;
+  app.getResult = (runId: string) => state.results[runId]?.state;
 
-  app.startAttempt = (attemptId: string) => api.startAttempt(attemptId);
+  app.startRun = (runId: string) => api.startRun(runId);
 
   // TODO probably remove?
-  app.registerAttempt = (attempt: any) => {
-    state.attempts[attempt.id] = attempt;
+  app.registerRun = (run: any) => {
+    state.runs[run.id] = run;
   };
 
   // TODO these are overriding koa's event handler - should I be doing something different?
@@ -114,13 +114,13 @@ const setupDevAPI = (
 
   app.onSocketEvent = (
     event: LightningEvents,
-    attemptId: string,
+    runId: string,
     fn: (evt: any) => void,
     once = true
   ): (() => void) => {
     const unsubscribe = () => state.events.removeListener(event, handler);
     function handler(e: any) {
-      if (e.attemptId && e.attemptId === attemptId) {
+      if (e.runId && e.runId === runId) {
         if (once) {
           unsubscribe();
         }
@@ -139,24 +139,24 @@ const setupDevAPI = (
 const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
   const router = new Router();
 
-  router.post('/attempt', (ctx) => {
-    const attempt = ctx.request.body as Attempt;
+  router.post('/run', (ctx) => {
+    const run = ctx.request.body as Run;
 
-    if (!attempt) {
+    if (!run) {
       ctx.response.status = 400;
       return;
     }
 
-    logger.info('Adding new attempt to queue:', attempt.id);
-    logger.debug(attempt);
+    logger.info('Adding new run to queue:', run.id);
+    logger.debug(run);
 
-    if (!attempt.id) {
-      attempt.id = crypto.randomUUID();
-      logger.info('Generating new id for incoming attempt:', attempt.id);
+    if (!run.id) {
+      run.id = crypto.randomUUID();
+      logger.info('Generating new id for incoming run:', run.id);
     }
 
     // convert credentials and dataclips
-    attempt.jobs.forEach((job) => {
+    run.jobs.forEach((job) => {
       if (job.credential) {
         const cid = crypto.randomUUID();
         state.credentials[cid] = job.credential;
@@ -164,7 +164,7 @@ const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
       }
     });
 
-    app.enqueueAttempt(attempt);
+    app.enqueueRun(run);
 
     ctx.response.status = 200;
   });

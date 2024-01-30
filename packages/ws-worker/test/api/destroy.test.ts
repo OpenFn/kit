@@ -7,7 +7,7 @@ import createMockRTE from '../../src/mock/runtime-engine';
 
 import destroy from '../../src/api/destroy';
 import { createMockLogger } from '@openfn/logger';
-import { Attempt } from '../../src/types';
+import { Run } from '../../src/types';
 
 const workerPort = 9876;
 const lightningPort = workerPort + 1;
@@ -31,7 +31,7 @@ test.afterEach(() => {
   lightning.reset();
 });
 
-const createAttempt = () =>
+const createRun = () =>
   ({
     id: crypto.randomUUID(),
     jobs: [
@@ -40,7 +40,7 @@ const createAttempt = () =>
         body: `wait(${500 + Math.random() * 1000})`,
       },
     ],
-  } as Attempt);
+  } as Run);
 
 const waitForClaim = (timeout: number = 1000) =>
   new Promise<boolean>((resolve) => {
@@ -70,7 +70,7 @@ const ping = async () => {
   return status === 200;
 };
 
-test.serial('destroy a worker with no active attempts', async (t) => {
+test.serial('destroy a worker with no active runs', async (t) => {
   // should respond to get
   t.true(await ping());
   // should be claiming
@@ -87,7 +87,7 @@ test.serial('destroy a worker with no active attempts', async (t) => {
 });
 
 // WARNING this might be flaky in CI
-test.serial('destroy a worker while one attempt is active', async (t) => {
+test.serial('destroy a worker while one run is active', async (t) => {
   return new Promise((done) => {
     let didFinish = false;
 
@@ -105,7 +105,7 @@ test.serial('destroy a worker while one attempt is active', async (t) => {
     };
 
     lightning.once('claim', () => {
-      // The attempt should be active immediately after it's claimed
+      // The run should be active immediately after it's claimed
       // BUT in these tests we do need a moment's grace - this event occurs
       // at the lightning end and the handler in the worker may not have executed yet
       setTimeout(() => {
@@ -116,12 +116,12 @@ test.serial('destroy a worker while one attempt is active', async (t) => {
     lightning.once('run:complete', () => {
       didFinish = true;
     });
-    lightning.enqueueAttempt(createAttempt());
+    lightning.enqueueRun(createRun());
   });
 });
 
 test.serial(
-  'destroy a worker while multiple attempts are active',
+  'destroy a worker while multiple runs are active',
   async (t) => {
     return new Promise((done) => {
       let completeCount = 0;
@@ -130,7 +130,7 @@ test.serial(
       const doDestroy = async () => {
         await destroy(worker, logger);
 
-        // Ensure all three attempts completed
+        // Ensure all three runs completed
         t.is(completeCount, 3);
 
         // should not respond to get
@@ -154,9 +154,9 @@ test.serial(
         completeCount++;
       });
 
-      lightning.enqueueAttempt(createAttempt());
-      lightning.enqueueAttempt(createAttempt());
-      lightning.enqueueAttempt(createAttempt());
+      lightning.enqueueRun(createRun());
+      lightning.enqueueRun(createRun());
+      lightning.enqueueRun(createRun());
     });
   }
 );
@@ -186,9 +186,9 @@ test("don't claim after destroy", (t) => {
     });
 
     // Add two things to the queue
-    lightning.enqueueAttempt(createAttempt());
+    lightning.enqueueRun(createRun());
 
     // This second one should never be claimed
-    lightning.enqueueAttempt(createAttempt());
+    lightning.enqueueRun(createRun());
   });
 });

@@ -21,7 +21,7 @@ import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
-const DEFAULT_ATTEMPT_TIMEOUT = 1000 * 60 * 10; // ms
+const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms
 
 const DEFAULT_MEMORY_LIMIT_MB = 500;
 
@@ -36,7 +36,7 @@ const createWorkflowEvents = (
   // uh actually there may be no point in this
   function proxy(event: string) {
     context.on(event, (evt) => {
-      // ensure the attempt id is on the event
+      // ensure the run id is on the event
       evt.workflowId = workflowId;
       const newEvt = {
         ...evt,
@@ -81,8 +81,8 @@ export type EngineOptions = {
 
   whitelist?: RegExp[];
 
-  // Default timeouts in ms(used if an attempt does not provide its own)
-  attemptTimeoutMs?: number;
+  // Default timeouts in ms(used if an run does not provide its own)
+  runTimeoutMs?: number;
 
   statePropsToRemove?: string[];
 };
@@ -94,7 +94,7 @@ export type ExecuteOptions = {
   // timeout?: number; // DEPRECATED
 
   // NB this deliberately uses old terminology
-  attemptTimeoutMs?: number;
+  runTimeoutMs?: number;
 
   memoryLimitMb?: number;
 };
@@ -108,7 +108,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
-  const defaultTimeout = options.attemptTimeoutMs || DEFAULT_ATTEMPT_TIMEOUT;
+  const defaultTimeout = options.runTimeoutMs || DEFAULT_RUN_TIMEOUT;
   const defaultMemoryLimit = options.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB;
 
   let resolvedWorkerPath;
@@ -177,7 +177,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        attemptTimeoutMs: opts.attemptTimeoutMs ?? defaultTimeout,
+        runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
       },
     });

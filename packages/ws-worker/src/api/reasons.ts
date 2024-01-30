@@ -2,7 +2,7 @@ import type {
   ExitReason,
   ExitReasonStrings,
   State,
-  AttemptState,
+  RunState,
 } from '../types';
 
 import type { JobNode } from '@openfn/runtime';
@@ -30,7 +30,7 @@ const calculateJobExitReason = (
 };
 
 // It has next jobs, but they weren't executed
-const isLeafNode = (state: AttemptState, job: JobNode) => {
+const isLeafNode = (state: RunState, job: JobNode) => {
   // A node is a leaf if:
   // It has no `next` jobs at all
   if (!job.next || Object.keys(job.next).length == 0) {
@@ -41,7 +41,7 @@ const isLeafNode = (state: AttemptState, job: JobNode) => {
   return !hasDownstream;
 };
 
-const calculateAttemptExitReason = (state: AttemptState): ExitReason => {
+const calculateRunExitReason = (state: RunState): ExitReason => {
   if (state.plan && state.reasons) {
     // A crash or greater will trigger an error, and the error
     // basically becomes the exit reason
@@ -61,4 +61,4 @@ const calculateAttemptExitReason = (state: AttemptState): ExitReason => {
   return { reason: 'success', error_type: null, error_message: null };
 };
 
-export { calculateJobExitReason, calculateAttemptExitReason };
+export { calculateJobExitReason, calculateRunExitReason };

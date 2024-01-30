@@ -5,7 +5,7 @@ import type {
   JobEdge,
   ExecutionPlan,
 } from '@openfn/runtime';
-import { Attempt, AttemptOptions, Edge } from '../types';
+import { Run, RunOptions, Edge } from '../types';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
   {
@@ -33,36 +33,36 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
-const mapOptions = (options: AttemptOptions): AttemptOptions => {
+const mapOptions = (options: RunOptions): RunOptions => {
   return options;
 };
 
 export default (
-  attempt: Attempt
-): { plan: ExecutionPlan; options: AttemptOptions } => {
-  const options = attempt.options || {};
+  run: Run
+): { plan: ExecutionPlan; options: RunOptions } => {
+  const options = run.options || {};
   const plan: Partial<ExecutionPlan> = {
-    id: attempt.id,
+    id: run.id,
   };
 
-  if (attempt.dataclip_id) {
+  if (run.dataclip_id) {
     // This is tricky - we're assining a string to the XPlan
     // which is fine becuase it'll be handled later
     // I guess we need a new type for now? Like a lazy XPlan
     // @ts-ignore
-    plan.initialState = attempt.dataclip_id;
+    plan.initialState = run.dataclip_id;
   }
-  if (attempt.starting_node_id) {
-    plan.start = attempt.starting_node_id;
+  if (run.starting_node_id) {
+    plan.start = run.starting_node_id;
   }
 
   const nodes: Record<JobNodeID, JobNode> = {};
 
-  const edges = attempt.edges ?? [];
+  const edges = run.edges ?? [];
 
   // We don't really care about triggers, it's mostly just a empty node
-  if (attempt.triggers?.length) {
-    attempt.triggers.forEach((trigger) => {
+  if (run.triggers?.length) {
+    run.triggers.forEach((trigger) => {
       const id = trigger.id || 'trigger';
 
       nodes[id] = {
@@ -85,8 +85,8 @@ export default (
     });
   }
 
-  if (attempt.jobs?.length) {
-    attempt.jobs.forEach((job) => {
+  if (run.jobs?.length) {
+    run.jobs.forEach((job) => {
       const id = job.id || crypto.randomUUID();
 
       nodes[id] = {

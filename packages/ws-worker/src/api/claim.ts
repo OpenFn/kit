@@ -17,7 +17,7 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
       return reject(new Error('No websocket available'));
     }
 
-    logger.debug('requesting attempt...');
+    logger.debug('requesting run...');
     app.queueChannel
       .push<ClaimPayload>(CLAIM, { demand: 1 })
       .receive('ok', ({ runs }: ClaimReply) => {
@@ -31,7 +31,7 @@ const claim = (app: ServerApp, logger: Logger = mockLogger, maxWorkers = 5) => {
         }
 
         runs.forEach((run) => {
-          logger.debug('starting attempt', run.id);
+          logger.debug('starting run', run.id);
           app.execute(run);
           resolve();
         });

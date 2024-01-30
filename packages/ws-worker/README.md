@@ -68,7 +68,7 @@ curl -X POST http://localhost:2222/claim
 
 ## Architecture
 
-Lightning is expected to maintain a queue of attempts. The Worker pulls those attempts from the queue, via websocket, and sends them off to the Engine for execution.
+Lightning is expected to maintain a queue of runs. The Worker pulls those runs from the queue, via websocket, and sends them off to the Engine for execution.
 
 While the engine executes it may need to request more information (like credentials and dataclips) and may feedback status (such as logging and runs). The Worker satisifies both these requirements.
 

@@ -1,16 +1,16 @@
 import test from 'ava';
-import onAttemptError from '../../src/events/attempt-error';
+import onRunError from '../../src/events/run-error';
 
 import { mockChannel } from '../../src/mock/sockets';
 import { RUN_COMPLETE, RUN_LOG, STEP_COMPLETE } from '../../src/events';
-import { createAttemptState } from '../../src/util';
+import { createRunState } from '../../src/util';
 
-const plan = { id: 'attempt-1', jobs: [] };
+const plan = { id: 'run-1', jobs: [] };
 
-test('attemptError should trigger runComplete with a reason', async (t) => {
+test('runError should trigger runComplete with a reason', async (t) => {
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.lastDataclipId = 'x';
   state.activeStep = 'b';
   state.activeJob = jobId;
@@ -33,13 +33,13 @@ test('attemptError should trigger runComplete with a reason', async (t) => {
 
   const context = { channel, state, onFinish: () => {} };
 
-  await onAttemptError(context, event);
+  await onRunError(context, event);
 });
 
 test('workflow error should send reason to onFinish', async (t) => {
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.lastDataclipId = 'x';
   state.activeStep = 'b';
   state.activeJob = jobId;
@@ -67,11 +67,11 @@ test('workflow error should send reason to onFinish', async (t) => {
     },
   };
 
-  await onAttemptError(context, event);
+  await onRunError(context, event);
 });
 
-test('attemptError should not call job complete if the job is not active', async (t) => {
-  const state = createAttemptState(plan);
+test('runError should not call job complete if the job is not active', async (t) => {
+  const state = createRunState(plan);
   state.lastDataclipId = 'x';
 
   const channel = mockChannel({
@@ -100,14 +100,14 @@ test('attemptError should not call job complete if the job is not active', async
     },
   };
 
-  await onAttemptError(context, event);
+  await onRunError(context, event);
 });
 
-test('attemptError should log the reason', async (t) => {
+test('runError should log the reason', async (t) => {
   const jobId = 'job-1';
 
-  const state = createAttemptState({
-    id: 'attempt-1',
+  const state = createRunState({
+    id: 'run-1',
     jobs: [{ id: 'job-1' }],
   });
   state.lastDataclipId = 'x';
@@ -133,6 +133,6 @@ test('attemptError should log the reason', async (t) => {
 
   const context = { channel, state, onFinish: () => {} };
 
-  await onAttemptError(context, event);
+  await onRunError(context, event);
   t.is(logEvent.message[0], 'Run complete with status: crash\nErr: it crashed');
 });

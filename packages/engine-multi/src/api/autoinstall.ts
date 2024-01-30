@@ -53,7 +53,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     }
   };
 
-  // This will actually do the autoinstall for an attempt (all adaptors)
+  // This will actually do the autoinstall for an run (all adaptors)
   const doAutoinstall = async (
     adaptors: string[],
     onComplete: (err?: any) => void
@@ -191,7 +191,7 @@ const isInstalled = async (
     // and we will count the adaptor as uninstalled
     // The install function will later decide a version number and may, or may
     // not, install for us.
-    // This log isn't terrible helpful as there's no attempt version info
+    // This log isn't terrible helpful as there's no run version info
     logger.warn(
       `adaptor ${specifier} does not have a version number - will try to auto-install`
     );

@@ -107,7 +107,7 @@ const args = yargs(hideBin(process.argv))
   .option('max-run-duration-seconds', {
     alias: 't',
     description:
-      'Default attempt timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
+      'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
     type: 'number',
     default: WORKER_MAX_RUN_DURATION_SECONDS || 60 * 5, // 5 minutes
   })
@@ -163,7 +163,7 @@ if (args.mock) {
     memoryLimitMb: args.runMemory,
     maxWorkers: args.capacity,
     statePropsToRemove: args.statePropsToRemove,
-    attemptTimeoutMs: args.maxRunDurationSeconds * 1000,
+    runTimeoutMs: args.maxRunDurationSeconds * 1000,
   };
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);

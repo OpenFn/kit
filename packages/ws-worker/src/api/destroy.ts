@@ -1,5 +1,5 @@
 import { ServerApp } from '../server';
-import { INTERNAL_ATTEMPT_COMPLETE } from '../events';
+import { INTERNAL_RUN_COMPLETE } from '../events';
 
 import type { Logger } from '@openfn/logger';
 
@@ -23,8 +23,8 @@ const destroy = async (app: ServerApp, logger: Logger) => {
       });
     }),
     new Promise<void>(async (resolve) => {
-      // Let any active attempts complete
-      await waitForAttempts(app, logger);
+      // Let any active runs complete
+      await waitForRuns(app, logger);
 
       // Kill the engine and socket
       await app.engine.destroy();
@@ -37,20 +37,20 @@ const destroy = async (app: ServerApp, logger: Logger) => {
   logger.success('Server closed');
 };
 
-const waitForAttempts = (app: ServerApp, logger: Logger) =>
+const waitForRuns = (app: ServerApp, logger: Logger) =>
   new Promise<void>((resolve) => {
     const log = () => {
       logger.debug(
         `Waiting for ${
           Object.keys(app.workflows).length
-        } attempts to complete...`
+        } runs to complete...`
       );
     };
 
-    const onAttemptComplete = () => {
+    const onRunComplete = () => {
       if (Object.keys(app.workflows).length === 0) {
-        logger.debug('All attempts completed!');
-        app.events.off(INTERNAL_ATTEMPT_COMPLETE, onAttemptComplete);
+        logger.debug('All runs completed!');
+        app.events.off(INTERNAL_RUN_COMPLETE, onRunComplete);
         resolve();
       } else {
         log();
@@ -59,7 +59,7 @@ const waitForAttempts = (app: ServerApp, logger: Logger) =>
 
     if (Object.keys(app.workflows).length) {
       log();
-      app.events.on(INTERNAL_ATTEMPT_COMPLETE, onAttemptComplete);
+      app.events.on(INTERNAL_RUN_COMPLETE, onRunComplete);
     } else {
       resolve();
     }

@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 
 import createLightningServer from '../src/server';
 import type { DevServer } from '../src/types';
-import { attempts } from './data';
+import { runs } from './data';
 
 type Channel = any; // TODO
 
@@ -25,9 +25,9 @@ export const setup = (port: number) => {
   });
 };
 
-export const join = (client: any, attemptId: string): Promise<Channel> =>
+export const join = (client: any, runId: string): Promise<Channel> =>
   new Promise((done, reject) => {
-    const channel = client.channel(`run:${attemptId}`, { token: 'a.b.c' });
+    const channel = client.channel(`run:${runId}`, { token: 'a.b.c' });
     channel
       .join()
       .receive('ok', () => {
@@ -38,7 +38,7 @@ export const join = (client: any, attemptId: string): Promise<Channel> =>
       });
   });
 
-export const createAttempt = () => ({
-  ...attempts['attempt-1'],
+export const createRun = () => ({
+  ...runs['run-1'],
   id: crypto.randomUUID(),
 });

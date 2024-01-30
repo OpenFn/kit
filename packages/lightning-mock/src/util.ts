@@ -1,9 +1,9 @@
 import fss from 'fast-safe-stringify';
 
-export const ATTEMPT_PREFIX = 'attempt:';
+export const RUN_PREFIX = 'run:';
 
-export const extractAttemptId = (topic: string) =>
-  topic.substr(ATTEMPT_PREFIX.length);
+export const extractRunId = (topic: string) =>
+  topic.substr(RUN_PREFIX.length);
 
 // This is copied out of ws-worker and untested here
 export const stringify = (obj: any): string =>

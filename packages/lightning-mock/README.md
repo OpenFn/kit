@@ -18,7 +18,7 @@ This will run on port 8888. Add `-p` to change the port.
 This repo contains:
 
 - A mock Pheonix websoket server implementation. Barebones but compatible with the phoenix sockets client
-- A mock Lightning server which handles and acknowledges Attempt comms and an Attempts queue
+- A mock Lightning server which handles and acknowledges Run comms and an Runs queue
 
 The key API is in `src/api-socket/ts`. The `createSocketAPI` function hooks up websockets and binds events to event handlers. It's supposed to be quite declarative so you can track the API quite easily.
 
@@ -28,19 +28,19 @@ Additional dev-time API's can be found in `src/api-dev.ts`. These are for testin
 
 ## Usage
 
-The server exposes a small dev API allowing you to post an Attempt.
+The server exposes a small dev API allowing you to post an Run.
 
-You can add an attempt (`{ jobs, triggers, edges }`) to the queue with:
+You can add an run (`{ jobs, triggers, edges }`) to the queue with:
 
 ```
-curl http://localhost:8888/attempt --json @tmp/attempt.json
+curl http://localhost:8888/run --json @tmp/run.json
 ```
 
-Here's an example attempt:
+Here's an example run:
 
 ```
 {
-  "id": "my-attempt,
+  "id": "my-run,
   "triggers": [],
   "edges": [],
   "jobs": [

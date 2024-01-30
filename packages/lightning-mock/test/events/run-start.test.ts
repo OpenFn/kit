@@ -1,5 +1,5 @@
 import test from 'ava';
-import { join, setup, createAttempt } from '../util';
+import { join, setup, createRun } from '../util';
 import { RUN_START } from '../../src/events';
 
 let server;
@@ -11,13 +11,13 @@ test.before(async () => ({ server, client } = await setup(port)));
 
 test.serial('acknowledge run:start', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     const event = {};
 
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
     channel.push(RUN_START, event).receive('ok', () => {
       t.pass('event acknowledged');
@@ -26,18 +26,18 @@ test.serial('acknowledge run:start', async (t) => {
   });
 });
 
-test.serial('reject run:start for an unknown attempt', async (t) => {
+test.serial('reject run:start for an unknown run', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
     const event = {};
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     // Note that the mock is currently lenient here
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
-    // Sneak into the server and kill the state for this attempt
-    delete server.state.pending[attempt.id];
+    // Sneak into the server and kill the state for this run
+    delete server.state.pending[run.id];
 
     channel.push(RUN_START, event).receive('error', () => {
       t.pass('event rejected');
@@ -46,18 +46,18 @@ test.serial('reject run:start for an unknown attempt', async (t) => {
   });
 });
 
-test.serial('reject run:start for a completed attempt', async (t) => {
+test.serial('reject run:start for a completed run', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
     const event = {};
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     // Note that the mock is currently lenient here
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
-    // Sneak into the server and update the state for this attempt
-    server.state.pending[attempt.id].status = 'completed';
+    // Sneak into the server and update the state for this run
+    server.state.pending[run.id].status = 'completed';
 
     channel.push(RUN_START, event).receive('error', () => {
       t.pass('event rejected');
