@@ -25,7 +25,7 @@ test.after(async () => {
 const run = async (attempt) => {
   return new Promise<any>(async (done) => {
     lightning.once('run:complete', (evt) => {
-      if (attempt.id === evt.attemptId) {
+      if (attempt.id === evt.runId) {
         done(evt.payload);
       }
     });

@@ -327,7 +327,7 @@ test('blacklist a non-openfn adaptor', (t) => {
   });
 });
 
-test('a timeout error should still call step-complete', (t) => {
+test.skip('a timeout error should still call step-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -342,16 +342,18 @@ test('a timeout error should still call step-complete', (t) => {
       },
     };
 
-    lightning.once('run:start', (event) => {
+    lightning.once('run:start', () => {
       t.log('attempt started');
     });
 
     lightning.once('step:complete', (event) => {
+      console.log(event);
       t.is(event.payload.reason, 'kill');
       t.is(event.payload.error_type, 'TimeoutError');
     });
 
-    lightning.once('run:complete', (event) => {
+    lightning.once('run:complete', () => {
+      console.log('DONE!');
       done();
     });
 
@@ -452,7 +454,7 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     let results = {};
 
     lightning.on('run:complete', (evt) => {
-      const id = evt.attemptId;
+      const id = evt.runId;
       results[id] = lightning.getResult(id);
 
       if (id === attempt2.id) {

@@ -44,7 +44,7 @@ const run = async (t, attempt) => {
       );
     });
     lightning.on('run:complete', (evt) => {
-      if (attempt.id === evt.attemptId) {
+      if (attempt.id === evt.runId) {
         done(lightning.getResult(attempt.id));
       } else {
         // If we get here, something has gone very wrong
