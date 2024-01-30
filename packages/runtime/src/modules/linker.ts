@@ -56,6 +56,10 @@ const linker: Linker = async (specifier, context, options = {}) => {
   if (exports.__esModule && target.default.default) {
     // CJS
     target = target.default.default; // ?!
+  } else if (target.default) {
+    // TODO I've just added this to import the helper in engine-multi's repo
+    // BUt why??
+    target = target.default;
   } else {
     // ESM
     // If we import @openfn/language-common@2.0.0-rc3, its named exports are found on the default object
@@ -69,7 +73,6 @@ const linker: Linker = async (specifier, context, options = {}) => {
       target = target.default;
     }
   }
-
   const exportNames = Object.keys(target);
   // Wrap up the real module into a Synthetic Module
   const m = new vm.SyntheticModule(
