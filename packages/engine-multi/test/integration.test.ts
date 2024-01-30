@@ -1,4 +1,5 @@
 import test from 'ava';
+import path from 'node:path';
 import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
 
@@ -142,6 +143,32 @@ test.serial('trigger workflow-log for job logs', (t) => {
 
     api.execute(plan).on('workflow-log', (evt) => {
       if (evt.name === 'JOB') {
+        t.deepEqual(evt.message, ['hola']);
+        t.pass('workflow logged');
+        done();
+      }
+    });
+  });
+});
+
+test.serial.only('trigger workflow-log for adaptor logs', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+      repoDir: path.resolve('./test/__repo__'),
+    });
+
+    const plan = createPlan([
+      {
+        // This will trigger console.log from inside the adaptor
+        // rather than from job code directly
+        expression: "log('hola')",
+        adaptor: '@openfn/helper@1.0.0',
+      },
+    ]);
+
+    api.execute(plan).on('workflow-log', (evt) => {
+      if (evt.name === 'ADA') {
         t.deepEqual(evt.message, ['hola']);
         t.pass('workflow logged');
         done();

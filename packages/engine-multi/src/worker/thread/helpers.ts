@@ -48,7 +48,14 @@ export const createLoggers = (
     sanitize,
   });
 
-  return { logger, jobLogger };
+  const adaptorLogger = createLogger('ADA', {
+    logger: emitter,
+    level: 'debug',
+    json: true,
+    sanitize,
+  });
+
+  return { logger, jobLogger, adaptorLogger };
 };
 
 // Execute wrapper function
