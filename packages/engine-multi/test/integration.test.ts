@@ -151,7 +151,7 @@ test.serial('trigger workflow-log for job logs', (t) => {
   });
 });
 
-test.serial.only('trigger workflow-log for adaptor logs', (t) => {
+test.serial('trigger workflow-log for adaptor logs', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
