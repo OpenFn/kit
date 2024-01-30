@@ -1,5 +1,16 @@
 # @openfn/lightning-mock
 
+## 1.2.0
+
+### Minor Changes
+
+- 7e4c159: Rename attempts to runs
+
+### Patch Changes
+
+- Updated dependencies [7e4c159]
+  - @openfn/engine-multi@0.4.0
+
 ## 1.1.11
 
 ### Patch Changes
