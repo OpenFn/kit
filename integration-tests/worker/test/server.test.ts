@@ -133,8 +133,7 @@ test.serial('allow a job to complete after receiving a sigterm', (t) => {
     });
 
     workerProcess = await spawnServer(port);
-
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
 
     // give the attempt time to start, then kill the server
     setTimeout(() => {

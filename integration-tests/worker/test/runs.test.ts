@@ -52,7 +52,7 @@ const run = async (t, attempt) => {
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 

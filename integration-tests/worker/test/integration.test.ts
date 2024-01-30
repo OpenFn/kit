@@ -41,7 +41,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt({
+    lightning.enqueueRun({
       id: 'a1',
       jobs: [
         {
@@ -83,7 +83,7 @@ test('run a job with autoinstall of common', (t) => {
       },
     });
 
-    lightning.enqueueAttempt({
+    lightning.enqueueRun({
       id: 'a33',
       jobs: [
         {
@@ -121,7 +121,7 @@ test('run a job which does NOT autoinstall common', (t) => {
       },
     });
 
-    lightning.enqueueAttempt({
+    lightning.enqueueRun({
       id: 'a10',
       jobs: [
         {
@@ -163,7 +163,7 @@ test("Don't send job logs to stdout", (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -197,7 +197,7 @@ test('run a job with initial state (with data)', (t) => {
     // well, not really, not yet, not from the worker
     // see https://github.com/OpenFn/kit/issues/402
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -232,7 +232,7 @@ test('run a job with initial state (no top level keys)', (t) => {
     // well, not really, not yet, not from the worker
     // see https://github.com/OpenFn/kit/issues/402
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -300,7 +300,7 @@ test.skip('run a job with credentials', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -323,7 +323,7 @@ test('blacklist a non-openfn adaptor', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -355,7 +355,7 @@ test('a timeout error should still call step-complete', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -386,7 +386,7 @@ test('an OOM error should still call step-complete', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -413,7 +413,7 @@ test('an OOM error should still call step-complete', (t) => {
 //   });
 //   initWorker();
 
-//   lightning.enqueueAttempt({
+//   lightning.enqueueRun({
 //     id: 'a1',
 //     jobs: [
 //       {
@@ -474,8 +474,8 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     };
     await initWorker(lightningPort, engineArgs);
 
-    lightning.enqueueAttempt(attempt1);
-    lightning.enqueueAttempt(attempt2);
+    lightning.enqueueRun(attempt1);
+    lightning.enqueueRun(attempt2);
   });
 });
 

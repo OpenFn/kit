@@ -28,7 +28,7 @@ const run = async (attempt) => {
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 

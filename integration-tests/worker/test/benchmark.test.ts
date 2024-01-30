@@ -85,7 +85,7 @@ test.serial.skip('run 100 attempts', async (t) => {
         ],
         []
       );
-      lightning.enqueueAttempt(attempt);
+      lightning.enqueueRun(attempt);
     }
 
     lightning.on('step:complete', (evt) => {
