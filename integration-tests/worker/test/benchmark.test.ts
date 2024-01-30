@@ -1,7 +1,7 @@
 import test from 'ava';
 import path from 'node:path';
 
-import { createAttempt } from '../src/factories';
+import { createRun } from '../src/factories';
 import { initLightning, initWorker } from '../src/init';
 import { run, humanMb } from '../src/util';
 
@@ -29,7 +29,7 @@ test.before(async () => {
   ));
 
   // trigger autoinstall
-  const bootstrap = createAttempt(
+  const bootstrap = createRun(
     [],
     [
       {
@@ -64,7 +64,7 @@ test.serial.skip('run 100 attempts', async (t) => {
     const start = Date.now();
 
     for (let i = 0; i < attemptsTotal; i++) {
-      const attempt = createAttempt(
+      const attempt = createRun(
         [],
         [
           {
@@ -85,7 +85,7 @@ test.serial.skip('run 100 attempts', async (t) => {
         ],
         []
       );
-      lightning.enqueueAttempt(attempt);
+      lightning.enqueueRun(attempt);
     }
 
     lightning.on('step:complete', (evt) => {

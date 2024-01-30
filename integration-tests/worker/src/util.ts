@@ -9,7 +9,7 @@ export const run = async (lightning, attempt) => {
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 

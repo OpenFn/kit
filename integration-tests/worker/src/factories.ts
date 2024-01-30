@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-export const createAttempt = (triggers, jobs, edges, args = {}) => ({
+export const createRun = (triggers, jobs, edges, args = {}) => ({
   id: crypto.randomUUID(),
   triggers,
   jobs,
@@ -32,4 +32,4 @@ export const createEdge = (a: any, b: any, condition?: string) => {
   return edge;
 };
 
-export default createAttempt;
+export default createRun;

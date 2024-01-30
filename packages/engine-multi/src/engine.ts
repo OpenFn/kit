@@ -60,43 +60,26 @@ const createWorkflowEvents = (
 // But I should probably lean in to the class more for typing and stuff
 class Engine extends EventEmitter {}
 
-// The engine is way more strict about options
 export type EngineOptions = {
-  repoDir: string;
-  logger: Logger;
-  runtimelogger?: Logger;
-
-  resolvers?: LazyResolvers;
-
-  noCompile?: boolean; // TODO deprecate in favour of compile
-
-  // compile?: { // TODO no support yet
-  //   skip?: boolean;
-  // };
-
   autoinstall?: AutoinstallOptions;
-
+  // compile?: { skip?: boolean } // TODO no support yet
+  logger: Logger;
   maxWorkers?: number;
   memoryLimitMb?: number;
-
-  whitelist?: RegExp[];
-
-  // Default timeouts in ms(used if an run does not provide its own)
+  noCompile?: boolean; // TODO deprecate in favour of compile
+  repoDir: string;
+  resolvers?: LazyResolvers;
+  runtimelogger?: Logger;
   runTimeoutMs?: number;
-
   statePropsToRemove?: string[];
+  whitelist?: RegExp[];
 };
 
 export type ExecuteOptions = {
-  sanitize?: SanitizePolicies;
-  resolvers?: LazyResolvers;
-
-  // timeout?: number; // DEPRECATED
-
-  // NB this deliberately uses old terminology
-  runTimeoutMs?: number;
-
   memoryLimitMb?: number;
+  resolvers?: LazyResolvers;
+  runTimeoutMs?: number;
+  sanitize?: SanitizePolicies;
 };
 
 // This creates the internal API
