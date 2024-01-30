@@ -30,28 +30,28 @@ test('return on second try', async (t) => {
 
 test.skip('return on tenth try (maximum backoff)', () => {});
 
-test('throw if maximum attempts (1) reached', async (t) => {
+test('throw if maximum runs (1) reached', async (t) => {
   let callCount = 0;
   const fn = async () => {
     callCount++;
     throw new Error('test');
   };
 
-  await t.throwsAsync(() => tryWithBackoff(fn, { maxAttempts: 1 }), {
-    message: 'max attempts exceeded',
+  await t.throwsAsync(() => tryWithBackoff(fn, { maxRuns: 1 }), {
+    message: 'max runs exceeded',
   });
   t.is(callCount, 1);
 });
 
-test('throw if maximum attempts (5) reached', async (t) => {
+test('throw if maximum runs (5) reached', async (t) => {
   let callCount = 0;
   const fn = async () => {
     callCount++;
     throw new Error('test');
   };
 
-  await t.throwsAsync(() => tryWithBackoff(fn, { maxAttempts: 5 }), {
-    message: 'max attempts exceeded',
+  await t.throwsAsync(() => tryWithBackoff(fn, { maxRuns: 5 }), {
+    message: 'max runs exceeded',
   });
   t.is(callCount, 5);
 });

@@ -4,9 +4,9 @@ import { JSONLog, createMockLogger } from '@openfn/logger';
 import {
   STEP_START,
   STEP_COMPLETE,
-  ATTEMPT_LOG,
-  ATTEMPT_START,
-  ATTEMPT_COMPLETE,
+  RUN_LOG,
+  RUN_START,
+  RUN_COMPLETE,
   GET_CREDENTIAL,
   GET_DATACLIP,
 } from '../../src/events';
@@ -21,10 +21,10 @@ import {
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
-import { stringify, createAttemptState } from '../../src/util';
+import { stringify, createRunState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
-import type { Attempt, AttemptState } from '../../src/types';
+import type { Run, RunState } from '../../src/types';
 
 const enc = new TextEncoder();
 
@@ -33,11 +33,11 @@ const toArrayBuffer = (obj: any) => enc.encode(stringify(obj));
 const noop = () => true;
 
 const mockEventHandlers = {
-  [ATTEMPT_START]: noop,
+  [RUN_START]: noop,
   [STEP_START]: noop,
-  [ATTEMPT_LOG]: noop,
+  [RUN_LOG]: noop,
   [STEP_COMPLETE]: noop,
-  [ATTEMPT_COMPLETE]: noop,
+  [RUN_COMPLETE]: noop,
 };
 
 // This is a nonsense timestamp but it's fine for the test (and easy to convert)
@@ -65,7 +65,7 @@ test('send event should throw if an event errors', async (t) => {
 });
 
 test('jobLog should should send a log event outside a run', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
 
   const log: JSONLog = {
     name: 'R/T',
@@ -78,7 +78,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
   t.is(log.time.length, 19);
 
   const result = {
-    attempt_id: plan.id,
+    run_id: plan.id,
     message: log.message,
     // Conveniently this won't have rounding errors because the last
     // 3 digits are always 000, because of how we generate the stamp above
@@ -90,10 +90,10 @@ test('jobLog should should send a log event outside a run', async (t) => {
   const state = {
     plan,
     // No active run
-  } as AttemptState;
+  } as RunState;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: (evt) => {
+    [RUN_LOG]: (evt) => {
       t.deepEqual(evt, result);
     },
   });
@@ -102,7 +102,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
 });
 
 test('jobLog should should send a log event inside a run', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
   const jobId = 'job-1';
 
   const log: JSONLog = {
@@ -119,10 +119,10 @@ test('jobLog should should send a log event inside a run', async (t) => {
     plan,
     activeJob: jobId,
     activeStep: 'b',
-  } as AttemptState;
+  } as RunState;
 
   const channel = mockChannel({
-    [ATTEMPT_LOG]: (evt) => {
+    [RUN_LOG]: (evt) => {
       t.truthy(evt.step_id);
       t.deepEqual(evt.message, log.message);
       t.is(evt.level, log.level);
@@ -137,7 +137,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
 test('jobError should trigger step:complete with a reason', async (t) => {
   let stepCompleteEvent;
 
-  const state = createAttemptState({ id: 'attempt-23' } as Attempt);
+  const state = createRunState({ id: 'run-23' } as Run);
   state.activeJob = 'job-1';
   state.activeStep = 'b';
 
@@ -164,7 +164,7 @@ test('jobError should trigger step:complete with a reason', async (t) => {
 test('jobError should trigger step:complete with a reason and default state', async (t) => {
   let stepCompleteEvent;
 
-  const state = createAttemptState({ id: 'attempt-23' } as Attempt);
+  const state = createRunState({ id: 'run-23' } as Run);
 
   const channel = mockChannel({
     [STEP_COMPLETE]: (evt) => {
@@ -181,9 +181,9 @@ test('jobError should trigger step:complete with a reason and default state', as
   t.deepEqual(stepCompleteEvent.output_dataclip, '{}');
 });
 
-test('workflowStart should send an empty attempt:start event', async (t) => {
+test('workflowStart should send an empty run:start event', async (t) => {
   const channel = mockChannel({
-    [ATTEMPT_START]: () => {
+    [RUN_START]: () => {
       t.pass();
     },
   });
@@ -191,7 +191,7 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
   await onWorkflowStart({ channel });
 });
 
-// test('workflowComplete should send an attempt:complete event', async (t) => {
+// test('workflowComplete should send an run:complete event', async (t) => {
 //   const result = { answer: 42 };
 
 //   const state = {
@@ -203,7 +203,7 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
 //   };
 
 //   const channel = mockChannel({
-//     [ATTEMPT_COMPLETE]: (evt) => {
+//     [RUN_COMPLETE]: (evt) => {
 //       t.deepEqual(evt.final_dataclip_id, 'x');
 //     },
 //   });
@@ -226,7 +226,7 @@ test('workflowStart should send an empty attempt:start event', async (t) => {
 //   };
 
 //   const channel = mockChannel({
-//     [ATTEMPT_COMPLETE]: () => true,
+//     [RUN_COMPLETE]: () => true,
 //   });
 
 //   const context = {
@@ -413,17 +413,17 @@ test('execute should call all events on the socket', async (t) => {
     // Note that these are listed in order but order is not tested
     GET_CREDENTIAL,
     // GET_DATACLIP, // TODO not really implemented properly yet
-    ATTEMPT_START,
+    RUN_START,
     STEP_START,
-    ATTEMPT_LOG,
+    RUN_LOG,
     STEP_COMPLETE,
-    ATTEMPT_COMPLETE,
+    RUN_COMPLETE,
   ];
 
   const channel = mockChannel(allEvents.reduce(toEventMap, {}));
 
   const plan = {
-    id: 'attempt-1',
+    id: 'run-1',
     jobs: [
       {
         id: 'trigger',

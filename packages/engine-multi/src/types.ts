@@ -71,7 +71,7 @@ export interface RuntimeEngine {
   options: EngineOptions;
 
   // TODO should return an unsubscribe hook
-  listen(attemptId: string, listeners: any): void;
+  listen(runId: string, listeners: any): void;
 
   execute(
     plan: ExecutionPlan,

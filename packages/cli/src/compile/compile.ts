@@ -116,7 +116,7 @@ export const loadTransformOptions = async (
     const [specifier] = pattern.split('=');
 
     // Preload exports from a path, optionally logging errors in case of a failure
-    log.debug(`Attempting to preload types for ${specifier}`);
+    log.debug(`Trying to preload types for ${specifier}`);
     const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
     if (path) {
       try {

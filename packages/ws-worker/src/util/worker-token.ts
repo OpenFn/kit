@@ -12,7 +12,7 @@ const generateWorkerToken = async (
     logger.warn();
     logger.warn('WARNING: Worker Secret not provided!');
     logger.warn(
-      'This worker will attempt to connect to Lightning with default secret'
+      'This worker will try to connect to Lightning with default secret'
     );
     logger.warn();
   }

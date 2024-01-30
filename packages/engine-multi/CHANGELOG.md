@@ -1,5 +1,11 @@
 # engine-multi
 
+## 0.4.0
+
+### Minor Changes
+
+- 7e4c159: Rename attempts to runs
+
 ## 0.3.0
 
 ### Minor Changes

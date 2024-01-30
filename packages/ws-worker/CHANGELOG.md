@@ -1,5 +1,16 @@
 # ws-worker
 
+## 0.8.0
+
+### Minor Changes
+
+- 7e4c159: Rename attempts to runs
+
+### Patch Changes
+
+- Updated dependencies [7e4c159]
+  - @openfn/engine-multi@0.4.0
+
 ## 0.7.0
 
 ### Minor Changes

@@ -21,7 +21,7 @@ import type { EngineAPI, EventHandler, WorkflowState } from './types';
 import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
-const DEFAULT_ATTEMPT_TIMEOUT = 1000 * 60 * 10; // ms
+const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms
 
 const DEFAULT_MEMORY_LIMIT_MB = 500;
 
@@ -36,7 +36,7 @@ const createWorkflowEvents = (
   // uh actually there may be no point in this
   function proxy(event: string) {
     context.on(event, (evt) => {
-      // ensure the attempt id is on the event
+      // ensure the run id is on the event
       evt.workflowId = workflowId;
       const newEvt = {
         ...evt,
@@ -60,48 +60,26 @@ const createWorkflowEvents = (
 // But I should probably lean in to the class more for typing and stuff
 class Engine extends EventEmitter {}
 
-// The engine is way more strict about options
 export type EngineOptions = {
-  repoDir: string;
-  logger: Logger;
-  runtimelogger?: Logger;
-
-  resolvers?: LazyResolvers;
-
-  noCompile?: boolean; // TODO deprecate in favour of compile
-
-  // compile?: { // TODO no support yet
-  //   skip?: boolean;
-  // };
-
   autoinstall?: AutoinstallOptions;
-
+  // compile?: { skip?: boolean } // TODO no support yet
+  logger: Logger;
   maxWorkers?: number;
   memoryLimitMb?: number;
-
-  whitelist?: RegExp[];
-
-  // Timeout for the whole workflow
-  // timeout?: number;
-
-  // Default timeouts in ms(used if an attempt does not provide its own)
-  attemptTimeoutMs?: number;
+  noCompile?: boolean; // TODO deprecate in favour of compile
+  repoDir: string;
+  resolvers?: LazyResolvers;
+  runtimelogger?: Logger;
   runTimeoutMs?: number;
-
   statePropsToRemove?: string[];
+  whitelist?: RegExp[];
 };
 
 export type ExecuteOptions = {
-  sanitize?: SanitizePolicies;
-  resolvers?: LazyResolvers;
-
-  // timeout?: number; // DEPRECATED
-
-  // NB this deliberately uses old terminology
-  attemptTimeoutMs?: number;
-  runTimeout?: number;
-
   memoryLimitMb?: number;
+  resolvers?: LazyResolvers;
+  runTimeoutMs?: number;
+  sanitize?: SanitizePolicies;
 };
 
 // This creates the internal API
@@ -113,7 +91,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
-  const defaultTimeout = options.attemptTimeoutMs || DEFAULT_ATTEMPT_TIMEOUT;
+  const defaultTimeout = options.runTimeoutMs || DEFAULT_RUN_TIMEOUT;
   const defaultMemoryLimit = options.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB;
 
   let resolvedWorkerPath;
@@ -182,7 +160,7 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
         ...options,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
-        attemptTimeoutMs: opts.attemptTimeoutMs ?? defaultTimeout,
+        runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
       },
     });

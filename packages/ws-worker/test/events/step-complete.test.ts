@@ -2,16 +2,16 @@ import test from 'ava';
 import handleStepStart from '../../src/events/step-complete';
 
 import { mockChannel } from '../../src/mock/sockets';
-import { createAttemptState } from '../../src/util';
+import { createRunState } from '../../src/util';
 import { STEP_COMPLETE } from '../../src/events';
 
 import type { ExecutionPlan } from '@openfn/runtime';
 
 test('clear the step id and active job on state', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -28,10 +28,10 @@ test('clear the step id and active job on state', async (t) => {
 
 test('setup input mappings on on state', async (t) => {
   let lightningEvent;
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -50,10 +50,10 @@ test('setup input mappings on on state', async (t) => {
 });
 
 test('save the dataclip to state', async (t) => {
-  const plan = { id: 'attempt-1' } as ExecutionPlan;
+  const plan = { id: 'run-1' } as ExecutionPlan;
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -70,10 +70,10 @@ test('save the dataclip to state', async (t) => {
 });
 
 test('write a reason to state', async (t) => {
-  const plan = { id: 'attempt-1' } as ExecutionPlan;
+  const plan = { id: 'run-1' } as ExecutionPlan;
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -95,10 +95,10 @@ test('write a reason to state', async (t) => {
 });
 
 test('generate an exit reason: success', async (t) => {
-  const plan = { id: 'attempt-1' } as ExecutionPlan;
+  const plan = { id: 'run-1' } as ExecutionPlan;
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -119,11 +119,11 @@ test('generate an exit reason: success', async (t) => {
 });
 
 test('send a step:complete event', async (t) => {
-  const plan = { id: 'attempt-1' };
+  const plan = { id: 'run-1' };
   const jobId = 'job-1';
   const result = { x: 10 };
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 

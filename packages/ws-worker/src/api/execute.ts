@@ -1,16 +1,16 @@
 import {
-  ATTEMPT_COMPLETE,
-  ATTEMPT_LOG,
-  AttemptLogPayload,
-  ATTEMPT_START,
-  AttemptStartPayload,
+  RUN_COMPLETE,
+  RUN_LOG,
+  RunLogPayload,
+  RUN_START,
+  RunStartPayload,
   GET_CREDENTIAL,
   GET_DATACLIP,
   STEP_COMPLETE,
   STEP_START,
 } from '../events';
-import { AttemptOptions, Channel, AttemptState } from '../types';
-import { getWithReply, createAttemptState } from '../util';
+import { RunOptions, Channel, RunState } from '../types';
+import { getWithReply, createRunState } from '../util';
 
 import type { JSONLog, Logger } from '@openfn/logger';
 import type {
@@ -22,8 +22,8 @@ import { ExecutionPlan } from '@openfn/runtime';
 
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
-import handleAttemptComplete from '../events/attempt-complete';
-import handleAttemptError from '../events/attempt-error';
+import handleRunComplete from '../events/run-complete';
+import handleRunError from '../events/run-error';
 
 import createThrottler from '../util/throttle';
 
@@ -33,7 +33,7 @@ export { handleStepComplete, handleStepStart };
 
 export type Context = {
   channel: Channel;
-  state: AttemptState;
+  state: RunState;
   logger: Logger;
   engine: RuntimeEngine;
   onFinish: (result: any) => void;
@@ -43,26 +43,26 @@ export type Context = {
 
 // mapping engine events to lightning events
 const eventMap = {
-  'workflow-start': ATTEMPT_START,
+  'workflow-start': RUN_START,
   'job-start': STEP_START,
   'job-complete': STEP_COMPLETE,
-  'workflow-log': ATTEMPT_LOG,
-  'workflow-complete': ATTEMPT_COMPLETE,
+  'workflow-log': RUN_LOG,
+  'workflow-complete': RUN_COMPLETE,
 };
 
-// pass a web socket connected to the attempt channel
+// pass a web socket connected to the run channel
 // this thing will do all the work
 export function execute(
   channel: Channel,
   engine: RuntimeEngine,
   logger: Logger,
   plan: ExecutionPlan,
-  options: AttemptOptions = {},
+  options: RunOptions = {},
   onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);
 
-  const state = createAttemptState(plan, options);
+  const state = createRunState(plan, options);
 
   const context: Context = { channel, state, logger, engine, onFinish };
 
@@ -109,9 +109,9 @@ export function execute(
     addEvent('job-error', throttle(onJobError)),
     addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
-    addEvent('workflow-complete', throttle(handleAttemptComplete)),
+    addEvent('workflow-complete', throttle(handleRunComplete)),
 
-    addEvent('workflow-error', throttle(handleAttemptError))
+    addEvent('workflow-error', throttle(handleRunError))
 
     // TODO send autoinstall logs
   );
@@ -143,7 +143,7 @@ export function execute(
         engine.execute(plan, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
-        handleAttemptError(context, {
+        handleRunError(context, {
           workflowId: plan.id!,
           message: e.message,
           type: e.type,
@@ -196,15 +196,15 @@ export function onWorkflowStart(
   { channel }: Context,
   _event: WorkflowStartPayload
 ) {
-  return sendEvent<AttemptStartPayload>(channel, ATTEMPT_START);
+  return sendEvent<RunStartPayload>(channel, RUN_START);
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {
   const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
 
   // lightning-friendly log object
-  const log: AttemptLogPayload = {
-    attempt_id: state.plan.id!,
+  const log: RunLogPayload = {
+    run_id: state.plan.id!,
     message: event.message,
     source: event.name,
     level: event.level,
@@ -215,7 +215,7 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
     log.step_id = state.activeStep;
   }
 
-  return sendEvent<AttemptLogPayload>(channel, ATTEMPT_LOG, log);
+  return sendEvent<RunLogPayload>(channel, RUN_LOG, log);
 }
 
 export async function loadDataclip(channel: Channel, stateId: string) {

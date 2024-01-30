@@ -65,7 +65,7 @@ test.serial('engine api uses custom options', async (t) => {
 
     maxWorkers: 29,
     memoryLimitMb: 99,
-    attemptTimeoutMs: 33,
+    runTimeoutMs: 33,
     statePropsToRemove: ['z'],
   };
 
@@ -77,7 +77,7 @@ test.serial('engine api uses custom options', async (t) => {
   t.true(api.options.whitelist![0] instanceof RegExp);
   t.is(api.options.maxWorkers, 29);
   t.is(api.options.memoryLimitMb, 99);
-  t.is(api.options.attemptTimeoutMs, 33);
+  t.is(api.options.runTimeoutMs, 33);
   t.deepEqual(api.options.statePropsToRemove, ['z']);
 });
 

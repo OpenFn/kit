@@ -9,9 +9,9 @@ import { mockChannel } from '../src/mock/sockets';
 import {
   STEP_START,
   STEP_COMPLETE,
-  ATTEMPT_LOG,
-  ATTEMPT_START,
-  ATTEMPT_COMPLETE,
+  RUN_LOG,
+  RUN_START,
+  RUN_COMPLETE,
 } from '../src/events';
 import { ExitReason } from '../src/types';
 
@@ -44,11 +44,11 @@ const execute = async (plan, options = {}) =>
     // Ignore all channel events
     // In these test we assume that the correct messages are sent to the channel
     const channel = mockChannel({
-      [ATTEMPT_START]: async () => true,
+      [RUN_START]: async () => true,
       [STEP_START]: async () => true,
-      [ATTEMPT_LOG]: async () => true,
+      [RUN_LOG]: async () => true,
       [STEP_COMPLETE]: async () => true,
-      [ATTEMPT_COMPLETE]: async () => true,
+      [RUN_COMPLETE]: async () => true,
     });
 
     const onFinish = (result) => {
@@ -208,7 +208,7 @@ test('exception: autoinstall error', async (t) => {
     adaptor: '@openfn/language-common@1.0.0',
   });
 
-  // TODO I also need to ensure that this calls attempt:complete
+  // TODO I also need to ensure that this calls run:complete
   // I think that test lives elsewhere though
   // I *think* I need to change the mock engine first though...
   const { reason } = await execute(plan);
@@ -228,7 +228,7 @@ test('kill: timeout', async (t) => {
   });
 
   const options = {
-    attemptTimeoutMs: 100,
+    runTimeoutMs: 100,
   };
 
   const { reason } = await execute(plan, options);

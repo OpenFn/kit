@@ -60,8 +60,8 @@ export interface Edge {
   enabled?: boolean;
 }
 
-// An attempt object returned by Lightning
-export type Attempt = {
+// An run object returned by Lightning
+export type Run = {
   id: string;
   dataclip_id: string;
   starting_node_id: string;
@@ -70,31 +70,21 @@ export type Attempt = {
   jobs: Node[];
   edges: Edge[];
 
-  options?: AttemptOptions;
+  options?: RunOptions;
 };
 
-export type AttemptOptions = {
-  // This is what Lightning will ssend us
-  // Note that this is the NEW terminology, so it's the timeout  for the whole "attempt"
-  runTimeout?: number;
-
-  // this is the internal old terminology, which will be deprecated soon
-  attemptTimeoutMs?: number;
-
-  attemptTimeout?: number; // deprecated
-
-  // deprecated alias for timeout. Maps to "attemptTimeout" internally
-  timeout?: number;
+export type RunOptions = {
+  runTimeoutMs?: number;
 
   sanitize?: SanitizePolicies;
 };
 
-// Internal server state for each attempt
-export type AttemptState = {
+// Internal server state for each run
+export type RunState = {
   activeStep?: string;
   activeJob?: string;
   plan: ExecutionPlan;
-  options: AttemptOptions;
+  options: RunOptions;
   dataclips: Record<string, any>;
   // For each run, map the input ids
   // TODO better name maybe?

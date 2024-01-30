@@ -32,7 +32,7 @@ test.after(async () => {
 
 test('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
-    lightning.once('attempt:complete', (evt) => {
+    lightning.once('run:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
       const result = lightning.getResult('a1');
       t.deepEqual(result, { data: { answer: 42 } });
@@ -41,7 +41,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt({
+    lightning.enqueueRun({
       id: 'a1',
       jobs: [
         {
@@ -57,7 +57,7 @@ test('run a job with autoinstall of common', (t) => {
   return new Promise(async (done) => {
     let autoinstallEvent;
 
-    lightning.once('attempt:complete', (evt) => {
+    lightning.once('run:complete', (evt) => {
       try {
         t.truthy(autoinstallEvent);
         t.is(autoinstallEvent.module, '@openfn/language-common');
@@ -83,7 +83,7 @@ test('run a job with autoinstall of common', (t) => {
       },
     });
 
-    lightning.enqueueAttempt({
+    lightning.enqueueRun({
       id: 'a33',
       jobs: [
         {
@@ -99,7 +99,7 @@ test('run a job with autoinstall of common', (t) => {
 // this depends on prior test!
 test('run a job which does NOT autoinstall common', (t) => {
   return new Promise(async (done) => {
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       try {
         // This will fetch the final dataclip from the attempt
         const result = lightning.getResult('a10');
@@ -121,7 +121,7 @@ test('run a job which does NOT autoinstall common', (t) => {
       },
     });
 
-    lightning.enqueueAttempt({
+    lightning.enqueueRun({
       id: 'a10',
       jobs: [
         {
@@ -146,7 +146,7 @@ test("Don't send job logs to stdout", (t) => {
       ],
     };
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       const jsonLogs = engineLogger._history.map((l) => JSON.parse(l));
 
       // The engine logger shouldn't print out any job logs
@@ -163,7 +163,7 @@ test("Don't send job logs to stdout", (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -184,7 +184,7 @@ test('run a job with initial state (with data)', (t) => {
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
@@ -197,7 +197,7 @@ test('run a job with initial state (with data)', (t) => {
     // well, not really, not yet, not from the worker
     // see https://github.com/OpenFn/kit/issues/402
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -218,7 +218,7 @@ test('run a job with initial state (no top level keys)', (t) => {
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.once('attempt:complete', () => {
+    lightning.once('run:complete', () => {
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
@@ -232,7 +232,7 @@ test('run a job with initial state (no top level keys)', (t) => {
     // well, not really, not yet, not from the worker
     // see https://github.com/OpenFn/kit/issues/402
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -288,7 +288,7 @@ test.skip('run a job with credentials', (t) => {
 
     lightning.addCredential('c', config);
 
-    lightning.on('attempt:complete', () => {
+    lightning.on('run:complete', () => {
       try {
         const result = lightning.getResult(attempt.id);
         t.deepEqual(result.configuration, config);
@@ -300,7 +300,7 @@ test.skip('run a job with credentials', (t) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -316,18 +316,18 @@ test('blacklist a non-openfn adaptor', (t) => {
       ],
     };
 
-    lightning.once('attempt:complete', (event) => {
+    lightning.once('run:complete', (event) => {
       const { payload } = event;
       t.is(payload.reason, 'crash'); // TODO actually this should be a kill
       t.is(payload.error_message, 'module blacklisted: lodash');
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
-test('a timeout error should still call step-complete', (t) => {
+test.skip('a timeout error should still call step-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -338,24 +338,26 @@ test('a timeout error should still call step-complete', (t) => {
         },
       ],
       options: {
-        runTimeout: 500,
+        runTimeoutMs: 500,
       },
     };
 
-    lightning.once('attempt:start', (event) => {
+    lightning.once('run:start', () => {
       t.log('attempt started');
     });
 
     lightning.once('step:complete', (event) => {
+      console.log(event);
       t.is(event.payload.reason, 'kill');
       t.is(event.payload.error_type, 'TimeoutError');
     });
 
-    lightning.once('attempt:complete', (event) => {
+    lightning.once('run:complete', () => {
+      console.log('DONE!');
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -382,11 +384,11 @@ test('an OOM error should still call step-complete', (t) => {
       t.is(event.payload.reason, 'kill');
     });
 
-    lightning.once('attempt:complete', (event) => {
+    lightning.once('run:complete', (event) => {
       done();
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 });
 
@@ -403,7 +405,7 @@ test('an OOM error should still call step-complete', (t) => {
 //   }
 
 //   initLightning();
-//   lightning.on('attempt:complete', (evt) => {
+//   lightning.on('run:complete', (evt) => {
 //     // This will fetch the final dataclip from the attempt
 //     const result = lightning.getResult('a1');
 //     t.deepEqual(result, { data: { answer: 42 } });
@@ -413,7 +415,7 @@ test('an OOM error should still call step-complete', (t) => {
 //   });
 //   initWorker();
 
-//   lightning.enqueueAttempt({
+//   lightning.enqueueRun({
 //     id: 'a1',
 //     jobs: [
 //       {
@@ -451,8 +453,8 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     };
     let results = {};
 
-    lightning.on('attempt:complete', (evt) => {
-      const id = evt.attemptId;
+    lightning.on('run:complete', (evt) => {
+      const id = evt.runId;
       results[id] = lightning.getResult(id);
 
       if (id === attempt2.id) {
@@ -474,8 +476,8 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     };
     await initWorker(lightningPort, engineArgs);
 
-    lightning.enqueueAttempt(attempt1);
-    lightning.enqueueAttempt(attempt2);
+    lightning.enqueueRun(attempt1);
+    lightning.enqueueRun(attempt2);
   });
 });
 

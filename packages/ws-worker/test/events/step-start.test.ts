@@ -4,20 +4,20 @@ import handleStepStart from '../../src/events/step-start';
 import { JobStartPayload } from '@openfn/engine-multi';
 
 import { mockChannel } from '../../src/mock/sockets';
-import { createAttemptState } from '../../src/util';
-import { ATTEMPT_LOG, STEP_START } from '../../src/events';
+import { createRunState } from '../../src/util';
+import { RUN_LOG, STEP_START } from '../../src/events';
 
 import pkg from '../../package.json' assert { type: 'json' };
 
 test('set a step id and active job on state', async (t) => {
-  const plan = { id: 'attempt-1', jobs: [{ id: 'job-1' }] };
+  const plan = { id: 'run-1', jobs: [{ id: 'job-1' }] };
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
 
   const channel = mockChannel({
     [STEP_START]: (x) => x,
-    [ATTEMPT_LOG]: (x) => x,
+    [RUN_LOG]: (x) => x,
   });
 
   await handleStepStart({ channel, state }, { jobId });
@@ -28,7 +28,7 @@ test('set a step id and active job on state', async (t) => {
 
 test('send a step:start event', async (t) => {
   const plan = {
-    id: 'attempt-1',
+    id: 'run-1',
     initialState: 'abc',
     jobs: [
       { id: 'job-1', expression: '.' },
@@ -37,7 +37,7 @@ test('send a step:start event', async (t) => {
   };
   const jobId = 'job-1';
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -48,7 +48,7 @@ test('send a step:start event', async (t) => {
       t.truthy(evt.step_id);
       return true;
     },
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
   });
 
   await handleStepStart({ channel, state }, { jobId });
@@ -56,7 +56,7 @@ test('send a step:start event', async (t) => {
 
 test('step:start event should include versions', async (t) => {
   const plan = {
-    id: 'attempt-1',
+    id: 'run-1',
     initialState: 'abc',
     jobs: [{ id: 'job-1', expression: '.' }],
   };
@@ -76,7 +76,7 @@ test('step:start event should include versions', async (t) => {
     versions,
   };
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -88,7 +88,7 @@ test('step:start event should include versions', async (t) => {
       });
       return true;
     },
-    [ATTEMPT_LOG]: () => true,
+    [RUN_LOG]: () => true,
   });
 
   await handleStepStart({ channel, state }, event);
@@ -97,7 +97,7 @@ test('step:start event should include versions', async (t) => {
 test('also logs the version number', async (t) => {
   let logEvent;
   const plan = {
-    id: 'attempt-1',
+    id: 'run-1',
     initialState: 'abc',
     jobs: [{ id: 'job-1', expression: '.' }],
   };
@@ -117,13 +117,13 @@ test('also logs the version number', async (t) => {
     versions,
   };
 
-  const state = createAttemptState(plan);
+  const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
   const channel = mockChannel({
     [STEP_START]: (evt) => true,
-    [ATTEMPT_LOG]: (evt) => {
+    [RUN_LOG]: (evt) => {
       if (evt.source === 'VER') {
         logEvent = evt;
       }

@@ -11,9 +11,9 @@ export const dataclips = {
   },
 };
 
-export const attempts = {
-  'attempt-1': {
-    id: 'attempt-1',
+export const runs = {
+  'run-1': {
+    id: 'run-1',
     dataclip_id: 'x',
     triggers: [],
     edges: [],

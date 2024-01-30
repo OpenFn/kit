@@ -3,8 +3,8 @@ import test from 'ava';
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
 
-import { createAttempt, setup } from './util';
-import type { Attempt } from '../src/types';
+import { createRun, setup } from './util';
+import type { Run } from '../src/types';
 
 let server;
 let client;
@@ -15,14 +15,14 @@ const endpoint = `ws://localhost:${port}/worker`;
 
 test.before(async () => ({ server, client } = await setup(port)));
 
-test.serial('should setup an attempt at /POST /attempt', async (t) => {
+test.serial('should setup an run at /POST /run', async (t) => {
   const state = server.getState();
 
   t.is(Object.keys(state.credentials).length, 0);
-  t.is(Object.keys(state.attempts).length, 0);
-  t.is(Object.keys(state.attempts).length, 0);
+  t.is(Object.keys(state.runs).length, 0);
+  t.is(Object.keys(state.runs).length, 0);
 
-  const attempt: Attempt = {
+  const run: Run = {
     id: 'a',
     dataclip_id: 'a',
     starting_node_id: 'j',
@@ -41,9 +41,9 @@ test.serial('should setup an attempt at /POST /attempt', async (t) => {
     edges: [],
   };
 
-  await fetch(`http://localhost:${port}/attempt`, {
+  await fetch(`http://localhost:${port}/run`, {
     method: 'POST',
-    body: JSON.stringify(attempt),
+    body: JSON.stringify(run),
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -51,8 +51,8 @@ test.serial('should setup an attempt at /POST /attempt', async (t) => {
   });
 
   const newState = server.getState();
-  t.is(Object.keys(newState.attempts).length, 1);
-  const a = server.getAttempt('a');
+  t.is(Object.keys(newState.runs).length, 1);
+  const a = server.getRun('a');
   t.truthy(a);
   t.is(server.getQueueLength(), 1);
 

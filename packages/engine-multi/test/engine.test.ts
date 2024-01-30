@@ -216,7 +216,7 @@ test.serial('catch and emit errors', async (t) => {
 });
 
 test.serial(
-  'timeout the whole attempt and emit an error (timeout on attempt)',
+  'timeout the whole run and emit an error (timeout on run)',
   async (t) => {
     return new Promise(async (done) => {
       const p = path.resolve('dist/test/worker-functions.js');
@@ -232,7 +232,7 @@ test.serial(
       };
 
       const opts: ExecuteOptions = {
-        attemptTimeoutMs: 10,
+        runTimeoutMs: 10,
       };
 
       engine.listen(plan.id, {
@@ -249,14 +249,14 @@ test.serial(
 );
 
 test.serial(
-  'timeout the whole attempt and emit an error (default engine timeout) ',
+  'timeout the whole run and emit an error (default engine timeout) ',
   async (t) => {
     return new Promise(async (done) => {
       const p = path.resolve('dist/test/worker-functions.js');
       engine = await createEngine(
         {
           ...options,
-          attemptTimeoutMs: 22,
+          runTimeoutMs: 22,
         },
         p
       );

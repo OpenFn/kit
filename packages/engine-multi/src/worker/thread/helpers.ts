@@ -85,7 +85,7 @@ export const execute = async (
 
     // Close down the process just to be 100% sure that all async code stops
     // This is in a timeout to give the emitted message time to escape
-    // There is a TINY WINDOW in which async code can still run and affect the next attempt
+    // There is a TINY WINDOW in which async code can still run and affect the next run
     // This should all go away when we replace workerpool
     setTimeout(() => {
       process.exit(HANDLED_EXIT_CODE);

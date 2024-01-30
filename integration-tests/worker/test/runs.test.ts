@@ -2,7 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 
 import {
-  createAttempt,
+  createRun,
   createEdge,
   createJob,
   createTrigger,
@@ -43,8 +43,8 @@ const run = async (t, attempt) => {
         )} / ${humanMb(payload.mem.system)}mb] [thread ${payload.thread_id}]`
       );
     });
-    lightning.on('attempt:complete', (evt) => {
-      if (attempt.id === evt.attemptId) {
+    lightning.on('run:complete', (evt) => {
+      if (attempt.id === evt.runId) {
         done(lightning.getResult(attempt.id));
       } else {
         // If we get here, something has gone very wrong
@@ -52,7 +52,7 @@ const run = async (t, attempt) => {
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 
@@ -62,7 +62,7 @@ test.serial('echo initial state', async (t) => {
   lightning.addDataclip('s1', initialState);
 
   const job = createJob({ body: 'fn((s) => s)' });
-  const attempt = createAttempt([], [job], [], {
+  const attempt = createRun([], [job], [], {
     dataclip_id: 's1',
   });
 
@@ -86,7 +86,7 @@ test.serial('start from a trigger node', async (t) => {
   const trigger = createTrigger();
   const job = createJob({ body: 'fn((s) => s)' });
   const edge = createEdge(trigger, job);
-  const attempt = createAttempt([trigger], [job], [edge], {
+  const attempt = createRun([trigger], [job], [edge], {
     dataclip_id: 's1',
   });
 
@@ -135,7 +135,7 @@ test.serial('run parallel jobs', async (t) => {
   const jobs = [a, x, y];
   const edges = [ax, ay];
 
-  const attempt = createAttempt([], jobs, edges, {
+  const attempt = createRun([], jobs, edges, {
     dataclip_id: 's1',
   });
 
@@ -190,7 +190,7 @@ test('run a http adaptor job', async (t) => {
     body: `get("https://jsonplaceholder.typicode.com/todos/1");
     fn((state) => { state.res = state.response; return state });`,
   });
-  const attempt = createAttempt([], [job], []);
+  const attempt = createRun([], [job], []);
   const result = await run(t, attempt);
 
   t.truthy(result.res);

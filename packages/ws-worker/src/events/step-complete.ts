@@ -28,7 +28,7 @@ export default function onStepComplete(
   delete state.activeStep;
   delete state.activeJob;
 
-  // TODO right now, the last job to run will be the result for the attempt
+  // TODO right now, the last job to run will be the result for the run
   // this may not stand up in the future
   // I'd feel happer if the runtime could judge what the final result is
   // (taking into account branches and stuff)

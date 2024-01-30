@@ -287,14 +287,14 @@ A workflow has a structure like this (better documentation is coming soon):
 
 ## Compilation
 
-The CLI will attempt to compile your job code into normalized Javascript. It will do a number of things to make your code robust and portable:
+The CLI will compile your job code into regular Javascript. It does a number of things to make your code robust and portable:
 
 - The language adaptor will be imported into the file
-- The adaptor's execute function will be exported form the file
+- The adaptor's execute function will be exported from the file
 - All top level operations will be added to an array
-- That array will be made the default export of the file
+- That operation array will be made the default export of the file
 
-The result of this is a lightweight, modern JS source file. It can be executed in any runtime environment: just execute each function in the exported array.
+The result of this is a lightweight, modern JS module. It can be executed in any runtime environment: just execute each function in the exported array.
 
 The CLI uses openfn's own runtime to execute jobs in a safe environment.
 

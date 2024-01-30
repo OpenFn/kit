@@ -1,6 +1,6 @@
 import test from 'ava';
-import convertAttempt, { conditions } from '../../src/util/convert-attempt';
-import { Attempt, Node } from '../../src/types';
+import convertRun, { conditions } from '../../src/util/convert-run';
+import { Run, Node } from '../../src/types';
 
 // Creates a lightning node (job or trigger)
 const createNode = (props = {}) =>
@@ -42,13 +42,13 @@ const testEdgeCondition = (expr, state) => {
 };
 
 test('convert a single job', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode()],
     triggers: [],
     edges: [],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -57,35 +57,35 @@ test('convert a single job', (t) => {
 });
 
 test('convert a single job with options', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode()],
     triggers: [],
     edges: [],
     options: {
       sanitize: 'obfuscate',
-      attemptTimeoutMs: 10,
+      runTimeoutMs: 10,
     },
   };
-  const { plan, options } = convertAttempt(attempt as Attempt);
+  const { plan, options } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
     jobs: [createJob()],
   });
-  t.deepEqual(options, attempt.options);
+  t.deepEqual(options, run.options);
 });
 
 // Note idk how lightningg will handle state/defaults on a job
 // but this is what we'll do right now
 test('convert a single job with data', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ state: { data: { x: 22 } } })],
     triggers: [],
     edges: [],
   };
-  const { plan, options } = convertAttempt(attempt as Attempt);
+  const { plan, options } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -94,11 +94,11 @@ test('convert a single job with data', (t) => {
   t.deepEqual(options, {});
 });
 
-test('Accept a partial attempt object', (t) => {
-  const attempt: Partial<Attempt> = {
+test('Accept a partial run object', (t) => {
+  const run: Partial<Run> = {
     id: 'w',
   };
-  const { plan, options } = convertAttempt(attempt as Attempt);
+  const { plan, options } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -108,11 +108,11 @@ test('Accept a partial attempt object', (t) => {
 });
 
 test('handle dataclip_id', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     dataclip_id: 'xyz',
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -122,11 +122,11 @@ test('handle dataclip_id', (t) => {
 });
 
 test('handle starting_node_id', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     starting_node_id: 'j1',
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -136,13 +136,13 @@ test('handle starting_node_id', (t) => {
 });
 
 test('convert a single trigger', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [],
     edges: [],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -156,13 +156,13 @@ test('convert a single trigger', (t) => {
 
 // This exhibits current behaviour. This should never happen though
 test('ignore a single edge', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [],
     triggers: [],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -171,7 +171,7 @@ test('ignore a single edge', (t) => {
 });
 
 test('convert a single trigger with an edge', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode()],
@@ -183,7 +183,7 @@ test('convert a single trigger with an edge', (t) => {
       },
     ],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -200,7 +200,7 @@ test('convert a single trigger with an edge', (t) => {
 });
 
 test('convert a single trigger with two edges', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
@@ -217,7 +217,7 @@ test('convert a single trigger with two edges', (t) => {
       },
     ],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -236,7 +236,7 @@ test('convert a single trigger with two edges', (t) => {
 });
 
 test('convert a disabled trigger', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode({ id: 'a' })],
@@ -249,7 +249,7 @@ test('convert a disabled trigger', (t) => {
       },
     ],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -264,13 +264,13 @@ test('convert a disabled trigger', (t) => {
 });
 
 test('convert two linked jobs', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -280,7 +280,7 @@ test('convert two linked jobs', (t) => {
 
 // This isn't supported by the runtime, but it'll survive the conversion
 test('convert a job with two upstream jobs', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [
       createNode({ id: 'a' }),
@@ -290,7 +290,7 @@ test('convert a job with two upstream jobs', (t) => {
     triggers: [],
     edges: [createEdge('a', 'x'), createEdge('b', 'x')],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -304,13 +304,13 @@ test('convert a job with two upstream jobs', (t) => {
 
 test('convert two linked jobs with an edge condition', (t) => {
   const condition = 'state.age > 10';
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition })],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -322,13 +322,13 @@ test('convert two linked jobs with an edge condition', (t) => {
 });
 
 test('convert two linked jobs with a disabled edge', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { enabled: false })],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -438,13 +438,13 @@ test('on_job_failure condition: return false if state is undefined', (t) => {
 });
 
 test('convert edge condition on_job_success', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition: 'on_job_success' })],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   const [job] = plan.jobs;
 
@@ -455,13 +455,13 @@ test('convert edge condition on_job_success', (t) => {
 });
 
 test('convert edge condition on_job_failure', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition: 'on_job_failure' })],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   const [job] = plan.jobs;
 
@@ -478,13 +478,13 @@ test('convert edge condition on_job_failure', (t) => {
 
 test('convert edge condition on_job_success with a funky id', (t) => {
   const id_a = 'a-b-c@ # {} !£';
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: id_a }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge(id_a, 'b', { condition: 'on_job_success' })],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
   const [job] = plan.jobs;
 
   t.truthy(job.next?.b);
@@ -495,13 +495,13 @@ test('convert edge condition on_job_success with a funky id', (t) => {
 });
 
 test('convert edge condition always', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition: 'always' })],
   };
-  const { plan } = convertAttempt(attempt as Attempt);
+  const { plan } = convertRun(run as Run);
 
   const [job] = plan.jobs;
 
@@ -509,7 +509,7 @@ test('convert edge condition always', (t) => {
 });
 
 test('convert random options', (t) => {
-  const attempt: Partial<Attempt> = {
+  const run: Partial<Run> = {
     id: 'w',
     options: {
       a: 1,
@@ -517,45 +517,7 @@ test('convert random options', (t) => {
       c: 3,
     },
   };
-  const { options } = convertAttempt(attempt as Attempt);
+  const { options } = convertRun(run as Run);
 
   t.deepEqual(options, { a: 1, b: 2, c: 3 });
-});
-
-test('convert options, mapping timeout', (t) => {
-  const attempt: Partial<Attempt> = {
-    id: 'w',
-    options: {
-      timeout: 123,
-    },
-  };
-  const { options } = convertAttempt(attempt as Attempt);
-
-  t.deepEqual(options, { attemptTimeoutMs: 123 });
-});
-
-test('convert options, mapping runTimeout', (t) => {
-  const attempt: Partial<Attempt> = {
-    id: 'w',
-    options: {
-      runTimeout: 123,
-    },
-  };
-  const { options } = convertAttempt(attempt as Attempt);
-
-  t.deepEqual(options, { attemptTimeoutMs: 123 });
-});
-
-test('convert options, preferring runTimeout', (t) => {
-  const attempt: Partial<Attempt> = {
-    id: 'w',
-    options: {
-      runTimeout: 123,
-      attemptTimeoutMs: 456,
-      timeout: 789,
-    },
-  };
-  const { options } = convertAttempt(attempt as Attempt);
-
-  t.deepEqual(options, { attemptTimeoutMs: 123 });
 });

@@ -1,10 +1,10 @@
 import type { ExecutionPlan } from '@openfn/runtime';
-import type { AttemptOptions, AttemptState } from '../types';
+import type { RunOptions, RunState } from '../types';
 
 export default (
   plan: ExecutionPlan,
-  options: AttemptOptions = {}
-): AttemptState => {
+  options: RunOptions = {}
+): RunState => {
   const state = {
     plan,
     lastDataclipId: '',
@@ -12,7 +12,7 @@ export default (
     inputDataclips: {},
     reasons: {},
     options,
-  } as AttemptState;
+  } as RunState;
 
   if (typeof plan.initialState === 'string') {
     // We need to initialise inputDataclips so that the first run
