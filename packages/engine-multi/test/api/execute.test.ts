@@ -186,8 +186,8 @@ test.serial('should emit a log event', async (t) => {
   await execute(context);
 
   t.is(workflowLog.workflowId, 'y');
-  t.is(workflowLog.message[0], 'hi');
   t.is(workflowLog.level, 'info');
+  t.deepEqual(workflowLog.message, JSON.stringify(['hi']));
 });
 
 test.serial('log events are timestamped in hr time', async (t) => {

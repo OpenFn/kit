@@ -143,7 +143,7 @@ test.serial('trigger workflow-log for job logs', (t) => {
 
     api.execute(plan).on('workflow-log', (evt) => {
       if (evt.name === 'JOB') {
-        t.deepEqual(evt.message, ['hola']);
+        t.deepEqual(evt.message, JSON.stringify(['hola']));
         t.pass('workflow logged');
         done();
       }
@@ -169,7 +169,7 @@ test.serial('trigger workflow-log for adaptor logs', (t) => {
 
     api.execute(plan).on('workflow-log', (evt) => {
       if (evt.name === 'ADA') {
-        t.deepEqual(evt.message, ['hola']);
+        t.deepEqual(evt.message, JSON.stringify(['hola']));
         t.pass('workflow logged');
         done();
       }

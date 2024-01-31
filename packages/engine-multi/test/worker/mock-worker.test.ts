@@ -157,7 +157,7 @@ test('Publish a job log event', async (t) => {
   t.is(id, plan.id);
 
   t.is(log.level, 'info');
-  t.deepEqual(log.message, ['test']);
   t.is(log.name, 'JOB');
   t.truthy(log.time);
+  t.deepEqual(log.message, JSON.stringify(['test']));
 });
