@@ -158,6 +158,40 @@ test.serial('trigger workflow-log for job logs', (t) => {
   });
 });
 
+test.serial('log errors', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const plan = createPlan([
+      {
+        expression: `${withFn}fn((s) => { console.log(new Error('hola')); return s; })`,
+      },
+    ]);
+
+    api.execute(plan).on('workflow-log', (evt) => {
+      if (evt.name === 'JOB') {
+        t.log(evt);
+        t.deepEqual(
+          evt.message,
+          JSON.stringify([
+            {
+              name: 'Error',
+              message: 'hola',
+            },
+          ])
+        );
+        t.pass('workflow logged');
+      }
+    });
+
+    api.execute(plan).on('workflow-complete', (evt) => {
+      done();
+    });
+  });
+});
+
 test.serial('trigger workflow-log for adaptor logs', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({

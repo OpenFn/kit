@@ -38,7 +38,12 @@ register({
 
     // override console.log
     // any console.log statements will now get treated as adaptor logs
-    console = adaptorLogger;
+    // const trace = console.trace;
+    // console = adaptorLogger;
+
+    // // Leave console.trace for local debugging
+    // // This goes to stdout but not the adpator logger
+    // console.trace = trace;
 
     // TODO I would like to pull these options out of here
     const options = {

@@ -19,6 +19,7 @@ export const createLoggers = (
   publish?: any
 ) => {
   const log = (message: JSONLog) => {
+    // console.trace(' >>>>>> ', message);
     // @ts-ignore
     publish(workerEvents.LOG, {
       workflowId,
@@ -47,6 +48,7 @@ export const createLoggers = (
     json: true,
     sanitize,
   });
+
   const jobLogger = createLogger('JOB', {
     logger: emitter,
     level: 'debug',
