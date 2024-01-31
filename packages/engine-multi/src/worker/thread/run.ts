@@ -29,9 +29,11 @@ register({
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
     const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
       runOptions;
+    // @ts-ignore
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
-      sanitize
+      sanitize,
+      publish
     );
 
     // override console.log

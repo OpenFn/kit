@@ -18,6 +18,7 @@ process.on('message', async (evt: WorkerEvent) => {
 });
 
 const run = async (task: string, args: any[] = [], options = {}) => {
+  console.log(' > RUN ', task);
   const thread = createThread(task, args, options);
 
   thread.on('error', (e) => {

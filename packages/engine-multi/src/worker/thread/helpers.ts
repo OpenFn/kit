@@ -14,14 +14,13 @@ import serializeError from '../../util/serialize-error';
 
 export const createLoggers = (
   workflowId: string,
-  sanitize?: SanitizePolicies
+  sanitize: SanitizePolicies = 'none',
+  publish?: any
 ) => {
   const log = (message: string) => {
-    // Apparently the json log stringifies the message
-    // We don't really want it to do that
     publish(workerEvents.LOG, {
       workflowId,
-      message: JSON.parse(message),
+      message,
     } as workerEvents.LogEvent);
   };
 
