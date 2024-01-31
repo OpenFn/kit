@@ -109,7 +109,7 @@ test('json output', async (t) => {
   const logger = createMockLogger('', { level: 'info', json: true });
   await printVersions(logger, { adaptors: ['http'], logJson: true });
 
-  const last = JSON.parse(logger._last) as JSONLog;
+  const last = logger._last as JSONLog;
   t.is(last.level, 'always');
 
   const [{ versions }] = last.message;
