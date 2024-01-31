@@ -12,7 +12,7 @@ const levels: LogFns[] = [
   'error',
 ];
 
-const history = [];
+const history: any[] = [];
 
 test.before(() => {
   // All json functions emit to log - so we just have to override that one function here
