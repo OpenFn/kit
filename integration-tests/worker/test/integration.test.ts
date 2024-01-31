@@ -147,7 +147,7 @@ test("Don't send job logs to stdout", (t) => {
     };
 
     lightning.once('attempt:complete', () => {
-      const jsonLogs = engineLogger._history.map((l) => JSON.parse(l));
+      const jsonLogs = engineLogger._history;
 
       // The engine logger shouldn't print out any job logs
       const jobLog = jsonLogs.find((l) => l.name === 'JOB');
