@@ -1,9 +1,18 @@
 import test from 'ava';
 import jsonEmitter from '../../src/util/json-emitter';
+import { LogFns } from '../../src/logger';
 
-const levels = ['log', 'info', 'success', 'always', 'debug', 'warn', 'error'];
+const levels: LogFns[] = [
+  'log',
+  'info',
+  'success',
+  'always',
+  'debug',
+  'warn',
+  'error',
+];
 
-const history = {};
+const history: Record<string, any[]> = {};
 
 test.before(() => {
   levels.forEach((l) => {
@@ -11,6 +20,7 @@ test.before(() => {
 
     // Override the console object
     // the json emitter should redirect here
+    // @ts-ignore add success function
     console[l] = (...args: any[]) => {
       history[l].push(args);
     };

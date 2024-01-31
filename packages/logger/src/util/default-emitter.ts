@@ -1,3 +1,5 @@
+import type { LogEmitter } from '../options';
+
 export default {
   ...console,
   // Direct error and warn logs to stdout, so that they appear in sequence
@@ -5,4 +7,4 @@ export default {
   warn: (...args: any[]) => console.log(...args),
   success: (...args: any[]) => console.log(...args),
   always: (...args: any[]) => console.log(...args),
-};
+} as LogEmitter;

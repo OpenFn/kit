@@ -1,6 +1,7 @@
 import stringify from 'fast-safe-stringify';
+import { LogEmitter } from '../options';
 
-const jsonEmitter: Console = {
+const jsonEmitter: Partial<LogEmitter> = {
   ...console,
 };
 
@@ -13,4 +14,4 @@ const jsonEmitter: Console = {
   };
 });
 
-export default jsonEmitter;
+export default jsonEmitter as LogEmitter;

@@ -43,8 +43,7 @@ export const defaults: Required<LogOptions> = {
 
   hideNamespace: false,
   hideIcons: false,
-  // @ts-ignore
-  emitter: defaultEmitter,
+  logger: defaultEmitter,
 
   // Not implemented
   wrap: false,
@@ -63,7 +62,7 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
     ...defaults,
     // If logging to json, and no emitter is provided,
     // use this emitter which will serialise the output to JSON
-    emitter: opts.json ? jsonEmitter : defaultEmitter,
+    logger: opts.json ? jsonEmitter : defaultEmitter,
     ...opts,
   };
 
