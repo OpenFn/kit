@@ -240,7 +240,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   const print = (...args: any[]) => {
     if (opts.level !== NONE) {
       if (opts.json) {
-        emitter.info(JSON.stringify({ message: args }));
+        emitter.info({ message: args });
       } else {
         emitter.info(...args);
       }
