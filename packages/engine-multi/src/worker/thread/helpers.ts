@@ -19,6 +19,7 @@ export const createLoggers = (
   publish?: any
 ) => {
   const log = (message: JSONLog) => {
+    // @ts-ignore
     publish(workerEvents.LOG, {
       workflowId,
       message: {
