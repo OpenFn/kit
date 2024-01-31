@@ -12,7 +12,7 @@ export default async (context: Context, reason: ExitReason) => {
 
   await onJobLog(context, {
     time,
-    message: [message],
+    message: JSON.stringify([message]),
     level: 'info',
     name: 'R/T',
   });
