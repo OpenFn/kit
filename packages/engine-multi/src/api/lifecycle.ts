@@ -121,7 +121,11 @@ export const log = (
   const { threadId } = event;
 
   if (event.message.name !== 'JOB') {
-    context.logger.proxy(event.message);
+    const proxy = {
+      ...event.message,
+      message: JSON.parse(event.message.message),
+    };
+    context.logger.proxy(proxy);
   }
 
   context.emit(externalEvents.WORKFLOW_LOG, {

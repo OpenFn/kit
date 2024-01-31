@@ -69,7 +69,9 @@ const execute = async (context: ExecutionContext) => {
         threadId: '-', // no thread at this point
         message: {
           level: 'debug',
-          message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
+          message: JSON.stringify([
+            `Memory limit: ${workerOptions.memoryLimitMb}mb`,
+          ]),
           name: 'RTE',
           time: timestamp().toString(),
         },
@@ -82,7 +84,9 @@ const execute = async (context: ExecutionContext) => {
         threadId: '-', // no thread at this point
         message: {
           level: 'debug',
-          message: [`Timeout: ${workerOptions.timeout / 1000}s`],
+          message: JSON.stringify([
+            `Timeout: ${workerOptions.timeout / 1000}s`,
+          ]),
           name: 'RTE',
           time: timestamp().toString(),
         },

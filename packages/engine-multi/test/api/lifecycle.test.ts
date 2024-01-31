@@ -173,7 +173,7 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
       message: {
         level: 'info',
         name: 'job',
-        message: ['oh hai'],
+        message: JSON.stringify(['oh hai']),
         time: Date.now() - 100,
       },
     };
