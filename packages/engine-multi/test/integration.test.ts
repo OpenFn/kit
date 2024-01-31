@@ -116,6 +116,8 @@ test.serial('trigger workflow-complete', (t) => {
     const plan = createPlan();
 
     api.execute(plan).on('workflow-complete', (evt) => {
+      t.falsy(evt.state.errors);
+
       t.is(evt.workflowId, plan.id);
       t.truthy(evt.duration);
       t.truthy(evt.state);
@@ -130,23 +132,28 @@ test.serial('trigger workflow-log for job logs', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      compile: {
-        skip: true,
-      },
     });
 
     const plan = createPlan([
       {
-        expression: `${withFn}console.log('hola')`,
+        expression: `${withFn}fn((s) => { console.log('hola'); return s; })`,
       },
     ]);
 
+    let didLog = false;
+
     api.execute(plan).on('workflow-log', (evt) => {
       if (evt.name === 'JOB') {
+        didLog = true;
         t.deepEqual(evt.message, JSON.stringify(['hola']));
         t.pass('workflow logged');
-        done();
       }
+    });
+
+    api.execute(plan).on('workflow-complete', (evt) => {
+      t.true(didLog);
+      t.falsy(evt.state.errors);
+      done();
     });
   });
 });
