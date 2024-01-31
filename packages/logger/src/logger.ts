@@ -163,6 +163,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       sanitize(o, {
         stringify: false,
         policy: options.sanitize,
+        serializeErrors: true,
       })
     );
     if (message.length === 1 && message[0] === null) {
@@ -178,7 +179,19 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       time: hrtimestamp().toString(),
     };
 
-    emitter[level](stringify(output));
+    // TODO OK maybe we should not stringify here because
+    // a) it doesn't safely stringify errors (how and where should we do this?)
+    // b) the worker wants the raw json, not a string
+    // You know what actually I think the message should be stringified, but not the wrapper
+    // I wonder how much that's going to break
+    //emitter[level](stringify(output));
+
+    // If we don't stringify, what if we hit:
+    // a function
+    // a circular reference
+    // something else non serializable
+    // But then again, I don't think we care about this?
+    emitter[level](output);
   };
 
   const logString = (

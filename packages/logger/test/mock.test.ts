@@ -182,7 +182,8 @@ test('log JSON', async (t) => {
   const logger = mockLogger<string>('a', { json: true });
   logger.success('z');
 
-  const { level, message, name, time } = JSON.parse(logger._last);
+  //const { level, message, name, time } = JSON.parse(logger._last);
+  const { level, message, name, time } = logger._last;
   t.is(name, 'a');
   t.is(level, 'success');
   t.is(message[0], 'z');

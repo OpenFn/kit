@@ -15,6 +15,8 @@ type SanitizeOptions = {
   // This is potentially important so we do want to break
   // but! we should throw in the CLI< not here.
   policy?: SanitizePolicies;
+
+  serializeErrors?: boolean; // false by default
 };
 
 const scrubbers: Record<SanitizePolicies, (item: any) => any> = {
@@ -31,6 +33,13 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
     options.stringify === false ? o : stringify(o, undefined, 2);
 
   if (item instanceof Error) {
+    if (options.serializeErrors) {
+      return {
+        name: item.name,
+        message: item.message || item.toString(),
+        // TODO stack? Tricky
+      };
+    }
     return item;
   }
 

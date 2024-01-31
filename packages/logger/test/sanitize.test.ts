@@ -40,6 +40,15 @@ test("Don't stringify a custom error", (t) => {
   t.assert(result instanceof Error);
 });
 
+test('do stringify an error if asked to', (t) => {
+  const e = new Error('test');
+  const result = sanitize(e, { serializeErrors: true });
+  t.deepEqual(result, {
+    name: 'Error',
+    message: 'test',
+  });
+});
+
 test('stringify an object', (t) => {
   const result = sanitize({});
   t.is(result, '{}');
