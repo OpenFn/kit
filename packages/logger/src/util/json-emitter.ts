@@ -9,8 +9,7 @@ const jsonEmitter: Partial<LogEmitter> = {
   // @ts-ignore
   jsonEmitter[fn] = (...args: any[]) => {
     const stringified = args.map((value) => stringify(value));
-    // @ts-ignore
-    console[fn](...stringified);
+    console.log(...stringified);
   };
 });
 
