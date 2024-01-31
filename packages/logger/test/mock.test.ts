@@ -1,6 +1,7 @@
 import test from 'ava';
 import chalk from 'chalk';
 import mockLogger from '../src/mock';
+import { JSONLog } from '../src';
 
 // disable chalk colours in unit tests
 chalk.level = 0;
@@ -179,15 +180,14 @@ test('print should include the message', async (t) => {
 });
 
 test('log JSON', async (t) => {
-  const logger = mockLogger<string>('a', { json: true });
+  const logger = mockLogger<JSONLog>('a', { json: true });
   logger.success('z');
 
-  //const { level, message, name, time } = JSON.parse(logger._last);
   const { level, message, name, time } = logger._last;
   t.is(name, 'a');
   t.is(level, 'success');
   t.is(message[0], 'z');
-  t.true(!isNaN(time));
+  t.true(typeof time === 'string');
 });
 
 test('find a log', (t) => {

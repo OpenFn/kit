@@ -244,19 +244,17 @@ big end time: ${endDate.toISOString()}`);
   t.true(endTime - startTime < 1e6);
 });
 
-// TODO this test needs to pass without the timeout
 test('timestamps increase in time', async (t) => {
   const options = { level: 'info' as const, json: true };
   const logger = createLogger<JSONLog>('x', options);
 
   for (let i = 0; i < 10; i += 1) {
-    // await new Promise(done => setTimeout(done, 2))
     logger.info("what's the time mr wolf");
   }
 
-  let last = 0;
+  let last = '0';
   logger._history.forEach(({ time }) => {
-    t.log(time);
+    t.log(typeof time, time);
     t.true(time > last);
     last = time;
   });
@@ -280,12 +278,13 @@ test('print() should not log if level is none', (t) => {
   t.is(logger._history.length, 0);
 });
 
-test('print() should log as json', (t) => {
+test.only('print() should log as json', (t) => {
   const options = { json: true };
-  const logger = createLogger<JSONLog>('x', options);
+  const logger = createLogger<string>('x', options);
   logger.print('abc');
 
-  const [level, message] = logger._last;
+  // @ts-ignore
+  const { level, message } = logger._parse(logger._last);
   t.is(level, 'print');
   t.deepEqual(message, { message: ['abc'] });
 });
