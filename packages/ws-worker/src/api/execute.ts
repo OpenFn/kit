@@ -9,10 +9,10 @@ import {
   STEP_COMPLETE,
   STEP_START,
 } from '../events';
-import { AttemptOptions, Channel, AttemptState } from '../types';
+import { AttemptOptions, Channel, AttemptState, JSONLog } from '../types';
 import { getWithReply, createAttemptState } from '../util';
 
-import type { JSONLog, Logger } from '@openfn/logger';
+import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
@@ -205,7 +205,11 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   // lightning-friendly log object
   const log: AttemptLogPayload = {
     attempt_id: state.plan.id!,
-    message: event.message,
+    // The message body, the actual thing that is logged,
+    // is always encoded into a string
+    // Parse it here before sending on to lightning
+    // TODO this needs optimising!
+    message: JSON.parse(event.message),
     source: event.name,
     level: event.level,
     timestamp: timeInMicroseconds.toString(),

@@ -10,7 +10,10 @@ test('createLogger: runtime logger should emit an event on log', (t) => {
     t.is(payload.workflowId, 'x');
     t.is(payload.message.level, 'info');
     t.is(payload.message.name, 'R/T');
-    t.deepEqual(payload.message.message, [message]);
+
+    // The log message is always encoded into a string
+    const parsedMessage = JSON.parse(payload.message.message);
+    t.deepEqual(parsedMessage, [message]);
   };
 
   const { logger } = createLoggers('x', 'none', publish);
@@ -24,7 +27,8 @@ test('createLogger: runtime logger should emit a nicely serialised error on log'
   const publish = (type: string, payload: any) => {
     t.is(type, 'worker:log');
 
-    t.deepEqual(payload.message.message, [
+    const parsedMessage = JSON.parse(payload.message.message);
+    t.deepEqual(parsedMessage, [
       {
         name: 'Error',
         message: 'err',

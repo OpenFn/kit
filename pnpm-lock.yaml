@@ -383,6 +383,9 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
+      fast-safe-stringify:
+        specifier: ^2.1.1
+        version: 2.1.1
     devDependencies:
       '@types/node':
         specifier: ^18.15.13
@@ -405,6 +408,8 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
+
+  packages/engine-multi/tmp/a/b/c: {}
 
   packages/engine-multi/tmp/repo: {}
 

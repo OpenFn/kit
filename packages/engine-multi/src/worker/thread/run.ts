@@ -38,7 +38,7 @@ register({
 
     // override console.log
     // any console.log statements will now get treated as adaptor logs
-    console = adaptorLogger;
+    //console = adaptorLogger;
 
     // TODO I would like to pull these options out of here
     const options = {

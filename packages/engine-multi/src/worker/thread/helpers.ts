@@ -2,7 +2,7 @@
 // This is designed to minimize the amount of code we have to mock
 
 import process from 'node:process';
-
+import stringify from 'fast-safe-stringify';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 
 import * as workerEvents from '../events';
@@ -11,16 +11,22 @@ import { ExecutionError, ExitError } from '../../errors';
 
 import { publish } from './runtime';
 import serializeError from '../../util/serialize-error';
+import { JSONLog } from '@openfn/logger';
 
 export const createLoggers = (
   workflowId: string,
   sanitize: SanitizePolicies = 'none',
   publish?: any
 ) => {
-  const log = (message: string) => {
+  const log = (message: JSONLog) => {
     publish(workerEvents.LOG, {
       workflowId,
-      message,
+      message: {
+        ...message,
+        // stringify the message now so that we know it's safe
+        // this also makes it more performant to feed up to the worker
+        message: stringify(message.message),
+      },
     } as workerEvents.LogEvent);
   };
 
