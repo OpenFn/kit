@@ -1,6 +1,5 @@
 import c from 'chalk';
 import iconfirm from '@inquirer/confirm';
-import stringify from 'fast-safe-stringify';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import getDurationString from './util/duration';
@@ -179,18 +178,9 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       time: hrtimestamp().toString(),
     };
 
-    // TODO OK maybe we should not stringify here because
-    // a) it doesn't safely stringify errors (how and where should we do this?)
-    // b) the worker wants the raw json, not a string
-    // You know what actually I think the message should be stringified, but not the wrapper
-    // I wonder how much that's going to break
-    //emitter[level](stringify(output));
-
-    // If we don't stringify, what if we hit:
-    // a function
-    // a circular reference
-    // something else non serializable
-    // But then again, I don't think we care about this?
+    // Emit the output directly, without any further
+    // serialisation. Note that this may cause us to log
+    // non-serialisable stuff
     emitter[level](output);
   };
 
