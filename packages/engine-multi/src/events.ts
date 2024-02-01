@@ -1,8 +1,5 @@
-// TODO remove ths file in favour of types
-
-// TODO mayberename event constants
-import { JSONLog } from '@openfn/logger';
 import { Versions } from './types';
+import { SerializedLogEvent } from './worker/events';
 
 // If the worker thread exists a process safely, it'll return this error code
 // any other error code is unexpected
@@ -89,12 +86,7 @@ export interface JobErrorPayload extends ExternalEvent {
   next: string[]; // downstream jobs
 }
 
-export interface WorkerLogPayload
-  extends ExternalEvent,
-    Omit<JSONLog, 'message'> {
-  // message is always a JSON string
-  message: string;
-}
+export interface WorkerLogPayload extends ExternalEvent, SerializedLogEvent {}
 
 export interface EdgeResolvedPayload extends ExternalEvent {
   edgeId: string; // interesting, we don't really have this yet. Is index more appropriate? key? yeah, it's target node basically

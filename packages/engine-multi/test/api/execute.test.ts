@@ -106,7 +106,7 @@ test.serial('should emit a log event with the memory limit', async (t) => {
   await execute(context);
 
   const log = logs.find(({ name }) => name === 'RTE');
-  t.is(log.message, JSON.stringify(['Memory limit: 666mb']));
+  t.is(log.message[0], 'Memory limit: 666mb');
 });
 
 test.serial('should emit a workflow-complete event', async (t) => {

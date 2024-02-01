@@ -68,12 +68,13 @@ export interface JobErrorEvent extends InternalEvent {
 }
 
 export type SerializedLogEvent = Omit<JSONLog, 'message'> & {
-  // message is always a JSON string
-  message: string;
+  // the message is either an array of strings/object to log,
+  // or a JSON array that was previously serialized
+  message: string | any[];
 };
 
 export interface LogEvent extends InternalEvent {
-  message: SerializedLogEvent;
+  log: SerializedLogEvent;
 }
 
 export interface ErrorEvent {

@@ -110,3 +110,13 @@ engine.execute(plan, { resolvers });
 ```
 
 Initial state and credentials are at the moment pre-loaded, with a "fully resolved" state object passed into the runtime. The Runtime has the ability to lazy load but implementing lazy loading across the worker_thread interface has proven tricky.
+
+## Note on Debugging
+
+Debugging in the engine can be really tricky.
+
+First there's the problem that a lot of code runs inside a worker thread in a child process, which is hard to get a breakpoint into (at the time of writing I haven't managed to do it).
+
+But also, any console.log statements inside the inner thread will get consumed by the adaptor logger and won't go to stdout.
+
+As a workaround to this, use console.debug inside the thread to print to stdout. This is not bound to the adaptor logger.

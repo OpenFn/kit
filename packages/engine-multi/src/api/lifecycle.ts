@@ -120,17 +120,22 @@ export const log = (
 ) => {
   const { threadId } = event;
 
-  if (event.message.name !== 'JOB') {
+  if (event.log.name !== 'JOB') {
+    // Forwrad the log event to the engine's logger
+    // Note that we may have to parse the serialized log string
     const proxy = {
-      ...event.message,
-      message: JSON.parse(event.message.message),
+      ...event.log,
+      message:
+        typeof event.log.message == 'string'
+          ? JSON.parse(event.log.message)
+          : event.log.message,
     };
     context.logger.proxy(proxy);
   }
 
   context.emit(externalEvents.WORKFLOW_LOG, {
     threadId,
-    ...event.message,
+    ...event.log,
   });
 };
 

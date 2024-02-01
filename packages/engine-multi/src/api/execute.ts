@@ -67,11 +67,9 @@ const execute = async (context: ExecutionContext) => {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
-        message: {
+        log: {
           level: 'debug',
-          message: JSON.stringify([
-            `Memory limit: ${workerOptions.memoryLimitMb}mb`,
-          ]),
+          message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
           name: 'RTE',
           time: timestamp().toString(),
         },
@@ -82,11 +80,9 @@ const execute = async (context: ExecutionContext) => {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
-        message: {
+        log: {
           level: 'debug',
-          message: JSON.stringify([
-            `Timeout: ${workerOptions.timeout / 1000}s`,
-          ]),
+          message: [`Timeout: ${workerOptions.timeout / 1000}s`],
           name: 'RTE',
           time: timestamp().toString(),
         },

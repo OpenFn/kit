@@ -145,10 +145,10 @@ test('Publish a job log event', async (t) => {
   let log;
   let id;
   await workers.exec('run', [plan], {
-    on: ({ workflowId, type, message }) => {
+    on: ({ workflowId, type, log: _log }) => {
       if (type === e.LOG) {
         didFire = true;
-        log = message;
+        log = _log;
         id = workflowId;
       }
     },
