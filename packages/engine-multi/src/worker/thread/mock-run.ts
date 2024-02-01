@@ -32,7 +32,7 @@ type MockExecutionPlan = {
 // optionally delay
 function mockRun(plan: MockExecutionPlan) {
   const [job] = plan.jobs;
-  const { jobLogger } = createLoggers(plan.id!);
+  const { jobLogger } = createLoggers(plan.id!, 'none', publish);
   const workflowId = plan.id;
   return new Promise((resolve) => {
     const jobId = job.id || '<job>';

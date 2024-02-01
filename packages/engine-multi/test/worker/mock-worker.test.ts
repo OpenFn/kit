@@ -145,10 +145,10 @@ test('Publish a job log event', async (t) => {
   let log;
   let id;
   await workers.exec('run', [plan], {
-    on: ({ workflowId, type, message }) => {
+    on: ({ workflowId, type, log: _log }) => {
       if (type === e.LOG) {
         didFire = true;
-        log = message;
+        log = _log;
         id = workflowId;
       }
     },
@@ -157,7 +157,7 @@ test('Publish a job log event', async (t) => {
   t.is(id, plan.id);
 
   t.is(log.level, 'info');
-  t.deepEqual(log.message, ['test']);
   t.is(log.name, 'JOB');
   t.truthy(log.time);
+  t.deepEqual(log.message, JSON.stringify(['test']));
 });

@@ -9,23 +9,24 @@ import {
   STEP_COMPLETE,
   STEP_START,
 } from '../events';
-import { RunOptions, Channel, RunState } from '../types';
-import { getWithReply, createRunState } from '../util';
-
-import type { JSONLog, Logger } from '@openfn/logger';
-import type {
-  RuntimeEngine,
-  Resolvers,
-  WorkflowStartPayload,
-} from '@openfn/engine-multi';
-import { ExecutionPlan } from '@openfn/runtime';
-
+import {
+  getWithReply,
+  createRunState,
+  throttle as createThrottle,
+} from '../util';
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
 
-import createThrottler from '../util/throttle';
+import type { RunOptions, Channel, RunState, JSONLog } from '../types';
+import type { Logger } from '@openfn/logger';
+import type {
+  RuntimeEngine,
+  Resolvers,
+  WorkflowStartPayload,
+} from '@openfn/engine-multi';
+import type { ExecutionPlan } from '@openfn/runtime';
 
 const enc = new TextDecoder('utf-8');
 
@@ -66,7 +67,7 @@ export function execute(
 
   const context: Context = { channel, state, logger, engine, onFinish };
 
-  const throttle = createThrottler();
+  const throttle = createThrottle();
 
   type EventHandler = (context: any, event: any) => void;
 
@@ -205,7 +206,14 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   // lightning-friendly log object
   const log: RunLogPayload = {
     run_id: state.plan.id!,
-    message: event.message,
+    // The message body, the actual thing that is logged,
+    // may be always encoded into a string
+    // Parse it here before sending on to lightning
+    // TODO this needs optimising!
+    message:
+      typeof event.message === 'string'
+        ? JSON.parse(event.message)
+        : event.message,
     source: event.name,
     level: event.level,
     timestamp: timeInMicroseconds.toString(),

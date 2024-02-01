@@ -1,4 +1,6 @@
 import { SanitizePolicies } from './sanitize';
+import defaultEmitter from './util/default-emitter';
+import jsonEmitter from './util/json-emitter';
 
 export type LogLevel = 'debug' | 'info' | 'default' | 'none';
 
@@ -36,24 +38,12 @@ export type LogOptions = {
   sanitize?: SanitizePolicies;
 };
 
-// TODO not crazy about the handling of this
-// but to support the success handler we need to alias console.log
-const defaultEmitter = {
-  ...console,
-  // Direct error and warn logs to stdout, so that they appear in sequence
-  error: (...args: any[]) => console.log(...args),
-  warn: (...args: any[]) => console.log(...args),
-  success: (...args: any[]) => console.log(...args),
-  always: (...args: any[]) => console.log(...args),
-};
-
 export const defaults: Required<LogOptions> = {
   level: 'default',
-  // TODO support an array of emitters here
-  logger: defaultEmitter, // I guess?
 
   hideNamespace: false,
   hideIcons: false,
+  logger: defaultEmitter,
 
   // Not implemented
   wrap: false,
@@ -70,6 +60,9 @@ const parseOptions = (opts: LogOptions = {}): Required<LogOptions> => {
   // First default all values
   const options = {
     ...defaults,
+    // If logging to json, and no emitter is provided,
+    // use this emitter which will serialise the output to JSON
+    logger: opts.json ? jsonEmitter : defaultEmitter,
     ...opts,
   };
 

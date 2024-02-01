@@ -194,6 +194,39 @@ test('only listen to events for the correct workflow', async (t) => {
   t.pass();
 });
 
+test('log events should stringify a string message', async (t) => {
+  const wf = clone(sampleWorkflow);
+  wf.jobs[0].expression =
+    'fn((s) => {console.log("haul away joe"); return s; })';
+
+  engine.listen(wf.id, {
+    'workflow-log': ({ message }) => {
+      t.is(typeof message, 'string');
+      const result = JSON.parse(message);
+      t.deepEqual(result, ['haul away joe']);
+    },
+  });
+
+  engine.execute(wf);
+  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+});
+
+test('log events should stringify an object message', async (t) => {
+  const wf = clone(sampleWorkflow);
+  wf.jobs[0].expression = 'fn((s) => {console.log({ x: 22 }); return s; })';
+
+  engine.listen(wf.id, {
+    'workflow-log': ({ message }) => {
+      t.is(typeof message, 'string');
+      const result = JSON.parse(message);
+      t.deepEqual(result, [{ x: 22 }]);
+    },
+  });
+
+  engine.execute(wf);
+  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+});
+
 test('do nothing for a job if no expression and adaptor (trigger node)', async (t) => {
   const workflow = {
     id: 'w1',

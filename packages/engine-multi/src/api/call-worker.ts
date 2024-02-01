@@ -34,14 +34,20 @@ export default function initWorkers(
     logger
   );
 
-  const callWorker: CallWorker = (task, args = [], events = [], options = {}) =>
-    workers.exec(task, args, {
+  const callWorker: CallWorker = (
+    task,
+    args = [],
+    events = [],
+    options = {}
+  ) => {
+    return workers.exec(task, args, {
       ...options,
       on: ({ type, ...args }: WorkerEvent) => {
         // just call the callback
         events[type]?.(args);
       },
     });
+  };
 
   const closeWorkers = async (instant?: boolean) => workers.destroy(instant);
 

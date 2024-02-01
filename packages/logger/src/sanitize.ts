@@ -15,6 +15,8 @@ type SanitizeOptions = {
   // This is potentially important so we do want to break
   // but! we should throw in the CLI< not here.
   policy?: SanitizePolicies;
+
+  serializeErrors?: boolean; // false by default
 };
 
 const scrubbers: Record<SanitizePolicies, (item: any) => any> = {
@@ -24,13 +26,37 @@ const scrubbers: Record<SanitizePolicies, (item: any) => any> = {
   none: (item) => item,
 };
 
+// If an error is generated inside the sandbox, it does not seem to be instanceof error
+// So let's walk the prototype chain to see if it LOOKs like an error
+const isError = (obj: any) => {
+  if (obj instanceof Error) {
+    return true;
+  }
+
+  let o = obj;
+  while (o && o.constructor) {
+    if (o.constructor.name === 'Error') {
+      return true;
+    }
+    o = o.prototype?.constructor;
+  }
+  return false;
+};
+
 // Sanitize console output
 const sanitize = (item: any, options: SanitizeOptions = {}) => {
   // Stringify output to ensure we show deep nesting
   const maybeStringify = (o: any) =>
     options.stringify === false ? o : stringify(o, undefined, 2);
 
-  if (item instanceof Error) {
+  if (isError(item)) {
+    if (options.serializeErrors) {
+      return {
+        name: item.name,
+        message: item.message || item.toString(),
+        // TODO stack? Tricky
+      };
+    }
     return item;
   }
 

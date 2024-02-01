@@ -67,7 +67,7 @@ const execute = async (context: ExecutionContext) => {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
-        message: {
+        log: {
           level: 'debug',
           message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
           name: 'RTE',
@@ -80,7 +80,7 @@ const execute = async (context: ExecutionContext) => {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
-        message: {
+        log: {
           level: 'debug',
           message: [`Timeout: ${workerOptions.timeout / 1000}s`],
           name: 'RTE',

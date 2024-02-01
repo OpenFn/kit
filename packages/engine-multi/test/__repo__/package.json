@@ -3,6 +3,6 @@
   "private": true,
   "version": "1.0.0",
   "dependencies": {
-    "helper_1.0.0": "@npm:helper@1.0.0"
+    "@openfn/helper_1.0.0": "@npm:@openfn/helper@1.0.0"
   }
 }
