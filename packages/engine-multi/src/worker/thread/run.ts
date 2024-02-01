@@ -36,14 +36,16 @@ register({
       publish
     );
 
+    // Save the debug function so that we can use it
+    const debug = console.debug;
+
     // override console.log
     // any console.log statements will now get treated as adaptor logs
-    // const trace = console.trace;
-    // console = adaptorLogger;
+    console = adaptorLogger;
 
-    // // Leave console.trace for local debugging
-    // // This goes to stdout but not the adpator logger
-    // console.trace = trace;
+    // Leave console.debug for local debugging
+    // This goes to stdout but not the adpator logger
+    console.debug = debug;
 
     // TODO I would like to pull these options out of here
     const options = {
