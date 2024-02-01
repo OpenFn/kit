@@ -1,7 +1,7 @@
 import { ExecutionPlan } from '@openfn/runtime';
 import crypto from 'node:crypto';
 
-export const wait = (fn, maxAttempts = 100) =>
+export const wait = (fn, maxRuns = 100) =>
   new Promise<any>((resolve) => {
     let count = 0;
     let ival = setInterval(() => {
@@ -12,7 +12,7 @@ export const wait = (fn, maxAttempts = 100) =>
         resolve(result);
       }
 
-      if (count == maxAttempts) {
+      if (count == maxRuns) {
         clearInterval(ival);
         resolve(null);
       }
@@ -50,7 +50,7 @@ export const createJob = (body?: string, id?: string) => ({
   body: body || `fn((s) => s)`,
 });
 
-export const createAttempt = (jobs = [], edges = [], triggers = []) => ({
+export const createRun = (jobs = [], edges = [], triggers = []) => ({
   id: crypto.randomUUID(),
   jobs,
   edges,

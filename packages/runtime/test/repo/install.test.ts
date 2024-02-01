@@ -48,7 +48,7 @@ test.serial('init a new repo', async (t) => {
   t.is(pkg.name, 'openfn-repo');
 });
 
-test.serial('attempt to install a package', async (t) => {
+test.serial('try to install a package', async (t) => {
   const exec = mockExec();
 
   await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
@@ -59,7 +59,7 @@ test.serial('attempt to install a package', async (t) => {
   t.true(/(npm install).*(my-package)/.test(cmd));
 });
 
-test.serial('attempt to install multiple packages', async (t) => {
+test.serial('try to install multiple packages', async (t) => {
   const exec = mockExec();
 
   await install(

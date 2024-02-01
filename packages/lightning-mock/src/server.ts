@@ -11,34 +11,34 @@ import createLogger, {
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 
-import type { AttemptLogPayload, Attempt, DevServer } from './types';
+import type { RunLogPayload, Run, DevServer } from './types';
 
 type StepId = string;
 type JobId = string;
 
-export type AttemptState = {
+export type RunState = {
   status: 'queued' | 'started' | 'complete';
-  logs: AttemptLogPayload[];
+  logs: RunLogPayload[];
   steps: Record<JobId, StepId>;
 };
 
 export type ServerState = {
-  queue: AttemptId[];
+  queue: RunId[];
 
   // list of credentials by id
   credentials: Record<string, any>;
 
-  // list of attempts by id
-  attempts: Record<string, Attempt>;
+  // list of runs by id
+  runs: Record<string, Run>;
 
   // list of dataclips by id
   dataclips: Record<string, any>;
 
-  // Tracking state of known attempts
+  // Tracking state of known runs
   // TODO include the engine id and token
-  pending: Record<string, AttemptState>;
+  pending: Record<string, RunState>;
 
-  // Track all completed attempts here
+  // Track all completed runs here
   results: Record<string, { workerId: string; state: null | any }>;
 
   // event emitter for debugging and observability
@@ -51,7 +51,7 @@ export type LightningOptions = {
   port?: string | number;
 };
 
-export type AttemptId = string;
+export type RunId = string;
 
 // a mock lightning server
 const createLightningServer = (options: LightningOptions = {}) => {
@@ -59,11 +59,11 @@ const createLightningServer = (options: LightningOptions = {}) => {
 
   const state = {
     credentials: {},
-    attempts: {},
+    runs: {},
     dataclips: {},
     pending: {},
 
-    queue: [] as AttemptId[],
+    queue: [] as RunId[],
     results: {},
     events: new EventEmitter(),
   } as ServerState;

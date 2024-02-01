@@ -21,8 +21,8 @@ export interface Edge {
   errors?: any;
 }
 
-// An attempt object returned by Lightning
-export type Attempt = {
+// An run object returned by Lightning
+export type Run = {
   id: string;
   dataclip_id: string;
   starting_node_id: string;
@@ -34,7 +34,7 @@ export type Attempt = {
   options?: Record<string, any>; // TODO type the expected options
 };
 
-export type LightningEvents = 'log' | 'attempt-complete';
+export type LightningEvents = 'log' | 'run-complete';
 
 export type DataClip = any;
 
@@ -42,26 +42,26 @@ export type DevServer = Koa & {
   state: ServerState;
   addCredential(id: string, cred: Credential): void;
   addDataclip(id: string, data: DataClip): void;
-  enqueueAttempt(attempt: Attempt): void;
+  enqueueRun(run: Run): void;
   destroy: () => void;
-  getAttempt(id: string): Attempt;
+  getRun(id: string): Run;
   getCredential(id: string): Credential;
   getDataclip(id: string): DataClip;
   getQueueLength(): number;
-  getResult(attemptId: string): any;
+  getResult(runId: string): any;
   getState(): ServerState;
   on(event: LightningEvents, fn: (evt: any) => void): void;
   once(event: LightningEvents, fn: (evt: any) => void): void;
   onSocketEvent(
     event: LightningEvents,
-    attemptId: string,
+    runId: string,
     fn: (evt: any) => void
   ): void;
-  registerAttempt(attempt: Attempt): void;
+  registerRun(run: Run): void;
   removeAllListeners(): void;
   reset(): void;
-  startAttempt(id: string): any;
-  waitForResult(attemptId: string): Promise<any>;
+  startRun(id: string): any;
+  waitForResult(runId: string): Promise<any>;
 };
 
 /**
@@ -86,48 +86,48 @@ export type ExitReason = {
 };
 
 export type ClaimPayload = { demand?: number };
-export type ClaimReply = { attempts: Array<ClaimAttempt> };
-export type ClaimAttempt = { id: string; token: string };
+export type ClaimReply = { runs: Array<ClaimRun> };
+export type ClaimRun = { id: string; token: string };
 
-export type GetAttemptPayload = void; // no payload
-export type GetAttemptReply = Attempt;
+export type GetPlanPayload = void; // no payload
+export type GetPlanReply = Run;
 
 export type GetCredentialPayload = { id: string };
 // credential in-line, no wrapper, arbitrary data
 export type GetCredentialReply = {};
 
 export type GetDataclipPayload = { id: string };
-export type GetDataClipReply = Uint8Array; // represents a json string Attempt
+export type GetDataClipReply = Uint8Array; // represents a json string Run
 
-export type AttemptStartPayload = void; // no payload
-export type AttemptStartReply = {}; // no payload
+export type RunStartPayload = void; // no payload
+export type RunStartReply = {}; // no payload
 
-export type AttemptCompletePayload = ExitReason & {
+export type RunCompletePayload = ExitReason & {
   final_dataclip_id?: string; // TODO this will be removed soon
 };
-export type AttemptCompleteReply = undefined;
+export type RunCompleteReply = undefined;
 
-export type AttemptLogPayload = {
+export type RunLogPayload = {
   message: Array<string | object>;
   timestamp: string;
-  attempt_id: string;
+  run_id: string;
   level?: string;
   source?: string; // namespace
   job_id?: string;
   step_id?: string;
 };
-export type AttemptLogReply = void;
+export type RunLogReply = void;
 
 export type StepStartPayload = {
   job_id: string;
   step_id: string;
-  attempt_id?: string;
+  run_id?: string;
   input_dataclip_id?: string;
 };
 export type StepStartReply = void;
 
 export type StepCompletePayload = ExitReason & {
-  attempt_id?: string;
+  run_id?: string;
   job_id: string;
   step_id: string;
   output_dataclip?: string;

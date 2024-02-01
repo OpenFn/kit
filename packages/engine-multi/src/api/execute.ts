@@ -55,11 +55,11 @@ const execute = async (context: ExecutionContext) => {
 
     const workerOptions = {
       memoryLimitMb: options.memoryLimitMb,
-      timeout: options.attemptTimeoutMs,
+      timeout: options.runTimeoutMs,
     };
 
-    // Put out a log with the memory limit for the attempt
-    // This is a bit annoying but the log needs to be associated with the attempt
+    // Put out a log with the memory limit for the run
+    // This is a bit annoying but the log needs to be associated with the run
     // and not just emitted to stdout
     // The runtime can't do it because it doesn't know the memory limit
     if (workerOptions.memoryLimitMb) {

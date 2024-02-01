@@ -24,13 +24,13 @@ test.after(async () => {
 
 const run = async (attempt) => {
   return new Promise<any>(async (done) => {
-    lightning.once('attempt:complete', (evt) => {
-      if (attempt.id === evt.attemptId) {
+    lightning.once('run:complete', (evt) => {
+      if (attempt.id === evt.runId) {
         done(evt.payload);
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 

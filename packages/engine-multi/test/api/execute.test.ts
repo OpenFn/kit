@@ -230,7 +230,7 @@ test.serial('should emit error on timeout', async (t) => {
 
   const wfOptions: ExecuteOptions = {
     ...options,
-    attemptTimeoutMs: 10,
+    runTimeoutMs: 10,
   };
 
   let event;

@@ -1,13 +1,15 @@
-import convertAttempt from './convert-attempt';
+import convertRun from './convert-run';
 import tryWithBackoff from './try-with-backoff';
 import getWithReply from './get-with-reply';
 import stringify from './stringify';
-import createAttemptState from './create-attempt-state';
+import createRunState from './create-run-state';
+import throttle from './throttle';
 
 export {
-  convertAttempt,
+  throttle,
+  convertRun,
   tryWithBackoff,
   getWithReply,
   stringify,
-  createAttemptState,
+  createRunState,
 };

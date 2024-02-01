@@ -265,7 +265,7 @@ test('destroy immediately', (t) => {
 });
 
 // TODO is this right?
-// If we've claimed and the claimed attempt is waiting, we should probably run it
+// If we've claimed and the claimed run is waiting, we should probably run it
 // so this is invalid
 test.skip("don't process the queue after destroy", () => {
   const pool = createPool(workerPath, { capacity: 1 }, logger);

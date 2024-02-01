@@ -9,7 +9,7 @@ import querystring from 'query-string';
 // @ts-ignore
 import { Serializer } from 'phoenix';
 
-import { ATTEMPT_PREFIX, extractAttemptId } from './util';
+import { RUN_PREFIX, extractRunId } from './util';
 import { ServerState } from './server';
 import { stringify } from './util';
 
@@ -112,13 +112,13 @@ function createServer({
       let status: PhoenixEventStatus = 'ok';
       let response = 'ok';
 
-      // Validation on attempt:* channels
+      // Validation on run:* channels
       // TODO is this logic in the right place?
-      if (topic.startsWith(ATTEMPT_PREFIX)) {
-        const attemptId = extractAttemptId(topic);
-        if (!state.pending[attemptId]) {
+      if (topic.startsWith(RUN_PREFIX)) {
+        const runId = extractRunId(topic);
+        if (!state.pending[runId]) {
           status = 'error';
-          response = 'invalid_attempt_id';
+          response = 'invalid_run_id';
         } else if (!payload.token) {
           // TODO better token validation here
           status = 'error';

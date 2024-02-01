@@ -1,8 +1,8 @@
 import { CancelablePromise } from '../types';
 
 export type Options = {
-  attempts?: number;
-  maxAttempts?: number;
+  runs?: number;
+  maxRuns?: number;
 
   // min and max durations
   min?: number;
@@ -20,7 +20,7 @@ const BACKOFF_MULTIPLIER = 1.15;
 // If the function throws, it will "backoff" and try again a little later
 // Right now it's a bit of a sketch, but it sort of works!
 const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
-  const { min = 1000, max = 10000, maxAttempts, attempts = 1 } = opts;
+  const { min = 1000, max = 10000, maxRuns, runs = 1 } = opts;
 
   let cancelled = false;
 
@@ -40,8 +40,8 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
         return resolve();
       }
 
-      if (!isNaN(maxAttempts as any) && attempts >= (maxAttempts as number)) {
-        return reject(new Error('max attempts exceeded'));
+      if (!isNaN(maxRuns as any) && runs >= (maxRuns as number)) {
+        return reject(new Error('max runs exceeded'));
       }
       // failed? No problem, we'll back off and try again
       setTimeout(() => {
@@ -49,8 +49,8 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
           return resolve();
         }
         const nextOpts = {
-          maxAttempts,
-          attempts: attempts + 1,
+          maxRuns,
+          runs: runs + 1,
           min: Math.min(max, min * BACKOFF_MULTIPLIER),
           max: max,
           isCancelled: opts.isCancelled,

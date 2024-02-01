@@ -1,7 +1,7 @@
 export const run = async (lightning, attempt) => {
   return new Promise<any>(async (done, reject) => {
-    lightning.on('attempt:complete', (evt) => {
-      if (attempt.id === evt.attemptId) {
+    lightning.on('run:complete', (evt) => {
+      if (attempt.id === evt.runId) {
         done(lightning.getResult(attempt.id));
       } else {
         // If we get here, something has gone very wrong
@@ -9,7 +9,7 @@ export const run = async (lightning, attempt) => {
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 

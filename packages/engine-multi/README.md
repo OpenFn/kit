@@ -36,7 +36,7 @@ At the time of writing, compilation and autoinstall are run on the main thread -
 
 The Engine runs Workflows or Execution Plans. A plan MUST have an id.
 
-Note: An Execution Plan is NOT the same as a Lightning attempt, although there is a 1:1 mapping between them.
+Note: An Execution Plan is NOT the same as a Lightning run, although there is a 1:1 mapping between them.
 
 Instantiate a new Engine:
 

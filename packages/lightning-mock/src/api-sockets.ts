@@ -8,31 +8,31 @@ import createPheonixMockSocketServer, {
   PhoenixEventStatus,
 } from './socket-server';
 import {
-  ATTEMPT_COMPLETE,
-  ATTEMPT_LOG,
-  ATTEMPT_START,
+  RUN_COMPLETE,
+  RUN_LOG,
+  RUN_START,
   CLAIM,
-  GET_ATTEMPT,
+  GET_PLAN,
   GET_CREDENTIAL,
   GET_DATACLIP,
   STEP_COMPLETE,
   STEP_START,
 } from './events';
-import { extractAttemptId, stringify } from './util';
+import { extractRunId, stringify } from './util';
 
 import type { ServerState } from './server';
 import type {
-  AttemptStartPayload,
-  AttemptStartReply,
-  AttemptCompletePayload,
-  AttemptCompleteReply,
-  AttemptLogPayload,
-  AttemptLogReply,
-  ClaimAttempt,
+  RunStartPayload,
+  RunStartReply,
+  RunCompletePayload,
+  RunCompleteReply,
+  RunLogPayload,
+  RunLogReply,
+  ClaimRun,
   ClaimPayload,
   ClaimReply,
-  GetAttemptPayload,
-  GetAttemptReply,
+  GetPlanPayload,
+  GetPlanReply,
   GetCredentialPayload,
   GetCredentialReply,
   GetDataclipPayload,
@@ -103,19 +103,19 @@ const createSocketAPI = (
 
   wss.registerEvents('worker:queue', {
     [CLAIM]: (ws, event: PhoenixEvent<ClaimPayload>) => {
-      const { attempts } = pullClaim(state, ws, event);
+      const { runs } = pullClaim(state, ws, event);
       state.events.emit(CLAIM, {
-        payload: attempts,
+        payload: runs,
         state: clone(state),
       });
     },
   });
 
-  const startAttempt = (attemptId: string) => {
-    logger?.info(`joining channel attempt:${attemptId}`);
+  const startRun = (runId: string) => {
+    logger?.info(`joining channel run:${runId}`);
 
-    // mark the attempt as started on the server
-    state.pending[attemptId] = {
+    // mark the run as started on the server
+    state.pending[runId] = {
       status: 'started',
       logs: [],
       steps: {},
@@ -126,37 +126,37 @@ const createSocketAPI = (
         state: ServerState,
         ws: DevSocket,
         evt: PhoenixEvent<T>,
-        attemptId: string
+        runId: string
       ) => void
     ) => {
       return (ws: DevSocket, event: PhoenixEvent<T>) => {
-        handler(state, ws, event, attemptId);
+        handler(state, ws, event, runId);
         // emit each event and the state after to the event handler, for debug
         state.events.emit(event.event, {
-          attemptId,
+          runId,
           payload: event.payload,
           state: clone(state),
         });
       };
     };
 
-    const { unsubscribe } = wss.registerEvents(`attempt:${attemptId}`, {
-      [GET_ATTEMPT]: wrap(getAttempt),
-      [ATTEMPT_START]: wrap(handleStartAttempt),
+    const { unsubscribe } = wss.registerEvents(`run:${runId}`, {
+      [GET_PLAN]: wrap(getRun),
+      [RUN_START]: wrap(handleStartRun),
       [GET_CREDENTIAL]: wrap(getCredential),
       [GET_DATACLIP]: wrap(getDataclip),
       [STEP_START]: wrap(handleStepStart),
-      [ATTEMPT_LOG]: wrap(handleLog),
+      [RUN_LOG]: wrap(handleLog),
       [STEP_COMPLETE]: wrap(handleStepComplete),
-      [ATTEMPT_COMPLETE]: wrap((...args) => {
-        handleAttemptComplete(...args);
+      [RUN_COMPLETE]: wrap((...args) => {
+        handleRunComplete(...args);
         unsubscribe();
       }),
     });
   };
 
   return {
-    startAttempt,
+    startRun,
     close: () => {
       server.close();
       (wss as any).close();
@@ -165,7 +165,7 @@ const createSocketAPI = (
 
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
-  // the reply ensures that only the calling worker will get the attempt
+  // the reply ensures that only the calling worker will get the run
   function pullClaim(
     state: ServerState,
     ws: DevSocket,
@@ -175,25 +175,25 @@ const createSocketAPI = (
     const { queue } = state;
     let count = 1;
 
-    const attempts: ClaimAttempt[] = [];
+    const runs: ClaimRun[] = [];
     const payload = {
       status: 'ok' as const,
-      response: { attempts } as ClaimReply,
+      response: { runs } as ClaimReply,
     };
 
     while (count > 0 && queue.length) {
-      // TODO assign the worker id to the attempt
+      // TODO assign the worker id to the run
       // Not needed by the mocks at the moment
       const next = queue.shift();
       // TODO the token in the mock is trivial because we're not going to do any validation on it yet
-      // TODO need to save the token associated with this attempt
-      attempts.push({ id: next!, token: 'x.y.z' });
+      // TODO need to save the token associated with this run
+      runs.push({ id: next!, token: 'x.y.z' });
       count -= 1;
 
-      startAttempt(next!);
+      startRun(next!);
     }
-    if (attempts.length) {
-      logger?.info(`Claiming ${attempts.length} attempts`);
+    if (runs.length) {
+      logger?.info(`Claiming ${runs.length} runs`);
     } else {
       logger?.debug('No claims (queue empty)');
     }
@@ -202,16 +202,16 @@ const createSocketAPI = (
     return payload.response;
   }
 
-  function getAttempt(
+  function getRun(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<GetAttemptPayload>
+    evt: PhoenixEvent<GetPlanPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const attemptId = extractAttemptId(topic);
-    const response = state.attempts[attemptId];
+    const runId = extractRunId(topic);
+    const response = state.runs[runId];
 
-    ws.reply<GetAttemptReply>({
+    ws.reply<GetPlanReply>({
       ref,
       join_ref,
       topic,
@@ -222,25 +222,25 @@ const createSocketAPI = (
     });
   }
 
-  function handleStartAttempt(
+  function handleStartRun(
     _state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<AttemptStartPayload>
+    evt: PhoenixEvent<RunStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const [_, attemptId] = topic.split(':');
+    const [_, runId] = topic.split(':');
     let payload = {
       status: 'ok' as PhoenixEventStatus,
     };
     if (
-      !state.pending[attemptId] ||
-      state.pending[attemptId].status !== 'started'
+      !state.pending[runId] ||
+      state.pending[runId].status !== 'started'
     ) {
       payload = {
         status: 'error',
       };
     }
-    ws.reply<AttemptStartReply>({
+    ws.reply<RunStartReply>({
       ref,
       join_ref,
       topic,
@@ -295,12 +295,12 @@ const createSocketAPI = (
   function handleLog(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<AttemptLogPayload>
+    evt: PhoenixEvent<RunLogPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { attempt_id: attemptId } = evt.payload;
+    const { run_id: runId } = evt.payload;
 
-    state.pending[attemptId].logs.push(evt.payload);
+    state.pending[runId].logs.push(evt.payload);
 
     let payload: any = {
       status: 'ok',
@@ -318,9 +318,9 @@ const createSocketAPI = (
       };
     }
 
-    logger?.info(`LOG [${attemptId}] ${evt.payload.message[0]}`);
+    logger?.info(`LOG [${runId}] ${evt.payload.message[0]}`);
 
-    ws.reply<AttemptLogReply>({
+    ws.reply<RunLogReply>({
       ref,
       join_ref,
       topic,
@@ -328,27 +328,27 @@ const createSocketAPI = (
     });
   }
 
-  function handleAttemptComplete(
+  function handleRunComplete(
     state: ServerState,
     ws: DevSocket,
-    evt: PhoenixEvent<AttemptCompletePayload>,
-    attemptId: string
+    evt: PhoenixEvent<RunCompletePayload>,
+    runId: string
   ) {
     const { ref, join_ref, topic } = evt;
     const { final_dataclip_id, reason, error_type, error_message, ...rest } =
       evt.payload;
 
-    logger?.info('Completed attempt ', attemptId);
+    logger?.info('Completed run ', runId);
     logger?.debug(final_dataclip_id);
 
-    state.pending[attemptId].status = 'complete';
+    state.pending[runId].status = 'complete';
 
     // TODO we'll remove this stuff soon
-    if (!state.results[attemptId]) {
-      state.results[attemptId] = { state: null, workerId: 'mock' };
+    if (!state.results[runId]) {
+      state.results[runId] = { state: null, workerId: 'mock' };
     }
     if (final_dataclip_id) {
-      state.results[attemptId].state = state.dataclips[final_dataclip_id];
+      state.results[runId].state = state.dataclips[final_dataclip_id];
     }
 
     let payload: any = validateReasons(evt.payload);
@@ -361,7 +361,7 @@ const createSocketAPI = (
       };
     }
 
-    ws.reply<AttemptCompleteReply>({
+    ws.reply<RunCompleteReply>({
       ref,
       join_ref,
       topic,
@@ -377,11 +377,11 @@ const createSocketAPI = (
     const { ref, join_ref, topic } = evt;
     const { step_id, job_id, input_dataclip_id } = evt.payload;
 
-    const [_, attemptId] = topic.split(':');
+    const [_, runId] = topic.split(':');
     if (!state.dataclips) {
       state.dataclips = {};
     }
-    state.pending[attemptId].steps[job_id] = step_id;
+    state.pending[runId].steps[job_id] = step_id;
 
     let payload: any = {
       status: 'ok',

@@ -23,7 +23,7 @@ test('workloop can be cancelled', async (t) => {
       [CLAIM]: () => {
         count++;
         cancel();
-        return { attempts: [] };
+        return { runs: [] };
       },
     }),
     execute: () => {},
@@ -36,7 +36,7 @@ test('workloop can be cancelled', async (t) => {
   t.assert(count <= 5);
 });
 
-test('workloop sends the attempts:claim event', (t) => {
+test('workloop sends the runs:claim event', (t) => {
   return new Promise((done) => {
     let cancel;
 
@@ -46,7 +46,7 @@ test('workloop sends the attempts:claim event', (t) => {
         [CLAIM]: () => {
           t.pass();
           done();
-          return { attempts: [] };
+          return { runs: [] };
         },
       }),
       execute: () => {},
@@ -55,7 +55,7 @@ test('workloop sends the attempts:claim event', (t) => {
   });
 });
 
-test('workloop sends the attempts:claim event several times ', (t) => {
+test('workloop sends the runs:claim event several times ', (t) => {
   return new Promise((done) => {
     let cancel;
     let count = 0;
@@ -68,7 +68,7 @@ test('workloop sends the attempts:claim event several times ', (t) => {
             t.pass();
             done();
           }
-          return { attempts: [] };
+          return { runs: [] };
         },
       }),
       execute: () => {},
@@ -77,7 +77,7 @@ test('workloop sends the attempts:claim event several times ', (t) => {
   });
 });
 
-test('workloop calls execute if attempts:claim returns attempts', (t) => {
+test('workloop calls execute if runs:claim returns runs', (t) => {
   return new Promise((done) => {
     let cancel;
 
@@ -85,11 +85,11 @@ test('workloop calls execute if attempts:claim returns attempts', (t) => {
       workflows: {},
       queueChannel: mockChannel({
         [CLAIM]: () => ({
-          attempts: [{ id: 'a', token: 'x.y.z' }],
+          runs: [{ id: 'a', token: 'x.y.z' }],
         }),
       }),
-      execute: (attempt) => {
-        t.deepEqual(attempt, { id: 'a', token: 'x.y.z' });
+      execute: (run) => {
+        t.deepEqual(run, { id: 'a', token: 'x.y.z' });
         t.pass();
         done();
       },

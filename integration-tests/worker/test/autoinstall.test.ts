@@ -6,7 +6,7 @@ import test from 'ava';
 import path from 'node:path';
 
 import { initLightning, initWorker } from '../src/init';
-import { createAttempt, createJob } from '../src/factories';
+import { createRun, createJob } from '../src/factories';
 
 const generate = (adaptor, version) => {
   const specifier = `@openfn/language-${adaptor}@${version}`;
@@ -14,7 +14,7 @@ const generate = (adaptor, version) => {
     body: `fn(() => ({ data: "${adaptor}" }))`,
     adaptor: specifier,
   });
-  return createAttempt([], [job], []);
+  return createRun([], [job], []);
 };
 
 let lightning;
@@ -22,13 +22,13 @@ let worker;
 
 const run = async (attempt) => {
   return new Promise<any>(async (done, reject) => {
-    lightning.on('attempt:complete', (evt) => {
-      if (attempt.id === evt.attemptId) {
+    lightning.on('run:complete', (evt) => {
+      if (attempt.id === evt.runId) {
         done(lightning.getResult(attempt.id));
       }
     });
 
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
   });
 };
 

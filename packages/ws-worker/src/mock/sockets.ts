@@ -36,7 +36,7 @@ export const mockChannel = (callbacks: Record<string, EventHandler> = {}) => {
     },
     join: () => {
       if (callbacks.join) {
-        // This is an attempt to mock a join fail
+        // Here we try mock a join fail
         // not sure it works that well...
         // @ts-ignore
         const { status, response } = callbacks.join();

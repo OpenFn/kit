@@ -1,7 +1,7 @@
 import test from 'ava';
 import { fork } from 'node:child_process';
 
-import { createAttempt, createJob } from '../src/factories';
+import { createRun, createJob } from '../src/factories';
 import { initLightning, initWorker } from '../src/init';
 
 let lightning;
@@ -105,9 +105,9 @@ test.serial('allow a job to complete after receiving a sigterm', (t) => {
       adaptor: '',
       body: 'export default [(s) => new Promise((resolve) => setTimeout(() => resolve(s), 1000))]',
     });
-    const attempt = createAttempt([], [job], []);
+    const attempt = createRun([], [job], []);
 
-    lightning.once('attempt:complete', (evt) => {
+    lightning.once('run:complete', (evt) => {
       t.true(didKill); // Did we kill the server before this returned?
       t.is(evt.payload.reason, 'success'); // did the attempt succeed?
       t.pass('ok');
@@ -133,8 +133,7 @@ test.serial('allow a job to complete after receiving a sigterm', (t) => {
     });
 
     workerProcess = await spawnServer(port);
-
-    lightning.enqueueAttempt(attempt);
+    lightning.enqueueRun(attempt);
 
     // give the attempt time to start, then kill the server
     setTimeout(() => {

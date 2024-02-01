@@ -1,6 +1,6 @@
 import test from 'ava';
 import { STEP_START } from '../../src/events';
-import { join, setup, createAttempt } from '../util';
+import { join, setup, createRun } from '../util';
 
 let server;
 let client;
@@ -11,9 +11,9 @@ test.before(async () => ({ server, client } = await setup(port)));
 
 test.serial('acknowledge valid message', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     const event = {
       job_id: 'a',
@@ -21,7 +21,7 @@ test.serial('acknowledge valid message', async (t) => {
       input_dataclip_id: 'x',
     };
 
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
     channel.push(STEP_START, event).receive('ok', () => {
       t.pass('event acknowledged');
@@ -32,9 +32,9 @@ test.serial('acknowledge valid message', async (t) => {
 
 test.serial('save run id to state', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     const event = {
       job_id: 'a',
@@ -42,10 +42,10 @@ test.serial('save run id to state', async (t) => {
       input_dataclip_id: 'x',
     };
 
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
     channel.push(STEP_START, event).receive('ok', () => {
-      t.deepEqual(server.state.pending[attempt.id].steps, {
+      t.deepEqual(server.state.pending[run.id].steps, {
         [event.job_id]: event.step_id,
       });
       done();
@@ -55,9 +55,9 @@ test.serial('save run id to state', async (t) => {
 
 test.serial('error if no step_id', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     const event = {
       job_id: 'a',
@@ -65,7 +65,7 @@ test.serial('error if no step_id', async (t) => {
       input_dataclip_id: 'x',
     };
 
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
     channel.push(STEP_START, event).receive('error', () => {
       t.pass('event rejected');
@@ -76,9 +76,9 @@ test.serial('error if no step_id', async (t) => {
 
 test.serial('error if no job_id', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     const event = {
       job_id: undefined,
@@ -86,7 +86,7 @@ test.serial('error if no job_id', async (t) => {
       input_dataclip_id: 'x',
     };
 
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
     channel.push(STEP_START, event).receive('error', () => {
       t.pass('event rejected');
@@ -97,9 +97,9 @@ test.serial('error if no job_id', async (t) => {
 
 test.serial('error if no input_dataclip_id', async (t) => {
   return new Promise(async (done) => {
-    const attempt = createAttempt();
+    const run = createRun();
 
-    server.startAttempt(attempt.id);
+    server.startRun(run.id);
 
     const event = {
       job_id: 'a',
@@ -107,7 +107,7 @@ test.serial('error if no input_dataclip_id', async (t) => {
       input_dataclip_id: undefined,
     };
 
-    const channel = await join(client, attempt.id);
+    const channel = await join(client, run.id);
 
     channel.push(STEP_START, event).receive('error', () => {
       t.pass('event rejected');

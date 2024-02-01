@@ -6,13 +6,13 @@ import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
 
-import { INTERNAL_ATTEMPT_COMPLETE, ClaimAttempt } from './events';
+import { INTERNAL_RUN_COMPLETE, ClaimRun } from './events';
 import destroy from './api/destroy';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import healthcheck from './middleware/healthcheck';
-import joinAttemptChannel from './channels/attempt';
+import joinRunChannel from './channels/run';
 import connectToWorkerQueue from './channels/worker-queue';
 
 import type { Server } from 'http';
@@ -45,7 +45,7 @@ export interface ServerApp extends Koa {
   server: Server;
   engine: RuntimeEngine;
 
-  execute: ({ id, token }: ClaimAttempt) => Promise<void>;
+  execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
   killWorkloop?: () => void;
 }
@@ -153,26 +153,26 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   router.get('/', healthcheck);
 
   // TODO this probably needs to move into ./api/ somewhere
-  app.execute = async ({ id, token }: ClaimAttempt) => {
+  app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
       app.workflows[id] = true;
 
       // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
       const {
-        channel: attemptChannel,
+        channel: runChannel,
         plan,
         options,
-      } = await joinAttemptChannel(app.socket, token, id, logger);
+      } = await joinRunChannel(app.socket, token, id, logger);
 
       // Callback to be triggered when the work is done (including errors)
       const onFinish = () => {
         delete app.workflows[id];
-        attemptChannel.leave();
+        runChannel.leave();
 
-        app.events.emit(INTERNAL_ATTEMPT_COMPLETE);
+        app.events.emit(INTERNAL_RUN_COMPLETE);
       };
       const context = execute(
-        attemptChannel,
+        runChannel,
         engine,
         logger,
         plan,
@@ -192,13 +192,13 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     logger.info('triggering claim from POST request');
     return claim(app, logger, options.maxWorkflows)
       .then(() => {
-        logger.info('claim complete: 1 attempt claimed');
+        logger.info('claim complete: 1 run claimed');
         ctx.body = 'complete';
         ctx.status = 200;
       })
       .catch(() => {
-        logger.info('claim complete: no attempts');
-        ctx.body = 'no attempts';
+        logger.info('claim complete: no runs');
+        ctx.body = 'no runs';
         ctx.status = 204;
       });
   });
