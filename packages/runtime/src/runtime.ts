@@ -1,9 +1,8 @@
 import { createMockLogger, Logger } from '@openfn/logger';
-
+import type { State } from '@openfn/lexicon';
 import type {
   Operation,
   ExecutionPlan,
-  State,
   JobNodeID,
   ExecutionCallbacks,
 } from './types';

@@ -1,9 +1,9 @@
 import { Logger } from '@openfn/logger';
-import { ErrorReport, JobNodeID, State } from '../types';
+import type { State, ErrorReport, StepId } from '@openfn/lexicon';
 
 export type ErrorReporter = (
   state: State,
-  jobId: JobNodeID,
+  jobId: StepId,
   error: NodeJS.ErrnoException & {
     severity?: string;
     handled?: boolean;
@@ -20,6 +20,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
     const report: ErrorReport = {
       type: error.subtype || error.type || error.name,
       jobId,
+      stepId: jobId,
       message: error.message,
       error: error,
     };

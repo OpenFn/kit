@@ -413,6 +413,8 @@ importers:
 
   packages/engine-multi/tmp/repo: {}
 
+  packages/lexicon: {}
+
   packages/lightning-mock:
     dependencies:
       '@koa/router':
@@ -559,6 +561,9 @@ importers:
       '@openfn/language-common':
         specifier: 2.0.0-rc3
         version: 2.0.0-rc3
+      '@openfn/lexicon':
+        specifier: workspace:^
+        version: link:../lexicon
       '@types/mock-fs':
         specifier: ^4.13.1
         version: 4.13.1
