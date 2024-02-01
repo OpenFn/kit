@@ -278,7 +278,7 @@ test('print() should not log if level is none', (t) => {
   t.is(logger._history.length, 0);
 });
 
-test.only('print() should log as json', (t) => {
+test('print() should log as json', (t) => {
   const options = { json: true };
   const logger = createLogger<string>('x', options);
   logger.print('abc');

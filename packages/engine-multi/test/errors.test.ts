@@ -154,7 +154,7 @@ test.serial.skip('execution error from async code', (t) => {
   });
 });
 
-test.serial.only('emit a crash error on process.exit()', (t) => {
+test.serial('emit a crash error on process.exit()', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'z',

@@ -406,7 +406,7 @@ test('log job code to the job logger', async (t) => {
   t.is(out.message[0], 'hi');
 });
 
-test.only('log and serialize an error to the job logger', async (t) => {
+test('log and serialize an error to the job logger', async (t) => {
   const plan: ExecutionPlan = {
     jobs: [
       {

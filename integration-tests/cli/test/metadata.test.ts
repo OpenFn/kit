@@ -17,7 +17,7 @@ test.before(async () => {
 });
 
 // Generate metadata
-test.serial.only(
+test.serial(
   `openfn metadata -S "${state}" -a test=${modulePath} --log-json --log info`,
   async (t) => {
     const { stdout } = await run(t.title);
