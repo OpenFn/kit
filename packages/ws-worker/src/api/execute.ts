@@ -207,10 +207,13 @@ export function onJobLog({ channel, state }: Context, event: JSONLog) {
   const log: RunLogPayload = {
     run_id: state.plan.id!,
     // The message body, the actual thing that is logged,
-    // is always encoded into a string
+    // may be always encoded into a string
     // Parse it here before sending on to lightning
     // TODO this needs optimising!
-    message: JSON.parse(event.message),
+    message:
+      typeof event.message === 'string'
+        ? JSON.parse(event.message)
+        : event.message,
     source: event.name,
     level: event.level,
     timestamp: timeInMicroseconds.toString(),

@@ -115,7 +115,7 @@ export interface Channel extends PhxChannel {
 }
 
 // override the JSON log typing because the log message
-// is always JSON encoded in a string
+// might be JSON encoded in a string
 export type JSONLog = Omit<JSONLog, 'message'> & {
-  message: string;
+  message: string | any[];
 };

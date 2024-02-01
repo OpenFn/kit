@@ -58,7 +58,7 @@ export default async function onStepStart(
 
   await onJobLog(versionLogContext, {
     time,
-    message: JSON.stringify([versionMessage]),
+    message: [versionMessage],
     level: 'info',
     name: 'VER',
   });
