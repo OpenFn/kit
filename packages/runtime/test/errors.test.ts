@@ -1,16 +1,28 @@
 import test from 'ava';
 import path from 'node:path';
+import type { WorkflowOptions } from '@openfn/lexicon';
+
 import run from '../src/runtime';
 
-// This is irrelevant now as state and credentials are preloaded
-test.todo('lazy state & credential loading');
+const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
+  workflow: {
+    jobs: [
+      {
+        expression,
+      },
+    ],
+  },
+  options,
+});
 
 test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
+  const plan = createPlan(expression, { timeout: 1 });
+  console.log(plan);
   let error;
   try {
-    await run(expression, {}, { timeout: 1 });
+    await run(plan);
   } catch (e) {
     error = e;
   }
@@ -72,24 +84,28 @@ test('crash on eval with SecurityError', async (t) => {
 });
 
 test('crash on edge condition error with EdgeConditionError', async (t) => {
-  const workflow = {
-    jobs: [
-      {
-        id: 'a',
-        next: {
-          b: {
-            // Will throw a reference error
-            condition: 'wibble',
+  const plan = {
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          expression: '.',
+          next: {
+            b: {
+              // Will throw a reference error
+              condition: 'wibble',
+            },
           },
         },
-      },
-      { id: 'b' },
-    ],
+        { id: 'b', expression: '.' },
+      ],
+    },
+    options: {},
   };
 
   let error;
   try {
-    await run(workflow);
+    await run(plan);
   } catch (e) {
     error = e;
   }
@@ -126,15 +142,11 @@ test('crash on blacklisted module', async (t) => {
 
   let error;
   try {
-    await run(
-      expression,
-      {},
-      {
-        linker: {
-          whitelist: [/^@opennfn/],
-        },
-      }
-    );
+    await run(expression, {
+      linker: {
+        whitelist: [/^@opennfn/],
+      },
+    });
   } catch (e) {
     error = e;
   }
@@ -202,17 +214,13 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   import { err } from 'x';
   export default [(s) => err()];
   `;
-  const result = await run(
-    expression,
-    {},
-    {
-      linker: {
-        modules: {
-          x: { path: path.resolve('test/__modules__/test') },
-        },
+  const result = await run(expression, {
+    linker: {
+      modules: {
+        x: { path: path.resolve('test/__modules__/test') },
       },
-    }
-  );
+    },
+  });
 
   const error = result.errors['job-1'];
   t.is(error.type, 'AdaptorError');
@@ -227,17 +235,13 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
   import { err2 } from 'x';
   export default [(s) => err2()];
   `;
-  const result = await run(
-    expression,
-    {},
-    {
-      linker: {
-        modules: {
-          x: { path: path.resolve('test/__modules__/test') },
-        },
+  const result = await run(expression, {
+    linker: {
+      modules: {
+        x: { path: path.resolve('test/__modules__/test') },
       },
-    }
-  );
+    },
+  });
 
   const error = result.errors['job-1'];
   t.is(error.type, 'JobError');

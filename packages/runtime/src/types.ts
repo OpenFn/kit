@@ -1,5 +1,10 @@
-// TMP just thinking through things
-import { State } from '@openfn/lexicon';
+import {
+  State,
+  Operation,
+  Job,
+  StepId,
+  WorkflowOptions,
+} from '@openfn/lexicon';
 
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
@@ -13,42 +18,6 @@ import {
   NOTIFY_STATE_LOAD,
 } from './events';
 
-// export type ExecutionPlan = {
-//   id?: string; // UUID for this plan
-//   jobs: JobNode[];
-//   start?: JobNodeID;
-//   initialState?: State | string;
-// };
-
-// export type JobNode = {
-//   id?: JobNodeID;
-
-//   // The runtime itself will ignore the adaptor flag
-//   // The adaptor import should be compiled in by the compiler, and dependency managed by the runtime manager
-//   adaptor?: string;
-
-//   expression?: string | Operation[]; // the code we actually want to execute. Can be a path.
-
-//   configuration?: object | string; // credential object
-
-//   // TODO strings aren't actually suppored here yet
-//   state?: Omit<State, 'configuration'> | string; // default state (globals)
-
-//   next?: string | Record<JobNodeID, JobEdge>;
-//   previous?: JobNodeID;
-// };
-
-// export type JobEdge =
-//   | boolean
-//   | string
-//   | {
-//       condition?: string; // Javascript expression (function body, not function)
-//       label?: string;
-//       disabled?: boolean;
-// };
-
-export type JobNodeID = string;
-
 export type CompiledJobEdge =
   | boolean
   | {
@@ -56,16 +25,21 @@ export type CompiledJobEdge =
       disabled?: boolean;
     };
 
-export type CompiledJobNode = Omit<JobNode, 'next'> & {
-  id: JobNodeID;
-  next?: Record<JobNodeID, CompiledJobEdge>;
+export type CompiledJobNode = Omit<Job, 'next'> & {
+  id: StepId;
+  next?: Record<StepId, CompiledJobEdge>;
 };
 
+export type Lazy<T> = string | T;
+
 export type CompiledExecutionPlan = {
-  id?: string;
-  start: JobNodeID;
-  jobs: Record<JobNodeID, CompiledJobNode>;
-  initialState?: State | string;
+  workflow: {
+    jobs: Record<StepId, CompiledJobNode>;
+  };
+  options: WorkflowOptions & {
+    start: StepId;
+    initialState: Lazy<State>;
+  };
 };
 
 export type JobModule = {
@@ -79,7 +53,6 @@ type NotifyHandler = (
   payload: NotifyEventsLookup[typeof event]
 ) => void;
 
-// TODO difficulty: this is not the same as a vm execution context
 export type ExecutionContext = {
   plan: CompiledExecutionPlan;
   logger: Logger;
@@ -143,7 +116,7 @@ export type NotifyEventsLookup = {
 };
 
 export type ExecutionCallbacks = {
-  notify: NotifyHandler;
+  notify?: NotifyHandler;
   resolveState?: (stateId: string) => Promise<any>;
   resolveCredential?: (credentialId: string) => Promise<any>;
 };

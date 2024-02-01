@@ -2,16 +2,16 @@ import type {
   CompiledExecutionPlan,
   CompiledJobEdge,
   CompiledJobNode,
-  ExecutionPlan,
-  JobEdge,
 } from '../types';
 
 import compileFunction from '../modules/compile-function';
 import { conditionContext, Context } from './context';
+import { ExecutionPlan, StepEdge, Workflow } from '@openfn/lexicon';
+import { clone, defaultState } from '../util';
 
 const compileEdges = (
   from: string,
-  edges: string | Record<string, boolean | JobEdge>,
+  edges: string | Record<string, boolean | StepEdge>,
   context: Context
 ) => {
   if (typeof edges === 'string') {
@@ -55,8 +55,8 @@ const compileEdges = (
 // find the upstream job for a given job
 // Inefficient but fine for now (note that validation does something similar)
 // Note that right now we only support one upstream job
-const findUpstream = (plan: ExecutionPlan, id: string) => {
-  for (const job of plan.jobs) {
+const findUpstream = (workflow: Workflow, id: string) => {
+  for (const job of workflow.jobs) {
     if (job.next)
       if (typeof job.next === 'string') {
         if (job.next === id) {
@@ -69,7 +69,9 @@ const findUpstream = (plan: ExecutionPlan, id: string) => {
 };
 
 export default (plan: ExecutionPlan) => {
+  const { workflow, options = {} } = plan;
   let autoJobId = 0;
+
   const generateJobId = () => `job-${++autoJobId}`;
   const context = conditionContext();
 
@@ -89,25 +91,25 @@ export default (plan: ExecutionPlan) => {
     }
   };
 
-  // ensure ids before we start
-  for (const job of plan.jobs) {
+  for (const job of workflow.jobs) {
     if (!job.id) {
       job.id = generateJobId();
     }
   }
 
-  const newPlan = {
-    jobs: {},
-    start: plan.start,
-    initialState: plan.initialState,
-  } as Pick<CompiledExecutionPlan, 'jobs' | 'start'>;
+  const newPlan: CompiledExecutionPlan = {
+    workflow: {
+      jobs: {},
+    },
+    options: {
+      ...options,
+      start: options.start ?? workflow.jobs[0]?.id!,
+      initialState: clone(options.initialState ?? defaultState),
+    },
+  };
 
-  for (const job of plan.jobs) {
+  for (const job of workflow.jobs) {
     const jobId = job.id!;
-    if (!newPlan.start) {
-      // Default the start job to the first
-      newPlan.start = jobId;
-    }
     const newJob: CompiledJobNode = {
       id: jobId,
       expression: job.expression, // TODO we should compile this here
@@ -123,8 +125,8 @@ export default (plan: ExecutionPlan) => {
         newJob.next = compileEdges(jobId, job.next!, context);
       });
     }
-    newJob.previous = findUpstream(plan, jobId);
-    newPlan.jobs[jobId] = newJob;
+    newJob.previous = findUpstream(workflow, jobId);
+    newPlan.workflow.jobs[jobId] = newJob;
   }
 
   if (errs.length) {

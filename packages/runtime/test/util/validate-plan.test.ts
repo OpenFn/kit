@@ -1,19 +1,21 @@
 import test from 'ava';
-import { ExecutionPlan } from '../../src';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
 
 import validate, { buildModel } from '../../src/util/validate-plan';
 
+const job = (id: string, next?: Record<string, boolean>) =>
+  ({
+    id,
+    next,
+    expression: '.',
+  } as Job);
+
 test('builds a simple model', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-      },
-    ],
+    options: {},
+    workflow: {
+      jobs: [job('a', { b: true }), job('b')],
+    },
   };
 
   const model = buildModel(plan);
@@ -31,17 +33,10 @@ test('builds a simple model', (t) => {
 
 test('builds a more complex model', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-        next: { c: true, a: true },
-      },
-      { id: 'c' },
-    ],
+    options: {},
+    workflow: {
+      jobs: [job('a', { b: true }), job('b', { c: true, a: true }), job('c')],
+    },
   };
 
   const model = buildModel(plan);
@@ -63,16 +58,10 @@ test('builds a more complex model', (t) => {
 
 test('throws for a circular dependency', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-        next: { a: true },
-      },
-    ],
+    options: {},
+    workflow: {
+      jobs: [job('a', { b: true }), job('b', { a: true })],
+    },
   };
 
   t.throws(() => validate(plan), {
@@ -82,20 +71,14 @@ test('throws for a circular dependency', (t) => {
 
 test('throws for an indirect circular dependency', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-        next: { c: true },
-      },
-      {
-        id: 'c',
-        next: { a: true },
-      },
-    ],
+    options: {},
+    workflow: {
+      jobs: [
+        job('a', { b: true }),
+        job('b', { c: true }),
+        job('c', { a: true }),
+      ],
+    },
   };
 
   t.throws(() => validate(plan), {
@@ -105,22 +88,17 @@ test('throws for an indirect circular dependency', (t) => {
 
 test('throws for a multiple inputs', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        next: { b: true, c: true },
-      },
-      {
-        id: 'b',
-        next: { z: true },
-      },
-      {
-        id: 'c',
-        next: { z: true },
-      },
-      { id: 'z' },
-    ],
+    options: {},
+    workflow: {
+      jobs: [
+        job('a', { b: true, c: true }),
+        job('b', { z: true }),
+        job('c', { z: true }),
+        job('z'),
+      ],
+    },
   };
+
   t.throws(() => validate(plan), {
     message: 'Multiple dependencies detected for: z',
   });
@@ -128,12 +106,12 @@ test('throws for a multiple inputs', (t) => {
 
 test('throws for a an unknown job', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        next: { z: true },
-      },
-    ],
+    options: {},
+    workflow: {
+      jobs: [job('next', { z: true })],
+    },
   };
+
   t.throws(() => validate(plan), {
     message: 'Cannot find job: z',
   });
@@ -141,11 +119,15 @@ test('throws for a an unknown job', (t) => {
 
 test('throws for a an unknown job with shorthand syntax', (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        next: 'z',
-      },
-    ],
+    options: {},
+    workflow: {
+      jobs: [
+        {
+          next: 'z',
+          expression: '.',
+        },
+      ],
+    },
   };
   t.throws(() => validate(plan), {
     message: 'Cannot find job: z',
@@ -154,9 +136,14 @@ test('throws for a an unknown job with shorthand syntax', (t) => {
 
 test('throws for invalid string start', (t) => {
   const plan: ExecutionPlan = {
-    start: 'z',
-    jobs: [{ id: 'a' }],
+    options: {
+      start: 'z',
+    },
+    workflow: {
+      jobs: [job('a')],
+    },
   };
+
   t.throws(() => validate(plan), {
     message: 'Could not find start job: z',
   });

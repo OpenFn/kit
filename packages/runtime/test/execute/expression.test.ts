@@ -1,8 +1,10 @@
 import test from 'ava';
 import { fn } from '@openfn/language-common';
 import { createMockLogger } from '@openfn/logger';
+import type { State } from '@openfn/lexicon';
+
 import execute from '../../src/execute/expression';
-import type { State, Operation, ExecutionContext } from '../../src/types';
+import type { ExecutionContext } from '../../src/types';
 
 type TestState = State & {
   data: {
@@ -17,15 +19,18 @@ const createState = (data = {}) => ({
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
-const createContext = (args = {}) =>
+const createContext = (args = {}, options = {}) =>
+  // @ts-ignore
   ({
     logger,
-    plan: {},
+    plan: {
+      options,
+    },
     opts: {},
     notify: () => {},
     report: () => {},
     ...args,
-  } as unknown as ExecutionContext);
+  } as ExecutionContext);
 
 test.afterEach(() => {
   logger._reset();
@@ -38,7 +43,6 @@ test.afterEach(() => {
 test('run a live no-op job with one operation', async (t) => {
   const job = [(s: State) => s];
   const state = createState();
-
   const context = createContext();
 
   const result = await execute(context, job, state);
@@ -108,7 +112,7 @@ test('configuration is removed from the result by default', async (t) => {
 test('statePropsToRemove removes multiple props from state', async (t) => {
   const job = [async (s: State) => s];
   const statePropsToRemove = ['x', 'y'];
-  const context = createContext({ opts: { statePropsToRemove } });
+  const context = createContext({}, { statePropsToRemove });
 
   const result = await execute(context, job, { x: 1, y: 1, z: 1 });
   t.deepEqual(result, { z: 1 });
@@ -118,7 +122,7 @@ test('statePropsToRemove logs to debug when a prop is removed', async (t) => {
   const job = [async (s: State) => s];
   const statePropsToRemove = ['x'];
 
-  const context = createContext({ opts: { statePropsToRemove } });
+  const context = createContext({}, { statePropsToRemove });
 
   const result = await execute(context, job, { x: 1, y: 1, z: 1 });
   t.deepEqual(result, { y: 1, z: 1 });
@@ -130,7 +134,7 @@ test('statePropsToRemove logs to debug when a prop is removed', async (t) => {
 test('no props are removed from state if an empty array is passed to statePropsToRemove', async (t) => {
   const job = [async (s: State) => s];
   const statePropsToRemove = ['x', 'y'];
-  const context = createContext({ opts: { statePropsToRemove } });
+  const context = createContext({}, { statePropsToRemove });
 
   const state = { x: 1, configuration: 1 };
   const result = await execute(context, job, state as any);
@@ -140,7 +144,7 @@ test('no props are removed from state if an empty array is passed to statePropsT
 test('no props are removed from state if a falsy value is passed to statePropsToRemove', async (t) => {
   const job = [async (s: State) => s];
   const statePropsToRemove = undefined;
-  const context = createContext({ opts: { statePropsToRemove } });
+  const context = createContext({}, { statePropsToRemove });
 
   const state = { x: 1, configuration: 1 };
   const result = await execute(context, job, state as any);
@@ -351,9 +355,12 @@ test('Throws after custom timeout', async (t) => {
 
   const job = `export default [() => new Promise((resolve) => setTimeout(resolve, 100))];`;
 
-  const context = createContext({
-    opts: { jobLogger: logger, timeout: 10 },
-  });
+  const context = createContext(
+    {
+      opts: { jobLogger: logger },
+    },
+    { timeout: 10 }
+  );
   const state = createState();
   await t.throwsAsync(async () => execute(context, job, state), {
     message: 'Job took longer than 10ms to complete',

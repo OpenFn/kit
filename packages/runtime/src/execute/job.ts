@@ -1,16 +1,12 @@
 // TODO hmm. I have a horrible feeling that the callbacks should go here
 // at least the resolvesrs
-import executeExpression, { ExecutionErrorWrapper } from './expression';
+import type { State, StepId } from '@openfn/lexicon';
+import type { Logger } from '@openfn/logger';
 
+import executeExpression, { ExecutionErrorWrapper } from './expression';
 import clone from '../util/clone';
 import assembleState from '../util/assemble-state';
-import type {
-  CompiledJobNode,
-  ExecutionContext,
-  JobNodeID,
-  State,
-} from '../types';
-import { Logger } from '@openfn/logger';
+import type { CompiledJobNode, ExecutionContext } from '../types';
 import { EdgeConditionError } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
@@ -85,8 +81,8 @@ const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
 const executeJob = async (
   ctx: ExecutionContext,
   job: CompiledJobNode,
-  initialState: State = {}
-): Promise<{ next: JobNodeID[]; state: any }> => {
+  input: State = {}
+): Promise<{ next: StepId[]; state: any }> => {
   const { opts, notify, logger, report } = ctx;
 
   const duration = Date.now();
@@ -107,7 +103,7 @@ const executeJob = async (
   );
 
   const state = assembleState(
-    clone(initialState),
+    clone(input),
     configuration,
     globals,
     opts.strict

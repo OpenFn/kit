@@ -1,19 +1,21 @@
 import type { Logger } from '@openfn/logger';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
+
 import executeJob from './job';
 import compilePlan from './compile-plan';
 
-import type { ExecutionPlan } from '../types';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
 import { NOTIFY_STATE_LOAD } from '../events';
+import { CompiledExecutionPlan } from '../types';
 
 const executePlan = async (
   plan: ExecutionPlan,
   opts: Options,
   logger: Logger
 ) => {
-  let compiledPlan;
+  let compiledPlan: CompiledExecutionPlan;
   try {
     validatePlan(plan);
     compiledPlan = compilePlan(plan);
@@ -24,7 +26,9 @@ const executePlan = async (
     throw e;
   }
 
-  let queue: string[] = [opts.start || compiledPlan.start];
+  const { workflow, options } = compiledPlan;
+
+  let queue: string[] = [options.start];
 
   const ctx = {
     plan: compiledPlan,
@@ -34,13 +38,12 @@ const executePlan = async (
     notify: opts.callbacks?.notify ?? (() => {}),
   };
 
-  type State = any;
   // record of state returned by every job
   const stateHistory: Record<string, State> = {};
   // Record of state on lead nodes (nodes with no next)
   const leaves: Record<string, State> = {};
 
-  let { initialState } = compiledPlan;
+  let { initialState } = options;
   if (typeof initialState === 'string') {
     const id = initialState;
     const startTime = Date.now();
@@ -58,7 +61,7 @@ const executePlan = async (
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift()!;
-    const job = compiledPlan.jobs[next];
+    const job = workflow.jobs[next];
 
     const prevState = stateHistory[job.previous || ''] ?? initialState;
 

@@ -8,7 +8,8 @@ import {
 } from '../../src';
 import execute from '../../src/execute/job';
 
-import type { ExecutionContext, State } from '../../src/types';
+import type { ExecutionContext } from '../../src/types';
+import { State } from '@openfn/lexicon';
 
 const createState = (data = {}) => ({
   data: data,
@@ -20,7 +21,9 @@ const logger = createMockLogger(undefined, { level: 'debug' });
 const createContext = (args = {}) =>
   ({
     logger,
-    plan: {},
+    plan: {
+      options: {},
+    },
     opts: {},
     notify: () => {},
     report: () => {},
