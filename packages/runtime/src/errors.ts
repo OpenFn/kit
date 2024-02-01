@@ -163,6 +163,7 @@ export class InputError extends RTError {
 export class AdaptorError extends RTError {
   type = 'AdaptorError';
   name = 'AdaptorError';
+  subtype = '';
   severity = 'fail';
   message: string = '';
   constructor(error: any) {
@@ -171,7 +172,9 @@ export class AdaptorError extends RTError {
     if (typeof error === 'string') {
       this.message = error;
     } else if (error.message) {
-      this.message = error.message;
+      this.subtype = error.constructor.name;
+      this.stack = error.stack;
+      this.message = error.message + '\n' + error.stack;
     }
   }
 }
