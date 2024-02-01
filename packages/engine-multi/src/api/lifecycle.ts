@@ -121,7 +121,7 @@ export const log = (
   const { threadId } = event;
 
   if (event.log.name !== 'JOB') {
-    // Forwrad the log event to the engine's logger
+    // Forward the log event to the engine's logger
     // Note that we may have to parse the serialized log string
     const proxy = {
       ...event.log,

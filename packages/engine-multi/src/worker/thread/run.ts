@@ -29,7 +29,6 @@ register({
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
     const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
       runOptions;
-    // @ts-ignore
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
       sanitize,
@@ -39,8 +38,7 @@ register({
     // Save the debug function so that we can use it
     const debug = console.debug;
 
-    // override console.log
-    // any console.log statements will now get treated as adaptor logs
+    // override console: any console.log statements will now get treated as adaptor logs
     console = adaptorLogger;
 
     // Leave console.debug for local debugging
