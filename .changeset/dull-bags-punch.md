@@ -2,4 +2,5 @@
 '@openfn/logger': patch
 ---
 
-Do not serialize messages when logging to JSON"
+In JSON mode, do not stringify emitted messages.
+Better handling of error objects
