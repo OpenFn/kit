@@ -1,10 +1,4 @@
-import {
-  State,
-  Operation,
-  Job,
-  StepId,
-  WorkflowOptions,
-} from '@openfn/lexicon';
+import { Operation, Job, StepId, WorkflowOptions } from '@openfn/lexicon';
 
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';

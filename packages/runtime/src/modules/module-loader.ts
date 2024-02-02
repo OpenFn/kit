@@ -4,7 +4,7 @@
 import vm, { Context } from './experimental-vm';
 import mainLinker, { Linker, LinkerOptions } from './linker';
 
-import type { Operation } from '../types';
+import type { Operation } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 type Options = LinkerOptions & {

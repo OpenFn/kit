@@ -59,7 +59,7 @@ const loadPlanFromString = (expression: string, logger: Logger) => {
 };
 
 const run = (
-  xplan: ExecutionPlan | string,
+  xplan: Partial<ExecutionPlan> | string,
   input: State,
   opts: RawOptions = {}
 ) => {
@@ -97,7 +97,7 @@ const run = (
     });
   }
 
-  return executePlan(xplan, input, opts as Options, logger);
+  return executePlan(xplan as ExecutionPlan, input, opts as Options, logger);
 };
 
 export default run;

@@ -10,7 +10,7 @@ export type Lazy<T> = T | string;
 export type ExecutionPlan = {
   id?: UUID; // this would bet the run (nee attempt)  id
   workflow: Workflow;
-  options?: WorkflowOptions;
+  options: WorkflowOptions;
 };
 
 /**
