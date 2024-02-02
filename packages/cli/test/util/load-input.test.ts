@@ -1,17 +1,26 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan } from '@openfn/lexicon';
+
 import loadInput from '../../src/util/load-input';
-import { ExecutionPlan } from '@openfn/runtime';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
+// TODO add support for handling old versions here
 test.beforeEach(() => {
   mock({
     'test/job.js': 'x',
-    'test/wf.json': JSON.stringify({
+    'test/wf-old.json': JSON.stringify({
       start: 'a',
       jobs: [{ id: 'a', expression: 'x()' }],
+    }),
+    'test/wf.json': JSON.stringify({
+      options: { start: 'a' },
+      workflow: {
+        // TODO rename steps
+        jobs: [{ id: 'a', expression: 'x()' }],
+      },
     }),
     'test/wf-err.json': '!!!',
   });
@@ -32,7 +41,7 @@ test.serial('do nothing if no path provided', async (t) => {
 
 test.serial('return the workflow if already set ', async (t) => {
   const opts = {
-    workflow: { start: 'x', jobs: [] },
+    workflow: { options: { start: 'x' }, jobs: [] },
     job: 'j',
     jobPath: 'test/job.js',
   };

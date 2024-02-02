@@ -1,23 +1,14 @@
-import type { ExecuteOptions } from './command';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
-const getAutoinstallTargets = (
-  options: Partial<
-    Pick<ExecuteOptions, 'adaptors' | 'autoinstall' | 'workflow'>
-  >
-) => {
-  if (options.workflow) {
-    const adaptors = {} as Record<string, true>;
-    Object.values(options.workflow.jobs).forEach((job) => {
-      if (job.adaptor) {
-        adaptors[job.adaptor] = true;
-      }
-    });
-    return Object.keys(adaptors);
-  }
-  if (options.adaptors) {
-    return options.adaptors?.filter((a) => !/=/.test(a));
-  }
-  return [];
+const getAutoinstallTargets = (plan: ExecutionPlan) => {
+  const adaptors = {} as Record<string, true>;
+  Object.values(plan.workflow.steps).forEach((step) => {
+    const job = step as Job;
+    if (job.adaptor) {
+      adaptors[job.adaptor] = true;
+    }
+  });
+  return Object.keys(adaptors);
 };
 
 export default getAutoinstallTargets;

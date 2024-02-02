@@ -1,4 +1,4 @@
-import { Opts } from '../options';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
 const expand = (name: any) => {
   if (typeof name === 'string') {
@@ -12,20 +12,18 @@ const expand = (name: any) => {
   return name;
 };
 
-export default (opts: Partial<Pick<Opts, 'adaptors' | 'workflow'>>) => {
-  const { adaptors, workflow } = opts;
-
-  if (adaptors) {
-    opts.adaptors = adaptors?.map(expand);
+export default (input: string[] | ExecutionPlan) => {
+  if (Array.isArray(input)) {
+    return input?.map(expand) as string[];
   }
 
-  if (workflow) {
-    Object.values(workflow.jobs).forEach((job) => {
-      if (job.adaptor) {
-        job.adaptor = expand(job.adaptor);
-      }
-    });
-  }
+  const plan = input as ExecutionPlan;
+  Object.values(plan.workflow.steps).forEach((step) => {
+    const job = step as Job;
+    if (job.adaptor) {
+      job.adaptor = expand(job.adaptor);
+    }
+  });
 
-  return opts;
+  return plan;
 };

@@ -1,11 +1,12 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { isPath } from '@openfn/compiler';
+import type { ExecutionPlan } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
-import type { Opts } from '../options';
-import { CLIExecutionPlan } from '../types';
-import { ExecutionPlan } from '@openfn/runtime';
+
 import abort from './abort';
+import type { CLIExecutionPlan } from '../types';
+import type { Opts } from '../options';
 
 type LoadWorkflowOpts = Required<
   Pick<Opts, 'workflowPath' | 'workflow' | 'baseDir'>

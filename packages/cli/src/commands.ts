@@ -12,6 +12,7 @@ import { clean, install, pwd, list } from './repo/handler';
 import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
   MapAdaptorsToMonorepoOptions,
+  validateMonoRepo,
 } from './util/map-adaptors-to-monorepo';
 import printVersions from './util/print-versions';
 
@@ -56,16 +57,23 @@ const parse = async (options: Opts, log?: Logger) => {
     await printVersions(logger, options);
   }
 
-  if (options.monorepoPath) {
-    if (options.monorepoPath === 'ERR') {
+  const { monorepoPath } = options;
+  if (monorepoPath) {
+    // TODO how does this occur?
+    if (monorepoPath === 'ERR') {
       logger.error(
         'ERROR: --use-adaptors-monorepo was passed, but OPENFN_ADAPTORS_REPO env var is undefined'
       );
       logger.error('Set OPENFN_ADAPTORS_REPO to a path pointing to the repo');
       process.exit(9); // invalid argument
     }
-    await mapAdaptorsToMonorepo(
-      options as MapAdaptorsToMonorepoOptions,
+
+    await validateMonoRepo(monorepoPath, logger);
+    logger.success(`Loading adaptors from monorepo at ${monorepoPath}`);
+
+    options.adaptors = await mapAdaptorsToMonorepo(
+      monorepoPath,
+      options.adaptors,
       logger
     );
   }

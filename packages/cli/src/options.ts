@@ -1,13 +1,15 @@
 import path from 'node:path';
-
 import yargs from 'yargs';
-import type { ExecutionPlan } from '@openfn/runtime';
+import type { ExecutionPlan } from '@openfn/lexicon';
+
 import type { CommandList } from './commands';
-import { CLIExecutionPlan } from './types';
+import { OldCLIWorkflow } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
-import doExpandAdaptors from './util/expand-adaptors';
-import ensureLogOpts from './util/ensure-log-opts';
-import { LogLevel } from './util';
+import {
+  expandAdaptors as doExpandAdaptors,
+  ensureLogOpts,
+  LogLevel,
+} from './util';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -37,6 +39,8 @@ export type Opts = {
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
+  plan?: ExecutionPlan;
+  planPath?: string;
   projectPath?: string;
   repoDir?: string;
   skipAdaptorValidation?: boolean;
@@ -48,9 +52,11 @@ export type Opts = {
   sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
-  workflow?: CLIExecutionPlan | ExecutionPlan;
-  workflowPath?: string;
+  workflow?: OldCLIWorkflow;
   projectId?: string;
+
+  // deprecated
+  workflowPath?: string;
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -97,8 +103,10 @@ export const adaptors: CLIOption = {
       opts.adaptors = [];
     }
 
+    // TODO this might be redundant now as load-plan should handle it
+    // maybe commands other than execute need it
     if (opts.expandAdaptors) {
-      doExpandAdaptors(opts);
+      opts.adaptors = doExpandAdaptors(opts.adaptors) as string[];
     }
 
     // delete the aliases as they have not been expanded
@@ -218,13 +226,11 @@ export const projectId: CLIOption = {
     hidden: true,
   },
   ensure: (opts) => {
-      const projectId = opts.projectId;
-      //check that this is a uuid
-      return projectId;
-    },
+    const projectId = opts.projectId;
+    //check that this is a uuid
+    return projectId;
+  },
 };
-
-
 
 // Input path covers jobPath and workflowPath
 export const inputPath: CLIOption = {
@@ -235,7 +241,7 @@ export const inputPath: CLIOption = {
   ensure: (opts) => {
     const { path: basePath } = opts;
     if (basePath?.endsWith('.json')) {
-      opts.workflowPath = basePath;
+      opts.planPath = basePath;
     } else if (basePath?.endsWith('.js')) {
       opts.jobPath = basePath;
     } else {

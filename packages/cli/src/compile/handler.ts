@@ -12,16 +12,17 @@ import mapAdaptorsToMonorepo, {
 
 const compileHandler = async (options: CompileOptions, logger: Logger) => {
   assertPath(options.path);
+  // TODO use loadPlan
   await loadInput(options, logger);
 
-  if (options.workflow) {
-    // expand shorthand adaptors in the workflow jobs
-    expandAdaptors(options);
-    await mapAdaptorsToMonorepo(
-      options as MapAdaptorsToMonorepoOptions,
-      logger
-    );
-  }
+  // if (options.workflow) {
+  //   // expand shorthand adaptors in the workflow jobs
+  //   expandAdaptors(options);
+  //   await mapAdaptorsToMonorepo(
+  //     options as MapAdaptorsToMonorepoOptions,
+  //     logger
+  //   );
+  // }
 
   let result = await compile(options, logger);
   if (options.workflow) {

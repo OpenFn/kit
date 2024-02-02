@@ -3,6 +3,8 @@ import path from 'node:path';
 import assert from 'node:assert';
 import { Logger } from '@openfn/logger';
 import { getNameAndVersion } from '@openfn/runtime';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
+
 import type { Opts } from '../options';
 
 export const validateMonoRepo = async (repoPath: string, log: Logger) => {
@@ -32,6 +34,8 @@ export const updatePath = (adaptor: string, repoPath: string, log: Logger) => {
   }
   const shortName = name.replace('@openfn/language-', '');
   const abspath = path.resolve(repoPath, 'packages', shortName);
+
+  log.info(`Mapped adaptor ${name} to monorepo: ${abspath}`);
   return `${name}=${abspath}`;
 };
 
@@ -40,31 +44,27 @@ export type MapAdaptorsToMonorepoOptions = Pick<
   'monorepoPath' | 'adaptors' | 'workflow'
 >;
 
-// This will mutate options (adaptors, workflow) to support the monorepo
 const mapAdaptorsToMonorepo = async (
-  options: MapAdaptorsToMonorepoOptions,
+  monorepoPath: string = '',
+  input: string[] | ExecutionPlan,
   log: Logger
 ) => {
-  const { adaptors, monorepoPath, workflow } = options;
   if (monorepoPath) {
-    await validateMonoRepo(monorepoPath, log);
-    log.success(`Loading adaptors from monorepo at ${monorepoPath}`);
-    if (adaptors) {
-      options.adaptors = adaptors.map((a) => {
-        const p = updatePath(a, monorepoPath, log);
-        log.info(`Mapped adaptor ${a} to monorepo: ${p.split('=')[1]}`);
-        return p;
-      });
+    if (Array.isArray(input)) {
+      const adaptors = input as string[];
+      return adaptors.map((a) => updatePath(a, monorepoPath, log));
     }
-    if (workflow) {
-      Object.values(workflow.jobs).forEach((job) => {
-        if (job.adaptor) {
-          job.adaptor = updatePath(job.adaptor, monorepoPath, log);
-        }
-      });
-    }
+
+    const plan = input as ExecutionPlan;
+    Object.values(plan.workflow.steps).forEach((step) => {
+      const job = step as Job;
+      if (job.adaptor) {
+        job.adaptor = updatePath(job.adaptor, monorepoPath, log);
+      }
+    });
+
+    return plan;
   }
-  return options;
 };
 
 export default mapAdaptorsToMonorepo;

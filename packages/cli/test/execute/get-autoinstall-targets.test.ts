@@ -1,166 +1,98 @@
 import test from 'ava';
 
 import getAutoinstallTargets from '../../src/execute/get-autoinstall-targets';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
-test('return empty if an empty array is passed', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: [],
-  });
-  t.truthy(result);
-  t.is(result.length, 0);
-});
-
-test('return 2 valid targets', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['a', 'b'],
-  });
-  t.truthy(result);
-  t.is(result.length, 2);
-  t.deepEqual(result, ['a', 'b']);
-});
-
-test('return empty if a path is passed', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['a=a/b/c'],
-  });
-  t.truthy(result);
-  t.is(result.length, 0);
-});
-
-test('return 1 valid target', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['a=/some/path', 'b@1.2.3'],
-  });
-  t.truthy(result);
-  t.is(result.length, 1);
-  t.deepEqual(result, ['b@1.2.3']);
-});
-
-test('return language common', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['@openfn/language-common'],
-  });
-  t.truthy(result);
-  t.is(result.length, 1);
-  t.deepEqual(result, ['@openfn/language-common']);
-});
-
-test('return language common with specifier', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['@openfn/language-common@1.0.0'],
-  });
-  t.truthy(result);
-  t.is(result.length, 1);
-  t.deepEqual(result, ['@openfn/language-common@1.0.0']);
-});
-
-test('reject language common with path', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['@openfn/language-common=/a/b/c'],
-  });
-  t.truthy(result);
-  t.is(result.length, 0);
-});
-
-test('reject language common with specifier and path', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: ['@openfn/language-common@1.0.0=/tmp/repo/common'],
-  });
-  t.truthy(result);
-  t.is(result.length, 0);
-});
-
-test('empty workflow', (t) => {
-  const result = getAutoinstallTargets({
+const getPlan = (steps: Job[]) =>
+  ({
     workflow: {
-      start: 'a',
-      jobs: {},
+      steps,
     },
-  });
+    options: {},
+  } as ExecutionPlan);
+
+test('empty plan', (t) => {
+  const plan = getPlan([]);
+  const result = getAutoinstallTargets(plan);
   t.truthy(result);
   t.is(result.length, 0);
 });
 
-test('workflow with zero adaptors', (t) => {
-  const result = getAutoinstallTargets({
-    workflow: {
-      start: 'a',
-      jobs: {
-        a: {
-          expression: 'fn()',
-        },
-      },
+test('plan with zero adaptors', (t) => {
+  const plan = getPlan([
+    {
+      expression: 'fn()',
     },
-  });
+  ]);
+  const result = getAutoinstallTargets(plan);
   t.truthy(result);
   t.is(result.length, 0);
 });
 
-test('workflow with multiple adaptors', (t) => {
-  const result = getAutoinstallTargets({
-    workflow: {
-      start: 'a',
-      jobs: {
-        a: {
-          adaptor: '@openfn/language-common',
-          expression: 'fn()',
-        },
-        b: {
-          adaptor: '@openfn/language-http',
-          expression: 'fn()',
-        },
-      },
+test('plan with multiple adaptors', (t) => {
+  const plan = getPlan([
+    {
+      adaptor: '@openfn/language-common',
+      expression: 'fn()',
     },
-  });
+    {
+      adaptor: '@openfn/language-http',
+      expression: 'fn()',
+    },
+  ]);
+  const result = getAutoinstallTargets(plan);
   t.is(result.length, 2);
   t.deepEqual(result, ['@openfn/language-common', '@openfn/language-http']);
 });
 
-test('workflow with duplicate adaptors', (t) => {
-  const result = getAutoinstallTargets({
-    workflow: {
-      start: 'a',
-      jobs: {
-        a: {
-          adaptor: '@openfn/language-common',
-          expression: 'fn()',
-        },
-        b: {
-          adaptor: '@openfn/language-common',
-          expression: 'fn()',
-        },
-      },
+test('plan with duplicate adaptors', (t) => {
+  const plan = getPlan([
+    {
+      adaptor: '@openfn/language-common',
+      expression: 'fn()',
     },
-  });
+    {
+      adaptor: '@openfn/language-common',
+      expression: 'fn()',
+    },
+  ]);
+  const result = getAutoinstallTargets(plan);
   t.is(result.length, 1);
   t.deepEqual(result, ['@openfn/language-common']);
 });
 
-test('workflow with one adaptor but different versions', (t) => {
-  const result = getAutoinstallTargets({
-    adaptors: [],
-    workflow: {
-      start: 'a',
-      jobs: {
-        a: {
-          adaptor: '@openfn/language-common@1.0.0',
-          expression: 'fn()',
-        },
-        b: {
-          adaptor: '@openfn/language-common@2.0.0',
-          expression: 'fn()',
-        },
-        c: {
-          adaptor: '@openfn/language-common@3.0.0',
-          expression: 'fn()',
-        },
-      },
+test('plan with one adaptor but different versions', (t) => {
+  const plan = getPlan([
+    {
+      adaptor: '@openfn/language-common@1.0.0',
+      expression: 'fn()',
     },
-  });
+    {
+      adaptor: '@openfn/language-common@2.0.0',
+      expression: 'fn()',
+    },
+    {
+      adaptor: '@openfn/language-common@3.0.0',
+      expression: 'fn()',
+    },
+  ]);
+  const result = getAutoinstallTargets(plan);
   t.is(result.length, 3);
   t.deepEqual(result, [
     '@openfn/language-common@1.0.0',
     '@openfn/language-common@2.0.0',
     '@openfn/language-common@3.0.0',
   ]);
+});
+
+test('do not return adaptors with a path', (t) => {
+  const plan = getPlan([
+    {
+      expression: 'fn()',
+      adaptor: 'commoin=a/b/c',
+    },
+  ]);
+  const result = getAutoinstallTargets(plan);
+  t.truthy(result);
+  t.is(result.length, 0);
 });

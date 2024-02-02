@@ -10,11 +10,7 @@ import { CompileOptions } from '../compile/command';
 import { Logger, printDuration } from '../util/logger';
 import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
-import loadInput from '../util/load-input';
-import expandAdaptors from '../util/expand-adaptors';
-import mapAdaptorsToMonorepo, {
-  MapAdaptorsToMonorepoOptions,
-} from '../util/map-adaptors-to-monorepo';
+import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
@@ -22,23 +18,14 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   assertPath(options.path);
   await validateAdaptors(options, logger);
 
-  let input = await loadInput(options, logger);
-
-  if (options.workflow) {
-    // expand shorthand adaptors in the workflow jobs
-    expandAdaptors(options);
-    await mapAdaptorsToMonorepo(
-      options as MapAdaptorsToMonorepoOptions,
-      logger
-    );
-  }
+  let plan = await loadPlan(options, logger);
 
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
     if (monorepoPath) {
       logger.warn('Skipping auto-install as monorepo is being used');
     } else {
-      const autoInstallTargets = getAutoinstallTargets(options);
+      const autoInstallTargets = getAutoinstallTargets(plan);
       if (autoInstallTargets.length) {
         logger.info('Auto-installing language adaptors');
         await install({ packages: autoInstallTargets, repoDir }, logger);
@@ -49,13 +36,13 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const state = await loadState(options, logger);
 
   if (options.compile) {
-    input = await compile(options as CompileOptions, logger);
+    plan = await compile(options as CompileOptions, logger);
   } else {
     logger.info('Skipping compilation as noCompile is set');
   }
 
   try {
-    const result = await execute(input!, state, options);
+    const result = await execute(plan, state, options);
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     if (result?.errors) {
