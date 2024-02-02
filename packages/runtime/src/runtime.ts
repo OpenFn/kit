@@ -43,7 +43,7 @@ const defaultLogger = createMockLogger();
 const loadPlanFromString = (expression: string, logger: Logger) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression,
         },
@@ -60,7 +60,7 @@ const loadPlanFromString = (expression: string, logger: Logger) => {
 
 const run = (
   xplan: Partial<ExecutionPlan> | string,
-  input: State,
+  input?: State,
   opts: RawOptions = {}
 ) => {
   const logger = opts.logger || defaultLogger;

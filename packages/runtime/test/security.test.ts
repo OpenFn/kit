@@ -203,7 +203,7 @@ test.serial(
   async (t) => {
     const plan: ExecutionPlan = {
       workflow: {
-        jobs: [
+        steps: [
           {
             id: 'a',
             expression: 'export default [s => { console.x = 10; return s; }]',

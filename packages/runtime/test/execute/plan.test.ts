@@ -9,11 +9,11 @@ import { CompiledExecutionPlan } from '../../src';
 let mockLogger = createMockLogger(undefined, { level: 'debug' });
 
 const createPlan = (
-  jobs: Job[],
+  steps: Job[],
   options: Partial<CompiledExecutionPlan['options']> = {}
 ): ExecutionPlan => ({
   workflow: {
-    jobs,
+    steps,
   },
   options,
 });
@@ -283,7 +283,7 @@ test('only allowed state is passed through in strict mode', async (t) => {
   });
 });
 
-test('Jobs only receive state from upstream jobs', async (t) => {
+test('steps only receive state from upstream steps', async (t) => {
   const assert = (expr: string) =>
     `if (!(${expr})) throw new Error('ASSERT FAIL')`;
 
@@ -515,16 +515,16 @@ test('Return when there are no more edges', async (t) => {
 });
 
 test('execute a 5 job execution plan', async (t) => {
-  const jobs = [];
+  const steps = [];
   for (let i = 1; i < 6; i++) {
-    jobs.push({
+    steps.push({
       id: `${i}`,
       expression: 'export default [s => { s.data.x += 1; return s; } ]',
       next: i === 5 ? null : { [`${i + 1}`]: true },
     } as Job);
   }
 
-  const plan = createPlan(jobs, {
+  const plan = createPlan(steps, {
     start: '1',
   });
   const state = { data: { x: 0 } };
@@ -769,15 +769,15 @@ test('log appopriately on error', async (t) => {
   const logger = createMockLogger(undefined, { level: 'debug' });
 
   await executePlan(plan, {}, {}, logger);
-  const err = logger._find('error', /failed job/i);
+  const err = logger._find('error', /failed step/i);
   t.truthy(err);
-  t.regex(err!.message as string, /Failed job job1 after \d+ms/i);
+  t.regex(err!.message as string, /Failed step job1 after \d+ms/i);
 
   t.truthy(logger._find('error', /JobError: e/));
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 });
 
-test('jobs do not share a local scope', async (t) => {
+test('steps do not share a local scope', async (t) => {
   const plan = createPlan([
     {
       id: 'job1',
@@ -799,7 +799,7 @@ test('jobs do not share a local scope', async (t) => {
   });
 });
 
-test('jobs do not share a global scope', async (t) => {
+test('steps do not share a global scope', async (t) => {
   const plan = createPlan([
     {
       id: 'job1',
@@ -820,7 +820,7 @@ test('jobs do not share a global scope', async (t) => {
   });
 });
 
-test('jobs do not share a globalThis object', async (t) => {
+test('steps do not share a globalThis object', async (t) => {
   const plan = createPlan([
     {
       id: 'job1',
@@ -842,7 +842,7 @@ test('jobs do not share a globalThis object', async (t) => {
 
 // TODO this fails right now
 // https://github.com/OpenFn/kit/issues/213
-test.skip('jobs cannot scribble on globals', async (t) => {
+test.skip('steps cannot scribble on globals', async (t) => {
   const plan = createPlan([
     {
       id: 'job1',
@@ -863,7 +863,7 @@ test.skip('jobs cannot scribble on globals', async (t) => {
 
 // TODO this fails right now
 // https://github.com/OpenFn/kit/issues/213
-test.skip('jobs cannot scribble on adaptor functions', async (t) => {
+test.skip('steps cannot scribble on adaptor functions', async (t) => {
   const plan = createPlan([
     {
       id: 'job1',
@@ -893,7 +893,7 @@ test.skip('jobs cannot scribble on adaptor functions', async (t) => {
   t.falsy(result.data.x);
 });
 
-test('jobs can write circular references to state without blowing up downstream', async (t) => {
+test('steps can write circular references to state without blowing up downstream', async (t) => {
   const expression = `export default [(s) => {
     const a  = {};
     const b = { a };
@@ -927,7 +927,7 @@ test('jobs can write circular references to state without blowing up downstream'
   });
 });
 
-test('jobs cannot pass circular references to each other', async (t) => {
+test('steps cannot pass circular references to each other', async (t) => {
   const expression = `export default [(s) => {
     const a  = {};
     const b = { a };
@@ -957,7 +957,7 @@ test('jobs cannot pass circular references to each other', async (t) => {
   t.is(result.data.answer, '[Circular]');
 });
 
-test('jobs can write functions to state without blowing up downstream', async (t) => {
+test('steps can write functions to state without blowing up downstream', async (t) => {
   const plan = createPlan([
     {
       next: { b: true },
@@ -981,7 +981,7 @@ test('jobs can write functions to state without blowing up downstream', async (t
   t.deepEqual(result, { data: {} });
 });
 
-test('jobs cannot pass functions to each other', async (t) => {
+test('steps cannot pass functions to each other', async (t) => {
   const plan = createPlan([
     {
       next: { b: true },
@@ -1008,7 +1008,7 @@ test('jobs cannot pass functions to each other', async (t) => {
   t.is(error.message, 'TypeError: s.data.x is not a function');
 });
 
-test('Plans log for each job start and end', async (t) => {
+test('Plans log step ids for each job start and end', async (t) => {
   const plan = createPlan([
     {
       id: 'a',
@@ -1017,10 +1017,27 @@ test('Plans log for each job start and end', async (t) => {
   ]);
   const logger = createMockLogger(undefined, { level: 'debug' });
   await executePlan(plan, {}, {}, logger);
+  const start = logger._find('always', /starting step a/i);
+  t.is(start!.message, 'Starting step a');
 
-  const start = logger._find('always', /starting job/i);
-  t.is(start!.message, 'Starting job a');
+  const end = logger._find('success', /completed step a/i);
+  t.regex(end!.message as string, /Completed step a in \d+ms/);
+});
 
-  const end = logger._find('success', /completed job/i);
-  t.regex(end!.message as string, /Completed job a in \d+ms/);
+test('Plans log step names for each job start and end', async (t) => {
+  const plan = createPlan([
+    {
+      id: 'a',
+      name: 'do-the-thing',
+      expression: 'export default [s => s]',
+    },
+  ]);
+  const logger = createMockLogger(undefined, { level: 'debug' });
+  await executePlan(plan, {}, {}, logger);
+
+  const start = logger._find('always', /starting step do-the-thing/i);
+  t.is(start!.message, 'Starting step do-the-thing');
+
+  const end = logger._find('success', /completed step do-the-thing/i);
+  t.regex(end!.message as string, /Completed step do-the-thing in \d+ms/);
 });

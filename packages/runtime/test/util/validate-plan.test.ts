@@ -14,7 +14,7 @@ test('builds a simple model', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [job('a', { b: true }), job('b')],
+      steps: [job('a', { b: true }), job('b')],
     },
   };
 
@@ -35,7 +35,7 @@ test('builds a more complex model', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [job('a', { b: true }), job('b', { c: true, a: true }), job('c')],
+      steps: [job('a', { b: true }), job('b', { c: true, a: true }), job('c')],
     },
   };
 
@@ -60,7 +60,7 @@ test('throws for a circular dependency', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [job('a', { b: true }), job('b', { a: true })],
+      steps: [job('a', { b: true }), job('b', { a: true })],
     },
   };
 
@@ -73,7 +73,7 @@ test('throws for an indirect circular dependency', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [
+      steps: [
         job('a', { b: true }),
         job('b', { c: true }),
         job('c', { a: true }),
@@ -90,7 +90,7 @@ test('throws for a multiple inputs', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [
+      steps: [
         job('a', { b: true, c: true }),
         job('b', { z: true }),
         job('c', { z: true }),
@@ -108,7 +108,7 @@ test('throws for a an unknown job', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [job('next', { z: true })],
+      steps: [job('next', { z: true })],
     },
   };
 
@@ -121,7 +121,7 @@ test('throws for a an unknown job with shorthand syntax', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
-      jobs: [
+      steps: [
         {
           next: 'z',
           expression: '.',
@@ -140,7 +140,7 @@ test('throws for invalid string start', (t) => {
       start: 'z',
     },
     workflow: {
-      jobs: [job('a')],
+      steps: [job('a')],
     },
   };
 

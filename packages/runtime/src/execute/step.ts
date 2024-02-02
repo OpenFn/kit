@@ -1,12 +1,12 @@
 // TODO hmm. I have a horrible feeling that the callbacks should go here
 // at least the resolvesrs
-import type { State, StepId } from '@openfn/lexicon';
+import type { Job, State, StepId } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 import executeExpression, { ExecutionErrorWrapper } from './expression';
 import clone from '../util/clone';
 import assembleState from '../util/assemble-state';
-import type { CompiledJobNode, ExecutionContext } from '../types';
+import type { CompiledStep, ExecutionContext } from '../types';
 import { EdgeConditionError } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
@@ -17,7 +17,7 @@ import {
 } from '../events';
 
 const loadCredentials = async (
-  job: CompiledJobNode,
+  job: Job,
   resolver: (id: string) => Promise<any>
 ) => {
   if (typeof job.configuration === 'string') {
@@ -28,10 +28,7 @@ const loadCredentials = async (
   return job.configuration;
 };
 
-const loadState = async (
-  job: CompiledJobNode,
-  resolver: (id: string) => Promise<any>
-) => {
+const loadState = async (job: Job, resolver: (id: string) => Promise<any>) => {
   if (typeof job.state === 'string') {
     // TODO let's log and notify something useful if we're lazy loading
     // TODO throw a controlled error if there's no resolver
@@ -40,7 +37,7 @@ const loadState = async (
   return job.state;
 };
 
-const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
+const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
   const next: string[] = [];
   if (job.next) {
     for (const nextJobId in job.next) {
@@ -78,50 +75,59 @@ const calculateNext = (job: CompiledJobNode, result: any, logger: Logger) => {
 // The job handler is responsible for preparing the job
 // and working out where to go next
 // it'll resolve credentials and state and notify how long init took
-const executeJob = async (
+const executeStep = async (
   ctx: ExecutionContext,
-  job: CompiledJobNode,
+  step: CompiledStep,
   input: State = {}
 ): Promise<{ next: StepId[]; state: any }> => {
   const { opts, notify, logger, report } = ctx;
 
   const duration = Date.now();
 
-  const jobId = job.id;
-
-  notify(NOTIFY_INIT_START, { jobId });
-
-  // lazy load config and state
-  const configuration = await loadCredentials(
-    job,
-    opts.callbacks?.resolveCredential! // cheat - we need to handle the error case here
-  );
-
-  const globals = await loadState(
-    job,
-    opts.callbacks?.resolveState! // and here
-  );
-
-  const state = assembleState(
-    clone(input),
-    configuration,
-    globals,
-    opts.strict
-  );
-
-  notify(NOTIFY_INIT_COMPLETE, { jobId, duration: Date.now() - duration });
-
-  // We should by this point have validated the plan, so the job MUST exist
-
-  const timerId = `job-${jobId}`;
-  logger.timer(timerId);
-  logger.always('Starting job', jobId);
+  const stepId = step.id;
 
   // The expression SHOULD return state, but COULD return anything
-  let result: any = state;
+  let result: any = input;
   let next: string[] = [];
   let didError = false;
-  if (job.expression) {
+
+  if (step.expression) {
+    const job = step as Job;
+    const jobId = job.id!;
+    const jobName = job.name || job.id;
+
+    // The notify events only apply to jobs - not steps - so names don't need to be changed here
+    notify(NOTIFY_INIT_START, { jobId });
+
+    // lazy load config and state
+    const configuration = await loadCredentials(
+      job,
+      opts.callbacks?.resolveCredential! // cheat - we need to handle the error case here
+    );
+
+    const globals = await loadState(
+      job,
+      opts.callbacks?.resolveState! // and here
+    );
+
+    const state = assembleState(
+      clone(input),
+      configuration,
+      globals,
+      opts.strict
+    );
+
+    notify(NOTIFY_INIT_COMPLETE, {
+      jobId,
+      duration: Date.now() - duration,
+    });
+
+    // We should by this point have validated the plan, so the step MUST exist
+
+    const timerId = `step-${jobId}`;
+    logger.timer(timerId);
+    logger.always(`Starting step ${jobName}`);
+
     const startTime = Date.now();
     try {
       // TODO include the upstream job?
@@ -136,10 +142,10 @@ const executeJob = async (
         result = state;
 
         const duration = logger.timer(timerId);
-        logger.error(`Failed job ${jobId} after ${duration}`);
+        logger.error(`Failed step ${jobName} after ${duration}`);
         report(state, jobId, error);
 
-        next = calculateNext(job, result, logger);
+        next = calculateNext(step, result, logger);
 
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
@@ -161,7 +167,7 @@ const executeJob = async (
 
     if (!didError) {
       const humanDuration = logger.timer(timerId);
-      logger.success(`Completed job ${jobId} in ${humanDuration}`);
+      logger.success(`Completed step ${jobName} in ${humanDuration}`);
 
       // Take a memory snapshot
       // IMPORTANT: this runs _after_ the state object has been serialized
@@ -175,10 +181,10 @@ const executeJob = async (
       const humanJobMemory = Math.round(jobMemory / 1024 / 1024);
       const humanSystemMemory = Math.round(systemMemory / 1024 / 1024);
       logger.debug(
-        `Final memory usage: [job ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
+        `Final memory usage: [step ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
       );
 
-      next = calculateNext(job, result, logger);
+      next = calculateNext(step, result, logger);
       notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
@@ -192,16 +198,16 @@ const executeJob = async (
     }
   } else {
     // calculate next for trigger nodes
-    next = calculateNext(job, result, logger);
+    next = calculateNext(step, result, logger);
   }
 
   if (next.length && !didError && !result) {
     logger.warn(
-      `WARNING: job ${jobId} did not return a state object. This may cause downstream jobs to fail.`
+      `WARNING: step ${stepId} did not return a state object. This may cause downstream jobs to fail.`
     );
   }
 
   return { next, state: result };
 };
 
-export default executeJob;
+export default executeStep;

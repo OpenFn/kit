@@ -1,4 +1,4 @@
-import { Operation, Job, StepId, WorkflowOptions } from '@openfn/lexicon';
+import { Operation, StepId, WorkflowOptions, Step } from '@openfn/lexicon';
 
 import { Logger } from '@openfn/logger';
 import { Options } from './runtime';
@@ -12,23 +12,25 @@ import {
   NOTIFY_STATE_LOAD,
 } from './events';
 
-export type CompiledJobEdge =
+export type CompiledEdge =
   | boolean
   | {
       condition?: Function;
       disabled?: boolean;
     };
 
-export type CompiledJobNode = Omit<Job, 'next'> & {
+export type CompiledStep = Omit<Step, 'next'> & {
   id: StepId;
-  next?: Record<StepId, CompiledJobEdge>;
+  next?: Record<StepId, CompiledEdge>;
+
+  [other: string]: any;
 };
 
 export type Lazy<T> = string | T;
 
 export type CompiledExecutionPlan = {
   workflow: {
-    jobs: Record<StepId, CompiledJobNode>;
+    steps: Record<StepId, CompiledStep>;
   };
   options: WorkflowOptions & {
     start: StepId;

@@ -1,12 +1,12 @@
 import type {
+  CompiledEdge,
   CompiledExecutionPlan,
-  CompiledJobEdge,
-  CompiledJobNode,
+  CompiledStep,
 } from '../types';
 
 import compileFunction from '../modules/compile-function';
 import { conditionContext, Context } from './context';
-import { ExecutionPlan, StepEdge, Workflow } from '@openfn/lexicon';
+import { ExecutionPlan, Job, StepEdge, Workflow } from '@openfn/lexicon';
 
 const compileEdges = (
   from: string,
@@ -18,7 +18,7 @@ const compileEdges = (
   }
   const errs = [];
 
-  const result = {} as Record<string, boolean | CompiledJobEdge>;
+  const result = {} as Record<string, boolean | CompiledEdge>;
   for (const edgeId in edges) {
     try {
       const edge = edges[edgeId];
@@ -33,7 +33,7 @@ const compileEdges = (
         if (typeof edge.condition === 'string') {
           (newEdge as any).condition = compileFunction(edge.condition, context);
         }
-        result[edgeId] = newEdge as CompiledJobEdge;
+        result[edgeId] = newEdge as CompiledEdge;
       }
     } catch (e: any) {
       errs.push(
@@ -55,7 +55,7 @@ const compileEdges = (
 // Inefficient but fine for now (note that validation does something similar)
 // Note that right now we only support one upstream job
 const findUpstream = (workflow: Workflow, id: string) => {
-  for (const job of workflow.jobs) {
+  for (const job of workflow.steps) {
     if (job.next)
       if (typeof job.next === 'string') {
         if (job.next === id) {
@@ -90,7 +90,7 @@ export default (plan: ExecutionPlan) => {
     }
   };
 
-  for (const job of workflow.jobs) {
+  for (const job of workflow.steps) {
     if (!job.id) {
       job.id = generateJobId();
     }
@@ -98,33 +98,42 @@ export default (plan: ExecutionPlan) => {
 
   const newPlan: CompiledExecutionPlan = {
     workflow: {
-      jobs: {},
+      steps: {},
     },
     options: {
       ...options,
-      start: options.start ?? workflow.jobs[0]?.id!,
+      start: options.start ?? workflow.steps[0]?.id!,
     },
   };
 
-  for (const job of workflow.jobs) {
-    const jobId = job.id!;
-    const newJob: CompiledJobNode = {
-      id: jobId,
-      expression: job.expression, // TODO we should compile this here
+  const maybeAssign = (a: any, b: any, keys: Array<keyof Job>) => {
+    keys.forEach((key) => {
+      if (a.hasOwnProperty(key)) {
+        b[key] = a[key];
+      }
+    });
+  };
+
+  for (const step of workflow.steps) {
+    const stepId = step.id!;
+    const newStep: CompiledStep = {
+      id: stepId,
     };
-    if (job.state) {
-      newJob.state = job.state;
-    }
-    if (job.configuration) {
-      newJob.configuration = job.configuration;
-    }
-    if (job.next) {
+
+    maybeAssign(step, newStep, [
+      'expression',
+      'state',
+      'configuration',
+      'name',
+    ]);
+
+    if (step.next) {
       trapErrors(() => {
-        newJob.next = compileEdges(jobId, job.next!, context);
+        newStep.next = compileEdges(stepId, step.next!, context);
       });
     }
-    newJob.previous = findUpstream(workflow, jobId);
-    newPlan.workflow.jobs[jobId] = newJob;
+    newStep.previous = findUpstream(workflow, stepId);
+    newPlan.workflow.steps[stepId] = newStep;
   }
 
   if (errs.length) {

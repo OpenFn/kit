@@ -6,7 +6,7 @@ import run from '../src/runtime';
 
 const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
-    jobs: [
+    steps: [
       {
         expression,
       },
@@ -85,7 +85,7 @@ test('crash on eval with SecurityError', async (t) => {
 test('crash on edge condition error with EdgeConditionError', async (t) => {
   const plan = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: '.',

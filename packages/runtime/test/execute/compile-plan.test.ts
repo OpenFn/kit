@@ -5,8 +5,8 @@ import compilePlan from '../../src/execute/compile-plan';
 
 const testPlan: ExecutionPlan = {
   workflow: {
-    jobs: [
-      { id: 'a', expression: 'x', next: { b: true } },
+    steps: [
+      { id: 'a', expression: 'x', name: 'a', next: { b: true } },
       { id: 'b', expression: 'y' },
     ],
   },
@@ -17,7 +17,7 @@ const testPlan: ExecutionPlan = {
 
 const planWithEdge = (edge: Partial<StepEdge>) => ({
   workflow: {
-    jobs: [
+    steps: [
       {
         id: 'a',
         expression: 'x',
@@ -37,7 +37,7 @@ test('should preserve the start option', (t) => {
   const compiledPlan = compilePlan({
     id: 'a',
     workflow: {
-      jobs: [{ id: 'a', expression: 'a' }],
+      steps: [{ id: 'a', expression: 'a' }],
     },
     options: {
       start: 'a',
@@ -51,7 +51,7 @@ test('should preserve arbitrary options', (t) => {
   const compiledPlan = compilePlan({
     id: 'a',
     workflow: {
-      jobs: [{ id: 'a', expression: 'a' }],
+      steps: [{ id: 'a', expression: 'a' }],
     },
     options: {
       // @ts-ignore
@@ -69,19 +69,24 @@ test('should preserve arbitrary options', (t) => {
   });
 });
 
-test('should convert jobs to an object', (t) => {
+test('should convert steps to an object', (t) => {
   const { workflow } = compilePlan(testPlan);
-  t.truthy(workflow.jobs.a);
-  t.is(workflow.jobs.a.expression, 'x');
+  t.deepEqual(workflow.steps.a, {
+    id: 'a',
+    name: 'a',
+    expression: 'x',
+    next: { b: true },
+    previous: undefined,
+  });
 
-  t.truthy(workflow.jobs.b);
-  t.is(workflow.jobs.b.expression, 'y');
+  t.truthy(workflow.steps.b);
+  t.is(workflow.steps.b.expression, 'y');
 });
 
-test('should set previous job with 2 jobs', (t) => {
+test('should set previous job with 2 steps', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'x', next: { b: true } },
         { id: 'b', expression: 'y' },
       ],
@@ -89,14 +94,14 @@ test('should set previous job with 2 jobs', (t) => {
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  t.is(workflow.jobs.a.previous, undefined);
-  t.is(workflow.jobs.b.previous, 'a');
+  t.is(workflow.steps.a.previous, undefined);
+  t.is(workflow.steps.b.previous, 'a');
 });
 
-test('should set previous job with 2 jobs and shorthand syntax', (t) => {
+test('should set previous job with 2 steps and shorthand syntax', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'x', next: 'b' },
         { id: 'b', expression: 'y' },
       ],
@@ -104,14 +109,14 @@ test('should set previous job with 2 jobs and shorthand syntax', (t) => {
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  t.is(workflow.jobs.a.previous, undefined);
-  t.is(workflow.jobs.b.previous, 'a');
+  t.is(workflow.steps.a.previous, undefined);
+  t.is(workflow.steps.b.previous, 'a');
 });
 
-test('should set previous job with 2 jobs and no start', (t) => {
+test('should set previous job with 2 steps and no start', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'x', next: { b: true } },
         { id: 'b', expression: 'y' },
       ],
@@ -119,14 +124,14 @@ test('should set previous job with 2 jobs and no start', (t) => {
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  t.is(workflow.jobs.a.previous, undefined);
-  t.is(workflow.jobs.b.previous, 'a');
+  t.is(workflow.steps.a.previous, undefined);
+  t.is(workflow.steps.b.previous, 'a');
 });
 
-test('should set previous job with 3 jobs', (t) => {
+test('should set previous job with 3 steps', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'x', next: { b: true } },
         { id: 'b', expression: 'y', next: { c: true } },
         { id: 'c', expression: 'z' },
@@ -135,15 +140,15 @@ test('should set previous job with 3 jobs', (t) => {
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  t.is(workflow.jobs.a.previous, undefined);
-  t.is(workflow.jobs.b.previous, 'a');
-  t.is(workflow.jobs.c.previous, 'b');
+  t.is(workflow.steps.a.previous, undefined);
+  t.is(workflow.steps.b.previous, 'a');
+  t.is(workflow.steps.c.previous, 'b');
 });
 
-test('should set previous job with 3 jobs and shorthand syntax', (t) => {
+test('should set previous job with 3 steps and shorthand syntax', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'c', expression: 'z' },
         { id: 'a', expression: 'x', next: 'b' },
         { id: 'b', expression: 'y', next: 'c' },
@@ -152,58 +157,54 @@ test('should set previous job with 3 jobs and shorthand syntax', (t) => {
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  t.is(workflow.jobs.a.previous, undefined);
-  t.is(workflow.jobs.b.previous, 'a');
-  t.is(workflow.jobs.c.previous, 'b');
+  t.is(workflow.steps.a.previous, undefined);
+  t.is(workflow.steps.b.previous, 'a');
+  t.is(workflow.steps.c.previous, 'b');
 });
 
-test('should auto generate ids for jobs', (t) => {
+test('should auto generate ids for steps', (t) => {
   const plan = {
     workflow: {
-      jobs: [{ expression: 'x' }, { expression: 'y' }],
+      steps: [{ expression: 'x' }, { expression: 'y' }],
     },
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  const ids = Object.keys(workflow.jobs);
+  const ids = Object.keys(workflow.steps);
   t.truthy(ids[0]);
   t.truthy(ids[1]);
   t.assert(ids[0] !== ids[1]);
 });
 
-test('should convert jobs to an object with auto ids', (t) => {
+test('should convert steps to an object with auto ids', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
-        // silly use case but it doens't matter
-        { expression: 'x' },
-        { expression: 'y' },
-      ],
+      steps: [{ expression: 'x' }, { expression: 'y' }],
     },
     options: {},
   };
   const { workflow } = compilePlan(plan);
-  t.deepEqual(Object.keys(workflow.jobs), ['job-1', 'job-2']);
+  t.deepEqual(Object.keys(workflow.steps), ['job-1', 'job-2']);
 });
 
 test('should reset job ids for each call', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [{ expression: 'x' }],
+      steps: [{ expression: 'x' }],
     },
     options: {},
   };
   const first = compilePlan(plan);
-  t.is(first.workflow.jobs['job-1'].expression, 'x');
+  t.is(first.workflow.steps['job-1'].expression, 'x');
 
   const second = compilePlan(plan);
-  t.is(second.workflow.jobs['job-1'].expression, 'x');
+  t.is(second.workflow.steps['job-1'].expression, 'x');
 });
 
-test('should set the start to jobs[0]', (t) => {
+test('should set the start to steps[0]', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'x' },
         { id: 'b', expression: 'y' },
         { id: 'c', expression: 'z' },
@@ -221,7 +222,7 @@ test('should not override the start', (t) => {
       start: 'c',
     },
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'x' },
         { id: 'b', expression: 'y' },
         { id: 'c', expression: 'z' },
@@ -235,7 +236,7 @@ test('should not override the start', (t) => {
 test('should compile a shorthand edge', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: 'x',
@@ -248,7 +249,7 @@ test('should compile a shorthand edge', (t) => {
 
   const { workflow } = compilePlan(plan);
 
-  t.deepEqual(workflow.jobs.a.next!, {
+  t.deepEqual(workflow.steps.a.next!, {
     y: true,
   });
 });
@@ -261,7 +262,7 @@ test('should not recompile a functional edge', (t) => {
 
   const { workflow } = compilePlan(plan);
   // @ts-ignore
-  const result = workflow.jobs.a.next!.b.condition({});
+  const result = workflow.steps.a.next!.b.condition({});
   t.true(result);
 });
 
@@ -271,7 +272,7 @@ test('should compile a truthy edge', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  const result = workflow.jobs.a.next!.b.condition({});
+  const result = workflow.steps.a.next!.b.condition({});
   t.true(result);
 });
 
@@ -281,7 +282,7 @@ test('should compile a string edge', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  const result = workflow.jobs.a.next!.b.condition();
+  const result = workflow.steps.a.next!.b.condition();
   t.true(result);
 });
 
@@ -291,7 +292,7 @@ test('should compile a falsy edge', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  const result = workflow.jobs.a.next!.b.condition({});
+  const result = workflow.steps.a.next!.b.condition({});
   t.false(result);
 });
 
@@ -301,7 +302,7 @@ test('should compile an edge with arithmetic', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  const result = workflow.jobs.a.next!.b.condition({});
+  const result = workflow.steps.a.next!.b.condition({});
   t.is(result, 2);
 });
 
@@ -311,7 +312,7 @@ test('should compile an edge which uses state', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  const result = workflow.jobs.a.next!.b.condition({});
+  const result = workflow.steps.a.next!.b.condition({});
   t.true(result);
 });
 
@@ -321,7 +322,7 @@ test('condition cannot require', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  t.throws(() => workflow.jobs.a.next!.b.condition({ data: {} }), {
+  t.throws(() => workflow.steps.a.next!.b.condition({ data: {} }), {
     message: 'require is not defined',
   });
 });
@@ -332,7 +333,7 @@ test('condition cannot access process', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  t.throws(() => workflow.jobs.a.next!.b.condition({ data: {} }), {
+  t.throws(() => workflow.steps.a.next!.b.condition({ data: {} }), {
     message: 'process is not defined',
   });
 });
@@ -343,7 +344,7 @@ test('condition cannot access process #2', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  t.throws(() => workflow.jobs.a.next!.b.condition({ data: {} }), {
+  t.throws(() => workflow.steps.a.next!.b.condition({ data: {} }), {
     message: 'process is not defined',
   });
 });
@@ -354,7 +355,7 @@ test('condition cannot eval', (t) => {
   const { workflow } = compilePlan(plan);
 
   // @ts-ignore
-  t.throws(() => workflow.jobs.a.next!.b.condition({ data: {} }), {
+  t.throws(() => workflow.steps.a.next!.b.condition({ data: {} }), {
     message: 'Code generation from strings disallowed for this context',
   });
 });
@@ -372,7 +373,7 @@ test('throw for a syntax error on a job edge', (t) => {
 test('throw for multiple errors', (t) => {
   const plan = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: 'x',

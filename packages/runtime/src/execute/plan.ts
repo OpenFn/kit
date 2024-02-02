@@ -1,7 +1,7 @@
 import type { Logger } from '@openfn/logger';
 import type { ExecutionPlan, State, Lazy } from '@openfn/lexicon';
 
-import executeJob from './job';
+import executeStep from './step';
 import compilePlan from './compile-plan';
 
 import type { Options } from '../runtime';
@@ -59,11 +59,11 @@ const executePlan = async (
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift()!;
-    const job = workflow.jobs[next];
+    const job = workflow.steps[next];
 
     const prevState = stateHistory[job.previous || ''] ?? input;
 
-    const result = await executeJob(ctx, job, prevState);
+    const result = await executeStep(ctx, job, prevState);
     stateHistory[next] = result.state;
 
     if (!result.next.length) {

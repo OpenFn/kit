@@ -6,7 +6,7 @@ import {
   NOTIFY_JOB_ERROR,
   NOTIFY_JOB_START,
 } from '../../src';
-import execute from '../../src/execute/job';
+import execute from '../../src/execute/step';
 
 import type { ExecutionContext } from '../../src/types';
 import { State } from '@openfn/lexicon';
@@ -34,35 +34,35 @@ test.afterEach(() => {
   logger._reset();
 });
 
-test.serial('resolve and return next for a simple job', async (t) => {
-  const job = {
+test.serial('resolve and return next for a simple step', async (t) => {
+  const step = {
     id: 'j',
     expression: [(s: State) => s],
     next: { k: true, a: false },
   };
   const initialState = createState();
   const context = createContext();
-  const { next, state } = await execute(context, job, initialState);
+  const { next, state } = await execute(context, step, initialState);
 
   t.deepEqual(state, { data: {} });
   t.deepEqual(next, ['k']);
 });
 
-test.serial('resolve and return next for a trigger-style job', async (t) => {
-  const job = {
+test.serial('resolve and return next for a trigger-style step', async (t) => {
+  const step = {
     id: 'j',
     next: { k: true, a: false },
   };
   const initialState = createState();
   const context = createContext();
-  const { next, state } = await execute(context, job, initialState);
+  const { next, state } = await execute(context, step, initialState);
 
   t.deepEqual(state, initialState);
   t.deepEqual(next, ['k']);
 });
 
-test.serial('resolve and return next for a failed job', async (t) => {
-  const job = {
+test.serial('resolve and return next for a failed step', async (t) => {
+  const step = {
     id: 'j',
     expression: [
       () => {
@@ -73,7 +73,7 @@ test.serial('resolve and return next for a failed job', async (t) => {
   };
   const initialState = createState();
   const context = createContext();
-  const { next, state } = await execute(context, job, initialState);
+  const { next, state } = await execute(context, step, initialState);
 
   // Config should still be scrubbed from data
   t.deepEqual(state, { data: {} });
@@ -81,7 +81,7 @@ test.serial('resolve and return next for a failed job', async (t) => {
 });
 
 test.serial(`notify ${NOTIFY_JOB_START}`, async (t) => {
-  const job = {
+  const step = {
     id: 'j',
     expression: [(s: State) => s],
   };
@@ -95,32 +95,32 @@ test.serial(`notify ${NOTIFY_JOB_START}`, async (t) => {
 
   const context = createContext({ notify });
 
-  await execute(context, job, state);
+  await execute(context, step, state);
 });
 
 test.serial(
-  `don't notify ${NOTIFY_JOB_START} for trigger-style jobs`,
+  `don't notify ${NOTIFY_JOB_START} for trigger-style steps`,
   async (t) => {
-    const job = {
+    const step = {
       id: 'j',
     };
     const state = createState();
 
     const notify = (event: string, payload?: any) => {
       if (event === NOTIFY_JOB_START) {
-        t.fail('should not notify job-start for trigger nodes');
+        t.fail('should not notify step-start for trigger nodes');
       }
     };
 
     const context = createContext({ notify });
 
-    await execute(context, job, state);
+    await execute(context, step, state);
     t.pass('all ok');
   }
 );
 
 test.serial(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
-  const job = {
+  const step = {
     id: 'j',
     expression: [(s: State) => s],
   };
@@ -142,11 +142,11 @@ test.serial(`notify ${NOTIFY_JOB_COMPLETE} with no next`, async (t) => {
 
   const context = createContext({ notify });
 
-  await execute(context, job, state);
+  await execute(context, step, state);
 });
 
 test.serial(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
-  const job = {
+  const step = {
     id: 'j',
     expression: [(s: State) => s],
     next: { b: true, c: true },
@@ -168,26 +168,26 @@ test.serial(`notify ${NOTIFY_JOB_COMPLETE} with two nexts`, async (t) => {
 
   const context = createContext({ notify });
 
-  await execute(context, job, state);
+  await execute(context, step, state);
 });
 
 test.serial(
-  `don't notify ${NOTIFY_JOB_COMPLETE} for trigger-style jobs`,
+  `don't notify ${NOTIFY_JOB_COMPLETE} for trigger-style steps`,
   async (t) => {
-    const job = {
+    const step = {
       id: 'j',
     };
     const state = createState();
 
     const notify = (event: string) => {
       if (event === NOTIFY_JOB_COMPLETE) {
-        t.fail('should not notify job-start for trigger nodes');
+        t.fail('should not notify step-start for trigger nodes');
       }
     };
 
     const context = createContext({ notify });
 
-    await execute(context, job, state);
+    await execute(context, step, state);
     t.pass('all ok');
   }
 );
@@ -198,7 +198,7 @@ test.serial(
     // Promises will trigger an exception if you try to serialize them
     // If we don't return finalState in  execute/expression, this test will fail
     const resultState = { x: new Promise((r) => r), y: 22 };
-    const job = {
+    const step = {
       id: 'j',
       expression: [() => resultState],
     };
@@ -215,12 +215,12 @@ test.serial(
 
     const context = createContext({ notify });
 
-    await execute(context, job, state);
+    await execute(context, step, state);
   }
 );
 
 test.serial(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
-  const job = {
+  const step = {
     id: 'j',
     expression: [
       () => {
@@ -250,33 +250,33 @@ test.serial(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
 
   const context = createContext({ notify });
 
-  await execute(context, job, state);
+  await execute(context, step, state);
 });
 
 test.serial('log duration of execution', async (t) => {
-  const job = {
+  const step = {
     id: 'y',
     expression: [(s: State) => s],
   };
   const initialState = createState();
   const context = createContext();
 
-  await execute(context, job, initialState);
+  await execute(context, step, initialState);
 
-  const duration = logger._find('success', /completed job /i);
+  const duration = logger._find('success', /completed step /i);
 
-  t.regex(duration?.message, /completed job y in \d\d?ms/i);
+  t.regex(duration?.message, /completed step y in \d\d?ms/i);
 });
 
 test.serial('log memory usage', async (t) => {
-  const job = {
+  const step = {
     id: 'z',
     expression: [(s: State) => s],
   };
   const initialState = createState();
   const context = createContext();
 
-  await execute(context, job, initialState);
+  await execute(context, step, initialState);
 
   const memory = logger._find('debug', /final memory usage/i);
 
@@ -285,8 +285,8 @@ test.serial('log memory usage', async (t) => {
   t.regex(memory?.message, /\d+mb(.+)\d+mb/i);
 });
 
-test.serial('warn if a non-leaf job does not return state', async (t) => {
-  const job = {
+test.serial('warn if a non-leaf step does not return state', async (t) => {
+  const step = {
     id: 'k',
     expression: [(s: State) => {}],
     next: { l: true },
@@ -295,14 +295,14 @@ test.serial('warn if a non-leaf job does not return state', async (t) => {
   const context = createContext();
   const state = createState();
 
-  // @ts-ignore ts complains that the job does not return state
-  const result = await execute(context, job, state);
+  // @ts-ignore ts complains that the step does not return state
+  const result = await execute(context, step, state);
   const warn = logger._find('warn', /did not return a state object/);
   t.truthy(warn);
 });
 
-test.serial('do not warn if a leaf job does not return state', async (t) => {
-  const job = {
+test.serial('do not warn if a leaf step does not return state', async (t) => {
+  const step = {
     id: 'k',
     expression: [(s: State) => {}],
   };
@@ -310,17 +310,17 @@ test.serial('do not warn if a leaf job does not return state', async (t) => {
   const context = createContext();
   const state = createState();
 
-  // @ts-ignore ts complains that the job does not return state
-  const result = await execute(context, job, state);
+  // @ts-ignore ts complains that the step does not return state
+  const result = await execute(context, step, state);
 
   const warn = logger._find('warn', /did not return a state object/);
   t.falsy(warn);
 });
 
 test.serial(
-  'do not warn a non-leaf job does not return state and there was an error',
+  'do not warn a non-leaf step does not return state and there was an error',
   async (t) => {
-    const job = {
+    const step = {
       id: 'k',
       expression: [
         (s: State) => {
@@ -333,8 +333,8 @@ test.serial(
     const context = createContext();
     const state = createState();
 
-    // @ts-ignore ts complains that the job does not return state
-    const result = await execute(context, job, state);
+    // @ts-ignore ts complains that the step does not return state
+    const result = await execute(context, step, state);
 
     const warn = logger._find('warn', /did not return a state object/);
     t.falsy(warn);

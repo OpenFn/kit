@@ -1,7 +1,7 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
 import {
   NOTIFY_INIT_COMPLETE,
@@ -12,6 +12,8 @@ import {
 } from '../src';
 import run from '../src/runtime';
 
+type ExecutionPlanNoOptions = Omit<ExecutionPlan, 'options'>;
+
 test('run simple expression', async (t) => {
   const expression = 'export default [(s) => {s.data.done = true; return s}]';
 
@@ -20,9 +22,9 @@ test('run simple expression', async (t) => {
 });
 
 test('run a simple workflow', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         { expression: 'export default [(s) => ({ data: { done: true } })]' },
       ],
     },
@@ -45,9 +47,9 @@ test('run a workflow and notify major events', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [{ expression: 'export default [(s) => s]' }],
+      steps: [{ expression: 'export default [(s) => s]' }],
     },
   };
 
@@ -74,9 +76,9 @@ test('notify job error even after fail', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'export default [(s) => s.data.x = s.err.z ]' },
       ],
     },
@@ -100,8 +102,8 @@ test('notify job error even after crash', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlan = {
-    workflow: { jobs: [{ id: 'a', expression: 'export default [() => s]' }] },
+  const plan: ExecutionPlanNoOptions = {
+    workflow: { steps: [{ id: 'a', expression: 'export default [() => s]' }] },
   };
 
   try {
@@ -115,7 +117,7 @@ test('notify job error even after crash', async (t) => {
 test('resolve a credential', async (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression: 'export default [(s) => s]',
           configuration: 'ccc',
@@ -140,9 +142,9 @@ test('resolve a credential', async (t) => {
 });
 
 test('resolve initial state', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression: 'export default [(s) => s]',
           state: 'abc',
@@ -175,9 +177,9 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         { id: 'a', expression: 'export default [(s) => s]', next: { b: true } },
         { id: 'b', expression: 'export default [(s) => s]' },
       ],
@@ -193,9 +195,9 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
 });
 
 test('run a workflow with state and parallel branching', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression:
             'export default [(s) => { s.data.count += 1; s.data.a = true; return s}]',
@@ -242,9 +244,9 @@ test('run a workflow with state and parallel branching', async (t) => {
 // TODO this test sort of shows why input state on the plan object is a bit funky
 // running the same plan with two inputs is pretty clunky
 test('run a workflow with state and conditional branching', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression: 'export default [(s) => { s.data.a = true; return s}]',
           next: {
@@ -284,7 +286,7 @@ test('run a workflow with state and conditional branching', async (t) => {
 test('run a workflow with initial state (data key) and optional start', async (t) => {
   const plan: ExecutionPlan = {
     workflow: {
-      jobs: [
+      steps: [
         {
           // won't run
           id: 'a',
@@ -312,9 +314,9 @@ test('run a workflow with initial state (data key) and optional start', async (t
 });
 
 test('run a workflow with a trigger node', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           next: { b: { condition: 'state.data.age > 18 ' } },
         },
@@ -332,9 +334,9 @@ test('run a workflow with a trigger node', async (t) => {
 });
 
 test('prefer initial state to inline state', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           state: {
             data: {
@@ -354,9 +356,9 @@ test('prefer initial state to inline state', async (t) => {
 });
 
 test('do not pass extraneous state in strict mode', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression: 'export default [() => ({ x: 1, data: {}} )]',
         },
@@ -371,9 +373,9 @@ test('do not pass extraneous state in strict mode', async (t) => {
 });
 
 test('do pass extraneous state in non-strict mode', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           expression: 'export default [() => ({ x: 1, data: {}} )]',
         },
@@ -389,9 +391,9 @@ test('do pass extraneous state in non-strict mode', async (t) => {
 });
 
 test('Allow a job to return undefined', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [{ expression: 'export default [() => {}]' }],
+      steps: [{ expression: 'export default [() => {}]' }],
     },
   };
 
@@ -400,9 +402,9 @@ test('Allow a job to return undefined', async (t) => {
 });
 
 test('log errors, write to state, and continue', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: 'export default [() => { throw new Error("test") }]',
@@ -424,13 +426,13 @@ test('log errors, write to state, and continue', async (t) => {
   t.is(result.errors.a.message, 'test');
   t.is(result.errors.a.type, 'JobError');
 
-  t.truthy(logger._find('error', /failed job a/i));
+  t.truthy(logger._find('error', /failed step a/i));
 });
 
 test('log job code to the job logger', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: 'export default [(s) => { console.log("hi"); return s;}]',
@@ -450,9 +452,9 @@ test('log job code to the job logger', async (t) => {
 });
 
 test('log and serialize an error to the job logger', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression:
@@ -477,9 +479,9 @@ test('log and serialize an error to the job logger', async (t) => {
 });
 
 test('error reports can be overwritten', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: 'export default [() => { throw new Error("test") }]',
@@ -501,9 +503,9 @@ test('error reports can be overwritten', async (t) => {
 
 // This tracks current behaviour but I don't know if it's right
 test('stuff written to state before an error is preserved', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           data: { x: 0 },
@@ -528,9 +530,9 @@ test('data can be an array (expression)', async (t) => {
 });
 
 test('data can be an array (workflow)', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: ExecutionPlanNoOptions = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: 'export default [() => ({ data: [1,2,3] })]',
