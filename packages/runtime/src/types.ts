@@ -38,7 +38,6 @@ export type CompiledExecutionPlan = {
   };
   options: WorkflowOptions & {
     start: StepId;
-    initialState: Lazy<State>;
   };
 };
 

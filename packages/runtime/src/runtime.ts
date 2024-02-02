@@ -1,9 +1,9 @@
 import { createMockLogger, Logger } from '@openfn/logger';
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
 import type { ExecutionCallbacks } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
-import { parseRegex } from './util/index';
+import { defaultState, parseRegex, clone } from './util/index';
 
 export const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -58,9 +58,11 @@ const loadPlanFromString = (expression: string, logger: Logger) => {
   return plan;
 };
 
-// TODO change to this:
-// const run = (xplan: ExecutionPlan | string, input: State, opts: RawOptions = {}) => {
-const run = (xplan: ExecutionPlan | string, opts: RawOptions = {}) => {
+const run = (
+  xplan: ExecutionPlan | string,
+  input: State,
+  opts: RawOptions = {}
+) => {
   const logger = opts.logger || defaultLogger;
 
   if (typeof xplan === 'string') {
@@ -69,6 +71,10 @@ const run = (xplan: ExecutionPlan | string, opts: RawOptions = {}) => {
 
   if (!xplan.options) {
     xplan.options = {};
+  }
+
+  if (!input) {
+    input = clone(defaultState);
   }
 
   const { options } = xplan;
@@ -91,12 +97,7 @@ const run = (xplan: ExecutionPlan | string, opts: RawOptions = {}) => {
     });
   }
 
-  // TODO change where initial state comes from (ie never from options)
-  if (!xplan.options.initialState) {
-    xplan.options.initialState = (options as any).intitialState;
-  }
-
-  return executePlan(xplan, opts as Options, logger);
+  return executePlan(xplan, input, opts as Options, logger);
 };
 
 export default run;

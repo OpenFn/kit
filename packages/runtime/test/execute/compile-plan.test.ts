@@ -33,36 +33,6 @@ const planWithEdge = (edge: Partial<StepEdge>) => ({
   },
 });
 
-test('should preserve initial state as an object', (t) => {
-  const state = { x: 123 };
-  const compiledPlan = compilePlan({
-    id: 'a',
-    workflow: {
-      jobs: [],
-    },
-    options: {
-      initialState: state,
-    },
-  });
-  t.deepEqual(state, compiledPlan.options.initialState);
-});
-
-test('should preserve initial state a string', (t) => {
-  const compiledPlan = compilePlan({
-    id: 'a',
-    workflow: {
-      jobs: [],
-    },
-    options: {
-      // @ts-ignore
-      initialState: 'abc',
-    },
-  });
-
-  // @ts-ignore
-  t.is(compiledPlan.options.initialState, 'abc');
-});
-
 test('should preserve the start option', (t) => {
   const compiledPlan = compilePlan({
     id: 'a',
@@ -91,10 +61,11 @@ test('should preserve arbitrary options', (t) => {
     },
   });
 
-  t.deepEqual(compiledPlan.options.start, {
+  t.deepEqual(compiledPlan.options, {
     a: 1,
     z: 2,
     '-': 3,
+    start: 'a',
   });
 });
 

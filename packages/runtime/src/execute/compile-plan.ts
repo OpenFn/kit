@@ -7,7 +7,6 @@ import type {
 import compileFunction from '../modules/compile-function';
 import { conditionContext, Context } from './context';
 import { ExecutionPlan, StepEdge, Workflow } from '@openfn/lexicon';
-import { clone, defaultState } from '../util';
 
 const compileEdges = (
   from: string,
@@ -104,7 +103,6 @@ export default (plan: ExecutionPlan) => {
     options: {
       ...options,
       start: options.start ?? workflow.jobs[0]?.id!,
-      initialState: clone(options.initialState ?? defaultState),
     },
   };
 

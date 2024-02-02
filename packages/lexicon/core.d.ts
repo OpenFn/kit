@@ -1,5 +1,6 @@
 type UUID = string;
 
+export type Lazy<T> = T | string;
 /**
  * An execution plan is a portable definition of a Work Order,
  * or, a unit of work to execute
@@ -37,10 +38,6 @@ export type WorkflowOptions = {
   start?: StepId;
 
   statePropsToRemove?: string[];
-
-  // TODO let's rename this to input, because that's what it is!
-  // also we need to remove it from here because it's not an option is it
-  initialState?: State;
 };
 
 export type StepId = string;
