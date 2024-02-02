@@ -6,28 +6,14 @@ import { State } from '@openfn/lexicon';
 
 const createState = (data = {}) => ({ data, configuration: {} });
 
-const createPlan = (expression: string, initialState: State) => ({
-  workflow: {
-    jobs: [
-      {
-        expression,
-      },
-    ],
-  },
-  options: {
-    initialState,
-  },
-});
-
 test('makes parseInt available inside the job', async (t) => {
   const expression = `
     export default [
       (s) => { s.data.count = parseInt(s.data.count); return s; }
     ];`;
-  const intialState = createState({ count: '22' });
-  const plan = createPlan(expression, intialState);
+  const input = createState({ count: '22' });
 
-  const result = await run(plan);
+  const result = await run(expression, input);
   t.deepEqual(result.data, { count: 22 });
 });
 
@@ -41,9 +27,8 @@ test('makes Set available inside the job', async (t) => {
     ];`;
 
   const state = createState({ count: '33' });
-  const plan = createPlan(expression, state);
 
-  const result = await run(plan);
+  const result = await run(expression, state);
   t.deepEqual(result.data, { count: '33' });
 });
 
@@ -57,9 +42,7 @@ test("doesn't allow process inside the job", async (t) => {
       }
     ];`;
 
-  const plan = createPlan(expression, createState());
-
-  await t.throwsAsync(() => run(plan, { logger }), {
+  await t.throwsAsync(() => run(expression, {}, { logger }), {
     name: 'RuntimeCrash',
     message: 'ReferenceError: process is not defined',
   });
@@ -72,8 +55,7 @@ test("doesn't allow eval inside a job", async (t) => {
       (state) => eval('ok') // should throw
     ];`;
 
-  const plan = createPlan(expression, createState());
-  await t.throwsAsync(() => run(plan, { logger }), {
+  await t.throwsAsync(() => run(expression, {}, { logger }), {
     name: 'SecurityError',
     message: /Illegal eval statement detected/,
   });

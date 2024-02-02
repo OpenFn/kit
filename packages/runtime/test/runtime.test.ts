@@ -51,7 +51,7 @@ test('run a workflow and notify major events', async (t) => {
     },
   };
 
-  await run(plan, { callbacks });
+  await run(plan, {}, { callbacks });
 
   t.is(counts[NOTIFY_INIT_START], 1);
   t.is(counts[NOTIFY_INIT_COMPLETE], 1);
@@ -82,7 +82,7 @@ test('notify job error even after fail', async (t) => {
     },
   };
 
-  await run(plan, { callbacks });
+  await run(plan, {}, { callbacks });
 });
 
 test('notify job error even after crash', async (t) => {
@@ -105,7 +105,7 @@ test('notify job error even after crash', async (t) => {
   };
 
   try {
-    await run(plan, { callbacks });
+    await run(plan, {}, { callbacks });
   } catch (e) {
     // this will throw, it's fine
     // don't assert on it, I only wnat to assert in on-error
@@ -122,17 +122,19 @@ test('resolve a credential', async (t) => {
         },
       ],
     },
+    options: {
+      statePropsToRemove: [],
+    },
   };
 
   const options = {
     strict: false,
-    statePropsToRemove: [],
     callbacks: {
       resolveCredential: async () => ({ password: 'password1' }),
     },
   };
 
-  const result: any = await run(plan, options);
+  const result: any = await run(plan, {}, options);
   t.truthy(result);
   t.deepEqual(result.configuration, { password: 'password1' });
 });
@@ -155,7 +157,7 @@ test('resolve initial state', async (t) => {
     },
   };
 
-  const result: any = await run(plan, options);
+  const result: any = await run(plan, {}, options);
   t.truthy(result);
   t.deepEqual(result.data, { foo: 'bar' });
 });
@@ -182,7 +184,7 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
     },
   };
 
-  await run(plan, { callbacks });
+  await run(plan, {}, { callbacks });
 
   t.is(counts['init-start'], 2);
   t.is(counts['init-complete'], 2);
@@ -214,12 +216,11 @@ test('run a workflow with state and parallel branching', async (t) => {
         },
       ],
     },
-    options: {
-      initialState: { data: { count: 0 } },
-    },
   };
 
-  const result: any = await run(plan);
+  const state = { data: { count: 0 } };
+
+  const result: any = await run(plan, state);
   t.deepEqual(result, {
     b: {
       data: {
@@ -282,40 +283,48 @@ test('run a workflow with state and conditional branching', async (t) => {
 
 test('run a workflow with initial state (data key) and optional start', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        // won't run
-        id: 'a',
-        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
-        next: { c: true },
-      },
-      {
-        id: 'c',
-        expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          // won't run
+          id: 'a',
+          expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+          next: { c: true },
+        },
+        {
+          id: 'c',
+          expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
+        },
+      ],
+    },
+    options: {
+      start: 'b',
+    },
   };
 
-  const result: any = await run(plan, { data: { count: 10 } }, { start: 'b' });
+  const result: any = await run(plan, { data: { count: 10 } });
   t.is(result.data.count, 12);
 });
 
 test('run a workflow with a trigger node', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        next: { b: { condition: 'state.data.age > 18 ' } },
-      },
-      {
-        id: 'b',
-        expression: 'export default [(s) => { s.data.done = true ; return s}]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          next: { b: { condition: 'state.data.age > 18 ' } },
+        },
+        {
+          id: 'b',
+          expression:
+            'export default [(s) => { s.data.done = true ; return s}]',
+        },
+      ],
+    },
   };
 
   const result: any = await run(plan, { data: { age: 28 } });
@@ -324,17 +333,19 @@ test('run a workflow with a trigger node', async (t) => {
 
 test('prefer initial state to inline state', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        state: {
-          data: {
-            x: 20, // this will be overriden by the incoming state
-            y: 20, // This will be untouched
+    workflow: {
+      jobs: [
+        {
+          state: {
+            data: {
+              x: 20, // this will be overriden by the incoming state
+              y: 20, // This will be untouched
+            },
           },
+          expression: 'export default [(s) => s]',
         },
-        expression: 'export default [(s) => s]',
-      },
-    ],
+      ],
+    },
   };
 
   const result: any = await run(plan, { data: { x: 40 } });
@@ -344,11 +355,13 @@ test('prefer initial state to inline state', async (t) => {
 
 test('do not pass extraneous state in strict mode', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        expression: 'export default [() => ({ x: 1, data: {}} )]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          expression: 'export default [() => ({ x: 1, data: {}} )]',
+        },
+      ],
+    },
   };
 
   const result: any = await run(plan, {}, { strict: true });
@@ -359,11 +372,13 @@ test('do not pass extraneous state in strict mode', async (t) => {
 
 test('do pass extraneous state in non-strict mode', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        expression: 'export default [() => ({ x: 1, data: {}} )]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          expression: 'export default [() => ({ x: 1, data: {}} )]',
+        },
+      ],
+    },
   };
 
   const result: any = await run(plan, {}, { strict: false });
@@ -375,7 +390,9 @@ test('do pass extraneous state in non-strict mode', async (t) => {
 
 test('Allow a job to return undefined', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [{ expression: 'export default [() => {}]' }],
+    workflow: {
+      jobs: [{ expression: 'export default [() => {}]' }],
+    },
   };
 
   const result: any = await run(plan);
@@ -384,17 +401,19 @@ test('Allow a job to return undefined', async (t) => {
 
 test('log errors, write to state, and continue', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression: 'export default [() => { throw new Error("test") }]',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-        expression: 'export default [(s) => { s.x = 1; return s; }]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          expression: 'export default [() => { throw new Error("test") }]',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.x = 1; return s; }]',
+        },
+      ],
+    },
   };
 
   const logger = createMockLogger();
@@ -410,12 +429,14 @@ test('log errors, write to state, and continue', async (t) => {
 
 test('log job code to the job logger', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression: 'export default [(s) => { console.log("hi"); return s;}]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          expression: 'export default [(s) => { console.log("hi"); return s;}]',
+        },
+      ],
+    },
   };
 
   const jobLogger = createMockLogger('JOB', { level: 'debug', json: true });
@@ -430,13 +451,15 @@ test('log job code to the job logger', async (t) => {
 
 test('log and serialize an error to the job logger', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression:
-          'export default [(s) => { console.log(new Error("hi")); return s;}]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          expression:
+            'export default [(s) => { console.log(new Error("hi")); return s;}]',
+        },
+      ],
+    },
   };
 
   const jobLogger = createMockLogger('JOB', { level: 'debug', json: true });
@@ -455,17 +478,19 @@ test('log and serialize an error to the job logger', async (t) => {
 
 test('error reports can be overwritten', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression: 'export default [() => { throw new Error("test") }]',
-        next: { b: true },
-      },
-      {
-        id: 'b',
-        expression: 'export default [(s) => ({ errors: 22 })]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          expression: 'export default [() => { throw new Error("test") }]',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => ({ errors: 22 })]',
+        },
+      ],
+    },
   };
 
   const logger = createMockLogger();
@@ -477,14 +502,16 @@ test('error reports can be overwritten', async (t) => {
 // This tracks current behaviour but I don't know if it's right
 test('stuff written to state before an error is preserved', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        data: { x: 0 },
-        expression:
-          'export default [(s) => { s.x = 1; throw new Error("test") }]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          data: { x: 0 },
+          expression:
+            'export default [(s) => { s.x = 1; throw new Error("test") }]',
+        },
+      ],
+    },
   };
 
   const logger = createMockLogger();
@@ -502,17 +529,19 @@ test('data can be an array (expression)', async (t) => {
 
 test('data can be an array (workflow)', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression: 'export default [() => ({ data: [1,2,3] })]',
-        next: 'b',
-      },
-      {
-        id: 'b',
-        expression: 'export default [(s) => s]',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          id: 'a',
+          expression: 'export default [() => ({ data: [1,2,3] })]',
+          next: 'b',
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => s]',
+        },
+      ],
+    },
   };
 
   const result: any = await run(plan, {}, { strict: false });

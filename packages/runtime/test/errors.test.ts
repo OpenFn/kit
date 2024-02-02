@@ -19,7 +19,6 @@ test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
   const plan = createPlan(expression, { timeout: 1 });
-  console.log(plan);
   let error;
   try {
     await run(plan);
@@ -100,7 +99,6 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
         { id: 'b', expression: '.' },
       ],
     },
-    options: {},
   };
 
   let error;
@@ -142,11 +140,15 @@ test('crash on blacklisted module', async (t) => {
 
   let error;
   try {
-    await run(expression, {
-      linker: {
-        whitelist: [/^@opennfn/],
-      },
-    });
+    await run(
+      expression,
+      {},
+      {
+        linker: {
+          whitelist: [/^@opennfn/],
+        },
+      }
+    );
   } catch (e) {
     error = e;
   }
@@ -214,13 +216,17 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   import { err } from 'x';
   export default [(s) => err()];
   `;
-  const result = await run(expression, {
-    linker: {
-      modules: {
-        x: { path: path.resolve('test/__modules__/test') },
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
       },
-    },
-  });
+    }
+  );
 
   const error = result.errors['job-1'];
   t.is(error.type, 'AdaptorError');
@@ -235,13 +241,17 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
   import { err2 } from 'x';
   export default [(s) => err2()];
   `;
-  const result = await run(expression, {
-    linker: {
-      modules: {
-        x: { path: path.resolve('test/__modules__/test') },
+  const result = await run(
+    expression,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
       },
-    },
-  });
+    }
+  );
 
   const error = result.errors['job-1'];
   t.is(error.type, 'JobError');

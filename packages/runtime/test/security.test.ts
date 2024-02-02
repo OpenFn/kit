@@ -5,22 +5,9 @@ import type { ExecutionPlan, State } from '@openfn/lexicon';
 
 import doRun from '../src/runtime';
 
-const createPlan = (expression: string, state: State = {}) => ({
-  workflow: {
-    jobs: [
-      {
-        expression,
-      },
-    ],
-  },
-  options: {
-    initialState: state,
-  },
-});
-
 // Disable strict mode for all these tests
-const run = (plan: ExecutionPlan, options: any = {}) =>
-  doRun(plan, { strict: false, ...options });
+const run = (plan: ExecutionPlan | string, state: State, options: any = {}) =>
+  doRun(plan, state, { strict: false, ...options });
 
 const logger = createMockLogger(undefined, { level: 'default' });
 
@@ -39,9 +26,8 @@ test.serial(
         password: 'secret',
       },
     };
-    const plan = createPlan(src, state);
 
-    const result: any = await run(plan);
+    const result: any = await run(src, state);
     t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
   }
@@ -59,8 +45,7 @@ test.serial(
       },
     };
 
-    const plan = createPlan(src, state);
-    const result: any = await run(plan, { strict: true });
+    const result: any = await run(src, state, { strict: true });
     t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
   }
@@ -78,8 +63,7 @@ test.serial(
       },
     };
 
-    const plan = createPlan(src, state);
-    const result: any = await run(plan, { strict: false });
+    const result: any = await run(src, state, { strict: false });
     t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
   }
@@ -96,9 +80,8 @@ test.serial(
         password: 'secret',
       },
     };
-    const plan = createPlan(src, state);
 
-    const result: any = await run(plan, { strict: false });
+    const result: any = await run(src, state, { strict: false });
     t.truthy(result.errors);
     t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
@@ -120,16 +103,14 @@ test.serial('jobs should not have access to global scope', async (t) => {
 test.serial('jobs should be able to read global state', async (t) => {
   const src = 'export default [() => state.data.x]';
 
-  const plan = createPlan(src, { data: { x: 42 } });
-  const result: any = await run(plan);
+  const result: any = await run(src, { data: { x: 42 } });
   t.is(result, 42);
 });
 
 test.serial('jobs should be able to mutate global state', async (t) => {
   const src = 'export default [() => { state.x = 22; return state.x; }]';
 
-  const plan = createPlan(src, { data: { x: 42 } });
-  const result: any = await run(plan);
+  const result: any = await run(src, { data: { x: 42 } });
   t.is(result, 22);
 });
 
