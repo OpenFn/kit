@@ -1,4 +1,4 @@
-The lexicon is a central repositoty of key type and word definitions.
+The lexicon (aka the OpenFunctionicon) is a central repositoty of key type and word definitions.
 
 It's a types repo and glossary at the same time.
 

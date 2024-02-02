@@ -58,6 +58,8 @@ const loadPlanFromString = (expression: string, logger: Logger) => {
   return plan;
 };
 
+// TODO change to this:
+// const run = (xplan: ExecutionPlan | string, input: State, opts: RawOptions = {}) => {
 const run = (xplan: ExecutionPlan | string, opts: RawOptions = {}) => {
   const logger = opts.logger || defaultLogger;
 

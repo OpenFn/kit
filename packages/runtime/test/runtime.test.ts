@@ -1,8 +1,9 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
+
 import {
-  ExecutionPlan,
   NOTIFY_INIT_COMPLETE,
   NOTIFY_JOB_COMPLETE,
   NOTIFY_JOB_ERROR,
@@ -20,9 +21,11 @@ test('run simple expression', async (t) => {
 
 test('run a simple workflow', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      { expression: 'export default [(s) => ({ data: { done: true } })]' },
-    ],
+    workflow: {
+      jobs: [
+        { expression: 'export default [(s) => ({ data: { done: true } })]' },
+      ],
+    },
   };
 
   const result: any = await run(plan);
@@ -43,10 +46,12 @@ test('run a workflow and notify major events', async (t) => {
   };
 
   const plan: ExecutionPlan = {
-    jobs: [{ expression: 'export default [(s) => s]' }],
+    workflow: {
+      jobs: [{ expression: 'export default [(s) => s]' }],
+    },
   };
 
-  await run(plan, {}, { callbacks });
+  await run(plan, { callbacks });
 
   t.is(counts[NOTIFY_INIT_START], 1);
   t.is(counts[NOTIFY_INIT_COMPLETE], 1);
@@ -70,12 +75,14 @@ test('notify job error even after fail', async (t) => {
   };
 
   const plan: ExecutionPlan = {
-    jobs: [
-      { id: 'a', expression: 'export default [(s) => s.data.x = s.err.z ]' },
-    ],
+    workflow: {
+      jobs: [
+        { id: 'a', expression: 'export default [(s) => s.data.x = s.err.z ]' },
+      ],
+    },
   };
 
-  await run(plan, {}, { callbacks });
+  await run(plan, { callbacks });
 });
 
 test('notify job error even after crash', async (t) => {
@@ -94,11 +101,11 @@ test('notify job error even after crash', async (t) => {
   };
 
   const plan: ExecutionPlan = {
-    jobs: [{ id: 'a', expression: 'export default [() => s]' }],
+    workflow: { jobs: [{ id: 'a', expression: 'export default [() => s]' }] },
   };
 
   try {
-    await run(plan, {}, { callbacks });
+    await run(plan, { callbacks });
   } catch (e) {
     // this will throw, it's fine
     // don't assert on it, I only wnat to assert in on-error
@@ -107,12 +114,14 @@ test('notify job error even after crash', async (t) => {
 
 test('resolve a credential', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        expression: 'export default [(s) => s]',
-        configuration: 'ccc',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          expression: 'export default [(s) => s]',
+          configuration: 'ccc',
+        },
+      ],
+    },
   };
 
   const options = {
@@ -123,19 +132,21 @@ test('resolve a credential', async (t) => {
     },
   };
 
-  const result: any = await run(plan, {}, options);
+  const result: any = await run(plan, options);
   t.truthy(result);
   t.deepEqual(result.configuration, { password: 'password1' });
 });
 
 test('resolve initial state', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        expression: 'export default [(s) => s]',
-        state: 'abc',
-      },
-    ],
+    workflow: {
+      jobs: [
+        {
+          expression: 'export default [(s) => s]',
+          state: 'abc',
+        },
+      ],
+    },
   };
 
   const options = {
@@ -144,7 +155,7 @@ test('resolve initial state', async (t) => {
     },
   };
 
-  const result: any = await run(plan, {}, options);
+  const result: any = await run(plan, options);
   t.truthy(result);
   t.deepEqual(result.data, { foo: 'bar' });
 });
@@ -163,13 +174,15 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
   };
 
   const plan: ExecutionPlan = {
-    jobs: [
-      { id: 'a', expression: 'export default [(s) => s]', next: { b: true } },
-      { id: 'b', expression: 'export default [(s) => s]' },
-    ],
+    workflow: {
+      jobs: [
+        { id: 'a', expression: 'export default [(s) => s]', next: { b: true } },
+        { id: 'b', expression: 'export default [(s) => s]' },
+      ],
+    },
   };
 
-  await run(plan, {}, { callbacks });
+  await run(plan, { callbacks });
 
   t.is(counts['init-start'], 2);
   t.is(counts['init-complete'], 2);
@@ -179,29 +192,34 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
 
 test('run a workflow with state and parallel branching', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        expression:
-          'export default [(s) => { s.data.count += 1; s.data.a = true; return s}]',
-        next: {
-          b: true as const,
-          c: true as const,
+    workflow: {
+      jobs: [
+        {
+          expression:
+            'export default [(s) => { s.data.count += 1; s.data.a = true; return s}]',
+          next: {
+            b: true as const,
+            c: true as const,
+          },
         },
-      },
-      {
-        id: 'b',
-        expression:
-          'export default [(s) => { s.data.count += 1; s.data.b = true; return s}]',
-      },
-      {
-        id: 'c',
-        expression:
-          'export default [(s) => { s.data.count += 1; s.data.c = true; return s}]',
-      },
-    ],
+        {
+          id: 'b',
+          expression:
+            'export default [(s) => { s.data.count += 1; s.data.b = true; return s}]',
+        },
+        {
+          id: 'c',
+          expression:
+            'export default [(s) => { s.data.count += 1; s.data.c = true; return s}]',
+        },
+      ],
+    },
+    options: {
+      initialState: { data: { count: 0 } },
+    },
   };
 
-  const result: any = await run(plan, { data: { count: 0 } });
+  const result: any = await run(plan);
   t.deepEqual(result, {
     b: {
       data: {
@@ -220,29 +238,33 @@ test('run a workflow with state and parallel branching', async (t) => {
   });
 });
 
+// TODO this test sort of shows why input state on the plan object is a bit funky
+// running the same plan with two inputs is pretty clunky
 test('run a workflow with state and conditional branching', async (t) => {
   const plan: ExecutionPlan = {
-    jobs: [
-      {
-        expression: 'export default [(s) => { s.data.a = true; return s}]',
-        next: {
-          b: {
-            condition: 'state.data.count > 0',
-          },
-          c: {
-            condition: 'state.data.count == 0',
+    workflow: {
+      jobs: [
+        {
+          expression: 'export default [(s) => { s.data.a = true; return s}]',
+          next: {
+            b: {
+              condition: 'state.data.count > 0',
+            },
+            c: {
+              condition: 'state.data.count == 0',
+            },
           },
         },
-      },
-      {
-        id: 'b',
-        expression: 'export default [(s) => { s.data.b = true; return s}]',
-      },
-      {
-        id: 'c',
-        expression: 'export default [(s) => { s.data.c = true; return s}]',
-      },
-    ],
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.data.b = true; return s}]',
+        },
+        {
+          id: 'c',
+          expression: 'export default [(s) => { s.data.c = true; return s}]',
+        },
+      ],
+    },
   };
 
   const result1: any = await run(plan, { data: { count: 10 } });
