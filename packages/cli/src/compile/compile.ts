@@ -1,27 +1,28 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
-import { getModulePath, ExecutionPlan } from '@openfn/runtime';
+import { getModulePath } from '@openfn/runtime';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
+
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';
 import type { CompileOptions } from './command';
 
 // Load and compile a job from a file, then return the result
 // This is designed to be re-used in different CLI steps
-export default async (opts: CompileOptions, log: Logger) => {
-  log.debug('Compiling...');
-  let job;
-  if (opts.workflow) {
-    // Note that the workflow will be loaded into an object by this point
-    job = compileWorkflow(opts.workflow as ExecutionPlan, opts, log);
-  } else {
-    job = await compileJob((opts.job || opts.jobPath) as string, opts, log);
+export default async (
+  planOrPath: ExecutionPlan | string,
+  opts: CompileOptions,
+  log: Logger
+) => {
+  if (typeof planOrPath === 'string') {
+    const result = await compileJob(planOrPath as string, opts, log);
+    log.success(`Compiled expression from ${opts.jobPath}`);
+    return result;
   }
 
-  if (opts.jobPath) {
-    log.success(`Compiled from ${opts.jobPath}`);
-  } else {
-    log.success('Compilation complete');
-  }
-  return job;
+  const compiledPlan = compileWorkflow(planOrPath as ExecutionPlan, opts, log);
+  log.success('Compiled all expressions in workflow');
+
+  return compiledPlan;
 };
 
 const compileJob = async (
@@ -29,7 +30,7 @@ const compileJob = async (
   opts: CompileOptions,
   log: Logger,
   jobName?: string
-) => {
+): Promise<string> => {
   try {
     const compilerOptions: Options = await loadTransformOptions(opts, log);
     return compile(job, compilerOptions);
@@ -40,16 +41,19 @@ const compileJob = async (
       e,
       'Check the syntax of the job expression:\n\n' + job
     );
+    // This will never actully execute
+    return '';
   }
 };
 
 // Find every expression in the job and run the compiler on it
 const compileWorkflow = async (
-  workflow: ExecutionPlan,
+  plan: ExecutionPlan,
   opts: CompileOptions,
   log: Logger
 ) => {
-  for (const job of workflow.jobs) {
+  for (const step of plan.workflow.steps) {
+    const job = step as Job;
     const jobOpts = {
       ...opts,
     };
@@ -65,7 +69,7 @@ const compileWorkflow = async (
       );
     }
   }
-  return workflow;
+  return plan;
 };
 
 // TODO this is a bit of a temporary solution

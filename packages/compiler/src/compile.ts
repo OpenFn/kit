@@ -21,10 +21,10 @@ export default function compile(pathOrSource: string, options: Options = {}) {
 
   let source = pathOrSource;
   if (isPath(pathOrSource)) {
-    logger.debug('Starting compilation from file at', pathOrSource);
+    //logger.debug('Starting compilation from file at', pathOrSource);
     source = loadFile(pathOrSource);
   } else {
-    logger.debug('Starting compilation from string');
+    //logger.debug('Starting compilation from string');
   }
   const ast = parse(source);
 

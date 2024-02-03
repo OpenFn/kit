@@ -12,12 +12,10 @@ import type { Opts } from '../options';
 import type { Logger } from './logger';
 import { OldCLIWorkflow } from '../types';
 import expandAdaptors from './expand-adaptors';
-import mapAdaptorsToMonorepo, {
-  MapAdaptorsToMonorepoOptions,
-} from './map-adaptors-to-monorepo';
+import mapAdaptorsToMonorepo from './map-adaptors-to-monorepo';
 
 const loadPlan = async (
-  options: Opts,
+  options: Pick<Opts, 'jobPath' | 'planPath' | 'workflowPath' | 'adaptors'>,
   logger: Logger
 ): Promise<ExecutionPlan> => {
   const { workflowPath, planPath, jobPath } = options;
@@ -37,6 +35,7 @@ const loadPlan = async (
     return loadOldWorkflow(json, options, logger);
   }
 };
+
 export default loadPlan;
 
 // TODO this is way over simplified :(
@@ -79,12 +78,12 @@ const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
 };
 
 const loadExpression = async (
-  options: Opts,
+  options: Pick<Opts, 'jobPath' | 'adaptors' | 'monorepoPath'>,
   logger: Logger
 ): Promise<ExecutionPlan> => {
   const jobPath = options.jobPath!;
 
-  logger.debug(`Loading job from ${jobPath}`);
+  logger.debug(`Loading expression from ${jobPath}`);
   const expression = await fs.readFile(jobPath, 'utf8');
   const name = path.parse(jobPath).name;
 
@@ -115,7 +114,7 @@ const loadExpression = async (
 
 const loadOldWorkflow = async (
   workflow: OldCLIWorkflow,
-  options: Opts,
+  options: Pick<Opts, 'workflowPath' | 'monorepoPath'>,
   logger: Logger
 ) => {
   const plan: ExecutionPlan = {
@@ -153,7 +152,7 @@ const loadOldWorkflow = async (
 // TODO default the workflow name from the file name
 const loadXPlan = async (
   plan: ExecutionPlan,
-  options: Opts,
+  options: Pick<Opts, 'monorepoPath'>,
   logger: Logger
 ) => {
   if (!plan.options) {
@@ -164,7 +163,7 @@ const loadXPlan = async (
   expandAdaptors(plan);
   await mapAdaptorsToMonorepo(options.monorepoPath, plan, logger);
 
-  // TODO: write any options from the user onto the potions object
+  // TODO: write any options from the user onto the options object
 
   return plan;
 };

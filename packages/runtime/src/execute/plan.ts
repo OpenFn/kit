@@ -12,7 +12,7 @@ import { CompiledExecutionPlan } from '../types';
 
 const executePlan = async (
   plan: ExecutionPlan,
-  input: Lazy<State>,
+  input: Lazy<State> | undefined,
   opts: Options,
   logger: Logger
 ) => {

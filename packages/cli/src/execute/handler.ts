@@ -1,3 +1,5 @@
+import type { ExecutionPlan } from '@openfn/lexicon';
+
 import type { ExecuteOptions } from './command';
 import execute from './execute';
 import serializeOutput from './serialize-output';
@@ -5,7 +7,6 @@ import getAutoinstallTargets from './get-autoinstall-targets';
 
 import { install } from '../repo/handler';
 import compile from '../compile/compile';
-import { CompileOptions } from '../compile/command';
 
 import { Logger, printDuration } from '../util/logger';
 import loadState from '../util/load-state';
@@ -36,7 +37,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const state = await loadState(options, logger);
 
   if (options.compile) {
-    plan = await compile(options as CompileOptions, logger);
+    plan = (await compile(plan, options, logger)) as ExecutionPlan;
   } else {
     logger.info('Skipping compilation as noCompile is set');
   }

@@ -21,6 +21,27 @@ export type Workflow = {
 };
 
 /**
+ * A type of Step which executes code
+ * This is some openfn expression plus metadata (adaptor, credentials)
+ */
+export interface Job extends Step {
+  adaptor?: string;
+  expression: Expression;
+  configuration?: object | string;
+  state?: Omit<State, 'configuration'> | string;
+}
+
+/**
+ * A raw openfn-js script to be executed by the runtime
+ *
+ * Can be compiled as part of a job.
+ *
+ * The expression itself has no metadata. It likely needs
+ * an adaptor and input state to run
+ */
+export type Expression = string;
+
+/**
  * State is an object passed into a workflow and returned from a workflow
  */
 export declare interface State<S = object, C = object> {
@@ -87,26 +108,9 @@ export type StepEdge =
     };
 
 /**
- * A type of Step which executes code
- */
-export interface Job extends Step {
-  adaptor?: string;
-  expression: string;
-  configuration?: object | string;
-  state?: Omit<State, 'configuration'> | string;
-}
-
-/**
  * A no-op type of Step
  */
 export interface Trigger extends Step {}
-
-/**
- * A raw openfn-js script to be executed by the runtime
- *
- * Can be compiled as part of a job
- */
-export type Expression = string;
 
 /**
  * An expression which has been compiled, and so includes import and export statements
