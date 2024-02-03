@@ -89,7 +89,7 @@ test('do not return adaptors with a path', (t) => {
   const plan = getPlan([
     {
       expression: 'fn()',
-      adaptor: 'commoin=a/b/c',
+      adaptor: 'common=a/b/c',
     },
   ]);
   const result = getAutoinstallTargets(plan);

@@ -20,7 +20,6 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   await validateAdaptors(options, logger);
 
   let plan = await loadPlan(options, logger);
-
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
     if (monorepoPath) {
