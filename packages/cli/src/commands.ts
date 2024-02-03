@@ -11,7 +11,6 @@ import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
-  MapAdaptorsToMonorepoOptions,
   validateMonoRepo,
 } from './util/map-adaptors-to-monorepo';
 import printVersions from './util/print-versions';
@@ -71,11 +70,11 @@ const parse = async (options: Opts, log?: Logger) => {
     await validateMonoRepo(monorepoPath, logger);
     logger.success(`Loading adaptors from monorepo at ${monorepoPath}`);
 
-    options.adaptors = await mapAdaptorsToMonorepo(
+    options.adaptors = mapAdaptorsToMonorepo(
       monorepoPath,
       options.adaptors,
       logger
-    );
+    ) as string[];
   }
 
   // TODO it would be nice to do this in the repoDir option, but

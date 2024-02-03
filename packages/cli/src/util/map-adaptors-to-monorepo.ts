@@ -44,11 +44,11 @@ export type MapAdaptorsToMonorepoOptions = Pick<
   'monorepoPath' | 'adaptors' | 'workflow'
 >;
 
-const mapAdaptorsToMonorepo = async (
+const mapAdaptorsToMonorepo = (
   monorepoPath: string = '',
-  input: string[] | ExecutionPlan,
+  input: string[] | ExecutionPlan = [],
   log: Logger
-) => {
+): string[] | ExecutionPlan => {
   if (monorepoPath) {
     if (Array.isArray(input)) {
       const adaptors = input as string[];
@@ -65,6 +65,7 @@ const mapAdaptorsToMonorepo = async (
 
     return plan;
   }
+  return input;
 };
 
 export default mapAdaptorsToMonorepo;
