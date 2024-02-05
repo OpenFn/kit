@@ -89,7 +89,7 @@ const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
 const loadExpression = async (
   options: Pick<Opts, 'expressionPath' | 'adaptors' | 'monorepoPath'>,
   logger: Logger
-): Promise<ExecutionPlan | undefined> => {
+): Promise<ExecutionPlan> => {
   const expressionPath = options.expressionPath!;
 
   logger.debug(`Loading expression from ${expressionPath}`);
@@ -127,6 +127,9 @@ const loadExpression = async (
       undefined,
       `Failed to load the expression from ${expressionPath}`
     );
+
+    // This will never execute
+    return {} as ExecutionPlan;
   }
 };
 

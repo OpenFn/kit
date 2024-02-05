@@ -41,7 +41,7 @@ export const updatePath = (adaptor: string, repoPath: string, log: Logger) => {
 
 export type MapAdaptorsToMonorepoOptions = Pick<
   Opts,
-  'monorepoPath' | 'adaptors' | 'workflow'
+  'monorepoPath' | 'adaptors'
 >;
 
 const mapAdaptorsToMonorepo = (
