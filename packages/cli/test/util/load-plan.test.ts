@@ -72,9 +72,25 @@ test.serial('expression: set an adaptor on the plan', async (t) => {
   t.is(step.adaptor, '@openfn/language-common');
 });
 
+test.serial('expression: do not expand adaptors', async (t) => {
+  const opts = {
+    jobPath: 'test/job.js',
+    expandAdaptors: false,
+    // Note that adaptor expansion should have happened before loadPlan is called
+    adaptors: ['common'],
+  } as Partial<Opts>;
+
+  const plan = await loadPlan(opts as Opts, logger);
+
+  const step = plan.workflow.steps[0] as Job;
+
+  t.is(step.adaptor, 'common');
+});
+
 test.serial('expression: set a timeout on the plan', async (t) => {
   const opts = {
     jobPath: 'test/job.js',
+    expandAdaptors: true,
     timeout: 111,
   } as Partial<Opts>;
 
@@ -83,11 +99,21 @@ test.serial('expression: set a timeout on the plan', async (t) => {
   t.is(plan.options.timeout, 111);
 });
 
-test.todo('expression: load a plan from an expression.js and add options');
+test.serial('expression: set a start on the plan', async (t) => {
+  const opts = {
+    jobPath: 'test/job.js',
+    start: 'x',
+  } as Partial<Opts>;
+
+  const plan = await loadPlan(opts as Opts, logger);
+
+  t.is(plan.options.start, 'x');
+});
 
 test.serial('xplan: load a plan from workflow path', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
+    expandAdaptors: true,
     plan: {},
   };
 
@@ -100,6 +126,7 @@ test.serial('xplan: load a plan from workflow path', async (t) => {
 test.serial('xplan: expand adaptors', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
+    expandAdaptors: true,
     plan: {},
   };
 
@@ -115,16 +142,93 @@ test.serial('xplan: expand adaptors', async (t) => {
     'test/wf.json': JSON.stringify(plan),
   });
 
-  const plan = await loadPlan(opts as Opts, logger);
-  t.truthy(plan);
+  const result = await loadPlan(opts as Opts, logger);
+  t.truthy(result);
 
-  const step = plan.workflow.steps[0] as Job;
+  const step = result.workflow.steps[0] as Job;
   t.is(step.adaptor, '@openfn/language-common@1.0.0');
+});
+
+test.serial('xplan: do not expand adaptors', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    expandAdaptors: false,
+    plan: {},
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: '.',
+      adaptor: 'common@1.0.0',
+    },
+  ]);
+
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const result = await loadPlan(opts as Opts, logger);
+  t.truthy(result);
+
+  const step = result.workflow.steps[0] as Job;
+  t.is(step.adaptor, 'common@1.0.0');
+});
+
+test.serial('xplan: set timeout from CLI', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    timeout: 666,
+    plan: {},
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: '.',
+    },
+  ]);
+  // The incoming option should overwrite this one
+  // @ts-ignore
+  plan.options.timeout = 1;
+
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const { options } = await loadPlan(opts as Opts, logger);
+  t.is(options.timeout, 666);
+});
+
+test.serial('xplan: set start from CLI', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    start: 'b',
+    plan: {},
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: '.',
+    },
+  ]);
+  // The incoming option should overwrite this one
+  // @ts-ignore
+  plan.options.start = 'a';
+
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const { options } = await loadPlan(opts as Opts, logger);
+  t.is(options.start, 'b');
 });
 
 test.serial('xplan: map to monorepo', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
+    expandAdaptors: true,
     plan: {},
     monorepoPath: '/repo/',
   } as Partial<Opts>;
@@ -141,14 +245,12 @@ test.serial('xplan: map to monorepo', async (t) => {
     'test/wf.json': JSON.stringify(plan),
   });
 
-  const plan = await loadPlan(opts as Opts, logger);
-  t.truthy(plan);
+  const result = await loadPlan(opts as Opts, logger);
+  t.truthy(result);
 
-  const step = plan.workflow.steps[0] as Job;
+  const step = result.workflow.steps[0] as Job;
   t.is(step.adaptor, '@openfn/language-common=/repo/packages/common');
 });
-
-test.todo('xplan: load a plan from a workflow path and add options');
 
 test.serial('old-workflow: load a plan from workflow path', async (t) => {
   const opts = {
@@ -168,5 +270,3 @@ test.serial('old-workflow: load a plan from workflow path', async (t) => {
     expression: 'x()',
   });
 });
-
-test.todo('old-workflow: load a plan from a workflow path and add options');

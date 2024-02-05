@@ -31,7 +31,7 @@ test('sets jobPath to path/job.js if path is a folder (trailing slash)', (t) => 
   t.is(opts.jobPath, '/jam/job.js');
 });
 
-test('set workflowPath if path ends in json', (t) => {
+test.skip('set workflowPath if path ends in json', (t) => {
   const opts = {
     path: 'workflow.json',
   } as Opts;

@@ -15,12 +15,12 @@ test.afterEach(() => {
   logger._reset();
 });
 
-const JOB_EXPORT_42 = 'export default [() => ({ data: { count: 42 } })];';
-const JOB_TIMES_2 =
+const EXPR_EXPORT_42 = 'export default [() => ({ data: { count: 42 } })];';
+const EXPR_TIMES_2 =
   'export default [(state) => { state.data.count = state.data.count * 2; return state; }];';
-const JOB_MOCK_ADAPTOR =
+const EXPR_MOCK_ADAPTOR =
   'import { byTwo } from "times-two"; export default [byTwo];';
-const JOB_EXPORT_STATE =
+const EXPR_EXPORT_STATE =
   "export default [() => ({ configuration: {}, data: {}, foo: 'bar' })];";
 
 type RunOptions = {
@@ -93,6 +93,65 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   }
 }
 
+test.serial('run an execution plan', async (t) => {
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'job1',
+          state: { data: { x: 0 } },
+          expression: 'export default [s => { s.data.x += 1; return s; } ]',
+          next: { job2: true },
+        },
+        {
+          id: 'job2',
+          expression: 'export default [s => { s.data.x += 1; return s; } ]',
+        },
+      ],
+    },
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    jobPath: 'wf.json', // just to fool the test
+  };
+
+  const result = await run('openfn wf.json', JSON.stringify(plan), options);
+  t.assert(result.data.x === 2);
+});
+
+test.serial('run an execution plan with start', async (t) => {
+  const state = JSON.stringify({ data: { x: 0 } });
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: 'export default [s => { s.data.x += 1; return s; } ]',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: 'export default [s => { s.data.x += 1; return s; } ]',
+        },
+      ],
+    },
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    jobPath: 'wf.json', // just to fool the test
+  };
+
+  const result = await run(
+    `openfn wf.json -S ${state} --start b`,
+    JSON.stringify(plan),
+    options
+  );
+
+  t.assert(result.data.x === 1);
+});
+
 test.serial('print version information with version', async (t) => {
   await run('version', '');
 
@@ -119,7 +178,7 @@ test.serial('run test job with custom state', async (t) => {
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
-  const result = await run('openfn job.js', JOB_EXPORT_42);
+  const result = await run('openfn job.js', EXPR_EXPORT_42);
   t.assert(result.data.count === 42);
 });
 
@@ -216,7 +275,7 @@ test.serial.skip(
 
     const result = await run(
       'openfn ~/openfn/jobs/the-question',
-      JOB_EXPORT_42,
+      EXPR_EXPORT_42,
       options
     );
     t.assert(result === 42);
@@ -237,7 +296,7 @@ test.serial(
     };
     const result = await run(
       'openfn job.js --output-path=/tmp/my-output.json',
-      JOB_EXPORT_42,
+      EXPR_EXPORT_42,
       options
     );
     t.is(result.data.count, 42);
@@ -256,7 +315,7 @@ test.serial(
     };
     const result = await run(
       'openfn job.js -o /tmp/my-output.json',
-      JOB_EXPORT_42,
+      EXPR_EXPORT_42,
       options
     );
     t.is(result.data.count, 42);
@@ -276,7 +335,7 @@ test.serial(
 
     const result = await run(
       'openfn job.js --output-path=/tmp/my-output.json --strict',
-      JOB_EXPORT_STATE,
+      EXPR_EXPORT_STATE,
       options
     );
     t.deepEqual(result, { data: {} });
@@ -296,7 +355,7 @@ test.serial(
 
     const result = await run(
       'openfn job.js --output-path=/tmp/my-output.json --no-strict-output',
-      JOB_EXPORT_STATE,
+      EXPR_EXPORT_STATE,
       options
     );
     t.deepEqual(result, { data: {}, foo: 'bar' });
@@ -320,7 +379,7 @@ test.serial(
 
     const result = await run(
       'openfn job.js --output-path=/tmp/my-output.json --no-strict',
-      JOB_EXPORT_STATE,
+      EXPR_EXPORT_STATE,
       options
     );
     t.deepEqual(result, { data: {}, foo: 'bar' });
@@ -344,7 +403,7 @@ test.serial(
     };
     const result = await run(
       'openfn job.js --state-path=/tmp/my-state.json',
-      JOB_TIMES_2,
+      EXPR_TIMES_2,
       options
     );
     t.assert(result.data.count === 66);
@@ -360,7 +419,7 @@ test.serial(
     };
     const result = await run(
       'openfn job.js -s /tmp/my-state.json',
-      JOB_TIMES_2,
+      EXPR_TIMES_2,
       options
     );
     t.assert(result.data.count === 66);
@@ -373,7 +432,7 @@ test.serial(
     const state = JSON.stringify({ data: { count: 11 } });
     const result = await run(
       `openfn job.js --state-stdin=${state}`,
-      JOB_TIMES_2
+      EXPR_TIMES_2
     );
     t.assert(result.data.count === 22);
   }
@@ -383,7 +442,7 @@ test.serial(
   'read state from stdin with alias: openfn job.js -S <obj>',
   async (t) => {
     const state = JSON.stringify({ data: { count: 44 } });
-    const result = await run(`openfn job.js -S ${state}`, JOB_TIMES_2);
+    const result = await run(`openfn job.js -S ${state}`, EXPR_TIMES_2);
     t.assert(result.data.count === 88);
   }
 );
@@ -394,7 +453,7 @@ test.serial(
     const state = JSON.stringify({ data: { count: 49.5 } });
     const result = await run(
       `openfn --no-expand-adaptors -S ${state} --adaptor times-two=/modules/times-two`,
-      JOB_MOCK_ADAPTOR
+      EXPR_MOCK_ADAPTOR
     );
     t.assert(result.data.count === 99);
   }
@@ -406,7 +465,7 @@ test.serial(
     const state = JSON.stringify({ data: { count: 49.5 } });
     const result = await run(
       `openfn --no-expand-adaptors -S ${state} --adaptors times-two=/modules/times-two`,
-      JOB_MOCK_ADAPTOR
+      EXPR_MOCK_ADAPTOR
     );
     t.assert(result.data.count === 99);
   }
@@ -418,7 +477,7 @@ test.serial(
     const state = JSON.stringify({ data: { count: 49.5 } });
     const result = await run(
       `openfn --no-expand-adaptors -S ${state} -a times-two=/modules/times-two`,
-      JOB_MOCK_ADAPTOR
+      EXPR_MOCK_ADAPTOR
     );
     t.assert(result.data.count === 99);
   }
@@ -588,7 +647,7 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
   const output = await fs.readFile('out.json', 'utf8');
   const result = JSON.parse(output);
   t.truthy(result);
-  t.is(result.jobs[0].expression, 'export default [x()];');
+  t.is(result.workflow.steps[0].expression, 'export default [x()];');
 });
 
 test.serial('docs should print documentation with full names', async (t) => {

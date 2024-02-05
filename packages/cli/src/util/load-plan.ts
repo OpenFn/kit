@@ -17,7 +17,12 @@ import type { OldCLIWorkflow } from '../types';
 const loadPlan = async (
   options: Pick<
     Opts,
-    'jobPath' | 'planPath' | 'workflowPath' | 'adaptors' | 'baseDir'
+    | 'jobPath'
+    | 'planPath'
+    | 'workflowPath'
+    | 'adaptors'
+    | 'baseDir'
+    | 'expandAdaptors'
   >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
@@ -96,7 +101,7 @@ const loadExpression = async (
 
   const step: Job = { expression };
 
-  // The adaptor should have been expanded nicely already, so we don't need todo much here
+  // The adaptor should have been expanded nicely already, so we don't need intervene here
   if (options.adaptors) {
     const [adaptor] = options.adaptors;
     if (adaptor) {
@@ -223,7 +228,7 @@ const importExpressions = async (
 // TODO default the workflow name from the file name
 const loadXPlan = async (
   plan: ExecutionPlan,
-  options: Pick<Opts, 'monorepoPath' | 'baseDir'>,
+  options: Pick<Opts, 'monorepoPath' | 'baseDir' | 'expandAdaptors'>,
   logger: Logger
 ) => {
   if (!plan.options) {
@@ -233,13 +238,14 @@ const loadXPlan = async (
   // Note that baseDir should be set up in the default function
   await importExpressions(plan, options.baseDir!, logger);
   // expand shorthand adaptors in the workflow jobs
-  expandAdaptors(plan);
+  if (options.expandAdaptors) {
+    expandAdaptors(plan);
+  }
   await mapAdaptorsToMonorepo(options.monorepoPath, plan, logger);
 
-  // TODO support state props to remove?
+  // Assign options form the CLI into the Xplan
+  // TODO support state props to remove
   maybeAssign(options, plan.options, ['timeout', 'start']);
-
-  // TODO: write any options from the user onto the options object
 
   return plan;
 };

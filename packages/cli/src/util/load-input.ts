@@ -1,3 +1,6 @@
+// TODO remove this now
+// Let's just port over any tests we want
+// (acutally let's get all tests, including integration, passing first)
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { isPath } from '@openfn/compiler';
