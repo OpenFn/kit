@@ -17,7 +17,7 @@ import type { OldCLIWorkflow } from '../types';
 const loadPlan = async (
   options: Pick<
     Opts,
-    | 'jobPath'
+    | 'expressionPath'
     | 'planPath'
     | 'workflowPath'
     | 'adaptors'
@@ -26,9 +26,9 @@ const loadPlan = async (
   >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
-  const { workflowPath, planPath, jobPath } = options;
+  const { workflowPath, planPath, expressionPath } = options;
 
-  if (jobPath) {
+  if (expressionPath) {
     return loadExpression(options, logger);
   }
 
@@ -38,8 +38,6 @@ const loadPlan = async (
     options.baseDir = path.dirname(jsonPath!);
   }
 
-  // TODO if neither jobPath, planPath or workflowPath is set... what happens?
-  // I think the CLI will exit before we even get here
   const json = await loadJson(jsonPath!, logger);
   if (json.workflow) {
     return loadXPlan(json, options, logger);
@@ -88,15 +86,15 @@ const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
 };
 
 const loadExpression = async (
-  options: Pick<Opts, 'jobPath' | 'adaptors' | 'monorepoPath'>,
+  options: Pick<Opts, 'expressionPath' | 'adaptors' | 'monorepoPath'>,
   logger: Logger
 ): Promise<ExecutionPlan> => {
-  const jobPath = options.jobPath!;
+  const expressionPath = options.expressionPath!;
 
-  logger.debug(`Loading expression from ${jobPath}`);
+  logger.debug(`Loading expression from ${expressionPath}`);
   try {
-    const expression = await fs.readFile(jobPath, 'utf8');
-    const name = path.parse(jobPath).name;
+    const expression = await fs.readFile(expressionPath, 'utf8');
+    const name = path.parse(expressionPath).name;
 
     const step: Job = { expression };
 
@@ -126,7 +124,7 @@ const loadExpression = async (
       logger,
       'Expression not found',
       undefined,
-      `Failed to load the expression from ${jobPath}`
+      `Failed to load the expression from ${expressionPath}`
     );
   }
 };

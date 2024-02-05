@@ -1,9 +1,7 @@
 import path from 'node:path';
 import yargs from 'yargs';
-import type { ExecutionPlan } from '@openfn/lexicon';
 
 import type { CommandList } from './commands';
-import { OldCLIWorkflow } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
 import {
   expandAdaptors as doExpandAdaptors,
@@ -30,7 +28,7 @@ export type Opts = {
   force?: boolean;
   immutable?: boolean;
   ignoreImports?: boolean | string[];
-  jobPath?: string; // TODO rename to expressionPath
+  expressionPath?: string;
   log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
@@ -54,9 +52,6 @@ export type Opts = {
 
   // deprecated
   workflowPath?: string;
-  job?: string;
-  plan?: ExecutionPlan; // TODO pretty sure this doesn't live on options
-  workflow?: OldCLIWorkflow; // TODO I don't think this should sit on options anymore?
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -232,7 +227,7 @@ export const projectId: CLIOption = {
   },
 };
 
-// Input path covers jobPath and workflowPath
+// Input path covers expressionPath and workflowPath
 export const inputPath: CLIOption = {
   name: 'input-path',
   yargs: {
@@ -243,10 +238,10 @@ export const inputPath: CLIOption = {
     if (basePath?.endsWith('.json')) {
       opts.planPath = basePath;
     } else if (basePath?.endsWith('.js')) {
-      opts.jobPath = basePath;
+      opts.expressionPath = basePath;
     } else {
       const base = getBaseDir(opts);
-      setDefaultValue(opts, 'jobPath', path.join(base, 'job.js'));
+      setDefaultValue(opts, 'expressionPath', path.join(base, 'job.js'));
     }
   },
 };

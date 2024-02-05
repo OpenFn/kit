@@ -10,8 +10,8 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
   assertPath(options.path);
 
   let result;
-  if (options.jobPath) {
-    result = await compile(options.jobPath, options, logger);
+  if (options.expressionPath) {
+    result = await compile(options.expressionPath, options, logger);
   } else {
     const plan = await loadPlan(options, logger);
     result = await compile(plan, options, logger);

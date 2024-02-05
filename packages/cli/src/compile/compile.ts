@@ -15,7 +15,7 @@ export default async (
 ) => {
   if (typeof planOrPath === 'string') {
     const result = await compileJob(planOrPath as string, opts, log);
-    log.success(`Compiled expression from ${opts.jobPath}`);
+    log.success(`Compiled expression from ${opts.expressionPath}`);
     return result;
   }
 

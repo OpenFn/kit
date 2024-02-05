@@ -43,7 +43,7 @@ test.serial('run a simple job', async (t) => {
 
   const options = {
     ...defaultOptions,
-    jobPath: '/job.js',
+    expressionPath: '/job.js',
   };
 
   const result = await handler(options, logger);
@@ -58,7 +58,7 @@ test.serial('run a job with initial state', async (t) => {
 
   const options = {
     ...defaultOptions,
-    jobPath: '/job.js',
+    expressionPath: '/job.js',
     stateStdin: JSON.stringify({ data: { count: 10 } }),
   };
 
@@ -275,6 +275,7 @@ test.serial('run a workflow with an adaptor (shortform)', async (t) => {
     ...defaultOptions,
     workflowPath: '/workflow.json',
     stateStdin: JSON.stringify({ data: { count: 10 } }),
+    expandAdaptors: true,
   };
   const result = await handler(options, logger);
   t.is(result.data.count, 10);
@@ -289,7 +290,7 @@ test.serial('run a job without compilation', async (t) => {
   const options = {
     ...defaultOptions,
     compile: false,
-    jobPath: '/job.js',
+    expressionPath: '/job.js',
   };
 
   const result = await handler(options, logger);
@@ -304,7 +305,7 @@ test.serial('run a job which does not return state', async (t) => {
 
   const options = {
     ...defaultOptions,
-    jobPath: '/job.js',
+    expressionPath: '/job.js',
   };
   const result = await handler(options, logger);
   t.falsy(result);

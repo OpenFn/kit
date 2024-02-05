@@ -43,7 +43,7 @@ test.afterEach(() => {
 
 test.serial('expression: load a plan from an expression.js', async (t) => {
   const opts = {
-    jobPath: 'test/job.js',
+    expressionPath: 'test/job.js',
     plan: {},
   };
 
@@ -60,7 +60,7 @@ test.serial('expression: load a plan from an expression.js', async (t) => {
 
 test.serial('expression: set an adaptor on the plan', async (t) => {
   const opts = {
-    jobPath: 'test/job.js',
+    expressionPath: 'test/job.js',
     // Note that adaptor expansion should have happened before loadPlan is called
     adaptors: ['@openfn/language-common'],
   } as Partial<Opts>;
@@ -74,7 +74,7 @@ test.serial('expression: set an adaptor on the plan', async (t) => {
 
 test.serial('expression: do not expand adaptors', async (t) => {
   const opts = {
-    jobPath: 'test/job.js',
+    expressionPath: 'test/job.js',
     expandAdaptors: false,
     // Note that adaptor expansion should have happened before loadPlan is called
     adaptors: ['common'],
@@ -89,7 +89,7 @@ test.serial('expression: do not expand adaptors', async (t) => {
 
 test.serial('expression: set a timeout on the plan', async (t) => {
   const opts = {
-    jobPath: 'test/job.js',
+    expressionPath: 'test/job.js',
     expandAdaptors: true,
     timeout: 111,
   } as Partial<Opts>;
@@ -101,7 +101,7 @@ test.serial('expression: set a timeout on the plan', async (t) => {
 
 test.serial('expression: set a start on the plan', async (t) => {
   const opts = {
-    jobPath: 'test/job.js',
+    expressionPath: 'test/job.js',
     start: 'x',
   } as Partial<Opts>;
 

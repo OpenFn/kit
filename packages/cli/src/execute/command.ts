@@ -14,7 +14,7 @@ export type ExecuteOptions = Required<
     | 'expandAdaptors'
     | 'immutable'
     | 'ignoreImports'
-    | 'jobPath'
+    | 'expressionPath'
     | 'log'
     | 'logJson'
     | 'outputPath'
@@ -30,7 +30,6 @@ export type ExecuteOptions = Required<
     | 'timeout'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
-    | 'workflow'
   >
 > &
   Pick<Opts, 'monorepoPath' | 'repoDir'>;
@@ -89,7 +88,7 @@ const executeCommand: yargs.CommandModule<ExecuteOptions> = {
       )
       .example(
         'openfn compile job.js -a http',
-        'Compile job.js with the http adaptor and print the code to stdout'
+        'Compile the expression at job.js with the http adaptor and print the code to stdout'
       ),
 };
 

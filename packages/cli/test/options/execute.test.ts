@@ -12,9 +12,9 @@ const cmd = yargs().command(execute);
 
 const parse = (command: string) => cmd.parse(command) as yargs.Arguments<Opts>;
 
-test("execute: jobPath'.'", (t) => {
+test("execute: expressionPath'.'", (t) => {
   const options = parse('execute job.js');
-  t.assert(options.jobPath === 'job.js');
+  t.assert(options.expressionPath === 'job.js');
 });
 
 test('execute: default outputPath to ./output.json', (t) => {

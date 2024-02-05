@@ -24,7 +24,7 @@ const EXPR_EXPORT_STATE =
   "export default [() => ({ configuration: {}, data: {}, foo: 'bar' })];";
 
 type RunOptions = {
-  jobPath?: string;
+  expressionPath?: string;
   statePath?: string;
   outputPath?: string;
   state?: any;
@@ -43,7 +43,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   // A good reason to move all these into integration tests tbh!
   command = command.replace(/^openfn /, '');
 
-  const jobPath = options.jobPath || 'job.js';
+  const expressionPath = options.expressionPath || 'job.js';
   const statePath = options.statePath || 'state.json';
   const outputPath = options.outputPath || 'output.json';
   const state =
@@ -58,7 +58,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
   // Mock the file system in-memory
   if (!options.disableMock) {
     mock({
-      [jobPath]: job,
+      [expressionPath]: job,
       [statePath]: state,
       [outputPath]: '{}',
       [pnpm]: mock.load(pnpm, {}),
@@ -74,7 +74,7 @@ async function run(command: string, job: string, options: RunOptions = {}) {
 
   const opts = cmd.parse(command) as Opts;
   // Override some options after the command has been parsed
-  opts.path = jobPath;
+  opts.path = expressionPath;
   opts.repoDir = options.repoDir;
 
   opts.log = { default: 'none' };
@@ -113,7 +113,7 @@ test.serial('run an execution plan', async (t) => {
 
   const options = {
     outputPath: 'output.json',
-    jobPath: 'wf.json', // just to fool the test
+    expressionPath: 'wf.json', // just to fool the test
   };
 
   const result = await run('openfn wf.json', JSON.stringify(plan), options);
@@ -140,7 +140,7 @@ test.serial('run an execution plan with start', async (t) => {
 
   const options = {
     outputPath: 'output.json',
-    jobPath: 'wf.json', // just to fool the test
+    expressionPath: 'wf.json', // just to fool the test
   };
 
   const result = await run(
@@ -206,7 +206,7 @@ test.serial('run a workflow', async (t) => {
 
   const options = {
     outputPath: 'output.json',
-    jobPath: 'wf.json', // just to fool the test
+    expressionPath: 'wf.json', // just to fool the test
   };
 
   const result = await run('openfn wf.json', JSON.stringify(workflow), options);
@@ -227,7 +227,7 @@ test.serial('run a workflow with config as an object', async (t) => {
 
   const options = {
     outputPath: 'output.json',
-    jobPath: 'wf.json', // just to fool the test
+    expressionPath: 'wf.json', // just to fool the test
   };
   const result = await run('openfn wf.json', JSON.stringify(workflow), options);
   t.deepEqual(result, {
@@ -249,7 +249,7 @@ test.serial('run a workflow with config as a path', async (t) => {
 
   const options = {
     outputPath: 'output.json',
-    jobPath: 'wf.json', // just to fool the test
+    expressionPath: 'wf.json', // just to fool the test
     mockfs: {
       '/config.json': JSON.stringify({ y: 0 }),
     },
@@ -267,7 +267,7 @@ test.serial.skip(
   async (t) => {
     const options = {
       // set up the file system
-      jobPath:
+      expressionPath:
         '~/openfn/jobs/the-question/what-is-the-answer-to-life-the-universe-and-everything.js',
       outputPath: '~/openfn/jobs/the-question/output.json',
       statePath: '~/openfn/jobs/the-question/state.json',
@@ -538,7 +538,7 @@ test.serial(
 
     const options = {
       outputPath: 'output.json',
-      jobPath: 'wf.json',
+      expressionPath: 'wf.json',
       repoDir: '/repo',
     };
 
@@ -607,7 +607,7 @@ test.serial(
     });
 
     const result = await run('workflow.json -m', workflow, {
-      jobPath: 'workflow.json',
+      expressionPath: 'workflow.json',
     });
     t.true(result.data.done);
     delete process.env.OPENFN_ADAPTORS_REPO;
@@ -635,7 +635,7 @@ test.serial('compile a job: openfn compile job.js to file', async (t) => {
 test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
   const options = {
     outputPath: 'out.json',
-    jobPath: 'wf.json', // just to fool the test
+    expressionPath: 'wf.json', // just to fool the test
   };
 
   const wf = JSON.stringify({

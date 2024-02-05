@@ -9,7 +9,7 @@ export type CompileOptions = Pick<
   | 'command'
   | 'expandAdaptors'
   | 'ignoreImports'
-  | 'jobPath'
+  | 'expressionPath'
   | 'job'
   | 'logJson'
   | 'log'

@@ -16,7 +16,7 @@ test('correct default options', (t) => {
   t.is(options.compile, true);
   t.is(options.expandAdaptors, true);
   t.is(options.immutable, false);
-  t.is(options.jobPath, 'job.js');
+  t.is(options.expressionPath, 'job.js');
   t.falsy(options.logJson); // TODO this is undefined right now
   t.is(options.outputPath, 'output.json');
   t.is(options.outputStdout, false);
@@ -79,7 +79,7 @@ test('enable immutability', (t) => {
 test('default job path', (t) => {
   const options = parse('execute /tmp/my-job/ --immutable');
   t.is(options.path, '/tmp/my-job/');
-  t.is(options.jobPath, '/tmp/my-job/job.js');
+  t.is(options.expressionPath, '/tmp/my-job/job.js');
 });
 
 test('enable json logging', (t) => {

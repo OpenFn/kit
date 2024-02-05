@@ -15,7 +15,7 @@ const mockLog = createMockLogger();
 
 test.after(resetMockFs);
 
-const jobPath = '/job.js';
+const expressionPath = '/job.js';
 
 type TransformOptionsWithImports = {
   ['add-imports']: {
@@ -44,14 +44,14 @@ test('compile from source string', async (t) => {
 test.serial('compile from path', async (t) => {
   const job = 'x();';
   mockFs({
-    [jobPath]: job,
+    [expressionPath]: job,
   });
 
   const opts = {
-    jobPath,
+    expressionPath,
   } as CompileOptions;
 
-  const result = await compile(jobPath, opts, mockLog);
+  const result = await compile(expressionPath, opts, mockLog);
 
   const expected = 'export default [x()];';
   t.is(result, expected);
