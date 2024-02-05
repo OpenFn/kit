@@ -83,6 +83,15 @@ test.serial(
   }
 );
 
+// Run a new-style execution plan with custom start
+test.serial(`openfn ${jobsPath}/plan.json -i`, async (t) => {
+  const { err } = await run(t.title);
+  t.falsy(err);
+
+  const out = getJSON();
+  t.deepEqual(out.data.userId, 1);
+});
+
 test.serial(`openfn ${jobsPath}/wf-conditional.json`, async (t) => {
   const { err } = await run(t.title);
   t.falsy(err);

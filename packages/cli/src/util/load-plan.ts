@@ -50,8 +50,6 @@ const loadPlan = async (
 
 export default loadPlan;
 
-// TODO this is way over simplified :(
-// see load-input
 const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
   let text: string;
 
@@ -96,32 +94,41 @@ const loadExpression = async (
   const jobPath = options.jobPath!;
 
   logger.debug(`Loading expression from ${jobPath}`);
-  const expression = await fs.readFile(jobPath, 'utf8');
-  const name = path.parse(jobPath).name;
+  try {
+    const expression = await fs.readFile(jobPath, 'utf8');
+    const name = path.parse(jobPath).name;
 
-  const step: Job = { expression };
+    const step: Job = { expression };
 
-  // The adaptor should have been expanded nicely already, so we don't need intervene here
-  if (options.adaptors) {
-    const [adaptor] = options.adaptors;
-    if (adaptor) {
-      step.adaptor = adaptor;
+    // The adaptor should have been expanded nicely already, so we don't need intervene here
+    if (options.adaptors) {
+      const [adaptor] = options.adaptors;
+      if (adaptor) {
+        step.adaptor = adaptor;
+      }
     }
+
+    const wfOptions: WorkflowOptions = {};
+    // TODO support state props to remove?
+    maybeAssign(options, wfOptions, ['timeout']);
+
+    const plan: ExecutionPlan = {
+      workflow: {
+        name,
+        steps: [step],
+      },
+      options: wfOptions,
+    };
+    // call loadXPlan now so that any options can be written
+    return loadXPlan(plan, options, logger);
+  } catch (e) {
+    abort(
+      logger,
+      'Expression not found',
+      undefined,
+      `Failed to load the expression from ${jobPath}`
+    );
   }
-
-  const wfOptions: WorkflowOptions = {};
-  // TODO support state props to remove?
-  maybeAssign(options, wfOptions, ['timeout']);
-
-  const plan: ExecutionPlan = {
-    workflow: {
-      name,
-      steps: [step],
-    },
-    options: wfOptions,
-  };
-  // call loadXPlan now so that any options can be written
-  return loadXPlan(plan, options, logger);
 };
 
 const loadOldWorkflow = async (
@@ -220,6 +227,7 @@ const importExpressions = async (
         configurationStr,
         log
       );
+      console.log(configString);
       job.configuration = JSON.parse(configString!);
     }
   }
@@ -234,7 +242,6 @@ const loadXPlan = async (
   if (!plan.options) {
     plan.options = {};
   }
-
   // Note that baseDir should be set up in the default function
   await importExpressions(plan, options.baseDir!, logger);
   // expand shorthand adaptors in the workflow jobs

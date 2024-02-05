@@ -2,19 +2,20 @@ import test from 'ava';
 import path from 'node:path';
 import run from '../src/run';
 import { extractLogs, assertLog } from '../src/util';
+import { stderr } from 'node:process';
 
 const jobsPath = path.resolve('test/fixtures');
 
 // These are all errors that will stop the CLI from even running
 
-test.serial('job not found', async (t) => {
+test.serial('expression not found', async (t) => {
   const { stdout, err } = await run('openfn blah.js --log-json');
   t.is(err.code, 1);
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /job not found/i);
-  assertLog(t, stdlogs, /failed to load the job from blah.js/i);
+  assertLog(t, stdlogs, /expression not found/i);
+  assertLog(t, stdlogs, /failed to load the expression from blah.js/i);
   assertLog(t, stdlogs, /critical error: aborting command/i);
 });
 
