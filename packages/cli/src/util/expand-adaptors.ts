@@ -1,6 +1,6 @@
 import { ExecutionPlan, Job } from '@openfn/lexicon';
 
-const expand = (name: any) => {
+const expand = (name: string) => {
   if (typeof name === 'string') {
     const [left] = name.split('=');
     // don't expand adaptors which look like a path (or @openfn/language-)
@@ -12,9 +12,15 @@ const expand = (name: any) => {
   return name;
 };
 
-export default (input: string[] | ExecutionPlan) => {
+type ArrayOrPlan<T> = T extends string[] ? string[] : ExecutionPlan;
+
+// TODO typings here aren't good,I can't get this to work!
+// At least this looks nice externally
+export default <T extends Array<string> | ExecutionPlan>(
+  input: T
+): ArrayOrPlan<T> => {
   if (Array.isArray(input)) {
-    return input?.map(expand) as string[];
+    return input?.map(expand) as any;
   }
 
   const plan = input as ExecutionPlan;
@@ -25,5 +31,5 @@ export default (input: string[] | ExecutionPlan) => {
     }
   });
 
-  return plan;
+  return plan as any;
 };

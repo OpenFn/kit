@@ -60,7 +60,7 @@ const docsHandler = async (
 
   // does the adaptor have a version? If not, fetch the latest
   // (docgen won't do this for us)
-  const { adaptors } = expandAdaptors([adaptor]);
+  const adaptors = expandAdaptors([adaptor]) as string[];
   const [adaptorName] = adaptors!;
   let { name, version } = getNameAndVersion(adaptorName);
   if (!version) {
