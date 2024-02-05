@@ -220,7 +220,6 @@ const importExpressions = async (
         configurationStr,
         log
       );
-      console.log(configString);
       job.configuration = JSON.parse(configString!);
     }
   }
