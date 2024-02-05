@@ -13,15 +13,12 @@ const assembleData = (initialData: any, defaultData = {}) => {
 const assembleState = (
   initialState: any = {}, // previous or initial state
   configuration = {},
-  defaultState: any = {}, // This is default state provided by the job
-  strictState: boolean = true
+  defaultState: any = {} // This is default state provided by the job
 ) => {
-  const obj = strictState
-    ? {}
-    : {
-        ...defaultState,
-        ...initialState,
-      };
+  const obj = {
+    ...defaultState,
+    ...initialState,
+  };
 
   if (initialState.references) {
     obj.references = initialState.references;

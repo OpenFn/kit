@@ -1,7 +1,7 @@
 import test from 'ava';
 import { fn } from '@openfn/language-common';
 import { createMockLogger } from '@openfn/logger';
-import type { State } from '@openfn/lexicon';
+import type { Operation, State } from '@openfn/lexicon';
 
 import execute from '../../src/execute/expression';
 import type { ExecutionContext } from '../../src/types';
@@ -151,41 +151,15 @@ test('no props are removed from state if a falsy value is passed to statePropsTo
   t.deepEqual(result, state);
 });
 
-test('config is removed from the result (strict)', async (t) => {
+test('config is removed from the result', async (t) => {
   const job = [async (s: State) => s];
-  const context = createContext({ opts: { strict: true } });
+  const context = createContext({ opts: {} });
 
   const result = await execute(context, job, { configuration: {} });
   t.deepEqual(result, {});
 });
 
-test('config is removed from the result (non-strict)', async (t) => {
-  const job = [async (s: State) => s];
-  const context = createContext({ opts: { strict: false } });
-  const result = await execute(context, job, { configuration: {} });
-  t.deepEqual(result, {});
-});
-
-test('output state is cleaned in strict mode', async (t) => {
-  const job = [
-    async () => ({
-      data: {},
-      references: [],
-      configuration: {},
-      x: true,
-    }),
-  ];
-
-  const context = createContext({ opts: { strict: true } });
-
-  const result = await execute(context, job, {});
-  t.deepEqual(result, {
-    data: {},
-    references: [],
-  });
-});
-
-test('output state is left alone in non-strict mode', async (t) => {
+test('output state is returned verbatim, apart from config', async (t) => {
   const state = {
     data: {},
     references: [],
@@ -194,7 +168,7 @@ test('output state is left alone in non-strict mode', async (t) => {
   };
   const job = [async () => ({ ...state })];
 
-  const context = createContext({ opts: { strict: false } });
+  const context = createContext();
 
   const result = await execute(context, job, {});
   t.deepEqual(result, {

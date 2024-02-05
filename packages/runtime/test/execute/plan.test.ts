@@ -259,30 +259,6 @@ test('Previous state overrides inline data', async (t) => {
   t.is(result.data.x, 6);
 });
 
-test('only allowed state is passed through in strict mode', async (t) => {
-  const plan = createPlan([
-    createJob({
-      expression:
-        'export default [s => ({ data: {}, references: [], x: 22, y: 33 })]',
-      next: {
-        job2: true,
-      },
-    }),
-    createJob({
-      id: 'job2',
-      // Throw if we receive unexpected stuff in state
-      expression:
-        'export default [s => { if (s.x || s.y) { throw new Error() }; return s;}]',
-    }),
-  ]);
-
-  const result: any = await executePlan(plan, {}, { strict: true }, mockLogger);
-  t.deepEqual(result, {
-    data: {},
-    references: [],
-  });
-});
-
 test('steps only receive state from upstream steps', async (t) => {
   const assert = (expr: string) =>
     `if (!(${expr})) throw new Error('ASSERT FAIL')`;
@@ -349,7 +325,7 @@ test('steps only receive state from upstream steps', async (t) => {
   });
 });
 
-test('all state is passed through in non-strict mode', async (t) => {
+test('all state is passed through successive jobs', async (t) => {
   const plan = createPlan([
     createJob({
       expression:
@@ -366,12 +342,7 @@ test('all state is passed through in non-strict mode', async (t) => {
     }),
   ]);
 
-  const result: any = await executePlan(
-    plan,
-    {},
-    { strict: false },
-    mockLogger
-  );
+  const result: any = await executePlan(plan, {}, {}, mockLogger);
   t.deepEqual(result, {
     data: {},
     references: [],

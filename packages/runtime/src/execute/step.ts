@@ -110,12 +110,7 @@ const executeStep = async (
       opts.callbacks?.resolveState! // and here
     );
 
-    const state = assembleState(
-      clone(input),
-      configuration,
-      globals,
-      opts.strict
-    );
+    const state = assembleState(clone(input), configuration, globals);
 
     notify(NOTIFY_INIT_COMPLETE, {
       jobId,

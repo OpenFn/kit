@@ -71,12 +71,12 @@ export default (
 
       duration = Date.now() - duration;
 
-      const finalState = prepareFinalState(plan.options, opts, result, logger);
+      const finalState = prepareFinalState(plan.options, result, logger);
       // return the final state
       resolve(finalState);
     } catch (e: any) {
       // whatever initial state looks like now, clean it and report it back
-      const finalState = prepareFinalState(plan.options, opts, input, logger);
+      const finalState = prepareFinalState(plan.options, input, logger);
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -155,7 +155,6 @@ const assignKeys = (
 // (especially as the result get stringified again downstream)
 const prepareFinalState = (
   options: WorkflowOptions,
-  opts: Options, // TODO remove this with strict mode
   state: any,
   logger: Logger
 ) => {
@@ -176,9 +175,6 @@ const prepareFinalState = (
           logger.debug(`Removed ${prop} from final state`);
         }
       });
-    }
-    if (opts.strict) {
-      state = assignKeys(state, {}, ['data', 'error', 'references']);
     }
     const cleanState = stringify(state);
     return JSON.parse(cleanState);

@@ -50,7 +50,6 @@ const run = async (t, workflow: ExecutionPlan) => {
   };
 
   const state = await callRuntime(workflow, {
-    strict: false,
     callbacks: { notify },
     globals: {
       process: {

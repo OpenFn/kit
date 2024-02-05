@@ -130,7 +130,6 @@ test('resolve a credential', async (t) => {
   };
 
   const options = {
-    strict: false,
     callbacks: {
       resolveCredential: async () => ({ password: 'password1' }),
     },
@@ -355,41 +354,6 @@ test('prefer initial state to inline state', async (t) => {
   t.is(result.data.y, 20);
 });
 
-test('do not pass extraneous state in strict mode', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
-    workflow: {
-      steps: [
-        {
-          expression: 'export default [() => ({ x: 1, data: {}} )]',
-        },
-      ],
-    },
-  };
-
-  const result: any = await run(plan, {}, { strict: true });
-  t.deepEqual(result, {
-    data: {},
-  });
-});
-
-test('do pass extraneous state in non-strict mode', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
-    workflow: {
-      steps: [
-        {
-          expression: 'export default [() => ({ x: 1, data: {}} )]',
-        },
-      ],
-    },
-  };
-
-  const result: any = await run(plan, {}, { strict: false });
-  t.deepEqual(result, {
-    x: 1,
-    data: {},
-  });
-});
-
 test('Allow a job to return undefined', async (t) => {
   const plan: ExecutionPlanNoOptions = {
     workflow: {
@@ -419,7 +383,7 @@ test('log errors, write to state, and continue', async (t) => {
   };
 
   const logger = createMockLogger();
-  const result: any = await run(plan, {}, { strict: false, logger });
+  const result: any = await run(plan, {}, { logger });
   t.is(result.x, 1);
 
   t.truthy(result.errors);
@@ -496,7 +460,7 @@ test('error reports can be overwritten', async (t) => {
   };
 
   const logger = createMockLogger();
-  const result: any = await run(plan, {}, { strict: false, logger });
+  const result: any = await run(plan, {}, { logger });
 
   t.is(result.errors, 22);
 });
@@ -517,7 +481,7 @@ test('stuff written to state before an error is preserved', async (t) => {
   };
 
   const logger = createMockLogger();
-  const result: any = await run(plan, {}, { strict: false, logger });
+  const result: any = await run(plan, {}, { logger });
 
   t.is(result.x, 1);
 });
@@ -525,7 +489,7 @@ test('stuff written to state before an error is preserved', async (t) => {
 test('data can be an array (expression)', async (t) => {
   const expression = 'export default [() => ({ data: [1,2,3] })]';
 
-  const result: any = await run(expression, {}, { strict: false });
+  const result: any = await run(expression, {}, {});
   t.deepEqual(result.data, [1, 2, 3]);
 });
 
@@ -546,7 +510,7 @@ test('data can be an array (workflow)', async (t) => {
     },
   };
 
-  const result: any = await run(plan, {}, { strict: false });
+  const result: any = await run(plan, {}, {});
   t.deepEqual(result.data, [1, 2, 3]);
 });
 

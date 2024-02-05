@@ -11,9 +11,6 @@ export type Options = {
   logger?: Logger;
   jobLogger?: Logger;
 
-  // TODO: deprecate in this work
-  strict?: boolean; // Be strict about handling of state returned from jobs
-
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
 
@@ -78,12 +75,6 @@ const run = (
   }
 
   const { options } = xplan;
-
-  // TODO remove
-  // Strict state handling by default
-  if (!opts.hasOwnProperty('strict')) {
-    opts.strict = true;
-  }
 
   if (!options.hasOwnProperty('statePropsToRemove')) {
     options.statePropsToRemove = ['configuration'];

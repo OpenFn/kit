@@ -3,11 +3,7 @@ import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
 import type { ExecutionPlan, State } from '@openfn/lexicon';
 
-import doRun from '../src/runtime';
-
-// Disable strict mode for all these tests
-const run = (plan: ExecutionPlan | string, state: State, options: any = {}) =>
-  doRun(plan, state, { strict: false, ...options });
+import run from '../src/runtime';
 
 const logger = createMockLogger(undefined, { level: 'default' });
 
@@ -33,41 +29,20 @@ test.serial(
   }
 );
 
-test.serial(
-  'config should be scrubbed from the result state in strict mode',
-  async (t) => {
-    const src = 'export default [(s) => s]';
+test.serial('config should be scrubbed from the result state', async (t) => {
+  const src = 'export default [(s) => s]';
 
-    const state = {
-      data: {},
-      configuration: {
-        password: 'secret',
-      },
-    };
+  const state = {
+    data: {},
+    configuration: {
+      password: 'secret',
+    },
+  };
 
-    const result: any = await run(src, state, { strict: true });
-    t.deepEqual(result.data, {});
-    t.is(result.configuration, undefined);
-  }
-);
-
-test.serial(
-  'config should be scrubbed from the result state in non-strict mode',
-  async (t) => {
-    const src = 'export default [(s) => s]';
-
-    const state = {
-      data: {},
-      configuration: {
-        password: 'secret',
-      },
-    };
-
-    const result: any = await run(src, state, { strict: false });
-    t.deepEqual(result.data, {});
-    t.is(result.configuration, undefined);
-  }
-);
+  const result: any = await run(src, state, {});
+  t.deepEqual(result.data, {});
+  t.is(result.configuration, undefined);
+});
 
 test.serial(
   'config should be scrubbed from the result state after error',
@@ -81,7 +56,7 @@ test.serial(
       },
     };
 
-    const result: any = await run(src, state, { strict: false });
+    const result: any = await run(src, state, {});
     t.truthy(result.errors);
     t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
