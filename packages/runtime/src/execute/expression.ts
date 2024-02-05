@@ -109,7 +109,7 @@ export const wrapOperation = (
     // TODO should we warn if an operation does not return state?
     // the trick is saying WHICH operation without source mapping
     const duration = printDuration(new Date().getTime() - start);
-    logger.info(`Operation ${name} complete in ${duration}`);
+    logger.debug(`Operation ${name} complete in ${duration}`);
     return result;
   };
 };
@@ -136,19 +136,6 @@ const prepareJob = async (
     }
     return { operations: expression as Operation[] };
   }
-};
-
-const assignKeys = (
-  source: Record<string, unknown>,
-  target: Record<string, unknown>,
-  keys: string[]
-) => {
-  keys.forEach((k) => {
-    if (source.hasOwnProperty(k)) {
-      target[k] = source[k];
-    }
-  });
-  return target;
 };
 
 // TODO this is suboptimal and may be slow on large objects

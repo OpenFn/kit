@@ -988,7 +988,7 @@ test('Plans log step ids for each job start and end', async (t) => {
   ]);
   const logger = createMockLogger(undefined, { level: 'debug' });
   await executePlan(plan, {}, {}, logger);
-  const start = logger._find('always', /starting step a/i);
+  const start = logger._find('info', /starting step a/i);
   t.is(start!.message, 'Starting step a');
 
   const end = logger._find('success', /completed step a/i);
@@ -1006,7 +1006,7 @@ test('Plans log step names for each job start and end', async (t) => {
   const logger = createMockLogger(undefined, { level: 'debug' });
   await executePlan(plan, {}, {}, logger);
 
-  const start = logger._find('always', /starting step do-the-thing/i);
+  const start = logger._find('info', /starting step do-the-thing/i);
   t.is(start!.message, 'Starting step do-the-thing');
 
   const end = logger._find('success', /completed step do-the-thing/i);

@@ -121,7 +121,7 @@ const executeStep = async (
 
     const timerId = `step-${jobId}`;
     logger.timer(timerId);
-    logger.always(`Starting step ${jobName}`);
+    logger.info(`Starting step ${jobName}`);
 
     const startTime = Date.now();
     try {

@@ -26,6 +26,7 @@ const executePlan = async (
     logger.error('Aborting');
     throw e;
   }
+  logger.info(`Executing ${plan.workflow.name || plan.id}`);
 
   const { workflow, options } = compiledPlan;
 

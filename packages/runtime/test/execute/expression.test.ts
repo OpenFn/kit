@@ -351,6 +351,6 @@ test('Operations log on start and end', async (t) => {
   const start = logger._find('debug', /starting operation /i);
   t.truthy(start);
 
-  const end = logger._find('info', /operation 1 complete in \dms/i);
+  const end = logger._find('debug', /operation 1 complete in \dms/i);
   t.truthy(end);
 });
