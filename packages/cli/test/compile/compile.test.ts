@@ -8,13 +8,14 @@ import compile, {
   resolveSpecifierPath,
 } from '../../src/compile/compile';
 import { CompileOptions } from '../../src/compile/command';
-import { ExecutionPlan } from '@openfn/runtime';
+import { mockFs, resetMockFs } from '../util';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
 const mockLog = createMockLogger();
 
-test.afterEach(() => {
-  mock.restore();
-});
+test.after(resetMockFs);
+
+const jobPath = '/job.js';
 
 type TransformOptionsWithImports = {
   ['add-imports']: {
@@ -26,67 +27,64 @@ type TransformOptionsWithImports = {
   };
 };
 
+// TODO this isn't really used and is a bit of a quirky thing
+// The compiler itself probably doesn't do any path parsing?
+// Just compile a source string and return the result
 test('compile from source string', async (t) => {
   const job = 'x();';
 
-  const opts = {
-    job,
-  } as CompileOptions;
+  const opts = {} as CompileOptions;
 
-  const result = await compile(opts, mockLog);
+  const result = await compile(job, opts, mockLog);
 
   const expected = 'export default [x()];';
   t.is(result, expected);
 });
 
 test.serial('compile from path', async (t) => {
-  const pnpm = path.resolve('../../node_modules/.pnpm');
-  mock({
-    [pnpm]: mock.load(pnpm, {}),
-    '/tmp/job.js': 'x();',
+  const job = 'x();';
+  mockFs({
+    [jobPath]: job,
   });
-
-  const jobPath = '/tmp/job.js';
 
   const opts = {
     jobPath,
   } as CompileOptions;
 
-  const result = await compile(opts, mockLog);
+  const result = await compile(jobPath, opts, mockLog);
 
   const expected = 'export default [x()];';
   t.is(result, expected);
 });
 
-test('compile from workflow', async (t) => {
-  const workflow = {
-    start: 'a',
-    jobs: [
-      { id: 'a', expression: 'x()' },
-      { id: 'b', expression: 'x()' },
-    ],
-  };
+test('compile from execution plan', async (t) => {
+  const plan = {
+    workflow: {
+      steps: [
+        { id: 'a', expression: 'x()' },
+        { id: 'b', expression: 'x()' },
+      ],
+    },
+    options: {},
+  } as ExecutionPlan;
 
-  const opts = {
-    workflow,
-  } as CompileOptions;
+  const opts = {} as CompileOptions;
 
-  const result = (await compile(opts, mockLog)) as ExecutionPlan;
+  const result = (await compile(plan, opts, mockLog)) as ExecutionPlan;
 
   const expected = 'export default [x()];';
-  t.is(result.jobs[0].expression, expected);
-  t.is(result.jobs[1].expression, expected);
+  const [a, b] = result.workflow.steps;
+  t.is((a as Job).expression, expected);
+  t.is((b as Job).expression, expected);
 });
 
 test('throw an AbortError if a job is uncompilable', async (t) => {
   const job = 'a b';
 
-  const opts = {
-    job,
-  } as CompileOptions;
+  const opts = {} as CompileOptions;
 
   const logger = createMockLogger();
-  await t.throwsAsync(() => compile(opts, logger), {
+  await t.throwsAsync(() => compile(job, opts, logger), {
     message: 'Failed to compile job',
   });
 
@@ -95,18 +93,18 @@ test('throw an AbortError if a job is uncompilable', async (t) => {
   t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
-test('throw an AbortError if a workflow contains an uncompilable job', async (t) => {
-  const workflow = {
-    start: 'a',
-    jobs: [{ id: 'a', expression: 'x b' }],
+test('throw an AbortError if an xplan contains an uncompilable job', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [{ id: 'a', expression: 'x b' }],
+    },
+    options: {},
   };
 
-  const opts = {
-    workflow,
-  } as CompileOptions;
+  const opts = {} as CompileOptions;
 
   const logger = createMockLogger();
-  await t.throwsAsync(() => compile(opts, logger), {
+  await t.throwsAsync(() => compile(plan, opts, logger), {
     message: 'Failed to compile job a',
   });
 

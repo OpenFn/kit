@@ -1,12 +1,11 @@
 // bunch of unit tests on the execute function itself
 // so far this is only done in commands.test.ts, which has the cli overhead
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
-import mock from 'mock-fs';
-import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
 import { ExecuteOptions } from '../../src/execute/command';
 import handler from '../../src/execute/handler';
+import { mockFs, resetMockFs } from '../util';
 
 // Why is this logging everywhere?
 const logger = createMockLogger(undefined, { level: 'none' });
@@ -33,16 +32,7 @@ const defaultOptions = {
 const fn = `const fn = (fn) => (s) => fn(s);
 `;
 
-const mockFs = (files: Record<string, string>) => {
-  const pnpm = path.resolve('../../node_modules/.pnpm');
-  mock({
-    [pnpm]: mock.load(pnpm, {}),
-    '/repo/': mock.load(path.resolve('test/__repo__/'), {}),
-    ...files,
-  });
-};
-
-test.after(() => mock.restore());
+test.after(resetMockFs);
 
 test.serial('run a simple job', async (t) => {
   const job = `${fn}fn(() => ({ data: 42 }));`;
@@ -141,7 +131,7 @@ test.serial('run a workflow with state', async (t) => {
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
     workflow: {
-      jobs: [
+      steps: [
         {
           id: 'a',
           expression: `${fn}fn((state) => { state.data.count += 1; return state;});`,

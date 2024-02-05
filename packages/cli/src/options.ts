@@ -30,8 +30,7 @@ export type Opts = {
   force?: boolean;
   immutable?: boolean;
   ignoreImports?: boolean | string[];
-  jobPath?: string;
-  job?: string;
+  jobPath?: string; // TODO rename to expressionPath
   log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
@@ -39,7 +38,6 @@ export type Opts = {
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
-  plan?: ExecutionPlan;
   planPath?: string;
   projectPath?: string;
   repoDir?: string;
@@ -52,11 +50,13 @@ export type Opts = {
   sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
-  workflow?: OldCLIWorkflow;
   projectId?: string;
 
   // deprecated
   workflowPath?: string;
+  job?: string;
+  plan?: ExecutionPlan; // TODO pretty sure this doesn't live on options
+  workflow?: OldCLIWorkflow; // TODO I don't think this should sit on options anymore?
 };
 
 // Definition of what Yargs returns (before ensure is called)
