@@ -39,10 +39,11 @@ const loadPlan = async (
   }
 
   const json = await loadJson(jsonPath!, logger);
+  const defaultName = path.parse(jsonPath!).name;
   if (json.workflow) {
-    return loadXPlan(json, options, logger);
+    return loadXPlan(json, options, logger, defaultName);
   } else {
-    return loadOldWorkflow(json, options, logger);
+    return loadOldWorkflow(json, options, logger, defaultName);
   }
 };
 
@@ -88,7 +89,7 @@ const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
 const loadExpression = async (
   options: Pick<Opts, 'expressionPath' | 'adaptors' | 'monorepoPath'>,
   logger: Logger
-): Promise<ExecutionPlan> => {
+): Promise<ExecutionPlan | undefined> => {
   const expressionPath = options.expressionPath!;
 
   logger.debug(`Loading expression from ${expressionPath}`);
@@ -132,7 +133,8 @@ const loadExpression = async (
 const loadOldWorkflow = async (
   workflow: OldCLIWorkflow,
   options: Pick<Opts, 'workflowPath' | 'monorepoPath'>,
-  logger: Logger
+  logger: Logger,
+  defaultName: string = ''
 ) => {
   const plan: ExecutionPlan = {
     workflow: {
@@ -147,20 +149,13 @@ const loadOldWorkflow = async (
     plan.id = workflow.id;
   }
 
-  try {
-    const name = path.parse(options.workflowPath!).name;
-    if (name) {
-      plan.workflow.name = name;
-    }
-  } catch (e) {
-    // do nothing
-  }
-
   // call loadXPlan now so that any options can be written
-  const final = await loadXPlan(plan, options, logger);
+  const final = await loadXPlan(plan, options, logger, defaultName);
 
   // TODO this can be nicer
-  logger.warn('converted old workflow into execution plan');
+  logger.warn(
+    'converted old workflow format into new execution plan format. See below for details'
+  );
   logger.warn(final);
 
   return final;
@@ -231,14 +226,18 @@ const importExpressions = async (
   }
 };
 
-// TODO default the workflow name from the file name
 const loadXPlan = async (
   plan: ExecutionPlan,
   options: Pick<Opts, 'monorepoPath' | 'baseDir' | 'expandAdaptors'>,
-  logger: Logger
+  logger: Logger,
+  defaultName: string = ''
 ) => {
   if (!plan.options) {
     plan.options = {};
+  }
+
+  if (!plan.workflow.name && defaultName) {
+    plan.workflow.name = defaultName;
   }
   // Note that baseDir should be set up in the default function
   await importExpressions(plan, options.baseDir!, logger);
@@ -251,6 +250,8 @@ const loadXPlan = async (
   // Assign options form the CLI into the Xplan
   // TODO support state props to remove
   maybeAssign(options, plan.options, ['timeout', 'start']);
+
+  logger.info(`Loaded workflow ${plan.workflow.name ?? ''}`);
 
   return plan;
 };

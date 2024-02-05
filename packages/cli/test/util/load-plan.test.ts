@@ -1,7 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
 import { Opts } from '../../src/options';
@@ -11,6 +11,7 @@ const logger = createMockLogger(undefined, { level: 'debug' });
 const sampleXPlan = {
   options: { start: 'a' },
   workflow: {
+    name: 'wf',
     steps: [{ id: 'a', expression: 'x()' }],
   },
 };
