@@ -44,7 +44,6 @@ export type Opts = {
   start?: string; // workflow start node
   statePath?: string;
   stateStdin?: string;
-  strict?: boolean; // Strict state handling (only forward state.data). Defaults to true
   sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
@@ -325,38 +324,6 @@ export const start: CLIOption = {
   yargs: {
     string: true,
     description: 'Specifiy the start node in a workflow',
-  },
-};
-
-// Preserve this but hide it
-export const strictOutput: CLIOption = {
-  name: 'no-strict-output',
-  yargs: {
-    deprecated: true,
-    hidden: true,
-    boolean: true,
-  },
-  ensure: (opts: { strictOutput?: boolean; strict?: boolean }) => {
-    if (!opts.hasOwnProperty('strict')) {
-      // override strict not set
-      opts.strict = opts.strictOutput;
-    }
-    delete opts.strictOutput;
-  },
-};
-
-export const strict: CLIOption = {
-  name: 'strict',
-  yargs: {
-    default: false,
-    boolean: true,
-    description:
-      'Enables strict state handling, meaning only state.data is returned from a job.',
-  },
-  ensure: (opts) => {
-    if (!opts.hasOwnProperty('strictOutput')) {
-      setDefaultValue(opts, 'strict', false);
-    }
   },
 };
 

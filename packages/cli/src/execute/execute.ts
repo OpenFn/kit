@@ -16,9 +16,6 @@ export default async (
 ): Promise<any> => {
   try {
     const result = await run(plan, input, {
-      strict: opts.strict,
-      // start: opts.start,
-      // timeout: opts.timeout,
       immutableState: opts.immutable,
       logger: createLogger(RUNTIME, opts),
       jobLogger: createLogger(JOB, opts),

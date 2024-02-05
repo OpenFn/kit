@@ -22,7 +22,6 @@ test('correct default options', (t) => {
   t.is(options.outputStdout, false);
   t.is(options.path, 'job.js');
   t.is(options.skipAdaptorValidation, false);
-  t.is(options.strict, false);
   t.is(options.timeout, 300000);
   t.falsy(options.useAdaptorsMonorepo);
 });
@@ -85,16 +84,6 @@ test('default job path', (t) => {
 test('enable json logging', (t) => {
   const options = parse('execute job.js --log-json');
   t.true(options.logJson);
-});
-
-test('disable strict output', (t) => {
-  const options = parse('execute job.js --no-strict');
-  t.false(options.strict);
-});
-
-test('disable strict output (legacy)', (t) => {
-  const options = parse('execute job.js --no-strict-output');
-  t.false(options.strict);
 });
 
 test('set an output path (short)', (t) => {
