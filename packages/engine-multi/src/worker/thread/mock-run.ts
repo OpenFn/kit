@@ -10,6 +10,7 @@
 import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
 import * as workerEvents from '../events';
+import { State } from '@openfn/lexicon';
 
 type MockJob = {
   id?: string;
@@ -25,13 +26,19 @@ type MockJob = {
 
 type MockExecutionPlan = {
   id: string;
-  jobs: MockJob[];
+  workflow: {
+    steps: MockJob[];
+  };
 };
 
 // This is a fake runtime handler which will return a fixed value, throw, and
 // optionally delay
-function mockRun(plan: MockExecutionPlan) {
-  const [job] = plan.jobs;
+function mockRun(plan: MockExecutionPlan, input: State, _options = {}) {
+  if (!input) {
+    throw new Error('no input passed to state');
+  }
+
+  const [job] = plan.workflow.steps;
   const { jobLogger } = createLoggers(plan.id!, 'none', publish);
   const workflowId = plan.id;
   return new Promise((resolve) => {
@@ -79,6 +86,6 @@ function mockRun(plan: MockExecutionPlan) {
 }
 
 register({
-  run: async (plan: MockExecutionPlan, _options?: any) =>
-    execute(plan.id, () => mockRun(plan)),
+  run: async (plan: MockExecutionPlan, input: State, _options?: any) =>
+    execute(plan.id, () => mockRun(plan, input)),
 });

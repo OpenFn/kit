@@ -120,13 +120,17 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     }
   };
 
-  const exec = (task: string, args: any[] = [], opts: ExecOpts = {}) => {
+  const exec = <T = any>(
+    task: string,
+    args: any[] = [],
+    opts: ExecOpts = {}
+  ): Promise<T> => {
     // TODO Throw if destroyed
     if (destroyed) {
       throw new Error('Worker destroyed');
     }
 
-    const promise = new Promise(async (resolve, reject) => {
+    const promise = new Promise<T>(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
@@ -194,7 +198,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       }
 
       try {
-        logger.debug(`pool: Running task "${task}" in worker ${worker.pid}`);
         worker.send({
           type: ENGINE_RUN_TASK,
           task,

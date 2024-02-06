@@ -2,7 +2,7 @@
 // Most of the heavy lifting is actually handled by execute
 import run from '@openfn/runtime';
 import type { NotifyEvents } from '@openfn/runtime';
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
 import type { SanitizePolicies } from '@openfn/logger';
 
 import { register, publish } from './runtime';
@@ -26,7 +26,7 @@ const eventMap = {
 };
 
 register({
-  run: (plan: ExecutionPlan, runOptions: RunOptions) => {
+  run: (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
     const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
       runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
@@ -73,6 +73,6 @@ register({
       },
     };
 
-    return execute(plan.id!, () => run(plan, undefined, options));
+    return execute(plan.id!, () => run(plan, input, options));
   },
 });

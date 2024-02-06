@@ -1,22 +1,15 @@
-import { ExecutionPlan } from '@openfn/lexicon';
+import { ExecutionPlan, State } from '@openfn/lexicon';
 import { WorkflowState } from '../types';
 
-export default (plan: ExecutionPlan, options = {}): WorkflowState => ({
+export default (plan: ExecutionPlan, input: State): WorkflowState => ({
   id: plan.id!,
   status: 'pending',
   plan,
+  input,
 
   threadId: undefined,
   startTime: undefined,
   duration: undefined,
   error: undefined,
   result: undefined,
-
-  // this is wf-specific options
-  // but they should be on context, rather than state
-  options,
-  // options: {
-  //   ...options,
-  //   repoDir,
-  // },
 });

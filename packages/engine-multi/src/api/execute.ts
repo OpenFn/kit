@@ -1,7 +1,7 @@
 import { timestamp } from '@openfn/logger';
 
 import * as workerEvents from '../worker/events';
-import type { ExecutionContext } from '../types';
+import type ExecutionContext from '../classes/ExecutionContext';
 import autoinstall from './autoinstall';
 import compile from './compile';
 import {
@@ -115,11 +115,9 @@ const execute = async (context: ExecutionContext) => {
         error(context, { workflowId: state.plan.id, error: evt.error });
       },
     };
-
-    // TODO in the new world order, what sorts of errors are being caught here?
     return callWorker(
       'run',
-      [state.plan, runOptions],
+      [state.plan, state.input || {}, runOptions || {}],
       events,
       workerOptions
     ).catch((e: any) => {

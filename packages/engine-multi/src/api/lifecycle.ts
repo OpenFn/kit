@@ -1,7 +1,7 @@
 // here's here things get a bit complex event wise
 import * as externalEvents from '../events';
 import * as internalEvents from '../worker/events';
-import { ExecutionContext } from '../types';
+import type ExecutionContext from '../classes/ExecutionContext';
 
 export const workflowStart = (
   context: ExecutionContext,

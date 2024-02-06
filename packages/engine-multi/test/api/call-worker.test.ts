@@ -40,7 +40,7 @@ test.serial('callWorker should return a custom result', async (t) => {
 });
 
 test.serial('callWorker should trigger an event callback', async (t) => {
-  const onCallback = ({ result }) => {
+  const onCallback = ({ result }: any) => {
     t.is(result, 11);
   };
 
@@ -69,7 +69,7 @@ test.serial(
       }
     );
 
-    const onCallback = (evt) => {
+    const onCallback = () => {
       t.pass('all ok');
     };
 
@@ -81,13 +81,13 @@ test.serial('callWorker should execute in one process', async (t) => {
   const ids: number[] = [];
 
   await engine.callWorker('test', [], {
-    'test-message': ({ processId }) => {
+    'test-message': ({ processId }: any) => {
       ids.push(processId);
     },
   });
 
   await engine.callWorker('test', [], {
-    'test-message': ({ processId }) => {
+    'test-message': ({ processId }: any) => {
       ids.push(processId);
     },
   });
@@ -100,13 +100,13 @@ test.serial('callWorker should execute in two different threads', async (t) => {
   const ids: number[] = [];
 
   await engine.callWorker('test', [], {
-    'test-message': ({ threadId }) => {
+    'test-message': ({ threadId }: any) => {
       ids.push(threadId);
     },
   });
 
   await engine.callWorker('test', [], {
-    'test-message': ({ threadId }) => {
+    'test-message': ({ threadId }: any) => {
       ids.push(threadId);
     },
   });
@@ -167,8 +167,6 @@ test.serial(
 test.serial(
   'By default, worker thread cannot access parent env if env not set (with options arg)',
   async (t) => {
-    const defaultAPI = {} as EngineAPI;
-
     const { callWorker, closeWorkers } = initWorkers(
       workerPath,
       { maxWorkers: 1 },

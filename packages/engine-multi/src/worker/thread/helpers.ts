@@ -66,7 +66,7 @@ export const createLoggers = (
 // Execute wrapper function
 export const execute = async (
   workflowId: string,
-  executeFn: () => Promise<any>
+  executeFn: () => Promise<any> | undefined
 ) => {
   const handleError = (err: any) => {
     publish(workerEvents.ERROR, {

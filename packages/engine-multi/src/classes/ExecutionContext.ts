@@ -1,13 +1,15 @@
 import { EventEmitter } from 'node:events';
+import type { Logger } from '@openfn/logger';
 
+import loadVersions from '../util/load-versions';
 import type {
   WorkflowState,
   CallWorker,
   ExecutionContextConstructor,
   ExecutionContextOptions,
+  Versions,
 } from '../types';
-import type { Logger } from '@openfn/logger';
-import loadVersions from '../util/load-versions';
+import type { ExternalEvents, EventMap } from '../events';
 
 /**
  * The ExeuctionContext class wraps an event emitter with some useful context
@@ -22,7 +24,7 @@ export default class ExecutionContext extends EventEmitter {
   logger: Logger;
   callWorker: CallWorker;
   options: ExecutionContextOptions;
-  versions = {};
+  versions: Versions;
 
   constructor({
     state,
@@ -40,8 +42,11 @@ export default class ExecutionContext extends EventEmitter {
 
   // override emit to add the workflowId to all events
   // @ts-ignore
-  emit(event: string, payload: any) {
-    payload.workflowId = this.state.id;
+  emit<T extends ExternalEvents>(
+    event: T,
+    payload: Omit<EventMap[T], 'workflowId'>
+  ): boolean {
+    (payload as EventMap[T]).workflowId = this.state.id;
     return super.emit(event, payload);
   }
 }

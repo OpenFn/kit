@@ -26,7 +26,7 @@ const workers = createPool(
 
 test('execute a mock plan inside a worker thread', async (t) => {
   const plan = createPlan();
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.deepEqual(result, { data: { answer: 42 } });
 });
 
@@ -35,7 +35,7 @@ test('execute a mock plan with data', async (t) => {
     id: 'j2',
     data: { input: 44 },
   });
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.deepEqual(result, { data: { answer: 44 } });
 });
 
@@ -44,7 +44,7 @@ test('execute a mock plan with an expression', async (t) => {
     id: 'j2',
     expression: '() => ({ data: { answer: 46 } })',
   });
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.deepEqual(result, { data: { answer: 46 } });
 });
 
@@ -54,7 +54,7 @@ test('execute a mock plan with an expression which uses state', async (t) => {
     data: { input: 2 },
     expression: '(s) => ({ data: { answer: s.data.input * 2 } })',
   });
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.deepEqual(result, { data: { answer: 4 } });
 });
 
@@ -68,7 +68,7 @@ test('execute a mock plan with a promise expression', async (t) => {
         }, 1);
       })`,
   });
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.deepEqual(result, { data: { answer: 46 } });
 });
 
@@ -78,16 +78,16 @@ test('expression state overrides data', async (t) => {
     data: { answer: 44 },
     expression: '() => ({ data: { agent: "007" } })',
   });
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.deepEqual(result, { data: { agent: '007' } });
 });
 
 test('write an exception to state', async (t) => {
   const plan = createPlan({
     id: 'j2',
-    expression: 'ƸӜƷ', // it's a butterfly, obviously (and mmore importantly, invalid JSON)
+    expression: 'ƸӜƷ', // it's a butterfly, obviously (and more importantly, invalid JSON)
   });
-  const result = await workers.exec('run', [plan]);
+  const result = await workers.exec('run', [plan, {}]);
   t.truthy(result.data);
   t.truthy(result.error);
 });
@@ -98,7 +98,7 @@ test('execute a mock plan with delay', async (t) => {
     id: 'j1',
     _delay: 50,
   });
-  await workers.exec('run', [plan]);
+  await workers.exec('run', [plan, {}]);
   const elapsed = new Date().getTime() - start;
   t.log(elapsed);
   t.assert(elapsed > 40);
@@ -108,7 +108,7 @@ test('Publish workflow-start event', async (t) => {
   const plan = createPlan();
   plan.id = 'xx';
   let didFire = false;
-  await workers.exec('run', [plan], {
+  await workers.exec('run', [plan, {}], {
     on: ({ type }) => {
       if (type === e.WORKFLOW_START) {
         didFire = true;
@@ -122,7 +122,7 @@ test('Publish workflow-complete event with state', async (t) => {
   const plan = createPlan();
   let didFire = false;
   let state;
-  await workers.exec('run', [plan], {
+  await workers.exec('run', [plan, {}], {
     on: ({ type, ...args }) => {
       if (type === e.WORKFLOW_COMPLETE) {
         didFire = true;
@@ -142,9 +142,9 @@ test('Publish a job log event', async (t) => {
     }`,
   });
   let didFire = false;
-  let log;
+  let log: any;
   let id;
-  await workers.exec('run', [plan], {
+  await workers.exec('run', [plan, {}], {
     on: ({ workflowId, type, log: _log }) => {
       if (type === e.LOG) {
         didFire = true;
@@ -154,7 +154,7 @@ test('Publish a job log event', async (t) => {
     },
   });
   t.true(didFire);
-  t.is(id, plan.id);
+  t.is(id, plan.id as any);
 
   t.is(log.level, 'info');
   t.is(log.name, 'JOB');

@@ -10,7 +10,7 @@ import type { Logger } from '@openfn/logger';
 
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
-import type { ExecutionContext } from '../types';
+import ExecutionContext from '../classes/ExecutionContext';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -139,6 +139,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
 
     // Write the adaptor version to the context
     // This is a reasonably accurate, but not totally bulletproof, report
+    // @ts-ignore
     context.versions[name] = v;
 
     paths[name] = {

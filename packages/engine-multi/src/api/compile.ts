@@ -4,7 +4,7 @@ import type { Job } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 import { CompileError } from '../errors';
-import type { ExecutionContext } from '../types';
+import type ExecutionContext from '../classes/ExecutionContext';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook

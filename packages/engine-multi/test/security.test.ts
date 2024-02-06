@@ -8,7 +8,7 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
-import createEngine from '../src/engine';
+import createEngine, { InternalEngine } from '../src/engine';
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -20,7 +20,7 @@ const options = {
   maxWorkers: 1,
 };
 
-let engine;
+let engine: InternalEngine;
 
 test.before(async () => {
   engine = await createEngine(
@@ -43,11 +43,13 @@ test.serial('parent env is hidden from sandbox', async (t) => {
 });
 
 test.serial('sandbox does not share a global scope', async (t) => {
+  // @ts-ignore
   t.is(global.x, undefined);
 
   // Set a global inside the first task
   await engine.callWorker('setGlobalX', [9]);
 
+  // @ts-ignore
   // (this should not affect us outside)
   t.is(global.x, undefined);
 
