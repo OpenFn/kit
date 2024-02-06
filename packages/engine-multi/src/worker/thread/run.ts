@@ -15,7 +15,6 @@ type RunOptions = {
   whitelist?: RegExp[];
   sanitize: SanitizePolicies;
   statePropsToRemove?: string[];
-  // TODO timeout
 };
 
 const eventMap = {

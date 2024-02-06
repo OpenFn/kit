@@ -293,9 +293,7 @@ test.serial('errors get nicely serialized', (t) => {
   });
 });
 
-// TODO I need to get options working before I can fix this one
-// statePropsToRemove needs to be fed through to the actual runtime on the option key
-test.serial.skip(
+test.serial(
   'execute should remove the configuration and response keys',
   (t) => {
     return new Promise(async (done) => {
@@ -318,8 +316,7 @@ test.serial.skip(
   }
 );
 
-// TODO ditto
-test.serial.skip('use custom state-props-to-remove', (t) => {
+test.serial('use custom state-props-to-remove', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,

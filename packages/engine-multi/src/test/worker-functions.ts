@@ -27,6 +27,7 @@ const tasks = {
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
   run: async (plan: ExecutionPlan, _input: any, _adaptorPaths: any) => {
+    console.log(' >> RUN');
     const workflowId = plan.id;
     publish('worker:workflow-start', {
       workflowId,

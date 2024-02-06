@@ -130,7 +130,7 @@ test.serial('execute does not return internal state stuff', async (t) => {
     t.falsy(result['callWorker']);
     t.falsy(result['options']);
 
-    result.then(done);
+    done();
   });
 });
 
