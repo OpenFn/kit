@@ -15,6 +15,7 @@ The CLI includes:
 
 - [Installation](#installation)
 - [Updating](#updating)
+- [Terminology](#terminology)
 - [Migrating from devtools](#migrating-from-devtools)
 - [Basic Usage](#basic-usage)
 - [Advanced Usage](#advanced-usage)
@@ -71,16 +72,25 @@ npm uninstall -g @openfn/cli
 
 And then re-installing.
 
-## Migrating from devtools
+## Terminology
 
-If you're coming to the CLI from the old openfn devtools, here are a couple of key points to be aware of:
+The CLI (and the wider OpenFn stack) has some very particular terminology
 
-- The CLI has a shorter, sleeker syntax, so your command should be much shorter
-- The CLI will automatically install adaptors for you (with full version control)
+- An **Expression** is a string of Javascript (or Javascript-like code) written to be run in the CLI or Lightning.
+- A **Job** is an expression plus some metadata required to run it - typically an adaptor and credentials.
+  The terms Job and Expression are often used interchangeably.
+- A **Workflow** is a series of steps to be executed in sequence. Steps are usually Jobs (and so job and step are often used
+  interchangeably), but can be Triggers.
+- An **Execution Plan** is a Workflow plus some options which inform how it should be executed (ie, start node, timeout).
+  The term "Execution plan" is mostly used internally and not exposed to users, and is usually interchangeable with Workflow.
+
+Note that an expression is not generally portable (ie, cannot run in other environments) unless it is compiled.
+A compiled expression has imports and exports and, so long as packages are available, can run in a simple
+JavaScript runtime.
 
 ## Basic Usage
 
-You're probably here to run jobs (expressions) or workflows, which the CLI makes easy:
+You're probably here to run Workflows (or individual jobs), which the CLI makes easy:
 
 ```
 openfn path/to/workflow.json
@@ -91,7 +101,7 @@ If running a single job, you MUST specify which adaptor to use.
 
 Pass the `-i` flag to auto-install any required adaptors (it's safe to do this redundantly, although the run will be a little slower).
 
-When the finished, the CLI will write the resulting state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
+When finished, the CLI will write the resulting state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
 
 The CLI maintains a repo for auto-installed adaptors. Run `openfn repo list` to see where the repo is, and what's in it. Set the `OPENFN_REPO_DIR` env var to specify the repo folder. When autoinstalling, the CLI will check to see if a matching version is found in the repo. `openfn repo clean` will remove all adaptors from the repo. The repo also includes any documentation and metadata built with the CLI.
 
@@ -103,13 +113,15 @@ You can pass `--log info` to get more feedback about what's happening, or `--log
 
 ## Advanced Usage
 
-The CLI has a number of commands (the first argument after openfn)
+The CLI has a number of commands (the first argument after `openfn`):
 
 - execute - run a job
-- compile - compile a job to a .js file
+- compile - compile a job to a .js file (prints to stdout by default)
 - docs - show documentation for an adaptor function
 - repo - manage the repo of installed modules
 - docgen - generate JSON documentation for an adaptor based on its typescript
+
+For example, `openfn compile job.js -a common` will compile the code at `job.js` with the common adaptor.
 
 If no command is specified, execute will run.
 
@@ -253,37 +265,42 @@ Pass `--log-json` to the CLI to do this. You can also set the OPENFN_LOG_JSON en
 
 ## Workflows
 
-As of v0.0.35 the CLI supports running workflows as well as jobs.
-
-A workflow is in execution plan for running several jobs in a sequence. It is defined as a JSON structure.
+A workflow is an execution plan for running several jobs in a sequence. It is defined as a JSON structure.
 
 To see an example workflow, run the test command with `openfn test`.
 
-A workflow has a structure like this (better documentation is coming soon):
+A workflow has a structure like this:
 
 ```json
 {
-  "start": "a", // optionally specify the start node (defaults to jobs[0])
-  "jobs": [
-    {
-      "id": "a",
-      "expression": "fn((state) => state)", // code or a path
-      "adaptor": "@openfn/language-common@1.75", // specifiy the adaptor to use (version optional)
-      "data": {}, // optionally pre-populate the data object (this will be overriden by keys in in previous state)
-      "configuration": {}, // Use this to pass credentials
-      "next": {
-        // This object defines which jobs to call next
-        // All edges returning true will run
-        // If there are no next edges, the workflow will end
-        "b": true,
-        "c": {
-          "condition": "!state.error" // Note that this is an expression, not a function
+  "workflow": {
+    "name": "my-workflow", // human readable name used in logging
+    "steps": [
+      {
+        "name": "a", // human readable name used in logging
+        "expression": "fn((state) => state)", // code or a path to an expression.js file
+        "adaptor": "@openfn/language-common@1.7.5", // specifiy the adaptor to use (version optional)
+        "data": {}, // optionally pre-populate the data object (this will be overriden by keys in in previous state)
+        "configuration": {}, // Use this to pass credentials
+        "next": {
+          // This object defines which jobs to call next
+          // All edges returning true will run
+          // If there are no next edges, the workflow will end
+          "b": true,
+          "c": {
+            "condition": "!state.error" // Note that this is a strict Javascript expression, not a function, and has no adaptor support
+          }
         }
       }
-    }
-  ]
+    ]
+  },
+  "options": {
+    "start": "a" // optionally specify the start node (defaults to steps[0])
+  }
 }
 ```
+
+See `packages/lexicon` for type definitions (the workflow format is covered by the `ExecutionPlan` type)/
 
 ## Compilation
 
@@ -297,8 +314,6 @@ The CLI will compile your job code into regular Javascript. It does a number of 
 The result of this is a lightweight, modern JS module. It can be executed in any runtime environment: just execute each function in the exported array.
 
 The CLI uses openfn's own runtime to execute jobs in a safe environment.
-
-All jobs which work against `@openfn/core` will work in the new CLI and runtime environment (note: although this is a work in progress and we are actively looking for help to test this!).
 
 If you want to see how the compiler is changing your job, run `openfn compile path/to/job -a <adaptor>` to return the compiled code to stdout. Add `-o path/to/output.js` to save the result to disk.
 
@@ -355,10 +370,10 @@ export OPENFN_ADAPTORS_REPO=~/repo/openfn/adaptors
 
 ### Contributing changes
 
-Open a PR at https://github.com/openfn/kit. Include a changeset and a description of your change.
-
-See the root readme for more details about changests,
+Include a changeset and a description of your change. Run this command and follow the interactive prompt (it's really easy, promise!)
 
 ```
-
+pnpm changeset
 ```
+
+Commit the changeset files and open a PR at https://github.com/openfn/kit.
