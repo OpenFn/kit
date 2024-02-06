@@ -1,7 +1,9 @@
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ExecutionPlan } from '@openfn/runtime';
+import type { ExecutionPlan } from '@openfn/lexicon';
+import type { Logger, SanitizePolicies } from '@openfn/logger';
+
 import {
   JOB_COMPLETE,
   JOB_START,
@@ -15,10 +17,8 @@ import execute from './api/execute';
 import validateWorker from './api/validate-worker';
 import ExecutionContext from './classes/ExecutionContext';
 
-import type { SanitizePolicies } from '@openfn/logger';
 import type { LazyResolvers } from './api';
 import type { EngineAPI, EventHandler, WorkflowState } from './types';
-import type { Logger } from '@openfn/logger';
 import type { AutoinstallOptions } from './api/autoinstall';
 
 const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms

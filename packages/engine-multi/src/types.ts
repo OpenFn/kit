@@ -1,5 +1,5 @@
 import type { Logger, SanitizePolicies } from '@openfn/logger';
-import type { ExecutionPlan } from '@openfn/runtime';
+import type { ExecutionPlan } from '@openfn/lexicon';
 import type { EventEmitter } from 'node:events';
 
 import type { ExternalEvents, EventMap } from './events';

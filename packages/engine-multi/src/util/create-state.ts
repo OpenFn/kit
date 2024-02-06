@@ -1,4 +1,4 @@
-import { ExecutionPlan } from '@openfn/runtime';
+import { ExecutionPlan } from '@openfn/lexicon';
 import { WorkflowState } from '../types';
 
 export default (plan: ExecutionPlan, options = {}): WorkflowState => ({

@@ -1,12 +1,10 @@
-// This function will compile a workflow
-// Later we'll add an in-memory cache to prevent the same job
-// being compiled twice
-
-import type { Logger } from '@openfn/logger';
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
-import { ExecutionContext } from '../types';
+import type { Job } from '@openfn/lexicon';
+import type { Logger } from '@openfn/logger';
+
 import { CompileError } from '../errors';
+import type { ExecutionContext } from '../types';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook
@@ -15,8 +13,9 @@ export default async (context: ExecutionContext) => {
   const { logger, state, options } = context;
   const { repoDir, noCompile } = options;
 
-  if (!noCompile && state.plan?.jobs?.length) {
-    for (const job of state.plan.jobs) {
+  if (!noCompile && state.plan?.workflow.steps?.length) {
+    for (const step of state.plan.workflow.steps) {
+      const job = step as Job;
       if (job.expression) {
         try {
           job.expression = await compileJob(

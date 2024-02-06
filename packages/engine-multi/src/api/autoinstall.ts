@@ -1,16 +1,15 @@
 import {
-  ExecutionPlan,
   ensureRepo,
   getAliasedName,
   getNameAndVersion,
   loadRepoPkg,
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { Logger } from '@openfn/logger';
 
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
-
-import type { Logger } from '@openfn/logger';
 import type { ExecutionContext } from '../types';
 
 // none of these options should be on the plan actually
@@ -206,9 +205,9 @@ const isInstalled = async (
 
 export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
   const adaptors = new Set<string>();
-  plan.jobs
-    .filter((job) => job.adaptor)
-    .forEach((job) => adaptors.add(job.adaptor!));
+  plan.workflow.steps
+    .filter((job) => (job as Job).adaptor)
+    .forEach((job) => adaptors.add((job as Job).adaptor!));
   return adaptors;
 };
 

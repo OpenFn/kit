@@ -16,6 +16,7 @@
   "dependencies": {
     "@openfn/compiler": "workspace:*",
     "@openfn/language-common": "2.0.0-rc3",
+    "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "fast-safe-stringify": "^2.1.1"
