@@ -75,9 +75,7 @@ export type WorkflowOptions = {
   // TODO Both numbers in minutes maybe
   timeout?: number;
   stepTimeout?: number;
-
   start?: StepId;
-  statePropsToRemove?: string[];
 };
 
 export type StepId = string;

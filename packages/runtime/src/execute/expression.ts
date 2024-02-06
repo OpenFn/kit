@@ -1,6 +1,6 @@
 import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
-import type { Operation, State, WorkflowOptions } from '@openfn/lexicon';
+import type { Operation, State } from '@openfn/lexicon';
 
 import loadModule from '../modules/module-loader';
 import { Options, DEFAULT_TIMEOUT_MS } from '../runtime';
@@ -34,7 +34,7 @@ export default (
     let duration = Date.now();
     const { logger, plan, opts = {} } = ctx;
     try {
-      const timeout = plan.options.timeout ?? DEFAULT_TIMEOUT_MS;
+      const timeout = plan.options?.timeout ?? DEFAULT_TIMEOUT_MS;
 
       // Setup an execution context
       const context = buildContext(input, opts);
@@ -71,12 +71,20 @@ export default (
 
       duration = Date.now() - duration;
 
-      const finalState = prepareFinalState(plan.options, result, logger);
+      const finalState = prepareFinalState(
+        result,
+        logger,
+        opts.statePropsToRemove
+      );
       // return the final state
       resolve(finalState);
     } catch (e: any) {
       // whatever initial state looks like now, clean it and report it back
-      const finalState = prepareFinalState(plan.options, input, logger);
+      const finalState = prepareFinalState(
+        input,
+        logger,
+        opts.statePropsToRemove
+      );
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -141,28 +149,24 @@ const prepareJob = async (
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
 const prepareFinalState = (
-  options: WorkflowOptions,
   state: any,
-  logger: Logger
+  logger: Logger,
+  statePropsToRemove?: string[]
 ) => {
   if (state) {
-    let statePropsToRemove;
-    if (options.hasOwnProperty('statePropsToRemove')) {
-      ({ statePropsToRemove } = options);
-    } else {
+    if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
       // tbh this should happen higher up in the stack but it causes havoc in unit testing
       statePropsToRemove = ['configuration'];
     }
 
-    if (statePropsToRemove && statePropsToRemove.forEach) {
-      statePropsToRemove.forEach((prop) => {
-        if (state.hasOwnProperty(prop)) {
-          delete state[prop];
-          logger.debug(`Removed ${prop} from final state`);
-        }
-      });
-    }
+    statePropsToRemove.forEach((prop) => {
+      if (state.hasOwnProperty(prop)) {
+        delete state[prop];
+        logger.debug(`Removed ${prop} from final state`);
+      }
+    });
+
     const cleanState = stringify(state);
     return JSON.parse(cleanState);
   }

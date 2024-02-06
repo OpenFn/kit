@@ -115,7 +115,7 @@ test('notify job error even after crash', async (t) => {
 });
 
 test('resolve a credential', async (t) => {
-  const plan: ExecutionPlan = {
+  const plan: Partial<ExecutionPlan> = {
     workflow: {
       steps: [
         {
@@ -124,12 +124,10 @@ test('resolve a credential', async (t) => {
         },
       ],
     },
-    options: {
-      statePropsToRemove: [],
-    },
   };
 
   const options = {
+    statePropsToRemove: [],
     callbacks: {
       resolveCredential: async () => ({ password: 'password1' }),
     },

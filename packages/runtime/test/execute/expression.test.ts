@@ -23,10 +23,10 @@ const createContext = (args = {}, options = {}) =>
   // @ts-ignore
   ({
     logger,
-    plan: {
-      options,
+    plan: {},
+    opts: {
+      ...options,
     },
-    opts: {},
     notify: () => {},
     report: () => {},
     ...args,
@@ -329,12 +329,10 @@ test('Throws after custom timeout', async (t) => {
 
   const job = `export default [() => new Promise((resolve) => setTimeout(resolve, 100))];`;
 
-  const context = createContext(
-    {
-      opts: { jobLogger: logger },
-    },
-    { timeout: 10 }
-  );
+  const context = createContext({
+    plan: { options: { timeout: 10 } },
+    opts: { jobLogger: logger },
+  });
   const state = createState();
   await t.throwsAsync(async () => execute(context, job, state), {
     message: 'Job took longer than 10ms to complete',

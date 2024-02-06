@@ -26,6 +26,9 @@ export type Options = {
   // inject globals into the environment
   // TODO leaving this here for now, but maybe its actually on the xplan?
   globals?: any;
+
+  // TODO state props to remove is a system-level option, not a workflow level one
+  statePropsToRemove?: string[];
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
@@ -74,11 +77,6 @@ const run = (
     input = clone(defaultState);
   }
 
-  const { options } = xplan;
-
-  if (!options.hasOwnProperty('statePropsToRemove')) {
-    options.statePropsToRemove = ['configuration'];
-  }
   if (opts.linker?.whitelist) {
     opts.linker.whitelist = opts.linker.whitelist.map((w) => {
       if (typeof w === 'string') {
@@ -87,7 +85,6 @@ const run = (
       return w;
     });
   }
-
   return executePlan(xplan as ExecutionPlan, input, opts as Options, logger);
 };
 
