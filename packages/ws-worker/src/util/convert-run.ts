@@ -1,11 +1,16 @@
 import crypto from 'node:crypto';
 import type {
-  JobNode,
-  JobNodeID,
-  JobEdge,
+  Step,
+  StepId,
   ExecutionPlan,
-} from '@openfn/runtime';
-import { Run, RunOptions, Edge } from '../types';
+  State,
+  Job,
+  Trigger,
+  StepEdge,
+  WorkflowOptions,
+  Lazy,
+} from '@openfn/lexicon';
+import { Run, RunOptions, Edge } from '@openfn/lexicon/lightning';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
   {
@@ -33,36 +38,44 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
-const mapOptions = (options: RunOptions): RunOptions => {
-  return options;
+const mapOptions = (
+  runOptions: RunOptions = {},
+  workflowOptions: WorkflowOptions = {}
+): WorkflowOptions => {
+  if (runOptions?.runTimeoutMs) {
+    workflowOptions.timeout = runOptions?.runTimeoutMs;
+  }
+  if (runOptions?.sanitize) {
+    workflowOptions.sanitize = runOptions?.sanitize;
+  }
+  return workflowOptions;
 };
 
 export default (
   run: Run
-): { plan: ExecutionPlan; options: RunOptions } => {
-  const options = run.options || {};
+): { plan: ExecutionPlan; options: WorkflowOptions; input: Lazy<State> } => {
+  const opts: WorkflowOptions = {};
+
   const plan: Partial<ExecutionPlan> = {
     id: run.id,
   };
 
+  let initialState;
   if (run.dataclip_id) {
-    // This is tricky - we're assining a string to the XPlan
-    // which is fine becuase it'll be handled later
-    // I guess we need a new type for now? Like a lazy XPlan
-    // @ts-ignore
-    plan.initialState = run.dataclip_id;
+    initialState = run.dataclip_id;
   }
+
   if (run.starting_node_id) {
-    plan.start = run.starting_node_id;
+    opts.start = run.starting_node_id;
   }
 
-  const nodes: Record<JobNodeID, JobNode> = {};
+  const nodes: Record<StepId, Step> = {};
 
-  const edges = run.edges ?? [];
+  const edges: Edge[] = run.edges ?? [];
 
   // We don't really care about triggers, it's mostly just a empty node
   if (run.triggers?.length) {
-    run.triggers.forEach((trigger) => {
+    run.triggers.forEach((trigger: Trigger) => {
       const id = trigger.id || 'trigger';
 
       nodes[id] = {
@@ -72,13 +85,16 @@ export default (
       // TODO do we need to support multiple edges here? Likely
       const connectedEdges = edges.filter((e) => e.source_trigger_id === id);
       if (connectedEdges.length) {
-        nodes[id].next = connectedEdges.reduce((obj, edge) => {
-          if (edge.enabled !== false) {
-            // @ts-ignore
-            obj[edge.target_job_id] = mapTriggerEdgeCondition(edge);
-          }
-          return obj;
-        }, {});
+        nodes[id].next = connectedEdges.reduce(
+          (obj: Partial<Trigger>, edge) => {
+            if (edge.enabled !== false) {
+              // @ts-ignore
+              obj[edge.target_job_id] = mapTriggerEdgeCondition(edge);
+            }
+            return obj;
+          },
+          {}
+        );
       } else {
         // TODO what if the edge isn't found?
       }
@@ -86,25 +102,27 @@ export default (
   }
 
   if (run.jobs?.length) {
-    run.jobs.forEach((job) => {
-      const id = job.id || crypto.randomUUID();
-
-      nodes[id] = {
+    run.jobs.forEach((step) => {
+      const id = step.id || crypto.randomUUID();
+      const job: Job = {
         id,
-        configuration: job.credential || job.credential_id,
-        expression: job.body,
-        adaptor: job.adaptor,
+        configuration: step.credential || step.credential_id,
+        expression: step.body!,
+        adaptor: step.adaptor,
       };
 
-      if (job.state) {
-        // TODO this is likely to change
-        nodes[id].state = job.state;
+      if (step.name) {
+        job.name = step.name;
+      }
+
+      if (step.state) {
+        job.state = step.state;
       }
 
       const next = edges
         .filter((e) => e.source_job_id === id)
         .reduce((obj, edge) => {
-          const newEdge: JobEdge = {};
+          const newEdge: StepEdge = {};
 
           const condition = mapEdgeCondition(edge);
           if (condition) {
@@ -117,18 +135,27 @@ export default (
             ? newEdge
             : true;
           return obj;
-        }, {} as Record<string, JobEdge>);
+        }, {} as Record<string, StepEdge>);
 
       if (Object.keys(next).length) {
-        nodes[id].next = next;
+        job.next = next;
       }
+
+      nodes[id] = job;
     });
   }
 
-  plan.jobs = Object.values(nodes);
+  plan.workflow = {
+    steps: Object.values(nodes),
+  };
+
+  if (run.name) {
+    plan.workflow.name = run.name;
+  }
 
   return {
     plan: plan as ExecutionPlan,
-    options: mapOptions(options),
+    options: mapOptions(run.options, opts),
+    input: initialState || {},
   };
 };

@@ -1,6 +1,12 @@
 import test from 'ava';
+import type { Run, Node } from '@openfn/lexicon/lightning';
 import convertRun, { conditions } from '../../src/util/convert-run';
-import { Run, Node } from '../../src/types';
+import {
+  ConditionalStepEdge,
+  Job,
+  StepEdge,
+  StepEdgeObj,
+} from '@openfn/lexicon';
 
 // Creates a lightning node (job or trigger)
 const createNode = (props = {}) =>
@@ -52,7 +58,28 @@ test('convert a single job', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [createJob()],
+    workflow: {
+      steps: [createJob()],
+    },
+  });
+});
+
+test('convert a single job with names', (t) => {
+  const run: Partial<Run> = {
+    id: 'w',
+    name: 'my-workflow',
+    jobs: [createNode({ name: 'my-job' })],
+    triggers: [],
+    edges: [],
+  };
+  const { plan } = convertRun(run as Run);
+
+  t.deepEqual(plan, {
+    id: 'w',
+    workflow: {
+      name: 'my-workflow',
+      steps: [createJob({ name: 'my-job' })],
+    },
   });
 });
 
@@ -71,9 +98,14 @@ test('convert a single job with options', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [createJob()],
+    workflow: {
+      steps: [createJob()],
+    },
   });
-  t.deepEqual(options, run.options);
+  t.deepEqual(options, {
+    timeout: 10,
+    sanitize: 'obfuscate',
+  });
 });
 
 // Note idk how lightningg will handle state/defaults on a job
@@ -89,7 +121,9 @@ test('convert a single job with data', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [createJob({ state: { data: { x: 22 } } })],
+    workflow: {
+      steps: [createJob({ state: { data: { x: 22 } } })],
+    },
   });
   t.deepEqual(options, {});
 });
@@ -102,36 +136,32 @@ test('Accept a partial run object', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [],
+    workflow: {
+      steps: [],
+    },
   });
   t.deepEqual(options, {});
 });
 
-test('handle dataclip_id', (t) => {
+test('handle dataclip_id as input', (t) => {
   const run: Partial<Run> = {
     id: 'w',
     dataclip_id: 'xyz',
   };
-  const { plan } = convertRun(run as Run);
+  const { input } = convertRun(run as Run);
 
-  t.deepEqual(plan, {
-    id: 'w',
-    initialState: 'xyz',
-    jobs: [],
-  });
+  t.deepEqual(input, 'xyz');
 });
 
-test('handle starting_node_id', (t) => {
+test('handle starting_node_id as options', (t) => {
   const run: Partial<Run> = {
     id: 'w',
     starting_node_id: 'j1',
   };
-  const { plan } = convertRun(run as Run);
+  const { options } = convertRun(run as Run);
 
-  t.deepEqual(plan, {
-    id: 'w',
+  t.deepEqual(options, {
     start: 'j1',
-    jobs: [],
   });
 });
 
@@ -146,11 +176,13 @@ test('convert a single trigger', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      {
-        id: 't',
-      },
-    ],
+    workflow: {
+      steps: [
+        {
+          id: 't',
+        },
+      ],
+    },
   });
 });
 
@@ -166,7 +198,9 @@ test('ignore a single edge', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [],
+    workflow: {
+      steps: [],
+    },
   });
 });
 
@@ -187,15 +221,17 @@ test('convert a single trigger with an edge', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      {
-        id: 't',
-        next: {
-          a: true,
+    workflow: {
+      steps: [
+        {
+          id: 't',
+          next: {
+            a: true,
+          },
         },
-      },
-      createJob(),
-    ],
+        createJob(),
+      ],
+    },
   });
 });
 
@@ -221,17 +257,19 @@ test('convert a single trigger with two edges', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      {
-        id: 't',
-        next: {
-          a: true,
-          b: true,
+    workflow: {
+      steps: [
+        {
+          id: 't',
+          next: {
+            a: true,
+            b: true,
+          },
         },
-      },
-      createJob({ id: 'a' }),
-      createJob({ id: 'b' }),
-    ],
+        createJob({ id: 'a' }),
+        createJob({ id: 'b' }),
+      ],
+    },
   });
 });
 
@@ -253,13 +291,15 @@ test('convert a disabled trigger', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      {
-        id: 't',
-        next: {},
-      },
-      createJob({ id: 'a' }),
-    ],
+    workflow: {
+      steps: [
+        {
+          id: 't',
+          next: {},
+        },
+        createJob({ id: 'a' }),
+      ],
+    },
   });
 });
 
@@ -274,7 +314,12 @@ test('convert two linked jobs', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [createJob({ id: 'a', next: { b: true } }), createJob({ id: 'b' })],
+    workflow: {
+      steps: [
+        createJob({ id: 'a', next: { b: true } }),
+        createJob({ id: 'b' }),
+      ],
+    },
   });
 });
 
@@ -294,11 +339,13 @@ test('convert a job with two upstream jobs', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      createJob({ id: 'a', next: { x: true } }),
-      createJob({ id: 'b', next: { x: true } }),
-      createJob({ id: 'x' }),
-    ],
+    workflow: {
+      steps: [
+        createJob({ id: 'a', next: { x: true } }),
+        createJob({ id: 'b', next: { x: true } }),
+        createJob({ id: 'x' }),
+      ],
+    },
   });
 });
 
@@ -314,10 +361,12 @@ test('convert two linked jobs with an edge condition', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      createJob({ id: 'a', next: { b: { condition } } }),
-      createJob({ id: 'b' }),
-    ],
+    workflow: {
+      steps: [
+        createJob({ id: 'a', next: { b: { condition } } }),
+        createJob({ id: 'b' }),
+      ],
+    },
   });
 });
 
@@ -332,10 +381,12 @@ test('convert two linked jobs with a disabled edge', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
-    jobs: [
-      createJob({ id: 'a', next: { b: { disabled: true } } }),
-      createJob({ id: 'b' }),
-    ],
+    workflow: {
+      steps: [
+        createJob({ id: 'a', next: { b: { disabled: true } } }),
+        createJob({ id: 'b' }),
+      ],
+    },
   });
 });
 
@@ -446,12 +497,12 @@ test('convert edge condition on_job_success', (t) => {
   };
   const { plan } = convertRun(run as Run);
 
-  const [job] = plan.jobs;
+  const [job] = plan.workflow.steps as Job[];
+  const edge = job.next as Record<string, ConditionalStepEdge>;
 
-  t.truthy(job.next?.b);
-  t.is(job.next.b.condition, conditions.on_job_success('a'));
-
-  t.true(testEdgeCondition(job.next.b.condition, {}));
+  t.truthy(edge.b);
+  t.is(edge.b.condition, conditions.on_job_success('a')!);
+  t.true(testEdgeCondition(edge.b.condition, {}));
 });
 
 test('convert edge condition on_job_failure', (t) => {
@@ -463,14 +514,14 @@ test('convert edge condition on_job_failure', (t) => {
   };
   const { plan } = convertRun(run as Run);
 
-  const [job] = plan.jobs;
+  const [job] = plan.workflow.steps as Job[];
+  const edge = job.next as Record<string, ConditionalStepEdge>;
 
-  t.truthy(job.next?.b);
-  t.is(job.next.b.condition, conditions.on_job_failure('a'));
-
+  t.truthy(edge.b);
+  t.is(edge.b.condition, conditions.on_job_failure('a')!);
   // Check that this is valid js
   t.true(
-    testEdgeCondition(job.next.b.condition, {
+    testEdgeCondition(edge.b.condition, {
       errors: { a: {} },
     })
   );
@@ -485,13 +536,13 @@ test('convert edge condition on_job_success with a funky id', (t) => {
     edges: [createEdge(id_a, 'b', { condition: 'on_job_success' })],
   };
   const { plan } = convertRun(run as Run);
-  const [job] = plan.jobs;
+  const [job] = plan.workflow.steps as Job[];
+  const edge = job.next as Record<string, ConditionalStepEdge>;
 
-  t.truthy(job.next?.b);
-  t.is(job.next.b.condition, conditions.on_job_success(id_a));
-
+  t.truthy(edge.b);
+  t.is(edge.b.condition, conditions.on_job_success(id_a)!);
   // Check that this is valid js
-  t.true(testEdgeCondition(job.next.b.condition, {}));
+  t.true(testEdgeCondition(edge.b.condition, {}));
 });
 
 test('convert edge condition always', (t) => {
@@ -503,21 +554,7 @@ test('convert edge condition always', (t) => {
   };
   const { plan } = convertRun(run as Run);
 
-  const [job] = plan.jobs;
-
-  t.false(job.next.b.hasOwnProperty('condition'));
-});
-
-test('convert random options', (t) => {
-  const run: Partial<Run> = {
-    id: 'w',
-    options: {
-      a: 1,
-      b: 2,
-      c: 3,
-    },
-  };
-  const { options } = convertRun(run as Run);
-
-  t.deepEqual(options, { a: 1, b: 2, c: 3 });
+  const [job] = plan.workflow.steps as Job[];
+  const edge = job.next as Record<string, ConditionalStepEdge>;
+  t.false(edge.b.hasOwnProperty('condition'));
 });
