@@ -4,6 +4,7 @@ import type { EventEmitter } from 'node:events';
 
 import type { EngineOptions } from './engine';
 import type { ExecOpts } from './worker/pool';
+import { LazyResolvers } from './api';
 
 export type Resolver<T> = (id: string) => Promise<T>;
 
@@ -41,6 +42,13 @@ export type ExecutionContextConstructor = {
   logger: Logger;
   callWorker: CallWorker;
   options: ExecutionContextOptions;
+};
+
+export type ExecuteOptions = {
+  memoryLimitMb?: number;
+  resolvers?: LazyResolvers;
+  runTimeoutMs?: number;
+  sanitize?: SanitizePolicies;
 };
 
 export type ExecutionContextOptions = EngineOptions & {

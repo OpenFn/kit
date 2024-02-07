@@ -3,8 +3,9 @@ import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 import type { ExecutionPlan } from '@openfn/lexicon';
 
-import createEngine, { ExecuteOptions, InternalEngine } from '../src/engine';
+import createEngine, { InternalEngine } from '../src/engine';
 import * as e from '../src/events';
+import type { ExecuteOptions } from '../src/types';
 
 const logger = createMockLogger('', { level: 'debug' });
 

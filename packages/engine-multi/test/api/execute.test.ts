@@ -14,8 +14,12 @@ import {
 } from '../../src/events';
 import ExecutionContext from '../../src/classes/ExecutionContext';
 
-import type { ExecutionContextOptions, WorkflowState } from '../../src/types';
-import type { ExecuteOptions, EngineOptions } from '../../src/engine';
+import type {
+  ExecuteOptions,
+  ExecutionContextOptions,
+  WorkflowState,
+} from '../../src/types';
+import type { EngineOptions } from '../../src/engine';
 
 const workerPath = path.resolve('dist/test/mock-run.js');
 

@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ExecutionPlan, State } from '@openfn/lexicon';
-import type { Logger, SanitizePolicies } from '@openfn/logger';
+import type { Logger } from '@openfn/logger';
 
 import {
   JOB_COMPLETE,
@@ -21,6 +21,7 @@ import type { LazyResolvers } from './api';
 import type {
   EngineAPI,
   EventHandler,
+  ExecuteOptions,
   RuntimeEngine,
   WorkflowState,
 } from './types';
@@ -75,16 +76,9 @@ export type EngineOptions = {
   repoDir: string;
   resolvers?: LazyResolvers;
   runtimelogger?: Logger;
-  runTimeoutMs?: number;
+  runTimeoutMs?: number; // default timeout
   statePropsToRemove?: string[];
   whitelist?: RegExp[];
-};
-
-export type ExecuteOptions = {
-  memoryLimitMb?: number;
-  resolvers?: LazyResolvers;
-  runTimeoutMs?: number;
-  sanitize?: SanitizePolicies;
 };
 
 export type InternalEngine = RuntimeEngine & {
