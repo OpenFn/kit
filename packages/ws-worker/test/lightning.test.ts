@@ -88,7 +88,7 @@ test.serial(
 );
 
 test.serial(
-  'should run an run which returns an expression as JSON',
+  'should run a run which returns an expression as JSON',
   async (t) => {
     return new Promise((done) => {
       const run = {
@@ -110,7 +110,7 @@ test.serial(
   }
 );
 
-test.serial('should run an run which returns intial state', async (t) => {
+test.serial('should run a run which returns initial state', async (t) => {
   return new Promise((done) => {
     lng.addDataclip('x', {
       data: 66,
@@ -160,29 +160,26 @@ test.todo(`events: lightning should receive a ${e.RUN_START} event`);
 // for each event we can see a copy of the server state
 // (if that helps anything?)
 
-test.serial(
-  `events: lightning should receive a ${e.GET_PLAN} event`,
-  (t) => {
-    return new Promise((done) => {
-      const run = getRun();
+test.serial(`events: lightning should receive a ${e.GET_PLAN} event`, (t) => {
+  return new Promise((done) => {
+    const run = getRun();
 
-      let didCallEvent = false;
-      lng.onSocketEvent(e.GET_PLAN, run.id, ({ payload }) => {
-        // This doesn't test that the correct run gets sent back
-        // We'd have to add an event to the engine for that
-        // (not a bad idea)
-        didCallEvent = true;
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
-        t.true(didCallEvent);
-        done();
-      });
-
-      lng.enqueueRun(run);
+    let didCallEvent = false;
+    lng.onSocketEvent(e.GET_PLAN, run.id, ({ payload }) => {
+      // This doesn't test that the correct run gets sent back
+      // We'd have to add an event to the engine for that
+      // (not a bad idea)
+      didCallEvent = true;
     });
-  }
-);
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      t.true(didCallEvent);
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 test.serial(
   `events: lightning should receive a ${e.GET_CREDENTIAL} event`,
@@ -313,37 +310,34 @@ test.serial(
   }
 );
 
-test.serial(
-  `events: lightning should receive a ${e.RUN_LOG} event`,
-  (t) => {
-    return new Promise((done) => {
-      const run = {
-        id: 'run-1',
-        jobs: [
-          {
-            body: 'fn((s) => { console.log("x"); return s })',
-          },
-        ],
-      };
+test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
+  return new Promise((done) => {
+    const run = {
+      id: 'run-1',
+      jobs: [
+        {
+          body: 'fn((s) => { console.log("x"); return s })',
+        },
+      ],
+    };
 
-      lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }) => {
-        const log = payload;
+    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }) => {
+      const log = payload;
 
-        t.is(log.level, 'info');
-        t.truthy(log.run_id);
-        t.truthy(log.step_id);
-        t.truthy(log.message);
-        t.deepEqual(log.message, ['x']);
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
-        done();
-      });
-
-      lng.enqueueRun(run);
+      t.is(log.level, 'info');
+      t.truthy(log.run_id);
+      t.truthy(log.step_id);
+      t.truthy(log.message);
+      t.deepEqual(log.message, ['x']);
     });
-  }
-);
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 // Skipping because this is flaky at microsecond resolution
 // See branch hrtime-send-nanoseconds-to-lightning where this should be more robust
@@ -417,37 +411,34 @@ test.serial(
   }
 );
 
-test.serial(
-  'should register and de-register runs to the server',
-  async (t) => {
-    return new Promise((done) => {
-      const run = {
-        id: 'run-1',
-        jobs: [
-          {
-            body: 'fn(() => ({ count: 122 }))',
-          },
-        ],
-      };
+test.serial('should register and de-register runs to the server', async (t) => {
+  return new Promise((done) => {
+    const run = {
+      id: 'run-1',
+      jobs: [
+        {
+          body: 'fn(() => ({ count: 122 }))',
+        },
+      ],
+    };
 
-      worker.on(e.RUN_START, () => {
-        t.truthy(worker.workflows[run.id]);
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
-        t.truthy(worker.workflows[run.id]);
-        // Tidyup is done AFTER lightning receives the event
-        // This timeout is crude but should work
-        setTimeout(() => {
-          t.falsy(worker.workflows[run.id]);
-          done();
-        }, 10);
-      });
-
-      lng.enqueueRun(run);
+    worker.on(e.RUN_START, () => {
+      t.truthy(worker.workflows[run.id]);
     });
-  }
-);
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      t.truthy(worker.workflows[run.id]);
+      // Tidyup is done AFTER lightning receives the event
+      // This timeout is crude but should work
+      setTimeout(() => {
+        t.falsy(worker.workflows[run.id]);
+        done();
+      }, 10);
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 // TODO this is a server test
 // What I am testing here is that the first job completes

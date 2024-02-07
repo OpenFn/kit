@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import crypto from 'node:crypto';
 import run from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { ExecutionPlan, Job, State } from '@openfn/lexicon';
 
 import mockResolvers from './resolvers';
 
@@ -13,23 +13,6 @@ export type EngineEvent =
   | typeof engine.WORKFLOW_ERROR
   | typeof engine.WORKFLOW_LOG
   | typeof engine.WORKFLOW_START;
-
-export type WorkflowStartEvent = {
-  workflowId: string;
-  threadId: string;
-};
-
-export type WorkflowCompleteEvent = {
-  workflowId: string;
-  error?: any; // hmm maybe not
-  threadId: string;
-};
-
-export type WorkflowErrorEvent = {
-  workflowId: string;
-  threadId: string;
-  message: string;
-};
 
 // this is basically a fake adaptor
 // these functions will be injected into scope
@@ -76,6 +59,7 @@ async function createMock() {
 
   const execute = async (
     xplan: ExecutionPlan,
+    input: State,
     options: { resolvers?: engine.Resolvers; throw?: boolean } = {
       resolvers: mockResolvers,
     }
@@ -137,7 +121,7 @@ async function createMock() {
       dispatch('workflow-start', { workflowId: id, threadId: threadId });
 
       try {
-        await run(xplan, undefined, opts as any);
+        await run(xplan, input, opts as any);
         dispatch('workflow-complete', { workflowId: id, threadId: threadId });
       } catch (e: any) {
         dispatch('workflow-error', {

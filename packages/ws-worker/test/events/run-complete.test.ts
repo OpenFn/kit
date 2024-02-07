@@ -4,10 +4,11 @@ import handleRunComplete from '../../src/events/run-complete';
 import { mockChannel } from '../../src/mock/sockets';
 import { RUN_COMPLETE, RUN_LOG } from '../../src/events';
 import { createRunState } from '../../src/util';
+import { createPlan } from '../util';
 
 test('should send an run:complete event', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [] };
+  const plan = createPlan();
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -30,7 +31,7 @@ test('should send an run:complete event', async (t) => {
 
 test('should call onFinish with final dataclip', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [] };
+  const plan = createPlan();
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -58,7 +59,7 @@ test('should call onFinish with final dataclip', async (t) => {
 
 test('should send a reason log and return reason for success', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [] };
+  const plan = createPlan();
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -98,7 +99,7 @@ test('should send a reason log and return reason for success', async (t) => {
 
 test('should send a reason log and return reason for fail', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [{ id: 'x' }] };
+  const plan = createPlan({ id: 'x', expression: '.' });
 
   const state = createRunState(plan);
   state.dataclips = {

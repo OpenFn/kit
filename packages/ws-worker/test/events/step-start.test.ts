@@ -10,7 +10,7 @@ import { RUN_LOG, STEP_START } from '../../src/events';
 import pkg from '../../package.json' assert { type: 'json' };
 
 test('set a step id and active job on state', async (t) => {
-  const plan = { id: 'run-1', jobs: [{ id: 'job-1' }] };
+  const plan = { id: 'run-1', workflow: { steps: [{ id: 'job-1' }] } };
   const jobId = 'job-1';
 
   const state = createRunState(plan);
@@ -29,22 +29,25 @@ test('set a step id and active job on state', async (t) => {
 test('send a step:start event', async (t) => {
   const plan = {
     id: 'run-1',
-    initialState: 'abc',
-    jobs: [
-      { id: 'job-1', expression: '.' },
-      { id: 'job-2', expression: '.' },
-    ],
+    workflow: {
+      steps: [
+        { id: 'job-1', expression: '.' },
+        { id: 'job-2', expression: '.' },
+      ],
+    },
+    options: {},
   };
+  const input = 'abc';
   const jobId = 'job-1';
 
-  const state = createRunState(plan);
+  const state = createRunState(plan, input);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
   const channel = mockChannel({
     [STEP_START]: (evt) => {
       t.is(evt.job_id, jobId);
-      t.is(evt.input_dataclip_id, plan.initialState);
+      t.is(evt.input_dataclip_id, input);
       t.truthy(evt.step_id);
       return true;
     },
@@ -57,9 +60,12 @@ test('send a step:start event', async (t) => {
 test('step:start event should include versions', async (t) => {
   const plan = {
     id: 'run-1',
-    initialState: 'abc',
-    jobs: [{ id: 'job-1', expression: '.' }],
+    workflow: {
+      steps: [{ id: 'job-1', expression: '.' }],
+    },
+    options: {},
   };
+  const input = 'abc';
   const jobId = 'job-1';
 
   const versions = {
@@ -76,7 +82,7 @@ test('step:start event should include versions', async (t) => {
     versions,
   };
 
-  const state = createRunState(plan);
+  const state = createRunState(plan, input);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
@@ -98,9 +104,12 @@ test('also logs the version number', async (t) => {
   let logEvent;
   const plan = {
     id: 'run-1',
-    initialState: 'abc',
-    jobs: [{ id: 'job-1', expression: '.' }],
+    workflow: {
+      steps: [{ id: 'job-1', expression: '.' }],
+    },
+    options: {},
   };
+  const input = 'abc';
   const jobId = 'job-1';
 
   const versions = {
@@ -117,7 +126,7 @@ test('also logs the version number', async (t) => {
     versions,
   };
 
-  const state = createRunState(plan);
+  const state = createRunState(plan, input);
   state.activeJob = jobId;
   state.activeStep = 'b';
 

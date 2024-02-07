@@ -1,4 +1,4 @@
-import { ExecutionPlan } from '@openfn/runtime';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 import crypto from 'node:crypto';
 
 export const wait = (fn, maxRuns = 100) =>
@@ -33,10 +33,13 @@ export const sleep = (delay = 100) =>
     setTimeout(resolve, delay);
   });
 
-export const createPlan = (...jobs) =>
+export const createPlan = (...steps: Job[]) =>
   ({
     id: crypto.randomUUID(),
-    jobs: [...jobs],
+    workflow: {
+      steps,
+    },
+    options: {},
   } as ExecutionPlan);
 
 export const createEdge = (from: string, to: string) => ({

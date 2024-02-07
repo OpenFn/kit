@@ -58,6 +58,7 @@ test('convert a single job', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [createJob()],
     },
@@ -76,6 +77,7 @@ test('convert a single job with names', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       name: 'my-workflow',
       steps: [createJob({ name: 'my-job' })],
@@ -98,12 +100,13 @@ test('convert a single job with options', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [createJob()],
     },
   });
   t.deepEqual(options, {
-    timeout: 10,
+    runTimeoutMs: 10,
     sanitize: 'obfuscate',
   });
 });
@@ -121,6 +124,7 @@ test('convert a single job with data', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [createJob({ state: { data: { x: 22 } } })],
     },
@@ -136,6 +140,7 @@ test('Accept a partial run object', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [],
     },
@@ -158,9 +163,9 @@ test('handle starting_node_id as options', (t) => {
     id: 'w',
     starting_node_id: 'j1',
   };
-  const { options } = convertRun(run as Run);
+  const { plan } = convertRun(run as Run);
 
-  t.deepEqual(options, {
+  t.deepEqual(plan.options, {
     start: 'j1',
   });
 });
@@ -176,6 +181,7 @@ test('convert a single trigger', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         {
@@ -198,6 +204,7 @@ test('ignore a single edge', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [],
     },
@@ -221,6 +228,7 @@ test('convert a single trigger with an edge', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         {
@@ -257,6 +265,7 @@ test('convert a single trigger with two edges', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         {
@@ -291,6 +300,7 @@ test('convert a disabled trigger', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         {
@@ -314,6 +324,7 @@ test('convert two linked jobs', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         createJob({ id: 'a', next: { b: true } }),
@@ -339,6 +350,7 @@ test('convert a job with two upstream jobs', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         createJob({ id: 'a', next: { x: true } }),
@@ -361,6 +373,7 @@ test('convert two linked jobs with an edge condition', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         createJob({ id: 'a', next: { b: { condition } } }),
@@ -381,6 +394,7 @@ test('convert two linked jobs with a disabled edge', (t) => {
 
   t.deepEqual(plan, {
     id: 'w',
+    options: {},
     workflow: {
       steps: [
         createJob({ id: 'a', next: { b: { disabled: true } } }),

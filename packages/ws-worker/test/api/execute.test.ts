@@ -275,17 +275,20 @@ test('execute should pass the final result to onFinish', async (t) => {
 
   const plan = {
     id: 'a',
-    jobs: [
-      {
-        expression: 'fn(() => ({ done: true }))',
-      },
-    ],
+    workflow: {
+      steps: [
+        {
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
   };
 
   const options = {};
+  const input = {};
 
   return new Promise((done) => {
-    execute(channel, engine, logger, plan, options, (result) => {
+    execute(channel, engine, logger, plan, input, options, (result) => {
       t.deepEqual(result.state, { done: true });
       done();
     });

@@ -10,7 +10,8 @@ import type {
   WorkflowOptions,
   Lazy,
 } from '@openfn/lexicon';
-import { Run, RunOptions, Edge } from '@openfn/lexicon/lightning';
+import { Run, Edge } from '@openfn/lexicon/lightning';
+import { ExecuteOptions } from '@openfn/engine-multi';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
   {
@@ -38,26 +39,26 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
-const mapOptions = (
-  runOptions: RunOptions = {},
-  workflowOptions: WorkflowOptions = {}
-): WorkflowOptions => {
-  if (runOptions?.runTimeoutMs) {
-    workflowOptions.timeout = runOptions?.runTimeoutMs;
-  }
-  if (runOptions?.sanitize) {
-    workflowOptions.sanitize = runOptions?.sanitize;
-  }
-  return workflowOptions;
-};
-
 export default (
   run: Run
-): { plan: ExecutionPlan; options: WorkflowOptions; input: Lazy<State> } => {
-  const opts: WorkflowOptions = {};
+): { plan: ExecutionPlan; options: ExecuteOptions; input: Lazy<State> } => {
+  // Some options get mapped straight through to the runtime's workflow options
+  // TODO or maybe not? Maybe they're all sent to the engine instead?
+  const runtimeOpts: Omit<WorkflowOptions, 'timeout'> = {};
+
+  // But some need to get passed down into the engine's options
+  const engineOpts: ExecuteOptions = {};
+
+  if (run.options?.runTimeoutMs) {
+    engineOpts.runTimeoutMs = run.options.runTimeoutMs;
+  }
+  if (run.options?.sanitize) {
+    engineOpts.sanitize = run.options.sanitize;
+  }
 
   const plan: Partial<ExecutionPlan> = {
     id: run.id,
+    options: runtimeOpts,
   };
 
   let initialState;
@@ -66,7 +67,7 @@ export default (
   }
 
   if (run.starting_node_id) {
-    opts.start = run.starting_node_id;
+    runtimeOpts.start = run.starting_node_id;
   }
 
   const nodes: Record<StepId, Step> = {};
@@ -155,7 +156,7 @@ export default (
 
   return {
     plan: plan as ExecutionPlan,
-    options: mapOptions(run.options, opts),
+    options: engineOpts,
     input: initialState || {},
   };
 };
