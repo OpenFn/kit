@@ -1,6 +1,6 @@
 import { timestamp } from '@openfn/logger';
+import { ExitReason } from '@openfn/lexicon/lightning';
 import { Context, onJobLog } from '../api/execute';
-import { ExitReason } from '../types';
 
 export default async (context: Context, reason: ExitReason) => {
   const time = (timestamp() - BigInt(10e6)).toString();

@@ -1,3 +1,7 @@
+import type { SanitizePolicies } from '@openfn/logger';
+
+type StepId = string;
+
 /**
  * Type definitions for Lightning and Worker interfaces
  *
@@ -9,6 +13,7 @@
 // An run object returned by Lightning
 export type Run = {
   id: string;
+  name?: string;
   dataclip_id: string;
   starting_node_id: string;
 
@@ -16,18 +21,32 @@ export type Run = {
   jobs: Node[];
   edges: Edge[];
 
-  options?: Record<string, any>; // TODO type the expected options
+  options?: RunOptions;
+};
+
+/**
+ * These are options that can be sent to the worker with an execution plan
+ * They broadly map to the Workflow Options that are fed straight into the runtime
+ * and saved to the plan itself
+ * (although at the time of writing timeout is handled by the worker, not the runtime)
+ */
+export type RunOptions = {
+  runTimeoutMs?: number;
+  sanitize?: SanitizePolicies;
+  start?: StepId;
 };
 
 // TODO rename to step
 // maybe also split into jobs and triggers
 export type Node = {
   id: string;
+  name?: string;
   body?: string;
   adaptor?: string;
-  credential?: any; // TODO tighten this up, string or object
+  credential?: any;
+  credential_id?: string;
   type?: 'webhook' | 'cron'; // trigger only
-  state?: any; // Initial state / defaults
+  state?: State;
 };
 
 export interface Edge {
@@ -39,11 +58,12 @@ export interface Edge {
   condition?: string;
   error_path?: boolean;
   errors?: any;
+  enabled?: boolean;
 }
 
-export type DataClip = object;
+export type DataClip = Record<string, any>;
 
-export type Credential = object;
+export type Credential = Record<string, any>;
 
 export type ExitReasonStrings =
   | 'success'

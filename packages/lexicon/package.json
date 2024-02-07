@@ -10,5 +10,8 @@
         "types": "./lightning.d/.ts"
       }
     }
+  },
+  "devDependencies": {
+    "@openfn/logger": "workspace:^"
   }
 }

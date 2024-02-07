@@ -1,7 +1,8 @@
 import { EventEmitter } from 'node:events';
 import crypto from 'node:crypto';
-import run, { ExecutionPlan } from '@openfn/runtime';
+import run from '@openfn/runtime';
 import * as engine from '@openfn/engine-multi';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
 
 import mockResolvers from './resolvers';
 
@@ -79,12 +80,14 @@ async function createMock() {
       resolvers: mockResolvers,
     }
   ) => {
-    const { id, jobs } = xplan;
+    const { id } = xplan;
+    const { steps } = xplan.workflow;
     activeWorkflows[id!] = true;
 
     const threadId = crypto.randomUUID();
 
-    for (const job of jobs) {
+    for (const step of steps) {
+      const job = step as Job;
       if (typeof job.configuration === 'string') {
         // Call the crendtial callback, but don't do anything with it
         job.configuration = await options.resolvers?.credential?.(

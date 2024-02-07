@@ -1,3 +1,5 @@
+import { SanitizePolicies } from '@openfn/logger';
+
 /**
  * An execution plan is a portable definition of a Work Order,
  * or, a unit of work to execute
@@ -76,6 +78,9 @@ export type WorkflowOptions = {
   timeout?: number;
   stepTimeout?: number;
   start?: StepId;
+
+  // TODO not supported yet I don't think?
+  sanitize?: SanitizePolicies;
 };
 
 export type StepId = string;
@@ -96,14 +101,13 @@ export interface Step {
  * Not actually keen on the node/edge semantics here
  * Maybe StepLink?
  */
-export type StepEdge =
-  | boolean
-  | string
-  | {
-      condition?: string; // Javascript expression (function body, not function)
-      label?: string;
-      disabled?: boolean;
-    };
+export type StepEdge = boolean | string | ConditionalStepEdge;
+
+export type ConditionalStepEdge = {
+  condition?: string; // Javascript expression (function body, not function)
+  label?: string;
+  disabled?: boolean;
+};
 
 /**
  * A no-op type of Step

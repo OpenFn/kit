@@ -428,7 +428,11 @@ importers:
 
   packages/engine-multi/tmp/repo: {}
 
-  packages/lexicon: {}
+  packages/lexicon:
+    devDependencies:
+      '@openfn/logger':
+        specifier: workspace:^
+        version: link:../logger
 
   packages/lightning-mock:
     dependencies:
@@ -618,6 +622,9 @@ importers:
       '@openfn/engine-multi':
         specifier: workspace:*
         version: link:../engine-multi
+      '@openfn/lexicon':
+        specifier: workspace:^
+        version: link:../lexicon
       '@openfn/logger':
         specifier: workspace:*
         version: link:../logger

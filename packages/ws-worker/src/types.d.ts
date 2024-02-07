@@ -1,6 +1,6 @@
 import { SanitizePolicies } from '@openfn/logger';
+import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
 import type { Channel as PhxChannel } from 'phoenix';
-import type { ExecutionPlan } from '@openfn/runtime';
 
 export { Socket };
 
@@ -9,7 +9,7 @@ export type RunState = {
   activeStep?: string;
   activeJob?: string;
   plan: ExecutionPlan;
-  options: RunOptions;
+  input: Lazy<State>;
   dataclips: Record<string, any>;
   // For each run, map the input ids
   // TODO better name maybe?

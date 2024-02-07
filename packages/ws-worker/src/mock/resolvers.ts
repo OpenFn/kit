@@ -1,4 +1,5 @@
-import type { State, Credential } from '../types';
+import type { State } from '@openfn/lexicon';
+import type { Credential } from '@openfn/lexicon/lightning';
 import { Resolvers } from '@openfn/engine-multi';
 
 const mockResolveCredential = (_credId: string) =>

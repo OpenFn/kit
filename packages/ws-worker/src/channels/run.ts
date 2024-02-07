@@ -1,10 +1,11 @@
-import convertRun from '../util/convert-run';
-import { getWithReply } from '../util';
-import { Run, RunOptions, Channel, Socket } from '../types';
-import { ExecutionPlan } from '@openfn/runtime';
-import { GET_PLAN, GetPlanReply } from '../events';
-
+import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
+import type { GetPlanReply, Run, RunOptions } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
+
+import { getWithReply } from '../util';
+import convertRun from '../util/convert-run';
+import { GET_PLAN } from '../events';
+import type { Channel, Socket } from '../types';
 
 // TODO what happens if this channel join fails?
 // Lightning could vanish, channel could error on its side, or auth could be wrong
@@ -21,6 +22,7 @@ const joinRunChannel = (
     channel: Channel;
     plan: ExecutionPlan;
     options: RunOptions;
+    input: Lazy<State>;
   }>((resolve, reject) => {
     // TMP - lightning seems to be sending two responses to me
     // just for now, I'm gonna gate the handling here
@@ -36,9 +38,9 @@ const joinRunChannel = (
         if (!didReceiveOk) {
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
-          const { plan, options } = await loadRun(channel);
+          const { plan, options, input } = await loadRun(channel);
           logger.debug('converted run as execution plan:', plan);
-          resolve({ channel, plan, options });
+          resolve({ channel, plan, options, input });
         }
       })
       .receive('error', (err: any) => {

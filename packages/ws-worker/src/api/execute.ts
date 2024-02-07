@@ -1,4 +1,4 @@
-import type { ExecutionPlan } from '@openfn/lexicon';
+import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
 import type {
   RunLogPayload,
   RunStartPayload,
@@ -62,12 +62,13 @@ export function execute(
   engine: RuntimeEngine,
   logger: Logger,
   plan: ExecutionPlan,
+  input: Lazy<State>,
   options: RunOptions = {},
   onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);
 
-  const state = createRunState(plan, options);
+  const state = createRunState(plan, input);
 
   const context: Context = { channel, state, logger, engine, onFinish };
 
@@ -135,18 +136,18 @@ export function execute(
       // TODO we need to remove this from here and let the runtime take care of it through
       // the resolver. See https://github.com/OpenFn/kit/issues/403
       // TODO come back and work out how initial state will work
-      if (typeof plan.initialState === 'string') {
-        logger.debug('loading dataclip', plan.initialState);
-        plan.initialState = await loadDataclip(channel, plan.initialState);
+      if (typeof input === 'string') {
+        logger.debug('loading dataclip', input);
+        const loadedInput = await loadDataclip(channel, input);
         logger.success('dataclip loaded');
-        logger.debug(plan.initialState);
+        return loadedInput;
       }
-      return plan;
+      return input;
     })
     // Execute (which we have to wrap in a promise chain to handle initial state)
-    .then(() => {
+    .then((input: State) => {
       try {
-        engine.execute(plan, { resolvers, ...options });
+        engine.execute(plan, input, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
         handleRunError(context, {
