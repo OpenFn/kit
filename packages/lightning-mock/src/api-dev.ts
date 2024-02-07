@@ -2,19 +2,14 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
+import crypto from 'node:crypto';
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
-import crypto from 'node:crypto';
-import { RUN_COMPLETE } from './events';
+import type { Run, RunCompletePayload } from '@openfn/lexicon/lightning';
 
 import { ServerState } from './server';
-
-import type {
-  RunCompletePayload,
-  Run,
-  DevServer,
-  LightningEvents,
-} from './types';
+import { RUN_COMPLETE } from './events';
+import type { DevServer, LightningEvents } from './types';
 
 type Api = {
   startRun(runId: string): void;

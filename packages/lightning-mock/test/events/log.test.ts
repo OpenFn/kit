@@ -3,8 +3,8 @@ import { RUN_LOG } from '../../src/events';
 
 import { join, setup, createRun } from '../util';
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 const port = 5501;
 
@@ -26,7 +26,7 @@ test.serial('acknowledge valid message (run log)', async (t) => {
 
     const channel = await join(client, run.id);
 
-    channel.push(RUN_LOG, event).receive('ok', (evt) => {
+    channel.push(RUN_LOG, event).receive('ok', () => {
       t.pass('event acknowledged');
       done();
     });
@@ -50,7 +50,7 @@ test.serial('acknowledge valid message (job log)', async (t) => {
 
     const channel = await join(client, run.id);
 
-    channel.push(RUN_LOG, event).receive('ok', (evt) => {
+    channel.push(RUN_LOG, event).receive('ok', () => {
       t.pass('event acknowledged');
       done();
     });

@@ -438,6 +438,9 @@ importers:
       '@openfn/engine-multi':
         specifier: workspace:*
         version: link:../engine-multi
+      '@openfn/lexicon':
+        specifier: workspace:^
+        version: link:../lexicon
       '@openfn/logger':
         specifier: workspace:*
         version: link:../logger

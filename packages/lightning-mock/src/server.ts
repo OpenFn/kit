@@ -10,10 +10,10 @@ import createLogger, {
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
+import type { StepId } from '@openfn/lexicon';
+import type { RunLogPayload, Run } from '@openfn/lexicon/lightning';
+import type { DevServer } from './types';
 
-import type { RunLogPayload, Run, DevServer } from './types';
-
-type StepId = string;
 type JobId = string;
 
 export type RunState = {

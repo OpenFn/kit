@@ -2,8 +2,8 @@ import test from 'ava';
 import { STEP_START } from '../../src/events';
 import { join, setup, createRun } from '../util';
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 const port = 5501;
 

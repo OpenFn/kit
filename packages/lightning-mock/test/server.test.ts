@@ -2,12 +2,12 @@
 import test from 'ava';
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
+import type { Run } from '@openfn/lexicon/lightning';
 
-import { createRun, setup } from './util';
-import type { Run } from '../src/types';
+import { setup } from './util';
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 const port = 3333;
 
@@ -82,10 +82,10 @@ test.serial('reject ws connections without a token', (t) => {
 });
 
 test.serial('respond to channel join requests', (t) => {
-  return new Promise(async (done, reject) => {
+  return new Promise(async (done) => {
     const channel = client.channel('x', {});
 
-    channel.join().receive('ok', (res) => {
+    channel.join().receive('ok', (res: any) => {
       t.is(res, 'ok');
       done();
     });
