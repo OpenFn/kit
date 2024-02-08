@@ -364,7 +364,7 @@ test('execute should lazy-load a credential', async (t) => {
   const input = {};
 
   return new Promise((done) => {
-    execute(channel, engine, logger, plan, input, options, (result) => {
+    execute(channel, engine, logger, plan, input, options, () => {
       t.true(didCallCredentials);
       done();
     });
@@ -394,6 +394,7 @@ test('execute should lazy-load initial state', async (t) => {
         },
       ],
     },
+    options: {},
   } as ExecutionPlan;
 
   const options = {};
