@@ -123,7 +123,6 @@ export type ErrorReport = {
   type: string; // The name/type of error, ie Error, TypeError
   message: string; // simple human readable message
   stepId: StepId; // ID of the associated job
-  jobId?: StepId; // deprecated
   error: Error; // the original underlying error object
 
   code?: string; // The error code, if any (found on node errors)

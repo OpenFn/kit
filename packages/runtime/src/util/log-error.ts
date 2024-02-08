@@ -3,7 +3,7 @@ import type { State, ErrorReport, StepId } from '@openfn/lexicon';
 
 export type ErrorReporter = (
   state: State,
-  jobId: StepId,
+  stepId: StepId,
   error: NodeJS.ErrnoException & {
     severity?: string;
     handled?: boolean;
@@ -16,11 +16,10 @@ export type ErrorReporter = (
 // Because we're taking closer control of errors
 // we should be able to report more simply
 const createErrorReporter = (logger: Logger): ErrorReporter => {
-  return (state, jobId, error) => {
+  return (state, stepId, error) => {
     const report: ErrorReport = {
       type: error.subtype || error.type || error.name,
-      jobId,
-      stepId: jobId,
+      stepId,
       message: error.message,
       error: error,
     };
@@ -46,13 +45,13 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
     }
 
     if (error.severity === 'fail') {
-      logger.error(`Check state.errors.${jobId} for details.`);
+      logger.error(`Check state.errors.${stepId} for details.`);
 
       if (!state.errors) {
         state.errors = {};
       }
 
-      state.errors[jobId] = report;
+      state.errors[stepId] = report;
     }
 
     return report as ErrorReport;

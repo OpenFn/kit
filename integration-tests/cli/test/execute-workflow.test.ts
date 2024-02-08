@@ -148,10 +148,10 @@ test.serial(
   }
 );
 
-test.serial(
-  `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 32 } }"`,
+test.serial.only(
+  `openfn ${jobsPath}/wf-errors.json -iS "{ \\"data\\": { \\"number\\": 32 } }"`,
   async (t) => {
-    const { stdout, err } = await run(t.title);
+    const { err } = await run(t.title);
     t.falsy(err);
 
     const out = getJSON();
