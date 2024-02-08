@@ -1,4 +1,5 @@
 import type { SanitizePolicies } from '@openfn/logger';
+import { State } from './core';
 
 type StepId = string;
 
@@ -10,8 +11,15 @@ type StepId = string;
  * It is helpful to have these in the lexicon to avoid a circular dependency between lightning and the worker
  * It's also kinda nice that the contract isn't in the worker itself, it's on neutral ground
  */
-// An run object returned by Lightning
-export type Run = {
+
+/**
+ * An execution plan representing a Ligyhtning 'Run'.
+ * This represents the execution of a workflow.
+ *
+ * The data stucture that Lightning sends is converted by the Worker into
+ * a runtime ExecutionPlan (as found in Core)
+ */
+export type LightningPlan = {
   id: string;
   name?: string;
   dataclip_id: string;
@@ -21,7 +29,7 @@ export type Run = {
   jobs: Node[];
   edges: Edge[];
 
-  options?: RunOptions;
+  options?: LightningPlanOptions;
 };
 
 /**
@@ -30,14 +38,19 @@ export type Run = {
  * and saved to the plan itself
  * (although at the time of writing timeout is handled by the worker, not the runtime)
  */
-export type RunOptions = {
+export type LightningPlanOptions = {
   runTimeoutMs?: number;
   sanitize?: SanitizePolicies;
   start?: StepId;
 };
 
-// TODO rename to step
-// maybe also split into jobs and triggers
+/**
+ * This is a Job or Trigger node in a Lightning plan,
+ * AKA a Step.
+ *
+ * Sticking with the Node/Edge semantics to help distinguish the
+ * Lightning and runtime typings
+ */
 export type Node = {
   id: string;
   name?: string;
@@ -49,6 +62,12 @@ export type Node = {
   state?: State;
 };
 
+/**
+ * This is a Path (or link) between two Jobs in a Plan.
+ *
+ * Sticking with the Node/Edge semantics to help distinguish the
+ * Lightning and runtime typings
+ */
 export interface Edge {
   id: string;
   source_job_id?: string;
@@ -109,7 +128,7 @@ export type ExitReason = {
 };
 
 export type GetPlanPayload = void; // no payload
-export type GetPlanReply = Run;
+export type GetPlanReply = LightningPlan;
 
 export type GetCredentialPayload = { id: string };
 // credential in-line, no wrapper, arbitrary data

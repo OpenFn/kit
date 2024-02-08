@@ -11,7 +11,7 @@ import createLogger, {
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
 import type { StepId } from '@openfn/lexicon';
-import type { RunLogPayload, Run } from '@openfn/lexicon/lightning';
+import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
 import type { DevServer } from './types';
 
 type JobId = string;
@@ -29,7 +29,7 @@ export type ServerState = {
   credentials: Record<string, any>;
 
   // list of runs by id
-  runs: Record<string, Run>;
+  runs: Record<string, LightningPlan>;
 
   // list of dataclips by id
   dataclips: Record<string, any>;

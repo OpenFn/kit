@@ -1,6 +1,6 @@
 import test from 'ava';
 import type {
-  Run,
+  LightningPlan,
   RunCompletePayload,
   Credential,
   DataClip,
@@ -76,7 +76,7 @@ test.serial('get run data through the run channel', async (t) => {
     server.startRun(run1.id);
 
     const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
-    channel.push(GET_PLAN).receive('ok', (run: Run) => {
+    channel.push(GET_PLAN).receive('ok', (run: LightningPlan) => {
       t.deepEqual(run, run1);
       done();
     });

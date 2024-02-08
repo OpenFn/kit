@@ -5,7 +5,10 @@
 import crypto from 'node:crypto';
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
-import type { Run, RunCompletePayload } from '@openfn/lexicon/lightning';
+import type {
+  LightningPlan,
+  RunCompletePayload,
+} from '@openfn/lexicon/lightning';
 
 import { ServerState } from './server';
 import { RUN_COMPLETE } from './events';
@@ -36,7 +39,7 @@ const setupDevAPI = (
 
   app.getDataclip = (id: string) => state.dataclips[id];
 
-  app.enqueueRun = (run: Run, workerId = 'rte') => {
+  app.enqueueRun = (run: LightningPlan, workerId = 'rte') => {
     state.runs[run.id] = run;
     state.results[run.id] = {
       workerId, // TODO
@@ -135,7 +138,7 @@ const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
   const router = new Router();
 
   router.post('/run', (ctx) => {
-    const run = ctx.request.body as Run;
+    const run = ctx.request.body as LightningPlan;
 
     if (!run) {
       ctx.response.status = 400;

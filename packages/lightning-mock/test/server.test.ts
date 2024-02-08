@@ -2,7 +2,7 @@
 import test from 'ava';
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
-import type { Run } from '@openfn/lexicon/lightning';
+import type { LightningPlan } from '@openfn/lexicon/lightning';
 
 import { setup } from './util';
 
@@ -22,7 +22,7 @@ test.serial('should setup an run at /POST /run', async (t) => {
   t.is(Object.keys(state.runs).length, 0);
   t.is(Object.keys(state.runs).length, 0);
 
-  const run: Run = {
+  const run: LightningPlan = {
     id: 'a',
     dataclip_id: 'a',
     starting_node_id: 'j',

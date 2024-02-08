@@ -2,7 +2,7 @@ import test from 'ava';
 import crypto from 'node:crypto';
 import createLightningServer from '@openfn/lightning-mock';
 import { createMockLogger } from '@openfn/logger';
-import { Run } from '@openfn/lexicon/lightning';
+import { LightningPlan } from '@openfn/lexicon/lightning';
 
 import createWorker from '../../src/server';
 import createMockRTE from '../../src/mock/runtime-engine';
@@ -40,7 +40,7 @@ const createRun = () =>
         body: `wait(${500 + Math.random() * 1000})`,
       },
     ],
-  } as Run);
+  } as LightningPlan);
 
 const waitForClaim = (timeout: number = 1000) =>
   new Promise<boolean>((resolve) => {

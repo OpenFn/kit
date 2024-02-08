@@ -1,6 +1,6 @@
 import test from 'ava';
-import type { Run, Node } from '@openfn/lexicon/lightning';
-import convertRun, { conditions } from '../../src/util/convert-run';
+import type { LightningPlan, Node } from '@openfn/lexicon/lightning';
+import convertPlan, { conditions } from '../../src/util/convert-lightning-plan';
 import { ConditionalStepEdge, Job } from '@openfn/lexicon';
 
 // Creates a lightning node (job or trigger)
@@ -43,13 +43,13 @@ const testEdgeCondition = (expr: string, state: any) => {
 };
 
 test('convert a single job', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode()],
     triggers: [],
     edges: [],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -61,14 +61,14 @@ test('convert a single job', (t) => {
 });
 
 test('convert a single job with names', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     name: 'my-workflow',
     jobs: [createNode({ name: 'my-job' })],
     triggers: [],
     edges: [],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -81,7 +81,7 @@ test('convert a single job with names', (t) => {
 });
 
 test('convert a single job with options', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode()],
     triggers: [],
@@ -91,7 +91,7 @@ test('convert a single job with options', (t) => {
       runTimeoutMs: 10,
     },
   };
-  const { plan, options } = convertRun(run as Run);
+  const { plan, options } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -109,13 +109,13 @@ test('convert a single job with options', (t) => {
 // Note idk how lightningg will handle state/defaults on a job
 // but this is what we'll do right now
 test('convert a single job with data', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ state: { data: { x: 22 } } })],
     triggers: [],
     edges: [],
   };
-  const { plan, options } = convertRun(run as Run);
+  const { plan, options } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -128,10 +128,10 @@ test('convert a single job with data', (t) => {
 });
 
 test('Accept a partial run object', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
   };
-  const { plan, options } = convertRun(run as Run);
+  const { plan, options } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -144,21 +144,21 @@ test('Accept a partial run object', (t) => {
 });
 
 test('handle dataclip_id as input', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     dataclip_id: 'xyz',
   };
-  const { input } = convertRun(run as Run);
+  const { input } = convertPlan(run as LightningPlan);
 
   t.deepEqual(input, 'xyz');
 });
 
 test('handle starting_node_id as options', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     starting_node_id: 'j1',
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan.options, {
     start: 'j1',
@@ -166,13 +166,13 @@ test('handle starting_node_id as options', (t) => {
 });
 
 test('convert a single trigger', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [],
     edges: [],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -189,13 +189,13 @@ test('convert a single trigger', (t) => {
 
 // This exhibits current behaviour. This should never happen though
 test('ignore a single edge', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [],
     triggers: [],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -207,7 +207,7 @@ test('ignore a single edge', (t) => {
 });
 
 test('convert a single trigger with an edge', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode()],
@@ -219,7 +219,7 @@ test('convert a single trigger with an edge', (t) => {
       },
     ],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -239,7 +239,7 @@ test('convert a single trigger with an edge', (t) => {
 });
 
 test('convert a single trigger with two edges', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
@@ -256,7 +256,7 @@ test('convert a single trigger with two edges', (t) => {
       },
     ],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -278,7 +278,7 @@ test('convert a single trigger with two edges', (t) => {
 });
 
 test('convert a disabled trigger', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     triggers: [createTrigger()],
     jobs: [createNode({ id: 'a' })],
@@ -291,7 +291,7 @@ test('convert a disabled trigger', (t) => {
       },
     ],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -309,13 +309,13 @@ test('convert a disabled trigger', (t) => {
 });
 
 test('convert two linked jobs', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -331,7 +331,7 @@ test('convert two linked jobs', (t) => {
 
 // This isn't supported by the runtime, but it'll survive the conversion
 test('convert a job with two upstream jobs', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [
       createNode({ id: 'a' }),
@@ -341,7 +341,7 @@ test('convert a job with two upstream jobs', (t) => {
     triggers: [],
     edges: [createEdge('a', 'x'), createEdge('b', 'x')],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -358,13 +358,13 @@ test('convert a job with two upstream jobs', (t) => {
 
 test('convert two linked jobs with an edge condition', (t) => {
   const condition = 'state.age > 10';
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition })],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -379,13 +379,13 @@ test('convert two linked jobs with an edge condition', (t) => {
 });
 
 test('convert two linked jobs with a disabled edge', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { enabled: false })],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   t.deepEqual(plan, {
     id: 'w',
@@ -498,13 +498,13 @@ test('on_job_failure condition: return false if state is undefined', (t) => {
 });
 
 test('convert edge condition on_job_success', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition: 'on_job_success' })],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   const [job] = plan.workflow.steps as Job[];
   const edge = job.next as Record<string, ConditionalStepEdge>;
@@ -515,13 +515,13 @@ test('convert edge condition on_job_success', (t) => {
 });
 
 test('convert edge condition on_job_failure', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition: 'on_job_failure' })],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   const [job] = plan.workflow.steps as Job[];
   const edge = job.next as Record<string, ConditionalStepEdge>;
@@ -538,13 +538,13 @@ test('convert edge condition on_job_failure', (t) => {
 
 test('convert edge condition on_job_success with a funky id', (t) => {
   const id_a = 'a-b-c@ # {} !£';
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: id_a }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge(id_a, 'b', { condition: 'on_job_success' })],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
   const [job] = plan.workflow.steps as Job[];
   const edge = job.next as Record<string, ConditionalStepEdge>;
 
@@ -555,13 +555,13 @@ test('convert edge condition on_job_success with a funky id', (t) => {
 });
 
 test('convert edge condition always', (t) => {
-  const run: Partial<Run> = {
+  const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [createNode({ id: 'a' }), createNode({ id: 'b' })],
     triggers: [],
     edges: [createEdge('a', 'b', { condition: 'always' })],
   };
-  const { plan } = convertRun(run as Run);
+  const { plan } = convertPlan(run as LightningPlan);
 
   const [job] = plan.workflow.steps as Job[];
   const edge = job.next as Record<string, ConditionalStepEdge>;

@@ -1,4 +1,4 @@
-import convertRun from './convert-run';
+import convertRun from './convert-lightning-plan';
 import tryWithBackoff from './try-with-backoff';
 import getWithReply from './get-with-reply';
 import stringify from './stringify';

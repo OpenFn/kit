@@ -2,7 +2,7 @@ import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
 import type {
   RunLogPayload,
   RunStartPayload,
-  RunOptions,
+  LightningPlanOptions,
 } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
@@ -63,7 +63,7 @@ export function execute(
   logger: Logger,
   plan: ExecutionPlan,
   input: Lazy<State>,
-  options: RunOptions = {},
+  options: LightningPlanOptions = {},
   onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);

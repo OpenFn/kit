@@ -10,7 +10,7 @@ import type {
   WorkflowOptions,
   Lazy,
 } from '@openfn/lexicon';
-import { Run, Edge } from '@openfn/lexicon/lightning';
+import { LightningPlan, Edge } from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
@@ -40,7 +40,7 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
 };
 
 export default (
-  run: Run
+  run: LightningPlan
 ): { plan: ExecutionPlan; options: ExecuteOptions; input: Lazy<State> } => {
   // Some options get mapped straight through to the runtime's workflow options
   // TODO or maybe not? Maybe they're all sent to the engine instead?
