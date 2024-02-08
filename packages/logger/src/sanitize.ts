@@ -51,6 +51,7 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
 
   if (isError(item)) {
     if (options.serializeErrors) {
+      console.log('SERIALISING ERROR');
       return {
         name: item.name,
         message: item.message || item.toString(),
