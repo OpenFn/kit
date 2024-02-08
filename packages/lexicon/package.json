@@ -5,7 +5,14 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "type": "module",
+  "main": "index.js",
   "exports": {
+    ".": {
+      "import": {
+        "default": "./index.js",
+        "types": "./core.d.ts"
+      }
+    },
     "./lightning": {
       "import": {
         "default": "./lightning.js",

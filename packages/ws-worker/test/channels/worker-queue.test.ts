@@ -76,9 +76,7 @@ test('should connect with api and worker versions', async (t) => {
 
     connectToWorkerQueue('www', 'a', 'secret', logger, createSocket as any).on(
       'connect',
-      ({ socket, channel }) => {
-        done();
-      }
+      done
     );
   });
 });
