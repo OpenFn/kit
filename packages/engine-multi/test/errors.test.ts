@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import createEngine, { EngineOptions } from '../src/engine';
 import { createMockLogger } from '@openfn/logger';
-import { WORKFLOW_COMPLETE, WORKFLOW_ERROR } from '../src/events';
+import { WORKFLOW_ERROR } from '../src/events';
 
 let engine;
 
@@ -160,7 +160,7 @@ test.serial('emit a crash error on process.exit()', (t) => {
       id: 'z',
       jobs: [
         {
-          adaptor: 'helper@1.0.0',
+          adaptor: '@openfn/helper@1.0.0',
           expression: 'export default [exit()]',
         },
       ],

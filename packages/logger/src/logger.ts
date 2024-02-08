@@ -1,6 +1,5 @@
 import c from 'chalk';
 import iconfirm from '@inquirer/confirm';
-import stringify from 'fast-safe-stringify';
 import * as symbols from './symbols';
 import sanitize from './sanitize';
 import getDurationString from './util/duration';
@@ -163,6 +162,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       sanitize(o, {
         stringify: false,
         policy: options.sanitize,
+        serializeErrors: true,
       })
     );
     if (message.length === 1 && message[0] === null) {
@@ -178,7 +178,10 @@ export default function (name?: string, options: LogOptions = {}): Logger {
       time: hrtimestamp().toString(),
     };
 
-    emitter[level](stringify(output));
+    // Emit the output directly, without any further
+    // serialisation. Note that this may cause us to log
+    // non-serialisable stuff
+    emitter[level](output);
   };
 
   const logString = (
@@ -237,7 +240,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   const print = (...args: any[]) => {
     if (opts.level !== NONE) {
       if (opts.json) {
-        emitter.info(JSON.stringify({ message: args }));
+        emitter.info({ message: args });
       } else {
         emitter.info(...args);
       }

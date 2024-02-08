@@ -11,7 +11,6 @@ export default async (api: EngineAPI, timeout = 5000) => {
     // TODO argument drive this
     await api.callWorker('handshake', [], {}, { timeout });
   } catch (e) {
-    console.error(e);
     throw new Error('Invalid worker path');
   }
 };

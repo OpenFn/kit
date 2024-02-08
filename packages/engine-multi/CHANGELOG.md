@@ -1,5 +1,15 @@
 # engine-multi
 
+## 0.4.1
+
+### Patch Changes
+
+- 823b471: Update handling of logs so that JSON messages are stringified
+- Updated dependencies [649ca43]
+  - @openfn/logger@0.0.20
+  - @openfn/compiler@0.0.39
+  - @openfn/runtime@0.2.6
+
 ## 0.4.0
 
 ### Minor Changes

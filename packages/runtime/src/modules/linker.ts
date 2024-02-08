@@ -69,7 +69,6 @@ const linker: Linker = async (specifier, context, options = {}) => {
       target = target.default;
     }
   }
-
   const exportNames = Object.keys(target);
   // Wrap up the real module into a Synthetic Module
   const m = new vm.SyntheticModule(

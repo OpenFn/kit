@@ -1,5 +1,16 @@
 # ws-worker
 
+## 0.8.1
+
+### Patch Changes
+
+- 823b471: Update handling of logs to accept stringified messages
+- Updated dependencies [649ca43]
+- Updated dependencies [823b471]
+  - @openfn/logger@0.0.20
+  - @openfn/engine-multi@0.4.1
+  - @openfn/runtime@0.2.6
+
 ## 0.8.0
 
 ### Minor Changes

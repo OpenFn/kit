@@ -109,7 +109,7 @@ async function createMock() {
           threadId: threadId,
           level: 'info',
           json: true,
-          message: args,
+          message: JSON.stringify(args),
           time: Date.now(),
         });
       },

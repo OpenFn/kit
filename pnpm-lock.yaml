@@ -383,6 +383,9 @@ importers:
       '@openfn/runtime':
         specifier: workspace:*
         version: link:../runtime
+      fast-safe-stringify:
+        specifier: ^2.1.1
+        version: 2.1.1
     devDependencies:
       '@types/node':
         specifier: ^18.15.13

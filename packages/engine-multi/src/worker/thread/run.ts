@@ -29,9 +29,23 @@ register({
   run: (plan: ExecutionPlan, runOptions: RunOptions) => {
     const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
       runOptions;
-    const { logger, jobLogger } = createLoggers(plan.id!, sanitize);
-    // TODO I would like to pull these options out of here
+    const { logger, jobLogger, adaptorLogger } = createLoggers(
+      plan.id!,
+      sanitize,
+      publish
+    );
 
+    // Save the debug function so that we can use it
+    const debug = console.debug;
+
+    // override console: any console.log statements will now get treated as adaptor logs
+    console = adaptorLogger;
+
+    // Leave console.debug for local debugging
+    // This goes to stdout but not the adpator logger
+    console.debug = debug;
+
+    // TODO I would like to pull these options out of here
     const options = {
       // disable the run/step timeout
       timeout: 0,

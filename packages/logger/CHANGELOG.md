@@ -1,5 +1,12 @@
 # @openfn/logger
 
+## 0.0.20
+
+### Patch Changes
+
+- 649ca43: In JSON mode, do not stringify emitted messages.
+  Better handling of error objects
+
 ## 0.0.19
 
 ### Patch Changes

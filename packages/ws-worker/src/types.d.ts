@@ -113,3 +113,9 @@ export interface Channel extends PhxChannel {
   push: <P = any>(event: string, payload?: P) => ReceiveHook;
   // join: () => ReceiveHook;
 }
+
+// override the JSON log typing because the log message
+// might be JSON encoded in a string
+export type JSONLog = Omit<JSONLog, 'message'> & {
+  message: string | any[];
+};

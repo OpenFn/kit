@@ -1,5 +1,5 @@
 import test from 'ava';
-import { JSONLog, createMockLogger } from '@openfn/logger';
+import { createMockLogger } from '@openfn/logger';
 
 import {
   STEP_START,
@@ -24,7 +24,7 @@ import { mockChannel } from '../../src/mock/sockets';
 import { stringify, createRunState } from '../../src/util';
 
 import type { ExecutionPlan } from '@openfn/runtime';
-import type { Run, RunState } from '../../src/types';
+import type { Run, RunState, JSONLog } from '../../src/types';
 
 const enc = new TextEncoder();
 
@@ -71,7 +71,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
     name: 'R/T',
     level: 'info',
     time: getBigIntTimestamp(),
-    message: ['ping'],
+    message: JSON.stringify(['ping']),
   };
 
   // The logger should print in nanoseconds (19 digits)
@@ -79,7 +79,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
 
   const result = {
     run_id: plan.id,
-    message: log.message,
+    message: JSON.parse(log.message),
     // Conveniently this won't have rounding errors because the last
     // 3 digits are always 000, because of how we generate the stamp above
     timestamp: log.time.substring(0, 16),
@@ -109,7 +109,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
     name: 'R/T',
     level: 'info',
     time: getBigIntTimestamp(),
-    message: ['ping'],
+    message: JSON.stringify(['ping']),
   };
 
   // The logger should print in nanoseconds (19 digits)
@@ -124,7 +124,7 @@ test('jobLog should should send a log event inside a run', async (t) => {
   const channel = mockChannel({
     [RUN_LOG]: (evt) => {
       t.truthy(evt.step_id);
-      t.deepEqual(evt.message, log.message);
+      t.deepEqual(evt.message, JSON.parse(log.message));
       t.is(evt.level, log.level);
       t.is(evt.source, log.name);
       t.is(evt.timestamp, log.time.substring(0, 16));

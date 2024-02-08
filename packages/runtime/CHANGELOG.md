@@ -1,5 +1,12 @@
 # @openfn/runtime
 
+## 0.2.6
+
+### Patch Changes
+
+- Updated dependencies [649ca43]
+  - @openfn/logger@0.0.20
+
 ## 0.2.5
 
 ### Patch Changes
