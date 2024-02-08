@@ -179,25 +179,26 @@ test.serial('log errors', (t) => {
       },
     ]);
 
-    api.execute(plan, emptyState).on('workflow-log', (evt) => {
-      if (evt.name === 'JOB') {
-        t.log(evt);
-        t.deepEqual(
-          evt.message,
-          JSON.stringify([
-            {
-              name: 'Error',
-              message: 'hola',
-            },
-          ])
-        );
-        t.pass('workflow logged');
-      }
-    });
-
-    api.execute(plan, emptyState).on('workflow-complete', () => {
-      done();
-    });
+    api
+      .execute(plan, emptyState)
+      .on('workflow-log', (evt) => {
+        if (evt.name === 'JOB') {
+          t.log(evt);
+          t.deepEqual(
+            evt.message,
+            JSON.stringify([
+              {
+                name: 'Error',
+                message: 'hola',
+              },
+            ])
+          );
+          t.pass('workflow logged');
+        }
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
 
