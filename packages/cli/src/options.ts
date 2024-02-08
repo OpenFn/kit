@@ -115,7 +115,7 @@ export const autoinstall: CLIOption = {
     alias: ['i'],
     boolean: true,
     description: 'Auto-install the language adaptor',
-    default: false,
+    default: true,
   },
 };
 
