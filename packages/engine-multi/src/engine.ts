@@ -82,7 +82,7 @@ export type EngineOptions = {
 };
 
 export type InternalEngine = RuntimeEngine & {
-  // TODONot a very good type definition, but it calms the tests down
+  // TODO Not a very good type definition, but it calms the tests down
   [other: string]: any;
 };
 

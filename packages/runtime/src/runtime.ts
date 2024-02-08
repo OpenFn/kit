@@ -27,7 +27,6 @@ export type Options = {
   // TODO leaving this here for now, but maybe its actually on the xplan?
   globals?: any;
 
-  // TODO state props to remove is a system-level option, not a workflow level one
   statePropsToRemove?: string[];
 };
 
