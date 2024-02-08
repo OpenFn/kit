@@ -24,7 +24,7 @@ test('set a step id and active job on state', async (t) => {
     [RUN_LOG]: (x) => x,
   });
 
-  await handleStepStart({ channel, state } as any, { jobId });
+  await handleStepStart({ channel, state } as any, { jobId } as any);
 
   t.is(state.activeJob, jobId);
   t.truthy(state.activeStep);
@@ -58,7 +58,7 @@ test('send a step:start event', async (t) => {
     [RUN_LOG]: () => true,
   });
 
-  await handleStepStart({ channel, state } as any, { jobId });
+  await handleStepStart({ channel, state } as any, { jobId } as any);
 });
 
 test('step:start event should include versions', async (t) => {
@@ -135,7 +135,7 @@ test('also logs the version number', async (t) => {
   state.activeStep = 'b';
 
   const channel = mockChannel({
-    [STEP_START]: (evt) => true,
+    [STEP_START]: () => true,
     [RUN_LOG]: (evt) => {
       if (evt.source === 'VER') {
         logEvent = evt;

@@ -151,5 +151,11 @@ export type StepCompletePayload = ExitReason & {
   step_id: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
+  thread_id?: string;
+  mem: {
+    job: number;
+    system: number;
+  };
+  duration: number;
 };
 export type StepCompleteReply = void;

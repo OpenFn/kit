@@ -25,7 +25,7 @@ test('runError should trigger runComplete with a reason', async (t) => {
     [RUN_COMPLETE]: () => true,
   });
 
-  const event = {
+  const event: any = {
     severity: 'crash',
     type: 'Err',
     message: 'it crashed',
@@ -46,11 +46,11 @@ test('workflow error should send reason to onFinish', async (t) => {
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
-    [STEP_COMPLETE]: (evt) => true,
+    [STEP_COMPLETE]: () => true,
     [RUN_COMPLETE]: () => true,
   });
 
-  const event = {
+  const event: any = {
     error: {
       severity: 'crash',
       type: 'Err',
@@ -62,7 +62,7 @@ test('workflow error should send reason to onFinish', async (t) => {
   const context = {
     channel,
     state,
-    onFinish: (evt) => {
+    onFinish: (evt: any) => {
       t.is(evt.reason.reason, 'crash');
     },
   };
@@ -76,14 +76,14 @@ test('runError should not call job complete if the job is not active', async (t)
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
-    [STEP_COMPLETE]: (evt) => {
+    [STEP_COMPLETE]: () => {
       t.fail('should not call!');
       return true;
     },
     [RUN_COMPLETE]: () => true,
   });
 
-  const event = {
+  const event: any = {
     error: {
       severity: 'crash',
       type: 'Err',
@@ -108,26 +108,29 @@ test('runError should log the reason', async (t) => {
 
   const state = createRunState({
     id: 'run-1',
-    jobs: [{ id: 'job-1' }],
+    workflow: {
+      steps: [{ id: 'job-1' }],
+    },
+    options: {},
   });
   state.lastDataclipId = 'x';
   state.activeStep = 'b';
   state.activeJob = jobId;
 
-  const event = {
+  const event: any = {
     severity: 'crash',
     type: 'Err',
     message: 'it crashed',
   };
   state.reasons['x'] = event;
 
-  let logEvent;
+  let logEvent: any;
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
       logEvent = e;
     },
-    [STEP_COMPLETE]: (evt) => true,
+    [STEP_COMPLETE]: () => true,
     [RUN_COMPLETE]: () => true,
   });
 

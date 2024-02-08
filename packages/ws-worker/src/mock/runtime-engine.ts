@@ -5,6 +5,7 @@ import * as engine from '@openfn/engine-multi';
 import type { ExecutionPlan, Job, State } from '@openfn/lexicon';
 
 import mockResolvers from './resolvers';
+import { RuntimeEngine } from '@openfn/engine-multi';
 
 export type EngineEvent =
   | typeof engine.JOB_COMPLETE
@@ -155,7 +156,7 @@ async function createMock() {
     getStatus,
     listen,
     destroy,
-  };
+  } as unknown as RuntimeEngine;
 }
 
 export default createMock;

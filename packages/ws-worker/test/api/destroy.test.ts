@@ -17,7 +17,7 @@ const lightning = createLightningServer({ port: lightningPort });
 let worker: any;
 
 test.beforeEach(async () => {
-  const engine = await createMockRTE();
+  const engine: any = await createMockRTE();
 
   worker = createWorker(engine, {
     logger,

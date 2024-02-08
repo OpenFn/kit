@@ -54,7 +54,7 @@ test('send event should resolve when the event is acknowledged', async (t) => {
 
 test('send event should throw if an event errors', async (t) => {
   const channel = mockChannel({
-    throw: (x) => {
+    throw: () => {
       throw new Error('err');
     },
   });

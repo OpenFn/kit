@@ -23,7 +23,7 @@ test('should send an run:complete event', async (t) => {
     },
   });
 
-  const event = {};
+  const event: any = {};
 
   const context: any = { channel, state, onFinish: () => {} };
   await handleRunComplete(context, event);
@@ -52,7 +52,7 @@ test('should call onFinish with final dataclip', async (t) => {
     },
   };
 
-  const event = { state: result };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 });
@@ -87,7 +87,7 @@ test('should send a reason log and return reason for success', async (t) => {
     },
   };
 
-  const event = { state: result };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 
@@ -134,7 +134,7 @@ test('should send a reason log and return reason for fail', async (t) => {
     },
   };
 
-  const event = { state: result };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 

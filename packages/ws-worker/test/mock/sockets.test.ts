@@ -68,7 +68,7 @@ test('mock channel: invoke the ok handler with the callback result', (t) => {
       },
     });
 
-    channel.push('ping', 'abc').receive('ok', (evt) => {
+    channel.push('ping', 'abc').receive('ok', (evt: any) => {
       t.is(evt, 'pong!');
       t.pass();
       done();

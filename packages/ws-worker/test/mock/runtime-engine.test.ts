@@ -3,12 +3,13 @@ import type { ExecutionPlan } from '@openfn/lexicon';
 
 import type {
   JobCompletePayload,
-  JobStartePayload,
+  JobStartPayload,
   WorkflowCompletePayload,
   WorkflowStartPayload,
 } from '@openfn/engine-multi';
 import create from '../../src/mock/runtime-engine';
 import { waitForEvent, clone, createPlan } from '../util';
+import { WorkflowErrorPayload } from '@openfn/engine-multi';
 
 const sampleWorkflow = {
   id: 'w1',
@@ -66,7 +67,7 @@ test.serial('Dispatch complete events when a workflow completes', async (t) => {
 
 test.serial('Dispatch start events for a job', async (t) => {
   engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<JobStartePayload>(engine, 'job-start');
+  const evt = await waitForEvent<JobStartPayload>(engine, 'job-start');
   t.truthy(evt);
   t.is(evt.workflowId, 'w1');
   t.is(evt.jobId, 'j1');
@@ -89,9 +90,12 @@ test.serial('Dispatch error event for a crash', async (t) => {
   });
 
   engine.execute(wf);
-  const evt = await waitForEvent<JobCompletePayload>(engine, 'workflow-error');
+  const evt = await waitForEvent<WorkflowErrorPayload>(
+    engine,
+    'workflow-error'
+  );
 
-  t.is(evt.workflowId, wf.id);
+  t.is(evt.workflowId, wf.id!);
   t.is(evt.type, 'RuntimeCrash');
   t.regex(evt.message, /invalid or unexpected token/i);
 });
@@ -104,7 +108,7 @@ test.serial('wait function', async (t) => {
   engine.execute(wf);
   const start = Date.now();
 
-  await waitForEvent<JobCompletePayload>(engine, 'workflow-complete');
+  await waitForEvent<WorkflowCompletePayload>(engine, 'workflow-complete');
 
   const end = Date.now() - start;
   t.true(end > 90);
@@ -126,7 +130,7 @@ test.serial(
     // @ts-ignore
     engine.execute(wf, {}, { resolvers: { credential } });
 
-    await waitForEvent<WorkflowCompletePayload>(engine, 'job-start');
+    await waitForEvent<JobStartPayload>(engine, 'job-start');
     t.true(didCallCredentials);
   }
 );
@@ -269,7 +273,7 @@ test.skip('timeout', async (t) => {
   // @ts-ignore
   engine.execute(wf, {}, { timeout: 10 });
 
-  const evt = await waitForEvent<WorkflowCompletePayload>(
+  const evt = await waitForEvent<WorkflowErrorPayload>(
     engine,
     'workflow-error'
   );

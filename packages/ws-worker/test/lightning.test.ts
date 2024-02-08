@@ -172,7 +172,7 @@ test.serial(`events: lightning should receive a ${e.GET_PLAN} event`, (t) => {
       didCallEvent = true;
     });
 
-    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt: any) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       t.true(didCallEvent);
       done();
     });
@@ -275,7 +275,7 @@ test.serial(
         t.pass('called run complete');
       });
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt: any) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
         done();
       });
 
@@ -301,7 +301,7 @@ test.serial(
         t.pass('called step complete');
       });
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, ({ payload }: any) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
         done();
       });
 
@@ -586,7 +586,7 @@ test.serial(
       const bc = createEdge('b', 'c');
       bc.condition = 'on_job_success';
 
-      const run = createRun([a, b, c], [ab, bc]);
+      const run = createRun([a, b, c] as any, [ab, bc] as any);
 
       const results: Record<string, any> = {};
 

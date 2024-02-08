@@ -16,7 +16,6 @@ test.afterEach(() => {
 
 test('workloop can be cancelled', async (t) => {
   let count = 0;
-  let cancel: any;
   const app = {
     queueChannel: mockChannel({
       [CLAIM]: () => {
@@ -37,8 +36,6 @@ test('workloop can be cancelled', async (t) => {
 
 test('workloop sends the runs:claim event', (t) => {
   return new Promise((done) => {
-    let cancel;
-
     const app = {
       workflows: {},
       queueChannel: mockChannel({
@@ -56,7 +53,6 @@ test('workloop sends the runs:claim event', (t) => {
 
 test('workloop sends the runs:claim event several times ', (t) => {
   return new Promise((done) => {
-    let cancel;
     let count = 0;
     const app = {
       workflows: {},
@@ -78,8 +74,6 @@ test('workloop sends the runs:claim event several times ', (t) => {
 
 test('workloop calls execute if runs:claim returns runs', (t) => {
   return new Promise((done) => {
-    let cancel;
-
     const app = {
       workflows: {},
       queueChannel: mockChannel({

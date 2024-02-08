@@ -1,11 +1,12 @@
 import test from 'ava';
-import handleStepStart from '../../src/events/step-complete';
+import type { StepCompletePayload } from '@openfn/lexicon/lightning';
 
+import handleStepComplete from '../../src/events/step-complete';
 import { mockChannel } from '../../src/mock/sockets';
 import { createRunState } from '../../src/util';
 import { STEP_COMPLETE } from '../../src/events';
-
 import { createPlan } from '../util';
+import { JobCompletePayload } from '@openfn/engine-multi';
 
 test('clear the step id and active job on state', async (t) => {
   const plan = createPlan();
@@ -19,8 +20,8 @@ test('clear the step id and active job on state', async (t) => {
     [STEP_COMPLETE]: () => true,
   });
 
-  const event = { state: { x: 10 } };
-  await handleStepStart({ channel, state } as any, event);
+  const event = { state: { x: 10 } } as any;
+  await handleStepComplete({ channel, state } as any, event);
 
   t.falsy(state.activeJob);
   t.falsy(state.activeStep);
@@ -41,8 +42,8 @@ test('setup input mappings on on state', async (t) => {
     },
   });
 
-  const engineEvent = { state: { x: 10 }, next: ['job-2'] };
-  await handleStepStart({ channel, state } as any, engineEvent);
+  const engineEvent = { state: { x: 10 }, next: ['job-2'] } as any;
+  await handleStepComplete({ channel, state } as any, engineEvent);
 
   t.deepEqual(state.inputDataclips, {
     ['job-2']: lightningEvent.output_dataclip_id,
@@ -61,8 +62,8 @@ test('save the dataclip to state', async (t) => {
     [STEP_COMPLETE]: () => true,
   });
 
-  const event = { state: { x: 10 } };
-  await handleStepStart({ channel, state } as any, event);
+  const event = { state: { x: 10 } } as any;
+  await handleStepComplete({ channel, state } as any, event);
 
   t.is(Object.keys(state.dataclips).length, 1);
   const [dataclip] = Object.values(state.dataclips);
@@ -83,8 +84,8 @@ test('write a reason to state', async (t) => {
     [STEP_COMPLETE]: () => true,
   });
 
-  const event = { state: { x: 10 } };
-  await handleStepStart({ channel, state } as any, event);
+  const event = { state: { x: 10 } } as any;
+  await handleStepComplete({ channel, state } as any, event);
 
   t.is(Object.keys(state.reasons).length, 1);
   t.deepEqual(state.reasons[jobId], {
@@ -110,7 +111,10 @@ test('generate an exit reason: success', async (t) => {
     },
   });
 
-  await handleStepStart({ channel, state } as any, { state: { x: 10 } });
+  await handleStepComplete(
+    { channel, state } as any,
+    { state: { x: 10 } } as any
+  );
 
   t.truthy(event);
   t.is(event.reason, 'success');
@@ -128,7 +132,7 @@ test('send a step:complete event', async (t) => {
   state.activeStep = 'b';
 
   const channel = mockChannel({
-    [STEP_COMPLETE]: (evt) => {
+    [STEP_COMPLETE]: (evt: StepCompletePayload) => {
       t.is(evt.job_id, jobId);
       t.truthy(evt.step_id);
       t.truthy(evt.output_dataclip_id);
@@ -140,11 +144,13 @@ test('send a step:complete event', async (t) => {
   });
 
   const event = {
+    jobId,
+    workflowId: plan.id,
     state: result,
     next: ['a'],
     mem: { job: 1, system: 10 },
     duration: 61,
-    threadId: 'abc',
-  };
-  await handleStepStart({ channel, state } as any, event);
+    thread_id: 'abc',
+  } as JobCompletePayload;
+  await handleStepComplete({ channel, state } as any, event);
 });
