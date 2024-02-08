@@ -302,14 +302,17 @@ test('execute should return a context object', async (t) => {
 
   const plan = {
     id: 'a',
-    jobs: [
-      {
-        expression: 'fn(() => ({ done: true }))',
-      },
-    ],
+    workflow: {
+      steps: [
+        {
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
   };
 
   const options = {};
+  const input = {};
 
   return new Promise((done) => {
     const context = execute(
@@ -317,13 +320,13 @@ test('execute should return a context object', async (t) => {
       engine,
       logger,
       plan,
+      input,
       options,
       (result) => {
         done();
       }
     );
     t.truthy(context.state);
-    t.deepEqual(context.state.options, options);
     t.deepEqual(context.channel, channel);
     t.deepEqual(context.logger, logger);
   });
