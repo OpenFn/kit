@@ -1,7 +1,3 @@
-/*
- * New entry point for loading up the input/execution plan
-   Note that htere's a lot of complexity from load input that I need to deal with here :(
- */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { isPath } from '@openfn/compiler';
@@ -155,10 +151,7 @@ const loadOldWorkflow = async (
   // call loadXPlan now so that any options can be written
   const final = await loadXPlan(plan, options, logger, defaultName);
 
-  // TODO this can be nicer
-  logger.warn(
-    'converted old workflow format into new execution plan format. See below for details'
-  );
+  logger.warn('Converted workflow into new format:');
   logger.warn(final);
 
   return final;
