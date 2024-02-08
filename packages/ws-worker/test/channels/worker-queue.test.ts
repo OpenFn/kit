@@ -1,8 +1,11 @@
 import test from 'ava';
 import * as jose from 'jose';
+import { createMockLogger } from '@openfn/logger';
+import { API_VERSION } from '@openfn/lexicon/lightning';
+import pkg from '../../package.json' assert { type: 'json' };
+
 import connectToWorkerQueue from '../../src/channels/worker-queue';
 import { mockSocket } from '../../src/mock/sockets';
-import { createMockLogger } from '@openfn/logger';
 
 const logger = createMockLogger();
 
@@ -52,6 +55,31 @@ test('should connect with an auth token', async (t) => {
       t.pass('connected');
       done();
     });
+  });
+});
+
+test('should connect with api and worker versions', async (t) => {
+  return new Promise((done) => {
+    function createSocket(endpoint: string, options: any) {
+      const socket = mockSocket(endpoint, {}, async () => {
+        const { worker_version, api_version } = options.params;
+
+        t.is(worker_version, pkg.version);
+        t.truthy(worker_version);
+
+        t.is(api_version, API_VERSION);
+        t.truthy(api_version);
+      });
+
+      return socket;
+    }
+
+    connectToWorkerQueue('www', 'a', 'secret', logger, createSocket as any).on(
+      'connect',
+      ({ socket, channel }) => {
+        done();
+      }
+    );
   });
 });
 
