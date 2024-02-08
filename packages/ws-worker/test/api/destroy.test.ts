@@ -1,20 +1,20 @@
 import test from 'ava';
 import crypto from 'node:crypto';
-
 import createLightningServer from '@openfn/lightning-mock';
+import { createMockLogger } from '@openfn/logger';
+import { Run } from '@openfn/lexicon/lightning';
+
 import createWorker from '../../src/server';
 import createMockRTE from '../../src/mock/runtime-engine';
-
 import destroy from '../../src/api/destroy';
-import { createMockLogger } from '@openfn/logger';
-import { Run } from '../../src/types';
 
 const workerPort = 9876;
 const lightningPort = workerPort + 1;
 
 const logger = createMockLogger();
 const lightning = createLightningServer({ port: lightningPort });
-let worker;
+
+let worker: any;
 
 test.beforeEach(async () => {
   const engine = await createMockRTE();
@@ -120,46 +120,43 @@ test.serial('destroy a worker while one run is active', async (t) => {
   });
 });
 
-test.serial(
-  'destroy a worker while multiple runs are active',
-  async (t) => {
-    return new Promise((done) => {
-      let completeCount = 0;
-      let startCount = 0;
+test.serial('destroy a worker while multiple runs are active', async (t) => {
+  return new Promise((done) => {
+    let completeCount = 0;
+    let startCount = 0;
 
-      const doDestroy = async () => {
-        await destroy(worker, logger);
+    const doDestroy = async () => {
+      await destroy(worker, logger);
 
-        // Ensure all three runs completed
-        t.is(completeCount, 3);
+      // Ensure all three runs completed
+      t.is(completeCount, 3);
 
-        // should not respond to get
-        t.false(await ping());
-        // should not be claiming
-        t.false(await waitForClaim());
+      // should not respond to get
+      t.false(await ping());
+      // should not be claiming
+      t.false(await waitForClaim());
 
-        done();
-      };
+      done();
+    };
 
-      lightning.on('run:start', () => {
-        startCount++;
+    lightning.on('run:start', () => {
+      startCount++;
 
-        // Let all three workflows start before we kill the server
-        if (startCount === 3) {
-          doDestroy();
-        }
-      });
-
-      lightning.on('run:complete', () => {
-        completeCount++;
-      });
-
-      lightning.enqueueRun(createRun());
-      lightning.enqueueRun(createRun());
-      lightning.enqueueRun(createRun());
+      // Let all three workflows start before we kill the server
+      if (startCount === 3) {
+        doDestroy();
+      }
     });
-  }
-);
+
+    lightning.on('run:complete', () => {
+      completeCount++;
+    });
+
+    lightning.enqueueRun(createRun());
+    lightning.enqueueRun(createRun());
+    lightning.enqueueRun(createRun());
+  });
+});
 
 test("don't claim after destroy", (t) => {
   return new Promise((done) => {

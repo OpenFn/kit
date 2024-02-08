@@ -1,7 +1,9 @@
 type EventHandler = (evt?: any) => void;
 
 // Mock websocket implementations
-export const mockChannel = (callbacks: Record<string, EventHandler> = {}) => {
+export const mockChannel = (
+  callbacks: Record<string, EventHandler> = {}
+): any => {
   const c = {
     on: (event: string, fn: EventHandler) => {
       // TODO support multiple callbacks

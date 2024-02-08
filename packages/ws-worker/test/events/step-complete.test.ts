@@ -20,14 +20,14 @@ test('clear the step id and active job on state', async (t) => {
   });
 
   const event = { state: { x: 10 } };
-  await handleStepStart({ channel, state }, event);
+  await handleStepStart({ channel, state } as any, event);
 
   t.falsy(state.activeJob);
   t.falsy(state.activeStep);
 });
 
 test('setup input mappings on on state', async (t) => {
-  let lightningEvent;
+  let lightningEvent: any;
   const plan = createPlan();
   const jobId = 'job-1';
 
@@ -42,7 +42,7 @@ test('setup input mappings on on state', async (t) => {
   });
 
   const engineEvent = { state: { x: 10 }, next: ['job-2'] };
-  await handleStepStart({ channel, state }, engineEvent);
+  await handleStepStart({ channel, state } as any, engineEvent);
 
   t.deepEqual(state.inputDataclips, {
     ['job-2']: lightningEvent.output_dataclip_id,
@@ -62,7 +62,7 @@ test('save the dataclip to state', async (t) => {
   });
 
   const event = { state: { x: 10 } };
-  await handleStepStart({ channel, state }, event);
+  await handleStepStart({ channel, state } as any, event);
 
   t.is(Object.keys(state.dataclips).length, 1);
   const [dataclip] = Object.values(state.dataclips);
@@ -84,7 +84,7 @@ test('write a reason to state', async (t) => {
   });
 
   const event = { state: { x: 10 } };
-  await handleStepStart({ channel, state }, event);
+  await handleStepStart({ channel, state } as any, event);
 
   t.is(Object.keys(state.reasons).length, 1);
   t.deepEqual(state.reasons[jobId], {
@@ -102,7 +102,7 @@ test('generate an exit reason: success', async (t) => {
   state.activeJob = jobId;
   state.activeStep = 'b';
 
-  let event;
+  let event: any;
 
   const channel = mockChannel({
     [STEP_COMPLETE]: (e) => {
@@ -110,7 +110,7 @@ test('generate an exit reason: success', async (t) => {
     },
   });
 
-  await handleStepStart({ channel, state }, { state: { x: 10 } });
+  await handleStepStart({ channel, state } as any, { state: { x: 10 } });
 
   t.truthy(event);
   t.is(event.reason, 'success');
@@ -146,5 +146,5 @@ test('send a step:complete event', async (t) => {
     duration: 61,
     threadId: 'abc',
   };
-  await handleStepStart({ channel, state }, event);
+  await handleStepStart({ channel, state } as any, event);
 });

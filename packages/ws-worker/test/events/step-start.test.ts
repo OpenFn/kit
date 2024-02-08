@@ -10,7 +10,11 @@ import { RUN_LOG, STEP_START } from '../../src/events';
 import pkg from '../../package.json' assert { type: 'json' };
 
 test('set a step id and active job on state', async (t) => {
-  const plan = { id: 'run-1', workflow: { steps: [{ id: 'job-1' }] } };
+  const plan = {
+    id: 'run-1',
+    workflow: { steps: [{ id: 'job-1' }] },
+    options: {},
+  };
   const jobId = 'job-1';
 
   const state = createRunState(plan);
@@ -20,7 +24,7 @@ test('set a step id and active job on state', async (t) => {
     [RUN_LOG]: (x) => x,
   });
 
-  await handleStepStart({ channel, state }, { jobId });
+  await handleStepStart({ channel, state } as any, { jobId });
 
   t.is(state.activeJob, jobId);
   t.truthy(state.activeStep);
@@ -54,7 +58,7 @@ test('send a step:start event', async (t) => {
     [RUN_LOG]: () => true,
   });
 
-  await handleStepStart({ channel, state }, { jobId });
+  await handleStepStart({ channel, state } as any, { jobId });
 });
 
 test('step:start event should include versions', async (t) => {
@@ -97,11 +101,11 @@ test('step:start event should include versions', async (t) => {
     [RUN_LOG]: () => true,
   });
 
-  await handleStepStart({ channel, state }, event);
+  await handleStepStart({ channel, state } as any, event);
 });
 
 test('also logs the version number', async (t) => {
-  let logEvent;
+  let logEvent: any;
   const plan = {
     id: 'run-1',
     workflow: {
@@ -140,7 +144,7 @@ test('also logs the version number', async (t) => {
     },
   });
 
-  await handleStepStart({ channel, state }, event);
+  await handleStepStart({ channel, state } as any, event);
 
   t.truthy(logEvent);
   t.is(logEvent.level, 'info');

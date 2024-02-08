@@ -4,7 +4,7 @@ import { calculateJobExitReason } from '../../src/api/reasons';
 
 test('success', (t) => {
   const jobId = 'a';
-  const state = {};
+  const state: any = {};
   const error = undefined;
   const r = calculateJobExitReason(jobId, state, error);
 
@@ -15,7 +15,7 @@ test('success', (t) => {
 
 test('still success if a prior job has errors', (t) => {
   const jobId = 'a';
-  const state = {
+  const state: any = {
     errors: {
       b: {
         type: 'RuntimeError',
@@ -34,7 +34,7 @@ test('still success if a prior job has errors', (t) => {
 
 test('fail', (t) => {
   const jobId = 'a';
-  const state = {
+  const state: any = {
     errors: {
       a: {
         type: 'RuntimeError',
@@ -52,7 +52,7 @@ test('fail', (t) => {
 
 test('crash', (t) => {
   const jobId = 'a';
-  const state = {};
+  const state: any = {};
   const error = new RuntimeCrash(new ReferenceError('x is not defined'));
   const r = calculateJobExitReason(jobId, state, error);
 
@@ -63,7 +63,7 @@ test('crash', (t) => {
 
 test('crash has priority over fail', (t) => {
   const jobId = 'a';
-  const state = {
+  const state: any = {
     errors: {
       b: {
         type: 'RuntimeError',
@@ -83,7 +83,7 @@ test('crash has priority over fail', (t) => {
 // But it should not stop us calculating a reason
 test('success if no state is passed', (t) => {
   const jobId = 'a';
-  const state = undefined;
+  const state: any = undefined;
   const error = undefined;
   const r = calculateJobExitReason(jobId, state, error);
 
@@ -94,7 +94,7 @@ test('success if no state is passed', (t) => {
 
 test('success if boolean state is passed', (t) => {
   const jobId = 'a';
-  const state = true;
+  const state: any = true;
   const error = undefined;
   const r = calculateJobExitReason(jobId, state, error);
 

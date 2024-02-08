@@ -8,7 +8,7 @@ const logger = createMockLogger();
 
 test('should connect', async (t) => {
   return new Promise((done) => {
-    connectToWorkerQueue('www', 'a', 'secret', logger, mockSocket).on(
+    connectToWorkerQueue('www', 'a', 'secret', logger, mockSocket as any).on(
       'connect',
       ({ socket, channel }) => {
         t.truthy(socket);
@@ -28,7 +28,7 @@ test('should connect with an auth token', async (t) => {
     const secret = 'xyz';
     const encodedSecret = new TextEncoder().encode(secret);
 
-    function createSocket(endpoint, options) {
+    function createSocket(endpoint: string, options: any) {
       const socket = mockSocket(endpoint, {}, async () => {
         const { token } = options.params;
 
@@ -38,17 +38,20 @@ test('should connect with an auth token', async (t) => {
 
       return socket;
     }
-    connectToWorkerQueue('www', workerId, secret, logger, createSocket).on(
-      'connect',
-      ({ socket, channel }) => {
-        t.truthy(socket);
-        t.truthy(socket.connect);
-        t.truthy(channel);
-        t.truthy(channel.join);
-        t.pass('connected');
-        done();
-      }
-    );
+    connectToWorkerQueue(
+      'www',
+      workerId,
+      secret,
+      logger,
+      createSocket as any
+    ).on('connect', ({ socket, channel }) => {
+      t.truthy(socket);
+      t.truthy(socket.connect);
+      t.truthy(channel);
+      t.truthy(channel.join);
+      t.pass('connected');
+      done();
+    });
   });
 });
 
@@ -58,7 +61,7 @@ test('should fail to connect with an invalid auth token', async (t) => {
     const secret = 'xyz';
     const encodedSecret = new TextEncoder().encode(secret);
 
-    function createSocket(endpoint, options) {
+    function createSocket(endpoint: string, options: any) {
       const socket = mockSocket(endpoint, {}, async () => {
         const { token } = options.params;
 
@@ -77,7 +80,7 @@ test('should fail to connect with an invalid auth token', async (t) => {
       workerId,
       'wrong-secret!',
       logger,
-      createSocket
+      createSocket as any
     ).on('error', (e) => {
       t.is(e, 'auth_fail');
       t.pass('error thrown');

@@ -1,12 +1,7 @@
 import test from 'ava';
 import type { Run, Node } from '@openfn/lexicon/lightning';
 import convertRun, { conditions } from '../../src/util/convert-run';
-import {
-  ConditionalStepEdge,
-  Job,
-  StepEdge,
-  StepEdgeObj,
-} from '@openfn/lexicon';
+import { ConditionalStepEdge, Job } from '@openfn/lexicon';
 
 // Creates a lightning node (job or trigger)
 const createNode = (props = {}) =>
@@ -18,7 +13,7 @@ const createNode = (props = {}) =>
     ...props,
   } as Node);
 
-const createEdge = (from, to, props = {}) => ({
+const createEdge = (from: string, to: string, props = {}) => ({
   id: `${from}-${to}`,
   source_job_id: from,
   target_job_id: to,
@@ -42,7 +37,7 @@ const createJob = (props = {}) => ({
   ...props,
 });
 
-const testEdgeCondition = (expr, state) => {
+const testEdgeCondition = (expr: string, state: any) => {
   const fn = new Function('state', 'return ' + expr);
   return fn(state);
 };
@@ -408,7 +403,7 @@ test('on_job_success condition: return true if no errors', (t) => {
   const condition = conditions.on_job_success('a');
 
   const state = {};
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, true);
 });
@@ -419,7 +414,7 @@ test('on_job_success condition: return true if state is undefined', (t) => {
   const condition = conditions.on_job_success('a');
 
   const state = undefined;
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, true);
 });
@@ -434,7 +429,7 @@ test('on_job_success condition: return true if unconnected upstream errors', (t)
       },
     },
   };
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, true);
 });
@@ -449,7 +444,7 @@ test('on_job_success condition: return false if the upstream job errored', (t) =
       },
     },
   };
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, false);
 });
@@ -464,7 +459,7 @@ test('on_job_failure condition: return true if error immediately upstream', (t) 
       },
     },
   };
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, true);
 });
@@ -479,7 +474,7 @@ test('on_job_failure condition: return false if unrelated error upstream', (t) =
       },
     },
   };
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, false);
 });
@@ -488,7 +483,7 @@ test('on_job_failure condition: return false if no errors', (t) => {
   const condition = conditions.on_job_failure('a');
 
   const state = {};
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, false);
 });
@@ -497,7 +492,7 @@ test('on_job_failure condition: return false if state is undefined', (t) => {
   const condition = conditions.on_job_failure('a');
 
   const state = undefined;
-  const result = testEdgeCondition(condition, state);
+  const result = testEdgeCondition(condition!, state);
 
   t.is(result, false);
 });
@@ -515,8 +510,8 @@ test('convert edge condition on_job_success', (t) => {
   const edge = job.next as Record<string, ConditionalStepEdge>;
 
   t.truthy(edge.b);
-  t.is(edge.b.condition, conditions.on_job_success('a')!);
-  t.true(testEdgeCondition(edge.b.condition, {}));
+  t.is(edge.b.condition!, conditions.on_job_success('a')!);
+  t.true(testEdgeCondition(edge.b.condition!, {}));
 });
 
 test('convert edge condition on_job_failure', (t) => {
@@ -532,10 +527,10 @@ test('convert edge condition on_job_failure', (t) => {
   const edge = job.next as Record<string, ConditionalStepEdge>;
 
   t.truthy(edge.b);
-  t.is(edge.b.condition, conditions.on_job_failure('a')!);
+  t.is(edge.b.condition!, conditions.on_job_failure('a')!);
   // Check that this is valid js
   t.true(
-    testEdgeCondition(edge.b.condition, {
+    testEdgeCondition(edge.b.condition!, {
       errors: { a: {} },
     })
   );
@@ -554,9 +549,9 @@ test('convert edge condition on_job_success with a funky id', (t) => {
   const edge = job.next as Record<string, ConditionalStepEdge>;
 
   t.truthy(edge.b);
-  t.is(edge.b.condition, conditions.on_job_success(id_a)!);
+  t.is(edge.b.condition!, conditions.on_job_success(id_a)!);
   // Check that this is valid js
-  t.true(testEdgeCondition(edge.b.condition, {}));
+  t.true(testEdgeCondition(edge.b.condition!, {}));
 });
 
 test('convert edge condition always', (t) => {

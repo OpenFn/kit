@@ -5,7 +5,7 @@ import { mockChannel } from '../../src/mock/sockets';
 import { RUN_COMPLETE, RUN_LOG, STEP_COMPLETE } from '../../src/events';
 import { createRunState } from '../../src/util';
 
-const plan = { id: 'run-1', jobs: [] };
+const plan = { id: 'run-1', workflow: { steps: [] }, options: {} };
 
 test('runError should trigger runComplete with a reason', async (t) => {
   const jobId = 'job-1';
@@ -33,7 +33,7 @@ test('runError should trigger runComplete with a reason', async (t) => {
 
   const context = { channel, state, onFinish: () => {} };
 
-  await onRunError(context, event);
+  await onRunError(context as any, event);
 });
 
 test('workflow error should send reason to onFinish', async (t) => {
@@ -67,7 +67,7 @@ test('workflow error should send reason to onFinish', async (t) => {
     },
   };
 
-  await onRunError(context, event);
+  await onRunError(context as any, event);
 });
 
 test('runError should not call job complete if the job is not active', async (t) => {
@@ -100,7 +100,7 @@ test('runError should not call job complete if the job is not active', async (t)
     },
   };
 
-  await onRunError(context, event);
+  await onRunError(context as any, event);
 });
 
 test('runError should log the reason', async (t) => {
@@ -133,6 +133,6 @@ test('runError should log the reason', async (t) => {
 
   const context = { channel, state, onFinish: () => {} };
 
-  await onRunError(context, event);
+  await onRunError(context as any, event);
   t.is(logEvent.message[0], 'Run complete with status: crash\nErr: it crashed');
 });

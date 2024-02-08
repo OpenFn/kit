@@ -1,13 +1,12 @@
 import test from 'ava';
+import { createMockLogger } from '@openfn/logger';
 
 import { sleep } from '../util';
-
 import { mockChannel } from '../../src/mock/sockets';
 import startWorkloop from '../../src/api/workloop';
 import { CLAIM } from '../../src/events';
-import { createMockLogger } from '@openfn/logger';
 
-let cancel;
+let cancel: any;
 
 const logger = createMockLogger();
 
@@ -17,7 +16,7 @@ test.afterEach(() => {
 
 test('workloop can be cancelled', async (t) => {
   let count = 0;
-  let cancel;
+  let cancel: any;
   const app = {
     queueChannel: mockChannel({
       [CLAIM]: () => {
@@ -29,7 +28,7 @@ test('workloop can be cancelled', async (t) => {
     execute: () => {},
   };
 
-  cancel = startWorkloop(app, logger, 1, 1);
+  cancel = startWorkloop(app as any, logger, 1, 1);
 
   await sleep(100);
   // A quirk of how cancel works is that the loop will be called a few times
@@ -51,7 +50,7 @@ test('workloop sends the runs:claim event', (t) => {
       }),
       execute: () => {},
     };
-    cancel = startWorkloop(app, logger, 1, 1);
+    cancel = startWorkloop(app as any, logger, 1, 1);
   });
 });
 
@@ -73,7 +72,7 @@ test('workloop sends the runs:claim event several times ', (t) => {
       }),
       execute: () => {},
     };
-    cancel = startWorkloop(app, logger, 1, 1);
+    cancel = startWorkloop(app as any, logger, 1, 1);
   });
 });
 
@@ -88,13 +87,13 @@ test('workloop calls execute if runs:claim returns runs', (t) => {
           runs: [{ id: 'a', token: 'x.y.z' }],
         }),
       }),
-      execute: (run) => {
+      execute: (run: any) => {
         t.deepEqual(run, { id: 'a', token: 'x.y.z' });
         t.pass();
         done();
       },
     };
 
-    cancel = startWorkloop(app, logger, 1, 1);
+    cancel = startWorkloop(app as any, logger, 1, 1);
   });
 });

@@ -13,9 +13,10 @@ import {
   RUN_START,
   RUN_COMPLETE,
 } from '../src/events';
+import { ExecutionPlan } from '@openfn/lexicon';
 
-let engine;
-let logger;
+let engine: any;
+let logger: any;
 
 test.before(async () => {
   logger = createMockLogger();
@@ -38,7 +39,7 @@ test.before(async () => {
 test.after(async () => engine.destroy());
 
 // Wrap up an execute call, capture the on complete state
-const execute = async (plan, input = {}, options = {}) =>
+const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
   new Promise<{ reason: ExitReason; state: any }>((done) => {
     // Ignore all channel events
     // In these test we assume that the correct messages are sent to the channel
@@ -50,7 +51,7 @@ const execute = async (plan, input = {}, options = {}) =>
       [RUN_COMPLETE]: async () => true,
     });
 
-    const onFinish = (result) => {
+    const onFinish = (result: any) => {
       done(result);
     };
 

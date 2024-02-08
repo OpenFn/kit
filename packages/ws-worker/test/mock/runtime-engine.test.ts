@@ -2,10 +2,10 @@ import test from 'ava';
 import type { ExecutionPlan } from '@openfn/lexicon';
 
 import type {
-  JobCompleteEvent,
-  JobStartEvent,
-  WorkflowCompleteEvent,
-  WorkflowStartEvent,
+  JobCompletePayload,
+  JobStartePayload,
+  WorkflowCompletePayload,
+  WorkflowStartPayload,
 } from '@openfn/engine-multi';
 import create from '../../src/mock/runtime-engine';
 import { waitForEvent, clone, createPlan } from '../util';
@@ -23,7 +23,7 @@ const sampleWorkflow = {
   },
 } as ExecutionPlan;
 
-let engine;
+let engine: any;
 
 test.before(async () => {
   engine = await create();
@@ -37,7 +37,10 @@ test.serial('getStatus() should should have no active workflows', async (t) => {
 
 test.serial('Dispatch start events for a new workflow', async (t) => {
   engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<WorkflowStartEvent>(engine, 'workflow-start');
+  const evt = await waitForEvent<WorkflowStartPayload>(
+    engine,
+    'workflow-start'
+  );
   t.truthy(evt);
   t.is(evt.workflowId, 'w1');
 });
@@ -52,7 +55,7 @@ test.serial('getStatus should report one active workflow', async (t) => {
 
 test.serial('Dispatch complete events when a workflow completes', async (t) => {
   engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<WorkflowCompleteEvent>(
+  const evt = await waitForEvent<WorkflowCompletePayload>(
     engine,
     'workflow-complete'
   );
@@ -63,7 +66,7 @@ test.serial('Dispatch complete events when a workflow completes', async (t) => {
 
 test.serial('Dispatch start events for a job', async (t) => {
   engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<JobStartEvent>(engine, 'job-start');
+  const evt = await waitForEvent<JobStartePayload>(engine, 'job-start');
   t.truthy(evt);
   t.is(evt.workflowId, 'w1');
   t.is(evt.jobId, 'j1');
@@ -71,7 +74,7 @@ test.serial('Dispatch start events for a job', async (t) => {
 
 test.serial('Dispatch complete events for a job', async (t) => {
   engine.execute(sampleWorkflow);
-  const evt = await waitForEvent<JobCompleteEvent>(engine, 'job-complete');
+  const evt = await waitForEvent<JobCompletePayload>(engine, 'job-complete');
   t.truthy(evt);
   t.is(evt.workflowId, 'w1');
   t.is(evt.jobId, 'j1');
@@ -86,7 +89,7 @@ test.serial('Dispatch error event for a crash', async (t) => {
   });
 
   engine.execute(wf);
-  const evt = await waitForEvent<JobCompleteEvent>(engine, 'workflow-error');
+  const evt = await waitForEvent<JobCompletePayload>(engine, 'workflow-error');
 
   t.is(evt.workflowId, wf.id);
   t.is(evt.type, 'RuntimeCrash');
@@ -101,7 +104,7 @@ test.serial('wait function', async (t) => {
   engine.execute(wf);
   const start = Date.now();
 
-  await waitForEvent<JobCompleteEvent>(engine, 'workflow-complete');
+  await waitForEvent<JobCompletePayload>(engine, 'workflow-complete');
 
   const end = Date.now() - start;
   t.true(end > 90);
@@ -115,7 +118,7 @@ test.serial(
     wf.workflow.steps[0].configuration = 'x';
 
     let didCallCredentials;
-    const credential = async (_id) => {
+    const credential = async () => {
       didCallCredentials = true;
       return {};
     };
@@ -123,7 +126,7 @@ test.serial(
     // @ts-ignore
     engine.execute(wf, {}, { resolvers: { credential } });
 
-    await waitForEvent<WorkflowCompleteEvent>(engine, 'job-start');
+    await waitForEvent<WorkflowCompletePayload>(engine, 'job-start');
     t.true(didCallCredentials);
   }
 );
@@ -144,46 +147,46 @@ test.serial('listen to events', async (t) => {
   });
 
   engine.listen(wf.id, {
-    'job-start': ({ workflowId, jobId }) => {
+    'job-start': ({ workflowId, jobId }: any) => {
       called['job-start'] = true;
       t.is(workflowId, wf.id);
       t.is(jobId, wf.workflow.steps[0].id);
     },
-    'job-complete': ({ workflowId, jobId }) => {
+    'job-complete': ({ workflowId, jobId }: any) => {
       called['job-complete'] = true;
       t.is(workflowId, wf.id);
       t.is(jobId, wf.workflow.steps[0].id);
       // TODO includes state?
     },
-    'workflow-log': ({ workflowId, message }) => {
+    'workflow-log': ({ workflowId, message }: any) => {
       called['workflow-log'] = true;
       t.is(workflowId, wf.id);
       t.truthy(message);
     },
-    'workflow-start': ({ workflowId }) => {
+    'workflow-start': ({ workflowId }: any) => {
       called['workflow-start'] = true;
       t.is(workflowId, wf.id);
     },
-    'workflow-complete': ({ workflowId }) => {
+    'workflow-complete': ({ workflowId }: any) => {
       called['workflow-complete'] = true;
       t.is(workflowId, wf.id);
     },
   });
 
   engine.execute(wf);
-  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+  await waitForEvent<WorkflowCompletePayload>(engine, 'workflow-complete');
   t.assert(Object.values(called).every((v) => v === true));
 });
 
 test.serial('only listen to events for the correct workflow', async (t) => {
   engine.listen('bobby mcgee', {
-    'workflow-start': ({ workflowId }) => {
+    'workflow-start': () => {
       throw new Error('should not have called this!!');
     },
   });
 
   engine.execute(sampleWorkflow);
-  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+  await waitForEvent<WorkflowCompletePayload>(engine, 'workflow-complete');
   t.pass();
 });
 
@@ -194,7 +197,7 @@ test.serial('log events should stringify a string message', async (t) => {
     'fn((s) => {console.log("haul away joe"); return s; })';
 
   engine.listen(wf.id, {
-    'workflow-log': ({ message }) => {
+    'workflow-log': ({ message }: any) => {
       t.is(typeof message, 'string');
       const result = JSON.parse(message);
       t.deepEqual(result, ['haul away joe']);
@@ -202,7 +205,7 @@ test.serial('log events should stringify a string message', async (t) => {
   });
 
   engine.execute(wf);
-  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+  await waitForEvent<WorkflowCompletePayload>(engine, 'workflow-complete');
 });
 
 test.serial('log events should stringify an object message', async (t) => {
@@ -212,7 +215,7 @@ test.serial('log events should stringify an object message', async (t) => {
     'fn((s) => {console.log({ x: 22 }); return s; })';
 
   engine.listen(wf.id, {
-    'workflow-log': ({ message }) => {
+    'workflow-log': ({ message }: any) => {
       t.is(typeof message, 'string');
       const result = JSON.parse(message);
       t.deepEqual(result, [{ x: 22 }]);
@@ -220,7 +223,7 @@ test.serial('log events should stringify an object message', async (t) => {
   });
 
   engine.execute(wf);
-  await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+  await waitForEvent<WorkflowCompletePayload>(engine, 'workflow-complete');
 });
 
 test.serial(
@@ -253,7 +256,7 @@ test.serial(
     });
 
     engine.execute(workflow);
-    await waitForEvent<WorkflowCompleteEvent>(engine, 'workflow-complete');
+    await waitForEvent<WorkflowCompletePayload>(engine, 'workflow-complete');
 
     t.false(didCallEvent);
   }
@@ -266,7 +269,7 @@ test.skip('timeout', async (t) => {
   // @ts-ignore
   engine.execute(wf, {}, { timeout: 10 });
 
-  const evt = await waitForEvent<WorkflowCompleteEvent>(
+  const evt = await waitForEvent<WorkflowCompletePayload>(
     engine,
     'workflow-error'
   );
