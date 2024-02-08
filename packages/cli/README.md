@@ -94,12 +94,12 @@ You're probably here to run Workflows (or individual jobs), which the CLI makes 
 
 ```
 openfn path/to/workflow.json
-openfn path/to/job.js -ia adaptor-name
+openfn path/to/job.js -a adaptor-name
 ```
 
 If running a single job, you MUST specify which adaptor to use.
 
-Pass the `-i` flag to auto-install any required adaptors (it's safe to do this redundantly, although the run will be a little slower).
+If the requested adaptor (or a matching version) is not already installed, it will be installed automatically. To disable this behaviour, pass the `--no-autoinstall` flag.
 
 When finished, the CLI will write the resulting state to disk. By default the CLI will create an `output.json` next to the job file. You can pass a path to output by passing `-o path/to/output.json` and state by adding `-s path/to/state.json`. You can use `-S` and `-O` to pass state through stdin and return the output through stdout.
 
