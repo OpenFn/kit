@@ -168,7 +168,7 @@ test.serial(
             severity: 'fail',
             source: 'runtime',
           },
-          jobId: 'start',
+          stepId: 'start',
           message: 'abort',
           type: 'JobError',
         },
