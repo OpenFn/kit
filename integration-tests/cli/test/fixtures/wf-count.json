@@ -1,14 +1,16 @@
 {
-  "jobs": [
-    {
-      "adaptor": "common",
-      "expression": "fn((state) => (state.data.count ? state : { data: { count: 21 } }));",
-      "next": { "b": true }
-    },
-    {
-      "id": "b",
-      "adaptor": "common",
-      "expression": "fn((state) => { state.data.count = state.data.count * 2; return state; });"
-    }
-  ]
+  "workflow": {
+    "steps": [
+      {
+        "adaptor": "common",
+        "expression": "fn((state) => (state.data.count ? state : { data: { count: 21 } }));",
+        "next": { "b": true }
+      },
+      {
+        "id": "b",
+        "adaptor": "common",
+        "expression": "fn((state) => { state.data.count = state.data.count * 2; return state; });"
+      }
+    ]
+  }
 }

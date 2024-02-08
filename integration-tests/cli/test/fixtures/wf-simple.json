@@ -1,8 +1,10 @@
 {
-  "jobs": [
-    {
-      "adaptor": "common",
-      "expression": "simple.js"
-    }
-  ]
+  "workflow": {
+    "steps": [
+      {
+        "adaptor": "common",
+        "expression": "simple.js"
+      }
+    ]
+  }
 }

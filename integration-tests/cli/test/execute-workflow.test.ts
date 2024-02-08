@@ -133,36 +133,6 @@ test.serial(
   }
 );
 
-test.serial(`openfn ${jobsPath}/wf-strict.json --strict`, async (t) => {
-  const { err } = await run(t.title);
-  t.falsy(err);
-
-  const out = getJSON();
-  t.deepEqual(out, {
-    data: {
-      name: 'jane',
-    },
-  });
-});
-
-test.serial(`openfn ${jobsPath}/wf-strict.json --no-strict`, async (t) => {
-  const { err } = await run(t.title);
-  t.falsy(err);
-
-  const out = getJSON();
-  t.deepEqual(out, {
-    x: 22,
-    data: {
-      name: 'jane',
-    },
-    references: [
-      {
-        name: 'bob',
-      },
-    ],
-  });
-});
-
 test.serial(
   `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 2 } }"`,
   async (t) => {
@@ -181,7 +151,7 @@ test.serial(
 test.serial(
   `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 32 } }"`,
   async (t) => {
-    const { err } = await run(t.title);
+    const { stdout, err } = await run(t.title);
     t.falsy(err);
 
     const out = getJSON();

@@ -1,8 +1,10 @@
 {
-  "jobs": [
-    {
-      "configuration": "does-not-exist.json",
-      "expression": "."
-    }
-  ]
+  "workflow": {
+    "steps": [
+      {
+        "configuration": "does-not-exist.json",
+        "expression": "."
+      }
+    ]
+  }
 }

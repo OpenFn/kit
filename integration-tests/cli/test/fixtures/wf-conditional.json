@@ -1,29 +1,31 @@
 {
-  "start": "start",
-  "jobs": [
-    {
-      "id": "start",
-      "state": {
-        "data": {
-          "number": 1
+  "options": { "start": "start" },
+  "workflow": {
+    "steps": [
+      {
+        "id": "start",
+        "state": {
+          "data": {
+            "number": 1
+          }
+        },
+        "adaptor": "common",
+        "expression": "fn((state) => state);",
+        "next": {
+          "small": { "condition": "state.data.number < 10" },
+          "large": { "condition": "state.data.number >= 10" }
         }
       },
-      "adaptor": "common",
-      "expression": "fn((state) => state);",
-      "next": {
-        "small": { "condition": "state.data.number < 10" },
-        "large": { "condition": "state.data.number >= 10" }
+      {
+        "id": "small",
+        "adaptor": "common",
+        "expression": "fn((state) => { state.data.result = \"small\"; return state; });"
+      },
+      {
+        "id": "large",
+        "adaptor": "common",
+        "expression": "fn((state) => { state.data.result = \"large\"; return state; });"
       }
-    },
-    {
-      "id": "small",
-      "adaptor": "common",
-      "expression": "fn((state) => { state.data.result = \"small\"; return state; });"
-    },
-    {
-      "id": "large",
-      "adaptor": "common",
-      "expression": "fn((state) => { state.data.result = \"large\"; return state; });"
-    }
-  ]
+    ]
+  }
 }
