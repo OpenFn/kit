@@ -63,6 +63,7 @@ export const mockChannel = (
       };
       return receive;
     },
+    leave: () => {},
   };
   return c;
 };
