@@ -80,7 +80,8 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
         logger,
         options.backoff?.min || MIN_BACKOFF,
         options.backoff?.max || MAX_BACKOFF,
-        options.maxWorkflows
+        options.maxWorkflows,
+        options.secret
       );
     } else {
       logger.break();
@@ -192,7 +193,10 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // Debug API to manually trigger a claim
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    return claim(app, logger, options.maxWorkflows)
+    return claim(app, logger, {
+      secret: options.secret,
+      maxWorkers: options.maxWorkflows,
+    })
       .then(() => {
         logger.info('claim complete: 1 run claimed');
         ctx.body = 'complete';

@@ -26,8 +26,7 @@ const generateWorkerToken = async (
   const jwt = await new jose.SignJWT(claims)
     .setProtectedHeader({ alg })
     .setIssuedAt()
-    .setIssuer('urn:example:issuer')
-    .setAudience('urn:example:audience')
+    .setIssuer('urn:openfn:worker')
     .sign(encodedSecret);
   // .setExpirationTime('2h') // ??
 

@@ -10,17 +10,25 @@ const startWorkloop = (
   logger: Logger,
   minBackoff: number,
   maxBackoff: number,
-  maxWorkers?: number
+  maxWorkers?: number,
+  secret?: string
 ) => {
   let promise: CancelablePromise;
   let cancelled = false;
 
   const workLoop = () => {
     if (!cancelled) {
-      promise = tryWithBackoff(() => claim(app, logger, maxWorkers), {
-        min: minBackoff,
-        max: maxBackoff,
-      });
+      promise = tryWithBackoff(
+        () =>
+          claim(app, logger, {
+            secret,
+            maxWorkers,
+          }),
+        {
+          min: minBackoff,
+          max: maxBackoff,
+        }
+      );
       // TODO this needs more unit tests I think
       promise.then(() => {
         if (!cancelled) {
