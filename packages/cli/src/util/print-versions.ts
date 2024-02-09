@@ -8,8 +8,6 @@ import { Opts } from '../options';
 
 const NODE = 'node.js';
 const CLI = 'cli';
-const RUNTIME = 'runtime';
-const COMPILER = 'compiler';
 
 const { triangleRightSmall: t } = mainSymbols;
 
@@ -26,7 +24,7 @@ const loadVersionFromPath = (adaptorPath: string) => {
 
 const printVersions = async (
   logger: Logger,
-  options: Partial<Pick<Opts, 'adaptors' | 'logJson'>> = {}
+  options: Partial<Pick<Opts, 'adaptors' | 'logJson' | 'monorepoPath'>> = {}
 ) => {
   const { adaptors, logJson } = options;
   let adaptor = '';
@@ -41,6 +39,9 @@ const printVersions = async (
       const [namePart, pathPart] = adaptor.split('=');
       adaptorVersion = loadVersionFromPath(pathPart);
       adaptorName = getNameAndVersion(namePart).name;
+    } else if (options.monorepoPath) {
+      adaptorName = getNameAndVersion(adaptor).name;
+      adaptorVersion = 'monorepo';
     } else {
       const { name, version } = getNameAndVersion(adaptor);
       adaptorName = name;
@@ -49,9 +50,7 @@ const printVersions = async (
   }
 
   // Work out the longest label
-  const longest = Math.max(
-    ...[NODE, CLI, RUNTIME, COMPILER, adaptorName].map((s) => s.length)
-  );
+  const longest = Math.max(...[NODE, CLI, adaptorName].map((s) => s.length));
 
   // Prefix and pad version numbers
   const prefix = (str: string) =>
@@ -62,10 +61,7 @@ const printVersions = async (
   // built into process/runner.js
 
   const pkg = JSON.parse(readFileSync(`${dirname}/../../package.json`, 'utf8'));
-  const { version, dependencies } = pkg;
-
-  const compilerVersion = dependencies['@openfn/compiler'];
-  const runtimeVersion = dependencies['@openfn/runtime'];
+  const { version } = pkg;
 
   let output: any;
   if (logJson) {
@@ -73,8 +69,6 @@ const printVersions = async (
       versions: {
         'node.js': process.version.substring(1),
         cli: version,
-        runtime: runtimeVersion,
-        compiler: compilerVersion,
       },
     };
     if (adaptorName) {
@@ -87,9 +81,7 @@ const printVersions = async (
 
     output = `Versions:
 ${prefix(NODE)}${process.version.substring(1)}
-${prefix(CLI)}${version}
-${prefix(RUNTIME)}${runtimeVersion}
-${prefix(COMPILER)}${compilerVersion}${adaptorVersionString}`;
+${prefix(CLI)}${version}${adaptorVersionString}`;
   }
   logger.always(output);
 };
