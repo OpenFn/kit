@@ -445,7 +445,7 @@ test.serial(
     const state = JSON.stringify({ data: { count: 11 } });
     const job = 'export default [byTwo]';
     const result = await run(
-      `openfn --no-expand-adaptors -S ${state} -a times-two`,
+      `openfn --no-expand-adaptors -S ${state} -a times-two  --no-autoinstall`,
       job,
       {
         repoDir: '/repo',
@@ -512,9 +512,13 @@ test.serial(
   async (t) => {
     const job =
       'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
-    const result = await run('openfn -a @openfn/language-postgres', job, {
-      repoDir: '/repo',
-    });
+    const result = await run(
+      'openfn -a @openfn/language-postgres --no-autoinstall',
+      job,
+      {
+        repoDir: '/repo',
+      }
+    );
     t.assert(result === 'execute called!');
   }
 );

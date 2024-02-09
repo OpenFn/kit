@@ -114,8 +114,8 @@ export const autoinstall: CLIOption = {
   yargs: {
     alias: ['i'],
     boolean: true,
-    description: 'Auto-install the language adaptor',
-    default: false,
+    description: 'Auto-install the language adaptor(s)',
+    default: true,
   },
 };
 
