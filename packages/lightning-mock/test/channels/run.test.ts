@@ -162,7 +162,7 @@ test.serial(
 
       const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
       channel
-        .push(GET_DATACLIP, { id: 'd' })
+        .push(GET_DATACLIP, { id: 'x' })
         .receive('error', (result: any) => {
           t.is(result, 'not_found');
           done();
