@@ -130,34 +130,44 @@ export function execute(
     // dataclip: (id: string) => loadDataclip(channel, id),
   } as Resolvers;
 
-  Promise.resolve()
+  setTimeout(async () => {
+    let loadedInput = input;
+
     // Optionally resolve initial state
-    .then(async () => {
-      // TODO we need to remove this from here and let the runtime take care of it through
-      // the resolver. See https://github.com/OpenFn/kit/issues/403
-      // TODO come back and work out how initial state will work
-      if (typeof input === 'string') {
-        logger.debug('loading dataclip', input);
-        const loadedInput = await loadDataclip(channel, input);
+    // TODO we need to remove this from here and let the runtime take care of it through
+    // the resolver. See https://github.com/OpenFn/kit/issues/403
+    // TODO come back and work out how initial state will work
+    if (typeof input === 'string') {
+      logger.debug('loading dataclip', input);
+
+      try {
+        loadedInput = await loadDataclip(channel, input);
         logger.success('dataclip loaded');
         return loadedInput;
-      }
-      return input;
-    })
-    // Execute (which we have to wrap in a promise chain to handle initial state)
-    .then((input: State) => {
-      try {
-        engine.execute(plan, input, { resolvers, ...options });
       } catch (e: any) {
-        // TODO what if there's an error?
-        handleRunError(context, {
+        // abort with error
+        return handleRunError(context, {
           workflowId: plan.id!,
-          message: e.message,
-          type: e.type,
-          severity: e.severity,
+          message: `Failed to load dataclip ${input}${
+            e.message ? `: ${e.message}` : ''
+          }`,
+          type: 'DataClipError',
+          severity: 'exception',
         });
       }
-    });
+    }
+
+    try {
+      engine.execute(plan, loadedInput as State, { resolvers, ...options });
+    } catch (e: any) {
+      handleRunError(context, {
+        workflowId: plan.id!,
+        message: e.message,
+        type: e.type,
+        severity: e.severity,
+      });
+    }
+  });
 
   return context;
 }

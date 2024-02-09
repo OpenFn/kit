@@ -84,6 +84,8 @@ export type DataClip = Record<string, any>;
 
 export type Credential = Record<string, any>;
 
+// TODO export reason strings from this repo
+// and explain what each reason means
 export type ExitReasonStrings =
   | 'success'
   | 'fail'
