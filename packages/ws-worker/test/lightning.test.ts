@@ -10,6 +10,7 @@ import { createRun, createEdge, createJob } from './util';
 import createWorkerServer from '../src/server';
 import createMockRTE from '../src/mock/runtime-engine';
 import * as e from '../src/events';
+import { RunCompletePayload } from '@openfn/lexicon/lightning';
 
 let lng: any;
 let worker: any;
@@ -234,6 +235,37 @@ test.serial(
         t.true(didCallEvent);
         done();
       });
+
+      lng.enqueueRun(run);
+    });
+  }
+);
+
+test.serial(
+  `events: worker should send an error if ${e.GET_DATACLIP} references a non-existant dataclip`,
+  (t) => {
+    return new Promise((done) => {
+      const run = getRun({
+        dataclip_id: 'xyz',
+      });
+      // Do not load the dataclip into lightning
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.GET_DATACLIP, run.id, () => {
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(
+        e.RUN_COMPLETE,
+        run.id,
+        ({ payload }: { payload: RunCompletePayload }) => {
+          t.true(didCallEvent);
+          t.is(payload.reason, 'exception');
+          t.is(payload.error_type, 'DataClipError');
+          t.regex(payload.error_message!, /Failed to load dataclip xyz/);
+          done();
+        }
+      );
 
       lng.enqueueRun(run);
     });
