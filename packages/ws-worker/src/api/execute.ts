@@ -143,7 +143,6 @@ export function execute(
       try {
         loadedInput = await loadDataclip(channel, input);
         logger.success('dataclip loaded');
-        return loadedInput;
       } catch (e: any) {
         // abort with error
         return handleRunError(context, {
@@ -156,7 +155,6 @@ export function execute(
         });
       }
     }
-
     try {
       engine.execute(plan, loadedInput as State, { resolvers, ...options });
     } catch (e: any) {
