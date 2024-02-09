@@ -1,12 +1,13 @@
-import { CompiledExecutionPlan } from '@openfn/runtime';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
 export default async (
-  plan: CompiledExecutionPlan,
+  plan: ExecutionPlan,
   loader: (id: string) => Promise<any>
 ) => {
   const loaders: Promise<void>[] = [];
 
-  Object.values(plan.jobs).forEach((job) => {
+  Object.values(plan.workflow.steps).forEach((step) => {
+    const job = step as Job;
     if (typeof job.configuration === 'string') {
       loaders.push(
         new Promise(async (resolve) => {

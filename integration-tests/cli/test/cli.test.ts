@@ -14,7 +14,7 @@ test.serial('openfn version', async (t) => {
 test.serial('openfn test', async (t) => {
   const { stdout } = await run(t.title);
   t.regex(stdout, /Versions:/);
-  t.regex(stdout, /Running test job.../);
+  t.regex(stdout, /Running test workflow/);
   t.regex(stdout, /Result: 42/);
 });
 

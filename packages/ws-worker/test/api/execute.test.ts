@@ -1,5 +1,6 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
 import {
   STEP_START,
@@ -23,8 +24,7 @@ import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify, createRunState } from '../../src/util';
 
-import type { ExecutionPlan } from '@openfn/runtime';
-import type { Run, RunState, JSONLog } from '../../src/types';
+import type { RunState, JSONLog } from '../../src/types';
 
 const enc = new TextEncoder();
 
@@ -54,7 +54,7 @@ test('send event should resolve when the event is acknowledged', async (t) => {
 
 test('send event should throw if an event errors', async (t) => {
   const channel = mockChannel({
-    throw: (x) => {
+    throw: () => {
       throw new Error('err');
     },
   });
@@ -98,7 +98,7 @@ test('jobLog should should send a log event outside a run', async (t) => {
     },
   });
 
-  await onJobLog({ channel, state }, log);
+  await onJobLog({ channel, state } as any, log);
 });
 
 test('jobLog should should send a log event inside a run', async (t) => {
@@ -131,13 +131,13 @@ test('jobLog should should send a log event inside a run', async (t) => {
     },
   });
 
-  await onJobLog({ channel, state }, log);
+  await onJobLog({ channel, state } as any, log);
 });
 
 test('jobError should trigger step:complete with a reason', async (t) => {
-  let stepCompleteEvent;
+  let stepCompleteEvent: any;
 
-  const state = createRunState({ id: 'run-23' } as Run);
+  const state = createRunState({ id: 'run-23' } as ExecutionPlan);
   state.activeJob = 'job-1';
   state.activeStep = 'b';
 
@@ -153,7 +153,7 @@ test('jobError should trigger step:complete with a reason', async (t) => {
     error: { message: 'nope', severity: 'kill', type: 'TEST' },
     state: exitState,
   };
-  await onJobError({ channel, state }, event);
+  await onJobError({ channel, state } as any, event);
 
   t.is(stepCompleteEvent.reason, 'kill');
   t.is(stepCompleteEvent.error_message, 'nope');
@@ -162,9 +162,9 @@ test('jobError should trigger step:complete with a reason', async (t) => {
 });
 
 test('jobError should trigger step:complete with a reason and default state', async (t) => {
-  let stepCompleteEvent;
+  let stepCompleteEvent: any;
 
-  const state = createRunState({ id: 'run-23' } as Run);
+  const state = createRunState({ id: 'run-23' } as ExecutionPlan);
 
   const channel = mockChannel({
     [STEP_COMPLETE]: (evt) => {
@@ -176,7 +176,7 @@ test('jobError should trigger step:complete with a reason and default state', as
   const event = {
     error: { message: 'nope', severity: 'kill', type: 'TEST' },
   };
-  await onJobError({ channel, state }, event);
+  await onJobError({ channel, state } as any, event);
 
   t.deepEqual(stepCompleteEvent.output_dataclip, '{}');
 });
@@ -188,6 +188,7 @@ test('workflowStart should send an empty run:start event', async (t) => {
     },
   });
 
+  // @ts-ignore
   await onWorkflowStart({ channel });
 });
 
@@ -275,17 +276,20 @@ test('execute should pass the final result to onFinish', async (t) => {
 
   const plan = {
     id: 'a',
-    jobs: [
-      {
-        expression: 'fn(() => ({ done: true }))',
-      },
-    ],
-  };
+    workflow: {
+      steps: [
+        {
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
+  } as ExecutionPlan;
 
   const options = {};
+  const input = {};
 
   return new Promise((done) => {
-    execute(channel, engine, logger, plan, options, (result) => {
+    execute(channel, engine, logger, plan, input, options, (result) => {
       t.deepEqual(result.state, { done: true });
       done();
     });
@@ -299,14 +303,17 @@ test('execute should return a context object', async (t) => {
 
   const plan = {
     id: 'a',
-    jobs: [
-      {
-        expression: 'fn(() => ({ done: true }))',
-      },
-    ],
-  };
+    workflow: {
+      steps: [
+        {
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
+  } as ExecutionPlan;
 
   const options = {};
+  const input = {};
 
   return new Promise((done) => {
     const context = execute(
@@ -314,13 +321,13 @@ test('execute should return a context object', async (t) => {
       engine,
       logger,
       plan,
+      input,
       options,
-      (result) => {
+      () => {
         done();
       }
     );
     t.truthy(context.state);
-    t.deepEqual(context.state.options, options);
     t.deepEqual(context.channel, channel);
     t.deepEqual(context.logger, logger);
   });
@@ -343,18 +350,21 @@ test('execute should lazy-load a credential', async (t) => {
 
   const plan = {
     id: 'a',
-    jobs: [
-      {
-        configuration: 'abc',
-        expression: 'fn(() => ({ done: true }))',
-      },
-    ],
-  };
+    workflow: {
+      steps: [
+        {
+          configuration: 'abc',
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
+  } as ExecutionPlan;
 
   const options = {};
+  const input = {};
 
   return new Promise((done) => {
-    execute(channel, engine, logger, plan, options, (result) => {
+    execute(channel, engine, logger, plan, input, options, () => {
       t.true(didCallCredentials);
       done();
     });
@@ -363,34 +373,36 @@ test('execute should lazy-load a credential', async (t) => {
 
 test('execute should lazy-load initial state', async (t) => {
   const logger = createMockLogger();
-  let didCallState = false;
+  let didLoadState = false;
 
   const channel = mockChannel({
     ...mockEventHandlers,
     [GET_DATACLIP]: (id) => {
       t.truthy(id);
-      didCallState = true;
+      didLoadState = true;
       return toArrayBuffer({});
     },
   });
   const engine = await createMockRTE();
 
-  const plan: Partial<ExecutionPlan> = {
+  const plan = {
     id: 'a',
-    // @ts-ignore
-    initialState: 'abc',
-    jobs: [
-      {
-        expression: 'fn(() => ({ done: true }))',
-      },
-    ],
-  };
+    workflow: {
+      steps: [
+        {
+          expression: 'fn(() => ({ done: true }))',
+        },
+      ],
+    },
+    options: {},
+  } as ExecutionPlan;
 
   const options = {};
+  const input = 'abc';
 
   return new Promise((done) => {
-    execute(channel, engine, logger, plan, options, (result) => {
-      t.true(didCallState);
+    execute(channel, engine, logger, plan, input, options, () => {
+      t.true(didLoadState);
       done();
     });
   });
@@ -400,10 +412,10 @@ test('execute should call all events on the socket', async (t) => {
   const logger = createMockLogger();
   const engine = await createMockRTE();
 
-  const events = {};
+  const events: Record<string, any> = {};
 
-  const toEventMap = (obj, evt: string) => {
-    obj[evt] = (e) => {
+  const toEventMap = (obj: any, evt: string) => {
+    obj[evt] = (e: any) => {
       events[evt] = e || true;
     };
     return obj;
@@ -424,20 +436,23 @@ test('execute should call all events on the socket', async (t) => {
 
   const plan = {
     id: 'run-1',
-    jobs: [
-      {
-        id: 'trigger',
-        configuration: 'a',
-        adaptor: '@openfn/language-common@1.0.0',
-        expression: 'fn(() => console.log("x"))',
-      },
-    ],
-  };
+    workflow: {
+      steps: [
+        {
+          id: 'trigger',
+          configuration: 'a',
+          adaptor: '@openfn/language-common@1.0.0',
+          expression: 'fn(() => console.log("x"))',
+        },
+      ],
+    },
+  } as ExecutionPlan;
 
   const options = {};
+  const input = {};
 
   return new Promise((done) => {
-    execute(channel, engine, logger, plan, options, (result) => {
+    execute(channel, engine, logger, plan, input, options, () => {
       // Check that events were passed to the socket
       // This is deliberately crude
       t.assert(allEvents.every((e) => events[e]));

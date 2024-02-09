@@ -1,4 +1,10 @@
 import test from 'ava';
+import type {
+  LightningPlan,
+  RunCompletePayload,
+  Credential,
+  DataClip,
+} from '@openfn/lexicon/lightning';
 
 import { setup } from '../util';
 import { runs, credentials, dataclips } from '../data';
@@ -9,16 +15,14 @@ import {
   GET_DATACLIP,
 } from '../../src/events';
 
-import { RunCompletePayload } from '@openfn/ws-worker';
-
 const enc = new TextDecoder('utf-8');
 
 type Channel = any;
 
 const port = 7777;
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 // Set up a lightning server and a phoenix socket client before each test
 test.before(async () => ({ server, client } = await setup(port)));
@@ -41,7 +45,7 @@ const join = (channelName: string, params: any = {}): Promise<Channel> =>
       .receive('ok', () => {
         done(channel);
       })
-      .receive('error', (err) => {
+      .receive('error', (err: any) => {
         // err will be the response message on the payload (ie, invalid_token, invalid_run_id etc)
         reject(new Error(err));
       });
@@ -72,7 +76,7 @@ test.serial('get run data through the run channel', async (t) => {
     server.startRun(run1.id);
 
     const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
-    channel.push(GET_PLAN).receive('ok', (run) => {
+    channel.push(GET_PLAN).receive('ok', (run: LightningPlan) => {
       t.deepEqual(run, run1);
       done();
     });
@@ -126,10 +130,12 @@ test.serial('get credential through the run channel', async (t) => {
     server.addCredential('a', credentials['a']);
 
     const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
-    channel.push(GET_CREDENTIAL, { id: 'a' }).receive('ok', (result) => {
-      t.deepEqual(result, credentials['a']);
-      done();
-    });
+    channel
+      .push(GET_CREDENTIAL, { id: 'a' })
+      .receive('ok', (result: Credential) => {
+        t.deepEqual(result, credentials['a']);
+        done();
+      });
   });
 });
 
@@ -139,7 +145,7 @@ test.serial('get dataclip through the run channel', async (t) => {
     server.addDataclip('d', dataclips['d']);
 
     const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
-    channel.push(GET_DATACLIP, { id: 'd' }).receive('ok', (result) => {
+    channel.push(GET_DATACLIP, { id: 'd' }).receive('ok', (result: any) => {
       const str = enc.decode(new Uint8Array(result));
       const dataclip = JSON.parse(str);
       t.deepEqual(dataclip, dataclips['d']);
@@ -159,7 +165,7 @@ test.serial(
       server.startRun(run1.id);
       server.addDataclip('result', result);
 
-      server.waitForResult(run1.id).then((dataclip) => {
+      server.waitForResult(run1.id).then((dataclip: DataClip) => {
         t.deepEqual(result, dataclip);
         done();
       });

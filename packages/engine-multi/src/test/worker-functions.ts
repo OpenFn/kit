@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { register, publish, threadId } from '../worker/thread/runtime';
 import { increment } from './counter.js';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
 const tasks = {
   test: async (result = 42) => {
@@ -25,13 +26,13 @@ const tasks = {
   processId: async () => process.pid,
   // very very simple intepretation of a run function
   // Most tests should use the mock-worker instead
-  run: async (plan: any, _adaptorPaths: any) => {
+  run: async (plan: ExecutionPlan, _input: any, _adaptorPaths: any) => {
     const workflowId = plan.id;
     publish('worker:workflow-start', {
       workflowId,
     });
     try {
-      const [job] = plan.jobs;
+      const [job] = plan.workflow.steps as Job[];
       const result = eval(job.expression);
       publish('worker:workflow-complete', {
         workflowId,

@@ -1,5 +1,5 @@
+import { ExecutionPlan, Step } from '@openfn/lexicon';
 import { ValidationError } from '../errors';
-import { ExecutionPlan, JobNode } from '../types';
 
 type ModelNode = {
   up: Record<string, true>;
@@ -20,16 +20,16 @@ export default (plan: ExecutionPlan) => {
   return true;
 };
 
-export const buildModel = (plan: ExecutionPlan) => {
+export const buildModel = ({ workflow }: ExecutionPlan) => {
   const model: Model = {};
 
-  const jobIdx = plan.jobs.reduce((obj, item) => {
+  const jobIdx = workflow.steps.reduce((obj, item) => {
     if (item.id) {
       obj[item.id] = item;
     }
     // TODO warn if there's no id? It's usually fine (until it isn't)
     return obj;
-  }, {} as Record<string, JobNode>);
+  }, {} as Record<string, Step>);
 
   const ensureModel = (jobId: string) => {
     if (!model[jobId]) {
@@ -48,7 +48,7 @@ export const buildModel = (plan: ExecutionPlan) => {
     }
   };
 
-  for (const job of plan.jobs) {
+  for (const job of workflow.steps) {
     let node = job.id ? ensureModel(job.id) : { up: {}, down: {} };
     if (typeof job.next === 'string') {
       validateJob(job.next);
@@ -71,9 +71,10 @@ export const buildModel = (plan: ExecutionPlan) => {
 };
 
 const assertStart = (plan: ExecutionPlan) => {
-  if (typeof plan.start === 'string') {
-    if (!plan.jobs.find(({ id }) => id == plan.start)) {
-      throw new ValidationError(`Could not find start job: ${plan.start}`);
+  const { start } = plan.options;
+  if (typeof start === 'string') {
+    if (!plan.workflow.steps.find(({ id }) => id == start)) {
+      throw new ValidationError(`Could not find start job: ${start}`);
     }
   }
 };

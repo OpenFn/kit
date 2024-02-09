@@ -33,7 +33,7 @@ export const join = (client: any, runId: string): Promise<Channel> =>
       .receive('ok', () => {
         done(channel);
       })
-      .receive('error', (err) => {
+      .receive('error', (err: any) => {
         reject(new Error(err));
       });
   });

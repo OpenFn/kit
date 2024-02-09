@@ -1,0 +1,19 @@
+{
+  "options": {
+    "start": "b"
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "a",
+        "adaptor": "common",
+        "expression": "fn((state) => { return state; });"
+      },
+      {
+        "id": "b",
+        "adaptor": "http",
+        "expression": "get('https://jsonplaceholder.typicode.com/todos/1')"
+      }
+    ]
+  }
+}

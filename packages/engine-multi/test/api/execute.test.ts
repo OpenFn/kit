@@ -1,8 +1,9 @@
 import path from 'node:path';
 import test from 'ava';
+import { createMockLogger } from '@openfn/logger';
+
 import initWorkers from '../../src/api/call-worker';
 import execute from '../../src/api/execute';
-import { createMockLogger } from '@openfn/logger';
 import {
   JOB_COMPLETE,
   JOB_START,
@@ -13,20 +14,31 @@ import {
 } from '../../src/events';
 import ExecutionContext from '../../src/classes/ExecutionContext';
 
-import type { RTEOptions } from '../../src/api';
-import type { WorkflowState } from '../../src/types';
-import { ExecuteOptions } from '../../src/engine';
+import type {
+  ExecuteOptions,
+  ExecutionContextOptions,
+  WorkflowState,
+} from '../../src/types';
+import type { EngineOptions } from '../../src/engine';
 
 const workerPath = path.resolve('dist/test/mock-run.js');
 
-const createContext = ({ state, options }) => {
+const createContext = ({
+  state,
+  options,
+}: {
+  state: Partial<WorkflowState>;
+  options: Partial<ExecutionContextOptions>;
+}) => {
   const logger = createMockLogger();
   const { callWorker } = initWorkers(workerPath, {}, logger);
 
   const ctx = new ExecutionContext({
+    // @ts-ignore
     state: state || { workflowId: 'x' },
     logger,
     callWorker,
+    // @ts-ignore
     options,
   });
 
@@ -37,12 +49,15 @@ const createContext = ({ state, options }) => {
 
 const plan = {
   id: 'x',
-  jobs: [
-    {
-      id: 'j',
-      expression: '() => 22',
-    },
-  ],
+  workflow: {
+    steps: [
+      {
+        id: 'j',
+        expression: '() => 22',
+      },
+    ],
+  },
+  options: {},
 };
 
 const options = {
@@ -51,13 +66,13 @@ const options = {
     handleInstall: async () => {},
     handleIsInstalled: async () => false,
   },
-} as RTEOptions;
+} as Partial<EngineOptions>;
 
 test.serial('execute should run a job and return the result', async (t) => {
   const state = {
     id: 'x',
     plan,
-  } as WorkflowState;
+  } as Partial<WorkflowState>;
 
   const context = createContext({ state, options });
 
@@ -80,7 +95,7 @@ test.serial('should emit a workflow-start event', async (t) => {
   await execute(context);
 
   // No need to do a deep test of the event payload here
-  t.is(workflowStart.workflowId, 'x');
+  t.is(workflowStart!.workflowId!, 'x');
 });
 
 test.serial('should emit a log event with the memory limit', async (t) => {
@@ -89,7 +104,7 @@ test.serial('should emit a log event with the memory limit', async (t) => {
     plan,
   } as WorkflowState;
 
-  const logs = [];
+  const logs: any[] = [];
 
   const context = createContext({
     state,
@@ -122,8 +137,8 @@ test.serial('should emit a workflow-complete event', async (t) => {
 
   await execute(context);
 
-  t.is(workflowComplete.workflowId, 'x');
-  t.is(workflowComplete.state, 22);
+  t.is(workflowComplete!.workflowId, 'x');
+  t.is(workflowComplete!.state, 22);
 });
 
 test.serial('should emit a job-start event', async (t) => {
@@ -132,7 +147,7 @@ test.serial('should emit a job-start event', async (t) => {
     plan,
   } as WorkflowState;
 
-  let event;
+  let event: any;
 
   const context = createContext({ state, options });
 
@@ -152,7 +167,7 @@ test.serial('should emit a job-complete event', async (t) => {
     plan,
   } as WorkflowState;
 
-  let event;
+  let event: any;
 
   const context = createContext({ state, options });
 
@@ -166,19 +181,22 @@ test.serial('should emit a job-complete event', async (t) => {
 });
 
 test.serial('should emit a log event', async (t) => {
-  let workflowLog;
+  let workflowLog: any;
   const plan = {
     id: 'y',
-    jobs: [
-      {
-        expression: '() => { console.log("hi"); return 33 }',
-      },
-    ],
+    workflow: {
+      steps: [
+        {
+          expression: '() => { console.log("hi"); return 33 }',
+        },
+      ],
+    },
+    options: {},
   };
   const state = {
     id: 'y',
     plan,
-  } as WorkflowState;
+  } as Partial<WorkflowState>;
 
   const context = createContext({ state, options });
   context.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
@@ -191,14 +209,16 @@ test.serial('should emit a log event', async (t) => {
 });
 
 test.serial('log events are timestamped in hr time', async (t) => {
-  let workflowLog;
+  let workflowLog: any;
   const plan = {
     id: 'y',
-    jobs: [
-      {
-        expression: '() => { console.log("hi"); return 33 }',
-      },
-    ],
+    workflow: {
+      steps: [
+        {
+          expression: '() => { console.log("hi"); return 33 }',
+        },
+      ],
+    },
   };
   const state = {
     id: 'y',
@@ -220,11 +240,13 @@ test.serial('should emit error on timeout', async (t) => {
   const state = {
     id: 'zz',
     plan: {
-      jobs: [
-        {
-          expression: '() => { while(true) {} }',
-        },
-      ],
+      workflow: {
+        steps: [
+          {
+            expression: '() => { while(true) {} }',
+          },
+        ],
+      },
     },
   } as WorkflowState;
 
@@ -233,7 +255,7 @@ test.serial('should emit error on timeout', async (t) => {
     runTimeoutMs: 10,
   };
 
-  let event;
+  let event: any;
 
   const context = createContext({ state, options: wfOptions });
 
@@ -280,7 +302,9 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
   const state = {
     id: 'baa',
     plan: {
-      jobs: [{ id: 'j', expression: 'la la la' }],
+      workflow: {
+        steps: [{ id: 'j', expression: 'la la la' }],
+      },
     },
   } as WorkflowState;
   const context = createContext({ state, options: {} });
@@ -299,7 +323,7 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
 });
 
 test.serial('should stringify the whitelist array', async (t) => {
-  let passedOptions;
+  let passedOptions: any;
 
   const state = {
     id: 'x',
@@ -312,8 +336,9 @@ test.serial('should stringify the whitelist array', async (t) => {
   };
 
   const context = createContext({ state, options: opts });
+  // @ts-ignore
   context.callWorker = (_command, args) => {
-    passedOptions = args[1];
+    passedOptions = args[2];
   };
 
   await execute(context);

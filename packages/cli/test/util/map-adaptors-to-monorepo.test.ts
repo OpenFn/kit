@@ -7,6 +7,7 @@ import mapAdaptorsToMonorepo, {
   validateMonoRepo,
   updatePath,
 } from '../../src/util/map-adaptors-to-monorepo';
+import { ExecutionPlan } from '@openfn/lexicon';
 
 const REPO_PATH = 'a/b/c';
 const ABS_REPO_PATH = path.resolve(REPO_PATH);
@@ -72,13 +73,8 @@ test.serial('mapAdaptorsToMonorepo: map adaptors', async (t) => {
     [`${REPO_PATH}/package.json`]: '{ "name": "adaptors" }',
   });
 
-  const options = {
-    monorepoPath: REPO_PATH,
-    adaptors: ['common'],
-  };
-
-  const newOptions = await mapAdaptorsToMonorepo(options, logger);
-  t.deepEqual(newOptions.adaptors, [`common=${ABS_REPO_PATH}/packages/common`]);
+  const result = await mapAdaptorsToMonorepo(REPO_PATH, ['common'], logger);
+  t.deepEqual(result, [`common=${ABS_REPO_PATH}/packages/common`]);
 });
 
 test.serial('mapAdaptorsToMonorepo: map workflow', async (t) => {
@@ -86,23 +82,23 @@ test.serial('mapAdaptorsToMonorepo: map workflow', async (t) => {
     [`${REPO_PATH}/package.json`]: '{ "name": "adaptors" }',
   });
 
-  const options = {
-    monorepoPath: REPO_PATH,
+  const plan: ExecutionPlan = {
     workflow: {
-      id: 'x',
-      jobs: [
+      steps: [
         {
+          expression: '.',
           adaptor: 'common',
         },
       ],
     },
+    options: {},
   };
 
-  const newOptions = await mapAdaptorsToMonorepo(options, logger);
-  t.deepEqual(newOptions.workflow, {
-    id: 'x',
-    jobs: [
+  await mapAdaptorsToMonorepo(REPO_PATH, plan, logger);
+  t.deepEqual(plan.workflow, {
+    steps: [
       {
+        expression: '.',
         adaptor: `common=${ABS_REPO_PATH}/packages/common`,
       },
     ],

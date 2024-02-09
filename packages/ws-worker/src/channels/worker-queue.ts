@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 import { Socket as PhxSocket } from 'phoenix';
 import { WebSocket } from 'ws';
-
+import { API_VERSION } from '@openfn/lexicon/lightning';
 import generateWorkerToken from '../util/worker-token';
 
 import type { Logger } from '@openfn/logger';
@@ -16,10 +16,20 @@ const connectToWorkerQueue = (
 ) => {
   const events = new EventEmitter();
 
-  generateWorkerToken(secret, serverId, logger).then((token) => {
+  generateWorkerToken(secret, serverId, logger).then(async (token) => {
+    const pkg = await import('../../package.json', {
+      assert: { type: 'json' },
+    });
+
+    const params = {
+      token,
+      api_version: API_VERSION,
+      worker_version: pkg.default.version,
+    };
+
     // @ts-ignore ts doesn't like the constructor here at all
     const socket = new SocketConstructor(endpoint, {
-      params: { token },
+      params,
       transport: WebSocket,
     });
 

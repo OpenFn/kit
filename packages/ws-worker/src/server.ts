@@ -5,8 +5,8 @@ import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
-
-import { INTERNAL_RUN_COMPLETE, ClaimRun } from './events';
+import { ClaimRun } from '@openfn/lexicon/lightning';
+import { INTERNAL_RUN_COMPLETE } from './events';
 import destroy from './api/destroy';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
@@ -162,6 +162,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         channel: runChannel,
         plan,
         options,
+        input,
       } = await joinRunChannel(app.socket, token, id, logger);
 
       // Callback to be triggered when the work is done (including errors)
@@ -176,6 +177,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         engine,
         logger,
         plan,
+        input,
         options,
         onFinish
       );

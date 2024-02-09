@@ -1,26 +1,6 @@
 import { WebSocketServer } from 'ws';
 import createLogger, { LogLevel, Logger } from '@openfn/logger';
 import type { Server } from 'http';
-
-import createPheonixMockSocketServer, {
-  DevSocket,
-  PhoenixEvent,
-  PhoenixEventStatus,
-} from './socket-server';
-import {
-  RUN_COMPLETE,
-  RUN_LOG,
-  RUN_START,
-  CLAIM,
-  GET_PLAN,
-  GET_CREDENTIAL,
-  GET_DATACLIP,
-  STEP_COMPLETE,
-  STEP_START,
-} from './events';
-import { extractRunId, stringify } from './util';
-
-import type { ServerState } from './server';
 import type {
   RunStartPayload,
   RunStartReply,
@@ -41,7 +21,26 @@ import type {
   StepCompleteReply,
   StepStartPayload,
   StepStartReply,
-} from './types';
+} from '@openfn/lexicon/lightning';
+
+import createPheonixMockSocketServer, {
+  DevSocket,
+  PhoenixEvent,
+  PhoenixEventStatus,
+} from './socket-server';
+import {
+  RUN_COMPLETE,
+  RUN_LOG,
+  RUN_START,
+  CLAIM,
+  GET_PLAN,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
+  STEP_COMPLETE,
+  STEP_START,
+} from './events';
+import { extractRunId, stringify } from './util';
+import type { ServerState } from './server';
 
 // dumb cloning id
 // just an idea for unit tests
@@ -232,10 +231,7 @@ const createSocketAPI = (
     let payload = {
       status: 'ok' as PhoenixEventStatus,
     };
-    if (
-      !state.pending[runId] ||
-      state.pending[runId].status !== 'started'
-    ) {
+    if (!state.pending[runId] || state.pending[runId].status !== 'started') {
       payload = {
         status: 'error',
       };

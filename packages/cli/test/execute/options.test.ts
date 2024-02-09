@@ -16,13 +16,12 @@ test('correct default options', (t) => {
   t.is(options.compile, true);
   t.is(options.expandAdaptors, true);
   t.is(options.immutable, false);
-  t.is(options.jobPath, 'job.js');
+  t.is(options.expressionPath, 'job.js');
   t.falsy(options.logJson); // TODO this is undefined right now
   t.is(options.outputPath, 'output.json');
   t.is(options.outputStdout, false);
   t.is(options.path, 'job.js');
   t.is(options.skipAdaptorValidation, false);
-  t.is(options.strict, false);
   t.is(options.timeout, 300000);
   t.falsy(options.useAdaptorsMonorepo);
 });
@@ -79,22 +78,12 @@ test('enable immutability', (t) => {
 test('default job path', (t) => {
   const options = parse('execute /tmp/my-job/ --immutable');
   t.is(options.path, '/tmp/my-job/');
-  t.is(options.jobPath, '/tmp/my-job/job.js');
+  t.is(options.expressionPath, '/tmp/my-job/job.js');
 });
 
 test('enable json logging', (t) => {
   const options = parse('execute job.js --log-json');
   t.true(options.logJson);
-});
-
-test('disable strict output', (t) => {
-  const options = parse('execute job.js --no-strict');
-  t.false(options.strict);
-});
-
-test('disable strict output (legacy)', (t) => {
-  const options = parse('execute job.js --no-strict-output');
-  t.false(options.strict);
 });
 
 test('set an output path (short)', (t) => {

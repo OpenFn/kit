@@ -2,19 +2,17 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
+import crypto from 'node:crypto';
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
-import crypto from 'node:crypto';
-import { RUN_COMPLETE } from './events';
+import type {
+  LightningPlan,
+  RunCompletePayload,
+} from '@openfn/lexicon/lightning';
 
 import { ServerState } from './server';
-
-import type {
-  RunCompletePayload,
-  Run,
-  DevServer,
-  LightningEvents,
-} from './types';
+import { RUN_COMPLETE } from './events';
+import type { DevServer, LightningEvents } from './types';
 
 type Api = {
   startRun(runId: string): void;
@@ -41,7 +39,7 @@ const setupDevAPI = (
 
   app.getDataclip = (id: string) => state.dataclips[id];
 
-  app.enqueueRun = (run: Run, workerId = 'rte') => {
+  app.enqueueRun = (run: LightningPlan, workerId = 'rte') => {
     state.runs[run.id] = run;
     state.results[run.id] = {
       workerId, // TODO
@@ -140,7 +138,7 @@ const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
   const router = new Router();
 
   router.post('/run', (ctx) => {
-    const run = ctx.request.body as Run;
+    const run = ctx.request.body as LightningPlan;
 
     if (!run) {
       ctx.response.status = 400;

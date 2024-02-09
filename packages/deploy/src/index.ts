@@ -164,7 +164,7 @@ export async function deploy(config: DeployConfig, logger: Logger) {
 
   await writeState(config, deployedState);
 
-  logger.always('Deployed.');
+  logger.success('Deployed');
   return true;
 }
 

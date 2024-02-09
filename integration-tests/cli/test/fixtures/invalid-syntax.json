@@ -1,7 +1,9 @@
 {
-  "jobs": [
-    {
-      "expression": "invalid.js"
-    }
-  ]
+  "workflow": {
+    "steps": [
+      {
+        "expression": "invalid.js"
+      }
+    ]
+  }
 }

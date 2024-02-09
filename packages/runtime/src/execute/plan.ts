@@ -1,19 +1,22 @@
 import type { Logger } from '@openfn/logger';
-import executeJob from './job';
+import type { ExecutionPlan, State, Lazy } from '@openfn/lexicon';
+
+import executeStep from './step';
 import compilePlan from './compile-plan';
 
-import type { ExecutionPlan } from '../types';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
 import { NOTIFY_STATE_LOAD } from '../events';
+import { CompiledExecutionPlan } from '../types';
 
 const executePlan = async (
   plan: ExecutionPlan,
+  input: Lazy<State> | undefined,
   opts: Options,
   logger: Logger
 ) => {
-  let compiledPlan;
+  let compiledPlan: CompiledExecutionPlan;
   try {
     validatePlan(plan);
     compiledPlan = compilePlan(plan);
@@ -23,8 +26,11 @@ const executePlan = async (
     logger.error('Aborting');
     throw e;
   }
+  logger.info(`Executing ${plan.workflow.name || plan.id}`);
 
-  let queue: string[] = [opts.start || compiledPlan.start];
+  const { workflow, options } = compiledPlan;
+
+  let queue: string[] = [options.start];
 
   const ctx = {
     plan: compiledPlan,
@@ -34,35 +40,31 @@ const executePlan = async (
     notify: opts.callbacks?.notify ?? (() => {}),
   };
 
-  type State = any;
   // record of state returned by every job
   const stateHistory: Record<string, State> = {};
+
   // Record of state on lead nodes (nodes with no next)
   const leaves: Record<string, State> = {};
 
-  let { initialState } = compiledPlan;
-  if (typeof initialState === 'string') {
-    const id = initialState;
+  if (typeof input === 'string') {
+    const id = input;
     const startTime = Date.now();
     logger.debug(`fetching intial state ${id}`);
 
-    initialState = await opts.callbacks?.resolveState?.(id);
-
+    input = await opts.callbacks?.resolveState?.(id);
     const duration = Date.now() - startTime;
     opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, jobId: id });
     logger.success(`loaded state for ${id} in ${duration}ms`);
-
-    // TODO catch and re-throw
   }
 
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift()!;
-    const job = compiledPlan.jobs[next];
+    const job = workflow.steps[next];
 
-    const prevState = stateHistory[job.previous || ''] ?? initialState;
+    const prevState = stateHistory[job.previous || ''] ?? input;
 
-    const result = await executeJob(ctx, job, prevState);
+    const result = await executeStep(ctx, job, prevState);
     stateHistory[next] = result.state;
 
     if (!result.next.length) {
@@ -78,7 +80,8 @@ const executePlan = async (
   if (Object.keys(leaves).length > 1) {
     return leaves;
   }
-  // Return a single value
+
+  // Otherwise return a single value
   return Object.values(leaves)[0];
 };
 

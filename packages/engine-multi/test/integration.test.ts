@@ -1,10 +1,15 @@
 import test from 'ava';
 import path from 'node:path';
-import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
 
+import createAPI from '../src/api';
+import type { RuntimeEngine } from '../src';
+import { ExecutionPlan } from '@openfn/lexicon';
+
 const logger = createMockLogger();
-let api;
+let api: RuntimeEngine;
+
+const emptyState = {};
 
 test.afterEach(() => {
   logger._reset();
@@ -23,15 +28,19 @@ const withFn = `function fn(f) { return (s) => f(s) }
 
 let idgen = 0;
 
-const createPlan = (jobs?: any[]) => ({
-  id: `${++idgen}`,
-  jobs: jobs || [
-    {
-      id: 'j1',
-      expression: 'export default [s => s]',
+const createPlan = (jobs?: any[]) =>
+  ({
+    id: `${++idgen}`,
+    workflow: {
+      steps: jobs || [
+        {
+          id: 'j1',
+          expression: 'export default [s => s]',
+        },
+      ],
     },
-  ],
-});
+    options: {},
+  } as ExecutionPlan);
 
 test.serial('trigger workflow-start', (t) => {
   return new Promise(async (done) => {
@@ -44,7 +53,7 @@ test.serial('trigger workflow-start', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan).on('workflow-start', (evt) => {
+    api.execute(plan, emptyState).on('workflow-start', (evt) => {
       t.is(evt.workflowId, plan.id);
       t.truthy(evt.threadId);
       t.pass('workflow started');
@@ -64,7 +73,7 @@ test.serial('trigger job-start', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan).on('job-start', (e) => {
+    api.execute(plan, emptyState).on('job-start', (e) => {
       t.is(e.workflowId, '2');
       t.is(e.jobId, 'j1');
       t.truthy(e.threadId);
@@ -86,7 +95,7 @@ test.serial('trigger job-complete', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan).on('job-complete', (evt) => {
+    api.execute(plan, emptyState).on('job-complete', (evt) => {
       t.deepEqual(evt.next, []);
       t.log('duration:', evt.duration);
       // Very lenient duration test - this often comes in around 200ms in CI
@@ -115,7 +124,7 @@ test.serial('trigger workflow-complete', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan).on('workflow-complete', (evt) => {
+    api.execute(plan, emptyState).on('workflow-complete', (evt) => {
       t.falsy(evt.state.errors);
 
       t.is(evt.workflowId, plan.id);
@@ -142,7 +151,7 @@ test.serial('trigger workflow-log for job logs', (t) => {
 
     let didLog = false;
 
-    api.execute(plan).on('workflow-log', (evt) => {
+    api.execute(plan, emptyState).on('workflow-log', (evt) => {
       if (evt.name === 'JOB') {
         didLog = true;
         t.deepEqual(evt.message, JSON.stringify(['hola']));
@@ -150,7 +159,7 @@ test.serial('trigger workflow-log for job logs', (t) => {
       }
     });
 
-    api.execute(plan).on('workflow-complete', (evt) => {
+    api.execute(plan, emptyState).on('workflow-complete', (evt) => {
       t.true(didLog);
       t.falsy(evt.state.errors);
       done();
@@ -170,25 +179,26 @@ test.serial('log errors', (t) => {
       },
     ]);
 
-    api.execute(plan).on('workflow-log', (evt) => {
-      if (evt.name === 'JOB') {
-        t.log(evt);
-        t.deepEqual(
-          evt.message,
-          JSON.stringify([
-            {
-              name: 'Error',
-              message: 'hola',
-            },
-          ])
-        );
-        t.pass('workflow logged');
-      }
-    });
-
-    api.execute(plan).on('workflow-complete', (evt) => {
-      done();
-    });
+    api
+      .execute(plan, emptyState)
+      .on('workflow-log', (evt) => {
+        if (evt.name === 'JOB') {
+          t.log(evt);
+          t.deepEqual(
+            evt.message,
+            JSON.stringify([
+              {
+                name: 'Error',
+                message: 'hola',
+              },
+            ])
+          );
+          t.pass('workflow logged');
+        }
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
 
@@ -208,7 +218,7 @@ test.serial('trigger workflow-log for adaptor logs', (t) => {
       },
     ]);
 
-    api.execute(plan).on('workflow-log', (evt) => {
+    api.execute(plan, emptyState).on('workflow-log', (evt) => {
       if (evt.name === 'ADA') {
         t.deepEqual(evt.message, JSON.stringify(['hola']));
         t.pass('workflow logged');
@@ -230,7 +240,7 @@ test.serial('compile and run', (t) => {
       },
     ]);
 
-    api.execute(plan).on('workflow-complete', ({ state }) => {
+    api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
       t.deepEqual(state.data, 42);
       done();
     });
@@ -249,7 +259,7 @@ test.serial('run without error if no state is returned', (t) => {
       },
     ]);
 
-    api.execute(plan).on('workflow-complete', ({ state }) => {
+    api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
       t.falsy(state);
 
       // Ensure there are no error logs
@@ -272,7 +282,7 @@ test.serial('errors get nicely serialized', (t) => {
       },
     ]);
 
-    api.execute(plan).on('job-error', (evt) => {
+    api.execute(plan, emptyState).on('job-error', (evt) => {
       t.is(evt.error.type, 'TypeError');
       t.is(evt.error.severity, 'fail');
       t.is(
@@ -299,7 +309,7 @@ test.serial(
         },
       ]);
 
-      api.execute(plan).on('workflow-complete', ({ state }) => {
+      api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
         t.deepEqual(state, { a: 1 });
         done();
       });
@@ -321,7 +331,7 @@ test.serial('use custom state-props-to-remove', (t) => {
       },
     ]);
 
-    api.execute(plan).on('workflow-complete', ({ state }) => {
+    api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
       t.deepEqual(state, { configuration: {}, response: {} });
       done();
     });
@@ -354,7 +364,7 @@ test.serial('evaluate conditional edges', (t) => {
 
     const plan = createPlan(jobs);
 
-    api.execute(plan).on('workflow-complete', ({ state }) => {
+    api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
       t.deepEqual(state.data, 'b');
       done();
     });
@@ -411,17 +421,15 @@ test.serial('accept initial state', (t) => {
 
     const plan = createPlan();
 
-    // important!  The runtime  must use both x and y as initial state
-    // if we run the runtime in strict mode, x will be ignored
-    plan.initialState = {
+    const input = {
       x: 1,
       data: {
         y: 1,
       },
     };
 
-    api.execute(plan).on('workflow-complete', ({ state }) => {
-      t.deepEqual(state, plan.initialState);
+    api.execute(plan, input).on('workflow-complete', ({ state }) => {
+      t.deepEqual(state, input);
       done();
     });
   });

@@ -56,7 +56,7 @@ test.serial(
   async (t) => {
     const pool = createPool(workerPath, { maxWorkers: 1 }, logger);
 
-    const ids = {};
+    const ids: Record<string, number> = {};
 
     const saveProcessId = (id: string) => {
       if (!ids[id]) {
@@ -98,8 +98,8 @@ test('Remove a worker from the pool and release it when finished', async (t) => 
   return p.then(() => {
     t.is(pool._pool.length, 5);
 
-    // the first thing in the queue should be a worker
-    t.true(pool[0] !== false);
+    // the last thing in the queue should be a worker
+    t.true(pool._pool[4] !== false);
   });
 });
 
@@ -168,7 +168,7 @@ test('throw if the task throws', async (t) => {
 
   try {
     await pool.exec('throw', []);
-  } catch (e) {
+  } catch (e: any) {
     // NB e is not an error isntance
     t.is(e.message, 'test_error');
   }
@@ -179,7 +179,7 @@ test('throw if memory limit is exceeded', async (t) => {
 
   try {
     await pool.exec('blowMemory', [], { memoryLimitMb: 100 });
-  } catch (e) {
+  } catch (e: any) {
     t.is(e.message, 'Run exceeded maximum memory usage');
     t.is(e.name, 'OOMError');
   }
@@ -398,13 +398,13 @@ test('events should disconnect between executions', (t) => {
   return new Promise(async (done) => {
     const pool = createPool(workerPath, { capacity: 1 }, logger);
 
-    const counts = {
+    const counts: Record<string, number> = {
       a: 0,
       b: 0,
       c: 0,
     };
 
-    const on = (event) => {
+    const on = (event: { type: string; result: number }) => {
       if (event.type === 'test-message') {
         counts[event.result] += 1;
       }

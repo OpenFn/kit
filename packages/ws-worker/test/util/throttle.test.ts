@@ -88,7 +88,7 @@ test('return in order', async (t) => {
 
   const results: string[] = [];
 
-  const fn = (name: string, delay: number) =>
+  const fn = (name: string) =>
     new Promise<void>((resolve) => {
       setTimeout(() => {
         results.push(name);

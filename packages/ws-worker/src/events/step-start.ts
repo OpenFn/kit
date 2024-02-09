@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
-import { JobStartPayload } from '@openfn/engine-multi';
 import { timestamp } from '@openfn/logger';
+import { JobStartPayload } from '@openfn/engine-multi';
+import type { Job } from '@openfn/lexicon';
+import type { StepStartPayload } from '@openfn/lexicon/lightning';
 
 import pkg from '../../package.json' assert { type: 'json' };
-import { STEP_START, StepStartPayload } from '../events';
+import { STEP_START } from '../events';
 import { sendEvent, Context, onJobLog } from '../api/execute';
 import calculateVersionString from '../util/versions';
 
@@ -20,7 +22,9 @@ export default async function onStepStart(
   state.activeStep = crypto.randomUUID();
   state.activeJob = event.jobId;
 
-  const job = state.plan.jobs.find(({ id }) => id === event.jobId);
+  const job = state.plan.workflow.steps.find(
+    ({ id }) => id === event.jobId
+  ) as Job;
 
   const input_dataclip_id = state.inputDataclips[event.jobId];
 

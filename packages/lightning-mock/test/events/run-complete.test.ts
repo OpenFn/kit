@@ -2,8 +2,8 @@ import test from 'ava';
 import { join, setup, createRun } from '../util';
 import { RUN_COMPLETE } from '../../src/events';
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 const port = 5501;
 

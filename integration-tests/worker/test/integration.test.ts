@@ -157,7 +157,7 @@ test("Don't send job logs to stdout", (t) => {
 
       // But it SHOULD log engine stuff
       const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'R/T' && l.message[0].match(/completed job/i)
+        (l) => l.name === 'R/T' && l.message[0].match(/completed step/i)
       );
       t.truthy(runtimeLog);
       done();

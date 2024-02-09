@@ -1,17 +1,16 @@
 import {
-  ExecutionPlan,
   ensureRepo,
   getAliasedName,
   getNameAndVersion,
   loadRepoPkg,
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type { Logger } from '@openfn/logger';
 
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../events';
 import { AutoinstallError } from '../errors';
-
-import type { Logger } from '@openfn/logger';
-import type { ExecutionContext } from '../types';
+import ExecutionContext from '../classes/ExecutionContext';
 
 // none of these options should be on the plan actually
 export type AutoinstallOptions = {
@@ -140,6 +139,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
 
     // Write the adaptor version to the context
     // This is a reasonably accurate, but not totally bulletproof, report
+    // @ts-ignore
     context.versions[name] = v;
 
     paths[name] = {
@@ -206,9 +206,9 @@ const isInstalled = async (
 
 export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
   const adaptors = new Set<string>();
-  plan.jobs
-    .filter((job) => job.adaptor)
-    .forEach((job) => adaptors.add(job.adaptor!));
+  plan.workflow.steps
+    .filter((job) => (job as Job).adaptor)
+    .forEach((job) => adaptors.add((job as Job).adaptor!));
   return adaptors;
 };
 

@@ -1,32 +1,36 @@
-import {
-  RUN_COMPLETE,
-  RUN_LOG,
+import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
+import type {
   RunLogPayload,
-  RUN_START,
   RunStartPayload,
-  GET_CREDENTIAL,
-  GET_DATACLIP,
-  STEP_COMPLETE,
-  STEP_START,
-} from '../events';
-import {
-  getWithReply,
-  createRunState,
-  throttle as createThrottle,
-} from '../util';
-import handleStepComplete from '../events/step-complete';
-import handleStepStart from '../events/step-start';
-import handleRunComplete from '../events/run-complete';
-import handleRunError from '../events/run-error';
-
-import type { RunOptions, Channel, RunState, JSONLog } from '../types';
+  LightningPlanOptions,
+} from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
   WorkflowStartPayload,
 } from '@openfn/engine-multi';
-import type { ExecutionPlan } from '@openfn/runtime';
+
+import {
+  getWithReply,
+  createRunState,
+  throttle as createThrottle,
+} from '../util';
+import {
+  RUN_COMPLETE,
+  RUN_LOG,
+  RUN_START,
+  GET_DATACLIP,
+  STEP_COMPLETE,
+  STEP_START,
+  GET_CREDENTIAL,
+} from '../events';
+import handleStepComplete from '../events/step-complete';
+import handleStepStart from '../events/step-start';
+import handleRunComplete from '../events/run-complete';
+import handleRunError from '../events/run-error';
+
+import type { Channel, RunState, JSONLog } from '../types';
 
 const enc = new TextDecoder('utf-8');
 
@@ -58,12 +62,13 @@ export function execute(
   engine: RuntimeEngine,
   logger: Logger,
   plan: ExecutionPlan,
-  options: RunOptions = {},
+  input: Lazy<State>,
+  options: LightningPlanOptions = {},
   onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);
 
-  const state = createRunState(plan, options);
+  const state = createRunState(plan, input);
 
   const context: Context = { channel, state, logger, engine, onFinish };
 
@@ -130,18 +135,19 @@ export function execute(
     .then(async () => {
       // TODO we need to remove this from here and let the runtime take care of it through
       // the resolver. See https://github.com/OpenFn/kit/issues/403
-      if (typeof plan.initialState === 'string') {
-        logger.debug('loading dataclip', plan.initialState);
-        plan.initialState = await loadDataclip(channel, plan.initialState);
+      // TODO come back and work out how initial state will work
+      if (typeof input === 'string') {
+        logger.debug('loading dataclip', input);
+        const loadedInput = await loadDataclip(channel, input);
         logger.success('dataclip loaded');
-        logger.debug(plan.initialState);
+        return loadedInput;
       }
-      return plan;
+      return input;
     })
     // Execute (which we have to wrap in a promise chain to handle initial state)
-    .then(() => {
+    .then((input: State) => {
       try {
-        engine.execute(plan, { resolvers, ...options });
+        engine.execute(plan, input, { resolvers, ...options });
       } catch (e: any) {
         // TODO what if there's an error?
         handleRunError(context, {

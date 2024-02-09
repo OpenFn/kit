@@ -1,11 +1,11 @@
 import crypto from 'node:crypto';
+import type { StepCompletePayload } from '@openfn/lexicon/lightning';
+import type { JobCompletePayload } from '@openfn/engine-multi';
 
-import { STEP_COMPLETE, StepCompletePayload } from '../events';
+import { STEP_COMPLETE } from '../events';
 import { stringify } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
 import { sendEvent, Context } from '../api/execute';
-
-import type { JobCompletePayload } from '@openfn/engine-multi';
 
 export default function onStepComplete(
   { channel, state }: Context,

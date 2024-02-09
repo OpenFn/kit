@@ -14,7 +14,7 @@ export type ExecuteOptions = Required<
     | 'expandAdaptors'
     | 'immutable'
     | 'ignoreImports'
-    | 'jobPath'
+    | 'expressionPath'
     | 'log'
     | 'logJson'
     | 'outputPath'
@@ -26,11 +26,9 @@ export type ExecuteOptions = Required<
     | 'statePath'
     | 'stateStdin'
     | 'sanitize'
-    | 'strict'
     | 'timeout'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
-    | 'workflow'
   >
 > &
   Pick<Opts, 'monorepoPath' | 'repoDir'>;
@@ -54,17 +52,14 @@ const options = [
   o.start,
   o.statePath,
   o.stateStdin,
-  o.strict, // order important
-  o.strictOutput,
   o.timeout,
   o.useAdaptorsMonorepo,
 ];
 
 const executeCommand: yargs.CommandModule<ExecuteOptions> = {
   command: 'execute [path]',
-  describe: `Run an openfn job or workflow. Get more help by running openfn <command> help.
-  \nExecute will run a job/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
-  \nBy default only state.data will be returned fron a job. Include --no-strict to write the entire state object.
+  describe: `Run an openfn expression or workflow. Get more help by running openfn <command> help.
+  \nExecute will run a expression/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
   \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
   aliases: ['$0'],
   handler: ensure('execute', options),
@@ -89,7 +84,7 @@ const executeCommand: yargs.CommandModule<ExecuteOptions> = {
       )
       .example(
         'openfn compile job.js -a http',
-        'Compile job.js with the http adaptor and print the code to stdout'
+        'Compile the expression at job.js with the http adaptor and print the code to stdout'
       ),
 };
 

@@ -1,3 +1,5 @@
+import type { ExecutionPlan } from '@openfn/lexicon';
+
 import { TestOptions } from './command';
 import { createNullLogger, Logger } from '../util/logger';
 import loadState from '../util/load-state';
@@ -6,44 +8,48 @@ import execute from '../execute/execute';
 import { ExecuteOptions } from '../execute/command';
 
 const testHandler = async (options: TestOptions, logger: Logger) => {
-  logger.log('Running test job...');
+  logger.log('Running test workflow...');
   const opts: Partial<ExecuteOptions> = { ...options };
 
   // Preconfigure some options
   opts.compile = true;
   opts.adaptors = [];
 
-  opts.workflow = {
-    start: 'start',
-    jobs: [
-      {
-        id: 'start',
-        state: { data: { defaultAnswer: 42 } },
-        expression:
-          "const fn = () => (state) => { console.log('Starting computer...'); return state; }; fn()",
-        next: {
-          calculate: '!state.error',
+  const plan = {
+    options: {
+      start: 'start',
+    },
+    workflow: {
+      steps: [
+        {
+          id: 'start',
+          state: { data: { defaultAnswer: 42 } },
+          expression:
+            "const fn = () => (state) => { console.log('Starting computer...'); return state; }; fn()",
+          next: {
+            calculate: '!state.error',
+          },
         },
-      },
-      {
-        id: 'calculate',
-        expression:
-          "const fn = () => (state) => { console.log('Calculating to life, the universe, and everything..'); return state }; fn()",
-        next: {
-          result: true,
+        {
+          id: 'calculate',
+          expression:
+            "const fn = () => (state) => { console.log('Calculating to life, the universe, and everything..'); return state }; fn()",
+          next: {
+            result: true,
+          },
         },
-      },
-      {
-        id: 'result',
-        expression:
-          'const fn = () => (state) => ({ data: { answer: state.data.answer || state.data.defaultAnswer } }); fn()',
-      },
-    ],
-  };
+        {
+          id: 'result',
+          expression:
+            'const fn = () => (state) => ({ data: { answer: state.data.answer || state.data.defaultAnswer } }); fn()',
+        },
+      ],
+    },
+  } as ExecutionPlan;
 
   logger.break();
-  logger.info('Workflow object:');
-  logger.info(JSON.stringify(opts.workflow, null, 2));
+  logger.info('Execution plan:');
+  logger.info(JSON.stringify(plan, null, 2));
   logger.break();
 
   if (!opts.stateStdin) {
@@ -54,8 +60,8 @@ const testHandler = async (options: TestOptions, logger: Logger) => {
   }
 
   const state = await loadState(opts, createNullLogger());
-  const code = await compile(opts, logger);
-  const result = await execute(code!, state, opts as ExecuteOptions);
+  const compiledPlan = (await compile(plan, opts, logger)) as ExecutionPlan;
+  const result = await execute(compiledPlan, state, opts as ExecuteOptions);
   logger.success(`Result: ${result.data.answer}`);
   return result;
 };

@@ -3,7 +3,6 @@
  */
 
 import { JSONLog } from '@openfn/logger';
-import { Versions } from '../types';
 
 // events used by the internal thread runtime
 
@@ -45,7 +44,6 @@ export interface WorkflowCompleteEvent extends InternalEvent {
 
 export interface JobStartEvent extends InternalEvent {
   jobId: string;
-  versions: Versions;
 }
 
 export interface JobCompleteEvent extends InternalEvent {

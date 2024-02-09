@@ -1,26 +1,15 @@
 import { createMockLogger, Logger } from '@openfn/logger';
-
-import type {
-  Operation,
-  ExecutionPlan,
-  State,
-  JobNodeID,
-  ExecutionCallbacks,
-} from './types';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { ExecutionCallbacks } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
-import clone from './util/clone';
-import parseRegex from './util/regex';
+import { defaultState, parseRegex, clone } from './util/index';
 
-export const TIMEOUT = 5 * 60 * 1000; // 5 minutes
+export const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export type Options = {
-  start?: JobNodeID;
   logger?: Logger;
   jobLogger?: Logger;
-
-  timeout?: number; // this is timeout used per job, not per workflow
-  strict?: boolean; // Be strict about handling of state returned from jobs
 
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
@@ -35,9 +24,9 @@ export type Options = {
   callbacks?: ExecutionCallbacks;
 
   // inject globals into the environment
+  // TODO leaving this here for now, but maybe its actually on the xplan?
   globals?: any;
 
-  // all listed props will be removed from the state object at the end of a job
   statePropsToRemove?: string[];
 };
 
@@ -47,27 +36,46 @@ type RawOptions = Omit<Options, 'linker'> & {
   };
 };
 
-const defaultState = { data: {}, configuration: {} };
-
 // Log nothing by default
 const defaultLogger = createMockLogger();
 
-// TODO doesn't really make sense to pass in a state object to an xplan,
-// so maybe state becomes an option in the opts object
+const loadPlanFromString = (expression: string, logger: Logger) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          expression,
+        },
+      ],
+    },
+    options: {},
+  };
+
+  logger.debug('Generated execution plan for incoming expression');
+  logger.debug(plan);
+
+  return plan;
+};
+
 const run = (
-  expressionOrXPlan: string | Operation[] | ExecutionPlan,
-  state?: State,
+  xplan: Partial<ExecutionPlan> | string,
+  input?: State,
   opts: RawOptions = {}
 ) => {
   const logger = opts.logger || defaultLogger;
 
-  // Strict state handling by default
-  if (!opts.hasOwnProperty('strict')) {
-    opts.strict = true;
+  if (typeof xplan === 'string') {
+    xplan = loadPlanFromString(xplan, logger);
   }
-  if (!opts.hasOwnProperty('statePropsToRemove')) {
-    opts.statePropsToRemove = ['configuration'];
+
+  if (!xplan.options) {
+    xplan.options = {};
   }
+
+  if (!input) {
+    input = clone(defaultState);
+  }
+
   if (opts.linker?.whitelist) {
     opts.linker.whitelist = opts.linker.whitelist.map((w) => {
       if (typeof w === 'string') {
@@ -76,36 +84,7 @@ const run = (
       return w;
     });
   }
-
-  // TODO the plan doesn't have an id, should it be given one?
-  // Ditto the jobs?
-  let plan: ExecutionPlan;
-  if (
-    typeof expressionOrXPlan == 'string' ||
-    !expressionOrXPlan.hasOwnProperty('jobs')
-  ) {
-    // Build an execution plan for an incoming expression
-    plan = {
-      jobs: [
-        {
-          expression: expressionOrXPlan,
-        },
-      ],
-    } as ExecutionPlan;
-    logger.debug('Generated execution plan for incoming expression');
-    // TODO how do we sanitise state.config?
-    logger.debug(plan);
-  } else {
-    plan = expressionOrXPlan as ExecutionPlan;
-  }
-
-  if (state) {
-    plan.initialState = clone(state);
-  } else if (!plan.initialState) {
-    plan.initialState = defaultState;
-  }
-
-  return executePlan(plan, opts as Options, logger);
+  return executePlan(xplan as ExecutionPlan, input, opts as Options, logger);
 };
 
 export default run;

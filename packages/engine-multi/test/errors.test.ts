@@ -1,11 +1,12 @@
 import test from 'ava';
 import path from 'node:path';
+import { createMockLogger } from '@openfn/logger';
 
 import createEngine, { EngineOptions } from '../src/engine';
-import { createMockLogger } from '@openfn/logger';
 import { WORKFLOW_ERROR } from '../src/events';
+import type { RuntimeEngine } from '../src/types';
 
-let engine;
+let engine: RuntimeEngine;
 
 test.before(async () => {
   const logger = createMockLogger('', { level: 'debug' });
@@ -30,16 +31,19 @@ test.serial('syntax error: missing bracket', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'a',
-      jobs: [
-        {
-          id: 'x',
-          // This is subtle syntax error
-          expression: 'fn((s) => { return s )',
-        },
-      ],
+      workflow: {
+        steps: [
+          {
+            id: 'x',
+            // This is subtle syntax error
+            expression: 'fn((s) => { return s )',
+          },
+        ],
+      },
+      options: {},
     };
 
-    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'CompileError');
       // compilation happens in the main thread
       t.is(evt.threadId, '-');
@@ -53,16 +57,19 @@ test.serial('syntax error: illegal throw', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'b',
-      jobs: [
-        {
-          id: 'z',
-          // This is also subtle syntax error
-          expression: 'fn(() => throw "e")',
-        },
-      ],
+      workflow: {
+        steps: [
+          {
+            id: 'z',
+            // This is also subtle syntax error
+            expression: 'fn(() => throw "e")',
+          },
+        ],
+      },
+      options: {},
     };
 
-    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'CompileError');
       // compilation happens in the main thread
       t.is(evt.threadId, '-');
@@ -75,21 +82,24 @@ test.serial('syntax error: illegal throw', (t) => {
 test.serial('thread oom error', (t) => {
   return new Promise((done) => {
     const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: `export default [(s) => {
+      id: 'c',
+      workflow: {
+        steps: [
+          {
+            expression: `export default [(s) => {
               s.a = [];
               while(true) {
                 s.a.push(new Array(1e6).fill("oom"));
               }
               return s;
             }]`,
-        },
-      ],
+          },
+        ],
+      },
+      options: {},
     };
 
-    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'OOMError');
       t.is(evt.severity, 'kill');
       t.is(evt.message, 'Run exceeded maximum memory usage');
@@ -102,21 +112,24 @@ test.serial('thread oom error', (t) => {
 test.serial.skip('vm oom error', (t) => {
   return new Promise((done) => {
     const plan = {
-      id: 'b',
-      jobs: [
-        {
-          expression: `export default [(s) => {
+      id: 'd',
+      workflow: {
+        steps: [
+          {
+            expression: `export default [(s) => {
               s.a = [];
               while(true) {
                 s.a.push(new Array(1e8).fill("oom"));
               }
               return s;
             }]`,
-        },
-      ],
+          },
+        ],
+      },
+      options: {},
     };
 
-    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'OOMError');
       t.is(evt.severity, 'kill');
       t.is(evt.message, 'Run exceeded maximum memory usage');
@@ -131,21 +144,24 @@ test.serial.skip('vm oom error', (t) => {
 test.serial.skip('execution error from async code', (t) => {
   return new Promise((done) => {
     const plan = {
-      id: 'a',
-      jobs: [
-        {
-          // this error will throw within the promise, and so before the job completes
-          // But REALLY naughty code could throw after the job has finished
-          // In which case it'll be ignored
-          // Also note that the wrapping promise will never resolve
-          expression: `export default [(s) => new Promise((r) => {
+      id: 'e',
+      workflow: {
+        steps: [
+          {
+            // this error will throw within the promise, and so before the job completes
+            // But REALLY naughty code could throw after the job has finished
+            // In which case it'll be ignored
+            // Also note that the wrapping promise will never resolve
+            expression: `export default [(s) => new Promise((r) => {
             setTimeout(() => { throw new Error(\"e1324\"); r() }, 10)
             })]`,
-        },
-      ],
+          },
+        ],
+      },
+      options: {},
     };
 
-    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'ExecutionError');
       t.is(evt.severity, 'crash');
 
@@ -157,16 +173,19 @@ test.serial.skip('execution error from async code', (t) => {
 test.serial('emit a crash error on process.exit()', (t) => {
   return new Promise((done) => {
     const plan = {
-      id: 'z',
-      jobs: [
-        {
-          adaptor: '@openfn/helper@1.0.0',
-          expression: 'export default [exit()]',
-        },
-      ],
+      id: 'f',
+      workflow: {
+        steps: [
+          {
+            adaptor: '@openfn/helper@1.0.0',
+            expression: 'export default [exit()]',
+          },
+        ],
+      },
+      options: {},
     };
 
-    engine.execute(plan).on(WORKFLOW_ERROR, (evt) => {
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'ExitError');
       t.is(evt.severity, 'crash');
       t.is(evt.message, 'Process exited with code: 42');

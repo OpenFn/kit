@@ -1,7 +1,9 @@
 {
-  "jobs": [
-    {
-      "expression": "does-not-exist.js"
-    }
-  ]
+  "workflow": {
+    "steps": [
+      {
+        "expression": "does-not-exist.js"
+      }
+    ]
+  }
 }

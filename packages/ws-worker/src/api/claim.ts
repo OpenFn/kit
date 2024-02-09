@@ -1,5 +1,6 @@
 import { Logger, createMockLogger } from '@openfn/logger';
-import { CLAIM, ClaimPayload, ClaimReply } from '../events';
+import { ClaimPayload, ClaimReply } from '@openfn/lexicon/lightning';
+import { CLAIM } from '../events';
 
 import type { ServerApp } from '../server';
 
