@@ -262,7 +262,7 @@ test.serial(
           t.true(didCallEvent);
           t.is(payload.reason, 'exception');
           t.is(payload.error_type, 'DataClipError');
-          t.regex(payload.error_message!, /Failed to load dataclip abc/);
+          t.regex(payload.error_message!, /Failed to load dataclip xyz/);
           done();
         }
       );
