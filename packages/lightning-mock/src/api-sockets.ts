@@ -263,8 +263,6 @@ const createSocketAPI = (
     });
   }
 
-  // TODO this mock function is broken in the phoenix package update
-  // (I am not TOO worried, the actual integration works fine)
   function getDataclip(
     state: ServerState,
     ws: DevSocket,
@@ -273,11 +271,19 @@ const createSocketAPI = (
     const { ref, topic, join_ref } = evt;
     const dataclip = state.dataclips[evt.payload.id];
 
-    // Send the data as an ArrayBuffer (our stringify function will do this)
-    const payload = {
-      status: 'ok',
-      response: enc.encode(stringify(dataclip)),
-    };
+    let payload;
+    if (dataclip) {
+      payload = {
+        status: 'ok',
+        response: enc.encode(stringify(dataclip)),
+      };
+    } else {
+      // TODO I think this actually tidier than what lightning does...
+      payload = {
+        status: 'error',
+        response: 'not_found',
+      };
+    }
 
     ws.reply<GetDataClipReply>({
       ref,

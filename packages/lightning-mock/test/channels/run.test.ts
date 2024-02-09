@@ -154,6 +154,23 @@ test.serial('get dataclip through the run channel', async (t) => {
   });
 });
 
+test.serial(
+  'get dataclip should throw if the dataclip does not exist',
+  async (t) => {
+    return new Promise(async (done) => {
+      server.startRun(run1.id);
+
+      const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
+      channel
+        .push(GET_DATACLIP, { id: 'd' })
+        .receive('error', (result: any) => {
+          t.is(result, 'not_found');
+          done();
+        });
+    });
+  }
+);
+
 // TODO test that all events are proxied out to server.on
 
 test.serial(
