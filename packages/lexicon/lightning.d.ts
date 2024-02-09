@@ -1,6 +1,8 @@
 import type { SanitizePolicies } from '@openfn/logger';
 import { State } from './core';
 
+export const API_VERSION: number;
+
 type StepId = string;
 
 /**
