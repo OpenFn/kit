@@ -19,6 +19,8 @@ test('print versions for node and cli', async (t) => {
   t.regex(message, /cli/);
   t.regex(message, /node/);
   t.notRegex(message, /adaptor/);
+  t.notRegex(message, /compiler/);
+  t.notRegex(message, /runtime/);
 });
 
 test('print versions for node, cli and adaptor', async (t) => {
@@ -30,6 +32,21 @@ test('print versions for node, cli and adaptor', async (t) => {
 
   t.regex(message, /Versions:/);
   t.regex(message, /cli/);
+  t.regex(message, /node/);
+  t.regex(message, /http .+ latest/);
+});
+
+test('print versions for node, cli, components and adaptor', async (t) => {
+  const logger = createMockLogger('', { level: 'info' });
+  await printVersions(logger, { adaptors: ['http'] }, true);
+
+  const last = logger._parse(logger._last);
+  const message = last.message as string;
+
+  t.regex(message, /Versions:/);
+  t.regex(message, /cli/);
+  t.regex(message, /node/);
+  t.regex(message, /runtime/);
   t.regex(message, /node/);
   t.regex(message, /http .+ latest/);
 });

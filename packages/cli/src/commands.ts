@@ -43,7 +43,8 @@ const handlers = {
   ['repo-install']: install,
   ['repo-pwd']: pwd,
   ['repo-list']: list,
-  version: async (opts: Opts, logger: Logger) => printVersions(logger, opts),
+  version: async (opts: Opts, logger: Logger) =>
+    printVersions(logger, opts, true),
 };
 
 // Top level command parser

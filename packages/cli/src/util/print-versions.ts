@@ -8,6 +8,8 @@ import { Opts } from '../options';
 
 const NODE = 'node.js';
 const CLI = 'cli';
+const RUNTIME = 'runtime';
+const COMPILER = 'compiler';
 
 const { triangleRightSmall: t } = mainSymbols;
 
@@ -24,7 +26,8 @@ const loadVersionFromPath = (adaptorPath: string) => {
 
 const printVersions = async (
   logger: Logger,
-  options: Partial<Pick<Opts, 'adaptors' | 'logJson' | 'monorepoPath'>> = {}
+  options: Partial<Pick<Opts, 'adaptors' | 'logJson' | 'monorepoPath'>> = {},
+  includeComponents = false
 ) => {
   const { adaptors, logJson } = options;
   let adaptor = '';
@@ -50,7 +53,9 @@ const printVersions = async (
   }
 
   // Work out the longest label
-  const longest = Math.max(...[NODE, CLI, adaptorName].map((s) => s.length));
+  const longest = Math.max(
+    ...[NODE, CLI, RUNTIME, COMPILER, adaptorName].map((s) => s.length)
+  );
 
   // Prefix and pad version numbers
   const prefix = (str: string) =>
@@ -61,7 +66,10 @@ const printVersions = async (
   // built into process/runner.js
 
   const pkg = JSON.parse(readFileSync(`${dirname}/../../package.json`, 'utf8'));
-  const { version } = pkg;
+  const { version, dependencies } = pkg;
+
+  const compilerVersion = dependencies['@openfn/compiler'];
+  const runtimeVersion = dependencies['@openfn/runtime'];
 
   let output: any;
   if (logJson) {
@@ -71,17 +79,26 @@ const printVersions = async (
         cli: version,
       },
     };
+    if (includeComponents) {
+      output.versions.runtime = runtimeVersion;
+      output.versions.compiler = compilerVersion;
+    }
     if (adaptorName) {
       output.versions[adaptorName] = adaptorVersion;
     }
   } else {
-    const adaptorVersionString = adaptorName
-      ? `\n${prefix(adaptorName)}${adaptorVersion}`
-      : '';
-
     output = `Versions:
 ${prefix(NODE)}${process.version.substring(1)}
-${prefix(CLI)}${version}${adaptorVersionString}`;
+${prefix(CLI)}${version}`;
+
+    if (includeComponents) {
+      output += `\n${prefix(RUNTIME)}${runtimeVersion}
+${prefix(COMPILER)}${compilerVersion}`;
+    }
+
+    if (adaptorName) {
+      output += `\n${prefix(adaptorName)}${adaptorVersion}`;
+    }
   }
   logger.always(output);
 };
