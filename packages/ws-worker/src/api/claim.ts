@@ -5,29 +5,29 @@ import { CLAIM } from '../events';
 
 import type { ServerApp } from '../server';
 
-import { KeyObject } from 'node:crypto';
+import crypto from 'node:crypto';
 
 const mockLogger = createMockLogger();
 
-const verifyToken = async (token: string, secret: string) => {
-  console.log(' >>> VERIFY TOKEN');
-  console.log('secret:', secret);
-  console.log('token:', token);
-  // TODO encode this further upstream
-  // We should encode the same secret once at use it for both channels
-  const encodedSecret = new TextEncoder().encode(secret || '');
+// TODO rename to WORKER_LIGHTNING_PUBLIC_KEY
+const DECODED_PUBLIC_KEY = Buffer.from(
+  process.env.LIGHTNING_PUBLIC_KEY!,
+  'base64'
+).toString();
 
-  const keyObject = KeyObject.from(secret);
-  const { payload } = await jose.jwtVerify(token, keyObject);
-  console.log(payload);
+const verifyToken = async (token: string, publicKey: string) => {
+  // Create a KeyObject with the public key in
+  const key = crypto.createPublicKey(publicKey);
+
+  // Now verify the token against the key
+  // This will throw if there's any problen
+  const { payload } = await jose.jwtVerify(token, key, {
+    issuer: 'Lightning',
+  });
+
   if (payload) {
     return true;
   }
-  // TODO we probably need to kill the worker at this point?
-  // We also need to un-claim the token, which we have no mechanism for
-  console.error('>> INVALID SECRET');
-  process.exit(1);
-  throw new Error('invalid_secret');
 };
 
 type ClaimOptions = {
@@ -68,11 +68,7 @@ const claim = (
 
         runs.forEach(async (run) => {
           if (secret) {
-            // TODO need to verify the token here right
-            // if we fail we need to unclaim somehow?
-            // or send a message back?
-            // maybe for now we'll process.exit
-            await verifyToken(run.token, secret);
+            await verifyToken(run.token, DECODED_PUBLIC_KEY);
           }
           logger.debug('starting run', run.id);
           app.execute(run);
