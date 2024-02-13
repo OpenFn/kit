@@ -440,51 +440,6 @@ test('log and serialize an error to the job logger', async (t) => {
   t.falsy(out.message[0].stack);
 });
 
-test('log job code to the job logger', async (t) => {
-  const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression: 'export default [(s) => { console.log("hi"); return s;}]',
-      },
-    ],
-  };
-
-  const jobLogger = createMockLogger('JOB', { level: 'debug', json: true });
-  await run(plan, {}, { jobLogger });
-
-  t.is(jobLogger._history.length, 1);
-  const [out] = jobLogger._history;
-
-  t.is(out.level, 'info');
-  t.is(out.message[0], 'hi');
-});
-
-test('log and serialize an error to the job logger', async (t) => {
-  const plan: ExecutionPlan = {
-    jobs: [
-      {
-        id: 'a',
-        expression:
-          'export default [(s) => { console.log(new Error("hi")); return s;}]',
-      },
-    ],
-  };
-
-  const jobLogger = createMockLogger('JOB', { level: 'debug', json: true });
-  await run(plan, {}, { jobLogger });
-
-  t.is(jobLogger._history.length, 1);
-  const [out] = jobLogger._history;
-  t.log(out);
-
-  t.is(out.level, 'info');
-  t.is(out.message[0].name, 'Error');
-  t.is(out.message[0].message, 'hi');
-  // should not be an error instance
-  t.falsy(out.message[0].stack);
-});
-
 test('error reports can be overwritten', async (t) => {
   const plan: ExecutionPlanNoOptions = {
     workflow: {
