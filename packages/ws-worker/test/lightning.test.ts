@@ -6,7 +6,6 @@ import test from 'ava';
 import createLightningServer from '@openfn/lightning-mock';
 import type {
   LightningPlan,
-  Node,
   RunCompletePayload,
 } from '@openfn/lexicon/lightning';
 

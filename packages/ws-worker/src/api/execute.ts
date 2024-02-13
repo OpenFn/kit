@@ -1,9 +1,5 @@
 import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
-import type {
-  RunLogPayload,
-  RunStartPayload,
-  LightningPlanOptions,
-} from '@openfn/lexicon/lightning';
+import type { RunLogPayload, RunStartPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
