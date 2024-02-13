@@ -28,3 +28,6 @@ export const generateKeys = async () => {
 };
 
 export const toBase64 = (key: string) => Buffer.from(key).toString('base64');
+
+export const fromBase64 = (key: string) =>
+  Buffer.from(key, 'base64').toString();

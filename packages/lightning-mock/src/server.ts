@@ -7,13 +7,13 @@ import createLogger, {
   LogLevel,
   Logger,
 } from '@openfn/logger';
+import type { StepId } from '@openfn/lexicon';
+import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
-import type { StepId } from '@openfn/lexicon';
-import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
+import { fromBase64 } from './util';
 import type { DevServer } from './types';
-import { toBase64 } from './util';
 
 type JobId = string;
 
@@ -65,7 +65,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
 
   // decode the incoming private key from base 64
   const runPrivateKey = options.runPrivateKey
-    ? toBase64(options.runPrivateKey)
+    ? fromBase64(options.runPrivateKey)
     : undefined;
 
   const state = {
