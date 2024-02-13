@@ -19,7 +19,7 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 
-type ServerOptions = {
+export type ServerOptions = {
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance

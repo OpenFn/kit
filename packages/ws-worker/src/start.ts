@@ -5,7 +5,7 @@ import createLogger, { LogLevel } from '@openfn/logger';
 
 import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
-import createWorker from './server';
+import createWorker, { ServerOptions } from './server';
 
 type Args = {
   _: string[];
@@ -140,13 +140,7 @@ const [minBackoff, maxBackoff] = args.backoff
 function engineReady(engine: any) {
   logger.debug('Creating worker server...');
 
-  if (args.lightningPublicKey) {
-    logger.info(
-      'Lightning public key found: run tokens from Lightning will be verified by this worker'
-    );
-  }
-
-  const workerOptions = {
+  const workerOptions: ServerOptions = {
     port: args.port,
     lightning: args.lightning,
     logger,
@@ -158,8 +152,18 @@ function engineReady(engine: any) {
       max: maxBackoff,
     },
     maxWorkflows: args.capacity,
-    runPublicKey: args.lightningPublicKey,
   };
+
+  if (args.lightningPublicKey) {
+    logger.info(
+      'Lightning public key found: run tokens from Lightning will be verified by this worker'
+    );
+    workerOptions.runPublicKey = Buffer.from(
+      args.lightningPublicKey,
+      'base64'
+    ).toString();
+  }
+
   const {
     logger: _l,
     secret: _s,
