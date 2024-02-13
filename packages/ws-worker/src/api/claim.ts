@@ -65,7 +65,9 @@ const claim = (
             } catch (e) {
               logger.error('Error validating run token');
               logger.error(e);
-              return reject();
+              reject();
+              app.destroy();
+              return;
             }
           } else {
             logger.debug('skipping run token validation for', run.id);
