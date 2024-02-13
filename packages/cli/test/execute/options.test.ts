@@ -11,7 +11,7 @@ test('correct default options', (t) => {
   const options = parse('execute job.js');
 
   t.deepEqual(options.adaptors, []);
-  t.is(options.autoinstall, false);
+  t.is(options.autoinstall, true);
   t.is(options.command, 'execute');
   t.is(options.compile, true);
   t.is(options.expandAdaptors, true);
