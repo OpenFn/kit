@@ -15,6 +15,7 @@ type Args = {
   secret?: string;
   loop?: boolean;
   log: LogLevel;
+  lightningPublicKey?: string;
   mock: boolean;
   backoff: string;
   capacity?: number;
@@ -26,6 +27,7 @@ type Args = {
 const {
   WORKER_BACKOFF,
   WORKER_CAPACITY,
+  WORKER_LIGHTNING_PUBLIC_KEY,
   WORKER_LIGHTNING_SERVICE_URL,
   WORKER_LOG_LEVEL,
   WORKER_MAX_RUN_DURATION_SECONDS,
@@ -63,6 +65,11 @@ const args = yargs(hideBin(process.argv))
     description:
       'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
     default: WORKER_SECRET,
+  })
+  .option('lightning-public-key', {
+    description:
+      'Base64-encoded public key. Used to verify run tokens. Env: WORKER_LIGHTNING_PUBLIC_KEY',
+    default: WORKER_LIGHTNING_PUBLIC_KEY,
   })
   .option('log', {
     description:
@@ -133,6 +140,12 @@ const [minBackoff, maxBackoff] = args.backoff
 function engineReady(engine: any) {
   logger.debug('Creating worker server...');
 
+  if (args.lightningPublicKey) {
+    logger.info(
+      'Lightning public key found: run tokens from Lightning will be verified by this worker'
+    );
+  }
+
   const workerOptions = {
     port: args.port,
     lightning: args.lightning,
@@ -145,8 +158,14 @@ function engineReady(engine: any) {
       max: maxBackoff,
     },
     maxWorkflows: args.capacity,
+    runPublicKey: args.lightningPublicKey,
   };
-  const { logger: _l, secret: _s, ...humanOptions } = workerOptions;
+  const {
+    logger: _l,
+    secret: _s,
+    runPublicKey,
+    ...humanOptions
+  } = workerOptions;
   logger.debug('Worker options:', humanOptions);
 
   createWorker(engine, workerOptions);
