@@ -27,6 +27,7 @@ type ServerOptions = {
   noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
+  runPublicKey?: string; // base64 encoded run public key
 
   backoff?: {
     min?: number;
@@ -44,6 +45,7 @@ export interface ServerApp extends Koa {
   events: EventEmitter;
   server: Server;
   engine: RuntimeEngine;
+  options: ServerOptions;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
@@ -80,8 +82,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
         logger,
         options.backoff?.min || MIN_BACKOFF,
         options.backoff?.max || MAX_BACKOFF,
-        options.maxWorkflows,
-        options.secret
+        options.maxWorkflows
       );
     } else {
       logger.break();
@@ -153,12 +154,13 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   router.get('/', healthcheck);
 
+  app.options = options || {};
+
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
       app.workflows[id] = true;
 
-      // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
       const {
         channel: runChannel,
         plan,
@@ -194,7 +196,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
     return claim(app, logger, {
-      secret: options.secret,
       maxWorkers: options.maxWorkflows,
     })
       .then(() => {

@@ -9,18 +9,15 @@ import crypto from 'node:crypto';
 
 const mockLogger = createMockLogger();
 
-// TODO rename to WORKER_LIGHTNING_PUBLIC_KEY
-const DECODED_PUBLIC_KEY = Buffer.from(
-  process.env.LIGHTNING_PUBLIC_KEY!,
-  'base64'
-).toString();
+// // TODO rename to WORKER_LIGHTNING_PUBLIC_KEY
+// const DECODED_PUBLIC_KEY = Buffer.from(
+//   process.env.LIGHTNING_PUBLIC_KEY!,
+//   'base64'
+// ).toString();
 
 const verifyToken = async (token: string, publicKey: string) => {
-  // Create a KeyObject with the public key in
   const key = crypto.createPublicKey(publicKey);
 
-  // Now verify the token against the key
-  // This will throw if there's any problen
   const { payload } = await jose.jwtVerify(token, key, {
     issuer: 'Lightning',
   });
@@ -31,7 +28,6 @@ const verifyToken = async (token: string, publicKey: string) => {
 };
 
 type ClaimOptions = {
-  secret?: string;
   maxWorkers?: number;
 };
 
@@ -42,7 +38,7 @@ const claim = (
   options: ClaimOptions = {}
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const { secret, maxWorkers = 5 } = options;
+    const { maxWorkers = 5 } = options;
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
@@ -67,9 +63,13 @@ const claim = (
         }
 
         runs.forEach(async (run) => {
-          if (secret) {
-            await verifyToken(run.token, DECODED_PUBLIC_KEY);
+          if (app.options?.runPublicKey) {
+            await verifyToken(run.token, app.options.runPublicKey);
+            logger.debug('verified run token for', run.id);
+          } else {
+            logger.debug('skipping run token validation for', run.id);
           }
+
           logger.debug('starting run', run.id);
           app.execute(run);
           resolve();

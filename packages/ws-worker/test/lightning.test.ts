@@ -3,11 +3,14 @@
  */
 
 import test from 'ava';
-import createLightningServer from '@openfn/lightning-mock';
 import type {
   LightningPlan,
   RunCompletePayload,
 } from '@openfn/lexicon/lightning';
+import createLightningServer, {
+  generateKeys,
+  toBase64,
+} from '@openfn/lightning-mock';
 
 import { createRun, createEdge, createJob } from './util';
 import createWorkerServer from '../src/server';
@@ -17,20 +20,34 @@ import createMockRTE from '../src/mock/runtime-engine';
 let lng: any;
 let worker: any;
 
+let keys = { private: '.', public: '.' };
+
 const urls = {
   worker: 'http://localhost:4567',
   lng: 'ws://localhost:7654/worker',
 };
 
 test.before(async () => {
+  const rawKeys = await generateKeys();
+
+  keys.public = rawKeys.publicKey;
+  keys.private = toBase64(rawKeys.privateKey);
+
   const engine = await createMockRTE();
-  // TODO give lightning the same secret and do some validation
-  lng = createLightningServer({ port: 7654 });
+  lng = createLightningServer({
+    port: 7654,
+    runPrivateKey: keys.private,
+  });
+
   worker = createWorkerServer(engine, {
     port: 4567,
     lightning: urls.lng,
     secret: 'abc',
     maxWorkflows: 1,
+
+    // Note that if this is not passed,
+    // JWT verification will be skipped
+    runPublicKey: keys.public,
   });
 });
 
@@ -89,6 +106,13 @@ test.serial(
       lng.enqueueRun(run);
     });
   }
+);
+
+test.todo('worker should log when a run token is verified');
+
+// Perhaps a workflow exception is the most responsible thing right now
+test.todo(
+  'worker throws or blow up or something when token verification fails'
 );
 
 test.serial(

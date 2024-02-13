@@ -10,8 +10,7 @@ const startWorkloop = (
   logger: Logger,
   minBackoff: number,
   maxBackoff: number,
-  maxWorkers?: number,
-  secret?: string
+  maxWorkers?: number
 ) => {
   let promise: CancelablePromise;
   let cancelled = false;
@@ -21,7 +20,6 @@ const startWorkloop = (
       promise = tryWithBackoff(
         () =>
           claim(app, logger, {
-            secret,
             maxWorkers,
           }),
         {
