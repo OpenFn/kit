@@ -11,7 +11,12 @@ export const randomPort = () => Math.round(2000 + Math.random() * 1000);
 export const initLightning = (port = 4000, privateKey?: string) => {
   // TODO the lightning mock right now doesn't use the secret
   // but we may want to add tests against this
-  return createLightningServer({ port, runPrivateKey: toBase64(privateKey) });
+  const opts = { port };
+  if (privateKey) {
+    // @ts-ignore
+    opts.runPrivateKey = toBase64(privateKey);
+  }
+  return createLightningServer(opts);
 };
 
 export const initWorker = async (
