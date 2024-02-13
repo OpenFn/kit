@@ -21,9 +21,9 @@ export const generateKeys = async () => {
   const { publicKey, privateKey } = await jose.generateKeyPair('RS256');
   return {
     // @ts-ignore export function
-    publicKey: publicKey.export({ type: 'pkcs1', format: 'pem' }),
+    public: publicKey.export({ type: 'pkcs1', format: 'pem' }),
     // @ts-ignore export function
-    privateKey: privateKey.export({ type: 'pkcs1', format: 'pem' }),
+    private: privateKey.export({ type: 'pkcs1', format: 'pem' }),
   };
 };
 

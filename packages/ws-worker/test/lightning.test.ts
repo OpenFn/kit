@@ -28,15 +28,12 @@ const urls = {
 };
 
 test.before(async () => {
-  const rawKeys = await generateKeys();
-
-  keys.public = rawKeys.publicKey;
-  keys.private = toBase64(rawKeys.privateKey);
+  keys = await generateKeys();
 
   const engine = await createMockRTE();
   lng = createLightningServer({
     port: 7654,
-    runPrivateKey: keys.private,
+    runPrivateKey: toBase64(keys.private),
   });
 
   worker = createWorkerServer(engine, {

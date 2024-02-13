@@ -17,11 +17,7 @@ const verify = async (token: string, publicKey: string) => {
 };
 
 test.before(async () => {
-  const result = await generateKeys();
-
-  // Note that these keys are not base64 encoded
-  keys.public = result.publicKey;
-  keys.private = result.privateKey;
+  keys = await generateKeys();
 });
 
 test('generate a placeholder token if no key passed', async (t) => {
