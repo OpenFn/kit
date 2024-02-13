@@ -1,5 +1,6 @@
 import test from 'ava';
 import path from 'node:path';
+import { generateKeys } from '@openfn/lightning-mock';
 
 import {
   createRun,
@@ -13,13 +14,20 @@ let lightning;
 let worker;
 
 test.before(async () => {
+  const keys = await generateKeys();
   const lightningPort = 4321;
 
-  lightning = initLightning(lightningPort);
+  lightning = initLightning(lightningPort, keys.private);
 
-  ({ worker } = await initWorker(lightningPort, {
-    repoDir: path.resolve('tmp/repo/attempts'),
-  }));
+  ({ worker } = await initWorker(
+    lightningPort,
+    {
+      repoDir: path.resolve('tmp/repo/attempts'),
+    },
+    {
+      runPublicKey: keys.public,
+    }
+  ));
 });
 
 test.afterEach(async () => {
