@@ -1,19 +1,13 @@
+import crypto from 'node:crypto';
 import * as jose from 'jose';
 import { Logger, createMockLogger } from '@openfn/logger';
 import { ClaimPayload, ClaimReply } from '@openfn/lexicon/lightning';
+
 import { CLAIM } from '../events';
 
 import type { ServerApp } from '../server';
 
-import crypto from 'node:crypto';
-
 const mockLogger = createMockLogger();
-
-// // TODO rename to WORKER_LIGHTNING_PUBLIC_KEY
-// const DECODED_PUBLIC_KEY = Buffer.from(
-//   process.env.LIGHTNING_PUBLIC_KEY!,
-//   'base64'
-// ).toString();
 
 const verifyToken = async (token: string, publicKey: string) => {
   const key = crypto.createPublicKey(publicKey);
@@ -65,8 +59,14 @@ const claim = (
 
         runs.forEach(async (run) => {
           if (app.options?.runPublicKey) {
-            await verifyToken(run.token, app.options.runPublicKey);
-            logger.debug('verified run token for', run.id);
+            try {
+              await verifyToken(run.token, app.options.runPublicKey);
+              logger.debug('verified run token for', run.id);
+            } catch (e) {
+              logger.error('Error validating run token');
+              logger.error(e);
+              return reject();
+            }
           } else {
             logger.debug('skipping run token validation for', run.id);
           }
