@@ -165,6 +165,19 @@ test('handle starting_node_id as options', (t) => {
   });
 });
 
+test('handle output_dataclip as options', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    options: {
+      output_dataclips: false,
+    },
+  };
+  const { options } = convertPlan(run as LightningPlan);
+  t.deepEqual(options, {
+    outputDataclips: false,
+  });
+});
+
 test('convert a single trigger', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'w',

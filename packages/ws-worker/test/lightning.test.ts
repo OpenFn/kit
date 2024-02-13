@@ -4,13 +4,15 @@
 
 import test from 'ava';
 import createLightningServer from '@openfn/lightning-mock';
+import type {
+  LightningPlan,
+  RunCompletePayload,
+} from '@openfn/lexicon/lightning';
 
 import { createRun, createEdge, createJob } from './util';
-
 import createWorkerServer from '../src/server';
-import createMockRTE from '../src/mock/runtime-engine';
 import * as e from '../src/events';
-import { RunCompletePayload } from '@openfn/lexicon/lightning';
+import createMockRTE from '../src/mock/runtime-engine';
 
 let lng: any;
 let worker: any;
@@ -38,17 +40,18 @@ test.afterEach(() => {
 
 let rollingRunId = 0;
 
-const getRun = (ext = {}, jobs?: any) => ({
-  id: `a${++rollingRunId}`,
-  jobs: jobs || [
-    {
-      id: 'j',
-      adaptor: '@openfn/language-common@1.0.0',
-      body: 'fn(() => ({ answer: 42 }))',
-    },
-  ],
-  ...ext,
-});
+const getRun = (ext = {}, jobs?: any[]): LightningPlan =>
+  ({
+    id: `a${++rollingRunId}`,
+    jobs: jobs || [
+      {
+        id: 'j',
+        adaptor: '@openfn/language-common@1.0.0',
+        body: 'fn(() => ({ answer: 42 }))',
+      },
+    ],
+    ...ext,
+  } as LightningPlan);
 
 test.serial(`events: lightning should respond to a ${e.CLAIM} event`, (t) => {
   return new Promise((done) => {
@@ -341,6 +344,28 @@ test.serial(
     });
   }
 );
+
+test.serial(`events: ${e.STEP_COMPLETE} should not return dataclips`, (t) => {
+  return new Promise((done) => {
+    const run = getRun();
+    run.options = {
+      output_dataclips: false,
+    };
+
+    lng.onSocketEvent(e.STEP_COMPLETE, run.id, ({ payload }: any) => {
+      t.is(payload.job_id, 'j');
+      t.falsy(payload.output_dataclip);
+      t.truthy(payload.output_dataclip_id);
+      t.pass();
+    });
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
   return new Promise((done) => {

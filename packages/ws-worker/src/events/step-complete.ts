@@ -8,7 +8,7 @@ import { calculateJobExitReason } from '../api/reasons';
 import { sendEvent, Context } from '../api/execute';
 
 export default function onStepComplete(
-  { channel, state }: Context,
+  { channel, state, options }: Context,
   event: JobCompletePayload,
   // TODO this isn't terribly graceful, but accept an error for crashes
   error?: any
@@ -52,7 +52,6 @@ export default function onStepComplete(
     step_id,
     job_id,
     output_dataclip_id: dataclipId,
-    output_dataclip: stringify(outputState),
 
     reason,
     error_message,
@@ -61,6 +60,11 @@ export default function onStepComplete(
     mem: event.mem,
     duration: event.duration,
     thread_id: event.threadId,
-  };
+  } as StepCompletePayload;
+
+  if (!options || options.outputDataclips !== false) {
+    evt.output_dataclip = stringify(outputState);
+  }
+
   return sendEvent<StepCompletePayload>(channel, STEP_COMPLETE, evt);
 }

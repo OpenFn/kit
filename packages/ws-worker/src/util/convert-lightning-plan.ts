@@ -39,21 +39,31 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
+// Options which relate to this execution but are not part of the plan
+export type WorkerRunOptions = ExecuteOptions & {
+  // Defaults to true - must be explicity false to stop dataclips being sent
+  outputDataclips?: boolean;
+};
+
 export default (
   run: LightningPlan
-): { plan: ExecutionPlan; options: ExecuteOptions; input: Lazy<State> } => {
+): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
   // Some options get mapped straight through to the runtime's workflow options
-  // TODO or maybe not? Maybe they're all sent to the engine instead?
   const runtimeOpts: Omit<WorkflowOptions, 'timeout'> = {};
 
   // But some need to get passed down into the engine's options
-  const engineOpts: ExecuteOptions = {};
+  const engineOpts: WorkerRunOptions = {};
 
-  if (run.options?.runTimeoutMs) {
-    engineOpts.runTimeoutMs = run.options.runTimeoutMs;
-  }
-  if (run.options?.sanitize) {
-    engineOpts.sanitize = run.options.sanitize;
+  if (run.options) {
+    if (run.options.runTimeoutMs) {
+      engineOpts.runTimeoutMs = run.options.runTimeoutMs;
+    }
+    if (run.options.sanitize) {
+      engineOpts.sanitize = run.options.sanitize;
+    }
+    if (run.options.hasOwnProperty('output_dataclips')) {
+      engineOpts.outputDataclips = run.options.output_dataclips;
+    }
   }
 
   const plan: Partial<ExecutionPlan> = {
