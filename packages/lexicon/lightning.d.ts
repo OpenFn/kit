@@ -44,6 +44,7 @@ export type LightningPlanOptions = {
   runTimeoutMs?: number;
   sanitize?: SanitizePolicies;
   start?: StepId;
+  output_dataclips?: boolean;
 };
 
 /**

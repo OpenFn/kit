@@ -31,6 +31,7 @@ import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
 
 import type { Channel, RunState, JSONLog } from '../types';
+import { WorkerRunOptions } from '../util/convert-lightning-plan';
 
 const enc = new TextDecoder('utf-8');
 
@@ -41,6 +42,7 @@ export type Context = {
   state: RunState;
   logger: Logger;
   engine: RuntimeEngine;
+  options: WorkerRunOptions;
   onFinish: (result: any) => void;
 
   // maybe its better for version numbers to be scribbled here as we go?
@@ -63,14 +65,21 @@ export function execute(
   logger: Logger,
   plan: ExecutionPlan,
   input: Lazy<State>,
-  options: LightningPlanOptions = {},
+  options: WorkerRunOptions = {},
   onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);
 
   const state = createRunState(plan, input);
 
-  const context: Context = { channel, state, logger, engine, onFinish };
+  const context: Context = {
+    channel,
+    state,
+    logger,
+    engine,
+    options,
+    onFinish,
+  };
 
   const throttle = createThrottle();
 

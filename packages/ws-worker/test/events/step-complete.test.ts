@@ -154,3 +154,35 @@ test('send a step:complete event', async (t) => {
   } as JobCompletePayload;
   await handleStepComplete({ channel, state } as any, event);
 });
+
+test('do not include dataclips in step:complete if output_dataclip is false', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+  const result = { x: 10 };
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const options = {
+    outputDataclips: false,
+  };
+
+  const channel = mockChannel({
+    [STEP_COMPLETE]: (evt: StepCompletePayload) => {
+      t.truthy(evt.output_dataclip_id);
+      t.falsy(evt.output_dataclip);
+    },
+  });
+
+  const event = {
+    jobId,
+    workflowId: plan.id,
+    state: result,
+    next: ['a'],
+    mem: { job: 1, system: 10 },
+    duration: 61,
+    thread_id: 'abc',
+  } as JobCompletePayload;
+  await handleStepComplete({ channel, state, options } as any, event);
+});
