@@ -194,7 +194,7 @@ test.serial('only listen to events for the correct workflow', async (t) => {
   t.pass();
 });
 
-test.serial('log events should stringify a string message', async (t) => {
+test('log events should stringify a string message', async (t) => {
   const wf = clone(sampleWorkflow);
   wf.id = t.title;
   wf.workflow.steps[0].expression =

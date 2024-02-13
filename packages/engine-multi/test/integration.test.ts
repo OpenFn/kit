@@ -1,10 +1,10 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
 import createAPI from '../src/api';
 import type { RuntimeEngine } from '../src';
-import { ExecutionPlan } from '@openfn/lexicon';
 
 const logger = createMockLogger();
 let api: RuntimeEngine;

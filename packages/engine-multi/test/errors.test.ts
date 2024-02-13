@@ -173,7 +173,7 @@ test.serial.skip('execution error from async code', (t) => {
 test.serial('emit a crash error on process.exit()', (t) => {
   return new Promise((done) => {
     const plan = {
-      id: 'f',
+      id: 'z',
       workflow: {
         steps: [
           {
