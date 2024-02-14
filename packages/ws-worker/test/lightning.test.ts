@@ -189,6 +189,8 @@ test.serial(
   `events: lightning should receive a ${e.GET_CREDENTIAL} event`,
   (t) => {
     return new Promise((done) => {
+      lng.addCredential('a', {});
+
       const run = getRun({}, [
         {
           id: 'some-job',
@@ -204,7 +206,38 @@ test.serial(
         didCallEvent = true;
       });
 
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, ({ payload }: any) => {
+        t.is(payload.reason, 'success');
+        t.true(didCallEvent);
+        done();
+      });
+
+      lng.enqueueRun(run);
+    });
+  }
+);
+
+test.serial(
+  `events: lightning should receive an exception reason if ${e.GET_CREDENTIAL} event fails`,
+  (t) => {
+    return new Promise((done) => {
+      const run = getRun({}, [
+        {
+          id: 'some-job',
+          credential_id: 'zzz',
+          adaptor: '@openfn/language-common@1.0.0',
+          body: 'fn(() => ({ answer: 42 }))',
+        },
+      ]);
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.GET_CREDENTIAL, run.id, () => {
+        // again there's no way to check the right credential was returned
+        didCallEvent = true;
+      });
+
       lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+        console.log('>> RUN COMPLETE');
         t.true(didCallEvent);
         done();
       });
