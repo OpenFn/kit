@@ -26,7 +26,6 @@ type ClaimOptions = {
   maxWorkers?: number;
 };
 
-// TODO: this needs standalone unit tests now that it's bene moved
 const claim = (
   app: ServerApp,
   logger: Logger = mockLogger,

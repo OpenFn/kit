@@ -186,8 +186,6 @@ const createSocketAPI = (
       // Not needed by the mocks at the moment
       const next = queue.shift();
 
-      // TODO this is not well tested inside this repo
-      // (although tests in the worker rely on it)
       const token = await generateRunToken(next!, options.runPrivateKey);
 
       runs.push({ id: next!, token });

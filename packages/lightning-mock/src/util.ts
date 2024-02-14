@@ -14,9 +14,6 @@ export const stringify = (obj: any): string =>
     return value;
   });
 
-// TODO should these be base64 encoded?
-// Depends. The env vars should be in base64, and the top level server args
-// But they should be decoded almost immediately for internal use
 export const generateKeys = async () => {
   const { publicKey, privateKey } = await jose.generateKeyPair('RS256');
   return {
