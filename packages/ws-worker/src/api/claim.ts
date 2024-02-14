@@ -14,7 +14,6 @@ const verifyToken = async (token: string, publicKey: string) => {
 
   const { payload } = await jose.jwtVerify(token, key, {
     issuer: 'Lightning',
-    // TODO id
   });
 
   if (payload) {
