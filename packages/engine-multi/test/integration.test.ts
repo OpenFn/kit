@@ -373,7 +373,7 @@ test.serial('evaluate conditional edges', (t) => {
 
 test.serial('preload credentials', (t) => {
   return new Promise(async (done) => {
-    let didCallLoader = true;
+    let didCallLoader = false;
 
     const loader = (id: string) =>
       new Promise<any>((resolve) => {
@@ -403,8 +403,50 @@ test.serial('preload credentials', (t) => {
 
     const plan = createPlan(jobs);
 
-    api.execute(plan, options).on('workflow-complete', () => {
+    api.execute(plan, {}, options).on('workflow-complete', () => {
       t.true(didCallLoader);
+      done();
+    });
+  });
+});
+
+test.serial('send a workflow error if credentials fail to load', (t) => {
+  return new Promise(async (done) => {
+    let didCallLoader = false;
+
+    const loader = () =>
+      new Promise<any>((_resolve, reject) => {
+        setTimeout(() => {
+          didCallLoader = true;
+          reject();
+        }, 1);
+      });
+
+    api = await createAPI({
+      logger,
+    });
+
+    const options = {
+      resolvers: {
+        credential: loader,
+      },
+    };
+
+    const jobs = [
+      {
+        id: 'a',
+        configuration: 'secret',
+      },
+    ];
+
+    const plan = createPlan(jobs);
+
+    api.execute(plan, {}, options).on('workflow-error', (e) => {
+      t.true(didCallLoader);
+
+      t.is(e.type, 'CredentialLoadError');
+      t.is(e.severity, 'exception');
+      t.is(e.message, 'Failed to load credential secret for step a');
       done();
     });
   });
