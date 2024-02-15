@@ -12,6 +12,7 @@ import {
   RUN_LOG,
   RUN_START,
   RUN_COMPLETE,
+  GET_CREDENTIAL,
 } from '../src/events';
 import { ExecutionPlan } from '@openfn/lexicon';
 
@@ -49,6 +50,9 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
       [RUN_LOG]: async () => true,
       [STEP_COMPLETE]: async () => true,
       [RUN_COMPLETE]: async () => true,
+      [GET_CREDENTIAL]: async () => {
+        throw new Error('err');
+      },
     });
 
     const onFinish = (result: any) => {
@@ -219,6 +223,20 @@ test('exception: autoinstall error', async (t) => {
     reason.error_message,
     'Error installing @openfn/language-common@1.0.0: not the way to amarillo'
   );
+});
+
+test('exception: failed to load credential', async (t) => {
+  const plan = createPlan({
+    id: 'aa',
+    expression: 'export default [() => s]',
+    configuration: 'zzz',
+  });
+
+  const { reason } = await execute(plan);
+
+  t.is(reason.reason, 'exception');
+  t.is(reason.error_type, 'CredentialLoadError');
+  t.is(reason.error_message, 'Failed to load credential zzz for step aa');
 });
 
 test('kill: timeout', async (t) => {
