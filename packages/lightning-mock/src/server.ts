@@ -7,11 +7,12 @@ import createLogger, {
   LogLevel,
   Logger,
 } from '@openfn/logger';
+import type { StepId } from '@openfn/lexicon';
+import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
-import type { StepId } from '@openfn/lexicon';
-import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
+import { fromBase64 } from './util';
 import type { DevServer } from './types';
 
 type JobId = string;
@@ -43,12 +44,17 @@ export type ServerState = {
 
   // event emitter for debugging and observability
   events: EventEmitter;
+
+  options: LightningOptions;
 };
 
 export type LightningOptions = {
   logger?: Logger;
   logLevel?: LogLevel;
   port?: string | number;
+
+  // if passed, a JWT will be included in all claim responses
+  runPrivateKey?: string;
 };
 
 export type RunId = string;
@@ -56,6 +62,11 @@ export type RunId = string;
 // a mock lightning server
 const createLightningServer = (options: LightningOptions = {}) => {
   const logger = options.logger || createMockLogger();
+
+  // decode the incoming private key from base 64
+  const runPrivateKey = options.runPrivateKey
+    ? fromBase64(options.runPrivateKey)
+    : undefined;
 
   const state = {
     credentials: {},
@@ -66,6 +77,11 @@ const createLightningServer = (options: LightningOptions = {}) => {
     queue: [] as RunId[],
     results: {},
     events: new EventEmitter(),
+
+    options: {
+      ...options,
+      runPrivateKey,
+    },
   } as ServerState;
 
   const app = new Koa() as DevServer;

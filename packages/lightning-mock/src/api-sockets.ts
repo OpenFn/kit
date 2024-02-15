@@ -39,6 +39,7 @@ import {
   STEP_COMPLETE,
   STEP_START,
 } from './events';
+import { generateRunToken } from './tokens';
 import { extractRunId, stringify } from './util';
 import type { ServerState } from './server';
 
@@ -101,8 +102,8 @@ const createSocketAPI = (
   });
 
   wss.registerEvents('worker:queue', {
-    [CLAIM]: (ws, event: PhoenixEvent<ClaimPayload>) => {
-      const { runs } = pullClaim(state, ws, event);
+    [CLAIM]: async (ws, event: PhoenixEvent<ClaimPayload>) => {
+      const { runs } = await pullClaim(state, ws, event);
       state.events.emit(CLAIM, {
         payload: runs,
         state: clone(state),
@@ -165,13 +166,13 @@ const createSocketAPI = (
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
   // the reply ensures that only the calling worker will get the run
-  function pullClaim(
+  async function pullClaim(
     state: ServerState,
     ws: DevSocket,
     evt: PhoenixEvent<ClaimPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { queue } = state;
+    const { queue, options } = state;
     let count = 1;
 
     const runs: ClaimRun[] = [];
@@ -184,9 +185,10 @@ const createSocketAPI = (
       // TODO assign the worker id to the run
       // Not needed by the mocks at the moment
       const next = queue.shift();
-      // TODO the token in the mock is trivial because we're not going to do any validation on it yet
-      // TODO need to save the token associated with this run
-      runs.push({ id: next!, token: 'x.y.z' });
+
+      const token = await generateRunToken(next!, options.runPrivateKey);
+
+      runs.push({ id: next!, token });
       count -= 1;
 
       startRun(next!);

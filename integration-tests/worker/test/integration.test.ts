@@ -2,6 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import Koa from 'koa';
+import { generateKeys } from '@openfn/lightning-mock';
 
 import { initLightning, initWorker, randomPort } from '../src/init';
 
@@ -12,13 +13,21 @@ let engineLogger;
 let lightningPort;
 
 test.before(async () => {
+  const keys = await generateKeys();
   lightningPort = randomPort();
-  lightning = initLightning(lightningPort);
-  ({ worker, engine, engineLogger } = await initWorker(lightningPort, {
+  lightning = initLightning(lightningPort, keys.private);
+
+  const engineArgs = {
     maxWorkers: 1,
-    purge: false,
     repoDir: path.resolve('tmp/repo/integration'),
-  }));
+  };
+  const workerArgs = { runPublicKey: keys.public };
+
+  ({ worker, engine, engineLogger } = await initWorker(
+    lightningPort,
+    engineArgs,
+    workerArgs
+  ));
 });
 
 test.afterEach(() => {
@@ -501,12 +510,64 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     const engineArgs = {
       repoDir: path.resolve('./dummy-repo'),
       maxWorkers: 1,
-      purge: false,
     };
     await initWorker(lightningPort, engineArgs);
 
     lightning.enqueueRun(attempt1);
     lightning.enqueueRun(attempt2);
+  });
+});
+
+test('worker should exit if it has an invalid key', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    // generate a new, invalid, public key
+    const keys = await generateKeys();
+
+    ({ worker } = await initWorker(
+      lightningPort,
+      {
+        maxWorkers: 1,
+        repoDir: path.resolve('tmp/repo/integration'),
+      },
+      {
+        runPublicKey: keys.public,
+      }
+    ));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-http@latest',
+          body: `fn((s) => s`,
+        },
+      ],
+    };
+
+    // This should NOT run because the worker should
+    // not verify the token and destroy itself
+    lightning.once('run:start', () => {
+      t.fail('invalid run was start');
+      done();
+    });
+    lightning.once('run:complete', () => {
+      t.fail('invalid run was completed');
+      done();
+    });
+
+    // TODO this run will, at the moment, be LOST to Lightning
+    lightning.enqueueRun(run);
+
+    t.false(worker.destroyed);
+    setTimeout(() => {
+      // Ensure that the worker is destroyed after a brief interval
+      t.true(worker.destroyed);
+      done();
+    }, 500);
   });
 });
 

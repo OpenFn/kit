@@ -19,7 +19,7 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 
-type ServerOptions = {
+export type ServerOptions = {
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -27,6 +27,7 @@ type ServerOptions = {
   noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
+  runPublicKey?: string; // base64 encoded run public key
 
   backoff?: {
     min?: number;
@@ -44,6 +45,7 @@ export interface ServerApp extends Koa {
   events: EventEmitter;
   server: Server;
   engine: RuntimeEngine;
+  options: ServerOptions;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
@@ -152,12 +154,13 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   router.get('/', healthcheck);
 
+  app.options = options || {};
+
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
       app.workflows[id] = true;
 
-      // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
       const {
         channel: runChannel,
         plan,
@@ -192,7 +195,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // Debug API to manually trigger a claim
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    return claim(app, logger, options.maxWorkflows)
+    return claim(app, logger, {
+      maxWorkers: options.maxWorkflows,
+    })
       .then(() => {
         logger.info('claim complete: 1 run claimed');
         ctx.body = 'complete';
