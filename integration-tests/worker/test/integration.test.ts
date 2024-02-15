@@ -151,75 +151,6 @@ test.serial('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test.serial("Don't send job logs to stdout", (t) => {
-  return new Promise(async (done) => {
-    const attempt = {
-      id: crypto.randomUUID(),
-      jobs: [
-        {
-          adaptor: '@openfn/language-common@latest',
-          body: 'fn((s) =>  { console.log("@@@"); return s })',
-        },
-      ],
-    };
-
-    lightning.once('run:complete', () => {
-      const jsonLogs = engineLogger._history;
-      // The engine logger shouldn't print out any job logs
-      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
-      t.falsy(jobLog);
-      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
-      t.falsy(jobLog2);
-
-      // But it SHOULD log engine stuff
-      const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
-      );
-      t.truthy(runtimeLog);
-      done();
-    });
-
-    lightning.enqueueRun(attempt);
-  });
-});
-
-test.serial("Don't send adaptor logs to stdout", (t) => {
-  return new Promise(async (done) => {
-    // We have to create a new worker with a different repo for this one
-    await worker.destroy();
-    ({ worker, engineLogger } = await createDummyWorker());
-
-    const message = 've have been expecting you meester bond';
-    const attempt = {
-      id: crypto.randomUUID(),
-      jobs: [
-        {
-          adaptor: '@openfn/test-adaptor@1.0.0',
-          body: `import { log } from '@openfn/test-adaptor'; log("${message}")`,
-        },
-      ],
-    };
-
-    lightning.once('run:complete', () => {
-      const jsonLogs = engineLogger._history;
-      // The engine logger shouldn't print out any adaptor logs
-      const jobLog = jsonLogs.find((l) => l.name === 'ADA');
-      t.falsy(jobLog);
-      const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
-      t.falsy(jobLog2);
-
-      // But it SHOULD log engine stuff
-      const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
-      );
-      t.truthy(runtimeLog);
-      done();
-    });
-
-    lightning.enqueueRun(attempt);
-  });
-});
-
 test.serial('run a job with initial state (with data)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
@@ -506,6 +437,74 @@ test.serial('an OOM error should still call step-complete', (t) => {
 //   });
 // });
 // });
+test.serial("Don't send job logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  { console.log("@@@"); return s })',
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any job logs
+      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
+test.serial("Don't send adaptor logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    // We have to create a new worker with a different repo for this one
+    await worker.destroy();
+    ({ worker, engineLogger } = await createDummyWorker());
+
+    const message = 've have been expecting you meester bond';
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `import { log } from '@openfn/test-adaptor'; log("${message}")`,
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any adaptor logs
+      const jobLog = jsonLogs.find((l) => l.name === 'ADA');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
 
 test.serial(
   'stateful adaptor should create a new client for each attempt',
