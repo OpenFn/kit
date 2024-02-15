@@ -29,7 +29,7 @@ export default async function onRunError(
 
     onFinish({ reason });
   } catch (e: any) {
-    logger.error('ERROR in workflow-error handler:', e.message);
+    logger.error('ERROR in run-error handler:', e.message);
     logger.error(e);
 
     onFinish({});
