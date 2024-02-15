@@ -1,5 +1,25 @@
 # engine-multi
 
+## 1.0.0
+
+### Major Changes
+
+- 86dd668: The 1.0 release updates the language and input of the Engine to match the nomenclature of Lightning.
+
+### Patch Changes
+
+- 5f24294: Don't log adaptor logs to stdout
+- 823b471: Update handling of logs so that JSON messages are stringified
+- ea6fc05: Add a CredentialLoadError
+- Updated dependencies [649ca43]
+- Updated dependencies [86dd668]
+- Updated dependencies [9f6c35d]
+- Updated dependencies [86dd668]
+  - @openfn/logger@1.0.0
+  - @openfn/runtime@1.0.0
+  - @openfn/compiler@0.0.40
+  - @openfn/lexicon@1.0.0
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@openfn/logger",
-  "version": "0.0.20",
+  "version": "1.0.0",
   "description": "Cross-package logging utility",
   "module": "dist/index.js",
   "author": "Open Function Group <admin@openfn.org>",

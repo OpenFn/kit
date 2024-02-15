@@ -1,5 +1,25 @@
 # ws-worker
 
+## 1.0.0
+
+### Major Changes
+
+- 86dd668: The 1.0 release updates the language and input of the Worker to match the nomenclature of Lightning.
+
+### Minor Changes
+
+- 29bff41: Validate the run token
+
+### Patch Changes
+
+- a97eb26: Better error handling for invalid dataclips
+- 823b471: Update handling of logs to accept stringified messages
+- Updated dependencies
+  - @openfn/engine-multi@1.0.0
+  - @openfn/logger@1.0.0
+  - @openfn/runtime@1.0.0
+  - @openfn/lexicon@1.0.0
+
 ## 0.8.1
 
 ### Patch Changes
