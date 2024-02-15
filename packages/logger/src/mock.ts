@@ -1,6 +1,6 @@
 // Mock logger which doesn't log anything
 // TODO built in an API to return the history - very useful in unit tests
-import createLogger, { Logger, LogFns, StringLog, JSONLog } from './logger';
+import createLogger, { Logger, LogFns, StringLog } from './logger';
 import type { LogOptions, LogEmitter } from './options';
 
 // Each log message is saved as the level, then whatever was actually logged
@@ -55,16 +55,6 @@ const mockLogger = <T = StringLog>(
   const mock = m as MockLogger<T>;
 
   mock.break = () => {}; // do nothing
-
-  // @ts-ignore
-  const proxy = m.proxy;
-  // @ts-ignore
-  mock.proxy = (...args) => {
-    // @ts-ignore
-    const result = proxy(...args);
-    // @ts-ignore
-    history.push(['proxy', result]);
-  };
 
   // TODO should this use json?
   mock.print = (...out: any[]) => {
