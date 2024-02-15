@@ -39,6 +39,15 @@ test.after(async () => {
   await worker.destroy();
 });
 
+const createDummyWorker = () => {
+  const engineArgs = {
+    repoDir: path.resolve('./dummy-repo'),
+    maxWorkers: 1,
+    purge: false,
+  };
+  return initWorker(lightningPort, engineArgs);
+};
+
 test('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
     lightning.once('run:complete', (evt) => {
@@ -157,7 +166,7 @@ test("Don't send job logs to stdout", (t) => {
 
     lightning.once('run:complete', () => {
       const jsonLogs = engineLogger._history;
-
+      console.log(jsonLogs);
       // The engine logger shouldn't print out any job logs
       const jobLog = jsonLogs.find((l) => l.name === 'JOB');
       t.falsy(jobLog);
@@ -166,7 +175,44 @@ test("Don't send job logs to stdout", (t) => {
 
       // But it SHOULD log engine stuff
       const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'R/T' && l.message[0].match(/completed step/i)
+        (l) => l.name === 'R/T' && l.message[0].match(/completed workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
+test("Don't send adaptor logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    // We have to create a new worker with a different repo for this one
+    await worker.destroy();
+    ({ worker, engineLogger } = await createDummyWorker());
+
+    const message = 've have been expecting you meester bond';
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `import { log } from '@openfn/test-adaptor'; log("${message}")`,
+        },
+      ],
+    };
+
+    lightning.once('run:complete', (evt) => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any adaptor logs
+      const jobLog = jsonLogs.find((l) => l.name === 'ADA');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'R/T' && l.message[0].match(/completed workflow/i)
       );
       t.truthy(runtimeLog);
       done();
@@ -471,6 +517,7 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     // We want to create our own special worker here
     await worker.destroy();
+    ({ worker } = await createDummyWorker());
 
     const attempt1 = {
       id: crypto.randomUUID(),
