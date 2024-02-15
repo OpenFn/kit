@@ -47,7 +47,7 @@ const createDummyWorker = () => {
   return initWorker(lightningPort, engineArgs);
 };
 
-test('should run a simple job with no compilation or adaptor', (t) => {
+test.serial('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
     lightning.once('run:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
@@ -70,7 +70,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
   });
 });
 
-test('run a job with autoinstall of common', (t) => {
+test.serial('run a job with autoinstall of common', (t) => {
   return new Promise(async (done) => {
     let autoinstallEvent;
 
@@ -114,7 +114,7 @@ test('run a job with autoinstall of common', (t) => {
 });
 
 // this depends on prior test!
-test('run a job which does NOT autoinstall common', (t) => {
+test.serial('run a job which does NOT autoinstall common', (t) => {
   return new Promise(async (done) => {
     lightning.once('run:complete', () => {
       try {
@@ -151,7 +151,7 @@ test('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test("Don't send job logs to stdout", (t) => {
+test.serial("Don't send job logs to stdout", (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -183,7 +183,7 @@ test("Don't send job logs to stdout", (t) => {
   });
 });
 
-test("Don't send adaptor logs to stdout", (t) => {
+test.serial("Don't send adaptor logs to stdout", (t) => {
   return new Promise(async (done) => {
     // We have to create a new worker with a different repo for this one
     await worker.destroy();
@@ -220,7 +220,7 @@ test("Don't send adaptor logs to stdout", (t) => {
   });
 });
 
-test('run a job with initial state (with data)', (t) => {
+test.serial('run a job with initial state (with data)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -255,7 +255,7 @@ test('run a job with initial state (with data)', (t) => {
   });
 });
 
-test('run a job with initial state (no top level keys)', (t) => {
+test.serial('run a job with initial state (no top level keys)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -357,7 +357,7 @@ test.skip('run a job with credentials', (t) => {
   });
 });
 
-test('run a job with bad credentials', (t) => {
+test.serial('run a job with bad credentials', (t) => {
   return new Promise<void>(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -386,7 +386,7 @@ test('run a job with bad credentials', (t) => {
   });
 });
 
-test('blacklist a non-openfn adaptor', (t) => {
+test.serial('blacklist a non-openfn adaptor', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -441,7 +441,7 @@ test.skip('a timeout error should still call step-complete', (t) => {
   });
 });
 
-test('an OOM error should still call step-complete', (t) => {
+test.serial('an OOM error should still call step-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -472,7 +472,7 @@ test('an OOM error should still call step-complete', (t) => {
   });
 });
 
-// test('run a job with complex behaviours (initial state, branching)', (t) => {
+// test.serial('run a job with complex behaviours (initial state, branching)', (t) => {
 //   const attempt = {
 //     id: 'a1',
 //     initialState: 's1
@@ -507,53 +507,56 @@ test('an OOM error should still call step-complete', (t) => {
 // });
 // });
 
-test('stateful adaptor should create a new client for each attempt', (t) => {
-  return new Promise(async (done) => {
-    // We want to create our own special worker here
-    await worker.destroy();
-    ({ worker, engineLogger } = await createDummyWorker());
+test.serial(
+  'stateful adaptor should create a new client for each attempt',
+  (t) => {
+    return new Promise(async (done) => {
+      // We want to create our own special worker here
+      await worker.destroy();
+      ({ worker, engineLogger } = await createDummyWorker());
 
-    const attempt1 = {
-      id: crypto.randomUUID(),
-      jobs: [
-        {
-          adaptor: '@openfn/stateful-test@1.0.0',
-          // manual import shouldn't be needed but its not important enough to fight over
-          body: `import { fn, threadId, clientId } from '@openfn/stateful-test';
+      const attempt1 = {
+        id: crypto.randomUUID(),
+        jobs: [
+          {
+            adaptor: '@openfn/stateful-test@1.0.0',
+            // manual import shouldn't be needed but its not important enough to fight over
+            body: `import { fn, threadId, clientId } from '@openfn/stateful-test';
           fn(() => {
             return { threadId, clientId }
           })`,
-        },
-      ],
-    };
-    const attempt2 = {
-      ...attempt1,
-      id: crypto.randomUUID(),
-    };
-    let results = {};
+          },
+        ],
+      };
+      const attempt2 = {
+        ...attempt1,
+        id: crypto.randomUUID(),
+      };
+      let results = {};
 
-    lightning.on('run:complete', (evt) => {
-      const id = evt.runId;
-      results[id] = lightning.getResult(id);
+      lightning.on('run:complete', (evt) => {
+        const id = evt.runId;
+        results[id] = lightning.getResult(id);
 
-      if (id === attempt2.id) {
-        const one = results[attempt1.id];
-        const two = results[attempt2.id];
+        if (id === attempt2.id) {
+          const one = results[attempt1.id];
+          const two = results[attempt2.id];
 
-        // The two attempts should run in different threads
-        t.not(one.threadId, two.threadId);
-        t.not(one.clientId, two.clientId);
+          // The two attempts should run in different threads
+          t.not(one.threadId, two.threadId);
+          t.not(one.clientId, two.clientId);
 
-        done();
-      }
+          done();
+        }
+      });
+
+      lightning.enqueueRun(attempt1);
+      lightning.enqueueRun(attempt2);
     });
+  }
+);
 
-    lightning.enqueueRun(attempt1);
-    lightning.enqueueRun(attempt2);
-  });
-});
-
-test('worker should exit if it has an invalid key', (t) => {
+test.serial('worker should exit if it has an invalid key', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
       await worker.destroy();
