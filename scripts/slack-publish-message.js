@@ -94,7 +94,7 @@ const getImplementationMessage = (cliVersion, changes) => {
 
   changes.publishedPackages.forEach((pkg) => {
     const changelog = extractChangelog(pkg.name, pkg.version);
-    if (changelog.length) {
+    if (changelog?.length) {
       attachments[0].blocks.push({
         type: 'section',
         text: {
@@ -115,34 +115,42 @@ const getImplementationMessage = (cliVersion, changes) => {
 // If the returned changelog is empty, don't bother listing the changes
 const extractChangelog = (package, version) => {
   const [_, name] = package.split('@openfn/');
-  const log = readFileSync(`packages/${name}/CHANGELOG.md`, 'utf8').split('\n');
-  let shouldParse = false;
-  let skipDeps = false;
-  const changes = [];
-  for (const line of log) {
-    if (skipDeps) {
-      if (line.startsWith('  -')) {
+  try {
+    const log = readFileSync(`packages/${name}/CHANGELOG.md`, 'utf8').split(
+      '\n'
+    );
+    let shouldParse = false;
+    let skipDeps = false;
+    const changes = [];
+    for (const line of log) {
+      if (skipDeps) {
+        if (line.startsWith('  -')) {
+          continue;
+        } else {
+          skipDeps = false;
+        }
+      }
+
+      if (line.startsWith('- Updated dependencies')) {
+        // Ignore all the dependency stuff
+        skipDeps = true;
         continue;
-      } else {
-        skipDeps = false;
+      }
+      if (line === `## ${version}`) {
+        shouldParse = true;
+      } else if (shouldParse && line.startsWith('## ')) {
+        // This is the start of the next version, stop parsing
+        break;
+      } else if (shouldParse && line.length > 2 && !line.startsWith('#')) {
+        changes.push(line);
       }
     }
-
-    if (line.startsWith('- Updated dependencies')) {
-      // Ignore all the dependency stuff
-      skipDeps = true;
-      continue;
-    }
-    if (line === `## ${version}`) {
-      shouldParse = true;
-    } else if (shouldParse && line.startsWith('## ')) {
-      // This is the start of the next version, stop parsing
-      break;
-    } else if (shouldParse && line.length > 2 && !line.startsWith('#')) {
-      changes.push(line);
-    }
+    return changes.join('\n');
+  } catch (e) {
+    console.error(`Error reading changelog for ${package}:`);
+    console.error(e);
+    return [];
   }
-  return changes.join('\n');
 };
 
 const file = readFileSync('pnpm-publish-summary.json');
