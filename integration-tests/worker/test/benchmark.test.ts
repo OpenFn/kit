@@ -89,7 +89,7 @@ test.serial.skip('run 100 attempts', async (t) => {
     }
 
     lightning.on('step:complete', (evt) => {
-      // May want to disable this  but it's nice feedback
+      // May want to disable this but it's nice feedback
       t.log('Completed ', evt.runId);
 
       if (evt.payload.reason !== 'success') {

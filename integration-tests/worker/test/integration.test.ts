@@ -237,7 +237,8 @@ test('run a job with initial state (with data)', (t) => {
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.once('run:complete', () => {
+    lightning.once('run:complete', (evt) => {
+      t.log(evt.payload);
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
