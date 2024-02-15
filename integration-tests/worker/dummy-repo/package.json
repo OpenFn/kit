@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "dependencies": {
+    "@openfn/language-common_latest": "npm:@openfn/language-common@^1.12.0",
     "@openfn/stateful-test_1.0.0": "@npm:@openfn/stateful-test@1.0.0",
     "@openfn/test-adaptor_1.0.0": "@npm:@openfn/test-adaptor@1.0.0"
   }

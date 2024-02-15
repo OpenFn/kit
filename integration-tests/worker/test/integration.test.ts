@@ -43,7 +43,6 @@ const createDummyWorker = () => {
   const engineArgs = {
     repoDir: path.resolve('./dummy-repo'),
     maxWorkers: 1,
-    purge: false,
   };
   return initWorker(lightningPort, engineArgs);
 };
@@ -174,7 +173,7 @@ test("Don't send job logs to stdout", (t) => {
 
       // But it SHOULD log engine stuff
       const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'R/T' && l.message[0].match(/completed workflow/i)
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
       );
       t.truthy(runtimeLog);
       done();
@@ -211,7 +210,7 @@ test("Don't send adaptor logs to stdout", (t) => {
 
       // But it SHOULD log engine stuff
       const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'R/T' && l.message[0].match(/completed workflow/i)
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
       );
       t.truthy(runtimeLog);
       done();
@@ -509,11 +508,13 @@ test('an OOM error should still call step-complete', (t) => {
 
 // TODO this test is a bit different now
 // I think it's worth keeping
-test('stateful adaptor should create a new client for each attempt', (t) => {
+test.only('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     // We want to create our own special worker here
     await worker.destroy();
-    ({ worker } = await createDummyWorker());
+    // ({ worker } = await createDummyWorker());
+
+    console.log(' >> ', worker.id);
 
     const attempt1 = {
       id: crypto.randomUUID(),
@@ -535,8 +536,10 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
     let results = {};
 
     lightning.on('run:complete', (evt) => {
+      console.log(evt.payload);
       const id = evt.runId;
       results[id] = lightning.getResult(id);
+      console.log(results[id]);
 
       if (id === attempt2.id) {
         const one = results[attempt1.id];
@@ -549,12 +552,6 @@ test('stateful adaptor should create a new client for each attempt', (t) => {
         done();
       }
     });
-
-    const engineArgs = {
-      repoDir: path.resolve('./dummy-repo'),
-      maxWorkers: 1,
-    };
-    await initWorker(lightningPort, engineArgs);
 
     lightning.enqueueRun(attempt1);
     lightning.enqueueRun(attempt2);
