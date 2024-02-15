@@ -506,15 +506,11 @@ test('an OOM error should still call step-complete', (t) => {
 // });
 // });
 
-// TODO this test is a bit different now
-// I think it's worth keeping
-test.only('stateful adaptor should create a new client for each attempt', (t) => {
+test('stateful adaptor should create a new client for each attempt', (t) => {
   return new Promise(async (done) => {
     // We want to create our own special worker here
     await worker.destroy();
-    // ({ worker } = await createDummyWorker());
-
-    console.log(' >> ', worker.id);
+    ({ worker, engineLogger } = await createDummyWorker());
 
     const attempt1 = {
       id: crypto.randomUUID(),
@@ -536,10 +532,8 @@ test.only('stateful adaptor should create a new client for each attempt', (t) =>
     let results = {};
 
     lightning.on('run:complete', (evt) => {
-      console.log(evt.payload);
       const id = evt.runId;
       results[id] = lightning.getResult(id);
-      console.log(results[id]);
 
       if (id === attempt2.id) {
         const one = results[attempt1.id];
