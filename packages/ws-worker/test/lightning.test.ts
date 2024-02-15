@@ -189,6 +189,8 @@ test.serial(
   `events: lightning should receive a ${e.GET_CREDENTIAL} event`,
   (t) => {
     return new Promise((done) => {
+      lng.addCredential('a', {});
+
       const run = getRun({}, [
         {
           id: 'some-job',
@@ -204,7 +206,8 @@ test.serial(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, ({ payload }: any) => {
+        t.is(payload.reason, 'success');
         t.true(didCallEvent);
         done();
       });

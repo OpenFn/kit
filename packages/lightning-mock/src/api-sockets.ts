@@ -250,16 +250,27 @@ const createSocketAPI = (
     evt: PhoenixEvent<GetCredentialPayload>
   ) {
     const { ref, join_ref, topic, payload } = evt;
-    const response = state.credentials[payload.id];
-    // console.log(topic, event, response);
+    const cred = state.credentials[payload.id];
+
+    let response;
+    if (cred) {
+      response = {
+        status: 'ok',
+        response: cred,
+      };
+    } else {
+      response = {
+        status: 'error',
+        response: 'not_found',
+      };
+    }
+
     ws.reply<GetCredentialReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-        response,
-      },
+      // @ts-ignore
+      payload: response,
     });
   }
 

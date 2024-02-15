@@ -40,7 +40,8 @@ const execute = async (context: ExecutionContext) => {
       // TODO catch and "throw" nice clean credentials issues
       await preloadCredentials(
         state.plan as any,
-        options.resolvers?.credential
+        options.resolvers?.credential,
+        logger
       );
     }
 

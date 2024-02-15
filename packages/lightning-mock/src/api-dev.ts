@@ -155,7 +155,7 @@ const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
 
     // convert credentials and dataclips
     run.jobs.forEach((job) => {
-      if (job.credential) {
+      if (job.credential && typeof job.credential !== 'string') {
         const cid = crypto.randomUUID();
         state.credentials[cid] = job.credential;
         job.credential = cid;

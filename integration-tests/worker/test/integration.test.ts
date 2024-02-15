@@ -304,6 +304,35 @@ test.skip('run a job with credentials', (t) => {
   });
 });
 
+test('run a job with bad credentials', (t) => {
+  return new Promise<void>(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      dataclip_id: 's1',
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) => s)',
+          credential: 'zzz',
+        },
+      ],
+    };
+
+    const initialState = { name: 'Professor X' };
+
+    lightning.addDataclip('s1', initialState);
+
+    lightning.once('run:complete', ({ payload }) => {
+      t.is(payload.reason, 'exception');
+      t.is(payload.error_type, 'CredentialLoadError');
+      t.regex(payload.error_message, /Failed to load credential zzz for step/);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
 test('blacklist a non-openfn adaptor', (t) => {
   return new Promise(async (done) => {
     const attempt = {
