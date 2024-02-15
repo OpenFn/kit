@@ -656,8 +656,8 @@ importers:
         specifier: ^3.2.1
         version: 3.2.1
       phoenix:
-        specifier: ^1.7.7
-        version: 1.7.7
+        specifier: 1.7.10
+        version: 1.7.10
       ws:
         specifier: ^8.14.1
         version: 8.14.1
@@ -6164,6 +6164,10 @@ packages:
       duplexify: 3.7.1
       through2: 2.0.5
     dev: true
+
+  /phoenix@1.7.10:
+    resolution: {integrity: sha512-akfr/QvLPFRB8sORyc8FQFY/YoGwjWhka/YRcu45sKlBOZHvA80EkLYBUsYlW63UicxgrXABZdrjDkv54LTE+g==}
+    dev: false
 
   /phoenix@1.7.7:
     resolution: {integrity: sha512-moAN6e4Z16x/x1nswUpnTR2v5gm7HsI7eluZ2YnYUUsBNzi3cY/5frmiJfXIEi877IQAafzTfp8hd6vEUMme+w==}
