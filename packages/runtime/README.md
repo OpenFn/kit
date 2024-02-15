@@ -54,29 +54,35 @@ It is expected that that long-running runtimes will have some kind of purge func
 
 ## Execution Plans
 
-The runtime can accept an Execution Plan (or workflow) as an input. 
+The runtime can accept an Execution Plan (or workflow) as an input.
 
 This defines a graph of of jobs (expressions) to run in sequence. Each node in the graph is a job, and contains a set of edges which tell the runtime what to execute next.
 
 The runtime will return the final state when there is nothing left to execute.
 
-A workflow looks like this:
-```
+An execution plan looks like this:
+
+```js
 {
-  start: 'a',
-  jobs: [{
-    id: 'a',
-    expression: "source or path",
-    state: { /* default state */ },
-    configuration: { /* credentials */ },
-    next: {
-      'b': true, // edge to another job
-      'c': { condition: "state.data.age > 18", // conditional edge to another job
-    }    
-    adaptor: "common", // it's complicated
-  }]
+  workflow: {
+    jobs: [{
+      id: 'a',
+      expression: "source or path",
+      state: { /* default state */ },
+      configuration: { /* credentials */ },
+      next: {
+        'b': true, // edge to another job
+        'c': { condition: "state.data.age > 18", // conditional edge to another job
+      }
+      adaptor: "common", // it's complicated
+    }]
+  },
+  options: {
+    start: 'a',
+  }
 }
 ```
+
 State and start node can be passed to the runtime as inputs.
 
 If no start node is provided, the first job in the jobs array will run first.
@@ -88,9 +94,10 @@ The runtime itself does not use the `adaptor` key, as it expects jobs to be comp
 See src/types.ts for a full definition of an execution plan, and `test/runtime.test.ts` for examples.
 
 At the time of writing, exectuion plans have some restrictions:
-* Jobs execute in series (but parallisation can be simulated)
-* A job can only have one input node (`a -> z <- b` is not allowed) 
-* Jobs cannot have circular references (`a -> b -> a` is not allowed)
+
+- Jobs execute in series (but parallisation can be simulated)
+- A job can only have one input node (`a -> z <- b` is not allowed)
+- Jobs cannot have circular references (`a -> b -> a` is not allowed)
 
 Support for more complex plans will be introduced later.
 
@@ -149,6 +156,7 @@ When a job calls `import` to import a dependent module, the runtime must resolve
 It does this through a `linker` function, which takes as arguments a package specifier and `vm` context, and an options object. It will load the module using a dynamic `import` and proxy the interface through a `vm.SyntheticModules`, usng the experimental `vm.SourceTextModule` API.
 
 Modules can be loaded from:
+
 - An explicit path (pass as a dictionary of name: path strings into the options)
 - The current working repo (see below)
 - The current working node_modules (should we somehow disallow this?)

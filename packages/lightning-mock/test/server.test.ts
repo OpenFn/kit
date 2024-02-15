@@ -2,12 +2,12 @@
 import test from 'ava';
 import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
+import type { LightningPlan } from '@openfn/lexicon/lightning';
 
-import { createRun, setup } from './util';
-import type { Run } from '../src/types';
+import { setup } from './util';
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 const port = 3333;
 
@@ -22,7 +22,7 @@ test.serial('should setup an run at /POST /run', async (t) => {
   t.is(Object.keys(state.runs).length, 0);
   t.is(Object.keys(state.runs).length, 0);
 
-  const run: Run = {
+  const run: LightningPlan = {
     id: 'a',
     dataclip_id: 'a',
     starting_node_id: 'j',
@@ -82,10 +82,10 @@ test.serial('reject ws connections without a token', (t) => {
 });
 
 test.serial('respond to channel join requests', (t) => {
-  return new Promise(async (done, reject) => {
+  return new Promise(async (done) => {
     const channel = client.channel('x', {});
 
-    channel.join().receive('ok', (res) => {
+    channel.join().receive('ok', (res: any) => {
       t.is(res, 'ok');
       done();
     });

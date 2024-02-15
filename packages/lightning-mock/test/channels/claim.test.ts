@@ -8,8 +8,8 @@ const port = 4444;
 
 type Channel = any;
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 test.before(async () => ({ server, client } = await setup(port)));
 
@@ -31,7 +31,7 @@ const join = (channelName: string, params: any = {}): Promise<Channel> =>
       .receive('ok', () => {
         done(channel);
       })
-      .receive('error', (err) => {
+      .receive('error', (err: any) => {
         // err will be the response message on the payload (ie, invalid_token, invalid_run_id etc)
         reject(new Error(err));
       });
@@ -46,7 +46,7 @@ test.serial(
       const channel = await join('worker:queue');
 
       // response is an array of run ids
-      channel.push(CLAIM).receive('ok', (response) => {
+      channel.push(CLAIM).receive('ok', (response: any) => {
         const { runs } = response;
         t.assert(Array.isArray(runs));
         t.is(runs.length, 0);
@@ -67,7 +67,7 @@ test.serial(
       const channel = await join('worker:queue');
 
       // response is an array of run ids
-      channel.push(CLAIM).receive('ok', (response) => {
+      channel.push(CLAIM).receive('ok', (response: any) => {
         const { runs } = response;
         t.truthy(runs);
         t.is(runs.length, 1);

@@ -1,5 +1,17 @@
 # @openfn/logger
 
+## 1.0.0
+
+### Major Changes
+
+- 86dd668: Symbolic 1.0 version release
+
+### Patch Changes
+
+- 649ca43: In JSON mode, do not stringify emitted messages.
+  Better handling of error objects
+- 9f6c35d: Support proxy() on the mock logger
+
 ## 0.0.20
 
 ### Patch Changes

@@ -5,8 +5,8 @@ import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
-
-import { INTERNAL_RUN_COMPLETE, ClaimRun } from './events';
+import { ClaimRun } from '@openfn/lexicon/lightning';
+import { INTERNAL_RUN_COMPLETE } from './events';
 import destroy from './api/destroy';
 import startWorkloop from './api/workloop';
 import claim from './api/claim';
@@ -19,7 +19,7 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 
-type ServerOptions = {
+export type ServerOptions = {
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -27,6 +27,7 @@ type ServerOptions = {
   noLoop?: boolean; // disable the worker loop
 
   secret?: string; // worker secret
+  runPublicKey?: string; // base64 encoded run public key
 
   backoff?: {
     min?: number;
@@ -44,6 +45,7 @@ export interface ServerApp extends Koa {
   events: EventEmitter;
   server: Server;
   engine: RuntimeEngine;
+  options: ServerOptions;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
@@ -65,6 +67,12 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // A new connection made to the queue
   const onConnect = ({ socket, channel }: SocketAndChannel) => {
+    if (app.destroyed) {
+      // Fix an edge case where a server can be destroyed before it is
+      // even connnected
+      // If this has happened, we do NOT want to go and start the workloop!
+      return;
+    }
     logger.success('Connected to Lightning at', options.lightning);
 
     // save the channel and socket
@@ -109,6 +117,10 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // We failed to connect to the queue
   const onError = (e: any) => {
+    if (app.destroyed) {
+      return;
+    }
+
     logger.error(
       'CRITICAL ERROR: could not connect to lightning at',
       options.lightning
@@ -152,16 +164,18 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   router.get('/', healthcheck);
 
+  app.options = options || {};
+
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
       app.workflows[id] = true;
 
-      // TODO need to verify the token against LIGHTNING_PUBLIC_KEY
       const {
         channel: runChannel,
         plan,
         options,
+        input,
       } = await joinRunChannel(app.socket, token, id, logger);
 
       // Callback to be triggered when the work is done (including errors)
@@ -176,6 +190,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         engine,
         logger,
         plan,
+        input,
         options,
         onFinish
       );
@@ -190,7 +205,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // Debug API to manually trigger a claim
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    return claim(app, logger, options.maxWorkflows)
+    return claim(app, logger, {
+      maxWorkers: options.maxWorkflows,
+    })
       .then(() => {
         logger.info('claim complete: 1 run claimed');
         ctx.body = 'complete';

@@ -1,14 +1,16 @@
 {
-  "jobs": [
-    {
-      "id": "a",
-      "expression": "x",
-      "next": { "b": true }
-    },
-    {
-      "id": "b",
-      "expression": "x",
-      "next": { "a": true }
-    }
-  ]
+  "workflow": {
+    "steps": [
+      {
+        "id": "a",
+        "expression": "x",
+        "next": { "b": true }
+      },
+      {
+        "id": "b",
+        "expression": "x",
+        "next": { "a": true }
+      }
+    ]
+  }
 }

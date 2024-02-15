@@ -13,7 +13,7 @@ test('correct default options', (t) => {
   t.deepEqual(options.adaptors, []);
   t.is(options.command, 'compile');
   t.is(options.expandAdaptors, true);
-  t.is(options.jobPath, 'job.js');
+  t.is(options.expressionPath, 'job.js');
   t.falsy(options.logJson); // TODO this is undefined right now
   t.is(options.outputStdout, true);
   t.is(options.path, 'job.js');
@@ -52,7 +52,7 @@ test("don't expand adaptors if --no-expand-adaptors is set", (t) => {
 test('default job path', (t) => {
   const options = parse('compile /tmp/my-job/ --immutable');
   t.is(options.path, '/tmp/my-job/');
-  t.is(options.jobPath, '/tmp/my-job/job.js');
+  t.is(options.expressionPath, '/tmp/my-job/job.js');
 });
 
 test('enable json logging', (t) => {

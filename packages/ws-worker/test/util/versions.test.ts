@@ -5,10 +5,7 @@ import calculateVersionString from '../../src/util/versions';
 // keys in this obejct are scrambled on purpose
 const versions = {
   worker: '2',
-  // compiler: '5',
   node: '1',
-  engine: '3',
-  // runtime: '4',
 };
 
 // Util function to parse a version string into something easier to test
@@ -33,9 +30,8 @@ test('calculate version string', (t) => {
   t.is(
     str,
     `Versions for step step-1:
-    ▸ node.js     1
-    ▸ worker      2
-    ▸ engine      3`
+    ▸ node.js   1
+    ▸ worker    2`
   );
 });
 
@@ -46,7 +42,6 @@ test('helper should parse a version string and return the correct order', (t) =>
   t.deepEqual(parsed, [
     ['node.js', '1'],
     ['worker', '2'],
-    ['engine', '3'],
   ]);
 });
 
@@ -58,7 +53,6 @@ test("show unknown if a version isn't passed", (t) => {
   t.deepEqual(parsed, [
     ['node.js', 'unknown'],
     ['worker', 'unknown'],
-    ['engine', 'unknown'],
   ]);
 });
 
@@ -67,9 +61,8 @@ test('show adaptors last', (t) => {
     '@openfn/language-common': '1.0.0',
     ...versions,
   });
-
   const parsed = parse(str);
-  const common = parsed[3];
+  const common = parsed[2];
   t.deepEqual(common, ['@openfn/language-common', '1.0.0']);
 });
 
@@ -83,9 +76,9 @@ test('sort and list multiple adaptors', (t) => {
 
   const parsed = parse(str);
 
-  const a = parsed[3];
-  const j = parsed[4];
-  const z = parsed[5];
+  const a = parsed[2];
+  const j = parsed[3];
+  const z = parsed[4];
 
   t.deepEqual(a, ['a', '1']);
   t.deepEqual(j, ['j', '2']);

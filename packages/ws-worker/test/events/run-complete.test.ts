@@ -4,10 +4,11 @@ import handleRunComplete from '../../src/events/run-complete';
 import { mockChannel } from '../../src/mock/sockets';
 import { RUN_COMPLETE, RUN_LOG } from '../../src/events';
 import { createRunState } from '../../src/util';
+import { createPlan } from '../util';
 
 test('should send an run:complete event', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [] };
+  const plan = createPlan();
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -22,15 +23,15 @@ test('should send an run:complete event', async (t) => {
     },
   });
 
-  const event = {};
+  const event: any = {};
 
-  const context = { channel, state, onFinish: () => {} };
+  const context: any = { channel, state, onFinish: () => {} };
   await handleRunComplete(context, event);
 });
 
 test('should call onFinish with final dataclip', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [] };
+  const plan = createPlan();
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -43,22 +44,22 @@ test('should call onFinish with final dataclip', async (t) => {
     [RUN_COMPLETE]: () => true,
   });
 
-  const context = {
+  const context: any = {
     channel,
     state,
-    onFinish: ({ state: finalState }) => {
+    onFinish: ({ state: finalState }: any) => {
       t.deepEqual(result, finalState);
     },
   };
 
-  const event = { state: result };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 });
 
 test('should send a reason log and return reason for success', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [] };
+  const plan = createPlan();
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -66,8 +67,8 @@ test('should send a reason log and return reason for success', async (t) => {
   };
   state.lastDataclipId = 'x';
 
-  let logEvent;
-  let completeEvent;
+  let logEvent: any;
+  let completeEvent: any;
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
@@ -78,15 +79,15 @@ test('should send a reason log and return reason for success', async (t) => {
     },
   });
 
-  const context = {
+  const context: any = {
     channel,
     state,
-    onFinish: ({ state: finalState }) => {
+    onFinish: ({ state: finalState }: any) => {
       t.deepEqual(result, finalState);
     },
   };
 
-  const event = { state: result };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 
@@ -98,7 +99,7 @@ test('should send a reason log and return reason for success', async (t) => {
 
 test('should send a reason log and return reason for fail', async (t) => {
   const result = { answer: 42 };
-  const plan = { id: 'run-1', jobs: [{ id: 'x' }] };
+  const plan = createPlan({ id: 'x', expression: '.' });
 
   const state = createRunState(plan);
   state.dataclips = {
@@ -113,8 +114,8 @@ test('should send a reason log and return reason for fail', async (t) => {
     },
   };
 
-  let logEvent;
-  let completeEvent;
+  let logEvent: any;
+  let completeEvent: any;
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
@@ -125,15 +126,15 @@ test('should send a reason log and return reason for fail', async (t) => {
     },
   });
 
-  const context = {
+  const context: any = {
     channel,
     state,
-    onFinish: ({ state: finalState }) => {
+    onFinish: ({ state: finalState }: any) => {
       t.deepEqual(result, finalState);
     },
   };
 
-  const event = { state: result };
+  const event: any = { state: result };
 
   await handleRunComplete(context, event);
 

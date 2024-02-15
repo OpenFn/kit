@@ -30,6 +30,8 @@ const destroy = async (app: ServerApp, logger: Logger) => {
       await app.engine.destroy();
       app.socket?.disconnect();
 
+      logger.info('Server closed....');
+
       resolve();
     }),
   ]);
@@ -41,9 +43,7 @@ const waitForRuns = (app: ServerApp, logger: Logger) =>
   new Promise<void>((resolve) => {
     const log = () => {
       logger.debug(
-        `Waiting for ${
-          Object.keys(app.workflows).length
-        } runs to complete...`
+        `Waiting for ${Object.keys(app.workflows).length} runs to complete...`
       );
     };
 
@@ -61,6 +61,7 @@ const waitForRuns = (app: ServerApp, logger: Logger) =>
       log();
       app.events.on(INTERNAL_RUN_COMPLETE, onRunComplete);
     } else {
+      logger.debug('No active rns detected');
       resolve();
     }
   });

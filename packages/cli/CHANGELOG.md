@@ -1,5 +1,28 @@
 # @openfn/cli
 
+## 1.0.0
+
+### Major Changes
+
+- 86dd668: The 1.0 Release of the CLI updates the language and input of the CLI to match the nomenclature of Lightning.
+
+  See the readme for details of the new terminology.
+
+  - Add support for execution plans
+  - Deprecate old workflow format (old workflows are supported and will be automatically converted into the new "execution plans")
+  - Update terminology across the codebase and docs
+  - Remove strict mode
+
+- 101f5a1: Autoinstall adaptors by default (pass `--no-autoinstall` to disable)
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/logger@1.0.0
+  - @openfn/deploy@0.4.2
+  - @openfn/runtime@1.0.0
+  - @openfn/compiler@0.0.40
+
 ## 0.4.16
 
 ### Patch Changes

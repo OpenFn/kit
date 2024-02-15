@@ -1,8 +1,9 @@
 import { printDuration, Logger } from '@openfn/logger';
 import stringify from 'fast-safe-stringify';
+import type { Operation, State } from '@openfn/lexicon';
+
 import loadModule from '../modules/module-loader';
-import { Operation, JobModule, State, ExecutionContext } from '../types';
-import { Options, TIMEOUT } from '../runtime';
+import { Options, DEFAULT_TIMEOUT_MS } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
@@ -16,25 +17,27 @@ import {
   assertRuntimeError,
   assertSecurityKill,
 } from '../errors';
+import type { JobModule, ExecutionContext } from '../types';
 
 export type ExecutionErrorWrapper = {
   state: any;
   error: any;
 };
 
+// TODO don't send the whole context because it's a bit confusing - just the options maybe?
 export default (
   ctx: ExecutionContext,
   expression: string | Operation[],
-  initialState: State
+  input: State
 ) =>
   new Promise(async (resolve, reject) => {
     let duration = Date.now();
-    const { logger, opts = {} } = ctx;
+    const { logger, plan, opts = {} } = ctx;
     try {
-      const timeout = opts.timeout ?? TIMEOUT;
+      const timeout = plan.options?.timeout ?? DEFAULT_TIMEOUT_MS;
 
       // Setup an execution context
-      const context = buildContext(initialState, opts);
+      const context = buildContext(input, opts);
 
       const { operations, execute } = await prepareJob(
         expression,
@@ -61,19 +64,27 @@ export default (
       }
 
       // Note that any errors will be trapped by the containing Job
-      const result = await reducer(initialState);
+      const result = await reducer(input);
 
       clearTimeout(tid);
       logger.debug('Expression complete!');
 
       duration = Date.now() - duration;
 
-      const finalState = prepareFinalState(opts, result, logger);
+      const finalState = prepareFinalState(
+        result,
+        logger,
+        opts.statePropsToRemove
+      );
       // return the final state
       resolve(finalState);
     } catch (e: any) {
       // whatever initial state looks like now, clean it and report it back
-      const finalState = prepareFinalState(opts, initialState, logger);
+      const finalState = prepareFinalState(
+        input,
+        logger,
+        opts.statePropsToRemove
+      );
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -106,7 +117,7 @@ export const wrapOperation = (
     // TODO should we warn if an operation does not return state?
     // the trick is saying WHICH operation without source mapping
     const duration = printDuration(new Date().getTime() - start);
-    logger.info(`Operation ${name} complete in ${duration}`);
+    logger.debug(`Operation ${name} complete in ${duration}`);
     return result;
   };
 };
@@ -135,43 +146,27 @@ const prepareJob = async (
   }
 };
 
-const assignKeys = (
-  source: Record<string, unknown>,
-  target: Record<string, unknown>,
-  keys: string[]
-) => {
-  keys.forEach((k) => {
-    if (source.hasOwnProperty(k)) {
-      target[k] = source[k];
-    }
-  });
-  return target;
-};
-
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
-const prepareFinalState = (opts: Options, state: any, logger: Logger) => {
+const prepareFinalState = (
+  state: any,
+  logger: Logger,
+  statePropsToRemove?: string[]
+) => {
   if (state) {
-    let statePropsToRemove;
-    if (opts.hasOwnProperty('statePropsToRemove')) {
-      ({ statePropsToRemove } = opts);
-    } else {
+    if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
       // tbh this should happen higher up in the stack but it causes havoc in unit testing
       statePropsToRemove = ['configuration'];
     }
 
-    if (statePropsToRemove && statePropsToRemove.forEach) {
-      statePropsToRemove.forEach((prop) => {
-        if (state.hasOwnProperty(prop)) {
-          delete state[prop];
-          logger.debug(`Removed ${prop} from final state`);
-        }
-      });
-    }
-    if (opts.strict) {
-      state = assignKeys(state, {}, ['data', 'error', 'references']);
-    }
+    statePropsToRemove.forEach((prop) => {
+      if (state.hasOwnProperty(prop)) {
+        delete state[prop];
+        logger.debug(`Removed ${prop} from final state`);
+      }
+    });
+
     const cleanState = stringify(state);
     return JSON.parse(cleanState);
   }

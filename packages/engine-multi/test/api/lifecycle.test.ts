@@ -12,12 +12,15 @@ import {
 } from '../../src/api/lifecycle';
 import { WorkflowState } from '../../src/types';
 import ExecutionContext from '../../src/classes/ExecutionContext';
+import * as w from '../../src/worker/events';
 
 const createContext = (workflowId: string, state?: any) =>
   new ExecutionContext({
     state: state || { id: workflowId },
     logger: createMockLogger(),
+    // @ts-ignore
     callWorker: () => {},
+    // @ts-ignore
     options: {},
   });
 
@@ -26,10 +29,17 @@ test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
     const workflowId = 'a';
 
     const context = createContext(workflowId);
-    const event = { workflowId, threadId: '123' };
+    const event: w.WorkflowStartEvent = {
+      type: w.WORKFLOW_START,
+      workflowId,
+      threadId: '123',
+    };
 
     context.on(e.WORKFLOW_START, (evt) => {
-      t.deepEqual(evt, event);
+      t.deepEqual(evt, {
+        workflowId,
+        threadId: '123',
+      });
       done();
     });
 
@@ -41,7 +51,11 @@ test('onWorkflowStart: updates state', (t) => {
   const workflowId = 'a';
 
   const context = createContext(workflowId);
-  const event = { workflowId, threadId: '123' };
+  const event: w.WorkflowStartEvent = {
+    type: w.WORKFLOW_START,
+    workflowId,
+    threadId: '123',
+  };
 
   workflowStart(context, event);
 
@@ -66,7 +80,12 @@ test(`workflowComplete: emits ${e.WORKFLOW_COMPLETE}`, (t) => {
     } as WorkflowState;
     const context = createContext(workflowId, state);
 
-    const event = { workflowId, state: result, threadId: '1' };
+    const event: w.WorkflowCompleteEvent = {
+      type: w.WORKFLOW_START,
+      workflowId,
+      state: result,
+      threadId: '1',
+    };
 
     context.on(e.WORKFLOW_COMPLETE, (evt) => {
       t.is(evt.workflowId, workflowId);
@@ -88,7 +107,12 @@ test('workflowComplete: updates state', (t) => {
     startTime: Date.now() - 1000,
   } as WorkflowState;
   const context = createContext(workflowId, state);
-  const event = { workflowId, state: result, threadId: '1' };
+  const event: w.WorkflowCompleteEvent = {
+    type: w.WORKFLOW_COMPLETE,
+    workflowId,
+    state: result,
+    threadId: '1',
+  };
 
   workflowComplete(context, event);
 
@@ -108,7 +132,8 @@ test(`job-start: emits ${e.JOB_START}`, (t) => {
 
     const context = createContext(workflowId, state);
 
-    const event = {
+    const event: w.JobStartEvent = {
+      type: w.JOB_START,
       workflowId,
       threadId: '1',
       jobId: 'j',
@@ -136,7 +161,8 @@ test(`job-complete: emits ${e.JOB_COMPLETE}`, (t) => {
 
     const context = createContext(workflowId, state);
 
-    const event = {
+    const event: w.JobCompleteEvent = {
+      type: w.JOB_COMPLETE,
       workflowId,
       threadId: '1',
       jobId: 'j',
@@ -167,14 +193,15 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
 
     const context = createContext(workflowId);
 
-    const event = {
+    const event: w.LogEvent = {
+      type: w.LOG,
       workflowId,
       threadId: 'a',
       log: {
         level: 'info',
         name: 'job',
         message: JSON.stringify(['oh hai']),
-        time: Date.now() - 100,
+        time: (Date.now() - 100).toString(),
       },
     };
 
@@ -189,6 +216,84 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
 
     log(context, event);
   });
+});
+
+test('logs get sent to stdout', (t) => {
+  const workflowId = 'a';
+
+  const stdout = createMockLogger(undefined, { level: 'debug', json: true });
+
+  const context = createContext(workflowId);
+  context.logger = stdout;
+
+  const event: w.LogEvent = {
+    type: w.LOG,
+    workflowId,
+    threadId: 'a',
+    log: {
+      level: 'info',
+      name: 'r/t',
+      message: ['oh hai'],
+      time: (Date.now() - 100).toString(),
+    },
+  };
+
+  log(context, event);
+
+  const last: any = stdout._last;
+  t.truthy(last);
+  t.is(last.message[0], 'oh hai');
+  t.is(last.name, 'r/t');
+});
+
+test('job logs do not get sent to stdout', (t) => {
+  const workflowId = 'a';
+
+  const stdout = createMockLogger(undefined, { level: 'debug' });
+
+  const context = createContext(workflowId);
+  context.logger = stdout;
+
+  const event: w.LogEvent = {
+    type: w.LOG,
+    workflowId,
+    threadId: 'a',
+    log: {
+      level: 'info',
+      name: 'job',
+      message: ['oh hai'],
+      time: (Date.now() - 100).toString(),
+    },
+  };
+
+  log(context, event);
+
+  t.is(stdout._history.length, 0);
+});
+
+test('adaptor logs do not get sent to stdout', (t) => {
+  const workflowId = 'a';
+
+  const stdout = createMockLogger(undefined, { level: 'debug' });
+
+  const context = createContext(workflowId);
+  context.logger = stdout;
+
+  const event: w.LogEvent = {
+    type: w.LOG,
+    workflowId,
+    threadId: 'a',
+    log: {
+      level: 'info',
+      name: 'ada',
+      message: ['oh hai'],
+      time: (Date.now() - 100).toString(),
+    },
+  };
+
+  log(context, event);
+
+  t.is(stdout._history.length, 0);
 });
 
 // TODO not a very thorough test, still not really sure what I'm doing here
@@ -206,6 +311,7 @@ test(`error: emits ${e.WORKFLOW_ERROR}`, (t) => {
 
     const err = new Error('test');
 
+    // @ts-ignore
     error(context, { error: err });
   });
 });

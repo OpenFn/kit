@@ -3,8 +3,8 @@ import { STEP_COMPLETE } from '../../src/events';
 
 import { join, setup, createRun } from '../util';
 
-let server;
-let client;
+let server: any;
+let client: any;
 
 const port = 5501;
 
@@ -24,7 +24,7 @@ test.serial('acknowledge valid message', async (t) => {
 
     const channel = await join(client, run.id);
 
-    channel.push(STEP_COMPLETE, event).receive('ok', (evt) => {
+    channel.push(STEP_COMPLETE, event).receive('ok', () => {
       t.pass('event acknowledged');
       done();
     });
@@ -88,7 +88,7 @@ test.serial('error if no output dataclip', async (t) => {
     };
     const channel = await join(client, run.id);
 
-    channel.push(STEP_COMPLETE, event).receive('error', (e) => {
+    channel.push(STEP_COMPLETE, event).receive('error', (e: any) => {
       t.is(e.toString(), 'no output_dataclip');
       done();
     });
@@ -108,7 +108,7 @@ test.serial('error if no output dataclip_id', async (t) => {
     };
     const channel = await join(client, run.id);
 
-    channel.push(STEP_COMPLETE, event).receive('error', (e) => {
+    channel.push(STEP_COMPLETE, event).receive('error', (e: any) => {
       t.is(e.toString(), 'no output_dataclip_id');
       done();
     });

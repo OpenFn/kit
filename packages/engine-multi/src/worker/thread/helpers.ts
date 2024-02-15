@@ -4,14 +4,13 @@
 import process from 'node:process';
 import stringify from 'fast-safe-stringify';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
+import type { JSONLog } from '@openfn/logger';
 
 import * as workerEvents from '../events';
 import { HANDLED_EXIT_CODE } from '../../events';
 import { ExecutionError, ExitError } from '../../errors';
-
 import { publish } from './runtime';
 import serializeError from '../../util/serialize-error';
-import { JSONLog } from '@openfn/logger';
 
 export const createLoggers = (
   workflowId: string,
@@ -67,7 +66,7 @@ export const createLoggers = (
 // Execute wrapper function
 export const execute = async (
   workflowId: string,
-  executeFn: () => Promise<any>
+  executeFn: () => Promise<any> | undefined
 ) => {
   const handleError = (err: any) => {
     publish(workerEvents.ERROR, {

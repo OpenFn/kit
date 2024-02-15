@@ -1,4 +1,4 @@
-import type { Operation, State } from '../types';
+import type { Operation, State } from '@openfn/lexicon';
 
 // Standard execute factory
 export default (...operations: Operation[]): Operation => {

@@ -4,9 +4,9 @@ import { Socket } from 'phoenix';
 import { WebSocket } from 'ws';
 import createSocketServer from '../src/socket-server';
 
-let socket;
-let server;
-let messages;
+let socket: any;
+let server: any;
+let messages: any;
 
 const wait = (duration = 10) =>
   new Promise((resolve) => {
@@ -19,6 +19,7 @@ test.beforeEach(
       messages = [];
       // @ts-ignore I don't care about missing server options here
       server = createSocketServer({
+        // @ts-ignore
         state: {
           events: new EventEmitter(),
         },
@@ -48,13 +49,13 @@ test.serial('respond to connection join requests', async (t) => {
 
     channel
       .join()
-      .receive('ok', (resp) => {
+      .receive('ok', (resp: any) => {
         t.is(resp, 'ok');
 
         channel.push('hello');
         resolve();
       })
-      .receive('error', (e) => {
+      .receive('error', (e: any) => {
         console.log(e);
       });
   });
@@ -64,7 +65,7 @@ test.serial('send a message', async (t) => {
   return new Promise((resolve) => {
     const channel = socket.channel('x', {});
 
-    server.listenToChannel('x', (_ws, { payload, event }) => {
+    server.listenToChannel('x', (_ws: any, { payload, event }: any) => {
       t.is(event, 'hello');
       t.deepEqual(payload, { x: 1 });
 

@@ -9,8 +9,7 @@ export type CompileOptions = Pick<
   | 'command'
   | 'expandAdaptors'
   | 'ignoreImports'
-  | 'jobPath'
-  | 'job'
+  | 'expressionPath'
   | 'logJson'
   | 'log'
   | 'outputPath'
@@ -18,7 +17,6 @@ export type CompileOptions = Pick<
   | 'repoDir'
   | 'path'
   | 'useAdaptorsMonorepo'
-  | 'workflow'
 > & {
   repoDir?: string;
 };

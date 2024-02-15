@@ -53,7 +53,7 @@ const options = {
 };
 
 test.serial('generate mock docs', async (t) => {
-  const path = await docsHandler(options, logger, mockGen);
+  const path = (await docsHandler(options, logger, mockGen)) as string;
   t.is(path, `${DOCS_PATH}/${specifier}.json`);
 
   const docs = await loadJSON(path);

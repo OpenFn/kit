@@ -1,16 +1,27 @@
 import test from 'ava';
 import path from 'node:path';
+import type { WorkflowOptions } from '@openfn/lexicon';
+
 import run from '../src/runtime';
 
-// This is irrelevant now as state and credentials are preloaded
-test.todo('lazy state & credential loading');
+const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
+  workflow: {
+    steps: [
+      {
+        expression,
+      },
+    ],
+  },
+  options,
+});
 
 test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
+  const plan = createPlan(expression, { timeout: 1 });
   let error;
   try {
-    await run(expression, {}, { timeout: 1 });
+    await run(plan);
   } catch (e) {
     error = e;
   }
@@ -72,24 +83,27 @@ test('crash on eval with SecurityError', async (t) => {
 });
 
 test('crash on edge condition error with EdgeConditionError', async (t) => {
-  const workflow = {
-    jobs: [
-      {
-        id: 'a',
-        next: {
-          b: {
-            // Will throw a reference error
-            condition: 'wibble',
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: '.',
+          next: {
+            b: {
+              // Will throw a reference error
+              condition: 'wibble',
+            },
           },
         },
-      },
-      { id: 'b' },
-    ],
+        { id: 'b', expression: '.' },
+      ],
+    },
   };
 
   let error;
   try {
-    await run(workflow);
+    await run(plan);
   } catch (e) {
     error = e;
   }

@@ -1,11 +1,6 @@
-import type {
-  ExitReason,
-  ExitReasonStrings,
-  State,
-  RunState,
-} from '../types';
-
-import type { JobNode } from '@openfn/runtime';
+import { State, Step } from '@openfn/lexicon';
+import { ExitReason, ExitReasonStrings } from '@openfn/lexicon/lightning';
+import type { RunState } from '../types';
 
 // This takes the result state and error from the job
 const calculateJobExitReason = (
@@ -30,7 +25,7 @@ const calculateJobExitReason = (
 };
 
 // It has next jobs, but they weren't executed
-const isLeafNode = (state: RunState, job: JobNode) => {
+const isLeafNode = (state: RunState, job: Step) => {
   // A node is a leaf if:
   // It has no `next` jobs at all
   if (!job.next || Object.keys(job.next).length == 0) {
@@ -47,11 +42,11 @@ const calculateRunExitReason = (state: RunState): ExitReason => {
     // basically becomes the exit reason
     // So If we get here, we basically just need to look to see if there's a fail on a leaf node
     // (we ignore fails on non-leaf nodes)
-    const leafJobReasons: ExitReason[] = state.plan.jobs
-      .filter((job: JobNode) => isLeafNode(state, job))
+    const leafJobReasons: ExitReason[] = state.plan.workflow.steps
+      .filter((job) => isLeafNode(state, job))
       // TODO what if somehow there is no exit reason for a job?
       // This implies some kind of exception error, no?
-      .map(({ id }: JobNode) => state.reasons[id!]);
+      .map(({ id }) => state.reasons[id!]);
 
     const fail = leafJobReasons.find((r) => r && r.reason === 'fail');
     if (fail) {

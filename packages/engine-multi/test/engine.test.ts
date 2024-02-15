@@ -1,12 +1,11 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
-import createEngine, { ExecuteOptions } from '../src/engine';
+import createEngine, { InternalEngine } from '../src/engine';
 import * as e from '../src/events';
-import { ExecutionPlan } from '@openfn/runtime';
-
-// TOOD this becomes low level tests on the internal engine api
+import type { ExecuteOptions } from '../src/types';
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -23,7 +22,19 @@ const options = {
   },
 };
 
-let engine;
+const createPlan = (expression: string = '.', id = 'a') => ({
+  id,
+  workflow: {
+    steps: [
+      {
+        expression,
+      },
+    ],
+  },
+  options: {},
+});
+
+let engine: InternalEngine;
 
 test.afterEach(async () => {
   logger._reset();
@@ -82,22 +93,17 @@ test.serial(
       const p = path.resolve('dist/test/worker-functions.js');
       engine = await createEngine(options, p);
 
-      const plan = {
-        id: 'a',
-        jobs: [
-          {
-            expression: '22',
-          },
-        ],
-      };
+      const plan = createPlan('22');
 
-      engine.execute(plan).on(e.WORKFLOW_COMPLETE, ({ state, threadId }) => {
-        t.is(state, 22);
-        t.truthy(threadId); // proves (sort of) that this has run in a worker
+      engine
+        .execute(plan, {})
+        .on(e.WORKFLOW_COMPLETE, ({ state, threadId }) => {
+          t.is(state, 22);
+          t.truthy(threadId); // proves (sort of) that this has run in a worker
 
-        // Apparently engine.destroy won't resolve if we return immediately
-        setTimeout(done, 1);
-      });
+          // Apparently engine.destroy won't resolve if we return immediately
+          setTimeout(done, 1);
+        });
     });
   }
 );
@@ -107,16 +113,9 @@ test.serial('execute does not return internal state stuff', async (t) => {
     const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: '22',
-        },
-      ],
-    };
+    const plan = createPlan();
 
-    const result = engine.execute(plan, {});
+    const result: any = engine.execute(plan, {});
     // Execute returns an event listener
     t.truthy(result.on);
     t.truthy(result.once);
@@ -133,7 +132,6 @@ test.serial('execute does not return internal state stuff', async (t) => {
     t.falsy(result['options']);
 
     done();
-    // TODO is this still running? Does it matter?
   });
 });
 
@@ -142,17 +140,13 @@ test.serial('listen to workflow-complete', async (t) => {
     const p = path.resolve('dist/test/worker-functions.js');
     engine = await createEngine(options, p);
 
-    const plan = {
-      id: 'a',
-      jobs: [
-        {
-          expression: '33',
-        },
-      ],
-    };
+    const plan = createPlan('33');
 
     engine.listen(plan.id, {
-      [e.WORKFLOW_COMPLETE]: ({ state, threadId }) => {
+      [e.WORKFLOW_COMPLETE]: ({
+        state,
+        threadId,
+      }: e.WorkflowCompletePayload) => {
         t.is(state, 33);
         t.truthy(threadId); // proves (sort of) that this has run in a worker
 
@@ -160,7 +154,7 @@ test.serial('listen to workflow-complete', async (t) => {
         setTimeout(done, 1);
       },
     });
-    engine.execute(plan);
+    engine.execute(plan, {});
   });
 });
 
@@ -171,22 +165,25 @@ test.serial('call listen before execute', async (t) => {
 
     const plan = {
       id: 'a',
-      jobs: [
-        {
-          expression: '34',
-        },
-      ],
+      workflow: {
+        steps: [
+          {
+            expression: '34',
+          },
+        ],
+      },
+      options: {},
     };
 
     engine.listen(plan.id, {
-      [e.WORKFLOW_COMPLETE]: ({ state }) => {
+      [e.WORKFLOW_COMPLETE]: ({ state }: e.WorkflowCompletePayload) => {
         t.is(state, 34);
 
         // Apparently engine.destroy won't resolve if we return immediately
         setTimeout(done, 1);
       },
     });
-    engine.execute(plan);
+    engine.execute(plan, {});
   });
 });
 
@@ -197,21 +194,24 @@ test.serial('catch and emit errors', async (t) => {
 
     const plan = {
       id: 'a',
-      jobs: [
-        {
-          expression: 'throw new Error("test")',
-        },
-      ],
+      workflow: {
+        steps: [
+          {
+            expression: 'throw new Error("test")',
+          },
+        ],
+      },
+      options: {},
     };
 
     engine.listen(plan.id, {
-      [e.WORKFLOW_ERROR]: ({ message }) => {
+      [e.WORKFLOW_ERROR]: ({ message }: e.WorkflowErrorPayload) => {
         t.is(message, 'test');
         done();
       },
     });
 
-    engine.execute(plan);
+    engine.execute(plan, {});
   });
 });
 
@@ -224,26 +224,31 @@ test.serial(
 
       const plan = {
         id: 'a',
-        jobs: [
-          {
-            expression: 'while(true) {}',
-          },
-        ],
+        workflow: {
+          steps: [
+            {
+              expression: 'while(true) {}',
+            },
+          ],
+        },
+        options: {},
       };
 
+      // TODO Now then - this doesn't seem right
+      // the timeout should be on the xplan
       const opts: ExecuteOptions = {
         runTimeoutMs: 10,
       };
 
       engine.listen(plan.id, {
-        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+        [e.WORKFLOW_ERROR]: ({ message, type }: e.WorkflowErrorPayload) => {
           t.is(type, 'TimeoutError');
           t.regex(message, /failed to return within 10ms/);
           done();
         },
       });
 
-      engine.execute(plan, opts);
+      engine.execute(plan, {}, opts);
     });
   }
 );
@@ -263,22 +268,25 @@ test.serial(
 
       const plan = {
         id: 'a',
-        jobs: [
-          {
-            expression: 'while(true) {}',
-          },
-        ],
+        workflow: {
+          steps: [
+            {
+              expression: 'while(true) {}',
+            },
+          ],
+        },
+        options: {},
       };
 
       engine.listen(plan.id, {
-        [e.WORKFLOW_ERROR]: ({ message, type }) => {
+        [e.WORKFLOW_ERROR]: ({ message, type }: e.WorkflowErrorPayload) => {
           t.is(type, 'TimeoutError');
           t.regex(message, /failed to return within 22ms/);
           done();
         },
       });
 
-      engine.execute(plan);
+      engine.execute(plan, {});
     });
   }
 );

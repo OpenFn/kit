@@ -1,13 +1,13 @@
 import path from 'node:path';
-
 import yargs from 'yargs';
-import type { ExecutionPlan } from '@openfn/runtime';
+
 import type { CommandList } from './commands';
-import { CLIExecutionPlan } from './types';
 import { DEFAULT_REPO_DIR } from './constants';
-import doExpandAdaptors from './util/expand-adaptors';
-import ensureLogOpts from './util/ensure-log-opts';
-import { LogLevel } from './util';
+import {
+  expandAdaptors as doExpandAdaptors,
+  ensureLogOpts,
+  LogLevel,
+} from './util';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -28,8 +28,7 @@ export type Opts = {
   force?: boolean;
   immutable?: boolean;
   ignoreImports?: boolean | string[];
-  jobPath?: string;
-  job?: string;
+  expressionPath?: string;
   log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
@@ -37,6 +36,7 @@ export type Opts = {
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
+  planPath?: string;
   projectPath?: string;
   repoDir?: string;
   skipAdaptorValidation?: boolean;
@@ -44,13 +44,13 @@ export type Opts = {
   start?: string; // workflow start node
   statePath?: string;
   stateStdin?: string;
-  strict?: boolean; // Strict state handling (only forward state.data). Defaults to true
   sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
-  workflow?: CLIExecutionPlan | ExecutionPlan;
-  workflowPath?: string;
   projectId?: string;
+
+  // deprecated
+  workflowPath?: string;
 };
 
 // Definition of what Yargs returns (before ensure is called)
@@ -97,8 +97,10 @@ export const adaptors: CLIOption = {
       opts.adaptors = [];
     }
 
+    // TODO this might be redundant now as load-plan should handle it
+    // maybe commands other than execute need it
     if (opts.expandAdaptors) {
-      doExpandAdaptors(opts);
+      opts.adaptors = doExpandAdaptors(opts.adaptors) as string[];
     }
 
     // delete the aliases as they have not been expanded
@@ -112,8 +114,8 @@ export const autoinstall: CLIOption = {
   yargs: {
     alias: ['i'],
     boolean: true,
-    description: 'Auto-install the language adaptor',
-    default: false,
+    description: 'Auto-install the language adaptor(s)',
+    default: true,
   },
 };
 
@@ -218,15 +220,13 @@ export const projectId: CLIOption = {
     hidden: true,
   },
   ensure: (opts) => {
-      const projectId = opts.projectId;
-      //check that this is a uuid
-      return projectId;
-    },
+    const projectId = opts.projectId;
+    //check that this is a uuid
+    return projectId;
+  },
 };
 
-
-
-// Input path covers jobPath and workflowPath
+// Input path covers expressionPath and workflowPath
 export const inputPath: CLIOption = {
   name: 'input-path',
   yargs: {
@@ -235,12 +235,12 @@ export const inputPath: CLIOption = {
   ensure: (opts) => {
     const { path: basePath } = opts;
     if (basePath?.endsWith('.json')) {
-      opts.workflowPath = basePath;
+      opts.planPath = basePath;
     } else if (basePath?.endsWith('.js')) {
-      opts.jobPath = basePath;
+      opts.expressionPath = basePath;
     } else {
       const base = getBaseDir(opts);
-      setDefaultValue(opts, 'jobPath', path.join(base, 'job.js'));
+      setDefaultValue(opts, 'expressionPath', path.join(base, 'job.js'));
     }
   },
 };
@@ -324,38 +324,6 @@ export const start: CLIOption = {
   yargs: {
     string: true,
     description: 'Specifiy the start node in a workflow',
-  },
-};
-
-// Preserve this but hide it
-export const strictOutput: CLIOption = {
-  name: 'no-strict-output',
-  yargs: {
-    deprecated: true,
-    hidden: true,
-    boolean: true,
-  },
-  ensure: (opts: { strictOutput?: boolean; strict?: boolean }) => {
-    if (!opts.hasOwnProperty('strict')) {
-      // override strict not set
-      opts.strict = opts.strictOutput;
-    }
-    delete opts.strictOutput;
-  },
-};
-
-export const strict: CLIOption = {
-  name: 'strict',
-  yargs: {
-    default: false,
-    boolean: true,
-    description:
-      'Enables strict state handling, meaning only state.data is returned from a job.',
-  },
-  ensure: (opts) => {
-    if (!opts.hasOwnProperty('strictOutput')) {
-      setDefaultValue(opts, 'strict', false);
-    }
   },
 };
 

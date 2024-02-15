@@ -1,5 +1,30 @@
 # @openfn/lightning-mock
 
+## 2.0.0
+
+### Major Changes
+
+- 86dd668: Symbolic 1.0 version release
+
+### Minor Changes
+
+- 29bff41: Optionally mock the run token
+
+### Patch Changes
+
+- Updated dependencies [5f24294]
+- Updated dependencies [649ca43]
+- Updated dependencies [86dd668]
+- Updated dependencies [823b471]
+- Updated dependencies [9f6c35d]
+- Updated dependencies [86dd668]
+- Updated dependencies [ea6fc05]
+- Updated dependencies [86dd668]
+  - @openfn/engine-multi@1.0.0
+  - @openfn/logger@1.0.0
+  - @openfn/runtime@1.0.0
+  - @openfn/lexicon@1.0.0
+
 ## 1.2.1
 
 ### Patch Changes

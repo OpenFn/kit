@@ -1,26 +1,6 @@
 import { WebSocketServer } from 'ws';
 import createLogger, { LogLevel, Logger } from '@openfn/logger';
 import type { Server } from 'http';
-
-import createPheonixMockSocketServer, {
-  DevSocket,
-  PhoenixEvent,
-  PhoenixEventStatus,
-} from './socket-server';
-import {
-  RUN_COMPLETE,
-  RUN_LOG,
-  RUN_START,
-  CLAIM,
-  GET_PLAN,
-  GET_CREDENTIAL,
-  GET_DATACLIP,
-  STEP_COMPLETE,
-  STEP_START,
-} from './events';
-import { extractRunId, stringify } from './util';
-
-import type { ServerState } from './server';
 import type {
   RunStartPayload,
   RunStartReply,
@@ -41,7 +21,27 @@ import type {
   StepCompleteReply,
   StepStartPayload,
   StepStartReply,
-} from './types';
+} from '@openfn/lexicon/lightning';
+
+import createPheonixMockSocketServer, {
+  DevSocket,
+  PhoenixEvent,
+  PhoenixEventStatus,
+} from './socket-server';
+import {
+  RUN_COMPLETE,
+  RUN_LOG,
+  RUN_START,
+  CLAIM,
+  GET_PLAN,
+  GET_CREDENTIAL,
+  GET_DATACLIP,
+  STEP_COMPLETE,
+  STEP_START,
+} from './events';
+import { generateRunToken } from './tokens';
+import { extractRunId, stringify } from './util';
+import type { ServerState } from './server';
 
 // dumb cloning id
 // just an idea for unit tests
@@ -102,8 +102,8 @@ const createSocketAPI = (
   });
 
   wss.registerEvents('worker:queue', {
-    [CLAIM]: (ws, event: PhoenixEvent<ClaimPayload>) => {
-      const { runs } = pullClaim(state, ws, event);
+    [CLAIM]: async (ws, event: PhoenixEvent<ClaimPayload>) => {
+      const { runs } = await pullClaim(state, ws, event);
       state.events.emit(CLAIM, {
         payload: runs,
         state: clone(state),
@@ -166,13 +166,13 @@ const createSocketAPI = (
   // pull claim will try and pull a claim off the queue,
   // and reply with the response
   // the reply ensures that only the calling worker will get the run
-  function pullClaim(
+  async function pullClaim(
     state: ServerState,
     ws: DevSocket,
     evt: PhoenixEvent<ClaimPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { queue } = state;
+    const { queue, options } = state;
     let count = 1;
 
     const runs: ClaimRun[] = [];
@@ -185,9 +185,10 @@ const createSocketAPI = (
       // TODO assign the worker id to the run
       // Not needed by the mocks at the moment
       const next = queue.shift();
-      // TODO the token in the mock is trivial because we're not going to do any validation on it yet
-      // TODO need to save the token associated with this run
-      runs.push({ id: next!, token: 'x.y.z' });
+
+      const token = await generateRunToken(next!, options.runPrivateKey);
+
+      runs.push({ id: next!, token });
       count -= 1;
 
       startRun(next!);
@@ -232,10 +233,7 @@ const createSocketAPI = (
     let payload = {
       status: 'ok' as PhoenixEventStatus,
     };
-    if (
-      !state.pending[runId] ||
-      state.pending[runId].status !== 'started'
-    ) {
+    if (!state.pending[runId] || state.pending[runId].status !== 'started') {
       payload = {
         status: 'error',
       };
@@ -254,21 +252,30 @@ const createSocketAPI = (
     evt: PhoenixEvent<GetCredentialPayload>
   ) {
     const { ref, join_ref, topic, payload } = evt;
-    const response = state.credentials[payload.id];
-    // console.log(topic, event, response);
+    const cred = state.credentials[payload.id];
+
+    let response;
+    if (cred) {
+      response = {
+        status: 'ok',
+        response: cred,
+      };
+    } else {
+      response = {
+        status: 'error',
+        response: 'not_found',
+      };
+    }
+
     ws.reply<GetCredentialReply>({
       ref,
       join_ref,
       topic,
-      payload: {
-        status: 'ok',
-        response,
-      },
+      // @ts-ignore
+      payload: response,
     });
   }
 
-  // TODO this mock function is broken in the phoenix package update
-  // (I am not TOO worried, the actual integration works fine)
   function getDataclip(
     state: ServerState,
     ws: DevSocket,
@@ -277,11 +284,19 @@ const createSocketAPI = (
     const { ref, topic, join_ref } = evt;
     const dataclip = state.dataclips[evt.payload.id];
 
-    // Send the data as an ArrayBuffer (our stringify function will do this)
-    const payload = {
-      status: 'ok',
-      response: enc.encode(stringify(dataclip)),
-    };
+    let payload;
+    if (dataclip) {
+      payload = {
+        status: 'ok',
+        response: enc.encode(stringify(dataclip)),
+      };
+    } else {
+      // TODO I think this actually tidier than what lightning does...
+      payload = {
+        status: 'error',
+        response: 'not_found',
+      };
+    }
 
     ws.reply<GetDataClipReply>({
       ref,

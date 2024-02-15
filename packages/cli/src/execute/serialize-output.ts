@@ -3,21 +3,14 @@ import { Logger } from '../util/logger';
 import { Opts } from '../options';
 
 const serializeOutput = async (
-  options: Pick<Opts, 'strict' | 'outputStdout' | 'outputPath'>,
+  options: Pick<Opts, 'outputStdout' | 'outputPath'>,
   result: any,
   logger: Logger
 ) => {
   let output = result;
   if (output && (output.configuration || output.data)) {
-    if (options.strict) {
-      output = { data: output.data };
-      if (result.errors) {
-        output.errors = result.errors;
-      }
-    } else {
-      const { configuration, ...rest } = result;
-      output = rest;
-    }
+    const { configuration, ...rest } = result;
+    output = rest;
   }
 
   if (output === undefined) {

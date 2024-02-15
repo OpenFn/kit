@@ -1,7 +1,8 @@
-import { ExecutionPlan } from '@openfn/runtime';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { Edge, Node } from '@openfn/lexicon/lightning';
 import crypto from 'node:crypto';
 
-export const wait = (fn, maxRuns = 100) =>
+export const wait = (fn: () => any, maxRuns = 100) =>
   new Promise<any>((resolve) => {
     let count = 0;
     let ival = setInterval(() => {
@@ -19,11 +20,11 @@ export const wait = (fn, maxRuns = 100) =>
     }, 100);
   });
 
-export const clone = (obj) => JSON.parse(JSON.stringify(obj));
+export const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
-export const waitForEvent = <T>(engine, eventName) =>
+export const waitForEvent = <T>(engine: any, eventName: string) =>
   new Promise<T>((resolve) => {
-    engine.once(eventName, (e) => {
+    engine.once(eventName, (e: any) => {
       resolve(e);
     });
   });
@@ -33,22 +34,27 @@ export const sleep = (delay = 100) =>
     setTimeout(resolve, delay);
   });
 
-export const createPlan = (...jobs) =>
+export const createPlan = (...steps: Job[]) =>
   ({
     id: crypto.randomUUID(),
-    jobs: [...jobs],
+    workflow: {
+      steps,
+    },
+    options: {},
   } as ExecutionPlan);
 
-export const createEdge = (from: string, to: string) => ({
-  id: `${from}-${to}`,
-  source_job_id: from,
-  target_job_id: to,
-});
+export const createEdge = (from: string, to: string) =>
+  ({
+    id: `${from}-${to}`,
+    source_job_id: from,
+    target_job_id: to,
+  } as Edge);
 
-export const createJob = (body?: string, id?: string) => ({
-  id: id || crypto.randomUUID(),
-  body: body || `fn((s) => s)`,
-});
+export const createJob = (body?: string, id?: string) =>
+  ({
+    id: id || crypto.randomUUID(),
+    body: body || `fn((s) => s)`,
+  } as Node);
 
 export const createRun = (jobs = [], edges = [], triggers = []) => ({
   id: crypto.randomUUID(),

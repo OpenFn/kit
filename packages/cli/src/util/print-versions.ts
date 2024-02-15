@@ -26,7 +26,8 @@ const loadVersionFromPath = (adaptorPath: string) => {
 
 const printVersions = async (
   logger: Logger,
-  options: Partial<Pick<Opts, 'adaptors' | 'logJson'>> = {}
+  options: Partial<Pick<Opts, 'adaptors' | 'logJson' | 'monorepoPath'>> = {},
+  includeComponents = false
 ) => {
   const { adaptors, logJson } = options;
   let adaptor = '';
@@ -41,6 +42,9 @@ const printVersions = async (
       const [namePart, pathPart] = adaptor.split('=');
       adaptorVersion = loadVersionFromPath(pathPart);
       adaptorName = getNameAndVersion(namePart).name;
+    } else if (options.monorepoPath) {
+      adaptorName = getNameAndVersion(adaptor).name;
+      adaptorVersion = 'monorepo';
     } else {
       const { name, version } = getNameAndVersion(adaptor);
       adaptorName = name;
@@ -73,23 +77,28 @@ const printVersions = async (
       versions: {
         'node.js': process.version.substring(1),
         cli: version,
-        runtime: runtimeVersion,
-        compiler: compilerVersion,
       },
     };
+    if (includeComponents) {
+      output.versions.runtime = runtimeVersion;
+      output.versions.compiler = compilerVersion;
+    }
     if (adaptorName) {
       output.versions[adaptorName] = adaptorVersion;
     }
   } else {
-    const adaptorVersionString = adaptorName
-      ? `\n${prefix(adaptorName)}${adaptorVersion}`
-      : '';
-
     output = `Versions:
 ${prefix(NODE)}${process.version.substring(1)}
-${prefix(CLI)}${version}
-${prefix(RUNTIME)}${runtimeVersion}
-${prefix(COMPILER)}${compilerVersion}${adaptorVersionString}`;
+${prefix(CLI)}${version}`;
+
+    if (includeComponents) {
+      output += `\n${prefix(RUNTIME)}${runtimeVersion}
+${prefix(COMPILER)}${compilerVersion}`;
+    }
+
+    if (adaptorName) {
+      output += `\n${prefix(adaptorName)}${adaptorVersion}`;
+    }
   }
   logger.always(output);
 };

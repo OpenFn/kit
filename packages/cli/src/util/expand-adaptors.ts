@@ -1,6 +1,6 @@
-import { Opts } from '../options';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
-const expand = (name: any) => {
+const expand = (name: string) => {
   if (typeof name === 'string') {
     const [left] = name.split('=');
     // don't expand adaptors which look like a path (or @openfn/language-)
@@ -12,20 +12,24 @@ const expand = (name: any) => {
   return name;
 };
 
-export default (opts: Partial<Pick<Opts, 'adaptors' | 'workflow'>>) => {
-  const { adaptors, workflow } = opts;
+type ArrayOrPlan<T> = T extends string[] ? string[] : ExecutionPlan;
 
-  if (adaptors) {
-    opts.adaptors = adaptors?.map(expand);
+// TODO typings here aren't good,I can't get this to work!
+// At least this looks nice externally
+export default <T extends Array<string> | ExecutionPlan>(
+  input: T
+): ArrayOrPlan<T> => {
+  if (Array.isArray(input)) {
+    return input?.map(expand) as any;
   }
 
-  if (workflow) {
-    Object.values(workflow.jobs).forEach((job) => {
-      if (job.adaptor) {
-        job.adaptor = expand(job.adaptor);
-      }
-    });
-  }
+  const plan = input as ExecutionPlan;
+  Object.values(plan.workflow.steps).forEach((step) => {
+    const job = step as Job;
+    if (job.adaptor) {
+      job.adaptor = expand(job.adaptor);
+    }
+  });
 
-  return opts;
+  return plan as any;
 };

@@ -36,14 +36,16 @@ test('loadRun should return an execution plan and options', async (t) => {
   const { plan, options } = await loadRun(channel);
   t.like(plan, {
     id: 'run-1',
-    jobs: [
-      {
-        id: 'job-1',
-        configuration: 'a',
-        expression: 'fn(a => a)',
-        adaptor: '@openfn/language-common@1.0.0',
-      },
-    ],
+    workflow: {
+      steps: [
+        {
+          id: 'job-1',
+          configuration: 'a',
+          expression: 'fn(a => a)',
+          adaptor: '@openfn/language-common@1.0.0',
+        },
+      ],
+    },
   });
   t.is(options.sanitize, 'obfuscate');
   t.is(options.runTimeoutMs, 10);
@@ -70,7 +72,7 @@ test('should join an run channel with a token', async (t) => {
   );
 
   t.truthy(channel);
-  t.deepEqual(plan, { id: 'a', jobs: [] });
+  t.deepEqual(plan, { id: 'a', workflow: { steps: [] }, options: {} });
   t.deepEqual(options, { runTimeoutMs: 10 });
 });
 

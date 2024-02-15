@@ -2,6 +2,7 @@ import test from 'ava';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import Koa from 'koa';
+import { generateKeys } from '@openfn/lightning-mock';
 
 import { initLightning, initWorker, randomPort } from '../src/init';
 
@@ -12,13 +13,21 @@ let engineLogger;
 let lightningPort;
 
 test.before(async () => {
+  const keys = await generateKeys();
   lightningPort = randomPort();
-  lightning = initLightning(lightningPort);
-  ({ worker, engine, engineLogger } = await initWorker(lightningPort, {
+  lightning = initLightning(lightningPort, keys.private);
+
+  const engineArgs = {
     maxWorkers: 1,
-    purge: false,
     repoDir: path.resolve('tmp/repo/integration'),
-  }));
+  };
+  const workerArgs = { runPublicKey: keys.public };
+
+  ({ worker, engine, engineLogger } = await initWorker(
+    lightningPort,
+    engineArgs,
+    workerArgs
+  ));
 });
 
 test.afterEach(() => {
@@ -30,7 +39,15 @@ test.after(async () => {
   await worker.destroy();
 });
 
-test('should run a simple job with no compilation or adaptor', (t) => {
+const createDummyWorker = () => {
+  const engineArgs = {
+    repoDir: path.resolve('./dummy-repo'),
+    maxWorkers: 1,
+  };
+  return initWorker(lightningPort, engineArgs);
+};
+
+test.serial('should run a simple job with no compilation or adaptor', (t) => {
   return new Promise(async (done) => {
     lightning.once('run:complete', (evt) => {
       // This will fetch the final dataclip from the attempt
@@ -53,7 +70,7 @@ test('should run a simple job with no compilation or adaptor', (t) => {
   });
 });
 
-test('run a job with autoinstall of common', (t) => {
+test.serial('run a job with autoinstall of common', (t) => {
   return new Promise(async (done) => {
     let autoinstallEvent;
 
@@ -97,7 +114,7 @@ test('run a job with autoinstall of common', (t) => {
 });
 
 // this depends on prior test!
-test('run a job which does NOT autoinstall common', (t) => {
+test.serial('run a job which does NOT autoinstall common', (t) => {
   return new Promise(async (done) => {
     lightning.once('run:complete', () => {
       try {
@@ -134,40 +151,7 @@ test('run a job which does NOT autoinstall common', (t) => {
   });
 });
 
-test("Don't send job logs to stdout", (t) => {
-  return new Promise(async (done) => {
-    const attempt = {
-      id: crypto.randomUUID(),
-      jobs: [
-        {
-          adaptor: '@openfn/language-common@latest',
-          body: 'fn((s) =>  { console.log("@@@"); return s })',
-        },
-      ],
-    };
-
-    lightning.once('run:complete', () => {
-      const jsonLogs = engineLogger._history;
-
-      // The engine logger shouldn't print out any job logs
-      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
-      t.falsy(jobLog);
-      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
-      t.falsy(jobLog2);
-
-      // But it SHOULD log engine stuff
-      const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'R/T' && l.message[0].match(/completed job/i)
-      );
-      t.truthy(runtimeLog);
-      done();
-    });
-
-    lightning.enqueueRun(attempt);
-  });
-});
-
-test('run a job with initial state (with data)', (t) => {
+test.serial('run a job with initial state (with data)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -184,7 +168,8 @@ test('run a job with initial state (with data)', (t) => {
 
     lightning.addDataclip('s1', initialState);
 
-    lightning.once('run:complete', () => {
+    lightning.once('run:complete', (evt) => {
+      t.log(evt.payload);
       const result = lightning.getResult(attempt.id);
       t.deepEqual(result, {
         ...initialState,
@@ -201,7 +186,7 @@ test('run a job with initial state (with data)', (t) => {
   });
 });
 
-test('run a job with initial state (no top level keys)', (t) => {
+test.serial('run a job with initial state (no top level keys)', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -248,7 +233,6 @@ test.skip('run a job with credentials', (t) => {
     const app = new Koa();
 
     app.use(async (ctx, next) => {
-      console.log('GET!');
       // TODO check basic credential
       ctx.body = '{ message: "ok" }';
       ctx.response.headers['Content-Type'] = 'application/json';
@@ -304,7 +288,36 @@ test.skip('run a job with credentials', (t) => {
   });
 });
 
-test('blacklist a non-openfn adaptor', (t) => {
+test.serial('run a job with bad credentials', (t) => {
+  return new Promise<void>(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      dataclip_id: 's1',
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) => s)',
+          credential: 'zzz',
+        },
+      ],
+    };
+
+    const initialState = { name: 'Professor X' };
+
+    lightning.addDataclip('s1', initialState);
+
+    lightning.once('run:complete', ({ payload }) => {
+      t.is(payload.reason, 'exception');
+      t.is(payload.error_type, 'CredentialLoadError');
+      t.regex(payload.error_message, /Failed to load credential zzz for step/);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
+test.serial('blacklist a non-openfn adaptor', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -347,13 +360,11 @@ test.skip('a timeout error should still call step-complete', (t) => {
     });
 
     lightning.once('step:complete', (event) => {
-      console.log(event);
       t.is(event.payload.reason, 'kill');
       t.is(event.payload.error_type, 'TimeoutError');
     });
 
     lightning.once('run:complete', () => {
-      console.log('DONE!');
       done();
     });
 
@@ -361,7 +372,7 @@ test.skip('a timeout error should still call step-complete', (t) => {
   });
 });
 
-test('an OOM error should still call step-complete', (t) => {
+test.serial('an OOM error should still call step-complete', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -392,7 +403,7 @@ test('an OOM error should still call step-complete', (t) => {
   });
 });
 
-// test('run a job with complex behaviours (initial state, branching)', (t) => {
+// test.serial('run a job with complex behaviours (initial state, branching)', (t) => {
 //   const attempt = {
 //     id: 'a1',
 //     initialState: 's1
@@ -426,58 +437,174 @@ test('an OOM error should still call step-complete', (t) => {
 //   });
 // });
 // });
-
-// TODO this test is a bit different now
-// I think it's worth keeping
-test('stateful adaptor should create a new client for each attempt', (t) => {
+test.serial("Don't send job logs to stdout", (t) => {
   return new Promise(async (done) => {
-    // We want to create our own special worker here
-    await worker.destroy();
-
-    const attempt1 = {
+    const attempt = {
       id: crypto.randomUUID(),
       jobs: [
         {
-          adaptor: '@openfn/stateful-test@1.0.0',
-          // manual import shouldn't be needed but its not important enough to fight over
-          body: `import { fn, threadId, clientId } from '@openfn/stateful-test';
-          fn(() => {
-            return { threadId, clientId }
-          })`,
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  { console.log("@@@"); return s })',
         },
       ],
     };
-    const attempt2 = {
-      ...attempt1,
-      id: crypto.randomUUID(),
-    };
-    let results = {};
 
-    lightning.on('run:complete', (evt) => {
-      const id = evt.runId;
-      results[id] = lightning.getResult(id);
+    lightning.once('run:complete', () => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any job logs
+      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
+      t.falsy(jobLog2);
 
-      if (id === attempt2.id) {
-        const one = results[attempt1.id];
-        const two = results[attempt2.id];
-
-        // The two attempts should run in different threads
-        t.not(one.threadId, two.threadId);
-        t.not(one.clientId, two.clientId);
-
-        done();
-      }
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
     });
 
-    const engineArgs = {
-      repoDir: path.resolve('./dummy-repo'),
-      maxWorkers: 1,
-      purge: false,
-    };
-    await initWorker(lightningPort, engineArgs);
+    lightning.enqueueRun(attempt);
+  });
+});
 
-    lightning.enqueueRun(attempt1);
-    lightning.enqueueRun(attempt2);
+test.serial("Don't send adaptor logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    // We have to create a new worker with a different repo for this one
+    await worker.destroy();
+    ({ worker, engineLogger } = await createDummyWorker());
+
+    const message = 've have been expecting you meester bond';
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `import { log } from '@openfn/test-adaptor'; log("${message}")`,
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any adaptor logs
+      const jobLog = jsonLogs.find((l) => l.name === 'ADA');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
+test.serial(
+  'stateful adaptor should create a new client for each attempt',
+  (t) => {
+    return new Promise(async (done) => {
+      // We want to create our own special worker here
+      await worker.destroy();
+      ({ worker, engineLogger } = await createDummyWorker());
+
+      const attempt1 = {
+        id: crypto.randomUUID(),
+        jobs: [
+          {
+            adaptor: '@openfn/stateful-test@1.0.0',
+            // manual import shouldn't be needed but its not important enough to fight over
+            body: `import { fn, threadId, clientId } from '@openfn/stateful-test';
+          fn(() => {
+            return { threadId, clientId }
+          })`,
+          },
+        ],
+      };
+      const attempt2 = {
+        ...attempt1,
+        id: crypto.randomUUID(),
+      };
+      let results = {};
+
+      lightning.on('run:complete', (evt) => {
+        const id = evt.runId;
+        results[id] = lightning.getResult(id);
+
+        if (id === attempt2.id) {
+          const one = results[attempt1.id];
+          const two = results[attempt2.id];
+
+          // The two attempts should run in different threads
+          t.not(one.threadId, two.threadId);
+          t.not(one.clientId, two.clientId);
+
+          done();
+        }
+      });
+
+      lightning.enqueueRun(attempt1);
+      lightning.enqueueRun(attempt2);
+    });
+  }
+);
+
+test.serial('worker should exit if it has an invalid key', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    // generate a new, invalid, public key
+    const keys = await generateKeys();
+
+    ({ worker } = await initWorker(
+      lightningPort,
+      {
+        maxWorkers: 1,
+        repoDir: path.resolve('tmp/repo/integration'),
+      },
+      {
+        runPublicKey: keys.public,
+      }
+    ));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-http@latest',
+          body: `fn((s) => s`,
+        },
+      ],
+    };
+
+    // This should NOT run because the worker should
+    // not verify the token and destroy itself
+    lightning.once('run:start', () => {
+      t.fail('invalid run was start');
+      done();
+    });
+    lightning.once('run:complete', () => {
+      t.fail('invalid run was completed');
+      done();
+    });
+
+    // TODO this run will, at the moment, be LOST to Lightning
+    lightning.enqueueRun(run);
+
+    t.false(worker.destroyed);
+    setTimeout(() => {
+      // Ensure that the worker is destroyed after a brief interval
+      t.true(worker.destroyed);
+      done();
+    }, 500);
   });
 });
 

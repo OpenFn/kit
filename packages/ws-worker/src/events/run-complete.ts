@@ -1,6 +1,7 @@
 import type { WorkflowCompletePayload } from '@openfn/engine-multi';
+import type { RunCompletePayload } from '@openfn/lexicon/lightning';
 
-import { RUN_COMPLETE, RunCompletePayload } from '../events';
+import { RUN_COMPLETE } from '../events';
 import { calculateRunExitReason } from '../api/reasons';
 import { sendEvent, Context } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';

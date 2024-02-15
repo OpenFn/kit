@@ -1,9 +1,10 @@
 import test from 'ava';
-import createAPI from '../src/api';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
+import createAPI from '../src/api';
 import pkg from '../package.json' assert { type: 'json' };
-import { RuntimeEngine } from '../src/types';
+import type { RuntimeEngine } from '../src/types';
 
 // thes are tests on the public api functions generally
 // so these are very high level tests and don't allow mock workers or anything
@@ -97,17 +98,21 @@ test.serial(
         },
       });
 
-      const plan = {
+      const plan: ExecutionPlan = {
         id: 'a',
-        jobs: [
-          {
-            expression: 'export default [s => s]',
-            // with no adaptor it shouldn't try to autoinstall
-          },
-        ],
+        workflow: {
+          steps: [
+            {
+              expression: 'export default [s => s]',
+              // with no adaptor it shouldn't try to autoinstall
+            },
+          ],
+        },
+        options: {},
       };
 
-      const listener = api.execute(plan);
+      const state = { x: 1 };
+      const listener = api.execute(plan, state);
       listener.on('workflow-complete', () => {
         t.pass('workflow completed');
         done();
@@ -126,18 +131,22 @@ test.serial('should listen to workflow-complete', async (t) => {
       },
     });
 
-    const plan = {
+    const plan: ExecutionPlan = {
       id: 'a',
-      jobs: [
-        {
-          expression: 'export default [s => s]',
-          // with no adaptor it shouldn't try to autoinstall
-        },
-      ],
+      workflow: {
+        steps: [
+          {
+            expression: 'export default [s => s]',
+            // with no adaptor it shouldn't try to autoinstall
+          },
+        ],
+      },
+      options: {},
     };
+    const state = { x: 1 };
+    api.execute(plan, state);
 
-    api.execute(plan);
-    api.listen(plan.id, {
+    api.listen(plan.id!, {
       'workflow-complete': () => {
         t.pass('workflow completed');
         done();

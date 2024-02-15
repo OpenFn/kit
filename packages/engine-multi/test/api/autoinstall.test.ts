@@ -1,7 +1,11 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
 
-import autoinstall, { identifyAdaptors } from '../../src/api/autoinstall';
+import autoinstall, {
+  AutoinstallOptions,
+  identifyAdaptors,
+} from '../../src/api/autoinstall';
 import { AUTOINSTALL_COMPLETE, AUTOINSTALL_ERROR } from '../../src/events';
 import ExecutionContext from '../../src/classes/ExecutionContext';
 import whitelist from '../../src/whitelist';
@@ -16,7 +20,7 @@ const mockIsInstalled = (pkg: PackageJson) => async (specifier: string) => {
   return pkg.dependencies.hasOwnProperty(alias);
 };
 
-const mockHandleInstall = async (specifier: string): Promise<void> =>
+const mockHandleInstall = async (_specifier: string): Promise<void> =>
   new Promise<void>((r) => r()).then();
 
 const logger = createMockLogger();
@@ -27,18 +31,23 @@ const wait = (duration = 10) =>
   });
 
 const createContext = (
-  autoinstallOpts?,
-  jobs?: any[],
+  autoinstallOpts?: AutoinstallOptions,
+  jobs?: Partial<Job>[],
   customWhitelist?: RegExp[]
 ) =>
   new ExecutionContext({
     state: {
       id: 'x',
       status: 'pending',
-      options: {},
       plan: {
-        jobs: jobs || [{ adaptor: '@openfn/language-common@1.0.0' }],
+        workflow: {
+          steps: jobs || [
+            { adaptor: '@openfn/language-common@1.0.0', expression: '.' },
+          ],
+        },
+        options: {},
       },
+      input: {},
     },
     logger,
     // @ts-ignore
@@ -47,6 +56,8 @@ const createContext = (
       logger,
       whitelist: customWhitelist || whitelist,
       repoDir: 'tmp/repo',
+
+      // @ts-ignore
       autoinstall: autoinstallOpts || {
         handleInstall: mockHandleInstall,
         handleIsInstalled: mockIsInstalled,
@@ -104,18 +115,24 @@ test('mock install: should return async', async (t) => {
 });
 
 test('identifyAdaptors: pick out adaptors and remove duplicates', (t) => {
-  const plan = {
-    jobs: [
-      {
-        adaptor: 'common@1.0.0',
-      },
-      {
-        adaptor: 'common@1.0.0',
-      },
-      {
-        adaptor: 'common@1.0.1',
-      },
-    ],
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          adaptor: 'common@1.0.0',
+          expression: '.',
+        },
+        {
+          adaptor: 'common@1.0.0',
+          expression: '.',
+        },
+        {
+          adaptor: 'common@1.0.1',
+          expression: '.',
+        },
+      ],
+    },
+    options: {},
   };
   const adaptors = identifyAdaptors(plan);
   t.true(adaptors.size === 2);
@@ -160,9 +177,9 @@ test.serial(
   async (t) => {
     let callCount = 0;
 
-    const installed = {};
+    const installed: Record<string, boolean> = {};
 
-    const mockInstall = (name) =>
+    const mockInstall = (name: string) =>
       new Promise<void>((resolve) => {
         installed[name] = true;
         callCount++;
@@ -172,7 +189,7 @@ test.serial(
     const options = {
       skipRepoValidation: true,
       handleInstall: mockInstall,
-      handleIsInstalled: async (name) => name in installed,
+      handleIsInstalled: async (name: string) => name in installed,
     };
 
     const context = createContext(options);
@@ -184,11 +201,11 @@ test.serial(
 );
 
 test.serial('autoinstall: install in sequence', async (t) => {
-  const installed = {};
+  const installed: Record<string, boolean> = {};
 
-  const states = {};
+  const states: Record<string, any> = {};
 
-  const mockInstall = (name) =>
+  const mockInstall = (name: string) =>
     new Promise<void>((resolve) => {
       // Each time install is called,
       // record the time the call was made
@@ -205,7 +222,7 @@ test.serial('autoinstall: install in sequence', async (t) => {
     skipRepoValidation: true,
     handleInstall: mockInstall,
     handleIsInstalled: false,
-  };
+  } as any;
 
   const c1 = createContext(options, [{ adaptor: '@openfn/language-common@1' }]);
   const c2 = createContext(options, [{ adaptor: '@openfn/language-common@2' }]);
@@ -354,7 +371,7 @@ test.serial('autoinstall: support custom whitelist', async (t) => {
 });
 
 test.serial('autoinstall: emit an event on completion', async (t) => {
-  let event;
+  let event: any;
   const jobs = [
     {
       adaptor: '@openfn/language-common@1.0.0',
@@ -366,7 +383,7 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
     skipRepoValidation: true,
     handleInstall: async () => new Promise((done) => setTimeout(done, 50)),
     handleIsInstalled: async () => false,
-  };
+  } as any;
   const context = createContext(autoinstallOpts, jobs);
 
   context.on(AUTOINSTALL_COMPLETE, (evt) => {
@@ -416,14 +433,14 @@ test.serial('autoinstall: throw on error twice if pending', async (t) => {
     const autoinstallOpts = {
       handleInstall: mockInstall,
       handleIsInstalled: mockIsInstalled,
-    };
+    } as any;
     const context = createContext(autoinstallOpts);
 
     autoinstall(context).catch(assertCatches);
 
     autoinstall(context).catch(assertCatches);
 
-    function assertCatches(e) {
+    function assertCatches(e: any) {
       t.is(e.name, 'AutoinstallError');
       errCount += 1;
       if (errCount === 2) {
@@ -436,7 +453,7 @@ test.serial('autoinstall: throw on error twice if pending', async (t) => {
 });
 
 test.serial('autoinstall: emit on error', async (t) => {
-  let evt;
+  let evt: any;
   const mockIsInstalled = async () => false;
   const mockInstall = async () => {
     throw new Error('err');
@@ -478,7 +495,7 @@ test.serial('autoinstall: throw twice in a row', async (t) => {
   const autoinstallOpts = {
     handleInstall: mockInstall,
     handleIsInstalled: mockIsInstalled,
-  };
+  } as any;
   const context = createContext(autoinstallOpts);
 
   await t.throwsAsync(() => autoinstall(context), {
@@ -503,6 +520,7 @@ test('write versions to context', async (t) => {
 
   await autoinstall(context);
 
+  // @ts-ignore
   t.is(context.versions['@openfn/language-common'], '1.0.0');
 });
 
@@ -515,5 +533,6 @@ test("write versions to context even if we don't install", async (t) => {
 
   await autoinstall(context);
 
+  // @ts-ignore
   t.is(context.versions['@openfn/language-common'], '1.0.0');
 });

@@ -2,6 +2,12 @@
 // Ie config can be a string
 export type JobNodeID = string;
 
+export type OldCLIWorkflow = {
+  id?: string; // UUID for this plan
+  start?: JobNodeID;
+  jobs: CLIJobNode[];
+};
+
 export type CLIExecutionPlan = {
   id?: string; // UUID for this plan
   start?: JobNodeID;

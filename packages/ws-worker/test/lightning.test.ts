@@ -3,16 +3,24 @@
  */
 
 import test from 'ava';
-import createLightningServer from '@openfn/lightning-mock';
+import type {
+  LightningPlan,
+  RunCompletePayload,
+} from '@openfn/lexicon/lightning';
+import createLightningServer, {
+  generateKeys,
+  toBase64,
+} from '@openfn/lightning-mock';
 
 import { createRun, createEdge, createJob } from './util';
-
 import createWorkerServer from '../src/server';
-import createMockRTE from '../src/mock/runtime-engine';
 import * as e from '../src/events';
+import createMockRTE from '../src/mock/runtime-engine';
 
-let lng;
-let worker;
+let lng: any;
+let worker: any;
+
+let keys = { private: '.', public: '.' };
 
 const urls = {
   worker: 'http://localhost:4567',
@@ -20,14 +28,23 @@ const urls = {
 };
 
 test.before(async () => {
+  keys = await generateKeys();
+
   const engine = await createMockRTE();
-  // TODO give lightning the same secret and do some validation
-  lng = createLightningServer({ port: 7654 });
+  lng = createLightningServer({
+    port: 7654,
+    runPrivateKey: toBase64(keys.private),
+  });
+
   worker = createWorkerServer(engine, {
     port: 4567,
     lightning: urls.lng,
     secret: 'abc',
     maxWorkflows: 1,
+
+    // Note that if this is not passed,
+    // JWT verification will be skipped
+    runPublicKey: keys.public,
   });
 });
 
@@ -37,21 +54,22 @@ test.afterEach(() => {
 
 let rollingRunId = 0;
 
-const getRun = (ext = {}, jobs?: any) => ({
-  id: `a${++rollingRunId}`,
-  jobs: jobs || [
-    {
-      id: 'j',
-      adaptor: '@openfn/language-common@1.0.0',
-      body: 'fn(() => ({ answer: 42 }))',
-    },
-  ],
-  ...ext,
-});
+const getRun = (ext = {}, jobs?: any[]): LightningPlan =>
+  ({
+    id: `a${++rollingRunId}`,
+    jobs: jobs || [
+      {
+        id: 'j',
+        adaptor: '@openfn/language-common@1.0.0',
+        body: 'fn(() => ({ answer: 42 }))',
+      },
+    ],
+    ...ext,
+  } as LightningPlan);
 
 test.serial(`events: lightning should respond to a ${e.CLAIM} event`, (t) => {
   return new Promise((done) => {
-    lng.on(e.CLAIM, (evt) => {
+    lng.on(e.CLAIM, (evt: any) => {
       const response = evt.payload;
       t.deepEqual(response, []);
       done();
@@ -64,9 +82,9 @@ test.serial(
   (t) => {
     return new Promise((done) => {
       const run = getRun();
-      let response;
+      let response: any;
 
-      lng.on(e.CLAIM, ({ payload }) => {
+      lng.on(e.CLAIM, ({ payload }: any) => {
         if (payload.length) {
           response = payload[0];
         }
@@ -87,8 +105,15 @@ test.serial(
   }
 );
 
+test.todo('worker should log when a run token is verified');
+
+// Perhaps a workflow exception is the most responsible thing right now
+test.todo(
+  'worker throws or blow up or something when token verification fails'
+);
+
 test.serial(
-  'should run an run which returns an expression as JSON',
+  'should run a run which returns an expression as JSON',
   async (t) => {
     return new Promise((done) => {
       const run = {
@@ -100,7 +125,7 @@ test.serial(
         ],
       };
 
-      lng.waitForResult(run.id).then((result) => {
+      lng.waitForResult(run.id).then((result: any) => {
         t.deepEqual(result, { count: 122 });
         done();
       });
@@ -110,7 +135,7 @@ test.serial(
   }
 );
 
-test.serial('should run an run which returns intial state', async (t) => {
+test.serial('should run a run which returns initial state', async (t) => {
   return new Promise((done) => {
     lng.addDataclip('x', {
       data: 66,
@@ -126,7 +151,7 @@ test.serial('should run an run which returns intial state', async (t) => {
       ],
     };
 
-    lng.waitForResult(run.id).then((result) => {
+    lng.waitForResult(run.id).then((result: any) => {
       t.deepEqual(result, { data: 66 });
       done();
     });
@@ -142,7 +167,7 @@ test.serial(
   (t) => {
     return new Promise((done) => {
       const run = getRun();
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt: any) => {
         const { final_dataclip_id } = evt.payload;
         t.assert(typeof final_dataclip_id === 'string');
         t.pass('run complete event received');
@@ -160,34 +185,33 @@ test.todo(`events: lightning should receive a ${e.RUN_START} event`);
 // for each event we can see a copy of the server state
 // (if that helps anything?)
 
-test.serial(
-  `events: lightning should receive a ${e.GET_PLAN} event`,
-  (t) => {
-    return new Promise((done) => {
-      const run = getRun();
+test.serial(`events: lightning should receive a ${e.GET_PLAN} event`, (t) => {
+  return new Promise((done) => {
+    const run = getRun();
 
-      let didCallEvent = false;
-      lng.onSocketEvent(e.GET_PLAN, run.id, ({ payload }) => {
-        // This doesn't test that the correct run gets sent back
-        // We'd have to add an event to the engine for that
-        // (not a bad idea)
-        didCallEvent = true;
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
-        t.true(didCallEvent);
-        done();
-      });
-
-      lng.enqueueRun(run);
+    let didCallEvent = false;
+    lng.onSocketEvent(e.GET_PLAN, run.id, () => {
+      // This doesn't test that the correct run gets sent back
+      // We'd have to add an event to the engine for that
+      // (not a bad idea)
+      didCallEvent = true;
     });
-  }
-);
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      t.true(didCallEvent);
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 test.serial(
   `events: lightning should receive a ${e.GET_CREDENTIAL} event`,
   (t) => {
     return new Promise((done) => {
+      lng.addCredential('a', {});
+
       const run = getRun({}, [
         {
           id: 'some-job',
@@ -203,7 +227,8 @@ test.serial(
         didCallEvent = true;
       });
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, ({ payload }: any) => {
+        t.is(payload.reason, 'success');
         t.true(didCallEvent);
         done();
       });
@@ -224,7 +249,7 @@ test.serial(
       });
 
       let didCallEvent = false;
-      lng.onSocketEvent(e.GET_DATACLIP, run.id, ({ payload }) => {
+      lng.onSocketEvent(e.GET_DATACLIP, run.id, ({ payload }: any) => {
         // payload is the incoming/request payload - this tells us which dataclip
         // the worker is asking for
         // Note that it doesn't tell us much about what is returned
@@ -243,17 +268,48 @@ test.serial(
   }
 );
 
+test.serial(
+  `events: worker should send an error if ${e.GET_DATACLIP} references a non-existant dataclip`,
+  (t) => {
+    return new Promise((done) => {
+      const run = getRun({
+        dataclip_id: 'xyz',
+      });
+      // Do not load the dataclip into lightning
+
+      let didCallEvent = false;
+      lng.onSocketEvent(e.GET_DATACLIP, run.id, () => {
+        didCallEvent = true;
+      });
+
+      lng.onSocketEvent(
+        e.RUN_COMPLETE,
+        run.id,
+        ({ payload }: { payload: RunCompletePayload }) => {
+          t.true(didCallEvent);
+          t.is(payload.reason, 'exception');
+          t.is(payload.error_type, 'DataClipError');
+          t.regex(payload.error_message!, /Failed to load dataclip xyz/);
+          done();
+        }
+      );
+
+      lng.enqueueRun(run);
+    });
+  }
+);
+
 test.serial(`events: lightning should receive a ${e.STEP_START} event`, (t) => {
   return new Promise((done) => {
     const run = getRun();
 
-    lng.onSocketEvent(e.STEP_START, run.id, ({ payload }) => {
+    lng.onSocketEvent(e.STEP_START, run.id, ({ payload }: any) => {
       t.is(payload.job_id, 'j');
       t.truthy(payload.step_id);
       t.pass('called run start');
     });
 
-    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       done();
     });
 
@@ -267,7 +323,7 @@ test.serial(
     return new Promise((done) => {
       const run = getRun();
 
-      lng.onSocketEvent(e.STEP_COMPLETE, run.id, ({ payload }) => {
+      lng.onSocketEvent(e.STEP_COMPLETE, run.id, ({ payload }: any) => {
         t.is(payload.job_id, 'j');
         t.truthy(payload.step_id);
         t.truthy(payload.output_dataclip);
@@ -278,7 +334,7 @@ test.serial(
         t.pass('called run complete');
       });
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
         done();
       });
 
@@ -299,12 +355,12 @@ test.serial(
         },
       ]);
 
-      lng.onSocketEvent(e.STEP_COMPLETE, run.id, ({ payload }) => {
+      lng.onSocketEvent(e.STEP_COMPLETE, run.id, ({ payload }: any) => {
         t.is(payload.reason, 'fail');
         t.pass('called step complete');
       });
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, ({ payload }) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
         done();
       });
 
@@ -313,37 +369,56 @@ test.serial(
   }
 );
 
-test.serial(
-  `events: lightning should receive a ${e.RUN_LOG} event`,
-  (t) => {
-    return new Promise((done) => {
-      const run = {
-        id: 'run-1',
-        jobs: [
-          {
-            body: 'fn((s) => { console.log("x"); return s })',
-          },
-        ],
-      };
+test.serial(`events: ${e.STEP_COMPLETE} should not return dataclips`, (t) => {
+  return new Promise((done) => {
+    const run = getRun();
+    run.options = {
+      output_dataclips: false,
+    };
 
-      lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }) => {
-        const log = payload;
-
-        t.is(log.level, 'info');
-        t.truthy(log.run_id);
-        t.truthy(log.step_id);
-        t.truthy(log.message);
-        t.deepEqual(log.message, ['x']);
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
-        done();
-      });
-
-      lng.enqueueRun(run);
+    lng.onSocketEvent(e.STEP_COMPLETE, run.id, ({ payload }: any) => {
+      t.is(payload.job_id, 'j');
+      t.falsy(payload.output_dataclip);
+      t.truthy(payload.output_dataclip_id);
+      t.pass();
     });
-  }
-);
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
+
+test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
+  return new Promise((done) => {
+    const run = {
+      id: 'run-1',
+      jobs: [
+        {
+          body: 'fn((s) => { console.log("x"); return s })',
+        },
+      ],
+    };
+
+    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }: any) => {
+      const log = payload;
+
+      t.is(log.level, 'info');
+      t.truthy(log.run_id);
+      t.truthy(log.step_id);
+      t.truthy(log.message);
+      t.deepEqual(log.message, ['x']);
+    });
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 // Skipping because this is flaky at microsecond resolution
 // See branch hrtime-send-nanoseconds-to-lightning where this should be more robust
@@ -366,13 +441,13 @@ test.serial.skip(`events: logs should have increasing timestamps`, (t) => {
     lng.onSocketEvent(
       e.RUN_LOG,
       run.id,
-      ({ payload }) => {
+      ({ payload }: any) => {
         history.push(BigInt(payload.timestamp));
       },
       false
     );
 
-    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       t.log(history);
       let last = BigInt(0);
 
@@ -407,7 +482,7 @@ test.serial(
     return new Promise((done) => {
       const run = getRun();
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
         t.pass('called run:complete');
         done();
       });
@@ -417,37 +492,34 @@ test.serial(
   }
 );
 
-test.serial(
-  'should register and de-register runs to the server',
-  async (t) => {
-    return new Promise((done) => {
-      const run = {
-        id: 'run-1',
-        jobs: [
-          {
-            body: 'fn(() => ({ count: 122 }))',
-          },
-        ],
-      };
+test.serial('should register and de-register runs to the server', async (t) => {
+  return new Promise((done) => {
+    const run = {
+      id: 'run-1',
+      jobs: [
+        {
+          body: 'fn(() => ({ count: 122 }))',
+        },
+      ],
+    };
 
-      worker.on(e.RUN_START, () => {
-        t.truthy(worker.workflows[run.id]);
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
-        t.truthy(worker.workflows[run.id]);
-        // Tidyup is done AFTER lightning receives the event
-        // This timeout is crude but should work
-        setTimeout(() => {
-          t.falsy(worker.workflows[run.id]);
-          done();
-        }, 10);
-      });
-
-      lng.enqueueRun(run);
+    worker.on(e.RUN_START, () => {
+      t.truthy(worker.workflows[run.id]);
     });
-  }
-);
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      t.truthy(worker.workflows[run.id]);
+      // Tidyup is done AFTER lightning receives the event
+      // This timeout is crude but should work
+      setTimeout(() => {
+        t.falsy(worker.workflows[run.id]);
+        done();
+      }, 10);
+    });
+
+    lng.enqueueRun(run);
+  });
+});
 
 // TODO this is a server test
 // What I am testing here is that the first job completes
@@ -469,10 +541,10 @@ test.skip('should not claim while at capacity', async (t) => {
       id: 'run-2',
     };
 
-    let run1Start;
+    let run1Start: any;
 
     // When the first run starts, we should only have run 1 in progress
-    lng.onSocketEvent(e.RUN_START, run1.id, (evt) => {
+    lng.onSocketEvent(e.RUN_START, run1.id, () => {
       run1Start = Date.now();
 
       t.truthy(worker.workflows[run1.id]);
@@ -480,7 +552,7 @@ test.skip('should not claim while at capacity', async (t) => {
     });
 
     // When the second run starts, we should only have run 2 in progress
-    lng.onSocketEvent(e.RUN_START, run2.id, (evt) => {
+    lng.onSocketEvent(e.RUN_START, run2.id, () => {
       const duration = Date.now() - run1Start;
       t.true(duration > 490);
 
@@ -490,7 +562,7 @@ test.skip('should not claim while at capacity', async (t) => {
       // also, the now date should be around 500 ms after the first start
     });
 
-    lng.onSocketEvent(e.RUN_COMPLETE, run2.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, run2.id, () => {
       done();
     });
 
@@ -506,9 +578,9 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
       body: `fn((s) => {  s.data.${id} = true; return s; })`,
     });
 
-    const outputDataclipIds = {};
-    const inputDataclipIds = {};
-    const outputs = {};
+    const outputDataclipIds: any = {};
+    const inputDataclipIds: any = {};
+    const outputs: any = {};
     const a = {
       id: 'a',
       body: 'fn(() => ({ data: { a: true } }))',
@@ -535,7 +607,7 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
     const unsub2 = lng.onSocketEvent(
       e.STEP_START,
       run.id,
-      ({ payload }) => {
+      ({ payload }: any) => {
         inputDataclipIds[payload.job_id] = payload.input_dataclip_id;
       },
       false
@@ -545,14 +617,14 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
     const unsub1 = lng.onSocketEvent(
       e.STEP_COMPLETE,
       run.id,
-      ({ payload }) => {
+      ({ payload }: any) => {
         outputDataclipIds[payload.job_id] = payload.output_dataclip_id;
         outputs[payload.job_id] = JSON.parse(payload.output_dataclip);
       },
       false
     );
 
-    lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       unsub1();
       unsub2();
 
@@ -595,7 +667,7 @@ test.serial(
       const bc = createEdge('b', 'c');
       bc.condition = 'on_job_success';
 
-      const run = createRun([a, b, c], [ab, bc]);
+      const run = createRun([a, b, c] as any, [ab, bc] as any);
 
       const results: Record<string, any> = {};
 
@@ -603,13 +675,13 @@ test.serial(
       const unsub = lng.onSocketEvent(
         e.STEP_COMPLETE,
         run.id,
-        (evt) => {
+        (evt: any) => {
           results[evt.payload.job_id] = JSON.parse(evt.payload.output_dataclip);
         },
         false
       );
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt) => {
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt: any) => {
         t.is(evt.payload.reason, 'success');
 
         // What we REALLY care about is that the b-c edge condition
@@ -629,7 +701,7 @@ test.serial(
 
 test.serial(`worker should send a success reason in the logs`, (t) => {
   return new Promise((done) => {
-    let log;
+    let log: any;
 
     const run = {
       id: 'run-1',
@@ -640,7 +712,7 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }) => {
+    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }: any) => {
       if (payload.message[0].match(/Run complete with status: success/)) {
         log = payload.message[0];
       }
@@ -657,7 +729,7 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
 
 test.serial(`worker should send a fail reason in the logs`, (t) => {
   return new Promise((done) => {
-    let log;
+    let log: any;
 
     const run = {
       id: 'run-1',
@@ -668,7 +740,7 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }) => {
+    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }: any) => {
       if (payload.message[0].match(/Run complete with status: fail/)) {
         log = payload.message[0];
       }

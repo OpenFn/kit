@@ -1,10 +1,10 @@
 import type { Logger, SanitizePolicies } from '@openfn/logger';
-import type { ExecutionPlan } from '@openfn/runtime';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
 import type { EventEmitter } from 'node:events';
 
-import type { ExternalEvents, EventMap } from './events';
 import type { EngineOptions } from './engine';
 import type { ExecOpts } from './worker/pool';
+import { LazyResolvers } from './api';
 
 export type Resolver<T> = (id: string) => Promise<T>;
 
@@ -23,9 +23,11 @@ export type WorkflowState = {
   startTime?: number;
   duration?: number;
   error?: string;
-  result?: any; // State
+  result?: State;
+
+  // Ok this changes quite a bit huh
   plan: ExecutionPlan; // this doesn't include options
-  options: any; // TODO this is wf specific options, like logging policy
+  input: State;
 };
 
 export type CallWorker = (
@@ -42,23 +44,16 @@ export type ExecutionContextConstructor = {
   options: ExecutionContextOptions;
 };
 
-export type ExecutionContextOptions = EngineOptions & {
+export type ExecuteOptions = {
+  memoryLimitMb?: number;
+  resolvers?: LazyResolvers;
+  runTimeoutMs?: number;
   sanitize?: SanitizePolicies;
 };
 
-export interface ExecutionContext extends EventEmitter {
-  constructor(args: ExecutionContextConstructor): ExecutionContext;
-  options: EngineOptions;
-  state: WorkflowState;
-  logger: Logger;
-  callWorker: CallWorker;
-  versions: Versions;
-
-  emit<T extends ExternalEvents>(
-    event: T,
-    payload: Omit<EventMap[T], 'workflowId'>
-  ): boolean;
-}
+export type ExecutionContextOptions = EngineOptions & {
+  sanitize?: SanitizePolicies;
+};
 
 export interface EngineAPI extends EventEmitter {
   callWorker: CallWorker;
@@ -66,7 +61,7 @@ export interface EngineAPI extends EventEmitter {
 }
 
 export interface RuntimeEngine {
-  version: string;
+  version?: string;
 
   options: EngineOptions;
 
@@ -75,14 +70,13 @@ export interface RuntimeEngine {
 
   execute(
     plan: ExecutionPlan,
+    input: State,
     options?: Partial<EngineOptions>
   ): Pick<EventEmitter, 'on' | 'off' | 'once'>;
 
   destroy(): void;
 
   on: (evt: string, fn: (...args: any[]) => void) => void;
-
-  // TODO my want some maintenance APIs, like getStatus. idk
 }
 
 export type Versions = {

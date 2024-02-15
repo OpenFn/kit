@@ -1,22 +1,23 @@
 import test from 'ava';
 import createRTE from '@openfn/engine-multi';
 import { createMockLogger } from '@openfn/logger';
+import type { ExitReason } from '@openfn/lexicon/lightning';
 
 import { createPlan } from './util';
 import { execute as doExecute } from '../src/api/execute';
 import { mockChannel } from '../src/mock/sockets';
-
 import {
   STEP_START,
   STEP_COMPLETE,
   RUN_LOG,
   RUN_START,
   RUN_COMPLETE,
+  GET_CREDENTIAL,
 } from '../src/events';
-import { ExitReason } from '../src/types';
+import { ExecutionPlan } from '@openfn/lexicon';
 
-let engine;
-let logger;
+let engine: any;
+let logger: any;
 
 test.before(async () => {
   logger = createMockLogger();
@@ -39,7 +40,7 @@ test.before(async () => {
 test.after(async () => engine.destroy());
 
 // Wrap up an execute call, capture the on complete state
-const execute = async (plan, options = {}) =>
+const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
   new Promise<{ reason: ExitReason; state: any }>((done) => {
     // Ignore all channel events
     // In these test we assume that the correct messages are sent to the channel
@@ -49,14 +50,16 @@ const execute = async (plan, options = {}) =>
       [RUN_LOG]: async () => true,
       [STEP_COMPLETE]: async () => true,
       [RUN_COMPLETE]: async () => true,
+      [GET_CREDENTIAL]: async () => {
+        throw new Error('err');
+      },
     });
 
-    const onFinish = (result) => {
+    const onFinish = (result: any) => {
       done(result);
     };
 
-    // @ts-ignore
-    doExecute(channel, engine, logger, plan, options, onFinish);
+    doExecute(channel, engine, logger, plan, input, options, onFinish);
   });
 
 test('success', async (t) => {
@@ -65,9 +68,9 @@ test('success', async (t) => {
     expression: '(s) => s',
   });
 
-  plan.initialState = { data: { result: 42 } };
+  const input = { data: { result: 42 } };
 
-  const { reason } = await execute(plan);
+  const { reason } = await execute(plan, input);
   t.is(reason.reason, 'success');
 });
 
@@ -165,10 +168,11 @@ test('fail: error in the first job, with downstream job that is not run', async 
     {
       id: 'a',
       expression: 'export default [(s) => {throw "abort!"}]',
-      next: { b: true },
+      next: { b: '!state.errors' },
     },
     {
       id: 'b',
+      expression: 'export default [(s) => s]',
     }
   );
 
@@ -221,6 +225,20 @@ test('exception: autoinstall error', async (t) => {
   );
 });
 
+test('exception: failed to load credential', async (t) => {
+  const plan = createPlan({
+    id: 'aa',
+    expression: 'export default [() => s]',
+    configuration: 'zzz',
+  });
+
+  const { reason } = await execute(plan);
+
+  t.is(reason.reason, 'exception');
+  t.is(reason.error_type, 'CredentialLoadError');
+  t.is(reason.error_message, 'Failed to load credential zzz for step aa');
+});
+
 test('kill: timeout', async (t) => {
   const plan = createPlan({
     id: 'x',
@@ -231,7 +249,7 @@ test('kill: timeout', async (t) => {
     runTimeoutMs: 100,
   };
 
-  const { reason } = await execute(plan, options);
+  const { reason } = await execute(plan, {}, options);
   t.is(reason.reason, 'kill');
   t.is(reason.error_type, 'TimeoutError');
   t.is(reason.error_message, 'Workflow failed to return within 100ms');

@@ -1,9 +1,6 @@
-// stress test for autoinstall
-// this could evolve  into stress testing, benchmarking or artillery generally?
-// Also I may skip this in CI after the issue is fixed
-
 import test from 'ava';
 import path from 'node:path';
+import { generateKeys } from '@openfn/lightning-mock';
 
 import { initLightning, initWorker } from '../src/init';
 import { createRun, createJob } from '../src/factories';
@@ -33,13 +30,20 @@ const run = async (attempt) => {
 };
 
 test.before(async () => {
+  const keys = await generateKeys();
   const lightningPort = 4321;
 
-  lightning = initLightning(lightningPort);
+  lightning = initLightning(lightningPort, keys.private);
 
-  ({ worker } = await initWorker(lightningPort, {
-    repoDir: path.resolve('tmp/repo/autoinstall'),
-  }));
+  ({ worker } = await initWorker(
+    lightningPort,
+    {
+      repoDir: path.resolve('tmp/repo/autoinstall'),
+    },
+    {
+      runPublicKey: keys.public,
+    }
+  ));
 });
 
 test.after(async () => {

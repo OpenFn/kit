@@ -1,5 +1,15 @@
 # @openfn/deploy
 
+## 0.4.2
+
+### Patch Changes
+
+- 86dd668: Log the result to success (not always)
+- Updated dependencies [649ca43]
+- Updated dependencies [9f6c35d]
+- Updated dependencies [86dd668]
+  - @openfn/logger@1.0.0
+
 ## 0.4.1
 
 ### Patch Changes

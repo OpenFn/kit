@@ -1,48 +1,57 @@
 import test from 'ava';
+import { ExecutionPlan, Job } from '@openfn/lexicon';
 
 import { parseAdaptors } from '../../src/execute/execute';
 
-test('parse a simple specifier', (t) => {
-  const adaptors = ['a'];
-  const result = parseAdaptors({ adaptors });
-  t.assert(Object.keys(result).length === 1);
-  t.truthy(result.a);
-  t.falsy(Object.keys(result.a).length);
+const createPlan = (adaptor: string): ExecutionPlan => ({
+  workflow: {
+    steps: [
+      {
+        adaptor,
+        expression: '.',
+      },
+    ],
+  },
+  options: {},
 });
 
-test('parse multiple specifiers', (t) => {
-  const adaptors = ['a', 'b'];
-  const result = parseAdaptors({ adaptors });
-  t.assert(Object.keys(result).length === 2);
-  t.truthy(result.a);
-  t.truthy(result.b);
+test('parse a simple specifier with no path or version', (t) => {
+  const adaptor = 'a';
+  const plan = createPlan(adaptor);
+  const result = parseAdaptors(plan);
+
+  t.deepEqual(result, { a: {} });
 });
 
 test('parse a specifier with a path', (t) => {
-  const adaptors = ['a=x'];
-  const result = parseAdaptors({ adaptors });
-  t.assert(Object.keys(result).length === 1);
-  t.deepEqual(result.a, { path: 'x' });
+  const adaptor = 'a=x';
+  const plan = createPlan(adaptor);
+  const result = parseAdaptors(plan);
+
+  t.deepEqual(result, { a: { path: 'x' } });
 });
 
 test('parse a specifier with a version', (t) => {
-  const adaptors = ['a@1'];
-  const result = parseAdaptors({ adaptors });
-  t.assert(Object.keys(result).length === 1);
-  t.deepEqual(result.a, { version: '1' });
+  const adaptor = 'a@1';
+  const plan = createPlan(adaptor);
+  const result = parseAdaptors(plan);
+
+  t.deepEqual(result, { a: { version: '1' } });
 });
 
 test('parse a specifier with a path and version', (t) => {
-  const adaptors = ['a@1=x'];
-  const result = parseAdaptors({ adaptors });
-  t.assert(Object.keys(result).length === 1);
-  t.deepEqual(result.a, { path: 'x', version: '1' });
+  const adaptor = 'a@1=x';
+  const plan = createPlan(adaptor);
+  const result = parseAdaptors(plan);
+
+  t.deepEqual(result, { a: { path: 'x', version: '1' } });
 });
 
 test('parse @openfn/language-common@1.0.0=~/repo/modules/common', (t) => {
-  const adaptors = ['@openfn/language-common@1.0.0=~/repo/modules/common'];
-  const result = parseAdaptors({ adaptors });
-  t.assert(Object.keys(result).length === 1);
+  const adaptor = '@openfn/language-common@1.0.0=~/repo/modules/common';
+  const plan = createPlan(adaptor);
+  const result = parseAdaptors(plan);
+
   t.deepEqual(result, {
     '@openfn/language-common': {
       path: '~/repo/modules/common',
@@ -51,25 +60,29 @@ test('parse @openfn/language-common@1.0.0=~/repo/modules/common', (t) => {
   });
 });
 
-test('parse workflow', (t) => {
-  const workflow = {
-    start: 'a',
-    jobs: {
-      a: {
-        adaptor: '@openfn/language-common',
-        expression: 'fn()',
-      },
-      b: {
-        adaptor: '@openfn/language-http@1.0.0',
-        expression: 'fn()',
-      },
-      c: {
-        adaptor: '@openfn/language-salesforce=a/b/c',
-        expression: 'fn()',
-      },
+test('parse plan with several steps', (t) => {
+  const plan = {
+    options: {
+      start: 'a',
+    },
+    workflow: {
+      steps: [
+        {
+          adaptor: '@openfn/language-common',
+          expression: 'fn()',
+        },
+        {
+          adaptor: '@openfn/language-http@1.0.0',
+          expression: 'fn()',
+        },
+        {
+          adaptor: '@openfn/language-salesforce=a/b/c',
+          expression: 'fn()',
+        },
+      ],
     },
   };
-  const result = parseAdaptors({ workflow });
+  const result = parseAdaptors(plan);
   t.assert(Object.keys(result).length === 3);
   t.deepEqual(result, {
     '@openfn/language-common': {},

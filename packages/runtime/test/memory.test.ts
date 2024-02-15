@@ -4,12 +4,9 @@
  * */
 
 import test from 'ava';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
-import {
-  ExecutionPlan,
-  NOTIFY_JOB_COMPLETE,
-  NotifyJobCompletePayload,
-} from '../src';
+import { NOTIFY_JOB_COMPLETE, NotifyJobCompletePayload } from '../src';
 import callRuntime from '../src/runtime';
 
 /**
@@ -52,19 +49,14 @@ const run = async (t, workflow: ExecutionPlan) => {
     }
   };
 
-  const state = await callRuntime(
-    workflow,
-    {},
-    {
-      strict: false,
-      callbacks: { notify },
-      globals: {
-        process: {
-          memoryUsage: () => process.memoryUsage(),
-        },
+  const state = await callRuntime(workflow, {
+    callbacks: { notify },
+    globals: {
+      process: {
+        memoryUsage: () => process.memoryUsage(),
       },
-    }
-  );
+    },
+  });
   return { state, mem };
 };
 

@@ -4,7 +4,7 @@ import createWorkerServer from '../src/server';
 
 test.before(async () => {
   const engine = await createMockRTE();
-  createWorkerServer(engine, {
+  createWorkerServer(engine as any, {
     port: 2323,
     secret: 'abc',
     maxWorkflows: 1,

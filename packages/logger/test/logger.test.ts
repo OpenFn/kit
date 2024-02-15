@@ -549,27 +549,25 @@ test('log an error object', (t) => {
 test('proxy a json argument to string', (t) => {
   const logger = createLogger('x');
   logger.proxy({ name: 'y', level: 'success', message: ['hello'] });
-
-  const { namespace, level, message } = logger._parse(logger._last);
-  t.is(namespace, 'y');
+  const [level, name, _icon, message] = logger._last;
+  t.is(name, '[y]');
   t.is(level, 'success');
-  t.deepEqual(message, 'hello');
+  t.is(message, 'hello');
 });
 
 test('proxy string arguments to string', (t) => {
   const logger = createLogger('x');
   logger.proxy('y', 'success', ['hello']);
 
-  const { namespace, level, message } = logger._parse(logger._last);
-  t.is(namespace, 'y');
+  const [level, name, _icon, message] = logger._last;
+  t.is(name, '[y]');
   t.is(level, 'success');
-  t.deepEqual(message, 'hello');
+  t.is(message, 'hello');
 });
 
 test('proxy a json argument to json', (t) => {
   const logger = createLogger<JSONLog>('x', { json: true });
   logger.proxy({ name: 'y', level: 'success', message: ['hello'] });
-
   const { name, level, message } = logger._last;
   t.is(name, 'y');
   t.is(level, 'success');

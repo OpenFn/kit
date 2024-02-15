@@ -1,5 +1,5 @@
 import vm from 'node:vm';
-import type { State } from '../types';
+import type { State } from '@openfn/lexicon';
 import type { Options } from '../runtime';
 
 const freezeAll = (
@@ -15,7 +15,10 @@ const freezeAll = (
 
 // Build a safe and helpful execution context
 // This will be shared by all jobs
-export default (state: State, options: Pick<Options, 'jobLogger' | 'globals'>) => {
+export default (
+  state: State,
+  options: Pick<Options, 'jobLogger' | 'globals'>
+) => {
   const logger = options.jobLogger ?? console;
   const globals = options.globals || {};
   const context = vm.createContext(

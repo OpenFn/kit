@@ -1,32 +1,33 @@
-import {
-  RUN_COMPLETE,
-  RUN_LOG,
-  RunLogPayload,
-  RUN_START,
-  RunStartPayload,
-  GET_CREDENTIAL,
-  GET_DATACLIP,
-  STEP_COMPLETE,
-  STEP_START,
-} from '../events';
-import {
-  getWithReply,
-  createRunState,
-  throttle as createThrottle,
-} from '../util';
-import handleStepComplete from '../events/step-complete';
-import handleStepStart from '../events/step-start';
-import handleRunComplete from '../events/run-complete';
-import handleRunError from '../events/run-error';
-
-import type { RunOptions, Channel, RunState, JSONLog } from '../types';
+import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
+import type { RunLogPayload, RunStartPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
   WorkflowStartPayload,
 } from '@openfn/engine-multi';
-import type { ExecutionPlan } from '@openfn/runtime';
+
+import {
+  getWithReply,
+  createRunState,
+  throttle as createThrottle,
+} from '../util';
+import {
+  RUN_COMPLETE,
+  RUN_LOG,
+  RUN_START,
+  GET_DATACLIP,
+  STEP_COMPLETE,
+  STEP_START,
+  GET_CREDENTIAL,
+} from '../events';
+import handleStepComplete from '../events/step-complete';
+import handleStepStart from '../events/step-start';
+import handleRunComplete from '../events/run-complete';
+import handleRunError from '../events/run-error';
+
+import type { Channel, RunState, JSONLog } from '../types';
+import { WorkerRunOptions } from '../util/convert-lightning-plan';
 
 const enc = new TextDecoder('utf-8');
 
@@ -37,6 +38,7 @@ export type Context = {
   state: RunState;
   logger: Logger;
   engine: RuntimeEngine;
+  options: WorkerRunOptions;
   onFinish: (result: any) => void;
 
   // maybe its better for version numbers to be scribbled here as we go?
@@ -58,14 +60,22 @@ export function execute(
   engine: RuntimeEngine,
   logger: Logger,
   plan: ExecutionPlan,
-  options: RunOptions = {},
+  input: Lazy<State>,
+  options: WorkerRunOptions = {},
   onFinish = (_result: any) => {}
 ) {
   logger.info('executing ', plan.id);
 
-  const state = createRunState(plan, options);
+  const state = createRunState(plan, input);
 
-  const context: Context = { channel, state, logger, engine, onFinish };
+  const context: Context = {
+    channel,
+    state,
+    logger,
+    engine,
+    options,
+    onFinish,
+  };
 
   const throttle = createThrottle();
 
@@ -125,33 +135,43 @@ export function execute(
     // dataclip: (id: string) => loadDataclip(channel, id),
   } as Resolvers;
 
-  Promise.resolve()
+  setTimeout(async () => {
+    let loadedInput = input;
+
     // Optionally resolve initial state
-    .then(async () => {
-      // TODO we need to remove this from here and let the runtime take care of it through
-      // the resolver. See https://github.com/OpenFn/kit/issues/403
-      if (typeof plan.initialState === 'string') {
-        logger.debug('loading dataclip', plan.initialState);
-        plan.initialState = await loadDataclip(channel, plan.initialState);
-        logger.success('dataclip loaded');
-        logger.debug(plan.initialState);
-      }
-      return plan;
-    })
-    // Execute (which we have to wrap in a promise chain to handle initial state)
-    .then(() => {
+    // TODO we need to remove this from here and let the runtime take care of it through
+    // the resolver. See https://github.com/OpenFn/kit/issues/403
+    // TODO come back and work out how initial state will work
+    if (typeof input === 'string') {
+      logger.debug('loading dataclip', input);
+
       try {
-        engine.execute(plan, { resolvers, ...options });
+        loadedInput = await loadDataclip(channel, input);
+        logger.success('dataclip loaded');
       } catch (e: any) {
-        // TODO what if there's an error?
-        handleRunError(context, {
+        // abort with error
+        return handleRunError(context, {
           workflowId: plan.id!,
-          message: e.message,
-          type: e.type,
-          severity: e.severity,
+          message: `Failed to load dataclip ${input}${
+            e.message ? `: ${e.message}` : ''
+          }`,
+          type: 'DataClipError',
+          severity: 'exception',
         });
       }
-    });
+    }
+
+    try {
+      engine.execute(plan, loadedInput as State, { resolvers, ...options });
+    } catch (e: any) {
+      handleRunError(context, {
+        workflowId: plan.id!,
+        message: e.message,
+        type: e.type,
+        severity: e.severity,
+      });
+    }
+  });
 
   return context;
 }

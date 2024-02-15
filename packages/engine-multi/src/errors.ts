@@ -100,4 +100,20 @@ export class ExitError extends EngineError {
   }
 }
 
-// CredentialsError (exception)
+export type CredentialErrorObj = { id: string; step: string; error: string };
+
+// Error lazy-loading a credenial
+export class CredentialLoadError extends EngineError {
+  severity = 'exception';
+  type = 'CredentialLoadError';
+  name = 'CredentialLoadError';
+  message;
+
+  original: any; // this is the original error
+  constructor(errors: CredentialErrorObj[]) {
+    super();
+    this.message = errors
+      .map((e) => `Failed to load credential ${e.id} for step ${e.step}`)
+      .join('\n');
+  }
+}

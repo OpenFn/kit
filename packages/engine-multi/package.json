@@ -1,6 +1,6 @@
 {
   "name": "@openfn/engine-multi",
-  "version": "0.4.1",
+  "version": "1.0.0",
   "description": "Multi-process runtime engine",
   "main": "dist/index.js",
   "type": "module",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@openfn/compiler": "workspace:*",
     "@openfn/language-common": "2.0.0-rc3",
+    "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "fast-safe-stringify": "^2.1.1"

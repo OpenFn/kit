@@ -3,33 +3,23 @@ import type { CompileOptions } from './command';
 import type { Logger } from '../util/logger';
 
 import compile from './compile';
-import loadInput from '../util/load-input';
-import expandAdaptors from '../util/expand-adaptors';
+import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
-import mapAdaptorsToMonorepo, {
-  MapAdaptorsToMonorepoOptions,
-} from '../util/map-adaptors-to-monorepo';
 
 const compileHandler = async (options: CompileOptions, logger: Logger) => {
   assertPath(options.path);
-  await loadInput(options, logger);
 
-  if (options.workflow) {
-    // expand shorthand adaptors in the workflow jobs
-    expandAdaptors(options);
-    await mapAdaptorsToMonorepo(
-      options as MapAdaptorsToMonorepoOptions,
-      logger
-    );
+  let result;
+  if (options.expressionPath) {
+    result = await compile(options.expressionPath, options, logger);
+  } else {
+    const plan = await loadPlan(options, logger);
+    result = await compile(plan, options, logger);
+    result = JSON.stringify(result, null, 2);
   }
 
-  let result = await compile(options, logger);
-  if (options.workflow) {
-    result = JSON.stringify(result);
-  }
   if (options.outputStdout) {
-    logger.success('Compiled code:');
-    logger.success('\n' + result);
+    logger.success('Result:\n\n' + result);
   } else {
     await writeFile(options.outputPath!, result as string);
     logger.success(`Compiled to ${options.outputPath}`);

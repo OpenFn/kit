@@ -9,16 +9,18 @@ const validateAdaptors = async (
     | 'autoinstall'
     | 'repoDir'
     | 'workflowPath'
+    | 'planPath'
   >,
   logger: Logger
 ) => {
   if (options.skipAdaptorValidation) {
     return;
   }
+  const isPlan = options.planPath || options.workflowPath;
 
   const hasDeclaredAdaptors = options.adaptors && options.adaptors.length > 0;
 
-  if (options.workflowPath && hasDeclaredAdaptors) {
+  if (isPlan && hasDeclaredAdaptors) {
     logger.error('ERROR: adaptor and workflow provided');
     logger.error(
       'This is probably not what you meant to do. A workflow should declare an adaptor for each job.'
@@ -29,7 +31,7 @@ const validateAdaptors = async (
   // If no adaptor is specified, pass a warning
   // (The runtime is happy to run without)
   // This can be overriden from options
-  if (!options.workflowPath && !hasDeclaredAdaptors) {
+  if (!isPlan && !hasDeclaredAdaptors) {
     logger.warn('WARNING: No adaptor provided!');
     logger.warn(
       'This job will probably fail. Pass an adaptor with the -a flag, eg:'

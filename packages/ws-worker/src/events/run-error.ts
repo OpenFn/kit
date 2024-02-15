@@ -1,8 +1,8 @@
-import { calculateJobExitReason } from '../api/reasons';
-
+import type { RunCompletePayload } from '@openfn/lexicon/lightning';
 import type { WorkflowErrorPayload } from '@openfn/engine-multi';
 
-import { RUN_COMPLETE, RunCompletePayload } from '../events';
+import { calculateJobExitReason } from '../api/reasons';
+import { RUN_COMPLETE } from '../events';
 import { sendEvent, Context, onJobError } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
 
@@ -29,7 +29,7 @@ export default async function onRunError(
 
     onFinish({ reason });
   } catch (e: any) {
-    logger.error('ERROR in workflow-error handler:', e.message);
+    logger.error('ERROR in run-error handler:', e.message);
     logger.error(e);
 
     onFinish({});

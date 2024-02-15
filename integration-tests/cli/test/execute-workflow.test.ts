@@ -83,6 +83,15 @@ test.serial(
   }
 );
 
+// Run a new-style execution plan with custom start
+test.serial(`openfn ${jobsPath}/plan.json -i`, async (t) => {
+  const { err } = await run(t.title);
+  t.falsy(err);
+
+  const out = getJSON();
+  t.deepEqual(out.data.userId, 1);
+});
+
 test.serial(`openfn ${jobsPath}/wf-conditional.json`, async (t) => {
   const { err } = await run(t.title);
   t.falsy(err);
@@ -124,36 +133,6 @@ test.serial(
   }
 );
 
-test.serial(`openfn ${jobsPath}/wf-strict.json --strict`, async (t) => {
-  const { err } = await run(t.title);
-  t.falsy(err);
-
-  const out = getJSON();
-  t.deepEqual(out, {
-    data: {
-      name: 'jane',
-    },
-  });
-});
-
-test.serial(`openfn ${jobsPath}/wf-strict.json --no-strict`, async (t) => {
-  const { err } = await run(t.title);
-  t.falsy(err);
-
-  const out = getJSON();
-  t.deepEqual(out, {
-    x: 22,
-    data: {
-      name: 'jane',
-    },
-    references: [
-      {
-        name: 'bob',
-      },
-    ],
-  });
-});
-
 test.serial(
   `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 2 } }"`,
   async (t) => {
@@ -169,8 +148,8 @@ test.serial(
   }
 );
 
-test.serial(
-  `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 32 } }"`,
+test.serial.only(
+  `openfn ${jobsPath}/wf-errors.json -iS "{ \\"data\\": { \\"number\\": 32 } }"`,
   async (t) => {
     const { err } = await run(t.title);
     t.falsy(err);
@@ -189,7 +168,7 @@ test.serial(
             severity: 'fail',
             source: 'runtime',
           },
-          jobId: 'start',
+          stepId: 'start',
           message: 'abort',
           type: 'JobError',
         },

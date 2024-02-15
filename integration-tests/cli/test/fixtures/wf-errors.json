@@ -1,24 +1,26 @@
 {
-  "start": "start",
-  "jobs": [
-    {
-      "id": "start",
-      "adaptor": "common",
-      "expression": "fn((state) => { if (state.data.number > 10) { throw new Error('abort') }; return state; });",
-      "next": {
-        "increment": { "condition": "!state.errors" },
-        "do nothing": { "condition": "state.errors" }
+  "options": { "start": "start" },
+  "workflow": {
+    "steps": [
+      {
+        "id": "start",
+        "adaptor": "common",
+        "expression": "fn((state) => { if (state.data.number > 10) { throw new Error('abort') }; return state; });",
+        "next": {
+          "increment": { "condition": "!state.errors" },
+          "do nothing": { "condition": "state.errors" }
+        }
+      },
+      {
+        "id": "increment",
+        "adaptor": "common",
+        "expression": "fn((state) => { state.data.number += 1; return state; });"
+      },
+      {
+        "id": "do nothing",
+        "adaptor": "common",
+        "expression": "fn((state) => state);"
       }
-    },
-    {
-      "id": "increment",
-      "adaptor": "common",
-      "expression": "fn((state) => { state.data.number += 1; return state; });"
-    },
-    {
-      "id": "do nothing",
-      "adaptor": "common",
-      "expression": "fn((state) => state);"
-    }
-  ]
+    ]
+  }
 }

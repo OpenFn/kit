@@ -1,9 +1,13 @@
 {
-  "start": "nope",
-  "jobs": [
-    {
-      "id": "x",
-      "expression": "fn((state) => state)"
-    }
-  ]
+  "options": {
+    "start": "nope"
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "x",
+        "expression": "fn((state) => state)"
+      }
+    ]
+  }
 }

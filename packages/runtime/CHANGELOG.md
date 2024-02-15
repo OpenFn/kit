@@ -1,5 +1,22 @@
 # @openfn/runtime
 
+## 1.0.0
+
+### Major Changes
+
+- 86dd668: The 1.0 release of the runtime updates the signatures and language of the runtime to match Lightning. It also includes some housekeeping.
+
+  - Update main run() signature
+  - Remove strict mode options
+  - Integrate with lexicon
+
+### Patch Changes
+
+- Updated dependencies [649ca43]
+- Updated dependencies [9f6c35d]
+- Updated dependencies [86dd668]
+  - @openfn/logger@1.0.0
+
 ## 0.2.6
 
 ### Patch Changes

@@ -1,13 +1,9 @@
 // a suite of tests with various security concerns in mind
 import test from 'ava';
-import doRun from '../src/runtime';
-
 import { createMockLogger } from '@openfn/logger';
-import { ExecutionPlan } from '../src/types';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
 
-// Disable strict mode for all these tests
-const run = (job: any, state?: any, options: any = {}) =>
-  doRun(job, state, { ...options, strict: false });
+import run from '../src/runtime';
 
 const logger = createMockLogger(undefined, { level: 'default' });
 
@@ -21,50 +17,32 @@ test.serial(
     const src = 'export default [(s) => s]';
 
     const state = {
-      data: true,
+      data: {},
       configuration: {
         password: 'secret',
       },
     };
+
     const result: any = await run(src, state);
-    t.is(result.data, true);
+    t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
   }
 );
 
-test.serial(
-  'config should be scrubbed from the result state in strict mode',
-  async (t) => {
-    const src = 'export default [(s) => s]';
+test.serial('config should be scrubbed from the result state', async (t) => {
+  const src = 'export default [(s) => s]';
 
-    const state = {
-      data: true,
-      configuration: {
-        password: 'secret',
-      },
-    };
-    const result: any = await run(src, state, { strict: true });
-    t.is(result.data, true);
-    t.is(result.configuration, undefined);
-  }
-);
+  const state = {
+    data: {},
+    configuration: {
+      password: 'secret',
+    },
+  };
 
-test.serial(
-  'config should be scrubbed from the result state in non-strict mode',
-  async (t) => {
-    const src = 'export default [(s) => s]';
-
-    const state = {
-      data: true,
-      configuration: {
-        password: 'secret',
-      },
-    };
-    const result: any = await run(src, state, { strict: false });
-    t.is(result.data, true);
-    t.is(result.configuration, undefined);
-  }
-);
+  const result: any = await run(src, state, {});
+  t.deepEqual(result.data, {});
+  t.is(result.configuration, undefined);
+});
 
 test.serial(
   'config should be scrubbed from the result state after error',
@@ -72,14 +50,15 @@ test.serial(
     const src = 'export default [(s) => { throw "err" }]';
 
     const state = {
-      data: true,
+      data: {},
       configuration: {
         password: 'secret',
       },
     };
-    const result: any = await run(src, state, { strict: false });
+
+    const result: any = await run(src, state, {});
     t.truthy(result.errors);
-    t.is(result.data, true);
+    t.deepEqual(result.data, {});
     t.is(result.configuration, undefined);
   }
 );
@@ -99,14 +78,14 @@ test.serial('jobs should not have access to global scope', async (t) => {
 test.serial('jobs should be able to read global state', async (t) => {
   const src = 'export default [() => state.data.x]';
 
-  const result: any = await run(src, { data: { x: 42 } }); // typings are a bit tricky
+  const result: any = await run(src, { data: { x: 42 } });
   t.is(result, 42);
 });
 
 test.serial('jobs should be able to mutate global state', async (t) => {
   const src = 'export default [() => { state.x = 22; return state.x; }]';
 
-  const result: any = await run(src, { data: { x: 42 } }); // typings are a bit tricky
+  const result: any = await run(src, { data: { x: 42 } });
   t.is(result, 22);
 });
 
@@ -198,20 +177,22 @@ test.serial(
   'jobs in workflow cannot share data through globals (issue #213)',
   async (t) => {
     const plan: ExecutionPlan = {
-      jobs: [
-        {
-          id: 'a',
-          expression: 'export default [s => { console.x = 10; return s; }]',
-          next: {
-            b: true,
+      workflow: {
+        steps: [
+          {
+            id: 'a',
+            expression: 'export default [s => { console.x = 10; return s; }]',
+            next: {
+              b: true,
+            },
           },
-        },
-        {
-          id: 'b',
-          expression:
-            'export default [s => { s.data.x = console.x; return s; }]',
-        },
-      ],
+          {
+            id: 'b',
+            expression:
+              'export default [s => { s.data.x = console.x; return s; }]',
+          },
+        ],
+      },
     };
 
     const result = await run(plan);

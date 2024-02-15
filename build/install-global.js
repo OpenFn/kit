@@ -14,6 +14,8 @@ const outputPath = process.argv[2] || './dist';
 
 // Package everything up like a local build
 exec('git branch --show-current', {}, async (err, branchName) => {
+  console.log('Installing openfnx for branch:', branchName);
+  console.log();
   const files = await findPackages();
   const pkgs = mapPackages(files);
   await ensureOutputPath(outputPath);
@@ -37,9 +39,13 @@ exec('git branch --show-current', {}, async (err, branchName) => {
   ).then(async () => {
     const cliPath = getLocalTarballName(pkgs['@openfn/cli']);
     const command = `npm install -g ${path.resolve(outputPath, cliPath)}`;
-    console.log(command);
+    //console.log(command);
 
     await exec(command);
     // install the local CLI globally
+
+    console.log();
+    console.log('openfnx installed successfully! To test:');
+    console.log('  openfnx --version');
   });
 });

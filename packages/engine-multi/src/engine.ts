@@ -1,7 +1,9 @@
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ExecutionPlan } from '@openfn/runtime';
+import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { Logger } from '@openfn/logger';
+
 import {
   JOB_COMPLETE,
   JOB_START,
@@ -15,10 +17,14 @@ import execute from './api/execute';
 import validateWorker from './api/validate-worker';
 import ExecutionContext from './classes/ExecutionContext';
 
-import type { SanitizePolicies } from '@openfn/logger';
 import type { LazyResolvers } from './api';
-import type { EngineAPI, EventHandler, WorkflowState } from './types';
-import type { Logger } from '@openfn/logger';
+import type {
+  EngineAPI,
+  EventHandler,
+  ExecuteOptions,
+  RuntimeEngine,
+  WorkflowState,
+} from './types';
 import type { AutoinstallOptions } from './api/autoinstall';
 
 const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms
@@ -70,23 +76,24 @@ export type EngineOptions = {
   repoDir: string;
   resolvers?: LazyResolvers;
   runtimelogger?: Logger;
-  runTimeoutMs?: number;
+  runTimeoutMs?: number; // default timeout
   statePropsToRemove?: string[];
   whitelist?: RegExp[];
 };
 
-export type ExecuteOptions = {
-  memoryLimitMb?: number;
-  resolvers?: LazyResolvers;
-  runTimeoutMs?: number;
-  sanitize?: SanitizePolicies;
+export type InternalEngine = RuntimeEngine & {
+  // TODO Not a very good type definition, but it calms the tests down
+  [other: string]: any;
 };
 
 // This creates the internal API
 // tbh this is actually the engine, right, this is where stuff happens
 // the api file is more about the public api I think
 // TOOD options MUST have a logger
-const createEngine = async (options: EngineOptions, workerPath?: string) => {
+const createEngine = async (
+  options: EngineOptions,
+  workerPath?: string
+): Promise<InternalEngine> => {
   const states: Record<string, WorkflowState> = {};
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
@@ -130,9 +137,9 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   // create, register and return  a state object
   // should it also load the initial data clip?
   // when does that happen? No, that's inside execute
-  const registerWorkflow = (plan: ExecutionPlan) => {
+  const registerWorkflow = (plan: ExecutionPlan, input: State) => {
     // TODO throw if already registered?
-    const state = createState(plan);
+    const state = createState(plan, input);
     states[state.id] = state;
     return state;
   };
@@ -144,13 +151,17 @@ const createEngine = async (options: EngineOptions, workerPath?: string) => {
   // TODO too much logic in this execute function, needs farming out
   // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
-  const executeWrapper = (plan: ExecutionPlan, opts: ExecuteOptions = {}) => {
+  const executeWrapper = (
+    plan: ExecutionPlan,
+    input: State,
+    opts: ExecuteOptions = {}
+  ) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
     // TODO throw if plan is invalid
     // Wait, don't throw because the server will die
     // Maybe return null instead
-    const state = registerWorkflow(plan);
+    const state = registerWorkflow(plan, input);
 
     const context = new ExecutionContext({
       state,
