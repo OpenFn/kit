@@ -221,7 +221,7 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
 test('logs get sent to stdout', (t) => {
   const workflowId = 'a';
 
-  const stdout = createMockLogger(undefined, { json: true });
+  const stdout = createMockLogger(undefined, { level: 'debug', json: true });
 
   const context = createContext(workflowId);
   context.logger = stdout;
@@ -249,7 +249,7 @@ test('logs get sent to stdout', (t) => {
 test('job logs do not get sent to stdout', (t) => {
   const workflowId = 'a';
 
-  const stdout = createMockLogger();
+  const stdout = createMockLogger(undefined, { level: 'debug' });
 
   const context = createContext(workflowId);
   context.logger = stdout;
@@ -274,7 +274,7 @@ test('job logs do not get sent to stdout', (t) => {
 test('adaptor logs do not get sent to stdout', (t) => {
   const workflowId = 'a';
 
-  const stdout = createMockLogger();
+  const stdout = createMockLogger(undefined, { level: 'debug' });
 
   const context = createContext(workflowId);
   context.logger = stdout;
