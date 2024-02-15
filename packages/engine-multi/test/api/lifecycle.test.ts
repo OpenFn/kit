@@ -218,6 +218,84 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
   });
 });
 
+test('logs get sent to stdout', (t) => {
+  const workflowId = 'a';
+
+  const stdout = createMockLogger(undefined, { json: true });
+
+  const context = createContext(workflowId);
+  context.logger = stdout;
+
+  const event: w.LogEvent = {
+    type: w.LOG,
+    workflowId,
+    threadId: 'a',
+    log: {
+      level: 'info',
+      name: 'r/t',
+      message: ['oh hai'],
+      time: (Date.now() - 100).toString(),
+    },
+  };
+
+  log(context, event);
+
+  const last = stdout._last;
+  t.truthy(last);
+  t.is(last.message[0], 'oh hai');
+  t.is(last.name, 'r/t');
+});
+
+test('job logs do not get sent to stdout', (t) => {
+  const workflowId = 'a';
+
+  const stdout = createMockLogger();
+
+  const context = createContext(workflowId);
+  context.logger = stdout;
+
+  const event: w.LogEvent = {
+    type: w.LOG,
+    workflowId,
+    threadId: 'a',
+    log: {
+      level: 'info',
+      name: 'job',
+      message: ['oh hai'],
+      time: (Date.now() - 100).toString(),
+    },
+  };
+
+  log(context, event);
+
+  t.is(stdout._history.length, 0);
+});
+
+test('adaptor logs do not get sent to stdout', (t) => {
+  const workflowId = 'a';
+
+  const stdout = createMockLogger();
+
+  const context = createContext(workflowId);
+  context.logger = stdout;
+
+  const event: w.LogEvent = {
+    type: w.LOG,
+    workflowId,
+    threadId: 'a',
+    log: {
+      level: 'info',
+      name: 'ada',
+      message: ['oh hai'],
+      time: (Date.now() - 100).toString(),
+    },
+  };
+
+  log(context, event);
+
+  t.is(stdout._history.length, 0);
+});
+
 // TODO not a very thorough test, still not really sure what I'm doing here
 test(`error: emits ${e.WORKFLOW_ERROR}`, (t) => {
   return new Promise((done) => {
