@@ -57,9 +57,13 @@ const mockLogger = <T = StringLog>(
   mock.break = () => {}; // do nothing
 
   // @ts-ignore
-  mock.proxy = (obj: JSONLog) => {
+  const proxy = m.proxy;
+  // @ts-ignore
+  mock.proxy = (...args) => {
     // @ts-ignore
-    history.push(obj);
+    const result = proxy(...args);
+    // @ts-ignore
+    history.push(['proxy', result]);
   };
 
   // TODO should this use json?

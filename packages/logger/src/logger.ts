@@ -233,6 +233,7 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     j = j as JSONLog;
 
     log(j.name, j.level, ...j.message);
+    return [j.name, j.level, ...j.message];
   };
 
   // print() will log without any metadata/overhead/santization
