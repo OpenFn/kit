@@ -240,7 +240,7 @@ test('logs get sent to stdout', (t) => {
 
   log(context, event);
 
-  const last = stdout._last;
+  const last: any = stdout._last;
   t.truthy(last);
   t.is(last.message[0], 'oh hai');
   t.is(last.name, 'r/t');
