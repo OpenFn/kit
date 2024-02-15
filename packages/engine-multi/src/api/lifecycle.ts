@@ -3,6 +3,10 @@ import * as externalEvents from '../events';
 import * as internalEvents from '../worker/events';
 import type ExecutionContext from '../classes/ExecutionContext';
 
+// Log events from the inner thread will be logged to stdout
+// EXCEPT the keys listed here
+const logsToExcludeFromStdout = /(job)|(ada)/i;
+
 export const workflowStart = (
   context: ExecutionContext,
   event: internalEvents.WorkflowStartEvent
@@ -120,7 +124,7 @@ export const log = (
 ) => {
   const { threadId } = event;
 
-  if (event.log.name !== 'JOB') {
+  if (!logsToExcludeFromStdout.test(event.log.name!)) {
     // Forward the log event to the engine's logger
     // Note that we may have to parse the serialized log string
     const proxy = {

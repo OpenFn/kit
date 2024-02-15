@@ -67,6 +67,12 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // A new connection made to the queue
   const onConnect = ({ socket, channel }: SocketAndChannel) => {
+    if (app.destroyed) {
+      // Fix an edge case where a server can be destroyed before it is
+      // even connnected
+      // If this has happened, we do NOT want to go and start the workloop!
+      return;
+    }
     logger.success('Connected to Lightning at', options.lightning);
 
     // save the channel and socket
@@ -111,6 +117,10 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // We failed to connect to the queue
   const onError = (e: any) => {
+    if (app.destroyed) {
+      return;
+    }
+
     logger.error(
       'CRITICAL ERROR: could not connect to lightning at',
       options.lightning
