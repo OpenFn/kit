@@ -166,7 +166,6 @@ test("Don't send job logs to stdout", (t) => {
 
     lightning.once('run:complete', () => {
       const jsonLogs = engineLogger._history;
-      console.log(jsonLogs);
       // The engine logger shouldn't print out any job logs
       const jobLog = jsonLogs.find((l) => l.name === 'JOB');
       t.falsy(jobLog);
@@ -202,7 +201,7 @@ test("Don't send adaptor logs to stdout", (t) => {
       ],
     };
 
-    lightning.once('run:complete', (evt) => {
+    lightning.once('run:complete', () => {
       const jsonLogs = engineLogger._history;
       // The engine logger shouldn't print out any adaptor logs
       const jobLog = jsonLogs.find((l) => l.name === 'ADA');
@@ -303,7 +302,6 @@ test.skip('run a job with credentials', (t) => {
     const app = new Koa();
 
     app.use(async (ctx, next) => {
-      console.log('GET!');
       // TODO check basic credential
       ctx.body = '{ message: "ok" }';
       ctx.response.headers['Content-Type'] = 'application/json';
@@ -431,13 +429,11 @@ test.skip('a timeout error should still call step-complete', (t) => {
     });
 
     lightning.once('step:complete', (event) => {
-      console.log(event);
       t.is(event.payload.reason, 'kill');
       t.is(event.payload.error_type, 'TimeoutError');
     });
 
     lightning.once('run:complete', () => {
-      console.log('DONE!');
       done();
     });
 
