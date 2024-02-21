@@ -1,6 +1,9 @@
 /**
  * Handler to generate adaptor code
  */
+import path from 'node:path';
+import fs from 'node:fs/promises';
+
 import { Opts } from '../options';
 import { Logger } from '../util';
 import loadGenSpec from './adaptor/load-gen-spec';
@@ -52,7 +55,7 @@ const generateAdaptor = async (opts: AdaptorGenOptions, logger: Logger) => {
   const sig = await generateSignature(spec, logger);
   const code = await generateCode(spec, sig, logger);
 
-  // Now we need to output to disk
+  await simpleOutput(opts, logger, sig, code);
 
   return { sig, code };
 };
@@ -62,14 +65,38 @@ export default generateAdaptor;
 // throw if the spec is missing anything
 const validateSpec = () => {};
 
-// this will generate a basic package for the adaptor
-// what is a good way to do this?
-const generatePackageTemplate = () => {
-  // package json
-  // src
-  // Adaptor.js
-  // index.js
-  // readme.md
+// simple output means we write adaptor.js and adaptor.d.ts to disk
+// next to the input path
+// This is what we run in non-monorepo mode
+const simpleOutput = async (
+  opts: AdaptorGenOptions,
+  logger: Logger,
+  sig: string,
+  code: string
+) => {
+  const outputPath = path.resolve(path.dirname(opts.path ?? '.'));
+
+  const sigPath = `${outputPath}/adaptor.d.ts`;
+  logger.debug(`Writing sig to ${sigPath}`);
+  await fs.writeFile(sigPath, sig);
+
+  const codePath = `${outputPath}/adaptor.js`;
+  logger.debug(`Writing code to ${sigPath}`);
+  await fs.writeFile(codePath, code);
+
+  logger.success(`Output adaptor.js and adaptor.d.ts to ${outputPath}`);
+};
+
+const monorepoOutput = async (
+  opts: AdaptorGenOptions,
+  logger: Logger,
+  sig: string,
+  code: string
+) => {
+  // Check if this adaptor exists in the monorepo
+  // If not, call a monorepo helper to generate a stub
+  // Now write adaptor.d.ts and adaptor.js into the monorepo structure
+  // (Right now, we don't care if this overwrites existing code)
 };
 
 const convertSpec = (spec: Spec) =>
@@ -92,8 +119,6 @@ const generateSignature = async (spec: Spec, logger: Logger) => {
   });
   const json = await result.json();
   logger.success('Generated signature:\n', json.signature);
-
-  // TODO write output
 
   return json.signature;
 };
