@@ -16,7 +16,7 @@ options.push({
 
 // Adaptor generation subcommand
 const adaptor = {
-  command: 'adaptor',
+  command: 'adaptor [path]',
   desc: 'Generate adaptor code',
   handler: ensure('generate-adaptor', options),
   builder: (yargs) =>
@@ -27,7 +27,6 @@ const adaptor = {
       )
       .positional('path', {
         describe: 'The path spec.json',
-        demandOption: true,
       }),
 } as yargs.CommandModule<{}>;
 

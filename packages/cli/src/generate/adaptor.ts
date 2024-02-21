@@ -1,10 +1,9 @@
 /**
  * Handler to generate adaptor code
  */
-
 import { Opts } from '../options';
 import { Logger } from '../util';
-import mailchimp from './mailchimp-spec.json' assert { type: 'json' };
+import loadGenSpec from './adaptor/load-gen-spec';
 
 // TODO: really I just want one domain here
 const endpoints = {
@@ -12,7 +11,7 @@ const endpoints = {
   code: 'http://localhost:8002/generate_code/',
 };
 
-type AdaptorGenOptions = Pick<
+export type AdaptorGenOptions = Pick<
   Opts,
   | 'command'
   | 'path' // path to spec - we proably want to override the description
@@ -21,14 +20,17 @@ type AdaptorGenOptions = Pick<
   | 'monorepoPath' // maybe use the monorepo (or use env var)
   | 'outputPath' // where to output to. Defaults to monorepo or as sibling of the spec
 > & {
-  adaptor: string;
+  adaptor?: string;
+  spec?: string;
 
   // TODO spec overrides
 };
 
 // spec.spec is silly, so what is this object?
-type Spec = {
-  spec: any; // OpenAPI spec
+export type Spec = {
+  adaptor?: string; // adaptor name. TOOD rename to name?
+
+  spec: any; // OpenAPI spec. TODO rename to api?
 
   instruction: string; // for now... but we'll use endpoints later
 
@@ -37,18 +39,15 @@ type Spec = {
   model?: string; // TODO not supported yet
 };
 
-const generateAdaptor = async (opts: any, logger: Logger) => {
-  logger.success('** GENERATE ADAPTOR**');
+const generateAdaptor = async (opts: AdaptorGenOptions, logger: Logger) => {
+  // Load the input spec from the cli options
+  const spec = await loadGenSpec(opts, logger);
+
+  // TODO Validate that the spec looks correct
+
   // if we're using the monorepo, and no adaptor with this name exists
   // prompt to generate it
   // humm is that worth it? it'll create a git diff anyway
-
-  // TODO load spec from path
-  // gonna hard code it right now
-  const spec = {
-    spec: mailchimp, // post as open_api_spec
-    instruction: 'Create an OpenFn function that accesses the /goals endpoint',
-  };
 
   const sig = await generateSignature(spec, logger);
   const code = await generateCode(spec, sig, logger);
@@ -77,6 +76,8 @@ const convertSpec = (spec: Spec) =>
   JSON.stringify({
     open_api_spec: spec.spec,
     instruction: spec.instruction,
+
+    // For now we force this model
     model: 'gpt3_turbo',
   });
 

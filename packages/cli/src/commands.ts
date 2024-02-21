@@ -22,7 +22,7 @@ export type CommandList =
   | 'docgen'
   | 'docs'
   | 'execute'
-  | 'generate'
+  | 'generate-adaptor'
   | 'metadata'
   | 'pull'
   | 'repo-clean'
