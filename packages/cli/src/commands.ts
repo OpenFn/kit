@@ -5,6 +5,7 @@ import test from './test/handler';
 import deploy from './deploy/handler';
 import docgen from './docgen/handler';
 import docs from './docs/handler';
+import generateAdaptor from './generate/adaptor';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
 import { clean, install, pwd, list } from './repo/handler';
@@ -21,6 +22,7 @@ export type CommandList =
   | 'docgen'
   | 'docs'
   | 'execute'
+  | 'generate'
   | 'metadata'
   | 'pull'
   | 'repo-clean'
@@ -37,6 +39,7 @@ const handlers = {
   deploy,
   docgen,
   docs,
+  ['generate-adaptor']: generateAdaptor,
   metadata,
   pull,
   ['repo-clean']: clean,
@@ -81,7 +84,7 @@ const parse = async (options: Opts, log?: Logger) => {
   // TODO it would be nice to do this in the repoDir option, but
   // the logger isn't available yet
   if (
-    !/^(pull|deploy|test|version)$/.test(options.command!) &&
+    !/^(pull|deploy|test|version|generate-adaptor)$/.test(options.command!) &&
     !options.repoDir
   ) {
     logger.warn(

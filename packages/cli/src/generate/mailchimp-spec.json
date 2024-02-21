@@ -1,0 +1,249 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mailchimp API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/lists/{list_id}/members/{subscriber_hash}/goals": {
+      "get": {
+        "summary": "Get Member Goals",
+        "description": "Get information about recent goal events for a specific list member.",
+        "operationId": "getListMemberGoals",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriber_hash",
+            "in": "path",
+            "required": true,
+            "description": "The hash of the subscriber.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Member Goal",
+        "description": "Create a new goal event for a specific list member.",
+        "operationId": "createListMemberGoal",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriber_hash",
+            "in": "path",
+            "required": true,
+            "description": "The hash of the subscriber.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lists/{list_id}/members/{subscriber_hash}/tags": {
+      "get": {
+        "summary": "Get Member Tags",
+        "description": "Get all the tags assigned to a contact.",
+        "operationId": "getListMemberTags",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriber_hash",
+            "in": "path",
+            "required": true,
+            "description": "The hash of the subscriber.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Manage Member Tags",
+        "description": "Manage the tags assigned to a contact.",
+        "operationId": "manageListMemberTags",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriber_hash",
+            "in": "path",
+            "required": true,
+            "description": "The hash of the subscriber.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lists/{list_id}/members/{subscriber_hash}/events": {
+      "get": {
+        "summary": "Get Member Events",
+        "description": "Get website or in-app actions for a specific list member.",
+        "operationId": "getListMemberEvents",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriber_hash",
+            "in": "path",
+            "required": true,
+            "description": "The hash of the subscriber.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Trigger Member Events",
+        "description": "Trigger targeted automations based on website or in-app actions.",
+        "operationId": "triggerListMemberEvents",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriber_hash",
+            "in": "path",
+            "required": true,
+            "description": "The hash of the subscriber.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
