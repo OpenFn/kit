@@ -1,5 +1,6 @@
-import run from './runtime';
+import run, { Options } from './runtime';
 export default run;
+export type { Options };
 
 import type { ModuleInfo, ModuleInfoMap } from './modules/linker';
 export type { ModuleInfo, ModuleInfoMap };

@@ -137,6 +137,7 @@ const prepareJob = async (
     const exports = await loadModule(expression, {
       ...opts.linker,
       // allow module paths and versions to be overriden from the defaults
+      // TODO I think this is too harsh and path information will be lost
       modules: Object.assign({}, opts.linker?.modules, moduleOverrides),
       context,
       log: opts.logger,

@@ -10,8 +10,8 @@ import { execute, createLoggers } from './helpers';
 import serializeError from '../../util/serialize-error';
 import { JobErrorPayload } from '../../events';
 
-type RunOptions = {
-  adaptorPaths: Record<string, { path: string }>;
+export type RunOptions = {
+  repoDir: string;
   whitelist?: RegExp[];
   sanitize: SanitizePolicies;
   statePropsToRemove?: string[];
@@ -26,8 +26,7 @@ const eventMap = {
 
 register({
   run: (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
-    const { adaptorPaths, whitelist, sanitize, statePropsToRemove } =
-      runOptions;
+    const { repoDir, whitelist, sanitize, statePropsToRemove } = runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
       sanitize,
@@ -52,7 +51,7 @@ register({
       logger,
       jobLogger,
       linker: {
-        modules: adaptorPaths,
+        repo: repoDir,
         whitelist,
         cacheKey: plan.id,
       },

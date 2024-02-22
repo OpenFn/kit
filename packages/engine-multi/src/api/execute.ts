@@ -15,14 +15,13 @@ import {
 } from './lifecycle';
 import preloadCredentials from './preload-credentials';
 import { ExecutionError } from '../errors';
+import type { RunOptions } from '../worker/thread/run';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
   try {
-    // TODO catch and "throw" nice clean autoinstall errors
-    const adaptorPaths = await autoinstall(context);
+    await autoinstall(context);
 
-    // TODO catch and "throw" nice clean compile errors
     try {
       await compile(context);
     } catch (e: any) {
@@ -49,10 +48,10 @@ const execute = async (context: ExecutionContext) => {
     const whitelist = options.whitelist?.map((w) => w.toString());
 
     const runOptions = {
-      adaptorPaths,
-      whitelist,
       statePropsToRemove: options.statePropsToRemove,
-    };
+      whitelist,
+      repoDir: options.repoDir,
+    } as RunOptions;
 
     const workerOptions = {
       memoryLimitMb: options.memoryLimitMb,
@@ -116,6 +115,7 @@ const execute = async (context: ExecutionContext) => {
         error(context, { workflowId: state.plan.id, error: evt.error });
       },
     };
+
     return callWorker(
       'run',
       [state.plan, state.input || {}, runOptions || {}],

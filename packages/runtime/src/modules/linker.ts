@@ -91,6 +91,7 @@ const linker: Linker = async (specifier, context, options = {}) => {
 
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
+  console.debug(' >> load');
   const log = options.log || defaultLogger;
   const prefix = process.platform == 'win32' ? 'file://' : '';
 
@@ -108,8 +109,12 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   let path;
   let version;
 
+  console.log('SPECIFIER:', specifier);
+  console.log('MODULES:', options.modules);
+  console.log(options.repo);
   if (options.modules?.[specifier]) {
     ({ path, version } = options.modules?.[specifier]);
+    console.log(path, options.repo);
   }
 
   if (path || options.repo) {
@@ -152,7 +157,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       );
     }
   }
-
+  console.log(' *** WAH ***');
   // Generic error (we should never get here)
   throw new ImportError(`Failed to import module "${specifier}"`);
 };
