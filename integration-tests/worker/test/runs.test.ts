@@ -194,7 +194,7 @@ test.serial('run parallel jobs', async (t) => {
   // });
 });
 
-test('run a http adaptor job', async (t) => {
+test.serial('run a http adaptor job', async (t) => {
   const job = createJob({
     adaptor: '@openfn/language-http@5.0.4',
     body: `get("https://jsonplaceholder.typicode.com/todos/1");
