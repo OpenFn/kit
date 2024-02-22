@@ -18,6 +18,7 @@ import {
   assertSecurityKill,
 } from '../errors';
 import type { JobModule, ExecutionContext } from '../types';
+import { ModuleInfoMap } from '../modules/linker';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -28,7 +29,10 @@ export type ExecutionErrorWrapper = {
 export default (
   ctx: ExecutionContext,
   expression: string | Operation[],
-  input: State
+  input: State,
+  // allow custom linker options to be passed for this step
+  // this lets us use multiple versions of the same adaptor in a workflow
+  moduleOverrides?: ModuleInfoMap
 ) =>
   new Promise(async (resolve, reject) => {
     let duration = Date.now();
@@ -42,7 +46,8 @@ export default (
       const { operations, execute } = await prepareJob(
         expression,
         context,
-        opts
+        opts,
+        moduleOverrides
       );
       // Create the main reducer function
       const reducer = (execute || defaultExecute)(
@@ -125,11 +130,14 @@ export const wrapOperation = (
 const prepareJob = async (
   expression: string | Operation[],
   context: Context,
-  opts: Options = {}
+  opts: Options = {},
+  moduleOverrides: ModuleInfoMap = {}
 ): Promise<JobModule> => {
   if (typeof expression === 'string') {
     const exports = await loadModule(expression, {
       ...opts.linker,
+      // allow module paths and versions to be overriden from the defaults
+      modules: Object.assign({}, opts.linker?.modules, moduleOverrides),
       context,
       log: opts.logger,
     });

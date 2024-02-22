@@ -201,6 +201,31 @@ test('should reset job ids for each call', (t) => {
   t.is(second.workflow.steps['job-1'].expression, 'x');
 });
 
+test('should write adaptor versions', (t) => {
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'x',
+          expression: '.',
+          adaptor: 'x@1.0',
+        },
+        {
+          id: 'y',
+          expression: '.',
+          adaptor: 'y@1.0',
+        },
+      ],
+    },
+    options: {},
+  };
+
+  const { workflow } = compilePlan(plan);
+  const { x, y } = workflow.steps;
+  t.deepEqual(x.linker, { x: { version: '1.0' } });
+  t.deepEqual(y.linker, { y: { version: '1.0' } });
+});
+
 test('should set the start to steps[0]', (t) => {
   const plan: ExecutionPlan = {
     workflow: {

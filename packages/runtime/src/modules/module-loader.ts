@@ -31,7 +31,6 @@ export default async (
   opts: Options = {}
 ): Promise<ModuleExports> => {
   validate(src);
-
   const context = opts.context || vm.createContext();
   const linker = opts.linker || mainLinker;
 

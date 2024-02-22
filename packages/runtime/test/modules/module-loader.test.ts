@@ -45,7 +45,7 @@ test('load a module with an import', async (t) => {
   t.assert(m.default === 20);
 });
 
-test('load a module with aribtrary exports', async (t) => {
+test('load a module with aribitrary exports', async (t) => {
   const src = 'export const x = 10; export const y = 20;';
 
   const m = await loadModule(src);
