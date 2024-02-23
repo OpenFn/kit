@@ -86,6 +86,7 @@ test.serial('should emit a workflow-start event', async (t) => {
     id: 'x',
     plan,
   } as WorkflowState;
+
   let workflowStart;
 
   const context = createContext({ state, options });
@@ -96,6 +97,9 @@ test.serial('should emit a workflow-start event', async (t) => {
 
   // No need to do a deep test of the event payload here
   t.is(workflowStart!.workflowId!, 'x');
+  // Just a shallow test on the actual version object to verify that it's been attached
+  t.truthy(workflowStart!.versions);
+  t.regex(workflowStart!.versions.node, new RegExp(/(\d+).(\d+).\d+/));
 });
 
 test.serial('should emit a log event with the memory limit', async (t) => {
@@ -156,9 +160,6 @@ test.serial('should emit a job-start event', async (t) => {
   await execute(context);
 
   t.is(event.jobId, 'j');
-  t.truthy(event.versions);
-  // Just a shallow test on the actual version object to verify that it's been attached
-  t.regex(event.versions.node, new RegExp(/(\d+).(\d+).\d+/));
 });
 
 test.serial('should emit a job-complete event', async (t) => {
