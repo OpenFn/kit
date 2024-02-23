@@ -83,5 +83,6 @@ export type Versions = {
   node: string;
   engine: string;
   compiler: string;
-  [adaptor: string]: string;
+
+  [adaptor: string]: string | string[];
 };

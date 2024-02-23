@@ -12,7 +12,7 @@ import type {
 import type { ExternalEvents, EventMap } from '../events';
 
 /**
- * The ExeuctionContext class wraps an event emitter with some useful context
+ * The ExecutionContext class wraps an event emitter with some useful context
  * and automatically appends the workflow id to each emitted events
  *
  * Each running workflow has its own context object

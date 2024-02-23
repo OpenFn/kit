@@ -49,7 +49,9 @@ interface ExternalEvent {
   workflowId: string;
 }
 
-export interface WorkflowStartPayload extends ExternalEvent {}
+export interface WorkflowStartPayload extends ExternalEvent {
+  versions: Versions;
+}
 
 export interface WorkflowCompletePayload extends ExternalEvent {
   state: any;
@@ -64,7 +66,6 @@ export interface WorkflowErrorPayload extends ExternalEvent {
 
 export interface JobStartPayload extends ExternalEvent {
   jobId: string;
-  versions: Versions;
 }
 
 export interface JobCompletePayload extends ExternalEvent {
