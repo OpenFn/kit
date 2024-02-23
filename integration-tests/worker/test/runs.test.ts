@@ -44,6 +44,8 @@ const humanMb = (sizeInBytes: number) => Math.round(sizeInBytes / 1024 / 1024);
 const run = async (t, attempt) => {
   return new Promise<any>(async (done, reject) => {
     lightning.on('step:complete', ({ payload }) => {
+      t.is(payload.reason, 'success');
+
       // TODO friendlier job names for this would be nice (rather than run ids)
       t.log(
         `run ${payload.step_id} done in ${payload.duration / 1000}s [${humanMb(
@@ -192,7 +194,7 @@ test.serial('run parallel jobs', async (t) => {
   // });
 });
 
-test('run a http adaptor job', async (t) => {
+test.serial('run a http adaptor job', async (t) => {
   const job = createJob({
     adaptor: '@openfn/language-http@5.0.4',
     body: `get("https://jsonplaceholder.typicode.com/todos/1");
@@ -211,4 +213,38 @@ test('run a http adaptor job', async (t) => {
     title: 'delectus aut autem',
     completed: false,
   });
+});
+
+test.serial('use different versions of the same adaptor', async (t) => {
+  // http@5 exported an axios global - so run this job and validate that the global is there
+  const job1 = createJob({
+    body: `import { axios } from "@openfn/language-http";
+    fn((s) => {
+      if (!axios) {
+        throw new Error('AXIOS NOT FOUND')
+      }
+      return s;
+    })`,
+    adaptor: '@openfn/language-http@5.0.4',
+  });
+
+  // http@6 no longer exports axios - so throw an error if we see it
+  const job2 = createJob({
+    body: `import { axios } from "@openfn/language-http";
+    fn((s) => {
+      if (axios) {
+        throw new Error('AXIOS FOUND')
+      }
+      return s;
+    })`,
+    adaptor: '@openfn/language-http@6.0.0',
+  });
+
+  // Just for fun, run each job a couple of times to make sure that there's no wierd caching or ordering anything
+  const steps = [job1, job2, job1, job2];
+  const attempt = createRun([], steps, []);
+
+  const result = await run(t, attempt);
+  t.log(result);
+  t.falsy(result.errors);
 });

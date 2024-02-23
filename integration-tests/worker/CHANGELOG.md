@@ -1,5 +1,16 @@
 # @openfn/integration-tests-worker
 
+## 1.0.36
+
+### Patch Changes
+
+- Updated dependencies [4f5f1dd]
+- Updated dependencies [58e0d11]
+- Updated dependencies [58e0d11]
+  - @openfn/engine-multi@1.1.0
+  - @openfn/ws-worker@1.0.1
+  - @openfn/lightning-mock@2.0.1
+
 ## 1.0.35
 
 ### Patch Changes

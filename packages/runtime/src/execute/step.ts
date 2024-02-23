@@ -121,13 +121,17 @@ const executeStep = async (
 
     const timerId = `step-${jobId}`;
     logger.timer(timerId);
+
+    // TODO can we include the adaptor version here?
+    // How would we get it?
     logger.info(`Starting step ${jobName}`);
 
     const startTime = Date.now();
     try {
       // TODO include the upstream job?
       notify(NOTIFY_JOB_START, { jobId });
-      result = await executeExpression(ctx, job.expression, state);
+
+      result = await executeExpression(ctx, job.expression, state, step.linker);
     } catch (e: any) {
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {

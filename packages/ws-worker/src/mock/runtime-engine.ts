@@ -98,6 +98,7 @@ async function createMock() {
           level: 'info',
           json: true,
           message: JSON.stringify(args),
+          name: 'JOB',
           time: Date.now(),
         });
       },

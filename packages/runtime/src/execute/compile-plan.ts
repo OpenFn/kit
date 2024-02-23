@@ -7,6 +7,7 @@ import type {
 import compileFunction from '../modules/compile-function';
 import { conditionContext, Context } from './context';
 import { ExecutionPlan, Job, StepEdge, Workflow } from '@openfn/lexicon';
+import { getNameAndVersion } from '../modules/repo';
 
 const compileEdges = (
   from: string,
@@ -115,6 +116,7 @@ export default (plan: ExecutionPlan) => {
   };
 
   for (const step of workflow.steps) {
+    const job = step as Job;
     const stepId = step.id!;
     const newStep: CompiledStep = {
       id: stepId,
@@ -126,6 +128,14 @@ export default (plan: ExecutionPlan) => {
       'configuration',
       'name',
     ]);
+
+    if (job.linker) {
+      newStep.linker = job.linker;
+    } else if (job.adaptor) {
+      const job = step as Job;
+      const { name, version } = getNameAndVersion(job.adaptor!);
+      newStep.linker = { [name]: { version: version! } };
+    }
 
     if (step.next) {
       trapErrors(() => {

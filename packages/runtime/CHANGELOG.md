@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.1.0
+
+### Minor Changes
+
+- 4f5f1dd: Support workflows with different versions of the same adaptor
+
 ## 1.0.0
 
 ### Major Changes

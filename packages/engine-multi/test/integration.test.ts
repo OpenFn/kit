@@ -56,6 +56,7 @@ test.serial('trigger workflow-start', (t) => {
     api.execute(plan, emptyState).on('workflow-start', (evt) => {
       t.is(evt.workflowId, plan.id);
       t.truthy(evt.threadId);
+      t.truthy(evt.versions);
       t.pass('workflow started');
       done();
     });
@@ -77,7 +78,6 @@ test.serial('trigger job-start', (t) => {
       t.is(e.workflowId, '2');
       t.is(e.jobId, 'j1');
       t.truthy(e.threadId);
-      t.truthy(e.versions);
       t.pass('job started');
       done();
     });
