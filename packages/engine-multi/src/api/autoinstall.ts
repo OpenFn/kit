@@ -112,8 +112,6 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   }
 
   if (!skipRepoValidation && !didValidateRepo) {
-    // TODO what if this throws?
-    // Whole server probably needs to crash, so throwing is probably appropriate
     // TODO do we need to do it on EVERY call? Can we not cache it?
     await ensureRepo(repoDir, logger);
     didValidateRepo = true;
@@ -140,15 +138,28 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     // Write the adaptor version to the context
     // This is a reasonably accurate, but not totally bulletproof, report
     // @ts-ignore
+    // TODO need to remove this soon as it's basically lying
     context.versions[name] = v;
 
-    paths[name] = {
+    paths[a] = {
       path: `${repoDir}/node_modules/${alias}`,
       version: v,
     };
 
     if (!(await isInstalledFn(a, repoDir, logger))) {
       adaptorsToLoad.push(a);
+    }
+  }
+
+  // Write linker arguments back to the plan
+  for (const step of plan.workflow.steps) {
+    const job = step as unknown as Job;
+    if (paths[job.adaptor!]) {
+      const { name } = getNameAndVersion(job.adaptor!);
+      // @ts-ignore
+      job.linker = {
+        [name]: paths[job.adaptor!],
+      };
     }
   }
 
