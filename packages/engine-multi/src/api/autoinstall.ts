@@ -135,11 +135,13 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
 
     const v = version || 'unknown';
 
-    // Write the adaptor version to the context
-    // This is a reasonably accurate, but not totally bulletproof, report
-    // @ts-ignore
-    // TODO need to remove this soon as it's basically lying
-    context.versions[name] = v;
+    // Write the adaptor version to the context for reporting later
+    if (!context.versions[name]) {
+      context.versions[name] = [];
+    }
+    if (!context.versions[name].includes(v)) {
+      (context.versions[name] as string[]).push(v);
+    }
 
     paths[a] = {
       path: `${repoDir}/node_modules/${alias}`,

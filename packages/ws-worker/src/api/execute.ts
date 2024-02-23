@@ -1,11 +1,7 @@
 import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
-import type { RunLogPayload, RunStartPayload } from '@openfn/lexicon/lightning';
+import type { RunLogPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
-import type {
-  RuntimeEngine,
-  Resolvers,
-  WorkflowStartPayload,
-} from '@openfn/engine-multi';
+import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
 
 import {
   getWithReply,
@@ -21,6 +17,7 @@ import {
   STEP_START,
   GET_CREDENTIAL,
 } from '../events';
+import handleRunStart from '../events/run-start';
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
@@ -114,7 +111,7 @@ export function execute(
   // so that they send in order
   const listeners = Object.assign(
     {},
-    addEvent('workflow-start', throttle(onWorkflowStart)),
+    addEvent('workflow-start', throttle(handleRunStart)),
     addEvent('job-start', throttle(handleStepStart)),
     addEvent('job-complete', throttle(handleStepComplete)),
     addEvent('job-error', throttle(onJobError)),
@@ -211,13 +208,6 @@ export function onJobError(context: Context, event: any) {
   } else {
     return handleStepComplete(context, event, event.error);
   }
-}
-
-export function onWorkflowStart(
-  { channel }: Context,
-  _event: WorkflowStartPayload
-) {
-  return sendEvent<RunStartPayload>(channel, RUN_START);
 }
 
 export function onJobLog({ channel, state }: Context, event: JSONLog) {

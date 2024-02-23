@@ -36,10 +36,9 @@ test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
     };
 
     context.on(e.WORKFLOW_START, (evt) => {
-      t.deepEqual(evt, {
-        workflowId,
-        threadId: '123',
-      });
+      t.truthy(evt.versions);
+      t.is(evt.workflowId, workflowId);
+      t.is(evt.threadId, '123');
       done();
     });
 

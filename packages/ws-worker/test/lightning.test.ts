@@ -402,15 +402,22 @@ test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }: any) => {
-      const log = payload;
+    lng.onSocketEvent(
+      e.RUN_LOG,
+      run.id,
+      ({ payload }: any) => {
+        if (payload.source === 'JOB') {
+          const log = payload;
 
-      t.is(log.level, 'info');
-      t.truthy(log.run_id);
-      t.truthy(log.step_id);
-      t.truthy(log.message);
-      t.deepEqual(log.message, ['x']);
-    });
+          t.is(log.level, 'info');
+          t.truthy(log.run_id);
+          t.truthy(log.step_id);
+          t.truthy(log.message);
+          t.deepEqual(log.message, ['x']);
+        }
+      },
+      false
+    );
 
     lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       done();
@@ -712,11 +719,16 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }: any) => {
-      if (payload.message[0].match(/Run complete with status: success/)) {
-        log = payload.message[0];
-      }
-    });
+    lng.onSocketEvent(
+      e.RUN_LOG,
+      run.id,
+      ({ payload }: any) => {
+        if (payload.message[0].match(/Run complete with status: success/)) {
+          log = payload.message[0];
+        }
+      },
+      false
+    );
 
     lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       t.truthy(log);
@@ -740,11 +752,16 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
       ],
     };
 
-    lng.onSocketEvent(e.RUN_LOG, run.id, ({ payload }: any) => {
-      if (payload.message[0].match(/Run complete with status: fail/)) {
-        log = payload.message[0];
-      }
-    });
+    lng.onSocketEvent(
+      e.RUN_LOG,
+      run.id,
+      ({ payload }: any) => {
+        if (payload.message[0].match(/Run complete with status: fail/)) {
+          log = payload.message[0];
+        }
+      },
+      false
+    );
 
     lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       t.truthy(log);

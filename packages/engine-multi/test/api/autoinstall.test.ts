@@ -565,7 +565,7 @@ test('write versions to context', async (t) => {
   await autoinstall(context);
 
   // @ts-ignore
-  t.is(context.versions['@openfn/language-common'], '1.0.0');
+  t.deepEqual(context.versions['@openfn/language-common'], ['1.0.0']);
 });
 
 test("write versions to context even if we don't install", async (t) => {
@@ -578,5 +578,5 @@ test("write versions to context even if we don't install", async (t) => {
   await autoinstall(context);
 
   // @ts-ignore
-  t.is(context.versions['@openfn/language-common'], '1.0.0');
+  t.deepEqual(context.versions['@openfn/language-common'], ['1.0.0']);
 });
