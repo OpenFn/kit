@@ -155,7 +155,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   for (const step of plan.workflow.steps) {
     const job = step as unknown as Job;
     if (paths[job.adaptor!]) {
-      const { name } = getNameAndVersion(job.adaptor);
+      const { name } = getNameAndVersion(job.adaptor!);
       // @ts-ignore
       job.linker = {
         [name]: paths[job.adaptor!],
