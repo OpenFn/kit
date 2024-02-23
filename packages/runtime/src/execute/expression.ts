@@ -127,6 +127,20 @@ export const wrapOperation = (
   };
 };
 
+export const mergeLinkerOptions = (
+  options: ModuleInfoMap = {},
+  overrides: ModuleInfoMap = {}
+) => {
+  const opts: ModuleInfoMap = {};
+  for (const specifier in options) {
+    opts[specifier] = options[specifier];
+  }
+  for (const specifier in overrides) {
+    opts[specifier] = Object.assign({}, opts[specifier], overrides[specifier]);
+  }
+  return opts;
+};
+
 const prepareJob = async (
   expression: string | Operation[],
   context: Context,
@@ -137,8 +151,7 @@ const prepareJob = async (
     const exports = await loadModule(expression, {
       ...opts.linker,
       // allow module paths and versions to be overriden from the defaults
-      // TODO I think this is too harsh and path information will be lost
-      modules: Object.assign({}, opts.linker?.modules, moduleOverrides),
+      modules: mergeLinkerOptions(opts.linker?.modules, moduleOverrides),
       context,
       log: opts.logger,
     });
