@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.1.0
+
+### Patch Changes
+
+Allow multiple version of the same adaptor to run in the same workflow
+
+- Updated dependencies [4f5f1dd]
+  - @openfn/runtime@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
