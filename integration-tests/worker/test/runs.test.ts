@@ -215,7 +215,7 @@ test.serial('run a http adaptor job', async (t) => {
   });
 });
 
-test.serial.only('use different versions of the same adaptor', async (t) => {
+test.serial('use different versions of the same adaptor', async (t) => {
   // http@5 exported an axios global - so run this job and validate that the global is there
   const job1 = createJob({
     body: `import { axios } from "@openfn/language-http";
