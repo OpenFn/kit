@@ -1,13 +1,9 @@
 import test from 'ava';
 import handleStepStart from '../../src/events/step-start';
 
-import { JobStartPayload } from '@openfn/engine-multi';
-
 import { mockChannel } from '../../src/mock/sockets';
 import { createRunState } from '../../src/util';
 import { RUN_LOG, STEP_START } from '../../src/events';
-
-import pkg from '../../package.json' assert { type: 'json' };
 
 test('set a step id and active job on state', async (t) => {
   const plan = {
