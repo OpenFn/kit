@@ -16,8 +16,6 @@ export default async function onRunStart(
   // Cheat on the timestamp time to make sure this is the first thing in the log
   const time = (timestamp() - BigInt(10e6)).toString();
 
-  await sendEvent<RunStartPayload>(channel, RUN_START);
-
   // Send the log with its own little state object
   // to preserve the run id
   // Otherwise, by the time the log sends,
@@ -35,6 +33,8 @@ export default async function onRunStart(
     worker: pkg.version,
     ...event.versions,
   };
+
+  await sendEvent<RunStartPayload>(channel, RUN_START, { versions });
 
   const versionMessage = calculateVersionString(versions);
 
