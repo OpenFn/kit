@@ -116,6 +116,7 @@ export default (plan: ExecutionPlan) => {
   };
 
   for (const step of workflow.steps) {
+    const job = step as Job;
     const stepId = step.id!;
     const newStep: CompiledStep = {
       id: stepId,
@@ -128,7 +129,9 @@ export default (plan: ExecutionPlan) => {
       'name',
     ]);
 
-    if ((step as Job).adaptor) {
+    if (job.linker) {
+      newStep.linker = job.linker;
+    } else if (job.adaptor) {
       const job = step as Job;
       const { name, version } = getNameAndVersion(job.adaptor!);
       newStep.linker = { [name]: { version: version! } };
