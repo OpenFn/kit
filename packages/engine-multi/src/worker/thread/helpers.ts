@@ -74,6 +74,7 @@ export const execute = async (
       workflowId,
       // Map the error out of the thread in a serializable format
       error: serializeError(err),
+      stack: err?.stack
       // TODO job id maybe
     });
   };
@@ -89,6 +90,18 @@ export const execute = async (
   // Note that if this occurs after the execute promise resolved,
   // it'll be ignored (ie the workerEmit call will fail)
   process.on('uncaughtException', async (err: any) => {
+    // Log this error to local stdout. This won't be sent out of the worker thread.
+    console.debug(`Uncaught exception in worker thread (workflow ${workflowId} )`)
+    console.debug(err)
+    
+    // Also try and log to the workflow's logger
+    try {
+      console.error(`Uncaught exception in worker thread (workflow ${workflowId} )`)
+      console.error(err)
+    } catch(e) {
+      console.error(`Uncaught exception in worker thread`)
+    }
+
     // For now, we'll write this off as a crash-level generic execution error
     // TODO did this come from job or adaptor code?
     const e = new ExecutionError(err);

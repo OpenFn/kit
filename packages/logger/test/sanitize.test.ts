@@ -1,6 +1,7 @@
 import test from 'ava';
 
 import sanitize, { SECRET } from '../src/sanitize';
+
 test('simply return a string', (t) => {
   const result = sanitize('x');
   t.is(result, 'x');
@@ -14,6 +15,17 @@ test('simply return null', (t) => {
 test('simply return a number', (t) => {
   const result = sanitize(0);
   t.true(result === 0);
+});
+
+
+test('simply return true', (t) => {
+  const result = sanitize(true);
+  t.true(result);
+});
+
+test('simply return false', (t) => {
+  const result = sanitize(false);
+  t.false(result);
 });
 
 test('simply return undefined', (t) => {
@@ -103,6 +115,13 @@ test('preserve top level stuff after sanitizing', (t) => {
   const json = JSON.parse(result);
 
   t.deepEqual(json, expectedState);
+});
+
+test("don't blow up on null prototypes", (t) => {
+  const obj = Object.create(null)
+  const result = sanitize(obj);
+
+  t.deepEqual(result, '{}');
 });
 
 test('ignore a string with obfuscation', (t) => {

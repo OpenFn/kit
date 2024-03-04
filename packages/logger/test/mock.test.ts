@@ -99,6 +99,7 @@ test('_parse raw message', (t) => {
   logger.success('x', 1, true);
 
   const { messageRaw } = logger._parse(logger._last);
+
   t.is(messageRaw[0], 'x');
   t.is(messageRaw[1], 1);
   t.true(messageRaw[2]);

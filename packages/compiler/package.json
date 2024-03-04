@@ -1,6 +1,6 @@
 {
   "name": "@openfn/compiler",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "description": "Compiler and language tooling for openfn jobs.",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",

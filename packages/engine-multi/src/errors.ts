@@ -33,11 +33,13 @@ export class ExecutionError extends EngineError {
   message;
 
   original: any; // this is the original error
+
   constructor(original: any) {
     super();
     this.original = original;
 
     this.message = original.message;
+    this.stack = original.stack;
   }
 }
 

@@ -1,16 +1,15 @@
 # ws-worker
 
-## 1.1.0
-
-Allow runs to use multiple versions of the same adaptor
+## 1.1.1
 
 ### Patch Changes
 
-- 58e0d11: Move version log to workflow start
-- Updated dependencies [4f5f1dd]
-- Updated dependencies [58e0d11]
-  - @openfn/engine-multi@1.1.0
-  - @openfn/runtime@1.1.0
+- Updated dependencies [2fde0ad]
+- Updated dependencies [2fde0ad]
+  - @openfn/logger@1.0.1
+  - @openfn/engine-multi@1.0.1
+  - @openfn/lexicon@1.0.0
+  - @openfn/runtime@1.0.1
 
 ## 1.0.0
 
