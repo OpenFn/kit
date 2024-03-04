@@ -105,6 +105,13 @@ test('preserve top level stuff after sanitizing', (t) => {
   t.deepEqual(json, expectedState);
 });
 
+test.only("don't blow up on null prototypes", (t) => {
+  const obj = Object.create(null)
+  const result = sanitize(obj);
+
+  t.is(result, '{}');
+});
+
 test('ignore a string with obfuscation', (t) => {
   const result = sanitize('x', { policy: 'obfuscate' });
   t.is(result, 'x');
