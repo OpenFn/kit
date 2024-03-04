@@ -14,7 +14,6 @@ import {
 import {
   onJobLog,
   execute,
-  onWorkflowStart,
   loadDataclip,
   loadCredential,
   sendEvent,
@@ -179,17 +178,6 @@ test('jobError should trigger step:complete with a reason and default state', as
   await onJobError({ channel, state } as any, event);
 
   t.deepEqual(stepCompleteEvent.output_dataclip, '{}');
-});
-
-test('workflowStart should send an empty run:start event', async (t) => {
-  const channel = mockChannel({
-    [RUN_START]: () => {
-      t.pass();
-    },
-  });
-
-  // @ts-ignore
-  await onWorkflowStart({ channel });
 });
 
 // test('workflowComplete should send an run:complete event', async (t) => {

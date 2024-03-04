@@ -77,8 +77,9 @@ test('Autoinstall basically works', async (t) => {
   const context = createContext(autoinstallOpts);
 
   const paths = await autoinstall(context);
+  t.log(paths);
   t.deepEqual(paths, {
-    '@openfn/language-common': {
+    '@openfn/language-common@1.0.0': {
       path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
       version: '1.0.0',
     },
@@ -263,7 +264,7 @@ test('autoinstall: handle two seperate, non-overlapping installs', async (t) => 
 
   const p1 = await autoinstall(c1);
   t.deepEqual(p1, {
-    '@openfn/language-dhis2': {
+    '@openfn/language-dhis2@1.0.0': {
       path: 'tmp/repo/node_modules/@openfn/language-dhis2_1.0.0',
       version: '1.0.0',
     },
@@ -271,7 +272,7 @@ test('autoinstall: handle two seperate, non-overlapping installs', async (t) => 
 
   const p2 = await autoinstall(c2);
   t.deepEqual(p2, {
-    '@openfn/language-http': {
+    '@openfn/language-http@1.0.0': {
       path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
       version: '1.0.0',
     },
@@ -329,10 +330,53 @@ test.serial('autoinstall: return a map to modules', async (t) => {
   const result = await autoinstall(context);
 
   t.deepEqual(result, {
+    '@openfn/language-common@1.0.0': {
+      path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
+      version: '1.0.0',
+    },
+    '@openfn/language-http@1.0.0': {
+      path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
+      version: '1.0.0',
+    },
+  });
+});
+
+test.serial('autoinstall: write linker options back to the plan', async (t) => {
+  const jobs = [
+    {
+      adaptor: '@openfn/language-common@1.0.0',
+    },
+    {
+      adaptor: '@openfn/language-common@2.0.0',
+    },
+    {
+      adaptor: '@openfn/language-http@1.0.0',
+    },
+  ];
+
+  const autoinstallOpts = {
+    skipRepoValidation: true,
+    handleInstall: async () => {},
+    handleIsInstalled: async () => false,
+  };
+  const context = createContext(autoinstallOpts, jobs);
+
+  await autoinstall(context);
+
+  const [a, b, c] = context.state.plan.workflow.steps as Job[];
+  t.deepEqual(a.linker, {
     '@openfn/language-common': {
       path: 'tmp/repo/node_modules/@openfn/language-common_1.0.0',
       version: '1.0.0',
     },
+  });
+  t.deepEqual(b.linker, {
+    '@openfn/language-common': {
+      path: 'tmp/repo/node_modules/@openfn/language-common_2.0.0',
+      version: '2.0.0',
+    },
+  });
+  t.deepEqual(c.linker, {
     '@openfn/language-http': {
       path: 'tmp/repo/node_modules/@openfn/language-http_1.0.0',
       version: '1.0.0',
@@ -363,7 +407,7 @@ test.serial('autoinstall: support custom whitelist', async (t) => {
   const result = await autoinstall(context);
 
   t.deepEqual(result, {
-    y: {
+    'y@1.0.0': {
       path: 'tmp/repo/node_modules/y_1.0.0',
       version: '1.0.0',
     },
@@ -521,7 +565,7 @@ test('write versions to context', async (t) => {
   await autoinstall(context);
 
   // @ts-ignore
-  t.is(context.versions['@openfn/language-common'], '1.0.0');
+  t.deepEqual(context.versions['@openfn/language-common'], ['1.0.0']);
 });
 
 test("write versions to context even if we don't install", async (t) => {
@@ -534,5 +578,5 @@ test("write versions to context even if we don't install", async (t) => {
   await autoinstall(context);
 
   // @ts-ignore
-  t.is(context.versions['@openfn/language-common'], '1.0.0');
+  t.deepEqual(context.versions['@openfn/language-common'], ['1.0.0']);
 });

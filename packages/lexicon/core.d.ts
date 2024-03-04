@@ -31,6 +31,17 @@ export interface Job extends Step {
   expression: Expression;
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
+
+  // Internal use only
+  // Allow module paths and versions to be overriden in the linker
+  // Maps to runtime.ModuleInfoMapo
+  linker?: Record<
+    string,
+    {
+      path?: string;
+      version?: string;
+    }
+  >;
 }
 
 /**

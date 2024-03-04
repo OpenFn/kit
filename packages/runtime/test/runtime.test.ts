@@ -598,6 +598,106 @@ test('run from an adaptor', async (t) => {
   t.deepEqual(result, { data: 22 });
 });
 
+test('run a workflow using the repo and load the default version', async (t) => {
+  const expression = `
+    import result from 'ultimate-answer';
+    export default [() => result];
+  `;
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression,
+        },
+      ],
+    },
+  };
+
+  const result: any = await run(
+    plan,
+    {},
+    {
+      linker: {
+        repo: path.resolve('test/__repo__'),
+      },
+    }
+  );
+
+  t.deepEqual(result, 43);
+});
+
+test('run a workflow using the repo using a specific version', async (t) => {
+  const expression = `
+    import result from 'ultimate-answer';
+    export default [() => result];
+  `;
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression,
+        },
+      ],
+    },
+  };
+
+  const result: any = await run(
+    plan,
+    {},
+    {
+      linker: {
+        repo: path.resolve('test/__repo__'),
+        modules: {
+          'ultimate-answer': { version: '1.0.0' },
+        },
+      },
+    }
+  );
+
+  t.deepEqual(result, 42);
+});
+
+test('run a workflow using the repo with multiple versions of the same adaptor', async (t) => {
+  const plan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: `import result from 'ultimate-answer';
+          export default [(s) => { s.data.a = result; return s;}];`,
+          adaptor: 'ultimate-answer@1.0.0',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `import result from 'ultimate-answer';
+          export default [(s) => { s.data.b = result; return s;}];`,
+          adaptor: 'ultimate-answer@2.0.0',
+        },
+      ],
+    },
+  };
+
+  const result: any = await run(
+    plan,
+    {},
+    {
+      linker: {
+        repo: path.resolve('test/__repo__'),
+      },
+    }
+  );
+
+  t.deepEqual(result, {
+    data: {
+      a: 42,
+      b: 43,
+    },
+  });
+});
+
 // https://github.com/OpenFn/kit/issues/520
 test('run from an adaptor with error', async (t) => {
   const expression = `

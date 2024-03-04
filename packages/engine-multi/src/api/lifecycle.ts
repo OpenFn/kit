@@ -38,6 +38,7 @@ export const workflowStart = (
   // forward the event on to any external listeners
   context.emit(externalEvents.WORKFLOW_START, {
     threadId,
+    versions: context.versions,
   });
 };
 
@@ -81,7 +82,6 @@ export const jobStart = (
   context.emit(externalEvents.JOB_START, {
     jobId,
     threadId,
-    versions: context.versions,
   });
 };
 

@@ -1,6 +1,6 @@
 # engine-multi
 
-## 1.0.1
+## 1.1.1
 
 ### Patch Changes
 
@@ -10,6 +10,17 @@
   - @openfn/compiler@0.0.41
   - @openfn/lexicon@1.0.0
   - @openfn/runtime@1.0.1
+## 1.1.0
+
+### Minor Changes
+
+- 4f5f1dd: Support workflows with different versions of the same adaptor
+
+### Patch Changes
+
+- 58e0d11: Record adaptor versions as an array
+- Updated dependencies [4f5f1dd]
+  - @openfn/runtime@1.1.0
 
 ## 1.0.0
 

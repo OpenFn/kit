@@ -11,6 +11,7 @@ import {
   NOTIFY_INIT_START,
   NOTIFY_STATE_LOAD,
 } from './events';
+import { ModuleInfoMap } from './modules/linker';
 
 export type CompiledEdge =
   | boolean
@@ -22,6 +23,10 @@ export type CompiledEdge =
 export type CompiledStep = Omit<Step, 'next'> & {
   id: StepId;
   next?: Record<StepId, CompiledEdge>;
+
+  // custom overrides for the linker
+  // This lets us set version or even path per job
+  linker?: ModuleInfoMap;
 
   [other: string]: any;
 };
