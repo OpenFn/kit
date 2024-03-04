@@ -1,6 +1,6 @@
 {
   "name": "@openfn/engine-multi",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Multi-process runtime engine",
   "main": "dist/index.js",
   "type": "module",

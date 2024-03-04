@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 1.0.1
+
+### Patch Changes
+
+- 2fde0ad: Don't blow up if an object with a null prototype is sent through
+
 ## 1.0.0
 
 ### Major Changes
