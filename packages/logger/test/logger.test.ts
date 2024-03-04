@@ -107,7 +107,7 @@ test('do log null after a string', (t) => {
   t.is(logger._history.length, 1);
 });
 
-test.only("log objects with null prototype", (t) => {
+test("log objects with null prototype", (t) => {
   const logger = createLogger(undefined, { level: 'debug' });
 
   const obj = Object.create(null)

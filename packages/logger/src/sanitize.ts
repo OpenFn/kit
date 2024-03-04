@@ -49,6 +49,12 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
   const maybeStringify = (o: any) =>
     options.stringify === false ? o : stringify(o, undefined, 2);
 
+  // Ignore primitive values
+  if (/^(number|string|boolean)$/.exec(typeof item)) {
+    return item;
+  }
+
+  // Serialize errors
   if (isError(item)) {
     if (options.serializeErrors) {
       return {
@@ -62,10 +68,9 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
 
   if (options.policy?.match(/^(remove|obfuscate|summarize)$/)) {
     return scrubbers[options.policy](item);
-  } else if (
-    Array.isArray(item) ||
-    (isNaN(item) && item && typeof item !== 'string')
-  ) {
+  } else if (Array.isArray(item)) {
+    return maybeStringify(item);
+  } else if (item) {
     const obj = item as Record<string, unknown>;
     if (obj && obj.configuration) {
       // This looks sensitive, so let's sanitize it
@@ -81,6 +86,7 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
     }
     return maybeStringify(obj);
   }
+
   return item;
 };
 
