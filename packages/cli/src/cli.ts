@@ -14,6 +14,8 @@ import testCommand from './test/command';
 
 const y = yargs(hideBin(process.argv));
 
+console.log(y.argv)
+
 export const cmd = y
   // TODO Typescipt hacks because signatures don't seem to align
   .command(executeCommand as any)

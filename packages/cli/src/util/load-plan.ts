@@ -35,6 +35,7 @@ const loadPlan = async (
   }
 
   const json = await loadJson(jsonPath!, logger);
+  console.log(json)
   const defaultName = path.parse(jsonPath!).name;
   if (json.workflow) {
     return loadXPlan(json, options, logger, defaultName);
@@ -74,10 +75,10 @@ const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
   return json;
 };
 
-const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
+const maybeAssign = (from: any, to: any, keys: Array<keyof WorkflowOptions>) => {
   keys.forEach((key) => {
-    if (a.hasOwnProperty(key)) {
-      b[key] = a[key];
+    if (from.hasOwnProperty(key)) {
+      to[key] = from[key];
     }
   });
 };
@@ -114,6 +115,7 @@ const loadExpression = async (
       },
       options: wfOptions,
     };
+
     // call loadXPlan now so that any options can be written
     return loadXPlan(plan, options, logger);
   } catch (e) {
@@ -242,9 +244,15 @@ const loadXPlan = async (
   }
   await mapAdaptorsToMonorepo(options.monorepoPath, plan, logger);
 
-  // Assign options form the CLI into the Xplan
+  // Assign options from the CLI into the Xplan
   // TODO support state props to remove
+
+  // TODO: Right, many options are defaulted, rather than set explicitly.
+  // eg, default, start.
+  // So basically the CLI options will always overwrite the plan options, which is wrong
+  console.log('options', options)
   maybeAssign(options, plan.options, ['timeout', 'start']);
+  console.log('plan.options', plan.options)
 
   logger.info(`Loaded workflow ${plan.workflow.name ?? ''}`);
 

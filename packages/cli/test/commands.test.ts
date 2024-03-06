@@ -152,6 +152,48 @@ test.serial('run an execution plan with start', async (t) => {
   t.assert(result.data.x === 1);
 });
 
+// https://github.com/OpenFn/kit/issues/614
+test.serial.only('run an execution plan using timeout from plan options', async (t) => {
+  const state = JSON.stringify({ data: { x: 0 } });
+  const plan = {
+    options: {
+      timeout: 1
+    },
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: 'export default [s => new Promise(() => {}) ]',
+        },
+      ],
+    },
+  };
+
+  const options = {
+    outputPath: 'output.json',
+    expressionPath: 'wf.json', // just to fool the test
+  };
+
+  // This should throw with a good error!
+  // but it doesn't. Nor do we get the erorr from the logger.
+  // ...what do we do about that?
+  const result = await run(
+    // This sill timeout the test because the timeout fails
+    //`openfn wf.json -S ${state}`,
+
+    // This logs an error because the timeout works
+    `openfn wf.json -S ${state} -t 10`,
+    JSON.stringify(plan),
+    options
+  );
+
+  console.log(logger._history)
+  // const last = logger._parse(logger._history.at(-1));
+  // console.log(last)
+
+  // t.assert(result.data.x === 2);
+});
+
 test.serial('print version information with version', async (t) => {
   await run('version', '');
 

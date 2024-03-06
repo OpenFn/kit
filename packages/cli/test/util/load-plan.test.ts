@@ -201,6 +201,29 @@ test.serial('xplan: set timeout from CLI', async (t) => {
   t.is(options.timeout, 666);
 });
 
+test.serial('xplan: set timeout from plan', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    plan: {},
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: '.',
+    },
+  ]);
+  // @ts-ignore
+  plan.options.timeout = 1;
+
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const { options } = await loadPlan(opts as Opts, logger);
+  t.is(options.timeout, 1);
+});
+
 test.serial('xplan: set start from CLI', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
