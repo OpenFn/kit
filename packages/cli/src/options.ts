@@ -362,7 +362,8 @@ export const timeout: CLIOption = {
     alias: ['t'],
     number: true,
     description: 'Set the timeout duration (ms). Defaults to 5 minutes.',
-    default: 5 * 60 * 1000,
+    // Note: we cannot set the default here
+    // otherwise it'll override the plan's timeout value
   },
 };
 

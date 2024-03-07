@@ -74,10 +74,10 @@ const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
   return json;
 };
 
-const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
+const maybeAssign = (from: any, to: any, keys: Array<keyof WorkflowOptions>) => {
   keys.forEach((key) => {
-    if (a.hasOwnProperty(key)) {
-      b[key] = a[key];
+    if (from.hasOwnProperty(key)) {
+      to[key] = from[key];
     }
   });
 };
@@ -245,6 +245,11 @@ const loadXPlan = async (
   // Assign options form the CLI into the Xplan
   // TODO support state props to remove
   maybeAssign(options, plan.options, ['timeout', 'start']);
+
+  // Ensure a default timeout is set
+  if (!plan.options.timeout) {
+    plan.options.timeout = 5 * 60 * 1000; // 5 minutes
+  }
 
   logger.info(`Loaded workflow ${plan.workflow.name ?? ''}`);
 
