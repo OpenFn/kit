@@ -50,6 +50,7 @@ const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
 
   try {
     text = await fs.readFile(workflowPath, 'utf8');
+    logger.debug('Loaded workflow from', workflowPath)
   } catch (e) {
     return abort(
       logger,
@@ -169,6 +170,7 @@ const fetchFile = async (
       ? filePath
       : path.resolve(rootDir, filePath);
     const result = await fs.readFile(fullPath, 'utf8');
+    log.debug('Loaded file', fullPath)
     return result;
   } catch (e) {
     abort(
@@ -242,7 +244,7 @@ const loadXPlan = async (
   }
   await mapAdaptorsToMonorepo(options.monorepoPath, plan, logger);
 
-  // Assign options form the CLI into the Xplan
+  // Assign options from the CLI into the Xplan
   // TODO support state props to remove
   maybeAssign(options, plan.options, ['timeout', 'start']);
 
