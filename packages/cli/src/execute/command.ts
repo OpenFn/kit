@@ -75,8 +75,8 @@ const executeCommand: yargs.CommandModule<ExecuteOptions> = {
         'Execute foo/job.js with no adaptor and write the final state to foo/job.json'
       )
       .example(
-        'openfn workflow.json -i',
-        'Execute workflow.json with autoinstall enabled'
+        'openfn workflow.json',
+        'Execute the workflow contained in workflow.json'
       )
       .example(
         'openfn job.js -a common --log info',
