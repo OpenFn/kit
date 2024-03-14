@@ -192,6 +192,8 @@ Example config file:
 
   // Optional: defaults to OpenFn.org's API, can be overridden or set with
   // `OPENFN_ENDPOINT` env var
+  // If you're running Lightning locally, you may need to use your local IP address (e.g., 127.0.0.1) instead of localhost,
+  // depending on the version of Node.js and your system.
   "endpoint": "https://app.openfn.org"
 }
 ```
