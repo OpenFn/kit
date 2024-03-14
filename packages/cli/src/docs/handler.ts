@@ -62,7 +62,7 @@ const docsHandler = async (
     logger.info('No version number provided, looking for latest...');
     version = await getLatestVersion(name);
     logger.info('Found ', version);
-    logger.success(`Showing docs for ${adaptorName} v${version}\n`);
+    logger.success(`Showing docs for ${adaptorName} v${version}`);
   }
 
   // First we need to generate docs metadata (this is a no-op if they exist already)
@@ -87,6 +87,7 @@ const docsHandler = async (
       const fn = data.functions.find(({ name }) => name === operation);
       if (fn) {
         logger.debug('Operation schema:', fn);
+        logger.break()
 
         // Generate a documentation string
         desc = describeFn(name, fn);
@@ -102,10 +103,12 @@ const docsHandler = async (
     // Log the description without any ceremony/meta stuff from the logger
     logger.print(desc);
 
-    logger.always(`For more details on a specfic functions, use:
-
+    if (!operation) {
+      logger.always(`For more details on a specfic functions, use:
+    
     openfn docs ${name} <fn>
 `)
+    }
 
     if (didError) {
       logger.error('Error');
