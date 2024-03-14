@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import c from 'chalk';
 
 import docgen from '../docgen/handler';
 import { Opts } from '../options';
@@ -12,16 +13,13 @@ import type {
 import { getNameAndVersion, getLatestVersion } from '@openfn/runtime';
 import expandAdaptors from '../util/expand-adaptors';
 
-const describeFn = (adaptorName: string, fn: FunctionDescription) => `## ${
+const describeFn = (adaptorName: string, fn: FunctionDescription) => [
+  c.green(`## ${
   fn.name
-}(${fn.parameters.map(({ name }) => name).join(',')})
-
-${fn.description}
-
-### Usage Examples
-
-${
-  fn.examples.length
+}(${fn.parameters.map(({ name }) => name).join(',')})`),
+`${fn.description}`,
+c.green('### Usage Examples'),
+fn.examples.length
     ? fn.examples
         .map(({ code, caption }) => {
           if (caption) {
@@ -30,24 +28,21 @@ ${
           return code;
         })
         .join('\n\n')
-    : 'None'
-}
-
-### API Reference
-
-https://docs.openfn.org/adaptors/packages/${adaptorName.replace(
+    : 'None',
+c.green('### API Reference'),
+`https://docs.openfn.org/adaptors/packages/${adaptorName.replace(
   '@openfn/language-',
   ''
 )}-docs#${fn.name}
-`;
+`].join('\n\n');
 
 const describeLib = (
   adaptorName: string,
   data: PackageDescription
-) => `## ${adaptorName} ${data.version}
+) => c.green(`## ${adaptorName} ${data.version}`)  + `
 
 ${data.functions
-  .map((fn) => `  ${fn.name}(${fn.parameters.map((p) => p.name).join(', ')})`)
+  .map((fn) => `  ${c.yellow(fn.name)} (${fn.parameters.map((p) => p.name).join(', ')})`)
   .sort()
   .join('\n')}
 `;
@@ -67,7 +62,7 @@ const docsHandler = async (
     logger.info('No version number provided, looking for latest...');
     version = await getLatestVersion(name);
     logger.info('Found ', version);
-    logger.success(`Showing docs for ${adaptorName} v${version}`);
+    logger.success(`Showing docs for ${adaptorName} v${version}\n`);
   }
 
   // First we need to generate docs metadata (this is a no-op if they exist already)
@@ -92,7 +87,6 @@ const docsHandler = async (
       const fn = data.functions.find(({ name }) => name === operation);
       if (fn) {
         logger.debug('Operation schema:', fn);
-        logger.success(`Documentation for ${name}.${operation} v${version}:\n`);
 
         // Generate a documentation string
         desc = describeFn(name, fn);
@@ -100,16 +94,23 @@ const docsHandler = async (
         logger.error(`Failed to find ${operation} in ${name}`);
       }
     } else {
-      logger.debug('No operation provided, listing available operations');
+      logger.debug('No operation name provided');
+      logger.always('Available functions:\n');
       desc = describeLib(name, data);
+
     }
     // Log the description without any ceremony/meta stuff from the logger
     logger.print(desc);
 
+    logger.always(`For more details on a specfic functions, use:
+
+    openfn docs ${name} <fn>
+`)
+
     if (didError) {
       logger.error('Error');
     } else {
-      logger.success('Done!');
+      logger.info('Done!');
     }
   } else {
     logger.error('Not found');
