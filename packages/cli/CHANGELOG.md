@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Fix pull with empty workflows
 - Added debug logging for workflow loading
 - Better docs output
 - Fix execute example in help
