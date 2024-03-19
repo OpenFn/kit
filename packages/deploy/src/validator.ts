@@ -47,7 +47,12 @@ export function parseAndValidate(input: string): {
   }
 
   function validateWorkflows(workflows: any) {
-    if (isMap(workflows)) {
+    if (typeof workflows === 'undefined') {
+      // allow workflows to be unspecified, but ensure there is an empty
+      // map to avoid errors downstream
+      doc.setIn(['workflows'], {})
+    }
+    else if (isMap(workflows)) {
       for (const workflow of workflows.items) {
         if (isPair(workflow)) {
           pushUniqueKey(workflow, (workflow as any).key.value);

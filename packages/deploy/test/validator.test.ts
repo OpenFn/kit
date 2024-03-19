@@ -76,3 +76,19 @@ workflows:
     ].condition_expression === 'true'
   );
 });
+
+
+test('allow empty workflows', (t) => {
+  let doc = `
+name: project-name
+  `;
+
+  let result = parseAndValidate(doc);
+
+  t.is(result.errors.length, 0)
+
+  t.deepEqual(result.doc, {
+    name: 'project-name',
+    workflows: {}
+  })
+});
