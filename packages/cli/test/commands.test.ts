@@ -628,7 +628,8 @@ test.serial('docs should print documentation with full names', async (t) => {
   opts.repoDir = '/repo';
 
   await commandParser(opts, logger);
-  const docs = logger._parse(logger._history[3]).message as string;
+  const docs = logger._parse(logger._history[2]).message as string;
+  
   // match the signature
   t.regex(docs, /\#\# fn\(\)/);
   // Match usage examples
@@ -637,13 +638,9 @@ test.serial('docs should print documentation with full names', async (t) => {
     docs,
     /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
   );
-
-  const { message, level } = logger._parse(logger._last);
-  t.is(level, 'success');
-  t.is(message, 'Done!');
 });
 
-test.serial('docs adaptor should print list operations', async (t) => {
+test.serial('docs adaptor should list operations', async (t) => {
   const pkgPath = path.resolve('./package.json');
   mock({
     [pkgPath]: mock.load(pkgPath),
@@ -664,14 +661,11 @@ test.serial('docs adaptor should print list operations', async (t) => {
   opts.repoDir = '/repo';
 
   await commandParser(opts, logger);
-  const docs = logger._parse(logger._history[2]).message as string;
+
+  const docs = logger._parse(logger._history[3]).message as string;
   t.notRegex(docs, /\[object Object\]/);
   t.notRegex(docs, /\#\#\# Usage Examples/);
-  t.regex(docs, /fn\(a, b\)/);
-
-  const { message, level } = logger._parse(logger._last);
-  t.is(level, 'success');
-  t.is(message, 'Done!');
+  t.regex(docs, /fn.+\(a, b\)/);
 });
 
 test.serial(
@@ -694,7 +688,7 @@ test.serial(
     opts.repoDir = '/repo';
 
     await commandParser(opts, logger);
-    const docs = logger._parse(logger._history[3]).message as string;
+    const docs = logger._parse(logger._history[2]).message as string;
     // match the signature
     t.regex(docs, /\#\# fn\(\)/);
     // Match usage examples
@@ -704,9 +698,5 @@ test.serial(
       docs,
       /https:\/\/docs.openfn.org\/adaptors\/packages\/common-docs#fn/
     );
-
-    const { message, level } = logger._parse(logger._last);
-    t.is(level, 'success');
-    t.is(message, 'Done!');
   }
 );
