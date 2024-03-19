@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.4.4
+
+### Patch Changes
+
+- 6d52ddf: Fix an issue pulling a project with no workflows
+
 ## 0.4.3
 
 ### Patch Changes

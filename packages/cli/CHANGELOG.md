@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [6d52ddf]
+  - @openfn/deploy@0.4.4
+
 ## 1.1.1
 
 ### Patch Changes
@@ -9,6 +16,7 @@
   - @openfn/compiler@0.0.41
   - @openfn/deploy@0.4.3
   - @openfn/runtime@1.0.1
+
 ## 1.1.0
 
 ### Patch Changes
