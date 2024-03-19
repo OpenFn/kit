@@ -2,9 +2,7 @@ name: Publish
 
 on:
   push:
-    branches:
-      - main
-      - fix-deploy-2
+    branches: main
 
 jobs:
   publish:
@@ -25,7 +23,7 @@ jobs:
       - run: pnpm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: pnpm publish -r --report-summary --publish-branch fix-deploy-2 --access=public
+      - run: pnpm publish -r --report-summary --publish-branch main --access=public
       - run: pnpm run generate-slack-report
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
