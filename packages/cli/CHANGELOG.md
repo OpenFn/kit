@@ -4,8 +4,9 @@
 
 ### Patch Changes
 
-- Updated dependencies [6d52ddf]
-  - @openfn/deploy@0.4.4
+- Added debug logging for workflow loading
+- Better docs output
+- Fix execute example in help
 
 ## 1.1.1
 
