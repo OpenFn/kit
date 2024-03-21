@@ -128,3 +128,10 @@ test('compile with nullish coalescence', (t) => {
   const result = compile(source);
   t.assert(result === expected);
 });
+
+test('compile a lazy state ($) expression', (t) => {
+  const source = 'get($.data.endpoint);';
+  const expected = 'export default [get(state => state.data.endpoint)];';
+  const result = compile(source);
+  t.assert(result === expected);
+});
