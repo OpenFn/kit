@@ -135,3 +135,22 @@ test('compile a lazy state ($) expression', (t) => {
   const result = compile(source);
   t.assert(result === expected);
 });
+
+
+test('compile a lazy state ($) expression with dumb imports', (t) => {
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: '@openfn/language-common',
+        exportAll: true,
+      },
+    },
+  };
+  const source = 'get($.data.endpoint);';
+  const expected = `import { get } from "@openfn/language-common";
+export * from "@openfn/language-common";
+export default [get(state => state.data.endpoint)];`
+
+  const result = compile(source, options);
+  t.assert(result === expected);
+});
