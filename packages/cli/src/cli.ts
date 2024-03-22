@@ -6,6 +6,7 @@ import deployCommand from './deploy/command';
 import docgenCommand from './docgen/command';
 import docsCommand from './docs/command';
 import executeCommand from './execute/command';
+import generateCommand from './generate/command';
 import metadataCommand from './metadata/command';
 import pullCommand from './pull/command';
 import { Opts } from './options';
@@ -26,6 +27,7 @@ export const cmd = y
   .command(metadataCommand as any)
   .command(docgenCommand as any)
   .command(pullCommand as any)
+  .command(generateCommand as any)
   .command({
     command: 'version',
     describe:
