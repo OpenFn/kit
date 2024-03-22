@@ -15,6 +15,8 @@ import type { Transformer } from '../transform';
 import type { Logger } from '@openfn/logger';
 
 const globals = [
+  '\\$', // TMP hack to fix a problem with lazy-state (needs double escaping to work)
+
   'AggregateError',
   'Array',
   'ArrayBuffer',

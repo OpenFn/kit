@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.1.0
+
+### Minor Changes
+
+- 6dcce3d: Support latest ecmascript version
+- 1d37ca1: Basic support for lazy state ($) operator
+
 ## 0.0.41
 
 ### Patch Changes
