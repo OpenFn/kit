@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [6dcce3d]
+- Updated dependencies [1d37ca1]
+  - @openfn/compiler@0.1.0
+
 ## 1.1.1
 
 ### Patch Changes
@@ -10,6 +18,7 @@
   - @openfn/compiler@0.0.41
   - @openfn/lexicon@1.0.0
   - @openfn/runtime@1.0.1
+
 ## 1.1.0
 
 ### Minor Changes
