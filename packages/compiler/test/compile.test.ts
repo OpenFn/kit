@@ -114,3 +114,17 @@ test('twitter example', async (t) => {
   const result = compile(source);
   t.deepEqual(result, expected);
 });
+
+test('compile with optional chaining', (t) => {
+  const source = 'fn(a.b?.c);';
+  const expected = 'export default [fn(a.b?.c)];';
+  const result = compile(source);
+  t.assert(result === expected);
+});
+
+test('compile with nullish coalescence', (t) => {
+  const source = 'fn(a ?? b);';
+  const expected = 'export default [fn(a ?? b)];';
+  const result = compile(source);
+  t.assert(result === expected);
+});
