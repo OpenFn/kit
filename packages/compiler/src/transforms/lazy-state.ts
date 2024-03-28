@@ -1,9 +1,8 @@
 /*
  * Convert $.a.b.c references into (state) => state.a.b.c
- * Should this only run at top level?
- * Ideally it would run on all arguments to operations - but we probably don't really know what an operation is
- * So for now, first pass, it's only top level.
- * (alternatively I guess it just dumbly converts everything and if it breaks, it breaks)
+ * 
+ * Converts all $.a.b chains unless:
+ * - $ was assigned previously in that scope 
  * 
  * TODO (maybe):
  *  - only convert $-expressions which are arguments to operations (needs type defs)
@@ -23,6 +22,15 @@ function visitor(path: NodePath<namedTypes.MemberExpression>) {
   let firstIdentifer = first as namedTypes.Identifier;
   
   if (first && firstIdentifer.name === "$") {
+    // But if a $ declared a parent scope, ignore it
+    let scope = path.scope;
+    while (scope) {
+      if (!scope.isGlobal && scope.declares('$')) {
+        return false;
+      }
+      scope = scope.parent;
+    }
+
     // rename $ to state
     firstIdentifer.name = "state";
 
@@ -36,7 +44,7 @@ function visitor(path: NodePath<namedTypes.MemberExpression>) {
   }
 
   // Stop parsing this member expression
-  return;
+  return false;
 }
 
 export default {

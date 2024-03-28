@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.1.1
+
+### Patch Changes
+
+- Ignore lazy state operator ($) for locally declared variables
+
 ## 0.1.0
 
 ### Minor Changes
