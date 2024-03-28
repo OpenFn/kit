@@ -12,7 +12,6 @@ test('convert a simple dollar reference', (t) => {
 
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed)
-  t.log(code)
 
   t.is(code, 'get(state => state.data)')
 })
@@ -22,7 +21,6 @@ test('convert a chained dollar reference', (t) => {
 
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed)
-  t.log(code)
 
   t.is(code, 'get(state => state.a.b.c.d)')
 })
@@ -32,7 +30,6 @@ test('ignore a regular chain reference', (t) => {
 
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed)
-  t.log(code)
 
   t.is(code, 'get(a.b.c.d)')
 })
@@ -42,7 +39,6 @@ test('ignore a string', (t) => {
 
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed)
-  t.log(code)
 
   t.is(code, 'get("$.a.b")')
 })
@@ -55,7 +51,6 @@ test('convert a nested dollar reference', (t) => {
 
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed)
-  t.log(code)
 
   // syntax starts getting a but picky at this level,
   // better to do ast tests
@@ -64,13 +59,37 @@ test('convert a nested dollar reference', (t) => {
 })`)
 })
 
-// TODO does our compiler not support optional chaining??
-test.skip('convert an optional chained simple dollar reference', (t) => {
+test('do not convert a $ var (param)', (t) => {
+  const src = `fn(($) => {
+    return $.a.b;
+  })`
+  const ast = parse(src);
+
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+
+  t.is(code, src)
+})
+
+test('do not convert a $ var (const)', (t) => {
+  const src = `fn((s) => {
+    const $ = 10;
+    s.data = $.a.b
+    return s;
+  })`
+  const ast = parse(src);
+
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+
+  t.is(code, src)
+})
+
+test('convert an optional chained simple dollar reference', (t) => {
   const ast = parse('get($.a?.b.c.d)');
 
-  // const transformed = transform(ast, [visitors]);
-  // const { code } = print(transformed)
-  // t.log(code)
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
 
-  // t.is(code, 'get(state => state.a?.b.c.d)')
+  t.is(code, 'get(state => state.a?.b.c.d)')
 })
