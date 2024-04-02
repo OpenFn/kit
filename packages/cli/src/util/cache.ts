@@ -13,6 +13,9 @@ export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'bas
   await fs.mkdir(basePath, { recursive: true })
   if (stepId) {
     const step = plan.workflow.steps.find(({ id }) => id === stepId);
+
+    // TODO do we really want to use step name? it's not likely to be easily typeable
+    // Then again, for Lightning steps, the id isn't friendly either
     const fileName = step?.name ?? stepId;
     return path.resolve(`${basePath}/${fileName.replace(/ /, '-')}.json`);
   }

@@ -105,6 +105,10 @@ const assertNoCircularReferences = (model: Model) => {
   }
 };
 
+// This ensures that each step only has a single upstream edge,
+// ie, each step only has a single input
+// This is importand for the `--cache` functionality in the CLI,
+// which assumes this rule when working out the input to a custom start node
 const assertSingletonDependencies = (model: Model) => {
   for (const id in model) {
     const node = model[id];

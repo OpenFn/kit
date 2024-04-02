@@ -41,20 +41,27 @@ export default async (
   }
 
   if (opts.cache && opts.start) {
-    log.info(`Attempting to load cached state for step "${opts.start}"`)
+    log.info(`Attempting to load cached input state for starting step "${opts.start}"`)
     try {
-      const cachedStatePath = await getCachePath(plan, opts, opts.start)
-      log.debug('Loading cached state from', cachedStatePath)
-      
-      const exists = await fs.lstat(cachedStatePath)
-      if (exists) {
-        const str = await fs.readFile(cachedStatePath, 'utf8');
-        const json = JSON.parse(str);
-        log.success(`Loaded cached state for step "${opts.start}"`)
-        log.debug('state:', json);
+      const upstreamStep = plan.workflow.steps.find((step) => opts.start! in step.next!)?.id ?? null
+
+      if (upstreamStep) {
+        log.debug(`Input step for "${opts.start}" is "${upstreamStep}"`)
+        const cachedStatePath = await getCachePath(plan, opts, upstreamStep)
+        log.debug('Loading cached state from', cachedStatePath)
+        
+        const exists = await fs.lstat(cachedStatePath)
+        if (exists) {
+          const str = await fs.readFile(cachedStatePath, 'utf8');
+          const json = JSON.parse(str);
+          log.success(`Loaded cached state for step "${opts.start}"`)
+          log.debug('state:', json);
+        } else {
+          log.warn(`No cached state found for step "${opts.start}"`);
+          log.warn('Re-run this command with --cache and without --start to rebuild the cache');
+        }
       } else {
-        log.warn(`No cached state found for step "${opts.start}"`);
-        log.warn('Re-run this command with --cache and without --start to rebuild the cache');
+        log.error(`Could not find an input step for step "${opts.start}"`)
       }
     } catch(e) {
       log.warn('Error loading cached state')
