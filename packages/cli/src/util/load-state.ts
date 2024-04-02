@@ -1,9 +1,14 @@
 import fs from 'node:fs/promises';
+
+import { getCachePath } from './cache';
+
+import type { ExecutionPlan } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 import type { Opts } from '../options';
 
 export default async (
-  opts: Pick<Opts, 'stateStdin' | 'statePath'>,
+  plan: ExecutionPlan,
+  opts: Pick<Opts, 'baseDir' | 'stateStdin' | 'statePath' | 'cache' | 'start'>,
   log: Logger
 ) => {
   const { stateStdin, statePath } = opts;
@@ -32,6 +37,27 @@ export default async (
     } catch (e) {
       log.warn(`Error loading state from ${statePath}`);
       log.warn(e);
+    }
+  }
+
+  if (opts.cache && opts.start) {
+    log.info(`Attempting to load cached state for step "${opts.start}"`)
+    try {
+      const cachedStatePath = await getCachePath(plan, opts, opts.start)
+      log.debug('Loading cached state from', cachedStatePath)
+      
+      const exists = await fs.lstat(cachedStatePath)
+      if (exists) {
+        const str = await fs.readFile(cachedStatePath, 'utf8');
+        const json = JSON.parse(str);
+        log.success(`Loaded cached state for step "${opts.start}"`)
+        log.debug('state:', json);
+      } else {
+        log.warn(`No cached state found for step "${opts.start}"`);
+        log.warn('Re-run this command with --cache and without --start to rebuild the cache');
+      }
+    } catch(e) {
+      log.warn('Error loading cached state')
     }
   }
 

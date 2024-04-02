@@ -33,7 +33,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     }
   }
 
-  const state = await loadState(options, logger);
+  const state = await loadState(plan, options, logger);
 
   if (options.compile) {
     plan = (await compile(plan, options, logger)) as ExecutionPlan;
