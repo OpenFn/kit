@@ -20,6 +20,7 @@ export type Opts = {
   adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
+  cache?: boolean;
   compile?: boolean;
   confirm?: boolean;
   describe?: string;
@@ -115,6 +116,15 @@ export const autoinstall: CLIOption = {
     alias: ['i'],
     boolean: true,
     description: 'Auto-install the language adaptor(s)',
+    default: true,
+  },
+};
+
+export const cache: CLIOption = {
+  name: 'cache',
+  yargs: {
+    boolean: true,
+    description: 'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
     default: true,
   },
 };

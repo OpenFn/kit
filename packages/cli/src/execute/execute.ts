@@ -1,9 +1,11 @@
-import run, { getNameAndVersion } from '@openfn/runtime';
+import run, { NOTIFY_JOB_COMPLETE, getNameAndVersion } from '@openfn/runtime';
 import type { ExecutionPlan, Job } from '@openfn/lexicon';
 import type { ModuleInfo, ModuleInfoMap } from '@openfn/runtime';
 
 import createLogger, { RUNTIME, JOB } from '../util/logger';
-import { ExecuteOptions } from './command';
+import { saveToCache } from '../util/cache'
+
+import type { ExecuteOptions } from './command';
 
 type ExtendedModuleInfo = ModuleInfo & {
   name: string;
@@ -23,6 +25,15 @@ export default async (
         repo: opts.repoDir,
         modules: parseAdaptors(plan),
       },
+      // I need to intercept state after each job here
+      callbacks: {
+      notify: (evt, payload) => {
+        if (evt === NOTIFY_JOB_COMPLETE) {
+          const { state, jobId } = payload;
+          saveToCache(plan, jobId, state, opts)
+        }
+      }
+    }
     });
     return result;
   } catch (e: any) {
