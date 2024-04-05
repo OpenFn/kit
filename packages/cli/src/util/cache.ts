@@ -1,8 +1,9 @@
 import { ExecutionPlan } from '@openfn/lexicon';
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path'
 
 import type { Opts } from '../options';
+import { Logger } from './logger';
 
 export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'baseDir' | 'cache'>, stepId: string) => {
   const { baseDir } = options;
@@ -25,13 +26,19 @@ export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'bas
 }
 
 // TODO this needs to move out into a util or something
-export const saveToCache = async (plan: ExecutionPlan, stepId: string, output: any, options: Pick<Opts, 'baseDir' | 'cache'>) => {
+export const saveToCache = async (
+  plan: ExecutionPlan,
+  stepId: string,
+  output: any,
+  options: Pick<Opts, 'baseDir' | 'cache'>,
+  logger: Logger
+  ) => {
   if (options.cache) {
     const cachePath = await getCachePath(plan, options, stepId);
-    await fs.mkdir(path.dirname(cachePath), { recursive: true })
+    // Note that this is sync because other execution order gets messed up
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true })
 
-    // TODO use the CLI logger
-    console.log(`Writing ${stepId} output to ${cachePath}`)
-    await fs.writeFile(cachePath, JSON.stringify(output))
+    logger.info(`Writing ${stepId} output to ${cachePath}`)
+    fs.writeFileSync(cachePath, JSON.stringify(output))
   }
 }

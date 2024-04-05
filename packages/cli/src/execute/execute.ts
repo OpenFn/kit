@@ -2,7 +2,7 @@ import run, { NOTIFY_JOB_COMPLETE, getNameAndVersion } from '@openfn/runtime';
 import type { ExecutionPlan, Job } from '@openfn/lexicon';
 import type { ModuleInfo, ModuleInfoMap } from '@openfn/runtime';
 
-import createLogger, { RUNTIME, JOB } from '../util/logger';
+import createLogger, { RUNTIME, JOB, Logger } from '../util/logger';
 import { saveToCache } from '../util/cache'
 
 import type { ExecuteOptions } from './command';
@@ -14,7 +14,8 @@ type ExtendedModuleInfo = ModuleInfo & {
 export default async (
   plan: ExecutionPlan,
   input: any,
-  opts: ExecuteOptions
+  opts: ExecuteOptions,
+  logger: Logger
 ): Promise<any> => {
   try {
     const result = await run(plan, input, {
@@ -30,7 +31,7 @@ export default async (
       notify: async (evt, payload) => {
         if (evt === NOTIFY_JOB_COMPLETE) {
           const { state, jobId } = payload;
-          await saveToCache(plan, jobId, state, opts)
+          await saveToCache(plan, jobId, state, opts, logger)
         }
       }
     }

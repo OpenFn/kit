@@ -42,7 +42,12 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   }
 
   try {
-    const result = await execute(plan, state, options);
+    const result = await execute(plan, state, options, logger);
+    
+    if (options.cache) {
+      logger.success("Cached output written to ./cli-cache (see info logs for details)")
+    }
+
     await serializeOutput(options, result, logger);
     const duration = printDuration(new Date().getTime() - start);
     if (result?.errors) {
