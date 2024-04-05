@@ -50,23 +50,26 @@ export default async (
         const cachedStatePath = await getCachePath(plan, opts, upstreamStep)
         log.debug('Loading cached state from', cachedStatePath)
         
-        const exists = await fs.lstat(cachedStatePath)
-        if (exists) {
+        try {
+          await fs.access(cachedStatePath)
+
           const str = await fs.readFile(cachedStatePath, 'utf8');
           const json = JSON.parse(str);
           log.success(`Loaded cached state for step "${opts.start}" from ${cachedStatePath}`)
           log.info(`  To force disable the cache, run again with --no-cache`)
           return json;
-        } else {
+        } catch (e) {
           log.warn(`No cached state found for step "${opts.start}"`);
           log.warn('Re-run this command with --cache and without --start to rebuild the cache');
-        }
+          log.break()
+          // should we exit at this point?
+       }
       } else {
         log.error(`Could not find an input step for step "${opts.start}"`)
       }
     } catch(e) {
       log.warn('Error loading cached state')
-      console.log(e)
+      log.warn(e)
     }
   }
 
