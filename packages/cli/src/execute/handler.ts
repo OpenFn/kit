@@ -13,6 +13,7 @@ import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
+import { clearCache } from '../util/cache';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
@@ -20,6 +21,11 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   await validateAdaptors(options, logger);
 
   let plan = await loadPlan(options, logger);
+
+  if (options.cache) {
+    await clearCache(plan, options, logger)
+  }
+
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
     if (monorepoPath) {
@@ -43,7 +49,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   try {
     const result = await execute(plan, state, options, logger);
-    
+
     if (options.cache) {
       logger.success("Cached output written to ./cli-cache (see info logs for details)")
     }

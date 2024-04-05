@@ -1,11 +1,12 @@
 import { ExecutionPlan } from '@openfn/lexicon';
 import fs from 'node:fs';
+import { rmdir } from 'node:fs/promises';
 import path from 'node:path'
 
 import type { Opts } from '../options';
 import { Logger } from './logger';
 
-export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'baseDir' | 'cache'>, stepId: string) => {
+export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'baseDir' | 'cache'>, stepId?: string) => {
   const { baseDir } = options;
 
   const { name } = plan.workflow;
@@ -40,5 +41,26 @@ export const saveToCache = async (
 
     logger.info(`Writing ${stepId} output to ${cachePath}`)
     fs.writeFileSync(cachePath, JSON.stringify(output))
+  }
+}
+
+export const clearCache = async (
+  plan: ExecutionPlan,
+  options: Pick<Opts, 'baseDir' | 'cache'>,
+  logger: Logger
+) => {
+  const cacheDir = await getCachePath(plan, options);
+
+  try {
+    await rmdir(cacheDir, { recursive: true })
+
+    logger.info(`Cleared cache at ${cacheDir}`);
+  } catch(e: any) {
+    if (e.code === 'ENOENT') {
+      // No cached files exist - this is fine, do nothing
+    } else {
+      logger.error(`Error while clearing cache at ${cacheDir}`)
+      logger.error(e)
+    }
   }
 }
