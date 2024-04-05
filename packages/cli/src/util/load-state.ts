@@ -56,6 +56,7 @@ export default async (
           const json = JSON.parse(str);
           log.success(`Loaded cached state for step "${opts.start}"`)
           log.debug('state:', json);
+          return json;
         } else {
           log.warn(`No cached state found for step "${opts.start}"`);
           log.warn('Re-run this command with --cache and without --start to rebuild the cache');
