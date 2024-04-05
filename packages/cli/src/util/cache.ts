@@ -10,7 +10,7 @@ export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'bas
   const { name } = plan.workflow;
 
   const basePath = `${baseDir}/.cli-cache/${name}`;
-  await fs.mkdir(basePath, { recursive: true })
+  
   if (stepId) {
     // const step = plan.workflow.steps.find(({ id }) => id === stepId);
 
@@ -28,6 +28,8 @@ export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'bas
 export const saveToCache = async (plan: ExecutionPlan, stepId: string, output: any, options: Pick<Opts, 'baseDir' | 'cache'>) => {
   if (options.cache) {
     const cachePath = await getCachePath(plan, options, stepId);
+    await fs.mkdir(path.dirname(cachePath), { recursive: true })
+
     // TODO use the CLI logger
     console.log(`Writing ${stepId} output to ${cachePath}`)
     await fs.writeFile(cachePath, JSON.stringify(output))

@@ -125,7 +125,6 @@ export const cache: CLIOption = {
   yargs: {
     boolean: true,
     description: 'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
-    default: false,
   },
 };
 

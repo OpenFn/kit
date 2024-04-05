@@ -27,10 +27,10 @@ export default async (
       },
       // I need to intercept state after each job here
       callbacks: {
-      notify: (evt, payload) => {
+      notify: async (evt, payload) => {
         if (evt === NOTIFY_JOB_COMPLETE) {
           const { state, jobId } = payload;
-          saveToCache(plan, jobId, state, opts)
+          await saveToCache(plan, jobId, state, opts)
         }
       }
     }

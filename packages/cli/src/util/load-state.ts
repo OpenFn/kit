@@ -40,8 +40,8 @@ export default async (
     }
   }
 
-  if (opts.cache && opts.start) {
-    log.info(`Attempting to load cached input state for starting step "${opts.start}"`)
+  if (opts.start && opts.cache !== false) {
+    log.debug(`Attempting to load cached input state for starting step "${opts.start}"`)
     try {
       const upstreamStep = plan.workflow.steps.find((step) => opts.start! in step.next!)?.id ?? null
 
@@ -54,8 +54,8 @@ export default async (
         if (exists) {
           const str = await fs.readFile(cachedStatePath, 'utf8');
           const json = JSON.parse(str);
-          log.success(`Loaded cached state for step "${opts.start}"`)
-          log.debug('state:', json);
+          log.success(`Loaded cached state for step "${opts.start}" from ${cachedStatePath}`)
+          log.info(`  To force disable the cache, run again with --no-cache`)
           return json;
         } else {
           log.warn(`No cached state found for step "${opts.start}"`);
@@ -66,6 +66,7 @@ export default async (
       }
     } catch(e) {
       log.warn('Error loading cached state')
+      console.log(e)
     }
   }
 
