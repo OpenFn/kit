@@ -43,11 +43,18 @@ export default async (
   if (opts.start && opts.cache !== false) {
     log.debug(`Attempting to load cached input state for starting step "${opts.start}"`)
     try {
-      const upstreamStep = plan.workflow.steps.find((step) => opts.start! in step.next!)?.id ?? null
+      const upstreamStep = plan.workflow.steps.find((step) => {
+        if (typeof step.next === "string" ) {
+          return step.next === opts.start
+        }
+
+        return opts.start! in step.next! ?? null
+      })
 
       if (upstreamStep) {
-        log.debug(`Input step for "${opts.start}" is "${upstreamStep}"`)
-        const cachedStatePath = await getCachePath(plan, opts, upstreamStep)
+        const upstreamStepId = typeof upstreamStep === 'string' ? upstreamStep : upstreamStep.id!;
+        log.debug(`Input step for "${opts.start}" is "${upstreamStepId}"`)
+        const cachedStatePath = await getCachePath(plan, opts, upstreamStepId)
         log.debug('Loading cached state from', cachedStatePath)
         
         try {
