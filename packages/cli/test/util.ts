@@ -21,27 +21,39 @@ export const resetMockFs = () => {
 
 type CreateWorkflowOptions = {
   id?: string;
-}
+};
 
-export const createWorkflow = (steps: Job[], options: CreateWorkflowOptions = {}) => {
+export const createWorkflow = (
+  steps: Job[],
+  options: CreateWorkflowOptions = {}
+) => {
   const { id = 'wf' } = options;
 
   return {
     id,
-    workflow: { steps }
+    workflow: { steps },
   } as ExecutionPlan;
-}
+};
 
 type CreateStepOptions = {
   id?: string;
+  name?: string;
   expression?: string;
   adaptor?: string;
-  next?: StepEdge
-}
+  next?: StepEdge;
+};
 
-export const createStep = ({ id, expression, adaptor, next}: CreateStepOptions = {}) => ({
-  id: id || 'a',
-  expression: expression || '.',
+export const createStep = ({
+  id,
+  expression,
+  name,
   adaptor,
   next,
-} as Job)
+}: CreateStepOptions = {}) =>
+  ({
+    id: id || 'a',
+    name,
+    expression: expression || '.',
+    adaptor,
+    next,
+  } as Job);

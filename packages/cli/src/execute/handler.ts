@@ -13,6 +13,7 @@ import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
+import fuzzyMatchStart from '../util/fuzzy-match-start';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
@@ -33,6 +34,8 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     }
   }
 
+  options.start = fuzzyMatchStart(plan, options.start) ?? options.start;
+
   const state = await loadState(plan, options, logger);
 
   if (options.compile) {
@@ -43,9 +46,11 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   try {
     const result = await execute(plan, state, options, logger);
-    
+
     if (options.cache) {
-      logger.success("Cached output written to ./cli-cache (see info logs for details)")
+      logger.success(
+        'Cached output written to ./cli-cache (see info logs for details)'
+      );
     }
 
     await serializeOutput(options, result, logger);
