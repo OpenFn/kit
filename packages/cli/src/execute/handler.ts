@@ -14,6 +14,7 @@ import validateAdaptors from '../util/validate-adaptors';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
 import fuzzyMatchStart from '../util/fuzzy-match-start';
+import abort from '../util/abort';
 
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
@@ -34,7 +35,26 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     }
   }
 
-  options.start = fuzzyMatchStart(plan, options.start) ?? options.start;
+  try {
+    const start = fuzzyMatchStart(plan, options.start) ?? options.start;
+    logger.info(`Starting workflow from step "${start}"`);
+    options.start = start;
+  } catch (err: any) {
+    let message;
+    let help;
+    if (err.message === 'AMBIGUOUS_INPUT') {
+      message = 'Start pattern matched muliple steps';
+      help =
+        'The start option can contain an exact match of a step id, or a partial match if a name or id so long as it is unique.';
+    } else if (err.message === 'NOT_FOUND') {
+      // TOOD this error will actualy be pre-empted by plan validation
+      message = 'Start step not found';
+      help = `The start step (${options.start}) could not be be found in the workflow provided.`;
+    } else {
+      message = 'Error parsing start option';
+    }
+    abort(logger, `Error: ${message}`, undefined, help);
+  }
 
   const state = await loadState(plan, options, logger);
 
