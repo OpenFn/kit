@@ -159,8 +159,8 @@ test('cache: off by default', (t) => {
   t.falsy(options.cache);
 });
 
-test('cache: enable with --cache', (t) => {
-  const options = parse('execute job.js --cache');
+test('cache: enable with --cache-steps', (t) => {
+  const options = parse('execute job.js --cache-steps');
   t.true(options.cache);
 });
 
@@ -170,8 +170,8 @@ test('cache: enable with env OPENFN_ALWAYS_CACHE_STEPS', (t) => {
   t.true(options.cache);
 });
 
-test('cache: override env OPENFN_ALWAYS_CACHE_STEPS with --no-cache', (t) => {
+test('cache: override env OPENFN_ALWAYS_CACHE_STEPS with --no-cache-steps', (t) => {
   process.env.OPENFN_ALWAYS_CACHE_STEPS = 'true';
-  const options = parse('execute job.js --no-cache');
+  const options = parse('execute job.js --no-cache-steps');
   t.falsy(options.cache);
 });

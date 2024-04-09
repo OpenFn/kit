@@ -22,7 +22,10 @@ export const getUpstreamStepId = (plan: ExecutionPlan, stepId: string) => {
 
 export default async (
   plan: ExecutionPlan,
-  opts: Pick<Opts, 'baseDir' | 'stateStdin' | 'statePath' | 'cache' | 'start'>,
+  opts: Pick<
+    Opts,
+    'baseDir' | 'stateStdin' | 'statePath' | 'cacheSteps' | 'start'
+  >,
   log: Logger
 ) => {
   const { stateStdin, statePath } = opts;
@@ -54,7 +57,7 @@ export default async (
     }
   }
 
-  if (opts.start && opts.cache !== false) {
+  if (opts.start && opts.cacheSteps !== false) {
     log.debug(
       `Attempting to load cached input state for starting step "${opts.start}"`
     );

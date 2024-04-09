@@ -20,7 +20,7 @@ export type Opts = {
   adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
-  cache?: boolean;
+  cacheSteps?: boolean;
   compile?: boolean;
   confirm?: boolean;
   describe?: string;
@@ -121,7 +121,7 @@ export const autoinstall: CLIOption = {
 };
 
 export const cache: CLIOption = {
-  name: 'cache',
+  name: 'cache-steps',
   yargs: {
     boolean: true,
     description:
@@ -130,7 +130,7 @@ export const cache: CLIOption = {
   ensure: (opts) => {
     setDefaultValue(
       opts,
-      'cache',
+      'cacheSteps',
       process.env.OPENFN_ALWAYS_CACHE_STEPS === 'true'
     );
   },

@@ -9,7 +9,7 @@ export type ExecuteOptions = Required<
     Opts,
     | 'adaptors'
     | 'autoinstall'
-    | 'cache'
+    | 'cacheSteps'
     | 'command'
     | 'compile'
     | 'expandAdaptors'
