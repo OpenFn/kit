@@ -129,13 +129,13 @@ To get more information about a command, including usage examples, run `openfn <
 
 ## Caching step output
 
-The CLI can write the output of every single step to do disk (rather than just the final output). To do this, just run a job with the `--cache-steps` flag.
+The CLI can write the output of every single step to disk (rather than just the final output). To do this, just run a job with the `--cache-steps` flag.
 
 ```
 openfn tmp/job.js --cache-steps
 ```
 
-The cached output is written to a the path `.cli-cache/<workflow-name>/<step-name>.json`, relative to the input job or workflow file.
+The cached output is written to `.cli-cache/<workflow-name>/<step-name>.json`, relative to the input job or workflow file.
 
 So for .tmp/workflow.json you'll get a cache path something like ./.cli-cache/workflow/step-1.json.
 

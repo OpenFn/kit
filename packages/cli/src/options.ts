@@ -120,7 +120,7 @@ export const autoinstall: CLIOption = {
   },
 };
 
-export const cache: CLIOption = {
+export const cacheSteps: CLIOption = {
   name: 'cache-steps',
   yargs: {
     boolean: true,

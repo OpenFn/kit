@@ -39,7 +39,7 @@ const options = [
 
   o.adaptors,
   o.autoinstall,
-  o.cache,
+  o.cacheSteps,
   o.compile,
   o.immutable,
   o.ignoreImports,
