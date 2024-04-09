@@ -153,3 +153,25 @@ test('disable some imports', (t) => {
   t.is(a, 'jam');
   t.is(b, 'jar');
 });
+
+test('cache: off by default', (t) => {
+  const options = parse('execute job.js');
+  t.falsy(options.cache);
+});
+
+test('cache: enable with --cache', (t) => {
+  const options = parse('execute job.js --cache');
+  t.true(options.cache);
+});
+
+test('cache: enable with env OPENFN_ALWAYS_CACHE_STEPS', (t) => {
+  process.env.OPENFN_ALWAYS_CACHE_STEPS = 'true';
+  const options = parse('execute job.js');
+  t.true(options.cache);
+});
+
+test('cache: override env OPENFN_ALWAYS_CACHE_STEPS with --no-cache', (t) => {
+  process.env.OPENFN_ALWAYS_CACHE_STEPS = 'true';
+  const options = parse('execute job.js --no-cache');
+  t.falsy(options.cache);
+});

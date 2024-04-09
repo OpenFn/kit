@@ -124,7 +124,15 @@ export const cache: CLIOption = {
   name: 'cache',
   yargs: {
     boolean: true,
-    description: 'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
+    description:
+      'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
+  },
+  ensure: (opts) => {
+    setDefaultValue(
+      opts,
+      'cache',
+      process.env.OPENFN_ALWAYS_CACHE_STEPS === 'true'
+    );
   },
 };
 
