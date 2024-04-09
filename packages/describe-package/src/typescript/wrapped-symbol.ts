@@ -43,7 +43,9 @@ export class WrappedSymbol {
       const newSymbol: ts.Symbol = this.typeChecker.getAliasedSymbol(
         this.symbol
       );
-      return new WrappedSymbol(this.typeChecker, newSymbol);
+      if (newSymbol.escapedName !== 'unknown') {
+        return new WrappedSymbol(this.typeChecker, newSymbol);
+      }
     }
     return this;
   }
@@ -95,7 +97,8 @@ export class WrappedSymbol {
     // @ts-ignore symbol.parent
     const parentSymbol = this.symbol.parent;
     return (
-      parentSymbol && parentSymbol.escapedName.match(/^\"\/node_modules\//)
+      this.symbol.flags === 2097152 ||
+      parentSymbol?.escapedName.match(/^\"\/node_modules\//)
     );
   }
 

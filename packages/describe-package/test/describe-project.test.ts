@@ -3,22 +3,23 @@ import { setupProject } from './helpers';
 
 import describeProject from '../src/describe-project';
 
-let fns;
+let members;
 
 // Load the fixture once and then run a bunch of tests against it
 test.before(async () => {
   const project = await setupProject('stroopwafel');
-  fns = await describeProject(project);
+  members = await describeProject(project);
 });
 
-const get = (name) => fns.find((fn) => fn.name === name);
+const get = (name) => members.find((fn) => fn.name === name);
 
-test('List all the exported functions', async (t) => {
-  t.assert(fns.length === 4);
+test('List all the exported members', async (t) => {
+  t.assert(members.length === 5);
   t.truthy(get('traditional'));
   t.truthy(get('oneFlavour'));
   t.truthy(get('manyFlavours'));
   t.truthy(get('fn'));
+  t.truthy(get('flavours'));
 });
 
 test('Does not include private functions', async (t) => {

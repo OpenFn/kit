@@ -30,12 +30,18 @@ export type PackageDescription = {
 
 export type FunctionDescription = {
   name: string;
+  type: 'function';
   magic: boolean; // keep you-know-who happy
   isOperation: boolean; // Is this an Operation?
   parameters: ParameterDescription[];
   description: string;
   examples: ExampleDescription[];
   parent?: string;
+};
+
+export type NamespaceDescription = {
+  name: string;
+  type: 'namespace';
 };
 
 type ExampleDescription = {
