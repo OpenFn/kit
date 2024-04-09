@@ -4,7 +4,7 @@ import type { Project } from './typescript/project';
 import type {
   FunctionDescription,
   ParameterDescription,
-  NamespaceDesription,
+  NamespaceDescription,
 } from './api';
 
 type DescribeOptions = {
@@ -27,7 +27,7 @@ const describeParameter = (
 };
 
 const describeNamespace = (
-  project: Project,
+  _project: Project,
   symbol: WrappedSymbol
 ): NamespaceDescription => {
   return {
@@ -113,7 +113,7 @@ const describeProject = (
       }
 
       return symbols;
-    }, [] as FunctionDescription[]);
+    }, [] as Array<FunctionDescription | NamespaceDescription>);
 };
 
 export default describeProject;

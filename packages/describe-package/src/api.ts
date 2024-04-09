@@ -26,6 +26,7 @@ export type PackageDescription = {
   name: string;
   version: string;
   functions: FunctionDescription[];
+  namespaces: NamespaceDescription[];
 };
 
 export type FunctionDescription = {
@@ -102,12 +103,20 @@ export const describePackage = async (
   const files = await fetchDTSListing(specifier);
 
   const functions: FunctionDescription[] = [];
+  const namespaces: NamespaceDescription[] = [];
   for await (const fileName of files) {
     // Exclude the beta file
     if (!/beta\.d\.ts$/.test(fileName)) {
       const f = await fetchFile(`${specifier}${fileName}`);
       project.createFile(f, fileName);
-      functions.push(...describeProject(project, fileName));
+
+      describeProject(project, fileName).forEach((member) => {
+        if (member.type === 'function') {
+          functions.push(member);
+        } else if (member.type === 'namespace') {
+          namespaces.push(member);
+        }
+      });
     }
   }
 
@@ -115,6 +124,7 @@ export const describePackage = async (
     name,
     version,
     functions,
+    namespaces,
   };
 };
 
