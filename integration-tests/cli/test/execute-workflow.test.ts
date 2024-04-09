@@ -148,7 +148,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   `openfn ${jobsPath}/wf-errors.json -iS "{ \\"data\\": { \\"number\\": 32 } }"`,
   async (t) => {
     const { err } = await run(t.title);
@@ -174,5 +174,21 @@ test.serial.only(
         },
       },
     });
+  }
+);
+
+// export issues https://github.com/OpenFn/kit/issues/238
+test.serial(
+  `openfn ${jobsPath}/common-date.json -s ${jobsPath}/common-date-input.json`,
+  async (t) => {
+    console.log(t.title);
+    const { stdout, stderr } = await run(t.title);
+    console.log(stdout);
+    console.log(stderr);
+    // t.falsy(err);
+
+    const out = getJSON();
+    console.log(out);
+    t.is(out.data.count, 42);
   }
 );
