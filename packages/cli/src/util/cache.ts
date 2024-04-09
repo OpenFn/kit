@@ -17,18 +17,28 @@ export const getCachePath = async (
   const basePath = `${baseDir}/.cli-cache/${name}`;
 
   if (stepId) {
-    // const step = plan.workflow.steps.find(({ id }) => id === stepId);
-
-    // TODO do we really want to use step name? it's not likely to be easily typeable
-    // Then again, for Lightning steps, the id isn't friendly either
-    // const fileName = step?.name ?? stepId;
-    const fileName = stepId;
-    return path.resolve(`${basePath}/${fileName.replace(/ /, '-')}.json`);
+    return path.resolve(`${basePath}/${stepId.replace(/ /, '-')}.json`);
   }
   return path.resolve(basePath);
 };
 
-// TODO this needs to move out into a util or something
+const ensureGitIgnore = (options: any) => {
+  if (!options._hasGitIgnore) {
+    const ignorePath = path.resolve(
+      options.baseDir,
+      '.cli-cache',
+      '.gitignore'
+    );
+    try {
+      fs.accessSync(ignorePath);
+    } catch (e) {
+      // doesn't exist!
+      fs.writeFileSync(ignorePath, '*');
+    }
+  }
+  options._hasGitIgnore = true;
+};
+
 export const saveToCache = async (
   plan: ExecutionPlan,
   stepId: string,
@@ -40,6 +50,8 @@ export const saveToCache = async (
     const cachePath = await getCachePath(plan, options, stepId);
     // Note that this is sync because other execution order gets messed up
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+
+    ensureGitIgnore(options);
 
     logger.info(`Writing ${stepId} output to ${cachePath}`);
     fs.writeFileSync(cachePath, JSON.stringify(output));

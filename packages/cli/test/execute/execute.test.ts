@@ -166,6 +166,32 @@ test.serial('run a workflow with cached steps', async (t) => {
   t.deepEqual(JSON.parse(cache_b), { a: true, b: true, data: {} });
 });
 
+test.serial('.cli-cache has a gitignore', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          expression: `${fn}fn((state) => ({ a: true }))`,
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/.cli-cache/workflow/': {},
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    cacheSteps: true,
+  };
+  await handler(options, logger);
+
+  const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
+  t.is(gitignore, '*');
+});
+
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
     workflow: {
