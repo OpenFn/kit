@@ -13,6 +13,44 @@ import { builders as b, namedTypes } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 
+// Walk up the AST and work out where the parent arrow function should go
+// This should be on the argument to the operation. So the top of whatever
+// structure we are in
+// If there's already a (state) wrapper, happily do nothing
+// if there's anything else, throw an error
+const ensureParentArrow = (path: NodePath<namedTypes.MemberExpression>) => {
+  let root;
+
+  // find the parenting call expression
+  // find the matching argument (which argument is == last?)
+  // maybe wrap the argument
+
+  let last;
+  let callexpr;
+  let arg;
+  // while (!root) {
+  //   //
+
+  //   root = root.parent;
+
+  // }
+
+  // Now nest the whole thing in an arrow
+  const params = b.identifier('state');
+  const arrow = b.arrowFunctionExpression([params], path.node);
+  arg.replace(arrow);
+};
+
+// Checks whether the passed node is an open function, ie, (state) => {...}
+const isOpenFunction = (path: NodePath<any>) => {
+  // is it a function?
+  //   -return false
+  // does it have one param?
+  //  continue else throw
+  // is the param called state?
+  //  return true else throw
+};
+
 function visitor(path: NodePath<namedTypes.MemberExpression>) {
   let first = path.node.object;
   while (first.hasOwnProperty('object')) {
@@ -34,10 +72,7 @@ function visitor(path: NodePath<namedTypes.MemberExpression>) {
     // rename $ to state
     firstIdentifer.name = 'state';
 
-    // Now nest the whole thing in an arrow
-    const params = b.identifier('state');
-    const arrow = b.arrowFunctionExpression([params], path.node);
-    path.replace(arrow);
+    ensureParentArrow();
   }
 
   // Stop parsing this member expression
