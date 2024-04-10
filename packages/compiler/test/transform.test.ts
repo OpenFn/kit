@@ -29,6 +29,36 @@ test('transform will visit nodes once', (t) => {
   t.assert(visitCount === 1);
 });
 
+test('visit with mutiple transformes', (t) => {
+  let callCount = 0;
+  let idCount = 0;
+
+  const transformers = [
+    {
+      id: '1' as TransformerName,
+      types: ['CallExpression'],
+      visitor: () => {
+        callCount++;
+      },
+    },
+    {
+      id: '2' as TransformerName,
+      types: ['Identifier'],
+      visitor: () => {
+        idCount++;
+      },
+    },
+  ];
+
+  const program = b.program([
+    b.expressionStatement(b.callExpression(b.identifier('jam'), [])),
+  ]);
+
+  transform(program, transformers);
+  t.is(callCount, 1);
+  t.is(idCount, 1);
+});
+
 test('transform will visit nested nodes', (t) => {
   let visitCount = 0;
   const visitor = () => {
@@ -59,76 +89,123 @@ test('transform will stop if a visitor returns truthy', (t) => {
   t.assert(visitCount === 1);
 });
 
-// test('ignore visitors disabled in options', (t) => {
-//   const transformers = [{ id: TEST, types: ['Program'], visitor: noop }];
+test('one transform will stopping does not affect another', (t) => {
+  let callCount = 0;
+  let idCount = 0;
 
-//   const map = indexTransformers(transformers, { test: false });
+  const transformers = [
+    {
+      id: '1' as TransformerName,
+      types: ['CallExpression'],
+      visitor: () => {
+        callCount++;
+        return true;
+      },
+    },
+    {
+      id: '2' as TransformerName,
+      types: ['Identifier'],
+      visitor: () => {
+        idCount++;
+      },
+    },
+  ];
 
-//   // Should add no visitors
-//   t.assert(Object.keys(map).length === 0);
-// });
+  const program = b.program([
+    b.expressionStatement(
+      b.callExpression(b.callExpression(b.identifier('jam'), []), [])
+    ),
+  ]);
+  transform(program, transformers);
+  t.assert(callCount === 1);
+  t.assert(idCount === 1);
+});
 
-// test('passes options to a visitor', (t) => {
-//   let result;
-//   const visitor = (_node: unknown, _logger: unknown, options: any) => {
-//     result = options.value;
-//   };
-//   const transformers = [{ id: TEST, types: ['Program'], visitor }];
+test('ignore transformers disabled in options', (t) => {
+  let visitCount = 0;
+  const transformers = [
+    {
+      id: TEST,
+      types: ['Identifier'],
+      visitor: () => {
+        ++visitCount;
+      },
+    },
+  ];
 
-//   const map = indexTransformers(transformers);
-//   const options = { [TEST]: { value: 42 } };
+  const program = b.program([
+    b.expressionStatement(b.callExpression(b.identifier('jam'), [])),
+  ]);
 
-//   // Visit an AST and ensure the visitor is called with the right options
-//   visit(b.program([]), buildVisitors(map, logger, options));
+  transform(program, transformers, { [TEST]: false });
 
-//   t.assert(result === 42);
-// });
+  t.is(visitCount, 0);
+});
 
-// test('passes options to several visitors', (t) => {
-//   let total = 0;
-//   const visitor = (_node: unknown, _logger: unknown, options: any) => {
-//     total += options.value;
-//   };
-//   const transformers = [
-//     { id: TEST, types: ['Program'], visitor },
-//     { id: TEST, types: ['Program'], visitor },
-//   ];
+test('passes options to a transformer', (t) => {
+  let result;
+  const visitor = (_node: unknown, _logger: unknown, options: any) => {
+    result = options.value;
+  };
+  const transformers = [{ id: TEST, types: ['Program'], visitor }];
 
-//   // Build a visitor map which should trap the options
-//   const map = indexTransformers(transformers);
-//   const options = { [TEST]: { value: 2 } };
+  const options = { [TEST]: { value: 42 } };
 
-//   // Visit an AST and ensure the visitor is called with the right options
-//   visit(b.program([]), buildVisitors(map, logger, options));
+  const program = b.program([]);
 
-//   t.assert(total === 4);
-// });
+  // Visit an AST and ensure the visitor is called with the right options
+  transform(program, transformers, options);
 
-// test('passes options to the correct visitor', (t) => {
-//   let x;
-//   let y;
+  t.is(result, 42);
+});
 
-//   const visitor_a = (_node: unknown, _logger: unknown, options: any) => {
-//     x = options.value;
-//   };
-//   const visitor_b = (_node: unknown, _logger: unknown, options: any) => {
-//     y = options.value;
-//   };
-//   const transformers = [
-//     { id: ENSURE_EXPORTS, types: ['Program'], visitor: visitor_a },
-//     { id: TEST, types: ['Program'], visitor: visitor_b },
-//   ];
+test('passes options to several transformers', (t) => {
+  let total = 0;
+  const visitor = (_node: unknown, _logger: unknown, options: any) => {
+    total += options.value;
+  };
+  const transformers = [
+    { id: TEST, types: ['Program'], visitor },
+    { id: TEST, types: ['Program'], visitor },
+  ];
 
-//   // Build a visitor map which should trap the options
-//   const options = {
-//     [ENSURE_EXPORTS]: { value: 99 }, // x
-//     [TEST]: { value: 42 }, // y
-//   };
-//   const map = indexTransformers(transformers);
+  // Build a visitor map which should trap the options
+  const options = { [TEST]: { value: 2 } };
+  const program = b.program([]);
 
-//   // Visit an AST and ensure the visitor is called with the right options
-//   visit(b.program([]), buildVisitors(map, logger, options));
+  // Visit an AST and ensure the visitor is called with the right options
+  transform(program, transformers, options);
 
-//   t.assert(x === 99);
-//   t.assert(y === 42);
-// });
+  t.is(total, 4);
+});
+
+test('passes options to the correct visitor', (t) => {
+  let x;
+  let y;
+
+  const visitor_a = (_node: unknown, _logger: unknown, options: any) => {
+    x = options.value;
+  };
+  const visitor_b = (_node: unknown, _logger: unknown, options: any) => {
+    y = options.value;
+  };
+
+  const transformers = [
+    { id: ENSURE_EXPORTS, types: ['Program'], visitor: visitor_a },
+    { id: TEST, types: ['Program'], visitor: visitor_b },
+  ];
+
+  // Build a visitor map which should trap the options
+  const options = {
+    [ENSURE_EXPORTS]: { value: 99 }, // x
+    [TEST]: { value: 42 }, // y
+  };
+
+  const program = b.program([]);
+
+  // Visit an AST and ensure the visitor is called with the right options
+  transform(program, transformers, options);
+
+  t.is(x, 99);
+  t.is(y, 42);
+});

@@ -60,23 +60,26 @@ export default function transform(
 
   // TODO sort transformers by order
 
-  transformers.forEach(({ id, types, visitor }) => {
-    const astTypes: Visitor = {};
-    for (const type of types) {
-      const name = `visit${type}` as keyof Visitor;
-      astTypes[name] = function (path: NodePath) {
-        const opts = options[id] || {};
-        const abort = visitor!(path, logger, opts);
-        if (abort) {
-          return false;
-        }
-        this.traverse(path);
-      };
-    }
+  transformers
+    // Ignore transformers which are explicitly disabled
+    .filter(({ id }) => options[id] ?? true)
+    .forEach(({ id, types, visitor }) => {
+      const astTypes: Visitor = {};
+      for (const type of types) {
+        const name = `visit${type}` as keyof Visitor;
+        astTypes[name] = function (path: NodePath) {
+          const opts = options[id] || {};
+          const abort = visitor!(path, logger, opts);
+          if (abort) {
+            return false;
+          }
+          this.traverse(path);
+        };
+      }
 
-    // @ts-ignore
-    visit(ast, astTypes);
-  });
+      // @ts-ignore
+      visit(ast, astTypes);
+    });
 
   return ast;
 }
