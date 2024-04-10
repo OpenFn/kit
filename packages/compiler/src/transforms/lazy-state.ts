@@ -3,61 +3,67 @@
  *
  * Converts all $.a.b chains unless:
  * - $ was assigned previously in that scope
+ * 
  *
- * TODO (maybe):
- *  - only convert $-expressions which are arguments to operations (needs type defs)
- *  - warn if converting a non-top-level $-expression
- *  - if not top level, convert to state.a.b.c (ie don't wrap the function)
  */
-import { builders as b, namedTypes } from 'ast-types';
+import { builders as b, namedTypes as n} from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 
 // Walk up the AST and work out where the parent arrow function should go
-// This should be on the argument to the operation. So the top of whatever
-// structure we are in
-// If there's already a (state) wrapper, happily do nothing
-// if there's anything else, throw an error
-const ensureParentArrow = (path: NodePath<namedTypes.MemberExpression>) => {
-  let root;
+const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
+  let root = path;
+  let last;
 
   // find the parenting call expression
-  // find the matching argument (which argument is == last?)
-  // maybe wrap the argument
-
-  let last;
-  let callexpr;
-  let arg;
-  // while (!root) {
-  //   //
-
-  //   root = root.parent;
-
-  // }
-
-  // Now nest the whole thing in an arrow
-  const params = b.identifier('state');
-  const arrow = b.arrowFunctionExpression([params], path.node);
-  arg.replace(arrow);
-};
-
-// Checks whether the passed node is an open function, ie, (state) => {...}
-const isOpenFunction = (path: NodePath<any>) => {
-  // is it a function?
-  //   -return false
-  // does it have one param?
-  //  continue else throw
-  // is the param called state?
-  //  return true else throw
-};
-
-function visitor(path: NodePath<namedTypes.MemberExpression>) {
-  let first = path.node.object;
-  while (first.hasOwnProperty('object')) {
-    first = (first as namedTypes.MemberExpression).object;
+  // Ie, the operation we're passing this arrow into
+  while(root && !n.CallExpression.check(root.node)) {
+    last = root;
+    root = root.parent;
   }
 
-  let firstIdentifer = first as namedTypes.Identifier;
+  if (root) {
+    const arg = last as NodePath;
+
+    if (!isOpenFunction(arg)) {
+      const params = b.identifier('state');
+      const arrow = b.arrowFunctionExpression([params], arg.node);
+      arg.replace(arrow);
+    }
+  }
+}
+
+// Checks whether the passed node is an open function, ie, (state) => {...}
+const isOpenFunction = (path: NodePath) => {
+  // is it a function?
+  if (n.ArrowFunctionExpression.check(path.node))  {
+    const arrow = path.node as n.ArrowFunctionExpression;
+    // does it have one param?
+    if(arrow.params.length == 1) {
+      const name = (arrow.params[0] as n.Identifier).name
+      // is the param called state?
+      if (name === "state") {
+        // We already have a valid open function here
+        return true;
+      }
+      throw new Error(`invalid lazy state: parameter "${name}" should be called "state"`)
+    }
+    throw new Error('invalid lazy state: parent has wrong arity')
+  }
+
+  // if we get here, then path is:
+  // a) a Javascript Expression (and not an arrow)
+  // b) appropriate for being wrapped in an arrow
+  return false;
+};
+
+function visitor(path: NodePath<n.MemberExpression>) {
+  let first = path.node.object;
+  while (first.hasOwnProperty('object')) {
+    first = (first as n.MemberExpression).object;
+  }
+
+  let firstIdentifer = first as n.Identifier;
 
   if (first && firstIdentifer.name === '$') {
     // But if a $ declared a parent scope, ignore it
@@ -72,7 +78,8 @@ function visitor(path: NodePath<namedTypes.MemberExpression>) {
     // rename $ to state
     firstIdentifer.name = 'state';
 
-    ensureParentArrow();
+    // from the parenting member expression, ensure the parent arrow is nicely wrapped
+    ensureParentArrow(path);
   }
 
   // Stop parsing this member expression

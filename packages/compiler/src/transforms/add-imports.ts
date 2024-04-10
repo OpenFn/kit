@@ -15,6 +15,7 @@ import type { Transformer } from '../transform';
 import type { Logger } from '@openfn/logger';
 
 const globals = [
+  // TODO I think we can remove this now!!
   '\\$', // TMP hack to fix a problem with lazy-state (needs double escaping to work)
 
   'AggregateError',

@@ -9,7 +9,6 @@ import visitors from '../../src/transforms/lazy-state';
 
 test('convert a simple dollar reference', (t) => {
   const ast = parse('get($.data)');
-
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed)
 
@@ -34,7 +33,82 @@ test('ignore a regular chain reference', (t) => {
   t.is(code, 'get(a.b.c.d)')
 })
 
-test('ignore a string', (t) => {
+test('convert a template literal', (t) => {
+  const src = 'get(`hello ${$.data}`)'
+  t.log(src)
+  const ast = parse(src);
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+  t.log(code)
+
+  t.is(code, 'get(state => `hello ${state.data}`)')
+})
+
+test('convert a template literal with two refs', (t) => {
+  const src = 'get(`hello ${$.firstname} ${$.lastname}`)'
+  t.log(src)
+  const ast = parse(src);
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+  t.log(code)
+
+  t.is(code, 'get(state => `hello ${state.firstname} ${state.lastname}`)')
+})
+
+test('convert a template literal with a pre-existing parent arrow', (t) => {
+  const src = 'get(state => `hello ${$.data}`)'
+  t.log(src)
+  const ast = parse(src);
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+  t.log(code)
+
+  t.is(code, 'get(state => `hello ${state.data}`)')
+})
+
+test('throw if a $ is already inside a non-compatible arrow (state name)', (t) => {
+  const src = 'get((s) => `hello ${$.data}`)' // throw!!
+  t.log(src)
+  const ast = parse(src);
+
+  t.throws(() => transform(ast, [visitors]), {
+    message: `invalid lazy state: parameter "s" should be called "state"`
+  });
+})
+
+test('throw if a $ is already inside a non-compatible arrow (arity)', (t) => {
+  const src = 'get((state, b) => `hello ${$.data}`)' // throw!!
+  t.log(src)
+  const ast = parse(src);
+
+  t.throws(() => transform(ast, [visitors]), {
+    message: 'invalid lazy state: parent has wrong arity'
+  });
+})
+
+test('wrap a concatenation', (t) => {
+  const src = 'get($.firstname + " " + $.lastname)'
+  t.log(src)
+  const ast = parse(src);
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+  t.log(code)
+
+  t.is(code, 'get(state => state.firstname + " " + state.lastname)')
+})
+
+test('wrap a dynamic property reference', (t) => {
+  const src = 'get(city[$.location])'
+  t.log(src)
+  const ast = parse(src);
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed)
+  t.log(code)
+
+  t.is(code, 'get(state => city[state.location])')
+})
+
+test('ignore a dollar ref in a string', (t) => {
   const ast = parse('get("$.a.b")');
 
   const transformed = transform(ast, [visitors]);
