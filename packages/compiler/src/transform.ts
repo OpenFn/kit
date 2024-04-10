@@ -30,8 +30,6 @@ export type Transformer = {
   order?: number;
 };
 
-type TransformerIndex = Partial<Record<keyof Visitor, Transformer[]>>;
-
 export type TransformOptions = {
   logger?: Logger; //  TODO maybe in the wrong place?
 
