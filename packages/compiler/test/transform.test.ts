@@ -7,8 +7,6 @@ import transform, { TransformerName } from '../src/transform';
 
 const logger = createMockLogger();
 
-const noop = () => false;
-
 const TEST = 'test' as TransformerName;
 const ENSURE_EXPORTS = 'ensure-exports' as TransformerName;
 
@@ -57,6 +55,51 @@ test('visit with mutiple transformes', (t) => {
   transform(program, transformers);
   t.is(callCount, 1);
   t.is(idCount, 1);
+});
+
+test.only('run transformers in order', (t) => {
+  const results: number[] = [];
+
+  const transformers = [
+    {
+      id: '1' as TransformerName,
+      types: ['Identifier'],
+      visitor: () => {
+        results.push(1);
+      },
+      order: 2,
+    },
+    {
+      id: '2' as TransformerName,
+      types: ['Identifier'],
+      visitor: () => {
+        results.push(2);
+      },
+      order: 1,
+    },
+    {
+      id: '3' as TransformerName,
+      types: ['Identifier'],
+      visitor: () => {
+        results.push(3);
+      },
+      // order defaults to 1, so we shouldn't need to set this
+      //order: 1,
+    },
+    {
+      id: '4' as TransformerName,
+      types: ['Identifier'],
+      visitor: () => {
+        results.push(4);
+      },
+      order: 0,
+    },
+  ];
+
+  const program = b.program([b.expressionStatement(b.identifier('jam'))]);
+
+  transform(program, transformers);
+  t.deepEqual(results, [4, 2, 3, 1]);
 });
 
 test('transform will visit nested nodes', (t) => {

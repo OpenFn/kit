@@ -27,6 +27,7 @@ export type Transformer = {
   id: TransformerName;
   types: string[];
   visitor: TransformFunction;
+  order?: number;
 };
 
 type TransformerIndex = Partial<Record<keyof Visitor, Transformer[]>>;
@@ -58,11 +59,18 @@ export default function transform(
   }
   const logger = options.logger || defaultLogger;
 
-  // TODO sort transformers by order
-
   transformers
     // Ignore transformers which are explicitly disabled
     .filter(({ id }) => options[id] ?? true)
+    // Set default orders
+    .map((t) => ({ ...t, order: t.order ?? 1 }))
+    // Sort by order
+    .sort((a, b) => {
+      if (a.order > b.order) return 1;
+      if (a.order < b.order) return -1;
+      return 0;
+    })
+    // Run each transformer
     .forEach(({ id, types, visitor }) => {
       const astTypes: Visitor = {};
       for (const type of types) {
