@@ -67,8 +67,15 @@ const executePlan = async (
     const result = await executeStep(ctx, job, prevState);
     stateHistory[next] = result.state;
 
-    if (!result.next.length) {
+    const exitEarly = options.end === next;
+    if (exitEarly || !result.next.length) {
       leaves[next] = stateHistory[next];
+    }
+
+    if (exitEarly) {
+      // If this is designated an end point, we should abort
+      // (even if there are more steps queued up)
+      break;
     }
 
     if (result.next) {

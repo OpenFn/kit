@@ -285,7 +285,6 @@ test('run a workflow with initial state (data key) and optional start', async (t
     workflow: {
       steps: [
         {
-          // won't run
           id: 'a',
           expression: 'export default [(s) => { s.data.count +=1 ; return s}]',
           next: { b: true },
@@ -308,6 +307,65 @@ test('run a workflow with initial state (data key) and optional start', async (t
 
   const result: any = await run(plan, { data: { count: 10 } });
   t.is(result.data.count, 12);
+});
+
+test('run a workflow with an end', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: 'export default [(s) => { s.data.a = 1 ; return s}]',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.data.b = 1; return s}]',
+          next: { c: true },
+        },
+        {
+          id: 'c',
+          expression: 'export default [(s) => { s.data.c = 1 ; return s}]',
+        },
+      ],
+    },
+    options: {
+      end: 'b',
+    },
+  };
+
+  const result: any = await run(plan, {});
+  t.deepEqual(result, { data: { a: 1, b: 1 } });
+});
+
+test('run a workflow with a start and end', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: 'export default [(s) => { s.data.a = 1 ; return s}]',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.data.b = 1; return s}]',
+          next: { c: true },
+        },
+        {
+          id: 'c',
+          expression: 'export default [(s) => { s.data.c = 1 ; return s}]',
+        },
+      ],
+    },
+    options: {
+      start: 'b',
+      end: 'b',
+    },
+  };
+
+  const result: any = await run(plan, {});
+  t.deepEqual(result, { data: { b: 1 } });
 });
 
 test('run a workflow with a trigger node', async (t) => {
