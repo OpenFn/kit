@@ -72,7 +72,7 @@ test('throw if a $ is already inside a non-compatible arrow (state name)', (t) =
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: `invalid lazy state: parameter "s" should be called "state"`
+    message: `invalid state operator: parameter "s" should be called "state"`
   });
 })
 
@@ -82,7 +82,47 @@ test('throw if a $ is already inside a non-compatible arrow (arity)', (t) => {
   const ast = parse(src);
 
   t.throws(() => transform(ast, [visitors]), {
-    message: 'invalid lazy state: parent has wrong arity'
+    message: 'invalid state operator: parent has wrong arity'
+  });
+})
+
+test('throw if $ is not inside an operation', (t) => {
+  const src = 'const x = $.data;' // throw!!
+  t.log(src)
+  const ast = parse(src);
+
+  t.throws(() => transform(ast, [visitors]), {
+    message: 'invalid state operator: must be inside an expression'
+  });
+})
+
+test('throw if $ is on the left hand side of an assignment', (t) => {
+  const src = '$.data = 20;' // throw!!
+  t.log(src)
+  const ast = parse(src);
+
+  t.throws(() => transform(ast, [visitors]), {
+    message: 'invalid state operator: must be inside an expression'
+  });
+})
+
+test('throw if $ is on the left hand side of a nested assignment', (t) => {
+  const src = 'fn(() => { $.data = 20; })' // throw!!
+  t.log(src)
+  const ast = parse(src);
+
+  t.throws(() => transform(ast, [visitors]), {
+    message: 'invalid state operator: must be inside an expression'
+  });
+})
+
+test('throw if $ is on the left hand side of a multi assignment', (t) => {
+  const src = 'const z = $.data = 20;' // throw!!
+  t.log(src)
+  const ast = parse(src);
+
+  t.throws(() => transform(ast, [visitors]), {
+    message: 'invalid state operator: must be inside an expression'
   });
 })
 
