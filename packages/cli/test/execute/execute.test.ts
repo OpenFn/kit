@@ -268,7 +268,7 @@ test.serial('run a workflow with config as a path', async (t) => {
   t.is(result.cfg.id, 'x');
 });
 
-test.serial('run a workflow from a start node', async (t) => {
+test.serial('run a workflow from --start', async (t) => {
   const workflow = {
     workflow: {
       steps: [
@@ -296,7 +296,7 @@ test.serial('run a workflow from a start node', async (t) => {
   t.is(result.data.result, 'b');
 });
 
-test.serial('run a workflow from a start node and cached state', async (t) => {
+test.serial('run a workflow from --start and cached state', async (t) => {
   const workflow = {
     workflow: {
       steps: [
@@ -324,6 +324,45 @@ test.serial('run a workflow from a start node and cached state', async (t) => {
   };
   const result = await handler(options, logger);
   t.is(result.x, 22);
+});
+
+test.serial('run a workflow from --only and cached state', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: `${fn}fn((state) => ({ ...state, a: true }))`,
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}fn((state) => ({ ...state, b: true }))`,
+          next: { c: true },
+        },
+        {
+          id: 'c',
+          expression: `${fn}fn((state) => ({ ...state, c: true }))`,
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/.cli-cache/workflow/a.json': JSON.stringify({ x: 22 }),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    only: 'b',
+  };
+  const result = await handler(options, logger);
+  t.deepEqual(result, {
+    b: true,
+    x: 22,
+    data: {},
+  });
 });
 
 test.serial('run a workflow with an adaptor (longform)', async (t) => {

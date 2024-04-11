@@ -67,18 +67,30 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     }
   }
 
+  // Handle start, end and only
   if (options.only) {
     const step = matchStep(plan, options.only, 'only', logger);
-    plan.options.start = step;
-    plan.options.end = step;
 
-    logger.always(`Only running workflow step "${options.only}"`);
+    // Note that we have to write the new start to the plan AND to the options object here
+    plan.options.start = options.start = step;
+    plan.options.end = options.end = step;
+    logger.always(`Only running workflow step "${options.start}"`);
   } else {
-    plan.options.start = matchStep(plan, options.start, 'start', logger);
+    plan.options.start = options.start = matchStep(
+      plan,
+      options.start,
+      'start',
+      logger
+    );
     logger.info(`Starting workflow from step "${options.start}"`);
 
     if (options.end) {
-      plan.options.end = matchStep(plan, options.end, 'end', logger);
+      plan.options.end = options.end = matchStep(
+        plan,
+        options.end,
+        'end',
+        logger
+      );
       logger.always(`Ending workflow at step "${options.end}"`);
     }
   }
