@@ -20,7 +20,7 @@ export type Opts = {
   adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
-  cache?: boolean;
+  cacheSteps?: boolean;
   compile?: boolean;
   confirm?: boolean;
   describe?: string;
@@ -120,11 +120,19 @@ export const autoinstall: CLIOption = {
   },
 };
 
-export const cache: CLIOption = {
-  name: 'cache',
+export const cacheSteps: CLIOption = {
+  name: 'cache-steps',
   yargs: {
     boolean: true,
-    description: 'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
+    description:
+      'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
+  },
+  ensure: (opts) => {
+    setDefaultValue(
+      opts,
+      'cacheSteps',
+      process.env.OPENFN_ALWAYS_CACHE_STEPS === 'true'
+    );
   },
 };
 

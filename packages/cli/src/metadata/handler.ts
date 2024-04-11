@@ -3,6 +3,7 @@ import { MetadataOpts } from './command';
 import loadState from '../util/load-state';
 import cache from './cache';
 import { getModuleEntryPoint } from '@openfn/runtime';
+import { ExecutionPlan } from '@openfn/lexicon';
 
 // Add extra, uh, metadata to the, uh, metadata object
 const decorateMetadata = (metadata: any) => {
@@ -51,7 +52,7 @@ const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0];
 
-  const state = await loadState(options, logger);
+  const state = await loadState({} as ExecutionPlan, options, logger);
   logger.success(`Generating metadata`);
 
   // Note that the config will be sanitised, so logging it may not be terrible helpful

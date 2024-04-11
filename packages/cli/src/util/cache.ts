@@ -1,52 +1,67 @@
-import { ExecutionPlan } from '@openfn/lexicon';
 import fs from 'node:fs';
+import path from 'node:path';
 import { rmdir } from 'node:fs/promises';
-import path from 'node:path'
 
+import type { ExecutionPlan } from '@openfn/lexicon';
 import type { Opts } from '../options';
-import { Logger } from './logger';
+import type { Logger } from './logger';
 
-export const getCachePath = async (plan: ExecutionPlan, options: Pick<Opts, 'baseDir' | 'cache'>, stepId?: string) => {
+export const getCachePath = async (
+  plan: ExecutionPlan,
+  options: Pick<Opts, 'baseDir'>,
+  stepId?: string
+) => {
   const { baseDir } = options;
 
   const { name } = plan.workflow;
 
   const basePath = `${baseDir}/.cli-cache/${name}`;
-  
-  if (stepId) {
-    // const step = plan.workflow.steps.find(({ id }) => id === stepId);
 
-    // TODO do we really want to use step name? it's not likely to be easily typeable
-    // Then again, for Lightning steps, the id isn't friendly either
-    // const fileName = step?.name ?? stepId;
-    const fileName = stepId;
-    return path.resolve(`${basePath}/${fileName.replace(/ /, '-')}.json`);
+  if (stepId) {
+    return path.resolve(`${basePath}/${stepId.replace(/ /, '-')}.json`);
   }
   return path.resolve(basePath);
+};
 
-}
+const ensureGitIgnore = (options: any) => {
+  if (!options._hasGitIgnore) {
+    const ignorePath = path.resolve(
+      options.baseDir,
+      '.cli-cache',
+      '.gitignore'
+    );
+    try {
+      fs.accessSync(ignorePath);
+    } catch (e) {
+      // doesn't exist!
+      fs.writeFileSync(ignorePath, '*');
+    }
+  }
+  options._hasGitIgnore = true;
+};
 
-// TODO this needs to move out into a util or something
 export const saveToCache = async (
   plan: ExecutionPlan,
   stepId: string,
   output: any,
-  options: Pick<Opts, 'baseDir' | 'cache'>,
+  options: Pick<Opts, 'baseDir' | 'cacheSteps'>,
   logger: Logger
-  ) => {
-  if (options.cache) {
+) => {
+  if (options.cacheSteps) {
     const cachePath = await getCachePath(plan, options, stepId);
     // Note that this is sync because other execution order gets messed up
-    fs.mkdirSync(path.dirname(cachePath), { recursive: true })
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true });
 
-    logger.info(`Writing ${stepId} output to ${cachePath}`)
-    fs.writeFileSync(cachePath, JSON.stringify(output))
+    ensureGitIgnore(options);
+
+    logger.info(`Writing ${stepId} output to ${cachePath}`);
+    fs.writeFileSync(cachePath, JSON.stringify(output));
   }
 }
 
 export const clearCache = async (
   plan: ExecutionPlan,
-  options: Pick<Opts, 'baseDir' | 'cache'>,
+  options: Pick<Opts, 'baseDir'>,
   logger: Logger
 ) => {
   const cacheDir = await getCachePath(plan, options);
