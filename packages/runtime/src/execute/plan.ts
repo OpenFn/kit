@@ -56,7 +56,6 @@ const executePlan = async (
     opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, jobId: id });
     logger.success(`loaded state for ${id} in ${duration}ms`);
   }
-
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift()!;

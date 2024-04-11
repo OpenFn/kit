@@ -1,16 +1,16 @@
 import { ExecutionPlan } from '@openfn/lexicon';
 
-export default (plan: ExecutionPlan, start?: string) => {
-  if (start) {
+export default (plan: ExecutionPlan, stepPattern?: string) => {
+  if (stepPattern) {
     const { steps } = plan.workflow;
     // first, check for an exact id match
-    const exact = steps.find((step) => step.id === start);
+    const exact = steps.find((step) => step.id === stepPattern);
     if (exact) return exact.id;
 
     // next, build a list of all matching steps by name or id
     const matches: Record<string, true> = {};
     steps.forEach((step) => {
-      if (step.id?.includes(start) || step.name?.includes(start)) {
+      if (step.id?.includes(stepPattern) || step.name?.includes(stepPattern)) {
         matches[step.id!] = true;
       }
     });
@@ -21,7 +21,7 @@ export default (plan: ExecutionPlan, start?: string) => {
       return results[0];
     }
 
-    // if there are multipe matches, we must abort with error
+    // if there are multiple matches, we must abort with error
     if (results.length > 1) {
       throw new Error('AMBIGUOUS_INPUT');
     }

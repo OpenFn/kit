@@ -22,33 +22,35 @@ export type Opts = {
   autoinstall?: boolean;
   cacheSteps?: boolean;
   compile?: boolean;
+  configPath?: string;
   confirm?: boolean;
   describe?: string;
-  configPath?: string;
+  end?: string; // workflow end node
   expandAdaptors?: boolean; // for unit tests really
-  force?: boolean;
-  immutable?: boolean;
-  ignoreImports?: boolean | string[];
   expressionPath?: string;
+  force?: boolean;
+  ignoreImports?: boolean | string[];
+  immutable?: boolean;
   log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
+  only?: string; // only run this workflow node
   operation?: string;
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
   planPath?: string;
+  projectId?: string;
   projectPath?: string;
   repoDir?: string;
+  sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   skipAdaptorValidation?: boolean;
   specifier?: string; // docgen
-  start?: string; // workflow start node
+  start?: string; // workflow start step
   statePath?: string;
   stateStdin?: string;
-  sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
-  projectId?: string;
 
   // deprecated
   workflowPath?: string;
@@ -340,7 +342,23 @@ export const start: CLIOption = {
   name: 'start',
   yargs: {
     string: true,
-    description: 'Specifiy the start node in a workflow',
+    description: 'Specifiy the start step in a workflow',
+  },
+};
+
+export const end: CLIOption = {
+  name: 'end',
+  yargs: {
+    string: true,
+    description: 'Specifiy the end step in a workflow',
+  },
+};
+
+export const only: CLIOption = {
+  name: 'only',
+  yargs: {
+    string: true,
+    description: 'Specifiy to only run one step in a workflow',
   },
 };
 
