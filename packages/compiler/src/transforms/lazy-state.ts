@@ -20,9 +20,15 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
   while(root && !n.CallExpression.check(root.node)) {
     last = root;
     root = root.parent;
+
+    // if this is any kind of statement, we should throw
+    // TODO we may relax this, see https://github.com/OpenFn/kit/issues/660
+    if (n.Statement.check(root.node) || n.Declaration.check(root.node)) {
+      throw new Error(`invalid state operator: must be inside an expression`)
+    }
   }
 
-  if (root) {
+  if (root && n.CallExpression.check(root.node)) {
     const arg = last as NodePath;
 
     if (!isOpenFunction(arg)) {
@@ -30,6 +36,9 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
       const arrow = b.arrowFunctionExpression([params], arg.node);
       arg.replace(arrow);
     }
+  } else {
+    // Actually I don't think we'll ever get here
+    throw new Error(`invalid state operator: must be be passed as an argument to an operator`)
   }
 }
 
@@ -46,9 +55,9 @@ const isOpenFunction = (path: NodePath) => {
         // We already have a valid open function here
         return true;
       }
-      throw new Error(`invalid lazy state: parameter "${name}" should be called "state"`)
+      throw new Error(`invalid state operator: parameter "${name}" should be called "state"`)
     }
-    throw new Error('invalid lazy state: parent has wrong arity')
+    throw new Error('invalid state operator: parent has wrong arity')
   }
 
   // if we get here, then path is:
