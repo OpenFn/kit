@@ -121,7 +121,7 @@ test.serial('multiple inputs', async (t) => {
   t.regex(error.message[0].message, /multiple dependencies detected for: c/i);
 });
 
-test.serial('invalid start', async (t) => {
+test.serial('invalid start on workflow (not found)', async (t) => {
   const { stdout, err } = await run(
     `openfn ${jobsPath}/invalid-start.json --log-json`
   );
@@ -129,10 +129,19 @@ test.serial('invalid start', async (t) => {
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /Error validating execution plan/i);
-  assertLog(t, stdlogs, /Workflow failed/i);
+  assertLog(t, stdlogs, /Error: start step not found/i);
+  assertLog(t, stdlogs, /aborting command/i);
+});
 
-  // Find the error obejct which is logged out
-  const error = stdlogs.find((l) => l.message[0].name === 'ValidationError');
-  t.regex(error.message[0].message, /could not find start job: nope/i);
+test.serial('invalid end (ambiguous)', async (t) => {
+  // Note that the start should override
+  const { stdout, err } = await run(
+    `openfn ${jobsPath}/invalid-start.json --log-json --start x1 --end x`
+  );
+  t.is(err.code, 1);
+
+  const stdlogs = extractLogs(stdout);
+
+  assertLog(t, stdlogs, /Error: end pattern matched multiple steps/i);
+  assertLog(t, stdlogs, /aborting command/i);
 });

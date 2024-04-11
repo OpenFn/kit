@@ -29,12 +29,11 @@ const matchStep = (
     let message;
     let help;
     if (err.message === 'AMBIGUOUS_INPUT') {
-      message = `${stepName} pattern matched muliple steps`;
+      message = `${stepName} pattern matched multiple steps`;
       help = `The ${stepName} option can contain an exact match of a step id, or a partial match if a name or id so long as it is unique.`;
     } else if (err.message === 'NOT_FOUND') {
-      // note that this error may be pre-empted by plan validation
       message = `${stepName} step not found`;
-      help = `The step "${stepPattern}" could not be be found in the workflow provided.`;
+      help = `The step "${stepPattern}" could not be be found in the workflow`;
     } else {
       message = `Error parsing ${stepName} option`;
     }
@@ -78,7 +77,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   } else {
     plan.options.start = options.start = matchStep(
       plan,
-      options.start,
+      options.start ?? plan.options.start,
       'start',
       logger
     );
@@ -87,7 +86,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     if (options.end) {
       plan.options.end = options.end = matchStep(
         plan,
-        options.end,
+        options.end ?? plan.options.end,
         'end',
         logger
       );
