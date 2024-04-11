@@ -30,3 +30,5 @@ export declare function somethingPrivate(): void;
 
 // Note that this is mocked by the helper project setup
 export { fn } from '@openfn/language-common';
+
+export * as flavours from './stroopwafel-flavours';

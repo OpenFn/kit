@@ -1,7 +1,11 @@
 import { WrappedSymbol } from './typescript/wrapped-symbol';
 import { NO_SYMBOLS_FOUND } from './typescript/project';
 import type { Project } from './typescript/project';
-import type { FunctionDescription, ParameterDescription } from './api';
+import type {
+  FunctionDescription,
+  ParameterDescription,
+  NamespaceDescription,
+} from './api';
 
 type DescribeOptions = {
   // Should we describe privately declared exports?
@@ -22,6 +26,16 @@ const describeParameter = (
   };
 };
 
+const describeNamespace = (
+  _project: Project,
+  symbol: WrappedSymbol
+): NamespaceDescription => {
+  return {
+    name: symbol.name,
+    type: 'namespace',
+  };
+};
+
 const describeFunction = (
   project: Project,
   symbol: WrappedSymbol,
@@ -35,6 +49,7 @@ const describeFunction = (
   }
 
   return {
+    type: 'function',
     name: moduleName ? `${moduleName}.${symbol.name}` : symbol.name,
     description: symbol.comment,
     parameters: symbol.parameters.map((p) => describeParameter(project, p)),
@@ -87,18 +102,18 @@ const describeProject = (
     .reduce((symbols, symbol) => {
       if (symbol.isFunctionDeclaration) {
         symbols.push(describeFunction(project, symbol));
-      }
-
-      if (symbol.isModuleDeclaration) {
+      } else if (symbol.isModuleDeclaration) {
         symbol.exports.map((modSymbol) => {
           if (modSymbol.isFunctionDeclaration) {
             symbols.push(describeFunction(project, modSymbol, symbol.name));
           }
         });
+      } else if (symbol.isExportAlias) {
+        symbols.push(describeNamespace(project, symbol));
       }
 
       return symbols;
-    }, [] as FunctionDescription[]);
+    }, [] as Array<FunctionDescription | NamespaceDescription>);
 };
 
 export default describeProject;

@@ -1,0 +1,10 @@
+{
+  "workflow": {
+    "steps": [
+      {
+        "adaptor": "common",
+        "expression": "fn((state) => { state.result = dateFns.parse(state.data, 'MM/dd/yyyy', new Date()).toLocaleString(); return state; })"
+      }
+    ]
+  }
+}
