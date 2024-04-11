@@ -181,14 +181,10 @@ test.serial(
 test.serial(
   `openfn ${jobsPath}/common-date.json -s ${jobsPath}/common-date-input.json`,
   async (t) => {
-    console.log(t.title);
-    const { stdout, stderr } = await run(t.title);
-    console.log(stdout);
-    console.log(stderr);
-    // t.falsy(err);
+    const { err } = await run(t.title);
+    t.falsy(err);
 
     const out = getJSON();
-    console.log(out);
-    t.is(out.data.count, 42);
+    t.deepEqual(out, { data: '01/01/2024', result: '1/1/2024, 12:00:00 AM' })
   }
 );
