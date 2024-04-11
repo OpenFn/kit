@@ -126,7 +126,7 @@ test('transform will stop if a visitor returns truthy', (t) => {
   t.assert(visitCount === 1);
 });
 
-test('one transform will stopping does not affect another', (t) => {
+test('one transform stopping does not affect another', (t) => {
   let callCount = 0;
   let idCount = 0;
 
