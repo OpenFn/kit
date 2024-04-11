@@ -71,3 +71,10 @@ test('Parse an empty file', async (t) => {
   const fns = await describeProject(project);
   t.is(fns.length, 0);
 });
+
+test('Recognise a namespace', async (t) => {
+  const ns = get('flavours');
+  t.is(ns.type, 'namespace')
+
+  // Note that we don't do a lot with the namespace right now - we just acknowledge that its there
+});

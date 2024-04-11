@@ -1,4 +1,4 @@
-import ts, { SymbolFlags } from 'typescript';
+import ts from 'typescript';
 
 export class WrappedSymbol {
   typeChecker: ts.TypeChecker;
@@ -97,7 +97,7 @@ export class WrappedSymbol {
     // @ts-ignore symbol.parent
     const parentSymbol = this.symbol.parent;
     return (
-      this.symbol.flags === SymbolFlags.AliasExcludes ||
+      this.symbol.flags === ts.SymbolFlags.AliasExcludes ||
       parentSymbol?.escapedName.match(/^\"\/node_modules\//)
     );
   }
