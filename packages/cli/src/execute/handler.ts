@@ -32,9 +32,9 @@ const matchStep = (
       message = `${stepName} pattern matched muliple steps`;
       help = `The ${stepName} option can contain an exact match of a step id, or a partial match if a name or id so long as it is unique.`;
     } else if (err.message === 'NOT_FOUND') {
-      // TOOD this error will actualy be pre-empted by plan validation
+      // note that this error may be pre-empted by plan validation
       message = `${stepName} step not found`;
-      help = `The step (${stepPattern}) could not be be found in the workflow provided.`;
+      help = `The step "${stepPattern}" could not be be found in the workflow provided.`;
     } else {
       message = `Error parsing ${stepName} option`;
     }
