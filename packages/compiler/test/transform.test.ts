@@ -1,16 +1,10 @@
 import test from 'ava';
 import { builders as b } from 'ast-types';
-// import { visit } from 'recast';
-import { createMockLogger } from '@openfn/logger';
 
 import transform, { TransformerName } from '../src/transform';
 
-const logger = createMockLogger();
-
 const TEST = 'test' as TransformerName;
 const ENSURE_EXPORTS = 'ensure-exports' as TransformerName;
-
-// TODO need to work out whether to migrate or move these tests!
 
 test('transform will visit nodes once', (t) => {
   let visitCount = 0;
@@ -57,7 +51,7 @@ test('visit with mutiple transformes', (t) => {
   t.is(idCount, 1);
 });
 
-test.only('run transformers in order', (t) => {
+test('run transformers in order', (t) => {
   const results: number[] = [];
 
   const transformers = [
