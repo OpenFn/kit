@@ -3,6 +3,7 @@
 // I don't want any io or adaptor tests here, really just looking for the actual execute flow
 import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
+import fs from 'node:fs/promises';
 import { ExecuteOptions } from '../../src/execute/command';
 import handler from '../../src/execute/handler';
 import { mockFs, resetMockFs } from '../util';
@@ -128,6 +129,69 @@ test.serial('run a workflow with state', async (t) => {
   t.is(result.data.count, 4);
 });
 
+test.serial('run a workflow with cached steps', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: `${fn}fn((state) => ({ a: true }))`,
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}fn((state) => ({ ...state, b: true }))`,
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/.cli-cache/workflow/': {},
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    cacheSteps: true,
+  };
+  const result = await handler(options, logger);
+  t.is(result.a, true);
+  t.is(result.b, true);
+
+  const cache_a = await fs.readFile('/.cli-cache/workflow/a.json', 'utf8');
+  t.deepEqual(JSON.parse(cache_a), { a: true });
+
+  const cache_b = await fs.readFile('/.cli-cache/workflow/b.json', 'utf8');
+  t.deepEqual(JSON.parse(cache_b), { a: true, b: true, data: {} });
+});
+
+test.serial('.cli-cache has a gitignore', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          expression: `${fn}fn((state) => ({ a: true }))`,
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/.cli-cache/workflow/': {},
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    cacheSteps: true,
+  };
+  await handler(options, logger);
+
+  const gitignore = await fs.readFile('/.cli-cache/.gitignore', 'utf8');
+  t.is(gitignore, '*');
+});
+
 test.serial('run a workflow with initial state from stdin', async (t) => {
   const workflow = {
     workflow: {
@@ -204,7 +268,7 @@ test.serial('run a workflow with config as a path', async (t) => {
   t.is(result.cfg.id, 'x');
 });
 
-test.serial('run a workflow from a start node', async (t) => {
+test.serial('run a workflow from --start', async (t) => {
   const workflow = {
     workflow: {
       steps: [
@@ -230,6 +294,75 @@ test.serial('run a workflow from a start node', async (t) => {
   };
   const result = await handler(options, logger);
   t.is(result.data.result, 'b');
+});
+
+test.serial('run a workflow from --start and cached state', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: `${fn}fn((state) => state)`,
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}fn((state) => state)`,
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/.cli-cache/workflow/a.json': JSON.stringify({ x: 22 }),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    start: 'b',
+  };
+  const result = await handler(options, logger);
+  t.is(result.x, 22);
+});
+
+test.serial('run a workflow from --only and cached state', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: `${fn}fn((state) => ({ ...state, a: true }))`,
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}fn((state) => ({ ...state, b: true }))`,
+          next: { c: true },
+        },
+        {
+          id: 'c',
+          expression: `${fn}fn((state) => ({ ...state, c: true }))`,
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/.cli-cache/workflow/a.json': JSON.stringify({ x: 22 }),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    only: 'b',
+  };
+  const result = await handler(options, logger);
+  t.deepEqual(result, {
+    b: true,
+    x: 22,
+    data: {},
+  });
 });
 
 test.serial('run a workflow with an adaptor (longform)', async (t) => {

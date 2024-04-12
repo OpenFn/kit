@@ -5,7 +5,11 @@
   "workflow": {
     "steps": [
       {
-        "id": "x",
+        "id": "x1",
+        "expression": "fn((state) => state)"
+      },
+      {
+        "id": "x2",
         "expression": "fn((state) => state)"
       }
     ]

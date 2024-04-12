@@ -20,34 +20,37 @@ export type Opts = {
   adaptor?: boolean | string;
   adaptors?: string[];
   autoinstall?: boolean;
+  cacheSteps?: boolean;
   compile?: boolean;
+  configPath?: string;
   confirm?: boolean;
   describe?: string;
-  configPath?: string;
+  end?: string; // workflow end node
   expandAdaptors?: boolean; // for unit tests really
-  force?: boolean;
-  immutable?: boolean;
-  ignoreImports?: boolean | string[];
   expressionPath?: string;
+  force?: boolean;
+  ignoreImports?: boolean | string[];
+  immutable?: boolean;
   log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
+  only?: string; // only run this workflow node
   operation?: string;
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
   planPath?: string;
+  projectId?: string;
   projectPath?: string;
   repoDir?: string;
+  sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   skipAdaptorValidation?: boolean;
   specifier?: string; // docgen
-  start?: string; // workflow start node
+  start?: string; // workflow start step
   statePath?: string;
   stateStdin?: string;
-  sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
-  projectId?: string;
 
   // deprecated
   workflowPath?: string;
@@ -116,6 +119,23 @@ export const autoinstall: CLIOption = {
     boolean: true,
     description: 'Auto-install the language adaptor(s)',
     default: true,
+  },
+};
+
+export const cacheSteps: CLIOption = {
+  name: 'cache-steps',
+  yargs: {
+    boolean: true,
+    description:
+      'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
+  },
+  ensure: (opts) => {
+    if (
+      process.env.OPENFN_ALWAYS_CACHE_STEPS &&
+      !opts.hasOwnProperty('cacheSteps')
+    ) {
+      opts.cacheSteps = process.env.OPENFN_ALWAYS_CACHE_STEPS === 'true';
+    }
   },
 };
 
@@ -323,7 +343,23 @@ export const start: CLIOption = {
   name: 'start',
   yargs: {
     string: true,
-    description: 'Specifiy the start node in a workflow',
+    description: 'Specifiy the start step in a workflow',
+  },
+};
+
+export const end: CLIOption = {
+  name: 'end',
+  yargs: {
+    string: true,
+    description: 'Specifiy the end step in a workflow',
+  },
+};
+
+export const only: CLIOption = {
+  name: 'only',
+  yargs: {
+    string: true,
+    description: 'Specifiy to only run one step in a workflow',
   },
 };
 
