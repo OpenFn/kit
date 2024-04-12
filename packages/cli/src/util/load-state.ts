@@ -60,7 +60,7 @@ export default async (
   }
 
   if (opts.start && opts.cacheSteps !== false) {
-    log.debug(
+    log.always(
       `Attempting to load cached input state for starting step "${opts.start}"`
     );
     try {
@@ -89,7 +89,7 @@ export default async (
           // should we exit at this point?
         }
       } else {
-        log.error(`Could not find an input step for step "${opts.start}"`);
+        log.warn(`Could not find an input step for step "${opts.start}"`);
       }
     } catch (e) {
       log.warn('Error loading cached state');
