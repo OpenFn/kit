@@ -1,5 +1,15 @@
 # ws-worker
 
+## 1.1.4
+
+### Patch Changes
+
+- 7ddc5d8: Support expressions in lazy state operators
+- 4deb5d4: Recognise import aliases in job code
+- Updated dependencies [cecdb60]
+  - @openfn/runtime@1.1.2
+  - @openfn/engine-multi@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

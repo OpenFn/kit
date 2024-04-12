@@ -1,5 +1,13 @@
 # @openfn/compiler
 
+## 0.1.2
+
+### Patch Changes
+
+- 7ddc5d8: Allow lazy state functions to be hoisted further up the tree (lazy state expressions)
+- Updated dependencies [4deb5d4]
+  - @openfn/describe-package@0.0.19
+
 ## 0.1.1
 
 ### Patch Changes
