@@ -135,11 +135,11 @@ The CLI can write the output of every single step to disk (rather than just the 
 openfn tmp/job.js --cache-steps
 ```
 
-The cached output is written to `.cli-cache/<workflow-name>/<step-name>.json`, relative to the input job or workflow file.
+The cached output is written to `.cli-cache/<workflow-name>/<step-name>.json`, relative to the input job or workflow file. This folder has a `.gitignore` file and should be ignored from your version control.
 
-So for .tmp/workflow.json you'll get a cache path something like ./.cli-cache/workflow/step-1.json.
+So for a workflow at `./tmp/workflow.json` you'll get a cache path something like `./tmp/.cli-cache/workflow/step-1.json.`
 
-The cache is cleared when execution starts, so all artefacts in the cache folder relate to the last run.
+The cache is cleared when execution starts, so you know all artefacts in the cache folder relate to the last run.
 
 Step caching is disabled by default, but you can switch it on by setting the `OPENFN_ALWAYS_CACHE_STEPS` env var to `true`. To disable for a single execution, pass the `--no-compile-steps` flag.
 
@@ -155,12 +155,14 @@ openfn tmp/job.js --start upload-to-salesforce
 
 If you previously cached the steps from this workflow, the CLI will automatically load the correct input state from the cache. Otherwise, you can pass in whatever state you need with `-s ./transformed-state.json`.
 
-The start name supports "fuzzy" inputs. If you pass an exact step id, that step will always be the starting step. But you can also pass part of step name or id.
+You can also pass `--end` to make the workflow end early, or `--only` to only run a single step.
 
-So to match a step called with id `cf628d9e-66cc-46b7-befa-cd1439f2173c?s=236baf56-e6c7-40f2-80ad-00d5a10b6b64` (such as you might download from Lightning), you can do:
+All step names name supports "fuzzy" inputs. If you pass an exact step id, that step will always be the starting step. But you can also pass part of step name or id.
+
+So to match a step called with id `236baf56-e6c7-40f2-80ad-00d5a10b6b64` (such as you might download from Lightning), you can do:
 
 ```
-openfn tmp/job.js --start cf628d
+openfn tmp/job.js --start 236b
 ```
 
 Any unique continuous sequence of characters on the name or id will match. If there are multiple matches, an error will be thrown.
