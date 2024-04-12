@@ -1,5 +1,5 @@
 ---
-'@openfn/cli': minor
+'@openfn/cli': patch
 ---
 
-Initial release of "lazy state" operators ($)
+Support expressions in lazy state operators
