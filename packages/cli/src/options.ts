@@ -130,11 +130,12 @@ export const cacheSteps: CLIOption = {
       'Cache the output of steps to ./.cache/<workflow-name>/<step-name>.json',
   },
   ensure: (opts) => {
-    setDefaultValue(
-      opts,
-      'cacheSteps',
-      process.env.OPENFN_ALWAYS_CACHE_STEPS === 'true'
-    );
+    if (
+      process.env.OPENFN_ALWAYS_CACHE_STEPS &&
+      !opts.hasOwnProperty('cacheSteps')
+    ) {
+      opts.cacheSteps = process.env.OPENFN_ALWAYS_CACHE_STEPS === 'true';
+    }
   },
 };
 

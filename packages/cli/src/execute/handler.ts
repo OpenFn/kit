@@ -66,25 +66,29 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     }
   }
 
+  let customStart;
+  let customEnd;
+
   // Handle start, end and only
   if (options.only) {
     const step = matchStep(plan, options.only, 'only', logger);
 
-    // Note that we have to write the new start to the plan AND to the options object here
-    plan.options.start = options.start = step;
-    plan.options.end = options.end = step;
+    customStart = step;
+    customEnd = step;
     logger.always(`Only running workflow step "${options.start}"`);
   } else {
-    plan.options.start = options.start = matchStep(
-      plan,
-      options.start ?? plan.options.start,
-      'start',
-      logger
-    );
-    logger.info(`Starting workflow from step "${options.start}"`);
+    if (options.start) {
+      customStart = matchStep(
+        plan,
+        options.start ?? plan.options.start,
+        'start',
+        logger
+      );
+      logger.info(`Starting workflow from step "${options.start}"`);
+    }
 
     if (options.end) {
-      plan.options.end = options.end = matchStep(
+      customEnd = matchStep(
         plan,
         options.end ?? plan.options.end,
         'end',
@@ -93,8 +97,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
       logger.always(`Ending workflow at step "${options.end}"`);
     }
   }
-
-  const state = await loadState(plan, options, logger);
+  const state = await loadState(plan, options, logger, customStart);
 
   if (options.compile) {
     plan = (await compile(plan, options, logger)) as ExecutionPlan;
@@ -102,8 +105,18 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     logger.info('Skipping compilation as noCompile is set');
   }
 
+  const finalPlan = {
+    ...plan,
+    options: {
+      ...plan.options,
+      start: customStart,
+      end: customEnd,
+    },
+    workflow: plan.workflow,
+  };
+
   try {
-    const result = await execute(plan, state, options, logger);
+    const result = await execute(finalPlan, state, options, logger);
 
     if (options.cacheSteps) {
       logger.success(

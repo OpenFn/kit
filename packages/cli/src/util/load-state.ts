@@ -28,7 +28,8 @@ export default async (
     Opts,
     'baseDir' | 'stateStdin' | 'statePath' | 'cacheSteps' | 'start'
   >,
-  log: Logger
+  log: Logger,
+  start?: string
 ) => {
   const { stateStdin, statePath } = opts;
   log.debug('Loading state...');
@@ -59,14 +60,17 @@ export default async (
     }
   }
 
-  if (opts.start && opts.cacheSteps !== false) {
+  if (start) {
+    log.info(
+      'No state provided to CLI. Will attempt to load state from cache instead'
+    );
     log.always(
-      `Attempting to load cached input state for starting step "${opts.start}"`
+      `Attempting to load cached input state for starting step "${start}"`
     );
     try {
-      const upstreamStepId = getUpstreamStepId(plan, opts.start);
+      const upstreamStepId = getUpstreamStepId(plan, start);
       if (upstreamStepId) {
-        log.debug(`Input step for "${opts.start}" is "${upstreamStepId}"`);
+        log.debug(`Input step for "${start}" is "${upstreamStepId}"`);
         const cachedStatePath = await getCachePath(plan, opts, upstreamStepId);
         log.debug('Loading cached state from', cachedStatePath);
 
@@ -76,20 +80,19 @@ export default async (
           const str = await fs.readFile(cachedStatePath, 'utf8');
           const json = JSON.parse(str);
           log.success(
-            `Loaded cached state for step "${opts.start}" from ${cachedStatePath}`
+            `Loaded cached state for step "${start}" from ${cachedStatePath}`
           );
           log.info(`  To force disable the cache, run again with --no-cache`);
           return json;
         } catch (e) {
-          log.warn(`No cached state found for step "${opts.start}"`);
+          log.warn(`No cached state found for step "${start}"`);
           log.warn(
-            'Re-run this command with --cache and without --start to rebuild the cache'
+            'Re-run this workflow with --cache to save the output of each step'
           );
           log.break();
-          // should we exit at this point?
         }
       } else {
-        log.warn(`Could not find an input step for step "${opts.start}"`);
+        log.warn(`Could not find an input step for step "${start}"`);
       }
     } catch (e) {
       log.warn('Error loading cached state');
