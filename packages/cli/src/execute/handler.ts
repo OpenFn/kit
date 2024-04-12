@@ -109,7 +109,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     ...plan,
     options: {
       ...plan.options,
-      start: customStart,
+      start: customStart || plan.options.start,
       end: customEnd,
     },
     workflow: plan.workflow,

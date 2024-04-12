@@ -129,8 +129,11 @@ test.serial('invalid start on workflow (not found)', async (t) => {
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /Error: start step not found/i);
-  assertLog(t, stdlogs, /aborting command/i);
+  assertLog(t, stdlogs, /Error validating execution plan/i);
+  assertLog(t, stdlogs, /aborting/i);
+
+  const error = stdlogs.find((l) => l.message[0].name === 'ValidationError');
+  t.regex(error.message[0].message, /Could not find start job: nope/i);
 });
 
 test.serial('invalid end (ambiguous)', async (t) => {
@@ -143,5 +146,5 @@ test.serial('invalid end (ambiguous)', async (t) => {
   const stdlogs = extractLogs(stdout);
 
   assertLog(t, stdlogs, /Error: end pattern matched multiple steps/i);
-  assertLog(t, stdlogs, /aborting command/i);
+  assertLog(t, stdlogs, /aborting/i);
 });
