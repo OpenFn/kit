@@ -8,11 +8,13 @@ import type { Opts } from '../options';
 
 export const getUpstreamStepId = (plan: ExecutionPlan, stepId: string) => {
   const upstreamStep = plan.workflow.steps.find((step) => {
-    if (typeof step.next === 'string') {
-      return step.next === stepId;
-    }
+    if (step.next) {
+      if (typeof step.next === 'string') {
+        return step.next === stepId;
+      }
 
-    return stepId! in step.next! ?? null;
+      return stepId in step.next ?? null;
+    }
   });
 
   if (upstreamStep) {

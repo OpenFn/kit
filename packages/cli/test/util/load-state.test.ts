@@ -24,6 +24,17 @@ test('getUpstreamStepId: basic usage', (t) => {
   t.is(getUpstreamStepId(workflow, 'c'), 'b');
 });
 
+test("getUpstreamStepId: don't blow up if now next", (t) => {
+  const workflow = createWorkflow([
+    createStep({ id: 'c' }),
+    createStep({ id: 'a', next: { b: true } }),
+    createStep({ id: 'b', next: { c: true } }),
+  ]);
+
+  t.is(getUpstreamStepId(workflow, 'b'), 'a');
+  t.is(getUpstreamStepId(workflow, 'c'), 'b');
+});
+
 // TODO unsure at the moment how smart we need to be with this stuff
 test.todo('getUpstreamStepId: ignore falsy values');
 test.todo('getUpstreamStepId: ignore disabled edges');
