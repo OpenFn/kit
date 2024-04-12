@@ -27,9 +27,8 @@ export type Transformer = {
   id: TransformerName;
   types: string[];
   visitor: TransformFunction;
+  order?: number;
 };
-
-type TransformerIndex = Partial<Record<keyof Visitor, Transformer[]>>;
 
 export type TransformOptions = {
   logger?: Logger; //  TODO maybe in the wrong place?
@@ -49,61 +48,44 @@ export default function transform(
   options: TransformOptions = {}
 ) {
   if (!transformers) {
-    transformers = [lazyState, ensureExports, topLevelOps, addImports] as Transformer[];
+    transformers = [
+      lazyState,
+      ensureExports,
+      topLevelOps,
+      addImports,
+    ] as Transformer[];
   }
   const logger = options.logger || defaultLogger;
-  const transformerIndex = indexTransformers(transformers, options);
 
-  const v = buildVisitors(transformerIndex, logger, options);
-  // @ts-ignore generic disagree on Visitor, so disabling type checking for now
-  visit(ast, v);
-
-  return ast;
-}
-
-// Build a map of AST node types against an array of transform functions
-export function indexTransformers(
-  transformers: Transformer[],
-  options: TransformOptions = {}
-): TransformerIndex {
-  const index: TransformerIndex = {};
-  for (const t of transformers) {
-    const { types, id } = t;
-    if (options[id] !== false) {
+  transformers
+    // Ignore transformers which are explicitly disabled
+    .filter(({ id }) => options[id] ?? true)
+    // Set default orders
+    .map((t) => ({ ...t, order: t.order ?? 1 }))
+    // Sort by order
+    .sort((a, b) => {
+      if (a.order > b.order) return 1;
+      if (a.order < b.order) return -1;
+      return 0;
+    })
+    // Run each transformer
+    .forEach(({ id, types, visitor }) => {
+      const astTypes: Visitor = {};
       for (const type of types) {
         const name = `visit${type}` as keyof Visitor;
-        if (!index[name]) {
-          index[name] = [];
-        }
-        index[name]!.push(t);
+        astTypes[name] = function (path: NodePath) {
+          const opts = options[id] || {};
+          const abort = visitor!(path, logger, opts);
+          if (abort) {
+            return false;
+          }
+          this.traverse(path);
+        };
       }
-    }
-  }
-  return index;
-}
 
-// Build an index of AST visitors, where each node type is mapped to a visitor function which
-// calls out to the correct transformer, passing a logger and options
-export function buildVisitors(
-  transformerIndex: TransformerIndex,
-  logger: Logger,
-  options: TransformOptions = {}
-) {
-  const visitors: Visitor = {};
+      // @ts-ignore
+      visit(ast, astTypes);
+    });
 
-  for (const k in transformerIndex) {
-    const astType = k as keyof Visitor;
-    visitors[astType] = function (path: NodePath) {
-      const transformers = transformerIndex[astType]!;
-      for (const { id, visitor } of transformers) {
-        const opts = options[id] || {};
-        const abort = visitor!(path, logger, opts);
-        if (abort) {
-          return false;
-        }
-      }
-      this.traverse(path);
-    };
-  }
-  return visitors;
+  return ast;
 }

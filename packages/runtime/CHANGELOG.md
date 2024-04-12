@@ -1,11 +1,18 @@
 # @openfn/runtime
 
+## 1.1.2
+
+### Patch Changes
+
+- cecdb60: Support an end step option
+
 ## 1.1.1
 
 ### Patch Changes
 
 - Updated dependencies [2fde0ad]
   - @openfn/logger@1.0.1
+
 ## 1.1.0
 
 ### Minor Changes

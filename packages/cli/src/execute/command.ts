@@ -9,9 +9,12 @@ export type ExecuteOptions = Required<
     Opts,
     | 'adaptors'
     | 'autoinstall'
+    | 'baseDir'
+    | 'cacheSteps'
     | 'command'
     | 'compile'
     | 'expandAdaptors'
+    | 'end'
     | 'immutable'
     | 'ignoreImports'
     | 'expressionPath'
@@ -19,6 +22,7 @@ export type ExecuteOptions = Required<
     | 'logJson'
     | 'outputPath'
     | 'outputStdout'
+    | 'only'
     | 'path'
     | 'repoDir'
     | 'skipAdaptorValidation'
@@ -38,6 +42,7 @@ const options = [
 
   o.adaptors,
   o.autoinstall,
+  o.cacheSteps,
   o.compile,
   o.immutable,
   o.ignoreImports,

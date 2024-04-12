@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.19
+
+### Patch Changes
+
+- 4deb5d4: Recognise import aliases in job code
+
 ## 0.0.18
 
 ### Patch Changes

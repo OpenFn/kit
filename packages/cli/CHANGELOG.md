@@ -1,5 +1,23 @@
 # @openfn/cli
 
+## 1.2.0
+
+### Minor Changes
+
+- ea248a3: Allow step output to be cached
+  Accept fuzzy step ids in `--start`, `--end` and `--only`
+
+### Patch Changes
+
+- 7ddc5d8: Support expressions in lazy state operators
+- 4deb5d4: Recognise import aliases in job code
+- Updated dependencies [cecdb60]
+- Updated dependencies [4deb5d4]
+- Updated dependencies [7ddc5d8]
+  - @openfn/runtime@1.1.2
+  - @openfn/describe-package@0.0.19
+  - @openfn/compiler@0.1.2
+
 ## 1.1.4
 
 ### Patch Changes

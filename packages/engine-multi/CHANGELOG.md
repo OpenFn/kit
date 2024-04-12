@@ -1,5 +1,14 @@
 # engine-multi
 
+## 1.1.4
+
+### Patch Changes
+
+- Updated dependencies [cecdb60]
+- Updated dependencies [7ddc5d8]
+  - @openfn/runtime@1.1.2
+  - @openfn/compiler@0.1.2
+
 ## 1.1.3
 
 ### Patch Changes

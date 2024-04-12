@@ -56,7 +56,6 @@ const executePlan = async (
     opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, jobId: id });
     logger.success(`loaded state for ${id} in ${duration}ms`);
   }
-
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const next = queue.shift()!;
@@ -67,8 +66,15 @@ const executePlan = async (
     const result = await executeStep(ctx, job, prevState);
     stateHistory[next] = result.state;
 
-    if (!result.next.length) {
+    const exitEarly = options.end === next;
+    if (exitEarly || !result.next.length) {
       leaves[next] = stateHistory[next];
+    }
+
+    if (exitEarly) {
+      // If this is designated an end point, we should abort
+      // (even if there are more steps queued up)
+      break;
     }
 
     if (result.next) {

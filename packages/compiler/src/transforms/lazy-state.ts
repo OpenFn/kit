@@ -1,27 +1,80 @@
 /*
  * Convert $.a.b.c references into (state) => state.a.b.c
- * 
+ *
  * Converts all $.a.b chains unless:
- * - $ was assigned previously in that scope 
+ * - $ was assigned previously in that scope
  * 
- * TODO (maybe):
- *  - only convert $-expressions which are arguments to operations (needs type defs)
- *  - warn if converting a non-top-level $-expression
- *  - if not top level, convert to state.a.b.c (ie don't wrap the function)
+ *
  */
-import { builders as b, namedTypes } from 'ast-types';
+import { builders as b, namedTypes as n} from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 
-function visitor(path: NodePath<namedTypes.MemberExpression>) {
-  let first = path.node.object;
-  while(first.hasOwnProperty('object')) {
-    first = (first as namedTypes.MemberExpression).object;
+// Walk up the AST and work out where the parent arrow function should go
+const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
+  let root = path;
+  let last;
+
+  // find the parenting call expression
+  // Ie, the operation we're passing this arrow into
+  while(root && !n.CallExpression.check(root.node)) {
+    last = root;
+    root = root.parent;
+
+    // if this is any kind of statement, we should throw
+    // TODO we may relax this, see https://github.com/OpenFn/kit/issues/660
+    if (n.Statement.check(root.node) || n.Declaration.check(root.node)) {
+      throw new Error(`invalid state operator: must be inside an expression`)
+    }
   }
 
-  let firstIdentifer = first as namedTypes.Identifier;
-  
-  if (first && firstIdentifer.name === "$") {
+  if (root && n.CallExpression.check(root.node)) {
+    const arg = last as NodePath;
+
+    if (!isOpenFunction(arg)) {
+      const params = b.identifier('state');
+      const arrow = b.arrowFunctionExpression([params], arg.node);
+      arg.replace(arrow);
+    }
+  } else {
+    // Actually I don't think we'll ever get here
+    throw new Error(`invalid state operator: must be be passed as an argument to an operator`)
+  }
+}
+
+// Checks whether the passed node is an open function, ie, (state) => {...}
+const isOpenFunction = (path: NodePath) => {
+  // is it a function?
+  if (n.ArrowFunctionExpression.check(path.node))  {
+    const arrow = path.node as n.ArrowFunctionExpression;
+    // does it have one param?
+    if(arrow.params.length == 1) {
+      const name = (arrow.params[0] as n.Identifier).name
+      // is the param called state?
+      if (name === "state") {
+        // We already have a valid open function here
+        return true;
+      }
+      throw new Error(`invalid state operator: parameter "${name}" should be called "state"`)
+    }
+    throw new Error('invalid state operator: parent has wrong arity')
+  }
+
+  // if we get here, then path is:
+  // a) a Javascript Expression (and not an arrow)
+  // b) appropriate for being wrapped in an arrow
+  return false;
+};
+
+function visitor(path: NodePath<n.MemberExpression>) {
+  let first = path.node.object;
+  while (first.hasOwnProperty('object')) {
+    first = (first as n.MemberExpression).object;
+  }
+
+  let firstIdentifer = first as n.Identifier;
+
+  if (first && firstIdentifer.name === '$') {
     // But if a $ declared a parent scope, ignore it
     let scope = path.scope;
     while (scope) {
@@ -32,15 +85,10 @@ function visitor(path: NodePath<namedTypes.MemberExpression>) {
     }
 
     // rename $ to state
-    firstIdentifer.name = "state";
+    firstIdentifer.name = 'state';
 
-    // Now nest the whole thing in an arrow
-    const params = b.identifier('state')
-    const arrow = b.arrowFunctionExpression(
-      [params],
-      path.node
-    )
-    path.replace(arrow)
+    // from the parenting member expression, ensure the parent arrow is nicely wrapped
+    ensureParentArrow(path);
   }
 
   // Stop parsing this member expression
@@ -51,4 +99,6 @@ export default {
   id: 'lazy-state',
   types: ['MemberExpression'],
   visitor,
+  // It's important that $ symbols are escaped before any other transformations can run
+  order: 0,
 } as Transformer;

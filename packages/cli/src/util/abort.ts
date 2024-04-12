@@ -15,6 +15,7 @@ export default (
   help?: string
 ) => {
   const e = new AbortError(reason);
+  logger.break();
   logger.error(reason);
   if (error) {
     logger.error(error.message);
@@ -24,5 +25,8 @@ export default (
   }
   logger.break();
   logger.error('Critical error: aborting command');
+
+  process.exitCode = 1;
+
   throw e;
 };

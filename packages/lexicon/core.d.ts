@@ -89,6 +89,7 @@ export type WorkflowOptions = {
   timeout?: number;
   stepTimeout?: number;
   start?: StepId;
+  end?: StepId;
 
   // TODO not supported yet I don't think?
   sanitize?: SanitizePolicies;
