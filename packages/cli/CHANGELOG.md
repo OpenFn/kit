@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.2.1
+
+### Patch Changes
+
+- Fix --end and --only
+
 ## 1.2.0
 
 ### Minor Changes
