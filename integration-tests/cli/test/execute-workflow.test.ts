@@ -64,10 +64,7 @@ test.serial(
 
     const out = getJSON();
     t.is(out.data.items.length, 4);
-    t.true(out.data.items.includes('z'));
-    t.true(out.data.items.includes('a'));
-    t.true(out.data.items.includes('b'));
-    t.true(out.data.items.includes('c'));
+    t.deepEqual(out.data.items, ['z', 'a', 'b', 'c']);
   }
 );
 
