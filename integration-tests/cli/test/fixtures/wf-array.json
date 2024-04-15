@@ -4,7 +4,7 @@
       {
         "id": "a",
         "adaptor": "common",
-        "expression": "fn((state) => { if (!state.data.items) { state.data.items = []; } return state; });",
+        "expression": "fn((state) => { if (!state.data.items) { state.data.items = []; state.data.items.push('a'); } return state; });",
         "next": { "b": true }
       },
       {

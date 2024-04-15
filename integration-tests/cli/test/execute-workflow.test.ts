@@ -69,7 +69,7 @@ test.serial(
   }
 );
 
-// special start node
+// special start step
 test.serial(
   `openfn ${jobsPath}/wf-array.json --start b -S "{ \\"data\\": { \\"items\\": [] } }"`,
   async (t) => {
@@ -80,6 +80,21 @@ test.serial(
     t.is(out.data.items.length, 2);
     t.true(out.data.items.includes('b'));
     t.true(out.data.items.includes('c'));
+  }
+);
+
+// only step
+test.serial(
+  `openfn ${jobsPath}/wf-array.json --only b -S "{ \\"data\\": { \\"items\\": [] } }"`,
+  async (t) => {
+    const { err } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+    t.is(out.data.items.length, 1);
+    t.false(out.data.items.includes('a'));
+    t.true(out.data.items.includes('b'));
+    t.false(out.data.items.includes('c'));
   }
 );
 
@@ -185,6 +200,6 @@ test.serial(
     t.falsy(err);
 
     const out = getJSON();
-    t.deepEqual(out, { data: '01/01/2024', result: '1/1/2024, 12:00:00 AM' })
+    t.deepEqual(out, { data: '01/01/2024', result: '1/1/2024, 12:00:00 AM' });
   }
 );
