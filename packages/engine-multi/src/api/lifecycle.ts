@@ -148,7 +148,6 @@ export const error = (
   event: internalEvents.ErrorEvent
 ) => {
   const { threadId = '-', error } = event;
-
   context.emit(externalEvents.WORKFLOW_ERROR, {
     threadId,
     // @ts-ignore

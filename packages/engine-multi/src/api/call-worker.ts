@@ -51,5 +51,5 @@ export default function initWorkers(
 
   const closeWorkers = async (instant?: boolean) => workers.destroy(instant);
 
-  return { callWorker, closeWorkers };
+  return { callWorker, closeWorkers, workers };
 }

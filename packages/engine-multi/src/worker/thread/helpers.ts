@@ -1,6 +1,5 @@
 // utilities to run inside the worker
 // This is designed to minimize the amount of code we have to mock
-
 import process from 'node:process';
 import stringify from 'fast-safe-stringify';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
@@ -66,16 +65,22 @@ export const createLoggers = (
 // Execute wrapper function
 export const execute = async (
   workflowId: string,
-  executeFn: () => Promise<any> | undefined
+  executeFn: () => Promise<any> | undefined,
+  publishFn = publish
 ) => {
   const handleError = (err: any) => {
-    publish(workerEvents.ERROR, {
+    publishFn(workerEvents.ERROR, {
       // @ts-ignore
       workflowId,
       // Map the error out of the thread in a serializable format
       error: serializeError(err),
-      stack: err?.stack
+      stack: err?.stack,
       // TODO job id maybe
+    });
+
+    // Explicitly send a reject task error, to ensure the worker closes down
+    publish(workerEvents.ENGINE_REJECT_TASK, {
+      error: serializeError(err),
     });
   };
 
@@ -91,15 +96,19 @@ export const execute = async (
   // it'll be ignored (ie the workerEmit call will fail)
   process.on('uncaughtException', async (err: any) => {
     // Log this error to local stdout. This won't be sent out of the worker thread.
-    console.debug(`Uncaught exception in worker thread (workflow ${workflowId} )`)
-    console.debug(err)
-    
+    console.debug(
+      `Uncaught exception in worker thread (workflow ${workflowId} )`
+    );
+    console.debug(err);
+
     // Also try and log to the workflow's logger
     try {
-      console.error(`Uncaught exception in worker thread (workflow ${workflowId} )`)
-      console.error(err)
-    } catch(e) {
-      console.error(`Uncaught exception in worker thread`)
+      console.error(
+        `Uncaught exception in worker thread (workflow ${workflowId} )`
+      );
+      console.error(err);
+    } catch (e) {
+      console.error(`Uncaught exception in worker thread`);
     }
 
     // For now, we'll write this off as a crash-level generic execution error
@@ -107,23 +116,15 @@ export const execute = async (
     const e = new ExecutionError(err);
     e.severity = 'crash'; // Downgrade this to a crash because it's likely not our fault
     handleError(e);
-
-    // Close down the process just to be 100% sure that all async code stops
-    // This is in a timeout to give the emitted message time to escape
-    // There is a TINY WINDOW in which async code can still run and affect the next run
-    // This should all go away when we replace workerpool
-    setTimeout(() => {
-      process.exit(HANDLED_EXIT_CODE);
-    }, 2);
   });
 
-  publish(workerEvents.WORKFLOW_START, {
+  publishFn(workerEvents.WORKFLOW_START, {
     workflowId,
   });
 
   try {
     const result = await executeFn();
-    publish(workerEvents.WORKFLOW_COMPLETE, { workflowId, state: result });
+    publishFn(workerEvents.WORKFLOW_COMPLETE, { workflowId, state: result });
 
     // For tests
     return result;

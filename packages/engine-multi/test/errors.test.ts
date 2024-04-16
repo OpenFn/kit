@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
 
 import createEngine, { EngineOptions } from '../src/engine';
-import { WORKFLOW_ERROR } from '../src/events';
+import { WORKFLOW_ERROR, WORKFLOW_COMPLETE } from '../src/events';
 import type { RuntimeEngine } from '../src/types';
 
 let engine: RuntimeEngine;
@@ -138,10 +138,7 @@ test.serial.skip('vm oom error', (t) => {
   });
 });
 
-// https://github.com/OpenFn/kit/issues/509
-// TODO this passes standalone, but will trigger an exception in the next test
-// This should start working again once we spin up the worker thread
-test.serial.skip('execution error from async code', (t) => {
+test.serial('execution error from async code', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'e',
@@ -153,7 +150,7 @@ test.serial.skip('execution error from async code', (t) => {
             // In which case it'll be ignored
             // Also note that the wrapping promise will never resolve
             expression: `export default [(s) => new Promise((r) => {
-            setTimeout(() => { throw new Error(\"e1324\"); r() }, 10)
+              setTimeout(() => { throw new Error(\"err\"); r() }, 10)
             })]`,
           },
         ],
@@ -166,6 +163,46 @@ test.serial.skip('execution error from async code', (t) => {
       t.is(evt.severity, 'crash');
 
       done();
+    });
+  });
+});
+
+test.serial('after uncaught exception, free up the pool', (t) => {
+  const plan1 = {
+    id: 'e',
+    workflow: {
+      steps: [
+        {
+          expression: `export default [(s) => new Promise((r) => {
+            setTimeout(() => { throw new Error(\"err\"); r() }, 10)
+          })]`,
+        },
+      ],
+    },
+    options: {},
+  };
+  const plan2 = {
+    id: 'a',
+    workflow: {
+      steps: [
+        {
+          expression: `export default [(s) => s]`,
+        },
+      ],
+    },
+    options: {},
+  };
+
+  return new Promise((done) => {
+    engine.execute(plan1, {}).on(WORKFLOW_ERROR, (evt) => {
+      t.log('First workflow failed');
+      t.is(evt.type, 'ExecutionError');
+      t.is(evt.severity, 'crash');
+
+      engine.execute(plan2, {}).on(WORKFLOW_COMPLETE, () => {
+        t.log('Second workflow completed');
+        done();
+      });
     });
   });
 });
