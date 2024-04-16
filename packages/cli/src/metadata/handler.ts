@@ -49,7 +49,7 @@ export const getAdaptorPath = async (
 };
 
 const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
-  const { repoDir, adaptors } = options;
+  const { repoDir, adaptors, autoinstall } = options;
   const adaptor = adaptors[0];
 
   const state = await loadState({} as ExecutionPlan, options, logger);
@@ -84,6 +84,21 @@ const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
     // Import the adaptor
     const adaptorPath = await getAdaptorPath(adaptor, logger, options.repoDir);
     const mod = await import(adaptorPath!);
+
+    // Check if auto-installation is enabled
+    if (autoinstall) {
+      // Auto-install metadata
+      logger.info('Auto-installing metadata...');
+
+      if (mod.installMetadata) {
+        // If the adaptor supports installation of metadata, call the installMetadata function
+        await mod.installMetadata(config);
+        logger.success("Installed metadata")
+      } else {
+        logger.error('Metadata auto-installation not supported by the adaptor');
+        process.exit(1);
+      }
+    }
 
     // Does it export a metadata function?
     if (mod.metadata) {

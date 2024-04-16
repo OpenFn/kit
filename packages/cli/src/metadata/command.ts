@@ -3,7 +3,7 @@ import { build, ensure } from '../util/command-builders';
 import type { Opts } from '../options';
 import * as o from '../options';
 
-export type MetadataOpts = Required<Pick<Opts, 'adaptors' | 'repoDir'>> &
+export type MetadataOpts = Required<Pick<Opts, 'adaptors' | 'repoDir' | 'autoinstall'>> &
   Pick<
     Opts,
     | 'expandAdaptors'
@@ -19,13 +19,14 @@ const options = [
   o.expandAdaptors, // order is important
 
   o.adaptors,
+  o.autoinstall,
   o.force,
   o.log,
   o.logJson,
   o.repoDir,
   o.statePath,
   o.stateStdin,
-  o.useAdaptorsMonorepo,
+  o.useAdaptorsMonorepo
 ];
 
 export default {
