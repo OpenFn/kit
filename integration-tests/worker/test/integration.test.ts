@@ -403,109 +403,6 @@ test.serial('an OOM error should still call step-complete', (t) => {
   });
 });
 
-// test.serial('run a job with complex behaviours (initial state, branching)', (t) => {
-//   const attempt = {
-//     id: 'a1',
-//     initialState: 's1
-//     jobs: [
-//       {
-//         id: 'j1',
-//         body: 'const fn = (f) => (state) => f(state); fn(() => ({ data: { answer: 42} }))',
-//       },
-//     ],
-//   }
-
-//   initLightning();
-//   lightning.on('run:complete', (evt) => {
-//     // This will fetch the final dataclip from the attempt
-//     const result = lightning.getResult('a1');
-//     t.deepEqual(result, { data: { answer: 42 } });
-
-//     t.pass('completed attempt');
-//     done();
-//   });
-//   initWorker();
-
-//   lightning.enqueueRun({
-//     id: 'a1',
-//     jobs: [
-//       {
-//         id: 'j1',
-//         body: 'const fn = (f) => (state) => f(state); fn(() => ({ data: { answer: 42} }))',
-//       },
-//     ],
-//   });
-// });
-// });
-test.serial("Don't send job logs to stdout", (t) => {
-  return new Promise(async (done) => {
-    const attempt = {
-      id: crypto.randomUUID(),
-      jobs: [
-        {
-          adaptor: '@openfn/language-common@latest',
-          body: 'fn((s) =>  { console.log("@@@"); return s })',
-        },
-      ],
-    };
-
-    lightning.once('run:complete', () => {
-      const jsonLogs = engineLogger._history;
-      // The engine logger shouldn't print out any job logs
-      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
-      t.falsy(jobLog);
-      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
-      t.falsy(jobLog2);
-
-      // But it SHOULD log engine stuff
-      const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
-      );
-      t.truthy(runtimeLog);
-      done();
-    });
-
-    lightning.enqueueRun(attempt);
-  });
-});
-
-test.serial("Don't send adaptor logs to stdout", (t) => {
-  return new Promise(async (done) => {
-    // We have to create a new worker with a different repo for this one
-    await worker.destroy();
-    ({ worker, engineLogger } = await createDummyWorker());
-
-    const message = 've have been expecting you meester bond';
-    const attempt = {
-      id: crypto.randomUUID(),
-      jobs: [
-        {
-          adaptor: '@openfn/test-adaptor@1.0.0',
-          body: `import { log } from '@openfn/test-adaptor'; log("${message}")`,
-        },
-      ],
-    };
-
-    lightning.once('run:complete', () => {
-      const jsonLogs = engineLogger._history;
-      // The engine logger shouldn't print out any adaptor logs
-      const jobLog = jsonLogs.find((l) => l.name === 'ADA');
-      t.falsy(jobLog);
-      const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
-      t.falsy(jobLog2);
-
-      // But it SHOULD log engine stuff
-      const runtimeLog = jsonLogs.find(
-        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
-      );
-      t.truthy(runtimeLog);
-      done();
-    });
-
-    lightning.enqueueRun(attempt);
-  });
-});
-
 // https://github.com/OpenFn/kit/pull/668
 // This test relies on a capacity of 1
 test.serial(
@@ -578,14 +475,14 @@ test.serial('keep claiming work after a run with a process.exit', (t) => {
       const id = evt.runId;
       finished[id] = true;
 
-      if (id === 'a20') {
+      if (id === 'a30') {
         t.is(evt.payload.reason, 'crash');
       }
-      if (id === 'a21') {
+      if (id === 'a31') {
         t.is(evt.payload.reason, 'success');
       }
 
-      if (finished.a20 && finished.a21) {
+      if (finished.a30 && finished.a31) {
         t.pass('both runs completed');
         done();
       }
@@ -604,7 +501,7 @@ fn(
 `;
 
     lightning.enqueueRun({
-      id: 'a20',
+      id: 'a30',
       jobs: [
         {
           id: 'j1',
@@ -615,7 +512,7 @@ fn(
     });
 
     lightning.enqueueRun({
-      id: 'a21',
+      id: 'a31',
       jobs: [
         {
           id: 'j2',
@@ -624,6 +521,75 @@ fn(
         },
       ],
     });
+  });
+});
+
+test.serial("Don't send job logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  { console.log("@@@"); return s })',
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any job logs
+      const jobLog = jsonLogs.find((l) => l.name === 'JOB');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === '@@@');
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
+test.serial("Don't send adaptor logs to stdout", (t) => {
+  return new Promise(async (done) => {
+    // We have to create a new worker with a different repo for this one
+    await worker.destroy();
+    ({ worker, engineLogger } = await createDummyWorker());
+
+    const message = 've have been expecting you meester bond';
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `import { log } from '@openfn/test-adaptor'; log("${message}")`,
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      const jsonLogs = engineLogger._history;
+      // The engine logger shouldn't print out any adaptor logs
+      const jobLog = jsonLogs.find((l) => l.name === 'ADA');
+      t.falsy(jobLog);
+      const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
+      t.falsy(jobLog2);
+
+      // But it SHOULD log engine stuff
+      const runtimeLog = jsonLogs.find(
+        (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+      );
+      t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
   });
 });
 
