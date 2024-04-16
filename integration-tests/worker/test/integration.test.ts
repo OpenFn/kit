@@ -506,6 +506,68 @@ test.serial("Don't send adaptor logs to stdout", (t) => {
   });
 });
 
+// https://github.com/OpenFn/kit/pull/668
+// This test relies on a capacity of 1
+test.serial(
+  'keep claiming work after a run with an uncaught exception',
+  (t) => {
+    return new Promise(async (done) => {
+      const finished: Record<string, true> = {};
+
+      const onComplete = (evt) => {
+        const id = evt.runId;
+        finished[id] = true;
+
+        if (id === 'a20') {
+          t.is(evt.payload.reason, 'crash');
+        }
+        if (id === 'a21') {
+          t.is(evt.payload.reason, 'success');
+        }
+
+        if (finished.a20 && finished.a21) {
+          t.pass('both runs completed');
+          done();
+        }
+      };
+
+      lightning.on('run:complete', onComplete);
+
+      const body = `
+fn(
+  () => new Promise(() => {
+    setTimeout(() => {
+      throw new Error('uncaught')
+    }, 1)
+  })
+)
+`;
+
+      lightning.enqueueRun({
+        id: 'a20',
+        jobs: [
+          {
+            id: 'j1',
+            adaptor: '@openfn/language-common@latest',
+            body,
+          },
+        ],
+      });
+
+      lightning.enqueueRun({
+        id: 'a21',
+        jobs: [
+          {
+            id: 'j2',
+            adaptor: '@openfn/language-common@latest',
+            body: 'fn(() => ({ data: { answer: 42} }))',
+          },
+        ],
+      });
+    });
+  }
+);
+
 test.serial(
   'stateful adaptor should create a new client for each attempt',
   (t) => {
