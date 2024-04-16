@@ -32,8 +32,5 @@
   "files": [
     "dist",
     "README.md"
-  ],
-  "devDependencies": {
-    "@types/koa": "^2.15.0"
-  }
+  ]
 }
