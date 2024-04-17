@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.1.5
+
+### Patch Changes
+
+- Fix an issue where failed steps might not error correctly, stopping the pool from reclaiming the slot
+
 ## 1.1.4
 
 ### Patch Changes

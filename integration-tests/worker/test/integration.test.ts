@@ -403,40 +403,127 @@ test.serial('an OOM error should still call step-complete', (t) => {
   });
 });
 
-// test.serial('run a job with complex behaviours (initial state, branching)', (t) => {
-//   const attempt = {
-//     id: 'a1',
-//     initialState: 's1
-//     jobs: [
-//       {
-//         id: 'j1',
-//         body: 'const fn = (f) => (state) => f(state); fn(() => ({ data: { answer: 42} }))',
-//       },
-//     ],
-//   }
+// https://github.com/OpenFn/kit/pull/668
+// This test relies on a capacity of 1
+test.serial(
+  'keep claiming work after a run with an uncaught exception',
+  (t) => {
+    return new Promise(async (done) => {
+      const finished: Record<string, true> = {};
 
-//   initLightning();
-//   lightning.on('run:complete', (evt) => {
-//     // This will fetch the final dataclip from the attempt
-//     const result = lightning.getResult('a1');
-//     t.deepEqual(result, { data: { answer: 42 } });
+      const onComplete = (evt) => {
+        const id = evt.runId;
+        finished[id] = true;
 
-//     t.pass('completed attempt');
-//     done();
-//   });
-//   initWorker();
+        if (id === 'a20') {
+          t.is(evt.payload.reason, 'crash');
+        }
+        if (id === 'a21') {
+          t.is(evt.payload.reason, 'success');
+        }
 
-//   lightning.enqueueRun({
-//     id: 'a1',
-//     jobs: [
-//       {
-//         id: 'j1',
-//         body: 'const fn = (f) => (state) => f(state); fn(() => ({ data: { answer: 42} }))',
-//       },
-//     ],
-//   });
-// });
-// });
+        if (finished.a20 && finished.a21) {
+          t.pass('both runs completed');
+          done();
+        }
+      };
+
+      lightning.on('run:complete', onComplete);
+
+      const body = `
+fn(
+  () => new Promise(() => {
+    setTimeout(() => {
+      throw new Error('uncaught')
+    }, 1)
+  })
+)
+`;
+
+      lightning.enqueueRun({
+        id: 'a20',
+        jobs: [
+          {
+            id: 'j1',
+            adaptor: '@openfn/language-common@latest',
+            body,
+          },
+        ],
+      });
+
+      lightning.enqueueRun({
+        id: 'a21',
+        jobs: [
+          {
+            id: 'j2',
+            adaptor: '@openfn/language-common@latest',
+            body: 'fn(() => ({ data: { answer: 42} }))',
+          },
+        ],
+      });
+    });
+  }
+);
+
+// https://github.com/OpenFn/kit/pull/668
+// This test relies on a capacity of 1
+test.serial('keep claiming work after a run with a process.exit', (t) => {
+  return new Promise(async (done) => {
+    const finished: Record<string, true> = {};
+
+    const onComplete = (evt) => {
+      const id = evt.runId;
+      finished[id] = true;
+
+      if (id === 'a30') {
+        t.is(evt.payload.reason, 'crash');
+      }
+      if (id === 'a31') {
+        t.is(evt.payload.reason, 'success');
+      }
+
+      if (finished.a30 && finished.a31) {
+        t.pass('both runs completed');
+        done();
+      }
+    };
+
+    lightning.on('run:complete', onComplete);
+
+    const body = `
+fn(
+  () => new Promise(() => {
+    setTimeout(() => {
+      process.exit()
+    }, 1)
+  })
+)
+`;
+
+    lightning.enqueueRun({
+      id: 'a30',
+      jobs: [
+        {
+          id: 'j1',
+          adaptor: '@openfn/language-common@latest',
+          body,
+        },
+      ],
+    });
+
+    lightning.enqueueRun({
+      id: 'a31',
+      jobs: [
+        {
+          id: 'j2',
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn(() => ({ data: { answer: 42} }))',
+        },
+      ],
+    });
+  });
+});
+
 test.serial("Don't send job logs to stdout", (t) => {
   return new Promise(async (done) => {
     const attempt = {

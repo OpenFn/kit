@@ -87,8 +87,15 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         env: options.env || {},
 
         // This pipes the stderr stream onto the child, so we can read it later
-        stdio: ['ipc', 'ignore', 'pipe'],
+        stdio: ['ipc', 'pipe', 'pipe'],
       });
+
+      // Note: Ok, now I have visibility on the stdout stream
+      // I don't think I want to send this to gpc
+      // This might be strictly local debug
+      // child.stdout!.on('data', (data) => {
+      //   console.log(data.toString());
+      // });
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
@@ -158,7 +165,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           } catch (e) {
             // do nothing
           }
-
           reject(new ExitError(code));
           finish(worker);
         }

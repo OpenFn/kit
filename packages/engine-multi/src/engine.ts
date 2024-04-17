@@ -121,7 +121,7 @@ const createEngine = async (
 
   const engine = new Engine() as EngineAPI;
 
-  const { callWorker, closeWorkers } = initWorkers(
+  const { callWorker, closeWorkers, workers } = initWorkers(
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
@@ -239,6 +239,7 @@ const createEngine = async (
     execute: executeWrapper,
     listen,
     destroy,
+    workers,
   });
 };
 

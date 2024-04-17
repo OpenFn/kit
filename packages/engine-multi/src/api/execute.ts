@@ -88,6 +88,7 @@ const execute = async (context: ExecutionContext) => {
       });
     }
 
+    let didError = false;
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
         workflowStart(context, evt);
@@ -112,6 +113,7 @@ const execute = async (context: ExecutionContext) => {
       },
       // TODO this is also untested
       [workerEvents.ERROR]: (evt: workerEvents.ErrorEvent) => {
+        didError = true;
         error(context, { workflowId: state.plan.id, error: evt.error });
       },
     };
@@ -122,11 +124,16 @@ const execute = async (context: ExecutionContext) => {
       events,
       workerOptions
     ).catch((e: any) => {
-      // TODO are timeout errors being handled nicely here?
-      // actually I think the occur outside of here, in the pool
-
-      error(context, { workflowId: state.plan.id, error: e });
-      logger.error(`Critical error thrown by ${state.plan.id}`, e);
+      // An error should:
+      // a) emit an error event (and so be handled by the error() function
+      // b) reject the task in the pool
+      // This guard just ensures that error logging is not duplicated
+      // if both the above are true (as expected), but that there's still some
+      // fallback handling if the error event wasn't issued
+      if (!didError) {
+        error(context, { workflowId: state.plan.id, error: e });
+        logger.error(`Critical error thrown by ${state.plan.id}`, e);
+      }
     });
   } catch (e: any) {
     if (!e.severity) {

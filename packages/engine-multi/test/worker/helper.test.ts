@@ -1,6 +1,7 @@
 import test from 'ava';
+import * as workerEvents from '../../src/worker/events';
 
-import { createLoggers } from '../../src/worker/thread/helpers';
+import { execute, createLoggers } from '../../src/worker/thread/helpers';
 
 test('createLogger: runtime logger should emit an event on log', (t) => {
   const message = 'testing1234';
@@ -39,4 +40,45 @@ test('createLogger: runtime logger should emit a nicely serialised error on log'
   const { logger } = createLoggers('x', 'none', publish);
 
   logger.log(message);
+});
+
+test('execute: should call the run function', (t) => {
+  let didCallRun = false;
+
+  const run = async () => {
+    // do something
+    didCallRun = true;
+  };
+
+  execute('abc', run);
+
+  t.true(didCallRun);
+});
+
+test('execute: should publish workflow-start', async (t) => {
+  let event;
+
+  const publish = (eventName: string, payload: any) => {
+    if (eventName === workerEvents.WORKFLOW_START) {
+      event = payload;
+    }
+  };
+
+  await execute('abc', async () => {}, publish);
+
+  t.deepEqual(event, { workflowId: 'abc' });
+});
+
+test('execute: should publish workflow-complete', async (t) => {
+  let event;
+
+  const publish = (eventName: string, payload: any) => {
+    if (eventName === workerEvents.WORKFLOW_COMPLETE) {
+      event = payload;
+    }
+  };
+
+  await execute('abc', async () => ({}), publish);
+
+  t.deepEqual(event, { workflowId: 'abc', state: {} });
 });
