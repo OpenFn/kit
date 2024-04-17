@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [adfb661]
+  - @openfn/deploy@0.4.5
+
 ## 1.2.1
 
 ### Patch Changes

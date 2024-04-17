@@ -216,6 +216,17 @@ export function mergeSpecIntoState(
           ];
         }
 
+        if (!specWorkflow && !isEmpty(stateWorkflow || {})) {
+          console.log(
+            'Workflow found in project state but not spec.',
+            `Spec: ${specWorkflow}`,
+            `State: ${stateWorkflow}`
+          );
+          throw new Error(
+            'Cannot continue: workflow from state not found in spec.'
+          );
+        }
+
         return [
           workflowKey,
           {
