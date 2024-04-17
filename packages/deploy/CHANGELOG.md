@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.4.5
+
+### Patch Changes
+
+- adfb661: Error message for when workflow found in 'state' but not 'spec' during deploy
+
 ## 0.4.4
 
 ### Patch Changes
