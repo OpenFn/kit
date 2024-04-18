@@ -5,7 +5,6 @@ import cache from './cache';
 import { getModuleEntryPoint } from '@openfn/runtime';
 import { ExecutionPlan } from '@openfn/lexicon';
 import { install } from '../repo/handler';
-import getAutoinstall from './get-auto-install';
 
 // Add extra, uh, metadata to the, uh, metadata object
 const decorateMetadata = (metadata: any) => {
@@ -50,6 +49,14 @@ export const getAdaptorPath = async (
   return adaptorPath;
 };
 
+export const shouldAutoinstall = (adaptor: string): boolean => {
+
+  if (adaptor.includes("=") || adaptor.startsWith("/") || !adaptor.length) {
+    return false;
+  }
+  return true
+};
+
 const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0];
@@ -84,9 +91,8 @@ const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
 
   try {
     //Install and import the adaptor
-    const autoInstall = getAutoinstall(adaptor);
+    const autoInstall = shouldAutoinstall(adaptor);
     if (autoInstall) {
-      logger.info('Auto-installing language adaptors');
       await install({ packages: [adaptor], repoDir }, logger);
     }
 
