@@ -4,6 +4,7 @@ import loadState from '../util/load-state';
 import cache from './cache';
 import { getModuleEntryPoint } from '@openfn/runtime';
 import { ExecutionPlan } from '@openfn/lexicon';
+import { install } from '../repo/handler';
 
 // Add extra, uh, metadata to the, uh, metadata object
 const decorateMetadata = (metadata: any) => {
@@ -48,6 +49,8 @@ export const getAdaptorPath = async (
   return adaptorPath;
 };
 
+export const shouldAutoinstall = (adaptor: string): boolean => adaptor?.length > 0 && !adaptor.startsWith('/') && !adaptor.includes('=');
+
 const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   const { repoDir, adaptors } = options;
   const adaptor = adaptors[0];
@@ -81,7 +84,10 @@ const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   }
 
   try {
-    // Import the adaptor
+    if (shouldAutoinstall(adaptor)) {
+      await install({ packages: [adaptor], repoDir }, logger);
+    }
+
     const adaptorPath = await getAdaptorPath(adaptor, logger, options.repoDir);
     const mod = await import(adaptorPath!);
 
