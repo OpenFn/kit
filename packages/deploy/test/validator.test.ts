@@ -40,11 +40,29 @@ workflows:
 
   results = parseAndValidate(doc);
 
-  t.truthy(findError(results.errors, 'duplicate key: workflow-one'));
-
-  t.truthy(findError(results.errors, 'duplicate key: foo'));
+  t.truthy(findError(results.errors, 'duplicate workflow key: workflow-one')); 
 
   t.truthy(findError(results.errors, 'jobs: must be a map'));
+  
+  doc = `
+name: project-name
+workflows:
+  workflow-one:
+    name: workflow one
+  workflow-two:
+    name: workflow two
+    jobs:
+      foo:
+      foo:
+  workflow-three:
+    name: workflow three
+    jobs:
+      bar:
+  `;
+
+  results = parseAndValidate(doc);
+
+  t.truthy(findError(results.errors, 'duplicate job key: foo'));
 
   doc = `
 name: project-name
