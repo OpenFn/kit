@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.2.3
+
+### Patch Changes
+
+- 1dffdfc: support autoinstall in the metadata command
+
 ## 1.2.2
 
 ### Patch Changes
