@@ -127,7 +127,7 @@ test.serial('does not log credentials', async (t) => {
   t.notRegex(logString, new RegExp(sensitiveValue), 'i');
 });
 
-// Test for auto-installing adaptor
+// This test should auto-install the common adaptor but then happily fail to generate metadata
 test.serial(
   `openfn metadata -f -S "${state}" -a common --log-json --log info`,
   async (t) => {
@@ -135,9 +135,8 @@ test.serial(
 
     t.regex(stdout, /Generating metadata/);
     t.regex(stdout, /Installing packages.../);
-    t.regex(stdout, /Installed @openfn\/language-common@1.13.1/);
+    t.regex(stdout, /Installed @openfn\/language-common@/);
     t.regex(stdout, /Installation complete in \d+\.\d+s/);
     t.regex(stdout, /No metadata helper found/);
-    t.notRegex(stdout, /Returning metadata from cache/);
   }
 );

@@ -49,13 +49,7 @@ export const getAdaptorPath = async (
   return adaptorPath;
 };
 
-export const shouldAutoinstall = (adaptor: string): boolean => {
-
-  if (adaptor.includes("=") || adaptor.startsWith("/") || !adaptor.length) {
-    return false;
-  }
-  return true
-};
+export const shouldAutoinstall = (adaptor: string): boolean => adaptor?.length > 0 && !adaptor.startsWith('/') && !adaptor.includes('=');
 
 const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   const { repoDir, adaptors } = options;
@@ -90,9 +84,7 @@ const metadataHandler = async (options: MetadataOpts, logger: Logger) => {
   }
 
   try {
-    //Install and import the adaptor
-    const autoInstall = shouldAutoinstall(adaptor);
-    if (autoInstall) {
+    if (shouldAutoinstall(adaptor)) {
       await install({ packages: [adaptor], repoDir }, logger);
     }
 
