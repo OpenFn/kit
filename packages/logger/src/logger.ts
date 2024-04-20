@@ -41,6 +41,7 @@ export type LogFns =
   | 'log'
   | 'warn'
   | 'error'
+  | 'table'
   | 'success'
   | 'always';
 
@@ -68,6 +69,7 @@ export interface Logger extends Console {
   debug(...args: any[]): void;
   warn(...args: any[]): void;
   error(...args: any[]): void;
+  table(...args: any[]): void;
   success(...args: any[]): void;
   always(...args: any[]): void;
 

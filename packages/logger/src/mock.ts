@@ -33,18 +33,25 @@ const mockLogger = <T = StringLog>(
     ...console,
   } as LogEmitter;
 
-  ['log', 'info', 'success', 'always', 'debug', 'warn', 'error'].forEach(
-    (l) => {
-      const level = l as LogFns;
-      logger[level] = (...out: any[]) => {
-        if (opts.json) {
-          history.push(out[0] as T);
-        } else {
-          history.push([level, ...out] as T);
-        }
-      };
-    }
-  );
+  [
+    'log',
+    'info',
+    'success',
+    'always',
+    'debug',
+    'warn',
+    'error',
+    'table',
+  ].forEach((l) => {
+    const level = l as LogFns;
+    logger[level] = (...out: any[]) => {
+      if (opts.json) {
+        history.push(out[0] as T);
+      } else {
+        history.push([level, ...out] as T);
+      }
+    };
+  });
 
   const m: unknown = createLogger(name, {
     logger,
