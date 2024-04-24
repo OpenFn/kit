@@ -1,5 +1,15 @@
 # ws-worker
 
+## 1.1.6
+
+### Patch Changes
+
+- 2216720: Update lightning plan options to use snake case
+- Updated dependencies [2216720]
+  - @openfn/lexicon@1.0.1
+  - @openfn/engine-multi@1.1.6
+  - @openfn/runtime@1.1.2
+
 ## 1.1.5
 
 ### Patch Changes
