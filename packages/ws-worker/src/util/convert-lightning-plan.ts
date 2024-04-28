@@ -55,8 +55,8 @@ export default (
   const engineOpts: WorkerRunOptions = {};
 
   if (run.options) {
-    if (run.options.runTimeoutMs) {
-      engineOpts.runTimeoutMs = run.options.runTimeoutMs;
+    if (run.options.run_timeout_ms) {
+      engineOpts.runTimeoutMs = run.options.run_timeout_ms;
     }
     if (run.options.sanitize) {
       engineOpts.sanitize = run.options.sanitize;

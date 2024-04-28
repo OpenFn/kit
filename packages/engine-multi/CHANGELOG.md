@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.1.6
+
+### Patch Changes
+
+- Updated dependencies [2216720]
+  - @openfn/lexicon@1.0.1
+  - @openfn/runtime@1.1.2
+
 ## 1.1.5
 
 ### Patch Changes

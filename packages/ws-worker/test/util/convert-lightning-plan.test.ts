@@ -88,7 +88,7 @@ test('convert a single job with options', (t) => {
     edges: [],
     options: {
       sanitize: 'obfuscate',
-      runTimeoutMs: 10,
+      run_timeout_ms: 10,
     },
   };
   const { plan, options } = convertPlan(run as LightningPlan);
