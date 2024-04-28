@@ -19,6 +19,7 @@ workflows:
     results.errors.find((e) => e.message === 'workflows: must be a map')
   );
 
+  // disallow two workflows with same name
   doc = `
 name: project-name
 workflows:
@@ -40,10 +41,11 @@ workflows:
 
   results = parseAndValidate(doc);
 
-  t.truthy(findError(results.errors, 'duplicate workflow key: workflow-one')); 
+  t.truthy(findError(results.errors, 'duplicate key: workflow-one')); 
 
   t.truthy(findError(results.errors, 'jobs: must be a map'));
   
+  // disallow two jobs of the same name in the same workflow
   doc = `
 name: project-name
 workflows:
@@ -62,7 +64,7 @@ workflows:
 
   results = parseAndValidate(doc);
 
-  t.truthy(findError(results.errors, 'duplicate job key: foo'));
+  t.truthy(findError(results.errors, 'duplicate key: foo'));
 
   doc = `
 name: project-name

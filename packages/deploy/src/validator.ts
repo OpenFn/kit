@@ -13,23 +13,20 @@ export function parseAndValidate(input: string): {
   doc: ProjectSpec;
 } {
   let errors: Error[] = [];
-  let workflowKeys: Set<string> = new Set();
-  let jobKeys: Set<string> = new Set();
   const doc = YAML.parseDocument(input);
 
-  function pushUniqueKey(context: YAML.Pair, key: string, keyType: 'workflow' | 'job') {
-    const keyList = keyType === 'workflow' ? workflowKeys : jobKeys;
-    if (keyList.has(key)) {
+  function pushUniqueKey(context: YAML.Pair, key: string, arr: string[]) {
+    if (arr.includes(key)) {
       errors.push({
         context,
-        message: `duplicate ${keyType} key: ${key}`,
+        message: `duplicate key: ${key}`,
       });
     } else {
-      keyList.add(key);
+      arr.push(key);
     }
   }
 
-  function validateJobs(workflow: YAMLMap) {
+  function validateJobs(workflow: YAMLMap, jobKeys: string[]) {
     const jobs = workflow.getIn(['jobs']);
 
     if (jobs) {
@@ -37,7 +34,7 @@ export function parseAndValidate(input: string): {
         for (const job of jobs.items) {
           if (isPair(job)) {
             const jobName = (job as any).key.value;
-            pushUniqueKey(job, jobName, 'job');
+            pushUniqueKey(job, jobName, jobKeys);
           }
         }
       } else {
@@ -55,14 +52,15 @@ export function parseAndValidate(input: string): {
       // map to avoid errors downstream
       doc.setIn(['workflows'], {});
     } else if (isMap(workflows)) {
+      const workflowKeys: string[] = [];
       for (const workflow of workflows.items) {
         if (isPair(workflow)) {
           const workflowName = (workflow as any).key.value;
-          pushUniqueKey(workflow, workflowName, 'workflow');
+          const jobKeys: string[] = [];
+          pushUniqueKey(workflow, workflowName, workflowKeys);
           const workflowValue = (workflow as any).value;
           if (isMap(workflowValue)) {
-            jobKeys = new Set(); // Reset job keys for each workflow
-            validateJobs(workflowValue);
+            validateJobs(workflowValue, jobKeys);
           } else {
             errors.push({
               context: workflowValue,
