@@ -41,10 +41,13 @@ export type LightningPlan = {
  * (although at the time of writing timeout is handled by the worker, not the runtime)
  */
 export type LightningPlanOptions = {
-  runTimeoutMs?: number;
+  run_timeout_ms?: number;
   sanitize?: SanitizePolicies;
   start?: StepId;
   output_dataclips?: boolean;
+
+  // future options
+  run_memory_limit?: number
 };
 
 /**

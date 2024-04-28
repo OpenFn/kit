@@ -25,7 +25,7 @@ test('loadRun should return an execution plan and options', async (t) => {
     ...runs['run-1'],
     options: {
       sanitize: 'obfuscate',
-      runTimeoutMs: 10,
+      run_timeout_ms: 10,
     },
   };
 
@@ -59,7 +59,7 @@ test('should join an run channel with a token', async (t) => {
       join: () => ({ status: 'ok' }),
       [GET_PLAN]: () => ({
         id: 'a',
-        options: { runTimeoutMs: 10 },
+        options: { run_timeout_ms: 10 },
       }),
     }),
   });
