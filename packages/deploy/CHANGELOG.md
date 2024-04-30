@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.4.6
+
+### Patch Changes
+
+- Allow steps in different workflows to have the same name
+
 ## 0.4.5
 
 ### Patch Changes
