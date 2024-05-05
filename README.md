@@ -128,6 +128,55 @@ pnpm export adaptor-docs
 
 This will build adaptor-docs into a tarball and install it directly into Lightning (assuming that `Lightning` is a sibling dir of `kit`).
 
+## Code Formatting with Prettier
+
+[Prettier](https://prettier.io/) is used to ensure consistent code style throughout the project.
+
+### Editor Integration
+
+- **Visual Studio Code**:
+  - Install the "Prettier - Code formatter" extension.
+  - Open VS Code settings (`settings.json`) and enable "Format on Save":
+    ```json
+    {
+      "editor.formatOnSave": true
+    }
+    ```
+
+### Pre-commit Hook (Optional)
+
+We provide an optional pre-commit hook to automatically format staged files using Prettier before each commit. Ensure you have `lint-staged` and `husky` installed as dev dependencies:
+
+```bash
+npm install --save-dev lint-staged husky
+
+```
+Configure the `lint-staged` and `husky` in `package.json`
+```json
+{
+  "scripts": {
+    "format": "prettier --write 'src/**/*.js'"
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "npm run format",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  }
+}
+```
+### Usage
+1. Edit source files `(src/*.js)` in your preferred code editor.\
+2. Save the file to trigger automatic code formatting using Prettier.\
+3. Commit your changes. The pre-commit hook (if enabled) will ensure that staged files are formatted before the commit is completed.\
+
+For more information about Prettier and its configuration options, refer to the [Prettier documentation](https://prettier.io/docs/en/).
+
 ## Documentation
 
 For information on the history of the OpenFn internals and ideas for the future

@@ -17,7 +17,19 @@
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
     "test": "pnpm -r --filter=./packages/* run test",
-    "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
+    "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install",
+    "format": "prettier --write 'src/**/*.js'"
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "pnpm run format",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
   "keywords": [],
   "author": "Open Function Group",
@@ -29,6 +41,9 @@
     "@types/rimraf": "^3.0.2",
     "@types/tar-stream": "^2.2.2",
     "gunzip-maybe": "^1.4.2",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
     "rimraf": "^3.0.2",
     "tar-stream": "^3.0.0",
     "typesync": "^0.11.1"
