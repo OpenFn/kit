@@ -13,28 +13,28 @@ export function parseAndValidate(input: string): {
   doc: ProjectSpec;
 } {
   let errors: Error[] = [];
-  let keys: string[] = [];
   const doc = YAML.parseDocument(input);
 
-  function pushUniqueKey(context: YAML.Pair, key: string) {
-    if (keys.includes(key)) {
+  function pushUniqueKey(context: YAML.Pair, key: string, arr: string[]) {
+    if (arr.includes(key)) {
       errors.push({
         context,
         message: `duplicate key: ${key}`,
       });
     } else {
-      keys.push(key);
+      arr.push(key);
     }
   }
 
-  function validateJobs(workflow: YAMLMap) {
+  function validateJobs(workflow: YAMLMap, jobKeys: string[]) {
     const jobs = workflow.getIn(['jobs']);
 
     if (jobs) {
       if (isMap(jobs)) {
         for (const job of jobs.items) {
           if (isPair(job)) {
-            pushUniqueKey(job, (job as any).key.value);
+            const jobName = (job as any).key.value;
+            pushUniqueKey(job, jobName, jobKeys);
           }
         }
       } else {
@@ -50,14 +50,24 @@ export function parseAndValidate(input: string): {
     if (typeof workflows === 'undefined') {
       // allow workflows to be unspecified, but ensure there is an empty
       // map to avoid errors downstream
-      doc.setIn(['workflows'], {})
-    }
-    else if (isMap(workflows)) {
+      doc.setIn(['workflows'], {});
+    } else if (isMap(workflows)) {
+      const workflowKeys: string[] = [];
       for (const workflow of workflows.items) {
         if (isPair(workflow)) {
-          pushUniqueKey(workflow, (workflow as any).key.value);
-
-          validateJobs((workflow as any).value);
+          const workflowName = (workflow as any).key.value;
+          const jobKeys: string[] = [];
+          pushUniqueKey(workflow, workflowName, workflowKeys);
+          const workflowValue = (workflow as any).value;
+          if (isMap(workflowValue)) {
+            validateJobs(workflowValue, jobKeys);
+          } else {
+            errors.push({
+              context: workflowValue,
+              message: `workflow '${workflowName}': must be a map`,
+              path: ['workflows', workflowName],
+            });
+          }
         }
       }
     } else {
