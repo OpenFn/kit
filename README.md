@@ -132,50 +132,22 @@ This will build adaptor-docs into a tarball and install it directly into Lightni
 
 [Prettier](https://prettier.io/) is used to ensure consistent code style throughout the project.
 
+## Code Formatting
+
+We recommend using [Prettier](https://prettier.io/) for code formatting to ensure consistent style across the project.
+
 ### Editor Integration
 
-- **Visual Studio Code**:
-  - Install the "Prettier - Code formatter" extension.
-  - Open VS Code settings (`settings.json`) and enable "Format on Save":
-    ```json
-    {
-      "editor.formatOnSave": true
-    }
-    ```
+Install the Prettier extension for your code editor to enable automatic formatting on save:
 
-### Pre-commit Hook (Optional)
+- **Visual Studio Code**: Install the "Prettier - Code formatter" extension.
 
-We provide an optional pre-commit hook to automatically format staged files using Prettier before each commit. Ensure you have `lint-staged` and `husky` installed as dev dependencies:
+### Manual Formatting
+
+You can also manually format files using Prettier by running the following command:
 
 ```bash
-npm install --save-dev lint-staged husky
-
-```
-Configure the `lint-staged` and `husky` in `package.json`
-```json
-{
-  "scripts": {
-    "format": "prettier --write 'src/**/*.js'"
-  },
-  "lint-staged": {
-    "src/**/*.js": [
-      "npm run format",
-      "git add"
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  }
-}
-```
-### Usage
-1. Edit source files `(src/*.js)` in your preferred code editor.\
-2. Save the file to trigger automatic code formatting using Prettier.\
-3. Commit your changes. The pre-commit hook (if enabled) will ensure that staged files are formatted before the commit is completed.\
-
-For more information about Prettier and its configuration options, refer to the [Prettier documentation](https://prettier.io/docs/en/).
+npm run format
 
 ## Documentation
 
