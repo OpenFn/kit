@@ -21,7 +21,7 @@ const apolloHandler = async (options: ApolloOptions, logger: Logger) => {
   const result = await callApollo(url, options.service, json, logger);
 
   // write the result according to output rules
-  await serializeOutput(options, json, logger);
+  await serializeOutput(options, result, logger);
 
   logger.success('Done!');
 };
@@ -37,9 +37,9 @@ const callApollo = async (
   logger.debug('Calling apollo: ', url);
   const result = await fetch(url, {
     method: 'POST',
-    // headers: {
-    //   'Content-Type': 'application/json',
-    // },
+    headers: {
+      'Content-Type': 'application/json',
+    },
     // ts-ignore
     body: JSON.stringify(payload),
   });
