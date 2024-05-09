@@ -1,4 +1,6 @@
+import { WebSocket } from 'ws';
 import { readFile } from 'node:fs/promises';
+import createLogger from '@openfn/logger';
 import { Logger } from '../util/logger';
 import { ApolloOptions } from './command';
 import { getURL } from './util';
@@ -26,26 +28,67 @@ const apolloHandler = async (options: ApolloOptions, logger: Logger) => {
   logger.success('Done!');
 };
 
+// const callApollo = async (
+//   apolloBaseUrl: string,
+//   serviceName: string,
+//   payload: any,
+//   logger: Logger
+// ) => {
+//   // TODO maybe use undici so I can mock it?
+//   const url = `${apolloBaseUrl}/services/${serviceName}`;
+//   logger.debug('Calling apollo: ', url);
+//   const result = await fetch(url, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     // ts-ignore
+//     body: JSON.stringify(payload),
+//   });
+//   logger.debug('Apollo responded with: ', result.status);
+
+//   return result.json();
+
+// };
+
+// websocket implementation
 const callApollo = async (
   apolloBaseUrl: string,
   serviceName: string,
   payload: any,
   logger: Logger
 ) => {
-  // TODO maybe use undici so I can mock it?
-  const url = `${apolloBaseUrl}/services/${serviceName}`;
-  logger.debug('Calling apollo: ', url);
-  const result = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    // ts-ignore
-    body: JSON.stringify(payload),
-  });
-  logger.debug('Apollo responded with: ', result.status);
+  return new Promise((resolve, reject) => {
+    const apolloLogger = createLogger('APO', { level: 'debug' });
 
-  return result.json();
+    const url = `${apolloBaseUrl.replace(
+      /^http/,
+      'ws'
+    )}/services/${serviceName}`;
+
+    logger.always('Calling apollo: ', url);
+
+    const socket = new WebSocket(url);
+
+    socket.addEventListener('message', ({ type, data }) => {
+      const evt = JSON.parse(data);
+      if (evt.event === 'complete') {
+        logger.debug('Apollo responded with: ', evt.data);
+        resolve(evt.data);
+      } else if (evt.event === 'log') {
+        apolloLogger.info(evt.data);
+      }
+    });
+
+    socket.addEventListener('open', (event) => {
+      socket.send(
+        JSON.stringify({
+          event: 'start',
+          data: payload,
+        })
+      );
+    });
+  });
 };
 
 const loadPayload = async (path?: string, logger: Logger): Promise<any> => {
