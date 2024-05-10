@@ -745,7 +745,45 @@ test.serial('set a default timeout on the worker', (t) => {
 });
 
 // create a new worker, set the timeout super high, run a job with a timeout on options, job should timeout
-test.todo('set a timeout on a run');
+test.serial('set a timeout on a run', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(lightningPort, {
+      maxWorkers: 1,
+      // use the dummy repo to remove autoinstall
+      repoDir: path.resolve('./dummy-repo'),
+      runTimeoutMs: 100 * 60 * 5,
+    }));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          // this will never return
+          body: `fn((s) => new Promise(resolve => {}))`,
+        },
+      ],
+      options: {
+        run_timeout_ms: 100,
+      },
+    };
+
+    lightning.once('run:complete', (evt) => {
+      const { reason, error_type, error_message } = evt.payload;
+      t.is(reason, 'kill');
+      t.is(error_type, 'TimeoutError');
+      t.is(error_message, 'Workflow failed to return within 100ms');
+
+      done();
+    });
+
+    lightning.enqueueRun(run);
+  });
+});
 
 // REMEMBER the default worker was destroyed at this point!
 // If you want to use a worker, you'll have to create your own
