@@ -66,6 +66,8 @@ export const mockChannel = (
       return receive;
     },
     leave: () => {},
+    onClose: () => {},
+    onError: () => {},
   };
   return c;
 };
