@@ -56,7 +56,7 @@ const joinRunChannel = (
       logger.debug(`Leaving ${channelName}`);
     });
     channel.onError((e: any) => {
-      // Error occured on the channel
+      // Error occurred on the channel
       // (the socket will try to reconnect with backoff)
       logger.debug(`Error in ${channelName}`);
       logger.debug(e);

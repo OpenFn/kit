@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.1.7
+
+### Patch Changes
+
+- bdff4b2: Fix an issue where workers may not be returned to the pool if run:complete throws
+
 ## 1.1.6
 
 ### Patch Changes
