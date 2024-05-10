@@ -695,7 +695,7 @@ test.serial('worker should exit if it has an invalid key', (t) => {
   });
 });
 
-test('set a default timeout on the worker', (t) => {
+test.serial('set a default timeout on the worker', (t) => {
   return new Promise(async (done) => {
     if (!worker.destroyed) {
       await worker.destroy();
