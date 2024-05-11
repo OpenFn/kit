@@ -22,6 +22,8 @@ export const mockChannel = (
           } catch (e) {
             responses.error?.(e);
           }
+        } else {
+          responses.timeout?.('timeout');
         }
       }, 1);
 
@@ -64,6 +66,8 @@ export const mockChannel = (
       return receive;
     },
     leave: () => {},
+    onClose: () => {},
+    onError: () => {},
   };
   return c;
 };

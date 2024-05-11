@@ -46,7 +46,21 @@ const joinRunChannel = (
       .receive('error', (err: any) => {
         logger.error(`error connecting to ${channelName}`, err);
         reject(err);
+      })
+      .receive('timeout', (err: any) => {
+        logger.error(`Timeout for ${channelName}`, err);
+        reject(err);
       });
+    channel.onClose(() => {
+      // channel was explicitly closed by the client or server
+      logger.debug(`Leaving ${channelName}`);
+    });
+    channel.onError((e: any) => {
+      // Error occurred on the channel
+      // (the socket will try to reconnect with backoff)
+      logger.debug(`Error in ${channelName}`);
+      logger.debug(e);
+    });
   });
 };
 
