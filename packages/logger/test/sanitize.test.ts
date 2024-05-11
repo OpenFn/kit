@@ -178,3 +178,13 @@ test('sanitize array with summarize', (t) => {
   const result = sanitize([{}, {}, {}], { policy: 'summarize' });
   t.is(result, '(array with 3 items)');
 });
+
+test('sanitize array with silent', (t) => {
+  const result = sanitize([{}, {}, {}], { policy: 'silent' });
+  t.is(result, null);
+});
+
+test('sanitize object with silent', (t) => {
+  const result = sanitize({ b: 1, a: 2 }, { policy: 'silent' });
+  t.is(result, null);
+});

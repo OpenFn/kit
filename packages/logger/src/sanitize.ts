@@ -3,7 +3,7 @@ import { isObject, isArray } from './util';
 
 export const SECRET = '****';
 
-export type SanitizePolicies = 'remove' | 'obfuscate' | 'summarize' | 'none';
+export type SanitizePolicies = 'remove' | 'obfuscate' | 'summarize' | 'none' | 'silent';
 
 type SanitizeOptions = {
   stringify?: boolean; // true by default
@@ -23,6 +23,7 @@ const scrubbers: Record<SanitizePolicies, (item: any) => any> = {
   remove,
   obfuscate,
   summarize,
+  silent,
   none: (item) => item,
 };
 
@@ -66,7 +67,7 @@ const sanitize = (item: any, options: SanitizeOptions = {}) => {
     return item;
   }
 
-  if (options.policy?.match(/^(remove|obfuscate|summarize)$/)) {
+  if (options.policy?.match(/^(remove|obfuscate|summarize|silent)$/)) {
     return scrubbers[options.policy](item);
   } else if (Array.isArray(item)) {
     return maybeStringify(item);
@@ -131,6 +132,10 @@ function obfuscate(logItem: any): any {
     return '[object]';
   }
   return logItem;
+}
+
+function silent(): any {
+  return null
 }
 
 export default sanitize;
