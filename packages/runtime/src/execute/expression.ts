@@ -38,7 +38,7 @@ export default (
     let duration = Date.now();
     const { logger, plan, opts = {} } = ctx;
     try {
-      const timeout = plan.options?.timeout ?? DEFAULT_TIMEOUT_MS;
+      const timeout = plan.options?.timeout ?? ctx.opts.defaultRunTimeoutMs;
 
       // Setup an execution context
       const context = buildContext(input, opts);

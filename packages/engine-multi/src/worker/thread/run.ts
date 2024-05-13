@@ -45,7 +45,7 @@ register({
 
     // TODO I would like to pull these options out of here
     const options = {
-      // disable the run/step timeout
+      // disable the runtime's own timeout
       timeout: 0,
       strict: false,
       logger,
