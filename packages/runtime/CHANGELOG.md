@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.1.3
+
+### Patch Changes
+
+- Don't default the run timeout
+
 ## 1.1.2
 
 ### Patch Changes
