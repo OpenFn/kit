@@ -695,5 +695,95 @@ test.serial('worker should exit if it has an invalid key', (t) => {
   });
 });
 
+test.serial('set a default timeout on the worker', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(lightningPort, {
+      maxWorkers: 1,
+      // use the dummy repo to remove autoinstall
+      repoDir: path.resolve('./dummy-repo'),
+      runTimeoutMs: 100,
+    }));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          // this will never return
+          body: `fn((s) => new Promise(resolve => {}))`,
+        },
+      ],
+    };
+
+    // let startTime;
+    // lightning.once('run:start', (evt) => {
+    //   startTime = Date.now();
+    // });
+
+    lightning.once('run:complete', (evt) => {
+      const { reason, error_type, error_message } = evt.payload;
+      t.is(reason, 'kill');
+      t.is(error_type, 'TimeoutError');
+      t.is(error_message, 'Workflow failed to return within 100ms');
+
+      // TODO I'd like a better test on exactly how long the workflow ran before returnuing
+      // But that's really hard because there's a lot of async stuff in the way
+
+      // const endTime = Date.now();
+      // t.true(endTime - startTime >= 40);
+      // t.true(endTime - startTime <= 80); // be generous with this
+
+      done();
+    });
+
+    lightning.enqueueRun(run);
+  });
+});
+
+// create a new worker, set the timeout super high, run a job with a timeout on options, job should timeout
+test.serial('set a timeout on a run', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(lightningPort, {
+      maxWorkers: 1,
+      // use the dummy repo to remove autoinstall
+      repoDir: path.resolve('./dummy-repo'),
+      runTimeoutMs: 100 * 60 * 5,
+    }));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          // this will never return
+          body: `fn((s) => new Promise(resolve => {}))`,
+        },
+      ],
+      options: {
+        run_timeout_ms: 100,
+      },
+    };
+
+    lightning.once('run:complete', (evt) => {
+      const { reason, error_type, error_message } = evt.payload;
+      t.is(reason, 'kill');
+      t.is(error_type, 'TimeoutError');
+      t.is(error_message, 'Workflow failed to return within 100ms');
+
+      done();
+    });
+
+    lightning.enqueueRun(run);
+  });
+});
+
 // REMEMBER the default worker was destroyed at this point!
 // If you want to use a worker, you'll have to create your own
