@@ -3,7 +3,7 @@ import stringify from 'fast-safe-stringify';
 import type { Operation, State } from '@openfn/lexicon';
 
 import loadModule from '../modules/module-loader';
-import { Options, DEFAULT_TIMEOUT_MS } from '../runtime';
+import { Options } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
