@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.1.8
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/runtime@1.1.3
+  - @openfn/engine-multi@1.1.7
+
 ## 1.1.7
 
 ### Patch Changes

@@ -5,8 +5,6 @@ import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';
 
-export const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
 export type Options = {
   logger?: Logger;
   jobLogger?: Logger;
@@ -28,6 +26,8 @@ export type Options = {
   globals?: any;
 
   statePropsToRemove?: string[];
+
+  defaultRunTimeoutMs?: number;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {

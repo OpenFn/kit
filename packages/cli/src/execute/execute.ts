@@ -38,6 +38,7 @@ export default async (
           }
         },
       },
+      defaultRunTimeoutMs: 5 * 60 * 1000, // 5 minutes
     });
     return result;
   } catch (e: any) {

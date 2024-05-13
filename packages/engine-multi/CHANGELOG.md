@@ -1,5 +1,12 @@
 # engine-multi
 
+## 1.1.7
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/runtime@1.1.3
+
 ## 1.1.6
 
 ### Patch Changes

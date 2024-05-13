@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.2.5
+
+### Patch Changes
+
+- Default the run timeout
+- Updated dependencies
+  - @openfn/runtime@1.1.3
+
 ## 1.2.4
 
 ### Patch Changes
