@@ -446,7 +446,7 @@ test.serial('send a workflow error if credentials fail to load', (t) => {
 
       t.is(e.type, 'CredentialLoadError');
       t.is(e.severity, 'exception');
-      t.is(e.message, 'Failed to load credential secret for step a');
+      t.is(e.message, 'Failed to load credential secret');
       done();
     });
   });
