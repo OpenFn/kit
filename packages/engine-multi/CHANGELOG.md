@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.1.8
+
+### Patch Changes
+
+- Better error reporting for bad credentials
+
 ## 1.1.7
 
 ### Patch Changes

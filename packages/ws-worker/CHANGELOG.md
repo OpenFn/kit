@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.1.9
+
+### Patch Changes
+
+- Better error reporting for bad credentials
+- Updated dependencies
+  - @openfn/engine-multi@1.1.8
+
 ## 1.1.8
 
 ### Patch Changes
