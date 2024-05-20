@@ -1,10 +1,13 @@
 import { ExecutionPlan, Job, Step, Trigger, WorkflowOptions } from '@openfn/lexicon';
 import { ValidationError } from '../errors';
+import createLogger from '@openfn/logger';
 
 type ModelNode = {
   up: Record<string, true>;
   down: Record<string, true>;
 };
+
+const logger = createLogger(undefined, { json: true });
 
 type Model = {
   [nodeId: string]: ModelNode;
@@ -33,7 +36,7 @@ const assertWorkflowStructure = (plan: ExecutionPlan) => {
   }
 
   if (workflow.steps.length === 0) {
-    console.warn('Warning: The workflow.steps array is empty.');
+    logger.warn('Warning: The workflow.steps array is empty.');
   }
 
   workflow.steps.forEach((step, index) => {
@@ -64,7 +67,7 @@ const assertOptionsStructure = (options: WorkflowOptions) => {
 
   Object.keys(options).forEach((key) => {
     if (!allowedKeys.includes(key)) {
-      console.warn(`Warning: Unrecognized option "${key}" in options object.`);
+      logger.warn(`Warning: Unrecognized option "${key}" in options object.`);
     }
   });
 };
