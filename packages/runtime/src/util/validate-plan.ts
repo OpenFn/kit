@@ -1,4 +1,4 @@
-import { ExecutionPlan, Step } from '@openfn/lexicon';
+import { ExecutionPlan, Job, Step, Trigger, WorkflowOptions } from '@openfn/lexicon';
 import { ValidationError } from '../errors';
 
 type ModelNode = {
@@ -11,6 +11,7 @@ type Model = {
 };
 
 export default (plan: ExecutionPlan) => {
+  assertWorkflowStructure(plan);
   assertStart(plan);
 
   const model = buildModel(plan);
@@ -18,6 +19,54 @@ export default (plan: ExecutionPlan) => {
   assertSingletonDependencies(model);
 
   return true;
+};
+
+const assertWorkflowStructure = (plan: ExecutionPlan) => {
+  const { workflow, options } = plan;
+
+  if (!workflow || typeof workflow !== 'object') {
+    throw new ValidationError('Missing or invalid workflow key in execution plan.');
+  }
+
+  if (!Array.isArray(workflow.steps)) {
+    throw new ValidationError('The workflow.steps key must be an array.');
+  }
+
+  if (workflow.steps.length === 0) {
+    console.warn('Warning: The workflow.steps array is empty.');
+  }
+
+  workflow.steps.forEach((step, index) => {
+    assertStepStructure(step, index);
+  });
+
+  if (options) {
+    assertOptionsStructure(options);
+  }
+};
+
+const assertStepStructure = (step: Job | Step | Trigger, index: number) => {
+  const allowedKeys = ['id', 'name', 'next', 'previous', 'adaptor', 'expression', 'state', 'configuration', 'linker'];
+
+  Object.keys(step).forEach((key) => {
+    if (!allowedKeys.includes(key)) {
+      throw new ValidationError(`Invalid key "${key}" in step ${step.id || index}.`);
+    }
+  });
+
+  if ('adaptor' in step && !('expression' in step)) {
+    throw new ValidationError(`Step ${index} with an adaptor must also have an expression.`);
+  }
+};
+
+const assertOptionsStructure = (options: WorkflowOptions) => {
+  const allowedKeys = ['timeout', 'stepTimeout', 'start', 'end', 'sanitize'];
+
+  Object.keys(options).forEach((key) => {
+    if (!allowedKeys.includes(key)) {
+      console.warn(`Warning: Unrecognized option "${key}" in options object.`);
+    }
+  });
 };
 
 export const buildModel = ({ workflow }: ExecutionPlan) => {

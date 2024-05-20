@@ -528,7 +528,9 @@ test('stuff written to state before an error is preserved', async (t) => {
       steps: [
         {
           id: 'a',
-          data: { x: 0 },
+          state: {
+            data: { x: 0 }
+          },
           expression:
             'export default [(s) => { s.x = 1; throw new Error("test") }]',
         },
