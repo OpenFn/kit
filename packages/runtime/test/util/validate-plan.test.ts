@@ -4,11 +4,11 @@ import type { ExecutionPlan, Job } from '@openfn/lexicon';
 import validate, { buildModel } from '../../src/util/validate-plan';
 
 const job = (id: string, next?: Record<string, boolean>) =>
-  ({
-    id,
-    next,
-    expression: '.',
-  } as Job);
+({
+  id,
+  next,
+  expression: '.',
+} as Job);
 
 test('builds a simple model', (t) => {
   const plan: ExecutionPlan = {
@@ -146,5 +146,46 @@ test('throws for invalid string start', (t) => {
 
   t.throws(() => validate(plan), {
     message: 'Could not find start job: z',
+  });
+});
+
+test('throws for adaptor without an expression', (t) => {
+  const plan: ExecutionPlan = {
+    options: {
+      start: 'a',
+    },
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          adaptor: 'z'
+        }
+      ],
+    },
+  };
+
+  t.throws(() => validate(plan), {
+    message: 'Step 0 with an adaptor must also have an expression.',
+  });
+});
+
+test('throws for unknown key in a step', (t) => {
+  const plan: ExecutionPlan = {
+    options: {
+      start: 'a',
+    },
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          //@ts-ignore
+          key: 'z'
+        }
+      ],
+    },
+  };
+
+  t.throws(() => validate(plan), {
+    message: 'Invalid key "key" in step a.',
   });
 });
