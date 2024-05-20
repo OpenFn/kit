@@ -43,7 +43,7 @@ test('parseArgs should override environment variables with command line argument
     process.env.WORKER_PORT = '4000';
     process.env.WORKER_LOG_LEVEL = 'error';
     process.env.WORKER_MAX_RUN_DURATION_SECONDS = '180';
-    
+
     const argv = ['node', 'cli.js', '--port', '5000', '--log', 'debug', '--max-run-duration-seconds', '240'];
     const args = parseArgs(argv);
 
@@ -54,9 +54,9 @@ test('parseArgs should override environment variables with command line argument
 
 test('parseArgs should set default values for unspecified options', t => {
     const argv = ['node', 'cli.js'];
-    
+
     const args = parseArgs(argv);
-    
+
     t.is(args.port, 2222);
     t.is(args.lightning, 'ws://localhost:4000/worker');
     t.is(args.log, 'debug' as LogLevel);
@@ -65,7 +65,7 @@ test('parseArgs should set default values for unspecified options', t => {
     t.deepEqual(args.statePropsToRemove, ['configuration', 'response']);
     t.is(args.runMemory, 500);
     t.is(args.maxRunDurationSeconds, 300);
-}); 
+});
 
 test('parseArgs should handle boolean options correctly', t => {
     const argv = ['node', 'cli.js', '--loop', 'false', '--mock', 'true'];
@@ -77,6 +77,15 @@ test('parseArgs should handle boolean options correctly', t => {
 
 test('parseArgs should handle array options correctly', t => {
     const argv = ['node', 'cli.js', '--state-props-to-remove', 'prop1', 'prop2', 'prop3'];
+    process.env.WORKER_STATE_PROPS_TO_REMOVE = 'prop4,prop5,prop6';
+    const args = parseArgs(argv);
+
+    t.deepEqual(args.statePropsToRemove, ['prop1', 'prop2', 'prop3']);
+});
+
+test('parseArgs should handle array options correctly for env variables', t => {
+    const argv = ['node', 'cli.js'];
+    process.env.WORKER_STATE_PROPS_TO_REMOVE = 'prop1,prop2,prop3';
     const args = parseArgs(argv);
 
     t.deepEqual(args.statePropsToRemove, ['prop1', 'prop2', 'prop3']);

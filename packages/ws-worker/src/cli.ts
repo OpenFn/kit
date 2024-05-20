@@ -20,7 +20,7 @@ type Args = {
 };
 
 function setArg<T>(argValue: T | undefined, envValue: string | undefined, defaultValue: T): T {
-  if (Array.isArray(defaultValue) && envValue !== undefined) {
+  if (Array.isArray(defaultValue) && envValue !== undefined && argValue == undefined) {
     return (envValue.split(',') as unknown) as T;
   }
 
