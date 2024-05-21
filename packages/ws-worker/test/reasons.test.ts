@@ -236,7 +236,7 @@ test('exception: failed to load credential', async (t) => {
 
   t.is(reason.reason, 'exception');
   t.is(reason.error_type, 'CredentialLoadError');
-  t.is(reason.error_message, 'Failed to load credential zzz for step aa');
+  t.is(reason.error_message, 'Failed to load credential zzz: err');
 });
 
 test('kill: timeout', async (t) => {

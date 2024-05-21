@@ -114,8 +114,18 @@ export class CredentialLoadError extends EngineError {
   original: any; // this is the original error
   constructor(errors: CredentialErrorObj[]) {
     super();
+    const ids: Record<string, true> = {};
     this.message = errors
-      .map((e) => `Failed to load credential ${e.id} for step ${e.step}`)
+      .filter((e) => {
+        if (!ids[e.id]) {
+          ids[e.id] = true;
+          return true;
+        }
+      })
+      .map(
+        (e) =>
+          `Failed to load credential ${e.id}${e.error ? `: ${e.error}` : ''}`
+      )
       .join('\n');
   }
 }

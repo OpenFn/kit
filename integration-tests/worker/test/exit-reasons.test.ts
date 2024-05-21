@@ -76,6 +76,30 @@ test('exception: autoinstall error', async (t) => {
   );
 });
 
+test('exception: bad credential (not found)', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        adaptor: '@openfn/language-common@latest',
+        body: 'fn((s) => s)',
+        credential: 'been-to-the-mountain', // the mock will return not_found
+      },
+    ],
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+
+  t.is(reason, 'exception');
+  t.is(error_type, 'CredentialLoadError');
+  t.is(
+    error_message,
+    'Failed to load credential been-to-the-mountain: not_found'
+  );
+});
+
 test('kill: oom (small, kill worker)', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),

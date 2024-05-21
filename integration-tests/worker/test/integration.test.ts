@@ -309,7 +309,10 @@ test.serial('run a job with bad credentials', (t) => {
     lightning.once('run:complete', ({ payload }) => {
       t.is(payload.reason, 'exception');
       t.is(payload.error_type, 'CredentialLoadError');
-      t.regex(payload.error_message, /Failed to load credential zzz for step/);
+      t.regex(
+        payload.error_message,
+        /Failed to load credential zzz: not_found/
+      );
       done();
     });
 
