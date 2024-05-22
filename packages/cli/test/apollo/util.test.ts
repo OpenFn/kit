@@ -1,10 +1,12 @@
 import test from 'ava';
+import { createMockLogger } from '@openfn/logger';
 
 import {
   getURL,
   LOCAL_URL,
   PRODUCTION_URL,
   STAGING_URL,
+  outputFiles,
 } from '../../src/apollo/util';
 
 test.beforeEach(() => {
@@ -85,3 +87,38 @@ test('getUrl: throw if an unknown value is passed', (t) => {
 });
 
 test.todo('throw if an invalid default is set');
+
+test.only('outputFiles: log several files', (t) => {
+  const files = {
+    'tmp/index.js': '// here is a js file ',
+    'tmp/readme.md': `### readme
+
+here is a plan text file`,
+  };
+
+  const logger = createMockLogger();
+
+  outputFiles(files, logger);
+
+  const output = `
+-------------
+tmp/index.js
+-------------
+
+// here is a js file 
+
+
+--------------
+tmp/readme.md
+--------------
+
+### readme
+
+here is a plan text file
+
+`;
+
+  const resultStr = logger._history.map((h) => h[1] ?? '').join('\n');
+
+  t.is(output, resultStr);
+});

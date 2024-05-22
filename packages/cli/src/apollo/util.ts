@@ -1,8 +1,10 @@
+import type { Logger } from '@openfn/logger';
 import { ApolloOptions } from './handler';
 
 export const PRODUCTION_URL = 'https://apollo.openfn.org';
 
-export const STAGING_URL = 'https://apollo-staging.openfn.org';
+//export const STAGING_URL = 'https://apollo-staging.openfn.org';
+export const STAGING_URL = 'http://34.95.82.109'; // use direct ip for now
 
 export const LOCAL_URL = 'http://localhost:3000';
 
@@ -33,4 +35,19 @@ export const getURL = (options: ApolloOptions) => {
   }
 
   return urlMap[userDefault || 'staging'];
+};
+
+// nicely print a bunch of files to std out
+export const outputFiles = (files: Record<string, string>, logger: Logger) => {
+  logger.print();
+  for (const k in files) {
+    const line = new Array(k.length + 1).fill('-').join('');
+    logger.print(line);
+    logger.print(`${k}`);
+    logger.print(line);
+    logger.print();
+    logger.print(files[k]);
+    logger.print();
+    logger.print();
+  }
 };

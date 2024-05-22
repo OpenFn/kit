@@ -1,20 +1,19 @@
 import { WebSocket } from 'ws';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import path from 'node:path';
 import createLogger from '@openfn/logger';
+
 import { Logger } from '../util/logger';
 import { ApolloOptions } from './command';
-import { getURL } from './util';
-import serializeOutput from '../execute/serialize-output';
+import { getURL, outputFiles } from './util';
 
 // TODO add a "dir" sub command which will load basic docs
-
-// export and test
 
 const apolloHandler = async (options: ApolloOptions, logger: Logger) => {
   logger.always(`Calling Apollo service: ${options.service}`);
   // this doesn't have to do much
   // load the input json
-  const json = await loadPayload(options.payload, logger);
+  const json = await loadPayload(logger, options.payload);
 
   // work out the server url
   const url = getURL(options);
@@ -22,36 +21,69 @@ const apolloHandler = async (options: ApolloOptions, logger: Logger) => {
   // call the server
   const result = await callApollo(url, options.service, json, logger);
 
-  // write the result according to output rules
-  await serializeOutput(options, result, logger);
+  if (result) {
+    await serializeOutput(options, result, logger);
+  } else {
+    logger.warn('No output returned from Apollo');
+  }
 
   logger.success('Done!');
 };
 
-// const callApollo = async (
-//   apolloBaseUrl: string,
-//   serviceName: string,
-//   payload: any,
-//   logger: Logger
-// ) => {
-//   // TODO maybe use undici so I can mock it?
-//   const url = `${apolloBaseUrl}/services/${serviceName}`;
-//   logger.debug('Calling apollo: ', url);
-//   const result = await fetch(url, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//     // ts-ignore
-//     body: JSON.stringify(payload),
-//   });
-//   logger.debug('Apollo responded with: ', result.status);
+const write = async (
+  basePath: string,
+  filePath: string,
+  content: string,
+  logger: Logger
+) => {
+  const ext = path.extname(basePath);
+  let dir;
+  if (ext) {
+    dir = path.dirname(path.resolve(basePath));
+  } else {
+    dir = basePath;
+  }
 
-//   return result.json();
+  // Ensure the root dir exists
+  await mkdir(dir, { recursive: true });
 
-// };
+  // TODO if basepath is a file, and there's file path, create the filepath next to it
+  const dest = path.resolve(basePath, filePath);
+  // TODO if the content is JSON, should we pretty print it?
+  await writeFile(dest, content);
 
-// websocket implementation
+  // TODO mabye here we just log the relative path from pwd, but we log to
+  // debug or info the absolute path
+  logger.success(`Wrote content to ${dest}`);
+};
+
+// appollo should write to stdout unless a path is provided
+const serializeOutput = async (
+  options: Pick<Opts, 'outputStdout' | 'outputPath'>,
+  result: any,
+  logger: Logger
+) => {
+  // print to disk
+  if (options.outputPath) {
+    if (result.files) {
+      for (const p in result.files) {
+        await write(options.outputPath, p, result.files[p], logger);
+      }
+    } else {
+      await write(options.outputPath, '', result.files, logger);
+    }
+    return;
+  }
+
+  // print to stdout
+  logger.success('Result:');
+  if (result.files) {
+    outputFiles(result.files, logger);
+  } else {
+    logger.always(JSON.stringify(result, undefined, 2));
+  }
+};
+
 const callApollo = async (
   apolloBaseUrl: string,
   serviceName: string,
@@ -70,7 +102,7 @@ const callApollo = async (
 
     const socket = new WebSocket(url);
 
-    socket.addEventListener('message', ({ type, data }) => {
+    socket.addEventListener('message', ({ data }) => {
       const evt = JSON.parse(data);
       if (evt.event === 'complete') {
         logger.debug('Apollo responded with: ', evt.data);
@@ -80,7 +112,7 @@ const callApollo = async (
       }
     });
 
-    socket.addEventListener('open', (event) => {
+    socket.addEventListener('open', () => {
       socket.send(
         JSON.stringify({
           event: 'start',
@@ -91,7 +123,7 @@ const callApollo = async (
   });
 };
 
-const loadPayload = async (path?: string, logger: Logger): Promise<any> => {
+const loadPayload = async (logger: Logger, path?: string): Promise<any> => {
   if (!path) {
     logger.warn('No JSON payload provided');
     logger.warn('Most apollo services require JSON to be uploaded');
