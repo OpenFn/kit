@@ -35,7 +35,7 @@ test('Workflows must have unique ids', (t) => {
 
   const results = parseAndValidate(doc);
 
-  const err = findError(results.errors, 'duplicate key: workflow-one');
+  const err = findError(results.errors, 'duplicate id: workflow-one');
   t.truthy(err);
   t.is(err.path, 'workflow-one');
 });
@@ -54,7 +54,7 @@ test('Jobs must have unique ids within a workflow', (t) => {
 
   const results = parseAndValidate(doc);
 
-  const err = findError(results.errors, 'duplicate key: foo');
+  const err = findError(results.errors, 'duplicate id: foo');
   t.is(err.path, 'workflow-two/foo');
   t.truthy(err);
 });

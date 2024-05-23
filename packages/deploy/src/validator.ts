@@ -15,9 +15,9 @@ export function parseAndValidate(input: string): {
   let errors: Error[] = [];
   const doc = YAML.parseDocument(input);
 
-  function pushUniqueKey(key: string, arr: string[]) {
+  function ensureUniqueId(key: string, arr: string[]) {
     if (arr.includes(key)) {
-      throw `duplicate key: ${key}`;
+      throw `duplicate id: ${key}`;
     } else {
       arr.push(key);
     }
@@ -36,7 +36,7 @@ export function parseAndValidate(input: string): {
           if (isPair(job)) {
             const jobName = (job as any).key.value;
             try {
-              pushUniqueKey(jobName, jobKeys);
+              ensureUniqueId(jobName, jobKeys);
             } catch (err: any) {
               errors.push({
                 path: `${workflowName}/${jobName}`,
@@ -68,7 +68,7 @@ export function parseAndValidate(input: string): {
           const workflowName = (workflow as any).key.value;
           const jobKeys: string[] = [];
           try {
-            pushUniqueKey(workflowName, workflowKeys);
+            ensureUniqueId(workflowName, workflowKeys);
           } catch (err: any) {
             errors.push({
               path: `${workflowName}`,
@@ -82,7 +82,7 @@ export function parseAndValidate(input: string): {
           } else {
             errors.push({
               context: workflowValue,
-              message: `workflow '${workflowName}': must be a map`,
+              message: `${workflowName}: must be a map`,
               path: 'workflowName',
             });
           }
@@ -91,7 +91,7 @@ export function parseAndValidate(input: string): {
     } else {
       errors.push({
         context: workflows,
-        message: 'workflows: must be a map',
+        message: 'must be a map',
         path: 'workflows',
       });
     }
