@@ -15,7 +15,7 @@ test('Workflows must be a map', (t) => {
 
   const results = parseAndValidate(doc);
 
-  const err = findError(results.errors, 'workflows: must be a map');
+  const err = findError(results.errors, 'must be a map');
 
   t.truthy(err);
   t.is(err.path, 'workflows');
