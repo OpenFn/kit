@@ -4,7 +4,7 @@ import { ProjectSpec } from './types';
 export interface Error {
   context: any;
   message: string;
-  path?: string[];
+  path: string; // human readable path to the error (ie, workflow-1/job-2)
   range?: [number, number, number];
 }
 
@@ -15,18 +15,19 @@ export function parseAndValidate(input: string): {
   let errors: Error[] = [];
   const doc = YAML.parseDocument(input);
 
-  function pushUniqueKey(context: YAML.Pair, key: string, arr: string[]) {
+  function pushUniqueKey(key: string, arr: string[]) {
     if (arr.includes(key)) {
-      errors.push({
-        context,
-        message: `duplicate key: ${key}`,
-      });
+      throw `duplicate key: ${key}`;
     } else {
       arr.push(key);
     }
   }
 
-  function validateJobs(workflow: YAMLMap, jobKeys: string[]) {
+  function validateJobs(
+    workflowName: string,
+    workflow: YAMLMap,
+    jobKeys: string[]
+  ) {
     const jobs = workflow.getIn(['jobs']);
 
     if (jobs) {
@@ -34,11 +35,20 @@ export function parseAndValidate(input: string): {
         for (const job of jobs.items) {
           if (isPair(job)) {
             const jobName = (job as any).key.value;
-            pushUniqueKey(job, jobName, jobKeys);
+            try {
+              pushUniqueKey(jobName, jobKeys);
+            } catch (err: any) {
+              errors.push({
+                path: `${workflowName}/${jobName}`,
+                context: job,
+                message: err,
+              });
+            }
           }
         }
       } else {
         errors.push({
+          path: 'workflow',
           context: jobs,
           message: 'jobs: must be a map',
         });
@@ -57,15 +67,23 @@ export function parseAndValidate(input: string): {
         if (isPair(workflow)) {
           const workflowName = (workflow as any).key.value;
           const jobKeys: string[] = [];
-          pushUniqueKey(workflow, workflowName, workflowKeys);
+          try {
+            pushUniqueKey(workflowName, workflowKeys);
+          } catch (err: any) {
+            errors.push({
+              path: `${workflowName}`,
+              context: workflow,
+              message: err,
+            });
+          }
           const workflowValue = (workflow as any).value;
           if (isMap(workflowValue)) {
-            validateJobs(workflowValue, jobKeys);
+            validateJobs(workflowName, workflowValue, jobKeys);
           } else {
             errors.push({
               context: workflowValue,
               message: `workflow '${workflowName}': must be a map`,
-              path: ['workflows', workflowName],
+              path: 'workflowName',
             });
           }
         }
@@ -74,7 +92,7 @@ export function parseAndValidate(input: string): {
       errors.push({
         context: workflows,
         message: 'workflows: must be a map',
-        path: ['workflows'],
+        path: 'workflows',
       });
     }
   }
@@ -86,7 +104,7 @@ export function parseAndValidate(input: string): {
           errors.push({
             context: pair,
             message: 'project: must provide at least one workflow',
-            path: ['workflows'],
+            path: 'workflows',
           });
 
           return doc.createPair('workflows', {});
@@ -96,6 +114,7 @@ export function parseAndValidate(input: string): {
       if (pair.key && pair.key.value === 'jobs') {
         if (pair.value.value === null) {
           errors.push({
+            path: 'workflows',
             context: pair,
             message: 'jobs: must be a map',
             range: pair.value.range,
@@ -114,7 +133,11 @@ export function parseAndValidate(input: string): {
   });
 
   if (!doc.has('name')) {
-    errors.push({ context: doc, message: 'Project must have a name' });
+    errors.push({
+      context: doc,
+      message: 'Project must have a name',
+      path: 'project',
+    });
   }
 
   const workflows = doc.getIn(['workflows']);
