@@ -19,16 +19,16 @@ type Args = {
   maxRunDurationSeconds: number;
 };
 
-function setArg<T>(argValue: T | undefined, envValue: string | undefined, defaultValue: T): T {
+function setArg<T>(argValue?: T, envValue?: string, defaultValue?: T): T | undefined {
   if (Array.isArray(defaultValue) && envValue !== undefined && argValue == undefined) {
-    return (envValue.split(',') as unknown) as T;
+    return (envValue.split(',')) as T;
   }
 
   if (typeof defaultValue === 'number' && envValue !== undefined && argValue == undefined) {
-    return parseInt(envValue) as unknown as T;
+    return parseInt(envValue) as T;
   }
 
-  return argValue ?? (envValue as unknown as T) ?? defaultValue;
+  return argValue ?? (envValue as T) ?? defaultValue;
 }
 
 export function parseArgs(argv: string[]): Args {
@@ -50,26 +50,26 @@ export function parseArgs(argv: string[]): Args {
     .command('server', 'Start a ws-worker server')
     .option('port', {
       alias: 'p',
-      description: 'Port to run the server on.',
+      description: 'Port to run the server on. Env: WORKER_PORT',
       type: 'number',
     })
     .option('lightning', {
       alias: ['l', 'lightning-service-url'],
-      description: 'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server.',
+      description: 'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server. Env: WORKER_LIGHTNING_SERVICE_URL',
     })
     .option('repo-dir', {
       alias: 'd',
-      description: 'Path to the runtime repo (where modules will be installed).',
+      description: 'Path to the runtime repo (where modules will be installed). Env: WORKER_REPO_DIR',
     })
     .option('secret', {
       alias: 's',
-      description: 'Worker secret.',
+      description: 'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
     })
     .option('lightning-public-key', {
-      description: 'Base64-encoded public key. Used to verify run tokens.',
+      description: 'Base64-encoded public key. Used to verify run tokens. Env: WORKER_LIGHTNING_PUBLIC_KEY',
     })
     .option('log', {
-      description: 'Set the log level for stdout (default to info, set to debug for verbose output).',
+      description: 'Set the log level for stdout (default to info, set to debug for verbose output). Env: WORKER_LOG_LEVEL',
     })
     .option('loop', {
       description: 'Disable the claims loop',
@@ -82,23 +82,23 @@ export function parseArgs(argv: string[]): Args {
       default: false,
     })
     .option('backoff', {
-      description: 'Claim backoff rules: min/max (in seconds).',
+      description: 'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
     })
     .option('capacity', {
-      description: 'max concurrent workers.',
+      description: 'max concurrent workers. Env: WORKER_CAPACITY',
       type: 'number',
     })
     .option('state-props-to-remove', {
-      description: 'A list of properties to remove from the final state returned by a job.',
+      description: 'A list of properties to remove from the final state returned by a job. Env: WORKER_STATE_PROPS_TO_REMOVE',
       type: 'array',
     })
     .option('run-memory', {
-      description: 'Maximum memory allocated to a single run, in mb.',
+      description: 'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY_MB',
       type: 'number',
     })
     .option('max-run-duration-seconds', {
       alias: 't',
-      description: 'Default run timeout for the server, in seconds.',
+      description: 'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
       type: 'number',
     });
 
@@ -108,9 +108,9 @@ export function parseArgs(argv: string[]): Args {
     ...args,
     port: setArg(args.port, WORKER_PORT, 2222),
     lightning: setArg(args.lightning, WORKER_LIGHTNING_SERVICE_URL, 'ws://localhost:4000/worker'),
-    repoDir: setArg(args.repoDir, WORKER_REPO_DIR, undefined),
-    secret: setArg(args.secret, WORKER_SECRET, undefined),
-    lightningPublicKey: setArg(args.lightningPublicKey, WORKER_LIGHTNING_PUBLIC_KEY, undefined),
+    repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
+    secret: setArg(args.secret, WORKER_SECRET),
+    lightningPublicKey: setArg(args.lightningPublicKey, WORKER_LIGHTNING_PUBLIC_KEY),
     log: setArg(args.log, WORKER_LOG_LEVEL as LogLevel, 'debug'),
     backoff: setArg(args.backoff, WORKER_BACKOFF, '1/10'),
     capacity: setArg(args.capacity, WORKER_CAPACITY, 5),
