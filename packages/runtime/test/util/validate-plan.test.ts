@@ -2,20 +2,13 @@ import test from 'ava';
 import type { ExecutionPlan, Job } from '@openfn/lexicon';
 
 import validate, { buildModel } from '../../src/util/validate-plan';
-import { createMockLogger } from '@openfn/logger';
 
 const job = (id: string, next?: Record<string, boolean>) =>
-({
-  id,
-  next,
-  expression: '.',
-} as Job);
-
-const logger = createMockLogger(undefined, { json: true });
-
-test.afterEach(() => {
-  logger._reset();
-});
+  ({
+    id,
+    next,
+    expression: '.',
+  } as Job);
 
 test('builds a simple model', (t) => {
   const plan: ExecutionPlan = {
@@ -71,7 +64,7 @@ test('throws for a circular dependency', (t) => {
     },
   };
 
-  t.throws(() => validate(plan, logger), {
+  t.throws(() => validate(plan), {
     message: 'Circular dependency: b <-> a',
   });
 });
@@ -88,7 +81,7 @@ test('throws for an indirect circular dependency', (t) => {
     },
   };
 
-  t.throws(() => validate(plan, logger), {
+  t.throws(() => validate(plan), {
     message: 'Circular dependency: c <-> a',
   });
 });
@@ -106,7 +99,7 @@ test('throws for a multiple inputs', (t) => {
     },
   };
 
-  t.throws(() => validate(plan, logger), {
+  t.throws(() => validate(plan), {
     message: 'Multiple dependencies detected for: z',
   });
 });
@@ -119,7 +112,7 @@ test('throws for a an unknown job', (t) => {
     },
   };
 
-  t.throws(() => validate(plan, logger), {
+  t.throws(() => validate(plan), {
     message: 'Cannot find job: z',
   });
 });
@@ -136,7 +129,7 @@ test('throws for a an unknown job with shorthand syntax', (t) => {
       ],
     },
   };
-  t.throws(() => validate(plan, logger), {
+  t.throws(() => validate(plan), {
     message: 'Cannot find job: z',
   });
 });
@@ -151,61 +144,7 @@ test('throws for invalid string start', (t) => {
     },
   };
 
-  t.throws(() => validate(plan, logger), {
+  t.throws(() => validate(plan), {
     message: 'Could not find start job: z',
-  });
-});
-
-test('throws for missing workflow', (t) => {
-  //@ts-ignore
-  const plan: ExecutionPlan = {
-    options: {
-      start: 'a',
-    }
-  };
-
-  t.throws(() => validate(plan, logger), {
-    message: 'Missing or invalid workflow key in execution plan',
-  });
-});
-
-test('throws for adaptor without an expression', (t) => {
-  const plan: ExecutionPlan = {
-    options: {
-      start: 'a',
-    },
-    workflow: {
-      steps: [
-        {
-          id: 'a',
-          adaptor: 'z'
-        }
-      ],
-    },
-  };
-
-  t.throws(() => validate(plan, logger), {
-    message: 'Step a with an adaptor must also have an expression',
-  });
-});
-
-test('throws for unknown key in a step', (t) => {
-  const plan: ExecutionPlan = {
-    options: {
-      start: 'a',
-    },
-    workflow: {
-      steps: [
-        {
-          id: 'a',
-          //@ts-ignore
-          key: 'z'
-        }
-      ],
-    },
-  };
-
-  t.throws(() => validate(plan, logger), {
-    message: 'Invalid key "key" in step a',
   });
 });

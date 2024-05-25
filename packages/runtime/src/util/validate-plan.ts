@@ -1,19 +1,16 @@
-import { ExecutionPlan, Step, WorkflowOptions } from '@openfn/lexicon';
+import { ExecutionPlan, Step } from '@openfn/lexicon';
 import { ValidationError } from '../errors';
-import { Logger } from '@openfn/logger';
 
 type ModelNode = {
   up: Record<string, true>;
   down: Record<string, true>;
 };
 
-
 type Model = {
   [nodeId: string]: ModelNode;
 };
 
-export default (plan: ExecutionPlan, logger: Logger) => {
-  assertWorkflowStructure(plan, logger);
+export default (plan: ExecutionPlan) => {
   assertStart(plan);
 
   const model = buildModel(plan);
@@ -21,52 +18,6 @@ export default (plan: ExecutionPlan, logger: Logger) => {
   assertSingletonDependencies(model);
 
   return true;
-};
-
-const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
-  const { workflow, options } = plan;
-
-  if (!workflow || typeof workflow !== 'object') {
-    throw new ValidationError('Missing or invalid workflow key in execution plan');
-  }
-
-  if (!Array.isArray(workflow.steps)) {
-    throw new ValidationError('The workflow.steps key must be an array');
-  }
-
-  if (workflow.steps.length === 0) {
-    logger.warn('Warning: The workflow.steps array is empty');
-  }
-
-  workflow.steps.forEach((step, index) => {
-    assertStepStructure(step, index);
-  });
-
-  assertOptionsStructure(options, logger);
-};
-
-const assertStepStructure = (step: Step, index: number) => {
-  const allowedKeys = ['id', 'name', 'next', 'previous', 'adaptor', 'expression', 'state', 'configuration', 'linker'];
-
-  for (const key in step) {
-    if (!allowedKeys.includes(key)) {
-      throw new ValidationError(`Invalid key "${key}" in step ${step.id || index}`);
-    }
-  }
-
-  if ('adaptor' in step && !('expression' in step)) {
-    throw new ValidationError(`Step ${step.id ?? index} with an adaptor must also have an expression`);
-  }
-};
-
-const assertOptionsStructure = (options: WorkflowOptions = {}, logger: Logger) => {
-  const allowedKeys = ['timeout', 'stepTimeout', 'start', 'end', 'sanitize'];
-
-  for (const key in options) {
-    if (!allowedKeys.includes(key)) {
-      logger.warn(`Warning: Unrecognized option "${key}" in options object`);
-    }
-  }
 };
 
 export const buildModel = ({ workflow }: ExecutionPlan) => {

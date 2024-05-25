@@ -18,7 +18,7 @@ const executePlan = async (
 ) => {
   let compiledPlan: CompiledExecutionPlan;
   try {
-    validatePlan(plan, logger);
+    validatePlan(plan);
     compiledPlan = compilePlan(plan);
   } catch (e: any) {
     logger.error('Error validating execution plan');
@@ -37,7 +37,7 @@ const executePlan = async (
     opts,
     logger,
     report: createErrorReporter(logger),
-    notify: opts.callbacks?.notify ?? (() => { }),
+    notify: opts.callbacks?.notify ?? (() => {}),
   };
 
   // record of state returned by every job
