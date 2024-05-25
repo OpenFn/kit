@@ -1,5 +1,5 @@
 import test from 'ava';
-import { parseArgs } from '../src/cli';
+import cli from '../../src/util/cli';
 import { LogLevel } from '@openfn/logger';
 
 
@@ -17,45 +17,45 @@ test.afterEach(t => {
     resetEnv(t.context as NodeJS.ProcessEnv);
 });
 
-test('parseArgs should parse command line arguments correctly', t => {
+test('cli should parse command line arguments correctly', t => {
     const argv = 'node cli.js --port 3000 --log info --max-run-duration-seconds 120'
-    const args = parseArgs(argv.split(' '))
+    const args = cli(argv.split(' '))
 
     t.is(args.port, 3000);
     t.is(args.log, 'info' as LogLevel);
     t.is(args.maxRunDurationSeconds, 120);
 });
 
-test('parseArgs should use environment variables as defaults', t => {
+test('cli should use environment variables as defaults', t => {
     process.env.WORKER_PORT = '4000';
     process.env.WORKER_LOG_LEVEL = 'error';
     process.env.WORKER_MAX_RUN_DURATION_SECONDS = '180';
 
     const argv = 'node cli.js';
-    const args = parseArgs(argv.split(' '));
+    const args = cli(argv.split(' '));
 
     t.is(args.port, 4000);
     t.is(args.log, 'error' as LogLevel);
     t.is(args.maxRunDurationSeconds, 180);
 });
 
-test('parseArgs should override environment variables with command line arguments', t => {
+test('cli should override environment variables with command line arguments', t => {
     process.env.WORKER_PORT = '4000';
     process.env.WORKER_LOG_LEVEL = 'error';
     process.env.WORKER_MAX_RUN_DURATION_SECONDS = '180';
 
     const argv = 'node cli.js --port 5000 --log debug --max-run-duration-seconds 240';
-    const args = parseArgs(argv.split(' '));
+    const args = cli(argv.split(' '));
 
     t.is(args.port, 5000);
     t.is(args.log, 'debug' as LogLevel);
     t.is(args.maxRunDurationSeconds, 240);
 });
 
-test('parseArgs should set default values for unspecified options', t => {
+test('cli should set default values for unspecified options', t => {
     const argv = 'node cli.js';
 
-    const args = parseArgs(argv.split(' '));
+    const args = cli(argv.split(' '));
 
     t.is(args.port, 2222);
     t.is(args.lightning, 'ws://localhost:4000/worker');
@@ -67,26 +67,26 @@ test('parseArgs should set default values for unspecified options', t => {
     t.is(args.maxRunDurationSeconds, 300);
 });
 
-test('parseArgs should handle boolean options correctly', t => {
+test('cli should handle boolean options correctly', t => {
     const argv = 'node cli.js --loop false --mock true';
-    const args = parseArgs(argv.split(' '));
+    const args = cli(argv.split(' '));
 
     t.is(args.loop, false);
     t.is(args.mock, true);
 });
 
-test('parseArgs should handle array options correctly', t => {
+test('cli should handle array options correctly', t => {
     const argv = 'node cli.js --state-props-to-remove prop1 prop2 prop3';
     process.env.WORKER_STATE_PROPS_TO_REMOVE = 'prop4,prop5,prop6';
-    const args = parseArgs(argv.split(' '));
+    const args = cli(argv.split(' '));
 
     t.deepEqual(args.statePropsToRemove, ['prop1', 'prop2', 'prop3']);
 });
 
-test('parseArgs should handle array options correctly for env variables', t => {
+test('cli should handle array options correctly for env variables', t => {
     const argv = 'node cli.js';
     process.env.WORKER_STATE_PROPS_TO_REMOVE = 'prop1,prop2,prop3';
-    const args = parseArgs(argv.split(' '));
+    const args = cli(argv.split(' '));
 
     t.deepEqual(args.statePropsToRemove, ['prop1', 'prop2', 'prop3']);
 });

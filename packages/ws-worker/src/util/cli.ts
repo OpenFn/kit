@@ -31,7 +31,7 @@ function setArg<T>(argValue?: T, envValue?: string, defaultValue?: T): T | undef
   return argValue ?? (envValue as T) ?? defaultValue;
 }
 
-export function parseArgs(argv: string[]): Args {
+export default function parseArgs(argv: string[]): Args {
   const {
     WORKER_BACKOFF,
     WORKER_CAPACITY,

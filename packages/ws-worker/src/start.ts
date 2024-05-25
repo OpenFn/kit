@@ -3,9 +3,9 @@ import createLogger from '@openfn/logger';
 import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
-import { parseArgs } from './cli';
+import cli from './util/cli';
 
-const args = parseArgs(process.argv)
+const args = cli(process.argv)
 
 const logger = createLogger('SRV', { level: args.log });
 
