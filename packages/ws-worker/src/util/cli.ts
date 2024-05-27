@@ -28,17 +28,13 @@ function setArg(
 ): ArgTypes {
   if (
     Array.isArray(defaultValue) &&
-    !argValue == undefined &&
+    !argValue &&
     typeof envValue === 'string'
   ) {
     return envValue.split(',');
   }
 
-  if (
-    typeof defaultValue === 'number' &&
-    envValue !== undefined &&
-    argValue == undefined
-  ) {
+  if (typeof defaultValue === 'number' && envValue && !argValue) {
     return parseInt(envValue);
   }
 
