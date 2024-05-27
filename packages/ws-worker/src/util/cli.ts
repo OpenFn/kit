@@ -19,16 +19,30 @@ type Args = {
   maxRunDurationSeconds: number;
 };
 
-function setArg<T>(argValue?: T, envValue?: string, defaultValue?: T): T | undefined {
-  if (Array.isArray(defaultValue) && envValue !== undefined && argValue == undefined) {
-    return (envValue.split(',')) as T;
+type ArgTypes = string | string[] | number | undefined;
+
+function setArg(
+  argValue?: ArgTypes,
+  envValue?: string,
+  defaultValue?: ArgTypes
+): ArgTypes {
+  if (
+    Array.isArray(defaultValue) &&
+    !argValue == undefined &&
+    typeof envValue === 'string'
+  ) {
+    return envValue.split(',');
   }
 
-  if (typeof defaultValue === 'number' && envValue !== undefined && argValue == undefined) {
-    return parseInt(envValue) as T;
+  if (
+    typeof defaultValue === 'number' &&
+    envValue !== undefined &&
+    argValue == undefined
+  ) {
+    return parseInt(envValue);
   }
 
-  return argValue ?? (envValue as T) ?? defaultValue;
+  return argValue ?? envValue ?? defaultValue;
 }
 
 export default function parseArgs(argv: string[]): Args {
@@ -55,21 +69,26 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('lightning', {
       alias: ['l', 'lightning-service-url'],
-      description: 'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server. Env: WORKER_LIGHTNING_SERVICE_URL',
+      description:
+        'Base url to Lightning websocket endpoint, eg, ws://localhost:4000/worker. Set to "mock" to use the default mock server. Env: WORKER_LIGHTNING_SERVICE_URL',
     })
     .option('repo-dir', {
       alias: 'd',
-      description: 'Path to the runtime repo (where modules will be installed). Env: WORKER_REPO_DIR',
+      description:
+        'Path to the runtime repo (where modules will be installed). Env: WORKER_REPO_DIR',
     })
     .option('secret', {
       alias: 's',
-      description: 'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
+      description:
+        'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
     })
     .option('lightning-public-key', {
-      description: 'Base64-encoded public key. Used to verify run tokens. Env: WORKER_LIGHTNING_PUBLIC_KEY',
+      description:
+        'Base64-encoded public key. Used to verify run tokens. Env: WORKER_LIGHTNING_PUBLIC_KEY',
     })
     .option('log', {
-      description: 'Set the log level for stdout (default to info, set to debug for verbose output). Env: WORKER_LOG_LEVEL',
+      description:
+        'Set the log level for stdout (default to info, set to debug for verbose output). Env: WORKER_LOG_LEVEL',
     })
     .option('loop', {
       description: 'Disable the claims loop',
@@ -82,23 +101,27 @@ export default function parseArgs(argv: string[]): Args {
       default: false,
     })
     .option('backoff', {
-      description: 'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
+      description:
+        'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
     })
     .option('capacity', {
       description: 'max concurrent workers. Env: WORKER_CAPACITY',
       type: 'number',
     })
     .option('state-props-to-remove', {
-      description: 'A list of properties to remove from the final state returned by a job. Env: WORKER_STATE_PROPS_TO_REMOVE',
+      description:
+        'A list of properties to remove from the final state returned by a job. Env: WORKER_STATE_PROPS_TO_REMOVE',
       type: 'array',
     })
     .option('run-memory', {
-      description: 'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY_MB',
+      description:
+        'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_RUN_MEMORY_MB',
       type: 'number',
     })
     .option('max-run-duration-seconds', {
       alias: 't',
-      description: 'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
+      description:
+        'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
       type: 'number',
     });
 
@@ -107,15 +130,30 @@ export default function parseArgs(argv: string[]): Args {
   return {
     ...args,
     port: setArg(args.port, WORKER_PORT, 2222),
-    lightning: setArg(args.lightning, WORKER_LIGHTNING_SERVICE_URL, 'ws://localhost:4000/worker'),
+    lightning: setArg(
+      args.lightning,
+      WORKER_LIGHTNING_SERVICE_URL,
+      'ws://localhost:4000/worker'
+    ),
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
     secret: setArg(args.secret, WORKER_SECRET),
-    lightningPublicKey: setArg(args.lightningPublicKey, WORKER_LIGHTNING_PUBLIC_KEY),
+    lightningPublicKey: setArg(
+      args.lightningPublicKey,
+      WORKER_LIGHTNING_PUBLIC_KEY
+    ),
     log: setArg(args.log, WORKER_LOG_LEVEL as LogLevel, 'debug'),
     backoff: setArg(args.backoff, WORKER_BACKOFF, '1/10'),
     capacity: setArg(args.capacity, WORKER_CAPACITY, 5),
-    statePropsToRemove: setArg(args.statePropsToRemove, WORKER_STATE_PROPS_TO_REMOVE, ['configuration', 'response']),
+    statePropsToRemove: setArg(
+      args.statePropsToRemove,
+      WORKER_STATE_PROPS_TO_REMOVE,
+      ['configuration', 'response']
+    ),
     runMemory: setArg(args.runMemory, WORKER_MAX_RUN_MEMORY_MB, 500),
-    maxRunDurationSeconds: setArg(args.maxRunDurationSeconds, WORKER_MAX_RUN_DURATION_SECONDS, 300),
+    maxRunDurationSeconds: setArg(
+      args.maxRunDurationSeconds,
+      WORKER_MAX_RUN_DURATION_SECONDS,
+      300
+    ),
   } as Args;
 }
