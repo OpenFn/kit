@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.1.10
+
+### Patch Changes
+
+- bc45b3d: Restructure handling of env vars
+
 ## 1.1.9
 
 ### Patch Changes
