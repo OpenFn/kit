@@ -63,7 +63,7 @@ const serializeOutput = async (
   result: any,
   logger: Logger
 ) => {
-  // print to disk
+  /** Print to disk **/
   if (options.outputPath) {
     if (result.files) {
       for (const p in result.files) {
@@ -75,7 +75,7 @@ const serializeOutput = async (
     return;
   }
 
-  // print to stdout
+  /** print to stdout **/
   logger.success('Result:');
   if (result.files) {
     outputFiles(result.files, logger);
@@ -102,8 +102,8 @@ const callApollo = async (
 
     const socket = new WebSocket(url);
 
-    socket.addEventListener('message', ({ data }: { data: string }) => {
-      const evt = JSON.parse(data);
+    socket.addEventListener('message', ({ data }) => {
+      const evt = JSON.parse(data as string);
       if (evt.event === 'complete') {
         logger.debug('Apollo responded with: ', evt.data);
         resolve(evt.data);

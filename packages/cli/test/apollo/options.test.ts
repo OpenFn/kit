@@ -7,8 +7,6 @@ const cmd = yargs().command(apollo as any);
 const parse = (command: string) =>
   cmd.parse(command) as yargs.Arguments<ApolloOptions>;
 
-test.todo('service name');
-
 test('load the service name', (t) => {
   const options = parse('apollo test a/b/c.json');
 
