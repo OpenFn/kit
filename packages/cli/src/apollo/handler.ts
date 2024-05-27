@@ -59,7 +59,7 @@ const write = async (
 
 // appollo should write to stdout unless a path is provided
 const serializeOutput = async (
-  options: Pick<Opts, 'outputStdout' | 'outputPath'>,
+  options: Pick<ApolloOptions, 'outputStdout' | 'outputPath'>,
   result: any,
   logger: Logger
 ) => {
@@ -90,7 +90,7 @@ const callApollo = async (
   payload: any,
   logger: Logger
 ) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const apolloLogger = createLogger('APO', { level: 'debug' });
 
     const url = `${apolloBaseUrl.replace(
@@ -102,7 +102,7 @@ const callApollo = async (
 
     const socket = new WebSocket(url);
 
-    socket.addEventListener('message', ({ data }) => {
+    socket.addEventListener('message', ({ data }: { data: string }) => {
       const evt = JSON.parse(data);
       if (evt.event === 'complete') {
         logger.debug('Apollo responded with: ', evt.data);

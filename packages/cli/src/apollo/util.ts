@@ -1,5 +1,5 @@
 import type { Logger } from '@openfn/logger';
-import { ApolloOptions } from './handler';
+import { ApolloOptions } from './command';
 
 export const PRODUCTION_URL = 'https://apollo.openfn.org';
 

@@ -143,6 +143,7 @@ export const apolloUrl: CLIOption = {
         }
 
         opts.apolloUrl = shortcut;
+        // @ts-ignore
         delete opts[shortcut];
         didLoadShortcut = true;
       }
