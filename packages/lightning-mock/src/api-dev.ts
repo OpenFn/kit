@@ -2,6 +2,7 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
+import Koa from 'koa';
 import crypto from 'node:crypto';
 import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
@@ -134,7 +135,11 @@ const setupDevAPI = (
 
 // Set up some rest endpoints
 // Note that these are NOT prefixed
-const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
+const setupRestAPI = (
+  app: DevServer,
+  state: ServerState,
+  logger: Logger
+): Koa.Middleware => {
   const router = new Router();
 
   router.post('/run', (ctx) => {
@@ -167,7 +172,7 @@ const setupRestAPI = (app: DevServer, state: ServerState, logger: Logger) => {
     ctx.response.status = 200;
   });
 
-  return router.routes();
+  return router.routes() as unknown as Koa.Middleware;
 };
 
 export default (
@@ -175,7 +180,7 @@ export default (
   state: ServerState,
   logger: Logger,
   api: Api
-) => {
+): Koa.Middleware => {
   setupDevAPI(app, state, logger, api);
   return setupRestAPI(app, state, logger);
 };
