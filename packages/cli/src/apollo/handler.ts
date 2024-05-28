@@ -47,12 +47,12 @@ const write = async (
   // Ensure the root dir exists
   await mkdir(dir, { recursive: true });
 
-  // TODO if basepath is a file, and there's file path, create the filepath next to it
+  console.log(content);
+
   const dest = path.resolve(basePath, filePath);
-  // TODO if the content is JSON, should we pretty print it?
   await writeFile(dest, content);
 
-  // TODO mabye here we just log the relative path from pwd, but we log to
+  // TODO maybe here we just log the relative path from pwd, but we log to
   // debug or info the absolute path
   logger.success(`Wrote content to ${dest}`);
 };
@@ -65,12 +65,17 @@ const serializeOutput = async (
 ) => {
   /** Print to disk **/
   if (options.outputPath) {
-    if (result.files) {
+    if (result.files && !options.outputPath.endsWith('.json')) {
       for (const p in result.files) {
         await write(options.outputPath, p, result.files[p], logger);
       }
     } else {
-      await write(options.outputPath, '', result.files, logger);
+      await write(
+        options.outputPath,
+        '',
+        JSON.stringify(result, null, 2),
+        logger
+      );
     }
     return;
   }
