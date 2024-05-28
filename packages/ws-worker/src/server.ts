@@ -180,6 +180,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
       // Callback to be triggered when the work is done (including errors)
       const onFinish = () => {
+        logger.debug(`workflow ${id} complete: releasing worker`);
         delete app.workflows[id];
         runChannel.leave();
 

@@ -1,5 +1,18 @@
 # engine-multi
 
+## 1.1.8
+
+### Patch Changes
+
+- Better error reporting for bad credentials
+
+## 1.1.7
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/runtime@1.1.3
+
 ## 1.1.6
 
 ### Patch Changes

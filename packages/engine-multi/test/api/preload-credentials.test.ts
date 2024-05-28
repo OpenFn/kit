@@ -97,11 +97,47 @@ test('throw if one credential fails to load', async (t) => {
     await preloadCredentials(plan, loader);
   } catch (e: any) {
     t.is(e.name, 'CredentialLoadError');
-    t.is(e.message, `Failed to load credential a for step z`);
+    t.is(e.message, `Failed to load credential a: err`);
   }
 });
 
 test('throw if several credentials fail to load', async (t) => {
+  const loader = async () => {
+    throw new Error('err');
+  };
+
+  const plan = {
+    id: t.title,
+    workflow: {
+      steps: [
+        {
+          id: 'j',
+          expression: '.',
+          configuration: 'a',
+        },
+        {
+          id: 'k',
+          expression: '.',
+          configuration: 'b',
+        },
+      ],
+    },
+    options: {},
+  } as ExecutionPlan;
+
+  try {
+    await preloadCredentials(plan, loader);
+  } catch (e: any) {
+    t.is(e.name, 'CredentialLoadError');
+    t.is(
+      e.message,
+      `Failed to load credential a: err
+Failed to load credential b: err`
+    );
+  }
+});
+
+test('only report each credential once', async (t) => {
   const loader = async () => {
     throw new Error('err');
   };
@@ -129,10 +165,6 @@ test('throw if several credentials fail to load', async (t) => {
     await preloadCredentials(plan, loader);
   } catch (e: any) {
     t.is(e.name, 'CredentialLoadError');
-    t.is(
-      e.message,
-      `Failed to load credential a for step j
-Failed to load credential a for step k`
-    );
+    t.is(e.message, `Failed to load credential a: err`);
   }
 });

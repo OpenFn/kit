@@ -1,4 +1,6 @@
 import test from 'ava';
+import { createMockLogger } from '@openfn/logger';
+
 import handleRunComplete from '../../src/events/run-complete';
 
 import { mockChannel } from '../../src/mock/sockets';
@@ -142,4 +144,99 @@ test('should send a reason log and return reason for fail', async (t) => {
   t.is(completeEvent.reason, 'fail');
   t.is(completeEvent.error_type, 'TEST');
   t.is(completeEvent.error_message, 'err');
+});
+
+test('should call onFinish even if the lightning event throws', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.dataclips = {
+    x: {},
+  };
+  state.lastDataclipId = 'x';
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: () => {
+      throw new Error('they came from... behind!');
+    },
+  });
+
+  const event: any = {};
+
+  const logger = createMockLogger();
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {
+      t.pass('On finish called');
+    },
+    logger,
+  };
+  await handleRunComplete(context, event);
+});
+
+test('should log if the lightning event throws', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.dataclips = {
+    x: {},
+  };
+  state.lastDataclipId = 'x';
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: () => {
+      throw new Error('they came from... behind!');
+    },
+  });
+
+  const event: any = {};
+
+  const logger = createMockLogger();
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {
+      const message = logger._find(
+        'error',
+        /failed to send run:complete event/
+      );
+      t.truthy(message);
+    },
+    logger,
+  };
+  await handleRunComplete(context, event);
+});
+
+test('should call onFinish even if the lightning event timesout', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+  state.dataclips = {
+    x: {},
+  };
+  state.lastDataclipId = 'x';
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    // no event handler is registered, so the mock will throw a timeout
+  });
+
+  const event: any = {};
+
+  const logger = createMockLogger();
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {
+      t.pass('On finish called');
+    },
+    logger,
+  };
+  await handleRunComplete(context, event);
 });

@@ -3,7 +3,7 @@ import stringify from 'fast-safe-stringify';
 import type { Operation, State } from '@openfn/lexicon';
 
 import loadModule from '../modules/module-loader';
-import { Options, DEFAULT_TIMEOUT_MS } from '../runtime';
+import { Options } from '../runtime';
 import buildContext, { Context } from './context';
 import defaultExecute from '../util/execute';
 import clone from '../util/clone';
@@ -38,7 +38,7 @@ export default (
     let duration = Date.now();
     const { logger, plan, opts = {} } = ctx;
     try {
-      const timeout = plan.options?.timeout ?? DEFAULT_TIMEOUT_MS;
+      const timeout = plan.options?.timeout ?? ctx.opts.defaultRunTimeoutMs;
 
       // Setup an execution context
       const context = buildContext(input, opts);
