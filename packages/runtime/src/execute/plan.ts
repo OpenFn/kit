@@ -65,8 +65,8 @@ const executePlan = async (
 
     const step = workflow.steps[stepName];
 
-    if (!counts[stepName]) {
-      counts[stepName] = 1;
+    if (isNaN(counts[stepName])) {
+      counts[stepName] = 0;
     } else {
       counts[stepName] += 1;
     }
@@ -74,7 +74,7 @@ const executePlan = async (
     // create a unique step id
     // leave the first step as just the step name to preserve legacy stuff
     const stepId =
-      counts[stepName] === 1 ? stepName : `${step.id}-${counts[stepName]}`;
+      counts[stepName] === 0 ? stepName : `${step.id}-${counts[stepName]}`;
 
     const result = await executeStep(ctx, step, prevState);
 

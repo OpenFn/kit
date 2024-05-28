@@ -437,7 +437,7 @@ test('Return multiple results for leaf step that executes multiple times', async
   const result = await executePlan(plan, {}, {}, mockLogger);
   t.deepEqual(result, {
     x: ['data', 'a', 'configuration'],
-    'x-2': ['data', 'b', 'configuration'],
+    'x-1': ['data', 'b', 'configuration'],
   });
 });
 
@@ -489,7 +489,7 @@ test('Downstream nodes get executed multiple times', async (t) => {
   t.is(callCount, 2);
   t.deepEqual(result, {
     y: ['data', 'a', 'x', 'configuration'],
-    'y-2': ['data', 'b', 'x', 'configuration'],
+    'y-1': ['data', 'b', 'x', 'configuration'],
   });
 });
 

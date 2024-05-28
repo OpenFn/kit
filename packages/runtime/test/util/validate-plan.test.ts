@@ -86,7 +86,7 @@ test('throws for an indirect circular dependency', (t) => {
   });
 });
 
-test('throws for a multiple inputs', (t) => {
+test('allows for a multiple inputs', (t) => {
   const plan: ExecutionPlan = {
     options: {},
     workflow: {
@@ -99,9 +99,8 @@ test('throws for a multiple inputs', (t) => {
     },
   };
 
-  t.throws(() => validate(plan), {
-    message: 'Multiple dependencies detected for: z',
-  });
+  validate(plan);
+  t.pass();
 });
 
 test('throws for a an unknown job', (t) => {
