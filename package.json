@@ -19,6 +19,7 @@
     "test": "pnpm -r --filter=./packages/* run test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install",
     "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'",
+    "gunzip-maybe": "^1.4.2",
     "test:format": "prettier --check 'src/**/*.{ts,tsx,js,jsx}' || (echo 'Formatting issues found!' && exit 1)"
   },
   "keywords": [],
