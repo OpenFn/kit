@@ -130,11 +130,7 @@ This will build adaptor-docs into a tarball and install it directly into Lightni
 
 ## Code Formatting with Prettier
 
-[Prettier](https://prettier.io/) is used to ensure consistent code style throughout the project.
-
-## Code Formatting
-
-We recommend using [Prettier](https://prettier.io/) for code formatting to ensure consistent style across the project.
+[Prettier](https://prettier.io/) ensures consistent code style throughout the project.
 
 ### Editor Integration
 
@@ -144,12 +140,7 @@ Install the Prettier extension for your code editor to enable automatic formatti
 
 ### Manual Formatting
 
-You can also manually format files using Prettier by running the following command:
+You can manually format files using Prettier by running:
 
 ```bash
-npm run format
-
-## Documentation
-
-For information on the history of the OpenFn internals and ideas for the future
-see [docs/future](docs/future).
+pnpm run format

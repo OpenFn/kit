@@ -18,10 +18,8 @@
     "test:types": "pnpm -r --filter=./packages/* run test:types",
     "test": "pnpm -r --filter=./packages/* run test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install",
-    "format": "prettier --write 'src/**/*.js'",
-    "lint": "eslint src",
-    "test:lint": "npm run lint",
-    "test:format": "npm run format"
+    "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'",
+    "test:format": "prettier --check 'src/**/*.{ts,tsx,js,jsx}' || (echo 'Formatting issues found!' && exit 1)"
   },
   "keywords": [],
   "author": "Open Function Group",
@@ -32,8 +30,6 @@
     "@types/gunzip-maybe": "^1.4.0",
     "@types/rimraf": "^3.0.2",
     "@types/tar-stream": "^2.2.2",
-    "eslint": "^8.0.0",
-    "gunzip-maybe": "^1.4.2",
     "prettier": "^3.2.5",
     "rimraf": "^3.0.2",
     "tar-stream": "^3.0.0",
