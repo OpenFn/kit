@@ -57,7 +57,7 @@ export const saveToCache = async (
     logger.info(`Writing ${stepId} output to ${cachePath}`);
     fs.writeFileSync(cachePath, JSON.stringify(output));
   }
-}
+};
 
 export const clearCache = async (
   plan: ExecutionPlan,
@@ -67,15 +67,15 @@ export const clearCache = async (
   const cacheDir = await getCachePath(plan, options);
 
   try {
-    await rmdir(cacheDir, { recursive: true })
+    await rmdir(cacheDir, { recursive: true });
 
     logger.info(`Cleared cache at ${cacheDir}`);
-  } catch(e: any) {
+  } catch (e: any) {
     if (e.code === 'ENOENT') {
       // No cached files exist - this is fine, do nothing
     } else {
-      logger.error(`Error while clearing cache at ${cacheDir}`)
-      logger.error(e)
+      logger.error(`Error while clearing cache at ${cacheDir}`);
+      logger.error(e);
     }
   }
-}
+};

@@ -13,36 +13,40 @@ import type {
 import { getNameAndVersion, getLatestVersion } from '@openfn/runtime';
 import expandAdaptors from '../util/expand-adaptors';
 
-const describeFn = (adaptorName: string, fn: FunctionDescription) => [
-  c.green(`## ${
-  fn.name
-}(${fn.parameters.map(({ name }) => name).join(',')})`),
-`${fn.description}`,
-c.green('### Usage Examples'),
-fn.examples.length
-    ? fn.examples
-        .map(({ code, caption }) => {
-          if (caption) {
-            return `${caption}:\n${code}`;
-          }
-          return code;
-        })
-        .join('\n\n')
-    : 'None',
-c.green('### API Reference'),
-`https://docs.openfn.org/adaptors/packages/${adaptorName.replace(
-  '@openfn/language-',
-  ''
-)}-docs#${fn.name}
-`].join('\n\n');
+const describeFn = (adaptorName: string, fn: FunctionDescription) =>
+  [
+    c.green(
+      `## ${fn.name}(${fn.parameters.map(({ name }) => name).join(',')})`
+    ),
+    `${fn.description}`,
+    c.green('### Usage Examples'),
+    fn.examples.length
+      ? fn.examples
+          .map(({ code, caption }) => {
+            if (caption) {
+              return `${caption}:\n${code}`;
+            }
+            return code;
+          })
+          .join('\n\n')
+      : 'None',
+    c.green('### API Reference'),
+    `https://docs.openfn.org/adaptors/packages/${adaptorName.replace(
+      '@openfn/language-',
+      ''
+    )}-docs#${fn.name}
+`,
+  ].join('\n\n');
 
-const describeLib = (
-  adaptorName: string,
-  data: PackageDescription
-) => c.green(`## ${adaptorName} ${data.version}`)  + `
+const describeLib = (adaptorName: string, data: PackageDescription) =>
+  c.green(`## ${adaptorName} ${data.version}`) +
+  `
 
 ${data.functions
-  .map((fn) => `  ${c.yellow(fn.name)} (${fn.parameters.map((p) => p.name).join(', ')})`)
+  .map(
+    (fn) =>
+      `  ${c.yellow(fn.name)} (${fn.parameters.map((p) => p.name).join(', ')})`
+  )
   .sort()
   .join('\n')}
 `;
@@ -87,7 +91,7 @@ const docsHandler = async (
       const fn = data.functions.find(({ name }) => name === operation);
       if (fn) {
         logger.debug('Operation schema:', fn);
-        logger.break()
+        logger.break();
 
         // Generate a documentation string
         desc = describeFn(name, fn);
@@ -98,7 +102,6 @@ const docsHandler = async (
       logger.debug('No operation name provided');
       logger.always('Available functions:\n');
       desc = describeLib(name, data);
-
     }
     // Log the description without any ceremony/meta stuff from the logger
     logger.print(desc);
@@ -107,7 +110,7 @@ const docsHandler = async (
       logger.always(`For more details on a specfic functions, use:
     
     openfn docs ${name} <fn>
-`)
+`);
     }
 
     if (didError) {

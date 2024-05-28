@@ -50,7 +50,7 @@ const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
 
   try {
     text = await fs.readFile(workflowPath, 'utf8');
-    logger.debug('Loaded workflow from', workflowPath)
+    logger.debug('Loaded workflow from', workflowPath);
   } catch (e) {
     return abort(
       logger,
@@ -170,7 +170,7 @@ const fetchFile = async (
       ? filePath
       : path.resolve(rootDir, filePath);
     const result = await fs.readFile(fullPath, 'utf8');
-    log.debug('Loaded file', fullPath)
+    log.debug('Loaded file', fullPath);
     return result;
   } catch (e) {
     abort(
