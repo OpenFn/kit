@@ -145,6 +145,10 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.4.5
+    devDependencies:
+      '@types/koa':
+        specifier: ^2.15.0
+        version: 2.15.0
 
   packages/cli:
     dependencies:
@@ -178,6 +182,9 @@ importers:
       treeify:
         specifier: ^1.1.0
         version: 1.1.0
+      ws:
+        specifier: ^8.14.1
+        version: 8.17.0
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -200,6 +207,9 @@ importers:
       '@types/treeify':
         specifier: ^1.0.0
         version: 1.0.3
+      '@types/ws':
+        specifier: ^8.5.10
+        version: 8.5.10
       '@types/yargs':
         specifier: ^17.0.24
         version: 17.0.32
@@ -1312,6 +1322,7 @@ packages:
 
   '@openfn/language-common@2.0.0-rc3':
     resolution: {integrity: sha512-7kwhBnCd1idyTB3MD9dXmUqROAhoaUIkz2AGDKuv9vn/cbZh7egEv9/PzKkRcDJYFV9qyyS+cVT3Xbgsg2ii5g==}
+    bundledDependencies: []
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
