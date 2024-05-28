@@ -30,8 +30,6 @@ const executePlan = async (
 
   const { workflow, options } = compiledPlan;
 
-  let queue: string[] = [options.start];
-
   const ctx = {
     plan: compiledPlan,
     opts,
@@ -40,10 +38,7 @@ const executePlan = async (
     notify: opts.callbacks?.notify ?? (() => {}),
   };
 
-  // record of state returned by every job
-  const stateHistory: Record<string, State> = {};
-
-  // Record of state on lead nodes (nodes with no next)
+  // Record of state on leaf nodes (nodes with no next)
   const leaves: Record<string, State> = {};
 
   if (typeof input === 'string') {
@@ -56,19 +51,36 @@ const executePlan = async (
     opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, jobId: id });
     logger.success(`loaded state for ${id} in ${duration}ms`);
   }
+
+  const queue: Array<{ stepName: string; input: any }> = [
+    { stepName: options.start, input },
+  ];
+
+  // count how many times each step has been called
+  const counts: Record<string, number> = {};
+
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
-    const next = queue.shift()!;
-    const job = workflow.steps[next];
+    const { stepName, input: prevState } = queue.shift()!;
 
-    const prevState = stateHistory[job.previous || ''] ?? input;
+    const step = workflow.steps[stepName];
 
-    const result = await executeStep(ctx, job, prevState);
-    stateHistory[next] = result.state;
+    if (!counts[stepName]) {
+      counts[stepName] = 1;
+    } else {
+      counts[stepName] += 1;
+    }
 
-    const exitEarly = options.end === next;
-    if (exitEarly || !result.next.length) {
-      leaves[next] = stateHistory[next];
+    // create a unique step id
+    // leave the first step as just the step name to preserve legacy stuff
+    const stepId =
+      counts[stepName] === 1 ? stepName : `${step.id}-${counts[stepName]}`;
+
+    const result = await executeStep(ctx, step, prevState);
+
+    const exitEarly = options.end === stepName;
+    if (result.state && (exitEarly || !result.next.length)) {
+      leaves[stepId] = result.state;
     }
 
     if (exitEarly) {
@@ -77,9 +89,9 @@ const executePlan = async (
       break;
     }
 
-    if (result.next) {
-      queue.push(...result.next);
-    }
+    result.next?.forEach((next) => {
+      queue.push({ stepName: next, input: result.state });
+    });
   }
 
   // If there are multiple leaf results, return them

@@ -34,17 +34,6 @@ test('throw for a circular job', async (t) => {
   t.regex(e!.message, /circular dependency/i);
 });
 
-test('throw for a job with multiple inputs', async (t) => {
-  const plan = createPlan([
-    createJob({ next: { job3: true } }),
-    createJob({ id: 'job2', next: { job3: true } }),
-    createJob({ id: 'job3' }),
-  ]);
-
-  const e = await t.throwsAsync(() => executePlan(plan, {}, {}, mockLogger));
-  t.regex(e!.message, /multiple dependencies/i);
-});
-
 test('throw for a plan which references an undefined job', async (t) => {
   const plan = createPlan([createJob({ next: { job3: true } })]);
 
@@ -351,6 +340,159 @@ test('all state is passed through successive jobs', async (t) => {
   });
 });
 
+test('execute the same step twice', async (t) => {
+  let callCount = 0;
+  const notify = (evt: string, payload: any) => {
+    if (evt === 'job-start' && payload.jobId === 'x') {
+      callCount += 1;
+    }
+  };
+  const plan = createPlan([
+    createJob({
+      id: 'start',
+      expression: 'export default [s => s]',
+      next: { a: true, b: true },
+    }),
+
+    createJob({
+      id: 'a',
+      expression: 'export default [s => s]',
+      next: { x: true },
+    }),
+    createJob({
+      id: 'b',
+      expression: 'export default [s => s]',
+      next: { x: true },
+    }),
+
+    createJob({
+      id: 'x',
+      expression: 'export default [s => s]',
+    }),
+  ]);
+
+  await executePlan(plan, {}, { callbacks: { notify } }, mockLogger);
+
+  t.is(callCount, 2);
+});
+
+test('A step executing twice should have two different inputs', async (t) => {
+  const plan = createPlan([
+    createJob({
+      id: 'start',
+      expression: 'export default [s => s]',
+      next: { a: true, b: true },
+    }),
+
+    createJob({
+      id: 'a',
+      expression: 'export default [s => ({ ...s, a: true })]',
+      next: { x: true },
+    }),
+    createJob({
+      id: 'b',
+      expression: 'export default [s => ({ ...s, b: true })]',
+      next: { x: true },
+    }),
+
+    // x should receive two distinct and unique state objects
+    // This will throw if any state is shared between a and b
+    createJob({
+      id: 'x',
+      expression:
+        'export default [s => { if (s.a && s.b) throw new Error("SHARED STATE") }]',
+    }),
+  ]);
+
+  await executePlan(plan, {}, {}, mockLogger);
+
+  t.pass('state not shared');
+});
+
+test('Return multiple results for leaf step that executes multiple times', async (t) => {
+  const plan = createPlan([
+    createJob({
+      id: 'start',
+      expression: 'export default [s => s]',
+      next: { a: true, b: true },
+    }),
+
+    createJob({
+      id: 'a',
+      expression: 'export default [s => ({ ...s, a: true })]',
+      next: { x: true },
+    }),
+    createJob({
+      id: 'b',
+      expression: 'export default [s => ({ ...s, b: true })]',
+      next: { x: true },
+    }),
+
+    createJob({
+      id: 'x',
+      expression: 'export default [s => Object.keys(s)]',
+    }),
+  ]);
+
+  const result = await executePlan(plan, {}, {}, mockLogger);
+  t.deepEqual(result, {
+    x: ['data', 'a', 'configuration'],
+    'x-2': ['data', 'b', 'configuration'],
+  });
+});
+
+test('Downstream nodes get executed multiple times', async (t) => {
+  let callCount = 0;
+  const notify = (evt: string, payload: any) => {
+    if (evt === 'job-start' && payload.jobId === 'y') {
+      callCount += 1;
+    }
+  };
+
+  const plan = createPlan([
+    createJob({
+      id: 'start',
+      expression: 'export default [s => s]',
+      next: { a: true, b: true },
+    }),
+
+    createJob({
+      id: 'a',
+      expression: 'export default [s => ({ ...s, a: true })]',
+      next: { x: true },
+    }),
+    createJob({
+      id: 'b',
+      expression: 'export default [s => ({ ...s, b: true })]',
+      next: { x: true },
+    }),
+
+    createJob({
+      id: 'x',
+      expression: 'export default [s => ({ ...s, x: true })]',
+      next: { y: true },
+    }),
+
+    // This should be called twice with different inputs
+    createJob({
+      id: 'y',
+      expression: 'export default [s => Object.keys(s)]',
+    }),
+  ]);
+
+  const result = await executePlan(
+    plan,
+    {},
+    { callbacks: { notify } },
+    mockLogger
+  );
+  t.is(callCount, 2);
+  t.deepEqual(result, {
+    y: ['data', 'a', 'x', 'configuration'],
+    'y-2': ['data', 'b', 'x', 'configuration'],
+  });
+});
+
 test('execute edge based on state in the condition', async (t) => {
   const plan = createPlan([
     {
@@ -539,6 +681,39 @@ test('execute multiple steps in "parallel"', async (t) => {
     b: { data: { x: 1 } },
     c: { data: { x: 1 } },
   });
+});
+
+test('ignore leaf nodes with no result', async (t) => {
+  const plan = createPlan(
+    [
+      {
+        id: 'start',
+        expression: 'export default [s => s]',
+        next: {
+          a: true,
+          b: true,
+          c: true,
+        },
+      },
+      {
+        id: 'a',
+        expression: 'export default [s => { s.data.x += 1; return s; } ]',
+      },
+      {
+        id: 'b',
+        expression: 'export default [s => null ]',
+      },
+      {
+        id: 'c',
+        expression: 'export default [s => null ]',
+      },
+    ],
+    { start: 'start' }
+  );
+  const state = { data: { x: 0 } };
+
+  const result: any = await executePlan(plan, state, {}, mockLogger);
+  t.deepEqual(result, { data: { x: 1 } });
 });
 
 test('isolate state in "parallel" execution', async (t) => {
