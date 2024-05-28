@@ -6,7 +6,14 @@ import * as o from '../options';
 export type PullOptions = Required<
   Pick<
     Opts,
-    'command' | 'log' | 'logJson' | 'statePath' | 'projectPath' | 'configPath' | 'projectId' | 'confirm'
+    | 'command'
+    | 'log'
+    | 'logJson'
+    | 'statePath'
+    | 'projectPath'
+    | 'configPath'
+    | 'projectId'
+    | 'confirm'
   >
 >;
 
@@ -16,16 +23,17 @@ const pullCommand: yargs.CommandModule<PullOptions> = {
   command: 'pull [projectId]',
   describe:
     "Pull a project's state and spec from a Lightning Instance to the local directory",
-  builder: (yargs: yargs.Argv<PullOptions>) => 
-     build(options, yargs)
-    .positional('projectId', {
-                describe: 
-                    'The id of the project that should be pulled shouled be a UUID',
-                demandOption: true,
-    }).example(
-      'pull 57862287-23e6-4650-8d79-e1dd88b24b1c',
-      'Pull an updated copy of a the above spec and state from a Lightning Instance'
-    ),
+  builder: (yargs: yargs.Argv<PullOptions>) =>
+    build(options, yargs)
+      .positional('projectId', {
+        describe:
+          'The id of the project that should be pulled shouled be a UUID',
+        demandOption: true,
+      })
+      .example(
+        'pull 57862287-23e6-4650-8d79-e1dd88b24b1c',
+        'Pull an updated copy of a the above spec and state from a Lightning Instance'
+      ),
   handler: ensure('pull', options),
 };
 

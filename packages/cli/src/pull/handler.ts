@@ -15,7 +15,9 @@ async function pullHandler(options: PullOptions, logger: Logger) {
   try {
     assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
-    logger.always('Downloading existing project state (as JSON) from the server.');
+    logger.always(
+      'Downloading existing project state (as JSON) from the server.'
+    );
 
     // Get the project.json from Lightning
     const { data: project } = await getProject(config, options.projectId);
@@ -38,9 +40,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       JSON.stringify(state, null, 2)
     );
 
-    logger.always(
-      'Downloading the project spec (as YAML) from the server.'
-    );
+    logger.always('Downloading the project spec (as YAML) from the server.');
     // Get the project.yaml from Lightning
     const url = new URL(
       `api/provision/yaml?id=${options.projectId}`,
