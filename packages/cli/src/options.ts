@@ -19,6 +19,7 @@ export type Opts = {
 
   adaptor?: boolean | string;
   adaptors?: string[];
+  apolloUrl?: string;
   autoinstall?: boolean;
   cacheSteps?: boolean;
   compile?: boolean;
@@ -119,6 +120,34 @@ export const autoinstall: CLIOption = {
     boolean: true,
     description: 'Auto-install the language adaptor(s)',
     default: true,
+  },
+};
+
+// how do I alias this to --staging, prod etc
+export const apolloUrl: CLIOption = {
+  name: 'apollo-url',
+  yargs: {
+    alias: ['url'],
+    description: 'Auto-install the language adaptor(s)',
+  },
+
+  // map local, staging, prod to apollo-url
+  ensure: (opts) => {
+    let didLoadShortcut = false;
+    ['local', 'staging', 'prod', 'production'].forEach((shortcut) => {
+      if (shortcut in opts) {
+        if (didLoadShortcut) {
+          throw new Error(
+            'Invalid apollo URL - please only enter one of local, staging or prod'
+          );
+        }
+
+        opts.apolloUrl = shortcut;
+        // @ts-ignore
+        delete opts[shortcut];
+        didLoadShortcut = true;
+      }
+    });
   },
 };
 
@@ -304,7 +333,8 @@ export const outputPath: CLIOption = {
     description: 'Path to the output file',
   },
   ensure: (opts) => {
-    if (opts.command == 'compile') {
+    // TODO these command specific rules don't sit well here
+    if (/^(compile|apollo)$/.test(opts.command!)) {
       if (opts.outputPath) {
         // If a path is set, remove the stdout flag
         delete opts.outputStdout;

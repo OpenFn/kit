@@ -5,90 +5,103 @@ function findError(errors: any[], message: string) {
   return errors.find((e) => e.message === message);
 }
 
-test('validator', (t) => {
-  let doc = `
-name: project-name
-workflows:
-  - name: workflow-one
-  - name: workflow-two
+test('Workflows must be a map', (t) => {
+  const doc = `
+    name: project-name
+    workflows:
+      - name: workflow-one
+      - name: workflow-two
+    `;
+
+  const results = parseAndValidate(doc);
+
+  const err = findError(results.errors, 'must be a map');
+
+  t.truthy(err);
+  t.is(err.path, 'workflows');
+});
+
+test('Workflows must have unique ids', (t) => {
+  const doc = `
+    name: project-name
+    workflows:
+      workflow-one:
+        name: workflow one
+      workflow-one:
+        name: workflow two
+      workflow-three:
+        name: workflow three
   `;
 
-  let results = parseAndValidate(doc);
+  const results = parseAndValidate(doc);
 
-  t.truthy(
-    results.errors.find((e) => e.message === 'workflows: must be a map')
-  );
+  const err = findError(results.errors, 'duplicate id: workflow-one');
+  t.truthy(err);
+  t.is(err.path, 'workflow-one');
+});
 
-  // disallow two workflows with same name
-  doc = `
-name: project-name
-workflows:
-  workflow-one:
-    name: workflow one
-  workflow-one:
-    name: workflow two
-    jobs:
-      foo:
-  workflow-three:
-    name: workflow three
-    jobs:
-      foo:
-  workflow-four:
-    jobs:
-      - 1
-      - 2
+test('Jobs must have unique ids within a workflow', (t) => {
+  const doc = `
+    name: project-name
+    workflows:
+      workflow-two:
+        name: workflow two
+        jobs:
+          foo:
+          foo:
+          bar:
+    `;
+
+  const results = parseAndValidate(doc);
+
+  const err = findError(results.errors, 'duplicate id: foo');
+  t.is(err.path, 'workflow-two/foo');
+  t.truthy(err);
+});
+
+test('Job ids can duplicate across workflows', (t) => {
+  const doc = `
+    name: project-name
+    workflows:
+      workflow-one:
+        name: workflow one
+        jobs:
+          foo:
+      workflow-two:
+        name: workflow two
+        jobs:
+          foo:
+    `;
+
+  const results = parseAndValidate(doc);
+
+  t.is(results.errors.length, 0);
+});
+
+test('Workflow edges are parsed correctly', (t) => {
+  const doc = `
+    name: project-name
+    workflows:
+      workflow-one:
+        name: workflow one
+        jobs:
+          Transform-data-to-FHIR-standard:
+            name: Transform data to FHIR standard
+            adaptor: '@openfn/language-http@latest'
+            body: |
+              fn(state => state);
+
+        triggers:
+          webhook:
+            type: webhook
+            enabled: true
+        edges:
+          webhook->Transform-data-to-FHIR-standard:
+            condition_type: js_expression
+            condition_expression: true
   `;
 
-  results = parseAndValidate(doc);
-
-  t.truthy(findError(results.errors, 'duplicate key: workflow-one')); 
-
-  t.truthy(findError(results.errors, 'jobs: must be a map'));
-  
-  // disallow two jobs of the same name in the same workflow
-  doc = `
-name: project-name
-workflows:
-  workflow-one:
-    name: workflow one
-  workflow-two:
-    name: workflow two
-    jobs:
-      foo:
-      foo:
-  workflow-three:
-    name: workflow three
-    jobs:
-      bar:
-  `;
-
-  results = parseAndValidate(doc);
-
-  t.truthy(findError(results.errors, 'duplicate key: foo'));
-
-  doc = `
-name: project-name
-workflows:
-  workflow-one:
-    name: workflow one
-    jobs:
-      Transform-data-to-FHIR-standard:
-        name: Transform data to FHIR standard
-        adaptor: '@openfn/language-http@latest'
-        body: |
-          fn(state => state);
-
-    triggers:
-      webhook:
-        type: webhook
-        enabled: true
-    edges:
-      webhook->Transform-data-to-FHIR-standard:
-        condition_type: js_expression
-        condition_expression: true
-  `;
-
-  results = parseAndValidate(doc);
+  const results = parseAndValidate(doc);
 
   t.assert(
     results.doc.workflows['workflow-one'].edges![
@@ -97,18 +110,17 @@ workflows:
   );
 });
 
-
 test('allow empty workflows', (t) => {
   let doc = `
-name: project-name
+    name: project-name
   `;
 
-  let result = parseAndValidate(doc);
+  const result = parseAndValidate(doc);
 
-  t.is(result.errors.length, 0)
+  t.is(result.errors.length, 0);
 
   t.deepEqual(result.doc, {
     name: 'project-name',
-    workflows: {}
-  })
+    workflows: {},
+  });
 });

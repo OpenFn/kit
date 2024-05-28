@@ -111,7 +111,7 @@ export async function deploy(config: DeployConfig, logger: Logger) {
 
   logger.debug('spec', spec);
   if (spec.errors.length > 0) {
-    spec.errors.forEach((e: any) => logger.warn(e.message));
+    spec.errors.forEach((e: any) => logger.warn(`${e.path} :: ${e.message}`));
     throw new DeployError(`${config.specPath} has errors`, 'VALIDATION_ERROR');
   }
   const nextState = mergeSpecIntoState(state, spec.doc);
