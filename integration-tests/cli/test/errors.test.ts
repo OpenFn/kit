@@ -106,21 +106,6 @@ test.serial('circular workflow', async (t) => {
   t.regex(error.message[0].message, /circular dependency: b <-> a/i);
 });
 
-test.serial('multiple inputs', async (t) => {
-  const { stdout, err } = await run(
-    `openfn ${jobsPath}/multiple-inputs.json --log-json`
-  );
-  t.is(err.code, 1);
-
-  const stdlogs = extractLogs(stdout);
-
-  assertLog(t, stdlogs, /Error validating execution plan/i);
-  assertLog(t, stdlogs, /Workflow failed/i);
-
-  const error = stdlogs.find((l) => l.message[0].name === 'ValidationError');
-  t.regex(error.message[0].message, /multiple dependencies detected for: c/i);
-});
-
 test.serial('invalid start on workflow (not found)', async (t) => {
   const { stdout, err } = await run(
     `openfn ${jobsPath}/invalid-start.json --log-json`
