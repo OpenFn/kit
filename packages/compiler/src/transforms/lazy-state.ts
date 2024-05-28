@@ -3,10 +3,10 @@
  *
  * Converts all $.a.b chains unless:
  * - $ was assigned previously in that scope
- * 
+ *
  *
  */
-import { builders as b, namedTypes as n} from 'ast-types';
+import { builders as b, namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
 
@@ -17,14 +17,14 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
 
   // find the parenting call expression
   // Ie, the operation we're passing this arrow into
-  while(root && !n.CallExpression.check(root.node)) {
+  while (root && !n.CallExpression.check(root.node)) {
     last = root;
     root = root.parent;
 
     // if this is any kind of statement, we should throw
     // TODO we may relax this, see https://github.com/OpenFn/kit/issues/660
     if (n.Statement.check(root.node) || n.Declaration.check(root.node)) {
-      throw new Error(`invalid state operator: must be inside an expression`)
+      throw new Error(`invalid state operator: must be inside an expression`);
     }
   }
 
@@ -38,26 +38,30 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
     }
   } else {
     // Actually I don't think we'll ever get here
-    throw new Error(`invalid state operator: must be be passed as an argument to an operator`)
+    throw new Error(
+      `invalid state operator: must be be passed as an argument to an operator`
+    );
   }
-}
+};
 
 // Checks whether the passed node is an open function, ie, (state) => {...}
 const isOpenFunction = (path: NodePath) => {
   // is it a function?
-  if (n.ArrowFunctionExpression.check(path.node))  {
+  if (n.ArrowFunctionExpression.check(path.node)) {
     const arrow = path.node as n.ArrowFunctionExpression;
     // does it have one param?
-    if(arrow.params.length == 1) {
-      const name = (arrow.params[0] as n.Identifier).name
+    if (arrow.params.length == 1) {
+      const name = (arrow.params[0] as n.Identifier).name;
       // is the param called state?
-      if (name === "state") {
+      if (name === 'state') {
         // We already have a valid open function here
         return true;
       }
-      throw new Error(`invalid state operator: parameter "${name}" should be called "state"`)
+      throw new Error(
+        `invalid state operator: parameter "${name}" should be called "state"`
+      );
     }
-    throw new Error('invalid state operator: parent has wrong arity')
+    throw new Error('invalid state operator: parent has wrong arity');
   }
 
   // if we get here, then path is:

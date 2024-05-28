@@ -2,10 +2,10 @@
 // We use this as a base to calculate timestamps later
 const start = BigInt(Date.now()) * BigInt(1e6);
 
-const startDiff = process.hrtime.bigint()
+const startDiff = process.hrtime.bigint();
 
 // The timestamp is: workout the time elapsed (in nanoseconds) and add that to the start date
-export default () => start + (process.hrtime.bigint() - startDiff)
+export default () => start + (process.hrtime.bigint() - startDiff);
 
 // Util to convert a bigint timestamp to a date
 export const timestampToDate = (time: bigint) =>
