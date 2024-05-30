@@ -10,40 +10,37 @@ test.afterEach(() => {
 })
 
 test('throws for missing workflow', (t) => {
-    //@ts-ignore
-    const plan: ExecutionPlan = {
+    const plan = {
         options: {
             start: 'a',
         }
-    };
+    } as ExecutionPlan;
 
     t.throws(() => validate(plan, logger), {
-        message: 'Missing or invalid workflow key in execution plan',
+        message: "Missing or invalid 'workflow' key in execution plan",
     });
 });
 
 test('throws for steps not an array', (t) => {
-    //@ts-ignore
-    const plan: ExecutionPlan = {
+
+    const plan = {
         options: {
             start: 'a',
         },
         workflow: {
-            //@ts-ignore
             steps: {
-                //@ts-ignore
                 id: 'a'
             }
         },
-    };
+    } as unknown as ExecutionPlan;
 
     t.throws(() => validate(plan, logger), {
         message: 'The workflow.steps key must be an array',
     });
 });
 
-test('throws for adaptor without an expression', (t) => {
-    const plan: ExecutionPlan = {
+test('throws for a step with an adaptor but no expression', (t) => {
+    const plan = {
         options: {
             start: 'a',
         },
@@ -55,7 +52,7 @@ test('throws for adaptor without an expression', (t) => {
                 }
             ],
         },
-    };
+    } as unknown as ExecutionPlan;
 
     t.throws(() => validate(plan, logger), {
         message: 'Step a with an adaptor must also have an expression',
@@ -63,7 +60,7 @@ test('throws for adaptor without an expression', (t) => {
 });
 
 test('throws for unknown key in a step', (t) => {
-    const plan: ExecutionPlan = {
+    const plan = {
         options: {
             start: 'a',
         },
@@ -71,12 +68,11 @@ test('throws for unknown key in a step', (t) => {
             steps: [
                 {
                     id: 'a',
-                    //@ts-ignore
                     key: 'z'
                 }
             ],
         },
-    };
+    }as unknown as ExecutionPlan;
 
     t.throws(() => validate(plan, logger), {
         message: 'Invalid key "key" in step a',
@@ -99,10 +95,9 @@ test.serial('should warn if no steps are defined', (t) => {
 })
 
 test.serial('should warn if unknown key is passed in options', (t) => {
-    const plan: ExecutionPlan = {
+    const plan = {
         options: {
             start: 'a',
-            //@ts-ignore
             key: 'z',
         },
         workflow: {
@@ -110,7 +105,7 @@ test.serial('should warn if unknown key is passed in options', (t) => {
                 id: 'a',
             }],
         },
-    };
+    } as unknown as ExecutionPlan;
     validate(plan, logger);
     const { message, level } = logger._parse(logger._history[0]);
     t.is(level, 'warn');
