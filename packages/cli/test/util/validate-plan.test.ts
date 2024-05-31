@@ -17,7 +17,7 @@ test('throws for missing workflow', (t) => {
     } as ExecutionPlan;
 
     t.throws(() => validate(plan, logger), {
-        message: "Missing or invalid 'workflow' key in execution plan",
+        message: `Missing or invalid "workflow" key in execution plan`,
     });
 });
 

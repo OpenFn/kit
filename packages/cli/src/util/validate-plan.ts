@@ -5,7 +5,7 @@ const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
     const { workflow, options } = plan;
 
     if (!workflow || typeof workflow !== 'object') {
-        throw new Error("Missing or invalid 'workflow' key in execution plan");
+        throw new Error(`Missing or invalid "workflow" key in execution plan`);
     }
 
     if (!Array.isArray(workflow.steps)) {
