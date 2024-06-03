@@ -128,7 +128,19 @@ pnpm export adaptor-docs
 
 This will build adaptor-docs into a tarball and install it directly into Lightning (assuming that `Lightning` is a sibling dir of `kit`).
 
-## Documentation
+## Code Formatting with Prettier
 
-For information on the history of the OpenFn internals and ideas for the future
-see [docs/future](docs/future).
+[Prettier](https://prettier.io/) ensures consistent code style throughout the project.
+
+### Editor Integration
+
+Install the Prettier extension for your code editor to enable automatic formatting on save:
+
+- **Visual Studio Code**: Install the "Prettier - Code formatter" extension.
+
+### Manual Formatting
+
+You can manually format files using Prettier by running:
+
+```bash
+pnpm run format
