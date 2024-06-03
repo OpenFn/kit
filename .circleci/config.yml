@@ -59,7 +59,7 @@ jobs:
           name: Run Tests
           command: pnpm test
 
-  type_check:
+  format:
     docker:
       - image: cimg/node:18.18
     resource_class: medium
@@ -69,7 +69,6 @@ jobs:
       - run:
           name: Check formatting
           command: pnpm test:format
-
 
   type_check:
     docker:
