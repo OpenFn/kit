@@ -67,6 +67,18 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
+          name: Check formatting
+          command: pnpm test:format
+
+
+  type_check:
+    docker:
+      - image: cimg/node:18.18
+    resource_class: medium
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
           name: Type check
           command: pnpm test:types
 
@@ -107,6 +119,9 @@ workflows:
           requires:
             - build
       - type_check:
+          requires:
+            - build
+      - format:
           requires:
             - build
       - integration_test:
