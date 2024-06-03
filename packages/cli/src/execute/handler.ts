@@ -16,6 +16,7 @@ import assertPath from '../util/assert-path';
 import { clearCache } from '../util/cache';
 import fuzzyMatchStep from '../util/fuzzy-match-step';
 import abort from '../util/abort';
+import validatePlan from '../util/validate-plan';
 
 const matchStep = (
   plan: ExecutionPlan,
@@ -48,6 +49,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   await validateAdaptors(options, logger);
 
   let plan = await loadPlan(options, logger);
+  validatePlan(plan, logger);
 
   if (options.cacheSteps) {
     await clearCache(plan, options, logger);
