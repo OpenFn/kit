@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- deploy: Improved error messages from local validation
+- Validate workflow.json before executing to catch common errors
 
 ## 1.3.0
 
@@ -16,7 +16,7 @@
 
 ### Patch Changes
 
-- Validate workflow.json before executing to catch common errors
+- deploy: Improved error messages from local validation
 
 ## 1.2.5
 
