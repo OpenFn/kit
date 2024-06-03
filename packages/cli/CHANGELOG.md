@@ -1,14 +1,22 @@
 # @openfn/cli
 
+## 1.3.1
+
+### Patch Changes
+
+- deploy: Improved error messages from local validation
+
 ## 1.3.0
 
 ### Minor Changes
 
 - 015055c: Add first pass of apollo command. Call an apollo service with `openfn apollo <service-name>`. For basic help run `openfn apollo --help`. For available services see the server index page. This first release is a super basic integration with log streaming through websockets and reasonably intelligent handling of `{ files }` result data.
 
+## 1.2.6
+
 ### Patch Changes
 
-- deploy: Improved error messages from local validation
+- Validate workflow.json before executing to catch common errors
 
 ## 1.2.5
 
