@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.2.0
+
+### Minor Changes
+
+- Enable a step to have multiple inputs
+
 ## 1.1.3
 
 ### Patch Changes

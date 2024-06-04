@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.1.11
+
+### Patch Changes
+
+- Enable a step to have multiple inputs
+- Updated dependencies
+  - @openfn/runtime@1.2.0
+  - @openfn/engine-multi@1.1.9
+
 ## 1.1.10
 
 ### Patch Changes
