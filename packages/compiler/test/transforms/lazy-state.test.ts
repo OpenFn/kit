@@ -216,7 +216,6 @@ test('convert logical not', (t) => {
 
   const transformed = transform(ast, [visitors]);
   const { code } = print(transformed);
-  console.log(code);
 
   t.is(code, 'get(state => !state.data.x)');
 });
