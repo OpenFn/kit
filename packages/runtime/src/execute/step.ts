@@ -90,7 +90,6 @@ const executeStep = async (
   let result: any = input;
   let next: string[] = [];
   let didError = false;
-
   if (step.expression) {
     const job = step as Job;
     const jobId = job.id!;

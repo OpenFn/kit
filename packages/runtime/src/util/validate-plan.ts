@@ -15,7 +15,6 @@ export default (plan: ExecutionPlan) => {
 
   const model = buildModel(plan);
   assertNoCircularReferences(model);
-  assertSingletonDependencies(model);
 
   return true;
 };
@@ -102,18 +101,5 @@ const assertNoCircularReferences = (model: Model) => {
   for (const id in model) {
     search(id, id, 'down');
     search(id, id, 'up'); // TODO do we even need to do this?
-  }
-};
-
-// This ensures that each step only has a single upstream edge,
-// ie, each step only has a single input
-// This is importand for the `--cache` functionality in the CLI,
-// which assumes this rule when working out the input to a custom start node
-const assertSingletonDependencies = (model: Model) => {
-  for (const id in model) {
-    const node = model[id];
-    if (Object.keys(node.up).length > 1) {
-      throw new ValidationError(`Multiple dependencies detected for: ${id}`);
-    }
   }
 };

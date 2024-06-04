@@ -238,6 +238,59 @@ test('run a workflow with state and parallel branching', async (t) => {
   });
 });
 
+test('run a workflow with a leaf step called multiple times', async (t) => {
+  const plan: ExecutionPlanNoOptions = {
+    workflow: {
+      steps: [
+        {
+          expression:
+            'export default [(s) => { s.data.count += 1; s.data.a = true; return s}]',
+          next: {
+            b: true as const,
+            c: true as const,
+          },
+        },
+        {
+          id: 'b',
+          expression:
+            'export default [(s) => { s.data.count += 1; s.data.b = true; return s}]',
+          next: { z: true },
+        },
+        {
+          id: 'c',
+          expression:
+            'export default [(s) => { s.data.count += 1; s.data.c = true; return s}]',
+          next: { z: true },
+        },
+        {
+          id: 'z',
+          expression: 'export default [(s) => s]',
+        },
+      ],
+    },
+  };
+
+  const state = { data: { count: 0 } };
+
+  const result: any = await run(plan, state);
+  t.deepEqual(result, {
+    z: {
+      data: {
+        count: 2,
+        a: true,
+        b: true,
+      },
+    },
+    'z-1': {
+      data: {
+        count: 2,
+        a: true,
+        c: true,
+      },
+    },
+  });
+});
+
 // TODO this test sort of shows why input state on the plan object is a bit funky
 // running the same plan with two inputs is pretty clunky
 test('run a workflow with state and conditional branching', async (t) => {
