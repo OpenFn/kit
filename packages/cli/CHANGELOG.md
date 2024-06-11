@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.3.3
+
+### Patch Changes
+
+- 86119ea: Better error messages in deploy
+  Support env vars on pull
+- Updated dependencies [86119ea]
+  - @openfn/deploy@0.4.7
+
 ## 1.3.2
 
 ### Patch Changes
