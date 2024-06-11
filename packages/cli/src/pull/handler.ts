@@ -9,12 +9,21 @@ import {
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
-import assertPath from '../util/assert-path';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   try {
-    assertPath(options.projectId);
     const config = mergeOverrides(await getConfig(options.configPath), options);
+
+    if (process.env['OPENFN_API_KEY']) {
+      logger.info('Using OPENFN_API_KEY environment variable');
+      config.apiKey = process.env['OPENFN_API_KEY'];
+    }
+
+    if (process.env['OPENFN_ENDPOINT']) {
+      logger.info('Using OPENFN_ENDPOINT environment variable');
+      config.endpoint = process.env['OPENFN_ENDPOINT'];
+    }
+
     logger.always(
       'Downloading existing project state (as JSON) from the server.'
     );

@@ -10,7 +10,7 @@ import { DeployOptions } from '../../src/deploy/command';
 
 const logger = createMockLogger();
 
-const originalEnv = process.env;
+const { OPENFN_API_KEY, OPENFN_ENDPOINT, ...originalEnv } = process.env;
 
 test.beforeEach(() => {
   mockfs.restore();

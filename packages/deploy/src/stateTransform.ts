@@ -18,6 +18,7 @@ import {
   assignIfTruthy,
 } from './utils';
 import { DeployError } from './deployError';
+import { Logger } from '@openfn/logger/dist';
 
 function mergeJobs(
   stateJobs: WorkflowState['jobs'],
@@ -182,7 +183,8 @@ function mergeEdges(
 // Prepare the next state, based on the current state and the spec.
 export function mergeSpecIntoState(
   oldState: ProjectState,
-  spec: ProjectSpec
+  spec: ProjectSpec,
+  logger?: Logger
 ): ProjectState {
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
@@ -217,14 +219,14 @@ export function mergeSpecIntoState(
         }
 
         if (!specWorkflow && !isEmpty(stateWorkflow || {})) {
-          console.log(
-            'Workflow found in project state but not spec.',
-            `Spec: ${specWorkflow}`,
-            `State: ${stateWorkflow}`
+          logger?.error('Critical error! Cannot continue');
+          logger?.error(
+            'Workflow found in project state but not spec:',
+            stateWorkflow?.name
+              ? `${stateWorkflow.name} (${stateWorkflow?.id})`
+              : stateWorkflow?.id
           );
-          throw new Error(
-            'Cannot continue: workflow from state not found in spec.'
-          );
+          process.exit(1);
         }
 
         return [

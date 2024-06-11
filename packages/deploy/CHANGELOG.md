@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.4.7
+
+### Patch Changes
+
+- 86119ea: Better error when a workfow is in state but not spec
+
 ## 0.4.6
 
 ### Patch Changes
