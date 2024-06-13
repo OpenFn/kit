@@ -48,7 +48,7 @@ test.serial('expression: load a plan from an expression.js', async (t) => {
     plan: {},
   };
 
-  const plan = await loadPlan(opts as Opts, logger);
+  const plan = await loadPlan(opts as unknown as Opts, logger);
 
   t.truthy(plan);
   t.deepEqual(plan.options, {});
@@ -118,7 +118,7 @@ test.serial('xplan: load a plan from workflow path', async (t) => {
     plan: {},
   };
 
-  const plan = await loadPlan(opts as Opts, logger);
+  const plan = await loadPlan(opts as unknown as Opts, logger);
 
   t.truthy(plan);
   t.deepEqual(plan, sampleXPlan);
@@ -143,7 +143,7 @@ test.serial('xplan: expand adaptors', async (t) => {
     'test/wf.json': JSON.stringify(plan),
   });
 
-  const result = await loadPlan(opts as Opts, logger);
+  const result = await loadPlan(opts as unknown as Opts, logger);
   t.truthy(result);
 
   const step = result.workflow.steps[0] as Job;
@@ -169,7 +169,7 @@ test.serial('xplan: do not expand adaptors', async (t) => {
     'test/wf.json': JSON.stringify(plan),
   });
 
-  const result = await loadPlan(opts as Opts, logger);
+  const result = await loadPlan(opts as unknown as Opts, logger);
   t.truthy(result);
 
   const step = result.workflow.steps[0] as Job;
@@ -197,7 +197,7 @@ test.serial('xplan: set timeout from CLI', async (t) => {
     'test/wf.json': JSON.stringify(plan),
   });
 
-  const { options } = await loadPlan(opts as Opts, logger);
+  const { options } = await loadPlan(opts as unknown as Opts, logger);
   t.is(options.timeout, 666);
 });
 
@@ -222,7 +222,7 @@ test.serial('xplan: set start from CLI', async (t) => {
     'test/wf.json': JSON.stringify(plan),
   });
 
-  const { options } = await loadPlan(opts as Opts, logger);
+  const { options } = await loadPlan(opts as unknown as Opts, logger);
   t.is(options.start, 'b');
 });
 
@@ -259,7 +259,7 @@ test.serial('old-workflow: load a plan from workflow path', async (t) => {
     plan: {},
   };
 
-  const plan = await loadPlan(opts as Opts, logger);
+  const plan = await loadPlan(opts as unknown as Opts, logger);
 
   t.deepEqual(plan.options, {
     start: 'a',
@@ -269,5 +269,37 @@ test.serial('old-workflow: load a plan from workflow path', async (t) => {
   t.deepEqual(plan.workflow.steps[0], {
     id: 'a',
     expression: 'x()',
+  });
+});
+
+test.serial('step: allow file paths for state and data', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    plan: {},
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: '.',
+      state: './state.json',
+    },
+  ]);
+
+  mock({
+    'test/data.json': JSON.stringify({ x: 1 }),
+    'test/state.json': JSON.stringify({
+      data: "./data.json"
+    }),
+    'test/wf.json': JSON.stringify(plan),
+  });
+  const result = await loadPlan(opts as unknown as Opts, logger);
+  t.truthy(result);
+
+  const step = result.workflow.steps[0] as Job;
+  t.deepEqual(step.state, {
+    data: {
+      x: 1
+    }
   });
 });

@@ -19,6 +19,7 @@ const loadPlan = async (
     | 'adaptors'
     | 'baseDir'
     | 'expandAdaptors'
+    | 'statePath'
   >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
@@ -203,6 +204,9 @@ const importExpressions = async (
       typeof job.expression === 'string' && job.expression?.trim();
     const configurationStr =
       typeof job.configuration === 'string' && job.configuration?.trim();
+    const stateStr = 
+      typeof job.state === 'string' && job.state?.trim();
+
     if (expressionStr && isPath(expressionStr)) {
       job.expression = await fetchFile(
         job.id || `${idx}`,
@@ -219,6 +223,27 @@ const importExpressions = async (
         log
       );
       job.configuration = JSON.parse(configString!);
+    }
+
+    if (stateStr && isPath(stateStr)) {
+      const stateString = await fetchFile(
+        job.id || `${idx}`,
+        rootDir,
+        stateStr,
+        log
+      );
+      job.state = JSON.parse(stateString!);
+    }
+
+    const state = job.state
+    if (typeof state === 'object' && state !== null) {
+      const keys = Object.keys(state);
+      for (const key of keys) {
+        if (typeof state[key] === 'string' && isPath(state[key])) {
+          const fileContent = await fetchFile(job.id || `${idx}`, rootDir, state[key], log);
+          state[key] = JSON.parse(fileContent);
+        }
+      }
     }
   }
 };
