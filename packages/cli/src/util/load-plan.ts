@@ -19,7 +19,6 @@ const loadPlan = async (
     | 'adaptors'
     | 'baseDir'
     | 'expandAdaptors'
-    | 'statePath'
   >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
@@ -224,7 +223,6 @@ const importExpressions = async (
       );
       job.configuration = JSON.parse(configString!);
     }
-
     if (stateStr && isPath(stateStr)) {
       const stateString = await fetchFile(
         job.id || `${idx}`,
