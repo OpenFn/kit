@@ -469,10 +469,10 @@ test.serial(
 );
 
 test.serial(
-  'auto-import from language-common (job): openfn job.js -a @openfn/language-common',
+  'auto-import from language-common (job): openfn job.js -a @openfn/language-common@0.0.1',
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
-    const result = await run('openfn -a @openfn/language-common', job, {
+    const result = await run('openfn -a @openfn/language-common@0.0.1', job, {
       repoDir: '/repo',
     });
     t.true(result.data?.done);
@@ -485,7 +485,7 @@ test.serial(
     const workflow = {
       jobs: [
         {
-          adaptor: '@openfn/language-common',
+          adaptor: '@openfn/language-common@0.0.1',
           expression:
             'fn((state) => { state.data.done = true; return state; });',
         },
@@ -629,7 +629,7 @@ test.serial('docs should print documentation with full names', async (t) => {
 
   await commandParser(opts, logger);
   const docs = logger._parse(logger._history[2]).message as string;
-  
+
   // match the signature
   t.regex(docs, /\#\# fn\(\)/);
   // Match usage examples
