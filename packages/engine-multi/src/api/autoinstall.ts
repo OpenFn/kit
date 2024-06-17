@@ -189,7 +189,7 @@ export default autoinstall;
 // The actual install function is not unit tested
 // It's basically just a proxy to @openfn/runtime
 const install = (specifier: string, repoDir: string, logger: Logger) =>
-  runtimeInstall(specifier, repoDir, logger);
+  runtimeInstall([specifier], repoDir, logger);
 
 // The actual isInstalled function is not unit tested
 // TODO this should probably all be handled (and tested) in @openfn/runtime
