@@ -32,7 +32,8 @@ const filterSpecifiers = async (
   for (const s of specifiers) {
     // TODO we can optimise here by caching pkg
     let { name, version } = getNameAndVersion(s);
-    if (!version) {
+
+    if (!version || version.match(/^(next|latest)$/)) {
       version = await getLatestVersion(s);
       log.info(`Looked up latest version of ${s}: found ${version}`);
     }

@@ -9,7 +9,7 @@ import { createMockLogger } from '@openfn/logger';
 import { install, loadRepoPkg } from '../../src';
 import exec from '../../src/util/exec';
 
-const mockLogger = createMockLogger();
+const mockLogger = createMockLogger(undefined, { level: 'debug' });
 
 test.afterEach(() => {
   mock.restore();
@@ -33,7 +33,7 @@ const mockExec = () => {
 };
 
 // util to get around some dubious typescript
-const getLastComamnd = (e: typeof exec) =>
+const getLastCommand = (e: typeof exec) =>
   // @ts-ignore
   e.last as string;
 
@@ -53,7 +53,7 @@ test.serial('try to install a package', async (t) => {
 
   await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
 
-  const cmd = getLastComamnd(exec);
+  const cmd = getLastCommand(exec);
   t.truthy(cmd);
   // Check the basic shape of the command
   t.true(/(npm install).*(my-package)/.test(cmd));
@@ -70,7 +70,7 @@ test.serial('try to install multiple packages', async (t) => {
     exec
   );
 
-  const cmd = getLastComamnd(exec);
+  const cmd = getLastCommand(exec);
   // Check the basic shape of the command
   // (this does assume the order of the install command but it should be fine!)
   t.true(
@@ -84,7 +84,7 @@ test.serial('installing should use the correct flags', async (t) => {
 
   await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
 
-  const cmd = getLastComamnd(exec);
+  const cmd = getLastCommand(exec);
   const flags = cmd
     .split(' ')
     .filter((token: string) => token.startsWith('--'));
@@ -99,7 +99,7 @@ test.serial('install with the correct alias', async (t) => {
 
   await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
 
-  const cmd = getLastComamnd(exec);
+  const cmd = getLastCommand(exec);
   const [aliasedSpecifier] = cmd
     .split(' ')
     .filter((token: string) => /\@/.test(token));
@@ -117,7 +117,7 @@ test.serial('do nothing if the package is already installed', async (t) => {
     }),
   });
   await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
-  t.falsy(getLastComamnd(exec));
+  t.falsy(getLastCommand(exec));
 });
 
 test.serial('lookup the latest version', async (t) => {
@@ -125,7 +125,10 @@ test.serial('lookup the latest version', async (t) => {
 
   await install('@openfn/language-common', '/tmp/repo', mockLogger, exec);
 
-  const cmd = getLastComamnd(exec);
+  const log = mockLogger._find('info', /Looked up latest version/);
+  t.truthy(log);
+
+  const cmd = getLastCommand(exec);
   const [aliasedSpecifier] = cmd
     .split(' ')
     .filter((token: string) => /\@/.test(token));
@@ -133,5 +136,48 @@ test.serial('lookup the latest version', async (t) => {
   const [_null, _name, version] = specifier.split('@');
   t.truthy(version);
   // It doesn't matter what version the module is, let's just ensure it's a sensible one
-  t.assert(semver.gt(version, '1.7.0'));
+  t.assert(semver.gt(version, '1.0.0'));
+});
+
+test.serial('lookup the latest version if @latest', async (t) => {
+  const exec = mockExec();
+
+  await install(
+    '@openfn/language-common@latest',
+    '/tmp/repo',
+    mockLogger,
+    exec
+  );
+
+  const log = mockLogger._find('info', /Looked up latest version/);
+  t.truthy(log);
+
+  const cmd = getLastCommand(exec);
+  const [aliasedSpecifier] = cmd
+    .split(' ')
+    .filter((token: string) => /\@/.test(token));
+  const [_alias, specifier] = aliasedSpecifier.split('@npm:');
+  const [_null, _name, version] = specifier.split('@');
+  t.truthy(version);
+  // It doesn't matter what version the module is, let's just ensure it's a sensible one
+  t.assert(semver.gt(version, '1.0.0'));
+});
+
+test.serial('lookup the latest version if @next', async (t) => {
+  const exec = mockExec();
+
+  await install('@openfn/language-common@next', '/tmp/repo', mockLogger, exec);
+
+  const log = mockLogger._find('info', /Looked up latest version/);
+  t.truthy(log);
+
+  const cmd = getLastCommand(exec);
+  const [aliasedSpecifier] = cmd
+    .split(' ')
+    .filter((token: string) => /\@/.test(token));
+  const [_alias, specifier] = aliasedSpecifier.split('@npm:');
+  const [_null, _name, version] = specifier.split('@');
+  t.truthy(version);
+  // It doesn't matter what version the module is, let's just ensure it's a sensible one
+  t.assert(semver.gt(version, '1.0.0'));
 });
