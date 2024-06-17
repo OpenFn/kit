@@ -17,10 +17,12 @@ export const install = async (
     log.timer('install');
     log.success('Installing packages...'); // not really success but I want it to default
     log.debug('repoDir is set to:', repoDir);
-    await rtInstall(targets, repoDir, log);
+    const result = await rtInstall(targets, repoDir, log);
     const duration = log.timer('install');
     log.success(`Installation complete in ${duration}`);
+    return result;
   }
+  return [];
 };
 
 export const clean = async (options: Opts, logger: Logger) => {
