@@ -37,8 +37,7 @@ const filterSpecifiers = async (
       version = await getLatestVersion(s);
       log.info(`Looked up latest version of ${s}: found ${version}`);
     }
-
-    const exists = await getModulePath(s, repoPath, log);
+    const exists = await getModulePath(`${name}@${version}`, repoPath, log);
     if (exists) {
       log.info(`Skipping ${name}@${version} as already installed`);
     } else {
