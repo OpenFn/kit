@@ -30,8 +30,14 @@ const wait = (duration = 10) =>
     setTimeout(resolve, duration);
   });
 
+const mockAutoinstallOpts = {
+  handleInstall: mockHandleInstall,
+  handleIsInstalled: mockIsInstalled,
+  versionLookup: async () => '2.0.0',
+};
+
 const createContext = (
-  autoinstallOpts?: AutoinstallOptions,
+  autoinstallOpts: AutoinstallOptions = {},
   jobs?: Partial<Job>[],
   customWhitelist?: RegExp[]
 ) =>
@@ -58,9 +64,9 @@ const createContext = (
       repoDir: 'tmp/repo',
 
       // @ts-ignore
-      autoinstall: autoinstallOpts || {
-        handleInstall: mockHandleInstall,
-        handleIsInstalled: mockIsInstalled,
+      autoinstall: {
+        ...mockAutoinstallOpts,
+        ...autoinstallOpts,
       },
     },
   });
@@ -139,6 +145,44 @@ test('identifyAdaptors: pick out adaptors and remove duplicates', (t) => {
   t.true(adaptors.size === 2);
   t.true(adaptors.has('common@1.0.0'));
   t.true(adaptors.has('common@1.0.1'));
+});
+
+test.serial('autoinstall: handle @latest', async (t) => {
+  const jobs = [
+    {
+      adaptor: 'x@latest',
+    },
+  ];
+
+  const context = createContext({}, jobs, [/x/]);
+
+  const result = await autoinstall(context);
+
+  t.deepEqual(result, {
+    'x@2.0.0': {
+      path: 'tmp/repo/node_modules/x_2.0.0',
+      version: '2.0.0',
+    },
+  });
+});
+
+test.serial('autoinstall: handle @next', async (t) => {
+  const jobs = [
+    {
+      adaptor: 'x@next',
+    },
+  ];
+
+  const context = createContext({}, jobs, [/x/]);
+
+  const result = await autoinstall(context);
+
+  t.deepEqual(result, {
+    'x@2.0.0': {
+      path: 'tmp/repo/node_modules/x_2.0.0',
+      version: '2.0.0',
+    },
+  });
 });
 
 // This doesn't do anything except check that the mocks are installed

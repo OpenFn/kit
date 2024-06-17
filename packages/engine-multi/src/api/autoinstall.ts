@@ -2,6 +2,7 @@ import {
   ensureRepo,
   getAliasedName,
   getNameAndVersion,
+  getLatestVersion,
   loadRepoPkg,
 } from '@openfn/runtime';
 import { install as runtimeInstall } from '@openfn/runtime';
@@ -21,6 +22,7 @@ export type AutoinstallOptions = {
     repoDir: string,
     logger: Logger
   ): Promise<boolean>;
+  versionLookup?: (specifier: string) => Promise<string>;
 };
 
 const pending: Record<string, Promise<void>> = {};
@@ -102,6 +104,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
 
   const installFn = autoinstallOptions?.handleInstall || install;
   const isInstalledFn = autoinstallOptions?.handleIsInstalled || isInstalled;
+  const versionlookup = autoinstallOptions?.versionLookup || getLatestVersion;
 
   let didValidateRepo = false;
   const { skipRepoValidation } = autoinstallOptions;
@@ -121,7 +124,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   const paths: ModulePaths = {};
 
   const adaptorsToLoad = [];
-  for (const a of adaptors) {
+  for (let a of adaptors) {
     // Ensure that this is not blacklisted
     if (whitelist && !whitelist.find((r) => r.exec(a))) {
       // TODO what if it is? For now we'll log and skip it
@@ -130,10 +133,16 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
       continue;
     }
 
-    const alias = getAliasedName(a);
     const { name, version } = getNameAndVersion(a);
+    let v = version || 'unknown';
 
-    const v = version || 'unknown';
+    // Handle @latest and @next dist-tags
+    if (v.match(/^(latest|next)$/)) {
+      v = await versionlookup(a);
+      a = `${name}@${v}`;
+    }
+
+    const alias = getAliasedName(a);
 
     // Write the adaptor version to the context for reporting later
     if (!context.versions[name]) {
