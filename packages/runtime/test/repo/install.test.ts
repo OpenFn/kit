@@ -41,7 +41,7 @@ test.serial('init a new repo', async (t) => {
   const exec = mockExec();
 
   // Using an explicit package specifier here prevents calling out to npm to lookup the latest version
-  await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
+  await install(['my-package@1.0.0'], '/tmp/repo', mockLogger, exec);
 
   const pkg = await loadRepoPkg('/tmp/repo');
   t.truthy(pkg);
@@ -51,11 +51,12 @@ test.serial('init a new repo', async (t) => {
 test.serial('try to install a package', async (t) => {
   const exec = mockExec();
 
-  await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
+  await install(['my-package@1.0.0'], '/tmp/repo', mockLogger, exec);
 
   const cmd = getLastCommand(exec);
+
   t.truthy(cmd);
-  // Check the basic shape of the command
+  // Check the basic shape of the install command
   t.true(/(npm install).*(my-package)/.test(cmd));
 });
 
@@ -78,11 +79,41 @@ test.serial('try to install multiple packages', async (t) => {
   );
 });
 
+test.serial('return the same array', async (t) => {
+  const exec = mockExec();
+
+  // Using an explicit package specifier here prevents calling out to npm to lookup the latest version
+  const result = await install(
+    ['my-package@1.0.0'],
+    '/tmp/repo',
+    mockLogger,
+    exec
+  );
+
+  t.deepEqual(result, ['my-package@1.0.0']);
+});
+
+test.serial('return an array with extra versions', async (t) => {
+  const exec = mockExec();
+  const versionLookup = async (s: string) => '2.0.0';
+
+  // Using an explicit package specifier here prevents calling out to npm to lookup the latest version
+  const result = await install(
+    ['my-package@next'],
+    '/tmp/repo',
+    mockLogger,
+    exec,
+    versionLookup
+  );
+
+  t.deepEqual(result, ['my-package@2.0.0']);
+});
+
 // test the flags to prevent regressions
 test.serial('installing should use the correct flags', async (t) => {
   const exec = mockExec();
 
-  await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
+  await install(['my-package@1.0.0'], '/tmp/repo', mockLogger, exec);
 
   const cmd = getLastCommand(exec);
   const flags = cmd
@@ -97,7 +128,7 @@ test.serial('installing should use the correct flags', async (t) => {
 test.serial('install with the correct alias', async (t) => {
   const exec = mockExec();
 
-  await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
+  await install(['my-package@1.0.0'], '/tmp/repo', mockLogger, exec);
 
   const cmd = getLastCommand(exec);
   const [aliasedSpecifier] = cmd
@@ -116,37 +147,20 @@ test.serial('do nothing if the package is already installed', async (t) => {
       },
     }),
   });
-  await install('my-package@1.0.0', '/tmp/repo', mockLogger, exec);
+  await install(['my-package@1.0.0'], '/tmp/repo', mockLogger, exec);
   t.falsy(getLastCommand(exec));
 });
 
 test.serial('lookup the latest version', async (t) => {
   const exec = mockExec();
-
-  await install('@openfn/language-common', '/tmp/repo', mockLogger, exec);
-
-  const log = mockLogger._find('info', /Looked up latest version/);
-  t.truthy(log);
-
-  const cmd = getLastCommand(exec);
-  const [aliasedSpecifier] = cmd
-    .split(' ')
-    .filter((token: string) => /\@/.test(token));
-  const [_alias, specifier] = aliasedSpecifier.split('@npm:');
-  const [_null, _name, version] = specifier.split('@');
-  t.truthy(version);
-  // It doesn't matter what version the module is, let's just ensure it's a sensible one
-  t.assert(semver.gt(version, '1.0.0'));
-});
-
-test.serial('lookup the latest version if @latest', async (t) => {
-  const exec = mockExec();
+  const versionLookup = async (s: string) => '1.1.0';
 
   await install(
-    '@openfn/language-common@latest',
+    ['@openfn/language-common'],
     '/tmp/repo',
     mockLogger,
-    exec
+    exec,
+    versionLookup
   );
 
   const log = mockLogger._find('info', /Looked up latest version/);
@@ -157,16 +171,20 @@ test.serial('lookup the latest version if @latest', async (t) => {
     .split(' ')
     .filter((token: string) => /\@/.test(token));
   const [_alias, specifier] = aliasedSpecifier.split('@npm:');
-  const [_null, _name, version] = specifier.split('@');
-  t.truthy(version);
-  // It doesn't matter what version the module is, let's just ensure it's a sensible one
-  t.assert(semver.gt(version, '1.0.0'));
+  t.is(specifier, '@openfn/language-common@1.1.0');
 });
 
-test.serial('lookup the latest version if @next', async (t) => {
+test.serial('lookup the latest version if @latest', async (t) => {
   const exec = mockExec();
+  const versionLookup = async (s: string) => '1.1.0';
 
-  await install('@openfn/language-common@next', '/tmp/repo', mockLogger, exec);
+  await install(
+    ['@openfn/language-common@latest'],
+    '/tmp/repo',
+    mockLogger,
+    exec,
+    versionLookup
+  );
 
   const log = mockLogger._find('info', /Looked up latest version/);
   t.truthy(log);
@@ -176,8 +194,30 @@ test.serial('lookup the latest version if @next', async (t) => {
     .split(' ')
     .filter((token: string) => /\@/.test(token));
   const [_alias, specifier] = aliasedSpecifier.split('@npm:');
-  const [_null, _name, version] = specifier.split('@');
-  t.truthy(version);
-  // It doesn't matter what version the module is, let's just ensure it's a sensible one
-  t.assert(semver.gt(version, '1.0.0'));
+
+  t.is(specifier, '@openfn/language-common@1.1.0');
+});
+
+test.serial('lookup the latest version if @next', async (t) => {
+  const exec = mockExec();
+  const versionLookup = async (s: string) => '2.0.0';
+
+  await install(
+    ['@openfn/language-common@next'],
+    '/tmp/repo',
+    mockLogger,
+    exec,
+    versionLookup
+  );
+
+  const log = mockLogger._find('info', /Looked up latest version/);
+  t.truthy(log);
+
+  const cmd = getLastCommand(exec);
+  const [aliasedSpecifier] = cmd
+    .split(' ')
+    .filter((token: string) => /\@/.test(token));
+  const [_alias, specifier] = aliasedSpecifier.split('@npm:');
+
+  t.is(specifier, '@openfn/language-common@2.0.0');
 });
