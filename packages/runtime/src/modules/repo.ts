@@ -24,7 +24,6 @@ export const install = async (
   specifiers: string[],
   repoPath: string = defaultRepoPath,
   log: Logger = defaultLogger,
-
   // for unit testing
   execFn = exec,
   versionLookup = getLatestVersion
