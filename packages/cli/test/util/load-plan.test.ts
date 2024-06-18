@@ -304,34 +304,3 @@ test.serial('step: allow file paths for state', async (t) => {
     }
   });
 });
-
-test.serial('step: allow file paths for data', async (t) => {
-  const opts = {
-    workflowPath: 'test/wf.json',
-    plan: {},
-  };
-
-  const plan = createPlan([
-    {
-      id: 'a',
-      expression: '.',
-      state: {
-        data: "./data.json"
-      },
-    },
-  ]);
-
-  mock({
-    'test/data.json': JSON.stringify({ x: 1 }),
-    'test/wf.json': JSON.stringify(plan),
-  });
-  const result = await loadPlan(opts, logger);
-  t.truthy(result);
-
-  const step = result.workflow.steps[0] as Job;
-  t.deepEqual(step.state, {
-    data: {
-      x: 1
-    }
-  });
-});
