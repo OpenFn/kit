@@ -136,13 +136,15 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
     const { name, version } = getNameAndVersion(a);
     let v = version || 'unknown';
 
+    let resolvedAdaptorName = a;
+
     // Handle @latest and @next dist-tags
     if (v.match(/^(latest|next)$/)) {
       v = await versionlookup(a);
-      a = `${name}@${v}`;
+      resolvedAdaptorName = `${name}@${v}`;
     }
 
-    const alias = getAliasedName(a);
+    const alias = getAliasedName(resolvedAdaptorName);
 
     // Write the adaptor version to the context for reporting later
     if (!context.versions[name]) {
@@ -152,13 +154,14 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
       (context.versions[name] as string[]).push(v);
     }
 
+    // important: write back to paths with the RAW specifier
     paths[a] = {
       path: `${repoDir}/node_modules/${alias}`,
       version: v,
     };
 
-    if (!(await isInstalledFn(a, repoDir, logger))) {
-      adaptorsToLoad.push(a);
+    if (!(await isInstalledFn(resolvedAdaptorName, repoDir, logger))) {
+      adaptorsToLoad.push(resolvedAdaptorName);
     }
   }
 
