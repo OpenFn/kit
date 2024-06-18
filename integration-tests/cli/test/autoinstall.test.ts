@@ -18,8 +18,7 @@ test.before(async () => {
 });
 
 // using jobs rather than workflows for autoinstall tests
-// its just easier
-// workflows should use exactly the same logic
+// because it's easier to manage
 
 // autoinstall a specific version
 test.serial(
@@ -72,7 +71,7 @@ test.serial(
   }
 );
 
-// Ignore the @next if present but we asked for latest
+// Ignore the @next version if present but we asked for latest
 test.serial(
   `openfn ${jobsPath}/simple.js -a test-tmp@latest ${repoDir} ${log}`,
   async (t) => {
