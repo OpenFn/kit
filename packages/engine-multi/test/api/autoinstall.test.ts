@@ -159,7 +159,7 @@ test.serial('autoinstall: handle @latest', async (t) => {
   const result = await autoinstall(context);
 
   t.deepEqual(result, {
-    'x@2.0.0': {
+    'x@latest': {
       path: 'tmp/repo/node_modules/x_2.0.0',
       version: '2.0.0',
     },
@@ -178,7 +178,7 @@ test.serial('autoinstall: handle @next', async (t) => {
   const result = await autoinstall(context);
 
   t.deepEqual(result, {
-    'x@2.0.0': {
+    'x@next': {
       path: 'tmp/repo/node_modules/x_2.0.0',
       version: '2.0.0',
     },
