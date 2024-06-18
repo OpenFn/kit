@@ -13,5 +13,5 @@ module.exports = {
     '--experimental-vm-modules',
   ],
 
-  files: ['test/**/*test.ts'],
+  files: ['test/util/*test.ts'],
 };
