@@ -7,7 +7,7 @@ const jobsPath = path.resolve('test/fixtures');
 const repoDir = `--repo-dir=${path.resolve('tmp/openfn/repo-autoinstall')}`;
 const log = `--log=debug`;
 
-const TEST_LATEST = '1.0.0';
+const TEST_LATEST = '1.0.';
 const TEST_NEXT = '2.0.0-next.';
 
 // Note that these tests are STATEFUL
