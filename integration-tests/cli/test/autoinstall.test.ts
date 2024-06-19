@@ -73,48 +73,48 @@ test.serial(
 
 // Ignore the @next version if present but we asked for latest
 test.serial(
-  `openfn ${jobsPath}/simple.js -a test-tmp@latest ${repoDir} ${log}`,
+  `openfn ${jobsPath}/simple.js -a testing@latest ${repoDir} ${log}`,
   async (t) => {
     const { stdout, err } = await run(t.title);
 
     // t.falsy(err); // TODO I think this is a broken adaptor build?
 
     t.regex(stdout, /Auto-installing language adaptors/);
-    t.regex(stdout, /Looked up latest version of @openfn\/language-test-tmp/);
+    t.regex(stdout, /Looked up latest version of @openfn\/language-testing/);
     t.regex(stdout, /Installing packages.../);
     t.regex(
       stdout,
       new RegExp(
-        `Will install @openfn\/language-test-tmp version ${TEST_LATEST}`
+        `Will install @openfn\/language-testing version ${TEST_LATEST}`
       )
     );
     t.regex(
       stdout,
-      new RegExp(`Installed @openfn\/language-test-tmp@${TEST_LATEST}`)
+      new RegExp(`Installed @openfn\/language-testing@${TEST_LATEST}`)
     );
   }
 );
 
 // Ignore @next if present but we asked for no version
 test.serial(
-  `openfn ${jobsPath}/simple.js -a test-tmp ${repoDir} ${log}`,
+  `openfn ${jobsPath}/simple.js -a testing ${repoDir} ${log}`,
   async (t) => {
     const { stdout, err } = await run(t.title);
 
     //t.falsy(err);
 
-    t.regex(stdout, /Looked up latest version of @openfn\/language-test-tmp/);
+    t.regex(stdout, /Looked up latest version of @openfn\/language-testing/);
     t.regex(
       stdout,
-      /Skipping @openfn\/language-test-tmp@(.+) as already installed/
+      /Skipping @openfn\/language-testing@(.+) as already installed/
     );
   }
 );
 
-// TODO we need to fix the version of test-tmp
+// TODO we need to fix the version of testing
 // maybe after release we can push next onto 2.0 and leave latest on 1.0
 test.serial(
-  `openfn ${jobsPath}/simple.js -a test-tmp@next ${repoDir} ${log}`,
+  `openfn ${jobsPath}/simple.js -a testing@next ${repoDir} ${log}`,
   async (t) => {
     const { stdout, stderr } = await run(t.title);
 
@@ -123,13 +123,13 @@ test.serial(
     t.regex(stdout, /Auto-installing language adaptors/);
     t.regex(
       stdout,
-      /Looked up latest version of @openfn\/language-test-tmp@next/
+      /Looked up latest version of @openfn\/language-testing@next/
     );
     t.regex(stdout, /Installing packages.../);
-    t.regex(stdout, /Will install @openfn\/language-test-tmp version/);
+    t.regex(stdout, /Will install @openfn\/language-testing version/);
     t.regex(
       stdout,
-      new RegExp(`Installed @openfn\/language-test-tmp@${TEST_NEXT}`)
+      new RegExp(`Installed @openfn\/language-testing@${TEST_NEXT}`)
     );
   }
 );

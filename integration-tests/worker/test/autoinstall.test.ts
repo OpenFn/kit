@@ -78,7 +78,7 @@ test.serial('autoinstall a specific version', async (t) => {
 
 // Lightning won't ever use this but it's good to validate the behaviour
 test.serial('autoinstall @latest', async (t) => {
-  const a = generate('test-tmp', 'latest');
+  const a = generate('testing', 'latest');
 
   let autoinstallEvent;
 
@@ -90,13 +90,13 @@ test.serial('autoinstall @latest', async (t) => {
 
   await run(a);
 
-  t.is(autoinstallEvent.module, '@openfn/language-test-tmp');
+  t.is(autoinstallEvent.module, '@openfn/language-testing');
   // any 1.x version is fine for latest
   t.true(autoinstallEvent.version.startsWith('1.0.'));
 });
 
 test.serial('autoinstall @next', async (t) => {
-  const a = generate('test-tmp', 'next');
+  const a = generate('testing', 'next');
 
   let autoinstallEvent;
 
@@ -108,7 +108,7 @@ test.serial('autoinstall @next', async (t) => {
 
   await run(a);
 
-  t.is(autoinstallEvent.module, '@openfn/language-test-tmp');
+  t.is(autoinstallEvent.module, '@openfn/language-testing');
   // TODO any 2.x version is fine for next
   t.true(autoinstallEvent.version.endsWith('-next.7')); // TODO this is hard coded and kinda bad
 });
