@@ -109,8 +109,8 @@ test.serial('autoinstall @next', async (t) => {
   await run(a);
 
   t.is(autoinstallEvent.module, '@openfn/language-testing');
-  // TODO any 2.x version is fine for next
-  t.true(autoinstallEvent.version.endsWith('-next.7')); // TODO this is hard coded and kinda bad
+  // any 2.x version is fine for next
+  t.true(autoinstallEvent.version.startsWith('2.0.'));
 });
 
 test.serial('autoinstall three things at once', async (t) => {
