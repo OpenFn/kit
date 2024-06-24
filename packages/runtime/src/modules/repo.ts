@@ -14,61 +14,54 @@ const defaultPkg = {
 
 export const defaultRepoPath = '/tmp/openfn/repo';
 
-const ensureArray = (s: string | string[]): string[] => {
-  if (Array.isArray(s)) {
-    return s;
-  }
-  return [s] as string[];
-};
-
 type InstallList = Array<{ name: string; version: string }>;
-
-const filterSpecifiers = async (
-  specifiers: string[],
-  repoPath: string,
-  log: Logger
-): Promise<InstallList> => {
-  const result: InstallList = [];
-  for (const s of specifiers) {
-    // TODO we can optimise here by caching pkg
-    let { name, version } = getNameAndVersion(s);
-    if (!version) {
-      version = await getLatestVersion(s);
-      log.info(`Looked up latest version of ${s}: found ${version}`);
-    }
-
-    const exists = await getModulePath(s, repoPath, log);
-    if (exists) {
-      log.info(`Skipping ${name}@${version} as already installed`);
-    } else {
-      log.info(`Will install ${name} version ${version}`);
-      result.push({ name, version });
-    }
-  }
-  return result;
-};
 
 /*
  * Install a module from a specifier (ie, name@version) to the provided repo path.
  * If a matching version is already installed, this does nothing.
- * TODO support multiple specifiers in one call
  */
 export const install = async (
-  specifiers: string | string[],
+  specifiers: string[],
   repoPath: string = defaultRepoPath,
   log: Logger = defaultLogger,
-  execFn = exec // for unit testing
-) => {
-  await ensureRepo(repoPath);
-  const filtered = await filterSpecifiers(
-    ensureArray(specifiers),
-    repoPath,
-    log
-  );
+  // for unit testing
+  execFn = exec,
+  versionLookup = getLatestVersion
+): Promise<string[]> => {
+  // map over the input
 
-  if (filtered.length) {
+  const mapped: string[] = [];
+  const forInstalling: InstallList = [];
+  const cached: Record<string, string> = {};
+
+  await ensureRepo(repoPath);
+
+  for (const s of specifiers) {
+    if (cached[s]) {
+      continue;
+    }
+    let { name, version } = getNameAndVersion(s);
+
+    if (!version || version.match(/^(next|latest)$/)) {
+      version = await versionLookup(s);
+      log.info(`Looked up latest version of ${s}: found ${version}`);
+    }
+    const mappedSpecifier = `${name}@${version}`;
+    mapped.push(mappedSpecifier);
+    cached[s] = mappedSpecifier;
+
+    const exists = await getModulePath(mappedSpecifier, repoPath, log);
+    if (exists) {
+      log.info(`Skipping ${mappedSpecifier} as already installed`);
+    } else {
+      forInstalling.push({ name, version });
+      log.info(`Will install ${name} version ${version}`);
+    }
+  }
+
+  if (forInstalling.length) {
     const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
-    const aliases = filtered.map(({ name, version }) => {
+    const aliases = forInstalling.map(({ name, version }) => {
       const alias = `npm:${name}@${version}`;
       const aliasedName = `${name}_${version}`;
       return `${aliasedName}@${alias}`;
@@ -78,12 +71,13 @@ export const install = async (
       cwd: repoPath,
     });
     log.success(
-      `Installed ${filtered
+      `Installed ${forInstalling
         .map(({ name, version }) => `${name}@${version}`)
         .join(', ')}`
     );
-    return true;
   }
+
+  return mapped;
 };
 
 /*

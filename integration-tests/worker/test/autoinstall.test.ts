@@ -1,5 +1,6 @@
 import test from 'ava';
 import path from 'node:path';
+import { rm } from 'node:fs/promises';
 import { generateKeys } from '@openfn/lightning-mock';
 
 import { initLightning, initWorker } from '../src/init';
@@ -16,6 +17,7 @@ const generate = (adaptor, version) => {
 
 let lightning;
 let worker;
+let engine;
 
 const run = async (attempt) => {
   return new Promise<any>(async (done, reject) => {
@@ -30,15 +32,21 @@ const run = async (attempt) => {
 };
 
 test.before(async () => {
+  const repoDir = path.resolve('tmp/repo/autoinstall');
+
+  try {
+    await rm(repoDir, { recursive: true });
+  } catch (e) {}
+
   const keys = await generateKeys();
   const lightningPort = 4321;
 
   lightning = initLightning(lightningPort, keys.private);
 
-  ({ worker } = await initWorker(
+  ({ worker, engine } = await initWorker(
     lightningPort,
     {
-      repoDir: path.resolve('tmp/repo/autoinstall'),
+      repoDir,
     },
     {
       runPublicKey: keys.public,
@@ -51,7 +59,61 @@ test.after(async () => {
   await worker.destroy();
 });
 
-test('autoinstall three things at once', async (t) => {
+test.serial('autoinstall a specific version', async (t) => {
+  const a = generate('common', '1.7.7');
+
+  let autoinstallEvent;
+
+  engine.listen(a.id, {
+    'autoinstall-complete': (evt) => {
+      autoinstallEvent = evt;
+    },
+  });
+
+  await run(a);
+
+  t.is(autoinstallEvent.module, '@openfn/language-common');
+  t.is(autoinstallEvent.version, '1.7.7');
+});
+
+// Lightning won't ever use this but it's good to validate the behaviour
+test.serial('autoinstall @latest', async (t) => {
+  const a = generate('testing', 'latest');
+
+  let autoinstallEvent;
+
+  engine.listen(a.id, {
+    'autoinstall-complete': (evt) => {
+      autoinstallEvent = evt;
+    },
+  });
+
+  await run(a);
+
+  t.is(autoinstallEvent.module, '@openfn/language-testing');
+  // any 1.x version is fine for latest
+  t.true(autoinstallEvent.version.startsWith('1.0.'));
+});
+
+test.serial('autoinstall @next', async (t) => {
+  const a = generate('testing', 'next');
+
+  let autoinstallEvent;
+
+  engine.listen(a.id, {
+    'autoinstall-complete': (evt) => {
+      autoinstallEvent = evt;
+    },
+  });
+
+  await run(a);
+
+  t.is(autoinstallEvent.module, '@openfn/language-testing');
+  // any 2.x version is fine for next
+  t.true(autoinstallEvent.version.startsWith('2.0.'));
+});
+
+test.serial('autoinstall three things at once', async (t) => {
   const a = generate('common', '1.11.1');
   const b = generate('http', '5.0.0');
   const c = generate('googlesheets', '2.2.2');
