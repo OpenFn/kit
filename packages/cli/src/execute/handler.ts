@@ -63,7 +63,10 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
       const autoInstallTargets = getAutoinstallTargets(plan);
       if (autoInstallTargets.length) {
         logger.info('Auto-installing language adaptors');
-        await install({ packages: autoInstallTargets, repoDir }, logger);
+        options.adaptors = await install(
+          { packages: autoInstallTargets, repoDir },
+          logger
+        );
       }
     }
   }

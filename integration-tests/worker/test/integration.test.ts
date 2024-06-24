@@ -78,7 +78,6 @@ test.serial('run a job with autoinstall of common', (t) => {
       try {
         t.truthy(autoinstallEvent);
         t.is(autoinstallEvent.module, '@openfn/language-common');
-        t.is(autoinstallEvent.version, 'latest');
         // Expect autoinstall to take several seconds
         t.assert(autoinstallEvent.duration >= 1000);
 
