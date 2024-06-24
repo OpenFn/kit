@@ -1,5 +1,19 @@
 # ws-worker
 
+## 1.2.0
+
+### Minor Changes
+
+- e8fc192: Add support for @next and @latest tags in adaptor versions
+
+### Patch Changes
+
+- Updated dependencies [e8fc192]
+- Updated dependencies [e8fc192]
+- Updated dependencies [e8fc192]
+  - @openfn/runtime@1.3.0
+  - @openfn/engine-multi@1.1.10
+
 ## 1.1.11
 
 ### Patch Changes
