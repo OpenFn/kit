@@ -1,5 +1,14 @@
 # engine-multi
 
+## 1.1.10
+
+### Patch Changes
+
+- e8fc192: Adjust to new autoinstall api
+- Updated dependencies [e8fc192]
+- Updated dependencies [e8fc192]
+  - @openfn/runtime@1.3.0
+
 ## 1.1.9
 
 ### Patch Changes

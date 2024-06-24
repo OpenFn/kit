@@ -1,5 +1,18 @@
 # @openfn/cli
 
+## 1.4.0
+
+### Minor Changes
+
+- 736935a: Allow state in a workflow to be a path
+- e8fc192: Add support for @next and @latest tags in adaptor versions
+
+### Patch Changes
+
+- Updated dependencies [e8fc192]
+- Updated dependencies [e8fc192]
+  - @openfn/runtime@1.3.0
+
 ## 1.3.3
 
 ### Patch Changes

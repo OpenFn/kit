@@ -1,5 +1,15 @@
 # @openfn/runtime
 
+## 1.3.0
+
+### Minor Changes
+
+- e8fc192: autoinstall returns mapped specifiers to the caller
+
+### Patch Changes
+
+- e8fc192: Add support for @next and @latest tags
+
 ## 1.2.0
 
 ### Minor Changes
