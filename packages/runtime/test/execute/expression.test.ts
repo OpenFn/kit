@@ -13,7 +13,7 @@ type TestState = State & {
 };
 
 const createState = (data = {}) => ({
-  data: data,
+  data,
   configuration: {},
 });
 
@@ -334,6 +334,61 @@ test.serial('calls execute if exported from a job', async (t) => {
 
   t.is(logger._history.length, 1);
 });
+
+test.serial('handles a promise returned by an operation', async (t) => {
+  const logger = createMockLogger(undefined, { level: 'info' });
+
+  const job = `export default [
+    (s) =>  new Promise((r) => r(s))
+  ];`;
+
+  const state = createState({ x: 1 });
+  const context = createContext({ opts: { jobLogger: logger } });
+
+  const result = (await execute(context, job, state)) as TestState;
+
+  t.is(result.data.x, 1);
+});
+
+test.serial(
+  'handles a promise returned by an operation with .then()',
+  async (t) => {
+    const logger = createMockLogger(undefined, { level: 'info' });
+
+    const job = `export default [
+    (s) => 
+      new Promise((r) => r(s))
+        .then(s => ({ data: { x: 2 }}))
+  ];`;
+
+    const state = createState({ x: 1 });
+    const context = createContext({ opts: { jobLogger: logger } });
+
+    const result = (await execute(context, job, state)) as TestState;
+
+    t.is(result.data.x, 2);
+  }
+);
+
+test.serial(
+  'handles a promise returned by an operation with .catch()',
+  async (t) => {
+    const logger = createMockLogger(undefined, { level: 'info' });
+
+    const job = `export default [
+    (s) => 
+      new Promise((r) => { throw "err" })
+        .catch((e) => ({ data: { x: 3 }}))
+  ];`;
+
+    const state = createState({ x: 1 });
+    const context = createContext({ opts: { jobLogger: logger } });
+
+    const result = (await execute(context, job, state)) as TestState;
+
+    t.is(result.data.x, 3);
+  }
+);
 
 // Skipping for now as the default timeout is quite long
 test.skip('Throws after default timeout', async (t) => {
