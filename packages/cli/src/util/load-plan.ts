@@ -203,8 +203,7 @@ const importExpressions = async (
       typeof job.expression === 'string' && job.expression?.trim();
     const configurationStr =
       typeof job.configuration === 'string' && job.configuration?.trim();
-    const stateStr = 
-      typeof job.state === 'string' && job.state?.trim();
+    const stateStr = typeof job.state === 'string' && job.state?.trim();
 
     if (expressionStr && isPath(expressionStr)) {
       job.expression = await fetchFile(
