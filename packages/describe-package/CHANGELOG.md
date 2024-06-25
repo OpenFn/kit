@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.0.20
+
+### Patch Changes
+
+- fa65a0f: Describe anything with an @function tag, consistent with docsite
+
 ## 0.0.19
 
 ### Patch Changes

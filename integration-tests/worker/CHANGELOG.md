@@ -1,5 +1,13 @@
 # @openfn/integration-tests-worker
 
+## 1.0.48
+
+### Patch Changes
+
+- @openfn/engine-multi@1.1.11
+- @openfn/lightning-mock@2.0.11
+- @openfn/ws-worker@1.2.1
+
 ## 1.0.47
 
 ### Patch Changes
