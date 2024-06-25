@@ -97,7 +97,7 @@ const describeProject = (
         return true;
       }
       // Return all export aliases and public symbols
-      return symbol.isExportAlias || symbol.isPublic;
+      return symbol.isExportAlias || symbol.hasFunctionTag;
     })
     .reduce((symbols, symbol) => {
       if (symbol.isFunctionDeclaration) {

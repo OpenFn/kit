@@ -86,10 +86,11 @@ export class WrappedSymbol {
     return this.symbol.valueDeclaration?.type;
   }
 
-  // A function is private unless it has a public tag
-  public get isPublic(): boolean {
-    return this.jsDocTags.some(
-      (tag: ts.JSDocTag) => tag.tagName.escapedText === 'public'
+  public get hasFunctionTag(): boolean {
+    return Boolean(
+      this.jsDocTags.find(
+        (tag: ts.JSDocTag) => tag.tagName.escapedText === 'function'
+      )
     );
   }
 
