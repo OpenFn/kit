@@ -1,6 +1,6 @@
 /**
  * Returns a traditional stroopwafel
- * @public
+ * @function
  * @example
  * traditional()
  */
@@ -8,7 +8,7 @@ export declare function traditional(): string;
 
 /**
  * Returns a flavoured stroopwafel
- * @public
+ * @function
  * @param {string} flavour
  * @magic flavour - $.children[*]
  * @example
@@ -18,7 +18,7 @@ export declare function oneFlavour(flavour: string): string;
 
 /**
  * Returns a many flavoured stroopwafel
- * @public
+ * @function
  * @example
  * manyFlavours(['strawberry', 'cream'])
  * @example
