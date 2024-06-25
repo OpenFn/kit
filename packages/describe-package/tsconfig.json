@@ -4,7 +4,6 @@
   "exclude": ["node_modules", "**/*.spec.ts", "dist"],
   "compilerOptions": {
     "typeRoots": ["./node_modules/@types"],
-    "target": "ESNext",
-    "esModuleInterop": true,
+    "target": "ESNext"
   }
 }
