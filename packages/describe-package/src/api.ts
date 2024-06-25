@@ -64,7 +64,7 @@ export type ParameterDescription = {
  */
 export const describePackage = async (
   specifier: string,
-  _options: Options
+  _options: Options = {}
 ): Promise<PackageDescription> => {
   const { name, version } = getNameAndVersion(specifier);
   const project = new Project();

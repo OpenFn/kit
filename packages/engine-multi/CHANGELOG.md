@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.1.11
+
+### Patch Changes
+
+- @openfn/compiler@0.1.3
+
 ## 1.1.10
 
 ### Patch Changes

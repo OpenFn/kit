@@ -1,6 +1,6 @@
 {
   "name": "@openfn/describe-package",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "Utilities to inspect an npm package.",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -32,7 +32,8 @@
     "build:worker": "tsm esbuild-worker.ts",
     "build:node": "tsup --config tsup.config.js src/index.ts",
     "build": "pnpm clean && pnpm build:node && pnpm build:worker",
-    "pack": "pnpm pack --pack-destination ../../dist"
+    "pack": "pnpm pack --pack-destination ../../dist",
+    "cli": "npx tsx src/cli.ts"
   },
   "keywords": [],
   "devDependencies": {
@@ -44,7 +45,7 @@
     "esbuild": "^0.18.14",
     "rimraf": "^3.0.2",
     "threads": "1.7.0",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "tslib": "^2.4.0",
     "tsm": "^2.2.1",
     "tsup": "^7.2.0"
