@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.1.0
+
+### Minor Changes
+
+- 6d01592: Include common functions in the exported definitions
+
 ## 0.0.20
 
 ### Patch Changes

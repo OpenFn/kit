@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.4.2
+
+### Patch Changes
+
+- Updated dependencies [6d01592]
+  - @openfn/describe-package@0.1.0
+  - @openfn/compiler@0.1.4
+
 ## 1.4.1
 
 ### Patch Changes
