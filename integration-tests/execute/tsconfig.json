@@ -1,0 +1,14 @@
+{
+  "ts-node": {
+    "experimentalSpecifierResolution": "node"
+  },
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "module": "es2020",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  }
+}
