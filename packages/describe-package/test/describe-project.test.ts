@@ -57,7 +57,6 @@ test('Load an example with caption', async (t) => {
 test('Load common fn', async (t) => {
   const fn = get('fn');
   t.truthy(fn);
-  t.is(fn.parent, 'language-common');
 });
 
 test('Recognise a magic function', async (t) => {

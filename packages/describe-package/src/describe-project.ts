@@ -41,13 +41,6 @@ const describeFunction = (
   symbol: WrappedSymbol,
   moduleName?: string
 ): FunctionDescription => {
-  let parent = undefined;
-  // If this is an export alias (exported from another package) say where it came from
-  if (symbol.isExportAlias) {
-    // @ts-ignore symbol.parent
-    [parent] = symbol.symbol.parent.escapedName.match(/(language-\w+)/);
-  }
-
   return {
     type: 'function',
     name: moduleName ? `${moduleName}.${symbol.name}` : symbol.name,
@@ -64,7 +57,6 @@ const describeFunction = (
       }
       return { code: eg.trim() };
     }),
-    parent,
   };
 };
 

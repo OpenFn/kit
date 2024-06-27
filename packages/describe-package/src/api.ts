@@ -38,6 +38,7 @@ export type FunctionDescription = {
   description: string;
   examples: ExampleDescription[];
   parent?: string;
+  package?: string; // the npm package that this definition came from
 };
 
 export type NamespaceDescription = {
@@ -69,6 +70,8 @@ export const describePackage = async (
   const { name, version } = getNameAndVersion(specifier);
   const project = new Project();
 
+  const commonFunctions: Record<string, FunctionDescription> = {};
+
   if (name != '@openfn/language-common') {
     // Include language-common in the project model
     // (I don't expect this to be permanent)
@@ -95,6 +98,14 @@ export const describePackage = async (
           f,
           relativeFileName
         );
+        project.createFile(f, fileName);
+
+        describeProject(project, fileName).forEach((member) => {
+          if (member.type === 'function') {
+            member.package = '@openfn/language-common';
+            commonFunctions[member.name] = member;
+          }
+        });
       }
     }
   }
@@ -112,9 +123,14 @@ export const describePackage = async (
 
       describeProject(project, fileName).forEach((member) => {
         if (member.type === 'function') {
+          member.package = name;
           functions.push(member);
         } else if (member.type === 'namespace') {
-          namespaces.push(member);
+          if (commonFunctions[member.name]) {
+            functions.push(commonFunctions[member.name]);
+          } else {
+            namespaces.push(member);
+          }
         }
       });
     }
