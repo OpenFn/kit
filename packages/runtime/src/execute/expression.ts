@@ -35,7 +35,13 @@ export default (
   // this lets us use multiple versions of the same adaptor in a workflow
   moduleOverrides?: ModuleInfoMap
 ) =>
-  new Promise(async (resolve, reject) => {
+  new Promise(async (resolve, r) => {
+    // Wrap up the reject handler and make sure the error is safe
+    // Are we SURE we're doing this here?
+    const reject = ({ state, error }: any) => {
+      r({ state, error: serialize(error) });
+    };
+
     let duration = Date.now();
     const { logger, plan, opts = {} } = ctx;
     try {
@@ -65,7 +71,7 @@ export default (
 
         tid = setTimeout(() => {
           logger.error(`Error: Timeout expired (${timeout}ms)`);
-          reject(new TimeoutError(timeout));
+          reject({ error: new TimeoutError(timeout) });
         }, timeout);
       }
 
@@ -106,7 +112,7 @@ export default (
 
       reject({
         state: finalState,
-        error: serialize(finalError),
+        error: finalError,
       } as ExecutionErrorWrapper);
     }
   });

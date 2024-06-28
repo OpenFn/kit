@@ -43,7 +43,7 @@ test('serialize a RuntimeError', (t) => {
     details: {
       severity: 'fail',
       source: 'runtime',
-      subtype: 'TypeError',
+      type: 'TypeError',
     },
   });
 });
@@ -128,75 +128,72 @@ test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
   const plan = createPlan(expression, { timeout: 1 });
-  let error: any;
+
   try {
     await run(plan);
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'TimeoutError',
+      message: 'Job took longer than 1ms to complete',
+      details: {
+        source: 'runtime',
+        severity: 'kill',
+      },
+    });
   }
-
-  t.truthy(error);
-  t.is(error.severity, 'kill');
-  t.is(error.type, 'TimeoutError');
-  t.is(error.message, 'Job took longer than 1ms to complete');
 });
 
 test('crash on runtime error with SyntaxError', async (t) => {
   const expression = 'export default [(s) => ~@]2q1j]';
 
-  let error: any;
   try {
     await run(expression);
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'RuntimeCrash',
+      message: 'Invalid or unexpected token',
+      details: {
+        source: 'runtime',
+        severity: 'crash',
+        type: 'SyntaxError',
+      },
+    });
   }
-
-  t.deepEqual(error, {
-    type: 'RuntimeCrash',
-    message: 'Invalid or unexpected token',
-    details: {
-      source: 'runtime',
-      severity: 'crash',
-      type: 'SyntaxError',
-    },
-  });
 });
 
-test.only('crash on runtime error with ReferenceError', async (t) => {
+test('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
 
-  let error: any;
   try {
     await run(expression);
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'RuntimeCrash',
+      message: 'x is not defined',
+      details: {
+        source: 'runtime',
+        severity: 'crash',
+        type: 'ReferenceError',
+      },
+    });
   }
-
-  t.deepEqual(error, {
-    type: 'RuntimeCrash',
-    message: 'x is not defined',
-    details: {
-      source: 'runtime',
-      severity: 'crash',
-      type: 'ReferenceError',
-    },
-  });
 });
 
 test('crash on eval with SecurityError', async (t) => {
   const expression = 'export default [(s) => eval("process.exit()")]';
 
-  let error: any;
   try {
     await run(expression);
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'SecurityError',
+      message: 'Illegal eval statement detected',
+      details: {
+        source: 'runtime',
+        severity: 'kill',
+      },
+    });
   }
-
-  t.truthy(error);
-  t.is(error.severity, 'kill');
-  t.is(error.type, 'SecurityError');
-  t.is(error.message, 'Illegal eval statement detected');
 });
 
 test('crash on edge condition error with EdgeConditionError', async (t) => {
@@ -218,17 +215,18 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
     },
   };
 
-  let error: any;
   try {
     await run(plan);
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'EdgeConditionError',
+      message: 'wibble is not defined',
+      details: {
+        source: 'runtime',
+        severity: 'crash',
+      },
+    });
   }
-
-  t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.type, 'EdgeConditionError');
-  t.is(error.message, 'wibble is not defined');
 });
 
 test.todo('crash on input error if a function is passed with forceSandbox');
@@ -239,23 +237,23 @@ test.todo('crash on input error if a function is passed with forceSandbox');
 test('crash on import error: module path provided', async (t) => {
   const expression = 'import x from "blah"; export default [(s) => x]';
 
-  let error: any;
   try {
     await run(expression);
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'ImportError',
+      message: 'Failed to import module "blah"',
+      details: {
+        source: 'runtime',
+        severity: 'crash',
+      },
+    });
   }
-
-  t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.type, 'ImportError');
-  t.is(error.message, 'Failed to import module "blah"');
 });
 
 test('crash on blacklisted module', async (t) => {
   const expression = 'import x from "blah"; export default [(s) => x]';
 
-  let error: any;
   try {
     await run(
       expression,
@@ -266,14 +264,16 @@ test('crash on blacklisted module', async (t) => {
         },
       }
     );
-  } catch (e) {
-    error = e;
+  } catch (error) {
+    t.deepEqual(error, {
+      type: 'ImportError',
+      message: 'module blacklisted: blah',
+      details: {
+        source: 'runtime',
+        severity: 'crash',
+      },
+    });
   }
-
-  t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.type, 'ImportError');
-  t.is(error.message, 'module blacklisted: blah');
 });
 
 test('fail on runtime TypeError', async (t) => {
@@ -282,12 +282,15 @@ test('fail on runtime TypeError', async (t) => {
   const result = await run(expression);
   const error = result.errors['job-1'];
 
-  t.truthy(error);
-  t.is(error.type, 'TypeError');
-  t.is(
-    error.message,
-    "TypeError: Cannot read properties of undefined (reading 'y')"
-  );
+  t.deepEqual(error, {
+    type: 'RuntimeError',
+    message: "Cannot read properties of undefined (reading 'y')",
+    details: {
+      source: 'runtime',
+      severity: 'fail',
+      type: 'TypeError',
+    },
+  });
 });
 
 // TODO not totally convinced on this one actually
@@ -298,12 +301,15 @@ test('fail on runtime error with RangeError', async (t) => {
   const result = await run(expression);
   const error = result.errors['job-1'];
 
-  t.truthy(error);
-  t.is(error.type, 'RangeError');
-  t.is(
-    error.message,
-    'RangeError: toFixed() digits argument must be between 0 and 100'
-  );
+  t.deepEqual(error, {
+    type: 'RuntimeError',
+    message: 'toFixed() digits argument must be between 0 and 100',
+    details: {
+      source: 'runtime',
+      severity: 'fail',
+      type: 'RangeError',
+    },
+  });
 });
 
 test('fail on user error with new Error()', async (t) => {
@@ -313,8 +319,14 @@ test('fail on user error with new Error()', async (t) => {
 
   const error = result.errors['job-1'];
 
-  t.is(error.type, 'JobError');
-  t.is(error.message, 'abort');
+  t.deepEqual(error, {
+    type: 'JobError',
+    message: 'abort',
+    details: {
+      source: 'runtime',
+      severity: 'fail',
+    },
+  });
 });
 
 test('fail on user error with throw "abort"', async (t) => {
@@ -324,8 +336,14 @@ test('fail on user error with throw "abort"', async (t) => {
 
   const error = result.errors['job-1'];
 
-  t.is(error.type, 'JobError');
-  t.is(error.message, 'abort');
+  t.deepEqual(error, {
+    type: 'JobError',
+    message: 'abort',
+    details: {
+      source: 'runtime',
+      severity: 'fail',
+    },
+  });
 });
 
 test('fail on adaptor error (with throw new Error())', async (t) => {
@@ -346,8 +364,15 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.type, 'AdaptorError');
-  t.is(error.message, 'adaptor err');
+
+  t.deepEqual(error, {
+    type: 'AdaptorError',
+    message: 'adaptor err',
+    details: {
+      source: 'runtime',
+      severity: 'fail',
+    },
+  });
 });
 
 test('adaptor error with no stack trace will be a user error', async (t) => {
@@ -371,6 +396,13 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.type, 'JobError');
-  t.is(error.message, 'adaptor err');
+
+  t.deepEqual(error, {
+    type: 'JobError',
+    message: 'adaptor err',
+    details: {
+      source: 'runtime',
+      severity: 'fail',
+    },
+  });
 });

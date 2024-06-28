@@ -92,6 +92,8 @@ const run = (
     opts as Options,
     logger
   ).catch((e) => {
+    // this will catch validation errors (I think)
+    // and edge condition errors
     throw serializeError(e);
   });
 };

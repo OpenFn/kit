@@ -15,6 +15,20 @@ type SerializedError = {
 // Just like the runtime guarantees to return a serialisable object,
 // it will also throw a serializable error
 export function serialize(error: any): SerializedError {
+  if (error.$serialized) {
+    throw error;
+  }
+
+  // Wrap all errors up with a special key that lets us know its been processed
+  const wrap = (e: any) => {
+    Object.defineProperty(e, '$serialized', {
+      enumerable: false,
+      writable: false,
+      value: true,
+    });
+    return e;
+  };
+
   if (error instanceof Error) {
     const details: SerializedError['details'] = {};
 
@@ -24,20 +38,20 @@ export function serialize(error: any): SerializedError {
         details[key] = error[key];
       }
     }
-    return {
+    return wrap({
       type: error.name,
       message: error.message,
       details,
-    };
+    });
   } else if (typeof error === 'string') {
     // TODO maybe capture a stack trace from here?
     // https://nodejs.org/api/errors.html#errorcapturestacktracetargetobject-constructoropt
-    return {
+    return wrap({
       type: 'Error',
       message: error,
-    };
+    });
   } else {
-    return {
+    return wrap({
       type: 'Error',
       // This is a bit of wierd one
       // It doesn't help anyone for us to make up an error
@@ -45,7 +59,7 @@ export function serialize(error: any): SerializedError {
       // I guess I can't do that!
       // message: error.message ?? 'An error occurred',
       details: error,
-    };
+    });
   }
 }
 
@@ -59,7 +73,7 @@ export function serialize(error: any): SerializedError {
 // Double buffering right now which is probably the worst solution...
 
 export function assertImportError(e: any) {
-  if (e.type === 'ImportError') {
+  if (e.name === 'ImportError') {
     throw e;
   }
 }
