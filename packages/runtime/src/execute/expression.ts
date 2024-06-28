@@ -16,6 +16,7 @@ import {
   assertRuntimeCrash,
   assertRuntimeError,
   assertSecurityKill,
+  serialize,
 } from '../errors';
 import type { JobModule, ExecutionContext } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
@@ -103,7 +104,10 @@ export default (
         finalError = e;
       }
 
-      reject({ state: finalState, error: finalError } as ExecutionErrorWrapper);
+      reject({
+        state: finalState,
+        error: serialize(finalError),
+      } as ExecutionErrorWrapper);
     }
   });
 

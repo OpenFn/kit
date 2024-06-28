@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { WorkflowOptions } from '@openfn/lexicon';
 
 import run from '../src/runtime';
+import { RuntimeError, serialize } from '../src/errors';
 
 const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
@@ -15,11 +16,119 @@ const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   options,
 });
 
+test('serialize a basic Error', (t) => {
+  const e: any = new Error('test_error');
+  e.code = 297;
+
+  const result = serialize(e);
+  t.log(result);
+  t.deepEqual(result, {
+    type: 'Error',
+    message: 'test_error',
+    details: {
+      code: 297,
+    },
+  });
+});
+
+test('serialize a RuntimeError', (t) => {
+  const inner = new TypeError('bad types');
+  const e: any = new RuntimeError(inner);
+  t.log(e);
+  const result = serialize(e);
+  t.log(result);
+  t.deepEqual(result, {
+    type: 'RuntimeError', // type should be the class name
+    message: 'bad types',
+    details: {
+      severity: 'fail',
+      source: 'runtime',
+      subtype: 'TypeError',
+    },
+  });
+});
+
+test('serialize an error from the HTTP adaptors', (t) => {
+  const statusCode = 404;
+  const statusMessage = 'Not Found';
+  const url = 'wwww';
+  const duration = 1234;
+  const method = 'GET';
+  const body = { message: 'server said no' };
+  const headers = { 'content-type': 'application/json' };
+
+  // This is copied out of the common http utils
+  const error: any = new Error('request failed');
+  error.statusCode = statusCode;
+  error.statusMessage = statusMessage;
+  error.url = url;
+  error.duration = duration;
+  error.method = method;
+  error.body = body;
+  error.headers = headers;
+
+  const result = serialize(error);
+  t.log(result);
+  t.deepEqual(result, {
+    type: 'Error',
+    message: 'request failed',
+    details: {
+      statusCode,
+      statusMessage,
+      url,
+      duration,
+      method,
+      body,
+      headers,
+    },
+  });
+});
+
+test('serialize a string', (t) => {
+  const e: any = 'something went wrong';
+
+  const result = serialize(e);
+  t.log(result);
+  t.deepEqual(result, {
+    type: 'Error',
+    message: e,
+  });
+});
+
+test('serialize an object', (t) => {
+  const e: any = { code: 1234, reason: 'idk' };
+
+  const result = serialize(e);
+  t.log(result);
+  t.deepEqual(result, {
+    type: 'Error',
+    // message: 'An error occurred',
+    details: {
+      code: 1234,
+      reason: 'idk',
+    },
+  });
+});
+
+test('serialize a weird error-like object', (t) => {
+  const e: any = { message: 'something went wrong' };
+
+  const result = serialize(e);
+  t.log(result);
+  t.deepEqual(result, {
+    type: 'Error',
+    // message: 'something went wrong',
+    details: {
+      message: 'something went wrong',
+    },
+  });
+});
+
 test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
   const plan = createPlan(expression, { timeout: 1 });
-  let error;
+  let error: any;
   try {
     await run(plan);
   } catch (e) {
@@ -35,41 +144,49 @@ test('crash on timeout', async (t) => {
 test('crash on runtime error with SyntaxError', async (t) => {
   const expression = 'export default [(s) => ~@]2q1j]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
     error = e;
   }
 
-  t.truthy(error);
-  t.is(error.severity, 'crash');
-  t.is(error.type, 'RuntimeCrash');
-  t.is(error.subtype, 'SyntaxError');
-  t.is(error.message, 'SyntaxError: Invalid or unexpected token');
+  t.deepEqual(error, {
+    type: 'RuntimeCrash',
+    message: 'Invalid or unexpected token',
+    details: {
+      source: 'runtime',
+      severity: 'crash',
+      type: 'SyntaxError',
+    },
+  });
 });
 
-test('crash on runtime error with ReferenceError', async (t) => {
+test.only('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
     error = e;
   }
 
-  // t.true(error instanceof RuntimeError);
-  t.is(error.severity, 'crash');
-  t.is(error.type, 'RuntimeCrash');
-  t.is(error.subtype, 'ReferenceError');
-  t.is(error.message, 'ReferenceError: x is not defined');
+  t.deepEqual(error, {
+    type: 'RuntimeCrash',
+    message: 'x is not defined',
+    details: {
+      source: 'runtime',
+      severity: 'crash',
+      type: 'ReferenceError',
+    },
+  });
 });
 
 test('crash on eval with SecurityError', async (t) => {
   const expression = 'export default [(s) => eval("process.exit()")]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
@@ -101,7 +218,7 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
     },
   };
 
-  let error;
+  let error: any;
   try {
     await run(plan);
   } catch (e) {
@@ -122,7 +239,7 @@ test.todo('crash on input error if a function is passed with forceSandbox');
 test('crash on import error: module path provided', async (t) => {
   const expression = 'import x from "blah"; export default [(s) => x]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
@@ -138,7 +255,7 @@ test('crash on import error: module path provided', async (t) => {
 test('crash on blacklisted module', async (t) => {
   const expression = 'import x from "blah"; export default [(s) => x]';
 
-  let error;
+  let error: any;
   try {
     await run(
       expression,

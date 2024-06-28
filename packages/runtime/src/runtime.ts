@@ -4,6 +4,7 @@ import type { ExecutionCallbacks } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';
+import { serialize as serializeError } from './errors';
 
 export type Options = {
   logger?: Logger;
@@ -84,7 +85,15 @@ const run = (
       return w;
     });
   }
-  return executePlan(xplan as ExecutionPlan, input, opts as Options, logger);
+
+  return executePlan(
+    xplan as ExecutionPlan,
+    input,
+    opts as Options,
+    logger
+  ).catch((e) => {
+    throw serializeError(e);
+  });
 };
 
 export default run;

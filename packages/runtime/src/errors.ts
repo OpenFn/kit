@@ -1,12 +1,55 @@
-import util from 'node:util';
+type SerializedError = {
+  type: string; // the error name
 
-// TODO: what if we add a "fix" to each error?
-// Maybe adminFix and userFix?
-// This would be a human readable hint about what to do
-// Or maybe summary/detail is a nicer approach
-// message/explanation
-// It would be nice for the detail to be in the error, not the code
-// But that probably requires more detailed error types
+  message?: string; // If we support error objects, we can't guarantee a message
+
+  // A dump of error details
+  details?: Record<string, any>;
+
+  // TODO handle this later
+  location?: any;
+  stacktrace?: string;
+};
+
+// This is my new error serializer
+// Just like the runtime guarantees to return a serialisable object,
+// it will also throw a serializable error
+export function serialize(error: any): SerializedError {
+  if (error instanceof Error) {
+    const details: SerializedError['details'] = {};
+
+    for (const key in error) {
+      if (!/^(message|name)$/.test(key)) {
+        // @ts-ignore
+        details[key] = error[key];
+      }
+    }
+    return {
+      type: error.name,
+      message: error.message,
+      details,
+    };
+  } else if (typeof error === 'string') {
+    // TODO maybe capture a stack trace from here?
+    // https://nodejs.org/api/errors.html#errorcapturestacktracetargetobject-constructoropt
+    return {
+      type: 'Error',
+      message: error,
+    };
+  } else {
+    return {
+      type: 'Error',
+      // This is a bit of wierd one
+      // It doesn't help anyone for us to make up an error
+      // But I also want to guarante that the error has a human readable message
+      // I guess I can't do that!
+      // message: error.message ?? 'An error occurred',
+      details: error,
+    };
+  }
+}
+
+// TODO I really  want to clean up some of this stuff, it's just not right
 
 // TODO it's annoying that for builtin errors I use constructor.name,
 // but for my errors I use type
@@ -62,27 +105,12 @@ export function assertAdaptorError(e: any) {
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';
-  type: string = '-';
 
   constructor() {
     super();
 
     // automatically limit the stacktrace (?)
     Error.captureStackTrace(this, RTError.constructor);
-
-    // Provide custom rendering of the error in node
-    // TODO we should include some kind of context where it makes sense
-    // eg, if the error is associated with a job, show the job code
-    // eg, if the error came from an expression, show the source and location
-    // eg, if this came from our code, it doesn't help the user to see it but it does help us!
-    // @ts-ignore
-    this[util.inspect.custom] = (_depth, _options, _inspect) => {
-      const str = `[${this.name}] ${this.message}`;
-
-      // TODO include stack trace if the error demands it
-
-      return str;
-    };
   }
 }
 
@@ -90,7 +118,6 @@ export class RTError extends Error {
 // TODO we should take a path to the invalid bit
 export class ValidationError extends RTError {
   severity = 'crash';
-  type = 'ValidationError';
   name = 'ValidationError';
 
   constructor(message: string) {
@@ -102,21 +129,20 @@ export class ValidationError extends RTError {
 // Generic runtime execution error
 // This is a wrapper around any node/js error thrown during execution
 // Should log without stack trace, with RuntimeError type,
-// and with a message (including subtype)
+// and with a message (including type)
 
 // A runtime error traps a non-critical fail state
 // The error is written to state and
 // we can continue executing the workflow
 export class RuntimeError extends RTError {
   severity = 'fail';
-  subtype: string;
-  type = 'RuntimeError';
+  type: string;
   name = 'RuntimeError';
 
   constructor(error: Error) {
     super();
-    this.subtype = error.constructor.name;
-    this.message = `${this.subtype}: ${error.message}`;
+    this.type = error.constructor.name;
+    this.message = error.message;
   }
 }
 
@@ -125,20 +151,18 @@ export class RuntimeError extends RTError {
 // The main runtime.run function should throw
 export class RuntimeCrash extends RTError {
   severity = 'crash';
-  subtype: string;
-  type = 'RuntimeCrash';
+  type: string;
   name = 'RuntimeCrash';
 
   constructor(error: Error) {
     super();
-    this.subtype = error.constructor.name;
-    this.message = `${this.subtype}: ${error.message}`;
+    this.type = error.constructor.name;
+    this.message = error.message;
   }
 }
 
 export class EdgeConditionError extends RTError {
   severity = 'crash';
-  type = 'EdgeConditionError';
   name = 'EdgeConditionError';
   message: string;
 
@@ -150,7 +174,6 @@ export class EdgeConditionError extends RTError {
 
 export class InputError extends RTError {
   severity = 'crash';
-  type = 'InputError';
   name = 'InputError';
   message: string;
 
@@ -161,7 +184,6 @@ export class InputError extends RTError {
 }
 
 export class AdaptorError extends RTError {
-  type = 'AdaptorError';
   name = 'AdaptorError';
   severity = 'fail';
   message: string = '';
@@ -179,7 +201,6 @@ export class AdaptorError extends RTError {
 // custom user error trow new Error() or throw {}
 // Maybe JobError or Expression Error?
 export class JobError extends RTError {
-  type = 'JobError';
   name = 'JobError';
   severity = 'fail';
   message: string = '';
@@ -198,7 +219,6 @@ export class JobError extends RTError {
 // The message will add context
 // Some of these may need a stack trace for admins (but not for users)
 export class ImportError extends RTError {
-  type = 'ImportError';
   name = 'ImportError';
   severity = 'crash';
   message: string;
@@ -210,7 +230,6 @@ export class ImportError extends RTError {
 
 // Eval (and maybe other security stuff)
 export class SecurityError extends RTError {
-  type = 'SecurityError';
   name = 'SecurityError';
   // TODO I wonder if severity really is a concern for later.
   // The runtime just needs to decide whether to throw or trap any errors
@@ -223,7 +242,6 @@ export class SecurityError extends RTError {
 }
 
 export class TimeoutError extends RTError {
-  type = 'TimeoutError';
   name = 'TimeoutError';
   severity = 'kill';
   message: string;

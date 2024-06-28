@@ -7,7 +7,7 @@ import executeExpression, { ExecutionErrorWrapper } from './expression';
 import clone from '../util/clone';
 import assembleState from '../util/assemble-state';
 import type { CompiledStep, ExecutionContext } from '../types';
-import { EdgeConditionError } from '../errors';
+import { EdgeConditionError, serialize } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
   NOTIFY_INIT_START,
@@ -132,34 +132,37 @@ const executeStep = async (
 
       result = await executeExpression(ctx, job.expression, state, step.linker);
     } catch (e: any) {
+      const { state, error } = e;
+
       didError = true;
-      if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
-        const { error, state } = e as ExecutionErrorWrapper;
 
-        // Whatever the final state was, save that as the intial state to the next thing
-        result = state;
+      // Whatever the final state was, save that as the intial state to the next thing
+      result = state;
 
-        const duration = logger.timer(timerId);
-        logger.error(`Failed step ${jobName} after ${duration}`);
-        report(state, jobId, error);
+      // const error = serialize(e);
 
-        next = calculateNext(step, result, logger);
+      const duration = logger.timer(timerId);
+      logger.error(`Failed step ${jobName} after ${duration}`);
 
-        notify(NOTIFY_JOB_ERROR, {
-          duration: Date.now() - startTime,
-          error,
-          state,
-          jobId,
-          next,
-        });
+      // TODO don't bother with this
+      report(state, jobId, error);
 
-        // Stop executing if the error is sufficiently severe
-        if (error.severity === 'crash' || error.severity === 'kill') {
-          throw error;
-        }
-      } else {
-        // It should be impossible to get here
-        throw e;
+      next = calculateNext(step, result, logger);
+
+      notify(NOTIFY_JOB_ERROR, {
+        duration: Date.now() - startTime,
+        error,
+        state,
+        jobId,
+        next,
+      });
+
+      // Stop executing if the error is sufficiently severe
+      if (
+        error.details?.severity === 'crash' ||
+        error.details?.severity === 'kill'
+      ) {
+        throw error;
       }
     }
 

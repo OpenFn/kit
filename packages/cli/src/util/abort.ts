@@ -14,19 +14,21 @@ export default (
   error?: Error,
   help?: string
 ) => {
-  const e = new AbortError(reason);
-  logger.break();
-  logger.error(reason);
-  if (error) {
-    logger.error(error.message);
-  }
-  if (help) {
-    logger.always(help);
-  }
-  logger.break();
-  logger.error('Critical error: aborting command');
+  // const e = new AbortError(reason);
+  // logger.break();
+  // logger.error(reason);
+  // if (error) {
+  //   logger.error(error.message);
+  // }
+  // if (help) {
+  //   logger.always(help);
+  // }
+  // logger.break();
+  // logger.error('Critical error: aborting command');
 
-  process.exitCode = 1;
+  // process.exitCode = 1;
 
-  throw e;
+  // throw e;
+
+  throw error;
 };
