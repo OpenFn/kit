@@ -32,17 +32,35 @@ export function serialize(error: any): SerializedError {
   if (error instanceof Error) {
     const details: SerializedError['details'] = {};
 
-    for (const key in error) {
-      if (!/^(message|name)$/.test(key)) {
-        // @ts-ignore
-        details[key] = error[key];
-      }
-    }
-    return wrap({
+    const e = {
       type: error.name,
       message: error.message,
-      details,
-    });
+    };
+    // TODO use a helper for this
+    if (error.severity) {
+      e.severity = error.severity;
+    }
+    if (error.source) {
+      e.source = error.source;
+    }
+    // assign details here at the bottom so it'll serialize better
+    e.details = details;
+
+    for (const key in error) {
+      //if (!/^(message|name|severity|)$/.test(key)) {
+      if (!e[key] && key !== 'name') {
+        // hmm = bad heuristic
+        if (error[key] instanceof Error) {
+          for (const ekey in error[key]) {
+            details[ekey] = error[key][ekey];
+          }
+        } else {
+          // TODO the key is an error object, we need to serialize that nicely too
+          details[key] = error[key];
+        }
+      }
+    }
+    return wrap(e);
   } else if (typeof error === 'string') {
     // TODO maybe capture a stack trace from here?
     // https://nodejs.org/api/errors.html#errorcapturestacktracetargetobject-constructoropt
@@ -197,10 +215,14 @@ export class InputError extends RTError {
   }
 }
 
+// Aha - a big part of my problem is that the adaptor error is swalloing
+// all the good stuff
 export class AdaptorError extends RTError {
   name = 'AdaptorError';
   severity = 'fail';
   message: string = '';
+
+  error: any;
   constructor(error: any) {
     super();
 
@@ -209,6 +231,7 @@ export class AdaptorError extends RTError {
     } else if (error.message) {
       this.message = error.message;
     }
+    this.error = error;
   }
 }
 

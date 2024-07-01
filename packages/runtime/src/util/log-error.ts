@@ -24,8 +24,8 @@ export type ErrorReporter = (
 // TODO this is really over complicated now
 // Because we're taking closer control of errors
 // we should be able to report more simply
-const createErrorReporter = (logger: Logger): ErrorReporter => {
-  return (state, stepId, error) => {
+const createErrorReporter = (logger: Logger): any /*ErrorReporter*/ => {
+  return (state: any, stepId: any, error: any) => {
     if (error.message) {
       logger.error(`${error.type}:`, error.message);
     } else {
@@ -38,7 +38,12 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       // part of the problem is that the logger will json.stringify output
       // which is acutally quite ugly
       //logger.print(error.details);
-      logger.error('Error details', error.details);
+
+      // TODO I don't acutally want to use dir on this
+      // nor json stringify
+      // I suppose it's fine, I can deal with the prettiness of it later
+      logger.error(error.details);
+      // console.dir(error.details, { breakLength: 2 });
     }
 
     if (error.severity === 'crash') {
@@ -68,7 +73,6 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       if (!state.errors) {
         state.errors = {};
       }
-
       state.errors[stepId] = error;
     }
 
