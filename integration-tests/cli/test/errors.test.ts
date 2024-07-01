@@ -1,10 +1,19 @@
 import test from 'ava';
 import path from 'node:path';
+import fs from 'node:fs';
 import run from '../src/run';
 import { extractLogs, assertLog } from '../src/util';
-import { stderr } from 'node:process';
 
 const jobsPath = path.resolve('test/fixtures');
+
+const tmpPath = path.resolve('tmp/error-tests');
+
+// after each, clear tmp path
+test.before(() => {
+  try {
+    fs.mkdirSync(tmpPath, { recursive: true });
+  } catch (e) {}
+});
 
 // These are all errors that will stop the CLI from even running
 
@@ -132,4 +141,28 @@ test.serial('invalid end (ambiguous)', async (t) => {
 
   assertLog(t, stdlogs, /Error: end pattern matched multiple steps/i);
   assertLog(t, stdlogs, /aborting/i);
+});
+
+// These are various runtime errors
+
+const create = (filename, code) => {
+  // write a file to tmp/filename
+  fs.writeFileSync(`${tmpPath}/${filename}`, code);
+};
+
+test.serial.only('type error', async (t) => {
+  // try something like this
+  // this will create tmp/job.js
+  create('job.js', `fn((s) => x)`);
+
+  // Note that the start should override
+  const { stdout, err } = await run(`openfn ${tmpPath}/job.js --log-json`);
+
+  t.is(err.code, 1);
+
+  const stdlogs = extractLogs(stdout);
+
+  assertLog(t, stdlogs, /RuntimeCrash/i);
+  assertLog(t, stdlogs, /fn is not defined/i);
+  assertLog(t, stdlogs, /Workflow failed in/i);
 });
