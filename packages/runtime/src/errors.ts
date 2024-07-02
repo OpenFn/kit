@@ -1,5 +1,3 @@
-import util from 'node:util';
-
 // TODO: what if we add a "fix" to each error?
 // Maybe adminFix and userFix?
 // This would be a human readable hint about what to do
@@ -161,9 +159,6 @@ export class AdaptorError extends RTError {
       this.message = error.message;
     }
   }
-  // toString() {
-  //   return util.inspect(this.details);
-  // }
 }
 
 // custom user error trow new Error() or throw {}
