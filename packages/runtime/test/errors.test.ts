@@ -149,30 +149,34 @@ test('crash on runtime error with SyntaxError', async (t) => {
   try {
     await run(expression);
   } catch (error) {
+    console.log(error);
     t.deepEqual(error, {
       type: 'RuntimeCrash',
       message: 'Invalid or unexpected token',
+      source: 'runtime',
+      severity: 'crash',
       details: {
-        source: 'runtime',
-        severity: 'crash',
         type: 'SyntaxError',
       },
     });
   }
 });
 
-test('crash on runtime error with ReferenceError', async (t) => {
+test.only('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
 
   try {
     await run(expression);
   } catch (error) {
+    console.log(error);
     t.deepEqual(error, {
       type: 'RuntimeCrash',
       message: 'x is not defined',
+      source: 'runtime',
+      severity: 'crash',
       details: {
-        source: 'runtime',
-        severity: 'crash',
+        // TODO how will I write this  here, and why?
+        // can I cary any more information?
         type: 'ReferenceError',
       },
     });

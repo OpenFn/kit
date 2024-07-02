@@ -20,7 +20,7 @@ export function serialize(error: any): SerializedError {
   }
 
   // Wrap all errors up with a special key that lets us know its been processed
-  const wrap = (e: any) => {
+  const wrap = (e: any): SerializedError => {
     Object.defineProperty(e, '$serialized', {
       enumerable: false,
       writable: false,
@@ -32,7 +32,7 @@ export function serialize(error: any): SerializedError {
   if (error instanceof Error) {
     const details: SerializedError['details'] = {};
 
-    const e = {
+    const e: Partial<SerializedError> = {
       type: error.name,
       message: error.message,
     };
@@ -49,7 +49,6 @@ export function serialize(error: any): SerializedError {
     for (const key in error) {
       //if (!/^(message|name|severity|)$/.test(key)) {
       if (!e[key] && key !== 'name') {
-        // hmm = bad heuristic
         if (error[key] instanceof Error) {
           for (const ekey in error[key]) {
             details[ekey] = error[key][ekey];

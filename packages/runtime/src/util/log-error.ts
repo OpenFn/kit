@@ -64,10 +64,7 @@ const createErrorReporter = (logger: Logger): any /*ErrorReporter*/ => {
     // }
 
     // TODO severity is now in details
-    if (
-      error.details?.severity === 'fail' ||
-      error.details?.severity === 'crash'
-    ) {
+    if (error.severity === 'fail' || error.severity === 'crash') {
       logger.error(`Check state.errors.${stepId} for details.`);
 
       if (!state.errors) {

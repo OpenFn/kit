@@ -158,10 +158,7 @@ const executeStep = async (
       });
 
       // Stop executing if the error is sufficiently severe
-      if (
-        error.details?.severity === 'crash' ||
-        error.details?.severity === 'kill'
-      ) {
+      if (error.severity === 'crash' || error.severity === 'kill') {
         throw error;
       }
     }
