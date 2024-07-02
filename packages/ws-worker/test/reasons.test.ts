@@ -99,7 +99,7 @@ test('fail: type error', async (t) => {
     reason.error_message,
     "TypeError: Cannot read properties of undefined (reading 'y')"
   );
-  t.is(reason.error_type, 'TypeError');
+  t.is(reason.error_type, 'RuntimeError');
 });
 
 test('fail: user error', async (t) => {

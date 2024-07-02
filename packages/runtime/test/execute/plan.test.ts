@@ -1150,8 +1150,15 @@ test('steps cannot pass functions to each other', async (t) => {
   const result: any = await executePlan(plan, {}, {}, mockLogger);
 
   const error = result.errors.b;
-  t.is(error.type, 'TypeError');
-  t.is(error.message, 'TypeError: s.data.x is not a function');
+
+  t.deepEqual(error, {
+    source: 'runtime',
+    type: 'RuntimeError',
+    severity: 'fail',
+    name: 'RuntimeError',
+    subtype: 'TypeError',
+    message: 'TypeError: s.data.x is not a function',
+  });
 });
 
 test('Plans log step ids for each job start and end', async (t) => {

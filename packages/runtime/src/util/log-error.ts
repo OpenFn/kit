@@ -12,11 +12,26 @@ export type ErrorReporter = (
   }
 ) => ErrorReport;
 
+const serialize = (error: any) => {
+  if (error instanceof Error) {
+    const result: any = {};
+    for (const key in error) {
+      // @ts-ignore
+      result[key] = serialize(error[key]);
+    }
+    return result;
+  }
+  return error;
+};
+
 // TODO this is really over complicated now
 // Because we're taking closer control of errors
 // we should be able to report more simply
 const createErrorReporter = (logger: Logger): ErrorReporter => {
   return (state, stepId, error) => {
+    // TODO I don't think the report is useful anymore
+    // we'll strip it all out soon
+    // see https://github.com/OpenFn/kit/issues/726
     const report: ErrorReport = {
       type: error.subtype || error.type || error.name,
       stepId,
@@ -34,15 +49,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.error('CRITICAL ERROR! Aborting execution');
     }
 
-    if (report.message) {
-      logger.error(
-        `${report.code || report.type || 'Error'}: ${report.message}`
-      );
-      logger.debug(error); // TODO the logger doesn't handle this very well
-    } else {
-      // This catches if a non-Error object is thrown, ie, `throw "e"`
-      logger.error(error);
-    }
+    logger.error(error);
 
     if (error.severity === 'fail') {
       logger.error(`Check state.errors.${stepId} for details.`);
@@ -51,7 +58,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
         state.errors = {};
       }
 
-      state.errors[stepId] = report;
+      state.errors[stepId] = serialize(error);
     }
 
     return report as ErrorReport;

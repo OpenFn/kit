@@ -1,5 +1,3 @@
-import util from 'node:util';
-
 // TODO: what if we add a "fix" to each error?
 // Maybe adminFix and userFix?
 // This would be a human readable hint about what to do
@@ -69,20 +67,6 @@ export class RTError extends Error {
 
     // automatically limit the stacktrace (?)
     Error.captureStackTrace(this, RTError.constructor);
-
-    // Provide custom rendering of the error in node
-    // TODO we should include some kind of context where it makes sense
-    // eg, if the error is associated with a job, show the job code
-    // eg, if the error came from an expression, show the source and location
-    // eg, if this came from our code, it doesn't help the user to see it but it does help us!
-    // @ts-ignore
-    this[util.inspect.custom] = (_depth, _options, _inspect) => {
-      const str = `[${this.name}] ${this.message}`;
-
-      // TODO include stack trace if the error demands it
-
-      return str;
-    };
   }
 }
 
@@ -165,9 +149,10 @@ export class AdaptorError extends RTError {
   name = 'AdaptorError';
   severity = 'fail';
   message: string = '';
+  details: any;
   constructor(error: any) {
     super();
-
+    this.details = error;
     if (typeof error === 'string') {
       this.message = error;
     } else if (error.message) {

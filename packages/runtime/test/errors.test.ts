@@ -19,14 +19,14 @@ test('crash on timeout', async (t) => {
   const expression = 'export default [(s) => new Promise((resolve) => {})]';
 
   const plan = createPlan(expression, { timeout: 1 });
-  let error;
+  let error: any;
   try {
     await run(plan);
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
-  t.truthy(error);
   t.is(error.severity, 'kill');
   t.is(error.type, 'TimeoutError');
   t.is(error.message, 'Job took longer than 1ms to complete');
@@ -35,14 +35,14 @@ test('crash on timeout', async (t) => {
 test('crash on runtime error with SyntaxError', async (t) => {
   const expression = 'export default [(s) => ~@]2q1j]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
-  t.truthy(error);
   t.is(error.severity, 'crash');
   t.is(error.type, 'RuntimeCrash');
   t.is(error.subtype, 'SyntaxError');
@@ -52,12 +52,13 @@ test('crash on runtime error with SyntaxError', async (t) => {
 test('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
   // t.true(error instanceof RuntimeError);
   t.is(error.severity, 'crash');
@@ -69,14 +70,14 @@ test('crash on runtime error with ReferenceError', async (t) => {
 test('crash on eval with SecurityError', async (t) => {
   const expression = 'export default [(s) => eval("process.exit()")]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
-  t.truthy(error);
   t.is(error.severity, 'kill');
   t.is(error.type, 'SecurityError');
   t.is(error.message, 'Illegal eval statement detected');
@@ -101,14 +102,14 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
     },
   };
 
-  let error;
+  let error: any;
   try {
     await run(plan);
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
-  t.truthy(error);
   t.is(error.severity, 'crash');
   t.is(error.type, 'EdgeConditionError');
   t.is(error.message, 'wibble is not defined');
@@ -122,14 +123,14 @@ test.todo('crash on input error if a function is passed with forceSandbox');
 test('crash on import error: module path provided', async (t) => {
   const expression = 'import x from "blah"; export default [(s) => x]';
 
-  let error;
+  let error: any;
   try {
     await run(expression);
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
-  t.truthy(error);
   t.is(error.severity, 'crash');
   t.is(error.type, 'ImportError');
   t.is(error.message, 'Failed to import module "blah"');
@@ -138,7 +139,7 @@ test('crash on import error: module path provided', async (t) => {
 test('crash on blacklisted module', async (t) => {
   const expression = 'import x from "blah"; export default [(s) => x]';
 
-  let error;
+  let error: any;
   try {
     await run(
       expression,
@@ -152,8 +153,8 @@ test('crash on blacklisted module', async (t) => {
   } catch (e) {
     error = e;
   }
+  t.log(error);
 
-  t.truthy(error);
   t.is(error.severity, 'crash');
   t.is(error.type, 'ImportError');
   t.is(error.message, 'module blacklisted: blah');
@@ -162,15 +163,18 @@ test('crash on blacklisted module', async (t) => {
 test('fail on runtime TypeError', async (t) => {
   const expression = 'export default [(s) => s.x.y]';
 
-  const result = await run(expression);
+  const result: any = await run(expression);
   const error = result.errors['job-1'];
+  t.log(error);
 
-  t.truthy(error);
-  t.is(error.type, 'TypeError');
-  t.is(
-    error.message,
-    "TypeError: Cannot read properties of undefined (reading 'y')"
-  );
+  t.deepEqual(error, {
+    message: "TypeError: Cannot read properties of undefined (reading 'y')",
+    name: 'RuntimeError',
+    type: 'RuntimeError',
+    subtype: 'TypeError',
+    severity: 'fail',
+    source: 'runtime',
+  });
 });
 
 // TODO not totally convinced on this one actually
@@ -178,37 +182,53 @@ test('fail on runtime error with RangeError', async (t) => {
   const expression =
     'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
 
-  const result = await run(expression);
+  const result: any = await run(expression);
   const error = result.errors['job-1'];
 
-  t.truthy(error);
-  t.is(error.type, 'RangeError');
-  t.is(
-    error.message,
-    'RangeError: toFixed() digits argument must be between 0 and 100'
-  );
+  t.log(error);
+
+  t.deepEqual(error, {
+    message: 'RangeError: toFixed() digits argument must be between 0 and 100',
+    name: 'RuntimeError',
+    subtype: 'RangeError',
+    type: 'RuntimeError',
+    severity: 'fail',
+    source: 'runtime',
+  });
 });
 
 test('fail on user error with new Error()', async (t) => {
   const expression = 'export default [(s) => {throw new Error("abort")}]';
 
-  const result = await run(expression);
+  const result: any = await run(expression);
 
   const error = result.errors['job-1'];
+  t.log(error);
 
-  t.is(error.type, 'JobError');
-  t.is(error.message, 'abort');
+  t.deepEqual(error, {
+    message: 'abort',
+    name: 'JobError',
+    severity: 'fail',
+    source: 'runtime',
+    type: 'JobError',
+  });
 });
 
 test('fail on user error with throw "abort"', async (t) => {
   const expression = 'export default [(s) => {throw "abort"}]';
 
-  const result = await run(expression);
+  const result: any = await run(expression);
 
   const error = result.errors['job-1'];
+  t.log(error);
 
-  t.is(error.type, 'JobError');
-  t.is(error.message, 'abort');
+  t.deepEqual(error, {
+    message: 'abort',
+    name: 'JobError',
+    severity: 'fail',
+    source: 'runtime',
+    type: 'JobError',
+  });
 });
 
 test('fail on adaptor error (with throw new Error())', async (t) => {
@@ -216,7 +236,7 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   import { err } from 'x';
   export default [(s) => err()];
   `;
-  const result = await run(
+  const result: any = await run(
     expression,
     {},
     {
@@ -229,8 +249,18 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.type, 'AdaptorError');
-  t.is(error.message, 'adaptor err');
+  t.log(error);
+
+  t.deepEqual(error, {
+    details: {
+      code: 1234,
+    },
+    message: 'adaptor err',
+    name: 'AdaptorError',
+    type: 'AdaptorError',
+    source: 'runtime',
+    severity: 'fail',
+  });
 });
 
 test('adaptor error with no stack trace will be a user error', async (t) => {
@@ -254,6 +284,14 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
   );
 
   const error = result.errors['job-1'];
-  t.is(error.type, 'JobError');
-  t.is(error.message, 'adaptor err');
+
+  t.log(error);
+
+  t.deepEqual(error, {
+    message: 'adaptor err',
+    name: 'JobError',
+    severity: 'fail',
+    source: 'runtime',
+    type: 'JobError',
+  });
 });
