@@ -283,7 +283,7 @@ test.serial('errors get nicely serialized', (t) => {
     ]);
 
     api.execute(plan, emptyState).on('job-error', (evt) => {
-      t.is(evt.error.type, 'TypeError');
+      t.is(evt.error.name, 'TypeError');
       t.is(evt.error.severity, 'fail');
       t.is(
         evt.error.message,
