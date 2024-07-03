@@ -49,7 +49,8 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.error('CRITICAL ERROR! Aborting execution');
     }
 
-    logger.error(error);
+    const serializedError = serialize(error);
+    logger.error(serializedError);
 
     if (error.severity === 'fail') {
       logger.error(`Check state.errors.${stepId} for details.`);
@@ -58,7 +59,7 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
         state.errors = {};
       }
 
-      state.errors[stepId] = serialize(error);
+      state.errors[stepId] = serializedError;
     }
 
     return report as ErrorReport;
