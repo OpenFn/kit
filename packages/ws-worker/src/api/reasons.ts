@@ -19,7 +19,7 @@ const calculateJobExitReason = (
     error_type = error.subtype || error.type || error.name;
   } else if (state.errors?.[jobId]) {
     reason = 'fail';
-    ({ message: error_message, type: error_type } = state.errors[jobId]);
+    ({ message: error_message, name: error_type } = state.errors[jobId]);
   }
   return { reason, error_type, error_message };
 };

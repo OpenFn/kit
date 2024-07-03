@@ -78,7 +78,7 @@ test('fail: error on state', async (t) => {
   const plan = createPlan({
     id: 'x',
     expression:
-      'export default [(s) => ({ errors: { "x": { "message": "err", "type": "Error" } } })]',
+      'export default [(s) => ({ errors: { "x": { "message": "err", "name": "Error" } } })]',
   });
 
   const { reason } = await execute(plan);
