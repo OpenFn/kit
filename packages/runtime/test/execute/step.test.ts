@@ -237,7 +237,7 @@ test.serial(`notify ${NOTIFY_JOB_ERROR} for a fail`, async (t) => {
       const { state, duration, jobId, next, error } = payload;
       t.truthy(state);
       t.is(error.message, 'e');
-      t.is(error.type, 'JobError');
+      t.is(error.name, 'JobError');
       t.is(error.severity, 'fail');
 
       t.deepEqual(state, state);

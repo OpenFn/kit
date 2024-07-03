@@ -28,7 +28,6 @@ test('crash on timeout', async (t) => {
   t.log(error);
 
   t.is(error.severity, 'kill');
-  t.is(error.type, 'TimeoutError');
   t.is(error.message, 'Job took longer than 1ms to complete');
 });
 
@@ -44,7 +43,6 @@ test('crash on runtime error with SyntaxError', async (t) => {
   t.log(error);
 
   t.is(error.severity, 'crash');
-  t.is(error.type, 'RuntimeCrash');
   t.is(error.subtype, 'SyntaxError');
   t.is(error.message, 'SyntaxError: Invalid or unexpected token');
 });
@@ -62,7 +60,6 @@ test('crash on runtime error with ReferenceError', async (t) => {
 
   // t.true(error instanceof RuntimeError);
   t.is(error.severity, 'crash');
-  t.is(error.type, 'RuntimeCrash');
   t.is(error.subtype, 'ReferenceError');
   t.is(error.message, 'ReferenceError: x is not defined');
 });
@@ -79,7 +76,6 @@ test('crash on eval with SecurityError', async (t) => {
   t.log(error);
 
   t.is(error.severity, 'kill');
-  t.is(error.type, 'SecurityError');
   t.is(error.message, 'Illegal eval statement detected');
 });
 
@@ -111,7 +107,6 @@ test('crash on edge condition error with EdgeConditionError', async (t) => {
   t.log(error);
 
   t.is(error.severity, 'crash');
-  t.is(error.type, 'EdgeConditionError');
   t.is(error.message, 'wibble is not defined');
 });
 
@@ -132,7 +127,6 @@ test('crash on import error: module path provided', async (t) => {
   t.log(error);
 
   t.is(error.severity, 'crash');
-  t.is(error.type, 'ImportError');
   t.is(error.message, 'Failed to import module "blah"');
 });
 
@@ -156,7 +150,6 @@ test('crash on blacklisted module', async (t) => {
   t.log(error);
 
   t.is(error.severity, 'crash');
-  t.is(error.type, 'ImportError');
   t.is(error.message, 'module blacklisted: blah');
 });
 
@@ -170,7 +163,6 @@ test('fail on runtime TypeError', async (t) => {
   t.deepEqual(error, {
     message: "TypeError: Cannot read properties of undefined (reading 'y')",
     name: 'RuntimeError',
-    type: 'RuntimeError',
     subtype: 'TypeError',
     severity: 'fail',
     source: 'runtime',
@@ -191,7 +183,6 @@ test('fail on runtime error with RangeError', async (t) => {
     message: 'RangeError: toFixed() digits argument must be between 0 and 100',
     name: 'RuntimeError',
     subtype: 'RangeError',
-    type: 'RuntimeError',
     severity: 'fail',
     source: 'runtime',
   });
@@ -210,7 +201,6 @@ test('fail on user error with new Error()', async (t) => {
     name: 'JobError',
     severity: 'fail',
     source: 'runtime',
-    type: 'JobError',
   });
 });
 
@@ -227,7 +217,6 @@ test('fail on user error with throw "abort"', async (t) => {
     name: 'JobError',
     severity: 'fail',
     source: 'runtime',
-    type: 'JobError',
   });
 });
 
@@ -257,7 +246,6 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
     },
     message: 'adaptor err',
     name: 'AdaptorError',
-    type: 'AdaptorError',
     source: 'runtime',
     severity: 'fail',
   });
@@ -292,6 +280,5 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
     name: 'JobError',
     severity: 'fail',
     source: 'runtime',
-    type: 'JobError',
   });
 });

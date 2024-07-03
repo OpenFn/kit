@@ -852,8 +852,12 @@ test('handle non-standard error objects', async (t) => {
   const result: any = await executePlan(plan, {}, {}, mockLogger);
   t.truthy(result.errors);
   const err = result.errors.a;
-  t.is(err.type, 'JobError');
-  t.is(err.message, 'wibble');
+  t.deepEqual(err, {
+    source: 'runtime',
+    name: 'JobError',
+    severity: 'fail',
+    message: 'wibble',
+  });
 });
 
 test('keep executing after an error', async (t) => {
@@ -903,7 +907,7 @@ test('simple on-error handler', async (t) => {
   t.falsy(result.x);
 });
 
-test('log appopriately on error', async (t) => {
+test('log appropriately on error', async (t) => {
   const plan = createPlan([
     {
       id: 'job1',
@@ -919,8 +923,15 @@ test('log appopriately on error', async (t) => {
   t.truthy(err);
   t.regex(err!.message as string, /Failed step job1 after \d+ms/i);
 
-  t.truthy(logger._find('error', /JobError: e/));
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
+
+  const [_level, _icon, errObj]: any = logger._history.at(-2);
+  t.deepEqual(JSON.parse(errObj), {
+    source: 'runtime',
+    name: 'JobError',
+    severity: 'fail',
+    message: 'e',
+  });
 });
 
 test('steps do not share a local scope', async (t) => {
@@ -1153,7 +1164,6 @@ test('steps cannot pass functions to each other', async (t) => {
 
   t.deepEqual(error, {
     source: 'runtime',
-    type: 'RuntimeError',
     severity: 'fail',
     name: 'RuntimeError',
     subtype: 'TypeError',

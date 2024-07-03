@@ -66,7 +66,7 @@ test('notify job error even after fail', async (t) => {
     if (name === NOTIFY_JOB_ERROR) {
       t.is(event.jobId, 'a');
       t.true(!isNaN(event.duration));
-      t.is(event.error.type, 'RuntimeError');
+      t.is(event.error.name, 'RuntimeError');
       t.is(event.error.subtype, 'TypeError');
       t.regex(event.error.message, /Cannot read properties of undefined/);
       t.pass('called job erorr');
@@ -92,7 +92,7 @@ test('notify job error even after crash', async (t) => {
     if (name === NOTIFY_JOB_ERROR) {
       t.is(event.jobId, 'a');
       t.true(!isNaN(event.duration));
-      t.is(event.error.type, 'RuntimeCrash');
+      t.is(event.error.name, 'RuntimeCrash');
       t.is(event.error.subtype, 'ReferenceError');
       t.regex(event.error.message, /s is not defined/);
       t.pass('called job erorr');
@@ -496,8 +496,12 @@ test('log errors, write to state, and continue', async (t) => {
   t.is(result.x, 1);
 
   t.truthy(result.errors);
-  t.is(result.errors.a.message, 'test');
-  t.is(result.errors.a.type, 'JobError');
+  t.deepEqual(result.errors.a, {
+    source: 'runtime',
+    name: 'JobError',
+    severity: 'fail',
+    message: 'test',
+  });
 
   t.truthy(logger._find('error', /failed step a/i));
 });
@@ -582,7 +586,7 @@ test('stuff written to state before an error is preserved', async (t) => {
         {
           id: 'a',
           state: {
-            data: { x: 0 }
+            data: { x: 0 },
           },
           expression:
             'export default [(s) => { s.x = 1; throw new Error("test") }]',
@@ -850,10 +854,10 @@ test('accept a whitelist as a regex', async (t) => {
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     t.truthy(error);
     t.is(error.severity, 'crash');
-    t.is(error.type, 'ImportError');
+    t.is(error.name, 'ImportError');
     t.is(error.message, 'module blacklisted: blah');
   }
 });
@@ -874,10 +878,10 @@ test('accept a whitelist as a string', async (t) => {
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     t.truthy(error);
     t.is(error.severity, 'crash');
-    t.is(error.type, 'ImportError');
+    t.is(error.name, 'ImportError');
     t.is(error.message, 'module blacklisted: blah');
   }
 });

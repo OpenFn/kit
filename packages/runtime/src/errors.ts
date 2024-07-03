@@ -6,15 +6,8 @@
 // It would be nice for the detail to be in the error, not the code
 // But that probably requires more detailed error types
 
-// TODO it's annoying that for builtin errors I use constructor.name,
-// but for my errors I use type
-// I guess I'm happy to present a type to other consumers, but it does feel a little messy
-// Note that I can't just use name either on the subclass because constructor.name is always Error
-// Then again, ava tests depend on name - so maybe I need to remove type?
-// Double buffering right now which is probably the worst solution...
-
 export function assertImportError(e: any) {
-  if (e.type === 'ImportError') {
+  if (e.name === 'ImportError') {
     throw e;
   }
 }
@@ -60,7 +53,7 @@ export function assertAdaptorError(e: any) {
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';
-  type: string = '-';
+  name: string = 'Error';
 
   constructor() {
     super();
@@ -74,7 +67,6 @@ export class RTError extends Error {
 // TODO we should take a path to the invalid bit
 export class ValidationError extends RTError {
   severity = 'crash';
-  type = 'ValidationError';
   name = 'ValidationError';
 
   constructor(message: string) {
@@ -94,7 +86,6 @@ export class ValidationError extends RTError {
 export class RuntimeError extends RTError {
   severity = 'fail';
   subtype: string;
-  type = 'RuntimeError';
   name = 'RuntimeError';
 
   constructor(error: Error) {
@@ -110,7 +101,6 @@ export class RuntimeError extends RTError {
 export class RuntimeCrash extends RTError {
   severity = 'crash';
   subtype: string;
-  type = 'RuntimeCrash';
   name = 'RuntimeCrash';
 
   constructor(error: Error) {
@@ -122,7 +112,6 @@ export class RuntimeCrash extends RTError {
 
 export class EdgeConditionError extends RTError {
   severity = 'crash';
-  type = 'EdgeConditionError';
   name = 'EdgeConditionError';
   message: string;
 
@@ -134,7 +123,6 @@ export class EdgeConditionError extends RTError {
 
 export class InputError extends RTError {
   severity = 'crash';
-  type = 'InputError';
   name = 'InputError';
   message: string;
 
@@ -145,7 +133,6 @@ export class InputError extends RTError {
 }
 
 export class AdaptorError extends RTError {
-  type = 'AdaptorError';
   name = 'AdaptorError';
   severity = 'fail';
   message: string = '';
@@ -164,7 +151,6 @@ export class AdaptorError extends RTError {
 // custom user error trow new Error() or throw {}
 // Maybe JobError or Expression Error?
 export class JobError extends RTError {
-  type = 'JobError';
   name = 'JobError';
   severity = 'fail';
   message: string = '';
@@ -183,7 +169,6 @@ export class JobError extends RTError {
 // The message will add context
 // Some of these may need a stack trace for admins (but not for users)
 export class ImportError extends RTError {
-  type = 'ImportError';
   name = 'ImportError';
   severity = 'crash';
   message: string;
@@ -195,7 +180,6 @@ export class ImportError extends RTError {
 
 // Eval (and maybe other security stuff)
 export class SecurityError extends RTError {
-  type = 'SecurityError';
   name = 'SecurityError';
   // TODO I wonder if severity really is a concern for later.
   // The runtime just needs to decide whether to throw or trap any errors
@@ -208,7 +192,6 @@ export class SecurityError extends RTError {
 }
 
 export class TimeoutError extends RTError {
-  type = 'TimeoutError';
   name = 'TimeoutError';
   severity = 'kill';
   message: string;
