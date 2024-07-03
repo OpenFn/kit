@@ -61,7 +61,7 @@ export declare interface State<S = object, C = object> {
   // Core state props used by the runtime
   configuration?: C;
   data?: S;
-  errors?: Record<StepId, ErrorReport>;
+  errors?: Record<StepId, SerializedError>;
 
   // Props added by common
   references?: Array<any>;
@@ -131,6 +131,24 @@ export interface Trigger extends Step {}
  */
 export type CompiledExpression = Expression;
 
+/**
+ * This is what serialized error objects should look like
+ * This is not well enforced right now
+ */
+export type SerializedError = {
+  source: string;
+  name: string;
+  severity: string;
+  message: string;
+  details: any;
+
+  stack?: string;
+  position?: string;
+};
+
+/**
+ * @deprecated
+ */
 export type ErrorReport = {
   type: string; // The name/type of error, ie Error, TypeError
   message: string; // simple human readable message
