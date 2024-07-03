@@ -50,7 +50,6 @@ const run = (task: string, args: any[]) => {
       });
     })
     .catch((e) => {
-      console.log(e);
       publish(ENGINE_REJECT_TASK, {
         error: {
           severity: e.severity || 'crash',
