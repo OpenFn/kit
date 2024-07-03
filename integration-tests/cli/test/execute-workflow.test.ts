@@ -176,7 +176,6 @@ test.serial(
       errors: {
         start: {
           source: 'runtime',
-          type: 'JobError',
           name: 'JobError',
           severity: 'fail',
           message: 'abort',
