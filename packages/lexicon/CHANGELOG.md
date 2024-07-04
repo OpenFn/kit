@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.0.2
+
+### Patch Changes
+
+- afcd041: Add type for SerializedErrors and deprecate ErrorReport
+
 ## 1.0.1
 
 ### Patch Changes

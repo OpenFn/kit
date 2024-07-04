@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.5.0
+
+### Minor Changes
+
+- Better error reporting in logs and on final state
+
+### Patch Changes
+
+- Updated dependencies [afcd041]
+  - @openfn/runtime@1.4.0
+
 ## 1.4.2
 
 ### Patch Changes

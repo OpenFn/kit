@@ -1,5 +1,20 @@
 # ws-worker
 
+## 1.3.0
+
+### Minor Changes
+
+- afcd041: Better error reporting in logs and on final state
+
+### Patch Changes
+
+- Updated dependencies [afcd041]
+- Updated dependencies [afcd041]
+- Updated dependencies [afcd041]
+  - @openfn/runtime@1.4.0
+  - @openfn/lexicon@1.0.2
+  - @openfn/engine-multi@1.1.13
+
 ## 1.2.2
 
 ### Patch Changes

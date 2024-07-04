@@ -1,5 +1,15 @@
 # engine-multi
 
+## 1.1.13
+
+### Patch Changes
+
+- afcd041: Remove the type key from errors
+- Updated dependencies [afcd041]
+- Updated dependencies [afcd041]
+  - @openfn/runtime@1.4.0
+  - @openfn/lexicon@1.0.2
+
 ## 1.1.12
 
 ### Patch Changes
