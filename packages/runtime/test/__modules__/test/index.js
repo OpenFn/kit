@@ -3,7 +3,9 @@ export const x = 'test';
 export default x;
 
 export const err = () => {
-  throw new Error('adaptor err');
+  const e = new Error('adaptor err');
+  e.code = 1234;
+  throw e;
 };
 
 export const err2 = () => {

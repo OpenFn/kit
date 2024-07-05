@@ -37,7 +37,7 @@ test('fail', (t) => {
   const state: any = {
     errors: {
       a: {
-        type: 'RuntimeError',
+        name: 'RuntimeError',
         message: "TypeError: Cannot read properties of undefined (reading 'y')",
       },
     },
@@ -46,7 +46,7 @@ test('fail', (t) => {
   const r = calculateJobExitReason(jobId, state, error);
 
   t.is(r.reason, 'fail');
-  t.is(r.error_type, state.errors.a.type);
+  t.is(r.error_type, state.errors.a.name);
   t.is(r.error_message, state.errors.a.message);
 });
 
@@ -66,7 +66,7 @@ test('crash has priority over fail', (t) => {
   const state: any = {
     errors: {
       b: {
-        type: 'RuntimeError',
+        name: 'RuntimeError',
         message: '.',
         severity: 'fail',
       },

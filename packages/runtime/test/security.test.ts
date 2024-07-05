@@ -118,7 +118,7 @@ test.serial(
 
     const result = await run(src);
     const error = result.errors['job-1'];
-    t.is(error.type, 'TypeError');
+    t.is(error.name, 'RuntimeError');
     t.regex(error.message, /The "callback" argument must be of type function/);
   }
 );
@@ -197,7 +197,7 @@ test.serial(
 
     const result = await run(plan);
     const error = result.errors.a;
-    t.is(error.type, 'TypeError');
+    t.is(error.name, 'RuntimeError');
     t.is(
       error.message,
       'TypeError: Cannot add property x, object is not extensible'

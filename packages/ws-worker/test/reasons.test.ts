@@ -78,7 +78,7 @@ test('fail: error on state', async (t) => {
   const plan = createPlan({
     id: 'x',
     expression:
-      'export default [(s) => ({ errors: { "x": { "message": "err", "type": "Error" } } })]',
+      'export default [(s) => ({ errors: { "x": { "message": "err", "name": "Error" } } })]',
   });
 
   const { reason } = await execute(plan);
@@ -99,7 +99,7 @@ test('fail: type error', async (t) => {
     reason.error_message,
     "TypeError: Cannot read properties of undefined (reading 'y')"
   );
-  t.is(reason.error_type, 'TypeError');
+  t.is(reason.error_type, 'RuntimeError');
 });
 
 test('fail: user error', async (t) => {

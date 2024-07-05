@@ -239,7 +239,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
             const e = new Error(evt.error.message);
             // @ts-ignore
             e.severity = evt.error.severity;
-            e.name = evt.error.type;
+            e.name = evt.error.name;
             reject(e);
 
             finish(worker);

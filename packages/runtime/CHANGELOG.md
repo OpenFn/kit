@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.4.0
+
+### Minor Changes
+
+- afcd041: Refactor of error objects for better serialization in worker and CLI
+
 ## 1.3.0
 
 ### Minor Changes

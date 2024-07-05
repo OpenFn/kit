@@ -175,16 +175,10 @@ test.serial(
       },
       errors: {
         start: {
-          error: {
-            message: 'abort',
-            type: 'JobError',
-            name: 'JobError',
-            severity: 'fail',
-            source: 'runtime',
-          },
-          stepId: 'start',
+          source: 'runtime',
+          name: 'JobError',
+          severity: 'fail',
           message: 'abort',
-          type: 'JobError',
         },
       },
     });
