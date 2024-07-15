@@ -1,8 +1,70 @@
 import test from 'ava';
+import { print } from 'recast';
+import { NodePath, namedTypes as n } from 'ast-types';
 
-import promises, { defer } from '../../src/transforms/promises';
+import promises, { defer, wrapFn } from '../../src/transforms/promises';
 import parse from '../../src/parse';
 import transform from '../../src/transform';
+
+// throws if there's no defer declaration in the ast
+export const assertDeferDeclaration = (ast: any) => {
+  for (const node of ast.program.body) {
+    if (n.FunctionDeclaration.check(node)) {
+      if (node.id.name === 'defer') {
+        return true;
+      }
+    }
+  }
+
+  throw new Error('No defer declaration found');
+};
+
+test("assertDeferDeclaration: find defer if it's the only thing", (t) => {
+  // TODO maybe call it $defer
+  const source = 'function defer () {}';
+
+  const ast = parse(source);
+  assertDeferDeclaration(ast);
+  t.pass('defer found');
+});
+
+test('assertDeferDeclaration: throw if no defer found', (t) => {
+  // this is not the right defer function syntax
+  const source = 'const defer = () => {};';
+
+  const ast = parse(source);
+  try {
+    assertDeferDeclaration(ast);
+  } catch (e) {
+    t.pass('assertion correctly failed');
+  }
+});
+
+test('assertDeferDeclaration: find defer among several statements', (t) => {
+  const source = `if(true) {};
+  const d = () => {};
+  function defer () {};
+  const _defer = false`;
+
+  const ast = parse(source);
+  assertDeferDeclaration(ast);
+  t.pass('defer found');
+});
+
+test('assertDeferDeclaration: throw if defer is not top level', (t) => {
+  const source = `
+  if (true) { function defer () {} }
+  function x() { function defer () {} }
+  fn(function defer () {})
+  `;
+
+  const ast = parse(source);
+  try {
+    assertDeferDeclaration(ast);
+  } catch (e) {
+    t.pass('assertion correctly failed');
+  }
+});
 
 // Bunch of tests around the defer function
 
@@ -99,32 +161,82 @@ test('defer: catch an async error', async (t) => {
   await fn(1);
 });
 
-// TODO what about the injected code?
-
-// Maybe thjere are a couple of tests:
-// - injects defer function
-// - doesn't inject defer function if it doesn't need to
-// And we just do a really basic AST check
-// Or maybe even a regex checj
-
-// Then we do a bunch of tests on the export array
-// We just codeify that
-
-// Let's assume that exports has already run
-test('transform', (t) => {
-  const source = `export default [fn(x).then(s => s)];`;
-  const result = `export default [defer(fn(x), s => s)];`;
+test('wrapFn: fn().then()', async (t) => {
+  const source = `fn(x).then(() => {})`;
+  const result = `defer(fn(x), () => {})`;
 
   const ast = parse(source);
-
-  const transformed = transform(ast, [promises], {}) as n.Program;
-
-  // assertDeferDeclaration(transformed)
-
-  // TODO: extract the export array, then print it
-  // Could I exclude the export array from the whole test?
+  const nodepath = new NodePath(ast.program);
+  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
 
   const { code } = print(transformed);
 
+  t.log(code);
   t.is(code, result);
 });
+
+test('wrapFn: fn.catch()', async (t) => {
+  const source = `fn(x).catch((e) => e)`;
+  const result = `defer(fn(x), undefined, (e) => e)`;
+
+  const ast = parse(source);
+  const nodepath = new NodePath(ast.program);
+  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+
+  const { code } = print(transformed);
+
+  t.log(code);
+  t.is(code, result);
+});
+
+// TODO this is a big problem - chains of promises aren't supported right now
+test.skip('wrapFn: fn.then().then()', async (t) => {
+  const source = `fn(x).then((e) => e).then((e) => e)`;
+  const result = `defer(fn(x), (e) => e)`;
+
+  const ast = parse(source);
+  const nodepath = new NodePath(ast.program);
+  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+
+  const { code } = print(transformed);
+
+  t.log(code);
+  t.is(code, result);
+});
+
+test('transform: fn().then()', (t) => {
+  const source = `fn(x).then(s => s);`;
+  const result = `defer(fn(x), s => s);`;
+
+  const ast = parse(source);
+
+  const transformed = transform(ast, [promises]) as n.Program;
+
+  assertDeferDeclaration(transformed);
+
+  const { code } = print(transformed);
+
+  t.log(code);
+
+  const { code: transformedExport } = print(transformed.program.body.at(-1));
+  t.is(transformedExport, result);
+});
+
+test('transform: fn().catch()', (t) => {
+  const source = `fn(x).catch(s => s);`;
+  const result = `defer(fn(x), undefined, s => s);`;
+
+  const ast = parse(source);
+
+  const transformed = transform(ast, [promises]) as n.Program;
+
+  assertDeferDeclaration(transformed);
+
+  const { code } = print(transformed);
+  t.log(code);
+
+  const { code: transformedExport } = print(transformed.program.body.at(-1));
+  t.is(transformedExport, result);
+});
+
+// TODO test stuff like nested functions
