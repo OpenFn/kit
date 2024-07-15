@@ -6,6 +6,7 @@ import createLogger, { Logger } from '@openfn/logger';
 import addImports, { AddImportsOptions } from './transforms/add-imports';
 import ensureExports from './transforms/ensure-exports';
 import lazyState from './transforms/lazy-state';
+import promises from './transforms/promises';
 import topLevelOps, {
   TopLevelOpsOptions,
 } from './transforms/top-level-operations';
@@ -38,6 +39,7 @@ export type TransformOptions = {
   ['top-level-operations']?: TopLevelOpsOptions | boolean;
   ['test']?: any;
   ['lazy-state']?: any;
+  ['promises']?: any;
 };
 
 const defaultLogger = createLogger();
@@ -50,6 +52,7 @@ export default function transform(
   if (!transformers) {
     transformers = [
       lazyState,
+      promises,
       ensureExports,
       topLevelOps,
       addImports,
