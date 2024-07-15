@@ -13,8 +13,7 @@ test.serial('should return state', async (t) => {
   t.deepEqual(state, result);
 });
 
-// This fails because the compiler can't handle it
-test.serial.skip('should use .then()', async (t) => {
+test.serial('should use .then()', async (t) => {
   const state = { data: { x: 1 } };
 
   const job = `
@@ -27,5 +26,21 @@ test.serial.skip('should use .then()', async (t) => {
   `;
   const result = await execute(job, state);
 
-  t.deepEqual(state, { data: { x: 33 } });
+  t.deepEqual(result, { data: { x: 33 } });
+});
+
+test.serial('should chain .then() with state', async (t) => {
+  const state = { data: { x: 1 } };
+
+  const job = `
+    fn(s => ({ x: 1 }))
+      .then((s) =>
+        ({
+          x: s.x + 1
+        })
+      )
+  `;
+  const result = await execute(job, state);
+
+  t.deepEqual(result, { x: 2 });
 });

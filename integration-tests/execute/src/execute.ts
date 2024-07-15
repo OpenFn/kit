@@ -13,7 +13,7 @@ const execute = async (job: string, state: any) => {
     },
   };
   const compiled = compiler(job, options);
-  console.log(compiled);
+  // console.log(compiled);
 
   const result = await runtime(compiled, state, {
     // preload the linker with some locally installed modules
