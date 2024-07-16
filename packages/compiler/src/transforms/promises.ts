@@ -141,14 +141,14 @@ export const rebuildPromiseChain = (expr: NodePath<n.CallExpression>) => {
 const isTopScope = (path: NodePath<any>) => {
   let parent = path.parent;
   while (parent) {
-    if (n.Program.check(parent)) {
+    if (n.Program.check(parent.node)) {
       return true;
     }
     if (
-      n.ArrowFunctionExpression.check(parent) ||
-      n.FunctionDeclaration.check(parent) ||
-      n.FunctionExpression.check(parent) ||
-      n.BlockStatement.check(parent)
+      n.ArrowFunctionExpression.check(parent.node) ||
+      n.FunctionDeclaration.check(parent.node) ||
+      n.FunctionExpression.check(parent.node) ||
+      n.BlockStatement.check(parent.node)
       // TODO more?
     ) {
       return false;

@@ -312,3 +312,16 @@ test('transform: fn(get().then())', (t) => {
   const { code: transformedExport } = print(transformed.program.body.at(-1));
   t.is(transformedExport, result);
 });
+
+test('transform: ignore promises in a callback', (t) => {
+  const source = `fn((state) => {
+    return get().then((s) => s)
+});`;
+
+  const ast = parse(source);
+
+  const transformed = transform(ast, [promises]) as n.Program;
+
+  const { code } = print(transformed);
+  t.is(code, source);
+});
