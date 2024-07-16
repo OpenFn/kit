@@ -239,4 +239,22 @@ test('transform: fn().catch()', (t) => {
   t.is(transformedExport, result);
 });
 
+test.only('transform: fn(get().then())', (t) => {
+  const source = `fn(get(x).then(s => s));`;
+  const result = `fn(defer(get(x), s => s));`;
+
+  const ast = parse(source);
+
+  const transformed = transform(ast, [promises]) as n.Program;
+
+  assertDeferDeclaration(transformed);
+
+  const { code } = print(transformed);
+
+  t.log(code);
+
+  const { code: transformedExport } = print(transformed.program.body.at(-1));
+  t.is(transformedExport, result);
+});
+
 // TODO test stuff like nested functions

@@ -44,3 +44,14 @@ test.serial('should chain .then() with state', async (t) => {
 
   t.deepEqual(result, { x: 2 });
 });
+
+test.serial('should use .then() as an argument', async (t) => {
+  const state = {};
+
+  const job = `fn(
+    fn(() => ({ x: 5 })).then((s) => ({ x: s.x + 1}))
+  )`;
+  const result = await execute(job, state);
+
+  t.deepEqual(result, { x: 6 });
+});
