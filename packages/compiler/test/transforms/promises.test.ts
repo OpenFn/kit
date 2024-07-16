@@ -161,9 +161,9 @@ test('defer: catch an async error', async (t) => {
   await fn(1);
 });
 
-test('wrapFn: fn().then()', async (t) => {
+test.only('wrapFn: fn().then()', async (t) => {
   const source = `fn(x).then(() => {})`;
-  const result = `defer(fn(x), () => {})`;
+  const result = `defer(fn(x), p => p.then(() => {}))`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -175,7 +175,7 @@ test('wrapFn: fn().then()', async (t) => {
   t.is(code, result);
 });
 
-test('wrapFn: fn.catch()', async (t) => {
+test.only('wrapFn: fn.catch()', async (t) => {
   const source = `fn(x).catch((e) => e)`;
   const result = `defer(fn(x), undefined, (e) => e)`;
 
@@ -189,10 +189,23 @@ test('wrapFn: fn.catch()', async (t) => {
   t.is(code, result);
 });
 
-// TODO this is a big problem - chains of promises aren't supported right now
-test.skip('wrapFn: fn.then().then()', async (t) => {
+test.only('wrapFn: fn.then().then()', async (t) => {
   const source = `fn(x).then((e) => e).then((e) => e)`;
-  const result = `defer(fn(x), (e) => e)`;
+  const result = `defer(fn(x), p => p.then((e) => e).then((e) => e))`;
+
+  const ast = parse(source);
+  const nodepath = new NodePath(ast.program);
+  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+
+  const { code } = print(transformed);
+
+  t.log(code);
+  t.is(code, result);
+});
+
+test.skip('wrapFn: fn.catch().then()', async (t) => {
+  const source = `fn(x).catch((e) => e).then((s) => s)`;
+  const result = `defer(fn(x), p => p.then((s) => s), (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -239,7 +252,7 @@ test('transform: fn().catch()', (t) => {
   t.is(transformedExport, result);
 });
 
-test.only('transform: fn(get().then())', (t) => {
+test('transform: fn(get().then())', (t) => {
   const source = `fn(get(x).then(s => s));`;
   const result = `fn(defer(get(x), s => s));`;
 
