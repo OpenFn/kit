@@ -2,7 +2,10 @@ import test from 'ava';
 import { print } from 'recast';
 import { NodePath, namedTypes as n } from 'ast-types';
 
-import promises, { defer, wrapFn } from '../../src/transforms/promises';
+import promises, {
+  defer,
+  rebuildPromiseChain,
+} from '../../src/transforms/promises';
 import parse from '../../src/parse';
 import transform from '../../src/transform';
 
@@ -161,13 +164,15 @@ test('defer: catch an async error', async (t) => {
   await fn(1);
 });
 
-test.only('wrapFn: fn().then()', async (t) => {
+test('wrapFn: fn().then()', async (t) => {
   const source = `fn(x).then(() => {})`;
   const result = `defer(fn(x), p => p.then(() => {}))`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
-  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+  const transformed = rebuildPromiseChain(
+    nodepath.get('body', 0, 'expression')
+  );
 
   const { code } = print(transformed);
 
@@ -175,13 +180,15 @@ test.only('wrapFn: fn().then()', async (t) => {
   t.is(code, result);
 });
 
-test.only('wrapFn: fn.catch()', async (t) => {
+test('wrapFn: fn.catch()', async (t) => {
   const source = `fn(x).catch((e) => e)`;
   const result = `defer(fn(x), undefined, (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
-  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+  const transformed = rebuildPromiseChain(
+    nodepath.get('body', 0, 'expression')
+  );
 
   const { code } = print(transformed);
 
@@ -189,13 +196,15 @@ test.only('wrapFn: fn.catch()', async (t) => {
   t.is(code, result);
 });
 
-test.only('wrapFn: fn.then().then()', async (t) => {
+test('wrapFn: fn.then().then()', async (t) => {
   const source = `fn(x).then((e) => e).then((e) => e)`;
   const result = `defer(fn(x), p => p.then((e) => e).then((e) => e))`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
-  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+  const transformed = rebuildPromiseChain(
+    nodepath.get('body', 0, 'expression')
+  );
 
   const { code } = print(transformed);
 
@@ -203,13 +212,47 @@ test.only('wrapFn: fn.then().then()', async (t) => {
   t.is(code, result);
 });
 
-test.skip('wrapFn: fn.catch().then()', async (t) => {
+test('wrapFn: fn.catch().then()', async (t) => {
   const source = `fn(x).catch((e) => e).then((s) => s)`;
   const result = `defer(fn(x), p => p.then((s) => s), (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
-  const transformed = wrapFn(nodepath.get('body', 0, 'expression'));
+  const transformed = rebuildPromiseChain(
+    nodepath.get('body', 0, 'expression')
+  );
+
+  const { code } = print(transformed);
+
+  t.log(code);
+  t.is(code, result);
+});
+
+test('wrapFn: fn.catch().then().then()', async (t) => {
+  const source = `fn(x).catch((e) => e).then((s) => s).then(s => s)`;
+  const result = `defer(fn(x), p => p.then((s) => s).then(s => s), (e) => e)`;
+
+  const ast = parse(source);
+  const nodepath = new NodePath(ast.program);
+  const transformed = rebuildPromiseChain(
+    nodepath.get('body', 0, 'expression')
+  );
+
+  const { code } = print(transformed);
+
+  t.log(code);
+  t.is(code, result);
+});
+
+test('wrapFn: fn.catch().then().catch', async (t) => {
+  const source = `fn(x).catch((e) => e).then((s) => s).catch(e => e)`;
+  const result = `defer(fn(x), p => p.then((s) => s).catch(e => e), (e) => e)`;
+
+  const ast = parse(source);
+  const nodepath = new NodePath(ast.program);
+  const transformed = rebuildPromiseChain(
+    nodepath.get('body', 0, 'expression')
+  );
 
   const { code } = print(transformed);
 
@@ -219,7 +262,7 @@ test.skip('wrapFn: fn.catch().then()', async (t) => {
 
 test('transform: fn().then()', (t) => {
   const source = `fn(x).then(s => s);`;
-  const result = `defer(fn(x), s => s);`;
+  const result = `defer(fn(x), p => p.then(s => s));`;
 
   const ast = parse(source);
 
@@ -254,7 +297,7 @@ test('transform: fn().catch()', (t) => {
 
 test('transform: fn(get().then())', (t) => {
   const source = `fn(get(x).then(s => s));`;
-  const result = `fn(defer(get(x), s => s));`;
+  const result = `fn(defer(get(x), p => p.then(s => s)));`;
 
   const ast = parse(source);
 
@@ -269,5 +312,3 @@ test('transform: fn(get().then())', (t) => {
   const { code: transformedExport } = print(transformed.program.body.at(-1));
   t.is(transformedExport, result);
 });
-
-// TODO test stuff like nested functions

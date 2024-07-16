@@ -9,15 +9,9 @@ type State = any;
 // and break it up into a deferred function call which
 // ensures the operation is a promise
 // eg, fn().then(s => s)
-// TODO what about
-// eg, fn().then(s => s).then(s => s)
 
 // TODO not a huge fan of how this stringifies
 // maybe later update tsconfig
-
-// TODO if the complete function errors, what do we do?
-// This should Just Work right?
-// eg, fn().then(s => s).catch()
 export function defer(
   fn: (s: State) => State,
   complete = (s: State) => s,
@@ -27,9 +21,7 @@ export function defer(
 ) {
   return (state: State) => {
     try {
-      //return Promise.resolve(fn(state)).catch(error).then(complete);
-
-      return Promise.resolve(fn(state)).then(complete);
+      return Promise.resolve(fn(state)).then(complete).catch(error);
     } catch (e) {
       error(e);
     }
@@ -66,32 +58,18 @@ const injectDeferFunction = (root: NodePath<n.Program>) => {
   }
 };
 
-// This function will take a promise chain, a.then(x).catch(y),
-// and convert it into defer(a, x, y)
-
-// TODO how do I explain this
 /*
-This function will replace a promise chain of the form
+  This function will replace a promise chain of the form op().then().then()
+  with a defer() function call, which breaks the operation and promise chain
+  into two parts, like this:
 
-op().then().then()
-
-With a defer function call, which breaks the operation and promise chain into two parts
-
-defer(op(), p => p.then().then())
-
-defer will lazily resolve the operation,then feed the result into the promise chain in the second argument
-
+  defer(op(), p => p.then().then())
 */
-
-export const wrapFn = (expr: NodePath<n.CallExpression>) => {
-  // pull out the callee, then and catch expressions
-
-  // Pull out the the Operation being chained
-
+export const rebuildPromiseChain = (expr: NodePath<n.CallExpression>) => {
   // We've just been handed something like looks like an operation with a promise chain
   // ie, op().then().then()
   // Walk down the call expression tree until we find the operation that's originally called
-  let op: NodePath<n.CallExpression>;
+  let op: NodePath<n.CallExpression> | null = null;
   let next = expr;
   while (next) {
     if (n.Identifier.check(next.node.callee)) {
@@ -109,50 +87,51 @@ export const wrapFn = (expr: NodePath<n.CallExpression>) => {
     }
   }
 
-  // Save the parent then/catch exp
-  // ALWAYs move the op
-  // if the parent is a catch, take the function and add it as the third arg, then remove the catch
-  // now carry on with whatever is left in the chain
+  if (!op) {
+    // If somehow we can't find the underling operation, abort
+    return;
+  }
 
-  // Build the arguments to the defer array (TODO, rename deferArgs)
-  const children = [op.node];
+  // Build the arguments to the defer() array
+  const deferArgs: any[] = [op.node];
   let catchFn;
 
   if (op.parent.node.property?.name === 'catch') {
     //  If there's a catch adjacent to the operation, we need to handle that a bit differently
-    catchFn = op.parent.parent.node.arguments[0];
+    catchFn = op.parent.parent.get('arguments', 0);
   }
 
   // In the promise chain, replace the operation call with `p`, a promise
   op.replace(b.identifier('p'));
 
+  // Now we re-build the promise chain
+  // This is a bit different if the operation has a catch against it
   if (catchFn) {
     // remove the catch from the tree
+    const parent = catchFn.parent.parent;
 
-    // TODO if there's a catch.then(), if if there's more than the catch
-    // then I need to prune the catch and rebuild the remaining chain from p
-    // op.parent.parent.prune();
-
-    // Otherwise, I need to force the expressuion to be undefined
-    children.push(b.identifier('undefined'));
-
-    // if there's something left, we have to graft p onto it
-  }
-
-  // What I'd like to do here is say: if there's still a then() chain,
-  // add it as the second argument
-  // Otherwise, add undefined
-  if (!catchFn) {
+    // if this catch is part of a longer chain,
+    // cut the catch out of the chain and replace it with p
+    if (parent.node.object === catchFn.parent.node) {
+      parent.get('object').replace(b.identifier('p'));
+      const chain = b.arrowFunctionExpression([b.identifier('p')], expr.node);
+      deferArgs.push(chain);
+    } else {
+      // Otherwise, if there is no then chain, just pass undefined
+      deferArgs.push(b.identifier('undefined'));
+    }
+    deferArgs.push(catchFn.node);
+  } else {
+    // If there's no catch, reparent the entire promise chian into an arrow
+    // ie, (p) => p.then().then()
     const chain = b.arrowFunctionExpression([b.identifier('p')], expr.node);
     if (chain) {
-      children.push(chain);
+      deferArgs.push(chain);
     }
   }
 
-  if (catchFn) {
-    children.push(catchFn);
-  }
-  const defer = b.callExpression(b.identifier('defer'), children);
+  // Finally, build and return the defer function call
+  const defer = b.callExpression(b.identifier('defer'), deferArgs);
 
   expr.replace(defer);
 
@@ -191,7 +170,7 @@ const visitor = (path: NodePath<n.CallExpression>) => {
     isTopScope(path)
   ) {
     injectDeferFunction(root);
-    wrapFn(path);
+    rebuildPromiseChain(path);
     // do not traverse this tree
     return true;
   }
