@@ -14,16 +14,16 @@ type State = any;
 // maybe later update tsconfig
 export function defer(
   fn: (s: State) => State,
-  complete = (s: State) => s,
+  complete = (p: Promise<any>) => p,
   error = (e: any): void => {
     throw e;
   }
 ) {
   return (state: State) => {
     try {
-      return Promise.resolve(fn(state)).then(complete).catch(error);
+      return complete(Promise.resolve(fn(state)).catch(error));
     } catch (e) {
-      error(e);
+      return error(e);
     }
   };
 }

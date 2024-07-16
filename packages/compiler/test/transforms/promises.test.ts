@@ -121,7 +121,7 @@ test('defer: returns a value', async (t) => {
 test('defer: invoke the complete callback and pass state', async (t) => {
   const op = (s) => ++s;
 
-  const fn = defer(op, (s) => (s *= 2));
+  const fn = defer(op, (p) => p.then((s) => (s *= 2)));
 
   const result = await fn(2);
 
