@@ -14,10 +14,18 @@ export type PullOptions = Required<
     | 'configPath'
     | 'projectId'
     | 'confirm'
+    | 'snapshots'
   >
 >;
 
-const options = [o.statePath, o.projectPath, o.configPath, o.log, o.logJson];
+const options = [
+  o.statePath,
+  o.projectPath,
+  o.configPath,
+  o.log,
+  o.logJson,
+  o.snapshots,
+];
 
 const pullCommand: yargs.CommandModule<PullOptions> = {
   command: 'pull [projectId]',

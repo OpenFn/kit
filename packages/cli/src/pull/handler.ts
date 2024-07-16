@@ -29,7 +29,11 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     );
 
     // Get the project.json from Lightning
-    const { data: project } = await getProject(config, options.projectId);
+    const { data: project } = await getProject(
+      config,
+      options.projectId,
+      options.snapshots
+    );
 
     if (!project) {
       logger.error('ERROR: Project not found.');
