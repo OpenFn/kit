@@ -3,41 +3,26 @@ import { print } from 'recast';
 import { NodePath, namedTypes as n } from 'ast-types';
 
 import promises, {
-  defer,
+  assertDeferDeclaration,
   rebuildPromiseChain,
 } from '../../src/transforms/promises';
 import parse from '../../src/parse';
 import transform from '../../src/transform';
 
-// throws if there's no defer declaration in the ast
-export const assertDeferDeclaration = (ast: any) => {
-  for (const node of ast.program.body) {
-    if (n.FunctionDeclaration.check(node)) {
-      if (node.id.name === 'defer') {
-        return true;
-      }
-    }
-  }
-
-  throw new Error('No defer declaration found');
-};
-
 test("assertDeferDeclaration: find defer if it's the only thing", (t) => {
-  // TODO maybe call it $defer
-  const source = 'function defer () {}';
+  const source = 'import { defer } from "@openfn/runtime"';
 
   const ast = parse(source);
-  assertDeferDeclaration(ast);
+  assertDeferDeclaration(ast.program);
   t.pass('defer found');
 });
 
-test('assertDeferDeclaration: throw if no defer found', (t) => {
-  // this is not the right defer function syntax
-  const source = 'const defer = () => {};';
+test('assertDeferDeclaration: throw if no defer import found', (t) => {
+  const source = 'import { defer } from "@openfn/common"';
 
   const ast = parse(source);
   try {
-    assertDeferDeclaration(ast);
+    assertDeferDeclaration(ast.program);
   } catch (e) {
     t.pass('assertion correctly failed');
   }
@@ -46,127 +31,18 @@ test('assertDeferDeclaration: throw if no defer found', (t) => {
 test('assertDeferDeclaration: find defer among several statements', (t) => {
   const source = `if(true) {};
   const d = () => {};
-  function defer () {};
+  import { defer } from "@openfn/runtime";
+  function $defer () {};
   const _defer = false`;
 
   const ast = parse(source);
-  assertDeferDeclaration(ast);
+  assertDeferDeclaration(ast.program);
   t.pass('defer found');
-});
-
-test('assertDeferDeclaration: throw if defer is not top level', (t) => {
-  const source = `
-  if (true) { function defer () {} }
-  function x() { function defer () {} }
-  fn(function defer () {})
-  `;
-
-  const ast = parse(source);
-  try {
-    assertDeferDeclaration(ast);
-  } catch (e) {
-    t.pass('assertion correctly failed');
-  }
-});
-
-// Bunch of tests around the defer function
-
-test('defer does not execute immediately', (t) => {
-  let x = 0;
-
-  const op = () => x++;
-
-  defer(op);
-
-  t.is(x, 0);
-});
-
-test('defer: function executes when called', async (t) => {
-  let x = 0;
-
-  const op = () => x++;
-
-  const fn = defer(op);
-
-  await fn({});
-
-  t.is(x, 1);
-});
-
-test('defer: function executes an async function when called', async (t) => {
-  const op = () =>
-    new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(22);
-      }, 2);
-    });
-
-  const fn = defer(op);
-
-  const result = await fn({});
-
-  t.is(result, 22);
-});
-
-test('defer: returns a value', async (t) => {
-  const op = (s) => s * s;
-
-  const fn = defer(op);
-
-  const result = await fn(5);
-
-  t.is(result, 25);
-});
-
-test('defer: invoke the complete callback and pass state', async (t) => {
-  const op = (s) => ++s;
-
-  const fn = defer(op, (p) => p.then((s) => (s *= 2)));
-
-  const result = await fn(2);
-
-  t.is(result, 6);
-});
-
-test('defer: catch an error', async (t) => {
-  const op = () => {
-    throw 'lamine yamal';
-  };
-
-  const c = (_e: any) => {
-    t.pass('caught the error');
-  };
-
-  const fn = defer(op, undefined, c);
-
-  await fn(1);
-});
-
-test('defer: catch an async error', async (t) => {
-  const op = () =>
-    new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // This should be handled gracefully
-        reject('lamine yamal');
-
-        // but this will be uncaught!
-        // I don't think there's anything we can do about this tbh
-        //throw 'lamine yamal';
-      }, 2);
-    });
-
-  const c = (e: any) => {
-    t.is(e, 'lamine yamal');
-  };
-
-  const fn = defer(op, undefined, c);
-
-  await fn(1);
 });
 
 test('wrapFn: fn().then()', async (t) => {
   const source = `fn(x).then(() => {})`;
-  const result = `defer(fn(x), p => p.then(() => {}))`;
+  const result = `_defer(fn(x), p => p.then(() => {}))`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -182,7 +58,7 @@ test('wrapFn: fn().then()', async (t) => {
 
 test('wrapFn: fn.catch()', async (t) => {
   const source = `fn(x).catch((e) => e)`;
-  const result = `defer(fn(x), undefined, (e) => e)`;
+  const result = `_defer(fn(x), undefined, (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -198,7 +74,7 @@ test('wrapFn: fn.catch()', async (t) => {
 
 test('wrapFn: fn.then().then()', async (t) => {
   const source = `fn(x).then((e) => e).then((e) => e)`;
-  const result = `defer(fn(x), p => p.then((e) => e).then((e) => e))`;
+  const result = `_defer(fn(x), p => p.then((e) => e).then((e) => e))`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -214,7 +90,7 @@ test('wrapFn: fn.then().then()', async (t) => {
 
 test('wrapFn: fn.catch().then()', async (t) => {
   const source = `fn(x).catch((e) => e).then((s) => s)`;
-  const result = `defer(fn(x), p => p.then((s) => s), (e) => e)`;
+  const result = `_defer(fn(x), p => p.then((s) => s), (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -230,7 +106,7 @@ test('wrapFn: fn.catch().then()', async (t) => {
 
 test('wrapFn: fn.catch().then().then()', async (t) => {
   const source = `fn(x).catch((e) => e).then((s) => s).then(s => s)`;
-  const result = `defer(fn(x), p => p.then((s) => s).then(s => s), (e) => e)`;
+  const result = `_defer(fn(x), p => p.then((s) => s).then(s => s), (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -246,7 +122,7 @@ test('wrapFn: fn.catch().then().then()', async (t) => {
 
 test('wrapFn: fn.catch().then().catch', async (t) => {
   const source = `fn(x).catch((e) => e).then((s) => s).catch(e => e)`;
-  const result = `defer(fn(x), p => p.then((s) => s).catch(e => e), (e) => e)`;
+  const result = `_defer(fn(x), p => p.then((s) => s).catch(e => e), (e) => e)`;
 
   const ast = parse(source);
   const nodepath = new NodePath(ast.program);
@@ -262,13 +138,13 @@ test('wrapFn: fn.catch().then().catch', async (t) => {
 
 test('transform: fn().then()', (t) => {
   const source = `fn(x).then(s => s);`;
-  const result = `defer(fn(x), p => p.then(s => s));`;
+  const result = `_defer(fn(x), p => p.then(s => s));`;
 
   const ast = parse(source);
 
-  const transformed = transform(ast, [promises]) as n.Program;
+  const transformed = transform(ast, [promises]) as n.File;
 
-  assertDeferDeclaration(transformed);
+  assertDeferDeclaration(transformed.program);
 
   const { code } = print(transformed);
 
@@ -280,13 +156,13 @@ test('transform: fn().then()', (t) => {
 
 test('transform: fn().catch()', (t) => {
   const source = `fn(x).catch(s => s);`;
-  const result = `defer(fn(x), undefined, s => s);`;
+  const result = `_defer(fn(x), undefined, s => s);`;
 
   const ast = parse(source);
 
-  const transformed = transform(ast, [promises]) as n.Program;
+  const transformed = transform(ast, [promises]) as n.File;
 
-  assertDeferDeclaration(transformed);
+  assertDeferDeclaration(transformed.program);
 
   const { code } = print(transformed);
   t.log(code);
@@ -295,15 +171,64 @@ test('transform: fn().catch()', (t) => {
   t.is(transformedExport, result);
 });
 
-test('transform: fn(get().then())', (t) => {
-  const source = `fn(get(x).then(s => s));`;
-  const result = `fn(defer(get(x), p => p.then(s => s)));`;
+test('transform: only import once ', (t) => {
+  const source = `fn(x).then(s => s);
+fn(x).then(s => s);`;
+
+  const result = `import { defer as _defer } from "@openfn/runtime";
+_defer(fn(x), p => p.then(s => s));
+_defer(fn(x), p => p.then(s => s));`;
 
   const ast = parse(source);
 
-  const transformed = transform(ast, [promises]) as n.Program;
+  const transformed = transform(ast, [promises]) as n.File;
+  const { code } = print(transformed);
+  console.log(code);
+  t.is(code, result);
+});
 
-  assertDeferDeclaration(transformed);
+test('transform: insert new import at the end of existing imports ', (t) => {
+  const source = `import x from 'y';
+fn(x).then(s => s);`;
+
+  const result = `import x from 'y';
+import { defer as _defer } from "@openfn/runtime";
+_defer(fn(x), p => p.then(s => s));`;
+
+  const ast = parse(source);
+  const transformed = transform(ast, [promises]) as n.File;
+  const { code } = print(transformed);
+
+  t.is(code, result);
+});
+
+test('transform: fn(get().then())', (t) => {
+  const source = `fn(get(x).then(s => s));`;
+  const result = `fn(_defer(get(x), p => p.then(s => s)));`;
+
+  const ast = parse(source);
+
+  const transformed = transform(ast, [promises]) as n.File;
+
+  assertDeferDeclaration(transformed.program);
+
+  const { code } = print(transformed);
+
+  t.log(code);
+
+  const { code: transformedExport } = print(transformed.program.body.at(-1));
+  t.is(transformedExport, result);
+});
+
+test('transform: fn(get().then(), get().then())', (t) => {
+  const source = `fn(get(x).then(s => s), post(x).then(s => s));`;
+  const result = `fn(_defer(get(x), p => p.then(s => s)), _defer(post(x), p => p.then(s => s)));`;
+
+  const ast = parse(source);
+
+  const transformed = transform(ast, [promises]) as n.File;
+
+  assertDeferDeclaration(transformed.program);
 
   const { code } = print(transformed);
 
@@ -320,7 +245,7 @@ test('transform: ignore promises in a callback', (t) => {
 
   const ast = parse(source);
 
-  const transformed = transform(ast, [promises]) as n.Program;
+  const transformed = transform(ast, [promises]) as n.File;
 
   const { code } = print(transformed);
   t.is(code, source);

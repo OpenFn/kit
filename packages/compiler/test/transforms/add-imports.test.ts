@@ -447,6 +447,34 @@ test("Don't add imports for ignored identifiers", async (t) => {
   t.assert(imports[0].imported.name === 'y');
 });
 
+test("Don't add imports from import specifiers", async (t) => {
+  const ast = b.program([
+    b.importDeclaration(
+      [
+        b.importSpecifier(b.identifier('x')),
+        b.importSpecifier(b.identifier('y'), b.identifier('_y')),
+      ],
+      b.stringLiteral('@openfn/runtime')
+    ),
+  ]);
+
+  const options = {
+    'add-imports': {
+      adaptor: {
+        name: 'test-adaptor',
+        exports: [],
+      },
+    },
+  };
+
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  t.assert(transformed.body.length === 1);
+  const [first] = transformed.body;
+  t.assert(n.ImportDeclaration.check(first));
+  t.assert(first.source.value === '@openfn/runtime');
+});
+
 test('export everything from an adaptor', (t) => {
   const ast = b.program([b.expressionStatement(b.identifier('x'))]);
 

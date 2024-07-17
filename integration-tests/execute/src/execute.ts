@@ -1,5 +1,5 @@
 import path from 'node:path';
-import runtime from '@openfn/runtime';
+import run from '@openfn/runtime';
 import compiler from '@openfn/compiler';
 
 const execute = async (job: string, state: any) => {
@@ -13,9 +13,9 @@ const execute = async (job: string, state: any) => {
     },
   };
   const compiled = compiler(job, options);
-  // console.log(compiled);
+  console.log(compiled);
 
-  const result = await runtime(compiled, state, {
+  const result = await run(compiled, state, {
     // preload the linker with some locally installed modules
     linker: {
       modules: {

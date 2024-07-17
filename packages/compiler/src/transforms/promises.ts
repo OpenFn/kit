@@ -1,60 +1,47 @@
-import * as acorn from 'acorn';
 import { namedTypes as n, builders as b } from 'ast-types';
 
 import type { NodePath } from 'ast-types/lib/node-path';
 
-type State = any;
+const NO_DEFER_DECLARATION_ERROR = 'No defer declaration found';
 
-// Defer will take an operation with a promise chain
-// and break it up into a deferred function call which
-// ensures the operation is a promise
-// eg, fn().then(s => s)
-
-// TODO not a huge fan of how this stringifies
-// maybe later update tsconfig
-export function defer(
-  fn: (s: State) => State,
-  complete = (p: Promise<any>) => p,
-  error = (e: any): void => {
-    throw e;
+export const assertDeferDeclaration = (
+  program: NodePath<n.Program> | n.Program
+) => {
+  if ((program as NodePath).node) {
+    program = (program as NodePath).node;
   }
-) {
-  return (state: State) => {
-    try {
-      return complete(Promise.resolve(fn(state)).catch(error));
-    } catch (e) {
-      return error(e);
-    }
-  };
-}
-
-const assertDeferDeclaration = (program: NodePath<n.Program>) => {
-  for (const node of program.node.body) {
-    if (n.FunctionDeclaration.check(node)) {
-      if (node.id.name === 'defer') {
+  const p = program as n.Program;
+  for (const node of p.body) {
+    if (n.ImportDeclaration.check(node)) {
+      if (node.source.value === '@openfn/runtime') {
         return true;
       }
     }
   }
 
-  throw new Error('No defer declaration found');
+  throw new Error(NO_DEFER_DECLARATION_ERROR);
 };
 
-const DEFER_SOURCE = defer.toString();
-
-const injectDeferFunction = (root: NodePath<n.Program>) => {
+const injectDeferImport = (root: NodePath<n.Program>) => {
   try {
     assertDeferDeclaration(root);
   } catch (e) {
-    const newAST = acorn.parse(DEFER_SOURCE, {
-      sourceType: 'module',
-      ecmaVersion: 10,
-      locations: false,
-    });
+    if (e.message === NO_DEFER_DECLARATION_ERROR) {
+      const i = b.importDeclaration(
+        [b.importSpecifier(b.identifier('defer'), b.identifier('_defer'))],
+        b.stringLiteral('@openfn/runtime')
+      );
 
-    // TODO work out the index of the first none import/export line
-    const idx = -1;
-    root.node.body.splice(idx + 1, 0, ...newAST.body);
+      // Find the first non-import node and
+      let idx = 0;
+      for (const node of root.node.body) {
+        if (!n.ImportDeclaration.check(node)) {
+          break;
+        }
+        idx++;
+      }
+      root.node.body.splice(idx, 0, i);
+    }
   }
 };
 
@@ -131,7 +118,7 @@ export const rebuildPromiseChain = (expr: NodePath<n.CallExpression>) => {
   }
 
   // Finally, build and return the defer function call
-  const defer = b.callExpression(b.identifier('defer'), deferArgs);
+  const defer = b.callExpression(b.identifier('_defer'), deferArgs);
 
   expr.replace(defer);
 
@@ -169,9 +156,10 @@ const visitor = (path: NodePath<n.CallExpression>) => {
     path.node.callee.property?.name?.match(/^(then|catch)$/) &&
     isTopScope(path)
   ) {
-    injectDeferFunction(root);
+    injectDeferImport(root);
     rebuildPromiseChain(path);
-    // do not traverse this tree
+
+    // do not traverse this tree any further
     return true;
   }
 };

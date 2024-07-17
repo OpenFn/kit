@@ -108,6 +108,11 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   const result: IdentifierList = {};
   visit(ast, {
     visitIdentifier: function (path) {
+      // If this is part of an import statement, do nothing
+      if (n.ImportSpecifier.check(path.parent.node)) {
+        return false;
+      }
+
       // undefined and NaN are treated as a regular identifier
       if (path.node.name === 'undefined' || path.node.name === 'NaN') {
         return false;
