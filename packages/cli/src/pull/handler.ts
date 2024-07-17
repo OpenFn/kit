@@ -55,8 +55,13 @@ async function pullHandler(options: PullOptions, logger: Logger) {
 
     logger.always('Downloading the project spec (as YAML) from the server.');
     // Get the project.yaml from Lightning
+    const queryParams = new URLSearchParams();
+    queryParams.append('id', options.projectId);
+    options.snapshots?.forEach((snapshot) =>
+      queryParams.append('snapshots[]', snapshot)
+    );
     const url = new URL(
-      `api/provision/yaml?id=${options.projectId}`,
+      `api/provision/yaml?${queryParams.toString()}`,
       config.endpoint
     );
     logger.debug('Fetching project spec from', url);

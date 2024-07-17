@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.6.1
+
+### Patch Changes
+
+- 505d60b: Add snapshot ids to the url for fetching project spec
+
 ## 1.6.0
 
 ### Minor Changes
