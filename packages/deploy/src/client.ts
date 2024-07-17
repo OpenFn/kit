@@ -1,7 +1,7 @@
 import { DeployConfig, ProjectPayload } from './types';
 import { DeployError } from './deployError';
 
-const getLightningUrl = (
+export const getLightningUrl = (
   config: DeployConfig,
   path: string = '',
   snapshots?: string[]
