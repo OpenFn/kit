@@ -25,7 +25,7 @@ export const assertDeferDeclaration = (
 const injectDeferImport = (root: NodePath<n.Program>) => {
   try {
     assertDeferDeclaration(root);
-  } catch (e) {
+  } catch (e: any) {
     if (e.message === NO_DEFER_DECLARATION_ERROR) {
       const i = b.importDeclaration(
         [b.importSpecifier(b.identifier('defer'), b.identifier('_defer'))],
@@ -65,7 +65,7 @@ export const rebuildPromiseChain = (expr: NodePath<n.CallExpression>) => {
     }
     if (
       n.MemberExpression.check(next.node.callee) &&
-      !next.node.callee.property.name?.match(/^(then|catch)$/)
+      !(next.node.callee.property as any).name?.match(/^(then|catch)$/)
     ) {
       op = next;
       break;
@@ -146,14 +146,14 @@ const isTopScope = (path: NodePath<any>) => {
 };
 
 const visitor = (path: NodePath<n.CallExpression>) => {
-  let root: NodePath<n.Program> = path;
+  let root: NodePath<any> = path;
   while (!n.Program.check(root.node)) {
     root = root.parent;
   }
 
   // any Call expression with then|catch which is not in a nested scope
   if (
-    path.node.callee.property?.name?.match(/^(then|catch)$/) &&
+    (path.node.callee as any).property?.name?.match(/^(then|catch)$/) &&
     isTopScope(path)
   ) {
     injectDeferImport(root);

@@ -157,32 +157,13 @@ export default [get(state => state.data.endpoint)];`;
 test('compile simple promise chain', (t) => {
   const source =
     'get($.data.endpoint).then((s => { console.log(s.data); return state;} ));';
-  const expected = `function defer(fn, complete, error) {
-  if (complete === void 0) {
-    complete = function(s) {
-      return s;
-    };
-  }
+  const expected = `import { defer as _defer } from "@openfn/runtime";
 
-  if (error === void 0) {
-    error = function(e) {
-      throw e;
-    };
-  }
-
-  return function(state) {
-    try {
-      return Promise.resolve(fn(state)).catch(error).then(complete);
-    } catch (e) {
-      error(e);
-    }
-  };
-}
-
-export default [defer(
+export default [_defer(
   get(state => state.data.endpoint),
-  s => { console.log(s.data); return state;}
+  p => p.then((s => { console.log(s.data); return state;} ))
 )];`;
+
   const result = compile(source);
   t.is(result, expected);
 });
