@@ -13,15 +13,15 @@ import { State } from '@openfn/lexicon';
 export function defer(
   fn: (s: State) => State,
   complete = (p: Promise<any>) => p,
-  error = (e: any): void => {
+  error = (e: any, _state: State): void => {
     throw e;
   }
 ) {
   return (state: State) => {
     try {
-      return complete(Promise.resolve(fn(state)).catch(error));
+      return complete(Promise.resolve(fn(state)).catch((e) => error(e, state)));
     } catch (e) {
-      return error(e);
+      return error(e, state);
     }
   };
 }

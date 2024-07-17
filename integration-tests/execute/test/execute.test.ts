@@ -108,6 +108,21 @@ test.serial('catch an error and re-throw it', async (t) => {
   t.is(result.errors['job-1'].type, 'JobError');
 });
 
+test.serial('catch an error and return state', async (t) => {
+  const state = {
+    data: {
+      x: 22,
+    },
+  };
+
+  const job = `fn(() => {
+    throw { err: true }
+  }).catch((e, s) => s)`;
+
+  const result = await execute(job, state);
+  t.deepEqual(result, state);
+});
+
 test.serial('each with then ', async (t) => {
   const state = {
     ids: [1, 2, 3],

@@ -63,8 +63,9 @@ test('defer: catch an error', async (t) => {
     throw 'lamine yamal';
   };
 
-  const c = (_e: any) => {
-    t.pass('caught the error');
+  const c = (e: any, s: any) => {
+    t.truthy(e);
+    t.truthy(s);
   };
 
   const fn = defer(op, undefined, c);
@@ -85,8 +86,9 @@ test('defer: catch an async error', async (t) => {
       }, 2);
     });
 
-  const c = (e: any) => {
+  const c = (e: any, s: any) => {
     t.is(e, 'lamine yamal');
+    t.truthy(s);
   };
 
   const fn = defer(op, undefined, c);
