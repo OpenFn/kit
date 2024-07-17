@@ -12,6 +12,7 @@
   "dependencies": {
     "@openfn/compiler": "workspace:^",
     "@openfn/language-common": "1.7.7",
+    "@openfn/language-http": "6.4.0",
     "@openfn/runtime": "workspace:^",
     "@types/node": "^18.15.13",
     "ava": "5.3.1",

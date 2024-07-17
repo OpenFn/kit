@@ -92,3 +92,41 @@ test.serial('catch an error and return it', async (t) => {
   const result = await execute(job, state);
   t.deepEqual(result, { err: true });
 });
+
+test.serial('catch an error and re-throw it', async (t) => {
+  const state = {
+    data: {
+      x: 22,
+    },
+  };
+
+  const job = `fn(() => {
+    throw { err: true }
+  }).catch(e => { throw e })`;
+
+  const result = await execute(job, state);
+  t.is(result.errors['job-1'].type, 'JobError');
+});
+
+test.serial('each with then ', async (t) => {
+  const state = {
+    ids: [1, 2, 3],
+    results: [],
+  };
+
+  const job = `each($.ids,
+      get(\`https://jsonplaceholder.typicode.com/todos/\${$.data}\`).then(
+      (s) => {
+        s.results.push(s.data);
+        return s;
+      }
+    )
+  )`;
+
+  const result = await execute(job, state, 'http');
+
+  t.is(result.results.length, 3);
+  t.is(result.results[0].id, 1);
+  t.is(result.results[1].id, 2);
+  t.is(result.results[2].id, 3);
+});
