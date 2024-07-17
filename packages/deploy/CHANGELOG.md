@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.5.0
+
+### Minor Changes
+
+- 960f293: Add snapshots option to cli pull command
+
 ## 0.4.7
 
 ### Patch Changes
