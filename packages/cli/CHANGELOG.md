@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.6.0
+
+### Minor Changes
+
+- 960f293: Add snapshots option to cli pull command
+
+### Patch Changes
+
+- Updated dependencies [960f293]
+  - @openfn/deploy@0.5.0
+
 ## 1.5.0
 
 ### Minor Changes

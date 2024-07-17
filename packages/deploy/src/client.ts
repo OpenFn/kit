@@ -1,14 +1,25 @@
 import { DeployConfig, ProjectPayload } from './types';
 import { DeployError } from './deployError';
 
-const getLightningUrl = (config: DeployConfig, path: string = '') =>
-  new URL(`/api/provision/${path}`, config.endpoint);
+export const getLightningUrl = (
+  config: DeployConfig,
+  path: string = '',
+  snapshots?: string[]
+) => {
+  const params = new URLSearchParams();
+  snapshots?.forEach((snapshot) => params.append('snapshots[]', snapshot));
+  return new URL(
+    `/api/provision/${path}?${params.toString()}`,
+    config.endpoint
+  );
+};
 
 export async function getProject(
   config: DeployConfig,
-  projectId: string
+  projectId: string,
+  snapshots?: string[]
 ): Promise<{ data: ProjectPayload | null }> {
-  const url = getLightningUrl(config, projectId);
+  const url = getLightningUrl(config, projectId, snapshots);
   console.log(`Checking ${url} for existing project.`);
 
   try {

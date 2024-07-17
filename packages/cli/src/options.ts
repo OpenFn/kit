@@ -46,6 +46,7 @@ export type Opts = {
   repoDir?: string;
   sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
   skipAdaptorValidation?: boolean;
+  snapshots?: string[];
   specifier?: string; // docgen
   start?: string; // workflow start step
   statePath?: string;
@@ -399,6 +400,14 @@ export const skipAdaptorValidation: CLIOption = {
     boolean: true,
     description: "Suppress warning message for jobs which don't use an adaptor",
     default: false,
+  },
+};
+
+export const snapshots: CLIOption = {
+  name: 'snapshots',
+  yargs: {
+    description: 'List of snapshot ids to pull',
+    array: true,
   },
 };
 
