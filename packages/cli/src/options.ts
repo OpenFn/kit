@@ -406,7 +406,7 @@ export const skipAdaptorValidation: CLIOption = {
 export const snapshots: CLIOption = {
   name: 'snapshots',
   yargs: {
-    description: 'List os snapshot ids to pull',
+    description: 'List of snapshot ids to pull',
     array: true,
   },
 };
