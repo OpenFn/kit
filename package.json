@@ -21,6 +21,10 @@
     "test": "pnpm -r --filter=./packages/* run test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
   },
+  "engines": {
+    "node": "<18",
+    "pnpm": "9.5.0"
+  },
   "keywords": [],
   "author": "Open Function Group",
   "license": "ISC",
