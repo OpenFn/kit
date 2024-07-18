@@ -2,7 +2,7 @@
   "name": "@openfn/kit",
   "version": "1.0.0",
   "private": true,
-  "description": "Next-generation OpenFN tooling",
+  "description": "Next-generation OpenFn tooling",
   "scripts": {
     "build": "pnpm run clean && pnpm -r --filter=./packages/* run build",
     "clean:local": "rimraf dist/**/*",
