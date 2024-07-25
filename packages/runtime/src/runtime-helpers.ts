@@ -9,7 +9,6 @@ import { State } from '@openfn/lexicon';
 // ensures the operation is a promise
 // eg, fn().then(s => s)
 
-// TODO move unit tests in here
 export function defer(
   fn: (s: State) => State,
   complete = (p: Promise<any>) => p,
