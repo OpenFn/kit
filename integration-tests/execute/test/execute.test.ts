@@ -101,11 +101,12 @@ test.serial('catch an error and re-throw it', async (t) => {
   };
 
   const job = `fn(() => {
-    throw { err: true }
+    throw new Error('err')
   }).catch(e => { throw e })`;
 
   const result = await execute(job, state);
-  t.is(result.errors['job-1'].type, 'JobError');
+  t.is(result.errors['job-1'].name, 'JobError');
+  t.is(result.errors['job-1'].message, 'err');
 });
 
 test.serial('catch an error and return state', async (t) => {
