@@ -1,5 +1,18 @@
 # ws-worker
 
+## 1.4.0
+
+### Minor Changes
+
+- Allow operations to behave like promises (ie, support fn().then())
+
+### Patch Changes
+
+- Updated dependencies [40fd45b]
+- Updated dependencies
+  - @openfn/runtime@1.4.1
+  - @openfn/engine-multi@1.2.0
+
 ## 1.3.0
 
 ### Minor Changes

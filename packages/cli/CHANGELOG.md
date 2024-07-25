@@ -1,5 +1,18 @@
 # @openfn/cli
 
+## 1.7.0
+
+### Minor Changes
+
+- Allow operations to behave like promises (ie, support fn().then())
+
+### Patch Changes
+
+- Updated dependencies [40fd45b]
+- Updated dependencies [40fd45b]
+  - @openfn/compiler@0.2.0
+  - @openfn/runtime@1.4.1
+
 ## 1.6.1
 
 ### Patch Changes
