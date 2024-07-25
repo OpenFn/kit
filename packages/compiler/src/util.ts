@@ -87,6 +87,7 @@ const findExports = async (
   const dtsFiles = files.filter((f) => f.endsWith('.d.ts'));
   const result = [];
   for (const f of dtsFiles) {
+    console.log(f);
     const relPath = `${typesRoot}/${f}`;
     const contents = await readFile(`${moduleRoot}/${relPath}`, 'utf8');
     project.createFile(contents, relPath);

@@ -108,6 +108,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   const result: IdentifierList = {};
   visit(ast, {
     visitIdentifier: function (path) {
+      console.log(path.node.name);
       // If this is part of an import statement, do nothing
       if (n.ImportSpecifier.check(path.parent.node)) {
         return false;
@@ -167,6 +168,8 @@ function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
 
     if (name) {
       const identifiers = findAllDanglingIdentifiers(path.node);
+      console.log(identifiers);
+      console.log(exports);
       const usedExports =
         exports && exports.length
           ? // If we have exports for this adaptor, import any dangling variables from the export list
