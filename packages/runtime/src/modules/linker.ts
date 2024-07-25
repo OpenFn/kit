@@ -10,6 +10,11 @@ import { ImportError } from '../errors';
 
 const defaultLogger = createMockLogger();
 
+// These specifiers are allowed to be imported "globally"
+const moduleWhitelist: Record<string, true> = {
+  '@openfn/runtime': true,
+};
+
 export type ModuleInfo = {
   path?: string;
   version?: string;
@@ -92,6 +97,13 @@ const linker: Linker = async (specifier, context, options = {}) => {
 // Loads a module as a general specifier or from a specific path
 const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   const log = options.log || defaultLogger;
+
+  // For a small number of whitelisted modules, import directly using basic module resolution
+  if (moduleWhitelist[specifier]) {
+    log.debug(`[linker] Importing whitelisted module: ${specifier}`);
+    return import(specifier);
+  }
+
   const prefix = process.platform == 'win32' ? 'file://' : '';
 
   // If the specifier is a path, just import it
@@ -127,7 +139,6 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       version = entry.version;
     } else {
       log.debug(`module not found in repo: ${specifier}`);
-      // throw new ImportError(`${specifier} not found in repo`);
     }
   }
 
@@ -153,7 +164,6 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
     }
   }
 
-  // Generic error (we should never get here)
   throw new ImportError(`Failed to import module "${specifier}"`);
 };
 

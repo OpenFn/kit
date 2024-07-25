@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.2.0
+
+### Minor Changes
+
+- 40fd45b: Add promises transformer
+  Don't try and import variables declared in other import statements
+
 ## 0.1.4
 
 ### Patch Changes

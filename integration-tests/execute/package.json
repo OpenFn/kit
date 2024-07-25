@@ -1,0 +1,32 @@
+{
+  "name": "@openfn/integration-tests-execute",
+  "private": true,
+  "version": "1.0.1",
+  "description": "Job execution tests",
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "test": "pnpm ava"
+  },
+  "dependencies": {
+    "@openfn/compiler": "workspace:^",
+    "@openfn/language-common": "1.7.7",
+    "@openfn/language-http": "6.4.0",
+    "@openfn/runtime": "workspace:^",
+    "@types/node": "^18.15.13",
+    "ava": "5.3.1",
+    "date-fns": "^2.30.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "10.8.1",
+    "tslib": "^2.4.0",
+    "typescript": "^5.1.6"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/rimraf": "^3.0.2"
+  }
+}

@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.4.1
+
+### Patch Changes
+
+- 40fd45b: Allow the linker to directly import some whitelisted packages
+
 ## 1.4.0
 
 ### Minor Changes

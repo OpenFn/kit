@@ -7,35 +7,35 @@ test('ensure default exports is created', (t) => {
   const source = '';
   const expected = 'export default [];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('do not add default exports if exports exist', (t) => {
   const source = 'export const x = 10;';
   const expected = 'export const x = 10;';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('compile a single operation', (t) => {
   const source = 'fn();';
   const expected = 'export default [fn()];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('compile a single operation without being fussy about semicolons', (t) => {
   const source = 'fn()';
   const expected = 'export default [fn()];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('compile multiple operations', (t) => {
   const source = 'fn();fn();fn();';
   const expected = 'export default [fn(), fn(), fn()];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('add imports', (t) => {
@@ -50,7 +50,7 @@ test('add imports', (t) => {
   const source = 'fn();';
   const expected = `import { fn } from "@openfn/language-common";\nexport default [fn()];`;
   const result = compile(source, options);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('do not add imports', (t) => {
@@ -66,7 +66,7 @@ test('do not add imports', (t) => {
   const source = "import { fn } from '@openfn/language-common'; fn();";
   const expected = `import { fn } from '@openfn/language-common';\nexport default [fn()];`;
   const result = compile(source, options);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('dumbly add imports', (t) => {
@@ -81,7 +81,7 @@ test('dumbly add imports', (t) => {
   const source = "import { jam } from '@openfn/language-common'; jam(state);";
   const expected = `import { jam } from '@openfn/language-common';\nexport default [jam(state)];`;
   const result = compile(source, options);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('add imports with export all', (t) => {
@@ -97,7 +97,7 @@ test('add imports with export all', (t) => {
   const source = 'fn();';
   const expected = `import { fn } from "@openfn/language-common";\nexport * from "@openfn/language-common";\nexport default [fn()];`;
   const result = compile(source, options);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('twitter example', async (t) => {
@@ -119,23 +119,22 @@ test('compile with optional chaining', (t) => {
   const source = 'fn(a.b?.c);';
   const expected = 'export default [fn(a.b?.c)];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('compile with nullish coalescence', (t) => {
   const source = 'fn(a ?? b);';
   const expected = 'export default [fn(a ?? b)];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
 
 test('compile a lazy state ($) expression', (t) => {
   const source = 'get($.data.endpoint);';
   const expected = 'export default [get(state => state.data.endpoint)];';
   const result = compile(source);
-  t.assert(result === expected);
+  t.is(result, expected);
 });
-
 
 test('compile a lazy state ($) expression with dumb imports', (t) => {
   const options = {
@@ -149,8 +148,40 @@ test('compile a lazy state ($) expression with dumb imports', (t) => {
   const source = 'get($.data.endpoint);';
   const expected = `import { get } from "@openfn/language-common";
 export * from "@openfn/language-common";
-export default [get(state => state.data.endpoint)];`
+export default [get(state => state.data.endpoint)];`;
 
   const result = compile(source, options);
-  t.assert(result === expected);
+  t.is(result, expected);
+});
+
+test('compile simple promise chain', (t) => {
+  const source =
+    'get($.data.endpoint).then((s => { console.log(s.data); return state;} ));';
+
+  const expected = `import { defer as _defer } from "@openfn/runtime";
+
+export default [_defer(
+  get(state => state.data.endpoint),
+  p => p.then((s => { console.log(s.data); return state;} ))
+)];`;
+
+  const result = compile(source);
+  t.is(result, expected);
+});
+
+test('compile simple promise chain with each', (t) => {
+  const source = `each(
+  "$.data[*]",
+  post("/upsert", (state) => state.data).then((s) => s)
+)`;
+
+  const expected = `import { defer as _defer } from "@openfn/runtime";
+
+export default [each(
+  "$.data[*]",
+  _defer(post("/upsert", (state) => state.data), p => p.then((s) => s))
+)];`;
+
+  const result = compile(source);
+  t.is(result, expected);
 });
