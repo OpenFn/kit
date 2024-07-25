@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.7.1
+
+### Patch Changes
+
+- 2f5dc51: Update the compiler to treat method calls (http.get()) like operations
+- Updated dependencies [4751c90]
+  - @openfn/compiler@0.3.0
+
 ## 1.7.0
 
 ### Minor Changes

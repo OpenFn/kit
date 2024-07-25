@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.3.0
+
+### Minor Changes
+
+- 4751c90: Treat method calls like http.get like operations
+
 ## 0.2.0
 
 ### Minor Changes
