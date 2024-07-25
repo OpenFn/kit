@@ -183,7 +183,6 @@ _defer(fn(x), p => p.then(s => s));`;
 
   const transformed = transform(ast, [promises]) as n.File;
   const { code } = print(transformed);
-  console.log(code);
   t.is(code, result);
 });
 

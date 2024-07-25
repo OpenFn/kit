@@ -157,6 +157,7 @@ export default [get(state => state.data.endpoint)];`;
 test('compile simple promise chain', (t) => {
   const source =
     'get($.data.endpoint).then((s => { console.log(s.data); return state;} ));';
+
   const expected = `import { defer as _defer } from "@openfn/runtime";
 
 export default [_defer(
@@ -182,6 +183,5 @@ export default [each(
 )];`;
 
   const result = compile(source);
-  console.log(result);
   t.is(result, expected);
 });
