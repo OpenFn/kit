@@ -167,3 +167,21 @@ export default [_defer(
   const result = compile(source);
   t.is(result, expected);
 });
+
+test('compile simple promise chain with each', (t) => {
+  const source = `each(
+  "$.data[*]",
+  post("/upsert", (state) => state.data).then((s) => s)
+)`;
+
+  const expected = `import { defer as _defer } from "@openfn/runtime";
+
+export default [each(
+  "$.data[*]",
+  _defer(post("/upsert", (state) => state.data), p => p.then((s) => s))
+)];`;
+
+  const result = compile(source);
+  console.log(result);
+  t.is(result, expected);
+});
