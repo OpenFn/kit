@@ -24,6 +24,13 @@ test('compile a single operation', (t) => {
   t.is(result, expected);
 });
 
+test('compile a single namespaced operation', (t) => {
+  const source = 'http.get();';
+  const expected = 'export default [http.get()];';
+  const result = compile(source);
+  t.is(result, expected);
+});
+
 test('compile a single operation without being fussy about semicolons', (t) => {
   const source = 'fn()';
   const expected = 'export default [fn()];';

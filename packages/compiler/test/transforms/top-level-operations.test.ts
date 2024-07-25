@@ -108,7 +108,7 @@ test('does not move a nested operation into the exports array', (t) => {
   t.assert(call.callee.name === 'fn');
 });
 
-test('does not move method call into the exports array', (t) => {
+test('moves a method call into the exports array', (t) => {
   const ast = createProgramWithExports([
     b.expressionStatement(
       b.callExpression(
@@ -119,17 +119,24 @@ test('does not move method call into the exports array', (t) => {
   ]);
 
   const { body } = transform(ast, [visitors]);
-  // should be two top level children
-  t.assert(body.length === 2);
 
-  // Those children should still be an expression and export statement
-  const [stmt, ex] = body;
-  t.assert(n.ExpressionStatement.check(stmt));
-  t.assert(n.ExportDefaultDeclaration.check(ex));
+  // should only be ony top level child
+  t.assert(body.length === 1);
 
-  // The declaration should be an array of 0
-  t.assert(n.ArrayExpression.check(ex.declaration));
-  t.assert(ex.declaration.elements.length == 0);
+  // That child should be a default declaration
+  t.assert(n.ExportDefaultDeclaration.check(body[0]));
+
+  // The declaration should be an array of 1
+  t.assert(n.ArrayExpression.check(body[0].declaration));
+  t.assert(body[0].declaration.elements.length == 1);
+
+  // And the one element should be a call to http.get
+  const call = body[0].declaration.elements[0];
+  t.assert(n.CallExpression.check(call));
+  t.assert(n.MemberExpression.check(call.callee));
+
+  t.is(call.callee.object.name, 'a');
+  t.is(call.callee.property.name, 'b');
 });
 
 test("does nothing if there's no export statement", (t) => {
