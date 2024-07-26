@@ -139,6 +139,32 @@ test('moves a method call into the exports array', (t) => {
   t.is(call.callee.property.name, 'b');
 });
 
+test('does not move a method call inside an asisignment', (t) => {
+  const ast = createProgramWithExports([
+    b.variableDeclaration('const', [
+      b.variableDeclarator(
+        b.identifier('x'),
+        b.callExpression(
+          b.memberExpression(b.identifier('a'), b.identifier('b')),
+          []
+        )
+      ),
+    ]),
+  ]);
+
+  const { body } = transform(ast, [visitors]);
+  console.log(body);
+
+  // should add the export
+  t.is(body.length, 2);
+
+  // The first child should be an variable declaration
+  t.true(n.VariableDeclaration.check(body[0]));
+
+  // the exported array should be empty
+  t.is(body[1].declaration.elements.length, 0);
+});
+
 test("does nothing if there's no export statement", (t) => {
   const ast = b.program([createOperationStatement('fn')]);
 

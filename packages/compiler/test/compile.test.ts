@@ -31,6 +31,14 @@ test('compile a single namespaced operation', (t) => {
   t.is(result, expected);
 });
 
+test('compile a const assignment with single method call', (t) => {
+  const source = 'const x = dateFns.parse()';
+  const expected = `const x = dateFns.parse()
+export default [];`;
+  const result = compile(source);
+  t.is(result, expected);
+});
+
 test('compile a single operation without being fussy about semicolons', (t) => {
   const source = 'fn()';
   const expected = 'export default [fn()];';
