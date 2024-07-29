@@ -21,8 +21,9 @@ function visitor(path: NodePath<namedTypes.CallExpression>) {
     // ie, the parent must be an ExpressionStatement, and the statement's parent must be a Program
     n.Program.check(root) &&
     n.Statement.check(path.parent.node) &&
-    // If it's an Operation call (ie, fn(() => {})), the callee will be an IdentifierExpression
-    n.Identifier.check(path.node.callee)
+    // An Operation could be an Identifier (fn()) or Member Expression (http.get())
+    (n.Identifier.check(path.node.callee) ||
+      n.MemberExpression.check(path.node.callee))
   ) {
     // Now Find the top level exports array
     const target = root.body.at(-1);

@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.4.1
+
+### Patch Changes
+
+- 2f5dc51: Update the compiler to treat method calls (http.get()) like operations
+  - @openfn/engine-multi@1.2.1
+
 ## 1.4.0
 
 ### Minor Changes
