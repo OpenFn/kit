@@ -180,6 +180,11 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         input,
       } = await joinRunChannel(app.socket, token, id, logger);
 
+      // Default the payload limit if it's not otherwise set on the run options
+      if (!('payloadLimitMb' in options)) {
+        options.payloadLimitMb = app.options.payloadLimitMb;
+      }
+
       // Callback to be triggered when the work is done (including errors)
       const onFinish = () => {
         logger.debug(`workflow ${id} complete: releasing worker`);
