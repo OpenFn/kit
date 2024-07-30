@@ -54,21 +54,20 @@ export default (
 
   // But some need to get passed down into the engine's options
   const engineOpts: WorkerRunOptions = {};
-
   if (run.options) {
-    if (run.options.run_timeout_ms) {
+    if ('run_timeout_ms' in run.options) {
       engineOpts.runTimeoutMs = run.options.run_timeout_ms;
     }
-    if (run.options.payload_memory_limit_mb) {
+    if ('payload_memory_limit_mb' in run.options) {
       engineOpts.payloadLimitMb = run.options.payload_memory_limit_mb;
     }
-    if (run.options.run_memory_limit_mb) {
+    if ('run_memory_limit_mb' in run.options) {
       engineOpts.memoryLimitMb = run.options.run_memory_limit_mb;
     }
-    if (run.options.sanitize) {
+    if ('sanitize' in run.options) {
       engineOpts.sanitize = run.options.sanitize;
     }
-    if (run.options.hasOwnProperty('output_dataclips')) {
+    if ('output_dataclips' in run.options) {
       engineOpts.outputDataclips = run.options.output_dataclips;
     }
   }

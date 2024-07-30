@@ -63,7 +63,7 @@ test('send event should throw if an event errors', async (t) => {
   });
 });
 
-test('jobLog should should send a log event outside a run', async (t) => {
+test('jobLog should send a log event outside a run', async (t) => {
   const plan = { id: 'run-1' };
 
   const log: JSONLog = {
@@ -100,7 +100,37 @@ test('jobLog should should send a log event outside a run', async (t) => {
   await onJobLog({ channel, state } as any, log);
 });
 
-test('jobLog should should send a log event inside a run', async (t) => {
+test('jobLog should redact log messages which are too large', async (t) => {
+  const plan = { id: 'run-1' };
+  const jobId = 'job-1';
+
+  const log: JSONLog = {
+    name: 'R/T',
+    level: 'info',
+    time: getBigIntTimestamp(),
+    message: JSON.stringify(new Array(1024 * 1024 + 1).fill('z').join('')),
+  };
+
+  const state = {
+    plan,
+    activeJob: jobId,
+    activeStep: 'b',
+  } as RunState;
+
+  const channel = mockChannel({
+    [RUN_LOG]: (evt) => {
+      t.regex(evt.message[0], /redacted/i);
+    },
+  });
+
+  const options = {
+    payloadLimitMb: 1,
+  };
+
+  await onJobLog({ channel, state, options } as any, log);
+});
+
+test('jobLog should send a log event inside a run', async (t) => {
   const plan = { id: 'run-1' };
   const jobId = 'job-1';
 
