@@ -870,5 +870,44 @@ test.serial('override the worker payload through run options', (t) => {
   });
 });
 
+test.serial('Redact logs which exceed the payload limit', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(lightningPort, {
+      maxWorkers: 1,
+      // use the dummy repo to remove autoinstall
+      repoDir: path.resolve('./dummy-repo'),
+    }));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `fn((s) => { console.log('a'); return s;})`,
+        },
+      ],
+      options: {
+        payload_memory_limit_mb: 0,
+      },
+    };
+
+    lightning.on('run:log', (evt) => {
+      if (evt.payload.source === 'JOB') {
+        t.regex(evt.payload.message[0], /redacted/i);
+      }
+    });
+
+    lightning.enqueueRun(run);
+
+    lightning.once('run:complete', () => {
+      done();
+    });
+  });
+});
+
 // REMEMBER the default worker was destroyed at this point!
 // If you want to use a worker, you'll have to create your own
