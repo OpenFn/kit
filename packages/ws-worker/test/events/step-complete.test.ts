@@ -205,6 +205,7 @@ test('do not include dataclips in step:complete if output_dataclip is too big', 
     [STEP_COMPLETE]: (evt: StepCompletePayload) => {
       t.falsy(evt.output_dataclip_id);
       t.falsy(evt.output_dataclip);
+      t.is(evt.output_dataclip_error, 'DATACLIP_TOO_LARGE');
     },
   });
 

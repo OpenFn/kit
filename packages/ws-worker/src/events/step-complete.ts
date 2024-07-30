@@ -60,9 +60,11 @@ export default async function onStepComplete(
 
       // Write the dataclip if it's not too big
       evt.output_dataclip = payload;
-      evt.output_dataclip_id = dataclipId;
     }
+    evt.output_dataclip_id = dataclipId;
   } catch (e) {
+    evt.output_dataclip_error = 'DATACLIP_TOO_LARGE';
+
     const time = (timestamp() - BigInt(10e6)).toString();
     // If the dataclip is too big, return the step without it
     // (the workflow will carry on internally)
