@@ -43,6 +43,7 @@ const mapTriggerEdgeCondition = (edge: Edge) => {
 export type WorkerRunOptions = ExecuteOptions & {
   // Defaults to true - must be explicity false to stop dataclips being sent
   outputDataclips?: boolean;
+  payloadLimitMb?: number;
 };
 
 export default (
@@ -57,6 +58,12 @@ export default (
   if (run.options) {
     if (run.options.run_timeout_ms) {
       engineOpts.runTimeoutMs = run.options.run_timeout_ms;
+    }
+    if (run.options.payload_memory_limit_mb) {
+      engineOpts.payloadLimitMb = run.options.payload_memory_limit_mb;
+    }
+    if (run.options.run_memory_limit_mb) {
+      engineOpts.memoryLimitMb = run.options.run_memory_limit_mb;
     }
     if (run.options.sanitize) {
       engineOpts.sanitize = run.options.sanitize;

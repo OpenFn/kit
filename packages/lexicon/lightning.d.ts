@@ -46,8 +46,8 @@ export type LightningPlanOptions = {
   start?: StepId;
   output_dataclips?: boolean;
 
-  // future options
-  run_memory_limit?: number
+  run_memory_limit_mb?: number;
+  payload_memory_limit_mb?: number;
 };
 
 /**

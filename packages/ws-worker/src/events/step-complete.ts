@@ -1,18 +1,21 @@
 import crypto from 'node:crypto';
 import type { StepCompletePayload } from '@openfn/lexicon/lightning';
 import type { JobCompletePayload } from '@openfn/engine-multi';
+import { timestamp } from '@openfn/logger';
 
 import { STEP_COMPLETE } from '../events';
 import { stringify } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
-import { sendEvent, Context } from '../api/execute';
+import { sendEvent, onJobLog, Context } from '../api/execute';
+import ensurePayloadSize from '../util/ensure-payload-size';
 
-export default function onStepComplete(
-  { channel, state, options }: Context,
+export default async function onStepComplete(
+  context: Context,
   event: JobCompletePayload,
   // TODO this isn't terribly graceful, but accept an error for crashes
   error?: any
 ) {
+  const { channel, state, options } = context;
   const dataclipId = crypto.randomUUID();
 
   const step_id = state.activeStep as string;
@@ -41,30 +44,42 @@ export default function onStepComplete(
     state.inputDataclips[nextJobId] = dataclipId;
   });
 
-  const { reason, error_message, error_type } = calculateJobExitReason(
-    job_id,
-    event.state,
-    error
-  );
-  state.reasons[job_id] = { reason, error_message, error_type };
-
   const evt = {
     step_id,
     job_id,
-    output_dataclip_id: dataclipId,
-
-    reason,
-    error_message,
-    error_type,
 
     mem: event.mem,
     duration: event.duration,
     thread_id: event.threadId,
   } as StepCompletePayload;
 
-  if (!options || options.outputDataclips !== false) {
-    evt.output_dataclip = stringify(outputState);
+  try {
+    if (!options || options.outputDataclips !== false) {
+      const payload = stringify(outputState);
+      ensurePayloadSize(payload, options?.payloadLimitMb);
+
+      // Write the dataclip if it's not too big
+      evt.output_dataclip = payload;
+      evt.output_dataclip_id = dataclipId;
+    }
+  } catch (e) {
+    const time = (timestamp() - BigInt(10e6)).toString();
+    // If the dataclip is too big, return the step without it
+    // (the workflow will carry on internally)
+    await onJobLog(context, {
+      time,
+      message: [
+        'Dataclip too large. This dataclip will not be sent back to lighting.',
+      ],
+      level: 'info',
+      name: 'R/T',
+    });
   }
+
+  const reason = calculateJobExitReason(job_id, event.state, error);
+  state.reasons[job_id] = reason;
+
+  Object.assign(evt, reason);
 
   return sendEvent<StepCompletePayload>(channel, STEP_COMPLETE, evt);
 }
