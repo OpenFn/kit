@@ -176,7 +176,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       const {
         channel: runChannel,
         plan,
-        options,
+        options = {},
         input,
       } = await joinRunChannel(app.socket, token, id, logger);
 

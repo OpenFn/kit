@@ -12,7 +12,7 @@ export default async function onRunStart(
   context: Context,
   event: WorkflowStartPayload
 ) {
-  const { channel, state, options } = context;
+  const { channel, state, options = {} } = context;
   // Cheat on the timestamp time to make sure this is the first thing in the log
   const time = (timestamp() - BigInt(10e6)).toString();
 
