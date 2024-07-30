@@ -787,5 +787,88 @@ test.serial('set a timeout on a run', (t) => {
   });
 });
 
+test.serial('set a default payload limit on the worker', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(
+      lightningPort,
+      {
+        maxWorkers: 1,
+        // use the dummy repo to remove autoinstall
+        repoDir: path.resolve('./dummy-repo'),
+      },
+      {
+        payloadLimitMb: 0,
+      }
+    ));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `fn((s) => ({ data: 'aaaa' }))`,
+        },
+      ],
+    };
+
+    lightning.once('step:complete', (evt) => {
+      const { reason, output_dataclip_id, output_dataclip } = evt.payload;
+      t.is(reason, 'success');
+      t.falsy(output_dataclip_id);
+      t.falsy(output_dataclip);
+
+      done();
+    });
+
+    lightning.enqueueRun(run);
+  });
+});
+
+test.serial('override the worker payload through run options', (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(
+      lightningPort,
+      {
+        maxWorkers: 1,
+        // use the dummy repo to remove autoinstall
+        repoDir: path.resolve('./dummy-repo'),
+      },
+      { payloadLimitMb: 0 }
+    ));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `fn((s) => ({ data: 'aaaa' }))`,
+        },
+      ],
+      options: {
+        payload_memory_limit_mb: 100,
+      },
+    };
+
+    lightning.once('step:complete', (evt) => {
+      const { reason, output_dataclip_id, output_dataclip } = evt.payload;
+      t.is(reason, 'success');
+      t.truthy(output_dataclip_id);
+      t.deepEqual(output_dataclip, JSON.stringify({ data: 'aaaa' }));
+
+      done();
+    });
+
+    lightning.enqueueRun(run);
+  });
+});
+
 // REMEMBER the default worker was destroyed at this point!
 // If you want to use a worker, you'll have to create your own
