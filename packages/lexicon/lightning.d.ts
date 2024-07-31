@@ -46,8 +46,8 @@ export type LightningPlanOptions = {
   start?: StepId;
   output_dataclips?: boolean;
 
-  // future options
-  run_memory_limit?: number
+  run_memory_limit_mb?: number;
+  payload_limit_mb?: number;
 };
 
 /**
@@ -178,6 +178,7 @@ export type StepCompletePayload = ExitReason & {
   step_id: string;
   output_dataclip?: string;
   output_dataclip_id?: string;
+  output_dataclip_error?: 'DATACLIP_TOO_LARGE';
   thread_id?: string;
   mem: {
     job: number;

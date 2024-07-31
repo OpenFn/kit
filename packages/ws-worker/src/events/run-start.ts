@@ -12,7 +12,7 @@ export default async function onRunStart(
   context: Context,
   event: WorkflowStartPayload
 ) {
-  const { channel, state } = context;
+  const { channel, state, options = {} } = context;
   // Cheat on the timestamp time to make sure this is the first thing in the log
   const time = (timestamp() - BigInt(10e6)).toString();
 
@@ -35,6 +35,15 @@ export default async function onRunStart(
   };
 
   await sendEvent<RunStartPayload>(channel, RUN_START, { versions });
+
+  if ('payloadLimitMb' in options) {
+    await onJobLog(versionLogContext, {
+      time,
+      message: [`Payload limit: ${options.payloadLimitMb}mb`],
+      level: 'info',
+      name: 'RTE',
+    });
+  }
 
   const versionMessage = calculateVersionString(versions);
 

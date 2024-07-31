@@ -39,6 +39,7 @@ function engineReady(engine: any) {
       max: maxBackoff,
     },
     maxWorkflows: args.capacity,
+    payloadLimitMb: args.payloadMemory,
   };
 
   if (args.lightningPublicKey) {

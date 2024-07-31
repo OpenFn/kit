@@ -33,6 +33,8 @@ export type ServerOptions = {
     min?: number;
     max?: number;
   };
+
+  payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
 };
 
 // this is the server/koa API
@@ -164,7 +166,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   router.get('/', healthcheck);
 
-  app.options = options || {};
+  app.options = options;
 
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {
@@ -174,9 +176,14 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       const {
         channel: runChannel,
         plan,
-        options,
+        options = {},
         input,
       } = await joinRunChannel(app.socket, token, id, logger);
+
+      // Default the payload limit if it's not otherwise set on the run options
+      if (!('payloadLimitMb' in options)) {
+        options.payloadLimitMb = app.options.payloadLimitMb;
+      }
 
       // Callback to be triggered when the work is done (including errors)
       const onFinish = () => {

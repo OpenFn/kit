@@ -7,6 +7,7 @@ import {
   getWithReply,
   createRunState,
   throttle as createThrottle,
+  stringify,
 } from '../util';
 import {
   RUN_COMPLETE,
@@ -25,6 +26,7 @@ import handleRunError from '../events/run-error';
 
 import type { Channel, RunState, JSONLog } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
+import ensurePayloadSize from '../util/ensure-payload-size';
 
 const enc = new TextDecoder('utf-8');
 
@@ -210,20 +212,32 @@ export function onJobError(context: Context, event: any) {
   }
 }
 
-export function onJobLog({ channel, state }: Context, event: JSONLog) {
+export function onJobLog({ channel, state, options }: Context, event: JSONLog) {
   const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
+
+  let message = event.message;
+  try {
+    // The message body, the actual thing that is logged,
+    // may be encoded into a string
+    // Parse it here before sending on to lightning
+    // TODO this needs optimising!
+    if (typeof event.message === 'string') {
+      ensurePayloadSize(event.message, options?.payloadLimitMb);
+      message = JSON.parse(message);
+    } else if (event.message) {
+      const payload = stringify(event.message);
+      ensurePayloadSize(payload, options?.payloadLimitMb);
+    }
+  } catch (e) {
+    message = [
+      `(Log message redacted: exceeds ${options.payloadLimitMb}mb memory limit)`,
+    ];
+  }
 
   // lightning-friendly log object
   const log: RunLogPayload = {
     run_id: state.plan.id!,
-    // The message body, the actual thing that is logged,
-    // may be always encoded into a string
-    // Parse it here before sending on to lightning
-    // TODO this needs optimising!
-    message:
-      typeof event.message === 'string'
-        ? JSON.parse(event.message)
-        : event.message,
+    message: message,
     source: event.name,
     level: event.level,
     timestamp: timeInMicroseconds.toString(),

@@ -89,6 +89,8 @@ test('convert a single job with options', (t) => {
     options: {
       sanitize: 'obfuscate',
       run_timeout_ms: 10,
+      run_memory_limit_mb: 500,
+      payload_limit_mb: 20,
     },
   };
   const { plan, options } = convertPlan(run as LightningPlan);
@@ -102,6 +104,8 @@ test('convert a single job with options', (t) => {
   });
   t.deepEqual(options, {
     runTimeoutMs: 10,
+    memoryLimitMb: 500,
+    payloadLimitMb: 20,
     sanitize: 'obfuscate',
   });
 });

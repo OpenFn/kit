@@ -4,7 +4,7 @@ import type { StepCompletePayload } from '@openfn/lexicon/lightning';
 import handleStepComplete from '../../src/events/step-complete';
 import { mockChannel } from '../../src/mock/sockets';
 import { createRunState } from '../../src/util';
-import { STEP_COMPLETE } from '../../src/events';
+import { RUN_LOG, STEP_COMPLETE } from '../../src/events';
 import { createPlan } from '../util';
 import { JobCompletePayload } from '@openfn/engine-multi';
 
@@ -184,5 +184,73 @@ test('do not include dataclips in step:complete if output_dataclip is false', as
     duration: 61,
     thread_id: 'abc',
   } as JobCompletePayload;
+  await handleStepComplete({ channel, state, options } as any, event);
+});
+
+test('do not include dataclips in step:complete if output_dataclip is too big', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+  const result = { data: new Array(1024 * 1024 + 1).fill('z').join('') };
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const options = {
+    payloadLimitMb: 1,
+  };
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [STEP_COMPLETE]: (evt: StepCompletePayload) => {
+      t.falsy(evt.output_dataclip_id);
+      t.falsy(evt.output_dataclip);
+      t.is(evt.output_dataclip_error, 'DATACLIP_TOO_LARGE');
+    },
+  });
+
+  const event = {
+    jobId,
+    workflowId: plan.id,
+    state: result,
+    next: ['a'],
+    mem: { job: 1, system: 10 },
+    duration: 61,
+    thread_id: 'abc',
+  } as JobCompletePayload;
+
+  await handleStepComplete({ channel, state, options } as any, event);
+});
+
+test('log when the output_dataclip is too big', async (t) => {
+  const plan = createPlan();
+  const jobId = 'job-1';
+  const result = { data: new Array(1024 * 1024 + 1).fill('z').join('') };
+
+  const state = createRunState(plan);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+
+  const options = {
+    payloadLimitMb: 1,
+  };
+
+  const channel = mockChannel({
+    [RUN_LOG]: (e) => {
+      t.regex(e.message[0], /dataclip too large/i);
+    },
+    [STEP_COMPLETE]: () => true,
+  });
+
+  const event = {
+    jobId,
+    workflowId: plan.id,
+    state: result,
+    next: ['a'],
+    mem: { job: 1, system: 10 },
+    duration: 61,
+    thread_id: 'abc',
+  } as JobCompletePayload;
+
   await handleStepComplete({ channel, state, options } as any, event);
 });
