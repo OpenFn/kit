@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.5.0
+
+### Minor Changes
+
+- f363254: Allow a payload limit to be set for large dataclips and logs (payload_limit_mb)
+
 ## 1.4.1
 
 ### Patch Changes
