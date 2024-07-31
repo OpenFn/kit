@@ -49,7 +49,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
-    WORKER_MAX_PAYLOAD_MEMORY_MB,
+    WORKER_MAX_PAYLOAD_MB,
     WORKER_MAX_RUN_DURATION_SECONDS,
     WORKER_MAX_RUN_MEMORY_MB,
     WORKER_PORT,
@@ -118,7 +118,7 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('payload-memory', {
       description:
-        'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MEMORY_MB',
+        'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
     .option('max-run-duration-seconds', {
@@ -153,7 +153,7 @@ export default function parseArgs(argv: string[]): Args {
       ['configuration', 'response']
     ),
     runMemory: setArg(args.runMemory, WORKER_MAX_RUN_MEMORY_MB, 500),
-    payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MEMORY_MB, 10),
+    payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
     maxRunDurationSeconds: setArg(
       args.maxRunDurationSeconds,
       WORKER_MAX_RUN_DURATION_SECONDS,
