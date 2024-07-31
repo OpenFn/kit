@@ -853,7 +853,7 @@ test.serial('override the worker payload through run options', (t) => {
         },
       ],
       options: {
-        payload_memory_limit_mb: 100,
+        payload_limit_mb: 100,
       },
     };
 
@@ -891,7 +891,7 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
         },
       ],
       options: {
-        payload_memory_limit_mb: 0,
+        payload_limit_mb: 0,
       },
     };
 
