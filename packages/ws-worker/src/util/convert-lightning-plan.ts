@@ -58,8 +58,8 @@ export default (
     if ('run_timeout_ms' in run.options) {
       engineOpts.runTimeoutMs = run.options.run_timeout_ms;
     }
-    if ('payload_memory_limit_mb' in run.options) {
-      engineOpts.payloadLimitMb = run.options.payload_memory_limit_mb;
+    if ('payload_limit_mb' in run.options) {
+      engineOpts.payloadLimitMb = run.options.payload_limit_mb;
     }
     if ('run_memory_limit_mb' in run.options) {
       engineOpts.memoryLimitMb = run.options.run_memory_limit_mb;

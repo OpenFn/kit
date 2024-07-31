@@ -90,7 +90,7 @@ test('convert a single job with options', (t) => {
       sanitize: 'obfuscate',
       run_timeout_ms: 10,
       run_memory_limit_mb: 500,
-      payload_memory_limit_mb: 20,
+      payload_limit_mb: 20,
     },
   };
   const { plan, options } = convertPlan(run as LightningPlan);
