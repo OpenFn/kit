@@ -47,7 +47,7 @@ export type LightningPlanOptions = {
   output_dataclips?: boolean;
 
   run_memory_limit_mb?: number;
-  payload_memory_limit_mb?: number;
+  payload_limit_mb?: number;
 };
 
 /**
