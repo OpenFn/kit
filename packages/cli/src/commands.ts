@@ -2,6 +2,7 @@ import { Opts } from './options';
 import apollo from './apollo/handler';
 import execute from './execute/handler';
 import compile from './compile/handler';
+import configuration from './configuration/handler';
 import test from './test/handler';
 import deploy from './deploy/handler';
 import docgen from './docgen/handler';
@@ -19,6 +20,7 @@ import printVersions from './util/print-versions';
 export type CommandList =
   | 'apollo'
   | 'compile'
+  | 'configuration'
   | 'deploy'
   | 'docgen'
   | 'docs'
@@ -36,6 +38,7 @@ const handlers = {
   apollo,
   execute,
   compile,
+  configuration,
   test,
   deploy,
   docgen,
@@ -84,7 +87,7 @@ const parse = async (options: Opts, log?: Logger) => {
   // TODO it would be nice to do this in the repoDir option, but
   // the logger isn't available yet
   if (
-    !/^(pull|deploy|test|version|apollo)$/.test(options.command!) &&
+    !/^(pull|deploy|test|version|apollo|configuration)$/.test(options.command!) &&
     !options.repoDir
   ) {
     logger.warn(
