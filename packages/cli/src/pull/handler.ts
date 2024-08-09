@@ -6,6 +6,7 @@ import {
   getProject,
   getSpec,
   getStateFromProjectPayload,
+  updatePulledSpecJobBodyPath,
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
@@ -47,11 +48,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     // Build the state.json
     const state = getStateFromProjectPayload(project!);
 
-    // Write the final project state to disk
-    await fs.writeFile(
-      path.resolve(config.statePath),
-      JSON.stringify(state, null, 2)
-    );
+    // defer writing to disk until we have the spec
 
     logger.always('Downloading the project spec (as YAML) from the server.');
     // Get the project.yaml from Lightning
@@ -85,9 +82,21 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     const resolvedPath = path.resolve(config.specPath);
     logger.debug('reading spec from', resolvedPath);
 
-    // Write the yaml to disk
     // @ts-ignore
-    await fs.writeFile(resolvedPath, res.body);
+    const updatedSpec = await updatePulledSpecJobBodyPath(
+      await res.text(),
+      state,
+      config,
+      logger
+    );
+
+    // Write the final project state and yaml to disk
+    await fs.writeFile(
+      path.resolve(config.statePath),
+      JSON.stringify(state, null, 2)
+    );
+
+    await fs.writeFile(resolvedPath, updatedSpec);
 
     // Read the spec back in a parsed yaml
     const spec = await getSpec(resolvedPath);

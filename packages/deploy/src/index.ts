@@ -1,8 +1,8 @@
 import { confirm } from '@inquirer/prompts';
 import { inspect } from 'node:util';
-import { DeployConfig, ProjectState } from './types';
+import { DeployConfig, ProjectState, SpecJob } from './types';
 import { readFile, writeFile } from 'fs/promises';
-import { parseAndValidate } from './validator';
+import { parseAndValidate, addSpecJobBodyPath } from './validator';
 import jsondiff from 'json-diff';
 import {
   mergeProjectPayloadIntoState,
@@ -91,7 +91,7 @@ function writeState(config: DeployConfig, nextState: {}): Promise<void> {
 export async function getSpec(path: string) {
   try {
     const body = await readFile(path, 'utf8');
-    return parseAndValidate(body);
+    return await parseAndValidate(body, path);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       throw new DeployError(`File not found: ${path}`, 'SPEC_ERROR');
@@ -102,6 +102,55 @@ export async function getSpec(path: string) {
 }
 
 // =============================================
+
+async function getAllSpecJobs(
+  config: DeployConfig,
+  logger: Logger
+): Promise<SpecJob[]> {
+  const jobs: SpecJob[] = [];
+
+  try {
+    const [state, spec] = await Promise.all([
+      getState(config.statePath),
+      getSpec(config.specPath),
+    ]);
+
+    for (const [workflowKey, workflow] of Object.entries(spec.doc.workflows)) {
+      if (workflow.jobs) {
+        for (const [jobKey, specJob] of Object.entries(workflow.jobs)) {
+          const stateJob = state.workflows[workflowKey]?.jobs[jobKey];
+          stateJob &&
+            jobs.push({
+              id: stateJob.id,
+              name: specJob.name,
+              adaptor: specJob.adaptor,
+              body: specJob.body,
+            });
+        }
+      }
+    }
+  } catch (error: any) {
+    logger.debug(`Could not read the spec and state: ${error.message}`);
+  }
+
+  return jobs;
+}
+
+export async function updatePulledSpecJobBodyPath(
+  newSpecBody: string,
+  newState: ProjectState,
+  config: DeployConfig,
+  logger: Logger
+): Promise<string> {
+  try {
+    const oldSpecJobs = await getAllSpecJobs(config, logger);
+
+    return await addSpecJobBodyPath(newSpecBody, newState, oldSpecJobs, config);
+  } catch (error: any) {
+    logger.warn(`Could not update spec job body paths: ${error.message}`);
+    return newSpecBody;
+  }
+}
 
 export async function deploy(config: DeployConfig, logger: Logger) {
   const [state, spec] = await Promise.all([

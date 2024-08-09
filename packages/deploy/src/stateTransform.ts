@@ -5,6 +5,7 @@ import {
   ProjectSpec,
   ProjectState,
   SpecEdge,
+  SpecJobBody,
   StateEdge,
   WorkflowSpec,
   WorkflowState,
@@ -20,6 +21,14 @@ import {
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger/dist';
 
+function stringifyJobBody(body: SpecJobBody): string {
+  if (typeof body === 'object') {
+    return body.content;
+  } else {
+    return body;
+  }
+}
+
 function mergeJobs(
   stateJobs: WorkflowState['jobs'],
   specJobs: WorkflowSpec['jobs']
@@ -33,7 +42,7 @@ function mergeJobs(
             id: crypto.randomUUID(),
             name: specJob.name,
             adaptor: specJob.adaptor,
-            body: specJob.body,
+            body: stringifyJobBody(specJob.body),
           },
         ];
       }
@@ -49,7 +58,7 @@ function mergeJobs(
             id: stateJob.id,
             name: specJob.name,
             adaptor: specJob.adaptor,
-            body: specJob.body,
+            body: stringifyJobBody(specJob.body),
           },
         ];
       }

@@ -1,5 +1,7 @@
-import YAML, { YAMLMap, isMap, isPair } from 'yaml';
-import { ProjectSpec } from './types';
+import YAML, { YAMLMap, isMap, isPair, isScalar } from 'yaml';
+import { DeployConfig, ProjectSpec, ProjectState, SpecJob } from './types';
+import { readFile, writeFile } from 'fs/promises';
+import path from 'path';
 
 export interface Error {
   context: any;
@@ -8,12 +10,16 @@ export interface Error {
   range?: [number, number, number];
 }
 
-export function parseAndValidate(input: string): {
+export async function parseAndValidate(
+  input: string,
+  specPath: string
+): Promise<{
   errors: Error[];
   doc: ProjectSpec;
-} {
+}> {
   let errors: Error[] = [];
   const doc = YAML.parseDocument(input);
+  const basePath = path.dirname(specPath);
 
   function ensureUniqueId(key: string, arr: string[]) {
     if (arr.includes(key)) {
@@ -97,8 +103,8 @@ export function parseAndValidate(input: string): {
     }
   }
 
-  YAML.visit(doc, {
-    Pair(_, pair: any) {
+  await YAML.visitAsync(doc, {
+    async Pair(_, pair: any, pairPath) {
       if (pair.key && pair.key.value === 'workflows') {
         if (pair.value.value === null) {
           errors.push({
@@ -121,6 +127,37 @@ export function parseAndValidate(input: string): {
           });
 
           return doc.createPair('jobs', {});
+        }
+      }
+
+      if (
+        pair.key &&
+        pair.key.value === 'body' &&
+        pairPath.length > 4 &&
+        isMap(pair.value)
+      ) {
+        const pathValue = pair.value.get('path');
+        const grandPair = pairPath[pairPath.length - 4];
+
+        if (
+          isPair(grandPair) &&
+          isScalar(grandPair.key) &&
+          grandPair.key.value === 'jobs' &&
+          typeof pathValue === 'string'
+        ) {
+          const filePath = path.resolve(basePath, pathValue);
+          try {
+            const content = await readFile(filePath, 'utf8');
+            pair.value.set('content', content);
+          } catch (error: any) {
+            errors.push({
+              path: `job/body/path`,
+              context: pair,
+              message: `Failed to read file ${pathValue}: ${error.message}`,
+              range: pair.value.range,
+            });
+          }
+          return undefined;
         }
       }
 
@@ -147,4 +184,62 @@ export function parseAndValidate(input: string): {
   //      or put our own errors in the yamlDoc
 
   return { errors, doc: doc.toJSON() as ProjectSpec };
+}
+
+export async function addSpecJobBodyPath(
+  specBody: string,
+  state: ProjectState,
+  oldJobs: SpecJob[],
+  config: DeployConfig
+): Promise<string> {
+  const doc = YAML.parseDocument(specBody);
+
+  await YAML.visitAsync(doc, {
+    async Pair(_, pair: any, pairPath) {
+      if (
+        pair.key &&
+        pair.key.value === 'body' &&
+        isScalar(pair.value) &&
+        pairPath.length > 6
+      ) {
+        // the job
+        const job = pairPath[pairPath.length - 2];
+        const jobKey = isPair(job) && isScalar(job.key) && job.key.value;
+        // the workflow
+        const workflow = pairPath[pairPath.length - 6];
+        const workflowKey =
+          isPair(workflow) && isScalar(workflow.key) && workflow.key.value;
+
+        // find the job in the state
+        const stateJob =
+          typeof jobKey === 'string' &&
+          typeof workflowKey === 'string' &&
+          state.workflows[workflowKey]?.jobs[jobKey];
+
+        // check if the state job is in the old spec jobs
+        const oldSpecJob =
+          stateJob && oldJobs.find((job) => job.id === stateJob.id);
+
+        // get the file path from the old spec job
+        const oldSpecJobPath =
+          oldSpecJob &&
+          typeof oldSpecJob?.body === 'object' &&
+          oldSpecJob.body.path;
+
+        if (oldSpecJobPath) {
+          const basePath = path.dirname(config.specPath);
+          const resolvedPath = path.resolve(basePath, oldSpecJobPath);
+          await writeFile(resolvedPath, pair.value.value);
+
+          // set the body path in the spec
+          const map = doc.createNode({ path: oldSpecJobPath });
+
+          pair.value = map;
+        }
+      }
+      return undefined;
+    },
+  });
+
+  return doc.toString();
 }
