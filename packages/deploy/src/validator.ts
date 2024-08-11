@@ -1,4 +1,4 @@
-import YAML, { YAMLMap, isMap, isPair, isScalar } from 'yaml';
+import YAML, { YAMLMap, Pair, Scalar, isMap, isPair, isScalar } from 'yaml';
 import { DeployConfig, ProjectSpec, ProjectState, SpecJob } from './types';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
@@ -192,52 +192,63 @@ export async function addSpecJobBodyPath(
   oldJobs: SpecJob[],
   config: DeployConfig
 ): Promise<string> {
+  function isPairWithScalarKey(
+    node: any
+  ): node is Pair & { key: Scalar & { value: string } } {
+    return (
+      isPair(node) && isScalar(node.key) && typeof node.key.value === 'string'
+    );
+  }
+
   const doc = YAML.parseDocument(specBody);
 
   await YAML.visitAsync(doc, {
     async Pair(_, pair: any, pairPath) {
       if (
-        pair.key &&
-        pair.key.value === 'body' &&
-        isScalar(pair.value) &&
-        pairPath.length > 6
+        !pair.key ||
+        pair.key.value !== 'body' ||
+        !isScalar(pair.value) ||
+        pairPath.length <= 6
       ) {
-        // the job
-        const job = pairPath[pairPath.length - 2];
-        const jobKey = isPair(job) && isScalar(job.key) && job.key.value;
-        // the workflow
-        const workflow = pairPath[pairPath.length - 6];
-        const workflowKey =
-          isPair(workflow) && isScalar(workflow.key) && workflow.key.value;
-
-        // find the job in the state
-        const stateJob =
-          typeof jobKey === 'string' &&
-          typeof workflowKey === 'string' &&
-          state.workflows[workflowKey]?.jobs[jobKey];
-
-        // check if the state job is in the old spec jobs
-        const oldSpecJob =
-          stateJob && oldJobs.find((job) => job.id === stateJob.id);
-
-        // get the file path from the old spec job
-        const oldSpecJobPath =
-          oldSpecJob &&
-          typeof oldSpecJob?.body === 'object' &&
-          oldSpecJob.body.path;
-
-        if (oldSpecJobPath) {
-          const basePath = path.dirname(config.specPath);
-          const resolvedPath = path.resolve(basePath, oldSpecJobPath);
-          await writeFile(resolvedPath, pair.value.value);
-
-          // set the body path in the spec
-          const map = doc.createNode({ path: oldSpecJobPath });
-
-          pair.value = map;
-        }
+        return;
       }
-      return undefined;
+
+      const jobPair = pairPath[pairPath.length - 2];
+      const workflowPair = pairPath[pairPath.length - 6];
+
+      if (!isPairWithScalarKey(jobPair) || !isPairWithScalarKey(workflowPair)) {
+        return;
+      }
+
+      const jobKey = jobPair.key.value;
+      const workflowKey = workflowPair.key.value;
+
+      // find the job in the state
+      const stateJob = state.workflows[workflowKey]?.jobs[jobKey];
+
+      if (!stateJob) {
+        return;
+      }
+
+      // check if the state job is in the old spec jobs
+      const oldSpecJob = oldJobs.find((job) => job.id === stateJob.id);
+
+      if (!oldSpecJob || typeof oldSpecJob?.body !== 'object') {
+        return;
+      }
+
+      const oldSpecJobPath = oldSpecJob.body.path;
+
+      if (oldSpecJobPath) {
+        const basePath = path.dirname(config.specPath);
+        const resolvedPath = path.resolve(basePath, oldSpecJobPath);
+        await writeFile(resolvedPath, pair.value.value);
+
+        // set the body path in the spec
+        const map = doc.createNode({ path: oldSpecJobPath });
+
+        pair.value = map;
+      }
     },
   });
 
