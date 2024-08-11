@@ -11,7 +11,10 @@ export function fullExampleSpec() {
           'job-a': {
             name: 'job a',
             adaptor: '@openfn/language-common@latest',
-            body: '',
+            body: {
+              path: 'somefile.js',
+              content: '',
+            },
           },
           'job-b': {
             name: 'job b',
