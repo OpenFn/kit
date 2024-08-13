@@ -76,7 +76,7 @@ export async function getState(path: string) {
     return await readState(path);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      return { workflows: {}, project_credentials: {} } as ProjectState;
+      return { workflows: {} } as ProjectState;
     } else {
       throw error;
     }

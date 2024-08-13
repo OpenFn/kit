@@ -71,6 +71,7 @@ test('toNextState adding a job', (t) => {
             name: 'new job',
             adaptor: '@openfn/language-adaptor',
             body: 'foo()',
+            project_credential_id: undefined,
           },
         },
         triggers: {
@@ -88,6 +89,7 @@ test('toNextState adding a job', (t) => {
     id: 'ecb683d1-5e5a-4c4f-9165-e143e2eeeb48',
     name: 'project-name',
     description: 'my test project',
+    project_credentials: {},
   });
 });
 
@@ -114,6 +116,7 @@ test('toNextState with empty state', (t) => {
     id: result.id,
     name: 'my project',
     description: 'some helpful description',
+    project_credentials: {},
     workflows: {
       'workflow-one': {
         id: jp.query(result, '$..workflows["workflow-one"].id')[0],
@@ -124,12 +127,14 @@ test('toNextState with empty state', (t) => {
             adaptor: '@openfn/language-common@latest',
             name: 'job a',
             body: '',
+            project_credential_id: null,
           },
           'job-b': {
             id: getItem(result, 'jobs', 'job-b').id,
             adaptor: '@openfn/language-common@latest',
             name: 'job b',
             body: '',
+            project_credential_id: null,
           },
         },
         triggers: {
@@ -170,6 +175,7 @@ test('toNextState with no changes', (t) => {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
     description: 'for the humans',
+    project_credentials: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -180,6 +186,7 @@ test('toNextState with no changes', (t) => {
             name: 'new job',
             adaptor: '@openfn/language-adaptor',
             body: 'foo()',
+            project_credential_id: undefined,
           },
         },
         triggers: {
@@ -283,6 +290,7 @@ test('toNextState with a new job', (t) => {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
     description: 'some other description',
+    project_credentials: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -293,12 +301,14 @@ test('toNextState with a new job', (t) => {
             name: 'job a',
             body: 'foo()',
             adaptor: '@openfn/language-adaptor',
+            project_credential_id: undefined,
           },
           'job-b': {
             id: getItem(result, 'jobs', 'job-b').id,
             name: 'job b',
             adaptor: undefined,
             body: undefined,
+            project_credential_id: undefined,
           },
         },
         triggers: {
@@ -448,6 +458,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
   t.deepEqual(state, {
     id: 'xyz',
     name: 'project',
+    project_credentials: {},
     workflows: {
       a: {
         id: 'wf-a',

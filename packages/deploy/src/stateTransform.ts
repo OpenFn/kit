@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import crypto from 'crypto';
 import { deepClone } from 'fast-json-patch';
 import {
@@ -228,14 +226,12 @@ export function mergeSpecIntoState(
           ];
         }
 
-        if (!specCredential && !isEmpty(stateCredential || {})) {
-          logger?.error('Critical error! Cannot continue');
-          logger?.error(
-            'Crdential found in project state but not spec:',
-            `${stateCredential.name} (${stateCredential.owner})`
-          );
-          process.exit(1);
-        }
+        throw new DeployError(
+          `Invalid credential spec or corrupted state for credential: ${
+            stateCredential?.name || specCredential?.name
+          } (${stateCredential?.owner || specCredential?.owner})`,
+          'VALIDATION_ERROR'
+        );
       }
     )
   );
@@ -312,8 +308,6 @@ export function mergeSpecIntoState(
   return projectState as ProjectState;
 }
 
-// @ts-nocheck
-// @ts-ignore
 export function getStateFromProjectPayload(
   project: ProjectPayload
 ): ProjectState {
@@ -344,7 +338,7 @@ export function getStateFromProjectPayload(
     return stateWorkflow as WorkflowState;
   });
 
-  const project_credentials = project.project_credentials.reduce(
+  const project_credentials = (project.project_credentials || []).reduce(
     (acc, credential) => {
       const key = hyphenate(`${credential.owner} ${credential.name}`);
       acc[key] = credential;
@@ -407,11 +401,12 @@ export function mergeProjectPayloadIntoState(
   );
 
   const nextCredentials = Object.fromEntries(
-    idKeyPairs(project.project_credentials, state.project_credentials).map(
-      ([key, nextCredential, _state]) => {
-        return [key, nextCredential];
-      }
-    )
+    idKeyPairs(
+      project.project_credentials || {},
+      state.project_credentials || {}
+    ).map(([key, nextCredential, _state]) => {
+      return [key, nextCredential];
+    })
   );
 
   return {
