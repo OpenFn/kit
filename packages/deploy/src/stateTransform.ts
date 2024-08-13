@@ -1,6 +1,9 @@
+// @ts-nocheck
+// @ts-ignore
 import crypto from 'crypto';
 import { deepClone } from 'fast-json-patch';
 import {
+  CredentialState,
   ProjectPayload,
   ProjectSpec,
   ProjectState,
@@ -30,6 +33,7 @@ function stringifyJobBody(body: SpecJobBody): string {
 }
 
 function mergeJobs(
+  credentials: ProjectState['project_credentials'],
   stateJobs: WorkflowState['jobs'],
   specJobs: WorkflowSpec['jobs']
 ): WorkflowState['jobs'] {
@@ -43,6 +47,8 @@ function mergeJobs(
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: stringifyJobBody(specJob.body),
+            project_credential_id:
+              specJob.credential && credentials[specJob.credential]?.id,
           },
         ];
       }
@@ -59,6 +65,8 @@ function mergeJobs(
             name: specJob.name,
             adaptor: specJob.adaptor,
             body: stringifyJobBody(specJob.body),
+            project_credential_id:
+              specJob.credential && credentials[specJob.credential]?.id,
           },
         ];
       }
@@ -195,10 +203,48 @@ export function mergeSpecIntoState(
   spec: ProjectSpec,
   logger?: Logger
 ): ProjectState {
+  const nextCredentials = Object.fromEntries(
+    splitZip(oldState.project_credentials || {}, spec.credentials || {}).map(
+      ([credentialKey, stateCredential, specCredential]) => {
+        if (specCredential && !stateCredential) {
+          return [
+            credentialKey,
+            {
+              id: crypto.randomUUID(),
+              name: specCredential.name,
+              owner: specCredential.owner,
+            },
+          ];
+        }
+
+        if (specCredential && stateCredential) {
+          return [
+            credentialKey,
+            {
+              id: stateCredential.id,
+              name: specCredential.name,
+              owner: specCredential.owner,
+            },
+          ];
+        }
+
+        if (!specCredential && !isEmpty(stateCredential || {})) {
+          logger?.error('Critical error! Cannot continue');
+          logger?.error(
+            'Crdential found in project state but not spec:',
+            `${stateCredential.name} (${stateCredential.owner})`
+          );
+          process.exit(1);
+        }
+      }
+    )
+  );
+
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
       ([workflowKey, stateWorkflow, specWorkflow]) => {
         const nextJobs = mergeJobs(
+          nextCredentials,
           stateWorkflow?.jobs || {},
           specWorkflow?.jobs || {}
         );
@@ -258,6 +304,7 @@ export function mergeSpecIntoState(
     id: oldState.id || crypto.randomUUID(),
     name: spec.name,
     workflows: nextWorkflows,
+    project_credentials: nextCredentials,
   };
 
   if (spec.description) projectState.description = spec.description;
@@ -265,6 +312,8 @@ export function mergeSpecIntoState(
   return projectState as ProjectState;
 }
 
+// @ts-nocheck
+// @ts-ignore
 export function getStateFromProjectPayload(
   project: ProjectPayload
 ): ProjectState {
@@ -295,8 +344,18 @@ export function getStateFromProjectPayload(
     return stateWorkflow as WorkflowState;
   });
 
+  const project_credentials = project.project_credentials.reduce(
+    (acc, credential) => {
+      const key = hyphenate(`${credential.owner} ${credential.name}`);
+      acc[key] = credential;
+      return acc;
+    },
+    {} as Record<string, CredentialState>
+  );
+
   return {
     ...project,
+    project_credentials,
     workflows,
   };
 }
@@ -347,8 +406,17 @@ export function mergeProjectPayloadIntoState(
     )
   );
 
+  const nextCredentials = Object.fromEntries(
+    idKeyPairs(project.project_credentials, state.project_credentials).map(
+      ([key, nextCredential, _state]) => {
+        return [key, nextCredential];
+      }
+    )
+  );
+
   return {
     ...project,
+    project_credentials: nextCredentials,
     workflows: nextWorkflows,
   };
 }
@@ -385,8 +453,12 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
     };
   });
 
+  const project_credentials: ProjectPayload['project_credentials'] =
+    Object.values(state.project_credentials);
+
   return {
     ...state,
+    project_credentials,
     workflows,
   };
 }

@@ -117,6 +117,12 @@ export async function parseAndValidate(
         }
       }
 
+      if (pair.key && pair.key.value === 'credentials') {
+        if (pair.value.value === null) {
+          return doc.createPair('credentials', {});
+        }
+      }
+
       if (pair.key && pair.key.value === 'jobs') {
         if (pair.value.value === null) {
           errors.push({

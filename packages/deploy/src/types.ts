@@ -1,8 +1,9 @@
 export type StateJob = {
-  id?: string;
+  id: string;
   name: string;
   adaptor: string;
   body: string;
+  project_credential_id: string | null;
   delete?: boolean;
 };
 
@@ -14,10 +15,10 @@ export type SpecJobBody =
     };
 
 export type SpecJob = {
-  id?: string;
   name: string;
   adaptor: string;
   body: SpecJobBody;
+  credential: string | null;
 };
 
 export type Trigger = {
@@ -57,10 +58,22 @@ export type WorkflowSpec = {
   edges?: Record<string | symbol, SpecEdge>;
 };
 
+export type CredentialSpec = {
+  name: string;
+  owner: string;
+};
+
+export type CredentialState = {
+  id: string;
+  name: string;
+  owner: string;
+};
+
 export interface ProjectSpec {
   name: string;
   description: string;
   workflows: Record<string | symbol, WorkflowSpec>;
+  credentials: Record<string | symbol, CredentialSpec>;
 }
 
 export interface WorkflowState {
@@ -82,12 +95,14 @@ export interface ProjectState {
   name: string;
   description: string;
   workflows: Record<string | symbol, WorkflowState>;
+  project_credentials: Record<string | symbol, CredentialState>;
 }
 
 export interface ProjectPayload {
   id: string;
   name: string;
   description: string;
+  project_credentials: Concrete<CredentialState>[];
   workflows: {
     id: string;
     name: string;
