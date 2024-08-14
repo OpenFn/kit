@@ -10,6 +10,7 @@ import {
   toProjectPayload,
   getStateFromProjectPayload,
 } from './stateTransform';
+import { syncRemoteSpec } from './pull';
 import { deployProject, getProject } from './client';
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger';
@@ -33,6 +34,7 @@ export {
   mergeSpecIntoState,
   mergeProjectPayloadIntoState,
   getStateFromProjectPayload,
+  syncRemoteSpec,
 };
 
 export async function getConfig(path?: string): Promise<DeployConfig> {
@@ -91,7 +93,7 @@ function writeState(config: DeployConfig, nextState: {}): Promise<void> {
 export async function getSpec(path: string) {
   try {
     const body = await readFile(path, 'utf8');
-    return parseAndValidate(body);
+    return parseAndValidate(body, path);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       throw new DeployError(`File not found: ${path}`, 'SPEC_ERROR');

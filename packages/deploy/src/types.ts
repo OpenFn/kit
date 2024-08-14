@@ -1,9 +1,23 @@
-export type Job = {
+export type StateJob = {
   id?: string;
   name: string;
   adaptor: string;
   body: string;
   delete?: boolean;
+};
+
+export type SpecJobBody =
+  | string
+  | {
+      path?: string;
+      content: string;
+    };
+
+export type SpecJob = {
+  id?: string;
+  name: string;
+  adaptor: string;
+  body: SpecJobBody;
 };
 
 export type Trigger = {
@@ -38,7 +52,7 @@ export type SpecEdge = {
 export type WorkflowSpec = {
   id?: string;
   name: string;
-  jobs?: Record<string | symbol, Job>;
+  jobs?: Record<string | symbol, SpecJob>;
   triggers?: Record<string | symbol, Trigger>;
   edges?: Record<string | symbol, SpecEdge>;
 };
@@ -52,7 +66,7 @@ export interface ProjectSpec {
 export interface WorkflowState {
   id: string;
   name: string;
-  jobs: Record<string | symbol, Concrete<Job>>;
+  jobs: Record<string | symbol, Concrete<StateJob>>;
   triggers: Record<string | symbol, Concrete<Trigger>>;
   edges: Record<string | symbol, Concrete<StateEdge>>;
   delete?: boolean;
@@ -78,7 +92,7 @@ export interface ProjectPayload {
     id: string;
     name: string;
     project_id?: string;
-    jobs: Concrete<Job>[];
+    jobs: Concrete<StateJob>[];
     triggers: Concrete<Trigger>[];
     edges: Concrete<StateEdge>[];
   }[];
