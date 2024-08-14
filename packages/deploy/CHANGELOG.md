@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.6.0
+
+### Minor Changes
+
+- b7fc4d0: Deploy: allow job body to be loaded from a file path in workflow.yaml
+
 ## 0.5.0
 
 ### Minor Changes
