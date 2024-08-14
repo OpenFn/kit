@@ -25,6 +25,7 @@ async function getAllSpecJobs(
               name: specJob.name,
               adaptor: specJob.adaptor,
               body: specJob.body,
+              credential: specJob.credential,
             });
         }
       }

@@ -15,6 +15,7 @@ export type SpecJobBody =
     };
 
 export type SpecJob = {
+  id?: string;
   name: string;
   adaptor: string;
   body: SpecJobBody;
