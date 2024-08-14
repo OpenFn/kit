@@ -1,21 +1,12 @@
 import test from 'ava';
 import { parseAndValidate } from '../src/validator';
-import fs from 'fs/promises';
-import path from 'path';
-
-// Helper to create and clean up temporary test files
-const createTempFile = async (t, content: string, ext = 'txt') => {
-  const fileName = `${t.title.replace(/\s+/g, '_')}-${Math.floor(
-    Math.random() * 20
-  )}.${ext}`;
-  const filePath = path.resolve(fileName);
-  await fs.writeFile(filePath, content);
-  return filePath;
-};
+import { mockFs, resetMockFs } from './util';
 
 function findError(errors: any[], message: string) {
   return errors.find((e) => e.message === message);
 }
+
+test.after(resetMockFs);
 
 test('Workflows must be a map', async (t) => {
   const doc = `
@@ -140,7 +131,9 @@ test('allow empty workflows', async (t) => {
 test('adds the file content into the job body from the specified path', async (t) => {
   // Step 1: Create a temporary file that the YAML will reference
   const fileContent = 'fn(state => state.data);';
-  const filePath = await createTempFile(t, fileContent);
+  mockFs({
+    '/jobBody.js': fileContent,
+  });
 
   // Step 2: YAML document that references the file
   const doc = `
@@ -153,7 +146,7 @@ test('adds the file content into the job body from the specified path', async (t
             name: job one
             adaptor: '@openfn/language-http@latest'
             body:
-              path: ${path.basename(filePath)}
+              path: /jobBody.js
   `;
 
   // Step 3: Run the parseAndValidate function
@@ -163,7 +156,4 @@ test('adds the file content into the job body from the specified path', async (t
   const jobBody = results.doc.workflows['workflow-one'].jobs!['job-one'].body;
 
   t.is(jobBody.content, fileContent);
-
-  // Cleanup
-  await fs.rm(filePath);
 });

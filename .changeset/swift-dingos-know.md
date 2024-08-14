@@ -3,4 +3,4 @@
 '@openfn/deploy': minor
 ---
 
-Support file paths for job body
+Deploy: allow job body to be loaded from a file path in workflow.yaml

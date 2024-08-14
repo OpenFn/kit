@@ -6,7 +6,7 @@ import {
   getProject,
   getSpec,
   getStateFromProjectPayload,
-  updatePulledSpecJobBodyPath,
+  syncRemoteSpec,
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
@@ -48,8 +48,6 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     // Build the state.json
     const state = getStateFromProjectPayload(project!);
 
-    // defer writing to disk until we have the spec
-
     logger.always('Downloading the project spec (as YAML) from the server.');
     // Get the project.yaml from Lightning
     const queryParams = new URLSearchParams();
@@ -82,8 +80,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     const resolvedPath = path.resolve(config.specPath);
     logger.debug('reading spec from', resolvedPath);
 
-    // @ts-ignore
-    const updatedSpec = await updatePulledSpecJobBodyPath(
+    const updatedSpec = await syncRemoteSpec(
       await res.text(),
       state,
       config,
