@@ -26,7 +26,7 @@ Delete this section if this is not a release PR.
 
 If this IS a release branch:
 
-- [ ] Run `pnpm changeset tag` from root to bump versions
+- [ ] Run `pnpm changeset version` from root to bump versions
 - [ ] Run `pnpm install`
 - [ ] Commit the new version numbers
 - [ ] Run `pnpm changeset tag` to generate tags
