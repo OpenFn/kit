@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.8.1
+
+### Patch Changes
+
+- Updated dependencies [0d53f9b]
+  - @openfn/deploy@0.7.0
+
 ## 1.8.0
 
 ### Minor Changes
