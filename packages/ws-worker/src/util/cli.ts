@@ -2,6 +2,9 @@ import yargs from 'yargs';
 import { LogLevel } from '@openfn/logger';
 import { hideBin } from 'yargs/helpers';
 
+const DEFAULT_PORT = 2222;
+const DEFAULT_WORKER_CAPACITY = 5;
+
 type Args = {
   _: string[];
   port?: number;
@@ -64,6 +67,7 @@ export default function parseArgs(argv: string[]): Args {
       alias: 'p',
       description: 'Port to run the server on. Env: WORKER_PORT',
       type: 'number',
+      default: DEFAULT_PORT,
     })
     .option('lightning', {
       alias: ['l', 'lightning-service-url'],
@@ -105,6 +109,7 @@ export default function parseArgs(argv: string[]): Args {
     .option('capacity', {
       description: 'max concurrent workers. Env: WORKER_CAPACITY',
       type: 'number',
+      default: DEFAULT_WORKER_CAPACITY,
     })
     .option('state-props-to-remove', {
       description:
@@ -132,7 +137,7 @@ export default function parseArgs(argv: string[]): Args {
 
   return {
     ...args,
-    port: setArg(args.port, WORKER_PORT, 2222),
+    port: setArg(args.port, WORKER_PORT, DEFAULT_PORT),
     lightning: setArg(
       args.lightning,
       WORKER_LIGHTNING_SERVICE_URL,
@@ -146,7 +151,7 @@ export default function parseArgs(argv: string[]): Args {
     ),
     log: setArg(args.log, WORKER_LOG_LEVEL as LogLevel, 'debug'),
     backoff: setArg(args.backoff, WORKER_BACKOFF, '1/10'),
-    capacity: setArg(args.capacity, WORKER_CAPACITY, 5),
+    capacity: setArg(args.capacity, WORKER_CAPACITY, DEFAULT_WORKER_CAPACITY),
     statePropsToRemove: setArg(
       args.statePropsToRemove,
       WORKER_STATE_PROPS_TO_REMOVE,

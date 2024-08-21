@@ -93,13 +93,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
         options.maxWorkflows
       );
     } else {
+      // @ts-ignore
+      const port = app.server?.address().port;
       logger.break();
-      logger.warn('Workloop not starting');
+      logger.warn('Noloop active: workloop has not started');
       logger.info('This server will not auto-pull work from lightning.');
       logger.info('You can manually claim by posting to /claim, eg:');
-      logger.info(
-        `  curl -X POST http://locahost:${options.port || DEFAULT_PORT}/claim`
-      );
+      logger.info(`  curl -X POST http://localhost:${port}/claim`);
       logger.break();
     }
   };

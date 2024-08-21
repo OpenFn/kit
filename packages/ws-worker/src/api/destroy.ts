@@ -61,7 +61,7 @@ const waitForRuns = (app: ServerApp, logger: Logger) =>
       log();
       app.events.on(INTERNAL_RUN_COMPLETE, onRunComplete);
     } else {
-      logger.debug('No active rns detected');
+      logger.debug('No active runs detected, closing immediately');
       resolve();
     }
   });
