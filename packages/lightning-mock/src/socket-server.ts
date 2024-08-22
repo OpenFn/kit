@@ -190,9 +190,6 @@ function createServer({
     ws.on('message', async function (data: string) {
       // decode  the data
       const evt = (await decode(data)) as PhoenixEvent;
-      // if (evt.event !== 'claim') {
-      //   console.log(evt);
-      // }
       onMessage(evt);
 
       if (evt.topic) {
@@ -212,7 +209,7 @@ function createServer({
               fn(ws, { event, topic, payload, ref, join_ref });
             });
           } else {
-            // This behaviour is just a convenience for unit tesdting
+            // This behaviour is just a convenience for unit testing
             ws.reply({
               ref,
               join_ref,
