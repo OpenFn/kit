@@ -16,12 +16,12 @@ type Args = {
   log?: LogLevel;
   lightningPublicKey?: string;
   mock?: boolean;
-  backoff?: string;
+  backoff: string;
   capacity?: number;
   runMemory?: number;
   payloadMemory?: number;
   statePropsToRemove?: string[];
-  maxRunDurationSeconds?: number;
+  maxRunDurationSeconds: number;
   socketTimeoutSeconds?: number;
 };
 
