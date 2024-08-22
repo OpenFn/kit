@@ -34,6 +34,7 @@ export type ServerOptions = {
     max?: number;
   };
 
+  socketTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
 };
 
@@ -59,7 +60,7 @@ type SocketAndChannel = {
   channel: Channel;
 };
 
-const DEFAULT_PORT = 1234;
+const DEFAULT_PORT = 2222;
 const MIN_BACKOFF = 1000;
 const MAX_BACKOFF = 1000 * 30;
 
@@ -130,7 +131,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     logger.debug(e);
   };
 
-  connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger)
+  connectToWorkerQueue(
+    options.lightning!,
+    app.id,
+    options.secret!,
+    options.socketTimeoutSeconds,
+    logger
+  )
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
     .on('error', onError);

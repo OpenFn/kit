@@ -4,6 +4,7 @@ import { hideBin } from 'yargs/helpers';
 
 const DEFAULT_PORT = 2222;
 const DEFAULT_WORKER_CAPACITY = 5;
+const DEFAULT_SOCKET_TIMEOUT_SECONDS = 10;
 
 type Args = {
   _: string[];
@@ -12,15 +13,16 @@ type Args = {
   repoDir?: string;
   secret?: string;
   loop?: boolean;
-  log: LogLevel;
+  log?: LogLevel;
   lightningPublicKey?: string;
-  mock: boolean;
-  backoff: string;
+  mock?: boolean;
+  backoff?: string;
   capacity?: number;
   runMemory?: number;
   payloadMemory?: number;
   statePropsToRemove?: string[];
-  maxRunDurationSeconds: number;
+  maxRunDurationSeconds?: number;
+  socketTimeoutSeconds?: number;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -59,6 +61,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_REPO_DIR,
     WORKER_SECRET,
     WORKER_STATE_PROPS_TO_REMOVE,
+    WORKER_SOCKET_TIMEOUT_SECONDS,
   } = process.env;
 
   const parser = yargs(hideBin(argv))
@@ -82,6 +85,9 @@ export default function parseArgs(argv: string[]): Args {
       alias: 's',
       description:
         'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
+    })
+    .option('socket-timeout', {
+      description: `Timeout for websockets to Lighting, in seconds. Defaults to 10.`,
     })
     .option('lightning-public-key', {
       description:
@@ -161,6 +167,11 @@ export default function parseArgs(argv: string[]): Args {
       args.maxRunDurationSeconds,
       WORKER_MAX_RUN_DURATION_SECONDS,
       300
+    ),
+    socketTimeoutSeconds: setArg(
+      args.socketTimeoutSeconds,
+      WORKER_SOCKET_TIMEOUT_SECONDS,
+      DEFAULT_SOCKET_TIMEOUT_SECONDS
     ),
   } as Args;
 }

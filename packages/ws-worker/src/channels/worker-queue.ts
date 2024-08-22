@@ -11,6 +11,7 @@ const connectToWorkerQueue = (
   endpoint: string,
   serverId: string,
   secret: string,
+  timeout: number = 10,
   logger: Logger,
   SocketConstructor = PhxSocket
 ) => {
@@ -31,6 +32,7 @@ const connectToWorkerQueue = (
     const socket = new SocketConstructor(endpoint, {
       params,
       transport: WebSocket,
+      timeout: timeout * 1000,
     });
 
     let didOpen = false;
