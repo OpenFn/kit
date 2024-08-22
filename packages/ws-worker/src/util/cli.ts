@@ -65,9 +65,8 @@ export default function parseArgs(argv: string[]): Args {
     .command('server', 'Start a ws-worker server')
     .option('port', {
       alias: 'p',
-      description: 'Port to run the server on. Env: WORKER_PORT',
+      description: `Port to run the server on. Default ${DEFAULT_PORT}. Env: WORKER_PORT`,
       type: 'number',
-      default: DEFAULT_PORT,
     })
     .option('lightning', {
       alias: ['l', 'lightning-service-url'],
@@ -107,9 +106,8 @@ export default function parseArgs(argv: string[]): Args {
         'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
     })
     .option('capacity', {
-      description: 'max concurrent workers. Env: WORKER_CAPACITY',
+      description: `max concurrent workers. Default ${DEFAULT_WORKER_CAPACITY}. Env: WORKER_CAPACITY`,
       type: 'number',
-      default: DEFAULT_WORKER_CAPACITY,
     })
     .option('state-props-to-remove', {
       description:
