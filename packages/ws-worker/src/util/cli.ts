@@ -2,6 +2,10 @@ import yargs from 'yargs';
 import { LogLevel } from '@openfn/logger';
 import { hideBin } from 'yargs/helpers';
 
+const DEFAULT_PORT = 2222;
+const DEFAULT_WORKER_CAPACITY = 5;
+const DEFAULT_SOCKET_TIMEOUT_SECONDS = 10;
+
 type Args = {
   _: string[];
   port?: number;
@@ -9,15 +13,16 @@ type Args = {
   repoDir?: string;
   secret?: string;
   loop?: boolean;
-  log: LogLevel;
+  log?: LogLevel;
   lightningPublicKey?: string;
-  mock: boolean;
+  mock?: boolean;
   backoff: string;
   capacity?: number;
   runMemory?: number;
   payloadMemory?: number;
   statePropsToRemove?: string[];
   maxRunDurationSeconds: number;
+  socketTimeoutSeconds?: number;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -56,13 +61,14 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_REPO_DIR,
     WORKER_SECRET,
     WORKER_STATE_PROPS_TO_REMOVE,
+    WORKER_SOCKET_TIMEOUT_SECONDS,
   } = process.env;
 
   const parser = yargs(hideBin(argv))
     .command('server', 'Start a ws-worker server')
     .option('port', {
       alias: 'p',
-      description: 'Port to run the server on. Env: WORKER_PORT',
+      description: `Port to run the server on. Default ${DEFAULT_PORT}. Env: WORKER_PORT`,
       type: 'number',
     })
     .option('lightning', {
@@ -79,6 +85,9 @@ export default function parseArgs(argv: string[]): Args {
       alias: 's',
       description:
         'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
+    })
+    .option('socket-timeout', {
+      description: `Timeout for websockets to Lighting, in seconds. Defaults to 10.`,
     })
     .option('lightning-public-key', {
       description:
@@ -103,7 +112,7 @@ export default function parseArgs(argv: string[]): Args {
         'Claim backoff rules: min/max (in seconds). Env: WORKER_BACKOFF',
     })
     .option('capacity', {
-      description: 'max concurrent workers. Env: WORKER_CAPACITY',
+      description: `max concurrent workers. Default ${DEFAULT_WORKER_CAPACITY}. Env: WORKER_CAPACITY`,
       type: 'number',
     })
     .option('state-props-to-remove', {
@@ -132,7 +141,7 @@ export default function parseArgs(argv: string[]): Args {
 
   return {
     ...args,
-    port: setArg(args.port, WORKER_PORT, 2222),
+    port: setArg(args.port, WORKER_PORT, DEFAULT_PORT),
     lightning: setArg(
       args.lightning,
       WORKER_LIGHTNING_SERVICE_URL,
@@ -146,7 +155,7 @@ export default function parseArgs(argv: string[]): Args {
     ),
     log: setArg(args.log, WORKER_LOG_LEVEL as LogLevel, 'debug'),
     backoff: setArg(args.backoff, WORKER_BACKOFF, '1/10'),
-    capacity: setArg(args.capacity, WORKER_CAPACITY, 5),
+    capacity: setArg(args.capacity, WORKER_CAPACITY, DEFAULT_WORKER_CAPACITY),
     statePropsToRemove: setArg(
       args.statePropsToRemove,
       WORKER_STATE_PROPS_TO_REMOVE,
@@ -158,6 +167,11 @@ export default function parseArgs(argv: string[]): Args {
       args.maxRunDurationSeconds,
       WORKER_MAX_RUN_DURATION_SECONDS,
       300
+    ),
+    socketTimeoutSeconds: setArg(
+      args.socketTimeoutSeconds,
+      WORKER_SOCKET_TIMEOUT_SECONDS,
+      DEFAULT_SOCKET_TIMEOUT_SECONDS
     ),
   } as Args;
 }

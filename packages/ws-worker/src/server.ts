@@ -34,6 +34,7 @@ export type ServerOptions = {
     max?: number;
   };
 
+  socketTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
 };
 
@@ -59,7 +60,7 @@ type SocketAndChannel = {
   channel: Channel;
 };
 
-const DEFAULT_PORT = 1234;
+const DEFAULT_PORT = 2222;
 const MIN_BACKOFF = 1000;
 const MAX_BACKOFF = 1000 * 30;
 
@@ -93,13 +94,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
         options.maxWorkflows
       );
     } else {
+      // @ts-ignore
+      const port = app.server?.address().port;
       logger.break();
-      logger.warn('Workloop not starting');
+      logger.warn('Noloop active: workloop has not started');
       logger.info('This server will not auto-pull work from lightning.');
       logger.info('You can manually claim by posting to /claim, eg:');
-      logger.info(
-        `  curl -X POST http://locahost:${options.port || DEFAULT_PORT}/claim`
-      );
+      logger.info(`  curl -X POST http://localhost:${port}/claim`);
       logger.break();
     }
   };
@@ -130,7 +131,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     logger.debug(e);
   };
 
-  connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger)
+  connectToWorkerQueue(
+    options.lightning!,
+    app.id,
+    options.secret!,
+    options.socketTimeoutSeconds,
+    logger
+  )
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
     .on('error', onError);

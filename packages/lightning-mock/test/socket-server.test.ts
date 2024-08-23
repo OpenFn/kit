@@ -155,3 +155,39 @@ test.serial('onMessage', (t) => {
     });
   });
 });
+
+test.serial('defer message', (t) => {
+  return new Promise(async (done) => {
+    // Bit annoying but  we need to rebuild the server to
+    // get a delay on it
+    server.close();
+
+    server = createSocketServer({
+      // @ts-ignore
+      state: {
+        events: new EventEmitter(),
+      },
+      onMessage: (evt) => {
+        messages.push(evt);
+      },
+      socketDelay: 500,
+    });
+
+    socket = new Socket('ws://localhost:8080', {
+      transport: WebSocket,
+      params: { token: 'x.y.z' },
+    });
+
+    socket.connect();
+
+    await wait(500);
+
+    const channel = socket.channel('x', {});
+    const start = Date.now();
+    channel.join().receive('ok', async () => {
+      const duration = Date.now() - start;
+      t.assert(duration >= 500);
+      done();
+    });
+  });
+});

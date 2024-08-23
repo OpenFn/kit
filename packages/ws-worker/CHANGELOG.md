@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.5.1
+
+### Patch Changes
+
+- a08fb47: Update CLI docs
+  Add WORKER_MAX_SOCKET_TIMEOUT_SECONDS
+
 ## 1.5.0
 
 ### Minor Changes
