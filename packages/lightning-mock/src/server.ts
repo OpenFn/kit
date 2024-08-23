@@ -55,6 +55,8 @@ export type LightningOptions = {
 
   // if passed, a JWT will be included in all claim responses
   runPrivateKey?: string;
+
+  socketDelay?: number; // add a delay to all web socket replies
 };
 
 export type RunId = string;
@@ -107,7 +109,8 @@ const createLightningServer = (options: LightningOptions = {}) => {
     '/worker', // TODO I should option drive this
     server,
     options.logger,
-    options.logLevel
+    options.logLevel,
+    options.socketDelay
   );
 
   app.use(createDevAPI(app as any, state, logger, api));

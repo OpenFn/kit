@@ -66,6 +66,7 @@ type CreateServerOptions = {
   state: ServerState;
   logger?: Logger;
   onMessage?: (evt: PhoenixEvent) => void;
+  socketDelay?: number;
 };
 
 type MockSocketServer = typeof WebSocketServer & {
@@ -87,6 +88,7 @@ function createServer({
   state,
   logger,
   onMessage = () => {},
+  socketDelay = 1,
 }: CreateServerOptions) {
   const channels: Record<Topic, Set<EventHandler>> = {
     // create a stub listener for pheonix to prevent errors
@@ -171,8 +173,10 @@ function createServer({
         topic,
         payload,
       });
-      // @ts-ignore
-      ws.send(evt);
+      setTimeout(() => {
+        // @ts-ignore
+        ws.send(evt);
+      }, socketDelay);
     };
 
     ws.sendJSON = async ({ event, ref, topic, payload }: PhoenixEvent) => {
