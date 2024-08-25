@@ -1,5 +1,7 @@
-import YAML, { YAMLMap, isMap, isPair } from 'yaml';
+import YAML, { YAMLMap, isMap, isPair, isScalar } from 'yaml';
 import { ProjectSpec } from './types';
+import { readFile } from 'fs/promises';
+import path from 'path';
 
 export interface Error {
   context: any;
@@ -8,12 +10,16 @@ export interface Error {
   range?: [number, number, number];
 }
 
-export function parseAndValidate(input: string): {
+export async function parseAndValidate(
+  input: string,
+  specPath: string = '.'
+): Promise<{
   errors: Error[];
   doc: ProjectSpec;
-} {
+}> {
   let errors: Error[] = [];
   const doc = YAML.parseDocument(input);
+  const basePath = path.dirname(specPath);
 
   function ensureUniqueId(key: string, arr: string[]) {
     if (arr.includes(key)) {
@@ -97,8 +103,8 @@ export function parseAndValidate(input: string): {
     }
   }
 
-  YAML.visit(doc, {
-    Pair(_, pair: any) {
+  await YAML.visitAsync(doc, {
+    async Pair(_, pair: any, pairPath) {
       if (pair.key && pair.key.value === 'workflows') {
         if (pair.value.value === null) {
           errors.push({
@@ -108,6 +114,12 @@ export function parseAndValidate(input: string): {
           });
 
           return doc.createPair('workflows', {});
+        }
+      }
+
+      if (pair.key && pair.key.value === 'credentials') {
+        if (pair.value.value === null) {
+          return doc.createPair('credentials', {});
         }
       }
 
@@ -121,6 +133,37 @@ export function parseAndValidate(input: string): {
           });
 
           return doc.createPair('jobs', {});
+        }
+      }
+
+      if (
+        pair.key &&
+        pair.key.value === 'body' &&
+        pairPath.length > 4 &&
+        isMap(pair.value)
+      ) {
+        const pathValue = pair.value.get('path');
+        const grandPair = pairPath[pairPath.length - 4];
+
+        if (
+          isPair(grandPair) &&
+          isScalar(grandPair.key) &&
+          grandPair.key.value === 'jobs' &&
+          typeof pathValue === 'string'
+        ) {
+          const filePath = path.resolve(basePath, pathValue);
+          try {
+            const content = await readFile(filePath, 'utf8');
+            pair.value.set('content', content);
+          } catch (error: any) {
+            errors.push({
+              path: `job/body/path`,
+              context: pair,
+              message: `Failed to read file ${pathValue}: ${error.message}`,
+              range: pair.value.range,
+            });
+          }
+          return undefined;
         }
       }
 

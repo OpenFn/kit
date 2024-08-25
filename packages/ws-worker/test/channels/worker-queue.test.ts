@@ -11,17 +11,21 @@ const logger = createMockLogger();
 
 test('should connect', async (t) => {
   return new Promise((done) => {
-    connectToWorkerQueue('www', 'a', 'secret', logger, mockSocket as any).on(
-      'connect',
-      ({ socket, channel }) => {
-        t.truthy(socket);
-        t.truthy(socket.connect);
-        t.truthy(channel);
-        t.truthy(channel.join);
-        t.pass('connected');
-        done();
-      }
-    );
+    connectToWorkerQueue(
+      'www',
+      'a',
+      'secret',
+      undefined,
+      logger,
+      mockSocket as any
+    ).on('connect', ({ socket, channel }) => {
+      t.truthy(socket);
+      t.truthy(socket.connect);
+      t.truthy(channel);
+      t.truthy(channel.join);
+      t.pass('connected');
+      done();
+    });
   });
 });
 
@@ -45,6 +49,7 @@ test('should connect with an auth token', async (t) => {
       'www',
       workerId,
       secret,
+      undefined,
       logger,
       createSocket as any
     ).on('connect', ({ socket, channel }) => {
@@ -74,10 +79,14 @@ test('should connect with api and worker versions', async (t) => {
       return socket;
     }
 
-    connectToWorkerQueue('www', 'a', 'secret', logger, createSocket as any).on(
-      'connect',
-      done
-    );
+    connectToWorkerQueue(
+      'www',
+      'a',
+      'secret',
+      undefined,
+      logger,
+      createSocket as any
+    ).on('connect', done);
   });
 });
 
@@ -105,6 +114,7 @@ test('should fail to connect with an invalid auth token', async (t) => {
       'www',
       workerId,
       'wrong-secret!',
+      undefined,
       logger,
       createSocket as any
     ).on('error', (e) => {

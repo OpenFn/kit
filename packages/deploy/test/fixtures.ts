@@ -4,6 +4,7 @@ export function fullExampleSpec() {
   return {
     name: 'my project',
     description: 'some helpful description',
+    credentials: {},
     workflows: {
       'workflow-one': {
         name: 'workflow one',
@@ -11,12 +12,17 @@ export function fullExampleSpec() {
           'job-a': {
             name: 'job a',
             adaptor: '@openfn/language-common@latest',
-            body: '',
+            body: {
+              path: 'somefile.js',
+              content: '',
+            },
+            credential: null,
           },
           'job-b': {
             name: 'job b',
             adaptor: '@openfn/language-common@latest',
             body: '',
+            credential: null,
           },
         },
         triggers: {
@@ -50,6 +56,7 @@ export function fullExampleState() {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
     description: 'some helpful description',
+    project_credentials: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -60,12 +67,14 @@ export function fullExampleState() {
             name: 'job a',
             adaptor: '@openfn/language-common@latest',
             body: '',
+            project_credential_id: null,
           },
           'job-b': {
             id: 'e1bf76a8-4deb-44ff-9881-fbf676537b37',
             name: 'job b',
             adaptor: '@openfn/language-common@latest',
             body: '',
+            project_credential_id: null,
           },
         },
         triggers: {
@@ -107,6 +116,13 @@ export const lightningProjectPayload = {
   updated_at: '2023-08-25T08:57:31',
   scheduled_deletion: null,
   requires_mfa: false,
+  project_credentials: [
+    {
+      id: '25f48989-d349-4eb8-99c3-923ebba5b116',
+      name: 'Basic Auth',
+      owner: 'email@test.com',
+    },
+  ],
   workflows: [
     {
       id: '05fab294-98dc-4d7d-85f3-024b2b0e6897',
@@ -151,24 +167,28 @@ export const lightningProjectPayload = {
           name: 'FHIR standard Data with change',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: '25f48989-d349-4eb8-99c3-923ebba5b116',
         },
         {
           id: 'ed3f110a-c800-479b-9576-47bb87e9ad57',
           name: 'Send to OpenHIM to route to SHR',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: null,
         },
         {
           id: 'f76a4faa-b648-4f44-b865-21154fa7ef7b',
           name: 'Notify CHW upload successful',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: null,
         },
         {
           id: 'd7ac4cfa-b900-4e14-80a3-94149589bbac',
           name: 'Notify CHW upload failed',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: null,
         },
       ],
       triggers: [
@@ -220,6 +240,13 @@ export const lightningProjectState = {
   updated_at: '2023-08-25T08:57:31',
   scheduled_deletion: null,
   requires_mfa: false,
+  project_credentials: {
+    'email@test.com-Basic-Auth': {
+      id: '25f48989-d349-4eb8-99c3-923ebba5b116',
+      name: 'Basic Auth',
+      owner: 'email@test.com',
+    },
+  },
   workflows: {
     'OpenHIE-Workflow': {
       id: '05fab294-98dc-4d7d-85f3-024b2b0e6897',
@@ -264,24 +291,28 @@ export const lightningProjectState = {
           name: 'FHIR standard Data with change',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: '25f48989-d349-4eb8-99c3-923ebba5b116',
         },
         'Send-to-OpenHIM-to-route-to-SHR': {
           id: 'ed3f110a-c800-479b-9576-47bb87e9ad57',
           name: 'Send to OpenHIM to route to SHR',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: null,
         },
         'Notify-CHW-upload-successful': {
           id: 'f76a4faa-b648-4f44-b865-21154fa7ef7b',
           name: 'Notify CHW upload successful',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: null,
         },
         'Notify-CHW-upload-failed': {
           id: 'd7ac4cfa-b900-4e14-80a3-94149589bbac',
           name: 'Notify CHW upload failed',
           body: 'fn(state => state);\n',
           adaptor: '@openfn/language-http@latest',
+          project_credential_id: null,
         },
       },
       triggers: {

@@ -12,13 +12,14 @@ import createLightningServer, {
   toBase64,
 } from '@openfn/lightning-mock';
 
-import { createRun, createEdge, createJob } from './util';
+import { createRun, createEdge, createJob, sleep } from './util';
 import createWorkerServer from '../src/server';
 import * as e from '../src/events';
 import createMockRTE from '../src/mock/runtime-engine';
 
 let lng: any;
 let worker: any;
+let engine: any;
 
 let keys = { private: '.', public: '.' };
 
@@ -30,7 +31,7 @@ const urls = {
 test.before(async () => {
   keys = await generateKeys();
 
-  const engine = await createMockRTE();
+  engine = await createMockRTE();
   lng = createLightningServer({
     port: 7654,
     runPrivateKey: toBase64(keys.private),
@@ -771,6 +772,34 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
 
     lng.enqueueRun(run);
   });
+});
+
+test.serial('worker should accept a custom socket timeout', async (t) => {
+  // re-create the lightning server with a timeout
+  lng = createLightningServer({
+    port: 7655,
+    runPrivateKey: toBase64(keys.private),
+    socketDelay: 500,
+  });
+
+  worker = createWorkerServer(engine, {
+    port: 4568,
+    lightning: 'ws://localhost:7655/worker',
+    secret: 'abc',
+    maxWorkflows: 1,
+    socketTimeoutSeconds: 0.1,
+  });
+
+  // should fail to claim
+  const run = getRun();
+  lng.enqueueRun(run);
+
+  lng.onSocketEvent(e.RUN_START, run.id, () => {
+    t.fail('Run started');
+  });
+
+  await sleep(500);
+  t.pass('Run did not start');
 });
 
 // Note that this test HAS to be last

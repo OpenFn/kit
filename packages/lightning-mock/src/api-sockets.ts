@@ -83,7 +83,8 @@ const createSocketAPI = (
   path: string,
   httpServer: Server,
   logger?: Logger,
-  logLevel?: LogLevel
+  logLevel?: LogLevel,
+  socketDelay = 1
 ) => {
   // set up a websocket server to listen to connections
   const server = new WebSocketServer({
@@ -99,6 +100,7 @@ const createSocketAPI = (
     server,
     state,
     logger: logger && createLogger('PHX', { level: logLevel }),
+    socketDelay: socketDelay,
   });
 
   wss.registerEvents('worker:queue', {

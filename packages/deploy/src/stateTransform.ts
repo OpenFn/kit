@@ -1,10 +1,12 @@
 import crypto from 'crypto';
 import { deepClone } from 'fast-json-patch';
 import {
+  CredentialState,
   ProjectPayload,
   ProjectSpec,
   ProjectState,
   SpecEdge,
+  SpecJobBody,
   StateEdge,
   WorkflowSpec,
   WorkflowState,
@@ -20,7 +22,30 @@ import {
 import { DeployError } from './deployError';
 import { Logger } from '@openfn/logger/dist';
 
+function stringifyJobBody(body: SpecJobBody): string {
+  if (typeof body === 'object') {
+    return body.content;
+  } else {
+    return body;
+  }
+}
+
+function getStateJobCredential(
+  specJobCredential: string,
+  stateCredentials: ProjectState['project_credentials']
+): string {
+  if (!stateCredentials[specJobCredential]) {
+    throw new DeployError(
+      `Could not find a credential with name: ${specJobCredential}`,
+      'VALIDATION_ERROR'
+    );
+  }
+
+  return stateCredentials[specJobCredential].id;
+}
+
 function mergeJobs(
+  credentials: ProjectState['project_credentials'],
   stateJobs: WorkflowState['jobs'],
   specJobs: WorkflowSpec['jobs']
 ): WorkflowState['jobs'] {
@@ -33,7 +58,10 @@ function mergeJobs(
             id: crypto.randomUUID(),
             name: specJob.name,
             adaptor: specJob.adaptor,
-            body: specJob.body,
+            body: stringifyJobBody(specJob.body),
+            project_credential_id:
+              specJob.credential &&
+              getStateJobCredential(specJob.credential, credentials),
           },
         ];
       }
@@ -49,7 +77,10 @@ function mergeJobs(
             id: stateJob.id,
             name: specJob.name,
             adaptor: specJob.adaptor,
-            body: specJob.body,
+            body: stringifyJobBody(specJob.body),
+            project_credential_id:
+              specJob.credential &&
+              getStateJobCredential(specJob.credential, credentials),
           },
         ];
       }
@@ -186,10 +217,46 @@ export function mergeSpecIntoState(
   spec: ProjectSpec,
   logger?: Logger
 ): ProjectState {
+  const nextCredentials = Object.fromEntries(
+    splitZip(oldState.project_credentials || {}, spec.credentials || {}).map(
+      ([credentialKey, stateCredential, specCredential]) => {
+        if (specCredential && !stateCredential) {
+          return [
+            credentialKey,
+            {
+              id: crypto.randomUUID(),
+              name: specCredential.name,
+              owner: specCredential.owner,
+            },
+          ];
+        }
+
+        if (specCredential && stateCredential) {
+          return [
+            credentialKey,
+            {
+              id: stateCredential.id,
+              name: specCredential.name,
+              owner: specCredential.owner,
+            },
+          ];
+        }
+
+        throw new DeployError(
+          `Invalid credential spec or corrupted state for credential: ${
+            stateCredential?.name || specCredential?.name
+          } (${stateCredential?.owner || specCredential?.owner})`,
+          'VALIDATION_ERROR'
+        );
+      }
+    )
+  );
+
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
       ([workflowKey, stateWorkflow, specWorkflow]) => {
         const nextJobs = mergeJobs(
+          nextCredentials,
           stateWorkflow?.jobs || {},
           specWorkflow?.jobs || {}
         );
@@ -249,6 +316,7 @@ export function mergeSpecIntoState(
     id: oldState.id || crypto.randomUUID(),
     name: spec.name,
     workflows: nextWorkflows,
+    project_credentials: nextCredentials,
   };
 
   if (spec.description) projectState.description = spec.description;
@@ -286,8 +354,18 @@ export function getStateFromProjectPayload(
     return stateWorkflow as WorkflowState;
   });
 
+  const project_credentials = (project.project_credentials || []).reduce(
+    (acc, credential) => {
+      const key = hyphenate(`${credential.owner} ${credential.name}`);
+      acc[key] = credential;
+      return acc;
+    },
+    {} as Record<string, CredentialState>
+  );
+
   return {
     ...project,
+    project_credentials,
     workflows,
   };
 }
@@ -338,8 +416,18 @@ export function mergeProjectPayloadIntoState(
     )
   );
 
+  const nextCredentials = Object.fromEntries(
+    idKeyPairs(
+      project.project_credentials || {},
+      state.project_credentials || {}
+    ).map(([key, nextCredential, _state]) => {
+      return [key, nextCredential];
+    })
+  );
+
   return {
     ...project,
+    project_credentials: nextCredentials,
     workflows: nextWorkflows,
   };
 }
@@ -376,8 +464,12 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
     };
   });
 
+  const project_credentials: ProjectPayload['project_credentials'] =
+    Object.values(state.project_credentials);
+
   return {
     ...state,
+    project_credentials,
     workflows,
   };
 }

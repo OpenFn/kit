@@ -48,7 +48,10 @@ const claim = (
     app.queueChannel
       .push<ClaimPayload>(CLAIM, { demand: 1 })
       .receive('ok', ({ runs }: ClaimReply) => {
-        logger.debug(`pulled ${runs.length} runs`);
+        logger.debug(
+          `claimed ${runs.length} runs: `,
+          runs.map((r) => r.id).join(',')
+        );
         // TODO what if we get here after we've been cancelled?
         // the events have already been claimed...
 
@@ -80,11 +83,11 @@ const claim = (
       })
       // TODO need implementations for both of these really
       // What do we do if we fail to join the worker channel?
-      .receive('error', () => {
-        logger.debug('pull err');
+      .receive('error', (e) => {
+        logger.error('Error on claim', e);
       })
       .receive('timeout', () => {
-        logger.debug('pull timeout');
+        logger.error('TIMEOUT on claim. Runs may be lost.');
         reject(new Error('timeout'));
       });
   });

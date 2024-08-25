@@ -1,5 +1,17 @@
 # @openfn/deploy
 
+## 0.7.0
+
+### Minor Changes
+
+- 0d53f9b: Add support for basic project-credential management (add, associate with jobs) via the CLI
+
+## 0.6.0
+
+### Minor Changes
+
+- b7fc4d0: Deploy: allow job body to be loaded from a file path in workflow.yaml
+
 ## 0.5.0
 
 ### Minor Changes

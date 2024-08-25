@@ -66,6 +66,7 @@ type CreateServerOptions = {
   state: ServerState;
   logger?: Logger;
   onMessage?: (evt: PhoenixEvent) => void;
+  socketDelay?: number;
 };
 
 type MockSocketServer = typeof WebSocketServer & {
@@ -87,6 +88,7 @@ function createServer({
   state,
   logger,
   onMessage = () => {},
+  socketDelay = 1,
 }: CreateServerOptions) {
   const channels: Record<Topic, Set<EventHandler>> = {
     // create a stub listener for pheonix to prevent errors
@@ -171,8 +173,10 @@ function createServer({
         topic,
         payload,
       });
-      // @ts-ignore
-      ws.send(evt);
+      setTimeout(() => {
+        // @ts-ignore
+        ws.send(evt);
+      }, socketDelay);
     };
 
     ws.sendJSON = async ({ event, ref, topic, payload }: PhoenixEvent) => {
@@ -190,9 +194,6 @@ function createServer({
     ws.on('message', async function (data: string) {
       // decode  the data
       const evt = (await decode(data)) as PhoenixEvent;
-      // if (evt.event !== 'claim') {
-      //   console.log(evt);
-      // }
       onMessage(evt);
 
       if (evt.topic) {
@@ -212,7 +213,7 @@ function createServer({
               fn(ws, { event, topic, payload, ref, join_ref });
             });
           } else {
-            // This behaviour is just a convenience for unit tesdting
+            // This behaviour is just a convenience for unit testing
             ws.reply({
               ref,
               join_ref,
