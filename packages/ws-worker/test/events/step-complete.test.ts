@@ -7,6 +7,7 @@ import { createRunState } from '../../src/util';
 import { RUN_LOG, STEP_COMPLETE } from '../../src/events';
 import { createPlan } from '../util';
 import { JobCompletePayload } from '@openfn/engine-multi';
+import { timestamp } from '@openfn/logger';
 
 test('clear the step id and active job on state', async (t) => {
   const plan = createPlan();
@@ -151,6 +152,7 @@ test('send a step:complete event', async (t) => {
     mem: { job: 1, system: 10 },
     duration: 61,
     thread_id: 'abc',
+    time: BigInt(123),
   } as JobCompletePayload;
   await handleStepComplete({ channel, state } as any, event);
 });
@@ -183,6 +185,7 @@ test('do not include dataclips in step:complete if output_dataclip is false', as
     mem: { job: 1, system: 10 },
     duration: 61,
     thread_id: 'abc',
+    time: BigInt(123),
   } as JobCompletePayload;
   await handleStepComplete({ channel, state, options } as any, event);
 });
@@ -217,6 +220,7 @@ test('do not include dataclips in step:complete if output_dataclip is too big', 
     mem: { job: 1, system: 10 },
     duration: 61,
     thread_id: 'abc',
+    time: BigInt(123),
   } as JobCompletePayload;
 
   await handleStepComplete({ channel, state, options } as any, event);
@@ -250,7 +254,31 @@ test('log when the output_dataclip is too big', async (t) => {
     mem: { job: 1, system: 10 },
     duration: 61,
     thread_id: 'abc',
+    time: BigInt(123),
   } as JobCompletePayload;
 
   await handleStepComplete({ channel, state, options } as any, event);
+});
+
+test('should include a timestamp', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [STEP_COMPLETE]: (evt) => {
+      t.assert(typeof evt.timestamp === 'string');
+      t.is(evt.timestamp.length, 16);
+    },
+  });
+
+  const event: any = {
+    time: timestamp(),
+    jobId: 'job-1',
+  };
+
+  t.is(event.time.toString().length, 19);
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleStepComplete(context, event);
 });
