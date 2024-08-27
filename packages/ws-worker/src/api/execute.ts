@@ -239,7 +239,7 @@ export function onJobLog({ channel, state, options }: Context, event: JSONLog) {
     message: message,
     source: event.name,
     level: event.level,
-    timestamp: timeInMicroseconds(event.time),
+    timestamp: timeInMicroseconds(event.time) as string,
   };
 
   if (state.activeStep) {
