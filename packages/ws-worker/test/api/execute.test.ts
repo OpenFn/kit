@@ -396,7 +396,6 @@ test('execute should lazy-load initial state', async (t) => {
   const channel = mockChannel({
     ...mockEventHandlers,
     [GET_DATACLIP]: (id) => {
-      console.log('> GET DATACLIP');
       t.truthy(id);
       didLoadState = true;
       return toArrayBuffer({});
