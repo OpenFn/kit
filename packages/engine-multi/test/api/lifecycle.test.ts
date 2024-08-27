@@ -24,7 +24,7 @@ const createContext = (workflowId: string, state?: any) =>
     options: {},
   });
 
-test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
+test(`workflowStart: emits ${e.WORKFLOW_START} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
 
@@ -39,6 +39,8 @@ test(`workflowStart: emits ${e.WORKFLOW_START}`, (t) => {
       t.truthy(evt.versions);
       t.is(evt.workflowId, workflowId);
       t.is(evt.threadId, '123');
+      t.assert(evt.time > 0);
+      t.assert(typeof evt.time === 'bigint');
       done();
     });
 
@@ -68,7 +70,7 @@ test('onWorkflowStart: updates state', (t) => {
 test.todo('onWorkflowStart: logs');
 test.todo('onWorkflowStart: throws if the workflow is already started');
 
-test(`workflowComplete: emits ${e.WORKFLOW_COMPLETE}`, (t) => {
+test(`workflowComplete: emits ${e.WORKFLOW_COMPLETE} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
     const result = { a: 777 };
@@ -89,6 +91,8 @@ test(`workflowComplete: emits ${e.WORKFLOW_COMPLETE}`, (t) => {
     context.on(e.WORKFLOW_COMPLETE, (evt) => {
       t.is(evt.workflowId, workflowId);
       t.deepEqual(evt.state, result);
+      t.assert(evt.time > 0);
+      t.assert(typeof evt.time === 'bigint');
       t.assert(evt.duration > 0);
       done();
     });
@@ -120,7 +124,7 @@ test('workflowComplete: updates state', (t) => {
   t.deepEqual(state.result, result);
 });
 
-test(`job-start: emits ${e.JOB_START}`, (t) => {
+test(`job-start: emits ${e.JOB_START} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
 
@@ -142,6 +146,8 @@ test(`job-start: emits ${e.JOB_START}`, (t) => {
       t.is(evt.workflowId, workflowId);
       t.is(evt.threadId, '1');
       t.is(evt.jobId, 'j');
+      t.assert(evt.time > 0);
+      t.assert(typeof evt.time === 'bigint');
       done();
     });
 
@@ -149,7 +155,7 @@ test(`job-start: emits ${e.JOB_START}`, (t) => {
   });
 });
 
-test(`job-complete: emits ${e.JOB_COMPLETE}`, (t) => {
+test(`job-complete: emits ${e.JOB_COMPLETE} with key fields`, (t) => {
   return new Promise((done) => {
     const workflowId = 'a';
 
@@ -179,6 +185,8 @@ test(`job-complete: emits ${e.JOB_COMPLETE}`, (t) => {
       t.is(evt.duration, 200);
       t.deepEqual(evt.next, []);
       t.deepEqual(evt.mem, event.mem);
+      t.assert(evt.time > 0);
+      t.assert(typeof evt.time === 'bigint');
       done();
     });
 

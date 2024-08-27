@@ -51,11 +51,13 @@ interface ExternalEvent {
 
 export interface WorkflowStartPayload extends ExternalEvent {
   versions: Versions;
+  time: bigint;
 }
 
 export interface WorkflowCompletePayload extends ExternalEvent {
   state: any;
   duration: number;
+  time: bigint;
 }
 
 export interface WorkflowErrorPayload extends ExternalEvent {
@@ -66,6 +68,7 @@ export interface WorkflowErrorPayload extends ExternalEvent {
 
 export interface JobStartPayload extends ExternalEvent {
   jobId: string;
+  time: bigint;
 }
 
 export interface JobCompletePayload extends ExternalEvent {
@@ -73,6 +76,7 @@ export interface JobCompletePayload extends ExternalEvent {
   duration: number;
   state: any; // the result state
   next: string[]; // downstream jobs
+  time: bigint;
   mem: {
     job: number;
     system: number;
