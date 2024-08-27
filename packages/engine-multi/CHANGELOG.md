@@ -1,5 +1,14 @@
 # engine-multi
 
+## 1.2.2
+
+### Patch Changes
+
+- 870a836: Add high resolution timestamps to key events
+- Updated dependencies [44f7f57]
+  - @openfn/lexicon@1.1.0
+  - @openfn/runtime@1.4.1
+
 ## 1.2.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.1.0
+
+### Minor Changes
+
+- 44f7f57: Bump API_VERSION to 1.2 (timestamps on events)
+
 ## 1.0.2
 
 ### Patch Changes
