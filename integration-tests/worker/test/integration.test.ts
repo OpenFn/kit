@@ -558,7 +558,7 @@ test.serial("Don't send job logs to stdout", (t) => {
   });
 });
 
-test.serial('Include tiemstamps on basically everything', (t) => {
+test.serial('Include timestamps on basically everything', (t) => {
   return new Promise(async (done) => {
     const attempt = {
       id: crypto.randomUUID(),
@@ -575,22 +575,23 @@ test.serial('Include tiemstamps on basically everything', (t) => {
     const assertAllTimestamps = () => {
       t.is(timestamps['run-start'].length, 16);
       t.is(timestamps['run-complete'].length, 16);
-      t.is(timestamps['job-start'].length, 16);
-      t.is(timestamps['job-complete'].length, 16);
+      t.is(timestamps['step-start'].length, 16);
+      t.is(timestamps['step-complete'].length, 16);
     };
 
     lightning.once('run:start', ({ payload }) => {
       timestamps['run-start'] = payload.timestamp;
     });
-    lightning.once('job:start', ({ payload }) => {
-      timestamps['job-start'] = payload.timestamp;
+    lightning.once('step:start', ({ payload }) => {
+      timestamps['step-start'] = payload.timestamp;
     });
-    lightning.once('job:complete', ({ payload }) => {
-      timestamps['job-complete'] = payload.timestamp;
+    lightning.once('step:complete', ({ payload }) => {
+      timestamps['step-complete'] = payload.timestamp;
     });
     lightning.once('run:complete', ({ payload }) => {
       timestamps['run-complete'] = payload.timestamp;
       assertAllTimestamps();
+
       done();
     });
 
