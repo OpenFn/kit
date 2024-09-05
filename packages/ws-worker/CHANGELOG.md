@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.6.1
+
+### Patch Changes
+
+- ca07db4: Fix an issue where a run with a missing start node caused the server to crash
+
 ## 1.6.0
 
 ### Minor Changes
