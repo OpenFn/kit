@@ -110,11 +110,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     if (app.killWorkloop) {
       app.killWorkloop();
       delete app.killWorkloop;
-      logger.info('Connection to lightning lost.');
-      logger.info(
-        'Worker will automatically reconnect when lightning is back online.'
-      );
-      // So far as I know, the socket will try and reconnect in the background forever
+      if (!app.destroyed) {
+        logger.info('Connection to lightning lost');
+        logger.info(
+          'Worker will automatically reconnect when lightning is back online'
+        );
+        // So far as I know, the socket will try and reconnect in the background forever
+      }
     }
   };
 
@@ -180,6 +182,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     if (app.socket) {
       app.workflows[id] = true;
 
+      // TODO if we fail to join the run channel, the whole server
+      //     will crash. Really we should just abort the run somehow
+      //     Maybe even soft shutdown the worker
       const {
         channel: runChannel,
         plan,

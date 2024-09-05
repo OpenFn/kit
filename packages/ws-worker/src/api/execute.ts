@@ -149,7 +149,6 @@ export function execute(
         loadedInput = await loadDataclip(channel, input);
         logger.success('dataclip loaded');
       } catch (e: any) {
-        // abort with error
         return handleRunError(context, {
           workflowId: plan.id!,
           message: `Failed to load dataclip ${input}${

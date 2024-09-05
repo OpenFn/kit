@@ -25,14 +25,16 @@ export default (plan: ExecutionPlan, input?: Lazy<State>): RunState => {
       startNode = jobs.find(({ id }) => id === plan.options.start)!;
     }
 
-    // TODO throw with validation error of some kind if this node could not be found
-
     const initialRuns: string[] = [];
-    // If this is a trigger, get the downstream jobs
-    if (!startNode.expression) {
-      initialRuns.push(...Object.keys(startNode.next!));
-    } else {
-      initialRuns.push(startNode.id!);
+    // Note that the workflow hasn't been properly validated yet
+    // and it's technically possible that there is no start node
+    if (startNode) {
+      // If this is a trigger, get the downstream jobs
+      if (!startNode.expression) {
+        initialRuns.push(...Object.keys(startNode.next!));
+      } else {
+        initialRuns.push(startNode.id!);
+      }
     }
 
     // For any runs downstream of the initial state,
