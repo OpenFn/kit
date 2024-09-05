@@ -220,8 +220,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       ws:
-        specifier: ^8.14.1
-        version: 8.14.1
+        specifier: ^8.18.0
+        version: 8.18.0
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -512,8 +512,8 @@ importers:
         specifier: ^1.7.7
         version: 1.7.7
       ws:
-        specifier: ^8.14.1
-        version: 8.14.1
+        specifier: ^8.18.0
+        version: 8.18.0
     devDependencies:
       '@types/koa':
         specifier: ^2.13.5
@@ -698,8 +698,8 @@ importers:
         specifier: 1.7.10
         version: 1.7.10
       ws:
-        specifier: ^8.14.1
-        version: 8.14.1
+        specifier: ^8.18.0
+        version: 8.18.0
     devDependencies:
       '@openfn/lightning-mock':
         specifier: workspace:*
@@ -4780,7 +4780,7 @@ packages:
       co: 4.6.0
       debug: 4.3.4
       koa-compose: 4.1.0
-      ws: 8.14.1
+      ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -7209,8 +7209,8 @@ packages:
       imurmurhash: 0.1.4
       signal-exit: 4.0.2
 
-  /ws@8.14.1:
-    resolution: {integrity: sha512-4OOseMUq8AzRBI/7SLMUwO+FEDnguetSk7KMb1sHwvF2w2Wv5Hoj0nlifx8vtGsftE/jWHojPy8sMMzYLJ2G/A==}
+  /ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1

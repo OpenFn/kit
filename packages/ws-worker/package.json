@@ -35,7 +35,7 @@
     "koa-bodyparser": "^4.4.0",
     "koa-logger": "^3.2.1",
     "phoenix": "1.7.10",
-    "ws": "^8.14.1"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@openfn/lightning-mock": "workspace:*",
