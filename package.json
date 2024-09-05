@@ -26,7 +26,7 @@
   "license": "ISC",
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
-    "@slack/web-api": "^6.8.1",
+    "@slack/web-api": "^6.12.1",
     "@types/gunzip-maybe": "^1.4.0",
     "@types/rimraf": "^3.0.2",
     "@types/tar-stream": "^2.2.2",
