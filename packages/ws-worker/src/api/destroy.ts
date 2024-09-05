@@ -30,8 +30,6 @@ const destroy = async (app: ServerApp, logger: Logger) => {
       await app.engine.destroy();
       app.socket?.disconnect();
 
-      logger.info('Server closed....');
-
       resolve();
     }),
   ]);

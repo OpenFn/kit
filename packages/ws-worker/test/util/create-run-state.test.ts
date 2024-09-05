@@ -98,3 +98,24 @@ test('Set initial input dataclip with a trigger with multiple downstream jobs', 
 
   t.deepEqual(run.inputDataclips, { a: 's', b: 's', c: 's' });
 });
+
+test("Do not throw if the start step doesn't exist", (t) => {
+  const plan = createPlan([{ id: 'a' }]);
+  plan.options.start = 'wibble';
+  const input = 'x';
+
+  createRunState(plan, input);
+
+  t.pass('did not throw');
+});
+
+test('Do not throw  if there are no steps', (t) => {
+  const plan = createPlan([{ id: 'a' }]);
+  plan.workflow.steps = [];
+
+  const input = 'x';
+
+  createRunState(plan, input);
+
+  t.pass('did not throw');
+});

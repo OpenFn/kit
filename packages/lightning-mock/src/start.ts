@@ -28,10 +28,14 @@ const args = yargs(hideBin(process.argv))
 
 const logger = createLogger('LNG', { level: args.log });
 
-createLightningServer({
+const server = createLightningServer({
   port: args.port,
   logger,
   logLevel: args.log,
 });
+
+// add a default credential
+server.addCredential('c', { user: 'user ' });
+server.addDataclip('d', { data: {} });
 
 logger.success('Started mock Lightning server on ', args.port);
