@@ -17,9 +17,6 @@ importers:
       '@types/gunzip-maybe':
         specifier: ^1.4.0
         version: 1.4.0
-      '@types/prettier':
-        specifier: ^3.0.0
-        version: 3.0.0
       '@types/rimraf':
         specifier: ^3.0.2
         version: 3.0.2
@@ -1389,10 +1386,6 @@ packages:
 
   '@types/phoenix@1.6.2':
     resolution: {integrity: sha512-I3mm7x5XIi+5NsIY3nfreY+H4PmQdyBwJ84SiUSOxSg1axwEPNmkKWYVm56y+emDpPPUL3cPzrLcgRWSd9gI7g==}
-
-  '@types/prettier@3.0.0':
-    resolution: {integrity: sha512-mFMBfMOz8QxhYVbuINtswBp9VL2b4Y0QqYHwqLz3YbgtfAcat2Dl6Y1o4e22S/OVE6Ebl9m7wWiMT2lSbAs1wA==}
-    deprecated: This is a stub types definition. prettier provides its own type definitions, so you do not need this installed.
 
   '@types/prop-types@15.7.5':
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
@@ -5636,10 +5629,6 @@ snapshots:
   '@types/normalize-package-data@2.4.1': {}
 
   '@types/phoenix@1.6.2': {}
-
-  '@types/prettier@3.0.0':
-    dependencies:
-      prettier: 2.8.8
 
   '@types/prop-types@15.7.5': {}
 
