@@ -1,5 +1,19 @@
 # ws-worker
 
+## 1.6.0
+
+### Minor Changes
+
+- eaa3859: Include timestamps in key events
+
+### Patch Changes
+
+- Updated dependencies [870a836]
+- Updated dependencies [44f7f57]
+  - @openfn/engine-multi@1.2.2
+  - @openfn/lexicon@1.1.0
+  - @openfn/runtime@1.4.1
+
 ## 1.5.1
 
 ### Patch Changes

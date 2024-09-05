@@ -5,10 +5,11 @@ import { RUN_COMPLETE } from '../events';
 import { calculateRunExitReason } from '../api/reasons';
 import { sendEvent, Context } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
+import { timeInMicroseconds } from '../util';
 
 export default async function onWorkflowComplete(
   context: Context,
-  _event: WorkflowCompletePayload
+  event: WorkflowCompletePayload
 ) {
   const { state, channel, onFinish, logger } = context;
 
@@ -22,6 +23,7 @@ export default async function onWorkflowComplete(
   try {
     await sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,
+      timestamp: timeInMicroseconds(event.time),
       ...reason,
     });
   } catch (e) {

@@ -4,7 +4,7 @@ import type { JobCompletePayload } from '@openfn/engine-multi';
 import { timestamp } from '@openfn/logger';
 
 import { STEP_COMPLETE } from '../events';
-import { stringify } from '../util';
+import { stringify, timeInMicroseconds } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
 import { sendEvent, onJobLog, Context } from '../api/execute';
 import ensurePayloadSize from '../util/ensure-payload-size';
@@ -51,6 +51,7 @@ export default async function onStepComplete(
     mem: event.mem,
     duration: event.duration,
     thread_id: event.threadId,
+    timestamp: timeInMicroseconds(event.time),
   } as StepCompletePayload;
 
   try {

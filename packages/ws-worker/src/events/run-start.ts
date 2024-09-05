@@ -7,6 +7,7 @@ import { sendEvent, Context, onJobLog } from '../api/execute';
 import calculateVersionString from '../util/versions';
 
 import pkg from '../../package.json' assert { type: 'json' };
+import { timeInMicroseconds } from '../util';
 
 export default async function onRunStart(
   context: Context,
@@ -34,10 +35,15 @@ export default async function onRunStart(
     ...event.versions,
   };
 
-  await sendEvent<RunStartPayload>(channel, RUN_START, { versions });
+  await sendEvent<RunStartPayload>(channel, RUN_START, {
+    versions,
+    /// use the engine time in run start
+    timestamp: timeInMicroseconds(event.time),
+  });
 
   if ('payloadLimitMb' in options) {
     await onJobLog(versionLogContext, {
+      // use the fake time in the log
       time,
       message: [`Payload limit: ${options.payloadLimitMb}mb`],
       level: 'info',

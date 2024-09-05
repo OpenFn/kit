@@ -2,6 +2,7 @@
 import * as externalEvents from '../events';
 import * as internalEvents from '../worker/events';
 import type ExecutionContext from '../classes/ExecutionContext';
+import { timestamp } from '@openfn/logger';
 
 // Log events from the inner thread will be logged to stdout
 // EXCEPT the keys listed here
@@ -39,6 +40,7 @@ export const workflowStart = (
   context.emit(externalEvents.WORKFLOW_START, {
     threadId,
     versions: context.versions,
+    time: timestamp(),
   });
 };
 
@@ -70,6 +72,7 @@ export const workflowComplete = (
     threadId,
     duration: state.duration,
     state: result,
+    time: timestamp(),
   });
 };
 
@@ -82,6 +85,7 @@ export const jobStart = (
   context.emit(externalEvents.JOB_START, {
     jobId,
     threadId,
+    time: timestamp(),
   });
 };
 
@@ -98,6 +102,7 @@ export const jobComplete = (
     jobId,
     next,
     mem,
+    time: timestamp(),
   });
 };
 

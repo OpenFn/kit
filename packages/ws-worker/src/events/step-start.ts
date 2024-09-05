@@ -4,6 +4,7 @@ import type { StepStartPayload } from '@openfn/lexicon/lightning';
 
 import { STEP_START } from '../events';
 import { sendEvent, Context } from '../api/execute';
+import { timeInMicroseconds } from '../util';
 
 export default async function onStepStart(
   context: Context,
@@ -21,5 +22,6 @@ export default async function onStepStart(
     step_id: state.activeStep!,
     job_id: state.activeJob!,
     input_dataclip_id,
+    timestamp: timeInMicroseconds(event.time),
   });
 }
