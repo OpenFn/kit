@@ -335,6 +335,10 @@ export function getStateFromProjectPayload(
 
     stateWorkflow.triggers = reduceByKey('type', wf.triggers!);
     stateWorkflow.jobs = reduceByKey('name', wf.jobs);
+
+    console.log('Yahoooo we made it here!!!!!!!!!');
+    console.log('RAINBOW HAIR MAN');
+
     stateWorkflow.edges = wf.edges.reduce((obj, edge) => {
       let sourceName;
       if (edge.source_trigger_id) {
@@ -344,7 +348,14 @@ export function getStateFromProjectPayload(
         const job = wf.jobs.find((e) => e.id === edge.source_job_id)!;
         sourceName = job.name;
       }
+
+      console.log('workflow', wf);
+      console.log('edge', edge);
+
       const target = wf.jobs.find((j) => j.id === edge.target_job_id)!;
+
+      console.log('source', sourceName)
+      console.log('target', target);
 
       const name = hyphenate(`${sourceName}->${hyphenate(target.name)}`);
       obj[name] = edge;
