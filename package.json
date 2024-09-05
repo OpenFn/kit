@@ -34,6 +34,6 @@
     "prettier": "^2.8.8",
     "rimraf": "^3.0.2",
     "tar-stream": "^3.0.0",
-    "typesync": "^0.11.1"
+    "typesync": "^0.13.0"
   }
 }
