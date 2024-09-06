@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.1.1
+
+### Patch Changes
+
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+
 ## 0.1.0
 
 ### Minor Changes

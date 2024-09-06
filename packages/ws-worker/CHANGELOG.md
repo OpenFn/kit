@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.6.2
+
+### Patch Changes
+
+security updates
+
 ## 1.6.1
 
 ### Patch Changes

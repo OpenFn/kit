@@ -1,5 +1,14 @@
 # @openfn/integration-tests-execute
 
+## 1.0.3
+
+### Patch Changes
+
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+- Updated dependencies [c3df1e5]
+  - @openfn/compiler@0.3.1
+  - @openfn/runtime@1.4.2
+
 ## 1.0.2
 
 ### Patch Changes
