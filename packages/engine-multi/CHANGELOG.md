@@ -1,5 +1,16 @@
 # engine-multi
 
+## 1.2.3
+
+### Patch Changes
+
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+- Updated dependencies [c3df1e5]
+  - @openfn/compiler@0.3.1
+  - @openfn/logger@1.0.2
+  - @openfn/runtime@1.4.2
+  - @openfn/lexicon@1.1.0
+
 ## 1.2.2
 
 ### Patch Changes

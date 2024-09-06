@@ -4,5 +4,6 @@
   "version": "1.0.0",
   "dependencies": {
     "@openfn/helper_1.0.0": "@npm:@openfn/helper@1.0.0"
-  }
+  },
+  "devDependencies": {}
 }
