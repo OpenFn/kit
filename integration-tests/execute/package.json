@@ -1,7 +1,7 @@
 {
   "name": "@openfn/integration-tests-execute",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Job execution tests",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@openfn/compiler": "workspace:^",
-    "@openfn/language-common": "1.7.7",
-    "@openfn/language-http": "6.4.0",
+    "@openfn/language-common": "2.0.1",
+    "@openfn/language-http": "6.4.3",
     "@openfn/runtime": "workspace:^",
     "@types/node": "^18.15.13",
     "ava": "5.3.1",

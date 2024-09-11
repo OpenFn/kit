@@ -1,5 +1,12 @@
 # @openfn/integration-tests-execute
 
+## 1.0.4
+
+### Patch Changes
+
+- 423a927: Update language-common to a version that does not have a dependency on axios.
+  - @openfn/compiler@0.3.2
+
 ## 1.0.3
 
 ### Patch Changes
