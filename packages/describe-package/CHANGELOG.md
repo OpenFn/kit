@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.1.2
+
+### Patch Changes
+
+- 423a927: Update language-common to a version that does not have a dependency on axios.
+
 ## 0.1.1
 
 ### Patch Changes

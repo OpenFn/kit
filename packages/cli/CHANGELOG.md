@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 1.8.3
+
+### Patch Changes
+
+Security update.
+
+- Updated dependencies [423a927]
+  - @openfn/describe-package@0.1.2
+  - @openfn/compiler@0.3.2
+
 ## 1.8.2
 
 ### Patch Changes
