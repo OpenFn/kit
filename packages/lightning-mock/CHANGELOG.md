@@ -1,5 +1,39 @@
 # @openfn/lightning-mock
 
+## 2.0.18
+
+### Patch Changes
+
+- @openfn/engine-multi@1.2.4
+
+## 2.0.17
+
+### Patch Changes
+
+- 24534e1: Upgrade vulnerable version of ws.
+- 3a5277b: Update vulnerable version of word-wrap.
+- ac5c373: Update vulnerable version of postcss.
+- 03ad493: Update @slack/web-api to remove dependency on vulnerable axios.
+- a223975: Update vulnerable version of jose
+- 1f340fa: Update typesync to remove dependency on ip, which has a vulnerability without a patch.
+- 6370e76: Update vulnerable version of micromatch.
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+- Updated dependencies [c3df1e5]
+  - @openfn/engine-multi@1.2.3
+  - @openfn/logger@1.0.2
+  - @openfn/runtime@1.4.2
+  - @openfn/lexicon@1.1.0
+
+## 2.0.16
+
+### Patch Changes
+
+- Updated dependencies [870a836]
+- Updated dependencies [44f7f57]
+  - @openfn/engine-multi@1.2.2
+  - @openfn/lexicon@1.1.0
+  - @openfn/runtime@1.4.1
+
 ## 2.0.15
 
 ### Patch Changes

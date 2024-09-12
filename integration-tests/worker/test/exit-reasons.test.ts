@@ -53,6 +53,31 @@ test('crash: syntax error', async (t) => {
   t.regex(error_message, /Unexpected token \(1:9\)$/);
 });
 
+// https://github.com/OpenFn/kit/issues/758
+test('crash: job not found', async (t) => {
+  lightning.addDataclip('x', {});
+
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        id: 'x',
+        adaptor: '@openfn/language-common@latest',
+        body: 'fn(s => s)',
+      },
+    ],
+    dataclip_id: 'x', // having a data clip is important to trigger the crash
+    starting_node_id: 'y',
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+  t.is(reason, 'crash');
+  t.is(error_type, 'ValidationError');
+  t.regex(error_message, /could not find start job: y/i);
+});
+
 test('exception: autoinstall error', async (t) => {
   const attempt = {
     id: crypto.randomUUID(),

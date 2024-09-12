@@ -1,5 +1,5 @@
 import test from 'ava';
-import { createMockLogger } from '@openfn/logger';
+import { createMockLogger, timestamp } from '@openfn/logger';
 
 import handleRunComplete from '../../src/events/run-complete';
 
@@ -8,7 +8,7 @@ import { RUN_COMPLETE, RUN_LOG } from '../../src/events';
 import { createRunState } from '../../src/util';
 import { createPlan } from '../util';
 
-test('should send an run:complete event', async (t) => {
+test('should send a run:complete event', async (t) => {
   const result = { answer: 42 };
   const plan = createPlan();
 
@@ -22,10 +22,34 @@ test('should send an run:complete event', async (t) => {
     [RUN_LOG]: () => true,
     [RUN_COMPLETE]: (evt) => {
       t.deepEqual(evt.final_dataclip_id, 'x');
+      t.falsy(evt.time); // if no timestamp in the engine event, no timestamp in the worker one
     },
   });
 
   const event: any = {};
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleRunComplete(context, event);
+});
+
+test('should include a timestamp', async (t) => {
+  const plan = createPlan();
+
+  const state = createRunState(plan);
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      t.assert(typeof evt.timestamp === 'string');
+      t.is(evt.timestamp.length, 16);
+    },
+  });
+
+  const event: any = {
+    time: timestamp(),
+  };
+
+  t.is(event.time.toString().length, 19);
 
   const context: any = { channel, state, onFinish: () => {} };
   await handleRunComplete(context, event);

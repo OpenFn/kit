@@ -1,5 +1,49 @@
 # @openfn/integration-tests-worker
 
+## 1.0.58
+
+### Patch Changes
+
+- @openfn/engine-multi@1.2.4
+- @openfn/lightning-mock@2.0.18
+- @openfn/ws-worker@1.6.3
+
+## 1.0.57
+
+### Patch Changes
+
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+- Updated dependencies [24534e1]
+- Updated dependencies [7977220]
+- Updated dependencies [3a5277b]
+- Updated dependencies [ac5c373]
+- Updated dependencies [03ad493]
+- Updated dependencies [a223975]
+- Updated dependencies [1f340fa]
+- Updated dependencies [6370e76]
+- Updated dependencies [c3df1e5]
+  - @openfn/lightning-mock@2.0.17
+  - @openfn/ws-worker@1.6.2
+  - @openfn/engine-multi@1.2.3
+  - @openfn/logger@1.0.2
+
+## 1.0.56
+
+### Patch Changes
+
+- Updated dependencies [ca07db4]
+  - @openfn/ws-worker@1.6.1
+
+## 1.0.55
+
+### Patch Changes
+
+- Updated dependencies [870a836]
+- Updated dependencies [eaa3859]
+  - @openfn/engine-multi@1.2.2
+  - @openfn/ws-worker@1.6.0
+  - @openfn/lightning-mock@2.0.16
+
 ## 1.0.54
 
 ### Patch Changes

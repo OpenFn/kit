@@ -7,6 +7,36 @@ import { createRunState } from '../../src/util';
 import { RUN_LOG, RUN_START } from '../../src/events';
 
 import pkg from '../../package.json' assert { type: 'json' };
+import { timestamp } from '@openfn/logger';
+
+test('should include a timestamp', async (t) => {
+  const plan = {
+    id: 'run-1',
+    workflow: {
+      steps: [{ id: 'job-1', expression: '.' }],
+    },
+    options: {},
+  };
+
+  const state = createRunState(plan);
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_START]: (evt) => {
+      t.assert(typeof evt.timestamp === 'string');
+      t.is(evt.timestamp.length, 16);
+    },
+  });
+
+  const event: any = {
+    time: timestamp(),
+  };
+
+  t.is(event.time.toString().length, 19);
+
+  const context: any = { channel, state, onFinish: () => {} };
+  await handleRunStart(context, event);
+});
 
 test('run:start event should include versions', async (t) => {
   const plan = {
@@ -73,6 +103,7 @@ test('run:start should log the version number', async (t) => {
   const event: WorkflowStartPayload = {
     workflowId: plan.id,
     versions,
+    time: BigInt(123),
   };
 
   const state = createRunState(plan, input);

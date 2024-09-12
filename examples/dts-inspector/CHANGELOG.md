@@ -1,5 +1,27 @@
 # dts-inspector
 
+## 1.0.20
+
+### Patch Changes
+
+- Updated dependencies [423a927]
+  - @openfn/describe-package@0.1.2
+
+## 1.0.19
+
+### Patch Changes
+
+- 24534e1: Upgrade vulnerable version of ws.
+- 2c69d90: Remove live-server as it was preventing an update of a vulnerable version of braces.
+- 3a5277b: Update vulnerable version of word-wrap.
+- ac5c373: Update vulnerable version of postcss.
+- 03ad493: Update @slack/web-api to remove dependency on vulnerable axios.
+- 1f340fa: Update typesync to remove dependency on ip, which has a vulnerability without a patch.
+- 6370e76: Update vulnerable version of micromatch.
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+- Updated dependencies [c3df1e5]
+  - @openfn/describe-package@0.1.1
+
 ## 1.0.18
 
 ### Patch Changes

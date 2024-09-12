@@ -8,6 +8,7 @@ import {
   createRunState,
   throttle as createThrottle,
   stringify,
+  timeInMicroseconds,
 } from '../util';
 import {
   RUN_COMPLETE,
@@ -148,7 +149,6 @@ export function execute(
         loadedInput = await loadDataclip(channel, input);
         logger.success('dataclip loaded');
       } catch (e: any) {
-        // abort with error
         return handleRunError(context, {
           workflowId: plan.id!,
           message: `Failed to load dataclip ${input}${
@@ -213,8 +213,6 @@ export function onJobError(context: Context, event: any) {
 }
 
 export function onJobLog({ channel, state, options }: Context, event: JSONLog) {
-  const timeInMicroseconds = BigInt(event.time) / BigInt(1e3);
-
   let message = event.message;
   try {
     // The message body, the actual thing that is logged,
@@ -240,7 +238,7 @@ export function onJobLog({ channel, state, options }: Context, event: JSONLog) {
     message: message,
     source: event.name,
     level: event.level,
-    timestamp: timeInMicroseconds.toString(),
+    timestamp: timeInMicroseconds(event.time) as string,
   };
 
   if (state.activeStep) {

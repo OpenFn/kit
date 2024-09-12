@@ -18,6 +18,7 @@ List any considerations/cases/advice for testing/QA here.
 
 - [ ] I have performed a self-review of my code
 - [ ] I have added unit tests
+- [ ] If this is a change to the Worker, does the API_VERSION need bumping?
 - [ ] Changesets have been added (if there are production code changes)
 
 ## Release branch checklist

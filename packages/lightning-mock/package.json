@@ -1,6 +1,6 @@
 {
   "name": "@openfn/lightning-mock",
-  "version": "2.0.15",
+  "version": "2.0.18",
   "private": true,
   "description": "A mock Lightning server",
   "main": "dist/index.js",
@@ -24,12 +24,12 @@
     "@types/koa-logger": "^3.1.2",
     "@types/ws": "^8.5.6",
     "fast-safe-stringify": "^2.1.1",
-    "jose": "^4.14.6",
+    "jose": "^4.15.9",
     "koa": "^2.13.4",
     "koa-bodyparser": "^4.4.0",
     "koa-logger": "^3.2.1",
     "phoenix": "^1.7.7",
-    "ws": "^8.14.1"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/koa": "^2.13.5",

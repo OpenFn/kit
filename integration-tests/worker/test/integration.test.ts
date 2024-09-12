@@ -558,6 +558,47 @@ test.serial("Don't send job logs to stdout", (t) => {
   });
 });
 
+test.serial('Include timestamps on basically everything', (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  s)',
+        },
+      ],
+    };
+
+    const timestamps = {};
+
+    const assertAllTimestamps = () => {
+      t.is(timestamps['run-start'].length, 16);
+      t.is(timestamps['run-complete'].length, 16);
+      t.is(timestamps['step-start'].length, 16);
+      t.is(timestamps['step-complete'].length, 16);
+    };
+
+    lightning.once('run:start', ({ payload }) => {
+      timestamps['run-start'] = payload.timestamp;
+    });
+    lightning.once('step:start', ({ payload }) => {
+      timestamps['step-start'] = payload.timestamp;
+    });
+    lightning.once('step:complete', ({ payload }) => {
+      timestamps['step-complete'] = payload.timestamp;
+    });
+    lightning.once('run:complete', ({ payload }) => {
+      timestamps['run-complete'] = payload.timestamp;
+      assertAllTimestamps();
+
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
 test.serial("Don't send adaptor logs to stdout", (t) => {
   return new Promise(async (done) => {
     // We have to create a new worker with a different repo for this one

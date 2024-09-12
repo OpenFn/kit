@@ -1,6 +1,6 @@
 {
   "name": "dts-inspector",
-  "version": "1.0.18",
+  "version": "1.0.20",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -16,13 +16,11 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.2",
-    "@types/live-server": "^1.2.1",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.3",
     "esbuild": "^0.18.14",
     "esbuild-postcss": "^0.0.4",
-    "live-server": "^1.2.2",
-    "postcss": "^8.4.13",
+    "postcss": "^8.4.45",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "tailwindcss": "^3.0.24"

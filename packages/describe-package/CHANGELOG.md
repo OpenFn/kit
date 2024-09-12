@@ -1,5 +1,17 @@
 # @openfn/describe-package
 
+## 0.1.2
+
+### Patch Changes
+
+- 423a927: Update language-common to a version that does not have a dependency on axios.
+
+## 0.1.1
+
+### Patch Changes
+
+- c3df1e5: Partially update vulnerable versions of braces - live-server is a holdout as there is not a newer version available.
+
 ## 0.1.0
 
 ### Minor Changes

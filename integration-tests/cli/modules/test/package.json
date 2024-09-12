@@ -3,5 +3,6 @@
   "version": "0.0.1",
   "type": "module",
   "module": "index.js",
-  "private": true
+  "private": true,
+  "devDependencies": {}
 }

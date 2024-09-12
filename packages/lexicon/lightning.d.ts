@@ -5,6 +5,8 @@ export const API_VERSION: number;
 
 type StepId = string;
 
+type TimeInMicroSeconds = string;
+
 /**
  * Type definitions for Lightning and Worker interfaces
  *
@@ -145,17 +147,20 @@ export type GetCredentialReply = {};
 export type GetDataclipPayload = { id: string };
 export type GetDataClipReply = Uint8Array; // represents a json string Run
 
-export type RunStartPayload = void; // no payload
+export type RunStartPayload = {
+  timestamp: TimeInMicroSeconds;
+}; // no payload
 export type RunStartReply = {}; // no payload
 
 export type RunCompletePayload = ExitReason & {
+  timestamp: TimeInMicroSeconds;
   final_dataclip_id?: string; // TODO this will be removed soon
 };
 export type RunCompleteReply = undefined;
 
 export type RunLogPayload = {
   message: Array<string | object>;
-  timestamp: string;
+  timestamp: TimeInMicroSeconds;
   run_id: string;
   level?: string;
   source?: string; // namespace
@@ -169,6 +174,7 @@ export type StepStartPayload = {
   step_id: string;
   run_id?: string;
   input_dataclip_id?: string;
+  timestamp: TimeInMicroSeconds;
 };
 export type StepStartReply = void;
 
@@ -185,5 +191,6 @@ export type StepCompletePayload = ExitReason & {
     system: number;
   };
   duration: number;
+  timestamp: TimeInMicroSeconds;
 };
 export type StepCompleteReply = void;
