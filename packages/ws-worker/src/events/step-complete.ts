@@ -64,6 +64,7 @@ export default async function onStepComplete(
     }
     evt.output_dataclip_id = dataclipId;
   } catch (e) {
+    state.withheldDataclips[dataclipId] = true;
     evt.output_dataclip_error = 'DATACLIP_TOO_LARGE';
 
     const time = (timestamp() - BigInt(10e6)).toString();

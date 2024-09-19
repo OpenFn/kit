@@ -14,6 +14,8 @@ export type RunState = {
   // For each run, map the input ids
   // TODO better name maybe?
   inputDataclips: Record<string, string>;
+  // If for any reason a dataclip was not sent to lightning, track it
+  withheldDataclips: Record<string, true>;
   reasons: Record<string, ExitReason>;
 
   // final dataclip id

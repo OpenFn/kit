@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.6.4
+
+### Patch Changes
+
+- 0cf7198: Do not send the input_dataclip_id in step:start if the dataclip was witheld
+
 ## 1.6.3
 
 ### Patch Changes

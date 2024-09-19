@@ -392,7 +392,7 @@ const createSocketAPI = (
     evt: PhoenixEvent<StepStartPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { step_id, job_id, input_dataclip_id } = evt.payload;
+    const { step_id, job_id } = evt.payload;
 
     const [_, runId] = topic.split(':');
     if (!state.dataclips) {
@@ -413,11 +413,6 @@ const createSocketAPI = (
       payload = {
         status: 'error',
         response: 'no job_id',
-      };
-    } else if (!input_dataclip_id) {
-      payload = {
-        status: 'error',
-        response: 'no input_dataclip_id',
       };
     }
 

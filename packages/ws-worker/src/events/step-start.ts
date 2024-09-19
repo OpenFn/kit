@@ -18,10 +18,14 @@ export default async function onStepStart(
 
   const input_dataclip_id = state.inputDataclips[event.jobId];
 
-  await sendEvent<StepStartPayload>(channel, STEP_START, {
+  const evt: StepStartPayload = {
     step_id: state.activeStep!,
     job_id: state.activeJob!,
-    input_dataclip_id,
     timestamp: timeInMicroseconds(event.time),
-  });
+  };
+  if (!state.withheldDataclips[input_dataclip_id]) {
+    evt.input_dataclip_id = input_dataclip_id;
+  }
+
+  await sendEvent<StepStartPayload>(channel, STEP_START, evt);
 }
