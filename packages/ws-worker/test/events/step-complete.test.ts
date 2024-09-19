@@ -190,7 +190,7 @@ test('do not include dataclips in step:complete if output_dataclip is false', as
   await handleStepComplete({ channel, state, options } as any, event);
 });
 
-test('do not include dataclips in step:complete if output_dataclip is too big', async (t) => {
+test.only('do not include dataclips in step:complete if output_dataclip is too big', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
   const result = { data: new Array(1024 * 1024 + 1).fill('z').join('') };
@@ -206,6 +206,9 @@ test('do not include dataclips in step:complete if output_dataclip is too big', 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
     [STEP_COMPLETE]: (evt: StepCompletePayload) => {
+      const clipId = state.inputDataclips['a'];
+      t.true(state.withheldDataclips[clipId])
+
       t.falsy(evt.output_dataclip_id);
       t.falsy(evt.output_dataclip);
       t.is(evt.output_dataclip_error, 'DATACLIP_TOO_LARGE');

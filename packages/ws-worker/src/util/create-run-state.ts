@@ -6,6 +6,7 @@ export default (plan: ExecutionPlan, input?: Lazy<State>): RunState => {
     lastDataclipId: '',
     dataclips: {},
     inputDataclips: {},
+    withheldDataclips: {},
     reasons: {},
     plan,
     input,

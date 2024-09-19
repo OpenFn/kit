@@ -60,6 +60,40 @@ test('send a step:start event', async (t) => {
   await handleStepStart({ channel, state } as any, event);
 });
 
+test('if the input dataclip was withheld, do not send it', async (t) => {
+  const plan = {
+    id: 'run-1',
+    workflow: {
+      steps: [
+        { id: 'job-1', expression: '.' },
+        { id: 'job-2', expression: '.' },
+      ],
+    },
+    options: {},
+  };
+  const input = 'abc';
+  const jobId = 'job-1';
+
+  const state = createRunState(plan, input);
+  state.activeJob = jobId;
+  state.activeStep = 'b';
+  
+  // register and withhold the dataclip
+  state.withheldDataclips['abc'] = true
+  state.inputDataclips[jobId] = 'abc';
+
+  const channel = mockChannel({
+    [STEP_START]: (evt) => {
+      t.falsy(evt.input_dataclip_id, input);
+      return true;
+    },
+    [RUN_LOG]: () => true,
+  });
+
+  const event = { jobId } as any;
+  await handleStepStart({ channel, state } as any, event);
+});
+
 test('should include a timestamp', async (t) => {
   const plan = {
     id: 'run-1',
