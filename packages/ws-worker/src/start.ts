@@ -5,7 +5,7 @@ import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
 
-const args = cli(process.argv);
+const args = chali(process.argv);
 
 const logger = createLogger('SRV', { level: args.log });
 
