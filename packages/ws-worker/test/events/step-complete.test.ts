@@ -190,7 +190,7 @@ test('do not include dataclips in step:complete if output_dataclip is false', as
   await handleStepComplete({ channel, state, options } as any, event);
 });
 
-test.only('do not include dataclips in step:complete if output_dataclip is too big', async (t) => {
+test('do not include dataclips in step:complete if output_dataclip is too big', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
   const result = { data: new Array(1024 * 1024 + 1).fill('z').join('') };
