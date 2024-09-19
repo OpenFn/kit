@@ -22,7 +22,7 @@ export default async function onStepStart(
     step_id: state.activeStep!,
     job_id: state.activeJob!,
     timestamp: timeInMicroseconds(event.time),
-  }
+  };
   if (!state.withheldDataclips[input_dataclip_id]) {
     evt.input_dataclip_id = input_dataclip_id;
   }

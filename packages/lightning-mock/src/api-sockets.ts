@@ -414,7 +414,7 @@ const createSocketAPI = (
         status: 'error',
         response: 'no job_id',
       };
-    } 
+    }
 
     ws.reply<StepStartReply>({
       ref,
