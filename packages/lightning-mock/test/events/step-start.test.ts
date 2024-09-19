@@ -95,7 +95,7 @@ test.serial('error if no job_id', async (t) => {
   });
 });
 
-test.serial('error if no input_dataclip_id', async (t) => {
+test.serial('no error if no input_dataclip_id', async (t) => {
   return new Promise(async (done) => {
     const run = createRun();
 
@@ -103,15 +103,15 @@ test.serial('error if no input_dataclip_id', async (t) => {
 
     const event = {
       job_id: 'a',
-      step_id: 'r:a',
-      input_dataclip_id: undefined,
+      step_id: 'r:a'
     };
 
     const channel = await join(client, run.id);
 
-    channel.push(STEP_START, event).receive('error', () => {
-      t.pass('event rejected');
+    channel.push(STEP_START, event).receive('ok', () => {
+      t.pass('event accepted');
       done();
     });
   });
 });
+
