@@ -181,6 +181,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
       try {
+        let start = Date.now();
         app.workflows[id] = true;
 
         const {
