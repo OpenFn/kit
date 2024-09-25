@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.6.5
+
+### Patch Changes
+
+- 5db5862: Dont log compiled job code
+- f581c6b: log duration of runs and server capacity
+- 3e6eba2: Trap errors coming out of the websocket
+  - @openfn/engine-multi@1.2.5
+
 ## 1.6.4
 
 ### Patch Changes

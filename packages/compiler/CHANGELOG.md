@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.3.3
+
+### Patch Changes
+
+- 5db5862: Dont log compiled job code
+
 ## 0.3.2
 
 ### Patch Changes

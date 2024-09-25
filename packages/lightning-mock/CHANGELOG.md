@@ -1,5 +1,11 @@
 # @openfn/lightning-mock
 
+## 2.0.19
+
+### Patch Changes
+
+- @openfn/engine-multi@1.2.5
+
 ## 2.0.18
 
 ### Patch Changes

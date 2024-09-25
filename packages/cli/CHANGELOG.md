@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.8.4
+
+### Patch Changes
+
+- 5db5862: Dont log compiled job code
+- Updated dependencies [5db5862]
+  - @openfn/compiler@0.3.3
+
 ## 1.8.3
 
 ### Patch Changes
