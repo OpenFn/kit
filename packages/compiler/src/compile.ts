@@ -14,6 +14,7 @@ const defaultLogger = createLogger();
 
 export type Options = TransformOptions & {
   logger?: Logger;
+  logCompiledSource?: boolean;
 };
 
 export default function compile(pathOrSource: string, options: Options = {}) {
@@ -31,8 +32,10 @@ export default function compile(pathOrSource: string, options: Options = {}) {
   const transformedAst = transform(ast, undefined, options);
 
   const compiledSource = print(transformedAst).code;
-  logger.debug('Compiled source:');
-  logger.debug(compiledSource); // TODO indent or something
+  if (options.logCompiledSource) {
+    logger.debug('Compiled source:');
+    logger.debug(compiledSource); // TODO indent or something
+  }
 
   return compiledSource;
 }
