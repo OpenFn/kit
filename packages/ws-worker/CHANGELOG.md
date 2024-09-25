@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.6.6
+
+### Patch Changes
+
+- Log claim event duration
+
 ## 1.6.5
 
 ### Patch Changes
