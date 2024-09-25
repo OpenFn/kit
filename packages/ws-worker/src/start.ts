@@ -9,6 +9,8 @@ const args = cli(process.argv);
 
 const logger = createLogger('SRV', { level: args.log });
 
+logger.info('Starting worker server...');
+
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';
   if (!args.secret) {
@@ -25,7 +27,7 @@ const [minBackoff, maxBackoff] = args.backoff
   .map((n: string) => parseInt(n, 10) * 1000);
 
 function engineReady(engine: any) {
-  logger.debug('Creating worker server...');
+  logger.debug('Creating worker instance');
 
   const workerOptions: ServerOptions = {
     port: args.port,
@@ -61,6 +63,7 @@ function engineReady(engine: any) {
   logger.debug('Worker options:', humanOptions);
 
   createWorker(engine, workerOptions);
+  logger.success('Worker started OK');
 }
 
 if (args.mock) {

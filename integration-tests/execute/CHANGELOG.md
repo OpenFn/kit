@@ -1,5 +1,12 @@
 # @openfn/integration-tests-execute
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [5db5862]
+  - @openfn/compiler@0.3.3
+
 ## 1.0.4
 
 ### Patch Changes
