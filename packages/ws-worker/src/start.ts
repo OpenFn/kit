@@ -4,10 +4,13 @@ import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
+import { execSync } from 'node:child_process';
 
 const args = cli(process.argv);
 
 const logger = createLogger('SRV', { level: args.log });
+
+logger.info('Starting worker...')
 
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';
@@ -25,7 +28,7 @@ const [minBackoff, maxBackoff] = args.backoff
   .map((n: string) => parseInt(n, 10) * 1000);
 
 function engineReady(engine: any) {
-  logger.debug('Creating worker server...');
+  logger.debug('Initing worker...');
 
   const workerOptions: ServerOptions = {
     port: args.port,
@@ -61,6 +64,22 @@ function engineReady(engine: any) {
   logger.debug('Worker options:', humanOptions);
 
   createWorker(engine, workerOptions);
+
+  logger.success('Worker started OK')
+}
+
+if (args.wipeEnv) {
+  try {
+    const out = execSync('unset WORKER_SECRET')
+    console.log(out.toString())
+    logger.success('Succesfully unset WORKER_SECRET')
+
+    const out2 = execSync('echo $WORKER_SECRET')
+    console.log(out2.toString())
+  } catch (e) {
+    logger.warn('WARNING: failed to unset WORKER_SECRET env var');
+    logger.warn(e);
+  }
 }
 
 if (args.mock) {

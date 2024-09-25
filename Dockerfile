@@ -25,4 +25,4 @@ WORKDIR /app/packages/ws-worker
 # ------------------------------------------------------------------------------
 
 EXPOSE 2222
-CMD [ "node", "./dist/start.js"]
+CMD [ "npm", "start:prod"]

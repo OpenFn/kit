@@ -23,6 +23,7 @@ type Args = {
   statePropsToRemove?: string[];
   maxRunDurationSeconds: number;
   socketTimeoutSeconds?: number;
+  wipeEnv?: boolean;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -129,6 +130,12 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
+    })
+    .option('wipe-env', {
+      description:
+        'Remove the worker secret from the env after the server has started.',
+      type: 'boolean',
+      default: false,
     })
     .option('max-run-duration-seconds', {
       alias: 't',
