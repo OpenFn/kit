@@ -214,11 +214,11 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         );
 
         app.workflows[id] = context;
-      } catch(e) {
+      } catch (e) {
         // Trap errors coming out of the socket
         // These are likely to be comms errors with Lightning
-        logger.error(`Unexpected error executing ${id}`)
-        logger.error(e)
+        logger.error(`Unexpected error executing ${id}`);
+        logger.error(e);
       }
     } else {
       logger.error('No lightning socket established');
