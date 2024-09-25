@@ -198,7 +198,10 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {
-          logger.debug(`workflow ${id} complete: releasing worker`);
+          const duration = (Date.now() - start) / 1000;
+          logger.debug(
+            `workflow ${id} complete in ${duration}s: releasing worker`
+          );
           delete app.workflows[id];
           runChannel.leave();
 
