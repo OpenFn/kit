@@ -35,10 +35,12 @@ const claim = (
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
-      logger.debug(`skipping claim attempt: server at capacity (${activeWorkers}/${maxWorkers})`);
+      logger.debug(
+        `skipping claim attempt: server at capacity (${activeWorkers}/${maxWorkers})`
+      );
       return reject(new Error('Server at capacity'));
     }
-    
+
     if (!app.queueChannel) {
       logger.debug('skipping claim attempt: websocket unavailable');
       return reject(new Error('No websocket available'));
