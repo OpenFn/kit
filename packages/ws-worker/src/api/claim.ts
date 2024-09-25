@@ -47,17 +47,15 @@ const claim = (
     }
     logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
 
-    const start = Date.now()
+    const start = Date.now();
     app.queueChannel
       .push<ClaimPayload>(CLAIM, { demand: 1 })
       .receive('ok', ({ runs }: ClaimReply) => {
         const duration = Date.now() - start;
         logger.debug(
           `claimed ${runs.length} runs in ${duration}ms (${
-            runs.length ? 
-            runs.map((r) => r.id).join(',')
-            : '-'
-          })`,
+            runs.length ? runs.map((r) => r.id).join(',') : '-'
+          })`
         );
         // TODO what if we get here after we've been cancelled?
         // the events have already been claimed...
