@@ -35,7 +35,9 @@ const claim = (
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
-      logger.debug('skipping claim attempt: server at capacity');
+      logger.debug(
+        `skipping claim attempt: server at capacity (${activeWorkers}/${maxWorkers})`
+      );
       return reject(new Error('Server at capacity'));
     }
 
@@ -43,8 +45,8 @@ const claim = (
       logger.debug('skipping claim attempt: websocket unavailable');
       return reject(new Error('No websocket available'));
     }
+    logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
 
-    logger.debug('requesting run...');
     app.queueChannel
       .push<ClaimPayload>(CLAIM, { demand: 1 })
       .receive('ok', ({ runs }: ClaimReply) => {
