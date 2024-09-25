@@ -180,42 +180,46 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
-      app.workflows[id] = true;
+      try {
+        app.workflows[id] = true;
 
-      // TODO if we fail to join the run channel, the whole server
-      //     will crash. Really we should just abort the run somehow
-      //     Maybe even soft shutdown the worker
-      const {
-        channel: runChannel,
-        plan,
-        options = {},
-        input,
-      } = await joinRunChannel(app.socket, token, id, logger);
+        const {
+          channel: runChannel,
+          plan,
+          options = {},
+          input,
+        } = await joinRunChannel(app.socket, token, id, logger);
 
-      // Default the payload limit if it's not otherwise set on the run options
-      if (!('payloadLimitMb' in options)) {
-        options.payloadLimitMb = app.options.payloadLimitMb;
+        // Default the payload limit if it's not otherwise set on the run options
+        if (!('payloadLimitMb' in options)) {
+          options.payloadLimitMb = app.options.payloadLimitMb;
+        }
+
+        // Callback to be triggered when the work is done (including errors)
+        const onFinish = () => {
+          logger.debug(`workflow ${id} complete: releasing worker`);
+          delete app.workflows[id];
+          runChannel.leave();
+
+          app.events.emit(INTERNAL_RUN_COMPLETE);
+        };
+        const context = execute(
+          runChannel,
+          engine,
+          logger,
+          plan,
+          input,
+          options,
+          onFinish
+        );
+
+        app.workflows[id] = context;
+      } catch(e) {
+        // Trap errors coming out of the socket
+        // These are likely to be comms errors with Lightning
+        logger.error(`Unexpected error executing ${id}`)
+        logger.error(e)
       }
-
-      // Callback to be triggered when the work is done (including errors)
-      const onFinish = () => {
-        logger.debug(`workflow ${id} complete: releasing worker`);
-        delete app.workflows[id];
-        runChannel.leave();
-
-        app.events.emit(INTERNAL_RUN_COMPLETE);
-      };
-      const context = execute(
-        runChannel,
-        engine,
-        logger,
-        plan,
-        input,
-        options,
-        onFinish
-      );
-
-      app.workflows[id] = context;
     } else {
       logger.error('No lightning socket established');
       // TODO something else. Throw? Emit?
