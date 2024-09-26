@@ -44,9 +44,11 @@ const startWorkloop = (
 
   return {
     stop: (reason = 'reason unknown') => {
-      logger.info(`cancelling workloop: ${reason}`);
-      cancelled = true;
-      promise.cancel();
+      if (!cancelled) {
+        logger.info(`cancelling workloop: ${reason}`);
+        cancelled = true;
+        promise.cancel();
+      }
     },
     isStopped: () => cancelled
   }

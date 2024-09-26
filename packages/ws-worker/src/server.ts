@@ -100,7 +100,9 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // We were disconnected from the queue
   const onDisconnect = () => {
-    app.workloop?.stop('Socket disconnected unexpectedly')
+    if (!app.workloop?.isStopped()) {
+      app.workloop?.stop('Socket disconnected unexpectedly')
+    }
     if (!app.destroyed) {
       logger.info('Connection to lightning lost');
       logger.info(

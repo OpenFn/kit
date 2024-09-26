@@ -11,7 +11,6 @@ const mockLogger = createMockLogger();
 
 const verifyToken = async (token: string, publicKey: string) => {
   const key = crypto.createPublicKey(publicKey);
-
   const { payload } = await jose.jwtVerify(token, key, {
     issuer: 'Lightning',
   });
