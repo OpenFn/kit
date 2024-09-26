@@ -69,7 +69,6 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const runPrivateKey = options.runPrivateKey
     ? fromBase64(options.runPrivateKey)
     : undefined;
-
   const state = {
     credentials: {},
     runs: {},
