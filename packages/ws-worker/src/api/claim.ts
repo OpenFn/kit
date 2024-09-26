@@ -35,9 +35,8 @@ const claim = (
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
-      logger.debug(
-        `skipping claim attempt: server at capacity (${activeWorkers}/${maxWorkers})`
-      );
+      // Important: stop the workloop so that we don't try and claim any more
+      app.workloop?.stop(`server at capacity (${activeWorkers}/${maxWorkers})`);
       return reject(new Error('Server at capacity'));
     }
 
