@@ -6,32 +6,36 @@ import { mockChannel } from '../../src/mock/sockets';
 import startWorkloop from '../../src/api/workloop';
 import { CLAIM } from '../../src/events';
 
-let cancel: any;
+let workloop: any;
 
 const logger = createMockLogger();
 
 test.afterEach(() => {
-  cancel?.(); // cancel any workloops
+  workloop?.stop(); // cancel any workloops
 });
 
 test('workloop can be cancelled', async (t) => {
   let count = 0;
+  
   const app = {
+    workflows: {},
     queueChannel: mockChannel({
       [CLAIM]: () => {
         count++;
-        cancel();
+        workloop.stop();
         return { runs: [] };
       },
     }),
     execute: () => {},
   };
 
-  cancel = startWorkloop(app as any, logger, 1, 1);
+  workloop = startWorkloop(app as any, logger, 1, 1);
+  t.false(workloop.isStopped())
 
   await sleep(100);
   // A quirk of how cancel works is that the loop will be called a few times
-  t.assert(count <= 5);
+  t.true(count <= 5);
+  t.true(workloop.isStopped())
 });
 
 test('workloop sends the runs:claim event', (t) => {
@@ -47,7 +51,7 @@ test('workloop sends the runs:claim event', (t) => {
       }),
       execute: () => {},
     };
-    cancel = startWorkloop(app as any, logger, 1, 1);
+    workloop = startWorkloop(app as any, logger, 1, 1);
   });
 });
 
@@ -68,7 +72,7 @@ test('workloop sends the runs:claim event several times ', (t) => {
       }),
       execute: () => {},
     };
-    cancel = startWorkloop(app as any, logger, 1, 1);
+    workloop = startWorkloop(app as any, logger, 1, 1);
   });
 });
 
@@ -88,6 +92,6 @@ test('workloop calls execute if runs:claim returns runs', (t) => {
       },
     };
 
-    cancel = startWorkloop(app as any, logger, 1, 1);
+    workloop = startWorkloop(app as any, logger, 1, 1);
   });
 });
