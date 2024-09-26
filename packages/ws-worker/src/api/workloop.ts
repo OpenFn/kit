@@ -8,7 +8,7 @@ import type { Logger } from '@openfn/logger';
 export type Workloop = {
   stop: (reason?: string) => void;
   isStopped: () => boolean;
-}
+};
 
 const startWorkloop = (
   app: ServerApp,
@@ -50,8 +50,8 @@ const startWorkloop = (
         promise.cancel();
       }
     },
-    isStopped: () => cancelled
-  }
+    isStopped: () => cancelled,
+  };
 };
 
 export default startWorkloop;

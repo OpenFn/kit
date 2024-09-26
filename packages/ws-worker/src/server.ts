@@ -95,13 +95,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       logger.break();
     }
 
-    app.resumeWorkloop()
+    app.resumeWorkloop();
   };
 
   // We were disconnected from the queue
   const onDisconnect = () => {
     if (!app.workloop?.isStopped()) {
-      app.workloop?.stop('Socket disconnected unexpectedly')
+      app.workloop?.stop('Socket disconnected unexpectedly');
     }
     if (!app.destroyed) {
       logger.info('Connection to lightning lost');
@@ -186,7 +186,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         options.maxWorkflows
       );
     }
-  }
+  };
 
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {

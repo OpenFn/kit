@@ -32,7 +32,7 @@ const server = createLightningServer({
   port: args.port,
   logger,
   logLevel: args.log,
-  runPrivateKey: process.env.WORKER_RUNS_PRIVATE_KEY
+  runPrivateKey: process.env.WORKER_RUNS_PRIVATE_KEY,
 });
 
 // add a default credential
