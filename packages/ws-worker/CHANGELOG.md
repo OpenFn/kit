@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.6.7
+
+### Patch Changes
+
+- 42883f8: Better handliung of claim backoffs when at capacity
+
 ## 1.6.6
 
 ### Patch Changes
