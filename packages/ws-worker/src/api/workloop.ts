@@ -5,13 +5,18 @@ import type { ServerApp } from '../server';
 import type { CancelablePromise } from '../types';
 import type { Logger } from '@openfn/logger';
 
+export type Workloop = {
+  stop: (reason?: string) => void;
+  isStopped: () => boolean;
+};
+
 const startWorkloop = (
   app: ServerApp,
   logger: Logger,
   minBackoff: number,
   maxBackoff: number,
   maxWorkers?: number
-) => {
+): Workloop => {
   let promise: CancelablePromise;
   let cancelled = false;
 
@@ -37,11 +42,15 @@ const startWorkloop = (
   };
   workLoop();
 
-  return () => {
-    logger.debug('cancelling workloop');
-    cancelled = true;
-    promise.cancel();
-    app.queueChannel?.leave();
+  return {
+    stop: (reason = 'reason unknown') => {
+      if (!cancelled) {
+        logger.info(`cancelling workloop: ${reason}`);
+        cancelled = true;
+        promise.cancel();
+      }
+    },
+    isStopped: () => cancelled,
   };
 };
 

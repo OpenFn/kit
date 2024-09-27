@@ -8,7 +8,7 @@ import { createMockLogger, Logger } from '@openfn/logger';
 import { ClaimRun } from '@openfn/lexicon/lightning';
 import { INTERNAL_RUN_COMPLETE } from './events';
 import destroy from './api/destroy';
-import startWorkloop from './api/workloop';
+import startWorkloop, { Workloop } from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import healthcheck from './middleware/healthcheck';
@@ -49,10 +49,11 @@ export interface ServerApp extends Koa {
   server: Server;
   engine: RuntimeEngine;
   options: ServerOptions;
+  workloop?: Workloop;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
-  killWorkloop?: () => void;
+  resumeWorkloop: () => void;
 }
 
 type SocketAndChannel = {
@@ -83,17 +84,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     app.queueChannel = channel;
 
     // trigger the workloop
-    if (!options.noLoop) {
-      logger.info('Starting workloop');
-      // TODO maybe namespace the workloop logger differently? It's a bit annoying
-      app.killWorkloop = startWorkloop(
-        app,
-        logger,
-        options.backoff?.min || MIN_BACKOFF,
-        options.backoff?.max || MAX_BACKOFF,
-        options.maxWorkflows
-      );
-    } else {
+    if (options.noLoop) {
       // @ts-ignore
       const port = app.server?.address().port;
       logger.break();
@@ -103,20 +94,21 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       logger.info(`  curl -X POST http://localhost:${port}/claim`);
       logger.break();
     }
+
+    app.resumeWorkloop();
   };
 
   // We were disconnected from the queue
   const onDisconnect = () => {
-    if (app.killWorkloop) {
-      app.killWorkloop();
-      delete app.killWorkloop;
-      if (!app.destroyed) {
-        logger.info('Connection to lightning lost');
-        logger.info(
-          'Worker will automatically reconnect when lightning is back online'
-        );
-        // So far as I know, the socket will try and reconnect in the background forever
-      }
+    if (!app.workloop?.isStopped()) {
+      app.workloop?.stop('Socket disconnected unexpectedly');
+    }
+    if (!app.destroyed) {
+      logger.info('Connection to lightning lost');
+      logger.info(
+        'Worker will automatically reconnect when lightning is back online'
+      );
+      // So far as I know, the socket will try and reconnect in the background forever
     }
   };
 
@@ -177,6 +169,25 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.options = options;
 
+  // Start the workloop (if not already started)
+  app.resumeWorkloop = () => {
+    if (options.noLoop) {
+      return;
+    }
+
+    if (!app.workloop || app.workloop?.isStopped()) {
+      logger.info('Starting workloop');
+      // TODO maybe namespace the workloop logger differently? It's a bit annoying
+      app.workloop = startWorkloop(
+        app,
+        logger,
+        options.backoff?.min || MIN_BACKOFF,
+        options.backoff?.max || MAX_BACKOFF,
+        options.maxWorkflows
+      );
+    }
+  };
+
   // TODO this probably needs to move into ./api/ somewhere
   app.execute = async ({ id, token }: ClaimRun) => {
     if (app.socket) {
@@ -206,6 +217,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           runChannel.leave();
 
           app.events.emit(INTERNAL_RUN_COMPLETE);
+
+          app.resumeWorkloop();
         };
         const context = execute(
           runChannel,

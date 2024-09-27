@@ -8,7 +8,6 @@ export const generateRunToken = async (
   if (privateKey) {
     try {
       const alg = 'RS256';
-
       const key = crypto.createPrivateKey(privateKey);
 
       const jwt = await new jose.SignJWT({ id: runId })

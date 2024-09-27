@@ -14,7 +14,7 @@ const destroy = async (app: ServerApp, logger: Logger) => {
       app.destroyed = true;
 
       // Immediately stop asking for more work
-      app.killWorkloop?.();
+      app.workloop?.stop('server closed');
       app.queueChannel?.leave();
 
       // Shut down the HTTP server
