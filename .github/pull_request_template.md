@@ -2,8 +2,6 @@
 
 A one or two-sentence description of what this PR does.
 
-## Related issue
-
 Fixes #
 
 ## Implementation Details
@@ -14,12 +12,19 @@ A more detailed breakdown of the changes, including motivations (if not provided
 
 List any considerations/cases/advice for testing/QA here.
 
-## Checklist before requesting a review
+## AI Usage
 
-- [ ] I have performed a self-review of my code
-- [ ] I have added unit tests
-- [ ] If this is a change to the Worker, does the API_VERSION need bumping?
-- [ ] Changesets have been added (if there are production code changes)
+Please disclose how you've used AI in this work (it's cool, we just want to know!):
+
+- [ ] Code generation (copilot but not intellisense)
+- [ ] Learning or fact checking
+- [ ] Strategy / design
+- [ ] Optimisation / refactoring
+- [ ] Translation / spellchecking / doc gen
+- [ ] Other
+- [ ] I have not used AI
+
+You can read more details in our [Responsible AI Policy](https://www.openfn.org/ai#pull-request-templates)
 
 ## Release branch checklist
 
