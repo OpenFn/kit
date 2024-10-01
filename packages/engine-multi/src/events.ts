@@ -86,6 +86,7 @@ export interface JobCompletePayload extends ExternalEvent {
 export interface JobErrorPayload extends ExternalEvent {
   jobId: string;
   duration: number;
+  time: bigint;
   state: any; // the result state
   error: any;
   next: string[]; // downstream jobs

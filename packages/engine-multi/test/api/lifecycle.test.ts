@@ -9,6 +9,7 @@ import {
   jobStart,
   jobComplete,
   error,
+  jobError,
 } from '../../src/api/lifecycle';
 import { WorkflowState } from '../../src/types';
 import ExecutionContext from '../../src/classes/ExecutionContext';
@@ -191,6 +192,49 @@ test(`job-complete: emits ${e.JOB_COMPLETE} with key fields`, (t) => {
     });
 
     jobComplete(context, event);
+  });
+});
+
+test(`job-error: emits ${e.JOB_ERROR} with key fields`, (t) => {
+  return new Promise((done) => {
+    const workflowId = 'a';
+
+    const state = {
+      id: workflowId,
+      startTime: Date.now() - 1000,
+    } as WorkflowState;
+
+    const context = createContext(workflowId, state);
+
+    const event: w.JobErrorEvent = {
+      type: w.JOB_ERROR,
+      error: {
+        message: 'Unexpected content returned',
+        name: 'JobError',
+        severity: 'fail',
+      },
+      workflowId,
+      threadId: '1',
+      jobId: 'j',
+      duration: 2,
+      state: 22,
+      next: [],
+    };
+
+    context.on(e.JOB_ERROR, (evt) => {
+      t.is(evt.workflowId, workflowId);
+      t.is(evt.threadId, '1');
+      t.is(evt.jobId, 'j');
+      t.is(evt.state, 22);
+      t.is(evt.duration, 2);
+      t.deepEqual(evt.next, []);
+      t.deepEqual(evt.error, event.error);
+      t.assert(evt.time > 0);
+      t.assert(typeof evt.time === 'bigint');
+      done();
+    });
+
+    jobError(context, event);
   });
 });
 
