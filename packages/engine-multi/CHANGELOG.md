@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.3.0
+
+### Minor Changes
+
+- ae55a6a: Include timestamp on JOB_ERROR payload
+
 ## 1.2.5
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.7.0
+
+### Minor Changes
+
+- ae55a6a: Include timestamp on step complete even if the step failed
+
+### Patch Changes
+
+- Updated dependencies [ae55a6a]
+  - @openfn/engine-multi@1.3.0
+
 ## 1.6.7
 
 ### Patch Changes
