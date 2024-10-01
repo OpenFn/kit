@@ -120,6 +120,7 @@ export const jobError = (
     duration,
     jobId,
     next,
+    time: timestamp(),
   });
 };
 
