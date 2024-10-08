@@ -3,6 +3,7 @@ import { hideBin } from 'yargs/helpers';
 
 import apolloCommand from './apollo/command';
 import compileCommand from './compile/command';
+import configurationCommand from './configuration/command';
 import deployCommand from './deploy/command';
 import docgenCommand from './docgen/command';
 import docsCommand from './docs/command';
@@ -25,6 +26,7 @@ export const cmd = y
   .command(testCommand)
   .command(docsCommand)
   .command(apolloCommand)
+  .command(configurationCommand)
   .command(metadataCommand as any)
   .command(docgenCommand as any)
   .command(pullCommand as any)
