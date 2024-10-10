@@ -27,6 +27,10 @@ export type Trigger = {
   type?: string;
   cron_expression?: string;
   delete?: boolean;
+  hosts?: string[];
+  topics?: string[];
+  initial_offset_reset_policy?: string;
+  connect_timeout?: number;
   enabled?: boolean;
 };
 
