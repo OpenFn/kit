@@ -8,6 +8,7 @@ import {
   SpecEdge,
   SpecJobBody,
   StateEdge,
+  StateKafkaHost,
   WorkflowSpec,
   WorkflowState,
 } from './types';
@@ -28,6 +29,24 @@ function stringifyJobBody(body: SpecJobBody): string {
   } else {
     return body;
   }
+}
+
+function transformSpecKafkaHost(hosts: string[]): StateKafkaHost[] {
+  function isValidHost(value: string): boolean {
+    const regex = /^([a-zA-Z0-9.-]+):(\d+)$/;
+    return regex.test(value);
+  }
+
+  return hosts.map((host) => {
+    if (!isValidHost(host)) {
+      throw new DeployError(
+        `Kafka host must be specified in the format host:port, found: ${host}`,
+        'VALIDATION_ERROR'
+      );
+    }
+    const [hostname, port] = host.split(':');
+    return [hostname, port];
+  });
 }
 
 function getStateJobCredential(
@@ -130,6 +149,16 @@ function mergeTriggers(
               ...(specTrigger.type === 'cron'
                 ? { cron_expression: specTrigger.cron_expression }
                 : {}),
+              ...(specTrigger.type === 'kafka'
+                ? {
+                    kafka_configuration: {
+                      ...specTrigger.kafka_configuration,
+                      hosts: transformSpecKafkaHost(
+                        specTrigger.kafka_configuration?.hosts ?? []
+                      ),
+                    },
+                  }
+                : {}),
             },
           ];
         }
@@ -148,6 +177,16 @@ function mergeTriggers(
               enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
               ...(specTrigger!.type === 'cron'
                 ? { cron_expression: specTrigger!.cron_expression }
+                : {}),
+              ...(specTrigger!.type === 'kafka'
+                ? {
+                    kafka_configuration: {
+                      ...specTrigger!.kafka_configuration,
+                      hosts: transformSpecKafkaHost(
+                        specTrigger!.kafka_configuration?.hosts ?? []
+                      ),
+                    },
+                  }
                 : {}),
             },
           },

@@ -22,16 +22,36 @@ export type SpecJob = {
   credential: string | null;
 };
 
-export type Trigger = {
-  id?: string;
-  type?: string;
+export type StateKafkaHost = [string, string];
+
+export type StateKafkaConfiguration = {
+  hosts: StateKafkaHost[];
+  topics: string[];
+  initial_offset_reset_policy: string;
+  connect_timeout: number;
+};
+
+export type SpecKafkaConfiguration = {
+  hosts: string[];
+  topics: string[];
+  initial_offset_reset_policy: string;
+  connect_timeout: number;
+};
+
+export type SpecTrigger = {
+  type: string;
+  cron_expression?: string;
+  enabled?: boolean;
+  kafka_configuration?: SpecKafkaConfiguration;
+};
+
+export type StateTrigger = {
+  id: string;
+  type: string;
   cron_expression?: string;
   delete?: boolean;
-  hosts?: string[];
-  topics?: string[];
-  initial_offset_reset_policy?: string;
-  connect_timeout?: number;
   enabled?: boolean;
+  kafka_configuration?: StateKafkaConfiguration;
 };
 
 export type StateEdge = {
@@ -59,7 +79,7 @@ export type WorkflowSpec = {
   id?: string;
   name: string;
   jobs?: Record<string | symbol, SpecJob>;
-  triggers?: Record<string | symbol, Trigger>;
+  triggers?: Record<string | symbol, SpecTrigger>;
   edges?: Record<string | symbol, SpecEdge>;
 };
 
@@ -85,7 +105,7 @@ export interface WorkflowState {
   id: string;
   name: string;
   jobs: Record<string | symbol, Concrete<StateJob>>;
-  triggers: Record<string | symbol, Concrete<Trigger>>;
+  triggers: Record<string | symbol, Concrete<StateTrigger>>;
   edges: Record<string | symbol, Concrete<StateEdge>>;
   delete?: boolean;
   project_id?: string;
@@ -113,7 +133,7 @@ export interface ProjectPayload {
     name: string;
     project_id?: string;
     jobs: Concrete<StateJob>[];
-    triggers: Concrete<Trigger>[];
+    triggers: Concrete<StateTrigger>[];
     edges: Concrete<StateEdge>[];
   }[];
 }
