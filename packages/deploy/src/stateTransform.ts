@@ -141,7 +141,7 @@ function mergeTriggers(
     splitZip(stateTriggers, specTriggers!).map(
       ([triggerKey, stateTrigger, specTrigger]) => {
         if (specTrigger && !stateTrigger) {
-          const trigger = {
+          const trigger: any = {
             id: crypto.randomUUID(),
             ...pickKeys(specTrigger, ['type', 'enabled']),
           };
@@ -154,7 +154,7 @@ function mergeTriggers(
             trigger.kafka_configuration = {
               ...specTrigger.kafka_configuration,
               hosts: transformSpecKafkaHost(
-                specTrigger.kafka_configuration?.hosts ?? []
+                specTrigger.kafka_configuration?.hosts
               ),
             };
           }
@@ -167,7 +167,7 @@ function mergeTriggers(
         }
 
         // prefer spec, but use state if spec is missing, or default
-        const trigger = {
+        const trigger: any = {
           id: stateTrigger!.id,
           type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
           enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
