@@ -168,6 +168,7 @@ function mergeTriggers(
 
         // prefer spec, but use state if spec is missing, or default
         const trigger = {
+          id: stateTrigger!.id,
           type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
           enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
         };
