@@ -352,6 +352,85 @@ test('toNextState removing a job and edge', (t) => {
   t.deepEqual(result, existingState);
 });
 
+test('toNextState with for kafka trigger', (t) => {
+  const state = { workflows: {} };
+  const spec = {
+    name: 'my project',
+    description: 'for the humans',
+    workflows: {
+      dummyWorkflow: {
+        name: 'workflow one',
+        jobs: {
+          'new-job': {
+            name: 'new job',
+            adaptor: '@openfn/language-adaptor',
+            body: 'foo()',
+          },
+        },
+        triggers: {
+          kafka: {
+            type: 'kafka',
+            enabled: true,
+            kafka_configuration: {
+              hosts: ['localhost:9092'],
+              topics: ['test'],
+              connect_timeout: 30,
+              initial_offset_reset_policy: 'earliest',
+            },
+          },
+        },
+        edges: {},
+      },
+    },
+  };
+
+  let result = mergeSpecIntoState(state, spec);
+
+  let expectedHosts = [['localhost', '9092']];
+
+  t.deepEqual(
+    result.workflows.dummyWorkflow.triggers.kafka.kafka_configuration.hosts,
+    expectedHosts
+  );
+
+  // deploy error is raised when host is incorrect
+  const badHosts = ['localhost', 'http://localhost:9092'];
+  badHosts.forEach((badHost) => {
+    const badSpec = {
+      name: 'my project',
+      description: 'for the humans',
+      workflows: {
+        dummyWorkflow: {
+          name: 'workflow one',
+          jobs: {},
+          edges: {},
+          triggers: {
+            kafka: {
+              type: 'kafka',
+              enabled: true,
+              kafka_configuration: {
+                hosts: [badHost],
+                topics: ['test'],
+                connect_timeout: 30,
+                initial_offset_reset_policy: 'earliest',
+              },
+            },
+          },
+        },
+      },
+    };
+
+    t.throws(
+      () => {
+        mergeSpecIntoState({ workflows: {} }, badSpec);
+      },
+      {
+        message: `Kafka host must be specified in the format host:port, found: ${badHost}`,
+      }
+    );
+  });
+});
+
 test('mergeProjectIntoState with no changes', (t) => {
   let existingState = fullExampleState();
   const workflowOne = existingState.workflows['workflow-one'];

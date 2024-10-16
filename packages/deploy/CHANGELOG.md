@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.8.0
+
+### Minor Changes
+
+- 7c96d79: Support Kafka trigger type in CLI
+
 ## 0.7.1
 
 ### Patch Changes
