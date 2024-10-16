@@ -31,9 +31,9 @@ function stringifyJobBody(body: SpecJobBody): string {
   }
 }
 
-function transformSpecKafkaHost(hosts: string[]): StateKafkaHost[] {
+function transformSpecKafkaHost(hosts: string[] = []): StateKafkaHost[] {
   function isValidHost(value: string): boolean {
-    const regex = /^([a-zA-Z0-9.-]+):(\d+)$/;
+    const regex = /^[^:]+:\d+$/;
     return regex.test(value);
   }
 
@@ -141,26 +141,25 @@ function mergeTriggers(
     splitZip(stateTriggers, specTriggers!).map(
       ([triggerKey, stateTrigger, specTrigger]) => {
         if (specTrigger && !stateTrigger) {
-          return [
-            triggerKey,
-            {
-              id: crypto.randomUUID(),
-              ...pickKeys(specTrigger, ['type', 'enabled']),
-              ...(specTrigger.type === 'cron'
-                ? { cron_expression: specTrigger.cron_expression }
-                : {}),
-              ...(specTrigger.type === 'kafka'
-                ? {
-                    kafka_configuration: {
-                      ...specTrigger.kafka_configuration,
-                      hosts: transformSpecKafkaHost(
-                        specTrigger.kafka_configuration?.hosts ?? []
-                      ),
-                    },
-                  }
-                : {}),
-            },
-          ];
+          const trigger = {
+            id: crypto.randomUUID(),
+            ...pickKeys(specTrigger, ['type', 'enabled']),
+          };
+
+          if (specTrigger.type === 'cron') {
+            trigger.cron_expression = specTrigger.cron_expression;
+          }
+
+          if (specTrigger.type === 'kafka') {
+            trigger.kafka_configuration = {
+              ...specTrigger.kafka_configuration,
+              hosts: transformSpecKafkaHost(
+                specTrigger.kafka_configuration?.hosts ?? []
+              ),
+            };
+          }
+
+          return [triggerKey, trigger];
         }
 
         if (!specTrigger && stateTrigger) {
@@ -168,29 +167,25 @@ function mergeTriggers(
         }
 
         // prefer spec, but use state if spec is missing, or default
-        return [
-          triggerKey,
-          {
-            id: stateTrigger!.id,
-            ...{
-              type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
-              enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
-              ...(specTrigger!.type === 'cron'
-                ? { cron_expression: specTrigger!.cron_expression }
-                : {}),
-              ...(specTrigger!.type === 'kafka'
-                ? {
-                    kafka_configuration: {
-                      ...specTrigger!.kafka_configuration,
-                      hosts: transformSpecKafkaHost(
-                        specTrigger!.kafka_configuration?.hosts ?? []
-                      ),
-                    },
-                  }
-                : {}),
-            },
-          },
-        ];
+        const trigger = {
+          type: pickValue(specTrigger!, stateTrigger!, 'type', 'webhook'),
+          enabled: pickValue(specTrigger!, stateTrigger!, 'enabled', true),
+        };
+
+        if (specTrigger!.type === 'cron') {
+          trigger.cron_expression = specTrigger!.cron_expression;
+        }
+
+        if (specTrigger!.type === 'kafka') {
+          trigger.kafka_configuration = {
+            ...specTrigger!.kafka_configuration,
+            hosts: transformSpecKafkaHost(
+              specTrigger!.kafka_configuration?.hosts ?? []
+            ),
+          };
+        }
+
+        return [triggerKey, trigger];
       }
     )
   );
