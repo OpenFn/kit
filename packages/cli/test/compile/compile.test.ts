@@ -20,10 +20,10 @@ const expressionPath = '/job.js';
 type TransformOptionsWithImports = {
   ['add-imports']: {
     ignore: true | string[];
-    adaptor: {
+    adaptors: Array<{
       name: string;
       exports: string[];
-    };
+    }>;
   };
 };
 
@@ -234,7 +234,7 @@ test.serial(
     t.truthy(result['add-imports']);
 
     // Should describe the exports of the times-two module
-    const { name, exports } = result['add-imports'].adaptor;
+    const [{ name, exports }] = result['add-imports'].adaptors;
     t.assert(name === 'times-two');
     t.assert(exports.includes('byTwo'));
   }
@@ -257,7 +257,7 @@ test.serial(
     t.truthy(result['add-imports']);
 
     // Should describe the exports of the times-two module
-    const { name, exports } = result['add-imports'].adaptor;
+    const [{ name, exports }] = result['add-imports'].adaptors;
     t.assert(name === 'times-two');
     t.assert(exports.includes('byTwo'));
   }
@@ -282,7 +282,7 @@ test.serial(
     t.truthy(result['add-imports']);
 
     // Should describe the exports of the times-two module
-    const { name, exports } = result['add-imports'].adaptor;
+    const [{ name, exports }] = result['add-imports'].adaptors;
     t.assert(name === 'times-two');
     t.assert(exports.includes('byTwo'));
   }
