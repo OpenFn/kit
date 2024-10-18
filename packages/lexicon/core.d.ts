@@ -27,7 +27,7 @@ export type Workflow = {
  * This is some openfn expression plus metadata (adaptor, credentials)
  */
 export interface Job extends Step {
-  adaptors?: string[];
+  adaptors: string[];
   expression: Expression;
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
@@ -42,6 +42,16 @@ export interface Job extends Step {
       version?: string;
     }
   >;
+}
+
+/**
+ * Defines an older style job from when we only supported a single adaptor
+ * And mostly we still do, so we want to support the simple adaptor property
+ * rather than just adaptors
+ * Internally, this will be mapped
+ */
+export interface LegacyJob extends Job {
+  adaptor?: string;
 }
 
 /**

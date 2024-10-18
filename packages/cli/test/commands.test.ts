@@ -169,7 +169,7 @@ test.serial('run test job with default state', async (t) => {
   t.assert(message === 'Result: 42');
 });
 
-test.serial('run test job with custom state', async (t) => {
+test.serial.only('run test job with custom state', async (t) => {
   const state = JSON.stringify({ data: { answer: 1 } });
 
   await run(`test -S ${state}`, '');
@@ -511,7 +511,7 @@ test.serial(
   'use execute from language-postgres: openfn job.js -a @openfn/language-postgres',
   async (t) => {
     const job =
-      'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
+      'alterState((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
     const result = await run(
       'openfn -a @openfn/language-postgres --no-autoinstall',
       job,

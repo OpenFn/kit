@@ -5,7 +5,12 @@ import { isPath } from '@openfn/compiler';
 import abort from './abort';
 import expandAdaptors from './expand-adaptors';
 import mapAdaptorsToMonorepo from './map-adaptors-to-monorepo';
-import type { ExecutionPlan, Job, WorkflowOptions } from '@openfn/lexicon';
+import type {
+  ExecutionPlan,
+  Job,
+  LegacyJob,
+  WorkflowOptions,
+} from '@openfn/lexicon';
 import type { Opts } from '../options';
 import type { Logger } from './logger';
 import type { OldCLIWorkflow } from '../types';
@@ -36,6 +41,7 @@ const loadPlan = async (
 
   const json = await loadJson(jsonPath!, logger);
   const defaultName = path.parse(jsonPath!).name;
+
   if (json.workflow) {
     return loadXPlan(json, options, logger, defaultName);
   } else {
@@ -94,15 +100,11 @@ const loadExpression = async (
     const expression = await fs.readFile(expressionPath, 'utf8');
     const name = path.parse(expressionPath).name;
 
-    const step: Job = { expression };
-
-    // The adaptor should have been expanded nicely already, so we don't need intervene here
-    if (options.adaptors) {
-      const [adaptor] = options.adaptors;
-      if (adaptor) {
-        step.adaptor = adaptor;
-      }
-    }
+    const step: Job = {
+      expression,
+      // The adaptor should have been expanded nicely already, so we don't need intervene here
+      adaptors: options.adaptors ?? [],
+    };
 
     const wfOptions: WorkflowOptions = {};
     // TODO support state props to remove?
@@ -234,6 +236,20 @@ const importExpressions = async (
   }
 };
 
+// Allow users to specify a single adaptor on a job,
+// but convert the internal representation into an array
+const ensureAdaptors = (plan: ExecutionPlan) => {
+  Object.values(plan.workflow.steps).forEach((step) => {
+    const job = step as LegacyJob;
+    if (job.adaptor) {
+      job.adaptors = [job.adaptor];
+      delete job.adaptor;
+    }
+    // Also, ensure there is an empty adaptors array, which makes everything else easier
+    job.adaptors ??= [];
+  });
+};
+
 const loadXPlan = async (
   plan: ExecutionPlan,
   options: Pick<Opts, 'monorepoPath' | 'baseDir' | 'expandAdaptors'>,
@@ -247,6 +263,8 @@ const loadXPlan = async (
   if (!plan.workflow.name && defaultName) {
     plan.workflow.name = defaultName;
   }
+  ensureAdaptors(plan);
+
   // Note that baseDir should be set up in the default function
   await importExpressions(plan, options.baseDir!, logger);
   // expand shorthand adaptors in the workflow jobs

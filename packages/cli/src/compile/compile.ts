@@ -56,10 +56,8 @@ const compileWorkflow = async (
     const job = step as Job;
     const jobOpts = {
       ...opts,
+      adaptors: job.adaptors ?? opts.adaptors,
     };
-    if (job.adaptor) {
-      jobOpts.adaptors = [job.adaptor];
-    }
     if (job.expression) {
       job.expression = await compileJob(
         job.expression as string,
