@@ -87,7 +87,7 @@ test.serial('mapAdaptorsToMonorepo: map workflow', async (t) => {
       steps: [
         {
           expression: '.',
-          adaptor: 'common',
+          adaptors: ['common'],
         },
       ],
     },
@@ -99,7 +99,7 @@ test.serial('mapAdaptorsToMonorepo: map workflow', async (t) => {
     steps: [
       {
         expression: '.',
-        adaptor: `common=${ABS_REPO_PATH}/packages/common`,
+        adaptors: [`common=${ABS_REPO_PATH}/packages/common`],
       },
     ],
   });

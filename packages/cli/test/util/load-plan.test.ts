@@ -1,7 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import type { Job } from '@openfn/lexicon';
+import type { Job, LegacyJob } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
 import { Opts } from '../../src/options';
@@ -12,11 +12,11 @@ const sampleXPlan = {
   options: { start: 'a' },
   workflow: {
     name: 'wf',
-    steps: [{ id: 'a', expression: 'x()' }],
+    steps: [{ id: 'a', expression: 'x()', adaptors: [] }],
   },
 };
 
-const createPlan = (steps: Job[] = []) => ({
+const createPlan = (steps: Partial<LegacyJob>[] = []) => ({
   workflow: {
     steps,
   },
@@ -56,6 +56,7 @@ test.serial('expression: load a plan from an expression.js', async (t) => {
   t.is(plan.workflow.name, 'job');
   t.deepEqual(plan.workflow.steps[0], {
     expression: 'x',
+    adaptors: [],
   });
 });
 
@@ -70,7 +71,7 @@ test.serial('expression: set an adaptor on the plan', async (t) => {
 
   const step = plan.workflow.steps[0] as Job;
 
-  t.is(step.adaptor, '@openfn/language-common');
+  t.is(step.adaptors[0], '@openfn/language-common');
 });
 
 test.serial('expression: do not expand adaptors', async (t) => {
@@ -85,7 +86,7 @@ test.serial('expression: do not expand adaptors', async (t) => {
 
   const step = plan.workflow.steps[0] as Job;
 
-  t.is(step.adaptor, 'common');
+  t.is(step.adaptors[0], 'common');
 });
 
 test.serial('expression: set a timeout on the plan', async (t) => {
@@ -147,7 +148,9 @@ test.serial('xplan: expand adaptors', async (t) => {
   t.truthy(result);
 
   const step = result.workflow.steps[0] as Job;
-  t.is(step.adaptor, '@openfn/language-common@1.0.0');
+  t.is(step.adaptors[0], '@openfn/language-common@1.0.0');
+  // @ts-ignore
+  t.is(step.adaptor, undefined);
 });
 
 test.serial('xplan: do not expand adaptors', async (t) => {
@@ -173,7 +176,9 @@ test.serial('xplan: do not expand adaptors', async (t) => {
   t.truthy(result);
 
   const step = result.workflow.steps[0] as Job;
-  t.is(step.adaptor, 'common@1.0.0');
+  t.is(step.adaptors[0], 'common@1.0.0');
+  // @ts-ignore
+  t.is(step.adaptor, undefined);
 });
 
 test.serial('xplan: set timeout from CLI', async (t) => {
@@ -250,7 +255,7 @@ test.serial('xplan: map to monorepo', async (t) => {
   t.truthy(result);
 
   const step = result.workflow.steps[0] as Job;
-  t.is(step.adaptor, '@openfn/language-common=/repo/packages/common');
+  t.is(step.adaptors[0], '@openfn/language-common=/repo/packages/common');
 });
 
 test.serial('old-workflow: load a plan from workflow path', async (t) => {
@@ -269,6 +274,7 @@ test.serial('old-workflow: load a plan from workflow path', async (t) => {
   t.deepEqual(plan.workflow.steps[0], {
     id: 'a',
     expression: 'x()',
+    adaptors: [],
   });
 });
 
@@ -289,8 +295,8 @@ test.serial('step: allow file paths for state', async (t) => {
   mock({
     'test/state.json': JSON.stringify({
       data: {
-        x: 1
-      }
+        x: 1,
+      },
     }),
     'test/wf.json': JSON.stringify(plan),
   });
@@ -300,7 +306,38 @@ test.serial('step: allow file paths for state', async (t) => {
   const step = result.workflow.steps[0] as Job;
   t.deepEqual(step.state, {
     data: {
-      x: 1
-    }
+      x: 1,
+    },
   });
+});
+
+test.serial('xplan: support multiple adaptors', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    expandAdaptors: true,
+    plan: {},
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: '.',
+      adaptors: ['common@1.0.0', '@openfn/language-collections@1.0.0'],
+    },
+  ]);
+
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const result = await loadPlan(opts, logger);
+  t.truthy(result);
+
+  const step = result.workflow.steps[0] as Job;
+  t.deepEqual(step.adaptors, [
+    '@openfn/language-common@1.0.0',
+    '@openfn/language-collections@1.0.0',
+  ]);
+  // @ts-ignore
+  t.is(step.adaptor, undefined);
 });

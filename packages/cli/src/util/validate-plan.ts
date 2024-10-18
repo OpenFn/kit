@@ -1,4 +1,10 @@
-import { ExecutionPlan, Step, WorkflowOptions } from '@openfn/lexicon';
+import {
+  ExecutionPlan,
+  Job,
+  Step,
+  Trigger,
+  WorkflowOptions,
+} from '@openfn/lexicon';
 import { Logger } from '@openfn/logger';
 
 const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
@@ -23,13 +29,13 @@ const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
   assertOptionsStructure(options, logger);
 };
 
-const assertStepStructure = (step: Step, index: number) => {
+const assertStepStructure = (step: Job | Trigger, index: number) => {
   const allowedKeys = [
     'id',
     'name',
     'next',
     'previous',
-    'adaptor',
+    'adaptors',
     'expression',
     'state',
     'configuration',
@@ -42,7 +48,7 @@ const assertStepStructure = (step: Step, index: number) => {
     }
   }
 
-  if ('adaptor' in step && !('expression' in step)) {
+  if ((step as Job).adaptors.length && !('expression' in step)) {
     throw new Error(
       `Step ${step.id ?? index} with an adaptor must also have an expression`
     );

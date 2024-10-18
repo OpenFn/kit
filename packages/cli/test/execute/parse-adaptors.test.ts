@@ -7,7 +7,7 @@ const createPlan = (adaptor: string): ExecutionPlan => ({
   workflow: {
     steps: [
       {
-        adaptor,
+        adaptors: [adaptor],
         expression: '.',
       },
     ],

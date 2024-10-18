@@ -48,7 +48,7 @@ const createContext = (
       plan: {
         workflow: {
           steps: jobs || [
-            { adaptor: '@openfn/language-common@1.0.0', expression: '.' },
+            { adaptors: ['@openfn/language-common@1.0.0'], expression: '.' },
           ],
         },
         options: {},
@@ -126,15 +126,15 @@ test('identifyAdaptors: pick out adaptors and remove duplicates', (t) => {
     workflow: {
       steps: [
         {
-          adaptor: 'common@1.0.0',
+          adaptors: ['common@1.0.0'],
           expression: '.',
         },
         {
-          adaptor: 'common@1.0.0',
+          adaptors: ['common@1.0.0'],
           expression: '.',
         },
         {
-          adaptor: 'common@1.0.1',
+          adaptors: ['common@1.0.1'],
           expression: '.',
         },
       ],
@@ -150,7 +150,7 @@ test('identifyAdaptors: pick out adaptors and remove duplicates', (t) => {
 test.serial('autoinstall: handle @latest', async (t) => {
   const jobs = [
     {
-      adaptor: 'x@latest',
+      adaptors: ['x@latest'],
     },
   ];
 
@@ -169,7 +169,7 @@ test.serial('autoinstall: handle @latest', async (t) => {
 test.serial('autoinstall: handle @next', async (t) => {
   const jobs = [
     {
-      adaptor: 'x@next',
+      adaptors: ['x@next'],
     },
   ];
 
@@ -269,9 +269,15 @@ test.serial('autoinstall: install in sequence', async (t) => {
     handleIsInstalled: false,
   } as any;
 
-  const c1 = createContext(options, [{ adaptor: '@openfn/language-common@1' }]);
-  const c2 = createContext(options, [{ adaptor: '@openfn/language-common@2' }]);
-  const c3 = createContext(options, [{ adaptor: '@openfn/language-common@3' }]);
+  const c1 = createContext(options, [
+    { adaptors: ['@openfn/language-common@1'] },
+  ]);
+  const c2 = createContext(options, [
+    { adaptors: ['@openfn/language-common@2'] },
+  ]);
+  const c3 = createContext(options, [
+    { adaptors: ['@openfn/language-common@3'] },
+  ]);
 
   autoinstall(c1);
   await wait(1);
@@ -300,10 +306,10 @@ test('autoinstall: handle two seperate, non-overlapping installs', async (t) => 
   };
 
   const c1 = createContext(options, [
-    { adaptor: '@openfn/language-dhis2@1.0.0' },
+    { adaptors: ['@openfn/language-dhis2@1.0.0'] },
   ]);
   const c2 = createContext(options, [
-    { adaptor: '@openfn/language-http@1.0.0' },
+    { adaptors: ['@openfn/language-http@1.0.0'] },
   ]);
 
   const p1 = await autoinstall(c1);
@@ -336,7 +342,7 @@ test.serial(
 
     const job = [
       {
-        adaptor: 'lodash@1.0.0',
+        adaptors: ['lodash@1.0.0'],
       },
     ];
 
@@ -357,10 +363,10 @@ test.serial(
 test.serial('autoinstall: return a map to modules', async (t) => {
   const jobs = [
     {
-      adaptor: '@openfn/language-common@1.0.0',
+      adaptors: ['@openfn/language-common@1.0.0'],
     },
     {
-      adaptor: '@openfn/language-http@1.0.0',
+      adaptors: ['@openfn/language-http@1.0.0'],
     },
   ];
 
@@ -388,13 +394,16 @@ test.serial('autoinstall: return a map to modules', async (t) => {
 test.serial('autoinstall: write linker options back to the plan', async (t) => {
   const jobs = [
     {
-      adaptor: '@openfn/language-common@1.0.0',
+      adaptors: ['@openfn/language-common@1.0.0'],
     },
     {
-      adaptor: '@openfn/language-common@2.0.0',
+      adaptors: [
+        '@openfn/language-common@2.0.0',
+        '@openfn/language-collections@1.0.0',
+      ],
     },
     {
-      adaptor: '@openfn/language-http@1.0.0',
+      adaptors: ['@openfn/language-http@1.0.0'],
     },
   ];
 
@@ -419,6 +428,10 @@ test.serial('autoinstall: write linker options back to the plan', async (t) => {
       path: 'tmp/repo/node_modules/@openfn/language-common_2.0.0',
       version: '2.0.0',
     },
+    '@openfn/language-collections': {
+      path: 'tmp/repo/node_modules/@openfn/language-collections_1.0.0',
+      version: '1.0.0',
+    },
   });
   t.deepEqual(c.linker, {
     '@openfn/language-http': {
@@ -433,11 +446,11 @@ test.serial('autoinstall: support custom whitelist', async (t) => {
   const jobs = [
     {
       // will be ignored
-      adaptor: 'x@1.0.0',
+      adaptors: ['x@1.0.0'],
     },
     {
       // will be installed
-      adaptor: 'y@1.0.0',
+      adaptors: ['y@1.0.0'],
     },
   ];
 
@@ -462,7 +475,7 @@ test.serial('autoinstall: emit an event on completion', async (t) => {
   let event: any;
   const jobs = [
     {
-      adaptor: '@openfn/language-common@1.0.0',
+      adaptors: ['@openfn/language-common@1.0.0'],
       version: '1.0.0',
     },
   ];

@@ -61,22 +61,22 @@ test('expands adaptors in an execution plan', (t) => {
       steps: [
         {
           id: 'a',
-          adaptor: 'common',
+          adaptors: ['common'],
           expression: 'fn()',
         },
         {
           id: 'b',
-          adaptor: 'http@1.0.0',
+          adaptors: ['http@1.0.0'],
           expression: 'fn()',
         },
         {
           id: 'c',
-          adaptor: 'salesforce=a/b/c',
+          adaptors: ['salesforce=a/b/c'],
           expression: 'fn()',
         },
         {
           id: 'd',
-          adaptor: 'a/b/c/my-adaptor.js',
+          adaptors: ['a/b/c/my-adaptor.js'],
           expression: 'fn()',
         },
       ],
@@ -85,8 +85,8 @@ test('expands adaptors in an execution plan', (t) => {
   };
   expandAdaptors(plan);
   const [a, b, c, d] = plan.workflow.steps;
-  t.is(a.adaptor, '@openfn/language-common');
-  t.is(b.adaptor, '@openfn/language-http@1.0.0');
-  t.is(c.adaptor, '@openfn/language-salesforce=a/b/c');
-  t.is(d.adaptor, 'a/b/c/my-adaptor.js');
+  t.is(a.adaptors[0], '@openfn/language-common');
+  t.is(b.adaptors[0], '@openfn/language-http@1.0.0');
+  t.is(c.adaptors[0], '@openfn/language-salesforce=a/b/c');
+  t.is(d.adaptors[0], 'a/b/c/my-adaptor.js');
 });

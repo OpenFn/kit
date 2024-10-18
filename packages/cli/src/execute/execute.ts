@@ -67,14 +67,12 @@ export function parseAdaptors(plan: ExecutionPlan) {
 
   const adaptors: ModuleInfoMap = {};
 
-  // TODO what if there are different versions of the same adaptor?
-  // This structure can't handle it - we'd need to build it for every job
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as Job;
-    if (job.adaptor) {
-      const { name, ...maybeVersionAndPath } = extractInfo(job.adaptor);
+    job.adaptors.forEach((adaptor) => {
+      const { name, ...maybeVersionAndPath } = extractInfo(adaptor);
       adaptors[name] = maybeVersionAndPath;
-    }
+    });
   });
 
   return adaptors;

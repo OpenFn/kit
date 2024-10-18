@@ -26,9 +26,7 @@ export default <T extends Array<string> | ExecutionPlan>(
   const plan = input as ExecutionPlan;
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as Job;
-    if (job.adaptor) {
-      job.adaptor = expand(job.adaptor);
-    }
+    job.adaptors = job.adaptors.map(expand);
   });
 
   return plan as any;
