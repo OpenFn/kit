@@ -27,7 +27,7 @@ export type Workflow = {
  * This is some openfn expression plus metadata (adaptor, credentials)
  */
 export interface Job extends Step {
-  adaptor?: string;
+  adaptors?: string[];
   expression: Expression;
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;

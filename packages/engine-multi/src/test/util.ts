@@ -7,7 +7,7 @@ export const createPlan = (job = {}) =>
       steps: [
         {
           id: 'j1',
-          adaptor: 'common', // not used
+          adaptors: ['common'], // not used
           configuration: {}, // not used
           expression: '(s) => ({ data: { answer: s.data?.input || 42 } })',
 
