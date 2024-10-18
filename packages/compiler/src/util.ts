@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Project, describeDts } from '@openfn/describe-package';
 import type { Logger } from '@openfn/logger';
@@ -39,7 +39,9 @@ export const preloadAdaptorExports = async (
 
       const adaptor = await findExports(pathToModule, pkg.types, project);
       adaptor.forEach(({ name }) => {
-        functionDefs[name] = true;
+        if (name !== 'default') {
+          functionDefs[name] = true;
+        }
       });
 
       return Object.keys(functionDefs);
@@ -60,20 +62,35 @@ const findExports = async (
   types: string,
   project: Project
 ) => {
-  const typesRoot = path.dirname(types);
-  const files = await readdir(`${moduleRoot}/${typesRoot}`);
-  const dtsFiles = files.filter((f) => f.endsWith('.d.ts'));
-  const result = [];
-  for (const f of dtsFiles) {
-    const relPath = `${typesRoot}/${f}`;
-    const contents = await readFile(`${moduleRoot}/${relPath}`, 'utf8');
-    project.createFile(contents, relPath);
+  const results = [];
 
-    result.push(
-      ...describeDts(project, relPath, {
-        includePrivate: true,
-      })
-    );
+  const contents = await readFile(`${moduleRoot}/${types}`, 'utf8');
+  project.createFile(contents, types);
+
+  results.push(
+    ...describeDts(project, types, {
+      includePrivate: true,
+    })
+  );
+
+  // Ensure that everything in adaptor.d.ts is exported
+  // This is kinda cheating but it's quite safe for the time being
+  const typesRoot = path.dirname(types);
+  for (const dts of ['adaptor', 'Adaptor']) {
+    try {
+      const adaptorPath = `${moduleRoot}/${typesRoot}/${dts}.d.ts`;
+      const contents = await readFile(adaptorPath, 'utf8');
+      project.createFile(contents, adaptorPath);
+      results.push(
+        ...describeDts(project, adaptorPath, {
+          includePrivate: true,
+        })
+      );
+      break;
+    } catch (e) {
+      // no problem if this throws - likely the file doesn't exist
+    }
   }
-  return result;
+
+  return results;
 };
