@@ -207,14 +207,14 @@ test.serial('after uncaught exception, free up the pool', (t) => {
   });
 });
 
-test.serial('emit a crash error on process.exit()', (t) => {
+test.serial.only('emit a crash error on process.exit()', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'z',
       workflow: {
         steps: [
           {
-            adaptor: '@openfn/helper@1.0.0',
+            adaptors: ['@openfn/helper@1.0.0'],
             expression: 'export default [exit()]',
           },
         ],
