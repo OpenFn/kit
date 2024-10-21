@@ -169,7 +169,7 @@ test.serial('run test job with default state', async (t) => {
   t.assert(message === 'Result: 42');
 });
 
-test.serial.only('run test job with custom state', async (t) => {
+test.serial('run test job with custom state', async (t) => {
   const state = JSON.stringify({ data: { answer: 1 } });
 
   await run(`test -S ${state}`, '');

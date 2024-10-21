@@ -68,22 +68,22 @@ test('parse plan with several steps', (t) => {
     workflow: {
       steps: [
         {
-          adaptor: '@openfn/language-common',
+          adaptors: ['@openfn/language-common'],
           expression: 'fn()',
         },
         {
-          adaptor: '@openfn/language-http@1.0.0',
+          adaptors: ['@openfn/language-http@1.0.0'],
           expression: 'fn()',
         },
         {
-          adaptor: '@openfn/language-salesforce=a/b/c',
+          adaptors: ['@openfn/language-salesforce=a/b/c'],
           expression: 'fn()',
         },
       ],
     },
   };
   const result = parseAdaptors(plan);
-  t.assert(Object.keys(result).length === 3);
+  t.is(Object.keys(result).length, 3);
   t.deepEqual(result, {
     '@openfn/language-common': {},
     '@openfn/language-http': {
@@ -93,23 +93,4 @@ test('parse plan with several steps', (t) => {
       path: 'a/b/c',
     },
   });
-});
-
-// TODO we can't do this right now
-// We'd have to send different maps to different jobs
-// Which we can support but maybe I'm gonna push that out of scope
-test.skip('parse workflow with multiple versions of the same adaptor', (t) => {
-  const workflow = {
-    start: 'a',
-    jobs: {
-      a: {
-        adaptor: '@openfn/language-common@1.0.0',
-        expression: 'fn()',
-      },
-      b: {
-        adaptor: '@openfn/language-common@2.0.0',
-        expression: 'fn()',
-      },
-    },
-  };
 });

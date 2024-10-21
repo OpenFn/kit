@@ -69,7 +69,11 @@ export function parseAdaptors(plan: ExecutionPlan) {
 
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as Job;
-    job.adaptors.forEach((adaptor) => {
+    // Usually every job should have an adaptors array
+    // But there are a couple of cases mostly in test, when validation is skipped,
+    // when the array may not be set
+    // It's mostly redundant nbut harmless to optionally chain here
+    job.adaptors?.forEach((adaptor) => {
       const { name, ...maybeVersionAndPath } = extractInfo(adaptor);
       adaptors[name] = maybeVersionAndPath;
     });

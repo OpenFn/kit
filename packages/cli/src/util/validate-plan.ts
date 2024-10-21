@@ -1,10 +1,4 @@
-import {
-  ExecutionPlan,
-  Job,
-  Step,
-  Trigger,
-  WorkflowOptions,
-} from '@openfn/lexicon';
+import { ExecutionPlan, Job, Trigger, WorkflowOptions } from '@openfn/lexicon';
 import { Logger } from '@openfn/logger';
 
 const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
