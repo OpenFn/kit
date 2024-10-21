@@ -5,15 +5,10 @@ import { isPath } from '@openfn/compiler';
 import abort from './abort';
 import expandAdaptors from './expand-adaptors';
 import mapAdaptorsToMonorepo from './map-adaptors-to-monorepo';
-import type {
-  ExecutionPlan,
-  Job,
-  LegacyJob,
-  WorkflowOptions,
-} from '@openfn/lexicon';
+import type { ExecutionPlan, Job, WorkflowOptions } from '@openfn/lexicon';
 import type { Opts } from '../options';
 import type { Logger } from './logger';
-import type { OldCLIWorkflow } from '../types';
+import type { CLIExecutionPlan, CLIJobNode, OldCLIWorkflow } from '../types';
 
 const loadPlan = async (
   options: Pick<
@@ -110,7 +105,7 @@ const loadExpression = async (
     // TODO support state props to remove?
     maybeAssign(options, wfOptions, ['timeout']);
 
-    const plan: ExecutionPlan = {
+    const plan: CLIExecutionPlan = {
       workflow: {
         name,
         steps: [step],
@@ -128,7 +123,7 @@ const loadExpression = async (
     );
 
     // This will never execute
-    return {} as ExecutionPlan;
+    return {} as CLIExecutionPlan;
   }
 };
 
@@ -190,7 +185,7 @@ const fetchFile = async (
 // TODO this is currently untested in load-plan
 // (but covered a bit in execute tests)
 const importExpressions = async (
-  plan: ExecutionPlan,
+  plan: CLIExecutionPlan,
   rootDir: string,
   log: Logger
 ) => {
@@ -238,9 +233,9 @@ const importExpressions = async (
 
 // Allow users to specify a single adaptor on a job,
 // but convert the internal representation into an array
-const ensureAdaptors = (plan: ExecutionPlan) => {
+const ensureAdaptors = (plan: CLIExecutionPlan) => {
   Object.values(plan.workflow.steps).forEach((step) => {
-    const job = step as LegacyJob;
+    const job = step as CLIJobNode;
     if (job.adaptor) {
       job.adaptors = [job.adaptor];
       delete job.adaptor;
@@ -251,7 +246,7 @@ const ensureAdaptors = (plan: ExecutionPlan) => {
 };
 
 const loadXPlan = async (
-  plan: ExecutionPlan,
+  plan: CLIExecutionPlan,
   options: Pick<Opts, 'monorepoPath' | 'baseDir' | 'expandAdaptors'>,
   logger: Logger,
   defaultName: string = ''
@@ -279,5 +274,5 @@ const loadXPlan = async (
 
   logger.info(`Loaded workflow ${plan.workflow.name ?? ''}`);
 
-  return plan;
+  return plan as ExecutionPlan;
 };

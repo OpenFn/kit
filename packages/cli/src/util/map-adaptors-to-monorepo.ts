@@ -58,7 +58,11 @@ const mapAdaptorsToMonorepo = (
     const plan = input as ExecutionPlan;
     Object.values(plan.workflow.steps).forEach((step) => {
       const job = step as Job;
-      job.adaptors = job.adaptors.map((a) => updatePath(a, monorepoPath, log));
+      if (job.adaptors) {
+        job.adaptors = job.adaptors.map((a) =>
+          updatePath(a, monorepoPath, log)
+        );
+      }
     });
 
     return plan;

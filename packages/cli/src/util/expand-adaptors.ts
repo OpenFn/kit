@@ -14,8 +14,6 @@ const expand = (name: string) => {
 
 type ArrayOrPlan<T> = T extends string[] ? string[] : ExecutionPlan;
 
-// TODO typings here aren't good,I can't get this to work!
-// At least this looks nice externally
 export default <T extends Array<string> | ExecutionPlan>(
   input: T
 ): ArrayOrPlan<T> => {
@@ -26,7 +24,9 @@ export default <T extends Array<string> | ExecutionPlan>(
   const plan = input as ExecutionPlan;
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as Job;
-    job.adaptors = job.adaptors.map(expand);
+    if (job.adaptors) {
+      job.adaptors = job.adaptors.map(expand);
+    }
   });
 
   return plan as any;

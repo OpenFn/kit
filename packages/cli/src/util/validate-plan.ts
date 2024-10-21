@@ -42,7 +42,7 @@ const assertStepStructure = (step: Job | Trigger, index: number) => {
     }
   }
 
-  if ((step as Job).adaptors.length && !('expression' in step)) {
+  if ((step as Job).adaptors?.length && !('expression' in step)) {
     throw new Error(
       `Step ${step.id ?? index} with an adaptor must also have an expression`
     );
