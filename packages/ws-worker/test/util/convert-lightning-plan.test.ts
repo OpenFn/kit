@@ -1,5 +1,9 @@
 import test from 'ava';
-import type { LightningPlan, Node } from '@openfn/lexicon/lightning';
+import type {
+  LightningPlan,
+  LightningJob,
+  LightningTrigger,
+} from '@openfn/lexicon/lightning';
 import convertPlan, { conditions } from '../../src/util/convert-lightning-plan';
 import { ConditionalStepEdge, Job } from '@openfn/lexicon';
 
@@ -11,7 +15,7 @@ const createNode = (props = {}) =>
     adaptor: 'common',
     credential_id: 'y',
     ...props,
-  } as Node);
+  } as LightningJob);
 
 const createEdge = (from: string, to: string, props = {}) => ({
   id: `${from}-${to}`,
@@ -26,13 +30,13 @@ const createTrigger = (props = {}) =>
     id: 't',
     type: 'cron',
     ...props,
-  } as Node);
+  } as LightningTrigger);
 
 // Creates a runtime job node
 const createJob = (props = {}) => ({
   id: 'a',
   expression: 'x',
-  adaptor: 'common',
+  adaptors: ['common'],
   configuration: 'y',
   ...props,
 });
