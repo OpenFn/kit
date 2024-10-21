@@ -13,7 +13,7 @@ export type OldCLIWorkflow = {
 
 export type CLIExecutionPlan = {
   id?: string;
-  options: WorkflowOptions;
+  options?: WorkflowOptions;
   workflow: {
     id?: UUID;
     name?: string;

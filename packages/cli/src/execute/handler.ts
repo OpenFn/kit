@@ -85,7 +85,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     if (options.start) {
       customStart = matchStep(
         plan,
-        options.start ?? plan.options.start,
+        options.start ?? plan.options!.start,
         'start',
         logger
       );
@@ -95,7 +95,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     if (options.end) {
       customEnd = matchStep(
         plan,
-        options.end ?? plan.options.end,
+        options.end ?? plan.options!.end,
         'end',
         logger
       );
@@ -113,8 +113,8 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const finalPlan = {
     ...plan,
     options: {
-      ...plan.options,
-      start: customStart || plan.options.start,
+      ...plan.options!,
+      start: customStart || plan.options!.start,
       end: customEnd,
     },
     workflow: plan.workflow,
