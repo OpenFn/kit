@@ -24,7 +24,6 @@ export const isRelativeSpecifier = (specifier: string) =>
 // But we may relax this  later.
 export const preloadAdaptorExports = async (
   pathToModule: string,
-  _useMonorepo?: boolean,
   log?: Logger
 ) => {
   const project = new Project();

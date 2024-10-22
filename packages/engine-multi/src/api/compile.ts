@@ -56,7 +56,7 @@ const compileJob = async (
   if (adaptor && repoDir) {
     // TODO I probably dont want to log this stuff
     const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
-    const exports = await preloadAdaptorExports(pathToAdaptor!, false, logger);
+    const exports = await preloadAdaptorExports(pathToAdaptor!, logger);
     compilerOptions['add-imports'] = {
       adaptor: {
         name: stripVersionSpecifier(adaptor),

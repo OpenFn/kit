@@ -124,11 +124,7 @@ export const loadTransformOptions = async (
     const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
     if (path) {
       try {
-        exports = await preloadAdaptorExports(
-          path,
-          opts.useAdaptorsMonorepo,
-          log
-        );
+        exports = await preloadAdaptorExports(path, log);
       } catch (e) {
         log.error(`Failed to load adaptor typedefs from path ${path}`);
         log.error(e);
