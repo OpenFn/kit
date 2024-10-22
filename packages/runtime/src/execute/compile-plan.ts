@@ -106,6 +106,9 @@ export default (plan: ExecutionPlan) => {
       start: options.start ?? workflow.steps[0]?.id!,
     },
   };
+  if (workflow.credentials) {
+    newPlan.workflow.credentials = workflow.credentials;
+  }
 
   const maybeAssign = (a: any, b: any, keys: Array<keyof Job>) => {
     keys.forEach((key) => {

@@ -258,6 +258,29 @@ test.serial('should run a run which returns initial state', async (t) => {
   });
 });
 
+test.serial('should run a run with the collections adaptor', async (t) => {
+  return new Promise((done) => {
+    const run = {
+      id: 'run-1',
+      jobs: [
+        {
+          // This should be enough to fake the worker into
+          // loading the collections machinery
+          body: 'fn((s) => /* collections.get */ s.configuration)',
+        },
+      ],
+    };
+
+    lng.waitForResult(run.id).then((result: any) => {
+      t.is(result.collections_endpoint, urls.lng);
+      t.is(typeof result.collections_token, 'string');
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
+
 // A basic high level integration test to ensure the whole loop works
 // This checks the events received by the lightning websocket
 test.serial(

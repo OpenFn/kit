@@ -23,6 +23,10 @@ export type Workflow = {
   name?: string;
 
   steps: Array<Job | Trigger>;
+
+  // global credentials
+  // (gets applied to every configuration object)
+  credentials?: Record<string, any>;
 };
 
 /**

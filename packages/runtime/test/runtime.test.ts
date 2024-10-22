@@ -12,8 +12,6 @@ import {
 } from '../src';
 import run from '../src/runtime';
 
-type ExecutionPlanNoOptions = Omit<ExecutionPlan, 'options'>;
-
 test('run simple expression', async (t) => {
   const expression = 'export default [(s) => {s.data.done = true; return s}]';
 
@@ -22,7 +20,7 @@ test('run simple expression', async (t) => {
 });
 
 test('run a simple workflow', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         { expression: 'export default [(s) => ({ data: { done: true } })]' },
@@ -32,6 +30,22 @@ test('run a simple workflow', async (t) => {
 
   const result: any = await run(plan);
   t.true(result.data.done);
+});
+
+test('run a workflow with global config', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [{ expression: 'export default [(s) => state.configuration];' }],
+      credentials: {
+        collection_token: 'j.w.t',
+      },
+    },
+  };
+
+  const result: any = await run(plan);
+  t.deepEqual(result, {
+    collection_token: 'j.w.t',
+  });
 });
 
 test('run a workflow and notify major events', async (t) => {
@@ -47,7 +61,7 @@ test('run a workflow and notify major events', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [{ expression: 'export default [(s) => s]' }],
     },
@@ -76,7 +90,7 @@ test('notify job error even after fail', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         { id: 'a', expression: 'export default [(s) => s.data.x = s.err.z ]' },
@@ -102,7 +116,7 @@ test('notify job error even after crash', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: { steps: [{ id: 'a', expression: 'export default [() => s]' }] },
   };
 
@@ -139,7 +153,7 @@ test('resolve a credential', async (t) => {
 });
 
 test('resolve initial state', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -174,7 +188,7 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
     notify,
   };
 
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         { id: 'a', expression: 'export default [(s) => s]', next: { b: true } },
@@ -192,7 +206,7 @@ test('run a workflow with two jobs and call callbacks', async (t) => {
 });
 
 test('run a workflow with state and parallel branching', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -239,7 +253,7 @@ test('run a workflow with state and parallel branching', async (t) => {
 });
 
 test('run a workflow with a leaf step called multiple times', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -294,7 +308,7 @@ test('run a workflow with a leaf step called multiple times', async (t) => {
 // TODO this test sort of shows why input state on the plan object is a bit funky
 // running the same plan with two inputs is pretty clunky
 test('run a workflow with state and conditional branching', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -422,7 +436,7 @@ test('run a workflow with a start and end', async (t) => {
 });
 
 test('run a workflow with a trigger node', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -442,7 +456,7 @@ test('run a workflow with a trigger node', async (t) => {
 });
 
 test('prefer initial state to inline state', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -464,7 +478,7 @@ test('prefer initial state to inline state', async (t) => {
 });
 
 test('Allow a job to return undefined', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [{ expression: 'export default [() => {}]' }],
     },
@@ -475,7 +489,7 @@ test('Allow a job to return undefined', async (t) => {
 });
 
 test('log errors, write to state, and continue', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -507,7 +521,7 @@ test('log errors, write to state, and continue', async (t) => {
 });
 
 test('log job code to the job logger', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -529,7 +543,7 @@ test('log job code to the job logger', async (t) => {
 });
 
 test('log and serialize an error to the job logger', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -556,7 +570,7 @@ test('log and serialize an error to the job logger', async (t) => {
 });
 
 test('error reports can be overwritten', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -580,7 +594,7 @@ test('error reports can be overwritten', async (t) => {
 
 // This tracks current behaviour but I don't know if it's right
 test('stuff written to state before an error is preserved', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
@@ -609,7 +623,7 @@ test('data can be an array (expression)', async (t) => {
 });
 
 test('data can be an array (workflow)', async (t) => {
-  const plan: ExecutionPlanNoOptions = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
