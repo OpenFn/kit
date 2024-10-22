@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Project, describeDts } from '@openfn/describe-package';
 import type { Logger } from '@openfn/logger';
@@ -24,7 +24,6 @@ export const isRelativeSpecifier = (specifier: string) =>
 // But we may relax this  later.
 export const preloadAdaptorExports = async (
   pathToModule: string,
-  useMonorepo?: boolean,
   log?: Logger
 ) => {
   const project = new Project();
@@ -37,31 +36,11 @@ export const preloadAdaptorExports = async (
     if (pkg.types) {
       const functionDefs = {} as Record<string, true>;
 
-      // load common definitions into the project
-      if (pkg.name !== '@openfn/language-common') {
-        try {
-          const common = await findExports(
-            path.resolve(
-              pathToModule,
-              useMonorepo ? '../common' : '../language-common'
-            ),
-            'types/index.d.ts',
-            project
-          );
-          if (common) {
-            common.forEach(({ name }) => {
-              functionDefs[name] = true;
-            });
-          }
-        } catch (e) {
-          log?.debug('Failed to load types from language common');
-          log?.debug(e);
-        }
-      }
-
       const adaptor = await findExports(pathToModule, pkg.types, project);
       adaptor.forEach(({ name }) => {
-        functionDefs[name] = true;
+        if (name !== 'default') {
+          functionDefs[name] = true;
+        }
       });
 
       return Object.keys(functionDefs);
@@ -82,20 +61,35 @@ const findExports = async (
   types: string,
   project: Project
 ) => {
-  const typesRoot = path.dirname(types);
-  const files = await readdir(`${moduleRoot}/${typesRoot}`);
-  const dtsFiles = files.filter((f) => f.endsWith('.d.ts'));
-  const result = [];
-  for (const f of dtsFiles) {
-    const relPath = `${typesRoot}/${f}`;
-    const contents = await readFile(`${moduleRoot}/${relPath}`, 'utf8');
-    project.createFile(contents, relPath);
+  const results = [];
 
-    result.push(
-      ...describeDts(project, relPath, {
-        includePrivate: true,
-      })
-    );
+  const contents = await readFile(`${moduleRoot}/${types}`, 'utf8');
+  project.createFile(contents, types);
+
+  results.push(
+    ...describeDts(project, types, {
+      includePrivate: true,
+    })
+  );
+
+  // Ensure that everything in adaptor.d.ts is exported
+  // This is kinda cheating but it's quite safe for the time being
+  const typesRoot = path.dirname(types);
+  for (const dts of ['adaptor', 'Adaptor']) {
+    try {
+      const adaptorPath = `${moduleRoot}/${typesRoot}/${dts}.d.ts`;
+      const contents = await readFile(adaptorPath, 'utf8');
+      project.createFile(contents, adaptorPath);
+      results.push(
+        ...describeDts(project, adaptorPath, {
+          includePrivate: true,
+        })
+      );
+      break;
+    } catch (e) {
+      // no problem if this throws - likely the file doesn't exist
+    }
   }
-  return result;
+
+  return results;
 };
