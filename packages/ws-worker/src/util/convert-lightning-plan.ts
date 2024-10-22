@@ -39,6 +39,18 @@ const mapTriggerEdgeCondition = (edge: LightningEdge) => {
   return condition;
 };
 
+// This function will look at every step and decide whether the collections adaptor
+// should be added to the array
+const appendCollectionsAdaptor = (plan: ExecutionPlan) => {
+  plan.workflow.steps.forEach((step) => {
+    const job = step as Job;
+    if (job.expression?.match(/(collections\.)/)) {
+      job.adaptors ??= [];
+      job.adaptors.push('@openfn/language-collections'); //  what about version? Is this safe?
+    }
+  });
+};
+
 // Options which relate to this execution but are not part of the plan
 export type WorkerRunOptions = ExecuteOptions & {
   // Defaults to true - must be explicity false to stop dataclips being sent
@@ -169,6 +181,8 @@ export default (
   if (run.name) {
     plan.workflow.name = run.name;
   }
+
+  appendCollectionsAdaptor(plan as ExecutionPlan);
 
   return {
     plan: plan as ExecutionPlan,

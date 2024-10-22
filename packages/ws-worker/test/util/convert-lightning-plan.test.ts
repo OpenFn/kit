@@ -588,3 +588,24 @@ test('convert edge condition always', (t) => {
   const edge = job.next as Record<string, ConditionalStepEdge>;
   t.false(edge.b.hasOwnProperty('condition'));
 });
+
+test('append the collections adaptor to jobs that use it', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({ id: 'a' }),
+      createNode({
+        id: 'b',
+        body: 'collections.each("c", "k", (state) => state)',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('a', 'b')],
+  };
+  const { plan } = convertPlan(run as LightningPlan);
+
+  const [_t, a, b] = plan.workflow.steps;
+
+  t.deepEqual(a.adaptors, ['common']);
+  t.deepEqual(b.adaptors, ['common', '@openfn/language-collections']);
+});
