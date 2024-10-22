@@ -42,7 +42,7 @@ test('loadRun should return an execution plan and options', async (t) => {
           id: 'job-1',
           configuration: 'a',
           expression: 'fn(a => a)',
-          adaptor: '@openfn/language-common@1.0.0',
+          adaptors: ['@openfn/language-common@1.0.0'],
         },
       ],
     },

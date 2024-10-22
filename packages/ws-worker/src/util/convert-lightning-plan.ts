@@ -10,7 +10,7 @@ import type {
   WorkflowOptions,
   Lazy,
 } from '@openfn/lexicon';
-import { LightningPlan, Edge } from '@openfn/lexicon/lightning';
+import { LightningPlan, LightningEdge } from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
@@ -22,7 +22,7 @@ export const conditions: Record<string, (upstreamId: string) => string | null> =
     always: (_upstreamId: string) => null,
   };
 
-const mapEdgeCondition = (edge: Edge) => {
+const mapEdgeCondition = (edge: LightningEdge) => {
   const { condition } = edge;
   if (condition && condition in conditions) {
     const upstream = (edge.source_job_id || edge.source_trigger_id) as string;
@@ -31,7 +31,7 @@ const mapEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
-const mapTriggerEdgeCondition = (edge: Edge) => {
+const mapTriggerEdgeCondition = (edge: LightningEdge) => {
   const { condition } = edge;
   // This handles cron triggers with undefined conditions and the 'always' string.
   if (condition === undefined || condition === 'always') return true;
@@ -88,7 +88,7 @@ export default (
 
   const nodes: Record<StepId, Step> = {};
 
-  const edges: Edge[] = run.edges ?? [];
+  const edges: LightningEdge[] = run.edges ?? [];
 
   // We don't really care about triggers, it's mostly just a empty node
   if (run.triggers?.length) {
@@ -125,7 +125,7 @@ export default (
         id,
         configuration: step.credential || step.credential_id,
         expression: step.body!,
-        adaptor: step.adaptor,
+        adaptors: step.adaptor ? [step.adaptor] : [],
       };
 
       if (step.name) {

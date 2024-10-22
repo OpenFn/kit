@@ -94,11 +94,11 @@ const globalRE = new RegExp(`^${globals.join('|')}$`);
 export type AddImportsOptions = {
   ignore?: string[];
   // Adaptor MUST be pre-populated for this transformer to actually do anything
-  adaptor: {
+  adaptors: Array<{
     name: string;
     exports?: string[];
     exportAll?: boolean;
-  };
+  }>;
 };
 
 export type IdentifierList = Record<string, true>;
@@ -157,31 +157,34 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
 }
 
 function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
-  if (options.adaptor) {
-    const { name, exports, exportAll } = options.adaptor;
-    const ignore =
-      options.ignore?.reduce((obj, key) => {
-        obj[key] = true;
-        return obj;
-      }, {} as Record<string, true>) ?? {};
+  if (options.adaptors) {
+    const identifiers = findAllDanglingIdentifiers(path.node);
 
-    if (name) {
-      const identifiers = findAllDanglingIdentifiers(path.node);
-      const usedExports =
-        exports && exports.length
-          ? // If we have exports for this adaptor, import any dangling variables from the export list
-            exports.filter((e) => !ignore[e] && identifiers[e])
-          : // If we have no exports for this adaptor, import anything apart from a few choice globals
-            Object.keys(identifiers).filter(
-              (i) => !ignore[i] && !globalRE.test(i)
-            );
-      if (usedExports.length) {
-        // TODO maybe in trace output we can say WHY we're doing these things
-        addUsedImports(path, usedExports, name);
-        logger.info(`Added import statement for ${name}`);
-        if (exportAll) {
-          addExportAdaptor(path, name);
-          logger.info(`Added export * statement for ${name}`);
+    for (const adaptor in options.adaptors) {
+      const { name, exports, exportAll } = options.adaptors[adaptor];
+      const ignore =
+        options.ignore?.reduce((obj, key) => {
+          obj[key] = true;
+          return obj;
+        }, {} as Record<string, true>) ?? {};
+
+      if (name) {
+        const usedExports =
+          exports && exports.length
+            ? // If we have exports for this adaptor, import any dangling variables from the export list
+              exports.filter((e) => !ignore[e] && identifiers[e])
+            : // If we have no exports for this adaptor, import anything apart from a few choice globals
+              Object.keys(identifiers).filter(
+                (i) => !ignore[i] && !globalRE.test(i)
+              );
+        if (usedExports.length) {
+          // TODO maybe in trace output we can say WHY we're doing these things
+          addUsedImports(path, usedExports, name);
+          logger.info(`Added import statement for ${name}`);
+          if (exportAll) {
+            addExportAdaptor(path, name);
+            logger.info(`Added export * statement for ${name}`);
+          }
         }
       }
     }

@@ -777,21 +777,21 @@ test('run a workflow using the repo using a specific version', async (t) => {
 });
 
 test('run a workflow using the repo with multiple versions of the same adaptor', async (t) => {
-  const plan = {
+  const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
           id: 'a',
           expression: `import result from 'ultimate-answer';
           export default [(s) => { s.data.a = result; return s;}];`,
-          adaptor: 'ultimate-answer@1.0.0',
+          adaptors: ['ultimate-answer@1.0.0'],
           next: { b: true },
         },
         {
           id: 'b',
           expression: `import result from 'ultimate-answer';
           export default [(s) => { s.data.b = result; return s;}];`,
-          adaptor: 'ultimate-answer@2.0.0',
+          adaptors: ['ultimate-answer@2.0.0'],
         },
       ],
     },

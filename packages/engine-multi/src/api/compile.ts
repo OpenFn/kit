@@ -22,7 +22,7 @@ export default async (context: ExecutionContext) => {
             job.expression as string,
             logger,
             repoDir,
-            job.adaptor // TODO need to expand this. Or do I?
+            job.adaptors
           );
         } catch (e) {
           throw new CompileError(e, job.id!);
@@ -47,22 +47,26 @@ const compileJob = async (
   job: string,
   logger: Logger,
   repoDir?: string,
-  adaptor?: string
+  adaptors?: string[]
 ) => {
   const compilerOptions: Options = {
     logger,
   };
 
-  if (adaptor && repoDir) {
-    // TODO I probably dont want to log this stuff
-    const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
-    const exports = await preloadAdaptorExports(pathToAdaptor!, logger);
-    compilerOptions['add-imports'] = {
-      adaptor: {
+  if (adaptors && repoDir) {
+    const adaptorConfig = [];
+    for (const adaptor of adaptors) {
+      // TODO I probably don't want to log this stuff
+      const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
+      const exports = await preloadAdaptorExports(pathToAdaptor!, logger);
+      adaptorConfig.push({
         name: stripVersionSpecifier(adaptor),
         exports,
         exportAll: true,
-      },
+      });
+    }
+    compilerOptions['add-imports'] = {
+      adaptors: adaptorConfig,
     };
   }
   return compile(job, compilerOptions);

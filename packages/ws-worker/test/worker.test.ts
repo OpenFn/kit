@@ -44,7 +44,7 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
       [STEP_START]: async () => true,
       [RUN_LOG]: async (_evt) => {
         //console.log(evt.source, evt.message)
-        return true
+        return true;
       },
       [STEP_COMPLETE]: async () => true,
       [RUN_COMPLETE]: async () => true,
@@ -59,7 +59,6 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
 
     doExecute(channel, engine, logger, plan, input, options, onFinish);
   });
-
 
 // Repro for https://github.com/OpenFn/kit/issues/616
 // This will not run in CI unless the env is set
@@ -80,21 +79,21 @@ if (process.env.OPENFN_TEST_SF_TOKEN && process.env.OPENFN_TEST_SF_PASSWORD) {
             "email": "test@test.com"
           }])
         )`,
-      adaptor: '@openfn/language-salesforce@4.5.0',
+      adaptors: ['@openfn/language-salesforce@4.5.0'],
       configuration: {
         username: 'demo@openfn.org',
         securityToken: process.env.OPENFN_TEST_SF_TOKEN,
         password: process.env.OPENFN_TEST_SF_PASSWORD,
         loginUrl: 'https://login.salesforce.com',
-      }
+      },
     });
 
     const input = { data: { result: 42 } };
 
-    const result= await execute(plan, input);
-    t.log(result)
+    const result = await execute(plan, input);
+    t.log(result);
 
     // Actually this fails right but it's a permissions thing on the sandbox
     t.is(result.reason.reason, 'success');
-  })
+  });
 }

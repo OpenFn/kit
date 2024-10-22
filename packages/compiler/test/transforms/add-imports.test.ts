@@ -234,10 +234,12 @@ test('add imports for a test module', async (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: exports,
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: exports,
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
@@ -260,10 +262,12 @@ test('only add used imports for a test module', async (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: exports,
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: exports,
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
@@ -285,15 +289,58 @@ test("don't add imports if nothing is used", async (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: exports,
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: exports,
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
 
   t.assert(transformed.body.length === 0);
+});
+
+test('add imports for multiple adaptors', async (t) => {
+  const ast = b.program([
+    b.expressionStatement(b.identifier('x')),
+    b.expressionStatement(b.identifier('y')),
+  ]);
+
+  const options = {
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'adaptor-a',
+          exports: ['x'],
+        },
+        {
+          name: 'adaptor-b',
+          exports: ['y'],
+        },
+      ],
+    },
+  };
+  const transformed = transform(ast, [addImports], options) as n.Program;
+
+  // Note that the first is y, and the second is x
+  const [first, second] = transformed.body as [
+    n.ImportDeclaration,
+    n.ImportDeclaration
+  ];
+  t.assert(n.ImportDeclaration.check(first));
+  const imports_1 = first.specifiers as n.ImportSpecifier[];
+  t.assert(imports_1.length === 1);
+  t.assert(imports_1.find((i) => i.imported.name === 'y'));
+  t.is(first.source.value, 'adaptor-b');
+
+  t.assert(n.ImportDeclaration.check(second));
+  const imports_2 = (second as n.ImportDeclaration)
+    .specifiers as n.ImportSpecifier[];
+  t.assert(imports_2.length === 1);
+  t.assert(imports_2.find((i) => i.imported.name === 'x'));
+  t.is(second.source.value, 'adaptor-a');
 });
 
 test("don't import if a variable is declared with the same name", async (t) => {
@@ -307,10 +354,12 @@ test("don't import if a variable is declared with the same name", async (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: exports,
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: exports,
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
@@ -325,10 +374,12 @@ test('dumbly add imports for an adaptor with empty exports', (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: [],
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: [],
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
@@ -350,9 +401,11 @@ test('dumbly add imports for an adaptor with unknown exports', (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
@@ -405,10 +458,12 @@ test("don't auto add imports for node globals", (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: [],
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: [],
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;
@@ -430,10 +485,12 @@ test("Don't add imports for ignored identifiers", async (t) => {
   const options = {
     'add-imports': {
       ignore: ['x'],
-      adaptor: {
-        name: 'test-adaptor',
-        exports: [],
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: [],
+        },
+      ],
     },
   };
 
@@ -460,10 +517,12 @@ test("Don't add imports from import specifiers", async (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exports: [],
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exports: [],
+        },
+      ],
     },
   };
 
@@ -480,10 +539,12 @@ test('export everything from an adaptor', (t) => {
 
   const options = {
     'add-imports': {
-      adaptor: {
-        name: 'test-adaptor',
-        exportAll: true,
-      },
+      adaptors: [
+        {
+          name: 'test-adaptor',
+          exportAll: true,
+        },
+      ],
     },
   };
   const transformed = transform(ast, [addImports], options) as n.Program;

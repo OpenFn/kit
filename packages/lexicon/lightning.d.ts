@@ -1,5 +1,5 @@
 import type { SanitizePolicies } from '@openfn/logger';
-import { State } from './core';
+import { LegacyJob, State } from './core';
 
 export const API_VERSION: number;
 
@@ -29,9 +29,9 @@ export type LightningPlan = {
   dataclip_id: string;
   starting_node_id: string;
 
-  triggers: Node[];
-  jobs: Node[];
-  edges: Edge[];
+  triggers: LightningTrigger[];
+  jobs: LightningJob[];
+  edges: LightningEdge[];
 
   options?: LightningPlanOptions;
 };
@@ -59,16 +59,23 @@ export type LightningPlanOptions = {
  * Sticking with the Node/Edge semantics to help distinguish the
  * Lightning and runtime typings
  */
-export type Node = {
+export interface LightningNode {
   id: string;
   name?: string;
   body?: string;
   adaptor?: string;
   credential?: any;
   credential_id?: string;
-  type?: 'webhook' | 'cron'; // trigger only
   state?: State;
-};
+}
+
+export interface LightningTrigger extends LightningNode {
+  type: 'webhook' | 'cron';
+}
+
+export interface LightningJob extends LightningNode {
+  adaptor: string;
+}
 
 /**
  * This is a Path (or link) between two Jobs in a Plan.
@@ -76,7 +83,7 @@ export type Node = {
  * Sticking with the Node/Edge semantics to help distinguish the
  * Lightning and runtime typings
  */
-export interface Edge {
+export interface LightningEdge {
   id: string;
   source_job_id?: string;
   source_trigger_id?: string;
