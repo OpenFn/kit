@@ -24,6 +24,7 @@ export type Opts = {
   cacheSteps?: boolean;
   compile?: boolean;
   configPath?: string;
+  configType?: string;
   confirm?: boolean;
   describe?: string;
   end?: string; // workflow end node
@@ -335,7 +336,7 @@ export const outputPath: CLIOption = {
   },
   ensure: (opts) => {
     // TODO these command specific rules don't sit well here
-    if (/^(compile|apollo)$/.test(opts.command!)) {
+    if (/^(compile|apollo|configuration)$/.test(opts.command!)) {
       if (opts.outputPath) {
         // If a path is set, remove the stdout flag
         delete opts.outputStdout;
@@ -475,5 +476,31 @@ export const sanitize: CLIOption = {
     const err = 'Unknown sanitize value provided: ' + opts.sanitize;
     console.error(err);
     throw new Error(err);
+  },
+};
+
+export const configType: CLIOption = {
+  name: 'configType',
+  yargs: {
+    alias: ['config-type'],
+    description: 'Specify the schema to return - schema, sample, or both',
+    default: 'both',
+  },
+  ensure: (opts) => {
+    let didLoadShortcut = false;
+    ['schema', 'sample', 'both'].forEach((shortcut) => {
+      if (shortcut in opts) {
+        if (didLoadShortcut) {
+          throw new Error(
+            'Invalid shortcut - please only enter one of sample, schema or both'
+          );
+        }
+
+        opts.configType = shortcut;
+        // @ts-ignore
+        delete opts[shortcut];
+        didLoadShortcut = true;
+      }
+    });
   },
 };
