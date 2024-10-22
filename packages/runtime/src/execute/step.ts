@@ -112,7 +112,7 @@ const executeStep = async (
       clone(input),
       configuration,
       globalState,
-      plan.workflow.credentials
+      plan.workflow?.credentials
     );
 
     notify(NOTIFY_INIT_COMPLETE, {

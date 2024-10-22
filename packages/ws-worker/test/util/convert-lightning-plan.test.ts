@@ -606,7 +606,9 @@ test('append the collections adaptor to jobs that use it', (t) => {
 
   const [_t, a, b] = plan.workflow.steps;
 
+  // @ts-ignore
   t.deepEqual(a.adaptors, ['common']);
+  // @ts-ignore
   t.deepEqual(b.adaptors, ['common', '@openfn/language-collections']);
 });
 
