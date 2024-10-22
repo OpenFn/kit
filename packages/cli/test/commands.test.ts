@@ -511,7 +511,7 @@ test.serial(
   'use execute from language-postgres: openfn job.js -a @openfn/language-postgres',
   async (t) => {
     const job =
-      'fn((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
+      'alterState((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
     const result = await run(
       'openfn -a @openfn/language-postgres --no-autoinstall',
       job,

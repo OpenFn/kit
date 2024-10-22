@@ -124,7 +124,7 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   const paths: ModulePaths = {};
 
   const adaptorsToLoad = [];
-  for (let a of adaptors) {
+  for (const a of adaptors) {
     // Ensure that this is not blacklisted
     if (whitelist && !whitelist.find((r) => r.exec(a))) {
       // TODO what if it is? For now we'll log and skip it
@@ -168,12 +168,13 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   // Write linker arguments back to the plan
   for (const step of plan.workflow.steps) {
     const job = step as unknown as Job;
-    if (paths[job.adaptor!]) {
-      const { name } = getNameAndVersion(job.adaptor!);
-      // @ts-ignore
-      job.linker = {
-        [name]: paths[job.adaptor!],
-      };
+    for (const adaptor of job.adaptors ?? []) {
+      if (paths[adaptor!]) {
+        const { name } = getNameAndVersion(adaptor!);
+        job.linker ??= {};
+        // @ts-ignore
+        job.linker[name] = paths[adaptor!];
+      }
     }
   }
 
@@ -232,8 +233,10 @@ const isInstalled = async (
 export const identifyAdaptors = (plan: ExecutionPlan): Set<string> => {
   const adaptors = new Set<string>();
   plan.workflow.steps
-    .filter((job) => (job as Job).adaptor)
-    .forEach((job) => adaptors.add((job as Job).adaptor!));
+    .filter((job) => (job as Job).adaptors)
+    .map((job) => (job as Job).adaptors)
+    .flat()
+    .forEach((adaptor) => adaptors.add(adaptor as string));
   return adaptors;
 };
 

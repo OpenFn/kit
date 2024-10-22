@@ -70,10 +70,12 @@ export const buildModel = ({ workflow }: ExecutionPlan) => {
 };
 
 const assertStart = (plan: ExecutionPlan) => {
-  const { start } = plan.options;
-  if (typeof start === 'string') {
-    if (!plan.workflow.steps.find(({ id }) => id === start)) {
-      throw new ValidationError(`Could not find start job: ${start}`);
+  if (plan.options) {
+    const { start } = plan.options;
+    if (typeof start === 'string') {
+      if (!plan.workflow.steps.find(({ id }) => id === start)) {
+        throw new ValidationError(`Could not find start job: ${start}`);
+      }
     }
   }
 };

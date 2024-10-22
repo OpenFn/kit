@@ -3,11 +3,14 @@ import { SanitizePolicies } from '@openfn/logger';
 /**
  * An execution plan is a portable definition of a Work Order,
  * or, a unit of work to execute
+ * This definition represents the external format - the shape of
+ * the plan pre-compilation before it's passed into the runtime manager
+ * (ie, the CLI or Worker)
  */
 export type ExecutionPlan = {
   id?: UUID; // this would be the run (nee attempt) id
   workflow: Workflow;
-  options: WorkflowOptions;
+  options?: WorkflowOptions;
 };
 
 /**
@@ -27,14 +30,14 @@ export type Workflow = {
  * This is some openfn expression plus metadata (adaptor, credentials)
  */
 export interface Job extends Step {
-  adaptor?: string;
+  adaptors?: string[];
   expression: Expression;
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
 
   // Internal use only
-  // Allow module paths and versions to be overriden in the linker
-  // Maps to runtime.ModuleInfoMapo
+  // Allow module paths and versions to be overridden in the linker
+  // Maps to runtime.ModuleInfoMap
   linker?: Record<
     string,
     {

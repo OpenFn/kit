@@ -208,12 +208,12 @@ test('should write adaptor versions', (t) => {
         {
           id: 'x',
           expression: '.',
-          adaptor: 'x@1.0',
+          adaptors: ['x@1.0'],
         },
         {
           id: 'y',
           expression: '.',
-          adaptor: 'y@1.0',
+          adaptors: ['y@1.0'],
         },
       ],
     },

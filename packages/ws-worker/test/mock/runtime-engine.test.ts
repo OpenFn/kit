@@ -17,7 +17,7 @@ const sampleWorkflow = {
     steps: [
       {
         id: 'j1',
-        adaptor: 'common@1.0.0',
+        adaptors: ['common@1.0.0'],
         expression: 'fn(() => ({ data: { x: 10 } }))',
       },
     ],
@@ -85,7 +85,7 @@ test.serial('Dispatch complete events for a job', async (t) => {
 test.serial('Dispatch error event for a crash', async (t) => {
   const wf = createPlan({
     id: 'j1',
-    adaptor: 'common@1.0.0',
+    adaptors: ['common@1.0.0'],
     expression: 'fn(() => ( @~!"@£!4 )',
   });
 
@@ -146,7 +146,7 @@ test.serial('listen to events', async (t) => {
 
   const wf = createPlan({
     id: 'j1',
-    adaptor: 'common@1.0.0',
+    adaptors: ['common@1.0.0'],
     expression: 'export default [() => { console.log("x"); }]',
   });
 
@@ -236,7 +236,7 @@ test.serial(
     // @ts-ignore
     const workflow = createPlan({
       id: 'j1',
-      adaptor: '@openfn/language-common@1.0.0',
+      adaptors: ['@openfn/language-common@1.0.0'],
     });
 
     let didCallEvent = false;
