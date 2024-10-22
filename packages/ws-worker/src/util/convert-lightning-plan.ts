@@ -42,13 +42,16 @@ const mapTriggerEdgeCondition = (edge: LightningEdge) => {
 // This function will look at every step and decide whether the collections adaptor
 // should be added to the array
 const appendCollectionsAdaptor = (plan: ExecutionPlan) => {
+  let hasCollections;
   plan.workflow.steps.forEach((step) => {
     const job = step as Job;
     if (job.expression?.match(/(collections\.)/)) {
+      hasCollections = true;
       job.adaptors ??= [];
       job.adaptors.push('@openfn/language-collections'); //  what about version? Is this safe?
     }
   });
+  return hasCollections;
 };
 
 // Options which relate to this execution but are not part of the plan
@@ -182,7 +185,13 @@ export default (
     plan.workflow.name = run.name;
   }
 
-  appendCollectionsAdaptor(plan as ExecutionPlan);
+  const hasCollections = appendCollectionsAdaptor(plan as ExecutionPlan);
+  if (hasCollections) {
+    plan.workflow.credentials = {
+      collections_token: true,
+      collections_endpoint: 'https://app.openfn.org',
+    };
+  }
 
   return {
     plan: plan as ExecutionPlan,

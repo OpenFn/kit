@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.7.1
+
+### Patch Changes
+
+- 1c79dc1: Append the collections adaptor to steps that need it
+- b15f151: Update worker to use adaptors as an array on xplans. Internal only change.
+- Updated dependencies [3463ff9]
+- Updated dependencies [7245bf7]
+  - @openfn/runtime@2.0.0
+  - @openfn/engine-multi@1.4.0
+
 ## 1.7.0
 
 ### Minor Changes
