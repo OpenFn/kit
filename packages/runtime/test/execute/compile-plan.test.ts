@@ -33,6 +33,20 @@ const planWithEdge = (edge: Partial<StepEdge>) => ({
   },
 });
 
+test('should preserve global credentials ', (t) => {
+  const compiledPlan = compilePlan({
+    id: 'a',
+    workflow: {
+      steps: [{ id: 'a', expression: 'a' }],
+      credentials: { collections_token: 'j.w.t.' },
+    },
+  });
+
+  t.deepEqual(compiledPlan.workflow.credentials, {
+    collections_token: 'j.w.t.',
+  });
+});
+
 test('should preserve the start option', (t) => {
   const compiledPlan = compilePlan({
     id: 'a',

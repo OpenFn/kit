@@ -80,7 +80,7 @@ const executeStep = async (
   step: CompiledStep,
   input: State = {}
 ): Promise<{ next: StepId[]; state: any }> => {
-  const { opts, notify, logger, report } = ctx;
+  const { opts, notify, logger, report, plan } = ctx;
 
   const duration = Date.now();
 
@@ -104,12 +104,16 @@ const executeStep = async (
       opts.callbacks?.resolveCredential! // cheat - we need to handle the error case here
     );
 
-    const globals = await loadState(
+    const globalState = await loadState(
       job,
       opts.callbacks?.resolveState! // and here
     );
-
-    const state = assembleState(clone(input), configuration, globals);
+    const state = assembleState(
+      clone(input),
+      configuration,
+      globalState,
+      plan.workflow.credentials
+    );
 
     notify(NOTIFY_INIT_COMPLETE, {
       jobId,
