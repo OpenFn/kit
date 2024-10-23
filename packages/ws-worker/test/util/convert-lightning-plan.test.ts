@@ -602,14 +602,14 @@ test('append the collections adaptor to jobs that use it', (t) => {
     triggers: [{ id: 't', type: 'cron' }],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertPlan(run as LightningPlan);
+  const { plan } = convertPlan(run as LightningPlan, '1.0.0');
 
   const [_t, a, b] = plan.workflow.steps;
 
   // @ts-ignore
   t.deepEqual(a.adaptors, ['common']);
   // @ts-ignore
-  t.deepEqual(b.adaptors, ['common', '@openfn/language-collections']);
+  t.deepEqual(b.adaptors, ['common', '@openfn/language-collections@1.0.0']);
 });
 
 test('append the collections credential to jobs that use it', (t) => {

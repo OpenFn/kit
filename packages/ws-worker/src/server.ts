@@ -1,4 +1,8 @@
 import { EventEmitter } from 'node:events';
+
+import { promisify } from 'node:util';
+import { exec as _exec } from 'node:child_process';
+
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
@@ -18,6 +22,9 @@ import connectToWorkerQueue from './channels/worker-queue';
 import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
+import { convertRun } from './util';
+
+const exec = promisify(_exec);
 
 export type ServerOptions = {
   maxWorkflows?: number;
@@ -36,6 +43,7 @@ export type ServerOptions = {
 
   socketTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
+  collectionsVersion?: string;
 };
 
 // this is the server/koa API
@@ -50,6 +58,9 @@ export interface ServerApp extends Koa {
   engine: RuntimeEngine;
   options: ServerOptions;
   workloop?: Workloop;
+  // What version of the collections adaptor should we use?
+  // Can be set through CLI, or else it'll look up latest on startup
+  collectionsVersion?: string;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
@@ -137,6 +148,24 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     .on('error', onError);
 }
 
+async function lookupCollectionsVersion(
+  options: ServerOptions,
+  logger: Logger
+) {
+  if (options.collectionsVersion && options.collectionsVersion !== 'latest') {
+    logger.log(
+      'Using collections version from CLI/env: ',
+      options.collectionsVersion
+    );
+    return options.collectionsVersion;
+  }
+  const { stdout: version } = await exec(
+    'npm view @openfn/language-collections@next version'
+  );
+  logger.log('Using collections version from @latest: ', version);
+  return version;
+}
+
 function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   const logger = options.logger || createMockLogger();
   const port = options.port || DEFAULT_PORT;
@@ -195,12 +224,18 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         const start = Date.now();
         app.workflows[id] = true;
 
-        const {
-          channel: runChannel,
-          plan,
-          options = {},
-          input,
-        } = await joinRunChannel(app.socket, token, id, logger);
+        const { channel: runChannel, run } = await joinRunChannel(
+          app.socket,
+          token,
+          id,
+          logger
+        );
+
+        const { plan, options, input } = convertRun(
+          run,
+          app.options.collectionsVersion
+        );
+        logger.debug('converted run body into execution plan:', plan);
 
         // Setup collections
         if (plan.workflow.credentials?.collections_token) {
@@ -275,7 +310,10 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.use(router.routes());
 
   if (options.lightning) {
-    connect(app, logger, options);
+    lookupCollectionsVersion(options, logger).then((version) => {
+      app.collectionsVersion = version;
+      connect(app, logger, options);
+    });
   } else {
     logger.warn('No lightning URL provided');
   }
