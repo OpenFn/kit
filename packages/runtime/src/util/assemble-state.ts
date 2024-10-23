@@ -13,7 +13,8 @@ const assembleData = (initialData: any, defaultData = {}) => {
 const assembleState = (
   initialState: any = {}, // previous or initial state
   configuration = {},
-  defaultState: any = {} // This is default state provided by the job
+  defaultState: any = {}, // This is default state provided by the job
+  globalCredentials: any = {}
 ) => {
   const obj = {
     ...defaultState,
@@ -29,11 +30,7 @@ const assembleState = (
   }
 
   Object.assign(obj, {
-    configuration: Object.assign(
-      {},
-      initialState.configuration ?? {},
-      configuration
-    ),
+    configuration: Object.assign({}, globalCredentials, configuration),
     data: assembleData(initialState.data, defaultState.data),
   });
 

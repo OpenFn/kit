@@ -1,5 +1,5 @@
 import { ExecutionPlan, Job } from '@openfn/lexicon';
-import { Edge, Node } from '@openfn/lexicon/lightning';
+import { LightningEdge, LightningNode } from '@openfn/lexicon/lightning';
 import crypto from 'node:crypto';
 
 export const wait = (fn: () => any, maxRuns = 100) =>
@@ -34,7 +34,7 @@ export const sleep = (delay = 100) =>
     setTimeout(resolve, delay);
   });
 
-export const createPlan = (...steps: Job[]) =>
+export const createPlan = (...steps: Partial<Job>[]) =>
   ({
     id: crypto.randomUUID(),
     workflow: {
@@ -48,13 +48,13 @@ export const createEdge = (from: string, to: string) =>
     id: `${from}-${to}`,
     source_job_id: from,
     target_job_id: to,
-  } as Edge);
+  } as LightningEdge);
 
 export const createJob = (body?: string, id?: string) =>
   ({
     id: id || crypto.randomUUID(),
     body: body || `fn((s) => s)`,
-  } as Node);
+  } as LightningNode);
 
 export const createRun = (jobs = [], edges = [], triggers = []) => ({
   id: crypto.randomUUID(),

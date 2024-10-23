@@ -1,9 +1,7 @@
-import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
 import type { GetPlanReply, LightningPlan } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 
 import { getWithReply } from '../util';
-import convertRun, { WorkerRunOptions } from '../util/convert-lightning-plan';
 import { GET_PLAN } from '../events';
 import type { Channel, Socket } from '../types';
 
@@ -20,9 +18,7 @@ const joinRunChannel = (
 ) => {
   return new Promise<{
     channel: Channel;
-    plan: ExecutionPlan;
-    options: WorkerRunOptions;
-    input: Lazy<State>;
+    run: LightningPlan;
   }>((resolve, reject) => {
     // TMP - lightning seems to be sending two responses to me
     // just for now, I'm gonna gate the handling here
@@ -38,9 +34,8 @@ const joinRunChannel = (
         if (!didReceiveOk) {
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
-          const { plan, options, input } = await loadRun(channel);
-          logger.debug('converted run as execution plan:', plan);
-          resolve({ channel, plan, options, input });
+          const run = await getWithReply<GetPlanReply>(channel, GET_PLAN);
+          resolve({ channel, run });
         }
       })
       .receive('error', (err: any) => {
@@ -65,10 +60,3 @@ const joinRunChannel = (
 };
 
 export default joinRunChannel;
-
-export async function loadRun(channel: Channel) {
-  // first we get the run body through the socket
-  const runBody = await getWithReply<GetPlanReply>(channel, GET_PLAN);
-  // then we generate the execution plan
-  return convertRun(runBody as LightningPlan);
-}

@@ -9,7 +9,7 @@ const createPlan = (jobs: Partial<Job>[]) =>
       steps: jobs.map((j) => ({ expression: '.', ...j })),
     },
     options: {},
-  } as ExecutionPlan);
+  } as Required<ExecutionPlan>);
 
 test('create run', (t) => {
   const plan = createPlan([{ id: 'a' }]);

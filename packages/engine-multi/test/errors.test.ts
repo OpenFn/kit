@@ -214,7 +214,7 @@ test.serial('emit a crash error on process.exit()', (t) => {
       workflow: {
         steps: [
           {
-            adaptor: '@openfn/helper@1.0.0',
+            adaptors: ['@openfn/helper@1.0.0'],
             expression: 'export default [exit()]',
           },
         ],

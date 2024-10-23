@@ -36,6 +36,7 @@ export type Lazy<T> = string | T;
 export type CompiledExecutionPlan = {
   workflow: {
     steps: Record<StepId, CompiledStep>;
+    credentials?: Record<string, any>;
   };
   options: WorkflowOptions & {
     start: StepId;

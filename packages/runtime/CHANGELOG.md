@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.5.0
+
+### Minor Changes
+
+- 3463ff9: Support global credential object on a workflow
+
 ## 1.4.2
 
 ### Patch Changes

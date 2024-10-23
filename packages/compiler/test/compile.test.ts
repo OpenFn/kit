@@ -56,10 +56,12 @@ test('compile multiple operations', (t) => {
 test('add imports', (t) => {
   const options = {
     'add-imports': {
-      adaptor: {
-        name: '@openfn/language-common',
-        exports: ['fn'],
-      },
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+          exports: ['fn'],
+        },
+      ],
     },
   };
   const source = 'fn();';
@@ -71,10 +73,12 @@ test('add imports', (t) => {
 test('do not add imports', (t) => {
   const options = {
     'add-imports': {
-      adaptor: {
-        name: '@openfn/language-common',
-        exports: ['fn'],
-      },
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+          exports: ['fn'],
+        },
+      ],
     },
   };
   // This example already has the correct imports declared, so add-imports should do nothing
@@ -87,9 +91,11 @@ test('do not add imports', (t) => {
 test('dumbly add imports', (t) => {
   const options = {
     'add-imports': {
-      adaptor: {
-        name: '@openfn/language-common',
-      },
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+        },
+      ],
     },
   };
   // This example already has the correct imports declared, so add-imports should do nothing
@@ -102,11 +108,13 @@ test('dumbly add imports', (t) => {
 test('add imports with export all', (t) => {
   const options = {
     'add-imports': {
-      adaptor: {
-        name: '@openfn/language-common',
-        exports: ['fn'],
-        exportAll: true,
-      },
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+          exports: ['fn'],
+          exportAll: true,
+        },
+      ],
     },
   };
   const source = 'fn();';
@@ -154,10 +162,12 @@ test('compile a lazy state ($) expression', (t) => {
 test('compile a lazy state ($) expression with dumb imports', (t) => {
   const options = {
     'add-imports': {
-      adaptor: {
-        name: '@openfn/language-common',
-        exportAll: true,
-      },
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+          exportAll: true,
+        },
+      ],
     },
   };
   const source = 'get($.data.endpoint);';

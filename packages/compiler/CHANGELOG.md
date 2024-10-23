@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.4.0
+
+### Minor Changes
+
+- 7a85894: support multiple adaptors when adding imports
+- b6de2c4: Be more accurate in calculating exports from an adaptor
+
 ## 0.3.3
 
 ### Patch Changes

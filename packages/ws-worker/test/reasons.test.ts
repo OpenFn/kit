@@ -209,7 +209,7 @@ test('exception: autoinstall error', async (t) => {
   const plan = createPlan({
     id: 'a',
     expression: '.',
-    adaptor: '@openfn/language-common@1.0.0',
+    adaptors: ['@openfn/language-common@1.0.0'],
   });
 
   // TODO I also need to ensure that this calls run:complete

@@ -22,8 +22,8 @@ export default (plan: ExecutionPlan, input?: Lazy<State>): RunState => {
     // find the first job
     const jobs = plan.workflow.steps as Job[];
     let startNode = jobs[0];
-    if (plan.options.start) {
-      startNode = jobs.find(({ id }) => id === plan.options.start)!;
+    if (plan.options?.start) {
+      startNode = jobs.find(({ id }) => id === plan.options?.start)!;
     }
 
     const initialRuns: string[] = [];

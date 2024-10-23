@@ -8,6 +8,7 @@ test.before(async () => {
     port: 2323,
     secret: 'abc',
     maxWorkflows: 1,
+    collectionsVersion: '1.0.0',
   });
 });
 

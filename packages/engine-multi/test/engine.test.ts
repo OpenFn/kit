@@ -28,6 +28,7 @@ const createPlan = (expression: string = '.', id = 'a') => ({
     steps: [
       {
         expression,
+        adaptors: [],
       },
     ],
   },

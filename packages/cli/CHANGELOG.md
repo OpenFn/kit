@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.8.6
+
+### Patch Changes
+
+- 528e9a0: Support multiple adaptors
+- Updated dependencies [3463ff9]
+- Updated dependencies [7a85894]
+- Updated dependencies [b6de2c4]
+  - @openfn/runtime@1.5.0
+  - @openfn/compiler@0.4.0
+
 ## 1.8.5
 
 ### Patch Changes

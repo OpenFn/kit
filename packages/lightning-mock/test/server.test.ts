@@ -36,6 +36,7 @@ test.serial('should setup an run at /POST /run', async (t) => {
           user: 'john',
           password: 'rambo',
         },
+        adaptor: 'abc',
       },
     ],
     edges: [],

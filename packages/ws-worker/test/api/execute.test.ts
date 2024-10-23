@@ -459,7 +459,7 @@ test('execute should call all events on the socket', async (t) => {
         {
           id: 'trigger',
           configuration: 'a',
-          adaptor: '@openfn/language-common@1.0.0',
+          adaptors: ['@openfn/language-common@1.0.0'],
           expression: 'fn(() => console.log("x"))',
         },
       ],

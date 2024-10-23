@@ -5,9 +5,11 @@ const getAutoinstallTargets = (plan: ExecutionPlan) => {
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as Job;
     // Do not autoinstall adaptors with a path
-    if (job.adaptor && !/=/.test(job.adaptor)) {
-      adaptors[job.adaptor] = true;
-    }
+    job.adaptors
+      ?.filter((adaptor) => !/=/.test(adaptor))
+      .forEach((adaptor) => {
+        adaptors[adaptor] = true;
+      });
   });
   return Object.keys(adaptors);
 };

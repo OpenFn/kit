@@ -56,10 +56,8 @@ const compileWorkflow = async (
     const job = step as Job;
     const jobOpts = {
       ...opts,
+      adaptors: job.adaptors ?? opts.adaptors,
     };
-    if (job.adaptor) {
-      jobOpts.adaptors = [job.adaptor];
-    }
     if (job.expression) {
       job.expression = await compileJob(
         job.expression as string,
@@ -115,37 +113,37 @@ export const loadTransformOptions = async (
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
   if (opts.adaptors?.length && opts.ignoreImports != true) {
-    let exports;
-    const [pattern] = opts.adaptors;
-    const [specifier] = pattern.split('=');
+    const adaptorsConfig = [];
+    for (const adaptorInput of opts.adaptors) {
+      let exports;
+      const [specifier] = adaptorInput.split('=');
 
-    // Preload exports from a path, optionally logging errors in case of a failure
-    log.debug(`Trying to preload types for ${specifier}`);
-    const path = await resolveSpecifierPath(pattern, opts.repoDir, log);
-    if (path) {
-      try {
-        exports = await preloadAdaptorExports(
-          path,
-          opts.useAdaptorsMonorepo,
-          log
-        );
-      } catch (e) {
-        log.error(`Failed to load adaptor typedefs from path ${path}`);
-        log.error(e);
+      // Preload exports from a path, optionally logging errors in case of a failure
+      log.debug(`Trying to preload types for ${specifier}`);
+      const path = await resolveSpecifierPath(adaptorInput, opts.repoDir, log);
+      if (path) {
+        try {
+          exports = await preloadAdaptorExports(path, log);
+        } catch (e) {
+          log.error(`Failed to load adaptor typedefs from path ${path}`);
+          log.error(e);
+        }
       }
-    }
 
-    if (!exports || exports.length === 0) {
-      log.debug(`No module exports found for ${pattern}`);
+      if (!exports || exports.length === 0) {
+        log.debug(`No module exports found for ${adaptorInput}`);
+      }
+
+      adaptorsConfig.push({
+        name: stripVersionSpecifier(specifier),
+        exports,
+        exportAll: true,
+      });
     }
 
     options['add-imports'] = {
       ignore: opts.ignoreImports as string[],
-      adaptor: {
-        name: stripVersionSpecifier(specifier),
-        exports,
-        exportAll: true,
-      },
+      adaptors: adaptorsConfig,
     };
   }
 

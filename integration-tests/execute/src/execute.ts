@@ -6,10 +6,12 @@ const execute = async (job: string, state: any, adaptor = 'common') => {
   // compile with common and dumb imports
   const options = {
     'add-imports': {
-      adaptor: {
-        name: `@openfn/language-${adaptor}`,
-        exportAll: true,
-      },
+      adaptors: [
+        {
+          name: `@openfn/language-${adaptor}`,
+          exportAll: true,
+        },
+      ],
     },
   };
   const compiled = compiler(job, options);

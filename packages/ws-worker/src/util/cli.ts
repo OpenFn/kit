@@ -23,6 +23,7 @@ type Args = {
   statePropsToRemove?: string[];
   maxRunDurationSeconds: number;
   socketTimeoutSeconds?: number;
+  collectionsVersion?: string;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -51,6 +52,7 @@ export default function parseArgs(argv: string[]): Args {
   const {
     WORKER_BACKOFF,
     WORKER_CAPACITY,
+    WORKER_COLLECTIONS_VERSION,
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
@@ -135,6 +137,11 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
       type: 'number',
+    })
+    .option('collections-version', {
+      description:
+        'The verison of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
+      type: 'string',
     });
 
   const args = parser.parse() as Args;
@@ -172,6 +179,10 @@ export default function parseArgs(argv: string[]): Args {
       args.socketTimeoutSeconds,
       WORKER_SOCKET_TIMEOUT_SECONDS,
       DEFAULT_SOCKET_TIMEOUT_SECONDS
+    ),
+    collectionsVersion: setArg(
+      args.collectionsVersion,
+      WORKER_COLLECTIONS_VERSION
     ),
   } as Args;
 }

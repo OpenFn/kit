@@ -30,14 +30,13 @@ const printVersions = async (
   includeComponents = false
 ) => {
   const { adaptors, logJson } = options;
-  let adaptor = '';
-  if (adaptors && adaptors.length) {
-    adaptor = adaptors[0];
-  }
 
-  let adaptorVersion;
-  let adaptorName = '';
-  if (adaptor) {
+  let longestAdaptorName = '';
+  const adaptorList: Array<string>[] = [];
+
+  adaptors?.forEach((adaptor) => {
+    let adaptorVersion;
+    let adaptorName = '';
     if (adaptor.match('=')) {
       const [namePart, pathPart] = adaptor.split('=');
       adaptorVersion = loadVersionFromPath(pathPart);
@@ -50,11 +49,15 @@ const printVersions = async (
       adaptorName = name;
       adaptorVersion = version || 'latest';
     }
-  }
+    adaptorList.push([adaptorName, adaptorVersion]);
+    if (adaptorName.length > longestAdaptorName.length) {
+      longestAdaptorName = adaptorName;
+    }
+  });
 
   // Work out the longest label
   const longest = Math.max(
-    ...[NODE, CLI, RUNTIME, COMPILER, adaptorName].map((s) => s.length)
+    ...[NODE, CLI, RUNTIME, COMPILER, longestAdaptorName].map((s) => s.length)
   );
 
   // Prefix and pad version numbers
@@ -83,8 +86,10 @@ const printVersions = async (
       output.versions.runtime = runtimeVersion;
       output.versions.compiler = compilerVersion;
     }
-    if (adaptorName) {
-      output.versions[adaptorName] = adaptorVersion;
+    if (adaptorList.length) {
+      for (const [name, version] of adaptorList) {
+        output.versions[name] = version;
+      }
     }
   } else {
     output = `Versions:
@@ -96,8 +101,10 @@ ${prefix(CLI)}${version}`;
 ${prefix(COMPILER)}${compilerVersion}`;
     }
 
-    if (adaptorName) {
-      output += `\n${prefix(adaptorName)}${adaptorVersion}`;
+    if (adaptorList.length) {
+      for (const [name, version] of adaptorList) {
+        output += `\n${prefix(name)}${version}`;
+      }
     }
   }
   logger.always(output);

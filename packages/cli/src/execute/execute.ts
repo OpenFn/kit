@@ -67,14 +67,16 @@ export function parseAdaptors(plan: ExecutionPlan) {
 
   const adaptors: ModuleInfoMap = {};
 
-  // TODO what if there are different versions of the same adaptor?
-  // This structure can't handle it - we'd need to build it for every job
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as Job;
-    if (job.adaptor) {
-      const { name, ...maybeVersionAndPath } = extractInfo(job.adaptor);
+    // Usually every job should have an adaptors array
+    // But there are a couple of cases mostly in test, when validation is skipped,
+    // when the array may not be set
+    // It's mostly redundant nbut harmless to optionally chain here
+    job.adaptors?.forEach((adaptor) => {
+      const { name, ...maybeVersionAndPath } = extractInfo(adaptor);
       adaptors[name] = maybeVersionAndPath;
-    }
+    });
   });
 
   return adaptors;

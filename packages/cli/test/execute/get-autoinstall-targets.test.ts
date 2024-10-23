@@ -29,14 +29,14 @@ test('plan with zero adaptors', (t) => {
   t.is(result.length, 0);
 });
 
-test('plan with multiple adaptors', (t) => {
+test('plan with multiple adaptors in multiple steps', (t) => {
   const plan = getPlan([
     {
-      adaptor: '@openfn/language-common',
+      adaptors: ['@openfn/language-common'],
       expression: 'fn()',
     },
     {
-      adaptor: '@openfn/language-http',
+      adaptors: ['@openfn/language-http'],
       expression: 'fn()',
     },
   ]);
@@ -48,11 +48,11 @@ test('plan with multiple adaptors', (t) => {
 test('plan with duplicate adaptors', (t) => {
   const plan = getPlan([
     {
-      adaptor: '@openfn/language-common',
+      adaptors: ['@openfn/language-common'],
       expression: 'fn()',
     },
     {
-      adaptor: '@openfn/language-common',
+      adaptors: ['@openfn/language-common'],
       expression: 'fn()',
     },
   ]);
@@ -61,18 +61,34 @@ test('plan with duplicate adaptors', (t) => {
   t.deepEqual(result, ['@openfn/language-common']);
 });
 
+test('plan with multiple adaptors in one step with duplicates', (t) => {
+  const plan = getPlan([
+    {
+      adaptors: [
+        '@openfn/language-common',
+        '@openfn/language-http',
+        '@openfn/language-http',
+      ],
+      expression: 'fn()',
+    },
+  ]);
+  const result = getAutoinstallTargets(plan);
+  t.is(result.length, 2);
+  t.deepEqual(result, ['@openfn/language-common', '@openfn/language-http']);
+});
+
 test('plan with one adaptor but different versions', (t) => {
   const plan = getPlan([
     {
-      adaptor: '@openfn/language-common@1.0.0',
+      adaptors: ['@openfn/language-common@1.0.0'],
       expression: 'fn()',
     },
     {
-      adaptor: '@openfn/language-common@2.0.0',
+      adaptors: ['@openfn/language-common@2.0.0'],
       expression: 'fn()',
     },
     {
-      adaptor: '@openfn/language-common@3.0.0',
+      adaptors: ['@openfn/language-common@3.0.0'],
       expression: 'fn()',
     },
   ]);
@@ -89,7 +105,7 @@ test('do not return adaptors with a path', (t) => {
   const plan = getPlan([
     {
       expression: 'fn()',
-      adaptor: 'common=a/b/c',
+      adaptors: ['common=a/b/c'],
     },
   ]);
   const result = getAutoinstallTargets(plan);
