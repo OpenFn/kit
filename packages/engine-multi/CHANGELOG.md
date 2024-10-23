@@ -1,5 +1,19 @@
 # engine-multi
 
+## 1.4.0
+
+### Minor Changes
+
+- 7245bf7: Support multiple adaptors in job structures
+
+### Patch Changes
+
+- Updated dependencies [3463ff9]
+- Updated dependencies [7a85894]
+- Updated dependencies [b6de2c4]
+  - @openfn/runtime@1.5.0
+  - @openfn/compiler@0.4.0
+
 ## 1.3.0
 
 ### Minor Changes
