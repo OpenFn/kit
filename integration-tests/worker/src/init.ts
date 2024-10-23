@@ -43,6 +43,7 @@ export const initWorker = async (
     port: workerPort,
     lightning: `ws://localhost:${lightningPort}/worker`,
     secret: crypto.randomUUID(),
+    collectionsVersion: '1.0.0',
     ...workerArgs,
   });
 
