@@ -1,4 +1,8 @@
 import { EventEmitter } from 'node:events';
+
+import { promisify } from 'node:util';
+import { exec as _exec } from 'node:child_process';
+
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
@@ -19,6 +23,8 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
+
+const exec = promisify(_exec);
 
 export type ServerOptions = {
   maxWorkflows?: number;
@@ -153,7 +159,11 @@ async function lookupCollectionsVersion(
     );
     return options.collectionsVersion;
   }
-  return;
+  const { stdout: version } = await exec(
+    'npm view @openfn/language-collections@next version'
+  );
+  logger.log('Using collections version from @latest: ', version);
+  return version;
 }
 
 function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
