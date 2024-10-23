@@ -9,7 +9,7 @@ import koaLogger from 'koa-logger';
 import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
-import { ClaimRun, LightningPlan } from '@openfn/lexicon/lightning';
+import { ClaimRun } from '@openfn/lexicon/lightning';
 import { INTERNAL_RUN_COMPLETE } from './events';
 import destroy from './api/destroy';
 import startWorkloop, { Workloop } from './api/workloop';
