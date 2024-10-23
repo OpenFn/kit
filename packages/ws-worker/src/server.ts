@@ -160,7 +160,7 @@ async function lookupCollectionsVersion(
     return options.collectionsVersion;
   }
   const { stdout: version } = await exec(
-    'npm view @openfn/language-collections@next version'
+    'npm view @openfn/language-collections@latest version'
   );
   logger.log('Using collections version from @latest: ', version);
   return version;
