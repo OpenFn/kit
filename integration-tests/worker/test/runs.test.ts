@@ -25,6 +25,7 @@ test.before(async () => {
       repoDir: path.resolve('tmp/repo/attempts'),
     },
     {
+      collectionsVersion: '1.0.0-next-f802225c',
       runPublicKey: keys.public,
     }
   ));
@@ -49,8 +50,8 @@ const run = async (t, attempt) => {
       // TODO friendlier job names for this would be nice (rather than run ids)
       t.log(
         `run ${payload.step_id} done in ${payload.duration / 1000}s [${humanMb(
-          payload.mem.job
-        )} / ${humanMb(payload.mem.system)}mb] [thread ${payload.thread_id}]`
+          payload.mem?.job
+        )} / ${humanMb(payload.mem?.system)}mb] [thread ${payload.thread_id}]`
       );
     });
     lightning.on('run:complete', (evt) => {
@@ -247,4 +248,37 @@ test.serial('use different versions of the same adaptor', async (t) => {
   const result = await run(t, attempt);
   t.log(result);
   t.falsy(result.errors);
+});
+
+test.serial('Run with collections', async (t) => {
+  const job1 = createJob({
+    body: `fn((state = {}) => {
+    const server = collections.createMockServer();
+    collections.setMockClient(server);
+
+    server.api.createCollection('collection');
+
+    state.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+    state.results = [];
+    return state;
+  });
+
+  collections.set('collection', v => v.id, $.data);
+
+  collections.each('collection', '*', (state, value, key) => {
+    state.results.push({ key, value })
+  });
+  `,
+    // Note: for some reason 1.7.0 fails because it exports a collections ??
+    // 1.7.4 seems fine
+    adaptor: '@openfn/language-common@1.7.4',
+  });
+  const attempt = createRun([], [job1], []);
+
+  const { results } = await run(t, attempt);
+  t.deepEqual(results, [
+    { key: 'a', value: { id: 'a' } },
+    { key: 'b', value: { id: 'b' } },
+    { key: 'c', value: { id: 'c' } },
+  ]);
 });
