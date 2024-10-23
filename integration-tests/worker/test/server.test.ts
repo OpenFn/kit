@@ -21,7 +21,7 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
         '--backoff 0.001/0.01',
         '--log debug',
         '-s secretsquirrel',
-        '--collections-token=1.0.0',
+        '--collections-version=1.0.0',
         ...args,
       ],
       options
