@@ -24,6 +24,7 @@ test.beforeEach(async () => {
     lightning: `ws://localhost:${lightningPort}/worker`,
     port: workerPort,
     backoff: { min: 10, max: 20 },
+    collectionsVersion: '1.0.0',
   });
 });
 

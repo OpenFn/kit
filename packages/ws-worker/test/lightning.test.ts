@@ -42,7 +42,7 @@ test.before(async () => {
     lightning: urls.lng,
     secret: 'abc',
     maxWorkflows: 1,
-
+    collectionsVersion: '1.0.0',
     // Note that if this is not passed,
     // JWT verification will be skipped
     runPublicKey: keys.public,
