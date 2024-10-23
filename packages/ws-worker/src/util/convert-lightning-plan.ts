@@ -41,14 +41,17 @@ const mapTriggerEdgeCondition = (edge: LightningEdge) => {
 
 // This function will look at every step and decide whether the collections adaptor
 // should be added to the array
-const appendCollectionsAdaptor = (plan: ExecutionPlan) => {
+const appendCollectionsAdaptor = (
+  plan: ExecutionPlan,
+  collectionsVersion: string = 'latest'
+) => {
   let hasCollections;
   plan.workflow.steps.forEach((step) => {
     const job = step as Job;
     if (job.expression?.match(/(collections\.)/)) {
       hasCollections = true;
       job.adaptors ??= [];
-      job.adaptors.push('@openfn/language-collections'); //  what about version? Is this safe?
+      job.adaptors.push(`@openfn/language-collections@${collectionsVersion}`);
     }
   });
   return hasCollections;
@@ -62,7 +65,8 @@ export type WorkerRunOptions = ExecuteOptions & {
 };
 
 export default (
-  run: LightningPlan
+  run: LightningPlan,
+  collectionsVersion?: string
 ): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
   // Some options get mapped straight through to the runtime's workflow options
   const runtimeOpts: Omit<WorkflowOptions, 'timeout'> = {};
@@ -185,7 +189,10 @@ export default (
     plan.workflow.name = run.name;
   }
 
-  const hasCollections = appendCollectionsAdaptor(plan as ExecutionPlan);
+  const hasCollections = appendCollectionsAdaptor(
+    plan as ExecutionPlan,
+    collectionsVersion
+  );
   if (hasCollections) {
     plan.workflow.credentials = {
       collections_token: true,
