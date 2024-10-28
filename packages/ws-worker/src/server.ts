@@ -44,6 +44,7 @@ export type ServerOptions = {
   socketTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   collectionsVersion?: string;
+  monorepoDir?: string;
 };
 
 // this is the server/koa API
@@ -233,7 +234,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
         const { plan, options, input } = convertRun(run, {
           collectionsVersion: app.options.collectionsVersion,
-          monorepoPath: process.env.OPENFN_REPO_DIR, // TODO wire this up properly
+          monorepoPath: app.options.monorepoDir,
         });
         logger.debug('converted run body into execution plan:', plan);
 
