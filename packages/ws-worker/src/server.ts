@@ -231,10 +231,10 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           logger
         );
 
-        const { plan, options, input } = convertRun(
-          run,
-          app.options.collectionsVersion
-        );
+        const { plan, options, input } = convertRun(run, {
+          collectionsVersion: app.options.collectionsVersion,
+          monorepoPath: process.env.OPENFN_REPO_DIR, // TODO wire this up properly
+        });
         logger.debug('converted run body into execution plan:', plan);
 
         // Setup collections
