@@ -120,7 +120,11 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
   let path;
   let version;
 
-  if (options.modules?.[specifier]) {
+  // If the specifier contains a path, import it
+  // (this can happen if a job has a specific path ovveride)
+  if (specifier.includes('=')) {
+    path = specifier.split('=')[1];
+  } else if (options.modules?.[specifier]) {
     ({ path, version } = options.modules?.[specifier]);
   }
 
