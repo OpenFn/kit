@@ -625,7 +625,7 @@ test('append the collections credential to jobs that use it', (t) => {
     triggers: [{ id: 't', type: 'cron' }],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertPlan(run as LightningPlan);
+  const { plan } = convertPlan(run as LightningPlan, '1.0.0');
 
   const creds = plan.workflow.credentials;
 
@@ -633,4 +633,23 @@ test('append the collections credential to jobs that use it', (t) => {
     collections_token: true,
     collections_endpoint: 'https://app.openfn.org',
   });
+});
+
+test("Don't set up collections if no version is passed", (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+  const { plan } = convertPlan(run as LightningPlan);
+
+  const [_t, a] = plan.workflow.steps;
+
+  t.deepEqual((a as Job).adaptors, ['common']);
 });

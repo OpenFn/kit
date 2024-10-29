@@ -43,6 +43,7 @@ function engineReady(engine: any) {
     maxWorkflows: args.capacity,
     payloadLimitMb: args.payloadMemory,
     collectionsVersion: args.collectionsVersion,
+    collectionsUrl: args.collectionsUrl,
   };
 
   if (args.lightningPublicKey) {

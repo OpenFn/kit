@@ -189,15 +189,17 @@ export default (
     plan.workflow.name = run.name;
   }
 
-  const hasCollections = appendCollectionsAdaptor(
-    plan as ExecutionPlan,
-    collectionsVersion
-  );
-  if (hasCollections) {
-    plan.workflow.credentials = {
-      collections_token: true,
-      collections_endpoint: 'https://app.openfn.org',
-    };
+  if (collectionsVersion) {
+    const hasCollections = appendCollectionsAdaptor(
+      plan as ExecutionPlan,
+      collectionsVersion
+    );
+    if (hasCollections) {
+      plan.workflow.credentials = {
+        collections_token: true,
+        collections_endpoint: 'https://app.openfn.org',
+      };
+    }
   }
 
   return {

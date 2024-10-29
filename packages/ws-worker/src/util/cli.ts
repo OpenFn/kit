@@ -24,6 +24,7 @@ type Args = {
   maxRunDurationSeconds: number;
   socketTimeoutSeconds?: number;
   collectionsVersion?: string;
+  collectionsUrl?: string;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -138,9 +139,14 @@ export default function parseArgs(argv: string[]): Args {
         'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
       type: 'number',
     })
+    .option('collections-url', {
+      alias: ['c'],
+      description:
+        'URL to the Collections service endpoint. Required for Collections.Env: WORKER_COLLECTIONS_URL',
+    })
     .option('collections-version', {
       description:
-        'The verison of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
+        'The version of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
       type: 'string',
     });
 
@@ -184,5 +190,6 @@ export default function parseArgs(argv: string[]): Args {
       args.collectionsVersion,
       WORKER_COLLECTIONS_VERSION
     ),
+    collectionsUrl: setArg(args.collectionsUrl, WORKER_COLLECTIONS_URL),
   } as Args;
 }

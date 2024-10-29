@@ -44,6 +44,7 @@ export type ServerOptions = {
   socketTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   collectionsVersion?: string;
+  collectionsUrl?: string;
 };
 
 // this is the server/koa API
@@ -148,10 +149,16 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     .on('error', onError);
 }
 
-async function lookupCollectionsVersion(
-  options: ServerOptions,
-  logger: Logger
-) {
+async function setupCollections(options: ServerOptions, logger: Logger) {
+  if (!options.collectionsUrl) {
+    logger.warn(
+      'WARNING: no collections URL provided. Collections service will not be enabled.'
+    );
+    logger.warn(
+      'Pass --collections-version or set WORKER_COLLECTIONS_URL to set the url'
+    );
+    return;
+  }
   if (options.collectionsVersion && options.collectionsVersion !== 'latest') {
     logger.log(
       'Using collections version from CLI/env: ',
@@ -243,7 +250,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         }
         if (plan.workflow.credentials?.collections_endpoint) {
           plan.workflow.credentials.collections_endpoint =
-            app.options.lightning;
+            app.options.collectionsUrl;
         }
 
         // Default the payload limit if it's not otherwise set on the run options
@@ -310,7 +317,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.use(router.routes());
 
   if (options.lightning) {
-    lookupCollectionsVersion(options, logger).then((version) => {
+    setupCollections(options, logger).then((version) => {
       app.collectionsVersion = version;
       connect(app, logger, options);
     });
