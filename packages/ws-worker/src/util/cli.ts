@@ -54,6 +54,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_BACKOFF,
     WORKER_CAPACITY,
     WORKER_COLLECTIONS_VERSION,
+    WORKER_COLLECTIONS_URL,
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
@@ -142,7 +143,7 @@ export default function parseArgs(argv: string[]): Args {
     .option('collections-url', {
       alias: ['c'],
       description:
-        'URL to the Collections service endpoint. Required for Collections.Env: WORKER_COLLECTIONS_URL',
+        'URL to the Collections service endpoint. Required for Collections, eg, https://app.openfn.org/collections. Env: WORKER_COLLECTIONS_URL',
     })
     .option('collections-version', {
       description:

@@ -197,7 +197,7 @@ export default (
     if (hasCollections) {
       plan.workflow.credentials = {
         collections_token: true,
-        collections_endpoint: 'https://app.openfn.org',
+        collections_endpoint: true,
       };
     }
   }

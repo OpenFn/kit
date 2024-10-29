@@ -150,7 +150,9 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 }
 
 async function setupCollections(options: ServerOptions, logger: Logger) {
-  if (!options.collectionsUrl) {
+  if (options.collectionsUrl) {
+    logger.log('Using collections endpoint at ', options.collectionsUrl);
+  } else {
     logger.warn(
       'WARNING: no collections URL provided. Collections service will not be enabled.'
     );
@@ -159,6 +161,7 @@ async function setupCollections(options: ServerOptions, logger: Logger) {
     );
     return;
   }
+
   if (options.collectionsVersion && options.collectionsVersion !== 'latest') {
     logger.log(
       'Using collections version from CLI/env: ',
