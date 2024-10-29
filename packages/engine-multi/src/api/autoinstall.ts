@@ -61,10 +61,6 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
   ) => {
     // Check whether we still need to do any work
     for (const a of adaptors) {
-      if (a.match('=')) {
-        // Ignore adaptors with explicit paths (ie monorepo @local)
-        continue;
-      }
       const { name, version } = getNameAndVersion(a);
       if (await isInstalledFn(a, repoDir, logger)) {
         continue;

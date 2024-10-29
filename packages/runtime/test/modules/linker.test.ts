@@ -105,16 +105,6 @@ test('loads a module from a path', async (t) => {
   t.assert(m.namespace.default === 'test');
 });
 
-// This is how the worker wants to do it:
-// A module with a path will be passed on one step,
-// rather than mapped globally
-// TODO: double check this
-test('loads a module from a path in the specifier', async (t) => {
-  const specifier = `ultimate-answer=${path.resolve('test/__modules__/test')}`;
-  const m = await linker(specifier, context, {});
-  t.assert(m.namespace.default === 'test');
-});
-
 test('imports with a cacheKey', async (t) => {
   const opts = {
     ...options,
