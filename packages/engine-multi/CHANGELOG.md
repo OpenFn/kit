@@ -8,6 +8,7 @@
 
 ### Patch Changes
 
+- Engine: don't try to autoinstall adaptor versions with @local
 - Updated dependencies [3463ff9]
 - Updated dependencies [7a85894]
 - Updated dependencies [b6de2c4]

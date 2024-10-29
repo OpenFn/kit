@@ -6,6 +6,7 @@
 
 - fd0e499: Support collections
 - bcd82e9: Accept collection version at startup (as arg or auto-looked-up from npm)
+- Support @local adaptor versions (which map to the monorepo)
 
 ### Patch Changes
 
