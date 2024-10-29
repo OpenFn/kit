@@ -10,6 +10,7 @@ type Args = {
   _: string[];
   backoff: string;
   capacity?: number;
+  collectionsUrl?: string;
   collectionsVersion?: string;
   lightning?: string;
   lightningPublicKey?: string;
@@ -54,6 +55,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_BACKOFF,
     WORKER_CAPACITY,
     WORKER_COLLECTIONS_VERSION,
+    WORKER_COLLECTIONS_URL,
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
@@ -145,9 +147,14 @@ export default function parseArgs(argv: string[]): Args {
         'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
       type: 'number',
     })
+    .option('collections-url', {
+      alias: ['c'],
+      description:
+        'URL to the Collections service endpoint. Required for Collections, eg, https://app.openfn.org/collections. Env: WORKER_COLLECTIONS_URL',
+    })
     .option('collections-version', {
       description:
-        'The verison of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
+        'The version of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
       type: 'string',
     });
 
@@ -192,5 +199,6 @@ export default function parseArgs(argv: string[]): Args {
       args.collectionsVersion,
       WORKER_COLLECTIONS_VERSION
     ),
+    collectionsUrl: setArg(args.collectionsUrl, WORKER_COLLECTIONS_URL),
   } as Args;
 }

@@ -627,14 +627,37 @@ test('append the collections credential to jobs that use it', (t) => {
     triggers: [{ id: 't', type: 'cron' }],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertPlan(run as LightningPlan);
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: '1.0.0',
+  });
 
   const creds = plan.workflow.credentials;
 
   t.deepEqual(creds, {
     collections_token: true,
-    collections_endpoint: 'https://app.openfn.org',
+    collections_endpoint: true,
   });
+});
+
+test("Don't set up collections if no version is passed", (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+        adaptor: 'common',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+  const { plan } = convertPlan(run as LightningPlan);
+
+  const [_t, a] = plan.workflow.steps;
+
+  t.deepEqual((a as Job).adaptors, ['common']);
+  t.falsy(plan.workflow.credentials);
 });
 
 test('Use local paths', (t) => {
@@ -650,6 +673,7 @@ test('Use local paths', (t) => {
     triggers: [{ id: 't', type: 'cron' }],
     edges: [createEdge('t', 'a')],
   };
+
   const { plan } = convertPlan(run as LightningPlan, {
     collectionsVersion: 'local',
     monorepoPath: '/adaptors',
