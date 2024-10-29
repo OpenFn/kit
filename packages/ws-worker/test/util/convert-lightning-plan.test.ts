@@ -602,7 +602,9 @@ test('append the collections adaptor to jobs that use it', (t) => {
     triggers: [{ id: 't', type: 'cron' }],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertPlan(run as LightningPlan, '1.0.0');
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: '1.0.0',
+  });
 
   const [_t, a, b] = plan.workflow.steps;
 
@@ -625,13 +627,15 @@ test('append the collections credential to jobs that use it', (t) => {
     triggers: [{ id: 't', type: 'cron' }],
     edges: [createEdge('a', 'b')],
   };
-  const { plan } = convertPlan(run as LightningPlan, '1.0.0');
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: '1.0.0',
+  });
 
   const creds = plan.workflow.credentials;
 
   t.deepEqual(creds, {
     collections_token: true,
-    collections_endpoint: 'https://app.openfn.org',
+    collections_endpoint: true,
   });
 });
 
@@ -642,6 +646,7 @@ test("Don't set up collections if no version is passed", (t) => {
       createNode({
         id: 'a',
         body: 'collections.each("c", "k", (state) => state)',
+        adaptor: 'common',
       }),
     ],
     triggers: [{ id: 't', type: 'cron' }],
@@ -652,4 +657,43 @@ test("Don't set up collections if no version is passed", (t) => {
   const [_t, a] = plan.workflow.steps;
 
   t.deepEqual((a as Job).adaptors, ['common']);
+  t.falsy(plan.workflow.credentials);
+});
+
+test('Use local paths', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+        adaptor: 'common@local',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: 'local',
+    monorepoPath: '/adaptors',
+  });
+
+  const [_t, a] = plan.workflow.steps as any[];
+
+  t.deepEqual(a.adaptors, [
+    'common@local',
+    '@openfn/language-collections@local',
+  ]);
+  t.deepEqual(a.linker, {
+    // The adaptor is not exapanded into long form, could be a problem
+    common: {
+      path: '/adaptors/packages/common',
+      version: 'local',
+    },
+    '@openfn/language-collections': {
+      path: '/adaptors/packages/collections',
+      version: 'local',
+    },
+  });
 });

@@ -21,7 +21,10 @@ test.before(async () => {
     maxWorkers: 1,
     repoDir: path.resolve('tmp/repo/integration'),
   };
-  const workerArgs = { runPublicKey: keys.public };
+  const workerArgs = {
+    runPublicKey: keys.public,
+    monorepoDir: path.resolve('monorepo'),
+  };
 
   ({ worker, engine, engineLogger } = await initWorker(
     lightningPort,
@@ -596,6 +599,27 @@ test.serial('Include timestamps on basically everything', (t) => {
     });
 
     lightning.enqueueRun(attempt);
+  });
+});
+
+test.serial('use local adaptor versions from monorepo', (t) => {
+  return new Promise(async (done) => {
+    lightning.once('run:complete', (evt) => {
+      const result = lightning.getResult('a1');
+      t.deepEqual(result, { data: 42 });
+      done();
+    });
+
+    lightning.enqueueRun({
+      id: 'a1',
+      jobs: [
+        {
+          id: 'j1',
+          body: 'fortyTwo()',
+          adaptor: '@openfn/language-common@local',
+        },
+      ],
+    });
   });
 });
 

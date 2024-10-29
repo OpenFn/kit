@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import path from 'node:path';
 import type {
   Step,
   StepId,
@@ -12,6 +13,7 @@ import type {
 } from '@openfn/lexicon';
 import { LightningPlan, LightningEdge } from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
+import { getNameAndVersion } from '@openfn/runtime';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
   {
@@ -39,24 +41,6 @@ const mapTriggerEdgeCondition = (edge: LightningEdge) => {
   return condition;
 };
 
-// This function will look at every step and decide whether the collections adaptor
-// should be added to the array
-const appendCollectionsAdaptor = (
-  plan: ExecutionPlan,
-  collectionsVersion: string = 'latest'
-) => {
-  let hasCollections;
-  plan.workflow.steps.forEach((step) => {
-    const job = step as Job;
-    if (job.expression?.match(/(collections\.)/)) {
-      hasCollections = true;
-      job.adaptors ??= [];
-      job.adaptors.push(`@openfn/language-collections@${collectionsVersion}`);
-    }
-  });
-  return hasCollections;
-};
-
 // Options which relate to this execution but are not part of the plan
 export type WorkerRunOptions = ExecuteOptions & {
   // Defaults to true - must be explicity false to stop dataclips being sent
@@ -64,10 +48,53 @@ export type WorkerRunOptions = ExecuteOptions & {
   payloadLimitMb?: number;
 };
 
+type ConversionOptions = {
+  collectionsVersion?: string;
+  monorepoPath?: string;
+};
+
 export default (
   run: LightningPlan,
-  collectionsVersion?: string
+  options: ConversionOptions = {}
 ): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
+  const { collectionsVersion, monorepoPath } = options;
+
+  const appendLocalVersions = (job: Job) => {
+    if (monorepoPath && job.adaptors!) {
+      for (const adaptor of job.adaptors) {
+        const { name, version } = getNameAndVersion(adaptor);
+        if (monorepoPath && version === 'local') {
+          const shortName = name.replace('@openfn/language-', '');
+          const localPath = path.resolve(monorepoPath, 'packages', shortName);
+          job.linker ??= {};
+          job.linker[name] = {
+            path: localPath,
+            version: 'local',
+          };
+        }
+      }
+    }
+    return job;
+  };
+
+  // This function will look at every step and decide whether the collections adaptor
+  // should be added to the array
+  const appendCollectionsAdaptor = (
+    plan: ExecutionPlan,
+    collectionsVersion: string = 'latest'
+  ) => {
+    let hasCollections;
+    plan.workflow.steps.forEach((step) => {
+      const job = step as Job;
+      if (job.expression?.match(/(collections\.)/)) {
+        hasCollections = true;
+        job.adaptors ??= [];
+        job.adaptors.push(`@openfn/language-collections@${collectionsVersion}`);
+      }
+    });
+    return hasCollections;
+  };
+
   // Some options get mapped straight through to the runtime's workflow options
   const runtimeOpts: Omit<WorkflowOptions, 'timeout'> = {};
 
@@ -200,6 +227,11 @@ export default (
         collections_endpoint: true,
       };
     }
+  }
+
+  // Find any @local versions and set them up properly
+  for (const step of plan.workflow.steps) {
+    appendLocalVersions(step as Job);
   }
 
   return {
