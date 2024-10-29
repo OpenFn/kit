@@ -158,6 +158,11 @@ const autoinstall = async (context: ExecutionContext): Promise<ModulePaths> => {
       (context.versions[name] as string[]).push(v);
     }
 
+    if (v === 'local') {
+      logger.info('Using local version of ', a);
+      continue;
+    }
+
     // important: write back to paths with the RAW specifier
     paths[a] = {
       path: `${repoDir}/node_modules/${alias}`,

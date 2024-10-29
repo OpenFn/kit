@@ -59,14 +59,22 @@ export default (
 ): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
   const { collectionsVersion, monorepoPath } = options;
 
-  const getLocalVersion = (adaptor: string) => {
-    const { name, version } = getNameAndVersion(adaptor);
-    if (monorepoPath && version === 'local') {
-      const shortName = name.replace('@openfn/language-', '');
-      const abspath = path.resolve(monorepoPath, 'packages', shortName);
-      return `${name}=${abspath}`;
+  const appendLocalVersions = (job: Job) => {
+    if (monorepoPath && job.adaptors!) {
+      for (const adaptor of job.adaptors) {
+        const { name, version } = getNameAndVersion(adaptor);
+        if (monorepoPath && version === 'local') {
+          const shortName = name.replace('@openfn/language-', '');
+          const localPath = path.resolve(monorepoPath, 'packages', shortName);
+          job.linker ??= {};
+          job.linker[name] = {
+            path: localPath,
+            version: 'local',
+          };
+        }
+      }
     }
-    return adaptor;
+    return job;
   };
 
   // This function will look at every step and decide whether the collections adaptor
@@ -81,9 +89,7 @@ export default (
       if (job.expression?.match(/(collections\.)/)) {
         hasCollections = true;
         job.adaptors ??= [];
-        job.adaptors.push(
-          getLocalVersion(`@openfn/language-collections@${collectionsVersion}`)
-        );
+        job.adaptors.push(`@openfn/language-collections@${collectionsVersion}`);
       }
     });
     return hasCollections;
@@ -165,7 +171,7 @@ export default (
         id,
         configuration: step.credential || step.credential_id,
         expression: step.body!,
-        adaptors: step.adaptor ? [getLocalVersion(step.adaptor)] : [],
+        adaptors: step.adaptor ? [step.adaptor] : [],
       };
 
       if (step.name) {
@@ -221,6 +227,11 @@ export default (
         collections_endpoint: true,
       };
     }
+  }
+
+  // Find any @local versions and set them up properly
+  for (const step of plan.workflow.steps) {
+    appendLocalVersions(step as Job);
   }
 
   return {
