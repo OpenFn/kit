@@ -43,6 +43,7 @@ test.before(async () => {
     secret: 'abc',
     maxWorkflows: 1,
     collectionsVersion: '1.0.0',
+    collectionsUrl: 'www',
     // Note that if this is not passed,
     // JWT verification will be skipped
     runPublicKey: keys.public,
@@ -272,7 +273,7 @@ test.serial('should run a run with the collections adaptor', async (t) => {
     };
 
     lng.waitForResult(run.id).then((result: any) => {
-      t.is(result.collections_endpoint, urls.lng);
+      t.is(result.collections_endpoint, 'www');
       t.is(typeof result.collections_token, 'string');
       done();
     });
