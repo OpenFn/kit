@@ -679,11 +679,21 @@ test('Use local paths', (t) => {
     monorepoPath: '/adaptors',
   });
 
-  const [_t, a] = plan.workflow.steps;
+  const [_t, a] = plan.workflow.steps as any[];
 
-  // @ts-ignore
   t.deepEqual(a.adaptors, [
-    'common=/adaptors/packages/common',
-    '@openfn/language-collections=/adaptors/packages/collections',
+    'common@local',
+    '@openfn/language-collections@local',
   ]);
+  t.deepEqual(a.linker, {
+    // The adaptor is not exapanded into long form, could be a problem
+    common: {
+      path: '/adaptors/packages/common',
+      version: 'local',
+    },
+    '@openfn/language-collections': {
+      path: '/adaptors/packages/collections',
+      version: 'local',
+    },
+  });
 });
