@@ -214,7 +214,7 @@ test.serial('trigger workflow-log for adaptor logs', (t) => {
         // This will trigger console.log from inside the adaptor
         // rather than from job code directly
         expression: "log('hola')",
-        adaptor: '@openfn/helper@1.0.0',
+        adaptors: ['@openfn/helper@1.0.0'],
       },
     ]);
 

@@ -33,6 +33,20 @@ const planWithEdge = (edge: Partial<StepEdge>) => ({
   },
 });
 
+test('should preserve global credentials ', (t) => {
+  const compiledPlan = compilePlan({
+    id: 'a',
+    workflow: {
+      steps: [{ id: 'a', expression: 'a' }],
+      credentials: { collections_token: 'j.w.t.' },
+    },
+  });
+
+  t.deepEqual(compiledPlan.workflow.credentials, {
+    collections_token: 'j.w.t.',
+  });
+});
+
 test('should preserve the start option', (t) => {
   const compiledPlan = compilePlan({
     id: 'a',
@@ -208,12 +222,12 @@ test('should write adaptor versions', (t) => {
         {
           id: 'x',
           expression: '.',
-          adaptor: 'x@1.0',
+          adaptors: ['x@1.0'],
         },
         {
           id: 'y',
           expression: '.',
-          adaptor: 'y@1.0',
+          adaptors: ['y@1.0'],
         },
       ],
     },

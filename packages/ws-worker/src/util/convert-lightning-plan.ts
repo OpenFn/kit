@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import path from 'node:path';
 import type {
   Step,
   StepId,
@@ -10,8 +11,9 @@ import type {
   WorkflowOptions,
   Lazy,
 } from '@openfn/lexicon';
-import { LightningPlan, Edge } from '@openfn/lexicon/lightning';
+import { LightningPlan, LightningEdge } from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
+import { getNameAndVersion } from '@openfn/runtime';
 
 export const conditions: Record<string, (upstreamId: string) => string | null> =
   {
@@ -22,7 +24,7 @@ export const conditions: Record<string, (upstreamId: string) => string | null> =
     always: (_upstreamId: string) => null,
   };
 
-const mapEdgeCondition = (edge: Edge) => {
+const mapEdgeCondition = (edge: LightningEdge) => {
   const { condition } = edge;
   if (condition && condition in conditions) {
     const upstream = (edge.source_job_id || edge.source_trigger_id) as string;
@@ -31,7 +33,7 @@ const mapEdgeCondition = (edge: Edge) => {
   return condition;
 };
 
-const mapTriggerEdgeCondition = (edge: Edge) => {
+const mapTriggerEdgeCondition = (edge: LightningEdge) => {
   const { condition } = edge;
   // This handles cron triggers with undefined conditions and the 'always' string.
   if (condition === undefined || condition === 'always') return true;
@@ -46,9 +48,53 @@ export type WorkerRunOptions = ExecuteOptions & {
   payloadLimitMb?: number;
 };
 
+type ConversionOptions = {
+  collectionsVersion?: string;
+  monorepoPath?: string;
+};
+
 export default (
-  run: LightningPlan
+  run: LightningPlan,
+  options: ConversionOptions = {}
 ): { plan: ExecutionPlan; options: WorkerRunOptions; input: Lazy<State> } => {
+  const { collectionsVersion, monorepoPath } = options;
+
+  const appendLocalVersions = (job: Job) => {
+    if (monorepoPath && job.adaptors!) {
+      for (const adaptor of job.adaptors) {
+        const { name, version } = getNameAndVersion(adaptor);
+        if (monorepoPath && version === 'local') {
+          const shortName = name.replace('@openfn/language-', '');
+          const localPath = path.resolve(monorepoPath, 'packages', shortName);
+          job.linker ??= {};
+          job.linker[name] = {
+            path: localPath,
+            version: 'local',
+          };
+        }
+      }
+    }
+    return job;
+  };
+
+  // This function will look at every step and decide whether the collections adaptor
+  // should be added to the array
+  const appendCollectionsAdaptor = (
+    plan: ExecutionPlan,
+    collectionsVersion: string = 'latest'
+  ) => {
+    let hasCollections;
+    plan.workflow.steps.forEach((step) => {
+      const job = step as Job;
+      if (job.expression?.match(/(collections\.)/)) {
+        hasCollections = true;
+        job.adaptors ??= [];
+        job.adaptors.push(`@openfn/language-collections@${collectionsVersion}`);
+      }
+    });
+    return hasCollections;
+  };
+
   // Some options get mapped straight through to the runtime's workflow options
   const runtimeOpts: Omit<WorkflowOptions, 'timeout'> = {};
 
@@ -88,7 +134,7 @@ export default (
 
   const nodes: Record<StepId, Step> = {};
 
-  const edges: Edge[] = run.edges ?? [];
+  const edges: LightningEdge[] = run.edges ?? [];
 
   // We don't really care about triggers, it's mostly just a empty node
   if (run.triggers?.length) {
@@ -125,7 +171,7 @@ export default (
         id,
         configuration: step.credential || step.credential_id,
         expression: step.body!,
-        adaptor: step.adaptor,
+        adaptors: step.adaptor ? [step.adaptor] : [],
       };
 
       if (step.name) {
@@ -168,6 +214,24 @@ export default (
 
   if (run.name) {
     plan.workflow.name = run.name;
+  }
+
+  if (collectionsVersion) {
+    const hasCollections = appendCollectionsAdaptor(
+      plan as ExecutionPlan,
+      collectionsVersion
+    );
+    if (hasCollections) {
+      plan.workflow.credentials = {
+        collections_token: true,
+        collections_endpoint: true,
+      };
+    }
+  }
+
+  // Find any @local versions and set them up properly
+  for (const step of plan.workflow.steps) {
+    appendLocalVersions(step as Job);
   }
 
   return {

@@ -8,21 +8,24 @@ const DEFAULT_SOCKET_TIMEOUT_SECONDS = 10;
 
 type Args = {
   _: string[];
-  port?: number;
-  lightning?: string;
-  repoDir?: string;
-  secret?: string;
-  loop?: boolean;
-  log?: LogLevel;
-  lightningPublicKey?: string;
-  mock?: boolean;
   backoff: string;
   capacity?: number;
-  runMemory?: number;
-  payloadMemory?: number;
-  statePropsToRemove?: string[];
+  collectionsUrl?: string;
+  collectionsVersion?: string;
+  lightning?: string;
+  lightningPublicKey?: string;
+  log?: LogLevel;
+  loop?: boolean;
   maxRunDurationSeconds: number;
+  mock?: boolean;
+  monorepoDir?: string;
+  payloadMemory?: number;
+  port?: number;
+  repoDir?: string;
+  runMemory?: number;
+  secret?: string;
   socketTimeoutSeconds?: number;
+  statePropsToRemove?: string[];
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -51,6 +54,8 @@ export default function parseArgs(argv: string[]): Args {
   const {
     WORKER_BACKOFF,
     WORKER_CAPACITY,
+    WORKER_COLLECTIONS_VERSION,
+    WORKER_COLLECTIONS_URL,
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
@@ -62,6 +67,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_SECRET,
     WORKER_STATE_PROPS_TO_REMOVE,
     WORKER_SOCKET_TIMEOUT_SECONDS,
+    OPENFN_ADAPTORS_REPO,
   } = process.env;
 
   const parser = yargs(hideBin(argv))
@@ -80,6 +86,11 @@ export default function parseArgs(argv: string[]): Args {
       alias: 'd',
       description:
         'Path to the runtime repo (where modules will be installed). Env: WORKER_REPO_DIR',
+    })
+    .option('monorepo-dir', {
+      alias: 'm',
+      description:
+        'Path to the adaptors mono repo, from where @local adaptors will be loaded. Env: OPENFN_ADAPTORS_REPO',
     })
     .option('secret', {
       alias: 's',
@@ -135,6 +146,16 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'Default run timeout for the server, in seconds. Env: WORKER_MAX_RUN_DURATION_SECONDS',
       type: 'number',
+    })
+    .option('collections-url', {
+      alias: ['c'],
+      description:
+        'URL to the Collections service endpoint. Required for Collections, eg, https://app.openfn.org/collections. Env: WORKER_COLLECTIONS_URL',
+    })
+    .option('collections-version', {
+      description:
+        'The version of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
+      type: 'string',
     });
 
   const args = parser.parse() as Args;
@@ -148,6 +169,7 @@ export default function parseArgs(argv: string[]): Args {
       'ws://localhost:4000/worker'
     ),
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
+    monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
     secret: setArg(args.secret, WORKER_SECRET),
     lightningPublicKey: setArg(
       args.lightningPublicKey,
@@ -173,5 +195,10 @@ export default function parseArgs(argv: string[]): Args {
       WORKER_SOCKET_TIMEOUT_SECONDS,
       DEFAULT_SOCKET_TIMEOUT_SECONDS
     ),
+    collectionsVersion: setArg(
+      args.collectionsVersion,
+      WORKER_COLLECTIONS_VERSION
+    ),
+    collectionsUrl: setArg(args.collectionsUrl, WORKER_COLLECTIONS_URL),
   } as Args;
 }

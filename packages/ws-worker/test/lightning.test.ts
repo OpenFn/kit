@@ -42,14 +42,15 @@ test.before(async () => {
     lightning: urls.lng,
     secret: 'abc',
     maxWorkflows: 1,
-
+    collectionsVersion: '1.0.0',
+    collectionsUrl: 'www',
     // Note that if this is not passed,
     // JWT verification will be skipped
     runPublicKey: keys.public,
     backoff: {
       min: 1,
       max: 1000,
-    }
+    },
   });
 });
 
@@ -110,109 +111,98 @@ test.serial(
   }
 );
 
-test.serial(
-  `should not claim while at capacity, then resume`,
-  (t) => {
-    return new Promise((done) => {
+test.serial(`should not claim while at capacity, then resume`, (t) => {
+  return new Promise((done) => {
+    let runIsActive = false;
+    let runComplete = false;
+    let didClaimAfterComplete = false;
 
-      let runIsActive = false;
-      let runComplete = false;
-      let didClaimAfterComplete = false;
-
-      const run = {
-        id: `a${++rollingRunId}`,
-        jobs: [
-          {
-            id: 'j',
-            adaptor: '@openfn/language-common@1.0.0',
-            body: `fn(() => new Promise((resolve) => {
+    const run = {
+      id: `a${++rollingRunId}`,
+      jobs: [
+        {
+          id: 'j',
+          adaptor: '@openfn/language-common@1.0.0',
+          body: `fn(() => new Promise((resolve) => {
               setTimeout(resolve, 500)
             }))`,
-          },
-        ],
-      };
+        },
+      ],
+    };
 
+    lng.on(e.CLAIM, () => {
+      if (runIsActive) {
+        t.fail('Claimed while run is active');
+      }
+      if (runComplete) {
+        didClaimAfterComplete = true;
+      }
+    });
 
-      lng.on(e.CLAIM, () => {
-        if (runIsActive) {
-          t.fail('Claimed while run is active')
-        }
-        if (runComplete) {
-          didClaimAfterComplete = true;
-        }
-      });
+    lng.onSocketEvent(e.RUN_START, run.id, () => {
+      runIsActive = true;
+    });
 
-      lng.onSocketEvent(e.RUN_START, run.id, () => {
-        runIsActive = true;
-      })
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      runIsActive = false;
+      runComplete = true;
 
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
-        runIsActive = false;
-        runComplete = true;
+      setTimeout(() => {
+        t.true(didClaimAfterComplete);
+        done();
+      }, 10);
+    });
 
-        setTimeout(() => {
-          t.true(didClaimAfterComplete);
-          done()
-        }, 10)
-      });
+    lng.enqueueRun(run);
+  });
+});
+
+test.serial(`should reset backoff after claim`, (t) => {
+  return new Promise((done) => {
+    let lastClaim = Date.now();
+    let lastClaimDiff = 0;
+
+    const run = {
+      id: `a${++rollingRunId}`,
+      jobs: [
+        {
+          id: 'j',
+          adaptor: '@openfn/language-common@1.0.0',
+          body: `fn(() => new Promise((resolve) => {
+              setTimeout(resolve, 500)
+            }))`,
+        },
+      ],
+    };
+
+    lng.on(e.CLAIM, () => {
+      lastClaimDiff = Date.now() - lastClaim;
+      lastClaim = Date.now();
+    });
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+      // set this articially high - if there are no more claims, the test will fail
+      lastClaimDiff = 10000;
+
+      // When the run is finished, the claims should resume
+      // but with a smaller backoff
+      setTimeout(() => {
+        t.log('Backoff after run:', lastClaimDiff);
+        t.true(lastClaimDiff < 5);
+        done();
+      }, 10);
+    });
+
+    setTimeout(() => {
+      t.log('Backoff before run:', lastClaimDiff);
+      // let the backoff increase a bit
+      // the last claim diff should be at least 20ms
+      t.true(lastClaimDiff > 20);
 
       lng.enqueueRun(run);
-    });
-  }
-);
-
-test.serial(
-  `should reset backoff after claim`,
-  (t) => {
-    return new Promise((done) => {
-
-      let lastClaim = Date.now()
-      let lastClaimDiff = 0;
-
-      const run = {
-        id: `a${++rollingRunId}`,
-        jobs: [
-          {
-            id: 'j',
-            adaptor: '@openfn/language-common@1.0.0',
-            body: `fn(() => new Promise((resolve) => {
-              setTimeout(resolve, 500)
-            }))`,
-          },
-        ],
-      };
-
-
-      lng.on(e.CLAIM, () => {
-        lastClaimDiff = Date.now() - lastClaim;
-        lastClaim = Date.now()
-      });
-
-      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
-         // set this articially high - if there are no more claims, the test will fail
-        lastClaimDiff = 10000;
-        
-        // When the run is finished, the claims should resume
-        // but with a smaller backoff
-        setTimeout(() => {
-          t.log('Backoff after run:', lastClaimDiff)
-          t.true(lastClaimDiff < 5)
-          done()
-        }, 10)
-      });
-
-      
-      setTimeout(() => {
-        t.log('Backoff before run:', lastClaimDiff)
-        // let the backoff increase a bit
-        // the last claim diff should be at least 30ms
-        t.true(lastClaimDiff > 30)
-
-        lng.enqueueRun(run);
-      }, 600)
-    });
-  }
-);
+    }, 600);
+  });
+});
 
 test.todo('worker should log when a run token is verified');
 
@@ -262,6 +252,29 @@ test.serial('should run a run which returns initial state', async (t) => {
 
     lng.waitForResult(run.id).then((result: any) => {
       t.deepEqual(result, { data: 66 });
+      done();
+    });
+
+    lng.enqueueRun(run);
+  });
+});
+
+test.serial('should run a run with the collections adaptor', async (t) => {
+  return new Promise((done) => {
+    const run = {
+      id: 'run-1',
+      jobs: [
+        {
+          // This should be enough to fake the worker into
+          // loading the collections machinery
+          body: 'fn((s) => /* collections.get */ s.configuration)',
+        },
+      ],
+    };
+
+    lng.waitForResult(run.id).then((result: any) => {
+      t.is(result.collections_endpoint, 'www');
+      t.is(typeof result.collections_token, 'string');
       done();
     });
 

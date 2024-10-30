@@ -106,6 +106,9 @@ export default (plan: ExecutionPlan) => {
       start: options.start ?? workflow.steps[0]?.id!,
     },
   };
+  if (workflow.credentials) {
+    newPlan.workflow.credentials = workflow.credentials;
+  }
 
   const maybeAssign = (a: any, b: any, keys: Array<keyof Job>) => {
     keys.forEach((key) => {
@@ -131,10 +134,13 @@ export default (plan: ExecutionPlan) => {
 
     if (job.linker) {
       newStep.linker = job.linker;
-    } else if (job.adaptor) {
+    } else if (job.adaptors) {
       const job = step as Job;
-      const { name, version } = getNameAndVersion(job.adaptor!);
-      newStep.linker = { [name]: { version: version! } };
+      newStep.linker ??= {};
+      for (const adaptor of job.adaptors!) {
+        const { name, version } = getNameAndVersion(adaptor);
+        newStep.linker[name] = { version: version! };
+      }
     }
 
     if (step.next) {

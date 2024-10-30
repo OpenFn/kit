@@ -1,5 +1,9 @@
 import test from 'ava';
-import type { LightningPlan, Node } from '@openfn/lexicon/lightning';
+import type {
+  LightningPlan,
+  LightningJob,
+  LightningTrigger,
+} from '@openfn/lexicon/lightning';
 import convertPlan, { conditions } from '../../src/util/convert-lightning-plan';
 import { ConditionalStepEdge, Job } from '@openfn/lexicon';
 
@@ -11,7 +15,7 @@ const createNode = (props = {}) =>
     adaptor: 'common',
     credential_id: 'y',
     ...props,
-  } as Node);
+  } as LightningJob);
 
 const createEdge = (from: string, to: string, props = {}) => ({
   id: `${from}-${to}`,
@@ -26,13 +30,13 @@ const createTrigger = (props = {}) =>
     id: 't',
     type: 'cron',
     ...props,
-  } as Node);
+  } as LightningTrigger);
 
 // Creates a runtime job node
 const createJob = (props = {}) => ({
   id: 'a',
   expression: 'x',
-  adaptor: 'common',
+  adaptors: ['common'],
   configuration: 'y',
   ...props,
 });
@@ -583,4 +587,113 @@ test('convert edge condition always', (t) => {
   const [job] = plan.workflow.steps as Job[];
   const edge = job.next as Record<string, ConditionalStepEdge>;
   t.false(edge.b.hasOwnProperty('condition'));
+});
+
+test('append the collections adaptor to jobs that use it', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({ id: 'a' }),
+      createNode({
+        id: 'b',
+        body: 'collections.each("c", "k", (state) => state)',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('a', 'b')],
+  };
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: '1.0.0',
+  });
+
+  const [_t, a, b] = plan.workflow.steps;
+
+  // @ts-ignore
+  t.deepEqual(a.adaptors, ['common']);
+  // @ts-ignore
+  t.deepEqual(b.adaptors, ['common', '@openfn/language-collections@1.0.0']);
+});
+
+test('append the collections credential to jobs that use it', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({ id: 'a' }),
+      createNode({
+        id: 'b',
+        body: 'collections.each("c", "k", (state) => state)',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('a', 'b')],
+  };
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: '1.0.0',
+  });
+
+  const creds = plan.workflow.credentials;
+
+  t.deepEqual(creds, {
+    collections_token: true,
+    collections_endpoint: true,
+  });
+});
+
+test("Don't set up collections if no version is passed", (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+        adaptor: 'common',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+  const { plan } = convertPlan(run as LightningPlan);
+
+  const [_t, a] = plan.workflow.steps;
+
+  t.deepEqual((a as Job).adaptors, ['common']);
+  t.falsy(plan.workflow.credentials);
+});
+
+test('Use local paths', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+        adaptor: 'common@local',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: 'local',
+    monorepoPath: '/adaptors',
+  });
+
+  const [_t, a] = plan.workflow.steps as any[];
+
+  t.deepEqual(a.adaptors, [
+    'common@local',
+    '@openfn/language-collections@local',
+  ]);
+  t.deepEqual(a.linker, {
+    // The adaptor is not exapanded into long form, could be a problem
+    common: {
+      path: '/adaptors/packages/common',
+      version: 'local',
+    },
+    '@openfn/language-collections': {
+      path: '/adaptors/packages/collections',
+      version: 'local',
+    },
+  });
 });
