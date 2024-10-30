@@ -187,6 +187,8 @@ importers:
         specifier: ^2.15.0
         version: 2.15.0
 
+  integration-tests/worker/monorepo/packages/common: {}
+
   packages/cli:
     dependencies:
       '@inquirer/prompts':
