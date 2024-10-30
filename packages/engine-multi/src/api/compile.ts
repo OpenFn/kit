@@ -1,5 +1,5 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
-import { getModulePath } from '@openfn/runtime';
+import { getModulePath, getNameAndVersion } from '@openfn/runtime';
 import type { Job } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
@@ -18,12 +18,7 @@ export default async (context: ExecutionContext) => {
       const job = step as Job;
       if (job.expression) {
         try {
-          job.expression = await compileJob(
-            job.expression as string,
-            logger,
-            repoDir,
-            job.adaptors
-          );
+          job.expression = await compileJob(job, logger, repoDir);
         } catch (e) {
           throw new CompileError(e, job.id!);
         }
@@ -43,12 +38,8 @@ const stripVersionSpecifier = (specifier: string) => {
   return specifier;
 };
 
-const compileJob = async (
-  job: string,
-  logger: Logger,
-  repoDir?: string,
-  adaptors?: string[]
-) => {
+const compileJob = async (job: Job, logger: Logger, repoDir?: string) => {
+  const { expression, adaptors, linker } = job;
   const compilerOptions: Options = {
     logger,
   };
@@ -56,8 +47,13 @@ const compileJob = async (
   if (adaptors && repoDir) {
     const adaptorConfig = [];
     for (const adaptor of adaptors) {
-      // TODO I probably don't want to log this stuff
-      const pathToAdaptor = await getModulePath(adaptor, repoDir, logger);
+      const { name } = getNameAndVersion(adaptor);
+
+      // Support local versions by looking in job.linker for a local path to the adaptor
+      const pathToAdaptor =
+        linker && linker[name]
+          ? linker[name].path
+          : await getModulePath(adaptor, repoDir, logger);
       const exports = await preloadAdaptorExports(pathToAdaptor!, logger);
       adaptorConfig.push({
         name: stripVersionSpecifier(adaptor),
@@ -69,5 +65,5 @@ const compileJob = async (
       adaptors: adaptorConfig,
     };
   }
-  return compile(job, compilerOptions);
+  return compile(expression, compilerOptions);
 };
