@@ -1,8 +1,12 @@
-{
-  "name": "@openfn/kit",
+{  "name": "@openfn/kit",
   "version": "1.0.0",
   "private": true,
   "description": "Next-generation OpenFN tooling",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "build": "pnpm run clean && pnpm -r --filter=./packages/* run build",
     "clean:local": "rimraf dist/**/*",
@@ -18,22 +22,16 @@
     "test:format": "prettier --check packages/*/src",
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
-    "test": "pnpm -r --filter=./packages/* run test",
-    "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
+    "test:setup": "node scripts/verify-environment.js && pnpm install && pnpm verify:deps && pnpm dlx typesync && pnpm install && tsc --noEmit",
+    "test": "pnpm run test:setup && ava",
+    "verify:deps": "node scripts/verify-dependencies.js"
   },
   "keywords": [],
   "author": "Open Function Group",
   "license": "ISC",
-  "devDependencies": {
-    "@changesets/cli": "^2.27.1",
-    "@slack/web-api": "^6.12.1",
-    "@types/gunzip-maybe": "^1.4.0",
-    "@types/rimraf": "^3.0.2",
-    "@types/tar-stream": "^2.2.2",
-    "gunzip-maybe": "^1.4.2",
-    "prettier": "^2.8.8",
-    "rimraf": "^3.0.2",
-    "tar-stream": "^3.0.0",
-    "typesync": "^0.13.0"
+  "husky": {
+    "hooks": {
+      "pre-commit": "pnpm verify:deps"
+    }
   }
 }
