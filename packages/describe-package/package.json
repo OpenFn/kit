@@ -37,6 +37,7 @@
   },
   "keywords": [],
   "devDependencies": {
+    "@ava/typescript": "^5.0.0",
     "@openfn/language-common": "2.0.1",
     "@types/node": "^18.15.13",
     "@types/node-localstorage": "^1.3.0",
@@ -48,7 +49,8 @@
     "ts-node": "^10.9.2",
     "tslib": "^2.4.0",
     "tsm": "^2.2.1",
-    "tsup": "^7.2.0"
+    "tsup": "^7.2.0",
+    "typescript": "^5.1.6"
   },
   "files": [
     "dist",
@@ -64,7 +66,6 @@
   "dependencies": {
     "@typescript/vfs": "^1.3.5",
     "cross-fetch": "^3.1.5",
-    "typescript": "^5.1.6",
     "url-join": "^5.0.0"
   }
 }
