@@ -1,4 +1,5 @@
-{  "name": "@openfn/kit",
+{
+  "name": "@openfn/kit",
   "version": "1.0.0",
   "private": true,
   "description": "Next-generation OpenFN tooling",
@@ -33,5 +34,6 @@
     "hooks": {
       "pre-commit": "pnpm verify:deps"
     }
-  }
+  },
+  "devDependencies": {}
 }
