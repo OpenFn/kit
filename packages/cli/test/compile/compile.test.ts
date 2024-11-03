@@ -35,7 +35,9 @@ test('compile from source string', async (t) => {
 
   const opts = {} as CompileOptions;
 
-  const result = await compile(job, opts, mockLog);
+  const { code: result } = (await compile(job, opts, mockLog)) as {
+    code: string;
+  };
 
   const expected = 'export default [x()];';
   t.is(result, expected);
@@ -51,7 +53,9 @@ test.serial('compile from path', async (t) => {
     expressionPath,
   } as CompileOptions;
 
-  const result = await compile(expressionPath, opts, mockLog);
+  const { code: result } = (await compile(expressionPath, opts, mockLog)) as {
+    code: string;
+  };
 
   const expected = 'export default [x()];';
   t.is(result, expected);
