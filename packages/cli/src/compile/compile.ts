@@ -30,9 +30,10 @@ const compileJob = async (
   opts: CompileOptions,
   log: Logger,
   jobName?: string
-): Promise<string> => {
+): Promise<{ code: string; map?: any }> => {
   try {
     const compilerOptions: Options = await loadTransformOptions(opts, log);
+    compilerOptions.name = jobName ?? 'job';
     return compile(job, compilerOptions);
   } catch (e: any) {
     abort(
@@ -42,7 +43,7 @@ const compileJob = async (
       'Check the syntax of the job expression:\n\n' + job
     );
     // This will never actully execute
-    return '';
+    return { code: '' };
   }
 };
 
@@ -59,12 +60,14 @@ const compileWorkflow = async (
       adaptors: job.adaptors ?? opts.adaptors,
     };
     if (job.expression) {
-      job.expression = await compileJob(
+      const { code, map } = await compileJob(
         job.expression as string,
         jobOpts,
         log,
         job.id
       );
+      job.expression = code;
+      //job.map = map; // TODO
     }
   }
   return plan;

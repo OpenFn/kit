@@ -11,7 +11,12 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
 
   let result;
   if (options.expressionPath) {
-    result = await compile(options.expressionPath, options, logger);
+    const { code } = (await compile(
+      options.expressionPath,
+      options,
+      logger
+    )) as { code: string };
+    result = code;
   } else {
     const plan = await loadPlan(options, logger);
     result = await compile(plan, options, logger);
