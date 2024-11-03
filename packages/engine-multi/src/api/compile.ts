@@ -18,7 +18,8 @@ export default async (context: ExecutionContext) => {
       const job = step as Job;
       if (job.expression) {
         try {
-          job.expression = await compileJob(job, logger, repoDir);
+          const { code } = await compileJob(job, logger, repoDir);
+          job.expression = code;
         } catch (e) {
           throw new CompileError(e, job.id!);
         }
