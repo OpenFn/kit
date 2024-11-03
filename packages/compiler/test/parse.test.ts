@@ -6,6 +6,9 @@ import parse from '../src/parse';
 
 import { loadAst } from './util';
 
+// Note that these tests do not include source mappings
+// just because the ast changes and develops circular structures
+
 test('parse a simple statement', (t) => {
   const source = 'const x = 10;';
 
