@@ -5,29 +5,26 @@ import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';
 
+// TODO we should be able to get a proper typing for this from somewherewhere
+type SourceMap = any;
+
 export type Options = {
   logger?: Logger;
   jobLogger?: Logger;
-
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
-
   // TODO currently unused
   // Ensure that all incoming jobs are sandboxed / loaded as text
   // In practice this means throwing if someone tries to pass live js
   forceSandbox?: boolean;
-
   linker?: LinkerOptions;
-
   callbacks?: ExecutionCallbacks;
-
   // inject globals into the environment
   // TODO leaving this here for now, but maybe its actually on the xplan?
   globals?: any;
-
   statePropsToRemove?: string[];
-
   defaultRunTimeoutMs?: number;
+  sourceMap?: SourceMap;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
