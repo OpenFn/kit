@@ -26,6 +26,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "devDependencies": {
+    "@openfn/compiler": "workspace:^",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/lexicon": "workspace:^",
     "@types/mock-fs": "^4.13.1",
@@ -33,6 +34,8 @@
     "@types/semver": "^7.5.0",
     "ava": "5.3.1",
     "mock-fs": "^5.4.1",
+    "recast": "^0.21.5",
+    "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "tsup": "^7.2.0",
     "typescript": "^5.1.6"
@@ -45,6 +48,7 @@
   "dependencies": {
     "@openfn/logger": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
-    "semver": "^7.5.4"
+    "semver": "^7.5.4",
+    "source-map": "^0.7.4"
   }
 }
