@@ -1,6 +1,7 @@
 import test from 'ava';
 import path from 'node:path';
 import type { WorkflowOptions } from '@openfn/lexicon';
+import compile from '@openfn/compiler';
 
 import run from '../src/runtime';
 
@@ -47,13 +48,18 @@ test('crash on runtime error with SyntaxError', async (t) => {
   t.is(error.message, 'SyntaxError: Invalid or unexpected token');
 });
 
-test('crash on runtime error with ReferenceError', async (t) => {
+test.only('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
+
+  // compile the code so we get a source map
+  const { code, map } = compile(expression, { name: 'src' });
+  console.log({ code, map });
 
   let error: any;
   try {
-    await run(expression);
+    await run(code, { map });
   } catch (e) {
+    console.log(e);
     error = e;
   }
   t.log(error);
