@@ -30,7 +30,12 @@ const assembleState = (
   }
 
   Object.assign(obj, {
-    configuration: Object.assign({}, globalCredentials, configuration),
+    configuration: Object.assign(
+      {},
+      globalCredentials,
+      initialState.configuration,
+      configuration
+    ),
     data: assembleData(initialState.data, defaultState.data),
   });
 
