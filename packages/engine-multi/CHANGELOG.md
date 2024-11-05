@@ -1,5 +1,12 @@
 # engine-multi
 
+## 1.4.1
+
+### Patch Changes
+
+- Updated dependencies [eeb660d]
+  - @openfn/runtime@1.5.1
+
 ## 1.4.0
 
 ### Minor Changes

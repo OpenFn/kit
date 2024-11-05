@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.8.1
+
+### Patch Changes
+
+- eeb660d: Fix an issue from previous patch where initial state.configuration could be lost at the start of a step
+- Updated dependencies [eeb660d]
+  - @openfn/runtime@1.5.1
+  - @openfn/engine-multi@1.4.1
+
 ## 1.8.0
 
 ### Minor Changes

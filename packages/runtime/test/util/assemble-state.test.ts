@@ -67,7 +67,7 @@ test('Initial data does not have to be an object', (t) => {
   });
 });
 
-test('does not merge default and initial config objects', (t) => {
+test('merges default and initial config objects', (t) => {
   const initial = { configuration: { x: 1 } };
   const defaultState = undefined;
   const config = { y: 1 };
@@ -75,6 +75,7 @@ test('does not merge default and initial config objects', (t) => {
   const result = assembleState(initial, config, defaultState);
   t.deepEqual(result, {
     configuration: {
+      x: 1,
       y: 1,
     },
     data: {},
@@ -90,6 +91,20 @@ test('configuration overrides initialState.configuration', (t) => {
   t.deepEqual(result, {
     configuration: {
       x: 2,
+    },
+    data: {},
+  });
+});
+
+test('initialState.configuration is preserved', (t) => {
+  const initial = { configuration: { x: 1 } };
+  const defaultState = undefined;
+  const config = undefined;
+
+  const result = assembleState(initial, config, defaultState);
+  t.deepEqual(result, {
+    configuration: {
+      x: 1,
     },
     data: {},
   });
@@ -127,6 +142,21 @@ test('global credentials should be merged in', (t) => {
 });
 
 test('local credentials should override global credentials', (t) => {
+  const initial = { configuration: {} };
+  const defaultState = undefined;
+  const config = { collection_token: 'x.y.z' };
+  const global = { collection_token: 'j.w.t' };
+
+  const result = assembleState(initial, config, defaultState, global);
+  t.deepEqual(result, {
+    configuration: {
+      collection_token: 'x.y.z',
+    },
+    data: {},
+  });
+});
+
+test('local credentials should override global credentials but still preserve intial credentials', (t) => {
   const initial = { configuration: { x: 1 } };
   const defaultState = undefined;
   const config = { collection_token: 'x.y.z' };
@@ -135,6 +165,7 @@ test('local credentials should override global credentials', (t) => {
   const result = assembleState(initial, config, defaultState, global);
   t.deepEqual(result, {
     configuration: {
+      x: 1,
       collection_token: 'x.y.z',
     },
     data: {},

@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.8.7
+
+### Patch Changes
+
+- eeb660d: Fix an issue from previous patch where initial state.configuration could be lost at the start of a step
+- Updated dependencies [eeb660d]
+  - @openfn/runtime@1.5.1
+
 ## 1.8.6
 
 ### Patch Changes
