@@ -614,7 +614,36 @@ test('append the collections adaptor to jobs that use it', (t) => {
   t.deepEqual(b.adaptors, ['common', '@openfn/language-collections@1.0.0']);
 });
 
-test('append the collections credential to jobs that use it', (t) => {
+test('do not append the collections adaptor to jobs that already have it', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+        adaptor: '@openfn/language-collections@latest',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: '1.0.0',
+  });
+
+  const [_t, a] = plan.workflow.steps;
+
+  // @ts-ignore
+  t.deepEqual(a.adaptors, ['@openfn/language-collections@latest']);
+
+  t.deepEqual(plan.workflow.credentials, {
+    collections_token: true,
+    collections_endpoint: true,
+  });
+});
+
+test('append the collections credential to workflows that use it', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'w',
     jobs: [
