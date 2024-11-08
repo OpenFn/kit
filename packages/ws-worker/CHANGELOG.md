@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.8.2
+
+### Patch Changes
+
+- ef1fb63: Fix an issue running collections from an auto-loaded version
+- 606f23b: Allow steps to specify their own adaptor version
+
 ## 1.8.1
 
 ### Patch Changes

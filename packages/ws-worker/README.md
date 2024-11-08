@@ -66,6 +66,20 @@ To manually trigger a claim, post to `/claim`:
 curl -X POST http://localhost:2222/claim
 ```
 
+## Collections
+
+To enable collections with a local lightning:
+
+```
+pnpm start -collections-url http://localhost:4000/collections
+```
+
+To use the monorepo adaptor version:
+
+```
+pnpm start --collections-version local --collections-url http://localhost:4000/collections
+```
+
 ## Architecture
 
 Lightning is expected to maintain a queue of runs. The Worker pulls those runs from the queue, via websocket, and sends them off to the Engine for execution.
