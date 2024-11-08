@@ -60,9 +60,6 @@ export interface ServerApp extends Koa {
   engine: RuntimeEngine;
   options: ServerOptions;
   workloop?: Workloop;
-  // What version of the collections adaptor should we use?
-  // Can be set through CLI, or else it'll look up latest on startup
-  collectionsVersion?: string;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
@@ -174,7 +171,7 @@ async function setupCollections(options: ServerOptions, logger: Logger) {
     'npm view @openfn/language-collections@latest version'
   );
   logger.log('Using collections version from @latest: ', version);
-  return version;
+  return version.trim();
 }
 
 function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
@@ -322,7 +319,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   if (options.lightning) {
     setupCollections(options, logger).then((version) => {
-      app.collectionsVersion = version;
+      app.options.collectionsVersion = version;
       connect(app, logger, options);
     });
   } else {
