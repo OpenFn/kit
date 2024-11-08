@@ -158,6 +158,8 @@ importers:
 
   integration-tests/worker/monorepo/packages/common: {}
 
+  packages: {}
+
   packages/cli:
     dependencies:
       '@inquirer/prompts':
