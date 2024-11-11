@@ -88,8 +88,16 @@ export default (
       const job = step as Job;
       if (job.expression?.match(/(collections\.)/)) {
         hasCollections = true;
-        job.adaptors ??= [];
-        job.adaptors.push(`@openfn/language-collections@${collectionsVersion}`);
+        if (
+          !job.adaptors?.find((v) =>
+            v.startsWith('@openfn/language-collections')
+          )
+        ) {
+          job.adaptors ??= [];
+          job.adaptors.push(
+            `@openfn/language-collections@${collectionsVersion}`
+          );
+        }
       }
     });
     return hasCollections;

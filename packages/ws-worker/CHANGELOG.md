@@ -1,5 +1,21 @@
 # ws-worker
 
+## 1.8.2
+
+### Patch Changes
+
+- ef1fb63: Fix an issue running collections from an auto-loaded version
+- 606f23b: Allow steps to specify their own adaptor version
+
+## 1.8.1
+
+### Patch Changes
+
+- eeb660d: Fix an issue from previous patch where initial state.configuration could be lost at the start of a step
+- Updated dependencies [eeb660d]
+  - @openfn/runtime@1.5.1
+  - @openfn/engine-multi@1.4.1
+
 ## 1.8.0
 
 ### Minor Changes

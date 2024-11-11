@@ -25,7 +25,8 @@ test.before(async () => {
       repoDir: path.resolve('tmp/repo/attempts'),
     },
     {
-      collectionsVersion: '1.0.0-next-f802225c',
+      collectionsVersion: '0.5.0',
+      collectionsUrl: 'http://localhost:4321/collections',
       runPublicKey: keys.public,
     }
   ));
@@ -45,6 +46,7 @@ const humanMb = (sizeInBytes: number) => Math.round(sizeInBytes / 1024 / 1024);
 const run = async (t, attempt) => {
   return new Promise<any>(async (done, reject) => {
     lightning.on('step:complete', ({ payload }) => {
+      console.log(payload);
       t.is(payload.reason, 'success');
 
       // TODO friendlier job names for this would be nice (rather than run ids)

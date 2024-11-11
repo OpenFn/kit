@@ -1,5 +1,12 @@
 # @openfn/integration-tests-execute
 
+## 1.0.7
+
+### Patch Changes
+
+- Updated dependencies [eeb660d]
+  - @openfn/runtime@1.5.1
+
 ## 1.0.6
 
 ### Patch Changes

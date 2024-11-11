@@ -8,6 +8,7 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
+  "description": "Packages to support OpenFn v2",
   "scripts": {
     "build": "pnpm run clean && pnpm -r --filter=./packages/* run build",
     "clean:local": "rimraf dist/**/*",

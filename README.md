@@ -7,13 +7,23 @@
 A set of articles or equipment needed for a specific purpose.
 
 1. _a football kit_
-1. _the next-generation openfn data integration kit_
+1. _ICT4D's favourite kit for data integration and workflow automation_
 
 ---
 
-This repo contains runtime, tooling, libraries and components to support the next generation core openfn data integration pipeline.
+This repo contains runtime, tooling, libraries and components to support the OpenFn's workflow automation and data integration pipeline.
 
-It is a kitbag of Javascript-based components to support Lightning.
+## About OpenFn
+
+First launched in 2014, OpenFn is the leading Digital Public Good for workflow automation. It has has been tried and tested by NGOs and governments in 40+ countries, and is a [Digital Square](https://digitalsquare.org/digital-health-global-goods) certified Global Good for Health.
+
+Try the app online at [app.openfn.org](https://app.openfn.org)
+
+Explore in a sandbox on [demo.openfn.org](https://demo.openfn.org)
+
+Learn more at [docs.openfn.org](docs.openfn.org)
+
+This monorepo contains many of the backend JavaScript services that power the app: most notably the core Runtime engine that executes OpenFn job code, the Worker service which pulls and executes Workflows from the app, and `@openfn/cli`.
 
 ## Prerequisities
 
@@ -144,3 +154,4 @@ You can manually format files using Prettier by running:
 
 ```bash
 pnpm run format
+```
