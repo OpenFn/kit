@@ -44,6 +44,7 @@ function engineReady(engine: any) {
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,
     monorepoDir: args.monorepoDir,
+    forceLocalAdaptors: args.localAdaptors,
   };
 
   if (args.lightningPublicKey) {

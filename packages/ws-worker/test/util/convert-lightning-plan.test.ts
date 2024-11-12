@@ -726,3 +726,42 @@ test('Use local paths', (t) => {
     },
   });
 });
+
+test('force local paths', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [
+      createNode({
+        id: 'a',
+        body: 'collections.each("c", "k", (state) => state)',
+        adaptor: 'common@1.0.0',
+      }),
+    ],
+    triggers: [{ id: 't', type: 'cron' }],
+    edges: [createEdge('t', 'a')],
+  };
+
+  const { plan } = convertPlan(run as LightningPlan, {
+    collectionsVersion: 'local',
+    monorepoPath: '/adaptors',
+    forceLocal: true,
+  });
+
+  const [_t, a] = plan.workflow.steps as any[];
+
+  t.deepEqual(a.adaptors, [
+    '@openfn/language-common@local',
+    '@openfn/language-collections@local',
+  ]);
+  t.deepEqual(a.linker, {
+    // The adaptor is not exapanded into long form, could be a problem
+    common: {
+      path: '/adaptors/packages/common',
+      version: 'local',
+    },
+    '@openfn/language-collections': {
+      path: '/adaptors/packages/collections',
+      version: 'local',
+    },
+  });
+});

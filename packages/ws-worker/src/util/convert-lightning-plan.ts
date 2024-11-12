@@ -51,6 +51,7 @@ export type WorkerRunOptions = ExecuteOptions & {
 type ConversionOptions = {
   collectionsVersion?: string;
   monorepoPath?: string;
+  forceLocal?: boolean;
 };
 
 export default (
@@ -61,9 +62,9 @@ export default (
 
   const appendLocalVersions = (job: Job) => {
     if (monorepoPath && job.adaptors!) {
-      for (const adaptor of job.adaptors) {
+      job.adaptors = job.adaptors.map((adaptor) => {
         const { name, version } = getNameAndVersion(adaptor);
-        if (monorepoPath && version === 'local') {
+        if (monorepoPath && (options.forceLocal || version === 'local')) {
           const shortName = name.replace('@openfn/language-', '');
           const localPath = path.resolve(monorepoPath, 'packages', shortName);
           job.linker ??= {};
@@ -71,8 +72,12 @@ export default (
             path: localPath,
             version: 'local',
           };
+          if (options.forceLocal) {
+            return `@openfn/language-${shortName}@local`;
+          }
         }
-      }
+        return adaptor;
+      });
     }
     return job;
   };

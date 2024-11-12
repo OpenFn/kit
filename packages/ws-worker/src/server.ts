@@ -46,6 +46,7 @@ export type ServerOptions = {
   collectionsVersion?: string;
   collectionsUrl?: string;
   monorepoDir?: string;
+  forceLocalAdaptors?: boolean;
 };
 
 // this is the server/koa API
@@ -242,6 +243,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         const { plan, options, input } = convertRun(run, {
           collectionsVersion: app.options.collectionsVersion,
           monorepoPath: app.options.monorepoDir,
+          forceLocal: app.options.forceLocalAdaptors,
         });
         logger.debug('converted run body into execution plan:', plan);
 

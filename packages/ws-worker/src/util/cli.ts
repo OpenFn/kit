@@ -14,6 +14,7 @@ type Args = {
   collectionsVersion?: string;
   lightning?: string;
   lightningPublicKey?: string;
+  localAdaptors?: boolean;
   log?: LogLevel;
   loop?: boolean;
   maxRunDurationSeconds: number;
@@ -28,7 +29,7 @@ type Args = {
   statePropsToRemove?: string[];
 };
 
-type ArgTypes = string | string[] | number | undefined;
+type ArgTypes = string | string[] | number | undefined | boolean;
 
 function setArg(
   argValue?: ArgTypes,
@@ -52,12 +53,14 @@ function setArg(
 
 export default function parseArgs(argv: string[]): Args {
   const {
+    OPENFN_ADAPTORS_REPO,
     WORKER_BACKOFF,
     WORKER_CAPACITY,
-    WORKER_COLLECTIONS_VERSION,
     WORKER_COLLECTIONS_URL,
+    WORKER_COLLECTIONS_VERSION,
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
+    WORKER_LOCAL_ADAPTORS,
     WORKER_LOG_LEVEL,
     WORKER_MAX_PAYLOAD_MB,
     WORKER_MAX_RUN_DURATION_SECONDS,
@@ -65,9 +68,8 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_PORT,
     WORKER_REPO_DIR,
     WORKER_SECRET,
-    WORKER_STATE_PROPS_TO_REMOVE,
     WORKER_SOCKET_TIMEOUT_SECONDS,
-    OPENFN_ADAPTORS_REPO,
+    WORKER_STATE_PROPS_TO_REMOVE,
   } = process.env;
 
   const parser = yargs(hideBin(argv))
@@ -91,6 +93,11 @@ export default function parseArgs(argv: string[]): Args {
       alias: 'm',
       description:
         'Path to the adaptors mono repo, from where @local adaptors will be loaded. Env: OPENFN_ADAPTORS_REPO',
+    })
+    .option('local-adaptors', {
+      description:
+        'Force the worker to load all adaptors from the local monorepo. The Lightning UI will not reflect this. Env: WORKER_LOCAL_ADAPTORS',
+      type: 'boolean',
     })
     .option('secret', {
       alias: 's',
@@ -170,6 +177,7 @@ export default function parseArgs(argv: string[]): Args {
     ),
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
     monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
+    localAdaptors: setArg(args.localAdaptors, WORKER_LOCAL_ADAPTORS),
     secret: setArg(args.secret, WORKER_SECRET),
     lightningPublicKey: setArg(
       args.lightningPublicKey,
