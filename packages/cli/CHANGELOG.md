@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.8.8
+
+### Patch Changes
+
+- 1f13d8f: Resolved an issue where the `-p` (project path) flag was ignored in the `deploy` command, causing the CLI to default to `project.yaml` instead of the specified file.
+
 ## 1.8.7
 
 ### Patch Changes

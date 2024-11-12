@@ -36,3 +36,13 @@ test('pass a config path (shortform)', (t) => {
   const options = parse('deploy -c other_config.json');
   t.deepEqual(options.configPath, 'other_config.json');
 });
+
+test('pass a spec path (longform)', (t) => {
+  const options = parse('deploy --project-path test-project.yaml');
+  t.deepEqual(options.projectPath, 'test-project.yaml');
+});
+
+test('pass a spec path (shortform)', (t) => {
+  const options = parse('deploy -p test-project.yaml');
+  t.deepEqual(options.projectPath, 'test-project.yaml');
+});
