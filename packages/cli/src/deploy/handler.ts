@@ -76,6 +76,7 @@ function mergeOverrides(
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
     endpoint: pickFirst(process.env['OPENFN_ENDPOINT'], config.endpoint),
     statePath: pickFirst(options.statePath, config.statePath),
+    specPath: pickFirst(options.projectPath, config.specPath),
     configPath: options.configPath,
     requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
   };
