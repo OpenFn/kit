@@ -1,5 +1,3 @@
-// This tsconfig is really only used for valdiation
-// Build artefacts are all controlled by tsup
 {
   "ts-node": {
     "experimentalSpecifierResolution": "node"
@@ -9,7 +7,6 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "esModuleInterop": true,
-    // This is needed to support the import.meta statement
     "module": "esnext",
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
@@ -21,6 +18,7 @@
     "noUnusedParameters": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "types": ["ava"] // Add this line
   }
 }
