@@ -15,6 +15,7 @@ import {
   NOTIFY_JOB_ERROR,
   NOTIFY_JOB_START,
 } from '../events';
+import stringify from 'fast-safe-stringify';
 
 const loadCredentials = async (
   job: Job,
@@ -72,6 +73,36 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
   return next;
 };
 
+// TODO this is suboptimal and may be slow on large objects
+// (especially as the result get stringified again downstream)
+const prepareFinalState = (
+  state: any,
+  logger: Logger,
+  statePropsToRemove?: string[]
+) => {
+  if (state) {
+    if (!statePropsToRemove) {
+      // As a strict default, remove the configuration key
+      // tbh this should happen higher up in the stack but it causes havoc in unit testing
+      statePropsToRemove = ['configuration'];
+    }
+
+    const removedProps: string[] = [];
+    statePropsToRemove.forEach((prop) => {
+      if (state.hasOwnProperty(prop)) {
+        delete state[prop];
+        removedProps.push(prop);
+      }
+    });
+    logger.debug(
+      `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
+    );
+
+    const cleanState = stringify(state);
+    return JSON.parse(cleanState);
+  }
+  return state;
+};
 // The job handler is responsible for preparing the job
 // and working out where to go next
 // it'll resolve credentials and state and notify how long init took
@@ -138,13 +169,18 @@ const executeStep = async (
     } catch (e: any) {
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
-        const { error, state } = e as ExecutionErrorWrapper;
+        const { error, state: errState } = e as ExecutionErrorWrapper;
+        let state = errState;
 
+        const duration = logger.timer(timerId);
+        logger.error(
+          `Step (${jobName}) aborted with status: Error (after ${duration})`
+        );
+
+        state = prepareFinalState(state, logger, ctx.opts.statePropsToRemove);
         // Whatever the final state was, save that as the intial state to the next thing
         result = state;
 
-        const duration = logger.timer(timerId);
-        logger.error(`Failed step ${jobName} after ${duration}`);
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
@@ -169,7 +205,10 @@ const executeStep = async (
 
     if (!didError) {
       const humanDuration = logger.timer(timerId);
-      logger.success(`Completed step ${jobName} in ${humanDuration}`);
+      logger.success(
+        `Step (${jobName}) complete with status: Success (after ${humanDuration})`
+      );
+      result = prepareFinalState(result, logger, ctx.opts.statePropsToRemove);
 
       // Take a memory snapshot
       // IMPORTANT: this runs _after_ the state object has been serialized
