@@ -173,9 +173,7 @@ const executeStep = async (
         let state = errState;
 
         const duration = logger.timer(timerId);
-        logger.error(
-          `Step (${jobName}) aborted with status: Error (after ${duration})`
-        );
+        logger.error(`${jobName} aborted with error (${duration})`);
 
         state = prepareFinalState(state, logger, ctx.opts.statePropsToRemove);
         // Whatever the final state was, save that as the intial state to the next thing
@@ -205,9 +203,7 @@ const executeStep = async (
 
     if (!didError) {
       const humanDuration = logger.timer(timerId);
-      logger.success(
-        `Step (${jobName}) complete with status: Success (after ${humanDuration})`
-      );
+      logger.success(`${jobName} completed in ${humanDuration}ms`);
       result = prepareFinalState(result, logger, ctx.opts.statePropsToRemove);
 
       // Take a memory snapshot

@@ -263,12 +263,9 @@ test.serial('log duration of execution', async (t) => {
 
   await execute(context, step, initialState);
 
-  const duration = logger._find('success', /complete with status: Success/i);
+  const duration = logger._find('success', /completed in/i);
 
-  t.regex(
-    duration?.message,
-    /Step \(y\) complete with status: Success \(after \d\d?ms\)/i
-  );
+  t.regex(duration?.message, /y completed in \d\d?ms/i);
 });
 
 test.serial('log memory usage', async (t) => {

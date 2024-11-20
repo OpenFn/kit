@@ -517,7 +517,7 @@ test('log errors, write to state, and continue', async (t) => {
     message: 'test',
   });
 
-  t.truthy(logger._find('error', /aborted with status: Error/i));
+  t.truthy(logger._find('error', /aborted with error/i));
 });
 
 test('log job code to the job logger', async (t) => {

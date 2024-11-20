@@ -919,12 +919,10 @@ test('log appropriately on error', async (t) => {
   const logger = createMockLogger(undefined, { level: 'debug' });
 
   await executePlan(plan, {}, {}, logger);
-  const err = logger._find('error', /aborted with status: Error/i);
+  const err = logger._find('error', /aborted with error/i);
   t.truthy(err);
-  t.regex(
-    err!.message as string,
-    /Step \(job1\) aborted with status: Error \(after \d+ms\)/i
-  );
+  console.log('msg:', err?.message);
+  t.regex(err!.message as string, /job1 aborted with error \(\d+ms\)/i);
 
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 
@@ -1186,11 +1184,8 @@ test('Plans log step ids for each job start and end', async (t) => {
   const start = logger._find('info', /starting step a/i);
   t.is(start!.message, 'Starting step a');
 
-  const end = logger._find('success', /complete with status: Success/i);
-  t.regex(
-    end!.message as string,
-    /Step \(a\) complete with status: Success \(after \d+ms\)/
-  );
+  const end = logger._find('success', /completed in/i);
+  t.regex(end!.message as string, /a completed in \d+ms/);
 });
 
 test('Plans log step names for each job start and end', async (t) => {
@@ -1207,12 +1202,6 @@ test('Plans log step names for each job start and end', async (t) => {
   const start = logger._find('info', /starting step do-the-thing/i);
   t.is(start!.message, 'Starting step do-the-thing');
 
-  const end = logger._find(
-    'success',
-    /\(do-the-thing\) complete with status: Success/i
-  );
-  t.regex(
-    end!.message as string,
-    /Step \(do-the-thing\) complete with status: Success \(after \d+ms\)/
-  );
+  const end = logger._find('success', /do-the-thing completed in/i);
+  t.regex(end!.message as string, /do-the-thing completed in \d+ms/);
 });
