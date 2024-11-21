@@ -1,5 +1,12 @@
 # @openfn/integration-tests-execute
 
+## 1.0.8
+
+### Patch Changes
+
+- Updated dependencies [f6bd593]
+  - @openfn/runtime@1.5.2
+
 ## 1.0.7
 
 ### Patch Changes

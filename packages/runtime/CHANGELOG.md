@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.5.2
+
+### Patch Changes
+
+- f6bd593: Move cleaning of state from expression to step, resulting in clearer logs.
+
 ## 1.5.1
 
 ### Patch Changes

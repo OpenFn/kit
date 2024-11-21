@@ -1,5 +1,4 @@
 import { printDuration, Logger } from '@openfn/logger';
-import stringify from 'fast-safe-stringify';
 import type { Operation, State } from '@openfn/lexicon';
 
 import loadModule from '../modules/module-loader';
@@ -76,20 +75,9 @@ export default (
 
       duration = Date.now() - duration;
 
-      const finalState = prepareFinalState(
-        result,
-        logger,
-        opts.statePropsToRemove
-      );
-      // return the final state
-      resolve(finalState);
+      resolve(result);
     } catch (e: any) {
       // whatever initial state looks like now, clean it and report it back
-      const finalState = prepareFinalState(
-        input,
-        logger,
-        opts.statePropsToRemove
-      );
       duration = Date.now() - duration;
       let finalError;
       try {
@@ -103,7 +91,7 @@ export default (
         finalError = e;
       }
 
-      reject({ state: finalState, error: finalError } as ExecutionErrorWrapper);
+      reject({ state: input, error: finalError } as ExecutionErrorWrapper);
     }
   });
 
@@ -166,31 +154,4 @@ const prepareJob = async (
     }
     return { operations: expression as Operation[] };
   }
-};
-
-// TODO this is suboptimal and may be slow on large objects
-// (especially as the result get stringified again downstream)
-const prepareFinalState = (
-  state: any,
-  logger: Logger,
-  statePropsToRemove?: string[]
-) => {
-  if (state) {
-    if (!statePropsToRemove) {
-      // As a strict default, remove the configuration key
-      // tbh this should happen higher up in the stack but it causes havoc in unit testing
-      statePropsToRemove = ['configuration'];
-    }
-
-    statePropsToRemove.forEach((prop) => {
-      if (state.hasOwnProperty(prop)) {
-        delete state[prop];
-        logger.debug(`Removed ${prop} from final state`);
-      }
-    });
-
-    const cleanState = stringify(state);
-    return JSON.parse(cleanState);
-  }
-  return state;
 };
