@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.8.9
+
+### Patch Changes
+
+- Updated dependencies [f6bd593]
+  - @openfn/runtime@1.5.2
+
 ## 1.8.8
 
 ### Patch Changes
