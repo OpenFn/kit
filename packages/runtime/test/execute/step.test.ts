@@ -263,9 +263,9 @@ test.serial('log duration of execution', async (t) => {
 
   await execute(context, step, initialState);
 
-  const duration = logger._find('success', /completed step /i);
+  const duration = logger._find('success', /completed in/i);
 
-  t.regex(duration?.message, /completed step y in \d\d?ms/i);
+  t.regex(duration?.message, /y completed in \d\d?ms/i);
 });
 
 test.serial('log memory usage', async (t) => {
@@ -338,5 +338,154 @@ test.serial(
 
     const warn = logger._find('warn', /did not return a state object/);
     t.falsy(warn);
+  }
+);
+
+test.serial('output state should be serializable', async (t) => {
+  const job = [async (s: State) => s];
+
+  const step = {
+    id: 'k',
+    expression: job,
+  };
+
+  const circular = {};
+  circular.self = circular;
+
+  const state = createState({
+    circular,
+    fn: () => {},
+  });
+
+  const context = createContext();
+
+  const result = await execute(context, step, state);
+
+  t.notThrows(() => JSON.stringify(result));
+
+  t.is(result.state.data.circular.self, '[Circular]');
+  t.falsy(result.state.data.fn);
+});
+
+test.serial(
+  'configuration is removed from the result by default',
+  async (t) => {
+    const job = [async (s: State) => s];
+    const step = {
+      id: 'k',
+      expression: job,
+    };
+    const context = createContext();
+
+    const result = await execute(context, step, { configuration: {} });
+    t.deepEqual(result.state, { data: {} });
+  }
+);
+
+test.serial(
+  'statePropsToRemove removes multiple props from state',
+  async (t) => {
+    const job = [async (s: State) => s];
+    const step = {
+      id: 'k',
+      expression: job,
+    };
+    const statePropsToRemove = ['x', 'y'];
+    const context = createContext({ opts: { statePropsToRemove } });
+
+    const result = await execute(context, step, { x: 1, y: 1, z: 1 });
+    t.deepEqual(result.state, { data: {}, z: 1, configuration: {} });
+  }
+);
+
+test.serial(
+  'statePropsToRemove logs to debug when a prop is removed',
+  async (t) => {
+    const job = [async (s: State) => s];
+    const step = {
+      id: 'k',
+      expression: job,
+    };
+    const statePropsToRemove = ['x'];
+
+    const context = createContext({ opts: { statePropsToRemove } });
+
+    const result = await execute(context, step, { x: 1, y: 1, z: 1 });
+    t.deepEqual(result.state, { data: {}, y: 1, z: 1, configuration: {} });
+
+    const log = logger._find('debug', /Cleaning up state. Removing keys: x/i);
+    t.truthy(log);
+  }
+);
+
+test.serial(
+  'no props are removed from state if an empty array is passed to statePropsToRemove',
+  async (t) => {
+    const job = [async (s: State) => s];
+    const step = {
+      id: 'k',
+      expression: job,
+    };
+    const statePropsToRemove: string[] = [];
+    const context = createContext({ opts: { statePropsToRemove } });
+
+    const state = { x: 1, configuration: 1 };
+    const result = await execute(context, step, state as any);
+    t.deepEqual(result.state, { x: 1, configuration: {}, data: {} });
+  }
+);
+
+test.serial(
+  'no props are removed from state if a falsy value is passed to statePropsToRemove',
+  async (t) => {
+    const job = [async (s: State) => s];
+    const step = {
+      id: 'k',
+      expression: job,
+    };
+    const statePropsToRemove = undefined;
+    const context = createContext({ opts: { statePropsToRemove } });
+
+    const state = { x: 1, configuration: 1 };
+    const result = await execute(context, step, state as any);
+    t.deepEqual(result.state, { x: 1, data: {} });
+  }
+);
+
+test.serial('config is removed from the result', async (t) => {
+  const job = [async (s: State) => s];
+  const step = {
+    id: 'k',
+    expression: job,
+  };
+  const context = createContext({ opts: {} });
+
+  const result = await execute(context, step, { configuration: {} });
+  t.deepEqual(result.state, { data: {} });
+});
+
+test.serial(
+  'output state is returned verbatim, apart from config',
+  async (t) => {
+    const state = {
+      data: {},
+      references: [],
+      configuration: {},
+      x: true,
+    };
+    const job = [async () => ({ ...state })];
+    const step = {
+      id: 'k',
+      expression: job,
+    };
+
+    const context = createContext();
+
+    const result = await execute(context, step, {});
+    t.deepEqual(result.state, {
+      data: {},
+      references: [],
+      x: true,
+    });
   }
 );
