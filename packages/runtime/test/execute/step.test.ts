@@ -285,10 +285,10 @@ test.serial('log memory usage', async (t) => {
   t.regex(memory?.message, /\d+mb(.+)\d+mb/i);
 });
 
-test.serial('warn if a non-leaf step does not return state', async (t) => {
+test.serial("warn if a previous step don't return state", async (t) => {
   const step = {
     id: 'k',
-    expression: [(s: State) => {}],
+    expression: [(s: State) => {}, (s: State) => {}],
     next: { l: true },
   };
 
@@ -297,8 +297,14 @@ test.serial('warn if a non-leaf step does not return state', async (t) => {
 
   // @ts-ignore ts complains that the step does not return state
   const result = await execute(context, step, state);
-  const warn = logger._find('warn', /did not return a state object/);
+  const warn = logger._find('warn', /Operation \d+ might fail!/);
   t.truthy(warn);
+
+  const warnPrev = logger._find(
+    'warn',
+    /The previous operation \d+ didn't return a state. did you forget\?/
+  );
+  t.truthy(warnPrev);
 });
 
 test.serial('do not warn if a leaf step does not return state', async (t) => {

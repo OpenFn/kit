@@ -477,7 +477,7 @@ test('prefer initial state to inline state', async (t) => {
   t.is(result.data.y, 20);
 });
 
-test('Allow a job to return undefined', async (t) => {
+test('Allow a job to return a null-state instead of undefined', async (t) => {
   const plan: ExecutionPlan = {
     workflow: {
       steps: [{ expression: 'export default [() => {}]' }],
@@ -485,7 +485,7 @@ test('Allow a job to return undefined', async (t) => {
   };
 
   const result: any = await run(plan);
-  t.falsy(result);
+  t.deepEqual(result, {});
 });
 
 test('log errors, write to state, and continue', async (t) => {

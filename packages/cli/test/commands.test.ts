@@ -185,7 +185,7 @@ test.serial('run a job with defaults: openfn job.js', async (t) => {
 test.serial('run a job which does not return state', async (t) => {
   const result = await run('openfn job.js', 'export default [s => {}]');
 
-  t.falsy(result);
+  t.deepEqual(result, {});
 });
 
 test.serial('run a workflow', async (t) => {

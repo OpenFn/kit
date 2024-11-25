@@ -713,7 +713,11 @@ test('ignore leaf nodes with no result', async (t) => {
   const state = { data: { x: 0 } };
 
   const result: any = await executePlan(plan, state, {}, mockLogger);
-  t.deepEqual(result, { data: { x: 1 } });
+  t.deepEqual(result, {
+    a: { data: { x: 1 } },
+    b: {},
+    c: {},
+  });
 });
 
 test('isolate state in "parallel" execution', async (t) => {

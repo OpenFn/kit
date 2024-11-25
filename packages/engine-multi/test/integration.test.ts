@@ -260,7 +260,7 @@ test.serial('run without error if no state is returned', (t) => {
     ]);
 
     api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
-      t.falsy(state);
+      t.deepEqual(state, {});
 
       // Ensure there are no error logs
       const err = logger._find('error', /./);

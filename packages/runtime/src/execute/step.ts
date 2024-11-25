@@ -94,9 +94,10 @@ const prepareFinalState = (
         removedProps.push(prop);
       }
     });
-    logger.debug(
-      `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
-    );
+    if (removedProps.length)
+      logger.debug(
+        `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
+      );
 
     const cleanState = stringify(state);
     return JSON.parse(cleanState);

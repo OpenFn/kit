@@ -5,6 +5,7 @@ import type { Operation, State } from '@openfn/lexicon';
 
 import execute, { mergeLinkerOptions } from '../../src/execute/expression';
 import type { ExecutionContext } from '../../src/types';
+import { isNullState } from '../../src/util/null-state';
 
 type TestState = State & {
   data: {
@@ -139,17 +140,20 @@ test.serial('async operations run in series', async (t) => {
   t.is(result.data.x, 12);
 });
 
-test.serial('jobs can return undefined', async (t) => {
-  // @ts-ignore violating the operation contract here
-  const job = [() => undefined] as Operation[];
+test.serial(
+  'jobs return null-state instead of undefined or null',
+  async (t) => {
+    // @ts-ignore violating the operation contract here
+    const job = [() => undefined] as Operation[];
 
-  const state = createState() as TestState;
-  const context = createContext();
+    const state = createState() as TestState;
+    const context = createContext();
 
-  const result = (await execute(context, job, state, {})) as TestState;
+    const result = (await execute(context, job, state, {})) as TestState;
 
-  t.assert(result === undefined);
-});
+    t.assert(isNullState(result));
+  }
+);
 
 test.serial('jobs can mutate the original state', async (t) => {
   const job = [

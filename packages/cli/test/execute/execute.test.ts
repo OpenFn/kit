@@ -441,7 +441,7 @@ test.serial('run a job which does not return state', async (t) => {
     expressionPath: '/job.js',
   };
   const result = await handler(options, logger);
-  t.falsy(result);
+  t.deepEqual(result, {});
 
   // Check that no error messages have been logged
   t.is(logger._history.length, 0);
