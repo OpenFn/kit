@@ -151,19 +151,20 @@ test.serial('trigger workflow-log for job logs', (t) => {
 
     let didLog = false;
 
-    api.execute(plan, emptyState).on('workflow-log', (evt) => {
-      if (evt.name === 'JOB') {
-        didLog = true;
-        t.deepEqual(evt.message, JSON.stringify(['hola']));
-        t.pass('workflow logged');
-      }
-    });
-
-    api.execute(plan, emptyState).on('workflow-complete', (evt) => {
-      t.true(didLog);
-      t.falsy(evt.state.errors);
-      done();
-    });
+    api
+      .execute(plan, emptyState)
+      .on('workflow-log', (evt) => {
+        if (evt.name === 'JOB') {
+          didLog = true;
+          t.deepEqual(evt.message, JSON.stringify(['hola']));
+          t.pass('workflow logged');
+        }
+      })
+      .on('workflow-complete', (evt) => {
+        t.true(didLog);
+        t.falsy(evt.state.errors);
+        done();
+      });
   });
 });
 
