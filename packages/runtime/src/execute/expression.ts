@@ -18,7 +18,11 @@ import {
 } from '../errors';
 import type { JobModule, ExecutionContext } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
-import { checkAndClearNullState, nullState } from '../util/null-state';
+import {
+  clearNullState,
+  isNullState,
+  createNullState,
+} from '../util/null-state';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -52,7 +56,7 @@ export default (
       // Create the main reducer function
       const reducer = (execute || defaultExecute)(
         ...operations.map((op, idx) =>
-          wrapOperation(op, logger, `${idx + 1}`, opts.immutableState, `${idx}`)
+          wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
         )
       );
 
@@ -101,29 +105,25 @@ export const wrapOperation = (
   fn: Operation,
   logger: Logger,
   name: string,
-  immutableState?: boolean,
-  prevName?: string
+  immutableState?: boolean
 ) => {
   return async (state: State) => {
     logger.debug(`Starting operation ${name}`);
     const start = new Date().getTime();
-    if (checkAndClearNullState(state)) {
-      logger.warn(`Operation ${name} might fail!`);
+    if (isNullState(state)) {
+      clearNullState(state);
       logger.warn(
-        `The previous operation ${prevName} didn't return a state. did you forget?`
+        `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
       );
     }
     const newState = immutableState ? clone(state) : state;
 
-    if (typeof fn !== 'function') {
-      logger.warn(`Are you sure ${name} is an operation?`);
-      logger.debug(`Operation ${name} isn't a valid operation`);
-      const duration = printDuration(new Date().getTime() - start);
-      logger.debug(`Operation ${name} skipped in ${duration}`);
-      return newState;
-    }
+    let result = await fn(newState);
 
-    const result = (await fn(newState)) || nullState();
+    if (!result) {
+      logger.debug(`Warning: operation ${name} did not return state`);
+      result = createNullState();
+    }
 
     // TODO should we warn if an operation does not return state?
     // the trick is saying WHICH operation without source mapping

@@ -297,12 +297,15 @@ test.serial("warn if a previous step don't return state", async (t) => {
 
   // @ts-ignore ts complains that the step does not return state
   const result = await execute(context, step, state);
-  const warn = logger._find('warn', /Operation \d+ might fail!/);
+  const warn = logger._find(
+    'warn',
+    /WARNING: No state was passed into operation/
+  );
   t.truthy(warn);
 
   const warnPrev = logger._find(
     'warn',
-    /The previous operation \d+ didn't return a state. did you forget\?/
+    /WARNING: No state was passed into operation/
   );
   t.truthy(warnPrev);
 });
