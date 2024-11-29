@@ -9,6 +9,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    working_directory: ~/project-<< parameters.node_version >>
     parameters:
       node_version:
         type: string
@@ -43,6 +44,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    working_directory: ~/project-<< parameters.node_version >>
     parameters:
       node_version:
         type: string
@@ -61,6 +63,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    working_directory: ~/project-<< parameters.node_version >>
     parameters:
       node_version:
         type: string
@@ -75,6 +78,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    working_directory: ~/project-<< parameters.node_version >>
     parameters:
       node_version:
         type: string
@@ -89,6 +93,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    working_directory: ~/project-<< parameters.node_version >>
     parameters:
       node_version:
         type: string
@@ -103,6 +108,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    working_directory: ~/project-<< parameters.node_version >>
     parameters:
       node_version:
         type: string
