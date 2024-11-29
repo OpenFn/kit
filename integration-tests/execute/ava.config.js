@@ -1,3 +1,7 @@
+import semver from "semver"
+
+const loader_arg = semver.lte(process.version, 'v20.5.0') ? '--loader=@swc-node/register/esm' : '--import=@swc-node/register/esm-register'
+
 export default {
   extensions: {
     ts: 'module',
@@ -7,7 +11,7 @@ export default {
     TS_NODE_TRANSPILE_ONLY: 'true',
   },
 
-  nodeArguments: ['--loader=ts-node/esm', '--no-warnings', '--experimental-vm-modules'],
+  nodeArguments: [loader_arg, '--no-warnings', '--experimental-vm-modules'],
 
   files: ['test/**/*test.ts'],
 };

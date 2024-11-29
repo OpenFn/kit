@@ -1,9 +1,6 @@
 // This tsconfig is really only used for valdiation
 // Build artefacts are all controlled by tsup
 {
-  "ts-node": {
-    "experimentalSpecifierResolution": "node"
-  },
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
