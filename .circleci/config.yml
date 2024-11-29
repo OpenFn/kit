@@ -7,11 +7,8 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: cimg/node:<< parameters.node_version >>
+      - image: cimg/node:18.18
     resource_class: medium
-    parameters:
-      node_version:
-        type: string
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
@@ -23,37 +20,31 @@ jobs:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
           # https://circleci.com/docs/2.0/configuration-reference/?section=reference#save_cache
           keys:
-            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}-<< parameters.node_version >>
+            - deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
       - run:
           name: Install
           command: pnpm install --frozen-lockfile
       - save_cache:
-          key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}-<< parameters.node_version >>
+          key: deps-v1-{{ .Branch }}-{{checksum "pnpm-lock.yaml"}}
           paths:
             - node_modules
-      - run:
-          name: Ensure workspace exists
-          command: mkdir -p -m 777 ~/project-<< parameters.node_version >>
       - persist_to_workspace:
-          root: ~/project-<< parameters.node_version >>
+          root: ~/project
           paths:
             - .
 
   build:
     docker:
-      - image: cimg/node:<< parameters.node_version >>
+      - image: cimg/node:18.18
     resource_class: medium
-    parameters:
-      node_version:
-        type: string
     steps:
       - attach_workspace:
-          at: ~/project-<< parameters.node_version >>
+          at: ~/project
       - run:
           name: Build packages
           command: pnpm build
       - persist_to_workspace:
-          root: ~/project-<< parameters.node_version >>
+          root: ~/project
           paths:
             - .
 
@@ -61,40 +52,35 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    parallelism: 1
     parameters:
       node_version:
         type: string
     steps:
       - attach_workspace:
-          at: ~/project-<< parameters.node_version >>
+          at: ~/project
       - run:
           name: Run Tests
           command: pnpm test
 
   format:
     docker:
-      - image: cimg/node:<< parameters.node_version >>
+      - image: cimg/node:18.18
     resource_class: medium
-    parameters:
-      node_version:
-        type: string
     steps:
       - attach_workspace:
-          at: ~/project-<< parameters.node_version >>
+          at: ~/project
       - run:
           name: Check formatting
           command: pnpm test:format
 
   type_check:
     docker:
-      - image: cimg/node:<< parameters.node_version >>
+      - image: cimg/node:18.18
     resource_class: medium
-    parameters:
-      node_version:
-        type: string
     steps:
       - attach_workspace:
-          at: ~/project-<< parameters.node_version >>
+          at: ~/project
       - run:
           name: Type check
           command: pnpm test:types
@@ -103,12 +89,13 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    parallelism: 1
     parameters:
       node_version:
         type: string
     steps:
       - attach_workspace:
-          at: ~/project-<< parameters.node_version >>
+          at: ~/project
       - run:
           name: Build local tarballs
           command: pnpm pack:local dist --no-version
@@ -128,40 +115,28 @@ workflows:
   build_and_test:
     jobs:
       - install:
-          matrix:
-            parameters:
-              node_version: ["18.18", "20.12"]
           filters:
             branches:
               ignore:
                 - main
       - build:
-          matrix:
-            parameters:
-              node_version: ["18.18", "20.12"]
           requires:
             - install
       - unit_test:
           matrix:
             parameters:
-              node_version: ["18.18", "20.12"]
+              node_version: ["18.18", "20.12", "22.12"]
           requires:
             - build
       - type_check:
-          matrix:
-            parameters:
-              node_version: ["18.18", "20.12"]
           requires:
             - build
       - format:
-          matrix:
-            parameters:
-              node_version: ["18.18", "20.12"]
           requires:
             - build
       - integration_test:
           matrix:
             parameters:
-              node_version: ["18.18", "20.12"]
+              node_version: ["18.18", "20.12", "22.12"]
           requires:
             - build
