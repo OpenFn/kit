@@ -52,6 +52,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    parallelism: 1
     parameters:
       node_version:
         type: string
@@ -88,6 +89,7 @@ jobs:
     docker:
       - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    parallelism: 1
     parameters:
       node_version:
         type: string
