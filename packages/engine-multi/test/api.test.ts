@@ -3,8 +3,8 @@ import { createMockLogger } from '@openfn/logger';
 import type { ExecutionPlan } from '@openfn/lexicon';
 
 import createAPI from '../src/api';
-import pkg from '../package.json' assert { type: 'json' };
 import type { RuntimeEngine } from '../src/types';
+import loadVersions from '../src/util/load-versions';
 
 // thes are tests on the public api functions generally
 // so these are very high level tests and don't allow mock workers or anything
@@ -41,7 +41,7 @@ test.serial('create an engine api with a limited surface', async (t) => {
 
 test.serial('engine api includes a version number', async (t) => {
   api = await createAPI({ logger });
-  t.is(api.version, pkg.version);
+  t.is(api.version, loadVersions().engine);
 });
 
 test.serial('engine api uses default options', async (t) => {

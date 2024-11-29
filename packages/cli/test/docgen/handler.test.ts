@@ -30,20 +30,29 @@ const loadJSON = async (path: string) => {
 };
 
 // Mock doc gen function
-const mockGen: DocGenFn = async () => ({
-  name: 'test',
-  version: '1.0.0',
-  functions: [
-    {
-      name: 'fn',
-      description: 'a function',
-      isOperation: true,
-      magic: false,
-      parameters: [],
-      examples: [],
-    },
-  ],
-});
+const mockGen: DocGenFn = async () =>
+  new Promise((resolve) => {
+    setTimeout(
+      () =>
+        resolve({
+          namespaces: [{ type: 'namespace', name: 'smth' }],
+          name: 'test',
+          version: '1.0.0',
+          functions: [
+            {
+              name: 'fn',
+              description: 'a function',
+              isOperation: true,
+              magic: false,
+              parameters: [],
+              examples: [],
+              type: 'function',
+            },
+          ],
+        }),
+      100
+    );
+  });
 
 const specifier = 'test@1.0.0';
 
@@ -146,7 +155,7 @@ test.serial(
     const promise = docsHandler(options, logger, mockGen);
     // the placeholder should already be created
 
-    const placeholder = JSON.parse(readFileSync(path, 'utf8'));
+    const placeholder = JSON.parse(readFileSync(path, 'utf-8'));
     t.truthy(placeholder);
     t.true(placeholder.loading);
     t.assert(typeof placeholder.timestamp === 'number');
