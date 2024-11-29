@@ -105,18 +105,18 @@ test.serial('destroy a worker while one run is active', async (t) => {
       done();
     };
 
-    lightning.once('claim', () => {
-      // The run should be active immediately after it's claimed
-      // BUT in these tests we do need a moment's grace - this event occurs
-      // at the lightning end and the handler in the worker may not have executed yet
-      setTimeout(() => {
-        doDestroy();
-      }, 2);
-    });
-
-    lightning.once('run:complete', () => {
-      didFinish = true;
-    });
+    lightning
+      .once('run:complete', () => {
+        didFinish = true;
+      })
+      .once('claim', () => {
+        // The run should be active immediately after it's claimed
+        // BUT in these tests we do need a moment's grace - this event occurs
+        // at the lightning end and the handler in the worker may not have executed yet
+        setTimeout(() => {
+          doDestroy();
+        }, 2);
+      });
     lightning.enqueueRun(createRun());
   });
 });

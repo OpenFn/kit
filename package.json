@@ -27,12 +27,14 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
     "@slack/web-api": "^6.12.1",
+    "@swc-node/register": "^1.10.9",
     "@types/gunzip-maybe": "^1.4.0",
     "@types/rimraf": "^3.0.2",
     "@types/tar-stream": "^2.2.2",
     "gunzip-maybe": "^1.4.2",
     "prettier": "^2.8.8",
     "rimraf": "^3.0.2",
+    "semver": "^7.5.4",
     "tar-stream": "^3.0.0",
     "typesync": "^0.13.0"
   }
