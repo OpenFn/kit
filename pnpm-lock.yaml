@@ -16,7 +16,7 @@ importers:
         version: 6.12.1
       '@swc-node/register':
         specifier: ^1.10.9
-        version: 1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.1.6)
+        version: 1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.7.2)
       '@types/gunzip-maybe':
         specifier: ^1.4.0
         version: 1.4.0
@@ -43,7 +43,7 @@ importers:
         version: 3.0.0
       typesync:
         specifier: ^0.13.0
-        version: 0.13.0(typescript@5.1.6)
+        version: 0.13.0(typescript@5.7.2)
 
   examples/dts-inspector:
     dependencies:
@@ -262,8 +262,8 @@ importers:
         specifier: 5.3.1
         version: 5.3.1
       mock-fs:
-        specifier: ^5.1.4
-        version: 5.1.4
+        specifier: ^5.4.1
+        version: 5.4.1
       ts-node:
         specifier: ^10.9.1
         version: 10.9.1(@swc/core@1.9.3)(@types/node@18.15.13)(typescript@5.1.6)
@@ -1881,7 +1881,7 @@ packages:
       '@swc/types': 0.1.17
     dev: true
 
-  /@swc-node/register@1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.1.6):
+  /@swc-node/register@1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.7.2):
     resolution: {integrity: sha512-iXy2sjP0phPEpK2yivjRC3PAgoLaT4sjSk0LDWCTdcTBJmR4waEog0E6eJbvoOkLkOtWw37SB8vCkl/bbh4+8A==}
     peerDependencies:
       '@swc/core': '>= 1.4.13'
@@ -1895,7 +1895,7 @@ packages:
       oxc-resolver: 1.12.0
       pirates: 4.0.6
       tslib: 2.7.0
-      typescript: 5.1.6
+      typescript: 5.7.2
     transitivePeerDependencies:
       - '@swc/types'
       - supports-color
@@ -3130,7 +3130,7 @@ packages:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
     dev: true
 
-  /cosmiconfig@9.0.0(typescript@5.1.6):
+  /cosmiconfig@9.0.0(typescript@5.7.2):
     resolution: {integrity: sha512-itvL5h8RETACmOTFc4UfIyB2RfEHi71Ax6E/PivVxq9NseKbOWpeyHEOIbmAw1rs8Ak0VursQNww7lf7YtUwzg==}
     engines: {node: '>=14'}
     peerDependencies:
@@ -3143,7 +3143,7 @@ packages:
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       parse-json: 5.2.0
-      typescript: 5.1.6
+      typescript: 5.7.2
     dev: true
 
   /create-require@1.1.1:
@@ -5444,6 +5444,11 @@ packages:
     engines: {node: '>=12.0.0'}
     dev: true
 
+  /mock-fs@5.4.1:
+    resolution: {integrity: sha512-sz/Q8K1gXXXHR+qr0GZg2ysxCRr323kuN10O7CtQjraJsFDJ4SJ+0I5MzALz7aRp9lHk8Cc/YdsT95h9Ka1aFw==}
+    engines: {node: '>=12.0.0'}
+    dev: true
+
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
 
@@ -7327,14 +7332,20 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  /typesync@0.13.0(typescript@5.1.6):
+  /typescript@5.7.2:
+    resolution: {integrity: sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: true
+
+  /typesync@0.13.0(typescript@5.7.2):
     resolution: {integrity: sha512-t5+DHmXqNHJyX9PSocEEB6c5gQlO0j0LLxEiZ/HMz0lWJWBf+bKEXTORkquAuUgjMZ7U5Hx8w63Qmebx7bK2FA==}
     engines: {node: '>=16.0.0'}
     hasBin: true
     dependencies:
       awilix: 10.0.2
       chalk: 4.1.2
-      cosmiconfig: 9.0.0(typescript@5.1.6)
+      cosmiconfig: 9.0.0(typescript@5.7.2)
       detect-indent: 6.1.0
       glob: 10.4.5
       js-yaml: 4.1.0
