@@ -28,6 +28,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "@swc-node/register": "^1.10.9",
     "@types/rimraf": "^3.0.2"
   }
 }
