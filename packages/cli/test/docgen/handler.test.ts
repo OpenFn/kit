@@ -31,6 +31,7 @@ const loadJSON = async (path: string) => {
 
 // Mock doc gen function
 const mockGen: DocGenFn = async () => ({
+  namespaces: [{ type: 'namespace', name: 'smth' }],
   name: 'test',
   version: '1.0.0',
   functions: [
@@ -41,6 +42,7 @@ const mockGen: DocGenFn = async () => ({
       magic: false,
       parameters: [],
       examples: [],
+      type: 'function',
     },
   ],
 });
