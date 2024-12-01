@@ -103,6 +103,9 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
     devDependencies:
+      '@swc-node/register':
+        specifier: ^1.10.9
+        version: 1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.1.6)
       '@types/rimraf':
         specifier: ^3.0.2
         version: 3.0.2
@@ -189,6 +192,9 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
     devDependencies:
+      '@swc-node/register':
+        specifier: ^1.10.9
+        version: 1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.1.6)
       '@types/koa':
         specifier: ^2.15.0
         version: 2.15.0
@@ -1879,6 +1885,26 @@ packages:
     dependencies:
       '@swc/core': 1.9.3
       '@swc/types': 0.1.17
+    dev: true
+
+  /@swc-node/register@1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.1.6):
+    resolution: {integrity: sha512-iXy2sjP0phPEpK2yivjRC3PAgoLaT4sjSk0LDWCTdcTBJmR4waEog0E6eJbvoOkLkOtWw37SB8vCkl/bbh4+8A==}
+    peerDependencies:
+      '@swc/core': '>= 1.4.13'
+      typescript: '>= 4.3'
+    dependencies:
+      '@swc-node/core': 1.13.3(@swc/core@1.9.3)(@swc/types@0.1.17)
+      '@swc-node/sourcemap-support': 0.5.1
+      '@swc/core': 1.9.3
+      colorette: 2.0.20
+      debug: 4.3.6
+      oxc-resolver: 1.12.0
+      pirates: 4.0.6
+      tslib: 2.7.0
+      typescript: 5.1.6
+    transitivePeerDependencies:
+      - '@swc/types'
+      - supports-color
     dev: true
 
   /@swc-node/register@1.10.9(@swc/core@1.9.3)(@swc/types@0.1.17)(typescript@5.7.2):

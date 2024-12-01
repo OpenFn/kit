@@ -11,7 +11,7 @@ export default {
     TS_NODE_TRANSPILE_ONLY: 'true',
   },
 
-  nodeArguments: [loader_arg, '--no-warnings'],
+  nodeArguments: [loader_arg, '--no-warnings', '--experimental-vm-modules'],
 
   files: ['test/**/*test.ts'],
 };
