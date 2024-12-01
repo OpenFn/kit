@@ -78,13 +78,15 @@ export class MockSocket {
   private allChannels: ChannelMap;
   private callbacks: Record<string, EventHandler>;
 
+  endpoint: string;
   constructor(
-    private _endpoint: string = '',
-    private channels: ChannelMap = {},
+    endpoint: string = '',
+    channels: ChannelMap = {},
     private _connect: () => Promise<void> = async () => {}
   ) {
     this.allChannels = channels;
     this.callbacks = {};
+    this.endpoint = endpoint;
   }
 
   onOpen(callback: EventHandler): void {
