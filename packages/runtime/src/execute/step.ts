@@ -15,7 +15,7 @@ import {
   NOTIFY_JOB_ERROR,
   NOTIFY_JOB_START,
 } from '../events';
-import stringify from 'fast-safe-stringify';
+import { isNullState } from '../util/null-state';
 
 const loadCredentials = async (
   job: Job,
@@ -99,8 +99,8 @@ const prepareFinalState = (
         `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
       );
 
-    const cleanState = stringify(state);
-    return JSON.parse(cleanState);
+    if (isNullState(state)) return undefined;
+    return clone(state);
   }
   return state;
 };
