@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.8.4
+
+### Patch Changes
+
+- Warn when an expression doesn't return state
+- Updated dependencies [1cbbba0]
+  - @openfn/runtime@1.5.3
+  - @openfn/engine-multi@1.4.3
+
 ## 1.8.3
 
 ### Patch Changes
