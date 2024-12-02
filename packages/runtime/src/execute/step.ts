@@ -80,6 +80,7 @@ const prepareFinalState = (
   logger: Logger,
   statePropsToRemove?: string[]
 ) => {
+  if (isNullState(state)) return undefined;
   if (state) {
     if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
@@ -99,7 +100,6 @@ const prepareFinalState = (
         `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
       );
 
-    if (isNullState(state)) return undefined;
     return clone(state);
   }
   return state;
