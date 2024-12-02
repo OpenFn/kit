@@ -155,6 +155,30 @@ test.serial(
   }
 );
 
+test.serial('warn when an operation does not return state', async (t) => {
+  // @ts-ignore violating the operation contract here
+  const job = [
+    (s) => s,
+    () => {},
+    (s) => {
+      s.data = { a: 'a' };
+      return s;
+    },
+  ] as Operation[];
+
+  const state = createState() as TestState;
+  const context = createContext();
+
+  const result = (await execute(context, job, state, {})) as TestState;
+  t.deepEqual(result, { data: { a: 'a' } });
+
+  const debugLog = logger._find('debug', /did not return state/);
+  t.truthy(debugLog);
+
+  const warningLog = logger._find('warn', /No state was passed into operation/);
+  t.truthy(warningLog);
+});
+
 test.serial('jobs can mutate the original state', async (t) => {
   const job = [
     (s: TestState) => {
