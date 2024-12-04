@@ -74,39 +74,48 @@ export const mockChannel = (
 
 type ChannelMap = Record<string, ReturnType<typeof mockChannel>>;
 
-export const mockSocket = (
-  _endpoint?: string,
-  channels?: ChannelMap,
-  connect: () => Promise<void> = async () => {}
-) => {
-  const allChannels: ChannelMap = channels || {};
+export class MockSocket {
+  private allChannels: ChannelMap;
+  private callbacks: Record<string, EventHandler>;
 
-  const callbacks: Record<string, EventHandler> = {};
-  return {
-    onOpen: (callback: EventHandler) => {
-      callbacks.onOpen = callback;
-    },
-    onError: (callback: EventHandler) => {
-      callbacks.onError = callback;
-    },
-    onClose: (callback: EventHandler) => {
-      // TODO this isn't actually hooked up right now
-      callbacks.onClose = callback;
-    },
-    connect: () => {
-      connect()
-        .then(() => {
-          setTimeout(() => callbacks?.onOpen?.(), 1);
-        })
-        .catch((e) => {
-          setTimeout(() => callbacks?.onError?.(e), 1);
-        });
-    },
-    channel: (topic: string) => {
-      if (!allChannels[topic]) {
-        allChannels[topic] = mockChannel();
-      }
-      return allChannels[topic];
-    },
-  };
-};
+  endpoint: string;
+  constructor(
+    endpoint: string = '',
+    channels: ChannelMap = {},
+    private _connect: () => Promise<void> = async () => {}
+  ) {
+    this.allChannels = channels;
+    this.callbacks = {};
+    this.endpoint = endpoint;
+  }
+
+  onOpen(callback: EventHandler): void {
+    this.callbacks.onOpen = callback;
+  }
+
+  onError(callback: EventHandler): void {
+    this.callbacks.onError = callback;
+  }
+
+  onClose(callback: EventHandler): void {
+    // TODO this isn't actually hooked up right now
+    this.callbacks.onClose = callback;
+  }
+
+  connect(): void {
+    this._connect()
+      .then(() => {
+        setTimeout(() => this.callbacks?.onOpen?.(), 1);
+      })
+      .catch((e) => {
+        setTimeout(() => this.callbacks?.onError?.(e), 1);
+      });
+  }
+
+  channel(topic: string) {
+    if (!this.allChannels[topic]) {
+      this.allChannels[topic] = mockChannel();
+    }
+    return this.allChannels[topic];
+  }
+}

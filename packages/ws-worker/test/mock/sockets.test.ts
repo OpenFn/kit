@@ -1,5 +1,5 @@
 import test from 'ava';
-import { mockSocket, mockChannel } from '../../src/mock/sockets';
+import { MockSocket, mockChannel } from '../../src/mock/sockets';
 
 test('mock channel: join', (t) => {
   return new Promise((done) => {
@@ -91,7 +91,7 @@ test('mock channel: listen to event', (t) => {
 
 test('mock socket: connect', (t) => {
   return new Promise((done) => {
-    const socket = mockSocket();
+    const socket = new MockSocket();
 
     socket.connect();
     t.pass('connected');
@@ -101,7 +101,7 @@ test('mock socket: connect', (t) => {
 
 test('mock socket: connect and call onOpen', (t) => {
   return new Promise((done) => {
-    const socket = mockSocket();
+    const socket = new MockSocket();
 
     socket.onOpen(() => {
       t.pass('called on open');
@@ -116,7 +116,7 @@ test('mock socket: call onOpen with customConnect', (t) => {
   return new Promise((done) => {
     let didCallConnect = false;
 
-    const socket = mockSocket('www', {}, async () => {
+    const socket = new MockSocket('www', {}, async () => {
       didCallConnect = true;
     });
 
@@ -131,7 +131,7 @@ test('mock socket: call onOpen with customConnect', (t) => {
 
 test('mock socket: call onError if connect throws', (t) => {
   return new Promise((done) => {
-    const socket = mockSocket('www', {}, async () => {
+    const socket = new MockSocket('www', {}, async () => {
       throw 'err';
     });
 
@@ -147,7 +147,7 @@ test('mock socket: call onError if connect throws', (t) => {
 
 test('mock socket: connect to channel', (t) => {
   return new Promise((done) => {
-    const socket = mockSocket();
+    const socket = new MockSocket();
 
     const channel = socket.channel('abc');
     t.assert(channel.hasOwnProperty('push'));

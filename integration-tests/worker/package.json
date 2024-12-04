@@ -34,6 +34,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "@swc-node/register": "^1.10.9",
     "@types/koa": "^2.15.0"
   }
 }

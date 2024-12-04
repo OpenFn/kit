@@ -50,8 +50,12 @@ jobs:
 
   unit_test:
     docker:
-      - image: cimg/node:18.18
+      - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    parallelism: 1
+    parameters:
+      node_version:
+        type: string
     steps:
       - attach_workspace:
           at: ~/project
@@ -83,8 +87,12 @@ jobs:
 
   integration_test:
     docker:
-      - image: cimg/node:18.18
+      - image: cimg/node:<< parameters.node_version >>
     resource_class: medium
+    parallelism: 1
+    parameters:
+      node_version:
+        type: string
     steps:
       - attach_workspace:
           at: ~/project
@@ -107,14 +115,17 @@ workflows:
   build_and_test:
     jobs:
       - install:
-        filters:
-          branches:
-            ignore:
-              - main
+          filters:
+            branches:
+              ignore:
+                - main
       - build:
           requires:
             - install
       - unit_test:
+          matrix:
+            parameters:
+              node_version: ["18.18", "20.12"]
           requires:
             - build
       - type_check:
@@ -124,5 +135,8 @@ workflows:
           requires:
             - build
       - integration_test:
+          matrix:
+            parameters:
+              node_version: ["18.18", "20.12"]
           requires:
             - build
