@@ -48,15 +48,19 @@ const describeFunction = (
     parameters: symbol.parameters.map((p) => describeParameter(project, p)),
     magic: symbol.jsDocTags.some((tag) => tag.tagName.escapedText === 'magic'),
     isOperation: false,
-    examples: symbol.examples.map((eg: string) => {
-      if (eg.startsWith('<caption>')) {
-        let [caption, code] = eg.split('</caption>');
-        caption = caption.replace('<caption>', '');
+    examples: symbol.examples
+      // Some cases can produce non-string examples
+      // Ie if an @{link} declaration is inside a caption, which breaks parsing (for some reason)
+      .filter((eg) => typeof eg === 'string')
+      .map((eg: string) => {
+        if (eg.startsWith('<caption>')) {
+          let [caption, code] = eg.split('</caption>');
+          caption = caption.replace('<caption>', '');
 
-        return { caption: caption.trim(), code: code.trim() };
-      }
-      return { code: eg.trim() };
-    }),
+          return { caption: caption.trim(), code: code.trim() };
+        }
+        return { code: eg.trim() };
+      }),
   };
 };
 

@@ -1,5 +1,11 @@
 # @openfn/describe-package
 
+## 0.1.3
+
+### Patch Changes
+
+- ddda182: Fix an issue which causes malformed examples to throw an error
+
 ## 0.1.2
 
 ### Patch Changes

@@ -1,7 +1,7 @@
 {
   "name": "@openfn/integration-tests-execute",
   "private": true,
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Job execution tests",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",

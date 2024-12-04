@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies [ddda182]
+  - @openfn/describe-package@0.1.3
+
 ## 0.4.0
 
 ### Minor Changes
