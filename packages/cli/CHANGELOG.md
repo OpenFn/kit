@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.8.11
+
+### Patch Changes
+
+- Updated dependencies [ddda182]
+  - @openfn/describe-package@0.1.3
+  - @openfn/compiler@0.4.1
+
 ## 1.8.10
 
 ### Patch Changes
