@@ -105,12 +105,23 @@ const getOptions = [
     default: 'info',
   }),
   o.logJson,
-  o.outputPath,
+  {
+    ...o.outputPath,
+    // disable default output path behaviour
+    ensure: () => {},
+  },
 ];
 
 export const get = {
-  command: 'get [name] [key]',
+  command: 'get name key',
   describe: 'Get values from a collection',
+  handler: ensure('collections-get', getOptions),
+  builder: (yargs) => build(getOptions, yargs),
+} as yargs.CommandModule<{}>;
+
+export const set = {
+  command: 'set name [key] path',
+  describe: 'Uploads values to a collection',
   handler: ensure('collections-get', getOptions),
   builder: (yargs) => build(getOptions, yargs),
 } as yargs.CommandModule<{}>;
