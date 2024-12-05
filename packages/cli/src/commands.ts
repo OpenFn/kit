@@ -2,6 +2,7 @@ import { Opts } from './options';
 import apollo from './apollo/handler';
 import execute from './execute/handler';
 import compile from './compile/handler';
+import collections from './collections/handler';
 import test from './test/handler';
 import deploy from './deploy/handler';
 import docgen from './docgen/handler';
@@ -19,6 +20,7 @@ import printVersions from './util/print-versions';
 export type CommandList =
   | 'apollo'
   | 'compile'
+  | 'collections-get'
   | 'deploy'
   | 'docgen'
   | 'docs'
@@ -42,6 +44,7 @@ const handlers = {
   docs,
   metadata,
   pull,
+  ['collections-get']: collections.get,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,
@@ -81,10 +84,15 @@ const parse = async (options: Opts, log?: Logger) => {
     ) as string[];
   }
 
+  // TODO Please fix this joe!
+  // Put the validation isnide the repoDir option
+
   // TODO it would be nice to do this in the repoDir option, but
   // the logger isn't available yet
   if (
-    !/^(pull|deploy|test|version|apollo)$/.test(options.command!) &&
+    !/^(pull|deploy|test|version|apollo|collections-get)$/.test(
+      options.command!
+    ) &&
     !options.repoDir
   ) {
     logger.warn(
