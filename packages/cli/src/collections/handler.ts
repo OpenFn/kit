@@ -4,9 +4,34 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { Logger } from '../util/logger';
 import request from './request';
 
-import type { GetOptions, SetOptions } from './command';
+import type { CollectionsOptions, GetOptions, SetOptions } from './command';
+
+const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
+  if (!('token' in opts)) {
+    if (process.env.OPENFN_PAT) {
+      const token = process.env.OPENFN_PAT;
+      logger.info(
+        `Using access token ending in ${token?.substring(
+          token.length - 10
+        )} from env (OPENFN_PAT)`
+      );
+      opts.token = token;
+    } else {
+      logger.error('No access token detected!');
+      logger.error(
+        'Ensure you pass a Personal Access Token (PAT) with --token $MY_TOKEN or set the OPENFN_PAT env var'
+      );
+      logger.error(
+        'You can get a PAT from OpenFn, see https://docs.openfn.org/documentation/api-tokens'
+      );
+
+      throw new Error('NO_PAT');
+    }
+  }
+};
 
 export const get = async (options: GetOptions, logger: Logger) => {
+  ensureToken(options, logger);
   const multiMode = options.key.includes('*');
   if (multiMode) {
     logger.info(
@@ -54,6 +79,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
 };
 
 export const set = async (options: SetOptions, logger: Logger) => {
+  ensureToken(options, logger);
   logger.info(`Upserting items to collection "${options.collectionName}"`);
 
   // Array of key/value pairs to upsert

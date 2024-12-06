@@ -87,7 +87,7 @@ const parse = async (options: Opts, log?: Logger) => {
   }
 
   // TODO Please fix this joe!
-  // Put the validation isnide the repoDir option
+  // Put the validation inside the repoDir option
 
   // TODO it would be nice to do this in the repoDir option, but
   // the logger isn't available yet
