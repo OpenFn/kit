@@ -13,6 +13,7 @@ const expandYargs = (y: {} | (() => any)) => {
 
 // build helper to chain options
 export function build(opts: CLIOption[], yargs: yargs.Argv<any>) {
+  console.log(yargs.argv);
   return opts.reduce(
     (_y, o) => yargs.option(o.name, expandYargs(o.yargs)),
     yargs

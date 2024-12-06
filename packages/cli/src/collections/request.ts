@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { request } from 'undici';
+import type { Dispatcher } from 'undici';
 import { Logger } from '../util';
 
 // helper function to call out to the collections API
@@ -14,6 +15,8 @@ type Options = {
 
   includeMeta?: boolean; // TODO ignored right now
   pageSize?: number;
+
+  data?: any;
 };
 
 type Key = string;
@@ -73,13 +76,20 @@ export default async (
     limit: options.pageSize || 1000,
   };
 
-  const args = {
+  const args: Partial<Dispatcher.RequestOptions> = {
     headers,
     method,
     query,
   };
 
-  const result: ItemSet = {
+  if (options.data) {
+    args.body = JSON.stringify(options.data);
+    args.headers['content-type'] = 'application/json';
+  }
+
+  // hmm, this is the result for paging a get
+  // not quite what we need
+  let result: ItemSet = {
     count: 0, // Set the count here so that it comes up first when serialized
     items: {},
   };
@@ -95,23 +105,33 @@ export default async (
       // await handleError(response, path, state.configuration.collections_endpoint);
       logger.error('error!');
     }
-    const items: any = await response.body.json();
-    logger.debug(
-      'Received',
-      response.statusCode,
-      `- ${items.items.length} values`
-    );
-    for (const item of items.items) {
-      try {
-        result.items[item.key] = JSON.parse(item.value);
-      } catch (e) {
-        result.items[item.key] = item.value;
-      }
-    }
-    cursor = items.cursor;
-  } while (cursor);
+    const responseData: any = await response.body.json();
 
-  result.count = Object.keys(result.items).length;
+    if (responseData.items) {
+      // Handle a get response
+      logger.debug(
+        'Received',
+        response.statusCode,
+        `- ${responseData.items.length} values`
+      );
+      for (const item of responseData?.items) {
+        try {
+          result.items[item.key] = JSON.parse(item.value);
+        } catch (e) {
+          result.items[item.key] = item.value;
+        }
+      }
+      cursor = responseData.cursor;
+    } else {
+      // handle a set response
+      logger.debug(
+        'Received',
+        response.statusCode,
+        `- ${JSON.stringify(responseData)}`
+      );
+      result = responseData;
+    }
+  } while (cursor);
 
   return result;
 };

@@ -21,6 +21,7 @@ export type CommandList =
   | 'apollo'
   | 'compile'
   | 'collections-get'
+  | 'collections-set'
   | 'deploy'
   | 'docgen'
   | 'docs'
@@ -45,6 +46,7 @@ const handlers = {
   metadata,
   pull,
   ['collections-get']: collections.get,
+  ['collections-set']: collections.set,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,
@@ -90,7 +92,7 @@ const parse = async (options: Opts, log?: Logger) => {
   // TODO it would be nice to do this in the repoDir option, but
   // the logger isn't available yet
   if (
-    !/^(pull|deploy|test|version|apollo|collections-get)$/.test(
+    !/^(pull|deploy|test|version|apollo|collections-get|collections-set)$/.test(
       options.command!
     ) &&
     !options.repoDir

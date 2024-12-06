@@ -3,27 +3,37 @@ import * as o from '../options';
 import type { Opts } from '../options';
 import { build, ensure, override } from '../util/command-builders';
 
+// TODO output options are only relevant to get
 export type CollectionsOptions = Pick<
   Opts,
   'log' | 'logJson' | 'outputPath' | 'outputStdout'
 > & {
   lightning?: string;
   token?: string;
-  pageSize?: number;
-  limit?: number;
   key: string;
   collectionName: string;
+};
+
+export type GetOptions = CollectionsOptions & {
+  pageSize?: number;
+  limit?: number;
   pretty?: boolean;
+};
+
+export type SetOptions = CollectionsOptions & {
+  items?: string;
+  value?: string;
 };
 
 const desc = `Call out to the Collections API on Lightning`;
 
 export default {
-  command: 'collections [subcommand]',
+  command: 'collections <subcommand>',
   describe: desc,
   builder: (yargs) =>
     yargs
       .command(get)
+      .command(set)
       .example(
         'collections get my-collection 2024* -O',
         'Get all keys from my-collection starting with the string "2024" and log the results to stdout'
@@ -100,7 +110,6 @@ const getOptions = [
   limit,
   pretty,
 
-  o.stateStdin,
   override(o.log, {
     default: 'info',
   }),
@@ -113,15 +122,55 @@ const getOptions = [
 ];
 
 export const get = {
-  command: 'get name key',
+  command: 'get <name> <key>',
   describe: 'Get values from a collection',
   handler: ensure('collections-get', getOptions),
   builder: (yargs) => build(getOptions, yargs),
 } as yargs.CommandModule<{}>;
 
+const value = {
+  name: 'value',
+  yargs: {
+    description: 'Path to the value to upsert',
+  },
+};
+
+const items = {
+  name: 'items',
+  yargs: {
+    description:
+      'Path to a batch of items to upsert. Must contain a JSON object where each key is an item key, and each value is an uploaded value',
+  },
+};
+
+const setOptions = [
+  collectionName,
+  override(key, {
+    demand: false,
+  }),
+  token,
+  lightningUrl,
+  value,
+  items,
+
+  override(o.log, {
+    default: 'info',
+  }),
+  o.logJson,
+];
+
 export const set = {
-  command: 'set name [key] path',
-  describe: 'Uploads values to a collection',
-  handler: ensure('collections-get', getOptions),
-  builder: (yargs) => build(getOptions, yargs),
+  command: 'set <name> [key] [value] [--items]',
+  describe: 'Uploads values to a collection. Must set key & value OR --items.',
+  handler: ensure('collections-set', setOptions),
+  builder: (yargs) =>
+    build(setOptions, yargs)
+      .example(
+        'collections set my-collection cities-mapping ./citymap.json',
+        'Upload the data in ./citymap.json to the cities-mapping key'
+      )
+      .example(
+        'collections set my-collection --items ./items.json',
+        'Upsert the object in ./items.json as a batch of items (key/value pairs)'
+      ),
 } as yargs.CommandModule<{}>;
