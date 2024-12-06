@@ -176,6 +176,8 @@ const items = {
 
 const setOptions = [
   collectionName,
+  // TODO in set, key does not support patterns
+  // We should document and catch this case
   override(key, {
     demand: false,
   }),
