@@ -29,7 +29,15 @@ const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
   }
 
   if (root && n.CallExpression.check(root.node)) {
-    const arg = last as NodePath;
+    let arg = last as NodePath;
+    if (
+      arg.parentPath &&
+      n.CallExpression.check(arg.parentPath.node) &&
+      n.MemberExpression.check(arg.parentPath.node.callee) &&
+      arg.parentPath.node.callee.object.name === 'state'
+    ) {
+      arg = arg.parentPath;
+    }
 
     if (!isOpenFunction(arg)) {
       const params = b.identifier('state');
