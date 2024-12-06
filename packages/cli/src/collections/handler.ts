@@ -7,14 +7,18 @@ import request from './request';
 import type { GetOptions, SetOptions } from './command';
 
 export const get = async (options: GetOptions, logger: Logger) => {
-  logger.info(
-    `Fetching "${options.key}" from collection "${options.collectionName}"`
-  );
+  const multiMode = options.key.includes('*');
+  if (multiMode) {
+    logger.info(
+      `Fetching multiple items from collection "${options.collectionName}" with pattern ${options.key}`
+    );
+  } else {
+    logger.info(
+      `Fetching "${options.key}" from collection "${options.collectionName}"`
+    );
+  }
 
-  // TODO: log the output format
-  // Something like: downloading single values item vs downloading multiple key/value pairs
-
-  const result = await request(
+  let result = await request(
     'GET',
     {
       lightning: options.lightning,
@@ -27,11 +31,13 @@ export const get = async (options: GetOptions, logger: Logger) => {
     logger
   );
 
-  result.count = Object.keys(result.items).length;
-
-  // TODO if fetching a single ite, (no pattern) return it verbatim
-
-  logger.success(`Fetched ${result.count} items!`);
+  if (multiMode) {
+    result.count = Object.keys(result.items).length;
+    logger.success(`Fetched ${result.count} items!`);
+  } else {
+    result = Object.values(result.items)[0];
+    logger.success(`Fetched ${options.key}`);
+  }
 
   if (options.outputPath) {
     const content = JSON.stringify(
@@ -43,7 +49,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
     logger.always(`Wrote items to ${options.outputPath}`);
   } else {
     // use print because it won't stringify
-    logger.print(result.items);
+    logger.print(multiMode ? result.items : result);
   }
 };
 
@@ -81,7 +87,7 @@ export const set = async (options: SetOptions, logger: Logger) => {
     // throw for invalid arguments
     throw new Error('INVALID_ARGUMENTS');
   }
-  console.log(items);
+
   // get the input data
   const result = await request(
     'POST',
