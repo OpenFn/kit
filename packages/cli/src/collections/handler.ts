@@ -4,7 +4,12 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { Logger } from '../util/logger';
 import request from './request';
 
-import type { CollectionsOptions, GetOptions, SetOptions } from './command';
+import type {
+  CollectionsOptions,
+  GetOptions,
+  RemoveOptions,
+  SetOptions,
+} from './command';
 
 const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
   if (!('token' in opts)) {
@@ -130,7 +135,52 @@ export const set = async (options: SetOptions, logger: Logger) => {
   logger.success(`Upserted ${result.upserted} items!`);
 };
 
+export const remove = async (options: RemoveOptions, logger: Logger) => {
+  ensureToken(options, logger);
+  logger.info(
+    `Removing "${options.key}" from collection "${options.collectionName}"`
+  );
+
+  // TODO should we ALWAYS do this to report the keys that will be lost
+  // But we can't guarantee 100% accuracy if a key is inserted between queries
+  // Can we even guarantee that the query in get and delete is the same?
+  if (options.dryRun) {
+    logger.info('--dry-run passed: fetching affected items');
+    // TODO this isn't optimal at the moment, to say the least
+    // See https://github.com/OpenFn/lightning/issues/2758
+    let result = await request(
+      'GET',
+      {
+        lightning: options.lightning,
+        token: options.token,
+        key: options.key,
+        collectionName: options.collectionName,
+      },
+      logger
+    );
+    const keys = Object.keys(result.items);
+    logger.info('Keys to be removed:');
+    logger.print(keys);
+
+    logger.always('Aborting request - keys have not been removed');
+  } else {
+    let result = await request(
+      'DELETE',
+      {
+        lightning: options.lightning,
+        token: options.token,
+        key: options.key,
+        collectionName: options.collectionName,
+      },
+      logger
+    );
+
+    logger.success(`Removed ${result.deleted} items`);
+  }
+};
+
 export default {
   get,
   set,
+  remove,
 };

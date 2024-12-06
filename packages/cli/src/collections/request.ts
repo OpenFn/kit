@@ -48,7 +48,7 @@ type ItemSet = {
 // TODO how should we handle cursor?
 // Lets a) support limit and b) fetch everything
 export default async (
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   options: Options,
   logger: Logger
 ) => {

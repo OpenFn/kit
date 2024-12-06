@@ -22,6 +22,7 @@ export type CommandList =
   | 'compile'
   | 'collections-get'
   | 'collections-set'
+  | 'collections-remove'
   | 'deploy'
   | 'docgen'
   | 'docs'
@@ -47,6 +48,7 @@ const handlers = {
   pull,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
+  ['collections-remove']: collections.remove,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,

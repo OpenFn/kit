@@ -3,21 +3,22 @@ import * as o from '../options';
 import type { Opts } from '../options';
 import { build, ensure, override } from '../util/command-builders';
 
-// TODO output options are only relevant to get
-export type CollectionsOptions = Pick<
-  Opts,
-  'log' | 'logJson' | 'outputPath' | 'outputStdout'
-> & {
+export type CollectionsOptions = Pick<Opts, 'log' | 'logJson'> & {
   lightning?: string;
   token?: string;
   key: string;
   collectionName: string;
 };
 
-export type GetOptions = CollectionsOptions & {
-  pageSize?: number;
-  limit?: number;
-  pretty?: boolean;
+export type GetOptions = CollectionsOptions &
+  Pick<Opts, 'outputPath' | 'outputStdout'> & {
+    pageSize?: number;
+    limit?: number;
+    pretty?: boolean;
+  };
+
+export type RemoveOptions = CollectionsOptions & {
+  dryRun?: boolean;
 };
 
 export type SetOptions = CollectionsOptions & {
@@ -34,6 +35,7 @@ export default {
     yargs
       .command(get)
       .command(set)
+      .command(remove)
       .example(
         'collections get my-collection 2024* -O',
         'Get all keys from my-collection starting with the string "2024" and log the results to stdout'
@@ -126,6 +128,35 @@ export const get = {
   describe: 'Get values from a collection',
   handler: ensure('collections-get', getOptions),
   builder: (yargs) => build(getOptions, yargs),
+} as yargs.CommandModule<{}>;
+
+const dryRun = {
+  name: 'dry-run',
+  yargs: {
+    description:
+      '[Alpha] Do not delete keys and instead return the keys that would be deleted',
+    type: 'boolean',
+  },
+};
+
+const removeOptions = [
+  collectionName,
+  key,
+  token,
+  lightningUrl,
+  dryRun,
+
+  override(o.log, {
+    default: 'info',
+  }),
+  o.logJson,
+];
+
+export const remove = {
+  command: 'remove <name> <key>',
+  describe: 'Remove values from a collection',
+  handler: ensure('collections-remove', removeOptions),
+  builder: (yargs) => build(removeOptions, yargs),
 } as yargs.CommandModule<{}>;
 
 const value = {
