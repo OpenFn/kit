@@ -9,6 +9,7 @@ import { setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
 import { collections } from '@openfn/language-collections';
 import { readFile } from 'fs/promises';
+import { lightning } from '@openfn/lexicon';
 
 // Log as json to make testing easier
 const logger = createMockLogger('default', { level: 'debug', json: true });
@@ -137,7 +138,6 @@ test.serial(
   }
 );
 
-// TODO collection doesn't exist
 // TODO item doesn't exist
 // TODO no matching values
 
@@ -243,4 +243,32 @@ test.serial('should do a dry run', async (t) => {
   // Find the outputted keys
   const [_level, output] = logger._history.find(([level]) => level === 'print');
   t.deepEqual(output.message[0], ['x', 'y']);
+});
+
+// These tests are against the request helper code and should be common to all verbs
+
+test.serial('should throw if the server is not available', async (t) => {
+  const options = createOptions({
+    key: 'x',
+    lightning: 'https://www.blah.blah.blah',
+  });
+  try {
+    await get(options, logger);
+  } catch (e: any) {
+    t.regex(e.reason, /connection_refused/i);
+    t.regex(e.help, /correct url .+ --lightning/i);
+  }
+});
+
+test.serial("should throw if a collection doesn't exist", async (t) => {
+  const options = createOptions({
+    key: 'x',
+    collectionName: 'strawberries',
+  });
+  try {
+    await get(options, logger);
+  } catch (e: any) {
+    t.regex(e.reason, /collection not found/i);
+    t.regex(e.help, /ensure the collection has been created/i);
+  }
 });

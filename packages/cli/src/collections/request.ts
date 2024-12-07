@@ -2,6 +2,7 @@ import path from 'node:path';
 import { request } from 'undici';
 import type { Dispatcher } from 'undici';
 import { Logger } from '../util';
+import abort, { throwAbortableError } from '../util/abort';
 
 // helper function to call out to the collections API
 
@@ -61,38 +62,80 @@ export default async (
       query.cursor = cursor;
     }
 
-    const response = await request(url, args);
-    if (response.statusCode >= 400) {
-      // await handleError(response, path, state.configuration.collections_endpoint);
-      logger.error('error!');
-    }
-    const responseData: any = await response.body.json();
+    try {
+      const response = await request(url, args);
 
-    if (responseData.items) {
-      // Handle a get response
-      logger.debug(
-        'Received',
-        response.statusCode,
-        `- ${responseData.items.length} values`
-      );
-      for (const item of responseData?.items) {
-        try {
-          result[item.key] = JSON.parse(item.value);
-        } catch (e) {
-          result[item.key] = item.value;
-        }
+      if (response.statusCode >= 400) {
+        return handleError(logger, response);
       }
-      cursor = responseData.cursor;
-    } else {
-      // handle a set response
-      logger.debug(
-        'Received',
-        response.statusCode,
-        `- ${JSON.stringify(responseData)}`
+      const responseData: any = await response.body.json();
+
+      if (responseData.items) {
+        // Handle a get response
+        logger.debug(
+          'Received',
+          response.statusCode,
+          `- ${responseData.items.length} values`
+        );
+        for (const item of responseData?.items) {
+          try {
+            result[item.key] = JSON.parse(item.value);
+          } catch (e) {
+            result[item.key] = item.value;
+          }
+        }
+        cursor = responseData.cursor;
+      } else {
+        // handle a set response
+        logger.debug(
+          'Received',
+          response.statusCode,
+          `- ${JSON.stringify(responseData)}`
+        );
+        result = responseData;
+      }
+    } catch (e: any) {
+      logger.error(e);
+      throwAbortableError(
+        `CONNECTION_REFUSED: error connecting to server at ${base}`,
+        'Check you have passed the correct URL to --lightning or OPENFN_ENDPOINT'
       );
-      result = responseData;
     }
   } while (cursor);
 
   return result;
 };
+
+async function handleError(
+  logger: Logger,
+  response: Dispatcher.ResponseData<any>
+) {
+  logger.error('Error from server', response.statusCode);
+  let message;
+  let fix;
+
+  switch (response.statusCode) {
+    case 404:
+      message = `404: collection not found`;
+      fix = `Ensure the Collection has been created on the admin page`;
+      break;
+    default:
+      message = `Error from server: ${response.statusCode}`;
+  }
+
+  let contentType = (response.headers?.['content-type'] as string) ?? '';
+
+  if (contentType.startsWith('application/json')) {
+    try {
+      const body = await response.body.json();
+      logger.error(body);
+    } catch (e) {}
+  } else {
+    try {
+      const text = await response.body.text();
+      logger.error(text);
+    } catch (e) {}
+  }
+
+  throwAbortableError(message, fix);
+}
