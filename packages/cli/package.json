@@ -33,6 +33,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "devDependencies": {
+    "@openfn/language-collections": "^0.6.1",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/lexicon": "workspace:^",
     "@types/mock-fs": "^4.13.1",
