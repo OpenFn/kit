@@ -24,22 +24,16 @@ export default async (
   options: Options,
   logger: Logger
 ) => {
-  // if (!state.configuration.collections_token) {
-  //   throwError('INVALID_AUTH', {
-  //     description: 'No access key provided for collection request',
-  //     fix: 'Ensure the "collections_token" value is set on state.configuration',
-  //     path,
-  //   });
-  // }
-
   const base =
-    options.lightning || 'http://localhost:4000' || 'https://app.openfn.org';
+    options.lightning ||
+    process.env.OPENFN_ENDPOINT ||
+    'https://app.openfn.org';
 
   const url = path.join(base, '/collections', options.collectionName);
 
   logger.debug('Calling Collections server at ', url);
 
-  const headers = {
+  const headers: Record<string, string> = {
     Authorization: `Bearer ${options.token}`,
   };
 
@@ -56,7 +50,7 @@ export default async (
 
   if (options.data) {
     args.body = JSON.stringify(options.data);
-    args.headers['content-type'] = 'application/json';
+    headers['content-type'] = 'application/json';
   }
 
   let result: any = {};
@@ -64,7 +58,7 @@ export default async (
   let cursor;
   do {
     if (cursor) {
-      args.query.cursor = cursor;
+      query.cursor = cursor;
     }
 
     const response = await request(url, args);

@@ -74,7 +74,8 @@ const token = {
 const lightningUrl = {
   name: 'lightning',
   yargs: {
-    description: 'URL to Lightning server',
+    description:
+      'URL to OpenFn server. Defaults to OPENFN_ENDPOINT or https://app.openfn.org',
   },
 };
 

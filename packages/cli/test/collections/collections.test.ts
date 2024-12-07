@@ -8,13 +8,13 @@ import { get, set, remove } from '../../src/collections/handler';
 import { setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
 import { collections } from '@openfn/language-collections';
-import { lightning } from '@openfn/lexicon';
 import { readFile } from 'fs/promises';
 
 // Log as json to make testing easier
 const logger = createMockLogger('default', { level: 'debug', json: true });
 
 const COLLECTION = 'test-collection-a';
+const ENDPOINT = 'https://mock.openfn.org';
 
 let api: any;
 
@@ -34,7 +34,7 @@ const loadData = (items: Record<string, object>) => {
 };
 
 test.before(() => {
-  const client = collections.createMockServer('https://mock.openfn.org');
+  const client = collections.createMockServer(ENDPOINT);
   api = client.api;
   setGlobalDispatcher(client.agent);
 });
@@ -43,32 +43,53 @@ test.beforeEach(() => {
   logger._reset();
   api.reset();
   api.createCollection(COLLECTION);
+  loadData({
+    x: {},
+    y: {},
+  });
+
   resetMockFs();
 });
 
 const createOptions = (opts = {}) => ({
-  lightning: 'https://mock.openfn.org',
+  lightning: ENDPOINT,
   collectionName: COLLECTION,
   key: '*',
+  token: 'x.y.z', // TODO need more tests around this
   ...opts,
 });
 
 test.serial(
   'should get all keys from a collection and print to stdout',
   async (t) => {
-    loadData({
-      x: {},
-      y: {},
+    const options = createOptions({
+      key: '*',
     });
-    const options = createOptions();
     await get(options, logger);
 
     // The last log should print the data out
     // (because we're logging to JSON we can easily inspect the raw JSON data)
-    const [level, log] = logger._history.at(-1);
+    const [_level, log] = logger._history.at(-1);
     t.deepEqual(log.message[0], {
       x: { id: 'x' },
       y: { id: 'y' },
+    });
+  }
+);
+
+test.serial(
+  'should get one key from a collection and print to stdout',
+  async (t) => {
+    const options = createOptions({
+      key: 'x',
+    });
+    await get(options, logger);
+
+    // The last log should print the data out
+    // (because we're logging to JSON we can easily inspect the raw JSON data)
+    const [_level, log] = logger._history.at(-1);
+    t.deepEqual(log.message[0], {
+      id: 'x',
     });
   }
 );
@@ -79,11 +100,8 @@ test.serial(
     mockFs({
       '/tmp.json': '',
     });
-    loadData({
-      x: {},
-      y: {},
-    });
     const options = createOptions({
+      key: '*',
       outputPath: '/tmp.json',
     });
     await get(options, logger);
@@ -97,3 +115,132 @@ test.serial(
     });
   }
 );
+
+test.serial(
+  'should get one key from a collection and write to disk',
+  async (t) => {
+    mockFs({
+      '/tmp.json': '',
+    });
+    const options = createOptions({
+      key: 'x',
+      outputPath: '/tmp.json',
+    });
+    await get(options, logger);
+
+    const data = await readFile('/tmp.json');
+    const items = JSON.parse(data);
+
+    t.deepEqual(items, {
+      id: 'x',
+    });
+  }
+);
+
+// TODO collection doesn't exist
+// TODO item doesn't exist
+// TODO no matching values
+
+test.serial(
+  'should use OPENFN_ENDPOINT if lightning option is not set',
+  async (t) => {
+    const options = createOptions({
+      key: 'x',
+      lightning: undefined,
+    });
+    process.env.OPENFN_ENDPOINT = ENDPOINT;
+
+    await get(options, logger);
+
+    const [_level, log] = logger._history.at(-1);
+    t.deepEqual(log.message[0], {
+      id: 'x',
+    });
+
+    delete process.env.OPENFN_ENDPOINT;
+  }
+);
+
+// TODO test that limit actually works
+// TODO test that query filters actually work (mock doesn't support this)
+
+test.serial('should set a single value', async (t) => {
+  mockFs({
+    '/value.json': JSON.stringify({ id: 'z' }),
+  });
+  const options = createOptions({
+    key: 'z',
+    value: '/value.json',
+  });
+
+  await set(options, logger);
+
+  t.is(api.count(COLLECTION), 3);
+  const item = api.asJSON(COLLECTION, 'z');
+  t.deepEqual(item, { id: 'z' });
+});
+
+test.serial('should set multiple values', async (t) => {
+  mockFs({
+    '/items.json': JSON.stringify({
+      a: { id: 'a' },
+      b: { id: 'b' },
+    }),
+  });
+  const options = createOptions({
+    key: 'z',
+    items: '/items.json',
+  });
+
+  await set(options, logger);
+
+  t.is(api.count(COLLECTION), 4);
+  const a = api.asJSON(COLLECTION, 'a');
+  t.deepEqual(a, { id: 'a' });
+
+  const b = api.asJSON(COLLECTION, 'b');
+  t.deepEqual(b, { id: 'b' });
+});
+
+test.serial('should remove one key', async (t) => {
+  const itemBefore = api.byKey(COLLECTION, 'x');
+  t.truthy(itemBefore);
+
+  const options = createOptions({
+    key: 'x',
+  });
+
+  await remove(options, logger);
+
+  const itemAfter = api.byKey(COLLECTION, 'x');
+  t.falsy(itemAfter);
+});
+
+test.serial('should remove multiple keys', async (t) => {
+  t.is(api.count(COLLECTION), 2);
+
+  const options = createOptions({
+    key: '*',
+  });
+
+  await remove(options, logger);
+
+  t.is(api.count(COLLECTION), 0);
+});
+
+test.serial('should do a dry run', async (t) => {
+  t.is(api.count(COLLECTION), 2);
+
+  const options = createOptions({
+    key: '*',
+    dryRun: true,
+  });
+
+  await remove(options, logger);
+
+  t.is(api.count(COLLECTION), 2);
+
+  // Find the outputted keys
+  const [_level, output] = logger._history.find(([level]) => level === 'print');
+  t.deepEqual(output.message[0], ['x', 'y']);
+});

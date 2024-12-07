@@ -157,7 +157,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
       },
       logger
     );
-    const keys = Object.keys(result.items);
+    const keys = Object.keys(result);
     logger.info('Keys to be removed:');
     logger.print(keys);
 
