@@ -62,10 +62,9 @@ export const get = async (options: GetOptions, logger: Logger) => {
   );
 
   if (multiMode) {
-    result.count = Object.keys(result.items).length;
     logger.success(`Fetched ${result.count} items!`);
   } else {
-    result = Object.values(result.items)[0];
+    result = Object.values(result)[0];
     logger.success(`Fetched ${options.key}`);
   }
 
@@ -79,7 +78,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
     logger.always(`Wrote items to ${options.outputPath}`);
   } else {
     // use print because it won't stringify
-    logger.print(multiMode ? result.items : result);
+    logger.print(result);
   }
 };
 

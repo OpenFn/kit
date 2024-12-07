@@ -19,34 +19,6 @@ type Options = {
   data?: any;
 };
 
-type Key = string;
-
-// This is what uploaded and downloaded data looks like
-// Uploads don't include count and meta, but they're harmless
-// For now, meta is discarded
-type ItemSet = {
-  items: Record<Key, any>;
-  count?: number;
-  meta?: Record<
-    Key,
-    {
-      updated: string;
-      created: string;
-    }
-  >;
-};
-
-// TODO we should try to autoparse strings into json right?
-// we can take a flag to not do that
-
-// TODO how should we return data?
-// As a key: value object?
-// what about metadata?
-// Let's add that as a second object
-// so you get: { items, metadata }
-
-// TODO how should we handle cursor?
-// Lets a) support limit and b) fetch everything
 export default async (
   method: 'GET' | 'POST' | 'DELETE',
   options: Options,
@@ -87,12 +59,7 @@ export default async (
     args.headers['content-type'] = 'application/json';
   }
 
-  // hmm, this is the result for paging a get
-  // not quite what we need
-  let result: ItemSet = {
-    count: 0, // Set the count here so that it comes up first when serialized
-    items: {},
-  };
+  let result: any = {};
 
   let cursor;
   do {
@@ -116,9 +83,9 @@ export default async (
       );
       for (const item of responseData?.items) {
         try {
-          result.items[item.key] = JSON.parse(item.value);
+          result[item.key] = JSON.parse(item.value);
         } catch (e) {
-          result.items[item.key] = item.value;
+          result[item.key] = item.value;
         }
       }
       cursor = responseData.cursor;
