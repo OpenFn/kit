@@ -2,11 +2,9 @@ import path from 'node:path';
 import { request } from 'undici';
 import type { Dispatcher } from 'undici';
 import { Logger } from '../util';
-import abort, { throwAbortableError } from '../util/abort';
+import { throwAbortableError } from '../util/abort';
 
 // helper function to call out to the collections API
-
-// export const request = async (state, client, path, options = {}) => {
 
 type Options = {
   key: string;
@@ -16,6 +14,7 @@ type Options = {
 
   includeMeta?: boolean; // TODO ignored right now
   pageSize?: number;
+  limit?: number;
 
   data?: any;
 };

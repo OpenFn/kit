@@ -52,7 +52,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
     'GET',
     {
       lightning: options.lightning,
-      token: options.token,
+      token: options.token!,
       pageSize: options.pageSize,
       limit: options.limit,
       key: options.key,
@@ -123,7 +123,7 @@ export const set = async (options: SetOptions, logger: Logger) => {
     'POST',
     {
       lightning: options.lightning,
-      token: options.token,
+      token: options.token!,
       key: options.key,
       collectionName: options.collectionName,
       data: { items },
@@ -151,7 +151,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
       'GET',
       {
         lightning: options.lightning,
-        token: options.token,
+        token: options.token!,
         key: options.key,
         collectionName: options.collectionName,
       },
@@ -167,7 +167,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
       'DELETE',
       {
         lightning: options.lightning,
-        token: options.token,
+        token: options.token!,
         key: options.key,
         collectionName: options.collectionName,
       },
