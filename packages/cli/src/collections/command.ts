@@ -26,7 +26,7 @@ export type SetOptions = CollectionsOptions & {
   value?: string;
 };
 
-const desc = `Call out to the Collections API on Lightning`;
+const desc = `Read and write from the OpenFn Collections API`;
 
 export default {
   command: 'collections <subcommand>',
@@ -37,8 +37,20 @@ export default {
       .command(set)
       .command(remove)
       .example(
-        'collections get my-collection 2024* -O',
-        'Get all keys from my-collection starting with the string "2024" and log the results to stdout'
+        '$0 collections get my-collection 2024* -o /tmp/output.json',
+        'Get all keys from my-collection starting with the string "2024" and output the results to file'
+      )
+      .example(
+        '$0 collections set my-collection my-key path/to/value.json',
+        'Set a single key in my-collection to the contents of value.json'
+      )
+      .example(
+        '$0 collections set my-collection --items path/to/items.json',
+        'Set multiple key/value pairs from items.json to my-collection'
+      )
+      .example(
+        '$0 collections remove my-collection my-key',
+        'Remove a single key from my-collection'
       ),
 } as yargs.CommandModule<{}>;
 

@@ -10,6 +10,7 @@ import type {
   RemoveOptions,
   SetOptions,
 } from './command';
+import { throwAbortableError } from '../util/abort';
 
 const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
   if (!('token' in opts)) {
@@ -83,6 +84,13 @@ export const get = async (options: GetOptions, logger: Logger) => {
 };
 
 export const set = async (options: SetOptions, logger: Logger) => {
+  if (options.key && options.items) {
+    throwAbortableError(
+      'ARGUMENT_ERROR: arguments for key and items were provided',
+      'If upserting multiple items with --items, do not pass a key'
+    );
+  }
+
   ensureToken(options, logger);
   logger.info(`Upserting items to collection "${options.collectionName}"`);
 

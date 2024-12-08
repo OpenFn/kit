@@ -60,111 +60,79 @@ const createOptions = (opts = {}) => ({
   ...opts,
 });
 
-test.serial(
-  'should get all keys from a collection and print to stdout',
-  async (t) => {
-    const options = createOptions({
-      key: '*',
-    });
-    await get(options, logger);
+test.serial('get all keys from a collection and print to stdout', async (t) => {
+  const options = createOptions({
+    key: '*',
+  });
+  await get(options, logger);
 
-    // The last log should print the data out
-    // (because we're logging to JSON we can easily inspect the raw JSON data)
-    const [_level, log] = logger._history.at(-1);
-    t.deepEqual(log.message[0], {
-      x: { id: 'x' },
-      y: { id: 'y' },
-    });
-  }
-);
+  // The last log should print the data out
+  // (because we're logging to JSON we can easily inspect the raw JSON data)
+  const [_level, log] = logger._history.at(-1);
+  t.deepEqual(log.message[0], {
+    x: { id: 'x' },
+    y: { id: 'y' },
+  });
+});
 
-test.serial(
-  'should get one key from a collection and print to stdout',
-  async (t) => {
-    const options = createOptions({
-      key: 'x',
-    });
-    await get(options, logger);
+test.serial('get one key from a collection and print to stdout', async (t) => {
+  const options = createOptions({
+    key: 'x',
+  });
+  await get(options, logger);
 
-    // The last log should print the data out
-    // (because we're logging to JSON we can easily inspect the raw JSON data)
-    const [_level, log] = logger._history.at(-1);
-    t.deepEqual(log.message[0], {
-      id: 'x',
-    });
-  }
-);
+  // The last log should print the data out
+  // (because we're logging to JSON we can easily inspect the raw JSON data)
+  const [_level, log] = logger._history.at(-1);
+  t.deepEqual(log.message[0], {
+    id: 'x',
+  });
+});
 
-test.serial(
-  'should get all keys from a collection and write to disk',
-  async (t) => {
-    mockFs({
-      '/tmp.json': '',
-    });
-    const options = createOptions({
-      key: '*',
-      outputPath: '/tmp.json',
-    });
-    await get(options, logger);
+test.serial('get all keys from a collection and write to disk', async (t) => {
+  mockFs({
+    '/tmp.json': '',
+  });
+  const options = createOptions({
+    key: '*',
+    outputPath: '/tmp.json',
+  });
+  await get(options, logger);
 
-    const data = await readFile('/tmp.json');
-    const items = JSON.parse(data);
+  const data = await readFile('/tmp.json');
+  const items = JSON.parse(data);
 
-    t.deepEqual(items, {
-      x: { id: 'x' },
-      y: { id: 'y' },
-    });
-  }
-);
+  t.deepEqual(items, {
+    x: { id: 'x' },
+    y: { id: 'y' },
+  });
+});
 
-test.serial(
-  'should get one key from a collection and write to disk',
-  async (t) => {
-    mockFs({
-      '/tmp.json': '',
-    });
-    const options = createOptions({
-      key: 'x',
-      outputPath: '/tmp.json',
-    });
-    await get(options, logger);
+test.serial('get one key from a collection and write to disk', async (t) => {
+  mockFs({
+    '/tmp.json': '',
+  });
+  const options = createOptions({
+    key: 'x',
+    outputPath: '/tmp.json',
+  });
+  await get(options, logger);
 
-    const data = await readFile('/tmp.json');
-    const items = JSON.parse(data);
+  const data = await readFile('/tmp.json');
+  const items = JSON.parse(data);
 
-    t.deepEqual(items, {
-      id: 'x',
-    });
-  }
-);
+  t.deepEqual(items, {
+    id: 'x',
+  });
+});
 
 // TODO item doesn't exist
 // TODO no matching values
 
-test.serial(
-  'should use OPENFN_ENDPOINT if lightning option is not set',
-  async (t) => {
-    const options = createOptions({
-      key: 'x',
-      lightning: undefined,
-    });
-    process.env.OPENFN_ENDPOINT = ENDPOINT;
-
-    await get(options, logger);
-
-    const [_level, log] = logger._history.at(-1);
-    t.deepEqual(log.message[0], {
-      id: 'x',
-    });
-
-    delete process.env.OPENFN_ENDPOINT;
-  }
-);
-
 // TODO test that limit actually works
 // TODO test that query filters actually work (mock doesn't support this)
 
-test.serial('should set a single value', async (t) => {
+test.serial('set a single value', async (t) => {
   mockFs({
     '/value.json': JSON.stringify({ id: 'z' }),
   });
@@ -180,7 +148,7 @@ test.serial('should set a single value', async (t) => {
   t.deepEqual(item, { id: 'z' });
 });
 
-test.serial('should set multiple values', async (t) => {
+test.serial('set multiple values', async (t) => {
   mockFs({
     '/items.json': JSON.stringify({
       a: { id: 'a' },
@@ -202,7 +170,20 @@ test.serial('should set multiple values', async (t) => {
   t.deepEqual(b, { id: 'b' });
 });
 
-test.serial('should remove one key', async (t) => {
+test.serial('set should throw if key and items are both set', async (t) => {
+  const options = createOptions({
+    key: 'z',
+    items: '/value.json',
+  });
+  try {
+    await set(options, logger);
+  } catch (e) {
+    t.regex(e.reason, /argument_error/i);
+    t.regex(e.help, /do not pass a key/i);
+  }
+});
+
+test.serial('remove one key', async (t) => {
   const itemBefore = api.byKey(COLLECTION, 'x');
   t.truthy(itemBefore);
 
@@ -216,7 +197,7 @@ test.serial('should remove one key', async (t) => {
   t.falsy(itemAfter);
 });
 
-test.serial('should remove multiple keys', async (t) => {
+test.serial('remove multiple keys', async (t) => {
   t.is(api.count(COLLECTION), 2);
 
   const options = createOptions({
@@ -228,7 +209,7 @@ test.serial('should remove multiple keys', async (t) => {
   t.is(api.count(COLLECTION), 0);
 });
 
-test.serial('should do a dry run', async (t) => {
+test.serial('remove with dry run', async (t) => {
   t.is(api.count(COLLECTION), 2);
 
   const options = createOptions({
@@ -271,4 +252,21 @@ test.serial("should throw if a collection doesn't exist", async (t) => {
     t.regex(e.reason, /collection not found/i);
     t.regex(e.help, /ensure the collection has been created/i);
   }
+});
+
+test.serial('use OPENFN_ENDPOINT if lightning option is not set', async (t) => {
+  const options = createOptions({
+    key: 'x',
+    lightning: undefined,
+  });
+  process.env.OPENFN_ENDPOINT = ENDPOINT;
+
+  await get(options, logger);
+
+  const [_level, log] = logger._history.at(-1);
+  t.deepEqual(log.message[0], {
+    id: 'x',
+  });
+
+  delete process.env.OPENFN_ENDPOINT;
 });
