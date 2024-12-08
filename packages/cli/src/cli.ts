@@ -2,6 +2,7 @@ import yargs, { Arguments } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
 import apolloCommand from './apollo/command';
+import collectionsCommand from './collections/command';
 import compileCommand from './compile/command';
 import deployCommand from './deploy/command';
 import docgenCommand from './docgen/command';
@@ -19,6 +20,7 @@ export const cmd = y
   // TODO Typescipt hacks because signatures don't seem to align
   .command(executeCommand as any)
   .command(compileCommand)
+  .command(collectionsCommand)
   .command(deployCommand as any)
   .command(installCommand) // allow install to run from the top as well as repo
   .command(repoCommand)

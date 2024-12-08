@@ -30,3 +30,20 @@ export default (
 
   throw e;
 };
+
+class DeferredAbort extends Error {
+  constructor(reason: string, help?: string) {
+    super('DeferredAbortError');
+    this.reason = reason;
+    this.help = help ?? '';
+  }
+  abort = true;
+  reason = '';
+  help = '';
+}
+// This function lets us create an error that can be aborted
+// but the top level command handler, resulting in code
+// that's easier to test
+export const throwAbortableError = (message: string, help?: string) => {
+  throw new DeferredAbort(message, help);
+};
