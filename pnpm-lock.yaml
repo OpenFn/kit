@@ -232,8 +232,8 @@ importers:
         version: 17.7.2
     devDependencies:
       '@openfn/language-collections':
-        specifier: ^0.6.1
-        version: 0.6.1
+        specifier: ^0.6.2
+        version: 0.6.2
       '@openfn/language-common':
         specifier: 2.0.0-rc3
         version: 2.0.0-rc3
@@ -1727,8 +1727,8 @@ packages:
     engines: {node: ^16.14.0 || >=18.0.0}
     dev: true
 
-  /@openfn/language-collections@0.6.1:
-    resolution: {integrity: sha512-CAQ5HH8o4npcux8zKHmZL+ZMVAjgvovEA76kzGu6Zaqmx/vJNH6ikv4jaTp3S0P25E9qm2U7QbtdQCVmiRHseg==}
+  /@openfn/language-collections@0.6.2:
+    resolution: {integrity: sha512-EyXuXvYGBmBXgF95snuxWCd+HgZsT57ghqzDUnhYC+qaUNe9p0aIlFdfA2tTokce04KWI8hc7HKnvm0yPd5H7A==}
     dependencies:
       '@openfn/language-common': 2.1.1
       stream-json: 1.9.1
