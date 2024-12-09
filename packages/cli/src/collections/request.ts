@@ -19,6 +19,8 @@ type Options = {
   data?: any;
 };
 
+const DEFAULT_PAGE_SIZE = 1000;
+
 export default async (
   method: 'GET' | 'POST' | 'DELETE',
   options: Options,
@@ -39,7 +41,7 @@ export default async (
 
   const query: any = {
     key: options.key,
-    limit: options.pageSize || 1000,
+    limit: options.pageSize || DEFAULT_PAGE_SIZE,
   };
 
   const args: Partial<Dispatcher.RequestOptions> = {
@@ -54,11 +56,22 @@ export default async (
   }
 
   let result: any = {};
-
   let cursor;
+  let count = 0;
+  let limit = Infinity;
+
   do {
     if (cursor) {
       query.cursor = cursor;
+    }
+
+    if (options.limit) {
+      limit = options.limit;
+      // Make sure the next page size respects the user limit
+      query.limit = Math.min(
+        options.pageSize || DEFAULT_PAGE_SIZE,
+        options.limit - count
+      );
     }
 
     try {
@@ -70,6 +83,7 @@ export default async (
       const responseData: any = await response.body.json();
 
       if (responseData.items) {
+        count += responseData.items.length;
         // Handle a get response
         logger.debug(
           'Received',
@@ -100,7 +114,7 @@ export default async (
         'Check you have passed the correct URL to --lightning or OPENFN_ENDPOINT'
       );
     }
-  } while (cursor);
+  } while (cursor && count < limit);
 
   return result;
 };

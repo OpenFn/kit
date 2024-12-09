@@ -63,7 +63,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
   );
 
   if (multiMode) {
-    logger.success(`Fetched ${result.count} items!`);
+    logger.success(`Fetched ${Object.keys(result).length} items!`);
   } else {
     result = Object.values(result)[0];
     logger.success(`Fetched ${options.key}`);

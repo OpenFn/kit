@@ -9,7 +9,6 @@ import { setGlobalDispatcher } from 'undici';
 import { createMockLogger } from '@openfn/logger';
 import { collections } from '@openfn/language-collections';
 import { readFile } from 'fs/promises';
-import { lightning } from '@openfn/lexicon';
 
 // Log as json to make testing easier
 const logger = createMockLogger('default', { level: 'debug', json: true });
@@ -124,6 +123,84 @@ test.serial('get one key from a collection and write to disk', async (t) => {
   t.deepEqual(items, {
     id: 'x',
   });
+});
+
+// We don't have a great way to test pagination because it's
+// all internal. We can't even get into the mock from here.
+// So we'll test on the logs - it's good enough for today
+test.serial('get 200 items over 4 pages', async (t) => {
+  api.reset();
+  api.createCollection(COLLECTION);
+
+  new Array(300).fill(0).forEach((_v, idx) => {
+    api.upsert(
+      COLLECTION,
+      idx,
+      JSON.stringify({
+        id: `${idx}`,
+        score: idx,
+      })
+    );
+  });
+  t.is(api.count(COLLECTION), 300);
+
+  const options = createOptions({
+    key: '*',
+    pageSize: 50,
+    limit: 200,
+  });
+
+  await get(options, logger);
+
+  const findLogs = logger._history.filter(
+    (l) => l.message && l.message.join(' ') === 'Received 200 - 50 values'
+  );
+  t.is(findLogs.length, 4);
+
+  // Find the stdout call
+  const [_level, log] = logger._history.at(-1);
+  const result = log.message[0];
+
+  // Should be 200 items returned
+  t.is(Object.keys(result).length, 200);
+});
+
+// This test uses an irregular page size
+test.serial('get 180 items over 4 pages', async (t) => {
+  api.reset();
+  api.createCollection(COLLECTION);
+
+  new Array(300).fill(0).forEach((_v, idx) => {
+    api.upsert(
+      COLLECTION,
+      idx,
+      JSON.stringify({
+        id: `${idx}`,
+        score: idx,
+      })
+    );
+  });
+  t.is(api.count(COLLECTION), 300);
+
+  const options = createOptions({
+    key: '*',
+    pageSize: 50,
+    limit: 180,
+  });
+
+  await get(options, logger);
+
+  const findLogs = logger._history.filter(
+    (l) => l.message && l.message.join(' ').match(/Received 200 - \d\d values/i)
+  );
+  t.is(findLogs.length, 4);
+
+  // Find the stdout call
+  const [_level, log] = logger._history.at(-1);
+  const result = log.message[0];
+
+  // Should be 200 items returned
+  t.is(Object.keys(result).length, 180);
 });
 
 // TODO item doesn't exist
