@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 0.4.2
+
+### Patch Changes
+
+- When using lazy state in job code, allow functions to be called directly on the state object, ie, `$.generateUUID()`
+
 ## 0.4.1
 
 ### Patch Changes

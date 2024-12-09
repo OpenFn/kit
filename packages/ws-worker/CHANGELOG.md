@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.8.6
+
+### Patch Changes
+
+- When using lazy state in job code, allow functions to be called directly on the state object, ie, `$.generateUUID()`
+  - @openfn/engine-multi@1.4.5
+
 ## 1.8.5
 
 ### Patch Changes
