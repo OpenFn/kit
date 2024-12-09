@@ -219,3 +219,21 @@ test('convert logical not', (t) => {
 
   t.is(code, 'get(state => !state.data.x)');
 });
+
+test('convert function call on state', (t) => {
+  const ast = parse('fn($.callMeMaybe())');
+
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed);
+
+  t.is(code, 'fn(state => state.callMeMaybe())');
+});
+
+test('convert function call on state with state argument', (t) => {
+  const ast = parse('fn($.callMeMaybe($.age))');
+
+  const transformed = transform(ast, [visitors]);
+  const { code } = print(transformed);
+
+  t.is(code, 'fn(state => state.callMeMaybe(state.age))');
+});
