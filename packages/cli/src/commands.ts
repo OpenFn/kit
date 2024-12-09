@@ -2,6 +2,7 @@ import { Opts } from './options';
 import apollo from './apollo/handler';
 import execute from './execute/handler';
 import compile from './compile/handler';
+import collections from './collections/handler';
 import test from './test/handler';
 import deploy from './deploy/handler';
 import docgen from './docgen/handler';
@@ -15,10 +16,14 @@ import mapAdaptorsToMonorepo, {
   validateMonoRepo,
 } from './util/map-adaptors-to-monorepo';
 import printVersions from './util/print-versions';
+import abort from './util/abort';
 
 export type CommandList =
   | 'apollo'
   | 'compile'
+  | 'collections-get'
+  | 'collections-set'
+  | 'collections-remove'
   | 'deploy'
   | 'docgen'
   | 'docs'
@@ -42,6 +47,9 @@ const handlers = {
   docs,
   metadata,
   pull,
+  ['collections-get']: collections.get,
+  ['collections-set']: collections.set,
+  ['collections-remove']: collections.remove,
   ['repo-clean']: clean,
   ['repo-install']: install,
   ['repo-pwd']: pwd,
@@ -81,10 +89,15 @@ const parse = async (options: Opts, log?: Logger) => {
     ) as string[];
   }
 
+  // TODO Please fix this joe!
+  // Put the validation inside the repoDir option
+
   // TODO it would be nice to do this in the repoDir option, but
   // the logger isn't available yet
   if (
-    !/^(pull|deploy|test|version|apollo)$/.test(options.command!) &&
+    !/^(pull|deploy|test|version|apollo|collections-get|collections-set)$/.test(
+      options.command!
+    ) &&
     !options.repoDir
   ) {
     logger.warn(
@@ -111,7 +124,12 @@ const parse = async (options: Opts, log?: Logger) => {
       process.exitCode = e.exitCode || 1;
     }
     if (e.handled) {
-      // If throwing an epected error from util/abort, we do nothing
+      // If throwing an expected error from util/abort, we do nothing
+    } else if (e.abort) {
+      try {
+        // Run the abort code but catch the error
+        abort(logger, e.reason, e.error, e.help);
+      } catch (e) {}
     } else {
       // This is unexpected error and we should try to log something
       logger.break();
