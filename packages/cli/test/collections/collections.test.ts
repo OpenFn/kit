@@ -156,8 +156,8 @@ test.serial('set multiple values', async (t) => {
     }),
   });
   const options = createOptions({
-    key: 'z',
     items: '/items.json',
+    key: null,
   });
 
   await set(options, logger);
