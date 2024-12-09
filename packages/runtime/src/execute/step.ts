@@ -15,7 +15,7 @@ import {
   NOTIFY_JOB_ERROR,
   NOTIFY_JOB_START,
 } from '../events';
-import stringify from 'fast-safe-stringify';
+import { isNullState } from '../util/null-state';
 
 const loadCredentials = async (
   job: Job,
@@ -80,6 +80,7 @@ const prepareFinalState = (
   logger: Logger,
   statePropsToRemove?: string[]
 ) => {
+  if (isNullState(state)) return undefined;
   if (state) {
     if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
@@ -94,12 +95,12 @@ const prepareFinalState = (
         removedProps.push(prop);
       }
     });
-    logger.debug(
-      `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
-    );
+    if (removedProps.length)
+      logger.debug(
+        `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
+      );
 
-    const cleanState = stringify(state);
-    return JSON.parse(cleanState);
+    return clone(state);
   }
   return state;
 };

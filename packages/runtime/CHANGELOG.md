@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.5.3
+
+### Patch Changes
+
+- 1cbbba0: warn when an expression doesn't return state
+
 ## 1.5.2
 
 ### Patch Changes

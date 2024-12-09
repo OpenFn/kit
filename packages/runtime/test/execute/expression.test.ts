@@ -5,6 +5,7 @@ import type { Operation, State } from '@openfn/lexicon';
 
 import execute, { mergeLinkerOptions } from '../../src/execute/expression';
 import type { ExecutionContext } from '../../src/types';
+import { isNullState } from '../../src/util/null-state';
 
 type TestState = State & {
   data: {
@@ -139,16 +140,43 @@ test.serial('async operations run in series', async (t) => {
   t.is(result.data.x, 12);
 });
 
-test.serial('jobs can return undefined', async (t) => {
+test.serial(
+  'jobs return null-state instead of undefined or null',
+  async (t) => {
+    // @ts-ignore violating the operation contract here
+    const job = [() => undefined] as Operation[];
+
+    const state = createState() as TestState;
+    const context = createContext();
+
+    const result = (await execute(context, job, state, {})) as TestState;
+
+    t.assert(isNullState(result));
+  }
+);
+
+test.serial('warn when an operation does not return state', async (t) => {
   // @ts-ignore violating the operation contract here
-  const job = [() => undefined] as Operation[];
+  const job = [
+    (s) => s,
+    () => {},
+    (s) => {
+      s.data = { a: 'a' };
+      return s;
+    },
+  ] as Operation[];
 
   const state = createState() as TestState;
   const context = createContext();
 
   const result = (await execute(context, job, state, {})) as TestState;
+  t.deepEqual(result, { data: { a: 'a' } });
 
-  t.assert(result === undefined);
+  const debugLog = logger._find('debug', /did not return state/);
+  t.truthy(debugLog);
+
+  const warningLog = logger._find('warn', /No state was passed into operation/);
+  t.truthy(warningLog);
 });
 
 test.serial('jobs can mutate the original state', async (t) => {

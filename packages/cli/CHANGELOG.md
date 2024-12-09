@@ -1,5 +1,21 @@
 # @openfn/cli
 
+## 1.8.11
+
+### Patch Changes
+
+- Updated dependencies [ddda182]
+  - @openfn/describe-package@0.1.3
+  - @openfn/compiler@0.4.1
+
+## 1.8.10
+
+### Patch Changes
+
+- Warn when an expression doesn't return state
+- Updated dependencies [1cbbba0]
+  - @openfn/runtime@1.5.3
+
 ## 1.8.9
 
 ### Patch Changes

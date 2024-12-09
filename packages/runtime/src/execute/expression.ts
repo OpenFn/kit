@@ -18,6 +18,11 @@ import {
 } from '../errors';
 import type { JobModule, ExecutionContext } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
+import {
+  clearNullState,
+  isNullState,
+  createNullState,
+} from '../util/null-state';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -105,8 +110,21 @@ export const wrapOperation = (
   return async (state: State) => {
     logger.debug(`Starting operation ${name}`);
     const start = new Date().getTime();
+    if (isNullState(state)) {
+      clearNullState(state);
+      logger.warn(
+        `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
+      );
+    }
     const newState = immutableState ? clone(state) : state;
-    const result = await fn(newState);
+
+    let result = await fn(newState);
+
+    if (!result) {
+      logger.debug(`Warning: operation ${name} did not return state`);
+      result = createNullState();
+    }
+
     // TODO should we warn if an operation does not return state?
     // the trick is saying WHICH operation without source mapping
     const duration = printDuration(new Date().getTime() - start);

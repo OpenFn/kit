@@ -1,7 +1,7 @@
 // a suite of tests with various security concerns in mind
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { ExecutionPlan } from '@openfn/lexicon';
 
 import run from '../src/runtime';
 
@@ -64,12 +64,12 @@ test.serial(
 );
 
 test.serial('jobs should not have access to global scope', async (t) => {
-  const src = 'export default [() => globalThis.x]';
+  const src = 'export default [() => ({x: globalThis.x, y: "some-val"})]';
   // @ts-ignore
   globalThis.x = 42;
 
   const result: any = await run(src);
-  t.falsy(result);
+  t.deepEqual(result, { y: 'some-val' });
 
   // @ts-ignore
   delete globalThis.x;
@@ -90,16 +90,17 @@ test.serial('jobs should be able to mutate global state', async (t) => {
 });
 
 test.serial('jobs should each run in their own context', async (t) => {
-  const src1 = 'export default [() => { globalThis.x = 1; return 1;}]';
-  const src2 = 'export default [() => globalThis.x]';
+  const src1 =
+    'export default [() => { globalThis.x = 1; return { x: globalThis.x }}]';
+  const src2 = 'export default [() => { return { x: globalThis.x }}]';
 
   await run(src1);
 
   const r1 = (await run(src1)) as any;
-  t.is(r1, 1);
+  t.deepEqual(r1, { x: 1 });
 
   const r2 = (await run(src2)) as any;
-  t.is(r2, undefined);
+  t.deepEqual(r2, {});
 });
 
 test.serial('jobs should not have a process object', async (t) => {
