@@ -11,6 +11,7 @@ import type {
   SetOptions,
 } from './command';
 import { throwAbortableError } from '../util/abort';
+import { QueryOptions } from '@openfn/language-collections/types/collections';
 
 const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
   if (!('token' in opts)) {
@@ -36,6 +37,22 @@ const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
   }
 };
 
+const buildQuery = (options: any) => {
+  const map: Record<keyof QueryOptions, string> = {
+    createdBefore: 'created_before',
+    createdAfter: 'created_after',
+    updatedBefore: 'updated_before',
+    updatedAfter: 'updated_after',
+  };
+  const query: any = {};
+  Object.keys(map).forEach((key) => {
+    if (options[key]) {
+      query[map[key]] = options[key];
+    }
+  });
+  return query;
+};
+
 export const get = async (options: GetOptions, logger: Logger) => {
   ensureToken(options, logger);
   const multiMode = options.key.includes('*');
@@ -58,6 +75,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
       limit: options.limit,
       key: options.key,
       collectionName: options.collectionName,
+      query: buildQuery(options),
     },
     logger
   );
@@ -178,6 +196,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
         token: options.token!,
         key: options.key,
         collectionName: options.collectionName,
+        query: buildQuery(options),
       },
       logger
     );

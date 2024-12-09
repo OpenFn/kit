@@ -3,6 +3,13 @@ import * as o from '../options';
 import type { Opts } from '../options';
 import { build, ensure, override } from '../util/command-builders';
 
+export type QueryOptions = {
+  createdBefore?: string;
+  createdAfter?: string;
+  updatedBefore?: string;
+  updatedAfter?: string;
+};
+
 export type CollectionsOptions = Pick<Opts, 'log' | 'logJson'> & {
   lightning?: string;
   token?: string;
@@ -11,15 +18,17 @@ export type CollectionsOptions = Pick<Opts, 'log' | 'logJson'> & {
 };
 
 export type GetOptions = CollectionsOptions &
+  QueryOptions &
   Pick<Opts, 'outputPath' | 'outputStdout'> & {
     pageSize?: number;
     limit?: number;
     pretty?: boolean;
   };
 
-export type RemoveOptions = CollectionsOptions & {
-  dryRun?: boolean;
-};
+export type RemoveOptions = CollectionsOptions &
+  QueryOptions & {
+    dryRun?: boolean;
+  };
 
 export type SetOptions = CollectionsOptions & {
   items?: string;
@@ -116,6 +125,33 @@ const pretty = {
   },
 };
 
+const createdBefore = {
+  name: 'created-before',
+  yargs: {
+    description: 'Matches keys created before the start of the created data',
+  },
+};
+
+const createdAfter = {
+  name: 'created-after',
+  yargs: {
+    description: 'Matches keys created after the end of the created data',
+  },
+};
+const updatedBefore = {
+  name: 'updated-before',
+  yargs: {
+    description: 'Matches keys updated before the start of the created data',
+  },
+};
+
+const updatedAfter = {
+  name: 'updated-after',
+  yargs: {
+    description: 'Matches keys updated after the end of the created data',
+  },
+};
+
 const getOptions = [
   collectionName,
   key,
@@ -124,6 +160,11 @@ const getOptions = [
   pageSize,
   limit,
   pretty,
+
+  createdBefore,
+  createdAfter,
+  updatedAfter,
+  updatedBefore,
 
   override(o.log, {
     default: 'info',
@@ -158,6 +199,11 @@ const removeOptions = [
   token,
   lightningUrl,
   dryRun,
+
+  createdBefore,
+  createdAfter,
+  updatedAfter,
+  updatedBefore,
 
   override(o.log, {
     default: 'info',

@@ -17,6 +17,8 @@ type Options = {
   limit?: number;
 
   data?: any;
+
+  query?: any;
 };
 
 const DEFAULT_PAGE_SIZE = 1000;
@@ -39,10 +41,13 @@ export default async (
     Authorization: `Bearer ${options.token}`,
   };
 
-  const query: any = {
-    key: options.key,
-    limit: options.pageSize || DEFAULT_PAGE_SIZE,
-  };
+  const query: any = Object.assign(
+    {
+      key: options.key,
+      limit: options.pageSize || DEFAULT_PAGE_SIZE,
+    },
+    options.query
+  );
 
   const args: Partial<Dispatcher.RequestOptions> = {
     headers,
