@@ -78,7 +78,13 @@ const key = {
   name: 'key',
   yargs: {
     description: 'Key or key pattern to retrieve',
+    type: 'string',
     demand: true,
+  },
+  ensure: (opts: Partial<CollectionsOptions>) => {
+    if (opts.key && typeof opts.key !== 'string') {
+      opts.key = `${opts.key}`;
+    }
   },
 };
 
