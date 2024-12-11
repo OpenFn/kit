@@ -10,6 +10,14 @@
 
 - 03f5b40: Adjust OPENFN_REPO_DIR warning message
 
+## 1.8.12
+
+### Patch Changes
+
+- When using lazy state in job code, allow functions to be called directly on the state object, ie, `$.generateUUID()`
+- Updated dependencies
+  - @openfn/compiler@0.4.2
+
 ## 1.8.11
 
 ### Patch Changes
