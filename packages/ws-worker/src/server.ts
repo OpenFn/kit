@@ -155,7 +155,7 @@ async function setupCollections(options: ServerOptions, logger: Logger) {
       'WARNING: no collections URL provided. Collections service will not be enabled.'
     );
     logger.warn(
-      'Pass --collections-version or set WORKER_COLLECTIONS_URL to set the url'
+      'Pass --collections-url or set WORKER_COLLECTIONS_URL to set the url'
     );
     return;
   }
