@@ -130,7 +130,6 @@ export const set = async (options: SetOptions, logger: Logger) => {
   } else if (options.key && options.value) {
     const resolvedPath = path.resolve(options.value);
     logger.debug('Loading value from ', resolvedPath);
-    // TODO throw if key contains a *
 
     // set a single item
     const data = await readFile(path.resolve(options.value), 'utf8');

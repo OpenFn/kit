@@ -89,25 +89,6 @@ const parse = async (options: Opts, log?: Logger) => {
     ) as string[];
   }
 
-  // TODO Please fix this joe!
-  // Put the validation inside the repoDir option
-
-  // TODO it would be nice to do this in the repoDir option, but
-  // the logger isn't available yet
-  if (
-    !/^(pull|deploy|test|version|apollo|collections-get|collections-set)$/.test(
-      options.command!
-    ) &&
-    !options.repoDir
-  ) {
-    logger.warn(
-      'WARNING: no repo module dir found! Using the default (/tmp/repo)'
-    );
-    logger.warn(
-      'You should set OPENFN_REPO_DIR or pass --repoDir=some/path in to the CLI'
-    );
-  }
-
   const handler = handlers[options.command!];
 
   if (!handler) {

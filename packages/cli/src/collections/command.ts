@@ -88,8 +88,6 @@ const key = {
   },
 };
 
-// TODO this should default from env
-// TODO this is used by other args
 const token = {
   name: 'pat',
   yargs: {
