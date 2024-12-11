@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "1.8.12",
+  "version": "1.9.0",
   "description": "CLI devtools for the openfn toolchain.",
   "engines": {
     "node": ">=18",
@@ -33,6 +33,7 @@
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
   "devDependencies": {
+    "@openfn/language-collections": "^0.6.2",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/lexicon": "workspace:^",
     "@types/mock-fs": "^4.13.1",
@@ -59,6 +60,7 @@
     "figures": "^5.0.0",
     "rimraf": "^3.0.2",
     "treeify": "^1.1.0",
+    "undici": "^7.1.0",
     "ws": "^8.18.0",
     "yargs": "^17.7.2"
   },

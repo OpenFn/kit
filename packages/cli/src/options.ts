@@ -368,6 +368,18 @@ export const repoDir: CLIOption = {
     description: 'Provide a path to the repo root dir',
     default: process.env.OPENFN_REPO_DIR || DEFAULT_REPO_DIR,
   }),
+  ensure: (opts) => {
+    if (opts.repoDir === DEFAULT_REPO_DIR) {
+      // Note that we don't use the logger here - it's not been created yet
+      console.warn(
+        'WARNING: no repo module dir found! Using the default (/tmp/repo)'
+      );
+      console.warn(
+        'You should set OPENFN_REPO_DIR or pass --repoDir=some/path in to the CLI'
+      );
+      console.log();
+    }
+  },
 };
 
 export const start: CLIOption = {
