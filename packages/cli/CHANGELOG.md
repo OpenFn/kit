@@ -1,5 +1,15 @@
 # @openfn/cli
 
+## 1.9.0
+
+### Minor Changes
+
+- 3a95d3b: Add collections command
+
+### Patch Changes
+
+- 03f5b40: Adjust OPENFN_REPO_DIR warning message
+
 ## 1.8.11
 
 ### Patch Changes
