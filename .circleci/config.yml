@@ -125,7 +125,7 @@ workflows:
       - unit_test:
           matrix:
             parameters:
-              node_version: ["18.18", "20.12"]
+              node_version: ["18.18", "20.12", "22.12"]
           requires:
             - build
       - type_check:
@@ -137,6 +137,6 @@ workflows:
       - integration_test:
           matrix:
             parameters:
-              node_version: ["18.18", "20.12"]
+              node_version: ["18.18", "20.12", "22.12"]
           requires:
             - build
