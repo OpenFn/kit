@@ -1,9 +1,12 @@
+import { createMockLogger } from '@openfn/logger';
 import test from 'ava';
 import mock from 'mock-fs';
-import path from 'node:path';
+import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
-import { createMockLogger } from '@openfn/logger';
+import os from 'node:os';
+import path from 'node:path';
 
+import { writeFileSync } from 'node:fs';
 import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
@@ -92,6 +95,47 @@ async function run(command: string, job: string, options: RunOptions = {}) {
     // do nothing
   }
 }
+
+async function mockResources() {
+  const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), 'commands-'));
+  execSync(`cp -r ${path.resolve('test')}/__*__  ${tmpdir}`);
+
+  const generateJob = async (job: string) => {
+    if (job) writeFileSync(path.join(tmpdir, '/job.js'), job);
+  };
+
+  const generateOutput = async (value: string) => {
+    if (value) writeFileSync(path.join(tmpdir, '/output.json'), value);
+  };
+
+  const createNew = async (filename: string, content: string) => {
+    const newPath = path.join(tmpdir, filename);
+    writeFileSync(newPath, content);
+    return newPath;
+  };
+
+  return {
+    mockPath: tmpdir,
+    modulesPath: path.join(tmpdir, '/__modules__'),
+    monorepoPath: path.join(tmpdir, '/__monorepo__'),
+    repoPath: path.join(tmpdir, '__repo__'),
+    jobPath: path.join(tmpdir, '/job.js'),
+    outputPath: path.join(tmpdir, '/output.json'),
+    generateJob,
+    generateOutput,
+    createNew,
+  };
+}
+
+let resMock: Awaited<ReturnType<typeof mockResources>>;
+
+test.before(async () => {
+  resMock = await mockResources();
+});
+
+test.after(async () => {
+  execSync(`rm -rf ${resMock.mockPath}`);
+});
 
 test.serial('run an execution plan', async (t) => {
   const plan = {
@@ -404,36 +448,48 @@ test.serial(
 );
 
 test.serial(
-  'override an adaptor: openfn --no-expand-adaptors -S <obj> --adaptor times-two=/modules/times-two',
+  'override an adaptor: openfn --no-expand-adaptors -S <obj> --adaptor times-two=<path-to-module>',
   async (t) => {
     const state = JSON.stringify({ data: { count: 49.5 } });
+
+    await resMock.generateJob(EXPR_MOCK_ADAPTOR);
+
     const result = await run(
-      `openfn --no-expand-adaptors -S ${state} --adaptor times-two=/modules/times-two`,
-      EXPR_MOCK_ADAPTOR
+      `openfn ${resMock.jobPath} --no-expand-adaptors -S ${state} --adaptor times-two=${resMock.modulesPath}/times-two`,
+      '',
+      { disableMock: true, outputPath: resMock.outputPath }
+    );
+
+    t.assert(result.data.count === 99);
+  }
+);
+
+test.serial(
+  'override adaptors: openfn --no-expand-adaptors -S <obj> --adaptors times-two=<path-to-module>',
+  async (t) => {
+    const state = JSON.stringify({ data: { count: 49.5 } });
+
+    await resMock.generateJob(EXPR_MOCK_ADAPTOR);
+    const result = await run(
+      `openfn ${resMock.jobPath} --no-expand-adaptors -S ${state} --adaptors times-two=${resMock.modulesPath}/times-two`,
+      '',
+      { disableMock: true, outputPath: resMock.outputPath }
     );
     t.assert(result.data.count === 99);
   }
 );
 
 test.serial(
-  'override adaptors: openfn --no-expand-adaptors -S <obj> --adaptors times-two=/modules/times-two',
+  'override adaptors: openfn --no-expand-adaptors -S <obj> -a times-two=<path-to-module>',
   async (t) => {
     const state = JSON.stringify({ data: { count: 49.5 } });
-    const result = await run(
-      `openfn --no-expand-adaptors -S ${state} --adaptors times-two=/modules/times-two`,
-      EXPR_MOCK_ADAPTOR
-    );
-    t.assert(result.data.count === 99);
-  }
-);
 
-test.serial(
-  'override adaptors: openfn --no-expand-adaptors -S <obj> -a times-two=/modules/times-two',
-  async (t) => {
-    const state = JSON.stringify({ data: { count: 49.5 } });
+    // mock module with real filesystem
+    await resMock.generateJob(EXPR_MOCK_ADAPTOR);
     const result = await run(
-      `openfn --no-expand-adaptors -S ${state} -a times-two=/modules/times-two`,
-      EXPR_MOCK_ADAPTOR
+      `openfn ${resMock.jobPath} --no-expand-adaptors -S ${state} -a times-two=${resMock.modulesPath}/times-two`,
+      '',
+      { disableMock: true, outputPath: resMock.outputPath }
     );
     t.assert(result.data.count === 99);
   }
@@ -444,11 +500,14 @@ test.serial(
   async (t) => {
     const state = JSON.stringify({ data: { count: 11 } });
     const job = 'export default [byTwo]';
+    await resMock.generateJob(job);
     const result = await run(
-      `openfn --no-expand-adaptors -S ${state} -a times-two  --no-autoinstall`,
-      job,
+      `openfn ${resMock.jobPath} --no-expand-adaptors -S ${state} -a times-two  --no-autoinstall`,
+      '',
       {
-        repoDir: '/repo',
+        disableMock: true,
+        repoDir: resMock.repoPath,
+        outputPath: resMock.outputPath,
       }
     );
     t.assert(result.data.count === 22);
@@ -460,9 +519,11 @@ test.serial(
   async (t) => {
     const state = JSON.stringify({ data: { count: 22 } });
     const job = 'export default [byTwo]';
+    await resMock.generateJob(job);
     const result = await run(
-      `openfn -S ${state} -a times-two=/modules/times-two`,
-      job
+      `openfn ${resMock.jobPath} -S ${state} -a times-two=${resMock.modulesPath}/times-two`,
+      '',
+      { disableMock: true, outputPath: resMock.outputPath }
     );
     t.assert(result.data.count === 44);
   }
@@ -472,9 +533,16 @@ test.serial(
   'auto-import from language-common (job): openfn job.js -a @openfn/language-common@0.0.1',
   async (t) => {
     const job = 'fn((state) => { state.data.done = true; return state; });';
-    const result = await run('openfn -a @openfn/language-common@0.0.1', job, {
-      repoDir: '/repo',
-    });
+    await resMock.generateJob(job);
+    const result = await run(
+      `openfn ${resMock.jobPath} -a @openfn/language-common@0.0.1`,
+      '',
+      {
+        disableMock: true,
+        repoDir: resMock.repoPath,
+        outputPath: resMock.outputPath,
+      }
+    );
     t.true(result.data?.done);
   }
 );
@@ -492,17 +560,19 @@ test.serial(
       ],
     };
 
+    const wfPath = await resMock.createNew(
+      '/wf.json',
+      JSON.stringify(workflow)
+    );
     const options = {
-      outputPath: 'output.json',
-      expressionPath: 'wf.json',
-      repoDir: '/repo',
+      disableMock: true,
+      outputPath: resMock.outputPath,
+      expressionPath: wfPath,
+      repoDir: resMock.repoPath,
     };
 
-    const result = await run(
-      'openfn wf.json',
-      JSON.stringify(workflow),
-      options
-    );
+    await resMock.generateJob(JSON.stringify(workflow));
+    const result = await run(`openfn ${wfPath}`, '', options);
     t.true(result.data?.done);
   }
 );
@@ -512,11 +582,15 @@ test.serial(
   async (t) => {
     const job =
       'alterState((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
+
+    await resMock.generateJob(job);
     const result = await run(
-      'openfn -a @openfn/language-postgres --no-autoinstall',
-      job,
+      `openfn ${resMock.jobPath} -a @openfn/language-postgres --no-autoinstall`,
+      '',
       {
-        repoDir: '/repo',
+        disableMock: true,
+        repoDir: resMock.repoPath,
+        outputPath: resMock.outputPath,
       }
     );
     t.assert(result === 'execute called!');
@@ -526,9 +600,13 @@ test.serial(
 test.serial(
   'load an adaptor from the monorepo env var: openfn job.js -m -a common',
   async (t) => {
-    process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
+    process.env.OPENFN_ADAPTORS_REPO = resMock.monorepoPath;
     const job = 'export default [alterState(() => 39)]';
-    const result = await run('job.js -m -a common', job);
+    await resMock.generateJob(job);
+    const result = await run(`${resMock.jobPath} -m -a common`, '', {
+      disableMock: true,
+      outputPath: resMock.outputPath,
+    });
     t.assert(result === 39);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
