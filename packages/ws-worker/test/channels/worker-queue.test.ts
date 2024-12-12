@@ -2,10 +2,10 @@ import test from 'ava';
 import * as jose from 'jose';
 import { createMockLogger } from '@openfn/logger';
 import { API_VERSION } from '@openfn/lexicon/lightning';
-import pkg from '../../package.json' assert { type: 'json' };
 
 import connectToWorkerQueue from '../../src/channels/worker-queue';
 import { MockSocket } from '../../src/mock/sockets';
+import loadVersions from '../../src/util/load-versions';
 
 const logger = createMockLogger();
 
@@ -69,7 +69,7 @@ test('should connect with api and worker versions', async (t) => {
       const socket = new MockSocket(endpoint, {}, async () => {
         const { worker_version, api_version } = options.params;
 
-        t.is(worker_version, pkg.version);
+        t.is(worker_version, loadVersions().engine);
         t.truthy(worker_version);
 
         t.is(api_version, API_VERSION);

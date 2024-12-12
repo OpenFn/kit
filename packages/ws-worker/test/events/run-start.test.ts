@@ -6,8 +6,8 @@ import { mockChannel } from '../../src/mock/sockets';
 import { createRunState } from '../../src/util';
 import { RUN_LOG, RUN_START } from '../../src/events';
 
-import pkg from '../../package.json' assert { type: 'json' };
 import { timestamp } from '@openfn/logger';
+import loadVersions from '../../src/util/load-versions';
 
 test('should include a timestamp', async (t) => {
   const plan = {
@@ -69,7 +69,7 @@ test('run:start event should include versions', async (t) => {
     [RUN_START]: (evt) => {
       t.deepEqual(evt.versions, {
         ...versions,
-        worker: pkg.version,
+        worker: loadVersions().engine,
       });
       return true;
     },
@@ -95,7 +95,8 @@ test('run:start should log the version number', async (t) => {
     node: process.version.substring(1),
     engine: '1.0.0',
     compiler: '1.0.0',
-    worker: pkg.version,
+    runtime: '1.0.0',
+    worker: loadVersions().engine,
     '@openfn/language-common': ['1.0.0'],
   };
 

@@ -6,9 +6,8 @@ import createLogger from '@openfn/logger';
 import whitelist from './whitelist';
 import createEngine, { EngineOptions } from './engine';
 
-import pkg from '../package.json' assert { type: 'json' };
-
 import type { RuntimeEngine } from './types';
+import loadVersions from './util/load-versions';
 
 export type State = any; // TODO I want a nice state def with generics
 
@@ -82,7 +81,7 @@ const createAPI = async function (
 
   return {
     options: engineOptions,
-    version: pkg.version,
+    version: loadVersions().engine,
     execute: engine.execute,
     listen: engine.listen,
     destroy: engine.destroy,
