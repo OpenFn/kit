@@ -299,7 +299,9 @@ test.serial('remove with dry run', async (t) => {
   t.is(api.count(COLLECTION), 2);
 
   // Find the outputted keys
-  const [_level, output] = logger._history.find(([level]) => level === 'print');
+  const [, output] = logger._history.find(
+    (log) => Array.isArray(log) && log[0] === 'print'
+  );
   t.deepEqual(output.message[0], ['x', 'y']);
 });
 
