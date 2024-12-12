@@ -25,7 +25,7 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts",
     "build:watch": "pnpm build --watch",
-    "parse": "ts-node-esm src/cli/parse.ts",
+    "parse": "node --loader @swc-node/register/esm src/cli/parse.ts",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "keywords": [],
@@ -33,7 +33,6 @@
     "@types/node": "^18.15.13",
     "@types/yargs": "^17.0.24",
     "ava": "5.3.1",
-    "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "tsup": "^7.2.0",
     "typescript": "^5.1.6",
