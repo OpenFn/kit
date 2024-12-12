@@ -6,6 +6,7 @@ import generateWorkerToken from '../util/worker-token';
 
 import type { Logger } from '@openfn/logger';
 import type { Channel } from '../types';
+import loadVersions from '../util/load-versions';
 
 const connectToWorkerQueue = (
   endpoint: string,
@@ -18,14 +19,10 @@ const connectToWorkerQueue = (
   const events = new EventEmitter();
 
   generateWorkerToken(secret, serverId, logger).then(async (token) => {
-    const pkg = await import('../../package.json', {
-      assert: { type: 'json' },
-    });
-
     const params = {
       token,
       api_version: API_VERSION,
-      worker_version: pkg.default.version,
+      worker_version: loadVersions().engine,
     };
 
     // @ts-ignore ts doesn't like the constructor here at all

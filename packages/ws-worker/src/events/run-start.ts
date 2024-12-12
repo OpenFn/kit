@@ -6,8 +6,8 @@ import { RUN_START } from '../events';
 import { sendEvent, Context, onJobLog } from '../api/execute';
 import calculateVersionString from '../util/versions';
 
-import pkg from '../../package.json' assert { type: 'json' };
 import { timeInMicroseconds } from '../util';
+import loadVersions from '../util/load-versions';
 
 export default async function onRunStart(
   context: Context,
@@ -31,7 +31,7 @@ export default async function onRunStart(
   };
 
   const versions = {
-    worker: pkg.version,
+    worker: loadVersions().engine,
     ...event.versions,
   };
 

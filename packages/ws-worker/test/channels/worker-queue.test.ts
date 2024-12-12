@@ -2,14 +2,14 @@ import test from 'ava';
 import * as jose from 'jose';
 import { createMockLogger } from '@openfn/logger';
 import { API_VERSION } from '@openfn/lexicon/lightning';
-import pkg from '../../package.json' assert { type: 'json' };
 
 import connectToWorkerQueue from '../../src/channels/worker-queue';
-import { mockSocket } from '../../src/mock/sockets';
+import { MockSocket } from '../../src/mock/sockets';
+import loadVersions from '../../src/util/load-versions';
 
 const logger = createMockLogger();
 
-test('should connect', async (t) => {
+test('should connect', (t) => {
   return new Promise((done) => {
     connectToWorkerQueue(
       'www',
@@ -17,7 +17,7 @@ test('should connect', async (t) => {
       'secret',
       undefined,
       logger,
-      mockSocket as any
+      MockSocket as any
     ).on('connect', ({ socket, channel }) => {
       t.truthy(socket);
       t.truthy(socket.connect);
@@ -36,7 +36,7 @@ test('should connect with an auth token', async (t) => {
     const encodedSecret = new TextEncoder().encode(secret);
 
     function createSocket(endpoint: string, options: any) {
-      const socket = mockSocket(endpoint, {}, async () => {
+      const socket = new MockSocket(endpoint, {}, async () => {
         const { token } = options.params;
 
         const { payload } = await jose.jwtVerify(token, encodedSecret);
@@ -66,10 +66,10 @@ test('should connect with an auth token', async (t) => {
 test('should connect with api and worker versions', async (t) => {
   return new Promise((done) => {
     function createSocket(endpoint: string, options: any) {
-      const socket = mockSocket(endpoint, {}, async () => {
+      const socket = new MockSocket(endpoint, {}, async () => {
         const { worker_version, api_version } = options.params;
 
-        t.is(worker_version, pkg.version);
+        t.is(worker_version, loadVersions().engine);
         t.truthy(worker_version);
 
         t.is(api_version, API_VERSION);
@@ -97,7 +97,7 @@ test('should fail to connect with an invalid auth token', async (t) => {
     const encodedSecret = new TextEncoder().encode(secret);
 
     function createSocket(endpoint: string, options: any) {
-      const socket = mockSocket(endpoint, {}, async () => {
+      const socket = new MockSocket(endpoint, {}, async () => {
         const { token } = options.params;
 
         try {

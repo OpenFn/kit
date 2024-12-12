@@ -25,7 +25,6 @@
     "date-fns": "^2.30.0",
     "koa": "^2.13.4",
     "rimraf": "^3.0.2",
-    "ts-node": "10.8.1",
     "tslib": "^2.4.0",
     "typescript": "^5.1.6"
   },
@@ -34,6 +33,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "@swc-node/register": "^1.10.9",
     "@types/koa": "^2.15.0"
   }
 }
