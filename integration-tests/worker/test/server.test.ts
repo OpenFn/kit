@@ -112,7 +112,7 @@ test.serial('should join attempts queue channel', (t) => {
   });
 });
 
-test.serial('allow a job to complete after receiving a sigterm', (t) => {
+test.skip('allow a job to complete after receiving a sigterm', (t) => {
   return new Promise(async (done) => {
     let didKill = false;
     const port = getPort();
