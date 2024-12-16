@@ -14,7 +14,6 @@
     "install:openfnx": "pnpm install:global",
     "pack:local": "pnpm run pack && node ./build/pack-local.js",
     "pack": "pnpm -r run pack",
-    "setup": "rm -rf node_modules && rm -rf ./packages/*/node_modules && pnpm i",
     "test:format": "prettier --check packages/*/src",
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
@@ -37,5 +36,6 @@
     "semver": "^7.5.4",
     "tar-stream": "^3.0.0",
     "typesync": "^0.13.0"
-  }
+  },
+  "packageManager": "pnpm@8.15.9+sha512.499434c9d8fdd1a2794ebf4552b3b25c0a633abcee5bb15e7b5de90f32f47b513aca98cd5cfd001c31f0db454bc3804edccd578501e4ca293a6816166bbd9f81"
 }
