@@ -17,10 +17,10 @@ type TimeInMicroSeconds = string;
  */
 
 /**
- * An execution plan representing a Ligyhtning 'Run'.
+ * An execution plan representing a Lightning 'Run'.
  * This represents the execution of a workflow.
  *
- * The data stucture that Lightning sends is converted by the Worker into
+ * The data structure that Lightning sends is converted by the Worker into
  * a runtime ExecutionPlan (as found in Core)
  */
 export type LightningPlan = {
