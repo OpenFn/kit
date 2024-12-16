@@ -14,7 +14,7 @@ jobs:
     steps:
       - run:
           name: Install pnpm
-          command: sudo corepack enable && corepack prepare pnpm@8.6.9 --activate
+          command: sudo corepack enable
       - checkout
       - restore_cache:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
@@ -123,9 +123,6 @@ workflows:
           requires:
             - install
       - unit_test:
-          matrix:
-            parameters:
-              node_version: ["18.18", "20.12", "22.12"]
           requires:
             - build
       - type_check:
@@ -137,6 +134,8 @@ workflows:
       - integration_test:
           matrix:
             parameters:
-              node_version: ["18.18", "20.12", "22.12"]
+              # temporarily test against a range of versions while we get over teh 18x hump
+              # We can reduce this later
+              node_version: ["18.12.1", "18.20.5" "20.18.1", "22.12"]
           requires:
             - build
