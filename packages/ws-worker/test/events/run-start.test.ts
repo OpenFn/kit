@@ -95,8 +95,8 @@ test('run:start should log the version number', async (t) => {
 
   // explicitly load package.json her
   // because load-version does it a bit differently
-  // @ts-ignore
   const { default: pkg } = await import('../../package.json', {
+    // @ts-ignore
     with: { type: 'json' },
   });
 
