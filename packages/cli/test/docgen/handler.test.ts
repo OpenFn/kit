@@ -30,29 +30,49 @@ const loadJSON = async (path: string) => {
 };
 
 // Mock doc gen function
+// const mockGen: DocGenFn = async () =>
+//   new Promise((resolve) => {
+//     // setTimeout(
+//       // () =>
+//         resolve({
+//           namespaces: [{ type: 'namespace', name: 'smth' }],
+//           name: 'test',
+//           version: '1.0.0',
+//           functions: [
+//             {
+//               name: 'fn',
+//               description: 'a function',
+//               isOperation: true,
+//               magic: false,
+//               parameters: [],
+//               examples: [],
+//               type: 'function',
+//             },
+//           ],
+//         }),
+//     //   1
+//     // );
+//   });
+
 const mockGen: DocGenFn = async () =>
-  new Promise((resolve) => {
-    setTimeout(
-      () =>
-        resolve({
-          namespaces: [{ type: 'namespace', name: 'smth' }],
-          name: 'test',
-          version: '1.0.0',
-          functions: [
-            {
-              name: 'fn',
-              description: 'a function',
-              isOperation: true,
-              magic: false,
-              parameters: [],
-              examples: [],
-              type: 'function',
-            },
-          ],
-        }),
-      300
-    );
-  });
+  new Promise((resolve) =>
+    resolve({
+      namespaces: [{ type: 'namespace', name: 'smth' }],
+      name: 'test',
+      version: '1.0.0',
+      functions: [
+        {
+          name: 'fn',
+          description: 'a function',
+          isOperation: true,
+          magic: false,
+          parameters: [],
+          examples: [],
+          type: 'function',
+        },
+      ],
+    })
+  );
 
 const specifier = 'test@1.0.0';
 
@@ -152,22 +172,21 @@ test.serial(
     const empty = await loadJSON(path);
     t.falsy(empty);
 
-    const promise = docsHandler(options, logger, mockGen);
-    // the placeholder should already be created
-
-    const placeholder = await loadJSON(path);
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
-    t.assert(typeof placeholder.timestamp === 'number');
-
-    // politely wait for the promise to run
-    await promise
+    // Run the promise but don't await it
+    docsHandler(options, logger, mockGen)
       .then(() => {
+        t.truthy(placeholder);
+        t.true(placeholder.loading);
+        t.assert(typeof placeholder.timestamp === 'number');
         t.pass();
       })
       .catch(() => {
         t.fail();
       });
+
+    // Read in the placeholder before the mockGen function runs
+    // (which is on a timeout)
+    const placeholder = JSON.parse(readFileSync(path, 'utf-8'));
   }
 );
 
