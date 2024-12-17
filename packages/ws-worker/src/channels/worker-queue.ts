@@ -3,10 +3,10 @@ import { Socket as PhxSocket } from 'phoenix';
 import { WebSocket } from 'ws';
 import { API_VERSION } from '@openfn/lexicon/lightning';
 import generateWorkerToken from '../util/worker-token';
+import version from '../util/load-version';
 
 import type { Logger } from '@openfn/logger';
 import type { Channel } from '../types';
-import loadVersions from '../util/load-versions';
 
 const connectToWorkerQueue = (
   endpoint: string,
@@ -22,7 +22,7 @@ const connectToWorkerQueue = (
     const params = {
       token,
       api_version: API_VERSION,
-      worker_version: loadVersions().engine,
+      worker_version: version,
     };
 
     // @ts-ignore ts doesn't like the constructor here at all

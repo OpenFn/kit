@@ -5,7 +5,7 @@ import { API_VERSION } from '@openfn/lexicon/lightning';
 
 import connectToWorkerQueue from '../../src/channels/worker-queue';
 import { MockSocket } from '../../src/mock/sockets';
-import loadVersions from '../../src/util/load-versions';
+import loadVersions from '../../src/util/load-version';
 
 const logger = createMockLogger();
 

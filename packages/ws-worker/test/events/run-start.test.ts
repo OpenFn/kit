@@ -7,7 +7,7 @@ import { createRunState } from '../../src/util';
 import { RUN_LOG, RUN_START } from '../../src/events';
 
 import { timestamp } from '@openfn/logger';
-import loadVersions from '../../src/util/load-versions';
+import version from '../../src/util/load-version';
 
 test('should include a timestamp', async (t) => {
   const plan = {
@@ -69,7 +69,7 @@ test('run:start event should include versions', async (t) => {
     [RUN_START]: (evt) => {
       t.deepEqual(evt.versions, {
         ...versions,
-        worker: loadVersions().engine,
+        worker: version,
       });
       return true;
     },
@@ -91,12 +91,18 @@ test('run:start should log the version number', async (t) => {
   const input = 'abc';
   const jobId = 'job-1';
 
+  // explicitly load package.json her
+  // because load-version does it a bit differently
+  const { default: pkg } = await import('../../package.json', {
+    with: { type: 'json' },
+  });
+
   const versions = {
     node: process.version.substring(1),
     engine: '1.0.0',
     compiler: '1.0.0',
     runtime: '1.0.0',
-    worker: loadVersions().engine,
+    worker: pkg.version,
     '@openfn/language-common': ['1.0.0'],
   };
 
@@ -130,4 +136,5 @@ test('run:start should log the version number', async (t) => {
   // This just a light test of the string to make sure it's here
   // It uses src/util/versions, which is tested elsewhere
   t.regex(message, /(node\.js).+(worker).+(@openfn\/language-common)/is);
+  t.regex(message, new RegExp(`worker(\\s+)${pkg.version}`, 'is'));
 });
