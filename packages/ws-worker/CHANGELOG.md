@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.8.8
+
+### Patch Changes
+
+- Fix version number readout
+
 ## 1.8.7
 
 ### Patch Changes
