@@ -1,5 +1,12 @@
 # @openfn/integration-tests-worker
 
+## 1.0.72
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/ws-worker@1.8.9
+
 ## 1.0.71
 
 ### Patch Changes

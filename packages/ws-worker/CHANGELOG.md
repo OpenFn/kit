@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.8.9
+
+### Patch Changes
+
+- Fix version loading paths
+
 ## 1.8.8
 
 ### Patch Changes
