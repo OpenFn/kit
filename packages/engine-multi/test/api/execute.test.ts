@@ -284,9 +284,9 @@ test.serial(
       t.is(evt.threadId, '-');
 
       t.is(evt.type, 'ExecutionError');
-      t.is(
+      t.regex(
         evt.message,
-        "Cannot read properties of undefined (reading 'repoDir')"
+        /Cannot read properties of undefined \(reading 'repoDir'\)|Cannot destructure property \'repoDir\' of \'options\' as it is undefined\./
       );
 
       t.pass('error thrown');

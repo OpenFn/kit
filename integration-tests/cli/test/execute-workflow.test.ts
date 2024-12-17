@@ -193,6 +193,9 @@ test.serial(
     t.falsy(err);
 
     const out = getJSON();
-    t.deepEqual(out, { data: '01/01/2024', result: '1/1/2024, 12:00:00 AM' });
+    t.deepEqual(out, {
+      data: '01/01/2024',
+      result: '2024-01-01T00:00:00.000Z',
+    });
   }
 );

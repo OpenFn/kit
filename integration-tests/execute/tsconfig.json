@@ -1,7 +1,4 @@
 {
-  "ts-node": {
-    "experimentalSpecifierResolution": "node"
-  },
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "module": "es2020",
