@@ -50,7 +50,7 @@ const mockGen: DocGenFn = async () =>
             },
           ],
         }),
-      100
+      300
     );
   });
 
@@ -155,13 +155,19 @@ test.serial(
     const promise = docsHandler(options, logger, mockGen);
     // the placeholder should already be created
 
-    const placeholder = JSON.parse(readFileSync(path, 'utf-8'));
+    const placeholder = await loadJSON(path);
     t.truthy(placeholder);
     t.true(placeholder.loading);
     t.assert(typeof placeholder.timestamp === 'number');
 
     // politely wait for the promise to run
-    await promise.then();
+    await promise
+      .then(() => {
+        t.pass();
+      })
+      .catch(() => {
+        t.fail();
+      });
   }
 );
 

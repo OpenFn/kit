@@ -88,7 +88,7 @@ const waitForDocs = async (
   }
 };
 
-// This function deliberately blocks woth synchronous I/O
+// This function deliberately blocks synchronous I/O
 // while it looks to see whether docs need generating
 const docgenHandler = (
   options: Required<Pick<Opts, 'specifier' | 'repoDir'>>,
