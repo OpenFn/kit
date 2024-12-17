@@ -14,7 +14,7 @@ test('parse a simple statement', (t) => {
   t.is(JSON.stringify(result), ast);
 });
 
-test.only('parse an esm module', (t) => {
+test('parse an esm module', (t) => {
   const source = `import foo from 'bar'; export const x = 10;`;
   const ast = loadAst('esm');
   const result = parse(source);
