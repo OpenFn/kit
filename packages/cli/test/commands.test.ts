@@ -633,20 +633,25 @@ test.serial.skip('sanitize output', async (t) => {
 test.serial(
   'load a workflow adaptor from the monorepo: openfn workflow.json -m',
   async (t) => {
-    process.env.OPENFN_ADAPTORS_REPO = '/monorepo/';
+    process.env.OPENFN_ADAPTORS_REPO = resMock.monorepoPath;
+
     const workflow = JSON.stringify({
       jobs: [
         {
           adaptor: 'common',
-          state: { data: { done: true } },
-          expression: 'alterState(s => s)',
+          expression: 'alterState(s => ({ data: { done: true } }))',
         },
       ],
     });
+    const wfpath = path.join(resMock.mockPath, '/wf-123.json');
 
-    const result = await run('workflow.json -m', workflow, {
-      expressionPath: 'workflow.json',
+    writeFileSync(wfpath, workflow);
+
+    const result = await run(`${wfpath} -m`, workflow, {
+      disableMock: true,
+      outputPath: resMock.outputPath,
     });
+
     t.true(result.data.done);
     delete process.env.OPENFN_ADAPTORS_REPO;
   }
