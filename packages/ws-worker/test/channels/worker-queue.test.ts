@@ -5,7 +5,7 @@ import { API_VERSION } from '@openfn/lexicon/lightning';
 
 import connectToWorkerQueue from '../../src/channels/worker-queue';
 import { MockSocket } from '../../src/mock/sockets';
-import loadVersions from '../../src/util/load-version';
+import loadVersion from '../../src/util/load-version';
 
 const logger = createMockLogger();
 
@@ -64,12 +64,13 @@ test('should connect with an auth token', async (t) => {
 });
 
 test('should connect with api and worker versions', async (t) => {
+  const version = await loadVersion();
   return new Promise((done) => {
     function createSocket(endpoint: string, options: any) {
       const socket = new MockSocket(endpoint, {}, async () => {
         const { worker_version, api_version } = options.params;
 
-        t.is(worker_version, loadVersions().engine);
+        t.is(worker_version, version);
         t.truthy(worker_version);
 
         t.is(api_version, API_VERSION);

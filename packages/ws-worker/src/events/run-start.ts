@@ -7,7 +7,7 @@ import { sendEvent, Context, onJobLog } from '../api/execute';
 import calculateVersionString from '../util/versions';
 
 import { timeInMicroseconds } from '../util';
-import version from '../util/load-version';
+import getVersion from '../util/load-version';
 
 export default async function onRunStart(
   context: Context,
@@ -31,7 +31,7 @@ export default async function onRunStart(
   };
 
   const versions = {
-    worker: version,
+    worker: await getVersion(),
     ...event.versions,
   };
 

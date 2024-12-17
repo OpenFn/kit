@@ -7,7 +7,7 @@ import { createRunState } from '../../src/util';
 import { RUN_LOG, RUN_START } from '../../src/events';
 
 import { timestamp } from '@openfn/logger';
-import version from '../../src/util/load-version';
+import getVersion from '../../src/util/load-version';
 
 test('should include a timestamp', async (t) => {
   const plan = {
@@ -60,6 +60,8 @@ test('run:start event should include versions', async (t) => {
     // @ts-ignore
     versions,
   };
+
+  const version = await getVersion();
 
   const state = createRunState(plan, input);
   state.activeJob = jobId;
