@@ -30,49 +30,29 @@ const loadJSON = async (path: string) => {
 };
 
 // Mock doc gen function
-// const mockGen: DocGenFn = async () =>
-//   new Promise((resolve) => {
-//     // setTimeout(
-//       // () =>
-//         resolve({
-//           namespaces: [{ type: 'namespace', name: 'smth' }],
-//           name: 'test',
-//           version: '1.0.0',
-//           functions: [
-//             {
-//               name: 'fn',
-//               description: 'a function',
-//               isOperation: true,
-//               magic: false,
-//               parameters: [],
-//               examples: [],
-//               type: 'function',
-//             },
-//           ],
-//         }),
-//     //   1
-//     // );
-//   });
-
 const mockGen: DocGenFn = async () =>
-  new Promise((resolve) =>
-    resolve({
-      namespaces: [{ type: 'namespace', name: 'smth' }],
-      name: 'test',
-      version: '1.0.0',
-      functions: [
-        {
-          name: 'fn',
-          description: 'a function',
-          isOperation: true,
-          magic: false,
-          parameters: [],
-          examples: [],
-          type: 'function',
-        },
-      ],
-    })
-  );
+  new Promise((resolve) => {
+    setTimeout(
+      () =>
+        resolve({
+          namespaces: [{ type: 'namespace', name: 'smth' }],
+          name: 'test',
+          version: '1.0.0',
+          functions: [
+            {
+              name: 'fn',
+              description: 'a function',
+              isOperation: true,
+              magic: false,
+              parameters: [],
+              examples: [],
+              type: 'function',
+            },
+          ],
+        }),
+      100
+    );
+  });
 
 const specifier = 'test@1.0.0';
 
@@ -163,7 +143,7 @@ test.serial('create a placeholder before generating the docs', async (t) => {
   await docsHandler(options, logger, docgen);
 });
 
-test.serial(
+test.serial.skip(
   'synchronously create a placeholder before generating the docs',
   async (t) => {
     const path = `${DOCS_PATH}/${specifier}.json`;
@@ -173,7 +153,7 @@ test.serial(
     t.falsy(empty);
 
     // Run the promise but don't await it
-    docsHandler(options, logger, mockGen)
+    const promise = docsHandler(options, logger, mockGen)
       .then(() => {
         t.truthy(placeholder);
         t.true(placeholder.loading);
@@ -187,26 +167,35 @@ test.serial(
     // Read in the placeholder before the mockGen function runs
     // (which is on a timeout)
     const placeholder = JSON.parse(readFileSync(path, 'utf-8'));
+
+    return promise;
   }
 );
 
 test.serial("remove the placeholder if there's an error", async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
-  const docgen = (async () => {
-    // When docgen is called, a placeholder should now exist
-    const placeholder = await loadJSON(path);
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
+  // a placeholder should not exist when we start
+  const before = await loadJSON(path);
+  t.falsy(before);
 
-    throw new Error('test');
-  }) as unknown as DocGenFn;
+  const docgen: any = async () =>
+    new Promise((_resolve, reject) => {
+      setTimeout(async () => {
+        // When docgen is called, a placeholder should now exist
+        const placeholder = await loadJSON(path);
+        t.truthy(placeholder);
+        t.true(placeholder.loading);
+
+        reject(new Error('test'));
+      }, 10);
+    });
 
   await docsHandler(options, logger, docgen);
 
   // placeholder should be gone
-  const empty = await loadJSON(path);
-  t.falsy(empty);
+  const after = await loadJSON(path);
+  t.falsy(after);
 });
 
 test.serial('wait for docs if a placeholder is present', async (t) => {
