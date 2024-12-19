@@ -4,6 +4,7 @@ import type { WorkflowOptions } from '@openfn/lexicon';
 import compile from '@openfn/compiler';
 
 import run from '../src/runtime';
+import { extractCallSite } from '../src';
 
 const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
@@ -14,6 +15,20 @@ const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
     ],
   },
   options,
+});
+
+test('extractCallSite', (t) => {
+  const fakeError = {
+    stack: `Error: some error
+ at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
+  };
+
+  extractCallSite(fakeError);
+
+  t.deepEqual(fakeError.pos, {
+    line: 25,
+    col: 15,
+  });
 });
 
 test('crash on timeout', async (t) => {
@@ -48,26 +63,56 @@ test('crash on runtime error with SyntaxError', async (t) => {
   t.is(error.message, 'SyntaxError: Invalid or unexpected token');
 });
 
-test.only('crash on runtime error with ReferenceError', async (t) => {
+test('crash on runtime error with ReferenceError', async (t) => {
   const expression = 'export default [(s) => x]';
-
-  // compile the code so we get a source map
-  const { code, map } = compile(expression, { name: 'src' });
-  console.log({ code, map });
 
   let error: any;
   try {
-    await run(code, { map });
+    await run(expression);
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     error = e;
   }
   t.log(error);
 
-  // t.true(error instanceof RuntimeError);
   t.is(error.severity, 'crash');
   t.is(error.subtype, 'ReferenceError');
   t.is(error.message, 'ReferenceError: x is not defined');
+
+  // Ensure an unmapped error position
+  t.deepEqual(error.pos, {
+    line: 1,
+    col: 24,
+  });
+});
+
+test.only('maps positions in a compiled ReferenceError', async (t) => {
+  const expression = `function fn(f) { return f() }
+fn((s) => x)`;
+
+  // compile the code so we get a source map
+  const { code, map } = compile(expression, { name: 'src' });
+  t.log(code)
+  let error: any;
+  try {
+    await run(code, {}, { sourceMap: map });
+  } catch (e) {
+    // console.log(e);
+    error = e;
+  }
+
+  // validate that this is the error we're expecting
+  t.is(error.subtype, 'ReferenceError');
+
+  // ensure a position is written to the error
+  // TODO note this is un-mapped at the moment
+  t.deepEqual(error.pos, {
+    line: 2,
+    col: 11,
+  });
+
+  // TODO we could verify that (2,11) points to x
+  // and that in the uncompiled code, x is at 2,<whatever>
 });
 
 test('crash on eval with SecurityError', async (t) => {

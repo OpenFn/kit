@@ -29,6 +29,8 @@ export type ExecutionErrorWrapper = {
   error: any;
 };
 
+
+
 // TODO don't send the whole context because it's a bit confusing - just the options maybe?
 export default (
   ctx: ExecutionContext,
@@ -37,8 +39,8 @@ export default (
   // allow custom linker options to be passed for this step
   // this lets us use multiple versions of the same adaptor in a workflow
   moduleOverrides?: ModuleInfoMap
-) =>
-  new Promise(async (resolve, reject) => {
+) => {
+  return new Promise(async (resolve, reject) => {
     let duration = Date.now();
     const { logger, plan, opts = {} } = ctx;
     try {
@@ -85,6 +87,8 @@ export default (
       // whatever initial state looks like now, clean it and report it back
       duration = Date.now() - duration;
       let finalError;
+      // Error.captureStackTrace(e, undefined);
+      // console.log(e)
       try {
         assertImportError(e);
         assertRuntimeError(e);
@@ -98,7 +102,36 @@ export default (
 
       reject({ state: input, error: finalError } as ExecutionErrorWrapper);
     }
-  });
+  })
+}
+
+// This indirection lets us trap error stacks
+export async function ExecuteBreak(context: any, state: State) {
+  const { fn, logger, name, immutableState } = context;
+  
+  logger.debug(`Starting operation ${name}`);
+  const start = new Date().getTime();
+  if (isNullState(state)) {
+    clearNullState(state);
+    logger.warn(
+      `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
+    );
+  }
+  const newState = immutableState ? clone(state) : state;
+
+  let result = await fn(newState);
+
+  if (!result) {
+    logger.debug(`Warning: operation ${name} did not return state`);
+    result = createNullState();
+  }
+
+  // TODO should we warn if an operation does not return state?
+  // the trick is saying WHICH operation without source mapping
+  const duration = printDuration(new Date().getTime() - start);
+  logger.debug(`Operation ${name} complete in ${duration}`);
+  return result;
+}
 
 // Wrap an operation with various useful stuff
 export const wrapOperation = (
@@ -107,31 +140,42 @@ export const wrapOperation = (
   name: string,
   immutableState?: boolean
 ) => {
-  return async (state: State) => {
-    logger.debug(`Starting operation ${name}`);
-    const start = new Date().getTime();
-    if (isNullState(state)) {
-      clearNullState(state);
-      logger.warn(
-        `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
-      );
-    }
-    const newState = immutableState ? clone(state) : state;
-
-    let result = await fn(newState);
-
-    if (!result) {
-      logger.debug(`Warning: operation ${name} did not return state`);
-      result = createNullState();
-    }
-
-    // TODO should we warn if an operation does not return state?
-    // the trick is saying WHICH operation without source mapping
-    const duration = printDuration(new Date().getTime() - start);
-    logger.debug(`Operation ${name} complete in ${duration}`);
-    return result;
-  };
+  const context = { fn, logger, name, immutableState };
+  return async (state: State) => ExecuteBreak(context, state)
 };
+
+// // Wrap an operation with various useful stuff
+// export const wrapOperation = (
+//   fn: Operation,
+//   logger: Logger,
+//   name: string,
+//   immutableState?: boolean
+// ) => {
+//   return async function ExecuteBreak(state: State) {
+//     logger.debug(`Starting operation ${name}`);
+//     const start = new Date().getTime();
+//     if (isNullState(state)) {
+//       clearNullState(state);
+//       logger.warn(
+//         `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
+//       );
+//     }
+//     const newState = immutableState ? clone(state) : state;
+
+//     let result = await fn(newState);
+
+//     if (!result) {
+//       logger.debug(`Warning: operation ${name} did not return state`);
+//       result = createNullState();
+//     }
+
+//     // TODO should we warn if an operation does not return state?
+//     // the trick is saying WHICH operation without source mapping
+//     const duration = printDuration(new Date().getTime() - start);
+//     logger.debug(`Operation ${name} complete in ${duration}`);
+//     return result;
+//   };
+// };
 
 export const mergeLinkerOptions = (
   options: ModuleInfoMap = {},

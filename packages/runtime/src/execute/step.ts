@@ -16,6 +16,7 @@ import {
   NOTIFY_JOB_START,
 } from '../events';
 import { isNullState } from '../util/null-state';
+import getMappedPosition from '../util/get-mapped-position';
 
 const loadCredentials = async (
   job: Job,
@@ -165,9 +166,10 @@ const executeStep = async (
     try {
       // TODO include the upstream job?
       notify(NOTIFY_JOB_START, { jobId });
-
+      debugger;
       result = await executeExpression(ctx, job.expression, state, step.linker);
     } catch (e: any) {
+      console.log(e);
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
         const { error, state: errState } = e as ExecutionErrorWrapper;
@@ -177,13 +179,19 @@ const executeStep = async (
         logger.error(`${jobName} aborted with error (${duration})`);
 
         state = prepareFinalState(state, logger, ctx.opts.statePropsToRemove);
-        // Whatever the final state was, save that as the intial state to the next thing
+        // Whatever the final state was, save that as the initial state to the next thing
         result = state;
+
+        if (error.pos && ctx.sourceMap) {
+          error.pos = await getMappedPosition(ctx.sourceMap, error.pos.line, error.pos.col)
+        }
 
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
+        
 
+        // TODO should we add positional information here?
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
           error,

@@ -6,6 +6,8 @@
 // It would be nice for the detail to be in the error, not the code
 // But that probably requires more detailed error types
 
+import expression, { ExecuteBreak } from './execute/expression'
+
 export function assertImportError(e: any) {
   if (e.name === 'ImportError') {
     throw e;
@@ -50,10 +52,28 @@ export function assertAdaptorError(e: any) {
   }
 }
 
+// v8 only returns positional information as a string
+// this function will pull the line/col information back out of it
+export const extractCallSite = (e: RTError) => {
+  if (e.stack) {
+    debugger;
+    const [_message, frame1] = e.stack.split('\n');
+
+    // find the line:col at the end
+    // structures here https://nodejs.org/api/errors.html#errorstack
+    const parts = frame1.split(':');
+    e.pos = {
+      col: parseInt(parts.pop()!.replace(')', '')),
+      line: parseInt(parts.pop()!),
+    };
+  }
+};
+
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';
   name: string = 'Error';
+  pos?: { col: number, line: number} = undefined;
 
   constructor() {
     super();
@@ -92,6 +112,13 @@ export class RuntimeError extends RTError {
     super();
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
+
+    // automatically limit the stacktrace (?)
+    // Error.captureStackTrace(this, expression);
+
+    // extract positional info for source mapping
+    extractCallSite(error);
+    this.pos = error.pos;
   }
 }
 
@@ -106,7 +133,19 @@ export class RuntimeCrash extends RTError {
   constructor(error: Error) {
     super();
     this.subtype = error.constructor.name;
+    // this.type = error.type;
     this.message = `${this.subtype}: ${error.message}`;
+    // this.stack = error.stack;
+
+    // automatically limit the stacktrace (?)
+    // console.log(ExecuteBreak)
+    // Error.captureStackTrace(error, ExecuteBreak);
+    // Error.captureStackTrace(error, undefined);
+    // Error.captureStackTrace(error, function(){});
+
+    // extract positional info for source mapping
+    extractCallSite(error);
+    this.pos = error.pos;
   }
 }
 

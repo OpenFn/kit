@@ -13,6 +13,9 @@ import {
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
 
+// TODO we should be able to get a proper typing for this from somewhere
+export type SourceMap = any;
+
 export type CompiledEdge =
   | boolean
   | {
@@ -58,6 +61,7 @@ export type ExecutionContext = {
   plan: CompiledExecutionPlan;
   logger: Logger;
   opts: Options;
+  sourceMap?: SourceMap
   report: ErrorReporter;
   notify: NotifyHandler;
 };
