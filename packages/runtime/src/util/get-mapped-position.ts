@@ -5,14 +5,15 @@
 import { SourceMapConsumer } from 'source-map';
 
 const getMappedPosition = async (map, line, column) => {
+  debugger
   const smc = await new SourceMapConsumer(map);
   const pos = smc.originalPositionFor({
     line,
     column,
   });
 
-  //return { line, col, src };
-  return pos;
+  return { line, col: pos.column/*, src*/ };
+  // return pos;
 };
 
 export default getMappedPosition;

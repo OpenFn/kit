@@ -1,12 +1,9 @@
 import { createMockLogger, Logger } from '@openfn/logger';
 import type { ExecutionPlan, State } from '@openfn/lexicon';
-import type { ExecutionCallbacks } from './types';
+import type { ExecutionCallbacks, SourceMap } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';
-
-// TODO we should be able to get a proper typing for this from somewherewhere
-type SourceMap = any;
 
 export type Options = {
   logger?: Logger;
