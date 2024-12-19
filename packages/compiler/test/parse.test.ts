@@ -6,19 +6,22 @@ import parse from '../src/parse';
 
 import { loadAst } from './util';
 
+// Note that these tests do not include source mappings
+// just because the ast changes and develops circular structures
+
 test('parse a simple statement', (t) => {
   const source = 'const x = 10;';
 
   const ast = loadAst('simple-statement');
   const result = parse(source);
-  t.is(ast, JSON.stringify(result));
+  t.is(JSON.stringify(result), ast);
 });
 
 test('parse an esm module', (t) => {
   const source = `import foo from 'bar'; export const x = 10;`;
   const ast = loadAst('esm');
   const result = parse(source);
-  t.is(ast, JSON.stringify(result));
+  t.is(JSON.stringify(result), ast);
 });
 
 // This will still parse as a module, but it won't freak out when it see module.exports
@@ -26,19 +29,19 @@ test('parse a CJS script', (t) => {
   const source = `module.exports = 10;`;
   const ast = loadAst('cjs');
   const result = parse(source);
-  t.is(ast, JSON.stringify(result));
+  t.is(JSON.stringify(result), ast);
 });
 
 test('parse a single operation', (t) => {
   const source = `fn();`;
   const ast = loadAst('simple-operation');
   const result = parse(source);
-  t.is(ast, JSON.stringify(result));
+  t.is(JSON.stringify(result), ast);
 });
 
 test('parse multiple operations', (t) => {
   const source = `fn();fn();fn();`;
   const ast = loadAst('multiple-operations');
   const result = parse(source);
-  t.is(ast, JSON.stringify(result));
+  t.is(JSON.stringify(result), ast);
 });

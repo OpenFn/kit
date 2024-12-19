@@ -1,6 +1,6 @@
 {
   "name": "@openfn/lightning-mock",
-  "version": "2.0.26",
+  "version": "2.0.27",
   "private": true,
   "description": "A mock Lightning server",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts --no-splitting",
     "build:watch": "pnpm build --watch",
-    "start": "ts-node-esm --transpile-only src/start.ts",
+    "start": "node --loader @swc-node/register/esm src/start.ts",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "author": "Open Function Group <admin@openfn.org>",
@@ -45,7 +45,6 @@
     "koa-route": "^3.2.0",
     "koa-websocket": "^7.0.0",
     "query-string": "^8.1.0",
-    "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "tsup": "^6.2.3",
     "typescript": "^4.6.4",

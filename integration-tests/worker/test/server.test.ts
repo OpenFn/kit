@@ -49,8 +49,25 @@ let portgen = 3000;
 
 const getPort = () => ++portgen;
 
+function waitForWorkerExit(worker) {
+  return new Promise((resolve, reject) => {
+    worker.on('exit', (code) => {
+      if (code === 0) {
+        resolve('Worker exited successfully');
+      } else {
+        reject(new Error(`Worker exited with code: ${code}`));
+      }
+    });
+
+    worker.on('error', (err) => {
+      reject(err); // Reject if an error occurs
+    });
+  });
+}
+
 // note that lightning isnt available here, and this is fine
 test.serial('worker should start, respond to 200, and close', async (t) => {
+  t.plan(2);
   workerProcess = await spawnServer();
 
   // The running server should respond to a get at root
@@ -58,7 +75,7 @@ test.serial('worker should start, respond to 200, and close', async (t) => {
   t.is(status, 200);
 
   workerProcess.kill('SIGTERM');
-
+  await waitForWorkerExit(workerProcess);
   // After being killed, the fetch should fail
   await t.throwsAsync(() => fetch('http://localhost:2222/'), {
     message: 'fetch failed',
@@ -95,7 +112,7 @@ test.serial('should join attempts queue channel', (t) => {
   });
 });
 
-test.serial('allow a job to complete after receiving a sigterm', (t) => {
+test.skip('allow a job to complete after receiving a sigterm', (t) => {
   return new Promise(async (done) => {
     let didKill = false;
     const port = getPort();

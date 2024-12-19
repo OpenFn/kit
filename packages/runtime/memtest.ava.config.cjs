@@ -12,7 +12,7 @@ module.exports = {
   },
 
   nodeArguments: [
-    '--loader=ts-node/esm',
+    '--loader=@swc-node/register/esm',
     '--no-warnings',
     '--experimental-vm-modules',
     '--expose-gc',

@@ -1,7 +1,7 @@
 {
   "name": "@openfn/integration-tests-execute",
   "private": true,
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Job execution tests",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -18,7 +18,6 @@
     "ava": "5.3.1",
     "date-fns": "^2.30.0",
     "rimraf": "^3.0.2",
-    "ts-node": "10.8.1",
     "tslib": "^2.4.0",
     "typescript": "^5.1.6"
   },

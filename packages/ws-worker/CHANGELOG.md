@@ -1,5 +1,38 @@
 # ws-worker
 
+## 1.8.9
+
+### Patch Changes
+
+- Fix version loading paths
+
+## 1.8.8
+
+### Patch Changes
+
+- Fix version number readout
+
+## 1.8.7
+
+### Patch Changes
+
+- Ensure support for node 18,20 and 22.
+
+  This update ensures compatibility with node 18 LTS, 20 LTS, and 22.12.
+
+  Most of the changes are in the build and test suites and have only minor impact on production code. No issues are anticipated as as result of this change.
+
+  Prior releases may fail on node version >=20.
+
+  Support for node 18 will be removed in late 2025.
+
+- Updated dependencies
+- Updated dependencies [8904af2]
+  - @openfn/engine-multi@1.4.6
+  - @openfn/runtime@1.5.4
+  - @openfn/logger@1.0.3
+  - @openfn/lexicon@1.1.0
+
 ## 1.8.6
 
 ### Patch Changes

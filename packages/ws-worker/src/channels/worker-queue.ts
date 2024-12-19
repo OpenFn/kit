@@ -3,6 +3,7 @@ import { Socket as PhxSocket } from 'phoenix';
 import { WebSocket } from 'ws';
 import { API_VERSION } from '@openfn/lexicon/lightning';
 import generateWorkerToken from '../util/worker-token';
+import getVersion from '../util/load-version';
 
 import type { Logger } from '@openfn/logger';
 import type { Channel } from '../types';
@@ -18,14 +19,10 @@ const connectToWorkerQueue = (
   const events = new EventEmitter();
 
   generateWorkerToken(secret, serverId, logger).then(async (token) => {
-    const pkg = await import('../../package.json', {
-      assert: { type: 'json' },
-    });
-
     const params = {
       token,
       api_version: API_VERSION,
-      worker_version: pkg.default.version,
+      worker_version: await getVersion(),
     };
 
     // @ts-ignore ts doesn't like the constructor here at all

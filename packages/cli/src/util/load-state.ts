@@ -13,7 +13,7 @@ export const getUpstreamStepId = (plan: ExecutionPlan, stepId: string) => {
         return step.next === stepId;
       }
 
-      return stepId in step.next ?? null;
+      return stepId in step.next || null;
     }
   });
 

@@ -148,7 +148,7 @@ const loadActualModule = async (specifier: string, options: LinkerOptions) => {
       if (options.cacheKey) {
         path += '?cache=' + options.cacheKey;
       }
-      const result = import(`${prefix}${path}`);
+      const result = await import(`${prefix}${path}`);
       if (specifier.startsWith('@openfn/language-')) {
         log.info(`Resolved adaptor ${specifier} to version ${version}`);
       }

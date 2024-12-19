@@ -472,7 +472,8 @@ function idKeyPairs<P extends { id: string }, S extends { id: string }>(
   stateItems: Record<keyof S, S>
 ): [key: string, projectItem: P, stateItem: S][] {
   let pairs: [string, P, S][] = [];
-  for (const projectItem of projectItems) {
+  for (let i = 0; i < projectItems.length; i++) {
+    const projectItem = projectItems[i];
     for (const [key, stateItem] of Object.entries(stateItems)) {
       if (projectItem.id === stateItem.id) {
         pairs.push([key, projectItem, stateItem]);
