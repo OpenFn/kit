@@ -32,7 +32,7 @@ const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms
 const DEFAULT_MEMORY_LIMIT_MB = 500;
 
 // For each workflow, create an API object with its own event emitter
-// this is a bt wierd - what if the emitter went on state instead?
+// this is a bit weird - what if the emitter went on state instead?
 const createWorkflowEvents = (
   engine: EngineAPI,
   context: ExecutionContext,

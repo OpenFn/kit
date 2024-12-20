@@ -1,7 +1,7 @@
 {
   "name": "@openfn/integration-tests-worker",
   "private": true,
-  "version": "1.0.69",
+  "version": "1.0.72",
   "description": "Lightning WOrker integration tests",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -25,7 +25,6 @@
     "date-fns": "^2.30.0",
     "koa": "^2.13.4",
     "rimraf": "^3.0.2",
-    "ts-node": "10.8.1",
     "tslib": "^2.4.0",
     "typescript": "^5.1.6"
   },

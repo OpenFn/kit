@@ -365,7 +365,9 @@ test.serial('run a workflow from --only and cached state', async (t) => {
   });
 });
 
-test.serial('run a workflow with an adaptor (longform)', async (t) => {
+// On node 22 this fails to load the adaptor because import()
+// no longer works with mock fs
+test.serial.skip('run a workflow with an adaptor (longform)', async (t) => {
   const workflow = {
     workflow: {
       steps: [
@@ -389,7 +391,9 @@ test.serial('run a workflow with an adaptor (longform)', async (t) => {
   t.is(result.data.count, 10);
 });
 
-test.serial('run a workflow with an adaptor (shortform)', async (t) => {
+// On node 22 this fails to load the adaptor because import()
+// no longer works with mock fs
+test.serial.skip('run a workflow with an adaptor (shortform)', async (t) => {
   const workflow = {
     workflow: {
       steps: [

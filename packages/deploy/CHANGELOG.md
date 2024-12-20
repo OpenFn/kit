@@ -1,5 +1,22 @@
 # @openfn/deploy
 
+## 0.8.1
+
+### Patch Changes
+
+- Ensure support for node 18,20 and 22.
+
+  This update ensures compatibility with node 18 LTS, 20 LTS, and 22.12.
+
+  Most of the changes are in the build and test suites and have only minor impact on production code. No issues are anticipated as as result of this change.
+
+  Prior releases may fail on node version >=20.
+
+  Support for node 18 will be removed in late 2025.
+
+- Updated dependencies
+  - @openfn/logger@1.0.3
+
 ## 0.8.0
 
 ### Minor Changes
