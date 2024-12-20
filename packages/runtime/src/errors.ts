@@ -54,18 +54,40 @@ export function assertAdaptorError(e: any) {
 
 // v8 only returns positional information as a string
 // this function will pull the line/col information back out of it
-export const extractCallSite = (e: RTError) => {
+export const extractPosition = (e: RTError) => {
   if (e.stack) {
-    debugger;
     const [_message, frame1] = e.stack.split('\n');
 
-    // find the line:col at the end
-    // structures here https://nodejs.org/api/errors.html#errorstack
-    const parts = frame1.split(':');
-    e.pos = {
-      col: parseInt(parts.pop()!.replace(')', '')),
-      line: parseInt(parts.pop()!),
-    };
+    return extractPositionForFrame(frame1);
+  }
+};
+
+// TODO move out into utils?
+export const extractPositionForFrame = (frame: string) => {
+  // find the line:col at the end
+  // structures here https://nodejs.org/api/errors.html#errorstack
+  const parts = frame.split(':');
+  return {
+    col: parseInt(parts.pop()!.replace(')', '')),
+    line: parseInt(parts.pop()!),
+  };
+};
+
+export const extractStackTrace = (e: RTError) => {
+  if (e.stack) {
+    const [message, ...frames] = e.stack.split('\n');
+
+    const vmFrames = [];
+    for (const frame of frames) {
+      // TODO: what if we rename the VM?
+      if (frame.includes("vm:module")) {
+        vmFrames.push(frame)
+      } else {
+        break;
+      }
+    }
+
+    return [message, ...vmFrames].join('\n')
   }
 };
 
@@ -113,12 +135,8 @@ export class RuntimeError extends RTError {
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
 
-    // automatically limit the stacktrace (?)
-    // Error.captureStackTrace(this, expression);
-
-    // extract positional info for source mapping
-    extractCallSite(error);
-    this.pos = error.pos;
+    this.pos = extractPosition(error);
+    this.stack = extractStackTrace(error);
   }
 }
 
@@ -133,19 +151,10 @@ export class RuntimeCrash extends RTError {
   constructor(error: Error) {
     super();
     this.subtype = error.constructor.name;
-    // this.type = error.type;
     this.message = `${this.subtype}: ${error.message}`;
-    // this.stack = error.stack;
-
-    // automatically limit the stacktrace (?)
-    // console.log(ExecuteBreak)
-    // Error.captureStackTrace(error, ExecuteBreak);
-    // Error.captureStackTrace(error, undefined);
-    // Error.captureStackTrace(error, function(){});
-
-    // extract positional info for source mapping
-    extractCallSite(error);
-    this.pos = error.pos;
+    
+    this.pos = extractPosition(error);
+    this.stack = extractStackTrace(error);
   }
 }
 

@@ -87,8 +87,6 @@ export default (
       // whatever initial state looks like now, clean it and report it back
       duration = Date.now() - duration;
       let finalError;
-      // Error.captureStackTrace(e, undefined);
-      // console.log(e)
       try {
         assertImportError(e);
         assertRuntimeError(e);

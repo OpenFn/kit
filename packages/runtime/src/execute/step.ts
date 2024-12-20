@@ -16,7 +16,7 @@ import {
   NOTIFY_JOB_START,
 } from '../events';
 import { isNullState } from '../util/null-state';
-import getMappedPosition from '../util/get-mapped-position';
+import {getMappedPosition, mapStackTrace} from '../util/get-mapped-position';
 
 const loadCredentials = async (
   job: Job,
@@ -169,7 +169,6 @@ const executeStep = async (
       debugger;
       result = await executeExpression(ctx, job.expression, state, step.linker);
     } catch (e: any) {
-      console.log(e);
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
         const { error, state: errState } = e as ExecutionErrorWrapper;
@@ -184,6 +183,9 @@ const executeStep = async (
 
         if (error.pos && ctx.sourceMap) {
           error.pos = await getMappedPosition(ctx.sourceMap, error.pos.line, error.pos.col)
+        }
+        if (error.stack && ctx.sourceMap) {
+          error.stack = await mapStackTrace(ctx.sourceMap, error.stack)
         }
 
         report(state, jobId, error);

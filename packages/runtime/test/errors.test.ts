@@ -4,7 +4,7 @@ import type { WorkflowOptions } from '@openfn/lexicon';
 import compile from '@openfn/compiler';
 
 import run from '../src/runtime';
-import { extractCallSite } from '../src';
+import { extractPosition, extractStackTrace } from '../src/errors';
 
 const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
@@ -17,18 +17,39 @@ const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   options,
 });
 
-test('extractCallSite', (t) => {
+test('extractCallSite: basic test', (t) => {
   const fakeError = {
     stack: `Error: some error
  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
   };
 
-  extractCallSite(fakeError);
+  const pos = extractPosition(fakeError);
 
-  t.deepEqual(fakeError.pos, {
+  t.deepEqual(pos, {
     line: 25,
     col: 15,
   });
+});
+
+test('extractStackTrace: basic test', (t) => {
+  const fakeError = {
+    stack: `ReferenceError: z is not defined
+    at vm:module(0):2:27
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:17
+    at SourceTextModule.evaluate (node:internal/vm/module:227:23)
+    at default (file:///repo/openfn/kit/packages/runtime/src/modules/module-loader.ts:29:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async prepareJob (file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:136:25)
+    at async file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:21:45`,
+  };
+
+  const stack = extractStackTrace(fakeError);
+
+  t.is(stack, `ReferenceError: z is not defined
+    at vm:module(0):2:27
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:17`);
 });
 
 test('crash on timeout', async (t) => {
@@ -70,10 +91,10 @@ test('crash on runtime error with ReferenceError', async (t) => {
   try {
     await run(expression);
   } catch (e) {
-    // console.log(e);
     error = e;
   }
   t.log(error);
+  t.log(error.stack)
 
   t.is(error.severity, 'crash');
   t.is(error.subtype, 'ReferenceError');
@@ -84,6 +105,10 @@ test('crash on runtime error with ReferenceError', async (t) => {
     line: 1,
     col: 24,
   });
+  
+  // Ensure the stack trace only includes VM frames
+  t.is(error.stack, `ReferenceError: x is not defined
+    at vm:module(0):1:24`)
 });
 
 test.only('maps positions in a compiled ReferenceError', async (t) => {
@@ -101,7 +126,8 @@ fn((s) => z)`;
   try {
     await run(code, {}, { sourceMap: map });
   } catch (e) {
-    // console.log(e);
+    t.log(e);
+    t.log(e.stack);
     error = e;
   }
 
@@ -117,6 +143,12 @@ fn((s) => z)`;
     line: 2,
     col: 11, // 1-based
   });
+
+  // Positions must be mapped in the stacktrace too
+  t.is(error.stack, `ReferenceError: z is not defined
+    at vm:module(0):2:11
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:1`)
 });
 
 test('crash on eval with SecurityError', async (t) => {
