@@ -88,7 +88,11 @@ test('crash on runtime error with ReferenceError', async (t) => {
 
 test.only('maps positions in a compiled ReferenceError', async (t) => {
   const expression = `function fn(f) { return f() }
-fn((s) => x)`;
+fn((s) => z)`;
+
+  // Assert that in the original code, the undeclared variable is at position 11
+  const originalZPosition = expression.split('\n')[1].indexOf('z')
+  t.is(originalZPosition, 10)
 
   // compile the code so we get a source map
   const { code, map } = compile(expression, { name: 'src' });
@@ -101,6 +105,9 @@ fn((s) => x)`;
     error = e;
   }
 
+  const newZPosition = code.split('\n')[1].indexOf('z')
+  t.is(newZPosition, 26)
+
   // validate that this is the error we're expecting
   t.is(error.subtype, 'ReferenceError');
 
@@ -108,7 +115,7 @@ fn((s) => x)`;
   // TODO note this is un-mapped at the moment
   t.deepEqual(error.pos, {
     line: 2,
-    col: 11,
+    col: 11, // 1-based
   });
 
   // TODO we could verify that (2,11) points to x
