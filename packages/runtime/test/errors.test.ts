@@ -117,9 +117,6 @@ fn((s) => z)`;
     line: 2,
     col: 11, // 1-based
   });
-
-  // TODO we could verify that (2,11) points to x
-  // and that in the uncompiled code, x is at 2,<whatever>
 });
 
 test('crash on eval with SecurityError', async (t) => {
