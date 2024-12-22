@@ -2,6 +2,7 @@ import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
+
 import compile, {
   stripVersionSpecifier,
   loadTransformOptions,
@@ -9,7 +10,8 @@ import compile, {
 } from '../../src/compile/compile';
 import { CompileOptions } from '../../src/compile/command';
 import { mockFs, resetMockFs } from '../util';
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
 
 const mockLog = createMockLogger();
 
@@ -27,18 +29,15 @@ type TransformOptionsWithImports = {
   };
 };
 
-// TODO this isn't really used and is a bit of a quirky thing
-// The compiler itself probably doesn't do any path parsing?
-// Just compile a source string and return the result
-test('compile from source string', async (t) => {
+test.serial('compile from source string', async (t) => {
   const job = 'x();';
 
   const opts = {} as CompileOptions;
 
-  const result = await compile(job, opts, mockLog);
+  const result = await compile(job, opts, mockLog)
 
   const expected = 'export default [x()];';
-  t.is(result, expected);
+  t.is(result.code, expected);
 });
 
 test.serial('compile from path', async (t) => {
@@ -54,10 +53,10 @@ test.serial('compile from path', async (t) => {
   const result = await compile(expressionPath, opts, mockLog);
 
   const expected = 'export default [x()];';
-  t.is(result, expected);
+  t.is(result.code, expected);
 });
 
-test('compile from execution plan', async (t) => {
+test.serial('compile from execution plan', async (t) => {
   const plan = {
     workflow: {
       steps: [
@@ -78,7 +77,7 @@ test('compile from execution plan', async (t) => {
   t.is((b as Job).expression, expected);
 });
 
-test('throw an AbortError if a job is uncompilable', async (t) => {
+test.serial('throw an AbortError if a job is uncompilable', async (t) => {
   const job = 'a b';
 
   const opts = {} as CompileOptions;
@@ -93,7 +92,7 @@ test('throw an AbortError if a job is uncompilable', async (t) => {
   t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
-test('throw an AbortError if an xplan contains an uncompilable job', async (t) => {
+test.serial('throw an AbortError if an xplan contains an uncompilable job', async (t) => {
   const plan: ExecutionPlan = {
     workflow: {
       steps: [{ id: 'a', expression: 'x b' }],
@@ -113,35 +112,35 @@ test('throw an AbortError if an xplan contains an uncompilable job', async (t) =
   t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
-test('stripVersionSpecifier: remove version specifier from @openfn', (t) => {
+test.serial('stripVersionSpecifier: remove version specifier from @openfn', (t) => {
   const specifier = '@openfn/language-common@3.0.0-rc2';
   const transformed = stripVersionSpecifier(specifier);
   const expected = '@openfn/language-common';
   t.assert(transformed == expected);
 });
 
-test('stripVersionSpecifier: remove version specifier from arbitrary package', (t) => {
+test.serial('stripVersionSpecifier: remove version specifier from arbitrary package', (t) => {
   const specifier = 'ava@1.0.0';
   const transformed = stripVersionSpecifier(specifier);
   const expected = 'ava';
   t.assert(transformed == expected);
 });
 
-test('stripVersionSpecifier: remove version specifier from arbitrary namespaced package', (t) => {
+test.serial('stripVersionSpecifier: remove version specifier from arbitrary namespaced package', (t) => {
   const specifier = '@ava/some-pkg@^1';
   const transformed = stripVersionSpecifier(specifier);
   const expected = '@ava/some-pkg';
   t.assert(transformed == expected);
 });
 
-test("stripVersionSpecifier: do nothing if there's no specifier", (t) => {
+test.serial("stripVersionSpecifier: do nothing if there's no specifier", (t) => {
   const specifier = '@openfn/language-common';
   const transformed = stripVersionSpecifier(specifier);
   const expected = '@openfn/language-common';
   t.assert(transformed == expected);
 });
 
-test('loadTransformOptions: do nothing', async (t) => {
+test.serial('loadTransformOptions: do nothing', async (t) => {
   const opts = {};
   const result = loadTransformOptions(opts, mockLog);
   t.assert(JSON.stringify(result) === '{}');
@@ -158,22 +157,22 @@ test.serial(
   }
 );
 
-test('resolveSpecifierPath: return a relative path if passed', async (t) => {
+test.serial('resolveSpecifierPath: return a relative path if passed', async (t) => {
   const path = await resolveSpecifierPath('pkg=./a', '/repo', mockLog);
   t.assert(path === './a');
 });
 
-test('resolveSpecifierPath: return an absolute path if passed', async (t) => {
+test.serial('resolveSpecifierPath: return an absolute path if passed', async (t) => {
   const path = await resolveSpecifierPath('pkg=/a', '/repo', mockLog);
   t.assert(path === '/a');
 });
 
-test('resolveSpecifierPath: return a path if passed', async (t) => {
+test.serial('resolveSpecifierPath: return a path if passed', async (t) => {
   const path = await resolveSpecifierPath('pkg=a/b/c', '/repo', mockLog);
   t.assert(path === 'a/b/c');
 });
 
-test('resolveSpecifierPath: basically return anything after the =', async (t) => {
+test.serial('resolveSpecifierPath: basically return anything after the =', async (t) => {
   const path = await resolveSpecifierPath('pkg=a', '/repo', mockLog);
   t.assert(path === 'a');
 

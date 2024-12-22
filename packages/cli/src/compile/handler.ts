@@ -11,11 +11,12 @@ const compileHandler = async (options: CompileOptions, logger: Logger) => {
 
   let result;
   if (options.expressionPath) {
-    result = await compile(options.expressionPath, options, logger);
+    const { code } = await compile(options.expressionPath, options, logger);
+    result = code;
   } else {
     const plan = await loadPlan(options, logger);
-    result = await compile(plan, options, logger);
-    result = JSON.stringify(result, null, 2);
+    const compiledPlan = await compile(plan, options, logger);
+    result = JSON.stringify(compiledPlan, null, 2);
   }
 
   if (options.outputStdout) {

@@ -105,7 +105,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const state = await loadState(plan, options, logger, customStart);
 
   if (options.compile) {
-    plan = (await compile(plan, options, logger)) as ExecutionPlan;
+    await compile(plan, options, logger)
   } else {
     logger.info('Skipping compilation as noCompile is set');
   }
