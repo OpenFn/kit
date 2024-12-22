@@ -22,5 +22,8 @@
   },
   "devDependencies": {
     "@openfn/logger": "workspace:^"
+  },
+  "dependencies": {
+    "source-map": "^0.7.4"
   }
 }
