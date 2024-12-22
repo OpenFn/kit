@@ -5,7 +5,16 @@ import compile from '../src/compile';
 
 // Not doing deep testing on this because recast does the heavy lifting
 // This is just to ensure the map is actually generated
-test('generate a source map if a file name is passed', (t) => {
+test('generate a source map', (t) => {
+  const source = 'fn();';
+  const { map } = compile(source);
+  t.truthy(map);
+  t.deepEqual(map.sources, ['src.js']);
+  t.is(map.file, 'src.map.js');
+});
+
+
+test('generate a named source map if a file name is passed', (t) => {
   const source = 'fn();';
   const { map } = compile(source, { name: 'job' });
   t.truthy(map);
