@@ -12,9 +12,11 @@ import {
   NOTIFY_STATE_LOAD,
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
+import { NullableMappedPosition, RawSourceMap } from 'source-map';
 
-// TODO we should be able to get a proper typing for this from somewhere
-export type SourceMap = any;
+export type SourceMap = RawSourceMap;
+
+export type ErrorPosition = Pick<NullableMappedPosition, 'line' | 'column'>
 
 export type CompiledEdge =
   | boolean

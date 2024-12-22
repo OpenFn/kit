@@ -5,11 +5,15 @@
 import { SourceMapConsumer } from 'source-map';
 import { extractPositionForFrame } from '../errors';
 
-export const getMappedPosition = async (map, line, column) => {
+export const sourced
+
+// Pass in a sourceMapConsumer from sourcemap
+// Uh this function does literally nothing now
+export const getMappedPosition = async (sourceMapConsumer, line, column) => {
   // TODO take consumer creation out of here and let this be sync
   // Can replace the map with the consumer
   const smc = await new SourceMapConsumer(map);
-  const pos = smc.originalPositionFor({
+  const pos = sourceMapConsumer.originalPositionFor({
     line,
     column,
   });

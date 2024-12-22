@@ -103,77 +103,38 @@ export default (
   })
 }
 
-// This indirection lets us trap error stacks
-export async function ExecuteBreak(context: any, state: State) {
-  const { fn, logger, name, immutableState } = context;
-  
-  logger.debug(`Starting operation ${name}`);
-  const start = new Date().getTime();
-  if (isNullState(state)) {
-    clearNullState(state);
-    logger.warn(
-      `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
-    );
-  }
-  const newState = immutableState ? clone(state) : state;
-
-  let result = await fn(newState);
-
-  if (!result) {
-    logger.debug(`Warning: operation ${name} did not return state`);
-    result = createNullState();
-  }
-
-  // TODO should we warn if an operation does not return state?
-  // the trick is saying WHICH operation without source mapping
-  const duration = printDuration(new Date().getTime() - start);
-  logger.debug(`Operation ${name} complete in ${duration}`);
-  return result;
-}
-
-// Wrap an operation with various useful stuff
+// // Wrap an operation with various useful stuff
 export const wrapOperation = (
   fn: Operation,
   logger: Logger,
   name: string,
   immutableState?: boolean
 ) => {
-  const context = { fn, logger, name, immutableState };
-  return async (state: State) => ExecuteBreak(context, state)
+  return async (state: State) => {
+    logger.debug(`Starting operation ${name}`);
+    const start = new Date().getTime();
+    if (isNullState(state)) {
+      clearNullState(state);
+      logger.warn(
+        `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
+      );
+    }
+    const newState = immutableState ? clone(state) : state;
+
+    let result = await fn(newState);
+
+    if (!result) {
+      logger.debug(`Warning: operation ${name} did not return state`);
+      result = createNullState();
+    }
+
+    // TODO should we warn if an operation does not return state?
+    // the trick is saying WHICH operation without source mapping
+    const duration = printDuration(new Date().getTime() - start);
+    logger.debug(`Operation ${name} complete in ${duration}`);
+    return result;
+  };
 };
-
-// // Wrap an operation with various useful stuff
-// export const wrapOperation = (
-//   fn: Operation,
-//   logger: Logger,
-//   name: string,
-//   immutableState?: boolean
-// ) => {
-//   return async function ExecuteBreak(state: State) {
-//     logger.debug(`Starting operation ${name}`);
-//     const start = new Date().getTime();
-//     if (isNullState(state)) {
-//       clearNullState(state);
-//       logger.warn(
-//         `WARNING: No state was passed into operation ${name}. Did the previous operation return state?`
-//       );
-//     }
-//     const newState = immutableState ? clone(state) : state;
-
-//     let result = await fn(newState);
-
-//     if (!result) {
-//       logger.debug(`Warning: operation ${name} did not return state`);
-//       result = createNullState();
-//     }
-
-//     // TODO should we warn if an operation does not return state?
-//     // the trick is saying WHICH operation without source mapping
-//     const duration = printDuration(new Date().getTime() - start);
-//     logger.debug(`Operation ${name} complete in ${duration}`);
-//     return result;
-//   };
-// };
 
 export const mergeLinkerOptions = (
   options: ModuleInfoMap = {},

@@ -28,7 +28,7 @@ const serialize = (error: any) => {
 // Because we're taking closer control of errors
 // we should be able to report more simply
 const createErrorReporter = (logger: Logger): ErrorReporter => {
-  return (state, stepId, error) => {
+  return (state, stepId, error: any) => {
     // TODO I don't think the report is useful anymore
     // we'll strip it all out soon
     // see https://github.com/OpenFn/kit/issues/726
@@ -46,9 +46,24 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
     }
 
     if (error.severity === 'crash') {
+      logger.print()
       logger.error('CRITICAL ERROR! Aborting execution');
     }
+    logger.error(error.message, `(${error.pos.line}:${error.pos.column})`)
 
+    if (error.pos && error.pos.line) {
+      // Print the error line of code and a marker to the position
+      const { src } = error.pos;
+      const pointer = new Array(src.length).fill(' ')
+      pointer[error.pos.column -1] = '^';
+      
+      logger.print()
+      logger.print(src)
+      logger.print(pointer.join(''))
+    }
+
+    // Don't serialize position information with the error
+    delete error.pos;
     const serializedError = serialize(error);
     logger.error(serializedError);
 

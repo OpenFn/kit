@@ -1,5 +1,3 @@
-// TODO hmm. I have a horrible feeling that the callbacks should go here
-// at least the resolvesrs
 import type { Job, State, StepId } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
@@ -16,7 +14,7 @@ import {
   NOTIFY_JOB_START,
 } from '../events';
 import { isNullState } from '../util/null-state';
-import {getMappedPosition, mapStackTrace} from '../util/get-mapped-position';
+import sourcemapErrors from '../util/sourcemap-errors'
 
 const loadCredentials = async (
   job: Job,
@@ -158,8 +156,7 @@ const executeStep = async (
     const timerId = `step-${jobId}`;
     logger.timer(timerId);
 
-    // TODO can we include the adaptor version here?
-    // How would we get it?
+    // TODO can/should we include the adaptor version here?
     logger.info(`Starting step ${jobName}`);
 
     const startTime = Date.now();
@@ -181,18 +178,12 @@ const executeStep = async (
         // Whatever the final state was, save that as the initial state to the next thing
         result = state;
 
-        if (error.pos && ctx.sourceMap) {
-          error.pos = await getMappedPosition(ctx.sourceMap, error.pos.line, error.pos.col)
-        }
-        if (error.stack && ctx.sourceMap) {
-          error.stack = await mapStackTrace(ctx.sourceMap, error.stack)
-        }
+        await sourcemapErrors(job, error)
 
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
         
-
         // TODO should we add positional information here?
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,

@@ -1,12 +1,4 @@
-// TODO: what if we add a "fix" to each error?
-// Maybe adminFix and userFix?
-// This would be a human readable hint about what to do
-// Or maybe summary/detail is a nicer approach
-// message/explanation
-// It would be nice for the detail to be in the error, not the code
-// But that probably requires more detailed error types
-
-import expression, { ExecuteBreak } from './execute/expression'
+import { ErrorPosition } from "./types";
 
 export function assertImportError(e: any) {
   if (e.name === 'ImportError') {
@@ -54,7 +46,7 @@ export function assertAdaptorError(e: any) {
 
 // v8 only returns positional information as a string
 // this function will pull the line/col information back out of it
-export const extractPosition = (e: RTError) => {
+export const extractPosition = (e: Error) => {
   if (e.stack) {
     const [_message, frame1] = e.stack.split('\n');
 
@@ -63,17 +55,17 @@ export const extractPosition = (e: RTError) => {
 };
 
 // TODO move out into utils?
-export const extractPositionForFrame = (frame: string) => {
+export const extractPositionForFrame = (frame: string): ErrorPosition => {
   // find the line:col at the end
   // structures here https://nodejs.org/api/errors.html#errorstack
   const parts = frame.split(':');
   return {
-    col: parseInt(parts.pop()!.replace(')', '')),
+    column: parseInt(parts.pop()!.replace(')', '')),
     line: parseInt(parts.pop()!),
   };
 };
 
-export const extractStackTrace = (e: RTError) => {
+export const extractStackTrace = (e: Error) => {
   if (e.stack) {
     const [message, ...frames] = e.stack.split('\n');
 
@@ -95,7 +87,7 @@ export const extractStackTrace = (e: RTError) => {
 export class RTError extends Error {
   source = 'runtime';
   name: string = 'Error';
-  pos?: { col: number, line: number} = undefined;
+  pos?: ErrorPosition = undefined;
 
   constructor() {
     super();

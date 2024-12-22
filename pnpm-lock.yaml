@@ -465,6 +465,10 @@ importers:
         version: 6.2.0
 
   packages/lexicon:
+    dependencies:
+      source-map:
+        specifier: ^0.7.4
+        version: 0.7.4
     devDependencies:
       '@openfn/logger':
         specifier: workspace:^
