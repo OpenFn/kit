@@ -2,7 +2,6 @@ import test from 'ava';
 import path from 'node:path';
 import run from '../src/run';
 import { extractLogs, assertLog } from '../src/util';
-import { stderr } from 'node:process';
 
 const jobsPath = path.resolve('test/fixtures');
 
@@ -133,3 +132,5 @@ test.serial('invalid end (ambiguous)', async (t) => {
   assertLog(t, stdlogs, /Error: end pattern matched multiple steps/i);
   assertLog(t, stdlogs, /aborting/i);
 });
+
+// TODO lets add some errors here and take a close look at the output

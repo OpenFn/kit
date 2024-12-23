@@ -29,8 +29,6 @@ export type ExecutionErrorWrapper = {
   error: any;
 };
 
-
-
 // TODO don't send the whole context because it's a bit confusing - just the options maybe?
 export default (
   ctx: ExecutionContext,
@@ -100,8 +98,8 @@ export default (
 
       reject({ state: input, error: finalError } as ExecutionErrorWrapper);
     }
-  })
-}
+  });
+};
 
 // // Wrap an operation with various useful stuff
 export const wrapOperation = (
