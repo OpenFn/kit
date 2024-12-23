@@ -159,8 +159,6 @@ fn((s) => z)`;
   try {
     await run(code, {}, { sourceMap: map });
   } catch (e) {
-    t.log(e);
-    t.log(e.stack);
     error = e;
   }
 
@@ -171,19 +169,19 @@ fn((s) => z)`;
   t.is(error.subtype, 'ReferenceError');
 
   // ensure a position is written to the error
-  // TODO note this is un-mapped at the moment
   t.deepEqual(error.pos, {
     line: 2,
-    column: 27,
+    column: 11,
+    src: 'fn((s) => z)',
   });
 
   // Positions must be mapped in the stacktrace too
   t.is(
     error.stack,
     `ReferenceError: z is not defined
-    at vm:module(0):2:27
+    at vm:module(0):2:11
     at fn (vm:module(0):1:25)
-    at vm:module(0):2:17`
+    at vm:module(0):2:1`
   );
 });
 
