@@ -130,7 +130,7 @@ export default (plan: ExecutionPlan) => {
       'state',
       'configuration',
       'name',
-      'sourceMap' // TODO need unit tests against this
+      'sourceMap', // TODO need unit tests against this
     ]);
 
     if (job.linker) {

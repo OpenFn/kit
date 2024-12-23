@@ -6,23 +6,22 @@ import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';
 import type { CompileOptions } from './command';
 
-export type CompiledJob = { code: string, map?: SourceMap }
+export type CompiledJob = { code: string; map?: SourceMap };
 
-
-export default async function(
+export default async function (
   job: ExecutionPlan,
   opts: CompileOptions,
   log: Logger
 ): Promise<ExecutionPlan>;
 
-export default async function(
-  plan:string,
+export default async function (
+  plan: string,
   opts: CompileOptions,
   log: Logger
 ): Promise<CompiledJob>;
 
-export default async function(
-  planOrPath:string | ExecutionPlan,
+export default async function (
+  planOrPath: string | ExecutionPlan,
   opts: CompileOptions,
   log: Logger
 ): Promise<CompiledJob | ExecutionPlan> {
@@ -32,11 +31,15 @@ export default async function(
     return result;
   }
 
-  const compiledPlan = await compileWorkflow(planOrPath as ExecutionPlan, opts, log);
+  const compiledPlan = await compileWorkflow(
+    planOrPath as ExecutionPlan,
+    opts,
+    log
+  );
   log.success('Compiled all expressions in workflow');
 
-  return compiledPlan
-};
+  return compiledPlan;
+}
 
 const compileJob = async (
   job: string,
@@ -78,8 +81,8 @@ const compileWorkflow = async (
         log,
         job.id
       );
-      job.expression = code
-      job.sourceMap = map
+      job.expression = code;
+      job.sourceMap = map;
     }
   }
   return plan;
