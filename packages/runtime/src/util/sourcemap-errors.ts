@@ -44,17 +44,19 @@ export const mapStackTrace = async (
   for (const line of lines) {
     try {
       const pos = extractPositionForFrame(line);
-      // TODO not sure about these typings tbh
-      const originalPos = smc.originalPositionFor({
-        line: pos.line!,
-        column: pos.column!,
-      });
-      newStack.push(
-        line.replace(
-          `${pos.line}:${pos.column}`,
-          `${originalPos.line}:${originalPos.column}`
-        )
-      );
+      if (pos) {
+        // TODO not sure about these typings tbh
+        const originalPos = smc.originalPositionFor({
+          line: pos.line!,
+          column: pos.column!,
+        });
+        newStack.push(
+          line.replace(
+            `${pos.line}:${pos.column}`,
+            `${originalPos.line}:${originalPos.column}`
+          )
+        );
+      }
     } catch (e) {
       // do nothing
       newStack.push(line);
