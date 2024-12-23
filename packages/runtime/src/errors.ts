@@ -88,6 +88,7 @@ export class RTError extends Error {
   source = 'runtime';
   name: string = 'Error';
   pos?: ErrorPosition = undefined;
+  step?: string = undefined;
 
   constructor() {
     super();

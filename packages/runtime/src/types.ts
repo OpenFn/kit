@@ -12,11 +12,16 @@ import {
   NOTIFY_STATE_LOAD,
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
-import { NullableMappedPosition, RawSourceMap } from 'source-map';
+import { RawSourceMap } from 'source-map';
 
 export type SourceMap = RawSourceMap;
 
-export type ErrorPosition = Pick<NullableMappedPosition, 'line' | 'column'>
+export type ErrorPosition = {
+  line: number;
+  column: number;
+  src?: string; // the source line for this error
+  step?: string; // the name of the step that threw this error
+};
 
 export type CompiledEdge =
   | boolean
@@ -63,7 +68,7 @@ export type ExecutionContext = {
   plan: CompiledExecutionPlan;
   logger: Logger;
   opts: Options;
-  sourceMap?: SourceMap
+  sourceMap?: SourceMap;
   report: ErrorReporter;
   notify: NotifyHandler;
 };
