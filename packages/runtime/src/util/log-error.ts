@@ -46,24 +46,29 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
     }
 
     if (error.severity === 'crash') {
-      logger.print()
+      logger.print();
       logger.error('CRITICAL ERROR! Aborting execution');
     }
-    logger.error(error.message, `(${error.pos.line}:${error.pos.column})`)
 
-    if (error.pos && error.pos.line) {
-      // Print the error line of code and a marker to the position
-      const { src } = error.pos;
-      const pointer = new Array(src.length).fill(' ')
-      pointer[error.pos.column -1] = '^';
-      
-      logger.print()
-      logger.print(src)
-      logger.print(pointer.join(''))
+    if (error.pos) {
+      logger.error(error.message, `(${error.pos.line}:${error.pos.column})`);
+      if (error.pos.src) {
+        // Print the error line of code and a marker to the position
+        const { src } = error.pos;
+        const pointer = new Array(src.length).fill(' ');
+        pointer[error.pos.column - 1] = '^';
+
+        logger.print();
+        logger.print(src);
+        logger.print(pointer.join(''));
+
+        // Don't serialize position information with the error
+        delete error.pos;
+      }
+    } else {
+      logger.error(error.message);
     }
 
-    // Don't serialize position information with the error
-    delete error.pos;
     const serializedError = serialize(error);
     logger.error(serializedError);
 

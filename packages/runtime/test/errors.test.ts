@@ -17,7 +17,7 @@ const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   options,
 });
 
-test('extractCallSite: basic test', (t) => {
+test('extractPosition: basic test', (t) => {
   const fakeError = {
     stack: `Error: some error
  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
@@ -27,8 +27,35 @@ test('extractCallSite: basic test', (t) => {
 
   t.deepEqual(pos, {
     line: 25,
-    col: 15,
+    column: 15,
   });
+});
+
+test("extractPosition: find errors which aren't on line 1", (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
+  };
+
+  const pos = extractPosition(fakeError);
+
+  t.deepEqual(pos, {
+    line: 25,
+    column: 15,
+  });
+});
+
+test("extractPosition: return undefined if there's no position", (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts)`,
+  };
+
+  const pos = extractPosition(fakeError);
+
+  t.falsy(pos);
 });
 
 test('extractStackTrace: basic test', (t) => {
@@ -46,10 +73,13 @@ test('extractStackTrace: basic test', (t) => {
 
   const stack = extractStackTrace(fakeError);
 
-  t.is(stack, `ReferenceError: z is not defined
+  t.is(
+    stack,
+    `ReferenceError: z is not defined
     at vm:module(0):2:27
     at fn (vm:module(0):1:25)
-    at vm:module(0):2:17`);
+    at vm:module(0):2:17`
+  );
 });
 
 test('crash on timeout', async (t) => {
@@ -94,7 +124,7 @@ test('crash on runtime error with ReferenceError', async (t) => {
     error = e;
   }
   t.log(error);
-  t.log(error.stack)
+  t.log(error.stack);
 
   t.is(error.severity, 'crash');
   t.is(error.subtype, 'ReferenceError');
@@ -103,25 +133,28 @@ test('crash on runtime error with ReferenceError', async (t) => {
   // Ensure an unmapped error position
   t.deepEqual(error.pos, {
     line: 1,
-    col: 24,
+    column: 24,
   });
-  
+
   // Ensure the stack trace only includes VM frames
-  t.is(error.stack, `ReferenceError: x is not defined
-    at vm:module(0):1:24`)
+  t.is(
+    error.stack,
+    `ReferenceError: x is not defined
+    at vm:module(0):1:24`
+  );
 });
 
-test.only('maps positions in a compiled ReferenceError', async (t) => {
+test('maps positions in a compiled ReferenceError', async (t) => {
   const expression = `function fn(f) { return f() }
 fn((s) => z)`;
 
   // Assert that in the original code, the undeclared variable is at position 11
-  const originalZPosition = expression.split('\n')[1].indexOf('z')
-  t.is(originalZPosition, 10)
+  const originalZPosition = expression.split('\n')[1].indexOf('z');
+  t.is(originalZPosition, 10);
 
   // compile the code so we get a source map
   const { code, map } = compile(expression, { name: 'src' });
-  t.log(code)
+  t.log(code);
   let error: any;
   try {
     await run(code, {}, { sourceMap: map });
@@ -131,8 +164,8 @@ fn((s) => z)`;
     error = e;
   }
 
-  const newZPosition = code.split('\n')[1].indexOf('z')
-  t.is(newZPosition, 26)
+  const newZPosition = code.split('\n')[1].indexOf('z');
+  t.is(newZPosition, 26);
 
   // validate that this is the error we're expecting
   t.is(error.subtype, 'ReferenceError');
@@ -141,14 +174,17 @@ fn((s) => z)`;
   // TODO note this is un-mapped at the moment
   t.deepEqual(error.pos, {
     line: 2,
-    col: 11, // 1-based
+    column: 27,
   });
 
   // Positions must be mapped in the stacktrace too
-  t.is(error.stack, `ReferenceError: z is not defined
-    at vm:module(0):2:11
+  t.is(
+    error.stack,
+    `ReferenceError: z is not defined
+    at vm:module(0):2:27
     at fn (vm:module(0):1:25)
-    at vm:module(0):2:1`)
+    at vm:module(0):2:17`
+  );
 });
 
 test('crash on eval with SecurityError', async (t) => {
@@ -253,10 +289,13 @@ test('fail on runtime TypeError', async (t) => {
     subtype: 'TypeError',
     severity: 'fail',
     source: 'runtime',
+    pos: {
+      column: 28,
+      line: 1,
+    },
   });
 });
 
-// TODO not totally convinced on this one actually
 test('fail on runtime error with RangeError', async (t) => {
   const expression =
     'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
@@ -272,6 +311,10 @@ test('fail on runtime error with RangeError', async (t) => {
     subtype: 'RangeError',
     severity: 'fail',
     source: 'runtime',
+    pos: {
+      column: 47,
+      line: 1,
+    },
   });
 });
 

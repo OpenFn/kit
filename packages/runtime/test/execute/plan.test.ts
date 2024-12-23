@@ -1169,6 +1169,10 @@ test('steps cannot pass functions to each other', async (t) => {
     name: 'RuntimeError',
     subtype: 'TypeError',
     message: 'TypeError: s.data.x is not a function',
+    pos: {
+      column: 29,
+      line: 2,
+    },
   });
 });
 

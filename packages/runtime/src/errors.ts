@@ -1,4 +1,4 @@
-import { ErrorPosition } from "./types";
+import { ErrorPosition } from './types';
 
 export function assertImportError(e: any) {
   if (e.name === 'ImportError') {
@@ -48,21 +48,28 @@ export function assertAdaptorError(e: any) {
 // this function will pull the line/col information back out of it
 export const extractPosition = (e: Error) => {
   if (e.stack) {
-    const [_message, frame1] = e.stack.split('\n');
-
-    return extractPositionForFrame(frame1);
+    const [_message, ...frames] = e.stack.split('\n');
+    while (frames.length) {
+      const pos = extractPositionForFrame(frames.shift()!);
+      if (pos) {
+        return pos;
+      }
+    }
   }
 };
 
-// TODO move out into utils?
-export const extractPositionForFrame = (frame: string): ErrorPosition => {
-  // find the line:col at the end
+export const extractPositionForFrame = (
+  frame: string
+): ErrorPosition | undefined => {
+  // find the line:col at the end of the line
   // structures here https://nodejs.org/api/errors.html#errorstack
-  const parts = frame.split(':');
-  return {
-    column: parseInt(parts.pop()!.replace(')', '')),
-    line: parseInt(parts.pop()!),
-  };
+  if (frame.match(/\d+:\d+/)) {
+    const parts = frame.split(':');
+    return {
+      column: parseInt(parts.pop()!.replace(')', '')),
+      line: parseInt(parts.pop()!),
+    };
+  }
 };
 
 export const extractStackTrace = (e: Error) => {
@@ -72,14 +79,14 @@ export const extractStackTrace = (e: Error) => {
     const vmFrames = [];
     for (const frame of frames) {
       // TODO: what if we rename the VM?
-      if (frame.includes("vm:module")) {
-        vmFrames.push(frame)
+      if (frame.includes('vm:module')) {
+        vmFrames.push(frame);
       } else {
         break;
       }
     }
 
-    return [message, ...vmFrames].join('\n')
+    return [message, ...vmFrames].join('\n');
   }
 };
 
@@ -87,8 +94,8 @@ export const extractStackTrace = (e: Error) => {
 export class RTError extends Error {
   source = 'runtime';
   name: string = 'Error';
-  pos?: ErrorPosition = undefined;
-  step?: string = undefined;
+  pos?: ErrorPosition;
+  step?: string;
 
   constructor() {
     super();
@@ -145,7 +152,7 @@ export class RuntimeCrash extends RTError {
     super();
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
-    
+
     this.pos = extractPosition(error);
     this.stack = extractStackTrace(error);
   }

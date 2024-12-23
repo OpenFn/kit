@@ -20,7 +20,6 @@ export type ErrorPosition = {
   line: number;
   column: number;
   src?: string; // the source line for this error
-  step?: string; // the name of the step that threw this error
 };
 
 export type CompiledEdge =

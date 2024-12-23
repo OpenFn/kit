@@ -14,7 +14,7 @@ import {
   NOTIFY_JOB_START,
 } from '../events';
 import { isNullState } from '../util/null-state';
-import sourcemapErrors from '../util/sourcemap-errors'
+import sourcemapErrors from '../util/sourcemap-errors';
 
 const loadCredentials = async (
   job: Job,
@@ -163,7 +163,6 @@ const executeStep = async (
     try {
       // TODO include the upstream job?
       notify(NOTIFY_JOB_START, { jobId });
-      debugger;
       result = await executeExpression(ctx, job.expression, state, step.linker);
     } catch (e: any) {
       didError = true;
@@ -178,12 +177,12 @@ const executeStep = async (
         // Whatever the final state was, save that as the initial state to the next thing
         result = state;
 
-        await sourcemapErrors(job, error)
+        await sourcemapErrors(job, error);
 
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
-        
+
         // TODO should we add positional information here?
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
@@ -239,7 +238,6 @@ const executeStep = async (
     // calculate next for trigger nodes
     next = calculateNext(step, result, logger);
   }
-
   if (next.length && !didError && !result) {
     logger.warn(
       `WARNING: step ${stepId} did not return a state object. This may cause downstream jobs to fail.`
