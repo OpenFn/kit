@@ -33,12 +33,17 @@ type RawOptions = Omit<Options, 'linker'> & {
 // Log nothing by default
 const defaultLogger = createMockLogger();
 
-const loadPlanFromString = (expression: string, logger: Logger) => {
+const loadPlanFromString = (
+  expression: string,
+  logger: Logger,
+  sourceMap?: SourceMap
+) => {
   const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
           expression,
+          sourceMap,
         },
       ],
     },
@@ -59,7 +64,7 @@ const run = (
   const logger = opts.logger || defaultLogger;
 
   if (typeof xplan === 'string') {
-    xplan = loadPlanFromString(xplan, logger);
+    xplan = loadPlanFromString(xplan, logger, opts.sourceMap);
   }
 
   if (!xplan.options) {

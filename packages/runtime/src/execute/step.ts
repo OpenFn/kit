@@ -178,12 +178,9 @@ const executeStep = async (
         result = state;
 
         await sourcemapErrors(job, error);
-
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
-
-        // TODO should we add positional information here?
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
           error,

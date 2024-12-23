@@ -61,9 +61,6 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
         logger.print();
         logger.print(src);
         logger.print(pointer.join(''));
-
-        // Don't serialize position information with the error
-        delete error.pos;
       }
     } else {
       logger.error(error.message);
