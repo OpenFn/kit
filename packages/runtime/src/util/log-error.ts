@@ -58,9 +58,11 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
         const pointer = new Array(src.length).fill(' ');
         pointer[error.pos.column - 1] = '^';
 
-        logger.print();
-        logger.print(src);
-        logger.print(pointer.join(''));
+        const prefix = `${error.pos.line}: `;
+
+        logger.error();
+        logger.error(`${prefix}${src}`);
+        logger.error(`${prefix.replace(/./g, ' ')}${pointer.join('')}`);
       }
     } else {
       logger.error(error.message);
