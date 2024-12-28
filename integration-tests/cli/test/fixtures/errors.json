@@ -1,0 +1,21 @@
+{
+  "workflow": {
+    "steps": [
+      {
+        "id": "ref",
+        "adaptor": "common",
+        "expression": "fn((state) => state.x.y)"
+      },
+      {
+        "id": "not-function",
+        "adaptor": "common",
+        "expression": "fn((state) => state())"
+      },
+      {
+        "id": "assign-const",
+        "adaptor": "common",
+        "expression": "fn((state) => {  const x = 10; x = 20; })"
+      }
+    ]
+  }
+}
