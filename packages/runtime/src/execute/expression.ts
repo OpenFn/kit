@@ -138,29 +138,31 @@ export const wrapOperation = (
       result = await fn(newState);
     } catch (e: any) {
       if (e.stack) {
+        const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
+
         // Is this an error from inside adaptor code?
         const frames = e.stack.split('\n');
         frames.shift(); // remove the first line
 
-        let frame;
+        let firstFrame;
 
         // find the first error from a file or the VM
         // (this cuts out low level language errors and stuff)
         do {
           const next = frames.shift();
           if (/^\s+at (file:\/\/)|(vm:module)/.test(next)) {
-            frame = next;
+            firstFrame = next;
             break;
           }
         } while (frames.length);
 
         // If that error did NOT come from the VM stack, it's an adaptor error
         // This is a little sketchy for nested operations
-        if (!frame.match(/at vm:module\(0\)/)) {
-          // If we get to here, we need to create an adaptor error
-          // and map it to the closest top-level operation
+        if (!firstFrame.match(/at vm:module\(0\)/)) {
+          // If there is no vm stuff in the stack, attribute
+          // the error position to the correct operation in the sourcemap
           let line, operationName;
-          if (sourceMap?.operations) {
+          if (!containsVMFrame && sourceMap?.operations) {
             const position = sourceMap?.operations[index];
             line = position?.line;
             operationName = position?.name;

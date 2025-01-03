@@ -38,11 +38,11 @@ export function assertAdaptorError(e: any) {
 
 // v8 only returns positional information as a string
 // this function will pull the line/col information back out of it
-export const extractPosition = (e: Error) => {
+export const extractPosition = (e: Error, vmOnly = false) => {
   if (e.stack) {
     const [_message, ...frames] = e.stack.split('\n');
     while (frames.length) {
-      const pos = extractPositionForFrame(frames.shift()!);
+      const pos = extractPositionForFrame(frames.shift()!, vmOnly);
       if (pos) {
         return pos;
       }
@@ -51,8 +51,13 @@ export const extractPosition = (e: Error) => {
 };
 
 export const extractPositionForFrame = (
-  frame: string
+  frame: string,
+  vmOnly = false
 ): ErrorPosition | undefined => {
+  if (vmOnly && !frame.match(/vm:module\(0\)/)) {
+    return;
+  }
+
   // find the line:col at the end of the line
   // structures here https://nodejs.org/api/errors.html#errorstack
   if (frame.match(/\d+:\d+/)) {
@@ -180,14 +185,21 @@ export class AdaptorError extends RTError {
   severity = 'fail';
   message: string = '';
   details: any;
-  line: number = -1;
-  operationName: string = '';
+
+  line?: number;
+  operationName?: string;
 
   constructor(error: any, line?: number, operationName?: string) {
     super();
     if (!isNaN(line!)) {
       this.line = line!;
+    } else {
+      // If no line/operation was passed,
+      // try and extract a position from the stack trace
+      this.pos = extractPosition(error, true);
+      this.stack = extractStackTrace(error);
     }
+
     if (operationName) {
       this.operationName = operationName;
     }

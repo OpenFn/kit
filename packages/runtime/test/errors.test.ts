@@ -23,7 +23,7 @@ test('extractPosition: basic test', (t) => {
  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
   };
 
-  const pos = extractPosition(fakeError);
+  const pos = extractPosition(fakeError as Error);
 
   t.deepEqual(pos, {
     line: 25,
@@ -38,11 +38,27 @@ test("extractPosition: find errors which aren't on line 1", (t) => {
   at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
   };
 
-  const pos = extractPosition(fakeError);
+  const pos = extractPosition(fakeError as Error);
 
   t.deepEqual(pos, {
     line: 25,
     column: 15,
+  });
+});
+
+test('extractPosition: only include vm frames', (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15),
+  at vm:module(0):2:17`,
+  };
+
+  const pos = extractPosition(fakeError as Error, true);
+
+  t.deepEqual(pos, {
+    line: 2,
+    column: 17,
   });
 });
 
@@ -53,7 +69,7 @@ test("extractPosition: return undefined if there's no position", (t) => {
   at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts)`,
   };
 
-  const pos = extractPosition(fakeError);
+  const pos = extractPosition(fakeError as Error);
 
   t.falsy(pos);
 });
@@ -71,7 +87,7 @@ test('extractStackTrace: basic test', (t) => {
     at async file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:21:45`,
   };
 
-  const stack = extractStackTrace(fakeError);
+  const stack = extractStackTrace(fakeError as Error);
 
   t.is(
     stack,
@@ -348,7 +364,7 @@ test('fail on user error with throw "abort"', async (t) => {
   });
 });
 
-test('fail on adaptor error (with throw new Error())', async (t) => {
+test('fail on adaptor error and map to the top operation', async (t) => {
   const expression = `
 
   err();`;
@@ -394,7 +410,7 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   });
 });
 
-test('fail on nested adaptor error', async (t) => {
+test('fail on nested adaptor error and map to a position in the vm', async (t) => {
   // have to use try/catch or we'll get an unhandled rejection error
   // TODO does this need wider testing?
   const expression = `
@@ -443,11 +459,12 @@ test('fail on nested adaptor error', async (t) => {
     name: 'AdaptorError',
     source: 'runtime',
     severity: 'fail',
-    // In this case right now the error will report back on the parent operation
-    // which is fn() on line 2 - even though the actual error occurred in the callback
-    // on line 4
-    line: 2,
-    operationName: 'fn',
+    step: 'job-1',
+    pos: {
+      column: 20,
+      line: 4,
+      src: '        await err()(state);',
+    },
   });
 });
 
