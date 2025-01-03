@@ -8,6 +8,10 @@ import type { Transformer } from '../transform';
 // Note that the validator should complain if it see anything other than export default []
 // What is the relationship between the validator and the compiler?
 
+export type ExtendedProgram = NodePath<namedTypes.Program> & {
+  operations: Array<{ line: number; name: string; order: number }>;
+};
+
 export type TopLevelOpsOptions = {
   // Wrap operations in a `(state) => op` wrapper
   wrap: boolean; // TODO
@@ -25,6 +29,8 @@ function visitor(path: NodePath<namedTypes.CallExpression>) {
     (n.Identifier.check(path.node.callee) ||
       n.MemberExpression.check(path.node.callee))
   ) {
+    appendOperationMetadata(path, root as unknown as ExtendedProgram);
+
     // Now Find the top level exports array
     const target = root.body.at(-1);
     if (
@@ -43,6 +49,26 @@ function visitor(path: NodePath<namedTypes.CallExpression>) {
 
   // if not (for now) we should cancel traversal
   // (should we only cancel traversal for this visitor?)
+}
+
+// Add metadata to each operation for:
+// - the order (do we know? We can guess from the state of the exports array
+// - the name of the operation
+// - the original line number (do we know?)
+function appendOperationMetadata(
+  path: NodePath<namedTypes.CallExpression>,
+  root: ExtendedProgram
+) {
+  if (!root.operations) {
+    root.operations = [];
+  }
+
+  const { operations } = root;
+  const order = operations.length + 1;
+  const name = path.value.callee.name;
+  const line = path.value.loc?.start.line ?? -1;
+
+  operations.push({ line, order, name });
 }
 
 export default {
