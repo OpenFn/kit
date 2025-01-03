@@ -31,9 +31,10 @@ test('generate a source map with operations', (t) => {
 test('generate a named source map if a file name is passed', (t) => {
   const source = 'fn();';
   const { map } = compile(source, { name: 'job' });
+
   t.truthy(map);
-  t.deepEqual(map.sources, ['job.js']);
-  t.is(map.file, 'job.map.js');
+  t.deepEqual(map!.sources, ['job.js']);
+  t.is(map!.file, 'job.map.js');
 });
 
 test('ensure default exports is created', (t) => {
