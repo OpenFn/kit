@@ -46,7 +46,7 @@ export interface Job extends Step {
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
 
-  sourceMap?: SourceMap;
+  sourceMap?: SourceMapWithOperations;
 
   // Internal use only
   // Allow module paths and versions to be overridden in the linker
