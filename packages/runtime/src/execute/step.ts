@@ -163,7 +163,13 @@ const executeStep = async (
     try {
       // TODO include the upstream job?
       notify(NOTIFY_JOB_START, { jobId });
-      result = await executeExpression(ctx, job.expression, state, step.linker);
+      result = await executeExpression(
+        ctx,
+        job.expression,
+        state,
+        step.linker,
+        job.sourceMap
+      );
     } catch (e: any) {
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {

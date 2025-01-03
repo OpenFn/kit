@@ -8,18 +8,33 @@ import compile from '../src/compile';
 test('generate a source map', (t) => {
   const source = 'fn();';
   const { map } = compile(source);
+
   t.truthy(map);
-  t.deepEqual(map.sources, ['src.js']);
-  t.is(map.file, 'src.map.js');
+  t.deepEqual(map!.sources, ['src.js']);
+  t.is(map!.file, 'src.map.js');
 });
 
+test('generate a source map with operations', (t) => {
+  const source = 'fn();';
+  const { map } = compile(source);
+
+  t.truthy(map);
+  t.deepEqual(map!.operations, [
+    {
+      name: 'fn',
+      order: 1,
+      line: 1,
+    },
+  ]);
+});
 
 test('generate a named source map if a file name is passed', (t) => {
   const source = 'fn();';
   const { map } = compile(source, { name: 'job' });
+
   t.truthy(map);
-  t.deepEqual(map.sources, ['job.js']);
-  t.is(map.file, 'job.map.js');
+  t.deepEqual(map!.sources, ['job.js']);
+  t.is(map!.file, 'job.map.js');
 });
 
 test('ensure default exports is created', (t) => {

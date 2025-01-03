@@ -1,5 +1,11 @@
 import { SanitizePolicies } from '@openfn/logger';
-import type { RawSourceMap } from 'source-map'
+import type { RawSourceMap } from 'source-map';
+
+export type SourceMap = RawSourceMap;
+
+export type SourceMapWithOperations = RawSourceMap & {
+  operations: [{ line: number; order: number; name: string }];
+};
 
 /**
  * An execution plan is a portable definition of a Work Order,
@@ -40,7 +46,7 @@ export interface Job extends Step {
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
 
-  sourceMap?: SourceMap
+  sourceMap?: SourceMapWithOperations;
 
   // Internal use only
   // Allow module paths and versions to be overridden in the linker

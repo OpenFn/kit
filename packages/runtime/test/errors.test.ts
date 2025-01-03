@@ -23,7 +23,7 @@ test('extractPosition: basic test', (t) => {
  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
   };
 
-  const pos = extractPosition(fakeError);
+  const pos = extractPosition(fakeError as Error);
 
   t.deepEqual(pos, {
     line: 25,
@@ -38,11 +38,27 @@ test("extractPosition: find errors which aren't on line 1", (t) => {
   at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
   };
 
-  const pos = extractPosition(fakeError);
+  const pos = extractPosition(fakeError as Error);
 
   t.deepEqual(pos, {
     line: 25,
     column: 15,
+  });
+});
+
+test('extractPosition: only include vm frames', (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15),
+  at vm:module(0):2:17`,
+  };
+
+  const pos = extractPosition(fakeError as Error, true);
+
+  t.deepEqual(pos, {
+    line: 2,
+    column: 17,
   });
 });
 
@@ -53,7 +69,7 @@ test("extractPosition: return undefined if there's no position", (t) => {
   at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts)`,
   };
 
-  const pos = extractPosition(fakeError);
+  const pos = extractPosition(fakeError as Error);
 
   t.falsy(pos);
 });
@@ -71,7 +87,7 @@ test('extractStackTrace: basic test', (t) => {
     at async file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:21:45`,
   };
 
-  const stack = extractStackTrace(fakeError);
+  const stack = extractStackTrace(fakeError as Error);
 
   t.is(
     stack,
@@ -348,13 +364,26 @@ test('fail on user error with throw "abort"', async (t) => {
   });
 });
 
-test('fail on adaptor error (with throw new Error())', async (t) => {
+test('fail on adaptor error and map to the top operation', async (t) => {
   const expression = `
-  import { err } from 'x';
-  export default [(s) => err()];
-  `;
+
+  err();`;
+
+  // Compile the code so that we get a source map
+  const { code, map } = compile(expression, {
+    name: 'src',
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'x',
+          exportAll: true,
+        },
+      ],
+    },
+  });
+
   const result: any = await run(
-    expression,
+    code,
     {},
     {
       linker: {
@@ -362,6 +391,60 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
           x: { path: path.resolve('test/__modules__/test') },
         },
       },
+      sourceMap: map,
+    }
+  );
+
+  const error = result.errors['job-1'];
+
+  t.deepEqual(error, {
+    details: {
+      code: 1234,
+    },
+    message: 'adaptor err',
+    name: 'AdaptorError',
+    source: 'runtime',
+    severity: 'fail',
+    line: 3,
+    operationName: 'err',
+  });
+});
+
+test('fail on nested adaptor error and map to a position in the vm', async (t) => {
+  // have to use try/catch or we'll get an unhandled rejection error
+  // TODO does this need wider testing?
+  const expression = `
+    fn(async (state) => {
+      try {  
+        await err()(state);
+      } catch(e) {
+        throw e;
+      }
+    })`;
+
+  // Compile the code so that we get a source map
+  const { code, map } = compile(expression, {
+    name: 'src',
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'x',
+          exportAll: true,
+        },
+      ],
+    },
+  });
+
+  const result: any = await run(
+    code,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+      sourceMap: map,
     }
   );
 
@@ -376,6 +459,12 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
     name: 'AdaptorError',
     source: 'runtime',
     severity: 'fail',
+    step: 'job-1',
+    pos: {
+      column: 20,
+      line: 4,
+      src: '        await err()(state);',
+    },
   });
 });
 

@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@openfn/describe-package": "workspace:*",
+    "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "acorn": "^8.8.0",
     "ast-types": "^0.14.2",

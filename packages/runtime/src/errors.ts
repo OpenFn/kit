@@ -28,29 +28,21 @@ export function assertSecurityKill(e: any) {
   }
 }
 
+// Adaptor errors are caught and generated deep inside the runtime
+// So they're easy to detect and we just re-throw them here
 export function assertAdaptorError(e: any) {
-  if (e.stack) {
-    // parse the stack
-    const frames = e.stack.split('\n');
-    frames.shift(); // remove the first line
-
-    const first = frames.shift();
-
-    // For now, we assume this is adaptor code if it has not come directly from the vm
-    // TODO: how reliable is this? Can we get a better heuristic?
-    if (first && !first.match(/at vm:module\(0\)/)) {
-      throw new AdaptorError(e);
-    }
+  if (e.name === 'AdaptorError') {
+    throw e;
   }
 }
 
 // v8 only returns positional information as a string
 // this function will pull the line/col information back out of it
-export const extractPosition = (e: Error) => {
+export const extractPosition = (e: Error, vmOnly = false) => {
   if (e.stack) {
     const [_message, ...frames] = e.stack.split('\n');
     while (frames.length) {
-      const pos = extractPositionForFrame(frames.shift()!);
+      const pos = extractPositionForFrame(frames.shift()!, vmOnly);
       if (pos) {
         return pos;
       }
@@ -59,8 +51,13 @@ export const extractPosition = (e: Error) => {
 };
 
 export const extractPositionForFrame = (
-  frame: string
+  frame: string,
+  vmOnly = false
 ): ErrorPosition | undefined => {
+  if (vmOnly && !frame.match(/vm:module\(0\)/)) {
+    return;
+  }
+
   // find the line:col at the end of the line
   // structures here https://nodejs.org/api/errors.html#errorstack
   if (frame.match(/\d+:\d+/)) {
@@ -101,6 +98,9 @@ export class RTError extends Error {
     super();
 
     // automatically limit the stacktrace (?)
+    // TODO: actually what we want here is to online include frames
+    // from inside the VM
+    // Anything outside the VM should be cut
     Error.captureStackTrace(this, RTError.constructor);
   }
 }
@@ -185,8 +185,25 @@ export class AdaptorError extends RTError {
   severity = 'fail';
   message: string = '';
   details: any;
-  constructor(error: any) {
+
+  line?: number;
+  operationName?: string;
+
+  constructor(error: any, line?: number, operationName?: string) {
     super();
+    if (!isNaN(line!)) {
+      this.line = line!;
+    } else {
+      // If no line/operation was passed,
+      // try and extract a position from the stack trace
+      this.pos = extractPosition(error, true);
+      this.stack = extractStackTrace(error);
+    }
+
+    if (operationName) {
+      this.operationName = operationName;
+    }
+
     this.details = error;
     if (typeof error === 'string') {
       this.message = error;

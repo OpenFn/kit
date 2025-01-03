@@ -12,9 +12,6 @@ import {
   NOTIFY_STATE_LOAD,
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
-import { RawSourceMap } from 'source-map';
-
-export type SourceMap = RawSourceMap;
 
 export type ErrorPosition = {
   line: number;
@@ -67,7 +64,6 @@ export type ExecutionContext = {
   plan: CompiledExecutionPlan;
   logger: Logger;
   opts: Options;
-  sourceMap?: SourceMap;
   report: ErrorReporter;
   notify: NotifyHandler;
 };

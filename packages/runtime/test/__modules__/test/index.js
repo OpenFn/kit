@@ -3,9 +3,11 @@ export const x = 'test';
 export default x;
 
 export const err = () => {
-  const e = new Error('adaptor err');
-  e.code = 1234;
-  throw e;
+  return async (state) => {
+    const e = new Error('adaptor err');
+    e.code = 1234;
+    throw e;
+  };
 };
 
 export const err2 = () => {
@@ -22,3 +24,5 @@ export function call(fn) {
     }
   };
 }
+
+export const fn = (f) => (state) => f(state);

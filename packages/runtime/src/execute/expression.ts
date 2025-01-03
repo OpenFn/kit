@@ -1,5 +1,9 @@
 import { printDuration, Logger } from '@openfn/logger';
-import type { Operation, State } from '@openfn/lexicon';
+import type {
+  Operation,
+  SourceMapWithOperations,
+  State,
+} from '@openfn/lexicon';
 
 import loadModule from '../modules/module-loader';
 import { Options } from '../runtime';
@@ -15,6 +19,7 @@ import {
   assertRuntimeCrash,
   assertRuntimeError,
   assertSecurityKill,
+  AdaptorError,
 } from '../errors';
 import type { JobModule, ExecutionContext } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
@@ -36,7 +41,8 @@ export default (
   input: State,
   // allow custom linker options to be passed for this step
   // this lets us use multiple versions of the same adaptor in a workflow
-  moduleOverrides?: ModuleInfoMap
+  moduleOverrides?: ModuleInfoMap,
+  sourceMap?: SourceMapWithOperations
 ) => {
   return new Promise(async (resolve, reject) => {
     let duration = Date.now();
@@ -56,7 +62,14 @@ export default (
       // Create the main reducer function
       const reducer = (execute || defaultExecute)(
         ...operations.map((op, idx) =>
-          wrapOperation(op, logger, `${idx + 1}`, opts.immutableState)
+          wrapOperation(
+            op,
+            logger,
+            `${idx + 1}`,
+            idx,
+            opts.immutableState,
+            sourceMap
+          )
         )
       );
 
@@ -86,11 +99,11 @@ export default (
       duration = Date.now() - duration;
       let finalError;
       try {
+        assertAdaptorError(e);
         assertImportError(e);
         assertRuntimeError(e);
         assertRuntimeCrash(e);
         assertSecurityKill(e);
-        assertAdaptorError(e);
         finalError = new JobError(e);
       } catch (e) {
         finalError = e;
@@ -101,12 +114,13 @@ export default (
   });
 };
 
-// // Wrap an operation with various useful stuff
 export const wrapOperation = (
   fn: Operation,
   logger: Logger,
   name: string,
-  immutableState?: boolean
+  index: number,
+  immutableState?: boolean,
+  sourceMap?: SourceMapWithOperations
 ) => {
   return async (state: State) => {
     logger.debug(`Starting operation ${name}`);
@@ -119,11 +133,53 @@ export const wrapOperation = (
     }
     const newState = immutableState ? clone(state) : state;
 
-    let result = await fn(newState);
+    let result;
+    try {
+      result = await fn(newState);
+    } catch (e: any) {
+      if (e.stack) {
+        const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
+
+        // Is this an error from inside adaptor code?
+        const frames = e.stack.split('\n');
+        frames.shift(); // remove the first line
+
+        let firstFrame;
+
+        // find the first error from a file or the VM
+        // (this cuts out low level language errors and stuff)
+        do {
+          const next = frames.shift();
+          if (/^\s+at (file:\/\/)|(vm:module)/.test(next)) {
+            firstFrame = next;
+            break;
+          }
+        } while (frames.length);
+
+        // If that error did NOT come from the VM stack, it's an adaptor error
+        // This is a little sketchy for nested operations
+        if (!firstFrame.match(/at vm:module\(0\)/)) {
+          // If there is no vm stuff in the stack, attribute
+          // the error position to the correct operation in the sourcemap
+          let line, operationName;
+          if (!containsVMFrame && sourceMap?.operations) {
+            const position = sourceMap?.operations[index];
+            line = position?.line;
+            operationName = position?.name;
+          }
+
+          const error = new AdaptorError(e, line, operationName);
+          throw error;
+        }
+      }
+
+      // Just re-throw the error to be handled elsewhere
+      throw e;
+    }
 
     if (!result) {
       logger.debug(`Warning: operation ${name} did not return state`);
-      result = createNullState();
+      result = createNullState() as unknown as State;
     }
 
     // TODO should we warn if an operation does not return state?
