@@ -95,7 +95,6 @@ export default (
 
       resolve(result);
     } catch (e: any) {
-      debugger;
       // whatever initial state looks like now, clean it and report it back
       duration = Date.now() - duration;
       let finalError;
@@ -149,7 +148,6 @@ export const wrapOperation = (
         // (this cuts out low level language errors and stuff)
         do {
           const next = frames.shift();
-          debugger;
           if (/^\s+at (file:\/\/)|(vm:module)/.test(next)) {
             frame = next;
             break;

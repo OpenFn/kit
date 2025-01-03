@@ -79,7 +79,6 @@ const prepareFinalState = (
   logger: Logger,
   statePropsToRemove?: string[]
 ) => {
-  debugger;
   if (isNullState(state)) return undefined;
   if (state) {
     if (!statePropsToRemove) {
