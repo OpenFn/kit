@@ -1,12 +1,16 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
-import { getModulePath, SourceMap } from '@openfn/runtime';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import { getModulePath } from '@openfn/runtime';
+import type {
+  ExecutionPlan,
+  Job,
+  SourceMapWithOperations,
+} from '@openfn/lexicon';
 
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';
 import type { CompileOptions } from './command';
 
-export type CompiledJob = { code: string; map?: SourceMap };
+export type CompiledJob = { code: string; map?: SourceMapWithOperations };
 
 export default async function (
   job: ExecutionPlan,
