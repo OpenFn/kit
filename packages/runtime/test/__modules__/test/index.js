@@ -3,9 +3,12 @@ export const x = 'test';
 export default x;
 
 export const err = () => {
-  const e = new Error('adaptor err');
-  e.code = 1234;
-  throw e;
+  return async (state) => {
+    debugger;
+    const e = new Error('adaptor err');
+    e.code = 1234;
+    throw e;
+  };
 };
 
 export const err2 = () => {

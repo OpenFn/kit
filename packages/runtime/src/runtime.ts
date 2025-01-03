@@ -1,6 +1,10 @@
 import { createMockLogger, Logger } from '@openfn/logger';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
-import type { ExecutionCallbacks, SourceMap } from './types';
+import type {
+  ExecutionPlan,
+  State,
+  SourceMapWithOperations,
+} from '@openfn/lexicon';
+import type { ExecutionCallbacks } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
 import { defaultState, parseRegex, clone } from './util/index';
@@ -21,7 +25,10 @@ export type Options = {
   globals?: any;
   statePropsToRemove?: string[];
   defaultRunTimeoutMs?: number;
-  sourceMap?: SourceMap;
+
+  // SourceMap is only passed directly if the expression is a string
+  // Usually a sourcemap is passed on a step
+  sourceMap?: SourceMapWithOperations;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
@@ -36,7 +43,7 @@ const defaultLogger = createMockLogger();
 const loadPlanFromString = (
   expression: string,
   logger: Logger,
-  sourceMap?: SourceMap
+  sourceMap?: SourceMapWithOperations
 ) => {
   const plan: ExecutionPlan = {
     workflow: {

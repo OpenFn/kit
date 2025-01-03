@@ -64,10 +64,18 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
         logger.error(`${prefix}${src}`);
         logger.error(`${prefix.replace(/./g, ' ')}${pointer.join('')}`);
       }
+    } else if (error.line && error.operationName) {
+      // handle adaptor errors where we don't have a position that corresponds nicely to the sourcemapped code
+      logger.error(
+        `Error reported by "${error.operationName}()" operation line ${error.line}:`
+      );
+      logger.error(error.message);
     } else {
       logger.error(error.message);
     }
 
+    // TODO we probably don't want to show all of this serialized error
+    // details if it exists, maybe source and severity but probably not?
     const serializedError = serialize(error);
     logger.error(serializedError);
 

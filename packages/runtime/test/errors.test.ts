@@ -350,11 +350,24 @@ test('fail on user error with throw "abort"', async (t) => {
 
 test('fail on adaptor error (with throw new Error())', async (t) => {
   const expression = `
-  import { err } from 'x';
-  export default [(s) => err()];
-  `;
+
+  err();`;
+
+  // Compile the code so that we get a source map
+  const { code, map } = compile(expression, {
+    name: 'src',
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'x',
+          exportAll: true,
+        },
+      ],
+    },
+  });
+
   const result: any = await run(
-    expression,
+    code,
     {},
     {
       linker: {
@@ -362,11 +375,11 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
           x: { path: path.resolve('test/__modules__/test') },
         },
       },
+      sourceMap: map,
     }
   );
 
   const error = result.errors['job-1'];
-  t.log(error);
 
   t.deepEqual(error, {
     details: {
@@ -376,6 +389,8 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
     name: 'AdaptorError',
     source: 'runtime',
     severity: 'fail',
+    line: 3,
+    operationName: 'err',
   });
 });
 

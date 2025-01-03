@@ -28,19 +28,11 @@ export function assertSecurityKill(e: any) {
   }
 }
 
+// Adaptor errors are caught and generated deep inside the runtime
+// So they're easy to detect and we just re-throw them here
 export function assertAdaptorError(e: any) {
-  if (e.stack) {
-    // parse the stack
-    const frames = e.stack.split('\n');
-    frames.shift(); // remove the first line
-
-    const first = frames.shift();
-
-    // For now, we assume this is adaptor code if it has not come directly from the vm
-    // TODO: how reliable is this? Can we get a better heuristic?
-    if (first && !first.match(/at vm:module\(0\)/)) {
-      throw new AdaptorError(e);
-    }
+  if (e.name === 'AdaptorError') {
+    throw e;
   }
 }
 
@@ -150,6 +142,7 @@ export class RuntimeCrash extends RTError {
 
   constructor(error: Error) {
     super();
+    console.log(error);
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
 
@@ -185,8 +178,18 @@ export class AdaptorError extends RTError {
   severity = 'fail';
   message: string = '';
   details: any;
-  constructor(error: any) {
+  line: number = -1;
+  operationName: string = '';
+
+  constructor(error: any, line?: number, operationName?: string) {
     super();
+    if (!isNaN(line!)) {
+      this.line = line!;
+    }
+    if (operationName) {
+      this.operationName = operationName;
+    }
+
     this.details = error;
     if (typeof error === 'string') {
       this.message = error;

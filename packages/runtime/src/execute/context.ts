@@ -48,7 +48,7 @@ export default (
   return context;
 };
 
-// Special, highly restricted cotext for a plan condition
+// Special, highly restricted context for a plan condition
 // Ie, a javascript expression
 export const conditionContext = () => {
   const context = vm.createContext(
