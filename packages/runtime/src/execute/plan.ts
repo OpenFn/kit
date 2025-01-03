@@ -36,7 +36,6 @@ const executePlan = async (
     logger,
     report: createErrorReporter(logger),
     notify: opts.callbacks?.notify ?? (() => {}),
-    sourceMap: opts.sourceMap,
   };
 
   // Record of state on leaf nodes (nodes with no next)

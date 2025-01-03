@@ -42,7 +42,7 @@ export default (
   // allow custom linker options to be passed for this step
   // this lets us use multiple versions of the same adaptor in a workflow
   moduleOverrides?: ModuleInfoMap,
-  sourceMap: SourceMapWithOperations
+  sourceMap?: SourceMapWithOperations
 ) => {
   return new Promise(async (resolve, reject) => {
     let duration = Date.now();
@@ -115,20 +115,6 @@ export default (
   });
 };
 
-// Wrap an operation with various useful stuff
-// TODO: this function will have to catch an error thrown by adaptor code
-// and somehow relate it back to which operation call in the original source it was
-// This probably won't ever work for nested operations though?
-// The nested operation will just bubble up here to the top
-// If the error did NOT come from VM code, we need to map it back to the closest operation
-// and then all we can really say is: error thrown by the get on line 2
-// I have no idea how we're gonna relate this back though
-// Because it's an error in the returned function, not actually in the source
-// We should know the index of the operation here though - we know if it's the first, second or third
-// So the best we can hope for is:
-// - identify the nth operation that caught the error  and map that back to the source (not easy tbh)
-// - include the stack trace from WITHIN the adaptor code
-// Ie, I suppose, everything INSIDE the executeExpression call
 export const wrapOperation = (
   fn: Operation,
   logger: Logger,
