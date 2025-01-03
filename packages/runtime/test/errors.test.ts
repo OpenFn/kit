@@ -394,6 +394,63 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   });
 });
 
+test('fail on nested adaptor error', async (t) => {
+  // have to use try/catch or we'll get an unhandled rejection error
+  // TODO does this need wider testing?
+  const expression = `
+    fn(async (state) => {
+      try {  
+        await err()(state);
+      } catch(e) {
+        throw e;
+      }
+    })`;
+
+  // Compile the code so that we get a source map
+  const { code, map } = compile(expression, {
+    name: 'src',
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'x',
+          exportAll: true,
+        },
+      ],
+    },
+  });
+
+  const result: any = await run(
+    code,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/test') },
+        },
+      },
+      sourceMap: map,
+    }
+  );
+
+  const error = result.errors['job-1'];
+  t.log(error);
+
+  t.deepEqual(error, {
+    details: {
+      code: 1234,
+    },
+    message: 'adaptor err',
+    name: 'AdaptorError',
+    source: 'runtime',
+    severity: 'fail',
+    // In this case right now the error will report back on the parent operation
+    // which is fn() on line 2 - even though the actual error occurred in the callback
+    // on line 4
+    line: 2,
+    operationName: 'fn',
+  });
+});
+
 test('adaptor error with no stack trace will be a user error', async (t) => {
   // this will throw "adaptor err"
   // Since it has no stack trace, we don't really know a lot about it

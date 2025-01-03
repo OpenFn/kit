@@ -93,6 +93,9 @@ export class RTError extends Error {
     super();
 
     // automatically limit the stacktrace (?)
+    // TODO: actually what we want here is to online include frames
+    // from inside the VM
+    // Anything outside the VM should be cut
     Error.captureStackTrace(this, RTError.constructor);
   }
 }
@@ -142,7 +145,6 @@ export class RuntimeCrash extends RTError {
 
   constructor(error: Error) {
     super();
-    console.log(error);
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
 

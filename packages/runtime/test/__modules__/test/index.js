@@ -4,7 +4,6 @@ export default x;
 
 export const err = () => {
   return async (state) => {
-    debugger;
     const e = new Error('adaptor err');
     e.code = 1234;
     throw e;
@@ -25,3 +24,5 @@ export function call(fn) {
     }
   };
 }
+
+export const fn = (f) => (state) => f(state);

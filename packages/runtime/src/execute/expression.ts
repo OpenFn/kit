@@ -152,25 +152,43 @@ export const wrapOperation = (
     try {
       result = await fn(newState);
     } catch (e: any) {
-      // Is this an error from inside adaptor code?
-      const frames = e.stack?.split('\n');
-      frames.shift(); // remove the first line
+      if (e.stack) {
+        // Is this an error from inside adaptor code?
+        const frames = e.stack.split('\n');
+        frames.shift(); // remove the first line
 
-      const first = frames.shift();
+        let frame;
 
-      // For now, we assume this is adaptor code if it has NOT come directly from the vm
-      if (first && !first.match(/at vm:module\(0\)/)) {
-        // look at the source map for the operation at this index
-        let line, operationName;
-        if (sourceMap?.operations) {
-          const position = sourceMap?.operations[index];
-          line = position?.line;
-          operationName = position?.name;
+        // find the first error from a file or the VM
+        // (this cuts out low level language errors and stuff)
+        do {
+          const next = frames.shift();
+          debugger;
+          if (/^\s+at (file:\/\/)|(vm:module)/.test(next)) {
+            frame = next;
+            break;
+          }
+        } while (frames.length);
+
+        // If that error did NOT come from the VM stack, it's an adaptor error
+        // This is a little sketchy for nested operations
+        if (!frame.match(/at vm:module\(0\)/)) {
+          // If we get to here, we need to create an adaptor error
+          // and map it to the closest top-level operation
+          let line, operationName;
+          if (sourceMap?.operations) {
+            const position = sourceMap?.operations[index];
+            line = position?.line;
+            operationName = position?.name;
+          }
+
+          const error = new AdaptorError(e, line, operationName);
+          throw error;
         }
-
-        const error = new AdaptorError(e, line, operationName);
-        throw error;
       }
+
+      // Just re-throw the error to be handled elsewhere
+      throw e;
     }
 
     if (!result) {
