@@ -75,9 +75,14 @@ export const extractStackTrace = (e: Error) => {
 
     const vmFrames = [];
     for (const frame of frames) {
+      // Include vm frames
       // TODO: what if we rename the VM?
       if (frame.includes('vm:module')) {
         vmFrames.push(frame);
+      }
+      // Include adaptor stack frames (with local path removed)
+      if (frame.includes('@openfn/language-')) {
+        vmFrames.push('    ' + frame.split(/(@openfn\/language\-.*)/)[1]);
       } else {
         break;
       }
@@ -96,12 +101,6 @@ export class RTError extends Error {
 
   constructor() {
     super();
-
-    // automatically limit the stacktrace (?)
-    // TODO: actually what we want here is to online include frames
-    // from inside the VM
-    // Anything outside the VM should be cut
-    Error.captureStackTrace(this, RTError.constructor);
   }
 }
 
@@ -193,6 +192,7 @@ export class AdaptorError extends RTError {
     super();
     if (!isNaN(line!)) {
       this.line = line!;
+      this.stack = extractStackTrace(error);
     } else {
       // If no line/operation was passed,
       // try and extract a position from the stack trace
@@ -204,7 +204,10 @@ export class AdaptorError extends RTError {
       this.operationName = operationName;
     }
 
-    this.details = error;
+    this.details = {
+      type: error.name || error.type,
+      message: error.message,
+    };
     if (typeof error === 'string') {
       this.message = error;
     } else if (error.message) {
