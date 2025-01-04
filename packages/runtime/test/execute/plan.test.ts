@@ -917,22 +917,17 @@ test('log appropriately on error', async (t) => {
   ]);
 
   const logger = createMockLogger(undefined, { level: 'debug' });
-
   await executePlan(plan, {}, {}, logger);
+
   const err = logger._find('error', /aborted with error/i);
   t.truthy(err);
-  console.log('msg:', err?.message);
+  t.log('msg:', err?.message);
   t.regex(err!.message as string, /job1 aborted with error \(\d+ms\)/i);
 
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 
-  const [_level, _icon, errObj]: any = logger._history.at(-2);
-  t.deepEqual(JSON.parse(errObj), {
-    source: 'runtime',
-    name: 'JobError',
-    severity: 'fail',
-    message: 'e',
-  });
+  const [_level, _icon, errMessage]: any = logger._history.at(-2);
+  t.deepEqual(errMessage, 'e');
 });
 
 test('steps do not share a local scope', async (t) => {

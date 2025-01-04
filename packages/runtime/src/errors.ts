@@ -83,8 +83,6 @@ export const extractStackTrace = (e: Error) => {
       // Include adaptor stack frames (with local path removed)
       if (frame.includes('@openfn/language-')) {
         vmFrames.push('    ' + frame.split(/(@openfn\/language\-.*)/)[1]);
-      } else {
-        break;
       }
     }
 

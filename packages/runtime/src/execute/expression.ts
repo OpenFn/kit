@@ -158,7 +158,7 @@ export const wrapOperation = (
 
         // If that error did NOT come from the VM stack, it's an adaptor error
         // This is a little sketchy for nested operations
-        if (!firstFrame.match(/at vm:module\(0\)/)) {
+        if (firstFrame && !firstFrame.match(/at vm:module\(0\)/)) {
           // If there is no vm stuff in the stack, attribute
           // the error position to the correct operation in the sourcemap
           let line, operationName;

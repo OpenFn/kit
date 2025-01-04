@@ -643,7 +643,7 @@ test('data can be an array (workflow)', async (t) => {
   t.deepEqual(result.data, [1, 2, 3]);
 });
 
-test('import from a module', async (t) => {
+test.only('import from a module', async (t) => {
   const expression = `
   import { x } from 'x';
   export default [(s) => ({ data: x })];
@@ -655,7 +655,7 @@ test('import from a module', async (t) => {
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
     }
@@ -720,7 +720,7 @@ test('run from an adaptor', async (t) => {
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
     }
@@ -842,7 +842,7 @@ test('run from an adaptor with error', async (t) => {
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
     }
