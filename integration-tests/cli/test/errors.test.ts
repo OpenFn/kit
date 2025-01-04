@@ -152,11 +152,13 @@ test.serial('job with reference error', async (t) => {
 
   t.deepEqual(logs, [
     'ref aborted with error (SSSms)',
-    "TypeError: Cannot read properties of undefined (reading 'y') (1:23)",
+    `TypeError: Cannot read properties of undefined (reading 'y')
+    at vm:module(0):1:23
+    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    'Error occurred at: ref',
     '1: fn((state) => state.x.y)',
     '                         ^ ',
-    '[object Object]',
-    'Check state.errors.ref for details.',
+    'Check state.errors.ref for details',
   ]);
 });
 
@@ -170,11 +172,13 @@ test.serial('job with not a function error', async (t) => {
 
   t.deepEqual(logs, [
     'not-function aborted with error (SSSms)',
-    'TypeError: state is not a function (1:15)',
+    `TypeError: state is not a function
+    at vm:module(0):1:15
+    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    'Error occurred at: not-function',
     '1: fn((state) => state())',
     '                 ^       ',
-    '[object Object]',
-    'Check state.errors.not-function for details.',
+    'Check state.errors.not-function for details',
   ]);
 });
 
@@ -188,10 +192,12 @@ test.serial('job with assign-to-const error', async (t) => {
 
   t.deepEqual(logs, [
     'assign-const aborted with error (SSSms)',
-    'TypeError: Assignment to constant variable. (1:33)',
+    `TypeError: Assignment to constant variable.
+    at vm:module(0):1:33
+    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    'Error occurred at: assign-const',
     '1: fn((state) => {  const x = 10; x = 20; })',
     '                                   ^        ',
-    '[object Object]',
-    'Check state.errors.assign-const for details.',
+    'Check state.errors.assign-const for details',
   ]);
 });

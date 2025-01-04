@@ -50,12 +50,16 @@ export const mapStackTrace = async (
           line: pos.line!,
           column: pos.column!,
         });
-        newStack.push(
-          line.replace(
-            `${pos.line}:${pos.column}`,
-            `${originalPos.line}:${originalPos.column}`
-          )
-        );
+        if (originalPos.line && originalPos.column) {
+          newStack.push(
+            line.replace(
+              `${pos.line}:${pos.column}`,
+              `${originalPos.line}:${originalPos.column}`
+            )
+          );
+        } else {
+          newStack.push(line);
+        }
       }
     } catch (e) {
       // do nothing

@@ -113,7 +113,35 @@ test('should map positions in a stack trace', async (t) => {
   at vm:module(0):1:${src.indexOf('z')}
   at fn (vm:module(0):1:${src.indexOf('x')})`;
 
-  // TODO for some reason the result comes out on line 2, but there's only one original line of source?
-  // col mapping looks fine??
+  t.is(error.stack, mappedStack);
+});
+
+test("should preserve stack trace positions if it can't map them", async (t) => {
+  const src = `fn((x) => z)`;
+
+  // compile the code with a source map
+  const { map, code } = compile(src);
+
+  // create a fake job
+  const job = {
+    expression: code,
+    sourceMap: map,
+  };
+
+  const error = new RTError();
+  (error as any).pos = {
+    line: 2,
+    column: 2,
+  };
+
+  error.stack = `ReferenceError: z is not defined
+  at @openfn/language-http_6.5.1/dist/index.cjs:201:22
+  at fn ( @openfn/language-http_6.5.1/dist/index.cjs):1192:7`;
+
+  const mappedStack = error.stack;
+
+  await mapErrors(job, error);
+  t.log(error.stack);
+
   t.is(error.stack, mappedStack);
 });

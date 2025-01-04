@@ -88,7 +88,6 @@ test('extractStackTrace: basic test', (t) => {
   };
 
   const stack = extractStackTrace(fakeError as Error);
-
   t.is(
     stack,
     `ReferenceError: z is not defined
@@ -388,7 +387,7 @@ test('fail on adaptor error and map to the top operation', async (t) => {
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
       sourceMap: map,
@@ -400,6 +399,8 @@ test('fail on adaptor error and map to the top operation', async (t) => {
   t.deepEqual(error, {
     details: {
       code: 1234,
+      message: 'adaptor err',
+      type: 'Error',
     },
     message: 'adaptor err',
     name: 'AdaptorError',
@@ -441,7 +442,7 @@ test('fail on nested adaptor error and map to a position in the vm', async (t) =
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
       sourceMap: map,
@@ -454,6 +455,8 @@ test('fail on nested adaptor error and map to a position in the vm', async (t) =
   t.deepEqual(error, {
     details: {
       code: 1234,
+      message: 'adaptor err',
+      type: 'Error',
     },
     message: 'adaptor err',
     name: 'AdaptorError',
@@ -482,7 +485,7 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
     }

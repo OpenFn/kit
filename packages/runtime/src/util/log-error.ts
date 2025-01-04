@@ -24,9 +24,6 @@ const serialize = (error: any) => {
   return error;
 };
 
-// TODO this is really over complicated now
-// Because we're taking closer control of errors
-// we should be able to report more simply
 const createErrorReporter = (logger: Logger): ErrorReporter => {
   return (state, stepId, error: any) => {
     // TODO I don't think the report is useful anymore
@@ -45,13 +42,21 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       report.stack = error.stack as string;
     }
 
+    logger.break();
     if (error.severity === 'crash') {
-      logger.print();
       logger.error('CRITICAL ERROR! Aborting execution');
     }
 
     if (error.pos) {
-      logger.error(error.message, `(${error.pos.line}:${error.pos.column})`);
+      if (error.stack) {
+        // If there's a stack trace, log it (it'll include position, message and type)
+        logger.error(error.stack);
+        logger.break();
+      } else {
+        // If there's no stack trace, log the message and position
+        logger.error(error.message, `(${error.pos.line}:${error.pos.column})`);
+      }
+
       if (error.pos.src) {
         // Print the error line of code and a marker to the position
         const { src } = error.pos;
@@ -60,9 +65,22 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
 
         const prefix = `${error.pos.line}: `;
 
-        logger.error();
+        logger.error('Error occurred at:', error.step ?? '');
         logger.error(`${prefix}${src}`);
         logger.error(`${prefix.replace(/./g, ' ')}${pointer.join('')}`);
+        logger.error();
+      }
+    } else if (error.line && error.operationName) {
+      // handle adaptor errors where we don't have a position that corresponds nicely to the sourcemapped code
+      logger.error(
+        `Error reported by "${error.operationName}()" operation line ${error.line}:`
+      );
+
+      // Log the stack or the message, depending on what we have
+      if (error.stack) {
+        logger.error(error.stack);
+      } else {
+        logger.error(error.message);
       }
     } else if (error.line && error.operationName) {
       // handle adaptor errors where we don't have a position that corresponds nicely to the sourcemapped code
@@ -74,19 +92,18 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.error(error.message);
     }
 
-    // TODO we probably don't want to show all of this serialized error
-    // details if it exists, maybe source and severity but probably not?
-    const serializedError = serialize(error);
-    logger.error(serializedError);
+    if (error.details) {
+      logger.error('Additional error details:');
+      logger.print(error.details);
+      logger.break();
+    }
 
     if (error.severity === 'fail') {
-      logger.error(`Check state.errors.${stepId} for details.`);
+      // Write a safely serialzied error object to state
+      state.errors ??= {};
+      state.errors[stepId] = serialize(error);
 
-      if (!state.errors) {
-        state.errors = {};
-      }
-
-      state.errors[stepId] = serializedError;
+      logger.error(`Check state.errors.${stepId} for details`);
     }
 
     return report as ErrorReport;

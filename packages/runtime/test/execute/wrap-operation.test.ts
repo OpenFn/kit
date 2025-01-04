@@ -82,9 +82,7 @@ test('rethrow a thrown nested reference error', async (t) => {
   };
 
   await t.throwsAsync(() => reducer([op], {}), {
-    // This will look like an adaptor error to the runtime code
-    // this is fine
-    name: 'AdaptorError',
+    name: 'ReferenceError',
     message: 'unknown is not defined',
   });
 });
@@ -101,7 +99,7 @@ test('rethrow a thrown nested reference error in a promise', async (t) => {
     });
 
   await t.throwsAsync(() => reducer([op], {}), {
-    name: 'AdaptorError',
+    name: 'ReferenceError',
     message: 'unknown is not defined',
   });
 });
@@ -112,7 +110,7 @@ test('rethrow an illegal function call', async (t) => {
   };
 
   await t.throwsAsync(() => reducer([op], {}), {
-    name: 'AdaptorError',
+    name: 'TypeError',
     message: 's is not a function',
   });
 });
@@ -123,7 +121,7 @@ test('rethrow an indirect type error', async (t) => {
   };
 
   await t.throwsAsync(() => reducer([op('jam')], {}), {
-    name: 'AdaptorError',
+    name: 'TypeError',
     message: 'x is not a function',
   });
 });
