@@ -204,10 +204,14 @@ export class AdaptorError extends RTError {
       this.operationName = operationName;
     }
 
-    this.details = {
-      type: error.name || error.type,
-      message: error.message,
-    };
+    this.details = Object.assign(
+      {
+        type: error.type || error.name,
+        message: error.message,
+      },
+      error
+    );
+
     if (typeof error === 'string') {
       this.message = error;
     } else if (error.message) {
