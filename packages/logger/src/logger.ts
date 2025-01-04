@@ -241,7 +241,11 @@ export default function (name?: string, options: LogOptions = {}): Logger {
   const print = (...args: any[]) => {
     if (opts.level !== NONE) {
       if (opts.json) {
-        emitter.info({ message: args });
+        emitter.info({
+          message: args,
+          name,
+          time: hrtimestamp().toString(),
+        });
       } else {
         emitter.info(...args);
       }
