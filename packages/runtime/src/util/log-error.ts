@@ -82,6 +82,12 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       } else {
         logger.error(error.message);
       }
+    } else if (error.line && error.operationName) {
+      // handle adaptor errors where we don't have a position that corresponds nicely to the sourcemapped code
+      logger.error(
+        `Error reported by "${error.operationName}()" operation line ${error.line}:`
+      );
+      logger.error(error.message);
     } else {
       logger.error(error.message);
     }
@@ -92,16 +98,12 @@ const createErrorReporter = (logger: Logger): ErrorReporter => {
       logger.break();
     }
 
-    // Write a safely serialzied error object to state
-    const serializedError = serialize(error);
     if (error.severity === 'fail') {
+      // Write a safely serialzied error object to state
+      state.errors ??= {};
+      state.errors[stepId] = serialize(error);
+
       logger.error(`Check state.errors.${stepId} for details`);
-
-      if (!state.errors) {
-        state.errors = {};
-      }
-
-      state.errors[stepId] = serializedError;
     }
 
     return report as ErrorReport;
