@@ -10,7 +10,7 @@
     "export": "sh scripts/export.sh",
     "format": "prettier --write packages/*/src",
     "generate-slack-report": "node ./scripts/slack-publish-message.js",
-    "install:global": "pnpm build && pnpm run pack && node ./build/install-global.js",
+    "install:global": "rimraf dist && pnpm build && pnpm run pack && node ./build/install-global.js",
     "install:openfnx": "pnpm install:global",
     "pack:local": "pnpm run pack && node ./build/pack-local.js",
     "pack": "pnpm -r run pack",
