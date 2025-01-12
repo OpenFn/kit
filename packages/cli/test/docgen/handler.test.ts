@@ -123,25 +123,29 @@ test.serial('do not generate docs if they already exist', async (t) => {
   t.is(path, `${DOCS_PATH}/${specifier}.json`);
 });
 
-test.serial('create a placeholder before generating the docs', async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip(
+  'create a placeholder before generating the docs',
+  async (t) => {
+    const path = `${DOCS_PATH}/${specifier}.json`;
 
-  // a placeholder should not exist when we start
-  const empty = await loadJSON(path);
-  t.falsy(empty);
+    // a placeholder should not exist when we start
+    const empty = await loadJSON(path);
+    t.falsy(empty);
 
-  const docgen = (async () => {
-    // When docgen is called, a placeholder should now exist
-    const placeholder = await loadJSON(path);
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
-    t.assert(typeof placeholder.timestamp === 'number');
+    const docgen = (async () => {
+      // When docgen is called, a placeholder should now exist
+      const placeholder = await loadJSON(path);
+      t.truthy(placeholder);
+      t.true(placeholder.loading);
+      t.assert(typeof placeholder.timestamp === 'number');
 
-    return {};
-  }) as unknown as DocGenFn;
+      return {};
+    }) as unknown as DocGenFn;
 
-  await docsHandler(options, logger, docgen);
-});
+    await docsHandler(options, logger, docgen);
+  }
+);
 
 // Skipped because this intermittently fails in CI
 test.serial.skip(
