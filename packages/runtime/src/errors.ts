@@ -186,20 +186,18 @@ export class AdaptorError extends RTError {
   line?: number;
   operationName?: string;
 
-  constructor(error: any, line?: number, operationName?: string) {
+  constructor(error: any, operation?: { line: number; name: string }) {
     super();
-    if (!isNaN(line!)) {
-      this.line = line!;
+    // If this error is attributed to an operation
+    // Include an operation number and line number
+    if (operation) {
+      this.operationName = operation.name;
+      this.line = operation.line;
       this.stack = extractStackTrace(error);
     } else {
-      // If no line/operation was passed,
-      // try and extract a position from the stack trace
+      // Otherwise, try to extract a position from the stack trace
       this.pos = extractPosition(error, true);
       this.stack = extractStackTrace(error);
-    }
-
-    if (operationName) {
-      this.operationName = operationName;
     }
 
     this.details = Object.assign(

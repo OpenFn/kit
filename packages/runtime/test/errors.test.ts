@@ -4,7 +4,11 @@ import type { WorkflowOptions } from '@openfn/lexicon';
 import compile from '@openfn/compiler';
 
 import run from '../src/runtime';
-import { extractPosition, extractStackTrace } from '../src/errors';
+import {
+  AdaptorError,
+  extractPosition,
+  extractStackTrace,
+} from '../src/errors';
 
 const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
@@ -501,4 +505,46 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
     severity: 'fail',
     source: 'runtime',
   });
+});
+
+test("AdaptorError: don't include pos if an operation is passed", (t) => {
+  const originalError = {
+    stack: `Error: UNEXPECTED_RELATIVE_URL
+    at assertUrl (/repo/openfn/cli-repo/node_modules/@openfn/language-http_6.5.2/dist/index.cjs:132:15)
+    at /repo/openfn/cli-repo/node_modules/@openfn/language-http_6.5.2/dist/index.cjs:166:5
+    at file:///repo/openfn/kit/packages/runtime/dist/index.js:650:22
+    at async file:///repo/openfn/kit/packages/runtime/dist/index.js:615:22`,
+  };
+
+  const adaptorError = new AdaptorError(originalError, {
+    line: 27,
+    name: 'get',
+  });
+
+  t.is(adaptorError.operationName, 'get');
+  t.is(
+    adaptorError.stack,
+    `Error: UNEXPECTED_RELATIVE_URL
+    @openfn/language-http_6.5.2/dist/index.cjs:132:15)
+    @openfn/language-http_6.5.2/dist/index.cjs:166:5`
+  );
+  t.falsy(adaptorError.pos);
+});
+
+test('AdaptorError: if no operation, extract position from stack', (t) => {
+  const originalError = {
+    stack: `ReferenceError: z is not defined
+    at vm:module(0):2:27
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:17
+    at SourceTextModule.evaluate (node:internal/vm/module:227:23)
+    at default (file:///repo/openfn/kit/packages/runtime/src/modules/module-loader.ts:29:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async prepareJob (file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:136:25)
+    at async file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:21:45`,
+  };
+
+  const adaptorError = new AdaptorError(originalError);
+  t.deepEqual(adaptorError.pos, { column: 27, line: 2 });
+  t.falsy(adaptorError.operationName);
 });
