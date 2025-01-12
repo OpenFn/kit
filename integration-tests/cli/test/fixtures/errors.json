@@ -3,17 +3,17 @@
     "steps": [
       {
         "id": "ref",
-        "adaptor": "common",
+        "adaptor": "common@2.1.1",
         "expression": "fn((state) => state.x.y)"
       },
       {
         "id": "not-function",
-        "adaptor": "common",
+        "adaptor": "common@2.1.1",
         "expression": "fn((state) => state())"
       },
       {
         "id": "assign-const",
-        "adaptor": "common",
+        "adaptor": "common@2.1.1",
         "expression": "fn((state) => {  const x = 10; x = 20; })"
       }
     ]
