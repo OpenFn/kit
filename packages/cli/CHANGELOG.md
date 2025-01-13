@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- 4ddd4d6: Update errors to include a source-mapped position and more dignostic information
+- Overhaul of error reporting in the CLI. Errors now include positional information and a stack trace, and reporting has generally been cleaned up a little bit.
 
 ### Patch Changes
 
