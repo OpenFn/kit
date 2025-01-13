@@ -8,7 +8,7 @@ import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
 import { NOTIFY_STATE_LOAD } from '../events';
-import { CompiledExecutionPlan } from '../types';
+import { CompiledExecutionPlan, ExecutionContext } from '../types';
 
 const executePlan = async (
   plan: ExecutionPlan,
@@ -30,7 +30,7 @@ const executePlan = async (
 
   const { workflow, options } = compiledPlan;
 
-  const ctx = {
+  const ctx: ExecutionContext = {
     plan: compiledPlan,
     opts,
     logger,
@@ -44,7 +44,7 @@ const executePlan = async (
   if (typeof input === 'string') {
     const id = input;
     const startTime = Date.now();
-    logger.debug(`fetching intial state ${id}`);
+    logger.debug(`fetching initial state ${id}`);
 
     input = await opts.callbacks?.resolveState?.(id);
     const duration = Date.now() - startTime;

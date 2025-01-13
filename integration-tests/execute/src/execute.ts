@@ -2,10 +2,16 @@ import path from 'node:path';
 import run from '@openfn/runtime';
 import compiler from '@openfn/compiler';
 
-const execute = async (job: string, state: any, adaptor = 'common') => {
+const execute = async (
+  job: string,
+  state: any,
+  adaptor = 'common',
+  ignore = []
+) => {
   // compile with common and dumb imports
   const options = {
     'add-imports': {
+      ignore,
       adaptors: [
         {
           name: `@openfn/language-${adaptor}`,
@@ -15,9 +21,8 @@ const execute = async (job: string, state: any, adaptor = 'common') => {
     },
   };
   const compiled = compiler(job, options);
-  // console.log(compiled);
-
-  const result = await run(compiled, state, {
+  const result = await run(compiled.code, state, {
+    sourceMap: compiled.map,
     // preload the linker with some locally installed modules
     linker: {
       modules: {

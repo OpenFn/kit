@@ -1,8 +1,14 @@
 import test from 'ava';
 import path from 'node:path';
 import type { WorkflowOptions } from '@openfn/lexicon';
+import compile from '@openfn/compiler';
 
 import run from '../src/runtime';
+import {
+  AdaptorError,
+  extractPosition,
+  extractStackTrace,
+} from '../src/errors';
 
 const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
   workflow: {
@@ -13,6 +19,86 @@ const createPlan = (expression: string, options: WorkflowOptions = {}) => ({
     ],
   },
   options,
+});
+
+test('extractPosition: basic test', (t) => {
+  const fakeError = {
+    stack: `Error: some error
+ at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
+  };
+
+  const pos = extractPosition(fakeError as Error);
+
+  t.deepEqual(pos, {
+    line: 25,
+    column: 15,
+  });
+});
+
+test("extractPosition: find errors which aren't on line 1", (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15)`,
+  };
+
+  const pos = extractPosition(fakeError as Error);
+
+  t.deepEqual(pos, {
+    line: 25,
+    column: 15,
+  });
+});
+
+test('extractPosition: only include vm frames', (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts:25:15),
+  at vm:module(0):2:17`,
+  };
+
+  const pos = extractPosition(fakeError as Error, true);
+
+  t.deepEqual(pos, {
+    line: 2,
+    column: 17,
+  });
+});
+
+test("extractPosition: return undefined if there's no position", (t) => {
+  const fakeError = {
+    stack: `Error: some error
+  at Number.toFixed (<anonymous>)
+  at assertRuntimeCrash (/repo/openfn/kit/packages/runtime/src/errors.ts)`,
+  };
+
+  const pos = extractPosition(fakeError as Error);
+
+  t.falsy(pos);
+});
+
+test('extractStackTrace: basic test', (t) => {
+  const fakeError = {
+    stack: `ReferenceError: z is not defined
+    at vm:module(0):2:27
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:17
+    at SourceTextModule.evaluate (node:internal/vm/module:227:23)
+    at default (file:///repo/openfn/kit/packages/runtime/src/modules/module-loader.ts:29:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async prepareJob (file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:136:25)
+    at async file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:21:45`,
+  };
+
+  const stack = extractStackTrace(fakeError as Error);
+  t.is(
+    stack,
+    `ReferenceError: z is not defined
+    at vm:module(0):2:27
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:17`
+  );
 });
 
 test('crash on timeout', async (t) => {
@@ -57,11 +143,65 @@ test('crash on runtime error with ReferenceError', async (t) => {
     error = e;
   }
   t.log(error);
+  t.log(error.stack);
 
-  // t.true(error instanceof RuntimeError);
   t.is(error.severity, 'crash');
   t.is(error.subtype, 'ReferenceError');
   t.is(error.message, 'ReferenceError: x is not defined');
+
+  // Ensure an unmapped error position
+  t.deepEqual(error.pos, {
+    line: 1,
+    column: 24,
+  });
+
+  // Ensure the stack trace only includes VM frames
+  t.is(
+    error.stack,
+    `ReferenceError: x is not defined
+    at vm:module(0):1:24`
+  );
+});
+
+test('maps positions in a compiled ReferenceError', async (t) => {
+  const expression = `function fn(f) { return f() }
+fn((s) => z)`;
+
+  // Assert that in the original code, the undeclared variable is at position 11
+  const originalZPosition = expression.split('\n')[1].indexOf('z');
+  t.is(originalZPosition, 10);
+
+  // compile the code so we get a source map
+  const { code, map } = compile(expression, { name: 'src' });
+  t.log(code);
+  let error: any;
+  try {
+    await run(code, {}, { sourceMap: map });
+  } catch (e) {
+    error = e;
+  }
+
+  const newZPosition = code.split('\n')[1].indexOf('z');
+  t.is(newZPosition, 26);
+
+  // validate that this is the error we're expecting
+  t.is(error.subtype, 'ReferenceError');
+
+  // ensure a position is written to the error
+  t.deepEqual(error.pos, {
+    line: 2,
+    column: 11,
+    src: 'fn((s) => z)',
+  });
+
+  // Positions must be mapped in the stacktrace too
+  t.is(
+    error.stack,
+    `ReferenceError: z is not defined
+    at vm:module(0):2:11
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:1`
+  );
 });
 
 test('crash on eval with SecurityError', async (t) => {
@@ -166,10 +306,13 @@ test('fail on runtime TypeError', async (t) => {
     subtype: 'TypeError',
     severity: 'fail',
     source: 'runtime',
+    pos: {
+      column: 28,
+      line: 1,
+    },
   });
 });
 
-// TODO not totally convinced on this one actually
 test('fail on runtime error with RangeError', async (t) => {
   const expression =
     'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
@@ -185,6 +328,10 @@ test('fail on runtime error with RangeError', async (t) => {
     subtype: 'RangeError',
     severity: 'fail',
     source: 'runtime',
+    pos: {
+      column: 47,
+      line: 1,
+    },
   });
 });
 
@@ -220,20 +367,89 @@ test('fail on user error with throw "abort"', async (t) => {
   });
 });
 
-test('fail on adaptor error (with throw new Error())', async (t) => {
+test('fail on adaptor error and map to the top operation', async (t) => {
   const expression = `
-  import { err } from 'x';
-  export default [(s) => err()];
-  `;
+
+  err();`;
+
+  // Compile the code so that we get a source map
+  const { code, map } = compile(expression, {
+    name: 'src',
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'x',
+          exportAll: true,
+        },
+      ],
+    },
+  });
+
   const result: any = await run(
-    expression,
+    code,
     {},
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
+      sourceMap: map,
+    }
+  );
+
+  const error = result.errors['job-1'];
+
+  t.deepEqual(error, {
+    details: {
+      code: 1234,
+      message: 'adaptor err',
+      type: 'Error',
+    },
+    message: 'adaptor err',
+    name: 'AdaptorError',
+    source: 'runtime',
+    severity: 'fail',
+    line: 3,
+    operationName: 'err',
+  });
+});
+
+test('fail on nested adaptor error and map to a position in the vm', async (t) => {
+  // have to use try/catch or we'll get an unhandled rejection error
+  // TODO does this need wider testing?
+  const expression = `
+    fn(async (state) => {
+      try {  
+        await err()(state);
+      } catch(e) {
+        throw e;
+      }
+    })`;
+
+  // Compile the code so that we get a source map
+  const { code, map } = compile(expression, {
+    name: 'src',
+    'add-imports': {
+      adaptors: [
+        {
+          name: 'x',
+          exportAll: true,
+        },
+      ],
+    },
+  });
+
+  const result: any = await run(
+    code,
+    {},
+    {
+      linker: {
+        modules: {
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
+        },
+      },
+      sourceMap: map,
     }
   );
 
@@ -243,11 +459,19 @@ test('fail on adaptor error (with throw new Error())', async (t) => {
   t.deepEqual(error, {
     details: {
       code: 1234,
+      message: 'adaptor err',
+      type: 'Error',
     },
     message: 'adaptor err',
     name: 'AdaptorError',
     source: 'runtime',
     severity: 'fail',
+    step: 'job-1',
+    pos: {
+      column: 20,
+      line: 4,
+      src: '        await err()(state);',
+    },
   });
 });
 
@@ -265,7 +489,7 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
     {
       linker: {
         modules: {
-          x: { path: path.resolve('test/__modules__/test') },
+          x: { path: path.resolve('test/__modules__/@openfn/language-test') },
         },
       },
     }
@@ -281,4 +505,46 @@ test('adaptor error with no stack trace will be a user error', async (t) => {
     severity: 'fail',
     source: 'runtime',
   });
+});
+
+test("AdaptorError: don't include pos if an operation is passed", (t) => {
+  const originalError = {
+    stack: `Error: UNEXPECTED_RELATIVE_URL
+    at assertUrl (/repo/openfn/cli-repo/node_modules/@openfn/language-http_6.5.2/dist/index.cjs:132:15)
+    at /repo/openfn/cli-repo/node_modules/@openfn/language-http_6.5.2/dist/index.cjs:166:5
+    at file:///repo/openfn/kit/packages/runtime/dist/index.js:650:22
+    at async file:///repo/openfn/kit/packages/runtime/dist/index.js:615:22`,
+  };
+
+  const adaptorError = new AdaptorError(originalError, {
+    line: 27,
+    name: 'get',
+  });
+
+  t.is(adaptorError.operationName, 'get');
+  t.is(
+    adaptorError.stack,
+    `Error: UNEXPECTED_RELATIVE_URL
+    @openfn/language-http_6.5.2/dist/index.cjs:132:15)
+    @openfn/language-http_6.5.2/dist/index.cjs:166:5`
+  );
+  t.falsy(adaptorError.pos);
+});
+
+test('AdaptorError: if no operation, extract position from stack', (t) => {
+  const originalError = {
+    stack: `ReferenceError: z is not defined
+    at vm:module(0):2:27
+    at fn (vm:module(0):1:25)
+    at vm:module(0):2:17
+    at SourceTextModule.evaluate (node:internal/vm/module:227:23)
+    at default (file:///repo/openfn/kit/packages/runtime/src/modules/module-loader.ts:29:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async prepareJob (file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:136:25)
+    at async file:///repo/openfn/kit/packages/runtime/src/execute/expression.ts:21:45`,
+  };
+
+  const adaptorError = new AdaptorError(originalError);
+  t.deepEqual(adaptorError.pos, { column: 27, line: 2 });
+  t.falsy(adaptorError.operationName);
 });

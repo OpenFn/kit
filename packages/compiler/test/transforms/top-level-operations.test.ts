@@ -2,6 +2,7 @@ import test from 'ava';
 import { builders as b, namedTypes as n } from 'ast-types';
 
 import transform from '../../src/transform';
+import parse from '../../src/parse';
 import visitors from '../../src/transforms/top-level-operations';
 import { assertCodeEqual } from '../util';
 
@@ -139,7 +140,7 @@ test('moves a method call into the exports array', (t) => {
   t.is(call.callee.property.name, 'b');
 });
 
-test('does not move a method call inside an asisignment', (t) => {
+test('does not move a method call inside an assignment', (t) => {
   const ast = createProgramWithExports([
     b.variableDeclaration('const', [
       b.variableDeclarator(
@@ -153,7 +154,6 @@ test('does not move a method call inside an asisignment', (t) => {
   ]);
 
   const { body } = transform(ast, [visitors]);
-  console.log(body);
 
   // should add the export
   t.is(body.length, 2);
@@ -214,3 +214,20 @@ test('should only take the top of a nested operation call (and preserve its argu
 });
 
 // TODO Does nothing if the export statement is wrong
+
+test('appends an operations map to simple operation', (t) => {
+  // We have to parse source here rather than building an AST so that we get positional information
+  const { program } = parse(`fn();`);
+
+  transform(program, [visitors]);
+
+  // @ts-ignore
+  const { operations } = program;
+  t.deepEqual(operations, [
+    {
+      name: 'fn',
+      line: 1,
+      order: 1,
+    },
+  ]);
+});

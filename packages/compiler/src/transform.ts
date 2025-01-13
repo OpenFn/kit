@@ -45,7 +45,7 @@ export type TransformOptions = {
 const defaultLogger = createLogger();
 
 export default function transform(
-  ast: namedTypes.Node,
+  ast: namedTypes.File,
   transformers?: Transformer[],
   options: TransformOptions = {}
 ) {

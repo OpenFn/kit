@@ -1,5 +1,17 @@
 # @openfn/runtime
 
+## 1.6.0
+
+### Minor Changes
+
+- 4ddd4d6: Update errors to include a source-mapped position and more dignostic information
+
+### Patch Changes
+
+- aaa7e7b: General improvements to how errors are reported. Includes a stack trace, removal of irrelevant or redundant information, and cleaner formatting
+- Updated dependencies [6e87156]
+  - @openfn/logger@1.0.4
+
 ## 1.5.4
 
 ### Patch Changes

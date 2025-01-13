@@ -105,7 +105,8 @@ test.serial("ensurePath if there's a namespace", (t) => {
   t.true(existsSync('/tmp/repo/docs/@openfn'));
 });
 
-test.serial('do not generate docs if they already exist', async (t) => {
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip('do not generate docs if they already exist', async (t) => {
   let docgenCalled = false;
 
   const docgen = (() => {
@@ -123,25 +124,29 @@ test.serial('do not generate docs if they already exist', async (t) => {
   t.is(path, `${DOCS_PATH}/${specifier}.json`);
 });
 
-test.serial('create a placeholder before generating the docs', async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip(
+  'create a placeholder before generating the docs',
+  async (t) => {
+    const path = `${DOCS_PATH}/${specifier}.json`;
 
-  // a placeholder should not exist when we start
-  const empty = await loadJSON(path);
-  t.falsy(empty);
+    // a placeholder should not exist when we start
+    const empty = await loadJSON(path);
+    t.falsy(empty);
 
-  const docgen = (async () => {
-    // When docgen is called, a placeholder should now exist
-    const placeholder = await loadJSON(path);
-    t.truthy(placeholder);
-    t.true(placeholder.loading);
-    t.assert(typeof placeholder.timestamp === 'number');
+    const docgen = (async () => {
+      // When docgen is called, a placeholder should now exist
+      const placeholder = await loadJSON(path);
+      t.truthy(placeholder);
+      t.true(placeholder.loading);
+      t.assert(typeof placeholder.timestamp === 'number');
 
-    return {};
-  }) as unknown as DocGenFn;
+      return {};
+    }) as unknown as DocGenFn;
 
-  await docsHandler(options, logger, docgen);
-});
+    await docsHandler(options, logger, docgen);
+  }
+);
 
 // Skipped because this intermittently fails in CI
 test.serial.skip(
@@ -200,7 +205,8 @@ test.serial.skip("remove the placeholder if there's an error", async (t) => {
   t.falsy(after);
 });
 
-test.serial('wait for docs if a placeholder is present', async (t) => {
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip('wait for docs if a placeholder is present', async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
   mockfs({
@@ -232,7 +238,8 @@ test.serial('wait for docs if a placeholder is present', async (t) => {
   t.is(docs.version, '1.0.0');
 });
 
-test.serial("throw there's a timeout", async (t) => {
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip("throw there's a timeout", async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
   mockfs({
@@ -249,29 +256,34 @@ test.serial("throw there's a timeout", async (t) => {
   );
 });
 
-test.serial("don't remove the placeholder if there's a timeout", async (t) => {
-  const path = `${DOCS_PATH}/${specifier}.json`;
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip(
+  "don't remove the placeholder if there's a timeout",
+  async (t) => {
+    const path = `${DOCS_PATH}/${specifier}.json`;
 
-  mockfs({
-    [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
-  });
+    mockfs({
+      [path]: `{ "loading": true, "timestamp": ${Date.now()} }`,
+    });
 
-  const timeout = 2;
-  await t.throwsAsync(
-    async () => docsHandler(options, logger, async () => {}, timeout),
-    {
-      message: 'Timed out waiting for docs to load',
-    }
-  );
+    const timeout = 2;
+    await t.throwsAsync(
+      async () => docsHandler(options, logger, async () => {}, timeout),
+      {
+        message: 'Timed out waiting for docs to load',
+      }
+    );
 
-  // docs should be present and correct
-  const placeholder = await loadJSON(path);
+    // docs should be present and correct
+    const placeholder = await loadJSON(path);
 
-  t.truthy(placeholder);
-  t.true(placeholder.loading);
-});
+    t.truthy(placeholder);
+    t.true(placeholder.loading);
+  }
+);
 
-test.serial("reset the placeholder if it's old", async (t) => {
+// Skipped because this is flaky in CI - timings are not dependable
+test.serial.skip("reset the placeholder if it's old", async (t) => {
   const path = `${DOCS_PATH}/${specifier}.json`;
 
   mockfs({

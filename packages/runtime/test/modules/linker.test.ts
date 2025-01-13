@@ -97,7 +97,7 @@ test('loads a module from a path', async (t) => {
   const m = await linker('ultimate-answer', context, {
     modules: {
       ['ultimate-answer']: {
-        path: path.resolve('test/__modules__/test'),
+        path: path.resolve('test/__modules__/@openfn/language-test'),
         version: '0.0.1',
       },
     },

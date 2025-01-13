@@ -1,36 +1,56 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
-import type { ExecutionPlan, Job } from '@openfn/lexicon';
+import type {
+  ExecutionPlan,
+  Job,
+  SourceMapWithOperations,
+} from '@openfn/lexicon';
 
 import createLogger, { COMPILER, Logger } from '../util/logger';
 import abort from '../util/abort';
 import type { CompileOptions } from './command';
 
-// Load and compile a job from a file, then return the result
-// This is designed to be re-used in different CLI steps
-export default async (
-  planOrPath: ExecutionPlan | string,
+export type CompiledJob = { code: string; map?: SourceMapWithOperations };
+
+export default async function (
+  job: ExecutionPlan,
   opts: CompileOptions,
   log: Logger
-) => {
+): Promise<ExecutionPlan>;
+
+export default async function (
+  plan: string,
+  opts: CompileOptions,
+  log: Logger
+): Promise<CompiledJob>;
+
+export default async function (
+  planOrPath: string | ExecutionPlan,
+  opts: CompileOptions,
+  log: Logger
+): Promise<CompiledJob | ExecutionPlan> {
   if (typeof planOrPath === 'string') {
     const result = await compileJob(planOrPath as string, opts, log);
     log.success(`Compiled expression from ${opts.expressionPath}`);
     return result;
   }
 
-  const compiledPlan = compileWorkflow(planOrPath as ExecutionPlan, opts, log);
+  const compiledPlan = await compileWorkflow(
+    planOrPath as ExecutionPlan,
+    opts,
+    log
+  );
   log.success('Compiled all expressions in workflow');
 
   return compiledPlan;
-};
+}
 
 const compileJob = async (
   job: string,
   opts: CompileOptions,
   log: Logger,
   jobName?: string
-): Promise<string> => {
+): Promise<CompiledJob> => {
   try {
     const compilerOptions: Options = await loadTransformOptions(opts, log);
     return compile(job, compilerOptions);
@@ -41,8 +61,8 @@ const compileJob = async (
       e,
       'Check the syntax of the job expression:\n\n' + job
     );
-    // This will never actully execute
-    return '';
+    // This will never actually execute
+    return { code: job };
   }
 };
 
@@ -59,12 +79,14 @@ const compileWorkflow = async (
       adaptors: job.adaptors ?? opts.adaptors,
     };
     if (job.expression) {
-      job.expression = await compileJob(
+      const { code, map } = await compileJob(
         job.expression as string,
         jobOpts,
         log,
         job.id
       );
+      job.expression = code;
+      job.sourceMap = map;
     }
   }
   return plan;

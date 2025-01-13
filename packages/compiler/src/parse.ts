@@ -10,12 +10,22 @@
  */
 import recast from 'recast';
 import * as acorn from 'acorn';
+import { namedTypes } from 'ast-types';
 
-export default function parse(source: string) {
-  // This is copied from v1 but I am unsure the usecase
+type Options = {
+  /** Name of the source job (no file extension). This triggers source map generation */
+  name?: string;
+};
+
+export default function parse(
+  source: string,
+  options: Options = {}
+): namedTypes.File {
+  // This is copied from v1 but I am unsure the use-case
   const escaped = source.replace(/\ $/, '');
 
   const ast = recast.parse(escaped, {
+    sourceFileName: options.name && `${options.name}.js`,
     tolerant: true,
     range: true,
     parser: {

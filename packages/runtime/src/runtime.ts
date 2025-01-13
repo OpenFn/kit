@@ -1,5 +1,9 @@
 import { createMockLogger, Logger } from '@openfn/logger';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type {
+  ExecutionPlan,
+  State,
+  SourceMapWithOperations,
+} from '@openfn/lexicon';
 import type { ExecutionCallbacks } from './types';
 import type { LinkerOptions } from './modules/linker';
 import executePlan from './execute/plan';
@@ -8,26 +12,23 @@ import { defaultState, parseRegex, clone } from './util/index';
 export type Options = {
   logger?: Logger;
   jobLogger?: Logger;
-
   // Treat state as immutable (likely to break in legacy jobs)
   immutableState?: boolean;
-
   // TODO currently unused
   // Ensure that all incoming jobs are sandboxed / loaded as text
   // In practice this means throwing if someone tries to pass live js
   forceSandbox?: boolean;
-
   linker?: LinkerOptions;
-
   callbacks?: ExecutionCallbacks;
-
   // inject globals into the environment
   // TODO leaving this here for now, but maybe its actually on the xplan?
   globals?: any;
-
   statePropsToRemove?: string[];
-
   defaultRunTimeoutMs?: number;
+
+  // SourceMap is only passed directly if the expression is a string
+  // Usually a sourcemap is passed on a step
+  sourceMap?: SourceMapWithOperations;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
@@ -39,12 +40,17 @@ type RawOptions = Omit<Options, 'linker'> & {
 // Log nothing by default
 const defaultLogger = createMockLogger();
 
-const loadPlanFromString = (expression: string, logger: Logger) => {
+const loadPlanFromString = (
+  expression: string,
+  logger: Logger,
+  sourceMap?: SourceMapWithOperations
+) => {
   const plan: ExecutionPlan = {
     workflow: {
       steps: [
         {
           expression,
+          sourceMap,
         },
       ],
     },
@@ -65,7 +71,7 @@ const run = (
   const logger = opts.logger || defaultLogger;
 
   if (typeof xplan === 'string') {
-    xplan = loadPlanFromString(xplan, logger);
+    xplan = loadPlanFromString(xplan, logger, opts.sourceMap);
   }
 
   if (!xplan.options) {

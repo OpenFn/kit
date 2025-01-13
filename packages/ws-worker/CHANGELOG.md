@@ -1,5 +1,21 @@
 # ws-worker
 
+## 1.9.0
+
+### Minor Changes
+
+- 4ddd4d6: Update errors to include a source-mapped position and more dignostic information
+
+### Patch Changes
+
+- Updated dependencies [4ddd4d6]
+- Updated dependencies [6e87156]
+- Updated dependencies [aaa7e7b]
+  - @openfn/runtime@1.6.0
+  - @openfn/logger@1.0.4
+  - @openfn/engine-multi@1.4.7
+  - @openfn/lexicon@1.1.0
+
 ## 1.8.9
 
 ### Patch Changes

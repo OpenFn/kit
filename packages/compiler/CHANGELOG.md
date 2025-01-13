@@ -1,5 +1,21 @@
 # @openfn/compiler
 
+## 1.0.0
+
+### Major Changes
+
+- 4ddd4d6: Update main compile API to return a sourcemap
+
+### Minor Changes
+
+- 93e9844: Append positional information to top level operations
+
+### Patch Changes
+
+- Updated dependencies [6e87156]
+  - @openfn/logger@1.0.4
+  - @openfn/lexicon@1.1.0
+
 ## 0.4.3
 
 ### Patch Changes

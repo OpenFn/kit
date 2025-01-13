@@ -2,9 +2,16 @@ import test from 'ava';
 import path from 'node:path';
 import run from '../src/run';
 import { extractLogs, assertLog } from '../src/util';
-import { stderr } from 'node:process';
 
 const jobsPath = path.resolve('test/fixtures');
+
+const extractErrorLogs = (stdout) => {
+  const stdlogs = extractLogs(stdout);
+  return stdlogs
+    .filter((e) => e.level === 'error')
+    .map((e) => e.message.join(' ').replace(/\(\d+ms\)/, '(SSSms)'))
+    .filter((e) => e.length);
+};
 
 // These are all errors that will stop the CLI from even running
 
@@ -13,7 +20,6 @@ test.serial('expression not found', async (t) => {
   t.is(err.code, 1);
 
   const stdlogs = extractLogs(stdout);
-
   assertLog(t, stdlogs, /expression not found/i);
   assertLog(t, stdlogs, /failed to load the expression from blah.js/i);
   assertLog(t, stdlogs, /critical error: aborting command/i);
@@ -132,4 +138,66 @@ test.serial('invalid end (ambiguous)', async (t) => {
 
   assertLog(t, stdlogs, /Error: end pattern matched multiple steps/i);
   assertLog(t, stdlogs, /aborting/i);
+});
+
+// These test error outputs within valid workflows
+
+test.serial('job with reference error', async (t) => {
+  const { stdout, err } = await run(
+    `openfn ${jobsPath}/errors.json --log-json --start ref --no-cache-steps`
+  );
+
+  const logs = extractErrorLogs(stdout);
+  t.log(logs);
+
+  t.deepEqual(logs, [
+    'ref aborted with error (SSSms)',
+    `TypeError: Cannot read properties of undefined (reading 'y')
+    at vm:module(0):1:23
+    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    'Error occurred at: ref',
+    '1: fn((state) => state.x.y)',
+    '                         ^ ',
+    'Check state.errors.ref for details',
+  ]);
+});
+
+test.serial('job with not a function error', async (t) => {
+  const { stdout, err } = await run(
+    `openfn ${jobsPath}/errors.json --log-json --start not-function --no-cache-steps`
+  );
+
+  const logs = extractErrorLogs(stdout);
+  t.log(logs);
+
+  t.deepEqual(logs, [
+    'not-function aborted with error (SSSms)',
+    `TypeError: state is not a function
+    at vm:module(0):1:15
+    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    'Error occurred at: not-function',
+    '1: fn((state) => state())',
+    '                 ^       ',
+    'Check state.errors.not-function for details',
+  ]);
+});
+
+test.serial('job with assign-to-const error', async (t) => {
+  const { stdout, err } = await run(
+    `openfn ${jobsPath}/errors.json --log-json --start assign-const --no-cache-steps`
+  );
+
+  const logs = extractErrorLogs(stdout);
+  t.log(logs);
+
+  t.deepEqual(logs, [
+    'assign-const aborted with error (SSSms)',
+    `TypeError: Assignment to constant variable.
+    at vm:module(0):1:33
+    @openfn/language-common_2.1.1/dist/index.cjs:333:12`,
+    'Error occurred at: assign-const',
+    '1: fn((state) => {  const x = 10; x = 20; })',
+    '                                   ^        ',
+    'Check state.errors.assign-const for details',
+  ]);
 });

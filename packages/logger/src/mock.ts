@@ -56,7 +56,8 @@ const mockLogger = <T = StringLog>(
 
   mock.break = () => {}; // do nothing
 
-  // TODO should this use json?
+  // Note: the print mock emits to "print" for test purposes
+  // but the actual logger prints to info
   mock.print = (...out: any[]) => {
     if (opts.level !== 'none') {
       if (opts.json) {

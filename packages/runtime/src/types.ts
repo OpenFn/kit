@@ -13,6 +13,12 @@ import {
 } from './events';
 import { ModuleInfoMap } from './modules/linker';
 
+export type ErrorPosition = {
+  line: number;
+  column: number;
+  src?: string; // the source line for this error
+};
+
 export type CompiledEdge =
   | boolean
   | {

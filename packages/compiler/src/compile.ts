@@ -1,8 +1,11 @@
 import { print } from 'recast';
 import createLogger, { Logger } from '@openfn/logger';
+
 import parse from './parse';
 import transform, { TransformOptions } from './transform';
 import { isPath, loadFile } from './util';
+
+import type { SourceMapWithOperations } from '@openfn/lexicon';
 
 const defaultLogger = createLogger();
 
@@ -13,11 +16,18 @@ const defaultLogger = createLogger();
 // }
 
 export type Options = TransformOptions & {
+  name?: string;
   logger?: Logger;
   logCompiledSource?: boolean;
 };
 
-export default function compile(pathOrSource: string, options: Options = {}) {
+export default function compile(
+  pathOrSource: string,
+  options: Options = {}
+): {
+  code: string;
+  map?: SourceMapWithOperations;
+} {
   const logger = options.logger || defaultLogger;
 
   let source = pathOrSource;
@@ -27,15 +37,22 @@ export default function compile(pathOrSource: string, options: Options = {}) {
   } else {
     //logger.debug('Starting compilation from string');
   }
-  const ast = parse(source);
 
+  const name = options.name ?? 'src';
+  const ast = parse(source, { name });
   const transformedAst = transform(ast, undefined, options);
 
-  const compiledSource = print(transformedAst).code;
+  const { code, map } = print(transformedAst, {
+    sourceMapName: `${name}.map.js`,
+  });
+
+  // write the operations index to the source map
+  map.operations = (transformedAst.program as any).operations ?? [];
+
   if (options.logCompiledSource) {
     logger.debug('Compiled source:');
-    logger.debug(compiledSource); // TODO indent or something
+    logger.debug(code);
   }
 
-  return compiledSource;
+  return { code, map };
 }

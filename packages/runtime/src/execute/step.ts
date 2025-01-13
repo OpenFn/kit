@@ -1,5 +1,3 @@
-// TODO hmm. I have a horrible feeling that the callbacks should go here
-// at least the resolvesrs
 import type { Job, State, StepId } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
@@ -16,6 +14,7 @@ import {
   NOTIFY_JOB_START,
 } from '../events';
 import { isNullState } from '../util/null-state';
+import sourcemapErrors from '../util/sourcemap-errors';
 
 const loadCredentials = async (
   job: Job,
@@ -157,16 +156,20 @@ const executeStep = async (
     const timerId = `step-${jobId}`;
     logger.timer(timerId);
 
-    // TODO can we include the adaptor version here?
-    // How would we get it?
+    // TODO can/should we include the adaptor version here?
     logger.info(`Starting step ${jobName}`);
 
     const startTime = Date.now();
     try {
       // TODO include the upstream job?
       notify(NOTIFY_JOB_START, { jobId });
-
-      result = await executeExpression(ctx, job.expression, state, step.linker);
+      result = await executeExpression(
+        ctx,
+        job.expression,
+        state,
+        step.linker,
+        job.sourceMap
+      );
     } catch (e: any) {
       didError = true;
       if (e.hasOwnProperty('error') && e.hasOwnProperty('state')) {
@@ -177,13 +180,13 @@ const executeStep = async (
         logger.error(`${jobName} aborted with error (${duration})`);
 
         state = prepareFinalState(state, logger, ctx.opts.statePropsToRemove);
-        // Whatever the final state was, save that as the intial state to the next thing
+        // Whatever the final state was, save that as the initial state to the next thing
         result = state;
 
+        await sourcemapErrors(job, error);
         report(state, jobId, error);
 
         next = calculateNext(step, result, logger);
-
         notify(NOTIFY_JOB_ERROR, {
           duration: Date.now() - startTime,
           error,
@@ -238,7 +241,6 @@ const executeStep = async (
     // calculate next for trigger nodes
     next = calculateNext(step, result, logger);
   }
-
   if (next.length && !didError && !result) {
     logger.warn(
       `WARNING: step ${stepId} did not return a state object. This may cause downstream jobs to fail.`

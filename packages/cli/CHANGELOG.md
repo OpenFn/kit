@@ -1,5 +1,23 @@
 # @openfn/cli
 
+## 1.10.0
+
+### Minor Changes
+
+- Overhaul of error reporting in the CLI. Errors now include positional information and a stack trace, and reporting has generally been cleaned up a little bit.
+
+### Patch Changes
+
+- Updated dependencies [4ddd4d6]
+- Updated dependencies [93e9844]
+- Updated dependencies [6e87156]
+- Updated dependencies [aaa7e7b]
+- Updated dependencies [4ddd4d6]
+  - @openfn/runtime@1.6.0
+  - @openfn/compiler@1.0.0
+  - @openfn/logger@1.0.4
+  - @openfn/deploy@0.8.2
+
 ## 1.9.1
 
 ### Patch Changes

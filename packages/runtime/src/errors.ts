@@ -1,10 +1,4 @@
-// TODO: what if we add a "fix" to each error?
-// Maybe adminFix and userFix?
-// This would be a human readable hint about what to do
-// Or maybe summary/detail is a nicer approach
-// message/explanation
-// It would be nice for the detail to be in the error, not the code
-// But that probably requires more detailed error types
+import { ErrorPosition } from './types';
 
 export function assertImportError(e: any) {
   if (e.name === 'ImportError') {
@@ -34,32 +28,77 @@ export function assertSecurityKill(e: any) {
   }
 }
 
+// Adaptor errors are caught and generated deep inside the runtime
+// So they're easy to detect and we just re-throw them here
 export function assertAdaptorError(e: any) {
-  if (e.stack) {
-    // parse the stack
-    const frames = e.stack.split('\n');
-    frames.shift(); // remove the first line
-
-    const first = frames.shift();
-
-    // For now, we assume this is adaptor code if it has not come directly from the vm
-    // TODO: how reliable is this? Can we get a better heuristic?
-    if (first && !first.match(/at vm:module\(0\)/)) {
-      throw new AdaptorError(e);
-    }
+  if (e.name === 'AdaptorError') {
+    throw e;
   }
 }
+
+// v8 only returns positional information as a string
+// this function will pull the line/col information back out of it
+export const extractPosition = (e: Error, vmOnly = false) => {
+  if (e.stack) {
+    const [_message, ...frames] = e.stack.split('\n');
+    while (frames.length) {
+      const pos = extractPositionForFrame(frames.shift()!, vmOnly);
+      if (pos) {
+        return pos;
+      }
+    }
+  }
+};
+
+export const extractPositionForFrame = (
+  frame: string,
+  vmOnly = false
+): ErrorPosition | undefined => {
+  if (vmOnly && !frame.match(/vm:module\(0\)/)) {
+    return;
+  }
+
+  // find the line:col at the end of the line
+  // structures here https://nodejs.org/api/errors.html#errorstack
+  if (frame.match(/\d+:\d+/)) {
+    const parts = frame.split(':');
+    return {
+      column: parseInt(parts.pop()!.replace(')', '')),
+      line: parseInt(parts.pop()!),
+    };
+  }
+};
+
+export const extractStackTrace = (e: Error) => {
+  if (e.stack) {
+    const [message, ...frames] = e.stack.split('\n');
+
+    const vmFrames = [];
+    for (const frame of frames) {
+      // Include vm frames
+      // TODO: what if we rename the VM?
+      if (frame.includes('vm:module')) {
+        vmFrames.push(frame);
+      }
+      // Include adaptor stack frames (with local path removed)
+      if (frame.includes('@openfn/language-')) {
+        vmFrames.push('    ' + frame.split(/(@openfn\/language\-.*)/)[1]);
+      }
+    }
+
+    return [message, ...vmFrames].join('\n');
+  }
+};
 
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';
   name: string = 'Error';
+  pos?: ErrorPosition;
+  step?: string;
 
   constructor() {
     super();
-
-    // automatically limit the stacktrace (?)
-    Error.captureStackTrace(this, RTError.constructor);
   }
 }
 
@@ -92,6 +131,9 @@ export class RuntimeError extends RTError {
     super();
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
+
+    this.pos = extractPosition(error);
+    this.stack = extractStackTrace(error);
   }
 }
 
@@ -107,6 +149,9 @@ export class RuntimeCrash extends RTError {
     super();
     this.subtype = error.constructor.name;
     this.message = `${this.subtype}: ${error.message}`;
+
+    this.pos = extractPosition(error);
+    this.stack = extractStackTrace(error);
   }
 }
 
@@ -137,9 +182,32 @@ export class AdaptorError extends RTError {
   severity = 'fail';
   message: string = '';
   details: any;
-  constructor(error: any) {
+
+  line?: number;
+  operationName?: string;
+
+  constructor(error: any, operation?: { line: number; name: string }) {
     super();
-    this.details = error;
+    // If this error is attributed to an operation
+    // Include an operation number and line number
+    if (operation) {
+      this.operationName = operation.name;
+      this.line = operation.line;
+      this.stack = extractStackTrace(error);
+    } else {
+      // Otherwise, try to extract a position from the stack trace
+      this.pos = extractPosition(error, true);
+      this.stack = extractStackTrace(error);
+    }
+
+    this.details = Object.assign(
+      {
+        type: error.type || error.name,
+        message: error.message,
+      },
+      error
+    );
+
     if (typeof error === 'string') {
       this.message = error;
     } else if (error.message) {

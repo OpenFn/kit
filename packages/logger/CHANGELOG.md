@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 1.0.4
+
+### Patch Changes
+
+- 6e87156: Fix an issue where print logs don't get picked up by the worker
+
 ## 1.0.3
 
 ### Patch Changes
