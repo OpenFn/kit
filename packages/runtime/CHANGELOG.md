@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.6.1
+
+### Patch Changes
+
+- 70e3d7a: Fix error reporting when loading adaptors from the monorepo
+
 ## 1.6.0
 
 ### Minor Changes
