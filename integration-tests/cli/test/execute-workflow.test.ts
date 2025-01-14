@@ -199,3 +199,25 @@ test.serial(
     });
   }
 );
+
+test.serial(
+  `openfn ${jobsPath}/different-adaptor-versions.json -l debug`,
+  async (t) => {
+    const { err, stdout } = await run(t.title);
+    t.falsy(err);
+
+    t.regex(
+      stdout,
+      /Resolved adaptor @openfn\/language-common to version 2.1.0/
+    );
+    t.regex(
+      stdout,
+      /Resolved adaptor @openfn\/language-common to version 2.0.3/
+    );
+
+    const out = getJSON();
+    t.deepEqual(out, {
+      z: 1,
+    });
+  }
+);
