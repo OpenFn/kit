@@ -137,6 +137,7 @@ export const wrapOperation = (
     try {
       result = await fn(newState);
     } catch (e: any) {
+      console.log(e);
       if (e.stack) {
         const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
 
@@ -146,11 +147,14 @@ export const wrapOperation = (
 
         let firstFrame;
 
-        // find the first error from a file or the VM
-        // (this cuts out low level language errors and stuff)
+        // find the first frame from an adaptor or the VM
+        // (this cuts out low level language errors like TypeError)
         do {
           const next = frames.shift();
-          if (/(@openfn\/language-)|(vm:module)/.test(next)) {
+          if (
+            // detect an adaptor prod, adaptor monorepo, or vm frame
+            /(@openfn\/language-)|(packages\/.+\/dist)|(vm:module)/.test(next)
+          ) {
             firstFrame = next;
             break;
           }

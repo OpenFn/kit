@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.9.1
+
+### Patch Changes
+
+- 70e3d7a: Fix error reporting when loading adaptors from the monorepo
+- Updated dependencies [70e3d7a]
+  - @openfn/runtime@1.6.1
+  - @openfn/engine-multi@1.4.8
+
 ## 1.9.0
 
 ### Minor Changes
