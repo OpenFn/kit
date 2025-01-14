@@ -137,6 +137,7 @@ export const wrapOperation = (
     try {
       result = await fn(newState);
     } catch (e: any) {
+      console.log(e);
       if (e.stack) {
         const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
 
@@ -152,9 +153,7 @@ export const wrapOperation = (
           const next = frames.shift();
           if (
             // detect an adaptor prod, adaptor monorepo, or vm frame
-            /(@openfn\/language-)|(adaptors\/packages\/.+\/dist)|(vm:module)/.test(
-              next
-            )
+            /(@openfn\/language-)|(packages\/.+\/dist)|(vm:module)/.test(next)
           ) {
             firstFrame = next;
             break;
