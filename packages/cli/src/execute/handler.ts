@@ -17,6 +17,7 @@ import { clearCache } from '../util/cache';
 import fuzzyMatchStep from '../util/fuzzy-match-step';
 import abort from '../util/abort';
 import validatePlan from '../util/validate-plan';
+import overridePlanAdaptors from '../util/override-plan-adaptors';
 
 const matchStep = (
   plan: ExecutionPlan,
@@ -55,6 +56,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     await clearCache(plan, options, logger);
   }
 
+  const moduleResolutions: Record<string, string> = {};
   const { repoDir, monorepoPath, autoinstall } = options;
   if (autoinstall) {
     if (monorepoPath) {
@@ -67,6 +69,14 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
           { packages: autoInstallTargets, repoDir },
           logger
         );
+
+        // create a module resolution dictionary.
+        // this is to map aliases like @latest & @next to what they resolved into
+        if (autoInstallTargets.length === options.adaptors.length) {
+          for (let i = 0; i < autoInstallTargets.length; i++) {
+            moduleResolutions[autoInstallTargets[i]] = options.adaptors[i];
+          }
+        }
       }
     }
   }
@@ -103,6 +113,9 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
     }
   }
   const state = await loadState(plan, options, logger, customStart);
+
+  // replacing adaptors in the original plan to what they resolved to.
+  plan = overridePlanAdaptors(plan, moduleResolutions);
 
   if (options.compile) {
     plan = await compile(plan, options, logger);
