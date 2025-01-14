@@ -146,11 +146,16 @@ export const wrapOperation = (
 
         let firstFrame;
 
-        // find the first error from a file or the VM
-        // (this cuts out low level language errors and stuff)
+        // find the first frame from an adaptor or the VM
+        // (this cuts out low level language errors like TypeError)
         do {
           const next = frames.shift();
-          if (/(@openfn\/language-)|(vm:module)/.test(next)) {
+          if (
+            // detect an adaptor prod, adaptor monorepo, or vm frame
+            /(@openfn\/language-)|(adaptors\/packages\/.+\/dist)|(vm:module)/.test(
+              next
+            )
+          ) {
             firstFrame = next;
             break;
           }

@@ -142,3 +142,41 @@ test('rethrow a job error', async (t) => {
     message: 'x is not a function',
   });
 });
+
+test('throw an adaptor error from a prod callstack', async (t) => {
+  const op = (x: any) => {
+    return async (_s: any) => {
+      // Create something that looks like an error thrown from adaptor code
+      const e = new TypeError('x is not a function');
+      e.stack = `TypeError: x is not a function
+  at /repo/@openfn/language-common/dist/index.cjs:573:5
+  at file:///repo/openfn/kit/packages/runtime/dist/index.js:649:22
+  at async file:///repo/openfn/kit/packages/runtime/dist/index.js:614:22;`;
+      throw e;
+    };
+  };
+
+  await t.throwsAsync(() => reducer([op('jam')], {}), {
+    name: 'AdaptorError',
+    message: 'x is not a function',
+  });
+});
+
+test('throw an adaptor error from a monorepo callstack', async (t) => {
+  const op = (x: any) => {
+    return async (_s: any) => {
+      // Create something that looks like an error thrown from adaptor code
+      const e = new TypeError('x is not a function');
+      e.stack = `TypeError: x is not a function
+  at /repo/openfn/adaptors/packages/common/dist/index.cjs:573:5
+  at file:///repo/openfn/kit/packages/runtime/dist/index.js:649:22
+  at async file:///repo/openfn/kit/packages/runtime/dist/index.js:614:22;`;
+      throw e;
+    };
+  };
+
+  await t.throwsAsync(() => reducer([op('jam')], {}), {
+    name: 'AdaptorError',
+    message: 'x is not a function',
+  });
+});
