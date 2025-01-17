@@ -49,6 +49,10 @@ test.serial(
     t.regex(stdout, /Installing packages.../);
     t.regex(stdout, /Will install @openfn\/language-common version/);
     t.regex(stdout, /Installed @openfn\/language-common@/);
+    t.regex(
+      stdout,
+      /Resolved adaptor @openfn\/language-common to version \d+(\.\d+)*/
+    );
   }
 );
 
@@ -68,6 +72,10 @@ test.serial(
       stdout,
       /Skipping @openfn\/language-common@(.+) as already installed/
     );
+    t.regex(
+      stdout,
+      /Resolved adaptor @openfn\/language-common to version \d+(\.\d+)*/
+    );
   }
 );
 
@@ -78,7 +86,6 @@ test.serial(
     const { stdout, err } = await run(t.title);
 
     // t.falsy(err); // TODO I think this is a broken adaptor build?
-
     t.regex(stdout, /Auto-installing language adaptors/);
     t.regex(stdout, /Looked up latest version of @openfn\/language-testing/);
     t.regex(stdout, /Installing packages.../);
@@ -91,6 +98,12 @@ test.serial(
     t.regex(
       stdout,
       new RegExp(`Installed @openfn\/language-testing@${TEST_LATEST}`)
+    );
+    t.regex(
+      stdout,
+      new RegExp(
+        `Resolved adaptor @openfn/language-testing to version ${TEST_LATEST}`
+      )
     );
   }
 );

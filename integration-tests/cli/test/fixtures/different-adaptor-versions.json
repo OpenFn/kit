@@ -1,0 +1,24 @@
+{
+  "options": {},
+  "workflow": {
+    "name": "Steps with different adaptor versions",
+    "steps": [
+      {
+        "id": "lesser",
+        "adaptor": "common@2.1.0",
+        "state": {
+          "x": 1
+        },
+        "expression": "fn(state=> ({y: state.x}))",
+        "next": {
+          "latest-again": true
+        }
+      },
+      {
+        "id": "latest-again",
+        "adaptor": "common@2.0.3",
+        "expression": "fn(state=> ({z: state.y}))"
+      }
+    ]
+  }
+}
