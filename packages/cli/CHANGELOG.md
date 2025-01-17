@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.10.1
+
+### Patch Changes
+
+- Properly resolve adaptor versions when they are explicitly set to @latest
+
 ## 1.10.0
 
 ### Minor Changes
