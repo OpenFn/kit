@@ -1,10 +1,18 @@
 # @openfn/cli
 
-## 1.10.1
+## 1.10.2
 
 ### Patch Changes
 
 - Properly resolve adaptor versions when they are explicitly set to @latest
+
+## 1.10.1
+
+### Patch Changes
+
+- 70e3d7a: Fix error reporting when loading adaptors from the monorepo
+- Updated dependencies [70e3d7a]
+  - @openfn/runtime@1.6.1
 
 ## 1.10.0
 
