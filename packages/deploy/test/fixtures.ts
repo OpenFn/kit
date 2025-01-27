@@ -4,6 +4,7 @@ export function fullExampleSpec() {
   return {
     name: 'my project',
     description: 'some helpful description',
+    collections: {},
     credentials: {},
     workflows: {
       'workflow-one': {
@@ -56,6 +57,7 @@ export function fullExampleState() {
     id: 'be156ab1-8426-4151-9a18-4045142f9ec0',
     name: 'my project',
     description: 'some helpful description',
+    collections: {},
     project_credentials: {},
     workflows: {
       'workflow-one': {
@@ -116,6 +118,12 @@ export const lightningProjectPayload = {
   updated_at: '2023-08-25T08:57:31',
   scheduled_deletion: null,
   requires_mfa: false,
+  collections: [
+    {
+      id: 'f8e1c1e1-5c5a-4d9b-8e9f-4b2f6b1c2f4e',
+      name: 'collection-one',
+    },
+  ],
   project_credentials: [
     {
       id: '25f48989-d349-4eb8-99c3-923ebba5b116',
@@ -240,6 +248,12 @@ export const lightningProjectState = {
   updated_at: '2023-08-25T08:57:31',
   scheduled_deletion: null,
   requires_mfa: false,
+  collections: {
+    'collection-one': {
+      id: 'f8e1c1e1-5c5a-4d9b-8e9f-4b2f6b1c2f4e',
+      name: 'collection-one',
+    },
+  },
   project_credentials: {
     'email@test.com-Basic-Auth': {
       id: '25f48989-d349-4eb8-99c3-923ebba5b116',
