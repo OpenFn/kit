@@ -94,11 +94,21 @@ export type CredentialState = {
   owner: string;
 };
 
+export type CollectionSpec = {
+  name: string;
+};
+
+export type CollectionState = {
+  id: string;
+  name: string;
+};
+
 export interface ProjectSpec {
   name: string;
   description: string;
   workflows: Record<string | symbol, WorkflowSpec>;
   credentials: Record<string | symbol, CredentialSpec>;
+  collections: Record<string | symbol, CollectionSpec>;
 }
 
 export interface WorkflowState {
@@ -121,12 +131,14 @@ export interface ProjectState {
   description: string;
   workflows: Record<string | symbol, WorkflowState>;
   project_credentials: Record<string | symbol, CredentialState>;
+  collections: Record<string | symbol, CollectionState>;
 }
 
 export interface ProjectPayload {
   id: string;
   name: string;
   description: string;
+  collections: Concrete<CollectionState>[];
   project_credentials: Concrete<CredentialState>[];
   workflows: {
     id: string;

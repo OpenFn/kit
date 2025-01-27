@@ -90,6 +90,7 @@ test('toNextState adding a job', (t) => {
     name: 'project-name',
     description: 'my test project',
     project_credentials: {},
+    collections: {},
   });
 });
 
@@ -117,6 +118,7 @@ test('toNextState with empty state', (t) => {
     name: 'my project',
     description: 'some helpful description',
     project_credentials: {},
+    collections: {},
     workflows: {
       'workflow-one': {
         id: jp.query(result, '$..workflows["workflow-one"].id')[0],
@@ -176,6 +178,7 @@ test('toNextState with no changes', (t) => {
     name: 'my project',
     description: 'for the humans',
     project_credentials: {},
+    collections: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -291,6 +294,7 @@ test('toNextState with a new job', (t) => {
     name: 'my project',
     description: 'some other description',
     project_credentials: {},
+    collections: {},
     workflows: {
       'workflow-one': {
         id: '8124e88c-566f-472f-be38-363e588af55a',
@@ -538,6 +542,7 @@ test('getStateFromProjectPayload with minimal project', (t) => {
     id: 'xyz',
     name: 'project',
     project_credentials: {},
+    collections: {},
     workflows: {
       a: {
         id: 'wf-a',

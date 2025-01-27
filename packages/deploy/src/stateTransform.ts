@@ -287,6 +287,39 @@ export function mergeSpecIntoState(
     )
   );
 
+  const nextCollections = Object.fromEntries(
+    splitZip(oldState.collections || {}, spec.collections || {}).map(
+      ([collectionKey, stateCollection, specCollection]) => {
+        if (specCollection && !stateCollection) {
+          return [
+            collectionKey,
+            {
+              id: crypto.randomUUID(),
+              name: specCollection.name,
+            },
+          ];
+        }
+
+        if (specCollection && stateCollection) {
+          return [
+            collectionKey,
+            {
+              id: stateCollection.id,
+              name: specCollection.name,
+            },
+          ];
+        }
+
+        throw new DeployError(
+          `Invalid collection spec or corrupted state for collection: ${
+            stateCollection?.name || specCollection?.name
+          }`,
+          'VALIDATION_ERROR'
+        );
+      }
+    )
+  );
+
   const nextWorkflows = Object.fromEntries(
     splitZip(oldState.workflows, spec.workflows).map(
       ([workflowKey, stateWorkflow, specWorkflow]) => {
@@ -352,6 +385,7 @@ export function mergeSpecIntoState(
     name: spec.name,
     workflows: nextWorkflows,
     project_credentials: nextCredentials,
+    collections: nextCollections,
   };
 
   if (spec.description) projectState.description = spec.description;
@@ -398,8 +432,11 @@ export function getStateFromProjectPayload(
     {} as Record<string, CredentialState>
   );
 
+  const collections = reduceByKey('name', project.collections || []);
+
   return {
     ...project,
+    collections,
     project_credentials,
     workflows,
   };
@@ -460,8 +497,17 @@ export function mergeProjectPayloadIntoState(
     })
   );
 
+  const nextCollections = Object.fromEntries(
+    idKeyPairs(project.collections || {}, state.collections || {}).map(
+      ([key, nextCollection, _state]) => {
+        return [key, nextCollection];
+      }
+    )
+  );
+
   return {
     ...project,
+    collections: nextCollections,
     project_credentials: nextCredentials,
     workflows: nextWorkflows,
   };
@@ -503,8 +549,13 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
   const project_credentials: ProjectPayload['project_credentials'] =
     Object.values(state.project_credentials);
 
+  const collections: ProjectPayload['collections'] = Object.values(
+    state.collections
+  );
+
   return {
     ...state,
+    collections,
     project_credentials,
     workflows,
   };
