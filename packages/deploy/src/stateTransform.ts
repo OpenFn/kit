@@ -310,6 +310,10 @@ export function mergeSpecIntoState(
           ];
         }
 
+        if (!specCollection && stateCollection) {
+          return [collectionKey, { id: stateCollection.id, delete: true }];
+        }
+
         throw new DeployError(
           `Invalid collection spec or corrupted state for collection: ${
             stateCollection?.name || specCollection?.name

@@ -101,6 +101,7 @@ export type CollectionSpec = {
 export type CollectionState = {
   id: string;
   name: string;
+  delete?: boolean;
 };
 
 export interface ProjectSpec {

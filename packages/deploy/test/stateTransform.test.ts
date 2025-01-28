@@ -94,6 +94,45 @@ test('toNextState adding a job', (t) => {
   });
 });
 
+test('toNextState deleting a credential', (t) => {
+  const spec = {
+    name: 'project-name',
+    description: 'my test project',
+    collections: {},
+    workflows: {},
+  };
+
+  const state = {
+    workflows: {},
+    project_credentials: {},
+    collections: {
+      'test-collection': {
+        id: 'f8e1c1e1-5c5a-4d9b-8e9f-4b2f6b1c2f4e',
+        name: 'test-collection',
+      },
+    },
+    id: 'ecb683d1-5e5a-4c4f-9165-e143e2eeeb48',
+    name: 'project-name',
+    description: 'my test project',
+  };
+
+  let result = mergeSpecIntoState(state, spec);
+
+  t.deepEqual(result, {
+    workflows: {},
+    id: 'ecb683d1-5e5a-4c4f-9165-e143e2eeeb48',
+    name: 'project-name',
+    description: 'my test project',
+    project_credentials: {},
+    collections: {
+      'test-collection': {
+        id: 'f8e1c1e1-5c5a-4d9b-8e9f-4b2f6b1c2f4e',
+        delete: true,
+      },
+    },
+  });
+});
+
 function getItem(result: {}, itemType: string, key: string) {
   const items = jp.query(result, `$..workflows[*].${itemType}["${key}"]`);
 
