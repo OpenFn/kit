@@ -123,6 +123,12 @@ export async function parseAndValidate(
         }
       }
 
+      if (pair.key && pair.key.value === 'collections') {
+        if (pair.value.value === null) {
+          return doc.createPair('collections', {});
+        }
+      }
+
       if (pair.key && pair.key.value === 'jobs') {
         if (pair.value.value === null) {
           errors.push({

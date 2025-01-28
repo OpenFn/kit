@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.9.0
+
+### Minor Changes
+
+- 6363e4a: Support collections in deploy package
+
 ## 0.8.2
 
 ### Patch Changes
