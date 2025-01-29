@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.10.0
+
+### Minor Changes
+
+- 295ceed: CLI Deploy: Don't send empty collections
+
 ## 0.9.0
 
 ### Minor Changes
