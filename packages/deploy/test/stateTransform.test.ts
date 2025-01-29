@@ -4,6 +4,7 @@ import {
   getStateFromProjectPayload,
   mergeProjectPayloadIntoState,
   mergeSpecIntoState,
+  toProjectPayload,
 } from '../src/stateTransform';
 import { ProjectPayload } from '../src/types';
 import {
@@ -616,10 +617,21 @@ test('getStateFromProjectPayload with minimal project', (t) => {
 });
 
 test('getStateFromProjectPayload with full lightning project', (t) => {
-  const project = lightningProjectPayload;
   const expectedState = lightningProjectState;
+
+  const project = lightningProjectPayload;
 
   const state = getStateFromProjectPayload(project);
 
   t.deepEqual(state, expectedState);
+});
+
+test('toProjectPayload drops empty collections key', (t) => {
+  const { collections: _, ...projectState } = lightningProjectState;
+  projectState.collections = {};
+  const { collections: _c, ...expectedPayload } = lightningProjectPayload;
+
+  const payload = toProjectPayload(projectState);
+
+  t.deepEqual(payload, expectedPayload);
 });

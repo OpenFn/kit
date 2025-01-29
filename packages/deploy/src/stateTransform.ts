@@ -502,7 +502,7 @@ export function mergeProjectPayloadIntoState(
   );
 
   const nextCollections = Object.fromEntries(
-    idKeyPairs(project.collections || {}, state.collections || {}).map(
+    idKeyPairs(project.collections || [], state.collections || {}).map(
       ([key, nextCollection, _state]) => {
         return [key, nextCollection];
       }
@@ -557,10 +557,12 @@ export function toProjectPayload(state: ProjectState): ProjectPayload {
     state.collections
   );
 
+  const { collections: _, ...stateWithoutCollections } = state;
+
   return {
-    ...state,
-    collections,
+    ...stateWithoutCollections,
     project_credentials,
     workflows,
+    ...(collections.length > 0 && { collections }),
   };
 }
