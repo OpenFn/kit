@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.10.4
+
+### Patch Changes
+
+- 295ceed: CLI Deploy: Don't send empty collections
+- Updated dependencies [295ceed]
+  - @openfn/deploy@0.10.0
+
 ## 1.10.3
 
 ### Patch Changes

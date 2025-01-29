@@ -139,7 +139,7 @@ export interface ProjectPayload {
   id: string;
   name: string;
   description: string;
-  collections: Concrete<CollectionState>[];
+  collections?: Concrete<CollectionState>[];
   project_credentials: Concrete<CredentialState>[];
   workflows: {
     id: string;
