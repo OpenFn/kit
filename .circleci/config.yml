@@ -14,7 +14,7 @@ jobs:
     steps:
       - run:
           name: Install pnpm
-          command: npm install -g corepack@latest && sudo corepack enable
+          command: sudo npm install -g corepack@latest && sudo corepack enable
       - checkout
       - restore_cache:
           # See the configuration reference documentation for more details on using restore_cache and save_cache steps
