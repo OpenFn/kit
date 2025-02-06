@@ -39,7 +39,7 @@ We use [`pnpm`](https://pnpm.io/installation), a fast, disk space efficient pack
 
 ## Installing
 
-This repo uses node corepack to ensure pnpm v8 is used.
+This repo uses node corepack to ensure pnpm v8 is used
 
 - `$ corepack enable`
 - `$ pnpm install`
