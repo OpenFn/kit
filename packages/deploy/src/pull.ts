@@ -52,7 +52,7 @@ async function extractJobsToDisk(
     );
   }
 
-  const doc = YAML.parseDocument(specBody, { strict: false });
+  const doc = YAML.parseDocument(specBody);
 
   await YAML.visitAsync(doc, {
     async Pair(_, pair: any, pairPath) {
