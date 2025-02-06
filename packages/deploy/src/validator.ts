@@ -1,5 +1,6 @@
 import YAML, { YAMLMap, isMap, isPair, isScalar } from 'yaml';
 import { ProjectSpec } from './types';
+import { DeployError } from './deployError';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
@@ -194,6 +195,9 @@ export async function parseAndValidate(
 
   // TODO somehow merge or return errors found inside the yamlDoc
   //      or put our own errors in the yamlDoc
+  if (doc.errors.length > 0) {
+    throw new DeployError(doc.errors[0].message, 'SPEC_ERROR');
+  }
 
   return { errors, doc: doc.toJSON() as ProjectSpec };
 }
