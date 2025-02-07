@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.11.0
+
+### Minor Changes
+
+- 706124a: deploy: Print helpful error messages when an invalid spec is encountered
+
+### Patch Changes
+
+- Updated dependencies [706124a]
+  - @openfn/deploy@0.11.0
+
 ## 1.10.4
 
 ### Patch Changes

@@ -4,6 +4,7 @@ import { Logger } from '@openfn/logger';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 import { getState, getSpec } from './index';
+import { DeployError } from './deployError';
 
 async function getAllSpecJobs(
   config: DeployConfig,
@@ -102,6 +103,10 @@ async function extractJobsToDisk(
       }
     },
   });
+
+  if (doc.errors.length > 0) {
+    throw new DeployError(doc.errors[0].message, 'SPEC_ERROR');
+  }
 
   return doc.toString();
 }
