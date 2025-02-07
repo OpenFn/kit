@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.11.0
+
+### Minor Changes
+
+- 706124a: Print helpful error messages when an invalid spec is encountered
+
 ## 0.10.0
 
 ### Minor Changes
