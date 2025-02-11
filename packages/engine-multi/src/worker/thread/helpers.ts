@@ -3,7 +3,7 @@
 import process from 'node:process';
 import stringify from 'fast-safe-stringify';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
-import type { JSONLog } from '@openfn/logger';
+import type { JSONLog, LogLevel } from '@openfn/logger';
 
 import * as workerEvents from '../events';
 import { HANDLED_EXIT_CODE } from '../../events';
@@ -14,7 +14,8 @@ import serializeError from '../../util/serialize-error';
 export const createLoggers = (
   workflowId: string,
   sanitize: SanitizePolicies = 'none',
-  publish?: any
+  publish?: any,
+  jobLogLevel: LogLevel = 'debug'
 ) => {
   const log = (message: JSONLog) => {
     publish(workerEvents.LOG, {
@@ -47,7 +48,7 @@ export const createLoggers = (
 
   const jobLogger = createLogger('JOB', {
     logger: emitter,
-    level: 'debug',
+    level: jobLogLevel,
     json: true,
     sanitize,
   });
