@@ -11,6 +11,7 @@ import type {
   WorkflowOptions,
   Lazy,
 } from '@openfn/lexicon';
+import type { LogLevel } from '@openfn/logger';
 import { LightningPlan, LightningEdge } from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
 import { getNameAndVersion } from '@openfn/runtime';
@@ -46,6 +47,7 @@ export type WorkerRunOptions = ExecuteOptions & {
   // Defaults to true - must be explicity false to stop dataclips being sent
   outputDataclips?: boolean;
   payloadLimitMb?: number;
+  jobLogLevel?: LogLevel;
 };
 
 type ConversionOptions = {
@@ -123,6 +125,9 @@ export default (
     }
     if ('output_dataclips' in run.options) {
       engineOpts.outputDataclips = run.options.output_dataclips;
+    }
+    if ('job_log_level' in run.options) {
+      engineOpts.jobLogLevel = run.options.job_log_level;
     }
   }
 
