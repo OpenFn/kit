@@ -3,7 +3,7 @@
 import run from '@openfn/runtime';
 import type { NotifyEvents } from '@openfn/runtime';
 import type { ExecutionPlan, State } from '@openfn/lexicon';
-import type { SanitizePolicies } from '@openfn/logger';
+import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 
 import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
@@ -15,6 +15,7 @@ export type RunOptions = {
   whitelist?: RegExp[];
   sanitize: SanitizePolicies;
   statePropsToRemove?: string[];
+  jobLogLevel?: LogLevel;
 };
 
 const eventMap = {
@@ -26,11 +27,13 @@ const eventMap = {
 
 register({
   run: (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
-    const { repoDir, whitelist, sanitize, statePropsToRemove } = runOptions;
+    const { repoDir, whitelist, sanitize, statePropsToRemove, jobLogLevel } =
+      runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
       sanitize,
-      publish
+      publish,
+      jobLogLevel
     );
 
     // Save the debug function so that we can use it
