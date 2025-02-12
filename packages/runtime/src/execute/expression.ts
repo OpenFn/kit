@@ -137,7 +137,6 @@ export const wrapOperation = (
     try {
       result = await fn(newState);
     } catch (e: any) {
-      console.log(e);
       if (e.stack) {
         const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
 
@@ -151,9 +150,15 @@ export const wrapOperation = (
         // (this cuts out low level language errors like TypeError)
         do {
           const next = frames.shift();
+          // If we hit a frame in runtime code, this is not an adaptor error
+          if (/(@openfn\/runtime)|(packages\/runtime)/.test(next)) {
+            break;
+          }
           if (
             // detect an adaptor prod, adaptor monorepo, or vm frame
-            /(@openfn\/language-)|(packages\/.+\/dist)|(vm:module)/.test(next)
+            /(@openfn\/language-)|(packages\/.+\/dist)|(vm:module)|(node_modules)/.test(
+              next
+            )
           ) {
             firstFrame = next;
             break;
