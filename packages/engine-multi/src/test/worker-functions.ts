@@ -4,6 +4,8 @@ import { register, publish, threadId } from '../worker/thread/runtime';
 import { increment } from './counter.js';
 import { ExecutionPlan, Job } from '@openfn/lexicon';
 
+// import { Readable } from 'node:stream';
+
 const tasks = {
   test: async (result = 42) => {
     publish('test-message', {
@@ -54,6 +56,17 @@ const tasks = {
 
   throw: async () => {
     throw new Error('test_error');
+  },
+
+  publishUnsafe: async () => {
+    publish('err', {
+      message: {
+        // This payload is not serializable
+        // Unless the runtime does something to handle it,
+        // it'll throw a DataCloneError
+        fn: () => {},
+      },
+    });
   },
 
   // Experiments with freezing the global scope

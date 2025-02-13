@@ -169,9 +169,23 @@ test('throw if the task throws', async (t) => {
   try {
     await pool.exec('throw', []);
   } catch (e: any) {
-    // NB e is not an error isntance
+    // NB e is not an error instance
     t.is(e.message, 'test_error');
   }
+});
+
+test('publish a non-serializable object', async (t) => {
+  const pool = createPool(workerPath, {}, logger);
+
+  await pool.exec('publishUnsafe', [], {
+    on: (evt) => {
+      if (evt.type === 'err') {
+        t.log(evt);
+        t.deepEqual(evt.message, {});
+        t.pass();
+      }
+    },
+  });
 });
 
 test('throw if memory limit is exceeded', async (t) => {

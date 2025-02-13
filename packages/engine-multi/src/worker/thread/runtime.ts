@@ -5,6 +5,7 @@ import {
   ENGINE_RESOLVE_TASK,
   ENGINE_RUN_TASK,
 } from '../events';
+import stringify from 'fast-safe-stringify';
 
 type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
 
@@ -38,7 +39,8 @@ export const publish = (
     type,
     threadId,
     processId,
-    ...payload,
+    // ensure the event message is serializable
+    ...JSON.parse(stringify(payload)),
   });
 };
 
