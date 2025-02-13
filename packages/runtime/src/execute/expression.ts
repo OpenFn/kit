@@ -137,7 +137,6 @@ export const wrapOperation = (
     try {
       result = await fn(newState);
     } catch (e: any) {
-      debugger;
       if (e.stack) {
         const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
 

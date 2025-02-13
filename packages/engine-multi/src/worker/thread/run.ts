@@ -7,21 +7,12 @@ import type { SanitizePolicies } from '@openfn/logger';
 
 import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
-import serializeError from '../../util/serialize-error';
-import { JobErrorPayload } from '../../events';
 
 export type RunOptions = {
   repoDir: string;
   whitelist?: RegExp[];
   sanitize: SanitizePolicies;
   statePropsToRemove?: string[];
-};
-
-const eventMap = {
-  'job-error': (evt: JobErrorPayload) => ({
-    ...evt,
-    error: serializeError(evt.error),
-  }),
 };
 
 register({
@@ -61,11 +52,9 @@ register({
         // For now I am preloading credentials
         // resolveCredential: async (id: string) => {},
         notify: (name: NotifyEvents, payload: any) => {
-          // @ts-ignore
-          const mappedPayload = eventMap[name]?.(payload) ?? payload;
           publish(`worker:${name}`, {
             workflowId: plan.id,
-            ...mappedPayload,
+            ...payload,
           });
         },
       },
