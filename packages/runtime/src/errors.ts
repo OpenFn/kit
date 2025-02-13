@@ -1,3 +1,4 @@
+import stringify from 'fast-safe-stringify';
 import { ErrorPosition } from './types';
 
 export function assertImportError(e: any) {
@@ -202,10 +203,11 @@ export class AdaptorError extends RTError {
 
     this.details = Object.assign(
       {
-        type: error.type || error.name,
         message: error.message,
       },
-      error
+      // The incoming error is untrusted but MUST be serialisable
+      // Or else we'll have problems in threaded environments
+      JSON.parse(stringify(error))
     );
 
     if (typeof error === 'string') {

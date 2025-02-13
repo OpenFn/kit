@@ -404,7 +404,6 @@ test('fail on adaptor error and map to the top operation', async (t) => {
     details: {
       code: 1234,
       message: 'adaptor err',
-      type: 'Error',
     },
     message: 'adaptor err',
     name: 'AdaptorError',
@@ -460,7 +459,6 @@ test('fail on nested adaptor error and map to a position in the vm', async (t) =
     details: {
       code: 1234,
       message: 'adaptor err',
-      type: 'Error',
     },
     message: 'adaptor err',
     name: 'AdaptorError',
@@ -547,4 +545,18 @@ test('AdaptorError: if no operation, extract position from stack', (t) => {
   const adaptorError = new AdaptorError(originalError);
   t.deepEqual(adaptorError.pos, { column: 27, line: 2 });
   t.falsy(adaptorError.operationName);
+});
+
+test('AdaptorError: ensure that error objects are safely serialised', (t) => {
+  const originalError = {
+    message: 'e',
+    name: 'AxiosError',
+    fn: () => {},
+  };
+
+  const adaptorError = new AdaptorError(originalError);
+  t.deepEqual(adaptorError.details, {
+    message: 'e',
+    name: 'AxiosError',
+  });
 });
