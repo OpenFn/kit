@@ -1,5 +1,12 @@
 # @openfn/integration-tests-execute
 
+## 1.0.15
+
+### Patch Changes
+
+- Updated dependencies [beb4617]
+  - @openfn/runtime@1.6.2
+
 ## 1.0.14
 
 ### Patch Changes

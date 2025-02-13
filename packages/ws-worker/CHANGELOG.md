@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.9.2
+
+### Patch Changes
+
+- beb4617: Fix an issue where a DataCloneError can occur after an exception is thrown
+- Updated dependencies [beb4617]
+  - @openfn/runtime@1.6.2
+  - @openfn/engine-multi@1.4.9
+
 ## 1.9.1
 
 ### Patch Changes
