@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.6.2
+
+### Patch Changes
+
+- beb4617: Ensure that AdaptorError details are safely serialised
+
 ## 1.6.1
 
 ### Patch Changes
