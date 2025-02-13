@@ -137,6 +137,7 @@ export const wrapOperation = (
     try {
       result = await fn(newState);
     } catch (e: any) {
+      debugger;
       if (e.stack) {
         const containsVMFrame = e.stack.match(/at vm:module\(0\)/);
 
@@ -151,7 +152,7 @@ export const wrapOperation = (
         do {
           const next = frames.shift();
           // If we hit a frame in runtime code, this is not an adaptor error
-          if (/(@openfn\/runtime)|(packages\/runtime)/.test(next)) {
+          if (/@openfn\/runtime/.test(next)) {
             break;
           }
           if (
