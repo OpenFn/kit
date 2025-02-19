@@ -1,5 +1,18 @@
 # ws-worker
 
+## 1.10.0
+
+### Minor Changes
+
+- 853285c: Allow configuration of job log level
+
+### Patch Changes
+
+- Updated dependencies [853285c]
+  - @openfn/engine-multi@1.5.0
+  - @openfn/lexicon@1.2.0
+  - @openfn/runtime@1.6.1
+
 ## 1.9.1
 
 ### Patch Changes

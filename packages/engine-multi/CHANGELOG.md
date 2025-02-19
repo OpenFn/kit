@@ -1,5 +1,18 @@
 # engine-multi
 
+## 1.5.0
+
+### Minor Changes
+
+- 853285c: Allow configuration of job log level
+
+### Patch Changes
+
+- Updated dependencies [853285c]
+  - @openfn/lexicon@1.2.0
+  - @openfn/compiler@1.0.1
+  - @openfn/runtime@1.6.1
+
 ## 1.4.8
 
 ### Patch Changes
