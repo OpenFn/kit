@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.2.0
+
+### Minor Changes
+
+- 784d595: Allow configuration of job log level
+
 ## 1.1.0
 
 ### Minor Changes
