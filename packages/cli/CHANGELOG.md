@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Added lexicon as a runtime dependency for typings
 - Updated dependencies [beb4617]
   - @openfn/runtime@1.6.2
 

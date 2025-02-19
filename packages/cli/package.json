@@ -35,7 +35,6 @@
   "devDependencies": {
     "@openfn/language-collections": "^0.6.2",
     "@openfn/language-common": "2.0.0-rc3",
-    "@openfn/lexicon": "workspace:^",
     "@types/mock-fs": "^4.13.1",
     "@types/node": "^18.15.13",
     "@types/rimraf": "^3.0.2",
@@ -50,6 +49,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^1.1.4",
+    "@openfn/lexicon": "workspace:^",
     "@openfn/compiler": "workspace:*",
     "@openfn/deploy": "workspace:*",
     "@openfn/describe-package": "workspace:*",
