@@ -1,6 +1,6 @@
 {
   "name": "@openfn/runtime",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Job processing runtime.",
   "type": "module",
   "exports": {
@@ -28,7 +28,6 @@
   "devDependencies": {
     "@openfn/compiler": "workspace:^",
     "@openfn/language-common": "2.0.0-rc3",
-    "@openfn/lexicon": "workspace:^",
     "@types/mock-fs": "^4.13.1",
     "@types/node": "^18.15.13",
     "@types/semver": "^7.5.0",
@@ -46,6 +45,7 @@
     "README.md"
   ],
   "dependencies": {
+    "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
     "semver": "^7.5.4",

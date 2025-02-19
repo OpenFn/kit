@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.6.3
+
+### Patch Changes
+
+Add lexicon as a runtime dependencies for typings
+
 ## 1.6.2
 
 ### Patch Changes
