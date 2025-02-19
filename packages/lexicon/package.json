@@ -6,6 +6,9 @@
   "license": "ISC",
   "type": "module",
   "main": "index.js",
+  "scripts": {
+    "pack": "pnpm pack --pack-destination ../../dist"
+  },
   "exports": {
     ".": {
       "import": {
