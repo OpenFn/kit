@@ -974,5 +974,48 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
   });
 });
 
+test.serial(
+  "Don't send job logs to stdout when job_log_level is set to none",
+  (t) => {
+    return new Promise(async (done) => {
+      await worker.destroy();
+      ({ worker, engineLogger } = await createDummyWorker());
+
+      const message = 'log that will never exist';
+
+      const run = {
+        id: crypto.randomUUID(),
+        jobs: [
+          {
+            adaptor: '@openfn/test-adaptor@1.0.0',
+            body: `fn((s) => { console.log("${message}"); return s;})`,
+          },
+        ],
+        options: {
+          job_log_level: 'none',
+        },
+      };
+
+      lightning.once('run:complete', () => {
+        const jsonLogs = engineLogger._history;
+        // The engine logger shouldn't print out any job logs
+        const jobLog = jsonLogs.find((l) => l.name === 'JOB');
+        t.falsy(jobLog);
+        const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
+        t.falsy(jobLog2);
+
+        // But it SHOULD log engine stuff
+        const runtimeLog = jsonLogs.find(
+          (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
+        );
+        t.truthy(runtimeLog);
+        done();
+      });
+
+      lightning.enqueueRun(run);
+    });
+  }
+);
+
 // REMEMBER the default worker was destroyed at this point!
 // If you want to use a worker, you'll have to create your own

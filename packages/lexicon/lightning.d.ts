@@ -1,4 +1,4 @@
-import type { SanitizePolicies } from '@openfn/logger';
+import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 import { LegacyJob, State } from './core';
 
 export const API_VERSION: number;
@@ -50,6 +50,7 @@ export type LightningPlanOptions = {
 
   run_memory_limit_mb?: number;
   payload_limit_mb?: number;
+  job_log_level?: LogLevel;
 };
 
 /**
