@@ -32,6 +32,13 @@ const connectToWorkerQueue = (
       timeout: timeout * 1000,
     });
 
+    socket.onMessage((message: Record<string, any>) => {
+      events.emit('message', {
+        topic: message?.topic,
+        data: message,
+      });
+    });
+
     let didOpen = false;
 
     socket.onOpen(() => {

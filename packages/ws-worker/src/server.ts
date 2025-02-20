@@ -10,7 +10,7 @@ import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
 import { ClaimRun } from '@openfn/lexicon/lightning';
-import { INTERNAL_RUN_COMPLETE } from './events';
+import { INTERNAL_RUN_COMPLETE, WORK_AVAILABLE } from './events';
 import destroy from './api/destroy';
 import startWorkloop, { Workloop } from './api/workloop';
 import claim from './api/claim';
@@ -135,6 +135,14 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     logger.debug(e);
   };
 
+  const onMessage = (message: { topic: string | undefined; data: any }) => {
+    // if message is work-available
+    if (message.topic === 'worker:queue') {
+      if (message?.data?.event === WORK_AVAILABLE)
+        claim(app, logger, { maxWorkers: options.maxWorkflows });
+    }
+  };
+
   connectToWorkerQueue(
     options.lightning!,
     app.id,
@@ -144,7 +152,8 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   )
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
-    .on('error', onError);
+    .on('error', onError)
+    .on('message', onMessage);
 }
 
 async function setupCollections(options: ServerOptions, logger: Logger) {
