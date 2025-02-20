@@ -159,6 +159,7 @@ const createSocketAPI = (
 
   return {
     startRun,
+    messageClients: wss.sendToClients.bind(this),
     close: () => {
       server.close();
       (wss as any).close();

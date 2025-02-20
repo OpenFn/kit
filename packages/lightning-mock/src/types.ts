@@ -5,6 +5,7 @@ import type {
   Credential,
 } from '@openfn/lexicon/lightning';
 import type { ServerState } from './server';
+import { PhoenixEvent } from './socket-server';
 
 export type LightningEvents = 'log' | 'run-complete';
 
@@ -20,6 +21,7 @@ export type DevServer = Koa & {
   getQueueLength(): number;
   getResult(runId: string): any;
   getState(): ServerState;
+  messageSocketClients(message: PhoenixEvent): void;
   on(event: LightningEvents, fn: (evt: any) => void): void;
   once(event: LightningEvents, fn: (evt: any) => void): void;
   onSocketEvent(
