@@ -80,6 +80,7 @@ type MockSocketServer = typeof WebSocketServer & {
     topic: Topic,
     events: Record<string, EventHandler>
   ) => { unsubscribe: () => void };
+  sendToClients: (message: PhoenixEvent) => void;
 };
 
 function createServer({
@@ -94,6 +95,8 @@ function createServer({
     // create a stub listener for pheonix to prevent errors
     phoenix: new Set([() => null]),
   };
+
+  const clients: Set<DevSocket> = new Set();
 
   const wsServer =
     server ||
@@ -202,6 +205,9 @@ function createServer({
 
         logger?.debug(`>> [${topic}] ${event} ${ref} :: ${stringify(payload)}`);
 
+        // tracking connected worker:queue workers
+        if (topic === 'worker:queue' && event === 'phx_join') clients.add(ws);
+
         if (event in events) {
           // handle system/phoenix events
           // @ts-ignore
@@ -227,9 +233,18 @@ function createServer({
         }
       }
     });
+
+    ws.on('close', () => clients.delete(ws));
   });
 
   const mockServer = wsServer as MockSocketServer;
+
+  mockServer.sendToClients = async (message) => {
+    clients.forEach((client) => {
+      // @ts-ignore
+      client.sendJSON(message);
+    });
+  };
 
   // debug API
   // TODO should this in fact be (topic, event, fn)?
