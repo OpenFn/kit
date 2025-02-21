@@ -97,6 +97,10 @@ export class MockSocket {
     this.callbacks.onError = callback;
   }
 
+  onMessage(callback: EventHandler): void {
+    this.callbacks.onMessage = callback;
+  }
+
   onClose(callback: EventHandler): void {
     // TODO this isn't actually hooked up right now
     this.callbacks.onClose = callback;

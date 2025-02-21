@@ -1,5 +1,8 @@
 import * as l from '@openfn/lexicon/lightning';
 
+// events from lightning to workers
+export const WORK_AVAILABLE = 'work-available';
+
 // These are worker-lightning events, used in the websocket
 export const CLAIM = 'claim';
 export const GET_PLAN = 'fetch:plan';

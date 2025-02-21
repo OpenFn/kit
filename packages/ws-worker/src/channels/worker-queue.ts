@@ -39,6 +39,11 @@ const connectToWorkerQueue = (
 
       const channel = socket.channel('worker:queue') as Channel;
 
+      channel.onMessage = (ev, load) => {
+        events.emit('message', ev, load);
+        return load;
+      };
+
       channel
         .join()
         .receive('ok', () => {

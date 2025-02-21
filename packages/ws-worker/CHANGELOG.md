@@ -1,5 +1,15 @@
 # ws-worker
 
+## 1.11.0
+
+### Minor Changes
+
+- 87f10f7: Respond to `work:available` events.
+
+  When the worker receives `work:available` in the worker queue, it'll instantly trigger a claim event.
+
+  This claim is independent of the workloop and does not affect backoff in any way.
+
 ## 1.10.0
 
 ### Minor Changes

@@ -17,9 +17,9 @@ import createWorkerServer from '../src/server';
 import * as e from '../src/events';
 import createMockRTE from '../src/mock/runtime-engine';
 
-let lng: any;
-let worker: any;
-let engine: any;
+let lng: ReturnType<typeof createLightningServer>;
+let worker: ReturnType<typeof createWorkerServer>;
+let engine: Awaited<ReturnType<typeof createMockRTE>>;
 
 let keys = { private: '.', public: '.' };
 
@@ -128,7 +128,7 @@ test.serial(`should not claim while at capacity, then resume`, (t) => {
             }))`,
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.on(e.CLAIM, () => {
       if (runIsActive) {
@@ -173,7 +173,7 @@ test.serial(`should reset backoff after claim`, (t) => {
             }))`,
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.on(e.CLAIM, () => {
       lastClaimDiff = Date.now() - lastClaim;
@@ -222,7 +222,7 @@ test.serial(
             body: 'fn(() => ({ count: 122 }))',
           },
         ],
-      };
+      } as LightningPlan;
 
       lng.waitForResult(run.id).then((result: any) => {
         t.deepEqual(result, { count: 122 });
@@ -248,7 +248,7 @@ test.serial('should run a run which returns initial state', async (t) => {
           body: 'fn((s) => s)',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.waitForResult(run.id).then((result: any) => {
       t.deepEqual(result, { data: 66 });
@@ -270,7 +270,7 @@ test.serial('should run a run with the collections adaptor', async (t) => {
           body: 'fn((s) => /* collections.get */ s.configuration)',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.waitForResult(run.id).then((result: any) => {
       t.is(result.collections_endpoint, 'www');
@@ -522,7 +522,7 @@ test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
           body: 'fn((s) => { console.log("x"); return s })',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.onSocketEvent(
       e.RUN_LOG,
@@ -630,7 +630,7 @@ test.serial('should register and de-register runs to the server', async (t) => {
           body: 'fn(() => ({ count: 122 }))',
         },
       ],
-    };
+    } as LightningPlan;
 
     worker.on(e.RUN_START, () => {
       t.truthy(worker.workflows[run.id]);
@@ -663,12 +663,12 @@ test.skip('should not claim while at capacity', async (t) => {
           body: 'wait(500)',
         },
       ],
-    };
+    } as LightningPlan;
 
     const run2 = {
       ...run1,
       id: 'run-2',
-    };
+    } as LightningPlan;
 
     let run1Start: any;
 
@@ -730,7 +730,7 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
         createEdge('j', 'x'),
         createEdge('k', 'y'),
       ],
-    };
+    } as LightningPlan;
 
     // Save all the input dataclip ids for each job
     const unsub2 = lng.onSocketEvent(
@@ -828,6 +828,38 @@ test.serial(
   }
 );
 
+test.serial(
+  `should recieve worker:queue message events from lightning`,
+  (t) => {
+    t.plan(1);
+
+    // set workflows to nothing. else we get server at capacity due to enqueue from prev. test
+    worker.workflows = {};
+    return new Promise((done) => {
+      const EVENT_NAME = 'some-vital-event';
+      // 1. register for worker receiving a work-available message
+      // @ts-ignore
+      worker.queueChannel.onMessage = (event, load) => {
+        // note: other events come here too. only assert when it's what we want. t.pla() deals with it!
+        if (event === EVENT_NAME) {
+          t.is(event, EVENT_NAME);
+          done();
+        }
+        return load;
+      };
+
+      // 2. send work-available message to all connected clients from lightning
+      lng.messageSocketClients({
+        topic: 'worker:queue',
+        event: EVENT_NAME,
+        payload: {}, // note: an empty payload should be an object
+        join_ref: '',
+        ref: '',
+      });
+    });
+  }
+);
+
 test.serial(`worker should send a success reason in the logs`, (t) => {
   return new Promise((done) => {
     let log: any;
@@ -839,7 +871,7 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
           body: 'fn((s) => { return s })',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.onSocketEvent(
       e.RUN_LOG,
@@ -872,7 +904,7 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
           body: 'fn((s) => { throw "blah" })',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.onSocketEvent(
       e.RUN_LOG,

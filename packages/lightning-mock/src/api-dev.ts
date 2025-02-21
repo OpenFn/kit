@@ -14,9 +14,11 @@ import type {
 import { ServerState } from './server';
 import { RUN_COMPLETE } from './events';
 import type { DevServer, LightningEvents } from './types';
+import { PhoenixEvent } from './socket-server';
 
 type Api = {
   startRun(runId: string): void;
+  messageClients(message: PhoenixEvent): void;
 };
 
 const setupDevAPI = (
@@ -39,6 +41,10 @@ const setupDevAPI = (
   };
 
   app.getDataclip = (id: string) => state.dataclips[id];
+
+  app.messageSocketClients = (message: PhoenixEvent) => {
+    api.messageClients(message);
+  };
 
   app.enqueueRun = (run: LightningPlan, workerId = 'rte') => {
     state.runs[run.id] = run;
@@ -169,6 +175,19 @@ const setupRestAPI = (
 
     app.enqueueRun(run);
 
+    // triggering wakeup in all connected workers
+    if ('wakeup' in ctx.query) {
+      logger.info(
+        'WAKE UP! Sending work-available event to all listening workers'
+      );
+      app.messageSocketClients({
+        topic: 'worker:queue',
+        event: 'work-available',
+        payload: {},
+        join_ref: '',
+        ref: '',
+      });
+    }
     ctx.response.status = 200;
   });
 

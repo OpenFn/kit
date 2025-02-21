@@ -159,6 +159,7 @@ const createSocketAPI = (
 
   return {
     startRun,
+    messageClients: wss.sendToClients.bind(this),
     close: () => {
       server.close();
       (wss as any).close();
@@ -352,8 +353,14 @@ const createSocketAPI = (
     runId: string
   ) {
     const { ref, join_ref, topic } = evt;
-    const { final_dataclip_id, reason, error_type, error_message, ...rest } =
-      evt.payload;
+    const {
+      final_dataclip_id,
+      reason,
+      error_type,
+      error_message,
+      timestamp, // whitelist timestamp
+      ...rest
+    } = evt.payload;
 
     logger?.info('Completed run ', runId);
     logger?.debug(final_dataclip_id);
