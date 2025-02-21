@@ -2,21 +2,17 @@
  * Tests manual claim from lightning when it hits /run?wakeup=true
  */
 
-import createLightningServer, {
-  generateKeys,
-  toBase64,
-} from '@openfn/lightning-mock';
 import test from 'ava';
+import createLightningServer from '@openfn/lightning-mock';
 
 import createMockRTE from '../src/mock/runtime-engine';
 import createWorkerServer from '../src/server';
-import { LightningPlan } from '@openfn/lexicon/lightning';
 import * as e from '../src/events';
+
+import type { LightningPlan } from '@openfn/lexicon/lightning';
 
 let lng: ReturnType<typeof createLightningServer>;
 let engine: Awaited<ReturnType<typeof createMockRTE>>;
-
-let keys = { private: '.', public: '.' };
 
 const urls = {
   worker: 'http://localhost:4567',
@@ -27,53 +23,43 @@ const urls = {
 const ONE_HOUR = 1000 * 60 * 60;
 
 let rollingRunId = 1;
-const getRun = (ext = {}, jobs?: any[]): LightningPlan =>
+const getRun = (): LightningPlan =>
   ({
     id: `a${++rollingRunId}`,
-    jobs: jobs || [
+    jobs: [
       {
-        id: 'j',
-        adaptor: '@openfn/language-common@1.0.0',
-        body: 'fn(() => ({ answer: 42 }))',
+        body: 'fn(s => s)',
       },
     ],
-    ...ext,
   } as LightningPlan);
 
 test.before(async () => {
-  keys = await generateKeys();
-
   engine = await createMockRTE();
   lng = createLightningServer({
     port: 7654,
-    runPrivateKey: toBase64(keys.private),
   });
 
   createWorkerServer(engine, {
     port: 4567,
     lightning: urls.lng,
-    secret: 'abc',
     maxWorkflows: 1,
-    collectionsVersion: '1.0.0',
-    collectionsUrl: 'www',
-    // Note that if this is not passed,
-    // JWT verification will be skipped
-    runPublicKey: keys.public,
     backoff: {
       min: ONE_HOUR,
       max: ONE_HOUR * 2,
     },
   });
 
-  // workers make an initial claim on start. wait for that claim before running the below tests.
+  // workers make an initial claim on start.
+  // wait for that claim before running the below tests.
   await new Promise((done) => {
     lng.on(e.CLAIM, done);
   });
 });
 
 const test_timeout = 150;
+
 // control test!
-test('control: should not initiate a quick claim', async (t) => {
+test('should not initiate a quick claim', async (t) => {
   t.plan(1);
   t.timeout(test_timeout);
   return new Promise<void>(async (done) => {
