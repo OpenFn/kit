@@ -71,7 +71,7 @@ test('should not initiate a quick claim', async (t) => {
 
     const run = getRun();
     lng.onSocketEvent(e.CLAIM, run.id, () => {
-      t.fail('expected claim received');
+      t.fail('unexpected claim received');
       done();
     });
 
