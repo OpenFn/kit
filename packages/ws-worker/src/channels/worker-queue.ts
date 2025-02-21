@@ -32,19 +32,17 @@ const connectToWorkerQueue = (
       timeout: timeout * 1000,
     });
 
-    socket.onMessage((message: Record<string, any>) => {
-      events.emit('message', {
-        topic: message?.topic,
-        data: message,
-      });
-    });
-
     let didOpen = false;
 
     socket.onOpen(() => {
       didOpen = true;
 
       const channel = socket.channel('worker:queue') as Channel;
+
+      channel.onMessage = (ev, load) => {
+        events.emit('message', ev, load);
+        return load;
+      };
 
       channel
         .join()

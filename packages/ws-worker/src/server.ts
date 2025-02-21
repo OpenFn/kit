@@ -135,12 +135,10 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     logger.debug(e);
   };
 
-  const onMessage = (message: { topic: string | undefined; data: any }) => {
-    // if message is work-available
-    if (message.topic === 'worker:queue') {
-      if (message?.data?.event === WORK_AVAILABLE)
-        claim(app, logger, { maxWorkers: options.maxWorkflows });
-    }
+  // handles messages for the worker:queue
+  const onMessage = (event: string) => {
+    if (event === WORK_AVAILABLE)
+      claim(app, logger, { maxWorkers: options.maxWorkflows });
   };
 
   connectToWorkerQueue(
