@@ -176,7 +176,7 @@ const setupRestAPI = (
     app.enqueueRun(run);
 
     // triggering wakeup in all connected workers
-    if (new Boolean(ctx.query.wakeup)) {
+    if ('wakeup' in ctx.query) {
       logger.info(
         'WAKE UP! Sending work-available event to all listening workers'
       );
