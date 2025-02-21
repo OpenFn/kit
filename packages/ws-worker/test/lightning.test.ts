@@ -828,6 +828,38 @@ test.serial(
   }
 );
 
+test.serial(
+  `should recieve worker:queue message events from lightning`,
+  (t) => {
+    t.plan(1);
+
+    // set workflows to nothing. else we get server at capacity due to enqueue from prev. test
+    worker.workflows = {};
+    return new Promise((done) => {
+      const EVENT_NAME = 'some-vital-event';
+      // 1. register for worker receiving a work-available message
+      // @ts-ignore
+      worker.queueChannel.onMessage = (event, load) => {
+        // note: other events come here too. only assert when it's what we want. t.pla() deals with it!
+        if (event === EVENT_NAME) {
+          t.is(event, EVENT_NAME);
+          done();
+        }
+        return load;
+      };
+
+      // 2. send work-available message to all connected clients from lightning
+      lng.messageSocketClients({
+        topic: 'worker:queue',
+        event: EVENT_NAME,
+        payload: {}, // note: an empty payload should be an object
+        join_ref: '',
+        ref: '',
+      });
+    });
+  }
+);
+
 test.serial(`worker should send a success reason in the logs`, (t) => {
   return new Promise((done) => {
     let log: any;
