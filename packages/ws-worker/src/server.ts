@@ -138,7 +138,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   // handles messages for the worker:queue
   const onMessage = (event: string) => {
     if (event === WORK_AVAILABLE) {
-      claim(app, logger, { maxWorkers: options.maxWorkflows }).catch((e) => {
+      claim(app, logger, { maxWorkers: options.maxWorkflows }).catch(() => {
         // do nothing - it's fine if  claim throws here
       });
     }
