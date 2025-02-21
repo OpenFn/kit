@@ -33,7 +33,7 @@ The server exposes a small dev API allowing you to post an Run.
 You can add an run (`{ jobs, triggers, edges }`) to the queue with:
 
 ```
-curl http://localhost:8888/run --json @tmp/run.json
+curl -X POST http://localhost:8888/run --json @tmp/run.json
 ```
 
 Here's an example run:

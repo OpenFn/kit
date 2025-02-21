@@ -149,7 +149,6 @@ const setupRestAPI = (
   const router = new Router();
 
   router.post('/run', (ctx) => {
-    const isWakeUp = ctx.query.wakeup === 'true';
     const run = ctx.request.body as LightningPlan;
 
     if (!run) {
@@ -177,7 +176,10 @@ const setupRestAPI = (
     app.enqueueRun(run);
 
     // triggering wakeup in all connected workers
-    if (isWakeUp)
+    if (new Boolean(ctx.query.wakeup)) {
+      logger.info(
+        'WAKE UP! Sending work-available event to all listening workers'
+      );
       app.messageSocketClients({
         topic: 'worker:queue',
         event: 'work-available',
@@ -185,6 +187,7 @@ const setupRestAPI = (
         join_ref: '',
         ref: '',
       });
+    }
     ctx.response.status = 200;
   });
 
