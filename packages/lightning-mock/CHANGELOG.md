@@ -1,5 +1,11 @@
 # @openfn/lightning-mock
 
+## 2.1.0
+
+### Minor Changes
+
+- 87f10f7: Add ?wakeup paramter to trigger work-available events
+
 ## 2.0.31
 
 ### Patch Changes
