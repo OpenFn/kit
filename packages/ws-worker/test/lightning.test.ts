@@ -17,9 +17,9 @@ import createWorkerServer from '../src/server';
 import * as e from '../src/events';
 import createMockRTE from '../src/mock/runtime-engine';
 
-let lng: any;
-let worker: any;
-let engine: any;
+let lng: ReturnType<typeof createLightningServer>;
+let worker: ReturnType<typeof createWorkerServer>;
+let engine: Awaited<ReturnType<typeof createMockRTE>>;
 
 let keys = { private: '.', public: '.' };
 
@@ -128,7 +128,7 @@ test.serial(`should not claim while at capacity, then resume`, (t) => {
             }))`,
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.on(e.CLAIM, () => {
       if (runIsActive) {
@@ -173,7 +173,7 @@ test.serial(`should reset backoff after claim`, (t) => {
             }))`,
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.on(e.CLAIM, () => {
       lastClaimDiff = Date.now() - lastClaim;
@@ -222,7 +222,7 @@ test.serial(
             body: 'fn(() => ({ count: 122 }))',
           },
         ],
-      };
+      } as LightningPlan;
 
       lng.waitForResult(run.id).then((result: any) => {
         t.deepEqual(result, { count: 122 });
@@ -248,7 +248,7 @@ test.serial('should run a run which returns initial state', async (t) => {
           body: 'fn((s) => s)',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.waitForResult(run.id).then((result: any) => {
       t.deepEqual(result, { data: 66 });
@@ -270,7 +270,7 @@ test.serial('should run a run with the collections adaptor', async (t) => {
           body: 'fn((s) => /* collections.get */ s.configuration)',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.waitForResult(run.id).then((result: any) => {
       t.is(result.collections_endpoint, 'www');
@@ -522,7 +522,7 @@ test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
           body: 'fn((s) => { console.log("x"); return s })',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.onSocketEvent(
       e.RUN_LOG,
@@ -630,7 +630,7 @@ test.serial('should register and de-register runs to the server', async (t) => {
           body: 'fn(() => ({ count: 122 }))',
         },
       ],
-    };
+    } as LightningPlan;
 
     worker.on(e.RUN_START, () => {
       t.truthy(worker.workflows[run.id]);
@@ -663,12 +663,12 @@ test.skip('should not claim while at capacity', async (t) => {
           body: 'wait(500)',
         },
       ],
-    };
+    } as LightningPlan;
 
     const run2 = {
       ...run1,
       id: 'run-2',
-    };
+    } as LightningPlan;
 
     let run1Start: any;
 
@@ -730,7 +730,7 @@ test.serial('should pass the right dataclip when running in parallel', (t) => {
         createEdge('j', 'x'),
         createEdge('k', 'y'),
       ],
-    };
+    } as LightningPlan;
 
     // Save all the input dataclip ids for each job
     const unsub2 = lng.onSocketEvent(
@@ -839,7 +839,7 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
           body: 'fn((s) => { return s })',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.onSocketEvent(
       e.RUN_LOG,
@@ -872,7 +872,7 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
           body: 'fn((s) => { throw "blah" })',
         },
       ],
-    };
+    } as LightningPlan;
 
     lng.onSocketEvent(
       e.RUN_LOG,

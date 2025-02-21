@@ -7,7 +7,7 @@ import type {
 import type { ServerState } from './server';
 import { PhoenixEvent } from './socket-server';
 
-export type LightningEvents = 'log' | 'run-complete';
+export type LightningEvents = 'log' | 'run-complete' | string; // not complete!
 
 export type DevServer = Koa & {
   state: ServerState;
@@ -27,8 +27,9 @@ export type DevServer = Koa & {
   onSocketEvent(
     event: LightningEvents,
     runId: string,
-    fn: (evt: any) => void
-  ): void;
+    fn: (evt: any) => void,
+    once?: boolean
+  ): () => void;
   registerRun(run: LightningPlan): void;
   removeAllListeners(): void;
   reset(): void;

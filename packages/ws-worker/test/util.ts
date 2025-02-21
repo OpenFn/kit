@@ -1,5 +1,9 @@
 import { ExecutionPlan, Job } from '@openfn/lexicon';
-import { LightningEdge, LightningNode } from '@openfn/lexicon/lightning';
+import {
+  LightningEdge,
+  LightningNode,
+  LightningPlan,
+} from '@openfn/lexicon/lightning';
 import crypto from 'node:crypto';
 
 export const wait = (fn: () => any, maxRuns = 100) =>
@@ -56,9 +60,10 @@ export const createJob = (body?: string, id?: string) =>
     body: body || `fn((s) => s)`,
   } as LightningNode);
 
-export const createRun = (jobs = [], edges = [], triggers = []) => ({
-  id: crypto.randomUUID(),
-  jobs,
-  edges,
-  triggers,
-});
+export const createRun = (jobs = [], edges = [], triggers = []) =>
+  ({
+    id: crypto.randomUUID(),
+    jobs,
+    edges,
+    triggers,
+  } as unknown as LightningPlan);
