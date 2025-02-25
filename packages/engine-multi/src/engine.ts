@@ -157,7 +157,6 @@ const createEngine = async (
     opts: ExecuteOptions = {}
   ) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
-    console.log(' >> engine opts', opts);
     const workflowId = plan.id!;
     // TODO throw if plan is invalid
     // Wait, don't throw because the server will die

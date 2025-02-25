@@ -996,19 +996,23 @@ test.serial(
         },
       };
 
+      const jobLogs = [];
+      const rtLogs = [];
+
+      lightning.on('run:log', (e) => {
+        if (e.payload.source === 'JOB') {
+          jobLogs.push(e.payload);
+        } else if (e.payload.source === 'R/T') {
+          rtLogs.push(e.payload);
+        }
+      });
+
       lightning.once('run:complete', () => {
-        const jsonLogs = engineLogger._history;
-        // The engine logger shouldn't print out any job logs
-        const jobLog = jsonLogs.find((l) => l.name === 'JOB');
-        t.falsy(jobLog);
-        const jobLog2 = jsonLogs.find((l) => l.message[0] === message);
-        t.falsy(jobLog2);
+        // Ensure no run logs got sent back to lightning
+        t.falsy(jobLogs.length);
 
         // But it SHOULD log engine stuff
-        const runtimeLog = jsonLogs.find(
-          (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
-        );
-        t.truthy(runtimeLog);
+        t.truthy(rtLogs.length);
         done();
       });
 
