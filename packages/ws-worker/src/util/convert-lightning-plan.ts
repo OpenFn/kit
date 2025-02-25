@@ -130,8 +130,6 @@ export default (
       engineOpts.jobLogLevel = run.options.job_log_level;
     }
   }
-  // TMP
-  engineOpts.jobLogLevel = 'none';
 
   const plan: Partial<ExecutionPlan> = {
     id: run.id,
