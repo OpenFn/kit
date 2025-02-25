@@ -347,3 +347,28 @@ test.serial('should stringify the whitelist array', async (t) => {
   t.truthy(passedOptions);
   t.deepEqual(passedOptions.whitelist, ['/abc/']);
 });
+
+test.serial('should forward the jobLogLevel option', async (t) => {
+  let passedOptions: any;
+
+  const state = {
+    id: 'x',
+    plan,
+  } as WorkflowState;
+
+  const opts = {
+    ...options,
+    jobLogLevel: 'none',
+  };
+
+  const context = createContext({ state, options: opts });
+  // @ts-ignore
+  context.callWorker = (_command, args) => {
+    passedOptions = args[2];
+  };
+
+  await execute(context);
+
+  t.truthy(passedOptions);
+  t.deepEqual(passedOptions.jobLogLevel, 'none');
+});

@@ -49,11 +49,10 @@ export type ExecuteOptions = {
   resolvers?: LazyResolvers;
   runTimeoutMs?: number;
   sanitize?: SanitizePolicies;
+  jobLogLevel?: string;
 };
 
-export type ExecutionContextOptions = EngineOptions & {
-  sanitize?: SanitizePolicies;
-};
+export type ExecutionContextOptions = ExecuteOptions & EngineOptions;
 
 export interface EngineAPI extends EventEmitter {
   callWorker: CallWorker;
