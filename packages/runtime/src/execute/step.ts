@@ -207,7 +207,7 @@ const executeStep = async (
 
     if (!didError) {
       const humanDuration = logger.timer(timerId);
-      logger.success(`${jobName} completed in ${humanDuration}ms`);
+      logger.success(`${jobName} completed in ${humanDuration}`);
       result = prepareFinalState(result, logger, ctx.opts.statePropsToRemove);
 
       // Take a memory snapshot
