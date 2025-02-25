@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.11.3
+
+### Patch Changes
+
+- 2667710: Fix an issue where step completion time is logged with double units (ie, `2msms`)
+- Updated dependencies [2667710]
+  - @openfn/runtime@1.6.3
+
 ## 1.11.2
 
 ### Patch Changes

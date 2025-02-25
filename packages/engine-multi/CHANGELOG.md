@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.5.1
+
+### Patch Changes
+
+- d430258: Fix an issue where Lightning log level options don't get fed to the engine properly
+- Updated dependencies [2667710]
+  - @openfn/runtime@1.6.3
+
 ## 1.5.0
 
 ### Minor Changes

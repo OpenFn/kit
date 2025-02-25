@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.11.1
+
+### Patch Changes
+
+- d430258: Fix an issue where Lightning log level options don't get fed to the engine properly
+- 2667710: Fix an issue where step completion time is logged with double units (ie, `2msms`)
+- Updated dependencies [d430258]
+- Updated dependencies [2667710]
+  - @openfn/engine-multi@1.5.1
+  - @openfn/runtime@1.6.3
+
 ## 1.11.0
 
 ### Minor Changes
