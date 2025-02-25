@@ -173,6 +173,7 @@ const createEngine = async (
         resolvers: opts.resolvers,
         runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
+        jobLogLevel: opts.jobLogLevel,
       },
     });
 

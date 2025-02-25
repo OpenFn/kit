@@ -50,6 +50,7 @@ const execute = async (context: ExecutionContext) => {
     const runOptions = {
       statePropsToRemove: options.statePropsToRemove,
       whitelist,
+      jobLogLevel: options.jobLogLevel,
     } as RunOptions;
 
     const workerOptions = {
@@ -108,7 +109,6 @@ const execute = async (context: ExecutionContext) => {
         jobError(context, evt);
       },
       [workerEvents.LOG]: (evt: workerEvents.LogEvent) => {
-        // console.log(evt.log.name, evt.log.message);
         log(context, evt);
       },
       // TODO this is also untested
