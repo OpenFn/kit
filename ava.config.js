@@ -1,6 +1,8 @@
-const semver = require("semver")
+const semver = require('semver');
 
-const loader_arg = semver.lte(process.version, 'v20.5.0') ? '--loader=@swc-node/register/esm' : '--import=@swc-node/register/esm-register'
+const loader_arg = semver.lte(process.version, 'v20.5.0')
+  ? '--loader=@swc-node/register/esm'
+  : '--import=@swc-node/register/esm-register';
 module.exports = {
   extensions: {
     ts: 'module',
@@ -14,6 +16,9 @@ module.exports = {
     loader_arg,
     '--no-warnings', // Disable experimental module warnings
     '--experimental-vm-modules',
+
+    // just for this one test
+    // '--max-old-space-size',
   ],
 
   files: ['test/**/*test.ts'],

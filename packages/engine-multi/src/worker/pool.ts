@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { ChildProcess, fork } from 'node:child_process';
+// import { createServer } from 'node:net';
 import path from 'node:path';
+import { WebSocketServer, WebSocket } from 'ws';
 
 import readline from 'node:readline/promises';
 
@@ -78,6 +80,33 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   // Keep track of all the workers we created
   const allWorkers: Record<number, ChildProcess> = {};
 
+  // try and create a web socket server
+  // TODO how to safely get a port?
+  // Scan and find one?
+  // Take one as an argument?
+  const wss = new WebSocketServer({ port: 3366 });
+  wss;
+
+  // And create a socket that connects to our server
+  const socket = new WebSocket('ws://localhost:3366');
+  // console.log(socket);
+  let s: any;
+  socket.on('open', () => {
+    console.log(' ?>>>>>>>>>>>>>>>> OPEN >>>>>>>>>>>>>');
+    // @ts-ignore
+    s = socket._socket;
+    // s = {}; // just a random thing
+  });
+
+  // const server = createServer({ pauseOnConnect: true });
+  // // get a connection now
+
+  // // where I'm a bit confused is: who connects?
+  // server.on('connection', (_socket) => {
+  //   console.log(' ********** CONNECTION! ****** ');
+  //   // child.send('socket', socket as any);
+  // });
+
   const init = (child: ChildProcess | false) => {
     if (!child) {
       // create a new child process and load the module script into it
@@ -90,12 +119,16 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         stdio: ['ipc', 'pipe', 'pipe'],
       });
 
+      // // send the socket instance to the child
+      // child.send('socket', s);
+      // socket;
+
       // Note: Ok, now I have visibility on the stdout stream
       // I don't think I want to send this to gpc
       // This might be strictly local debug
-      // child.stdout!.on('data', (data) => {
-      //   console.log(data.toString());
-      // });
+      child.stdout!.on('data', (data) => {
+        console.log(data.toString());
+      });
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
@@ -204,14 +237,18 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       }
 
       try {
-        worker.send({
-          type: ENGINE_RUN_TASK,
-          task,
-          args,
-          options: {
-            memoryLimitMb: opts.memoryLimitMb,
-          },
-        } as RunTaskEvent);
+        worker.send(
+          {
+            type: ENGINE_RUN_TASK,
+            task,
+            args,
+            options: {
+              memoryLimitMb: opts.memoryLimitMb,
+            },
+          } as RunTaskEvent,
+          // Send a socket connection along
+          s
+        );
       } catch (e) {
         // swallow errors here
         // this may occur if the inner worker is invalid

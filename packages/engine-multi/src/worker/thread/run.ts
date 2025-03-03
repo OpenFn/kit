@@ -29,7 +29,7 @@ register({
   run: (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
     const { repoDir, whitelist, sanitize, statePropsToRemove, jobLogLevel } =
       runOptions;
-    const { logger, jobLogger, adaptorLogger } = createLoggers(
+    const { logger, jobLogger } = createLoggers(
       plan.id!,
       sanitize,
       publish,
@@ -40,7 +40,7 @@ register({
     const debug = console.debug;
 
     // override console: any console.log statements will now get treated as adaptor logs
-    console = adaptorLogger;
+    // const _console = adaptorLogger;
 
     // Leave console.debug for local debugging
     // This goes to stdout but not the adpator logger
@@ -64,6 +64,11 @@ register({
         // For now I am preloading credentials
         // resolveCredential: async (id: string) => {},
         notify: (name: NotifyEvents, payload: any) => {
+          console.log('[RTE]', name);
+          // console.log(payload);
+          // if (payload.state) {
+          //   delete payload.state.data;
+          // }
           // @ts-ignore
           const mappedPayload = eventMap[name]?.(payload) ?? payload;
           publish(`worker:${name}`, {

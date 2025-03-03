@@ -80,6 +80,7 @@ export const jobStart = (
   context: ExecutionContext,
   event: internalEvents.JobStartEvent
 ) => {
+  console.log(' >> JOB START');
   const { threadId, jobId } = event;
 
   context.emit(externalEvents.JOB_START, {
@@ -93,6 +94,7 @@ export const jobComplete = (
   context: ExecutionContext,
   event: internalEvents.JobCompleteEvent
 ) => {
+  console.log(' >> JOB COMPLETE');
   const { threadId, state, duration, jobId, next, mem } = event;
 
   context.emit(externalEvents.JOB_COMPLETE, {

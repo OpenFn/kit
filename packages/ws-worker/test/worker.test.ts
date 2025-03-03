@@ -2,7 +2,8 @@
 
 import test from 'ava';
 import createRTE from '@openfn/engine-multi';
-import { createMockLogger } from '@openfn/logger';
+import createLogger from '@openfn/logger';
+// import { createMockLogger } from '@openfn/logger';
 
 import type { ExitReason } from '@openfn/lexicon/lightning';
 
@@ -23,8 +24,8 @@ let engine: any;
 let logger: any;
 
 test.before(async () => {
-  logger = createMockLogger();
-  // logger = createLogger(null, { level: 'debug' });
+  // logger = createMockLogger();
+  logger = createLogger(null, { level: 'debug' });
 
   // Note: this is the REAL engine, not a mock
   engine = await createRTE({
@@ -97,3 +98,32 @@ if (process.env.OPENFN_TEST_SF_TOKEN && process.env.OPENFN_TEST_SF_PASSWORD) {
     t.is(result.reason.reason, 'success');
   });
 }
+
+// cool, so this blows up with
+// NODE_OPTIONS="--max-old-space-size=50" pnpm test test/worker.test.ts
+// the question now is why!
+test.only('oom error', async (t) => {
+  const LIMIT = 20;
+  const expression = `
+  export default [(state) => {
+  const limit = ${LIMIT};
+  state.data = [];
+  for(let i=0; i < limit; i++) {
+    state.data.push(new Array(1024 * 1024).fill('a'));
+    if (i % 100 === 0) {
+      console.log(state.data.length);
+    }
+  }
+  return state;
+}]`;
+  const plan = createPlan({
+    id: 'x',
+    expression,
+    adaptors: [],
+  });
+
+  const input = {};
+
+  const result = await execute(plan, input);
+  t.log(result.state.data.length);
+});

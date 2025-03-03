@@ -11,6 +11,7 @@ export default async function onWorkflowComplete(
   context: Context,
   event: WorkflowCompletePayload
 ) {
+  console.log(' >>> COMPLETE');
   const { state, channel, onFinish, logger } = context;
 
   // TODO I dont think the run final dataclip IS the last job dataclip
