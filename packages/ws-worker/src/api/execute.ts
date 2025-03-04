@@ -233,6 +233,7 @@ export function onJobLog(
     message,
     source: event.name,
     level: event.level,
+    // @ts-ignore
     timestamp: timeInMicroseconds(event.time) as string,
   };
 
