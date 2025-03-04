@@ -1,13 +1,16 @@
 import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
 import type { RunLogPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
-import type { RuntimeEngine, Resolvers } from '@openfn/engine-multi';
+import type {
+  RuntimeEngine,
+  Resolvers,
+  WorkerLogPayload,
+} from '@openfn/engine-multi';
 
 import {
   getWithReply,
   createRunState,
   throttle as createThrottle,
-  stringify,
   timeInMicroseconds,
 } from '../util';
 import {
@@ -25,9 +28,8 @@ import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
 
-import type { Channel, RunState, JSONLog } from '../types';
+import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
-import ensurePayloadSize from '../util/ensure-payload-size';
 
 const enc = new TextDecoder('utf-8');
 
@@ -212,30 +214,23 @@ export function onJobError(context: Context, event: any) {
   }
 }
 
-export function onJobLog({ channel, state, options }: Context, event: JSONLog) {
-  let message = event.message;
-  try {
-    // The message body, the actual thing that is logged,
-    // may be encoded into a string
-    // Parse it here before sending on to lightning
-    // TODO this needs optimising!
-    if (typeof event.message === 'string') {
-      ensurePayloadSize(event.message, options?.payloadLimitMb);
-      message = JSON.parse(message);
-    } else if (event.message) {
-      const payload = stringify(event.message);
-      ensurePayloadSize(payload, options?.payloadLimitMb);
-    }
-  } catch (e) {
+export function onJobLog(
+  { channel, state, options }: Context,
+  event: WorkerLogPayload
+) {
+  let message = event.message as any[];
+
+  if (event.redacted) {
     message = [
       `(Log message redacted: exceeds ${options.payloadLimitMb}mb memory limit)`,
     ];
+  } else if (typeof event.message === 'string') {
+    message = JSON.parse(event.message);
   }
-
   // lightning-friendly log object
   const log: RunLogPayload = {
     run_id: state.plan.id!,
-    message: message,
+    message,
     source: event.name,
     level: event.level,
     timestamp: timeInMicroseconds(event.time) as string,

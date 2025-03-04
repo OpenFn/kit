@@ -100,7 +100,7 @@ test('jobLog should send a log event outside a run', async (t) => {
   await onJobLog({ channel, state } as any, log);
 });
 
-test('jobLog should redact log messages which are too large', async (t) => {
+test('jobLog should replace the message of redacted logs', async (t) => {
   const plan = { id: 'run-1' };
   const jobId = 'job-1';
 
@@ -108,7 +108,8 @@ test('jobLog should redact log messages which are too large', async (t) => {
     name: 'R/T',
     level: 'info',
     time: getBigIntTimestamp(),
-    message: JSON.stringify(new Array(1024 * 1024 + 1).fill('z').join('')),
+    message: ['<large object>'],
+    redacted: true,
   };
 
   const state = {
