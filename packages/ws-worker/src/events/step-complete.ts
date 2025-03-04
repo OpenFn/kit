@@ -62,7 +62,7 @@ export default async function onStepComplete(
     await onJobLog(context, {
       time,
       message: [
-        'Dataclip too large. This dataclip will not be sent back to lighting.',
+        'Dataclip too large. This dataclip will not be sent back to lightning.',
       ],
       level: 'info',
       name: 'R/T',

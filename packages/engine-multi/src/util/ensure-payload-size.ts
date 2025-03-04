@@ -4,7 +4,7 @@ export const REDACTED_STATE = {
 };
 
 export const REDACTED_LOG = {
-  message: ['[REDACTED: MESSAGE TOO LARGE]'],
+  message: ['[REDACTED: Message length exceeds payload limit]'],
   _$REDACTED$_: true,
 };
 
