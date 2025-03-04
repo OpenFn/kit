@@ -216,7 +216,7 @@ export function onJobError(context: Context, event: any) {
 
 export function onJobLog(
   { channel, state, options }: Context,
-  event: WorkerLogPayload
+  event: Omit<WorkerLogPayload, 'workflowId'>
 ) {
   let message = event.message as any[];
 
