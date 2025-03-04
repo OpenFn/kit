@@ -37,7 +37,7 @@ export default function initWorkers(
   const callWorker: CallWorker = (
     task,
     args = [],
-    events = [],
+    events = {},
     options = {}
   ) => {
     return workers.exec(task, args, {

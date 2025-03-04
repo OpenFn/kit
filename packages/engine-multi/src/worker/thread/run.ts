@@ -43,7 +43,7 @@ register({
     console = adaptorLogger;
 
     // Leave console.debug for local debugging
-    // This goes to stdout but not the adpator logger
+    // This goes to stdout but not the adapator logger
     console.debug = debug;
 
     // TODO I would like to pull these options out of here

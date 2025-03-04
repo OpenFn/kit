@@ -7,7 +7,7 @@ import {
   ENGINE_RESOLVE_TASK,
   ENGINE_RUN_TASK,
 } from '../events';
-import createThread from './create-thread';
+import createThread, { ThreadOptions } from './create-thread';
 import serializeError from '../../util/serialize-error';
 
 process.on('message', async (evt: WorkerEvent) => {
@@ -17,7 +17,11 @@ process.on('message', async (evt: WorkerEvent) => {
   }
 });
 
-const run = async (task: string, args: any[] = [], options = {}) => {
+const run = async (
+  task: string,
+  args: any[] = [],
+  options: ThreadOptions = {}
+) => {
   const thread = createThread(task, args, options);
 
   thread.on('error', (e) => {

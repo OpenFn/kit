@@ -34,6 +34,7 @@ export type ExecOpts = {
   timeout?: number; // ms
 
   memoryLimitMb?: number;
+  payloadLimitMb?: number;
 };
 
 export type ChildProcessPool = Array<ChildProcess | false>;
@@ -93,9 +94,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // Note: Ok, now I have visibility on the stdout stream
       // I don't think I want to send this to gpc
       // This might be strictly local debug
-      // child.stdout!.on('data', (data) => {
-      //   console.log(data.toString());
-      // });
+      child.stdout!.on('data', (data) => {
+        console.log(data.toString());
+      });
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
@@ -210,6 +211,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           args,
           options: {
             memoryLimitMb: opts.memoryLimitMb,
+            payloadLimitMb: opts.payloadLimitMb,
           },
         } as RunTaskEvent);
       } catch (e) {
@@ -220,6 +222,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
+        // TODO I think here we may have to decode the payload
+
         // forward the message out of the pool
         opts.on?.(evt);
 
