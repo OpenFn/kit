@@ -9,5 +9,8 @@
  * whats a good way to set up the three tests?
  *
  *
- * Is any of this worth it right now?
+ * Is any of this worth it right now? No
+ * I should totally just write this as a simple json object
+ *
+ * then, maybe right after, run this little test
  */

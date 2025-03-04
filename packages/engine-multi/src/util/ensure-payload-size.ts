@@ -8,21 +8,26 @@ export const REDACTED_LOG = {
   _$REDACTED$_: true,
 };
 
-const verify = (value: any, limit_mb: number = 10) => {
-  if (value && limit_mb) {
+export const verify = (value: any, limit_mb: number = 10) => {
+  if (value && !isNaN(limit_mb)) {
     let size_mb = 0;
     try {
-      const str = JSON.stringify(value);
+      const str = typeof value === 'string' ? value : JSON.stringify(value);
       // should this be utf16?
       // It's the JSON size we care about though right?
-      const size_bytes = Buffer.byteLength(str, 'utf8');
+      // const size_bytes = Buffer.byteLength(str, 'utf8');
+      const size_bytes = new Blob([str]).size;
       size_mb = size_bytes / 1024 / 1024;
     } catch (e) {
       // do nothing
     }
 
     if (size_mb > limit_mb) {
-      throw {};
+      const e = new Error();
+      // @ts-ignore
+      e.name = 'PAYLOAD_TOO_LARGE';
+      e.message = `The payload exceeded the size limit of ${limit_mb}mb`;
+      throw e;
     }
   }
 };
@@ -36,11 +41,13 @@ export default (payload: any, limit_mb: number = 10) => {
     verify(payload.state, limit_mb);
   } catch (e) {
     newPayload.state = REDACTED_STATE;
+    newPayload.redacted = true;
   }
   try {
     verify(payload.log, limit_mb);
   } catch (e) {
     Object.assign(newPayload.log, REDACTED_LOG);
+    newPayload.redacted = true;
   }
   return newPayload;
 };
