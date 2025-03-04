@@ -13,10 +13,7 @@ export const verify = (value: any, limit_mb: number = 10) => {
     let size_mb = 0;
     try {
       const str = typeof value === 'string' ? value : JSON.stringify(value);
-      // should this be utf16?
-      // It's the JSON size we care about though right?
-      // const size_bytes = Buffer.byteLength(str, 'utf8');
-      const size_bytes = new Blob([str]).size;
+      const size_bytes = Buffer.byteLength(str, 'utf8');
       size_mb = size_bytes / 1024 / 1024;
     } catch (e) {
       // do nothing
