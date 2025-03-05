@@ -64,7 +64,7 @@ test('execute: should publish workflow-start', async (t) => {
     }
   };
 
-  await execute('abc', async () => {}, publish);
+  await execute('abc', async () => {}, { publish });
 
   t.deepEqual(event, { workflowId: 'abc' });
 });
@@ -78,7 +78,7 @@ test('execute: should publish workflow-complete', async (t) => {
     }
   };
 
-  await execute('abc', async () => ({}), publish);
+  await execute('abc', async () => ({}), { publish });
 
   t.deepEqual(event, { workflowId: 'abc', state: {} });
 });
