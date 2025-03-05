@@ -94,9 +94,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // Note: Ok, now I have visibility on the stdout stream
       // I don't think I want to send this to gpc
       // This might be strictly local debug
-      child.stdout!.on('data', (data) => {
-        console.log(data.toString());
-      });
+      // child.stdout!.on('data', (data) => {
+      //   console.log(data.toString());
+      // });
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
