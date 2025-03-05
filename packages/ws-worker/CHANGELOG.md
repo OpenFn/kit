@@ -1,5 +1,17 @@
 # ws-worker
 
+## 1.12.0
+
+### Minor Changes
+
+- d50c05d: Fix an issue where large payloads can cause the worker to OOM crash
+
+### Patch Changes
+
+- Updated dependencies [deb7293]
+- Updated dependencies [d50c05d]
+  - @openfn/engine-multi@1.6.0
+
 ## 1.11.1
 
 ### Patch Changes

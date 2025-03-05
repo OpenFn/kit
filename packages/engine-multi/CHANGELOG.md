@@ -1,5 +1,15 @@
 # engine-multi
 
+## 1.6.0
+
+### Minor Changes
+
+- d50c05d: Fix an issue where large payloads can cause the worker to OOM crash
+
+### Patch Changes
+
+- deb7293: Don't return the result of a task unless explicitly requested
+
 ## 1.5.1
 
 ### Patch Changes
