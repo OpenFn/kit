@@ -18,6 +18,7 @@ export type CLIExecutionPlan = {
     id?: UUID;
     name?: string;
     steps: Array<CLIJobNode | Trigger>;
+    functions?: string;
   };
 };
 

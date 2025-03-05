@@ -182,6 +182,23 @@ const fetchFile = async (
   }
 };
 
+const importFunctions = async (
+  plan: CLIExecutionPlan,
+  rootDir: string,
+  log: Logger
+) => {
+  const fnStr = plan.workflow?.functions;
+  if (fnStr && isPath(fnStr)) {
+    // FIXME: fetchFile function isn't generic enough
+    plan.workflow.functions = await fetchFile(
+      'global functions',
+      rootDir,
+      fnStr,
+      log
+    );
+  }
+};
+
 // TODO this is currently untested in load-plan
 // (but covered a bit in execute tests)
 const importExpressions = async (
@@ -259,6 +276,9 @@ const loadXPlan = async (
     plan.workflow.name = defaultName;
   }
   ensureAdaptors(plan);
+
+  // import global functions
+  await importFunctions(plan, options.baseDir!, logger);
 
   // Note that baseDir should be set up in the default function
   await importExpressions(plan, options.baseDir!, logger);
