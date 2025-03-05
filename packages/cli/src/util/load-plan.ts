@@ -156,11 +156,15 @@ const loadOldWorkflow = async (
 };
 
 const fetchFile = async (
-  jobId: string,
-  rootDir: string = '',
-  filePath: string,
+  fileInfo: {
+    id: string;
+    fileType: string;
+    rootDir?: string;
+    filePath: string;
+  },
   log: Logger
 ) => {
+  const { id, rootDir = '', filePath, fileType = 'resource' } = fileInfo;
   try {
     // Special handling for ~ feels like a necessary evil
     const fullPath = filePath.startsWith('~')
@@ -172,7 +176,7 @@ const fetchFile = async (
   } catch (e) {
     abort(
       log,
-      `File not found for job ${jobId}: ${filePath}`,
+      `File not found for ${fileType} ${id}: ${filePath}`,
       undefined,
       `This workflow references a file which cannot be found at ${filePath}\n\nPaths inside the workflow are relative to the workflow.json`
     );
@@ -191,9 +195,7 @@ const importGlobals = async (
   if (fnStr && isPath(fnStr)) {
     // FIXME: fetchFile function isn't generic enough
     plan.workflow.globals = await fetchFile(
-      'global functions',
-      rootDir,
-      fnStr,
+      { id: '', fileType: 'globals', rootDir, filePath: fnStr },
       log
     );
   }
@@ -221,26 +223,35 @@ const importExpressions = async (
 
     if (expressionStr && isPath(expressionStr)) {
       job.expression = await fetchFile(
-        job.id || `${idx}`,
-        rootDir,
-        expressionStr,
+        {
+          id: job.id || `${idx}`,
+          rootDir,
+          filePath: expressionStr,
+          fileType: 'job',
+        },
         log
       );
     }
     if (configurationStr && isPath(configurationStr)) {
       const configString = await fetchFile(
-        job.id || `${idx}`,
-        rootDir,
-        configurationStr,
+        {
+          id: job.id || `${idx}`,
+          rootDir,
+          filePath: configurationStr,
+          fileType: 'job configuration',
+        },
         log
       );
       job.configuration = JSON.parse(configString!);
     }
     if (stateStr && isPath(stateStr)) {
       const stateString = await fetchFile(
-        job.id || `${idx}`,
-        rootDir,
-        stateStr,
+        {
+          id: job.id || `${idx}`,
+          rootDir,
+          filePath: stateStr,
+          fileType: 'job state',
+        },
         log
       );
       job.state = JSON.parse(stateString!);
