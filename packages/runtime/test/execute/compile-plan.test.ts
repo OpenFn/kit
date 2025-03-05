@@ -433,6 +433,31 @@ test('throw for a syntax error on a job edge', (t) => {
   }
 });
 
+test('global functions. when undefined', (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [{ expression: 'x' }, { expression: 'y' }],
+    },
+    options: {},
+  };
+  const compiled = compilePlan(plan);
+  t.is(compiled.workflow.functions, undefined);
+});
+
+test('global functions. perform no transformation', (t) => {
+  const GLOBAL_FUNCTIONS =
+    'export const cleaner = (name) => name.replace("a", "b");';
+  const plan: ExecutionPlan = {
+    workflow: {
+      functions: GLOBAL_FUNCTIONS,
+      steps: [{ expression: 'x' }, { expression: 'y' }],
+    },
+    options: {},
+  };
+  const compiled = compilePlan(plan);
+  t.is(compiled.workflow.functions, GLOBAL_FUNCTIONS);
+});
+
 test('throw for multiple errors', (t) => {
   const plan = {
     workflow: {

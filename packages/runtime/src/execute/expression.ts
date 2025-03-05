@@ -64,12 +64,15 @@ export default (
       // Setup an execution context
       const context = buildContext(input, { ...opts, globals });
 
+      // FIXME: when expression isn't a string, additional stuff isn't loaded
+      // eg. global functions might not be loaded!
       const { operations, execute } = await prepareJob(
         expression,
         context,
         opts,
         moduleOverrides
       );
+
       // Create the main reducer function
       const reducer = (execute || defaultExecute)(
         ...operations.map((op, idx) =>

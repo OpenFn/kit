@@ -51,6 +51,23 @@ test.serial('run a live no-op job with one operation', async (t) => {
   t.deepEqual(state, result);
 });
 
+test.serial('use global function defined in functions', async (t) => {
+  const job = `export default [state=> {state.data.pr = prefixer(state.data.name); return state;}]`;
+
+  const state = createState();
+  // @ts-ignore
+  state.data.name = 'john';
+  const context = createContext();
+  context.plan.workflow = {
+    steps: [] as any,
+    functions: "export const prefixer = (w) => 'welcome '+ w",
+  };
+
+  const result = await execute(context, job, state);
+  // @ts-ignore
+  t.is(result.data.pr, 'welcome ' + state.data.name);
+});
+
 test.serial('run a stringified no-op job with one operation', async (t) => {
   const job = 'export default [(s) => s]';
   const state = createState();
