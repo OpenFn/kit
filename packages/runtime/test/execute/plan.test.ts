@@ -11,10 +11,10 @@ let mockLogger = createMockLogger(undefined, { level: 'debug' });
 const createPlan = (
   steps: Job[],
   options: Partial<CompiledExecutionPlan['options']> = {},
-  functions?: string
+  globals?: string
 ): ExecutionPlan => ({
   workflow: {
-    functions,
+    globals,
     steps,
   },
   options,

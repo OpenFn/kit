@@ -21,11 +21,7 @@ import {
   assertSecurityKill,
   AdaptorError,
 } from '../errors';
-import type {
-  JobModule,
-  ExecutionContext,
-  GlobalFunctionsModule,
-} from '../types';
+import type { JobModule, ExecutionContext, GlobalsModule } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
 import {
   clearNullState,
@@ -57,8 +53,8 @@ export default (
 
       // prepare global functions to be injected into execution context
       let funcs = {};
-      if (plan.workflow?.functions)
-        funcs = await prepareGlobalFunctions(plan.workflow.functions);
+      if (plan.workflow?.globals)
+        funcs = await prepareGlobals(plan.workflow.globals);
       const globals = { ...opts.globals, ...funcs };
 
       // Setup an execution context
@@ -253,10 +249,10 @@ const prepareJob = async (
   }
 };
 
-const prepareGlobalFunctions = async (
+const prepareGlobals = async (
   source: string,
   opts: Options = {}
-): Promise<GlobalFunctionsModule> => {
+): Promise<GlobalsModule> => {
   if (typeof source === 'string' && !!source.trim()) {
     const context = vm.createContext({ console: opts.logger });
     const funcs = await loadModule(source || '', {
@@ -264,7 +260,7 @@ const prepareGlobalFunctions = async (
     }).catch((e) => {
       // mostly syntax errors
       // repackage errors and throw
-      e.message = `(global functions) ${e.message}`;
+      e.message = `(inside globals) ${e.message}`;
       throw e;
     });
     return funcs;

@@ -454,7 +454,7 @@ test.serial('run a job which does not return state', async (t) => {
 test.serial('globals: use a global function in an operation', async (t) => {
   const workflow = {
     workflow: {
-      functions: "export const prefixer = (w) => 'welcome '+w",
+      globals: "export const prefixer = (w) => 'welcome '+w",
       steps: [
         {
           id: 'a',
@@ -480,7 +480,7 @@ test.serial('globals: use a global function in an operation', async (t) => {
 test.serial('globals: get global functions from a filePath', async (t) => {
   const workflow = {
     workflow: {
-      functions: '/my-globals.js',
+      globals: '/my-globals.js',
       steps: [
         {
           id: 'a',

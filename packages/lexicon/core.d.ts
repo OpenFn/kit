@@ -36,7 +36,7 @@ export type Workflow = {
   credentials?: Record<string, any>;
 
   // a path to a file where functions are defined!
-  functions?: string;
+  globals?: string;
 };
 
 /**

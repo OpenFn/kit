@@ -441,7 +441,7 @@ test('global functions. when undefined', (t) => {
     options: {},
   };
   const compiled = compilePlan(plan);
-  t.is(compiled.workflow.functions, undefined);
+  t.is(compiled.workflow.globals, undefined);
 });
 
 test('global functions. perform no transformation', (t) => {
@@ -449,13 +449,13 @@ test('global functions. perform no transformation', (t) => {
     'export const cleaner = (name) => name.replace("a", "b");';
   const plan: ExecutionPlan = {
     workflow: {
-      functions: GLOBAL_FUNCTIONS,
+      globals: GLOBAL_FUNCTIONS,
       steps: [{ expression: 'x' }, { expression: 'y' }],
     },
     options: {},
   };
   const compiled = compilePlan(plan);
-  t.is(compiled.workflow.functions, GLOBAL_FUNCTIONS);
+  t.is(compiled.workflow.globals, GLOBAL_FUNCTIONS);
 });
 
 test('throw for multiple errors', (t) => {

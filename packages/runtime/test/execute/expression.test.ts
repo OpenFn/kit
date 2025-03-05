@@ -60,7 +60,7 @@ test.serial('use global function defined in functions', async (t) => {
   const context = createContext();
   context.plan.workflow = {
     steps: [] as any,
-    functions: "export const prefixer = (w) => 'welcome '+ w",
+    globals: "export const prefixer = (w) => 'welcome '+ w",
   };
 
   const result = await execute(context, job, state);
