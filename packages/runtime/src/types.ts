@@ -41,6 +41,7 @@ export type Lazy<T> = string | T;
 
 export type CompiledExecutionPlan = {
   workflow: {
+    functions?: string;
     steps: Record<StepId, CompiledStep>;
     credentials?: Record<string, any>;
   };
@@ -54,6 +55,8 @@ export type JobModule = {
   execute?: (...operations: Operation[]) => (state: any) => any;
   // TODO lifecycle hooks
 };
+
+export type GlobalFunctionsModule = Record<string, any>;
 
 type NotifyHandler = (
   event: NotifyEvents,

@@ -34,6 +34,9 @@ export type Workflow = {
   // global credentials
   // (gets applied to every configuration object)
   credentials?: Record<string, any>;
+
+  // a path to a file where functions are defined!
+  functions?: string;
 };
 
 /**

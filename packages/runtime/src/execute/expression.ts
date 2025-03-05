@@ -21,13 +21,18 @@ import {
   assertSecurityKill,
   AdaptorError,
 } from '../errors';
-import type { JobModule, ExecutionContext } from '../types';
+import type {
+  JobModule,
+  ExecutionContext,
+  GlobalFunctionsModule,
+} from '../types';
 import { ModuleInfoMap } from '../modules/linker';
 import {
   clearNullState,
   isNullState,
   createNullState,
 } from '../util/null-state';
+import vm from '../modules/experimental-vm';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -50,8 +55,14 @@ export default (
     try {
       const timeout = plan.options?.timeout ?? ctx.opts.defaultRunTimeoutMs;
 
+      // prepare global functions to be injected into execution context
+      let funcs = {};
+      if (plan.workflow?.functions)
+        funcs = await prepareGlobalFunctions(plan.workflow.functions);
+      const globals = { ...opts.globals, ...funcs };
+
       // Setup an execution context
-      const context = buildContext(input, opts);
+      const context = buildContext(input, { ...opts, globals });
 
       const { operations, execute } = await prepareJob(
         expression,
@@ -237,4 +248,23 @@ const prepareJob = async (
     }
     return { operations: expression as Operation[] };
   }
+};
+
+const prepareGlobalFunctions = async (
+  source: string,
+  opts: Options = {}
+): Promise<GlobalFunctionsModule> => {
+  if (typeof source === 'string' && !!source.trim()) {
+    const context = vm.createContext({ console: opts.logger });
+    const funcs = await loadModule(source || '', {
+      context,
+    }).catch((e) => {
+      // mostly syntax errors
+      // repackage errors and throw
+      e.message = `(global functions) ${e.message}`;
+      throw e;
+    });
+    return funcs;
+  }
+  return {};
 };
