@@ -10,9 +10,11 @@ let mockLogger = createMockLogger(undefined, { level: 'debug' });
 
 const createPlan = (
   steps: Job[],
-  options: Partial<CompiledExecutionPlan['options']> = {}
+  options: Partial<CompiledExecutionPlan['options']> = {},
+  functions?: string
 ): ExecutionPlan => ({
   workflow: {
+    functions,
     steps,
   },
   options,
@@ -1204,3 +1206,39 @@ test('Plans log step names for each job start and end', async (t) => {
   const end = logger._find('success', /do-the-thing completed in/i);
   t.regex(end!.message as string, /do-the-thing completed in \d+ms/);
 });
+
+test.serial(
+  'global functions should be scoped per step or job code',
+  async (t) => {
+    const functions = `
+    export const addToBase = ((a) => (b) => { a = a + b; return a })(0); 
+    export const INC = 5;
+    `;
+    const plan = createPlan(
+      [
+        {
+          id: 'a',
+          name: 'do-a',
+          expression:
+            'export default [s => {addToBase(INC); return s;}, s => {state.data.a = addToBase(INC); return state;}]',
+          next: {
+            b: true,
+          },
+        },
+        {
+          id: 'b',
+          name: 'do-b',
+          expression:
+            'export default [s => {addToBase(INC); return s;}, s => {state.data.b = addToBase(INC); return state;}]',
+        },
+      ],
+      {},
+      functions
+    );
+
+    const result: any = await executePlan(plan, {}, {}, mockLogger);
+
+    t.notThrows(() => JSON.stringify(result));
+    t.deepEqual(result.data, { a: 10, b: 10 });
+  }
+);
