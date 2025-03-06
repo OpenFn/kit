@@ -193,7 +193,6 @@ const importGlobals = async (
 ) => {
   const fnStr = plan.workflow?.globals;
   if (fnStr && isPath(fnStr)) {
-    // FIXME: fetchFile function isn't generic enough
     plan.workflow.globals = await fetchFile(
       { id: '', fileType: 'globals', rootDir, filePath: fnStr },
       log

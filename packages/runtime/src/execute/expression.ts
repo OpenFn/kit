@@ -52,10 +52,12 @@ export default (
       const timeout = plan.options?.timeout ?? ctx.opts.defaultRunTimeoutMs;
 
       // prepare global functions to be injected into execution context
-      let funcs = {};
-      if (plan.workflow?.globals)
-        funcs = await prepareGlobals(plan.workflow.globals);
-      const globals = { ...opts.globals, ...funcs };
+      const globals = {
+        ...opts.globals,
+        ...(plan.workflow?.globals
+          ? await prepareGlobals(plan.workflow.globals)
+          : {}),
+      };
 
       // Setup an execution context
       const context = buildContext(input, { ...opts, globals });
@@ -255,15 +257,14 @@ const prepareGlobals = async (
 ): Promise<GlobalsModule> => {
   if (typeof source === 'string' && !!source.trim()) {
     const context = vm.createContext({ console: opts.logger });
-    const funcs = await loadModule(source || '', {
+    return await loadModule(source || '', {
       context,
     }).catch((e) => {
       // mostly syntax errors
       // repackage errors and throw
-      e.message = `(inside globals) ${e.message}`;
+      e.message = `[globals] ${e.message}`;
       throw e;
     });
-    return funcs;
   }
   return {};
 };
