@@ -34,6 +34,7 @@ export type ExecOpts = {
   timeout?: number; // ms
 
   memoryLimitMb?: number;
+  payloadLimitMb?: number;
 };
 
 export type ChildProcessPool = Array<ChildProcess | false>;
@@ -210,6 +211,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           args,
           options: {
             memoryLimitMb: opts.memoryLimitMb,
+            payloadLimitMb: opts.payloadLimitMb,
           },
         } as RunTaskEvent);
       } catch (e) {
@@ -220,6 +222,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
+        // TODO I think here we may have to decode the payload
+
         // forward the message out of the pool
         opts.on?.(evt);
 

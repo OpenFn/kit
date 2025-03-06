@@ -974,6 +974,45 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
   });
 });
 
+test.serial("Don't return dataclips which exceed the payload limit", (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(lightningPort, {
+      maxWorkers: 1,
+      // use the dummy repo to remove autoinstall
+      repoDir: path.resolve('./dummy-repo'),
+    }));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `fn(() => ({ data: 'abdef' }))`,
+        },
+      ],
+      options: {
+        payload_limit_mb: 0,
+      },
+    };
+
+    lightning.on('step:complete', (evt) => {
+      t.is(evt.payload.output_dataclip_error, 'DATACLIP_TOO_LARGE');
+      t.falsy(evt.payload.output_dataclip_id);
+      t.falsy(evt.payload.output_dataclip);
+    });
+
+    lightning.enqueueRun(run);
+
+    lightning.once('run:complete', () => {
+      done();
+    });
+  });
+});
+
 test.serial(
   "Don't send job logs to stdout when job_log_level is set to none",
   (t) => {

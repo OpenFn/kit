@@ -55,6 +55,7 @@ const execute = async (context: ExecutionContext) => {
 
     const workerOptions = {
       memoryLimitMb: options.memoryLimitMb,
+      payloadLimitMb: options.payloadLimitMb,
       timeout: options.runTimeoutMs,
     };
 

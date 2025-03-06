@@ -49,6 +49,7 @@ export interface JobStartEvent extends InternalEvent {
 export interface JobCompleteEvent extends InternalEvent {
   jobId: string;
   state: any;
+  redacted?: boolean;
   duration: number;
   next: string[];
   mem: {

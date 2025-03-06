@@ -63,12 +63,28 @@ export const createLoggers = (
   return { logger, jobLogger, adaptorLogger };
 };
 
+type Options = {
+  /**
+   * Should we return results directly?
+   * Useful for tests but dangerous in production
+   * as can cause OOM errors for large results
+   * */
+  directReturn?: boolean;
+
+  /**
+   * Allow a custom publish function to be passed in
+   */
+  publish?: typeof publish;
+};
+
 // Execute wrapper function
 export const execute = async (
   workflowId: string,
   executeFn: () => Promise<any> | undefined,
-  publishFn = publish
+  options: Options = {}
 ) => {
+  const publishFn = options.publish ?? publish;
+
   const handleError = (err: any) => {
     publishFn(workerEvents.ERROR, {
       // @ts-ignore
@@ -127,8 +143,7 @@ export const execute = async (
     const result = await executeFn();
     publishFn(workerEvents.WORKFLOW_COMPLETE, { workflowId, state: result });
 
-    // For tests
-    return result;
+    return options.directReturn ? result : {};
   } catch (err: any) {
     handleError(err);
   }

@@ -5,8 +5,9 @@ import { ENGINE_RUN_TASK } from '../events';
 
 const scriptPath = process.argv[2];
 
-type ThreadOptions = {
+export type ThreadOptions = {
   memoryLimitMb?: number;
+  payloadLimitMb?: number;
 };
 
 const createThread = (
@@ -24,6 +25,7 @@ const createThread = (
     type: ENGINE_RUN_TASK,
     task,
     args,
+    options,
   });
 
   return worker;
