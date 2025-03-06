@@ -88,7 +88,11 @@ test.serial("can't find config referenced in a workflow", async (t) => {
 
   const stdlogs = extractLogs(stdout);
 
-  assertLog(t, stdlogs, /File not found for job 1: does-not-exist.js/i);
+  assertLog(
+    t,
+    stdlogs,
+    /File not found for job configuration 1: does-not-exist.js/i
+  );
   assertLog(
     t,
     stdlogs,
