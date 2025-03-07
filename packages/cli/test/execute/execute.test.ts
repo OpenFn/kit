@@ -450,3 +450,56 @@ test.serial('run a job which does not return state', async (t) => {
   // Check that no error messages have been logged
   t.is(logger._history.length, 0);
 });
+
+test.serial('globals: use a global function in an operation', async (t) => {
+  const workflow = {
+    workflow: {
+      globals: "export const prefixer = (w) => 'welcome '+w",
+      steps: [
+        {
+          id: 'a',
+          state: { data: { name: 'John' } },
+          expression: `${fn}fn(state=> { state.data.new = prefixer(state.data.name); return state; })`,
+        },
+      ],
+    },
+  };
+
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+  };
+  const result = await handler(options, logger);
+  t.deepEqual(result.data, { name: 'John', new: 'welcome John' });
+});
+
+test.serial('globals: get global functions from a filePath', async (t) => {
+  const workflow = {
+    workflow: {
+      globals: '/my-globals.js',
+      steps: [
+        {
+          id: 'a',
+          state: { data: { name: 'John' } },
+          expression: `${fn}fn(state=> { state.data.new = suffixer(state.data.name); return state; })`,
+        },
+      ],
+    },
+  };
+
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/my-globals.js': `export const suffixer = (w) => w + " goodbye!"`,
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+  };
+  const result = await handler(options, logger);
+  t.deepEqual(result.data, { name: 'John', new: 'John goodbye!' });
+});
