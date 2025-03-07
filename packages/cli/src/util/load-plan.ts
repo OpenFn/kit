@@ -157,14 +157,13 @@ const loadOldWorkflow = async (
 
 const fetchFile = async (
   fileInfo: {
-    id: string;
-    fileType: string;
+    name: string;
     rootDir?: string;
     filePath: string;
   },
   log: Logger
 ) => {
-  const { id, rootDir = '', filePath, fileType = 'resource' } = fileInfo;
+  const { rootDir = '', filePath, name } = fileInfo;
   try {
     // Special handling for ~ feels like a necessary evil
     const fullPath = filePath.startsWith('~')
@@ -176,7 +175,7 @@ const fetchFile = async (
   } catch (e) {
     abort(
       log,
-      `File not found for ${fileType} ${id}: ${filePath}`,
+      `File not found for ${name}: ${filePath}`,
       undefined,
       `This workflow references a file which cannot be found at ${filePath}\n\nPaths inside the workflow are relative to the workflow.json`
     );
@@ -194,7 +193,7 @@ const importGlobals = async (
   const fnStr = plan.workflow?.globals;
   if (fnStr && isPath(fnStr)) {
     plan.workflow.globals = await fetchFile(
-      { id: '', fileType: 'globals', rootDir, filePath: fnStr },
+      { name: 'globals', rootDir, filePath: fnStr },
       log
     );
   }
@@ -223,10 +222,9 @@ const importExpressions = async (
     if (expressionStr && isPath(expressionStr)) {
       job.expression = await fetchFile(
         {
-          id: job.id || `${idx}`,
+          name: `job ${job.id || idx}`,
           rootDir,
           filePath: expressionStr,
-          fileType: 'job',
         },
         log
       );
@@ -234,10 +232,9 @@ const importExpressions = async (
     if (configurationStr && isPath(configurationStr)) {
       const configString = await fetchFile(
         {
-          id: job.id || `${idx}`,
+          name: `job configuration ${job.id || idx}`,
           rootDir,
           filePath: configurationStr,
-          fileType: 'job configuration',
         },
         log
       );
@@ -246,10 +243,9 @@ const importExpressions = async (
     if (stateStr && isPath(stateStr)) {
       const stateString = await fetchFile(
         {
-          id: job.id || `${idx}`,
+          name: `job state ${job.id || idx}`,
           rootDir,
           filePath: stateStr,
-          fileType: 'job state',
         },
         log
       );
