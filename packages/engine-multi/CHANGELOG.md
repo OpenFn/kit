@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.6.1
+
+### Patch Changes
+
+- e2f1197: Better logging on credential errors
+
 ## 1.6.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.12.1
+
+### Patch Changes
+
+- e2f1197: Better logging on credential errors
+- Updated dependencies [e2f1197]
+  - @openfn/engine-multi@1.6.1
+
 ## 1.12.0
 
 ### Minor Changes
