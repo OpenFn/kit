@@ -100,6 +100,7 @@ export default (plan: ExecutionPlan) => {
   const newPlan: CompiledExecutionPlan = {
     workflow: {
       steps: {},
+      globals: workflow.globals,
     },
     options: {
       ...options,

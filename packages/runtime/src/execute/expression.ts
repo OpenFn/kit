@@ -21,13 +21,14 @@ import {
   assertSecurityKill,
   AdaptorError,
 } from '../errors';
-import type { JobModule, ExecutionContext } from '../types';
+import type { JobModule, ExecutionContext, GlobalsModule } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
 import {
   clearNullState,
   isNullState,
   createNullState,
 } from '../util/null-state';
+import vm from '../modules/experimental-vm';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -50,15 +51,26 @@ export default (
     try {
       const timeout = plan.options?.timeout ?? ctx.opts.defaultRunTimeoutMs;
 
-      // Setup an execution context
-      const context = buildContext(input, opts);
+      // prepare global functions to be injected into execution context
+      const globals = {
+        ...opts.globals,
+        ...(plan.workflow?.globals
+          ? await prepareGlobals(plan.workflow.globals)
+          : {}),
+      };
 
+      // Setup an execution context
+      const context = buildContext(input, { ...opts, globals });
+
+      // FIXME: when expression isn't a string, additional stuff isn't loaded
+      // eg. global functions might not be loaded!
       const { operations, execute } = await prepareJob(
         expression,
         context,
         opts,
         moduleOverrides
       );
+
       // Create the main reducer function
       const reducer = (execute || defaultExecute)(
         ...operations.map((op, idx) =>
@@ -237,4 +249,22 @@ const prepareJob = async (
     }
     return { operations: expression as Operation[] };
   }
+};
+
+const prepareGlobals = async (
+  source: string,
+  opts: Options = {}
+): Promise<GlobalsModule> => {
+  if (typeof source === 'string' && !!source.trim()) {
+    const context = vm.createContext({ console: opts.logger });
+    return await loadModule(source || '', {
+      context,
+    }).catch((e) => {
+      // mostly syntax errors
+      // repackage errors and throw
+      e.message = `[globals] ${e.message}`;
+      throw e;
+    });
+  }
+  return {};
 };
