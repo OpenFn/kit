@@ -22,11 +22,11 @@ export default async (
             job.configuration = await loader(config as string);
             logger?.debug(`Credential ${config} loaded OK (${config})`);
           } catch (e: any) {
-            logger?.debug(`Error loading credential ${config}`);
+            logger?.error(`Error loading credential ${config}`, e);
             errors.push({
               id: config,
               step: step.id!,
-              error: e?.message || e?.toString() || e,
+              error: e?.message || e,
             });
           }
           resolve();
