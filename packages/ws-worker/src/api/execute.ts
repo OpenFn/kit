@@ -6,7 +6,6 @@ import type {
   RuntimeEngine,
   Resolvers,
   WorkerLogPayload,
-  JobStartPayload,
 } from '@openfn/engine-multi';
 
 import {
@@ -87,40 +86,7 @@ export function execute(
   options: WorkerRunOptions = {},
   onFinish = (_result: any) => {}
 ) {
-  // return Sentry.withIsolationScope(async () => {
   logger.info('executing ', plan.id);
-
-  // const sentryContext = {
-  //   run_id: plan.id,
-  //   // status: 'setup', // | 'started' | 'finished',
-  //   // last_event: '', // what was the last event emitted by this run?
-  //   // step: '', // what step is this run on?
-  // };
-
-  // Sentry.setContext('run', {
-  //   run_id: plan.id,
-  // });
-
-  // const updateSentryStatus = (status: 'setup' | 'started' | 'finished') => {
-  //   sentryContext.status = status;
-  //   Sentry.setContext('run', sentryContext);
-  // };
-
-  // TODO step name isn;t supported in the payload yet
-  // so maybe we'll add this later
-  // const updateSentryStep = (step: string) => {
-  //   Sentry.setContext('run', {
-  //     step,
-  //   });
-  // };
-
-  // this doesn't work great because the last event on context
-  // is not neccessarily the same as the last event on an error
-  // like you might get an error but then the context will change before its reported
-  // const updateSentryEvent = (event: string) => {
-  //   sentryContext.last_event = event;
-  //   Sentry.setContext('run', sentryContext);
-  // };
 
   Sentry.addBreadcrumb({
     category: 'run',
@@ -291,7 +257,6 @@ export function execute(
     }
   });
   return context;
-  // });
 }
 
 // async/await wrapper to push to a channel
