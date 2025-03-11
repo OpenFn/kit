@@ -2,14 +2,9 @@ import test from 'ava';
 import cli from '../../src/util/cli';
 import { LogLevel } from '@openfn/logger';
 
-test.beforeEach((t) => {
-  // Store original environment variables
-  t.context = { ...process.env };
-});
-
-test.afterEach((t) => {
-  // Restore original environment variables
-  process.env = { ...(t.context as NodeJS.ProcessEnv) };
+test.beforeEach(() => {
+  // Don't let local environment interfere with tests
+  process.env = {};
 });
 
 test('cli should parse command line arguments correctly', (t) => {
@@ -63,6 +58,8 @@ test('cli should set default values for unspecified options', (t) => {
   t.is(args.log, 'debug' as LogLevel);
   t.is(args.backoff, '1/10');
   t.is(args.capacity, 5);
+  t.is(args.sentryEnv, 'dev');
+  t.falsy(args.sentryDsn);
   t.deepEqual(args.statePropsToRemove, ['configuration', 'response']);
   t.is(args.runMemory, 500);
   t.is(args.maxRunDurationSeconds, 300);
@@ -74,6 +71,24 @@ test('cli should handle boolean options correctly', (t) => {
 
   t.is(args.loop, false);
   t.is(args.mock, true);
+});
+
+test('cli should configure sentry directly', (t) => {
+  const argv = 'pnpm start --sentry-dsn abc --sentry-env local'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.sentryDsn, 'abc');
+  t.is(args.sentryEnv, 'local');
+});
+
+test('cli should configure sentry through env vars', (t) => {
+  process.env.WORKER_SENTRY_DSN = 'abc';
+  process.env.WORKER_SENTRY_ENV = 'local';
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.sentryDsn, 'abc');
+  t.is(args.sentryEnv, 'local');
 });
 
 test('cli should handle array options correctly', (t) => {
