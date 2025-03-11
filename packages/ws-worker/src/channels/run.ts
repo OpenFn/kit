@@ -1,4 +1,5 @@
 import type { GetPlanReply, LightningPlan } from '@openfn/lexicon/lightning';
+import * as Sentry from '@sentry/node';
 import type { Logger } from '@openfn/logger';
 
 import { getWithReply } from '../util';
@@ -39,10 +40,12 @@ const joinRunChannel = (
         }
       })
       .receive('error', (err: any) => {
+        Sentry.captureException(err);
         logger.error(`error connecting to ${channelName}`, err);
         reject(err);
       })
       .receive('timeout', (err: any) => {
+        Sentry.captureException(err);
         logger.error(`Timeout for ${channelName}`, err);
         reject(err);
       });

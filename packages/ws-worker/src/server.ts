@@ -208,6 +208,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     Sentry.init({
       environment: options.sentryEnv,
       dsn: options.sentryDsn,
+      // stackParser:
     });
     Sentry.setupKoaErrorHandler(app);
   }

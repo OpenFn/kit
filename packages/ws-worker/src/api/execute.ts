@@ -1,10 +1,12 @@
 import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
+import * as Sentry from '@sentry/node';
 import type { RunLogPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
   Resolvers,
   WorkerLogPayload,
+  JobStartPayload,
 } from '@openfn/engine-multi';
 
 import {
@@ -32,6 +34,25 @@ import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
 
 const enc = new TextDecoder('utf-8');
+
+class LightningSocketError extends Error {
+  name = 'LightningSocketError';
+  event = '';
+  rejectMessage = '';
+  constructor(event: string, message: string) {
+    super(`[${event}] ${message}`);
+    this.event = event;
+    this.rejectMessage = message;
+  }
+}
+
+class LightningTimeoutError extends Error {
+  name = 'LightningTimeoutError';
+  constructor(event: string) {
+    super(event);
+    super(`[${event}] timeout`);
+  }
+}
 
 export { handleStepComplete, handleStepStart };
 
@@ -66,7 +87,49 @@ export function execute(
   options: WorkerRunOptions = {},
   onFinish = (_result: any) => {}
 ) {
+  // return Sentry.withIsolationScope(async () => {
   logger.info('executing ', plan.id);
+
+  // const sentryContext = {
+  //   run_id: plan.id,
+  //   // status: 'setup', // | 'started' | 'finished',
+  //   // last_event: '', // what was the last event emitted by this run?
+  //   // step: '', // what step is this run on?
+  // };
+
+  // Sentry.setContext('run', {
+  //   run_id: plan.id,
+  // });
+
+  // const updateSentryStatus = (status: 'setup' | 'started' | 'finished') => {
+  //   sentryContext.status = status;
+  //   Sentry.setContext('run', sentryContext);
+  // };
+
+  // TODO step name isn;t supported in the payload yet
+  // so maybe we'll add this later
+  // const updateSentryStep = (step: string) => {
+  //   Sentry.setContext('run', {
+  //     step,
+  //   });
+  // };
+
+  // this doesn't work great because the last event on context
+  // is not neccessarily the same as the last event on an error
+  // like you might get an error but then the context will change before its reported
+  // const updateSentryEvent = (event: string) => {
+  //   sentryContext.last_event = event;
+  //   Sentry.setContext('run', sentryContext);
+  // };
+
+  Sentry.addBreadcrumb({
+    category: 'run',
+    message: 'Executing run: loading metadata',
+    level: 'info',
+    data: {
+      runId: plan.id,
+    },
+  });
 
   const state = createRunState(plan, input);
 
@@ -90,6 +153,14 @@ export function execute(
   // TODO for debugging and monitoring, we should also send events to the worker's event emitter
   const addEvent = (eventName: string, handler: EventHandler) => {
     const wrappedFn = async (event: any) => {
+      if (eventName !== 'workflow-log') {
+        Sentry.addBreadcrumb({
+          category: 'event',
+          message: eventName,
+          level: 'info',
+        });
+      }
+
       // TODO this logging is in the wrong place
       // This actually logs errors coming out of the worker
       // But it presents as logging from messages being send to lightning
@@ -98,13 +169,30 @@ export function execute(
       // @ts-ignore
       const lightningEvent = eventMap[eventName] ?? eventName;
       try {
+        // updateSentryEvent(eventName);
         await handler(context, event);
         logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
       } catch (e: any) {
+        const context = {
+          run_id: plan.id,
+          event: eventName,
+        };
+        const extras: any = {};
+        if (e instanceof LightningSocketError) {
+          extras.details =
+            'This error was thrown because Lightning rejected an event from the worker';
+          extras.rejection_reason = e.rejectMessage;
+        }
+        Sentry.captureException(e, (scope) => {
+          scope.setContext('run', context);
+          scope.setExtras(extras);
+          return scope;
+        });
         logger.error(
           `${plan.id} :: ${lightningEvent} :: ERR: ${e.message || e.toString()}`
         );
-        logger.error(e);
+        // TODO I don't think I want a stack trace here in prod?
+        // logger.error(e);
       }
     };
     return {
@@ -122,9 +210,21 @@ export function execute(
     addEvent('job-error', throttle(onJobError)),
     addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
-    addEvent('workflow-complete', throttle(handleRunComplete)),
+    addEvent(
+      'workflow-complete',
+      throttle((context, evt) => {
+        // updateSentryStatus('finished');
+        return handleRunComplete(context, evt);
+      })
+    ),
 
-    addEvent('workflow-error', throttle(handleRunError))
+    addEvent(
+      'workflow-error',
+      throttle((context, evt) => {
+        // updateSentryStatus('finished');
+        return handleRunError(context, evt);
+      })
+    )
 
     // TODO send autoinstall logs
   );
@@ -163,8 +263,25 @@ export function execute(
     }
 
     try {
+      Sentry.addBreadcrumb({
+        category: 'run',
+        message: 'run metadata loaded: starting run',
+        level: 'info',
+        data: {
+          runId: plan.id,
+        },
+      });
+      // updateSentryStatus('started');
       engine.execute(plan, loadedInput as State, { resolvers, ...options });
     } catch (e: any) {
+      Sentry.addBreadcrumb({
+        category: 'run',
+        message: 'exception in run',
+        level: 'info',
+        data: {
+          runId: plan.id,
+        },
+      });
       handleRunError(context, {
         workflowId: plan.id!,
         message: e.message,
@@ -173,8 +290,8 @@ export function execute(
       });
     }
   });
-
   return context;
+  // });
 }
 
 // async/await wrapper to push to a channel
@@ -183,9 +300,11 @@ export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
   new Promise((resolve, reject) => {
     channel
       .push<T>(event, payload)
-      .receive('error', reject)
+      .receive('error', (message) => {
+        reject(new LightningSocketError(event, message));
+      })
       .receive('timeout', () => {
-        reject(new Error('timeout'));
+        reject(new LightningTimeoutError(event));
       })
       .receive('ok', resolve);
   });
