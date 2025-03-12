@@ -49,6 +49,7 @@
     "@types/yargs": "^17.0.12",
     "ava": "5.1.0",
     "nodemon": "3.0.1",
+    "sentry-testkit": "^6.1.0",
     "tslib": "^2.4.0",
     "tsup": "^6.2.3",
     "typescript": "^4.6.4",

@@ -31,31 +31,14 @@ import handleRunError from '../events/run-error';
 
 import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
+import { sendEvent } from '../util/send-event';
 
 const enc = new TextDecoder('utf-8');
-
-class LightningSocketError extends Error {
-  name = 'LightningSocketError';
-  event = '';
-  rejectMessage = '';
-  constructor(event: string, message: string) {
-    super(`[${event}] ${message}`);
-    this.event = event;
-    this.rejectMessage = message;
-  }
-}
-
-class LightningTimeoutError extends Error {
-  name = 'LightningTimeoutError';
-  constructor(event: string) {
-    super(event);
-    super(`[${event}] timeout`);
-  }
-}
 
 export { handleStepComplete, handleStepStart };
 
 export type Context = {
+  id: string; // plan id
   channel: Channel;
   state: RunState;
   logger: Logger;
@@ -100,6 +83,7 @@ export function execute(
   const state = createRunState(plan, input);
 
   const context: Context = {
+    id: plan.id!,
     channel,
     state,
     logger,
@@ -139,26 +123,12 @@ export function execute(
         await handler(context, event);
         logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
       } catch (e: any) {
-        const context = {
-          run_id: plan.id,
-          event: eventName,
-        };
-        const extras: any = {};
-        if (e instanceof LightningSocketError) {
-          extras.details =
-            'This error was thrown because Lightning rejected an event from the worker';
-          extras.rejection_reason = e.rejectMessage;
+        if (!e.reportedToSentry) {
+          Sentry.captureException(e);
+          logger.error(e);
         }
-        Sentry.captureException(e, (scope) => {
-          scope.setContext('run', context);
-          scope.setExtras(extras);
-          return scope;
-        });
-        logger.error(
-          `${plan.id} :: ${lightningEvent} :: ERR: ${e.message || e.toString()}`
-        );
-        // TODO I don't think I want a stack trace here in prod?
-        // logger.error(e);
+        // Do nothing else here: the error should have been handled
+        // and life will go on
       }
     };
     return {
@@ -176,21 +146,8 @@ export function execute(
     addEvent('job-error', throttle(onJobError)),
     addEvent('workflow-log', throttle(onJobLog)),
     // This will also resolve the promise
-    addEvent(
-      'workflow-complete',
-      throttle((context, evt) => {
-        // updateSentryStatus('finished');
-        return handleRunComplete(context, evt);
-      })
-    ),
-
-    addEvent(
-      'workflow-error',
-      throttle((context, evt) => {
-        // updateSentryStatus('finished');
-        return handleRunError(context, evt);
-      })
-    )
+    addEvent('workflow-complete', throttle(handleRunComplete)),
+    addEvent('workflow-error', throttle(handleRunError))
 
     // TODO send autoinstall logs
   );
@@ -261,18 +218,6 @@ export function execute(
 
 // async/await wrapper to push to a channel
 // TODO move into utils I think?
-export const sendEvent = <T>(channel: Channel, event: string, payload?: any) =>
-  new Promise((resolve, reject) => {
-    channel
-      .push<T>(event, payload)
-      .receive('error', (message) => {
-        reject(new LightningSocketError(event, message));
-      })
-      .receive('timeout', () => {
-        reject(new LightningTimeoutError(event));
-      })
-      .receive('ok', resolve);
-  });
 
 // TODO move all event handlers into api/events/*
 
@@ -299,9 +244,10 @@ export function onJobError(context: Context, event: any) {
 }
 
 export function onJobLog(
-  { channel, state, options }: Context,
+  context: Context,
   event: Omit<WorkerLogPayload, 'workflowId'>
 ) {
+  const { state, options } = context;
   let message = event.message as any[];
 
   if (event.redacted) {
@@ -325,8 +271,10 @@ export function onJobLog(
     log.step_id = state.activeStep;
   }
 
-  return sendEvent<RunLogPayload>(channel, RUN_LOG, log);
+  return sendEvent<RunLogPayload>(context, RUN_LOG, log);
 }
+
+// TODO: replace getWithReply with sendEvent
 
 export async function loadDataclip(channel: Channel, stateId: string) {
   const result = await getWithReply<Uint8Array>(channel, GET_DATACLIP, {
