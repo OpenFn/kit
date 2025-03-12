@@ -16,14 +16,15 @@ import {
   execute,
   loadDataclip,
   loadCredential,
-  sendEvent,
   onJobError,
 } from '../../src/api/execute';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
-import { stringify, createRunState } from '../../src/util';
+import { stringify, createRunState, sendEvent } from '../../src/util';
 
 import type { RunState, JSONLog } from '../../src/types';
+
+const logger = createMockLogger();
 
 const enc = new TextEncoder();
 
@@ -47,7 +48,8 @@ test('send event should resolve when the event is acknowledged', async (t) => {
     echo: (x) => x,
   });
 
-  const result = await sendEvent(channel, 'echo', 22);
+  const context = { channel, logger } as any;
+  const result = await sendEvent(context, 'echo', 22);
   t.is(result, 22);
 });
 
@@ -58,8 +60,9 @@ test('send event should throw if an event errors', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => sendEvent(channel, 'throw', 22), {
-    message: 'err',
+  const context = { channel, logger } as any;
+  await t.throwsAsync(() => sendEvent(context, 'throw', 22), {
+    message: '[throw] Error: err',
   });
 });
 
