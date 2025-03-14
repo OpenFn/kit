@@ -1,18 +1,12 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
-import * as Sentry from '@sentry/node';
-import sentryTestkit from 'sentry-testkit';
 
 import { mockChannel } from '../../src/mock/sockets';
 import { createRunState, sendEvent } from '../../src/util';
 import { LightningSocketError, LightningTimeoutError } from '../../src/errors';
-import { sleep } from '../util';
+import { initSentry, sleep, waitForSentryReport } from '../util';
 
-const { testkit, sentryTransport } = sentryTestkit();
-Sentry.init({
-  dsn: 'https://296274784378f87245c369278a62b29a@o55451.ingest.us.sentry.io/4508936084848640',
-  transport: sentryTransport,
-});
+const testkit = initSentry();
 
 const logger = createMockLogger(undefined, { json: true });
 
@@ -159,17 +153,8 @@ test.serial('should report to sentry if the event is rejected', async (t) => {
     t.true(e.reportedToSentry);
   }
 
-  // Telemetry will asynchronously submit the report in the background
-  // We have to wait for it here in this nasty loop :(
-  while (true) {
-    await sleep(1);
-    const reports = testkit.reports();
-    if (reports.length) {
-      t.is(reports.length, 1);
-      t.is(reports[0].error?.name, 'LightningSocketError');
-      break;
-    }
-  }
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].error?.name, 'LightningSocketError');
 });
 
 test.serial('should report to sentry if the event timesout', async (t) => {
@@ -190,16 +175,6 @@ test.serial('should report to sentry if the event timesout', async (t) => {
   } catch (e: any) {
     t.true(e.reportedToSentry);
   }
-
-  // Telemetry will asynchronously submit the report in the background
-  // We have to wait for it here in this nasty loop :(
-  while (true) {
-    await sleep(1);
-    const reports = testkit.reports();
-    if (reports.length) {
-      t.is(reports.length, 1);
-      t.is(reports[0].error?.name, 'LightningTimeoutError');
-      break;
-    }
-  }
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports[0].error?.name, 'LightningTimeoutError');
 });

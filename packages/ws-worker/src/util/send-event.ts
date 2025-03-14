@@ -3,13 +3,13 @@ import type { Context } from '../api/execute';
 import { LightningSocketError, LightningTimeoutError } from '../errors';
 
 export const sendEvent = <T>(
-  context: Pick<Context, 'logger' | 'channel' | 'state' | 'id'>,
+  context: Pick<Context, 'logger' | 'channel' | 'id'>,
   event: string,
   payload?: any
 ) => {
-  const { channel, logger, id: runId } = context;
+  const { channel, logger, id: runId = '<unknown run>' } = context;
 
-  return new Promise((resolve, reject) => {
+  return new Promise<T>((resolve, reject) => {
     const report = (error: any) => {
       logger.error(`${runId} :: ${event} :: ERR: ${error.message || error}`);
 

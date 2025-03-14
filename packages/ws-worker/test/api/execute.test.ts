@@ -21,8 +21,11 @@ import {
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify, createRunState, sendEvent } from '../../src/util';
+import { initSentry, waitForSentryReport } from '../util';
 
 import type { RunState, JSONLog } from '../../src/types';
+
+const testkit = initSentry();
 
 const logger = createMockLogger();
 
@@ -42,6 +45,11 @@ const mockEventHandlers = {
 
 // This is a nonsense timestamp but it's fine for the test (and easy to convert)
 const getBigIntTimestamp = () => (BigInt(Date.now()) * BigInt(1e6)).toString();
+
+test.beforeEach(() => {
+  testkit.reset();
+  logger._reset();
+});
 
 test('send event should resolve when the event is acknowledged', async (t) => {
   const channel = mockChannel({
@@ -273,12 +281,29 @@ test('loadDataclip should fetch a dataclip', async (t) => {
       return toArrayBuffer({ data: {} });
     },
   });
+  const context = { channel, logger } as any;
 
-  const state = await loadDataclip(channel, 'xyz');
+  const state = await loadDataclip(context, 'xyz');
   t.deepEqual(state, { data: {} });
 });
 
-// TODO what if an error?
+test('loadDataclip report to sentry on fail', async (t) => {
+  const channel = mockChannel({
+    [GET_DATACLIP]: () => {
+      throw new Error('not_found');
+    },
+  });
+
+  const context = { channel, logger } as any;
+  try {
+    await loadDataclip(context, 'xyz');
+  } catch (e) {}
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports.length, 1);
+  t.is(reports[0].error.name, 'LightningSocketError');
+});
+
 test('loadCredential should fetch a credential', async (t) => {
   const channel = mockChannel({
     [GET_CREDENTIAL]: ({ id }) => {
@@ -287,8 +312,26 @@ test('loadCredential should fetch a credential', async (t) => {
     },
   });
 
-  const state = await loadCredential(channel, 'jfk');
+  const context = { channel, logger } as any;
+  const state = await loadCredential(context, 'jfk');
   t.deepEqual(state, { apiKey: 'abc' });
+});
+
+test('loadCredential report to sentry on fail', async (t) => {
+  const channel = mockChannel({
+    [GET_CREDENTIAL]: () => {
+      throw new Error('not_found');
+    },
+  });
+
+  const context = { channel, logger } as any;
+  try {
+    await loadCredential(context, 'abc');
+  } catch (e) {}
+
+  const reports = await waitForSentryReport(testkit);
+  t.is(reports.length, 1);
+  t.is(reports[0].error.name, 'LightningSocketError');
 });
 
 test('execute should pass the final result to onFinish', async (t) => {

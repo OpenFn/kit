@@ -154,7 +154,7 @@ export function execute(
   engine.listen(plan.id!, listeners);
 
   const resolvers = {
-    credential: (id: string) => loadCredential(channel, id),
+    credential: (id: string) => loadCredential(context, id),
 
     // TODO not supported right now
     // dataclip: (id: string) => loadDataclip(channel, id),
@@ -171,7 +171,7 @@ export function execute(
       logger.debug('loading dataclip', input);
 
       try {
-        loadedInput = await loadDataclip(channel, input);
+        loadedInput = await loadDataclip(context, input);
         logger.success('dataclip loaded');
       } catch (e: any) {
         return handleRunError(context, {
@@ -276,14 +276,20 @@ export function onJobLog(
 
 // TODO: replace getWithReply with sendEvent
 
-export async function loadDataclip(channel: Channel, stateId: string) {
-  const result = await getWithReply<Uint8Array>(channel, GET_DATACLIP, {
+export async function loadDataclip(
+  context: Pick<Context, 'logger' | 'channel' | 'id'>,
+  stateId: string
+) {
+  const result = await sendEvent<Uint8Array>(context, GET_DATACLIP, {
     id: stateId,
   });
   const str = enc.decode(new Uint8Array(result));
   return JSON.parse(str);
 }
 
-export async function loadCredential(channel: Channel, credentialId: string) {
-  return getWithReply(channel, GET_CREDENTIAL, { id: credentialId });
+export async function loadCredential(
+  context: Pick<Context, 'logger' | 'channel' | 'id'>,
+  credentialId: string
+) {
+  return sendEvent(context, GET_CREDENTIAL, { id: credentialId });
 }
