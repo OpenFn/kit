@@ -9,7 +9,6 @@ import type {
 } from '@openfn/engine-multi';
 
 import {
-  getWithReply,
   createRunState,
   throttle as createThrottle,
   timeInMicroseconds,
@@ -273,8 +272,6 @@ export function onJobLog(
 
   return sendEvent<RunLogPayload>(context, RUN_LOG, log);
 }
-
-// TODO: replace getWithReply with sendEvent
 
 export async function loadDataclip(
   context: Pick<Context, 'logger' | 'channel' | 'id'>,
