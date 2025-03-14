@@ -561,6 +561,31 @@ test.serial("Don't send job logs to stdout", (t) => {
   });
 });
 
+// This is a test against job logs - but it should work
+// exactly the same way for all logs
+test.serial("Don't send empty logs to lightning", (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  { console.log(); return s })',
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      // The engine logger shouldn't print out any job logs
+      const jobLogs = engineLogger._history.filter((l) => l.name === 'JOB');
+      t.is(jobLogs.length, 0);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
 test.serial('Include timestamps on basically everything', (t) => {
   return new Promise(async (done) => {
     const attempt = {

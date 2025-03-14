@@ -158,6 +158,14 @@ export default function (name?: string, options: LogOptions = {}): Logger {
     level: LogFns,
     ...args: LogArgs
   ) => {
+    if (args.length === 0) {
+      // In JSON mode, don't log empty lines
+      // (mostly because this spams Lightning with nonsense, but more generally
+      // if you have machine readable logs then "whitespace" or "formatting" logs,
+      // like console.break(), are meaningless)
+      return;
+    }
+
     const message = args.map((o) =>
       sanitize(o, {
         stringify: false,
