@@ -3,14 +3,15 @@ import type { WorkflowErrorPayload } from '@openfn/engine-multi';
 
 import { calculateJobExitReason } from '../api/reasons';
 import { RUN_COMPLETE } from '../events';
-import { sendEvent, Context, onJobError } from '../api/execute';
+import { Context, onJobError } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
+import { sendEvent } from '../util/send-event';
 
 export default async function onRunError(
   context: Context,
   event: WorkflowErrorPayload
 ) {
-  const { state, channel, logger, onFinish } = context;
+  const { state, logger, onFinish } = context;
 
   try {
     // Ok, let's try that, let's just generate a reason from the event
@@ -22,7 +23,7 @@ export default async function onRunError(
 
     await logFinalReason(context, reason);
 
-    await sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, {
+    await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,
       ...reason,
     });

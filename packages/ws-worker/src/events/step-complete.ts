@@ -6,7 +6,8 @@ import { timestamp } from '@openfn/logger';
 import { STEP_COMPLETE } from '../events';
 import { stringify, timeInMicroseconds } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
-import { sendEvent, onJobLog, Context } from '../api/execute';
+import { onJobLog, Context } from '../api/execute';
+import { sendEvent } from '../util/send-event';
 
 export default async function onStepComplete(
   context: Context,
@@ -14,7 +15,7 @@ export default async function onStepComplete(
   // TODO this isn't terribly graceful, but accept an error for crashes
   error?: any
 ) {
-  const { channel, state, options } = context;
+  const { state, options } = context;
   const dataclipId = crypto.randomUUID();
 
   const step_id = state.activeStep as string;
@@ -81,5 +82,5 @@ export default async function onStepComplete(
 
   Object.assign(evt, reason);
 
-  return sendEvent<StepCompletePayload>(channel, STEP_COMPLETE, evt);
+  return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt);
 }

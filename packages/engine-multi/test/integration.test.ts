@@ -263,7 +263,6 @@ test.serial('run without error if no state is returned', (t) => {
 
     api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
       t.falsy(state);
-      t.log(logger._history);
 
       // Ensure there are no error logs
       const err = logger._find('error', /./);
@@ -532,7 +531,7 @@ export default [(state) => {
       },
     ]);
     const options = {
-      payloadLimitMb: 0.5,
+      payloadLimitMb: 0.01,
     };
 
     api.execute(plan, emptyState, options).on('workflow-log', (evt) => {

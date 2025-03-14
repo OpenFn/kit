@@ -26,6 +26,8 @@ type Args = {
   secret?: string;
   socketTimeoutSeconds?: number;
   statePropsToRemove?: string[];
+  sentryDsn?: string;
+  sentryEnv?: string;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -65,6 +67,8 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_PORT,
     WORKER_REPO_DIR,
     WORKER_SECRET,
+    WORKER_SENTRY_DSN,
+    WORKER_SENTRY_ENV,
     WORKER_STATE_PROPS_TO_REMOVE,
     WORKER_SOCKET_TIMEOUT_SECONDS,
     OPENFN_ADAPTORS_REPO,
@@ -96,6 +100,14 @@ export default function parseArgs(argv: string[]): Args {
       alias: 's',
       description:
         'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
+    })
+    .option('sentry-dsn', {
+      alias: ['dsn'],
+      description: 'Sentry DSN. Env: WORKER_SENTRY_DSN',
+    })
+    .option('sentry-env', {
+      description:
+        "Sentry environment. Defaults to 'dev'. Env: WORKER_SENTRY_ENV",
     })
     .option('socket-timeout', {
       description: `Timeout for websockets to Lighting, in seconds. Defaults to 10.`,
@@ -171,6 +183,8 @@ export default function parseArgs(argv: string[]): Args {
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
     monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
     secret: setArg(args.secret, WORKER_SECRET),
+    sentryDsn: setArg(args.sentryDsn, WORKER_SENTRY_DSN),
+    sentryEnv: setArg(args.sentryEnv, WORKER_SENTRY_ENV, 'dev'),
     lightningPublicKey: setArg(
       args.lightningPublicKey,
       WORKER_LIGHTNING_PUBLIC_KEY

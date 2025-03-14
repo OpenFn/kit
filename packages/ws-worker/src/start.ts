@@ -33,6 +33,8 @@ function engineReady(engine: any) {
     lightning: args.lightning,
     logger,
     secret: args.secret,
+    sentryDsn: args.sentryDsn,
+    sentryEnv: args.sentryEnv,
     noLoop: !args.loop,
     // TODO need to feed this through properly
     backoff: {

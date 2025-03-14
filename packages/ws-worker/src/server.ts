@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events';
 import { promisify } from 'node:util';
 import { exec as _exec } from 'node:child_process';
 
+import * as Sentry from '@sentry/node';
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import koaLogger from 'koa-logger';
@@ -40,6 +41,9 @@ export type ServerOptions = {
     min?: number;
     max?: number;
   };
+
+  sentryDsn?: string;
+  sentryEnv?: string;
 
   socketTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
@@ -133,6 +137,8 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       options.lightning
     );
     logger.debug(e);
+
+    // How to prevent spam here?
   };
 
   // handles messages for the worker:queue
@@ -194,6 +200,17 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.events = new EventEmitter();
   app.engine = engine;
+
+  if (options.sentryDsn) {
+    // TODO I think we need to set up sourcemaps
+    // https://docs.sentry.io/platforms/javascript/guides/koa/sourcemaps/uploading/esbuild/
+    // TODO warn if no API key
+    Sentry.init({
+      environment: options.sentryEnv,
+      dsn: options.sentryDsn,
+    });
+    Sentry.setupKoaErrorHandler(app);
+  }
 
   app.use(bodyParser());
   app.use(

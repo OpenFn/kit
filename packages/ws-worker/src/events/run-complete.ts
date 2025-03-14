@@ -3,15 +3,16 @@ import type { RunCompletePayload } from '@openfn/lexicon/lightning';
 
 import { RUN_COMPLETE } from '../events';
 import { calculateRunExitReason } from '../api/reasons';
-import { sendEvent, Context } from '../api/execute';
+import { Context } from '../api/execute';
 import logFinalReason from '../util/log-final-reason';
 import { timeInMicroseconds } from '../util';
+import { sendEvent } from '../util/send-event';
 
 export default async function onWorkflowComplete(
   context: Context,
   event: WorkflowCompletePayload
 ) {
-  const { state, channel, onFinish, logger } = context;
+  const { state, onFinish, logger } = context;
 
   // TODO I dont think the run final dataclip IS the last job dataclip
   // Especially not in parallelisation
@@ -21,7 +22,7 @@ export default async function onWorkflowComplete(
   await logFinalReason(context, reason);
 
   try {
-    await sendEvent<RunCompletePayload>(channel, RUN_COMPLETE, {
+    await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,
       timestamp: timeInMicroseconds(event.time),
       ...reason,
