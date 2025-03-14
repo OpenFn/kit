@@ -354,6 +354,17 @@ test('json mode should serialize errors nicely', (t) => {
   t.deepEqual(result.message[0], { name: 'Error', message: 'wibble' });
 });
 
+test('json mode should not log empty lines', (t) => {
+  const logger = createLogger<JSONLog>(undefined, {
+    level: 'info',
+    json: true,
+  });
+
+  logger.info();
+
+  t.is(logger._history.length, 0);
+});
+
 test('with level=default, logs success, error and warning but not info and debug', (t) => {
   const logger = createLogger<StringLog>('x', { level: 'default' });
 
