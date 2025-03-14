@@ -57,6 +57,8 @@ const eventMap = {
   'workflow-complete': RUN_COMPLETE,
 };
 
+type EventHandler = (context: any, event: any) => void;
+
 // pass a web socket connected to the run channel
 // this thing will do all the work
 export function execute(
@@ -70,15 +72,6 @@ export function execute(
 ) {
   logger.info('executing ', plan.id);
 
-  Sentry.addBreadcrumb({
-    category: 'run',
-    message: 'Executing run: loading metadata',
-    level: 'info',
-    data: {
-      runId: plan.id,
-    },
-  });
-
   const state = createRunState(plan, input);
 
   const context: Context = {
@@ -91,126 +84,136 @@ export function execute(
     onFinish,
   };
 
-  const throttle = createThrottle();
+  // Ensure that each execute call is in its own sentry isolated scope
+  // Because I don't trust it to automatically scope each request properly
+  Sentry.withIsolationScope(async () => {
+    Sentry.addBreadcrumb({
+      category: 'run',
+      message: 'Executing run: loading metadata',
+      level: 'info',
+      data: {
+        runId: plan.id,
+      },
+    });
+    const throttle = createThrottle();
 
-  type EventHandler = (context: any, event: any) => void;
-
-  // Utility function to:
-  // a) bind an event handler to a runtime-engine event
-  // b) pass the context object into the hander
-  // c) log the response from the websocket from lightning
-  // TODO for debugging and monitoring, we should also send events to the worker's event emitter
-  const addEvent = (eventName: string, handler: EventHandler) => {
-    const wrappedFn = async (event: any) => {
-      if (eventName !== 'workflow-log') {
-        Sentry.addBreadcrumb({
-          category: 'event',
-          message: eventName,
-          level: 'info',
-        });
-      }
-
-      // TODO this logging is in the wrong place
-      // This actually logs errors coming out of the worker
-      // But it presents as logging from messages being send to lightning
-      // really this messaging should move into send event
-
-      // @ts-ignore
-      const lightningEvent = eventMap[eventName] ?? eventName;
-      try {
-        // updateSentryEvent(eventName);
-        await handler(context, event);
-        logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
-      } catch (e: any) {
-        if (!e.reportedToSentry) {
-          Sentry.captureException(e);
-          logger.error(e);
+    // Utility function to:
+    // a) bind an event handler to a runtime-engine event
+    // b) pass the context object into the hander
+    // c) log the response from the websocket from lightning
+    // TODO for debugging and monitoring, we should also send events to the worker's event emitter
+    const addEvent = (eventName: string, handler: EventHandler) => {
+      const wrappedFn = async (event: any) => {
+        if (eventName !== 'workflow-log') {
+          Sentry.addBreadcrumb({
+            category: 'event',
+            message: eventName,
+            level: 'info',
+          });
         }
-        // Do nothing else here: the error should have been handled
-        // and life will go on
+
+        // TODO this logging is in the wrong place
+        // This actually logs errors coming out of the worker
+        // But it presents as logging from messages being send to lightning
+        // really this messaging should move into send event
+
+        // @ts-ignore
+        const lightningEvent = eventMap[eventName] ?? eventName;
+        try {
+          // updateSentryEvent(eventName);
+          await handler(context, event);
+          logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
+        } catch (e: any) {
+          if (!e.reportedToSentry) {
+            Sentry.captureException(e);
+            logger.error(e);
+          }
+          // Do nothing else here: the error should have been handled
+          // and life will go on
+        }
+      };
+      return {
+        [eventName]: wrappedFn,
+      };
+    };
+
+    // TODO listeners need to be called in a strict queue
+    // so that they send in order
+    const listeners = Object.assign(
+      {},
+      addEvent('workflow-start', throttle(handleRunStart)),
+      addEvent('job-start', throttle(handleStepStart)),
+      addEvent('job-complete', throttle(handleStepComplete)),
+      addEvent('job-error', throttle(onJobError)),
+      addEvent('workflow-log', throttle(onJobLog)),
+      // This will also resolve the promise
+      addEvent('workflow-complete', throttle(handleRunComplete)),
+      addEvent('workflow-error', throttle(handleRunError))
+
+      // TODO send autoinstall logs
+    );
+    engine.listen(plan.id!, listeners);
+
+    const resolvers = {
+      credential: (id: string) => loadCredential(context, id),
+
+      // TODO not supported right now
+      // dataclip: (id: string) => loadDataclip(channel, id),
+    } as Resolvers;
+
+    setTimeout(async () => {
+      let loadedInput = input;
+
+      // Optionally resolve initial state
+      // TODO we need to remove this from here and let the runtime take care of it through
+      // the resolver. See https://github.com/OpenFn/kit/issues/403
+      // TODO come back and work out how initial state will work
+      if (typeof input === 'string') {
+        logger.debug('loading dataclip', input);
+
+        try {
+          loadedInput = await loadDataclip(context, input);
+          logger.success('dataclip loaded');
+        } catch (e: any) {
+          return handleRunError(context, {
+            workflowId: plan.id!,
+            message: `Failed to load dataclip ${input}${
+              e.message ? `: ${e.message}` : ''
+            }`,
+            type: 'DataClipError',
+            severity: 'exception',
+          });
+        }
       }
-    };
-    return {
-      [eventName]: wrappedFn,
-    };
-  };
-
-  // TODO listeners need to be called in a strict queue
-  // so that they send in order
-  const listeners = Object.assign(
-    {},
-    addEvent('workflow-start', throttle(handleRunStart)),
-    addEvent('job-start', throttle(handleStepStart)),
-    addEvent('job-complete', throttle(handleStepComplete)),
-    addEvent('job-error', throttle(onJobError)),
-    addEvent('workflow-log', throttle(onJobLog)),
-    // This will also resolve the promise
-    addEvent('workflow-complete', throttle(handleRunComplete)),
-    addEvent('workflow-error', throttle(handleRunError))
-
-    // TODO send autoinstall logs
-  );
-  engine.listen(plan.id!, listeners);
-
-  const resolvers = {
-    credential: (id: string) => loadCredential(context, id),
-
-    // TODO not supported right now
-    // dataclip: (id: string) => loadDataclip(channel, id),
-  } as Resolvers;
-
-  setTimeout(async () => {
-    let loadedInput = input;
-
-    // Optionally resolve initial state
-    // TODO we need to remove this from here and let the runtime take care of it through
-    // the resolver. See https://github.com/OpenFn/kit/issues/403
-    // TODO come back and work out how initial state will work
-    if (typeof input === 'string') {
-      logger.debug('loading dataclip', input);
 
       try {
-        loadedInput = await loadDataclip(context, input);
-        logger.success('dataclip loaded');
+        Sentry.addBreadcrumb({
+          category: 'run',
+          message: 'run metadata loaded: starting run',
+          level: 'info',
+          data: {
+            runId: plan.id,
+          },
+        });
+        // updateSentryStatus('started');
+        engine.execute(plan, loadedInput as State, { resolvers, ...options });
       } catch (e: any) {
-        return handleRunError(context, {
+        Sentry.addBreadcrumb({
+          category: 'run',
+          message: 'exception in run',
+          level: 'info',
+          data: {
+            runId: plan.id,
+          },
+        });
+        handleRunError(context, {
           workflowId: plan.id!,
-          message: `Failed to load dataclip ${input}${
-            e.message ? `: ${e.message}` : ''
-          }`,
-          type: 'DataClipError',
-          severity: 'exception',
+          message: e.message,
+          type: e.type,
+          severity: e.severity,
         });
       }
-    }
-
-    try {
-      Sentry.addBreadcrumb({
-        category: 'run',
-        message: 'run metadata loaded: starting run',
-        level: 'info',
-        data: {
-          runId: plan.id,
-        },
-      });
-      // updateSentryStatus('started');
-      engine.execute(plan, loadedInput as State, { resolvers, ...options });
-    } catch (e: any) {
-      Sentry.addBreadcrumb({
-        category: 'run',
-        message: 'exception in run',
-        level: 'info',
-        data: {
-          runId: plan.id,
-        },
-      });
-      handleRunError(context, {
-        workflowId: plan.id!,
-        message: e.message,
-        type: e.type,
-        severity: e.severity,
-      });
-    }
+    });
   });
   return context;
 }

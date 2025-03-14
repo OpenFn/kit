@@ -531,7 +531,7 @@ export default [(state) => {
       },
     ]);
     const options = {
-      payloadLimitMb: 0.5,
+      payloadLimitMb: 0.01,
     };
 
     api.execute(plan, emptyState, options).on('workflow-log', (evt) => {
