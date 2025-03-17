@@ -1210,9 +1210,10 @@ test('Plans log step names for each job start and end', async (t) => {
 test.serial(
   'global functions should be scoped per step or job code',
   async (t) => {
-    const functions = `
-    export const addToBase = ((a) => (b) => { a = a + b; return a })(0); 
-    export const INC = 5;
+    const globals = `
+    let x = 10;
+    export const setX = (value) => { x = value }
+    export const getX = () => x
     `;
     const plan = createPlan(
       [
@@ -1220,7 +1221,7 @@ test.serial(
           id: 'a',
           name: 'do-a',
           expression:
-            'export default [s => {addToBase(INC); return s;}, s => {state.data.a = addToBase(INC); return state;}]',
+            'export default [s => {setX(20); return {data: {x1: getX()}}}]',
           next: {
             b: true,
           },
@@ -1229,16 +1230,40 @@ test.serial(
           id: 'b',
           name: 'do-b',
           expression:
-            'export default [s => {addToBase(INC); return s;}, s => {state.data.b = addToBase(INC); return state;}]',
+            'export default [s => {return {data: {...s.data, x2: getX()}}}]',
         },
       ],
       {},
-      functions
+      globals
     );
 
     const result: any = await executePlan(plan, {}, {}, mockLogger);
+    t.deepEqual(result.data, { x1: 20, x2: 10 });
+  }
+);
 
-    t.notThrows(() => JSON.stringify(result));
-    t.deepEqual(result.data, { a: 10, b: 10 });
+test.serial(
+  'global function scope should be shared between operations',
+  async (t) => {
+    const globals = `
+    let x = 10;
+    export const setX = (value) => { x = value }
+    export const getX = () => x
+    `;
+    const plan = createPlan(
+      [
+        {
+          id: 'a',
+          name: 'do-a',
+          expression:
+            'export default [s => {setX(20); return {data: {x1: getX()}}}, s=> ({data: {...s.data, x2: getX()}})]',
+        },
+      ],
+      {},
+      globals
+    );
+
+    const result: any = await executePlan(plan, {}, {}, mockLogger);
+    t.deepEqual(result.data, { x1: 20, x2: 20 });
   }
 );
