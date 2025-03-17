@@ -55,7 +55,7 @@ export default (
       const globals = {
         ...opts.globals,
         ...(plan.workflow?.globals
-          ? await prepareGlobals(plan.workflow.globals)
+          ? await prepareGlobals(plan.workflow.globals, opts)
           : {}),
       };
 
