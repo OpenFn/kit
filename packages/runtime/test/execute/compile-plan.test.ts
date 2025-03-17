@@ -433,7 +433,7 @@ test('throw for a syntax error on a job edge', (t) => {
   }
 });
 
-test('global functions. when undefined', (t) => {
+test('globals should be undefined if no globals are passed', (t) => {
   const plan: ExecutionPlan = {
     workflow: {
       steps: [{ expression: 'x' }, { expression: 'y' }],
@@ -444,7 +444,19 @@ test('global functions. when undefined', (t) => {
   t.is(compiled.workflow.globals, undefined);
 });
 
-test('global functions. perform no transformation', (t) => {
+test('globals should be undefined if non-string is passed', (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      globals: { some: 'val' } as any,
+      steps: [{ expression: 'x' }, { expression: 'y' }],
+    },
+    options: {},
+  };
+  const compiled = compilePlan(plan);
+  t.is(compiled.workflow.globals, undefined);
+});
+
+test('global functions should perform no transformation inline code', (t) => {
   const GLOBAL_FUNCTIONS =
     'export const cleaner = (name) => name.replace("a", "b");';
   const plan: ExecutionPlan = {
