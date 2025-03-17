@@ -28,7 +28,6 @@ import {
   isNullState,
   createNullState,
 } from '../util/null-state';
-import vm from '../modules/experimental-vm';
 
 export type ExecutionErrorWrapper = {
   state: any;
@@ -256,7 +255,7 @@ const prepareGlobals = async (
   opts: Options = {}
 ): Promise<GlobalsModule> => {
   if (typeof source === 'string' && !!source.trim()) {
-    const context = vm.createContext({ console: opts.logger });
+    const context = buildContext({}, opts);
     return await loadModule(source || '', {
       context,
     }).catch((e) => {
