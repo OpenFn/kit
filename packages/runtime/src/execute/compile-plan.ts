@@ -106,6 +106,10 @@ export default (plan: ExecutionPlan) => {
       start: options.start ?? workflow.steps[0]?.id!,
     },
   };
+
+  if (typeof workflow.globals === 'string')
+    newPlan.workflow.globals = workflow.globals;
+
   if (workflow.credentials) {
     newPlan.workflow.credentials = workflow.credentials;
   }
