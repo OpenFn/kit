@@ -726,3 +726,27 @@ test('Use local paths', (t) => {
     },
   });
 });
+
+test('pass globals from lightning run to plan', (t) => {
+  const GLOBALS_CONTENT = "export const prefixer = (v) => 'prefix-' + v";
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a' })],
+    globals: GLOBALS_CONTENT,
+  };
+
+  const { plan } = convertPlan(run as LightningPlan);
+  t.deepEqual(plan.workflow.globals, GLOBALS_CONTENT);
+});
+
+test("ignore globals when it isn't a string", (t) => {
+  const GLOBALS_CONTENT = { some: 'value' }; // not a string
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode({ id: 'a' })],
+    globals: GLOBALS_CONTENT as any,
+  };
+
+  const { plan } = convertPlan(run as LightningPlan);
+  t.deepEqual(plan.workflow.globals, undefined);
+});

@@ -34,6 +34,8 @@ export type LightningPlan = {
   edges: LightningEdge[];
 
   options?: LightningPlanOptions;
+
+  globals?: string;
 };
 
 /**
