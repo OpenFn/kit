@@ -53,16 +53,12 @@ export default (
       // prepare global functions to be injected into execution context
       const globals = {
         ...opts.globals,
-        ...(plan.workflow?.globals
-          ? await prepareGlobals(plan.workflow.globals, opts)
-          : {}),
+        ...(await prepareGlobals(plan.workflow?.globals || '', opts)),
       };
 
       // Setup an execution context
       const context = buildContext(input, { ...opts, globals });
 
-      // FIXME: when expression isn't a string, additional stuff isn't loaded
-      // eg. global functions might not be loaded!
       const { operations, execute } = await prepareJob(
         expression,
         context,
