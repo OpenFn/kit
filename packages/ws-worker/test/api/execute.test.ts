@@ -478,3 +478,39 @@ test('execute should call all events on the socket', async (t) => {
     });
   });
 });
+
+test('execute should acknowledge globals', async (t) => {
+  const logger = createMockLogger();
+
+  const channel = mockChannel({
+    ...mockEventHandlers,
+    [GET_DATACLIP]: (id) => {
+      t.truthy(id);
+      return toArrayBuffer({});
+    },
+  });
+  const engine = await createMockRTE();
+
+  const plan = {
+    id: 'a',
+    workflow: {
+      globals: "export const DEFAULT_NAME = 'han solo'",
+      steps: [
+        {
+          expression: 'fn(() => ({ name: DEFAULT_NAME }))',
+        },
+      ],
+    },
+    options: {},
+  } as ExecutionPlan;
+
+  const options = {};
+  const input = 'abc';
+
+  return new Promise((done) => {
+    execute(channel, engine, logger, plan, input, options, (results) => {
+      t.is(results.state.name, 'han solo');
+      done();
+    });
+  });
+});
