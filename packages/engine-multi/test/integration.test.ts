@@ -531,17 +531,19 @@ export default [(state) => {
       },
     ]);
     const options = {
-      payloadLimitMb: 0.01,
+      payloadLimitMb: 0.1,
     };
 
-    api.execute(plan, emptyState, options).on('workflow-log', (evt) => {
-      if (evt.name === 'JOB') {
-        t.deepEqual(evt.message, REDACTED_LOG.message);
-      }
-    });
-
-    api.execute(plan, emptyState, options).on('workflow-complete', () => {
-      done();
-    });
+    api
+      .execute(plan, emptyState, options)
+      .on('workflow-log', (evt) => {
+        console.log(evt);
+        if (evt.name === 'JOB') {
+          t.deepEqual(evt.message, REDACTED_LOG.message);
+        }
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
