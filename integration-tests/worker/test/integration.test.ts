@@ -313,7 +313,7 @@ test.serial('run a job with bad credentials', (t) => {
       t.is(payload.error_type, 'CredentialLoadError');
       t.regex(
         payload.error_message,
-        /Failed to load credential zzz: not_found/
+        /Failed to load credential zzz: \[fetch:credential\] not_found/
       );
       done();
     });

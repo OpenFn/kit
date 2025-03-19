@@ -263,7 +263,6 @@ test.serial('run without error if no state is returned', (t) => {
 
     api.execute(plan, emptyState).on('workflow-complete', ({ state }) => {
       t.falsy(state);
-      t.log(logger._history);
 
       // Ensure there are no error logs
       const err = logger._find('error', /./);
@@ -532,17 +531,19 @@ export default [(state) => {
       },
     ]);
     const options = {
-      payloadLimitMb: 0.5,
+      payloadLimitMb: 0.1,
     };
 
-    api.execute(plan, emptyState, options).on('workflow-log', (evt) => {
-      if (evt.name === 'JOB') {
-        t.deepEqual(evt.message, REDACTED_LOG.message);
-      }
-    });
-
-    api.execute(plan, emptyState, options).on('workflow-complete', () => {
-      done();
-    });
+    api
+      .execute(plan, emptyState, options)
+      .on('workflow-log', (evt) => {
+        console.log(evt);
+        if (evt.name === 'JOB') {
+          t.deepEqual(evt.message, REDACTED_LOG.message);
+        }
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
