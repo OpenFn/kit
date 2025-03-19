@@ -1,5 +1,20 @@
 # ws-worker
 
+## 1.13.0
+
+### Minor Changes
+
+- ce5022a: Added sentry notifications for server and websocket errors
+
+### Patch Changes
+
+- 0a176aa: Ignore empty log lines (don't send them to lightning)
+- Updated dependencies [0a176aa]
+  - @openfn/logger@1.0.5
+  - @openfn/engine-multi@1.6.2
+  - @openfn/lexicon@1.2.0
+  - @openfn/runtime@1.6.4
+
 ## 1.12.1
 
 ### Patch Changes
