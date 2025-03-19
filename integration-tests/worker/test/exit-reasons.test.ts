@@ -121,7 +121,7 @@ test('exception: bad credential (not found)', async (t) => {
   t.is(error_type, 'CredentialLoadError');
   t.is(
     error_message,
-    'Failed to load credential been-to-the-mountain: not_found'
+    'Failed to load credential been-to-the-mountain: [fetch:credential] not_found'
   );
 });
 

@@ -1,4 +1,5 @@
 import EventEmitter from 'node:events';
+import * as Sentry from '@sentry/node';
 import { Socket as PhxSocket } from 'phoenix';
 import { WebSocket } from 'ws';
 import { API_VERSION } from '@openfn/lexicon/lightning';
@@ -17,8 +18,18 @@ const connectToWorkerQueue = (
   SocketConstructor = PhxSocket
 ) => {
   const events = new EventEmitter();
-
+  Sentry.addBreadcrumb({
+    category: 'lifecycle',
+    message: 'Connecting to worker queue',
+    level: 'info',
+  });
   generateWorkerToken(secret, serverId, logger).then(async (token) => {
+    Sentry.addBreadcrumb({
+      category: 'lifecycle',
+      message: 'Worker token generated',
+      level: 'info',
+    });
+
     const params = {
       token,
       api_version: API_VERSION,
@@ -30,12 +41,21 @@ const connectToWorkerQueue = (
       params,
       transport: WebSocket,
       timeout: timeout * 1000,
+      reconnectAfterMs: (tries) => Math.max(tries * 1000),
     });
 
     let didOpen = false;
+    let shouldReportConnectionError = true;
 
     socket.onOpen(() => {
+      Sentry.addBreadcrumb({
+        category: 'lifecycle',
+        message: 'Web socket connected',
+        level: 'info',
+      });
+
       didOpen = true;
+      shouldReportConnectionError = true;
 
       const channel = socket.channel('worker:queue') as Channel;
 
@@ -66,16 +86,24 @@ const connectToWorkerQueue = (
     });
 
     // if we fail to connect, the socket will try to reconnect
-    /// forever (?) with backoff
+    // forever (?) with backoff - see reconnectAfterMs
     socket.onError((e: any) => {
-      // If we failed to connect, reject the promise
-      // The server will try and reconnect itself.s
+      Sentry.addBreadcrumb({
+        category: 'lifecycle',
+        message: 'Error in web socket connection',
+        level: 'info',
+      });
+
+      if (shouldReportConnectionError) {
+        logger.debug('Reporting connection error to sentry');
+        shouldReportConnectionError = false;
+        Sentry.captureException(e);
+      }
+
       if (!didOpen) {
         events.emit('error', e.message);
         didOpen = false;
       }
-      // Note that if we DID manage to connect once, the socket should re-negotiate
-      // wihout us having to do anything
     });
 
     socket.connect();
