@@ -31,7 +31,7 @@ export default async (
   const base =
     options.lightning ||
     process.env.OPENFN_ENDPOINT ||
-    'https://app.openfn.org';
+    'https://app.staging.openfn.org';
 
   const url = path.join(base, '/collections', options.collectionName);
 
@@ -40,6 +40,7 @@ export default async (
   const headers: Record<string, string> = {
     Authorization: `Bearer ${options.token}`,
   };
+  console.log(options.token)
 
   const query: any = Object.assign(
     {
@@ -131,7 +132,7 @@ async function handleError(
   logger.error('Error from server', response.statusCode);
   let message;
   let fix;
-
+  console.log(response);
   switch (response.statusCode) {
     case 404:
       message = `404: collection not found`;
