@@ -407,6 +407,11 @@ const createSocketAPI = (
     }
     state.pending[runId].steps[job_id] = step_id;
 
+    // let payload: any = {
+    //   status: 'error',
+    //   response: 'test_error',
+    // };
+
     let payload: any = {
       status: 'ok',
     };

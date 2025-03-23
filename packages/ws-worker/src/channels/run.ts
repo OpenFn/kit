@@ -1,7 +1,8 @@
 import type { GetPlanReply, LightningPlan } from '@openfn/lexicon/lightning';
+import * as Sentry from '@sentry/node';
 import type { Logger } from '@openfn/logger';
 
-import { getWithReply } from '../util';
+import { sendEvent } from '../util';
 import { GET_PLAN } from '../events';
 import type { Channel, Socket } from '../types';
 
@@ -34,15 +35,20 @@ const joinRunChannel = (
         if (!didReceiveOk) {
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
-          const run = await getWithReply<GetPlanReply>(channel, GET_PLAN);
+          const run = await sendEvent<GetPlanReply>(
+            { channel, logger, id: runId },
+            GET_PLAN
+          );
           resolve({ channel, run });
         }
       })
       .receive('error', (err: any) => {
+        Sentry.captureException(err);
         logger.error(`error connecting to ${channelName}`, err);
         reject(err);
       })
       .receive('timeout', (err: any) => {
+        Sentry.captureException(err);
         logger.error(`Timeout for ${channelName}`, err);
         reject(err);
       });
