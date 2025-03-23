@@ -10,6 +10,12 @@ tsconfig.tsbuildinfo
 ts.cache
 dist
 
+# Environments
+.env
+.env.local
+.env.development
+.env.production
+
 # Build tools
 .rollup.cache
 .parcel-cache
