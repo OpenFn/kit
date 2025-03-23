@@ -12,6 +12,7 @@ import type {
 } from './command';
 import { throwAbortableError } from '../util/abort';
 import { QueryOptions } from '@openfn/language-collections/types/collections';
+import { parseGoogleSheet } from '../util/google-sheet-parser';
 
 const ensureToken = (opts: CollectionsOptions, logger: Logger) => {
   if (!('token' in opts)) {
@@ -109,13 +110,20 @@ export const set = async (options: SetOptions, logger: Logger) => {
     );
   }
 
+  if (options.sheet && options.items) {
+    throwAbortableError(
+      'ARGUMENT_ERROR: arguments for sheet and items were provided',
+      'You can only pass one of --sheet or --items'
+    );
+  }
+
   ensureToken(options, logger);
   logger.info(`Upserting items to collection "${options.collectionName}"`);
 
   // Array of key/value pairs to upsert
-  const items = [];
+  const items: Array<{ key: string; value: string }> = [];
 
-  // set multiple items
+  // 1. Set multiple items from a JSON file.
   if (options.items) {
     const resolvedPath = path.resolve(options.items);
     logger.debug('Loading items from ', resolvedPath);
@@ -127,12 +135,43 @@ export const set = async (options: SetOptions, logger: Logger) => {
     });
 
     logger.info(`Upserting ${items.length} items`);
-  } else if (options.key && options.value) {
+  }
+  // 2. Set mapping from a Google Sheet.
+  else if (options.sheet) {
+    logger.info(
+      `Upserting mapping from a Google Sheet to collection "${options.collectionName}"`
+    );
+
+    let mapping;
+    try {
+      // Call our parser to get the mapping from the public sheet.
+      mapping = await parseGoogleSheet(options.sheet, {
+        keyColumn: options.keyColumn ?? 0,
+        valueColumn: options.valueColumn ?? 1,
+        skipHeaders: options.skipHeaders !== false, // defaults to true
+        worksheetName: options.worksheetName || 'Sheet1',
+        nested: options.nested || false,
+        // Optionally add a range option if needed
+        range: options.range,
+      });
+    } catch (error) {
+      logger.error('Error fetching Google Sheet:', error);
+      throwAbortableError(
+        'GOOGLE_SHEET_FETCH_ERROR',
+        'Failed to fetch and parse the Google Sheet'
+      );
+    }
+    // Push the mapping as a single key/value pair into the items array.
+    items.push({ key: options.key, value: JSON.stringify(mapping) });
+    logger.info(`Upserting mapping from Google Sheet as key "${options.key}"`);
+  }
+  // 3. Set a single item from a JSON file.
+  else if (options.key && options.value) {
     const resolvedPath = path.resolve(options.value);
     logger.debug('Loading value from ', resolvedPath);
 
     // set a single item
-    const data = await readFile(path.resolve(options.value), 'utf8');
+    const data = await readFile(resolvedPath, 'utf8');
     // Ensure the data is properly jsonified
     const value = JSON.stringify(JSON.parse(data));
 
@@ -143,7 +182,7 @@ export const set = async (options: SetOptions, logger: Logger) => {
     throw new Error('INVALID_ARGUMENTS');
   }
 
-  // get the input data
+  // Upload the data to the OpenFn collections API.
   const result = await request(
     'POST',
     {
@@ -165,13 +204,8 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
     `Removing "${options.key}" from collection "${options.collectionName}"`
   );
 
-  // TODO should we ALWAYS do this to report the keys that will be lost
-  // But we can't guarantee 100% accuracy if a key is inserted between queries
-  // Can we even guarantee that the query in get and delete is the same?
   if (options.dryRun) {
     logger.info('--dry-run passed: fetching affected items');
-    // TODO this isn't optimal at the moment, to say the least
-    // See https://github.com/OpenFn/lightning/issues/2758
     let result = await request(
       'GET',
       {
