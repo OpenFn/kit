@@ -317,6 +317,7 @@ A workflow has a structure like this:
 {
   "workflow": {
     "name": "my-workflow", // human readable name used in logging
+    "globals": "./common-funcs.js", // code or path to functions that can be accessed in any step. globally scoped
     "steps": [
       {
         "name": "a", // human readable name used in logging
