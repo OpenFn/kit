@@ -54,8 +54,6 @@ export default async function onStepComplete(
     timestamp: timeInMicroseconds(event.time),
   } as StepCompletePayload;
 
-  console.log(event.state.data.length);
-
   if (event.redacted) {
     state.withheldDataclips[dataclipId] = true;
     evt.output_dataclip_error = 'DATACLIP_TOO_LARGE';
