@@ -34,7 +34,7 @@ const claim = (
 ) => {
   return new Promise<void>((resolve, reject) => {
     const { maxWorkers = 5 } = options;
-    const podName = DEPLOYED_POD_NAME ? `${DEPLOYED_POD_NAME} ` : '';
+    const podName = DEPLOYED_POD_NAME ? `[${DEPLOYED_POD_NAME}] ` : '';
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
@@ -83,7 +83,7 @@ const claim = (
             logger.debug('skipping run token validation for', run.id);
           }
 
-          logger.debug(`{podName} starting run %{run.id}`);
+          logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
           resolve();
         });
