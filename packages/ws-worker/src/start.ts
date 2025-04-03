@@ -28,6 +28,7 @@ const [minBackoff, maxBackoff] = args.backoff
 
 function engineReady(engine: any) {
   logger.debug('Creating worker instance');
+  console.log(args);
   const workerOptions: ServerOptions = {
     port: args.port,
     lightning: args.lightning,
@@ -46,6 +47,8 @@ function engineReady(engine: any) {
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,
     monorepoDir: args.monorepoDir,
+    messageTimeoutSeconds: args.messageTimeoutSeconds,
+    socketTimeoutSeconds: args.socketTimeoutSeconds,
   };
 
   if (args.lightningPublicKey) {

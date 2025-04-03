@@ -46,6 +46,7 @@ export type ServerOptions = {
   sentryEnv?: string;
 
   socketTimeoutSeconds?: number;
+  messageTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   collectionsVersion?: string;
   collectionsUrl?: string;
@@ -263,7 +264,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           app.socket,
           token,
           id,
-          logger
+          logger,
+          app.options.messageTimeoutSeconds
         );
 
         const { plan, options, input } = convertRun(run, {
