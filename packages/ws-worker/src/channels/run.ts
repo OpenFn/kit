@@ -28,6 +28,7 @@ const joinRunChannel = (
 
     // TODO use proper logger
     const channelName = `run:${runId}`;
+    logger.info(`JOINING ${channelName}`);
     logger.debug(`connecting to ${channelName} with timeout ${timeout}s`);
     const channel = socket.channel(channelName, { token });
     channel
@@ -46,11 +47,13 @@ const joinRunChannel = (
       .receive('error', (err: any) => {
         Sentry.captureException(err);
         logger.error(`error connecting to ${channelName}`, err);
+        channel?.leave();
         reject(err);
       })
       .receive('timeout', (err: any) => {
         Sentry.captureException(err);
         logger.error(`Timeout for ${channelName}`, err);
+        channel?.leave();
         reject(err);
       });
     channel.onClose(() => {

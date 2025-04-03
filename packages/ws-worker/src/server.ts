@@ -260,6 +260,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         const start = Date.now();
         app.workflows[id] = true;
 
+        // const { channel: runChannel, run }) = await joinRunChannel(
         const { channel: runChannel, run } = await joinRunChannel(
           app.socket,
           token,
@@ -313,6 +314,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
         app.workflows[id] = context;
       } catch (e) {
+        delete app.workflows[id];
+
+        // TODO should we try and send a workflow complete message here?
+
+        app.resumeWorkloop();
+
         // Trap errors coming out of the socket
         // These are likely to be comms errors with Lightning
         logger.error(`Unexpected error executing ${id}`);
