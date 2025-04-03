@@ -5,7 +5,7 @@ import { hideBin } from 'yargs/helpers';
 const DEFAULT_PORT = 2222;
 const DEFAULT_WORKER_CAPACITY = 5;
 const DEFAULT_SOCKET_TIMEOUT_SECONDS = 10;
-const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 1;
+const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 30;
 
 type Args = {
   _: string[];
