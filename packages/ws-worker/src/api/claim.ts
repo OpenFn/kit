@@ -51,7 +51,7 @@ const claim = (
 
     const start = Date.now();
     app.queueChannel
-      .push<ClaimPayload>(CLAIM, { demand: 1 })
+      .push<ClaimPayload>(CLAIM, { demand: 1, pod_name: DEPLOYED_POD_NAME })
       .receive('ok', ({ runs }: ClaimReply) => {
         const duration = Date.now() - start;
         logger.debug(
