@@ -16,7 +16,7 @@ const joinRunChannel = (
   token: string,
   runId: string,
   logger: Logger,
-  timeout: number = 1
+  timeout: number = 30
 ) => {
   return new Promise<{
     channel: Channel;
