@@ -46,6 +46,8 @@ function engineReady(engine: any) {
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,
     monorepoDir: args.monorepoDir,
+    messageTimeoutSeconds: args.messageTimeoutSeconds,
+    socketTimeoutSeconds: args.socketTimeoutSeconds,
   };
 
   if (args.lightningPublicKey) {

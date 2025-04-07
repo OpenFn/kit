@@ -15,7 +15,8 @@ const joinRunChannel = (
   socket: Socket,
   token: string,
   runId: string,
-  logger: Logger
+  logger: Logger,
+  timeout: number = 30
 ) => {
   return new Promise<{
     channel: Channel;
@@ -27,10 +28,11 @@ const joinRunChannel = (
 
     // TODO use proper logger
     const channelName = `run:${runId}`;
-    logger.debug('connecting to ', channelName);
+    logger.info(`JOINING ${channelName}`);
+    logger.debug(`connecting to ${channelName} with timeout ${timeout}s`);
     const channel = socket.channel(channelName, { token });
     channel
-      .join()
+      .join(timeout * 1000)
       .receive('ok', async (e: any) => {
         if (!didReceiveOk) {
           didReceiveOk = true;
@@ -45,11 +47,13 @@ const joinRunChannel = (
       .receive('error', (err: any) => {
         Sentry.captureException(err);
         logger.error(`error connecting to ${channelName}`, err);
+        channel?.leave();
         reject(err);
       })
       .receive('timeout', (err: any) => {
         Sentry.captureException(err);
         logger.error(`Timeout for ${channelName}`, err);
+        channel?.leave();
         reject(err);
       });
     channel.onClose(() => {
