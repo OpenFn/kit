@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.13.1
+
+### Patch Changes
+
+- b83d13c: Add DEFAULT_MESSAGE_TIMEOUT_SECONDS env var and tweaked some error handling around lightning messaging
+- 0bd4adf: Include pod name in logs when claiming
+
 ## 1.13.0
 
 ### Minor Changes
