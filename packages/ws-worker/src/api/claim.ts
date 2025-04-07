@@ -24,6 +24,9 @@ type ClaimOptions = {
   maxWorkers?: number;
 };
 
+// used to report the pod name in logging, for tracking
+const { DEPLOYED_POD_NAME } = process.env;
+
 const claim = (
   app: ServerApp,
   logger: Logger = mockLogger,
@@ -31,6 +34,7 @@ const claim = (
 ) => {
   return new Promise<void>((resolve, reject) => {
     const { maxWorkers = 5 } = options;
+    const podName = DEPLOYED_POD_NAME ? `[${DEPLOYED_POD_NAME}] ` : '';
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
@@ -47,11 +51,11 @@ const claim = (
 
     const start = Date.now();
     app.queueChannel
-      .push<ClaimPayload>(CLAIM, { demand: 1 })
+      .push<ClaimPayload>(CLAIM, { demand: 1, pod_name: DEPLOYED_POD_NAME })
       .receive('ok', ({ runs }: ClaimReply) => {
         const duration = Date.now() - start;
         logger.debug(
-          `claimed ${runs.length} runs in ${duration}ms (${
+          `${podName}claimed ${runs.length} runs in ${duration}ms (${
             runs.length ? runs.map((r) => r.id).join(',') : '-'
           })`
         );
@@ -79,7 +83,7 @@ const claim = (
             logger.debug('skipping run token validation for', run.id);
           }
 
-          logger.debug('starting run', run.id);
+          logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
           resolve();
         });
