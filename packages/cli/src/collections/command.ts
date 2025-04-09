@@ -33,6 +33,13 @@ export type RemoveOptions = CollectionsOptions &
 export type SetOptions = CollectionsOptions & {
   items?: string;
   value?: string;
+  sheet?: string;
+  range?: string;
+  skipHeaders?: boolean;
+  worksheetName?: string;
+  nested?: boolean;
+  valueColumn?: number | string;
+  keyColumn?: number | string;
 };
 
 const desc = `Read and write from the OpenFn Collections API`;
@@ -237,6 +244,61 @@ const items = {
   },
 };
 
+// In your options definitions (collections/command.ts)
+const googleSheetOptions = [
+  {
+    name: 'sheet',
+    yargs: {
+      description: 'Google Sheet URL or ID',
+    },
+  },
+  {
+    name: 'range',
+    yargs: {
+      description:
+        'Range of cells to read from the Google Sheet -  default: A0:B0. First column is the key.',
+      default: 'A1:Z',
+    },
+  },
+  {
+    name: 'skip-headers',
+    yargs: {
+      description: 'Skip the first row of the Google Sheet (headers)',
+      type: 'boolean',
+      default: false,
+    },
+  },
+  {
+    name: 'worksheet-name',
+    yargs: {
+      description: 'Name of the worksheet to use (default: "Sheet1")',
+      default: 'Sheet1',
+    },
+  },
+  {
+    name: 'key-column',
+    yargs: {
+      description: 'Column to use as key (either index or header name)',
+      default: 0,
+    },
+  },
+  {
+    name: 'value-column',
+    yargs: {
+      description: 'Column to use as value (either index or header name)',
+      default: 1,
+    },
+  },
+  // We can have this later if we want
+  // {
+  //   name: 'api-key',
+  //   yargs: {
+  //     description: 'Google API key  for OAuth authentication',
+  //     default: '',
+  //   },
+  // },
+];
+
 const setOptions = [
   collectionName,
   override(key as any, {
@@ -246,7 +308,7 @@ const setOptions = [
   lightningUrl,
   value,
   items,
-
+  ...googleSheetOptions,
   override(o.log, {
     default: 'info',
   }),
