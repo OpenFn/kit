@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.1
+
 ## 1.0.2
 
 ### Patch Changes
