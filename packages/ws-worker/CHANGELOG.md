@@ -1,5 +1,15 @@
 # ws-worker
 
+## 1.13.2
+
+### Patch Changes
+
+- On claim, rename pod_name to worker_name
+- Updated dependencies
+  - @openfn/lexicon@1.2.1
+  - @openfn/engine-multi@1.6.3
+  - @openfn/runtime@1.6.4
+
 ## 1.13.1
 
 ### Patch Changes

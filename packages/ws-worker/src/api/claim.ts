@@ -25,7 +25,8 @@ type ClaimOptions = {
 };
 
 // used to report the pod name in logging, for tracking
-const { DEPLOYED_POD_NAME } = process.env;
+const { DEPLOYED_POD_NAME, WORKER_NAME } = process.env;
+const NAME = WORKER_NAME || DEPLOYED_POD_NAME;
 
 const claim = (
   app: ServerApp,
@@ -34,7 +35,7 @@ const claim = (
 ) => {
   return new Promise<void>((resolve, reject) => {
     const { maxWorkers = 5 } = options;
-    const podName = DEPLOYED_POD_NAME ? `[${DEPLOYED_POD_NAME}] ` : '';
+    const podName = NAME ? `[${NAME}] ` : '';
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
@@ -51,7 +52,10 @@ const claim = (
 
     const start = Date.now();
     app.queueChannel
-      .push<ClaimPayload>(CLAIM, { demand: 1, pod_name: DEPLOYED_POD_NAME })
+      .push<ClaimPayload>(CLAIM, {
+        demand: 1,
+        worker_name: NAME || null,
+      })
       .receive('ok', ({ runs }: ClaimReply) => {
         const duration = Date.now() - start;
         logger.debug(

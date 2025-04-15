@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.11.5
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.1
+  - @openfn/compiler@1.0.3
+  - @openfn/runtime@1.6.4
+
 ## 1.11.4
 
 ### Patch Changes
