@@ -60,7 +60,11 @@ test('cli should set default values for unspecified options', (t) => {
   t.is(args.capacity, 5);
   t.is(args.sentryEnv, 'dev');
   t.falsy(args.sentryDsn);
-  t.deepEqual(args.statePropsToRemove, ['configuration', 'response']);
+  t.deepEqual(args.statePropsToRemove, [
+    'configuration',
+    'response',
+    'references',
+  ]);
   t.is(args.runMemory, 500);
   t.is(args.maxRunDurationSeconds, 300);
 });
