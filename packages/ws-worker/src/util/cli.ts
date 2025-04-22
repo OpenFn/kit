@@ -201,7 +201,7 @@ export default function parseArgs(argv: string[]): Args {
     statePropsToRemove: setArg(
       args.statePropsToRemove,
       WORKER_STATE_PROPS_TO_REMOVE,
-      ['configuration', 'response', 'references']
+      ['configuration', 'references']
     ),
     runMemory: setArg(args.runMemory, WORKER_MAX_RUN_MEMORY_MB, 500),
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
