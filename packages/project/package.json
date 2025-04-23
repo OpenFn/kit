@@ -1,0 +1,35 @@
+{
+  "name": "@openfn/project",
+  "version": "0.1.0",
+  "description": "Read, serialize, replicate and sync OpenFn projects",
+  "scripts": {
+    "test": "pnpm ava",
+    "test:watch": "pnpm ava -w",
+    "test:types": "pnpm tsc --project tsconfig.test.json",
+    "build": "tsup --config ./tsup.config.js",
+    "build:watch": "pnpm build --watch",
+    "pack": "pnpm pack --pack-destination ../../dist"
+  },
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [],
+  "author": "Open Function Group <admin@openfn.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "ava": "5.3.1",
+    "mock-fs": "^5.4.1",
+    "tslib": "^2.4.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.1.6",
+    "rimraf": "^3.0.2"
+  },
+  "dependencies": {
+    "@openfn/lexicon": "workspace:^",
+    "@openfn/logger": "workspace:*"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
