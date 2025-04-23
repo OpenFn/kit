@@ -6,6 +6,7 @@ import * as o from '../options';
 export type PullOptions = Required<
   Pick<
     Opts,
+    | 'beta'
     | 'command'
     | 'log'
     | 'logJson'
@@ -25,6 +26,10 @@ const options = [
   o.log,
   o.logJson,
   o.snapshots,
+  o.beta,
+
+  // TOOD add options for endpoint & api key
+  // madness that they aren't here
 ];
 
 const pullCommand: yargs.CommandModule<PullOptions> = {
