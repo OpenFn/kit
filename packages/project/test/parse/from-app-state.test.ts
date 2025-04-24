@@ -6,7 +6,7 @@ import fromAppState, { mapWorkflow } from '../../src/parse/from-app-state';
 // loosely maps to the old config file
 const config = {
   endpoint: 'app.openfn.org',
-  name: 'main', // this is like the local name
+  env: 'test',
 };
 
 const state: Provisioner.Project = {
@@ -66,6 +66,7 @@ test('should create a Project from prov state with basic metadata', (t) => {
   const project = fromAppState(state, config);
 
   t.is(project.name, 'aaa');
+  t.is(project.env, 'test');
   t.is(project.description, 'a project');
 });
 
@@ -75,7 +76,6 @@ test('should create a Project from prov state with app project metadata', (t) =>
   t.deepEqual(project.openfn, {
     projectId: state.id,
     endpoint: config.endpoint,
-    name: config.name,
     inserted_at: state.inserted_at,
     updated_at: state.updated_at,
     fetched_at: undefined,

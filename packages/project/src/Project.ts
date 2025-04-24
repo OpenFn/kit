@@ -6,7 +6,8 @@ import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
 type MergeOptions = {
-  force: boolean;
+  force?: boolean;
+  workflows?: string[]; // which workflows to include
 };
 
 // // A local collection of openfn projects
@@ -18,28 +19,14 @@ type MergeOptions = {
 // A single openfn project
 // could be an app project or a checked out fs
 export class Project {
-  constructor(data: l.Project) {
-    this.name = data.name;
-    this.description = data.description;
-    this.openfn = data.openfn;
-    this.workflows = data.workflows;
-
-    // TODO collections, credentials (or do they just go in the openfn bucket?)
-  }
-
-  // load a project from a state file (project.json)
-  // or from a path (the file system)
-  // TODO presumably we can detect a state file? Not a big deal?
-  static from(type: 'state' | 'path', data: any, options: any) {
-    if (type === 'state') {
-      return fromAppState(data, options);
-    }
-  }
-
   // what schema version is this?
   // And how are we tracking this?
   // version;
 
+  /** env name - eg prod | staging */
+  env?: string;
+
+  /** project name */
   name?: string;
   description?: string;
 
@@ -54,8 +41,29 @@ export class Project {
   // Things we need to track but don't actually use
   meta: any;
 
-  // this contains meta about the connected openfn
+  // this contains meta about the connected openfn project
   openfn?: l.ProjectConfig;
+
+  // load a project from a state file (project.json)
+  // or from a path (the file system)
+  // TODO presumably we can detect a state file? Not a big deal?
+  static from(type: 'state' | 'path', data: any, options: any) {
+    if (type === 'state') {
+      return fromAppState(data, options);
+    }
+  }
+
+  // env is excluded because it's not really part of the project
+  // uh maybe
+  constructor(data: l.Project, env: string) {
+    this.name = data.name;
+    this.env = env || data.env;
+    this.description = data.description;
+    this.openfn = data.openfn;
+    this.workflows = data.workflows;
+
+    // TODO collections, credentials (or do they just go in the openfn bucket?)
+  }
 
   // serialize to filesystem, json or yaml
   serialize(type: 'json' | 'yaml' | 'fs' = 'json') {

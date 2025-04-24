@@ -4,6 +4,11 @@ import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../Project';
 
+type Config = {
+  endpoint: string;
+  env: string;
+};
+
 // TODO need to work out how to map versions
 // the state file should be able to handle multiple versions of provisioner files
 /// project id in config isn't needed here
@@ -14,14 +19,14 @@ export default (
   // TODO env: string = 'project'
 ) => {
   const proj: Partial<l.Project> = {
-    name: state.name,
+    name: state.name, // TODO do we need to slug this or anything?
+    env: config.env,
     description: state.description,
   };
 
   proj.openfn = {
     projectId: state.id,
     endpoint: config.endpoint,
-    name: config.name, // TODO this is the local name/environment - not part of openfn config
     inserted_at: state.inserted_at,
     updated_at: state.updated_at,
     fetched_at: config.fetched_at, // how do we set this? It needs passing in
@@ -29,7 +34,7 @@ export default (
 
   proj.workflows = state.workflows.map(mapWorkflow);
 
-  return new Project(proj as l.Project, config as l.ProjectConfig);
+  return new Project(proj as l.Project);
 };
 
 const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {

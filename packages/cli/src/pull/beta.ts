@@ -32,6 +32,7 @@ type Config = {
   // statePath: string;
 };
 
+// TODO need to document and add options.env
 export async function handler(options: PullOptions, logger: Logger) {
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
 
@@ -56,11 +57,11 @@ export async function handler(options: PullOptions, logger: Logger) {
   );
 
   // TODO if the user doesn't specify an env name, prompt for one
-  const name = options.name || 'project';
+  const name = options.env || 'project';
 
   const project = Project.from('state', data, {
     endpoint: config.endpoint,
-    name,
+    env: name,
   });
 
   // so this thing is my project.yaml file
@@ -72,10 +73,14 @@ export async function handler(options: PullOptions, logger: Logger) {
   // The local project.yaml files contain stuff that the provisioner project does not
   // eg the endpoint and maybe a local name
   // so what we serialise is a Json Project, not a provisioner state file
+  const outputPath = `./tmp/projects/${name}@${extractDomain(
+    config.endpoint
+  )}.json`;
   await fs.writeFile(
-    `./tmp/projects/${name}@${extractDomain(config.endpoint)}.json`,
+    outputPath,
     JSON.stringify(project?.serialize('json'), null, 2)
   );
+  logger.success(`Saved project to ${outputPath}`);
 }
 
 const extractDomain = (endpoint: string) => {
