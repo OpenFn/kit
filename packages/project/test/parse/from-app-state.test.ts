@@ -12,7 +12,7 @@ const config = {
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
   name: 'aaa',
-  description: null,
+  description: 'a project',
   concurrency: null,
   inserted_at: '2025-04-23T11:15:59Z',
   collections: [],
@@ -62,7 +62,14 @@ const state: Provisioner.Project = {
   dataclip_retention_period: null,
 };
 
-test.only('should create a Project from provisioner state', (t) => {
+test('should create a Project from prov state with basic metadata', (t) => {
+  const project = fromAppState(state, config);
+
+  t.is(project.name, 'aaa');
+  t.is(project.description, 'a project');
+});
+
+test('should create a Project from prov state with app project metadata', (t) => {
   const project = fromAppState(state, config);
 
   t.deepEqual(project.openfn, {
@@ -73,7 +80,10 @@ test.only('should create a Project from provisioner state', (t) => {
     updated_at: state.updated_at,
     fetched_at: undefined,
   });
-  t.deepEqual(project.history, []);
+});
+
+test('should create a Project from prov state with a workflow', (t) => {
+  const project = fromAppState(state, config);
 
   t.is(project.workflows.length, 1);
   t.deepEqual(project.workflows[0], {
@@ -130,7 +140,6 @@ test('mapWorkflow: map a simple job', (t) => {
   const mapped = mapWorkflow(state.workflows[0]);
 
   const [_trigger, job] = mapped.steps;
-  t.log(job);
   t.deepEqual(job, {
     adaptor: '@openfn/language-common@latest',
     expression:

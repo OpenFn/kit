@@ -2,7 +2,7 @@
 
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { Project } from '../project';
+import { Project } from '../Project';
 
 // TODO need to work out how to map versions
 // the state file should be able to handle multiple versions of provisioner files
@@ -11,13 +11,17 @@ import { Project } from '../project';
 export default (
   state: Provisioner.Project,
   config: Partial<l.ProjectConfig>
+  // TODO env: string = 'project'
 ) => {
-  const proj: Partial<l.Project> = {};
+  const proj: Partial<l.Project> = {
+    name: state.name,
+    description: state.description,
+  };
 
   proj.openfn = {
     projectId: state.id,
     endpoint: config.endpoint,
-    name: config.name,
+    name: config.name, // TODO this is the local name/environment - not part of openfn config
     inserted_at: state.inserted_at,
     updated_at: state.updated_at,
     fetched_at: config.fetched_at, // how do we set this? It needs passing in
@@ -39,6 +43,7 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 };
 
 // map a project workflow to a local cli workflow
+// TODO this probably gets easier if I index everything by name
 export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   const { jobs, edges, triggers, name, ...remoteProps } = workflow;
   const mapped: l.Workflow = {
@@ -61,7 +66,6 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       openfn: otherProps,
       next: connectedEdges.reduce((obj: any, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
-        console.log({ target });
         // we use the name, not the id, to reference
         obj[target.name] = mapTriggerEdgeCondition(edge);
         return obj;

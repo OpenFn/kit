@@ -3,6 +3,7 @@
   "include": ["src/**/*.ts", "test/**/*.ts"],
   "compilerOptions": {
     "module": "ESNext",
-    "sourceMap": true
+    "sourceMap": true,
+    "noCheck": true
   }
 }

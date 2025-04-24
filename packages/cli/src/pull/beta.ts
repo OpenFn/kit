@@ -14,6 +14,7 @@ import {
   getStateFromProjectPayload,
   syncRemoteSpec,
 } from '@openfn/deploy';
+import Project from '@openfn/project';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 
@@ -32,8 +33,6 @@ type Config = {
 };
 
 export async function handler(options: PullOptions, logger: Logger) {
-  console.log(' >> PULL BETA', options.projectId);
-
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
 
   const config: Partial<Config> = {};
@@ -50,11 +49,19 @@ export async function handler(options: PullOptions, logger: Logger) {
   }
 
   // download the state.json
-  const { data: project } = await getProject(
+  const { data } = await getProject(
     config as any,
     options.projectId
     // options.snapshots
   );
+
+  // TODO if the user doesn't specify an env name, prompt for one
+  const name = options.name || 'project';
+
+  const project = Project.from('state', data, {
+    endpoint: config.endpoint,
+    name,
+  });
 
   // so this thing is my project.yaml file
   // name@domain
@@ -66,7 +73,11 @@ export async function handler(options: PullOptions, logger: Logger) {
   // eg the endpoint and maybe a local name
   // so what we serialise is a Json Project, not a provisioner state file
   await fs.writeFile(
-    '/tmp/openfn/state.json',
-    JSON.stringify(project, null, 2)
+    `./tmp/projects/${name}@${extractDomain(config.endpoint)}.json`,
+    JSON.stringify(project?.serialize('json'), null, 2)
   );
 }
+
+const extractDomain = (endpoint: string) => {
+  return new URL(endpoint).hostname;
+};

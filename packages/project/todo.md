@@ -1,0 +1,1 @@
+- step names need to slugify the openfn name, and also openfn needs to save the original name

@@ -2,6 +2,9 @@ import * as l from '@openfn/lexicon';
 // but what is this ?
 // is it just types?
 
+import * as serializers from './serialize';
+import fromAppState from './parse/from-app-state';
+
 type MergeOptions = {
   force: boolean;
 };
@@ -16,17 +19,29 @@ type MergeOptions = {
 // could be an app project or a checked out fs
 export class Project {
   constructor(data: l.Project) {
+    this.name = data.name;
+    this.description = data.description;
     this.openfn = data.openfn;
     this.workflows = data.workflows;
+
+    // TODO collections, credentials (or do they just go in the openfn bucket?)
   }
 
   // load a project from a state file (project.json)
   // or from a path (the file system)
-  // static from(type: 'state' | 'path', data) {}
+  // TODO presumably we can detect a state file? Not a big deal?
+  static from(type: 'state' | 'path', data: any, options: any) {
+    if (type === 'state') {
+      return fromAppState(data, options);
+    }
+  }
 
   // what schema version is this?
   // And how are we tracking this?
   // version;
+
+  name?: string;
+  description?: string;
 
   // array of version shas
   history: string[] = [];
@@ -42,8 +57,14 @@ export class Project {
   // this contains meta about the connected openfn
   openfn?: l.ProjectConfig;
 
-  // serialize to filesystem, or a state file
-  serialize() {}
+  // serialize to filesystem, json or yaml
+  serialize(type: 'json' | 'yaml' | 'fs' = 'json') {
+    if (type in serializers) {
+      // @ts-ignore
+      return serializers[type](this);
+    }
+    throw new Error(`Cannot serialize ${type}`);
+  }
 
   // would like a better name for this
   // stamp? id? sha?
