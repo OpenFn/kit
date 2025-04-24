@@ -62,6 +62,7 @@ export async function handler(options: PullOptions, logger: Logger) {
   const project = Project.from('state', data, {
     endpoint: config.endpoint,
     env: name,
+    fetchedAt: new Date().toISOString(),
   });
 
   // so this thing is my project.yaml file

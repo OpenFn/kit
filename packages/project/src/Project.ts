@@ -35,10 +35,12 @@ export class Project {
 
   workflows: l.Workflow[];
 
+  // option strings saved by the app
+  // these are all (?) unused clientside
   options: any;
 
-  // This is a bucket of stuff used by the provisioner
-  // Things we need to track but don't actually use
+  // local metdata used by the CLI
+  // This stuff is not synced back to lightning
   meta: any;
 
   // this contains meta about the connected openfn project
@@ -60,13 +62,14 @@ export class Project {
     this.env = env || data.env;
     this.description = data.description;
     this.openfn = data.openfn;
+    this.options = data.options;
     this.workflows = data.workflows;
-
-    // TODO collections, credentials (or do they just go in the openfn bucket?)
+    this.collections = data.collections;
+    this.credentials = data.credentials;
+    this.meta = data.meta;
   }
 
-  // serialize to filesystem, json or yaml
-  serialize(type: 'json' | 'yaml' | 'fs' = 'json') {
+  serialize(type: 'json' | 'yaml' | 'fs' | 'state ' = 'json') {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this);

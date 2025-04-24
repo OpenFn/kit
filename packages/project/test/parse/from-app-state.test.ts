@@ -78,8 +78,33 @@ test('should create a Project from prov state with app project metadata', (t) =>
     endpoint: config.endpoint,
     inserted_at: state.inserted_at,
     updated_at: state.updated_at,
-    fetched_at: undefined,
   });
+});
+
+test('should create a Project from prov state with options', (t) => {
+  const project = fromAppState(state, config);
+
+  t.deepEqual(project.options, {
+    scheduled_deletion: null,
+    history_retention_period: null,
+    dataclip_retention_period: null,
+    allow_support_access: false,
+    retention_policy: 'retain_all',
+    concurrency: null,
+    requires_mfa: false,
+  });
+});
+
+test('should create a Project from prov state with collections', (t) => {
+  const project = fromAppState(state, config);
+
+  t.deepEqual(project.collections, []);
+});
+
+test('should create a Project from prov state with credentials', (t) => {
+  const project = fromAppState(state, config);
+
+  t.deepEqual(project.credentials, []);
 });
 
 test('should create a Project from prov state with a workflow', (t) => {
@@ -93,7 +118,15 @@ test('should create a Project from prov state with a workflow', (t) => {
         id: 'trigger',
         type: 'webhook',
         openfn: { enabled: true, id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
-        next: { 'Transform data': true },
+        next: {
+          'Transform data': {
+            condition: true,
+            disabled: false,
+            openfn: {
+              id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+            },
+          },
+        },
       },
       {
         id: 'Transform data',
@@ -126,7 +159,13 @@ test('mapWorkflow: map a simple trigger', (t) => {
     id: 'trigger',
     type: 'webhook',
     next: {
-      'Transform data': true,
+      'Transform data': {
+        condition: true,
+        disabled: false,
+        openfn: {
+          id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+        },
+      },
     },
     openfn: {
       enabled: true,

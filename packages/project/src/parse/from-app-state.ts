@@ -4,32 +4,45 @@ import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../Project';
 
+// Extra metadata used to init the project
 type Config = {
   endpoint: string;
-  env: string;
+  env?: string;
+  fetchedAt?: string;
 };
 
-// TODO need to work out how to map versions
-// the state file should be able to handle multiple versions of provisioner files
-/// project id in config isn't needed here
-// TODO maybe the sig is (state, endpoint, name = main)
-export default (
-  state: Provisioner.Project,
-  config: Partial<l.ProjectConfig>
-  // TODO env: string = 'project'
-) => {
+export default (state: Provisioner.Project, config: Config) => {
+  const {
+    id,
+    name,
+    description,
+    workflows,
+    project_credentials: credentials,
+    collections,
+    inserted_at,
+    updated_at,
+    ...options
+  } = state;
+
   const proj: Partial<l.Project> = {
-    name: state.name, // TODO do we need to slug this or anything?
+    name, // TODO do we need to slug this or anything?
     env: config.env,
-    description: state.description,
+    description,
+    collections,
+    credentials,
+    options,
   };
 
   proj.openfn = {
-    projectId: state.id,
+    projectId: id,
     endpoint: config.endpoint,
-    inserted_at: state.inserted_at,
-    updated_at: state.updated_at,
-    fetched_at: config.fetched_at, // how do we set this? It needs passing in
+    inserted_at,
+    updated_at,
+  };
+
+  // TODO maybe this for local metadata, stuff that isn't synced?
+  proj.meta = {
+    fetched_at: config.fetchedAt,
   };
 
   proj.workflows = state.workflows.map(mapWorkflow);
@@ -38,13 +51,22 @@ export default (
 };
 
 const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
+  const e = {
+    disabled: !edge.enabled,
+  };
   if (edge.condition_type === 'always') {
-    return true;
+    e.condition = true;
+  } else if (edge.condition_type === 'never') {
+    e.condition = false;
+  } else {
+    e.condition = edge.condition_expression;
   }
-  if (edge.condition_type === 'never') {
-    return false;
-  }
-  return edge.condition_expression;
+
+  // Do this last so that it serializes last
+  e.openfn = {
+    id: edge.id,
+  };
+  return e;
 };
 
 // map a project workflow to a local cli workflow
