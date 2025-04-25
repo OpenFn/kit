@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.13.3
+
+### Patch Changes
+
+- d79c828: Publish memory limit and timeout to info logs, not debug
+- Updated dependencies [d79c828]
+  - @openfn/engine-multi@1.6.4
+
 ## 1.13.2
 
 ### Patch Changes
