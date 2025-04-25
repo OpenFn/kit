@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.6.4
+
+### Patch Changes
+
+- d79c828: Publish memory limit and timeout to info logs, not debug
+
 ## 1.6.3
 
 ### Patch Changes
