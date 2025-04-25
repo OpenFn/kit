@@ -74,14 +74,29 @@ export async function handler(options: PullOptions, logger: Logger) {
   // The local project.yaml files contain stuff that the provisioner project does not
   // eg the endpoint and maybe a local name
   // so what we serialise is a Json Project, not a provisioner state file
-  const outputPath = `./tmp/projects/${name}@${extractDomain(
+  const outputRoot = `./tmp/projects`;
+
+  await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
+  const outputPath = `${outputRoot}/.projects/${name}@${extractDomain(
     config.endpoint
   )}.json`;
-  await fs.writeFile(
-    outputPath,
-    JSON.stringify(project?.serialize('json'), null, 2)
-  );
-  logger.success(`Saved project to ${outputPath}`);
+  logger.success(`Saved project file to ${outputPath}`);
+
+  const json = project?.serialize('json');
+  await fs.writeFile(outputPath, JSON.stringify(json, null, 2));
+
+  const files = project?.serialize('fs');
+  for (const f in files) {
+    if (files[f]) {
+      await fs.mkdir(path.join(outputRoot, path.dirname(f)), {
+        recursive: true,
+      });
+      await fs.writeFile(path.join(outputRoot, f), files[f]);
+    } else {
+      console.log('WARNING! No content for file', f);
+    }
+  }
+  logger.success(`Expanded project to ${outputRoot}`);
 }
 
 const extractDomain = (endpoint: string) => {

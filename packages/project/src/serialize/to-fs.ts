@@ -17,8 +17,11 @@ export default function (project: Project) {
     files[path] = content;
 
     for (const s of wf.steps) {
-      const { path, content } = extractStep(project, wf.id, s.id);
-      files[path] = content;
+      const result = extractStep(project, wf.id, s.id);
+      if (result) {
+        const { path, content } = result;
+        files[path] = content;
+      }
     }
   }
 
@@ -59,17 +62,19 @@ export const extractStep = (project, workflowId, stepId) => {
   if (!workflow) {
     throw new Error(`workflow not found: ${workflowId}`);
   }
-  const step = workflow.steps.find((s) => (s.id = stepId));
-
-  if (!workflow) {
+  const step = workflow.steps.find((s) => s.id === stepId);
+  if (!step) {
     throw new Error(`step not found: ${stepId}`);
   }
 
-  const root = project.config?.workflowRoot ?? 'workflows/';
-  const path = nodepath.join(root, `${workflow.id}/${step.id}.js`);
-  const content = step.expression;
+  // TODO unit test needed on this
+  if (step.expression) {
+    const root = project.config?.workflowRoot ?? 'workflows/';
+    const path = nodepath.join(root, `${workflow.id}/${step.id}.js`);
+    const content = step.expression;
 
-  return { path, content };
+    return { path, content };
+  }
 };
 
 // extracts contents for openfn.yaml|json
