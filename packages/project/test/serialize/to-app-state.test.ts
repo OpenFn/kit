@@ -1,7 +1,7 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../../src/Project';
-import fromAppState, { mapWorkflow } from '../../src/parse/from-app-state';
+import toAppState, { mapWorkflow } from '../../src/serialize/to-app-state';
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -128,7 +128,7 @@ test('should convert a project back to app state', (t) => {
   };
   const project = new Project(data);
 
-  const newState = project.serialize('state');
+  const newState = toAppState(project);
   // t.log(JSON.stringify(newState, null, 2));
   t.deepEqual(newState, state);
 });

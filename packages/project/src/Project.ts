@@ -10,11 +10,39 @@ type MergeOptions = {
   workflows?: string[]; // which workflows to include
 };
 
+type FileFormats = 'yaml' | 'json';
+
+// repo-wide options
+type RepoOptions = {
+  /** env name - eg prod | staging */
+  env?: string;
+
+  /**default workflow root when serializing to fs (relative to openfn.yaml) */
+  workflowRoot?: string;
+
+  formats: {
+    openfn: FileFormats;
+    workflow: FileFormats;
+    project: FileFormats;
+  };
+};
+
 // // A local collection of openfn projects
 // class Repo {
 
 //   projects: {}
 // }
+
+const setConfigDefaults = (config = {}) => ({
+  env: config.env ?? 'main',
+  workflowRoot: config.workflowRoot ?? 'workflows',
+  formats: {
+    // TODO change these maybe
+    openfn: config.formats?.openfn ?? 'yaml',
+    project: config.formats?.project ?? 'yaml',
+    workflow: config.formats?.workflow ?? 'yaml',
+  },
+});
 
 // A single openfn project
 // could be an app project or a checked out fs
@@ -22,9 +50,6 @@ export class Project {
   // what schema version is this?
   // And how are we tracking this?
   // version;
-
-  /** env name - eg prod | staging */
-  env?: string;
 
   /** project name */
   name?: string;
@@ -44,7 +69,13 @@ export class Project {
   meta: any;
 
   // this contains meta about the connected openfn project
+  // TODO type needs renaming
   openfn?: l.ProjectConfig;
+
+  // repo configuration options
+  // these should be shared across projects
+  // and saved to an openfn.yaml file
+  config?: Required<RepoOptions>;
 
   // load a project from a state file (project.json)
   // or from a path (the file system)
@@ -57,9 +88,12 @@ export class Project {
 
   // env is excluded because it's not really part of the project
   // uh maybe
-  constructor(data: l.Project, env: string) {
+  // maybe this second arg is config - like env, branch rules, serialisation rules
+  // stuff that's external to the actual project and managed by the repo
+  constructor(data: l.Project, config: RepoOptions = {}) {
+    this.config = setConfigDefaults(config);
+
     this.name = data.name;
-    this.env = env || data.env;
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
@@ -89,7 +123,11 @@ export class Project {
 
   // what else might we need?
 
-  getWorkflow(name: string) {}
+  // get workflow by name or id
+  // this is fuzzy, but is that wrong?
+  getWorkflow(id: string) {
+    return this.workflows.find((wf) => wf.id == id);
+  }
 }
 
 // Surely this is just a type?

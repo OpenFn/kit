@@ -66,7 +66,7 @@ test('should create a Project from prov state with basic metadata', (t) => {
   const project = fromAppState(state, config);
 
   t.is(project.name, 'aaa');
-  t.is(project.env, 'test');
+  t.is(project.config.env, 'test');
   t.is(project.description, 'a project');
 });
 

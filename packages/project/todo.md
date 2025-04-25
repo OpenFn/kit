@@ -1,12 +1,5 @@
 - step names need to slugify the openfn name, and also openfn needs to save the original name
+- workflow id needs to be a slugified form of the name
 - include an options key on the project and workflow
 
-edege can be an object like
-{
-disabled,
-condition
-}
-
-So I can add an openfn project and save all data to this implied edge
-
-phew
+- have I got a problem with triggers? If creating a local project, the cli doesn't need it, but the provisioner does. Maybe we auto-generate one if it doesn't exist? Probably under an option

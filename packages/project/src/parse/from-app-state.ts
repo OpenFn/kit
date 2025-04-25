@@ -26,11 +26,14 @@ export default (state: Provisioner.Project, config: Config) => {
 
   const proj: Partial<l.Project> = {
     name, // TODO do we need to slug this or anything?
-    env: config.env,
     description,
     collections,
     credentials,
     options,
+  };
+
+  const repoConfig = {
+    env: config.env,
   };
 
   proj.openfn = {
@@ -47,7 +50,7 @@ export default (state: Provisioner.Project, config: Config) => {
 
   proj.workflows = state.workflows.map(mapWorkflow);
 
-  return new Project(proj as l.Project);
+  return new Project(proj as l.Project, repoConfig);
 };
 
 const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {

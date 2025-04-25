@@ -1,0 +1,83 @@
+// serialize the file system
+
+import nodepath from 'path';
+import { Project } from '../Project';
+
+const stringify = (json) => JSON.stringify(json, null, 2);
+
+// TODO need a suite of unit tests against this
+export default function (project: Project) {
+  const files: Record<string, sting> = {};
+
+  const { path, content } = extractConfig(project);
+  files[path] = content;
+
+  for (const wf of project.workflows) {
+    const { path, content } = extractWorkflow(project, wf.id);
+    files[path] = content;
+
+    for (const s of wf.steps) {
+      const { path, content } = extractStep(project, wf.id, s.id);
+      files[path] = content;
+    }
+  }
+
+  return files;
+}
+
+// extracts a workflow.json|yaml from a project
+export const extractWorkflow = (project, workflowId) => {
+  const workflow = project.getWorkflow(workflowId);
+  if (!workflow) {
+    throw new Error(`workflow not found: ${workflowId}`);
+  }
+
+  const root = project.config?.workflowRoot ?? 'workflows/';
+
+  const path = nodepath.join(root, `${workflow.id}/${workflow.id}.json`);
+
+  const wf = {
+    id: workflow.id,
+    name: workflow.name,
+    options: workflow.options,
+    steps: workflow.steps.map((step) => {
+      const { openfn, expression, ...mapped } = step;
+      if (expression) {
+        mapped.expression = `./${step.id}.js`;
+      }
+      return mapped;
+    }),
+  };
+  const content = stringify(wf, null, 2);
+
+  return { path, content };
+};
+
+// extracts an expression.js from a workflow in project
+export const extractStep = (project, workflowId, stepId) => {
+  const workflow = project.getWorkflow(workflowId);
+  if (!workflow) {
+    throw new Error(`workflow not found: ${workflowId}`);
+  }
+  const step = workflow.steps.find((s) => (s.id = stepId));
+
+  if (!workflow) {
+    throw new Error(`step not found: ${stepId}`);
+  }
+
+  const root = project.config?.workflowRoot ?? 'workflows/';
+  const path = nodepath.join(root, `${workflow.id}/${step.id}.js`);
+  const content = step.expression;
+
+  return { path, content };
+};
+
+// extracts contents for openfn.yaml|json
+export const extractConfig = (project) => {
+  const config = project.config;
+
+  const path = `openfn.json`;
+  const content = stringify(config, null, 2);
+
+  return { path, content };
+};

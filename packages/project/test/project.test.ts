@@ -66,7 +66,7 @@ test('should convert a state file to a project and back again', (t) => {
 
   const project = Project.from('state', state, config);
 
-  t.is(project.env, 'test');
+  t.is(project.config.env, 'test');
   t.is(project.openfn.endpoint, 'app.openfn.org');
   t.is(project.openfn.projectId, state.id);
   t.is(project.name, state.name);
