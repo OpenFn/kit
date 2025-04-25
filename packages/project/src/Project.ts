@@ -33,6 +33,11 @@ type RepoOptions = {
 //   projects: {}
 // }
 
+// TODO maybe use an npm for this, or create  util
+function slugify(text) {
+  return text.replace(/\W/g, ' ').trim().replace(/\s+/g, '-');
+}
+
 const setConfigDefaults = (config = {}) => ({
   env: config.env ?? 'main',
   workflowRoot: config.workflowRoot ?? 'workflows',
@@ -93,6 +98,7 @@ export class Project {
   constructor(data: l.Project, config: RepoOptions = {}) {
     this.config = setConfigDefaults(config);
 
+    this.id = data.id;
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;

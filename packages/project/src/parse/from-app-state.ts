@@ -11,6 +11,10 @@ type Config = {
   fetchedAt?: string;
 };
 
+function slugify(text) {
+  return text.replace(/\W/g, ' ').trim().replace(/\s+/g, '-').toLowerCase();
+}
+
 export default (state: Provisioner.Project, config: Config) => {
   const {
     id,
@@ -77,7 +81,8 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   const { jobs, edges, triggers, name, ...remoteProps } = workflow;
   const mapped: l.Workflow = {
-    name: workflow.name, // I think we map name not id?
+    id: slugify(workflow.name),
+    name: workflow.name,
     steps: [],
     openfn: remoteProps,
   };

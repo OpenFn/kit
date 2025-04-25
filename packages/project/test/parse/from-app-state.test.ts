@@ -112,6 +112,7 @@ test('should create a Project from prov state with a workflow', (t) => {
 
   t.is(project.workflows.length, 1);
   t.deepEqual(project.workflows[0], {
+    id: 'wf1',
     name: 'wf1',
     steps: [
       {
@@ -148,6 +149,24 @@ test('should create a Project from prov state with a workflow', (t) => {
       deleted_at: null,
     },
   });
+});
+
+test('mapWorkflow: generate an id from the name', (t) => {
+  const wf = {
+    id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+    name: 'My Workflow',
+    edges: [],
+    inserted_at: '2025-04-23T11:19:32Z',
+    updated_at: '2025-04-23T11:19:32Z',
+    jobs: [],
+    triggers: [],
+    lock_version: 1,
+    deleted_at: null,
+  };
+  const mapped = mapWorkflow(wf);
+
+  t.is(mapped.name, 'My Workflow');
+  t.is(mapped.id, 'my-workflow');
 });
 
 test('mapWorkflow: map a simple trigger', (t) => {
