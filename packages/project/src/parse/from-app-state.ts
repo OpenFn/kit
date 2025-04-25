@@ -102,7 +102,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       next: connectedEdges.reduce((obj: any, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
         // we use the name, not the id, to reference
-        obj[target.name] = mapTriggerEdgeCondition(edge);
+        obj[slugify(target.name)] = mapTriggerEdgeCondition(edge);
         return obj;
       }, {}),
     });
@@ -116,7 +116,8 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     const { body: expression, name, adaptor, ...remoteProps } = step;
 
     const s = {
-      id: name,
+      id: slugify(name),
+      name: name,
       expression,
       adaptor,
       openfn: remoteProps,
@@ -125,7 +126,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     if (outboundEdges) {
       s.next = outboundEdges.reduce((next, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
-        next[target.name] = mapTriggerEdgeCondition(edge);
+        next[slugify(target.name)] = mapTriggerEdgeCondition(edge);
         return next;
       }, {});
     }

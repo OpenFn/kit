@@ -120,7 +120,7 @@ test('should create a Project from prov state with a workflow', (t) => {
         type: 'webhook',
         openfn: { enabled: true, id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
-          'Transform data': {
+          'transform-data': {
             condition: true,
             disabled: false,
             openfn: {
@@ -130,7 +130,8 @@ test('should create a Project from prov state with a workflow', (t) => {
         },
       },
       {
-        id: 'Transform data',
+        id: 'transform-data',
+        name: 'Transform data',
         expression:
           '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
         adaptor: '@openfn/language-common@latest',
@@ -178,7 +179,7 @@ test('mapWorkflow: map a simple trigger', (t) => {
     id: 'trigger',
     type: 'webhook',
     next: {
-      'Transform data': {
+      'transform-data': {
         condition: true,
         disabled: false,
         openfn: {
@@ -199,10 +200,11 @@ test('mapWorkflow: map a simple job', (t) => {
 
   const [_trigger, job] = mapped.steps;
   t.deepEqual(job, {
+    id: 'transform-data',
+    name: 'Transform data',
     adaptor: '@openfn/language-common@latest',
     expression:
       '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
-    id: 'Transform data',
     openfn: {
       id: '66add020-e6eb-4eec-836b-20008afca816',
       project_credential_id: null,
