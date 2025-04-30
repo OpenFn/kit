@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.13.4
+
+### Patch Changes
+
+- Fix a memory leak, affecting log-running worker instances
+- Updated dependencies
+  - @openfn/engine-multi@1.6.5
+
 ## 1.13.3
 
 ### Patch Changes
