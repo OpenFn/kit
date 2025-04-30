@@ -9,7 +9,7 @@ import createAPI from '../src/api';
 let completedCount = 0;
 const logger = createMockLogger();
 
-let api;
+let api: any;
 
 function run() {
   const job = `
