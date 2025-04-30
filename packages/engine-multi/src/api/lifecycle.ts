@@ -60,8 +60,10 @@ export const workflowComplete = (
   // }
 
   state.status = 'done';
-  state.result = result;
   state.duration = Date.now() - state.startTime!;
+
+  // Important! We do NOT write the result back to this state object
+  // It has a tendency to not get garbage collected and causing memory problems
 
   // TODO do we have to remove this from the active workflows array?
   // const idx = activeWorkflows.findIndex((id) => id === workflowId);
