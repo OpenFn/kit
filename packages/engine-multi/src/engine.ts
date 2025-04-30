@@ -197,7 +197,12 @@ const createEngine = async (
       // TODO typing between the class and interface isn't right
       // @ts-ignore
       execute(context).finally(() => {
+        // Take care to explicitly unreference the result object here,
+        // because it can be very large
+        delete contexts[workflowId].state.result;
         delete contexts[workflowId];
+
+        context.removeAllListeners();
       });
     }, 1);
 
