@@ -197,10 +197,20 @@ const createEngine = async (
       // TODO typing between the class and interface isn't right
       // @ts-ignore
       execute(context).finally(() => {
-        // const events = contexts[workflowId];
-        // for (const evt in handlers) {
-        //   events?.removeAllListeners(evt);
-        // }
+        const events = contexts[workflowId];
+
+        // remove all listeners
+        [
+          WORKFLOW_START,
+          WORKFLOW_COMPLETE,
+          JOB_START,
+          JOB_COMPLETE,
+          WORKFLOW_LOG,
+        ].forEach((evt) => {
+          console.log('REMOVING', evt);
+          events?.removeAllListeners(evt);
+        });
+
         delete contexts[workflowId];
       });
     }, 1);
