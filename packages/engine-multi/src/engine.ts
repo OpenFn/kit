@@ -197,6 +197,10 @@ const createEngine = async (
       // TODO typing between the class and interface isn't right
       // @ts-ignore
       execute(context).finally(() => {
+        // const events = contexts[workflowId];
+        // for (const evt in handlers) {
+        //   events?.removeAllListeners(evt);
+        // }
         delete contexts[workflowId];
       });
     }, 1);
@@ -234,6 +238,19 @@ const createEngine = async (
     // How does this work if deferred?
   };
 
+  // TODO how will we unit test this?
+  // TODO wouldn't it be better for all listeners to be auto-remove on finish?
+  // yes, maybe, but we don't have access to the handlers so this is hard
+  const disconnect = (
+    workflowId: string,
+    handlers: Record<string, EventHandler>
+  ) => {
+    const events = contexts[workflowId];
+    for (const evt in handlers) {
+      events?.off(evt, handlers[evt]);
+    }
+  };
+
   const destroy = (instant?: boolean) => closeWorkers(instant);
 
   return Object.assign(engine, {
@@ -245,6 +262,7 @@ const createEngine = async (
     getWorkflowStatus,
     execute: executeWrapper,
     listen,
+    disconnect,
     destroy,
     workers,
   });

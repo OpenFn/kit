@@ -84,6 +84,7 @@ const createAPI = async function (
     version: loadVersions().engine,
     execute: engine.execute,
     listen: engine.listen,
+    disconnect: engine.disconnect,
     destroy: engine.destroy,
     on: (evt: string, fn: (...args: any[]) => void) => engine.on(evt, fn),
   };

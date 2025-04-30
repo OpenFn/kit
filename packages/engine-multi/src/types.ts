@@ -68,6 +68,10 @@ export interface RuntimeEngine {
   // TODO should return an unsubscribe hook
   listen(runId: string, listeners: any): void;
 
+  // TODO should just take a runId really
+  // or even better, be handled internally
+  disconnect(runId: string, listeners: any): void;
+
   execute(
     plan: ExecutionPlan,
     input: State,
