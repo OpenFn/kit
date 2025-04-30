@@ -79,6 +79,7 @@ const run = (task: string, args: any[], options: Options = {}) => {
 };
 
 parentPort!.on('message', async (evt) => {
+  console.log(evt);
   if (evt.type === ENGINE_RUN_TASK) {
     const args = evt.args || [];
     run(evt.task, args, evt.options);

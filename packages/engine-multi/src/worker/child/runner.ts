@@ -1,5 +1,7 @@
 // this is the child process runtime environment
-// it lists to run calls, spins up a thread, and forwards events
+// it lists to run calls, spins up a thread, and forwards events#
+import { Worker } from 'node:worker_threads';
+
 import type { WorkerEvent } from '../../api/call-worker';
 import { OOMError } from '../../errors';
 import {
@@ -9,6 +11,13 @@ import {
 } from '../events';
 import createThread, { ThreadOptions } from './create-thread';
 import serializeError from '../../util/serialize-error';
+
+const scriptPath = process.argv[2];
+const worker = new Worker(scriptPath);
+
+worker.on('message', (evt) => {
+  process.send!(evt);
+});
 
 process.on('message', async (evt: WorkerEvent) => {
   if (evt.type === ENGINE_RUN_TASK) {
@@ -22,27 +31,34 @@ const run = async (
   args: any[] = [],
   options: ThreadOptions = {}
 ) => {
-  const thread = createThread(task, args, options);
-
-  thread.on('error', (e) => {
-    // @ts-ignore
-    if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
-      e = new OOMError();
-
-      process.send!({
-        type: ENGINE_REJECT_TASK,
-        error: serializeError(e),
-      });
-    }
+  worker.postMessage({
+    type: ENGINE_RUN_TASK,
+    task,
+    args,
+    options,
   });
 
-  thread.on('message', (evt) => {
-    process.send!(evt);
+  // const thread = createThread(task, args, options);
 
-    if (evt.type === ENGINE_RESOLVE_TASK || evt.type === ENGINE_REJECT_TASK) {
-      // TODO wait for this to finish (or throw)
-      // then destroy the thread
-      thread.terminate();
-    }
-  });
+  // thread.on('error', (e) => {
+  //   // @ts-ignore
+  //   if (e.code === 'ERR_WORKER_OUT_OF_MEMORY') {
+  //     e = new OOMError();
+
+  //     process.send!({
+  //       type: ENGINE_REJECT_TASK,
+  //       error: serializeError(e),
+  //     });
+  //   }
+  // });
+
+  // thread.on('message', (evt) => {
+  //   process.send!(evt);
+
+  //   if (evt.type === ENGINE_RESOLVE_TASK || evt.type === ENGINE_REJECT_TASK) {
+  //     // TODO wait for this to finish (or throw)
+  //     // then destroy the thread
+  //     thread.terminate();
+  //   }
+  // });
 };

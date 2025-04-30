@@ -16,15 +16,16 @@ export const workflowStart = (
   const { workflowId, threadId } = event;
 
   logger.info('starting workflow ', workflowId);
+  console.log('starting:', state);
 
-  // where would this throw get caught?
-  if (state.startTime) {
-    // TODO this shouldn't throw.. but what do we do?
-    // We shouldn't run a workflow that's been run
-    // Every workflow should have a unique id
-    // maybe the RTM doesn't care about this
-    throw new Error(`Workflow with id ${workflowId} is already started`);
-  }
+  // // where would this throw get caught?
+  // if (state.startTime) {
+  //   // TODO this shouldn't throw.. but what do we do?
+  //   // We shouldn't run a workflow that's been run
+  //   // Every workflow should have a unique id
+  //   // maybe the RTM doesn't care about this
+  //   throw new Error(`Workflow with id ${workflowId} is already started`);
+  // }
 
   Object.assign(state, {
     status: 'running',

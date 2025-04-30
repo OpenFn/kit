@@ -23,7 +23,6 @@ export default function initWorkers(
   logger: Logger
 ) {
   const { env = {}, maxWorkers = 5, silent } = options;
-
   const workers = createPool(
     workerPath,
     {

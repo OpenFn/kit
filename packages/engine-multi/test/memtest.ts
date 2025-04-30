@@ -36,7 +36,10 @@ function run() {
     'workflow-complete': () => {
       completedCount++;
       console.log('>> Finished', completedCount);
-      run();
+
+      setTimeout(() => {
+        run();
+      }, 1);
     },
   });
 }

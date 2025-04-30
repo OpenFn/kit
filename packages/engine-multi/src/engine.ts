@@ -200,16 +200,16 @@ const createEngine = async (
         const events = contexts[workflowId];
 
         // remove all listeners
-        [
-          WORKFLOW_START,
-          WORKFLOW_COMPLETE,
-          JOB_START,
-          JOB_COMPLETE,
-          WORKFLOW_LOG,
-        ].forEach((evt) => {
-          console.log('REMOVING', evt);
-          events?.removeAllListeners(evt);
-        });
+        // [
+        //   WORKFLOW_START,
+        //   WORKFLOW_COMPLETE,
+        //   JOB_START,
+        //   JOB_COMPLETE,
+        //   WORKFLOW_LOG,
+        // ].forEach((evt) => {
+        //   console.log('REMOVING', evt);
+        // });
+        events.events?.removeAllListeners();
 
         delete contexts[workflowId];
       });
