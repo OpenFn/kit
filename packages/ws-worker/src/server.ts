@@ -24,6 +24,7 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
+import writeMemoryLog from './util/write-memory-log';
 
 const exec = promisify(_exec);
 
@@ -299,6 +300,8 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           runChannel.leave();
 
           app.events.emit(INTERNAL_RUN_COMPLETE);
+
+          writeMemoryLog();
 
           app.resumeWorkloop();
         };

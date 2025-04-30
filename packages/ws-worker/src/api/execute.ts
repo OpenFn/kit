@@ -73,6 +73,7 @@ export function execute(
   logger.info('executing ', plan.id);
 
   const state = createRunState(plan, input);
+  let listeners;
 
   const context: Context = {
     id: plan.id!,
@@ -81,7 +82,11 @@ export function execute(
     logger,
     engine,
     options,
-    onFinish,
+    onFinish: (...args) => {
+      // note that this is called whether success or fail
+      engine.disconnect(plan.id!, listeners);
+      onFinish(...args);
+    },
   };
 
   // Ensure that each execute call is in its own sentry isolated scope
@@ -137,9 +142,7 @@ export function execute(
       };
     };
 
-    // TODO listeners need to be called in a strict queue
-    // so that they send in order
-    const listeners = Object.assign(
+    listeners = Object.assign(
       {},
       addEvent('workflow-start', throttle(handleRunStart)),
       addEvent('job-start', throttle(handleStepStart)),

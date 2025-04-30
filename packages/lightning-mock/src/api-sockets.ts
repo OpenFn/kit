@@ -362,7 +362,7 @@ const createSocketAPI = (
       ...rest
     } = evt.payload;
 
-    logger?.info('Completed run ', runId);
+    logger?.info(`Completed run %{runId}:: %{reason}`);
     logger?.debug(final_dataclip_id);
 
     state.pending[runId].status = 'complete';

@@ -7,6 +7,7 @@
   "scripts": {
     "test": "pnpm ava --serial",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
+    "test:mem": "node --loader @swc-node/register/esm test/memtest.ts",
     "build": "tsup --config tsup.config.js",
     "build:watch": "pnpm build --watch",
     "start": "node --loader @swc-node/register/esm src/start.ts",
