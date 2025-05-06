@@ -36,13 +36,12 @@ export default (state: Provisioner.Project, config: Config) => {
     options,
   };
 
-  const repoConfig = {
-    env: config.env,
-  };
+  const repoConfig = {};
 
   proj.openfn = {
     projectId: id,
     endpoint: config.endpoint,
+    env: config.env,
     inserted_at,
     updated_at,
   };

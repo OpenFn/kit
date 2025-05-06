@@ -8,25 +8,32 @@ const s = JSON.stringify;
 mock({
   '/p1': {},
   '/p1/openfn.json': s({
-    env: 'staging', // the name of the checked out project
+    // this must be the whole deploy name right?
+    // else how do we know?
     workflowRoot: 'workflows',
     formats: {
       openfn: 'yaml', // TODO actually isn't this implied?
       project: 'yaml',
       workflow: 'yaml',
     },
-    // Do I want this here?
-    // Or do we go and look in the project file?
-    // Let's look in the project file eh
-    // project: {
-    //  name: 'My Project', // This should be here because I can see and edit the project name locally
-    //  description: '...'
-
-    //  endpoint: 'www; // this should not be here because I don't change this as a human
-    // },
+    project: {
+      id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+      env: 'staging',
+      endpoint: 'https://app.openfn.org',
+      name: 'My Project',
+      description: '...',
+      // Note that we exclude app options here
+      // That stuff is all in the project.yaml, not useful here
+    },
   }),
-  // TODO do I really need these intemittend folders?
-  '/p1/workflows': {},
+  // // hmm I don't think we need to model this
+  // // in the PROJECT. It should all be implicit.
+  // '/p1/projects/staging@app.openfn.org.json': s({
+  //   openfn: {
+  //     projectId: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+  //     endpoint: 'http://localhost:4000',
+  //   },
+  // }),
   '/p1/workflows/my-workflow': {},
   '/p1/workflows/my-workflow/my-workflow.json': s({
     id: 'wf1',
@@ -50,21 +57,32 @@ mock({
   }),
 });
 
-test('should load the openfn config from json', async (t) => {
+test('should load the openfn repo config from json', async (t) => {
   const project = await parseProject('/p1');
-  t.log(project);
 
-  t.is(project.config.env, 'staging');
+  t.deepEqual(project.repo, {
+    workflowRoot: 'workflows',
+    formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+  });
+});
 
-  // t.is(project.name, 'aaa');
-  // t.is(project.description, 'a project');
+test('should load the openfn project config from json', async (t) => {
+  const project = await parseProject('/p1');
+
+  t.deepEqual(project.openfn, {
+    id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+    env: 'staging',
+    endpoint: 'https://app.openfn.org',
+    name: 'My Project',
+    description: '...',
+  });
 });
 
 test.todo('should load the openfn config from yaml');
 
-test.only('should load a workflow from the file system', async (t) => {
+test('should load a workflow from the file system', async (t) => {
   const project = await parseProject('/p1');
-  t.log(project.workflows);
+  // t.log(project.workflows);
 
   t.is(project.workflows.length, 1);
   const [wf] = project.workflows;

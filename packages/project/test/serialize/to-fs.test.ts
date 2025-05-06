@@ -4,7 +4,7 @@ import { Project } from '../../src/Project';
 import toFs, {
   extractWorkflow,
   extractStep,
-  extractConfig,
+  extractRepoConfig,
   mapWorkflow,
 } from '../../src/serialize/to-fs';
 
@@ -191,13 +191,12 @@ test('extractConfig: create a default openfn.json', (t) => {
     ],
   });
 
-  const { path, content } = extractConfig(project);
+  const { path, content } = extractRepoConfig(project);
   t.log(path);
   t.log(content);
 
   t.is(path, 'openfn.json');
   t.deepEqual(JSON.parse(content), {
-    env: 'main',
     workflowRoot: 'workflows',
     formats: {
       openfn: 'yaml',
@@ -207,7 +206,7 @@ test('extractConfig: create a default openfn.json', (t) => {
   });
 });
 
-test('toFs: extract a single-step project', (t) => {
+test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   const project = new Project({
     workflows: [
       {
@@ -229,7 +228,10 @@ test('toFs: extract a single-step project', (t) => {
   // rough test on the file contents
   // (this should be validated in more detail by each step)
   const config = JSON.parse(files['openfn.json']);
-  t.is(config.env, 'main');
+  t.deepEqual(config, {
+    workflowRoot: 'workflows',
+    formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+  });
 
   const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
   t.is(workflow.id, 'my-workflow');
@@ -237,3 +239,5 @@ test('toFs: extract a single-step project', (t) => {
 
   t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
 });
+
+// TODO we need many more tests on this, with options

@@ -9,7 +9,7 @@ const stringify = (json) => JSON.stringify(json, null, 2);
 export default function (project: Project) {
   const files: Record<string, sting> = {};
 
-  const { path, content } = extractConfig(project);
+  const { path, content } = extractRepoConfig(project);
   files[path] = content;
 
   for (const wf of project.workflows) {
@@ -35,7 +35,7 @@ export const extractWorkflow = (project, workflowId) => {
     throw new Error(`workflow not found: ${workflowId}`);
   }
 
-  const root = project.config?.workflowRoot ?? 'workflows/';
+  const root = project.repo?.workflowRoot ?? 'workflows/';
 
   const path = nodepath.join(root, `${workflow.id}/${workflow.id}.json`);
 
@@ -78,8 +78,8 @@ export const extractStep = (project, workflowId, stepId) => {
 };
 
 // extracts contents for openfn.yaml|json
-export const extractConfig = (project) => {
-  const config = project.config;
+export const extractRepoConfig = (project) => {
+  const config = project.repo;
 
   const path = `openfn.json`;
   const content = stringify(config, null, 2);

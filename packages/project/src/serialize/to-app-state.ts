@@ -3,7 +3,7 @@
 import { Project } from '../Project';
 
 export default function (project: Project) {
-  const { projectId: id, endpoint, ...rest } = project.openfn;
+  const { projectId: id, endpoint, env, ...rest } = project.openfn;
 
   const state = {
     id,
@@ -47,7 +47,7 @@ const mapWorkflow = (workflow) => {
       wfState.triggers.push(node);
     } else {
       node = {
-        name: s.id,
+        name: s.name,
         body: s.expression,
         adaptor: s.adaptor,
         ...s.openfn,

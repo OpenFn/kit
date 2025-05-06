@@ -14,9 +14,6 @@ type FileFormats = 'yaml' | 'json';
 
 // repo-wide options
 type RepoOptions = {
-  /** env name - eg prod | staging */
-  env?: string;
-
   /**default workflow root when serializing to fs (relative to openfn.yaml) */
   workflowRoot?: string;
 
@@ -39,7 +36,6 @@ function slugify(text) {
 }
 
 const setConfigDefaults = (config = {}) => ({
-  env: config.env ?? 'main',
   workflowRoot: config.workflowRoot ?? 'workflows',
   formats: {
     // TODO change these maybe
@@ -69,18 +65,17 @@ export class Project {
   // these are all (?) unused clientside
   options: any;
 
-  // local metdata used by the CLI
+  // local metadata used by the CLI
   // This stuff is not synced back to lightning
   meta: any;
 
   // this contains meta about the connected openfn project
-  // TODO type needs renaming
   openfn?: l.ProjectConfig;
 
   // repo configuration options
   // these should be shared across projects
   // and saved to an openfn.yaml file
-  config?: Required<RepoOptions>;
+  repo?: Required<RepoOptions>;
 
   // load a project from a state file (project.json)
   // or from a path (the file system)
@@ -95,8 +90,8 @@ export class Project {
   // uh maybe
   // maybe this second arg is config - like env, branch rules, serialisation rules
   // stuff that's external to the actual project and managed by the repo
-  constructor(data: l.Project, config: RepoOptions = {}) {
-    this.config = setConfigDefaults(config);
+  constructor(data: l.Project, repoConfig: RepoOptions = {}) {
+    this.repo = setConfigDefaults(repoConfig);
 
     this.id = data.id;
     this.name = data.name;
@@ -133,6 +128,23 @@ export class Project {
   // this is fuzzy, but is that wrong?
   getWorkflow(id: string) {
     return this.workflows.find((wf) => wf.id == id);
+  }
+
+  // it's the name of the project.yaml file
+  // qualified name? Remote name? App name?
+  // every project in a repo need a unique identifier
+  getIdentifier() {
+    const endpoint = this.openfn?.endpoint || 'local';
+    const name = this.openfn?.env ?? 'main';
+    let host;
+    try {
+      host = new URL(endpoint).hostname;
+    } catch (e) {
+      // if an invalid endpoint is passed, assume it's local
+      // this may not be fair??
+      host = endpoint;
+    }
+    return `${name}@${host}`;
   }
 }
 

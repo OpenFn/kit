@@ -66,7 +66,6 @@ test('should create a Project from prov state with basic metadata', (t) => {
   const project = fromAppState(state, config);
 
   t.is(project.name, 'aaa');
-  t.is(project.config.env, 'test');
   t.is(project.description, 'a project');
 });
 
@@ -74,6 +73,7 @@ test('should create a Project from prov state with app project metadata', (t) =>
   const project = fromAppState(state, config);
 
   t.deepEqual(project.openfn, {
+    env: 'test',
     projectId: state.id,
     endpoint: config.endpoint,
     inserted_at: state.inserted_at,

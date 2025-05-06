@@ -61,10 +61,10 @@ test('should convert a project back to app state', (t) => {
   const data = {
     name: 'aaa',
     description: 'a project',
-    env: 'project',
     credentials: [],
     collections: [],
     openfn: {
+      env: 'project',
       projectId: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
       endpoint: 'http://localhost:4000',
       inserted_at: '2025-04-23T11:15:59Z',
@@ -95,7 +95,7 @@ test('should convert a project back to app state', (t) => {
               id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
             },
             next: {
-              'Transform data': {
+              'transform-data': {
                 disabled: false,
                 condition: true,
                 openfn: {
@@ -105,7 +105,8 @@ test('should convert a project back to app state', (t) => {
             },
           },
           {
-            id: 'Transform data',
+            id: 'transform-data',
+            name: 'Transform data',
             expression:
               '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
             adaptor: '@openfn/language-common@latest',

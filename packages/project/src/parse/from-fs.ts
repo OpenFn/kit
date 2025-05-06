@@ -19,13 +19,10 @@ export const parseProject = async (root: string) => {
     console.log(e);
   }
 
-  // // find the openfn settings
-  // // if there's arent't present we can default or infer them
-  // // like if openfn is set to yaml, that's obvious
+  // find the openfn settings
 
-  const repoConfig = {
-    env: config.env,
-  };
+  const { project: openfn, ...repo } = config;
+  proj.openfn = openfn;
 
   // now find all the workflows
   // this will find all json files in the workflows folder
@@ -38,7 +35,6 @@ export const parseProject = async (root: string) => {
     ignore: ['**node_modules/**', '**tmp**'],
   });
   const workflows = [];
-  console.log(candidateWfs);
   for (const filePath of candidateWfs) {
     const candidate = await fs.readFile(filePath, 'utf-8');
     try {
@@ -49,7 +45,7 @@ export const parseProject = async (root: string) => {
             const dir = path.dirname(filePath);
             const exprPath = path.join(dir, step.expression);
             try {
-              console.debug(`Loaded expression from exprPath}`);
+              console.debug(`Loaded expression from ${exprPath}`);
               step.expression = await fs.readFile(exprPath, 'utf-8');
             } catch (e) {
               console.error(`Error loading expression from ${exprPath}`);
@@ -85,7 +81,7 @@ export const parseProject = async (root: string) => {
 
   // proj.workflows = state.workflows.map(mapWorkflow);
 
-  return new Project(proj as l.Project, repoConfig);
+  return new Project(proj as l.Project, repo);
 };
 
 // Parse the filesystem for all projects

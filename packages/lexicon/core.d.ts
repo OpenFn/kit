@@ -21,28 +21,17 @@ export type Project = {
   credentials: any;
 
   // metadata about the app for sync
-  //openfn: ProjectConfig;
-  // is it more like this?
-  // I kind of want this stuff to be all the things
-  // that aren't synced but do need to be tracked
-  openfn: {
-    projectId: string;
-    endpoint: string;
-    name: string;
-    inserted_at: number;
-    created_at: number;
-    fetched_at: number; // this is when we last fetched the metadata
-  };
+  openfn?: ProjectConfig;
 };
 
-// Probably not really used
 export type ProjectConfig = {
-  projectId: string;
+  id: string;
   endpoint: string;
   name: string;
-
-  // hmm
-  fetched_at?: string;
+  env: string;
+  inserted_at: number;
+  created_at: number;
+  fetched_at: number; // this is when we last fetched the metadata
 };
 
 /**
