@@ -80,10 +80,22 @@ export class Project {
   // load a project from a state file (project.json)
   // or from a path (the file system)
   // TODO presumably we can detect a state file? Not a big deal?
-  static from(type: 'state' | 'path', data: any, options: any) {
+
+  static from(
+    type: 'state',
+    data: any,
+    options: Partial<l.ProjectConfig>
+  ): Project;
+  static from(type: 'path', data: any): Project;
+  static from(
+    type: 'state' | 'path',
+    data: any,
+    options?: Partial<l.ProjectConfig>
+  ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
     }
+    throw new Error(`Didn't recognize type ${type}`);
   }
 
   // env is excluded because it's not really part of the project

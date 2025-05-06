@@ -62,7 +62,7 @@ export async function handler(options: PullOptions, logger: Logger) {
   const project = Project.from('state', data, {
     endpoint: config.endpoint,
     env: name,
-    fetchedAt: new Date().toISOString(),
+    fetched_at: new Date().toISOString(),
   });
 
   // so this thing is my project.yaml file
@@ -76,10 +76,10 @@ export async function handler(options: PullOptions, logger: Logger) {
   // so what we serialise is a Json Project, not a provisioner state file
   const outputRoot = `./tmp/projects`;
 
+  const projectFileName = project.getIdentifier();
+
   await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
-  const outputPath = `${outputRoot}/.projects/${name}@${extractDomain(
-    config.endpoint
-  )}.json`;
+  const outputPath = `${outputRoot}/.projects/${projectFileName}.json`;
   logger.success(`Saved project file to ${outputPath}`);
 
   const json = project?.serialize('json');
@@ -98,7 +98,3 @@ export async function handler(options: PullOptions, logger: Logger) {
   }
   logger.success(`Expanded project to ${outputRoot}`);
 }
-
-const extractDomain = (endpoint: string) => {
-  return new URL(endpoint).hostname;
-};

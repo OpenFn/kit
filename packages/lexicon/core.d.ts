@@ -29,9 +29,9 @@ export type ProjectConfig = {
   endpoint: string;
   name: string;
   env: string;
-  inserted_at: number;
-  created_at: number;
-  fetched_at: number; // this is when we last fetched the metadata
+  inserted_at: string;
+  created_at: string;
+  fetched_at: string; // this is when we last fetched the metadata
 };
 
 /**

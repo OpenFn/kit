@@ -79,7 +79,10 @@ export const extractStep = (project, workflowId, stepId) => {
 
 // extracts contents for openfn.yaml|json
 export const extractRepoConfig = (project) => {
-  const config = project.repo;
+  const config = {
+    ...project.repo,
+    project: project.openfn ?? {},
+  };
 
   const path = `openfn.json`;
   const content = stringify(config, null, 2);
