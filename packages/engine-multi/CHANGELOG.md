@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.6.5
+
+### Patch Changes
+
+- Fix a memory leak, affecting log-running worker instances
+
 ## 1.6.4
 
 ### Patch Changes
