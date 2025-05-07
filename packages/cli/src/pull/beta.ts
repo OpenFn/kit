@@ -79,11 +79,18 @@ export async function handler(options: PullOptions, logger: Logger) {
   const projectFileName = project.getIdentifier();
 
   await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
-  const outputPath = `${outputRoot}/.projects/${projectFileName}.json`;
-  logger.success(`Saved project file to ${outputPath}`);
+  let stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
 
-  const json = project?.serialize('json');
-  await fs.writeFile(outputPath, JSON.stringify(json, null, 2));
+  const state = project?.serialize('state');
+  if (project.repo?.formats.project === 'yaml') {
+    await fs.writeFile(`${stateOutputPath}.yaml`, state);
+  } else {
+    await fs.writeFile(
+      `${stateOutputPath}.json`,
+      JSON.stringify(state, null, 2)
+    );
+  }
+  logger.success(`Saved project file to ${stateOutputPath}`);
 
   const files = project?.serialize('fs');
   for (const f in files) {

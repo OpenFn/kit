@@ -119,7 +119,7 @@ export class Project {
     this.meta = data.meta;
   }
 
-  serialize(type: 'json' | 'yaml' | 'fs' | 'state ' = 'json') {
+  serialize(type: 'json' | 'yaml' | 'fs' | 'state' = 'json') {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this);
