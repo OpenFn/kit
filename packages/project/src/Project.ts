@@ -5,6 +5,11 @@ import * as l from '@openfn/lexicon';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
+// TODO this naming clearly isn't right
+import { parseProject as fromFs } from './parse/from-fs';
+import getIdentifier from './util/get-identifier';
+import slugify from './util/slugify';
+
 type MergeOptions = {
   force?: boolean;
   workflows?: string[]; // which workflows to include
@@ -31,9 +36,6 @@ type RepoOptions = {
 // }
 
 // TODO maybe use an npm for this, or create  util
-function slugify(text) {
-  return text.replace(/\W/g, ' ').trim().replace(/\s+/g, '-');
-}
 
 const setConfigDefaults = (config = {}) => ({
   workflowRoot: config.workflowRoot ?? 'workflows',
@@ -82,7 +84,7 @@ export class Project {
   // TODO presumably we can detect a state file? Not a big deal?
 
   static from(
-    type: 'state',
+    type: 'state' | 'fs',
     data: any,
     options: Partial<l.ProjectConfig>
   ): Project;
@@ -94,6 +96,9 @@ export class Project {
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
+    }
+    if (type === 'fs') {
+      return fromFs(data, options);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }
@@ -149,17 +154,7 @@ export class Project {
   // qualified name? Remote name? App name?
   // every project in a repo need a unique identifier
   getIdentifier() {
-    const endpoint = this.openfn?.endpoint || 'local';
-    const name = this.openfn?.env ?? 'main';
-    let host;
-    try {
-      host = new URL(endpoint).hostname;
-    } catch (e) {
-      // if an invalid endpoint is passed, assume it's local
-      // this may not be fair??
-      host = endpoint;
-    }
-    return `${name}@${host}`;
+    return getIdentifier(this.openfn);
   }
 
   // Compare this project with another and return a diff

@@ -52,3 +52,30 @@ versus
 lightning workflow format (state format), in json or yaml
 
 everything is interopable apart from these two low level data structures
+
+---
+
+Ok, next steps are better CLI integration
+
+- I want to be able to edit and deploy
+- I want to be abel to execute using project
+
+When all that's done, although it isn't perfect, I think I can release the beta
+
+There are lots of little details that aren't quite right
+
+--
+
+I think I'm missing something big
+
+workflow.yaml on the file system does not have UUIDs in
+
+So when I load from the file system, I need to take care to lookup the UUIDs
+
+And if UUIDs don't exist, because it's something I've just created, I need to generate them
+
+Do UUIDs get generated in the serialisation step? Yes I think so, because that's the only peerson who cares
+
+So when I load from the filesystem, I need to keep the project file handy so I can map uuids. And when I check out a new project, I need to update that stuff
+
+Maybe the Project needs a UUID map which can be used in serialisation. Or do we just keep it in memory, with other app only stuff?

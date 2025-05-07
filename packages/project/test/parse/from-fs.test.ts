@@ -46,6 +46,24 @@ mock({
     // TODO maybe test the options key though
   }),
   '/p1/workflows/my-workflow/job.js': `fn(s => s)`,
+  // keep a state file (just the stuff we need for uuids)
+  '/p1/.projects/staging@app.openfn.org.json': s({
+    workflows: [
+      {
+        id: '<some-uuid>',
+        name: 'wf1',
+        jobs: [
+          {
+            id: '66add020-e6eb-4eec-836b-20008afca816',
+            name: 'Job',
+          },
+        ],
+        // TODO I don't technically need these right now, but should add them
+        triggers: [{}],
+        edges: [{}],
+      },
+    ],
+  }),
 
   // junk to throw the tests
   '/p1/random.json': s({
@@ -107,6 +125,19 @@ test('should load a workflow from the file system', async (t) => {
   t.is(wf.id, 'wf1');
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });
+
+test.only('should track the UUID of a step', async (t) => {
+  const project = await parseProject('/p1');
+
+  const [wf] = project.workflows;
+
+  t.truthy(wf.steps[0].openfn);
+  t.is(wf.steps[0].openfn.id, '66add020-e6eb-4eec-836b-20008afca816');
+});
+
+test.todo('should track the UUID of an edge');
+test.todo('should track the UUID of a trigger');
+// maybe track other things that aren't in workflow.yaml?
 
 test('should load a project from yaml', async (t) => {
   const project = await parseProject('/p2');

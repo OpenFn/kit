@@ -34,7 +34,7 @@ const mapWorkflow = (workflow) => {
     triggers: [],
     edges: [],
   };
-
+  console.log(workflow.steps);
   // lookup of local-ids to project-ids
   const lookup = workflow.steps.reduce((obj, next) => {
     obj[next.id] = next.openfn.id;

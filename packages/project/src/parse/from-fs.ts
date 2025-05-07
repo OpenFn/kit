@@ -1,19 +1,26 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { glob } from 'glob';
+import * as l from '@openfn/lexicon';
+
 import { Project } from '../Project';
+import getIdentifier from '../util/get-identifier';
 import { yamlToJson } from '../util/yaml';
+import slugify from '../util/slugify';
 
 // Parse a single project from a root folder
 // focus on this first
 // root must be absolute?
-export const parseProject = async (root: string) => {
+export const parseProject = async (root: string = '.') => {
   const proj = {};
 
-  let config;
+  let config; // TODO need a type for the shape of this file
   try {
     // TODO any flex on the openfn.json file name?
-    const file = await fs.readFile(path.join(root, 'openfn.yaml'), 'utf8');
+    const file = await fs.readFile(
+      path.resolve(path.join(root, 'openfn.yaml')),
+      'utf8'
+    );
     config = yamlToJson(file);
   } catch (e) {
     // Not found - try and parse as JSON
@@ -27,6 +34,27 @@ export const parseProject = async (root: string) => {
     }
   }
 
+  // Now we need to look for the corresponding state file
+  // Need to load UUIDs and other app settings from this
+  let state = {};
+  const identifier = getIdentifier({
+    endpoint: config.project?.endpoint,
+    env: config.project?.env,
+  });
+  try {
+    const format = config.formats.project ?? 'yaml';
+    const statePath = path.join(root, '.projects', `${identifier}.${format}`);
+    const stateFile = await fs.readFile(statePath, 'utf8');
+    if (format === 'json') {
+      state = JSON.parse(stateFile);
+    } else {
+      state = yamlToJson(stateFile);
+    }
+    console.log({ state });
+  } catch (e) {
+    console.warn(`Failed to find state file for ${identifier}`);
+    console.warn(e);
+  }
   // find the openfn settings
 
   const { project: openfn, ...repo } = config;
@@ -49,6 +77,18 @@ export const parseProject = async (root: string) => {
       const wf =
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
       if (wf.id && Array.isArray(wf.steps)) {
+        const wfState = state?.workflows.find((w) => w.name === wf.id);
+        const lookup = {};
+        if (wfState) {
+          ['jobs', 'triggers'].forEach((type) => {
+            wfState[type].forEach((item) => {
+              if (item.name) {
+                lookup[slugify(item.name)] = item;
+              }
+            });
+          });
+        }
+        console.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
           if (step.expression && step.expression.endsWith('.js')) {
             const dir = path.dirname(filePath);
@@ -61,7 +101,23 @@ export const parseProject = async (root: string) => {
               // throw?
             }
           }
+          // check the state file for a matching uuid
+          const name = slugify(step.id);
+          if (name in lookup) {
+            // find all the app-only properties
+            // This must be common code we can reuse?
+            const {
+              name: _name,
+              body,
+              adaptor,
+              enabled,
+              ...rest
+            } = lookup[name];
+            step.openfn = rest;
+          }
         }
+        // TODO tracking edges is gonna be really hard no?
+        // something is amiss here I think
         workflows.push(wf);
       }
     } catch (e) {
