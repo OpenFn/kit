@@ -98,6 +98,9 @@ export class Project {
     throw new Error(`Didn't recognize type ${type}`);
   }
 
+  // Diff two projects
+  static diff(a: Project, b: Project) {}
+
   // env is excluded because it's not really part of the project
   // uh maybe
   // maybe this second arg is config - like env, branch rules, serialisation rules
@@ -158,6 +161,9 @@ export class Project {
     }
     return `${name}@${host}`;
   }
+
+  // Compare this project with another and return a diff
+  compare(proj: Project) {}
 }
 
 // Surely this is just a type?
