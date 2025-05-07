@@ -35,7 +35,8 @@
   "dependencies": {
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
-    "glob": "^11.0.2"
+    "glob": "^11.0.2",
+    "yaml": "^2.2.2"
   },
   "files": [
     "dist",

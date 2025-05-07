@@ -2,10 +2,10 @@
 
 import nodepath from 'path';
 import { Project } from '../Project';
+import { jsonToYaml } from '../util/yaml';
 
 const stringify = (json) => JSON.stringify(json, null, 2);
 
-// TODO need a suite of unit tests against this
 export default function (project: Project) {
   const files: Record<string, sting> = {};
 
@@ -30,6 +30,8 @@ export default function (project: Project) {
 
 // extracts a workflow.json|yaml from a project
 export const extractWorkflow = (project, workflowId) => {
+  const format = project.repo.formats.workflow;
+
   const workflow = project.getWorkflow(workflowId);
   if (!workflow) {
     throw new Error(`workflow not found: ${workflowId}`);
@@ -37,7 +39,7 @@ export const extractWorkflow = (project, workflowId) => {
 
   const root = project.repo?.workflowRoot ?? 'workflows/';
 
-  const path = nodepath.join(root, `${workflow.id}/${workflow.id}.json`);
+  const path = nodepath.join(root, workflow.id, workflow.id);
 
   const wf = {
     id: workflow.id,
@@ -51,9 +53,7 @@ export const extractWorkflow = (project, workflowId) => {
       return mapped;
     }),
   };
-  const content = stringify(wf, null, 2);
-
-  return { path, content };
+  return handleOutput(wf, path, format);
 };
 
 // extracts an expression.js from a workflow in project
@@ -79,13 +79,25 @@ export const extractStep = (project, workflowId, stepId) => {
 
 // extracts contents for openfn.yaml|json
 export const extractRepoConfig = (project) => {
+  const format = project.repo.formats.openfn;
   const config = {
     ...project.repo,
     project: project.openfn ?? {},
   };
 
-  const path = `openfn.json`;
-  const content = stringify(config, null, 2);
+  return handleOutput(config, 'openfn', format);
+};
 
+const handleOutput = (data, filePath, format) => {
+  const path = `${filePath}.${format}`;
+  let content;
+  if (format === 'json') {
+    content = stringify(data, null, 2);
+  } else if (format === 'yaml') {
+    content = jsonToYaml(data);
+  } else {
+    // TODO not a useful error this
+    throw new Error(`Unrecognised format: ${format}`);
+  }
   return { path, content };
 };

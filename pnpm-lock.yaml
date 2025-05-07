@@ -619,6 +619,9 @@ importers:
       glob:
         specifier: ^11.0.2
         version: 11.0.2
+      yaml:
+        specifier: ^2.2.2
+        version: 2.6.1
     devDependencies:
       ava:
         specifier: 5.3.1

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { glob } from 'glob';
 import { Project } from '../Project';
+import { yamlToJson } from '../util/yaml';
 
 // Parse a single project from a root folder
 // focus on this first
@@ -12,11 +13,18 @@ export const parseProject = async (root: string) => {
   let config;
   try {
     // TODO any flex on the openfn.json file name?
-    const file = await fs.readFile(path.join(root, 'openfn.json'), 'utf8');
-    config = JSON.parse(file);
+    const file = await fs.readFile(path.join(root, 'openfn.yaml'), 'utf8');
+    config = yamlToJson(file);
   } catch (e) {
     // Not found - try and parse as JSON
-    console.log(e);
+    try {
+      const file = await fs.readFile(path.join(root, 'openfn.json'), 'utf8');
+      config = JSON.parse(file);
+    } catch (e) {
+      console.log(e);
+      // TODO better error handling
+      throw e;
+    }
   }
 
   // find the openfn settings
@@ -28,8 +36,8 @@ export const parseProject = async (root: string) => {
   // this will find all json files in the workflows folder
   // TODO how can I prevent this loading huge data files?
   // I mean they shouldn't be there anyway but still
-  const workflowDir = 'workflows';
-  const fileType = 'json';
+  const workflowDir = config.workflowRoot ?? 'workflows';
+  const fileType = config.formats?.workflow ?? 'yaml';
   const pattern = `${root}/${workflowDir}/*/*.${fileType}`;
   const candidateWfs = await glob(pattern, {
     ignore: ['**node_modules/**', '**tmp**'],
@@ -38,7 +46,8 @@ export const parseProject = async (root: string) => {
   for (const filePath of candidateWfs) {
     const candidate = await fs.readFile(filePath, 'utf-8');
     try {
-      const wf = JSON.parse(candidate);
+      const wf =
+        fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
       if (wf.id && Array.isArray(wf.steps)) {
         for (const step of wf.steps) {
           if (step.expression && step.expression.endsWith('.js')) {

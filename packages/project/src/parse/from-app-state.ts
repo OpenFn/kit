@@ -3,12 +3,14 @@
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../Project';
+import { yamlToJson } from '../util/yaml';
 
 // Extra metadata used to init the project
 type Config = {
   endpoint: string;
   env?: string;
   fetchedAt?: string;
+  format?: 'json' | 'yaml';
 };
 
 function slugify(text) {
@@ -16,6 +18,10 @@ function slugify(text) {
 }
 
 export default (state: Provisioner.Project, config: Config) => {
+  if (config.format === 'yaml') {
+    state = yamlToJson(state);
+  }
+
   const {
     id,
     name,

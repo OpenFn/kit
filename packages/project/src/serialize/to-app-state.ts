@@ -1,7 +1,10 @@
 // serialize to simple json
 
 import { Project } from '../Project';
+import { jsonToYaml } from '../util/yaml';
 
+// TODO this should allow override on format,
+// regardless of repo settings
 export default function (project: Project) {
   const { projectId: id, endpoint, env, ...rest } = project.openfn;
 
@@ -15,6 +18,10 @@ export default function (project: Project) {
     ...project.options,
     workflows: project.workflows.map(mapWorkflow),
   };
+
+  if (project.repo.formats.project === 'yaml') {
+    return jsonToYaml(state);
+  }
 
   return state;
 }

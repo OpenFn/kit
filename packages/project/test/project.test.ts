@@ -93,6 +93,7 @@ test('should convert a state file to a project and back again', (t) => {
   const config = {
     endpoint: 'app.openfn.org',
     env: 'test',
+    formats: 'json',
   };
 
   const project = Project.from('state', state, config);
@@ -101,6 +102,11 @@ test('should convert a state file to a project and back again', (t) => {
   t.is(project.openfn.projectId, state.id);
   t.is(project.name, state.name);
 
+  // TODO: this hack is needed right now to serialize the state as json
+  project.repo.formats.project = 'json';
+
   const newState = project.serialize('state');
   t.deepEqual(newState, state);
 });
+
+test.todo('serialize to and from yaml');

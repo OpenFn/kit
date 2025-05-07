@@ -6,15 +6,14 @@ const s = JSON.stringify;
 
 // mock several projects and use them through the tests
 mock({
-  '/p1': {},
   '/p1/openfn.json': s({
     // this must be the whole deploy name right?
     // else how do we know?
     workflowRoot: 'workflows',
     formats: {
-      openfn: 'yaml', // TODO actually isn't this implied?
-      project: 'yaml',
-      workflow: 'yaml',
+      openfn: 'json',
+      project: 'json',
+      workflow: 'json',
     },
     project: {
       id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -55,6 +54,27 @@ mock({
   '/p1/workflows/my-workflow/random.json': s({
     // not a workflow file! this should be ignored
   }),
+
+  // p2 is all yaml based
+  '/p2/openfn.yaml': `
+    workflowRoot: wfs
+    formats:
+      openfn: yaml
+      project: yaml
+      workflow: yaml
+    project:
+      env: main
+      id: "123"
+      endpoint: app.openfn.org`,
+  '/p2/wfs/my-workflow/my-workflow.yaml': `
+  id: my-workflow
+  name: My Workflow
+  steps:
+    - id: job
+      adaptor: "@openfn/language-common@latest"
+      expression: ./job.js
+  `,
+  '/p2/wfs/my-workflow/job.js': `fn(s => s)`,
 });
 
 test('should load the openfn repo config from json', async (t) => {
@@ -62,7 +82,7 @@ test('should load the openfn repo config from json', async (t) => {
 
   t.deepEqual(project.repo, {
     workflowRoot: 'workflows',
-    formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
+    formats: { openfn: 'json', project: 'json', workflow: 'json' },
   });
 });
 
@@ -78,15 +98,22 @@ test('should load the openfn project config from json', async (t) => {
   });
 });
 
-test.todo('should load the openfn config from yaml');
-
 test('should load a workflow from the file system', async (t) => {
   const project = await parseProject('/p1');
-  // t.log(project.workflows);
 
   t.is(project.workflows.length, 1);
   const [wf] = project.workflows;
 
   t.is(wf.id, 'wf1');
+  t.is(wf.steps[0].expression, 'fn(s => s)');
+});
+
+test('should load a project from yaml', async (t) => {
+  const project = await parseProject('/p2');
+
+  t.is(project.workflows.length, 1);
+  const [wf] = project.workflows;
+
+  t.is(wf.id, 'my-workflow');
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });
