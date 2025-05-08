@@ -9,6 +9,7 @@ import fromAppState from './parse/from-app-state';
 import { parseProject as fromFs } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
+import { getUuidForEdge, getUuidForStep } from './util/uuid';
 
 type MergeOptions = {
   force?: boolean;
@@ -159,6 +160,15 @@ export class Project {
 
   // Compare this project with another and return a diff
   compare(proj: Project) {}
+
+  // find the UUID for a given node or edge
+  // returns null if it doesn't exist
+  getUUID(workflow: string | Workflow, stepId: string, otherStep?: string) {
+    if (otherStep) {
+      return getUuidForEdge(this, workflow, stepId, otherStep);
+    }
+    return getUuidForStep(this, workflow, stepId);
+  }
 }
 
 // Surely this is just a type?

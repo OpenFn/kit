@@ -39,8 +39,18 @@ mock({
     name: 'wf1',
     steps: [
       {
-        id: 'job',
-        expression: 'job.js', // TODO test different formats, ie ./job.js
+        id: 'a',
+        expression: 'job.js',
+        next: {
+          b: true,
+        },
+      },
+      {
+        id: 'b',
+        expression: './job.js',
+        next: {
+          c: false,
+        },
       },
     ], // TODO handle expressions too!
     // TODO maybe test the options key though
@@ -54,13 +64,23 @@ mock({
         name: 'wf1',
         jobs: [
           {
-            id: '66add020-e6eb-4eec-836b-20008afca816',
-            name: 'Job',
+            // pretend this is a uuid
+            id: '<uuid-1>',
+            name: 'a',
+          },
+          {
+            id: '<uuid-2>',
+            name: 'b',
           },
         ],
-        // TODO I don't technically need these right now, but should add them
-        triggers: [{}],
-        edges: [{}],
+        triggers: [],
+        edges: [
+          {
+            id: '<uuid-3>',
+            source_job_id: '<uuid-1>',
+            target_job_id: '<uuid-2>',
+          },
+        ],
       },
     ],
   }),
@@ -93,6 +113,7 @@ mock({
       expression: ./job.js
   `,
   '/p2/wfs/my-workflow/job.js': `fn(s => s)`,
+  // TODO state here - quite a good test
 });
 
 test('should load the openfn repo config from json', async (t) => {
@@ -126,16 +147,33 @@ test('should load a workflow from the file system', async (t) => {
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });
 
-test.only('should track the UUID of a step', async (t) => {
+test('should load a workflow from the file system and expand shorthand links', async (t) => {
+  const project = await parseProject('/p1');
+
+  t.is(project.workflows.length, 1);
+  const [wf] = project.workflows;
+
+  t.is(typeof wf.steps[1].next.c, 'object');
+});
+
+test('should track the UUID of a step', async (t) => {
   const project = await parseProject('/p1');
 
   const [wf] = project.workflows;
 
   t.truthy(wf.steps[0].openfn);
-  t.is(wf.steps[0].openfn.id, '66add020-e6eb-4eec-836b-20008afca816');
+  t.is(wf.steps[0].openfn.id, '<uuid-1>');
 });
 
-test.todo('should track the UUID of an edge');
+test('should track the UUID of an edge', async (t) => {
+  const project = await parseProject('/p1');
+
+  const [wf] = project.workflows;
+
+  t.truthy(wf.steps[0].next?.b.openfn);
+  t.is(wf.steps[0].next?.b.openfn.id, '<uuid-3>');
+});
+
 test.todo('should track the UUID of a trigger');
 // maybe track other things that aren't in workflow.yaml?
 

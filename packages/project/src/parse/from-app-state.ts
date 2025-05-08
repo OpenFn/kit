@@ -20,6 +20,8 @@ function slugify(text) {
 export default (state: Provisioner.Project, config: Config) => {
   if (config.format === 'yaml') {
     state = yamlToJson(state);
+  } else if (typeof state === 'string') {
+    state = JSON.parse(state);
   }
 
   const {
@@ -106,6 +108,9 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       openfn: otherProps,
       next: connectedEdges.reduce((obj: any, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
+        if (!target) {
+          throw new Error(`Failed to find ${edge.target_job_id}`);
+        }
         // we use the name, not the id, to reference
         obj[slugify(target.name)] = mapTriggerEdgeCondition(edge);
         return obj;
@@ -114,7 +119,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   });
 
   workflow.jobs.forEach((step: Provisioner.Job) => {
-    const outboundEdges = edges.find(
+    const outboundEdges = edges.filter(
       (e) => e.source_job_id === step.id || e.source_trigger_id === step.id
     );
 
@@ -128,7 +133,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       openfn: remoteProps,
     };
 
-    if (outboundEdges) {
+    if (outboundEdges.length) {
       s.next = outboundEdges.reduce((next, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
         next[slugify(target.name)] = mapTriggerEdgeCondition(edge);

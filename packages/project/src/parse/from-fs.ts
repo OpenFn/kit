@@ -7,6 +7,7 @@ import { Project } from '../Project';
 import getIdentifier from '../util/get-identifier';
 import { yamlToJson } from '../util/yaml';
 import slugify from '../util/slugify';
+import fromAppState from './from-app-state';
 
 // Parse a single project from a root folder
 // focus on this first
@@ -36,7 +37,8 @@ export const parseProject = async (root: string = '.') => {
 
   // Now we need to look for the corresponding state file
   // Need to load UUIDs and other app settings from this
-  let state = {};
+  // If we load it as a Project, uuid tracking is way easier
+  let state: Project;
   const identifier = getIdentifier({
     endpoint: config.project?.endpoint,
     env: config.project?.env,
@@ -45,12 +47,8 @@ export const parseProject = async (root: string = '.') => {
     const format = config.formats.project ?? 'yaml';
     const statePath = path.join(root, '.projects', `${identifier}.${format}`);
     const stateFile = await fs.readFile(statePath, 'utf8');
-    if (format === 'json') {
-      state = JSON.parse(stateFile);
-    } else {
-      state = yamlToJson(stateFile);
-    }
-    console.log({ state });
+    // Load the state contents as a Project
+    state = fromAppState(stateFile, { format });
   } catch (e) {
     console.warn(`Failed to find state file for ${identifier}`);
     console.warn(e);
@@ -71,23 +69,14 @@ export const parseProject = async (root: string = '.') => {
     ignore: ['**node_modules/**', '**tmp**'],
   });
   const workflows = [];
+
   for (const filePath of candidateWfs) {
     const candidate = await fs.readFile(filePath, 'utf-8');
     try {
       const wf =
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
+
       if (wf.id && Array.isArray(wf.steps)) {
-        const wfState = state?.workflows.find((w) => w.name === wf.id);
-        const lookup = {};
-        if (wfState) {
-          ['jobs', 'triggers'].forEach((type) => {
-            wfState[type].forEach((item) => {
-              if (item.name) {
-                lookup[slugify(item.name)] = item;
-              }
-            });
-          });
-        }
         console.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
           if (step.expression && step.expression.endsWith('.js')) {
@@ -102,22 +91,23 @@ export const parseProject = async (root: string = '.') => {
             }
           }
           // check the state file for a matching uuid
-          const name = slugify(step.id);
-          if (name in lookup) {
-            // find all the app-only properties
-            // This must be common code we can reuse?
-            const {
-              name: _name,
-              body,
-              adaptor,
-              enabled,
-              ...rest
-            } = lookup[name];
-            step.openfn = rest;
+          // TODO this isn't quite right - what if there are other openfn keys to write?
+          // We need to return not just the UUID, but all the openfn keys
+          // TODO do we need to slugify the id here? Not really tbh?
+          const uuid = state?.getUUID(wf.id, step.id) ?? null;
+          step.openfn = { id: uuid };
+
+          // Now track UUIDs for edges against state
+          for (const target in step.next || {}) {
+            if (typeof step.next[target] === 'boolean') {
+              const bool = step.next[target];
+              step.next[target] = { condition: bool };
+            }
+            const uuid = state?.getUUID(wf.id, step.id, target) ?? null;
+            step.next[target].openfn = { id: uuid };
           }
         }
-        // TODO tracking edges is gonna be really hard no?
-        // something is amiss here I think
+
         workflows.push(wf);
       }
     } catch (e) {

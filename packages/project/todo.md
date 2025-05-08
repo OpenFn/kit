@@ -79,3 +79,13 @@ Do UUIDs get generated in the serialisation step? Yes I think so, because that's
 So when I load from the filesystem, I need to keep the project file handy so I can map uuids. And when I check out a new project, I need to update that stuff
 
 Maybe the Project needs a UUID map which can be used in serialisation. Or do we just keep it in memory, with other app only stuff?
+
+---
+
+there's actually something really important here
+
+when i scan the fs for the workflows, and I try to match a uuid in the state file, we're already diffing
+
+This process of scanning from the fs is surely doing a lot of the diff work. It should know, I think, that there are new/untracked steps. It might know if they've been renamed?
+
+I'm not sure: but this is actually quite a big problem. I need to take my time here
