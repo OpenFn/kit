@@ -3,9 +3,11 @@
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
 
+type Options = { format?: 'json' | 'yaml' };
+
 // TODO this should allow override on format,
 // regardless of repo settings
-export default function (project: Project) {
+export default function (project: Project, options: Options = {}) {
   const { projectId: id, endpoint, env, ...rest } = project.openfn;
 
   const state = {
@@ -19,7 +21,11 @@ export default function (project: Project) {
     workflows: project.workflows.map(mapWorkflow),
   };
 
-  if (project.repo.formats.project === 'yaml') {
+  const shouldReturnYaml =
+    options.format === 'yaml' ||
+    (!options.format && project.repo.formats.project === 'yaml');
+
+  if (shouldReturnYaml) {
     return jsonToYaml(state);
   }
 

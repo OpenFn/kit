@@ -125,10 +125,10 @@ export class Project {
     this.meta = data.meta;
   }
 
-  serialize(type: 'json' | 'yaml' | 'fs' | 'state' = 'json') {
+  serialize(type: 'json' | 'yaml' | 'fs' | 'state' = 'json', options?: any) {
     if (type in serializers) {
       // @ts-ignore
-      return serializers[type](this);
+      return serializers[type](this, options);
     }
     throw new Error(`Cannot serialize ${type}`);
   }

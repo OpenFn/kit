@@ -77,6 +77,13 @@ export const parseProject = async (root: string = '.') => {
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
 
       if (wf.id && Array.isArray(wf.steps)) {
+        // load settings from the state file
+        const wfState = state.getWorkflow(wf.id);
+        wf.openfn = {
+          id: wfState.openfn?.id ?? null,
+          // TODO do we need to transfer more stuff?
+        };
+
         console.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
           if (step.expression && step.expression.endsWith('.js')) {

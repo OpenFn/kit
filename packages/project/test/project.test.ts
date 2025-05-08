@@ -110,3 +110,6 @@ test('should convert a state file to a project and back again', (t) => {
 });
 
 test.todo('serialize to and from yaml');
+
+test.todo('serialize state as json');
+test.todo('serialize state as yaml');

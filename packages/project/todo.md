@@ -10,6 +10,10 @@
 
 - the openfn file needs to contain a project key which represents the currently connected project
 
+- need to ensure the project name is in openfn.yaml
+
+- maybe have a link to the project at the endpoint? in the openfn file? Or maybe CLI can generate it
+
 --
 
 have I hit a problem?

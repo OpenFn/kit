@@ -144,6 +144,7 @@ test('should load a workflow from the file system', async (t) => {
   const [wf] = project.workflows;
 
   t.is(wf.id, 'wf1');
+  t.is(wf.openfn.id, '<some-uuid>');
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });
 
