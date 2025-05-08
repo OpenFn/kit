@@ -35,6 +35,7 @@ export {
   mergeProjectPayloadIntoState,
   getStateFromProjectPayload,
   syncRemoteSpec,
+  deployProject,
 };
 
 export async function getConfig(path?: string): Promise<DeployConfig> {
