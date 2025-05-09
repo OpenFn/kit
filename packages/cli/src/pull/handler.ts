@@ -10,8 +10,13 @@ import {
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
+import * as beta from './beta';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
+  if (options.beta) {
+    return beta.handler(options, logger);
+  }
+
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 

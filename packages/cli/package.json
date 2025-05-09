@@ -49,11 +49,12 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^1.1.4",
-    "@openfn/lexicon": "workspace:^",
     "@openfn/compiler": "workspace:*",
     "@openfn/deploy": "workspace:*",
     "@openfn/describe-package": "workspace:*",
+    "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
+    "@openfn/project": "workspace:^",
     "@openfn/runtime": "workspace:*",
     "chalk": "^5.1.2",
     "figures": "^5.0.0",

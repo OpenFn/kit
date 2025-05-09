@@ -7,6 +7,7 @@ import {
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { DeployOptions } from './command';
+import * as beta from './beta';
 
 export type DeployFn = typeof deploy;
 
@@ -24,6 +25,10 @@ async function deployHandler(
   logger: Logger,
   deployFn = actualDeploy
 ) {
+  if (options.beta) {
+    return beta.handler(options, logger);
+  }
+
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 

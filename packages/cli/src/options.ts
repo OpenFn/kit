@@ -21,6 +21,7 @@ export type Opts = {
   adaptors?: string[];
   apolloUrl?: string;
   autoinstall?: boolean;
+  beta?: boolean;
   cacheSteps?: boolean;
   compile?: boolean;
   configPath?: string;
@@ -149,6 +150,15 @@ export const apolloUrl: CLIOption = {
         didLoadShortcut = true;
       }
     });
+  },
+};
+
+export const beta: CLIOption = {
+  name: 'beta',
+  yargs: {
+    boolean: true,
+    description: 'Use the beta alternative of this command',
+    default: false,
   },
 };
 

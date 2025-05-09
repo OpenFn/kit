@@ -202,3 +202,103 @@ export type StepCompletePayload = ExitReason & {
   timestamp: TimeInMicroSeconds;
 };
 export type StepCompleteReply = void;
+
+// This needs to describe the data structures coming out of lightning
+// they've been copied out of deploy but they don't seem accurate
+export namespace Provisioner {
+  export type Project = Project_v1;
+
+  export interface Project_v1 {
+    id: string;
+    name: string;
+    description: string | null;
+
+    workflows: Workflow[];
+    concurrency?: any; // TODO
+
+    // TODO typing isn't quite right here either
+    //project_credentials: Record<string | symbol, Credential>;
+    project_credentials: any[];
+
+    // this is clearly wrong?
+    //collections: Record<string | symbol, Collection>;
+    // should be an array of something?
+    collections: any[];
+
+    // serverside metadata
+    inserted_at?: string;
+    updated_at?: string;
+    scheduled_deletion: string | null;
+
+    // app options
+    allow_support_access?: boolean;
+    requires_mfa?: boolean;
+    retention_policy?: string;
+    history_retention_period: string | null;
+    dataclip_retention_period: string | null;
+  }
+
+  export interface Workflow {
+    id: string;
+    name: string;
+    jobs: Job[];
+    triggers: Trigger[];
+    edges: Edge[];
+    delete?: boolean;
+    project_id?: string;
+
+    concurrency?: null; // TODO
+    lock_version?: number;
+    inserted_at?: string;
+    updated_at?: string;
+    deleted_at: string | null;
+  }
+
+  export type Collection = {
+    id: string;
+    name: string;
+    delete?: boolean;
+  };
+
+  export type Credential = {
+    id: string;
+    name: string;
+    owner: string;
+  };
+
+  export type Job = {
+    id: string;
+    name: string;
+    adaptor: string;
+    body: string;
+    project_credential_id: string | null;
+    delete?: boolean;
+  };
+
+  export type Trigger = {
+    id: string;
+    type: string;
+    cron_expression?: string;
+    delete?: boolean;
+    enabled?: boolean;
+    kafka_configuration?: KafkaConfiguration;
+  };
+
+  export type Edge = {
+    id: string;
+    condition_type: string;
+    condition_expression?: string | null;
+    condition_label?: string | null;
+    source_job_id?: string | null;
+    source_trigger_id: string | null;
+    target_job_id: string;
+    enabled?: boolean;
+  };
+
+  export type KafkaConfiguration = {
+    hosts: [string, string];
+    topics: string[];
+    initial_offset_reset_policy: string;
+    connect_timeout: number;
+  };
+}
