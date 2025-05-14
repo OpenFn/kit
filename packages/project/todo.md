@@ -1,4 +1,31 @@
+before I can release I must:
+
+- make fewer assumptions about paths (remove the hard coded stuff)
+- [DONE] on pull, clear workflows folder and warn
+- assert that locally renamed nodes get updated
+- get tests passing
+- restore typechecks in project
+- work out how to add --beta help
+
+At this point, we should be able to push/pull a single project with full file system support
+
+--
+
+QA:
+
+- great, right now, I can pull a workflow even if stuff changes, and the filesystem updates beautifully. With a warning.
+
+- Now, if I rename the local job id... what happens if I push? I get an error because I can't track ids
+- what I actually need to do is generate a new id for anything dangling and push that
+
+- I think there's also a problem where if I rename my expression file, next time I pull it'll use the old file name.
+
+- Later we need a command in the CLI to rename a step. Pass the human name and everything else will be restructured for you.
+
+--
+
 - step names need to slugify the openfn name, and also openfn needs to save the original name
+
 - workflow id needs to be a slugified form of the name
 - include an options key on the project and workflow
 

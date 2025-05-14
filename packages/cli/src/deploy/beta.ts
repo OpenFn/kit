@@ -69,7 +69,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   // generate state for the provisioner
   const state = project.serialize('state', { format: 'json' });
-  console.log(JSON.stringify(state, null, 2));
+  logger.debug('Converted local project to app state:');
+  logger.debug(JSON.stringify(state, null, 2));
 
   const config = {
     endpoint: endpoint || project.openfn.endpoint,
@@ -78,6 +79,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   // THis fails right now becuase the serialized workflow does not have an id!
 
+  logger.info('Sending project to app...');
+
   // TODO do I really want to use this deploy function? Is it suitable?
   await deployProject(config, state);
+
+  logger.success('Updated project at', endpoint);
 }

@@ -3,7 +3,7 @@
 // Fetches from provisioner
 // converts into project
 // serializes project
-
+import { confirm } from '@inquirer/prompts';
 import path from 'path';
 import fs from 'node:fs/promises';
 import {
@@ -17,6 +17,7 @@ import {
 import Project from '@openfn/project';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
+import { rimraf } from 'rimraf';
 
 // new config
 type Config = {
@@ -80,6 +81,26 @@ export async function handler(options: PullOptions, logger: Logger) {
 
   await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
   let stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
+
+  const workflowsRoot = path.resolve(
+    outputRoot,
+    project.repo?.workflowRoot ?? 'workflows'
+  );
+  // Prompt before deleting
+  // TODO this is actually the wrong path
+  if (
+    !(await confirm({
+      message: `This will remove all files in ${path.resolve(
+        workflowsRoot
+      )} and rebuild the workflow. Are you sure you wish to proceed?
+`,
+      default: true,
+    }))
+  ) {
+    logger.always('Cancelled');
+    return false;
+  }
+  await rimraf(workflowsRoot);
 
   const state = project?.serialize('state');
   if (project.repo?.formats.project === 'yaml') {

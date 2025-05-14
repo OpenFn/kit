@@ -3,6 +3,7 @@
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
 
+import { randomUUID } from 'node:crypto';
 type Options = { format?: 'json' | 'yaml' };
 
 // TODO this should allow override on format,
@@ -40,9 +41,16 @@ const mapWorkflow = (workflow) => {
     triggers: [],
     edges: [],
   };
-  console.log(workflow.steps);
+
   // lookup of local-ids to project-ids
   const lookup = workflow.steps.reduce((obj, next) => {
+    if (!next.openfn?.id) {
+      // If there's no tracked id, we generate one here
+      // TODO there is no unit test on this
+      next.openfn ??= {};
+      next.openfn.id = randomUUID();
+    }
+
     obj[next.id] = next.openfn.id;
     return obj;
   }, {});
@@ -74,7 +82,7 @@ const mapWorkflow = (workflow) => {
       const rules = s.next[next];
 
       const e = {
-        id: rules.openfn?.id,
+        id: rules.openfn?.id ?? randomUUID(),
         target_job_id: lookup[next],
         enabled: !rules.disabled,
       };
