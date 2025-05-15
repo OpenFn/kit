@@ -46,5 +46,5 @@ export async function handler(options: DeployOptionsBeta, logger: Logger) {
   // TODO do I really want to use this deploy function? Is it suitable?
   await deployProject(config as DeployConfig, state);
 
-  logger.success('Updated project at', endpoint);
+  logger.success('Updated project at', config.endpoint);
 }
