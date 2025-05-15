@@ -18,6 +18,8 @@
     "noUnusedParameters": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    // Needed for debug
+    "sourceMap": true
   }
 }

@@ -55,7 +55,7 @@ export const parseProject = async (options: { root: string } = {}) => {
     state = fromAppState(stateFile, { format });
   } catch (e) {
     console.warn(`Failed to find state file for ${identifier}`);
-    console.warn(e);
+    // console.warn(e);
   }
   // find the openfn settings
 

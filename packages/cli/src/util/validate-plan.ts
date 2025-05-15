@@ -27,8 +27,6 @@ const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
 // It is useful for manual workflow construction
 // skipped for now just while I get things working
 const assertStepStructure = (step: Job | Trigger, index: number) => {
-  return;
-
   const allowedKeys = [
     'id',
     'name',
@@ -39,6 +37,7 @@ const assertStepStructure = (step: Job | Trigger, index: number) => {
     'state',
     'configuration',
     'linker',
+    'openfn',
   ];
 
   for (const key in step) {

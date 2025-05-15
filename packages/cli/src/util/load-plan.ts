@@ -44,7 +44,13 @@ const loadPlan = async (
   }
 
   // Run a workflow from a project in the current working dir
-  if (!/\..+%/.test(options.path || '') && !options.workflow) {
+  // (no expression or workflow path, and no file extension)
+  if (
+    !expressionPath &&
+    !workflowPath &&
+    !/\.(js|json|yaml)+$/.test(options.path || '') &&
+    !options.workflow
+  ) {
     // If the path has no extension
     // Run a workflow from a project in the working dir
     const workflow = options.path;
