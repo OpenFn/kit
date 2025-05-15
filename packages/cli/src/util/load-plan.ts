@@ -54,13 +54,7 @@ const loadPlan = async (
     // If the path has no extension
     // Run a workflow from a project in the working dir
     const workflow = options.path;
-    return fromProject(
-      path.resolve('.'),
-      // path.resolve('./tmp/projects'), // TMP just for debugging
-      workflow!,
-      options,
-      logger
-    );
+    return fromProject(path.resolve('.'), workflow!, options, logger);
   }
 
   if (expressionPath) {
