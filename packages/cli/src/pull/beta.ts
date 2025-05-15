@@ -1,23 +1,12 @@
 // beta v2 version of CLI pull
-// Should be super lightweight
-// Fetches from provisioner
-// converts into project
-// serializes project
 import { confirm } from '@inquirer/prompts';
 import path from 'path';
 import fs from 'node:fs/promises';
-import {
-  DeployConfig,
-  getConfig,
-  getProject,
-  getSpec,
-  getStateFromProjectPayload,
-  syncRemoteSpec,
-} from '@openfn/deploy';
+import { DeployConfig, getProject } from '@openfn/deploy';
 import Project from '@openfn/project';
 import type { Logger } from '../util/logger';
-import { PullOptions } from '../pull/command';
 import { rimraf } from 'rimraf';
+import { Opts } from '../options';
 
 // new config
 type Config = {
@@ -27,20 +16,33 @@ type Config = {
   // maybe keep?
   requireConfirmation?: boolean;
   dryRun?: boolean;
-
-  // configPath?: string;
-  // specPath: string;
-  // statePath: string;
 };
 
-// TODO need to document and add options.env
-export async function handler(options: PullOptions, logger: Logger) {
+export type PullOptionsBeta = Required<
+  Pick<
+    Opts,
+    | 'apiKey'
+    | 'beta'
+    | 'command'
+    | 'confirm'
+    | 'endpoint'
+    | 'env'
+    | 'log'
+    | 'logJson'
+    | 'path'
+    | 'projectId'
+  >
+>;
+
+export async function handler(options: PullOptionsBeta, logger: Logger) {
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
 
-  const config: Partial<Config> = {};
+  const config: Partial<Config> = {
+    apiKey: options.apiKey,
+    endpoint: options.endpoint,
+  };
 
-  // TODO this all needs fixing
-  if (!options.key && OPENFN_API_KEY) {
+  if (!options.apiKey && OPENFN_API_KEY) {
     logger.info('Using OPENFN_API_KEY environment variable');
     config.apiKey = OPENFN_API_KEY;
   }
@@ -50,12 +52,8 @@ export async function handler(options: PullOptions, logger: Logger) {
     config.endpoint = OPENFN_ENDPOINT;
   }
 
-  // download the state.json
-  const { data } = await getProject(
-    config as any,
-    options.projectId
-    // options.snapshots
-  );
+  // download the state.json from lightning
+  const { data } = await getProject(config as DeployConfig, options.projectId);
 
   // TODO if the user doesn't specify an env name, prompt for one
   const name = options.env || 'project';
@@ -66,16 +64,11 @@ export async function handler(options: PullOptions, logger: Logger) {
     fetched_at: new Date().toISOString(),
   });
 
-  // so this thing is my project.yaml file
-  // name@domain
-  // I have no control over this - it's whatever the provisioner wants
-  // But I can serialize my Project however I want right? options,workflows,meta
-
-  // Ah that settles it!
-  // The local project.yaml files contain stuff that the provisioner project does not
-  // eg the endpoint and maybe a local name
-  // so what we serialise is a Json Project, not a provisioner state file
-  const outputRoot = `./tmp/projects`;
+  // TODO `path` or `output` ?
+  // I don't think I want to model this as output. deploy is really
+  // designed to run from the working folder
+  // could be projectPath or repoPath too
+  const outputRoot = path.resolve(options.path || '.');
 
   const projectFileName = project.getIdentifier();
 
