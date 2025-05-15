@@ -14,7 +14,7 @@ import * as beta from './beta';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
-    return beta.handler(options, logger);
+    return beta.handler(options as any, logger);
   }
 
   try {

@@ -21,14 +21,16 @@ const loadPlan = async (
     | 'baseDir'
     | 'expandAdaptors'
     | 'path'
-  >,
+  > & {
+    workflow?: Opts['workflow'];
+  },
   logger: Logger
 ): Promise<ExecutionPlan> => {
   // TODO all these paths probably need rethinkng now that we're supporting
   // so many more input formats
   const { workflowPath, planPath, expressionPath } = options;
 
-  if (/ya?ml$/.test(options.path)) {
+  if (options.path && /ya?ml$/.test(options.path)) {
     const content = await fs.readFile(path.resolve(options.path), 'utf-8');
     const workflow = yamlToJson(content);
     options.baseDir = dirname(options.path);
@@ -49,7 +51,7 @@ const loadPlan = async (
     return fromProject(
       path.resolve('.'),
       // path.resolve('./tmp/projects'), // TMP just for debugging
-      workflow,
+      workflow!,
       options,
       logger
     );
@@ -80,22 +82,25 @@ export default loadPlan;
 const fromProject = async (
   rootDir: string,
   workflowName: string,
-  options: Opts,
+  options: Partial<Opts>,
   logger: Logger
 ): Promise<any> => {
   logger.debug('Loading Repo from ', path.resolve(rootDir));
-  const project = await Project.from('fs', rootDir);
+  const project = await Project.from('fs', { root: rootDir });
   logger.debug('Loading workflow ', workflowName);
   const workflow = project.getWorkflow(workflowName);
+  if (!workflow) {
+    throw new Error(`Workflow "${workflowName}" not found`);
+  }
   return loadXPlan({ workflow }, options, logger);
 };
 
 // load a workflow from a repo
 // if you do `openfn wf1` then we use this - you've asked for a workflow name, which we'll find
-const loadRepo = () => {};
+// const loadRepo = () => {};
 
 // Load a workflow straight from yaml
-const loadYaml = () => {};
+// const loadYaml = () => {};
 
 const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
   let text: string;

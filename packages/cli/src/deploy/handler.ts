@@ -26,7 +26,7 @@ async function deployHandler(
   deployFn = actualDeploy
 ) {
   if (options.beta) {
-    return beta.handler(options, logger);
+    return beta.handler(options as any, logger);
   }
 
   try {

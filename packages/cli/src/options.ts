@@ -59,6 +59,7 @@ export type Opts = {
   stateStdin?: string;
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
+  workflow: string;
 
   // deprecated
   workflowPath?: string;
@@ -534,5 +535,13 @@ export const sanitize: CLIOption = {
     const err = 'Unknown sanitize value provided: ' + opts.sanitize;
     console.error(err);
     throw new Error(err);
+  },
+};
+
+export const workflow: CLIOption = {
+  name: 'workflow',
+  yargs: {
+    string: true,
+    description: 'Name of the workflow to execute',
   },
 };
