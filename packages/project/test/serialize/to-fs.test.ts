@@ -237,6 +237,7 @@ test('extractConfig: create a default openfn.json', (t) => {
 
 test('extractConfig: create a default openfn.yaml', (t) => {
   const project = new Project({
+    name: 'My Project',
     openfn: {
       env: 'main',
       id: '123',
@@ -255,7 +256,8 @@ test('extractConfig: create a default openfn.yaml', (t) => {
   t.is(path, 'openfn.yaml');
   t.is(
     content,
-    `workflowRoot: workflows
+    `name: My Project
+workflowRoot: workflows
 formats:
   openfn: yaml
   project: yaml

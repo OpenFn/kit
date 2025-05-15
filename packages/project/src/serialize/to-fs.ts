@@ -81,6 +81,7 @@ export const extractStep = (project, workflowId, stepId) => {
 export const extractRepoConfig = (project) => {
   const format = project.repo.formats.openfn;
   const config = {
+    name: project.name,
     ...project.repo,
     project: project.openfn ?? {},
   };
