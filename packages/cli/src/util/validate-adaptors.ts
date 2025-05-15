@@ -10,7 +10,9 @@ const validateAdaptors = async (
     | 'repoDir'
     | 'workflowPath'
     | 'planPath'
-  >,
+  > & {
+    workflow?: Opts['workflow'];
+  },
   logger: Logger
 ) => {
   if (options.skipAdaptorValidation) {
