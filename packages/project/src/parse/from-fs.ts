@@ -12,7 +12,8 @@ import fromAppState from './from-app-state';
 // Parse a single project from a root folder
 // focus on this first
 // root must be absolute?
-export const parseProject = async (root: string = '.') => {
+export const parseProject = async (options: { root: string } = {}) => {
+  const { root } = options;
   const proj = {};
 
   let config; // TODO need a type for the shape of this file
@@ -26,7 +27,10 @@ export const parseProject = async (root: string = '.') => {
   } catch (e) {
     // Not found - try and parse as JSON
     try {
-      const file = await fs.readFile(path.join(root, 'openfn.json'), 'utf8');
+      const file = await fs.readFile(
+        path.join(root || '.', 'openfn.json'),
+        'utf8'
+      );
       config = JSON.parse(file);
     } catch (e) {
       console.log(e);
@@ -75,10 +79,9 @@ export const parseProject = async (root: string = '.') => {
     try {
       const wf =
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
-
       if (wf.id && Array.isArray(wf.steps)) {
         // load settings from the state file
-        const wfState = state.getWorkflow(wf.id);
+        const wfState = (state && state.getWorkflow(wf.id)) ?? {};
         wf.openfn = {
           id: wfState.openfn?.id ?? null,
           // TODO do we need to transfer more stuff?
@@ -118,6 +121,7 @@ export const parseProject = async (root: string = '.') => {
         workflows.push(wf);
       }
     } catch (e) {
+      console.log(e);
       // not valid json
       // should probably maybe a big deal about this huh?
       continue;

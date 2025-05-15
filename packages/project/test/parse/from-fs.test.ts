@@ -117,7 +117,7 @@ mock({
 });
 
 test('should load the openfn repo config from json', async (t) => {
-  const project = await parseProject('/p1');
+  const project = await parseProject({ root: '/p1' });
 
   t.deepEqual(project.repo, {
     workflowRoot: 'workflows',
@@ -126,7 +126,7 @@ test('should load the openfn repo config from json', async (t) => {
 });
 
 test('should load the openfn project config from json', async (t) => {
-  const project = await parseProject('/p1');
+  const project = await parseProject({ root: '/p1' });
 
   t.deepEqual(project.openfn, {
     id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -138,7 +138,7 @@ test('should load the openfn project config from json', async (t) => {
 });
 
 test('should load a workflow from the file system', async (t) => {
-  const project = await parseProject('/p1');
+  const project = await parseProject({ root: '/p1' });
 
   t.is(project.workflows.length, 1);
   const [wf] = project.workflows;
@@ -149,7 +149,7 @@ test('should load a workflow from the file system', async (t) => {
 });
 
 test('should load a workflow from the file system and expand shorthand links', async (t) => {
-  const project = await parseProject('/p1');
+  const project = await parseProject({ root: '/p1' });
 
   t.is(project.workflows.length, 1);
   const [wf] = project.workflows;
@@ -158,7 +158,7 @@ test('should load a workflow from the file system and expand shorthand links', a
 });
 
 test('should track the UUID of a step', async (t) => {
-  const project = await parseProject('/p1');
+  const project = await parseProject({ root: '/p1' });
 
   const [wf] = project.workflows;
 
@@ -167,7 +167,7 @@ test('should track the UUID of a step', async (t) => {
 });
 
 test('should track the UUID of an edge', async (t) => {
-  const project = await parseProject('/p1');
+  const project = await parseProject({ root: '/p1' });
 
   const [wf] = project.workflows;
 
@@ -179,7 +179,7 @@ test.todo('should track the UUID of a trigger');
 // maybe track other things that aren't in workflow.yaml?
 
 test('should load a project from yaml', async (t) => {
-  const project = await parseProject('/p2');
+  const project = await parseProject({ root: '/p2' });
 
   t.is(project.workflows.length, 1);
   const [wf] = project.workflows;

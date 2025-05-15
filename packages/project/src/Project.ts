@@ -85,13 +85,14 @@ export class Project {
   // TODO presumably we can detect a state file? Not a big deal?
 
   static from(
-    type: 'state' | 'fs',
+    type: 'state',
     data: any,
     options: Partial<l.ProjectConfig>
   ): Project;
+  static from(type: 'fs', options: { root: string }): Project;
   static from(type: 'path', data: any): Project;
   static from(
-    type: 'state' | 'path',
+    type: 'state' | 'path' | 'fs',
     data: any,
     options?: Partial<l.ProjectConfig>
   ): Project {
