@@ -1,6 +1,6 @@
 # ws-worker
 
-## 1.13.3
+## 1.13.5
 
 ### Patch Changes
 
@@ -8,6 +8,22 @@
   - @openfn/lexicon@1.2.2
   - @openfn/engine-multi@1.6.4
   - @openfn/runtime@1.6.4
+
+## 1.13.4
+
+### Patch Changes
+
+- Fix a memory leak, affecting log-running worker instances
+- Updated dependencies
+  - @openfn/engine-multi@1.6.5
+
+## 1.13.3
+
+### Patch Changes
+
+- d79c828: Publish memory limit and timeout to info logs, not debug
+- Updated dependencies [d79c828]
+  - @openfn/engine-multi@1.6.4
 
 ## 1.13.2
 

@@ -1,6 +1,6 @@
 # engine-multi
 
-## 1.6.4
+## 1.6.6
 
 ### Patch Changes
 
@@ -8,6 +8,18 @@
   - @openfn/lexicon@1.2.2
   - @openfn/compiler@1.0.4
   - @openfn/runtime@1.6.4
+
+## 1.6.5
+
+### Patch Changes
+
+- Fix a memory leak, affecting log-running worker instances
+
+## 1.6.4
+
+### Patch Changes
+
+- d79c828: Publish memory limit and timeout to info logs, not debug
 
 ## 1.6.3
 

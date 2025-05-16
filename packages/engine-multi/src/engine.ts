@@ -198,6 +198,8 @@ const createEngine = async (
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
+
+        context.removeAllListeners();
       });
     }, 1);
 
