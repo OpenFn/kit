@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.13.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.2
+  - @openfn/engine-multi@1.6.4
+  - @openfn/runtime@1.6.4
+
 ## 1.13.2
 
 ### Patch Changes
