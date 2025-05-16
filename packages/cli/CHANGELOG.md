@@ -1,5 +1,22 @@
 # @openfn/cli
 
+## 1.12.0
+
+### Minor Changes
+
+- Add --beta flag to pull and deploy commands, which use new `projects` for better local project management. See https://github.com/OpenFn/kit/wiki/Pull-Deploy-Beta
+
+  New projects downloaded with beta are fully compatible with cli execute
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - @openfn/lexicon@1.2.2
+  - @openfn/project@0.2.0
+  - @openfn/compiler@1.0.4
+  - @openfn/runtime@1.6.4
+
 ## 1.11.5
 
 ### Patch Changes

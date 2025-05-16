@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import path, { dirname } from 'node:path';
 import { isPath } from '@openfn/compiler';
+import Project, { yamlToJson } from '@openfn/project';
 
 import abort from './abort';
 import expandAdaptors from './expand-adaptors';
@@ -19,10 +20,42 @@ const loadPlan = async (
     | 'adaptors'
     | 'baseDir'
     | 'expandAdaptors'
-  >,
+    | 'path'
+  > & {
+    workflow?: Opts['workflow'];
+  },
   logger: Logger
 ): Promise<ExecutionPlan> => {
+  // TODO all these paths probably need rethinkng now that we're supporting
+  // so many more input formats
   const { workflowPath, planPath, expressionPath } = options;
+
+  if (options.path && /ya?ml$/.test(options.path)) {
+    const content = await fs.readFile(path.resolve(options.path), 'utf-8');
+    const workflow = yamlToJson(content);
+    options.baseDir = dirname(options.path);
+    return loadXPlan({ workflow }, options, logger);
+  }
+
+  // Run a workflow from a project, with a path and workflow name
+  if (options.path && options.workflow) {
+    options.baseDir = options.path;
+    return fromProject(options.path, options.workflow, options, logger);
+  }
+
+  // Run a workflow from a project in the current working dir
+  // (no expression or workflow path, and no file extension)
+  if (
+    !expressionPath &&
+    !workflowPath &&
+    !/\.(js|json|yaml)+$/.test(options.path || '') &&
+    !options.workflow
+  ) {
+    // If the path has no extension
+    // Run a workflow from a project in the working dir
+    const workflow = options.path;
+    return fromProject(path.resolve('.'), workflow!, options, logger);
+  }
 
   if (expressionPath) {
     return loadExpression(options, logger);
@@ -45,6 +78,29 @@ const loadPlan = async (
 };
 
 export default loadPlan;
+
+const fromProject = async (
+  rootDir: string,
+  workflowName: string,
+  options: Partial<Opts>,
+  logger: Logger
+): Promise<any> => {
+  logger.debug('Loading Repo from ', path.resolve(rootDir));
+  const project = await Project.from('fs', { root: rootDir });
+  logger.debug('Loading workflow ', workflowName);
+  const workflow = project.getWorkflow(workflowName);
+  if (!workflow) {
+    throw new Error(`Workflow "${workflowName}" not found`);
+  }
+  return loadXPlan({ workflow }, options, logger);
+};
+
+// load a workflow from a repo
+// if you do `openfn wf1` then we use this - you've asked for a workflow name, which we'll find
+// const loadRepo = () => {};
+
+// Load a workflow straight from yaml
+// const loadYaml = () => {};
 
 const loadJson = async (workflowPath: string, logger: Logger): Promise<any> => {
   let text: string;

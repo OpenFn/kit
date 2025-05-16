@@ -18,6 +18,7 @@ export type CompileOptions = Pick<
   | 'path'
   | 'useAdaptorsMonorepo'
 > & {
+  workflow?: Opts['workflow'];
   repoDir?: string;
 };
 
@@ -34,6 +35,7 @@ const options = [
   o.outputPath,
   o.repoDir,
   o.useAdaptorsMonorepo,
+  o.workflow,
 ];
 
 const compileCommand: yargs.CommandModule<CompileOptions> = {

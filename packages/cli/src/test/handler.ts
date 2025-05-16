@@ -60,7 +60,7 @@ const testHandler = async (options: TestOptions, logger: Logger) => {
   }
 
   const state = await loadState(plan, opts, createNullLogger());
-  const compiledPlan = (await compile(plan, opts, logger)) as ExecutionPlan;
+  const compiledPlan = await compile(plan, opts, logger);
   const result = await execute(
     compiledPlan,
     state,

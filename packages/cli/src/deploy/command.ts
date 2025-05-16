@@ -6,6 +6,7 @@ import * as o from '../options';
 export type DeployOptions = Required<
   Pick<
     Opts,
+    | 'beta'
     | 'command'
     | 'configPath'
     | 'confirm'
@@ -17,6 +18,7 @@ export type DeployOptions = Required<
 >;
 
 const options = [
+  o.beta,
   o.configPath,
   o.confirm,
   o.describe,

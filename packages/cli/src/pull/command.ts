@@ -1,11 +1,12 @@
 import yargs from 'yargs';
-import { build, ensure } from '../util/command-builders';
+import { build, ensure, override } from '../util/command-builders';
 import { Opts } from '../options';
 import * as o from '../options';
 
 export type PullOptions = Required<
   Pick<
     Opts,
+    | 'beta'
     | 'command'
     | 'log'
     | 'logJson'
@@ -19,18 +20,26 @@ export type PullOptions = Required<
 >;
 
 const options = [
-  o.statePath,
-  o.projectPath,
+  o.apikey,
+  o.beta,
+  o.beta,
   o.configPath,
+  o.endpoint,
+  o.env,
   o.log,
+  override(o.path, {
+    description: 'path to output the project to',
+  }),
   o.logJson,
+  o.projectPath,
   o.snapshots,
+  o.statePath,
+  o.path,
 ];
 
 const pullCommand: yargs.CommandModule<PullOptions> = {
   command: 'pull [projectId]',
-  describe:
-    "Pull a project's state and spec from a Lightning Instance to the local directory",
+  describe: `Pull a project's state and spec from a Lightning Instance to the local directory. Pass --beta to use the experimental new pull command. See https://github.com/OpenFn/kit/wiki/Pull-Deploy-Beta for docs`,
   builder: (yargs: yargs.Argv<PullOptions>) =>
     build(options, yargs)
       .positional('projectId', {
