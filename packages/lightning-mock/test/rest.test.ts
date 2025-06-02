@@ -14,11 +14,19 @@ test.before(async () => ({ server, client } = await setup(port)));
 
 test.serial('should pull a project', async (t) => {
   const response = await fetch(`${endpoint}/api/provision/123`);
-  const proj = await response.json();
+  const { data: proj } = await response.json();
 
   t.is(proj.id, '123');
-  t.is(proj.name, 'openhie-project');
+  t.is(proj.name, 'aaa');
   t.truthy(proj.workflows);
+});
+
+test.serial('should pull a project as yaml', async (t) => {
+  const response = await fetch(`${endpoint}/api/provision/yaml?id=123`);
+  const proj = await response.text();
+
+  t.regex(proj, /name: aaa/);
+  t.regex(proj, /name: wf1/);
 });
 
 test.serial('should deploy a project', async (t) => {
