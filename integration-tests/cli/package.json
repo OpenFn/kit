@@ -15,6 +15,7 @@
     "test:dev": "node prelude.js && pnpm ava -s && pnpm clean"
   },
   "dependencies": {
+    "@openfn/lightning-mock": "workspace:^",
     "@types/node": "^18.15.13",
     "ava": "5.3.1",
     "date-fns": "^2.30.0",

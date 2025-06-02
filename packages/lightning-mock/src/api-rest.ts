@@ -40,7 +40,7 @@ export default (
 ): Koa.Middleware => {
   const router = new Router();
 
-  router.get('/provision/:id', (ctx) => {
+  router.get('/api/provision/:id', (ctx) => {
     // just return a hard-coded project for now
     ctx.response.body = {
       ...proj,
@@ -48,7 +48,7 @@ export default (
     };
   });
 
-  router.post('/provision', (ctx) => {
+  router.post('/api/provision', (ctx) => {
     // const project = ctx.request.body as LightningPlan;
     // TODO just return 200 for now
 

@@ -81,6 +81,9 @@ importers:
 
   integration-tests/cli:
     dependencies:
+      '@openfn/lightning-mock':
+        specifier: workspace:^
+        version: link:../../packages/lightning-mock
       '@types/node':
         specifier: ^18.15.13
         version: 18.19.68

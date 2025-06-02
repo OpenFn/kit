@@ -13,7 +13,7 @@ const endpoint = `http://localhost:${port}`;
 test.before(async () => ({ server, client } = await setup(port)));
 
 test.serial('should pull a project', async (t) => {
-  const response = await fetch(`${endpoint}/provision/123`);
+  const response = await fetch(`${endpoint}/api/provision/123`);
   const proj = await response.json();
 
   t.is(proj.id, '123');
@@ -22,7 +22,7 @@ test.serial('should pull a project', async (t) => {
 });
 
 test.serial('should deploy a project', async (t) => {
-  const response = await fetch(`${endpoint}/provision`, {
+  const response = await fetch(`${endpoint}/api/provision`, {
     method: 'POST',
     body: JSON.stringify({}), // Not a very good test right now!!
     headers: {
