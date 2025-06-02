@@ -13,6 +13,7 @@ export const generateRunToken = async (
       const jwt = await new jose.SignJWT({ id: runId })
         .setProtectedHeader({ alg })
         .setIssuedAt()
+        .setNotBefore(Math.floor(Date.now() / 1000))
         .setIssuer('Lightning')
         .setExpirationTime('2h')
         .sign(key);

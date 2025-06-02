@@ -9,10 +9,11 @@ import type { ServerApp } from '../server';
 
 const mockLogger = createMockLogger();
 
-const verifyToken = async (token: string, publicKey: string) => {
+export const verifyToken = async (token: string, publicKey: string) => {
   const key = crypto.createPublicKey(publicKey);
   const { payload } = await jose.jwtVerify(token, key, {
     issuer: 'Lightning',
+    clockTolerance: '5s', // Allow 5 seconds of clock skew
   });
 
   if (payload) {
