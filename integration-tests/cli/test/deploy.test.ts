@@ -11,9 +11,6 @@ const endpoint = `http://localhost:${port}`;
 
 test.before(async () => {
   server = await createLightningServer({ port });
-  await new Promise((resolve) => {
-    setTimeout(resolve, 2000);
-  });
 });
 
 // test.serial.only(`test`, async (t) => {

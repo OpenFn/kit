@@ -1,4 +1,5 @@
 import { createMockLogger } from '@openfn/logger';
+import createLightningServer from '@openfn/lightning-mock';
 import test from 'ava';
 import mock from 'mock-fs';
 import { execSync } from 'node:child_process';
@@ -12,6 +13,15 @@ import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
 
 const logger = createMockLogger('', { level: 'debug' });
+
+const port = 8967;
+
+let server;
+const endpoint = `http://localhost:${port}`;
+
+test.before(async () => {
+  server = await createLightningServer({ port });
+});
 
 test.afterEach(() => {
   mock.restore();
@@ -752,7 +762,7 @@ test.serial('docs adaptor should list operations', async (t) => {
 });
 
 test.serial(
-  'docs adaptor + operation should print documention with shorthand names',
+  'docs adaptor + operation should print documentation with shorthand names',
   async (t) => {
     mock({
       '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
@@ -783,3 +793,21 @@ test.serial(
     );
   }
 );
+
+test.serial('pull: should pull a simple project', async (t) => {
+  mock({
+    './state.json': '',
+    './project.yaml': '',
+  });
+  process.env.OPENFN_ENDPOINT = endpoint;
+
+  const opts = cmd.parse('pull 123') as Opts;
+  await commandParser(opts, logger);
+
+  const last = logger._parse(logger._history.at(-1));
+  t.is(last.message, 'Project pulled successfully');
+  const errors = logger._find('error', /./);
+  t.falsy(errors);
+
+  delete process.env.OPENFN_ENDPOINT;
+});
