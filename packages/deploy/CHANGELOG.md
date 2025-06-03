@@ -1,5 +1,11 @@
 # @openfn/deploy
 
+## 0.11.2
+
+### Patch Changes
+
+- 79686ce: Export deployProject version
+
 ## 0.11.1
 
 ### Patch Changes
