@@ -15,7 +15,7 @@ const endpoint = `ws://localhost:${port}/worker`;
 
 test.before(async () => ({ server, client } = await setup(port)));
 
-test.serial('should setup an run at /POST /run', async (t) => {
+test.serial('should setup a run at /POST /run', async (t) => {
   const state = server.getState();
 
   t.is(Object.keys(state.credentials).length, 0);

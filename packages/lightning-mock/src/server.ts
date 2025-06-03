@@ -12,6 +12,7 @@ import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
+import createRestAPI from './api-rest';
 import { fromBase64 } from './util';
 import type { DevServer } from './types';
 
@@ -113,6 +114,8 @@ const createLightningServer = (options: LightningOptions = {}) => {
   );
 
   app.use(createDevAPI(app as any, state, logger, api));
+
+  app.use(createRestAPI(app as any, state, logger, api));
 
   app.destroy = () => {
     server.close();

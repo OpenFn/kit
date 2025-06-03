@@ -1,5 +1,11 @@
 # @openfn/lightning-mock
 
+## 2.2.0
+
+### Minor Changes
+
+- 728fb3d: Stub in a provisioner API for very basic testing
+
 ## 2.1.9
 
 ### Patch Changes
