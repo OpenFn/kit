@@ -1,6 +1,9 @@
 import test from 'ava';
 import run from '../src/run';
 import createLightningServer from '@openfn/lightning-mock';
+import { extractLogs, assertLog } from '../src/util';
+import { rimraf } from 'rimraf';
+
 // set up a lightning mock
 
 let server: any;
@@ -13,26 +16,18 @@ test.before(async () => {
   server = await createLightningServer({ port });
 });
 
-// test.serial.only(`test`, async (t) => {
-//   try {
-//     const result = await fetch('http://localhost:8967/api/provision/123');
-//     console.log(result.status);
-//     const body = await result.json();
-//     console.log(body);
-//   } catch (e) {
-//     console.log(e);
-//   }
-// });
-
 // This should fail against the built CLI right now
-test.serial(`OPENFN_ENDPOINT=${endpoint} openfn pull 123`, async (t) => {
-  const { stdout, stderr } = await run(t.title);
-  console.log(stdout);
-  console.log(stderr);
-  t.pass();
-  // t.regex(stdout, /Versions/);
-  // t.regex(stdout, /node.js/);
-  // t.regex(stdout, /cli/);
-  // t.regex(stdout, /runtime/);
-  // t.regex(stdout, /compiler/);
-});
+test.serial(
+  `OPENFN_ENDPOINT=${endpoint} openfn pull 123 --log-json`,
+  async (t) => {
+    const { stdout, stderr } = await run(t.title);
+    t.falsy(stderr);
+
+    const stdlogs = extractLogs(stdout);
+    assertLog(t, stdlogs, /Project pulled successfully/i);
+
+    // TODO what's an elegant way to tidy up here?
+    await rimraf('project.yaml');
+    await rimraf('.state.json');
+  }
+);
