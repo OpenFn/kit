@@ -1,5 +1,11 @@
 # @openfn/lightning-mock
 
+## 2.1.9
+
+### Patch Changes
+
+- 284d10a: Add 5s of clock tolerance to run token validation
+
 ## 2.1.8
 
 ### Patch Changes

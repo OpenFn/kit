@@ -53,4 +53,18 @@ test('token claims should include the issuer: Lightning', async (t) => {
   t.is(iss, 'Lightning');
 });
 
+test('token claims should include NBF (not before)', async (t) => {
+  const beforeGeneration = Math.floor(Date.now() / 1000);
+  const result = await generateRunToken('23', keys.private);
+  const afterGeneration = Math.floor(Date.now() / 1000);
+
+  const payload = await verify(result, keys.public);
+  const nbf = payload.nbf as number;
+
+  t.truthy(nbf);
+  t.true(typeof nbf === 'number');
+  t.true(nbf >= beforeGeneration);
+  t.true(nbf <= afterGeneration);
+});
+
 // TODO - claim should include exp and nbf
