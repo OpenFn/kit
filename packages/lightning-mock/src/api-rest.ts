@@ -3,7 +3,7 @@ import Router from '@koa/router';
 import { Logger } from '@openfn/logger';
 
 import { ServerState } from './server';
-import type { DevServer, LightningEvents } from './types';
+import type { DevServer } from './types';
 
 const proj = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -81,10 +81,10 @@ workflows:
 `;
 
 export default (
-  app: DevServer,
-  state: ServerState,
-  logger: Logger,
-  api: Api
+  _app: DevServer,
+  _state: ServerState,
+  _logger: Logger,
+  _api: any
 ): Koa.Middleware => {
   const router = new Router();
 

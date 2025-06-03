@@ -3,14 +3,14 @@ import test from 'ava';
 
 import { setup } from './util';
 
+// @ts-ignore
 let server: any;
-let client: any;
 
 const port = 3334;
 
 const endpoint = `http://localhost:${port}`;
 
-test.before(async () => ({ server, client } = await setup(port)));
+test.before(async () => ({ server } = await setup(port)));
 
 test.serial('should pull a project', async (t) => {
   const response = await fetch(`${endpoint}/api/provision/123`);
