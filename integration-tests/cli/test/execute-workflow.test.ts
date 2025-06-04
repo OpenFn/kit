@@ -232,3 +232,14 @@ test.serial(`openfn ${jobsPath}/globals-exp.json`, async (t) => {
     val: 'some-big-value',
   });
 });
+
+test.serial(`openfn ${jobsPath}/globals-path.json`, async (t) => {
+  await run(t.title);
+  const out = getJSON();
+  t.deepEqual(out, {
+    alter: 'heartsfx',
+    data: {},
+    final: 'some-big-valueheartsfx',
+    val: 'some-big-value',
+  });
+});
