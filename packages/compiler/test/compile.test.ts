@@ -244,3 +244,37 @@ export default [each(
   const { code: result } = compile(source);
   t.is(result, expected);
 });
+
+// TODO: this is error prone and shouldn't be desired
+test('try picking dangling identifiers from adaptor', (t) => {
+  const options = {
+    'add-imports': {
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+        },
+      ],
+    },
+  };
+  const source = 'fn(state=> doSomething(state))';
+  const expected = `import { fn, doSomething } from "@openfn/language-common";\nexport default [fn(state=> doSomething(state))];`;
+  const { code: result } = compile(source, options);
+  t.is(result, expected);
+});
+
+test('respect ignore list when exports not provided', (t) => {
+  const options = {
+    'add-imports': {
+      ignore: ['doSomething'],
+      adaptors: [
+        {
+          name: '@openfn/language-common',
+        },
+      ],
+    },
+  };
+  const source = 'fn(state=> doSomething(state))';
+  const expected = `import { fn } from "@openfn/language-common";\nexport default [fn(state=> doSomething(state))];`;
+  const { code: result } = compile(source, options);
+  t.is(result, expected);
+});
