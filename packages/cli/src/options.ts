@@ -17,6 +17,7 @@ export type Opts = {
   baseDir?: string;
   path?: string;
 
+  globals?: string;
   adaptor?: boolean | string;
   adaptors?: string[];
   apolloUrl?: string;

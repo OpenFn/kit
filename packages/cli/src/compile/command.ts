@@ -17,6 +17,7 @@ export type CompileOptions = Pick<
   | 'repoDir'
   | 'path'
   | 'useAdaptorsMonorepo'
+  | 'globals'
 > & {
   repoDir?: string;
 };

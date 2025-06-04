@@ -19,6 +19,7 @@ const loadPlan = async (
     | 'adaptors'
     | 'baseDir'
     | 'expandAdaptors'
+    | 'globals'
   >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
@@ -85,7 +86,10 @@ const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
 };
 
 const loadExpression = async (
-  options: Pick<Opts, 'expressionPath' | 'adaptors' | 'monorepoPath'>,
+  options: Pick<
+    Opts,
+    'expressionPath' | 'adaptors' | 'monorepoPath' | 'globals'
+  >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
   const expressionPath = options.expressionPath!;
@@ -109,6 +113,7 @@ const loadExpression = async (
       workflow: {
         name,
         steps: [step],
+        globals: options.globals,
       },
       options: wfOptions,
     };
@@ -270,7 +275,10 @@ const ensureAdaptors = (plan: CLIExecutionPlan) => {
 
 const loadXPlan = async (
   plan: CLIExecutionPlan,
-  options: Pick<Opts, 'monorepoPath' | 'baseDir' | 'expandAdaptors'>,
+  options: Pick<
+    Opts,
+    'monorepoPath' | 'baseDir' | 'expandAdaptors' | 'globals'
+  >,
   logger: Logger,
   defaultName: string = ''
 ) => {
@@ -284,6 +292,8 @@ const loadXPlan = async (
   ensureAdaptors(plan);
 
   // import global functions
+  // if globals is provided via cli argument. it takes precedence
+  if (options.globals) plan.workflow.globals = options.globals;
   await importGlobals(plan, options.baseDir!, logger);
 
   // Note that baseDir should be set up in the default function
