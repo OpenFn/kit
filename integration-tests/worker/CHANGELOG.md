@@ -1,5 +1,87 @@
 # @openfn/integration-tests-worker
 
+## 1.0.88
+
+### Patch Changes
+
+- Updated dependencies [728fb3d]
+  - @openfn/lightning-mock@2.2.0
+  - @openfn/ws-worker@1.13.6
+
+## 1.0.87
+
+### Patch Changes
+
+- Updated dependencies [284d10a]
+  - @openfn/lightning-mock@2.1.9
+  - @openfn/ws-worker@1.13.6
+
+## 1.0.85
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/engine-multi@1.6.5
+  - @openfn/ws-worker@1.13.4
+  - @openfn/lightning-mock@2.1.7
+
+## 1.0.84
+
+### Patch Changes
+
+- Updated dependencies [d79c828]
+  - @openfn/engine-multi@1.6.4
+  - @openfn/ws-worker@1.13.3
+  - @openfn/lightning-mock@2.1.6
+
+## 1.0.83
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/ws-worker@1.13.2
+  - @openfn/engine-multi@1.6.3
+  - @openfn/lightning-mock@2.1.5
+
+## 1.0.82
+
+### Patch Changes
+
+- Updated dependencies [b83d13c]
+- Updated dependencies [0bd4adf]
+  - @openfn/ws-worker@1.13.1
+
+## 1.0.81
+
+### Patch Changes
+
+- Updated dependencies [0a176aa]
+- Updated dependencies [0a176aa]
+- Updated dependencies [ce5022a]
+  - @openfn/logger@1.0.5
+  - @openfn/ws-worker@1.13.0
+  - @openfn/engine-multi@1.6.2
+  - @openfn/lightning-mock@2.1.4
+
+## 1.0.80
+
+### Patch Changes
+
+- Updated dependencies [e2f1197]
+  - @openfn/engine-multi@1.6.1
+  - @openfn/ws-worker@1.12.1
+  - @openfn/lightning-mock@2.1.3
+
+## 1.0.79
+
+### Patch Changes
+
+- Updated dependencies [deb7293]
+- Updated dependencies [d50c05d]
+  - @openfn/engine-multi@1.6.0
+  - @openfn/ws-worker@1.12.0
+  - @openfn/lightning-mock@2.1.2
+
 ## 1.0.78
 
 ### Patch Changes

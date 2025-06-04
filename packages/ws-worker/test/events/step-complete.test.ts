@@ -193,7 +193,6 @@ test('do not include dataclips in step:complete if output_dataclip is false', as
 test('do not include dataclips in step:complete if output_dataclip is too big', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
-  const result = { data: new Array(1024 * 1024 + 1).fill('z').join('') };
 
   const state = createRunState(plan);
   state.activeJob = jobId;
@@ -207,7 +206,7 @@ test('do not include dataclips in step:complete if output_dataclip is too big', 
     [RUN_LOG]: () => true,
     [STEP_COMPLETE]: (evt: StepCompletePayload) => {
       const clipId = state.inputDataclips['a'];
-      t.true(state.withheldDataclips[clipId])
+      t.true(state.withheldDataclips[clipId]);
 
       t.falsy(evt.output_dataclip_id);
       t.falsy(evt.output_dataclip);
@@ -218,7 +217,8 @@ test('do not include dataclips in step:complete if output_dataclip is too big', 
   const event = {
     jobId,
     workflowId: plan.id,
-    state: result,
+    state: {},
+    redacted: true,
     next: ['a'],
     mem: { job: 1, system: 10 },
     duration: 61,
@@ -232,19 +232,16 @@ test('do not include dataclips in step:complete if output_dataclip is too big', 
 test('log when the output_dataclip is too big', async (t) => {
   const plan = createPlan();
   const jobId = 'job-1';
-  const result = { data: new Array(1024 * 1024 + 1).fill('z').join('') };
 
   const state = createRunState(plan);
   state.activeJob = jobId;
   state.activeStep = 'b';
 
-  const options = {
-    payloadLimitMb: 1,
-  };
+  const options = {};
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
-      t.regex(e.message[0], /dataclip too large/i);
+      t.regex(e.message[0], /dataclip exceeds payload limit/i);
     },
     [STEP_COMPLETE]: () => true,
   });
@@ -252,7 +249,8 @@ test('log when the output_dataclip is too big', async (t) => {
   const event = {
     jobId,
     workflowId: plan.id,
-    state: result,
+    redacted: true,
+    state: {},
     next: ['a'],
     mem: { job: 1, system: 10 },
     duration: 61,

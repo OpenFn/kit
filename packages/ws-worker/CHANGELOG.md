@@ -1,5 +1,88 @@
 # ws-worker
 
+## 1.13.6
+
+### Patch Changes
+
+- 284d10a: Add 5s of clock tolerance to run token validation
+
+## 1.13.5
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.2
+  - @openfn/engine-multi@1.6.4
+  - @openfn/runtime@1.6.4
+
+## 1.13.4
+
+### Patch Changes
+
+- Fix a memory leak, affecting log-running worker instances
+- Updated dependencies
+  - @openfn/engine-multi@1.6.5
+
+## 1.13.3
+
+### Patch Changes
+
+- d79c828: Publish memory limit and timeout to info logs, not debug
+- Updated dependencies [d79c828]
+  - @openfn/engine-multi@1.6.4
+
+## 1.13.2
+
+### Patch Changes
+
+- On claim, rename pod_name to worker_name
+- Updated dependencies
+  - @openfn/lexicon@1.2.1
+  - @openfn/engine-multi@1.6.3
+  - @openfn/runtime@1.6.4
+
+## 1.13.1
+
+### Patch Changes
+
+- b83d13c: Add DEFAULT_MESSAGE_TIMEOUT_SECONDS env var and tweaked some error handling around lightning messaging
+- 0bd4adf: Include pod name in logs when claiming
+
+## 1.13.0
+
+### Minor Changes
+
+- ce5022a: Added sentry notifications for server and websocket errors
+
+### Patch Changes
+
+- 0a176aa: Ignore empty log lines (don't send them to lightning)
+- Updated dependencies [0a176aa]
+  - @openfn/logger@1.0.5
+  - @openfn/engine-multi@1.6.2
+  - @openfn/lexicon@1.2.0
+  - @openfn/runtime@1.6.4
+
+## 1.12.1
+
+### Patch Changes
+
+- e2f1197: Better logging on credential errors
+- Updated dependencies [e2f1197]
+  - @openfn/engine-multi@1.6.1
+
+## 1.12.0
+
+### Minor Changes
+
+- d50c05d: Fix an issue where large payloads can cause the worker to OOM crash
+
+### Patch Changes
+
+- Updated dependencies [deb7293]
+- Updated dependencies [d50c05d]
+  - @openfn/engine-multi@1.6.0
+
 ## 1.11.1
 
 ### Patch Changes

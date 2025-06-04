@@ -3,17 +3,18 @@ import { timestamp } from '@openfn/logger';
 import type { WorkflowStartPayload } from '@openfn/engine-multi';
 
 import { RUN_START } from '../events';
-import { sendEvent, Context, onJobLog } from '../api/execute';
+import { Context, onJobLog } from '../api/execute';
 import calculateVersionString from '../util/versions';
 
 import { timeInMicroseconds } from '../util';
 import getVersion from '../util/load-version';
+import { sendEvent } from '../util/send-event';
 
 export default async function onRunStart(
   context: Context,
   event: WorkflowStartPayload
 ) {
-  const { channel, state, options = {} } = context;
+  const { state, options = {} } = context;
   // Cheat on the timestamp time to make sure this is the first thing in the log
   const time = (timestamp() - BigInt(10e6)).toString();
 
@@ -35,7 +36,7 @@ export default async function onRunStart(
     ...event.versions,
   };
 
-  await sendEvent<RunStartPayload>(channel, RUN_START, {
+  await sendEvent<RunStartPayload>(context, RUN_START, {
     versions,
     /// use the engine time in run start
     timestamp: timeInMicroseconds(event.time),

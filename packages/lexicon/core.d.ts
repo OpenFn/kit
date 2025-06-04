@@ -7,6 +7,33 @@ export type SourceMapWithOperations = RawSourceMap & {
   operations: [{ line: number; order: number; name: string }];
 };
 
+// The serialised shape of of a project, as JSON
+// this is what is saved to project.yaml
+export type Project = {
+  name: string; // human readable name
+  description?: string;
+
+  // object or array?
+  workflows: Workflow[];
+
+  options: {};
+
+  credentials: any;
+
+  // metadata about the app for sync
+  openfn?: ProjectConfig;
+};
+
+export type ProjectConfig = {
+  id: string;
+  endpoint: string;
+  name: string;
+  env: string;
+  inserted_at: string;
+  created_at: string;
+  fetched_at: string; // this is when we last fetched the metadata
+};
+
 /**
  * An execution plan is a portable definition of a Work Order,
  * or, a unit of work to execute
@@ -37,7 +64,48 @@ export type Workflow = {
 
   // a path to a file where functions are defined
   globals?: string;
+  // properties which map to an openfn project
+  // only used by projects
+  openfn?: {
+    id: string;
+  };
 };
+
+export type StepId = string;
+
+/**
+ * A thing to be run as part of a workflow
+ * (usually a job)
+ */
+export interface Step {
+  id?: StepId;
+  name?: string; // user-friendly name used in logging
+
+  next?: string | Record<StepId, StepEdge>;
+  previous?: StepId;
+}
+
+/**
+ * Not actually keen on the node/edge semantics here
+ * Maybe StepLink?
+ */
+export type StepEdge = boolean | string | ConditionalStepEdge;
+
+export type ConditionalStepEdge = {
+  condition?: string; // Javascript expression (function body, not function)
+  label?: string;
+  disabled?: boolean;
+};
+
+/**
+ * A no-op type of Step
+ */
+export interface Trigger extends Step {}
+
+/**
+ * An expression which has been compiled, and so includes import and export statements
+ */
+export type CompiledExpression = Expression;
 
 /**
  * A type of Step which executes code
@@ -113,42 +181,6 @@ export type WorkflowOptions = {
   // TODO not supported yet I don't think?
   sanitize?: SanitizePolicies;
 };
-
-export type StepId = string;
-
-/**
- * A thing to be run as part of a workflow
- * (usually a job)
- */
-export interface Step {
-  id?: StepId;
-  name?: string; // user-friendly name used in logging
-
-  next?: string | Record<StepId, StepEdge>;
-  previous?: StepId;
-}
-
-/**
- * Not actually keen on the node/edge semantics here
- * Maybe StepLink?
- */
-export type StepEdge = boolean | string | ConditionalStepEdge;
-
-export type ConditionalStepEdge = {
-  condition?: string; // Javascript expression (function body, not function)
-  label?: string;
-  disabled?: boolean;
-};
-
-/**
- * A no-op type of Step
- */
-export interface Trigger extends Step {}
-
-/**
- * An expression which has been compiled, and so includes import and export statements
- */
-export type CompiledExpression = Expression;
 
 /**
  * This is what serialized error objects should look like

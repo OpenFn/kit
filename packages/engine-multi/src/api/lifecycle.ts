@@ -60,8 +60,10 @@ export const workflowComplete = (
   // }
 
   state.status = 'done';
-  state.result = result;
   state.duration = Date.now() - state.startTime!;
+
+  // Important! We do NOT write the result back to this state object
+  // It has a tendency to not get garbage collected and causing memory problems
 
   // TODO do we have to remove this from the active workflows array?
   // const idx = activeWorkflows.findIndex((id) => id === workflowId);
@@ -93,7 +95,7 @@ export const jobComplete = (
   context: ExecutionContext,
   event: internalEvents.JobCompleteEvent
 ) => {
-  const { threadId, state, duration, jobId, next, mem } = event;
+  const { threadId, state, duration, jobId, next, mem, redacted } = event;
 
   context.emit(externalEvents.JOB_COMPLETE, {
     threadId,
@@ -101,6 +103,7 @@ export const jobComplete = (
     duration,
     jobId,
     next,
+    redacted,
     mem,
     time: timestamp(),
   });

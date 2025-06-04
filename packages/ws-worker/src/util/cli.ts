@@ -5,6 +5,7 @@ import { hideBin } from 'yargs/helpers';
 const DEFAULT_PORT = 2222;
 const DEFAULT_WORKER_CAPACITY = 5;
 const DEFAULT_SOCKET_TIMEOUT_SECONDS = 10;
+const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 30;
 
 type Args = {
   _: string[];
@@ -25,7 +26,10 @@ type Args = {
   runMemory?: number;
   secret?: string;
   socketTimeoutSeconds?: number;
+  messageTimeoutSeconds?: number;
   statePropsToRemove?: string[];
+  sentryDsn?: string;
+  sentryEnv?: string;
 };
 
 type ArgTypes = string | string[] | number | undefined;
@@ -52,22 +56,25 @@ function setArg(
 
 export default function parseArgs(argv: string[]): Args {
   const {
+    OPENFN_ADAPTORS_REPO,
     WORKER_BACKOFF,
     WORKER_CAPACITY,
-    WORKER_COLLECTIONS_VERSION,
     WORKER_COLLECTIONS_URL,
+    WORKER_COLLECTIONS_VERSION,
     WORKER_LIGHTNING_PUBLIC_KEY,
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
     WORKER_MAX_PAYLOAD_MB,
     WORKER_MAX_RUN_DURATION_SECONDS,
     WORKER_MAX_RUN_MEMORY_MB,
+    WORKER_MESSAGE_TIMEOUT_SECONDS,
     WORKER_PORT,
     WORKER_REPO_DIR,
     WORKER_SECRET,
-    WORKER_STATE_PROPS_TO_REMOVE,
+    WORKER_SENTRY_DSN,
+    WORKER_SENTRY_ENV,
     WORKER_SOCKET_TIMEOUT_SECONDS,
-    OPENFN_ADAPTORS_REPO,
+    WORKER_STATE_PROPS_TO_REMOVE,
   } = process.env;
 
   const parser = yargs(hideBin(argv))
@@ -90,15 +97,26 @@ export default function parseArgs(argv: string[]): Args {
     .option('monorepo-dir', {
       alias: 'm',
       description:
-        'Path to the adaptors mono repo, from where @local adaptors will be loaded. Env: OPENFN_ADAPTORS_REPO',
+        'Path to the adaptors monorepo, from where @local adaptors will be loaded. Env: OPENFN_ADAPTORS_REPO',
     })
     .option('secret', {
       alias: 's',
       description:
         'Worker secret. (comes from WORKER_SECRET by default). Env: WORKER_SECRET',
     })
+    .option('sentry-dsn', {
+      alias: ['dsn'],
+      description: 'Sentry DSN. Env: WORKER_SENTRY_DSN',
+    })
+    .option('sentry-env', {
+      description:
+        "Sentry environment. Defaults to 'dev'. Env: WORKER_SENTRY_ENV",
+    })
     .option('socket-timeout', {
-      description: `Timeout for websockets to Lighting, in seconds. Defaults to 10.`,
+      description: `Timeout for websockets to Lightning, in seconds. Defaults to 10.Env: WORKER_SOCKET_TIMEOUT_SECONDS`,
+    })
+    .option('message-timeout', {
+      description: `Timeout for messages in the run channel in seconds. Defaults to 1. Env: WORKER_MESSAGE_TIMEOUT_SECONDS`,
     })
     .option('lightning-public-key', {
       description:
@@ -171,6 +189,8 @@ export default function parseArgs(argv: string[]): Args {
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
     monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
     secret: setArg(args.secret, WORKER_SECRET),
+    sentryDsn: setArg(args.sentryDsn, WORKER_SENTRY_DSN),
+    sentryEnv: setArg(args.sentryEnv, WORKER_SENTRY_ENV, 'dev'),
     lightningPublicKey: setArg(
       args.lightningPublicKey,
       WORKER_LIGHTNING_PUBLIC_KEY
@@ -194,6 +214,11 @@ export default function parseArgs(argv: string[]): Args {
       args.socketTimeoutSeconds,
       WORKER_SOCKET_TIMEOUT_SECONDS,
       DEFAULT_SOCKET_TIMEOUT_SECONDS
+    ),
+    messageTimeoutSeconds: setArg(
+      args.messageTimeoutSeconds,
+      WORKER_MESSAGE_TIMEOUT_SECONDS,
+      DEFAULT_MESSAGE_TIMEOUT_SECONDS
     ),
     collectionsVersion: setArg(
       args.collectionsVersion,

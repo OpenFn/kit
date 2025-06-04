@@ -31,6 +31,8 @@ const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms
 
 const DEFAULT_MEMORY_LIMIT_MB = 500;
 
+const DEFAULT_PAYLOAD_LIMIT_MB = 10;
+
 // For each workflow, create an API object with its own event emitter
 // this is a bit weird - what if the emitter went on state instead?
 const createWorkflowEvents = (
@@ -72,6 +74,7 @@ export type EngineOptions = {
   logger: Logger;
   maxWorkers?: number;
   memoryLimitMb?: number;
+  payloadLimitMb?: number;
   noCompile?: boolean; // TODO deprecate in favour of compile
   repoDir: string;
   resolvers?: LazyResolvers;
@@ -100,6 +103,8 @@ const createEngine = async (
 
   const defaultTimeout = options.runTimeoutMs || DEFAULT_RUN_TIMEOUT;
   const defaultMemoryLimit = options.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB;
+  const defaultPayloadLimit =
+    options.payloadLimitMb || DEFAULT_PAYLOAD_LIMIT_MB;
 
   let resolvedWorkerPath;
   if (workerPath) {
@@ -173,6 +178,7 @@ const createEngine = async (
         resolvers: opts.resolvers,
         runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
+        payloadLimitMb: opts.payloadLimitMb ?? defaultPayloadLimit,
         jobLogLevel: opts.jobLogLevel,
       },
     });
@@ -192,6 +198,8 @@ const createEngine = async (
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
+
+        context.removeAllListeners();
       });
     }, 1);
 

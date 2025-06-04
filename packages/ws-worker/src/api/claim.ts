@@ -9,10 +9,11 @@ import type { ServerApp } from '../server';
 
 const mockLogger = createMockLogger();
 
-const verifyToken = async (token: string, publicKey: string) => {
+export const verifyToken = async (token: string, publicKey: string) => {
   const key = crypto.createPublicKey(publicKey);
   const { payload } = await jose.jwtVerify(token, key, {
     issuer: 'Lightning',
+    clockTolerance: '5s', // Allow 5 seconds of clock skew
   });
 
   if (payload) {
@@ -24,6 +25,10 @@ type ClaimOptions = {
   maxWorkers?: number;
 };
 
+// used to report the pod name in logging, for tracking
+const { DEPLOYED_POD_NAME, WORKER_NAME } = process.env;
+const NAME = WORKER_NAME || DEPLOYED_POD_NAME;
+
 const claim = (
   app: ServerApp,
   logger: Logger = mockLogger,
@@ -31,6 +36,7 @@ const claim = (
 ) => {
   return new Promise<void>((resolve, reject) => {
     const { maxWorkers = 5 } = options;
+    const podName = NAME ? `[${NAME}] ` : '';
 
     const activeWorkers = Object.keys(app.workflows).length;
     if (activeWorkers >= maxWorkers) {
@@ -47,11 +53,14 @@ const claim = (
 
     const start = Date.now();
     app.queueChannel
-      .push<ClaimPayload>(CLAIM, { demand: 1 })
+      .push<ClaimPayload>(CLAIM, {
+        demand: 1,
+        worker_name: NAME || null,
+      })
       .receive('ok', ({ runs }: ClaimReply) => {
         const duration = Date.now() - start;
         logger.debug(
-          `claimed ${runs.length} runs in ${duration}ms (${
+          `${podName}claimed ${runs.length} runs in ${duration}ms (${
             runs.length ? runs.map((r) => r.id).join(',') : '-'
           })`
         );
@@ -79,7 +88,7 @@ const claim = (
             logger.debug('skipping run token validation for', run.id);
           }
 
-          logger.debug('starting run', run.id);
+          logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
           resolve();
         });

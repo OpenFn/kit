@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 1.0.5
+
+### Patch Changes
+
+- 0a176aa: In JSON mode, don't log empty messages
+
 ## 1.0.4
 
 ### Patch Changes

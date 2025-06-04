@@ -1,4 +1,4 @@
-import path from 'node:path';
+import nodePath from 'node:path';
 import yargs from 'yargs';
 
 import type { CommandList } from './commands';
@@ -12,24 +12,29 @@ import {
 // Central type definition for the main options
 // This represents the types coming out of yargs,
 // after ensure() is called
+// TODO does this big central list of options feels a bit less useful
+// as the commands diversify?
 export type Opts = {
   command?: CommandList;
   baseDir?: string;
-  path?: string;
 
   globals?: string;
   adaptor?: boolean | string;
   adaptors?: string[];
   apolloUrl?: string;
+  apiKey?: string;
   autoinstall?: boolean;
+  beta?: boolean;
   cacheSteps?: boolean;
   compile?: boolean;
   configPath?: string;
   confirm?: boolean;
   describe?: string;
   end?: string; // workflow end node
+  env?: string;
   expandAdaptors?: boolean; // for unit tests really
   expressionPath?: string;
+  endpoint?: string;
   force?: boolean;
   ignoreImports?: boolean | string[];
   immutable?: boolean;
@@ -41,6 +46,7 @@ export type Opts = {
   outputPath?: string;
   outputStdout?: boolean;
   packages?: string[];
+  path?: string;
   planPath?: string;
   projectId?: string;
   projectPath?: string;
@@ -54,6 +60,7 @@ export type Opts = {
   stateStdin?: string;
   timeout?: number; // ms
   useAdaptorsMonorepo?: boolean;
+  workflow: string;
 
   // deprecated
   workflowPath?: string;
@@ -125,6 +132,15 @@ export const autoinstall: CLIOption = {
   },
 };
 
+export const apikey: CLIOption = {
+  name: 'apikey',
+  yargs: {
+    alias: ['key', 'pat', 'token'],
+    description:
+      '[beta only] API Key, Personal Access Token (Pat), or other access token',
+  },
+};
+
 // how do I alias this to --staging, prod etc
 export const apolloUrl: CLIOption = {
   name: 'apollo-url',
@@ -150,6 +166,16 @@ export const apolloUrl: CLIOption = {
         didLoadShortcut = true;
       }
     });
+  },
+};
+
+export const beta: CLIOption = {
+  name: 'beta',
+  yargs: {
+    boolean: true,
+    description:
+      'Use the beta alternative of this command: see https://github.com/OpenFn/kit/wiki/Pull-Deploy-Beta',
+    default: false,
   },
 };
 
@@ -223,6 +249,21 @@ export const expandAdaptors: CLIOption = {
   },
 };
 
+export const endpoint: CLIOption = {
+  name: 'endpoint',
+  yargs: {
+    alias: ['lightning'],
+    description: '[beta only] URL to Lightning endpoint',
+  },
+};
+
+export const env: CLIOption = {
+  name: 'env',
+  yargs: {
+    description: '[beta only] Environment name (eg staging, prod, branch)',
+  },
+};
+
 export const force: CLIOption = {
   name: 'force',
   yargs: {
@@ -260,7 +301,7 @@ export const ignoreImports: CLIOption = {
 const getBaseDir = (opts: { path?: string }) => {
   const basePath = opts.path ?? '.';
   if (/\.(jso?n?)$/.test(basePath)) {
-    return path.dirname(basePath);
+    return nodePath.dirname(basePath);
   }
   return basePath;
 };
@@ -291,7 +332,7 @@ export const inputPath: CLIOption = {
       opts.expressionPath = basePath;
     } else {
       const base = getBaseDir(opts);
-      setDefaultValue(opts, 'expressionPath', path.join(base, 'job.js'));
+      setDefaultValue(opts, 'expressionPath', nodePath.join(base, 'job.js'));
     }
   },
 };
@@ -346,7 +387,7 @@ export const outputPath: CLIOption = {
         delete opts.outputPath;
       } else {
         const base = getBaseDir(opts);
-        setDefaultValue(opts, 'outputPath', path.join(base, 'output.json'));
+        setDefaultValue(opts, 'outputPath', nodePath.join(base, 'output.json'));
       }
     }
     // remove the alias
@@ -360,6 +401,13 @@ export const projectPath: CLIOption = {
     string: true,
     alias: ['p'],
     description: 'The location of your project.yaml file',
+  },
+};
+
+export const path: CLIOption = {
+  name: 'path',
+  yargs: {
+    description: 'Path',
   },
 };
 
@@ -488,5 +536,13 @@ export const sanitize: CLIOption = {
     const err = 'Unknown sanitize value provided: ' + opts.sanitize;
     console.error(err);
     throw new Error(err);
+  },
+};
+
+export const workflow: CLIOption = {
+  name: 'workflow',
+  yargs: {
+    string: true,
+    description: 'Name of the workflow to execute',
   },
 };

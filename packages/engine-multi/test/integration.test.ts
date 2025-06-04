@@ -5,8 +5,9 @@ import type { ExecutionPlan } from '@openfn/lexicon';
 
 import createAPI from '../src/api';
 import type { RuntimeEngine } from '../src';
+import { REDACTED_STATE, REDACTED_LOG } from '../src/util/ensure-payload-size';
 
-const logger = createMockLogger();
+const logger = createMockLogger(undefined, { level: 'debug' });
 let api: RuntimeEngine;
 
 const emptyState = {};
@@ -480,3 +481,69 @@ test.serial('accept initial state', (t) => {
 
 test.todo('should report an error');
 test.todo('various workflow options (start, initial state)');
+
+test.serial('redact final state if it exceeds the payload limit', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const expression = `
+export default [(state) => {
+  state.data = new Array(1024 * 1024).fill('a')
+  return state;
+}]`;
+
+    const plan = createPlan([
+      {
+        expression,
+      },
+    ]);
+    const options = {
+      payloadLimitMb: 0.5,
+    };
+
+    api
+      .execute(plan, emptyState, options)
+      .on('workflow-complete', ({ state }) => {
+        t.log(state);
+        t.deepEqual(REDACTED_STATE, state);
+        done();
+      });
+  });
+});
+
+test.serial('redact log line state if it exceeds the payload limit', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const expression = `
+export default [(state) => {
+  console.log(new Array(1024 * 1024).fill('a'));
+  return state;
+}]`;
+
+    const plan = createPlan([
+      {
+        expression,
+      },
+    ]);
+    const options = {
+      payloadLimitMb: 0.1,
+    };
+
+    api
+      .execute(plan, emptyState, options)
+      .on('workflow-log', (evt) => {
+        console.log(evt);
+        if (evt.name === 'JOB') {
+          t.deepEqual(evt.message, REDACTED_LOG.message);
+        }
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
+  });
+});

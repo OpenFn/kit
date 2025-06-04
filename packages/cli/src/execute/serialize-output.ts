@@ -1,6 +1,7 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { Logger } from '../util/logger';
 import { Opts } from '../options';
+import { dirname } from 'node:path';
 
 const serializeOutput = async (
   options: Pick<Opts, 'outputStdout' | 'outputPath'>,
@@ -23,6 +24,8 @@ const serializeOutput = async (
     logger.success(`Result: `);
     logger.always(output);
   } else if (options.outputPath) {
+    await mkdir(dirname(options.outputPath), { recursive: true });
+
     logger.debug(`Writing output to ${options.outputPath}`);
     await writeFile(options.outputPath, output);
     logger.success(`State written to ${options.outputPath}`);

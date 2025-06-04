@@ -1,5 +1,26 @@
 # @openfn/integration-tests-execute
 
+## 1.0.20
+
+### Patch Changes
+
+- @openfn/compiler@1.0.4
+- @openfn/runtime@1.6.4
+
+## 1.0.19
+
+### Patch Changes
+
+- @openfn/compiler@1.0.3
+- @openfn/runtime@1.6.4
+
+## 1.0.18
+
+### Patch Changes
+
+- @openfn/compiler@1.0.2
+- @openfn/runtime@1.6.4
+
 ## 1.0.17
 
 ### Patch Changes

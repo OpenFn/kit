@@ -1,5 +1,61 @@
 # engine-multi
 
+## 1.6.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.2
+  - @openfn/compiler@1.0.4
+  - @openfn/runtime@1.6.4
+
+## 1.6.5
+
+### Patch Changes
+
+- Fix a memory leak, affecting log-running worker instances
+
+## 1.6.4
+
+### Patch Changes
+
+- d79c828: Publish memory limit and timeout to info logs, not debug
+
+## 1.6.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.1
+  - @openfn/compiler@1.0.3
+  - @openfn/runtime@1.6.4
+
+## 1.6.2
+
+### Patch Changes
+
+- Updated dependencies [0a176aa]
+  - @openfn/logger@1.0.5
+  - @openfn/compiler@1.0.2
+  - @openfn/lexicon@1.2.0
+  - @openfn/runtime@1.6.4
+
+## 1.6.1
+
+### Patch Changes
+
+- e2f1197: Better logging on credential errors
+
+## 1.6.0
+
+### Minor Changes
+
+- d50c05d: Fix an issue where large payloads can cause the worker to OOM crash
+
+### Patch Changes
+
+- deb7293: Don't return the result of a task unless explicitly requested
+
 ## 1.5.1
 
 ### Patch Changes

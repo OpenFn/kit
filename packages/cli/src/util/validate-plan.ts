@@ -23,6 +23,9 @@ const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
   assertOptionsStructure(options, logger);
 };
 
+// TODO do we really need this stuff? I'm not wild about it
+// It is useful for manual workflow construction
+// skipped for now just while I get things working
 const assertStepStructure = (step: Job | Trigger, index: number) => {
   const allowedKeys = [
     'id',
@@ -34,6 +37,7 @@ const assertStepStructure = (step: Job | Trigger, index: number) => {
     'state',
     'configuration',
     'linker',
+    'openfn',
   ];
 
   for (const key in step) {

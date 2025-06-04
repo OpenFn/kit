@@ -87,5 +87,5 @@ function mockRun(plan: MockExecutionPlan, input: State, _options = {}) {
 
 register({
   run: async (plan: MockExecutionPlan, input: State, _options?: any) =>
-    execute(plan.id, () => mockRun(plan, input)),
+    execute(plan.id, () => mockRun(plan, input), { directReturn: true }),
 });

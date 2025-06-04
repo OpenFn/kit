@@ -1,5 +1,17 @@
 # lexicon
 
+## 1.2.2
+
+### Patch Changes
+
+- Sync types
+
+## 1.2.1
+
+### Patch Changes
+
+- On claim, rename pod_name to worker_name
+
 ## 1.2.0
 
 ### Minor Changes

@@ -33,6 +33,8 @@ function engineReady(engine: any) {
     lightning: args.lightning,
     logger,
     secret: args.secret,
+    sentryDsn: args.sentryDsn,
+    sentryEnv: args.sentryEnv,
     noLoop: !args.loop,
     // TODO need to feed this through properly
     backoff: {
@@ -44,6 +46,8 @@ function engineReady(engine: any) {
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,
     monorepoDir: args.monorepoDir,
+    messageTimeoutSeconds: args.messageTimeoutSeconds,
+    socketTimeoutSeconds: args.socketTimeoutSeconds,
   };
 
   if (args.lightningPublicKey) {

@@ -6,8 +6,8 @@ import { timestamp } from '@openfn/logger';
 import { STEP_COMPLETE } from '../events';
 import { stringify, timeInMicroseconds } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
-import { sendEvent, onJobLog, Context } from '../api/execute';
-import ensurePayloadSize from '../util/ensure-payload-size';
+import { onJobLog, Context } from '../api/execute';
+import { sendEvent } from '../util/send-event';
 
 export default async function onStepComplete(
   context: Context,
@@ -15,7 +15,7 @@ export default async function onStepComplete(
   // TODO this isn't terribly graceful, but accept an error for crashes
   error?: any
 ) {
-  const { channel, state, options } = context;
+  const { state, options } = context;
   const dataclipId = crypto.randomUUID();
 
   const step_id = state.activeStep as string;
@@ -54,30 +54,27 @@ export default async function onStepComplete(
     timestamp: timeInMicroseconds(event.time),
   } as StepCompletePayload;
 
-  try {
-    if (!options || options.outputDataclips !== false) {
-      const payload = stringify(outputState);
-      ensurePayloadSize(payload, options?.payloadLimitMb);
-
-      // Write the dataclip if it's not too big
-      evt.output_dataclip = payload;
-    }
-    evt.output_dataclip_id = dataclipId;
-  } catch (e) {
+  if (event.redacted) {
     state.withheldDataclips[dataclipId] = true;
     evt.output_dataclip_error = 'DATACLIP_TOO_LARGE';
-
     const time = (timestamp() - BigInt(10e6)).toString();
     // If the dataclip is too big, return the step without it
     // (the workflow will carry on internally)
     await onJobLog(context, {
       time,
       message: [
-        'Dataclip too large. This dataclip will not be sent back to lighting.',
+        'Dataclip exceeds payload limit: output will not be sent back to the app.',
       ],
       level: 'info',
       name: 'R/T',
     });
+  } else {
+    evt.output_dataclip_id = dataclipId;
+    if (!options || options.outputDataclips !== false) {
+      const payload = stringify(outputState);
+      // Write the dataclip if it's not too big
+      evt.output_dataclip = payload;
+    }
   }
 
   const reason = calculateJobExitReason(job_id, event.state, error);
@@ -85,5 +82,5 @@ export default async function onStepComplete(
 
   Object.assign(evt, reason);
 
-  return sendEvent<StepCompletePayload>(channel, STEP_COMPLETE, evt);
+  return sendEvent<StepCompletePayload>(context, STEP_COMPLETE, evt);
 }

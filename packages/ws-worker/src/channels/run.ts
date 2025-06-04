@@ -1,7 +1,8 @@
 import type { GetPlanReply, LightningPlan } from '@openfn/lexicon/lightning';
+import * as Sentry from '@sentry/node';
 import type { Logger } from '@openfn/logger';
 
-import { getWithReply } from '../util';
+import { sendEvent } from '../util';
 import { GET_PLAN } from '../events';
 import type { Channel, Socket } from '../types';
 
@@ -14,7 +15,8 @@ const joinRunChannel = (
   socket: Socket,
   token: string,
   runId: string,
-  logger: Logger
+  logger: Logger,
+  timeout: number = 30
 ) => {
   return new Promise<{
     channel: Channel;
@@ -26,24 +28,32 @@ const joinRunChannel = (
 
     // TODO use proper logger
     const channelName = `run:${runId}`;
-    logger.debug('connecting to ', channelName);
+    logger.info(`JOINING ${channelName}`);
+    logger.debug(`connecting to ${channelName} with timeout ${timeout}s`);
     const channel = socket.channel(channelName, { token });
     channel
-      .join()
+      .join(timeout * 1000)
       .receive('ok', async (e: any) => {
         if (!didReceiveOk) {
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
-          const run = await getWithReply<GetPlanReply>(channel, GET_PLAN);
+          const run = await sendEvent<GetPlanReply>(
+            { channel, logger, id: runId },
+            GET_PLAN
+          );
           resolve({ channel, run });
         }
       })
       .receive('error', (err: any) => {
+        Sentry.captureException(err);
         logger.error(`error connecting to ${channelName}`, err);
+        channel?.leave();
         reject(err);
       })
       .receive('timeout', (err: any) => {
+        Sentry.captureException(err);
         logger.error(`Timeout for ${channelName}`, err);
+        channel?.leave();
         reject(err);
       });
     channel.onClose(() => {

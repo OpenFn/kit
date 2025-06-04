@@ -1,7 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
-import type { Job, LegacyJob } from '@openfn/lexicon';
+import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
 import { Opts } from '../../src/options';
@@ -16,7 +16,7 @@ const sampleXPlan = {
   },
 };
 
-const createPlan = (steps: Partial<LegacyJob>[] = []) => ({
+const createPlan = (steps: Partial<Job>[] = []) => ({
   workflow: {
     steps,
   },
@@ -41,6 +41,8 @@ test.afterEach(() => {
   logger._reset();
   mock.restore();
 });
+
+// TODO: add some tests for handling yaml stuff
 
 test.serial('expression: load a plan from an expression.js', async (t) => {
   const opts = {

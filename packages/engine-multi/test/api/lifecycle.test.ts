@@ -122,7 +122,6 @@ test('workflowComplete: updates state', (t) => {
 
   t.is(state.status, 'done');
   t.assert(state.duration! > 0);
-  t.deepEqual(state.result, result);
 });
 
 test(`job-start: emits ${e.JOB_START} with key fields`, (t) => {

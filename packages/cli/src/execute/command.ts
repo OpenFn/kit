@@ -65,7 +65,7 @@ const options = [
 ];
 
 const executeCommand: yargs.CommandModule<ExecuteOptions> = {
-  command: 'execute [path]',
+  command: 'execute <path> [workflow]',
   describe: `Run an openfn expression or workflow. Get more help by running openfn <command> help.
   \nExecute will run a expression/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
   \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
@@ -73,6 +73,7 @@ const executeCommand: yargs.CommandModule<ExecuteOptions> = {
   handler: ensure('execute', options),
   builder: (yargs) =>
     build(options, yargs)
+      // TODO this is now path or workflow name
       .positional('path', {
         describe:
           'The path to load the job or workflow from (a .js or .json file or a dir containing a job.js file)',

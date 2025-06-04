@@ -313,7 +313,7 @@ test.serial('run a job with bad credentials', (t) => {
       t.is(payload.error_type, 'CredentialLoadError');
       t.regex(
         payload.error_message,
-        /Failed to load credential zzz: not_found/
+        /Failed to load credential zzz: \[fetch:credential\] not_found/
       );
       done();
     });
@@ -554,6 +554,31 @@ test.serial("Don't send job logs to stdout", (t) => {
         (l) => l.name === 'engine' && l.message[0].match(/complete workflow/i)
       );
       t.truthy(runtimeLog);
+      done();
+    });
+
+    lightning.enqueueRun(attempt);
+  });
+});
+
+// This is a test against job logs - but it should work
+// exactly the same way for all logs
+test.serial("Don't send empty logs to lightning", (t) => {
+  return new Promise(async (done) => {
+    const attempt = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/language-common@latest',
+          body: 'fn((s) =>  { console.log(); return s })',
+        },
+      ],
+    };
+
+    lightning.once('run:complete', () => {
+      // The engine logger shouldn't print out any job logs
+      const jobLogs = engineLogger._history.filter((l) => l.name === 'JOB');
+      t.is(jobLogs.length, 0);
       done();
     });
 
@@ -964,6 +989,45 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
       if (evt.payload.source === 'JOB') {
         t.regex(evt.payload.message[0], /redacted/i);
       }
+    });
+
+    lightning.enqueueRun(run);
+
+    lightning.once('run:complete', () => {
+      done();
+    });
+  });
+});
+
+test.serial("Don't return dataclips which exceed the payload limit", (t) => {
+  return new Promise(async (done) => {
+    if (!worker.destroyed) {
+      await worker.destroy();
+    }
+
+    ({ worker } = await initWorker(lightningPort, {
+      maxWorkers: 1,
+      // use the dummy repo to remove autoinstall
+      repoDir: path.resolve('./dummy-repo'),
+    }));
+
+    const run = {
+      id: crypto.randomUUID(),
+      jobs: [
+        {
+          adaptor: '@openfn/test-adaptor@1.0.0',
+          body: `fn(() => ({ data: 'abdef' }))`,
+        },
+      ],
+      options: {
+        payload_limit_mb: 0,
+      },
+    };
+
+    lightning.on('step:complete', (evt) => {
+      t.is(evt.payload.output_dataclip_error, 'DATACLIP_TOO_LARGE');
+      t.falsy(evt.payload.output_dataclip_id);
+      t.falsy(evt.payload.output_dataclip);
     });
 
     lightning.enqueueRun(run);

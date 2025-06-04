@@ -1,5 +1,72 @@
 # @openfn/lightning-mock
 
+## 2.2.0
+
+### Minor Changes
+
+- 728fb3d: Stub in a provisioner API for very basic testing
+
+## 2.1.9
+
+### Patch Changes
+
+- 284d10a: Add 5s of clock tolerance to run token validation
+
+## 2.1.8
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/engine-multi@1.6.6
+
+## 2.1.7
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/engine-multi@1.6.5
+
+## 2.1.6
+
+### Patch Changes
+
+- Updated dependencies [d79c828]
+  - @openfn/engine-multi@1.6.4
+
+## 2.1.5
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/lexicon@1.2.1
+  - @openfn/engine-multi@1.6.3
+  - @openfn/runtime@1.6.4
+
+## 2.1.4
+
+### Patch Changes
+
+- Updated dependencies [0a176aa]
+  - @openfn/logger@1.0.5
+  - @openfn/engine-multi@1.6.2
+  - @openfn/lexicon@1.2.0
+  - @openfn/runtime@1.6.4
+
+## 2.1.3
+
+### Patch Changes
+
+- Updated dependencies [e2f1197]
+  - @openfn/engine-multi@1.6.1
+
+## 2.1.2
+
+### Patch Changes
+
+- Updated dependencies [deb7293]
+- Updated dependencies [d50c05d]
+  - @openfn/engine-multi@1.6.0
+
 ## 2.1.1
 
 ### Patch Changes
