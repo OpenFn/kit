@@ -223,7 +223,8 @@ test.serial(
 );
 
 test.serial(`openfn ${jobsPath}/globals-exp.json`, async (t) => {
-  await run(t.title);
+  const res = await run(t.title);
+  t.falsy(res.err);
   const out = getJSON();
   t.deepEqual(out, {
     alter: 'heartsfx',
@@ -234,12 +235,41 @@ test.serial(`openfn ${jobsPath}/globals-exp.json`, async (t) => {
 });
 
 test.serial(`openfn ${jobsPath}/globals-path.json`, async (t) => {
-  await run(t.title);
+  const res = await run(t.title);
+  t.falsy(res.err);
   const out = getJSON();
   t.deepEqual(out, {
-    alter: 'heartsfx',
+    alter: 'heart.path.value',
     data: {},
-    final: 'some-big-valueheartsfx',
-    val: 'some-big-value',
+    final: 'path-valueheart.path.value',
+    val: 'path-value',
   });
 });
+
+test.serial(
+  `openfn ${jobsPath}/globals-job.js --globals="export const suffixer = w => w + '-some-suffix'" -a common`,
+  async (t) => {
+    const res = await run(t.title);
+    t.falsy(res.err);
+    const out = getJSON();
+    t.deepEqual(out, {
+      data: {
+        result: 'love-some-suffix',
+      },
+    });
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/globals-job.js --globals ${jobsPath}/globals-path-file.js -a common`,
+  async (t) => {
+    const res = await run(t.title);
+    t.falsy(res.err);
+    const out = getJSON();
+    t.deepEqual(out, {
+      data: {
+        result: 'love-humble-suffix',
+      },
+    });
+  }
+);
