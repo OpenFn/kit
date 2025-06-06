@@ -18,6 +18,7 @@ export type Opts = {
   command?: CommandList;
   baseDir?: string;
 
+  globals?: string;
   adaptor?: boolean | string;
   adaptors?: string[];
   apolloUrl?: string;

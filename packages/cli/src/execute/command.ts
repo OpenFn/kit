@@ -33,6 +33,7 @@ export type ExecuteOptions = Required<
     | 'timeout'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
+    | 'globals'
   >
 > &
   Pick<Opts, 'monorepoPath' | 'repoDir'>;

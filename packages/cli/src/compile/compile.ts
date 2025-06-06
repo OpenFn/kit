@@ -1,4 +1,8 @@
-import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
+import compile, {
+  preloadAdaptorExports,
+  Options,
+  getExports,
+} from '@openfn/compiler';
 import { getModulePath } from '@openfn/runtime';
 import type {
   ExecutionPlan,
@@ -72,11 +76,16 @@ const compileWorkflow = async (
   opts: CompileOptions,
   log: Logger
 ) => {
+  let globalsIgnoreList: string[] = [];
+  if (plan.workflow.globals)
+    globalsIgnoreList = getExports(plan.workflow.globals);
+
   for (const step of plan.workflow.steps) {
     const job = step as Job;
     const jobOpts = {
       ...opts,
       adaptors: job.adaptors ?? opts.adaptors,
+      ignoreImports: globalsIgnoreList,
     };
     if (job.expression) {
       const { code, map } = await compileJob(

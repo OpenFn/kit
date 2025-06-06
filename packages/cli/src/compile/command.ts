@@ -17,6 +17,7 @@ export type CompileOptions = Pick<
   | 'repoDir'
   | 'path'
   | 'useAdaptorsMonorepo'
+  | 'globals'
 > & {
   workflow?: Opts['workflow'];
   repoDir?: string;

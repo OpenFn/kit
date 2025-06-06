@@ -62,6 +62,8 @@ export type Workflow = {
   // (gets applied to every configuration object)
   credentials?: Record<string, any>;
 
+  // a path to a file where functions are defined
+  globals?: string;
   // properties which map to an openfn project
   // only used by projects
   openfn?: {
