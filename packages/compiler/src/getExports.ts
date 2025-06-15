@@ -2,7 +2,11 @@ import recast from 'recast';
 import * as acorn from 'acorn';
 import { namedTypes as n } from 'ast-types';
 
-function getExports(content: string) {
+function getExports(content?: string) {
+  if (!content) {
+    return [];
+  }
+
   const ast = recast.parse(content, {
     parser: {
       parse: (source: string) =>

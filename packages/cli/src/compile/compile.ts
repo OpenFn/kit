@@ -76,9 +76,7 @@ const compileWorkflow = async (
   opts: CompileOptions,
   log: Logger
 ) => {
-  let globalsIgnoreList: string[] = [];
-  if (plan.workflow.globals)
-    globalsIgnoreList = getExports(plan.workflow.globals);
+  let globalsIgnoreList: string[] = getExports(plan.workflow.globals);
 
   for (const step of plan.workflow.steps) {
     const job = step as Job;

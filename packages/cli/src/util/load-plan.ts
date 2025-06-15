@@ -252,13 +252,16 @@ const importGlobals = async (
   log: Logger
 ) => {
   const fnStr = plan.workflow?.globals;
-  if (!fnStr) return;
-  if (isPath(fnStr))
-    plan.workflow.globals = await fetchFile(
-      { name: 'globals', rootDir, filePath: fnStr },
-      log
-    );
-  else plan.workflow.globals = fnStr;
+  if (fnStr) {
+    if (isPath(fnStr)) {
+      plan.workflow.globals = await fetchFile(
+        { name: 'globals', rootDir, filePath: fnStr },
+        log
+      );
+    } else {
+      plan.workflow.globals = fnStr;
+    }
+  }
 };
 
 // TODO this is currently untested in load-plan
