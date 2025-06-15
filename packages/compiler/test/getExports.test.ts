@@ -61,7 +61,6 @@ test('re-export from module', (t) => {
   t.deepEqual(res, ['lightning', 'compiler']);
 });
 
-// TODO: do we want to pick up default exports?
 test('export default should be ignored', (t) => {
   const source = `
     export default function main() {}
