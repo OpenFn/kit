@@ -225,6 +225,10 @@ export default (
     steps: Object.values(nodes),
   };
 
+  // only pass globals if it's a string
+  if (run.globals && typeof run.globals === 'string')
+    plan.workflow.globals = run.globals;
+
   if (run.name) {
     plan.workflow.name = run.name;
   }

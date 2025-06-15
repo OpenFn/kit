@@ -21,7 +21,7 @@ import {
   assertSecurityKill,
   AdaptorError,
 } from '../errors';
-import type { JobModule, ExecutionContext } from '../types';
+import type { JobModule, ExecutionContext, GlobalsModule } from '../types';
 import { ModuleInfoMap } from '../modules/linker';
 import {
   clearNullState,
@@ -50,8 +50,14 @@ export default (
     try {
       const timeout = plan.options?.timeout ?? ctx.opts.defaultRunTimeoutMs;
 
+      // prepare global functions to be injected into execution context
+      const globals = {
+        ...opts.globals,
+        ...(await prepareGlobals(plan.workflow?.globals || '', opts)),
+      };
+
       // Setup an execution context
-      const context = buildContext(input, opts);
+      const context = buildContext(input, { ...opts, globals });
 
       const { operations, execute } = await prepareJob(
         expression,
@@ -59,6 +65,7 @@ export default (
         opts,
         moduleOverrides
       );
+
       // Create the main reducer function
       const reducer = (execute || defaultExecute)(
         ...operations.map((op, idx) =>
@@ -237,4 +244,22 @@ const prepareJob = async (
     }
     return { operations: expression as Operation[] };
   }
+};
+
+const prepareGlobals = async (
+  source: string,
+  opts: Options = {}
+): Promise<GlobalsModule> => {
+  if (typeof source === 'string' && !!source.trim()) {
+    const context = buildContext({}, opts);
+    return await loadModule(source || '', {
+      context,
+    }).catch((e) => {
+      // mostly syntax errors
+      // repackage errors and throw
+      e.message = `[globals] ${e.message}`;
+      throw e;
+    });
+  }
+  return {};
 };

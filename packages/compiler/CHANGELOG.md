@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 1.1.0
+
+### Minor Changes
+
+- 9d4ece3: Add support for global functions in execution plan
+
 ## 1.0.4
 
 ### Patch Changes

@@ -21,6 +21,7 @@ const loadPlan = async (
     | 'baseDir'
     | 'expandAdaptors'
     | 'path'
+    | 'globals'
   > & {
     workflow?: Opts['workflow'];
   },
@@ -141,7 +142,10 @@ const maybeAssign = (a: any, b: any, keys: Array<keyof WorkflowOptions>) => {
 };
 
 const loadExpression = async (
-  options: Pick<Opts, 'expressionPath' | 'adaptors' | 'monorepoPath'>,
+  options: Pick<
+    Opts,
+    'expressionPath' | 'adaptors' | 'monorepoPath' | 'globals'
+  >,
   logger: Logger
 ): Promise<ExecutionPlan> => {
   const expressionPath = options.expressionPath!;
@@ -165,6 +169,7 @@ const loadExpression = async (
       workflow: {
         name,
         steps: [step],
+        globals: options.globals,
       },
       options: wfOptions,
     };
@@ -212,11 +217,14 @@ const loadOldWorkflow = async (
 };
 
 const fetchFile = async (
-  jobId: string,
-  rootDir: string = '',
-  filePath: string,
+  fileInfo: {
+    name: string;
+    rootDir?: string;
+    filePath: string;
+  },
   log: Logger
 ) => {
+  const { rootDir = '', filePath, name } = fileInfo;
   try {
     // Special handling for ~ feels like a necessary evil
     const fullPath = filePath.startsWith('~')
@@ -228,13 +236,31 @@ const fetchFile = async (
   } catch (e) {
     abort(
       log,
-      `File not found for job ${jobId}: ${filePath}`,
+      `File not found for ${name}: ${filePath}`,
       undefined,
       `This workflow references a file which cannot be found at ${filePath}\n\nPaths inside the workflow are relative to the workflow.json`
     );
 
     // should never get here
     return '.';
+  }
+};
+
+const importGlobals = async (
+  plan: CLIExecutionPlan,
+  rootDir: string,
+  log: Logger
+) => {
+  const fnStr = plan.workflow?.globals;
+  if (fnStr) {
+    if (isPath(fnStr)) {
+      plan.workflow.globals = await fetchFile(
+        { name: 'globals', rootDir, filePath: fnStr },
+        log
+      );
+    } else {
+      plan.workflow.globals = fnStr;
+    }
   }
 };
 
@@ -260,26 +286,32 @@ const importExpressions = async (
 
     if (expressionStr && isPath(expressionStr)) {
       job.expression = await fetchFile(
-        job.id || `${idx}`,
-        rootDir,
-        expressionStr,
+        {
+          name: `job ${job.id || idx}`,
+          rootDir,
+          filePath: expressionStr,
+        },
         log
       );
     }
     if (configurationStr && isPath(configurationStr)) {
       const configString = await fetchFile(
-        job.id || `${idx}`,
-        rootDir,
-        configurationStr,
+        {
+          name: `job configuration ${job.id || idx}`,
+          rootDir,
+          filePath: configurationStr,
+        },
         log
       );
       job.configuration = JSON.parse(configString!);
     }
     if (stateStr && isPath(stateStr)) {
       const stateString = await fetchFile(
-        job.id || `${idx}`,
-        rootDir,
-        stateStr,
+        {
+          name: `job state ${job.id || idx}`,
+          rootDir,
+          filePath: stateStr,
+        },
         log
       );
       job.state = JSON.parse(stateString!);
@@ -303,7 +335,10 @@ const ensureAdaptors = (plan: CLIExecutionPlan) => {
 
 const loadXPlan = async (
   plan: CLIExecutionPlan,
-  options: Pick<Opts, 'monorepoPath' | 'baseDir' | 'expandAdaptors'>,
+  options: Pick<
+    Opts,
+    'monorepoPath' | 'baseDir' | 'expandAdaptors' | 'globals'
+  >,
   logger: Logger,
   defaultName: string = ''
 ) => {
@@ -315,6 +350,11 @@ const loadXPlan = async (
     plan.workflow.name = defaultName;
   }
   ensureAdaptors(plan);
+
+  // import global functions
+  // if globals is provided via cli argument. it takes precedence
+  if (options.globals) plan.workflow.globals = options.globals;
+  await importGlobals(plan, options.baseDir!, logger);
 
   // Note that baseDir should be set up in the default function
   await importExpressions(plan, options.baseDir!, logger);

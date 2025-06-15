@@ -10,9 +10,11 @@ let mockLogger = createMockLogger(undefined, { level: 'debug' });
 
 const createPlan = (
   steps: Job[],
-  options: Partial<CompiledExecutionPlan['options']> = {}
+  options: Partial<CompiledExecutionPlan['options']> = {},
+  globals?: string
 ): ExecutionPlan => ({
   workflow: {
+    globals,
     steps,
   },
   options,
@@ -1204,3 +1206,64 @@ test('Plans log step names for each job start and end', async (t) => {
   const end = logger._find('success', /do-the-thing completed in/i);
   t.regex(end!.message as string, /do-the-thing completed in \d+ms/);
 });
+
+test.serial(
+  'global functions should be scoped per step or job code',
+  async (t) => {
+    const globals = `
+    let x = 10;
+    export const setX = (value) => { x = value }
+    export const getX = () => x
+    `;
+    const plan = createPlan(
+      [
+        {
+          id: 'a',
+          name: 'do-a',
+          expression:
+            'export default [s => {setX(20); return {data: {x1: getX()}}}]',
+          next: {
+            b: true,
+          },
+        },
+        {
+          id: 'b',
+          name: 'do-b',
+          expression:
+            'export default [s => {return {data: {...s.data, x2: getX()}}}]',
+        },
+      ],
+      {},
+      globals
+    );
+
+    const result: any = await executePlan(plan, {}, {}, mockLogger);
+    t.deepEqual(result.data, { x1: 20, x2: 10 });
+  }
+);
+
+test.serial(
+  'global function scope should be shared between operations',
+  async (t) => {
+    const globals = `
+    let x = 10;
+    export const setX = (value) => { x = value }
+    export const getX = () => x
+    `;
+    const plan = createPlan(
+      [
+        {
+          id: 'a',
+          name: 'do-a',
+          expression:
+            'export default [s => {setX(20); return {data: {x1: getX()}}}, s=> ({data: {...s.data, x2: getX()}})]',
+        },
+      ],
+      {},
+      globals
+    );
+
+    const result: any = await executePlan(plan, {}, {}, mockLogger);
+    t.deepEqual(result.data, { x1: 20, x2: 20 });
+  }
+);

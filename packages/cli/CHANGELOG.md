@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 1.13.0
+
+### Minor Changes
+
+- 9d4ece3: Add support for global functions in execution plan
+
+### Patch Changes
+
+- Updated dependencies [9d4ece3]
+  - @openfn/compiler@1.1.0
+  - @openfn/runtime@1.7.0
+
 ## 1.12.1
 
 ### Patch Changes

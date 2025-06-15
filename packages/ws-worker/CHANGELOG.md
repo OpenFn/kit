@@ -1,5 +1,17 @@
 # ws-worker
 
+## 1.14.0
+
+### Minor Changes
+
+- 9d4ece3: Add support for global functions in execution plan
+
+### Patch Changes
+
+- Updated dependencies [9d4ece3]
+  - @openfn/runtime@1.7.0
+  - @openfn/engine-multi@1.6.7
+
 ## 1.13.6
 
 ### Patch Changes

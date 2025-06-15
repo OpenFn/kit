@@ -1,0 +1,19 @@
+{
+  "workflow": {
+    "globals": "./globals-path-file.js",
+    "steps": [
+      {
+        "adaptor": "common",
+        "expression": "fn(state=> ({val: BIG_VAL, alter: suffix('heart')}))",
+        "next": {
+          "b": true
+        }
+      },
+      {
+        "id": "b",
+        "adaptor": "common",
+        "expression": "fn((state) => { state.final = state.val + state.alter; return state; });"
+      }
+    ]
+  }
+}
