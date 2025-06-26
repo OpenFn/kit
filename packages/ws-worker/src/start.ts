@@ -24,7 +24,7 @@ if (args.lightning === 'mock') {
 
 const [minBackoff, maxBackoff] = args.backoff
   .split('/')
-  .map((n: string) => parseInt(n, 10) * 1000);
+  .map((n: string) => parseFloat(n) * 1000);
 
 function engineReady(engine: any) {
   logger.debug('Creating worker instance');
@@ -36,7 +36,6 @@ function engineReady(engine: any) {
     sentryDsn: args.sentryDsn,
     sentryEnv: args.sentryEnv,
     noLoop: !args.loop,
-    // TODO need to feed this through properly
     backoff: {
       min: minBackoff,
       max: maxBackoff,

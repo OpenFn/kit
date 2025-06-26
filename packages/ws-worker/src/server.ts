@@ -236,9 +236,11 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   // Start the workloop (if not already started)
   app.resumeWorkloop = () => {
-    if (options.noLoop) {
-      return;
-    }
+    // TODO restore this to get the fix
+    // (leaving off now while I get my test to fail)
+    // if (options.noLoop || app.destroyed) {
+    //   return;
+    // }
 
     if (!app.workloop || app.workloop?.isStopped()) {
       logger.info('Starting workloop');
@@ -369,7 +371,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       shutdown = true;
       logger.always(`${signal} RECEIVED: CLOSING SERVER`);
       await app.destroy();
-      process.exit();
+      process.exit(0);
     }
   };
 
