@@ -114,7 +114,6 @@ test('exception: bad credential (not found)', async (t) => {
   };
 
   const result = await run(attempt);
-
   const { reason, error_type, error_message } = result;
 
   t.is(reason, 'exception');
@@ -122,6 +121,29 @@ test('exception: bad credential (not found)', async (t) => {
   t.is(
     error_message,
     'Failed to load credential been-to-the-mountain: [fetch:credential] not_found'
+  );
+});
+
+test('exception: credential timeout', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        adaptor: '@openfn/language-common@latest',
+        body: 'fn((s) => s)',
+        credential: '%TIMEOUT%', // special mock key
+      },
+    ],
+  };
+
+  const result = await run(attempt);
+  const { reason, error_type, error_message } = result;
+
+  t.is(reason, 'exception');
+  t.is(error_type, 'CredentialLoadError');
+  t.is(
+    error_message,
+    'Failed to load credential %TIMEOUT%: [fetch:credential] timeout'
   );
 });
 
