@@ -8,9 +8,10 @@ let lightning;
 let workerProcess;
 
 const spawnServer = (port: string | number = 1, args: string[] = []) => {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     const options = {
       stdio: ['pipe', 'pipe', 'pipe', 'ipc'] as any[],
+      env: {},
     };
 
     // We use fork because we want IPC messaging with the processing
@@ -20,8 +21,8 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
         `-l ws://localhost:${port}/worker`,
         '--backoff 0.001/0.01',
         '--log debug',
-        '-s secretsquirrel',
         '--collections-version=1.0.0',
+        '--debug', // alow us to run without keys
         ...args,
       ],
       options
@@ -112,11 +113,10 @@ test.serial('should join attempts queue channel', (t) => {
   });
 });
 
-test.skip('allow a job to complete after receiving a sigterm', (t) => {
+test('allow a job to complete after receiving a sigterm', (t) => {
   return new Promise(async (done) => {
     let didKill = false;
     const port = getPort();
-    lightning = initLightning(port);
 
     const job = createJob({
       // This job needs no adaptor (no autoinstall here!) and returns state after 1 second
@@ -124,6 +124,9 @@ test.skip('allow a job to complete after receiving a sigterm', (t) => {
       body: 'export default [(s) => new Promise((resolve) => setTimeout(() => resolve(s), 1000))]',
     });
     const attempt = createRun([], [job], []);
+
+    workerProcess = await spawnServer(port);
+    lightning = initLightning(port);
 
     lightning.once('run:complete', (evt) => {
       t.true(didKill); // Did we kill the server before this returned?
@@ -137,20 +140,18 @@ test.skip('allow a job to complete after receiving a sigterm', (t) => {
           message: 'fetch failed',
         });
 
-        const finishTimeout = setTimeout(() => {
+        waitForWorkerExit(workerProcess).then(() => {
           done();
-        }, 500);
+        });
 
         // Lightning should receive no more claims
         lightning.on('claim', () => {
-          clearTimeout(finishTimeout);
           t.fail();
           done();
         });
       }, 10);
     });
 
-    workerProcess = await spawnServer(port);
     lightning.enqueueRun(attempt);
 
     // give the attempt time to start, then kill the server

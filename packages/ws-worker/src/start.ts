@@ -17,7 +17,7 @@ if (args.lightning === 'mock') {
     // Set a fake secret to stop the console warning
     args.secret = 'abdefg';
   }
-} else if (!args.secret) {
+} else if (!args.debug && !args.secret) {
   logger.error('WORKER_SECRET is not set');
   process.exit(1);
 }

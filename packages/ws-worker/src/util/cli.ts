@@ -79,6 +79,10 @@ export default function parseArgs(argv: string[]): Args {
 
   const parser = yargs(hideBin(argv))
     .command('server', 'Start a ws-worker server')
+    .option('debug', {
+      hidden: true,
+      type: 'boolean',
+    })
     .option('port', {
       alias: 'p',
       description: `Port to run the server on. Default ${DEFAULT_PORT}. Env: WORKER_PORT`,
