@@ -149,7 +149,7 @@ test.serial(
       channel
         .push(GET_CREDENTIAL, { id: 'unknown' })
         .receive('error', (result: any) => {
-          t.is(result, 'not_found');
+          t.deepEqual(result, { errors: { id: ['Credential not found!'] } });
           done();
         });
     });
