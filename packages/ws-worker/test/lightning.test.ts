@@ -829,7 +829,7 @@ test.serial(
 );
 
 test.serial(
-  `should recieve worker:queue message events from lightning`,
+  `should receive worker:queue message events from lightning`,
   (t) => {
     t.plan(1);
 

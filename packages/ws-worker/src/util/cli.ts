@@ -10,6 +10,7 @@ const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 30;
 type Args = {
   _: string[];
   backoff: string;
+  debug?: boolean;
   capacity?: number;
   collectionsUrl?: string;
   collectionsVersion?: string;

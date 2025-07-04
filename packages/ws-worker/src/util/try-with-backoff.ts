@@ -36,6 +36,11 @@ const tryWithBackoff = (fn: any, opts: Options = {}): CancelablePromise => {
       await fn();
       resolve();
     } catch (e) {
+      if ((e as any).abort) {
+        cancelled = true;
+        return reject();
+      }
+
       if (opts.isCancelled!()) {
         return resolve();
       }
