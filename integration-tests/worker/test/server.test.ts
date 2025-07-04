@@ -124,8 +124,6 @@ test.serial('should join attempts queue channel', (t) => {
   });
 });
 
-// TODO: test this after two jobs are active
-// because once the first one completes, it must not restore the claim loop
 test('allow a job to complete after receiving a sigterm', (t) => {
   return new Promise(async (done) => {
     let didKill = false;
@@ -226,8 +224,6 @@ test("don't restore the claim loop after a sigterm", (t) => {
       }
     });
 
-    // TODO I can't find any reliable way to see if this is working from here
-    // I can't use sentry because the worker runs in a different process
     await waitForWorkerExit(workerProcess).then(() => {
       // This is about the only way I can find to
       // see if the worker attempted to claim after shutdown

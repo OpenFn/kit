@@ -236,8 +236,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   // Start the workloop (if not already started)
   app.resumeWorkloop = () => {
-    // TODO restore this to get the fix
-    // (leaving off now while I get my test to fail)
     if (options.noLoop || app.destroyed) {
       return;
     }
