@@ -236,7 +236,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   // Start the workloop (if not already started)
   app.resumeWorkloop = () => {
-    if (options.noLoop) {
+    if (options.noLoop || app.destroyed) {
       return;
     }
 
@@ -369,7 +369,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       shutdown = true;
       logger.always(`${signal} RECEIVED: CLOSING SERVER`);
       await app.destroy();
-      process.exit();
+      process.exit(0);
     }
   };
 

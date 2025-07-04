@@ -270,7 +270,7 @@ const createSocketAPI = (
     } else {
       response = {
         status: 'error',
-        response: 'not_found',
+        response: { errors: { id: ['Credential not found!'] } },
       };
     }
 

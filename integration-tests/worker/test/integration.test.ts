@@ -311,9 +311,11 @@ test.serial('run a job with bad credentials', (t) => {
     lightning.once('run:complete', ({ payload }) => {
       t.is(payload.reason, 'exception');
       t.is(payload.error_type, 'CredentialLoadError');
-      t.regex(
+      t.is(
         payload.error_message,
-        /Failed to load credential zzz: \[fetch:credential\] not_found/
+        `Failed to load credential zzz: [fetch:credential] ${JSON.stringify({
+          errors: { id: ['Credential not found!'] },
+        })}`
       );
       done();
     });

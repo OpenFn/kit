@@ -33,11 +33,15 @@ const startWorkloop = (
         }
       );
       // TODO this needs more unit tests I think
-      promise.then(() => {
-        if (!cancelled) {
-          setTimeout(workLoop, minBackoff);
-        }
-      });
+      promise
+        .then(() => {
+          if (!cancelled) {
+            setTimeout(workLoop, minBackoff);
+          }
+        })
+        .catch(() => {
+          // do nothing
+        });
     }
   };
   workLoop();

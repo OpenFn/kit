@@ -1,8 +1,9 @@
+import * as Sentry from '@sentry/node';
 import crypto from 'node:crypto';
 import * as jose from 'jose';
+
 import { Logger, createMockLogger } from '@openfn/logger';
 import { ClaimPayload, ClaimReply } from '@openfn/lexicon/lightning';
-
 import { CLAIM } from '../events';
 
 import type { ServerApp } from '../server';
@@ -29,6 +30,14 @@ type ClaimOptions = {
 const { DEPLOYED_POD_NAME, WORKER_NAME } = process.env;
 const NAME = WORKER_NAME || DEPLOYED_POD_NAME;
 
+class ClaimError extends Error {
+  // This breaks the parenting backoff loop
+  abort = true;
+  constructor(e: string) {
+    super(e);
+  }
+}
+
 const claim = (
   app: ServerApp,
   logger: Logger = mockLogger,
@@ -42,13 +51,22 @@ const claim = (
     if (activeWorkers >= maxWorkers) {
       // Important: stop the workloop so that we don't try and claim any more
       app.workloop?.stop(`server at capacity (${activeWorkers}/${maxWorkers})`);
-      return reject(new Error('Server at capacity'));
+      return reject(new ClaimError('Server at capacity'));
     }
 
     if (!app.queueChannel) {
-      logger.debug('skipping claim attempt: websocket unavailable');
-      return reject(new Error('No websocket available'));
+      logger.warn('skipping claim attempt: websocket unavailable');
+      return reject(new ClaimError('No websocket available'));
     }
+
+    if (app.queueChannel.state === 'closed') {
+      // Trying to claim while the channel is closed? That's an error!
+      const e = new ClaimError('queue closed');
+      Sentry.captureException(e);
+      logger.warn('skipping claim attempt: channel closed');
+      return reject(e);
+    }
+
     logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
 
     const start = Date.now();

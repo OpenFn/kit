@@ -17,14 +17,14 @@ if (args.lightning === 'mock') {
     // Set a fake secret to stop the console warning
     args.secret = 'abdefg';
   }
-} else if (!args.secret) {
+} else if (!args.debug && !args.secret) {
   logger.error('WORKER_SECRET is not set');
   process.exit(1);
 }
 
 const [minBackoff, maxBackoff] = args.backoff
   .split('/')
-  .map((n: string) => parseInt(n, 10) * 1000);
+  .map((n: string) => parseFloat(n) * 1000);
 
 function engineReady(engine: any) {
   logger.debug('Creating worker instance');
@@ -36,7 +36,6 @@ function engineReady(engine: any) {
     sentryDsn: args.sentryDsn,
     sentryEnv: args.sentryEnv,
     noLoop: !args.loop,
-    // TODO need to feed this through properly
     backoff: {
       min: minBackoff,
       max: maxBackoff,
