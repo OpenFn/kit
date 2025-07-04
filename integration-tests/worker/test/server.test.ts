@@ -2,10 +2,12 @@ import test from 'ava';
 import { fork } from 'node:child_process';
 
 import { createRun, createJob } from '../src/factories';
-import { initLightning, initWorker } from '../src/init';
+import { initLightning } from '../src/init';
 
 let lightning;
 let workerProcess;
+
+let workerLogs = [];
 
 const spawnServer = (port: string | number = 1, args: string[] = []) => {
   return new Promise(async (resolve) => {
@@ -34,14 +36,17 @@ const spawnServer = (port: string | number = 1, args: string[] = []) => {
       }
     });
 
-    // Uncomment for logs
     workerProcess.stdout.on('data', (data) => {
-      console.log(data.toString());
+      workerLogs.push(data.toString());
+
+      // Uncomment for logs
+      // console.log(data.toString());
     });
   });
 };
 
 test.afterEach(async () => {
+  workerLogs = [];
   lightning?.destroy();
   await workerProcess?.kill();
 });
@@ -170,30 +175,26 @@ test('allow a job to complete after receiving a sigterm', (t) => {
   });
 });
 
-// This test doesn't really work because of a bug in the mock, I think
-// Something in the mock lightning is stalled/awaiting
-// So even though the worker has triggered a claim event,
-// the mock doesn't emit it back out to the test until the job is finished
-// It's like the mock socket is waiting for run-complete before it'll respond to any claim events
-test.skip("don't restore the claim loop after a sigterm", (t) => {
+test("don't restore the claim loop after a sigterm", (t) => {
   return new Promise(async (done) => {
-    let didKill = false;
     let abort = false;
+    let didSendSigterm = false;
     const port = getPort();
 
     const job = createJob({
-      // This job needs no adaptor (no autoinstall here!) and returns state after 1 second
       adaptor: '',
-      body: 'export default [(s) => new Promise((resolve) => setTimeout(() => resolve(s), 500))]',
+      body: 'export default [(s) => new Promise((resolve) => setTimeout(() => resolve(s), 100))]',
     });
 
+    // Set up two runs to run concurrently and fill the server capacity,
+    // but ensure that one ends before the other
     const a = createRun([], [job], []);
     const b = createRun(
       [],
       [
         {
           ...job,
-          body: job.body.replace('500', '1000'), // TODO should be able to shorten these delays once I fix the test
+          body: job.body.replace('100', '200'),
         },
       ],
       []
@@ -205,15 +206,10 @@ test.skip("don't restore the claim loop after a sigterm", (t) => {
     // After the second run starts, there should be no more claims
     lightning.on('run:start', (evt) => {
       if (evt.runId === b.id) {
+        didSendSigterm = true;
         // Kill the worker once the second job has started
         // This will force an overlap of two pending runs at full capacity
         workerProcess.kill('SIGTERM');
-
-        lightning.on('claim', () => {
-          abort = true;
-          t.fail('Claim triggered after sigterm');
-          done();
-        });
       }
     });
 
@@ -222,8 +218,27 @@ test.skip("don't restore the claim loop after a sigterm", (t) => {
     lightning.enqueueRun(a);
     lightning.enqueueRun(b);
 
+    lightning.on('claim', (e) => {
+      if (didSendSigterm && !abort) {
+        abort = true;
+        t.fail('Claim triggered after sigterm');
+        done();
+      }
+    });
+
+    // TODO I can't find any reliable way to see if this is working from here
+    // I can't use sentry because the worker runs in a different process
     await waitForWorkerExit(workerProcess).then(() => {
-      if (!abort) {
+      // This is about the only way I can find to
+      // see if the worker attempted to claim after shutdown
+      const didTryToClaim = workerLogs.find((l) =>
+        l.match(/skipping claim attempt: channel closed/)
+      );
+
+      if (didTryToClaim) {
+        t.fail('Worker attempted to claim after sigterm');
+        done();
+      } else if (!abort) {
         t.pass();
         done();
       }
