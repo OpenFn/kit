@@ -75,8 +75,6 @@ const claim = (
         runs.forEach(async (run) => {
           if (app.options?.runPublicKey) {
             try {
-              console.log('TOKEN', run.token);
-              console.log('KEY', app.options.runPublicKey);
               await verifyToken(run.token, app.options.runPublicKey);
               logger.debug('verified run token for', run.id);
             } catch (e) {
