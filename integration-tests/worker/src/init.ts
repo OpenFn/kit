@@ -17,6 +17,7 @@ export const initLightning = (port = 4000, privateKey?: string) => {
     // @ts-ignore
     opts.runPrivateKey = toBase64(privateKey);
   }
+  // opts.logger = createLogger('LTG', { level: 'debug' });
   return createLightningServer(opts);
 };
 
@@ -45,6 +46,7 @@ export const initWorker = async (
     lightning: `ws://localhost:${lightningPort}/worker`,
     secret: crypto.randomUUID(),
     collectionsVersion: '1.0.0',
+    messageTimeoutSeconds: 0.01,
     ...workerArgs,
   });
 

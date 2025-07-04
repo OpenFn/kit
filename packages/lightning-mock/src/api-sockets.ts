@@ -255,10 +255,14 @@ const createSocketAPI = (
     evt: PhoenixEvent<GetCredentialPayload>
   ) {
     const { ref, join_ref, topic, payload } = evt;
-    const cred = state.credentials[payload.id];
 
     let response;
-    if (cred) {
+    const cred = state.credentials[payload.id];
+
+    if (payload.id === '%TIMEOUT%') {
+      // Simulate a timeout with this special id
+      return;
+    } else if (cred) {
       response = {
         status: 'ok',
         response: cred,

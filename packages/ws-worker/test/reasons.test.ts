@@ -50,7 +50,10 @@ const execute = async (plan: ExecutionPlan, input = {}, options = {}) =>
       [RUN_LOG]: async () => true,
       [STEP_COMPLETE]: async () => true,
       [RUN_COMPLETE]: async () => true,
-      [GET_CREDENTIAL]: async () => {
+      [GET_CREDENTIAL]: async ({ id }) => {
+        if (id === '%TIMEOUT%') {
+          return null;
+        }
         throw new Error('err');
       },
     });
@@ -236,7 +239,27 @@ test('exception: failed to load credential', async (t) => {
 
   t.is(reason.reason, 'exception');
   t.is(reason.error_type, 'CredentialLoadError');
-  t.is(reason.error_message, 'Failed to load credential zzz: err');
+  t.is(
+    reason.error_message,
+    'Failed to load credential zzz: [fetch:credential] Error: err'
+  );
+});
+
+test('exception: credential timeout', async (t) => {
+  const plan = createPlan({
+    id: 'aa',
+    expression: 'export default [(s) => s]',
+    configuration: '%TIMEOUT%',
+  });
+
+  const { reason } = await execute(plan);
+
+  t.is(reason.reason, 'exception');
+  t.is(reason.error_type, 'CredentialLoadError');
+  t.is(
+    reason.error_message,
+    'Failed to load credential %TIMEOUT%: [fetch:credential] timeout'
+  );
 });
 
 test('kill: timeout', async (t) => {

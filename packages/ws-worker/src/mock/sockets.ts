@@ -14,11 +14,16 @@ export const mockChannel = (
 
       // if a callback was registered, trigger it
       // otherwise do nothing
-      setTimeout(() => {
+      setTimeout(async () => {
         if (callbacks[event]) {
           try {
-            const result = callbacks[event](payload);
-            responses.ok?.(result);
+            const result = await callbacks[event](payload);
+            // Special timeout handler
+            if (result === null) {
+              responses.timeout?.('timeout');
+            } else {
+              responses.ok?.(result);
+            }
           } catch (e) {
             responses.error?.(e);
           }
