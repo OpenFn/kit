@@ -29,6 +29,7 @@
     "@swc-node/register": "^1.10.9",
     "@types/gunzip-maybe": "^1.4.0",
     "@types/rimraf": "^3.0.2",
+    "@types/semver": "~7.5.8",
     "@types/tar-stream": "^2.2.2",
     "gunzip-maybe": "^1.4.2",
     "prettier": "^2.8.8",

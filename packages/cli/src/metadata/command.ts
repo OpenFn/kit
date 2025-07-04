@@ -8,6 +8,7 @@ export type MetadataOpts = Required<Pick<Opts, 'adaptors' | 'repoDir'>> &
     Opts,
     | 'expandAdaptors'
     | 'force'
+    | 'keepUnsupported'
     | 'log'
     | 'logJson'
     | 'statePath'
@@ -20,6 +21,7 @@ const options = [
 
   o.adaptors,
   o.force,
+  o.keepUnsupported,
   o.log,
   o.logJson,
   o.repoDir,

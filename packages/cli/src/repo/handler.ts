@@ -1,7 +1,11 @@
 import { exec } from 'node:child_process';
 // @ts-ignore
 import treeify from 'treeify';
-import { install as rtInstall, loadRepoPkg } from '@openfn/runtime';
+import {
+  install as rtInstall,
+  loadRepoPkg,
+  getNameAndVersion,
+} from '@openfn/runtime';
 import type { Opts } from '../options';
 import { defaultLogger, Logger } from '../util/logger';
 
@@ -23,6 +27,38 @@ export const install = async (
     return result;
   }
   return [];
+};
+
+export const removePackage = async (
+  packageSpecifier: string,
+  repoDir: string,
+  logger: Logger
+): Promise<void> => {
+  const { name, version } = getNameAndVersion(packageSpecifier);
+  if (!version) {
+    logger.warn(`Cannot remove ${packageSpecifier}: no version specified`);
+    return;
+  }
+
+  const aliasedName = `${name}_${version}`;
+  logger.info(`Removing package ${aliasedName} from repo...`);
+
+  try {
+    // Use npm uninstall to safely remove the package
+    await new Promise<void>((resolve, reject) => {
+      exec(`npm uninstall ${aliasedName}`, { cwd: repoDir }, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    logger.success(`Successfully removed ${aliasedName}`);
+  } catch (error) {
+    logger.warn(`Failed to remove ${aliasedName}: ${(error as Error).message}`);
+  }
 };
 
 export const clean = async (options: Opts, logger: Logger) => {
