@@ -124,7 +124,7 @@ test.serial('should join attempts queue channel', (t) => {
   });
 });
 
-test('allow a job to complete after receiving a sigterm', (t) => {
+test.serial('allow a job to complete after receiving a sigterm', (t) => {
   return new Promise(async (done) => {
     let didKill = false;
     const port = getPort();
@@ -173,7 +173,7 @@ test('allow a job to complete after receiving a sigterm', (t) => {
   });
 });
 
-test("don't restore the claim loop after a sigterm", (t) => {
+test.serial("don't restore the claim loop after a sigterm", (t) => {
   return new Promise(async (done) => {
     let abort = false;
     let didSendSigterm = false;
