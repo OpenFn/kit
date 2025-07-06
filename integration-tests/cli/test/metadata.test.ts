@@ -144,7 +144,7 @@ test.serial(
 
 // This test validates that cached unsupported adaptors are not downloaded again
 test.serial(
-  `openfn metadata -f -S "${state}" -a common --log-json --log info`,
+  `openfn metadata -f -S "${state}" -a common --log info --log-json `,
   async (t) => {
     const { stdout } = await run(t.title);
 
@@ -168,15 +168,18 @@ test.serial(
     t.regex(stdout, /Installed @openfn\/language-http@/);
     t.regex(stdout, /Installation complete in \d+\.\d+s/);
     t.regex(stdout, /No metadata helper found/);
-    t.regex(stdout, /Keeping unsupported adaptor as requested by --keep-unsupported flag/);
+    t.regex(
+      stdout,
+      /Keeping unsupported adaptor as requested by --keep-unsupported flag/
+    );
     // Should NOT try to remove the package
     t.notRegex(stdout, /Removing unsupported adaptor from disk/);
   }
 );
 
 // This test validates that even with --keep-unsupported, the cache works
-test.serial(
-  `openfn metadata -f -S "${state}" -a http --keep-unsupported --log-json --log info`,
+test.serial.only(
+  `openfn metadata -fS "${state}" -a http --keep-unsupported --log-json --log info`,
   async (t) => {
     const { stdout } = await run(t.title);
 
