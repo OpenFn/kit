@@ -57,7 +57,7 @@ const metadataHandler = async (
   logger: Logger
 ): Promise<void> => {
   const { repoDir, adaptors, keepUnsupported } = options;
-  const adaptor = adaptors[0];
+  let adaptor = adaptors[0];
 
   // Check cache first to avoid unnecessary downloads
   if (await cache.isAdaptorUnsupported(adaptor, repoDir)) {
@@ -99,8 +99,15 @@ const metadataHandler = async (
   let wasAutoInstalled = false;
   try {
     if (shouldAutoinstall(adaptor)) {
-      await install({ packages: [adaptor], repoDir }, logger);
+      const autoinstallResult = await install(
+        { packages: [adaptor], repoDir },
+        logger
+      );
       wasAutoInstalled = true;
+
+      // If we've autoinstalled, we may need to set the version number
+      // TODO we should probably resolve @latest before we do the install actually
+      adaptor = autoinstallResult[0];
     }
 
     const adaptorPath = await getAdaptorPath(adaptor, logger, options.repoDir);
@@ -131,15 +138,19 @@ const metadataHandler = async (
         await cache.markAdaptorAsUnsupported(adaptor, repoDir);
         logger.info('Adaptor removed and marked as unsupported');
       } else if (wasAutoInstalled && keepUnsupported) {
+        if (adaptor === '@openfn/language-openfn') {
+          logger.log({ wasAutoInstalled, keepUnsupported });
+        }
         logger.info(
           'Keeping unsupported adaptor as requested by --keep-unsupported flag'
         );
         await cache.markAdaptorAsUnsupported(adaptor, repoDir);
       }
 
-      process.exit(1); // TODO what's the correct error code?
+      process.exit(1);
     }
   } catch (e) {
+    console.log(e);
     logger.error('Exception while generating metadata');
     logger.error(e);
     process.exit(1);
