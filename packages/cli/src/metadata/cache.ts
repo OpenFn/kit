@@ -38,7 +38,7 @@ export interface ParsedVersion {
 export type CacheResult<T> = T | null;
 
 // Return the path to the metadata cache inside the CLI repo
-const getCachePath = (repoDir: string, key?: string): string => {
+export const getCachePath = (repoDir: string, key?: string): string => {
   const base = path.join(repoDir, 'meta');
   if (key) {
     return path.join(base, key.endsWith('.json') ? key : `${key}.json`);
@@ -46,9 +46,22 @@ const getCachePath = (repoDir: string, key?: string): string => {
   return base;
 };
 
+export const getCache = async (repoDir: string, key: string) => {
+  try {
+    const cachePath = getCachePath(repoDir, key);
+    const content = await readFile(cachePath, 'utf8');
+    return JSON.parse(content) as UnsupportedAdaptorCache;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const getUnsupportedCache = (repoDir: string) =>
+  getCache(repoDir, UNSUPPORTED_FILE_NAME);
+
 // Sort keys on a json object so that the same object with different key order returns the same cache id
 // At this stage we're not sorting values (apart from objects)
-const sortKeys = (obj: Record<string, any>): Record<string, any> => {
+export const sortKeys = (obj: Record<string, any>): Record<string, any> => {
   const newObj = {} as Record<string, any>;
   Object.keys(obj)
     .sort()
@@ -63,13 +76,16 @@ const sortKeys = (obj: Record<string, any>): Record<string, any> => {
   return newObj;
 };
 
-const generateKey = (config: AdaptorConfiguration, adaptor: string): string => {
+export const generateKey = (
+  config: AdaptorConfiguration,
+  adaptor: string
+): string => {
   const sorted = sortKeys(config);
   const key = `${JSON.stringify(sorted)}-${adaptor}`;
   return createHash('sha256').update(key).digest('hex');
 };
 
-const get = async <T = CachedMetadata>(
+export const get = async <T = CachedMetadata>(
   repoPath: string,
   key: string
 ): Promise<CacheResult<T>> => {
@@ -82,7 +98,7 @@ const get = async <T = CachedMetadata>(
   }
 };
 
-const set = async <T = CachedMetadata>(
+export const set = async <T = CachedMetadata>(
   repoPath: string,
   key: string,
   result: T
@@ -115,6 +131,8 @@ const compareVersions = (version1: string, version2: string): number => {
   return v1.patch - v2.patch;
 };
 
+// Return true if we know that this adaptor does not support metadata
+// If the adaptor version has not been checked before, return false
 export const isAdaptorUnsupported = async (
   adaptorSpecifier: string,
   repoDir: string
@@ -122,19 +140,12 @@ export const isAdaptorUnsupported = async (
   const { name, version } = getNameAndVersion(adaptorSpecifier);
   if (!version) return false;
 
-  const cachePath = getUnsupportedCachePath(repoDir);
-  let cache: UnsupportedAdaptorCache = {};
-
-  try {
-    const cacheContent = await readFile(cachePath, 'utf8');
-    cache = JSON.parse(cacheContent);
-  } catch (error) {
+  const cache = await getUnsupportedCache(repoDir);
+  if (!cache || !cache[name]) {
     // Cache doesn't exist or is invalid, that's fine
     return false;
   }
-
   const cached = cache[name];
-  if (!cached) return false;
 
   const currentParsed = parseVersion(version);
   const cachedParsed = parseVersion(cached.lastCheckedVersion);
@@ -229,18 +240,4 @@ export const clearCache = async (repoDir: string): Promise<void> => {
   } catch (error) {
     // Cache directory might not exist, that's fine
   }
-};
-
-export default {
-  get,
-  set,
-  getPath: getCachePath,
-  generateKey,
-  sortKeys,
-  isAdaptorUnsupported,
-  markAdaptorAsUnsupported,
-  getCacheInfo,
-  clearCache,
-  parseVersion,
-  compareVersions,
 };
