@@ -1,9 +1,9 @@
 import { getNameAndVersion } from '@openfn/runtime';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 
-const CACHE_DIR = '.cli-cache';
+const UNSUPPORTED_FILE_NAME = 'unsupported.json';
 
 export type AdaptorConfiguration = Record<string, any>;
 
@@ -37,8 +37,13 @@ export interface ParsedVersion {
 
 export type CacheResult<T> = T | null;
 
-const getPath = (repoDir: string, key: string): string => {
-  return `${repoDir}/${CACHE_DIR}/${key}.json`;
+// Return the path to the metadata cache inside the CLI repo
+const getCachePath = (repoDir: string, key?: string): string => {
+  const base = path.join(repoDir, 'meta');
+  if (key) {
+    return path.join(base, key.endsWith('.json') ? key : `${key}.json`);
+  }
+  return base;
 };
 
 // Sort keys on a json object so that the same object with different key order returns the same cache id
@@ -68,7 +73,7 @@ const get = async <T = CachedMetadata>(
   repoPath: string,
   key: string
 ): Promise<CacheResult<T>> => {
-  const p = getPath(repoPath, key);
+  const p = getCachePath(repoPath, key);
   try {
     const result = await readFile(p, 'utf8');
     return JSON.parse(result) as T;
@@ -77,22 +82,18 @@ const get = async <T = CachedMetadata>(
   }
 };
 
-// lock the cache to prevent another process generating
-// this is very similar to how docgen works
-// /const lock = async (repoPath: string, key: string) => {};
-
 const set = async <T = CachedMetadata>(
   repoPath: string,
   key: string,
   result: T
 ): Promise<void> => {
-  const p = getPath(repoPath, key);
+  const p = getCachePath(repoPath, key);
   await mkdir(path.dirname(p), { recursive: true });
   await writeFile(p, JSON.stringify(result));
 };
 
 const getUnsupportedCachePath = (repoDir: string): string => {
-  return path.join(repoDir, CACHE_DIR, 'unsupported-metadata.json');
+  return getCachePath(repoDir, UNSUPPORTED_FILE_NAME);
 };
 
 const parseVersion = (version: string): ParsedVersion => {
@@ -192,19 +193,17 @@ export const getCacheInfo = async (
   unsupportedCount: number;
   cacheDir: string;
 }> => {
-  const cacheDir = path.join(repoDir, CACHE_DIR);
+  const cacheDir = getCachePath(repoDir);
   let supportedCount = 0;
   let unsupportedCount = 0;
 
   try {
-    const { readdir } = await import('node:fs/promises');
     const files = await readdir(cacheDir);
-    // Count .json files (excluding unsupported-metadata.json)
     supportedCount = files.filter(
-      (f: string) => f.endsWith('.json') && f !== 'unsupported-metadata.json'
+      (f) => f.endsWith('.json') && !f.endsWith(UNSUPPORTED_FILE_NAME)
     ).length;
   } catch (error) {
-    // Cache directory doesn't exist
+    // Cache directory doesn't exist, no problem
   }
 
   try {
@@ -213,7 +212,7 @@ export const getCacheInfo = async (
     const cache: UnsupportedAdaptorCache = JSON.parse(content);
     unsupportedCount = Object.keys(cache).length;
   } catch (error) {
-    // Unsupported cache doesn't exist
+    // Unsupported cache doesn't exist, no problem
   }
 
   return {
@@ -224,9 +223,8 @@ export const getCacheInfo = async (
 };
 
 export const clearCache = async (repoDir: string): Promise<void> => {
-  const cacheDir = path.join(repoDir, CACHE_DIR);
+  const cacheDir = getCachePath(repoDir);
   try {
-    const { rm } = await import('node:fs/promises');
     await rm(cacheDir, { recursive: true, force: true });
   } catch (error) {
     // Cache directory might not exist, that's fine
@@ -236,7 +234,7 @@ export const clearCache = async (repoDir: string): Promise<void> => {
 export default {
   get,
   set,
-  getPath,
+  getPath: getCachePath,
   generateKey,
   sortKeys,
   isAdaptorUnsupported,

@@ -67,7 +67,9 @@ const metadataHandler = async (
 
   // Check cache first to avoid unnecessary downloads
   if (await isAdaptorUnsupported(adaptor, repoDir)) {
-    logger.warn(`Adaptor ${adaptor} is known to not support metadata (cached)`);
+    logger.info(
+      `Adaptor ${adaptor} is known to not support metadata (cached) - skipping lookup`
+    );
     logger.error('No metadata helper found');
     process.exit(1);
   }
