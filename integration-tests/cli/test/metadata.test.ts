@@ -167,8 +167,7 @@ test.serial(
 );
 
 // metadata should work with implicit @latest (note that it'll still autoinstall)
-// TODO some kind of exception triggers here?? Can't repro standalone
-test.serial.skip(
+test.serial(
   `openfn metadata -S "${state}" -a openfn --log-json --log info`,
   async (t) => {
     const { stdout } = await run(t.title);
