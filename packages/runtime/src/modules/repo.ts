@@ -193,7 +193,7 @@ const getRepoAlias = async (
     // TODO: fuzzy semver match
     const a = getAliasedName(specifier);
     const pkg = await loadRepoPkg(repoPath);
-    if (pkg && pkg.dependencies[a]) {
+    if (pkg && pkg.dependencies && pkg.dependencies[a]) {
       return a;
     }
   } else {

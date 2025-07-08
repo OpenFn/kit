@@ -38,6 +38,7 @@ export type Opts = {
   force?: boolean;
   ignoreImports?: boolean | string[];
   immutable?: boolean;
+  keepUnsupported?: boolean;
   log?: Record<string, LogLevel>;
   logJson?: boolean;
   monorepoPath?: string;
@@ -270,6 +271,16 @@ export const force: CLIOption = {
     alias: ['f'],
     boolean: true,
     description: 'Force metadata to be regenerated',
+    default: false,
+  },
+};
+
+export const keepUnsupported: CLIOption = {
+  name: 'keep-unsupported',
+  yargs: {
+    boolean: true,
+    description:
+      'Keep adaptors that do not support metadata (do not remove them)',
     default: false,
   },
 };

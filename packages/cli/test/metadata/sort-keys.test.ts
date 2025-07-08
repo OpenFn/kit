@@ -1,5 +1,5 @@
 import test from 'ava';
-import cache from '../../src/metadata/cache';
+import * as cache from '../../src/metadata/cache';
 
 test('sort keys', (t) => {
   const sorted = cache.sortKeys({

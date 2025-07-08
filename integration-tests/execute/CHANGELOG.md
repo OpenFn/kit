@@ -1,5 +1,12 @@
 # @openfn/integration-tests-execute
 
+## 1.0.22
+
+### Patch Changes
+
+- Updated dependencies [f04acef]
+  - @openfn/runtime@1.7.1
+
 ## 1.0.21
 
 ### Patch Changes

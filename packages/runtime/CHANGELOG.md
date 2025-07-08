@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.7.1
+
+### Patch Changes
+
+- f04acef: Fix an issue reading package.json on autoinstalled adaptors
+
 ## 1.7.0
 
 ### Minor Changes
