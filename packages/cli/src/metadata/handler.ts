@@ -150,7 +150,6 @@ const metadataHandler = async (
       process.exit(1);
     }
   } catch (e) {
-    console.log(e);
     logger.error('Exception while generating metadata');
     logger.error(e);
     process.exit(1);
