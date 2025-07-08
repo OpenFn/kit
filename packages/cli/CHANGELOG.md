@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.13.1
+
+### Patch Changes
+
+- 6ec2c48: Better cache management in the metadata command
+- Updated dependencies [f04acef]
+  - @openfn/runtime@1.7.1
+
 ## 1.13.0
 
 ### Minor Changes
