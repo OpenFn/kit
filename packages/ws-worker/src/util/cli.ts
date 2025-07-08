@@ -10,6 +10,7 @@ const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 30;
 type Args = {
   _: string[];
   backoff: string;
+  debug?: boolean;
   capacity?: number;
   collectionsUrl?: string;
   collectionsVersion?: string;
@@ -79,6 +80,10 @@ export default function parseArgs(argv: string[]): Args {
 
   const parser = yargs(hideBin(argv))
     .command('server', 'Start a ws-worker server')
+    .option('debug', {
+      hidden: true,
+      type: 'boolean',
+    })
     .option('port', {
       alias: 'p',
       description: `Port to run the server on. Default ${DEFAULT_PORT}. Env: WORKER_PORT`,
@@ -177,7 +182,6 @@ export default function parseArgs(argv: string[]): Args {
     });
 
   const args = parser.parse() as Args;
-
   return {
     ...args,
     port: setArg(args.port, WORKER_PORT, DEFAULT_PORT),

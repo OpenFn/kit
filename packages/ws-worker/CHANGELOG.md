@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.14.1
+
+### Patch Changes
+
+- d765843: Fix an issue where the server can attempt to claim even while it's waiting to shut down
+- 667e3bf: Improve logging of errors returned by lightning
+- d765843: Fix an issue where the --backoff server argument only accepts integer values
+
 ## 1.14.0
 
 ### Minor Changes
