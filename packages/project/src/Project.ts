@@ -133,7 +133,7 @@ export class Project {
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options?: Partial<l.ProjectConfig>
+    options: Partial<l.ProjectConfig> = {}
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
