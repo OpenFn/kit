@@ -115,7 +115,7 @@ test.serial('autoinstall @next', async (t) => {
 
 test.serial('autoinstall three things at once', async (t) => {
   const a = generate('common', '1.11.1');
-  const b = generate('http', '5.0.0');
+  const b = generate('http', '7.2.0');
   const c = generate('googlesheets', '2.2.2');
 
   const [ra, rb, rc] = await Promise.all([run(a), run(b), run(c)]);
