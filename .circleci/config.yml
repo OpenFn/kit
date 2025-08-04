@@ -133,6 +133,6 @@ workflows:
             parameters:
               # temporarily test against a range of versions while we get over teh 18x hump
               # We can reduce this later
-              node_version: ['18.12.1', '18.18', '20.18.1', '22.12']
+              node_version: ['18.12.1', '18.18', '18.20.0', '20.18.1', '22.12']
           requires:
             - build
