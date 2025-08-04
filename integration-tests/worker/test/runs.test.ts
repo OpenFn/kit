@@ -198,7 +198,7 @@ test.serial('run parallel jobs', async (t) => {
 
 test.serial('run a http adaptor job', async (t) => {
   const job = createJob({
-    adaptor: '@openfn/language-http@5.0.4',
+    adaptor: '@openfn/language-http@7.2.0',
     body: `get("https://jsonplaceholder.typicode.com/todos/1");
     fn((state) => { state.res = state.response; return state });`,
   });
@@ -206,7 +206,7 @@ test.serial('run a http adaptor job', async (t) => {
   const result = await run(t, attempt);
 
   t.truthy(result.res);
-  t.is(result.res.status, 200);
+  t.is(result.res.statusCode, 200);
   t.truthy(result.res.headers);
 
   t.deepEqual(result.data, {
