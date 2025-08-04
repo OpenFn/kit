@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "CLI devtools for the OpenFn toolchain",
   "engines": {
     "node": ">=18",
@@ -60,7 +60,7 @@
     "figures": "^5.0.0",
     "rimraf": "^6.0.1",
     "treeify": "^1.1.0",
-    "undici": "^7.1.0",
+    "undici": "7.12.0",
     "ws": "^8.18.0",
     "yargs": "^17.7.2"
   },

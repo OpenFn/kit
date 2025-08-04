@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.13.2
+
+### Patch Changes
+
+- ba70253: Lock undici to v7.12 to retain compatibility with node18
+
 ## 1.13.1
 
 ### Patch Changes
