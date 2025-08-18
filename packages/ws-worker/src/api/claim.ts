@@ -64,6 +64,7 @@ const claim = (
       const e = new ClaimError('queue closed');
       Sentry.captureException(e);
       logger.warn('skipping claim attempt: channel closed');
+      app.workloop?.stop('Claim queue closed');
       return reject(e);
     }
 
