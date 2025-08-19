@@ -7,10 +7,6 @@ import { randomUUID } from 'node:crypto';
 
 const uuid = randomUUID;
 
-// map triggers with the same name
-// map steps with the same name
-// map edges with the same name
-
 const wf = (steps = []): l.Workflow => ({
   name: 'wf1',
   steps,
@@ -40,8 +36,8 @@ test('map triggers with the same name', (t) => {
     },
   ]);
 
-  console.log(a);
-  console.log(b);
+  t.log(JSON.stringify(a, null, 2));
+  t.log(JSON.stringify(b, null, 2));
 
   const result = mapUUIDs(a, b);
 
@@ -49,3 +45,10 @@ test('map triggers with the same name', (t) => {
     [id_a]: id_b,
   });
 });
+
+// map steps with the same name
+// map edges with the same name
+
+// map step with different id but same parent
+// mark new step as new
+// mark removed step as removed

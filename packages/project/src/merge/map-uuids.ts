@@ -1,4 +1,6 @@
 /**
+ * Identify identical nodes in two projects
+ *
  * this function will take two workflows
  * and it'll return a map of step and edge UUIDs in A
  * and how they map to B
@@ -19,7 +21,6 @@ type Map = Record<string, MappingRule>;
 
 export default (a: Project, b: Project) => {
   // first of we handle all simple mappings
-
   const map: Map = {};
 
   // go over each UUID of A and see if you can map it to something in B
