@@ -20,11 +20,17 @@ export default function merge(source, target, options = {}) {
   // for each workflow required (either all or in options)
 
   const idmap = mapUuids(source_wf, target_wf);
+
+  // id map is like:
+  // source id: target uuid
+  // { x: uuid_main }
+
   // copy it
   // keep the uuid of the target
   // for each step in the source:
-  //    copy it
-  //    assign uuids for each step from the target
+  //    copy it into the target
+  //    remove the UUID id (actually the whole openfn object I think)
+  //    from the map, set the new UUID (or generate a new one)
   // add to the new project
 
   // return the new project

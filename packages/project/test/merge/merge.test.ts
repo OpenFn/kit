@@ -43,6 +43,7 @@ test.only('should merge two simple projects', (t) => {
     steps: [
       {
         id: 'x',
+        name: 'X',
         adaptor: 'common',
         expression: 'fn(s => s)',
       },
