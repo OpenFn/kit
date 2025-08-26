@@ -15,13 +15,17 @@ type Options = {
  * target, but the UUIDs of the source
  */
 export default function merge(source, target, options = {}) {
-  const idmap = mapUuids(source, target);
-
   // create a new project
 
-  // for each workflow of the source
+  // for each workflow required (either all or in options)
+
+  const idmap = mapUuids(source_wf, target_wf);
   // copy it
-  // assign uuids from the target
+  // keep the uuid of the target
+  // for each step in the source:
+  //    copy it
+  //    assign uuids for each step from the target
+  // add to the new project
 
   // return the new project
   return source;
