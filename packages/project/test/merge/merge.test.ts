@@ -60,11 +60,14 @@ test.only('should merge two simple projects', (t) => {
   const staging = createProject(wf_b, 'b');
 
   // merge staging into main
-  const result = merge(main, staging);
+  const result = merge(staging, main);
 
-  // The resulting project should have the expression of B, but the uuid of A
+  // The resulting project should have:,
   const step = result.workflows[0].steps[0];
+  // the adaptor of staging
   t.is(step.adaptor, wf_b.steps[0].adaptor);
+
+  // but the uuid of main
   t.is(step.openfn.id, wf_a.steps[0].openfn.id);
 });
 

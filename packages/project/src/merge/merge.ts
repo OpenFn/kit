@@ -1,9 +1,11 @@
+import mapUuids from './map-uuids';
+
 type Options = {
   workflows: string[]; // A list of workflows to merge
 };
 
 /**
- * This is the main merge function
+ * This is the main merge function: merge source -> target
  *
  * This top level function must be highly readable and algorithmic
  *
@@ -13,12 +15,14 @@ type Options = {
  * target, but the UUIDs of the source
  */
 export default function merge(source, target, options = {}) {
-  // Get a list lof workflows to merge (based on options)
-  // For each workflow, map source nodes (steps and edges)
-  // to target nodes.
-  // Note that we need to handle triggers somehow too
-  // Merge the properties of each node
-  // Including UUIDs
-  // return a new project with the merged state
+  const idmap = mapUuids(source, target);
+
+  // create a new project
+
+  // for each workflow of the source
+  // copy it
+  // assign uuids from the target
+
+  // return the new project
   return source;
 }
