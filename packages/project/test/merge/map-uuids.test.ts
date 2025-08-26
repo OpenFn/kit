@@ -52,3 +52,82 @@ test('map triggers with the same name', (t) => {
 // map step with different id but same parent
 // mark new step as new
 // mark removed step as removed
+
+test('node name changes but no positional change', (t) => {
+  const trigger_a = uuid();
+  const trigger_b = uuid();
+
+  const id_a = uuid();
+  const id_b = uuid();
+
+  const id_v = uuid();
+  const id_bb = uuid();
+
+  const a = wf([
+    {
+      id: 'trigger',
+      type: 'webhook',
+      next: {
+        a: true
+      },
+      openfn: {
+        enabled: true,
+        id: trigger_a,
+      },
+    },
+    {
+      id: 'a',
+      type: 'step',
+      next: {b: true},
+      openfn: {
+        enabled: true,
+        id: id_a,
+      },
+    },
+    {
+      id: 'b',
+      type: 'step',
+      openfn: {
+        enabled: true,
+        id: id_b,
+      },
+    },
+  ]);
+  const b = wf([
+    {
+      id: 'trigger',
+      type: 'webhook',
+      next: {v: true},
+      openfn: {
+        enabled: true,
+        id: id_b,
+      },
+    },
+    {
+      id: 'v',
+      type: 'step',
+      next: {b: true},
+      openfn: {
+        enabled: true,
+        id: id_v,
+      },
+    },
+    {
+      id: 'b',
+      type: 'step',
+      openfn: {
+        enabled: true,
+        id: id_bb,
+      },
+    },
+  ]);
+
+  t.log(JSON.stringify(a, null, 2));
+  t.log(JSON.stringify(b, null, 2));
+
+  const result = mapUUIDs(a, b);
+
+  t.deepEqual(result, {
+    [id_a]: id_v,
+  });
+});
