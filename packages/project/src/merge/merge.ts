@@ -17,8 +17,10 @@ type Options = {
  * Return a new project which has all the nodes and values of the
  * target, but the UUIDs of the source
  */
+// TOOD what if a workflow is removed from the target?
 export function merge(source: Project, target: Project, options) {
   const finalWorkflows: Workflow[] = [];
+  // TODO: a new workflow in the source will not be handled
   for (const workflow of target.workflows) {
     const sourceWorkflow = source.getWorkflow(workflow.id);
     if (sourceWorkflow) {
@@ -31,6 +33,7 @@ export function merge(source: Project, target: Project, options) {
 
   const mergedProject = new Project(
     { ...target, ...source, workflows: finalWorkflows },
+    // TODO probably just preserve target repo?
     { ...target.repo, ...source.repo }
   );
   return mergedProject;

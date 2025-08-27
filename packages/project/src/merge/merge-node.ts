@@ -55,7 +55,10 @@ export function mergeWorkflowNodes(
       // do a merge
       newNode = mergeNode(sstep, targetNodes[preservedId]);
       // replace preserved id
-      newNode.openfn = { ...(newNode.openfn || {}), id: preservedId };
+      // newNode.openfn = { ...(newNode.openfn || {}), id: preservedId };
+      newNode.openfn = Object.assign({}, newNode.openfn, { id: preservedId });
+    } else {
+      // TODO Do we need to generate a UUID here?
     }
     steps.push(newNode);
   }

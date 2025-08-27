@@ -120,7 +120,7 @@ export class Project {
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
-    this.workflows = data.workflows;
+    this.workflows = data.workflows.map((w) => new Workflow(w));
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
@@ -172,5 +172,28 @@ export class Project {
   }
 }
 
-// Surely this is just a type?
-class Workflow {}
+class Workflow {
+  constructor(workflow: l.Workflow) {
+    this.steps = {}; // TODO extract from workflow
+    this.edges = {}; // TODO extract from workflow
+
+    // maybe the raw model
+    this.model = workflow;
+  }
+
+  getStep(id) {}
+  setStep(id, props) {
+    // replace the step with id with the properties attached
+    // create a new step if doesn't exist?
+  }
+  mergeStep(id, props) {
+    // overwrite each key of props on the step
+    // throw if the step doesn't exist?
+  }
+  getEdge(from, to) {}
+  setEdge(from, to, props) {}
+  mergeEdge(from, to, props) {}
+
+  // TODO same for triggers?
+  // Or is a trigger just a step?
+}
