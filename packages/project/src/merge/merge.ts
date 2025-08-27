@@ -1,3 +1,6 @@
+import { Workflow } from '@openfn/lexicon';
+import { Project } from '../Project';
+import { mergeWorkflowNodes } from './merge-node';
 import mapUuids from './map-uuids';
 
 type Options = {
@@ -14,14 +17,24 @@ type Options = {
  * Return a new project which has all the nodes and values of the
  * target, but the UUIDs of the source
  */
-export default function merge(source, target, options = {}) {
-  // create a new project
+export function merge(source: Project, target: Project, options) {
+  const finalWorkflows: Workflow[] = [];
+  for (const workflow of target.workflows) {
+    const sourceWorkflow = source.getWorkflow(workflow.id);
+    if (sourceWorkflow) {
+      const mappings = mapUuids(sourceWorkflow, workflow);
+      finalWorkflows.push(
+        mergeWorkflowNodes(sourceWorkflow, workflow, mappings)
+      );
+    } else finalWorkflows.push(workflow);
+  }
 
-  // for each workflow required (either all or in options)
-
-  const idmap = mapUuids(source_wf, target_wf);
-
-  // id map is like:
+  const mergedProject = new Project(
+    { ...target, ...source, workflows: finalWorkflows },
+    { ...target.repo, ...source.repo }
+  );
+  return mergedProject;
+    // id map is like:
   // source id: target uuid
   // { x: uuid_main }
 
@@ -32,7 +45,4 @@ export default function merge(source, target, options = {}) {
   //    remove the UUID id (actually the whole openfn object I think)
   //    from the map, set the new UUID (or generate a new one)
   // add to the new project
-
-  // return the new project
-  return source;
 }

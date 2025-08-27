@@ -7,42 +7,64 @@ import { randomUUID } from 'node:crypto';
 
 const uuid = randomUUID;
 
+interface TStep {
+  id: string;
+  type?: string;
+  next: TStep[];
+}
+interface TWorkflow {
+  name: string;
+  steps: TStep[];
+}
+function workflowGenerator(gn: TWorkflow) {
+  const steps = [];
+  const idMap = new Map<string, string>();
+  // do something
+  const generate = (stp: TStep) => {
+    const id = uuid();
+    idMap.set(stp.id, id);
+    const next = {};
+    if (stp.next) {
+      for (const step of stp.next) {
+        next[step.id] = true;
+        generate(step);
+      }
+    }
+    steps.push({
+      id: stp.id,
+      openfn: {
+        id,
+      },
+      next,
+    });
+  };
+  for (const step of gn.steps) generate(step);
+  return {
+    workflow: { name: gn.name, steps: steps.reverse() },
+    getId(id: string) {
+      return idMap.get(id);
+    },
+  };
+}
+
 const wf = (steps = []): l.Workflow => ({
   name: 'wf1',
   steps,
 });
 
 test('map triggers with the same name', (t) => {
-  const id_a = uuid();
-  const id_b = uuid();
-  const a = wf([
-    {
-      id: 'trigger',
-      type: 'webhook',
-      openfn: {
-        enabled: true,
-        id: id_a,
-      },
-    },
-  ]);
-  const b = wf([
-    {
-      id: 'trigger',
-      type: 'webhook',
-      openfn: {
-        enabled: true,
-        id: id_b,
-      },
-    },
-  ]);
+  const source = workflowGenerator({
+    name: 'initial workflow',
+    steps: [{ id: 'trigger', type: 'webhook' }],
+  });
 
-  t.log(JSON.stringify(a, null, 2));
-  t.log(JSON.stringify(b, null, 2));
-
-  const result = mapUUIDs(a, b);
-
+  const target = workflowGenerator({
+    name: 'initial workflow',
+    steps: [{ id: 'trigger', type: 'webhook' }],
+  });
+  const result = mapUUIDs(source.workflow, target.workflow);
   t.deepEqual(result, {
-    [id_a]: id_b,
+    ['trigger']: target.getId('trigger'),
   });
 });
 
@@ -54,80 +76,89 @@ test('map triggers with the same name', (t) => {
 // mark removed step as removed
 
 test('node name changes but no positional change', (t) => {
-  const trigger_a = uuid();
-  const trigger_b = uuid();
+  const source = workflowGenerator({
+    name: 'initial workflow',
+    steps: [
+      {
+        id: 'trigger',
+        type: 'webhook',
+        next: [
+          {
+            id: 'a',
+            next: [{ id: 'b' }],
+          },
+        ],
+      },
+    ],
+  });
 
-  const id_a = uuid();
-  const id_b = uuid();
+  const target = workflowGenerator({
+    name: 'updated workflow',
+    steps: [
+      {
+        id: 'trigger',
+        type: 'webhook',
+        next: [
+          {
+            id: 'c',
+            next: [{ id: 'b' }],
+          },
+        ],
+      },
+    ],
+  });
 
-  const id_v = uuid();
-  const id_bb = uuid();
-
-  const a = wf([
-    {
-      id: 'trigger',
-      type: 'webhook',
-      next: {
-        a: true
-      },
-      openfn: {
-        enabled: true,
-        id: trigger_a,
-      },
-    },
-    {
-      id: 'a',
-      type: 'step',
-      next: {b: true},
-      openfn: {
-        enabled: true,
-        id: id_a,
-      },
-    },
-    {
-      id: 'b',
-      type: 'step',
-      openfn: {
-        enabled: true,
-        id: id_b,
-      },
-    },
-  ]);
-  const b = wf([
-    {
-      id: 'trigger',
-      type: 'webhook',
-      next: {v: true},
-      openfn: {
-        enabled: true,
-        id: id_b,
-      },
-    },
-    {
-      id: 'v',
-      type: 'step',
-      next: {b: true},
-      openfn: {
-        enabled: true,
-        id: id_v,
-      },
-    },
-    {
-      id: 'b',
-      type: 'step',
-      openfn: {
-        enabled: true,
-        id: id_bb,
-      },
-    },
-  ]);
-
-  t.log(JSON.stringify(a, null, 2));
-  t.log(JSON.stringify(b, null, 2));
-
-  const result = mapUUIDs(a, b);
+  const result = mapUUIDs(source.workflow, target.workflow);
 
   t.deepEqual(result, {
-    [id_a]: id_v,
+    ['trigger']: target.getId('trigger'),
+    ['b']: target.getId('b'),
+    ['c']: null,
+    ['a']: true,
+  });
+});
+
+test('one connecting node missing', (t) => {
+  const source = workflowGenerator({
+    name: 'Some workflow',
+    steps: [
+      {
+        id: 'a',
+        next: [
+          {
+            id: 'b',
+            next: [{ id: 'c' }, { id: 'd' }],
+          },
+        ],
+      },
+    ],
+  });
+  const target = workflowGenerator({
+    name: 'Updated workflow',
+    steps: [
+      {
+        id: 'a',
+        next: [
+          {
+            id: 'z',
+            next: [
+              {
+                id: 'b',
+                next: [{ id: 'c' }, { id: 'd' }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  const result = mapUUIDs(source.workflow, target.workflow);
+  t.deepEqual(result, {
+    ['a']: target.getId('a'),
+    ['b']: target.getId('b'),
+    ['c']: target.getId('c'),
+    ['d']: target.getId('d'),
+    ['z']: null,
   });
 });
