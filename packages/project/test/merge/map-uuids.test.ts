@@ -64,7 +64,7 @@ test('map triggers with the same name', (t) => {
   });
   const result = mapUUIDs(source.workflow, target.workflow);
   t.deepEqual(result, {
-    ['trigger']: source.getId('trigger'),
+    ['trigger']: target.getId('trigger'),
   });
 });
 
@@ -111,8 +111,8 @@ test('node name changes but no positional change', (t) => {
   const result = mapUUIDs(source.workflow, target.workflow);
 
   t.deepEqual(result, {
-    ['trigger']: source.getId('trigger'),
-    ['b']: source.getId('b'),
+    ['trigger']: target.getId('trigger'),
+    ['b']: target.getId('b'),
     ['c']: null,
     ['a']: true,
   });
@@ -155,10 +155,10 @@ test('one connecting node missing', (t) => {
 
   const result = mapUUIDs(source.workflow, target.workflow);
   t.deepEqual(result, {
-    ['a']: source.getId('a'),
-    ['b']: source.getId('b'),
-    ['c']: source.getId('c'),
-    ['d']: source.getId('d'),
+    ['a']: target.getId('a'),
+    ['b']: target.getId('b'),
+    ['c']: target.getId('c'),
+    ['d']: target.getId('d'),
     ['z']: null,
   });
 });

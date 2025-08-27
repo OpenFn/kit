@@ -33,17 +33,20 @@ type MappingRule = null | string | true;
 // 1. check what node was in that position originally (use parent when parent is a solid node, else use sibling if it's solid, else if all children are solid)
 // 2. if the original node isn't a solid node, then it might be it. (when same parent and children)
 
-
 export default (source: Workflow, target: Workflow) => {
   const mapping: Record<string, MappingRule> = {};
 
   // sets all nodes as not existing in target
-  for (const tstep of target.steps) mapping[tstep.id] = null;
+  const targetIds: Record<string, string> = {};
+  for (const tstep of target.steps) {
+    mapping[tstep.id] = null;
+    targetIds[tstep.id] = tstep.openfn.id || tstep.id;
+  }
 
   for (const sstep of source.steps) {
     const ex = mapping[sstep.id];
     // matched nodes are mapped
-    if (ex === null) mapping[sstep.id] = sstep.openfn.id || sstep.id;
+    if (ex === null) mapping[sstep.id] = targetIds[sstep.id];
     else if (ex === undefined) mapping[sstep.id] = true; // true to create id for new nodes
   }
   return mapping;
