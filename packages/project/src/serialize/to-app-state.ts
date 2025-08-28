@@ -3,6 +3,7 @@
 import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
+import Workflow from '../Workflow';
 
 import { randomUUID } from 'node:crypto';
 type Options = { format?: 'json' | 'yaml' };
@@ -35,6 +36,10 @@ export default function (project: Project, options: Options = {}) {
 }
 
 const mapWorkflow = (workflow) => {
+  // TODO this is always a Workflow now, no?
+  if (workflow instanceof Workflow) {
+    workflow = workflow.toJSON();
+  }
   const wfState = {
     name: workflow.name,
     ...renameKeys(workflow.openfn, { uuid: 'id' }),

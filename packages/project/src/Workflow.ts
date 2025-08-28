@@ -15,8 +15,12 @@ class Workflow {
     };
 
     this.#workflow = clone(workflow);
-    this.id = workflow.id;
-    this.name = workflow.name;
+
+    const { id, name, openfn, steps, ...options } = workflow;
+    this.id = id;
+    this.name = name;
+    this.openfn = openfn;
+    this.options = options;
 
     this.#buildIndex();
   }
@@ -40,13 +44,15 @@ class Workflow {
         const edgeId = `${s.id}-${next}`;
         const edge = edges[next];
         this.index.edges[edgeId] = edge;
-        this.index.uuid[edgeId] = edge.openfn.id;
+        this.index.uuid[edgeId] = edge.openfn?.id;
         if (edge.openfn?.id) {
           this.index.id[edge.openfn.id] = edgeId;
         }
       }
     }
   }
+
+  set(id, props) {}
 
   getStep(id) {}
   setStep(id, props) {
