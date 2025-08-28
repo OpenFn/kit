@@ -26,7 +26,7 @@ export function merge(source: Project, target: Project, options) {
     if (sourceWorkflow) {
       const mappings = mapUuids(sourceWorkflow, workflow);
       finalWorkflows.push(
-        mergeWorkflowNodes(sourceWorkflow, workflow, mappings)
+        mergeWorkflowNodes(sourceWorkflow, workflow, mappings.nodes)
       );
     } else finalWorkflows.push(workflow);
   }

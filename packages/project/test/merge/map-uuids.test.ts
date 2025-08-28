@@ -14,7 +14,7 @@ test('map triggers with the same name', (t) => {
   });
 
   const result = mapUUIDs(source.workflow, target.workflow);
-  t.deepEqual(result, {
+  t.deepEqual(result.nodes, {
     ['trigger']: target.getId('trigger'),
   });
 });
@@ -32,7 +32,7 @@ test('node name changes but no positional change', (t) => {
 
   const result = mapUUIDs(source.workflow, target.workflow);
 
-  t.deepEqual(result, {
+  t.deepEqual(result.nodes, {
     ['trigger']: target.getId('trigger'),
     ['b']: target.getId('b'),
     ['c']: null,
@@ -45,7 +45,7 @@ test('one connecting node missing', (t) => {
   const target = generateWorkflow(['a-z', 'z-b', 'b-c', 'b-d']);
 
   const result = mapUUIDs(source.workflow, target.workflow);
-  t.deepEqual(result, {
+  t.deepEqual(result.nodes, {
     ['a']: target.getId('a'),
     ['b']: target.getId('b'),
     ['c']: target.getId('c'),

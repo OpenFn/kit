@@ -17,7 +17,7 @@ class WorkflowGenerator {
         this.nodes[from] = {
           id: from,
           openfn: { id: fromId },
-          next: to ? {} : { [to]: true },
+          next: to ? { [to]: true } : {},
         };
       }
       if (to && !this.nodes[to]) {

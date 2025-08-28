@@ -34,22 +34,51 @@ type MappingRule = null | string | true;
 // 2. if the original node isn't a solid node, then it might be it. (when same parent and children)
 
 export default (source: Workflow, target: Workflow) => {
-  const mapping: Record<string, MappingRule> = {};
+  const nodeMapping: Record<string, MappingRule> = {};
+  const edgeMapping: Record<string, MappingRule> = {};
+  // const mapping: Record<string, MappingRule> = {};
 
   // sets all nodes as not existing in target
   const targetIds: Record<string, string> = {};
   for (const tstep of target.steps) {
-    mapping[tstep.id] = null;
-    targetIds[tstep.id] = tstep.openfn.id || tstep.id;
+    nodeMapping[tstep.id] = null;
+    targetIds[tstep.id] = tstep.openfn?.id || tstep.id;
+
+    // dealing with edges
+    const next =
+      typeof tstep.next === 'string'
+        ? { [tstep.next]: true }
+        : tstep.next || {};
+    for (const [toNode, toValue] of Object.entries(next)) {
+      const edgeId = tstep.id + '-' + toNode;
+      edgeMapping[edgeId] = null;
+      targetIds[edgeId] =
+        typeof toValue === 'object' ? toValue.openfn?.id || edgeId : edgeId;
+    }
   }
 
   for (const sstep of source.steps) {
-    const ex = mapping[sstep.id];
+    const ex = nodeMapping[sstep.id];
     // matched nodes are mapped
-    if (ex === null) mapping[sstep.id] = targetIds[sstep.id];
-    else if (ex === undefined) mapping[sstep.id] = true; // true to create id for new nodes
+    if (ex === null) nodeMapping[sstep.id] = targetIds[sstep.id];
+    else if (ex === undefined) nodeMapping[sstep.id] = true; // true to create id for new nodes
+
+    // dealing with edges
+    const next =
+      typeof sstep.next === 'string'
+        ? { [sstep.next]: true }
+        : sstep.next || {};
+    for (const toNode of Object.keys(next)) {
+      const edgeId = sstep.id + '-' + toNode;
+      const ex = edgeMapping[edgeId];
+      if (ex === null) edgeMapping[edgeId] = targetIds[edgeId];
+      else if (ex === undefined) edgeMapping[edgeId] = true;
+    }
   }
-  return mapping;
+  return {
+    nodes: nodeMapping,
+    edges: edgeMapping,
+  };
 };
 
 // if newchildren has some additional nodes, that's fine. it's the same children!
