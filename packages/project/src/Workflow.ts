@@ -1,0 +1,73 @@
+import * as l from '@openfn/lexicon';
+
+const clone = (obj) => JSON.parse(JSON.stringify(obj));
+
+class Workflow {
+  #workflow;
+  index;
+
+  constructor(workflow: l.Workflow) {
+    this.index = {
+      steps: {}, // steps by id
+      edges: {}, // edges by from-id id
+      uuid: {}, // id to uuid
+      id: {}, // uuid to ids
+    };
+
+    this.#workflow = clone(workflow);
+    this.id = workflow.id;
+    this.name = workflow.name;
+
+    this.#buildIndex();
+  }
+
+  get steps() {
+    return this.#workflow.steps;
+  }
+
+  #buildIndex() {
+    for (const s of this.#workflow.steps) {
+      // index this step
+      this.index.steps[s.id] = s;
+      this.index.uuid[s.id] = s.openfn.id;
+      if (s.openfn?.id) {
+        this.index.id[s.openfn.id] = s.id;
+      }
+
+      const edges = s.next ?? {};
+      // Now index each edge
+      for (const next in edges) {
+        const edgeId = `${s.id}-${next}`;
+        const edge = edges[next];
+        this.index.edges[edgeId] = edge;
+        this.index.uuid[edgeId] = edge.openfn.id;
+        if (edge.openfn?.id) {
+          this.index.id[edge.openfn.id] = edgeId;
+        }
+      }
+    }
+  }
+
+  getStep(id) {}
+  setStep(id, props) {
+    // replace the step with id with the properties attached
+    // create a new step if doesn't exist?
+  }
+  mergeStep(id, props) {
+    // overwrite each key of props on the step
+    // throw if the step doesn't exist?
+  }
+  getEdge(from, to) {}
+  setEdge(from, to, props) {}
+  mergeEdge(from, to, props) {}
+
+  // TODO same for triggers?
+  // Or is a trigger just a step?
+
+  // TODO make sure this stays up to date after edits
+  toJSON() {
+    return this.#workflow;
+  }
+}
+
+export default Workflow;
