@@ -1,7 +1,5 @@
 import { randomUUID } from 'node:crypto';
 
-const uuid = randomUUID;
-
 class WorkflowGenerator {
   ids = new Map<string, string>();
   nodes: Record<string, any> = {};
@@ -10,26 +8,33 @@ class WorkflowGenerator {
       const [from, to] = conn.split('-');
       // create node for from and to
       if (this.nodes[from]) {
-        if (to) this.nodes[from].next[to] = true;
+        if (to && !this.nodes[from].next[to])
+          this.nodes[from].next[to] = {
+            openfn: { id: this.uuid(`${from}-${to}`) },
+          };
       } else {
-        const fromId = uuid();
-        this.ids.set(from, fromId);
         this.nodes[from] = {
           id: from,
-          openfn: { id: fromId },
-          next: to ? { [to]: true } : {},
+          openfn: { id: this.uuid(from) },
+          next: to
+            ? { [to]: { openfn: { id: this.uuid(`${from}-${to}`) } } }
+            : {},
         };
       }
       if (to && !this.nodes[to]) {
-        const toId = uuid();
-        this.ids.set(to, toId);
         this.nodes[to] = {
           id: to,
-          openfn: { id: toId },
+          openfn: { id: this.uuid(to) },
           next: {},
         };
       }
     }
+  }
+
+  private uuid(id: string) {
+    const muuid = randomUUID();
+    this.ids.set(id, muuid);
+    return muuid;
   }
 
   get workflow() {
