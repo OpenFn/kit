@@ -111,7 +111,7 @@ test('should create a Project from prov state with a workflow', (t) => {
   const project = fromAppState(state, config);
 
   t.is(project.workflows.length, 1);
-  t.deepEqual(project.workflows[0], {
+  t.deepEqual(project.workflows[0].toJSON(), {
     id: 'wf1',
     name: 'wf1',
     steps: [

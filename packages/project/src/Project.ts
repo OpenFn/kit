@@ -2,6 +2,7 @@ import * as l from '@openfn/lexicon';
 // but what is this ?
 // is it just types?
 
+import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
@@ -62,7 +63,7 @@ export class Project {
   // array of version shas
   history: string[] = [];
 
-  workflows: l.Workflow[];
+  workflows: Workflow[];
 
   // option strings saved by the app
   // these are all (?) unused clientside
@@ -120,8 +121,7 @@ export class Project {
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
-    this.workflows = data.workflows;
-    // this.workflows = data.workflows.map((w) => new Workflow(w));
+    this.workflows = data.workflows?.map((w) => new Workflow(w)) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
