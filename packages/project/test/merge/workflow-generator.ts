@@ -3,7 +3,16 @@ import { randomUUID } from 'node:crypto';
 class WorkflowGenerator {
   ids = new Map<string, string>();
   nodes: Record<string, any> = {};
-  constructor(def: string[], private name: string = 'workflow') {
+
+  uuidSeed;
+
+  constructor(
+    def: string[],
+    private name: string = 'workflow',
+    private uuidSeed
+  ) {
+    this.uuidSeed = uuidSeed;
+
     for (const conn of def) {
       const [from, to] = conn.split('-');
       // create node for from and to
@@ -15,24 +24,24 @@ class WorkflowGenerator {
       } else {
         this.nodes[from] = {
           id: from,
-          openfn: { uuid: this.uuid(from) },
           next: to
             ? { [to]: { openfn: { uuid: this.uuid(`${from}-${to}`) } } }
             : {},
+          openfn: { uuid: this.uuid(from) },
         };
       }
       if (to && !this.nodes[to]) {
         this.nodes[to] = {
           id: to,
-          openfn: { uuid: this.uuid(to) },
           next: {},
+          openfn: { uuid: this.uuid(to) },
         };
       }
     }
   }
 
   private uuid(id: string) {
-    const muuid = randomUUID();
+    const muuid = !isNaN(this.uuidSeed) ? ++this.uuidSeed : randomUUID();
     this.ids.set(id, muuid);
     return muuid;
   }
@@ -62,6 +71,8 @@ class WorkflowGenerator {
   }
 }
 
-export default function generateWorkflow(def: string, name?: string) {
-  return new WorkflowGenerator(def, name);
+export default function generateWorkflow(def: string, options = {}) {
+  const { name, uuidSeed } = options;
+
+  return new WorkflowGenerator(def, name, uuidSeed);
 }
