@@ -3,18 +3,22 @@ import { randomUUID } from 'node:crypto';
 import Project from '../../src';
 import { merge } from '../../src/merge/merge';
 import { join } from 'node:path';
-import generateWorkflow from './workflow-generator';
+import generateWorkflow from '../workflow-generator';
 
 // go over each node in a workflow and add a new uuid
 // does not mutate
 const assignUUIDs = (workflow) => ({
   ...workflow,
-  steps: workflow.steps.map((s) => ({
-    ...s,
-    // TODO this reduction isn't quite right
-    next:
-      s.next &&
-      Object.keys(s.next).reduce((obj, key) => {
+  steps: workflow.steps.map((s) => {
+    const step = {
+      ...s,
+      openfn: {
+        id: randomUUID(),
+      },
+    };
+    if (s.next) {
+      // TODO this reduction isn't quite right
+      step.next = Object.keys(s.next).reduce((obj, key) => {
         obj[key] = {
           condition: true,
           openfn: {
@@ -22,11 +26,10 @@ const assignUUIDs = (workflow) => ({
           },
         };
         return obj;
-      }, {}),
-    openfn: {
-      id: randomUUID(),
-    },
-  })),
+      }, {});
+    }
+    return step;
+  }),
 });
 
 const createProject = (workflow, id = 'a') =>
@@ -141,7 +144,6 @@ test('merge a new step into an existing workflow', (t) => {
 
   // The resulting project should have:
   const [x, y] = result.workflows[0].steps;
-
   t.is(result.name, 'a');
   t.is(result.openfn.uuid, main.openfn.uuid);
 
@@ -302,11 +304,11 @@ test('merge an id change in a single step with preserved uuids', (t) => {
   t.is(step.openfn.id, wf_a.steps[0].openfn.id);
 });
 
-test('should merge two projects and preservee edge id', (t) => {
-  const source = generateWorkflow(['a-b']).setProp('a-b', { condition: true });
+test('should merge two projects and preserve edge id', (t) => {
+  const source = generateWorkflow(['a-b']).set('a-b', { condition: true });
   const target = generateWorkflow(['a-b']);
 
-  t.not(source.getId('a-b'), target.getId('a-b'));
+  t.not(source.getUUID('a-b'), target.getUUID('a-b'));
   const result = merge(
     createProject(source.workflow),
     createProject(target.workflow)
@@ -316,7 +318,7 @@ test('should merge two projects and preservee edge id', (t) => {
   // preserve edge condition from source
   t.is(resultEdge.condition, true);
   // preserve edge id from target
-  t.is(target.getId('a-b'), resultEdge.openfn.id);
+  t.is(target.getUUID('a-b'), resultEdge.openfn.id);
 });
 
 // should preserve UUID if id changes

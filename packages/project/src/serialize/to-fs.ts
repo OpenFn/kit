@@ -29,7 +29,7 @@ export default function (project: Project) {
 }
 
 // extracts a workflow.json|yaml from a project
-export const extractWorkflow = (project, workflowId) => {
+export const extractWorkflow = (project: Project, workflowId: string) => {
   const format = project.repo.formats.workflow;
 
   const workflow = project.getWorkflow(workflowId);
@@ -44,6 +44,8 @@ export const extractWorkflow = (project, workflowId) => {
   const wf = {
     id: workflow.id,
     name: workflow.name,
+    // Note: if no options are defined, options will serialize to an empty object
+    // Not crazy about this - maybe we should do something better? Or do we like the consistency?
     options: workflow.options,
     steps: workflow.steps.map((step) => {
       const { openfn, expression, ...mapped } = step;
@@ -57,7 +59,7 @@ export const extractWorkflow = (project, workflowId) => {
 };
 
 // extracts an expression.js from a workflow in project
-export const extractStep = (project, workflowId, stepId) => {
+export const extractStep = (project: Projec, workflowId, stepId) => {
   const workflow = project.getWorkflow(workflowId);
   if (!workflow) {
     throw new Error(`workflow not found: ${workflowId}`);
