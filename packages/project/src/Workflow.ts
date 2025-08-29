@@ -52,23 +52,50 @@ class Workflow {
     }
   }
 
-  set(id, props) {}
+  // Set properties on any step or edge by id
+  set(id, props) {
+    const item = this.index.edges[id] || this.index.steps[id];
+    if (!item) {
+      throw new Error(`step/edge with id "${id}" does not exist in workflow`);
+    }
 
-  getStep(id) {}
-  setStep(id, props) {
-    // replace the step with id with the properties attached
-    // create a new step if doesn't exist?
-  }
-  mergeStep(id, props) {
-    // overwrite each key of props on the step
-    // throw if the step doesn't exist?
-  }
-  getEdge(from, to) {}
-  setEdge(from, to, props) {}
-  mergeEdge(from, to, props) {}
+    Object.assign(item, props);
 
-  // TODO same for triggers?
-  // Or is a trigger just a step?
+    return this;
+  }
+
+  // Get properties on any step or edge by id
+  get(id) {
+    const item = this.index.edges[id] || this.index.steps[id];
+    if (!item) {
+      throw new Error(`step/edge with id "${id}" does not exist in workflow`);
+    }
+
+    return item;
+  }
+
+  // Get an edge based on its source and target
+  getEdge(from, to) {
+    const edgeId = [from, to].join('-');
+
+    const edge = this.index.edges[edgeId];
+    if (!edge) {
+      throw new Error(`edge with id "${edgeId}" does not exist in workflow`);
+    }
+
+    return edge;
+  }
+
+  // setStep(id, props) {
+  //   // replace the step with id with the properties attached
+  //   // create a new step if doesn't exist?
+  // }
+  // mergeStep(id, props) {
+  //   // overwrite each key of props on the step
+  //   // throw if the step doesn't exist?
+  // }
+  // setEdge(from, to, props) {}
+  // mergeEdge(from, to, props) {}
 
   // TODO make sure this stays up to date after edits
   toJSON() {
