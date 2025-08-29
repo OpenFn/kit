@@ -75,13 +75,74 @@ test('a Workflow class can serialize to JSON', (t) => {
   t.deepEqual(json, simpleWorkflow);
 });
 
-test.skip("Editing a workflow internally doesn't affect the input", (t) => {
+test('get - get a step', (t) => {
   const w = new Workflow(simpleWorkflow);
 
-  // set a property on w
-  // simple workflow should not reflect the change
+  const step = w.get('a');
 
-  t.deepEqual(json, simpleWorkflow);
+  t.deepEqual(step, simpleWorkflow.steps[0]);
+});
+
+test('get - get an edge', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  const edge = w.get('a-c');
+
+  t.deepEqual(edge, simpleWorkflow.steps[0].next.c);
+});
+
+test('get - throw if not found', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.throws(() => w.get('x'), {
+    message: 'step/edge with id "x" does not exist in workflow',
+  });
+});
+
+test('getEdge - get an edge', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  const edge = w.getEdge('a', 'c');
+
+  t.deepEqual(edge, simpleWorkflow.steps[0].next.c);
+});
+
+test('set properties on a step', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.set('a', { adaptor: 'salesforce' });
+
+  const step = w.get('a');
+  t.is(step.adaptor, 'salesforce');
+});
+
+test('set properties on a step, with a chain', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.set('a', { adaptor: 'salesforce' }).set('b', { adaptor: 'dhis2' });
+
+  const a = w.get('a');
+  t.is(a.adaptor, 'salesforce');
+
+  const b = w.get('b');
+  t.is(b.adaptor, 'dhis2');
+});
+
+test('set properties on an edge', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.set('a-c', { condition: '!state.error' });
+
+  const edge = w.get('a-c');
+  t.is(edge.condition, '!state.error');
+});
+
+test("Editing a workflow internally doesn't affect the input", (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  w.set('a', { adaptor: 'salesforce' });
+
+  t.falsy(simpleWorkflow.steps[0].adaptor);
 });
 
 test('map steps by id', (t) => {
