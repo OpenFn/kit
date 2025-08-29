@@ -1,78 +1,60 @@
 import { randomUUID } from 'node:crypto';
+import Workflow from '../../src/Workflow';
 
-class WorkflowGenerator {
-  ids = new Map<string, string>();
-  nodes: Record<string, any> = {};
+function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
+  const ids = new Map<string, string>();
+  const nodes: Record<string, any> = {};
 
-  uuidSeed;
-
-  constructor(
-    def: string[],
-    private name: string = 'workflow',
-    private uuidSeed
-  ) {
-    this.uuidSeed = uuidSeed;
-
-    for (const conn of def) {
-      const [from, to] = conn.split('-');
-      // create node for from and to
-      if (this.nodes[from]) {
-        if (to && !this.nodes[from].next[to])
-          this.nodes[from].next[to] = {
-            openfn: { id: this.uuid(`${from}-${to}`) },
-          };
-      } else {
-        this.nodes[from] = {
-          id: from,
-          next: to
-            ? { [to]: { openfn: { id: this.uuid(`${from}-${to}`) } } }
-            : {},
-          openfn: { id: this.uuid(from) },
-        };
-      }
-      if (to && !this.nodes[to]) {
-        this.nodes[to] = {
-          id: to,
-          next: {},
-          openfn: { id: this.uuid(to) },
-        };
-      }
-    }
-  }
-
-  private uuid(id: string) {
-    const muuid = !isNaN(this.uuidSeed) ? ++this.uuidSeed : randomUUID();
-    this.ids.set(id, muuid);
-    return muuid;
-  }
-
-  get workflow() {
-    return { name: this.name, steps: Object.values(this.nodes) };
-  }
-
-  getId(node: string) {
-    return this.ids.get(node);
-  }
-
-  setProp(def: string, prop: Record<string, unknown>) {
-    const [from, to] = def.split('-');
-    if (to) {
-      // edge
-      if (this.nodes[from]) {
-        if (this.nodes[from].next[to])
-          this.nodes[from].next[to] = { ...this.nodes[from].next[to], ...prop };
-        else this.nodes[from].next[to] = { ...prop };
+  for (const conn of def) {
+    const [from, to] = conn.split('-');
+    // create node for from and to
+    if (nodes[from]) {
+      if (to) {
+        if (!nodes[from].next?.[to]) {
+          nodes[from].next ??= {};
+          nodes[from].next[to] = edge(`${from}-${to}`);
+        }
       }
     } else {
-      // node
-      if (this.nodes[from]) this.nodes[from] = { ...this.nodes[from], ...prop };
+      let props;
+      if (to) {
+        props = { next: { [to]: edge(`${from}-${to}`) } };
+      }
+      nodes[from] = node(from, props);
     }
-    return this;
+    if (to && !nodes[to]) {
+      nodes[to] = node(to);
+    }
+  }
+
+  return { name: name, steps: Object.values(nodes) };
+
+  // Generate a node with an openfn.id property
+  function node(id, props = {}) {
+    return {
+      id,
+      ...props,
+      openfn: { id: uuid(id) },
+    };
+  }
+
+  function edge(id, props = {}) {
+    return {
+      ...props,
+      openfn: { id: uuid(id) },
+    };
+  }
+
+  function uuid(id: string) {
+    const muuid = !isNaN(uuidSeed) ? ++uuidSeed : randomUUID();
+    ids.set(id, muuid);
+    return muuid;
   }
 }
 
 export default function generateWorkflow(def: string, options = {}) {
   const { name, uuidSeed } = options;
 
-  return new WorkflowGenerator(def, name, uuidSeed);
+  const wf = gen(def, name, uuidSeed);
+  return new Workflow(wf);
 }

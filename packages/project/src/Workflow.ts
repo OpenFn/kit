@@ -3,7 +3,7 @@ import * as l from '@openfn/lexicon';
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
 class Workflow {
-  #workflow;
+  workflow;
   index;
 
   constructor(workflow: l.Workflow) {
@@ -14,7 +14,7 @@ class Workflow {
       id: {}, // uuid to ids
     };
 
-    this.#workflow = clone(workflow);
+    this.workflow = clone(workflow);
 
     const { id, name, openfn, steps, ...options } = workflow;
     this.id = id;
@@ -26,11 +26,11 @@ class Workflow {
   }
 
   get steps() {
-    return this.#workflow.steps;
+    return this.workflow.steps;
   }
 
   #buildIndex() {
-    for (const s of this.#workflow.steps) {
+    for (const s of this.workflow.steps) {
       // index this step
       this.index.steps[s.id] = s;
       this.index.uuid[s.id] = s.openfn.id;
@@ -97,9 +97,8 @@ class Workflow {
   // setEdge(from, to, props) {}
   // mergeEdge(from, to, props) {}
 
-  // TODO make sure this stays up to date after edits
   toJSON() {
-    return this.#workflow;
+    return this.workflow;
   }
 }
 
