@@ -8,6 +8,7 @@
  */
 
 import { Workflow } from '@openfn/lexicon';
+import { MappingResults } from './map-uuids';
 
 type Node = Workflow['steps'][number];
 
@@ -35,10 +36,10 @@ export function mergeNode(source, target) {
   return result;
 }
 
-export function mergeWorkflowNodes(
+export function mergeWorkflows(
   source: Workflow,
   target: Workflow,
-  mappings: Record<string, MappingRule>
+  mappings: MappingResults
 ) {
   // We probably need to vary this by the node type,
   // step or edge, but we're basically doing this
@@ -50,9 +51,27 @@ export function mergeWorkflowNodes(
   const steps: Node[] = [];
   for (const sstep of source.steps) {
     let newNode: Node = sstep;
-    if (typeof mappings[sstep.id] === 'string') {
-      const preservedId = mappings[sstep.id];
-      // do a merge
+    if (typeof mappings.nodes[sstep.id] === 'string') {
+      const preservedId = mappings.nodes[sstep.id];
+      // how do I merge the edges?
+      const preservedEdgeIds = {};
+      for (const toNode of Object.keys(
+        typeof sstep.next === 'string'
+          ? { [tstep.next]: true }
+          : sstep.next || {}
+      )) {
+        // find step - toNode
+        const key = sstep.id + '-' + toNode;
+        if (typeof mappings.edges[key] === 'string') {
+          const preservedEdgeId = mappings.edges[key];
+          const toEdge = sstep.next?.[toNode] || {};
+          preservedEdgeIds[toNode] = sstep.next[toNode] = {
+            ...toEdge,
+            openfn: { ...(toEdge?.openfn || {}), id: preservedEdgeId },
+          };
+        }
+      }
+      // do a node merge
       newNode = mergeNode(sstep, targetNodes[preservedId]);
       // replace preserved id
       // newNode.openfn = { ...(newNode.openfn || {}), id: preservedId };

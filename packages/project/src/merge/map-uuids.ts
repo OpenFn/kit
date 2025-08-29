@@ -33,7 +33,12 @@ type MappingRule = null | string | true;
 // 1. check what node was in that position originally (use parent when parent is a solid node, else use sibling if it's solid, else if all children are solid)
 // 2. if the original node isn't a solid node, then it might be it. (when same parent and children)
 
-export default (source: Workflow, target: Workflow) => {
+export interface MappingResults {
+  nodes: Record<string, MappingRule>;
+  edges: Record<string, MappingRule>;
+}
+
+export default (source: Workflow, target: Workflow): MappingResults => {
   const nodeMapping: Record<string, MappingRule> = {};
   const edgeMapping: Record<string, MappingRule> = {};
   // const mapping: Record<string, MappingRule> = {};

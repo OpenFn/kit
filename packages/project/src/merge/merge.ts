@@ -1,6 +1,6 @@
 import { Workflow } from '@openfn/lexicon';
 import { Project } from '../Project';
-import { mergeWorkflowNodes } from './merge-node';
+import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
 
 type Options = {
@@ -25,16 +25,14 @@ export function merge(source: Project, target: Project, options) {
     const sourceWorkflow = source.getWorkflow(workflow.id);
     if (sourceWorkflow) {
       const mappings = mapUuids(sourceWorkflow, workflow);
-      finalWorkflows.push(
-        mergeWorkflowNodes(sourceWorkflow, workflow, mappings.nodes)
-      );
+      finalWorkflows.push(mergeWorkflows(sourceWorkflow, workflow, mappings));
     } else finalWorkflows.push(workflow);
   }
 
   const mergedProject = new Project(
-    { ...target, ...source, workflows: finalWorkflows },
+    { ...source, ...target, workflows: finalWorkflows },
     // TODO probably just preserve target repo?
-    { ...target.repo, ...source.repo }
+    { ...source.repo, ...target.repo }
   );
   return mergedProject;
   // Get a list lof workflows to merge (based on options)
