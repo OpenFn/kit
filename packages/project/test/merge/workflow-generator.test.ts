@@ -4,7 +4,6 @@ import generateWorkflow from './workflow-generator';
 
 test('should generate a simple workflow with uuids', (t) => {
   const wf = generateWorkflow(['a-b'], { uuidSeed: 0 });
-
   t.deepEqual(wf.workflow, {
     name: 'workflow',
     steps: [
@@ -23,7 +22,6 @@ test('should generate a simple workflow with uuids', (t) => {
       },
       {
         id: 'b',
-        next: {},
         openfn: {
           id: 3,
         },
@@ -53,7 +51,6 @@ test('should support long node ids', (t) => {
       },
       {
         id: 'child',
-        next: {},
         openfn: {
           id: 3,
         },
@@ -88,14 +85,12 @@ test('should generate two children for one node', (t) => {
       },
       {
         id: 'b',
-        next: {},
         openfn: {
           id: 3,
         },
       },
       {
         id: 'c',
-        next: {},
         openfn: {
           id: 5,
         },
@@ -161,7 +156,6 @@ test('should ignore duplicates', (t) => {
       },
       {
         id: 'b',
-        next: {},
         openfn: {
           id: 3,
         },
@@ -175,8 +169,6 @@ test('should generate a complex workflow', (t) => {
     ['a-b', 'a-c', 'c-d', 'c-e', 'c-f', 'a-f', 'e-a', 'e-f'],
     { uuidSeed: 0 }
   );
-
-  t.log(JSON.stringify(wf.workflow, null, 2));
 
   t.deepEqual(wf.workflow, {
     name: 'workflow',
@@ -206,7 +198,6 @@ test('should generate a complex workflow', (t) => {
       },
       {
         id: 'b',
-        next: {},
         openfn: {
           id: 3,
         },
@@ -236,7 +227,6 @@ test('should generate a complex workflow', (t) => {
       },
       {
         id: 'd',
-        next: {},
         openfn: {
           id: 7,
         },
@@ -261,7 +251,6 @@ test('should generate a complex workflow', (t) => {
       },
       {
         id: 'f',
-        next: {},
         openfn: {
           id: 11,
         },
