@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import Workflow from '../../src/Workflow';
+import Workflow from '../src/Workflow';
 
 function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
   const ids = new Map<string, string>();

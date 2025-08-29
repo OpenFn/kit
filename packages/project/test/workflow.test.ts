@@ -53,7 +53,7 @@ test('create a Workflow from json', (t) => {
   const w = new Workflow(simpleWorkflow);
 
   t.is(w.steps.length, 3);
-  t.falsy(w.workflow);
+  t.truthy(w.workflow.steps);
 });
 
 test('a Workflow class behaves just like regular json', (t) => {

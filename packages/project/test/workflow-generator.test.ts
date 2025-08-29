@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import generateWorkflow from './workflow-generator';
+import generateWorkflow from '../workflow-generator';
 
 test('should generate a simple workflow with uuids', (t) => {
   const wf = generateWorkflow(['a-b'], { uuidSeed: 0 });
