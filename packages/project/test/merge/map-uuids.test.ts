@@ -3,22 +3,22 @@ import * as l from '@openfn/lexicon';
 import test from 'ava';
 import mapUUIDs from '../../src/merge/map-uuids';
 import { createWorkflow } from '../util';
-import generateWorkflow from './workflow-generator';
+import generateWorkflow from '../workflow-generator';
 
 test('map triggers with the same name', (t) => {
-  const source = generateWorkflow(['trigger']).setProp('trigger', {
+  const source = generateWorkflow(['trigger']).set('trigger', {
     type: 'webhook',
   });
-  const target = generateWorkflow(['trigger']).setProp('trigger', {
+  const target = generateWorkflow(['trigger']).set('trigger', {
     type: 'webhook',
   });
 
   const result = mapUUIDs(source.workflow, target.workflow);
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getId('trigger'),
+    ['trigger']: target.getUUID('trigger'),
   });
   // no edges here
-  t.deepEqual(result.edges, {})
+  t.deepEqual(result.edges, {});
 });
 
 // map steps with the same name
@@ -35,8 +35,8 @@ test('node name changes but no positional change', (t) => {
   const result = mapUUIDs(source.workflow, target.workflow);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getId('trigger'),
-    ['b']: target.getId('b'),
+    ['trigger']: target.getUUID('trigger'),
+    ['b']: target.getUUID('b'),
     ['c']: null,
     ['a']: true,
   });
@@ -55,17 +55,17 @@ test('one connecting node missing', (t) => {
 
   const result = mapUUIDs(source.workflow, target.workflow);
   t.deepEqual(result.nodes, {
-    ['a']: target.getId('a'),
-    ['b']: target.getId('b'),
-    ['c']: target.getId('c'),
-    ['d']: target.getId('d'),
+    ['a']: target.getUUID('a'),
+    ['b']: target.getUUID('b'),
+    ['c']: target.getUUID('c'),
+    ['d']: target.getUUID('d'),
     ['z']: null,
   });
 
   // retained b-c and b-d
   t.deepEqual(result.edges, {
-    ['b-c']: target.getId('b-c'),
-    ['b-d']: target.getId('b-d'),
+    ['b-c']: target.getUUID('b-c'),
+    ['b-d']: target.getUUID('b-d'),
     ['a-b']: true,
     ['a-z']: null,
     ['z-b']: null,

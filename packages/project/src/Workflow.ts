@@ -3,7 +3,7 @@ import * as l from '@openfn/lexicon';
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
 class Workflow {
-  workflow;
+  workflow; // this is the raw workflow JSON representation
   index;
 
   constructor(workflow: l.Workflow) {
@@ -86,16 +86,9 @@ class Workflow {
     return edge;
   }
 
-  // setStep(id, props) {
-  //   // replace the step with id with the properties attached
-  //   // create a new step if doesn't exist?
-  // }
-  // mergeStep(id, props) {
-  //   // overwrite each key of props on the step
-  //   // throw if the step doesn't exist?
-  // }
-  // setEdge(from, to, props) {}
-  // mergeEdge(from, to, props) {}
+  getUUID(id) {
+    return this.index.uuid[id];
+  }
 
   toJSON() {
     return this.workflow;
