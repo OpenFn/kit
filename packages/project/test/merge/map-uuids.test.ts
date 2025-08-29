@@ -17,6 +17,8 @@ test('map triggers with the same name', (t) => {
   t.deepEqual(result.nodes, {
     ['trigger']: target.getId('trigger'),
   });
+  // no edges here
+  t.deepEqual(result.edges, {})
 });
 
 // map steps with the same name
@@ -38,6 +40,13 @@ test('node name changes but no positional change', (t) => {
     ['c']: null,
     ['a']: true,
   });
+  // no retained edges
+  t.deepEqual(result.edges, {
+    ['trigger-c']: null,
+    ['c-b']: null,
+    ['trigger-a']: true,
+    ['a-b']: true,
+  });
 });
 
 test('one connecting node missing', (t) => {
@@ -51,5 +60,14 @@ test('one connecting node missing', (t) => {
     ['c']: target.getId('c'),
     ['d']: target.getId('d'),
     ['z']: null,
+  });
+
+  // retained b-c and b-d
+  t.deepEqual(result.edges, {
+    ['b-c']: target.getId('b-c'),
+    ['b-d']: target.getId('b-d'),
+    ['a-b']: true,
+    ['a-z']: null,
+    ['z-b']: null,
   });
 });
