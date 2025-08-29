@@ -1,12 +1,8 @@
 import * as l from '@openfn/lexicon';
-// but what is this ?
-// is it just types?
-
 import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
-// TODO this naming clearly isn't right
 import { parseProject as fromFs } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
@@ -31,7 +27,7 @@ type RepoOptions = {
   };
 };
 
-// // A local collection of openfn projects
+// A local collection of openfn projects?
 // class Repo {
 
 //   projects: {}
