@@ -43,7 +43,7 @@ test('getUuidForStep: should return null if a matching step does not exist', (t)
   t.is(result, null);
 });
 
-test.only('getUuidForStep: should get a UUID for a step', (t) => {
+test('getUuidForStep: should get a UUID for a step', (t) => {
   const target = b.step('b');
   const proj = b.project([b.step('a'), target, b.step('c')]);
 
