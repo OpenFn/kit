@@ -67,7 +67,7 @@ export type Workflow = {
   // properties which map to an openfn project
   // only used by projects
   openfn?: {
-    id: string;
+    uuid: string;
   };
 };
 

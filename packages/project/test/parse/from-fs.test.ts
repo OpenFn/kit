@@ -144,7 +144,7 @@ test('should load a workflow from the file system', async (t) => {
   const [wf] = project.workflows;
 
   t.is(wf.id, 'wf1');
-  t.is(wf.openfn.id, '<some-uuid>');
+  t.is(wf.openfn.uuid, '<some-uuid>');
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });
 
@@ -163,7 +163,7 @@ test('should track the UUID of a step', async (t) => {
   const [wf] = project.workflows;
 
   t.truthy(wf.steps[0].openfn);
-  t.is(wf.steps[0].openfn.id, '<uuid-1>');
+  t.is(wf.steps[0].openfn.uuid, '<uuid-1>');
 });
 
 test('should track the UUID of an edge', async (t) => {
@@ -172,7 +172,7 @@ test('should track the UUID of an edge', async (t) => {
   const [wf] = project.workflows;
 
   t.truthy(wf.steps[0].next?.b.openfn);
-  t.is(wf.steps[0].next?.b.openfn.id, '<uuid-3>');
+  t.is(wf.steps[0].next?.b.openfn.uuid, '<uuid-3>');
 });
 
 test.todo('should track the UUID of a trigger');

@@ -1,6 +1,7 @@
 // serialize to simple json
 
 import { Project } from '../Project';
+import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 
 import { randomUUID } from 'node:crypto';
@@ -36,7 +37,7 @@ export default function (project: Project, options: Options = {}) {
 const mapWorkflow = (workflow) => {
   const wfState = {
     name: workflow.name,
-    ...workflow.openfn,
+    ...renameKeys(workflow.openfn, { uuid: 'id' }),
     jobs: [],
     triggers: [],
     edges: [],
@@ -44,14 +45,14 @@ const mapWorkflow = (workflow) => {
 
   // lookup of local-ids to project-ids
   const lookup = workflow.steps.reduce((obj, next) => {
-    if (!next.openfn?.id) {
+    if (!next.openfn?.uuid) {
       // If there's no tracked id, we generate one here
       // TODO there is no unit test on this
       next.openfn ??= {};
-      next.openfn.id = randomUUID();
+      next.openfn.uuid = randomUUID();
     }
 
-    obj[next.id] = next.openfn.id;
+    obj[next.id] = next.openfn.uuid;
     return obj;
   }, {});
 
@@ -63,7 +64,7 @@ const mapWorkflow = (workflow) => {
       isTrigger = true;
       node = {
         type: s.type,
-        ...s.openfn,
+        ...renameKeys(s.openfn, { uuid: 'id' }),
       };
       wfState.triggers.push(node);
     } else {
@@ -71,7 +72,7 @@ const mapWorkflow = (workflow) => {
         name: s.name,
         body: s.expression,
         adaptor: s.adaptor,
-        ...s.openfn,
+        ...renameKeys(s.openfn, { uuid: 'id' }),
       };
 
       wfState.jobs.push(node);
@@ -82,7 +83,7 @@ const mapWorkflow = (workflow) => {
       const rules = s.next[next];
 
       const e = {
-        id: rules.openfn?.id ?? randomUUID(),
+        id: rules.openfn?.uuid ?? randomUUID(),
         target_job_id: lookup[next],
         enabled: !rules.disabled,
       };

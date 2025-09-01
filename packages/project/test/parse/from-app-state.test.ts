@@ -118,13 +118,13 @@ test('should create a Project from prov state with a workflow', (t) => {
       {
         id: 'trigger',
         type: 'webhook',
-        openfn: { enabled: true, id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
+        openfn: { enabled: true, uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
           'transform-data': {
             condition: true,
             disabled: false,
             openfn: {
-              id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+              uuid: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
             },
           },
         },
@@ -136,13 +136,13 @@ test('should create a Project from prov state with a workflow', (t) => {
           '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
         adaptor: '@openfn/language-common@latest',
         openfn: {
-          id: '66add020-e6eb-4eec-836b-20008afca816',
+          uuid: '66add020-e6eb-4eec-836b-20008afca816',
           project_credential_id: null,
         },
       },
     ],
     openfn: {
-      id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+      uuid: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       concurrency: null,
       inserted_at: '2025-04-23T11:19:32Z',
       updated_at: '2025-04-23T11:19:32Z',
@@ -183,13 +183,13 @@ test('mapWorkflow: map a simple trigger', (t) => {
         condition: true,
         disabled: false,
         openfn: {
-          id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+          uuid: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
         },
       },
     },
     openfn: {
       enabled: true,
-      id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+      uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
     },
   });
 });
@@ -206,7 +206,7 @@ test('mapWorkflow: map a simple job', (t) => {
     expression:
       '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
     openfn: {
-      id: '66add020-e6eb-4eec-836b-20008afca816',
+      uuid: '66add020-e6eb-4eec-836b-20008afca816',
       project_credential_id: null,
     },
   });

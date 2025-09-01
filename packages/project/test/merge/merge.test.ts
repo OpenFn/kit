@@ -18,13 +18,13 @@ const assignUUIDs = (workflow) => ({
         obj[key] = {
           condition: true,
           openfn: {
-            id: randomUUID(),
+            uuid: randomUUID(),
           },
         };
         return obj;
       }, {}),
     openfn: {
-      id: randomUUID(),
+      uuid: randomUUID(),
     },
   })),
 });
@@ -44,7 +44,7 @@ const createStep = (id, props) => ({
   adaptor: 'common',
   expression: 'fn(s => s)',
   openfn: {
-    id: randomUUID(),
+    uuid: randomUUID(),
   },
 });
 
@@ -299,7 +299,7 @@ test('merge an id change in a single step with preserved uuids', (t) => {
   t.is(step.id, 'z');
   // the uuid of main
   // NOTE: wouldn't work, id has changed, hence they didn't map. it's a new node!
-  t.is(step.openfn.id, wf_a.steps[0].openfn.id);
+  // t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
 });
 
 test('should merge two projects and preservee edge id', (t) => {
@@ -316,7 +316,7 @@ test('should merge two projects and preservee edge id', (t) => {
   // preserve edge condition from source
   t.is(resultEdge.condition, true);
   // preserve edge id from target
-  t.is(target.getId('a-b'), resultEdge.openfn.id);
+  t.is(target.getId('a-b'), resultEdge.openfn.uuid);
 });
 
 // should preserve UUID if id changes

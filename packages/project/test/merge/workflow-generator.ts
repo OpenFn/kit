@@ -10,21 +10,21 @@ class WorkflowGenerator {
       if (this.nodes[from]) {
         if (to && !this.nodes[from].next[to])
           this.nodes[from].next[to] = {
-            openfn: { id: this.uuid(`${from}-${to}`) },
+            openfn: { uuid: this.uuid(`${from}-${to}`) },
           };
       } else {
         this.nodes[from] = {
           id: from,
-          openfn: { id: this.uuid(from) },
+          openfn: { uuid: this.uuid(from) },
           next: to
-            ? { [to]: { openfn: { id: this.uuid(`${from}-${to}`) } } }
+            ? { [to]: { openfn: { uuid: this.uuid(`${from}-${to}`) } } }
             : {},
         };
       }
       if (to && !this.nodes[to]) {
         this.nodes[to] = {
           id: to,
-          openfn: { id: this.uuid(to) },
+          openfn: { uuid: this.uuid(to) },
           next: {},
         };
       }
