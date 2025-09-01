@@ -38,10 +38,13 @@ test('extractWorkflow: single simple workflow (yaml by default)', (t) => {
 
   const { path, content } = extractWorkflow(project, 'my-workflow');
   t.is(path, 'workflows/my-workflow/my-workflow.yaml');
+
+  // TODO is the empty options object correct here??
   t.deepEqual(
     content,
     `id: my-workflow
 name: My Workflow
+options: {}
 steps:
   - id: step
     adaptor: "@openfn/language-common@latest"
@@ -91,6 +94,7 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
   t.deepEqual(JSON.parse(content), {
     id: 'my-workflow',
     name: 'My Workflow',
+    options: {},
     steps: [
       {
         id: 'step1',
@@ -144,6 +148,7 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   t.deepEqual(JSON.parse(content), {
     id: 'my-workflow',
     name: 'My Workflow',
+    options: {},
     steps: [
       {
         id: 'step',
