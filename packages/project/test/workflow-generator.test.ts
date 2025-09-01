@@ -1,6 +1,5 @@
 import test from 'ava';
-
-import generateWorkflow from '../workflow-generator';
+import generateWorkflow from './workflow-generator';
 
 test('should generate a simple workflow with uuids', (t) => {
   const wf = generateWorkflow(['a-b'], { uuidSeed: 0 });
@@ -12,18 +11,18 @@ test('should generate a simple workflow with uuids', (t) => {
         next: {
           b: {
             openfn: {
-              id: 1,
+              uuid: 1,
             },
           },
         },
         openfn: {
-          id: 2,
+          uuid: 2,
         },
       },
       {
         id: 'b',
         openfn: {
-          id: 3,
+          uuid: 3,
         },
       },
     ],
@@ -41,18 +40,18 @@ test('should support long node ids', (t) => {
         next: {
           child: {
             openfn: {
-              id: 1,
+              uuid: 1,
             },
           },
         },
         openfn: {
-          id: 2,
+          uuid: 2,
         },
       },
       {
         id: 'child',
         openfn: {
-          id: 3,
+          uuid: 3,
         },
       },
     ],
@@ -70,29 +69,29 @@ test('should generate two children for one node', (t) => {
         next: {
           b: {
             openfn: {
-              id: 1,
+              uuid: 1,
             },
           },
           c: {
             openfn: {
-              id: 4,
+              uuid: 4,
             },
           },
         },
         openfn: {
-          id: 2,
+          uuid: 2,
         },
       },
       {
         id: 'b',
         openfn: {
-          id: 3,
+          uuid: 3,
         },
       },
       {
         id: 'c',
         openfn: {
-          id: 5,
+          uuid: 5,
         },
       },
     ],
@@ -110,12 +109,12 @@ test("should generate circular references even though that's illegal", (t) => {
         next: {
           b: {
             openfn: {
-              id: 1,
+              uuid: 1,
             },
           },
         },
         openfn: {
-          id: 2,
+          uuid: 2,
         },
       },
       {
@@ -123,12 +122,12 @@ test("should generate circular references even though that's illegal", (t) => {
         next: {
           a: {
             openfn: {
-              id: 4,
+              uuid: 4,
             },
           },
         },
         openfn: {
-          id: 3,
+          uuid: 3,
         },
       },
     ],
@@ -146,18 +145,18 @@ test('should ignore duplicates', (t) => {
         next: {
           b: {
             openfn: {
-              id: 1,
+              uuid: 1,
             },
           },
         },
         openfn: {
-          id: 2,
+          uuid: 2,
         },
       },
       {
         id: 'b',
         openfn: {
-          id: 3,
+          uuid: 3,
         },
       },
     ],
@@ -178,28 +177,28 @@ test('should generate a complex workflow', (t) => {
         next: {
           b: {
             openfn: {
-              id: 1,
+              uuid: 1,
             },
           },
           c: {
             openfn: {
-              id: 4,
+              uuid: 4,
             },
           },
           f: {
             openfn: {
-              id: 12,
+              uuid: 12,
             },
           },
         },
         openfn: {
-          id: 2,
+          uuid: 2,
         },
       },
       {
         id: 'b',
         openfn: {
-          id: 3,
+          uuid: 3,
         },
       },
       {
@@ -207,28 +206,28 @@ test('should generate a complex workflow', (t) => {
         next: {
           d: {
             openfn: {
-              id: 6,
+              uuid: 6,
             },
           },
           e: {
             openfn: {
-              id: 8,
+              uuid: 8,
             },
           },
           f: {
             openfn: {
-              id: 10,
+              uuid: 10,
             },
           },
         },
         openfn: {
-          id: 5,
+          uuid: 5,
         },
       },
       {
         id: 'd',
         openfn: {
-          id: 7,
+          uuid: 7,
         },
       },
       {
@@ -236,23 +235,23 @@ test('should generate a complex workflow', (t) => {
         next: {
           a: {
             openfn: {
-              id: 13,
+              uuid: 13,
             },
           },
           f: {
             openfn: {
-              id: 14,
+              uuid: 14,
             },
           },
         },
         openfn: {
-          id: 9,
+          uuid: 9,
         },
       },
       {
         id: 'f',
         openfn: {
-          id: 11,
+          uuid: 11,
         },
       },
     ],
