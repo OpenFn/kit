@@ -36,8 +36,10 @@ export default function (project: Project, options: Options = {}) {
 
 const mapWorkflow = (workflow) => {
   const wfState = {
+    id: workflow.openfn?.uuid,
     name: workflow.name,
-    ...renameKeys(workflow.openfn, { uuid: 'id' }),
+    // TODO maybe needs removing?
+    // ...renameKeys(workflow.openfn, { uuid: 'id' }),
     jobs: [],
     triggers: [],
     edges: [],

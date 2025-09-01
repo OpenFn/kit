@@ -65,7 +65,7 @@ test('should convert a project back to app state in json', (t) => {
     collections: [],
     openfn: {
       env: 'project',
-      projectId: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+      uuid: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
       endpoint: 'http://localhost:4000',
       inserted_at: '2025-04-23T11:15:59Z',
       updated_at: '2025-04-23T11:15:59Z',
