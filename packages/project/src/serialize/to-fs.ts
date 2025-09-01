@@ -59,7 +59,7 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
 };
 
 // extracts an expression.js from a workflow in project
-export const extractStep = (project: Projec, workflowId, stepId) => {
+export const extractStep = (project: Project, workflowId, stepId) => {
   const workflow = project.getWorkflow(workflowId);
   if (!workflow) {
     throw new Error(`workflow not found: ${workflowId}`);
