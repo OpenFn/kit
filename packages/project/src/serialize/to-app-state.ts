@@ -10,7 +10,7 @@ type Options = { format?: 'json' | 'yaml' };
 // TODO this should allow override on format,
 // regardless of repo settings
 export default function (project: Project, options: Options = {}) {
-  const { projectId: id, endpoint, env, ...rest } = project.openfn;
+  const { uuid: id, endpoint, env, ...rest } = project.openfn;
 
   const state = {
     id,

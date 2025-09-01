@@ -25,7 +25,7 @@ export type Project = {
 };
 
 export type ProjectConfig = {
-  id: string;
+  uuid: string;
   endpoint: string;
   name: string;
   env: string;

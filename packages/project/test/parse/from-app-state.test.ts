@@ -74,7 +74,7 @@ test('should create a Project from prov state with app project metadata', (t) =>
 
   t.deepEqual(project.openfn, {
     env: 'test',
-    projectId: state.id,
+    uuid: state.id,
     endpoint: config.endpoint,
     inserted_at: state.inserted_at,
     updated_at: state.updated_at,

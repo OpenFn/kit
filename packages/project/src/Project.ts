@@ -121,7 +121,6 @@ export class Project {
     this.openfn = data.openfn;
     this.options = data.options;
     this.workflows = data.workflows;
-    // this.workflows = data.workflows.map((w) => new Workflow(w));
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
