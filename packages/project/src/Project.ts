@@ -115,7 +115,6 @@ export class Project {
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
     this.repo = setConfigDefaults(repoConfig);
 
-    this.id = data.id;
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;
