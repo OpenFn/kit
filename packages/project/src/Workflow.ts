@@ -2,9 +2,23 @@ import * as l from '@openfn/lexicon';
 
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
+type OpenfnMeta = {
+  uuid?: string;
+};
+
+type WithMeta<T> = T & {
+  openfn?: OpenfnMeta;
+};
+
 class Workflow {
-  workflow; // this is the raw workflow JSON representation
+  workflow: l.Workflow; // this is the raw workflow JSON representation
   index;
+
+  name: string;
+  id: string;
+  openfn: OpenfnMeta;
+
+  steps: WithMeta<l.Job | l.Trigger>[];
 
   constructor(workflow: l.Workflow) {
     this.index = {
@@ -53,7 +67,7 @@ class Workflow {
   }
 
   // Set properties on any step or edge by id
-  set(id, props) {
+  set(id: string, props: Parital<l.Job, l.Edge>) {
     const item = this.index.edges[id] || this.index.steps[id];
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
@@ -65,7 +79,7 @@ class Workflow {
   }
 
   // Get properties on any step or edge by id
-  get(id) {
+  get(id): WithMeta<l.Step | l.Trigger | l.Edge> {
     const item = this.index.edges[id] || this.index.steps[id];
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
@@ -74,8 +88,18 @@ class Workflow {
     return item;
   }
 
+  // TODO needs unit tests and maybe setter
+  meta(id): OpenfnMeta {
+    const item = this.index.edges[id] || this.index.steps[id];
+    if (!item) {
+      throw new Error(`step/edge with id "${id}" does not exist in workflow`);
+    }
+
+    return item.openfn ?? {};
+  }
+
   // Get an edge based on its source and target
-  getEdge(from, to) {
+  getEdge(from, to): WithMeta<l.ConditionalStepEdge> {
     const edgeId = [from, to].join('-');
 
     const edge = this.index.edges[edgeId];
@@ -86,11 +110,11 @@ class Workflow {
     return edge;
   }
 
-  getUUID(id) {
+  getUUID(id): string {
     return this.index.uuid[id];
   }
 
-  toJSON() {
+  toJSON(): JSON.Object {
     return this.workflow;
   }
 }
