@@ -13,7 +13,7 @@ const assignUUIDs = (workflow) => ({
     const step = {
       ...s,
       openfn: {
-        id: randomUUID(),
+        uuid: randomUUID(),
       },
     };
     if (s.next) {
@@ -113,7 +113,7 @@ test('merge a simple change between single-step workflows with preserved uuids',
   t.is(result.openfn.uuid, main.openfn.uuid);
 
   t.is(step.adaptor, wf_b.steps[0].adaptor);
-  t.is(step.openfn.id, wf_a.steps[0].openfn.id);
+  t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
 });
 
 test('merge a new step into an existing workflow', (t) => {
@@ -221,7 +221,6 @@ test('merge with a change to an edge condition', (t) => {
   const wf_a = assignUUIDs(wf);
   const wf_b = assignUUIDs(wf);
   wf_b.steps[0].next.y.condition = 'z';
-  console.log(JSON.stringify(wf_b, null, 2));
 
   const main = createProject(wf_a, 'a');
   const staging = createProject(wf_b, 'b');

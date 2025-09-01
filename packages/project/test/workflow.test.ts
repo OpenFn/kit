@@ -13,12 +13,12 @@ const simpleWorkflow = {
         c: {
           condition: true,
           openfn: {
-            id: randomUUID(),
+            uuid: randomUUID(),
           },
         },
       },
       openfn: {
-        id: randomUUID(),
+        uuid: randomUUID(),
       },
     },
     {
@@ -28,24 +28,24 @@ const simpleWorkflow = {
         c: {
           condition: false,
           openfn: {
-            id: randomUUID(),
+            uuid: randomUUID(),
           },
         },
       },
       openfn: {
-        id: randomUUID(),
+        uuid: randomUUID(),
       },
     },
     {
       id: 'c',
       expression: 'fn(s => s)',
       openfn: {
-        id: randomUUID(),
+        uuid: randomUUID(),
       },
     },
   ],
   openfn: {
-    id: randomUUID(),
+    uuid: randomUUID(),
   },
 };
 
@@ -163,21 +163,20 @@ test('map edges by name', (t) => {
 test('map ids to uuids', (t) => {
   const w = new Workflow(simpleWorkflow);
 
-  t.deepEqual(w.index.uuid['a'], simpleWorkflow.steps[0].openfn.id);
-  t.deepEqual(w.index.uuid['b'], simpleWorkflow.steps[1].openfn.id);
-  t.deepEqual(w.index.uuid['c'], simpleWorkflow.steps[2].openfn.id);
-  t.deepEqual(w.index.uuid['a-c'], simpleWorkflow.steps[0].next.c.openfn.id);
-  t.deepEqual(w.index.uuid['b-c'], simpleWorkflow.steps[1].next.c.openfn.id);
+  t.deepEqual(w.index.uuid['a'], simpleWorkflow.steps[0].openfn.uuid);
+  t.deepEqual(w.index.uuid['b'], simpleWorkflow.steps[1].openfn.uuid);
+  t.deepEqual(w.index.uuid['c'], simpleWorkflow.steps[2].openfn.uuid);
+  t.deepEqual(w.index.uuid['a-c'], simpleWorkflow.steps[0].next.c.openfn.uuid);
+  t.deepEqual(w.index.uuid['b-c'], simpleWorkflow.steps[1].next.c.openfn.uuid);
 });
 
 test('map uuids to ids', (t) => {
   const w = new Workflow(simpleWorkflow);
-
-  const uuid_a = simpleWorkflow.steps[0].openfn.id;
-  const uuid_b = simpleWorkflow.steps[1].openfn.id;
-  const uuid_c = simpleWorkflow.steps[2].openfn.id;
-  const uuid_ac = simpleWorkflow.steps[0].next.c.openfn.id;
-  const uuid_bc = simpleWorkflow.steps[1].next.c.openfn.id;
+  const uuid_a = simpleWorkflow.steps[0].openfn.uuid;
+  const uuid_b = simpleWorkflow.steps[1].openfn.uuid;
+  const uuid_c = simpleWorkflow.steps[2].openfn.uuid;
+  const uuid_ac = simpleWorkflow.steps[0].next.c.openfn.uuid;
+  const uuid_bc = simpleWorkflow.steps[1].next.c.openfn.uuid;
 
   t.deepEqual(w.index.id[uuid_a], 'a');
   t.deepEqual(w.index.id[uuid_b], 'b');

@@ -33,9 +33,9 @@ class Workflow {
     for (const s of this.workflow.steps) {
       // index this step
       this.index.steps[s.id] = s;
-      this.index.uuid[s.id] = s.openfn.id;
-      if (s.openfn?.id) {
-        this.index.id[s.openfn.id] = s.id;
+      this.index.uuid[s.id] = s.openfn?.uuid;
+      if (s.openfn?.uuid) {
+        this.index.id[s.openfn.uuid] = s.id;
       }
 
       const edges = s.next ?? {};
@@ -44,9 +44,9 @@ class Workflow {
         const edgeId = `${s.id}-${next}`;
         const edge = edges[next];
         this.index.edges[edgeId] = edge;
-        this.index.uuid[edgeId] = edge.openfn?.id;
-        if (edge.openfn?.id) {
-          this.index.id[edge.openfn.id] = edgeId;
+        this.index.uuid[edgeId] = edge.openfn?.uuid;
+        if (edge.openfn?.uuid) {
+          this.index.id[edge.openfn.uuid] = edgeId;
         }
       }
     }
