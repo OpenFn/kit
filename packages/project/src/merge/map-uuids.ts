@@ -47,7 +47,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   const targetIds: Record<string, string> = {};
   for (const tstep of target.steps) {
     nodeMapping[tstep.id] = null;
-    targetIds[tstep.id] = tstep.openfn?.id || tstep.id;
+    targetIds[tstep.id] = tstep.openfn?.uuid || tstep.id;
 
     // dealing with edges
     const next =
@@ -58,7 +58,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       const edgeId = tstep.id + '-' + toNode;
       edgeMapping[edgeId] = null;
       targetIds[edgeId] =
-        typeof toValue === 'object' ? toValue.openfn?.id || edgeId : edgeId;
+        typeof toValue === 'object' ? toValue.openfn?.uuid || edgeId : edgeId;
     }
   }
 

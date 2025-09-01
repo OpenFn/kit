@@ -46,7 +46,7 @@ export function mergeWorkflows(
 
   const targetNodes: Record<string, Node> = {};
   for (const tstep of target.steps)
-    targetNodes[tstep.openfn.id || tstep.id] = tstep;
+    targetNodes[tstep.openfn.uuid || tstep.id] = tstep;
 
   const steps: Node[] = [];
   for (const sstep of source.steps) {
@@ -67,7 +67,7 @@ export function mergeWorkflows(
           const toEdge = sstep.next?.[toNode] || {};
           preservedEdgeIds[toNode] = sstep.next[toNode] = {
             ...toEdge,
-            openfn: { ...(toEdge?.openfn || {}), id: preservedEdgeId },
+            openfn: { ...(toEdge?.openfn || {}), uuid: preservedEdgeId },
           };
         }
       }
@@ -75,7 +75,7 @@ export function mergeWorkflows(
       newNode = mergeNode(sstep, targetNodes[preservedId]);
       // replace preserved id
       // newNode.openfn = { ...(newNode.openfn || {}), id: preservedId };
-      newNode.openfn = Object.assign({}, newNode.openfn, { id: preservedId });
+      newNode.openfn = Object.assign({}, newNode.openfn, { uuid: preservedId });
     } else {
       // TODO Do we need to generate a UUID here?
     }
