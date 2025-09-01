@@ -64,11 +64,6 @@ export type Workflow = {
 
   // a path to a file where functions are defined
   globals?: string;
-  // properties which map to an openfn project
-  // only used by projects
-  openfn?: {
-    uuid: string;
-  };
 };
 
 export type StepId = string;
