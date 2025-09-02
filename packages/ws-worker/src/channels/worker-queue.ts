@@ -9,20 +9,35 @@ import getVersion from '../util/load-version';
 import type { Logger } from '@openfn/logger';
 import type { Channel } from '../types';
 
+export const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 30;
+export const DEFAULT_CLAIM_TIMEOUT_SECONDS = 60 * 60;
+
 const connectToWorkerQueue = (
   endpoint: string,
   serverId: string,
   secret: string,
-  timeout: number = 10,
   logger: Logger,
-  SocketConstructor = PhxSocket
+  options: {
+    messageTimeout?: number;
+    claimTimeout?: number;
+    SocketConstructor?: any;
+  }
 ) => {
+  const {
+    // Sets the DEFAULT timeout for all messages on the websocket
+    // This can be overridden by different channels (although we tend not to)
+    messageTimeout = DEFAULT_MESSAGE_TIMEOUT_SECONDS,
+    claimTimeout = DEFAULT_CLAIM_TIMEOUT_SECONDS,
+    SocketConstructor = PhxSocket,
+  } = options;
+
   const events = new EventEmitter();
   Sentry.addBreadcrumb({
     category: 'lifecycle',
     message: 'Connecting to worker queue',
     level: 'info',
   });
+
   generateWorkerToken(secret, serverId, logger).then(async (token) => {
     Sentry.addBreadcrumb({
       category: 'lifecycle',
@@ -40,8 +55,8 @@ const connectToWorkerQueue = (
     const socket = new SocketConstructor(endpoint, {
       params,
       transport: WebSocket,
-      timeout: timeout * 1000,
-      reconnectAfterMs: (tries) => Math.max(tries * 1000),
+      timeout: messageTimeout * 1000,
+      reconnectAfterMs: (tries: number) => Math.max(tries * 1000),
     });
 
     let didOpen = false;
@@ -65,7 +80,7 @@ const connectToWorkerQueue = (
       };
 
       channel
-        .join(1000 * 60 * 60 * 24) // force a really long 24hr timeout
+        .join(claimTimeout * 1000)
         .receive('ok', () => {
           logger.debug('Connected to worker queue socket');
           events.emit('connect', { socket, channel });
