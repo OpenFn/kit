@@ -1,11 +1,8 @@
 import * as l from '@openfn/lexicon';
-// but what is this ?
-// is it just types?
-
+import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
-// TODO this naming clearly isn't right
 import { parseProject as fromFs } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
@@ -30,7 +27,7 @@ type RepoOptions = {
   };
 };
 
-// // A local collection of openfn projects
+// A local collection of openfn projects?
 // class Repo {
 
 //   projects: {}
@@ -62,7 +59,7 @@ export class Project {
   // array of version shas
   history: string[] = [];
 
-  workflows: l.Workflow[];
+  workflows: Workflow[];
 
   // option strings saved by the app
   // these are all (?) unused clientside
@@ -115,12 +112,11 @@ export class Project {
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
     this.repo = setConfigDefaults(repoConfig);
 
-    this.id = data.id;
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
-    this.workflows = data.workflows;
+    this.workflows = data.workflows?.map((w) => new Workflow(w)) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
@@ -171,6 +167,3 @@ export class Project {
     return getUuidForStep(this, workflow, stepId);
   }
 }
-
-// Surely this is just a type?
-class Workflow {}

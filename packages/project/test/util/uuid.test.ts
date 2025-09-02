@@ -9,7 +9,7 @@ let idGen = 0;
 const b = {
   step: (id, props: Parital<Step> = {}) => ({
     id,
-    openfn: { id: ++idGen },
+    openfn: { uuid: ++idGen },
     ...props,
   }),
   project: (steps = []) =>
@@ -48,7 +48,7 @@ test('getUuidForStep: should get a UUID for a step', (t) => {
   const proj = b.project([b.step('a'), target, b.step('c')]);
 
   const result = getUuidForStep(proj, 'w', 'b');
-  t.is(result, target.openfn.id);
+  t.is(result, target.openfn.uuid);
 });
 
 test("getUuidForEdge: throw if workflow doesn't exist", (t) => {
@@ -70,7 +70,7 @@ test('getUuidForEdge: should return null if no edge exists', (t) => {
       y: {
         condition: true,
         openfn: {
-          id: 'x-y',
+          uuid: 'x-y',
         },
       },
     },
@@ -88,7 +88,7 @@ test('getUuidForEdge: should get a UUID for an edge', (t) => {
       y: {
         condition: true,
         openfn: {
-          id: 'x-y',
+          uuid: 'x-y',
         },
       },
     },

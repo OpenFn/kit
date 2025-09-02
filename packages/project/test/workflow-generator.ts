@@ -1,0 +1,60 @@
+import { randomUUID } from 'node:crypto';
+import Workflow from '../src/Workflow';
+
+function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
+  const ids = new Map<string, string>();
+  const nodes: Record<string, any> = {};
+
+  for (const conn of def) {
+    const [from, to] = conn.split('-');
+    // create node for from and to
+    if (nodes[from]) {
+      if (to) {
+        if (!nodes[from].next?.[to]) {
+          nodes[from].next ??= {};
+          nodes[from].next[to] = edge(`${from}-${to}`);
+        }
+      }
+    } else {
+      let props;
+      if (to) {
+        props = { next: { [to]: edge(`${from}-${to}`) } };
+      }
+      nodes[from] = node(from, props);
+    }
+    if (to && !nodes[to]) {
+      nodes[to] = node(to);
+    }
+  }
+
+  return { name: name, steps: Object.values(nodes) };
+
+  // Generate a node with an openfn.uuid property
+  function node(id, props = {}) {
+    return {
+      id,
+      ...props,
+      openfn: { uuid: uuid(id) },
+    };
+  }
+
+  function edge(id, props = {}) {
+    return {
+      ...props,
+      openfn: { uuid: uuid(id) },
+    };
+  }
+
+  function uuid(id: string) {
+    const muuid = !isNaN(uuidSeed) ? ++uuidSeed : randomUUID();
+    ids.set(id, muuid);
+    return muuid;
+  }
+}
+
+export default function generateWorkflow(def: string, options = {}) {
+  const { name, uuidSeed } = options;
+
+  const wf = gen(def, name, uuidSeed);
+  return new Workflow(wf);
+}

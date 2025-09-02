@@ -83,7 +83,7 @@ export const parseProject = async (options: { root: string } = {}) => {
         // load settings from the state file
         const wfState = (state && state.getWorkflow(wf.id)) ?? {};
         wf.openfn = {
-          id: wfState.openfn?.id ?? null,
+          uuid: wfState.openfn?.uuid ?? null,
           // TODO do we need to transfer more stuff?
         };
 
@@ -105,7 +105,7 @@ export const parseProject = async (options: { root: string } = {}) => {
           // We need to return not just the UUID, but all the openfn keys
           // TODO do we need to slugify the id here? Not really tbh?
           const uuid = state?.getUUID(wf.id, step.id) ?? null;
-          step.openfn = { id: uuid };
+          step.openfn = { uuid };
 
           // Now track UUIDs for edges against state
           for (const target in step.next || {}) {
@@ -114,7 +114,7 @@ export const parseProject = async (options: { root: string } = {}) => {
               step.next[target] = { condition: bool };
             }
             const uuid = state?.getUUID(wf.id, step.id, target) ?? null;
-            step.next[target].openfn = { id: uuid };
+            step.next[target].openfn = { uuid };
           }
         }
 

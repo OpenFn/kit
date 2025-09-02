@@ -19,7 +19,7 @@ export const getUuidForStep = (
   }
   for (const step of wf.steps) {
     if (step.id === stepId) {
-      return step.openfn?.id ?? null;
+      return step.openfn?.uuid ?? null;
     }
   }
   return null;
@@ -47,7 +47,7 @@ export const getUuidForEdge = (
     if (step.id === from) {
       for (const edge in step.next) {
         if (edge === to) {
-          return step.next[edge].openfn?.id ?? null;
+          return step.next[edge].openfn?.uuid ?? null;
         }
       }
       break;
