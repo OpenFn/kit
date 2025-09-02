@@ -45,8 +45,9 @@ export type ServerOptions = {
   sentryDsn?: string;
   sentryEnv?: string;
 
-  socketTimeoutSeconds?: number;
+  socketTimeoutSeconds?: number; // deprecated
   messageTimeoutSeconds?: number;
+  claimTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   collectionsVersion?: string;
   collectionsUrl?: string;
@@ -151,13 +152,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     }
   };
 
-  connectToWorkerQueue(
-    options.lightning!,
-    app.id,
-    options.secret!,
-    options.socketTimeoutSeconds,
-    logger
-  )
+  connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger, {
+    // TODO: options.socketTimeoutSeconds wins because this is what USED to be used
+    // But it's deprecated and should be removed soon
+    messageTimeout:
+      options.socketTimeoutSeconds ?? options.messageTimeoutSeconds,
+    claimTimeout: options.claimTimeoutSeconds,
+  })
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
     .on('error', onError)
@@ -260,7 +261,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         const start = Date.now();
         app.workflows[id] = true;
 
-        // const { channel: runChannel, run }) = await joinRunChannel(
         const { channel: runChannel, run } = await joinRunChannel(
           app.socket,
           token,
