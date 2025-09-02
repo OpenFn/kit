@@ -65,7 +65,7 @@ const connectToWorkerQueue = (
       };
 
       channel
-        .join()
+        .join(1000 * 60 * 60 * 24) // force a really long 24hr timeout
         .receive('ok', () => {
           logger.debug('Connected to worker queue socket');
           events.emit('connect', { socket, channel });
