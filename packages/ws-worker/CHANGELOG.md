@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.14.3
+
+### Patch Changes
+
+- 032430f: Increase timeout on claim events
+- 0957412: Stop trying to claim after the queue has been closed
+
 ## 1.14.2
 
 ### Patch Changes
