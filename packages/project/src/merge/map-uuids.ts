@@ -8,7 +8,7 @@
  * If step names stay the same, this is trivial
  */
 
-import { Workflow } from '@openfn/lexicon';
+import { Job, Workflow } from '@openfn/lexicon';
 import { Project } from '../Project';
 
 // changing parent and changing id is probably a new node
@@ -39,82 +39,175 @@ export interface MappingResults {
 }
 
 export default (source: Workflow, target: Workflow): MappingResults => {
+  // create nodes, edges
   const nodeMapping: Record<string, MappingRule> = {};
   const edgeMapping: Record<string, MappingRule> = {};
-  // const mapping: Record<string, MappingRule> = {};
+  const idMap = new Map<string, string>();
+  // NODE MAPPING
+  for (const target_step of target.steps) nodeMapping[target_step.id] = null;
+  for (const source_step of source.steps) {
+    if (!source_step.id) continue; // yh. we'll always have it.
+    let result: Workflow['steps'] = target.steps;
 
-  // sets all nodes as not existing in target
-  const targetIds: Record<string, string> = {};
-  for (const tstep of target.steps) {
-    nodeMapping[tstep.id] = null;
-    targetIds[tstep.id] = tstep.openfn?.uuid || tstep.id;
+    // finding by id
+    result = findById(source_step.id, result.length ? result : target.steps);
+    if (result.length === 1) {
+      nodeMapping[source_step.id] = getStepUuid(result[0]);
+      idMap.set(source_step.id, result[0].id);
+      continue;
+    }
 
-    // dealing with edges
-    const next =
-      typeof tstep.next === 'string'
-        ? { [tstep.next]: true }
-        : tstep.next || {};
-    for (const [toNode, toValue] of Object.entries(next)) {
-      const edgeId = tstep.id + '-' + toNode;
-      edgeMapping[edgeId] = null;
-      targetIds[edgeId] =
-        typeof toValue === 'object' ? toValue.openfn?.uuid || edgeId : edgeId;
+    // finding by parent
+    const parent = getParent(source_step.id, source.steps);
+    if (parent) {
+      result = findByParent(parent, result.length ? result : target.steps);
+      if (result.length === 1) {
+        nodeMapping[source_step.id] = getStepUuid(result[0]);
+        idMap.set(source_step.id, result[0].id);
+        continue;
+      }
+    }
+
+    // finding by children
+    let tmp_final: Workflow['steps'][number];
+    const children = getEdges(source.steps)[source_step.id];
+    result = findByChildren(children, result.length ? result : target.steps);
+    if (result.length === 1) {
+      nodeMapping[source_step.id] = getStepUuid(result[0]);
+      idMap.set(source_step.id, result[0].id);
+      continue;
+    } else if (result.length) {
+      tmp_final = result[0];
+    }
+
+    // finding by expression | very flawed
+    result = findByExpression(
+      (source_step as Job).expression,
+      result.length ? result : target.steps
+    );
+    if (result.length === 1) {
+      nodeMapping[source_step.id] = getStepUuid(result[0]);
+      idMap.set(source_step.id, result[0].id);
+      continue;
+    }
+
+    // if find by expression did nothing but children did then use that.
+    if (tmp_final) {
+      nodeMapping[source_step.id] = getStepUuid(tmp_final);
+      idMap.set(source_step.id, result[0].id);
+    } else if (nodeMapping[source_step.id] === undefined)
+      nodeMapping[source_step.id] = true;
+  }
+
+  // EDGE MAPPING
+  // this needs to be a bit smart!!!
+  // get edges
+  const targetEdges = getEdges(target.steps);
+  const sourceEdges = getEdges(source.steps);
+  for (const [parent, children] of Object.entries(targetEdges)) {
+    for (const child of children) {
+      const edgeKey = `${parent}-${child}`;
+      edgeMapping[edgeKey] = null;
     }
   }
 
-  for (const sstep of source.steps) {
-    const ex = nodeMapping[sstep.id];
-    // matched nodes are mapped
-    if (ex === null) nodeMapping[sstep.id] = targetIds[sstep.id];
-    else if (ex === undefined) nodeMapping[sstep.id] = true; // true to create id for new nodes
-
-    // dealing with edges
-    const next =
-      typeof sstep.next === 'string'
-        ? { [sstep.next]: true }
-        : sstep.next || {};
-    for (const toNode of Object.keys(next)) {
-      const edgeId = sstep.id + '-' + toNode;
-      const ex = edgeMapping[edgeId];
-      if (ex === null) edgeMapping[edgeId] = targetIds[edgeId];
-      else if (ex === undefined) edgeMapping[edgeId] = true;
+  for (const [parent, children] of Object.entries(sourceEdges)) {
+    for (const child of children) {
+      const tparent = idMap.has(parent) ? idMap.get(parent) : parent;
+      const tchild = idMap.has(child) ? idMap.get(child) : child;
+      const edgeKey = `${parent}-${child}`;
+      const targetEdgeKey = `${tparent}-${tchild}`;
+      if (edgeMapping[targetEdgeKey] === null)
+        edgeMapping[edgeKey] = getEdgeUuid(tparent, tchild, target.steps);
+      else edgeMapping[edgeKey] = true;
     }
   }
+
   return {
     nodes: nodeMapping,
     edges: edgeMapping,
   };
 };
 
-// if newchildren has some additional nodes, that's fine. it's the same children!
-// when a node is missing, nope, not the same children
-function sameChildren(mainChildren: string[], newChildren: string[]) {
-  if (newChildren.length < mainChildren) return false;
-  for (const child of mainChildren) {
-    if (!newChildren.includes(child)) return false;
-  }
-  return true;
-}
-
-function getNodesWithParent(parent: string, parentsMap: Map<string, string>) {
-  const matches: string[] = [];
-  for (const [child, child_parent] of parentsMap.entries()) {
-    if (parent === child_parent) matches.push(child as string);
-  }
-  return matches;
-}
-
-function getNodeWithChildren(
-  newChildren: string[],
-  childrenMap: Map<string, string[]>
+function getEdgeUuid(
+  parentId: string,
+  childId: string,
+  steps: Workflow['steps']
 ) {
-  // which node has all of its children in here
-  for (const [node, children] of childrenMap.entries()) {
-    for (const child of children) {
-      if (!newChildren.includes(child)) return;
+  const parentNode = steps.find((step) => step.id === parentId);
+  if (!parentNode) return;
+  if (typeof parentNode.next !== 'object') return;
+  const edge = parentNode.next[childId];
+  return edge?.openfn?.uuid;
+}
+function getStepUuid(step: Workflow['steps'][number]) {
+  return step?.openfn?.uuid || step.id;
+}
+function getEdges(steps: Workflow['steps']) {
+  const edges: Record<string, string[]> = {};
+  for (const step of steps) {
+    const next =
+      typeof step.next === 'string' ? { [step.next]: true } : step.next || {};
+
+    for (const toNode of Object.keys(next)) {
+      if (!Array.isArray(edges[step.id])) edges[step.id] = [toNode];
+      else edges[step.id].push(toNode);
     }
-    return node as string;
   }
+  return edges;
+}
+
+function getParent(id: string, steps: Workflow['steps']) {
+  const edges = getEdges(steps);
+  const found = Object.entries(edges).find(([parent, children]) =>
+    children.includes(id)
+  );
+  if (!found) return;
+  return found[0]; // getting the parent id
+}
+
+function findById(id: string, steps: Workflow['steps']) {
+  return steps.filter((step: Job) => step.id === id);
+}
+
+// very flawed, due to the commented code snipped every step comes with.
+function findByExpression(exp: string, steps: Workflow['steps']) {
+  // find a node having the same expression
+  return steps.filter(
+    (step: Job) =>
+      step.expression && !!step.expression.trim() && step.expression === exp
+  );
+}
+
+function findByParent(parentId: string, steps: Workflow['steps']) {
+  // returns all nodes having the parentId as parent
+  const edges = getEdges(steps);
+  const matched = edges[parentId];
+  if (!matched || matched.length === 0) return [];
+  return steps.filter((step) => matched.includes(step.id));
+}
+
+function findByChildren(childIds: string[], steps: Workflow['steps']) {
+  // return best candidates for the child ids
+  const edges = getEdges(steps);
+  const countIndex: Record<string, number> = {};
+  for (const [parent, children] of Object.entries(edges)) {
+    let count = 0;
+    for (const child of children) {
+      if (childIds.includes(child)) count++;
+    }
+    if (count > 0) countIndex[parent] = count;
+  }
+  const parents = Object.entries(countIndex)
+    .sort(([p1, c1], [p2, c2]) => c2 - c1)
+    .map(([parent, count]) => parent);
+
+  const stepsIndex = steps.reduce((a, b) => {
+    a[b.id] = b;
+    return a;
+  }, {} as Record<string, Workflow['steps'][number]>);
+
+  return parents.map((p) => stepsIndex[p]);
 }
 
 // Get an array of all UUIDS

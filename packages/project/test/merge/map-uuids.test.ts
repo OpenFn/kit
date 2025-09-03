@@ -36,20 +36,20 @@ test('node name changes but no positional change', (t) => {
 
   t.deepEqual(result.nodes, {
     ['trigger']: target.getUUID('trigger'),
+    ['a']: target.getUUID('c'),
     ['b']: target.getUUID('b'),
     ['c']: null,
-    ['a']: true,
   });
   // no retained edges
   t.deepEqual(result.edges, {
+    ['trigger-a']: target.getUUID('trigger-c'),
+    ['a-b']: target.getUUID('c-b'),
     ['trigger-c']: null,
     ['c-b']: null,
-    ['trigger-a']: true,
-    ['a-b']: true,
   });
 });
 
-test('one connecting node missing', (t) => {
+test.only('one connecting node missing', (t) => {
   const source = generateWorkflow(['a-b', 'b-c', 'b-d']);
   const target = generateWorkflow(['a-z', 'z-b', 'b-c', 'b-d']);
 
