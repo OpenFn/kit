@@ -47,10 +47,13 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   for (const target_step of target.steps) nodeMapping[target_step.id] = null;
   for (const source_step of source.steps) {
     if (!source_step.id) continue; // yh. we'll always have it.
-    let result: Workflow['steps'] = target.steps;
+    const sampleSteps: Workflow['steps'] = target.steps.filter(
+      (step) => !idMap.has(step.id)
+    );
+    let result: Workflow['steps'] = [];
 
     // finding by id
-    result = findById(source_step.id, result.length ? result : target.steps);
+    result = findById(source_step.id, result.length ? result : sampleSteps);
     if (result.length === 1) {
       nodeMapping[source_step.id] = getStepUuid(result[0]);
       idMap.set(source_step.id, result[0].id);
@@ -60,7 +63,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     // finding by parent
     const parent = getParent(source_step.id, source.steps);
     if (parent) {
-      result = findByParent(parent, result.length ? result : target.steps);
+      result = findByParent(parent, result.length ? result : sampleSteps);
       if (result.length === 1) {
         nodeMapping[source_step.id] = getStepUuid(result[0]);
         idMap.set(source_step.id, result[0].id);
@@ -71,7 +74,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     // finding by children
     let tmp_final: Workflow['steps'][number];
     const children = getEdges(source.steps)[source_step.id];
-    result = findByChildren(children, result.length ? result : target.steps);
+    result = findByChildren(children, result.length ? result : sampleSteps);
     if (result.length === 1) {
       nodeMapping[source_step.id] = getStepUuid(result[0]);
       idMap.set(source_step.id, result[0].id);
@@ -83,7 +86,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     // finding by expression | very flawed
     result = findByExpression(
       (source_step as Job).expression,
-      result.length ? result : target.steps
+      result.length ? result : sampleSteps
     );
     if (result.length === 1) {
       nodeMapping[source_step.id] = getStepUuid(result[0]);
