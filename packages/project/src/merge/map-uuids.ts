@@ -43,14 +43,17 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   const edgeMapping: Record<string, MappingRule> = {};
 
   // Map by id
-  let { mapping: nodeMapping, pool, idMap } = mapStepsById(source.steps, target.steps);
+  let {
+    mapping: nodeMapping,
+    pool,
+    idMap,
+  } = mapStepsById(source.steps, target.steps);
 
   for (const source_step of pool.source) {
     if (!source_step.id) continue; // yh. we'll always have it.
-    const sampleSteps: Workflow['steps'] = pool.target.filter(
-      (step) => !idMap.has(step.id)
-    );
-    let candidates = sampleSteps;
+
+    // these are the candidates for the search
+    let candidates = pool.target.filter((step) => !idMap.has(step.id));
 
     // Parent
     let result = mapStepByParent(source_step, source, candidates);
@@ -194,23 +197,26 @@ function mapStepsById(
   };
 }
 
-// very flawed, due to the commented code snipped every step comes with.
+// findByExpression
+// given an expression and a list of steps, return all steps that have this expression
 function findByExpression(exp: string, steps: Workflow['steps']) {
-  // find a node having the same expression
   return steps.filter(
     (step: Job) =>
       step.expression && !!step.expression.trim() && step.expression === exp
   );
 }
 
+// findByParent
+// given a parent node ID and a list of steps, return all steps that have this parent node ID as their parent
 function findByParent(parentId: string, steps: Workflow['steps']) {
-  // returns all nodes having the parentId as parent
   const edges = getEdges(steps);
   const matched = edges[parentId];
   if (!matched || matched.length === 0) return [];
   return steps.filter((step) => matched.includes(step.id));
 }
 
+// findByChildren
+// given a list of IDs and a list of steps, return all steps where their children match the list of IDs from a higher degree
 function findByChildren(childIds: string[], steps: Workflow['steps']) {
   // return best candidates for the child ids
   const edges = getEdges(steps);
@@ -234,7 +240,11 @@ function findByChildren(childIds: string[], steps: Workflow['steps']) {
   return parents.map((p) => stepsIndex[p]);
 }
 
-function mapStepByParent(source_step: Workflow['steps'][number], source: Workflow['steps'], candidates: Workflow['steps']) {
+function mapStepByParent(
+  source_step: Workflow['steps'][number],
+  source: Workflow['steps'],
+  candidates: Workflow['steps']
+) {
   const parent = getParent(source_step.id, source.steps);
   if (parent) {
     return findByParent(parent, candidates);
@@ -242,13 +252,20 @@ function mapStepByParent(source_step: Workflow['steps'][number], source: Workflo
   return [];
 }
 
-function mapStepByChildren(source_step: Workflow['steps'][number], source: Workflow['steps'], candidates: Workflow['steps']) {
+function mapStepByChildren(
+  source_step: Workflow['steps'][number],
+  source: Workflow['steps'],
+  candidates: Workflow['steps']
+) {
   const children = getEdges(source.steps)[source_step.id];
-  if(!children) return [];
+  if (!children) return [];
   return findByChildren(children, candidates);
 }
 
-function mapStepByExpression(source_step: Workflow['steps'][number], candidates: Workflow['steps']) {
+function mapStepByExpression(
+  source_step: Workflow['steps'][number],
+  candidates: Workflow['steps']
+) {
   return findByExpression((source_step as Job).expression, candidates);
 }
 
