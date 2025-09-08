@@ -174,14 +174,15 @@ function mapStepsById(
 
   for (const target_step of target) {
     targets[target_step.id] = target_step;
+    mapping[target_step.id] = null;
   }
 
   const removedIndexes = [];
   for (let i = 0; i < source.length; i++) {
     const source_step = source[i];
-    if (target[source_step.id]) {
-      mapping[source_step.id] = target[source_step.id]?.openfn?.uuid;
-      idMap.set(source_step.id, target[source_step.id]?.id);
+    if (targets[source_step.id]) {
+      mapping[source_step.id] = targets[source_step.id]?.openfn?.uuid;
+      idMap.set(source_step.id, targets[source_step.id]?.id);
       removedIndexes.push(i);
       target = target.filter((t) => t !== target[source_step]);
     }
