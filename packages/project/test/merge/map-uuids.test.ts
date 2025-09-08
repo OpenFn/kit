@@ -227,3 +227,95 @@ test('steps removed from a workflow', (t) => {
     ['d-e']: null,
   });
 });
+
+// NEW TESTS
+
+// narrowing by parent
+// id changed but parent stayed the same
+test('parent stayed same but id changed', (t) => {
+  const source = generateWorkflow(['a-b']);
+  const target = generateWorkflow(['a-x']);
+
+  const result = mapUUIDs(source.workflow, target.workflow);
+  t.deepEqual(result.nodes, {
+    ['a']: target.getUUID('a'),
+    ['b']: target.getUUID('x'),
+    ['x']: null,
+  });
+  t.deepEqual(result.edges, {
+    ['a-x']: null,
+    ['a-b']: target.getUUID('a-x'),
+  });
+});
+
+test('parent stayed same but id changed (with children)', (t) => {
+  const source = generateWorkflow(['a-b', 'b-c']);
+  const target = generateWorkflow(['a-x', 'x-c']);
+
+  const result = mapUUIDs(source.workflow, target.workflow);
+  t.deepEqual(result.nodes, {
+    ['a']: target.getUUID('a'),
+    ['b']: target.getUUID('x'),
+    ['c']: target.getUUID('c'),
+    ['x']: null,
+  });
+  t.deepEqual(result.edges, {
+    ['a-x']: null,
+    ['x-c']: null,
+    ['a-b']: target.getUUID('a-x'),
+    ['b-c']: target.getUUID('x-c'),
+  });
+});
+
+// narrowing by children
+// id changed, parent matched multiple children
+test('multiple children after parent match', (t) => {
+  const source = generateWorkflow(['a-b', 'b-c', 'b-d']);
+  const target = generateWorkflow(['a-x', 'a-y', 'x-c', 'x-d']);
+
+  const result = mapUUIDs(source.workflow, target.workflow);
+  t.deepEqual(result.nodes, {
+    ['a']: target.getUUID('a'),
+    ['b']: target.getUUID('x'),
+    ['c']: target.getUUID('c'),
+    ['d']: target.getUUID('d'),
+    ['x']: null,
+    ['y']: null,
+  });
+  t.deepEqual(result.edges, {
+    ['a-x']: null,
+    ['x-c']: null,
+    ['a-y']: null,
+    ['x-d']: null,
+    ['a-b']: target.getUUID('a-x'),
+    ['b-c']: target.getUUID('x-c'),
+    ['b-d']: target.getUUID('x-d'),
+  });
+});
+
+test('multiple likely children after parent match', (t) => {
+  const source = generateWorkflow(['a-b', 'b-c', 'b-d']);
+  const target = generateWorkflow(['a-x', 'a-y', 'y-c', 'x-c', 'x-d']);
+
+  const result = mapUUIDs(source.workflow, target.workflow);
+  t.deepEqual(result.nodes, {
+    ['a']: target.getUUID('a'),
+    ['b']: target.getUUID('x'),
+    ['c']: target.getUUID('c'),
+    ['d']: target.getUUID('d'),
+    ['x']: null,
+    ['y']: null,
+  });
+  t.deepEqual(result.edges, {
+    ['a-x']: null,
+    ['x-c']: null,
+    ['a-y']: null,
+    ['x-d']: null,
+    ['a-b']: target.getUUID('a-x'),
+    ['b-c']: target.getUUID('x-c'),
+    ['b-d']: target.getUUID('x-d'),
+    ['y-c']: null,
+  });
+});
+
+
