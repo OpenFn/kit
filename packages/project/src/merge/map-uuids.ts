@@ -8,8 +8,9 @@
  * If step names stay the same, this is trivial
  */
 
-import { Job, Workflow } from '@openfn/lexicon';
+import { Job } from '@openfn/lexicon';
 import { Project } from '../Project';
+import Workflow from '../Workflow';
 
 // changing parent and changing id is probably a new node
 // changing id but preserving parent should map
@@ -39,67 +40,47 @@ export interface MappingResults {
 }
 
 export default (source: Workflow, target: Workflow): MappingResults => {
-  // create nodes, edges
-  const nodeMapping: Record<string, MappingRule> = {};
   const edgeMapping: Record<string, MappingRule> = {};
-  const idMap = new Map<string, string>();
-  // NODE MAPPING
-  for (const target_step of target.steps) nodeMapping[target_step.id] = null;
-  for (const source_step of source.steps) {
+
+  // Map by id
+  let { mapping: nodeMapping, pool, idMap } = mapStepsById(source.steps, target.steps);
+
+  for (const source_step of pool.source) {
     if (!source_step.id) continue; // yh. we'll always have it.
-    const sampleSteps: Workflow['steps'] = target.steps.filter(
+    const sampleSteps: Workflow['steps'] = pool.target.filter(
       (step) => !idMap.has(step.id)
     );
-    let result: Workflow['steps'] = [];
+    let candidates = sampleSteps;
 
-    // finding by id
-    result = findById(source_step.id, result.length ? result : sampleSteps);
-    if (result.length === 1) {
-      nodeMapping[source_step.id] = getStepUuid(result[0]);
-      idMap.set(source_step.id, result[0].id);
+    // Parent
+    let result = mapStepByParent(source_step, source, candidates);
+    if (result.length) candidates = result;
+    if (candidates.length === 1) {
+      nodeMapping[source_step.id] = getStepUuid(candidates[0]);
+      idMap.set(source_step.id, candidates[0].id);
       continue;
     }
 
-    // finding by parent
-    const parent = getParent(source_step.id, source.steps);
-    if (parent) {
-      result = findByParent(parent, result.length ? result : sampleSteps);
-      if (result.length === 1) {
-        nodeMapping[source_step.id] = getStepUuid(result[0]);
-        idMap.set(source_step.id, result[0].id);
-        continue;
-      }
-    }
-
-    // finding by children
-    let tmp_final: Workflow['steps'][number];
-    const children = getEdges(source.steps)[source_step.id];
-    result = findByChildren(children, result.length ? result : sampleSteps);
-    if (result.length === 1) {
-      nodeMapping[source_step.id] = getStepUuid(result[0]);
-      idMap.set(source_step.id, result[0].id);
-      continue;
-    } else if (result.length) {
-      tmp_final = result[0];
-    }
-
-    // finding by expression | very flawed
-    result = findByExpression(
-      (source_step as Job).expression,
-      result.length ? result : sampleSteps
-    );
-    if (result.length === 1) {
-      nodeMapping[source_step.id] = getStepUuid(result[0]);
-      idMap.set(source_step.id, result[0].id);
+    // Children
+    result = mapStepByChildren(source_step, source, candidates);
+    if (result.length) candidates = result;
+    if (candidates.length === 1) {
+      nodeMapping[source_step.id] = getStepUuid(candidates[0]);
+      idMap.set(source_step.id, candidates[0].id);
       continue;
     }
 
-    // if find by expression did nothing but children did then use that.
-    if (tmp_final) {
-      nodeMapping[source_step.id] = getStepUuid(tmp_final);
-      idMap.set(source_step.id, result[0].id);
-    } else if (nodeMapping[source_step.id] === undefined)
-      nodeMapping[source_step.id] = true;
+    // Expression
+    result = mapStepByExpression(source_step, candidates);
+    if (result.length) candidates = result;
+    if (candidates.length === 1) {
+      nodeMapping[source_step.id] = getStepUuid(candidates[0]);
+      idMap.set(source_step.id, candidates[0].id);
+      continue;
+    }
+
+    // If none matched, mark as new
+    nodeMapping[source_step.id] = true;
   }
 
   // EDGE MAPPING
@@ -169,8 +150,48 @@ function getParent(id: string, steps: Workflow['steps']) {
   return found[0]; // getting the parent id
 }
 
-function findById(id: string, steps: Workflow['steps']) {
-  return steps.filter((step: Job) => step.id === id);
+interface Pool {
+  source: Workflow['steps'];
+  target: Workflow['steps'];
+}
+
+interface MapStepResult {
+  mapping: Record<string, string>;
+  idMap: Map<string, string>;
+  pool: Pool;
+}
+
+function mapStepsById(
+  source: Workflow['steps'],
+  target: Workflow['steps']
+): MapStepResult {
+  const targets: Record<string, Workflow['steps'][number]> = {};
+  const mapping: Record<string, string> = {};
+  const idMap = new Map<string, string>();
+
+  for (const target_step of target) {
+    targets[target_step.id] = target_step;
+  }
+
+  const removedIndexes = [];
+  for (let i = 0; i < source.length; i++) {
+    const source_step = source[i];
+    if (target[source_step.id]) {
+      mapping[source_step.id] = target[source_step.id]?.openfn?.uuid;
+      idMap.set(source_step.id, target[source_step.id]?.id);
+      removedIndexes.push(i);
+      target = target.filter((t) => t !== target[source_step]);
+    }
+  }
+
+  return {
+    mapping,
+    idMap,
+    pool: {
+      source: source.filter((_, i) => !removedIndexes.includes(i)),
+      target,
+    },
+  };
 }
 
 // very flawed, due to the commented code snipped every step comes with.
@@ -211,6 +232,24 @@ function findByChildren(childIds: string[], steps: Workflow['steps']) {
   }, {} as Record<string, Workflow['steps'][number]>);
 
   return parents.map((p) => stepsIndex[p]);
+}
+
+function mapStepByParent(source_step: Workflow['steps'][number], source: Workflow['steps'], candidates: Workflow['steps']) {
+  const parent = getParent(source_step.id, source.steps);
+  if (parent) {
+    return findByParent(parent, candidates);
+  }
+  return [];
+}
+
+function mapStepByChildren(source_step: Workflow['steps'][number], source: Workflow['steps'], candidates: Workflow['steps']) {
+  const children = getEdges(source.steps)[source_step.id];
+  if(!children) return [];
+  return findByChildren(children, candidates);
+}
+
+function mapStepByExpression(source_step: Workflow['steps'][number], candidates: Workflow['steps']) {
+  return findByExpression((source_step as Job).expression, candidates);
 }
 
 // Get an array of all UUIDS
