@@ -12,50 +12,44 @@ import { Job } from '@openfn/lexicon';
 import { Project } from '../Project';
 import Workflow from '../Workflow';
 
-// changing parent and changing id is probably a new node
-// changing id but preserving parent should map
-// adding a new node an changing the id... an we track this?
-
-// null: this item does not exist in B
-// string: this item maps to this ID in B (could be the same)
-// true: this item needs a new UUID in B
-type MappingRule = null | string | true;
-
-// detecting nodes in b that were in a via heuristics
-// what are the possible changes that will happen to a node.
-// - change of properties (name, adaptor-type) [note: name affects id]
-// - change of position (parent, children)
-// - change of properties & position -> though one
-
-// passes to pick solid nodes
-// 1. properties & position match - solid node!
-
-// passes to predict nodes
-// 1. check what node was in that position originally (use parent when parent is a solid node, else use sibling if it's solid, else if all children are solid)
-// 2. if the original node isn't a solid node, then it might be it. (when same parent and children)
+type MappingRule =
+  | string // id of the matching target node
+  | null // Node should be removed (does not exist in the target)
+  | true; // Indicates the node is new (does not exist in the source)
 
 export interface MappingResults {
   nodes: Record<string, MappingRule>;
   edges: Record<string, MappingRule>;
 }
 
+/**
+ * Compare two Workflows and identify matching nodes across them.
+ *
+ * This is designed to help merging two workflows together, ensuring that
+ * as many UUIDs are preserved in the target workflow as possible.
+ *
+ * Returns node and edge maps, where the key is the id in the source, and the
+ * value is the corresponding UUID in the target,
+ * ie: `{
+ *  // source id: target UUID
+ *  a: '851341-1234124-1512'
+ * }
+ */
 export default (source: Workflow, target: Workflow): MappingResults => {
   const edgeMapping: Record<string, MappingRule> = {};
 
-  // Map by id
+  // First, simply map nodes with the same id
   let {
     mapping: nodeMapping,
     pool,
     idMap,
   } = mapStepsById(source.steps, target.steps);
 
+  // Now, for any nodes that weren't mapped, try and find a suitable mapping
   for (const source_step of pool.source) {
-    if (!source_step.id) continue; // yh. we'll always have it.
-
-    // these are the candidates for the search
     let candidates = pool.target.filter((step) => !idMap.has(step.id));
 
-    // Parent
+    // Is there an unmapped node with the same parent?
     let result = mapStepByParent(source_step, source, candidates);
     if (result.length) candidates = result;
     if (candidates.length === 1) {
@@ -64,7 +58,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       continue;
     }
 
-    // Children
+    // Is there an unmapped node with the same children?
     result = mapStepByChildren(source_step, source, candidates);
     if (result.length) candidates = result;
     if (candidates.length === 1) {
@@ -73,7 +67,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       continue;
     }
 
-    // Expression
+    // Is there an unmapped node with the same expression?
     result = mapStepByExpression(source_step, candidates);
     if (result.length) candidates = result;
     if (candidates.length === 1) {
@@ -82,7 +76,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       continue;
     }
 
-    // If none matched, mark as new
+    // If we still can't find a match, generate a new UUID
     nodeMapping[source_step.id] = true;
   }
 

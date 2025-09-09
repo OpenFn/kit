@@ -248,6 +248,31 @@ test('parent stayed same but id changed', (t) => {
   });
 });
 
+// why does this test matter?
+// ok, he's doing it by parent node
+// so this is all tests about a reparenting
+// uh but is it?
+// does it really matter? Isn't this a bit semantic?
+// expression and adaptor are also changed and it's a 1:1 structure
+
+// I think I want a test like:
+// id changed but parent the same
+// 2 ids changed under same parent
+// 2 ids changed under different parents
+// id changed and parent changed
+
+// OR
+
+// Single change (maybe add variants to handle different structures?)
+// change: id
+// change: id, parent
+// change: id, parent, adaptor,
+// change: id, parent, adaptor, expression // should we still map this if a 1:1 map?
+
+// Now test multiple changes at once
+// change: id / id
+// change: id, parent / id, parent
+
 test('parent stayed same but id changed (with children)', (t) => {
   const source = generateWorkflow(['a-b', 'b-c']);
   const target = generateWorkflow(['a-x', 'x-c']);
@@ -317,5 +342,3 @@ test('multiple likely children after parent match', (t) => {
     ['y-c']: null,
   });
 });
-
-
