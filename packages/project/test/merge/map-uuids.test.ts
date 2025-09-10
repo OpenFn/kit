@@ -318,4 +318,29 @@ test('multiple likely children after parent match', (t) => {
   });
 });
 
+// narrowing by Expression
+// id changed, parent matched multiple children with no subtrees
+test('multiple children with no subtree after parent match', (t) => {
+  const bExpression = "fn(state => ({b: 'value'}))";
+  const source = generateWorkflow(['a-b', 'a-c']).set('b', {
+    expression: bExpression,
+  });
+  const target = generateWorkflow(['a-x', 'a-y']).set('x', {
+    expression: bExpression,
+  });
 
+  const result = mapUUIDs(source.workflow, target.workflow);
+  t.deepEqual(result.nodes, {
+    ['a']: target.getUUID('a'),
+    ['b']: target.getUUID('x'), // mapped 
+    ['c']: true,
+    ['x']: null,
+    ['y']: null,
+  });
+  t.deepEqual(result.edges, {
+    ['a-x']: null,
+    ['a-y']: null,
+    ['a-b']: target.getUUID('a-x'),
+    ['a-c']: true,
+  })
+});
