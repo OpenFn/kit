@@ -48,11 +48,14 @@ const claim = (
     const podName = NAME ? `[${NAME}] ` : '';
 
     const activeWorkers = Object.keys(app.workflows).length;
+
     if (activeWorkers >= maxWorkers) {
       // Important: stop the workloop so that we don't try and claim any more
       app.workloop?.stop(`server at capacity (${activeWorkers}/${maxWorkers})`);
       return reject(new ClaimError('Server at capacity'));
     }
+    // TODO if activeWorkers + activeClaims > capacity, silently abort
+    // This can happen in response to the work-available event
 
     if (!app.queueChannel) {
       logger.warn('skipping claim attempt: websocket unavailable');

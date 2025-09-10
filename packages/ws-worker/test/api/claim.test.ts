@@ -2,8 +2,12 @@ import test from 'ava';
 import * as jose from 'jose';
 import crypto from 'node:crypto';
 
-import { verifyToken } from '../../src/api/claim';
+import claim, { verifyToken } from '../../src/api/claim';
 import { generateKeys } from '@openfn/lightning-mock/src/util';
+import { createMockLogger } from '@openfn/logger';
+import { ServerApp } from '../../src/server';
+import { mockChannel } from '../../src/mock/sockets';
+import { CLAIM } from '../../src';
 
 let keys = { public: '.', private: '.' };
 
@@ -117,3 +121,67 @@ test('verifyToken should accept a token with NBF exactly 2 seconds in future (us
     '✅ Token that is 2 seconds off is accepted within 5-second clock tolerance'
   );
 });
+
+const createMockApp = (opts: any) => {
+  const { onClaim = () => {}, onExecute = () => {}, workflows = {} } = opts;
+
+  const channel = mockChannel({
+    [CLAIM]: (args) => {
+      return onClaim(args);
+    },
+  });
+
+  return {
+    workloop: undefined, // should be safe
+    workflows,
+    queueChannel: channel,
+    execute: (...args) => {
+      onExecute(...args);
+    },
+  } as ServerApp;
+};
+const logger = createMockLogger();
+
+test.todo('claim: should do nothing if no runs returned');
+
+test('claim: should call execute for a single run', async (t) => {
+  let executeArgs;
+  const onClaim = () => ({ runs: [{ id: 'abc' }] });
+  const onExecute = (...args) => {
+    executeArgs = args;
+  };
+
+  const options = { maxWorkers: 1 };
+  const app = createMockApp({
+    onClaim,
+    onExecute,
+  });
+
+  await claim(app, logger, options);
+  t.deepEqual(executeArgs[0], { id: 'abc' });
+});
+
+test.only('should not claim if worker is at capacity', async (t) => {
+  const options = { maxWorkers: 1 };
+
+  const app = createMockApp({
+    workflows: {
+      a: true,
+    },
+  });
+
+  await t.throwsAsync(() => claim(app, logger, options), {
+    message: 'Server at capacity',
+  });
+});
+
+test('should not claim if open claims exceeds capacity', () => {});
+
+test('should not claim if open claims + active runs exceeds capacity', () => {});
+
+test.todo('should handle multiple runs');
+test.todo('claim payload should have a demand');
+test.todo('claim payload should include a worker name');
+test.todo('should stop the workloop if at capacity');
+// TODO I'd rather return true/false really and let the backoff itself decide whether to throw or not
+test.todo('should throw if there are no runs available (to trigger backoff)');
