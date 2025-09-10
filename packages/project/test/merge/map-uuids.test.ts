@@ -611,6 +611,35 @@ test.only('id change: several internal nodes (mid-size workflow) 2', (t) => {
   });
 });
 
+test.only('id change: chained internal nodes', (t) => {
+  // special: this features a node b which has both parent and children changed
+  const source = generateWorkflow(['trigger-a', 'a-b', 'b-c', 'b-d']);
+  const target = generateWorkflow(['trigger-x', 'x-y', 'y-z', 'y-q']);
+  const result = mapUUIDs(source, target);
+
+  t.deepEqual(result.nodes, {
+    ['trigger']: target.getUUID('trigger'),
+    ['a']: target.getUUID('x'),
+    ['b']: target.getUUID('y'),
+    ['c']: target.getUUID('z'),
+    ['d']: target.getUUID('q'),
+    ['q']: null,
+    ['x']: null,
+    ['y']: null,
+    ['z']: null,
+  });
+  t.deepEqual(result.edges, {
+    ['trigger-a']: target.getUUID('trigger-x'),
+    ['a-b']: target.getUUID('x-y'),
+    ['b-c']: target.getUUID('y-z'),
+    ['b-d']: target.getUUID('y-q'),
+    ['trigger-x']: null,
+    ['x-y']: null,
+    ['y-q']: null,
+    ['y-z']: null,
+  });
+});
+
 test.only('node removal: single node', (t) => {
   const source = generateWorkflow([]);
   const target = generateWorkflow(['trigger']);

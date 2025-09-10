@@ -54,6 +54,11 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     idMap,
   } = mapStepsById(source.steps, target.steps);
 
+  const getMappedId = (id: string) => {
+    if (idMap.has(id)) return idMap.get(id) as string;
+    return id;
+  };
+
   for (const source_step of pool.source) {
     if (!source_step.id) continue; // yh. we'll always have it.
 
@@ -69,7 +74,8 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       source_step,
       candidates,
       sourceEdges,
-      targetEdges
+      targetEdges,
+      getMappedId
     );
     if (result.length) {
       candidates = result;
@@ -86,7 +92,8 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       source_step,
       candidates,
       sourceEdges,
-      targetEdges
+      targetEdges,
+      getMappedId
     );
     if (result.length) {
       top_result = candidates[0];
@@ -280,22 +287,24 @@ function mapStepByParent(
   source_step: Workflow['steps'][number],
   candidates: Workflow['steps'],
   sourceEdges: EdgesType,
-  targetEdges: EdgesType
+  targetEdges: EdgesType,
+  getMappedId: (id: string) => string
 ) {
   const parents = getParent(source_step.id, sourceEdges);
   if (!parents.length) return candidates;
-  return findByParent(parents, targetEdges, candidates);
+  return findByParent(parents.map(getMappedId), targetEdges, candidates);
 }
 
 function mapStepByChildren(
   source_step: Workflow['steps'][number],
   candidates: Workflow['steps'],
   sourceEdges: EdgesType,
-  targetEdges: EdgesType
+  targetEdges: EdgesType,
+  getMappedId: (id: string) => string
 ) {
   const children = sourceEdges[source_step.id];
   if (!children) return candidates; // this means they can't be mapped by children - because it's a leaf node
-  return findByChildren(children, targetEdges, candidates);
+  return findByChildren(children.map(getMappedId), targetEdges, candidates);
 }
 
 function mapStepByExpression(
