@@ -58,8 +58,12 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     if (!source_step.id) continue; // yh. we'll always have it.
 
     // these are the candidates for the search
-    let candidates = pool.target.filter((step) => !idMap.has(step.id));
+    const mappedCandidates = [...idMap.values()]; // already mapped candidates
+    let candidates = pool.target.filter(
+      (step) => !mappedCandidates.includes(step.id)
+    );
 
+    let top_result;
     // Parent
     let result = mapStepByParent(
       source_step,
@@ -67,15 +71,16 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       sourceEdges,
       targetEdges
     );
-    if (result.length) candidates = result;
+    if (result.length) {
+      candidates = result;
+      top_result = candidates[0];
+    }
     if (candidates.length === 1) {
       nodeMapping[source_step.id] = getStepUuid(candidates[0]);
       idMap.set(source_step.id, candidates[0].id);
       continue;
     }
-    console.log('parent:', result, source_step);
 
-    let top_result;
     // Children
     result = mapStepByChildren(
       source_step,
@@ -167,11 +172,10 @@ function getEdges(steps: Workflow['steps']) {
 }
 
 function getParent(id: string, edges: EdgesType) {
-  const found = Object.entries(edges).find(([parent, children]) =>
-    children.includes(id)
-  );
-  if (!found) return;
-  return found[0]; // getting the parent id
+  const parents = Object.entries(edges)
+    .filter(([parent, children]) => children.includes(id))
+    .map((p) => p[0]); // getting the parent id at [parent, children]
+  return parents;
 }
 
 interface Pool {
@@ -231,13 +235,17 @@ function findByExpression(exp: string, steps: Workflow['steps']) {
 // findByParent
 // given a parent node ID and a list of steps, return all steps that have this parent node ID as their parent
 function findByParent(
-  parentId: string,
+  parentIds: string,
   edges: EdgesType,
   steps: Workflow['steps']
 ) {
-  const matched = edges[parentId];
-  if (!matched || matched.length === 0) return [];
-  return steps.filter((step) => matched.includes(step.id));
+  const matches: Workflow['steps'] = [];
+  for (const parentId of parentIds) {
+    const matched = edges[parentId];
+    if (!matched || matched.length === 0) continue;
+    matches.push(...steps.filter((step) => matched.includes(step.id)));
+  }
+  return matches;
 }
 
 // findByChildren
@@ -274,11 +282,9 @@ function mapStepByParent(
   sourceEdges: EdgesType,
   targetEdges: EdgesType
 ) {
-  const parent = getParent(source_step.id, sourceEdges);
-  if (parent) {
-    return findByParent(parent, targetEdges, candidates);
-  }
-  return [];
+  const parents = getParent(source_step.id, sourceEdges);
+  if (!parents.length) return candidates;
+  return findByParent(parents, targetEdges, candidates);
 }
 
 function mapStepByChildren(
@@ -288,7 +294,7 @@ function mapStepByChildren(
   targetEdges: EdgesType
 ) {
   const children = sourceEdges[source_step.id];
-  if (!children) return [];
+  if (!children) return candidates; // this means they can't be mapped by children - because it's a leaf node
   return findByChildren(children, targetEdges, candidates);
 }
 
