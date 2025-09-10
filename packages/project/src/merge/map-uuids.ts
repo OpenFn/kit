@@ -43,8 +43,8 @@ type EdgesType = Record<string, string[]>;
 export default (source: Workflow, target: Workflow): MappingResults => {
   const edgeMapping: MappingResults['edges'] = {};
 
-  const targetEdges = getEdges(target.steps);
-  const sourceEdges = getEdges(source.steps);
+  const targetEdges = target.getAllEdges(); 
+  const sourceEdges = source.getAllEdges();
 
   // Map by id
   let {
@@ -162,19 +162,6 @@ function getEdgeUuid(
 }
 function getStepUuid(step: Workflow['steps'][number]) {
   return step?.openfn?.uuid || step.id;
-}
-function getEdges(steps: Workflow['steps']) {
-  const edges: Record<string, string[]> = {};
-  for (const step of steps) {
-    const next =
-      typeof step.next === 'string' ? { [step.next]: true } : step.next || {};
-
-    for (const toNode of Object.keys(next)) {
-      if (!Array.isArray(edges[step.id])) edges[step.id] = [toNode];
-      else edges[step.id].push(toNode);
-    }
-  }
-  return edges;
 }
 
 function getParent(id: string, edges: EdgesType) {

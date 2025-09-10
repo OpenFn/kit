@@ -110,6 +110,20 @@ class Workflow {
     return edge;
   }
 
+  getAllEdges() {
+    const edges: Record<string, string[]> = {};
+    for (const step of this.steps) {
+      const next =
+        typeof step.next === 'string' ? { [step.next]: true } : step.next || {};
+
+      for (const toNode of Object.keys(next)) {
+        if (!Array.isArray(edges[step.id])) edges[step.id] = [toNode];
+        else edges[step.id].push(toNode);
+      }
+    }
+    return edges;
+  }
+
   getUUID(id): string {
     return this.index.uuid[id];
   }
