@@ -19,7 +19,6 @@ import Workflow from '../Workflow';
 // null: this item does not exist in B
 // string: this item maps to this ID in B (could be the same)
 // true: this item needs a new UUID in B
-type MappingRule = null | string | true;
 
 // detecting nodes in b that were in a via heuristics
 // what are the possible changes that will happen to a node.
@@ -35,14 +34,14 @@ type MappingRule = null | string | true;
 // 2. if the original node isn't a solid node, then it might be it. (when same parent and children)
 
 export interface MappingResults {
-  nodes: Record<string, MappingRule>;
-  edges: Record<string, MappingRule>;
+  nodes: Record<string, string>;
+  edges: Record<string, string>;
 }
 
 type EdgesType = Record<string, string[]>;
 
 export default (source: Workflow, target: Workflow): MappingResults => {
-  const edgeMapping: Record<string, MappingRule> = {};
+  const edgeMapping: MappingResults['edges'] = {};
 
   const targetEdges = getEdges(target.steps);
   const sourceEdges = getEdges(source.steps);
@@ -117,9 +116,6 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       idMap.set(source_step.id, top_result.id);
       continue;
     }
-
-    // If none matched, mark as new
-    nodeMapping[source_step.id] = true;
   }
 
   // EDGE MAPPING
@@ -128,7 +124,6 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   for (const [parent, children] of Object.entries(targetEdges)) {
     for (const child of children) {
       const edgeKey = `${parent}-${child}`;
-      edgeMapping[edgeKey] = null;
     }
   }
 
@@ -138,9 +133,13 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       const tchild = idMap.has(child) ? idMap.get(child) : child;
       const edgeKey = `${parent}-${child}`;
       const targetEdgeKey = `${tparent}-${tchild}`;
-      if (edgeMapping[targetEdgeKey] === null)
-        edgeMapping[edgeKey] = getEdgeUuid(tparent, tchild, target.steps);
-      else edgeMapping[edgeKey] = true;
+      if (!edgeMapping[targetEdgeKey]) {
+        const targetEdgeId = getEdgeUuid(tparent, tchild, target.steps);
+        if (targetEdgeId) {
+          // eg. if it's a new edge then the targetEdgeId would be undefined
+          edgeMapping[edgeKey] = targetEdgeId;
+        }
+      }
     }
   }
 
@@ -201,12 +200,11 @@ function mapStepsById(
   target: Workflow['steps']
 ): MapStepResult {
   const targets: Record<string, Workflow['steps'][number]> = {};
-  const mapping: Record<string, string> = {};
+  const mapping: MappingResults['nodes'] = {};
   const idMap = new Map<string, string>();
 
   for (const target_step of target) {
     targets[target_step.id] = target_step;
-    mapping[target_step.id] = null;
   }
 
   const removedIndexes = [];

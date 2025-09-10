@@ -352,7 +352,7 @@ test.only('no changes: single node workflow', (t) => {
 
   const result = mapUUIDs(source, target);
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
+    trigger: target.getUUID('trigger'),
   });
   t.deepEqual(result.edges, {});
 });
@@ -363,11 +363,11 @@ test.only('no changes: multi node workflow', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
+    'trigger-a': target.getUUID('trigger-a'),
   });
 });
 
@@ -395,24 +395,24 @@ test.only('no changes: huge workflow', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
-    ['b']: target.getUUID('b'),
-    ['c']: target.getUUID('c'),
-    ['d']: target.getUUID('d'),
-    ['e']: target.getUUID('e'),
-    ['f']: target.getUUID('f'),
-    ['g']: target.getUUID('g'),
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
+    b: target.getUUID('b'),
+    c: target.getUUID('c'),
+    d: target.getUUID('d'),
+    e: target.getUUID('e'),
+    f: target.getUUID('f'),
+    g: target.getUUID('g'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
-    ['trigger-b']: target.getUUID('trigger-b'),
-    ['a-c']: target.getUUID('a-c'),
-    ['a-d']: target.getUUID('a-d'),
-    ['b-d']: target.getUUID('b-d'),
-    ['b-e']: target.getUUID('b-e'),
-    ['c-f']: target.getUUID('c-f'),
-    ['e-g']: target.getUUID('e-g'),
+    'trigger-a': target.getUUID('trigger-a'),
+    'trigger-b': target.getUUID('trigger-b'),
+    'a-c': target.getUUID('a-c'),
+    'a-d': target.getUUID('a-d'),
+    'b-d': target.getUUID('b-d'),
+    'b-e': target.getUUID('b-e'),
+    'c-f': target.getUUID('c-f'),
+    'e-g': target.getUUID('e-g'),
   });
 });
 
@@ -422,8 +422,7 @@ test.only('id change: single node', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('activate'), // trigger mapped to activate
-    ['activate']: null,
+    trigger: target.getUUID('activate'), // trigger mapped to activate
   });
   t.deepEqual(result.edges, {});
 });
@@ -434,17 +433,13 @@ test.only('id change: leaf nodes', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['b']: target.getUUID('y'),
-    ['x']: null,
-    ['y']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
+    b: target.getUUID('y'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['trigger-b']: target.getUUID('trigger-y'),
-    ['trigger-x']: null,
-    ['trigger-y']: null,
+    'trigger-a': target.getUUID('trigger-x'),
+    'trigger-b': target.getUUID('trigger-y'),
   });
 });
 
@@ -454,16 +449,13 @@ test.only('id change: internal node', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['b']: target.getUUID('b'),
-    ['x']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
+    b: target.getUUID('b'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['a-b']: target.getUUID('x-b'),
-    ['trigger-x']: null,
-    ['x-b']: null,
+    'trigger-a': target.getUUID('trigger-x'),
+    'a-b': target.getUUID('x-b'),
   });
 });
 
@@ -473,22 +465,16 @@ test.only('id change: internal nodes(same parent and child)', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['b']: target.getUUID('y'),
-    ['c']: target.getUUID('c'),
-    ['x']: null,
-    ['y']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
+    b: target.getUUID('y'),
+    c: target.getUUID('c'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['trigger-b']: target.getUUID('trigger-y'),
-    ['a-c']: target.getUUID('x-c'),
-    ['b-c']: target.getUUID('y-c'),
-    ['trigger-x']: null,
-    ['trigger-y']: null,
-    ['x-c']: null,
-    ['y-c']: null,
+    'trigger-a': target.getUUID('trigger-x'),
+    'trigger-b': target.getUUID('trigger-y'),
+    'a-c': target.getUUID('x-c'),
+    'b-c': target.getUUID('y-c'),
   });
 });
 
@@ -518,38 +504,25 @@ test.only('id change: several internal nodes (mid-size workflow)', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a1'),
-    ['b']: target.getUUID('b1'),
-    ['c']: target.getUUID('x'),
-    ['d']: target.getUUID('y'),
-    ['e']: target.getUUID('e'),
-    ['f']: target.getUUID('f'),
-    ['g']: target.getUUID('z'),
-    ['a1']: null,
-    ['b1']: null,
-    ['x']: null,
-    ['y']: null,
-    ['z']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a1'),
+    b: target.getUUID('b1'),
+    c: target.getUUID('x'),
+    d: target.getUUID('y'),
+    e: target.getUUID('e'),
+    f: target.getUUID('f'),
+    g: target.getUUID('z'),
   });
 
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a1'),
-    ['trigger-b']: target.getUUID('trigger-b1'),
-    ['a-c']: target.getUUID('a1-x'),
-    ['b-d']: target.getUUID('b1-y'),
-    ['c-e']: target.getUUID('x-e'),
-    ['d-f']: target.getUUID('y-f'),
-    ['e-g']: target.getUUID('e-z'),
-    ['f-g']: target.getUUID('f-z'),
-    ['trigger-a1']: null,
-    ['trigger-b1']: null,
-    ['a1-x']: null,
-    ['b1-y']: null,
-    ['x-e']: null,
-    ['y-f']: null,
-    ['e-z']: null,
-    ['f-z']: null,
+    'trigger-a': target.getUUID('trigger-a1'),
+    'trigger-b': target.getUUID('trigger-b1'),
+    'a-c': target.getUUID('a1-x'),
+    'b-d': target.getUUID('b1-y'),
+    'c-e': target.getUUID('x-e'),
+    'd-f': target.getUUID('y-f'),
+    'e-g': target.getUUID('e-z'),
+    'f-g': target.getUUID('f-z'),
   });
 });
 
@@ -577,37 +550,25 @@ test.only('id change: several internal nodes (mid-size workflow) 2', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['b']: target.getUUID('y'),
-    ['c']: target.getUUID('c'),
-    ['d']: target.getUUID('m'),
-    ['e']: target.getUUID('n'),
-    ['f']: target.getUUID('f'),
-    ['g']: target.getUUID('g'),
-    ['x']: null,
-    ['y']: null,
-    ['m']: null,
-    ['n']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
+    b: target.getUUID('y'),
+    c: target.getUUID('c'),
+    d: target.getUUID('m'),
+    e: target.getUUID('n'),
+    f: target.getUUID('f'),
+    g: target.getUUID('g'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['trigger-b']: target.getUUID('trigger-y'),
-    ['a-c']: target.getUUID('x-c'),
-    ['a-d']: target.getUUID('x-m'),
-    ['b-e']: target.getUUID('y-n'),
-    ['b-e']: target.getUUID('y-n'),
-    ['b-f']: target.getUUID('y-f'),
-    ['d-g']: target.getUUID('m-g'),
-    ['e-g']: target.getUUID('n-g'),
-    ['trigger-x']: null,
-    ['trigger-y']: null,
-    ['x-c']: null,
-    ['x-m']: null,
-    ['y-n']: null,
-    ['y-f']: null,
-    ['m-g']: null,
-    ['n-g']: null,
+    'trigger-a': target.getUUID('trigger-x'),
+    'trigger-b': target.getUUID('trigger-y'),
+    'a-c': target.getUUID('x-c'),
+    'a-d': target.getUUID('x-m'),
+    'b-e': target.getUUID('y-n'),
+    'b-e': target.getUUID('y-n'),
+    'b-f': target.getUUID('y-f'),
+    'd-g': target.getUUID('m-g'),
+    'e-g': target.getUUID('n-g'),
   });
 });
 
@@ -618,25 +579,17 @@ test.only('id change: chained internal nodes', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['b']: target.getUUID('y'),
-    ['c']: target.getUUID('z'),
-    ['d']: target.getUUID('q'),
-    ['q']: null,
-    ['x']: null,
-    ['y']: null,
-    ['z']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
+    b: target.getUUID('y'),
+    c: target.getUUID('z'),
+    d: target.getUUID('q'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['a-b']: target.getUUID('x-y'),
-    ['b-c']: target.getUUID('y-z'),
-    ['b-d']: target.getUUID('y-q'),
-    ['trigger-x']: null,
-    ['x-y']: null,
-    ['y-q']: null,
-    ['y-z']: null,
+    'trigger-a': target.getUUID('trigger-x'),
+    'a-b': target.getUUID('x-y'),
+    'b-c': target.getUUID('y-z'),
+    'b-d': target.getUUID('y-q'),
   });
 });
 
@@ -645,9 +598,7 @@ test.only('node removal: single node', (t) => {
   const target = generateWorkflow(['trigger']);
   const result = mapUUIDs(source, target);
 
-  t.deepEqual(result.nodes, {
-    ['trigger']: null,
-  });
+  t.deepEqual(result.nodes, {});
   t.deepEqual(result.edges, {});
 });
 
@@ -658,11 +609,8 @@ test.only('node removal: leaf node', (t) => {
 
   t.deepEqual(result.nodes, {
     ['trigger']: target.getUUID('trigger'),
-    ['a']: null,
   });
-  t.deepEqual(result.edges, {
-    ['trigger-a']: null,
-  });
+  t.deepEqual(result.edges, {});
 });
 
 test.only('node removal: multi leaf nodes (same parent)', (t) => {
@@ -671,14 +619,9 @@ test.only('node removal: multi leaf nodes (same parent)', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: null,
-    ['b']: null,
+    trigger: target.getUUID('trigger'),
   });
-  t.deepEqual(result.edges, {
-    ['trigger-a']: null,
-    ['trigger-b']: null,
-  });
+  t.deepEqual(result.edges, {});
 });
 
 test.only('node removal: multi leaf nodes (different parents)', (t) => {
@@ -687,17 +630,13 @@ test.only('node removal: multi leaf nodes (different parents)', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
-    ['b']: target.getUUID('b'),
-    ['c']: null,
-    ['d']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
+    b: target.getUUID('b'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
-    ['trigger-b']: target.getUUID('trigger-b'),
-    ['a-c']: null,
-    ['b-d']: null,
+    'trigger-a': target.getUUID('trigger-a'),
+    'trigger-b': target.getUUID('trigger-b'),
   });
 });
 
@@ -707,16 +646,13 @@ test.only('node removal: single node (different parents)', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
-    ['b']: target.getUUID('b'),
-    ['c']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
+    b: target.getUUID('b'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
-    ['trigger-b']: target.getUUID('trigger-b'),
-    ['a-c']: null,
-    ['b-c']: null,
+    'trigger-a': target.getUUID('trigger-a'),
+    'trigger-b': target.getUUID('trigger-b'),
   });
 });
 
@@ -726,15 +662,10 @@ test.only('node removal: internal node', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: null,
-    ['b']: target.getUUID('b'),
+    trigger: target.getUUID('trigger'),
+    b: target.getUUID('b'),
   });
-  t.deepEqual(result.edges, {
-    ['trigger-a']: null,
-    ['trigger-b']: true,
-    ['a-b']: null,
-  });
+  t.deepEqual(result.edges, {});
 });
 
 // Breakpoint here!
@@ -744,13 +675,11 @@ test.only('node addition: single leaf node', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
-    ['b']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
-    ['a-b']: null,
+    'trigger-a': target.getUUID('trigger-a'),
   });
 });
 
@@ -760,17 +689,13 @@ test.only('node addition: branching internal node', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
-    ['b']: target.getUUID('b'),
-    ['c']: null,
-    ['d']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
+    b: target.getUUID('b'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
-    ['a-b']: target.getUUID('a-b'),
-    ['a-c']: null,
-    ['c-d']: null,
+    'trigger-a': target.getUUID('trigger-a'),
+    'a-b': target.getUUID('a-b'),
   });
 });
 
@@ -780,14 +705,12 @@ test.only('edge change: rewire to different parent', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('a'),
-    ['b']: target.getUUID('b'),
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('a'),
+    b: target.getUUID('b'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-a'),
-    ['a-b']: true,
-    ['trigger-b']: null,
+    'trigger-a': target.getUUID('trigger-a'),
   });
 });
 
@@ -797,15 +720,11 @@ test.only('mixed change: rename + add new leaf', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['b']: null,
-    ['x']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['x-b']: null,
-    ['trigger-x']: null,
+    'trigger-a': target.getUUID('trigger-x'),
   });
 });
 
@@ -815,24 +734,14 @@ test.skip('deep chain: multiple renames down a path', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('trigger'),
-    ['a']: target.getUUID('x'),
-    ['c']: target.getUUID('z'),
-    ['d']: target.getUUID('d'),
-    ['b']: true, // b got it's parent and child changed. Hence, not mapping. we need to use idMap
-    ['x']: null,
-    ['y']: null,
-    ['z']: null,
+    trigger: target.getUUID('trigger'),
+    a: target.getUUID('x'),
+    c: target.getUUID('z'),
+    d: target.getUUID('d'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('trigger-x'),
-    ['c-d']: target.getUUID('z-d'),
-    ['a-b']: true,
-    ['b-c']: true,
-    ['trigger-x']: null,
-    ['x-y']: null,
-    ['y-z']: null,
-    ['z-d']: null,
+    'trigger-a': target.getUUID('trigger-x'),
+    'c-d': target.getUUID('z-d'),
   });
 });
 
@@ -842,21 +751,14 @@ test.skip('full rename: all nodes and edges renamed', (t) => {
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
-    ['trigger']: target.getUUID('start'),
-    ['a']: target.getUUID('x'),
-    ['b']: target.getUUID('y'),
-    ['c']: target.getUUID('z'),
-    ['start']: null,
-    ['x']: null,
-    ['y']: null,
-    ['z']: null,
+    trigger: target.getUUID('start'),
+    a: target.getUUID('x'),
+    b: target.getUUID('y'),
+    c: target.getUUID('z'),
   });
   t.deepEqual(result.edges, {
-    ['trigger-a']: target.getUUID('start-x'),
-    ['a-b']: target.getUUID('x-y'),
-    ['b-c']: target.getUUID('y-z'),
-    ['start-x']: null,
-    ['x-y']: null,
-    ['y-z']: null,
+    'trigger-a': target.getUUID('start-x'),
+    'a-b': target.getUUID('x-y'),
+    'b-c': target.getUUID('y-z'),
   });
 });
