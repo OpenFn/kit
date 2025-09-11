@@ -51,6 +51,8 @@ const claim = (
   options: ClaimOptions = {}
 ) => {
   return new Promise<void>((resolve, reject) => {
+    app.openClaims ??= {};
+
     const { maxWorkers = 5, demand = 1 } = options;
     const podName = NAME ? `[${NAME}] ` : '';
 
@@ -73,7 +75,6 @@ const claim = (
       );
       return reject(new ClaimError('Server at capacity'));
     }
-    // TODO if activeWorkers + activeClaims > capacity, silently abort
 
     if (!app.queueChannel) {
       logger.warn('skipping claim attempt: websocket unavailable');
