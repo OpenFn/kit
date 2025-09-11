@@ -1,5 +1,11 @@
 # @openfn/lightning-mock
 
+## 2.2.3
+
+### Patch Changes
+
+- c47b65f: Ensure json payloads respect sockey delay
+
 ## 2.2.2
 
 ### Patch Changes
