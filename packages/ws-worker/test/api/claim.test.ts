@@ -154,9 +154,9 @@ const logger = createMockLogger();
 test.todo('claim: should do nothing if no runs returned');
 
 test('claim: should call execute for a single run', async (t) => {
-  let executeArgs;
+  let executeArgs: any[] = [];
   const onClaim = () => ({ runs: [{ id: 'abc' }] });
-  const onExecute = (...args) => {
+  const onExecute = (...args: any[]) => {
     executeArgs = args;
   };
 
@@ -287,6 +287,7 @@ test('should not claim if open claims exceeds capacity', async (t) => {
     // Slow claim event
     onClaim: () =>
       new Promise((resolve) => {
+        // @ts-ignore
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
@@ -295,8 +296,9 @@ test('should not claim if open claims exceeds capacity', async (t) => {
     stop: () => {
       didStopWorkloop = true;
     },
-  };
+  } as any;
 
+  // @ts-ignore
   app.execute = ({ id }) => {
     app.workflows[id] = true;
   };
@@ -333,10 +335,12 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
     // Slow claim event
     onClaim: () =>
       new Promise((resolve) => {
+        // @ts-ignore
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
 
+  // @ts-ignore
   app.execute = ({ id }) => {
     app.workflows[id] = true;
   };
