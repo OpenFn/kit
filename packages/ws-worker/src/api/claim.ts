@@ -24,6 +24,7 @@ export const verifyToken = async (token: string, publicKey: string) => {
 
 type ClaimOptions = {
   maxWorkers?: number;
+  demand?: number;
 };
 
 // used to report the pod name in logging, for tracking
@@ -38,19 +39,40 @@ class ClaimError extends Error {
   }
 }
 
+let claimIdGen = 0;
+
+export const resetClaimIdGen = () => {
+  claimIdGen = 0;
+};
+
 const claim = (
   app: ServerApp,
   logger: Logger = mockLogger,
   options: ClaimOptions = {}
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const { maxWorkers = 5 } = options;
+    app.openClaims ??= {};
+
+    const { maxWorkers = 5, demand = 1 } = options;
     const podName = NAME ? `[${NAME}] ` : '';
 
     const activeWorkers = Object.keys(app.workflows).length;
+
+    const pendingClaims = Object.values(app.openClaims).reduce(
+      (a, b) => a + b,
+      0
+    );
+
     if (activeWorkers >= maxWorkers) {
       // Important: stop the workloop so that we don't try and claim any more
       app.workloop?.stop(`server at capacity (${activeWorkers}/${maxWorkers})`);
+      return reject(new ClaimError('Server at capacity'));
+    } else if (activeWorkers + pendingClaims >= maxWorkers) {
+      // There are active claims which haven't yet been fulfilled
+      // This can happen in response to the work-available event
+      app.workloop?.stop(
+        `server at capacity (${activeWorkers}/${maxWorkers}, ${pendingClaims} pending)`
+      );
       return reject(new ClaimError('Server at capacity'));
     }
 
@@ -67,15 +89,20 @@ const claim = (
       return reject(e);
     }
 
+    const claimId = ++claimIdGen;
+
+    app.openClaims[claimId] = demand;
+
     logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
 
     const start = Date.now();
     app.queueChannel
       .push<ClaimPayload>(CLAIM, {
-        demand: 1,
+        demand,
         worker_name: NAME || null,
       })
       .receive('ok', ({ runs }: ClaimReply) => {
+        delete app.openClaims[claimId];
         const duration = Date.now() - start;
         logger.debug(
           `${podName}claimed ${runs.length} runs in ${duration}ms (${
@@ -114,9 +141,12 @@ const claim = (
       // TODO need implementations for both of these really
       // What do we do if we fail to join the worker channel?
       .receive('error', (e) => {
+        delete app.openClaims[claimId];
         logger.error('Error on claim', e);
+        reject(new Error('claim error'));
       })
       .receive('timeout', () => {
+        delete app.openClaims[claimId];
         logger.error('TIMEOUT on claim. Runs may be lost.');
         reject(new Error('timeout'));
       });

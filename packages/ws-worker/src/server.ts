@@ -60,6 +60,7 @@ export interface ServerApp extends Koa {
   socket?: any;
   queueChannel?: Channel;
   workflows: Record<string, true | Context>;
+  openClaims: Record<string, number>;
   destroyed: boolean;
   events: EventEmitter;
   server: Server;
@@ -221,6 +222,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
+  app.openClaims = {};
   app.workflows = {};
   app.destroyed = false;
 
