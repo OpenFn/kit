@@ -134,7 +134,6 @@ const claim = (
 
           logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
-          console.log('> done');
           resolve();
         });
       })

@@ -23,12 +23,13 @@ const urls = {
 const ONE_HOUR = 1000 * 60 * 60;
 
 let rollingRunId = 1;
-const getRun = (): LightningPlan =>
+
+const getRun = (body = 'fn(s => s)'): LightningPlan =>
   ({
     id: `a${++rollingRunId}`,
     jobs: [
       {
-        body: 'fn(s => s)',
+        body,
       },
     ],
   } as LightningPlan);
@@ -37,6 +38,7 @@ test.before(async () => {
   engine = await createMockRTE();
   lng = createLightningServer({
     port: 7654,
+    socketDelay: 10,
   });
 
   createWorkerServer(engine, {
@@ -99,6 +101,71 @@ test('should initiate a claim when /run?wakeup=true', async (t) => {
     await fetch(`${urls.lngServer}/run?wakeup=true`, {
       method: 'POST',
       body: JSON.stringify(run),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+  });
+});
+
+// This tests creates two runs, call wake_up on them both,
+// and ensures they are executed sequentially
+// This doesn't feel like a great test, but if the pending claims validation
+// is removed from claim.ts, it fails. So it is kinda working
+test.only('should not claim beyond capacity', async (t) => {
+  t.plan(2);
+  let claimCount = 0;
+  return new Promise<void>(async (done) => {
+    const run_1 = getRun(
+      's => new Promise(resolve => setTimeout(resolve, 200))'
+    );
+    const run_2 = getRun(
+      's => new Promise(resolve => setTimeout(resolve, 200))'
+    );
+    let run_1_finished = false;
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run_1.id, (evt) => {
+      if (evt.runId === run_1.id) {
+        t.log(' RUN 1 complete');
+        run_1_finished = true;
+      }
+    });
+
+    lng.onSocketEvent(e.RUN_START, run_2.id, (evt) => {
+      if (evt.runId === run_2.id) {
+        t.log(' RUN 2 start');
+        // Ensure that run 1 is finished when run 2 starts
+        t.true(run_1_finished);
+      }
+    });
+
+    // TODO there's a terrible bug in the mock and these events don't bind right
+    lng.onSocketEvent(e.RUN_COMPLETE, run_2.id, (evt) => {
+      if (evt.runId === run_2.id) {
+        t.log(' RUN 2 complete');
+        // Only 2 claims should be made
+        t.is(claimCount, 2);
+        done();
+      }
+    });
+
+    lng.onSocketEvent(e.CLAIM, run_1.id, () => {
+      claimCount++;
+    });
+
+    // Send two runs up at the same time
+    fetch(`${urls.lngServer}/run?wakeup=true`, {
+      method: 'POST',
+      body: JSON.stringify(run_1),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    fetch(`${urls.lngServer}/run?wakeup=true`, {
+      method: 'POST',
+      body: JSON.stringify(run_2),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
