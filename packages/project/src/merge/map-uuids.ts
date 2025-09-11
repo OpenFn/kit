@@ -114,12 +114,6 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   // EDGE MAPPING
   // this needs to be a bit smart!!!
   // get edges
-  for (const [parent, children] of Object.entries(targetEdges)) {
-    for (const child of children) {
-      const edgeKey = `${parent}-${child}`;
-    }
-  }
-
   for (const [parent, children] of Object.entries(sourceEdges)) {
     for (const child of children) {
       const tparent = idMap.has(parent) ? idMap.get(parent) : parent;
