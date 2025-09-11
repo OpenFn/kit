@@ -273,7 +273,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           collectionsVersion: app.options.collectionsVersion,
           monorepoPath: app.options.monorepoDir,
         });
-        logger.debug('converted run body into execution plan:', plan);
+        //logger.debug('converted run body into execution plan:', plan);
 
         // Setup collections
         if (plan.workflow.credentials?.collections_token) {
