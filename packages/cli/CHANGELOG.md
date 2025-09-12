@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.13.3
+
+### Patch Changes
+
+- 284b889: apollo: add support for events while streaming from apollo
+
 ## 1.13.2
 
 ### Patch Changes
