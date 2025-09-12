@@ -37,8 +37,7 @@ type MapStepResult = {
  * }
  */
 export default (source: Workflow, target: Workflow): MappingResults => {
-  const edgeMapping: MappingResults['edges'] = {};
-
+  // generate edges for source & target workflow
   const targetEdges = target.getAllEdges();
   const sourceEdges = source.getAllEdges();
 
@@ -49,7 +48,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     idMap,
   } = mapStepsById(source.steps, target.steps);
 
-  // Second, map the roots
+  // Second, map the root nodes
   const sourceRoot = source.getRoot();
   const targetRoot = target.getRoot();
   if (sourceRoot && targetRoot) {
@@ -66,15 +65,16 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   for (const source_step of pool.source) {
     if (!source_step.id) continue; // yh. we'll always have it.
 
-    // these are the candidates for the search
-    const mappedCandidates = [...idMap.values()]; // already mapped candidates
+    // these are the candidates for the search. removes already mapped candidates
+    const mappedCandidates = [...idMap.values()];
     let candidates = pool.target.filter(
       (step) => !mappedCandidates.includes(step.id)
     );
 
-    let top_result;
-    let did_filter = false;
-    // Parent
+    let top_result; // holds the top result after a structural filter
+    let did_filter = false; // holds whether a structural filter was successful
+
+    // Is there an unmapped node with the same parent?
     let result = mapStepByParent(
       source_step,
       candidates,
@@ -120,21 +120,26 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       idMap.set(source_step.id, candidates[0].id);
       continue;
     } else if (did_filter && candidates.length > 1 && top_result) {
+      // if we were unable to match by expression but at least one structural filter passed. pick the top_result
       nodeMapping[source_step.id] = getStepUuid(top_result);
       idMap.set(source_step.id, top_result.id);
       continue;
     }
   }
 
-  // EDGE MAPPING
-  // this needs to be a bit smart!!!
-  // get edges
+  // Edge mapping
+  const edgeMapping: MappingResults['edges'] = {};
   for (const [parent, children] of Object.entries(sourceEdges)) {
     for (const child of children) {
-      const tparent = idMap.has(parent) ? idMap.get(parent) : parent;
-      const tchild = idMap.has(child) ? idMap.get(child) : child;
+      // the edge in the source we want to map <parent> - <child>
       const edgeKey = `${parent}-${child}`;
+      // if <parent> was mapped, use that instead
+      const tparent = idMap.has(parent) ? idMap.get(parent) : parent;
+      // if <child> was mapped, use that instead
+      const tchild = idMap.has(child) ? idMap.get(child) : child;
+      // the expected edge in the target
       const targetEdgeKey = `${tparent}-${tchild}`;
+      // if it's not already mapped, then map it
       if (!edgeMapping[targetEdgeKey]) {
         const targetEdgeId = getEdgeUuid(tparent, tchild, target.steps);
         if (targetEdgeId) {
@@ -151,6 +156,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   };
 };
 
+// util for getting uuid from and edge
 function getEdgeUuid(
   parentId: string,
   childId: string,
@@ -162,10 +168,13 @@ function getEdgeUuid(
   const edge = parentNode.next[childId];
   return edge?.openfn?.uuid;
 }
+
+// util for getting uuid from a step
 function getStepUuid(step: Workflow['steps'][number]) {
   return step?.openfn?.uuid || step.id;
 }
 
+// return the parents of a node
 function getParent(id: string, edges: EdgesType) {
   const parents = Object.entries(edges)
     .filter(([parent, children]) => children.includes(id))
@@ -184,6 +193,7 @@ interface MapStepsByIdResult {
   pool: Pool;
 }
 
+// does a 1-1 mapping of nodes by their id
 function mapStepsById(
   source: Workflow['steps'],
   target: Workflow['steps']
@@ -270,6 +280,7 @@ function findByChildren(
   return parents.filter((p) => !!stepsIndex[p]).map((p) => stepsIndex[p]);
 }
 
+// returns which of the candidate nodes have the same parent as source_step
 function mapStepByParent(
   source_step: Workflow['steps'][number],
   candidates: Workflow['steps'],
@@ -287,6 +298,7 @@ function mapStepByParent(
   };
 }
 
+// returns which of the candidate nodes have the same children as source_step to a higher degree
 function mapStepByChildren(
   source_step: Workflow['steps'][number],
   candidates: Workflow['steps'],
@@ -306,6 +318,7 @@ function mapStepByChildren(
   };
 }
 
+// return which of the candidate nodes have the same expression as source_step
 function mapStepByExpression(
   source_step: Workflow['steps'][number],
   candidates: Workflow['steps']
