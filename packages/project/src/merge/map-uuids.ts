@@ -62,68 +62,75 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   };
 
   // Now, for any nodes that weren't mapped, try and find a suitable mapping
-  for (const source_step of pool.source) {
-    if (!source_step.id) continue; // yh. we'll always have it.
+  let tries = 2;
+  while (tries--) {
+    for (const source_step of pool.source) {
+      if (!source_step.id || idMap.has(source_step.id)) continue; // yh. we'll always have it.
 
-    // these are the candidates for the search. removes already mapped candidates
-    const mappedCandidates = [...idMap.values()];
-    let candidates = pool.target.filter(
-      (step) => !mappedCandidates.includes(step.id)
-    );
+      // these are the candidates for the search. removes already mapped candidates
+      const mappedCandidates = [...idMap.values()];
+      let candidates = pool.target.filter(
+        (step) => !mappedCandidates.includes(step.id)
+      );
 
-    let top_result; // holds the top result after a structural filter
-    let did_filter = false; // holds whether a structural filter was successful
+      let top_result; // holds the top result after a structural filter
+      let did_filter = false; // holds whether a structural filter was successful
 
-    // Is there an unmapped node with the same parent?
-    let result = mapStepByParent(
-      source_step,
-      candidates,
-      sourceEdges,
-      targetEdges,
-      getMappedId
-    );
-    if (result.candidates.length) {
-      candidates = result.candidates;
-      top_result = candidates[0];
-      did_filter ||= result.filtered;
-    }
-    if (candidates.length === 1) {
-      nodeMapping[source_step.id] = getStepUuid(candidates[0]);
-      idMap.set(source_step.id, candidates[0].id);
-      continue;
-    }
+      // Is there an unmapped node with the same parent?
+      let result = mapStepByParent(
+        source_step,
+        candidates,
+        sourceEdges,
+        targetEdges,
+        getMappedId
+      );
+      if (result.candidates.length) {
+        candidates = result.candidates;
+        top_result = candidates[0];
+        did_filter ||= result.filtered;
+      }
+      if (candidates.length === 1) {
+        nodeMapping[source_step.id] = getStepUuid(candidates[0]);
+        idMap.set(source_step.id, candidates[0].id);
+        continue;
+      }
 
-    // Is there an unmapped node with the same children?
-    result = mapStepByChildren(
-      source_step,
-      candidates,
-      sourceEdges,
-      targetEdges,
-      getMappedId
-    );
-    if (result.candidates.length) {
-      top_result = candidates[0];
-      candidates = result.candidates;
-      did_filter ||= result.filtered;
-    }
-    if (candidates.length === 1) {
-      nodeMapping[source_step.id] = getStepUuid(candidates[0]);
-      idMap.set(source_step.id, candidates[0].id);
-      continue;
-    }
+      // Is there an unmapped node with the same children?
+      result = mapStepByChildren(
+        source_step,
+        candidates,
+        sourceEdges,
+        targetEdges,
+        getMappedId
+      );
+      if (result.candidates.length) {
+        top_result = candidates[0];
+        candidates = result.candidates;
+        did_filter ||= result.filtered;
+      }
+      if (candidates.length === 1) {
+        nodeMapping[source_step.id] = getStepUuid(candidates[0]);
+        idMap.set(source_step.id, candidates[0].id);
+        continue;
+      }
 
-    // Is there an unmapped node with the same expression?
-    result = mapStepByExpression(source_step, candidates);
-    if (result.length) candidates = result;
-    if (candidates.length === 1) {
-      nodeMapping[source_step.id] = getStepUuid(candidates[0]);
-      idMap.set(source_step.id, candidates[0].id);
-      continue;
-    } else if (did_filter && candidates.length > 1 && top_result) {
-      // if we were unable to match by expression but at least one structural filter passed. pick the top_result
-      nodeMapping[source_step.id] = getStepUuid(top_result);
-      idMap.set(source_step.id, top_result.id);
-      continue;
+      // Is there an unmapped node with the same expression?
+      result = mapStepByExpression(source_step, candidates);
+      if (result.length) candidates = result;
+      if (candidates.length === 1) {
+        nodeMapping[source_step.id] = getStepUuid(candidates[0]);
+        idMap.set(source_step.id, candidates[0].id);
+        continue;
+      } else if (
+        did_filter &&
+        candidates.length > 1 &&
+        top_result &&
+        tries < 1
+      ) {
+        // if we were unable to match by expression but at least one structural filter passed. pick the top_result
+        nodeMapping[source_step.id] = getStepUuid(top_result);
+        idMap.set(source_step.id, top_result.id);
+      }
     }
   }
 

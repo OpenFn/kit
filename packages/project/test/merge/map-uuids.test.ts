@@ -388,37 +388,24 @@ test('mixed change: rename + add new leaf', (t) => {
   });
 });
 
-test.skip('deep chain: multiple renames down a path', (t) => {
-  const source = generateWorkflow(['trigger-a', 'a-b', 'b-c', 'c-d']);
-  const target = generateWorkflow(['trigger-x', 'x-y', 'y-z', 'z-d']);
+test('move: children move to a sibling', (t) => {
+  const source = generateWorkflow(['trigger-m', 'm-n', 'm-o', 'o-d', 'o-e']);
+  const target = generateWorkflow(['trigger-a', 'a-b', 'a-c', 'b-d', 'b-e']);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
     trigger: target.getUUID('trigger'),
-    a: target.getUUID('x'),
-    c: target.getUUID('z'),
+    m: target.getUUID('a'),
+    o: target.getUUID('b'),
+    n: target.getUUID('c'),
     d: target.getUUID('d'),
+    e: target.getUUID('e'),
   });
   t.deepEqual(result.edges, {
-    'trigger-a': target.getUUID('trigger-x'),
-    'c-d': target.getUUID('z-d'),
-  });
-});
-
-test.skip('full rename: all nodes and edges renamed', (t) => {
-  const source = generateWorkflow(['trigger-a', 'a-b', 'b-c']);
-  const target = generateWorkflow(['start-x', 'x-y', 'y-z']);
-  const result = mapUUIDs(source, target);
-
-  t.deepEqual(result.nodes, {
-    trigger: target.getUUID('start'),
-    a: target.getUUID('x'),
-    b: target.getUUID('y'),
-    c: target.getUUID('z'),
-  });
-  t.deepEqual(result.edges, {
-    'trigger-a': target.getUUID('start-x'),
-    'a-b': target.getUUID('x-y'),
-    'b-c': target.getUUID('y-z'),
+    'trigger-m': target.getUUID('trigger-a'),
+    'm-n': target.getUUID('a-c'),
+    'm-o': target.getUUID('a-b'),
+    'o-d': target.getUUID('b-d'),
+    'o-e': target.getUUID('b-e'),
   });
 });

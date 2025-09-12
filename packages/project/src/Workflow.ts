@@ -124,6 +124,10 @@ class Workflow {
     return edges;
   }
 
+  getStep(id: string) {
+    return this.index.steps[id] as Workflow['steps'][number];
+  }
+
   getRoot() {
     const edges = this.getAllEdges();
     const all_children = [];
