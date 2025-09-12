@@ -18,6 +18,10 @@ export interface MappingResults {
 }
 
 type EdgesType = Record<string, string[]>;
+type MapStepResult = {
+  filtered: boolean;
+  candidates: Workflow['steps'][number];
+};
 
 /**
  * Compare two Workflows and identify matching nodes across them.
@@ -35,7 +39,7 @@ type EdgesType = Record<string, string[]>;
 export default (source: Workflow, target: Workflow): MappingResults => {
   const edgeMapping: MappingResults['edges'] = {};
 
-  const targetEdges = target.getAllEdges(); 
+  const targetEdges = target.getAllEdges();
   const sourceEdges = source.getAllEdges();
 
   // First, simply map nodes with the same id
@@ -44,6 +48,14 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     pool,
     idMap,
   } = mapStepsById(source.steps, target.steps);
+
+  // Second, map the roots
+  const sourceRoot = source.getRoot();
+  const targetRoot = target.getRoot();
+  if (sourceRoot && targetRoot) {
+    idMap.set(sourceRoot.id, targetRoot.id);
+    nodeMapping[sourceRoot.id] = getStepUuid(targetRoot);
+  }
 
   const getMappedId = (id: string) => {
     if (idMap.has(id)) return idMap.get(id) as string;
@@ -61,6 +73,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     );
 
     let top_result;
+    let did_filter = false;
     // Parent
     let result = mapStepByParent(
       source_step,
@@ -69,9 +82,10 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       targetEdges,
       getMappedId
     );
-    if (result.length) {
-      candidates = result;
+    if (result.candidates.length) {
+      candidates = result.candidates;
       top_result = candidates[0];
+      did_filter ||= result.filtered;
     }
     if (candidates.length === 1) {
       nodeMapping[source_step.id] = getStepUuid(candidates[0]);
@@ -87,9 +101,10 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       targetEdges,
       getMappedId
     );
-    if (result.length) {
+    if (result.candidates.length) {
       top_result = candidates[0];
-      candidates = result;
+      candidates = result.candidates;
+      did_filter ||= result.filtered;
     }
     if (candidates.length === 1) {
       nodeMapping[source_step.id] = getStepUuid(candidates[0]);
@@ -104,7 +119,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       nodeMapping[source_step.id] = getStepUuid(candidates[0]);
       idMap.set(source_step.id, candidates[0].id);
       continue;
-    } else if (candidates.length > 1 && top_result) {
+    } else if (did_filter && candidates.length > 1 && top_result) {
       nodeMapping[source_step.id] = getStepUuid(top_result);
       idMap.set(source_step.id, top_result.id);
       continue;
@@ -163,7 +178,7 @@ interface Pool {
   target: Workflow['steps'];
 }
 
-interface MapStepResult {
+interface MapStepsByIdResult {
   mapping: Record<string, string>;
   idMap: Map<string, string>;
   pool: Pool;
@@ -172,7 +187,7 @@ interface MapStepResult {
 function mapStepsById(
   source: Workflow['steps'],
   target: Workflow['steps']
-): MapStepResult {
+): MapStepsByIdResult {
   const targets: Record<string, Workflow['steps'][number]> = {};
   const mapping: MappingResults['nodes'] = {};
   const idMap = new Map<string, string>();
@@ -261,10 +276,15 @@ function mapStepByParent(
   sourceEdges: EdgesType,
   targetEdges: EdgesType,
   getMappedId: (id: string) => string
-) {
+): MapStepResult {
   const parents = getParent(source_step.id, sourceEdges);
-  if (!parents.length) return candidates;
-  return findByParent(parents.map(getMappedId), targetEdges, candidates);
+  if (!parents.length) {
+    return { filtered: false, candidates };
+  }
+  return {
+    filtered: true,
+    candidates: findByParent(parents.map(getMappedId), targetEdges, candidates),
+  };
 }
 
 function mapStepByChildren(
@@ -273,10 +293,17 @@ function mapStepByChildren(
   sourceEdges: EdgesType,
   targetEdges: EdgesType,
   getMappedId: (id: string) => string
-) {
+): MapStepResult {
   const children = sourceEdges[source_step.id];
-  if (!children) return candidates; // this means they can't be mapped by children - because it's a leaf node
-  return findByChildren(children.map(getMappedId), targetEdges, candidates);
+  if (!children) return { filtered: false, candidates }; // this means they can't be mapped by children - because it's a leaf node
+  return {
+    filtered: true,
+    candidates: findByChildren(
+      children.map(getMappedId),
+      targetEdges,
+      candidates
+    ),
+  };
 }
 
 function mapStepByExpression(

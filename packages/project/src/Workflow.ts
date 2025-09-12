@@ -124,6 +124,19 @@ class Workflow {
     return edges;
   }
 
+  getRoot() {
+    const edges = this.getAllEdges();
+    const all_children = [];
+    const all_parents = [];
+    for (const [parent, children] of Object.entries(edges)) {
+      all_children.push(...children);
+      all_parents.push(parent);
+    }
+    const root = all_parents.find((parent) => !all_children.includes(parent));
+    if (!root) return;
+    return this.index.steps[root] as Workflow['steps'][number];
+  }
+
   getUUID(id): string {
     return this.index.uuid[id];
   }
