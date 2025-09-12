@@ -113,7 +113,7 @@ test('should initiate a claim when /run?wakeup=true', async (t) => {
 // and ensures they are executed sequentially
 // This doesn't feel like a great test, but if the pending claims validation
 // is removed from claim.ts, it fails. So it is kinda working
-test.only('should not claim beyond capacity', async (t) => {
+test('should not claim beyond capacity', async (t) => {
   t.plan(2);
   let claimCount = 0;
   return new Promise<void>(async (done) => {

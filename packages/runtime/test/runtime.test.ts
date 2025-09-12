@@ -643,7 +643,7 @@ test('data can be an array (workflow)', async (t) => {
   t.deepEqual(result.data, [1, 2, 3]);
 });
 
-test.only('import from a module', async (t) => {
+test('import from a module', async (t) => {
   const expression = `
   import { x } from 'x';
   export default [(s) => ({ data: x })];
