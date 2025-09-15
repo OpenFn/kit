@@ -291,3 +291,164 @@ test.serial(
     });
   }
 );
+
+// Run this in a simple in-memory loop
+// Is usage consistent here? Yes, usually <=4ms
+test.serial.skip(
+  'control: does not slow down on consecutive runs',
+  async (t) => {
+    const exp = 'new Array(1e6).fill(1).join("-")';
+
+    const timings = [];
+    let count = 500;
+    t.timeout(1000 * 60 * 5);
+
+    while (count--) {
+      let start = Date.now();
+      eval(exp);
+      timings.push(Date.now() - start);
+    }
+
+    let min = Infinity;
+    let max = 0;
+    for (const d of timings) {
+      if (d < min) {
+        min = d;
+      }
+      if (d > max) {
+        max = d;
+      }
+    }
+    t.log(min, max);
+    // Ensure minimal timing drift
+    // locally, this passes even after 500 iterations
+    // (but doing les than this in CI)
+    t.true(max - min < 6);
+  }
+);
+
+// Over 500 runs this does seem to slow down a bit
+test.serial.skip('does not slow down on consecutive runs', async (t) => {
+  return new Promise(async (done) => {
+    const p = path.resolve('dist/test/worker-functions.js');
+    engine = await createEngine(
+      {
+        ...options,
+        maxWorkers: 1,
+      },
+      p
+    );
+
+    const plan = {
+      id: 'a',
+      workflow: {
+        steps: [
+          {
+            expression: 'new Array(1e7).fill(1).join("-")',
+          },
+        ],
+      },
+      options: {},
+    };
+
+    const timings = [];
+    // CI
+    // let count = 50;
+
+    // LOCAL
+    let count = 500;
+    t.timeout(1000 * 60 * 5);
+
+    while (count--) {
+      await new Promise((resolve) => {
+        let start = Date.now();
+        engine.execute(plan, {}).on(e.WORKFLOW_COMPLETE, () => {
+          timings.push(Date.now() - start);
+          resolve();
+        });
+      });
+    }
+
+    let min = Infinity;
+    let max = 0;
+    for (const d of timings) {
+      if (d < min) {
+        min = d;
+      }
+      if (d > max) {
+        max = d;
+      }
+    }
+    t.log(timings.join(' '));
+    t.log(min, max);
+    // Ensure minimal timing drift
+    // locally, this passes even after 500 iterations
+    // (but doing les than this in CI)
+    t.true(max - min < 20);
+    done();
+  });
+});
+
+// quite a small variance here, ~25ms
+test.serial.only(
+  'does not slow down on consecutive runs with timeout',
+  async (t) => {
+    return new Promise(async (done) => {
+      const p = path.resolve('dist/test/worker-functions.js');
+      engine = await createEngine(
+        {
+          ...options,
+          maxWorkers: 1,
+        },
+        p
+      );
+
+      const plan = {
+        id: 'a',
+        workflow: {
+          steps: [
+            {
+              expression: 'new Array(1e7).fill(1).join("-")',
+            },
+          ],
+        },
+        options: {},
+      };
+
+      const timings = [];
+      // CI
+      // let count = 50;
+
+      // LOCAL
+      let count = 500;
+      t.timeout(1000 * 60 * 5);
+
+      while (count--) {
+        await new Promise((resolve) => {
+          let start = Date.now();
+          engine.execute(plan, {}).on(e.WORKFLOW_COMPLETE, () => {
+            timings.push(Date.now() - start);
+            setTimeout(resolve, 200);
+          });
+        });
+      }
+
+      let min = Infinity;
+      let max = 0;
+      for (const d of timings) {
+        if (d < min) {
+          min = d;
+        }
+        if (d > max) {
+          max = d;
+        }
+      }
+      t.log(min, max);
+      // Ensure minimal timing drift
+      // locally, this passes even after 500 iterations
+      // (but doing les than this in CI)
+      t.true(max - min < 40);
+      done();
+    });
+  }
+);

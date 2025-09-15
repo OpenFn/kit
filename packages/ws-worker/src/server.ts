@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 
 import { promisify } from 'node:util';
 import { exec as _exec } from 'node:child_process';
+import v8 from 'node:v8';
 
 import * as Sentry from '@sentry/node';
 import Koa from 'koa';
@@ -24,6 +25,7 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
+import { heap } from './util/log-memory';
 
 const exec = promisify(_exec);
 
@@ -292,9 +294,15 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {
           const duration = (Date.now() - start) / 1000;
+          const stats = v8.getHeapStatistics();
+          const heap_mb = (stats.used_heap_size / (1024 * 1024)).toFixed(2);
           logger.debug(
-            `workflow ${id} complete in ${duration}s: releasing worker`
+            `workflow ${id} complete in ${duration}s (${heap_mb}mb heap) releasing worker thread`
           );
+          // logger.debug(
+          //   `workflow ${id} complete in ${duration}s, releasing worker thread`
+          // );
+          heap(logger, 'run:complete');
           delete app.workflows[id];
           runChannel.leave();
 

@@ -9,7 +9,7 @@
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config tsup.config.js",
     "build:watch": "pnpm build --watch",
-    "start": "node --loader @swc-node/register/esm src/start.ts",
+    "start": "node --loader @swc-node/register/esm src/start.ts --expose-gc",
     "start:prod": "node dist/start.js",
     "start:watch": "nodemon -e ts,js --watch ../runtime-manager/dist --watch ./src --exec 'pnpm start'",
     "pack": "pnpm pack --pack-destination ../../dist"

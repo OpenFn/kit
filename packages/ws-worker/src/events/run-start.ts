@@ -9,11 +9,14 @@ import calculateVersionString from '../util/versions';
 import { timeInMicroseconds } from '../util';
 import getVersion from '../util/load-version';
 import { sendEvent } from '../util/send-event';
+import { heap } from '../util/log-memory';
 
 export default async function onRunStart(
   context: Context,
   event: WorkflowStartPayload
 ) {
+  heap(context.logger, 'run:start');
+
   const { state, options = {} } = context;
   // Cheat on the timestamp time to make sure this is the first thing in the log
   const time = (timestamp() - BigInt(10e6)).toString();

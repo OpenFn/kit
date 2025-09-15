@@ -21,6 +21,8 @@ export default async function onWorkflowComplete(
   const reason = calculateRunExitReason(state);
   await logFinalReason(context, reason);
 
+  logger.success(`(heap) duration: ${event.duration}ms`);
+
   try {
     await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, {
       final_dataclip_id: state.lastDataclipId!,

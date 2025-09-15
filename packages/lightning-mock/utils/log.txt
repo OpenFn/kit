@@ -1,0 +1,151 @@
+// first always super fast
+[SRV] ❯ workflow run-1 complete in 0.868s (75.11mb heap) releasing worker thread
+
+// now the heap doubles
+[SRV] ❯ workflow run-2 complete in 4.644s (130.22mb heap) releasing worker thread
+
+// then we start consistently slowing down - why?
+[SRV] ❯ workflow run-3 complete in 16.93s (148.99mb heap) releasing worker thread
+[SRV] ❯ workflow run-4 complete in 25.889s (179.18mb heap) releasing worker thread
+[SRV] ❯ workflow run-5 complete in 34.012s (149.21mb heap) releasing worker thread
+[SRV] ❯ workflow run-6 complete in 35.458s (149.42mb heap) releasing worker thread
+
+// Note that the heap HAS stabilised
+[SRV] ❯ workflow run-7 complete in 45.342s (159.09mb heap) releasing worker thread
+
+
+/// ----------
+// What if I do this super slowly? 2  seconds between calls?
+// same thing
+[SRV] ❯ workflow run-1 complete in 0.785s (108.77mb heap) releasing worker thread
+[SRV] ❯ workflow run-2 complete in 4.814s (191.75mb heap) releasing worker thread
+[SRV] ❯ workflow run-3 complete in 17.224s (152.27mb heap) releasing worker thread
+[SRV] ❯ workflow run-4 complete in 25.765s (168.69mb heap) releasing worker thread
+[SRV] ❯ workflow run-5 complete in 34.025s (168.22mb heap) releasing worker thread
+[SRV] ❯ workflow run-6 complete in 35.065s (168.37mb heap) releasing worker thread
+[SRV] ❯ workflow run-7 complete in 44.94s (158.77mb heap) releasing worker thread
+
+hngh. SOmething odd is that the server seems to be running singetons. It's not  keeping up. Is this a single  CPU thing?
+
+
+// Slower? 30 secs?
+// just the same
+[SRV] ❯ workflow run-1 complete in 0.785s (108.77mb heap) releasing worker thread
+[SRV] ❯ workflow run-2 complete in 4.814s (191.75mb heap) releasing worker thread
+[SRV] ❯ workflow run-3 complete in 17.224s (152.27mb heap) releasing worker thread
+[SRV] ❯ workflow run-4 complete in 25.765s (168.69mb heap) releasing worker thread
+[SRV] ❯ workflow run-5 complete in 34.025s (168.22mb heap) releasing worker thread
+[SRV] ❯ workflow run-6 complete in 35.065s (168.37mb heap) releasing worker thread
+[SRV] ❯ workflow run-7 complete in 44.94s (158.77mb heap) releasing worker thread
+
+
+
+
+// Lets go to 5 seconds and look more closely
+
+
+// Does capacity affect anything? Just 1 thread to play with
+
+Seems to get a bit better but doesn't go right down. I also don't get back to 42 mb memory
+
+```
+[SRV] ❯   heap memory: 42.76
+[SRV] ❯ workflow run-1 complete in 0.886s (74.55mb heap) releasing worker thread
+[SRV] ❯   heap memory: 74.57
+[SRV] ❯   heap memory: 74.60
+[SRV] ❯ workflow run-2 complete in 2.733s (150.72mb heap) releasing worker thread
+[SRV] ❯   heap memory: 150.72
+[SRV] ❯   heap memory: 150.74
+[SRV] ❯   heap memory: 150.77
+[SRV] ❯   heap memory: 150.79
+[SRV] ❯ workflow run-3 complete in 5.27s (92.83mb heap) releasing worker thread
+[SRV] ❯   heap memory: 92.84
+[SRV] ❯   heap memory: 92.87
+[SRV] ❯ workflow run-4 complete in 7.475s (62.63mb heap) releasing worker thread
+[SRV] ❯   heap memory: 62.63
+[SRV] ❯   heap memory: 62.65
+[SRV] ❯ workflow run-5 complete in 10.418s (72.44mb heap) releasing worker thread
+[SRV] ❯   heap memory: 72.45
+[SRV] ❯   heap memory: 72.46
+[SRV] ❯ workflow run-6 complete in 12.54s (72.56mb heap) releasing worker thread
+[SRV] ❯   heap memory: 72.57
+[SRV] ❯   heap memory: 72.59
+[SRV] ❯ workflow run-7 complete in 14.701s (72.58mb heap) releasing worker thread
+[SRV] ❯   heap memory: 72.58
+[SRV] ❯   heap memory: 72.60
+```
+
+
+// What if I just claim and don't actually do anything?
+ ```
+ [SRV] ❯   heap memory: 46.40
+[SRV] ❯   heap memory: 46.44
+[SRV] ❯   heap memory: 46.48
+[SRV] ❯   heap memory: 46.51
+[SRV] ❯   heap memory: 46.53
+[SRV] ❯   heap memory: 46.55
+[SRV] ❯   heap memory: 41.92
+[SRV] ❯   heap memory: 41.99
+[SRV] ❯   heap memory: 42.05
+[SRV] ❯   heap memory: 42.09
+[SRV] ❯   heap memory: 42.11
+[SRV] ❯   heap memory: 42.14
+[SRV] ❯   heap memory: 42.16
+[SRV] ❯   heap memory: 42.18
+[SRV] ❯   heap memory: 42.20
+[SRV] ❯   heap memory: 42.22
+[SRV] ❯   heap memory: 42.24
+[SRV] ❯   heap memory: 42.51
+[SRV] ❯   heap memory: 42.53
+[SRV] ❯   heap memory: 42.55
+[SRV] ❯   heap memory: 42.56
+[SRV] ❯   heap memory: 42.58
+[SRV] ❯   heap memory: 42.60
+[SRV] ❯   heap memory: 42.62
+[SRV] ❯   heap memory: 42.64
+[SRV] ❯   heap memory: 42.66
+[SRV] ❯   heap memory: 42.67
+[SRV] ❯   heap memory: 42.69
+[SRV] ❯   heap memory: 42.71
+```
+It does rise after several claims, but then also sorts itself out. So not too worried about that.
+
+
+What if we claim 1? Do we get back to parity?
+```
+[SRV] ❯   heap memory: 44.62
+[SRV] ❯   heap memory: 44.68
+[SRV] ❯   heap memory: 44.71
+[SRV] ❯   heap memory: 44.74
+[SRV] ❯   heap memory: 44.79
+[SRV] ❯ workflow run-1 complete in 0.856s (123.48mb heap) releasing worker thread
+[SRV] ❯   heap memory: 123.51
+[SRV] ❯   heap memory: 123.54
+[SRV] ❯   heap memory: 123.56
+[SRV] ❯   heap memory: 123.58
+[SRV] ❯   heap memory: 123.61
+[SRV] ❯   heap memory: 123.64
+[SRV] ❯   heap memory: 123.66
+[SRV] ❯   heap memory: 123.68
+[SRV] ❯   heap memory: 123.70
+[SRV] ❯   heap memory: 123.72
+[SRV] ❯   heap memory: 45.79
+```
+yes, we do. Just takes a while.
+
+Does GC run anywhere here? Struggling to get a trace to work 
+
+
+
+
+I think it's gc. I need to see the trace.
+
+Right, you have to pass --trace-gc before the script name, not after. Then you get it.
+
+It looks to me like gc is happening frequently AND quickly. Like a couple of ms. It;'s not sitting and waiting for gc here.
+
+
+Uh hang on, howcome suddenly runs are completing in 4 seconds? Maybe because I'm running JS and things are just faster. I'm seeing it to go 10 seconds to be fair. Now up to 14. So yes, still slowing down.
+
+
+Let's take a closer look

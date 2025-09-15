@@ -537,7 +537,6 @@ export default [(state) => {
     api
       .execute(plan, emptyState, options)
       .on('workflow-log', (evt) => {
-        console.log(evt);
         if (evt.name === 'JOB') {
           t.deepEqual(evt.message, REDACTED_LOG.message);
         }
@@ -545,5 +544,40 @@ export default [(state) => {
       .on('workflow-complete', () => {
         done();
       });
+  });
+});
+
+test.serial.only('does not slow down on consecutive runs', async (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+      maxWorkers: 1,
+    });
+
+    const plan = {
+      id: 'a',
+      workflow: {
+        steps: [
+          {
+            expression: 'new Array(1e7).fill(1).join("-")',
+          },
+        ],
+      },
+      options: {},
+    };
+
+    const timings = [];
+    let count = 50;
+    while (count--) {
+      await new Promise((resolve) => {
+        let start = Date.now();
+        api.execute(plan, {}).on('workflow-complete', () => {
+          timings.push(Date.now() - start);
+          resolve();
+        });
+      });
+    }
+    t.log(timings);
+    done();
   });
 });

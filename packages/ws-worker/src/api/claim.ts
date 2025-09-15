@@ -7,6 +7,7 @@ import { ClaimPayload, ClaimReply } from '@openfn/lexicon/lightning';
 import { CLAIM } from '../events';
 
 import type { ServerApp } from '../server';
+import { heap } from '../util/log-memory';
 
 const mockLogger = createMockLogger();
 
@@ -68,6 +69,7 @@ const claim = (
     }
 
     logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
+    heap(logger, 'claim');
 
     const start = Date.now();
     app.queueChannel
