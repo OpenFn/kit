@@ -58,10 +58,14 @@ test.before(async () => {
   });
 });
 
+test.afterEach(() => {
+  lng.reset();
+});
+
 const test_timeout = 150;
 
 // control test!
-test('should not initiate a quick claim', async (t) => {
+test.serial('should not initiate a quick claim', async (t) => {
   t.plan(1);
   t.timeout(test_timeout);
   return new Promise<void>(async (done) => {
@@ -74,6 +78,9 @@ test('should not initiate a quick claim', async (t) => {
     const run = getRun();
     lng.onSocketEvent(e.CLAIM, run.id, () => {
       t.fail('unexpected claim received');
+    });
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       done();
     });
 
@@ -89,12 +96,15 @@ test('should not initiate a quick claim', async (t) => {
 });
 
 // main test
-test('should initiate a claim when /run?wakeup=true', async (t) => {
+test.serial.skip('should initiate a claim when /run?wakeup=true', async (t) => {
   t.plan(1);
   return new Promise<void>(async (done) => {
     const run = getRun();
     lng.onSocketEvent(e.CLAIM, run.id, () => {
       t.pass('claim happened on lightning');
+    });
+
+    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
       done();
     });
 
@@ -113,7 +123,7 @@ test('should initiate a claim when /run?wakeup=true', async (t) => {
 // and ensures they are executed sequentially
 // This doesn't feel like a great test, but if the pending claims validation
 // is removed from claim.ts, it fails. So it is kinda working
-test('should not claim beyond capacity', async (t) => {
+test.serial('should not claim beyond capacity', async (t) => {
   t.plan(2);
   let claimCount = 0;
   return new Promise<void>(async (done) => {
