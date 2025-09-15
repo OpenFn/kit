@@ -52,10 +52,11 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   const getMappedId = (id: string) => idMap.get(id) || id;
 
   // 3: structural & expression matching
-  const tries = 6; // I think 6 should be a good number of iterations
-  for (let i = 0; i < tries; i++) {
-    const remainingUnmapped = findRemainingUnmappedNodes(unmappedSource, idMap);
-
+  let prevUnmapped = -1;
+  let remainingUnmapped = findRemainingUnmappedNodes(unmappedSource, idMap);
+  let lastIteration = false;
+  while (prevUnmapped !== remainingUnmapped.length || !lastIteration) {
+    lastIteration = prevUnmapped === remainingUnmapped.length;
     for (const sourceStep of remainingUnmapped) {
       const candidates = getUnmappedCandidates(unmappedTarget, idMap);
 
@@ -65,7 +66,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
         sourceEdges,
         targetEdges,
         getMappedId,
-        i === tries - 1 // isLastIteration
+        lastIteration // isLastIteration
       );
 
       if (mappingResult) {
@@ -73,6 +74,8 @@ export default (source: Workflow, target: Workflow): MappingResults => {
         idMap.set(sourceStep.id, mappingResult.id);
       }
     }
+    prevUnmapped = remainingUnmapped.length;
+    remainingUnmapped = findRemainingUnmappedNodes(unmappedSource, idMap);
   }
 
   // 4: edge mapping
