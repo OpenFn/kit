@@ -1,11 +1,10 @@
-
 import { Job } from '@openfn/lexicon';
 import { Project } from '../Project';
 import Workflow from '../Workflow';
 
 export interface MappingResults {
-  nodes: Record<string, string>;  // source node id -> target nodes uuid
-  edges: Record<string, string>;  // source edge key -> target edge uuid
+  nodes: Record<string, string>; // source node id -> target nodes uuid
+  edges: Record<string, string>; // source edge key -> target edge uuid
 }
 
 type EdgesType = Record<string, string[]>;
@@ -26,7 +25,7 @@ type MapStepResult = {
  *  // source id: target UUID
  *  a: '851341-1234124-1512'
  * }
- * 
+ *
  * The algorithm uses a multi-stage approach:
  * 1. Direct ID matching
  * 2. Root node mapping
@@ -56,10 +55,10 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   const tries = 6; // I think 6 should be a good number of iterations
   for (let i = 0; i < tries; i++) {
     const remainingUnmapped = findRemainingUnmappedNodes(unmappedSource, idMap);
-    
+
     for (const sourceStep of remainingUnmapped) {
       const candidates = getUnmappedCandidates(unmappedTarget, idMap);
-      
+
       const mappingResult = findBestMatch(
         sourceStep,
         candidates,
@@ -83,20 +82,20 @@ export default (source: Workflow, target: Workflow): MappingResults => {
     nodes: nodeMapping,
     edges: edgeMapping,
   };
-}
+};
 
 // HELPER FUNCTIONS
 
 // maps root nodes between source and target workflows
 function mapRootNodes(
-  source: Workflow, 
-  target: Workflow, 
-  idMap: Map<string, string>, 
+  source: Workflow,
+  target: Workflow,
+  idMap: Map<string, string>,
   nodeMapping: Record<string, string>
 ): void {
   const sourceRoot = source.getRoot();
   const targetRoot = target.getRoot();
-  
+
   if (sourceRoot && targetRoot) {
     idMap.set(sourceRoot.id, targetRoot.id);
     nodeMapping[sourceRoot.id] = getStepUuid(targetRoot);
@@ -105,21 +104,19 @@ function mapRootNodes(
 
 // finds nodes that haven't been mapped yet
 function findRemainingUnmappedNodes(
-  unmappedSource: Workflow['steps'], 
+  unmappedSource: Workflow['steps'],
   idMap: Map<string, string>
 ): Workflow['steps'] {
-  return unmappedSource.filter(step => 
-    step.id && !idMap.has(step.id)
-  );
+  return unmappedSource.filter((step) => step.id && !idMap.has(step.id));
 }
 
 // gets candidate nodes that haven't been mapped yet
 function getUnmappedCandidates(
-  unmappedTarget: Workflow['steps'], 
+  unmappedTarget: Workflow['steps'],
   idMap: Map<string, string>
 ): Workflow['steps'] {
   const mappedIds = new Set(idMap.values());
-  return unmappedTarget.filter(step => !mappedIds.has(step.id));
+  return unmappedTarget.filter((step) => !mappedIds.has(step.id));
 }
 
 // finds the best match for a source step using multiple strategies
@@ -139,28 +136,36 @@ function findBestMatch(
 
   // 1: match by parent relationship
   const parentResult = mapStepByParent(
-    sourceStep, bestCandidates, sourceEdges, targetEdges, getMappedId
+    sourceStep,
+    bestCandidates,
+    sourceEdges,
+    targetEdges,
+    getMappedId
   );
   if (parentResult.candidates.length > 0) {
     bestCandidates = parentResult.candidates;
     topResult = bestCandidates[0];
     didStructuralFilter ||= parentResult.filtered;
   }
-  
+
   if (bestCandidates.length === 1) {
     return bestCandidates[0];
   }
 
   // 2: match by children relationship
   const childrenResult = mapStepByChildren(
-    sourceStep, bestCandidates, sourceEdges, targetEdges, getMappedId
+    sourceStep,
+    bestCandidates,
+    sourceEdges,
+    targetEdges,
+    getMappedId
   );
   if (childrenResult.candidates.length > 0) {
     bestCandidates = childrenResult.candidates;
     topResult = bestCandidates[0];
     didStructuralFilter ||= childrenResult.filtered;
   }
-  
+
   if (bestCandidates.length === 1) {
     return bestCandidates[0];
   }
@@ -170,7 +175,7 @@ function findBestMatch(
   if (expressionCandidates.length > 0) {
     bestCandidates = expressionCandidates;
   }
-  
+
   if (bestCandidates.length === 1) {
     return bestCandidates[0];
   }
@@ -191,23 +196,27 @@ function mapEdges(
   targetSteps: Workflow['steps']
 ): Record<string, string> {
   const edgeMapping: Record<string, string> = {};
-  
+
   for (const [parentId, children] of Object.entries(sourceEdges)) {
     for (const childId of children) {
       const sourceEdgeKey = `${parentId}-${childId}`;
-      
+
       // use already mapped ids or use the original
       const mappedParentId = idMap.get(parentId) || parentId;
       const mappedChildId = idMap.get(childId) || childId;
-      
+
       // find the expected edge in target
-      const targetEdgeId = getEdgeUuid(mappedParentId, mappedChildId, targetSteps);
+      const targetEdgeId = getEdgeUuid(
+        mappedParentId,
+        mappedChildId,
+        targetSteps
+      );
       if (targetEdgeId) {
         edgeMapping[sourceEdgeKey] = targetEdgeId;
       }
     }
   }
-  
+
   return edgeMapping;
 }
 
@@ -217,9 +226,9 @@ function getEdgeUuid(
   childId: string,
   steps: Workflow['steps']
 ): string | undefined {
-  const parentNode = steps.find(step => step.id === parentId);
+  const parentNode = steps.find((step) => step.id === parentId);
   if (!parentNode || typeof parentNode.next !== 'object') return undefined;
-  
+
   const edge = parentNode.next[childId];
   return edge?.openfn?.uuid;
 }
@@ -241,7 +250,7 @@ interface MapStepsByIdResult {
   pool: Pool;
 }
 
- // does 1-1 mapping of nodes by their ids
+// does 1-1 mapping of nodes by their ids
 function mapStepsById(
   source: Workflow['steps'],
   target: Workflow['steps']
@@ -260,14 +269,16 @@ function mapStepsById(
   for (let i = 0; i < source.length; i++) {
     const sourceStep = source[i];
     const matchingTarget = targetIndex[sourceStep.id];
-    
+
     if (matchingTarget) {
       // direct match found
       mapping[sourceStep.id] = getStepUuid(matchingTarget);
       idMap.set(sourceStep.id, matchingTarget.id);
-      
+
       // remove from unmapped target list
-      const targetIndex = unmappedTarget.findIndex(t => t.id === matchingTarget.id);
+      const targetIndex = unmappedTarget.findIndex(
+        (t) => t.id === matchingTarget.id
+      );
       if (targetIndex !== -1) {
         unmappedTarget.splice(targetIndex, 1);
       }
@@ -296,11 +307,15 @@ function getParent(id: string, edges: EdgesType): string[] {
 // SEARCH FUNCTIONS
 
 // finds steps with matching expression content
-function findByExpression(expression: string, steps: Workflow['steps']): Workflow['steps'] {
-  return steps.filter((step: Job) => 
-    step.expression && 
-    step.expression.trim() && 
-    step.expression === expression
+function findByExpression(
+  expression: string,
+  steps: Workflow['steps']
+): Workflow['steps'] {
+  return steps.filter(
+    (step: Job) =>
+      step.expression &&
+      step.expression.trim() &&
+      step.expression === expression
   );
 }
 
@@ -311,18 +326,17 @@ function findByParent(
   steps: Workflow['steps']
 ): Workflow['steps'] {
   const matches: Workflow['steps'] = [];
-  
+
   for (const parentId of parentIds) {
     const children = edges[parentId];
     if (!children || children.length === 0) continue;
-    
-    const matchingSteps = steps.filter(step => children.includes(step.id));
+
+    const matchingSteps = steps.filter((step) => children.includes(step.id));
     matches.push(...matchingSteps);
   }
-  
+
   return matches;
 }
-
 
 // finds steps whose children best match the given child ids
 // returns steps sorted by the number of matching children (highest first)
@@ -333,9 +347,11 @@ function findByChildren(
 ): Workflow['steps'] {
   // holds how many children each candidate matches
   const childMatchCount: Record<string, number> = {};
-  
+
   for (const [parentId, children] of Object.entries(edges)) {
-    const matchCount = children.filter(childId => childIds.includes(childId)).length;
+    const matchCount = children.filter((childId) =>
+      childIds.includes(childId)
+    ).length;
     if (matchCount > 0) {
       childMatchCount[parentId] = matchCount;
     }
@@ -353,13 +369,13 @@ function findByChildren(
 
   // returns matched steps in order of best match
   return sortedParentIds
-    .filter(parentId => stepIndex[parentId])
-    .map(parentId => stepIndex[parentId]);
+    .filter((parentId) => stepIndex[parentId])
+    .map((parentId) => stepIndex[parentId]);
 }
 
 // MAPPING STRATEGY FUNCTIONS
 
- // maps steps by parent relationship
+// maps steps by parent relationship
 function mapStepByParent(
   sourceStep: Workflow['steps'][number],
   candidates: Workflow['steps'],
@@ -368,20 +384,23 @@ function mapStepByParent(
   getMappedId: (id: string) => string
 ): MapStepResult {
   const sourceParents = getParent(sourceStep.id, sourceEdges);
-  
+
   if (sourceParents.length === 0) {
     return { filtered: false, candidates };
   }
 
   const mappedParentIds = sourceParents.map(getMappedId);
-  const matchingCandidates = findByParent(mappedParentIds, targetEdges, candidates);
-  
+  const matchingCandidates = findByParent(
+    mappedParentIds,
+    targetEdges,
+    candidates
+  );
+
   return {
     filtered: true,
     candidates: matchingCandidates,
   };
 }
-
 
 // maps steps by children relationship
 function mapStepByChildren(
@@ -392,14 +411,18 @@ function mapStepByChildren(
   getMappedId: (id: string) => string
 ): MapStepResult {
   const sourceChildren = sourceEdges[sourceStep.id];
-  
+
   if (!sourceChildren) {
     return { filtered: false, candidates }; // Leaf node - can't map by children
   }
 
   const mappedChildIds = sourceChildren.map(getMappedId);
-  const matchingCandidates = findByChildren(mappedChildIds, targetEdges, candidates);
-  
+  const matchingCandidates = findByChildren(
+    mappedChildIds,
+    targetEdges,
+    candidates
+  );
+
   return {
     filtered: true,
     candidates: matchingCandidates,
