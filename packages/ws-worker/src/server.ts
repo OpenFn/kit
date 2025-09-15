@@ -60,6 +60,7 @@ export interface ServerApp extends Koa {
   socket?: any;
   queueChannel?: Channel;
   workflows: Record<string, true | Context>;
+  openClaims: Record<string, number>;
   destroyed: boolean;
   events: EventEmitter;
   server: Server;
@@ -221,6 +222,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
+  app.openClaims = {};
   app.workflows = {};
   app.destroyed = false;
 
@@ -273,7 +275,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           collectionsVersion: app.options.collectionsVersion,
           monorepoPath: app.options.monorepoDir,
         });
-        logger.debug('converted run body into execution plan:', plan);
+        //logger.debug('converted run body into execution plan:', plan);
 
         // Setup collections
         if (plan.workflow.credentials?.collections_token) {

@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.14.4
+
+### Patch Changes
+
+- 5a613e7: Adjust logging
+- 3a33557: Count outstanding claim requests as capacity. This fixes an issue where `work-available` messages can cause a worker to over-claim, particularly during periods of high load on the Lightning database.
+
 ## 1.14.3
 
 ### Patch Changes

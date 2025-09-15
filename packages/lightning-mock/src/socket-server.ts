@@ -190,8 +190,10 @@ function createServer({
         topic,
         payload: stringify(payload), // TODO do we stringify this? All of it?
       });
-      // @ts-ignore
-      ws.send(evt);
+      setTimeout(() => {
+        // @ts-ignore
+        ws.send(evt);
+      }, socketDelay);
     };
 
     ws.on('message', async function (data: string) {
