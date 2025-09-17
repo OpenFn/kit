@@ -4,7 +4,8 @@ import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
 
 type Options = {
-  workflows: string[]; // A list of workflows to merge
+  // workflows: string[]; // A list of workflows to merge
+  workflowMappings: Record<string, string>; // <source, target>
 };
 
 /**
@@ -18,28 +19,42 @@ type Options = {
  * target, but the UUIDs of the source
  */
 // TOOD what if a workflow is removed from the target?
-export function merge(source: Project, target: Project, options) {
+export function merge(
+  source: Project,
+  target: Project,
+  options: Options = { workflowMappings: {} }
+) {
   const finalWorkflows: Workflow[] = [];
-  // TODO: a new workflow in the source will not be handled
-  for (const workflow of target.workflows) {
-    const sourceWorkflow = source.getWorkflow(workflow.id);
-    if (sourceWorkflow) {
-      const mappings = mapUuids(sourceWorkflow, workflow);
-      finalWorkflows.push(mergeWorkflows(sourceWorkflow, workflow, mappings));
-    } else finalWorkflows.push(workflow);
+  const usedTargetIds = new Set<string>();
+
+  for (const sourceWorkflow of source.workflows) {
+    const mappedTargetId = options.workflowMappings?.[sourceWorkflow.id];
+    const targetWorkflow = mappedTargetId
+      ? target.getWorkflow(mappedTargetId)
+      : target.getWorkflow(sourceWorkflow.id);
+
+    if (targetWorkflow) {
+      usedTargetIds.add(targetWorkflow.id);
+      const mappings = mapUuids(sourceWorkflow, targetWorkflow);
+      finalWorkflows.push(
+        mergeWorkflows(sourceWorkflow, targetWorkflow, mappings)
+      );
+    } else {
+      finalWorkflows.push(sourceWorkflow);
+    }
   }
 
-  const mergedProject = new Project(
+  // workflows from target that didn't get merged
+  for (const targetWorkflow of target.workflows) {
+    if (!usedTargetIds.has(targetWorkflow.id)) {
+      finalWorkflows.push(targetWorkflow);
+    }
+  }
+
+  // TODO: clarify repo preservation strategy
+  // TODO: how other properties of a project are being merged. 
+  return new Project(
     { ...source, ...target, workflows: finalWorkflows },
-    // TODO probably just preserve target repo?
-    { ...source.repo, ...target.repo }
+    { ...source.repo, ...target.repo } 
   );
-  return mergedProject;
-  // Get a list lof workflows to merge (based on options)
-  // For each workflow, map source nodes (steps and edges)
-  // to target nodes.
-  // Note that we need to handle triggers somehow too
-  // Merge the properties of each node
-  // Including UUIDs
-  // return a new project with the merged state
 }
