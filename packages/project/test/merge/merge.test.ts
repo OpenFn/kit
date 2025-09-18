@@ -4,6 +4,7 @@ import Project from '../../src';
 import { merge } from '../../src/merge/merge';
 import { join } from 'node:path';
 import generateWorkflow from '../workflow-generator';
+import slugify from '../../src/util/slugify';
 
 // go over each node in a workflow and add a new uuid
 // does not mutate
@@ -320,6 +321,69 @@ test('should merge two projects and preserve edge id', (t) => {
   t.is(target.getUUID('a-b'), resultEdge.openfn.uuid);
 });
 
+test('id match: same workflow in source and target project', (t) => {
+  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
+  const target = generateWorkflow(['a-b'], { name: 'some workflow' });
+
+  const source_project = createProject(source);
+  const target_project = createProject(target);
+  t.is(source_project.workflows[0].id, target_project.workflows[0].id);
+  const result = merge(source_project, target_project);
+
+  t.is(result.workflows.length, 1);
+  t.is(result.workflows[0].name, 'some workflow');
+  t.is(result.workflows[0].id, 'some-workflow');
+});
+
+test('no id match: union of both workflow', (t) => {
+  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
+  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+
+  const source_project = createProject(source);
+  const target_project = createProject(target);
+  const result = merge(source_project, target_project);
+
+  t.is(result.workflows.length, 2);
+  t.deepEqual(
+    result.workflows.map((w) => w.name).sort(),
+    ['another workflow', 'some workflow'].sort()
+  );
+});
+
+test('no id match: workflow-mapping', (t) => {
+  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
+  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+
+  const source_project = createProject(source);
+  const target_project = createProject(target);
+  const result = merge(source_project, target_project, {
+    workflowMappings: {
+      'some-workflow': 'another-workflow',
+    },
+  });
+
+  t.is(result.workflows.length, 1);
+  t.deepEqual(result.workflows[0].name, 'some workflow');
+});
+
+test('no id match: workflow-mapping with non-existent workflow', (t) => {
+  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
+  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+
+  const source_project = createProject(source);
+  const target_project = createProject(target);
+  const result = merge(source_project, target_project, {
+    workflowMappings: {
+      'some-workflow': 'non-existing-workflow',
+    },
+  });
+
+  t.is(result.workflows.length, 2);
+  t.deepEqual(
+    result.workflows.map((w) => w.name).sort(),
+    ['another workflow', 'some workflow'].sort()
+  );
+});
 // should preserve UUID if id changes
 
 // should generate a UUID if name, adaptor and expression fail

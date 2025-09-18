@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import Workflow from '../src/Workflow';
+import slugify from '../src/util/slugify';
 
 function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
   const ids = new Map<string, string>();
@@ -27,7 +28,7 @@ function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
     }
   }
 
-  return { name: name, steps: Object.values(nodes) };
+  return { name: name, id: slugify(name), steps: Object.values(nodes) };
 
   // Generate a node with an openfn.uuid property
   function node(id, props = {}) {
