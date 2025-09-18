@@ -79,7 +79,12 @@ export default (source: Workflow, target: Workflow): MappingResults => {
   }
 
   // 4: edge mapping
-  const edgeMapping = mapEdges(sourceEdges, targetEdges, idMap, target.steps);
+  const edgeMapping = mapEdges(
+    sourceEdges,
+    targetEdges,
+    idMap,
+    target.getUUID.bind(target)
+  );
 
   return {
     nodes: nodeMapping,
@@ -196,7 +201,7 @@ function mapEdges(
   sourceEdges: EdgesType,
   targetEdges: EdgesType,
   idMap: Map<string, string>,
-  targetSteps: Workflow['steps']
+  getTargetUUID: (id: string) => string
 ): Record<string, string> {
   const edgeMapping: Record<string, string> = {};
 
@@ -209,11 +214,7 @@ function mapEdges(
       const mappedChildId = idMap.get(childId) || childId;
 
       // find the expected edge in target
-      const targetEdgeId = getEdgeUuid(
-        mappedParentId,
-        mappedChildId,
-        targetSteps
-      );
+      const targetEdgeId = getTargetUUID(`${mappedParentId}-${mappedChildId}`);
       if (targetEdgeId) {
         edgeMapping[sourceEdgeKey] = targetEdgeId;
       }
@@ -221,19 +222,6 @@ function mapEdges(
   }
 
   return edgeMapping;
-}
-
-// gets UUID for an edge
-function getEdgeUuid(
-  parentId: string,
-  childId: string,
-  steps: Workflow['steps']
-): string | undefined {
-  const parentNode = steps.find((step) => step.id === parentId);
-  if (!parentNode || typeof parentNode.next !== 'object') return undefined;
-
-  const edge = parentNode.next[childId];
-  return edge?.openfn?.uuid;
 }
 
 // gets UUID for a step
