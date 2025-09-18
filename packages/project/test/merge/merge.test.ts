@@ -384,6 +384,24 @@ test('no id match: workflow-mapping with non-existent workflow', (t) => {
     ['another workflow', 'some workflow'].sort()
   );
 });
+
+test.only('id match: preserve target uuid', (t) => {
+  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
+  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+
+  const source_project = createProject(source);
+  const target_project = createProject(target);
+  const result = merge(source_project, target_project, {
+    workflowMappings: {
+      'some-workflow': 'another-workflow',
+    },
+  });
+
+  t.is(result.workflows.length, 1);
+  t.is(result.workflows[0].name, 'some workflow')
+  // we expect every thing in target to be overridden exect the uuid
+  t.is(result.workflows[0].openfn.uuid, target.workflow.openfn.uuid)
+});
 // should preserve UUID if id changes
 
 // should generate a UUID if name, adaptor and expression fail

@@ -28,7 +28,12 @@ function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
     }
   }
 
-  return { name: name, id: slugify(name), steps: Object.values(nodes) };
+  return {
+    name: name,
+    id: slugify(name),
+    steps: Object.values(nodes),
+    openfn: { uuid: randomUUID() },
+  };
 
   // Generate a node with an openfn.uuid property
   function node(id, props = {}) {

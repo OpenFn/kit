@@ -86,5 +86,6 @@ export function mergeWorkflows(
   return {
     ...target,
     ...newSource,
+    openfn: { ...target.openfn }, // preserving the target uuid. we might need a proper helper function for this.
   };
 }
