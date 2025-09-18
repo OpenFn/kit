@@ -409,3 +409,35 @@ test('move: children move to a sibling', (t) => {
     'o-e': target.getUUID('b-e'),
   });
 });
+
+test('expression-based mapping: nodes only distinguishable by expression', (t) => {
+  const source = generateWorkflow(['trigger-x', 'trigger-y']);
+  const target = generateWorkflow(['trigger-a', 'trigger-b']);
+
+  source.set('x', {expression: 'foo'});
+  source.set('y', {expression: 'bar'});
+  target.set('a', {expression: 'foo'});
+  target.set('b', {expression: 'bar'});
+  const result = mapUUIDs(source, target);
+
+  t.deepEqual(result.nodes, {
+    trigger: target.getUUID('trigger'),
+    x: target.getUUID('a'),
+    y: target.getUUID('b'),
+  });
+
+  // switch the expressions and expect mappings to switch
+  // from x -> a, y -> b to x -> b, y -> a
+  source.set('x', {expression: 'bar'});
+  source.set('y', {expression: 'foo'});
+  const sresult = mapUUIDs(source, target);
+
+  t.deepEqual(sresult.nodes, {
+    trigger: target.getUUID('trigger'),
+    x: target.getUUID('b'),
+    y: target.getUUID('a'),
+  });
+});
+
+// we need to do some testing around multiple roots. 
+test.skip('multiple roots:', ()=> {});
