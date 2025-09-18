@@ -110,6 +110,37 @@ class Workflow {
     return edge;
   }
 
+  getAllEdges() {
+    const edges: Record<string, string[]> = {};
+    for (const step of this.steps) {
+      const next =
+        typeof step.next === 'string' ? { [step.next]: true } : step.next || {};
+
+      for (const toNode of Object.keys(next)) {
+        if (!Array.isArray(edges[step.id])) edges[step.id] = [toNode];
+        else edges[step.id].push(toNode);
+      }
+    }
+    return edges;
+  }
+
+  getStep(id: string) {
+    return this.index.steps[id] as Workflow['steps'][number];
+  }
+
+  getRoot() {
+    const edges = this.getAllEdges();
+    const all_children = [];
+    const all_parents = [];
+    for (const [parent, children] of Object.entries(edges)) {
+      all_children.push(...children);
+      all_parents.push(parent);
+    }
+    const root = all_parents.find((parent) => !all_children.includes(parent));
+    if (!root) return;
+    return this.index.steps[root] as Workflow['steps'][number];
+  }
+
   getUUID(id): string {
     return this.index.uuid[id];
   }
