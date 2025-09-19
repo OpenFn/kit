@@ -13,30 +13,6 @@ import baseMerge from '../util/base-merge';
 
 type Node = Workflow['steps'][number];
 
-// Do we need mergeEdge, mergeTrigger and mergeStep?
-// Or can we do it in one generic function?
-// only called with objects
-export function mergeNode(source, target) {
-  const result = { ...target };
-  for (const [key, value] of Object.entries(source)) {
-    if (Array.isArray(value)) {
-      if (!Array.isArray(target[key])) result[key] = value;
-      else result[key] = [...new Set([...value, target[key]])];
-    } else if (
-      value &&
-      typeof value === 'object' &&
-      target[key] &&
-      typeof target[key] == 'object' &&
-      !Array.isArray(target[key])
-    ) {
-      result[key] = mergeNode(value, target[key]);
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
 export function mergeWorkflows(
   source: Workflow,
   target: Workflow,
