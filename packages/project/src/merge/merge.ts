@@ -52,9 +52,9 @@ export function merge(
   }
 
   // TODO: clarify repo preservation strategy
-  // TODO: how other properties of a project are being merged. 
+  // TODO: how other properties of a project are being merged.
   return new Project(
     { ...source, ...target, workflows: finalWorkflows },
-    { ...source.repo, ...target.repo } 
+    { ...source.repo, ...target.repo }
   );
 }

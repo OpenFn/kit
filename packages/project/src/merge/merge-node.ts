@@ -9,6 +9,7 @@
 
 import { Workflow } from '@openfn/lexicon';
 import { MappingResults } from './map-uuids';
+import baseMerge from '../util/base-merge';
 
 type Node = Workflow['steps'][number];
 
@@ -71,11 +72,17 @@ export function mergeWorkflows(
           };
         }
       }
+
       // do a node merge
-      newNode = mergeNode(sstep, targetNodes[preservedId]);
-      // replace preserved id
-      // newNode.openfn = { ...(newNode.openfn || {}), id: preservedId };
-      newNode.openfn = Object.assign({}, newNode.openfn, { uuid: preservedId });
+      // it's a bit tricky knowing all the properties to be merged
+      newNode = baseMerge(targetNodes[preservedId], sstep, [
+        'id',
+        'name',
+        'adaptor',
+        'expression',
+        'next',
+        'previous',
+      ]);
     } else {
       // TODO Do we need to generate a UUID here?
     }

@@ -385,7 +385,7 @@ test('no id match: workflow-mapping with non-existent workflow', (t) => {
   );
 });
 
-test.only('id match: preserve target uuid', (t) => {
+test('id match: preserve target uuid', (t) => {
   const source = generateWorkflow(['a-b'], { name: 'some workflow' });
   const target = generateWorkflow(['a-b'], { name: 'another workflow', openfnUuid: true });
 
