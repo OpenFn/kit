@@ -4,6 +4,7 @@ import generateWorkflow from './workflow-generator';
 test('should generate a simple workflow with uuids', (t) => {
   const wf = generateWorkflow(['a-b'], { uuidSeed: 0 });
   t.deepEqual(wf.workflow, {
+    id: 'workflow',
     name: 'workflow',
     steps: [
       {
@@ -33,6 +34,7 @@ test('should support long node ids', (t) => {
   const wf = generateWorkflow(['parent-child'], { uuidSeed: 0 });
 
   t.deepEqual(wf.workflow, {
+    id: 'workflow',
     name: 'workflow',
     steps: [
       {
@@ -62,6 +64,7 @@ test('should generate two children for one node', (t) => {
   const wf = generateWorkflow(['a-b', 'a-c'], { uuidSeed: 0 });
 
   t.deepEqual(wf.workflow, {
+    id: 'workflow',
     name: 'workflow',
     steps: [
       {
@@ -102,6 +105,7 @@ test("should generate circular references even though that's illegal", (t) => {
   const wf = generateWorkflow(['a-b', 'b-a'], { uuidSeed: 0 });
 
   t.deepEqual(wf.workflow, {
+    id: 'workflow',
     name: 'workflow',
     steps: [
       {
@@ -138,6 +142,7 @@ test('should ignore duplicates', (t) => {
   const wf = generateWorkflow(['a-b', 'a-b'], { uuidSeed: 0 });
 
   t.deepEqual(wf.workflow, {
+    id: 'workflow',
     name: 'workflow',
     steps: [
       {
@@ -170,6 +175,7 @@ test('should generate a complex workflow', (t) => {
   );
 
   t.deepEqual(wf.workflow, {
+    id: 'workflow',
     name: 'workflow',
     steps: [
       {
