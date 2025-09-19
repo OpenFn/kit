@@ -2,6 +2,7 @@ import { Workflow } from '@openfn/lexicon';
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
+import baseMerge from '../util/base-merge';
 
 type Options = {
   // workflows: string[]; // A list of workflows to merge
@@ -53,8 +54,14 @@ export function merge(
 
   // TODO: clarify repo preservation strategy
   // TODO: how other properties of a project are being merged.
+
+  // with project level props merging, target goes into source because we want to preserve the target props.
   return new Project(
-    { ...source, ...target, workflows: finalWorkflows },
-    { ...source.repo, ...target.repo }
+    baseMerge(
+      source,
+      target,
+      ['description', 'history', 'name', 'meta', 'options', 'repo', 'openfn'],
+      { workflows: finalWorkflows }
+    )
   );
 }
