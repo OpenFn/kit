@@ -29,10 +29,9 @@ export function merge(
   const usedTargetIds = new Set<string>();
 
   for (const sourceWorkflow of source.workflows) {
-    const mappedTargetId = options.workflowMappings?.[sourceWorkflow.id];
-    const targetWorkflow = mappedTargetId
-      ? target.getWorkflow(mappedTargetId)
-      : target.getWorkflow(sourceWorkflow.id);
+    const targetId =
+      options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
+    const targetWorkflow = target.getWorkflow(targetId);
 
     if (targetWorkflow) {
       usedTargetIds.add(targetWorkflow.id);
