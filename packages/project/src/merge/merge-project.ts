@@ -57,11 +57,6 @@ export function merge(
 
   // with project level props merging, target goes into source because we want to preserve the target props.
   return new Project(
-    baseMerge(
-      source,
-      target,
-      ['description', 'history', 'name', 'meta', 'options', 'repo', 'openfn'],
-      { workflows: finalWorkflows }
-    )
+    baseMerge(target, source, [], { workflows: finalWorkflows })
   );
 }
