@@ -81,6 +81,10 @@ export class Project {
   // or from a path (the file system)
   // TODO presumably we can detect a state file? Not a big deal?
 
+  // collections for the project
+  // TODO to be well typed
+  collections: any;
+
   static from(
     type: 'state',
     data: any,
