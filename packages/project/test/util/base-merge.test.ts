@@ -110,8 +110,8 @@ test('assign', (t) => {
   });
 });
 
-test('special: dealing with arrays', (t) => {
-  const target = { key: 'one', title: 'target', colours: ['red', 'blue'] };
+test('special: arrays are shallow merged', (t) => {
+  const target = { key: 'one', title: 'target', colours: ['red', 'blue', 'green'] };
   const source = { key: 'two', title: 'source', colours: ['green', 'yellow'] };
   const result = baseMerge(target, source, ['key', 'props', 'colours']);
 
@@ -123,7 +123,7 @@ test('special: dealing with arrays', (t) => {
 });
 
 // TODO: should a merge create a union of two objects?
-test('special: dealing with objects', (t) => {
+test('special: objects are shallow merged', (t) => {
   const target = {
     key: 'one',
     title: 'target',
@@ -142,8 +142,6 @@ test('special: dealing with objects', (t) => {
     opts: {
       isDeleted: true,
       time: 'yesterday',
-      isNew: true,
-      colour: 'green',
     },
   });
 });

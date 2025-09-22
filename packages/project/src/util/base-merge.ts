@@ -1,5 +1,4 @@
 import pick from 'lodash/pick';
-import merge from 'lodash/merge';
 import assign from 'lodash/assign';
 
 type PropsOnly<T> = {
@@ -13,5 +12,5 @@ export default function baseMerge<T>(
   assigns: Record<PropsOnly<T>, unknown> = {}
 ) {
   const pickedSource = sourceKeys ? pick(source, sourceKeys) : source;
-  return assign(merge(target, pickedSource), assigns);
+  return assign(target, { ...pickedSource, ...assigns });
 }

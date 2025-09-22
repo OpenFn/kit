@@ -1,7 +1,7 @@
 import test from 'ava';
 import { randomUUID } from 'node:crypto';
 import Project from '../../src';
-import { merge } from '../../src/merge/merge';
+import { merge } from '../../src/merge/merge-project';
 import { join } from 'node:path';
 import generateWorkflow from '../workflow-generator';
 import slugify from '../../src/util/slugify';
