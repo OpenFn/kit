@@ -13,12 +13,12 @@ import {
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
 
-type PoolOptions = {
+export type PoolOptions = {
   capacity?: number; // defaults to 5
   maxWorkers?: number; // alias for capacity. Which is best?
   env?: Record<string, string>; // default environment for workers
 
-  silent?: boolean;
+  proxyStdout?: boolean; // print internal stdout to console
 };
 
 type RunTaskEvent = {
@@ -79,8 +79,9 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   // Keep track of all the workers we created
   const allWorkers: Record<number, ChildProcess> = {};
 
-  const init = (child: ChildProcess | false) => {
-    if (!child) {
+  const init = (maybeChild: ChildProcess | false) => {
+    let child: ChildProcess;
+    if (!maybeChild) {
       // create a new child process and load the module script into it
       child = fork(envPath, [script], {
         execArgv: ['--experimental-vm-modules', '--no-warnings'],
@@ -91,16 +92,17 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
         stdio: ['ipc', 'pipe', 'pipe'],
       });
 
-      // Note: Ok, now I have visibility on the stdout stream
-      // I don't think I want to send this to gpc
-      // This might be strictly local debug
-      // child.stdout!.on('data', (data) => {
-      //   console.log(data.toString());
-      // });
+      // This will forward all internal console.debug() lines to the parent stdout
+      if (options.proxyStdout) {
+        child.stdout!.on('data', (data) => {
+          console.log(`${child.pid ?? ''} |> ${data.toString()}`);
+        });
+      }
 
       logger.debug('pool: Created new child process', child.pid);
       allWorkers[child.pid!] = child;
     } else {
+      child = maybeChild as ChildProcess;
       logger.debug('pool: Using existing child process', child.pid);
     }
     return child;

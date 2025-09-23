@@ -43,7 +43,7 @@ export class ExecutionError extends EngineError {
 
 export class CompileError extends EngineError {
   severity = 'crash'; // Syntax errors are crashes, but what if we get a module resolution thing?
-  name = 'CompileError';
+  type = 'CompileError';
   subtype;
   message;
   jobId;
@@ -53,6 +53,8 @@ export class CompileError extends EngineError {
 
     this.jobId = jobId;
     this.message = `${jobId}: ${error.message}`;
+    this.name = error.constructor.name ?? error.name ?? error.type;
+    // TODO remove?
     this.subtype = error.type || error.constructor.name;
   }
 }

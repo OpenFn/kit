@@ -1,8 +1,9 @@
 export default (error: any) => {
   return {
     message: error.message,
-    name: error.subtype || error.name || error.type,
-    type: error.name,
+    name: error.name,
+    type: error.type,
+    subtype: error.subtype,
     severity: error.severity || 'crash',
   };
 };

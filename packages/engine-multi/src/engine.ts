@@ -81,6 +81,7 @@ export type EngineOptions = {
   runTimeoutMs?: number; // default timeout
   statePropsToRemove?: string[];
   whitelist?: RegExp[];
+  proxyStdout?: boolean;
 };
 
 export type InternalEngine = RuntimeEngine & {
@@ -129,6 +130,7 @@ const createEngine = async (
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
+      proxyStdout: options.proxyStdout,
     },
     options.logger
   );

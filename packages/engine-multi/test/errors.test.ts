@@ -20,6 +20,7 @@ test.before(async () => {
     },
     maxWorkers: 1,
     memoryLimitMb: 200,
+    proxyStdout: true,
   };
 
   // This uses the real runtime and real worker
@@ -45,8 +46,36 @@ test.serial('syntax error: missing bracket', (t) => {
 
     engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'CompileError');
+
+      // t.is(evt.name, 'SyntaxError'); // TODO fix in #1004
       t.true(typeof evt.threadId === 'number');
       t.is(evt.message, 'x: Unexpected token (1:21)');
+      done();
+    });
+  });
+});
+
+test.serial('reference error: var not defined', (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'a',
+      workflow: {
+        steps: [
+          {
+            id: 'x',
+            expression: 'export default [() => s]',
+          },
+        ],
+      },
+      options: {},
+    };
+
+    engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
+      t.is(evt.message, 'ReferenceError: s is not defined');
+      // TODO this is the standard we want in https://github.com/OpenFn/kit/issues/1004
+      t.is(evt.type, 'RuntimeCrash');
+      // t.is(evt.name, 'ReferenceError'); // TODO fix in #1004
+      t.true(typeof evt.threadId === 'number');
       done();
     });
   });
