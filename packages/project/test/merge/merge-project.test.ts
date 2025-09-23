@@ -387,7 +387,10 @@ test('no id match: workflow-mapping with non-existent workflow', (t) => {
 
 test('id match: preserve target uuid', (t) => {
   const source = generateWorkflow(['a-b'], { name: 'some workflow' });
-  const target = generateWorkflow(['a-b'], { name: 'another workflow', openfnUuid: true });
+  const target = generateWorkflow(['a-b'], {
+    name: 'another workflow',
+    openfnUuid: true,
+  });
 
   const source_project = createProject(source);
   const target_project = createProject(target);
@@ -398,12 +401,118 @@ test('id match: preserve target uuid', (t) => {
   });
 
   t.is(result.workflows.length, 1);
-  t.is(result.workflows[0].name, 'some workflow')
+  t.is(result.workflows[0].name, 'some workflow');
   // we expect every thing in target to be overridden exect the uuid
-  t.is(result.workflows[0].openfn.uuid, target.workflow.openfn.uuid)
+  t.is(result.workflows[0].openfn.uuid, target.workflow.openfn.uuid);
 });
 // should preserve UUID if id changes
 
 // should generate a UUID if name, adaptor and expression fail
 
 // should generate a UUID if change is ambiguous
+
+test('config: no mappings & removeUnmapped=false', (t) => {
+  const source_project = createProject([
+    generateWorkflow(['a-new'], { name: 'a' }),
+    generateWorkflow(['b-new'], { name: 'b' }),
+    generateWorkflow(['c-new'], { name: 'c' }),
+  ]);
+  const target_project = createProject([
+    generateWorkflow(['a-old'], { name: 'a' }),
+    generateWorkflow(['b-old'], { name: 'b' }),
+    generateWorkflow(['d-old'], { name: 'd' }),
+  ]);
+  const result = merge(source_project, target_project);
+
+  // should be the new version of a,b,c
+  t.truthy(result.getWorkflow('a')?.get('new'));
+  t.truthy(result.getWorkflow('b')?.get('new'));
+  t.truthy(result.getWorkflow('c')?.get('new'));
+  // then old version of d
+  t.truthy(result.getWorkflow('d')?.get('old'));
+
+  t.deepEqual(
+    result.workflows.map((w) => w.name),
+    ['a', 'b', 'c', 'd']
+  );
+});
+
+test('config: no mappings & removeUnmapped=true', (t) => {
+  const source_project = createProject([
+    generateWorkflow(['a-new'], { name: 'a' }),
+    generateWorkflow(['b-new'], { name: 'b' }),
+    generateWorkflow(['c-new'], { name: 'c' }),
+  ]);
+  const target_project = createProject([
+    generateWorkflow(['a-old'], { name: 'a' }),
+    generateWorkflow(['b-old'], { name: 'b' }),
+    generateWorkflow(['d-old'], { name: 'd' }),
+    generateWorkflow(['e-old'], { name: 'e' }),
+  ]);
+  const result = merge(source_project, target_project, {
+    removeUnmapped: true,
+  });
+
+  // should be the new version of a,b,c
+  t.truthy(result.getWorkflow('a')?.get('new'));
+  t.truthy(result.getWorkflow('b')?.get('new'));
+  t.truthy(result.getWorkflow('c')?.get('new'));
+
+  t.deepEqual(
+    result.workflows.map((w) => w.name),
+    ['a', 'b', 'c']
+  );
+});
+
+test('config: mapping & removeUnmapped=false', (t) => {
+  const source_project = createProject([
+    generateWorkflow(['a-new'], { name: 'a' }),
+    generateWorkflow(['b-new'], { name: 'b' }),
+    generateWorkflow(['c'], { name: 'c' }),
+  ]);
+  const target_project = createProject([
+    generateWorkflow(['a-old'], { name: 'a' }),
+    generateWorkflow(['b-old'], { name: 'b' }),
+    generateWorkflow(['d-old'], { name: 'd' }),
+  ]);
+  const result = merge(source_project, target_project, {
+    workflowMappings: { a: 'a' },
+    removeUnmapped: false,
+  });
+
+  // should be the new version of a
+  t.truthy(result.getWorkflow('a')?.get('new'));
+  // should be the old version of b & d
+  t.truthy(result.getWorkflow('b')?.get('old'));
+  t.truthy(result.getWorkflow('d')?.get('old'));
+
+  t.deepEqual(
+    result.workflows.map((w) => w.name),
+    ['a', 'b', 'd']
+  );
+});
+
+test('config: mapping & removeUnmapped=true', (t) => {
+  const source_project = createProject([
+    generateWorkflow(['a-new'], { name: 'a' }),
+    generateWorkflow(['b-new'], { name: 'b' }),
+    generateWorkflow(['c'], { name: 'c' }),
+  ]);
+  const target_project = createProject([
+    generateWorkflow(['a-old'], { name: 'a' }),
+    generateWorkflow(['b-old'], { name: 'b' }),
+    generateWorkflow(['d-old'], { name: 'd' }),
+  ]);
+  const result = merge(source_project, target_project, {
+    workflowMappings: { a: 'a' },
+    removeUnmapped: true,
+  });
+
+  // should be the new version of a
+  t.truthy(result.getWorkflow('a')?.get('new'));
+
+  t.deepEqual(
+    result.workflows.map((w) => w.name),
+    ['a']
+  );
+});
