@@ -47,9 +47,6 @@ test.serial('trigger workflow-start', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      compile: {
-        skip: true,
-      },
     });
 
     const plan = createPlan();
@@ -68,9 +65,6 @@ test.serial('trigger job-start', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      compile: {
-        skip: true,
-      },
     });
 
     const plan = createPlan();
@@ -89,9 +83,6 @@ test.serial('trigger job-complete', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      compile: {
-        skip: true,
-      },
     });
 
     const plan = createPlan();
@@ -118,9 +109,6 @@ test.serial('trigger workflow-complete', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      compile: {
-        skip: true,
-      },
     });
 
     const plan = createPlan();
@@ -458,9 +446,6 @@ test.serial('accept initial state', (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      compile: {
-        skip: true,
-      },
     });
 
     const plan = createPlan();

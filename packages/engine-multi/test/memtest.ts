@@ -48,10 +48,6 @@ function run() {
 async function start() {
   api = await createAPI({
     logger,
-    // Disable compilation
-    compile: {
-      skip: true,
-    },
     maxWorkers: 1,
   });
 

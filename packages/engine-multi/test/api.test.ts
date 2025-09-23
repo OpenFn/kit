@@ -88,10 +88,6 @@ test.serial(
     return new Promise(async (done) => {
       api = await createAPI({
         logger,
-        // Disable compilation
-        compile: {
-          skip: true,
-        },
       });
 
       const plan: ExecutionPlan = {
@@ -121,10 +117,6 @@ test.serial('should listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      // Disable compilation
-      compile: {
-        skip: true,
-      },
     });
 
     const plan: ExecutionPlan = {
