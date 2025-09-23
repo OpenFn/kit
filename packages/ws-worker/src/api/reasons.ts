@@ -16,7 +16,7 @@ const calculateJobExitReason = (
   if (error) {
     reason = error.severity ?? 'crash';
     error_message = error.message;
-    error_type = error.type || error.name;
+    error_type = error.subtype || error.type || error.name;
   } else if (state.errors?.[jobId]) {
     reason = 'fail';
     ({ message: error_message, name: error_type } = state.errors[jobId]);
