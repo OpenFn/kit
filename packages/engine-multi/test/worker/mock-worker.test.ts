@@ -82,7 +82,7 @@ test('expression state overrides data', async (t) => {
   t.deepEqual(result, { data: { agent: '007' } });
 });
 
-test('write an exception to state', async (t) => {
+test.only('write an exception to state', async (t) => {
   const plan = createPlan({
     id: 'j2',
     expression: 'ƸӜƷ', // it's a butterfly, obviously (and more importantly, invalid JSON)

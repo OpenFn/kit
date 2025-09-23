@@ -76,7 +76,6 @@ register({
     };
 
     return execute(plan.id!, async () => {
-      // TODO nocompile flag?
       // TODO force top level logging only in the compiler
       await compile(plan, { repoDir }, logger);
       return run(plan, input, options);

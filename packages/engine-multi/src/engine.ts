@@ -75,7 +75,6 @@ export type EngineOptions = {
   maxWorkers?: number;
   memoryLimitMb?: number;
   payloadLimitMb?: number;
-  noCompile?: boolean; // TODO deprecate in favour of compile
   repoDir: string;
   resolvers?: LazyResolvers;
   runtimelogger?: Logger;

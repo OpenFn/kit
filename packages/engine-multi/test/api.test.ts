@@ -50,7 +50,6 @@ test.serial('engine api uses default options', async (t) => {
   t.truthy(api.options);
 
   t.deepEqual(api.options.statePropsToRemove, ['configuration', 'response']);
-  t.false(api.options.noCompile);
   t.truthy(api.options.whitelist);
 });
 
@@ -60,9 +59,6 @@ test.serial('engine api uses custom options', async (t) => {
 
     repoDir: 'a/b/c',
     whitelist: ['/@openfn/'],
-
-    // noCompile
-    // autoinstall
 
     maxWorkers: 29,
     memoryLimitMb: 99,
