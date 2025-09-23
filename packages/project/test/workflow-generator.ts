@@ -63,7 +63,15 @@ function gen(
   }
 }
 
-export default function generateWorkflow(def: string, options = {}) {
+type GenerateWorkflowOptions = {
+  name: string;
+  uuidSeed: number;
+  openfnUuid: boolean;
+};
+export default function generateWorkflow(
+  def: string,
+  options: Partial<GenerateWorkflowOptions> = {}
+) {
   const { name, uuidSeed, openfnUuid } = options;
 
   const wf = gen(def, name, uuidSeed, openfnUuid);

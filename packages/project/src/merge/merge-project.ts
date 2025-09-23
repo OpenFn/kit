@@ -3,10 +3,12 @@ import { Project } from '../Project';
 import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
+import defaultsDeep from 'lodash/defaultsDeep';
+import isEmpty from 'lodash/isEmpty';
 
 type Options = {
-  // workflows: string[]; // A list of workflows to merge
   workflowMappings: Record<string, string>; // <source, target>
+  removeUnmapped: boolean;
 };
 
 /**
@@ -23,12 +25,23 @@ type Options = {
 export function merge(
   source: Project,
   target: Project,
-  options: Options = { workflowMappings: {} }
+  options?: Partial<Options>
 ) {
+  const defaultOptions: Options = {
+    workflowMappings: {},
+    removeUnmapped: false,
+  };
+  options = defaultsDeep<Options>(options, defaultOptions);
   const finalWorkflows: Workflow[] = [];
   const usedTargetIds = new Set<string>();
 
-  for (const sourceWorkflow of source.workflows) {
+  const noMappings = isEmpty(options?.workflowMappings); // no mapping provided. hence *
+  let sourceWorkflows: Workflow[] = source.workflows.filter((w) => {
+    if (noMappings) return true;
+    return !!options?.workflowMappings[w.id];
+  });
+
+  for (const sourceWorkflow of sourceWorkflows) {
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
@@ -44,10 +57,13 @@ export function merge(
     }
   }
 
-  // workflows from target that didn't get merged
-  for (const targetWorkflow of target.workflows) {
-    if (!usedTargetIds.has(targetWorkflow.id)) {
-      finalWorkflows.push(targetWorkflow);
+  // do not remove unmapped means include them too.
+  if (!options?.removeUnmapped) {
+    // workflows from target that didn't get merged
+    for (const targetWorkflow of target.workflows) {
+      if (!usedTargetIds.has(targetWorkflow.id)) {
+        finalWorkflows.push(targetWorkflow);
+      }
     }
   }
 
