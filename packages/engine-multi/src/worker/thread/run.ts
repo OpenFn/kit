@@ -47,11 +47,6 @@ register({
     // This goes to stdout but not the adapator logger
     console.debug = debug;
 
-    // TODO nocompile?
-    // TODO force top level logging only in the compiler
-    // TODO throw on error
-    await compile(plan, { repoDir }, logger);
-
     // TODO I would like to pull these options out of here
     const options = {
       // disable the runtime's own timeout
@@ -80,6 +75,11 @@ register({
       },
     };
 
-    return execute(plan.id!, () => run(plan, input, options));
+    return execute(plan.id!, async () => {
+      // TODO nocompile flag?
+      // TODO force top level logging only in the compiler
+      await compile(plan, { repoDir }, logger);
+      return run(plan, input, options);
+    });
   },
 });

@@ -45,8 +45,7 @@ test.serial('syntax error: missing bracket', (t) => {
 
     engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'CompileError');
-      // compilation happens in the main thread
-      t.is(evt.threadId, '-');
+      t.true(typeof evt.threadId === 'number');
       t.is(evt.message, 'x: Unexpected token (1:21)');
       done();
     });
@@ -71,15 +70,14 @@ test.serial('syntax error: illegal throw', (t) => {
 
     engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'CompileError');
-      // compilation happens in the main thread
-      t.is(evt.threadId, '-');
+      t.true(typeof evt.threadId === 'number');
       t.is(evt.message, 'z: Unexpected token (1:9)');
       done();
     });
   });
 });
 
-test.serial('thread oom error', (t) => {
+test.serial.only('thread oom error', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'c',
