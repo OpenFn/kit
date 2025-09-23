@@ -5,6 +5,7 @@ import type { NotifyEvents } from '@openfn/runtime';
 import type { ExecutionPlan, State } from '@openfn/lexicon';
 import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 
+import compile from './compile';
 import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
 import serializeError from '../../util/serialize-error';
@@ -26,7 +27,7 @@ const eventMap = {
 };
 
 register({
-  run: (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
+  run: async (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
     const { repoDir, whitelist, sanitize, statePropsToRemove, jobLogLevel } =
       runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
@@ -45,6 +46,11 @@ register({
     // Leave console.debug for local debugging
     // This goes to stdout but not the adapator logger
     console.debug = debug;
+
+    // TODO nocompile?
+    // TODO force top level logging only in the compiler
+    // TODO throw on error
+    await compile(plan, { repoDir }, logger);
 
     // TODO I would like to pull these options out of here
     const options = {

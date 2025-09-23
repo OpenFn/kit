@@ -3,7 +3,6 @@ import { timestamp } from '@openfn/logger';
 import * as workerEvents from '../worker/events';
 import type ExecutionContext from '../classes/ExecutionContext';
 import autoinstall from './autoinstall';
-import compile from './compile';
 import {
   workflowStart,
   workflowComplete,
@@ -22,14 +21,14 @@ const execute = async (context: ExecutionContext) => {
   try {
     await autoinstall(context);
 
-    try {
-      await compile(context);
-    } catch (e: any) {
-      if (e.type === 'CompileError') {
-        return error(context, { workflowId: state.plan.id, error: e });
-      }
-      throw e;
-    }
+    // try {
+    //   await compile(context);
+    // } catch (e: any) {
+    //   if (e.type === 'CompileError') {
+    //     return error(context, { workflowId: state.plan.id, error: e });
+    //   }
+    //   throw e;
+    // }
 
     // unfortunately we have to preload all credentials
     // I don't know any way to send data back into the worker once started
