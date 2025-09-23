@@ -516,3 +516,29 @@ test('config: mapping & removeUnmapped=true', (t) => {
     ['a']
   );
 });
+
+test('config: mapping(rename) & removeUnmapped=false', (t) => {
+  const source_project = createProject([
+    generateWorkflow(['a-new'], { name: 'a' }),
+    generateWorkflow(['b-new'], { name: 'b' }),
+    generateWorkflow(['c-new'], { name: 'c' }),
+  ]);
+  const target_project = createProject([
+    generateWorkflow(['a-old'], { name: 'a' }),
+    generateWorkflow(['b-old'], { name: 'b' }),
+  ]);
+  const result = merge(source_project, target_project, {
+    workflowMappings: { c: 'a' },
+    removeUnmapped: false,
+  });
+
+  // should be the new version of c
+  t.truthy(result.getWorkflow('c')?.get('new'));
+  // old version of b
+  t.truthy(result.getWorkflow('b')?.get('old'));
+
+  t.deepEqual(
+    result.workflows.map((w) => w.name),
+    ['c', 'b']
+  );
+});
