@@ -542,3 +542,24 @@ test('config: mapping(rename) & removeUnmapped=false', (t) => {
     ['c', 'b']
   );
 });
+
+test('config: multiple source into one target error', (t) => {
+  const source_project = createProject([
+    generateWorkflow(['a-new'], { name: 'a' }),
+    generateWorkflow(['b-new'], { name: 'b' }),
+    generateWorkflow(['c-new'], { name: 'c' }),
+  ]);
+  const target_project = createProject([
+    generateWorkflow(['a-old'], { name: 'a' }),
+    generateWorkflow(['b-old'], { name: 'b' }),
+  ]);
+
+  t.throws(
+    () =>
+      merge(source_project, target_project, {
+        workflowMappings: { a: 'a', c: 'a' },
+        removeUnmapped: false,
+      }),
+    { instanceOf: Error, message: 'The following target workflow have multiple source workflows merging into them. a' }
+  );
+});

@@ -5,6 +5,7 @@ import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import defaultsDeep from 'lodash/defaultsDeep';
 import isEmpty from 'lodash/isEmpty';
+import getDuplicates from '../util/get-duplicates';
 
 type Options = {
   workflowMappings: Record<string, string>; // <source, target>
@@ -32,6 +33,19 @@ export function merge(
     removeUnmapped: false,
   };
   options = defaultsDeep<Options>(options, defaultOptions);
+
+  // check whether multiple workflows are merging into one. throw Error
+  const dupTargetMappings = getDuplicates(
+    Object.values(options?.workflowMappings)
+  );
+  if (dupTargetMappings.length) {
+    throw new Error(
+      `The following target workflow have multiple source workflows merging into them. ${dupTargetMappings.join(
+        ', '
+      )}`
+    );
+  }
+
   const finalWorkflows: Workflow[] = [];
   const usedTargetIds = new Set<string>();
 
