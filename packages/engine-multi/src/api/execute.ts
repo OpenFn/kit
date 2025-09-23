@@ -21,15 +21,6 @@ const execute = async (context: ExecutionContext) => {
   try {
     await autoinstall(context);
 
-    // try {
-    //   await compile(context);
-    // } catch (e: any) {
-    //   if (e.type === 'CompileError') {
-    //     return error(context, { workflowId: state.plan.id, error: e });
-    //   }
-    //   throw e;
-    // }
-
     // unfortunately we have to preload all credentials
     // I don't know any way to send data back into the worker once started
     // there is a shared memory thing but I'm not sure how it works yet
@@ -50,6 +41,7 @@ const execute = async (context: ExecutionContext) => {
       statePropsToRemove: options.statePropsToRemove,
       whitelist,
       jobLogLevel: options.jobLogLevel,
+      repoDir: options.repoDir,
     } as RunOptions;
 
     const workerOptions = {

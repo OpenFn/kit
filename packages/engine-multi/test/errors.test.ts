@@ -77,7 +77,7 @@ test.serial('syntax error: illegal throw', (t) => {
   });
 });
 
-test.serial.only('thread oom error', (t) => {
+test.serial('thread oom error', (t) => {
   return new Promise((done) => {
     const plan = {
       id: 'c',

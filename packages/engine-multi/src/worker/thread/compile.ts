@@ -22,8 +22,8 @@ export default async (
       if (job.expression) {
         try {
           const result = await compileJob(job, logger, repoDir);
-          job.expression = result.code;
           job.sourceMap = result.map;
+          job.expression = result.code;
         } catch (e) {
           throw new CompileError(e, job.id!);
         }
@@ -48,7 +48,6 @@ const compileJob = async (job: Job, logger: Logger, repoDir?: string) => {
   const compilerOptions: Options = {
     logger,
   };
-
   if (adaptors && repoDir) {
     const adaptorConfig = [];
     for (const adaptor of adaptors) {
