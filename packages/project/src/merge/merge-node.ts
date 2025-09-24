@@ -9,32 +9,9 @@
 
 import { Workflow } from '@openfn/lexicon';
 import { MappingResults } from './map-uuids';
+import baseMerge from '../util/base-merge';
 
 type Node = Workflow['steps'][number];
-
-// Do we need mergeEdge, mergeTrigger and mergeStep?
-// Or can we do it in one generic function?
-// only called with objects
-export function mergeNode(source, target) {
-  const result = { ...target };
-  for (const [key, value] of Object.entries(source)) {
-    if (Array.isArray(value)) {
-      if (!Array.isArray(target[key])) result[key] = value;
-      else result[key] = [...new Set([...value, target[key]])];
-    } else if (
-      value &&
-      typeof value === 'object' &&
-      target[key] &&
-      typeof target[key] == 'object' &&
-      !Array.isArray(target[key])
-    ) {
-      result[key] = mergeNode(value, target[key]);
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
 
 export function mergeWorkflows(
   source: Workflow,
@@ -71,11 +48,17 @@ export function mergeWorkflows(
           };
         }
       }
+
       // do a node merge
-      newNode = mergeNode(sstep, targetNodes[preservedId]);
-      // replace preserved id
-      // newNode.openfn = { ...(newNode.openfn || {}), id: preservedId };
-      newNode.openfn = Object.assign({}, newNode.openfn, { uuid: preservedId });
+      // it's a bit tricky knowing all the properties to be merged
+      newNode = baseMerge(targetNodes[preservedId], sstep, [
+        'id',
+        'name',
+        'adaptor',
+        'expression',
+        'next',
+        'previous',
+      ]);
     } else {
       // TODO Do we need to generate a UUID here?
     }
@@ -86,5 +69,6 @@ export function mergeWorkflows(
   return {
     ...target,
     ...newSource,
+    openfn: { ...target.openfn }, // preserving the target uuid. we might need a proper helper function for this.
   };
 }

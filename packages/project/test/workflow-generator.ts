@@ -1,7 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import Workflow from '../src/Workflow';
+import slugify from '../src/util/slugify';
 
-function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
+function gen(
+  def: string[],
+  name: string = 'workflow',
+  uuidSeed?: number,
+  openfnUuid?: boolean
+) {
   const ids = new Map<string, string>();
   const nodes: Record<string, any> = {};
 
@@ -27,7 +33,12 @@ function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
     }
   }
 
-  return { name: name, steps: Object.values(nodes) };
+  return {
+    name: name,
+    id: slugify(name),
+    steps: Object.values(nodes),
+    ...(openfnUuid ? { openfn: { uuid: randomUUID() } } : {}),
+  };
 
   // Generate a node with an openfn.uuid property
   function node(id, props = {}) {
@@ -52,9 +63,17 @@ function gen(def: string[], name: string = 'workflow', uuidSeed?: number) {
   }
 }
 
-export default function generateWorkflow(def: string, options = {}) {
-  const { name, uuidSeed } = options;
+type GenerateWorkflowOptions = {
+  name: string;
+  uuidSeed: number;
+  openfnUuid: boolean;
+};
+export default function generateWorkflow(
+  def: string,
+  options: Partial<GenerateWorkflowOptions> = {}
+) {
+  const { name, uuidSeed, openfnUuid } = options;
 
-  const wf = gen(def, name, uuidSeed);
+  const wf = gen(def, name, uuidSeed, openfnUuid);
   return new Workflow(wf);
 }
