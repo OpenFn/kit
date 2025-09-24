@@ -1,5 +1,15 @@
 # @openfn/compiler
 
+## 1.1.1
+
+### Patch Changes
+
+- Update dependencies
+- Updated dependencies
+  - @openfn/describe-package@0.1.5
+  - @openfn/lexicon@1.2.3
+  - @openfn/logger@1.0.6
+
 ## 1.1.0
 
 ### Minor Changes

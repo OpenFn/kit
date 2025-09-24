@@ -1,5 +1,16 @@
 # engine-multi
 
+## 1.6.9
+
+### Patch Changes
+
+- Update dependencies
+- Updated dependencies
+  - @openfn/compiler@1.1.1
+  - @openfn/lexicon@1.2.3
+  - @openfn/runtime@1.7.2
+  - @openfn/logger@1.0.6
+
 ## 1.6.8
 
 ### Patch Changes

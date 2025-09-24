@@ -1,5 +1,19 @@
 # @openfn/cli
 
+## 1.13.4
+
+### Patch Changes
+
+- Update dependencies
+- Updated dependencies
+  - @openfn/describe-package@0.1.5
+  - @openfn/compiler@1.1.1
+  - @openfn/lexicon@1.2.3
+  - @openfn/project@0.1.1
+  - @openfn/runtime@1.7.2
+  - @openfn/deploy@0.11.3
+  - @openfn/logger@1.0.6
+
 ## 1.13.3
 
 ### Patch Changes
