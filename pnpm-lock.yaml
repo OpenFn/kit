@@ -470,13 +470,13 @@ importers:
   packages/engine-multi/tmp/a/b/c:
     dependencies:
       ava:
-        specifier: '6'
+        specifier: ^6.4.1
         version: 6.4.1
 
   packages/engine-multi/tmp/repo:
     dependencies:
       ava:
-        specifier: '6'
+        specifier: ^6.4.1
         version: 6.4.1
 
   packages/lexicon:
