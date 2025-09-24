@@ -27,6 +27,6 @@
     "@openfn/logger": "workspace:^"
   },
   "dependencies": {
-    "source-map": "^0.7.4"
+    "source-map": "^0.7.6"
   }
 }

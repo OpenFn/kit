@@ -27,17 +27,17 @@
   "devDependencies": {
     "@types/mock-fs": "~4.13.4",
     "ava": "5.3.1",
-    "mock-fs": "^5.4.1",
+    "mock-fs": "^5.5.0",
     "rimraf": "^3.0.2",
-    "tslib": "^2.4.0",
+    "tslib": "^2.8.1",
     "tsup": "^7.2.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
-    "glob": "^11.0.2",
-    "yaml": "^2.2.2"
+    "glob": "^11.0.3",
+    "yaml": "^2.8.1"
   },
   "files": [
     "dist",
