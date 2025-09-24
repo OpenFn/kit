@@ -52,7 +52,7 @@ const createStep = (id, props) => ({
   },
 });
 
-test('merge top-level project properties', (t) => {
+test('Preserve the name and UUID of the target project', (t) => {
   // create a base workflow
   const wf = {
     steps: [
@@ -411,7 +411,7 @@ test('id match: preserve target uuid', (t) => {
 
 // should generate a UUID if change is ambiguous
 
-test('config: no mappings & removeUnmapped=false', (t) => {
+test('options: no mappings & removeUnmapped=false', (t) => {
   const source_project = createProject([
     generateWorkflow(['a-new'], { name: 'a' }),
     generateWorkflow(['b-new'], { name: 'b' }),
@@ -437,7 +437,7 @@ test('config: no mappings & removeUnmapped=false', (t) => {
   );
 });
 
-test('config: no mappings & removeUnmapped=true', (t) => {
+test('options: no mappings & removeUnmapped=true', (t) => {
   const source_project = createProject([
     generateWorkflow(['a-new'], { name: 'a' }),
     generateWorkflow(['b-new'], { name: 'b' }),
@@ -464,7 +464,7 @@ test('config: no mappings & removeUnmapped=true', (t) => {
   );
 });
 
-test('config: mapping & removeUnmapped=false', (t) => {
+test('options: mapping & removeUnmapped=false', (t) => {
   const source_project = createProject([
     generateWorkflow(['a-new'], { name: 'a' }),
     generateWorkflow(['b-new'], { name: 'b' }),
@@ -492,7 +492,7 @@ test('config: mapping & removeUnmapped=false', (t) => {
   );
 });
 
-test('config: mapping & removeUnmapped=true', (t) => {
+test('options: mapping & removeUnmapped=true', (t) => {
   const source_project = createProject([
     generateWorkflow(['a-new'], { name: 'a' }),
     generateWorkflow(['b-new'], { name: 'b' }),
@@ -517,7 +517,7 @@ test('config: mapping & removeUnmapped=true', (t) => {
   );
 });
 
-test('config: mapping(rename) & removeUnmapped=false', (t) => {
+test('options: mapping(rename) & removeUnmapped=false', (t) => {
   const source_project = createProject([
     generateWorkflow(['a-new'], { name: 'a' }),
     generateWorkflow(['b-new'], { name: 'b' }),
@@ -543,7 +543,7 @@ test('config: mapping(rename) & removeUnmapped=false', (t) => {
   );
 });
 
-test('config: multiple source into one target error', (t) => {
+test('options: multiple source into one target error', (t) => {
   const source_project = createProject([
     generateWorkflow(['a-new'], { name: 'a' }),
     generateWorkflow(['b-new'], { name: 'b' }),
@@ -560,6 +560,10 @@ test('config: multiple source into one target error', (t) => {
         workflowMappings: { a: 'a', c: 'a' },
         removeUnmapped: false,
       }),
-    { instanceOf: Error, message: 'The following target workflow have multiple source workflows merging into them. a' }
+    {
+      instanceOf: Error,
+      message:
+        'The following target workflow have multiple source workflows merging into them. a',
+    }
   );
 });
