@@ -1,6 +1,6 @@
 {
   "name": "@openfn/lexicon",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Central repo of names and type definitions",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
@@ -27,6 +27,6 @@
     "@openfn/logger": "workspace:^"
   },
   "dependencies": {
-    "source-map": "^0.7.4"
+    "source-map": "^0.7.6"
   }
 }

@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 1.7.2
+
+### Patch Changes
+
+- Update dependencies
+- Updated dependencies
+  - @openfn/logger@1.0.6
+
 ## 1.7.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@openfn/runtime",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Job processing runtime.",
   "type": "module",
   "exports": {
@@ -29,16 +29,16 @@
     "@openfn/compiler": "workspace:^",
     "@openfn/language-common": "2.0.0-rc3",
     "@openfn/lexicon": "workspace:^",
-    "@types/mock-fs": "^4.13.1",
-    "@types/node": "^18.15.13",
-    "@types/semver": "^7.5.0",
+    "@types/mock-fs": "^4.13.4",
+    "@types/node": "^18.19.127",
+    "@types/semver": "^7.7.1",
     "ava": "5.3.1",
-    "mock-fs": "^5.4.1",
+    "mock-fs": "^5.5.0",
     "recast": "^0.21.5",
-    "ts-node": "^10.9.1",
-    "tslib": "^2.4.0",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
     "tsup": "^7.2.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.9.2"
   },
   "files": [
     "dist/index.js",
@@ -48,7 +48,7 @@
   "dependencies": {
     "@openfn/logger": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
-    "semver": "^7.5.4",
-    "source-map": "^0.7.4"
+    "semver": "^7.7.2",
+    "source-map": "^0.7.6"
   }
 }
