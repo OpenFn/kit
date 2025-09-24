@@ -1,5 +1,30 @@
 # ws-worker
 
+## 1.14.5
+
+### Patch Changes
+
+- Update dependencies
+- Updated dependencies
+  - @openfn/engine-multi@1.6.9
+  - @openfn/lexicon@1.2.3
+  - @openfn/runtime@1.7.2
+  - @openfn/logger@1.0.6
+
+## 1.14.4
+
+### Patch Changes
+
+- 5a613e7: Adjust logging
+- 3a33557: Count outstanding claim requests as capacity. This fixes an issue where `work-available` messages can cause a worker to over-claim, particularly during periods of high load on the Lightning database.
+
+## 1.14.3
+
+### Patch Changes
+
+- 032430f: Increase timeout on claim events
+- 0957412: Stop trying to claim after the queue has been closed
+
 ## 1.14.2
 
 ### Patch Changes

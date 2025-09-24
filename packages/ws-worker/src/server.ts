@@ -45,8 +45,9 @@ export type ServerOptions = {
   sentryDsn?: string;
   sentryEnv?: string;
 
-  socketTimeoutSeconds?: number;
+  socketTimeoutSeconds?: number; // deprecated
   messageTimeoutSeconds?: number;
+  claimTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
   collectionsVersion?: string;
   collectionsUrl?: string;
@@ -59,6 +60,7 @@ export interface ServerApp extends Koa {
   socket?: any;
   queueChannel?: Channel;
   workflows: Record<string, true | Context>;
+  openClaims: Record<string, number>;
   destroyed: boolean;
   events: EventEmitter;
   server: Server;
@@ -151,13 +153,13 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     }
   };
 
-  connectToWorkerQueue(
-    options.lightning!,
-    app.id,
-    options.secret!,
-    options.socketTimeoutSeconds,
-    logger
-  )
+  connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger, {
+    // TODO: options.socketTimeoutSeconds wins because this is what USED to be used
+    // But it's deprecated and should be removed soon
+    messageTimeout:
+      options.socketTimeoutSeconds ?? options.messageTimeoutSeconds,
+    claimTimeout: options.claimTimeoutSeconds,
+  })
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
     .on('error', onError)
@@ -220,6 +222,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
+  app.openClaims = {};
   app.workflows = {};
   app.destroyed = false;
 
@@ -260,7 +263,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         const start = Date.now();
         app.workflows[id] = true;
 
-        // const { channel: runChannel, run }) = await joinRunChannel(
         const { channel: runChannel, run } = await joinRunChannel(
           app.socket,
           token,
@@ -273,7 +275,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           collectionsVersion: app.options.collectionsVersion,
           monorepoPath: app.options.monorepoDir,
         });
-        logger.debug('converted run body into execution plan:', plan);
+        //logger.debug('converted run body into execution plan:', plan);
 
         // Setup collections
         if (plan.workflow.credentials?.collections_token) {

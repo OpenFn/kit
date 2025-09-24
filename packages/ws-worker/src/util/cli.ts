@@ -1,11 +1,13 @@
 import yargs from 'yargs';
 import { LogLevel } from '@openfn/logger';
 import { hideBin } from 'yargs/helpers';
+import {
+  DEFAULT_CLAIM_TIMEOUT_SECONDS,
+  DEFAULT_MESSAGE_TIMEOUT_SECONDS,
+} from '../channels/worker-queue';
 
 const DEFAULT_PORT = 2222;
 const DEFAULT_WORKER_CAPACITY = 5;
-const DEFAULT_SOCKET_TIMEOUT_SECONDS = 10;
-const DEFAULT_MESSAGE_TIMEOUT_SECONDS = 30;
 
 type Args = {
   _: string[];
@@ -26,8 +28,9 @@ type Args = {
   repoDir?: string;
   runMemory?: number;
   secret?: string;
-  socketTimeoutSeconds?: number;
+  socketTimeoutSeconds?: number; // deprecated
   messageTimeoutSeconds?: number;
+  claimTimeoutSeconds?: number;
   statePropsToRemove?: string[];
   sentryDsn?: string;
   sentryEnv?: string;
@@ -60,6 +63,7 @@ export default function parseArgs(argv: string[]): Args {
     OPENFN_ADAPTORS_REPO,
     WORKER_BACKOFF,
     WORKER_CAPACITY,
+    WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
     WORKER_COLLECTIONS_VERSION,
     WORKER_LIGHTNING_PUBLIC_KEY,
@@ -118,10 +122,14 @@ export default function parseArgs(argv: string[]): Args {
         "Sentry environment. Defaults to 'dev'. Env: WORKER_SENTRY_ENV",
     })
     .option('socket-timeout', {
-      description: `Timeout for websockets to Lightning, in seconds. Defaults to 10.Env: WORKER_SOCKET_TIMEOUT_SECONDS`,
+      description: `[deprecated] Timeout for websockets to Lightning, in seconds. Defaults to 10.Env: WORKER_SOCKET_TIMEOUT_SECONDS`,
+      hidden: true,
     })
     .option('message-timeout', {
-      description: `Timeout for messages in the run channel in seconds. Defaults to 1. Env: WORKER_MESSAGE_TIMEOUT_SECONDS`,
+      description: `Timeout for all messages send to lightning via websocket. Defaults to 30. Env: WORKER_MESSAGE_TIMEOUT_SECONDS`,
+    })
+    .option('claim-timeout', {
+      description: `Timeout for claim requests for new Runs. This should be set to a high value or else runs may be lost. Defaults to 3600 (1 hour). Env: WORKER_CLAIM_TIMEOUT_SECONDS`,
     })
     .option('lightning-public-key', {
       description:
@@ -214,10 +222,14 @@ export default function parseArgs(argv: string[]): Args {
       WORKER_MAX_RUN_DURATION_SECONDS,
       300
     ),
+    claimTimeoutSeconds: setArg(
+      args.claimTimeoutSeconds,
+      WORKER_CLAIM_TIMEOUT_SECONDS,
+      DEFAULT_CLAIM_TIMEOUT_SECONDS
+    ),
     socketTimeoutSeconds: setArg(
       args.socketTimeoutSeconds,
-      WORKER_SOCKET_TIMEOUT_SECONDS,
-      DEFAULT_SOCKET_TIMEOUT_SECONDS
+      WORKER_SOCKET_TIMEOUT_SECONDS
     ),
     messageTimeoutSeconds: setArg(
       args.messageTimeoutSeconds,

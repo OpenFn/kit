@@ -60,11 +60,10 @@ const joinRunChannel = (
       // channel was explicitly closed by the client or server
       logger.debug(`Leaving ${channelName}`);
     });
-    channel.onError((e: any) => {
+    channel.onError((...args: any) => {
       // Error occurred on the channel
       // (the socket will try to reconnect with backoff)
-      logger.debug(`Error in ${channelName}`);
-      logger.debug(e);
+      logger.debug(`Critical error in channel ${channelName}`, args);
     });
   });
 };

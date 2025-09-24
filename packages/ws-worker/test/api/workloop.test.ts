@@ -16,7 +16,7 @@ test.afterEach(() => {
 
 test('workloop can be cancelled', async (t) => {
   let count = 0;
-  
+
   const app = {
     workflows: {},
     queueChannel: mockChannel({
@@ -30,12 +30,12 @@ test('workloop can be cancelled', async (t) => {
   };
 
   workloop = startWorkloop(app as any, logger, 1, 1);
-  t.false(workloop.isStopped())
+  t.false(workloop.isStopped());
 
   await sleep(100);
   // A quirk of how cancel works is that the loop will be called a few times
   t.true(count <= 5);
-  t.true(workloop.isStopped())
+  t.true(workloop.isStopped());
 });
 
 test('workloop sends the runs:claim event', (t) => {

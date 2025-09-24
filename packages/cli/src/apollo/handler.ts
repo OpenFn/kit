@@ -97,6 +97,7 @@ const callApollo = async (
 ) => {
   return new Promise((resolve) => {
     const apolloLogger = createLogger('APO', { level: 'debug' });
+    const evtLogger = createLogger('EVT', { level: 'debug' });
 
     const url = `${apolloBaseUrl.replace(
       /^http/,
@@ -114,6 +115,8 @@ const callApollo = async (
         resolve(evt.data);
       } else if (evt.event === 'log') {
         apolloLogger.info(evt.data);
+      } else if (evt.event === 'event') {
+        evtLogger.always(evt.type.toUpperCase(), evt.data);
       }
     });
 

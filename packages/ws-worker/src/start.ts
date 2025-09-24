@@ -46,8 +46,16 @@ function engineReady(engine: any) {
     collectionsUrl: args.collectionsUrl,
     monorepoDir: args.monorepoDir,
     messageTimeoutSeconds: args.messageTimeoutSeconds,
+    claimTimeoutSeconds: args.claimTimeoutSeconds,
+    // deprecated!
     socketTimeoutSeconds: args.socketTimeoutSeconds,
   };
+
+  if ('socketTimeoutSeconds' in args) {
+    logger.warn(
+      'WARNING: deprecated socketTimeoutSeconds value passed.\n\nThis will be respected as the default socket timeout value, but will be removed from future versions of the worker.'
+    );
+  }
 
   if (args.lightningPublicKey) {
     logger.info(
