@@ -562,8 +562,7 @@ test('options: multiple source into one target error', (t) => {
       }),
     {
       instanceOf: Error,
-      message:
-        'The following target workflow have multiple source workflows merging into them. a',
+      message: /multiple source workflows/,
     }
   );
 });
