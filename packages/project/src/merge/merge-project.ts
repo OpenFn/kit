@@ -1,6 +1,5 @@
 import { Workflow } from '@openfn/lexicon';
-import defaultsDeep from 'lodash/defaultsDeep';
-import isEmpty from 'lodash/isEmpty';
+import { defaultsDeep, isEmpty } from 'lodash-es';
 
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-node';
