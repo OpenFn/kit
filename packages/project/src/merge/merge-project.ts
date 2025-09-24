@@ -1,16 +1,18 @@
 import { Workflow } from '@openfn/lexicon';
+import { defaultsDeep, isEmpty } from 'lodash-es';
+
 import { Project } from '../Project';
 import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
-import defaultsDeep from 'lodash/defaultsDeep';
-import isEmpty from 'lodash/isEmpty';
 import getDuplicates from '../util/get-duplicates';
 
-type Options = {
+export type MergeProjectOptions = Partial<{
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
-};
+
+  force: boolean; // TODO not implemented yet
+}>;
 
 /**
  * This is the main merge function
@@ -22,17 +24,16 @@ type Options = {
  * Return a new project which has all the nodes and values of the
  * target, but the UUIDs of the source
  */
-// TOOD what if a workflow is removed from the target?
 export function merge(
   source: Project,
   target: Project,
-  options?: Partial<Options>
+  options?: MergeProjectOptions
 ) {
-  const defaultOptions: Options = {
+  const defaultOptions: MergeProjectOptions = {
     workflowMappings: {},
     removeUnmapped: false,
   };
-  options = defaultsDeep<Options>(options, defaultOptions);
+  options = defaultsDeep<MergeProjectOptions>(options, defaultOptions);
 
   // check whether multiple workflows are merging into one. throw Error
   const dupTargetMappings = getDuplicates(
@@ -40,7 +41,7 @@ export function merge(
   );
   if (dupTargetMappings.length) {
     throw new Error(
-      `The following target workflow have multiple source workflows merging into them. ${dupTargetMappings.join(
+      `The following target workflows have multiple source workflows merging into them: ${dupTargetMappings.join(
         ', '
       )}`
     );

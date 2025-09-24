@@ -1,5 +1,4 @@
-import pick from 'lodash/pick';
-import assign from 'lodash/assign';
+import { pick, assign } from 'lodash-es';
 
 type PropsOnly<T> = {
   [K in keyof T]: T[K] extends Function ? never : K;
