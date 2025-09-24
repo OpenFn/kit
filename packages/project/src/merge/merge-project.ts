@@ -7,10 +7,12 @@ import defaultsDeep from 'lodash/defaultsDeep';
 import isEmpty from 'lodash/isEmpty';
 import getDuplicates from '../util/get-duplicates';
 
-type Options = {
+export type MergeProjectOptions = Partial<{
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
-};
+
+  force: boolean; // TODO not implemented yet
+}>;
 
 /**
  * This is the main merge function
@@ -26,13 +28,13 @@ type Options = {
 export function merge(
   source: Project,
   target: Project,
-  options?: Partial<Options>
+  options?: MergeProjectOptions
 ) {
-  const defaultOptions: Options = {
+  const defaultOptions: MergeProjectOptions = {
     workflowMappings: {},
     removeUnmapped: false,
   };
-  options = defaultsDeep<Options>(options, defaultOptions);
+  options = defaultsDeep<MergeProjectOptions>(options, defaultOptions);
 
   // check whether multiple workflows are merging into one. throw Error
   const dupTargetMappings = getDuplicates(

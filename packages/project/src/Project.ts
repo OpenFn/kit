@@ -7,6 +7,7 @@ import { parseProject as fromFs } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
+import { merge, MergeProjectOptions } from './merge/merge-project';
 
 type MergeOptions = {
   force?: boolean;
@@ -109,6 +110,13 @@ export class Project {
   // Diff two projects
   static diff(a: Project, b: Project) {}
 
+  // Merge a source project (staging) into the target project (main)
+  // Returns a new Project
+  // TODO: throw if histories have diverged
+  static merge(source: Project, target: Project, options: MergeProjectOptions) {
+    return merge(source, target, options);
+  }
+
   // env is excluded because it's not really part of the project
   // uh maybe
   // maybe this second arg is config - like env, branch rules, serialisation rules
@@ -138,11 +146,6 @@ export class Project {
   // stamp? id? sha?
   // this builds a version string for the current state
   getVersionHash() {}
-
-  // take a second project and merge its data into this one
-  // Throws if there's a conflict, unless force is true
-  // It's basically an overwrite
-  merge(project: Project, options: any) {}
 
   // what else might we need?
 

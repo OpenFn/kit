@@ -473,7 +473,11 @@ importers:
         specifier: '6'
         version: 6.4.1
 
-  packages/engine-multi/tmp/repo: {}
+  packages/engine-multi/tmp/repo:
+    dependencies:
+      ava:
+        specifier: '6'
+        version: 6.4.1
 
   packages/lexicon:
     dependencies:
