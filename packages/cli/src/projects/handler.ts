@@ -5,7 +5,7 @@ import fs from 'fs';
 import getFsProjects from './get-projects';
 
 const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
-  const commandPath = options.projectPath ?? process.cwd();
+  const commandPath = path.resolve(process.cwd(), options.projectPath ?? '.');
   // look for .projects folder
   const projectsDir = path.join(commandPath, '.projects');
   if (!fs.existsSync(projectsDir) || !fs.statSync(projectsDir).isDirectory()) {
@@ -15,6 +15,7 @@ const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
   const projects = await getFsProjects(projectsDir, logger);
   if (!projects.length) {
     logger.error('No openfn projects available');
+    return;
   }
 
   process.stdout.write(

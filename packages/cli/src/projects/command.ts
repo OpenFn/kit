@@ -8,7 +8,7 @@ export type ProjectsOptions = Required<Pick<Opts, 'command' | 'projectPath'>>;
 const options = [o.projectPath];
 
 const projectsCommand: yargs.CommandModule = {
-  command: 'projects',
+  command: 'projects [project-path]',
   describe: 'List all the openfn projects available in the current directory',
   handler: ensure('projects', options),
   builder: (yargs) => build(options, yargs),
