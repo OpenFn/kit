@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs';
+import { getHeapStatistics } from 'v8';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Project, describeDts } from '@openfn/describe-package';
 import type { Logger } from '@openfn/logger';
+
+export function heap(reason: string) {
+  const { used_heap_size } = getHeapStatistics();
+  const mb = used_heap_size / 1024 / 1024;
+  console.log(`>> [${reason}] Used heap at ${mb.toFixed(2)}mb`);
+}
 
 export const loadFile = (filePath: string) =>
   readFileSync(path.resolve(filePath), 'utf8');

@@ -104,7 +104,7 @@ function visitor(path: NodePath<n.MemberExpression>) {
   }
 
   // Stop parsing this member expression
-  return false;
+  return true;
 }
 
 export default {
