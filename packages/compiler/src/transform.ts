@@ -53,7 +53,7 @@ export default function transform(
 ) {
   const printHeap = (reason: string) => {
     if (options.trace) {
-      heap(reason);
+      heap(reason, options.logger);
     }
   };
   const start = Date.now();

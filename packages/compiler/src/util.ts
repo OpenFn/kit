@@ -5,10 +5,10 @@ import path from 'node:path';
 import { Project, describeDts } from '@openfn/describe-package';
 import type { Logger } from '@openfn/logger';
 
-export function heap(reason: string) {
+export function heap(reason: string, logger?: Logger) {
   const { used_heap_size } = getHeapStatistics();
   const mb = used_heap_size / 1024 / 1024;
-  console.log(`>> [${reason}] Used heap at ${mb.toFixed(2)}mb`);
+  logger?.debug(`[${reason}] Used heap at ${mb.toFixed(2)}mb`);
 }
 
 export const loadFile = (filePath: string) =>
