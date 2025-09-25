@@ -102,9 +102,6 @@ function visitor(path: NodePath<n.MemberExpression>) {
     // from the parenting member expression, ensure the parent arrow is nicely wrapped
     ensureParentArrow(path);
   }
-
-  // Stop parsing this member expression
-  return true;
 }
 
 export default {

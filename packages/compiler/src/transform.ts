@@ -66,15 +66,6 @@ export default function transform(
       topLevelOps,
       addImports,
     ] as Transformer[];
-
-    // @ts-ignore
-    const _transformers = [
-      lazyState,
-      promises,
-      ensureExports,
-      topLevelOps,
-      addImports,
-    ] as Transformer[];
   }
   const logger = options.logger || defaultLogger;
 
