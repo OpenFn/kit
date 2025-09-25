@@ -1,15 +1,13 @@
 import * as l from '@openfn/lexicon';
-// but what is this ?
-// is it just types?
-
+import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
-// TODO this naming clearly isn't right
 import { parseProject as fromFs } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
+import { merge, MergeProjectOptions } from './merge/merge-project';
 
 type MergeOptions = {
   force?: boolean;
@@ -30,7 +28,7 @@ type RepoOptions = {
   };
 };
 
-// // A local collection of openfn projects
+// A local collection of openfn projects?
 // class Repo {
 
 //   projects: {}
@@ -62,7 +60,7 @@ export class Project {
   // array of version shas
   history: string[] = [];
 
-  workflows: l.Workflow[];
+  workflows: Workflow[];
 
   // option strings saved by the app
   // these are all (?) unused clientside
@@ -83,6 +81,10 @@ export class Project {
   // load a project from a state file (project.json)
   // or from a path (the file system)
   // TODO presumably we can detect a state file? Not a big deal?
+
+  // collections for the project
+  // TODO to be well typed
+  collections: any;
 
   static from(
     type: 'state',
@@ -108,6 +110,13 @@ export class Project {
   // Diff two projects
   static diff(a: Project, b: Project) {}
 
+  // Merge a source project (staging) into the target project (main)
+  // Returns a new Project
+  // TODO: throw if histories have diverged
+  static merge(source: Project, target: Project, options: MergeProjectOptions) {
+    return merge(source, target, options);
+  }
+
   // env is excluded because it's not really part of the project
   // uh maybe
   // maybe this second arg is config - like env, branch rules, serialisation rules
@@ -115,12 +124,11 @@ export class Project {
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
     this.repo = setConfigDefaults(repoConfig);
 
-    this.id = data.id;
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
-    this.workflows = data.workflows;
+    this.workflows = data.workflows?.map((w) => new Workflow(w)) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
@@ -138,11 +146,6 @@ export class Project {
   // stamp? id? sha?
   // this builds a version string for the current state
   getVersionHash() {}
-
-  // take a second project and merge its data into this one
-  // Throws if there's a conflict, unless force is true
-  // It's basically an overwrite
-  merge(project: Project, options: any) {}
 
   // what else might we need?
 
@@ -171,6 +174,3 @@ export class Project {
     return getUuidForStep(this, workflow, stepId);
   }
 }
-
-// Surely this is just a type?
-class Workflow {}

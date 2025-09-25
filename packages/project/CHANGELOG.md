@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.2.0
+
+### Minor Changes
+
+- Add support for merging projects
+
 ## 0.1.1
 
 ### Patch Changes

@@ -4,6 +4,7 @@ import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../Project';
 import { yamlToJson } from '../util/yaml';
+import renameKeys from '../util/rename-keys';
 
 // Extra metadata used to init the project
 type Config = {
@@ -47,7 +48,7 @@ export default (state: Provisioner.Project, config: Config) => {
   const repoConfig = {};
 
   proj.openfn = {
-    projectId: id,
+    uuid: id,
     endpoint: config.endpoint,
     env: config.env,
     inserted_at,
@@ -78,7 +79,7 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 
   // Do this last so that it serializes last
   e.openfn = {
-    id: edge.id,
+    uuid: edge.id,
   };
   return e;
 };
@@ -91,7 +92,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     id: slugify(workflow.name),
     name: workflow.name,
     steps: [],
-    openfn: remoteProps,
+    openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
 
   // TODO what do we do if the condition is disabled?
@@ -105,7 +106,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     mapped.steps.push({
       id: 'trigger',
       type,
-      openfn: otherProps,
+      openfn: renameKeys(otherProps, { id: 'uuid' }),
       next: connectedEdges.reduce((obj: any, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
         if (!target) {
@@ -130,7 +131,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       name: name,
       expression,
       adaptor,
-      openfn: remoteProps,
+      openfn: renameKeys(remoteProps, { id: 'uuid' }),
     };
 
     if (outboundEdges.length) {
