@@ -10,7 +10,10 @@ interface FsProject {
   active?: boolean;
 }
 
-export default async function getFsProjects(projectsDir: string, logger: Logger) {
+export default async function getFsProjects(
+  projectsDir: string,
+  logger: Logger
+) {
   const projects = fs
     .readdirSync(projectsDir)
     .filter((name) => ['.yaml', '.yml'].includes(path.extname(name)));
