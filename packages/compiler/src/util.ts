@@ -56,7 +56,7 @@ export const preloadAdaptorExports = async (
     // Do not load absolute modules
     // We can later do this with fetchFile(`${specifier}/package.json`)
     if (log) {
-      log.info(`Skipping adaptor export preload for ${pathToModule}`);
+      log.debug(`Skipping adaptor export preload for ${pathToModule}`);
     }
   }
 

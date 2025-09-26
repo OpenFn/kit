@@ -180,10 +180,10 @@ function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
         if (usedExports.length) {
           // TODO maybe in trace output we can say WHY we're doing these things
           addUsedImports(path, usedExports, name);
-          logger.info(`Added import statement for ${name}`);
+          logger.debug(`Added import statement for ${name}`);
           if (exportAll) {
             addExportAdaptor(path, name);
-            logger.info(`Added export * statement for ${name}`);
+            logger.debug(`Added export * statement for ${name}`);
           }
         }
       }
