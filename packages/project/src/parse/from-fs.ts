@@ -8,11 +8,23 @@ import getIdentifier from '../util/get-identifier';
 import { yamlToJson } from '../util/yaml';
 import slugify from '../util/slugify';
 import fromAppState from './from-app-state';
+import defaultsDeep from 'lodash/defaultsDeep';
 
+export type FromFsConfig = {
+  root: string;
+  projectFile: string;
+  path: string;
+};
+
+const fromFsConfigDefaults: FromFsConfig = {
+  projectFile: 'openfn.yaml',
+  root: '.',
+};
 // Parse a single project from a root folder
 // focus on this first
 // root must be absolute?
-export const parseProject = async (options: { root: string } = {}) => {
+export const parseProject = async (options: Partial<FromFsConfig>) => {
+  options = defaultsDeep<FromFsConfig>(options, fromFsConfigDefaults);
   const { root } = options;
   const proj = {};
 
@@ -20,7 +32,7 @@ export const parseProject = async (options: { root: string } = {}) => {
   try {
     // TODO any flex on the openfn.json file name?
     const file = await fs.readFile(
-      path.resolve(path.join(root, 'openfn.yaml')),
+      path.resolve(path.join(root, options.projectFile)),
       'utf8'
     );
     config = yamlToJson(file);
@@ -28,7 +40,10 @@ export const parseProject = async (options: { root: string } = {}) => {
     // Not found - try and parse as JSON
     try {
       const file = await fs.readFile(
-        path.join(root || '.', 'openfn.json'),
+        path.join(
+          root,
+          path.basename(options.projectFile, path.extname(options.projectFile))
+        ) + '.json',
         'utf8'
       );
       config = JSON.parse(file);

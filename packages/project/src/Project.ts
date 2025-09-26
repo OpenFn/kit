@@ -6,7 +6,7 @@ import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
 // TODO this naming clearly isn't right
-import { parseProject as fromFs } from './parse/from-fs';
+import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
@@ -89,7 +89,7 @@ export class Project {
     data: any,
     options: Partial<l.ProjectConfig>
   ): Project;
-  static from(type: 'fs', options: { root: string }): Project;
+  static from(type: 'fs', options: FromFsConfig): Project;
   static from(type: 'path', data: any): Project;
   static from(
     type: 'state' | 'path' | 'fs',
