@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 1.1.2
+
+### Patch Changes
+
+- 1a3caea: - Exit transformers a little earlier. This reduces the memory overhead of parsing large files
+  - Add memory diagnostic outputs
+
 ## 1.1.1
 
 ### Patch Changes

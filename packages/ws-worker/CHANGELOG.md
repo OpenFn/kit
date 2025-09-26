@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.14.6
+
+### Patch Changes
+
+- @openfn/engine-multi@1.6.10
+
 ## 1.14.5
 
 ### Patch Changes
