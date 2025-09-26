@@ -1,6 +1,10 @@
 # ws-worker
 
-## 1.14.6
+## 1.15.0
+
+Move expression compilation down into the run thread, isolating its memory from the main worker thread. This should work around a memory leak in long-running workers and improve the robustness of the worker generally.
+
+Note that workflows with large expressions and low run memory limits may be OOM killed as a result of these changes,
 
 ### Patch Changes
 
