@@ -12,9 +12,15 @@ import recast from 'recast';
 import * as acorn from 'acorn';
 import { namedTypes } from 'ast-types';
 
+import { heap } from './util';
+
+import type { Logger } from '@openfn/logger';
+
 type Options = {
   /** Name of the source job (no file extension). This triggers source map generation */
   name?: string;
+  trace?: boolean;
+  logger?: Logger;
 };
 
 export default function parse(
@@ -23,6 +29,10 @@ export default function parse(
 ): namedTypes.File {
   // This is copied from v1 but I am unsure the use-case
   const escaped = source.replace(/\ $/, '');
+
+  if (options.trace) {
+    heap('pre acorn parse', options.logger);
+  }
 
   const ast = recast.parse(escaped, {
     sourceFileName: options.name && `${options.name}.js`,
@@ -38,6 +48,10 @@ export default function parse(
         }),
     },
   });
+
+  if (options.trace) {
+    heap('post acorn parse', options.logger);
+  }
 
   // Recast with Acorn doesn't have an initial errors array
   if (!ast.program.errors) {

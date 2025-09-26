@@ -48,7 +48,7 @@ function visitor(path: NodePath<namedTypes.CallExpression>) {
   }
 
   // if not (for now) we should cancel traversal
-  // (should we only cancel traversal for this visitor?)
+  return true;
 }
 
 // Add metadata to each operation for:

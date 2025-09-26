@@ -18,6 +18,7 @@ export type CompileOptions = Pick<
   | 'path'
   | 'useAdaptorsMonorepo'
   | 'globals'
+  | 'trace'
 > & {
   workflow?: Opts['workflow'];
   repoDir?: string;
@@ -35,6 +36,7 @@ const options = [
   }),
   o.outputPath,
   o.repoDir,
+  o.trace,
   o.useAdaptorsMonorepo,
   o.workflow,
 ];

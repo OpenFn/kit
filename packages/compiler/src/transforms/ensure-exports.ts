@@ -14,12 +14,14 @@ function visitor(path: NodePath<namedTypes.Program>) {
   // if we find any, we do nothing
   const currentExport = path.node.body.find(({ type }) => type.match(/Export/));
   if (currentExport) {
-    return;
+    return true;
   }
 
   // Add an empty export default statement as the final statement
   const newExport = buildExports();
   path.node.body.push(newExport);
+
+  return true;
 }
 
 // This will basically create `default export [];`

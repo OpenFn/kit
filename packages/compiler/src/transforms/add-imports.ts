@@ -189,6 +189,7 @@ function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
       }
     }
   }
+  return true;
 }
 
 // Add an import statement to pull in the named values from an adaptor

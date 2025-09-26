@@ -84,6 +84,7 @@ const compileWorkflow = async (
       ...opts,
       adaptors: job.adaptors ?? opts.adaptors,
       ignoreImports: globalsIgnoreList,
+      trace: opts.trace,
     };
     if (job.expression) {
       const { code, map } = await compileJob(
@@ -138,6 +139,7 @@ export const loadTransformOptions = async (
 ) => {
   const options: Options = {
     logger: log || createLogger(COMPILER, opts as any),
+    trace: opts.trace,
   };
   // If an adaptor is passed in, we need to look up its declared exports
   // and pass them along to the compiler
