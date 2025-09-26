@@ -39,7 +39,8 @@ export default function compile(
   }
 
   const name = options.name ?? 'src';
-  const ast = parse(source, { name });
+  const trace = options.trace;
+  const ast = parse(source, { logger, name, trace });
   const transformedAst = transform(ast, undefined, options);
 
   const { code, map } = print(transformedAst, {

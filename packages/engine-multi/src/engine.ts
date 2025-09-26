@@ -75,13 +75,13 @@ export type EngineOptions = {
   maxWorkers?: number;
   memoryLimitMb?: number;
   payloadLimitMb?: number;
-  noCompile?: boolean; // TODO deprecate in favour of compile
   repoDir: string;
   resolvers?: LazyResolvers;
   runtimelogger?: Logger;
   runTimeoutMs?: number; // default timeout
   statePropsToRemove?: string[];
   whitelist?: RegExp[];
+  proxyStdout?: boolean;
 };
 
 export type InternalEngine = RuntimeEngine & {
@@ -130,6 +130,7 @@ const createEngine = async (
     resolvedWorkerPath,
     {
       maxWorkers: options.maxWorkers,
+      proxyStdout: options.proxyStdout,
     },
     options.logger
   );

@@ -60,6 +60,7 @@ export type Opts = {
   statePath?: string;
   stateStdin?: string;
   timeout?: number; // ms
+  trace?: boolean;
   useAdaptorsMonorepo?: boolean;
   workflow: string;
 
@@ -510,6 +511,17 @@ export const timeout: CLIOption = {
     number: true,
     description: 'Set the timeout duration (ms). Defaults to 5 minutes.',
     default: 5 * 60 * 1000,
+  },
+};
+
+// undocumented secret API
+export const trace: CLIOption = {
+  name: 'trace',
+  yargs: {
+    boolean: true,
+    hidden: true,
+    description: 'Show trace debugger output in the compiler',
+    default: false,
   },
 };
 

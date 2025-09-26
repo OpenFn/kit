@@ -11,6 +11,7 @@ import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
 import * as workerEvents from '../events';
 import { State } from '@openfn/lexicon';
+import { CompileError } from '../../errors';
 
 type MockJob = {
   id?: string;
@@ -41,6 +42,14 @@ function mockRun(plan: MockExecutionPlan, input: State, _options = {}) {
   const [job] = plan.workflow.steps;
   const { jobLogger } = createLoggers(plan.id!, 'none', publish);
   const workflowId = plan.id;
+
+  // simulate compilation
+  try {
+    eval(job.expression!);
+  } catch (e: any) {
+    throw new CompileError(e, job.id!);
+  }
+
   return new Promise((resolve) => {
     const jobId = job.id || '<job>';
     setTimeout(async () => {
