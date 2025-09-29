@@ -10,6 +10,7 @@ import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
 import serializeError from '../../util/serialize-error';
 import { JobErrorPayload } from '../../events';
+import { COMPILE_START, COMPILE_COMPLETE } from '../events';
 
 export type RunOptions = {
   repoDir: string;
@@ -76,8 +77,15 @@ register({
     };
 
     return execute(plan.id!, async () => {
-      // TODO force top level logging only in the compiler
+      const start = Date.now();
+      publish(COMPILE_START, {
+        workflowId: plan.id,
+      });
       await compile(plan, { repoDir }, logger);
+      publish(COMPILE_COMPLETE, {
+        workflowId: plan.id,
+        duration: Date.now() - start,
+      });
       return run(plan, input, options);
     });
   },

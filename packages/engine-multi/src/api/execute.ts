@@ -15,6 +15,7 @@ import {
 import preloadCredentials from './preload-credentials';
 import { ExecutionError } from '../errors';
 import type { RunOptions } from '../worker/thread/run';
+import { COMPILE_COMPLETE, COMPILE_START, ExternalEvents } from '../events';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -81,6 +82,8 @@ const execute = async (context: ExecutionContext) => {
       });
     }
 
+    const proxy = (name: ExternalEvents, evt: any) => context.emit(name, evt);
+
     let didError = false;
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
@@ -111,6 +114,11 @@ const execute = async (context: ExecutionContext) => {
           threadId: evt.threadId,
         });
       },
+      [workerEvents.COMPILE_START]: (evt: workerEvents.CompileStartEvent) =>
+        proxy(COMPILE_START, evt),
+      [workerEvents.COMPILE_COMPLETE]: (
+        evt: workerEvents.CompileCompleteEvent
+      ) => proxy(COMPILE_COMPLETE, evt),
     };
 
     return callWorker(
