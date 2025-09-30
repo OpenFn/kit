@@ -3,7 +3,6 @@ import { timestamp } from '@openfn/logger';
 import * as workerEvents from '../worker/events';
 import type ExecutionContext from '../classes/ExecutionContext';
 import autoinstall from './autoinstall';
-import compile from './compile';
 import {
   workflowStart,
   workflowComplete,
@@ -21,15 +20,6 @@ const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
   try {
     await autoinstall(context);
-
-    try {
-      await compile(context);
-    } catch (e: any) {
-      if (e.type === 'CompileError') {
-        return error(context, { workflowId: state.plan.id, error: e });
-      }
-      throw e;
-    }
 
     // unfortunately we have to preload all credentials
     // I don't know any way to send data back into the worker once started
@@ -51,6 +41,7 @@ const execute = async (context: ExecutionContext) => {
       statePropsToRemove: options.statePropsToRemove,
       whitelist,
       jobLogLevel: options.jobLogLevel,
+      repoDir: options.repoDir,
     } as RunOptions;
 
     const workerOptions = {
@@ -112,10 +103,13 @@ const execute = async (context: ExecutionContext) => {
       [workerEvents.LOG]: (evt: workerEvents.LogEvent) => {
         log(context, evt);
       },
-      // TODO this is also untested
       [workerEvents.ERROR]: (evt: workerEvents.ErrorEvent) => {
         didError = true;
-        error(context, { workflowId: state.plan.id, error: evt.error });
+        error(context, {
+          workflowId: state.plan.id,
+          error: evt.error,
+          threadId: evt.threadId,
+        });
       },
     };
 
@@ -132,7 +126,11 @@ const execute = async (context: ExecutionContext) => {
       // if both the above are true (as expected), but that there's still some
       // fallback handling if the error event wasn't issued
       if (!didError) {
-        error(context, { workflowId: state.plan.id, error: e });
+        error(context, {
+          workflowId: state.plan.id,
+          error: e,
+          threadId: e.threadId,
+        });
         logger.error(`Critical error thrown by ${state.plan.id}`, e);
       }
     });
@@ -140,7 +138,11 @@ const execute = async (context: ExecutionContext) => {
     if (!e.severity) {
       e = new ExecutionError(e);
     }
-    error(context, { workflowId: state.plan.id, error: e });
+    error(context, {
+      workflowId: state.plan.id,
+      error: e,
+      threadId: e.threadId,
+    });
   }
 };
 

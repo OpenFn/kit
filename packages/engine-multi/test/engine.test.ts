@@ -16,7 +16,6 @@ const options = {
   workerPath: path.resolve('dist/test/mock-run.js'),
   logger,
   repoDir: '.', // doesn't matter for the mock
-  noCompile: true, // messy - needed to allow an expression to be passed as json
   autoinstall: {
     handleIsInstalled: async () => true,
   },

@@ -5,6 +5,7 @@ import type { NotifyEvents } from '@openfn/runtime';
 import type { ExecutionPlan, State } from '@openfn/lexicon';
 import type { LogLevel, SanitizePolicies } from '@openfn/logger';
 
+import compile from './compile';
 import { register, publish } from './runtime';
 import { execute, createLoggers } from './helpers';
 import serializeError from '../../util/serialize-error';
@@ -26,7 +27,7 @@ const eventMap = {
 };
 
 register({
-  run: (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
+  run: async (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
     const { repoDir, whitelist, sanitize, statePropsToRemove, jobLogLevel } =
       runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
@@ -74,6 +75,10 @@ register({
       },
     };
 
-    return execute(plan.id!, () => run(plan, input, options));
+    return execute(plan.id!, async () => {
+      // TODO force top level logging only in the compiler
+      await compile(plan, { repoDir }, logger);
+      return run(plan, input, options);
+    });
   },
 });

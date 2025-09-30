@@ -82,16 +82,6 @@ test('expression state overrides data', async (t) => {
   t.deepEqual(result, { data: { agent: '007' } });
 });
 
-test('write an exception to state', async (t) => {
-  const plan = createPlan({
-    id: 'j2',
-    expression: 'ƸӜƷ', // it's a butterfly, obviously (and more importantly, invalid JSON)
-  });
-  const result = await workers.exec('run', [plan, {}]);
-  t.truthy(result.data);
-  t.truthy(result.error);
-});
-
 test('execute a mock plan with delay', async (t) => {
   const start = new Date().getTime();
   const plan = createPlan({

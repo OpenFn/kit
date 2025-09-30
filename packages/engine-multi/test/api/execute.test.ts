@@ -61,7 +61,6 @@ const plan = {
 };
 
 const options = {
-  noCompile: true,
   autoinstall: {
     handleInstall: async () => {},
     handleIsInstalled: async () => false,
@@ -312,10 +311,10 @@ test.serial('should emit CompileError if compilation fails', async (t) => {
 
   context.once(WORKFLOW_ERROR, (evt) => {
     t.is(evt.workflowId, state.id);
-    t.is(evt.threadId, '-');
+    t.true(typeof evt.threadId === 'number');
 
     t.is(evt.type, 'CompileError');
-    t.is(evt.message, 'j: Unexpected token (1:3)');
+    t.is(evt.message, "j: Unexpected identifier 'la'");
 
     t.pass('error thrown');
   });

@@ -1,26 +1,29 @@
 import compile, { preloadAdaptorExports, Options } from '@openfn/compiler';
 import { getModulePath, getNameAndVersion } from '@openfn/runtime';
-import type { Job } from '@openfn/lexicon';
+import type { ExecutionPlan, Job } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
-import { CompileError } from '../errors';
-import type ExecutionContext from '../classes/ExecutionContext';
+import { CompileError } from '../../errors';
+import { ExecutionContextOptions } from '../../types';
 
 // TODO this compiler is going to change anyway to run just in time
 // the runtime will have an onCompile hook
 // We'll keep this for now though while we get everything else working
-export default async (context: ExecutionContext) => {
-  const { logger, state, options } = context;
-  const { repoDir, noCompile } = options;
+export default async (
+  plan: ExecutionPlan,
+  options: Pick<ExecutionContextOptions, 'repoDir'>,
+  logger: Logger
+) => {
+  const { repoDir } = options;
 
-  if (!noCompile && state.plan?.workflow.steps?.length) {
-    for (const step of state.plan.workflow.steps) {
+  if (plan.workflow.steps?.length) {
+    for (const step of plan.workflow.steps) {
       const job = step as Job;
       if (job.expression) {
         try {
           const result = await compileJob(job, logger, repoDir);
-          job.expression = result.code;
           job.sourceMap = result.map;
+          job.expression = result.code;
         } catch (e) {
           throw new CompileError(e, job.id!);
         }
@@ -45,7 +48,6 @@ const compileJob = async (job: Job, logger: Logger, repoDir?: string) => {
   const compilerOptions: Options = {
     logger,
   };
-
   if (adaptors && repoDir) {
     const adaptorConfig = [];
     for (const adaptor of adaptors) {

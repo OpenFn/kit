@@ -48,12 +48,13 @@ export const publish = (
   // Validate the size of every outgoing message
   // Redact any payloads that are too large
   const safePayload = ensurePayloadSize(payload, payloadLimitMb);
-  parentPort!.postMessage({
+  const x = {
     type,
     threadId,
     processId,
     ...safePayload,
-  });
+  };
+  parentPort!.postMessage(x);
 };
 
 const run = (task: string, args: any[], options: Options = {}) => {
@@ -69,7 +70,8 @@ const run = (task: string, args: any[], options: Options = {}) => {
         error: {
           severity: e.severity || 'crash',
           message: e.message,
-          type: e.type || e.name,
+          type: e.type,
+          name: e.name,
         },
       });
     })

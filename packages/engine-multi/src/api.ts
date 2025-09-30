@@ -21,14 +21,7 @@ export type LazyResolvers = {
   expressions?: Resolver<string>;
 };
 
-export type APIOptions = Partial<
-  Omit<EngineOptions, 'whitelist' | 'noCompile'> & {
-    // Needed here for unit tests to support json expressions. Would rather exclude tbh
-    compile?: {
-      skip?: boolean;
-    };
-  }
->;
+export type APIOptions = Partial<Omit<EngineOptions, 'whitelist'>>;
 
 const DEFAULT_REPO_DIR = '/tmp/openfn/worker/repo';
 
@@ -59,8 +52,6 @@ const createAPI = async function (
     // Only allow @openfn/ modules to be imported into runs
     whitelist,
 
-    // TODO should map this down into compile.
-    noCompile: options.compile?.skip ?? false,
     // TODO should we disable autoinstall overrides?
     autoinstall: options.autoinstall,
 

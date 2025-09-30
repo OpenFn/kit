@@ -10,6 +10,7 @@ import promises from './transforms/promises';
 import topLevelOps, {
   TopLevelOpsOptions,
 } from './transforms/top-level-operations';
+import { heap } from './util';
 
 export type TransformerName =
   | 'add-imports'
@@ -33,6 +34,7 @@ export type Transformer = {
 
 export type TransformOptions = {
   logger?: Logger; //  TODO maybe in the wrong place?
+  trace?: boolean; // print debug information
 
   ['add-imports']?: AddImportsOptions | boolean;
   ['ensure-exports']?: boolean;
@@ -49,6 +51,13 @@ export default function transform(
   transformers?: Transformer[],
   options: TransformOptions = {}
 ) {
+  const printHeap = (reason: string) => {
+    if (options.trace) {
+      heap(reason, options.logger);
+    }
+  };
+  const start = Date.now();
+
   if (!transformers) {
     transformers = [
       lazyState,
@@ -77,6 +86,7 @@ export default function transform(
       for (const type of types) {
         const name = `visit${type}` as keyof Visitor;
         astTypes[name] = function (path: NodePath) {
+          printHeap(`visit: ${path.name}`);
           const opts = options[id] || {};
           const abort = visitor!(path, logger, opts);
           if (abort) {
@@ -89,6 +99,10 @@ export default function transform(
       // @ts-ignore
       visit(ast, astTypes);
     });
+
+  printHeap(`finished`);
+  const duration = (Date.now() - start) / 1000;
+  logger.debug(`Finished in ${duration}s`);
 
   return ast;
 }

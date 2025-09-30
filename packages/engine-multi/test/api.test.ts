@@ -50,7 +50,6 @@ test.serial('engine api uses default options', async (t) => {
   t.truthy(api.options);
 
   t.deepEqual(api.options.statePropsToRemove, ['configuration', 'response']);
-  t.false(api.options.noCompile);
   t.truthy(api.options.whitelist);
 });
 
@@ -60,9 +59,6 @@ test.serial('engine api uses custom options', async (t) => {
 
     repoDir: 'a/b/c',
     whitelist: ['/@openfn/'],
-
-    // noCompile
-    // autoinstall
 
     maxWorkers: 29,
     memoryLimitMb: 99,
@@ -92,10 +88,6 @@ test.serial(
     return new Promise(async (done) => {
       api = await createAPI({
         logger,
-        // Disable compilation
-        compile: {
-          skip: true,
-        },
       });
 
       const plan: ExecutionPlan = {
@@ -125,10 +117,6 @@ test.serial('should listen to workflow-complete', async (t) => {
   return new Promise(async (done) => {
     api = await createAPI({
       logger,
-      // Disable compilation
-      compile: {
-        skip: true,
-      },
     });
 
     const plan: ExecutionPlan = {

@@ -31,6 +31,7 @@ export type ExecuteOptions = Required<
     | 'stateStdin'
     | 'sanitize'
     | 'timeout'
+    | 'trace'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
     | 'globals'
@@ -61,6 +62,7 @@ const options = [
   o.statePath,
   o.stateStdin,
   o.timeout,
+  o.trace,
   o.useAdaptorsMonorepo,
 ];
 

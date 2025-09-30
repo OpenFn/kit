@@ -12,7 +12,7 @@ type WorkerOptions = {
   maxWorkers?: number;
   env?: any;
   timeout?: number; // ms
-  silent?: boolean; // don't forward stdout to the parent
+  proxyStdout?: boolean; // print internal stdout to console
 };
 
 // Create a worker pool and return helper functions
@@ -22,14 +22,14 @@ export default function initWorkers(
   options: WorkerOptions = {},
   logger: Logger
 ) {
-  const { env = {}, maxWorkers = 5, silent } = options;
+  const { env = {}, maxWorkers = 5, proxyStdout = false } = options;
 
   const workers = createPool(
     workerPath,
     {
       maxWorkers,
       env,
-      silent,
+      proxyStdout,
     },
     logger
   );
