@@ -186,14 +186,6 @@ export class Project {
     }
     return getUuidForStep(this, workflow, stepId);
   }
-
-  describe() {
-    return `${this.name}\n  ${
-      this.openfn.projectId || '<project-id>'
-    }\n  workflows:\n${this.workflows
-      .map((w) => '    - ' + w.name)
-      .join('\n')}`;
-  }
 }
 
 // Surely this is just a type?

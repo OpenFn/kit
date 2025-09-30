@@ -1,4 +1,4 @@
-import { Workspace } from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import path from 'path';
 import type { Logger } from '../util/logger';
 import type { ProjectsOptions } from './command';
@@ -13,9 +13,17 @@ const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
 
   logger.success(`Available openfn projects\n\n${workspace
     .list()
-    .map((p) => p.describe())
+    .map(describeProject)
     .join('\n\n')}
     `);
 };
+
+function describeProject(project: Project) {
+  return `${project.name}\n  ${
+    project.openfn?.projectId || '<project-id>'
+  }\n  workflows:\n${project.workflows
+    .map((w) => '    - ' + w.name)
+    .join('\n')}`;
+}
 
 export default projectsHandler;
