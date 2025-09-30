@@ -18,9 +18,15 @@ export class Workspace {
     const projectsPath = path.join(workspacePath, PROJECTS_DIRECTORY);
     const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
 
-    // dealing with projects
-    if (pathExists(projectsPath, 'directory')) {
+    // dealing with openfn.yaml
+    if (pathExists(openfnYamlPath, 'file')) {
       this.isValid = true;
+      const data = fs.readFileSync(openfnYamlPath, 'utf-8');
+      this.config = yamlToJson(data);
+    }
+
+    // dealing with projects
+    if (this.isValid && pathExists(projectsPath, 'directory')) {
       const stateFiles = fs
         .readdirSync(projectsPath)
         .filter((fileName) =>
@@ -31,12 +37,6 @@ export class Workspace {
         const data = fs.readFileSync(path.join(projectsPath, file), 'utf-8');
         return fromAppState(data, { format: 'yaml' });
       });
-    }
-
-    // dealing with openfn.yaml
-    if (pathExists(openfnYamlPath, 'file')) {
-      const data = fs.readFileSync(openfnYamlPath, 'utf-8');
-      this.config = yamlToJson(data);
     }
   }
 
