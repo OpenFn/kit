@@ -10,6 +10,7 @@ const options = [o.projectPath];
 const projectsCommand: yargs.CommandModule = {
   command: 'projects [project-path]',
   describe: 'List all the openfn projects available in the current directory',
+  aliases: ['project'],
   handler: ensure('projects', options),
   builder: (yargs) => build(options, yargs),
 };
