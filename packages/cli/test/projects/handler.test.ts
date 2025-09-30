@@ -6,6 +6,15 @@ import { jsonToYaml } from '@openfn/project';
 
 mock({
   'no-ws/': { 'some.yaml': 'name: smth' },
+  '/ws/openfn.yaml': jsonToYaml({
+    name: 'some-project-name',
+    workflowRoot: 'workflows',
+    formats: {
+      openfn: 'yaml',
+      project: 'yaml',
+      workflow: 'yaml',
+    },
+  }),
   '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
     id: 'some-id',
     name: 'some-project-name',
@@ -91,7 +100,7 @@ test('openfn projects: valid workspace', (t) => {
   t.is(
     `Available openfn projects
 
-some-project-name 
+some-project-name (active)
   some-id
   workflows:
     - simple-workflow
