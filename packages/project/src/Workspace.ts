@@ -48,8 +48,16 @@ export class Workspace {
     return this.projects.find((p) => p.name === id);
   }
 
+  getActiveProject() {
+    return this.projects.find((p) => p.name === this.config?.name);
+  }
+
   getConfig() {
     return this.config;
+  }
+
+  get activeProjectId() {
+    return this.config?.name;
   }
 
   get valid() {
