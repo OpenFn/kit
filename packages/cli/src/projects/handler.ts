@@ -14,7 +14,7 @@ const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
   const config = workspace.getConfig();
   logger.success(`Available openfn projects\n\n${workspace
     .list()
-    .map((p) => describeProject(p, p.name === config.name))
+    .map((p) => describeProject(p, p.name === config?.name))
     .join('\n\n')}
     `);
 };

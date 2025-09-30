@@ -11,7 +11,7 @@ const OPENFN_YAML_FILE = 'openfn.yaml';
 const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
-  private config: OpenfnConfig;
+  private config?: OpenfnConfig;
   private projects: Project[];
   private isValid: boolean = false;
   constructor(workspacePath: string) {
