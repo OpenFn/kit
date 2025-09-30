@@ -11,15 +11,16 @@ const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
     return;
   }
 
+  const config = workspace.getConfig();
   logger.success(`Available openfn projects\n\n${workspace
     .list()
-    .map(describeProject)
+    .map((p) => describeProject(p, p.name === config.name))
     .join('\n\n')}
     `);
 };
 
-function describeProject(project: Project) {
-  return `${project.name}\n  ${
+function describeProject(project: Project, active = false) {
+  return `${project.name} ${active ? '(active)' : ''}\n  ${
     project.openfn?.projectId || '<project-id>'
   }\n  workflows:\n${project.workflows
     .map((w) => '    - ' + w.name)
