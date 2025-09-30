@@ -190,4 +190,8 @@ export class Project {
     }
     return getUuidForStep(this, workflow, stepId);
   }
+
+  updateRepo(config: Partial<RepoOptions>) {
+    this.repo = { ...this.repo, ...config };
+  }
 }
