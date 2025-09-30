@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.3.0
+
+### Minor Changes
+
+- 7ae519b: Add Workspace class for Repo management
+
 ## 0.2.0
 
 ### Minor Changes

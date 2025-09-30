@@ -7,7 +7,7 @@ import { yamlToJson } from '../util/yaml';
 import renameKeys from '../util/rename-keys';
 
 // Extra metadata used to init the project
-type Config = {
+type FromAppStateConfig = {
   endpoint: string;
   env?: string;
   fetchedAt?: string;
@@ -18,7 +18,7 @@ function slugify(text) {
   return text.replace(/\W/g, ' ').trim().replace(/\s+/g, '-').toLowerCase();
 }
 
-export default (state: Provisioner.Project, config: Config) => {
+export default (state: Provisioner.Project, config: FromAppStateConfig) => {
   if (config.format === 'yaml') {
     state = yamlToJson(state);
   } else if (typeof state === 'string') {

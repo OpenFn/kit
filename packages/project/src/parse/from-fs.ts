@@ -9,10 +9,14 @@ import { yamlToJson } from '../util/yaml';
 import slugify from '../util/slugify';
 import fromAppState from './from-app-state';
 
+export type FromFsConfig = {
+  root: string;
+};
+
 // Parse a single project from a root folder
 // focus on this first
 // root must be absolute?
-export const parseProject = async (options: { root: string } = {}) => {
+export const parseProject = async (options: FromFsConfig = {}) => {
   const { root } = options;
   const proj = {};
 

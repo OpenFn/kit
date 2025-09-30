@@ -3,7 +3,8 @@ import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
 
-import { parseProject as fromFs } from './parse/from-fs';
+// TODO this naming clearly isn't right
+import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
@@ -15,6 +16,23 @@ type MergeOptions = {
 };
 
 type FileFormats = 'yaml' | 'json';
+
+export interface OpenfnConfig {
+  name: string;
+  workflowRoot: string;
+  formats: {
+    openfn: FileFormats;
+    project: FileFormats;
+    workflow: FileFormats;
+  };
+  project: {
+    projectId: string;
+    endpoint: string;
+    env: string;
+    inserted_at: string;
+    updated_at: string;
+  };
+}
 
 // repo-wide options
 type RepoOptions = {
@@ -36,7 +54,7 @@ type RepoOptions = {
 
 // TODO maybe use an npm for this, or create  util
 
-const setConfigDefaults = (config = {}) => ({
+const setConfigDefaults = (config: OpenfnConfig = {}) => ({
   workflowRoot: config.workflowRoot ?? 'workflows',
   formats: {
     // TODO change these maybe
@@ -91,7 +109,7 @@ export class Project {
     data: any,
     options: Partial<l.ProjectConfig>
   ): Project;
-  static from(type: 'fs', options: { root: string }): Project;
+  static from(type: 'fs', options: FromFsConfig): Project;
   static from(type: 'path', data: any): Project;
   static from(
     type: 'state' | 'path' | 'fs',
@@ -100,8 +118,7 @@ export class Project {
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
-    }
-    if (type === 'fs') {
+    } else if (type === 'fs') {
       return fromFs(data, options);
     }
     throw new Error(`Didn't recognize type ${type}`);

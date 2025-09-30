@@ -1,5 +1,6 @@
 import { Project } from './Project';
+import { Workspace } from './Workspace';
+import { yamlToJson, jsonToYaml } from './util/yaml';
 
 export default Project;
-
-export { yamlToJson, jsonToYaml } from './util/yaml';
+export { Workspace, yamlToJson, jsonToYaml };
