@@ -18,6 +18,23 @@ type MergeOptions = {
 
 type FileFormats = 'yaml' | 'json';
 
+export interface OpenfnConfig {
+  name: string;
+  workflowRoot: string;
+  formats: {
+    openfn: FileFormats;
+    project: FileFormats;
+    workflow: FileFormats;
+  };
+  project: {
+    projectId: string;
+    endpoint: string;
+    env: string;
+    inserted_at: string;
+    updated_at: string;
+  };
+}
+
 // repo-wide options
 type RepoOptions = {
   /**default workflow root when serializing to fs (relative to openfn.yaml) */
@@ -38,7 +55,7 @@ type RepoOptions = {
 
 // TODO maybe use an npm for this, or create  util
 
-const setConfigDefaults = (config = {}) => ({
+const setConfigDefaults = (config: OpenfnConfig = {}) => ({
   workflowRoot: config.workflowRoot ?? 'workflows',
   formats: {
     // TODO change these maybe
@@ -98,8 +115,7 @@ export class Project {
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
-    }
-    if (type === 'fs') {
+    } else if (type === 'fs') {
       return fromFs(data, options);
     }
     throw new Error(`Didn't recognize type ${type}`);
@@ -169,6 +185,14 @@ export class Project {
       return getUuidForEdge(this, workflow, stepId, otherStep);
     }
     return getUuidForStep(this, workflow, stepId);
+  }
+
+  describe() {
+    return `${this.name}\n  ${
+      this.openfn.projectId || '<project-id>'
+    }\n  workflows:\n${this.workflows
+      .map((w) => '    - ' + w.name)
+      .join('\n')}`;
   }
 }
 

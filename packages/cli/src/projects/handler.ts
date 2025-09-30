@@ -1,28 +1,21 @@
-import type { ProjectsOptions } from './command';
-import type { Logger } from '../util/logger';
+import { Workspace } from '@openfn/project';
 import path from 'path';
-import fs from 'fs';
-import getFsProjects from './get-projects';
+import type { Logger } from '../util/logger';
+import type { ProjectsOptions } from './command';
 
 const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
   const commandPath = path.resolve(process.cwd(), options.projectPath ?? '.');
-  // look for .projects folder
-  const projectsDir = path.join(commandPath, '.projects');
-  if (!fs.existsSync(projectsDir) || !fs.statSync(projectsDir).isDirectory()) {
-    logger.error('.projects folder not found');
-    return;
-  }
-  const projects = await getFsProjects(projectsDir, logger);
-  if (!projects.length) {
-    logger.error('No openfn projects available');
+  const workspace = new Workspace(commandPath);
+  if (!workspace.valid) {
+    logger.error('Command was run in an invalid openfn workspace');
     return;
   }
 
-  process.stdout.write(
-    `Available openfn projects\n\n${projects
-      .map((p) => p.name + (p.active ? ' (active)' : ''))
-      .join('\n')}\n\n`
-  );
+  logger.success(`Available openfn projects\n\n${workspace
+    .list()
+    .map((p) => p.describe())
+    .join('\n\n')}
+    `);
 };
 
 export default projectsHandler;
