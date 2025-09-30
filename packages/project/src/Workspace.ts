@@ -12,7 +12,7 @@ const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
   private config?: OpenfnConfig;
-  private projects: Project[];
+  private projects: Project[] = [];
   private isValid: boolean = false;
   constructor(workspacePath: string) {
     const projectsPath = path.join(workspacePath, PROJECTS_DIRECTORY);

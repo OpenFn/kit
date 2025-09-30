@@ -3,6 +3,15 @@ import { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
 
 mock({
+  '/ws/openfn.yaml': jsonToYaml({
+    name: 'some-project-name',
+    workflowRoot: 'workflows',
+    formats: {
+      openfn: 'yaml',
+      project: 'yaml',
+      workflow: 'yaml',
+    },
+  }),
   '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
     id: 'some-id',
     name: 'some-project-name',
