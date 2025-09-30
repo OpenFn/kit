@@ -20,7 +20,7 @@ const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
 
 function describeProject(project: Project, active = false) {
   // @ts-ignore
-  const pId = project.openfn?.projectId;
+  const pId = project.openfn?.uuid;
   return `${project.name} ${active ? '(active)' : ''}\n  ${
     pId || '<project-id>'
   }\n  workflows:\n${project.workflows
