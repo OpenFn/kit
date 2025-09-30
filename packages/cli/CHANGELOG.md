@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.14.0
+
+### Minor Changes
+
+- 7ae519b: Add `openfn projects` command
+
+### Patch Changes
+
+- Updated dependencies [7ae519b]
+  - @openfn/project@0.3.0
+
 ## 1.13.6
 
 ### Patch Changes
