@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.14.1
+
+### Patch Changes
+
+- ca3d6ca: Fix an issue pulling projects with pull --beta
+- Updated dependencies [ca3d6ca]
+  - @openfn/project@0.3.1
+
 ## 1.14.0
 
 ### Minor Changes
