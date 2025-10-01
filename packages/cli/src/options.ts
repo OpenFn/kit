@@ -312,7 +312,7 @@ export const ignoreImports: CLIOption = {
 
 const getBaseDir = (opts: { path?: string }) => {
   const basePath = opts.path ?? '.';
-  if (/\.(jso?n?)$/.test(basePath)) {
+  if (/\.(jso?n?|ya?ml)$/.test(basePath)) {
     return nodePath.dirname(basePath);
   }
   return basePath;
@@ -343,6 +343,8 @@ export const inputPath: CLIOption = {
     } else if (basePath?.endsWith('.js')) {
       opts.expressionPath = basePath;
     } else {
+      // why couldn't this be path.basename?
+      // currently it only returns path.basename when .json is matched. added support for .ya?ml
       const base = getBaseDir(opts);
       setDefaultValue(opts, 'expressionPath', nodePath.join(base, 'job.js'));
     }
