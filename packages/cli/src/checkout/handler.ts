@@ -28,7 +28,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   // delete workflow dir before expanding project
   await rimraf(path.join(commandPath, config?.workflowRoot || 'workflows'));
 
-  // expand project intor directory
+  // expand project into directory
   const files = switchProject.serialize('fs');
   for (const f in files) {
     if (files[f]) {
@@ -37,7 +37,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
       });
       fs.writeFileSync(path.join(commandPath, f), files[f]);
     } else {
-      console.log('WARNING! No content for file', f);
+      logger.warn('WARNING! No content for file', f);
     }
   }
   logger.success(`Expanded project to ${commandPath}`);
