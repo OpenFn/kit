@@ -1,4 +1,4 @@
-import Project, { Workspace } from '@openfn/project';
+import { Workspace } from '@openfn/project';
 import path from 'path';
 import type { Logger } from '../util/logger';
 import type { CheckoutOptions } from './command';
