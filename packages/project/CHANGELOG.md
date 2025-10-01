@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.3.1
+
+### Patch Changes
+
+- ca3d6ca: Fix an issue pulling projects with pull --beta
+
 ## 0.3.0
 
 ### Minor Changes

@@ -18,8 +18,6 @@ class Workflow {
   id: string;
   openfn: OpenfnMeta;
 
-  steps: WithMeta<l.Job | l.Trigger>[];
-
   constructor(workflow: l.Workflow) {
     this.index = {
       steps: {}, // steps by id
@@ -39,7 +37,7 @@ class Workflow {
     this.#buildIndex();
   }
 
-  get steps() {
+  get steps(): WithMeta<l.Job | l.Trigger>[] {
     return this.workflow.steps;
   }
 
