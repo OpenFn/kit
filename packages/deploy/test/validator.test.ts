@@ -6,7 +6,7 @@ function findError(errors: any[], message: string) {
   return errors.find((e) => e.message === message);
 }
 
-test.after(resetMockFs);
+test.beforeAll(resetMockFs);
 
 test('Workflows must be a map', async (t) => {
   const doc = `
