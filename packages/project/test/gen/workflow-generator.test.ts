@@ -1,5 +1,16 @@
 import test from 'ava';
-import generateWorkflow from './workflow-generator';
+import Project from '../../src/Project';
+import generateWorkflow from '../../src/gen/workflow-generator';
+
+test('workflow should be compatible with Project', (t) => {
+  const wf = generateWorkflow(['a-b']);
+  const project = new Project({ workflows: [wf] });
+
+  t.is(project.workflows.length, 1);
+  t.is(project.workflows[0].id, 'workflow');
+  t.is(project.workflows[0].steps[0].id, 'a');
+  t.is(project.workflows[0].steps[1].id, 'b');
+});
 
 test('should generate a simple workflow with uuids', (t) => {
   const wf = generateWorkflow(['a-b'], { uuidSeed: 0 });

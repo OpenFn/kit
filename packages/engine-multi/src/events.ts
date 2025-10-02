@@ -20,6 +20,10 @@ export const JOB_ERROR = 'job-error';
 
 export const JOB_COMPLETE = 'job-complete';
 
+export const COMPILE_START = 'compile-start';
+
+export const COMPILE_COMPLETE = 'compile-complete';
+
 // TODO To be fair this is just a log, not neccesarily a workflow log
 // A log line may have a workflow and job id
 export const WORKFLOW_LOG = 'workflow-log';
@@ -40,6 +44,8 @@ export type EventMap = {
   [WORKFLOW_ERROR]: WorkflowErrorPayload;
   [AUTOINSTALL_COMPLETE]: AutoinstallCompletePayload;
   [AUTOINSTALL_ERROR]: AutoinstallErrorPayload;
+  [COMPILE_START]: CompileStartPayload;
+  [COMPILE_COMPLETE]: CompileCompletePayload;
 };
 
 export type ExternalEvents = keyof EventMap;
@@ -113,4 +119,10 @@ export interface AutoinstallErrorPayload extends ExternalEvent {
   version: string;
   duration: number;
   message: string;
+}
+
+export interface CompileStartPayload extends ExternalEvent {}
+
+export interface CompileCompletePayload extends ExternalEvent {
+  duration: number;
 }

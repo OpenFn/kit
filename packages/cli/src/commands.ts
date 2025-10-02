@@ -10,6 +10,7 @@ import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
 import projects from './projects/handler';
+import checkout from './checkout/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
@@ -32,6 +33,7 @@ export type CommandList =
   | 'metadata'
   | 'pull'
   | 'projects'
+  | 'checkout'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-list'
@@ -50,6 +52,7 @@ const handlers = {
   metadata,
   pull,
   projects,
+  checkout,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,

@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.4.0
+
+### Minor Changes
+
+- 14b0b58: Export project generator
+
 ## 0.3.1
 
 ### Patch Changes

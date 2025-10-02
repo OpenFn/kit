@@ -50,6 +50,7 @@ export type Opts = {
   path?: string;
   planPath?: string;
   projectId?: string;
+  projectName?: string;
   projectPath?: string;
   repoDir?: string;
   sanitize: 'none' | 'remove' | 'summarize' | 'obfuscate';
@@ -312,7 +313,7 @@ export const ignoreImports: CLIOption = {
 
 const getBaseDir = (opts: { path?: string }) => {
   const basePath = opts.path ?? '.';
-  if (/\.(jso?n?)$/.test(basePath)) {
+  if (/\.(jso?n?|ya?ml)$/.test(basePath)) {
     return nodePath.dirname(basePath);
   }
   return basePath;
@@ -327,6 +328,17 @@ export const projectId: CLIOption = {
     const projectId = opts.projectId;
     //check that this is a uuid
     return projectId;
+  },
+};
+
+export const projectName: CLIOption = {
+  name: 'project-name',
+  yargs: {
+    description: 'The name of an openfn project',
+    string: true,
+  },
+  ensure: (opts) => {
+    return opts.projectName;
   },
 };
 

@@ -3,7 +3,7 @@ import * as l from '@openfn/lexicon';
 import test from 'ava';
 import mapUUIDs from '../../src/merge/map-uuids';
 import { createWorkflow } from '../util';
-import generateWorkflow from '../workflow-generator';
+import generateWorkflow from '../../src/gen/workflow-generator';
 
 // mapping by ids
 test('no changes: single node workflow', (t) => {
@@ -414,10 +414,10 @@ test('expression-based mapping: nodes only distinguishable by expression', (t) =
   const source = generateWorkflow(['trigger-x', 'trigger-y']);
   const target = generateWorkflow(['trigger-a', 'trigger-b']);
 
-  source.set('x', {expression: 'foo'});
-  source.set('y', {expression: 'bar'});
-  target.set('a', {expression: 'foo'});
-  target.set('b', {expression: 'bar'});
+  source.set('x', { expression: 'foo' });
+  source.set('y', { expression: 'bar' });
+  target.set('a', { expression: 'foo' });
+  target.set('b', { expression: 'bar' });
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -428,8 +428,8 @@ test('expression-based mapping: nodes only distinguishable by expression', (t) =
 
   // switch the expressions and expect mappings to switch
   // from x -> a, y -> b to x -> b, y -> a
-  source.set('x', {expression: 'bar'});
-  source.set('y', {expression: 'foo'});
+  source.set('x', { expression: 'bar' });
+  source.set('y', { expression: 'foo' });
   const sresult = mapUUIDs(source, target);
 
   t.deepEqual(sresult.nodes, {
@@ -439,5 +439,5 @@ test('expression-based mapping: nodes only distinguishable by expression', (t) =
   });
 });
 
-// we need to do some testing around multiple roots. 
-test.skip('multiple roots:', ()=> {});
+// we need to do some testing around multiple roots.
+test.skip('multiple roots:', () => {});

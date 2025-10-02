@@ -29,6 +29,7 @@ const assertWorkflowStructure = (plan: ExecutionPlan, logger: Logger) => {
 const assertStepStructure = (step: Job | Trigger, index: number) => {
   const allowedKeys = [
     'id',
+    'type',
     'name',
     'next',
     'previous',

@@ -1,5 +1,20 @@
 # @openfn/cli
 
+## 1.15.0
+
+### Minor Changes
+
+- 8af8c15: Add a checkout command to allow switching between openfn projects in a workspace.
+
+### Patch Changes
+
+- 64d0cea: Fix CLI execution errors when passed a workflow yaml file.
+- Updated dependencies [2315417]
+- Updated dependencies [b0306c1]
+- Updated dependencies [14b0b58]
+  - @openfn/compiler@1.1.3
+  - @openfn/project@0.4.0
+
 ## 1.14.1
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.15.1
+
+### Patch Changes
+
+- 569f405: Improve compiler logging output
+  - @openfn/engine-multi@1.6.11
+
 ## 1.15.0
 
 Move expression compilation down into the run thread, isolating its memory from the main worker thread. This should work around a memory leak in long-running workers and improve the robustness of the worker generally.
