@@ -28,6 +28,7 @@ export default function compile(
   code: string;
   map?: SourceMapWithOperations;
 } {
+  let start = Date.now();
   const logger = options.logger || defaultLogger;
 
   let source = pathOrSource;
@@ -49,6 +50,9 @@ export default function compile(
 
   // write the operations index to the source map
   map.operations = (transformedAst.program as any).operations ?? [];
+
+  const duration = (Date.now() - start) / 1000;
+  logger.success(`Compilation complete in ${duration.toPrecision(2)}s`);
 
   if (options.logCompiledSource) {
     logger.debug('Compiled source:');

@@ -30,6 +30,10 @@ export const ERROR = 'worker:error';
 
 export const LOG = 'worker:log';
 
+export const COMPILE_START = 'worker:compile-start';
+
+export const COMPILE_COMPLETE = 'worker:compile-complete';
+
 interface InternalEvent {
   type: WorkerEvents;
   workflowId: string;
@@ -85,6 +89,11 @@ export interface ErrorEvent {
     severity: string;
   };
 }
+export interface CompileStartEvent extends InternalEvent {}
+
+export interface CompileCompleteEvent extends InternalEvent {
+  duration: number;
+}
 
 export type EventMap = {
   [WORKFLOW_START]: WorkflowStartEvent;
@@ -94,6 +103,9 @@ export type EventMap = {
   [JOB_ERROR]: JobErrorEvent;
   [LOG]: LogEvent;
   [ERROR]: ErrorEvent;
+
+  [COMPILE_START]: CompileStartEvent;
+  [COMPILE_COMPLETE]: CompileCompleteEvent;
 
   // TODO - extra events that aren't really designed yet
   ['worker:init-start']: any;

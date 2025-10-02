@@ -894,9 +894,8 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
 });
 
 test.serial(`worker should send a fail reason in the logs`, (t) => {
+  t.plan(2); // ensures we need two pass() assertions
   return new Promise((done) => {
-    let log: any;
-
     const run = {
       id: 'run-1',
       jobs: [
@@ -911,15 +910,15 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
       run.id,
       ({ payload }: any) => {
         if (payload.message[0].match(/Run complete with status: fail/)) {
-          log = payload.message[0];
+          t.pass();
+        } else if (payload.message[0].match(/JobError: blah/i)) {
+          t.pass();
         }
       },
       false
     );
 
     lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
-      t.truthy(log);
-      t.regex(log, /JobError: blah/i);
       done();
     });
 

@@ -15,6 +15,7 @@ import {
 import preloadCredentials from './preload-credentials';
 import { ExecutionError } from '../errors';
 import type { RunOptions } from '../worker/thread/run';
+import { COMPILE_COMPLETE, COMPILE_START, ExternalEvents } from '../events';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -81,6 +82,10 @@ const execute = async (context: ExecutionContext) => {
       });
     }
 
+    const proxy = (name: ExternalEvents, evt: any) => context.emit(name, evt);
+
+    let compileStatus: 'pending' | 'started' | 'completed' = 'pending';
+
     let didError = false;
     const events = {
       [workerEvents.WORKFLOW_START]: (evt: workerEvents.WorkflowStartEvent) => {
@@ -111,6 +116,16 @@ const execute = async (context: ExecutionContext) => {
           threadId: evt.threadId,
         });
       },
+      [workerEvents.COMPILE_START]: (evt: workerEvents.CompileStartEvent) => {
+        compileStatus = 'started';
+        proxy(COMPILE_START, evt);
+      },
+      [workerEvents.COMPILE_COMPLETE]: (
+        evt: workerEvents.CompileCompleteEvent
+      ) => {
+        compileStatus = 'completed';
+        proxy(COMPILE_COMPLETE, evt);
+      },
     };
 
     return callWorker(
@@ -118,7 +133,22 @@ const execute = async (context: ExecutionContext) => {
       [state.plan, state.input || {}, runOptions || {}],
       events,
       workerOptions
-    ).catch((e: any) => {
+    ).catch(async (e: any) => {
+      if (compileStatus === 'started') {
+        // Try and alert users that the error occurred at compile-time
+        // Not super keen on adding this down in the engine but it may help app users
+        await log(context, {
+          type: workerEvents.LOG,
+          workflowId: state.plan.id!,
+          threadId: '-',
+          log: {
+            level: 'info',
+            message: [`Error occurred during compilation`],
+            name: 'RTE',
+            time: timestamp().toString(),
+          },
+        });
+      }
       // An error should:
       // a) emit an error event (and so be handled by the error() function
       // b) reject the task in the pool
