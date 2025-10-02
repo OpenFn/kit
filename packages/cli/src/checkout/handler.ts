@@ -14,10 +14,10 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   }
 
   // get the project
-  const switchProject = workspace.get(options.projectId);
+  const switchProject = workspace.get(options.projectName);
   if (!switchProject) {
     logger.error(
-      `Project with id ${options.projectId} not found in the workspace`
+      `Project with id ${options.projectName} not found in the workspace`
     );
     return;
   }

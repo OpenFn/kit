@@ -154,7 +154,7 @@ test.serial('get active project', (t) => {
 
 test.serial('checkout: invalid project id', (t) => {
   checkoutHandler(
-    { command: 'checkout', projectId: 'not-known', projectPath: '/ws' },
+    { command: 'checkout', projectName: 'not-known', projectPath: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -168,7 +168,7 @@ test.serial('checkout: to a different valid project', async (t) => {
   t.is(bcheckout.getActiveProject()?.name, 'some-project-name');
 
   await checkoutHandler(
-    { command: 'checkout', projectId: 'main-project-id', projectPath: '/ws' },
+    { command: 'checkout', projectName: 'main-project-id', projectPath: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -193,7 +193,7 @@ test.serial('checkout: same id as active', async (t) => {
   t.is(bcheckout.getActiveProject()?.name, 'some-project-name');
 
   await checkoutHandler(
-    { command: 'checkout', projectId: 'some-project-name', projectPath: '/ws' },
+    { command: 'checkout', projectName: 'some-project-name', projectPath: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -219,7 +219,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
 
   // 1. switch from some-project-name to main-project-id
   await checkoutHandler(
-    { command: 'checkout', projectId: 'main-project-id', projectPath: '/ws' },
+    { command: 'checkout', projectName: 'main-project-id', projectPath: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -238,7 +238,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
 
   // 2. switch back from main-project-id to some-project-name
   await checkoutHandler(
-    { command: 'checkout', projectId: 'some-project-name', projectPath: '/ws' },
+    { command: 'checkout', projectName: 'some-project-name', projectPath: '/ws' },
     logger
   );
   const { message: lastMsg } = logger._parse(logger._last);
