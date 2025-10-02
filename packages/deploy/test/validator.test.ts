@@ -1,12 +1,14 @@
+import mock from 'mock-fs';
 import test from 'ava';
 import { parseAndValidate } from '../src/validator';
-import { mockFs, resetMockFs } from './util';
 
 function findError(errors: any[], message: string) {
   return errors.find((e) => e.message === message);
 }
 
-test.beforeEach(resetMockFs);
+test.after(() => {
+  mock.restore();
+});
 
 test('Workflows must be a map', async (t) => {
   const doc = `
@@ -131,7 +133,7 @@ test('allow empty workflows', async (t) => {
 test('adds the file content into the job body from the specified path', async (t) => {
   // Step 1: Create a temporary file that the YAML will reference
   const fileContent = 'fn(state => state.data);';
-  mockFs({
+  mock({
     '/jobBody.js': fileContent,
   });
 
