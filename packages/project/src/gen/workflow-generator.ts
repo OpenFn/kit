@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import Workflow from '../src/Workflow';
-import slugify from '../src/util/slugify';
+import Workflow from '../Workflow';
+import slugify from '../util/slugify';
 
 function gen(
   def: string[],

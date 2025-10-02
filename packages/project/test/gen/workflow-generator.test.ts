@@ -1,6 +1,6 @@
 import test from 'ava';
-import Project from '../src/Project';
-import generateWorkflow from './workflow-generator';
+import Project from '../../src/Project';
+import generateWorkflow from '../../src/gen/workflow-generator';
 
 test.only('workflow should be compatible with Project', (t) => {
   const wf = generateWorkflow(['a-b']);
