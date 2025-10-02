@@ -39,6 +39,7 @@
     "@openfn/logger": "workspace:*",
     "glob": "^11.0.2",
     "lodash-es": "^4.17.21",
+    "ohm-js": "^17.2.1",
     "yaml": "^2.2.2"
   },
   "files": [
