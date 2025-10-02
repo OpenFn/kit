@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 1.1.3
+
+### Patch Changes
+
+- 2315417: Log compilation duration
+- b0306c1: log compile information to debug, not info
+
 ## 1.1.2
 
 ### Patch Changes

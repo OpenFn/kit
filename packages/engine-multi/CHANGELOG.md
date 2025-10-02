@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.6.11
+
+### Patch Changes
+
+- Updated dependencies [2315417]
+- Updated dependencies [b0306c1]
+  - @openfn/compiler@1.1.3
+
 ## 1.6.10
 
 ### Patch Changes
