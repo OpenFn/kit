@@ -149,7 +149,6 @@ export function execute(
       // This will also resolve the promise
       addEvent('workflow-complete', throttle(handleRunComplete)),
       addEvent('workflow-error', throttle(handleRunError))
-
       // TODO send autoinstall logs
     );
     engine.listen(plan.id!, listeners);
@@ -198,6 +197,7 @@ export function execute(
         // updateSentryStatus('started');
         engine.execute(plan, loadedInput as State, { resolvers, ...options });
       } catch (e: any) {
+        process.exit(66);
         Sentry.addBreadcrumb({
           category: 'run',
           message: 'exception in run',

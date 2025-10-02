@@ -313,7 +313,7 @@ export const ignoreImports: CLIOption = {
 
 const getBaseDir = (opts: { path?: string }) => {
   const basePath = opts.path ?? '.';
-  if (/\.(jso?n?)$/.test(basePath)) {
+  if (/\.(jso?n?|ya?ml)$/.test(basePath)) {
     return nodePath.dirname(basePath);
   }
   return basePath;

@@ -124,6 +124,7 @@ test('should send a reason log and return reason for success', async (t) => {
 });
 
 test('should send a reason log and return reason for fail', async (t) => {
+  t.plan(6);
   const result = { answer: 42 };
   const plan = createPlan({ id: 'x', expression: '.' });
 
@@ -140,12 +141,15 @@ test('should send a reason log and return reason for fail', async (t) => {
     },
   };
 
-  let logEvent: any;
   let completeEvent: any;
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
-      logEvent = e;
+      if (e.message[0].match(/run complete with status/i)) {
+        t.is(e.message[0], 'Run complete with status: fail');
+      } else if (e.message[0].match(/test: err/i)) {
+        t.is(e.message[0], 'TEST: err');
+      }
     },
     [RUN_COMPLETE]: (e) => {
       completeEvent = e;
@@ -164,7 +168,6 @@ test('should send a reason log and return reason for fail', async (t) => {
 
   await handleRunComplete(context, event);
 
-  t.is(logEvent.message[0], 'Run complete with status: fail\nTEST: err');
   t.is(completeEvent.reason, 'fail');
   t.is(completeEvent.error_type, 'TEST');
   t.is(completeEvent.error_message, 'err');
