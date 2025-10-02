@@ -68,8 +68,14 @@ type GenerateWorkflowOptions = {
   uuidSeed: number;
   openfnUuid: boolean;
 };
+
+/**
+ * Generate a Workflow from a simple text based representation
+ * The def array contains strings of pairs of nodes
+ * eg, ['a-b', 'b-c']
+ */
 export default function generateWorkflow(
-  def: string,
+  def: string[],
   options: Partial<GenerateWorkflowOptions> = {}
 ) {
   const { name, uuidSeed, openfnUuid } = options;
