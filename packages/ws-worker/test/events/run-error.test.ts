@@ -124,11 +124,11 @@ test('runError should log the reason', async (t) => {
   };
   state.reasons['x'] = event;
 
-  let logEvent: any;
+  let logEvents: any[] = [];
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
-      logEvent = e;
+      logEvents.push(e);
     },
     [STEP_COMPLETE]: () => true,
     [RUN_COMPLETE]: () => true,
@@ -137,5 +137,6 @@ test('runError should log the reason', async (t) => {
   const context = { channel, state, onFinish: () => {} };
 
   await onRunError(context as any, event);
-  t.is(logEvent.message[0], 'Run complete with status: crash\nErr: it crashed');
+  t.is(logEvents[0].message[0], 'Run complete with status: crash');
+  t.is(logEvents[1].message[0], 'Err: it crashed');
 });
