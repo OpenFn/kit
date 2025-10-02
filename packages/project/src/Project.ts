@@ -17,6 +17,9 @@ type MergeOptions = {
 
 type FileFormats = 'yaml' | 'json';
 
+const maybeCreateWorkflow = (wf: any) =>
+  wf instanceof Workflow ? wf : new Workflow(wf);
+
 export interface OpenfnConfig {
   name: string;
   workflowRoot: string;
@@ -145,7 +148,7 @@ export class Project {
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
-    this.workflows = data.workflows?.map((w) => new Workflow(w)) ?? [];
+    this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
@@ -191,3 +194,5 @@ export class Project {
     return getUuidForStep(this, workflow, stepId);
   }
 }
+
+export default Project;

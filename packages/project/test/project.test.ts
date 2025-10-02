@@ -2,7 +2,7 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../src/Project';
-import generateWorkflow from './workflow-generator';
+import generateWorkflow from '../src/gen/workflow-generator';
 
 // TODO move to fixtures and re-use?
 // Or use util function instead?
