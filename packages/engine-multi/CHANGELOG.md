@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.6.12
+
+### Patch Changes
+
+- 362d6bf: Better logs for compiler
+- Updated dependencies [362d6bf]
+  - @openfn/compiler@1.1.4
+
 ## 1.6.11
 
 ### Patch Changes
