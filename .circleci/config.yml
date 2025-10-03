@@ -58,13 +58,13 @@ jobs:
           at: ~/project
       - run:
           name: Run Tests
-          command: pnpm -C packages/engine-multi test
+          command: pnpm -C packages/cli test
       - run:
           name: Run Tests
-          command: pnpm -C packages/engine-multi test
+          command: pnpm -C packages/cli test
       - run:
           name: Run Tests
-          command: pnpm -C packages/engine-multi test
+          command: pnpm -C packages/cli test
 
   format:
     docker:
