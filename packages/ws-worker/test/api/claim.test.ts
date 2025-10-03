@@ -145,7 +145,7 @@ const createMockApp = (opts: any) => {
     openClaims: {},
     workflows,
     queueChannel: channel,
-    execute: (...args) => {
+    execute: (...args: any) => {
       onExecute(...args);
     },
     events: new EventEmitter(),
