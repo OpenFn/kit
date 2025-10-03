@@ -246,14 +246,15 @@ test.serial('trigger compile-start', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan, emptyState).on('compile-start', (evt) => {
-      t.is(evt.workflowId, plan.id);
-      t.pass('workflow completed');
-    });
-
-    api.execute(plan, emptyState).on('workflow-complete', () => {
-      done();
-    });
+    api
+      .execute(plan, emptyState)
+      .on('compile-start', (evt) => {
+        t.is(evt.workflowId, plan.id);
+        t.pass('workflow completed');
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
 
@@ -266,16 +267,17 @@ test.serial('trigger compile-complete', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan, emptyState).on('compile-complete', (evt) => {
-      t.is(evt.workflowId, plan.id);
-      t.true(typeof evt.duration === 'number');
-      t.true(evt.duration >= 0);
-      t.pass('workflow completed');
-    });
-
-    api.execute(plan, emptyState).on('workflow-complete', () => {
-      done();
-    });
+    api
+      .execute(plan, emptyState)
+      .on('compile-complete', (evt) => {
+        t.is(evt.workflowId, plan.id);
+        t.true(typeof evt.duration === 'number');
+        t.true(evt.duration >= 0);
+        t.pass('workflow completed');
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
 
