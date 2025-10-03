@@ -158,7 +158,7 @@ test.serial('checkout: invalid project id', (t) => {
     logger
   );
   const { message } = logger._parse(logger._last);
-  t.is(message, 'Project with id not-known not found in the workspace');
+  t.is(message, 'Project with id/name not-known not found in the workspace');
 });
 
 test.serial('checkout: to a different valid project', async (t) => {
