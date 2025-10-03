@@ -14,6 +14,9 @@ export const RUN_LOG = 'run:log';
 export const STEP_START = 'step:start';
 export const STEP_COMPLETE = 'step:complete';
 export const INTERNAL_RUN_COMPLETE = 'server:run-complete';
+export const INTERNAL_CLAIM_START = 'server:claim-start';
+export const INTERNAL_CLAIM_COMPLETE = 'server:claim-complete';
+export const INTERNAL_SOCKET_READY = 'server:socket-ready';
 
 export type QueueEvents = {
   [CLAIM]: l.ClaimPayload;
