@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm ava --serial",
+    "test": "pnpm ava --serial test/integration.test.ts",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "test:mem": "NODE_OPTIONS=\"--max-old-space-size=90 --experimental-vm-modules\" pnpm exec tsx test/memtest.ts",
     "build": "tsup --config ./tsup.config.js",

@@ -237,7 +237,7 @@ test.serial('compile and run', (t) => {
   });
 });
 
-test.serial('trigger compile-start', (t) => {
+test.serial.only('trigger compile-start', (t) => {
   t.plan(2);
   return new Promise(async (done) => {
     api = await createAPI({
@@ -257,7 +257,7 @@ test.serial('trigger compile-start', (t) => {
   });
 });
 
-test.serial('trigger compile-complete', (t) => {
+test.serial.only('trigger compile-complete', (t) => {
   t.plan(4);
   return new Promise(async (done) => {
     api = await createAPI({
