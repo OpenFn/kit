@@ -44,7 +44,9 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
   }
 
   // TODO pick options from the terminal
-  const final = Project.merge(mProject, checkedProject, {});
+  const final = Project.merge(mProject, checkedProject, {
+    removeUnmapped: options.removeUnmapped,
+  });
   const yaml = final.serialize('state', { format: 'yaml' });
   await fs.writeFile(finalPath, yaml);
 

@@ -4,10 +4,10 @@ import { ensure, build } from '../util/command-builders';
 import * as o from '../options';
 
 export type MergeOptions = Required<
-  Pick<Opts, 'command' | 'projectName' | 'projectPath'>
+  Pick<Opts, 'command' | 'projectName' | 'projectPath' | 'removeUnmapped'>
 >;
 
-const options = [o.projectName, o.projectPath];
+const options = [o.projectName, o.projectPath, o.removeUnmapped];
 
 const mergeCommand: yargs.CommandModule = {
   command: 'merge [project-name]',

@@ -64,6 +64,8 @@ export type Opts = {
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
   workflow: string;
+  // merge options
+  removeUnmapped?: boolean;
 
   // deprecated
   workflowPath?: string;
@@ -579,5 +581,15 @@ export const workflow: CLIOption = {
   yargs: {
     string: true,
     description: 'Name of the workflow to execute',
+  },
+};
+
+// merge options
+export const removeUnmapped: CLIOption = {
+  name: 'remove-unmapped',
+  yargs: {
+    boolean: true,
+    description:
+      "Removes all workflows that didn't get mapped from the final project after merge",
   },
 };
