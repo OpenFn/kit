@@ -1,5 +1,14 @@
 # @openfn/compiler
 
+## 1.1.4
+
+### Patch Changes
+
+- 362d6bf: Improved log output:
+
+  - Don't log anything for import/export statements (consistent with other visitors)
+  - When a step is compiled, include the step name
+
 ## 1.1.3
 
 ### Patch Changes

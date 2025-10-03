@@ -47,6 +47,7 @@ const compileJob = async (job: Job, logger: Logger, repoDir?: string) => {
   const { expression, adaptors, linker } = job;
   const compilerOptions: Options = {
     logger,
+    name: job.name,
   };
   if (adaptors && repoDir) {
     const adaptorConfig = [];

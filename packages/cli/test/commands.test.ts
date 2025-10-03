@@ -12,11 +12,18 @@ import { cmd } from '../src/cli';
 import commandParser from '../src/commands';
 import type { Opts } from '../src/options';
 
+// These CLI tests take quite a while to run, mostly I think
+// because of all the FS mocking
+// To make them more robust in CI, all the tests in this file need
+// an increased timeout
+const TIMEOUT = 1000 * 20;
+
 const logger = createMockLogger('', { level: 'debug' });
 
 const port = 8967;
 
 let server;
+
 const endpoint = `http://localhost:${port}`;
 
 test.before(async () => {
@@ -148,6 +155,7 @@ test.after(async () => {
 });
 
 test.serial('run an execution plan', async (t) => {
+  t.timeout(TIMEOUT);
   const plan = {
     workflow: {
       steps: [
@@ -175,6 +183,7 @@ test.serial('run an execution plan', async (t) => {
 });
 
 test.serial('run an execution plan with start', async (t) => {
+  t.timeout(TIMEOUT);
   const state = JSON.stringify({ data: { x: 0 } });
   const plan = {
     workflow: {
@@ -207,6 +216,7 @@ test.serial('run an execution plan with start', async (t) => {
 });
 
 test.serial('print version information with version', async (t) => {
+  t.timeout(TIMEOUT);
   await run('version', '');
 
   const last = logger._parse(logger._last);
@@ -217,6 +227,7 @@ test.serial('print version information with version', async (t) => {
 });
 
 test.serial('run test job with default state', async (t) => {
+  t.timeout(TIMEOUT);
   await run('test', '');
 
   const { message } = logger._parse(logger._last);
@@ -224,6 +235,7 @@ test.serial('run test job with default state', async (t) => {
 });
 
 test.serial('run test job with custom state', async (t) => {
+  t.timeout(TIMEOUT);
   const state = JSON.stringify({ data: { answer: 1 } });
 
   await run(`test -S ${state}`, '');
@@ -232,17 +244,20 @@ test.serial('run test job with custom state', async (t) => {
 });
 
 test.serial('run a job with defaults: openfn job.js', async (t) => {
+  t.timeout(TIMEOUT);
   const result = await run('openfn job.js', EXPR_EXPORT_42);
   t.assert(result.data.count === 42);
 });
 
 test.serial('run a job which does not return state', async (t) => {
+  t.timeout(TIMEOUT);
   const result = await run('openfn job.js', 'export default [s => {}]');
 
   t.falsy(result);
 });
 
 test.serial('run a workflow', async (t) => {
+  t.timeout(TIMEOUT);
   const workflow = {
     jobs: [
       {
@@ -268,6 +283,7 @@ test.serial('run a workflow', async (t) => {
 });
 
 test.serial('run a workflow with config as an object', async (t) => {
+  t.timeout(TIMEOUT);
   const workflow = {
     jobs: [
       {
@@ -290,6 +306,7 @@ test.serial('run a workflow with config as an object', async (t) => {
 });
 
 test.serial('run a workflow with config as a path', async (t) => {
+  t.timeout(TIMEOUT);
   const workflow = {
     jobs: [
       {
@@ -319,6 +336,7 @@ test.serial('run a workflow with config as a path', async (t) => {
 test.serial.skip(
   'run a trivial job from a folder: openfn ~/openfn/jobs/the-question',
   async (t) => {
+    t.timeout(TIMEOUT);
     const options = {
       // set up the file system
       expressionPath:
@@ -345,6 +363,7 @@ test.serial.skip(
 test.serial(
   'output to file: openfn job.js --output-path=/tmp/my-output.json',
   async (t) => {
+    t.timeout(TIMEOUT);
     const options = {
       outputPath: '/tmp/my-output.json',
     };
@@ -364,6 +383,7 @@ test.serial(
 test.serial(
   'output to file with alias: openfn job.js -o=/tmp/my-output.json',
   async (t) => {
+    t.timeout(TIMEOUT);
     const options = {
       outputPath: '/tmp/my-output.json',
     };
@@ -383,6 +403,7 @@ test.serial(
 test.serial(
   'output to file removing configuration: openfn job.js --output-path=/tmp/my-output.json',
   async (t) => {
+    t.timeout(TIMEOUT);
     const options = {
       outputPath: '/tmp/my-output.json',
     };
@@ -407,6 +428,7 @@ test.serial(
 test.serial(
   'read state from file: openfn job.js --state-path=/tmp/my-state.json',
   async (t) => {
+    t.timeout(TIMEOUT);
     const options = {
       statePath: '/tmp/my-state.json',
       state: { data: { count: 33 } },
@@ -423,6 +445,7 @@ test.serial(
 test.serial(
   'read state from file with alias: openfn job.js -s /tmp/my-state.json',
   async (t) => {
+    t.timeout(TIMEOUT);
     const options = {
       statePath: '/tmp/my-state.json',
       state: { data: { count: 33 } },
@@ -439,6 +462,7 @@ test.serial(
 test.serial(
   'read state from stdin: openfn job.js --state-stdin=<obj>',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 11 } });
     const result = await run(
       `openfn job.js --state-stdin=${state}`,
@@ -451,6 +475,7 @@ test.serial(
 test.serial(
   'read state from stdin with alias: openfn job.js -S <obj>',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 44 } });
     const result = await run(`openfn job.js -S ${state}`, EXPR_TIMES_2);
     t.assert(result.data.count === 88);
@@ -460,6 +485,7 @@ test.serial(
 test.serial(
   'override an adaptor: openfn --no-expand-adaptors -S <obj> --adaptor times-two=<path-to-module>',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 49.5 } });
 
     await resMock.generateJob(EXPR_MOCK_ADAPTOR);
@@ -477,6 +503,7 @@ test.serial(
 test.serial(
   'override adaptors: openfn --no-expand-adaptors -S <obj> --adaptors times-two=<path-to-module>',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 49.5 } });
 
     await resMock.generateJob(EXPR_MOCK_ADAPTOR);
@@ -492,6 +519,7 @@ test.serial(
 test.serial(
   'override adaptors: openfn --no-expand-adaptors -S <obj> -a times-two=<path-to-module>',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 49.5 } });
 
     // mock module with real filesystem
@@ -508,6 +536,7 @@ test.serial(
 test.serial(
   'auto-import from test module with repoDir: openfn job.js -S <obj> -a times-two',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 11 } });
     const job = 'export default [byTwo]';
     await resMock.generateJob(job);
@@ -527,6 +556,7 @@ test.serial(
 test.serial(
   'auto-import from test module with path: openfn job.js -S <obj> -a times-two',
   async (t) => {
+    t.timeout(TIMEOUT);
     const state = JSON.stringify({ data: { count: 22 } });
     const job = 'export default [byTwo]';
     await resMock.generateJob(job);
@@ -542,6 +572,7 @@ test.serial(
 test.serial(
   'auto-import from language-common (job): openfn job.js -a @openfn/language-common@0.0.1',
   async (t) => {
+    t.timeout(TIMEOUT);
     const job = 'fn((state) => { state.data.done = true; return state; });';
     await resMock.generateJob(job);
     const result = await run(
@@ -560,6 +591,7 @@ test.serial(
 test.serial(
   'run a workflow using language-common: openfn wf.json',
   async (t) => {
+    t.timeout(TIMEOUT);
     const workflow = {
       jobs: [
         {
@@ -590,6 +622,7 @@ test.serial(
 test.serial(
   'use execute from language-postgres: openfn job.js -a @openfn/language-postgres',
   async (t) => {
+    t.timeout(TIMEOUT);
     const job =
       'alterState((state) => { /* function isn\t actually called by the mock adaptor */ throw new Error("fake adaptor") });';
 
@@ -610,6 +643,7 @@ test.serial(
 test.serial(
   'load an adaptor from the monorepo env var: openfn job.js -m -a common',
   async (t) => {
+    t.timeout(TIMEOUT);
     process.env.OPENFN_ADAPTORS_REPO = resMock.monorepoPath;
     const job = 'export default [alterState(() => 39)]';
     await resMock.generateJob(job);
@@ -628,6 +662,7 @@ test.serial(
 // controlling that from here
 // I'll have to leave this as an integration test for now
 test.serial.skip('sanitize output', async (t) => {
+  t.timeout(TIMEOUT);
   const job = 'export default [() => {console.log({}); return 22}]';
 
   const result = await run('job.js -a common --sanitize=obfuscate', job);
@@ -643,6 +678,7 @@ test.serial.skip('sanitize output', async (t) => {
 test.serial(
   'load a workflow adaptor from the monorepo: openfn workflow.json -m',
   async (t) => {
+    t.timeout(TIMEOUT);
     process.env.OPENFN_ADAPTORS_REPO = resMock.monorepoPath;
 
     const workflow = JSON.stringify({
@@ -668,6 +704,7 @@ test.serial(
 );
 
 test.serial('compile a job: openfn compile job.js to stdout', async (t) => {
+  t.timeout(TIMEOUT);
   const options = {};
   await run('compile job.js', 'fn(42);', options);
 
@@ -676,6 +713,7 @@ test.serial('compile a job: openfn compile job.js to stdout', async (t) => {
 });
 
 test.serial('compile a job: openfn compile job.js to file', async (t) => {
+  t.timeout(TIMEOUT);
   const options = {
     outputPath: 'out.js',
   };
@@ -686,6 +724,7 @@ test.serial('compile a job: openfn compile job.js to file', async (t) => {
 });
 
 test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
+  t.timeout(TIMEOUT);
   const options = {
     outputPath: 'out.json',
     expressionPath: 'wf.json', // just to fool the test
@@ -704,6 +743,7 @@ test.serial('compile a workflow: openfn compile wf.json to file', async (t) => {
 });
 
 test.serial('docs should print documentation with full names', async (t) => {
+  t.timeout(TIMEOUT);
   mock({
     '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
       name: 'test',
@@ -734,6 +774,7 @@ test.serial('docs should print documentation with full names', async (t) => {
 });
 
 test.serial('docs adaptor should list operations', async (t) => {
+  t.timeout(TIMEOUT);
   const pkgPath = path.resolve('./package.json');
   mock({
     [pkgPath]: mock.load(pkgPath),
@@ -764,6 +805,7 @@ test.serial('docs adaptor should list operations', async (t) => {
 test.serial(
   'docs adaptor + operation should print documentation with shorthand names',
   async (t) => {
+    t.timeout(TIMEOUT);
     mock({
       '/repo/docs/@openfn/language-common@1.0.0.json': JSON.stringify({
         name: 'test',
@@ -795,6 +837,7 @@ test.serial(
 );
 
 test.serial('pull: should pull a simple project', async (t) => {
+  t.timeout(TIMEOUT);
   mock({
     './state.json': '',
     './project.yaml': '',
