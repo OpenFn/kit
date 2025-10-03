@@ -51,8 +51,12 @@ export default function compile(
   // write the operations index to the source map
   map.operations = (transformedAst.program as any).operations ?? [];
 
-  const duration = (Date.now() - start) / 1000;
-  logger.success(`Compilation complete in ${duration.toPrecision(2)}s`);
+  const duration = ((Date.now() - start) / 1000).toPrecision(2);
+  if (options.name) {
+    logger.info(`Compiled ${name} in ${duration}s`);
+  } else {
+    logger.info(`Compilation complete in ${duration}s`);
+  }
 
   if (options.logCompiledSource) {
     logger.debug('Compiled source:');

@@ -81,10 +81,15 @@ register({
       publish(COMPILE_START, {
         workflowId: plan.id,
       });
+      logger.info('Compiling all workflow steps...');
       await compile(plan, { repoDir }, logger);
+      const duration = Date.now() - start;
+      logger.success(
+        `Workflow compilation complete in ${(duration / 1000).toPrecision(2)}s`
+      );
       publish(COMPILE_COMPLETE, {
         workflowId: plan.id,
-        duration: Date.now() - start,
+        duration,
       });
       return run(plan, input, options);
     });

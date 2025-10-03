@@ -156,7 +156,7 @@ export function findAllDanglingIdentifiers(ast: ASTNode) {
   return result;
 }
 
-function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
+function visitor(path: NodePath, _logger: Logger, options: AddImportsOptions) {
   if (options.adaptors) {
     const identifiers = findAllDanglingIdentifiers(path.node);
 
@@ -180,10 +180,10 @@ function visitor(path: NodePath, logger: Logger, options: AddImportsOptions) {
         if (usedExports.length) {
           // TODO maybe in trace output we can say WHY we're doing these things
           addUsedImports(path, usedExports, name);
-          logger.debug(`Added import statement for ${name}`);
+          //logger.debug(`Added import statement for ${name}`);
           if (exportAll) {
             addExportAdaptor(path, name);
-            logger.debug(`Added export * statement for ${name}`);
+            //logger.debug(`Added export * statement for ${name}`);
           }
         }
       }
