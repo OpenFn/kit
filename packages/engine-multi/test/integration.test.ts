@@ -1,19 +1,20 @@
 import test from 'ava';
 import path from 'node:path';
-import { createMockLogger } from '@openfn/logger';
+import createLogger, { createMockLogger } from '@openfn/logger';
 import type { ExecutionPlan } from '@openfn/lexicon';
 
 import createAPI from '../src/api';
 import type { RuntimeEngine } from '../src';
 import { REDACTED_STATE, REDACTED_LOG } from '../src/util/ensure-payload-size';
 
-const logger = createMockLogger(undefined, { level: 'debug' });
+// const logger = createMockLogger(undefined, { level: 'debug' });
+const logger = createLogger('', { level: 'debug' });
 let api: RuntimeEngine;
 
 const emptyState = {};
 
 test.afterEach(() => {
-  logger._reset();
+  // logger._reset();
   api.destroy();
 });
 
@@ -246,18 +247,19 @@ test.serial.only('trigger compile-start', (t) => {
 
     const plan = createPlan();
 
-    api.execute(plan, emptyState).on('compile-start', (evt) => {
-      t.is(evt.workflowId, plan.id);
-      t.pass('workflow completed');
-    });
-
-    api.execute(plan, emptyState).on('workflow-complete', () => {
-      done();
-    });
+    api
+      .execute(plan, emptyState)
+      .on('compile-start', (evt) => {
+        t.is(evt.workflowId, plan.id);
+        t.pass('workflow completed');
+      })
+      .on('workflow-complete', () => {
+        done();
+      });
   });
 });
 
-test.serial.only('trigger compile-complete', (t) => {
+test.serial('trigger compile-complete', (t) => {
   t.plan(4);
   return new Promise(async (done) => {
     api = await createAPI({

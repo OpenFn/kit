@@ -93,7 +93,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       });
 
       // This will forward all internal console.debug() lines to the parent stdout
-      if (options.proxyStdout) {
+      if (true) {
         child.stdout!.on('data', (data) => {
           console.log(`${child.pid ?? ''} |> ${data.toString()}`);
         });
