@@ -13,6 +13,7 @@ const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 export class Workspace {
   private config?: OpenfnConfig;
   private projects: Project[] = [];
+  private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
   constructor(workspacePath: string) {
     const projectsPath = path.join(workspacePath, PROJECTS_DIRECTORY);
@@ -34,8 +35,11 @@ export class Workspace {
         );
 
       this.projects = stateFiles.map((file) => {
-        const data = fs.readFileSync(path.join(projectsPath, file), 'utf-8');
-        return fromAppState(data, { format: 'yaml' });
+        const stateFilePath = path.join(projectsPath, file);
+        const data = fs.readFileSync(stateFilePath, 'utf-8');
+        const project = fromAppState(data, { format: 'yaml' });
+        this.projectPaths.set(project.name, stateFilePath);
+        return project;
       });
     }
   }
@@ -46,6 +50,10 @@ export class Workspace {
 
   get(id: string) {
     return this.projects.find((p) => p.name === id);
+  }
+
+  getProjectPath(id: string) {
+    return this.projectPaths.get(id);
   }
 
   getActiveProject() {

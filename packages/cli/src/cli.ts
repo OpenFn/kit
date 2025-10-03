@@ -15,6 +15,7 @@ import { install as installCommand, repo as repoCommand } from './repo/command';
 import testCommand from './test/command';
 import projectsCommand from './projects/command';
 import checkoutCommand from './checkout/command';
+import mergeCommand from './merge/command';
 
 const y = yargs(hideBin(process.argv));
 
@@ -34,6 +35,7 @@ export const cmd = y
   .command(pullCommand as any)
   .command(projectsCommand)
   .command(checkoutCommand)
+  .command(mergeCommand)
   .command({
     command: 'version',
     describe:

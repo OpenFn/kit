@@ -11,6 +11,7 @@ import metadata from './metadata/handler';
 import pull from './pull/handler';
 import projects from './projects/handler';
 import checkout from './checkout/handler';
+import merge from './merge/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
@@ -34,6 +35,7 @@ export type CommandList =
   | 'pull'
   | 'projects'
   | 'checkout'
+  | 'merge'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-list'
@@ -53,6 +55,7 @@ const handlers = {
   pull,
   projects,
   checkout,
+  merge,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,
