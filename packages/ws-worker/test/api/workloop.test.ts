@@ -5,6 +5,7 @@ import { sleep } from '../util';
 import { mockChannel } from '../../src/mock/sockets';
 import startWorkloop from '../../src/api/workloop';
 import { CLAIM } from '../../src/events';
+import EventEmitter from 'node:events';
 
 let workloop: any;
 
@@ -14,11 +15,23 @@ test.afterEach(() => {
   workloop?.stop(); // cancel any workloops
 });
 
+const createMockApp = (props: any) => ({
+  workflows: {},
+  queueChannel: mockChannel({
+    [CLAIM]: () => {
+      return { runs: [] };
+    },
+  }),
+  execute: () => {},
+
+  events: new EventEmitter(),
+  ...props,
+});
+
 test('workloop can be cancelled', async (t) => {
   let count = 0;
 
-  const app = {
-    workflows: {},
+  const app = createMockApp({
     queueChannel: mockChannel({
       [CLAIM]: () => {
         count++;
@@ -26,8 +39,7 @@ test('workloop can be cancelled', async (t) => {
         return { runs: [] };
       },
     }),
-    execute: () => {},
-  };
+  });
 
   workloop = startWorkloop(app as any, logger, 1, 1);
   t.false(workloop.isStopped());
@@ -40,8 +52,7 @@ test('workloop can be cancelled', async (t) => {
 
 test('workloop sends the runs:claim event', (t) => {
   return new Promise((done) => {
-    const app = {
-      workflows: {},
+    const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
           t.pass();
@@ -49,8 +60,7 @@ test('workloop sends the runs:claim event', (t) => {
           return { runs: [] };
         },
       }),
-      execute: () => {},
-    };
+    });
     workloop = startWorkloop(app as any, logger, 1, 1);
   });
 });
@@ -58,8 +68,7 @@ test('workloop sends the runs:claim event', (t) => {
 test('workloop sends the runs:claim event several times ', (t) => {
   return new Promise((done) => {
     let count = 0;
-    const app = {
-      workflows: {},
+    const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
           count++;
@@ -70,16 +79,14 @@ test('workloop sends the runs:claim event several times ', (t) => {
           return { runs: [] };
         },
       }),
-      execute: () => {},
-    };
+    });
     workloop = startWorkloop(app as any, logger, 1, 1);
   });
 });
 
 test('workloop calls execute if runs:claim returns runs', (t) => {
   return new Promise((done) => {
-    const app = {
-      workflows: {},
+    const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => ({
           runs: [{ id: 'a', token: 'x.y.z' }],
@@ -90,7 +97,7 @@ test('workloop calls execute if runs:claim returns runs', (t) => {
         t.pass();
         done();
       },
-    };
+    });
 
     workloop = startWorkloop(app as any, logger, 1, 1);
   });

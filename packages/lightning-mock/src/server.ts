@@ -117,10 +117,13 @@ const createLightningServer = (options: LightningOptions = {}) => {
 
   app.use(createRestAPI(app as any, state, logger, api));
 
-  app.destroy = () => {
-    server.close();
-    api.close();
-  };
+  app.destroy = () =>
+    new Promise<void>(async (resolve) => {
+      api.close();
+      server.close(() => {
+        resolve();
+      });
+    });
   return app;
 };
 

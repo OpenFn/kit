@@ -14,7 +14,7 @@ export type DevServer = Koa & {
   addCredential(id: string, cred: Credential): void;
   addDataclip(id: string, data: DataClip): void;
   enqueueRun(run: LightningPlan): void;
-  destroy: () => void;
+  destroy: () => Promise<void>;
   getRun(id: string): LightningPlan;
   getCredential(id: string): Credential;
   getDataclip(id: string): DataClip;

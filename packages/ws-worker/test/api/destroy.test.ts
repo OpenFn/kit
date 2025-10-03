@@ -7,29 +7,45 @@ import { LightningPlan } from '@openfn/lexicon/lightning';
 import createWorker from '../../src/server';
 import createMockRTE from '../../src/mock/runtime-engine';
 import destroy from '../../src/api/destroy';
+import {
+  INTERNAL_CLAIM_COMPLETE,
+  INTERNAL_CLAIM_START,
+  INTERNAL_SOCKET_READY,
+} from '../../src';
 
 const workerPort = 9876;
 const lightningPort = workerPort + 1;
 
 const logger = createMockLogger();
-const lightning = createLightningServer({ port: lightningPort });
+let lightning: any;
 
 let worker: any;
 
-test.beforeEach(async () => {
-  const engine: any = await createMockRTE();
+const initLightning = (options = {}) => {
+  lightning = createLightningServer({ port: lightningPort, ...options });
+};
 
-  worker = createWorker(engine, {
-    logger,
-    lightning: `ws://localhost:${lightningPort}/worker`,
-    port: workerPort,
-    backoff: { min: 10, max: 20 },
-    collectionsVersion: '1.0.0',
+const initWorker = (options = {}) => {
+  return new Promise<void>(async (resolve) => {
+    const engine: any = await createMockRTE();
+
+    worker = createWorker(engine, {
+      logger,
+      lightning: `ws://localhost:${lightningPort}/worker`,
+      port: workerPort,
+      backoff: { min: 10, max: 20 },
+      collectionsVersion: '1.0.0',
+      ...options,
+    });
+    worker.events.on(INTERNAL_SOCKET_READY, () => {
+      resolve();
+    });
   });
-});
+};
 
-test.afterEach(() => {
-  lightning.reset();
+test.afterEach(async () => {
+  await lightning.destroy();
+  logger._reset();
 });
 
 const createRun = () =>
@@ -45,17 +61,22 @@ const createRun = () =>
 
 const waitForClaim = (timeout: number = 1000) =>
   new Promise<boolean>((resolve) => {
+    let didTimeout = false;
+    let didResolve = false;
     const handler = () => {
+      didResolve = true;
+      lightning.off('claim', handler);
       if (!didTimeout) {
         resolve(true);
       }
     };
-    let didTimeout = false;
 
     setTimeout(() => {
-      didTimeout = true;
-      lightning.off('claim', handler);
-      resolve(false);
+      if (!didResolve) {
+        didTimeout = true;
+        lightning.off('claim', handler);
+        resolve(false);
+      }
     }, timeout);
 
     lightning.once('claim', handler);
@@ -72,6 +93,9 @@ const ping = async () => {
 };
 
 test.serial('destroy a worker with no active runs', async (t) => {
+  initLightning();
+  await initWorker();
+
   // should respond to get
   t.true(await ping());
   // should be claiming
@@ -89,6 +113,9 @@ test.serial('destroy a worker with no active runs', async (t) => {
 
 // WARNING this might be flaky in CI
 test.serial('destroy a worker while one run is active', async (t) => {
+  initLightning();
+  await initWorker();
+
   return new Promise((done) => {
     let didFinish = false;
 
@@ -122,6 +149,9 @@ test.serial('destroy a worker while one run is active', async (t) => {
 });
 
 test.serial('destroy a worker while multiple runs are active', async (t) => {
+  initLightning();
+  await initWorker();
+
   return new Promise((done) => {
     let completeCount = 0;
     let startCount = 0;
@@ -159,7 +189,54 @@ test.serial('destroy a worker while multiple runs are active', async (t) => {
   });
 });
 
-test("don't claim after destroy", (t) => {
+test.serial(
+  'destroy a worker while a claim is outstanding and wait for the run to complete',
+  async (t) => {
+    t.plan(4);
+    initLightning({
+      socketDelay: 50,
+    });
+    await initWorker({ noLoop: true });
+    return new Promise((done) => {
+      let didFinish = false;
+
+      const doDestroy = async () => {
+        await destroy(worker, logger);
+
+        t.true(didFinish);
+
+        // should not respond to get
+        t.false(await ping());
+        // should not be claiming
+        t.false(await waitForClaim());
+
+        done();
+      };
+      // As  soon as the claim starts, kill the worker
+      worker.events.once(INTERNAL_CLAIM_START, () => {
+        doDestroy();
+      });
+
+      // We still expect the run to complete
+      lightning.once('run:complete', () => {
+        didFinish = true;
+      });
+
+      // By the time the claim is complete, the worker should be marked destroyed
+      worker.events.once(INTERNAL_CLAIM_COMPLETE, () => {
+        t.true(worker.destroyed);
+      });
+
+      lightning.enqueueRun(createRun());
+      worker.claim().catch();
+    });
+  }
+);
+
+test("don't claim after destroy", async (t) => {
+  initLightning();
+  await initWorker();
+
   return new Promise((done) => {
     let completeCount = 0;
 

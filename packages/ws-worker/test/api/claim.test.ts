@@ -8,6 +8,7 @@ import { createMockLogger } from '@openfn/logger';
 import { ServerApp } from '../../src/server';
 import { mockChannel } from '../../src/mock/sockets';
 import { CLAIM } from '../../src';
+import EventEmitter from 'node:events';
 
 let keys = { public: '.', private: '.' };
 
@@ -144,10 +145,11 @@ const createMockApp = (opts: any) => {
     openClaims: {},
     workflows,
     queueChannel: channel,
-    execute: (...args) => {
+    execute: (...args: any) => {
       onExecute(...args);
     },
-  } as ServerApp;
+    events: new EventEmitter(),
+  } as unknown as ServerApp;
 };
 const logger = createMockLogger();
 

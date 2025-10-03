@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.15.3
+
+### Patch Changes
+
+- 5688813: Allow the worker to shutdown gracefully while claims are still in-flight. Runs will be completed before the server closes
+
 ## 1.15.2
 
 ### Patch Changes
