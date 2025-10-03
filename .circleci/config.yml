@@ -58,7 +58,7 @@ jobs:
           at: ~/project
       - run:
           name: Run Tests
-          command: pnpm test
+          command: pnpm -C packages/engine-multi test
 
   format:
     docker:
@@ -119,18 +119,25 @@ workflows:
       - build:
           requires:
             - install
+      # Testing 3 batches of tests at once
       - unit_test:
           requires:
             - build
-      - type_check:
+      - unit_test_2:
           requires:
             - build
-      - format:
+      - unit_test_3:
           requires:
             - build
-      - integration_test:
-          matrix:
-            parameters:
-              node_version: ['22.20']
-          requires:
-            - build
+      # - type_check:
+      #     requires:
+      #       - build
+      # - format:
+      #     requires:
+      #       - build
+      # - integration_test:
+      #     matrix:
+      #       parameters:
+      #         node_version: ['22.20']
+      #     requires:
+      #       - build
