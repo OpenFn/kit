@@ -8,6 +8,7 @@ import {
   ensureLogOpts,
   LogLevel,
 } from './util';
+import getCLIOptionObject from './util/get-cli-option-object';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -66,6 +67,7 @@ export type Opts = {
   workflow: string;
   // merge options
   removeUnmapped?: boolean;
+  workflowMappings?: Record<string, string>;
 
   // deprecated
   workflowPath?: string;
@@ -591,5 +593,13 @@ export const removeUnmapped: CLIOption = {
     boolean: true,
     description:
       "Removes all workflows that didn't get mapped from the final project after merge",
+  },
+};
+
+export const workflowMappings: CLIOption = {
+  name: 'workflow-mappings',
+  yargs: {
+    type: 'string',
+    coerce: getCLIOptionObject,
   },
 };
