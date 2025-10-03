@@ -60,6 +60,9 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     },
     logger
   );
+  logger.success(
+    `Project ${mProject.name} has been merged into Project ${checkedProject.name} successfully`
+  );
 };
 
 export default mergeHandler;

@@ -66,8 +66,8 @@ export type Opts = {
   useAdaptorsMonorepo?: boolean;
   workflow: string;
   // merge options
-  removeUnmapped?: boolean;
-  workflowMappings?: Record<string, string>;
+  removeUnmapped?: boolean | undefined;
+  workflowMappings?: Record<string, string> | undefined;
 
   // deprecated
   workflowPath?: string;
@@ -601,5 +601,7 @@ export const workflowMappings: CLIOption = {
   yargs: {
     type: 'string',
     coerce: getCLIOptionObject,
+    description:
+      'A manual object mapping of which workflows in source and target should be matched for a merge.',
   },
 };
