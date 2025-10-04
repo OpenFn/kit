@@ -1,0 +1,15 @@
+/**
+  * Ohm grammer for interpreting our Workflow syntax
+  * https://ohmjs.org/docs/intro
+  */
+Workflow {
+  Workflow = (space* Pair space*)*
+
+  Pair =  Node Edge Node
+
+  /* A node name can contain letters, numbers or underscores */
+  Node = (alnum | "_")+
+
+  Edge = "-"
+}
+
