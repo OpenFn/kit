@@ -9,6 +9,7 @@ type GenerateWorkflowOptions = {
   name: string;
   uuidSeed: number;
   openfnUuid: boolean;
+  printErrors: boolean; // true by default
 };
 
 let parser;
@@ -23,7 +24,7 @@ const initOperations = (options = {}) => {
 
   // These are functions which run on matched parse trees
   const operations = {
-    Workflow(_s1, pair, _s2) {
+    Workflow(pair) {
       pair.children.forEach((child) => child.buildWorkflow());
 
       const steps = Object.values(nodes);
@@ -41,7 +42,7 @@ const initOperations = (options = {}) => {
 
       return [n1, n2];
     },
-    Node(node) {
+    node(node) {
       const name = node.sourceString;
       if (!nodes[name]) {
         nodes[name] = {
@@ -73,6 +74,8 @@ export const createParser = () => {
 
   return {
     parse(str, options) {
+      const { printErrors = true } = options;
+
       // Setup semantic actions (which run against an AST and build stuff)
       // Do this on each parse so we can maintain state
       const semantics = parser.createSemantics();
@@ -82,8 +85,12 @@ export const createParser = () => {
       // First we parse the source
       const result = parser.match(str);
       if (!result.succeeded()) {
+        if (printErrors) {
+          console.error(result.shortMessage);
+          console.error(result.message);
+        }
         // TODO can we be more helpful here?
-        throw new Error('Parsing failed!');
+        throw new Error('Parsing failed!' + result.shortMessage);
       }
 
       // Then we pass the AST into an operation factory

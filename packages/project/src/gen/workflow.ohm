@@ -1,14 +1,18 @@
 /**
-  * Ohm grammer for interpreting our Workflow syntax
+  * Ohm grammar for interpreting our Workflow syntax
   * https://ohmjs.org/docs/intro
   */
 Workflow {
-  Workflow = (space* Pair space*)*
+  /* Maybe a top level rule to handle space more nicely? */
+  /* Grammar = Workflow space* */
+  
+  Workflow = Pair*
 
-  Pair =  Node Edge Node
+  Pair =  node Edge node
 
   /* A node name can contain letters, numbers or underscores */
-  Node = (alnum | "_")+
+  /* lower case is important: it disables whitespace */
+  node = (alnum | "_")+
 
   Edge = "-"
 }
