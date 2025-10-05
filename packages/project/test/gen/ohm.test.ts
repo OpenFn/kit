@@ -152,3 +152,107 @@ test('it should parse two node pairs', (t) => {
 
   t.deepEqual(result, expected);
 });
+
+test('it should parse two node pairs from one parent', (t) => {
+  const result = gen('a-b a-c', t);
+  const expected = {
+    steps: [
+      {
+        name: 'a',
+        openfn: {
+          uuid: 1,
+        },
+        next: {
+          b: {
+            openfn: {
+              uuid: 3,
+            },
+          },
+          c: {
+            openfn: {
+              uuid: 5,
+            },
+          },
+        },
+      },
+      {
+        name: 'b',
+        openfn: {
+          uuid: 2,
+        },
+      },
+      {
+        name: 'c',
+        openfn: {
+          uuid: 4,
+        },
+      },
+    ],
+  };
+
+  t.deepEqual(result, expected);
+});
+
+test('it should parse several node pairs', (t) => {
+  const result = gen('a-b b-c b-d a-x', t);
+  const expected = {
+    steps: [
+      {
+        name: 'a',
+        openfn: {
+          uuid: 1,
+        },
+        next: {
+          b: {
+            openfn: {
+              uuid: 3,
+            },
+          },
+          x: {
+            openfn: {
+              uuid: 9,
+            },
+          },
+        },
+      },
+      {
+        name: 'b',
+        openfn: {
+          uuid: 2,
+        },
+        next: {
+          c: {
+            openfn: {
+              uuid: 5,
+            },
+          },
+          d: {
+            openfn: {
+              uuid: 7,
+            },
+          },
+        },
+      },
+      {
+        name: 'c',
+        openfn: {
+          uuid: 4,
+        },
+      },
+      {
+        name: 'd',
+        openfn: {
+          uuid: 6,
+        },
+      },
+      {
+        name: 'x',
+        openfn: {
+          uuid: 8,
+        },
+      },
+    ],
+  };
+
+  t.deepEqual(result, expected);
+});
