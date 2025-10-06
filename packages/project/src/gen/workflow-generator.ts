@@ -22,6 +22,18 @@ const initOperations = (options = {}) => {
     return options.uuidSeed ? options.uuidSeed++ : randomUUID();
   };
 
+  const buildNode = (name: string) => {
+    if (!nodes[name]) {
+      nodes[name] = {
+        name,
+        openfn: {
+          uuid: uuid(),
+        },
+      };
+    }
+    return nodes[name];
+  };
+
   // These are functions which run on matched parse trees
   const operations = {
     Workflow(pair) {
@@ -43,16 +55,27 @@ const initOperations = (options = {}) => {
       return [n1, n2];
     },
     node(node) {
-      const name = node.sourceString;
-      if (!nodes[name]) {
-        nodes[name] = {
-          name,
-          openfn: {
-            uuid: uuid(),
-          },
-        };
-      }
-      return nodes[name];
+      console.log(' >> NODE ');
+      return buildNode(node.sourceString);
+    },
+    nodeWithProps(nameNode, props) {
+      console.log(' >> NODE WITH PROPS');
+      const name = nameNode.sourceString;
+      console.log({ name });
+      const node = buildNode(name);
+      const [key, value] = props.buildWorkflow();
+
+      nodes[name].key = value;
+
+      return node;
+    },
+    props(_lbr, props, _rbr) {
+      // TODO this only supports one now
+      const propArray = [props.buildWorkflow()];
+      return propArray;
+    },
+    prop(key, _op, value) {
+      return [key, value];
     },
     Edge(_) {
       return {

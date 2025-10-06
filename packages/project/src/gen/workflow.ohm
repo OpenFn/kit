@@ -10,9 +10,17 @@ Workflow {
 
   Pair =  node Edge node
 
-  /* A node name can contain letters, numbers or underscores */
   /* lower case is important: it disables whitespace */
-  node = (alnum | "_")+
+  node = nodeWithProps | node_name
+
+  nodeWithProps = node_name props
+
+  /* A node name can contain letters, numbers or underscores */
+  node_name = (alnum | "_")+
+
+  props = "(" prop ")"
+
+  prop = alnum "=" alnum
 
   Edge = "-"
 }

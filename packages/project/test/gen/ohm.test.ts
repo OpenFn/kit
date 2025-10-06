@@ -1,6 +1,7 @@
 // TODO this should wholesale replace workflow-generator.test.ts
 import test from 'ava';
 import { grammar } from 'ohm-js';
+import _ from 'lodash';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import generateWorkflow from '../../src/gen/workflow-generator';
@@ -253,6 +254,15 @@ test('it should parse several node pairs', (t) => {
       },
     ],
   };
+
+  t.deepEqual(result, expected);
+});
+
+test.skip('it should parse a node with a prop', (t) => {
+  const result = gen('a(x=y)-b');
+
+  const expected = _.cloneDeep(fixtures.ab);
+  expected.steps[0].x = 'y';
 
   t.deepEqual(result, expected);
 });
