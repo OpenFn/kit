@@ -26,10 +26,17 @@ export default async (job: Job, error: RTError) => {
     }
 
     if (error.pos && !isNaN(error.pos.line!)) {
-      // TODO how to handle file name properly here?
-      const src = smc.sourceContentFor('src.js')!.split('\n');
-      const line = src[error.pos.line! - 1];
-      error.pos.src = line;
+      const fileName = job.name ? `${job.name}.js` : 'src.js';
+      try {
+        const src = smc.sourceContentFor(fileName)!.split('\n');
+        const line = src[error.pos.line! - 1];
+        error.pos.src = line;
+      } catch (e) {
+        console.debug(
+          `Failed to load sourcemap for "${fileName}", falling back to default error`
+        );
+        console.error(e);
+      }
     }
   }
 };
