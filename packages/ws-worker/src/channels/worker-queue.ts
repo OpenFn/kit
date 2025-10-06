@@ -20,6 +20,7 @@ const connectToWorkerQueue = (
   options: {
     messageTimeout?: number;
     claimTimeout?: number;
+    capacity?: number;
     SocketConstructor?: any;
   }
 ) => {
@@ -28,6 +29,7 @@ const connectToWorkerQueue = (
     // This can be overridden by different channels (although we tend not to)
     messageTimeout = DEFAULT_MESSAGE_TIMEOUT_SECONDS,
     claimTimeout = DEFAULT_CLAIM_TIMEOUT_SECONDS,
+    capacity,
     SocketConstructor = PhxSocket,
   } = options;
 
@@ -72,7 +74,10 @@ const connectToWorkerQueue = (
       didOpen = true;
       shouldReportConnectionError = true;
 
-      const channel = socket.channel('worker:queue') as Channel;
+      // Build join payload with capacity if provided
+      const joinPayload = capacity !== undefined ? { capacity } : {};
+
+      const channel = socket.channel('worker:queue', joinPayload) as Channel;
 
       channel.onMessage = (ev, load) => {
         events.emit('message', ev, load);

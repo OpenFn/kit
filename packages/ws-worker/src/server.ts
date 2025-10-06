@@ -169,6 +169,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     messageTimeout:
       options.socketTimeoutSeconds ?? options.messageTimeoutSeconds,
     claimTimeout: options.claimTimeoutSeconds,
+    capacity: options.maxWorkflows,
   })
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)

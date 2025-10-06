@@ -108,3 +108,19 @@ test('cli should handle array options correctly for env variables', (t) => {
 
   t.deepEqual(args.statePropsToRemove, ['prop1', 'prop2', 'prop3']);
 });
+
+test('cli should parse WORKER_CAPACITY from env', (t) => {
+  process.env.WORKER_CAPACITY = '10';
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.capacity, 10);
+});
+
+test('cli should override WORKER_CAPACITY env with --capacity arg', (t) => {
+  process.env.WORKER_CAPACITY = '10';
+  const argv = 'pnpm start --capacity 20'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.capacity, 20);
+});

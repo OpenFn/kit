@@ -106,5 +106,61 @@ test('should fail to connect with an invalid auth token', async (t) => {
   });
 });
 
+test('should pass capacity in join payload when provided', (t) => {
+  return new Promise((done) => {
+    function createSocket(endpoint: string, options: any) {
+      const socket = new MockSocket(endpoint, {}, async () => {});
+
+      // Override channel method to capture join params
+      const originalChannel = socket.channel.bind(socket);
+      socket.channel = (topic: string, params?: any) => {
+        const channel = originalChannel(topic, params);
+        if (topic === 'worker:queue') {
+          t.truthy(params);
+          t.is(params.capacity, 10);
+        }
+        return channel;
+      };
+
+      return socket;
+    }
+
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      capacity: 10,
+      SocketConstructor: createSocket as any,
+    }).on('connect', () => {
+      t.pass('connected with capacity');
+      done();
+    });
+  });
+});
+
+test('should not pass capacity in join payload when not provided', (t) => {
+  return new Promise((done) => {
+    function createSocket(endpoint: string, options: any) {
+      const socket = new MockSocket(endpoint, {}, async () => {});
+
+      // Override channel method to capture join params
+      const originalChannel = socket.channel.bind(socket);
+      socket.channel = (topic: string, params?: any) => {
+        const channel = originalChannel(topic, params);
+        if (topic === 'worker:queue') {
+          t.deepEqual(params, {});
+        }
+        return channel;
+      };
+
+      return socket;
+    }
+
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      SocketConstructor: createSocket as any,
+    }).on('connect', () => {
+      t.pass('connected without capacity');
+      done();
+    });
+  });
+});
+
 // TODO maybe?
 test.todo('should reconnect with backoff when connection is dropped');
