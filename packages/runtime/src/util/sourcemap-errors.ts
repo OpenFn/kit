@@ -27,16 +27,9 @@ export default async (job: Job, error: RTError) => {
 
     if (error.pos && !isNaN(error.pos.line!)) {
       const fileName = job.name ? `${job.name}.js` : 'src.js';
-      try {
-        const src = smc.sourceContentFor(fileName)!.split('\n');
-        const line = src[error.pos.line! - 1];
-        error.pos.src = line;
-      } catch (e) {
-        console.debug(
-          `Failed to load sourcemap for "${fileName}", falling back to default error`
-        );
-        console.error(e);
-      }
+      const src = smc.sourceContentFor(fileName)!.split('\n');
+      const line = src[error.pos.line! - 1];
+      error.pos.src = line;
     }
   }
 };

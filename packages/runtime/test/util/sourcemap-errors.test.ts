@@ -6,9 +6,9 @@ import { RTError } from '../../src';
 const b = recast.types.builders;
 
 // compile an expression into a function
-const compile = (src: string) => {
+const compile = (src: string, sourceFileName = 'src.js') => {
   const ast = recast.parse(src, {
-    sourceFileName: 'src.js',
+    sourceFileName,
   });
 
   // take the expression and wrap it in a function declaration
@@ -22,12 +22,12 @@ const compile = (src: string) => {
   ast.program.body.push(fn);
 
   return recast.print(fn, {
-    sourceMapName: 'src.map.js',
+    sourceMapName: `${sourceFileName.replace('.js', '.map.js')}`,
   });
 };
 
 test('should write the step name to the error', async (t) => {
-  const { code, map } = compile('x + 1');
+  const { code, map } = compile('x + 1', 'yyy.js');
 
   // create a fake job
   const job = {
