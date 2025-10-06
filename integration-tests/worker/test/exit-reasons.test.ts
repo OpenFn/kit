@@ -53,6 +53,30 @@ test('crash: syntax error', async (t) => {
   t.regex(error_message, /Unexpected token \(1:9\)$/);
 });
 
+// https://github.com/OpenFn/kit/issues/1045
+test('crash: reference error', async (t) => {
+  const attempt = {
+    id: crypto.randomUUID(),
+    jobs: [
+      {
+        name: 'x', // important!
+        adaptor: '@openfn/language-common@latest',
+        body: 'fn((s) => s.err.map(s => s))',
+      },
+    ],
+  };
+
+  const result = await run(attempt);
+
+  const { reason, error_type, error_message } = result;
+  t.is(reason, 'fail');
+  t.is(error_type, 'RuntimeError');
+  t.regex(
+    error_message,
+    /TypeError: Cannot read properties of undefined \(reading \'map\'\)/
+  );
+});
+
 // https://github.com/OpenFn/kit/issues/758
 test('crash: job not found', async (t) => {
   lightning.addDataclip('x', {});

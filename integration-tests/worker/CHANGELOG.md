@@ -1,5 +1,14 @@
 # @openfn/integration-tests-worker
 
+## 1.0.95
+
+### Patch Changes
+
+- 84bebf4: Fix an issue where certain error messages are badly processed the runtime & worker. This resulted in cryptic errors like "src.js is not in the SourceMap".
+  - @openfn/engine-multi@1.6.13
+  - @openfn/lightning-mock@2.2.8
+  - @openfn/ws-worker@1.15.4
+
 ## 1.0.94
 
 ### Patch Changes
