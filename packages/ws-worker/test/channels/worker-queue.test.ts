@@ -108,7 +108,7 @@ test('should fail to connect with an invalid auth token', async (t) => {
 
 test('should pass capacity in join payload when provided', (t) => {
   return new Promise((done) => {
-    function createSocket(endpoint: string, options: any) {
+    function createSocket(endpoint: string, _options: any) {
       const socket = new MockSocket(endpoint, {}, async () => {});
 
       // Override channel method to capture join params
@@ -137,7 +137,7 @@ test('should pass capacity in join payload when provided', (t) => {
 
 test('should not pass capacity in join payload when not provided', (t) => {
   return new Promise((done) => {
-    function createSocket(endpoint: string, options: any) {
+    function createSocket(endpoint: string, _options: any) {
       const socket = new MockSocket(endpoint, {}, async () => {});
 
       // Override channel method to capture join params
