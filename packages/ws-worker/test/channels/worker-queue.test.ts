@@ -106,5 +106,32 @@ test('should fail to connect with an invalid auth token', async (t) => {
   });
 });
 
+test('should pass capacity in join payload when provided', (t) => {
+  return new Promise((done) => {
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      capacity: 10,
+      SocketConstructor: MockSocket as any,
+    }).on('connect', ({ socket }) => {
+      const channel = socket.allChannels['worker:queue'];
+      // @ts-ignore - accessing test property
+      t.is(channel._joinParams.capacity, 10);
+      done();
+    });
+  });
+});
+
+test('should pass capacity in join payload when not provided', (t) => {
+  return new Promise((done) => {
+    connectToWorkerQueue('www', 'a', 'secret', logger, {
+      SocketConstructor: MockSocket as any,
+    }).on('connect', ({ socket }) => {
+      const channel = socket.allChannels['worker:queue'];
+      // @ts-ignore - accessing test property
+      t.is(channel._joinParams.capacity, undefined);
+      done();
+    });
+  });
+});
+
 // TODO maybe?
 test.todo('should reconnect with backoff when connection is dropped');

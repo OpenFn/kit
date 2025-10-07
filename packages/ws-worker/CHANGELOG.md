@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.16.0
+
+### Minor Changes
+
+- 64176c6: Report on configured capacity when connecting to the worker channel
+
 ## 1.15.4
 
 ### Patch Changes
