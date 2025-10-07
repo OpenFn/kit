@@ -6,7 +6,6 @@ import fs from 'fs';
 import { rimraf } from 'rimraf';
 
 const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
-  console.log({ cwd: process.cwd() });
   const commandPath = path.resolve(options.projectPath ?? '.');
   const workspace = new Workspace(commandPath);
   if (!workspace.valid) {
