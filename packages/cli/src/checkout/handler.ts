@@ -6,7 +6,7 @@ import fs from 'fs';
 import { rimraf } from 'rimraf';
 
 const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
-  const commandPath = path.resolve(process.cwd(), options.projectPath ?? '.');
+  const commandPath = path.resolve(options.projectPath ?? '.');
   const workspace = new Workspace(commandPath);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
@@ -17,7 +17,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   const switchProject = workspace.get(options.projectName);
   if (!switchProject) {
     logger.error(
-      `Project with id ${options.projectName} not found in the workspace`
+      `Project with id/name ${options.projectName} not found in the workspace`
     );
     return;
   }
