@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.4.1
+
+### Patch Changes
+
+- add getProjectPath
+
 ## 0.4.0
 
 ### Minor Changes

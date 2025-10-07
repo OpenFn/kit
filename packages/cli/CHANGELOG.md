@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.16.0
+
+### Minor Changes
+
+- Support merge command, to merge two projects while perserving UUIDs
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/project@0.4.1
+
 ## 1.15.1
 
 ### Patch Changes
