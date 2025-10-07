@@ -6,7 +6,7 @@ import { promises as fs } from 'fs';
 import checkoutHandler from '../checkout/handler';
 
 const mergeHandler = async (options: MergeOptions, logger: Logger) => {
-  const commandPath = path.resolve(process.cwd(), options.projectPath ?? '.');
+  const commandPath = path.resolve(options.projectPath ?? '.');
   const workspace = new Workspace(commandPath);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');

@@ -18,7 +18,7 @@ export class Workspace {
   constructor(workspacePath: string) {
     const projectsPath = path.join(workspacePath, PROJECTS_DIRECTORY);
     const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
-
+    console.log({ workspacePath, openfnYamlPath });
     // dealing with openfn.yaml
     if (pathExists(openfnYamlPath, 'file')) {
       this.isValid = true;
