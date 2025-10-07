@@ -125,11 +125,8 @@ export class MockSocket {
     if (!this.allChannels[topic]) {
       this.allChannels[topic] = mockChannel();
     }
-    // Store params on the channel for testing purposes
-    if (params) {
-      // @ts-ignore
-      this.allChannels[topic]._joinParams = params;
-    }
+    // @ts-ignore
+    this.allChannels[topic]._joinParams = params;
     return this.allChannels[topic];
   }
 }

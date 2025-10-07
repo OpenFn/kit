@@ -74,9 +74,7 @@ const connectToWorkerQueue = (
       didOpen = true;
       shouldReportConnectionError = true;
 
-      // Build join payload with capacity if provided
-      const joinPayload = capacity !== undefined ? { capacity } : {};
-
+      const joinPayload = { capacity };
       const channel = socket.channel('worker:queue', joinPayload) as Channel;
 
       channel.onMessage = (ev, load) => {
