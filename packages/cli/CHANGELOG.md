@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Support merge command, to merge two projects while perserving UUIDs
+- Support merge command, to merge two projects while preserving UUIDs
 
 ### Patch Changes
 

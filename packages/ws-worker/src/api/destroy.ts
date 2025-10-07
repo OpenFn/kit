@@ -1,5 +1,5 @@
 import { ServerApp } from '../server';
-import { INTERNAL_RUN_COMPLETE } from '../events';
+import { INTERNAL_CLAIM_COMPLETE, INTERNAL_RUN_COMPLETE } from '../events';
 
 import type { Logger } from '@openfn/logger';
 
@@ -15,7 +15,6 @@ const destroy = async (app: ServerApp, logger: Logger) => {
 
       // Immediately stop asking for more work
       app.workloop?.stop('server closed');
-      app.queueChannel?.leave();
 
       // Shut down the HTTP server
       app.server.close(async () => {
@@ -24,8 +23,9 @@ const destroy = async (app: ServerApp, logger: Logger) => {
     }),
     new Promise<void>(async (resolve) => {
       // Let any active runs complete
-      await waitForRuns(app, logger);
+      await waitForRunsAndClaims(app, logger);
 
+      app.queueChannel?.leave();
       // Kill the engine and socket
       await app.engine.destroy();
       app.socket?.disconnect();
@@ -37,27 +37,38 @@ const destroy = async (app: ServerApp, logger: Logger) => {
   logger.success('Server closed');
 };
 
-const waitForRuns = (app: ServerApp, logger: Logger) =>
+const waitForRunsAndClaims = (app: ServerApp, logger: Logger) =>
   new Promise<void>((resolve) => {
     const log = () => {
       logger.debug(
-        `Waiting for ${Object.keys(app.workflows).length} runs to complete...`
+        `Waiting for ${Object.keys(app.workflows).length} runs and ${
+          Object.keys(app.openClaims).length
+        } claims to complete...`
       );
     };
 
-    const onRunComplete = () => {
-      if (Object.keys(app.workflows).length === 0) {
+    const checkAllClear = () => {
+      if (
+        Object.keys(app.workflows).length +
+          Object.keys(app.openClaims).length ===
+        0
+      ) {
         logger.debug('All runs completed!');
-        app.events.off(INTERNAL_RUN_COMPLETE, onRunComplete);
+        app.events.off(INTERNAL_RUN_COMPLETE, checkAllClear);
+        app.events.off(INTERNAL_CLAIM_COMPLETE, checkAllClear);
         resolve();
       } else {
         log();
       }
     };
 
-    if (Object.keys(app.workflows).length) {
+    if (
+      Object.keys(app.workflows).length ||
+      Object.keys(app.openClaims).length
+    ) {
       log();
-      app.events.on(INTERNAL_RUN_COMPLETE, onRunComplete);
+      app.events.on(INTERNAL_RUN_COMPLETE, checkAllClear);
+      app.events.on(INTERNAL_CLAIM_COMPLETE, checkAllClear);
     } else {
       logger.debug('No active runs detected, closing immediately');
       resolve();

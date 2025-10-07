@@ -121,10 +121,12 @@ export class MockSocket {
       });
   }
 
-  channel(topic: string) {
+  channel(topic: string, params?: any) {
     if (!this.allChannels[topic]) {
       this.allChannels[topic] = mockChannel();
     }
+    // @ts-ignore
+    this.allChannels[topic]._joinParams = params;
     return this.allChannels[topic];
   }
 }

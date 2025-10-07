@@ -4,7 +4,11 @@ import * as jose from 'jose';
 
 import { Logger, createMockLogger } from '@openfn/logger';
 import { ClaimPayload, ClaimReply } from '@openfn/lexicon/lightning';
-import { CLAIM } from '../events';
+import {
+  CLAIM,
+  INTERNAL_CLAIM_COMPLETE,
+  INTERNAL_CLAIM_START,
+} from '../events';
 
 import type { ServerApp } from '../server';
 
@@ -95,6 +99,7 @@ const claim = (
 
     logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
 
+    app.events.emit(INTERNAL_CLAIM_START);
     const start = Date.now();
     app.queueChannel
       .push<ClaimPayload>(CLAIM, {
@@ -109,10 +114,9 @@ const claim = (
             runs.length ? runs.map((r) => r.id).join(',') : '-'
           })`
         );
-        // TODO what if we get here after we've been cancelled?
-        // the events have already been claimed...
 
         if (!runs?.length) {
+          app.events.emit(INTERNAL_CLAIM_COMPLETE, { runs });
           // throw to backoff and try again
           return reject(new Error('No runs returned'));
         }
@@ -135,8 +139,10 @@ const claim = (
 
           logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
-          resolve();
         });
+        // Don't trigger claim complete until all runs are registered
+        resolve();
+        app.events.emit(INTERNAL_CLAIM_COMPLETE, { runs });
       })
       // TODO need implementations for both of these really
       // What do we do if we fail to join the worker channel?

@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.7.3
+
+### Patch Changes
+
+- 84bebf4: Fix an issue where certain error messages are badly processed the runtime & worker. This resulted in cryptic errors like "src.js is not in the SourceMap".
+
 ## 1.7.2
 
 ### Patch Changes

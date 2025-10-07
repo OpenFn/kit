@@ -1,5 +1,25 @@
 # ws-worker
 
+## 1.16.0
+
+### Minor Changes
+
+- 64176c6: Report on configured capacity when connecting to the worker channel
+
+## 1.15.4
+
+### Patch Changes
+
+- Updated dependencies [84bebf4]
+  - @openfn/runtime@1.7.3
+  - @openfn/engine-multi@1.6.13
+
+## 1.15.3
+
+### Patch Changes
+
+- 5688813: Allow the worker to shutdown gracefully while claims are still in-flight. Runs will be completed before the server closes
+
 ## 1.15.2
 
 ### Patch Changes

@@ -11,7 +11,11 @@ import Router from '@koa/router';
 import { humanId } from 'human-id';
 import { createMockLogger, Logger } from '@openfn/logger';
 import { ClaimRun } from '@openfn/lexicon/lightning';
-import { INTERNAL_RUN_COMPLETE, WORK_AVAILABLE } from './events';
+import {
+  INTERNAL_RUN_COMPLETE,
+  INTERNAL_SOCKET_READY,
+  WORK_AVAILABLE,
+} from './events';
 import destroy from './api/destroy';
 import startWorkloop, { Workloop } from './api/workloop';
 import claim from './api/claim';
@@ -71,6 +75,9 @@ export interface ServerApp extends Koa {
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
   resumeWorkloop: () => void;
+
+  // debug API
+  claim: () => Promise<any>;
 }
 
 type SocketAndChannel = {
@@ -112,6 +119,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       logger.break();
     }
 
+    app.events.emit(INTERNAL_SOCKET_READY);
     app.resumeWorkloop();
   };
 
@@ -147,9 +155,11 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   // handles messages for the worker:queue
   const onMessage = (event: string) => {
     if (event === WORK_AVAILABLE) {
-      claim(app, logger, { maxWorkers: options.maxWorkflows }).catch(() => {
-        // do nothing - it's fine if  claim throws here
-      });
+      if (!app.destroyed) {
+        claim(app, logger, { maxWorkers: options.maxWorkflows }).catch(() => {
+          // do nothing - it's fine if  claim throws here
+        });
+      }
     }
   };
 
@@ -159,6 +169,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     messageTimeout:
       options.socketTimeoutSeconds ?? options.messageTimeoutSeconds,
     claimTimeout: options.claimTimeoutSeconds,
+    capacity: options.maxWorkflows,
   })
     .on('connect', onConnect)
     .on('disconnect', onDisconnect)
@@ -350,6 +361,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         ctx.status = 204;
       });
   });
+
+  app.claim = () => {
+    return claim(app, logger, {
+      maxWorkers: options.maxWorkflows,
+    });
+  };
 
   app.destroy = () => destroy(app, logger);
 
