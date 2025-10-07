@@ -18,7 +18,7 @@ Workflow {
   /* A node name can contain letters, numbers or underscores */
   node_name = (alnum | "_")+
 
-  props = "(" prop ")"
+  props = "(" listOf<prop, ","> ")"
 
   prop = alnum "=" alnum
 

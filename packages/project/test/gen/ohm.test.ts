@@ -258,7 +258,7 @@ test('it should parse several node pairs', (t) => {
   t.deepEqual(result, expected);
 });
 
-test.only('it should parse a node with a prop', (t) => {
+test('it should parse a node with a prop', (t) => {
   const result = gen('a(x=y)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
   expected.steps[0].x = 'y';
@@ -266,11 +266,11 @@ test.only('it should parse a node with a prop', (t) => {
   t.deepEqual(result, expected);
 });
 
-test.skip('it should parse a node with two props', (t) => {
-  const result = gen('a(x=y z=y)-b', t);
+test('it should parse a node with two props', (t) => {
+  const result = gen('a(x=1,z=2)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
-  expected.steps[0].x = 'y';
-  expected.steps[0].z = 'y';
+  expected.steps[0].x = '1';
+  expected.steps[0].z = '2';
 
   t.deepEqual(result, expected);
 });

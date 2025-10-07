@@ -66,17 +66,16 @@ const initOperations = (options = {}) => {
     nodeWithProps(nameNode, props) {
       const name = nameNode.sourceString;
       const node = buildNode(name);
-      const [key, value] = props.buildWorkflow();
-      nodes[name][key] = value;
+      props.buildWorkflow().forEach(([key, value]) => {
+        nodes[name][key] = value;
+      });
       return node;
     },
     node_name(n) {
       return n.sourceString;
     },
     props(_lbr, props, _rbr) {
-      // TODO this only supports one now
-      const propArray = [props.buildWorkflow()];
-      return propArray[0]; // todo
+      return props.asIteration().children.map((c) => c.buildWorkflow());
     },
     prop(key, _op, value) {
       return [key.sourceString, value.sourceString];
