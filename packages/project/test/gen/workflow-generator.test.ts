@@ -1,276 +1,276 @@
+// TODO this should wholesale replace workflow-generator.test.ts
 import test from 'ava';
-import Project from '../../src/Project';
+import { grammar } from 'ohm-js';
+import _ from 'lodash';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import generateWorkflow from '../../src/gen/workflow-generator';
+import * as fixtures from './fixtures';
 
-test('workflow should be compatible with Project', (t) => {
-  const wf = generateWorkflow(['a-b']);
-  const project = new Project({ workflows: [wf] });
+const printResults = true; // TODO load this from env or something
 
-  t.is(project.workflows.length, 1);
-  t.is(project.workflows[0].id, 'workflow');
-  t.is(project.workflows[0].steps[0].id, 'a');
-  t.is(project.workflows[0].steps[1].id, 'b');
+const print = (t, result) => {};
+
+// Generate a workflow with a fixed UUID seed
+// Pass test context to log the result
+const gen = (src, t) => {
+  const result = generateWorkflow(src, { uuidSeed: 1, printErrors: false });
+  if (t) {
+    t.log(JSON.stringify(result, null, 2));
+  }
+  return result;
+};
+
+test('it should parse a simple workflow', (t) => {
+  const result = gen('a-b', t);
+
+  t.deepEqual(result, fixtures.ab);
 });
 
-test('should generate a simple workflow with uuids', (t) => {
-  const wf = generateWorkflow(['a-b'], { uuidSeed: 0 });
-  t.deepEqual(wf.workflow, {
-    id: 'workflow',
-    name: 'workflow',
+test('it should throw if parsing fails with 1 node, 1 edge', (t) => {
+  t.throws(() => gen('a-'), {
+    message: /parsing failed!/i,
+  });
+});
+
+test('it should throw if parsing fails with 2 nodes, 0 edges', (t) => {
+  t.throws(() => gen('a b'), {
+    message: /parsing failed!/i,
+  });
+});
+
+test('it should parse a simple workflow with leading space', (t) => {
+  const result = gen(' a-b');
+  t.deepEqual(result, fixtures.ab);
+});
+
+test('it should parse a simple workflow with trailing space', (t) => {
+  const result = gen('a-b ');
+  t.deepEqual(result, fixtures.ab);
+});
+
+test("it should fail if there's a space on an edge", (t) => {
+  const result = gen('a -b');
+  t.throws(() => gen('a-'), {
+    message: /parsing failed!/i,
+  });
+});
+
+test('it should parse a simple workflow with any letter', (t) => {
+  const result = gen('x-y', t);
+  const expected = {
     steps: [
       {
-        id: 'a',
+        name: 'x',
+        openfn: {
+          uuid: 1,
+        },
         next: {
-          b: {
+          y: {
             openfn: {
-              uuid: 1,
+              uuid: 3,
             },
           },
         },
+      },
+      {
+        name: 'y',
         openfn: {
           uuid: 2,
         },
       },
-      {
-        id: 'b',
-        openfn: {
-          uuid: 3,
-        },
-      },
     ],
-  });
+  };
+  t.deepEqual(result, expected);
 });
 
-test('should support long node ids', (t) => {
-  const wf = generateWorkflow(['parent-child'], { uuidSeed: 0 });
-
-  t.deepEqual(wf.workflow, {
-    id: 'workflow',
-    name: 'workflow',
+test('it should parse a simple workflow with words, numbers and underscores', (t) => {
+  const result = gen('node_1-_node_2_', t);
+  const expected = {
     steps: [
       {
-        id: 'parent',
+        name: 'node_1',
+        openfn: {
+          uuid: 1,
+        },
         next: {
-          child: {
+          _node_2_: {
             openfn: {
-              uuid: 1,
+              uuid: 3,
             },
           },
         },
+      },
+      {
+        name: '_node_2_',
         openfn: {
           uuid: 2,
         },
       },
-      {
-        id: 'child',
-        openfn: {
-          uuid: 3,
-        },
-      },
     ],
-  });
+  };
+  t.deepEqual(result, expected);
 });
 
-test('should generate two children for one node', (t) => {
-  const wf = generateWorkflow(['a-b', 'a-c'], { uuidSeed: 0 });
-
-  t.deepEqual(wf.workflow, {
-    id: 'workflow',
-    name: 'workflow',
+test('it should parse two node pairs', (t) => {
+  const result = gen('a-b b-c', t);
+  const expected = {
     steps: [
       {
-        id: 'a',
+        name: 'a',
+        openfn: {
+          uuid: 1,
+        },
         next: {
           b: {
             openfn: {
-              uuid: 1,
+              uuid: 3,
+            },
+          },
+        },
+      },
+      {
+        name: 'b',
+        openfn: {
+          uuid: 2,
+        },
+        next: {
+          c: {
+            openfn: {
+              uuid: 5,
+            },
+          },
+        },
+      },
+      {
+        name: 'c',
+        openfn: {
+          uuid: 4,
+        },
+      },
+    ],
+  };
+
+  t.deepEqual(result, expected);
+});
+
+test('it should parse two node pairs from one parent', (t) => {
+  const result = gen('a-b a-c', t);
+  const expected = {
+    steps: [
+      {
+        name: 'a',
+        openfn: {
+          uuid: 1,
+        },
+        next: {
+          b: {
+            openfn: {
+              uuid: 3,
             },
           },
           c: {
             openfn: {
-              uuid: 4,
+              uuid: 5,
             },
           },
         },
+      },
+      {
+        name: 'b',
         openfn: {
           uuid: 2,
         },
       },
       {
-        id: 'b',
+        name: 'c',
         openfn: {
-          uuid: 3,
-        },
-      },
-      {
-        id: 'c',
-        openfn: {
-          uuid: 5,
+          uuid: 4,
         },
       },
     ],
-  });
+  };
+
+  t.deepEqual(result, expected);
 });
 
-test("should generate circular references even though that's illegal", (t) => {
-  const wf = generateWorkflow(['a-b', 'b-a'], { uuidSeed: 0 });
-
-  t.deepEqual(wf.workflow, {
-    id: 'workflow',
-    name: 'workflow',
+test('it should parse several node pairs', (t) => {
+  const result = gen('a-b b-c b-d a-x', t);
+  const expected = {
     steps: [
       {
-        id: 'a',
+        name: 'a',
+        openfn: {
+          uuid: 1,
+        },
         next: {
           b: {
             openfn: {
-              uuid: 1,
+              uuid: 3,
+            },
+          },
+          x: {
+            openfn: {
+              uuid: 9,
             },
           },
         },
+      },
+      {
+        name: 'b',
         openfn: {
           uuid: 2,
         },
-      },
-      {
-        id: 'b',
         next: {
-          a: {
-            openfn: {
-              uuid: 4,
-            },
-          },
-        },
-        openfn: {
-          uuid: 3,
-        },
-      },
-    ],
-  });
-});
-
-test('should ignore duplicates', (t) => {
-  const wf = generateWorkflow(['a-b', 'a-b'], { uuidSeed: 0 });
-
-  t.deepEqual(wf.workflow, {
-    id: 'workflow',
-    name: 'workflow',
-    steps: [
-      {
-        id: 'a',
-        next: {
-          b: {
-            openfn: {
-              uuid: 1,
-            },
-          },
-        },
-        openfn: {
-          uuid: 2,
-        },
-      },
-      {
-        id: 'b',
-        openfn: {
-          uuid: 3,
-        },
-      },
-    ],
-  });
-});
-
-test('should generate a complex workflow', (t) => {
-  const wf = generateWorkflow(
-    ['a-b', 'a-c', 'c-d', 'c-e', 'c-f', 'a-f', 'e-a', 'e-f'],
-    { uuidSeed: 0 }
-  );
-
-  t.deepEqual(wf.workflow, {
-    id: 'workflow',
-    name: 'workflow',
-    steps: [
-      {
-        id: 'a',
-        next: {
-          b: {
-            openfn: {
-              uuid: 1,
-            },
-          },
           c: {
             openfn: {
-              uuid: 4,
+              uuid: 5,
             },
           },
-          f: {
-            openfn: {
-              uuid: 12,
-            },
-          },
-        },
-        openfn: {
-          uuid: 2,
-        },
-      },
-      {
-        id: 'b',
-        openfn: {
-          uuid: 3,
-        },
-      },
-      {
-        id: 'c',
-        next: {
           d: {
             openfn: {
-              uuid: 6,
+              uuid: 7,
             },
           },
-          e: {
-            openfn: {
-              uuid: 8,
-            },
-          },
-          f: {
-            openfn: {
-              uuid: 10,
-            },
-          },
-        },
-        openfn: {
-          uuid: 5,
         },
       },
       {
-        id: 'd',
+        name: 'c',
         openfn: {
-          uuid: 7,
+          uuid: 4,
         },
       },
       {
-        id: 'e',
-        next: {
-          a: {
-            openfn: {
-              uuid: 13,
-            },
-          },
-          f: {
-            openfn: {
-              uuid: 14,
-            },
-          },
-        },
+        name: 'd',
         openfn: {
-          uuid: 9,
+          uuid: 6,
         },
       },
       {
-        id: 'f',
+        name: 'x',
         openfn: {
-          uuid: 11,
+          uuid: 8,
         },
       },
     ],
-  });
+  };
+
+  t.deepEqual(result, expected);
+});
+
+test('it should parse a node with a prop', (t) => {
+  const result = gen('a(x=y)-b', t);
+  const expected = _.cloneDeep(fixtures.ab);
+  expected.steps[0].x = 'y';
+
+  t.deepEqual(result, expected);
+});
+
+test('it should parse a node with two props', (t) => {
+  const result = gen('a(x=1,z=2)-b', t);
+  const expected = _.cloneDeep(fixtures.ab);
+  expected.steps[0].x = '1';
+  expected.steps[0].z = '2';
+
+  t.deepEqual(result, expected);
 });
