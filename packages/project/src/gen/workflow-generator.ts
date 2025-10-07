@@ -54,28 +54,32 @@ const initOperations = (options = {}) => {
 
       return [n1, n2];
     },
+    // node could just be a node name, or a node with props
+    // different results have different requirements
+    // Not sure the best way to handle this, but this seems to work
     node(node) {
-      console.log(' >> NODE ');
-      return buildNode(node.sourceString);
+      if (node._node.ruleName === 'node_name') {
+        return buildNode(node.sourceString);
+      }
+      return node.buildWorkflow();
     },
     nodeWithProps(nameNode, props) {
-      console.log(' >> NODE WITH PROPS');
       const name = nameNode.sourceString;
-      console.log({ name });
       const node = buildNode(name);
       const [key, value] = props.buildWorkflow();
-
-      nodes[name].key = value;
-
+      nodes[name][key] = value;
       return node;
+    },
+    node_name(n) {
+      return n.sourceString;
     },
     props(_lbr, props, _rbr) {
       // TODO this only supports one now
       const propArray = [props.buildWorkflow()];
-      return propArray;
+      return propArray[0]; // todo
     },
     prop(key, _op, value) {
-      return [key, value];
+      return [key.sourceString, value.sourceString];
     },
     Edge(_) {
       return {

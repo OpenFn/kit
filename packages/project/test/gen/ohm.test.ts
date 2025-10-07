@@ -22,7 +22,7 @@ const gen = (src, t) => {
 };
 
 test('it should parse a simple workflow', (t) => {
-  const result = gen('a-b');
+  const result = gen('a-b', t);
 
   t.deepEqual(result, fixtures.ab);
 });
@@ -258,11 +258,19 @@ test('it should parse several node pairs', (t) => {
   t.deepEqual(result, expected);
 });
 
-test.skip('it should parse a node with a prop', (t) => {
-  const result = gen('a(x=y)-b');
-
+test.only('it should parse a node with a prop', (t) => {
+  const result = gen('a(x=y)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
   expected.steps[0].x = 'y';
+
+  t.deepEqual(result, expected);
+});
+
+test.skip('it should parse a node with two props', (t) => {
+  const result = gen('a(x=y z=y)-b', t);
+  const expected = _.cloneDeep(fixtures.ab);
+  expected.steps[0].x = 'y';
+  expected.steps[0].z = 'y';
 
   t.deepEqual(result, expected);
 });
