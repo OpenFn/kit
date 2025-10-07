@@ -6,7 +6,7 @@ import fs from 'fs';
 import { rimraf } from 'rimraf';
 
 const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
-  const commandPath = path.resolve(process.cwd(), options.projectPath ?? '.');
+  const commandPath = path.resolve(options.projectPath ?? '.');
   const workspace = new Workspace(commandPath);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
