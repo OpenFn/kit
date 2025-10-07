@@ -79,6 +79,8 @@ const isOpenFunction = (path: NodePath) => {
 };
 
 function visitor(path: NodePath<n.MemberExpression>) {
+  return true;
+
   let first = path.node.object;
   while (first.hasOwnProperty('object')) {
     first = (first as n.MemberExpression).object;

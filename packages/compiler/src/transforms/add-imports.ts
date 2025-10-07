@@ -107,6 +107,10 @@ export type IdentifierList = Record<string, true>;
 export function findAllDanglingIdentifiers(ast: ASTNode) {
   const result: IdentifierList = {};
   visit(ast, {
+    visitObjectExpression: () => {
+      // TODO: abort if top-level and inside a const
+      return false;
+    },
     visitIdentifier: function (path) {
       // If this is part of an import statement, do nothing
       if (n.ImportSpecifier.check(path.parent.node)) {

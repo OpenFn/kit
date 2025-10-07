@@ -52,20 +52,20 @@ export default function transform(
   options: TransformOptions = {}
 ) {
   const printHeap = (reason: string) => {
-    if (options.trace) {
-      heap(reason, options.logger);
-    }
+    heap(reason, options.logger);
   };
   const start = Date.now();
 
   if (!transformers) {
-    transformers = [
+    const _transformers = [
       lazyState,
       promises,
       ensureExports,
       topLevelOps,
       addImports,
     ] as Transformer[];
+
+    transformers = [addImports];
   }
   const logger = options.logger || defaultLogger;
 
