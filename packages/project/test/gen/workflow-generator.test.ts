@@ -9,6 +9,7 @@ import {
   generateProject,
 } from '../../src/gen/workflow-generator';
 import * as fixtures from './fixtures';
+import Workflow from '../../src/Workflow';
 
 const printResults = true; // TODO load this from env or something
 
@@ -19,9 +20,9 @@ const print = (t, result) => {};
 const gen = (src, t) => {
   const result = generateWorkflow(src, { uuidSeed: 1, printErrors: false });
   if (t) {
-    t.log(JSON.stringify(result, null, 2));
+    t.log(JSON.stringify(result.toJSON(), null, 2));
   }
-  return result;
+  return result.toJSON();
 };
 
 test('it should generate a simple workflow', (t) => {
@@ -30,10 +31,31 @@ test('it should generate a simple workflow', (t) => {
   t.deepEqual(result, fixtures.ab);
 });
 
+test('it should return a Workflow instance', (t) => {
+  const result = generateWorkflow('a-b');
+
+  t.true(result instanceof Workflow);
+});
+
 test('it should generate a simple project', (t) => {
   const result = generateProject('danko jones', ['a-b'], { uuidSeed: 1 });
   t.is(result.name, 'danko jones');
   t.deepEqual(result.workflows[0].toJSON(), fixtures.ab);
+});
+
+test.skip('it should generate a simple workflow with an attribute (name', (t) => {
+  const result = gen(
+    `@name joe
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    name: 'joe',
+  };
+
+  t.deepEqual(result, fixtures.ab);
 });
 
 test('it should throw if parsing fails with 1 node, 1 edge', (t) => {

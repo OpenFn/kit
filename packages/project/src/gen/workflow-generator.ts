@@ -141,7 +141,7 @@ function generateWorkflow(
     parser = createParser();
   }
 
-  return parser.parse(def, options);
+  return new Workflow(parser.parse(def, options));
 }
 
 function generateProject(
