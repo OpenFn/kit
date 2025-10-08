@@ -4,7 +4,10 @@ import { grammar } from 'ohm-js';
 import _ from 'lodash';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
-import generateWorkflow from '../../src/gen/workflow-generator';
+import {
+  generateWorkflow,
+  generateProject,
+} from '../../src/gen/workflow-generator';
 import * as fixtures from './fixtures';
 
 const printResults = true; // TODO load this from env or something
@@ -21,10 +24,16 @@ const gen = (src, t) => {
   return result;
 };
 
-test('it should parse a simple workflow', (t) => {
+test('it should generate a simple workflow', (t) => {
   const result = gen('a-b', t);
 
   t.deepEqual(result, fixtures.ab);
+});
+
+test('it should generate a simple project', (t) => {
+  const result = generateProject('danko jones', ['a-b'], { uuidSeed: 1 });
+  t.is(result.name, 'danko jones');
+  t.deepEqual(result.workflows[0].toJSON(), fixtures.ab);
 });
 
 test('it should throw if parsing fails with 1 node, 1 edge', (t) => {
@@ -39,12 +48,12 @@ test('it should throw if parsing fails with 2 nodes, 0 edges', (t) => {
   });
 });
 
-test('it should parse a simple workflow with leading space', (t) => {
+test('it should generate a simple workflow with leading space', (t) => {
   const result = gen(' a-b');
   t.deepEqual(result, fixtures.ab);
 });
 
-test('it should parse a simple workflow with trailing space', (t) => {
+test('it should generate a simple workflow with trailing space', (t) => {
   const result = gen('a-b ');
   t.deepEqual(result, fixtures.ab);
 });
@@ -56,7 +65,7 @@ test("it should fail if there's a space on an edge", (t) => {
   });
 });
 
-test('it should parse a simple workflow with any letter', (t) => {
+test('it should generate a simple workflow with any letter', (t) => {
   const result = gen('x-y', t);
   const expected = {
     steps: [
@@ -84,7 +93,7 @@ test('it should parse a simple workflow with any letter', (t) => {
   t.deepEqual(result, expected);
 });
 
-test('it should parse a simple workflow with words, numbers and underscores', (t) => {
+test('it should generate a simple workflow with words, numbers and underscores', (t) => {
   const result = gen('node_1-_node_2_', t);
   const expected = {
     steps: [
@@ -112,7 +121,7 @@ test('it should parse a simple workflow with words, numbers and underscores', (t
   t.deepEqual(result, expected);
 });
 
-test('it should parse two node pairs', (t) => {
+test('it should generate two node pairs', (t) => {
   const result = gen('a-b b-c', t);
   const expected = {
     steps: [
@@ -154,7 +163,7 @@ test('it should parse two node pairs', (t) => {
   t.deepEqual(result, expected);
 });
 
-test('it should parse two node pairs from one parent', (t) => {
+test('it should generate two node pairs from one parent', (t) => {
   const result = gen('a-b a-c', t);
   const expected = {
     steps: [
@@ -194,7 +203,7 @@ test('it should parse two node pairs from one parent', (t) => {
   t.deepEqual(result, expected);
 });
 
-test('it should parse several node pairs', (t) => {
+test('it should generate several node pairs', (t) => {
   const result = gen('a-b b-c b-d a-x', t);
   const expected = {
     steps: [
@@ -258,7 +267,7 @@ test('it should parse several node pairs', (t) => {
   t.deepEqual(result, expected);
 });
 
-test('it should parse a node with a prop', (t) => {
+test('it should generate a node with a prop', (t) => {
   const result = gen('a(x=y)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
   expected.steps[0].x = 'y';
@@ -266,7 +275,7 @@ test('it should parse a node with a prop', (t) => {
   t.deepEqual(result, expected);
 });
 
-test('it should parse a node with two props', (t) => {
+test('it should generate a node with two props', (t) => {
   const result = gen('a(x=1,z=2)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
   expected.steps[0].x = '1';

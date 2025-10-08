@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { grammar } from 'ohm-js';
+import Project from '../Project';
 import Workflow from '../Workflow';
 import slugify from '../util/slugify';
 
@@ -130,11 +131,10 @@ export const createParser = () => {
 
 /**
  * Generate a Workflow from a simple text based representation
- * The def array contains strings of pairs of nodes
- * eg, ['a-b', 'b-c']
+ * eg, `a-b b-c a-c`
  */
-export default function generateWorkflow(
-  def: string[],
+function generateWorkflow(
+  def: string,
   options: Partial<GenerateWorkflowOptions> = {}
 ) {
   if (!parser) {
@@ -143,3 +143,20 @@ export default function generateWorkflow(
 
   return parser.parse(def, options);
 }
+
+function generateProject(
+  name: string,
+  workflowDefs: string[],
+  options: Partial<GenerateWorkflowOptions>
+) {
+  const workflows = workflowDefs.map((w) => generateWorkflow(w, options));
+
+  return new Project({
+    name,
+    workflows,
+  });
+}
+
+export default generateWorkflow;
+
+export { generateWorkflow, generateProject };
