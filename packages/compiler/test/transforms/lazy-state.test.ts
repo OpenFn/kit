@@ -15,7 +15,7 @@ test('convert a simple dollar reference', (t) => {
   t.is(code, 'get(state => state.data)');
 });
 
-test.only("don't visit top-level object", (t) => {
+test("don't visit top-level object", (t) => {
   const ast = parse(`const x = { x: $.data };
 fn($.data)`);
   t.notThrows(() => {
