@@ -2,7 +2,7 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../src/Project';
-import generateWorkflow from '../src/gen/workflow-generator';
+import generateWorkflow from '../src/gen/generator';
 
 // TODO move to fixtures and re-use?
 // Or use util function instead?
@@ -118,15 +118,9 @@ test.todo('serialize state as yaml');
 // Note that this is mostly tested under merge-project
 // This is testing the static function on Project, which is just a proxy
 test('should merge two projects', (t) => {
-  const wf_a = generateWorkflow(['a-b', 'a-c']);
-  wf_a.set('a', {
-    expression: 'a()',
-  });
+  const wf_a = generateWorkflow(`a(expression="a()")-b a-c`);
 
-  const wf_b = generateWorkflow(['a-b', 'a-c']);
-  wf_b.set('a', {
-    expression: 'b()',
-  });
+  const wf_b = generateWorkflow(`a(expression="b()")-b a-c`);
 
   const main = new Project({
     name: 'a',

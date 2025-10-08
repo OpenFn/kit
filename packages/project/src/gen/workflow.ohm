@@ -1,0 +1,38 @@
+/**
+  * Ohm grammar for interpreting our Workflow syntax
+  * https://ohmjs.org/docs/intro
+  */
+Workflow {
+  Workflow = attribute* Pair*
+
+  attribute = "@" attr_name space attr_name
+
+  attr_name = (alnum | "_" | "-")+
+
+  Pair =  node edge node
+
+  comment = "#" (~lineTerminator any)*
+
+  space := " " | "\t" | lineTerminator | comment
+
+  /* lower case is important: it disables whitespace */
+  node = nodeWithProps | node_name
+
+  nodeWithProps = node_name props
+
+  /* A node name can contain letters, numbers or underscores */
+  node_name = (alnum | "_")+
+
+  props = "(" listOf<prop, ","> ")"
+
+  prop = alnum+ "=" propValue
+
+  propValue = alnum+ | quotedProp
+  
+  quotedProp = "\"" (~"\"" any)* "\""
+
+  edge = "-"
+
+  lineTerminator =  "\n" | "\r"
+}
+
