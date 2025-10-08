@@ -52,7 +52,9 @@ const initOperations = (options = {}) => {
 
       return { ...attributes, steps: steps };
     },
-
+    comment(_a, _b) {
+      return null;
+    },
     attribute(_, name, _space, value) {
       return [name.sourceString, value.sourceString];
     },

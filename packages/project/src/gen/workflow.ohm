@@ -4,10 +4,14 @@
   */
 Workflow {
   Workflow = attribute* Pair*
-  
+
   attribute = "@" alnum+ space alnum+
 
   Pair =  node edge node
+
+  comment = "#" (~lineTerminator (any))*
+
+  space := " " | "\t" | lineTerminator | comment
 
   /* lower case is important: it disables whitespace */
   node = nodeWithProps | node_name
@@ -22,5 +26,7 @@ Workflow {
   prop = alnum "=" alnum
 
   edge = "-"
+
+  lineTerminator =  "\n" | "\r"
 }
 

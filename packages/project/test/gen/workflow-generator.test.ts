@@ -322,3 +322,63 @@ test('it should generate a node with two props', (t) => {
 
   t.deepEqual(result, expected);
 });
+
+test('it should ignore leading comments', (t) => {
+  const result = gen(
+    `#test
+a-b`,
+    t
+  );
+
+  t.deepEqual(result, fixtures.ab);
+});
+
+test('it should ignore trailing comments', (t) => {
+  const result = gen(
+    `a-b
+#test`,
+    t
+  );
+
+  t.deepEqual(result, fixtures.ab);
+});
+
+test('it should ignore multiple leading comments', (t) => {
+  const result = gen(
+    `#xxx
+#yyy
+a-b
+`,
+    t
+  );
+
+  t.deepEqual(result, fixtures.ab);
+});
+
+test('it should ignore EOL comments', (t) => {
+  const result = gen(`a-b # test`, t);
+
+  t.deepEqual(result, fixtures.ab);
+});
+
+test('it should ignore comments with nodes', (t) => {
+  const result = gen(
+    `#x-y
+a-b`,
+    t
+  );
+
+  t.deepEqual(result, fixtures.ab);
+});
+
+test('it should ignore mixed comments', (t) => {
+  const result = gen(
+    `#test
+#xxx
+a-b #zz
+#lll`,
+    t
+  );
+
+  t.deepEqual(result, fixtures.ab);
+});
