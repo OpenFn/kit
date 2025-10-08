@@ -107,6 +107,17 @@ export type IdentifierList = Record<string, true>;
 export function findAllDanglingIdentifiers(ast: ASTNode) {
   const result: IdentifierList = {};
   visit(ast, {
+    visitObjectExpression(path) {
+      // excaping top-level object variable declarations.
+      if (
+        n.VariableDeclarator.check(path.parentPath.node) &&
+        n.VariableDeclaration.check(path.parentPath.parentPath.node) &&
+        n.Program.check(path.parentPath.parentPath.parentPath.parentPath.node)
+      ) {
+        return false;
+      }
+      this.traverse(path);
+    },
     visitIdentifier: function (path) {
       // If this is part of an import statement, do nothing
       if (n.ImportSpecifier.check(path.parent.node)) {
