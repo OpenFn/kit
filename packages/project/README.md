@@ -63,6 +63,12 @@ You can also set properties on a node by putting comma seperated key-value pairs
 a(adaptor=http)
 ```
 
+You can use quotes to include spaces and brackets in a property value - great for expressions:
+
+```
+a(expression="fn(s => s)")
+```
+
 You can comment inside the string with `#`, which is a basic single-line comment
 
 Reference:

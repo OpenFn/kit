@@ -3,7 +3,7 @@ import * as l from '@openfn/lexicon';
 import test from 'ava';
 import mapUUIDs from '../../src/merge/map-uuids';
 import { createWorkflow } from '../util';
-import generateWorkflow from '../../src/gen/workflow-generator';
+import generateWorkflow from '../../src/gen/generator';
 
 // mapping by ids
 test('no changes: single node workflow', (t) => {

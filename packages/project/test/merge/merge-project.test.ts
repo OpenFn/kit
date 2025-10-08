@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import Project from '../../src';
 import { merge } from '../../src/merge/merge-project';
 import { join } from 'node:path';
-import generateWorkflow from '../../src/gen/workflow-generator';
+import generateWorkflow from '../../src/gen/generator';
 import slugify from '../../src/util/slugify';
 
 // go over each node in a workflow and add a new uuid

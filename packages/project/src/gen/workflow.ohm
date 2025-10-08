@@ -9,7 +9,7 @@ Workflow {
 
   Pair =  node edge node
 
-  comment = "#" (~lineTerminator (any))*
+  comment = "#" (~lineTerminator any)*
 
   space := " " | "\t" | lineTerminator | comment
 
@@ -23,7 +23,11 @@ Workflow {
 
   props = "(" listOf<prop, ","> ")"
 
-  prop = alnum "=" alnum
+  prop = alnum+ "=" propValue
+
+  propValue = alnum+ | quotedProp
+  
+  quotedProp = "\"" (~"\"" any)* "\""
 
   edge = "-"
 

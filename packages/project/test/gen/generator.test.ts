@@ -4,10 +4,7 @@ import { grammar } from 'ohm-js';
 import _ from 'lodash';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
-import {
-  generateWorkflow,
-  generateProject,
-} from '../../src/gen/workflow-generator';
+import { generateWorkflow, generateProject } from '../../src/gen/generator';
 import * as fixtures from './fixtures';
 import Workflow from '../../src/Workflow';
 
@@ -319,6 +316,14 @@ test('it should generate a node with two props', (t) => {
   const expected = _.cloneDeep(fixtures.ab);
   expected.steps[0].x = '1';
   expected.steps[0].z = '2';
+
+  t.deepEqual(result, expected);
+});
+
+test('it should treat quotes specially', (t) => {
+  const result = gen('a(expression="fn()")-b', t);
+  const expected = _.cloneDeep(fixtures.ab);
+  expected.steps[0].expression = 'fn()';
 
   t.deepEqual(result, expected);
 });

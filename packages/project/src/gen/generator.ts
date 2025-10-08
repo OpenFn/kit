@@ -58,7 +58,6 @@ const initOperations = (options = {}) => {
     attribute(_, name, _space, value) {
       return [name.sourceString, value.sourceString];
     },
-
     Pair(parent, edge, child) {
       const n1 = parent.buildWorkflow();
       const n2 = child.buildWorkflow();
@@ -94,7 +93,20 @@ const initOperations = (options = {}) => {
       return props.asIteration().children.map((c) => c.buildWorkflow());
     },
     prop(key, _op, value) {
-      return [key.sourceString, value.sourceString];
+      if (value._iter) {
+        console.log('>>>> ITER');
+      }
+      return [key.sourceString, value.buildWorkflow()];
+    },
+    // Bit flaky - we need this to handle quoted props
+    _iter(...items) {
+      return items.map((i) => i.buildWorkflow()).join('');
+    },
+    alnum(a) {
+      return a.sourceString;
+    },
+    quotedProp(_left, value, _right) {
+      return value.sourceString;
     },
     edge(_) {
       return {
