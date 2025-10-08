@@ -37,13 +37,26 @@ const initOperations = (options = {}) => {
 
   // These are functions which run on matched parse trees
   const operations = {
-    Workflow(pair) {
+    Workflow(attrs, pair) {
       pair.children.forEach((child) => child.buildWorkflow());
 
       const steps = Object.values(nodes);
 
-      return { steps: steps };
+      const attributes = attrs.children
+        .map((c) => c.buildWorkflow())
+        .reduce((obj, next) => {
+          const [key, value] = next;
+          obj[key] = value;
+          return obj;
+        }, {});
+
+      return { ...attributes, steps: steps };
     },
+
+    attribute(_, name, _space, value) {
+      return [name.sourceString, value.sourceString];
+    },
+
     Pair(parent, edge, child) {
       const n1 = parent.buildWorkflow();
       const n2 = child.buildWorkflow();
@@ -81,7 +94,7 @@ const initOperations = (options = {}) => {
     prop(key, _op, value) {
       return [key.sourceString, value.sourceString];
     },
-    Edge(_) {
+    edge(_) {
       return {
         openfn: {
           uuid: uuid(),

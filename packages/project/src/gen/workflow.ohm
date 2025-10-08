@@ -3,12 +3,11 @@
   * https://ohmjs.org/docs/intro
   */
 Workflow {
-  /* Maybe a top level rule to handle space more nicely? */
-  /* Grammar = Workflow space* */
+  Workflow = attribute* Pair*
   
-  Workflow = Pair*
+  attribute = "@" alnum+ space alnum+
 
-  Pair =  node Edge node
+  Pair =  node edge node
 
   /* lower case is important: it disables whitespace */
   node = nodeWithProps | node_name
@@ -22,6 +21,6 @@ Workflow {
 
   prop = alnum "=" alnum
 
-  Edge = "-"
+  edge = "-"
 }
 

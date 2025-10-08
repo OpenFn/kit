@@ -43,7 +43,7 @@ test('it should generate a simple project', (t) => {
   t.deepEqual(result.workflows[0].toJSON(), fixtures.ab);
 });
 
-test.skip('it should generate a simple workflow with an attribute (name', (t) => {
+test('it should generate a simple workflow with an attribute', (t) => {
   const result = gen(
     `@name joe
 a-b`,
@@ -55,7 +55,24 @@ a-b`,
     name: 'joe',
   };
 
-  t.deepEqual(result, fixtures.ab);
+  t.deepEqual(result, expected);
+});
+
+test('it should generate a simple workflow with two attributes', (t) => {
+  const result = gen(
+    `@x 1
+@y 2
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    x: '1',
+    y: '2',
+  };
+
+  t.deepEqual(result, expected);
 });
 
 test('it should throw if parsing fails with 1 node, 1 edge', (t) => {
