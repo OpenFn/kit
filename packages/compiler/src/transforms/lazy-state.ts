@@ -79,6 +79,17 @@ const isOpenFunction = (path: NodePath) => {
 };
 
 function visitor(path: NodePath<n.MemberExpression>) {
+  // if it was called for an ObjectExpression
+  if (n.ObjectExpression.check(path.node)) {
+    if (
+      n.VariableDeclarator.check(path.parentPath.node) &&
+      n.VariableDeclaration.check(path.parentPath.parentPath.node) &&
+      n.Program.check(path.parentPath.parentPath.parentPath.parentPath.node)
+    ) {
+      return true;
+    }
+    return false;
+  }
   let first = path.node.object;
   while (first.hasOwnProperty('object')) {
     first = (first as n.MemberExpression).object;
@@ -106,7 +117,7 @@ function visitor(path: NodePath<n.MemberExpression>) {
 
 export default {
   id: 'lazy-state',
-  types: ['MemberExpression'],
+  types: ['MemberExpression', 'ObjectExpression'],
   visitor,
   // It's important that $ symbols are escaped before any other transformations can run
   order: 0,
