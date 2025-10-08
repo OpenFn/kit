@@ -55,6 +55,21 @@ a-b`,
   t.deepEqual(result, expected);
 });
 
+test('it should generate a simple workflow with an attribute with underscores and dashes', (t) => {
+  const result = gen(
+    `@name a_c-x
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    name: 'a_c-x',
+  };
+
+  t.deepEqual(result, expected);
+});
+
 test('it should generate a simple workflow with two attributes', (t) => {
   const result = gen(
     `@x 1
@@ -106,6 +121,7 @@ test('it should generate a simple workflow with any letter', (t) => {
   const expected = {
     steps: [
       {
+        id: 'x',
         name: 'x',
         openfn: {
           uuid: 1,
@@ -119,6 +135,7 @@ test('it should generate a simple workflow with any letter', (t) => {
         },
       },
       {
+        id: 'y',
         name: 'y',
         openfn: {
           uuid: 2,
@@ -134,6 +151,7 @@ test('it should generate a simple workflow with words, numbers and underscores',
   const expected = {
     steps: [
       {
+        id: 'node_1',
         name: 'node_1',
         openfn: {
           uuid: 1,
@@ -147,6 +165,7 @@ test('it should generate a simple workflow with words, numbers and underscores',
         },
       },
       {
+        id: '_node_2_',
         name: '_node_2_',
         openfn: {
           uuid: 2,
@@ -162,6 +181,7 @@ test('it should generate two node pairs', (t) => {
   const expected = {
     steps: [
       {
+        id: 'a',
         name: 'a',
         openfn: {
           uuid: 1,
@@ -175,6 +195,7 @@ test('it should generate two node pairs', (t) => {
         },
       },
       {
+        id: 'b',
         name: 'b',
         openfn: {
           uuid: 2,
@@ -188,6 +209,7 @@ test('it should generate two node pairs', (t) => {
         },
       },
       {
+        id: 'c',
         name: 'c',
         openfn: {
           uuid: 4,
@@ -204,6 +226,7 @@ test('it should generate two node pairs from one parent', (t) => {
   const expected = {
     steps: [
       {
+        id: 'a',
         name: 'a',
         openfn: {
           uuid: 1,
@@ -222,12 +245,14 @@ test('it should generate two node pairs from one parent', (t) => {
         },
       },
       {
+        id: 'b',
         name: 'b',
         openfn: {
           uuid: 2,
         },
       },
       {
+        id: 'c',
         name: 'c',
         openfn: {
           uuid: 4,
@@ -244,6 +269,7 @@ test('it should generate several node pairs', (t) => {
   const expected = {
     steps: [
       {
+        id: 'a',
         name: 'a',
         openfn: {
           uuid: 1,
@@ -262,6 +288,7 @@ test('it should generate several node pairs', (t) => {
         },
       },
       {
+        id: 'b',
         name: 'b',
         openfn: {
           uuid: 2,
@@ -280,18 +307,21 @@ test('it should generate several node pairs', (t) => {
         },
       },
       {
+        id: 'c',
         name: 'c',
         openfn: {
           uuid: 4,
         },
       },
       {
+        id: 'd',
         name: 'd',
         openfn: {
           uuid: 6,
         },
       },
       {
+        id: 'x',
         name: 'x',
         openfn: {
           uuid: 8,

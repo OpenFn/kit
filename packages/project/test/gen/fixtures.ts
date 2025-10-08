@@ -4,6 +4,7 @@
 export const ab = {
   steps: [
     {
+      id: 'a',
       name: 'a',
       openfn: {
         uuid: 1,
@@ -17,6 +18,7 @@ export const ab = {
       },
     },
     {
+      id: 'b',
       name: 'b',
       openfn: {
         uuid: 2,

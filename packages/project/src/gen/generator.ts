@@ -26,7 +26,8 @@ const initOperations = (options = {}) => {
   const buildNode = (name: string) => {
     if (!nodes[name]) {
       nodes[name] = {
-        name,
+        name: name,
+        id: slugify(name),
         openfn: {
           uuid: uuid(),
         },
@@ -168,7 +169,13 @@ function generateWorkflow(
     parser = createParser();
   }
 
-  return new Workflow(parser.parse(def, options));
+  const wf = new Workflow(parser.parse(def, options));
+  if (options.openfnUuid) {
+    wf.openfn = {
+      uuid: randomUUID(),
+    };
+  }
+  return wf;
 }
 
 function generateProject(

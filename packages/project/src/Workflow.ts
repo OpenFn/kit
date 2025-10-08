@@ -1,4 +1,5 @@
 import * as l from '@openfn/lexicon';
+import slugify from './util/slugify';
 
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -29,8 +30,8 @@ class Workflow {
     this.workflow = clone(workflow);
 
     const { id, name, openfn, steps, ...options } = workflow;
-    this.id = id;
-    this.name = name;
+    this.id = id ?? slugify(name);
+    this.name = name ?? id;
     this.openfn = openfn;
     this.options = options;
 

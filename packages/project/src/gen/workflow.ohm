@@ -5,7 +5,9 @@
 Workflow {
   Workflow = attribute* Pair*
 
-  attribute = "@" alnum+ space alnum+
+  attribute = "@" attr_name space attr_name
+
+  attr_name = (alnum | "_" | "-")+
 
   Pair =  node edge node
 
