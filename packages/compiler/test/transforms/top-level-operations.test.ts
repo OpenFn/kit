@@ -217,7 +217,7 @@ test('should only take the top of a nested operation call (and preserve its argu
 
 test('appends an operations map to simple operation', (t) => {
   // We have to parse source here rather than building an AST so that we get positional information
-  const { program } = parse(`fn();`);
+  const { program } = parse(`fn(); export default [];`);
 
   transform(program, [visitors]);
 
