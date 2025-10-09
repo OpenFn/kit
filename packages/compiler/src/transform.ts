@@ -82,7 +82,7 @@ export default function transform(
     // Run each transformer
     .forEach(({ id, types, visitor }) => {
       const t = `transformer ${id}`;
-      console.time(t);
+      console.time?.(t);
       const astTypes: Visitor = {};
       for (const type of types) {
         const name = `visit${type}` as keyof Visitor;
@@ -102,7 +102,7 @@ export default function transform(
       if (options.trace) {
         console.log();
         printHeap(`${t}`);
-        console.timeEnd(t);
+        console.timeEnd?.(t);
       }
     });
   if (options.trace) {
