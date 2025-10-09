@@ -23,6 +23,10 @@ const maybeCreateWorkflow = (wf: any) =>
 export interface OpenfnConfig {
   name: string;
   workflowRoot: string;
+  dirs: {
+    workflows: string;
+    projects: string;
+  };
   formats: {
     openfn: FileFormats;
     project: FileFormats;
@@ -123,6 +127,8 @@ export class Project {
       return fromAppState(data, options);
     } else if (type === 'fs') {
       return fromFs(data, options);
+    } else if (type === 'path') {
+      return fromPath(data, options);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }

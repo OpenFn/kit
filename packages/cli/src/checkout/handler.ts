@@ -1,4 +1,4 @@
-import { Workspace } from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import path from 'path';
 import type { Logger } from '../util/logger';
 import type { CheckoutOptions } from './command';
@@ -14,7 +14,16 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   }
 
   // get the project
-  const switchProject = workspace.get(options.projectName);
+  let switchProject;
+  if (/\.(yaml|json)$/.test(options.projectName)) {
+    // TODO: should we allow checkout into an arbitrary folder?
+    const filePath = path.join(commandPath, options.projectName);
+    logger.debug('Loading project from path ', filePath);
+    switchProject = await Project.from('state', filePath, { format: 'yaml' });
+  } else {
+    switchProject = workspace.get(options.projectName);
+  }
+
   if (!switchProject) {
     logger.error(
       `Project with id/name ${options.projectName} not found in the workspace`
