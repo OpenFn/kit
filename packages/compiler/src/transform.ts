@@ -68,7 +68,6 @@ export default function transform(
     ] as Transformer[];
   }
   const logger = options.logger || defaultLogger;
-
   transformers
     // Ignore transformers which are explicitly disabled
     .filter(({ id }) => options[id] ?? true)
@@ -82,11 +81,13 @@ export default function transform(
     })
     // Run each transformer
     .forEach(({ id, types, visitor }) => {
+      const t = `transformer ${id}`;
+      console.time(t);
       const astTypes: Visitor = {};
       for (const type of types) {
         const name = `visit${type}` as keyof Visitor;
         astTypes[name] = function (path: NodePath) {
-          printHeap(`visit: ${path.name}`);
+          // printHeap(`visit: ${path.name}`);
           const opts = options[id] || {};
           const abort = visitor!(path, logger, opts);
           if (abort) {
@@ -98,8 +99,15 @@ export default function transform(
 
       // @ts-ignore
       visit(ast, astTypes);
+      if (options.trace) {
+        console.log();
+        printHeap(`${t}`);
+        console.timeEnd(t);
+      }
     });
-
+  if (options.trace) {
+    console.log();
+  }
   printHeap(`finished`);
   const duration = (Date.now() - start) / 1000;
   logger.debug(`Finished in ${duration}s`);
