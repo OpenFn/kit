@@ -89,7 +89,7 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   const { jobs, edges, triggers, name, ...remoteProps } = workflow;
   const mapped: l.Workflow = {
-    id: slugify(workflow.name),
+    id: workflow.id ?? slugify(workflow.name),
     name: workflow.name,
     steps: [],
     openfn: renameKeys(remoteProps, { id: 'uuid' }),

@@ -1,5 +1,6 @@
 import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
+import { randomUUID } from 'node:crypto';
 
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -30,8 +31,9 @@ class Workflow {
     this.workflow = clone(workflow);
 
     const { id, name, openfn, steps, ...options } = workflow;
-    this.id = id ?? slugify(name);
-    this.name = name ?? id;
+    // ensure a workflow always has an id
+    this.id = id ?? name ? slugify(name) : randomUUID();
+    this.name = name ?? this.id;
     this.openfn = openfn;
     this.options = options;
 
