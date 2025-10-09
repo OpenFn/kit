@@ -19,7 +19,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
     // TODO: should we allow checkout into an arbitrary folder?
     const filePath = path.join(commandPath, options.projectName);
     logger.debug('Loading project from path ', filePath);
-    switchProject = await Project.from('state', filePath, { format: 'yaml' });
+    switchProject = await Project.from('path', filePath);
   } else {
     switchProject = workspace.get(options.projectName);
   }

@@ -2,7 +2,7 @@ import * as l from '@openfn/lexicon';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
-
+import fromPath from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
