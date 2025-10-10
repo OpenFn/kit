@@ -52,10 +52,11 @@ export const parseProject = async (options: FromFsConfig = {}) => {
     env: config.project?.env,
   });
   try {
-    const format = config.formats?.projects ?? 'yaml';
+    const format =
+      config.formats?.project ?? config.formats?.projects ?? 'yaml';
     const statePath = path.join(
       root,
-      config.dirs.projects ?? '.projects',
+      config.dirs?.projects ?? '.projects',
       `${identifier}.${format}`
     );
     const stateFile = await fs.readFile(statePath, 'utf8');
@@ -97,7 +98,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
           // TODO do we need to transfer more stuff?
         };
 
-        console.log('Loading workflow at ', filePath); // TODO logger.debug
+        //console.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
           if (step.expression && step.expression.endsWith('.js')) {
             const dir = path.dirname(filePath);

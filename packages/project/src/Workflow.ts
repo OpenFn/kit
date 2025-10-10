@@ -33,7 +33,7 @@ class Workflow {
     const { id, name, openfn, steps, ...options } = workflow;
     // ensure a workflow always has an id
     this.id = id ?? (name ? slugify(name) : randomUUID());
-    this.name = name ?? this.id;
+    this.name = name ?? this.id; // TODO I think generating a name from uuid is wrong
     this.openfn = openfn;
     this.options = options;
 
