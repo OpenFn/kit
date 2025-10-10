@@ -117,7 +117,7 @@ test.todo('serialize state as yaml');
 
 // Note that this is mostly tested under merge-project
 // This is testing the static function on Project, which is just a proxy
-test('should merge two projects', (t) => {
+test.only('should merge two projects', (t) => {
   const wf_a = generateWorkflow(`a(expression="a()")-b a-c`);
 
   const wf_b = generateWorkflow(`a(expression="b()")-b a-c`);

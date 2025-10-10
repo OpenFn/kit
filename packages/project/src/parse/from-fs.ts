@@ -42,7 +42,6 @@ export const parseProject = async (options: FromFsConfig = {}) => {
       throw e;
     }
   }
-  console.log(config);
 
   // Now we need to look for the corresponding state file
   // Need to load UUIDs and other app settings from this
