@@ -9,6 +9,7 @@
 import { builders as b, namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
+import IgnoreRules from '../transform-ignore';
 
 // Walk up the AST and work out where the parent arrow function should go
 const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
@@ -80,15 +81,9 @@ const isOpenFunction = (path: NodePath) => {
 
 function visitor(path: NodePath<n.MemberExpression>) {
   // if it was called for an ObjectExpression
-  if (n.ObjectExpression.check(path.node)) {
-    if (
-      n.VariableDeclarator.check(path.parentPath.node) &&
-      n.VariableDeclaration.check(path.parentPath.parentPath.node) &&
-      n.Program.check(path.parentPath.parentPath.parentPath.parentPath.node)
-    ) {
-      return true;
-    }
-    return false;
+  const ignoreRule = IgnoreRules(path);
+  if (ignoreRule.check) {
+    return ignoreRule.shouldSkip();
   }
   let first = path.node.object;
   while (first.hasOwnProperty('object')) {
