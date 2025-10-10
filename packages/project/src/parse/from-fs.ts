@@ -42,6 +42,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
       throw e;
     }
   }
+  console.log(config);
 
   // Now we need to look for the corresponding state file
   // Need to load UUIDs and other app settings from this
@@ -69,6 +70,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
 
   const { project: openfn, ...repo } = config;
   proj.openfn = openfn;
+  proj.config = repo;
 
   // now find all the workflows
   // this will find all json files in the workflows folder
@@ -155,7 +157,6 @@ export const parseProject = async (options: FromFsConfig = {}) => {
   // };
 
   // proj.workflows = state.workflows.map(mapWorkflow);
-
   return new Project(proj as l.Project, repo);
 };
 

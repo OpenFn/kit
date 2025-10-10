@@ -41,9 +41,16 @@ export interface OpenfnConfig {
   };
 }
 
+// TODO --------------
+// I think this needs renaming to config
+// and it's part of the workspace technically
+// I need to support custom props
+// When serializing, for now, we always write defaults
+// --------------
 // repo-wide options
 type RepoOptions = {
   /**default workflow root when serializing to fs (relative to openfn.yaml) */
+  // TODO deprecate this
   workflowRoot?: string;
 
   formats: {
@@ -62,6 +69,7 @@ type RepoOptions = {
 // TODO maybe use an npm for this, or create  util
 
 const setConfigDefaults = (config: OpenfnConfig = {}) => ({
+  ...config,
   workflowRoot: config.workflowRoot ?? 'workflows',
   formats: {
     // TODO change these maybe
@@ -98,7 +106,7 @@ export class Project {
   // this contains meta about the connected openfn project
   openfn?: l.ProjectConfig;
 
-  // repo configuration options
+  // workspace-wide configuration options
   // these should be shared across projects
   // and saved to an openfn.yaml file
   repo?: Required<RepoOptions>;
@@ -149,7 +157,6 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
     this.repo = setConfigDefaults(repoConfig);
-
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;

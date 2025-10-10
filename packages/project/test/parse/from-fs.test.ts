@@ -114,6 +114,20 @@ mock({
   `,
   '/p2/wfs/my-workflow/job.js': `fn(s => s)`,
   // TODO state here - quite a good test
+
+  // p3 uses custom yaml
+  '/p3/openfn.yaml': `
+x: 1
+y: 2`,
+  '/p3/wfs/my-workflow/my-workflow.yaml': `
+  id: my-workflow
+  name: My Workflow
+  steps:
+    - id: job
+      adaptor: "@openfn/language-common@latest"
+      expression: ./job.js
+  `,
+  '/p3/wfs/my-workflow/job.js': `fn(s => s)`,
 });
 
 test('should load the openfn repo config from json', async (t) => {
@@ -122,6 +136,17 @@ test('should load the openfn repo config from json', async (t) => {
   t.deepEqual(project.repo, {
     workflowRoot: 'workflows',
     formats: { openfn: 'json', project: 'json', workflow: 'json' },
+  });
+});
+
+test('should load custom repro props and include default', async (t) => {
+  const project = await parseProject({ root: '/p3' });
+
+  t.deepEqual(project.repo, {
+    x: 1,
+    y: 2,
+    workflowRoot: 'workflows',
+    formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
   });
 });
 
