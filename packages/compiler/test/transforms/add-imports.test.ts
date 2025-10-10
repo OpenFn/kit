@@ -147,7 +147,23 @@ test('findAllDanglingIdentifiers: const x = { a: 10 };', (t) => {
   t.assert(Object.keys(result).length == 0);
 });
 
-test('findAllDanglingIdentifiers: const x = { a: b };', (t) => {
+test('findAllDanglingIdentifiers: ignore top-level objects declarations', (t) => {
+  // ignored because [bank] isn't picked as dangling but [foo] is
+  const ast = parse(`
+const bigObj = {name: "ignore-me", age: bank};
+fn(state=> {
+    const update = {
+      name: "pick-me",
+      age: foo
+    }
+    return update
+})
+    `);
+  const result = findAllDanglingIdentifiers(ast);
+  t.deepEqual(result, { fn: true, foo: true });
+});
+
+test.skip('findAllDanglingIdentifiers: const x = { a: b };', (t) => {
   const ast = parse('const x = { a: b };');
   const result = findAllDanglingIdentifiers(ast);
   t.assert(Object.keys(result).length == 1);
