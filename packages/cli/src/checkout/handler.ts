@@ -13,13 +13,19 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
     return;
   }
 
+  // get the config
+  // TODO: try to retain the endpoint for the projects
+  const { project: _, ...config } = workspace.getConfig() ?? {};
+
   // get the project
   let switchProject;
   if (/\.(yaml|json)$/.test(options.projectName)) {
     // TODO: should we allow checkout into an arbitrary folder?
     const filePath = path.join(commandPath, options.projectName);
     logger.debug('Loading project from path ', filePath);
-    switchProject = await Project.from('path', filePath);
+    switchProject = await Project.from('path', filePath, {
+      config,
+    });
   } else {
     switchProject = workspace.get(options.projectName);
   }
@@ -30,9 +36,8 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
     );
     return;
   }
-  // get the config
-  // TODO: try to retain the endpoint for the projects
-  const config = workspace.getConfig();
+  console.log('cli ws config:', config);
+  console.log('cli proj config:', switchProject.repo);
 
   // delete workflow dir before expanding project
   await rimraf(path.join(commandPath, config?.workflowRoot || 'workflows'));
