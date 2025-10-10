@@ -1,5 +1,5 @@
 export default function renameKeys(
-  props: Record<string, unknown>,
+  props: Record<string, unknown> = {},
   keyMap: Record<string, string>
 ) {
   return Object.fromEntries(

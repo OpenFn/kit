@@ -15,7 +15,9 @@ export const getUuidForStep = (
   const wf =
     typeof workflow === 'string' ? project.getWorkflow(workflow) : workflow;
   if (!wf) {
-    throw new Error(`Workflow "${workflow} not found in project ${project.id}`);
+    throw new Error(
+      `Workflow "${workflow}" not found in project ${project.id}`
+    );
   }
   for (const step of wf.steps) {
     if (step.id === stepId) {

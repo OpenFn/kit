@@ -52,8 +52,13 @@ export const parseProject = async (options: FromFsConfig = {}) => {
     env: config.project?.env,
   });
   try {
-    const format = config.formats.project ?? 'yaml';
-    const statePath = path.join(root, '.projects', `${identifier}.${format}`);
+    const format =
+      config.formats?.project ?? config.formats?.projects ?? 'yaml';
+    const statePath = path.join(
+      root,
+      config.dirs?.projects ?? '.projects',
+      `${identifier}.${format}`
+    );
     const stateFile = await fs.readFile(statePath, 'utf8');
     // Load the state contents as a Project
     state = fromAppState(stateFile, { format });
@@ -65,12 +70,14 @@ export const parseProject = async (options: FromFsConfig = {}) => {
 
   const { project: openfn, ...repo } = config;
   proj.openfn = openfn;
+  proj.config = repo;
 
   // now find all the workflows
   // this will find all json files in the workflows folder
   // TODO how can I prevent this loading huge data files?
   // I mean they shouldn't be there anyway but still
-  const workflowDir = config.workflowRoot ?? 'workflows';
+  const workflowDir =
+    config.workflowRoot ?? config.dirs?.workflows ?? 'workflows';
   const fileType = config.formats?.workflow ?? 'yaml';
   const pattern = `${root}/${workflowDir}/*/*.${fileType}`;
   const candidateWfs = await glob(pattern, {
@@ -91,7 +98,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
           // TODO do we need to transfer more stuff?
         };
 
-        console.log('Loading workflow at ', filePath); // TODO logger.debug
+        //console.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
           if (step.expression && step.expression.endsWith('.js')) {
             const dir = path.dirname(filePath);
@@ -150,7 +157,6 @@ export const parseProject = async (options: FromFsConfig = {}) => {
   // };
 
   // proj.workflows = state.workflows.map(mapWorkflow);
-
   return new Project(proj as l.Project, repo);
 };
 

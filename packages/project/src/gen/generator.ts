@@ -9,7 +9,7 @@ import slugify from '../util/slugify';
 type GenerateWorkflowOptions = {
   name: string;
   uuidSeed: number;
-  openfnUuid: boolean;
+  openfnUuid: boolean; // TODO probably need to do this by default?
   printErrors: boolean; // true by default
 };
 
@@ -181,13 +181,14 @@ function generateWorkflow(
 function generateProject(
   name: string,
   workflowDefs: string[],
-  options: Partial<GenerateWorkflowOptions>
+  options: Partial<GenerateWorkflowOptions> = {}
 ) {
   const workflows = workflowDefs.map((w) => generateWorkflow(w, options));
 
   return new Project({
     name,
     workflows,
+    openfn: options.openfnUuid && { uuid: randomUUID() },
   });
 }
 

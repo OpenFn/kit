@@ -13,38 +13,46 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     return;
   }
 
-  const checkedProject = workspace.getActiveProject();
-  if (!checkedProject) {
+  // The target project - the think we apply changes to - is
+  // whatever is checked out
+  const targetProject = workspace.getActiveProject();
+  if (!targetProject) {
     logger.error(`No project currently checked out`);
     return;
   }
 
-  const mProject = workspace.get(options.projectName);
-  if (!mProject) {
-    logger.error(
-      `Project with id/name ${options.projectName} not found in the workspace`
-    );
+  // Lookup the source project - the thing we are getting changes from
+  let sourceProject;
+  if (/\.(yaml|json)$/.test(options.projectName)) {
+    const filePath = path.join(commandPath, options.projectName);
+    logger.debug('Loading source project from path ', filePath);
+    sourceProject = await Project.from('path', filePath);
+  } else {
+    sourceProject = workspace.get(options.projectName);
+  }
+  if (!sourceProject) {
+    logger.error(`Project "${options.projectName}" not found in the workspace`);
     return;
   }
 
-  if (checkedProject.name === mProject.name) {
+  if (targetProject.name === sourceProject.name) {
     logger.error('Merging into the same project not allowed');
     return;
   }
 
-  if (!checkedProject.name) {
+  if (!targetProject.name) {
     logger.error('The checked out project has no name/id');
     return;
   }
 
-  const finalPath = workspace.getProjectPath(checkedProject.name);
+  const finalPath = workspace.getProjectPath(targetProject.name);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
   }
 
   // TODO pick options from the terminal
-  const final = Project.merge(mProject, checkedProject, {
+  const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
     workflowMappings: options.workflowMappings,
   });
@@ -61,7 +69,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     logger
   );
   logger.success(
-    `Project ${mProject.name} has been merged into Project ${checkedProject.name} successfully`
+    `Project ${sourceProject.name} has been merged into Project ${targetProject.name} successfully`
   );
 };
 

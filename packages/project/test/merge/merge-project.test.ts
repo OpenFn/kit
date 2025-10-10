@@ -84,6 +84,7 @@ test('Preserve the name and UUID of the target project', (t) => {
 test('merge a simple change between single-step workflows with preserved uuids', (t) => {
   // create a base workflow
   const wf = {
+    name: 'wf',
     steps: [
       {
         id: 'x',
@@ -120,6 +121,7 @@ test('merge a simple change between single-step workflows with preserved uuids',
 test('merge a new step into an existing workflow', (t) => {
   // create a base workflow
   const wf = {
+    name: 'wf',
     steps: [
       {
         id: 'x',
@@ -155,6 +157,7 @@ test('merge a new step into an existing workflow', (t) => {
 test('merge with an edge and no changes', (t) => {
   // create a base workflow
   const wf = {
+    name: 'wf',
     steps: [
       {
         id: 'x',
@@ -197,6 +200,7 @@ test('merge with an edge and no changes', (t) => {
 test('merge with a change to an edge condition', (t) => {
   // create a base workflow
   const wf = {
+    name: 'wf',
     steps: [
       {
         id: 'x',
@@ -241,6 +245,7 @@ test('merge with a change to an edge condition', (t) => {
 test('remove a step from an existing workflow', (t) => {
   // create a base workflow
   const wf = {
+    name: 'wf',
     steps: [
       {
         id: 'x',
@@ -271,6 +276,7 @@ test('remove a step from an existing workflow', (t) => {
 test('merge an id change in a single step with preserved uuids', (t) => {
   // create a base workflow
   const wf = {
+    name: 'wf',
     steps: [
       {
         id: 'x',
@@ -305,8 +311,10 @@ test('merge an id change in a single step with preserved uuids', (t) => {
 });
 
 test('should merge two projects and preserve edge id', (t) => {
-  const source = generateWorkflow(`a-b`).set('a-b', { condition: true });
-  const target = generateWorkflow(`a-b`);
+  const source = generateWorkflow(`@name wf a-b`).set('a-b', {
+    condition: true,
+  });
+  const target = generateWorkflow(`@name wf a-b`);
 
   t.not(source.getUUID('a-b'), target.getUUID('a-b'));
   const result = merge(
