@@ -125,7 +125,11 @@ export class Project {
     options: Partial<l.ProjectConfig>
   ): Project;
   static from(type: 'fs', options: FromFsConfig): Project;
-  static from(type: 'path', data: any): Project;
+  static from(
+    type: 'path',
+    data: string,
+    options?: { config?: Partial<OpenfnConfig> }
+  ): Project;
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
@@ -136,7 +140,7 @@ export class Project {
     } else if (type === 'fs') {
       return fromFs(data, options);
     } else if (type === 'path') {
-      return fromPath(data, options);
+      return fromPath(path, options);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }

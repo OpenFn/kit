@@ -66,7 +66,7 @@ export class Workspace {
     return this.projects.find((p) => p.name === this.config?.name);
   }
 
-  getConfig() {
+  getConfig(): Partial<OpenfnConfig> {
     return this.config;
   }
 
