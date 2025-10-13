@@ -36,8 +36,6 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
     );
     return;
   }
-  console.log('cli ws config:', config);
-  console.log('cli proj config:', switchProject.repo);
 
   // delete workflow dir before expanding project
   await rimraf(path.join(commandPath, config.workflowRoot ?? 'workflows'));

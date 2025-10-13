@@ -87,7 +87,6 @@ export const extractRepoConfig = (project) => {
     ...project.repo,
     project: project.openfn ?? {},
   };
-  console.log(' >> tofs config:', config);
 
   return handleOutput(config, 'openfn', format);
 };
