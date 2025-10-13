@@ -4,7 +4,7 @@ import mock from 'mock-fs';
 import { generateProject } from '../../src';
 import fromPath from '../../src/parse/from-path';
 
-const proj = generateProject('my-project', ['@name wf1 a-b'], {
+const proj = generateProject('my-project', ['a-b'], {
   openfnUuid: true,
 });
 
