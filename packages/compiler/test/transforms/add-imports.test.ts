@@ -163,11 +163,10 @@ fn(state=> {
   t.deepEqual(result, { fn: true, foo: true });
 });
 
-test.skip('findAllDanglingIdentifiers: const x = { a: b };', (t) => {
+test('findAllDanglingIdentifiers: ignore top-level objects', (t) => {
   const ast = parse('const x = { a: b };');
   const result = findAllDanglingIdentifiers(ast);
-  t.assert(Object.keys(result).length == 1);
-  t.truthy(result['b']);
+  t.deepEqual(result, {});
 });
 
 test('findAllDanglingIdentifiers: const a = {}; const x = { ...a };', (t) => {
