@@ -120,6 +120,7 @@ test('it should generate a simple workflow with any letter', (t) => {
   const result = gen('x-y', t);
   const expected = {
     id: 'workflow',
+    name: 'Workflow',
     steps: [
       {
         id: 'x',
@@ -151,6 +152,7 @@ test('it should generate a simple workflow with words, numbers and underscores',
   const result = gen('node_1-_node_2_', t);
   const expected = {
     id: 'workflow',
+    name: 'Workflow',
     steps: [
       {
         id: 'node_1',
@@ -182,6 +184,7 @@ test('it should generate two node pairs', (t) => {
   const result = gen('a-b b-c', t);
   const expected = {
     id: 'workflow',
+    name: 'Workflow',
     steps: [
       {
         id: 'a',
@@ -228,6 +231,7 @@ test('it should generate two node pairs from one parent', (t) => {
   const result = gen('a-b a-c', t);
   const expected = {
     id: 'workflow',
+    name: 'Workflow',
     steps: [
       {
         id: 'a',
@@ -272,6 +276,7 @@ test('it should generate several node pairs', (t) => {
   const result = gen('a-b b-c b-d a-x', t);
   const expected = {
     id: 'workflow',
+    name: 'Workflow',
     steps: [
       {
         id: 'a',

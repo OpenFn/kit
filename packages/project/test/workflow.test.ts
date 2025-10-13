@@ -3,6 +3,7 @@ import test from 'ava';
 import Workflow from '../src/Workflow';
 
 const simpleWorkflow = {
+  id: 'my-workflow',
   name: 'My Workflow',
   steps: [
     {
@@ -67,7 +68,8 @@ test('a Workflow class behaves just like regular json', (t) => {
 });
 
 test('a Workflow class will generate an ID from the name', (t) => {
-  const w = new Workflow(simpleWorkflow);
+  const { id, ...wf } = simpleWorkflow;
+  const w = new Workflow(wf);
 
   t.is(w.id, 'my-workflow');
 });

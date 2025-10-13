@@ -3,6 +3,7 @@
  */
 export const ab = {
   id: 'workflow',
+  name: 'Workflow',
   steps: [
     {
       id: 'a',

@@ -35,8 +35,8 @@ mock({
   // }),
   '/p1/workflows/my-workflow': {},
   '/p1/workflows/my-workflow/my-workflow.json': s({
-    id: 'wf1',
-    name: 'wf1',
+    id: 'my-workflow',
+    name: 'My Workflow',
     steps: [
       {
         id: 'a',
@@ -61,7 +61,7 @@ mock({
     workflows: [
       {
         id: '<some-uuid>',
-        name: 'wf1',
+        name: 'My Workflow',
         jobs: [
           {
             // pretend this is a uuid
@@ -168,7 +168,7 @@ test('should load a workflow from the file system', async (t) => {
   t.is(project.workflows.length, 1);
   const [wf] = project.workflows;
 
-  t.is(wf.id, 'wf1');
+  t.is(wf.id, 'my-workflow');
   t.is(wf.openfn.uuid, '<some-uuid>');
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });

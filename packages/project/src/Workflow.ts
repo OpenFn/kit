@@ -38,6 +38,12 @@ class Workflow {
     this.id = id ?? slugify(name);
     this.name = name;
 
+    // This is a bit messy but needed to allow toJSON() to serialize properly
+    this.workflow.id = this.id;
+    if (name) {
+      this.workflow.name = this.name;
+    }
+
     this.openfn = openfn;
     this.options = options;
 

@@ -96,6 +96,9 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     steps: [],
     openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
+  if (workflow.name) {
+    mapped.id = slugify(workflow.name);
+  }
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?

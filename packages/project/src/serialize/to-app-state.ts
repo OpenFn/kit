@@ -40,9 +40,12 @@ const mapWorkflow = (workflow) => {
   if (workflow instanceof Workflow) {
     workflow = workflow.toJSON();
   }
+
+  const { uuid, ...originalOpenfnProps } = workflow.openfn;
   const wfState = {
+    ...originalOpenfnProps,
+    id: workflow.openfn?.uuid ?? randomUUID(),
     name: workflow.name,
-    ...renameKeys(workflow.openfn, { uuid: 'id' }),
     jobs: [],
     triggers: [],
     edges: [],
