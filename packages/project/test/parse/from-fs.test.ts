@@ -162,7 +162,7 @@ test('should load the openfn project config from json', async (t) => {
   });
 });
 
-test.only('should load a workflow from the file system', async (t) => {
+test('should load a workflow from the file system', async (t) => {
   const project = await parseProject({ root: '/p1' });
 
   t.is(project.workflows.length, 1);
