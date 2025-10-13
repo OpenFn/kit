@@ -11,7 +11,7 @@ const config = {
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
-  name: 'aaa',
+  name: 'My Workflow',
   description: 'a project',
   concurrency: null,
   inserted_at: '2025-04-23T11:15:59Z',
@@ -19,7 +19,7 @@ const state: Provisioner.Project = {
   workflows: [
     {
       id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
-      name: 'wf1',
+      name: 'My Workflow',
       edges: [
         {
           enabled: true,
@@ -65,7 +65,7 @@ const state: Provisioner.Project = {
 test('should create a Project from prov state with basic metadata', (t) => {
   const project = fromAppState(state, config);
 
-  t.is(project.name, 'aaa');
+  t.is(project.name, 'My Workflow');
   t.is(project.description, 'a project');
 });
 
@@ -112,8 +112,7 @@ test('should create a Project from prov state with a workflow', (t) => {
 
   t.is(project.workflows.length, 1);
   t.deepEqual(project.workflows[0].toJSON(), {
-    id: 'wf1',
-    name: 'wf1',
+    name: 'My Workflow',
     steps: [
       {
         id: 'trigger',
@@ -150,24 +149,6 @@ test('should create a Project from prov state with a workflow', (t) => {
       deleted_at: null,
     },
   });
-});
-
-test('mapWorkflow: generate an id from the name', (t) => {
-  const wf = {
-    id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
-    name: 'My Workflow',
-    edges: [],
-    inserted_at: '2025-04-23T11:19:32Z',
-    updated_at: '2025-04-23T11:19:32Z',
-    jobs: [],
-    triggers: [],
-    lock_version: 1,
-    deleted_at: null,
-  };
-  const mapped = mapWorkflow(wf);
-
-  t.is(mapped.name, 'My Workflow');
-  t.is(mapped.id, 'my-workflow');
 });
 
 test('mapWorkflow: map a simple trigger', (t) => {

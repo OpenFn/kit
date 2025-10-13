@@ -43,7 +43,7 @@ export default (state: Provisioner.Project, config: FromAppStateConfig) => {
   } = state;
 
   const proj: Partial<l.Project> = {
-    name, // TODO do we need to slug this or anything?
+    name,
     description,
     collections,
     credentials,
@@ -92,7 +92,6 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   const { jobs, edges, triggers, name, ...remoteProps } = workflow;
   const mapped: l.Workflow = {
-    id: workflow.id ?? slugify(workflow.name),
     name: workflow.name,
     steps: [],
     openfn: renameKeys(remoteProps, { id: 'uuid' }),

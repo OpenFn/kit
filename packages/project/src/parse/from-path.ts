@@ -21,7 +21,7 @@ export default async (path: string, options: FromPathConfig = {}) => {
 
   const config = {
     format: null,
-    repo: options.config,
+    repo: options.repo ?? options.config, // TMP
   };
   let state;
   if (ext === '.json') {
