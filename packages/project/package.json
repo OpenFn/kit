@@ -1,6 +1,6 @@
 {
   "name": "@openfn/project",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Read, serialize, replicate and sync OpenFn projects",
   "scripts": {
     "test": "pnpm ava",
@@ -38,7 +38,9 @@
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "glob": "^11.0.2",
+    "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
+    "ohm-js": "^17.2.1",
     "yaml": "^2.2.2"
   },
   "files": [

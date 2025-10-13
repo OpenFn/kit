@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import Project from '../../src';
 import { merge } from '../../src/merge/merge-project';
 import { join } from 'node:path';
-import generateWorkflow from '../../src/gen/workflow-generator';
+import { generateWorkflow } from '../../src/gen/generator';
 import slugify from '../../src/util/slugify';
 
 // go over each node in a workflow and add a new uuid
@@ -305,8 +305,8 @@ test('merge an id change in a single step with preserved uuids', (t) => {
 });
 
 test('should merge two projects and preserve edge id', (t) => {
-  const source = generateWorkflow(['a-b']).set('a-b', { condition: true });
-  const target = generateWorkflow(['a-b']);
+  const source = generateWorkflow(`a-b`).set('a-b', { condition: true });
+  const target = generateWorkflow(`a-b`);
 
   t.not(source.getUUID('a-b'), target.getUUID('a-b'));
   const result = merge(
@@ -322,8 +322,8 @@ test('should merge two projects and preserve edge id', (t) => {
 });
 
 test('id match: same workflow in source and target project', (t) => {
-  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
-  const target = generateWorkflow(['a-b'], { name: 'some workflow' });
+  const source = generateWorkflow('@name some_workflow a-b');
+  const target = generateWorkflow('@name some_workflow a-b');
 
   const source_project = createProject(source);
   const target_project = createProject(target);
@@ -331,13 +331,13 @@ test('id match: same workflow in source and target project', (t) => {
   const result = merge(source_project, target_project);
 
   t.is(result.workflows.length, 1);
-  t.is(result.workflows[0].name, 'some workflow');
-  t.is(result.workflows[0].id, 'some-workflow');
+  t.is(result.workflows[0].name, 'some_workflow');
+  t.is(result.workflows[0].id, 'some_workflow');
 });
 
 test('no id match: union of both workflow', (t) => {
-  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
-  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+  const source = generateWorkflow('@name some_workflow a-b');
+  const target = generateWorkflow('@name another_workflow a-b');
 
   const source_project = createProject(source);
   const target_project = createProject(target);
@@ -346,49 +346,50 @@ test('no id match: union of both workflow', (t) => {
   t.is(result.workflows.length, 2);
   t.deepEqual(
     result.workflows.map((w) => w.name).sort(),
-    ['another workflow', 'some workflow'].sort()
+    ['another_workflow', 'some_workflow'].sort()
   );
 });
 
 test('no id match: workflow-mapping', (t) => {
-  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
-  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+  const source = generateWorkflow('@name some_workflow a-b');
+  const target = generateWorkflow('@name another_workflow a-b');
 
   const source_project = createProject(source);
   const target_project = createProject(target);
   const result = merge(source_project, target_project, {
     workflowMappings: {
-      'some-workflow': 'another-workflow',
+      some_workflow: 'another_workflow',
     },
   });
 
   t.is(result.workflows.length, 1);
-  t.deepEqual(result.workflows[0].name, 'some workflow');
+  t.deepEqual(result.workflows[0].name, 'some_workflow');
 });
 
 test('no id match: workflow-mapping with non-existent workflow', (t) => {
-  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
-  const target = generateWorkflow(['a-b'], { name: 'another workflow' });
+  const source = generateWorkflow('@id some_workflow a-b');
+  const target = generateWorkflow('@id another_workflow a-b');
 
   const source_project = createProject(source);
   const target_project = createProject(target);
   const result = merge(source_project, target_project, {
     workflowMappings: {
-      'some-workflow': 'non-existing-workflow',
+      some_workflow: 'non-existing-workflow',
     },
   });
 
   t.is(result.workflows.length, 2);
   t.deepEqual(
     result.workflows.map((w) => w.name).sort(),
-    ['another workflow', 'some workflow'].sort()
+    ['another_workflow', 'some_workflow'].sort()
   );
 });
 
 test('id match: preserve target uuid', (t) => {
-  const source = generateWorkflow(['a-b'], { name: 'some workflow' });
-  const target = generateWorkflow(['a-b'], {
-    name: 'another workflow',
+  const source = generateWorkflow('@name some_workflow a-b', {
+    openfnUuid: true,
+  });
+  const target = generateWorkflow('@name another_workflow a-b', {
     openfnUuid: true,
   });
 
@@ -396,14 +397,14 @@ test('id match: preserve target uuid', (t) => {
   const target_project = createProject(target);
   const result = merge(source_project, target_project, {
     workflowMappings: {
-      'some-workflow': 'another-workflow',
+      some_workflow: 'another_workflow',
     },
   });
 
   t.is(result.workflows.length, 1);
-  t.is(result.workflows[0].name, 'some workflow');
-  // we expect every thing in target to be overridden exect the uuid
-  t.is(result.workflows[0].openfn.uuid, target.workflow.openfn.uuid);
+  t.is(result.workflows[0].name, 'some_workflow');
+  // we expect every thing in target to be overridden except the uuid
+  t.is(result.workflows[0].openfn.uuid, target.openfn.uuid);
 });
 // should preserve UUID if id changes
 
@@ -413,17 +414,16 @@ test('id match: preserve target uuid', (t) => {
 
 test('options: no mappings & removeUnmapped=false', (t) => {
   const source_project = createProject([
-    generateWorkflow(['a-new'], { name: 'a' }),
-    generateWorkflow(['b-new'], { name: 'b' }),
-    generateWorkflow(['c-new'], { name: 'c' }),
+    generateWorkflow('@id a a-new'),
+    generateWorkflow('@id b b-new'),
+    generateWorkflow('@id c c-new'),
   ]);
   const target_project = createProject([
-    generateWorkflow(['a-old'], { name: 'a' }),
-    generateWorkflow(['b-old'], { name: 'b' }),
-    generateWorkflow(['d-old'], { name: 'd' }),
+    generateWorkflow('@id a a-old'),
+    generateWorkflow('@id b b-old'),
+    generateWorkflow('@id d d-old'),
   ]);
   const result = merge(source_project, target_project);
-
   // should be the new version of a,b,c
   t.truthy(result.getWorkflow('a')?.get('new'));
   t.truthy(result.getWorkflow('b')?.get('new'));
@@ -439,15 +439,15 @@ test('options: no mappings & removeUnmapped=false', (t) => {
 
 test('options: no mappings & removeUnmapped=true', (t) => {
   const source_project = createProject([
-    generateWorkflow(['a-new'], { name: 'a' }),
-    generateWorkflow(['b-new'], { name: 'b' }),
-    generateWorkflow(['c-new'], { name: 'c' }),
+    generateWorkflow('@id a a-new'),
+    generateWorkflow('@id b b-new'),
+    generateWorkflow('@id c c-new'),
   ]);
   const target_project = createProject([
-    generateWorkflow(['a-old'], { name: 'a' }),
-    generateWorkflow(['b-old'], { name: 'b' }),
-    generateWorkflow(['d-old'], { name: 'd' }),
-    generateWorkflow(['e-old'], { name: 'e' }),
+    generateWorkflow('@id a a-old'),
+    generateWorkflow('@id b b-old'),
+    generateWorkflow('@id d d-old'),
+    generateWorkflow('@id e e-old'),
   ]);
   const result = merge(source_project, target_project, {
     removeUnmapped: true,
@@ -459,21 +459,21 @@ test('options: no mappings & removeUnmapped=true', (t) => {
   t.truthy(result.getWorkflow('c')?.get('new'));
 
   t.deepEqual(
-    result.workflows.map((w) => w.name),
+    result.workflows.map((w) => w.id),
     ['a', 'b', 'c']
   );
 });
 
 test('options: mapping & removeUnmapped=false', (t) => {
   const source_project = createProject([
-    generateWorkflow(['a-new'], { name: 'a' }),
-    generateWorkflow(['b-new'], { name: 'b' }),
-    generateWorkflow(['c'], { name: 'c' }),
+    generateWorkflow('@name a a-new'),
+    generateWorkflow('@name b b-new'),
+    generateWorkflow('@name c'),
   ]);
   const target_project = createProject([
-    generateWorkflow(['a-old'], { name: 'a' }),
-    generateWorkflow(['b-old'], { name: 'b' }),
-    generateWorkflow(['d-old'], { name: 'd' }),
+    generateWorkflow('@name a a-old'),
+    generateWorkflow('@name b b-old'),
+    generateWorkflow('@name d d-old'),
   ]);
   const result = merge(source_project, target_project, {
     workflowMappings: { a: 'a' },
@@ -494,14 +494,14 @@ test('options: mapping & removeUnmapped=false', (t) => {
 
 test('options: mapping & removeUnmapped=true', (t) => {
   const source_project = createProject([
-    generateWorkflow(['a-new'], { name: 'a' }),
-    generateWorkflow(['b-new'], { name: 'b' }),
-    generateWorkflow(['c'], { name: 'c' }),
+    generateWorkflow('@name a a-new'),
+    generateWorkflow('@name b b-new'),
+    generateWorkflow('@name c c-x'),
   ]);
   const target_project = createProject([
-    generateWorkflow(['a-old'], { name: 'a' }),
-    generateWorkflow(['b-old'], { name: 'b' }),
-    generateWorkflow(['d-old'], { name: 'd' }),
+    generateWorkflow('@name a a-old'),
+    generateWorkflow('@name b b-old'),
+    generateWorkflow('@name d d-old'),
   ]);
   const result = merge(source_project, target_project, {
     workflowMappings: { a: 'a' },
@@ -519,13 +519,13 @@ test('options: mapping & removeUnmapped=true', (t) => {
 
 test('options: mapping(rename) & removeUnmapped=false', (t) => {
   const source_project = createProject([
-    generateWorkflow(['a-new'], { name: 'a' }),
-    generateWorkflow(['b-new'], { name: 'b' }),
-    generateWorkflow(['c-new'], { name: 'c' }),
+    generateWorkflow('@name a a-new'),
+    generateWorkflow('@name b b-new'),
+    generateWorkflow('@name c c-new'),
   ]);
   const target_project = createProject([
-    generateWorkflow(['a-old'], { name: 'a' }),
-    generateWorkflow(['b-old'], { name: 'b' }),
+    generateWorkflow('@name a a-old'),
+    generateWorkflow('@name b b-old'),
   ]);
   const result = merge(source_project, target_project, {
     workflowMappings: { c: 'a' },
@@ -545,13 +545,13 @@ test('options: mapping(rename) & removeUnmapped=false', (t) => {
 
 test('options: multiple source into one target error', (t) => {
   const source_project = createProject([
-    generateWorkflow(['a-new'], { name: 'a' }),
-    generateWorkflow(['b-new'], { name: 'b' }),
-    generateWorkflow(['c-new'], { name: 'c' }),
+    generateWorkflow('@name a a-new'),
+    generateWorkflow('@name b b-new'),
+    generateWorkflow('@name c c-new'),
   ]);
   const target_project = createProject([
-    generateWorkflow(['a-old'], { name: 'a' }),
-    generateWorkflow(['b-old'], { name: 'b' }),
+    generateWorkflow('@name a a-old'),
+    generateWorkflow('@name b b-old'),
   ]);
 
   t.throws(

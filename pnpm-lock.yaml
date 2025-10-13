@@ -628,9 +628,15 @@ importers:
       glob:
         specifier: ^11.0.2
         version: 11.0.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
+      ohm-js:
+        specifier: ^17.2.1
+        version: 17.2.1
       yaml:
         specifier: ^2.2.2
         version: 2.8.1
@@ -4061,6 +4067,10 @@ packages:
 
   observable-fns@0.6.1:
     resolution: {integrity: sha512-9gRK4+sRWzeN6AOewNBTLXir7Zl/i3GB6Yl26gK4flxz8BXVpD3kt8amREmWNb0mxYOGDotvE5a4N+PtGGKdkg==}
+
+  ohm-js@17.2.1:
+    resolution: {integrity: sha512-4cXF0G09fAYU9z61kTfkNbKK1Kz/sGEZ5NbVWHoe9Qi7VB7y+Spwk051CpUTfUENdlIr+vt8tMV4/LosTE2cDQ==}
+    engines: {node: '>=0.12.1'}
 
   on-finished@2.4.1:
     resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
@@ -8513,6 +8523,8 @@ snapshots:
   object-inspect@1.13.4: {}
 
   observable-fns@0.6.1: {}
+
+  ohm-js@17.2.1: {}
 
   on-finished@2.4.1:
     dependencies:

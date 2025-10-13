@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.16.1
+
+### Patch Changes
+
+- cb97744: Improve compiler performance for large files
+  - @openfn/engine-multi@1.6.14
+
 ## 1.16.0
 
 ### Minor Changes

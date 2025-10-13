@@ -2,13 +2,26 @@ import * as l from '@openfn/lexicon';
 
 import test from 'ava';
 import mapUUIDs from '../../src/merge/map-uuids';
-import { createWorkflow } from '../util';
-import generateWorkflow from '../../src/gen/workflow-generator';
+import generateWorkflow from '../../src/gen/generator';
+import Workflow from '../../src/Workflow';
+
+const gen = (src) => generateWorkflow(src, { uuidSeed: 1 });
+
+const createSingleNode = (name, uuid) =>
+  new Workflow({
+    steps: [
+      {
+        id: name,
+        name,
+        openfn: { uuid: uuid ?? crypto.randomUUID() },
+      },
+    ],
+  });
 
 // mapping by ids
 test('no changes: single node workflow', (t) => {
-  const source = generateWorkflow(['trigger']);
-  const target = generateWorkflow(['trigger']);
+  const source = createSingleNode('trigger');
+  const target = createSingleNode('trigger');
 
   const result = mapUUIDs(source, target);
   t.deepEqual(result.nodes, {
@@ -18,10 +31,9 @@ test('no changes: single node workflow', (t) => {
 });
 
 test('no changes: multi node workflow', (t) => {
-  const source = generateWorkflow(['trigger-a']);
-  const target = generateWorkflow(['trigger-a']);
+  const source = gen('trigger-a');
+  const target = gen('trigger-a');
   const result = mapUUIDs(source, target);
-
   t.deepEqual(result.nodes, {
     trigger: target.getUUID('trigger'),
     a: target.getUUID('a'),
@@ -32,26 +44,26 @@ test('no changes: multi node workflow', (t) => {
 });
 
 test('no changes: huge workflow', (t) => {
-  const source = generateWorkflow([
-    'trigger-a',
-    'trigger-b',
-    'a-c',
-    'a-d',
-    'b-d',
-    'b-e',
-    'c-f',
-    'e-g',
-  ]);
-  const target = generateWorkflow([
-    'trigger-a',
-    'trigger-b',
-    'a-c',
-    'a-d',
-    'b-d',
-    'b-e',
-    'c-f',
-    'e-g',
-  ]);
+  const source = gen(`
+    trigger-a
+    trigger-b
+    a-c
+    a-d
+    b-d
+    b-e
+    c-f
+    e-g
+  `);
+  const target = gen(`
+    trigger-a
+    trigger-b
+    a-c
+    a-d
+    b-d
+    b-e
+    c-f
+    e-g
+  `);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -77,8 +89,8 @@ test('no changes: huge workflow', (t) => {
 });
 
 test('id change: single node', (t) => {
-  const source = generateWorkflow(['trigger']);
-  const target = generateWorkflow(['activate']);
+  const source = createSingleNode('trigger');
+  const target = createSingleNode('activate');
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -88,8 +100,8 @@ test('id change: single node', (t) => {
 });
 
 test('id change: leaf nodes', (t) => {
-  const source = generateWorkflow(['trigger-a', 'trigger-b']);
-  const target = generateWorkflow(['trigger-x', 'trigger-y']);
+  const source = gen(`trigger-a trigger-b`);
+  const target = gen(`trigger-x trigger-y`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -104,8 +116,8 @@ test('id change: leaf nodes', (t) => {
 });
 
 test('id change: internal node', (t) => {
-  const source = generateWorkflow(['trigger-a', 'a-b']);
-  const target = generateWorkflow(['trigger-x', 'x-b']);
+  const source = gen(`trigger-a a-b`);
+  const target = gen(`trigger-x x-b`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -120,8 +132,8 @@ test('id change: internal node', (t) => {
 });
 
 test('id change: internal nodes(same parent and child)', (t) => {
-  const source = generateWorkflow(['trigger-a', 'trigger-b', 'a-c', 'b-c']);
-  const target = generateWorkflow(['trigger-x', 'trigger-y', 'x-c', 'y-c']);
+  const source = gen(`trigger-a trigger-b a-c b-c`);
+  const target = gen(`trigger-x trigger-y x-c y-c`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -139,27 +151,27 @@ test('id change: internal nodes(same parent and child)', (t) => {
 });
 
 test('id change: several internal nodes (mid-size workflow)', (t) => {
-  const source = generateWorkflow([
-    'trigger-a',
-    'trigger-b',
-    'a-c',
-    'b-d',
-    'c-e',
-    'd-f',
-    'e-g',
-    'f-g',
-  ]);
+  const source = gen(`
+    trigger-a
+    trigger-b
+    a-c
+    b-d
+    c-e
+    d-f
+    e-g
+    f-g
+  `);
 
-  const target = generateWorkflow([
-    'trigger-a1',
-    'trigger-b1',
-    'a1-x',
-    'b1-y',
-    'x-e',
-    'y-f',
-    'e-z',
-    'f-z',
-  ]);
+  const target = gen(`
+    trigger-a1
+    trigger-b1
+    a1-x
+    b1-y
+    x-e
+    y-f
+    e-z
+    f-z
+  `);
 
   const result = mapUUIDs(source, target);
 
@@ -187,26 +199,26 @@ test('id change: several internal nodes (mid-size workflow)', (t) => {
 });
 
 test('id change: several internal nodes (mid-size workflow) 2', (t) => {
-  const source = generateWorkflow([
-    'trigger-a',
-    'trigger-b',
-    'a-c',
-    'a-d',
-    'b-e',
-    'b-f',
-    'd-g',
-    'e-g',
-  ]);
-  const target = generateWorkflow([
-    'trigger-x',
-    'trigger-y',
-    'x-c',
-    'x-m',
-    'y-n',
-    'y-f',
-    'm-g',
-    'n-g',
-  ]);
+  const source = gen(`
+    trigger-a
+    trigger-b
+    a-c
+    a-d
+    b-e
+    b-f
+    d-g
+    e-g
+  `);
+  const target = gen(`
+    trigger-x
+    trigger-y
+    x-c
+    x-m
+    y-n
+    y-f
+    m-g
+    n-g
+  `);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -225,7 +237,6 @@ test('id change: several internal nodes (mid-size workflow) 2', (t) => {
     'a-c': target.getUUID('x-c'),
     'a-d': target.getUUID('x-m'),
     'b-e': target.getUUID('y-n'),
-    'b-e': target.getUUID('y-n'),
     'b-f': target.getUUID('y-f'),
     'd-g': target.getUUID('m-g'),
     'e-g': target.getUUID('n-g'),
@@ -234,8 +245,8 @@ test('id change: several internal nodes (mid-size workflow) 2', (t) => {
 
 test('id change: chained internal nodes', (t) => {
   // special: this features a node b which has both parent and children changed
-  const source = generateWorkflow(['trigger-a', 'a-b', 'b-c', 'b-d']);
-  const target = generateWorkflow(['trigger-x', 'x-y', 'y-z', 'y-q']);
+  const source = gen(`trigger-a a-b b-c b-d`);
+  const target = gen(`trigger-x x-y y-z y-q`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -254,8 +265,8 @@ test('id change: chained internal nodes', (t) => {
 });
 
 test('node removal: single node', (t) => {
-  const source = generateWorkflow([]);
-  const target = generateWorkflow(['trigger']);
+  const source = new Workflow({ steps: [] });
+  const target = createSingleNode('trigger');
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {});
@@ -263,8 +274,8 @@ test('node removal: single node', (t) => {
 });
 
 test('node removal: leaf node', (t) => {
-  const source = generateWorkflow(['trigger']);
-  const target = generateWorkflow(['trigger-a']);
+  const source = createSingleNode('trigger');
+  const target = gen(`trigger-a`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -274,8 +285,8 @@ test('node removal: leaf node', (t) => {
 });
 
 test('node removal: multi leaf nodes (same parent)', (t) => {
-  const source = generateWorkflow(['trigger']);
-  const target = generateWorkflow(['trigger-a', 'trigger-b']);
+  const source = createSingleNode('trigger');
+  const target = gen(`trigger-a trigger-b`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -285,8 +296,8 @@ test('node removal: multi leaf nodes (same parent)', (t) => {
 });
 
 test('node removal: multi leaf nodes (different parents)', (t) => {
-  const source = generateWorkflow(['trigger-a', 'trigger-b']);
-  const target = generateWorkflow(['trigger-a', 'trigger-b', 'a-c', 'b-d']);
+  const source = gen(`trigger-a trigger-b`);
+  const target = gen(`trigger-a trigger-b a-c b-d`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -301,8 +312,8 @@ test('node removal: multi leaf nodes (different parents)', (t) => {
 });
 
 test('node removal: single node (different parents)', (t) => {
-  const source = generateWorkflow(['trigger-a', 'trigger-b']);
-  const target = generateWorkflow(['trigger-a', 'trigger-b', 'a-c', 'b-c']);
+  const source = gen(`trigger-a trigger-b`);
+  const target = gen(`trigger-a trigger-b a-c b-c`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -317,8 +328,8 @@ test('node removal: single node (different parents)', (t) => {
 });
 
 test('node removal: internal node', (t) => {
-  const source = generateWorkflow(['trigger-b']);
-  const target = generateWorkflow(['trigger-a', 'a-b']);
+  const source = gen(`trigger-b`);
+  const target = gen(`trigger-a a-b`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -330,8 +341,8 @@ test('node removal: internal node', (t) => {
 
 // Breakpoint here!
 test('node addition: single leaf node', (t) => {
-  const source = generateWorkflow(['trigger-a']);
-  const target = generateWorkflow(['trigger-a', 'a-b']);
+  const source = gen(`trigger-a`);
+  const target = gen(`trigger-a a-b`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -344,8 +355,8 @@ test('node addition: single leaf node', (t) => {
 });
 
 test('node addition: branching internal node', (t) => {
-  const source = generateWorkflow(['trigger-a', 'a-b']);
-  const target = generateWorkflow(['trigger-a', 'a-b', 'a-c', 'c-d']);
+  const source = gen(`trigger-a a-b`);
+  const target = gen(`trigger-a a-b a-c c-d`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -360,8 +371,8 @@ test('node addition: branching internal node', (t) => {
 });
 
 test('edge change: rewire to different parent', (t) => {
-  const source = generateWorkflow(['trigger-a', 'a-b']);
-  const target = generateWorkflow(['trigger-a', 'trigger-b']);
+  const source = gen(`trigger-a a-b`);
+  const target = gen(`trigger-a trigger-b`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -375,8 +386,8 @@ test('edge change: rewire to different parent', (t) => {
 });
 
 test('mixed change: rename + add new leaf', (t) => {
-  const source = generateWorkflow(['trigger-a']);
-  const target = generateWorkflow(['trigger-x', 'x-b']);
+  const source = gen(`trigger-a`);
+  const target = gen(`trigger-x x-b`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -389,8 +400,8 @@ test('mixed change: rename + add new leaf', (t) => {
 });
 
 test('move: children move to a sibling', (t) => {
-  const source = generateWorkflow(['trigger-m', 'm-n', 'm-o', 'o-d', 'o-e']);
-  const target = generateWorkflow(['trigger-a', 'a-b', 'a-c', 'b-d', 'b-e']);
+  const source = gen(`trigger-m m-n m-o o-d o-e`);
+  const target = gen(`trigger-a a-b a-c b-d b-e`);
   const result = mapUUIDs(source, target);
 
   t.deepEqual(result.nodes, {
@@ -411,8 +422,8 @@ test('move: children move to a sibling', (t) => {
 });
 
 test('expression-based mapping: nodes only distinguishable by expression', (t) => {
-  const source = generateWorkflow(['trigger-x', 'trigger-y']);
-  const target = generateWorkflow(['trigger-a', 'trigger-b']);
+  const source = gen(`trigger-x trigger-y`);
+  const target = gen(`trigger-a trigger-b`);
 
   source.set('x', { expression: 'foo' });
   source.set('y', { expression: 'bar' });

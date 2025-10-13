@@ -9,6 +9,7 @@
 import { builders as b, namedTypes as n } from 'ast-types';
 import type { NodePath } from 'ast-types/lib/node-path';
 import type { Transformer } from '../transform';
+import IgnoreRules from '../transform-ignore';
 
 // Walk up the AST and work out where the parent arrow function should go
 const ensureParentArrow = (path: NodePath<n.MemberExpression>) => {
@@ -79,6 +80,11 @@ const isOpenFunction = (path: NodePath) => {
 };
 
 function visitor(path: NodePath<n.MemberExpression>) {
+  // if it was called for an ObjectExpression
+  const ignoreRule = IgnoreRules(path);
+  if (ignoreRule.check) {
+    return ignoreRule.shouldSkip();
+  }
   let first = path.node.object;
   while (first.hasOwnProperty('object')) {
     first = (first as n.MemberExpression).object;
@@ -106,7 +112,7 @@ function visitor(path: NodePath<n.MemberExpression>) {
 
 export default {
   id: 'lazy-state',
-  types: ['MemberExpression'],
+  types: ['MemberExpression', 'ObjectExpression'],
   visitor,
   // It's important that $ symbols are escaped before any other transformations can run
   order: 0,

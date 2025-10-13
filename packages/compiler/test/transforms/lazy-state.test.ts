@@ -15,6 +15,20 @@ test('convert a simple dollar reference', (t) => {
   t.is(code, 'get(state => state.data)');
 });
 
+test("don't visit top-level object", (t) => {
+  const ast = parse(`const x = { x: $.data };
+fn($.data)`);
+  t.notThrows(() => {
+    const transformed = transform(ast, [visitors]);
+    const { code } = print(transformed);
+    t.is(
+      code,
+      `const x = { x: $.data };
+fn(state => state.data)`
+    );
+  });
+});
+
 test('convert a chained dollar reference', (t) => {
   const ast = parse('get($.a.b.c.d)');
 

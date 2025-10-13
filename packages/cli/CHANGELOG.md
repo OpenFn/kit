@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.16.1
+
+### Patch Changes
+
+- Updated dependencies [cb97744]
+- Updated dependencies [49caf75]
+  - @openfn/compiler@1.1.5
+  - @openfn/project@0.5.0
+
 ## 1.16.0
 
 ### Minor Changes
