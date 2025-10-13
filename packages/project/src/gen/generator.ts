@@ -169,7 +169,13 @@ function generateWorkflow(
     parser = createParser();
   }
 
-  const wf = new Workflow(parser.parse(def, options));
+  const raw = parser.parse(def, options);
+  if (!raw.id) {
+    // Workflow ID is required, so make sure it gets set
+    // before calling the constructor
+    raw.id = 'workflow';
+  }
+  const wf = new Workflow(raw);
   if (options.openfnUuid) {
     wf.openfn = {
       uuid: randomUUID(),

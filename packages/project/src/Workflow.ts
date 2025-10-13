@@ -31,9 +31,13 @@ class Workflow {
     this.workflow = clone(workflow);
 
     const { id, name, openfn, steps, ...options } = workflow;
-    // ensure a workflow always has an id
-    this.id = id ?? (name ? slugify(name) : randomUUID());
-    this.name = name ?? this.id; // TODO I think generating a name from uuid is wrong
+    if (!(id || name)) {
+      throw new Error('A Workflow MUST have a name or id');
+    }
+
+    this.id = id ?? slugify(name);
+    this.name = name;
+
     this.openfn = openfn;
     this.options = options;
 
