@@ -1,5 +1,21 @@
 # @openfn/cli
 
+## 1.16.1
+
+### Patch Changes
+
+- 8a50703: Allow a project to be checked out from a direct path to a project file
+- 7d16875: When merging, allow the source project to specified as a path to a project file
+- Updated dependencies [81b97c3]
+- Updated dependencies [43be979]
+- Updated dependencies [1f8d65e]
+- Updated dependencies [25c7a2b]
+- Updated dependencies [04a89e2]
+- Updated dependencies [7d16875]
+- Updated dependencies [49caf75]
+  - @openfn/project@0.5.0
+  - @openfn/lexicon@1.2.4
+
 ## 1.16.0
 
 ### Minor Changes
