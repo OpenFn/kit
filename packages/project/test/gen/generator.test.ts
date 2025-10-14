@@ -1,4 +1,3 @@
-// TODO this should wholesale replace workflow-generator.test.ts
 import test from 'ava';
 import { grammar } from 'ohm-js';
 import _ from 'lodash';
@@ -8,14 +7,14 @@ import { generateWorkflow, generateProject } from '../../src/gen/generator';
 import * as fixtures from './fixtures';
 import Workflow from '../../src/Workflow';
 
-const printResults = true; // TODO load this from env or something
-
-const print = (t, result) => {};
-
 // Generate a workflow with a fixed UUID seed
 // Pass test context to log the result
-const gen = (src, t) => {
-  const result = generateWorkflow(src, { uuidSeed: 1, printErrors: false });
+const gen = (src, t, options = {}) => {
+  const result = generateWorkflow(src, {
+    uuidSeed: 1,
+    printErrors: false,
+    ...options,
+  });
   if (t) {
     t.log(JSON.stringify(result.toJSON(), null, 2));
   }
@@ -426,4 +425,86 @@ a-b #zz
   );
 
   t.deepEqual(result, fixtures.ab);
+});
+
+test('it should generate a simple workflow with mapped uuids', (t) => {
+  const result = gen('a-b', t, {
+    uuidMap: {
+      a: 'A',
+      b: 'B',
+      'a-b': 'AB',
+    },
+  });
+
+  const expected = {
+    id: 'workflow',
+    name: 'Workflow',
+    steps: [
+      {
+        id: 'a',
+        name: 'a',
+        openfn: {
+          uuid: 'A',
+        },
+        next: {
+          b: {
+            openfn: {
+              uuid: 'AB',
+            },
+          },
+        },
+      },
+      {
+        id: 'b',
+        name: 'b',
+        openfn: {
+          uuid: 'B',
+        },
+      },
+    ],
+  };
+
+  t.deepEqual(result, expected);
+});
+
+test('it should generate a project with uuids', (t) => {
+  const result = generateProject('x', ['a-b'], {
+    uuidMap: [
+      {
+        a: 'A',
+        b: 'B',
+        'a-b': 'AB',
+      },
+    ],
+  });
+
+  const expected = {
+    id: 'workflow',
+    name: 'Workflow',
+    steps: [
+      {
+        id: 'a',
+        name: 'a',
+        openfn: {
+          uuid: 'A',
+        },
+        next: {
+          b: {
+            openfn: {
+              uuid: 'AB',
+            },
+          },
+        },
+      },
+      {
+        id: 'b',
+        name: 'b',
+        openfn: {
+          uuid: 'B',
+        },
+      },
+    ],
+  };
+
+  t.deepEqual(result.workflows[0].toJSON(), expected);
 });
