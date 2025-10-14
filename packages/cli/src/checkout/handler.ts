@@ -1,4 +1,4 @@
-import { Workspace } from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import path from 'path';
 import type { Logger } from '../util/logger';
 import type { CheckoutOptions } from './command';
@@ -13,20 +13,32 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
     return;
   }
 
+  // get the config
+  // TODO: try to retain the endpoint for the projects
+  const { project: _, ...config } = workspace.getConfig() ?? {};
+
   // get the project
-  const switchProject = workspace.get(options.projectName);
+  let switchProject;
+  if (/\.(yaml|json)$/.test(options.projectName)) {
+    // TODO: should we allow checkout into an arbitrary folder?
+    const filePath = path.join(commandPath, options.projectName);
+    logger.debug('Loading project from path ', filePath);
+    switchProject = await Project.from('path', filePath, {
+      config,
+    });
+  } else {
+    switchProject = workspace.get(options.projectName);
+  }
+
   if (!switchProject) {
     logger.error(
       `Project with id/name ${options.projectName} not found in the workspace`
     );
     return;
   }
-  // get the config
-  // TODO: try to retain the endpoint for the projects
-  const config = workspace.getConfig();
 
   // delete workflow dir before expanding project
-  await rimraf(path.join(commandPath, config?.workflowRoot || 'workflows'));
+  await rimraf(path.join(commandPath, config.workflowRoot ?? 'workflows'));
 
   // expand project into directory
   const files = switchProject.serialize('fs');

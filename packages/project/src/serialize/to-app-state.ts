@@ -11,7 +11,7 @@ type Options = { format?: 'json' | 'yaml' };
 // TODO this should allow override on format,
 // regardless of repo settings
 export default function (project: Project, options: Options = {}) {
-  const { uuid: id, endpoint, env, ...rest } = project.openfn;
+  const { uuid: id, endpoint, env, ...rest } = project.openfn ?? {};
 
   const state = {
     id,
@@ -40,9 +40,12 @@ const mapWorkflow = (workflow) => {
   if (workflow instanceof Workflow) {
     workflow = workflow.toJSON();
   }
+
+  const { uuid, ...originalOpenfnProps } = workflow.openfn ?? {};
   const wfState = {
+    ...originalOpenfnProps,
+    id: workflow.openfn?.uuid ?? randomUUID(),
     name: workflow.name,
-    ...renameKeys(workflow.openfn, { uuid: 'id' }),
     jobs: [],
     triggers: [],
     edges: [],

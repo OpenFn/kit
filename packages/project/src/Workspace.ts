@@ -16,7 +16,6 @@ export class Workspace {
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
   constructor(workspacePath: string) {
-    const projectsPath = path.join(workspacePath, PROJECTS_DIRECTORY);
     const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
     // dealing with openfn.yaml
     if (pathExists(openfnYamlPath, 'file')) {
@@ -24,22 +23,30 @@ export class Workspace {
       const data = fs.readFileSync(openfnYamlPath, 'utf-8');
       this.config = yamlToJson(data);
     }
+    const projectsPath = path.join(
+      workspacePath,
+      this.config?.dirs?.projects ?? PROJECTS_DIRECTORY
+    );
 
     // dealing with projects
     if (this.isValid && pathExists(projectsPath, 'directory')) {
       const stateFiles = fs
         .readdirSync(projectsPath)
-        .filter((fileName) =>
-          PROJECT_EXTENSIONS.includes(path.extname(fileName))
+        .filter(
+          (fileName) =>
+            PROJECT_EXTENSIONS.includes(path.extname(fileName)) &&
+            path.parse(fileName).name !== 'openfn'
         );
 
-      this.projects = stateFiles.map((file) => {
-        const stateFilePath = path.join(projectsPath, file);
-        const data = fs.readFileSync(stateFilePath, 'utf-8');
-        const project = fromAppState(data, { format: 'yaml' });
-        this.projectPaths.set(project.name, stateFilePath);
-        return project;
-      });
+      this.projects = stateFiles
+        .map((file) => {
+          const stateFilePath = path.join(projectsPath, file);
+          const data = fs.readFileSync(stateFilePath, 'utf-8');
+          const project = fromAppState(data, { format: 'yaml' });
+          this.projectPaths.set(project.name, stateFilePath);
+          return project;
+        })
+        .filter((s) => s);
     }
   }
 
@@ -59,7 +66,7 @@ export class Workspace {
     return this.projects.find((p) => p.name === this.config?.name);
   }
 
-  getConfig() {
+  getConfig(): Partial<OpenfnConfig> {
     return this.config;
   }
 

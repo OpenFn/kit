@@ -2,7 +2,7 @@
 
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { Project } from '../Project';
+import { OpenfnConfig, Project } from '../Project';
 import { yamlToJson } from '../util/yaml';
 import renameKeys from '../util/rename-keys';
 
@@ -12,6 +12,9 @@ type FromAppStateConfig = {
   env?: string;
   fetchedAt?: string;
   format?: 'json' | 'yaml';
+
+  // Allow workspace config to be passed
+  repo: OpenfnConfig;
 };
 
 function slugify(text) {
@@ -19,10 +22,12 @@ function slugify(text) {
 }
 
 export default (state: Provisioner.Project, config: FromAppStateConfig) => {
-  if (config.format === 'yaml') {
-    state = yamlToJson(state);
-  } else if (typeof state === 'string') {
-    state = JSON.parse(state);
+  if (typeof state === 'string') {
+    if (config?.format === 'yaml') {
+      state = yamlToJson(state);
+    } else {
+      state = JSON.parse(state);
+    }
   }
 
   const {
@@ -38,14 +43,12 @@ export default (state: Provisioner.Project, config: FromAppStateConfig) => {
   } = state;
 
   const proj: Partial<l.Project> = {
-    name, // TODO do we need to slug this or anything?
+    name,
     description,
     collections,
     credentials,
     options,
   };
-
-  const repoConfig = {};
 
   proj.openfn = {
     uuid: id,
@@ -62,7 +65,7 @@ export default (state: Provisioner.Project, config: FromAppStateConfig) => {
 
   proj.workflows = state.workflows.map(mapWorkflow);
 
-  return new Project(proj as l.Project, repoConfig);
+  return new Project(proj as l.Project, config?.repo);
 };
 
 const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
@@ -89,11 +92,13 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   const { jobs, edges, triggers, name, ...remoteProps } = workflow;
   const mapped: l.Workflow = {
-    id: slugify(workflow.name),
     name: workflow.name,
     steps: [],
     openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
+  if (workflow.name) {
+    mapped.id = slugify(workflow.name);
+  }
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?

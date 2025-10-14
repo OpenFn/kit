@@ -15,7 +15,7 @@ class Workflow {
   workflow: l.Workflow; // this is the raw workflow JSON representation
   index;
 
-  name: string;
+  name?: string;
   id: string;
   openfn: OpenfnMeta;
 
@@ -30,8 +30,19 @@ class Workflow {
     this.workflow = clone(workflow);
 
     const { id, name, openfn, steps, ...options } = workflow;
+    if (!(id || name)) {
+      throw new Error('A Workflow MUST have a name or id');
+    }
+
     this.id = id ?? slugify(name);
-    this.name = name ?? id;
+    this.name = name;
+
+    // This is a bit messy but needed to allow toJSON() to serialize properly
+    this.workflow.id = this.id;
+    if (name) {
+      this.workflow.name = this.name;
+    }
+
     this.openfn = openfn;
     this.options = options;
 
@@ -146,6 +157,10 @@ class Workflow {
 
   toJSON(): JSON.Object {
     return this.workflow;
+  }
+
+  getUUIDMap(): Record<string, string> {
+    return this.index.uuid;
   }
 }
 

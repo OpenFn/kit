@@ -7,8 +7,11 @@ import Workflow from '../../src/Workflow';
 
 const gen = (src) => generateWorkflow(src, { uuidSeed: 1 });
 
+let idgen = 0;
+
 const createSingleNode = (name, uuid) =>
   new Workflow({
+    id: `wf-${++idgen}}`,
     steps: [
       {
         id: name,
@@ -265,7 +268,7 @@ test('id change: chained internal nodes', (t) => {
 });
 
 test('node removal: single node', (t) => {
-  const source = new Workflow({ steps: [] });
+  const source = new Workflow({ id: 'w', steps: [] });
   const target = createSingleNode('trigger');
   const result = mapUUIDs(source, target);
 
