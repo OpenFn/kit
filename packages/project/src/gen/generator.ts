@@ -204,7 +204,7 @@ function generateProject(
   workflowDefs: string[],
   // The uuid map here must be a sequenced array with a map per workflow
   // (we can't associate id maps by workflow name because we don't know yet)
-  options: Partial<GenerateWorkflowOptions> = {}
+  options: Partial<GenerateProjectOptions> = {}
 ) {
   const workflows = workflowDefs.map((w, idx) =>
     generateWorkflow(w, {
