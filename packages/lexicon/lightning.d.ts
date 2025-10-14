@@ -17,15 +17,19 @@ type TimeInMicroSeconds = string;
  */
 
 /**
- * An execution plan representing a Lightning 'Run'.
- * This represents the execution of a workflow.
+ * The Lightning Plan is the data structure sent by lightning in response
+ * to the fetch:plan event. It represents a single Run, or an execution
+ * of a workflow given some input dataclip.
  *
- * The data structure that Lightning sends is converted by the Worker into
- * a runtime ExecutionPlan (as found in Core)
+ * This structure is converted by the Worker into a runtime ExecutionPlan (as found in Core)
  */
 export type LightningPlan = {
+  /** The Lightning UUID for this Run (not the same as the workflow id/UUID) */
   id: string;
+
+  /** The human readable name of the workflow. Not currently sent by Lightning. */
   name?: string;
+
   dataclip_id: string;
   starting_node_id: string;
 

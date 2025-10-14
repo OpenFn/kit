@@ -64,8 +64,8 @@ export type ExecutionPlan = {
  * A workflow is just a series of steps, executed start to finish
  */
 export type Workflow = {
-  /** The ID is the primary internal identifier for a Workflow, and MUST be set */
-  id: string;
+  /** The ID is the primary internal identifier for a Workflow */
+  id?: string;
 
   /** Human readable name, like display. Can be used to generate an internal id */
   name?: string;

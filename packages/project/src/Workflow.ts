@@ -15,7 +15,7 @@ class Workflow {
   workflow: l.Workflow; // this is the raw workflow JSON representation
   index;
 
-  name: string;
+  name?: string;
   id: string;
   openfn: OpenfnMeta;
 
