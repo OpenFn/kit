@@ -9,27 +9,42 @@ import slugify from '../util/slugify';
 type GenerateWorkflowOptions = {
   name: string;
   uuidSeed: number;
-  openfnUuid: boolean; // TODO probably need to do this by default?
   printErrors: boolean; // true by default
+
+  // Optional map of uuids to use for each node id
+  // useful to generate a project with fixed ids
+  uuidMap?: Record<string, string>;
+
+  // TODO removing on this PR, I swear to god
+  openfnUuid: boolean; // TODO probably need to do this by default?
+};
+
+type GenerateProjectOptions = GenerateWorkflowOptions & {
+  uuidMap: Array<Record<string, string>>;
 };
 
 let parser;
 
 const initOperations = (options = {}) => {
   let nodes = {};
+  const uuidMap = options.uuidMap ?? {};
 
   // Sets values available to this inside semantic actions
-  const uuid = () => {
+  const uuid = (id: string) => {
+    if (id in uuidMap) {
+      return uuidMap[id];
+    }
     return options.uuidSeed ? options.uuidSeed++ : randomUUID();
   };
 
   const buildNode = (name: string) => {
     if (!nodes[name]) {
+      const id = slugify(name);
       nodes[name] = {
         name: name,
-        id: slugify(name),
+        id,
         openfn: {
-          uuid: uuid(),
+          uuid: uuid(id),
         },
       };
     }
@@ -63,6 +78,7 @@ const initOperations = (options = {}) => {
       const n1 = parent.buildWorkflow();
       const n2 = child.buildWorkflow();
       const e = edge.buildWorkflow();
+      e.openfn.uuid = uuid(`${n1.id}-${n2.id}`);
 
       n1.next ??= {};
 
@@ -94,9 +110,6 @@ const initOperations = (options = {}) => {
       return props.asIteration().children.map((c) => c.buildWorkflow());
     },
     prop(key, _op, value) {
-      if (value._iter) {
-        console.log('>>>> ITER');
-      }
       return [key.sourceString, value.buildWorkflow()];
     },
     // Bit flaky - we need this to handle quoted props
@@ -111,9 +124,7 @@ const initOperations = (options = {}) => {
     },
     edge(_) {
       return {
-        openfn: {
-          uuid: uuid(),
-        },
+        openfn: {},
       };
     },
   };
@@ -191,9 +202,16 @@ function generateWorkflow(
 function generateProject(
   name: string,
   workflowDefs: string[],
+  // The uuid map here must be a sequenced array with a map per workflow
+  // (we can't associate id maps by workflow name because we don't know yet)
   options: Partial<GenerateWorkflowOptions> = {}
 ) {
-  const workflows = workflowDefs.map((w) => generateWorkflow(w, options));
+  const workflows = workflowDefs.map((w, idx) =>
+    generateWorkflow(w, {
+      ...options,
+      uuidMap: options.uuidMap && options.uuidMap[idx],
+    })
+  );
 
   return new Project({
     name,

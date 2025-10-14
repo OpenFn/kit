@@ -139,3 +139,18 @@ test('should merge two projects', (t) => {
   t.is(mergedStep.expression, 'b()');
   t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn.uuid);
 });
+
+test('should return UUIDs for everything', (t) => {
+  const project = Project.from('state', state, {});
+  const map = project.getUUIDMap();
+  t.deepEqual(map, {
+    wf1: {
+      self: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+      children: {
+        trigger: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+        'trigger-transform-data': 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+        'transform-data': '66add020-e6eb-4eec-836b-20008afca816',
+      },
+    },
+  });
+});

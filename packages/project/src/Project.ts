@@ -210,6 +210,20 @@ export class Project {
     }
     return getUuidForStep(this, workflow, stepId);
   }
+
+  /**
+   * Returns a map of ids:uuids for everything in the project
+   */
+  getUUIDMap(options: { workflows: boolean; project: false } = {}) {
+    const result = {};
+    for (const wf of this.workflows) {
+      result[wf.id] = {
+        self: wf.openfn?.uuid,
+        children: wf.getUUIDMap(),
+      };
+    }
+    return result;
+  }
 }
 
 export default Project;

@@ -158,6 +158,10 @@ class Workflow {
   toJSON(): JSON.Object {
     return this.workflow;
   }
+
+  getUUIDMap(): Record<string, string> {
+    return this.index.uuid;
+  }
 }
 
 export default Workflow;
