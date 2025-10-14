@@ -1,6 +1,5 @@
 import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
-import { randomUUID } from 'node:crypto';
 
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
