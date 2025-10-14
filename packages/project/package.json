@@ -6,8 +6,7 @@
     "test": "pnpm ava",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
-    "build": "tsup --config ../../tsup.config.js src/index.ts",
-    "build:watch": "pnpm build --watch",
+    "build": "tsup --config ../../tsup.config.js src/index.ts && cp src/gen/workflow.ohm dist/workflow.ohm",
     "pack": "pnpm pack --pack-destination ../../dist"
   },
   "type": "module",

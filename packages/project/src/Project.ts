@@ -140,7 +140,7 @@ export class Project {
     } else if (type === 'fs') {
       return fromFs(data, options);
     } else if (type === 'path') {
-      return fromPath(path, options);
+      return fromPath(data, options);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }
