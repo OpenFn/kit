@@ -1,14 +1,19 @@
+import { Workflow } from '@openfn/lexicon';
 import crypto from 'node:crypto';
 
 const SHORT_HASH_LENGTH = 12;
 
 export const project = () => {};
 
-export const workflow = (workflow: l.Workflow, source = 'cli') => {
+function isDefined(v: any) {
+  return v !== undefined && v !== null;
+}
+
+export const workflow = (workflow: Workflow, source = 'cli') => {
   const parts = [];
 
   // These are the keys we hash against
-  const wfkeys = ['name', 'credentials'].sort();
+  const wfKeys = ['name', 'credentials'].sort();
   const stepKeys = [
     'name',
     'adaptors',
@@ -24,22 +29,48 @@ export const workflow = (workflow: l.Workflow, source = 'cli') => {
     'disabled', // This feels more like an option - should be excluded?
   ].sort();
 
-  for (const step of workflow.steps) {
+  wfKeys.forEach((key) => {
+    if (isDefined(workflow[key])) {
+      parts.push(key, serializeValue(workflow[key]));
+    }
+  });
+
+  const steps = (workflow.steps || []).slice().sort((a, b) => {
+    const aName = a.name ?? '';
+    const bName = b.name ?? '';
+    return aName.localeCompare(bName);
+  });
+  for (const step of steps) {
     stepKeys.forEach((key) => {
-      if (typeof step[key] === 'string') {
-        parts.push(key, step[key]);
+      if (isDefined(step[key])) {
+        parts.push(key, serializeValue(step[key]));
       }
     });
 
-    // if (step.next) {
-    //   for (const edge of step.next) {
-    //     // TODO I don't think we can handle this well right now
-    //   }
-    // }
+    if (step.next && Array.isArray(step.next)) {
+      const edges = step.next.slice().sort((a, b) => {
+        const aLabel = a.label || '';
+        const bLabel = b.label || '';
+        return aLabel.localeCompare(bLabel);
+      });
+      for (const edge of edges) {
+        edgeKeys.forEach((key) => {
+          if (isDefined(edge[key])) {
+            parts.push(key, serializeValue(edge[key]));
+          }
+        });
+      }
+    }
   }
 
   const str = parts.join('');
-  const hash = crypto.hash('sha256', str);
-
-  return `${source}:${hash.substr(0, 12)}`;
+  const hash = crypto.createHash('sha256').update(str).digest('hex');
+  return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
 };
+
+function serializeValue(val) {
+  if (typeof val === 'object') {
+    return JSON.stringify(val);
+  }
+  return String(val);
+}

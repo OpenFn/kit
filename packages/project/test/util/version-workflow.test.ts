@@ -49,7 +49,7 @@ test('generate an 12 character version hash for a basic workflow', (t) => {
 
   const hash = workflow(wf);
   t.log(hash);
-  t.is(hash, 'cli:625fcedf07d4');
+  t.is(hash, 'cli:fd18866bcb34');
 });
 
 /**
