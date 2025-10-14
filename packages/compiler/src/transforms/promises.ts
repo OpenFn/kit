@@ -1,6 +1,7 @@
 import { namedTypes as n, builders as b } from 'ast-types';
 
 import type { NodePath } from 'ast-types/lib/node-path';
+import IgnoreRules from '../transform-ignore';
 
 const NO_DEFER_DECLARATION_ERROR = 'No defer declaration found';
 
@@ -146,6 +147,10 @@ const isTopScope = (path: NodePath<any>) => {
 };
 
 const visitor = (path: NodePath<n.CallExpression>) => {
+  const ignoreRule = IgnoreRules(path);
+  if (ignoreRule.check) {
+    return ignoreRule.shouldSkip();
+  }
   let root: NodePath<any> = path;
   while (!n.Program.check(root.node)) {
     root = root.parent;
@@ -166,7 +171,7 @@ const visitor = (path: NodePath<n.CallExpression>) => {
 
 export default {
   id: 'promises',
-  types: ['CallExpression'],
+  types: ['CallExpression', 'ObjectExpression'],
   visitor,
   // this should run before top-level operations are moved into the exports array
   order: 0,

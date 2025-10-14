@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 1.1.5
+
+### Patch Changes
+
+- cb97744: Improve compiler performance for large files
+
 ## 1.1.4
 
 ### Patch Changes
