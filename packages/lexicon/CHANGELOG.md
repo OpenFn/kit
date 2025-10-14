@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.2.4
+
+### Patch Changes
+
+- 1f8d65e: Clarify naming conventions for id/name
+
 ## 1.2.3
 
 ### Patch Changes
