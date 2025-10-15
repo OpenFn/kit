@@ -1,55 +1,43 @@
 import test from 'ava';
 import { Project } from '../../src/Project';
 import { createWorkflow } from '../util';
-import { workflow } from '../../src/util/version';
+import { generateHash } from '../../src/util/version';
+import { generateProject, generateWorkflow } from '../../src';
 
 test('generate an 12 character version hash for a basic workflow', (t) => {
-  // Keep workflows in lightning state format so that tests are easier to port
-  const project = {
-    id: 'p',
-    workflows: [
-      {
-        id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
-        name: 'a',
-        edges: [
-          {
-            enabled: true,
-            id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
-            source_trigger_id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
-            condition_type: 'always',
-            target_job_id: '66add020-e6eb-4eec-836b-20008afca816',
-          },
-        ],
-        concurrency: null,
-        inserted_at: '2025-04-23T11:19:32Z',
-        updated_at: '2025-04-23T11:19:32Z',
-        jobs: [
-          {
-            id: '66add020-e6eb-4eec-836b-20008afca816',
-            name: 'Transform data',
-            body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
-            adaptor: '@openfn/language-common@latest',
-            project_credential_id: null,
-          },
-        ],
-        triggers: [
-          {
-            enabled: true,
-            id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
-            type: 'webhook',
-          },
-        ],
-        lock_version: 1,
-        deleted_at: null,
-      },
-    ],
-  };
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    webhook-transform_data(name="Transform data",expression="// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n")
+    `
+  );
 
-  const wf = Project.from('state', project).getWorkflow('a');
-
-  const hash = workflow(wf);
+  const hash = generateHash(workflow);
   t.log(hash);
-  t.is(hash, 'cli:fd18866bcb34');
+  t.is(hash, 'cli:7e5ca7843721');
+});
+
+test('unique hash but different steps order', (t) => {
+  const workflow1 = generateWorkflow(
+    `
+    @name same-workflow
+    @id id-one
+    a-b
+    b-c
+    `
+  );
+  const workflow2 = generateWorkflow(
+    `
+    @name same-workflow
+    @id id-two
+    a-c
+    c-b
+    `
+  );
+
+  // different order of nodes (b & c changed position) but should generate the same hash
+  t.is(generateHash(workflow1), generateHash(workflow2))
 });
 
 /**
@@ -61,3 +49,107 @@ test('generate an 12 character version hash for a basic workflow', (t) => {
  *
  * include a prefix
  */
+
+test('hash changes when workflow name changes', (t) => {
+  const wf1 = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-b
+    b-c
+    `
+  );
+  const wf2= generateWorkflow(
+    `
+    @name wf-2
+    @id workflow-id 
+    a-b
+    b-c
+    `
+  );
+  t.not(generateHash(wf1), generateHash(wf2));
+});
+
+// can't get credentials to work in the generator, need to fix that
+test.skip('hash changes when credentials field changes', (t) => {
+  const wf1 = generateWorkflow(
+    `
+    @name wf-1
+    @credentials cred-1
+    @id workflow-id 
+    a-b
+    b-c
+    `
+  );
+  const wf2 = generateWorkflow(
+    `
+    @name wf-1
+    @credentials cred-2
+    @id workflow-id 
+    a-b
+    b-c
+    `
+  );
+  t.not(generateHash(wf1), generateHash(wf2));
+});
+
+test("hash changes when a step's adaptor changes", (t) => {
+    const wf1 = generateWorkflow(
+    `
+    @name wf-1 
+    @id workflow-id 
+    a-b(adaptor=http)
+    b-c
+    `
+  );
+  const wf2 = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-b(adaptor=common)
+    b-c
+    `
+  );
+  t.not(generateHash(wf1), generateHash(wf2));
+});
+
+test("hash changes when a step's expression changes", (t) => {
+  const wf1 = generateWorkflow(
+    `
+    @name wf-1 
+    @id workflow-id 
+    a-b
+    b-c(expression="x=1")
+    `
+  );
+  const wf2 = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-b
+    b-c(expression="x=2")
+    `
+  );
+  t.not(generateHash(wf1), generateHash(wf2));
+});
+
+test('ignored fields do not affect hash', (t) => {
+  const wf1 = generateWorkflow(
+    `
+    @name wf-1 
+    @id workflow-id 
+    a-b
+    b-c(expression="x=1")
+    `
+  );
+  const wf1_ignored = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    @unknownfield some-value
+    a-b
+    b-c(expression="x=1")
+    `
+  );
+  t.is(generateHash(wf1), generateHash(wf1_ignored));
+});

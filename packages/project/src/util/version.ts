@@ -9,7 +9,7 @@ function isDefined(v: any) {
   return v !== undefined && v !== null;
 }
 
-export const workflow = (workflow: Workflow, source = 'cli') => {
+export const generateHash = (workflow: Workflow, source = 'cli') => {
   const parts = [];
 
   // These are the keys we hash against
@@ -17,6 +17,7 @@ export const workflow = (workflow: Workflow, source = 'cli') => {
   const stepKeys = [
     'name',
     'adaptors',
+    'adaptor', // there's ao adaptor & adaptors key in steps somehow.
     'expression',
     'configuration', // assumes a string credential id
     'expression',
