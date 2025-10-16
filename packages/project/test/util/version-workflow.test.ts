@@ -37,6 +37,10 @@ test('unique hash but different steps order', (t) => {
   );
 
   // different order of nodes (b & c changed position) but should generate the same hash
+  // validate second step is actually different
+  t.is(workflow1.steps[1].name, 'b')
+  t.is(workflow2.steps[1].name, 'c')
+  // assert that hashes are the same
   t.is(generateHash(workflow1), generateHash(workflow2))
 });
 
