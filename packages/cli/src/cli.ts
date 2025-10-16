@@ -16,6 +16,7 @@ import testCommand from './test/command';
 import projectsCommand from './projects/command';
 import checkoutCommand from './checkout/command';
 import mergeCommand from './merge/command';
+import workflowVersionCommand from './version/command';
 
 const y = yargs(hideBin(process.argv));
 
@@ -36,6 +37,7 @@ export const cmd = y
   .command(projectsCommand)
   .command(checkoutCommand)
   .command(mergeCommand)
+  .command(workflowVersionCommand)
   .command({
     command: 'version',
     describe:

@@ -188,8 +188,11 @@ export class Project {
 
   // get workflow by name or id
   // this is fuzzy, but is that wrong?
-  getWorkflow(id: string) {
-    return this.workflows.find((wf) => wf.id == id);
+  getWorkflow(idOrName: string) {
+    return (
+      this.workflows.find((wf) => wf.id == idOrName) ||
+      this.workflows.find((wf) => wf.name === idOrName)
+    );
   }
 
   // it's the name of the project.yaml file
