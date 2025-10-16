@@ -1,5 +1,6 @@
 import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
+import { generateHash } from './util/version';
 
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -161,6 +162,10 @@ class Workflow {
 
   getUUIDMap(): Record<string, string> {
     return this.index.uuid;
+  }
+
+  getVersionHash() {
+    return generateHash(this);
   }
 }
 

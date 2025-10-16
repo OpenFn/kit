@@ -13,7 +13,7 @@ test('generate an 12 character version hash for a basic workflow', (t) => {
     `
   );
 
-  const hash = generateHash(workflow);
+  const hash = workflow.getVersionHash();
   t.log(hash);
   t.is(hash, 'cli:7e5ca7843721');
 });
