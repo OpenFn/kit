@@ -33,9 +33,15 @@ const workflowVersionHandler = async (
     logger.error('No workflow available');
     return;
   }
-  const final = Array.from(output.entries())
-    .map(([key, value]) => key + '\n' + value)
-    .join('\n\n');
+
+  let final: string;
+  if (options.json) {
+    final = JSON.stringify(Object.fromEntries(output), undefined, 2);
+  } else {
+    final = Array.from(output.entries())
+      .map(([key, value]) => key + '\n' + value)
+      .join('\n\n');
+  }
   logger.success(`Workflow(s) and their hashes\n\n${final}`);
 };
 
