@@ -1,5 +1,16 @@
 # @openfn/cli
 
+## 1.17.0
+
+### Minor Changes
+
+- New command: openfn project version
+
+### Patch Changes
+
+- Updated dependencies
+  - @openfn/project@0.6.0
+
 ## 1.16.2
 
 ### Patch Changes

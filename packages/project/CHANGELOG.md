@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.6.0
+
+### Minor Changes
+
+- Add version hashes for workflows
+
 ## 0.5.1
 
 ### Patch Changes
