@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.17.1
+
+### Patch Changes
+
+- a0a1cb7: Add log option for checkout and merge
+
 ## 1.17.0
 
 ### Minor Changes
