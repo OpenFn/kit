@@ -358,7 +358,7 @@ const createSocketAPI = (
   ) {
     const { ref, join_ref, topic } = evt;
     const {
-      final_dataclip_id,
+      final_state,
       reason,
       error_type,
       error_message,
@@ -367,16 +367,16 @@ const createSocketAPI = (
     } = evt.payload;
 
     logger?.info('Completed run ', runId);
-    logger?.debug(final_dataclip_id);
+    logger?.debug(final_state);
 
     state.pending[runId].status = 'complete';
 
-    // TODO we'll remove this stuff soon
+    // Store the final state directly from the payload
     if (!state.results[runId]) {
       state.results[runId] = { state: null, workerId: 'mock' };
     }
-    if (final_dataclip_id) {
-      state.results[runId].state = state.dataclips[final_dataclip_id];
+    if (final_state) {
+      state.results[runId].state = final_state;
     }
 
     let payload: any = validateReasons(evt.payload);

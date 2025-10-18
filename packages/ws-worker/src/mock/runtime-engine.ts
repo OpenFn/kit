@@ -120,11 +120,19 @@ async function createMock() {
       },
     };
     setTimeout(async () => {
+      const startTime = Date.now();
       dispatch('workflow-start', { workflowId: id, threadId: threadId });
 
       try {
-        await run(xplan, input, opts as any);
-        dispatch('workflow-complete', { workflowId: id, threadId: threadId });
+        const result = await run(xplan, input, opts as any);
+        const duration = Date.now() - startTime;
+        dispatch('workflow-complete', {
+          workflowId: id,
+          threadId: threadId,
+          state: result,
+          duration,
+          time: BigInt(Date.now()) * BigInt(1000000), // Convert to nanoseconds
+        });
       } catch (e: any) {
         dispatch('workflow-error', {
           threadId: threadId,

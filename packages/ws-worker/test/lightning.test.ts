@@ -290,8 +290,8 @@ test.serial(
     return new Promise((done) => {
       const run = getRun();
       lng.onSocketEvent(e.RUN_COMPLETE, run.id, (evt: any) => {
-        const { final_dataclip_id } = evt.payload;
-        t.assert(typeof final_dataclip_id === 'string');
+        const { final_state } = evt.payload;
+        t.assert(typeof final_state === 'object');
         t.pass('run complete event received');
         done();
       });

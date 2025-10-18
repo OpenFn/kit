@@ -14,16 +14,16 @@ export default async function onWorkflowComplete(
 ) {
   const { state, onFinish, logger } = context;
 
-  // TODO I dont think the run final dataclip IS the last job dataclip
-  // Especially not in parallelisation
-  const result = state.dataclips[state.lastDataclipId!];
+  // Use the aggregated final state from the runtime
+  // This handles branching workflows correctly by returning all leaf states
+  const result = event.state;
 
   const reason = calculateRunExitReason(state);
   await logFinalReason(context, reason);
 
   try {
     await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, {
-      final_dataclip_id: state.lastDataclipId!,
+      final_state: result,
       timestamp: timeInMicroseconds(event.time),
       ...reason,
     });
