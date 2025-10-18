@@ -75,10 +75,7 @@ const setupDevAPI = (
       }) => {
         if (evt.runId === runId) {
           state.events.removeListener(RUN_COMPLETE, handler);
-          // Use final_state directly from the payload
-          // If final_state is not present, fall back to getResult which uses state.results
-          const result = evt.payload.final_state || state.results[runId]?.state;
-          resolve(result);
+          resolve(evt.payload.final_state);
         }
       };
       state.events.addListener(RUN_COMPLETE, handler);
