@@ -13,20 +13,16 @@ test('should send a run:complete event', async (t) => {
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: result,
-  };
-  state.lastDataclipId = 'x';
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
     [RUN_COMPLETE]: (evt) => {
-      t.deepEqual(evt.final_dataclip_id, 'x');
+      t.deepEqual(evt.final_state, result);
       t.falsy(evt.time); // if no timestamp in the engine event, no timestamp in the worker one
     },
   });
 
-  const event: any = {};
+  const event: any = { state: result };
 
   const context: any = { channel, state, onFinish: () => {} };
   await handleRunComplete(context, event);
@@ -55,15 +51,11 @@ test('should include a timestamp', async (t) => {
   await handleRunComplete(context, event);
 });
 
-test('should call onFinish with final dataclip', async (t) => {
+test('should call onFinish with final state', async (t) => {
   const result = { answer: 42 };
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: result,
-  };
-  state.lastDataclipId = 'x';
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
@@ -88,10 +80,6 @@ test('should send a reason log and return reason for success', async (t) => {
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: result,
-  };
-  state.lastDataclipId = 'x';
 
   let logEvent: any;
   let completeEvent: any;
@@ -129,10 +117,6 @@ test('should send a reason log and return reason for fail', async (t) => {
   const plan = createPlan({ id: 'x', expression: '.' });
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: result,
-  };
-  state.lastDataclipId = 'x';
   state.reasons = {
     x: {
       reason: 'fail',
@@ -177,10 +161,6 @@ test('should call onFinish even if the lightning event throws', async (t) => {
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: {},
-  };
-  state.lastDataclipId = 'x';
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
@@ -189,7 +169,7 @@ test('should call onFinish even if the lightning event throws', async (t) => {
     },
   });
 
-  const event: any = {};
+  const event: any = { state: {} };
 
   const logger = createMockLogger();
 
@@ -208,10 +188,6 @@ test('should log if the lightning event throws', async (t) => {
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: {},
-  };
-  state.lastDataclipId = 'x';
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
@@ -220,7 +196,7 @@ test('should log if the lightning event throws', async (t) => {
     },
   });
 
-  const event: any = {};
+  const event: any = { state: {} };
 
   const logger = createMockLogger();
 
@@ -243,17 +219,13 @@ test('should call onFinish even if the lightning event timesout', async (t) => {
   const plan = createPlan();
 
   const state = createRunState(plan);
-  state.dataclips = {
-    x: {},
-  };
-  state.lastDataclipId = 'x';
 
   const channel = mockChannel({
     [RUN_LOG]: () => true,
     // no event handler is registered, so the mock will throw a timeout
   });
 
-  const event: any = {};
+  const event: any = { state: {} };
 
   const logger = createMockLogger();
 
@@ -266,4 +238,155 @@ test('should call onFinish even if the lightning event timesout', async (t) => {
     logger,
   };
   await handleRunComplete(context, event);
+});
+
+test('should send final_state for a linear workflow', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+  const finalResult = { data: { count: 100 }, references: [] };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
+    },
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {},
+  };
+
+  const event: any = { state: finalResult };
+
+  await handleRunComplete(context, event);
+
+  t.deepEqual(completeEvent.final_state, finalResult);
+  t.is(completeEvent.reason, 'success');
+});
+
+test('should send final_state for a branching workflow with multiple leaf nodes', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  // Simulate a branching workflow with multiple final states
+  const branchedResult = {
+    'job-1': { data: { path: 'A', value: 42 } },
+    'job-2': { data: { path: 'B', value: 84 } },
+    'job-3': { data: { path: 'C', value: 126 } },
+  };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
+    },
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: ({ state: finalState }: any) => {
+      // Verify that onFinish receives the branched result
+      t.deepEqual(finalState, branchedResult);
+    },
+  };
+
+  const event: any = { state: branchedResult };
+
+  await handleRunComplete(context, event);
+
+  // Verify the event contains the full branched state structure
+  t.deepEqual(completeEvent.final_state, branchedResult);
+  t.is(completeEvent.reason, 'success');
+  t.truthy(completeEvent.final_state['job-1']);
+  t.truthy(completeEvent.final_state['job-2']);
+  t.truthy(completeEvent.final_state['job-3']);
+});
+
+test('should properly serialize final_state as JSON', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  // Test with complex state including nested objects, arrays, and special values
+  const complexState = {
+    data: {
+      users: [
+        { id: 1, name: 'Alice' },
+        { id: 2, name: 'Bob' },
+      ],
+      metadata: {
+        timestamp: new Date('2024-01-01').toISOString(),
+        nested: { deeply: { value: 42 } },
+      },
+    },
+    configuration: { setting: true },
+    references: [],
+  };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
+    },
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {},
+  };
+
+  const event: any = { state: complexState };
+
+  await handleRunComplete(context, event);
+
+  // Verify the state is properly preserved
+  t.deepEqual(completeEvent.final_state, complexState);
+  t.deepEqual(completeEvent.final_state.data.users[0], { id: 1, name: 'Alice' });
+  t.is(completeEvent.final_state.data.metadata.nested.deeply.value, 42);
+
+  // Verify it can be stringified (simulating what happens when sent over the wire)
+  const jsonString = JSON.stringify(completeEvent.final_state);
+  const parsed = JSON.parse(jsonString);
+  t.deepEqual(parsed, complexState);
+});
+
+test('should handle Uint8Array in final_state', async (t) => {
+  const plan = createPlan();
+  const state = createRunState(plan);
+
+  // Test with Uint8Array which needs special handling
+  const stateWithBinary = {
+    data: { buffer: new Uint8Array([1, 2, 3, 4, 5]) },
+  };
+
+  let completeEvent: any;
+
+  const channel = mockChannel({
+    [RUN_LOG]: () => true,
+    [RUN_COMPLETE]: (evt) => {
+      completeEvent = evt;
+    },
+  });
+
+  const context: any = {
+    channel,
+    state,
+    onFinish: () => {},
+  };
+
+  const event: any = { state: stateWithBinary };
+
+  await handleRunComplete(context, event);
+
+  // Verify the Uint8Array is preserved in the event
+  t.deepEqual(completeEvent.final_state.data.buffer, new Uint8Array([1, 2, 3, 4, 5]));
 });

@@ -168,7 +168,7 @@ export type RunStartReply = {}; // no payload
 
 export type RunCompletePayload = ExitReason & {
   timestamp: TimeInMicroSeconds;
-  final_dataclip_id?: string; // TODO this will be removed soon
+  final_state?: any; // The aggregated final state from the workflow (handles branching)
 };
 export type RunCompleteReply = undefined;
 

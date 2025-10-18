@@ -75,8 +75,7 @@ const setupDevAPI = (
       }) => {
         if (evt.runId === runId) {
           state.events.removeListener(RUN_COMPLETE, handler);
-          const result = state.dataclips[evt.payload.final_dataclip_id!];
-          resolve(result);
+          resolve(evt.payload.final_state);
         }
       };
       state.events.addListener(RUN_COMPLETE, handler);

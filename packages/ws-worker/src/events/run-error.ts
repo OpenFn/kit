@@ -24,7 +24,6 @@ export default async function onRunError(
     await logFinalReason(context, reason);
 
     await sendEvent<RunCompletePayload>(context, RUN_COMPLETE, {
-      final_dataclip_id: state.lastDataclipId!,
       ...reason,
     });
 
