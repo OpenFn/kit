@@ -83,7 +83,7 @@ Before merging to main, check out the release branch locally and run the followi
 1. Run `pnpm changeset tag` to generate tags
 1. Push tags `git push --tags`
 
-Rememebr tags may need updating if commits come in after the tags are first generated.
+Remember tags may need updating if commits come in after the tags are first generated.
 
 ## TypeSync
 
