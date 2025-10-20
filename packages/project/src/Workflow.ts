@@ -20,6 +20,8 @@ class Workflow {
   id: string;
   openfn: OpenfnMeta;
 
+  history: string[] = [];
+
   constructor(workflow: l.Workflow) {
     this.index = {
       steps: {}, // steps by id
