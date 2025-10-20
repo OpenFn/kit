@@ -65,6 +65,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
       command: 'checkout',
       projectPath: commandPath,
       projectName: final.name || '',
+      log: options.log,
     },
     logger
   );
