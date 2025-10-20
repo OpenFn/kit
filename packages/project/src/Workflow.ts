@@ -20,6 +20,8 @@ class Workflow {
   id: string;
   openfn: OpenfnMeta;
 
+  history: string[] = [];
+
   constructor(workflow: l.Workflow) {
     this.index = {
       steps: {}, // steps by id
@@ -166,6 +168,14 @@ class Workflow {
 
   getVersionHash() {
     return generateHash(this);
+  }
+
+  // return true if the current workflow can be merged into the target workflow without losing any changes
+  canMergeInto(target: Workflow) {
+    if (!target.history.length) return true;
+    const targetHead = target.history[target.history.length - 1];
+    if (this.history.indexOf(targetHead) > -1) return true;
+    return false;
   }
 }
 

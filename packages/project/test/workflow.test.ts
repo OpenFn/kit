@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import test from 'ava';
 import Workflow from '../src/Workflow';
+import { generateWorkflow } from '../src';
 
 const simpleWorkflow = {
   id: 'my-workflow',
@@ -204,4 +205,62 @@ test('map uuids to ids', (t) => {
   t.deepEqual(w.index.id[uuid_c], 'c');
   t.deepEqual(w.index.id[uuid_ac], 'a-c');
   t.deepEqual(w.index.id[uuid_bc], 'b-c');
+});
+
+test('canMergeInto: empty histories', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  t.deepEqual(sourceWf.history, []);
+  t.deepEqual(targetWf.history, []);
+  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+});
+
+test('canMergeInto: empty target history', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  sourceWf.history = ['history-1'];
+  t.is(sourceWf.history.length, 1);
+  t.deepEqual(targetWf.history, []);
+  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+});
+
+test('canMergeInto: empty source history', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  targetWf.history = ['history-1'];
+  t.is(targetWf.history.length, 1);
+  t.deepEqual(sourceWf.history, []);
+  t.false(sourceWf.canMergeInto(targetWf)); // not allowed
+});
+
+test('canMergeInto: target head in source', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  targetWf.history = ['history-1', 'history-3', 'history-5'];
+  sourceWf.history = ['history-2', 'history-5', 'history-6'];
+  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+});
+
+test('canMergeInto: target head not in source', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  targetWf.history = ['history-1', 'history-3', 'history-5'];
+  sourceWf.history = ['history-2', 'history-4', 'history-6'];
+  t.false(sourceWf.canMergeInto(targetWf)); // not allowed
+});
+
+test('canMergeInto: source head in target', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  targetWf.history = ['history-1', 'history-3', 'history-6', 'history-5'];
+  sourceWf.history = ['history-2', 'history-4', 'history-6'];
+  t.false(sourceWf.canMergeInto(targetWf)); // not allowed
+});
+
+test('canMergeInto: same heads', (t) => {
+  const sourceWf = generateWorkflow('trigger-x');
+  const targetWf = generateWorkflow('trigger-y');
+  targetWf.history = ['history-1', 'history-3', 'history-6'];
+  sourceWf.history = ['history-2', 'history-4', 'history-6'];
+  t.true(sourceWf.canMergeInto(targetWf)); // allowed
 });
