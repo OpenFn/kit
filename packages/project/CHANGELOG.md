@@ -1,5 +1,23 @@
 # @openfn/project
 
+## 0.6.0
+
+### Minor Changes
+
+- Add version hashes for workflows
+
+## 0.5.1
+
+### Patch Changes
+
+- 81b97c3: Allow projects to be loaded directly from a file
+- 43be979: Fix an issue loading the ohm grammer
+- 25c7a2b: Allow a UUID map to be passed to the project generator
+- 04a89e2: Add support for dirs in config
+- 7d16875: When merging, allow the source project to specified as a path to a project file
+- Updated dependencies [1f8d65e]
+  - @openfn/lexicon@1.2.4
+
 ## 0.5.0
 
 ### Minor Changes

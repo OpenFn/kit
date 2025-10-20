@@ -1,11 +1,17 @@
 # lexicon
 
-## 1.2.4
+## 1.2.5
 
 ### Patch Changes
 
 - 09dd4b2: - Add `final_state` object to `workflow:complete` event
   - Remove unused `final_dataclip_id` from `workflow:complete` payload
+
+## 1.2.4
+
+### Patch Changes
+
+- 1f8d65e: Clarify naming conventions for id/name
 
 ## 1.2.3
 

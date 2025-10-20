@@ -3,7 +3,7 @@ import test from 'ava';
 import Workflow from '../src/Workflow';
 
 const simpleWorkflow = {
-  id: 'wf1',
+  id: 'my-workflow',
   name: 'My Workflow',
   steps: [
     {
@@ -59,13 +59,34 @@ test('create a Workflow from json', (t) => {
 test('a Workflow class behaves just like regular json', (t) => {
   const w = new Workflow(simpleWorkflow);
 
-  t.is(w.id, 'wf1');
   t.is(w.name, 'My Workflow');
   t.is(w.steps.length, 3);
 
   t.is(w.steps[0].id, 'a');
   t.is(w.steps[1].id, 'b');
   t.is(w.steps[2].id, 'c');
+});
+
+test('a Workflow class will generate an ID from the name', (t) => {
+  const { id, ...wf } = simpleWorkflow;
+  const w = new Workflow(wf);
+
+  t.is(w.id, 'my-workflow');
+});
+
+test('a Workflow class will prefer an id passed explicitly', (t) => {
+  const w = new Workflow({
+    ...simpleWorkflow,
+    id: '1234',
+  });
+
+  t.is(w.id, '1234');
+});
+
+test('a Workflow class will preserve openfn metadata', (t) => {
+  const w = new Workflow(simpleWorkflow);
+
+  t.deepEqual(w.openfn, simpleWorkflow.openfn);
 });
 
 test('a Workflow class can serialize to JSON', (t) => {

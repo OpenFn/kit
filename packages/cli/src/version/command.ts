@@ -3,31 +3,31 @@ import { Opts } from '../options';
 import { ensure, build } from '../util/command-builders';
 import * as o from '../options';
 
-export type MergeOptions = Required<
+export type VersionOptions = Required<
   Pick<
     Opts,
     | 'command'
+    | 'workflow'
     | 'projectName'
     | 'projectPath'
-    | 'removeUnmapped'
     | 'workflowMappings'
-    | 'log'
+    | 'json'
   >
 >;
 
 const options = [
+  o.workflow,
   o.projectName,
   o.projectPath,
-  o.removeUnmapped,
   o.workflowMappings,
-  o.log,
+  o.json,
 ];
 
-const mergeCommand: yargs.CommandModule = {
-  command: 'merge [project-name]',
-  describe: 'Merges the specified project into the checked out project',
-  handler: ensure('merge', options),
+const workflowVersionCommand: yargs.CommandModule = {
+  command: 'project version [workflow]',
+  describe: 'Returns the version has of a workflow',
+  handler: ensure('project', options),
   builder: (yargs) => build(options, yargs),
 };
 
-export default mergeCommand;
+export default workflowVersionCommand;

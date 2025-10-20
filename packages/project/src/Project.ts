@@ -2,7 +2,7 @@ import * as l from '@openfn/lexicon';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState from './parse/from-app-state';
-
+import fromPath from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
@@ -23,6 +23,10 @@ const maybeCreateWorkflow = (wf: any) =>
 export interface OpenfnConfig {
   name: string;
   workflowRoot: string;
+  dirs: {
+    workflows: string;
+    projects: string;
+  };
   formats: {
     openfn: FileFormats;
     project: FileFormats;
@@ -37,9 +41,16 @@ export interface OpenfnConfig {
   };
 }
 
+// TODO --------------
+// I think this needs renaming to config
+// and it's part of the workspace technically
+// I need to support custom props
+// When serializing, for now, we always write defaults
+// --------------
 // repo-wide options
 type RepoOptions = {
   /**default workflow root when serializing to fs (relative to openfn.yaml) */
+  // TODO deprecate this
   workflowRoot?: string;
 
   formats: {
@@ -58,6 +69,7 @@ type RepoOptions = {
 // TODO maybe use an npm for this, or create  util
 
 const setConfigDefaults = (config: OpenfnConfig = {}) => ({
+  ...config,
   workflowRoot: config.workflowRoot ?? 'workflows',
   formats: {
     // TODO change these maybe
@@ -94,7 +106,7 @@ export class Project {
   // this contains meta about the connected openfn project
   openfn?: l.ProjectConfig;
 
-  // repo configuration options
+  // workspace-wide configuration options
   // these should be shared across projects
   // and saved to an openfn.yaml file
   repo?: Required<RepoOptions>;
@@ -113,16 +125,22 @@ export class Project {
     options: Partial<l.ProjectConfig>
   ): Project;
   static from(type: 'fs', options: FromFsConfig): Project;
-  static from(type: 'path', data: any): Project;
+  static from(
+    type: 'path',
+    data: string,
+    options?: { config?: Partial<OpenfnConfig> }
+  ): Project;
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options?: Partial<l.ProjectConfig>
+    options: Partial<l.ProjectConfig> = {}
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
     } else if (type === 'fs') {
       return fromFs(data, options);
+    } else if (type === 'path') {
+      return fromPath(data, options);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }
@@ -143,7 +161,6 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
     this.repo = setConfigDefaults(repoConfig);
-
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;
@@ -171,8 +188,11 @@ export class Project {
 
   // get workflow by name or id
   // this is fuzzy, but is that wrong?
-  getWorkflow(id: string) {
-    return this.workflows.find((wf) => wf.id == id);
+  getWorkflow(idOrName: string) {
+    return (
+      this.workflows.find((wf) => wf.id == idOrName) ||
+      this.workflows.find((wf) => wf.name === idOrName)
+    );
   }
 
   // it's the name of the project.yaml file
@@ -192,6 +212,20 @@ export class Project {
       return getUuidForEdge(this, workflow, stepId, otherStep);
     }
     return getUuidForStep(this, workflow, stepId);
+  }
+
+  /**
+   * Returns a map of ids:uuids for everything in the project
+   */
+  getUUIDMap(options: { workflows: boolean; project: false } = {}) {
+    const result = {};
+    for (const wf of this.workflows) {
+      result[wf.id] = {
+        self: wf.openfn?.uuid,
+        children: wf.getUUIDMap(),
+      };
+    }
+    return result;
   }
 }
 

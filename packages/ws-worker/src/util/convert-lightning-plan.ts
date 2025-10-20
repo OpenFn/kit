@@ -131,11 +131,6 @@ export default (
     }
   }
 
-  const plan: Partial<ExecutionPlan> = {
-    id: run.id,
-    options: runtimeOpts,
-  };
-
   let initialState;
   if (run.dataclip_id) {
     initialState = run.dataclip_id;
@@ -221,8 +216,14 @@ export default (
     });
   }
 
-  plan.workflow = {
-    steps: Object.values(nodes),
+  const plan: ExecutionPlan = {
+    id: run.id,
+    options: runtimeOpts,
+    workflow: {
+      // id: run.workflowId, // TODO: lightning does not send this
+      // name: run.name, // TODO: lightning does not send this
+      steps: Object.values(nodes),
+    },
   };
 
   // only pass globals if it's a string

@@ -8,7 +8,7 @@ import * as l from '@openfn/lexicon';
 
 // with metadata or just raw?
 // randomise stuff like uuids, name?
-export const createWorkflow = (...props: l.Workflow) => ({
+export const createWorkflow = (props: l.Workflow) => ({
   name: 'wf1',
   steps: [
     {

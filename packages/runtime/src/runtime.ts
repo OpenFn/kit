@@ -47,6 +47,7 @@ const loadPlanFromString = (
 ) => {
   const plan: ExecutionPlan = {
     workflow: {
+      id: 'workflow',
       steps: [
         {
           expression,

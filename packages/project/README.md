@@ -51,10 +51,10 @@ a-b
 a-c
 ```
 
-You can set properties on the workflow itself - probably the name, with `@attributes`
+You can set properties on the workflow itself - probably the id, with `@attributes`
 
 ```
-@name my-cool-workflow
+@id my-cool-workflow
 ```
 
 You can also set properties on a node by putting comma seperated key-value pairs in brackets

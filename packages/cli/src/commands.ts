@@ -10,6 +10,7 @@ import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
 import projects from './projects/handler';
+import workflowVersion from './version/handler';
 import checkout from './checkout/handler';
 import merge from './merge/handler';
 import { clean, install, pwd, list } from './repo/handler';
@@ -36,6 +37,7 @@ export type CommandList =
   | 'projects'
   | 'checkout'
   | 'merge'
+  | 'project'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-list'
@@ -56,6 +58,7 @@ const handlers = {
   projects,
   checkout,
   merge,
+  project: workflowVersion,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,

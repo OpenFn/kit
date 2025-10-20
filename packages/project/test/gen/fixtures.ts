@@ -2,6 +2,8 @@
  * A bunch of very simple  workflows that can be re-used
  */
 export const ab = {
+  id: 'workflow',
+  name: 'Workflow',
   steps: [
     {
       id: 'a',

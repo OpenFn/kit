@@ -25,6 +25,7 @@ export type Opts = {
   apolloUrl?: string;
   apiKey?: string;
   autoinstall?: boolean;
+  json?: boolean;
   beta?: boolean;
   cacheSteps?: boolean;
   compile?: boolean;
@@ -173,6 +174,15 @@ export const apolloUrl: CLIOption = {
         didLoadShortcut = true;
       }
     });
+  },
+};
+
+export const json: CLIOption = {
+  name: 'json',
+  yargs: {
+    boolean: true,
+    description: 'Output the result as a json object',
+    default: false,
   },
 };
 
