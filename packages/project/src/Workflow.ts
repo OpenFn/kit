@@ -170,6 +170,10 @@ class Workflow {
     return generateHash(this);
   }
 
+  pushHistory(versionHash: string) {
+    this.history.push(versionHash);
+  }
+
   // return true if the current workflow can be merged into the target workflow without losing any changes
   canMergeInto(target: Workflow) {
     if (!target.history.length) return true;
