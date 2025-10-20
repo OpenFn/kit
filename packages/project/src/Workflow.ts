@@ -20,8 +20,6 @@ class Workflow {
   id: string;
   openfn: OpenfnMeta;
 
-  history: string[] = [];
-
   constructor(workflow: l.Workflow) {
     this.index = {
       steps: {}, // steps by id
@@ -31,6 +29,9 @@ class Workflow {
     };
 
     this.workflow = clone(workflow);
+
+    // history needs to be on workflow object.
+    this.workflow.history = workflow.history?.length ? workflow.history : [];
 
     const { id, name, openfn, steps, ...options } = workflow;
     if (!(id || name)) {
@@ -171,14 +172,15 @@ class Workflow {
   }
 
   pushHistory(versionHash: string) {
-    this.history.push(versionHash);
+    this.workflow.history?.push(versionHash);
   }
 
   // return true if the current workflow can be merged into the target workflow without losing any changes
   canMergeInto(target: Workflow) {
-    if (!target.history.length) return true;
-    const targetHead = target.history[target.history.length - 1];
-    if (this.history.indexOf(targetHead) > -1) return true;
+    if (!target.workflow.history.length) return true;
+    const targetHead =
+      target.workflow.history[target.workflow.history.length - 1];
+    if (this.workflow.history.indexOf(targetHead) > -1) return true;
     return false;
   }
 }

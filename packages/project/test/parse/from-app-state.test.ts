@@ -114,6 +114,7 @@ test('should create a Project from prov state with a workflow', (t) => {
   t.deepEqual(project.workflows[0].toJSON(), {
     id: 'my-workflow',
     name: 'My Workflow',
+    history: [],
     steps: [
       {
         id: 'trigger',
