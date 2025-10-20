@@ -1,5 +1,17 @@
 # @openfn/lightning-mock
 
+## 2.3.0
+
+### Minor Changes
+
+- 09dd4b2: - Add `final_state` object to `workflow:complete` event
+  - Remove unused `final_dataclip_id` from `workflow:complete` payload
+
+### Patch Changes
+
+- Updated dependencies [09dd4b2]
+  - @openfn/lexicon@1.2.4
+
 ## 2.2.9
 
 ### Patch Changes

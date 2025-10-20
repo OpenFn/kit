@@ -5,7 +5,6 @@ import type { ExecutionPlan } from '@openfn/lexicon';
 
 import createAPI from '../src/api';
 import type { RuntimeEngine } from '../src';
-import { REDACTED_STATE, REDACTED_LOG } from '../src/util/ensure-payload-size';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 let api: RuntimeEngine;
@@ -536,7 +535,7 @@ export default [(state) => {
       .execute(plan, emptyState, options)
       .on('workflow-complete', ({ state }) => {
         t.log(state);
-        t.deepEqual(REDACTED_STATE, state);
+        t.is(state.data, '[REDACTED]');
         done();
       });
   });
@@ -566,9 +565,8 @@ export default [(state) => {
     api
       .execute(plan, emptyState, options)
       .on('workflow-log', (evt) => {
-        console.log(evt);
         if (evt.name === 'JOB') {
-          t.deepEqual(evt.message, REDACTED_LOG.message);
+          t.true(/redacted/i.test(evt.message[0]));
         }
       })
       .on('workflow-complete', () => {

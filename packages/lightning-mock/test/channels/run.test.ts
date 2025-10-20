@@ -88,11 +88,10 @@ test.serial('complete an run through the run channel', async (t) => {
     const a = run1;
     server.registerRun(a);
     server.startRun(a.id);
-    server.addDataclip('abc', { answer: 42 });
 
     const channel = await join(`run:${a.id}`, { token: 'a.b.c' });
     channel
-      .push(RUN_COMPLETE, { reason: 'success', final_dataclip_id: 'abc' })
+      .push(RUN_COMPLETE, { reason: 'success', final_state: { answer: 42 } })
       .receive('ok', () => {
         const { pending, results } = server.getState();
         t.deepEqual(pending[a.id], {
@@ -197,7 +196,6 @@ test.serial(
       const result = { answer: 42 };
 
       server.startRun(run1.id);
-      server.addDataclip('result', result);
 
       server.waitForResult(run1.id).then((dataclip: DataClip) => {
         t.deepEqual(result, dataclip);
@@ -206,7 +204,7 @@ test.serial(
 
       const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
       channel.push(RUN_COMPLETE, {
-        final_dataclip_id: 'result',
+        final_state: result,
       } as RunCompletePayload);
     });
   }
@@ -220,7 +218,6 @@ test.serial(
       const result = { answer: 42 };
 
       server.startRun(run1.id);
-      server.addDataclip('result', result);
 
       server.waitForResult(run1.id).then(() => {
         const dataclip = server.getResult(run1.id);
@@ -230,7 +227,7 @@ test.serial(
 
       const channel = await join(`run:${run1.id}`, { token: 'a.b.c' });
       channel.push(RUN_COMPLETE, {
-        final_dataclip_id: 'result',
+        final_state: result,
       } as RunCompletePayload);
     });
   }

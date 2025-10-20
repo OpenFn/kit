@@ -1,5 +1,17 @@
 # ws-worker
 
+## 1.17.0
+
+### Minor Changes
+
+- 09dd4b2: - Add `final_state` object to `workflow:complete` event
+  - Remove unused `final_dataclip_id` from `workflow:complete` payload
+
+### Patch Changes
+
+- Updated dependencies [09dd4b2]
+  - @openfn/lexicon@1.2.4
+
 ## 1.16.1
 
 ### Patch Changes

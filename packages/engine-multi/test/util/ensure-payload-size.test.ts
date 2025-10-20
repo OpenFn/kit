@@ -1,9 +1,5 @@
 import test from 'ava';
-import ensurePayloadSize, {
-  REDACTED_LOG,
-  REDACTED_STATE,
-  verify,
-} from '../../src/util/ensure-payload-size';
+import ensurePayloadSize, { verify } from '../../src/util/ensure-payload-size';
 
 const mb = (bytes: number) => bytes / 1024 / 1024;
 
@@ -62,7 +58,9 @@ test('redact payload with state', (t) => {
   };
 
   const newPayload = ensurePayloadSize(payload, 1);
-  t.deepEqual(newPayload.state, REDACTED_STATE);
+  t.deepEqual(newPayload.state, {
+    data: '[REDACTED]',
+  });
   t.true(newPayload.redacted);
 });
 
@@ -74,6 +72,22 @@ test('redact payload with log message', (t) => {
   };
 
   const newPayload = ensurePayloadSize(payload, 1);
-  t.deepEqual(newPayload.log, REDACTED_LOG);
+  t.deepEqual(newPayload.log, {
+    message: ['[REDACTED: Message length exceeds payload limit]'],
+  });
+  t.true(newPayload.redacted);
+});
+
+test('redact payload with final_state', (t) => {
+  const payload = {
+    final_state: {
+      data: new Array(1024 * 1024).fill('z').join(''),
+    },
+  };
+
+  const newPayload = ensurePayloadSize(payload, 1);
+  t.deepEqual(newPayload.final_state, {
+    data: '[REDACTED]',
+  });
   t.true(newPayload.redacted);
 });
