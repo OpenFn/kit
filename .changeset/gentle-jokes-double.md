@@ -4,4 +4,5 @@
 '@openfn/lexicon': patch
 ---
 
-Remove `final_dataclip_id`; send `final_state`
+- Add `final_state` object to `workflow:complete` event
+- Remove unused `final_dataclip_id` from `workflow:complete` payload
