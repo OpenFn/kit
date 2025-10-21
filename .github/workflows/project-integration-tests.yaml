@@ -1,0 +1,37 @@
+name: Project Integration
+
+# This workflow runs on every release branch,
+# when a PR is labeled with 'run_project_tests',
+on:
+  push:
+    branches:
+      - 'release/**'
+  pull_request:
+    types: [labeled]
+
+jobs:
+  cli_stories:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.label.name == 'run_project_tests'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout Integration Test Repo
+        uses: actions/checkout@v3
+        with:
+          repository: openfn/project-integration-tests
+          path: resources/repo
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '22.12'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm install:openfnx
+
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+        working-directory: resources/repo
+
+      - run: pnpm stories:cli
+        env:
+          OPENFN_RUNNER_ARGS: cmd:openfnx
+        working-directory: resources/repo
