@@ -1,4 +1,3 @@
-import { Workflow } from '@openfn/lexicon';
 import { defaultsDeep, isEmpty } from 'lodash-es';
 
 import { Project } from '../Project';
@@ -6,6 +5,7 @@ import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
+import Workflow from '../Workflow';
 
 export type MergeProjectOptions = Partial<{
   workflowMappings: Record<string, string>; // <source, target>
@@ -55,6 +55,27 @@ export function merge(
     if (noMappings) return true;
     return !!options?.workflowMappings[w.id];
   });
+
+  // mergeability
+  const mergeMapping: Record<string, string> = {};
+  for (const sourceWorkflow of sourceWorkflows) {
+    const targetId =
+      options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
+    const targetWorkflow = target.getWorkflow(targetId);
+    if (!sourceWorkflow.canMergeInto(targetWorkflow)) {
+      mergeMapping[sourceWorkflow.name] = targetWorkflow?.name;
+    }
+  }
+
+  if (Object.keys(mergeMapping).length) {
+    throw new Error(
+      `The below workflows can't merge directly without losing data.\n${Object.entries(
+        mergeMapping
+      )
+        .map(([from, to]) => `${from} → ${to}`)
+        .join('\n')}`
+    );
+  }
 
   for (const sourceWorkflow of sourceWorkflows) {
     const targetId =
