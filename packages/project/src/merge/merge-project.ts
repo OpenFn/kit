@@ -10,8 +10,7 @@ import Workflow from '../Workflow';
 export type MergeProjectOptions = Partial<{
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
-
-  force: boolean; // TODO not implemented yet
+  force: boolean;
 }>;
 
 /**
@@ -67,7 +66,7 @@ export function merge(
     }
   }
 
-  if (Object.keys(mergeMapping).length) {
+  if (Object.keys(mergeMapping).length && !options?.force) {
     throw new Error(
       `The below workflows can't merge directly without losing data.\n${Object.entries(
         mergeMapping

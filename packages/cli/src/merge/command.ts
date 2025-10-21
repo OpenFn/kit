@@ -12,6 +12,7 @@ export type MergeOptions = Required<
     | 'removeUnmapped'
     | 'workflowMappings'
     | 'log'
+    | 'force'
   >
 >;
 
@@ -21,6 +22,7 @@ const options = [
   o.removeUnmapped,
   o.workflowMappings,
   o.log,
+  o.force,
 ];
 
 const mergeCommand: yargs.CommandModule = {
