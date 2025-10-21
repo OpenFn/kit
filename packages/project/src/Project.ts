@@ -22,6 +22,8 @@ const maybeCreateWorkflow = (wf: any) =>
 
 export interface OpenfnConfig {
   name: string;
+
+  /** @deprecated */
   workflowRoot: string;
   dirs: {
     workflows: string;
@@ -68,6 +70,7 @@ type RepoOptions = {
 
 // TODO maybe use an npm for this, or create  util
 
+// TODO this need to be controlled by the workspace
 const setConfigDefaults = (config: OpenfnConfig = {}) => ({
   ...config,
   workflowRoot: config.workflowRoot ?? 'workflows',
@@ -109,6 +112,7 @@ export class Project {
   // workspace-wide configuration options
   // these should be shared across projects
   // and saved to an openfn.yaml file
+  // TODO should this just be the Workspace now?
   repo?: Required<RepoOptions>;
 
   // load a project from a state file (project.json)
@@ -160,6 +164,8 @@ export class Project {
   // maybe this second arg is config - like env, branch rules, serialisation rules
   // stuff that's external to the actual project and managed by the repo
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
+    // TODO replace with workspace
+    // If no workspace is provided, maybe create a default empty one in the working dir
     this.repo = setConfigDefaults(repoConfig);
     this.name = data.name;
     this.description = data.description;

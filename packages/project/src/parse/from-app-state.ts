@@ -14,6 +14,7 @@ type FromAppStateConfig = {
   format?: 'json' | 'yaml';
 
   // Allow workspace config to be passed
+  // TODO can we just pass a Workspace?
   repo: OpenfnConfig;
 };
 

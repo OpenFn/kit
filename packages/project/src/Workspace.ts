@@ -15,6 +15,7 @@ export class Workspace {
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
+
   constructor(workspacePath: string) {
     const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
     // dealing with openfn.yaml
@@ -50,6 +51,12 @@ export class Workspace {
     }
   }
 
+  // This will load a project within this workspace
+  // uses Project.from
+  // Rather than doing new Workspace + Project.from(),
+  // you can do it in a single call
+  loadProject() {}
+
   list() {
     return this.projects;
   }
@@ -66,6 +73,8 @@ export class Workspace {
     return this.projects.find((p) => p.name === this.config?.name);
   }
 
+  // TODO this needs to return default values
+  // We should always rely on the workspace to load these values
   getConfig(): Partial<OpenfnConfig> {
     return this.config;
   }
