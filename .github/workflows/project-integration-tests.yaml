@@ -1,7 +1,12 @@
 name: Project Integration
 
-# TODO maybe only run on release branches? Or if a label is attached?
-on: push
+# This workflow runs on every release branch,
+# Or can be triggered manually
+on:
+  push:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
 
 jobs:
   test:
