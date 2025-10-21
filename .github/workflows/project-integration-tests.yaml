@@ -1,16 +1,19 @@
 name: Project Integration
 
 # This workflow runs on every release branch,
-# Or can be triggered manually
+# when a PR is labeled with 'run_project_tests',
+# or can be triggered manually
 on:
   push:
     branches:
       - 'release/**'
-  workflow_dispatch:
+  pull_request:
+    types: [labeled]
 
 jobs:
   project_integration_test:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.label.name == 'run_project_tests'
     steps:
       - uses: actions/checkout@v3
       - name: Checkout Integration Test Repo
