@@ -55,6 +55,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
   const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
     workflowMappings: options.workflowMappings,
+    force: options.force,
   });
   const yaml = final.serialize('state', { format: 'yaml' });
   await fs.writeFile(finalPath, yaml);
