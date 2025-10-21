@@ -61,7 +61,7 @@ export function merge(
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
-    if (!sourceWorkflow.canMergeInto(targetWorkflow)) {
+    if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
       mergeMapping[sourceWorkflow.name] = targetWorkflow?.name;
     }
   }
