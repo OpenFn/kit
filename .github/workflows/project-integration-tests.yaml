@@ -1,0 +1,29 @@
+name: Project Integration
+
+# TODO maybe only run on release branches? Or if a label is attached?
+on: push
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout Integration Test Repo
+        uses: actions/checkout@v3
+        with:
+          repository: openfn/project-integration-tests
+          path: resources/repo
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '22.12'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm install:openfnx
+
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+        working-directory: resources/repo
+
+      - run: pnpm stories:cli
+        env: OPENFN_RUNNER_ARGS=cmd:openfnx
+        working-directory: resources/repo
