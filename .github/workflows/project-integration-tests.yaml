@@ -2,7 +2,6 @@ name: Project Integration
 
 # This workflow runs on every release branch,
 # when a PR is labeled with 'run_project_tests',
-# or can be triggered manually
 on:
   push:
     branches:
