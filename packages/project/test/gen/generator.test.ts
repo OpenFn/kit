@@ -508,3 +508,9 @@ test('it should generate a project with uuids', (t) => {
 
   t.deepEqual(result.workflows[0].toJSON(), expected);
 });
+
+test('it should generate a project with options', (t) => {
+  const result = gen('a-b', t);
+
+  t.deepEqual(result, fixtures.ab);
+});

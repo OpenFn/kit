@@ -25,5 +25,6 @@ jobs:
         working-directory: resources/repo
 
       - run: pnpm stories:cli
-        env: OPENFN_RUNNER_ARGS=cmd:openfnx
+        env:
+          OPENFN_RUNNER_ARGS: cmd:openfnx
         working-directory: resources/repo
