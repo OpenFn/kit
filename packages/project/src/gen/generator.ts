@@ -21,6 +21,8 @@ type GenerateWorkflowOptions = {
 
 type GenerateProjectOptions = GenerateWorkflowOptions & {
   uuidMap: Array<Record<string, string>>;
+  /** openfn project options */
+  options: Record<string, any>;
 };
 
 let parser;
@@ -217,6 +219,7 @@ function generateProject(
     name,
     workflows,
     openfn: options.openfnUuid && { uuid: randomUUID() },
+    options: options.options,
   });
 }
 

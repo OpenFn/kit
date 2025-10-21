@@ -508,3 +508,23 @@ test('it should generate a project with uuids', (t) => {
 
   t.deepEqual(result.workflows[0].toJSON(), expected);
 });
+
+test('it should generate a project with options', (t) => {
+  const options = {
+    color: '#f00',
+    concurrency: 1,
+    scheduled_deletion: null,
+    history_retention_period: 90,
+    dataclip_retention_period: 12,
+    retention_policy: 'retain_all',
+    version_history: ['abc'],
+    allow_support_access: false,
+    requires_mfa: false,
+  };
+
+  const result = generateProject('x', ['a-b'], {
+    options,
+  });
+
+  t.deepEqual(result.options, options);
+});
