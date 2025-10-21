@@ -11,7 +11,7 @@ on:
     types: [labeled]
 
 jobs:
-  project_integration_test:
+  cli_stories:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.label.name == 'run_project_tests'
     steps:
