@@ -4,8 +4,9 @@ import { ensure, build } from '../util/command-builders';
 import * as o from '../options';
 
 export type CheckoutOptions = Required<
-  Pick<Opts, 'command' | 'projectName' | 'projectPath' | 'log'>
->;
+  Pick<Opts, 'command' | 'projectName' | 'projectPath'>
+> &
+  Pick<Opts, 'log'>;
 
 const options = [o.projectName, o.projectPath, o.log];
 
