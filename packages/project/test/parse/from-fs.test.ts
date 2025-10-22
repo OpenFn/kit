@@ -158,10 +158,10 @@ test('should load the workspace config from json', async (t) => {
   const project = await parseProject({ root: '/p1' });
 
   t.deepEqual(project.openfn, {
+    name: 'My Project',
     id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
     env: 'staging',
     endpoint: 'https://app.openfn.org',
-    name: 'My Project',
     description: '...',
   });
 });

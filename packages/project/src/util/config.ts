@@ -115,7 +115,10 @@ export const loadWorkspaceFile = (
 
   const legacy = !json.workspace && !json.projects;
   if (legacy) {
-    project = json.project;
+    project = json.project ?? {};
+    if (json.name) {
+      project.name = json.name;
+    }
 
     // prettier-ignore
     const {

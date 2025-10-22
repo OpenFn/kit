@@ -76,6 +76,7 @@ project:
     },
   });
   t.deepEqual(result.project, {
+    name: 'joe-sandbox-testing',
     uuid: 'd3367267-ef25-41cf-91b2-43d18f831f3c',
     endpoint: 'https://app.staging.openfn.org',
     env: 'dev',
@@ -112,6 +113,7 @@ test('legacy: load config as json', (t) => {
     },
   });
   t.deepEqual(result.project, {
+    name: 'joe-sandbox-testing',
     uuid: 'd3367267-ef25-41cf-91b2-43d18f831f3c',
     endpoint: 'https://app.staging.openfn.org',
     env: 'dev',
