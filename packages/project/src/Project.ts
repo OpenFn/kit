@@ -1,7 +1,6 @@
-import * as l from '@openfn/lexicon';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
-import fromAppState from './parse/from-app-state';
+import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
 import fromPath from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
@@ -102,7 +101,7 @@ export class Project {
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options: Partial<l.ProjectConfig> = {}
+    options: FromAppStateConfig = {}
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);

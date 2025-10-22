@@ -2,12 +2,13 @@
 
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { OpenfnConfig, Project } from '../Project';
+import { Project } from '../Project';
 import { yamlToJson } from '../util/yaml';
 import renameKeys from '../util/rename-keys';
+import { WorkspaceConfig } from '../util/config';
 
 // Extra metadata used to init the project
-type FromAppStateConfig = {
+export type FromAppStateConfig = {
   endpoint: string;
   env?: string;
   fetchedAt?: string;
@@ -15,7 +16,7 @@ type FromAppStateConfig = {
 
   // Allow workspace config to be passed
   // TODO can we just pass a Workspace?
-  repo: OpenfnConfig;
+  config: WorkspaceConfig;
 };
 
 function slugify(text) {
@@ -66,7 +67,7 @@ export default (state: Provisioner.Project, config: FromAppStateConfig) => {
 
   proj.workflows = state.workflows.map(mapWorkflow);
 
-  return new Project(proj as l.Project, config?.repo);
+  return new Project(proj as l.Project, config?.config);
 };
 
 const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
