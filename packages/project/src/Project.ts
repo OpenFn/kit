@@ -1,7 +1,7 @@
 import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
-import fromPath from './parse/from-path';
+import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
@@ -96,7 +96,7 @@ export class Project {
   static from(
     type: 'path',
     data: string,
-    options?: { config?: Partial<OpenfnConfig> }
+    options?: { config?: FromPathConfig }
   ): Project;
   static from(
     type: 'state' | 'path' | 'fs',

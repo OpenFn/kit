@@ -46,7 +46,7 @@ test.serial('should use workspace config', async (t) => {
     x: 1234,
   };
   const project = await fromPath('/p1/main@openfn.org.yaml', {
-    repo: config,
+    config,
   });
 
   t.is(project.name, proj.name);

@@ -87,7 +87,7 @@ export class Workspace {
 
   // TODO this needs to return default values
   // We should always rely on the workspace to load these values
-  getConfig(): Partial<OpenfnConfig> {
+  getConfig(): Partial<WorkspaceConfig> {
     return this.config;
   }
 
