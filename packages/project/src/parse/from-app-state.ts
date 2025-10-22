@@ -54,6 +54,7 @@ export default (state: Provisioner.Project, config: FromAppStateConfig) => {
 
   proj.openfn = {
     uuid: id,
+    name: name,
     endpoint: config.endpoint,
     env: config.env,
     inserted_at,
