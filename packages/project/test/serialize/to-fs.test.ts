@@ -4,9 +4,9 @@ import { Project } from '../../src/Project';
 import toFs, {
   extractWorkflow,
   extractStep,
-  extractRepoConfig,
   mapWorkflow,
 } from '../../src/serialize/to-fs';
+import { extractConfig } from '../../src/util/config';
 
 const stringify = (json) => JSON.stringify(json, null, 2);
 
@@ -184,133 +184,6 @@ test('extractWorkflow: single simple workflow with custom root', (t) => {
   t.is(path, 'openfn/wfs/my-workflow/my-workflow.json');
 });
 
-test('extractStep: extract a step', (t) => {
-  const project = new Project({
-    workflows: [
-      {
-        id: 'my-workflow',
-        steps: [step],
-      },
-    ],
-  });
-
-  const { path, content } = extractStep(project, 'my-workflow', 'step');
-
-  t.is(path, 'workflows/my-workflow/step.js');
-  t.is(content, step.expression);
-});
-
-test('extractConfig: create a default openfn.json', (t) => {
-  const project = new Project(
-    {
-      openfn: {
-        env: 'main',
-        id: '123',
-        endpoint: 'app.openfn.org',
-      },
-      workflows: [
-        {
-          id: 'my-workflow',
-          steps: [step],
-        },
-      ],
-    },
-    {
-      formats: {
-        openfn: 'json', // note that we have to set this
-      },
-    }
-  );
-  const { path, content } = extractRepoConfig(project);
-
-  t.is(path, 'openfn.json');
-  t.deepEqual(JSON.parse(content), {
-    dirs: {
-      projects: '.projects',
-      workflows: 'workflows',
-    },
-    formats: {
-      openfn: 'json',
-      workflow: 'yaml',
-      project: 'yaml',
-    },
-    project: {
-      id: '123',
-      endpoint: 'app.openfn.org',
-      env: 'main',
-    },
-  });
-});
-
-test('extractConfig: create a default openfn.yaml', (t) => {
-  const project = new Project({
-    name: 'My Project',
-    openfn: {
-      env: 'main',
-      id: '123',
-      endpoint: 'app.openfn.org',
-    },
-    workflows: [
-      {
-        id: 'my-workflow',
-        steps: [step],
-      },
-    ],
-  });
-
-  const { path, content } = extractRepoConfig(project);
-
-  t.is(path, 'openfn.yaml');
-  t.is(
-    content,
-    `name: My Project
-dirs:
-  projects: .projects
-  workflows: workflows
-formats:
-  openfn: yaml
-  project: yaml
-  workflow: yaml
-project:
-  env: main
-  id: "123"
-  endpoint: app.openfn.org
-`
-  );
-});
-
-test('extractConfig: include empty project config for local projects', (t) => {
-  const project = new Project(
-    {
-      // no openfn obj!
-      workflows: [
-        {
-          id: 'my-workflow',
-          steps: [step],
-        },
-      ],
-    },
-    {
-      formats: {
-        openfn: 'json', // for easier testing
-      },
-    }
-  );
-
-  const { path, content } = extractRepoConfig(project);
-
-  t.is(path, 'openfn.json');
-  t.deepEqual(JSON.parse(content), {
-    dirs: { projects: '.projects', workflows: 'workflows' },
-    formats: {
-      openfn: 'json',
-      workflow: 'yaml',
-      project: 'yaml',
-    },
-    project: {},
-  });
-});
-
 test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   const project = new Project(
     {
@@ -342,8 +215,10 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   // (this should be validated in more detail by each step)
   const config = JSON.parse(files['openfn.json']);
   t.deepEqual(config, {
-    formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
-    dirs: { projects: '.projects', workflows: 'workflows' },
+    workspace: {
+      formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
+      dirs: { projects: '.projects', workflows: 'workflows' },
+    },
     project: {},
   });
 

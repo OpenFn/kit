@@ -1,6 +1,11 @@
 import test from 'ava';
-import { findWorkspaceFile, loadWorkspaceFile } from '../../src/util/config';
+import {
+  extractConfig,
+  findWorkspaceFile,
+  loadWorkspaceFile,
+} from '../../src/util/config';
 import mock from 'mock-fs';
+import Project from '../../src';
 
 test.afterEach(() => {
   mock.restore();
@@ -130,3 +135,38 @@ test('find openfn.json', (t) => {
   t.is(result.type, 'json');
   t.deepEqual(result.content, { x: 1 });
 });
+
+test('generate openfn.yaml', (t) => {
+  const proj = new Project(
+    {
+      id: 'p1',
+      name: 'My Project',
+      openfn: {
+        uuid: 1234,
+      },
+    },
+    {
+      formats: {
+        openfn: 'yaml',
+      },
+    }
+  );
+  const result = extractConfig(proj);
+  t.is(result.path, 'openfn.yaml'),
+    t.deepEqual(
+      result.content,
+      `project:
+  uuid: 1234
+workspace:
+  formats:
+    openfn: yaml
+    project: yaml
+    workflow: yaml
+  dirs:
+    projects: .projects
+    workflows: workflows
+`
+    );
+});
+
+test.todo('generate openfn.json');

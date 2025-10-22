@@ -3,13 +3,14 @@
 import nodepath from 'path';
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
+import { extractConfig } from '../util/config';
 
 const stringify = (json) => JSON.stringify(json, null, 2);
 
 export default function (project: Project) {
   const files: Record<string, sting> = {};
 
-  const { path, content } = extractRepoConfig(project);
+  const { path, content } = extractConfig(project);
   files[path] = content;
 
   for (const wf of project.workflows) {
@@ -80,25 +81,11 @@ export const extractStep = (project: Project, workflowId, stepId) => {
   }
 };
 
-// extracts contents for openfn.yaml|json
-// TODO this is nwo WorkspaceConfig
-// Need to support new and old formats
-export const extractRepoConfig = (project) => {
-  const format = project.config.formats.openfn;
-  const config = {
-    name: project.name,
-    ...project.config,
-    project: project.openfn ?? {},
-  };
-
-  return handleOutput(config, 'openfn', format);
-};
-
 const handleOutput = (data, filePath, format) => {
   const path = `${filePath}.${format}`;
   let content;
   if (format === 'json') {
-    content = stringify(data, null, 2);
+    content = stringify(data);
   } else if (format === 'yaml') {
     content = jsonToYaml(data);
   } else {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { chain, pickBy, isNil } from 'lodash-es';
-import { yamlToJson } from './yaml';
+import { yamlToJson, jsonToYaml } from './yaml';
 
 // Initialize and default Workspace (and Project) config
 
@@ -77,9 +77,29 @@ export const buildConfig = (config: WorkspaceConfig = {}) => ({
   },
 });
 
-// TODO
-// Generate a config file from a project
-export const extractConfig = (source: Project | Workspace) => {};
+// Generate a workspace config (openfn.yaml) file for a project
+export const extractConfig = (source: Project) => {
+  const project = {
+    ...(source.openfn || {}),
+  };
+  const workspace = {
+    ...source.config,
+  };
+
+  const content = { project, workspace };
+
+  const format = workspace.formats.openfn;
+  if (format === 'yaml') {
+    return {
+      path: 'openfn.yaml',
+      content: jsonToYaml(content),
+    };
+  }
+  return {
+    path: 'openfn.json',
+    content: JSON.stringify(content, null, 2),
+  };
+};
 
 export const loadWorkspaceFile = (
   contents: string | WorkspaceFile | WorkspaceFileLegacy,
