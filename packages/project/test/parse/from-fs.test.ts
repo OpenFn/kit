@@ -117,8 +117,11 @@ mock({
 
   // p3 uses custom yaml
   '/p3/openfn.yaml': `
-x: 1
-y: 2`,
+workspace:
+  x: 1
+  y: 2
+project:
+`,
   '/p3/wfs/my-workflow/my-workflow.yaml': `
   id: my-workflow
   name: My Workflow

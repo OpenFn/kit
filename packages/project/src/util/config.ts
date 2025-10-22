@@ -1,8 +1,15 @@
-// Initiaise and default Workspace (and Project) config
+import { yamlToJson } from './yaml';
+import { chain, pickBy, isNil } from 'lodash-es';
+
+// Initialize and default Workspace (and Project) config
 
 type FileFormats = 'yaml' | 'json';
 
 // This is the old workspace config file, up to 0.6
+// TODO would like a better name than "Workspace File"
+// Can't use config, it means something else (and not all of it is config!)
+// State is good but overloaded
+// Settings? Context?
 export interface WorkspaceFileLegacy {
   workflowRoot: string;
   dirs: {
@@ -68,7 +75,54 @@ export const buildConfig = (config: WorkspaceConfig = {}) => ({
   },
 });
 
-//
+// TODO
+// Generate a config file from a project
 export const extractConfig = (source: Project | Workspace) => {};
 
-export const loadCOnfig = (contents: string) => {};
+export const loadWorkspaceFile = (
+  contents: string,
+  format: 'yaml' | 'json' = 'yaml'
+) => {
+  let project, workspace;
+  let json;
+  if (format === 'yaml') {
+    json = yamlToJson(contents);
+  } else if (typeof contents === 'string') {
+    json = JSON.parse(contents);
+  }
+
+  const legacy = !json.workspace && !json.projects;
+  if (legacy) {
+    project = json.project;
+
+    // prettier-ignore
+    const {
+      formats,
+      dirs,
+      project: _ /* ignore!*/,
+      name,
+      ...rest
+    } = json;
+
+    workspace = pickBy(
+      {
+        ...rest,
+        formats,
+        dirs,
+      },
+      (value) => !isNil(value)
+    );
+  } else {
+    project = json.project ?? {};
+    workspace = json.workspace ?? {};
+  }
+
+  return { project, workspace };
+};
+
+// TODO
+// find the workspace file in a specific dir
+// throws if it can't find one
+export const findWorkspaceFile = (dir: string) => {
+  return { content: '', type: '' };
+};

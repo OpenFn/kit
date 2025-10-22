@@ -2,7 +2,7 @@
 import { OpenfnConfig, Project } from './Project';
 import pathExists from './util/path-exists';
 import { yamlToJson } from './util/yaml';
-import { buildConfig, ProjectMeta } from './util/config';
+import { buildConfig, loadWorkspaceFile, ProjectMeta } from './util/config';
 import path from 'path';
 import fs from 'fs';
 import fromAppState from './parse/from-app-state';
@@ -25,8 +25,8 @@ export class Workspace {
     if (pathExists(openfnYamlPath, 'file')) {
       this.isValid = true;
       const data = fs.readFileSync(openfnYamlPath, 'utf-8');
-      const { name, project, ...c } = yamlToJson(data);
-      this.config = buildConfig(c);
+      const { project, workspace } = loadWorkspaceFile(data);
+      this.config = buildConfig(workspace);
       this.projectMeta = project;
     }
     const projectsPath = path.join(
