@@ -122,6 +122,14 @@ test('legacy: load config as json', (t) => {
   });
 });
 
+test('legacy: load empty config', (t) => {
+  const yaml = ``;
+  const result = loadWorkspaceFile(yaml);
+
+  t.deepEqual(result.workspace, {});
+  t.deepEqual(result.project, {});
+});
+
 test('find openfn.yaml', (t) => {
   mock({ '/tmp/openfn.yaml': 'x: 1' });
 

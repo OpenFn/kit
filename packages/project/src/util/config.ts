@@ -108,7 +108,7 @@ export const loadWorkspaceFile = (
   let project, workspace;
   let json = contents;
   if (format === 'yaml') {
-    json = yamlToJson(contents);
+    json = yamlToJson(contents) ?? {};
   } else if (typeof contents === 'string') {
     json = JSON.parse(contents);
   }
@@ -146,10 +146,13 @@ export const loadWorkspaceFile = (
 };
 
 export const findWorkspaceFile = (dir: string = '.') => {
+  console.log({ dir });
   let content, type;
   try {
     type = 'yaml';
+    console.log(path.resolve(path.join(dir, 'openfn.yaml')));
     content = readFileSync(path.resolve(path.join(dir, 'openfn.yaml')), 'utf8');
+    console.log({ content });
   } catch (e) {
     // Not found - try and parse as JSON
     try {
@@ -159,7 +162,7 @@ export const findWorkspaceFile = (dir: string = '.') => {
         content = JSON.parse(file);
       }
     } catch (e) {
-      // console.log(e);
+      console.log(e);
       // TODO better error handling
       throw e;
     }

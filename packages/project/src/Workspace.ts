@@ -26,9 +26,11 @@ export class Workspace {
     let context;
     try {
       const { type, content } = findWorkspaceFile(workspacePath);
+      console.log(content);
       context = loadWorkspaceFile(content, type);
       this.isValid = true;
     } catch (e) {
+      console.log(e);
       // invalid workspace
       return;
     }
