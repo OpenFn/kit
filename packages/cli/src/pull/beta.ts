@@ -69,7 +69,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   const name = options.env || 'project';
 
   const project = Project.from('state', data, {
-    repo: config,
+    config,
     endpoint: cfg.endpoint,
     env: name,
     fetched_at: new Date().toISOString(),
