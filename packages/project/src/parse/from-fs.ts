@@ -11,6 +11,7 @@ import {
   WorkspaceConfig,
   WorkspaceFile,
   loadWorkspaceFile,
+  findWorkspaceFile,
 } from '../util/config';
 import slugify from '../util/slugify';
 import fromAppState from './from-app-state';
@@ -20,31 +21,11 @@ export type FromFsConfig = {
 };
 
 // Parse a single project from a root folder
-// root must be absolute?
 export const parseProject = async (options: FromFsConfig = {}) => {
   const { root } = options;
 
-  let context: WorkspaceFile;
-  try {
-    const file = await fs.readFile(
-      path.resolve(path.join(root, 'openfn.yaml')),
-      'utf8'
-    );
-    context = loadWorkspaceFile(file);
-  } catch (e) {
-    // Not found - try and parse as JSON
-    try {
-      const file = await fs.readFile(
-        path.join(root || '.', 'openfn.json'),
-        'utf8'
-      );
-      context = loadWorkspaceFile(file, 'json');
-    } catch (e) {
-      console.log(e);
-      // TODO better error handling
-      throw e;
-    }
-  }
+  const { type, content } = findWorkspaceFile(root);
+  const context = loadWorkspaceFile(content, type);
   const config = buildConfig(context.workspace);
 
   // Now we need to look for the corresponding state file

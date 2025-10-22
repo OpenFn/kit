@@ -1,5 +1,10 @@
 import test from 'ava';
-import { loadWorkspaceFile } from '../../src/util/config';
+import { findWorkspaceFile, loadWorkspaceFile } from '../../src/util/config';
+import mock from 'mock-fs';
+
+test.afterEach(() => {
+  mock.restore();
+});
 
 test('load config as yaml', (t) => {
   const yaml = `
@@ -108,4 +113,20 @@ test('legacy: load config as json', (t) => {
     inserted_at: '2025-10-21T17:10:57Z',
     updated_at: '2025-10-21T17:10:57Z',
   });
+});
+
+test('find openfn.yaml', (t) => {
+  mock({ '/tmp/openfn.yaml': 'x: 1' });
+
+  const result = findWorkspaceFile('/tmp');
+  t.is(result.type, 'yaml');
+  t.is(result.content, 'x: 1');
+});
+
+test('find openfn.json', (t) => {
+  mock({ '/tmp/openfn.json': '{ "x": 1 }' });
+
+  const result = findWorkspaceFile('/tmp');
+  t.is(result.type, 'json');
+  t.deepEqual(result.content, { x: 1 });
 });

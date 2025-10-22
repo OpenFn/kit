@@ -1,14 +1,16 @@
-// when given a file path from cli it'll create a workspace object
+import path from 'node:path';
+import fs from 'node:fs';
+
 import { OpenfnConfig, Project } from './Project';
+import fromAppState from './parse/from-app-state';
 import pathExists from './util/path-exists';
 import { yamlToJson } from './util/yaml';
-import { buildConfig, loadWorkspaceFile, ProjectMeta } from './util/config';
-import path from 'path';
-import fs from 'fs';
-import fromAppState from './parse/from-app-state';
+import {
+  buildConfig,
+  loadWorkspaceFile,
+  findWorkspaceFile,
+} from './util/config';
 
-const PROJECTS_DIRECTORY = '.projects';
-const OPENFN_YAML_FILE = 'openfn.yaml';
 const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
@@ -20,19 +22,20 @@ export class Workspace {
   private isValid: boolean = false;
 
   constructor(workspacePath: string) {
-    const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
-    // dealing with openfn.yaml
-    if (pathExists(openfnYamlPath, 'file')) {
+    let context;
+    try {
+      const { type, content } = findWorkspaceFile(workspacePath);
+      context = loadWorkspaceFile(content, type);
       this.isValid = true;
-      const data = fs.readFileSync(openfnYamlPath, 'utf-8');
-      const { project, workspace } = loadWorkspaceFile(data);
-      this.config = buildConfig(workspace);
-      this.projectMeta = project;
+    } catch (e) {
+      // invalid workspace
+      return;
     }
-    const projectsPath = path.join(
-      workspacePath,
-      this.config?.dirs?.projects ?? PROJECTS_DIRECTORY
-    );
+
+    this.config = buildConfig(context.workspace);
+    this.projectMeta = context.project;
+
+    const projectsPath = path.join(workspacePath, this.config.dirs.projects);
 
     // dealing with projects
     if (this.isValid && pathExists(projectsPath, 'directory')) {

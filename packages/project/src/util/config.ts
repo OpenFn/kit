@@ -1,5 +1,7 @@
-import { yamlToJson } from './yaml';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { chain, pickBy, isNil } from 'lodash-es';
+import { yamlToJson } from './yaml';
 
 // Initialize and default Workspace (and Project) config
 
@@ -80,11 +82,11 @@ export const buildConfig = (config: WorkspaceConfig = {}) => ({
 export const extractConfig = (source: Project | Workspace) => {};
 
 export const loadWorkspaceFile = (
-  contents: string,
+  contents: string | WorkspaceFile | WorkspaceFileLegacy,
   format: 'yaml' | 'json' = 'yaml'
 ) => {
   let project, workspace;
-  let json;
+  let json = contents;
   if (format === 'yaml') {
     json = yamlToJson(contents);
   } else if (typeof contents === 'string') {
@@ -120,9 +122,24 @@ export const loadWorkspaceFile = (
   return { project, workspace };
 };
 
-// TODO
-// find the workspace file in a specific dir
-// throws if it can't find one
-export const findWorkspaceFile = (dir: string) => {
-  return { content: '', type: '' };
+export const findWorkspaceFile = (dir: string = '.') => {
+  let content, type;
+  try {
+    type = 'yaml';
+    content = readFileSync(path.resolve(path.join(dir, 'openfn.yaml')), 'utf8');
+  } catch (e) {
+    // Not found - try and parse as JSON
+    try {
+      type = 'json';
+      const file = readFileSync(path.join(dir, 'openfn.json'), 'utf8');
+      if (file) {
+        content = JSON.parse(file);
+      }
+    } catch (e) {
+      console.log(e);
+      // TODO better error handling
+      throw e;
+    }
+  }
+  return { content, type };
 };
