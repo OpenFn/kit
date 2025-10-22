@@ -13,6 +13,7 @@ import projects from './projects/handler';
 import workflowVersion from './version/handler';
 import checkout from './checkout/handler';
 import merge from './merge/handler';
+import fetchHandler from './fetch/handler';
 import { clean, install, pwd, list } from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
@@ -34,6 +35,7 @@ export type CommandList =
   | 'execute'
   | 'metadata'
   | 'pull'
+  | 'fetch'
   | 'projects'
   | 'checkout'
   | 'merge'
@@ -55,6 +57,7 @@ const handlers = {
   docs,
   metadata,
   pull,
+  fetch: fetchHandler,
   projects,
   checkout,
   merge,
