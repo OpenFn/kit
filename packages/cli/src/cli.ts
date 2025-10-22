@@ -17,6 +17,7 @@ import testCommand from './test/command';
 import projectsCommand from './projects/command';
 import mergeCommand from './projects/merge';
 import checkoutCommand from './projects/checkout';
+import fetchCommand from './fetch/command';
 
 const env = loadDotEnv();
 if (env) {
@@ -44,6 +45,7 @@ export const cmd = y
   .command(projectsCommand)
   .command(checkoutCommand)
   .command(mergeCommand)
+  .command(fetchCommand as any)
   .command({
     command: 'version',
     describe:

@@ -11,6 +11,7 @@ import metadata from './metadata/handler';
 import pull from './pull/handler';
 import * as projects from './projects/handler';
 import * as repo from './repo/handler';
+import fetchHandler from './fetch/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
@@ -32,6 +33,7 @@ export type CommandList =
   | 'execute'
   | 'metadata'
   | 'pull'
+  | 'fetch'
   | 'projects'
   | 'project'
   | 'repo-clean'
@@ -55,6 +57,7 @@ const handlers = {
   docs,
   metadata,
   pull,
+  fetch: fetchHandler,
   projects,
   project: projects,
   ['collections-get']: collections.get,
