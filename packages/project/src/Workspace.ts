@@ -13,12 +13,11 @@ const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
   config?: OpenfnConfig;
+  projectMeta: ProjectMeta;
 
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
-
-  private projectMeta: ProjectMeta;
 
   constructor(workspacePath: string) {
     const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
