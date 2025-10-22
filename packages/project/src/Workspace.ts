@@ -1,7 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
-import { OpenfnConfig, Project } from './Project';
+import { Project } from './Project';
+import type { WorkspaceConfig } from './util/config';
 import fromAppState from './parse/from-app-state';
 import pathExists from './util/path-exists';
 import { yamlToJson } from './util/yaml';
@@ -14,7 +15,7 @@ import {
 const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
-  config?: OpenfnConfig;
+  config?: WorkspaceConfig;
   projectMeta: ProjectMeta;
 
   private projects: Project[] = [];
