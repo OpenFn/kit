@@ -68,7 +68,7 @@ export function merge(
 
   if (Object.keys(mergeMapping).length && !options?.force) {
     throw new Error(
-      `The below workflows can't merge directly without losing data.\n${Object.entries(
+      `The below workflows can't be merged directly without losing data.\n${Object.entries(
         mergeMapping
       )
         .map(([from, to]) => `${from} → ${to}`)
