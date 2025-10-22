@@ -2,15 +2,22 @@ import mock from 'mock-fs';
 import { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
 
+// TODO need a test on the legacy and new yaml formats here
 mock({
   '/ws/openfn.yaml': jsonToYaml({
     name: 'some-project-name',
-    workflowRoot: 'workflows',
+    project: {
+      uuid: '1234',
+      name: 'some-project-name',
+    },
     formats: {
       openfn: 'yaml',
       project: 'yaml',
       workflow: 'yaml',
+      custom: true, // Note tha this will be excluded
     },
+    // deliberately exclude dirs
+    custom: true,
   }),
   '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
     id: 'some-id',
@@ -104,4 +111,28 @@ test('workspace-get: get projects in the workspace', (t) => {
     found?.workflows.map((w) => w.name),
     ['simple-workflow', 'another-workflow']
   );
+});
+
+test('load config', (t) => {
+  const ws = new Workspace('/ws');
+  t.deepEqual(ws.config, {
+    formats: {
+      openfn: 'yaml',
+      project: 'yaml',
+      workflow: 'yaml',
+    },
+    dirs: {
+      workflows: 'workflows',
+      projects: '.projects',
+    },
+    custom: true,
+  });
+});
+
+test('load project meta', (t) => {
+  const ws = new Workspace('/ws');
+  t.deepEqual(ws.projectMeta, {
+    uuid: '1234',
+    name: 'some-project-name',
+  });
 });

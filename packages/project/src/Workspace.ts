@@ -2,7 +2,7 @@
 import { OpenfnConfig, Project } from './Project';
 import pathExists from './util/path-exists';
 import { yamlToJson } from './util/yaml';
-import { buildConfig } from './util/config';
+import { buildConfig, ProjectMeta } from './util/config';
 import path from 'path';
 import fs from 'fs';
 import fromAppState from './parse/from-app-state';
@@ -18,13 +18,17 @@ export class Workspace {
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
 
+  private projectMeta: ProjectMeta;
+
   constructor(workspacePath: string) {
     const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
     // dealing with openfn.yaml
     if (pathExists(openfnYamlPath, 'file')) {
       this.isValid = true;
       const data = fs.readFileSync(openfnYamlPath, 'utf-8');
-      this.config = buildConfig(yamlToJson(data));
+      const { name, project, ...c } = yamlToJson(data);
+      this.config = buildConfig(c);
+      this.projectMeta = project;
     }
     const projectsPath = path.join(
       workspacePath,
@@ -53,6 +57,7 @@ export class Workspace {
     }
   }
 
+  // TODO
   // This will load a project within this workspace
   // uses Project.from
   // Rather than doing new Workspace + Project.from(),
@@ -63,6 +68,7 @@ export class Workspace {
     return this.projects;
   }
 
+  // TODO clear up name/id confusion
   get(id: string) {
     return this.projects.find((p) => p.name === id);
   }
@@ -72,7 +78,8 @@ export class Workspace {
   }
 
   getActiveProject() {
-    return this.projects.find((p) => p.name === this.config?.name);
+    // TODO should use id, not name
+    return this.projects.find((p) => p.name === this.projectMeta?.name);
   }
 
   // TODO this needs to return default values
@@ -82,7 +89,8 @@ export class Workspace {
   }
 
   get activeProjectId() {
-    return this.config?.name;
+    // TODO should return activeProject.id
+    return this.projectMeta?.name;
   }
 
   get valid() {
