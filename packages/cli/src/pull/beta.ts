@@ -82,7 +82,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
 
   const workflowsRoot = path.resolve(
     outputRoot,
-    project.repo.dirs?.workflows ?? 'workflows'
+    project.config.dirs.workflows ?? 'workflows'
   );
   // Prompt before deleting
   // TODO this is actually the wrong path
@@ -102,7 +102,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
 
   const state = project?.serialize('state');
 
-  if (project.repo.formats?.project === 'yaml') {
+  if (project.config.formats.project === 'yaml') {
     await fs.writeFile(`${stateOutputPath}.yaml`, state);
   } else {
     await fs.writeFile(

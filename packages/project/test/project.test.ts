@@ -104,7 +104,7 @@ test('should convert a state file to a project and back again', (t) => {
   t.is(project.name, state.name);
 
   // TODO: this hack is needed right now to serialize the state as json
-  project.repo.formats.project = 'json';
+  project.config.formats.project = 'json';
 
   const newState = project.serialize('state');
   t.deepEqual(newState, state);

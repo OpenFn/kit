@@ -30,14 +30,15 @@ export default function (project: Project) {
 
 // extracts a workflow.json|yaml from a project
 export const extractWorkflow = (project: Project, workflowId: string) => {
-  const format = project.repo.formats.workflow;
+  const format = project.config.formats.workflow;
 
   const workflow = project.getWorkflow(workflowId);
   if (!workflow) {
     throw new Error(`workflow not found: ${workflowId}`);
   }
 
-  const root = project.repo?.workflowRoot ?? 'workflows/';
+  const root =
+    project.config.dirs.workflow ?? project.config.workflowRoot ?? 'workflows/';
 
   const path = nodepath.join(root, workflow.id, workflow.id);
 
@@ -80,11 +81,13 @@ export const extractStep = (project: Project, workflowId, stepId) => {
 };
 
 // extracts contents for openfn.yaml|json
+// TODO this is nwo WorkspaceConfig
+// Need to support new and old formats
 export const extractRepoConfig = (project) => {
-  const format = project.repo.formats.openfn;
+  const format = project.config.formats.openfn;
   const config = {
     name: project.name,
-    ...project.repo,
+    ...project.config,
     project: project.openfn ?? {},
   };
 

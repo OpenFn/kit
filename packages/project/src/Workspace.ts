@@ -2,6 +2,7 @@
 import { OpenfnConfig, Project } from './Project';
 import pathExists from './util/path-exists';
 import { yamlToJson } from './util/yaml';
+import { buildConfig } from './util/config';
 import path from 'path';
 import fs from 'fs';
 import fromAppState from './parse/from-app-state';
@@ -11,7 +12,8 @@ const OPENFN_YAML_FILE = 'openfn.yaml';
 const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
-  private config?: OpenfnConfig;
+  config?: OpenfnConfig;
+
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
@@ -22,7 +24,7 @@ export class Workspace {
     if (pathExists(openfnYamlPath, 'file')) {
       this.isValid = true;
       const data = fs.readFileSync(openfnYamlPath, 'utf-8');
-      this.config = yamlToJson(data);
+      this.config = buildConfig(yamlToJson(data));
     }
     const projectsPath = path.join(
       workspacePath,

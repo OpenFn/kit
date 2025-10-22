@@ -130,27 +130,28 @@ y: 2`,
   '/p3/wfs/my-workflow/job.js': `fn(s => s)`,
 });
 
-test('should load the openfn repo config from json', async (t) => {
+test('should load workspace config from json', async (t) => {
   const project = await parseProject({ root: '/p1' });
 
-  t.deepEqual(project.repo, {
+  t.deepEqual(project.config, {
     workflowRoot: 'workflows',
+    dirs: { projects: '.projects', workflows: 'workflows' },
     formats: { openfn: 'json', project: 'json', workflow: 'json' },
   });
 });
 
-test('should load custom repro props and include default', async (t) => {
+test('should load custom config props and include default', async (t) => {
   const project = await parseProject({ root: '/p3' });
 
-  t.deepEqual(project.repo, {
+  t.deepEqual(project.config, {
     x: 1,
     y: 2,
-    workflowRoot: 'workflows',
+    dirs: { projects: '.projects', workflows: 'workflows' },
     formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
   });
 });
 
-test('should load the openfn project config from json', async (t) => {
+test('should load the workspace config from json', async (t) => {
   const project = await parseProject({ root: '/p1' });
 
   t.deepEqual(project.openfn, {

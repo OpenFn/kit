@@ -51,5 +51,5 @@ test.serial('should use workspace config', async (t) => {
 
   t.is(project.name, proj.name);
   t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
-  t.is(project.repo.x, config.x);
+  t.is(project.config.x, config.x);
 });

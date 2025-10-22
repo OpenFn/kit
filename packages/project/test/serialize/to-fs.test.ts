@@ -215,7 +215,6 @@ test('extractConfig: create a default openfn.json', (t) => {
         },
       ],
     },
-    // TODO still a little uncomfortable about this structure
     {
       formats: {
         openfn: 'json', // note that we have to set this
@@ -226,7 +225,10 @@ test('extractConfig: create a default openfn.json', (t) => {
 
   t.is(path, 'openfn.json');
   t.deepEqual(JSON.parse(content), {
-    workflowRoot: 'workflows',
+    dirs: {
+      projects: '.projects',
+      workflows: 'workflows',
+    },
     formats: {
       openfn: 'json',
       workflow: 'yaml',
@@ -262,7 +264,9 @@ test('extractConfig: create a default openfn.yaml', (t) => {
   t.is(
     content,
     `name: My Project
-workflowRoot: workflows
+dirs:
+  projects: .projects
+  workflows: workflows
 formats:
   openfn: yaml
   project: yaml
@@ -294,12 +298,10 @@ test('extractConfig: include empty project config for local projects', (t) => {
   );
 
   const { path, content } = extractRepoConfig(project);
-  t.log(path);
-  t.log(content);
 
   t.is(path, 'openfn.json');
   t.deepEqual(JSON.parse(content), {
-    workflowRoot: 'workflows',
+    dirs: { projects: '.projects', workflows: 'workflows' },
     formats: {
       openfn: 'json',
       workflow: 'yaml',
@@ -340,8 +342,8 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   // (this should be validated in more detail by each step)
   const config = JSON.parse(files['openfn.json']);
   t.deepEqual(config, {
-    workflowRoot: 'workflows',
     formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
+    dirs: { projects: '.projects', workflows: 'workflows' },
     project: {},
   });
 
