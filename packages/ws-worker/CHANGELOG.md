@@ -1,5 +1,16 @@
 # ws-worker
 
+## 1.18.0
+
+### Minor Changes
+
+- cf8d3c2: Add retry with backoff to worker validation
+
+### Patch Changes
+
+- Updated dependencies [cf8d3c2]
+  - @openfn/engine-multi@1.7.0
+
 ## 1.17.0
 
 ### Minor Changes
