@@ -139,18 +139,11 @@ const createEngine = async (
   );
   engine.callWorker = callWorker;
 
-  // Use a longer timeout (15s) and retry logic (5 attempts) for containerized environments
-  // where file system or process initialization may be slower
   await validateWorker(engine, options.logger, {
     timeout: options.workerValidationTimeout,
     retries: options.workerValidationRetries,
   });
 
-  // TODO I think this needs to be like:
-  // take a plan
-  // create, register and return  a state object
-  // should it also load the initial data clip?
-  // when does that happen? No, that's inside execute
   const registerWorkflow = (plan: ExecutionPlan, input: State) => {
     // TODO throw if already registered?
     const state = createState(plan, input);
