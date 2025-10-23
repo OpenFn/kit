@@ -82,6 +82,9 @@ export type EngineOptions = {
   statePropsToRemove?: string[];
   whitelist?: RegExp[];
   proxyStdout?: boolean;
+
+  workerValidationTimeout?: number;
+  workerValidationRetries?: number;
 };
 
 export type InternalEngine = RuntimeEngine & {
@@ -136,13 +139,11 @@ const createEngine = async (
   );
   engine.callWorker = callWorker;
 
-  await validateWorker(engine);
+  await validateWorker(engine, options.logger, {
+    timeout: options.workerValidationTimeout,
+    retries: options.workerValidationRetries,
+  });
 
-  // TODO I think this needs to be like:
-  // take a plan
-  // create, register and return  a state object
-  // should it also load the initial data clip?
-  // when does that happen? No, that's inside execute
   const registerWorkflow = (plan: ExecutionPlan, input: State) => {
     // TODO throw if already registered?
     const state = createState(plan, input);

@@ -16,6 +16,8 @@ type Args = {
   capacity?: number;
   collectionsUrl?: string;
   collectionsVersion?: string;
+  engineValidationTimeoutMs?: number;
+  engineValidationRetries?: number;
   lightning?: string;
   lightningPublicKey?: string;
   log?: LogLevel;
@@ -80,6 +82,8 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_SENTRY_ENV,
     WORKER_SOCKET_TIMEOUT_SECONDS,
     WORKER_STATE_PROPS_TO_REMOVE,
+    WORKER_VALIDATION_RETRIES,
+    WORKER_VALIDATION_TIMEOUT_MS,
   } = process.env;
 
   const parser = yargs(hideBin(argv))
@@ -187,6 +191,16 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'The version of the collections adaptor to use for all runs on this worker instance.Env: WORKER_COLLECTIONS_VERSION',
       type: 'string',
+    })
+    .option('engine-validation-timeout-ms', {
+      description:
+        'The timeout used to run the validation task within the engine, in milliseconds. Env: WORKER_VALIDATION_TIMEOUT_MS',
+      type: 'number',
+    })
+    .option('engine-validation-retries', {
+      description:
+        'The number of times to retry engine validation. Useful in hosted environments. Default 3. ENV: WORKER_VALIDATION_RETRIES',
+      type: 'number',
     });
 
   const args = parser.parse() as Args;
@@ -241,5 +255,15 @@ export default function parseArgs(argv: string[]): Args {
       WORKER_COLLECTIONS_VERSION
     ),
     collectionsUrl: setArg(args.collectionsUrl, WORKER_COLLECTIONS_URL),
+    engineValidationRetries: setArg(
+      args.engineValidationRetries,
+      WORKER_VALIDATION_RETRIES,
+      3
+    ),
+    engineValidationTimeoutMs: setArg(
+      args.engineValidationTimeoutMs,
+      WORKER_VALIDATION_TIMEOUT_MS,
+      5000
+    ),
   } as Args;
 }

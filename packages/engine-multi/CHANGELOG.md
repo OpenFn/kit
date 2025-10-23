@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.7.0
+
+### Minor Changes
+
+- cf8d3c2: Add retry with backoff to worker validation
+
 ## 1.6.14
 
 ### Patch Changes
