@@ -38,6 +38,7 @@ export default async (
 
       // exponential backoff: 1s, 2s, 4s, etc.
       const backoffMs = 1000 * Math.pow(2, i);
+      logger.warn(`Worker validation failed: will retry in ${backoffMs}ms`);
       await new Promise((resolve) => setTimeout(resolve, backoffMs));
     }
   }
