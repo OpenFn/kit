@@ -25,12 +25,12 @@ export default async (
       // TODO argument drive this
       await api.callWorker('handshake', [], {}, { timeout });
       const duration = Date.now() - start;
-      logger.debug(`Worker validated in ${duration}ms`);
+      logger.debug(`Engine worker validated in ${duration}ms`);
       return;
     } catch (e) {
       if (i >= retries - 1) {
         const duration = Date.now() - start;
-        logger.error(`Worker validation failed in in ${duration}ms`);
+        logger.error(`Engine worker validation failed in in ${duration}ms`);
         throw new WorkerValidationError(`Failed to validate worker thread. This likely happened because:
 1. An invalid worker file was passed to the engine
 2. The filesystem was temporarily unavailable`);
