@@ -82,6 +82,9 @@ export type EngineOptions = {
   statePropsToRemove?: string[];
   whitelist?: RegExp[];
   proxyStdout?: boolean;
+
+  workerValidationTimeout?: number;
+  workerValidationRetries?: number;
 };
 
 export type InternalEngine = RuntimeEngine & {
@@ -138,7 +141,10 @@ const createEngine = async (
 
   // Use a longer timeout (15s) and retry logic (5 attempts) for containerized environments
   // where file system or process initialization may be slower
-  await validateWorker(engine, 15000, 5);
+  await validateWorker(engine, options.logger, {
+    timeout: options.workerValidationTimeout,
+    retries: options.workerValidationRetries,
+  });
 
   // TODO I think this needs to be like:
   // take a plan
