@@ -63,6 +63,8 @@ test('cli should set default values for unspecified options', (t) => {
   t.deepEqual(args.statePropsToRemove, ['configuration', 'response']);
   t.is(args.runMemory, 500);
   t.is(args.maxRunDurationSeconds, 300);
+  t.is(args.engineValidationRetries, 3);
+  t.is(args.engineValidationTimeoutMs, 5000);
 });
 
 test('cli should handle boolean options correctly', (t) => {
@@ -102,9 +104,34 @@ test('cli should handle array options correctly', (t) => {
 });
 
 test('cli should handle array options correctly for env variables', (t) => {
-  const argv = 'pnpm start'.split(' ');
   process.env.WORKER_STATE_PROPS_TO_REMOVE = 'prop1,prop2,prop3';
+
+  const argv = 'pnpm start'.split(' ');
   const args = cli(argv);
 
   t.deepEqual(args.statePropsToRemove, ['prop1', 'prop2', 'prop3']);
+});
+
+test('cli should configure engine validation through env vars', (t) => {
+  process.env.WORKER_VALIDATION_RETRIES = '22';
+  process.env.WORKER_VALIDATION_TIMEOUT_MS = '3333';
+
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+
+  t.is(args.engineValidationRetries, 22);
+  t.is(args.engineValidationTimeoutMs, 3333);
+});
+
+test('cli should configure engine validation through args', (t) => {
+  const retries = '22';
+  const timeout = '3333';
+  const argv =
+    `pnpm start --engine-validation-timeout-ms ${timeout} --engine-validation-retries ${retries}`.split(
+      ' '
+    );
+  const args = cli(argv);
+
+  t.is(args.engineValidationRetries, 22);
+  t.is(args.engineValidationTimeoutMs, 3333);
 });

@@ -91,6 +91,8 @@ if (args.mock) {
     maxWorkers: args.capacity,
     statePropsToRemove: args.statePropsToRemove,
     runTimeoutMs: args.maxRunDurationSeconds * 1000,
+    workerValidationTimeout: args.engineValidationTimeoutMs,
+    workerValidationRetries: args.engineValidationRetries,
   };
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);
