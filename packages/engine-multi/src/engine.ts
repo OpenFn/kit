@@ -136,7 +136,9 @@ const createEngine = async (
   );
   engine.callWorker = callWorker;
 
-  await validateWorker(engine);
+  // Use a longer timeout (15s) and retry logic (5 attempts) for containerized environments
+  // where file system or process initialization may be slower
+  await validateWorker(engine, 15000, 5);
 
   // TODO I think this needs to be like:
   // take a plan
