@@ -166,7 +166,7 @@ test('incompatible-merge: should throw error when merge is incompatible', (t) =>
   const sourceProject = new Project({ workflows: [source] });
   const targetProject = new Project({ workflows: [target] });
   t.throws(() => Project.merge(sourceProject, targetProject), {
-    message: `The below workflows can't be merged directly without losing data.\nWorkflow → Workflow`,
+    message: `The below workflows can't be merged directly without losing data\nWorkflow → Workflow\nPass --force to force the merge anyway`,
   });
 });
 
