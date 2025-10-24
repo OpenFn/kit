@@ -94,6 +94,7 @@ const mapWorkflow = (workflow) => {
         id: rules.openfn?.uuid ?? randomUUID(),
         target_job_id: lookup[next],
         enabled: !rules.disabled,
+        source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
       };
 
       if (isTrigger) {
