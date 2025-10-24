@@ -113,7 +113,7 @@ test('merging into the same project', async (t) => {
 test('merging a different project into checked-out', async (t) => {
   // state of main projects workflow before sandbox is merged in
   const bworkspace = new Workspace('/ws');
-  t.is(bworkspace.getConfig()?.name, 'main-project-id');
+  t.is(bworkspace.projectMeta.name, 'main-project-id');
   t.is(bworkspace.getActiveProject()?.name, 'main-project-id');
   const bprojects = bworkspace.list();
   t.is(bprojects[0].workflows[0].steps.length, 2);
@@ -133,13 +133,13 @@ test('merging a different project into checked-out', async (t) => {
 
   // state of main projects workflow before sandbox is merged in
   const workspace = new Workspace('/ws');
-  t.is(workspace.getConfig()?.name, 'main-project-id');
+  t.is(workspace.projectMeta.name, 'main-project-id');
   t.is(workspace.getActiveProject()?.name, 'main-project-id');
   const projects = workspace.list();
   t.is(projects[0].workflows[0].steps.length, 3);
   t.is(projects[0].workflows[0].steps[1].name, 'Job X');
   t.is(projects[0].workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
-  t.is(projects[0].workflows[0].steps[2].name, 'Job Y'); 
+  t.is(projects[0].workflows[0].steps[2].name, 'Job Y');
   t.is(projects[0].workflows[0].steps[2].openfn?.uuid, 'job-y'); // id not retained - new nod
 
   const { message, level } = logger._parse(logger._last);

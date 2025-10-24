@@ -26,7 +26,7 @@ export default function (project: Project, options: Options = {}) {
 
   const shouldReturnYaml =
     options.format === 'yaml' ||
-    (!options.format && project.repo.formats.project === 'yaml');
+    (!options.format && project.config.formats.project === 'yaml');
 
   if (shouldReturnYaml) {
     return jsonToYaml(state);

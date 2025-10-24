@@ -15,7 +15,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
 
   // get the config
   // TODO: try to retain the endpoint for the projects
-  const { project: _, ...config } = workspace.getConfig() ?? {};
+  const { project: _, ...config } = workspace.getConfig() as any;
 
   // get the project
   let switchProject;
