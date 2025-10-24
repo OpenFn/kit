@@ -177,7 +177,6 @@ class Workflow {
 
   // return true if the current workflow can be merged into the target workflow without losing any changes
   canMergeInto(target: Workflow) {
-<<<<<<< HEAD
     const thisHistory = this.workflow.history?.concat(this.getVersionHash());
     const targetHistory = target.workflow.history?.concat(
       target.getVersionHash()
@@ -185,12 +184,6 @@ class Workflow {
 
     const targetHead = targetHistory[targetHistory.length - 1];
     if (thisHistory.indexOf(targetHead) > -1) return true;
-=======
-    if (!target.workflow.history.length) return true;
-    const targetHead =
-      target.workflow.history[target.workflow.history.length - 1];
-    if (this.workflow.history.indexOf(targetHead) > -1) return true;
->>>>>>> 664dfbea (feat: add history to workflow property)
     return false;
   }
 }
