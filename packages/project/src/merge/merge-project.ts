@@ -31,6 +31,7 @@ export function merge(
   const defaultOptions: MergeProjectOptions = {
     workflowMappings: {},
     removeUnmapped: false,
+    force: true,
   };
   options = defaultsDeep<MergeProjectOptions>(options, defaultOptions);
 
