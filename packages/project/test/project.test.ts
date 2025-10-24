@@ -2,7 +2,7 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../src/Project';
-import generateWorkflow from '../src/gen/generator';
+import generateWorkflow, { generateProject } from '../src/gen/generator';
 
 // TODO move to fixtures and re-use?
 // Or use util function instead?
@@ -153,4 +153,35 @@ test('should return UUIDs for everything', (t) => {
       },
     },
   });
+});
+
+test('incompatible-merge: should throw error when merge is incompatible', (t) => {
+  const source = generateWorkflow('trigger-x');
+  source.pushHistory(source.getVersionHash());
+  const target = generateWorkflow('trigger-y');
+  target.pushHistory(target.getVersionHash());
+
+  t.false(source.canMergeInto(target));
+
+  const sourceProject = new Project({ workflows: [source] });
+  const targetProject = new Project({ workflows: [target] });
+  t.throws(() => Project.merge(sourceProject, targetProject), {
+    message: `The below workflows can't be merged directly without losing data\nWorkflow → Workflow\nPass --force to force the merge anyway`,
+  });
+});
+
+test('incompatible-merge-force: should ignore incompatiblity and merge when forced', (t) => {
+  // same as the above test with force
+  const source = generateWorkflow('trigger-x');
+  source.pushHistory(source.getVersionHash());
+  const target = generateWorkflow('trigger-y');
+  target.pushHistory(target.getVersionHash());
+
+  t.false(source.canMergeInto(target));
+
+  const sourceProject = new Project({ workflows: [source] });
+  const targetProject = new Project({ workflows: [target] });
+  t.notThrows(() =>
+    Project.merge(sourceProject, targetProject, { force: true })
+  );
 });
