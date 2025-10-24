@@ -51,6 +51,11 @@ const simpleWorkflow = {
   },
 };
 
+// should workflow.toJSON actually do this?
+function realJson(v: any) {
+  return JSON.parse(JSON.stringify(v));
+}
+
 test('create a Workflow from json', (t) => {
   const w = new Workflow(simpleWorkflow);
 
@@ -208,75 +213,97 @@ test('map uuids to ids', (t) => {
   t.deepEqual(w.index.id[uuid_bc], 'b-c');
 });
 
-test('canMergeInto: can merge empty histories', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
+test.only('canMergeInto: should merge same content source & target', (t) => {
+  const main = generateWorkflow('trigger-x');
+  const sbox = generateWorkflow('trigger-x');
 
-  t.deepEqual(sourceWf.workflow.history, []);
-  t.deepEqual(targetWf.workflow.history, []);
-
-  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+  t.true(sbox.canMergeInto(main)); // allowed
 });
 
-test('canMergeInto: can merge empty target history', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
-  sourceWf.workflow.history = ['history-1'];
+test.only("canMergeInto: shouldn't merge different content source & target", (t) => {
+  const main = generateWorkflow('trigger-x');
+  const sbox = generateWorkflow('trigger-y');
 
-  t.is(sourceWf.workflow.history.length, 1);
-  t.deepEqual(targetWf.workflow.history, []);
-
-  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+  t.false(sbox.canMergeInto(main)); // allowed
 });
 
-test('canMergeInto: cannot merge empty source history', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
-  targetWf.workflow.history = ['history-1'];
+test.only('canMergeInto: source is target + changes', (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
 
-  t.is(targetWf.workflow.history.length, 1);
-  t.deepEqual(sourceWf.workflow.history, []);
-
-  t.false(sourceWf.canMergeInto(targetWf)); // not allowed
+  // clone main for sbox
+  const sbox = new Workflow(realJson(main.toJSON()));
+  // do code changes to sbox
+  sbox.workflow.steps = generateWorkflow('trigger-x x-y y-z').steps;
+  t.true(sbox.canMergeInto(main));
 });
 
-test('canMergeInto: can merge target head in source', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
-  targetWf.workflow.history = ['history-1', 'history-3', 'history-5'];
-  sourceWf.workflow.history = ['history-2', 'history-5', 'history-6'];
+test.only("canMergeInto: source isn't from target", (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
 
-  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+  // clone main for sbox
+  const sbox = generateWorkflow('trigger-y');
+  sbox.pushHistory(sbox.getVersionHash());
+  t.false(sbox.canMergeInto(main));
 });
 
-test('canMergeInto: cannot merge target head not in source', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
-  targetWf.workflow.history = ['history-1', 'history-3', 'history-5'];
-  sourceWf.workflow.history = ['history-2', 'history-4', 'history-6'];
+test.only("canMergeInto: source isn't from target but ended with same code", (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
 
-  t.false(sourceWf.canMergeInto(targetWf)); // not allowed
+  const sbox = generateWorkflow('trigger-x x-y');
+  t.true(sbox.canMergeInto(main));
 });
 
-test('canMergeInto: cannot merge source head in target', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
-  targetWf.workflow.history = [
-    'history-1',
-    'history-3',
-    'history-6',
-    'history-5',
-  ];
-  sourceWf.workflow.history = ['history-2', 'history-4', 'history-6'];
+test.only('canMergeInto: source is from target but target has changes', (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
 
-  t.false(sourceWf.canMergeInto(targetWf)); // not allowed
+  // clone main for sbox
+  const sbox = new Workflow(realJson(main.toJSON()));
+
+  // changes to main after cloning
+  main.workflow.steps = generateWorkflow('trigger-x x-y x-z').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // merging sbox to main
+  t.false(sbox.canMergeInto(main));
 });
 
-test('canMergeInto: can merge same heads', (t) => {
-  const sourceWf = generateWorkflow('trigger-x');
-  const targetWf = generateWorkflow('trigger-y');
-  targetWf.workflow.history = ['history-1', 'history-3', 'history-6'];
-  sourceWf.workflow.history = ['history-2', 'history-4', 'history-6'];
-  
-  t.true(sourceWf.canMergeInto(targetWf)); // allowed
+test.only('canMergeInto: source is from target but target & source have changes', (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // clone main for sbox
+  const sbox = new Workflow(realJson(main.toJSON()));
+  // changes to sbox
+  sbox.workflow.steps = generateWorkflow('trigger-x x-y y-g').steps;
+
+  // changes to main after cloning
+  main.workflow.steps = generateWorkflow('trigger-x x-y x-z').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // merging sbox to main
+  t.false(sbox.canMergeInto(main));
 });
