@@ -9,7 +9,7 @@ export default function (project: Project) {
     // Do we just serialize all public fields?
     name: project.name,
     description: project.description,
-    repo: project.repo,
+    config: project.config,
     meta: project.meta,
     workflows: project.workflows,
     collections: project.collections,

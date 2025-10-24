@@ -4,6 +4,7 @@
 export const ab = {
   id: 'workflow',
   name: 'Workflow',
+  history: [],
   steps: [
     {
       id: 'a',

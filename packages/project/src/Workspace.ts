@@ -1,32 +1,44 @@
-// when given a file path from cli it'll create a workspace object
-import { OpenfnConfig, Project } from './Project';
+import path from 'node:path';
+import fs from 'node:fs';
+
+import { Project } from './Project';
+import type { WorkspaceConfig } from './util/config';
+import fromAppState from './parse/from-app-state';
 import pathExists from './util/path-exists';
 import { yamlToJson } from './util/yaml';
-import path from 'path';
-import fs from 'fs';
-import fromAppState from './parse/from-app-state';
+import {
+  buildConfig,
+  loadWorkspaceFile,
+  findWorkspaceFile,
+} from './util/config';
 
-const PROJECTS_DIRECTORY = '.projects';
-const OPENFN_YAML_FILE = 'openfn.yaml';
 const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
-  private config?: OpenfnConfig;
+  config?: WorkspaceConfig;
+  projectMeta: ProjectMeta;
+
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
+
   constructor(workspacePath: string) {
-    const openfnYamlPath = path.join(workspacePath, OPENFN_YAML_FILE);
-    // dealing with openfn.yaml
-    if (pathExists(openfnYamlPath, 'file')) {
+    let context;
+    try {
+      const { type, content } = findWorkspaceFile(workspacePath);
+      console.log(content);
+      context = loadWorkspaceFile(content, type);
       this.isValid = true;
-      const data = fs.readFileSync(openfnYamlPath, 'utf-8');
-      this.config = yamlToJson(data);
+    } catch (e) {
+      console.log(e);
+      // invalid workspace
+      return;
     }
-    const projectsPath = path.join(
-      workspacePath,
-      this.config?.dirs?.projects ?? PROJECTS_DIRECTORY
-    );
+
+    this.config = buildConfig(context.workspace);
+    this.projectMeta = context.project;
+
+    const projectsPath = path.join(workspacePath, this.config.dirs.projects);
 
     // dealing with projects
     if (this.isValid && pathExists(projectsPath, 'directory')) {
@@ -50,10 +62,18 @@ export class Workspace {
     }
   }
 
+  // TODO
+  // This will load a project within this workspace
+  // uses Project.from
+  // Rather than doing new Workspace + Project.from(),
+  // you can do it in a single call
+  loadProject() {}
+
   list() {
     return this.projects;
   }
 
+  // TODO clear up name/id confusion
   get(id: string) {
     return this.projects.find((p) => p.name === id);
   }
@@ -63,15 +83,19 @@ export class Workspace {
   }
 
   getActiveProject() {
-    return this.projects.find((p) => p.name === this.config?.name);
+    // TODO should use id, not name
+    return this.projects.find((p) => p.name === this.projectMeta?.name);
   }
 
-  getConfig(): Partial<OpenfnConfig> {
+  // TODO this needs to return default values
+  // We should always rely on the workspace to load these values
+  getConfig(): Partial<WorkspaceConfig> {
     return this.config;
   }
 
   get activeProjectId() {
-    return this.config?.name;
+    // TODO should return activeProject.id
+    return this.projectMeta?.name;
   }
 
   get valid() {

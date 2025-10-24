@@ -120,6 +120,7 @@ test('it should generate a simple workflow with any letter', (t) => {
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'x',
@@ -152,6 +153,7 @@ test('it should generate a simple workflow with words, numbers and underscores',
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'node_1',
@@ -184,6 +186,7 @@ test('it should generate two node pairs', (t) => {
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'a',
@@ -231,6 +234,7 @@ test('it should generate two node pairs from one parent', (t) => {
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'a',
@@ -276,6 +280,7 @@ test('it should generate several node pairs', (t) => {
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'a',
@@ -439,6 +444,7 @@ test('it should generate a simple workflow with mapped uuids', (t) => {
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'a',
@@ -481,6 +487,7 @@ test('it should generate a project with uuids', (t) => {
   const expected = {
     id: 'workflow',
     name: 'Workflow',
+    history: [],
     steps: [
       {
         id: 'a',

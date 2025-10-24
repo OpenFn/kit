@@ -3,7 +3,7 @@ import { confirm } from '@inquirer/prompts';
 import path from 'path';
 import fs from 'node:fs/promises';
 import { DeployConfig, getProject } from '@openfn/deploy';
-import Project from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import type { Logger } from '../util/logger';
 import { rimraf } from 'rimraf';
 import { Opts } from '../options';
@@ -37,38 +37,43 @@ export type PullOptionsBeta = Required<
 export async function handler(options: PullOptionsBeta, logger: Logger) {
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
 
-  const config: Partial<Config> = {
+  const cfg: Partial<Config> = {
     apiKey: options.apiKey,
     endpoint: options.endpoint,
   };
 
   if (!options.apiKey && OPENFN_API_KEY) {
     logger.info('Using OPENFN_API_KEY environment variable');
-    config.apiKey = OPENFN_API_KEY;
+    cfg.apiKey = OPENFN_API_KEY;
   }
 
   if (!options.endpoint && OPENFN_ENDPOINT) {
     logger.info('Using OPENFN_ENDPOINT environment variable');
-    config.endpoint = OPENFN_ENDPOINT;
+    cfg.endpoint = OPENFN_ENDPOINT;
   }
-
-  // download the state.json from lightning
-  const { data } = await getProject(config as DeployConfig, options.projectId);
-
-  // TODO if the user doesn't specify an env name, prompt for one
-  const name = options.env || 'project';
-
-  const project = Project.from('state', data, {
-    endpoint: config.endpoint,
-    env: name,
-    fetched_at: new Date().toISOString(),
-  });
 
   // TODO `path` or `output` ?
   // I don't think I want to model this as output. deploy is really
   // designed to run from the working folder
   // could be projectPath or repoPath too
   const outputRoot = path.resolve(options.path || '.');
+
+  // TODO is outputRoot the right dir for this?
+  const workspace = new Workspace(outputRoot);
+  const config = workspace.getConfig();
+
+  // download the state.json from lightning
+  const { data } = await getProject(cfg as DeployConfig, options.projectId);
+
+  // TODO if the user doesn't specify an env name, prompt for one
+  const name = options.env || 'project';
+
+  const project = Project.from('state', data, {
+    config,
+    endpoint: cfg.endpoint,
+    env: name,
+    fetched_at: new Date().toISOString(),
+  });
 
   const projectFileName = project.getIdentifier();
 
@@ -77,7 +82,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
 
   const workflowsRoot = path.resolve(
     outputRoot,
-    project.repo?.workflowRoot ?? 'workflows'
+    project.config.dirs.workflows ?? 'workflows'
   );
   // Prompt before deleting
   // TODO this is actually the wrong path
@@ -96,7 +101,8 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   await rimraf(workflowsRoot);
 
   const state = project?.serialize('state');
-  if (project.repo?.formats.project === 'yaml') {
+
+  if (project.config.formats.project === 'yaml') {
     await fs.writeFile(`${stateOutputPath}.yaml`, state);
   } else {
     await fs.writeFile(

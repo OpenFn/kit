@@ -6,6 +6,13 @@ import * as l from '@openfn/lexicon';
 import { Project } from '../Project';
 import getIdentifier from '../util/get-identifier';
 import { yamlToJson } from '../util/yaml';
+import {
+  buildConfig,
+  WorkspaceConfig,
+  WorkspaceFile,
+  loadWorkspaceFile,
+  findWorkspaceFile,
+} from '../util/config';
 import slugify from '../util/slugify';
 import fromAppState from './from-app-state';
 
@@ -14,42 +21,20 @@ export type FromFsConfig = {
 };
 
 // Parse a single project from a root folder
-// focus on this first
-// root must be absolute?
 export const parseProject = async (options: FromFsConfig = {}) => {
   const { root } = options;
-  const proj = {};
 
-  let config; // TODO need a type for the shape of this file
-  try {
-    // TODO any flex on the openfn.json file name?
-    const file = await fs.readFile(
-      path.resolve(path.join(root, 'openfn.yaml')),
-      'utf8'
-    );
-    config = yamlToJson(file);
-  } catch (e) {
-    // Not found - try and parse as JSON
-    try {
-      const file = await fs.readFile(
-        path.join(root || '.', 'openfn.json'),
-        'utf8'
-      );
-      config = JSON.parse(file);
-    } catch (e) {
-      console.log(e);
-      // TODO better error handling
-      throw e;
-    }
-  }
+  const { type, content } = findWorkspaceFile(root);
+  const context = loadWorkspaceFile(content, type);
+  const config = buildConfig(context.workspace);
 
   // Now we need to look for the corresponding state file
   // Need to load UUIDs and other app settings from this
   // If we load it as a Project, uuid tracking is way easier
   let state: Project;
   const identifier = getIdentifier({
-    endpoint: config.project?.endpoint,
-    env: config.project?.env,
+    endpoint: context.project?.endpoint,
+    env: context.project?.env,
   });
   try {
     const format =
@@ -66,11 +51,12 @@ export const parseProject = async (options: FromFsConfig = {}) => {
     console.warn(`Failed to find state file for ${identifier}`);
     // console.warn(e);
   }
-  // find the openfn settings
 
-  const { project: openfn, ...repo } = config;
-  proj.openfn = openfn;
-  proj.config = repo;
+  const proj = {
+    openfn: context.project,
+    config: config,
+    workflows: [],
+  };
 
   // now find all the workflows
   // this will find all json files in the workflows folder
@@ -129,7 +115,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
           }
         }
 
-        workflows.push(wf);
+        proj.workflows.push(wf);
       }
     } catch (e) {
       console.log(e);
@@ -138,26 +124,8 @@ export const parseProject = async (options: FromFsConfig = {}) => {
       continue;
     }
   }
-  // now for each workflow, read in the expression files
 
-  proj.workflows = workflows;
-
-  // TODO do the workflow folder and the workflows file need to be same name?
-
-  // proj.openfn = {
-  //   projectId: id,
-  //   endpoint: config.endpoint,
-  //   inserted_at,
-  //   updated_at,
-  // };
-
-  // // TODO maybe this for local metadata, stuff that isn't synced?
-  // proj.meta = {
-  //   fetched_at: config.fetchedAt,
-  // };
-
-  // proj.workflows = state.workflows.map(mapWorkflow);
-  return new Project(proj as l.Project, repo);
+  return new Project(proj as l.Project, context.workspace);
 };
 
 // Parse the filesystem for all projects

@@ -1,5 +1,13 @@
 # @openfn/project
 
+## 0.6.1
+
+### Patch Changes
+
+- f955548: On merge, warn when projects may have diverged
+- edfc759: Refactor project.repo to project.config
+- 329d29d: Include `source_trigger_id` in generated workflows (for lightning compatibility)
+
 ## 0.6.0
 
 ### Minor Changes

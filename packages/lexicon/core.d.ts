@@ -83,6 +83,9 @@ export type Workflow = {
   globals?: string;
 
   openfn?: OpenFnMetadata;
+
+  // holds history information of a workflow
+  history?: string[]
 };
 
 export type StepId = string;

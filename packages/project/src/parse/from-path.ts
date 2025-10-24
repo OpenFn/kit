@@ -3,11 +3,10 @@ import { readFile } from 'node:fs/promises';
 
 import fromAppState from './from-app-state';
 import { yamlToJson } from '../util/yaml';
-import { OpenfnConfig } from '../Project';
+import { WorkspaceConfig } from '../util/config';
 
-type FromPathConfig = {
-  // repo config options
-  repo: OpenfnConfig;
+export type FromPathConfig = {
+  config: WorkspaceConfig;
 };
 
 // Load a project from a file path
@@ -21,7 +20,7 @@ export default async (path: string, options: FromPathConfig = {}) => {
 
   const config = {
     format: null,
-    repo: options.repo ?? options.config, // TMP
+    config: options.config,
   };
   let state;
   if (ext === '.json') {

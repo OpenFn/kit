@@ -46,10 +46,10 @@ test.serial('should use workspace config', async (t) => {
     x: 1234,
   };
   const project = await fromPath('/p1/main@openfn.org.yaml', {
-    repo: config,
+    config,
   });
 
   t.is(project.name, proj.name);
   t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
-  t.is(project.repo.x, config.x);
+  t.is(project.config.x, config.x);
 });

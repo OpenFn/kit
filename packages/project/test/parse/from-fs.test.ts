@@ -117,8 +117,11 @@ mock({
 
   // p3 uses custom yaml
   '/p3/openfn.yaml': `
-x: 1
-y: 2`,
+workspace:
+  x: 1
+  y: 2
+project:
+`,
   '/p3/wfs/my-workflow/my-workflow.yaml': `
   id: my-workflow
   name: My Workflow
@@ -130,34 +133,35 @@ y: 2`,
   '/p3/wfs/my-workflow/job.js': `fn(s => s)`,
 });
 
-test('should load the openfn repo config from json', async (t) => {
+test('should load workspace config from json', async (t) => {
   const project = await parseProject({ root: '/p1' });
 
-  t.deepEqual(project.repo, {
+  t.deepEqual(project.config, {
     workflowRoot: 'workflows',
+    dirs: { projects: '.projects', workflows: 'workflows' },
     formats: { openfn: 'json', project: 'json', workflow: 'json' },
   });
 });
 
-test('should load custom repro props and include default', async (t) => {
+test('should load custom config props and include default', async (t) => {
   const project = await parseProject({ root: '/p3' });
 
-  t.deepEqual(project.repo, {
+  t.deepEqual(project.config, {
     x: 1,
     y: 2,
-    workflowRoot: 'workflows',
+    dirs: { projects: '.projects', workflows: 'workflows' },
     formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },
   });
 });
 
-test('should load the openfn project config from json', async (t) => {
+test('should load the workspace config from json', async (t) => {
   const project = await parseProject({ root: '/p1' });
 
   t.deepEqual(project.openfn, {
+    name: 'My Project',
     id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
     env: 'staging',
     endpoint: 'https://app.openfn.org',
-    name: 'My Project',
     description: '...',
   });
 });
