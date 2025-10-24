@@ -30,6 +30,9 @@ class Workflow {
 
     this.workflow = clone(workflow);
 
+    // history needs to be on workflow object.
+    this.workflow.history = workflow.history?.length ? workflow.history : [];
+
     const { id, name, openfn, steps, ...options } = workflow;
     if (!(id || name)) {
       throw new Error('A Workflow MUST have a name or id');
@@ -166,6 +169,22 @@ class Workflow {
 
   getVersionHash() {
     return generateHash(this);
+  }
+
+  pushHistory(versionHash: string) {
+    this.workflow.history?.push(versionHash);
+  }
+
+  // return true if the current workflow can be merged into the target workflow without losing any changes
+  canMergeInto(target: Workflow) {
+    const thisHistory = this.workflow.history?.concat(this.getVersionHash());
+    const targetHistory = target.workflow.history?.concat(
+      target.getVersionHash()
+    );
+
+    const targetHead = targetHistory[targetHistory.length - 1];
+    if (thisHistory.indexOf(targetHead) > -1) return true;
+    return false;
   }
 }
 
