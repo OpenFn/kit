@@ -1,45 +1,23 @@
-import * as l from '@openfn/lexicon';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
-import fromAppState from './parse/from-app-state';
-import fromPath from './parse/from-path';
+import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
+import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
+import { Workspace } from './Workspace';
+import { buildConfig, WorkspaceConfig } from './util/config';
 
 type MergeOptions = {
   force?: boolean;
   workflows?: string[]; // which workflows to include
 };
 
-type FileFormats = 'yaml' | 'json';
-
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
-
-export interface OpenfnConfig {
-  name: string;
-  workflowRoot: string;
-  dirs: {
-    workflows: string;
-    projects: string;
-  };
-  formats: {
-    openfn: FileFormats;
-    project: FileFormats;
-    workflow: FileFormats;
-  };
-  project: {
-    projectId: string;
-    endpoint: string;
-    env: string;
-    inserted_at: string;
-    updated_at: string;
-  };
-}
 
 // TODO --------------
 // I think this needs renaming to config
@@ -68,16 +46,7 @@ type RepoOptions = {
 
 // TODO maybe use an npm for this, or create  util
 
-const setConfigDefaults = (config: OpenfnConfig = {}) => ({
-  ...config,
-  workflowRoot: config.workflowRoot ?? 'workflows',
-  formats: {
-    // TODO change these maybe
-    openfn: config.formats?.openfn ?? 'yaml',
-    project: config.formats?.project ?? 'yaml',
-    workflow: config.formats?.workflow ?? 'yaml',
-  },
-});
+// TODO this need to be controlled by the workspace
 
 // A single openfn project
 // could be an app project or a checked out fs
@@ -106,10 +75,9 @@ export class Project {
   // this contains meta about the connected openfn project
   openfn?: l.ProjectConfig;
 
-  // workspace-wide configuration options
-  // these should be shared across projects
-  // and saved to an openfn.yaml file
-  repo?: Required<RepoOptions>;
+  workspace?: Workspace;
+
+  config: WorkspaceConfig;
 
   // load a project from a state file (project.json)
   // or from a path (the file system)
@@ -128,12 +96,12 @@ export class Project {
   static from(
     type: 'path',
     data: string,
-    options?: { config?: Partial<OpenfnConfig> }
+    options?: { config?: FromPathConfig }
   ): Project;
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options: Partial<l.ProjectConfig> = {}
+    options: FromAppStateConfig = {}
   ): Project {
     if (type === 'state') {
       return fromAppState(data, options);
@@ -159,8 +127,11 @@ export class Project {
   // uh maybe
   // maybe this second arg is config - like env, branch rules, serialisation rules
   // stuff that's external to the actual project and managed by the repo
+
+  // TODO maybe the constructor is (data, Workspace)
   constructor(data: l.Project, repoConfig: RepoOptions = {}) {
-    this.repo = setConfigDefaults(repoConfig);
+    this.setConfig(repoConfig);
+
     this.name = data.name;
     this.description = data.description;
     this.openfn = data.openfn;
@@ -169,6 +140,10 @@ export class Project {
     this.collections = data.collections;
     this.credentials = data.credentials;
     this.meta = data.meta;
+  }
+
+  setConfig(config: Partial<WorkspaceConfig>) {
+    this.config = buildConfig(config);
   }
 
   serialize(type: 'json' | 'yaml' | 'fs' | 'state' = 'json', options?: any) {
