@@ -213,21 +213,21 @@ test('map uuids to ids', (t) => {
   t.deepEqual(w.index.id[uuid_bc], 'b-c');
 });
 
-test.only('canMergeInto: should merge same content source & target', (t) => {
+test('canMergeInto: should merge same content source & target', (t) => {
   const main = generateWorkflow('trigger-x');
   const sbox = generateWorkflow('trigger-x');
 
-  t.true(sbox.canMergeInto(main)); // allowed
+  t.true(sbox.canMergeInto(main));
 });
 
-test.only("canMergeInto: shouldn't merge different content source & target", (t) => {
+test("canMergeInto: shouldn't merge different content source & target", (t) => {
   const main = generateWorkflow('trigger-x');
   const sbox = generateWorkflow('trigger-y');
 
-  t.false(sbox.canMergeInto(main)); // allowed
+  t.false(sbox.canMergeInto(main));
 });
 
-test.only('canMergeInto: source is target + changes', (t) => {
+test('canMergeInto: source is target + changes', (t) => {
   // initial main code
   const main = generateWorkflow('trigger-x');
   main.pushHistory(main.getVersionHash());
@@ -242,7 +242,7 @@ test.only('canMergeInto: source is target + changes', (t) => {
   t.true(sbox.canMergeInto(main));
 });
 
-test.only("canMergeInto: source isn't from target", (t) => {
+test("canMergeInto: source isn't from target", (t) => {
   // initial main code
   const main = generateWorkflow('trigger-x');
   main.pushHistory(main.getVersionHash());
@@ -256,7 +256,7 @@ test.only("canMergeInto: source isn't from target", (t) => {
   t.false(sbox.canMergeInto(main));
 });
 
-test.only("canMergeInto: source isn't from target but ended with same code", (t) => {
+test("canMergeInto: source isn't from target but ended with same code", (t) => {
   // initial main code
   const main = generateWorkflow('trigger-x');
   main.pushHistory(main.getVersionHash());
@@ -268,7 +268,7 @@ test.only("canMergeInto: source isn't from target but ended with same code", (t)
   t.true(sbox.canMergeInto(main));
 });
 
-test.only('canMergeInto: source is from target but target has changes', (t) => {
+test('canMergeInto: source is from target but target has changes', (t) => {
   // initial main code
   const main = generateWorkflow('trigger-x');
   main.pushHistory(main.getVersionHash());
@@ -287,7 +287,7 @@ test.only('canMergeInto: source is from target but target has changes', (t) => {
   t.false(sbox.canMergeInto(main));
 });
 
-test.only('canMergeInto: source is from target but target & source have changes', (t) => {
+test('canMergeInto: source is from target but target & source have changes', (t) => {
   // initial main code
   const main = generateWorkflow('trigger-x');
   main.pushHistory(main.getVersionHash());
