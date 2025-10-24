@@ -56,23 +56,23 @@ export function merge(
   });
 
   // mergeability
-  const mergeMapping: Record<string, string> = {};
+  const potentialConflicts: Record<string, string> = {};
   for (const sourceWorkflow of sourceWorkflows) {
     const targetId =
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
     if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
-      mergeMapping[sourceWorkflow.name] = targetWorkflow?.name;
+      potentialConflicts[sourceWorkflow.name] = targetWorkflow?.name;
     }
   }
 
-  if (Object.keys(mergeMapping).length && !options?.force) {
+  if (Object.keys(potentialConflicts).length && !options?.force) {
     throw new Error(
-      `The below workflows can't be merged directly without losing data.\n${Object.entries(
-        mergeMapping
+      `The below workflows can't be merged directly without losing data\n${Object.entries(
+        potentialConflicts
       )
         .map(([from, to]) => `${from} → ${to}`)
-        .join('\n')}`
+        .join('\n')}\nPass --force to force the merge anyway`
     );
   }
 
