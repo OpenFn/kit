@@ -1,5 +1,17 @@
 # @openfn/cli
 
+## 1.18.0
+
+### Minor Changes
+
+- 16da2ef: Warn when merging two projects might result in lost work
+
+### Patch Changes
+
+- Updated dependencies [16da2ef]
+- Updated dependencies [16da2ef]
+  - @openfn/project@0.7.0
+
 ## 1.17.2
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.7.0
+
+### Minor Changes
+
+- 16da2ef: Warn when merging two projects might result in lost work
+
+### Patch Changes
+
+- 16da2ef: Internal refactoring for clarity and cleaner APIs
+
 ## 0.6.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.7.1
+
+### Patch Changes
+
+- b61bf9b: Fix an issue where memory may not be released after runs
+
 ## 1.7.0
 
 ### Minor Changes
