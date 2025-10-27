@@ -1,4 +1,3 @@
-import { Workflow } from '@openfn/lexicon';
 import { defaultsDeep, isEmpty } from 'lodash-es';
 
 import { Project } from '../Project';
@@ -6,12 +5,12 @@ import { mergeWorkflows } from './merge-node';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
+import Workflow from '../Workflow';
 
 export type MergeProjectOptions = Partial<{
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
-
-  force: boolean; // TODO not implemented yet
+  force: boolean;
 }>;
 
 /**
@@ -32,6 +31,7 @@ export function merge(
   const defaultOptions: MergeProjectOptions = {
     workflowMappings: {},
     removeUnmapped: false,
+    force: true,
   };
   options = defaultsDeep<MergeProjectOptions>(options, defaultOptions);
 
@@ -55,6 +55,27 @@ export function merge(
     if (noMappings) return true;
     return !!options?.workflowMappings[w.id];
   });
+
+  // mergeability
+  const potentialConflicts: Record<string, string> = {};
+  for (const sourceWorkflow of sourceWorkflows) {
+    const targetId =
+      options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
+    const targetWorkflow = target.getWorkflow(targetId);
+    if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
+      potentialConflicts[sourceWorkflow.name] = targetWorkflow?.name;
+    }
+  }
+
+  if (Object.keys(potentialConflicts).length && !options?.force) {
+    throw new Error(
+      `The below workflows can't be merged directly without losing data\n${Object.entries(
+        potentialConflicts
+      )
+        .map(([from, to]) => `${from} → ${to}`)
+        .join('\n')}\nPass --force to force the merge anyway`
+    );
+  }
 
   for (const sourceWorkflow of sourceWorkflows) {
     const targetId =

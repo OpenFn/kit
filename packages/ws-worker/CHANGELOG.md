@@ -1,5 +1,13 @@
 # ws-worker
 
+## 1.18.1
+
+### Patch Changes
+
+- b61bf9b: Fix an issue where memory may not be released after runs
+- Updated dependencies [b61bf9b]
+  - @openfn/engine-multi@1.7.1
+
 ## 1.18.0
 
 ### Minor Changes

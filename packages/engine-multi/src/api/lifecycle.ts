@@ -52,22 +52,8 @@ export const workflowComplete = (
   const { workflowId, state: result, threadId } = event;
 
   logger.success('complete workflow ', workflowId);
-  //logger.info(event.state);
-
-  // TODO I don't know how we'd get here in this architecture
-  // if (!allWorkflows.has(workflowId)) {
-  //   throw new Error(`Workflow with id ${workflowId} is not defined`);
-  // }
-
   state.status = 'done';
   state.duration = Date.now() - state.startTime!;
-
-  // Important! We do NOT write the result back to this state object
-  // It has a tendency to not get garbage collected and causing memory problems
-
-  // TODO do we have to remove this from the active workflows array?
-  // const idx = activeWorkflows.findIndex((id) => id === workflowId);
-  // activeWorkflows.splice(idx, 1);
 
   // forward the event on to any external listeners
   context.emit(externalEvents.WORKFLOW_COMPLETE, {

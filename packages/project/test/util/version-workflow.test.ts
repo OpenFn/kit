@@ -38,10 +38,10 @@ test('unique hash but different steps order', (t) => {
 
   // different order of nodes (b & c changed position) but should generate the same hash
   // validate second step is actually different
-  t.is(workflow1.steps[1].name, 'b')
-  t.is(workflow2.steps[1].name, 'c')
+  t.is(workflow1.steps[1].name, 'b');
+  t.is(workflow2.steps[1].name, 'c');
   // assert that hashes are the same
-  t.is(generateHash(workflow1), generateHash(workflow2))
+  t.is(generateHash(workflow1), generateHash(workflow2));
 });
 
 /**
@@ -63,7 +63,7 @@ test('hash changes when workflow name changes', (t) => {
     b-c
     `
   );
-  const wf2= generateWorkflow(
+  const wf2 = generateWorkflow(
     `
     @name wf-2
     @id workflow-id 
@@ -98,7 +98,7 @@ test.skip('hash changes when credentials field changes', (t) => {
 });
 
 test("hash changes when a step's adaptor changes", (t) => {
-    const wf1 = generateWorkflow(
+  const wf1 = generateWorkflow(
     `
     @name wf-1 
     @id workflow-id 

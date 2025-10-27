@@ -121,8 +121,13 @@ export function execute(
         const lightningEvent = eventMap[eventName] ?? eventName;
         try {
           // updateSentryEvent(eventName);
+          let start = Date.now();
           await handler(context, event);
-          logger.info(`${plan.id} :: ${lightningEvent} :: OK`);
+          logger.info(
+            `${plan.id} :: sent ${lightningEvent} :: OK :: ${
+              Date.now() - start
+            }ms`
+          );
         } catch (e: any) {
           if (!e.reportedToSentry) {
             Sentry.captureException(e);

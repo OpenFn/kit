@@ -23,7 +23,6 @@ import type {
   EventHandler,
   ExecuteOptions,
   RuntimeEngine,
-  WorkflowState,
 } from './types';
 import type { AutoinstallOptions } from './api/autoinstall';
 
@@ -100,7 +99,6 @@ const createEngine = async (
   options: EngineOptions,
   workerPath?: string
 ): Promise<InternalEngine> => {
-  const states: Record<string, WorkflowState> = {};
   const contexts: Record<string, ExecutionContext> = {};
   const deferredListeners: Record<string, Record<string, EventHandler>[]> = {};
 
@@ -144,17 +142,6 @@ const createEngine = async (
     retries: options.workerValidationRetries,
   });
 
-  const registerWorkflow = (plan: ExecutionPlan, input: State) => {
-    // TODO throw if already registered?
-    const state = createState(plan, input);
-    states[state.id] = state;
-    return state;
-  };
-
-  const getWorkflowState = (workflowId: string) => states[workflowId];
-
-  const getWorkflowStatus = (workflowId: string) => states[workflowId]?.status;
-
   // TODO too much logic in this execute function, needs farming out
   // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
@@ -165,13 +152,9 @@ const createEngine = async (
   ) => {
     options.logger!.debug('executing plan ', plan?.id ?? '<no id>');
     const workflowId = plan.id!;
-    // TODO throw if plan is invalid
-    // Wait, don't throw because the server will die
-    // Maybe return null instead
-    const state = registerWorkflow(plan, input);
 
     const context = new ExecutionContext({
-      state,
+      state: createState(plan, input),
       logger: options.logger!,
       callWorker,
       options: {
@@ -244,9 +227,6 @@ const createEngine = async (
     options,
     workerPath: resolvedWorkerPath,
     logger: options.logger,
-    registerWorkflow,
-    getWorkflowState,
-    getWorkflowStatus,
     execute: executeWrapper,
     listen,
     destroy,

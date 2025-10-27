@@ -1,5 +1,29 @@
 # @openfn/cli
 
+## 1.18.0
+
+### Minor Changes
+
+- 16da2ef: Warn when merging two projects might result in lost work
+
+### Patch Changes
+
+- Updated dependencies [16da2ef]
+- Updated dependencies [16da2ef]
+  - @openfn/project@0.7.0
+
+## 1.17.2
+
+### Patch Changes
+
+- edfc759: Update Project dependency
+- 6a68759: Respect openfn.yaml options in pull --beta
+- f4209dd: Warn when merging projects which may have diverged
+- Updated dependencies [f955548]
+- Updated dependencies [edfc759]
+- Updated dependencies [329d29d]
+  - @openfn/project@0.6.1
+
 ## 1.17.1
 
 ### Patch Changes

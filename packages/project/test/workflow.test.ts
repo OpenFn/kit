@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import test from 'ava';
 import Workflow from '../src/Workflow';
+import { generateWorkflow } from '../src';
 
 const simpleWorkflow = {
   id: 'my-workflow',
+  history: [],
   name: 'My Workflow',
   steps: [
     {
@@ -48,6 +50,11 @@ const simpleWorkflow = {
     uuid: randomUUID(),
   },
 };
+
+// should workflow.toJSON actually do this?
+function realJson(v: any) {
+  return JSON.parse(JSON.stringify(v));
+}
 
 test('create a Workflow from json', (t) => {
   const w = new Workflow(simpleWorkflow);
@@ -204,4 +211,99 @@ test('map uuids to ids', (t) => {
   t.deepEqual(w.index.id[uuid_c], 'c');
   t.deepEqual(w.index.id[uuid_ac], 'a-c');
   t.deepEqual(w.index.id[uuid_bc], 'b-c');
+});
+
+test('canMergeInto: should merge same content source & target', (t) => {
+  const main = generateWorkflow('trigger-x');
+  const sbox = generateWorkflow('trigger-x');
+
+  t.true(sbox.canMergeInto(main));
+});
+
+test("canMergeInto: shouldn't merge different content source & target", (t) => {
+  const main = generateWorkflow('trigger-x');
+  const sbox = generateWorkflow('trigger-y');
+
+  t.false(sbox.canMergeInto(main));
+});
+
+test('canMergeInto: source is target + changes', (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // clone main for sbox
+  const sbox = new Workflow(realJson(main.toJSON()));
+  // do code changes to sbox
+  sbox.workflow.steps = generateWorkflow('trigger-x x-y y-z').steps;
+  t.true(sbox.canMergeInto(main));
+});
+
+test("canMergeInto: source isn't from target", (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // clone main for sbox
+  const sbox = generateWorkflow('trigger-y');
+  sbox.pushHistory(sbox.getVersionHash());
+  t.false(sbox.canMergeInto(main));
+});
+
+test("canMergeInto: source isn't from target but ended with same code", (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
+
+  const sbox = generateWorkflow('trigger-x x-y');
+  t.true(sbox.canMergeInto(main));
+});
+
+test('canMergeInto: source is from target but target has changes', (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // clone main for sbox
+  const sbox = new Workflow(realJson(main.toJSON()));
+
+  // changes to main after cloning
+  main.workflow.steps = generateWorkflow('trigger-x x-y x-z').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // merging sbox to main
+  t.false(sbox.canMergeInto(main));
+});
+
+test('canMergeInto: source is from target but target & source have changes', (t) => {
+  // initial main code
+  const main = generateWorkflow('trigger-x');
+  main.pushHistory(main.getVersionHash());
+  // main code updated
+  main.workflow.steps = generateWorkflow('trigger-x x-y').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // clone main for sbox
+  const sbox = new Workflow(realJson(main.toJSON()));
+  // changes to sbox
+  sbox.workflow.steps = generateWorkflow('trigger-x x-y y-g').steps;
+
+  // changes to main after cloning
+  main.workflow.steps = generateWorkflow('trigger-x x-y x-z').steps;
+  main.pushHistory(main.getVersionHash());
+
+  // merging sbox to main
+  t.false(sbox.canMergeInto(main));
 });
