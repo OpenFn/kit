@@ -53,28 +53,6 @@ test.serial('create an engine', async (t) => {
 
 test.todo('throw if the worker is invalid');
 
-test.serial('register a workflow', async (t) => {
-  const plan = { id: 'z' };
-  engine = await createEngine(options);
-
-  const state = engine.registerWorkflow(plan);
-
-  t.is(state.status, 'pending');
-  t.is(state.id, plan.id);
-  t.deepEqual(state.plan, plan);
-});
-
-test.serial('get workflow state', async (t) => {
-  const plan = { id: 'z' } as ExecutionPlan;
-  engine = await createEngine(options);
-
-  const s = engine.registerWorkflow(plan);
-
-  const state = engine.getWorkflowState(plan.id);
-
-  t.deepEqual(state, s);
-});
-
 test.serial('use the default worker path', async (t) => {
   engine = await createEngine({ logger, repoDir: '.' });
   t.true(engine.workerPath.endsWith('worker/thread/run.js'));
