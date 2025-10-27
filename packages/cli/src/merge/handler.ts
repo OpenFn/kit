@@ -51,7 +51,6 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     return;
   }
 
-  // TODO pick options from the terminal
   const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
     workflowMappings: options.workflowMappings,
