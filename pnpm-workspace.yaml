@@ -1,4 +1,4 @@
-minimumReleaseAge: 1440 # 1 day
+minimumReleaseAge: 4320 # 3 days
 packages:
   # exclude the integration test repos
   - '!integration-tests/worker/dummy-repo/**'
