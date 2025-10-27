@@ -67,7 +67,7 @@ async function start() {
   runBatch();
   setInterval(() => {
     runBatch();
-  }, 1000);
+  }, 200);
 }
 
 start();
