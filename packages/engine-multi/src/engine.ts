@@ -23,7 +23,6 @@ import type {
   EventHandler,
   ExecuteOptions,
   RuntimeEngine,
-  WorkflowState,
 } from './types';
 import type { AutoinstallOptions } from './api/autoinstall';
 
@@ -143,8 +142,6 @@ const createEngine = async (
     retries: options.workerValidationRetries,
   });
 
-  const getWorkflowStatus = (workflowId: string) => states[workflowId]?.status;
-
   // TODO too much logic in this execute function, needs farming out
   // I don't mind having a wrapper here but it must be super thin
   // TODO maybe engine options is too broad?
@@ -230,7 +227,6 @@ const createEngine = async (
     options,
     workerPath: resolvedWorkerPath,
     logger: options.logger,
-    getWorkflowStatus,
     execute: executeWrapper,
     listen,
     destroy,

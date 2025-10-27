@@ -1,7 +1,6 @@
 import test from 'ava';
 import path from 'node:path';
 import { createMockLogger } from '@openfn/logger';
-import type { ExecutionPlan } from '@openfn/lexicon';
 
 import createEngine, { InternalEngine } from '../src/engine';
 import * as e from '../src/events';

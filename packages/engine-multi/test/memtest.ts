@@ -11,7 +11,7 @@ const logger = createMockLogger();
 
 let api: any;
 
-function heap(reason) {
+function heap(reason: string) {
   const { used_heap_size } = getHeapStatistics();
   const mb = used_heap_size / 1024 / 1024;
   console.log(`>> [${reason}] Used heap at ${mb.toFixed(2)}mb`);
