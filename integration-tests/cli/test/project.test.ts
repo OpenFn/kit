@@ -152,12 +152,14 @@ test.serial('merge a project', async (t) => {
       'utf8'
     ).then((str) => str.trim());
 
-  // assert the intial step code
+  // assert the initial step code
   const initial = await readStep();
   t.is(initial, '// TODO');
 
   // Run the merge
-  await run(`openfn merge hello-world-staging -p ${projectsPath}`);
+  const { stdout } = await run(
+    `openfn merge hello-world-staging -p ${projectsPath} --force`
+  );
 
   // Check the step is updated
   const merged = await readStep();
