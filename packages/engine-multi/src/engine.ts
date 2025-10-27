@@ -200,6 +200,7 @@ const createEngine = async (
       // @ts-ignore
       execute(context).finally(() => {
         delete contexts[workflowId];
+        delete states[workflowId];
 
         context.removeAllListeners();
       });
