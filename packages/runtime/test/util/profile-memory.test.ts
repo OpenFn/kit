@@ -54,4 +54,32 @@ test('profiler tracks on stop', async (t) => {
 
   const peak = memProfiler.stop();
   t.true(peak > 0, 'Peak memory should be greater than 0');
+  t.true(peak > 1000, 'Peak memory should be greater than 1000');
+});
+
+test('profiler converts the result to mb', async (t) => {
+  const memProfiler = profiler(10000); // will never trigger!
+
+  memProfiler.start();
+
+  t.is(memProfiler.peak(), -1);
+
+  const peak = memProfiler.stop(true);
+  t.log(peak);
+  t.true(peak > 0, 'Peak memory should be greater than 0');
+  t.true(peak < 50, 'Peak memory should be less than 50');
+});
+
+test('profiler mb converts 1 mb exactly', async (t) => {
+  const memProfiler = profiler(10000);
+
+  const result = memProfiler.toMb(1024 * 1024);
+  t.is(result, 1);
+});
+
+test('profiler mb converts 1.5 mb exactly', async (t) => {
+  const memProfiler = profiler(10000);
+
+  const result = memProfiler.toMb(1572864);
+  t.is(result, 1.5);
 });

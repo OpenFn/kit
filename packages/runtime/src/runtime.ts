@@ -29,6 +29,12 @@ export type Options = {
   // SourceMap is only passed directly if the expression is a string
   // Usually a sourcemap is passed on a step
   sourceMap?: SourceMapWithOperations;
+
+  /** Profile memory usage through the run */
+  profile?: boolean;
+
+  /** Number of ms to wait before polling memory */
+  profilePollInterval?: number;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {

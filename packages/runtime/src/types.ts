@@ -96,6 +96,7 @@ export type NotifyJobCompletePayload = {
   mem: {
     job: number;
     system: number;
+    peak?: number;
   };
 };
 

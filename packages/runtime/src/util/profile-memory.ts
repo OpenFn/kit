@@ -15,17 +15,22 @@ const profiler = (pollrate = 10) => {
     console.log(now);
     peak = Math.max(peak, now);
   };
+
+  const convertToMb = (mem: number) =>
+    Math.round((mem / 1024 / 1024) * 100) / 100;
+
   return {
     start: () => {
       interval = setInterval(test, pollrate);
     },
-    stop: () => {
+    stop: (toMb = false) => {
       clearInterval(interval);
       // Make one final test now that we've stopped
       test();
-      return peak;
+      return toMb ? convertToMb(peak) : peak;
     },
     peak: () => peak,
+    toMb: convertToMb,
   };
 };
 
