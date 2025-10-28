@@ -225,16 +225,21 @@ const executeStep = async (
         `Final memory usage: [step ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
       );
 
+      const mem = {
+          job: jobMemory,
+          system: systemMemory,
+      }
+      if (peak) {
+        
+      }
+
       next = calculateNext(step, result, logger);
       notify(NOTIFY_JOB_COMPLETE, {
         duration: Date.now() - duration,
         state: result,
         jobId,
         next,
-        mem: {
-          job: jobMemory,
-          system: systemMemory,
-        },
+        mem: ,
       });
     }
   } else {
