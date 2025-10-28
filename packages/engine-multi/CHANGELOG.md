@@ -1,5 +1,16 @@
 # engine-multi
 
+## 1.8.0
+
+### Minor Changes
+
+- 475f8cf: Add options to profile memory usage in workflows. This should give a more accurate reading of the memory used by a run, but may have a small impact on performance
+
+### Patch Changes
+
+- Updated dependencies [3cd3cd5]
+  - @openfn/runtime@1.7.4
+
 ## 1.7.1
 
 ### Patch Changes
