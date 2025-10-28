@@ -27,10 +27,10 @@ import type {
 import type { AutoinstallOptions } from './api/autoinstall';
 
 const DEFAULT_RUN_TIMEOUT = 1000 * 60 * 10; // ms
-
 const DEFAULT_MEMORY_LIMIT_MB = 500;
-
 const DEFAULT_PAYLOAD_LIMIT_MB = 10;
+const DEFAULT_PROFILE = false;
+const DEFAULT_PROFILE_POLL_INTERVAL = 10;
 
 // For each workflow, create an API object with its own event emitter
 // this is a bit weird - what if the emitter went on state instead?
@@ -84,6 +84,9 @@ export type EngineOptions = {
 
   workerValidationTimeout?: number;
   workerValidationRetries?: number;
+
+  profile?: boolean;
+  profilePollInterval?: number;
 };
 
 export type InternalEngine = RuntimeEngine & {
@@ -106,6 +109,9 @@ const createEngine = async (
   const defaultMemoryLimit = options.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB;
   const defaultPayloadLimit =
     options.payloadLimitMb || DEFAULT_PAYLOAD_LIMIT_MB;
+  const defaultProfile = options.profile ?? DEFAULT_PROFILE;
+  const defaultProfilePollInterval =
+    options.profilePollInterval ?? DEFAULT_PROFILE_POLL_INTERVAL;
 
   let resolvedWorkerPath;
   if (workerPath) {
@@ -165,6 +171,8 @@ const createEngine = async (
         memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
         payloadLimitMb: opts.payloadLimitMb ?? defaultPayloadLimit,
         jobLogLevel: opts.jobLogLevel,
+        profile: defaultProfile,
+        profilePollInterval: defaultProfilePollInterval,
       },
     });
 

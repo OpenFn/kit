@@ -65,6 +65,8 @@ test('cli should set default values for unspecified options', (t) => {
   t.is(args.maxRunDurationSeconds, 300);
   t.is(args.engineValidationRetries, 3);
   t.is(args.engineValidationTimeoutMs, 5000);
+  t.is(args.profile, false);
+  t.is(args.profilePollIntervalMs, 10);
 });
 
 test('cli should handle boolean options correctly', (t) => {
