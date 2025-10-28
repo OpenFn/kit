@@ -53,7 +53,7 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
           try {
             if (!edge.condition(result)) {
               logger.debug(
-                `Edge ${edge.condition.toString()} returned false; ${nextJobId} will NOT be executed`
+                `Edge condition returned false; ${nextJobId} will NOT be executed`
               );
               continue;
             }
@@ -61,7 +61,7 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
             throw new EdgeConditionError(e.message);
           }
           logger.debug(
-            `Edge ${edge.condition.toString()} returned true; ${nextJobId} will be executed next`
+            `Edge condition returned true; ${nextJobId} will be executed next`
           );
         }
       }
@@ -230,7 +230,7 @@ const executeStep = async (
           system: systemMemory,
       }
       if (peak) {
-        
+
       }
 
       next = calculateNext(step, result, logger);
