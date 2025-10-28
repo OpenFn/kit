@@ -15,7 +15,7 @@ import { COMPILE_START, COMPILE_COMPLETE } from '../events';
 export type RunOptions = {
   repoDir: string;
   whitelist?: RegExp[];
-  sanitize: SanitizePolicies;
+  sanitize?: SanitizePolicies;
   statePropsToRemove?: string[];
   jobLogLevel?: LogLevel;
   profile?: boolean;

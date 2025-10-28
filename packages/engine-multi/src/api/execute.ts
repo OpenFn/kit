@@ -46,7 +46,7 @@ const execute = async (context: ExecutionContext) => {
       profile: context.options.profile,
       profilePollInteval: context.options.profilePollInterval,
     } as RunOptions;
-    console.log({ runOptions });
+
     const workerOptions = {
       memoryLimitMb: options.memoryLimitMb,
       payloadLimitMb: options.payloadLimitMb,
