@@ -7,6 +7,7 @@ import compilePlan from './compile-plan';
 import type { Options } from '../runtime';
 import validatePlan from '../util/validate-plan';
 import createErrorReporter from '../util/log-error';
+import createProfiler from '../util/profile-memory';
 import { NOTIFY_STATE_LOAD } from '../events';
 import { CompiledExecutionPlan, ExecutionContext } from '../types';
 
@@ -59,6 +60,11 @@ const executePlan = async (
   // count how many times each step has been called
   const counts: Record<string, number> = {};
 
+  let profiler = opts.profile
+    ? createProfiler(opts.profilePollInterval ?? 10)
+    : null;
+  profiler?.start();
+
   // Right now this executes in series, even if jobs are parallelised
   while (queue.length) {
     const { stepName, input: prevState } = queue.shift()!;
@@ -92,6 +98,11 @@ const executePlan = async (
     result.next?.forEach((next) => {
       queue.push({ stepName: next, input: result.state });
     });
+  }
+
+  if (profiler) {
+    const peak = profiler?.stop();
+    logger.debug(`Workflow complete: peak memory ${profiler.toMb(peak)}mb`);
   }
 
   // If there are multiple leaf results, return them

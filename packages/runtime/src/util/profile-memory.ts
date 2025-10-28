@@ -12,7 +12,6 @@ const profiler = (pollrate = 10) => {
 
   const test = () => {
     const now = getHeapStatistics().used_heap_size;
-    console.log(now);
     peak = Math.max(peak, now);
   };
 
