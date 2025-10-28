@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.7.4
+
+### Patch Changes
+
+- 3cd3cd5: Don't log edge condition code
+
 ## 1.7.3
 
 ### Patch Changes

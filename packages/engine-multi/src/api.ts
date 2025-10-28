@@ -63,6 +63,8 @@ const createAPI = async function (
       'configuration',
       'response',
     ],
+    profile: options.profile,
+    profilePollInterval: options.profilePollInterval,
   };
 
   logger.info(`memory limit set to ${options.memoryLimitMb}mb`);

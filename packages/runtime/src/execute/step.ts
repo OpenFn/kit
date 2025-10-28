@@ -4,7 +4,11 @@ import type { Logger } from '@openfn/logger';
 import executeExpression, { ExecutionErrorWrapper } from './expression';
 import clone from '../util/clone';
 import assembleState from '../util/assemble-state';
-import type { CompiledStep, ExecutionContext } from '../types';
+import type {
+  CompiledStep,
+  ExecutionContext,
+  NotifyJobCompletePayload,
+} from '../types';
 import { EdgeConditionError } from '../errors';
 import {
   NOTIFY_INIT_COMPLETE,
@@ -15,6 +19,7 @@ import {
 } from '../events';
 import { isNullState } from '../util/null-state';
 import sourcemapErrors from '../util/sourcemap-errors';
+import createProfiler from '../util/profile-memory';
 
 const loadCredentials = async (
   job: Job,
@@ -53,7 +58,7 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
           try {
             if (!edge.condition(result)) {
               logger.debug(
-                `Edge ${edge.condition.toString()} returned false; ${nextJobId} will NOT be executed`
+                `Edge condition returned false; ${nextJobId} will NOT be executed`
               );
               continue;
             }
@@ -61,7 +66,7 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
             throw new EdgeConditionError(e.message);
           }
           logger.debug(
-            `Edge ${edge.condition.toString()} returned true; ${nextJobId} will be executed next`
+            `Edge condition returned true; ${nextJobId} will be executed next`
           );
         }
       }
@@ -121,7 +126,13 @@ const executeStep = async (
   let result: any = input;
   let next: string[] = [];
   let didError = false;
+
   if (step.expression) {
+    let profiler = opts.profile
+      ? createProfiler(opts.profilePollInterval ?? 10)
+      : null;
+    profiler?.start();
+
     const job = step as Job;
     const jobId = job.id!;
     const jobName = job.name || job.id;
@@ -221,9 +232,20 @@ const executeStep = async (
 
       const humanJobMemory = Math.round(jobMemory / 1024 / 1024);
       const humanSystemMemory = Math.round(systemMemory / 1024 / 1024);
-      logger.debug(
-        `Final memory usage: [step ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
-      );
+
+      const mem: NotifyJobCompletePayload['mem'] = {
+        job: jobMemory,
+        system: systemMemory,
+      };
+
+      if (profiler) {
+        mem.peak = profiler.stop();
+        logger.debug(`Step memory usage: peak ${profiler.toMb(mem.peak)}mb`);
+      } else {
+        logger.debug(
+          `Step memory usage: [step ${humanJobMemory}mb] [system ${humanSystemMemory}mb]`
+        );
+      }
 
       next = calculateNext(step, result, logger);
       notify(NOTIFY_JOB_COMPLETE, {
@@ -231,10 +253,7 @@ const executeStep = async (
         state: result,
         jobId,
         next,
-        mem: {
-          job: jobMemory,
-          system: systemMemory,
-        },
+        mem,
       });
     }
   } else {

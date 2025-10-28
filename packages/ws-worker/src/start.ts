@@ -93,6 +93,8 @@ if (args.mock) {
     runTimeoutMs: args.maxRunDurationSeconds * 1000,
     workerValidationTimeout: args.engineValidationTimeoutMs,
     workerValidationRetries: args.engineValidationRetries,
+    profile: args.profile,
+    profilePollInterval: args.profilePollIntervalMs,
   };
   logger.debug('Creating runtime engine...');
   logger.debug('Engine options:', engineOptions);

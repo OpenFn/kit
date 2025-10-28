@@ -1,3 +1,4 @@
+import v8 from 'node:v8';
 import * as Sentry from '@sentry/node';
 import crypto from 'node:crypto';
 import * as jose from 'jose';
@@ -97,7 +98,13 @@ const claim = (
 
     app.openClaims[claimId] = demand;
 
-    logger.debug(`requesting run (capacity ${activeWorkers}/${maxWorkers})`);
+    const { used_heap_size, heap_size_limit } = v8.getHeapStatistics();
+    const usedHeapMb = Math.round(used_heap_size / 1024 / 1024);
+    const totalHeapMb = Math.round(heap_size_limit / 1024 / 1024);
+    const memPercent = Math.round((usedHeapMb / totalHeapMb) * 100);
+    logger.debug(
+      `Claiming runs :: demand ${demand} | capacity ${activeWorkers}/${maxWorkers} | memory ${memPercent}% (${usedHeapMb}/${totalHeapMb}mb)`
+    );
 
     app.events.emit(INTERNAL_CLAIM_START);
     const start = Date.now();

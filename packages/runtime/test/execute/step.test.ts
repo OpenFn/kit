@@ -278,11 +278,33 @@ test.serial('log memory usage', async (t) => {
 
   await execute(context, step, initialState);
 
-  const memory = logger._find('debug', /final memory usage/i);
+  const memory = logger._find('debug', /step memory usage/i);
 
   // All we're looking for here is two strings of numbers in mb
-  // the rest is for the birds
   t.regex(memory?.message, /\d+mb(.+)\d+mb/i);
+});
+
+test.serial('log memory usage with profiler and peak', async (t) => {
+  const step = {
+    id: 'z',
+    expression: [
+      (s: State) => {
+        return new Promise<any>((resolve) => setTimeout(() => resolve(s), 10));
+      },
+    ],
+  };
+  const initialState = createState();
+  const context = createContext({
+    opts: {
+      profile: true,
+    },
+  });
+
+  await execute(context, step, initialState);
+
+  const memory = logger._find('debug', /step memory usage/i);
+  // All we're looking for here is two strings of numbers in mb
+  t.regex(memory?.message, /peak (\d)+(.+)\d(\d?)mb/i);
 });
 
 test.serial('warn if a non-leaf step does not return state', async (t) => {

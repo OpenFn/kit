@@ -15,9 +15,11 @@ import { COMPILE_START, COMPILE_COMPLETE } from '../events';
 export type RunOptions = {
   repoDir: string;
   whitelist?: RegExp[];
-  sanitize: SanitizePolicies;
+  sanitize?: SanitizePolicies;
   statePropsToRemove?: string[];
   jobLogLevel?: LogLevel;
+  profile?: boolean;
+  profilePollInterval?: number;
 };
 
 const eventMap = {
@@ -29,8 +31,15 @@ const eventMap = {
 
 register({
   run: async (plan: ExecutionPlan, input: State, runOptions: RunOptions) => {
-    const { repoDir, whitelist, sanitize, statePropsToRemove, jobLogLevel } =
-      runOptions;
+    const {
+      repoDir,
+      whitelist,
+      sanitize,
+      statePropsToRemove,
+      jobLogLevel,
+      profile,
+      profilePollInterval,
+    } = runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
       sanitize,
@@ -60,6 +69,8 @@ register({
         whitelist,
         cacheKey: plan.id,
       },
+      profile,
+      profilePollInterval,
       statePropsToRemove,
       callbacks: {
         // TODO: this won't actually work across the worker boundary
@@ -75,6 +86,7 @@ register({
         },
       },
     };
+    logger.log(' >>', options.profile, options.profilePollInterval);
 
     return execute(plan.id!, async () => {
       const start = Date.now();

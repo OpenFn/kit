@@ -1,5 +1,19 @@
 # ws-worker
 
+## 1.19.0
+
+### Minor Changes
+
+- 475f8cf: Add options to profile memory usage in workflows. This should give a more accurate reading of the memory used by a run, but may have a small impact on performance
+
+### Patch Changes
+
+- 34edb8b: Improved logging of available memory on claim
+- Updated dependencies [3cd3cd5]
+- Updated dependencies [475f8cf]
+  - @openfn/runtime@1.7.4
+  - @openfn/engine-multi@1.8.0
+
 ## 1.18.1
 
 ### Patch Changes

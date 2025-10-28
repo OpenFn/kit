@@ -27,6 +27,8 @@ type Args = {
   monorepoDir?: string;
   payloadMemory?: number;
   port?: number;
+  profile?: boolean;
+  profilePollIntervalMs?: number;
   repoDir?: string;
   runMemory?: number;
   secret?: string;
@@ -38,7 +40,7 @@ type Args = {
   sentryEnv?: string;
 };
 
-type ArgTypes = string | string[] | number | undefined;
+type ArgTypes = string | string[] | number | boolean | undefined;
 
 function setArg(
   argValue?: ArgTypes,
@@ -55,6 +57,10 @@ function setArg(
 
   if (typeof defaultValue === 'number' && envValue && !argValue) {
     return parseInt(envValue);
+  }
+
+  if (typeof defaultValue === 'boolean' && envValue && argValue === undefined) {
+    return envValue === 'true' || envValue === '1';
   }
 
   return argValue ?? envValue ?? defaultValue;
@@ -76,6 +82,8 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_MAX_RUN_MEMORY_MB,
     WORKER_MESSAGE_TIMEOUT_SECONDS,
     WORKER_PORT,
+    WORKER_PROFILE,
+    WORKER_PROFILE_POLL_INTERVAL_MS,
     WORKER_REPO_DIR,
     WORKER_SECRET,
     WORKER_SENTRY_DSN,
@@ -201,6 +209,16 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'The number of times to retry engine validation. Useful in hosted environments. Default 3. ENV: WORKER_VALIDATION_RETRIES',
       type: 'number',
+    })
+    .option('profile', {
+      description:
+        'Enable profiling for runs. Default false. Env: WORKER_PROFILE',
+      type: 'boolean',
+    })
+    .option('profile-poll-interval-ms', {
+      description:
+        'Interval for polling profile data, in milliseconds. Default 10. Env: WORKER_PROFILE_POLL_INTERVAL_MS',
+      type: 'number',
     });
 
   const args = parser.parse() as Args;
@@ -264,6 +282,12 @@ export default function parseArgs(argv: string[]): Args {
       args.engineValidationTimeoutMs,
       WORKER_VALIDATION_TIMEOUT_MS,
       5000
+    ),
+    profile: setArg(args.profile, WORKER_PROFILE, false),
+    profilePollIntervalMs: setArg(
+      args.profilePollIntervalMs,
+      WORKER_PROFILE_POLL_INTERVAL_MS,
+      10
     ),
   } as Args;
 }

@@ -43,6 +43,8 @@ const execute = async (context: ExecutionContext) => {
       whitelist,
       jobLogLevel: options.jobLogLevel,
       repoDir: options.repoDir,
+      profile: context.options.profile,
+      profilePollInteval: context.options.profilePollInterval,
     } as RunOptions;
 
     const workerOptions = {
