@@ -1,3 +1,4 @@
+import { humanId } from 'human-id';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
@@ -55,8 +56,12 @@ export class Project {
   // And how are we tracking this?
   // version;
 
-  /** project name */
+  /** Human readable project name. This corresponds to the label in Lightning */
   name?: string;
+
+  /** Project id. Must be url safe. May be derived from the name. NOT a UUID */
+  id: string;
+
   description?: string;
 
   // array of version shas
@@ -129,10 +134,16 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: l.Project, repoConfig: RepoOptions = {}) {
-    this.setConfig(repoConfig);
+  constructor(data: l.Project, config: RepoOptions = {}) {
+    this.setConfig(config);
+
+    this.id =
+      data.id ?? data.name
+        ? slugify(data.name)
+        : humanId({ separator: '-', capitalize: false });
 
     this.name = data.name;
+
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
@@ -154,19 +165,12 @@ export class Project {
     throw new Error(`Cannot serialize ${type}`);
   }
 
-  // would like a better name for this
-  // stamp? id? sha?
-  // this builds a version string for the current state
-  getVersionHash() {}
-
-  // what else might we need?
-
-  // get workflow by name or id
-  // this is fuzzy, but is that wrong?
+  // get workflow by name, id or uuid
   getWorkflow(idOrName: string) {
     return (
       this.workflows.find((wf) => wf.id == idOrName) ||
-      this.workflows.find((wf) => wf.name === idOrName)
+      this.workflows.find((wf) => wf.name === idOrName) ||
+      this.workflows.find((wf) => wf.openfn?.uuid === idOrName)
     );
   }
 

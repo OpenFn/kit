@@ -16,7 +16,7 @@ const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
 
 export class Workspace {
   config?: WorkspaceConfig;
-  projectMeta: ProjectMeta;
+  activeProject: ProjectMeta;
 
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
@@ -26,7 +26,6 @@ export class Workspace {
     let context;
     try {
       const { type, content } = findWorkspaceFile(workspacePath);
-      console.log(content);
       context = loadWorkspaceFile(content, type);
       this.isValid = true;
     } catch (e) {
@@ -36,7 +35,7 @@ export class Workspace {
     }
 
     this.config = buildConfig(context.workspace);
-    this.projectMeta = context.project;
+    this.activeProject = context.project;
 
     const projectsPath = path.join(workspacePath, this.config.dirs.projects);
 
@@ -73,9 +72,12 @@ export class Workspace {
     return this.projects;
   }
 
-  // TODO clear up name/id confusion
+  /** Get a project by its id or UUID */
   get(id: string) {
-    return this.projects.find((p) => p.name === id);
+    return (
+      this.projects.find((p) => p.id === id) ??
+      this.projects.find((p) => p.openfn?.uuid === id)
+    );
   }
 
   getProjectPath(id: string) {
@@ -84,7 +86,7 @@ export class Workspace {
 
   getActiveProject() {
     // TODO should use id, not name
-    return this.projects.find((p) => p.name === this.projectMeta?.name);
+    return this.projects.find((p) => p.id === this.activeProject?.id);
   }
 
   // TODO this needs to return default values
@@ -94,8 +96,7 @@ export class Workspace {
   }
 
   get activeProjectId() {
-    // TODO should return activeProject.id
-    return this.projectMeta?.name;
+    return this.activeProject?.id;
   }
 
   get valid() {

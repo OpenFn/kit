@@ -53,6 +53,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
   }
 
   const proj = {
+    name: state?.name,
     openfn: context.project,
     config: config,
     workflows: [],
@@ -81,7 +82,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
         const wfState = (state && state.getWorkflow(wf.id)) ?? {};
         wf.openfn = {
           uuid: wfState.openfn?.uuid ?? null,
-          // TODO do we need to transfer more stuff?
+          // TODO do we need to transfer more stuff? Options maybe?
         };
 
         //console.log('Loading workflow at ', filePath); // TODO logger.debug
