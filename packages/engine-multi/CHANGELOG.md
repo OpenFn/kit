@@ -1,5 +1,11 @@
 # engine-multi
 
+## 1.8.1
+
+### Patch Changes
+
+- Remove debug log line
+
 ## 1.8.0
 
 ### Minor Changes
