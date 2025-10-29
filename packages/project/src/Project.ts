@@ -20,35 +20,6 @@ type MergeOptions = {
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
 
-// TODO --------------
-// I think this needs renaming to config
-// and it's part of the workspace technically
-// I need to support custom props
-// When serializing, for now, we always write defaults
-// --------------
-// repo-wide options
-type RepoOptions = {
-  /**default workflow root when serializing to fs (relative to openfn.yaml) */
-  // TODO deprecate this
-  workflowRoot?: string;
-
-  formats: {
-    openfn: FileFormats;
-    workflow: FileFormats;
-    project: FileFormats;
-  };
-};
-
-// A local collection of openfn projects?
-// class Repo {
-
-//   projects: {}
-// }
-
-// TODO maybe use an npm for this, or create  util
-
-// TODO this need to be controlled by the workspace
-
 // A single openfn project
 // could be an app project or a checked out fs
 export class Project {
@@ -64,7 +35,7 @@ export class Project {
 
   description?: string;
 
-  // array of version shas
+  // array of version hashes
   history: string[] = [];
 
   workflows: Workflow[];
@@ -84,12 +55,6 @@ export class Project {
 
   config: WorkspaceConfig;
 
-  // load a project from a state file (project.json)
-  // or from a path (the file system)
-  // TODO presumably we can detect a state file? Not a big deal?
-
-  // collections for the project
-  // TODO to be well typed
   collections: any;
 
   static from(
