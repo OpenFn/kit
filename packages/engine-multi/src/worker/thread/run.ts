@@ -86,7 +86,6 @@ register({
         },
       },
     };
-    logger.log(' >>', options.profile, options.profilePollInterval);
 
     return execute(plan.id!, async () => {
       const start = Date.now();
