@@ -144,39 +144,33 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     const promise = new Promise<T>(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
-        try {
-          if (code !== HANDLED_EXIT_CODE) {
-            logger.debug('pool: Worker exited unexpectedly');
-            clearTimeout(timeout);
+        if (code !== HANDLED_EXIT_CODE) {
+          logger.debug(`pool: Worker exited unexpectedly with code ${code}`);
+          clearTimeout(timeout);
 
-            // Read the stderr stream from the worked to see if this looks like an OOM error
-            const rl = readline.createInterface({
-              input: worker.stderr!,
-              crlfDelay: Infinity,
-            });
+          // Read the stderr stream from the worked to see if this looks like an OOM error
+          const rl = readline.createInterface({
+            input: worker.stderr!,
+            crlfDelay: Infinity,
+          });
 
-            try {
+          try {
+            if (worker.stderr && worker.stderr?.readableLength > 0) {
               for await (const line of rl) {
-                logger.debug(line);
                 if (line.match(/JavaScript heap out of memory/)) {
-                  reject(new OOMError());
-
                   killWorker(worker);
                   // restore a placeholder to the queue
                   finish(false);
+                  reject(new OOMError());
                   return;
                 }
               }
-            } catch (e) {
-              // do nothing
             }
-            reject(new ExitError(code));
-            finish(worker);
+          } catch (e) {
+            // do nothing
           }
-        } catch (e) {
-          logger.log('**********');
-          logger.log(e);
-          logger.log('**********');
+          finish(worker);
+          reject(new ExitError(code));
         }
       };
 
@@ -231,9 +225,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
-        console.log(evt);
-        // TODO I think here we may have to decode the payload
-
         // forward the message out of the pool
         opts.on?.(evt);
 
