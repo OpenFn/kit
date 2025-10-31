@@ -57,7 +57,7 @@ export type ExecutionContextOptions = ExecuteOptions & EngineOptions;
 
 export interface EngineAPI extends EventEmitter {
   callWorker: CallWorker;
-  closeWorkers: (instant?: boolean) => void;
+  closeWorkers: (instant?: boolean) => Promise<void>;
 }
 
 export interface RuntimeEngine {
@@ -74,7 +74,7 @@ export interface RuntimeEngine {
     options?: Partial<EngineOptions>
   ): Pick<EventEmitter, 'on' | 'off' | 'once'>;
 
-  destroy(): void;
+  destroy(instant?: boolean): Promise<void>;
 
   on: (evt: string, fn: (...args: any[]) => void) => void;
 }
