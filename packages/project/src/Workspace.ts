@@ -54,7 +54,7 @@ export class Workspace {
           const stateFilePath = path.join(projectsPath, file);
           const data = fs.readFileSync(stateFilePath, 'utf-8');
           const project = fromAppState(data, { format: 'yaml' });
-          this.projectPaths.set(project.name, stateFilePath);
+          this.projectPaths.set(project.id, stateFilePath);
           return project;
         })
         .filter((s) => s);
@@ -85,8 +85,10 @@ export class Workspace {
   }
 
   getActiveProject() {
-    // TODO should use id, not name
-    return this.projects.find((p) => p.id === this.activeProject?.id);
+    return (
+      this.projects.find((p) => p.id === this.activeProject?.id) ??
+      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.id)
+    );
   }
 
   // TODO this needs to return default values

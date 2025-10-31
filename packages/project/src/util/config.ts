@@ -81,6 +81,7 @@ export const buildConfig = (config: WorkspaceConfig = {}) => ({
 export const extractConfig = (source: Project) => {
   const project = {
     ...(source.openfn || {}),
+    id: source.id,
   };
   const workspace = {
     ...source.config,
