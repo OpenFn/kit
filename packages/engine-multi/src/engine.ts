@@ -229,7 +229,9 @@ const createEngine = async (
     // How does this work if deferred?
   };
 
-  const destroy = (instant?: boolean) => closeWorkers(instant);
+  const destroy = async (instant?: boolean): Promise<void> => {
+    return closeWorkers(instant);
+  };
 
   return Object.assign(engine, {
     options,
