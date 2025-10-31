@@ -297,7 +297,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
     // Drain the pool
     while (pool.length) {
-      const worker = pool.pop()!;
+      const worker = pool.pop();
       if (worker) {
         killPromises.push(waitForWorkerExit(worker));
         delete allWorkers[worker.pid!];
@@ -306,7 +306,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
 
     if (immediate) {
       Object.values(allWorkers).forEach((worker) => {
-        killPromises.push(waitForWorkerExit(worker));
+        killPromises.push(waitForWorkerExit(worker, 1000));
         delete allWorkers[worker.pid!];
       });
     }
