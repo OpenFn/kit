@@ -8,21 +8,28 @@ test.beforeEach(() => {
   mock({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
-      name: 'main-project-id',
-      workflowRoot: 'workflows',
-      formats: {
-        openfn: 'yaml',
-        project: 'yaml',
-        workflow: 'yaml',
+      project: {
+        id: 'my-project',
+        name: 'My Project',
+      },
+      workspace: {
+        dirs: {
+          workflows: 'workflows',
+        },
+        formats: {
+          openfn: 'yaml',
+          project: 'yaml',
+          workflow: 'yaml',
+        },
       },
     }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-      id: 'sandbox-uuid',
-      name: 'sandbox-project-id',
+      id: '<uuid:sandbox>',
+      name: 'My Sandbox',
       workflows: [
         {
-          name: 'first-workflow',
-          id: 'first-workflow-id',
+          name: 'Workflow 1',
+          id: 'workflow-1',
           jobs: [
             {
               id: 'job-x',
@@ -62,12 +69,12 @@ test.beforeEach(() => {
       ],
     }),
     '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml({
-      id: 'main-project-uuid',
-      name: 'main-project-id',
+      id: '<uuid:main>',
+      name: 'My Project',
       workflows: [
         {
-          name: 'first-workflow',
-          id: 'first-workflow-id',
+          name: 'Workflow 1',
+          id: 'workflow-1',
           jobs: [{ id: 'job-a', name: 'Job A' }],
           triggers: [
             {
@@ -98,7 +105,7 @@ test('merging into the same project', async (t) => {
     {
       command: 'merge',
       projectPath: '/ws',
-      projectName: 'main-project-id',
+      projectId: 'my-project',
       removeUnmapped: false,
       workflowMappings: {},
     },
@@ -112,40 +119,39 @@ test('merging into the same project', async (t) => {
 
 test('merging a different project into checked-out', async (t) => {
   // state of main projects workflow before sandbox is merged in
-  const bworkspace = new Workspace('/ws');
-  t.is(bworkspace.projectMeta.name, 'main-project-id');
-  t.is(bworkspace.getActiveProject()?.name, 'main-project-id');
-  const bprojects = bworkspace.list();
-  t.is(bprojects[0].workflows[0].steps.length, 2);
-  t.is(bprojects[0].workflows[0].steps[1].name, 'Job A');
+  const beforeWs = new Workspace('/ws');
+  t.is(beforeWs.activeProject.id, 'my-project');
+  const beforeProjects = beforeWs.list();
+  t.is(beforeProjects[0].workflows[0].steps.length, 2);
+  t.is(beforeProjects[0].workflows[0].steps[1].name, 'Job A');
 
   // do merging
   await mergeHandler(
     {
       command: 'merge',
       projectPath: '/ws',
-      projectName: 'sandbox-project-id',
+      projectId: 'my-sandbox',
       removeUnmapped: false,
       workflowMappings: {},
     },
     logger
   );
 
-  // state of main projects workflow before sandbox is merged in
-  const workspace = new Workspace('/ws');
-  t.is(workspace.projectMeta.name, 'main-project-id');
-  t.is(workspace.getActiveProject()?.name, 'main-project-id');
-  const projects = workspace.list();
-  t.is(projects[0].workflows[0].steps.length, 3);
-  t.is(projects[0].workflows[0].steps[1].name, 'Job X');
-  t.is(projects[0].workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
-  t.is(projects[0].workflows[0].steps[2].name, 'Job Y');
-  t.is(projects[0].workflows[0].steps[2].openfn?.uuid, 'job-y'); // id not retained - new nod
+  // state of main projects workflow AFTER sandbox is merged in
+  const afterWorkspace = new Workspace('/ws');
+  t.is(afterWorkspace.activeProject.id, 'my-project');
+  const afterProjects = afterWorkspace.list();
+  const wf = afterProjects[0].workflows[0];
+  t.is(wf.steps.length, 3);
+  t.is(wf.steps[1].name, 'Job X');
+  t.is(wf.steps[1].openfn?.uuid, 'job-a'); // id got retained
+  t.is(wf.steps[2].name, 'Job Y');
+  t.is(wf.steps[2].openfn?.uuid, 'job-y'); // id not retained - new nod
 
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
   t.is(
     message,
-    'Project sandbox-project-id has been merged into Project main-project-id successfully'
+    'Project my-sandbox has been merged into Project my-project successfully'
   );
 });

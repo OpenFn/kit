@@ -336,19 +336,7 @@ const getBaseDir = (opts: { path?: string }) => {
 export const projectId: CLIOption = {
   name: 'project-id',
   yargs: {
-    hidden: true,
-  },
-  ensure: (opts) => {
-    const projectId = opts.projectId;
-    //check that this is a uuid
-    return projectId;
-  },
-};
-
-export const projectName: CLIOption = {
-  name: 'project-name',
-  yargs: {
-    description: 'The name of an openfn project',
+    description: 'The id or UUID of an openfn project',
     string: true,
   },
   ensure: (opts) => {

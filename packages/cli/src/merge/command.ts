@@ -7,17 +7,16 @@ export type MergeOptions = Required<
   Pick<
     Opts,
     | 'command'
-    | 'projectName'
+    | 'projectId'
     | 'projectPath'
     | 'removeUnmapped'
     | 'workflowMappings'
-    | 'log'
-    | 'force'
   >
->;
+> &
+  Pick<Opts, 'log' | 'force'>;
 
 const options = [
-  o.projectName,
+  o.projectId,
   o.projectPath,
   o.removeUnmapped,
   o.workflowMappings,
@@ -28,7 +27,7 @@ const options = [
 ];
 
 const mergeCommand: yargs.CommandModule = {
-  command: 'merge [project-name]',
+  command: 'merge <project-id>',
   describe: 'Merges the specified project into the checked out project',
   handler: ensure('merge', options),
   builder: (yargs) => build(options, yargs),
