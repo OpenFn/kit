@@ -12,9 +12,9 @@ import loadVersions from '../src/util/load-versions';
 const logger = createMockLogger(undefined, { level: 'debug' });
 let api: RuntimeEngine;
 
-test.afterEach(() => {
+test.afterEach(async () => {
   logger._reset();
-  api?.destroy();
+  await api?.destroy();
 });
 
 test.serial('create a default engine api without throwing', async (t) => {

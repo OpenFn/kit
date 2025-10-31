@@ -11,9 +11,9 @@ let api: RuntimeEngine;
 
 const emptyState = {};
 
-test.afterEach(() => {
+test.afterEach(async () => {
   logger._reset();
-  api.destroy();
+  await api.destroy();
 });
 
 // this tests the full API with the actual runtime

@@ -265,18 +265,53 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     }
   };
 
-  const destroy = (immediate = false) => {
+  const waitForWorkerExit = (
+    worker: ChildProcess,
+    forceKillTimeout = 5000
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!worker || worker.killed || !worker.connected) {
+        resolve();
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        logger.debug('pool: force killing worker', worker.pid);
+        worker.kill('SIGKILL');
+        resolve();
+      }, forceKillTimeout);
+
+      worker.once('exit', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+
+      worker.kill();
+    });
+  };
+
+  const destroy = async (immediate = false): Promise<void> => {
     destroyed = true;
+
+    const killPromises: Promise<void>[] = [];
 
     // Drain the pool
     while (pool.length) {
-      killWorker(pool.pop()!);
+      const worker = pool.pop();
+      if (worker) {
+        killPromises.push(waitForWorkerExit(worker));
+        delete allWorkers[worker.pid!];
+      }
     }
 
     if (immediate) {
-      Object.values(allWorkers).forEach(killWorker);
+      Object.values(allWorkers).forEach((worker) => {
+        killPromises.push(waitForWorkerExit(worker, 1000));
+        delete allWorkers[worker.pid!];
+      });
     }
-    // TODO set a timeout and force any outstanding workers to die
+
+    await Promise.all(killPromises);
   };
 
   const api = {
