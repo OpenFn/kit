@@ -108,8 +108,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   };
 
   const finish = (worker: ChildProcess | false) => {
-    console.log('>>> FINISH');
-    logger.debug(' >>>> FINISH');
     if (worker) {
       logger.debug('pool: finished task in worker', worker.pid);
       worker.removeAllListeners();
