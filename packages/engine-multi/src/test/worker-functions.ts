@@ -59,7 +59,6 @@ const tasks = {
   weirdExit: async () => {
     // https://www.youtube.com/watch?v=Z2cXRtblqjQ
     process.exit(72);
-    // return 72;
   },
 
   // Experiments with freezing the global scope

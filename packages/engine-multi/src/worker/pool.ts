@@ -254,10 +254,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     return promise;
   };
 
-  const killWorker = async (worker: ChildProcess | false) => {
+  const killWorker = (worker: ChildProcess | false) => {
     if (worker) {
       logger.debug('pool: destroying worker ', worker.pid);
-      await worker.kill();
+      worker.kill();
       delete allWorkers[worker.pid!];
     }
   };
