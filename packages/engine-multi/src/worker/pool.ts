@@ -67,7 +67,6 @@ export const returnToPool = (
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const capacity = options.capacity || options.maxWorkers || 5;
-
   logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
@@ -144,7 +143,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
-          logger.debug('pool: Worker exited unexpectedly');
+          logger.debug(`pool: Worker exited unexpectedly with code ${code}`);
           clearTimeout(timeout);
 
           // Read the stderr stream from the worked to see if this looks like an OOM error
@@ -154,22 +153,22 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           });
 
           try {
-            for await (const line of rl) {
-              logger.debug(line);
-              if (line.match(/JavaScript heap out of memory/)) {
-                reject(new OOMError());
-
-                killWorker(worker);
-                // restore a placeholder to the queue
-                finish(false);
-                return;
+            if (worker.stderr && worker.stderr?.readableLength > 0) {
+              for await (const line of rl) {
+                if (line.match(/JavaScript heap out of memory/)) {
+                  killWorker(worker);
+                  // restore a placeholder to the queue
+                  finish(false);
+                  reject(new OOMError());
+                  return;
+                }
               }
             }
           } catch (e) {
             // do nothing
           }
-          reject(new ExitError(code));
           finish(worker);
+          reject(new ExitError(code));
         }
       };
 
@@ -224,8 +223,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
-        // TODO I think here we may have to decode the payload
-
         // forward the message out of the pool
         opts.on?.(evt);
 
