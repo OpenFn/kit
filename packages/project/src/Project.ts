@@ -1,3 +1,4 @@
+import { humanId } from 'human-id';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
 import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
@@ -19,35 +20,6 @@ type MergeOptions = {
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
 
-// TODO --------------
-// I think this needs renaming to config
-// and it's part of the workspace technically
-// I need to support custom props
-// When serializing, for now, we always write defaults
-// --------------
-// repo-wide options
-type RepoOptions = {
-  /**default workflow root when serializing to fs (relative to openfn.yaml) */
-  // TODO deprecate this
-  workflowRoot?: string;
-
-  formats: {
-    openfn: FileFormats;
-    workflow: FileFormats;
-    project: FileFormats;
-  };
-};
-
-// A local collection of openfn projects?
-// class Repo {
-
-//   projects: {}
-// }
-
-// TODO maybe use an npm for this, or create  util
-
-// TODO this need to be controlled by the workspace
-
 // A single openfn project
 // could be an app project or a checked out fs
 export class Project {
@@ -55,11 +27,15 @@ export class Project {
   // And how are we tracking this?
   // version;
 
-  /** project name */
+  /** Human readable project name. This corresponds to the label in Lightning */
   name?: string;
+
+  /** Project id. Must be url safe. May be derived from the name. NOT a UUID */
+  id: string;
+
   description?: string;
 
-  // array of version shas
+  // array of version hashes
   history: string[] = [];
 
   workflows: Workflow[];
@@ -79,12 +55,6 @@ export class Project {
 
   config: WorkspaceConfig;
 
-  // load a project from a state file (project.json)
-  // or from a path (the file system)
-  // TODO presumably we can detect a state file? Not a big deal?
-
-  // collections for the project
-  // TODO to be well typed
   collections: any;
 
   static from(
@@ -129,10 +99,16 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: l.Project, repoConfig: RepoOptions = {}) {
-    this.setConfig(repoConfig);
+  constructor(data: l.Project, config: RepoOptions = {}) {
+    this.setConfig(config);
+
+    this.id =
+      data.id ?? data.name
+        ? slugify(data.name)
+        : humanId({ separator: '-', capitalize: false });
 
     this.name = data.name;
+
     this.description = data.description;
     this.openfn = data.openfn;
     this.options = data.options;
@@ -154,19 +130,12 @@ export class Project {
     throw new Error(`Cannot serialize ${type}`);
   }
 
-  // would like a better name for this
-  // stamp? id? sha?
-  // this builds a version string for the current state
-  getVersionHash() {}
-
-  // what else might we need?
-
-  // get workflow by name or id
-  // this is fuzzy, but is that wrong?
+  // get workflow by name, id or uuid
   getWorkflow(idOrName: string) {
     return (
       this.workflows.find((wf) => wf.id == idOrName) ||
-      this.workflows.find((wf) => wf.name === idOrName)
+      this.workflows.find((wf) => wf.name === idOrName) ||
+      this.workflows.find((wf) => wf.openfn?.uuid === idOrName)
     );
   }
 

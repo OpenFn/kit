@@ -5,27 +5,28 @@ import test from 'ava';
 // TODO need a test on the legacy and new yaml formats here
 mock({
   '/ws/openfn.yaml': jsonToYaml({
-    name: 'some-project-name',
     project: {
+      id: 'project-1',
       uuid: '1234',
-      name: 'some-project-name',
     },
-    formats: {
-      openfn: 'yaml',
-      project: 'yaml',
-      workflow: 'yaml',
-      custom: true, // Note tha this will be excluded
+    workspace: {
+      formats: {
+        openfn: 'yaml',
+        project: 'yaml',
+        workflow: 'yaml',
+        custom: true, // Note that this will be excluded
+      },
+      // deliberately exclude dirs
+      custom: true,
     },
-    // deliberately exclude dirs
-    custom: true,
   }),
   '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-    id: 'some-id',
-    name: 'some-project-name',
+    name: 'Project 1',
+    id: '<uuid-1>',
     workflows: [
       {
-        name: 'simple-workflow',
-        id: 'wf-id',
+        name: 'simple-workflow', // TODO clean up
+        id: 'wf-id', // TODO clean up
         jobs: [
           {
             name: 'Transform data to FHIR standard',
@@ -97,18 +98,18 @@ test('workspace-list: list projects in the workspace', (t) => {
   const ws = new Workspace('/ws');
   t.is(ws.list().length, 1);
   t.deepEqual(
-    ws.list().map((w) => w.name),
-    ['some-project-name']
+    ws.list().map((w) => w.id),
+    ['project-1']
   );
 });
 
 test('workspace-get: get projects in the workspace', (t) => {
   const ws = new Workspace('/ws');
-  const found = ws.get('some-project-name');
+  const found = ws.get('project-1');
   t.truthy(found);
   t.is(found?.workflows.length, 2);
   t.deepEqual(
-    found?.workflows.map((w) => w.name),
+    found?.workflows.map((w) => w.id),
     ['simple-workflow', 'another-workflow']
   );
 });
@@ -131,8 +132,8 @@ test('load config', (t) => {
 
 test('load project meta', (t) => {
   const ws = new Workspace('/ws');
-  t.deepEqual(ws.projectMeta, {
+  t.deepEqual(ws.activeProject, {
     uuid: '1234',
-    name: 'some-project-name',
+    id: 'project-1',
   });
 });
