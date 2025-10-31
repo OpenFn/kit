@@ -23,29 +23,29 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
 
   // Lookup the source project - the thing we are getting changes from
   let sourceProject;
-  if (/\.(yaml|json)$/.test(options.projectName)) {
-    const filePath = path.join(commandPath, options.projectName);
+  if (/\.(yaml|json)$/.test(options.projectId)) {
+    const filePath = path.join(commandPath, options.projectId);
     logger.debug('Loading source project from path ', filePath);
     sourceProject = await Project.from('path', filePath);
   } else {
-    sourceProject = workspace.get(options.projectName);
+    sourceProject = workspace.get(options.projectId);
   }
   if (!sourceProject) {
-    logger.error(`Project "${options.projectName}" not found in the workspace`);
+    logger.error(`Project "${options.projectId}" not found in the workspace`);
     return;
   }
 
-  if (targetProject.name === sourceProject.name) {
+  if (targetProject.id === sourceProject.id) {
     logger.error('Merging into the same project not allowed');
     return;
   }
 
-  if (!targetProject.name) {
-    logger.error('The checked out project has no name/id');
+  if (!targetProject.id) {
+    logger.error('The checked out project has no id');
     return;
   }
 
-  const finalPath = workspace.getProjectPath(targetProject.name);
+  const finalPath = workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
@@ -64,13 +64,13 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     {
       command: 'checkout',
       projectPath: commandPath,
-      projectName: final.name || '',
+      projectId: final.id,
       log: options.log,
     },
     logger
   );
   logger.success(
-    `Project ${sourceProject.name} has been merged into Project ${targetProject.name} successfully`
+    `Project ${sourceProject.id} has been merged into Project ${targetProject.id} successfully`
   );
 };
 

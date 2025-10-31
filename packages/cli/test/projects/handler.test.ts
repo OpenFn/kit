@@ -7,17 +7,21 @@ import { jsonToYaml } from '@openfn/project';
 mock({
   'no-ws/': { 'some.yaml': 'name: smth' },
   '/ws/openfn.yaml': jsonToYaml({
-    name: 'some-project-name',
-    workflowRoot: 'workflows',
-    formats: {
-      openfn: 'yaml',
-      project: 'yaml',
-      workflow: 'yaml',
+    project: {
+      id: 'my-project',
+    },
+    workspace: {
+      workflowRoot: 'workflows',
+      formats: {
+        openfn: 'yaml',
+        project: 'yaml',
+        workflow: 'yaml',
+      },
     },
   }),
   '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-    id: 'some-id',
-    name: 'some-project-name',
+    id: '<uuid:main>',
+    name: 'my-project',
     workflows: [
       {
         name: 'simple-workflow',
@@ -93,15 +97,15 @@ test('openfn projects: not a workspace', (t) => {
   t.is(message, 'Command was run in an invalid openfn workspace');
 });
 
-test('openfn projects: valid workspace', (t) => {
+test.only('openfn projects: valid workspace', (t) => {
   projectsHandler({ command: 'projects', projectPath: '/ws' }, logger);
   const { message, level } = logger._parse(logger._last);
   t.is('success', level);
   t.is(
     `Available openfn projects
 
-some-project-name (active)
-  some-id
+my-project (active)
+  <uuid:main>
   workflows:
     - simple-workflow
     - another-workflow

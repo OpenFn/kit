@@ -19,20 +19,20 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
 
   // get the project
   let switchProject;
-  if (/\.(yaml|json)$/.test(options.projectName)) {
+  if (/\.(yaml|json)$/.test(options.projectId)) {
     // TODO: should we allow checkout into an arbitrary folder?
-    const filePath = path.join(commandPath, options.projectName);
+    const filePath = path.join(commandPath, options.projectId);
     logger.debug('Loading project from path ', filePath);
     switchProject = await Project.from('path', filePath, {
       config,
     });
   } else {
-    switchProject = workspace.get(options.projectName);
+    switchProject = workspace.get(options.projectId);
   }
 
   if (!switchProject) {
     logger.error(
-      `Project with id/name ${options.projectName} not found in the workspace`
+      `Project with id/name ${options.projectId} not found in the workspace`
     );
     return;
   }

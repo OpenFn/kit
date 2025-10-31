@@ -187,6 +187,7 @@ test('extractWorkflow: single simple workflow with custom root', (t) => {
 test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   const project = new Project(
     {
+      name: 'My Project',
       workflows: [
         {
           id: 'my-workflow',
@@ -219,7 +220,9 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
       formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
       dirs: { projects: '.projects', workflows: 'workflows' },
     },
-    project: {},
+    project: {
+      id: 'my-project',
+    },
   });
 
   const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
