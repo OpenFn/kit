@@ -67,7 +67,6 @@ export const returnToPool = (
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const capacity = options.capacity || options.maxWorkers || 5;
-
   logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
@@ -143,6 +142,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     const promise = new Promise<T>(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
+        console.log('>>> EXIT', code);
         if (code !== HANDLED_EXIT_CODE) {
           logger.debug('pool: Worker exited unexpectedly');
           clearTimeout(timeout);
@@ -224,6 +224,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
+        console.log(evt);
         // TODO I think here we may have to decode the payload
 
         // forward the message out of the pool

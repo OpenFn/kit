@@ -185,6 +185,16 @@ test('throw if memory limit is exceeded', async (t) => {
   }
 });
 
+test('handle weird exit', async (t) => {
+  const pool = createPool(workerPath, {}, logger);
+
+  try {
+    await pool.exec('weirdExit', []);
+  } catch (e: any) {
+    t.is(e.message, 'worker thread exited with code 72');
+  }
+});
+
 test('destroy should handle un-initialised workers', async (t) => {
   const pool = createPool(workerPath, { capacity: 10 }, logger);
   await pool.destroy();
