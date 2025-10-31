@@ -60,25 +60,16 @@ export const install = async (
   }
 
   if (forInstalling.length) {
-    const flags = [
-      '--no-audit',
-      '--no-fund',
-      '--no-package-lock',
-      '--log-level verbose',
-    ];
+    const flags = ['--no-audit', '--no-fund', '--no-package-lock'];
     const aliases = forInstalling.map(({ name, version }) => {
       const alias = `npm:${name}@${version}`;
       const aliasedName = `${name}_${version}`;
       return `${aliasedName}@${alias}`;
     });
     // TODO it would be nice to report something about what's going on under the hood here
-    const { stdout, stderr } = await execFn(
-      `npm install ${flags.join(' ')} ${aliases.join(' ')}`,
-      {
-        cwd: repoPath,
-      }
-    );
-    console.log({ stdout, stderr });
+    await execFn(`npm install ${flags.join(' ')} ${aliases.join(' ')}`, {
+      cwd: repoPath,
+    });
     log.success(
       `Installed ${forInstalling
         .map(({ name, version }) => `${name}@${version}`)
