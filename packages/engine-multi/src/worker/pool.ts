@@ -108,6 +108,8 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   };
 
   const finish = (worker: ChildProcess | false) => {
+    console.log('>>> FINISH');
+    logger.debug(' >>>> FINISH');
     if (worker) {
       logger.debug('pool: finished task in worker', worker.pid);
       worker.removeAllListeners();
@@ -142,34 +144,39 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     const promise = new Promise<T>(async (resolve, reject) => {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
-        console.log('>>> EXIT', code);
-        if (code !== HANDLED_EXIT_CODE) {
-          logger.debug('pool: Worker exited unexpectedly');
-          clearTimeout(timeout);
+        try {
+          if (code !== HANDLED_EXIT_CODE) {
+            logger.debug('pool: Worker exited unexpectedly');
+            clearTimeout(timeout);
 
-          // Read the stderr stream from the worked to see if this looks like an OOM error
-          const rl = readline.createInterface({
-            input: worker.stderr!,
-            crlfDelay: Infinity,
-          });
+            // Read the stderr stream from the worked to see if this looks like an OOM error
+            const rl = readline.createInterface({
+              input: worker.stderr!,
+              crlfDelay: Infinity,
+            });
 
-          try {
-            for await (const line of rl) {
-              logger.debug(line);
-              if (line.match(/JavaScript heap out of memory/)) {
-                reject(new OOMError());
+            try {
+              for await (const line of rl) {
+                logger.debug(line);
+                if (line.match(/JavaScript heap out of memory/)) {
+                  reject(new OOMError());
 
-                killWorker(worker);
-                // restore a placeholder to the queue
-                finish(false);
-                return;
+                  killWorker(worker);
+                  // restore a placeholder to the queue
+                  finish(false);
+                  return;
+                }
               }
+            } catch (e) {
+              // do nothing
             }
-          } catch (e) {
-            // do nothing
+            reject(new ExitError(code));
+            finish(worker);
           }
-          reject(new ExitError(code));
-          finish(worker);
+        } catch (e) {
+          logger.log('**********');
+          logger.log(e);
+          logger.log('**********');
         }
       };
 
@@ -258,10 +265,10 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     return promise;
   };
 
-  const killWorker = (worker: ChildProcess | false) => {
+  const killWorker = async (worker: ChildProcess | false) => {
     if (worker) {
       logger.debug('pool: destroying worker ', worker.pid);
-      worker.kill();
+      await worker.kill();
       delete allWorkers[worker.pid!];
     }
   };

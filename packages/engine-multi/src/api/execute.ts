@@ -136,6 +136,8 @@ const execute = async (context: ExecutionContext) => {
       events,
       workerOptions
     ).catch(async (e: any) => {
+      console.log(' >>>> CALL WORKER ERROR');
+      logger.log(' >>>> CALL WORKER ERROR');
       if (compileStatus === 'started') {
         // Try and alert users that the error occurred at compile-time
         // Not super keen on adding this down in the engine but it may help app users
