@@ -54,7 +54,7 @@ This will wrap a real runtime engine into the server. It will rebuild when the W
 
 ### Disabling auto-fetch
 
-When working in dev it is convinient to disable the workloop. To switch it off, run:
+When working in dev it is convenient to disable the workloop. To switch it off, run:
 
 ```
 pnpm start --no-loop

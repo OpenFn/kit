@@ -185,9 +185,19 @@ test('throw if memory limit is exceeded', async (t) => {
   }
 });
 
+test('handle weird exit', async (t) => {
+  const pool = createPool(workerPath, {}, logger);
+
+  try {
+    await pool.exec('weirdExit', []);
+  } catch (e: any) {
+    t.is(e.message, 'Worker thread exited with code: 72');
+  }
+});
+
 test('destroy should handle un-initialised workers', async (t) => {
   const pool = createPool(workerPath, { capacity: 10 }, logger);
-  pool.destroy();
+  await pool.destroy();
   t.is(pool._pool.length, 0);
 });
 
@@ -201,7 +211,7 @@ test('destroy should close all child processes', async (t) => {
   const workers = Object.values(pool._allWorkers);
 
   // now destroy it
-  pool.destroy();
+  await pool.destroy();
 
   // check that every child is disconnected
   t.true(workers.every((child) => child.killed));
@@ -210,27 +220,26 @@ test('destroy should close all child processes', async (t) => {
   t.is(pool._pool.length, 0);
 });
 
-test('destroy gracefully', (t) => {
-  return new Promise((done) => {
-    const pool = createPool(workerPath, {}, logger);
-    const workers = Object.values(pool._allWorkers);
+test('destroy gracefully', async (t) => {
+  const pool = createPool(workerPath, {}, logger);
+  const workers = Object.values(pool._allWorkers);
 
-    t.is(pool._pool.length, 5);
+  t.is(pool._pool.length, 5);
 
-    pool.exec('wait', [100]).then((result) => {
-      t.is(result, 1);
-      setTimeout(() => {
-        t.true(workers.every((child) => child.killed));
-        t.is(pool._pool.length, 0);
+  const taskPromise = pool.exec('wait', [100]);
 
-        done();
-      }, 1);
-    });
+  await pool.destroy();
 
-    pool.destroy();
+  t.is(pool._pool.length, 0);
 
-    t.is(pool._pool.length, 0);
-  });
+  // The task should complete gracefully
+  const result = await taskPromise;
+  t.is(result, 1);
+
+  // Give a moment for cleanup to finish
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  t.true(workers.every((child) => child.killed));
 });
 
 // TODO should the worker throw on sigterm?

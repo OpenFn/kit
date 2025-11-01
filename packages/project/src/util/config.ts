@@ -81,6 +81,7 @@ export const buildConfig = (config: WorkspaceConfig = {}) => ({
 export const extractConfig = (source: Project) => {
   const project = {
     ...(source.openfn || {}),
+    id: source.id,
   };
   const workspace = {
     ...source.config,
@@ -146,13 +147,10 @@ export const loadWorkspaceFile = (
 };
 
 export const findWorkspaceFile = (dir: string = '.') => {
-  console.log({ dir });
   let content, type;
   try {
     type = 'yaml';
-    console.log(path.resolve(path.join(dir, 'openfn.yaml')));
     content = readFileSync(path.resolve(path.join(dir, 'openfn.yaml')), 'utf8');
-    console.log({ content });
   } catch (e) {
     // Not found - try and parse as JSON
     try {

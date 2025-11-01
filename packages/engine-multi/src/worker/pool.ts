@@ -67,7 +67,6 @@ export const returnToPool = (
 // creates a new pool of workers which use the same script
 function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
   const capacity = options.capacity || options.maxWorkers || 5;
-
   logger.debug(`pool: Creating new child process pool | capacity: ${capacity}`);
   let destroyed = false;
 
@@ -144,7 +143,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       // TODO what should we do if a process in the pool dies, perhaps due to OOM?
       const onExit = async (code: number) => {
         if (code !== HANDLED_EXIT_CODE) {
-          logger.debug('pool: Worker exited unexpectedly');
+          logger.debug(`pool: Worker exited unexpectedly with code ${code}`);
           clearTimeout(timeout);
 
           // Read the stderr stream from the worked to see if this looks like an OOM error
@@ -154,22 +153,22 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           });
 
           try {
-            for await (const line of rl) {
-              logger.debug(line);
-              if (line.match(/JavaScript heap out of memory/)) {
-                reject(new OOMError());
-
-                killWorker(worker);
-                // restore a placeholder to the queue
-                finish(false);
-                return;
+            if (worker.stderr && worker.stderr?.readableLength > 0) {
+              for await (const line of rl) {
+                if (line.match(/JavaScript heap out of memory/)) {
+                  killWorker(worker);
+                  // restore a placeholder to the queue
+                  finish(false);
+                  reject(new OOMError());
+                  return;
+                }
               }
             }
           } catch (e) {
             // do nothing
           }
-          reject(new ExitError(code));
           finish(worker);
+          reject(new ExitError(code));
         }
       };
 
@@ -224,8 +223,6 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
       worker.on('exit', onExit);
 
       worker.on('message', (evt: any) => {
-        // TODO I think here we may have to decode the payload
-
         // forward the message out of the pool
         opts.on?.(evt);
 
@@ -265,18 +262,53 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
     }
   };
 
-  const destroy = (immediate = false) => {
+  const waitForWorkerExit = (
+    worker: ChildProcess,
+    forceKillTimeout = 5000
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!worker || worker.killed || !worker.connected) {
+        resolve();
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        logger.debug('pool: force killing worker', worker.pid);
+        worker.kill('SIGKILL');
+        resolve();
+      }, forceKillTimeout);
+
+      worker.once('exit', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+
+      worker.kill();
+    });
+  };
+
+  const destroy = async (immediate = false): Promise<void> => {
     destroyed = true;
+
+    const killPromises: Promise<void>[] = [];
 
     // Drain the pool
     while (pool.length) {
-      killWorker(pool.pop()!);
+      const worker = pool.pop();
+      if (worker) {
+        killPromises.push(waitForWorkerExit(worker));
+        delete allWorkers[worker.pid!];
+      }
     }
 
     if (immediate) {
-      Object.values(allWorkers).forEach(killWorker);
+      Object.values(allWorkers).forEach((worker) => {
+        killPromises.push(waitForWorkerExit(worker, 1000));
+        delete allWorkers[worker.pid!];
+      });
     }
-    // TODO set a timeout and force any outstanding workers to die
+
+    await Promise.all(killPromises);
   };
 
   const api = {

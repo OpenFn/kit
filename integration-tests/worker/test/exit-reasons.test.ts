@@ -242,5 +242,5 @@ test('crash: process.exit() triggered by postgres', async (t) => {
 
   t.is(reason, 'crash');
   t.is(error_type, 'ExitError');
-  t.regex(error_message, /Process exited with code: 1/i);
+  t.regex(error_message, /Worker thread exited with code: 1/i);
 });

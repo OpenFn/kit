@@ -1,5 +1,13 @@
 # engine-multi
 
+## 1.8.2
+
+### Patch Changes
+
+- 8632629: Remove log line
+- 0e5b7d4: Fix an issue where an empty stderr buffer from a crashed run could fail to return, triggering Lost
+- 7e12e4b: Wait for child processes to exit properly when shutting down (shouldn't affect prod environments)
+
 ## 1.8.1
 
 ### Patch Changes

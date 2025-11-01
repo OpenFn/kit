@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.19.2
+
+### Patch Changes
+
+- Updated dependencies [8632629]
+- Updated dependencies [0e5b7d4]
+- Updated dependencies [7e12e4b]
+  - @openfn/engine-multi@1.8.2
+
 ## 1.19.1
 
 ### Patch Changes

@@ -6,22 +6,11 @@ import * as o from '../options';
 export type VersionOptions = Required<
   Pick<
     Opts,
-    | 'command'
-    | 'workflow'
-    | 'projectName'
-    | 'projectPath'
-    | 'workflowMappings'
-    | 'json'
+    'command' | 'workflow' | 'projectPath' | 'workflowMappings' | 'json'
   >
 >;
 
-const options = [
-  o.workflow,
-  o.projectName,
-  o.projectPath,
-  o.workflowMappings,
-  o.json,
-];
+const options = [o.workflow, o.projectPath, o.workflowMappings, o.json];
 
 const workflowVersionCommand: yargs.CommandModule = {
   command: 'project version [workflow]',

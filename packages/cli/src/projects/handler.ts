@@ -13,19 +13,17 @@ const projectsHandler = async (options: ProjectsOptions, logger: Logger) => {
 
   logger.success(`Available openfn projects\n\n${workspace
     .list()
-    .map((p) => describeProject(p, p.name === workspace.activeProjectId))
+    .map((p) => describeProject(p, p.id === workspace.activeProjectId))
     .join('\n\n')}
     `);
 };
 
 function describeProject(project: Project, active = false) {
   // @ts-ignore
-  const pId = project.openfn?.uuid;
-  return `${project.name} ${active ? '(active)' : ''}\n  ${
-    pId || '<project-id>'
-  }\n  workflows:\n${project.workflows
-    .map((w) => '    - ' + w.name)
-    .join('\n')}`;
+  const uuid = project.openfn?.uuid;
+  return `${project.id} ${active ? '(active)' : ''}\n  ${
+    uuid || '<project-id>'
+  }\n  workflows:\n${project.workflows.map((w) => '    - ' + w.id).join('\n')}`;
 }
 
 export default projectsHandler;

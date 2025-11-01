@@ -80,6 +80,16 @@ const run = (task: string, args: any[], options: Options = {}) => {
     });
 };
 
+process.on('exit', (code) => {
+  publish(ENGINE_REJECT_TASK, {
+    error: {
+      name: 'ExitError',
+      message: `Worker thread exited with code: ${code}`,
+      severity: 'crash',
+    },
+  });
+});
+
 parentPort!.on('message', async (evt) => {
   if (evt.type === ENGINE_RUN_TASK) {
     const args = evt.args || [];

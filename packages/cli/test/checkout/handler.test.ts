@@ -9,17 +9,21 @@ test.beforeEach(() => {
   mock({
     '/ws/workflows': {},
     '/ws/openfn.yaml': jsonToYaml({
-      name: 'some-project-name',
-      workflowRoot: 'workflows',
-      formats: {
-        openfn: 'yaml',
-        project: 'yaml',
-        workflow: 'yaml',
+      project: {
+        id: 'my-project',
+      },
+      workspace: {
+        workflowRoot: 'workflows',
+        formats: {
+          openfn: 'yaml',
+          project: 'yaml',
+          workflow: 'yaml',
+        },
       },
     }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-      id: 'some-id',
-      name: 'some-project-name',
+      id: '<uuid:staging>>',
+      name: 'My Staging',
       workflows: [
         {
           name: 'simple-workflow',
@@ -80,8 +84,8 @@ test.beforeEach(() => {
       ],
     }),
     '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml({
-      id: 'main-id',
-      name: 'main-project-id',
+      id: '<uuid:main>',
+      name: 'My Project',
       workflows: [
         {
           name: 'simple-workflow-main',
@@ -149,12 +153,12 @@ const logger = createMockLogger('', { level: 'debug' });
 test.serial('get active project', (t) => {
   const workspace = new Workspace('/ws');
   t.is(workspace.valid, true);
-  t.is(workspace.activeProjectId, 'some-project-name');
+  t.is(workspace.activeProjectId, 'my-project');
 });
 
 test.serial('checkout: invalid project id', (t) => {
   checkoutHandler(
-    { command: 'checkout', projectName: 'not-known', projectPath: '/ws' },
+    { command: 'checkout', projectId: 'not-known', projectPath: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -162,22 +166,20 @@ test.serial('checkout: invalid project id', (t) => {
 });
 
 test.serial('checkout: to a different valid project', async (t) => {
-  // before checkout. some-project-name is active and expanded
+  // before checkout. my-project is active and expanded
   const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.projectMeta.name, 'some-project-name');
-  t.is(bcheckout.getActiveProject()?.name, 'some-project-name');
+  t.is(bcheckout.activeProject.id, 'my-project');
 
   await checkoutHandler(
-    { command: 'checkout', projectName: 'main-project-id', projectPath: '/ws' },
+    { command: 'checkout', projectId: 'my-project', projectPath: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
   t.is(message, 'Expanded project to /ws');
 
-  // after checkout. main-project-id is active and expanded
+  // after checkout. my-project is active and expanded
   const acheckout = new Workspace('/ws');
-  t.is(acheckout.projectMeta.name, 'main-project-id');
-  t.is(acheckout.getActiveProject()?.name, 'main-project-id');
+  t.is(acheckout.activeProject.id, 'my-project');
 
   // check if files where well expanded
   t.deepEqual(
@@ -187,15 +189,14 @@ test.serial('checkout: to a different valid project', async (t) => {
 });
 
 test.serial('checkout: same id as active', async (t) => {
-  // before checkout. some-project-name is active and expanded
+  // before checkout. my-project is active and expanded
   const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.projectMeta.name, 'some-project-name');
-  t.is(bcheckout.getActiveProject()?.name, 'some-project-name');
+  t.is(bcheckout.activeProject.id, 'my-project');
 
   await checkoutHandler(
     {
       command: 'checkout',
-      projectName: 'some-project-name',
+      projectId: 'my-project',
       projectPath: '/ws',
     },
     logger
@@ -203,48 +204,45 @@ test.serial('checkout: same id as active', async (t) => {
   const { message } = logger._parse(logger._last);
   t.is(message, 'Expanded project to /ws');
 
-  // after checkout. main-project-id is active and expanded
+  // after checkout. my-project is active and expanded
   const acheckout = new Workspace('/ws');
-  t.is(acheckout.projectMeta.name, 'some-project-name');
-  t.is(acheckout.getActiveProject()?.name, 'some-project-name');
-
-  // check if files where well expanded
-  t.deepEqual(
-    fs.readdirSync('/ws/workflows').sort(),
-    ['simple-workflow', 'another-workflow'].sort()
-  );
-});
-
-test.serial('checkout: switching to and back between projects', async (t) => {
-  // before checkout. some-project-name is active and expanded
-  const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.projectMeta.name, 'some-project-name');
-  t.is(bcheckout.getActiveProject()?.name, 'some-project-name');
-
-  // 1. switch from some-project-name to main-project-id
-  await checkoutHandler(
-    { command: 'checkout', projectName: 'main-project-id', projectPath: '/ws' },
-    logger
-  );
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Expanded project to /ws');
-
-  // after checkout. main-project-id is active and expanded
-  const acheckout = new Workspace('/ws');
-  t.is(acheckout.projectMeta.name, 'main-project-id');
-  t.is(acheckout.getActiveProject()?.name, 'main-project-id');
+  t.is(acheckout.activeProject.id, 'my-project');
 
   // check if files where well expanded
   t.deepEqual(
     fs.readdirSync('/ws/workflows').sort(),
     ['simple-workflow-main', 'another-workflow-main'].sort()
   );
+});
 
-  // 2. switch back from main-project-id to some-project-name
+test.serial('checkout: switching to and back between projects', async (t) => {
+  // before checkout. my-project is active and expanded
+  const bcheckout = new Workspace('/ws');
+  t.is(bcheckout.activeProject.id, 'my-project');
+
+  // 1. switch from my-project to my-staging
+  await checkoutHandler(
+    { command: 'checkout', projectId: 'my-staging', projectPath: '/ws' },
+    logger
+  );
+  const { message } = logger._parse(logger._last);
+  t.is(message, 'Expanded project to /ws');
+
+  // after checkout. my-staging is active and expanded
+  const acheckout = new Workspace('/ws');
+  t.is(acheckout.activeProject.id, 'my-staging');
+
+  // check if files where well expanded
+  t.deepEqual(
+    fs.readdirSync('/ws/workflows').sort(),
+    ['simple-workflow', 'another-workflow'].sort()
+  );
+
+  // 2. switch back from my-project to my-project
   await checkoutHandler(
     {
       command: 'checkout',
-      projectName: 'some-project-name',
+      projectId: 'my-project',
       projectPath: '/ws',
     },
     logger
@@ -252,14 +250,13 @@ test.serial('checkout: switching to and back between projects', async (t) => {
   const { message: lastMsg } = logger._parse(logger._last);
   t.is(lastMsg, 'Expanded project to /ws');
 
-  // after checkout. main-project-id is active and expanded
+  // after checkout. my-project is active and expanded
   const fcheckout = new Workspace('/ws');
-  t.is(fcheckout.projectMeta.name, 'some-project-name');
-  t.is(fcheckout.getActiveProject()?.name, 'some-project-name');
+  t.is(fcheckout.activeProject.id, 'my-project');
 
   // check if files where well expanded
   t.deepEqual(
     fs.readdirSync('/ws/workflows').sort(),
-    ['simple-workflow', 'another-workflow'].sort()
+    ['simple-workflow-main', 'another-workflow-main'].sort()
   );
 });

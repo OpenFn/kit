@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.7.1
+
+### Patch Changes
+
+- 8632629: Internal refactor for clarity
+
 ## 0.7.0
 
 ### Minor Changes
