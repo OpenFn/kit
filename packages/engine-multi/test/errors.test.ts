@@ -20,7 +20,7 @@ test.before(async () => {
     },
     maxWorkers: 1,
     memoryLimitMb: 200,
-    proxyStdout: true,
+    // proxyStdout: true,
   };
 
   // This uses the real runtime and real worker
@@ -252,7 +252,7 @@ test.serial('emit a crash error on process.exit()', (t) => {
     engine.execute(plan, {}).on(WORKFLOW_ERROR, (evt) => {
       t.is(evt.type, 'ExitError');
       t.is(evt.severity, 'crash');
-      t.is(evt.message, 'Process exited with code: 42');
+      t.is(evt.message, 'Worker thread exited with code: 42');
       done();
     });
   });

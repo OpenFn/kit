@@ -191,7 +191,7 @@ test('handle weird exit', async (t) => {
   try {
     await pool.exec('weirdExit', []);
   } catch (e: any) {
-    t.is(e.message, 'worker thread exited with code 72');
+    t.is(e.message, 'Worker thread exited with code: 72');
   }
 });
 

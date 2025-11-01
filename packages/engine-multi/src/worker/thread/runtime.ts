@@ -83,8 +83,8 @@ const run = (task: string, args: any[], options: Options = {}) => {
 process.on('exit', (code) => {
   publish(ENGINE_REJECT_TASK, {
     error: {
-      name: 'UNEXPECTED_EXIT',
-      message: `worker thread exited with code ${code}`,
+      name: 'ExitError',
+      message: `Worker thread exited with code: ${code}`,
       severity: 'crash',
     },
   });
