@@ -79,7 +79,7 @@ const mapWorkflow = (workflow) => {
       };
       wfState.triggers.push(node);
     } else {
-      let node = omitBy(pick(s, ['name', 'adaptor']), isNil);
+      node = omitBy(pick(s, ['name', 'adaptor']), isNil);
       const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
       node.id = uuid;
       Object.assign(node, otherOpenFnProps);
