@@ -17,7 +17,7 @@ export default function (project: Project, options: Options = {}) {
     id,
     name: project.name,
     description: project.description,
-    project_credentials: project.credentials,
+    project_credentials: project.credentials ?? [],
     collections: project.collections,
     ...rest,
     ...project.options,
@@ -49,6 +49,7 @@ const mapWorkflow = (workflow) => {
     jobs: [],
     triggers: [],
     edges: [],
+    lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
   };
 
   // lookup of local-ids to project-ids
@@ -81,6 +82,10 @@ const mapWorkflow = (workflow) => {
         body: s.expression,
         adaptor: s.adaptor,
         ...renameKeys(s.openfn, { uuid: 'id' }),
+        // TODO need a unit test on this
+        project_credential_id: s.openfn?.project_credential_id ?? null,
+        // TODO need to track this
+        keychain_credential_id: null,
       };
 
       wfState.jobs.push(node);
