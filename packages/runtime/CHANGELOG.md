@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.7.5
+
+### Patch Changes
+
+- fe06f44: Expose Buffer to runtime context. Quite safe in node 20+
+
 ## 1.7.4
 
 ### Patch Changes
