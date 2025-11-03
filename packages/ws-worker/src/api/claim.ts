@@ -129,8 +129,6 @@ const claim = (
         }
 
         for (const run of runs) {
-          // will this make the test fail?
-          // await new Promise((r) => setTimeout(r, 1000));
           if (app.options?.runPublicKey) {
             try {
               await verifyToken(run.token, app.options.runPublicKey);
