@@ -21,6 +21,19 @@ export default (
 ) => {
   const logger = options.jobLogger ?? console;
   const globals = options.globals || {};
+
+  // Workaround for https://github.com/nodejs/node/issues/4660
+  // The Buffer class we share directly with users will throw if used
+  // All _internal_ Buffer references use the original nodejs interface
+  class SafeBuffer extends Buffer {
+    constructor(x: any) {
+      throw new Error(
+        'Do not call Buffer() constructor directly. Use Buffer.from() instead.'
+      );
+      super(x); // keeps types happy
+    }
+  }
+
   const context = vm.createContext(
     freezeAll(
       {
@@ -34,7 +47,7 @@ export default (
         setInterval,
         setTimeout,
         state, // TODO will be dropped as a global one day, see https://github.com/OpenFn/kit/issues/17
-        Buffer,
+        Buffer: SafeBuffer,
       },
       { state: true }
     ),
