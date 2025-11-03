@@ -1,4 +1,4 @@
-// serialize to simple json
+import { pick, omitBy, isNil } from 'lodash-es';
 
 import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
@@ -6,23 +6,22 @@ import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
 
 import { randomUUID } from 'node:crypto';
+
 type Options = { format?: 'json' | 'yaml' };
 
 // TODO this should allow override on format,
 // regardless of repo settings
 export default function (project: Project, options: Options = {}) {
-  const { uuid: id, endpoint, env, ...rest } = project.openfn ?? {};
+  const { uuid, endpoint, env, ...rest } = project.openfn ?? {};
 
-  const state = {
-    id,
-    name: project.name,
-    description: project.description,
-    project_credentials: project.credentials ?? [],
-    collections: project.collections,
-    ...rest,
-    ...project.options,
-    workflows: project.workflows.map(mapWorkflow),
-  };
+  const state = omitBy(
+    pick(project, ['name', 'description', 'collections']),
+    isNil
+  );
+  state.id = uuid;
+  Object.assign(state, rest, project.options);
+  state.project_credentials = project.credentials ?? [];
+  state.workflows = project.workflows.map(mapWorkflow);
 
   const shouldReturnYaml =
     options.format === 'yaml' ||
@@ -45,12 +44,15 @@ const mapWorkflow = (workflow) => {
   const wfState = {
     ...originalOpenfnProps,
     id: workflow.openfn?.uuid ?? randomUUID(),
-    name: workflow.name,
     jobs: [],
     triggers: [],
     edges: [],
     lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
   };
+
+  if (workflow.name) {
+    wfState.name = workflow.name;
+  }
 
   // lookup of local-ids to project-ids
   const lookup = workflow.steps.reduce((obj, next) => {
@@ -77,16 +79,16 @@ const mapWorkflow = (workflow) => {
       };
       wfState.triggers.push(node);
     } else {
-      node = {
-        name: s.name,
-        body: s.expression,
-        adaptor: s.adaptor,
-        ...renameKeys(s.openfn, { uuid: 'id' }),
-        // TODO need a unit test on this
-        project_credential_id: s.openfn?.project_credential_id ?? null,
-        // TODO need to track this
-        keychain_credential_id: null,
-      };
+      let node = omitBy(pick(s, ['name', 'adaptor']), isNil);
+      const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
+      node.id = uuid;
+      Object.assign(node, otherOpenFnProps);
+      if (s.expression) {
+        node.body = s.expression;
+      }
+      node.project_credential_id = s.openfn?.project_credential_id ?? null;
+      // TODO need to track this
+      node.keychain_credential_id = null;
 
       wfState.jobs.push(node);
     }
@@ -95,12 +97,15 @@ const mapWorkflow = (workflow) => {
     Object.keys(s.next ?? {}).forEach((next) => {
       const rules = s.next[next];
 
+      const { uuid, ...otherOpenFnProps } = rules.openfn ?? {};
+
       const e = {
-        id: rules.openfn?.uuid ?? randomUUID(),
+        id: uuid ?? randomUUID(),
         target_job_id: lookup[next],
         enabled: !rules.disabled,
         source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
       };
+      Object.assign(e, otherOpenFnProps);
 
       if (isTrigger) {
         e.source_trigger_id = node.id;

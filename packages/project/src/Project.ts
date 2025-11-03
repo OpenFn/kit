@@ -1,3 +1,4 @@
+import type l from '@openfn/lexicon';
 import { humanId } from 'human-id';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
