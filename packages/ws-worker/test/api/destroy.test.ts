@@ -1,6 +1,9 @@
 import test from 'ava';
 import crypto from 'node:crypto';
-import createLightningServer from '@openfn/lightning-mock';
+import createLightningServer, {
+  generateKeys,
+  toBase64,
+} from '@openfn/lightning-mock';
 import { createMockLogger } from '@openfn/logger';
 import { LightningPlan } from '@openfn/lexicon/lightning';
 
@@ -18,8 +21,8 @@ const lightningPort = workerPort + 1;
 
 const logger = createMockLogger();
 let lightning: any;
-
 let worker: any;
+let keys = { private: '.', public: '.' };
 
 const initLightning = (options = {}) => {
   lightning = createLightningServer({ port: lightningPort, ...options });
@@ -42,6 +45,10 @@ const initWorker = (options = {}) => {
     });
   });
 };
+
+test.before(async () => {
+  keys = await generateKeys();
+});
 
 test.afterEach(async () => {
   await lightning.destroy();
@@ -107,11 +114,8 @@ test.serial('destroy a worker with no active runs', async (t) => {
   t.false(await ping());
   // should not be claiming
   t.false(await waitForClaim());
-
-  // TODO how can I test the socket is closed?
 });
 
-// WARNING this might be flaky in CI
 test.serial('destroy a worker while one run is active', async (t) => {
   initLightning();
   await initWorker();
@@ -203,7 +207,7 @@ test.serial(
       const doDestroy = async () => {
         await destroy(worker, logger);
 
-        t.true(didFinish);
+        t.true(didFinish, 'Run did not finish');
 
         // should not respond to get
         t.false(await ping());
@@ -212,7 +216,56 @@ test.serial(
 
         done();
       };
-      // As  soon as the claim starts, kill the worker
+      // As soon as the claim starts, kill the worker
+      worker.events.once(INTERNAL_CLAIM_START, () => {
+        doDestroy();
+      });
+
+      // We still expect the run to complete
+      lightning.once('run:complete', () => {
+        didFinish = true;
+      });
+
+      // By the time the claim is complete, the worker should be marked destroyed
+      worker.events.once(INTERNAL_CLAIM_COMPLETE, () => {
+        t.true(worker.destroyed);
+      });
+
+      lightning.enqueueRun(createRun());
+      worker.claim().catch();
+    });
+  }
+);
+
+// The async bit is important because we can actually lose a run between claim and start
+test.serial(
+  'destroy a worker while a claim is outstanding and wait for the run to complete with async token validation',
+  async (t) => {
+    t.plan(4);
+
+    initLightning({
+      socketDelay: 50,
+      runPrivateKey: toBase64(keys.private),
+    });
+    await initWorker({ noLoop: true, runPublicKey: keys.public });
+
+    return new Promise((done) => {
+      let didFinish = false;
+
+      const doDestroy = async () => {
+        await destroy(worker, logger);
+
+        t.true(didFinish, 'Run did not finish');
+
+        // should not respond to get
+        t.false(await ping());
+        // should not be claiming
+        t.false(await waitForClaim());
+
+        done();
+      };
+
+      // As soon as the claim starts, kill the worker
       worker.events.once(INTERNAL_CLAIM_START, () => {
         doDestroy();
       });
