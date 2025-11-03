@@ -1,5 +1,14 @@
 # ws-worker
 
+## 1.19.3
+
+### Patch Changes
+
+- 62f24b0: Fix an edge case where the server can shut down in-between claim and start (lost runs edge case)
+- Updated dependencies [fe06f44]
+  - @openfn/runtime@1.7.5
+  - @openfn/engine-multi@1.8.3
+
 ## 1.19.2
 
 ### Patch Changes

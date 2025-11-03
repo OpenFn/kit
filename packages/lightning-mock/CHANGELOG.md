@@ -1,5 +1,13 @@
 # @openfn/lightning-mock
 
+## 2.3.6
+
+### Patch Changes
+
+- Updated dependencies [fe06f44]
+  - @openfn/runtime@1.7.5
+  - @openfn/engine-multi@1.8.3
+
 ## 2.3.5
 
 ### Patch Changes
