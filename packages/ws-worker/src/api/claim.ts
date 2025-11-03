@@ -113,7 +113,7 @@ const claim = (
         demand,
         worker_name: NAME || null,
       })
-      .receive('ok', ({ runs }: ClaimReply) => {
+      .receive('ok', async ({ runs }: ClaimReply) => {
         delete app.openClaims[claimId];
         const duration = Date.now() - start;
         logger.debug(
@@ -128,7 +128,9 @@ const claim = (
           return reject(new Error('No runs returned'));
         }
 
-        runs.forEach(async (run) => {
+        for (const run of runs) {
+          // will this make the test fail?
+          // await new Promise((r) => setTimeout(r, 1000));
           if (app.options?.runPublicKey) {
             try {
               await verifyToken(run.token, app.options.runPublicKey);
@@ -146,7 +148,8 @@ const claim = (
 
           logger.debug(`${podName} starting run ${run.id}`);
           app.execute(run);
-        });
+        }
+
         // Don't trigger claim complete until all runs are registered
         resolve();
         app.events.emit(INTERNAL_CLAIM_COMPLETE, { runs });
