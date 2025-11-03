@@ -60,3 +60,27 @@ test("doesn't allow eval inside a job", async (t) => {
     message: /Illegal eval statement detected/,
   });
 });
+
+test('Buffer.from() works inside a job', async (t) => {
+  const expression = `
+    export default [
+      (s) => { s.data = Buffer.from('6a6f65', 'hex').toString(); return s;  }
+    ];`;
+  const input = {};
+
+  const result = await run(expression, input);
+  t.is(result.data as any, 'joe');
+});
+
+test('Buffer constructor throws inside a job', async (t) => {
+  const expression = `
+    export default [
+      (s) => { s.data = new Buffer('6a6f65', 'hex').toString(); return s;  }
+    ];`;
+  const input = {};
+
+  const result = await run(expression, input);
+  const err = result.errors!['job-1'];
+  t.is(err.name, 'JobError');
+  t.regex(err.message, /do not call Buffer\(\) constructor/i);
+});
