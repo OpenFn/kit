@@ -34,6 +34,7 @@ export default (
         setInterval,
         setTimeout,
         state, // TODO will be dropped as a global one day, see https://github.com/OpenFn/kit/issues/17
+        Buffer,
       },
       { state: true }
     ),
