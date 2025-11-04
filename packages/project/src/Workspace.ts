@@ -29,11 +29,10 @@ export class Workspace {
       context = loadWorkspaceFile(content, type);
       this.isValid = true;
     } catch (e) {
-      console.log(e);
+      console.error(e);
       // invalid workspace
       return;
     }
-
     this.config = buildConfig(context.workspace);
     this.activeProject = context.project;
 
@@ -54,6 +53,7 @@ export class Workspace {
           const stateFilePath = path.join(projectsPath, file);
           const data = fs.readFileSync(stateFilePath, 'utf-8');
           const project = fromAppState(data, { format: 'yaml' });
+          console.log({ project });
           this.projectPaths.set(project.id, stateFilePath);
           return project;
         })
@@ -87,7 +87,7 @@ export class Workspace {
   getActiveProject() {
     return (
       this.projects.find((p) => p.id === this.activeProject?.id) ??
-      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.id)
+      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid)
     );
   }
 

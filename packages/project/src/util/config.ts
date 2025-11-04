@@ -67,8 +67,8 @@ export interface ProjectMeta {
 export const buildConfig = (config: WorkspaceConfig = {}) => ({
   ...config,
   dirs: {
-    projects: '.projects', // TODO change to projects
-    workflows: 'workflows',
+    projects: config.dirs?.projects ?? '.projects',
+    workflows: config.dirs?.workflows ?? 'workflows',
   },
   formats: {
     openfn: config.formats?.openfn ?? 'yaml',
