@@ -185,7 +185,7 @@ test('workspace-path: valid workspace path', (t) => {
   t.is(ws.valid, true);
 });
 
-test.only('workspace-path: invalid workspace path', (t) => {
+test('workspace-path: invalid workspace path', (t) => {
   const ws = new Workspace('/invalid');
   t.is(ws.valid, false);
 });

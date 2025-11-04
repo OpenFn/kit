@@ -56,6 +56,7 @@ export class Workspace {
             const data = fs.readFileSync(stateFilePath, 'utf-8');
             const project = fromAppState(data, {
               format: this.config?.formats.project,
+              config: this.config,
             });
             this.projectPaths.set(project.id, stateFilePath);
             return project;
