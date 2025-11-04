@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { grammar } from 'ohm-js';
+import { isNil } from 'lodash-es';
 import Project from '../Project';
 import Workflow from '../Workflow';
 import slugify from '../util/slugify';
@@ -15,12 +16,12 @@ type GenerateWorkflowOptions = {
   // useful to generate a project with fixed ids
   uuidMap?: Record<string, string>;
 
-  // TODO removing on this PR, I swear to god
   openfnUuid: boolean; // TODO probably need to do this by default?
 };
 
 type GenerateProjectOptions = GenerateWorkflowOptions & {
   uuidMap: Array<Record<string, string>>;
+  uuid?: string | number;
 };
 
 let parser;
@@ -181,20 +182,31 @@ function generateWorkflow(
     parser = createParser();
   }
 
+  // Calculate the seeded uuid here, so that it's the first value
+  let uuid;
+  if (options.openfnUuid) {
+    uuid = options.uuidSeed ? options.uuidSeed++ : randomUUID();
+  }
+
   const raw = parser.parse(def, options);
   if (!raw.name) {
     raw.name = 'Workflow';
   }
+
   if (!raw.id) {
     // Workflow ID is required, so make sure it gets set
     // before calling the constructor
     raw.id = 'workflow';
   }
-
-  if (options.openfnUuid) {
-    raw.openfn ??= {};
-    raw.openfn.uuid = randomUUID();
+  if (options.uuidMap && raw.id in options.uuidMap) {
+    uuid = options.uuidMap[raw.id];
   }
+
+  if (!isNil(uuid) && options.openfnUuid) {
+    raw.openfn ??= {};
+    raw.openfn.uuid = uuid;
+  }
+
   const wf = new Workflow(raw);
   return wf;
 }
@@ -216,7 +228,9 @@ function generateProject(
   return new Project({
     name,
     workflows,
-    openfn: options.openfnUuid && { uuid: randomUUID() },
+    openfn: {
+      uuid: options.uuid ?? (options.openfnUuid ? randomUUID() : null),
+    },
   });
 }
 

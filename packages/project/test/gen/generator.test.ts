@@ -432,6 +432,50 @@ a-b #zz
   t.deepEqual(result, fixtures.ab);
 });
 
+test('it should generate a project with seeded uuids', (t) => {
+  const result = generateProject('x', ['a-b'], {
+    openfnUuid: true,
+    uuidSeed: 1000,
+    uuid: 123,
+  });
+
+  const expected = {
+    id: 'workflow',
+    name: 'Workflow',
+    history: [],
+    steps: [
+      {
+        id: 'a',
+        name: 'a',
+        openfn: {
+          uuid: 'A',
+        },
+        next: {
+          b: {
+            openfn: {
+              uuid: 'AB',
+            },
+          },
+        },
+      },
+      {
+        id: 'b',
+        name: 'b',
+        openfn: {
+          uuid: 'B',
+        },
+      },
+    ],
+  };
+  t.deepEqual(result.openfn, {
+    uuid: 123,
+  });
+
+  t.deepEqual(result.workflows[0].openfn.uuid, 1000);
+  t.deepEqual(result.workflows[0].steps[0].openfn.uuid, 1001);
+  t.deepEqual(result.workflows[0].steps[1].openfn.uuid, 1002);
+});
+
 test('it should generate a simple workflow with mapped uuids', (t) => {
   const result = gen('a-b', t, {
     uuidMap: {
@@ -473,13 +517,15 @@ test('it should generate a simple workflow with mapped uuids', (t) => {
   t.deepEqual(result, expected);
 });
 
-test('it should generate a project with uuids', (t) => {
+test('it should generate a project with mapped uuids', (t) => {
   const result = generateProject('x', ['a-b'], {
+    openfnUuid: true,
     uuidMap: [
       {
         a: 'A',
         b: 'B',
         'a-b': 'AB',
+        workflow: 'W',
       },
     ],
   });
@@ -511,6 +557,9 @@ test('it should generate a project with uuids', (t) => {
         },
       },
     ],
+    openfn: {
+      uuid: 'W',
+    },
   };
 
   t.deepEqual(result.workflows[0].toJSON(), expected);
