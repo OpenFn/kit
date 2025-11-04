@@ -20,7 +20,7 @@ const workflowVersionHandler = async (
   if (options.workflow) {
     const workflow = activeProject?.getWorkflow(options.workflow);
     if (!workflow) {
-      logger.error(`No workflow found with id/name ${options.workflow}`);
+      logger.error(`No workflow found with id ${options.workflow}`);
       return;
     }
     output.set(workflow.name || workflow.id, workflow.getVersionHash());

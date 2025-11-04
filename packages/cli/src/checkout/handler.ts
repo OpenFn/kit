@@ -31,10 +31,9 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   }
 
   if (!switchProject) {
-    logger.error(
-      `Project with id/name ${options.projectId} not found in the workspace`
+    throw new Error(
+      `Project with id ${options.projectId} not found in the workspace`
     );
-    return;
   }
 
   // delete workflow dir before expanding project

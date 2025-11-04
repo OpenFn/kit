@@ -22,7 +22,7 @@ test.beforeEach(() => {
       },
     }),
     '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-      id: '<uuid:staging>>',
+      id: '<uuid:staging>',
       name: 'My Staging',
       workflows: [
         {
@@ -156,13 +156,17 @@ test.serial('get active project', (t) => {
   t.is(workspace.activeProjectId, 'my-project');
 });
 
-test.serial('checkout: invalid project id', (t) => {
-  checkoutHandler(
-    { command: 'checkout', projectId: 'not-known', projectPath: '/ws' },
-    logger
+test.serial('checkout: invalid project id', async (t) => {
+  await t.throwsAsync(
+    () =>
+      checkoutHandler(
+        { command: 'checkout', projectId: 'not-known', projectPath: '/ws' },
+        logger
+      ),
+    {
+      message: 'Project with id not-known not found in the workspace',
+    }
   );
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Project with id/name not-known not found in the workspace');
 });
 
 test.serial('checkout: to a different valid project', async (t) => {
@@ -259,4 +263,155 @@ test.serial('checkout: switching to and back between projects', async (t) => {
     fs.readdirSync('/ws/workflows').sort(),
     ['simple-workflow-main', 'another-workflow-main'].sort()
   );
+});
+
+test.serial('respect openfn.yaml settings', async (t) => {
+  mock({
+    '/ws1/w': {},
+    '/ws1/openfn.yaml': jsonToYaml({
+      project: {
+        id: 'main',
+      },
+      workspace: {
+        dirs: {
+          workflows: 'w',
+          projects: 'p',
+        },
+        formats: {
+          openfn: 'yaml', // TODO need to test that this can be JSON too
+          project: 'json',
+          workflow: 'json',
+        },
+      },
+    }),
+    '/ws1/p/staging@app.openfn.org.json': JSON.stringify({
+      id: '<uuid:staging>',
+      name: 'Staging',
+      workflows: [
+        {
+          name: 'Simple Workflow',
+          id: 'wf1',
+          jobs: [
+            {
+              name: 'Transform data to FHIR standard',
+              body: '.',
+              adaptor: '@openfn/language-http@latest',
+              id: 'job-a',
+            },
+          ],
+          triggers: [
+            {
+              type: 'webhook',
+              enabled: true,
+              id: 'trigger-id',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-id',
+              target_job_id: 'job-a',
+              enabled: true,
+              source_trigger_id: 'trigger-id',
+              condition_type: 'always',
+            },
+          ],
+        },
+      ],
+    }),
+    '/ws1/p/project@app.openfn.org.json': JSON.stringify({
+      id: '<uuid:main>',
+      name: 'Main',
+      workflows: [
+        {
+          name: 'simple-workflow-main',
+          id: 'wf-id-main',
+          jobs: [
+            {
+              name: 'Transform data to FHIR standard',
+              body: 'fn(s => s)',
+              adaptor: '@openfn/language-http@latest',
+              id: 'job-a',
+            },
+          ],
+          triggers: [
+            {
+              type: 'webhook',
+              enabled: true,
+              id: 'trigger-id',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-id',
+              target_job_id: 'job-a',
+              enabled: true,
+              source_trigger_id: 'trigger-id',
+              condition_type: 'always',
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  await checkoutHandler(
+    {
+      command: 'checkout',
+      projectId: 'staging',
+      projectPath: '/ws1',
+    },
+    logger
+  );
+
+  // config file should be correct
+  const yaml = fs.readFileSync('/ws1/openfn.yaml', 'utf8');
+  t.is(
+    yaml,
+    `project:
+  uuid: <uuid:staging>
+  name: Staging
+  id: staging
+workspace:
+  dirs:
+    projects: p
+    workflows: w
+  formats:
+    openfn: yaml
+    project: json
+    workflow: json
+`
+  );
+
+  // workflow file should be correct
+  const wf = fs.readFileSync(
+    '/ws1/w/simple-workflow/simple-workflow.json',
+    'utf8'
+  );
+
+  t.deepEqual(JSON.parse(wf), {
+    id: 'simple-workflow',
+    name: 'Simple Workflow',
+    options: {},
+    steps: [
+      {
+        id: 'trigger',
+        type: 'webhook',
+        next: {
+          'transform-data-to-fhir-standard': {
+            disabled: false,
+            condition: true,
+            openfn: {
+              uuid: 'edge-id',
+            },
+          },
+        },
+      },
+      {
+        id: 'transform-data-to-fhir-standard',
+        name: 'Transform data to FHIR standard',
+        adaptor: '@openfn/language-http@latest',
+        expression: './transform-data-to-fhir-standard.js',
+      },
+    ],
+  });
 });
