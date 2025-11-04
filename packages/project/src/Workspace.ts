@@ -29,6 +29,7 @@ export class Workspace {
       context = loadWorkspaceFile(content, type);
       this.isValid = true;
     } catch (e) {
+      // TODO use logger
       console.error(e);
       // invalid workspace
       return;
@@ -37,25 +38,28 @@ export class Workspace {
     this.activeProject = context.project;
 
     const projectsPath = path.join(workspacePath, this.config.dirs.projects);
-
     // dealing with projects
     if (this.isValid && pathExists(projectsPath, 'directory')) {
+      const ext = `.${this.config.formats.project}`;
       const stateFiles = fs
         .readdirSync(projectsPath)
         .filter(
           (fileName) =>
-            PROJECT_EXTENSIONS.includes(path.extname(fileName)) &&
+            path.extname(fileName) === ext &&
             path.parse(fileName).name !== 'openfn'
         );
 
       this.projects = stateFiles
         .map((file) => {
-          const stateFilePath = path.join(projectsPath, file);
-          const data = fs.readFileSync(stateFilePath, 'utf-8');
-          const project = fromAppState(data, { format: 'yaml' });
-          console.log({ project });
-          this.projectPaths.set(project.id, stateFilePath);
-          return project;
+          try {
+            const stateFilePath = path.join(projectsPath, file);
+            const data = fs.readFileSync(stateFilePath, 'utf-8');
+            const project = fromAppState(data, {
+              format: this.config?.formats.project,
+            });
+            this.projectPaths.set(project.id, stateFilePath);
+            return project;
+          } catch (e) {}
         })
         .filter((s) => s);
     }

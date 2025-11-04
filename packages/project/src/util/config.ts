@@ -160,7 +160,7 @@ export const findWorkspaceFile = (dir: string = '.') => {
         content = JSON.parse(file);
       }
     } catch (e) {
-      console.log(e);
+      // console.log(e);
       // TODO better error handling
       throw e;
     }
