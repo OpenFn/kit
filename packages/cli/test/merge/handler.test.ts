@@ -1,4 +1,4 @@
-import { jsonToYaml, Workspace } from '@openfn/project/dist';
+import Project, { jsonToYaml, Workspace } from '@openfn/project';
 import test from 'ava';
 import mock from 'mock-fs';
 import mergeHandler from '../../src/merge/handler';
@@ -100,7 +100,7 @@ test.beforeEach(() => {
 
 const logger = createMockLogger('', { level: 'debug' });
 
-test('merging into the same project', async (t) => {
+test.serial('merging into the same project', async (t) => {
   await mergeHandler(
     {
       command: 'merge',
@@ -117,7 +117,7 @@ test('merging into the same project', async (t) => {
   t.is(message, 'Merging into the same project not allowed');
 });
 
-test('merging a different project into checked-out', async (t) => {
+test.serial('merging a different project into checked-out', async (t) => {
   // state of main projects workflow before sandbox is merged in
   const beforeWs = new Workspace('/ws');
   t.is(beforeWs.activeProject.id, 'my-project');
@@ -154,4 +154,29 @@ test('merging a different project into checked-out', async (t) => {
     message,
     'Project my-sandbox has been merged into Project my-project successfully'
   );
+});
+
+test.serial('Write to a different project file', async (t) => {
+  // state of main projects workflow before sandbox is merged in
+  const before = new Workspace('/ws');
+  t.is(before.activeProject.id, 'my-project');
+
+  // do merging
+  await mergeHandler(
+    {
+      command: 'merge',
+      projectPath: '/ws',
+      projectId: 'my-sandbox',
+      removeUnmapped: false,
+      workflowMappings: {},
+      outputPath: '/ws/backup.yaml',
+    },
+    logger
+  );
+
+  // Read in the state file and check it matches
+  const merged = await Project.from('path', '/ws/backup.yaml');
+  t.is(merged.id, 'my-project');
+  t.is(merged.workflows[0].steps[1].name, 'Job X');
+  t.is(merged.workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
 });

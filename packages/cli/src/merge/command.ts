@@ -13,7 +13,7 @@ export type MergeOptions = Required<
     | 'workflowMappings'
   >
 > &
-  Pick<Opts, 'log' | 'force'>;
+  Pick<Opts, 'log' | 'force' | 'outputPath'>;
 
 const options = [
   o.projectId,
@@ -21,6 +21,7 @@ const options = [
   o.removeUnmapped,
   o.workflowMappings,
   o.log,
+  o.outputPath,
   override(o.force, {
     description: 'Force a merge even when workflows are incompatible',
   }),

@@ -45,7 +45,8 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     return;
   }
 
-  const finalPath = workspace.getProjectPath(targetProject.id);
+  const finalPath =
+    options.outputPath ?? workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
@@ -56,7 +57,9 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     workflowMappings: options.workflowMappings,
     force: options.force,
   });
-  const yaml = final.serialize('state', { format: 'yaml' });
+  const yaml = final.serialize('state', {
+    format: final.config.formats.project,
+  });
   await fs.writeFile(finalPath, yaml);
 
   // Checkout after merge. to unwrap updated files into filesystem
@@ -64,7 +67,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     {
       command: 'checkout',
       projectPath: commandPath,
-      projectId: final.id,
+      projectId: options.outputPath ? finalPath : final.id,
       log: options.log,
     },
     logger

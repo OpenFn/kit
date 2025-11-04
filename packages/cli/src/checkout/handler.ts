@@ -21,7 +21,9 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   let switchProject;
   if (/\.(yaml|json)$/.test(options.projectId)) {
     // TODO: should we allow checkout into an arbitrary folder?
-    const filePath = path.join(commandPath, options.projectId);
+    const filePath = options.projectId.startsWith('/')
+      ? options.projectId
+      : path.join(commandPath, options.projectId);
     logger.debug('Loading project from path ', filePath);
     switchProject = await Project.from('path', filePath, {
       config,
