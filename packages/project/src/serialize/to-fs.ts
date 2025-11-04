@@ -39,7 +39,9 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
   }
 
   const root =
-    project.config.dirs.workflow ?? project.config.workflowRoot ?? 'workflows/';
+    project.config.dirs.workflows ??
+    project.config.workflowRoot ??
+    'workflows/';
 
   const path = nodepath.join(root, workflow.id, workflow.id);
 
