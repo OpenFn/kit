@@ -21,7 +21,15 @@ const options = [
   o.removeUnmapped,
   o.workflowMappings,
   o.log,
-  o.outputPath,
+  // custom output because we don't want defaults or anyything
+  {
+    name: 'output-path',
+    yargs: {
+      alias: 'o',
+      description:
+        'Optionally write the merged project file to a custom location',
+    },
+  },
   override(o.force, {
     description: 'Force a merge even when workflows are incompatible',
   }),

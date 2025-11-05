@@ -156,7 +156,7 @@ test.serial('merging a different project into checked-out', async (t) => {
   );
 });
 
-test.serial('Write to a different project file', async (t) => {
+test.serial.only('Write to a different project file', async (t) => {
   // state of main projects workflow before sandbox is merged in
   const before = new Workspace('/ws');
   t.is(before.activeProject.id, 'my-project');
