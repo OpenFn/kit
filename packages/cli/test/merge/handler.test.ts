@@ -262,3 +262,63 @@ test.serial('Write to JSON using project config', async (t) => {
   t.is(merged.workflows[0].steps[1].name, 'Job X');
   t.is(merged.workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
 });
+
+test.serial('merge with custom base', async (t) => {
+  mock({
+    '/ws/openfn.yaml': jsonToYaml({
+      project: {
+        id: 'my-project',
+        name: 'My Project',
+      },
+      workspace: {
+        dirs: {
+          workflows: 'workflows',
+        },
+        formats: {
+          openfn: 'yaml',
+          project: 'yaml',
+          workflow: 'yaml',
+        },
+      },
+    }),
+    '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml(sandbox),
+    '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml(main),
+    // This project has id main but a different name
+    // If merging using just the active project, we'll have ambiguity
+    // But we CAN merge it through --base flag
+    '/ws/.projects/fake@app.openfn.org.yaml': jsonToYaml({
+      ...main,
+      name: 'FAKE PROJECT',
+    }),
+  });
+
+  // state of main projects workflow before sandbox is merged in
+  const before = new Workspace('/ws');
+  t.is(before.activeProject.id, 'my-project');
+
+  t.is(before.list()[0].workflows[0].steps[1].name, 'Job A');
+  t.is(before.list()[0].workflows[0].steps[1].openfn?.uuid, 'job-a'); // id Aot retained
+
+  // do merging
+  await mergeHandler(
+    {
+      command: 'merge',
+      projectPath: '/ws',
+      projectId: 'my-sandbox',
+      base: '/ws/.projects/project@app.openfn.org.yaml',
+      removeUnmapped: false,
+      workflowMappings: {},
+    },
+    logger
+  );
+
+  // Read in the state file and check it matches
+  const merged = await Project.from(
+    'path',
+    '/ws/.projects/project@app.openfn.org.yaml'
+  );
+  t.is(merged.id, 'my-project');
+  t.is(merged.name, 'My Project'); // not fake project!
+  t.is(merged.workflows[0].steps[1].name, 'Job X');
+  t.is(merged.workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
+});

@@ -13,12 +13,18 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     return;
   }
 
-  // The target project - the think we apply changes to - is
-  // whatever is checked out
-  const targetProject = workspace.getActiveProject();
-  if (!targetProject) {
-    logger.error(`No project currently checked out`);
-    return;
+  let targetProject: Project;
+  if (options.base) {
+    const basePath = path.resolve(options.base);
+    logger.debug('Loading target project from path', basePath);
+    targetProject = await Project.from('path', basePath);
+  } else {
+    targetProject = workspace.getActiveProject()!;
+    if (!targetProject) {
+      logger.error(`No project currently checked out`);
+      return;
+    }
+    logger.debug(`Loading target project from workspace (${targetProject.id})`);
   }
 
   // Lookup the source project - the thing we are getting changes from
@@ -28,6 +34,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     logger.debug('Loading source project from path ', filePath);
     sourceProject = await Project.from('path', filePath);
   } else {
+    logger.debug(`Loading source project from workspace ${options.projectId}`);
     sourceProject = workspace.get(options.projectId);
   }
   if (!sourceProject) {
@@ -44,15 +51,12 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     logger.error('The checked out project has no id');
     return;
   }
-  logger.debug(options);
   const finalPath =
     options.outputPath ?? workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
   }
-  logger.debug('final path', finalPath);
-
   const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
     workflowMappings: options.workflowMappings,
@@ -66,7 +70,6 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
   } else if (options.outputPath?.endsWith('.yaml')) {
     outputFormat = 'yaml';
   }
-  logger.debug('Output format', outputFormat);
 
   let finalState = final.serialize('state', {
     format: outputFormat,
