@@ -13,6 +13,8 @@ import baseMerge from '../util/base-merge';
 
 type Node = Workflow['steps'][number];
 
+const clone = (obj) => JSON.parse(JSON.stringify(obj));
+
 export function mergeWorkflows(
   source: Workflow,
   target: Workflow,
@@ -22,40 +24,43 @@ export function mergeWorkflows(
   // step or edge, but we're basically doing this
 
   const targetNodes: Record<string, Node> = {};
-  for (const tstep of target.steps)
-    targetNodes[tstep.openfn.uuid || tstep.id] = tstep;
+  for (const targetStep of target.steps) {
+    targetNodes[targetStep.openfn.uuid || targetStep.id] = targetStep;
+  }
+
   const steps: Node[] = [];
-  for (const sstep of source.steps) {
-    let newNode: Node = sstep;
-    if (sstep.id in mappings.nodes) {
-      const preservedId = mappings.nodes[sstep.id];
-      const preservedEdgeIds = {};
-      for (const toNode of Object.keys(
-        typeof sstep.next === 'string'
+  for (const sourceStep of source.steps) {
+    let newNode: Node = clone(sourceStep);
+    if (sourceStep.id in mappings.nodes) {
+      const preservedId = mappings.nodes[sourceStep.id];
+      const toNodeIds = Object.keys(
+        typeof sourceStep.next === 'string'
           ? { [tstep.next]: true }
-          : sstep.next || {}
-      )) {
+          : sourceStep.next || {}
+      );
+      for (const toNode of toNodeIds) {
         // find step - toNode
-        const key = sstep.id + '-' + toNode;
-        if (typeof mappings.edges[key] === 'string') {
+        const key = sourceStep.id + '-' + toNode;
+        if (key in mappings.edges) {
           const preservedEdgeId = mappings.edges[key];
-          const toEdge = sstep.next?.[toNode] || {};
-          preservedEdgeIds[toNode] = sstep.next[toNode] = {
-            ...toEdge,
-            openfn: { ...(toEdge?.openfn || {}), uuid: preservedEdgeId },
+          const edge = sourceStep.next?.[toNode] || {};
+
+          sourceStep.next[toNode] = {
+            ...edge,
+            openfn: Object.assign({}, edge?.openfn, {
+              uuid: preservedEdgeId,
+            }),
           };
         }
       }
 
       // do a node merge
-      // it's a bit tricky knowing all the properties to be merged
-      newNode = baseMerge(targetNodes[preservedId], sstep, [
+      newNode = baseMerge(targetNodes[preservedId], sourceStep, [
         'id',
         'name',
         'adaptor',
         'expression',
         'next',
-        'previous',
       ]);
     } else {
       // TODO Do we need to generate a UUID here?

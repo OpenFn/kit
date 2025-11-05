@@ -194,7 +194,7 @@ test('merge a new step into an existing workflow', (t) => {
   t.deepEqual(y, wf_b.steps[1]);
 });
 
-test('merge with an edge and no changes', (t) => {
+test.only('merge with an edge and no changes', (t) => {
   // create a base workflow
   const wf = {
     name: 'wf',
@@ -218,8 +218,8 @@ test('merge with an edge and no changes', (t) => {
   };
 
   // step up two copies with UUIDS
-  const wf_a = assignUUIDs(wf);
-  const wf_b = assignUUIDs(wf);
+  const wf_a = assignUUIDs(wf, () => ++idgen);
+  const wf_b = assignUUIDs(wf, () => ++idgen);
   // console.log(JSON.stringify(wf_a, null, 2));
 
   const main = createProject(wf_a, 'a');
@@ -233,7 +233,7 @@ test('merge with an edge and no changes', (t) => {
   t.is(result.openfn.uuid, main.openfn.uuid);
 
   const step = result.workflows[0].steps[0];
-  // The step should be totally unchanged
+  // The step and edge should be totally unchanged
   t.deepEqual(step.next, wf_a.steps[0].next);
 });
 
