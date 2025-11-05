@@ -58,7 +58,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     force: options.force,
   });
 
-  let outputFormat = final.config.formats.project;
+  let outputFormat = workspace.config!.formats.project;
   // If outputPath has a JSON file extension, use that
   if (options.outputPath?.endsWith('.json')) {
     outputFormat = 'json';
@@ -73,6 +73,8 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     finalState = JSON.stringify(finalState, null, 2);
   }
   await fs.writeFile(finalPath, finalState);
+
+  logger.info(`Updated statefile at `, finalPath);
 
   // Checkout after merge. to unwrap updated files into filesystem
   await checkoutHandler(
