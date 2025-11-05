@@ -44,13 +44,14 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     logger.error('The checked out project has no id');
     return;
   }
-
+  logger.debug(options);
   const finalPath =
     options.outputPath ?? workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
   }
+  logger.debug('final path', finalPath);
 
   const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
@@ -65,6 +66,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
   } else if (options.outputPath?.endsWith('.yaml')) {
     outputFormat = 'yaml';
   }
+  logger.debug('Output format', outputFormat);
 
   let finalState = final.serialize('state', {
     format: outputFormat,
@@ -75,6 +77,10 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
   await fs.writeFile(finalPath, finalState);
 
   logger.info(`Updated statefile at `, finalPath);
+
+  logger.info('Checking out merged project to filesystem');
+
+  // TODO support --no-checkout to merge without expanding
 
   // Checkout after merge. to unwrap updated files into filesystem
   await checkoutHandler(

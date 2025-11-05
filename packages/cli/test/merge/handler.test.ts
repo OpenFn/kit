@@ -238,6 +238,9 @@ test.serial('Write to JSON using project config', async (t) => {
   const before = new Workspace('/ws');
   t.is(before.activeProject.id, 'my-project');
 
+  t.is(before.list()[0].workflows[0].steps[1].name, 'Job A');
+  t.is(before.list()[0].workflows[0].steps[1].openfn?.uuid, 'job-a'); // id Aot retained
+
   // do merging
   await mergeHandler(
     {
