@@ -24,13 +24,11 @@ export function mergeWorkflows(
   const targetNodes: Record<string, Node> = {};
   for (const tstep of target.steps)
     targetNodes[tstep.openfn.uuid || tstep.id] = tstep;
-
   const steps: Node[] = [];
   for (const sstep of source.steps) {
     let newNode: Node = sstep;
-    if (typeof mappings.nodes[sstep.id] === 'string') {
+    if (sstep.id in mappings.nodes) {
       const preservedId = mappings.nodes[sstep.id];
-      // how do I merge the edges?
       const preservedEdgeIds = {};
       for (const toNode of Object.keys(
         typeof sstep.next === 'string'
