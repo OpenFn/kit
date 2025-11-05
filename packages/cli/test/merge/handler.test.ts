@@ -180,3 +180,31 @@ test.serial('Write to a different project file', async (t) => {
   t.is(merged.workflows[0].steps[1].name, 'Job X');
   t.is(merged.workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
 });
+
+test.serial(
+  'Write to a different project file as JSON using extension',
+  async (t) => {
+    // state of main projects workflow before sandbox is merged in
+    const before = new Workspace('/ws');
+    t.is(before.activeProject.id, 'my-project');
+
+    // do merging
+    await mergeHandler(
+      {
+        command: 'merge',
+        projectPath: '/ws',
+        projectId: 'my-sandbox',
+        removeUnmapped: false,
+        workflowMappings: {},
+        outputPath: '/ws/backup.json',
+      },
+      logger
+    );
+
+    // Read in the state file and check it matches
+    const merged = await Project.from('path', '/ws/backup.json');
+    t.is(merged.id, 'my-project');
+    t.is(merged.workflows[0].steps[1].name, 'Job X');
+    t.is(merged.workflows[0].steps[1].openfn?.uuid, 'job-a'); // id got retained
+  }
+);

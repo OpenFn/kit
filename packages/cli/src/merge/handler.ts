@@ -57,10 +57,22 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     workflowMappings: options.workflowMappings,
     force: options.force,
   });
-  const yaml = final.serialize('state', {
-    format: final.config.formats.project,
+
+  let outputFormat = final.config.formats.project;
+  // If outputPath has a JSON file extension, use that
+  if (options.outputPath?.endsWith('.json')) {
+    outputFormat = 'json';
+  } else if (options.outputPath?.endsWith('.yaml')) {
+    outputFormat = 'yaml';
+  }
+
+  let finalState = final.serialize('state', {
+    format: outputFormat,
   });
-  await fs.writeFile(finalPath, yaml);
+  if (outputFormat === 'json') {
+    finalState = JSON.stringify(finalState, null, 2);
+  }
+  await fs.writeFile(finalPath, finalState);
 
   // Checkout after merge. to unwrap updated files into filesystem
   await checkoutHandler(
