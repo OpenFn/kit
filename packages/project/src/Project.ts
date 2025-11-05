@@ -2,7 +2,7 @@ import type l from '@openfn/lexicon';
 import { humanId } from 'human-id';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
-import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
+import fromAppState from './parse/from-app-state';
 import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
@@ -11,12 +11,9 @@ import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
 import { Workspace } from './Workspace';
-import { buildConfig, WorkspaceConfig } from './util/config';
-
-type MergeOptions = {
-  force?: boolean;
-  workflows?: string[]; // which workflows to include
-};
+import { buildConfig } from './util/config';
+import { Provisioner } from '@openfn/lexicon/lightning';
+import { WorkspaceConfig } from '@openfn/lexicon';
 
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
@@ -34,7 +31,7 @@ export class Project {
   /** Project id. Must be url safe. May be derived from the name. NOT a UUID */
   id: string;
 
-  description?: string;
+  description?: string | null;
 
   // array of version hashes
   history: string[] = [];
@@ -50,18 +47,19 @@ export class Project {
   meta: any;
 
   // this contains meta about the connected openfn project
-  openfn?: l.ProjectConfig;
+  openfn?: l.ProjectMeta;
 
   workspace?: Workspace;
 
-  config: WorkspaceConfig;
+  config: l.WorkspaceConfig;
 
   collections: any;
 
   static from(
     type: 'state',
-    data: any,
-    options: Partial<l.ProjectConfig>
+    data: Provisioner.Project,
+    meta: l.ProjectMeta,
+    config: l.WorkspaceConfig
   ): Project;
   static from(type: 'fs', options: FromFsConfig): Project;
   static from(
@@ -72,10 +70,11 @@ export class Project {
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options: FromAppStateConfig = {}
+    options: any = {},
+    config: any
   ): Project {
     if (type === 'state') {
-      return fromAppState(data, options);
+      return fromAppState(data, options, config);
     } else if (type === 'fs') {
       return fromFs(data, options);
     } else if (type === 'path') {
@@ -100,13 +99,14 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: l.Project, config: RepoOptions = {}) {
-    this.setConfig(config);
+  constructor(data: l.Project, config: l.WorkspaceConfig) {
+    this.config = buildConfig(config);
 
     this.id =
-      data.id ?? data.name
+      data.id ??
+      (data.name
         ? slugify(data.name)
-        : humanId({ separator: '-', capitalize: false });
+        : humanId({ separator: '-', capitalize: false }));
 
     this.name = data.name;
 

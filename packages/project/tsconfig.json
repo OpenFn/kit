@@ -1,9 +1,8 @@
 {
   "extends": "../../tsconfig.common",
-  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
     "module": "ESNext",
-    "sourceMap": true,
-    "noCheck": true
+    "sourceMap": true
   }
 }

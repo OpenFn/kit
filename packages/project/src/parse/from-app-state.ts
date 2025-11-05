@@ -1,31 +1,25 @@
-// Load a Project from app state
+// Load a Project from v1 app state
 
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
+import { omit } from 'lodash-es';
+
 import { Project } from '../Project';
 import { yamlToJson } from '../util/yaml';
 import renameKeys from '../util/rename-keys';
-import { WorkspaceConfig } from '../util/config';
+import slugify from '../util/slugify';
 
-// Extra metadata used to init the project
-export type FromAppStateConfig = {
-  endpoint: string;
-  env?: string;
-  fetchedAt?: string;
-  format?: 'json' | 'yaml';
-
-  // Allow workspace config to be passed
-  // TODO can we just pass a Workspace?
-  config: WorkspaceConfig;
+type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
+  format?: 'yaml' | 'json';
 };
 
-function slugify(text) {
-  return text.replace(/\W/g, ' ').trim().replace(/\s+/g, '-').toLowerCase();
-}
-
-export default (state: Provisioner.Project, config: FromAppStateConfig) => {
+export default (
+  state: Provisioner.Project,
+  meta: l.ProjectMeta,
+  config: fromAppStateConfig = {}
+) => {
   if (typeof state === 'string') {
-    if (config?.format === 'yaml') {
+    if (config.format === 'yaml') {
       state = yamlToJson(state);
     } else {
       state = JSON.parse(state);
@@ -46,33 +40,32 @@ export default (state: Provisioner.Project, config: FromAppStateConfig) => {
 
   const proj: Partial<l.Project> = {
     name,
-    description,
+    description: description ?? undefined,
     collections,
     credentials,
     options,
+    config: omit(config, ['format']),
   };
 
+  const { id: uuid, ...restMeta } = meta;
   proj.openfn = {
-    uuid: id,
-    name: name,
-    endpoint: config.endpoint,
-    env: config.env,
-    inserted_at,
-    updated_at,
+    // @ts-ignore
+    uuid,
+    ...restMeta,
   };
 
   // TODO maybe this for local metadata, stuff that isn't synced?
-  proj.meta = {
-    fetched_at: config.fetchedAt,
-  };
+  // proj.meta = {
+  //   fetched_at: config.fetchedAt,
+  // };
 
   proj.workflows = state.workflows.map(mapWorkflow);
 
-  return new Project(proj as l.Project, config?.config);
+  return new Project(proj as l.Project, config);
 };
 
 const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
-  const e = {
+  const e: any = {
     disabled: !edge.enabled,
   };
   if (edge.condition_type === 'always') {
@@ -134,11 +127,11 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
 
     const { body: expression, name, adaptor, ...remoteProps } = step;
 
-    const s = {
+    const s: any /*l.Job*/ = {
       id: slugify(name),
       name: name,
       expression,
-      adaptor,
+      adaptor, // TODO is this slug wrong?
       openfn: renameKeys(remoteProps, { id: 'uuid' }),
     };
 
