@@ -156,7 +156,7 @@ test('find openfn.json', (t) => {
 test('generate openfn.yaml', (t) => {
   const proj = new Project(
     {
-      id: 'p1',
+      id: 'my-project',
       name: 'My Project',
       openfn: {
         uuid: 1234,

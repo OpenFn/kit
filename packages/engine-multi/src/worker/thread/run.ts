@@ -67,7 +67,7 @@ register({
       linker: {
         repo: repoDir,
         whitelist,
-        cacheKey: plan.id,
+        cacheKey: `${plan.id}`,
       },
       profile,
       profilePollInterval,
@@ -87,7 +87,7 @@ register({
       },
     };
 
-    return execute(plan.id!, async () => {
+    return execute(`${plan.id}`!, async () => {
       const start = Date.now();
       publish(COMPILE_START, {
         workflowId: plan.id,

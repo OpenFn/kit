@@ -25,9 +25,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
       ? options.projectId
       : path.join(commandPath, options.projectId);
     logger.debug('Loading project from path ', filePath);
-    switchProject = await Project.from('path', filePath, {
-      config,
-    });
+    switchProject = await Project.from('path', filePath, config);
   } else {
     switchProject = workspace.get(options.projectId);
   }

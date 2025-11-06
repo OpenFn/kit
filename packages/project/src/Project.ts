@@ -2,7 +2,7 @@ import type l from '@openfn/lexicon';
 import { humanId } from 'human-id';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
-import fromAppState, { FromAppStateConfig } from './parse/from-app-state';
+import fromAppState, { fromAppStateConfig } from './parse/from-app-state';
 import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
@@ -11,18 +11,22 @@ import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
 import { Workspace } from './Workspace';
-import { buildConfig, WorkspaceConfig } from './util/config';
-
-type MergeOptions = {
-  force?: boolean;
-  workflows?: string[]; // which workflows to include
-};
+import { buildConfig } from './util/config';
+import { Provisioner } from '@openfn/lexicon/lightning';
+import { UUID, WorkspaceConfig } from '@openfn/lexicon';
 
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
 
-// A single openfn project
-// could be an app project or a checked out fs
+type UUIDMap = {
+  [workflowId: string]: {
+    self?: UUID;
+    children: {
+      [nodeId: string]: UUID;
+    };
+  };
+};
+
 export class Project {
   // what schema version is this?
   // And how are we tracking this?
@@ -50,47 +54,54 @@ export class Project {
   meta: any;
 
   // this contains meta about the connected openfn project
-  openfn?: l.ProjectConfig;
+  openfn?: l.ProjectMeta;
 
   workspace?: Workspace;
 
-  config: WorkspaceConfig;
+  config: l.WorkspaceConfig;
 
   collections: any;
 
-  static from(
+  credentials: string[];
+
+  static async from(
     type: 'state',
-    data: any,
-    options: Partial<l.ProjectConfig>
-  ): Project;
-  static from(type: 'fs', options: FromFsConfig): Project;
-  static from(
+    data: Provisioner.Project,
+    meta?: Partial<l.ProjectMeta>,
+    config?: fromAppStateConfig
+  ): Promise<Project>;
+  static async from(type: 'fs', options: FromFsConfig): Promise<Project>;
+  static async from(
     type: 'path',
     data: string,
     options?: { config?: FromPathConfig }
-  ): Project;
-  static from(
+  ): Promise<Project>;
+  static async from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options: FromAppStateConfig = {}
-  ): Project {
+    ...rest: any[]
+  ): Promise<Project> {
     if (type === 'state') {
-      return fromAppState(data, options);
+      return fromAppState(data, rest[0], rest[1]);
     } else if (type === 'fs') {
-      return fromFs(data, options);
+      return fromFs(data);
     } else if (type === 'path') {
-      return fromPath(data, options);
+      return fromPath(data, rest[0]);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }
 
   // Diff two projects
-  static diff(a: Project, b: Project) {}
+  // /static diff(a: Project, b: Project) {}
 
   // Merge a source project (staging) into the target project (main)
   // Returns a new Project
   // TODO: throw if histories have diverged
-  static merge(source: Project, target: Project, options: MergeProjectOptions) {
+  static merge(
+    source: Project,
+    target: Project,
+    options?: Partial<MergeProjectOptions>
+  ) {
     return merge(source, target, options);
   }
 
@@ -100,23 +111,24 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: l.Project, config: RepoOptions = {}) {
-    this.setConfig(config);
+  constructor(data: Partial<l.Project>, config?: Partial<l.WorkspaceConfig>) {
+    this.config = buildConfig(config);
 
     this.id =
-      data.id ?? data.name
+      data.id ??
+      (data.name
         ? slugify(data.name)
-        : humanId({ separator: '-', capitalize: false });
+        : humanId({ separator: '-', capitalize: false }));
 
     this.name = data.name;
 
-    this.description = data.description;
-    this.openfn = data.openfn;
+    this.description = data.description ?? undefined;
+    this.openfn = data.openfn as l.ProjectMeta; // TODO shaky typing here tbh
     this.options = data.options;
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
-    this.meta = data.meta;
+    // this.meta = data.meta ?? {};
   }
 
   setConfig(config: Partial<WorkspaceConfig>) {
@@ -148,7 +160,7 @@ export class Project {
   }
 
   // Compare this project with another and return a diff
-  compare(proj: Project) {}
+  // compare(proj: Project) {}
 
   // find the UUID for a given node or edge
   // returns null if it doesn't exist
@@ -162,8 +174,8 @@ export class Project {
   /**
    * Returns a map of ids:uuids for everything in the project
    */
-  getUUIDMap(options: { workflows: boolean; project: false } = {}) {
-    const result = {};
+  getUUIDMap(): UUIDMap {
+    const result: UUIDMap = {};
     for (const wf of this.workflows) {
       result[wf.id] = {
         self: wf.openfn?.uuid,

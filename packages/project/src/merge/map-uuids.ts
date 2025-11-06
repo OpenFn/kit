@@ -1,5 +1,4 @@
-import { Job } from '@openfn/lexicon';
-import { Project } from '../Project';
+import { Job, UUID } from '@openfn/lexicon';
 import Workflow from '../Workflow';
 
 export interface MappingResults {
@@ -10,7 +9,7 @@ export interface MappingResults {
 type EdgesType = Record<string, string[]>;
 type MapStepResult = {
   filtered: boolean;
-  candidates: Workflow['steps'][number];
+  candidates: Workflow['steps'];
 };
 
 /**
@@ -70,8 +69,8 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       );
 
       if (mappingResult) {
-        nodeMapping[sourceStep.id] = getStepUuid(mappingResult);
-        idMap.set(sourceStep.id, mappingResult.id);
+        nodeMapping[sourceStep.id!] = getStepUuid(mappingResult) as string;
+        idMap.set(sourceStep.id!, mappingResult.id!);
       }
     }
     prevUnmapped = remainingUnmapped.length;
@@ -105,8 +104,8 @@ function mapRootNodes(
   const targetRoot = target.getRoot();
 
   if (sourceRoot && targetRoot) {
-    idMap.set(sourceRoot.id, targetRoot.id);
-    nodeMapping[sourceRoot.id] = getStepUuid(targetRoot);
+    idMap.set(sourceRoot.id!, targetRoot.id!);
+    nodeMapping[sourceRoot.id!] = getStepUuid(targetRoot) as string;
   }
 }
 
@@ -124,7 +123,7 @@ function getUnmappedCandidates(
   idMap: Map<string, string>
 ): Workflow['steps'] {
   const mappedIds = new Set(idMap.values());
-  return unmappedTarget.filter((step) => !mappedIds.has(step.id));
+  return unmappedTarget.filter((step) => !mappedIds.has(step.id!));
 }
 
 // finds the best match for a source step using multiple strategies
@@ -199,7 +198,7 @@ function findBestMatch(
 // maps edges between source and target workflows
 function mapEdges(
   sourceEdges: EdgesType,
-  targetEdges: EdgesType,
+  _targetEdges: EdgesType, // TODO why is this not used?
   idMap: Map<string, string>,
   getTargetUUID: (id: string) => string
 ): Record<string, string> {
@@ -225,8 +224,8 @@ function mapEdges(
 }
 
 // gets UUID for a step
-function getStepUuid(step: Workflow['steps'][number]): string {
-  return step?.openfn?.uuid || step.id;
+function getStepUuid(step: Workflow['steps'][number]): UUID | undefined {
+  return step?.openfn?.uuid;
 }
 
 // MAPPING FUNCTIONS
@@ -247,11 +246,11 @@ function mapStepsById(
   target: Workflow['steps']
 ): MapStepsByIdResult {
   const targetIndex: Record<string, Workflow['steps'][number]> = {};
-  const mapping: Record<string, string> = {};
+  const mapping: Record<string | number, string> = {};
   const idMap = new Map<string, string>();
 
   for (const targetStep of target) {
-    targetIndex[targetStep.id] = targetStep;
+    targetIndex[targetStep.id!] = targetStep;
   }
 
   const unmappedSourceIndices: number[] = [];
@@ -259,12 +258,13 @@ function mapStepsById(
 
   for (let i = 0; i < source.length; i++) {
     const sourceStep = source[i];
-    const matchingTarget = targetIndex[sourceStep.id];
+    const matchingTarget = targetIndex[sourceStep.id!];
 
     if (matchingTarget) {
       // direct match found
+      // @ts-ignore
       mapping[sourceStep.id] = getStepUuid(matchingTarget);
-      idMap.set(sourceStep.id, matchingTarget.id);
+      idMap.set(sourceStep.id!, matchingTarget.id!);
 
       // remove from unmapped target list
       const targetIndex = unmappedTarget.findIndex(
@@ -303,7 +303,7 @@ function findByExpression(
   steps: Workflow['steps']
 ): Workflow['steps'] {
   return steps.filter(
-    (step: Job) =>
+    (step: any) =>
       step.expression &&
       step.expression.trim() &&
       step.expression === expression
@@ -322,7 +322,7 @@ function findByParent(
     const children = edges[parentId];
     if (!children || children.length === 0) continue;
 
-    const matchingSteps = steps.filter((step) => children.includes(step.id));
+    const matchingSteps = steps.filter((step) => children.includes(step.id!));
     matches.push(...matchingSteps);
   }
 
@@ -354,7 +354,7 @@ function findByChildren(
     .map(([parentId]) => parentId);
 
   const stepIndex = steps.reduce((index, step) => {
-    index[step.id] = step;
+    index[step.id!] = step;
     return index;
   }, {} as Record<string, Workflow['steps'][number]>);
 
@@ -374,7 +374,7 @@ function mapStepByParent(
   targetEdges: EdgesType,
   getMappedId: (id: string) => string
 ): MapStepResult {
-  const sourceParents = getParent(sourceStep.id, sourceEdges);
+  const sourceParents = getParent(sourceStep.id!, sourceEdges);
 
   if (sourceParents.length === 0) {
     return { filtered: false, candidates };
@@ -401,7 +401,7 @@ function mapStepByChildren(
   targetEdges: EdgesType,
   getMappedId: (id: string) => string
 ): MapStepResult {
-  const sourceChildren = sourceEdges[sourceStep.id];
+  const sourceChildren = sourceEdges[sourceStep.id!];
 
   if (!sourceChildren) {
     return { filtered: false, candidates }; // Leaf node - can't map by children
@@ -425,6 +425,5 @@ function mapStepByExpression(
   sourceStep: Workflow['steps'][number],
   candidates: Workflow['steps']
 ): Workflow['steps'] {
-  const expression = (sourceStep as Job).expression;
-  return findByExpression(expression, candidates);
+  return findByExpression((sourceStep as Job).expression!, candidates);
 }

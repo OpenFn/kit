@@ -1,8 +1,10 @@
 import test from 'ava';
-import { Project } from '../../src/Project';
-import { createWorkflow } from '../util';
 import { generateHash } from '../../src/util/version';
-import { generateProject, generateWorkflow } from '../../src';
+import { generateWorkflow } from '../../src';
+
+// TODO just caught a bug with both of these - needs to add tests around this
+test.todo('include edge label in hash');
+test.todo('include edge expression in hash');
 
 test('generate an 12 character version hash for a basic workflow', (t) => {
   const workflow = generateWorkflow(

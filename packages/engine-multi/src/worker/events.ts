@@ -2,6 +2,7 @@
  * Events published by the inner worker
  */
 
+import { UUID } from '@openfn/lexicon';
 import { JSONLog } from '@openfn/logger';
 
 // events used by the internal thread runtime
@@ -36,7 +37,7 @@ export const COMPILE_COMPLETE = 'worker:compile-complete';
 
 interface InternalEvent {
   type: WorkerEvents;
-  workflowId: string;
+  workflowId: UUID;
   threadId: string;
 }
 
@@ -82,7 +83,7 @@ export interface LogEvent extends InternalEvent {
 
 export interface ErrorEvent {
   threadId?: string;
-  workflowId?: string;
+  workflowId?: UUID;
   error: {
     message: string;
     type: string;

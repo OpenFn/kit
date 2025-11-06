@@ -1,4 +1,4 @@
-import type { ExecutionPlan, Lazy, State } from '@openfn/lexicon';
+import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
 import type { RunLogPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
@@ -37,7 +37,7 @@ const enc = new TextDecoder('utf-8');
 export { handleStepComplete, handleStepStart };
 
 export type Context = {
-  id: string; // plan id
+  id: UUID; // plan id
   channel: Channel;
   state: RunState;
   logger: Logger;
@@ -266,7 +266,7 @@ export function onJobLog(
   }
   // lightning-friendly log object
   const log: RunLogPayload = {
-    run_id: state.plan.id!,
+    run_id: `${state.plan.id}`,
     message,
     source: event.name,
     level: event.level,

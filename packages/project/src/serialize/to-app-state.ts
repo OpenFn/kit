@@ -1,24 +1,27 @@
 import { pick, omitBy, isNil } from 'lodash-es';
+import { Provisioner } from '@openfn/lexicon/lightning';
+import { randomUUID } from 'node:crypto';
 
 import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
 
-import { randomUUID } from 'node:crypto';
-
 type Options = { format?: 'json' | 'yaml' };
 
-// TODO this should allow override on format,
-// regardless of repo settings
-export default function (project: Project, options: Options = {}) {
+export default function (
+  project: Project,
+  options: Options = {}
+): Provisioner.Project | string {
   const { uuid, endpoint, env, ...rest } = project.openfn ?? {};
 
   const state = omitBy(
     pick(project, ['name', 'description', 'collections']),
     isNil
-  );
-  state.id = uuid;
+  ) as Provisioner.Project;
+
+  state.id = uuid as string;
+
   Object.assign(state, rest, project.options);
   state.project_credentials = project.credentials ?? [];
   state.workflows = project.workflows.map(mapWorkflow);
@@ -34,9 +37,9 @@ export default function (project: Project, options: Options = {}) {
   return state;
 }
 
-const mapWorkflow = (workflow) => {
-  // TODO this is always a Workflow now, no?
+const mapWorkflow = (workflow: Workflow) => {
   if (workflow instanceof Workflow) {
+    // @ts-ignore
     workflow = workflow.toJSON();
   }
 
@@ -48,7 +51,7 @@ const mapWorkflow = (workflow) => {
     triggers: [],
     edges: [],
     lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
-  };
+  } as unknown as Provisioner.Workflow;
 
   if (workflow.name) {
     wfState.name = workflow.name;
@@ -63,23 +66,24 @@ const mapWorkflow = (workflow) => {
       next.openfn.uuid = randomUUID();
     }
 
+    // @ts-ignore
     obj[next.id] = next.openfn.uuid;
     return obj;
-  }, {});
+  }, {}) as Record<string, string>;
 
-  workflow.steps.forEach((s) => {
-    let isTrigger;
-    let node;
+  workflow.steps.forEach((s: any) => {
+    let isTrigger = false;
+    let node: Provisioner.Job | Provisioner.Trigger;
 
     if (s.type && !s.expression) {
       isTrigger = true;
       node = {
         type: s.type,
         ...renameKeys(s.openfn, { uuid: 'id' }),
-      };
+      } as Provisioner.Trigger;
       wfState.triggers.push(node);
     } else {
-      node = omitBy(pick(s, ['name', 'adaptor']), isNil);
+      node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
       const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
       node.id = uuid;
       Object.assign(node, otherOpenFnProps);
@@ -104,7 +108,7 @@ const mapWorkflow = (workflow) => {
         target_job_id: lookup[next],
         enabled: !rules.disabled,
         source_trigger_id: null, // lightning complains if this isn't set, even if its falsy :(
-      };
+      } as Provisioner.Edge;
       Object.assign(e, otherOpenFnProps);
 
       if (isTrigger) {

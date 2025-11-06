@@ -7,13 +7,13 @@
  * edges a bit less weird in the Project
  */
 
-import { Workflow } from '@openfn/lexicon';
 import { MappingResults } from './map-uuids';
 import baseMerge from '../util/base-merge';
+import Workflow, { WithMeta } from '../Workflow';
 
 type Node = Workflow['steps'][number];
 
-const clone = (obj) => JSON.parse(JSON.stringify(obj));
+const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
 export function mergeWorkflows(
   source: Workflow,
@@ -23,19 +23,19 @@ export function mergeWorkflows(
   // We probably need to vary this by the node type,
   // step or edge, but we're basically doing this
 
-  const targetNodes: Record<string, Node> = {};
+  const targetNodes: Record<string, WithMeta<Node>> = {};
   for (const targetStep of target.steps) {
-    targetNodes[targetStep.openfn.uuid || targetStep.id] = targetStep;
+    targetNodes[targetStep.openfn?.uuid || targetStep.id!] = targetStep;
   }
 
   const steps: Node[] = [];
   for (const sourceStep of source.steps) {
     let newNode: Node = clone(sourceStep);
-    if (sourceStep.id in mappings.nodes) {
-      const preservedId = mappings.nodes[sourceStep.id];
+    if (sourceStep.id! in mappings.nodes) {
+      const preservedId = mappings.nodes[sourceStep.id!];
       const toNodeIds = Object.keys(
         typeof sourceStep.next === 'string'
-          ? { [tstep.next]: true }
+          ? { [sourceStep.next]: true }
           : sourceStep.next || {}
       );
       for (const toNode of toNodeIds) {
@@ -43,8 +43,10 @@ export function mergeWorkflows(
         const key = sourceStep.id + '-' + toNode;
         if (key in mappings.edges) {
           const preservedEdgeId = mappings.edges[key];
+          // @ts-ignore
           const edge = sourceStep.next?.[toNode] || {};
 
+          // @ts-ignore
           sourceStep.next[toNode] = {
             ...edge,
             openfn: Object.assign({}, edge?.openfn, {
@@ -58,7 +60,9 @@ export function mergeWorkflows(
       newNode = baseMerge(targetNodes[preservedId], sourceStep, [
         'id',
         'name',
+        // @ts-ignore
         'adaptor',
+        'adaptors',
         'expression',
         'next',
       ]);

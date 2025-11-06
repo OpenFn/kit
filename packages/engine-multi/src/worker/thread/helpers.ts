@@ -4,6 +4,7 @@ import process from 'node:process';
 import stringify from 'fast-safe-stringify';
 import createLogger, { SanitizePolicies } from '@openfn/logger';
 import type { JSONLog, LogLevel } from '@openfn/logger';
+import type { UUID } from '@openfn/lexicon';
 
 import * as workerEvents from '../events';
 import { HANDLED_EXIT_CODE } from '../../events';
@@ -12,7 +13,7 @@ import { publish } from './runtime';
 import serializeError from '../../util/serialize-error';
 
 export const createLoggers = (
-  workflowId: string,
+  workflowId: UUID,
   sanitize: SanitizePolicies = 'none',
   publish?: any,
   jobLogLevel: LogLevel = 'debug'

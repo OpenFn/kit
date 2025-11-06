@@ -7,11 +7,13 @@ import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
 
-export type MergeProjectOptions = Partial<{
+export class UnsafeMergeError extends Error {}
+
+export type MergeProjectOptions = {
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
   force: boolean;
-}>;
+};
 
 /**
  * This is the main merge function
@@ -26,18 +28,21 @@ export type MergeProjectOptions = Partial<{
 export function merge(
   source: Project,
   target: Project,
-  options?: MergeProjectOptions
+  opts?: Partial<MergeProjectOptions>
 ) {
   const defaultOptions: MergeProjectOptions = {
     workflowMappings: {},
     removeUnmapped: false,
     force: true,
   };
-  options = defaultsDeep<MergeProjectOptions>(options, defaultOptions);
+  const options = defaultsDeep(
+    opts,
+    defaultOptions
+  ) as Required<MergeProjectOptions>;
 
   // check whether multiple workflows are merging into one. throw Error
   const dupTargetMappings = getDuplicates(
-    Object.values(options?.workflowMappings)
+    Object.values(options.workflowMappings ?? {})
   );
   if (dupTargetMappings.length) {
     throw new Error(
@@ -63,12 +68,12 @@ export function merge(
       options.workflowMappings?.[sourceWorkflow.id] ?? sourceWorkflow.id;
     const targetWorkflow = target.getWorkflow(targetId);
     if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
-      potentialConflicts[sourceWorkflow.name] = targetWorkflow?.name;
+      potentialConflicts[sourceWorkflow.id] = targetWorkflow?.id;
     }
   }
 
   if (Object.keys(potentialConflicts).length && !options?.force) {
-    throw new Error(
+    throw new UnsafeMergeError(
       `The below workflows can't be merged directly without losing data\n${Object.entries(
         potentialConflicts
       )
@@ -86,6 +91,7 @@ export function merge(
       usedTargetIds.add(targetWorkflow.id);
       const mappings = mapUuids(sourceWorkflow, targetWorkflow);
       finalWorkflows.push(
+        // @ts-ignore
         mergeWorkflows(sourceWorkflow, targetWorkflow, mappings)
       );
     } else {
@@ -108,6 +114,8 @@ export function merge(
 
   // with project level props merging, target goes into source because we want to preserve the target props.
   return new Project(
-    baseMerge(target, source, ['collections'], { workflows: finalWorkflows })
+    baseMerge(target, source, ['collections'], {
+      workflows: finalWorkflows,
+    } as any)
   );
 }

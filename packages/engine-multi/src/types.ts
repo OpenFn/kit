@@ -1,5 +1,5 @@
 import type { Logger, SanitizePolicies } from '@openfn/logger';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { ExecutionPlan, State, UUID } from '@openfn/lexicon';
 import type { EventEmitter } from 'node:events';
 
 import type { EngineOptions } from './engine';
@@ -16,7 +16,7 @@ export type Resolvers = {
 export type EventHandler = (event: any) => void;
 
 export type WorkflowState = {
-  id: string;
+  id: UUID;
   name?: string; // TODO what is name? this is irrelevant?
   status: 'pending' | 'running' | 'done' | 'err';
   threadId?: string;
@@ -66,7 +66,7 @@ export interface RuntimeEngine {
   options: EngineOptions;
 
   // TODO should return an unsubscribe hook
-  listen(runId: string, listeners: any): void;
+  listen(runId: UUID, listeners: any): void;
 
   execute(
     plan: ExecutionPlan,

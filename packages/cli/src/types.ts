@@ -12,10 +12,10 @@ export type OldCLIWorkflow = {
 };
 
 export type CLIExecutionPlan = {
-  id?: string;
+  id?: UUID;
   options?: WorkflowOptions;
   workflow: {
-    id?: UUID;
+    id?: string;
     name?: string;
     steps: Array<CLIJobNode | Trigger>;
     globals?: string;
