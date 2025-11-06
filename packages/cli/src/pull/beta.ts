@@ -7,6 +7,7 @@ import Project, { Workspace } from '@openfn/project';
 import type { Logger } from '../util/logger';
 import { rimraf } from 'rimraf';
 import { Opts } from '../options';
+import { Provisioner } from '@openfn/lexicon/lightning';
 
 // new config
 type Config = {
@@ -68,12 +69,16 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   // TODO if the user doesn't specify an env name, prompt for one
   const name = options.env || 'project';
 
-  const project = await Project.from('state', data, {
-    config,
-    endpoint: cfg.endpoint,
-    env: name,
-    fetched_at: new Date().toISOString(),
-  });
+  const project = await Project.from(
+    'state',
+    data as Provisioner.Project,
+    {
+      endpoint: cfg.endpoint,
+      env: name,
+      fetched_at: new Date().toISOString(),
+    },
+    config
+  );
 
   const projectFileName = project.getIdentifier();
 

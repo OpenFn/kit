@@ -2,7 +2,6 @@
 
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { omit } from 'lodash-es';
 
 import { Project } from '../Project';
 import { yamlToJson } from '../util/yaml';
@@ -28,6 +27,7 @@ export default (
   } else {
     stateJson = state;
   }
+  delete config.format;
 
   const {
     id,
@@ -47,7 +47,7 @@ export default (
     collections,
     credentials,
     options,
-    config: omit(config, ['format']) as l.WorkspaceConfig,
+    config: config as l.WorkspaceConfig,
   };
 
   const { id: _ignore, ...restMeta } = meta;
