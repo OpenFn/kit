@@ -1,5 +1,4 @@
 import { pick, omitBy, isNil } from 'lodash-es';
-import type l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { randomUUID } from 'node:crypto';
 
@@ -10,8 +9,6 @@ import Workflow from '../Workflow';
 
 type Options = { format?: 'json' | 'yaml' };
 
-// TODO this should allow override on format,
-// regardless of repo settings
 export default function (
   project: Project,
   options: Options = {}
@@ -23,7 +20,7 @@ export default function (
     isNil
   ) as Provisioner.Project;
 
-  state.id = uuid!;
+  state.id = uuid as string;
 
   Object.assign(state, rest, project.options);
   state.project_credentials = project.credentials ?? [];
@@ -42,6 +39,7 @@ export default function (
 
 const mapWorkflow = (workflow: Workflow) => {
   if (workflow instanceof Workflow) {
+    // @ts-ignore
     workflow = workflow.toJSON();
   }
 

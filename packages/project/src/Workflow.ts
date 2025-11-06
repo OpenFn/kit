@@ -4,7 +4,7 @@ import { generateHash } from './util/version';
 
 const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
-type WithMeta<T> = T & {
+export type WithMeta<T> = T & {
   openfn?: l.NodeMeta;
 };
 
@@ -50,7 +50,7 @@ class Workflow {
     this._buildIndex();
   }
 
-  get steps(): WithMeta<l.Job | l.Trigger>[] {
+  get steps(): WithMeta<l.Job & l.Trigger>[] {
     return this.workflow.steps;
   }
 

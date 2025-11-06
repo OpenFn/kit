@@ -1,4 +1,4 @@
-import { Job, Trigger, UUID } from '@openfn/lexicon';
+import { Job, UUID } from '@openfn/lexicon';
 import Workflow from '../Workflow';
 
 export interface MappingResults {
@@ -9,7 +9,7 @@ export interface MappingResults {
 type EdgesType = Record<string, string[]>;
 type MapStepResult = {
   filtered: boolean;
-  candidates: Workflow['steps'][number];
+  candidates: Workflow['steps'];
 };
 
 /**
@@ -69,7 +69,7 @@ export default (source: Workflow, target: Workflow): MappingResults => {
       );
 
       if (mappingResult) {
-        nodeMapping[sourceStep.id!] = getStepUuid(mappingResult);
+        nodeMapping[sourceStep.id!] = getStepUuid(mappingResult) as string;
         idMap.set(sourceStep.id!, mappingResult.id!);
       }
     }
@@ -105,7 +105,7 @@ function mapRootNodes(
 
   if (sourceRoot && targetRoot) {
     idMap.set(sourceRoot.id!, targetRoot.id!);
-    nodeMapping[sourceRoot.id!] = getStepUuid(targetRoot);
+    nodeMapping[sourceRoot.id!] = getStepUuid(targetRoot) as string;
   }
 }
 
@@ -425,6 +425,5 @@ function mapStepByExpression(
   sourceStep: Workflow['steps'][number],
   candidates: Workflow['steps']
 ): Workflow['steps'] {
-  const expression = (sourceStep as Job).expression;
-  return findByExpression(expression, candidates);
+  return findByExpression((sourceStep as Job).expression!, candidates);
 }

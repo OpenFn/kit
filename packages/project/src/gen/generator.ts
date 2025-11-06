@@ -126,7 +126,7 @@ const initOperations = (options: any = {}) => {
     quotedProp(_left: any, value: any, _right: any) {
       return value.sourceString;
     },
-    edge(_) {
+    edge(_: any) {
       return {
         openfn: {},
       };

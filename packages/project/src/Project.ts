@@ -64,27 +64,27 @@ export class Project {
 
   credentials: string[];
 
-  static from(
+  static async from(
     type: 'state',
     data: Provisioner.Project,
     meta: Partial<l.ProjectMeta>,
     config: fromAppStateConfig
-  ): Project;
-  static from(type: 'fs', options: FromFsConfig): Project;
-  static from(
+  ): Promise<Project>;
+  static async from(type: 'fs', options: FromFsConfig): Promise<Project>;
+  static async from(
     type: 'path',
     data: string,
     options?: { config?: FromPathConfig }
-  ): Project;
-  static from(
+  ): Promise<Project>;
+  static async from(
     type: 'state' | 'path' | 'fs',
     data: any,
     ...rest: any[]
-  ): Project {
+  ): Promise<Project> {
     if (type === 'state') {
       return fromAppState(data, rest[0], rest[1]);
     } else if (type === 'fs') {
-      return fromFs(data, rest[0]);
+      return fromFs(data);
     } else if (type === 'path') {
       return fromPath(data, rest[0]);
     }
@@ -92,7 +92,7 @@ export class Project {
   }
 
   // Diff two projects
-  static diff(a: Project, b: Project) {}
+  // /static diff(a: Project, b: Project) {}
 
   // Merge a source project (staging) into the target project (main)
   // Returns a new Project
@@ -156,7 +156,7 @@ export class Project {
   }
 
   // Compare this project with another and return a diff
-  compare(proj: Project) {}
+  // compare(proj: Project) {}
 
   // find the UUID for a given node or edge
   // returns null if it doesn't exist

@@ -54,7 +54,7 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
     steps: workflow.steps.map((step) => {
       const { openfn, expression, ...mapped } = step;
       if (expression) {
-        mapped.expression = `./${step.id}.js`;
+        (mapped as any).expression = `./${step.id}.js`;
       }
       return mapped;
     }),

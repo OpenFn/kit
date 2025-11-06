@@ -1,8 +1,8 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
 
-/** UUID v4 */
-export type UUID = string;
+/** UUID v4 (or numbers, when running in dev mode*/
+export type UUID = string | number;
 
 export type SourceMap = RawSourceMap;
 
@@ -91,7 +91,7 @@ export interface WorkspaceConfig {
 
 // Metadata about a connected OpenFn Project
 export interface ProjectMeta {
-  uuid: string;
+  uuid: UUID;
   endpoint: string;
   env: string;
   inserted_at: string;
@@ -101,14 +101,14 @@ export interface ProjectMeta {
 }
 
 export interface WorkflowMeta {
-  uuid?: string;
+  uuid?: UUID;
   lock_version?: number;
 
   [key: string]: unknown;
 }
 
 export interface NodeMeta {
-  uuid?: string;
+  uuid?: UUID;
 
   [key: string]: unknown;
 }
@@ -197,7 +197,7 @@ export type CompiledExpression = Expression;
  */
 export interface Job extends Step {
   adaptors?: string[];
-  expression: Expression;
+  expression?: Expression;
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
 
