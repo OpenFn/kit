@@ -278,6 +278,7 @@ export namespace Provisioner {
     adaptor: string;
     body: string;
     project_credential_id: string | null;
+    keychain_credential_id: string | null;
     delete?: boolean;
   };
 

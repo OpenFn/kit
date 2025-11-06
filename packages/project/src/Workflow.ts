@@ -2,11 +2,15 @@ import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
 import { generateHash } from './util/version';
 
-const clone = (obj) => JSON.parse(JSON.stringify(obj));
+const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
-type OpenfnMeta = {
-  uuid?: string;
-};
+type OpenfnMeta = Partial<{
+  uuid: string;
+  lock_version: number;
+  inserted_at: string;
+  updated_at: string;
+  [other: string]: unknown;
+}>;
 
 type WithMeta<T> = T & {
   openfn?: OpenfnMeta;

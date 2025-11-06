@@ -55,6 +55,8 @@ export class Project {
 
   collections: any;
 
+  credentials: string[];
+
   static from(
     type: 'state',
     data: Provisioner.Project,
@@ -70,15 +72,14 @@ export class Project {
   static from(
     type: 'state' | 'path' | 'fs',
     data: any,
-    options: any = {},
-    config: any
+    ...rest: any[]
   ): Project {
     if (type === 'state') {
-      return fromAppState(data, options, config);
+      return fromAppState(data, rest[0], rest[1]);
     } else if (type === 'fs') {
-      return fromFs(data, options);
+      return fromFs(data, rest[0]);
     } else if (type === 'path') {
-      return fromPath(data, options);
+      return fromPath(data, rest[0]);
     }
     throw new Error(`Didn't recognize type ${type}`);
   }
@@ -99,7 +100,7 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: l.Project, config: l.WorkspaceConfig) {
+  constructor(data: Partial<l.Project>, config: Partial<l.WorkspaceConfig>) {
     this.config = buildConfig(config);
 
     this.id =

@@ -4,7 +4,7 @@ import fromAppState, { mapWorkflow } from '../../src/parse/from-app-state';
 
 // I don't think this file really represents anything
 // loosely maps to the old config file
-const config = {
+const meta = {
   endpoint: 'app.openfn.org',
   env: 'test',
 };
@@ -63,27 +63,26 @@ const state: Provisioner.Project = {
 };
 
 test('should create a Project from prov state with basic metadata', (t) => {
-  const project = fromAppState(state, config);
+  const project = fromAppState(state, meta);
 
   t.is(project.name, 'My Workflow');
   t.is(project.description, 'a project');
 });
 
 test('should create a Project from prov state with app project metadata', (t) => {
-  const project = fromAppState(state, config);
+  const project = fromAppState(state, meta);
 
   t.deepEqual(project.openfn, {
     env: 'test',
     uuid: state.id,
-    name: 'My Workflow',
-    endpoint: config.endpoint,
+    endpoint: meta.endpoint,
     inserted_at: state.inserted_at,
     updated_at: state.updated_at,
   });
 });
 
 test('should create a Project from prov state with options', (t) => {
-  const project = fromAppState(state, config);
+  const project = fromAppState(state, meta);
 
   t.deepEqual(project.options, {
     scheduled_deletion: null,
@@ -97,19 +96,19 @@ test('should create a Project from prov state with options', (t) => {
 });
 
 test('should create a Project from prov state with collections', (t) => {
-  const project = fromAppState(state, config);
+  const project = fromAppState(state, meta);
 
   t.deepEqual(project.collections, []);
 });
 
 test('should create a Project from prov state with credentials', (t) => {
-  const project = fromAppState(state, config);
+  const project = fromAppState(state, meta);
 
   t.deepEqual(project.credentials, []);
 });
 
 test('should create a Project from prov state with a workflow', (t) => {
-  const project = fromAppState(state, config);
+  const project = fromAppState(state, meta);
 
   t.is(project.workflows.length, 1);
   t.deepEqual(project.workflows[0].toJSON(), {
@@ -239,8 +238,7 @@ workflows:
         condition_type: always
   `;
 
-  const project = fromAppState(yaml, {
-    ...config,
+  const project = fromAppState(yaml, meta, {
     format: 'yaml',
   });
 

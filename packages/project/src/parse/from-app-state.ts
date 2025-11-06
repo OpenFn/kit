@@ -14,16 +14,19 @@ type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
 };
 
 export default (
-  state: Provisioner.Project,
-  meta: l.ProjectMeta,
+  state: Provisioner.Project | string,
+  meta: Partial<l.ProjectMeta>,
   config: fromAppStateConfig = {}
 ) => {
+  let stateJson: Provisioner.Project;
   if (typeof state === 'string') {
     if (config.format === 'yaml') {
-      state = yamlToJson(state);
+      stateJson = yamlToJson(state);
     } else {
-      state = JSON.parse(state);
+      stateJson = JSON.parse(state);
     }
+  } else {
+    stateJson = state;
   }
 
   const {
@@ -36,7 +39,7 @@ export default (
     inserted_at,
     updated_at,
     ...options
-  } = state;
+  } = stateJson;
 
   const proj: Partial<l.Project> = {
     name,
@@ -44,14 +47,17 @@ export default (
     collections,
     credentials,
     options,
-    config: omit(config, ['format']),
+    config: omit(config, ['format']) as l.WorkspaceConfig,
   };
 
-  const { id: uuid, ...restMeta } = meta;
+  const { id: _ignore, ...restMeta } = meta;
   proj.openfn = {
     // @ts-ignore
-    uuid,
+    uuid: id,
     ...restMeta,
+
+    inserted_at,
+    updated_at,
   };
 
   // TODO maybe this for local metadata, stuff that isn't synced?
@@ -59,7 +65,7 @@ export default (
   //   fetched_at: config.fetchedAt,
   // };
 
-  proj.workflows = state.workflows.map(mapWorkflow);
+  proj.workflows = stateJson.workflows.map(mapWorkflow);
 
   return new Project(proj as l.Project, config);
 };
@@ -117,7 +123,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
         obj[slugify(target.name)] = mapTriggerEdgeCondition(edge);
         return obj;
       }, {}),
-    });
+    } as l.Trigger);
   });
 
   workflow.jobs.forEach((step: Provisioner.Job) => {
@@ -131,13 +137,14 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       id: slugify(name),
       name: name,
       expression,
-      adaptor, // TODO is this slug wrong?
+      adaptor, // TODO is this wrong?
       openfn: renameKeys(remoteProps, { id: 'uuid' }),
     };
 
     if (outboundEdges.length) {
       s.next = outboundEdges.reduce((next, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
+        // @ts-ignore
         next[slugify(target.name)] = mapTriggerEdgeCondition(edge);
         return next;
       }, {});
