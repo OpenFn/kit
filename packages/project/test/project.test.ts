@@ -92,16 +92,15 @@ test('should generate a correct identifier with weird values', (t) => {
 });
 
 test('should convert a state file to a project and back again', (t) => {
-  const config = {
+  const meta = {
     endpoint: 'app.openfn.org',
     env: 'test',
-    formats: 'json',
   };
 
-  const project = Project.from('state', state, config);
-  t.is(project.openfn.env, 'test');
-  t.is(project.openfn.endpoint, 'app.openfn.org');
-  t.is(project.openfn.uuid, state.id);
+  const project = Project.from('state', state, meta, { format: 'json' });
+  t.is(project.openfn?.env, 'test');
+  t.is(project.openfn?.endpoint, 'app.openfn.org');
+  t.is(project.openfn?.uuid, state.id);
   t.is(project.name, state.name);
 
   // TODO: this hack is needed right now to serialize the state as json

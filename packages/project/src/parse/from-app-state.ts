@@ -9,7 +9,7 @@ import { yamlToJson } from '../util/yaml';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
 
-type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
+export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
 };
 

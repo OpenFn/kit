@@ -1,12 +1,12 @@
+import * as l from '@openfn/lexicon';
 import { extname } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
 import fromAppState from './from-app-state';
 import { yamlToJson } from '../util/yaml';
-import { WorkspaceConfig } from '../util/config';
 
 export type FromPathConfig = {
-  config: WorkspaceConfig;
+  config?: l.WorkspaceConfig;
 };
 
 // Load a project from a file path
@@ -18,7 +18,7 @@ export default async (path: string, options: FromPathConfig = {}) => {
   const ext = extname(path).toLowerCase();
   const source = await readFile(path, 'utf8');
 
-  const config = {
+  const config: any = {
     format: null,
     config: options.config,
   };

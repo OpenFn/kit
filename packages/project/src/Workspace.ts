@@ -1,22 +1,20 @@
+import * as l from '@openfn/lexicon';
 import path from 'node:path';
 import fs from 'node:fs';
 
 import { Project } from './Project';
-import type { WorkspaceConfig } from './util/config';
 import fromAppState from './parse/from-app-state';
 import pathExists from './util/path-exists';
-import { yamlToJson } from './util/yaml';
 import {
   buildConfig,
   loadWorkspaceFile,
   findWorkspaceFile,
 } from './util/config';
 
-const PROJECT_EXTENSIONS = ['.yaml', '.yml'];
-
 export class Workspace {
-  config?: WorkspaceConfig;
-  activeProject: ProjectMeta;
+  // @ts-ignore config not defininitely assigned - it sure is
+  config: l.WorkspaceConfig;
+  activeProject?: l.ProjectMeta;
 
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
@@ -26,10 +24,11 @@ export class Workspace {
     let context;
     try {
       const { type, content } = findWorkspaceFile(workspacePath);
-      context = loadWorkspaceFile(content, type);
+      context = loadWorkspaceFile(content, type as any);
       this.isValid = true;
     } catch (e) {
       // TODO use logger
+      // TODO maybe we should throw here?
       console.error(e);
       // invalid workspace
       return;
@@ -62,7 +61,7 @@ export class Workspace {
             return project;
           } catch (e) {}
         })
-        .filter((s) => s);
+        .filter((s) => s) as Project[];
     }
   }
 
@@ -98,8 +97,8 @@ export class Workspace {
 
   // TODO this needs to return default values
   // We should always rely on the workspace to load these values
-  getConfig(): Partial<WorkspaceConfig> {
-    return this.config;
+  getConfig(): Partial<l.WorkspaceConfig> {
+    return this.config!;
   }
 
   get activeProjectId() {

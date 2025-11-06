@@ -2,7 +2,7 @@ import type l from '@openfn/lexicon';
 import { humanId } from 'human-id';
 import Workflow from './Workflow';
 import * as serializers from './serialize';
-import fromAppState from './parse/from-app-state';
+import fromAppState, { fromAppStateConfig } from './parse/from-app-state';
 import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
@@ -13,13 +13,20 @@ import { merge, MergeProjectOptions } from './merge/merge-project';
 import { Workspace } from './Workspace';
 import { buildConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { WorkspaceConfig } from '@openfn/lexicon';
+import { UUID, WorkspaceConfig } from '@openfn/lexicon';
 
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
 
-// A single openfn project
-// could be an app project or a checked out fs
+type UUIDMap = {
+  [workflowId: string]: {
+    self?: UUID;
+    children: {
+      [nodeId: string]: UUID;
+    };
+  };
+};
+
 export class Project {
   // what schema version is this?
   // And how are we tracking this?
@@ -31,7 +38,7 @@ export class Project {
   /** Project id. Must be url safe. May be derived from the name. NOT a UUID */
   id: string;
 
-  description?: string | null;
+  description?: string;
 
   // array of version hashes
   history: string[] = [];
@@ -60,8 +67,8 @@ export class Project {
   static from(
     type: 'state',
     data: Provisioner.Project,
-    meta: l.ProjectMeta,
-    config: l.WorkspaceConfig
+    meta: Partial<l.ProjectMeta>,
+    config: fromAppStateConfig
   ): Project;
   static from(type: 'fs', options: FromFsConfig): Project;
   static from(
@@ -100,7 +107,7 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: Partial<l.Project>, config: Partial<l.WorkspaceConfig>) {
+  constructor(data: Partial<l.Project>, config?: Partial<l.WorkspaceConfig>) {
     this.config = buildConfig(config);
 
     this.id =
@@ -111,13 +118,13 @@ export class Project {
 
     this.name = data.name;
 
-    this.description = data.description;
-    this.openfn = data.openfn;
+    this.description = data.description ?? undefined;
+    this.openfn = data.openfn as l.ProjectMeta; // TODO shaky typing here tbh
     this.options = data.options;
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
-    this.meta = data.meta;
+    // this.meta = data.meta ?? {};
   }
 
   setConfig(config: Partial<WorkspaceConfig>) {
@@ -163,8 +170,8 @@ export class Project {
   /**
    * Returns a map of ids:uuids for everything in the project
    */
-  getUUIDMap(options: { workflows: boolean; project: false } = {}) {
-    const result = {};
+  getUUIDMap(): UUIDMap {
+    const result: UUIDMap = {};
     for (const wf of this.workflows) {
       result[wf.id] = {
         self: wf.openfn?.uuid,
