@@ -176,7 +176,7 @@ const executeStep = async (
       notify(NOTIFY_JOB_START, { jobId });
       result = await executeExpression(
         ctx,
-        job.expression,
+        job.expression!,
         state,
         step.linker,
         job.sourceMap
