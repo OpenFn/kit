@@ -39,6 +39,7 @@ const state: Provisioner.Project = {
           body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
           adaptor: '@openfn/language-common@latest',
           project_credential_id: null,
+          keychain_credential_id: null,
         },
       ],
       triggers: [

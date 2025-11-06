@@ -91,13 +91,24 @@ export interface WorkspaceConfig {
 
 // Metadata about a connected OpenFn Project
 export interface ProjectMeta {
-  id: string;
-  name: string;
   uuid: string;
   endpoint: string;
   env: string;
   inserted_at: string;
   updated_at: string;
+
+  [key: string]: unknown;
+}
+
+export interface WorkflowMeta {
+  uuid?: string;
+  lock_version?: number;
+
+  [key: string]: unknown;
+}
+
+export interface NodeMeta {
+  uuid?: string;
 
   [key: string]: unknown;
 }
@@ -137,7 +148,7 @@ export type Workflow = {
   // a path to a file where functions are defined
   globals?: string;
 
-  openfn?: OpenFnMetadata;
+  openfn?: WorkflowMeta;
 
   // holds history information of a workflow
   history?: string[];
