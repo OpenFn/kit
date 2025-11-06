@@ -3,6 +3,7 @@ import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../src/Project';
 import generateWorkflow, { generateProject } from '../src/gen/generator';
+import { UnsafeMergeError } from '../src/merge/merge-project';
 
 // TODO move to fixtures and re-use?
 // Or use util function instead?
@@ -91,13 +92,13 @@ test('should generate a correct identifier with weird values', (t) => {
   t.is(id, 'hello@app.com');
 });
 
-test('should convert a state file to a project and back again', (t) => {
+test('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',
     env: 'test',
   };
 
-  const project = Project.from('state', state, meta, { format: 'json' });
+  const project = await Project.from('state', state, meta, { format: 'json' });
   t.is(project.openfn?.env, 'test');
   t.is(project.openfn?.endpoint, 'app.openfn.org');
   t.is(project.openfn?.uuid, state.id);
@@ -140,8 +141,8 @@ test('should merge two projects', (t) => {
   t.is(mergedStep.openfn.uuid, wf_a.get('a').openfn.uuid);
 });
 
-test('should return UUIDs for everything', (t) => {
-  const project = Project.from('state', state, {});
+test('should return UUIDs for everything', async (t) => {
+  const project = await Project.from('state', state, {});
   const map = project.getUUIDMap();
   t.deepEqual(map, {
     wf1: {
@@ -168,7 +169,7 @@ test('incompatible-merge: should throw error when merge is incompatible', (t) =>
   t.throws(
     () => Project.merge(sourceProject, targetProject, { force: false }),
     {
-      message: `The below workflows can't be merged directly without losing data\nWorkflow → Workflow\nPass --force to force the merge anyway`,
+      instanceOf: UnsafeMergeError,
     }
   );
 });

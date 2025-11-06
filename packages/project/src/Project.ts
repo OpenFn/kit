@@ -67,8 +67,8 @@ export class Project {
   static async from(
     type: 'state',
     data: Provisioner.Project,
-    meta: Partial<l.ProjectMeta>,
-    config: fromAppStateConfig
+    meta?: Partial<l.ProjectMeta>,
+    config?: fromAppStateConfig
   ): Promise<Project>;
   static async from(type: 'fs', options: FromFsConfig): Promise<Project>;
   static async from(
@@ -97,7 +97,11 @@ export class Project {
   // Merge a source project (staging) into the target project (main)
   // Returns a new Project
   // TODO: throw if histories have diverged
-  static merge(source: Project, target: Project, options: MergeProjectOptions) {
+  static merge(
+    source: Project,
+    target: Project,
+    options?: Partial<MergeProjectOptions>
+  ) {
     return merge(source, target, options);
   }
 

@@ -68,7 +68,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   // TODO if the user doesn't specify an env name, prompt for one
   const name = options.env || 'project';
 
-  const project = Project.from('state', data, {
+  const project = await Project.from('state', data, {
     config,
     endpoint: cfg.endpoint,
     env: name,

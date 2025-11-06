@@ -50,16 +50,23 @@ export class Workspace {
 
       this.projects = stateFiles
         .map((file) => {
+          const stateFilePath = path.join(projectsPath, file);
           try {
-            const stateFilePath = path.join(projectsPath, file);
             const data = fs.readFileSync(stateFilePath, 'utf-8');
-            const project = fromAppState(data, {
-              format: this.config?.formats.project,
-              config: this.config,
-            });
+            const project = fromAppState(
+              data,
+              {},
+              {
+                ...this.config,
+                format: this.config?.formats.project,
+              }
+            );
             this.projectPaths.set(project.id, stateFilePath);
             return project;
-          } catch (e) {}
+          } catch (e) {
+            console.warn(`Failed to load project from ${stateFilePath}`);
+            console.warn(e);
+          }
         })
         .filter((s) => s) as Project[];
     }

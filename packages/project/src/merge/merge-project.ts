@@ -7,6 +7,8 @@ import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
 
+export class UnsafeMergeError extends Error {}
+
 export type MergeProjectOptions = {
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
@@ -26,14 +28,17 @@ export type MergeProjectOptions = {
 export function merge(
   source: Project,
   target: Project,
-  options?: MergeProjectOptions
+  opts?: Partial<MergeProjectOptions>
 ) {
   const defaultOptions: MergeProjectOptions = {
     workflowMappings: {},
     removeUnmapped: false,
     force: true,
   };
-  options = defaultsDeep(options, defaultOptions) as MergeProjectOptions;
+  const options = defaultsDeep(
+    opts,
+    defaultOptions
+  ) as Required<MergeProjectOptions>;
 
   // check whether multiple workflows are merging into one. throw Error
   const dupTargetMappings = getDuplicates(
@@ -68,7 +73,7 @@ export function merge(
   }
 
   if (Object.keys(potentialConflicts).length && !options?.force) {
-    throw new Error(
+    throw new UnsafeMergeError(
       `The below workflows can't be merged directly without losing data\n${Object.entries(
         potentialConflicts
       )

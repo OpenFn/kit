@@ -83,9 +83,9 @@ export interface WorkspaceConfig {
     projects: string;
   };
   formats: {
-    openfn: FileFormats;
-    project: FileFormats;
-    workflow: FileFormats;
+    openfn?: FileFormats;
+    project?: FileFormats;
+    workflow?: FileFormats;
   };
 }
 

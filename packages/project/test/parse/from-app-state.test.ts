@@ -140,6 +140,7 @@ test('should create a Project from prov state with a workflow', (t) => {
         openfn: {
           uuid: '66add020-e6eb-4eec-836b-20008afca816',
           project_credential_id: null,
+          keychain_credential_id: null,
         },
       },
     ],
@@ -192,6 +193,7 @@ test('mapWorkflow: map a simple job', (t) => {
     openfn: {
       uuid: '66add020-e6eb-4eec-836b-20008afca816',
       project_credential_id: null,
+      keychain_credential_id: null,
     },
   });
 });
