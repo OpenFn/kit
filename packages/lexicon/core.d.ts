@@ -131,7 +131,7 @@ export type ExecutionPlan = {
  */
 export type Workflow = {
   /** The ID is the primary internal identifier for a Workflow */
-  id?: string;
+  id?: UUID;
 
   /** Human readable name, like display. Can be used to generate an internal id */
   name?: string;

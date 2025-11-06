@@ -70,5 +70,5 @@ const compileJob = async (job: Job, logger: Logger, repoDir?: string) => {
       adaptors: adaptorConfig,
     };
   }
-  return compile(expression, compilerOptions);
+  return compile(expression!, compilerOptions);
 };
