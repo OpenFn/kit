@@ -4,16 +4,18 @@ import { readFile } from 'node:fs/promises';
 
 import fromAppState from './from-app-state';
 import { yamlToJson } from '../util/yaml';
+import { omit } from 'lodash-es';
+
+export type FromPathConfig = l.WorkspaceConfig & {
+  format: 'json' | 'yaml';
+};
 
 // Load a project from a file path
 // This ignores config files on disk
 // Pass options explicitly
 // Paths will be inferred from the source path
 // TODO: should we try and find the nearest openfn.yaml file for config?
-export default async (
-  path: string,
-  config: Partial<l.WorkspaceConfig> = {}
-) => {
+export default async (path: string, config: Partial<FromPathConfig> = {}) => {
   const ext = extname(path).toLowerCase();
   const source = await readFile(path, 'utf8');
 
@@ -29,5 +31,5 @@ export default async (
   }
 
   const meta = {};
-  return fromAppState(state, meta, config);
+  return fromAppState(state, meta, omit(config, ['format']));
 };

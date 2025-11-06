@@ -38,7 +38,7 @@ test.serial('should load a v1 state yaml', async (t) => {
   // t.deepEqual(project.workflows[0].workflow, proj.workflows[0].workflow);
 });
 
-test.serial('should use workspace config', async (t) => {
+test.serial.only('should use workspace config', async (t) => {
   mock({
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
   });

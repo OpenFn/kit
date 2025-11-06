@@ -59,7 +59,7 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
       return mapped;
     }),
   };
-  return handleOutput(wf, path, format);
+  return handleOutput(wf, path, format!);
 };
 
 // extracts an expression.js from a workflow in project
