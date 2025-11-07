@@ -1,15 +1,12 @@
-import test from 'ava';
-import { grammar } from 'ohm-js';
+import test, { ExecutionContext } from 'ava';
 import _ from 'lodash';
-import path from 'node:path';
-import { readFile } from 'node:fs/promises';
 import { generateWorkflow, generateProject } from '../../src/gen/generator';
 import * as fixtures from './fixtures';
 import Workflow from '../../src/Workflow';
 
 // Generate a workflow with a fixed UUID seed
 // Pass test context to log the result
-const gen = (src, t, options = {}) => {
+const gen = (src: string, t: ExecutionContext<unknown>, options = {}) => {
   const result = generateWorkflow(src, {
     uuidSeed: 1,
     printErrors: false,
@@ -39,7 +36,7 @@ test('it should generate a simple project', (t) => {
   t.deepEqual(result.workflows[0].toJSON(), fixtures.ab);
 });
 
-test('it should generate a simple workflow with an attribute', (t) => {
+test('it should generate a workflow with an attribute', (t) => {
   const result = gen(
     `@name joe
 a-b`,
@@ -54,7 +51,7 @@ a-b`,
   t.deepEqual(result, expected);
 });
 
-test('it should generate a simple workflow with an attribute with underscores and dashes', (t) => {
+test('it should generate a workflow with an attribute with underscores and dashes', (t) => {
   const result = gen(
     `@name a_c-x
 a-b`,
@@ -69,21 +66,72 @@ a-b`,
   t.deepEqual(result, expected);
 });
 
-test('it should generate a simple workflow with two attributes', (t) => {
+test('it should generate a workflow with two attributes', (t) => {
   const result = gen(
-    `@x 1
-@y 2
+    `@x x
+@y y
 a-b`,
     t
   );
 
   const expected = {
     ...fixtures.ab,
-    x: '1',
-    y: '2',
+    x: 'x',
+    y: 'y',
   };
 
   t.deepEqual(result, expected);
+});
+
+test('it should generate a workflow with nested attributes', (t) => {
+  const result = gen(
+    `@x.y jam
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    x: { y: 'jam' },
+  };
+
+  t.deepEqual(result, expected);
+});
+
+test('it should generate a workflow with typed attributes (number, boolean)', (t) => {
+  const result = gen(
+    `@somebool false
+@somenum 61
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    somebool: false,
+    somenum: 61,
+  };
+
+  t.deepEqual(result, expected);
+});
+
+// TODO: it shouldn't really be necessary to quote the date here?
+test('it should generate a workflow with openfn meta', (t) => {
+  const result = gen(
+    `@openfn.lock_version 123
+@openfn.concurrency 3
+@openfn.updated_at "2025-04-23T11:19:32Z"
+@openfn.jam jar 
+a-b`,
+    t
+  );
+  t.log(result);
+  t.deepEqual(result.openfn, {
+    lock_version: 123,
+    concurrency: 3,
+    updated_at: '2025-04-23T11:19:32Z',
+    jam: 'jar',
+  });
 });
 
 test('it should throw if parsing fails with 1 node, 1 edge', (t) => {
@@ -356,10 +404,10 @@ test('it should generate a node with a prop', (t) => {
 });
 
 test('it should generate a node with two props', (t) => {
-  const result = gen('a(x=1,z=2)-b', t);
+  const result = gen('a(x=j,z=k)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
-  expected.steps[0].x = '1';
-  expected.steps[0].z = '2';
+  expected.steps[0].x = 'j';
+  expected.steps[0].z = 'k';
 
   t.deepEqual(result, expected);
 });
@@ -370,6 +418,67 @@ test('it should treat quotes specially', (t) => {
   expected.steps[0].expression = 'fn()';
 
   t.deepEqual(result, expected);
+});
+
+test('it should generate an edge with a prop', (t) => {
+  const result = gen('a-(x=y)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.deepEqual(edge, {
+    openfn: {
+      uuid: 3,
+    },
+    x: 'y',
+  });
+});
+
+test('it should generate an edge with a multi-char prop', (t) => {
+  const result = gen('a-(condition=false)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.deepEqual(edge, {
+    openfn: {
+      uuid: 3,
+    },
+    condition: false,
+  });
+});
+
+test('it should generate an edge with multiple props', (t) => {
+  const result = gen('a-(x=y,foo=bar)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.deepEqual(edge, {
+    openfn: {
+      uuid: 3,
+    },
+    x: 'y',
+    foo: 'bar',
+  });
+});
+
+test('it should parse node property values as boolean', (t) => {
+  const result = gen('a(t=true,f=false)-b', t);
+
+  const [step] = result.steps;
+  t.true(step.t);
+  t.false(step.f);
+});
+
+test('it should parse edge property values as boolean', (t) => {
+  const result = gen('a-(t=true,f=false)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.true(edge.t);
+  t.false(edge.f);
+});
+
+test('it should parse node property values as numbers', (t) => {
+  const result = gen('a(x=22,z=0)-b', t);
+
+  const [step] = result.steps;
+  t.is(step.x, 22);
+  t.is(step.z, 0);
 });
 
 test('it should ignore leading comments', (t) => {

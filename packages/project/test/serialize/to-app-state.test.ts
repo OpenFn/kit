@@ -1,7 +1,8 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../../src/Project';
-import toAppState, { mapWorkflow } from '../../src/serialize/to-app-state';
+import toAppState from '../../src/serialize/to-app-state';
+import { generateProject } from '../../src/gen/generator';
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -175,6 +176,65 @@ test('should write openfn keys to objects', (t) => {
   t.is(state.workflows[0].jobs[0].x, 1);
   t.is(state.workflows[0].triggers[0].x, 1);
   t.is(state.workflows[0].edges[0].x, 1);
+});
+
+test.todo('handle edge labels');
+
+/**
+ * Stumbled on something difficult here
+ *
+ * lightning saves special edge conditions, like on_job_success
+ * We need to convert that two ways
+ *
+ * I think I need to make the RUNTIME support the special strings
+ * in order to make this sync properly. Else it's too hard.
+ *
+ * See https://github.com/OpenFn/kit/issues/1123
+ */
+test.skip('should handle edge conditions', (t) => {
+  const wf = `
+a-(condition=true)-b
+a-(condition=false)-c
+a-(condition=false)-c
+a--b
+  `;
+  const project = generateProject('p');
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'a',
+            expression: '.',
+          },
+          {
+            id: 'b',
+            expression: '.',
+          },
+          {
+            id: 'c',
+            expression: '.',
+          },
+          {
+            id: 'd',
+            expression: '.',
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(project);
+  // TODO
 });
 
 test('should convert a project back to app state in json', (t) => {

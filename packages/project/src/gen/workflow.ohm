@@ -5,11 +5,13 @@
 Workflow {
   Workflow = attribute* Pair*
 
-  attribute = "@" attr_name space attr_name
+  attribute = "@" chained_attr_name space (attr_value | quoted_prop)
 
-  attr_name = (alnum | "_" | "-")+
+  attr_value = int | bool | (alnum | "_" | "-" | ":")+
 
-  Pair =  node edge node
+  chained_attr_name = (alnum | "_" | "-" | ".")+
+
+  Pair =  node (edge_with_props | edge) node
 
   comment = "#" (~lineTerminator any)*
 
@@ -27,11 +29,19 @@ Workflow {
 
   prop = alnum+ "=" propValue
 
-  propValue = alnum+ | quotedProp
+  propValue = quoted_prop | bool | int | alnum+ 
+
+  // TODO we only parse numbers as positive ints right now
+  // fine for tests
+  int = digit+
+
+  bool = "false" | "true"
   
-  quotedProp = "\"" (~"\"" any)* "\""
+  quoted_prop = "\"" (~"\"" any)* "\""
 
   edge = "-"
+  
+  edge_with_props = "-" props "-"
 
   lineTerminator =  "\n" | "\r"
 }

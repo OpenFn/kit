@@ -95,8 +95,8 @@ export interface LightningEdge {
   source_job_id?: string;
   source_trigger_id?: string;
   target_job_id: string;
+  condition?: 'always' | 'on_job_success' | 'on_job_failure' | string;
   name?: string;
-  condition?: string;
   error_path?: boolean;
   errors?: any;
   enabled?: boolean;

@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.8.0
+
+### Minor Changes
+
+- e427771: New additions to project generator:
+
+  - Support edge properties `x-(enabled=false)-y`
+  - Parse property values as boolean and unsigned int
+  - Support chained attributes on workflows, like `@options.concurrency=2`
+
 ## 0.7.2
 
 ### Patch Changes

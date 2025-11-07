@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { grammar } from 'ohm-js';
-import { isNil } from 'lodash-es';
+import { isNil, set } from 'lodash-es';
 import Project from '../Project';
 import Workflow from '../Workflow';
 import slugify from '../util/slugify';
@@ -66,7 +66,7 @@ const initOperations = (options: any = {}) => {
         .map((c: any) => c.buildWorkflow())
         .reduce((obj: any, next: any) => {
           const [key, value] = next;
-          obj[key] = value;
+          set(obj, key, value);
           return obj;
         }, {});
 
@@ -76,7 +76,19 @@ const initOperations = (options: any = {}) => {
       return null;
     },
     attribute(_: unknown, name: any, _space: unknown, value: any) {
-      return [name.sourceString, value.sourceString];
+      return [
+        name.sourceString,
+        value.isTerminal() ? value.sourceString : value.buildWorkflow(),
+      ];
+    },
+    attr_value(n: any) {
+      return n.isTerminal() ? n.sourceString : n.buildWorkflow();
+    },
+    bool(value: any) {
+      return value.sourceString === 'true';
+    },
+    int(value: any) {
+      return parseInt(value.sourceString);
     },
     Pair(parent: any, edge: any, child: any) {
       const n1 = parent.buildWorkflow();
@@ -118,18 +130,32 @@ const initOperations = (options: any = {}) => {
     },
     // Bit flaky - we need this to handle quoted props
     _iter(...items: any) {
-      return items.map((i: any) => i.buildWorkflow()).join('');
+      return items
+        .map((i: any) => (i.isTerminal() ? i.sourceString : i.buildWorkflow()))
+        .join('');
     },
     alnum(a: any) {
       return a.sourceString;
     },
-    quotedProp(_left: any, value: any, _right: any) {
+    quoted_prop(_left: any, value: any, _right: any) {
       return value.sourceString;
     },
     edge(_: any) {
       return {
         openfn: {},
       };
+    },
+    edge_with_props(_: any, props: any, __: any) {
+      const edge = {
+        openfn: {},
+      };
+
+      props.buildWorkflow().forEach(([key, value]: any) => {
+        // @ts-ignore
+        edge[key] = value;
+      });
+
+      return edge;
     },
   };
 
