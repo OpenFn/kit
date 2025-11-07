@@ -1,8 +1,8 @@
 import { SanitizePolicies } from '@openfn/logger';
 import type { RawSourceMap } from 'source-map';
 
-/** UUID v4 */
-export type UUID = string;
+/** UUID v4 (or numbers, when running in dev mode*/
+export type UUID = string | number;
 
 export type SourceMap = RawSourceMap;
 
@@ -29,23 +29,89 @@ export type Project = {
   options: {};
 
   credentials: any;
+  collections: string[];
 
   // metadata about the app for sync
-  openfn?: ProjectConfig;
+  openfn?: Partial<ProjectMeta>;
+
+  config: WorkspaceConfig;
 };
 
-export type OpenFnMetadata = {
+export interface OpenFnMetadata {
   uuid?: UUID;
-};
+}
 
-export type ProjectConfig = OpenFnMetadata & {
-  endpoint: string;
+type FileFormats = 'yaml' | 'json';
+
+// This is the old workspace config file, up to 0.6
+// TODO would like a better name than "Workspace File"
+// Can't use config, it means something else (and not all of it is config!)
+// State is good but overloaded
+// Settings? Context?
+export interface WorkspaceFileLegacy {
+  workflowRoot: string;
+  dirs: {
+    workflows: string;
+    projects: string;
+  };
+  formats: {
+    openfn: FileFormats;
+    project: FileFormats;
+    workflow: FileFormats;
+  };
+
+  // TODO this isn't actually config - this is other stuff
   name: string;
+  project: {
+    projectId: string;
+    endpoint: string;
+    env: string;
+    inserted_at: string;
+    updated_at: string;
+  };
+}
+
+// Structure of the new openfn.yaml file
+export interface WorkspaceFile {
+  workspace: WorkspaceConfig;
+  project: ProjectMeta;
+}
+
+export interface WorkspaceConfig {
+  dirs: {
+    workflows: string;
+    projects: string;
+  };
+  formats: {
+    openfn?: FileFormats;
+    project?: FileFormats;
+    workflow?: FileFormats;
+  };
+}
+
+// Metadata about a connected OpenFn Project
+export interface ProjectMeta {
+  uuid: UUID;
+  endpoint: string;
   env: string;
   inserted_at: string;
-  created_at: string;
-  fetched_at: string; // this is when we last fetched the metadata
-};
+  updated_at: string;
+
+  [key: string]: unknown;
+}
+
+export interface WorkflowMeta {
+  uuid?: UUID;
+  lock_version?: number;
+
+  [key: string]: unknown;
+}
+
+export interface NodeMeta {
+  uuid?: UUID;
+
+  [key: string]: unknown;
+}
 
 /**
  * An execution plan is a portable definition of a Work Order,
@@ -82,10 +148,10 @@ export type Workflow = {
   // a path to a file where functions are defined
   globals?: string;
 
-  openfn?: OpenFnMetadata;
+  openfn?: WorkflowMeta;
 
   // holds history information of a workflow
-  history?: string[]
+  history?: string[];
 };
 
 export type StepId = string;
@@ -131,7 +197,7 @@ export type CompiledExpression = Expression;
  */
 export interface Job extends Step {
   adaptors?: string[];
-  expression: Expression;
+  expression?: Expression;
   configuration?: object | string;
   state?: Omit<State, 'configuration'> | string;
 

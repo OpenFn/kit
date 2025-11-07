@@ -1,4 +1,4 @@
-import { Workflow } from '@openfn/lexicon';
+import { ConditionalStepEdge, Job, Trigger, Workflow } from '@openfn/lexicon';
 import crypto from 'node:crypto';
 
 const SHORT_HASH_LENGTH = 12;
@@ -10,20 +10,20 @@ function isDefined(v: any) {
 }
 
 export const generateHash = (workflow: Workflow, source = 'cli') => {
-  const parts = [];
+  const parts: string[] = [];
 
   // These are the keys we hash against
-  const wfKeys = ['name', 'credentials'].sort();
+  const wfKeys = ['name', 'credentials'].sort() as Array<keyof Workflow>;
   const stepKeys = [
     'name',
     'adaptors',
-    'adaptor', // there's ao adaptor & adaptors key in steps somehow.
+    'adaptor', // there's both adaptor & adaptors key in steps somehow
     'expression',
     'configuration', // assumes a string credential id
     'expression',
 
     // TODO need to model trigger types in this, which I think are currently ignored
-  ].sort();
+  ].sort() as Array<keyof Job | keyof Trigger>;
   const edgeKeys = [
     'condition',
     'label',
@@ -43,18 +43,19 @@ export const generateHash = (workflow: Workflow, source = 'cli') => {
   });
   for (const step of steps) {
     stepKeys.forEach((key) => {
-      if (isDefined(step[key])) {
-        parts.push(key, serializeValue(step[key]));
+      if (isDefined((step as any)[key])) {
+        parts.push(key, serializeValue((step as any)[key]));
       }
     });
 
     if (step.next && Array.isArray(step.next)) {
-      const edges = step.next.slice().sort((a, b) => {
+      const steps = step.next.slice() as Array<ConditionalStepEdge>;
+      steps.slice().sort((a: ConditionalStepEdge, b: ConditionalStepEdge) => {
         const aLabel = a.label || '';
         const bLabel = b.label || '';
         return aLabel.localeCompare(bLabel);
       });
-      for (const edge of edges) {
+      for (const edge of step.next) {
         edgeKeys.forEach((key) => {
           if (isDefined(edge[key])) {
             parts.push(key, serializeValue(edge[key]));
@@ -69,7 +70,7 @@ export const generateHash = (workflow: Workflow, source = 'cli') => {
   return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
 };
 
-function serializeValue(val) {
+function serializeValue(val: unknown) {
   if (typeof val === 'object') {
     return JSON.stringify(val);
   }

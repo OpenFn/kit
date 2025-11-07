@@ -8,6 +8,7 @@ export default function baseMerge<T>(
   target: T,
   source: T,
   sourceKeys?: PropsOnly<T>[], // if there's no keys provided, we do a full merge
+  // @ts-ignore
   assigns: Record<PropsOnly<T>, unknown> = {}
 ) {
   const pickedSource = sourceKeys ? pick(source, sourceKeys) : source;

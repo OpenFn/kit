@@ -33,7 +33,7 @@ const tasks = {
     });
     try {
       const [job] = plan.workflow.steps as Job[];
-      const result = eval(job.expression);
+      const result = eval(job.expression!);
       publish('worker:workflow-complete', {
         workflowId,
         state: result,

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ExecutionPlan, State } from '@openfn/lexicon';
+import type { ExecutionPlan, State, UUID } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 import {
@@ -37,7 +37,7 @@ const DEFAULT_PROFILE_POLL_INTERVAL = 10;
 const createWorkflowEvents = (
   engine: EngineAPI,
   context: ExecutionContext,
-  workflowId: string
+  workflowId: UUID
 ) => {
   // proxy all events to the main emitter
   // uh actually there may be no point in this
@@ -207,10 +207,7 @@ const createEngine = async (
     };
   };
 
-  const listen = (
-    workflowId: string,
-    handlers: Record<string, EventHandler>
-  ) => {
+  const listen = (workflowId: UUID, handlers: Record<string, EventHandler>) => {
     const events = contexts[workflowId];
     if (events) {
       // If execute() was called, we'll have a context and we can subscribe directly

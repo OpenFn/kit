@@ -44,12 +44,27 @@ test.serial('should use workspace config', async (t) => {
   });
   const config = {
     x: 1234,
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
+    format: 'yaml',
   };
-  const project = await fromPath('/p1/main@openfn.org.yaml', {
-    config,
-  });
+  const project = await fromPath('/p1/main@openfn.org.yaml', config);
 
   t.is(project.name, proj.name);
+  t.deepEqual(project.config, {
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
+    formats: {
+      openfn: 'yaml',
+      project: 'yaml',
+      workflow: 'yaml',
+    },
+    x: 1234,
+  });
+
   t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
-  t.is(project.config.x, config.x);
 });

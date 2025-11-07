@@ -7,11 +7,13 @@
  * edges a bit less weird in the Project
  */
 
-import { Workflow } from '@openfn/lexicon';
 import { MappingResults } from './map-uuids';
 import baseMerge from '../util/base-merge';
+import Workflow, { WithMeta } from '../Workflow';
 
 type Node = Workflow['steps'][number];
+
+const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
 export function mergeWorkflows(
   source: Workflow,
@@ -21,43 +23,48 @@ export function mergeWorkflows(
   // We probably need to vary this by the node type,
   // step or edge, but we're basically doing this
 
-  const targetNodes: Record<string, Node> = {};
-  for (const tstep of target.steps)
-    targetNodes[tstep.openfn.uuid || tstep.id] = tstep;
+  const targetNodes: Record<string, WithMeta<Node>> = {};
+  for (const targetStep of target.steps) {
+    targetNodes[targetStep.openfn?.uuid || targetStep.id!] = targetStep;
+  }
 
   const steps: Node[] = [];
-  for (const sstep of source.steps) {
-    let newNode: Node = sstep;
-    if (typeof mappings.nodes[sstep.id] === 'string') {
-      const preservedId = mappings.nodes[sstep.id];
-      // how do I merge the edges?
-      const preservedEdgeIds = {};
-      for (const toNode of Object.keys(
-        typeof sstep.next === 'string'
-          ? { [tstep.next]: true }
-          : sstep.next || {}
-      )) {
+  for (const sourceStep of source.steps) {
+    let newNode: Node = clone(sourceStep);
+    if (sourceStep.id! in mappings.nodes) {
+      const preservedId = mappings.nodes[sourceStep.id!];
+      const toNodeIds = Object.keys(
+        typeof sourceStep.next === 'string'
+          ? { [sourceStep.next]: true }
+          : sourceStep.next || {}
+      );
+      for (const toNode of toNodeIds) {
         // find step - toNode
-        const key = sstep.id + '-' + toNode;
-        if (typeof mappings.edges[key] === 'string') {
+        const key = sourceStep.id + '-' + toNode;
+        if (key in mappings.edges) {
           const preservedEdgeId = mappings.edges[key];
-          const toEdge = sstep.next?.[toNode] || {};
-          preservedEdgeIds[toNode] = sstep.next[toNode] = {
-            ...toEdge,
-            openfn: { ...(toEdge?.openfn || {}), uuid: preservedEdgeId },
+          // @ts-ignore
+          const edge = sourceStep.next?.[toNode] || {};
+
+          // @ts-ignore
+          sourceStep.next[toNode] = {
+            ...edge,
+            openfn: Object.assign({}, edge?.openfn, {
+              uuid: preservedEdgeId,
+            }),
           };
         }
       }
 
       // do a node merge
-      // it's a bit tricky knowing all the properties to be merged
-      newNode = baseMerge(targetNodes[preservedId], sstep, [
+      newNode = baseMerge(targetNodes[preservedId], sourceStep, [
         'id',
         'name',
+        // @ts-ignore
         'adaptor',
+        'adaptors',
         'expression',
         'next',
-        'previous',
       ]);
     } else {
       // TODO Do we need to generate a UUID here?

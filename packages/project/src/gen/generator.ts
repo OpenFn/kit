@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { grammar } from 'ohm-js';
+import { isNil } from 'lodash-es';
 import Project from '../Project';
 import Workflow from '../Workflow';
 import slugify from '../util/slugify';
@@ -15,18 +16,20 @@ type GenerateWorkflowOptions = {
   // useful to generate a project with fixed ids
   uuidMap?: Record<string, string>;
 
-  // TODO removing on this PR, I swear to god
   openfnUuid: boolean; // TODO probably need to do this by default?
 };
 
 type GenerateProjectOptions = GenerateWorkflowOptions & {
   uuidMap: Array<Record<string, string>>;
+  uuid?: string | number;
 };
 
-let parser;
+let parser: {
+  parse(str: string, options: Partial<GenerateWorkflowOptions>): Workflow;
+};
 
-const initOperations = (options = {}) => {
-  let nodes = {};
+const initOperations = (options: any = {}) => {
+  let nodes: any = {};
   const uuidMap = options.uuidMap ?? {};
 
   // Sets values available to this inside semantic actions
@@ -52,15 +55,16 @@ const initOperations = (options = {}) => {
   };
 
   // These are functions which run on matched parse trees
+  // TODO typings ought to be fixed - use NonterminalNode and TerminalNode from Ohm
   const operations = {
-    Workflow(attrs, pair) {
-      pair.children.forEach((child) => child.buildWorkflow());
+    Workflow(attrs: any, pair: any) {
+      pair.children.forEach((child: any) => child.buildWorkflow());
 
       const steps = Object.values(nodes);
 
       const attributes = attrs.children
-        .map((c) => c.buildWorkflow())
-        .reduce((obj, next) => {
+        .map((c: any) => c.buildWorkflow())
+        .reduce((obj: any, next: any) => {
           const [key, value] = next;
           obj[key] = value;
           return obj;
@@ -68,13 +72,13 @@ const initOperations = (options = {}) => {
 
       return { ...attributes, steps: steps };
     },
-    comment(_a, _b) {
+    comment(_a: any, _b: any) {
       return null;
     },
-    attribute(_, name, _space, value) {
+    attribute(_: unknown, name: any, _space: unknown, value: any) {
       return [name.sourceString, value.sourceString];
     },
-    Pair(parent, edge, child) {
+    Pair(parent: any, edge: any, child: any) {
       const n1 = parent.buildWorkflow();
       const n2 = child.buildWorkflow();
       const e = edge.buildWorkflow();
@@ -89,40 +93,40 @@ const initOperations = (options = {}) => {
     // node could just be a node name, or a node with props
     // different results have different requirements
     // Not sure the best way to handle this, but this seems to work
-    node(node) {
+    node(node: any) {
       if (node._node.ruleName === 'node_name') {
         return buildNode(node.sourceString);
       }
       return node.buildWorkflow();
     },
-    nodeWithProps(nameNode, props) {
+    nodeWithProps(nameNode: any, props: any) {
       const name = nameNode.sourceString;
       const node = buildNode(name);
-      props.buildWorkflow().forEach(([key, value]) => {
+      props.buildWorkflow().forEach(([key, value]: any) => {
         nodes[name][key] = value;
       });
       return node;
     },
-    node_name(n) {
+    node_name(n: any) {
       return n.sourceString;
     },
-    props(_lbr, props, _rbr) {
-      return props.asIteration().children.map((c) => c.buildWorkflow());
+    props(_lbr: any, props: any, _rbr: any) {
+      return props.asIteration().children.map((c: any) => c.buildWorkflow());
     },
-    prop(key, _op, value) {
+    prop(key: any, _op: any, value: any) {
       return [key.sourceString, value.buildWorkflow()];
     },
     // Bit flaky - we need this to handle quoted props
-    _iter(...items) {
-      return items.map((i) => i.buildWorkflow()).join('');
+    _iter(...items: any) {
+      return items.map((i: any) => i.buildWorkflow()).join('');
     },
-    alnum(a) {
+    alnum(a: any) {
       return a.sourceString;
     },
-    quotedProp(_left, value, _right) {
+    quotedProp(_left: any, value: any, _right: any) {
       return value.sourceString;
     },
-    edge(_) {
+    edge(_: any) {
       return {
         openfn: {},
       };
@@ -140,7 +144,7 @@ export const createParser = () => {
   const parser = grammar(contents);
 
   return {
-    parse(str, options) {
+    parse(str: string, options: Partial<GenerateWorkflowOptions>) {
       const { printErrors = true } = options;
 
       // Setup semantic actions (which run against an AST and build stuff)
@@ -181,20 +185,31 @@ function generateWorkflow(
     parser = createParser();
   }
 
+  // Calculate the seeded uuid here, so that it's the first value
+  let uuid;
+  if (options.openfnUuid) {
+    uuid = options.uuidSeed ? options.uuidSeed++ : randomUUID();
+  }
+
   const raw = parser.parse(def, options);
   if (!raw.name) {
     raw.name = 'Workflow';
   }
+
   if (!raw.id) {
     // Workflow ID is required, so make sure it gets set
     // before calling the constructor
     raw.id = 'workflow';
   }
-
-  if (options.openfnUuid) {
-    raw.openfn ??= {};
-    raw.openfn.uuid = randomUUID();
+  if (options.uuidMap && raw.id in options.uuidMap) {
+    uuid = options.uuidMap[raw.id];
   }
+
+  if (!isNil(uuid) && options.openfnUuid) {
+    raw.openfn ??= {};
+    raw.openfn.uuid = uuid;
+  }
+
   const wf = new Workflow(raw);
   return wf;
 }
@@ -216,7 +231,9 @@ function generateProject(
   return new Project({
     name,
     workflows,
-    openfn: options.openfnUuid && { uuid: randomUUID() },
+    openfn: {
+      uuid: options.uuid ?? (options.openfnUuid ? randomUUID() : undefined),
+    },
   });
 }
 

@@ -33,6 +33,7 @@ const state: Provisioner.Project = {
           body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
           adaptor: '@openfn/language-common@latest',
           project_credential_id: null,
+          keychain_credential_id: null,
         },
       ],
       triggers: [
@@ -55,6 +56,126 @@ const state: Provisioner.Project = {
   history_retention_period: null,
   dataclip_retention_period: null,
 };
+
+test('should set defaults for keys that Lightning needs', (t) => {
+  // set up a very minimal project
+  const data = {
+    id: 'my-project',
+    openfn: {
+      uuid: '<uuid>',
+    },
+    workflows: [
+      {
+        id: 'wf',
+        openfn: {
+          uuid: 0,
+        },
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {
+                openfn: {
+                  uuid: '<trigger-step>',
+                },
+              },
+            },
+            openfn: {
+              uuid: 1,
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            openfn: {
+              uuid: 2,
+            },
+          },
+        ],
+      },
+    ],
+  };
+  const project = new Project(data, {
+    formats: {
+      project: 'json',
+    },
+  });
+
+  const defaultState = toAppState(project);
+  t.deepEqual(defaultState, {
+    id: '<uuid>',
+    project_credentials: [],
+    workflows: [
+      {
+        id: 0,
+        jobs: [
+          {
+            body: '.',
+            id: 2,
+            project_credential_id: null,
+            keychain_credential_id: null,
+          },
+        ],
+        triggers: [{ type: 'webhook', id: 1 }],
+        edges: [
+          {
+            id: '<trigger-step>',
+            target_job_id: 2,
+            enabled: true,
+            source_trigger_id: 1,
+          },
+        ],
+        lock_version: null,
+      },
+    ],
+  });
+});
+
+// This test just ensures that whatever we write to an openfn object
+// gets written back to state
+test('should write openfn keys to objects', (t) => {
+  const openfn = { x: 1 };
+  const data = {
+    id: 'my-project',
+    openfn,
+    workflows: [
+      {
+        id: 'wf',
+        openfn,
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {
+                openfn,
+              },
+            },
+            openfn,
+          },
+          {
+            id: 'step',
+            expression: '.',
+            openfn,
+          },
+        ],
+      },
+    ],
+  };
+  const project = new Project(data, {
+    formats: {
+      project: 'json',
+    },
+  });
+
+  const state = toAppState(project);
+  t.is(state.x, 1);
+  t.is(state.workflows[0].x, 1);
+  t.is(state.workflows[0].jobs[0].x, 1);
+  t.is(state.workflows[0].triggers[0].x, 1);
+  t.is(state.workflows[0].edges[0].x, 1);
+});
 
 test('should convert a project back to app state in json', (t) => {
   // this is a serialized project file

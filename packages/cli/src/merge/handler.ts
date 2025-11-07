@@ -13,12 +13,18 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     return;
   }
 
-  // The target project - the think we apply changes to - is
-  // whatever is checked out
-  const targetProject = workspace.getActiveProject();
-  if (!targetProject) {
-    logger.error(`No project currently checked out`);
-    return;
+  let targetProject: Project;
+  if (options.base) {
+    const basePath = path.resolve(options.base);
+    logger.debug('Loading target project from path', basePath);
+    targetProject = await Project.from('path', basePath);
+  } else {
+    targetProject = workspace.getActiveProject()!;
+    if (!targetProject) {
+      logger.error(`No project currently checked out`);
+      return;
+    }
+    logger.debug(`Loading target project from workspace (${targetProject.id})`);
   }
 
   // Lookup the source project - the thing we are getting changes from
@@ -28,6 +34,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     logger.debug('Loading source project from path ', filePath);
     sourceProject = await Project.from('path', filePath);
   } else {
+    logger.debug(`Loading source project from workspace ${options.projectId}`);
     sourceProject = workspace.get(options.projectId);
   }
   if (!sourceProject) {
@@ -44,27 +51,46 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
     logger.error('The checked out project has no id');
     return;
   }
-
-  const finalPath = workspace.getProjectPath(targetProject.id);
+  const finalPath =
+    options.outputPath ?? workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
     logger.error('Path to checked out project not found.');
     return;
   }
-
   const final = Project.merge(sourceProject, targetProject, {
     removeUnmapped: options.removeUnmapped,
     workflowMappings: options.workflowMappings,
     force: options.force,
   });
-  const yaml = final.serialize('state', { format: 'yaml' });
-  await fs.writeFile(finalPath, yaml);
+
+  let outputFormat = workspace.config!.formats.project;
+  // If outputPath has a JSON file extension, use that
+  if (options.outputPath?.endsWith('.json')) {
+    outputFormat = 'json';
+  } else if (options.outputPath?.endsWith('.yaml')) {
+    outputFormat = 'yaml';
+  }
+
+  let finalState = final.serialize('state', {
+    format: outputFormat,
+  });
+  if (outputFormat === 'json') {
+    finalState = JSON.stringify(finalState, null, 2);
+  }
+  await fs.writeFile(finalPath, finalState);
+
+  logger.info(`Updated statefile at `, finalPath);
+
+  logger.info('Checking out merged project to filesystem');
+
+  // TODO support --no-checkout to merge without expanding
 
   // Checkout after merge. to unwrap updated files into filesystem
   await checkoutHandler(
     {
       command: 'checkout',
       projectPath: commandPath,
-      projectId: final.id,
+      projectId: options.outputPath ? finalPath : final.id,
       log: options.log,
     },
     logger

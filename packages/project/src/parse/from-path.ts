@@ -1,12 +1,13 @@
+import * as l from '@openfn/lexicon';
 import { extname } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
 import fromAppState from './from-app-state';
 import { yamlToJson } from '../util/yaml';
-import { WorkspaceConfig } from '../util/config';
+import { omit } from 'lodash-es';
 
-export type FromPathConfig = {
-  config: WorkspaceConfig;
+export type FromPathConfig = l.WorkspaceConfig & {
+  format: 'json' | 'yaml';
 };
 
 // Load a project from a file path
@@ -14,14 +15,10 @@ export type FromPathConfig = {
 // Pass options explicitly
 // Paths will be inferred from the source path
 // TODO: should we try and find the nearest openfn.yaml file for config?
-export default async (path: string, options: FromPathConfig = {}) => {
+export default async (path: string, config: Partial<FromPathConfig> = {}) => {
   const ext = extname(path).toLowerCase();
   const source = await readFile(path, 'utf8');
 
-  const config = {
-    format: null,
-    config: options.config,
-  };
   let state;
   if (ext === '.json') {
     config.format = 'json';
@@ -33,5 +30,6 @@ export default async (path: string, options: FromPathConfig = {}) => {
     throw new Error(`Cannot load a project from a ${ext} file`);
   }
 
-  return fromAppState(state, config);
+  const meta = {};
+  return fromAppState(state, meta, omit(config, ['format']));
 };

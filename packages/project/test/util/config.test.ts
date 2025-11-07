@@ -14,6 +14,9 @@ test.afterEach(() => {
 test('load config as yaml', (t) => {
   const yaml = `
 workspace:
+  dirs:
+    projects: p
+    workflows: w
   formats:
     openfn: yaml
     project: json
@@ -30,6 +33,10 @@ project:
   const result = loadWorkspaceFile(yaml);
 
   t.deepEqual(result.workspace, {
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
     formats: {
       openfn: 'yaml',
       project: 'json',
@@ -149,7 +156,7 @@ test('find openfn.json', (t) => {
 test('generate openfn.yaml', (t) => {
   const proj = new Project(
     {
-      id: 'p1',
+      id: 'my-project',
       name: 'My Project',
       openfn: {
         uuid: 1234,

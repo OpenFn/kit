@@ -1,3 +1,4 @@
+import { UUID } from '@openfn/lexicon';
 import { Versions } from './types';
 import { SerializedLogEvent } from './worker/events';
 
@@ -52,7 +53,7 @@ export type ExternalEvents = keyof EventMap;
 
 interface ExternalEvent {
   threadId?: string;
-  workflowId: string;
+  workflowId: UUID;
 }
 
 export interface WorkflowStartPayload extends ExternalEvent {

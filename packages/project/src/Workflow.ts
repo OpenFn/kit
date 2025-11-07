@@ -2,23 +2,20 @@ import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
 import { generateHash } from './util/version';
 
-const clone = (obj) => JSON.parse(JSON.stringify(obj));
+const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
-type OpenfnMeta = {
-  uuid?: string;
-};
-
-type WithMeta<T> = T & {
-  openfn?: OpenfnMeta;
+export type WithMeta<T> = T & {
+  openfn?: l.NodeMeta;
 };
 
 class Workflow {
   workflow: l.Workflow; // this is the raw workflow JSON representation
-  index;
+  index: any;
 
   name?: string;
   id: string;
-  openfn: OpenfnMeta;
+  openfn?: l.WorkflowMeta;
+  options: any; // TODO
 
   constructor(workflow: l.Workflow) {
     this.index = {
@@ -38,7 +35,7 @@ class Workflow {
       throw new Error('A Workflow MUST have a name or id');
     }
 
-    this.id = id ?? slugify(name);
+    this.id = id ?? slugify(name!);
     this.name = name;
 
     // This is a bit messy but needed to allow toJSON() to serialize properly
@@ -50,15 +47,16 @@ class Workflow {
     this.openfn = openfn;
     this.options = options;
 
-    this.#buildIndex();
+    this._buildIndex();
   }
 
-  get steps(): WithMeta<l.Job | l.Trigger>[] {
+  get steps(): WithMeta<l.Job & l.Trigger>[] {
     return this.workflow.steps;
   }
 
-  #buildIndex() {
-    for (const s of this.workflow.steps) {
+  _buildIndex() {
+    for (const step of this.workflow.steps) {
+      const s = step as any;
       // index this step
       this.index.steps[s.id] = s;
       this.index.uuid[s.id] = s.openfn?.uuid;
@@ -81,7 +79,7 @@ class Workflow {
   }
 
   // Set properties on any step or edge by id
-  set(id: string, props: Parital<l.Job, l.Edge>) {
+  set(id: string, props: Partial<l.Job | l.StepEdge>) {
     const item = this.index.edges[id] || this.index.steps[id];
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
@@ -93,7 +91,7 @@ class Workflow {
   }
 
   // Get properties on any step or edge by id
-  get(id): WithMeta<l.Step | l.Trigger | l.Edge> {
+  get(id: string): WithMeta<l.Step | l.Trigger | l.StepEdge> {
     const item = this.index.edges[id] || this.index.steps[id];
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
@@ -103,7 +101,7 @@ class Workflow {
   }
 
   // TODO needs unit tests and maybe setter
-  meta(id): OpenfnMeta {
+  meta(id: string): l.WorkflowMeta {
     const item = this.index.edges[id] || this.index.steps[id];
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
@@ -113,7 +111,7 @@ class Workflow {
   }
 
   // Get an edge based on its source and target
-  getEdge(from, to): WithMeta<l.ConditionalStepEdge> {
+  getEdge(from: string, to: string): WithMeta<l.ConditionalStepEdge> {
     const edgeId = [from, to].join('-');
 
     const edge = this.index.edges[edgeId];
@@ -126,7 +124,8 @@ class Workflow {
 
   getAllEdges() {
     const edges: Record<string, string[]> = {};
-    for (const step of this.steps) {
+    for (const s of this.steps) {
+      const step = s as any;
       const next =
         typeof step.next === 'string' ? { [step.next]: true } : step.next || {};
 
@@ -144,7 +143,7 @@ class Workflow {
 
   getRoot() {
     const edges = this.getAllEdges();
-    const all_children = [];
+    const all_children: any[] = [];
     const all_parents = [];
     for (const [parent, children] of Object.entries(edges)) {
       all_children.push(...children);
@@ -155,11 +154,11 @@ class Workflow {
     return this.index.steps[root] as Workflow['steps'][number];
   }
 
-  getUUID(id): string {
+  getUUID(id: string): string {
     return this.index.uuid[id];
   }
 
-  toJSON(): JSON.Object {
+  toJSON(): Object {
     return this.workflow;
   }
 
@@ -177,14 +176,13 @@ class Workflow {
 
   // return true if the current workflow can be merged into the target workflow without losing any changes
   canMergeInto(target: Workflow) {
-    const thisHistory = this.workflow.history?.concat(this.getVersionHash());
-    const targetHistory = target.workflow.history?.concat(
-      target.getVersionHash()
-    );
+    const thisHistory =
+      this.workflow.history?.concat(this.getVersionHash()) ?? [];
+    const targetHistory =
+      target.workflow.history?.concat(target.getVersionHash()) ?? [];
 
     const targetHead = targetHistory[targetHistory.length - 1];
-    if (thisHistory.indexOf(targetHead) > -1) return true;
-    return false;
+    return thisHistory.indexOf(targetHead) > -1;
   }
 }
 

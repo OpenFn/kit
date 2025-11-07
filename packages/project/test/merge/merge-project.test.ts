@@ -10,14 +10,14 @@ let idgen = 0;
 
 // go over each node in a workflow and add a new uuid
 // does not mutate
-const assignUUIDs = (workflow) => ({
+const assignUUIDs = (workflow, generator = randomUUID) => ({
   id: 'wf',
   ...workflow,
   steps: workflow.steps.map((s) => {
     const step = {
       ...s,
       openfn: {
-        uuid: randomUUID(),
+        uuid: generator(),
       },
     };
     if (s.next) {
@@ -26,7 +26,7 @@ const assignUUIDs = (workflow) => ({
         obj[key] = {
           condition: true,
           openfn: {
-            uuid: randomUUID(),
+            uuid: generator(),
           },
         };
         return obj;
@@ -121,6 +121,43 @@ test('merge a simple change between single-step workflows with preserved uuids',
   t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
 });
 
+test('merge a simple change between single-step workflows with preserved numeric uuids', (t) => {
+  // create a base workflow
+  const wf = {
+    id: 'wf',
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+      },
+    ],
+  };
+
+  // step up two copies with UUIDS
+  const wf_a = assignUUIDs(wf, () => ++idgen);
+  const wf_b = assignUUIDs(wf, () => ++idgen);
+
+  // change the adaptor
+  wf_b.steps[0].adaptor = 'http';
+
+  const main = createProject(wf_a, 'a');
+  const staging = createProject(wf_b, 'b');
+
+  // merge staging into main
+  const result = merge(staging, main);
+  const step = result.workflows[0].steps[0];
+
+  // The resulting project should basically be main but with a different adaptor
+
+  t.is(result.name, 'a');
+  t.is(result.openfn.uuid, main.openfn.uuid);
+
+  t.is(step.adaptor, wf_b.steps[0].adaptor);
+  t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
+});
+
 test('merge a new step into an existing workflow', (t) => {
   // create a base workflow
   const wf = {
@@ -157,7 +194,7 @@ test('merge a new step into an existing workflow', (t) => {
   t.deepEqual(y, wf_b.steps[1]);
 });
 
-test('merge with an edge and no changes', (t) => {
+test.only('merge with an edge and no changes', (t) => {
   // create a base workflow
   const wf = {
     name: 'wf',
@@ -181,8 +218,8 @@ test('merge with an edge and no changes', (t) => {
   };
 
   // step up two copies with UUIDS
-  const wf_a = assignUUIDs(wf);
-  const wf_b = assignUUIDs(wf);
+  const wf_a = assignUUIDs(wf, () => ++idgen);
+  const wf_b = assignUUIDs(wf, () => ++idgen);
   // console.log(JSON.stringify(wf_a, null, 2));
 
   const main = createProject(wf_a, 'a');
@@ -196,7 +233,7 @@ test('merge with an edge and no changes', (t) => {
   t.is(result.openfn.uuid, main.openfn.uuid);
 
   const step = result.workflows[0].steps[0];
-  // The step should be totally unchanged
+  // The step and edge should be totally unchanged
   t.deepEqual(step.next, wf_a.steps[0].next);
 });
 

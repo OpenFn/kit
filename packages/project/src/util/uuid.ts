@@ -21,7 +21,7 @@ export const getUuidForStep = (
   }
   for (const step of wf.steps) {
     if (step.id === stepId) {
-      return step.openfn?.uuid ?? null;
+      return (step as any).openfn?.uuid ?? null;
     }
   }
   return null;
@@ -40,16 +40,14 @@ export const getUuidForEdge = (
   const wf =
     typeof workflow === 'string' ? project.getWorkflow(workflow) : workflow;
   if (!wf) {
-    throw new Error(
-      `Workflow "${workflowId} not found in project ${project.id}`
-    );
+    throw new Error(`Workflow "${workflow} not found in project ${project.id}`);
   }
 
   for (const step of wf.steps) {
     if (step.id === from) {
-      for (const edge in step.next) {
+      for (const edge in step.next as any) {
         if (edge === to) {
-          return step.next[edge].openfn?.uuid ?? null;
+          return (step.next as any)[edge].openfn?.uuid ?? null;
         }
       }
       break;

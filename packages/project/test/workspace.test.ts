@@ -82,6 +82,102 @@ mock({
       },
     ],
   }),
+
+  // json format
+  '/ws2/openfn.yaml': jsonToYaml({
+    project: {
+      id: 'project-2',
+      uuid: '<uuid-id2>',
+    },
+    workspace: {
+      formats: {
+        openfn: 'yaml',
+        project: 'json',
+        workflow: 'yaml',
+      },
+    },
+  }),
+  '/ws2/.projects/staging@app.openfn.org.json': JSON.stringify({
+    name: 'Project 2',
+    id: '<uuid-2>',
+    workflows: [
+      {
+        name: 'Simple Workflow',
+        id: '<uuid>',
+        jobs: [
+          {
+            name: 'X',
+            body: '.',
+            adaptor: '@openfn/language-http@latest',
+            id: 'a',
+          },
+        ],
+        triggers: [
+          {
+            type: 'webhook',
+            enabled: true,
+            id: 'trigger-id',
+          },
+        ],
+        edges: [
+          {
+            id: 'edge-id',
+            target_job_id: 'a',
+            enabled: true,
+            source_trigger_id: 'trigger-id',
+            condition_type: 'always',
+          },
+        ],
+      },
+    ],
+  }),
+
+  // custom paths
+  '/ws3/openfn.yaml': jsonToYaml({
+    project: {
+      id: 'project-3',
+      uuid: '<uuid-3>',
+    },
+    workspace: {
+      dirs: {
+        projects: 'p',
+      },
+    },
+  }),
+  '/ws3/p/project@app.openfn.org.yaml': jsonToYaml({
+    name: 'Project 3',
+    id: '<uuid-3>',
+    workflows: [
+      {
+        name: 'Simple Workflow',
+        id: '<uuid>',
+        jobs: [
+          {
+            name: 'X',
+            body: '.',
+            adaptor: '@openfn/language-http@latest',
+            id: 'a',
+          },
+        ],
+        triggers: [
+          {
+            type: 'webhook',
+            enabled: true,
+            id: 'trigger-id',
+          },
+        ],
+        edges: [
+          {
+            id: 'edge-id',
+            target_job_id: 'a',
+            enabled: true,
+            source_trigger_id: 'trigger-id',
+            condition_type: 'always',
+          },
+        ],
+      },
+    ],
+  }),
 });
 
 test('workspace-path: valid workspace path', (t) => {
@@ -112,6 +208,22 @@ test('workspace-get: get projects in the workspace', (t) => {
     found?.workflows.map((w) => w.id),
     ['simple-workflow', 'another-workflow']
   );
+});
+
+test('load JSON files', (t) => {
+  const ws = new Workspace('/ws2');
+  const proj = ws.get('project-2');
+  t.truthy(proj);
+  t.is(proj?.workflows.length, 1);
+  t.is(proj?.workflows[0].id, 'simple-workflow');
+});
+
+test('load from custom path', (t) => {
+  const ws = new Workspace('/ws3');
+  const proj = ws.get('project-3');
+  t.truthy(proj);
+  t.is(proj?.workflows.length, 1);
+  t.is(proj?.workflows[0].id, 'simple-workflow');
 });
 
 test('load config', (t) => {

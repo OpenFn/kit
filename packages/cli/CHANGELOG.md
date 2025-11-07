@@ -1,5 +1,18 @@
 # @openfn/cli
 
+## 1.18.3
+
+### Patch Changes
+
+- 75e3220: support --output in merge, to write the merged project file elsewhere. Useful for backups, merge conflicts and testing
+- 43b0b0c: checkout: fixed issues when using custom file paths
+- Updated dependencies
+- Updated dependencies [88f7f80]
+- Updated dependencies [435d55c]
+- Updated dependencies [64b6d4a]
+  - @openfn/lexicon@1.2.6
+  - @openfn/project@0.7.2
+
 ## 1.18.2
 
 ### Patch Changes

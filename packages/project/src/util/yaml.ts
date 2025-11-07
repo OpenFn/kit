@@ -5,7 +5,7 @@ export function yamlToJson(y: string) {
   return doc.toJS();
 }
 
-export function jsonToYaml(json: string | JSONObject) {
+export function jsonToYaml(json: string | Object) {
   if (typeof json === 'string') {
     json = JSON.parse(json);
   }

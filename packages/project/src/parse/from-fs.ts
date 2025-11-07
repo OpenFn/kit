@@ -8,12 +8,9 @@ import getIdentifier from '../util/get-identifier';
 import { yamlToJson } from '../util/yaml';
 import {
   buildConfig,
-  WorkspaceConfig,
-  WorkspaceFile,
   loadWorkspaceFile,
   findWorkspaceFile,
 } from '../util/config';
-import slugify from '../util/slugify';
 import fromAppState from './from-app-state';
 
 export type FromFsConfig = {
@@ -21,24 +18,23 @@ export type FromFsConfig = {
 };
 
 // Parse a single project from a root folder
-export const parseProject = async (options: FromFsConfig = {}) => {
+export const parseProject = async (options: FromFsConfig) => {
   const { root } = options;
 
   const { type, content } = findWorkspaceFile(root);
-  const context = loadWorkspaceFile(content, type);
+  const context = loadWorkspaceFile(content, type as any);
   const config = buildConfig(context.workspace);
 
   // Now we need to look for the corresponding state file
   // Need to load UUIDs and other app settings from this
   // If we load it as a Project, uuid tracking is way easier
-  let state: Project;
+  let state: Project | null = null;
   const identifier = getIdentifier({
     endpoint: context.project?.endpoint,
     env: context.project?.env,
   });
   try {
-    const format =
-      config.formats?.project ?? config.formats?.projects ?? 'yaml';
+    const format = config.formats?.project ?? config.formats?.project ?? 'yaml';
     const statePath = path.join(
       root,
       config.dirs?.projects ?? '.projects',
@@ -52,7 +48,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
     // console.warn(e);
   }
 
-  const proj = {
+  const proj: any = {
     name: state?.name,
     openfn: context.project,
     config: config,
@@ -64,13 +60,12 @@ export const parseProject = async (options: FromFsConfig = {}) => {
   // TODO how can I prevent this loading huge data files?
   // I mean they shouldn't be there anyway but still
   const workflowDir =
-    config.workflowRoot ?? config.dirs?.workflows ?? 'workflows';
+    (config as any).workflowRoot ?? config.dirs?.workflows ?? 'workflows';
   const fileType = config.formats?.workflow ?? 'yaml';
   const pattern = `${root}/${workflowDir}/*/*.${fileType}`;
   const candidateWfs = await glob(pattern, {
     ignore: ['**node_modules/**', '**tmp**'],
   });
-  const workflows = [];
 
   for (const filePath of candidateWfs) {
     const candidate = await fs.readFile(filePath, 'utf-8');
@@ -79,7 +74,7 @@ export const parseProject = async (options: FromFsConfig = {}) => {
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
       if (wf.id && Array.isArray(wf.steps)) {
         // load settings from the state file
-        const wfState = (state && state.getWorkflow(wf.id)) ?? {};
+        const wfState: any = (state && state.getWorkflow(wf.id)) ?? {};
         wf.openfn = {
           uuid: wfState.openfn?.uuid ?? null,
           // TODO do we need to transfer more stuff? Options maybe?
@@ -128,6 +123,3 @@ export const parseProject = async (options: FromFsConfig = {}) => {
 
   return new Project(proj as l.Project, context.workspace);
 };
-
-// Parse the filesystem for all projects
-const parseRepo = () => {};

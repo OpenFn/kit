@@ -162,7 +162,9 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
 
 test('extractWorkflow: single simple workflow with custom root', (t) => {
   const config = {
-    workflowRoot: './openfn/wfs/',
+    dirs: {
+      workflows: './openfn/wfs/',
+    },
     formats: {
       workflow: 'json', // for easier testing
     },

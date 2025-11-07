@@ -13,7 +13,7 @@ export type MergeOptions = Required<
     | 'workflowMappings'
   >
 > &
-  Pick<Opts, 'log' | 'force'>;
+  Pick<Opts, 'log' | 'force' | 'outputPath'> & { base?: string };
 
 const options = [
   o.projectId,
@@ -21,6 +21,23 @@ const options = [
   o.removeUnmapped,
   o.workflowMappings,
   o.log,
+  // custom output because we don't want defaults or anything
+  {
+    name: 'output-path',
+    yargs: {
+      alias: 'o',
+      description:
+        'Optionally write the merged project file to a custom location',
+    },
+  },
+  {
+    name: 'base',
+    yargs: {
+      alias: 'target',
+      description:
+        'Path to the base (target) state file to merge into (ie, what main should be)',
+    },
+  },
   override(o.force, {
     description: 'Force a merge even when workflows are incompatible',
   }),
