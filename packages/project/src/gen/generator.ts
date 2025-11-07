@@ -81,6 +81,12 @@ const initOperations = (options: any = {}) => {
     attr_value(n: any) {
       return n.sourceString;
     },
+    bool(value: any) {
+      return value.sourceString === 'true';
+    },
+    int(value: any) {
+      return parseInt(value.sourceString);
+    },
     Pair(parent: any, edge: any, child: any) {
       const n1 = parent.buildWorkflow();
       const n2 = child.buildWorkflow();

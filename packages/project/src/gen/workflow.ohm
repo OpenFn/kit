@@ -29,7 +29,13 @@ Workflow {
 
   prop = alnum+ "=" propValue
 
-  propValue = quoted_prop | alnum+ 
+  propValue = quoted_prop | bool | int | alnum+ 
+
+  // TODO we only parse numbers as positive ints right now
+  // fine for tests
+  int = digit+
+
+  bool = "false" | "true"
   
   quoted_prop = "\"" (~"\"" any)* "\""
 
