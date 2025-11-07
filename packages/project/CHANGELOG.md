@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.7.2
+
+### Patch Changes
+
+- 88f7f80: Read project files from JSON
+- 435d55c: Allow project generator to generate uuids for project and workflow
+- 64b6d4a: Ensure config.dirs is properly respected
+- Updated dependencies
+  - @openfn/lexicon@1.2.6
+
 ## 0.7.1
 
 ### Patch Changes

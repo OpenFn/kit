@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.2.6
+
+### Patch Changes
+
+- Update types for projects
+
 ## 1.2.5
 
 ### Patch Changes
