@@ -179,6 +179,19 @@ test('mapWorkflow: map a simple trigger', (t) => {
   });
 });
 
+test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => {
+  const mapped = mapWorkflow(state.workflows[0]);
+
+  t.deepEqual(mapped.openfn, {
+    lock_version: 1,
+    deleted_at: null,
+    concurrency: null,
+    uuid: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+    updated_at: '2025-04-23T11:19:32Z',
+    inserted_at: '2025-04-23T11:19:32Z',
+  });
+});
+
 // TODO need to test various trigger conditions and states
 test('mapWorkflow: map a simple job', (t) => {
   const mapped = mapWorkflow(state.workflows[0]);
