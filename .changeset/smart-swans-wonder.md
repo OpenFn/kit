@@ -6,4 +6,4 @@ New additions to project generator:
 
 - Support edge properties `x-(enabled=false)-y`
 - Parse property values as boolean and unsigned int
-- Support changed attributes on workflows, like `@options.concurrency=2`
+- Support chained attributes on workflows, like `@options.concurrency=2`
