@@ -232,11 +232,6 @@ a--b
       },
     ],
   };
-  const project = new Project(data, {
-    formats: {
-      project: 'json',
-    },
-  });
 
   const state = toAppState(project);
   // TODO
