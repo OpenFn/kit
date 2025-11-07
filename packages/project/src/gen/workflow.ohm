@@ -7,7 +7,7 @@ Workflow {
 
   attribute = "@" chained_attr_name space (attr_value | quoted_prop)
 
-  attr_value = (alnum | "_" | "-" | ":")+
+  attr_value = int | bool | (alnum | "_" | "-" | ":")+
 
   chained_attr_name = (alnum | "_" | "-" | ".")+
 

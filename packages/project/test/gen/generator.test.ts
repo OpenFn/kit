@@ -68,16 +68,16 @@ a-b`,
 
 test('it should generate a workflow with two attributes', (t) => {
   const result = gen(
-    `@x 1
-@y 2
+    `@x x
+@y y
 a-b`,
     t
   );
 
   const expected = {
     ...fixtures.ab,
-    x: '1',
-    y: '2',
+    x: 'x',
+    y: 'y',
   };
 
   t.deepEqual(result, expected);
@@ -85,32 +85,50 @@ a-b`,
 
 test('it should generate a workflow with nested attributes', (t) => {
   const result = gen(
-    `@x.y 1
+    `@x.y jam
 a-b`,
     t
   );
 
   const expected = {
     ...fixtures.ab,
-    x: { y: '1' }, // comes out as a string, deal with it
+    x: { y: 'jam' },
   };
 
   t.deepEqual(result, expected);
 });
 
+test('it should generate a workflow with typed attributes (number, boolean)', (t) => {
+  const result = gen(
+    `@somebool false
+@somenum 61
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    somebool: false,
+    somenum: 61,
+  };
+
+  t.deepEqual(result, expected);
+});
+
+// TODO: it shouldn't really be necessary to quote the date here?
 test('it should generate a workflow with openfn meta', (t) => {
   const result = gen(
     `@openfn.lock_version 123
 @openfn.concurrency 3
-@openfn.updated_at 2025-04-23T11:19:32Z
+@openfn.updated_at "2025-04-23T11:19:32Z"
 @openfn.jam jar 
 a-b`,
     t
   );
   t.log(result);
   t.deepEqual(result.openfn, {
-    lock_version: '123',
-    concurrency: '3',
+    lock_version: 123,
+    concurrency: 3,
     updated_at: '2025-04-23T11:19:32Z',
     jam: 'jar',
   });

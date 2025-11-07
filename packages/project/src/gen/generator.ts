@@ -76,10 +76,13 @@ const initOperations = (options: any = {}) => {
       return null;
     },
     attribute(_: unknown, name: any, _space: unknown, value: any) {
-      return [name.sourceString, value.sourceString];
+      return [
+        name.sourceString,
+        value.isTerminal() ? value.sourceString : value.buildWorkflow(),
+      ];
     },
     attr_value(n: any) {
-      return n.sourceString;
+      return n.isTerminal() ? n.sourceString : n.buildWorkflow();
     },
     bool(value: any) {
       return value.sourceString === 'true';
@@ -127,7 +130,9 @@ const initOperations = (options: any = {}) => {
     },
     // Bit flaky - we need this to handle quoted props
     _iter(...items: any) {
-      return items.map((i: any) => i.buildWorkflow()).join('');
+      return items
+        .map((i: any) => (i.isTerminal() ? i.sourceString : i.buildWorkflow()))
+        .join('');
     },
     alnum(a: any) {
       return a.sourceString;
