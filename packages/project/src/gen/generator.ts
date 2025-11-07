@@ -134,6 +134,17 @@ const initOperations = (options: any = {}) => {
         openfn: {},
       };
     },
+    edge_with_props(_: any, props: any, __: any) {
+      const edge = {
+        openfn: {},
+      };
+
+      props.buildWorkflow().forEach(([key, value]: any) => {
+        edge[key] = value;
+      });
+
+      return edge;
+    },
   };
 
   return operations;

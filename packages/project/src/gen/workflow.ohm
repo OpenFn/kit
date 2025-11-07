@@ -11,7 +11,7 @@ Workflow {
 
   chained_attr_name = (alnum | "_" | "-" | ".")+
 
-  Pair =  node edge node
+  Pair =  node (edge_with_props | edge) node
 
   comment = "#" (~lineTerminator any)*
 
@@ -29,11 +29,13 @@ Workflow {
 
   prop = alnum+ "=" propValue
 
-  propValue = alnum+ | quoted_prop
+  propValue = quoted_prop | alnum+ 
   
   quoted_prop = "\"" (~"\"" any)* "\""
 
   edge = "-"
+  
+  edge_with_props = "-" props "-"
 
   lineTerminator =  "\n" | "\r"
 }

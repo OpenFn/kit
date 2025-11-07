@@ -402,6 +402,43 @@ test('it should treat quotes specially', (t) => {
   t.deepEqual(result, expected);
 });
 
+test('it should generate an edge with a prop', (t) => {
+  const result = gen('a-(x=y)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.deepEqual(edge, {
+    openfn: {
+      uuid: 3,
+    },
+    x: 'y',
+  });
+});
+
+test('it should generate an edge with a multi-char prop', (t) => {
+  const result = gen('a-(condition=false)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.deepEqual(edge, {
+    openfn: {
+      uuid: 3,
+    },
+    condition: 'false', // TODO should really parse this
+  });
+});
+
+test('it should generate an edge with multiple props', (t) => {
+  const result = gen('a-(x=y,foo=bar)-b', t);
+
+  const edge = result.steps[0].next.b;
+  t.deepEqual(edge, {
+    openfn: {
+      uuid: 3,
+    },
+    x: 'y',
+    foo: 'bar',
+  });
+});
+
 test('it should ignore leading comments', (t) => {
   const result = gen(
     `#test
