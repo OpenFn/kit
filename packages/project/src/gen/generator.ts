@@ -151,6 +151,7 @@ const initOperations = (options: any = {}) => {
       };
 
       props.buildWorkflow().forEach(([key, value]: any) => {
+        // @ts-ignore
         edge[key] = value;
       });
 
