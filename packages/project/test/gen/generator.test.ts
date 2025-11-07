@@ -1,15 +1,12 @@
-import test from 'ava';
-import { grammar } from 'ohm-js';
+import test, { ExecutionContext } from 'ava';
 import _ from 'lodash';
-import path from 'node:path';
-import { readFile } from 'node:fs/promises';
 import { generateWorkflow, generateProject } from '../../src/gen/generator';
 import * as fixtures from './fixtures';
 import Workflow from '../../src/Workflow';
 
 // Generate a workflow with a fixed UUID seed
 // Pass test context to log the result
-const gen = (src, t, options = {}) => {
+const gen = (src: string, t: ExecutionContext<unknown>, options = {}) => {
   const result = generateWorkflow(src, {
     uuidSeed: 1,
     printErrors: false,
@@ -39,7 +36,7 @@ test('it should generate a simple project', (t) => {
   t.deepEqual(result.workflows[0].toJSON(), fixtures.ab);
 });
 
-test('it should generate a simple workflow with an attribute', (t) => {
+test('it should generate a workflow with an attribute', (t) => {
   const result = gen(
     `@name joe
 a-b`,
@@ -54,7 +51,7 @@ a-b`,
   t.deepEqual(result, expected);
 });
 
-test('it should generate a simple workflow with an attribute with underscores and dashes', (t) => {
+test('it should generate a workflow with an attribute with underscores and dashes', (t) => {
   const result = gen(
     `@name a_c-x
 a-b`,
@@ -69,7 +66,7 @@ a-b`,
   t.deepEqual(result, expected);
 });
 
-test('it should generate a simple workflow with two attributes', (t) => {
+test('it should generate a workflow with two attributes', (t) => {
   const result = gen(
     `@x 1
 @y 2
@@ -84,6 +81,39 @@ a-b`,
   };
 
   t.deepEqual(result, expected);
+});
+
+test('it should generate a workflow with nested attributes', (t) => {
+  const result = gen(
+    `@x.y 1
+a-b`,
+    t
+  );
+
+  const expected = {
+    ...fixtures.ab,
+    x: { y: '1' }, // comes out as a string, deal with it
+  };
+
+  t.deepEqual(result, expected);
+});
+
+test('it should generate a workflow with openfn meta', (t) => {
+  const result = gen(
+    `@openfn.lock_version 123
+@openfn.concurrency 3
+@openfn.updated_at 2025-04-23T11:19:32Z
+@openfn.jam jar 
+a-b`,
+    t
+  );
+  t.log(result);
+  t.deepEqual(result.openfn, {
+    lock_version: '123',
+    concurrency: '3',
+    updated_at: '2025-04-23T11:19:32Z',
+    jam: 'jar',
+  });
 });
 
 test('it should throw if parsing fails with 1 node, 1 edge', (t) => {

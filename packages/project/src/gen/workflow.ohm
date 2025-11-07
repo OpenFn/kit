@@ -5,9 +5,11 @@
 Workflow {
   Workflow = attribute* Pair*
 
-  attribute = "@" attr_name space attr_name
+  attribute = "@" chained_attr_name space (attr_value | quoted_prop)
 
-  attr_name = (alnum | "_" | "-")+
+  attr_value = (alnum | "_" | "-" | ":")+
+
+  chained_attr_name = (alnum | "_" | "-" | ".")+
 
   Pair =  node edge node
 
@@ -27,9 +29,9 @@ Workflow {
 
   prop = alnum+ "=" propValue
 
-  propValue = alnum+ | quotedProp
+  propValue = alnum+ | quoted_prop
   
-  quotedProp = "\"" (~"\"" any)* "\""
+  quoted_prop = "\"" (~"\"" any)* "\""
 
   edge = "-"
 
