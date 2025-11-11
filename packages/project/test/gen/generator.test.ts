@@ -403,6 +403,14 @@ test('it should generate a node with a prop', (t) => {
   t.deepEqual(result, expected);
 });
 
+test('it should generate a node with a prop with an underscore', (t) => {
+  const result = gen('a(project_credential_id=y)-b', t);
+  const expected = _.cloneDeep(fixtures.ab);
+  expected.steps[0].project_credential_id = 'y';
+
+  t.deepEqual(result, expected);
+});
+
 test('it should generate a node with two props', (t) => {
   const result = gen('a(x=j,z=k)-b', t);
   const expected = _.cloneDeep(fixtures.ab);

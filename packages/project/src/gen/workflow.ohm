@@ -27,7 +27,7 @@ Workflow {
 
   props = "(" listOf<prop, ","> ")"
 
-  prop = alnum+ "=" propValue
+  prop = (alnum | "-" | "_")+ "=" propValue
 
   propValue = quoted_prop | bool | int | alnum+ 
 

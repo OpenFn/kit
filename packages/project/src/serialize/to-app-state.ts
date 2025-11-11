@@ -1,4 +1,4 @@
-import { pick, omitBy, isNil } from 'lodash-es';
+import { pick, omitBy, isNil, sortBy } from 'lodash-es';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { randomUUID } from 'node:crypto';
 
@@ -71,7 +71,8 @@ const mapWorkflow = (workflow: Workflow) => {
     return obj;
   }, {}) as Record<string, string>;
 
-  workflow.steps.forEach((s: any) => {
+  // Sort steps by name (for more predictable comparisons in test)
+  sortBy(workflow.steps, 'name').forEach((s: any) => {
     let isTrigger = false;
     let node: Provisioner.Job | Provisioner.Trigger;
 
@@ -127,6 +128,9 @@ const mapWorkflow = (workflow: Workflow) => {
       wfState.edges.push(e);
     });
   });
+
+  // Sort edges by UUID (for more predictable comparisons in test)
+  wfState.edges = sortBy(wfState.edges, 'id');
 
   return wfState;
 };

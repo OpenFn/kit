@@ -2,7 +2,7 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../src/Project';
-import generateWorkflow, { generateProject } from '../src/gen/generator';
+import generateWorkflow from '../src/gen/generator';
 import { UnsafeMergeError } from '../src/merge/merge-project';
 
 // TODO move to fixtures and re-use?
