@@ -1,5 +1,12 @@
 # @openfn/project
 
+## 0.8.1
+
+### Patch Changes
+
+- 2ebd35e: In the project generator, allow node properties to include underscores and dashes
+- 27fdc42: Ensure that serialized state files have sorted arrays (enables better diffs)
+
 ## 0.8.0
 
 ### Minor Changes
