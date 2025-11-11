@@ -14,7 +14,7 @@ export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
 
 export default (
   state: Provisioner.Project | string,
-  meta: Partial<l.ProjectMeta>,
+  meta: Partial<l.ProjectMeta> = {},
   config: fromAppStateConfig = {}
 ) => {
   let stateJson: Provisioner.Project;
