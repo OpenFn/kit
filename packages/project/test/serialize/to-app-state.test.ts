@@ -180,6 +180,25 @@ test('should write openfn keys to objects', (t) => {
 
 test.todo('handle edge labels');
 
+test('serialize steps and trigger in alphabetical order', (t) => {
+  const wf = `
+z-b
+y-x
+c-p
+  `;
+  const project = generateProject('proj', [wf], { uuidSeed: 1 });
+
+  const state = toAppState(project, { format: 'json' });
+
+  const jobs = state.workflows[0].jobs.map((j) => j.name);
+  // short be sorted by name
+  t.deepEqual(jobs, ['b', 'c', 'p', 'x', 'y', 'z']);
+
+  const edges = state.workflows[0].edges.map((e) => e.id);
+  // edges are sorted by uuid
+  t.deepEqual(edges, [3, 6, 9]);
+});
+
 /**
  * Stumbled on something difficult here
  *
