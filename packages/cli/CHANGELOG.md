@@ -1,5 +1,13 @@
 # @openfn/cli
 
+## 1.18.5
+
+### Patch Changes
+
+- Updated dependencies [e93ec75]
+- Updated dependencies [5630eca]
+  - @openfn/project@0.9.0
+
 ## 1.18.4
 
 ### Patch Changes
