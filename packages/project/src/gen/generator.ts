@@ -28,6 +28,19 @@ let parser: {
   parse(str: string, options: Partial<GenerateWorkflowOptions>): Workflow;
 };
 
+const expectedNodeProps = [
+  // TODO need to clarify adaptor/adaptors confusion
+  'adaptor',
+  'adaptors',
+
+  'expression',
+  'condition',
+  'label',
+  'type',
+  'disabled',
+  'name',
+];
+
 const initOperations = (options: any = {}) => {
   let nodes: any = {};
   const uuidMap = options.uuidMap ?? {};
@@ -115,7 +128,12 @@ const initOperations = (options: any = {}) => {
       const name = nameNode.sourceString;
       const node = buildNode(name);
       props.buildWorkflow().forEach(([key, value]: any) => {
-        nodes[name][key] = value;
+        if (expectedNodeProps.includes(key)) {
+          nodes[name][key] = value;
+        } else {
+          nodes[name].openfn ??= {};
+          nodes[name].openfn[key] = value;
+        }
       });
       return node;
     },

@@ -396,9 +396,9 @@ test('it should generate several node pairs', (t) => {
 });
 
 test('it should generate a node with a prop', (t) => {
-  const result = gen('a(x=y)-b', t);
+  const result = gen('a(expression=y)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
-  expected.steps[0].x = 'y';
+  expected.steps[0].expression = 'y';
 
   t.deepEqual(result, expected);
 });
@@ -406,16 +406,42 @@ test('it should generate a node with a prop', (t) => {
 test('it should generate a node with a prop with an underscore', (t) => {
   const result = gen('a(project_credential_id=y)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
-  expected.steps[0].project_credential_id = 'y';
+  expected.steps[0].openfn = {
+    uuid: 1,
+    project_credential_id: 'y',
+  };
 
   t.deepEqual(result, expected);
 });
 
+test('it should save unexpected props to .openfn', (t) => {
+  const props = ['name=x', 'expression=fn', 'adaptor=common', 'disabled=false'];
+
+  const unexpectedProps = [
+    'project_credential_id=abc',
+    'keychain_credential_id=abc',
+    'uuid=123',
+  ];
+  const result = gen(`a(${props.join(',')},${unexpectedProps.join(',')})-b`, t);
+
+  const [step] = result.steps;
+  t.is(step.name, 'x');
+  t.is(step.expression, 'fn');
+  t.is(step.adaptor, 'common');
+  t.false(step.disabled);
+
+  t.deepEqual(step.openfn, {
+    project_credential_id: 'abc',
+    keychain_credential_id: 'abc',
+    uuid: 123,
+  });
+});
+
 test('it should generate a node with two props', (t) => {
-  const result = gen('a(x=j,z=k)-b', t);
+  const result = gen('a(adaptor=j,expression=k)-b', t);
   const expected = _.cloneDeep(fixtures.ab);
-  expected.steps[0].x = 'j';
-  expected.steps[0].z = 'k';
+  expected.steps[0].adaptor = 'j';
+  expected.steps[0].expression = 'k';
 
   t.deepEqual(result, expected);
 });
@@ -468,7 +494,7 @@ test('it should generate an edge with multiple props', (t) => {
 test('it should parse node property values as boolean', (t) => {
   const result = gen('a(t=true,f=false)-b', t);
 
-  const [step] = result.steps;
+  const step = result.steps[0].openfn;
   t.true(step.t);
   t.false(step.f);
 });
@@ -484,7 +510,7 @@ test('it should parse edge property values as boolean', (t) => {
 test('it should parse node property values as numbers', (t) => {
   const result = gen('a(x=22,z=0)-b', t);
 
-  const [step] = result.steps;
+  const step = result.steps[0].openfn;
   t.is(step.x, 22);
   t.is(step.z, 0);
 });
