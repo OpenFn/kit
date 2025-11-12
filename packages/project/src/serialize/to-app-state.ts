@@ -9,6 +9,11 @@ import Workflow from '../Workflow';
 
 type Options = { format?: 'json' | 'yaml' };
 
+const defaultJobProps = {
+  keychain_credential_id: null,
+  project_credential_id: null,
+};
+
 export default function (
   project: Project,
   options: Options = {}
@@ -87,13 +92,11 @@ const mapWorkflow = (workflow: Workflow) => {
       node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
       const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
       node.id = uuid;
-      Object.assign(node, otherOpenFnProps);
       if (s.expression) {
         node.body = s.expression;
       }
-      node.project_credential_id = s.openfn?.project_credential_id ?? null;
-      // TODO need to track this
-      node.keychain_credential_id = null;
+
+      Object.assign(node, defaultJobProps, otherOpenFnProps);
 
       wfState.jobs.push(node);
     }
