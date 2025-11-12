@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.9.0
+
+### Minor Changes
+
+- e93ec75: When generating props, write unexpected stuff to the .openfn object
+
+### Patch Changes
+
+- 5630eca: Fix an issue serialising keychain_credential_id to statefiles
+
 ## 0.8.1
 
 ### Patch Changes
