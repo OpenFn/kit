@@ -48,6 +48,8 @@ export type WorkerRunOptions = ExecuteOptions & {
   outputDataclips?: boolean;
   payloadLimitMb?: number;
   jobLogLevel?: LogLevel;
+  timeoutRetryCount?: number;
+  timeoutRetryDelay?: number;
 };
 
 type ConversionOptions = {

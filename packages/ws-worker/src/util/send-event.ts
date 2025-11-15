@@ -2,24 +2,28 @@ import * as Sentry from '@sentry/node';
 import type { Context } from '../api/execute';
 import { LightningSocketError, LightningTimeoutError } from '../errors';
 
+// // When a message receives a timeout, how many times should we retry?
+// const TIMEOUT_RETRY_COUNT = process.env.WORKER_TIMEOUT_RETRY_COUNT
+//   ? parseInt(process.env.WORKER_TIMEOUT_RETRY_COUNT)
+//   : 10;
+
+// // When a message receives a timeout, how long should we wait before retrying?
+// const TIMEOUT_RETRY_DELAY =
+//   process.env.WORKER_TIMEOUT_RETRY_DELAY ??
+//   process.env.WORKER_MESSAGE_TIMEOUT_SECONDS ??
+//   30 * 1000;
+
 export const sendEvent = <T>(
-  context: Pick<Context, 'logger' | 'channel' | 'id'>,
+  context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
   event: string,
   payload?: any,
   attempts?: number
 ) => {
+  // Low defaults here are better for unit tests
+  const { timeoutRetryCount = 1, timeoutRetryDelay = 1 } =
+    context.options ?? {};
+
   const thisAttempt = attempts ?? 1;
-
-  // When a message receives a timeout, how many times should we retry?
-  const TIMEOUT_RETRY_COUNT = process.env.WORKER_TIMEOUT_RETRY_COUNT
-    ? parseInt(process.env.WORKER_TIMEOUT_RETRY_COUNT)
-    : 10;
-
-  // When a message receives a timeout, how long should we wait before retrying?
-  const TIMEOUT_RETRY_DELAY =
-    process.env.WORKER_TIMEOUT_RETRY_DELAY ??
-    process.env.WORKER_MESSAGE_TIMEOUT_SECONDS ??
-    30 * 1000;
 
   const { channel, logger, id: runId = '<unknown run>' } = context;
 
@@ -55,25 +59,20 @@ export const sendEvent = <T>(
         report(new LightningSocketError(event, message));
       })
       .receive('timeout', () => {
-        if (thisAttempt >= TIMEOUT_RETRY_COUNT) {
+        if (thisAttempt >= timeoutRetryCount) {
           report(new LightningTimeoutError(event));
         } else {
           logger.warn(
             `${runId} event ${event} timed out, will retry (attempt ${
               thisAttempt + 1
-            } of ${TIMEOUT_RETRY_COUNT})`
+            } of ${timeoutRetryCount})`
           );
-
-          const delay =
-            typeof TIMEOUT_RETRY_DELAY === 'string'
-              ? parseInt(typeof TIMEOUT_RETRY_DELAY, 10)
-              : TIMEOUT_RETRY_DELAY;
 
           setTimeout(() => {
             sendEvent<T>(context, event, payload, thisAttempt + 1)
               .then(resolve)
               .catch(reject);
-          }, delay);
+          }, timeoutRetryDelay);
         }
       })
       .receive('ok', resolve);

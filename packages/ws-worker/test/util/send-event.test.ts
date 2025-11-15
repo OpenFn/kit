@@ -84,9 +84,6 @@ test.serial('should throw if the event is rejected', async (t) => {
 });
 
 test.serial('should throw if the event timesout and retry is 1', async (t) => {
-  process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
-  process.env.WORKER_TIMEOUT_RETRY_COUNT = '1';
-
   const EVENT_NAME = 'test';
   const channel = mockChannel({
     // No handler so no reply
@@ -104,14 +101,18 @@ test.serial('should throw if the event timesout and retry is 1', async (t) => {
   await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
     instanceOf: LightningTimeoutError,
   });
+
+  // Check it did not retry at all
+  const events = logger._history.filter(
+    ({ level, message }: any) =>
+      level === 'warn' && /event test timed out/.test(message)
+  );
+  t.is(events.length, 0);
 });
 
 test.serial(
   'should throw after 5 attempts if the event timesout and retry is 5',
   async (t) => {
-    process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
-    process.env.WORKER_TIMEOUT_RETRY_COUNT = '5';
-
     const EVENT_NAME = 'test';
     const channel = mockChannel({
       // No handler so no reply
@@ -124,6 +125,10 @@ test.serial(
         id: 'x',
       } as any),
       logger,
+      options: {
+        timeoutRetryCount: 5,
+        timeoutRetryDelay: 1,
+      },
     };
 
     await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
@@ -141,8 +146,6 @@ test.serial(
 test.serial(
   'should pass after 5 attempts if the event timesout and retry is 5',
   async (t) => {
-    process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
-    process.env.WORKER_TIMEOUT_RETRY_COUNT = '5';
     let count = 0;
 
     const EVENT_NAME = 'test';
@@ -165,6 +168,10 @@ test.serial(
         id: 'x',
       } as any),
       logger,
+      options: {
+        timeoutRetryCount: 5,
+        timeoutRetryDelay: 1,
+      },
     };
 
     const reply = await sendEvent(context, EVENT_NAME, {});
