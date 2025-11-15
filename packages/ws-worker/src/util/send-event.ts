@@ -5,9 +5,11 @@ import { LightningSocketError, LightningTimeoutError } from '../errors';
 export const sendEvent = <T>(
   context: Pick<Context, 'logger' | 'channel' | 'id'>,
   event: string,
-  payload: any,
-  attempts = 1
+  payload?: any,
+  attempts?: number
 ) => {
+  const thisAttempt = attempts ?? 1;
+
   // When a message receives a timeout, how many times should we retry?
   const TIMEOUT_RETRY_COUNT = process.env.WORKER_TIMEOUT_RETRY_COUNT
     ? parseInt(process.env.WORKER_TIMEOUT_RETRY_COUNT)
@@ -58,7 +60,7 @@ export const sendEvent = <T>(
         } else {
           logger.warn(
             `${runId} event ${event} timed out, will retry (attempt ${
-              attempts + 1
+              thisAttempt + 1
             } of ${TIMEOUT_RETRY_COUNT})`
           );
 
@@ -68,7 +70,7 @@ export const sendEvent = <T>(
               : TIMEOUT_RETRY_DELAY;
 
           setTimeout(() => {
-            sendEvent<T>(context, event, payload, attempts + 1)
+            sendEvent<T>(context, event, payload, thisAttempt + 1)
               .then(resolve)
               .catch(reject);
           }, delay);
