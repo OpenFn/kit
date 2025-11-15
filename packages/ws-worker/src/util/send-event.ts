@@ -5,8 +5,20 @@ import { LightningSocketError, LightningTimeoutError } from '../errors';
 export const sendEvent = <T>(
   context: Pick<Context, 'logger' | 'channel' | 'id'>,
   event: string,
-  payload?: any
+  payload: any,
+  attempts = 1
 ) => {
+  // When a message receives a timeout, how many times should we retry?
+  const TIMEOUT_RETRY_COUNT = process.env.TIMEOUT_RETRY_COUNT
+    ? parseInt(process.env.TIMEOUT_RETRY_COUNT)
+    : 10;
+
+  // When a message receives a timeout, how long should we wait before retrying?
+  const TIMEOUT_RETRY_DELAY =
+    process.env.TIMEOUT_RETRY_DELAY ??
+    process.env.WORKER_MESSAGE_TIMEOUT_SECONDS ??
+    30 * 1000;
+
   const { channel, logger, id: runId = '<unknown run>' } = context;
 
   return new Promise<T>((resolve, reject) => {
@@ -41,7 +53,26 @@ export const sendEvent = <T>(
         report(new LightningSocketError(event, message));
       })
       .receive('timeout', () => {
-        report(new LightningTimeoutError(event));
+        if (attempts === TIMEOUT_RETRY_COUNT) {
+          report(new LightningTimeoutError(event));
+        } else {
+          logger.warn(
+            `${runId} event ${event} timed out, will retry (attempt ${
+              attempts + 1
+            } of ${TIMEOUT_RETRY_COUNT})`
+          );
+
+          const delay =
+            typeof TIMEOUT_RETRY_DELAY === 'string'
+              ? parseInt(typeof TIMEOUT_RETRY_DELAY, 10)
+              : TIMEOUT_RETRY_DELAY;
+
+          setTimeout(() => {
+            sendEvent<T>(context, event, payload, attempts + 1)
+              .then(resolve)
+              .catch(reject);
+          }, delay);
+        }
       })
       .receive('ok', resolve);
   });

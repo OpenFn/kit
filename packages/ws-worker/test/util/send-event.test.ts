@@ -83,7 +83,10 @@ test.serial('should throw if the event is rejected', async (t) => {
   });
 });
 
-test.serial('should throw if the event timesout', async (t) => {
+test.serial('should throw if the event timesout and retry is 1', async (t) => {
+  process.env.TIMEOUT_RETRY_DELAY = '1';
+  process.env.TIMEOUT_RETRY_COUNT = '1';
+
   const EVENT_NAME = 'test';
   const channel = mockChannel({
     // No handler so no reply
@@ -102,6 +105,78 @@ test.serial('should throw if the event timesout', async (t) => {
     instanceOf: LightningTimeoutError,
   });
 });
+
+test.serial(
+  'should throw after 5 attempts if the event timesout and retry is 5',
+  async (t) => {
+    process.env.TIMEOUT_RETRY_DELAY = '1';
+    process.env.TIMEOUT_RETRY_COUNT = '5';
+
+    const EVENT_NAME = 'test';
+    const channel = mockChannel({
+      // No handler so no reply
+    });
+
+    const context = {
+      id: 'x',
+      channel,
+      state: createRunState({
+        id: 'x',
+      } as any),
+      logger,
+    };
+
+    await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
+      instanceOf: LightningTimeoutError,
+    });
+
+    const events = logger._history.filter(
+      ({ level, message }: any) =>
+        level === 'warn' && /event test timed out/.test(message)
+    );
+    t.is(events.length, 4); // should retry 4 times and fail on the fifth!
+  }
+);
+
+test.serial.only(
+  'should pass after 5 attempts if the event timesout and retry is 5',
+  async (t) => {
+    process.env.TIMEOUT_RETRY_DELAY = '1';
+    process.env.TIMEOUT_RETRY_COUNT = '5';
+    let count = 0;
+
+    const EVENT_NAME = 'test';
+    const channel = mockChannel({
+      [EVENT_NAME]: () => {
+        return new Promise((resolve) => {
+          count++;
+          if (count === 5) {
+            resolve(55);
+          }
+          resolve(null); // simulate timeout
+        });
+      },
+    });
+
+    const context = {
+      id: 'x',
+      channel,
+      state: createRunState({
+        id: 'x',
+      } as any),
+      logger,
+    };
+
+    const reply = await sendEvent(context, EVENT_NAME, {});
+    t.is(reply, 55);
+
+    const events = logger._history.filter(
+      ({ level, message }: any) =>
+        level === 'warn' && /event test timed out/.test(message)
+    );
+    t.is(events.length, 4); // should retry 4 times and pass on the fifth!
+  }
+);
 
 test.serial('should log if the event is rejected', async (t) => {
   const EVENT_NAME = 'test';
