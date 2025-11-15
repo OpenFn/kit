@@ -56,6 +56,9 @@ export type ServerOptions = {
   collectionsVersion?: string;
   collectionsUrl?: string;
   monorepoDir?: string;
+
+  timeoutRetryCount?: number;
+  timeoutRetryDelayMs?: number;
 };
 
 // this is the server/koa API
@@ -301,6 +304,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         if (!('payloadLimitMb' in options)) {
           options.payloadLimitMb = app.options.payloadLimitMb;
         }
+        options.timeoutRetryCount = app.options.timeoutRetryCount;
+        options.timeoutRetryDelay =
+          app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
 
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {

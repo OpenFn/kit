@@ -12,17 +12,19 @@ const DEFAULT_WORKER_CAPACITY = 5;
 type Args = {
   _: string[];
   backoff: string;
-  debug?: boolean;
   capacity?: number;
+  claimTimeoutSeconds?: number;
   collectionsUrl?: string;
   collectionsVersion?: string;
-  engineValidationTimeoutMs?: number;
+  debug?: boolean;
   engineValidationRetries?: number;
+  engineValidationTimeoutMs?: number;
   lightning?: string;
   lightningPublicKey?: string;
   log?: LogLevel;
   loop?: boolean;
   maxRunDurationSeconds: number;
+  messageTimeoutSeconds?: number;
   mock?: boolean;
   monorepoDir?: string;
   payloadMemory?: number;
@@ -32,12 +34,12 @@ type Args = {
   repoDir?: string;
   runMemory?: number;
   secret?: string;
-  socketTimeoutSeconds?: number; // deprecated
-  messageTimeoutSeconds?: number;
-  claimTimeoutSeconds?: number;
-  statePropsToRemove?: string[];
   sentryDsn?: string;
   sentryEnv?: string;
+  socketTimeoutSeconds?: number; // deprecated
+  statePropsToRemove?: string[];
+  timeoutRetryCount?: number;
+  timeoutRetryDelayMs?: number;
 };
 
 type ArgTypes = string | string[] | number | boolean | undefined;
@@ -82,14 +84,16 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_MAX_RUN_MEMORY_MB,
     WORKER_MESSAGE_TIMEOUT_SECONDS,
     WORKER_PORT,
-    WORKER_PROFILE,
     WORKER_PROFILE_POLL_INTERVAL_MS,
+    WORKER_PROFILE,
     WORKER_REPO_DIR,
     WORKER_SECRET,
     WORKER_SENTRY_DSN,
     WORKER_SENTRY_ENV,
     WORKER_SOCKET_TIMEOUT_SECONDS,
     WORKER_STATE_PROPS_TO_REMOVE,
+    WORKER_TIMEOUT_RETRY_COUNT,
+    WORKER_TIMEOUT_RETRY_DELAY_MS,
     WORKER_VALIDATION_RETRIES,
     WORKER_VALIDATION_TIMEOUT_MS,
   } = process.env;
@@ -219,6 +223,16 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'Interval for polling profile data, in milliseconds. Default 10. Env: WORKER_PROFILE_POLL_INTERVAL_MS',
       type: 'number',
+    })
+    .option('timeout-retry-count', {
+      description:
+        'When a websocket event receives a timeout, this option sets how many times the worker should retry it. Default 10. Env: WORKER_TIMEOUT_RETRY_COUNT',
+      type: 'number',
+    })
+    .option('timeout-retry-delay', {
+      description:
+        'When a websocket event receives a timeout, this option sets how log to wait before retrying Default 30000. Env: WORKER_TIMEOUT_RETRY_DELAY_MS',
+      type: 'number',
     });
 
   const args = parser.parse() as Args;
@@ -288,6 +302,16 @@ export default function parseArgs(argv: string[]): Args {
       args.profilePollIntervalMs,
       WORKER_PROFILE_POLL_INTERVAL_MS,
       10
+    ),
+    timeoutRetryCount: setArg(
+      args.timeoutRetryCount,
+      WORKER_TIMEOUT_RETRY_COUNT,
+      10
+    ),
+    timeoutRetryDelayMs: setArg(
+      args.timeoutRetryDelayMs,
+      WORKER_TIMEOUT_RETRY_DELAY_MS,
+      30 * 1000
     ),
   } as Args;
 }

@@ -49,6 +49,8 @@ function engineReady(engine: any) {
     claimTimeoutSeconds: args.claimTimeoutSeconds,
     // deprecated!
     socketTimeoutSeconds: args.socketTimeoutSeconds,
+    timeoutRetryCount: args.timeoutRetryCount,
+    timeoutRetryDelayMs: args.timeoutRetryDelayMs,
   };
 
   if ('socketTimeoutSeconds' in args) {

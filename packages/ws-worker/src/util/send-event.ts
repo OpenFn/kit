@@ -2,17 +2,6 @@ import * as Sentry from '@sentry/node';
 import type { Context } from '../api/execute';
 import { LightningSocketError, LightningTimeoutError } from '../errors';
 
-// // When a message receives a timeout, how many times should we retry?
-// const TIMEOUT_RETRY_COUNT = process.env.WORKER_TIMEOUT_RETRY_COUNT
-//   ? parseInt(process.env.WORKER_TIMEOUT_RETRY_COUNT)
-//   : 10;
-
-// // When a message receives a timeout, how long should we wait before retrying?
-// const TIMEOUT_RETRY_DELAY =
-//   process.env.WORKER_TIMEOUT_RETRY_DELAY ??
-//   process.env.WORKER_MESSAGE_TIMEOUT_SECONDS ??
-//   30 * 1000;
-
 export const sendEvent = <T>(
   context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
   event: string,
@@ -63,7 +52,7 @@ export const sendEvent = <T>(
           report(new LightningTimeoutError(event));
         } else {
           logger.warn(
-            `${runId} event ${event} timed out, will retry (attempt ${
+            `${runId} event ${event} timed out, will retry in ${timeoutRetryDelay}ms (attempt ${
               thisAttempt + 1
             } of ${timeoutRetryCount})`
           );
