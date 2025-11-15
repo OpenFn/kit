@@ -202,7 +202,6 @@ export function execute(
         // updateSentryStatus('started');
         engine.execute(plan, loadedInput as State, { resolvers, ...options });
       } catch (e: any) {
-        process.exit(66);
         Sentry.addBreadcrumb({
           category: 'run',
           message: 'exception in run',
