@@ -138,7 +138,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   'should pass after 5 attempts if the event timesout and retry is 5',
   async (t) => {
     process.env.TIMEOUT_RETRY_DELAY = '1';
