@@ -247,9 +247,6 @@ test('exception: failed to load credential', async (t) => {
 });
 
 test('exception: credential timeout', async (t) => {
-  process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
-  process.env.WORKER_TIMEOUT_RETRY_COUNT = '5';
-
   const plan = createPlan({
     id: 'aa',
     expression: 'export default [(s) => s]',
@@ -267,9 +264,6 @@ test('exception: credential timeout', async (t) => {
 });
 
 test('kill: timeout', async (t) => {
-  process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
-  process.env.WORKER_TIMEOUT_RETRY_COUNT = '5';
-
   const plan = createPlan({
     id: 'x',
     expression: 'export default [(s) => { while(true) { } }]',
