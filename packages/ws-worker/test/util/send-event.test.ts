@@ -35,6 +35,7 @@ test.serial('should send a simple event', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   await sendEvent(context, EVENT_NAME, {});
@@ -55,6 +56,7 @@ test.serial('should send a simple event with return data', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   const reply = await sendEvent(context, EVENT_NAME, {});
@@ -76,6 +78,7 @@ test.serial('should throw if the event is rejected', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
@@ -83,7 +86,7 @@ test.serial('should throw if the event is rejected', async (t) => {
   });
 });
 
-test.serial('should throw if the event timesout', async (t) => {
+test.serial('should throw if the event timesout and retry is 1', async (t) => {
   const EVENT_NAME = 'test';
   const channel = mockChannel({
     // No handler so no reply
@@ -96,12 +99,95 @@ test.serial('should throw if the event timesout', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
     instanceOf: LightningTimeoutError,
   });
+
+  // Check it did not retry at all
+  const events = logger._history.filter(
+    ({ level, message }: any) =>
+      level === 'warn' && /event test timed out/.test(message)
+  );
+  t.is(events.length, 0);
 });
+
+test.serial(
+  'should throw after 5 attempts if the event timesout and retry is 5',
+  async (t) => {
+    const EVENT_NAME = 'test';
+    const channel = mockChannel({
+      // No handler so no reply
+    });
+
+    const context = {
+      id: 'x',
+      channel,
+      state: createRunState({
+        id: 'x',
+      } as any),
+      logger,
+      options: {
+        timeoutRetryCount: 5,
+        timeoutRetryDelay: 1,
+      },
+    };
+
+    await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
+      instanceOf: LightningTimeoutError,
+    });
+
+    const events = logger._history.filter(
+      ({ level, message }: any) =>
+        level === 'warn' && /event test timed out/.test(message)
+    );
+    t.is(events.length, 4); // should retry 4 times and fail on the fifth!
+  }
+);
+
+test.serial(
+  'should pass after 5 attempts if the event timesout and retry is 5',
+  async (t) => {
+    let count = 0;
+
+    const EVENT_NAME = 'test';
+    const channel = mockChannel({
+      [EVENT_NAME]: () => {
+        return new Promise((resolve) => {
+          count++;
+          if (count === 5) {
+            resolve(55);
+          }
+          resolve(null); // simulate timeout
+        });
+      },
+    });
+
+    const context = {
+      id: 'x',
+      channel,
+      state: createRunState({
+        id: 'x',
+      } as any),
+      logger,
+      options: {
+        timeoutRetryCount: 5,
+        timeoutRetryDelay: 1,
+      },
+    };
+
+    const reply = await sendEvent(context, EVENT_NAME, {});
+    t.is(reply, 55);
+
+    const events = logger._history.filter(
+      ({ level, message }: any) =>
+        level === 'warn' && /event test timed out/.test(message)
+    );
+    t.is(events.length, 4); // should retry 4 times and pass on the fifth!
+  }
+);
 
 test.serial('should log if the event is rejected', async (t) => {
   const EVENT_NAME = 'test';
@@ -118,6 +204,7 @@ test.serial('should log if the event is rejected', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   try {
@@ -145,6 +232,7 @@ test.serial('should report to sentry if the event is rejected', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   try {
@@ -168,6 +256,7 @@ test.serial('should report to sentry if the event timesout', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   try {

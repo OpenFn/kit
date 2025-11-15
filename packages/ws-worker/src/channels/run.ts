@@ -38,7 +38,7 @@ const joinRunChannel = (
           didReceiveOk = true;
           logger.success(`connected to ${channelName}`, e);
           const run = await sendEvent<GetPlanReply>(
-            { channel, logger, id: runId },
+            { channel, logger, id: runId, options: {} },
             GET_PLAN
           );
           resolve({ channel, run });

@@ -3,10 +3,17 @@ import type { Context } from '../api/execute';
 import { LightningSocketError, LightningTimeoutError } from '../errors';
 
 export const sendEvent = <T>(
-  context: Pick<Context, 'logger' | 'channel' | 'id'>,
+  context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
   event: string,
-  payload?: any
+  payload?: any,
+  attempts?: number
 ) => {
+  // Low defaults here are better for unit tests
+  const { timeoutRetryCount = 1, timeoutRetryDelay = 1 } =
+    context.options ?? {};
+
+  const thisAttempt = attempts ?? 1;
+
   const { channel, logger, id: runId = '<unknown run>' } = context;
 
   return new Promise<T>((resolve, reject) => {
@@ -41,7 +48,21 @@ export const sendEvent = <T>(
         report(new LightningSocketError(event, message));
       })
       .receive('timeout', () => {
-        report(new LightningTimeoutError(event));
+        if (thisAttempt >= timeoutRetryCount) {
+          report(new LightningTimeoutError(event));
+        } else {
+          logger.warn(
+            `${runId} event ${event} timed out, will retry in ${timeoutRetryDelay}ms (attempt ${
+              thisAttempt + 1
+            } of ${timeoutRetryCount})`
+          );
+
+          setTimeout(() => {
+            sendEvent<T>(context, event, payload, thisAttempt + 1)
+              .then(resolve)
+              .catch(reject);
+          }, timeoutRetryDelay);
+        }
       })
       .receive('ok', resolve);
   });
