@@ -55,7 +55,7 @@ export const sendEvent = <T>(
         report(new LightningSocketError(event, message));
       })
       .receive('timeout', () => {
-        if (attempts === TIMEOUT_RETRY_COUNT) {
+        if (thisAttempt >= TIMEOUT_RETRY_COUNT) {
           report(new LightningTimeoutError(event));
         } else {
           logger.warn(

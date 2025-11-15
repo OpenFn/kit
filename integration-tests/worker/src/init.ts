@@ -5,7 +5,10 @@ import createLightningServer, { toBase64 } from '@openfn/lightning-mock';
 import createEngine from '@openfn/engine-multi';
 import createWorkerServer from '@openfn/ws-worker';
 import { createMockLogger } from '@openfn/logger';
-// import createLogger from '@openfn/logger';
+import createLogger from '@openfn/logger';
+
+process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
+process.env.WORKER_TIMEOUT_RETRY_COUNT = '1';
 
 export const randomPort = () => Math.round(2000 + Math.random() * 1000);
 
@@ -40,8 +43,8 @@ export const initWorker = async (
   });
 
   const worker = createWorkerServer(engine, {
-    logger: createMockLogger(),
-    // logger: createLogger('worker', { level: 'debug' }),
+    // logger: createMockLogger(),
+    logger: createLogger('worker', { level: 'debug' }),
     port: workerPort,
     lightning: `ws://localhost:${lightningPort}/worker`,
     secret: crypto.randomUUID(),
