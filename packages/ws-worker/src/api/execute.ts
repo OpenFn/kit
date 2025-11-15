@@ -281,7 +281,7 @@ export function onJobLog(
 }
 
 export async function loadDataclip(
-  context: Pick<Context, 'logger' | 'channel' | 'id'>,
+  context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
   stateId: string
 ) {
   const result = await sendEvent<Uint8Array>(context, GET_DATACLIP, {
@@ -292,7 +292,7 @@ export async function loadDataclip(
 }
 
 export async function loadCredential(
-  context: Pick<Context, 'logger' | 'channel' | 'id'>,
+  context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
   credentialId: string
 ) {
   return sendEvent(context, GET_CREDENTIAL, { id: credentialId });

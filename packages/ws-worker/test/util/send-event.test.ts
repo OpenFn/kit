@@ -35,6 +35,7 @@ test.serial('should send a simple event', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   await sendEvent(context, EVENT_NAME, {});
@@ -55,6 +56,7 @@ test.serial('should send a simple event with return data', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   const reply = await sendEvent(context, EVENT_NAME, {});
@@ -76,6 +78,7 @@ test.serial('should throw if the event is rejected', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
@@ -96,6 +99,7 @@ test.serial('should throw if the event timesout and retry is 1', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   await t.throwsAsync(() => sendEvent(context, EVENT_NAME, {}), {
@@ -200,6 +204,7 @@ test.serial('should log if the event is rejected', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   try {
@@ -227,6 +232,7 @@ test.serial('should report to sentry if the event is rejected', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   try {
@@ -250,6 +256,7 @@ test.serial('should report to sentry if the event timesout', async (t) => {
       id: 'x',
     } as any),
     logger,
+    options: {},
   };
 
   try {
