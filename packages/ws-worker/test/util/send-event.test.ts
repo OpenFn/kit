@@ -84,8 +84,8 @@ test.serial('should throw if the event is rejected', async (t) => {
 });
 
 test.serial('should throw if the event timesout and retry is 1', async (t) => {
-  process.env.TIMEOUT_RETRY_DELAY = '1';
-  process.env.TIMEOUT_RETRY_COUNT = '1';
+  process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
+  process.env.WORKER_TIMEOUT_RETRY_COUNT = '1';
 
   const EVENT_NAME = 'test';
   const channel = mockChannel({
@@ -109,8 +109,8 @@ test.serial('should throw if the event timesout and retry is 1', async (t) => {
 test.serial(
   'should throw after 5 attempts if the event timesout and retry is 5',
   async (t) => {
-    process.env.TIMEOUT_RETRY_DELAY = '1';
-    process.env.TIMEOUT_RETRY_COUNT = '5';
+    process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
+    process.env.WORKER_TIMEOUT_RETRY_COUNT = '5';
 
     const EVENT_NAME = 'test';
     const channel = mockChannel({
@@ -141,8 +141,8 @@ test.serial(
 test.serial(
   'should pass after 5 attempts if the event timesout and retry is 5',
   async (t) => {
-    process.env.TIMEOUT_RETRY_DELAY = '1';
-    process.env.TIMEOUT_RETRY_COUNT = '5';
+    process.env.WORKER_TIMEOUT_RETRY_DELAY = '1';
+    process.env.WORKER_TIMEOUT_RETRY_COUNT = '5';
     let count = 0;
 
     const EVENT_NAME = 'test';

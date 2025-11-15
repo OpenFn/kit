@@ -9,13 +9,13 @@ export const sendEvent = <T>(
   attempts = 1
 ) => {
   // When a message receives a timeout, how many times should we retry?
-  const TIMEOUT_RETRY_COUNT = process.env.TIMEOUT_RETRY_COUNT
-    ? parseInt(process.env.TIMEOUT_RETRY_COUNT)
+  const TIMEOUT_RETRY_COUNT = process.env.WORKER_TIMEOUT_RETRY_COUNT
+    ? parseInt(process.env.WORKER_TIMEOUT_RETRY_COUNT)
     : 10;
 
   // When a message receives a timeout, how long should we wait before retrying?
   const TIMEOUT_RETRY_DELAY =
-    process.env.TIMEOUT_RETRY_DELAY ??
+    process.env.WORKER_TIMEOUT_RETRY_DELAY ??
     process.env.WORKER_MESSAGE_TIMEOUT_SECONDS ??
     30 * 1000;
 
