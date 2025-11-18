@@ -1,6 +1,7 @@
 import test from 'ava';
 import type { Provisioner } from '@openfn/lexicon/lightning';
 import fromAppState, { mapWorkflow } from '../../src/parse/from-app-state';
+import { clone, cloneDeep } from 'lodash-es';
 
 // I don't think this file really represents anything
 // loosely maps to the old config file
@@ -106,6 +107,24 @@ test('should create a Project from prov state with credentials', (t) => {
   const project = fromAppState(state, meta);
 
   t.deepEqual(project.credentials, []);
+});
+
+test('should create a Project from prov state with positions', (t) => {
+  const newState = cloneDeep(state);
+
+  // assign a fake positions object
+  // the provisioner right now doesn't include positions
+  // - but one day it will, and Project needs to be able to sync it
+  newState.workflows[0].positions = {
+    x: 1,
+    y: 1,
+  };
+  const project = fromAppState(newState, meta);
+
+  t.deepEqual(project.workflows[0].openfn.positions, {
+    x: 1,
+    y: 1,
+  });
 });
 
 test('should create a Project from prov state with a workflow', (t) => {
