@@ -6,6 +6,7 @@ import fromAppState, { fromAppStateConfig } from './parse/from-app-state';
 import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
+import fromProject from './parse/from-project';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
@@ -64,6 +65,13 @@ export class Project {
 
   credentials: string[];
 
+  // project v2. Default.
+  // doens't take any options
+  static async from(
+    type: 'project',
+    data: JSON,
+    options: never
+  ): Promise<Project>;
   static async from(
     type: 'state',
     data: Provisioner.Project,
@@ -77,18 +85,22 @@ export class Project {
     options?: { config?: FromPathConfig }
   ): Promise<Project>;
   static async from(
-    type: 'state' | 'path' | 'fs',
+    type: 'project' | 'state' | 'path' | 'fs',
     data: any,
     ...rest: any[]
   ): Promise<Project> {
-    if (type === 'state') {
-      return fromAppState(data, rest[0], rest[1]);
-    } else if (type === 'fs') {
-      return fromFs(data);
-    } else if (type === 'path') {
-      return fromPath(data, rest[0]);
+    switch (type) {
+      case 'project':
+        return fromProject(data);
+      case 'state':
+        return fromAppState(data, rest[0], rest[1]);
+      case 'fs':
+        return fromFs(data);
+      case 'path':
+        return fromPath(data, rest[0]);
+      default:
+        throw new Error(`Didn't recognize type ${type}`);
     }
-    throw new Error(`Didn't recognize type ${type}`);
   }
 
   // Diff two projects

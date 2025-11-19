@@ -2,6 +2,9 @@
 
 import { Project } from '../Project';
 
+// TODO This is the same as Project.serialize('project', { format: 'json'  })
+// We could keep it as a shorthand?
+
 // TODO need a suite of unit tests against this
 export default function (project: Project) {
   return {
