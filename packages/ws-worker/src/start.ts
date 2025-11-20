@@ -53,7 +53,7 @@ function engineReady(engine: any) {
     timeoutRetryDelayMs: args.timeoutRetryDelayMs,
   };
 
-  if ('socketTimeoutSeconds' in args) {
+  if (args.socketTimeoutSeconds) {
     logger.warn(
       'WARNING: deprecated socketTimeoutSeconds value passed.\n\nThis will be respected as the default socket timeout value, but will be removed from future versions of the worker.'
     );
