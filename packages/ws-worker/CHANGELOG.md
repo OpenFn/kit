@@ -1,5 +1,11 @@
 # ws-worker
 
+## 1.19.5
+
+### Patch Changes
+
+- b42b0b0: Force disable message retries
+
 ## 1.19.4
 
 ### Patch Changes
