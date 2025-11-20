@@ -114,7 +114,8 @@ test.serial('should throw if the event timesout and retry is 1', async (t) => {
   t.is(events.length, 0);
 });
 
-test.serial(
+// This behaviour is disabled and this test will likely be removed soon
+test.serial.skip(
   'should throw after 5 attempts if the event timesout and retry is 5',
   async (t) => {
     const EVENT_NAME = 'test';
@@ -147,7 +148,8 @@ test.serial(
   }
 );
 
-test.serial(
+// This behaviour is disabled and this test will likely be removed soon
+test.serial.skip(
   'should pass after 5 attempts if the event timesout and retry is 5',
   async (t) => {
     let count = 0;

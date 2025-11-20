@@ -2,6 +2,10 @@ import * as Sentry from '@sentry/node';
 import type { Context } from '../api/execute';
 import { LightningSocketError, LightningTimeoutError } from '../errors';
 
+// Force disabled for now because this can cause duplication on the Lightning end
+// See https://github.com/OpenFn/kit/issues/1137
+const allowRetryOntimeout = false;
+
 export const sendEvent = <T>(
   context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
   event: string,
@@ -48,7 +52,7 @@ export const sendEvent = <T>(
         report(new LightningSocketError(event, message));
       })
       .receive('timeout', () => {
-        if (thisAttempt >= timeoutRetryCount) {
+        if (!allowRetryOntimeout || thisAttempt >= timeoutRetryCount) {
           report(new LightningTimeoutError(event));
         } else {
           logger.warn(
