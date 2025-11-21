@@ -189,4 +189,94 @@ test('import from a v2 project as JSON', async (t) => {
     history: [],
   });
 });
-test.todo('import from a v2 project as YAML');
+
+test('import from a v2 project as YAML', async (t) => {
+  const yaml = `id: my-project
+name: My Project
+description: a project
+version: 2
+openfn:
+  uuid: e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00
+  domain: https://app.openfn.org
+  inserted_at: 2025-04-23T11:15:59Z
+  updated_at: 2025-04-23T11:15:59Z
+meta: {}
+options:
+  allow_support_access: false
+  requires_mfa: false
+  retention_policy: retain_all
+workflows:
+  - id: my-workflow
+    name: My Workflow
+    openfn:
+      uuid: 72ca3eb0-042c-47a0-a2a1-a545ed4a8406
+      inserted_at: 2025-04-23T11:19:32Z
+      updated_at: 2025-04-23T11:19:32Z
+      lock_version: 1
+    edges:
+      - id: webhook->transform-data
+        source_trigger_id: webhook
+        condition_type: always
+        target_job_id: transform-data
+        openfn:
+          enabled: true
+          uuid: a9a3adef-b394-4405-814d-3ac4323f4b4b
+    jobs:
+      - id: transform-data
+        name: Transform data
+        body: |
+          // Check out the Job Writing Guide for help getting started:
+          // https://docs.openfn.org/documentation/jobs/job-writing-guide
+        adaptor: "@openfn/language-common@latest"
+        openfn:
+          uuid: 66add020-e6eb-4eec-836b-20008afca816
+    triggers:
+      - id: webhook
+        type: webhook
+        openfn:
+          uuid: 4a06289c-15aa-4662-8dc6-f0aaacd8a058
+          enabled: true
+`;
+  const proj = await Project.from('project', yaml);
+  t.is(proj.id, 'my-project');
+  t.is(proj.name, 'My Project');
+  t.is(proj.openfn!.uuid, 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00');
+  t.is(proj.openfn!.domain, 'https://app.openfn.org');
+  t.is(proj.options.retention_policy, 'retain_all');
+
+  t.is(proj.workflows.length, 1);
+
+  t.deepEqual(proj.workflows[0].workflow, {
+    id: 'my-workflow',
+    name: 'My Workflow',
+    steps: [
+      {
+        id: 'webhook',
+        type: 'webhook',
+        openfn: { uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058', enabled: true },
+        next: {
+          'transform-data': {
+            disabled: false,
+            condition: true,
+            openfn: { uuid: 'webhook->transform-data' },
+          },
+        },
+      },
+      {
+        id: 'transform-data',
+        name: 'Transform data',
+        expression:
+          '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+        adaptor: '@openfn/language-common@latest',
+        openfn: { uuid: '66add020-e6eb-4eec-836b-20008afca816' },
+      },
+    ],
+    openfn: {
+      uuid: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+      inserted_at: '2025-04-23T11:19:32Z',
+      updated_at: '2025-04-23T11:19:32Z',
+      lock_version: 1,
+    },
+    history: [],
+  });
+});
