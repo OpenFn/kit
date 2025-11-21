@@ -4,9 +4,9 @@ import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 
 import { Project } from '../Project';
-import { yamlToJson } from '../util/yaml';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
+import ensureJson from '../util/ensure-json';
 
 export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
@@ -17,16 +17,7 @@ export default (
   meta: Partial<l.ProjectMeta> = {},
   config: fromAppStateConfig = {}
 ) => {
-  let stateJson: Provisioner.Project;
-  if (typeof state === 'string') {
-    if (config.format === 'yaml') {
-      stateJson = yamlToJson(state);
-    } else {
-      stateJson = JSON.parse(state);
-    }
-  } else {
-    stateJson = state;
-  }
+  let stateJson = ensureJson<Provisioner.Project>(state);
   delete config.format;
 
   const {

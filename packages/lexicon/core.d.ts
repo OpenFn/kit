@@ -19,9 +19,6 @@ export type Project = {
   /** human readable name */
   name?: string;
 
-  /** Shorthand identifier used by CLI commands */
-  alias?: string;
-
   description?: string;
 
   workflows: Workflow[];
@@ -35,7 +32,19 @@ export type Project = {
   openfn?: Partial<ProjectMeta>;
 
   config: WorkspaceConfig;
+
+  /** Stuff only used by the CLI for this project */
+  meta?: LocalMeta;
 };
+
+export interface LocalMeta {
+  /* schema version. Must be at >= 2 for a new project file 
+  This only affects how a state file ondisk is parsed */
+  version?: number;
+  /** Shorthand identifier used by CLI commands */
+  alias?: string;
+  [key: string]: any;
+}
 
 export interface OpenFnMetadata {
   uuid?: UUID;
