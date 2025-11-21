@@ -20,6 +20,18 @@ test.serial('should return state', async (t) => {
   t.deepEqual(state, result);
 });
 
+test.serial('allow export statements and functions', async (t) => {
+  const state = {};
+
+  const job = `
+    export const x = () => ({ x: 90 })
+    fn(() => x())
+  `;
+  const result = await execute(job, state);
+
+  t.deepEqual(result, { x: 90 });
+});
+
 test.serial('should use .then()', async (t) => {
   const state = { data: { x: 1 } };
 
