@@ -104,7 +104,7 @@ export class Project {
   }
 
   // Diff two projects
-  // /static diff(a: Project, b: Project) {}
+  // static diff(a: Project, b: Project) {}
 
   // Merge a source project (staging) into the target project (main)
   // Returns a new Project
