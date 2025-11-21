@@ -1,5 +1,11 @@
 # @openfn/compiler
 
+## 1.2.0
+
+### Minor Changes
+
+- 6bd4210: Allow expressions to export named identifiers
+
 ## 1.1.5
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # engine-multi
 
+## 1.8.4
+
+### Patch Changes
+
+- Updated dependencies [6bd4210]
+  - @openfn/compiler@1.2.0
+
 ## 1.8.3
 
 ### Patch Changes
