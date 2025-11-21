@@ -1,10 +1,10 @@
-import test, { ExecutionContext } from 'ava';
-import { namedTypes, NodePath, builders as b } from 'ast-types';
+import test from 'ava';
+import { NodePath, builders as b } from 'ast-types';
 import parse from '../../src/parse';
+import { print } from 'recast';
 
 import transform from '../../src/transform';
 import visitors from '../../src/transforms/ensure-exports';
-import { assertCodeEqual } from '../util';
 
 // TODO where can I get this info?
 // Representations of ast nodes is a bit of a mess tbh
@@ -82,40 +82,49 @@ fn();`);
 
 test("don't change source with a default export", (t) => {
   const ast = parse('export default [];');
+  const before = print(ast).code;
 
   // There are many kinds of export nodes so as a short hand, let's just check for export keywords
-
   const e = findKeyword(ast, 'export');
   t.truthy(e);
 
   const transformed = transform(ast, [visitors]);
-  assertCodeEqual(t, ast, transformed);
+  const after = print(transformed).code;
+
+  t.true(before === after);
 });
 
-test("don't change source with a named export", (t) => {
+// These behaviours changed in compiler 1.2
+test('do change source with a named export', (t) => {
   const ast = parse('const x = 10; export { x };');
 
   const transformed = transform(ast, [visitors]);
-  assertCodeEqual(t, ast, transformed);
+
+  const last = transformed.program.body.at(-1);
+  t.assert(last.type === 'ExportDefaultDeclaration');
 });
 
-test("don't change source with a named export const ", (t) => {
+test('do change source with a named export const ', (t) => {
   const ast = parse('export const x = 10;');
 
   const transformed = transform(ast, [visitors]);
-  assertCodeEqual(t, ast, transformed);
+
+  const last = transformed.program.body.at(-1);
+  t.assert(last.type === 'ExportDefaultDeclaration');
 });
 
-test("don't change source with a specifier", (t) => {
+test('do change source with a specifier', (t) => {
   const ast = parse('const x = 10; export { x as y };');
 
   const transformed = transform(ast, [visitors]);
-  assertCodeEqual(t, ast, transformed);
+  const last = transformed.program.body.at(-1);
+  t.assert(last.type === 'ExportDefaultDeclaration');
 });
 
-test("don't change source with an export all", (t) => {
+test('do change source with an export all', (t) => {
   const ast = parse('export * from "foo";');
 
   const transformed = transform(ast, [visitors]);
-  assertCodeEqual(t, ast, transformed);
+  const last = transformed.program.body.at(-1);
+  t.assert(last.type === 'ExportDefaultDeclaration');
 });

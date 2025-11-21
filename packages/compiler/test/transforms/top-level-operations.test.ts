@@ -1,15 +1,14 @@
 import test from 'ava';
 import { builders as b, namedTypes as n } from 'ast-types';
-
+import { print } from 'recast';
 import transform from '../../src/transform';
 import parse from '../../src/parse';
 import visitors from '../../src/transforms/top-level-operations';
-import { assertCodeEqual } from '../util';
 
-const createProgramWithExports = (statements) =>
+const createProgramWithExports = (statements: any[]) =>
   b.program([...statements, b.exportDefaultDeclaration(b.arrayExpression([]))]);
 
-const createOperationStatement = (name, args: any[] = []) =>
+const createOperationStatement = (name: string, args: any[] = []) =>
   b.expressionStatement(b.callExpression(b.identifier(name), args));
 
 test('visits a Call Expression node', (t) => {
@@ -167,8 +166,11 @@ test('does not move a method call inside an assignment', (t) => {
 
 test("does nothing if there's no export statement", (t) => {
   const ast = b.program([createOperationStatement('fn')]);
+  const before = print(ast).code;
 
   const transformed = transform(ast, [visitors]) as n.Program;
+  const after = print(transformed).code;
+
   // should only be ony top level child
   t.assert(transformed.body.length === 1);
 
@@ -176,7 +178,7 @@ test("does nothing if there's no export statement", (t) => {
   t.assert(n.ExpressionStatement.check(transformed.body[0]));
 
   // In fact the code should be unchanged
-  assertCodeEqual(t, ast, transformed);
+  t.true(before === after);
 });
 
 test('should only take the top of a nested operation call (and preserve its arguments)', (t) => {

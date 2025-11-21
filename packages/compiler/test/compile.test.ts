@@ -44,9 +44,9 @@ test('ensure default exports is created', (t) => {
   t.is(result, expected);
 });
 
-test('do not add default exports if exports exist', (t) => {
-  const source = 'export const x = 10;';
-  const expected = 'export const x = 10;';
+test('do not add default exports if default exports exist', (t) => {
+  const source = 'export const x = 10;export default [];';
+  const expected = 'export const x = 10;export default [];';
   const { code: result } = compile(source);
   t.is(result, expected);
 });
