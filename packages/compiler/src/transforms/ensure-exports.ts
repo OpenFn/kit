@@ -11,8 +11,11 @@ import type { Transformer } from '../transform';
 
 function visitor(path: NodePath<namedTypes.Program>) {
   // check the export statements
-  // if we find any, we do nothing
-  const currentExport = path.node.body.find(({ type }) => type.match(/Export/));
+  // if we find any export default, assume this code is compiled
+  // and do nothing
+  const currentExport = path.node.body.find(({ type }) =>
+    type.match(/ExportDefault/)
+  );
   if (currentExport) {
     return true;
   }

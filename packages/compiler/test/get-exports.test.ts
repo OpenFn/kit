@@ -1,5 +1,5 @@
 import test from 'ava';
-import getExports from '../src/getExports';
+import getExports from '../src/get-exports';
 
 test('exported variable', (t) => {
   const source = 'export const BigVal = 56;';
