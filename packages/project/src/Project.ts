@@ -69,7 +69,7 @@ export class Project {
   // doens't take any options
   static async from(
     type: 'project',
-    data: JSON,
+    data: any,
     options: never
   ): Promise<Project>;
   static async from(
