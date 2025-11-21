@@ -133,6 +133,51 @@ test('should set defaults for keys that Lightning needs', (t) => {
   });
 });
 
+test('should serialize workflow positions', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        openfn: {
+          positions: {
+            step: {
+              x: 1,
+              y: 1,
+            },
+          },
+        },
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+          },
+        ],
+      },
+    ],
+  };
+  const project = new Project(data, {
+    formats: {
+      project: 'json',
+    },
+  });
+
+  const state = toAppState(project);
+  t.deepEqual(state.workflows[0].positions, {
+    step: {
+      x: 1,
+      y: 1,
+    },
+  });
+});
+
 // This test just ensures that whatever we write to an openfn object
 // gets written back to state
 test('should write openfn keys to objects', (t) => {
