@@ -1,13 +1,15 @@
 // beta v2 version of CLI pull
-import { confirm } from '@inquirer/prompts';
-import path from 'path';
+import path from 'node:path';
 import fs from 'node:fs/promises';
+import { rimraf } from 'rimraf';
+import { confirm } from '@inquirer/prompts';
+
 import { DeployConfig, getProject } from '@openfn/deploy';
 import Project, { Workspace } from '@openfn/project';
-import type { Logger } from '../util/logger';
-import { rimraf } from 'rimraf';
-import { Opts } from '../options';
 import { Provisioner } from '@openfn/lexicon/lightning';
+
+import type { Logger } from '../util/logger';
+import type { Opts } from '../options';
 
 // new config
 type Config = {
@@ -34,6 +36,31 @@ export type PullOptionsBeta = Required<
     | 'projectId'
   >
 >;
+
+/**
+ * pull means: fetch and checkout the remote
+ * should throw
+ *
+ * openfn pull
+ *
+ * - no project alias passed
+ * - will pull the active project
+ * - writes all to project files
+ * - if any project files are in conflict, they should error
+ *
+ *
+ * openfn pull abcdefg
+ *
+ * will pull by uuid from default app
+ *
+ * openfn pull staging
+ *
+ * will pull by alias staging, so long as that alias is found in the workspace
+ *
+ * --endpoint is only compatible with uuid I think? else the endpoint is fixed
+ */
+
+// pnpm openfn pull --beta --api-key $LIGHTNING_API_KEY a272a529-716a-4de7-a01c-a082916c6d23  --path tmp/local-test-project
 
 export async function handler(options: PullOptionsBeta, logger: Logger) {
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
@@ -83,7 +110,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   const projectFileName = project.getIdentifier();
 
   await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
-  let stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
+  const stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
 
   const workflowsRoot = path.resolve(
     outputRoot,
@@ -95,7 +122,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
     !(await confirm({
       message: `This will remove all files in ${path.resolve(
         workflowsRoot
-      )} and rebuild the workflow. Are you sure you wish to proceed?
+      )}. Are you sure you wish to proceed?
 `,
       default: true,
     }))
@@ -105,14 +132,14 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   }
   await rimraf(workflowsRoot);
 
-  const state = project?.serialize('state');
+  const projFile = project?.serialize('project');
 
-  if (project.config.formats.project === 'yaml') {
-    await fs.writeFile(`${stateOutputPath}.yaml`, state);
+  if (typeof projFile === 'string') {
+    await fs.writeFile(`${stateOutputPath}.yaml`, projFile);
   } else {
     await fs.writeFile(
       `${stateOutputPath}.json`,
-      JSON.stringify(state, null, 2)
+      JSON.stringify(projFile, null, 2)
     );
   }
   logger.success(`Saved project file to ${stateOutputPath}`);
