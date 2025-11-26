@@ -31,7 +31,7 @@ export default (project: Project, options: ToProjectOptions = {}) => {
 
       openfn: project.openfn,
       meta: project.meta,
-      options: project.options,
+      options: omitBy(project.options, isNil),
 
       //workflows: project.workflows.map(mapWorkflow) as SerializedWorkflow[],
       workflows: project.workflows.map((w) =>
@@ -41,8 +41,9 @@ export default (project: Project, options: ToProjectOptions = {}) => {
     isNil
   ) as SerializedProject;
 
-  // return json or yaml
-  if (options.format === 'json') {
+  const format = options.format ?? proj.config?.formats.project;
+
+  if (format === 'json') {
     return proj;
   }
   return jsonToYaml(proj);
