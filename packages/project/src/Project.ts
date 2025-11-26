@@ -52,6 +52,7 @@ export class Project {
 
   // local metadata used by the CLI
   // This stuff is not synced back to lightning
+  // TODO maybe rename cli or local
   meta: any;
 
   // this contains meta about the connected openfn project
@@ -147,7 +148,13 @@ export class Project {
     this.config = buildConfig(config);
   }
 
-  serialize(type: 'json' | 'yaml' | 'fs' | 'state' = 'json', options?: any) {
+  // TODO maybe now it's just serialize { format, version }
+  // where if version is 1, it'll serialize to v1 state
+  // Oh but what about fs? That could be a format I guess
+  serialize(
+    type: 'project' | 'json' | 'yaml' | 'fs' | 'state' = 'project',
+    options?: any
+  ) {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this, options);

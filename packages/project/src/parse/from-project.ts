@@ -10,6 +10,7 @@ import slugify from '../util/slugify';
 // This is backwards-compatible with v1 state.json files
 // But is really designed for v2 project.yaml files
 
+// TODO move these types to a common types.ts, or maybe Project.ts
 export type SerializedProject = Omit<Partial<l.Project>, 'workflows'> & {
   version: number;
   workflows: SerializedWorkflow[];
@@ -19,68 +20,12 @@ export type SerializedWorkflow = {
   id: string;
   name: string;
 
-  jobs: SerializedJob[];
-  triggers: SerializedTrigger[];
-  edges: SerializedEdge[];
+  // jobs: SerializedJob[];
+  // triggers: SerializedTrigger[];
+  // edges: SerializedEdge[];
+  steps: l.Step[];
 
-  openfn?: {
-    uuid: string;
-    concurrency?: null;
-    lock_version?: number;
-    inserted_at?: string;
-    updated_at?: string;
-    deleted_at?: string;
-
-    [key: string]: unknown;
-  };
-};
-
-export type SerializedJob = {
-  id: string;
-  name: string;
-  adaptor: string;
-  body: string;
-  openfn?: {
-    // TODO make sure v2 doesn't serialized any nulls
-    project_credential_id?: string;
-    keychain_credential_id?: string;
-    delete?: boolean;
-
-    [key: string]: unknown;
-  };
-};
-
-export type SerializedTrigger = {
-  id: string;
-  type: string;
-  cron_expression?: string;
-  kafka_configuration?: any;
-  openfn?: {
-    delete?: boolean;
-    enabled?: boolean;
-
-    [key: string]: unknown;
-  };
-};
-
-export type SerializedEdge = {
-  id: string;
-
-  // TODO these are not natively compatible with CLI
-  // but the CLI should be so
-
-  condition_type: string;
-  condition_expression?: string;
-  condition_label?: string;
-
-  source_job_id?: string;
-  source_trigger_id?: string;
-  target_job_id?: string;
-  openfn?: {
-    enabled?: boolean;
-
-    [key: string]: unknown;
-  };
+  openfn?: l.ProjectMeta;
 };
 
 export default (data: l.Project | SerializedProject | string) => {
@@ -115,7 +60,7 @@ const from_v2 = (data: SerializedProject) => {
   // (When we add v3, we'll ned to migrate through this)
   return {
     ...data,
-    workflows: data.workflows.map(mapWorkflow),
+    // workflows: data.workflows.map(mapWorkflow),
   };
 };
 

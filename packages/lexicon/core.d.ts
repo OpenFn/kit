@@ -100,11 +100,11 @@ export interface WorkspaceConfig {
 
 // Metadata about a connected OpenFn Project
 export interface ProjectMeta {
-  uuid: UUID;
-  endpoint: string;
-  env: string;
-  inserted_at: string;
-  updated_at: string;
+  uuid?: UUID;
+  endpoint?: string;
+  env?: string;
+  inserted_at?: string;
+  updated_at?: string;
 
   [key: string]: unknown;
 }
