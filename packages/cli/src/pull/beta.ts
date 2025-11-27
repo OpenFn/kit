@@ -77,6 +77,10 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
     {
       endpoint: cfg.endpoint,
       env: name,
+
+      // TODO this is NOT an openfn metadata key
+      // (it should not be sent back to lighting)
+      // should add it to the local or meta objects instead
       fetched_at: new Date().toISOString(),
     },
     config

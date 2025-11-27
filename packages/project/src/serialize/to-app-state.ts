@@ -18,7 +18,14 @@ export default function (
   project: Project,
   options: Options = {}
 ): Provisioner.Project | string {
-  const { uuid, endpoint, env, ...rest } = project.openfn ?? {};
+  const {
+    uuid,
+    endpoint,
+    env,
+    id /* shouldn't be there but will cause problems if it's set*/,
+    fetched_at /* remove this metadata as it causes problems */,
+    ...rest
+  } = project.openfn ?? {};
 
   const state = omitBy(
     pick(project, ['name', 'description', 'collections']),

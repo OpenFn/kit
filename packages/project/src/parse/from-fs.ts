@@ -12,6 +12,7 @@ import {
   findWorkspaceFile,
 } from '../util/config';
 import fromProject from './from-project';
+import { omit } from 'lodash-es';
 
 export type FromFsConfig = {
   root: string;
@@ -50,7 +51,7 @@ export const parseProject = async (options: FromFsConfig) => {
 
   const proj: any = {
     name: state?.name,
-    openfn: context.project,
+    openfn: omit(context.project, ['id']),
     config: config,
     workflows: [],
   };
