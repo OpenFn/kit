@@ -53,6 +53,21 @@ export type JSONLog = {
 
 export type StringLog = [LogFns | 'confirm' | 'print', ...any];
 
+export const colourize = (level: string, str: string) => {
+  if (typeof str === 'string') {
+    if (level === DEBUG) {
+      return c.grey(str);
+    }
+    if (level === ERROR) {
+      return c.red(str);
+    }
+    if (level === WARN) {
+      return c.yellow(str);
+    }
+  }
+  return str;
+};
+
 // Design for a logger
 // some inputs:
 // This will be passed into a job, so must look like the console object
@@ -224,7 +239,9 @@ export default function (name?: string, options: LogOptions = {}): Logger {
           output.push(styleLevel(level));
         }
 
-        emitter[level](...output.concat(cleanedArgs));
+        emitter[level](
+          ...output.concat(cleanedArgs).map((s) => colourize(level, s))
+        );
       }
     }
   };
