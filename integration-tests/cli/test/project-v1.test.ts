@@ -139,8 +139,6 @@ steps:
       transform-data:
         disabled: false
         condition: true
-        openfn:
-          uuid: 33dce70f-047f-4508-82fd-950eb508519b
   - id: transform-data
     name: Transform data
     adaptor: "@openfn/language-common@latest"
