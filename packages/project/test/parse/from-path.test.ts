@@ -3,6 +3,7 @@ import mock from 'mock-fs';
 
 import { generateProject } from '../../src';
 import fromPath from '../../src/parse/from-path';
+import * as v2 from '../fixtures/sample-v2-project';
 
 const proj = generateProject('my-project', ['a-b'], {
   openfnUuid: true,
@@ -38,6 +39,28 @@ test.serial('should load a v1 state yaml', async (t) => {
   // t.deepEqual(project.workflows[0].workflow, proj.workflows[0].workflow);
 });
 
+test.serial('should load a v2 project yaml', async (t) => {
+  mock({
+    '/p1/main@openfn.org.yaml': v2.yaml,
+  });
+  const project = await fromPath('/p1/main@openfn.org.yaml');
+
+  t.is(project.id, proj.id);
+  t.deepEqual(project.openfn.uuid, '1234');
+  t.is(project.workflows.length, 1);
+});
+
+test.serial('should load a v2 project json', async (t) => {
+  mock({
+    '/p1/main@openfn.org.json': JSON.stringify(v2.json),
+  });
+  const project = await fromPath('/p1/main@openfn.org.json');
+
+  t.is(project.id, proj.id);
+  t.deepEqual(project.openfn.uuid, '1234');
+  t.is(project.workflows.length, 1);
+});
+
 test.serial('should use workspace config', async (t) => {
   mock({
     '/p1/main@openfn.org.yaml': proj.serialize('state', { format: 'yaml' }),
@@ -48,7 +71,6 @@ test.serial('should use workspace config', async (t) => {
       projects: 'p',
       workflows: 'w',
     },
-    format: 'yaml',
   };
   const project = await fromPath('/p1/main@openfn.org.yaml', config);
 

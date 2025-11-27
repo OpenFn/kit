@@ -153,3 +153,28 @@ test('import from a v2 project as YAML', async (t) => {
     ],
   });
 });
+
+test('import with custom config', async (t) => {
+  const config = {
+    x: 1234,
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
+  };
+  const proj = await Project.from('project', v2.yaml, config);
+  t.is(proj.id, 'my-project');
+
+  t.deepEqual(proj.config, {
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
+    formats: {
+      openfn: 'yaml',
+      project: 'yaml',
+      workflow: 'yaml',
+    },
+    x: 1234,
+  });
+});

@@ -92,13 +92,15 @@ export class Project {
   ): Promise<Project> {
     switch (type) {
       case 'project':
-        return fromProject(data);
+        var [config] = rest;
+        return fromProject(data, config);
       case 'state':
         return fromAppState(data, rest[0], rest[1]);
       case 'fs':
         return fromFs(data);
       case 'path':
-        return fromPath(data, rest[0]);
+        var [config] = rest;
+        return fromPath(data, config);
       default:
         throw new Error(`Didn't recognize type ${type}`);
     }

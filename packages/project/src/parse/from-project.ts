@@ -24,7 +24,10 @@ export type SerializedWorkflow = {
   openfn?: l.ProjectMeta;
 };
 
-export default (data: l.Project | SerializedProject | string) => {
+export default (
+  data: l.Project | SerializedProject | string,
+  config?: Partial<l.WorkspaceConfig>
+) => {
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);
 
@@ -36,7 +39,7 @@ export default (data: l.Project | SerializedProject | string) => {
     json = from_v1(rawJson as Provisioner.Project);
   }
 
-  return new Project(json);
+  return new Project(json, config);
 };
 
 const from_v1 = (data: Provisioner.Project) => {
