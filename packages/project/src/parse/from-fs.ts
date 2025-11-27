@@ -11,7 +11,8 @@ import {
   loadWorkspaceFile,
   findWorkspaceFile,
 } from '../util/config';
-import fromAppState from './from-app-state';
+import fromProject from './from-project';
+import { omit } from 'lodash-es';
 
 export type FromFsConfig = {
   root: string;
@@ -41,8 +42,8 @@ export const parseProject = async (options: FromFsConfig) => {
       `${identifier}.${format}`
     );
     const stateFile = await fs.readFile(statePath, 'utf8');
-    // Load the state contents as a Project
-    state = fromAppState(stateFile, { format });
+
+    state = fromProject(stateFile, config);
   } catch (e) {
     console.warn(`Failed to find state file for ${identifier}`);
     // console.warn(e);
@@ -50,7 +51,7 @@ export const parseProject = async (options: FromFsConfig) => {
 
   const proj: any = {
     name: state?.name,
-    openfn: context.project,
+    openfn: omit(context.project, ['id']),
     config: config,
     workflows: [],
   };

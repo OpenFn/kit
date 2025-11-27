@@ -1,5 +1,16 @@
 # engine-multi
 
+## 1.8.5
+
+### Patch Changes
+
+- Updated dependencies [72f18b1]
+- Updated dependencies [2cc28a6]
+  - @openfn/lexicon@1.2.7
+  - @openfn/logger@1.1.0
+  - @openfn/compiler@1.2.1
+  - @openfn/runtime@1.7.6
+
 ## 1.8.4
 
 ### Patch Changes

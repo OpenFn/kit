@@ -399,9 +399,6 @@ workspace:
           'transform-data-to-fhir-standard': {
             disabled: false,
             condition: true,
-            openfn: {
-              uuid: 'edge-id',
-            },
           },
         },
       },

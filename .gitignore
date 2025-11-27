@@ -1,3 +1,5 @@
+.env
+
 # dev
 *.code-workspace
 examples/**/dist
@@ -35,3 +37,5 @@ tmp
 
 *.drawio.bkp
 .fuse
+
+

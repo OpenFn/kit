@@ -1,6 +1,7 @@
 import yargs, { Arguments } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import loadDotEnv from './env';
 import apolloCommand from './apollo/command';
 import collectionsCommand from './collections/command';
 import compileCommand from './compile/command';
@@ -17,6 +18,13 @@ import projectsCommand from './projects/command';
 import checkoutCommand from './checkout/command';
 import mergeCommand from './merge/command';
 import workflowVersionCommand from './version/command';
+
+const env = loadDotEnv();
+if (env) {
+  // Write the env so that the inner process can use it
+  // This is just a convenience for logging back to the user
+  process.env.$DOT_ENV_OVERRIDES = Object.keys(env).join(',');
+}
 
 const y = yargs(hideBin(process.argv));
 

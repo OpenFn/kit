@@ -1,14 +1,6 @@
 import test from 'ava';
-import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../../src/Project';
-import toFs, {
-  extractWorkflow,
-  extractStep,
-  mapWorkflow,
-} from '../../src/serialize/to-fs';
-import { extractConfig } from '../../src/util/config';
-
-const stringify = (json) => JSON.stringify(json, null, 2);
+import toFs, { extractWorkflow } from '../../src/serialize/to-fs';
 
 const step = {
   id: 'step',
@@ -67,6 +59,10 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
               next: {
                 step2: {
                   condition: true,
+                  openfn: {
+                    // should be excluded!
+                    uuid: 1,
+                  },
                 },
               },
             },

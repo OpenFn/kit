@@ -21,6 +21,7 @@ import mapAdaptorsToMonorepo, {
 } from './util/map-adaptors-to-monorepo';
 import printVersions from './util/print-versions';
 import abort from './util/abort';
+import { report } from './env';
 
 export type CommandList =
   | 'apollo'
@@ -79,6 +80,9 @@ const parse = async (options: Opts, log?: Logger) => {
   if (options.command === 'execute' || options.command === 'test') {
     await printVersions(logger, options);
   }
+
+  // Tell the user whether we're using env vars
+  report(logger);
 
   const { monorepoPath } = options;
   if (monorepoPath) {

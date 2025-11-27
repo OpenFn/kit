@@ -29,6 +29,8 @@ export async function handler(options: DeployOptionsBeta, logger: Logger) {
   // TMP use options.path to set the directory for now
   // We'll need to manage this a bit better
   const project = await Project.from('fs', { root: options.path || '.' });
+  // Why is there an id on openfn here?
+  console.log({ openfn: project.openfn });
 
   // TODO: work out if there's any diff
 

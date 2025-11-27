@@ -3,6 +3,8 @@ import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
 
+// These tests use the legacy v1 yaml structure
+
 const mainYaml = `
 id: 8dbc4349-52b4-4bf2-be10-fdf06da52c46
 name: hello-world
@@ -107,6 +109,15 @@ test.before(async () => {
   );
 });
 
+test.serial('list available projects', async (t) => {
+  const { stdout } = await run(`openfn projects -p ${projectsPath}`);
+
+  t.regex(stdout, /hello-world/);
+  t.regex(stdout, /8dbc4349-52b4-4bf2-be10-fdf06da52c46/);
+  t.regex(stdout, /hello-world-staging/);
+  t.regex(stdout, /5deddbfa-c63f-4dbc-98b5-a49d3395a488/);
+});
+
 // checkout a project from a yaml file
 test.serial('Checkout a project', async (t) => {
   await run(`openfn checkout hello-world -p ${projectsPath}`);
@@ -128,8 +139,6 @@ steps:
       transform-data:
         disabled: false
         condition: true
-        openfn:
-          uuid: 33dce70f-047f-4508-82fd-950eb508519b
   - id: transform-data
     name: Transform data
     adaptor: "@openfn/language-common@latest"

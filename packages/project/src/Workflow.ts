@@ -159,7 +159,7 @@ class Workflow {
   }
 
   toJSON(): Object {
-    return this.workflow;
+    return clone(this.workflow);
   }
 
   getUUIDMap(): Record<string, string> {

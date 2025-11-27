@@ -1,6 +1,6 @@
-// serialize the file system
-
 import nodepath from 'path';
+import { omit } from 'lodash-es';
+
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
 import { extractConfig } from '../util/config';
@@ -52,9 +52,15 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
     // Not crazy about this - maybe we should do something better? Or do we like the consistency?
     options: workflow.options,
     steps: workflow.steps.map((step) => {
-      const { openfn, expression, ...mapped } = step;
+      const { openfn, expression, next, ...mapped } = step;
       if (expression) {
         (mapped as any).expression = `./${step.id}.js`;
+      }
+      if (next && typeof next === 'object') {
+        (mapped as any).next = {};
+        for (const id in next) {
+          (mapped as any).next[id] = omit(next[id] as any, ['openfn']);
+        }
       }
       return mapped;
     }),

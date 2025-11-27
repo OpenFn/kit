@@ -159,7 +159,6 @@ test('should load the workspace config from json', async (t) => {
 
   t.deepEqual(project.openfn, {
     name: 'My Project',
-    id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
     env: 'staging',
     endpoint: 'https://app.openfn.org',
     description: '...',
