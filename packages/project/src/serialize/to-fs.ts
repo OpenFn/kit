@@ -1,5 +1,5 @@
 import nodepath from 'path';
-import { omit, omitBy } from 'lodash-es';
+import { omit } from 'lodash-es';
 
 import { Project } from '../Project';
 import { jsonToYaml } from '../util/yaml';
