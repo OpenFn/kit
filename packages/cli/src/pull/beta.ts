@@ -119,7 +119,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   }
   logger.success(`Saved project file to ${stateOutputPath}`);
 
-  const files = project?.serialize('fs');
+  const files = project?.serialize('fs') as any;
   for (const f in files) {
     if (files[f]) {
       await fs.mkdir(path.join(outputRoot, path.dirname(f)), {

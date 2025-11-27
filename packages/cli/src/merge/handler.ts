@@ -77,7 +77,7 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
   if (outputFormat === 'json') {
     finalState = JSON.stringify(finalState, null, 2);
   }
-  await fs.writeFile(finalPath, finalState);
+  await fs.writeFile(finalPath, finalState as string);
 
   logger.info(`Updated statefile at `, finalPath);
 

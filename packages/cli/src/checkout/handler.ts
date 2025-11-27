@@ -40,7 +40,7 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   await rimraf(path.join(commandPath, config.workflowRoot ?? 'workflows'));
 
   // expand project into directory
-  const files = switchProject.serialize('fs');
+  const files: any = switchProject.serialize('fs');
   for (const f in files) {
     if (files[f]) {
       fs.mkdirSync(path.join(commandPath, path.dirname(f)), {
