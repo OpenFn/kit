@@ -62,3 +62,22 @@ test('should log if no env is found', (t) => {
   const a = logger._find('debug', /.env not found/i);
   t.truthy(a);
 });
+
+test('should use $DOT_ENV_OVERRIDES found', (t) => {
+  mock({});
+
+  // don't load .env
+  // but set this magic env var instead
+  process.env.$DOT_ENV_OVERRIDES = 'FOO,BAR';
+
+  report(logger);
+
+  const a = logger._find('always', /imported 1 env vars/i);
+  t.truthy(a);
+
+  const b = logger._find('debug', /set from .env:/i);
+  t.truthy(b);
+
+  const c = logger._find('debug', /FOO, BAR/);
+  t.truthy(c);
+});

@@ -12,7 +12,15 @@ export default (path?: string) => {
 };
 
 export const report = (logger?: Logger) => {
-  const envs = Object.keys(env.parsed ?? {});
+  // workaround for the CLI's inner process
+
+  let envs = [];
+  if (process.env.$DOT_ENV_OVERRIDES) {
+    envs = process.env.$DOT_ENV_OVERRIDES.split(',').map((s) => s.trim());
+  } else {
+    envs = Object.keys(env?.parsed ?? {});
+  }
+
   if (envs.length) {
     logger?.always(`Imported ${envs.length} env vars from .env file`);
     logger?.debug('Envs set from .env: ', envs.join(', '));
