@@ -11,7 +11,9 @@ mock({
       id: 'my-project',
     },
     workspace: {
-      workflowRoot: 'workflows',
+      dirs: {
+        workflows: 'workflows',
+      },
       formats: {
         openfn: 'yaml',
         project: 'yaml',
@@ -19,62 +21,105 @@ mock({
       },
     },
   }),
-  '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
-    id: '<uuid:main>',
-    name: 'my-project',
+  // This is in the new v2 format!
+  '/ws/.projects/main@app.openfn.org.yaml': jsonToYaml({
+    name: 'My Project',
+    openfn: {
+      uuid: '<uuid:main>',
+    },
+    version: 2,
     workflows: [
       {
-        name: 'simple-workflow',
-        id: 'wf-id',
+        id: 'simple-workflow',
+        name: 'Simple Workflow',
+        openfn: {
+          uuid: '<uuid:wf>',
+        },
+        steps: [
+          {
+            type: 'webhook',
+            enabled: true,
+            next: {
+              'job-a': {
+                openfn: {
+                  uuid: '<uuid:edge>',
+                },
+              },
+            },
+            openfn: {
+              uuid: '<uuid:trigger>',
+            },
+          },
+          {
+            id: 'job-a',
+            name: 'Transform data to FHIR standard',
+            body: ' fn(state => state); // sdfl',
+            adaptor: '@openfn/language-http@latest',
+            openfn: {
+              uuid: '<uuid:step>',
+            },
+          },
+        ],
+      },
+    ],
+  }),
+  // This is in the old v1 format!
+  '/ws/.projects/staging@app.openfn.org.yaml': jsonToYaml({
+    id: '<uuid:staging>',
+    name: 'My Project',
+    workflows: [
+      {
+        name: 'Simple Workflow',
+        id: '<uuid:wf1>',
         jobs: [
           {
             name: 'Transform data to FHIR standard',
             body: ' fn(state => state); // sdfl',
             adaptor: '@openfn/language-http@latest',
-            id: 'job-a',
+            id: '<uuid:job>>',
           },
         ],
         triggers: [
           {
             type: 'webhook',
             enabled: true,
-            id: 'trigger-id',
+            id: '<uuid:trigger>',
           },
         ],
         edges: [
           {
-            id: 'edge-id',
-            target_job_id: 'job-a',
+            id: '<uuid:edge>',
+            target_job_id: '<uuid:job>>',
             enabled: true,
-            source_trigger_id: 'trigger-id',
+            source_trigger_id: '<uuid:trigger>',
             condition_type: 'always',
           },
         ],
       },
       {
-        name: 'another-workflow',
-        id: 'another-id',
+        name: 'Another Workflow',
+        id: '<uuid:wf2>',
         jobs: [
           {
             name: 'Transform data to FHIR standard',
             body: ' fn(state => state); // sdfl',
             adaptor: '@openfn/language-http@latest',
-            id: 'job-b',
+            id: '<uuid:job2>',
           },
         ],
         triggers: [
           {
             type: 'webhook',
             enabled: true,
-            id: 'trigger-id',
+            id: '<uuid:trigger2>',
           },
         ],
         edges: [
           {
-            id: 'edge-id',
-            target_job_id: 'job-b',
+            id: '<uuid:edge2>',
+            target_job_id: '<uuid:job2>',
             enabled: true,
-            source_trigger_id: 'trigger-id',
+            source_trigger_id: '<uuid:trigger>',
             condition_type: 'always',
           },
         ],
@@ -97,7 +142,7 @@ test('openfn projects: not a workspace', (t) => {
   t.is(message, 'Command was run in an invalid openfn workspace');
 });
 
-test.only('openfn projects: valid workspace', (t) => {
+test('openfn projects: valid workspace', (t) => {
   projectsHandler({ command: 'projects', projectPath: '/ws' }, logger);
   const { message, level } = logger._parse(logger._last);
   t.is('success', level);
@@ -106,6 +151,11 @@ test.only('openfn projects: valid workspace', (t) => {
 
 my-project (active)
   <uuid:main>
+  workflows:
+    - simple-workflow
+
+my-project (active)
+  <uuid:staging>
   workflows:
     - simple-workflow
     - another-workflow

@@ -37,31 +37,6 @@ export type PullOptionsBeta = Required<
   >
 >;
 
-/**
- * pull means: fetch and checkout the remote
- * should throw
- *
- * openfn pull
- *
- * - no project alias passed
- * - will pull the active project
- * - writes all to project files
- * - if any project files are in conflict, they should error
- *
- *
- * openfn pull abcdefg
- *
- * will pull by uuid from default app
- *
- * openfn pull staging
- *
- * will pull by alias staging, so long as that alias is found in the workspace
- *
- * --endpoint is only compatible with uuid I think? else the endpoint is fixed
- */
-
-// pnpm openfn pull --beta --api-key $LIGHTNING_API_KEY a272a529-716a-4de7-a01c-a082916c6d23  --path tmp/local-test-project
-
 export async function handler(options: PullOptionsBeta, logger: Logger) {
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
 
