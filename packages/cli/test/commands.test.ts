@@ -761,7 +761,7 @@ test.serial('docs should print documentation with full names', async (t) => {
   opts.repoDir = '/repo';
 
   await commandParser(opts, logger);
-  const docs = logger._parse(logger._history[2]).message as string;
+  const docs = logger._find('print', /API Reference/).message;
 
   // match the signature
   t.regex(docs, /\#\# fn\(\)/);
