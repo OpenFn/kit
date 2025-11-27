@@ -1,10 +1,11 @@
 import { Logger } from '@openfn/logger';
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
+import { expand } from 'dotenv-expand';
 
 let env: any;
 
 export default (path?: string) => {
-  env = dotenv.config({ path, override: true, debug: false, quiet: true });
+  env = expand(config({ path, override: true, debug: false, quiet: true }));
   if (env.error) {
     return null;
   }
