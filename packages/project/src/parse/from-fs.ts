@@ -11,7 +11,7 @@ import {
   loadWorkspaceFile,
   findWorkspaceFile,
 } from '../util/config';
-import fromAppState from './from-app-state';
+import fromProject from './from-project';
 
 export type FromFsConfig = {
   root: string;
@@ -42,13 +42,7 @@ export const parseProject = async (options: FromFsConfig) => {
     );
     const stateFile = await fs.readFile(statePath, 'utf8');
 
-    // TODO: now the state file could be a Project or a State file
-    // (as yaml or JSON). We need a way to resolve this!
-    // TODO so we do:
-    // const json = ensureJSON(statefile)
-    // state = fromJSON(stateFile)
-    // Load the state contents as a Project
-    state = fromAppState(stateFile, { format });
+    state = fromProject(stateFile, config);
   } catch (e) {
     console.warn(`Failed to find state file for ${identifier}`);
     // console.warn(e);
