@@ -1,5 +1,6 @@
 import yargs, { Arguments } from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import 'dotenv/config';
 
 import apolloCommand from './apollo/command';
 import collectionsCommand from './collections/command';
