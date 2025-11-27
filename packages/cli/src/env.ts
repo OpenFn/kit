@@ -1,7 +1,15 @@
 import { Logger } from '@openfn/logger';
 import dotenv from 'dotenv';
 
-const env = dotenv.config({ override: true, debug: false, quiet: true });
+let env: any;
+
+export default (path?: string) => {
+  env = dotenv.config({ path, override: true, debug: false, quiet: true });
+  if (env.error) {
+    return null;
+  }
+  return env.parsed;
+};
 
 export const report = (logger?: Logger) => {
   const envs = Object.keys(env.parsed ?? {});

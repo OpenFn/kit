@@ -1,7 +1,7 @@
 import yargs, { Arguments } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import './env';
+import loadDotEnv from './env';
 import apolloCommand from './apollo/command';
 import collectionsCommand from './collections/command';
 import compileCommand from './compile/command';
@@ -18,6 +18,8 @@ import projectsCommand from './projects/command';
 import checkoutCommand from './checkout/command';
 import mergeCommand from './merge/command';
 import workflowVersionCommand from './version/command';
+
+loadDotEnv();
 
 const y = yargs(hideBin(process.argv));
 
