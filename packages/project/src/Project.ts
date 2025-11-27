@@ -150,13 +150,7 @@ export class Project {
     this.config = buildConfig(config);
   }
 
-  // TODO maybe now it's just serialize { format, version }
-  // where if version is 1, it'll serialize to v1 state
-  // Oh but what about fs? That could be a format I guess
-  serialize(
-    type: 'project' | 'json' | 'yaml' | 'fs' | 'state' = 'project',
-    options?: any
-  ) {
+  serialize(type: 'project' | 'fs' | 'state' = 'project', options?: any) {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this, options);
