@@ -796,7 +796,7 @@ test.serial('docs adaptor should list operations', async (t) => {
 
   await commandParser(opts, logger);
 
-  const docs = logger._parse(logger._history[3]).message as string;
+  const docs = logger._find('print', /language-common/).message;
   t.notRegex(docs, /\[object Object\]/);
   t.notRegex(docs, /\#\#\# Usage Examples/);
   t.regex(docs, /fn.+\(a, b\)/);
@@ -823,7 +823,8 @@ test.serial(
     opts.repoDir = '/repo';
 
     await commandParser(opts, logger);
-    const docs = logger._parse(logger._history[2]).message as string;
+
+    const docs = logger._find('print', /API Reference/).message;
     // match the signature
     t.regex(docs, /\#\# fn\(\)/);
     // Match usage examples
