@@ -11,7 +11,7 @@ import {
   loadWorkspaceFile,
   findWorkspaceFile,
 } from '../util/config';
-import fromAppState from './from-app-state';
+import fromProject from './from-project';
 
 export type FromFsConfig = {
   root: string;
@@ -41,8 +41,8 @@ export const parseProject = async (options: FromFsConfig) => {
       `${identifier}.${format}`
     );
     const stateFile = await fs.readFile(statePath, 'utf8');
-    // Load the state contents as a Project
-    state = fromAppState(stateFile, { format });
+
+    state = fromProject(stateFile, config);
   } catch (e) {
     console.warn(`Failed to find state file for ${identifier}`);
     // console.warn(e);

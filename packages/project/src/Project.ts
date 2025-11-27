@@ -6,6 +6,7 @@ import fromAppState, { fromAppStateConfig } from './parse/from-app-state';
 import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
+import fromProject from './parse/from-project';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
@@ -51,6 +52,7 @@ export class Project {
 
   // local metadata used by the CLI
   // This stuff is not synced back to lightning
+  // TODO maybe rename cli or local
   meta: any;
 
   // this contains meta about the connected openfn project
@@ -64,6 +66,13 @@ export class Project {
 
   credentials: string[];
 
+  // project v2. Default.
+  // doens't take any options
+  static async from(
+    type: 'project',
+    data: any,
+    options: never
+  ): Promise<Project>;
   static async from(
     type: 'state',
     data: Provisioner.Project,
@@ -77,22 +86,28 @@ export class Project {
     options?: { config?: FromPathConfig }
   ): Promise<Project>;
   static async from(
-    type: 'state' | 'path' | 'fs',
+    type: 'project' | 'state' | 'path' | 'fs',
     data: any,
     ...rest: any[]
   ): Promise<Project> {
-    if (type === 'state') {
-      return fromAppState(data, rest[0], rest[1]);
-    } else if (type === 'fs') {
-      return fromFs(data);
-    } else if (type === 'path') {
-      return fromPath(data, rest[0]);
+    switch (type) {
+      case 'project':
+        var [config] = rest;
+        return fromProject(data, config);
+      case 'state':
+        return fromAppState(data, rest[0], rest[1]);
+      case 'fs':
+        return fromFs(data);
+      case 'path':
+        var [config] = rest;
+        return fromPath(data, config);
+      default:
+        throw new Error(`Didn't recognize type ${type}`);
     }
-    throw new Error(`Didn't recognize type ${type}`);
   }
 
   // Diff two projects
-  // /static diff(a: Project, b: Project) {}
+  // static diff(a: Project, b: Project) {}
 
   // Merge a source project (staging) into the target project (main)
   // Returns a new Project
@@ -135,7 +150,7 @@ export class Project {
     this.config = buildConfig(config);
   }
 
-  serialize(type: 'json' | 'yaml' | 'fs' | 'state' = 'json', options?: any) {
+  serialize(type: 'project' | 'fs' | 'state' = 'project', options?: any) {
     if (type in serializers) {
       // @ts-ignore
       return serializers[type](this, options);

@@ -3,16 +3,16 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 import { Project } from './Project';
-import fromAppState from './parse/from-app-state';
 import pathExists from './util/path-exists';
 import {
   buildConfig,
   loadWorkspaceFile,
   findWorkspaceFile,
 } from './util/config';
+import fromProject from './parse/from-project';
 
 export class Workspace {
-  // @ts-ignore config not defininitely assigned - it sure is
+  // @ts-ignore config not definitely assigned - it sure is
   config: l.WorkspaceConfig;
   activeProject?: l.ProjectMeta;
 
@@ -53,14 +53,9 @@ export class Workspace {
           const stateFilePath = path.join(projectsPath, file);
           try {
             const data = fs.readFileSync(stateFilePath, 'utf-8');
-            const project = fromAppState(
-              data,
-              {},
-              {
-                ...this.config,
-                format: this.config?.formats.project,
-              }
-            );
+            const project = fromProject(data, {
+              ...this.config,
+            });
             this.projectPaths.set(project.id, stateFilePath);
             return project;
           } catch (e) {

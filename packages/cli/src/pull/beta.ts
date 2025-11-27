@@ -1,13 +1,15 @@
 // beta v2 version of CLI pull
-import { confirm } from '@inquirer/prompts';
-import path from 'path';
+import path from 'node:path';
 import fs from 'node:fs/promises';
+import { rimraf } from 'rimraf';
+import { confirm } from '@inquirer/prompts';
+
 import { DeployConfig, getProject } from '@openfn/deploy';
 import Project, { Workspace } from '@openfn/project';
-import type { Logger } from '../util/logger';
-import { rimraf } from 'rimraf';
-import { Opts } from '../options';
 import { Provisioner } from '@openfn/lexicon/lightning';
+
+import type { Logger } from '../util/logger';
+import type { Opts } from '../options';
 
 // new config
 type Config = {
@@ -83,7 +85,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   const projectFileName = project.getIdentifier();
 
   await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
-  let stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
+  const stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
 
   const workflowsRoot = path.resolve(
     outputRoot,
@@ -95,7 +97,7 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
     !(await confirm({
       message: `This will remove all files in ${path.resolve(
         workflowsRoot
-      )} and rebuild the workflow. Are you sure you wish to proceed?
+      )}. Are you sure you wish to proceed?
 `,
       default: true,
     }))
@@ -105,19 +107,19 @@ export async function handler(options: PullOptionsBeta, logger: Logger) {
   }
   await rimraf(workflowsRoot);
 
-  const state = project?.serialize('state');
+  const projFile = project?.serialize('project');
 
-  if (project.config.formats.project === 'yaml') {
-    await fs.writeFile(`${stateOutputPath}.yaml`, state);
+  if (typeof projFile === 'string') {
+    await fs.writeFile(`${stateOutputPath}.yaml`, projFile);
   } else {
     await fs.writeFile(
       `${stateOutputPath}.json`,
-      JSON.stringify(state, null, 2)
+      JSON.stringify(projFile, null, 2)
     );
   }
   logger.success(`Saved project file to ${stateOutputPath}`);
 
-  const files = project?.serialize('fs');
+  const files = project?.serialize('fs') as any;
   for (const f in files) {
     if (files[f]) {
       await fs.mkdir(path.join(outputRoot, path.dirname(f)), {
