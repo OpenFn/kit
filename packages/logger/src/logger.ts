@@ -54,14 +54,16 @@ export type JSONLog = {
 export type StringLog = [LogFns | 'confirm' | 'print', ...any];
 
 export const colourize = (level: string, str: string) => {
-  if (level === DEBUG) {
-    return c.grey(str);
-  }
-  if (level === ERROR) {
-    return c.red(str);
-  }
-  if (level === WARN) {
-    return c.yellow(str);
+  if (typeof str === 'string') {
+    if (level === DEBUG) {
+      return c.grey(str);
+    }
+    if (level === ERROR) {
+      return c.red(str);
+    }
+    if (level === WARN) {
+      return c.yellow(str);
+    }
   }
   return str;
 };
