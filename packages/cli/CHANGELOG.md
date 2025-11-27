@@ -1,5 +1,23 @@
 # @openfn/cli
 
+## 1.19.0
+
+### Minor Changes
+
+- 72f18b1: In pull --beta, use an improved and updated structure for project.yaml files
+- 9001244: Support .env files in all CLI commands
+
+### Patch Changes
+
+- Updated dependencies [72f18b1]
+- Updated dependencies [2cc28a6]
+  - @openfn/lexicon@1.2.7
+  - @openfn/project@0.9.1
+  - @openfn/logger@1.1.0
+  - @openfn/compiler@1.2.1
+  - @openfn/deploy@0.11.4
+  - @openfn/runtime@1.7.6
+
 ## 1.18.6
 
 ### Patch Changes

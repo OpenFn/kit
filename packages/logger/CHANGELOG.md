@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 1.1.0
+
+### Minor Changes
+
+- 2cc28a6: Add colour to output
+
 ## 1.0.6
 
 ### Patch Changes

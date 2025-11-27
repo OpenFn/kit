@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.2.7
+
+### Patch Changes
+
+- 72f18b1: Add a new project.yaml structure, which is the default "v2 state" used by each project. For now, this mirrors the internal structure of the runtime, rather than Lightning's structure
+
 ## 1.2.6
 
 ### Patch Changes

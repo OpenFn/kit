@@ -1,5 +1,15 @@
 # @openfn/project
 
+## 0.9.1
+
+### Patch Changes
+
+- 72f18b1: Add a new project.yaml structure, which is the default "v2 state" used by each project. For now, this mirrors the internal structure of the runtime, rather than Lightning's structure
+- Updated dependencies [72f18b1]
+- Updated dependencies [2cc28a6]
+  - @openfn/lexicon@1.2.7
+  - @openfn/logger@1.1.0
+
 ## 0.9.0
 
 ### Minor Changes
