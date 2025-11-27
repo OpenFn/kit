@@ -21,16 +21,10 @@ export const report = (logger?: Logger) => {
     envs = Object.keys(env?.parsed ?? {});
   }
 
-  if (!envs) {
-    return;
-  }
-
   if (envs.length) {
     logger?.always(`Imported ${envs.length} env vars from .env file`);
     logger?.debug('Envs set from .env: ', envs.join(', '));
-  } else {
-    if (env.error) {
-      logger?.debug('.env not found');
-    }
+  } else if (env && env.error) {
+    logger?.debug('.env not found');
   }
 };
