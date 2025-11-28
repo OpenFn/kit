@@ -1,5 +1,5 @@
 import { DeployConfig, getProject } from '@openfn/deploy';
-import Project from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import fs from 'node:fs/promises';
 import path from 'path';
 import { Opts } from '../options';
@@ -26,6 +26,7 @@ export type FetchOptions = Required<
     | 'logJson'
     | 'path'
     | 'projectId'
+    | 'projectPath'
   >
 >;
 
@@ -33,6 +34,9 @@ export default async function fetchHandler(
   options: FetchOptions,
   logger: Logger
 ) {
+  const commandPath = path.resolve(options.projectPath ?? '.');
+  const workspace = new Workspace(commandPath);
+
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
 
   const config: Partial<Config> = {
@@ -54,11 +58,15 @@ export default async function fetchHandler(
   const { data } = await getProject(config as DeployConfig, options.projectId);
   const name = options.env || 'project';
 
-  const project = Project.from('state', data, {
-    endpoint: config.endpoint,
-    env: name,
-    fetched_at: new Date().toISOString(),
-  });
+  const project = await Project.from(
+    'state',
+    data,
+    {
+      endpoint: config.endpoint,
+      env: name,
+    },
+    workspace.getConfig()
+  );
 
   const outputRoot = path.resolve(options.path || '.');
 
@@ -67,13 +75,13 @@ export default async function fetchHandler(
   await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
   let stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
 
-  const state = project?.serialize('state');
-  if (project.repo?.formats.project === 'yaml') {
-    await fs.writeFile(`${stateOutputPath}.yaml`, state);
+  const output = project?.serialize('project');
+  if (project.config?.formats.project === 'yaml') {
+    await fs.writeFile(`${stateOutputPath}.yaml`, output as string);
   } else {
     await fs.writeFile(
       `${stateOutputPath}.json`,
-      JSON.stringify(state, null, 2)
+      JSON.stringify(output, null, 2)
     );
   }
   logger.success(`Fetched project file to ${stateOutputPath}`);
