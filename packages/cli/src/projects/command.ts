@@ -25,10 +25,6 @@ export const projectsCommand = {
       .example(
         'project merge staging',
         'Merge staging into the checkout-out branch'
-      )
-      .example(
-        'project merge staging',
-        'Merge staging into the checkout-out branch'
       ),
 } as yargs.CommandModule<{}>;
 

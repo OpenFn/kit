@@ -140,7 +140,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
 
   // TODO support --no-checkout to merge without expanding
 
-  // Checkout after merge. to unwrap updated files into filesystem
+  // Checkout after merge to expand updated files into filesystem
   await checkout(
     {
       command: 'project-checkout',
@@ -151,6 +151,6 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
     logger
   );
   logger.success(
-    `Project ${sourceProject.id} has been merged into Project ${targetProject.id} successfully`
+    `Project ${sourceProject.id} has been merged into Project ${targetProject.id}`
   );
 };
