@@ -1,9 +1,7 @@
 import yargs from 'yargs';
-import { Opts } from '../options';
-import { ensure, build } from '../util/command-builders';
-import * as o from '../options';
 
 import list from './list';
+import version from './version';
 
 export const projectsCommand = {
   command: 'project [subcommand]',
@@ -12,9 +10,8 @@ export const projectsCommand = {
   handler: () => {},
   builder: (yargs: yargs.Argv) =>
     yargs
-      // .command(clean)
-      // .command(install)
       .command(list)
+      .command(version)
       .example('project', 'list all projects in the workspace')
       .example('project list', 'list all projects in the workspace'),
 } as yargs.CommandModule<{}>;

@@ -10,7 +10,6 @@ import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
 import * as projects from './projects/handler';
-import workflowVersion from './version/handler';
 import checkout from './checkout/handler';
 import merge from './merge/handler';
 import * as repo from './repo/handler';
@@ -44,6 +43,7 @@ export type CommandList =
   | 'repo-list'
   | 'repo-pwd'
   | 'project-list'
+  | 'project-version'
   | 'test'
   | 'version';
 
@@ -60,7 +60,7 @@ const handlers = {
   projects,
   checkout,
   merge,
-  project: workflowVersion,
+  project: projects.version,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,
@@ -69,6 +69,7 @@ const handlers = {
   ['repo-pwd']: repo.pwd,
   ['repo-list']: repo.list,
   ['project-list']: projects.list,
+  ['project-version']: projects.version,
   version: async (opts: Opts, logger: Logger) =>
     printVersions(logger, opts, true),
 };

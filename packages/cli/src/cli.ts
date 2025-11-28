@@ -17,7 +17,6 @@ import testCommand from './test/command';
 import projectsCommand from './projects/command';
 import checkoutCommand from './checkout/command';
 import mergeCommand from './merge/command';
-import workflowVersionCommand from './version/command';
 
 const env = loadDotEnv();
 if (env) {
@@ -29,7 +28,7 @@ if (env) {
 const y = yargs(hideBin(process.argv));
 
 export const cmd = y
-  // TODO Typescipt hacks because signatures don't seem to align
+  // TODO Typescript hacks because signatures don't seem to align
   .command(executeCommand as any)
   .command(compileCommand as any)
   .command(collectionsCommand)
@@ -45,7 +44,6 @@ export const cmd = y
   .command(projectsCommand)
   .command(checkoutCommand)
   .command(mergeCommand)
-  // .command(workflowVersionCommand)
   .command({
     command: 'version',
     describe:
