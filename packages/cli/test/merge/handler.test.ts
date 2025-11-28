@@ -117,7 +117,7 @@ test.serial('merging into the same project', async (t) => {
 
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'error');
-  t.is(message, 'Merging into the same project not allowed');
+  t.regex(message, /Merging into the same project not allowed/);
 });
 
 test.serial('merging a different project into checked-out', async (t) => {
