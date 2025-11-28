@@ -8,7 +8,7 @@ import type { Logger } from '../util/logger';
 import * as o from '../options';
 
 import type { Opts } from '../options';
-import checkoutHandler from '../checkout/handler';
+import { handler as checkout } from './checkout';
 
 export type MergeOptions = Required<
   Pick<
@@ -141,9 +141,9 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   // TODO support --no-checkout to merge without expanding
 
   // Checkout after merge. to unwrap updated files into filesystem
-  await checkoutHandler(
+  await checkout(
     {
-      command: 'checkout',
+      command: 'project-checkout',
       projectPath: commandPath,
       projectId: options.outputPath ? finalPath : final.id,
       log: options.log,

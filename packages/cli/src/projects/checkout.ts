@@ -1,12 +1,33 @@
+import yargs from 'yargs';
 import Project, { Workspace } from '@openfn/project';
 import path from 'path';
-import type { Logger } from '../util/logger';
-import type { CheckoutOptions } from './command';
 import fs from 'fs';
 import { rimraf } from 'rimraf';
 
-const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
-  const commandPath = path.resolve(options.projectPath ?? '.');
+import { ensure, build } from '../util/command-builders';
+import type { Logger } from '../util/logger';
+import * as o from '../options';
+
+import type { Opts } from '../options';
+
+export type CheckoutOptions = Required<
+  Pick<Opts, 'command' | 'projectId' | 'workspace'>
+> &
+  Pick<Opts, 'log'>;
+
+const options = [o.projectId, o.workspace, o.log];
+
+const command: yargs.CommandModule = {
+  command: 'checkout <project-id>',
+  describe: 'Switch to a different openfn project in the same workspace',
+  handler: ensure('project-checkout', options),
+  builder: (yargs) => build(options, yargs),
+};
+
+export default command;
+
+export const handler = async (options: CheckoutOptions, logger: Logger) => {
+  const commandPath = options.workspace;
   const workspace = new Workspace(commandPath);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
@@ -53,5 +74,3 @@ const checkoutHandler = async (options: CheckoutOptions, logger: Logger) => {
   }
   logger.success(`Expanded project to ${commandPath}`);
 };
-
-export default checkoutHandler;

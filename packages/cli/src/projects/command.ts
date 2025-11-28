@@ -3,6 +3,7 @@ import yargs from 'yargs';
 import list from './list';
 import version from './version';
 import merge from './merge';
+import checkout from './checkout';
 
 export const projectsCommand = {
   command: 'project [subcommand]',
@@ -14,6 +15,7 @@ export const projectsCommand = {
       .command(list)
       .command(version)
       .command(merge)
+      .command(checkout)
       .example('project', 'list all projects in the workspace')
       .example('project list', 'list all projects in the workspace'),
 } as yargs.CommandModule<{}>;

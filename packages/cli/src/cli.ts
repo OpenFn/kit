@@ -16,7 +16,7 @@ import { install as installCommand, repo as repoCommand } from './repo/command';
 import testCommand from './test/command';
 import projectsCommand from './projects/command';
 import mergeCommand from './projects/merge';
-import checkoutCommand from './checkout/command';
+import checkoutCommand from './projects/checkout';
 
 const env = loadDotEnv();
 if (env) {

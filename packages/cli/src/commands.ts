@@ -10,7 +10,6 @@ import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
 import * as projects from './projects/handler';
-import checkout from './checkout/handler';
 import * as repo from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
@@ -34,7 +33,6 @@ export type CommandList =
   | 'metadata'
   | 'pull'
   | 'projects'
-  | 'checkout'
   | 'project'
   | 'repo-clean'
   | 'repo-install'
@@ -43,6 +41,7 @@ export type CommandList =
   | 'project-list'
   | 'project-version'
   | 'project-merge'
+  | 'project-checkout'
   | 'test'
   | 'version';
 
@@ -57,8 +56,6 @@ const handlers = {
   metadata,
   pull,
   projects,
-  checkout,
-  project: projects.version,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,
@@ -69,6 +66,7 @@ const handlers = {
   ['project-list']: projects.list,
   ['project-version']: projects.version,
   ['project-merge']: projects.merge,
+  ['project-checkout']: projects.checkout,
   version: async (opts: Opts, logger: Logger) =>
     printVersions(logger, opts, true),
 };
