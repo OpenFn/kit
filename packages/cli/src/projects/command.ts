@@ -2,6 +2,7 @@ import list from './list';
 import version from './version';
 import merge from './merge';
 import checkout from './checkout';
+import fetch from './fetch';
 
 import type yargs from 'yargs';
 
@@ -16,6 +17,7 @@ export const projectsCommand = {
       .command(version)
       .command(merge)
       .command(checkout)
+      .command(fetch as any)
       .example('project', 'list all projects in the workspace')
       .example('project list', 'list all projects in the workspace')
       .example(

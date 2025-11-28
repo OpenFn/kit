@@ -1,9 +1,14 @@
+import yargs from 'yargs';
 import { DeployConfig, getProject } from '@openfn/deploy';
 import Project, { Workspace } from '@openfn/project';
 import fs from 'node:fs/promises';
 import path from 'path';
-import { Opts } from '../options';
+
+import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
+import * as o from '../options';
+
+import type { Opts } from '../options';
 
 type Config = {
   endpoint: string;
@@ -24,17 +29,50 @@ export type FetchOptions = Required<
     | 'env'
     | 'log'
     | 'logJson'
-    | 'path'
+    | 'outputPath'
     | 'projectId'
-    | 'projectPath'
+    | 'workspace'
   >
 >;
 
-export default async function fetchHandler(
-  options: FetchOptions,
-  logger: Logger
-) {
-  const commandPath = path.resolve(options.projectPath ?? '.');
+const options = [
+  o.apikey,
+  o.beta,
+  o.beta,
+  o.configPath,
+  o.endpoint,
+  o.env,
+  o.log,
+  override(o.outputPath, {
+    description: 'Path to output the fetched project to',
+  }),
+  o.logJson,
+  o.workspace,
+  o.snapshots,
+  o.statePath,
+];
+
+const command: yargs.CommandModule<FetchOptions> = {
+  command: 'fetch [projectId]',
+  describe: `Fetch a project's state and spec from a Lightning Instance to the local state file without expanding to the filesystem.`,
+  builder: (yargs: yargs.Argv<FetchOptions>) =>
+    build(options, yargs)
+      .positional('projectId', {
+        describe:
+          'The id of the project that should be fetched, should be a UUID',
+        demandOption: true,
+      })
+      .example(
+        'fetch 57862287-23e6-4650-8d79-e1dd88b24b1c',
+        'Fetch an updated copy of a the above spec and state from a Lightning Instance'
+      ),
+  handler: ensure('project-fetch', options),
+};
+
+export default command;
+
+export const handler = async (options: FetchOptions, logger: Logger) => {
+  const commandPath = path.resolve(options.workspace ?? '.');
   const workspace = new Workspace(commandPath);
 
   const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
@@ -68,7 +106,7 @@ export default async function fetchHandler(
     workspace.getConfig()
   );
 
-  const outputRoot = path.resolve(options.path || '.');
+  const outputRoot = path.resolve(options.outputPath || '.');
 
   const projectFileName = project.getIdentifier();
 
@@ -85,4 +123,4 @@ export default async function fetchHandler(
     );
   }
   logger.success(`Fetched project file to ${stateOutputPath}`);
-}
+};

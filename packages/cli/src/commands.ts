@@ -11,7 +11,6 @@ import metadata from './metadata/handler';
 import pull from './pull/handler';
 import * as projects from './projects/handler';
 import * as repo from './repo/handler';
-import fetchHandler from './fetch/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
@@ -33,7 +32,6 @@ export type CommandList =
   | 'execute'
   | 'metadata'
   | 'pull'
-  | 'fetch'
   | 'projects'
   | 'project'
   | 'repo-clean'
@@ -44,6 +42,7 @@ export type CommandList =
   | 'project-version'
   | 'project-merge'
   | 'project-checkout'
+  | 'project-fetch'
   | 'test'
   | 'version';
 
@@ -57,7 +56,6 @@ const handlers = {
   docs,
   metadata,
   pull,
-  fetch: fetchHandler,
   projects,
   project: projects,
   ['collections-get']: collections.get,
@@ -71,6 +69,7 @@ const handlers = {
   ['project-version']: projects.version,
   ['project-merge']: projects.merge,
   ['project-checkout']: projects.checkout,
+  ['project-fetch']: projects.fetch,
   version: async (opts: Opts, logger: Logger) =>
     printVersions(logger, opts, true),
 };

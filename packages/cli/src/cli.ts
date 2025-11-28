@@ -17,7 +17,7 @@ import testCommand from './test/command';
 import projectsCommand from './projects/command';
 import mergeCommand from './projects/merge';
 import checkoutCommand from './projects/checkout';
-import fetchCommand from './fetch/command';
+import fetchCommand from './projects/fetch';
 
 const env = loadDotEnv();
 if (env) {
