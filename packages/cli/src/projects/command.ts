@@ -3,6 +3,8 @@ import version from './version';
 import merge from './merge';
 import checkout from './checkout';
 
+import type yargs from 'yargs';
+
 export const projectsCommand = {
   command: 'project [subcommand]',
   aliases: ['projects'],

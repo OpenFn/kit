@@ -56,6 +56,7 @@ const handlers = {
   metadata,
   pull,
   projects,
+  project: projects,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,

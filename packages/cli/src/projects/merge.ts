@@ -144,7 +144,7 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   await checkout(
     {
       command: 'project-checkout',
-      projectPath: commandPath,
+      workspace: commandPath,
       projectId: options.outputPath ? finalPath : final.id,
       log: options.log,
     },
