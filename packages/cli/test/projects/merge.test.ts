@@ -153,10 +153,7 @@ test.serial('merging a different project into checked-out', async (t) => {
 
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
-  t.is(
-    message,
-    'Project my-sandbox has been merged into Project my-project successfully'
-  );
+  t.is(message, 'Project my-sandbox has been merged into Project my-project');
 });
 
 test.serial('Write to a different project file', async (t) => {
