@@ -24,10 +24,10 @@ export type MergeOptions = Required<
 
 const options = [
   o.projectId,
-  o.projectPath,
   o.removeUnmapped,
   o.workflowMappings,
   o.log,
+  o.workspace,
   // custom output because we don't want defaults or anything
   {
     name: 'output-path',
