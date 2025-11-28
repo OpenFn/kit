@@ -45,7 +45,7 @@ export const cmd = y
   .command(projectsCommand)
   .command(checkoutCommand)
   .command(mergeCommand)
-  .command(workflowVersionCommand)
+  // .command(workflowVersionCommand)
   .command({
     command: 'version',
     describe:

@@ -9,11 +9,11 @@ import docgen from './docgen/handler';
 import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
-import projects from './projects/handler';
+import * as projects from './projects/handler';
 import workflowVersion from './version/handler';
 import checkout from './checkout/handler';
 import merge from './merge/handler';
-import { clean, install, pwd, list } from './repo/handler';
+import * as repo from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
@@ -43,6 +43,7 @@ export type CommandList =
   | 'repo-install'
   | 'repo-list'
   | 'repo-pwd'
+  | 'project-list'
   | 'test'
   | 'version';
 
@@ -63,10 +64,11 @@ const handlers = {
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,
-  ['repo-clean']: clean,
-  ['repo-install']: install,
-  ['repo-pwd']: pwd,
-  ['repo-list']: list,
+  ['repo-clean']: repo.clean,
+  ['repo-install']: repo.install,
+  ['repo-pwd']: repo.pwd,
+  ['repo-list']: repo.list,
+  ['project-list']: projects.list,
   version: async (opts: Opts, logger: Logger) =>
     printVersions(logger, opts, true),
 };

@@ -29,6 +29,7 @@ export class Workspace {
     } catch (e) {
       // TODO use logger
       // TODO maybe we should throw here?
+      // TODO showing hte direct error here is rarely useful
       console.error(e);
       // invalid workspace
       return;

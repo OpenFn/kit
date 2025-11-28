@@ -3,16 +3,20 @@ import { Opts } from '../options';
 import { ensure, build } from '../util/command-builders';
 import * as o from '../options';
 
-export type ProjectsOptions = Required<Pick<Opts, 'command' | 'projectPath'>>;
+import list from './list';
 
-const options = [o.projectPath];
-
-const projectsCommand: yargs.CommandModule = {
-  command: 'projects [project-path]',
-  describe: 'List all the openfn projects available in the current directory',
-  aliases: ['project'],
-  handler: ensure('projects', options),
-  builder: (yargs) => build(options, yargs),
-};
+export const projectsCommand = {
+  command: 'project [subcommand]',
+  aliases: ['projects'],
+  describe: 'Sync and manage an OpenFn project',
+  handler: () => {},
+  builder: (yargs: yargs.Argv) =>
+    yargs
+      // .command(clean)
+      // .command(install)
+      .command(list)
+      .example('project', 'list all projects in the workspace')
+      .example('project list', 'list all projects in the workspace'),
+} as yargs.CommandModule<{}>;
 
 export default projectsCommand;
