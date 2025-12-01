@@ -1,6 +1,10 @@
+import path from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { Provisioner } from '@openfn/lexicon/lightning';
+
 import type { Opts } from '../options';
 import type { Logger } from '@openfn/logger';
+import type Project from '@openfn/project';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -28,6 +32,35 @@ export const loadAppAuthConfig = (
   // TODO probably need to throw
 
   return config as Required<AuthOptions>;
+};
+
+const ensureExt = (filePath: string, ext: string) => {
+  if (!filePath.endsWith(ext)) {
+    return `${filePath}.${ext}`;
+  }
+  return filePath;
+};
+
+export const serialize = async (
+  project: Project,
+  outputPath: string,
+  formatOverride?: 'yaml' | 'json'
+) => {
+  const root = path.dirname(outputPath);
+  await mkdir(root, { recursive: true });
+
+  const output = project?.serialize('project');
+
+  const format = formatOverride ?? project.config?.formats.project;
+  let finalPath;
+  if (format === 'yaml') {
+    finalPath = ensureExt(outputPath, 'yaml');
+    await writeFile(finalPath, output as string);
+  } else {
+    finalPath = ensureExt(outputPath, 'json');
+    await writeFile(finalPath, JSON.stringify(output, null, 2));
+  }
+  return finalPath;
 };
 
 export const getLightningUrl = (

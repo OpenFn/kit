@@ -19,14 +19,7 @@ setGlobalDispatcher(mockAgent);
 test.beforeEach(() => {
   mock({
     '/ws/.projects': {},
-    '/ws/openfn.yaml': `
-project:
-  id: test-project
-  name: Test Project
-workspace:
-  formats:
-    project: yaml
-`,
+    '/ws/openfn.yaml': '',
   });
   logger._reset();
 });

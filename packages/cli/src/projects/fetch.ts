@@ -8,7 +8,7 @@ import type { Logger } from '../util/logger';
 import * as o from '../options';
 
 import type { Opts } from '../options';
-import { getProject, loadAppAuthConfig } from './util';
+import { serialize, getProject, loadAppAuthConfig } from './util';
 
 // TODO need to implement these
 type Config = {
@@ -75,7 +75,6 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
 
   const config = loadAppAuthConfig(options, logger);
 
-  // download the state.json from lightning
   const { data } = await getProject(logger, config, options.projectId);
   const name = options.env || 'project';
 
@@ -89,21 +88,19 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     workspace.getConfig()
   );
 
+  // TODO load whatever is on disk and compare it
+  // If they have diverged, throw an error
+  // Also, log whether we are updating or doing nothing
+
   const outputRoot = path.resolve(options.outputPath || '.');
 
   const projectFileName = project.getIdentifier();
 
-  await fs.mkdir(`${outputRoot}/.projects`, { recursive: true });
-  let stateOutputPath = `${outputRoot}/.projects/${projectFileName}`;
+  const projectsDir = project.config.dirs.projects ?? '.projects';
 
-  const output = project?.serialize('project');
-  if (project.config?.formats.project === 'yaml') {
-    await fs.writeFile(`${stateOutputPath}.yaml`, output as string);
-  } else {
-    await fs.writeFile(
-      `${stateOutputPath}.json`,
-      JSON.stringify(output, null, 2)
-    );
-  }
-  logger.success(`Fetched project file to ${stateOutputPath}`);
+  // TODO allow this to be overridden by argument
+  const stateOutputPath = `${outputRoot}/${projectsDir}/${projectFileName}`;
+  const finalOutput = await serialize(project, stateOutputPath);
+
+  logger.success(`Fetched project file to ${finalOutput}`);
 };
