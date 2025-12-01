@@ -1,20 +1,19 @@
 import yargs from 'yargs';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import { DeployConfig, getProject } from '@openfn/deploy';
 import Project, { Workspace } from '@openfn/project';
-import fs from 'node:fs/promises';
-import path from 'path';
 
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
 
 import type { Opts } from '../options';
+import { loadAppAuthConfig } from './util';
 
+// TODO need to implement these
 type Config = {
-  endpoint: string;
-  apiKey: string | null;
-
-  requireConfirmation?: boolean;
+  requireConfirmation?: boolean; // alias to y maybe
   dryRun?: boolean;
 };
 
@@ -75,22 +74,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   const commandPath = path.resolve(options.workspace ?? '.');
   const workspace = new Workspace(commandPath);
 
-  const { OPENFN_API_KEY, OPENFN_ENDPOINT } = process.env;
-
-  const config: Partial<Config> = {
-    apiKey: options.apiKey,
-    endpoint: options.endpoint,
-  };
-
-  if (!options.apiKey && OPENFN_API_KEY) {
-    logger.info('Using OPENFN_API_KEY environment variable');
-    config.apiKey = OPENFN_API_KEY;
-  }
-
-  if (!options.endpoint && OPENFN_ENDPOINT) {
-    logger.info('Using OPENFN_ENDPOINT environment variable');
-    config.endpoint = OPENFN_ENDPOINT;
-  }
+  const config = loadAppAuthConfig(options, logger);
 
   // download the state.json from lightning
   const { data } = await getProject(config as DeployConfig, options.projectId);
