@@ -1,7 +1,6 @@
 import yargs from 'yargs';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { DeployConfig, getProject } from '@openfn/deploy';
 import Project, { Workspace } from '@openfn/project';
 
 import { build, ensure, override } from '../util/command-builders';
@@ -9,7 +8,7 @@ import type { Logger } from '../util/logger';
 import * as o from '../options';
 
 import type { Opts } from '../options';
-import { loadAppAuthConfig } from './util';
+import { getProject, loadAppAuthConfig } from './util';
 
 // TODO need to implement these
 type Config = {
@@ -77,7 +76,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   const config = loadAppAuthConfig(options, logger);
 
   // download the state.json from lightning
-  const { data } = await getProject(config as DeployConfig, options.projectId);
+  const { data } = await getProject(logger, config, options.projectId);
   const name = options.env || 'project';
 
   const project = await Project.from(
