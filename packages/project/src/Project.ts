@@ -202,6 +202,22 @@ export class Project {
     }
     return result;
   }
+
+  canMergeInto(target: Project) {
+    const potentialConflicts: Record<string, string> = {};
+    for (const sourceWorkflow of this.workflows) {
+      // TODO mapping needs work
+      const targetId = sourceWorkflow.id;
+      const targetWorkflow = target.getWorkflow(targetId);
+      if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
+        potentialConflicts[sourceWorkflow.id] = targetWorkflow?.id;
+      }
+    }
+    if (Object.keys(potentialConflicts).length) {
+      return false;
+    }
+    return true;
+  }
 }
 
 export default Project;

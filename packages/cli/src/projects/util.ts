@@ -44,7 +44,8 @@ const ensureExt = (filePath: string, ext: string) => {
 export const serialize = async (
   project: Project,
   outputPath: string,
-  formatOverride?: 'yaml' | 'json'
+  formatOverride?: 'yaml' | 'json',
+  dryRun = false
 ) => {
   const root = path.dirname(outputPath);
   await mkdir(root, { recursive: true });
@@ -52,13 +53,19 @@ export const serialize = async (
   const format = formatOverride ?? project.config?.formats.project;
   const output = project?.serialize('project', { format });
 
+  const maybeWriteFile = (filePath: string, output: string) => {
+    if (!dryRun) {
+      return writeFile(filePath, output);
+    }
+  };
+
   let finalPath;
   if (format === 'yaml') {
     finalPath = ensureExt(outputPath, 'yaml');
-    await writeFile(finalPath, output as string);
+    await maybeWriteFile(finalPath, output as string);
   } else {
     finalPath = ensureExt(outputPath, 'json');
-    await writeFile(finalPath, JSON.stringify(output, null, 2));
+    await maybeWriteFile(finalPath, JSON.stringify(output, null, 2));
   }
 
   return finalPath;

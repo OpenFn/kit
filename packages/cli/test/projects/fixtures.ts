@@ -42,6 +42,7 @@ export const myProject_v1: Provisioner.Project = {
       ],
       lock_version: 1,
       deleted_at: null,
+      version_history: ['a'], // TODO not implemented yet? needed for tests
     },
   ],
   updated_at: '2025-04-23T11:15:59Z',
@@ -96,4 +97,4 @@ workflows:
       updated_at: 2025-04-23T11:19:32Z
       lock_version: 1
     id: my-workflow
-    history: []`;
+    history: [a]`;

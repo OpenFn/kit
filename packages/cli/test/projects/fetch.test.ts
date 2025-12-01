@@ -169,7 +169,7 @@ test.serial(
         "lock_version": 1
       },
       "id": "my-workflow",
-      "history": []
+      "history": [a]
     }
   ]
 }`;
@@ -184,3 +184,71 @@ test.serial(
     t.regex(message, /Fetched project file to/);
   }
 );
+
+test.serial('Override a compatible project', async (t) => {
+  // Change project.yaml
+  const modified = myProject_yaml.replace('my lovely project', 'renamed');
+
+  mock({
+    '/ws/.projects': {},
+    '/ws/openfn.yaml': '',
+    '/ws/.projects/project@app.openfn.org.yaml': modified,
+  });
+
+  await fetchHandler(
+    {
+      projectId: PROJECT_ID,
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+
+      workspace: '/ws',
+      env: 'project',
+      outputPath: '/ws',
+    } as any,
+    logger
+  );
+
+  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  // This should overwrite the renamed value back to the default
+  t.regex(fileContent, /my lovely project/);
+});
+
+// In this test, the file on disk has diverged from the remove
+// This means changes could be lost, so we throw!
+test.serial('throw for an incompatible project', async (t) => {
+  // Change project.yaml
+  const modified = myProject_yaml.replace('fn()', 'fn(x)');
+
+  mock({
+    '/ws/.projects': {},
+    '/ws/openfn.yaml': '',
+    '/ws/.projects/project@app.openfn.org.yaml': modified,
+  });
+
+  await t.throwsAsync(
+    () =>
+      fetchHandler(
+        {
+          projectId: PROJECT_ID,
+          endpoint: ENDPOINT,
+          apiKey: 'test-api-key',
+
+          workspace: '/ws',
+          env: 'project',
+          outputPath: '/ws',
+        } as any,
+        logger
+      ),
+    {
+      message: /incompatible project/,
+    }
+  );
+
+  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  // The file should NOT be overwritte
+  t.regex(fileContent, /fn()/);
+});

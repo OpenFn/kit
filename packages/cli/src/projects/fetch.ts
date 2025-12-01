@@ -88,23 +88,40 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     workspace.getConfig()
   );
 
-  // TODO load whatever is on disk and compare it
-  // If they have diverged, throw an error
-  // Also, log whether we are updating or doing nothing
-
+  // Work out where and how to serialize the project
   const outputRoot = path.resolve(options.outputPath || '.');
-
   const projectFileName = project.getIdentifier();
-
   const projectsDir = project.config.dirs.projects ?? '.projects';
-
   const ext = path.extname(options.outputPath).substring(1) || undefined;
-
   const stateOutputPath = ext
     ? options.outputPath
     : `${outputRoot}/${projectsDir}/${projectFileName}`;
 
-  const finalOutput = await serialize(project, stateOutputPath, ext as any);
+  // See if a project already exists there
+  const finalOutput = await serialize(
+    project,
+    stateOutputPath,
+    ext as any,
+    true // dry run - this won't trigger an actual write!
+  );
+
+  // If a project already exists at the output path, make sure it's compatible
+  let current: Project | null = null;
+  try {
+    current = await Project.from('path', finalOutput);
+  } catch (e) {
+    // Do nothing - project doesn't exist
+  }
+
+  if (current && !project.canMergeInto(current)) {
+    // TODO allow force or rename
+    throw new Error('Error! An incompatible project exists at this location');
+  }
+
+  // TODO report whether we've updated or not
+
+  // finally, write it!
+  await serialize(project, stateOutputPath, ext as any);
 
   logger.success(`Fetched project file to ${finalOutput}`);
 };
