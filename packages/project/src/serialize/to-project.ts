@@ -29,14 +29,34 @@ export default (project: Project, options: ToProjectOptions = {}) => {
       collections: project.collections,
       credentials: project.credentials,
 
-      openfn: project.openfn,
+      openfn: omitBy(project.openfn, isNil),
       meta: project.meta,
       options: omitBy(project.options, isNil),
 
       //workflows: project.workflows.map(mapWorkflow) as SerializedWorkflow[],
-      workflows: project.workflows.map((w) =>
-        w.toJSON()
-      ) as SerializedWorkflow[],
+      workflows: project.workflows.map((w) => {
+        const obj: any = w.toJSON();
+        if (obj.openfn) {
+          obj.openfn = omitBy(obj.openfn, isNil);
+        }
+        if (obj.steps) {
+          obj.steps = obj.steps.sort((a: any, b: any) => {
+            return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+          });
+          obj.steps.forEach((s) => {
+            s.openfn = omitBy(s.openfn, isNil);
+            if (s.next) {
+              for (const id in s.next) {
+                const edge = s.next[id];
+                if (edge.openfn) {
+                  edge.openfn = omitBy(edge.openfn, isNil);
+                }
+              }
+            }
+          });
+        }
+        return obj;
+      }) as SerializedWorkflow[],
     },
     isNil
   ) as SerializedProject;
