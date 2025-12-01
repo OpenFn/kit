@@ -35,41 +35,38 @@ test.afterEach(() => {
   mock.restore();
 });
 
-test.serial(
-  'fetch v1 app state and write to disk as project.yaml',
-  async (t) => {
-    const mockPool = mockAgent.get(ENDPOINT);
-    mockPool
-      .intercept({
-        path: `/api/provision/${PROJECT_ID}?`,
-        method: 'GET',
-      })
-      .reply(200, {
-        data: myProject_v1,
-      });
+test.serial('fetch from lightning save as v2 yaml file', async (t) => {
+  const mockPool = mockAgent.get(ENDPOINT);
+  mockPool
+    .intercept({
+      path: `/api/provision/${PROJECT_ID}?`,
+      method: 'GET',
+    })
+    .reply(200, {
+      data: myProject_v1,
+    });
 
-    await fetchHandler(
-      {
-        projectId: PROJECT_ID,
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
+  await fetchHandler(
+    {
+      projectId: PROJECT_ID,
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
 
-        workspace: '/ws',
-        env: 'project',
-        outputPath: '/ws',
-      } as any,
-      logger
-    );
+      workspace: '/ws',
+      env: 'project',
+      outputPath: '/ws',
+    } as any,
+    logger
+  );
 
-    const filePath = '/ws/.projects/project@app.openfn.org.yaml';
-    const fileContent = await readFile(filePath, 'utf-8');
+  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
+  const fileContent = await readFile(filePath, 'utf-8');
 
-    const yaml = myProject_yaml;
+  const yaml = myProject_yaml;
 
-    t.is(fileContent.trim(), yaml);
+  t.is(fileContent.trim(), yaml);
 
-    const { message, level } = logger._parse(logger._last);
-    t.is(level, 'success');
-    t.regex(message, /Fetched project file to/);
-  }
-);
+  const { message, level } = logger._parse(logger._last);
+  t.is(level, 'success');
+  t.regex(message, /Fetched project file to/);
+});

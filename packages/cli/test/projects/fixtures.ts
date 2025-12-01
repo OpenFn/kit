@@ -73,6 +73,12 @@ options:
 workflows:
   - name: My Workflow
     steps:
+      - id: transform-data
+        name: Transform data
+        expression: fn()
+        adaptor: "@openfn/language-common@latest"
+        openfn:
+          uuid: 66add020-e6eb-4eec-836b-20008afca816
       - id: trigger
         type: webhook
         openfn:
@@ -84,20 +90,10 @@ workflows:
             condition: true
             openfn:
               uuid: a9a3adef-b394-4405-814d-3ac4323f4b4b
-      - id: transform-data
-        name: Transform data
-        expression: fn()
-        adaptor: "@openfn/language-common@latest"
-        openfn:
-          uuid: 66add020-e6eb-4eec-836b-20008afca816
-          project_credential_id: null
-          keychain_credential_id: null
     openfn:
       uuid: 72ca3eb0-042c-47a0-a2a1-a545ed4a8406
-      concurrency: null
       inserted_at: 2025-04-23T11:19:32Z
       updated_at: 2025-04-23T11:19:32Z
       lock_version: 1
-      deleted_at: null
     id: my-workflow
     history: []`;
