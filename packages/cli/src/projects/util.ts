@@ -49,9 +49,9 @@ export const serialize = async (
   const root = path.dirname(outputPath);
   await mkdir(root, { recursive: true });
 
-  const output = project?.serialize('project');
-
   const format = formatOverride ?? project.config?.formats.project;
+  const output = project?.serialize('project', { format });
+
   let finalPath;
   if (format === 'yaml') {
     finalPath = ensureExt(outputPath, 'yaml');
@@ -60,6 +60,7 @@ export const serialize = async (
     finalPath = ensureExt(outputPath, 'json');
     await writeFile(finalPath, JSON.stringify(output, null, 2));
   }
+
   return finalPath;
 };
 

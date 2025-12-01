@@ -98,9 +98,13 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
 
   const projectsDir = project.config.dirs.projects ?? '.projects';
 
-  // TODO allow this to be overridden by argument
-  const stateOutputPath = `${outputRoot}/${projectsDir}/${projectFileName}`;
-  const finalOutput = await serialize(project, stateOutputPath);
+  const ext = path.extname(options.outputPath).substring(1) || undefined;
+
+  const stateOutputPath = ext
+    ? options.outputPath
+    : `${outputRoot}/${projectsDir}/${projectFileName}`;
+
+  const finalOutput = await serialize(project, stateOutputPath, ext as any);
 
   logger.success(`Fetched project file to ${finalOutput}`);
 };
