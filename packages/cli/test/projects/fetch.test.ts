@@ -112,72 +112,69 @@ test.serial(
     const filePath = '/ws/out.json';
     const fileContent = await readFile(filePath, 'utf-8');
 
-    const json = `{
-  "id": "my-project",
-  "name": "My Project",
-  "version": 2,
-  "description": "my lovely project",
-  "collections": [],
-  "credentials": [],
-  "openfn": {
-    "uuid": "e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00",
-    "endpoint": "https://app.openfn.org",
-    "env": "project",
-    "inserted_at": "2025-04-23T11:15:59Z",
-    "updated_at": "2025-04-23T11:15:59Z"
-  },
-  "options": {
-    "allow_support_access": false,
-    "requires_mfa": false,
-    "retention_policy": "retain_all"
-  },
-  "workflows": [
-    {
-      "name": "My Workflow",
-      "steps": [
-        {
-          "id": "transform-data",
-          "name": "Transform data",
-          "expression": "fn()",
-          "adaptor": "@openfn/language-common@latest",
-          "openfn": {
-            "uuid": "66add020-e6eb-4eec-836b-20008afca816"
-          }
-        },
-        {
-          "id": "trigger",
-          "type": "webhook",
-          "openfn": {
-            "enabled": true,
-            "uuid": "4a06289c-15aa-4662-8dc6-f0aaacd8a058"
-          },
-          "next": {
-            "transform-data": {
-              "disabled": false,
-              "condition": true,
-              "openfn": {
-                "uuid": "a9a3adef-b394-4405-814d-3ac4323f4b4b"
-              }
-            }
-          }
-        }
-      ],
-      "openfn": {
-        "uuid": "72ca3eb0-042c-47a0-a2a1-a545ed4a8406",
-        "inserted_at": "2025-04-23T11:19:32Z",
-        "updated_at": "2025-04-23T11:19:32Z",
-        "lock_version": 1
+    const json = {
+      id: 'my-project',
+      name: 'My Project',
+      version: 2,
+      description: 'my lovely project',
+      collections: [],
+      credentials: [],
+      openfn: {
+        uuid: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+        endpoint: 'https://app.openfn.org',
+        env: 'project',
+        inserted_at: '2025-04-23T11:15:59Z',
+        updated_at: '2025-04-23T11:15:59Z',
       },
-      "id": "my-workflow",
-      "history": [a]
-    }
-  ]
-}`;
+      options: {
+        allow_support_access: false,
+        requires_mfa: false,
+        retention_policy: 'retain_all',
+      },
+      workflows: [
+        {
+          name: 'My Workflow',
+          steps: [
+            {
+              id: 'transform-data',
+              name: 'Transform data',
+              expression: 'fn()',
+              adaptor: '@openfn/language-common@latest',
+              openfn: {
+                uuid: '66add020-e6eb-4eec-836b-20008afca816',
+              },
+            },
+            {
+              id: 'trigger',
+              type: 'webhook',
+              openfn: {
+                enabled: true,
+                uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+              },
+              next: {
+                'transform-data': {
+                  disabled: false,
+                  condition: true,
+                  openfn: {
+                    uuid: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+                  },
+                },
+              },
+            },
+          ],
+          openfn: {
+            uuid: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+            inserted_at: '2025-04-23T11:19:32Z',
+            updated_at: '2025-04-23T11:19:32Z',
+            lock_version: 1,
+          },
+          id: 'my-workflow',
+          history: ['a'],
+        },
+      ],
+    };
 
-    t.is(fileContent.trim(), json);
-
-    // should not throw
-    JSON.parse(fileContent);
+    t.deepEqual(JSON.parse(fileContent), json);
 
     const { message, level } = logger._parse(logger._last);
     t.is(level, 'success');

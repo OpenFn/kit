@@ -91,10 +91,11 @@ workflows:
             condition: true
             openfn:
               uuid: a9a3adef-b394-4405-814d-3ac4323f4b4b
+    history:
+      - a
     openfn:
       uuid: 72ca3eb0-042c-47a0-a2a1-a545ed4a8406
       inserted_at: 2025-04-23T11:19:32Z
       updated_at: 2025-04-23T11:19:32Z
       lock_version: 1
-    id: my-workflow
-    history: [a]`;
+    id: my-workflow`;
