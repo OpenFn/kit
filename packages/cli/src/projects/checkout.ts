@@ -10,10 +10,10 @@ import * as o from '../options';
 
 import type { Opts } from '../options';
 
-export type CheckoutOptions = Required<
-  Pick<Opts, 'command' | 'projectId' | 'workspace'>
-> &
-  Pick<Opts, 'log'>;
+export type CheckoutOptions = Pick<
+  Opts,
+  'command' | 'projectId' | 'workspace' | 'log'
+>;
 
 const options = [o.projectId, o.workspace, o.log];
 
@@ -27,11 +27,11 @@ const command: yargs.CommandModule = {
 export default command;
 
 export const handler = async (options: CheckoutOptions, logger: Logger) => {
-  const commandPath = options.workspace;
-  const workspace = new Workspace(commandPath);
+  const projectId = options.projectId!;
+  const workspacePath = options.workspace ?? process.cwd();
+  const workspace = new Workspace(workspacePath);
   if (!workspace.valid) {
-    logger.error('Command was run in an invalid openfn workspace');
-    return;
+    throw new Error('Command was run in an invalid openfn workspace');
   }
 
   // get the config
@@ -40,37 +40,35 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
 
   // get the project
   let switchProject;
-  if (/\.(yaml|json)$/.test(options.projectId)) {
+  if (/\.(yaml|json)$/.test(projectId)) {
     // TODO: should we allow checkout into an arbitrary folder?
-    const filePath = options.projectId.startsWith('/')
-      ? options.projectId
-      : path.join(commandPath, options.projectId);
+    const filePath = projectId.startsWith('/')
+      ? projectId
+      : path.join(workspacePath, projectId);
     logger.debug('Loading project from path ', filePath);
     switchProject = await Project.from('path', filePath, config);
   } else {
-    switchProject = workspace.get(options.projectId);
+    switchProject = workspace.get(projectId);
   }
 
   if (!switchProject) {
-    throw new Error(
-      `Project with id ${options.projectId} not found in the workspace`
-    );
+    throw new Error(`Project with id ${projectId} not found in the workspace`);
   }
 
   // delete workflow dir before expanding project
-  await rimraf(path.join(commandPath, config.workflowRoot ?? 'workflows'));
+  await rimraf(path.join(workspacePath, config.workflowRoot ?? 'workflows'));
 
   // expand project into directory
   const files: any = switchProject.serialize('fs');
   for (const f in files) {
     if (files[f]) {
-      fs.mkdirSync(path.join(commandPath, path.dirname(f)), {
+      fs.mkdirSync(path.join(workspacePath, path.dirname(f)), {
         recursive: true,
       });
-      fs.writeFileSync(path.join(commandPath, f), files[f]);
+      fs.writeFileSync(path.join(workspacePath, f), files[f]);
     } else {
       logger.warn('WARNING! No content for file', f);
     }
   }
-  logger.success(`Expanded project to ${commandPath}`);
+  logger.success(`Expanded project to ${workspacePath}`);
 };

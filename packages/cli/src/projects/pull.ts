@@ -1,0 +1,35 @@
+import { handler as fetch } from './fetch';
+import { handler as checkout } from './checkout';
+
+import type { Logger } from '../util/logger';
+import type { Opts } from '../options';
+
+export type PullOptionsBeta = Pick<
+  Opts,
+  | 'apiKey'
+  | 'command'
+  | 'endpoint'
+  | 'env'
+  | 'force'
+  | 'log'
+  | 'logJson'
+  | 'path'
+  | 'projectId'
+  | 'workspace'
+>;
+
+export async function handler(options: PullOptionsBeta, logger: Logger) {
+  const project = await fetch(options, logger);
+  logger.success(`Downloaded latest project version`);
+
+  await checkout(
+    {
+      ...options,
+      projectId: project.id,
+    },
+    logger
+  );
+  logger.success(`Checked out project locally`);
+}
+
+export default handler;

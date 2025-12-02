@@ -35,6 +35,11 @@ const options = [
   o.snapshots,
   o.statePath,
   o.path,
+
+  // These are hidden commands used only by beta
+  // The need to be declared here to be initialised and defaulted properly
+  override(o.force, { hidden: true }),
+  override(o.workspace, { hidden: true }),
 ];
 
 const pullCommand: yargs.CommandModule<PullOptions> = {

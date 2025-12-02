@@ -15,28 +15,22 @@ import { serialize, getProject, loadAppAuthConfig } from './util';
 //   dryRun?: boolean;
 // };
 
-export type FetchOptions = Required<
-  Pick<
-    Opts,
-    | 'apiKey'
-    | 'beta'
-    | 'command'
-    | 'confirm'
-    | 'endpoint'
-    | 'env'
-    | 'force'
-    | 'log'
-    | 'logJson'
-    | 'outputPath'
-    | 'projectId'
-    | 'workspace'
-  >
+export type FetchOptions = Pick<
+  Opts,
+  | 'apiKey'
+  | 'command'
+  | 'endpoint'
+  | 'env'
+  | 'force'
+  | 'log'
+  | 'logJson'
+  | 'outputPath'
+  | 'projectId'
+  | 'workspace'
 >;
 
 const options = [
   o.apikey,
-  o.beta,
-  o.beta,
   o.configPath,
   o.endpoint,
   o.env,
@@ -73,12 +67,15 @@ const command: yargs.CommandModule<FetchOptions> = {
 export default command;
 
 export const handler = async (options: FetchOptions, logger: Logger) => {
-  const commandPath = path.resolve(options.workspace ?? '.');
-  const workspace = new Workspace(commandPath);
+  const workspacePath = path.resolve(options.workspace ?? '.');
+  const workspace = new Workspace(workspacePath);
+  const projectId = options.projectId!;
+
+  const outputPath = options.outputPath;
 
   const config = loadAppAuthConfig(options, logger);
 
-  const { data } = await getProject(logger, config, options.projectId);
+  const { data } = await getProject(logger, config, projectId);
   const name = options.env || 'project';
 
   const project = await Project.from(
@@ -92,18 +89,19 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   );
 
   // Work out where and how to serialize the project
-  const outputRoot = path.resolve(options.outputPath || '.');
+  const outputRoot = path.resolve(options.outputPath || workspacePath);
   const projectFileName = project.getIdentifier();
   const projectsDir = project.config.dirs.projects ?? '.projects';
-  const ext = path.extname(options.outputPath).substring(1) || undefined;
+  const ext = outputPath ? path.extname(outputPath!).substring(1) : undefined;
+
   const stateOutputPath = ext
-    ? options.outputPath
+    ? outputPath
     : `${outputRoot}/${projectsDir}/${projectFileName}`;
 
   // See if a project already exists there
   const finalOutput = await serialize(
     project,
-    stateOutputPath,
+    stateOutputPath!,
     ext as any,
     true // dry run - this won't trigger an actual write!
   );
@@ -124,7 +122,9 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // TODO report whether we've updated or not
 
   // finally, write it!
-  await serialize(project, stateOutputPath, ext as any);
+  await serialize(project, stateOutputPath!, ext as any);
 
   logger.success(`Fetched project file to ${finalOutput}`);
+
+  return project;
 };
