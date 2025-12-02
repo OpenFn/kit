@@ -24,6 +24,7 @@ export type FetchOptions = Required<
     | 'confirm'
     | 'endpoint'
     | 'env'
+    | 'force'
     | 'log'
     | 'logJson'
     | 'outputPath'
@@ -47,6 +48,9 @@ const options = [
   o.workspace,
   o.snapshots,
   o.statePath,
+  override(o.force, {
+    description: 'Overwrite local file contents with the fetched contents',
+  }),
 ];
 
 const command: yargs.CommandModule<FetchOptions> = {
@@ -112,7 +116,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     // Do nothing - project doesn't exist
   }
 
-  if (current && !project.canMergeInto(current)) {
+  if (current && !project.canMergeInto(current) && !options.force) {
     // TODO allow force or rename
     throw new Error('Error! An incompatible project exists at this location');
   }

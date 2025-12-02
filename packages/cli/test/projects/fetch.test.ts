@@ -246,6 +246,37 @@ test.serial('throw for an incompatible project', async (t) => {
   const filePath = '/ws/.projects/project@app.openfn.org.yaml';
   const fileContent = await readFile(filePath, 'utf-8');
 
-  // The file should NOT be overwritte
+  // The file should NOT be overwritten
+  t.regex(fileContent, /fn()/);
+});
+
+test.serial('force merge an incompatible project', async (t) => {
+  // Change project.yaml
+  const modified = myProject_yaml.replace('fn()', 'fn(x)');
+
+  mock({
+    '/ws/.projects': {},
+    '/ws/openfn.yaml': '',
+    '/ws/.projects/project@app.openfn.org.yaml': modified,
+  });
+
+  await fetchHandler(
+    {
+      projectId: PROJECT_ID,
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+
+      workspace: '/ws',
+      env: 'project',
+      outputPath: '/ws',
+      force: true,
+    } as any,
+    logger
+  );
+
+  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  // The file should be overwritten
   t.regex(fileContent, /fn()/);
 });
