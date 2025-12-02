@@ -4,7 +4,7 @@ import { handler as checkout } from './checkout';
 import type { Logger } from '../util/logger';
 import type { Opts } from '../options';
 
-export type PullOptionsBeta = Pick<
+export type PullOptions = Pick<
   Opts,
   | 'apiKey'
   | 'command'
@@ -18,7 +18,7 @@ export type PullOptionsBeta = Pick<
   | 'workspace'
 >;
 
-export async function handler(options: PullOptionsBeta, logger: Logger) {
+export async function handler(options: PullOptions, logger: Logger) {
   const project = await fetch(options, logger);
   logger.success(`Downloaded latest project version`);
 
