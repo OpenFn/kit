@@ -1,6 +1,5 @@
 import yargs from 'yargs';
 import path from 'node:path';
-import fs from 'node:fs/promises';
 import Project, { Workspace } from '@openfn/project';
 
 import { build, ensure, override } from '../util/command-builders';
@@ -11,10 +10,10 @@ import type { Opts } from '../options';
 import { serialize, getProject, loadAppAuthConfig } from './util';
 
 // TODO need to implement these
-type Config = {
-  requireConfirmation?: boolean; // alias to y maybe
-  dryRun?: boolean;
-};
+// type Config = {
+//   requireConfirmation?: boolean; // alias to y maybe
+//   dryRun?: boolean;
+// };
 
 export type FetchOptions = Required<
   Pick<
@@ -80,7 +79,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
 
   const project = await Project.from(
     'state',
-    data,
+    data!,
     {
       endpoint: config.endpoint,
       env: name,
