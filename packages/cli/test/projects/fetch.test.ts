@@ -41,7 +41,7 @@ test.afterEach(() => {
   mock.restore();
 });
 
-test.serial('fetch from lightning save as v2 yaml file', async (t) => {
+test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
   await fetchHandler(
     {
       projectId: PROJECT_ID,

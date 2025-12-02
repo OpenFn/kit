@@ -92,7 +92,11 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   const outputRoot = path.resolve(options.outputPath || workspacePath);
   const projectFileName = project.getIdentifier();
   const projectsDir = project.config.dirs.projects ?? '.projects';
-  const ext = outputPath ? path.extname(outputPath!).substring(1) : undefined;
+  let ext = path.extname(outputPath!).substring(1);
+  let format: undefined | 'json' | 'yaml' = undefined;
+  if (ext.length) {
+    format = ext as any;
+  }
 
   const stateOutputPath = ext
     ? outputPath
@@ -102,7 +106,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   const finalOutput = await serialize(
     project,
     stateOutputPath!,
-    ext as any,
+    format,
     true // dry run - this won't trigger an actual write!
   );
 
@@ -122,7 +126,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // TODO report whether we've updated or not
 
   // finally, write it!
-  await serialize(project, stateOutputPath!, ext as any);
+  await serialize(project, stateOutputPath!, format as any);
 
   logger.success(`Fetched project file to ${finalOutput}`);
 
