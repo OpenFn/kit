@@ -7,13 +7,11 @@ import type { Opts } from '../options';
 export type PullOptions = Pick<
   Opts,
   | 'apiKey'
-  | 'command'
   | 'endpoint'
   | 'env'
   | 'force'
   | 'log'
   | 'logJson'
-  | 'path'
   | 'projectId'
   | 'workspace'
 >;
