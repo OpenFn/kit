@@ -1,3 +1,4 @@
+import * as l from '@openfn/lexicon';
 import { omitBy, isNil } from 'lodash-es';
 
 import type {
@@ -6,6 +7,7 @@ import type {
 } from '../parse/from-project';
 import Project from '../Project';
 import { jsonToYaml } from '../util/yaml';
+import { WithMeta } from '../Workflow';
 
 const SERIALIZE_VERSION = 2;
 
@@ -33,9 +35,8 @@ export default (project: Project, options: ToProjectOptions = {}) => {
       meta: project.meta,
       options: omitBy(project.options, isNil),
 
-      //workflows: project.workflows.map(mapWorkflow) as SerializedWorkflow[],
       workflows: project.workflows.map((w) => {
-        const obj: any = w.toJSON();
+        const obj = w.toJSON() as SerializedWorkflow;
         if (obj.openfn) {
           obj.openfn = omitBy(obj.openfn, isNil);
         }
@@ -43,11 +44,11 @@ export default (project: Project, options: ToProjectOptions = {}) => {
           obj.steps = obj.steps.sort((a: any, b: any) => {
             return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
           });
-          obj.steps.forEach((s) => {
+          obj.steps.forEach((s: WithMeta<l.Step>) => {
             s.openfn = omitBy(s.openfn, isNil);
-            if (s.next) {
+            if (s.next && typeof s.next !== 'string') {
               for (const id in s.next) {
-                const edge = s.next[id];
+                const edge = s.next[id] as any;
                 if (edge.openfn) {
                   edge.openfn = omitBy(edge.openfn, isNil);
                 }
@@ -56,7 +57,7 @@ export default (project: Project, options: ToProjectOptions = {}) => {
           });
         }
         return obj;
-      }) as SerializedWorkflow[],
+      }),
     },
     isNil
   ) as SerializedProject;
