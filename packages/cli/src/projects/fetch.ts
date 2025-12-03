@@ -118,7 +118,17 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     // Do nothing - project doesn't exist
   }
 
-  if (current && !project.canMergeInto(current) && !options.force) {
+  const hasAnyHistory = project.workflows.find(
+    (w) => w.workflow.history?.length
+  );
+
+  // Skip version checking if:
+  const skipVersionCheck =
+    options.force || // The user forced the checkout
+    !current || // there is no project on disk
+    !hasAnyHistory; // the remote project has no history (can happen in old apps)
+
+  if (!skipVersionCheck && !project.canMergeInto(current!)) {
     // TODO allow force or rename
     throw new Error('Error! An incompatible project exists at this location');
   }

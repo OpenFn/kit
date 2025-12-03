@@ -216,7 +216,9 @@ test.serial('Override a compatible project', async (t) => {
 // This means changes could be lost, so we throw!
 test.serial('throw for an incompatible project', async (t) => {
   // Change project.yaml
-  const modified = myProject_yaml.replace('fn()', 'fn(x)');
+  const modified = myProject_yaml
+    .replace('fn()', 'fn(x)') // arbitrary edit so that we can track the change
+    .replace(' - a', ' - z'); // change the local history to be incompatible
 
   mock({
     '/ws/.projects': {},
@@ -247,7 +249,7 @@ test.serial('throw for an incompatible project', async (t) => {
   const fileContent = await readFile(filePath, 'utf-8');
 
   // The file should NOT be overwritten
-  t.regex(fileContent, /fn()/);
+  t.regex(fileContent, /fn\(x\)/);
 });
 
 test.serial('force merge an incompatible project', async (t) => {
@@ -278,5 +280,5 @@ test.serial('force merge an incompatible project', async (t) => {
   const fileContent = await readFile(filePath, 'utf-8');
 
   // The file should be overwritten
-  t.regex(fileContent, /fn()/);
+  t.regex(fileContent, /fn\(\)/);
 });
