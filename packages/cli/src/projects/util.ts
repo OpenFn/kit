@@ -5,6 +5,7 @@ import { Provisioner } from '@openfn/lexicon/lightning';
 import type { Opts } from '../options';
 import type { Logger } from '@openfn/logger';
 import type Project from '@openfn/project';
+import { CLIError } from '../errors';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -103,20 +104,17 @@ export async function getProject(
       },
     });
 
-    // A 404 response means the project doesn't exist yet
-    if (response.status === 404) {
-      logger.info('No project found');
-      return { data: null };
-    }
-
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new DeployError(
+        throw new CLIError(
           `Failed to authorize request with endpoint ${config.endpoint}, got ${response.status} ${response.statusText}`
         );
       }
+      if (response.status === 404) {
+        throw new CLIError(`Project not found: ${projectId}`);
+      }
 
-      throw new Error(
+      throw new CLIError(
         `Failed to fetch project ${projectId}: ${response.statusText}`
       );
     }

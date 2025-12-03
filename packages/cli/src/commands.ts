@@ -19,6 +19,7 @@ import mapAdaptorsToMonorepo, {
 import printVersions from './util/print-versions';
 import abort from './util/abort';
 import { report } from './env';
+import { CLIError } from './errors';
 
 export type CommandList =
   | 'apollo'
@@ -134,7 +135,11 @@ const parse = async (options: Opts, log?: Logger) => {
       // This is unexpected error and we should try to log something
       logger.break();
       logger.error('Command failed!');
-      logger.error(e);
+      if (e instanceof CLIError) {
+        logger.error(e.message);
+      } else {
+        logger.error(e);
+      }
     }
   }
 };
