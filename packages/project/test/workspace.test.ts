@@ -183,11 +183,18 @@ mock({
 test('workspace-path: valid workspace path', (t) => {
   const ws = new Workspace('/ws');
   t.is(ws.valid, true);
+
+  t.truthy(ws.config);
 });
 
 test('workspace-path: invalid workspace path', (t) => {
   const ws = new Workspace('/invalid');
   t.is(ws.valid, false);
+
+  // should still have config
+  t.truthy(ws.config);
+  t.truthy(ws.config.dirs);
+  t.truthy(ws.config.formats);
 });
 
 test('workspace-list: list projects in the workspace', (t) => {
