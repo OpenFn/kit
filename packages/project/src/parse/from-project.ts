@@ -4,6 +4,7 @@ import Project from '../Project';
 import ensureJson from '../util/ensure-json';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import fromAppState from './from-app-state';
+import { WithMeta } from '../Workflow';
 
 // Load a project from any JSON or yaml representation
 // This is backwards-compatible with v1 state.json files
@@ -19,7 +20,7 @@ export type SerializedWorkflow = {
   id: string;
   name: string;
 
-  steps: l.Step[];
+  steps: WithMeta<l.Step[]>;
 
   openfn?: l.ProjectMeta;
 };

@@ -24,7 +24,6 @@ options:
   allow_support_access: false
   requires_mfa: false
   retention_policy: retain_all
-  version_history: []
 workflows:
   - name: Hello Workflow
     steps:
@@ -80,8 +79,6 @@ options:
   allow_support_access: false
   requires_mfa: false
   retention_policy: retain_all
-  version_history:
-    - 7b0f5af558f5
 workflows:
   - name: Hello Workflow
     steps:
@@ -149,8 +146,7 @@ test.serial('Checkout a project', async (t) => {
     workflowYaml,
     `id: hello-workflow
 name: Hello Workflow
-options:
-  history: []
+options: {}
 steps:
   - id: trigger
     type: webhook

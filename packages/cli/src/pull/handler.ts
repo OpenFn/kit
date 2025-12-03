@@ -10,11 +10,11 @@ import {
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
-import * as beta from './beta';
+import beta from '../projects/pull';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
-    return beta.handler(options as any, logger);
+    return beta(options as any, logger);
   }
 
   try {
