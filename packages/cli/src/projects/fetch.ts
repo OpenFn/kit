@@ -67,45 +67,45 @@ const command: yargs.CommandModule<FetchOptions> = {
 export default command;
 
 export const handler = async (options: FetchOptions, logger: Logger) => {
-  const workspacePath = path.resolve(options.workspace ?? '.');
+  const workspacePath = path.resolve(options.workspace ?? process.cwd());
   const workspace = new Workspace(workspacePath);
-  const projectId = options.projectId!;
-
-  const outputPath = options.outputPath;
+  const { projectId, outputPath } = options;
 
   const config = loadAppAuthConfig(options, logger);
 
-  const { data } = await getProject(logger, config, projectId);
-  const name = options.env || 'project';
+  const { data } = await getProject(logger, config, projectId!);
 
   const project = await Project.from(
     'state',
     data!,
     {
       endpoint: config.endpoint,
-      env: name,
+      env: options.env || 'project',
     },
     workspace.getConfig()
   );
 
   // Work out where and how to serialize the project
-  const outputRoot = path.resolve(options.outputPath || workspacePath);
+  const outputRoot = path.resolve(outputPath || workspacePath);
   const projectFileName = project.getIdentifier();
   const projectsDir = project.config.dirs.projects ?? '.projects';
-  let ext = path.extname(outputPath!).substring(1);
-  let format: undefined | 'json' | 'yaml' = undefined;
-  if (ext.length) {
-    format = ext as any;
-  }
 
-  const stateOutputPath = ext
-    ? outputPath
-    : `${outputRoot}/${projectsDir}/${projectFileName}`;
+  const finalOutputPath =
+    outputPath ?? `${outputRoot}/${projectsDir}/${projectFileName}`;
+  let format: undefined | 'json' | 'yaml' = undefined;
+
+  if (outputPath) {
+    // If the user gave us a path for output, we need to respect the format we've been given
+    const ext = path.extname(outputPath!).substring(1) as any;
+    if (ext.length) {
+      format = ext;
+    }
+  }
 
   // See if a project already exists there
   const finalOutput = await serialize(
     project,
-    stateOutputPath!,
+    finalOutputPath!,
     format,
     true // dry run - this won't trigger an actual write!
   );
@@ -136,7 +136,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // TODO report whether we've updated or not
 
   // finally, write it!
-  await serialize(project, stateOutputPath!, format as any);
+  await serialize(project, finalOutputPath!, format as any);
 
   logger.success(`Fetched project file to ${finalOutput}`);
 

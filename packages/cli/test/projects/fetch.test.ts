@@ -50,7 +50,6 @@ test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
 
       workspace: '/ws',
       env: 'project',
-      outputPath: '/ws',
     } as any,
     logger
   );
@@ -200,7 +199,6 @@ test.serial('Override a compatible project', async (t) => {
 
       workspace: '/ws',
       env: 'project',
-      outputPath: '/ws',
     } as any,
     logger
   );
@@ -236,7 +234,6 @@ test.serial('throw for an incompatible project', async (t) => {
 
           workspace: '/ws',
           env: 'project',
-          outputPath: '/ws',
         } as any,
         logger
       ),
@@ -270,7 +267,6 @@ test.serial('force merge an incompatible project', async (t) => {
 
       workspace: '/ws',
       env: 'project',
-      outputPath: '/ws',
       force: true,
     } as any,
     logger
