@@ -1,14 +1,29 @@
+import yargs from 'yargs';
 import { Workspace } from '@openfn/project';
-import path from 'path';
-import type { Logger } from '../util/logger';
-import type { VersionOptions } from './command';
 
-const workflowVersionHandler = async (
-  options: VersionOptions,
-  logger: Logger
-) => {
-  const commandPath = path.resolve(options.projectPath ?? '.');
-  const workspace = new Workspace(commandPath);
+import { ensure, build } from '../util/command-builders';
+import type { Logger } from '../util/logger';
+import * as o from '../options';
+
+import type { Opts } from '../options';
+
+export type VersionOptions = Required<
+  Pick<Opts, 'command' | 'workflow' | 'workspace' | 'workflowMappings' | 'json'>
+>;
+
+const options = [o.workflow, o.workspace, o.workflowMappings];
+
+const command: yargs.CommandModule = {
+  command: 'version [workflow]',
+  describe: 'Returns the version hash of a given workflow in a workspace',
+  handler: ensure('project-version', options),
+  builder: (yargs) => build(options, yargs),
+};
+
+export default command;
+
+export const handler = async (options: VersionOptions, logger: Logger) => {
+  const workspace = new Workspace(options.workspace);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
     return;
@@ -44,5 +59,3 @@ const workflowVersionHandler = async (
   }
   logger.success(`Workflow(s) and their hashes\n\n${final}`);
 };
-
-export default workflowVersionHandler;

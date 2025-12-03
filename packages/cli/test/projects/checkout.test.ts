@@ -1,6 +1,6 @@
 import test from 'ava';
 import { createMockLogger } from '@openfn/logger';
-import checkoutHandler from '../../src/checkout/handler';
+import { handler as checkoutHandler } from '../../src/projects/checkout';
 import mock from 'mock-fs';
 import fs from 'fs';
 import { jsonToYaml, Workspace } from '@openfn/project';
@@ -160,7 +160,11 @@ test.serial('checkout: invalid project id', async (t) => {
   await t.throwsAsync(
     () =>
       checkoutHandler(
-        { command: 'checkout', projectId: 'not-known', projectPath: '/ws' },
+        {
+          command: 'project-checkout',
+          projectId: 'not-known',
+          workspace: '/ws',
+        },
         logger
       ),
     {
@@ -175,7 +179,7 @@ test.serial('checkout: to a different valid project', async (t) => {
   t.is(bcheckout.activeProject.id, 'my-project');
 
   await checkoutHandler(
-    { command: 'checkout', projectId: 'my-project', projectPath: '/ws' },
+    { command: 'project-checkout', projectId: 'my-project', workspace: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -199,9 +203,9 @@ test.serial('checkout: same id as active', async (t) => {
 
   await checkoutHandler(
     {
-      command: 'checkout',
+      command: 'project-checkout',
       projectId: 'my-project',
-      projectPath: '/ws',
+      workspace: '/ws',
     },
     logger
   );
@@ -226,7 +230,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
 
   // 1. switch from my-project to my-staging
   await checkoutHandler(
-    { command: 'checkout', projectId: 'my-staging', projectPath: '/ws' },
+    { command: 'project-checkout', projectId: 'my-staging', workspace: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -245,9 +249,9 @@ test.serial('checkout: switching to and back between projects', async (t) => {
   // 2. switch back from my-project to my-project
   await checkoutHandler(
     {
-      command: 'checkout',
+      command: 'project-checkout',
       projectId: 'my-project',
-      projectPath: '/ws',
+      workspace: '/ws',
     },
     logger
   );
@@ -356,9 +360,9 @@ test.serial('respect openfn.yaml settings', async (t) => {
 
   await checkoutHandler(
     {
-      command: 'checkout',
+      command: 'project-checkout',
       projectId: 'staging',
-      projectPath: '/ws1',
+      workspace: '/ws1',
     },
     logger
   );

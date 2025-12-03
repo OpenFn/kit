@@ -6,7 +6,7 @@ import fromAppState, { fromAppStateConfig } from './parse/from-app-state';
 import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
-import fromProject from './parse/from-project';
+import fromProject, { SerializedProject } from './parse/from-project';
 import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
@@ -150,6 +150,9 @@ export class Project {
     this.config = buildConfig(config);
   }
 
+  serialize(type: 'project', options?: any): SerializedProject | string;
+  serialize(type: 'state', options?: any): Provisioner.Project | string;
+  serialize(type: 'fs', options?: any): Record<string, string>;
   serialize(type: 'project' | 'fs' | 'state' = 'project', options?: any) {
     if (type in serializers) {
       // @ts-ignore
@@ -198,6 +201,22 @@ export class Project {
       };
     }
     return result;
+  }
+
+  canMergeInto(target: Project) {
+    const potentialConflicts: Record<string, string> = {};
+    for (const sourceWorkflow of this.workflows) {
+      // TODO mapping needs work
+      const targetId = sourceWorkflow.id;
+      const targetWorkflow = target.getWorkflow(targetId);
+      if (targetWorkflow && !sourceWorkflow.canMergeInto(targetWorkflow)) {
+        potentialConflicts[sourceWorkflow.id] = targetWorkflow?.id;
+      }
+    }
+    if (Object.keys(potentialConflicts).length) {
+      return false;
+    }
+    return true;
   }
 }
 

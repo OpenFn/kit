@@ -1,12 +1,67 @@
+import yargs from 'yargs';
 import Project, { Workspace } from '@openfn/project';
-import path from 'path';
-import type { Logger } from '../util/logger';
-import type { MergeOptions } from './command';
-import { promises as fs } from 'fs';
-import checkoutHandler from '../checkout/handler';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 
-const mergeHandler = async (options: MergeOptions, logger: Logger) => {
-  const commandPath = path.resolve(options.projectPath ?? '.');
+import { ensure, build, override } from '../util/command-builders';
+import type { Logger } from '../util/logger';
+import * as o from '../options';
+
+import type { Opts } from '../options';
+import { handler as checkout } from './checkout';
+
+export type MergeOptions = Required<
+  Pick<
+    Opts,
+    | 'command'
+    | 'projectId'
+    | 'workspace'
+    | 'removeUnmapped'
+    | 'workflowMappings'
+  >
+> &
+  Pick<Opts, 'log' | 'force' | 'outputPath'> & { base?: string };
+
+const options = [
+  o.projectId,
+  o.removeUnmapped,
+  o.workflowMappings,
+  o.log,
+  o.workspace,
+  // custom output because we don't want defaults or anything
+  {
+    name: 'output-path',
+    yargs: {
+      alias: 'o',
+      description:
+        'Optionally write the merged project file to a custom location',
+    },
+  },
+  {
+    name: 'base',
+    yargs: {
+      alias: 'target',
+      description:
+        'Path to the base (target) state file to merge into (ie, what main should be)',
+    },
+  },
+  override(o.force, {
+    description: 'Force a merge even when workflows are incompatible',
+  }),
+];
+
+const command: yargs.CommandModule = {
+  command: 'merge <project-id>',
+  describe:
+    'Merges the specified project into the currently checked out project',
+  handler: ensure('project-merge', options),
+  builder: (yargs) => build(options, yargs),
+};
+
+export default command;
+
+export const handler = async (options: MergeOptions, logger: Logger) => {
+  const commandPath = options.workspace;
   const workspace = new Workspace(commandPath);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
@@ -85,19 +140,17 @@ const mergeHandler = async (options: MergeOptions, logger: Logger) => {
 
   // TODO support --no-checkout to merge without expanding
 
-  // Checkout after merge. to unwrap updated files into filesystem
-  await checkoutHandler(
+  // Checkout after merge to expand updated files into filesystem
+  await checkout(
     {
-      command: 'checkout',
-      projectPath: commandPath,
+      command: 'project-checkout',
+      workspace: commandPath,
       projectId: options.outputPath ? finalPath : final.id,
       log: options.log,
     },
     logger
   );
   logger.success(
-    `Project ${sourceProject.id} has been merged into Project ${targetProject.id} successfully`
+    `Project ${sourceProject.id} has been merged into Project ${targetProject.id}`
   );
 };
-
-export default mergeHandler;

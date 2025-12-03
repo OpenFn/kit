@@ -9,11 +9,8 @@ import docgen from './docgen/handler';
 import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
-import projects from './projects/handler';
-import workflowVersion from './version/handler';
-import checkout from './checkout/handler';
-import merge from './merge/handler';
-import { clean, install, pwd, list } from './repo/handler';
+import * as projects from './projects/handler';
+import * as repo from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
 import mapAdaptorsToMonorepo, {
@@ -22,6 +19,7 @@ import mapAdaptorsToMonorepo, {
 import printVersions from './util/print-versions';
 import abort from './util/abort';
 import { report } from './env';
+import { CLIError } from './errors';
 
 export type CommandList =
   | 'apollo'
@@ -36,13 +34,16 @@ export type CommandList =
   | 'metadata'
   | 'pull'
   | 'projects'
-  | 'checkout'
-  | 'merge'
   | 'project'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-list'
   | 'repo-pwd'
+  | 'project-list'
+  | 'project-version'
+  | 'project-merge'
+  | 'project-checkout'
+  | 'project-fetch'
   | 'test'
   | 'version';
 
@@ -57,16 +58,19 @@ const handlers = {
   metadata,
   pull,
   projects,
-  checkout,
-  merge,
-  project: workflowVersion,
+  project: projects,
   ['collections-get']: collections.get,
   ['collections-set']: collections.set,
   ['collections-remove']: collections.remove,
-  ['repo-clean']: clean,
-  ['repo-install']: install,
-  ['repo-pwd']: pwd,
-  ['repo-list']: list,
+  ['repo-clean']: repo.clean,
+  ['repo-install']: repo.install,
+  ['repo-pwd']: repo.pwd,
+  ['repo-list']: repo.list,
+  ['project-list']: projects.list,
+  ['project-version']: projects.version,
+  ['project-merge']: projects.merge,
+  ['project-checkout']: projects.checkout,
+  ['project-fetch']: projects.fetch,
   version: async (opts: Opts, logger: Logger) =>
     printVersions(logger, opts, true),
 };
@@ -131,7 +135,11 @@ const parse = async (options: Opts, log?: Logger) => {
       // This is unexpected error and we should try to log something
       logger.break();
       logger.error('Command failed!');
-      logger.error(e);
+      if (e instanceof CLIError) {
+        logger.error(e.message);
+      } else {
+        logger.error(e);
+      }
     }
   }
 };

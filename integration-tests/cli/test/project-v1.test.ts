@@ -110,7 +110,7 @@ test.before(async () => {
 });
 
 test.serial('list available projects', async (t) => {
-  const { stdout } = await run(`openfn projects -p ${projectsPath}`);
+  const { stdout } = await run(`openfn projects -w ${projectsPath}`);
 
   t.regex(stdout, /hello-world/);
   t.regex(stdout, /8dbc4349-52b4-4bf2-be10-fdf06da52c46/);
@@ -120,7 +120,7 @@ test.serial('list available projects', async (t) => {
 
 // checkout a project from a yaml file
 test.serial('Checkout a project', async (t) => {
-  await run(`openfn checkout hello-world -p ${projectsPath}`);
+  await run(`openfn checkout hello-world -w ${projectsPath}`);
 
   // check workflow.yaml
   const workflowYaml = await readFile(
@@ -166,9 +166,7 @@ test.serial('merge a project', async (t) => {
   t.is(initial, '// TODO');
 
   // Run the merge
-  const { stdout } = await run(
-    `openfn merge hello-world-staging -p ${projectsPath} --force`
-  );
+  await run(`openfn merge hello-world-staging -w ${projectsPath} --force`);
 
   // Check the step is updated
   const merged = await readStep();

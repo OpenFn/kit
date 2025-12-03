@@ -24,7 +24,6 @@ options:
   allow_support_access: false
   requires_mfa: false
   retention_policy: retain_all
-  version_history: []
 workflows:
   - name: Hello Workflow
     steps:
@@ -80,8 +79,6 @@ options:
   allow_support_access: false
   requires_mfa: false
   retention_policy: retain_all
-  version_history:
-    - 7b0f5af558f5
 workflows:
   - name: Hello Workflow
     steps:
@@ -130,7 +127,7 @@ test.before(async () => {
 });
 
 test.serial('list available projects', async (t) => {
-  const { stdout } = await run(`openfn projects -p ${projectsPath}`);
+  const { stdout } = await run(`openfn projects -w ${projectsPath}`);
   t.regex(stdout, /sandboxing-simple/);
   t.regex(stdout, /a272a529-716a-4de7-a01c-a082916c6d23/);
   t.regex(stdout, /staging/);
@@ -138,7 +135,7 @@ test.serial('list available projects', async (t) => {
 });
 
 test.serial('Checkout a project', async (t) => {
-  await run(`openfn checkout staging -p ${projectsPath}`);
+  await run(`openfn checkout staging -w ${projectsPath}`);
 
   // check workflow.yaml
   const workflowYaml = await readFile(
@@ -149,8 +146,7 @@ test.serial('Checkout a project', async (t) => {
     workflowYaml,
     `id: hello-workflow
 name: Hello Workflow
-options:
-  history: []
+options: {}
 steps:
   - id: trigger
     type: webhook
@@ -180,7 +176,7 @@ test.serial('merge a project', async (t) => {
       'utf8'
     ).then((str) => str.trim());
 
-  await run(`openfn checkout sandboxing-simple -p ${projectsPath}`);
+  await run(`openfn checkout sandboxing-simple -w ${projectsPath}`);
 
   // assert the initial step code
   const initial = await readStep();
@@ -188,7 +184,7 @@ test.serial('merge a project', async (t) => {
 
   // Run the merge
   const { stdout } = await run(
-    `openfn merge staging -p ${projectsPath} --force`
+    `openfn merge staging -w ${projectsPath} --force`
   );
 
   // Check the step is updated

@@ -1,7 +1,7 @@
 import Project, { jsonToYaml, Workspace } from '@openfn/project';
 import test from 'ava';
 import mock from 'mock-fs';
-import mergeHandler from '../../src/merge/handler';
+import { handler as mergeHandler } from '../../src/projects/merge';
 import { createMockLogger } from '@openfn/logger';
 
 const sandbox = {
@@ -106,8 +106,8 @@ const logger = createMockLogger('', { level: 'debug' });
 test.serial('merging into the same project', async (t) => {
   await mergeHandler(
     {
-      command: 'merge',
-      projectPath: '/ws',
+      command: 'project-merge',
+      workspace: '/ws',
       projectId: 'my-project',
       removeUnmapped: false,
       workflowMappings: {},
@@ -117,7 +117,7 @@ test.serial('merging into the same project', async (t) => {
 
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'error');
-  t.is(message, 'Merging into the same project not allowed');
+  t.regex(message, /Merging into the same project not allowed/);
 });
 
 test.serial('merging a different project into checked-out', async (t) => {
@@ -131,8 +131,8 @@ test.serial('merging a different project into checked-out', async (t) => {
   // do merging
   await mergeHandler(
     {
-      command: 'merge',
-      projectPath: '/ws',
+      command: 'project-merge',
+      workspace: '/ws',
       projectId: 'my-sandbox',
       removeUnmapped: false,
       workflowMappings: {},
@@ -153,10 +153,7 @@ test.serial('merging a different project into checked-out', async (t) => {
 
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
-  t.is(
-    message,
-    'Project my-sandbox has been merged into Project my-project successfully'
-  );
+  t.is(message, 'Project my-sandbox has been merged into Project my-project');
 });
 
 test.serial('Write to a different project file', async (t) => {
@@ -167,8 +164,8 @@ test.serial('Write to a different project file', async (t) => {
   // do merging
   await mergeHandler(
     {
-      command: 'merge',
-      projectPath: '/ws',
+      command: 'project-merge',
+      workspace: '/ws',
       projectId: 'my-sandbox',
       removeUnmapped: false,
       workflowMappings: {},
@@ -194,8 +191,8 @@ test.serial(
     // do merging
     await mergeHandler(
       {
-        command: 'merge',
-        projectPath: '/ws',
+        command: 'project-merge',
+        workspace: '/ws',
         projectId: 'my-sandbox',
         removeUnmapped: false,
         workflowMappings: {},
@@ -244,8 +241,8 @@ test.serial('Write to JSON using project config', async (t) => {
   // do merging
   await mergeHandler(
     {
-      command: 'merge',
-      projectPath: '/ws',
+      command: 'project-merge',
+      workspace: '/ws',
       projectId: 'my-sandbox',
       removeUnmapped: false,
       workflowMappings: {},
@@ -302,8 +299,8 @@ test.serial('merge with custom base', async (t) => {
   // do merging
   await mergeHandler(
     {
-      command: 'merge',
-      projectPath: '/ws',
+      command: 'project-merge',
+      workspace: '/ws',
       projectId: 'my-sandbox',
       base: '/ws/.projects/project@app.openfn.org.yaml',
       removeUnmapped: false,

@@ -253,6 +253,8 @@ export namespace Provisioner {
     delete?: boolean;
     project_id?: string;
 
+    version_history?: string[];
+
     concurrency?: null; // TODO
     lock_version?: number;
     inserted_at?: string;

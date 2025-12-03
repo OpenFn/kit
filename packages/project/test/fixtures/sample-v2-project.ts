@@ -8,44 +8,29 @@ export const json: SerializedProject = {
   name: 'My Project',
   version: 2,
   description: 'my lovely project',
-  openfn: {
-    uuid: '1234',
-    endpoint: 'https://app.openfn.org',
-  },
-  options: {
-    allow_support_access: false,
-  },
+  openfn: { uuid: '1234', endpoint: 'https://app.openfn.org' },
+  options: { allow_support_access: false },
   workflows: [
     {
       steps: [
         {
-          name: 'a',
-          id: 'a',
-          openfn: {
-            uuid: 2,
-          },
-          next: {
-            b: {
-              openfn: {
-                uuid: 4,
-              },
-            },
-          },
-        },
-        {
           name: 'b',
           id: 'b',
-          openfn: {
-            uuid: 3,
-          },
+          openfn: { uuid: 3 },
+          expression: 'fn()',
+          adaptor: 'common',
+        },
+        {
+          id: 'trigger',
+          openfn: { uuid: 2 },
+          type: 'webhook',
+          next: { b: { openfn: { uuid: 4 } } },
         },
       ],
       name: 'Workflow',
       id: 'workflow',
+      openfn: { uuid: 1 },
       history: [],
-      openfn: {
-        uuid: 1,
-      },
     },
   ],
 };
@@ -61,18 +46,20 @@ options:
   allow_support_access: false
 workflows:
   - steps:
-      - name: a
-        id: a
-        openfn:
-          uuid: 2
-        next:
-          b:
-            openfn:
-              uuid: 4
       - name: b
         id: b
         openfn:
           uuid: 3
+        expression: fn()
+        adaptor: common
+      - id: trigger
+        openfn:
+          uuid: 2
+        type: webhook
+        next:
+          b:
+            openfn:
+              uuid: 4
     name: Workflow
     id: workflow
     openfn:
