@@ -194,7 +194,7 @@ test('merge a new step into an existing workflow', (t) => {
   t.deepEqual(y, wf_b.steps[1]);
 });
 
-test.only('merge with an edge and no changes', (t) => {
+test('merge with an edge and no changes', (t) => {
   // create a base workflow
   const wf = {
     name: 'wf',
