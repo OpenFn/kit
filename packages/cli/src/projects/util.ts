@@ -9,8 +9,6 @@ import { CLIError } from '../errors';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
-export const init = (dir: string) => {};
-
 export const loadAppAuthConfig = (
   options: AuthOptions,
   logger: Logger
