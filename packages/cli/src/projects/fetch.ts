@@ -129,7 +129,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     !hasAnyHistory; // the remote project has no history (can happen in old apps)
 
   if (!skipVersionCheck && !project.canMergeInto(current!)) {
-    // TODO allow force or rename
+    // TODO allow rename
     throw new Error('Error! An incompatible project exists at this location');
   }
 
