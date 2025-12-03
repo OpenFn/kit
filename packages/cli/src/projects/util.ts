@@ -8,6 +8,8 @@ import type Project from '@openfn/project';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
+export const init = (dir: string) => {};
+
 export const loadAppAuthConfig = (
   options: AuthOptions,
   logger: Logger

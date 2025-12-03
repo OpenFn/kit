@@ -19,7 +19,7 @@ const options = [o.projectId, o.workspace, o.log];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project-id>',
-  describe: 'Switch to a different openfn project in the same workspace',
+  describe: 'Switch to a different OpenFn project in the same workspace',
   handler: ensure('project-checkout', options),
   builder: (yargs) => build(options, yargs),
 };
@@ -29,10 +29,7 @@ export default command;
 export const handler = async (options: CheckoutOptions, logger: Logger) => {
   const projectId = options.projectId!;
   const workspacePath = options.workspace ?? process.cwd();
-  const workspace = new Workspace(workspacePath);
-  if (!workspace.valid) {
-    throw new Error('Command was run in an invalid openfn workspace');
-  }
+  const workspace = new Workspace(workspacePath, logger);
 
   // get the config
   // TODO: try to retain the endpoint for the projects
