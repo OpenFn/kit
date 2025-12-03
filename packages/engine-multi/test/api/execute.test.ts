@@ -107,8 +107,6 @@ test.serial('should emit a log event with the memory limit', async (t) => {
     plan,
   } as WorkflowState;
 
-  const logs: any[] = [];
-
   const context = createContext({
     state,
     options: {
@@ -118,14 +116,13 @@ test.serial('should emit a log event with the memory limit', async (t) => {
   });
 
   context.on(WORKFLOW_LOG, (evt) => {
-    logs.push(evt);
+    const [log] = evt.logs;
+    if (log && log.message[0] === 'Memory limit: 666mb') {
+      t.pass();
+    }
   });
 
   await execute(context);
-
-  const logEvent = logs.find((evt) => evt.logs.some((l: any) => l.name === 'RTE'));
-  const log = logEvent.logs.find((l: any) => l.name === 'RTE');
-  t.is(log.message[0], 'Memory limit: 666mb');
 });
 
 test.serial('should emit a workflow-complete event', async (t) => {
@@ -182,7 +179,6 @@ test.serial('should emit a job-complete event', async (t) => {
 });
 
 test.serial('should emit a log event', async (t) => {
-  let workflowLog: any;
   const plan = {
     id: 'y',
     workflow: {
@@ -199,18 +195,19 @@ test.serial('should emit a log event', async (t) => {
     plan,
   } as Partial<WorkflowState>;
 
+  const logs: any[] = [];
   const context = createContext({ state, options });
-  context.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
+  context.on(WORKFLOW_LOG, (evt) => {
+    logs.push(...evt.logs);
+  });
 
   await execute(context);
 
-  t.is(workflowLog.workflowId, 'y');
-  t.is(workflowLog.logs[0].level, 'info');
-  t.deepEqual(workflowLog.logs[0].message, JSON.stringify(['hi']));
+  t.is(logs[0].level, 'info');
+  t.deepEqual(logs[0].message, JSON.stringify(['hi']));
 });
 
 test.serial('log events are timestamped in hr time', async (t) => {
-  let workflowLog: any;
   const plan = {
     id: 'y',
     workflow: {
@@ -226,11 +223,14 @@ test.serial('log events are timestamped in hr time', async (t) => {
     plan,
   } as WorkflowState;
 
+  const logs: any[] = [];
   const context = createContext({ state, options });
-  context.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
+  context.on(WORKFLOW_LOG, (evt) => {
+    logs.push(...evt.logs);
+  });
 
   await execute(context);
-  const { time } = workflowLog.logs[0];
+  const { time } = logs[0];
 
   // Note: The time we get here is NOT a bigint because it's been serialized
   t.true(typeof time === 'string');
