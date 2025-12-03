@@ -21,12 +21,12 @@ export const createLoggers = (
   const log = (message: JSONLog) => {
     publish(workerEvents.LOG, {
       workflowId,
-      log: {
+      logs: [{
         ...message,
         // stringify the message now so that we know it's safe
         // this also makes it more performant to feed up to the worker
         message: stringify(message.message),
-      },
+      }],
     } as workerEvents.LogEvent);
   };
 

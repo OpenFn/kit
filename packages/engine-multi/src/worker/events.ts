@@ -78,7 +78,7 @@ export type SerializedLogEvent = Omit<JSONLog, 'message'> & {
 };
 
 export interface LogEvent extends InternalEvent {
-  log: SerializedLogEvent;
+  logs: SerializedLogEvent[];
 }
 
 export interface ErrorEvent {

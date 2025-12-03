@@ -72,12 +72,12 @@ const execute = async (context: ExecutionContext) => {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
-        log: {
+        logs: [{
           level: 'info',
           message: [`Memory limit: ${workerOptions.memoryLimitMb}mb`],
           name: 'RTE',
           time: timestamp().toString(),
-        },
+        }],
       });
     }
     if (workerOptions.timeout) {
@@ -85,12 +85,12 @@ const execute = async (context: ExecutionContext) => {
         type: workerEvents.LOG,
         workflowId: state.plan.id!,
         threadId: '-', // no thread at this point
-        log: {
+        logs: [{
           level: 'info',
           message: [`Timeout: ${workerOptions.timeout / 1000}s`],
           name: 'RTE',
           time: timestamp().toString(),
-        },
+        }],
       });
     }
 
@@ -153,12 +153,12 @@ const execute = async (context: ExecutionContext) => {
           type: workerEvents.LOG,
           workflowId: state.plan.id!,
           threadId: '-',
-          log: {
+          logs: [{
             level: 'info',
             message: [`Error occurred during compilation`],
             name: 'RTE',
             time: timestamp().toString(),
-          },
+          }],
         });
       }
       // An error should:

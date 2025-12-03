@@ -117,24 +117,26 @@ export const log = (
   context: ExecutionContext,
   event: internalEvents.LogEvent
 ) => {
-  const { threadId } = event;
+  const { threadId, logs } = event;
 
-  if (!logsToExcludeFromStdout.test(event.log.name!)) {
-    // Forward the log event to the engine's logger
-    // Note that we may have to parse the serialized log string
-    const proxy = {
-      ...event.log,
-      message:
-        typeof event.log.message == 'string'
-          ? JSON.parse(event.log.message)
-          : event.log.message,
-    };
-    context.logger.proxy(proxy);
+  // Forward each log event to the engine's logger
+  for (const logEntry of logs) {
+    if (!logsToExcludeFromStdout.test(logEntry.name!)) {
+      // Note that we may have to parse the serialized log string
+      const proxy = {
+        ...logEntry,
+        message:
+          typeof logEntry.message == 'string'
+            ? JSON.parse(logEntry.message)
+            : logEntry.message,
+      };
+      context.logger.proxy(proxy);
+    }
   }
 
   context.emit(externalEvents.WORKFLOW_LOG, {
     threadId,
-    ...event.log,
+    logs,
   });
 };
 

@@ -123,7 +123,8 @@ test.serial('should emit a log event with the memory limit', async (t) => {
 
   await execute(context);
 
-  const log = logs.find(({ name }) => name === 'RTE');
+  const logEvent = logs.find((evt) => evt.logs.some((l: any) => l.name === 'RTE'));
+  const log = logEvent.logs.find((l: any) => l.name === 'RTE');
   t.is(log.message[0], 'Memory limit: 666mb');
 });
 
@@ -204,8 +205,8 @@ test.serial('should emit a log event', async (t) => {
   await execute(context);
 
   t.is(workflowLog.workflowId, 'y');
-  t.is(workflowLog.level, 'info');
-  t.deepEqual(workflowLog.message, JSON.stringify(['hi']));
+  t.is(workflowLog.logs[0].level, 'info');
+  t.deepEqual(workflowLog.logs[0].message, JSON.stringify(['hi']));
 });
 
 test.serial('log events are timestamped in hr time', async (t) => {
@@ -229,7 +230,7 @@ test.serial('log events are timestamped in hr time', async (t) => {
   context.once(WORKFLOW_LOG, (evt) => (workflowLog = evt));
 
   await execute(context);
-  const { time } = workflowLog;
+  const { time } = workflowLog.logs[0];
 
   // Note: The time we get here is NOT a bigint because it's been serialized
   t.true(typeof time === 'string');

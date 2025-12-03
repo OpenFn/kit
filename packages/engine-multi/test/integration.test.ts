@@ -142,9 +142,10 @@ test.serial('trigger workflow-log for job logs', (t) => {
     api
       .execute(plan, emptyState)
       .on('workflow-log', (evt) => {
-        if (evt.name === 'JOB') {
+        const jobLog = evt.logs?.find((l: any) => l.name === 'JOB');
+        if (jobLog) {
           didLog = true;
-          t.deepEqual(evt.message, JSON.stringify(['hola']));
+          t.deepEqual(jobLog.message, JSON.stringify(['hola']));
           t.pass('workflow logged');
         }
       })
@@ -171,10 +172,11 @@ test.serial('log errors', (t) => {
     api
       .execute(plan, emptyState)
       .on('workflow-log', (evt) => {
-        if (evt.name === 'JOB') {
+        const jobLog = evt.logs?.find((l: any) => l.name === 'JOB');
+        if (jobLog) {
           t.log(evt);
           t.deepEqual(
-            evt.message,
+            jobLog.message,
             JSON.stringify([
               {
                 name: 'Error',

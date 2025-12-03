@@ -100,7 +100,8 @@ export interface JobErrorPayload extends ExternalEvent {
   next: string[]; // downstream jobs
 }
 
-export interface WorkerLogPayload extends ExternalEvent, SerializedLogEvent {
+export interface WorkerLogPayload extends ExternalEvent {
+  logs: SerializedLogEvent[];
   redacted?: boolean;
 }
 

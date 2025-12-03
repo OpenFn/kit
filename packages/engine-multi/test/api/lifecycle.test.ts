@@ -247,19 +247,19 @@ test(`log: emits ${e.WORKFLOW_LOG}`, (t) => {
       type: w.LOG,
       workflowId,
       threadId: 'a',
-      log: {
+      logs: [{
         level: 'info',
         name: 'job',
         message: JSON.stringify(['oh hai']),
         time: (Date.now() - 100).toString(),
-      },
+      }],
     };
 
     context.on(e.WORKFLOW_LOG, (evt) => {
       t.deepEqual(evt, {
         workflowId,
         threadId: 'a',
-        ...event.log,
+        logs: event.logs,
       });
       done();
     });
@@ -280,12 +280,12 @@ test('logs get sent to stdout', (t) => {
     type: w.LOG,
     workflowId,
     threadId: 'a',
-    log: {
+    logs: [{
       level: 'info',
       name: 'r/t',
       message: ['oh hai'],
       time: (Date.now() - 100).toString(),
-    },
+    }],
   };
 
   log(context, event);
@@ -308,12 +308,12 @@ test('job logs do not get sent to stdout', (t) => {
     type: w.LOG,
     workflowId,
     threadId: 'a',
-    log: {
+    logs: [{
       level: 'info',
       name: 'job',
       message: ['oh hai'],
       time: (Date.now() - 100).toString(),
-    },
+    }],
   };
 
   log(context, event);
@@ -333,12 +333,12 @@ test('adaptor logs do not get sent to stdout', (t) => {
     type: w.LOG,
     workflowId,
     threadId: 'a',
-    log: {
+    logs: [{
       level: 'info',
       name: 'ada',
       message: ['oh hai'],
       time: (Date.now() - 100).toString(),
-    },
+    }],
   };
 
   log(context, event);
