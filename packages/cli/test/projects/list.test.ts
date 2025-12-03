@@ -1,5 +1,5 @@
 import test from 'ava';
-import projectsHandler from '../../src/projects/handler';
+import { handler as list } from '../../src/projects/list';
 import { createMockLogger } from '@openfn/logger';
 import mock from 'mock-fs';
 import { jsonToYaml } from '@openfn/project';
@@ -130,22 +130,30 @@ mock({
 
 const logger = createMockLogger('', { level: 'debug' });
 
-test('openfn projects: invalid workspace directory', (t) => {
-  projectsHandler({ command: 'projects', projectPath: '/invalid' }, logger);
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Command was run in an invalid openfn workspace');
+test('throw for invalid workspace directory', async (t) => {
+  await t.throwsAsync(
+    () => list({ command: 'projects', workspace: '/invalid' }, logger),
+    {
+      message: 'No OpenFn projects found',
+    }
+  );
+  // const { message } = logger._parse(logger._last);
+  // t.is(message, 'Command was run in an invalid openfn workspace');
 });
 
-test('openfn projects: not a workspace', (t) => {
-  projectsHandler({ command: 'projects', projectPath: '/no-ws' }, logger);
-  const { message } = logger._parse(logger._last);
-  t.is(message, 'Command was run in an invalid openfn workspace');
+test('throw if dir is not a workspace', async (t) => {
+  await t.throwsAsync(
+    () => list({ command: 'projects', workspace: '/no-ws' }, logger),
+    {
+      message: 'No OpenFn projects found',
+    }
+  );
 });
 
-test('openfn projects: valid workspace', (t) => {
-  projectsHandler({ command: 'projects', projectPath: '/ws' }, logger);
-  const { message, level } = logger._parse(logger._last);
-  t.is('success', level);
+test('valid workspace', async (t) => {
+  await list({ command: 'projects', workspace: '/ws' }, logger);
+
+  const { message } = logger._find('always', /available openfn projects/i);
   t.is(
     `Available openfn projects
 

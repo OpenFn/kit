@@ -1,18 +1,33 @@
-import yargs from 'yargs';
-import { Opts } from '../options';
-import { ensure, build } from '../util/command-builders';
-import * as o from '../options';
+import list from './list';
+import version from './version';
+import merge from './merge';
+import checkout from './checkout';
+import fetch from './fetch';
 
-export type ProjectsOptions = Required<Pick<Opts, 'command' | 'projectPath'>>;
+import type yargs from 'yargs';
 
-const options = [o.projectPath];
-
-const projectsCommand: yargs.CommandModule = {
-  command: 'projects [project-path]',
-  describe: 'List all the openfn projects available in the current directory',
-  aliases: ['project'],
-  handler: ensure('projects', options),
-  builder: (yargs) => build(options, yargs),
-};
+export const projectsCommand = {
+  command: 'project [subcommand]',
+  aliases: ['projects'],
+  describe: 'Sync and manage an OpenFn project',
+  handler: () => {},
+  builder: (yargs: yargs.Argv) =>
+    yargs
+      .command(list)
+      .command(version)
+      .command(merge)
+      .command(checkout)
+      .command(fetch as any)
+      .example('project', 'list all projects in the workspace')
+      .example('project list', 'list all projects in the workspace')
+      .example(
+        'project checkout staging',
+        'Checkout the project with id staging'
+      )
+      .example(
+        'project merge staging',
+        'Merge staging into the checkout-out branch'
+      ),
+} as yargs.CommandModule<{}>;
 
 export default projectsCommand;

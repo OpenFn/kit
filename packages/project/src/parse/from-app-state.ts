@@ -83,10 +83,12 @@ const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
 // map a project workflow to a local cli workflow
 // TODO this probably gets easier if I index everything by name
 export const mapWorkflow = (workflow: Provisioner.Workflow) => {
-  const { jobs, edges, triggers, name, ...remoteProps } = workflow;
+  const { jobs, edges, triggers, name, version_history, ...remoteProps } =
+    workflow;
   const mapped: l.Workflow = {
     name: workflow.name,
     steps: [],
+    history: workflow.version_history ?? [],
     openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
   if (workflow.name) {

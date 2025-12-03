@@ -69,6 +69,7 @@ export type Opts = {
   // merge options
   removeUnmapped?: boolean | undefined;
   workflowMappings?: Record<string, string> | undefined;
+  workspace?: string;
 
   // deprecated
   workflowPath?: string;
@@ -601,5 +602,21 @@ export const workflowMappings: CLIOption = {
     coerce: getCLIOptionObject,
     description:
       'A manual object mapping of which workflows in source and target should be matched for a merge.',
+  },
+};
+
+export const workspace: CLIOption = {
+  name: 'workspace',
+  yargs: {
+    alias: ['w'],
+    description: 'Path to the project workspace (ie, path to openfn.yaml)',
+  },
+  ensure: (opts) => {
+    const ws = opts.workspace ?? process.env.OPENFN_WORKSPACE;
+    if (!ws) {
+      opts.workspace = process.cwd();
+    } else {
+      opts.workspace = nodePath.resolve(ws);
+    }
   },
 };

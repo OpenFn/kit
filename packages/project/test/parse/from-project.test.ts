@@ -87,8 +87,17 @@ test('import from a v2 project as JSON', async (t) => {
     history: [],
     steps: [
       {
-        name: 'a',
-        id: 'a',
+        name: 'b',
+        id: 'b',
+        expression: 'fn()',
+        adaptor: 'common',
+        openfn: {
+          uuid: 3,
+        },
+      },
+      {
+        id: 'trigger',
+        type: 'webhook',
         openfn: {
           uuid: 2,
         },
@@ -98,13 +107,6 @@ test('import from a v2 project as JSON', async (t) => {
               uuid: 4,
             },
           },
-        },
-      },
-      {
-        name: 'b',
-        id: 'b',
-        openfn: {
-          uuid: 3,
         },
       },
     ],
@@ -130,8 +132,17 @@ test('import from a v2 project as YAML', async (t) => {
     history: [],
     steps: [
       {
-        name: 'a',
-        id: 'a',
+        name: 'b',
+        id: 'b',
+        expression: 'fn()',
+        adaptor: 'common',
+        openfn: {
+          uuid: 3,
+        },
+      },
+      {
+        id: 'trigger',
+        type: 'webhook',
         openfn: {
           uuid: 2,
         },
@@ -141,13 +152,6 @@ test('import from a v2 project as YAML', async (t) => {
               uuid: 4,
             },
           },
-        },
-      },
-      {
-        name: 'b',
-        id: 'b',
-        openfn: {
-          uuid: 3,
         },
       },
     ],

@@ -30,7 +30,7 @@ class Workflow {
     // history needs to be on workflow object.
     this.workflow.history = workflow.history?.length ? workflow.history : [];
 
-    const { id, name, openfn, steps, ...options } = workflow;
+    const { id, name, openfn, steps, history, ...options } = workflow;
     if (!(id || name)) {
       throw new Error('A Workflow MUST have a name or id');
     }

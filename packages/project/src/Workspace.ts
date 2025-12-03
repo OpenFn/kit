@@ -1,4 +1,5 @@
 import * as l from '@openfn/lexicon';
+import createLogger from '@openfn/logger';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -10,6 +11,7 @@ import {
   findWorkspaceFile,
 } from './util/config';
 import fromProject from './parse/from-project';
+import type { Logger } from '@openfn/logger';
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
@@ -19,26 +21,27 @@ export class Workspace {
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
+  private logger: Logger;
 
-  constructor(workspacePath: string) {
-    let context;
+  constructor(workspacePath: string, logger?: Logger) {
+    this.logger = logger ?? createLogger('Workspace', { level: 'info' });
+
+    let context = { workspace: undefined, project: undefined };
     try {
       const { type, content } = findWorkspaceFile(workspacePath);
       context = loadWorkspaceFile(content, type as any);
       this.isValid = true;
     } catch (e) {
-      // TODO use logger
-      // TODO maybe we should throw here?
-      console.error(e);
-      // invalid workspace
-      return;
+      this.logger.warn(
+        `Could not find openfn.yaml at ${workspacePath}. Using default values.`
+      );
     }
     this.config = buildConfig(context.workspace);
     this.activeProject = context.project;
 
     const projectsPath = path.join(workspacePath, this.config.dirs.projects);
     // dealing with projects
-    if (this.isValid && pathExists(projectsPath, 'directory')) {
+    if (pathExists(projectsPath, 'directory')) {
       const ext = `.${this.config.formats.project}`;
       const stateFiles = fs
         .readdirSync(projectsPath)
@@ -64,6 +67,10 @@ export class Workspace {
           }
         })
         .filter((s) => s) as Project[];
+    } else {
+      this.logger.warn(
+        `No projects found: directory at ${projectsPath} does not exist`
+      );
     }
   }
 
