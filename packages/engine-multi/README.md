@@ -146,3 +146,7 @@ As soon as data is referenced the memory goes up. Probably the import is optimis
 yes: it's about 98mb without the import, and 115mb if I import and reference
 
 Ok, final swing, just as a rough guide, I want to plug this in to AI
+
+It's generated a very good looking traversal algorithm to calculate the size.
+
+But this seems to take more memory! 125mb+! Saw it go over 30 once
