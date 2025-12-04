@@ -116,7 +116,7 @@ export default async (
       logger.error(e);
       throwAbortableError(
         `CONNECTION_REFUSED: error connecting to server at ${base}`,
-        'Check you have passed the correct URL to --lightning or OPENFN_ENDPOINT'
+        'Check you have passed the correct URL to --endpoint or OPENFN_ENDPOINT'
       );
     }
   } while (cursor && count < limit);

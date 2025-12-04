@@ -52,7 +52,7 @@ test.beforeEach(() => {
 });
 
 const createOptions = (opts = {}) => ({
-  lightning: ENDPOINT,
+  endpoint: ENDPOINT,
   collectionName: COLLECTION,
   key: '*',
   token: 'x.y.z', // TODO need more tests around this
@@ -310,13 +310,13 @@ test.serial('remove with dry run', async (t) => {
 test.serial('should throw if the server is not available', async (t) => {
   const options = createOptions({
     key: 'x',
-    lightning: 'https://www.blah.blah.blah',
+    endpoint: 'https://www.blah.blah.blah',
   });
   try {
     await get(options, logger);
   } catch (e: any) {
     t.regex(e.reason, /connection_refused/i);
-    t.regex(e.help, /correct url .+ --lightning/i);
+    t.regex(e.help, /correct url .+ --endpoint/i);
   }
 });
 
@@ -333,10 +333,10 @@ test.serial("should throw if a collection doesn't exist", async (t) => {
   }
 });
 
-test.serial('use OPENFN_ENDPOINT if lightning option is not set', async (t) => {
+test.serial('use OPENFN_ENDPOINT if endpoint option is not set', async (t) => {
   const options = createOptions({
     key: 'x',
-    lightning: undefined,
+    endpoint: undefined,
   });
   process.env.OPENFN_ENDPOINT = ENDPOINT;
 
