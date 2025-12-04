@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.20.1
+
+### Patch Changes
+
+- ff42d44: Support `endpoint` argument in collections command
+
 ## 1.20.0
 
 ### Minor Changes

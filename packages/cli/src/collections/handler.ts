@@ -69,7 +69,7 @@ export const get = async (options: GetOptions, logger: Logger) => {
   let result = await request(
     'GET',
     {
-      lightning: options.lightning,
+      lightning: options.endpoint,
       token: options.token!,
       pageSize: options.pageSize,
       limit: options.limit,
@@ -147,7 +147,7 @@ export const set = async (options: SetOptions, logger: Logger) => {
   const result = await request(
     'POST',
     {
-      lightning: options.lightning,
+      lightning: options.endpoint,
       token: options.token!,
       key: options.key,
       collectionName: options.collectionName,
@@ -175,7 +175,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
     let result = await request(
       'GET',
       {
-        lightning: options.lightning,
+        lightning: options.endpoint,
         token: options.token!,
         key: options.key,
         collectionName: options.collectionName,
@@ -191,7 +191,7 @@ export const remove = async (options: RemoveOptions, logger: Logger) => {
     let result = await request(
       'DELETE',
       {
-        lightning: options.lightning,
+        lightning: options.endpoint,
         token: options.token!,
         key: options.key,
         collectionName: options.collectionName,

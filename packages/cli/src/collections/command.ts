@@ -11,7 +11,7 @@ export type QueryOptions = {
 };
 
 export type CollectionsOptions = Pick<Opts, 'log' | 'logJson'> & {
-  lightning?: string;
+  endpoint?: string;
   token?: string;
   key: string;
   collectionName: string;
@@ -96,9 +96,10 @@ const token = {
   },
 };
 
-const lightningUrl = {
-  name: 'lightning',
+const endpoint = {
+  name: 'endpoint',
   yargs: {
+    alias: ['e', 'lightning'],
     description:
       'URL to OpenFn server. Defaults to OPENFN_ENDPOINT or https://app.openfn.org',
   },
@@ -160,7 +161,7 @@ const getOptions = [
   collectionName,
   key,
   token,
-  lightningUrl,
+  endpoint,
   pageSize,
   limit,
   pretty,
@@ -201,7 +202,7 @@ const removeOptions = [
   collectionName,
   key,
   token,
-  lightningUrl,
+  endpoint,
   dryRun,
 
   createdBefore,
@@ -243,7 +244,7 @@ const setOptions = [
     demand: false,
   }),
   token,
-  lightningUrl,
+  endpoint,
   value,
   items,
 

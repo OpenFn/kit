@@ -32,13 +32,23 @@ test('all commands accept a token', (t) => {
   }
 });
 
-test('all commands accept a lighting url', (t) => {
+test('all commands accept a lighting endpoint (lightning)', (t) => {
   for (const cmd of ['get', 'set', 'remove']) {
     const options = parse(
       `collections ${cmd} my-collection some-key --lightning app.openfn.org`
     );
     t.is(options.command, `collections-${cmd}`);
-    t.is(options.lightning, 'app.openfn.org');
+    t.is(options.endpoint, 'app.openfn.org');
+  }
+});
+
+test('all commands accept a lighting endpoint (endpoint)', (t) => {
+  for (const cmd of ['get', 'set', 'remove']) {
+    const options = parse(
+      `collections ${cmd} my-collection some-key --endpoint app.openfn.org`
+    );
+    t.is(options.command, `collections-${cmd}`);
+    t.is(options.endpoint, 'app.openfn.org');
   }
 });
 

@@ -30,6 +30,7 @@ export const ensure =
         try {
           opt.ensure!(yargs);
         } catch (e) {
+          console.log(e);
           console.error(
             c.red(`\nError parsing command arguments: ${command}.${opt.name}\n`)
           );
