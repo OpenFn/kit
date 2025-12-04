@@ -17,12 +17,14 @@ export const verify = async (
   algo: 'stringify' | 'traverse' = 'stringify'
 ) => {
   if (value && !isNaN(limit_mb)) {
-    const isTooBig =
-      algo === 'traverse'
-        ? await exceedsSizeTraverse(value, limit_mb)
-        : exceedsSizeStringify(value, limit_mb);
+    const limitBytes = limit_mb * 1024 * 1024;
 
-    if (isTooBig) {
+    const sizeBytes =
+      algo === 'traverse'
+        ? await calculateSizeTraverse(value, limitBytes)
+        : calculateSizeStringify(value);
+
+    if (sizeBytes > limitBytes) {
       const e = new Error();
       // @ts-ignore
       e.name = 'PAYLOAD_TOO_LARGE';
@@ -32,81 +34,89 @@ export const verify = async (
   }
 };
 
-export const exceedsSizeStringify = (value: any, limit_mb: number) => {
-  let size_mb = 0;
-
+export const calculateSizeStringify = (value: any): number => {
   const str = typeof value === 'string' ? value : JSON.stringify(value);
   const size_bytes = Buffer.byteLength(str, 'utf8');
-  size_mb = size_bytes / 1024 / 1024;
-
-  return size_mb > limit_mb;
+  return size_bytes;
 };
 
-export const exceedsSizeTraverse = async (value: any, limit_mb: number) => {
-  const maxBytes = limit_mb * 1024 * 1024;
+export const calculateSizeTraverse = async (
+  value: any,
+  limit?: number
+): Promise<number> => {
   let currentSize = 0;
   const visited = new WeakSet();
   let operations = 0;
   const YIELD_INTERVAL = 10000; // Yield every N operations to prevent blocking
 
-  async function traverse(val: any): Promise<boolean> {
+  const stack = [value];
+
+  while (stack.length > 0) {
     operations++;
     if (operations % YIELD_INTERVAL === 0) {
       await new Promise((resolve) => setImmediate(resolve));
     }
 
     // Early exit if we've already exceeded the limit
-    if (currentSize > maxBytes) return true;
+    if (limit !== undefined && currentSize > limit) return currentSize;
 
-    if (val === null || val === undefined) {
-      currentSize += 4; // "null" or "undefined"
-      return false;
+    const val = stack.pop();
+
+    if (typeof val === 'undefined') {
+      // these are excluded from json stringify
+      // so we must ignore them
+      continue;
+    }
+
+    if (val === null) {
+      currentSize += 4;
+      continue;
     }
 
     const type = typeof val;
 
     if (type === 'string') {
-      currentSize += Buffer.byteLength(val, 'utf8');
-      return currentSize > maxBytes;
+      currentSize += Buffer.byteLength(val, 'utf8') + 2;
+      continue;
     }
 
     if (type === 'number') {
       currentSize += val.toString().length;
-      return currentSize > maxBytes;
+      continue;
     }
 
     if (type === 'boolean') {
       currentSize += val ? 4 : 5; // "true" or "false"
-      return currentSize > maxBytes;
+      continue;
     }
 
     // Prevent circular reference infinite loops
-    if (visited.has(val)) {
-      return false;
-    }
+    if (visited.has(val)) continue;
     visited.add(val);
 
     currentSize += 2; // For {} or []
 
     if (Array.isArray(val)) {
       for (let i = 0; i < val.length; i++) {
-        if (await traverse(val[i])) return true;
+        stack.push(val[i]);
         if (i < val.length - 1) currentSize += 1; // comma separator
       }
     } else if (type === 'object') {
       const keys = Object.keys(val);
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
+        if (val[key] === undefined) {
+          // excluded from stringify
+          continue;
+        }
         currentSize += Buffer.byteLength(key, 'utf8') + 3; // "key":
-        if (await traverse(val[key])) return true;
+        stack.push(val[key]);
         if (i < keys.length - 1) currentSize += 1; // comma separator
       }
     }
-
-    return false;
   }
 
-  return traverse(value);
+  return currentSize;
 };
 
 export default async (payload: any, limit_mb: number = 10) => {

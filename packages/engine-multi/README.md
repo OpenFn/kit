@@ -150,3 +150,17 @@ Ok, final swing, just as a rough guide, I want to plug this in to AI
 It's generated a very good looking traversal algorithm to calculate the size.
 
 But this seems to take more memory! 125mb+! Saw it go over 30 once
+
+Worth adding: if I reduce the limit to 1mb, and so the traversal gets the chance to exit early, it uses ~122mb. About the same as stringify.
+
+The larger the object, the bigger the saving. but also for small objects you are adding overhead.
+
+But the AI has another idea: drop recursion and use a queue to process items. Shallower call stack. Let's go
+
+10mb limit traverse: 115-120
+
+1mb limit traverse: same really
+
+10mb stringify: 117-125 (mostly over 120)
+
+Now we're getting somewhere

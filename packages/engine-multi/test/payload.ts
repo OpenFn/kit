@@ -6,4 +6,5 @@ import data from './tmp/docs.json' with { type: 'json' };
 
 data;
 // console.log(data.length)
-verify(data, 10, 'traverse')
+// verify(data, 1, 'traverse')
+verify(data, 10, 'stringify')
