@@ -11,18 +11,18 @@ const replacements: Record<string, any> = {
   },
 };
 
-export const verify = (value: any, limit_mb: number = 10) => {
+export const verify = async (
+  value: any,
+  limit_mb: number = 10,
+  algo: 'stringify' | 'traverse' = 'stringify'
+) => {
   if (value && !isNaN(limit_mb)) {
-    let size_mb = 0;
-    try {
-      const str = typeof value === 'string' ? value : JSON.stringify(value);
-      const size_bytes = Buffer.byteLength(str, 'utf8');
-      size_mb = size_bytes / 1024 / 1024;
-    } catch (e) {
-      // do nothing
-    }
+    const isTooBig =
+      algo === 'traverse'
+        ? await exceedsSizeTraverse(value, limit_mb)
+        : exceedsSizeStringify(value, limit_mb);
 
-    if (size_mb > limit_mb) {
+    if (isTooBig) {
       const e = new Error();
       // @ts-ignore
       e.name = 'PAYLOAD_TOO_LARGE';
@@ -32,12 +32,24 @@ export const verify = (value: any, limit_mb: number = 10) => {
   }
 };
 
-export default (payload: any, limit_mb: number = 10) => {
+export const exceedsSizeStringify = (value: any, limit_mb: number) => {
+  let size_mb = 0;
+
+  const str = typeof value === 'string' ? value : JSON.stringify(value);
+  const size_bytes = Buffer.byteLength(str, 'utf8');
+  size_mb = size_bytes / 1024 / 1024;
+
+  return size_mb > limit_mb;
+};
+
+export const exceedsSizeTraverse = async (value: any, limit_mb: number) => {};
+
+export default async (payload: any, limit_mb: number = 10) => {
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {
     try {
-      verify(payload[key], limit_mb);
+      await verify(payload[key], limit_mb);
     } catch (e) {
       Object.assign(newPayload[key], replacements[key] ?? replacements.default);
       newPayload.redacted = true;

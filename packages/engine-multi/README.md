@@ -120,3 +120,29 @@ First there's the problem that a lot of code runs inside a worker thread in a ch
 But also, any console.log statements inside the inner thread will get consumed by the adaptor logger and won't go to stdout.
 
 As a workaround to this, use console.debug inside the thread to print to stdout. This is not bound to the adaptor logger.
+
+## Payload perf
+
+Testing payload sizes
+
+```bash
+/usr/bin/time -v pnpm tsx test/payload.ts
+```
+
+Just loading the JSON:
+
+Maximum resident set size (kbytes): 117076 117mb
+
+This has a 10mb variance over several runs. Call it 115mb.
+
+If I call verify to stringify:
+
+I would say it creeps up a little bit to mostly over 120mb.
+
+Oh interesting: console.log(data.length) itself takes quite a bit of memory
+
+As soon as data is referenced the memory goes up. Probably the import is optimised out.
+
+yes: it's about 98mb without the import, and 115mb if I import and reference
+
+Ok, final swing, just as a rough guide, I want to plug this in to AI

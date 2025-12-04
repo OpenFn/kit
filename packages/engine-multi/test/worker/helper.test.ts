@@ -58,7 +58,7 @@ test('execute: should call the run function', (t) => {
 test('execute: should publish workflow-start', async (t) => {
   let event;
 
-  const publish = (eventName: string, payload: any) => {
+  const publish = async (eventName: string, payload: any) => {
     if (eventName === workerEvents.WORKFLOW_START) {
       event = payload;
     }
@@ -72,7 +72,7 @@ test('execute: should publish workflow-start', async (t) => {
 test('execute: should publish workflow-complete', async (t) => {
   let event;
 
-  const publish = (eventName: string, payload: any) => {
+  const publish = async (eventName: string, payload: any) => {
     if (eventName === workerEvents.WORKFLOW_COMPLETE) {
       event = payload;
     }

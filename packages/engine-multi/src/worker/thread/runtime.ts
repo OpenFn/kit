@@ -41,13 +41,13 @@ type Options = {
   payloadLimitMb?: number;
 };
 
-export const publish = (
+export const publish = async (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>
 ) => {
   // Validate the size of every outgoing message
   // Redact any payloads that are too large
-  const safePayload = ensurePayloadSize(payload, payloadLimitMb);
+  const safePayload = await ensurePayloadSize(payload, payloadLimitMb);
   const x = {
     type,
     threadId,
