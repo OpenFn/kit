@@ -12,6 +12,7 @@ import {
 } from './events';
 import { HANDLED_EXIT_CODE } from '../events';
 import { Logger } from '@openfn/logger';
+import type { PayloadLimits } from './thread/runtime';
 
 export type PoolOptions = {
   capacity?: number; // defaults to 5
@@ -34,7 +35,7 @@ export type ExecOpts = {
   timeout?: number; // ms
 
   memoryLimitMb?: number;
-  payloadLimitMb?: number;
+  payloadLimits?: PayloadLimits;
 };
 
 export type ChildProcessPool = Array<ChildProcess | false>;
@@ -212,7 +213,7 @@ function createPool(script: string, options: PoolOptions = {}, logger: Logger) {
           args,
           options: {
             memoryLimitMb: opts.memoryLimitMb,
-            payloadLimitMb: opts.payloadLimitMb,
+            payloadLimits: opts.payloadLimits,
           },
         } as RunTaskEvent);
       } catch (e) {
