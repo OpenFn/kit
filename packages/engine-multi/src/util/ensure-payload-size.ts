@@ -58,7 +58,9 @@ export const calculateSizeTraverse = async (
     }
 
     // Early exit if we've already exceeded the limit
-    if (limit !== undefined && currentSize > limit) return currentSize;
+    if (limit !== undefined && currentSize > limit) {
+      return currentSize;
+    }
 
     const val = stack.pop();
 
