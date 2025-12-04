@@ -56,7 +56,6 @@ export type LightningPlanOptions = {
 
   run_memory_limit_mb?: number;
   payload_limit_mb?: number;
-  log_payload_limit_mb?: number;
   job_log_level?: LogLevel;
 };
 
