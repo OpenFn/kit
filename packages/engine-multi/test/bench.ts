@@ -77,6 +77,7 @@ async function bench(algo: string) {
 
 const stringifyStats = await bench('stringify');
 const traverseStats = await bench('traverse');
+const streamStats = await bench('stream');
 
 // Calculate percentage differences (traverse vs stringify baseline)
 function calcDiff(baseline: number, comparison: number) {
@@ -108,3 +109,29 @@ console.log(
 );
 
 console.log('\n(Negative values mean traverse is better)');
+
+console.log('\n=== COMPARISON (stream vs stringify baseline) ===\n');
+
+console.log('Time Performance:');
+console.log(
+  `  Min: ${calcDiff(stringifyStats.time.min, streamStats.time.min)}%`
+);
+console.log(
+  `  Max: ${calcDiff(stringifyStats.time.max, streamStats.time.max)}%`
+);
+console.log(
+  `  Avg: ${calcDiff(stringifyStats.time.avg, streamStats.time.avg)}%`
+);
+
+console.log('\nMemory Usage:');
+console.log(
+  `  Min: ${calcDiff(stringifyStats.mem.min, streamStats.mem.min)}%`
+);
+console.log(
+  `  Max: ${calcDiff(stringifyStats.mem.max, streamStats.mem.max)}%`
+);
+console.log(
+  `  Avg: ${calcDiff(stringifyStats.mem.avg, streamStats.mem.avg)}%`
+);
+
+console.log('\n(Negative values mean stream is better)');
