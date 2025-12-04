@@ -47,6 +47,7 @@ export type WorkerRunOptions = ExecuteOptions & {
   // Defaults to true - must be explicity false to stop dataclips being sent
   outputDataclips?: boolean;
   payloadLimitMb?: number;
+  logPayloadLimitMb?: number;
   jobLogLevel?: LogLevel;
   timeoutRetryCount?: number;
   timeoutRetryDelay?: number;
@@ -118,6 +119,9 @@ export default (
     }
     if ('payload_limit_mb' in run.options) {
       engineOpts.payloadLimitMb = run.options.payload_limit_mb;
+    }
+    if ('log_payload_limit_mb' in run.options) {
+      engineOpts.logPayloadLimitMb = run.options.log_payload_limit_mb as number;
     }
     if ('run_memory_limit_mb' in run.options) {
       engineOpts.memoryLimitMb = run.options.run_memory_limit_mb;
