@@ -31,6 +31,9 @@ async function run(algo) {
 async function bench(algo: string) {
   console.log(`\n==RUNNING BENCHMARK FOR ${algo.toUpperCase()}==\n`);
 
+  // one once to warm any caching - the very first run is often slowe
+  await run(algo);
+
   // Run 10 times and collect results
   const results = [];
   for (let i = 0; i < count; i++) {

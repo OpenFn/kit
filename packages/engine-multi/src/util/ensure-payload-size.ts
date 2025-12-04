@@ -78,7 +78,7 @@ export const calculateSizeTraverse = async (
     const type = typeof val;
 
     if (type === 'string') {
-      currentSize += Buffer.byteLength(val, 'utf8') + 2;
+      currentSize += val.length + 2;
       continue;
     }
 
@@ -111,7 +111,7 @@ export const calculateSizeTraverse = async (
           // excluded from stringify
           continue;
         }
-        currentSize += Buffer.byteLength(key, 'utf8') + 3; // "key":
+        currentSize += key.length + 3; // "key":
         stack.push(val[key]);
         if (i < keys.length - 1) currentSize += 1; // comma separator
       }
