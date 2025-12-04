@@ -3,9 +3,10 @@ import ensurePayloadSize, {
   verify,
   calculateSizeStringify,
   calculateSizeTraverse,
+  calculateSizeStream,
 } from '../../src/util/ensure-payload-size';
 
-(['stringify', 'traverse'] as const).forEach((algo) => {
+(['stringify', 'traverse', 'stream'] as const).forEach((algo) => {
   test(algo + ': throw limit 0, payload 1 byte', async (t) => {
     await t.throwsAsync(() => verify('x', 0, algo), {
       name: 'PAYLOAD_TOO_LARGE',
@@ -100,63 +101,81 @@ test('size estimation: null value', async (t) => {
   const value = { x: null };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: undefined value', async (t) => {
   const value = { x: undefined };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: string value', async (t) => {
   const value = { x: 'hello world' };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: number value', async (t) => {
   const value = { x: 42 };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: negative number', async (t) => {
   const value = { x: -123.456 };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: boolean true', async (t) => {
   const value = { x: true };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: boolean false', async (t) => {
   const value = { x: false };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: empty object', async (t) => {
   const value = { x: {} };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: empty array', async (t) => {
   const value = { x: [] };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: simple object with mixed types', async (t) => {
@@ -168,14 +187,18 @@ test('size estimation: simple object with mixed types', async (t) => {
   };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: simple array with mixed types', async (t) => {
   const value = { x: ['hello', 42, true, null, false] };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: object with string exceeding limit', async (t) => {
@@ -184,14 +207,18 @@ test('size estimation: object with string exceeding limit', async (t) => {
   };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: array of strings within limit', async (t) => {
   const value = { x: ['a', 'b', 'c', 'd', 'e'] };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: nested object structure', async (t) => {
@@ -214,7 +241,9 @@ test('size estimation: nested object structure', async (t) => {
   };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: nested arrays and objects', async (t) => {
@@ -234,7 +263,9 @@ test('size estimation: nested arrays and objects', async (t) => {
   };
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
 
 test('size estimation: deeply nested object', async (t) => {
@@ -245,5 +276,7 @@ test('size estimation: deeply nested object', async (t) => {
 
   const sizeTraverse = await calculateSizeTraverse(value);
   const sizeStringify = calculateSizeStringify(value);
+  const sizeStream = await calculateSizeStream(value);
   t.is(sizeTraverse, sizeStringify);
+  t.is(sizeStream, sizeStringify);
 });
