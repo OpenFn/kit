@@ -1,6 +1,5 @@
 import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
-import type { RunLogPayload, RunLogLine } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
@@ -11,7 +10,6 @@ import type {
 import {
   createRunState,
   throttle as createThrottle,
-  timeInMicroseconds,
 } from '../util';
 import createLogBatcher from '../util/log-batcher';
 import {
@@ -28,6 +26,7 @@ import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
+import handleRunLog from '../events/run-log';
 
 import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
@@ -35,7 +34,7 @@ import { sendEvent } from '../util/send-event';
 
 const enc = new TextDecoder('utf-8');
 
-export { handleStepComplete, handleStepStart };
+export { handleStepComplete, handleStepStart, handleRunLog as onJobLog };
 
 export type Context = {
   id: UUID; // plan id
@@ -99,9 +98,8 @@ export function execute(
     const throttle = createThrottle();
 
     // Create a log batcher that batches log events over 10ms windows
-    const batchLogs = createLogBatcher(
-      (events: Omit<WorkerLogPayload, 'workflowId'>[]) =>
-        onJobLog(context, events),
+    const batchLogs = createLogBatcher<Omit<WorkerLogPayload, 'workflowId'>>(
+      (events) => handleRunLog(context, events),
       { timeoutMs: 10, logger, id: plan.id }
     );
 
@@ -257,48 +255,6 @@ export function onJobError(context: Context, event: any) {
   }
 }
 
-export function onJobLog(
-  context: Context,
-  events: Omit<WorkerLogPayload, 'workflowId'>[]
-) {
-  const { state, options } = context;
-
-  // Convert each event to a RunLogLine
-  const logs = events.map((evt) => {
-    let message = evt.message as any[];
-
-    if (evt.redacted) {
-      message = [
-        `(Log message redacted: exceeds ${
-          options.logPayloadLimitMb ?? options.payloadLimitMb
-        }mb memory limit)`,
-      ];
-    } else if (typeof evt.message === 'string') {
-      message = JSON.parse(evt.message);
-    }
-
-    const logLine: RunLogLine = {
-      message,
-      source: evt.name,
-      level: evt.level,
-      timestamp: timeInMicroseconds(evt.time as any),
-    };
-
-    if (state.activeStep) {
-      logLine.step_id = state.activeStep;
-    }
-
-    return logLine;
-  });
-
-  // lightning-friendly log payload
-  const payload: RunLogPayload = {
-    run_id: `${state.plan.id}`,
-    logs,
-  };
-
-  return sendEvent<RunLogPayload>(context, RUN_LOG, payload);
-}
 
 export async function loadDataclip(
   context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
