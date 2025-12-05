@@ -74,6 +74,7 @@ export type EngineOptions = {
   maxWorkers?: number;
   memoryLimitMb?: number;
   payloadLimitMb?: number;
+  logPayloadLimitMb?: number;
   repoDir: string;
   resolvers?: LazyResolvers;
   runtimelogger?: Logger;
@@ -109,6 +110,7 @@ const createEngine = async (
   const defaultMemoryLimit = options.memoryLimitMb || DEFAULT_MEMORY_LIMIT_MB;
   const defaultPayloadLimit =
     options.payloadLimitMb || DEFAULT_PAYLOAD_LIMIT_MB;
+  const defaultLogPayloadLimit = options.logPayloadLimitMb;
   const defaultProfile = options.profile ?? DEFAULT_PROFILE;
   const defaultProfilePollInterval =
     options.profilePollInterval ?? DEFAULT_PROFILE_POLL_INTERVAL;
@@ -170,6 +172,7 @@ const createEngine = async (
         runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,
         memoryLimitMb: opts.memoryLimitMb ?? defaultMemoryLimit,
         payloadLimitMb: opts.payloadLimitMb ?? defaultPayloadLimit,
+        logPayloadLimitMb: opts.logPayloadLimitMb ?? defaultLogPayloadLimit,
         jobLogLevel: opts.jobLogLevel,
         profile: defaultProfile,
         profilePollInterval: defaultProfilePollInterval,
