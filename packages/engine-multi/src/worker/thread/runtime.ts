@@ -55,7 +55,7 @@ export const publish = async (
   // Redact any payloads that are too large
   const limit =
     payloadLimits?.[type as keyof PayloadLimits] ?? payloadLimits?.default;
-  const safePayload = ensurePayloadSize(payload, limit);
+  const safePayload = await ensurePayloadSize(payload, limit);
 
   parentPort!.postMessage({
     type,
