@@ -39,18 +39,7 @@ export default (payload: any, limit_mb: number = 10) => {
     try {
       verify(payload[key], limit_mb);
     } catch (e) {
-      // For log objects, preserve the original structure and only replace specific fields
-      if (key === 'log' && newPayload[key]) {
-        newPayload[key] = {
-          ...newPayload[key],
-          ...(replacements[key] ?? replacements.default),
-        };
-      } else {
-        Object.assign(
-          newPayload[key],
-          replacements[key] ?? replacements.default
-        );
-      }
+      Object.assign(newPayload[key], replacements[key] ?? replacements.default);
       newPayload.redacted = true;
     }
   }
