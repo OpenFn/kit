@@ -137,6 +137,6 @@ test('runError should log the reason', async (t) => {
   const context = { channel, state, onFinish: () => {} };
 
   await onRunError(context as any, event);
-  t.is(logEvents[0].message[0], 'Run complete with status: crash');
-  t.is(logEvents[1].message[0], 'Err: it crashed');
+  t.is(logEvents[0].logs[0].message[0], 'Run complete with status: crash');
+  t.is(logEvents[1].logs[0].message[0], 'Err: it crashed');
 });

@@ -173,15 +173,19 @@ export type RunCompletePayload = ExitReason & {
 };
 export type RunCompleteReply = undefined;
 
-export type RunLogPayload = {
+export type RunLogLine = {
   message: Array<string | object>;
   timestamp: TimeInMicroSeconds;
-  run_id: string;
   level?: string;
   source?: string; // namespace
-  job_id?: string;
   step_id?: string;
 };
+
+export type RunLogPayload = {
+  run_id: string;
+  logs: RunLogLine[];
+};
+
 export type RunLogReply = void;
 
 export type StepStartPayload = {

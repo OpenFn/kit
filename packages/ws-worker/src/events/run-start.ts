@@ -43,21 +43,21 @@ export default async function onRunStart(
   });
 
   if ('payloadLimitMb' in options) {
-    await onJobLog(versionLogContext, {
+    await onJobLog(versionLogContext, [{
       // use the fake time in the log
       time,
       message: [`Payload limit: ${options.payloadLimitMb}mb`],
       level: 'info',
       name: 'RTE',
-    });
+    }]);
   }
 
   const versionMessage = calculateVersionString(versions);
 
-  await onJobLog(versionLogContext, {
+  await onJobLog(versionLogContext, [{
     time,
     message: [versionMessage],
     level: 'info',
     name: 'VER',
-  });
+  }]);
 }

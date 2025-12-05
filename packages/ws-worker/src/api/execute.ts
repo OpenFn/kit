@@ -1,6 +1,6 @@
 import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
-import type { RunLogPayload } from '@openfn/lexicon/lightning';
+import type { RunLogPayload, RunLogLine } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
@@ -150,7 +150,10 @@ export function execute(
       addEvent('job-start', throttle(handleStepStart)),
       addEvent('job-complete', throttle(handleStepComplete)),
       addEvent('job-error', throttle(onJobError)),
-      addEvent('workflow-log', throttle(onJobLog)),
+      addEvent(
+        'workflow-log',
+        throttle((ctx: Context, evt: any) => onJobLog(ctx, [evt]))
+      ),
       // This will also resolve the promise
       addEvent('workflow-complete', throttle(handleRunComplete)),
       addEvent('workflow-error', throttle(handleRunError))
@@ -251,33 +254,45 @@ export function onJobError(context: Context, event: any) {
 
 export function onJobLog(
   context: Context,
-  event: Omit<WorkerLogPayload, 'workflowId'>
+  events: Omit<WorkerLogPayload, 'workflowId'>[]
 ) {
   const { state, options } = context;
-  let message = event.message as any[];
 
-  if (event.redacted) {
-    message = [
-      `(Log message redacted: exceeds ${options.payloadLimitMb}mb memory limit)`,
-    ];
-  } else if (typeof event.message === 'string') {
-    message = JSON.parse(event.message);
-  }
-  // lightning-friendly log object
-  const log: RunLogPayload = {
+  // Convert each event to a RunLogLine
+  const logs = events.map((evt) => {
+    let message = evt.message as any[];
+
+    if (evt.redacted) {
+      message = [
+        `(Log message redacted: exceeds ${
+          options.logPayloadLimitMb ?? options.payloadLimitMb
+        }mb memory limit)`,
+      ];
+    } else if (typeof evt.message === 'string') {
+      message = JSON.parse(evt.message);
+    }
+
+    const logLine: RunLogLine = {
+      message,
+      source: evt.name,
+      level: evt.level,
+      timestamp: timeInMicroseconds(evt.time as any),
+    };
+
+    if (state.activeStep) {
+      logLine.step_id = state.activeStep;
+    }
+
+    return logLine;
+  });
+
+  // lightning-friendly log payload
+  const payload: RunLogPayload = {
     run_id: `${state.plan.id}`,
-    message,
-    source: event.name,
-    level: event.level,
-    // @ts-ignore
-    timestamp: timeInMicroseconds(event.time) as string,
+    logs,
   };
 
-  if (state.activeStep) {
-    log.step_id = state.activeStep;
-  }
-
-  return sendEvent<RunLogPayload>(context, RUN_LOG, log);
+  return sendEvent<RunLogPayload>(context, RUN_LOG, payload);
 }
 
 export async function loadDataclip(
