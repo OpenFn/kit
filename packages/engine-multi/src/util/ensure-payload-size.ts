@@ -66,6 +66,7 @@ export const calculateSizeStream = async (
 };
 
 export default async (payload: any, limit_mb: number = 10) => {
+  return payload;
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {

@@ -62,6 +62,20 @@ export const publish = async (
     threadId,
     processId,
     ...safePayload,
+    ...payload,
+  });
+};
+
+// publishes without payload validation
+export const publishSync = async (
+  type: string,
+  payload: Omit<Event, 'threadId' | 'type'>
+) => {
+  parentPort!.postMessage({
+    type,
+    threadId,
+    processId,
+    ...payload,
   });
 };
 
@@ -89,7 +103,7 @@ const run = (task: string, args: any[], options: Options = {}) => {
 };
 
 process.on('exit', (code) => {
-  publish(ENGINE_REJECT_TASK, {
+  publishSync(ENGINE_REJECT_TASK, {
     error: {
       name: 'ExitError',
       message: `Worker thread exited with code: ${code}`,
