@@ -4,13 +4,19 @@ import {
   ENGINE_REJECT_TASK,
   ENGINE_RESOLVE_TASK,
   ENGINE_RUN_TASK,
+  type WorkerEvents,
 } from '../events';
 import ensurePayloadSize from '../../util/ensure-payload-size';
 
 // This constrains the size of any payloads coming out of the worker thread
 // Payloads exceeding this will be redacted
 // (in practice I think this is specifically the state and message keys)
-let payloadLimitMb: number | undefined;
+export type PayloadLimits = {
+  default?: number;
+  [key: string]: number | undefined;
+} & Partial<Record<WorkerEvents, number>>;
+
+let payloadLimits: PayloadLimits | undefined;
 
 type TaskRegistry = Record<string, (...args: any[]) => Promise<any>>;
 
@@ -38,7 +44,7 @@ type Event = {
 
 type Options = {
   memoryLimitMb?: number;
-  payloadLimitMb?: number;
+  payloadLimits?: PayloadLimits;
 };
 
 export const publish = async (
@@ -47,18 +53,20 @@ export const publish = async (
 ) => {
   // Validate the size of every outgoing message
   // Redact any payloads that are too large
-  const safePayload = await ensurePayloadSize(payload, payloadLimitMb);
-  const x = {
+  const limit =
+    payloadLimits?.[type as keyof PayloadLimits] ?? payloadLimits?.default;
+  const safePayload = ensurePayloadSize(payload, limit);
+
+  parentPort!.postMessage({
     type,
     threadId,
     processId,
     ...safePayload,
-  };
-  parentPort!.postMessage(x);
+  });
 };
 
 const run = (task: string, args: any[], options: Options = {}) => {
-  payloadLimitMb = options.payloadLimitMb;
+  payloadLimits = options.payloadLimits;
   tasks[task](...args)
     .then((result) => {
       publish(ENGINE_RESOLVE_TASK, {
@@ -76,7 +84,7 @@ const run = (task: string, args: any[], options: Options = {}) => {
       });
     })
     .finally(() => {
-      payloadLimitMb = undefined;
+      payloadLimits = undefined;
     });
 };
 
