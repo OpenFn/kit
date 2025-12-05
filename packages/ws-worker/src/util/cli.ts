@@ -22,6 +22,7 @@ type Args = {
   lightning?: string;
   lightningPublicKey?: string;
   log?: LogLevel;
+  logPayloadMemory?: number;
   loop?: boolean;
   maxRunDurationSeconds: number;
   messageTimeoutSeconds?: number;
@@ -80,6 +81,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
     WORKER_MAX_PAYLOAD_MB,
+    WORKER_MAX_LOG_PAYLOAD_MB,
     WORKER_MAX_RUN_DURATION_SECONDS,
     WORKER_MAX_RUN_MEMORY_MB,
     WORKER_MESSAGE_TIMEOUT_SECONDS,
@@ -155,6 +157,11 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'Set the log level for stdout (default to info, set to debug for verbose output). Env: WORKER_LOG_LEVEL',
     })
+    .option('log-payload-memory', {
+      description:
+        'Maximum memory allocated to log payloads, in mb. Env: WORKER_MAX_LOG_PAYLOAD_MB',
+      type: 'number',
+    })
     .option('loop', {
       description: 'Disable the claims loop',
       type: 'boolean',
@@ -188,6 +195,7 @@ export default function parseArgs(argv: string[]): Args {
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
+
     .option('max-run-duration-seconds', {
       alias: 't',
       description:
@@ -263,6 +271,11 @@ export default function parseArgs(argv: string[]): Args {
     ),
     runMemory: setArg(args.runMemory, WORKER_MAX_RUN_MEMORY_MB, 500),
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
+    logPayloadMemory: setArg(
+      args.logPayloadMemory,
+      WORKER_MAX_LOG_PAYLOAD_MB,
+      1
+    ),
     maxRunDurationSeconds: setArg(
       args.maxRunDurationSeconds,
       WORKER_MAX_RUN_DURATION_SECONDS,
