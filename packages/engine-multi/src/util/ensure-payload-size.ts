@@ -46,7 +46,10 @@ export default (payload: any, limit_mb: number = 10) => {
           ...(replacements[key] ?? replacements.default),
         };
       } else {
-        Object.assign(newPayload[key], replacements[key] ?? replacements.default);
+        Object.assign(
+          newPayload[key],
+          replacements[key] ?? replacements.default
+        );
       }
       newPayload.redacted = true;
     }

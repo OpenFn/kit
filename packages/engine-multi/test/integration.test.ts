@@ -599,17 +599,16 @@ export default [(state) => {
       logPayloadLimitMb: 0,
     };
 
-    let logWasRedacted = false;
-
     api
       .execute(plan, emptyState, options)
       .on('workflow-log', (evt) => {
         if (evt.name === 'JOB') {
           if (/redacted/i.test(evt.message[0])) {
+            t.pass();
           }
         }
       })
-      .on('workflow-complete', ({ state }) => {
+      .on('workflow-complete', () => {
         done();
       });
   });
@@ -645,7 +644,7 @@ export default [(state) => {
         .on('workflow-log', (evt) => {
           if (evt.name === 'JOB') {
             if (/redacted/i.test(evt.message[0])) {
-              logWasRedacted = true;
+              t.pass('log was redacted');
             }
           }
         })
