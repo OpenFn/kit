@@ -330,6 +330,8 @@ const createSocketAPI = (
     logs.forEach((log) => {
       state.pending[runId].logs.push(log);
 
+      logger?.info(`LOG [${runId}] ${log.message}`);
+
       if (!log.message || !log.source || !log.timestamp || !log.level) {
         payload = {
           status: 'error',
@@ -337,8 +339,6 @@ const createSocketAPI = (
         };
       }
     });
-
-    logger?.info(`LOG [${runId}] ${evt.payload.message[0]}`);
 
     ws.reply<RunLogReply>({
       ref,
