@@ -320,25 +320,23 @@ const createSocketAPI = (
     evt: PhoenixEvent<RunLogPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { run_id: runId } = evt.payload;
 
-    state.pending[runId].logs.push(evt.payload);
+    const { run_id: runId, logs } = evt.payload;
 
     let payload: any = {
       status: 'ok',
     };
 
-    if (
-      !evt.payload.message ||
-      !evt.payload.source ||
-      !evt.payload.timestamp ||
-      !evt.payload.level
-    ) {
-      payload = {
-        status: 'error',
-        response: 'Missing property on log',
-      };
-    }
+    logs.forEach((log) => {
+      state.pending[runId].logs.push(log);
+
+      if (!log.message || !log.source || !log.timestamp || !log.level) {
+        payload = {
+          status: 'error',
+          response: 'Missing property on log',
+        };
+      }
+    });
 
     logger?.info(`LOG [${runId}] ${evt.payload.message[0]}`);
 
