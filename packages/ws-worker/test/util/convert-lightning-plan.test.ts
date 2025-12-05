@@ -114,6 +114,38 @@ test('convert a single job with options', (t) => {
   });
 });
 
+test('convert a single job with log_payload_limit_mb', (t) => {
+  const run: Partial<LightningPlan> = {
+    id: 'w',
+    jobs: [createNode()],
+    triggers: [],
+    edges: [],
+    options: {
+      sanitize: 'obfuscate',
+      run_timeout_ms: 10,
+      run_memory_limit_mb: 500,
+      payload_limit_mb: 20,
+      log_payload_limit_mb: 2,
+    },
+  };
+  const { plan, options } = convertPlan(run as LightningPlan);
+
+  t.deepEqual(plan, {
+    id: 'w',
+    options: {},
+    workflow: {
+      steps: [createJob()],
+    },
+  });
+  t.deepEqual(options, {
+    runTimeoutMs: 10,
+    memoryLimitMb: 500,
+    payloadLimitMb: 20,
+    logPayloadLimitMb: 2,
+    sanitize: 'obfuscate',
+  });
+});
+
 // Note idk how lightningg will handle state/defaults on a job
 // but this is what we'll do right now
 test('convert a single job with data', (t) => {

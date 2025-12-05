@@ -1,6 +1,5 @@
 import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
-import type { RunLogPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
 import type {
   RuntimeEngine,
@@ -8,11 +7,8 @@ import type {
   WorkerLogPayload,
 } from '@openfn/engine-multi';
 
-import {
-  createRunState,
-  throttle as createThrottle,
-  timeInMicroseconds,
-} from '../util';
+import { createRunState, throttle as createThrottle } from '../util';
+import createLogBatcher from '../util/log-batcher';
 import {
   RUN_COMPLETE,
   RUN_LOG,
@@ -27,6 +23,7 @@ import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
+import handleRunLog from '../events/run-log';
 
 import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
@@ -34,7 +31,7 @@ import { sendEvent } from '../util/send-event';
 
 const enc = new TextDecoder('utf-8');
 
-export { handleStepComplete, handleStepStart };
+export { handleStepComplete, handleStepStart, handleRunLog as onJobLog };
 
 export type Context = {
   id: UUID; // plan id
@@ -97,6 +94,12 @@ export function execute(
     });
     const throttle = createThrottle();
 
+    // Create a log batcher that batches log events over 10ms windows
+    const batchLogs = createLogBatcher<Omit<WorkerLogPayload, 'workflowId'>>(
+      (events) => handleRunLog(context, events),
+      { timeoutMs: 10, logger, id: plan.id }
+    );
+
     // Utility function to:
     // a) bind an event handler to a runtime-engine event
     // b) pass the context object into the hander
@@ -150,7 +153,7 @@ export function execute(
       addEvent('job-start', throttle(handleStepStart)),
       addEvent('job-complete', throttle(handleStepComplete)),
       addEvent('job-error', throttle(onJobError)),
-      addEvent('workflow-log', throttle(onJobLog)),
+      addEvent('workflow-log', batchLogs),
       // This will also resolve the promise
       addEvent('workflow-complete', throttle(handleRunComplete)),
       addEvent('workflow-error', throttle(handleRunError))
@@ -247,37 +250,6 @@ export function onJobError(context: Context, event: any) {
   } else {
     return handleStepComplete(context, event, event.error);
   }
-}
-
-export function onJobLog(
-  context: Context,
-  event: Omit<WorkerLogPayload, 'workflowId'>
-) {
-  const { state, options } = context;
-  let message = event.message as any[];
-
-  if (event.redacted) {
-    message = [
-      `(Log message redacted: exceeds ${options.payloadLimitMb}mb memory limit)`,
-    ];
-  } else if (typeof event.message === 'string') {
-    message = JSON.parse(event.message);
-  }
-  // lightning-friendly log object
-  const log: RunLogPayload = {
-    run_id: `${state.plan.id}`,
-    message,
-    source: event.name,
-    level: event.level,
-    // @ts-ignore
-    timestamp: timeInMicroseconds(event.time) as string,
-  };
-
-  if (state.activeStep) {
-    log.step_id = state.activeStep;
-  }
-
-  return sendEvent<RunLogPayload>(context, RUN_LOG, log);
 }
 
 export async function loadDataclip(

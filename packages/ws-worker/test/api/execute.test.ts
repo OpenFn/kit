@@ -87,16 +87,6 @@ test('jobLog should send a log event outside a run', async (t) => {
   // The logger should print in nanoseconds (19 digits)
   t.is(log.time.length, 19);
 
-  const result = {
-    run_id: plan.id,
-    message: JSON.parse(log.message),
-    // Conveniently this won't have rounding errors because the last
-    // 3 digits are always 000, because of how we generate the stamp above
-    timestamp: log.time.substring(0, 16),
-    level: log.level,
-    source: log.name,
-  };
-
   const state = {
     plan,
     // No active run
@@ -104,11 +94,18 @@ test('jobLog should send a log event outside a run', async (t) => {
 
   const channel = mockChannel({
     [RUN_LOG]: (evt) => {
-      t.deepEqual(evt, result);
+      t.is(evt.run_id, plan.id);
+      t.is(evt.logs.length, 1);
+      t.deepEqual(evt.logs[0].message, JSON.parse(log.message));
+      // Conveniently this won't have rounding errors because the last
+      // 3 digits are always 000, because of how we generate the stamp above
+      t.is(evt.logs[0].timestamp, log.time.substring(0, 16));
+      t.is(evt.logs[0].level, log.level);
+      t.is(evt.logs[0].source, log.name);
     },
   });
 
-  await onJobLog({ channel, state } as any, log);
+  await onJobLog({ channel, state } as any, [log]);
 });
 
 test('jobLog should replace the message of redacted logs', async (t) => {
@@ -131,7 +128,8 @@ test('jobLog should replace the message of redacted logs', async (t) => {
 
   const channel = mockChannel({
     [RUN_LOG]: (evt) => {
-      t.regex(evt.message[0], /redacted/i);
+      t.is(evt.logs.length, 1);
+      t.regex(evt.logs[0].message[0], /redacted/i);
     },
   });
 
@@ -139,7 +137,7 @@ test('jobLog should replace the message of redacted logs', async (t) => {
     payloadLimitMb: 1,
   };
 
-  await onJobLog({ channel, state, options } as any, log);
+  await onJobLog({ channel, state, options } as any, [log]);
 });
 
 test('jobLog should send a log event inside a run', async (t) => {
@@ -164,15 +162,16 @@ test('jobLog should send a log event inside a run', async (t) => {
 
   const channel = mockChannel({
     [RUN_LOG]: (evt) => {
-      t.truthy(evt.step_id);
-      t.deepEqual(evt.message, JSON.parse(log.message));
-      t.is(evt.level, log.level);
-      t.is(evt.source, log.name);
-      t.is(evt.timestamp, log.time.substring(0, 16));
+      t.is(evt.logs.length, 1);
+      t.truthy(evt.logs[0].step_id);
+      t.deepEqual(evt.logs[0].message, JSON.parse(log.message));
+      t.is(evt.logs[0].level, log.level);
+      t.is(evt.logs[0].source, log.name);
+      t.is(evt.logs[0].timestamp, log.time.substring(0, 16));
     },
   });
 
-  await onJobLog({ channel, state } as any, log);
+  await onJobLog({ channel, state } as any, [log]);
 });
 
 test('jobError should trigger step:complete with a reason', async (t) => {

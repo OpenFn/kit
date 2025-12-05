@@ -4,6 +4,7 @@ import sendEvent from './send-event';
 import stringify from './stringify';
 import throttle from './throttle';
 import tryWithBackoff from './try-with-backoff';
+import logBatcher from './log-batcher';
 export * from './timestamp';
 
 export {
@@ -13,4 +14,5 @@ export {
   stringify,
   throttle,
   tryWithBackoff,
+  logBatcher,
 };

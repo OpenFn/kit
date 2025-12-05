@@ -46,6 +46,7 @@ export type ExecutionContextConstructor = {
 
 export type ExecuteOptions = {
   payloadLimitMb?: number;
+  logPayloadLimitMb?: number;
   memoryLimitMb?: number;
   resolvers?: LazyResolvers;
   runTimeoutMs?: number;

@@ -53,6 +53,7 @@ export type ServerOptions = {
   messageTimeoutSeconds?: number;
   claimTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
+  logPayloadLimitMb?: number; // max memory limit for log payloads specifically
   collectionsVersion?: string;
   collectionsUrl?: string;
   monorepoDir?: string;
@@ -303,6 +304,10 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         // Default the payload limit if it's not otherwise set on the run options
         if (!('payloadLimitMb' in options)) {
           options.payloadLimitMb = app.options.payloadLimitMb;
+        }
+        // Default the log payload limit if it's not otherwise set on the run options
+        if (!('logPayloadLimitMb' in options)) {
+          options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =

@@ -241,7 +241,7 @@ test('log when the output_dataclip is too big', async (t) => {
 
   const channel = mockChannel({
     [RUN_LOG]: (e) => {
-      t.regex(e.message[0], /dataclip exceeds payload limit/i);
+      t.regex(e.logs[0].message[0], /dataclip exceeds payload limit/i);
     },
     [STEP_COMPLETE]: () => true,
   });

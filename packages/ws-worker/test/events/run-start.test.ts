@@ -123,7 +123,7 @@ test('run:start should log the version number', async (t) => {
   const channel = mockChannel({
     [RUN_START]: () => true,
     [RUN_LOG]: (evt) => {
-      if (evt.source === 'VER') {
+      if (evt.logs[0].source === 'VER') {
         logEvent = evt;
       }
       return true;
@@ -133,8 +133,8 @@ test('run:start should log the version number', async (t) => {
   await handleRunStart({ channel, state } as any, event);
 
   t.truthy(logEvent);
-  t.is(logEvent.level, 'info');
-  const [message] = logEvent.message;
+  t.is(logEvent.logs[0].level, 'info');
+  const [message] = logEvent.logs[0].message;
   t.log(message);
   // This just a light test of the string to make sure it's here
   // It uses src/util/versions, which is tested elsewhere

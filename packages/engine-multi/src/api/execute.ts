@@ -16,6 +16,7 @@ import preloadCredentials from './preload-credentials';
 import { ExecutionError } from '../errors';
 import type { RunOptions } from '../worker/thread/run';
 import { COMPILE_COMPLETE, COMPILE_START, ExternalEvents } from '../events';
+import type { PayloadLimits } from '../worker/thread/runtime';
 
 const execute = async (context: ExecutionContext) => {
   const { state, callWorker, logger, options } = context;
@@ -47,9 +48,18 @@ const execute = async (context: ExecutionContext) => {
       profilePollInteval: context.options.profilePollInterval,
     } as RunOptions;
 
+    // Construct the payload limits object
+    const payloadLimits: PayloadLimits = {};
+    if (options.payloadLimitMb !== undefined) {
+      payloadLimits.default = options.payloadLimitMb;
+    }
+    if (options.logPayloadLimitMb !== undefined) {
+      payloadLimits[workerEvents.LOG] = options.logPayloadLimitMb;
+    }
+
     const workerOptions = {
       memoryLimitMb: options.memoryLimitMb,
-      payloadLimitMb: options.payloadLimitMb,
+      payloadLimits,
       timeout: options.runTimeoutMs,
     };
 
