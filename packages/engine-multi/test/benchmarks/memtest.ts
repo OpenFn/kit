@@ -4,7 +4,7 @@
 import { getHeapStatistics } from 'node:v8';
 import { createMockLogger } from '@openfn/logger';
 import { randomUUID } from 'node:crypto';
-import createAPI from '../src/api';
+import createAPI from '../../src/api';
 
 let completedCount = 0;
 const logger = createMockLogger();

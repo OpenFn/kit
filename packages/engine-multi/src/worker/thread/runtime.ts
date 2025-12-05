@@ -47,23 +47,36 @@ type Options = {
   payloadLimits?: PayloadLimits;
 };
 
-export const publish = (
+export const publish = async (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>
 ) => {
   // Validate the size of every outgoing message
   // Redact any payloads that are too large
-  // Use event-specific limit if available, otherwise use default
   const limit =
     payloadLimits?.[type as keyof PayloadLimits] ?? payloadLimits?.default;
-  const safePayload = ensurePayloadSize(payload, limit);
-  const x = {
+  const safePayload = await ensurePayloadSize(payload, limit);
+
+  parentPort!.postMessage({
     type,
     threadId,
     processId,
     ...safePayload,
-  };
-  parentPort!.postMessage(x);
+    ...payload,
+  });
+};
+
+// publishes without payload validation
+export const publishSync = async (
+  type: string,
+  payload: Omit<Event, 'threadId' | 'type'>
+) => {
+  parentPort!.postMessage({
+    type,
+    threadId,
+    processId,
+    ...payload,
+  });
 };
 
 const run = (task: string, args: any[], options: Options = {}) => {
@@ -90,7 +103,7 @@ const run = (task: string, args: any[], options: Options = {}) => {
 };
 
 process.on('exit', (code) => {
-  publish(ENGINE_REJECT_TASK, {
+  publishSync(ENGINE_REJECT_TASK, {
     error: {
       name: 'ExitError',
       message: `Worker thread exited with code: ${code}`,
