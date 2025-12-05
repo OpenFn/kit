@@ -49,29 +49,21 @@ export const calculateSizeStream = async (
   value: any,
   limit?: number
 ): Promise<number> => {
-  let size = 0;
+  let size_bytes = 0;
 
-  try {
-    // @ts-ignore - streamingStringify returns an async iterable
-    const stream = new JsonStreamStringify(value);
+  const stream = new JsonStreamStringify(value);
 
-    // Consume the stream chunk by chunk
-    for await (const chunk of stream) {
-      // Each chunk is a string token from the JSON output
-      size += Buffer.byteLength(chunk, 'utf8');
-      // size +=
-      // Early exit if we've exceeded the limit
-      if (limit !== undefined && size > limit) {
-        // The stream should stop naturally once we stop consuming
-        return size;
-      }
+  for await (const chunk of stream) {
+    // Each chunk is a string token from the JSON output
+    size_bytes += Buffer.byteLength(chunk, 'utf8');
+
+    if (limit !== undefined && size_bytes > limit) {
+      break;
     }
-  } catch (e) {
-    // If streaming fails, fall back to regular stringify
-    return calculateSizeStringify(value);
   }
+  stream.destroy();
 
-  return size;
+  return size_bytes;
 };
 
 export default async (payload: any, limit_mb: number = 10) => {
