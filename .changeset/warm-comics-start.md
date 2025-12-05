@@ -1,5 +1,4 @@
 ---
-'@openfn/ws-worker': minor
 '@openfn/ws-lexicon': minor
 '@openfn/ws-engine-multi': minor
 ---
