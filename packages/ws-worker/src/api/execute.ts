@@ -13,6 +13,7 @@ import {
   throttle as createThrottle,
   timeInMicroseconds,
 } from '../util';
+import createLogBatcher from '../util/log-batcher';
 import {
   RUN_COMPLETE,
   RUN_LOG,
@@ -97,6 +98,13 @@ export function execute(
     });
     const throttle = createThrottle();
 
+    // Create a log batcher that batches log events over 10ms windows
+    const batchLogs = createLogBatcher(
+      (events: Omit<WorkerLogPayload, 'workflowId'>[]) =>
+        onJobLog(context, events),
+      { timeoutMs: 10, logger, id: plan.id }
+    );
+
     // Utility function to:
     // a) bind an event handler to a runtime-engine event
     // b) pass the context object into the hander
@@ -150,10 +158,7 @@ export function execute(
       addEvent('job-start', throttle(handleStepStart)),
       addEvent('job-complete', throttle(handleStepComplete)),
       addEvent('job-error', throttle(onJobError)),
-      addEvent(
-        'workflow-log',
-        throttle((ctx: Context, evt: any) => onJobLog(ctx, [evt]))
-      ),
+      addEvent('workflow-log', batchLogs),
       // This will also resolve the promise
       addEvent('workflow-complete', throttle(handleRunComplete)),
       addEvent('workflow-error', throttle(handleRunError))
