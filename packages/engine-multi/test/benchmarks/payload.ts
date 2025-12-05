@@ -1,3 +1,9 @@
+/**
+ * To measure memory usage:
+ * 
+ * /usr/bin/time -v pnpm tsx test/payload.ts
+ */
+
 import { verify } from '../../src/util/ensure-payload-size';
 
 // this is 2.63mb of data
