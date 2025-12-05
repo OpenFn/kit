@@ -47,6 +47,9 @@ type Options = {
   payloadLimits?: PayloadLimits;
 };
 
+// instantly this fails with batching
+// I have to pass an array of events to publish and ensuresize of each
+// I can't just send one object with a bunch of logs
 export const publish = (
   type: string,
   payload: Omit<Event, 'threadId' | 'type'>

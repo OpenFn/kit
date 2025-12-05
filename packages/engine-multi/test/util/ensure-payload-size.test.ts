@@ -64,18 +64,22 @@ test('redact payload with state', (t) => {
   t.true(newPayload.redacted);
 });
 
-test('redact payload with log message', (t) => {
+test('redact payload with logs', (t) => {
   const payload = {
-    log: {
-      message: [new Array(1024 * 1024).fill('z').join('')],
-    },
+    logs: [
+      {
+        message: [new Array(1024 * 1024).fill('z').join('')],
+      },
+    ],
   };
 
   const newPayload = ensurePayloadSize(payload, 1);
-  t.deepEqual(newPayload.log, {
-    message: ['[REDACTED: Message length exceeds payload limit]'],
-  });
-  t.true(newPayload.redacted);
+  t.deepEqual(newPayload.logs, [
+    {
+      message: ['[REDACTED: log length exceeds payload limit]'],
+      redacted: true,
+    },
+  ]);
 });
 
 test('redact payload with final_state', (t) => {

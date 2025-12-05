@@ -1,11 +1,9 @@
 // This specifies which keys of an event payload to potentially redact
 // if they are too big
-const KEYS_TO_VERIFY = ['state', 'final_state', 'log'];
+const KEYS_TO_VERIFY = ['state', 'final_state', 'message'];
 
 const replacements: Record<string, any> = {
-  log: {
-    message: ['[REDACTED: Message length exceeds payload limit]'],
-  },
+  message: ['[REDACTED: log length exceeds payload limit]'],
   default: {
     data: '[REDACTED]',
   },
@@ -32,7 +30,7 @@ export const verify = (value: any, limit_mb: number = 10) => {
   }
 };
 
-export default (payload: any, limit_mb: number = 10) => {
+const ensure = (payload: any, limit_mb: number = 10) => {
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {
@@ -43,6 +41,15 @@ export default (payload: any, limit_mb: number = 10) => {
       newPayload.redacted = true;
     }
   }
+  // special handling for batched log events
+  if (payload.logs) {
+    return {
+      ...payload,
+      logs: payload.logs.map((l: any) => ensure(l, limit_mb)),
+    };
+  }
 
   return newPayload;
 };
+
+export default ensure;

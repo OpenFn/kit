@@ -75,6 +75,7 @@ export type SerializedLogEvent = Omit<JSONLog, 'message'> & {
   // the message is either an array of strings/object to log,
   // or a JSON array that was previously serialized
   message: string | any[];
+  redacted: true;
 };
 
 export interface LogEvent extends InternalEvent {
