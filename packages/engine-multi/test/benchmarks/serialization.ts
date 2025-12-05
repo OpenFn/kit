@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
+// @ts-ignore
 import { $ } from 'bun';
 
 const count = parseInt(process.argv[2] ?? '10');
 
-async function run(algo) {
+async function run(algo: string) {
   // Run the command and capture both stdout and stderr
   const proc =
     await $`/usr/bin/time -v pnpm tsx test/payload.ts ${algo}`.quiet();
@@ -75,8 +76,11 @@ async function bench(algo: string) {
   return stats;
 }
 
+// @ts-ignore
 const stringifyStats = await bench('stringify');
+// @ts-ignore
 const traverseStats = await bench('traverse');
+// @ts-ignore
 const streamStats = await bench('stream');
 
 // Calculate percentage differences (traverse vs stringify baseline)
@@ -124,14 +128,8 @@ console.log(
 );
 
 console.log('\nMemory Usage:');
-console.log(
-  `  Min: ${calcDiff(stringifyStats.mem.min, streamStats.mem.min)}%`
-);
-console.log(
-  `  Max: ${calcDiff(stringifyStats.mem.max, streamStats.mem.max)}%`
-);
-console.log(
-  `  Avg: ${calcDiff(stringifyStats.mem.avg, streamStats.mem.avg)}%`
-);
+console.log(`  Min: ${calcDiff(stringifyStats.mem.min, streamStats.mem.min)}%`);
+console.log(`  Max: ${calcDiff(stringifyStats.mem.max, streamStats.mem.max)}%`);
+console.log(`  Avg: ${calcDiff(stringifyStats.mem.avg, streamStats.mem.avg)}%`);
 
 console.log('\n(Negative values mean stream is better)');
