@@ -7,10 +7,7 @@ import type {
   WorkerLogPayload,
 } from '@openfn/engine-multi';
 
-import {
-  createRunState,
-  throttle as createThrottle,
-} from '../util';
+import { createRunState, throttle as createThrottle } from '../util';
 import createLogBatcher from '../util/log-batcher';
 import {
   RUN_COMPLETE,
@@ -254,7 +251,6 @@ export function onJobError(context: Context, event: any) {
     return handleStepComplete(context, event, event.error);
   }
 }
-
 
 export async function loadDataclip(
   context: Pick<Context, 'logger' | 'channel' | 'id' | 'options'>,
