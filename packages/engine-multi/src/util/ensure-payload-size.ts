@@ -1,4 +1,3 @@
-// @ts-ignore - no type definitions available
 import { JsonStreamStringify } from 'json-stream-stringify';
 
 // This specifies which keys of an event payload to potentially redact
