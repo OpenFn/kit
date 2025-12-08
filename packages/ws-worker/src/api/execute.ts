@@ -8,29 +8,16 @@ import type {
   WorkerLogPayload,
 } from '@openfn/engine-multi';
 
-import {
-  createRunState,
-  throttle as createThrottle,
-  timeInMicroseconds,
-} from '../util';
-import {
-  RUN_COMPLETE,
-  RUN_LOG,
-  RUN_START,
-  GET_DATACLIP,
-  STEP_COMPLETE,
-  STEP_START,
-  GET_CREDENTIAL,
-} from '../events';
-import handleRunStart from '../events/run-start';
+import { createRunState, timeInMicroseconds } from '../util';
+import { RUN_LOG, GET_DATACLIP, GET_CREDENTIAL } from '../events';
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
-import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
 
 import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
 import { sendEvent } from '../util/send-event';
+import { eventProcessor } from './process-events';
 
 const enc = new TextDecoder('utf-8');
 
@@ -49,15 +36,6 @@ export type Context = {
 };
 
 // mapping engine events to lightning events
-const eventMap = {
-  'workflow-start': RUN_START,
-  'job-start': STEP_START,
-  'job-complete': STEP_COMPLETE,
-  'workflow-log': RUN_LOG,
-  'workflow-complete': RUN_COMPLETE,
-};
-
-type EventHandler = (context: any, event: any) => void;
 
 // pass a web socket connected to the run channel
 // this thing will do all the work
@@ -95,68 +73,8 @@ export function execute(
         runId: plan.id,
       },
     });
-    const throttle = createThrottle();
 
-    // Utility function to:
-    // a) bind an event handler to a runtime-engine event
-    // b) pass the context object into the hander
-    // c) log the response from the websocket from lightning
-    // TODO for debugging and monitoring, we should also send events to the worker's event emitter
-    const addEvent = (eventName: string, handler: EventHandler) => {
-      const wrappedFn = async (event: any) => {
-        if (eventName !== 'workflow-log') {
-          Sentry.addBreadcrumb({
-            category: 'event',
-            message: eventName,
-            level: 'info',
-          });
-        }
-
-        // TODO this logging is in the wrong place
-        // This actually logs errors coming out of the worker
-        // But it presents as logging from messages being send to lightning
-        // really this messaging should move into send event
-
-        // @ts-ignore
-        const lightningEvent = eventMap[eventName] ?? eventName;
-        try {
-          // updateSentryEvent(eventName);
-          let start = Date.now();
-          await handler(context, event);
-          logger.info(
-            `${plan.id} :: sent ${lightningEvent} :: OK :: ${
-              Date.now() - start
-            }ms`
-          );
-        } catch (e: any) {
-          if (!e.reportedToSentry) {
-            Sentry.captureException(e);
-            logger.error(e);
-          }
-          // Do nothing else here: the error should have been handled
-          // and life will go on
-        }
-      };
-      return {
-        [eventName]: wrappedFn,
-      };
-    };
-
-    // TODO listeners need to be called in a strict queue
-    // so that they send in order
-    const listeners = Object.assign(
-      {},
-      addEvent('workflow-start', throttle(handleRunStart)),
-      addEvent('job-start', throttle(handleStepStart)),
-      addEvent('job-complete', throttle(handleStepComplete)),
-      addEvent('job-error', throttle(onJobError)),
-      addEvent('workflow-log', throttle(onJobLog)),
-      // This will also resolve the promise
-      addEvent('workflow-complete', throttle(handleRunComplete)),
-      addEvent('workflow-error', throttle(handleRunError))
-      // TODO send autoinstall logs
-    );
-    engine.listen(plan.id!, listeners);
+    eventProcessor(engine, context, plan.id);
 
     const resolvers = {
       credential: (id: string) => loadCredential(context, id),
