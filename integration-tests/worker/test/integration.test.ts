@@ -963,6 +963,7 @@ test.serial('override the worker payload through run options', (t) => {
 });
 
 test.serial('Redact logs which exceed the payload limit', (t) => {
+  t.plan(2);
   return new Promise(async (done) => {
     if (!worker.destroyed) {
       await worker.destroy();
@@ -988,9 +989,12 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
     };
 
     lightning.on('run:log', (evt) => {
-      if (evt.payload.source === 'JOB') {
-        t.regex(evt.payload.message[0], /redacted/i);
-      }
+      evt.payload.logs.forEach((log) => {
+        if (log.source === 'JOB') {
+          t.regex(log.message[0], /redacted/i);
+          t.pass();
+        }
+      });
     });
 
     lightning.enqueueRun(run);
