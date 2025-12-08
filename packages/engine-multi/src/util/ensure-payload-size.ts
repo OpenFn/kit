@@ -1,3 +1,5 @@
+import { JsonStreamStringify } from 'json-stream-stringify';
+
 // This specifies which keys of an event payload to potentially redact
 // if they are too big
 const KEYS_TO_VERIFY = ['state', 'final_state', 'log'];
@@ -11,18 +13,22 @@ const replacements: Record<string, any> = {
   },
 };
 
-export const verify = (value: any, limit_mb: number = 10) => {
+export const verify = async (
+  value: any,
+  limit_mb: number = 10,
+  algo: 'stringify' | 'stream' = 'stringify'
+) => {
   if (value && !isNaN(limit_mb)) {
-    let size_mb = 0;
-    try {
-      const str = typeof value === 'string' ? value : JSON.stringify(value);
-      const size_bytes = Buffer.byteLength(str, 'utf8');
-      size_mb = size_bytes / 1024 / 1024;
-    } catch (e) {
-      // do nothing
+    const limitBytes = limit_mb * 1024 * 1024;
+
+    let sizeBytes: number;
+    if (algo === 'stream') {
+      sizeBytes = await calculateSizeStream(value, limitBytes);
+    } else {
+      sizeBytes = calculateSizeStringify(value);
     }
 
-    if (size_mb > limit_mb) {
+    if (sizeBytes > limitBytes) {
       const e = new Error();
       // @ts-ignore
       e.name = 'PAYLOAD_TOO_LARGE';
@@ -32,12 +38,39 @@ export const verify = (value: any, limit_mb: number = 10) => {
   }
 };
 
-export default (payload: any, limit_mb: number = 10) => {
+export const calculateSizeStringify = (value: any): number => {
+  const str = typeof value === 'string' ? value : JSON.stringify(value);
+  const size_bytes = Buffer.byteLength(str, 'utf8');
+  return size_bytes;
+};
+
+export const calculateSizeStream = async (
+  value: any,
+  limit?: number
+): Promise<number> => {
+  let size_bytes = 0;
+
+  const stream = new JsonStreamStringify(value);
+
+  for await (const chunk of stream) {
+    // Each chunk is a string token from the JSON output
+    size_bytes += Buffer.byteLength(chunk, 'utf8');
+
+    if (limit !== undefined && size_bytes > limit) {
+      break;
+    }
+  }
+  stream.destroy();
+
+  return size_bytes;
+};
+
+export default async (payload: any, limit_mb: number = 10) => {
   const newPayload = { ...payload };
 
   for (const key of KEYS_TO_VERIFY) {
     try {
-      verify(payload[key], limit_mb);
+      await verify(payload[key], limit_mb);
     } catch (e) {
       Object.assign(newPayload[key], replacements[key] ?? replacements.default);
       newPayload.redacted = true;
