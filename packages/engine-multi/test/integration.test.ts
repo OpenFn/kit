@@ -518,7 +518,7 @@ test.serial('redact final state if it exceeds the payload limit', (t) => {
 
     const expression = `
 export default [(state) => {
-  state.data = new Array(1024 * 1024).fill('a')
+  state.data = new Array(1024 * 512).fill('a').join('')
   return state;
 }]`;
 
@@ -528,7 +528,7 @@ export default [(state) => {
       },
     ]);
     const options = {
-      payloadLimitMb: 0.5,
+      payloadLimitMb: 0.1,
     };
 
     api
