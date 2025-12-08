@@ -2,16 +2,25 @@ import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
 import type { RunLogPayload } from '@openfn/lexicon/lightning';
 import type { Logger } from '@openfn/logger';
-import type {
+import {
   RuntimeEngine,
   Resolvers,
   WorkerLogPayload,
+  JOB_COMPLETE,
+  JOB_START,
+  WORKFLOW_COMPLETE,
+  WORKFLOW_LOG,
+  WORKFLOW_START,
+  JOB_ERROR,
+  WORKFLOW_ERROR,
 } from '@openfn/engine-multi';
 
 import { createRunState, timeInMicroseconds } from '../util';
 import { RUN_LOG, GET_DATACLIP, GET_CREDENTIAL } from '../events';
+import handleRunStart from '../events/run-start';
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
+import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
 
 import type { Channel, RunState } from '../types';
@@ -74,7 +83,15 @@ export function execute(
       },
     });
 
-    eventProcessor(engine, context, plan.id);
+    eventProcessor(engine, context, {
+      [WORKFLOW_START]: handleRunStart,
+      [JOB_START]: handleStepStart,
+      [JOB_COMPLETE]: handleStepComplete,
+      [JOB_ERROR]: onJobError,
+      [WORKFLOW_LOG]: onJobLog,
+      [WORKFLOW_COMPLETE]: handleRunComplete,
+      [WORKFLOW_ERROR]: handleRunError,
+    });
 
     const resolvers = {
       credential: (id: string) => loadCredential(context, id),
