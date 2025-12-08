@@ -2,9 +2,11 @@ import * as Sentry from '@sentry/node';
 
 import {
   JOB_COMPLETE,
+  JOB_ERROR,
   JOB_START,
   RuntimeEngine,
   WORKFLOW_COMPLETE,
+  WORKFLOW_ERROR,
   WORKFLOW_LOG,
   WORKFLOW_START,
 } from '@openfn/engine-multi';
@@ -12,21 +14,19 @@ import {
   RUN_COMPLETE,
   RUN_LOG,
   RUN_START,
-  GET_DATACLIP,
   STEP_COMPLETE,
   STEP_START,
-  GET_CREDENTIAL,
 } from '../events';
 import { Context } from './execute';
 
 export type EventHandler = (context: any, event: any) => void;
 
 const eventMap = {
-  'workflow-start': RUN_START,
-  'job-start': STEP_START,
-  'job-complete': STEP_COMPLETE,
-  'workflow-log': RUN_LOG,
-  'workflow-complete': RUN_COMPLETE,
+  [WORKFLOW_START]: RUN_START,
+  [JOB_START]: STEP_START,
+  [JOB_COMPLETE]: STEP_COMPLETE,
+  [WORKFLOW_LOG]: RUN_LOG,
+  [WORKFLOW_COMPLETE]: RUN_COMPLETE,
 };
 
 // this function will:
@@ -46,8 +46,8 @@ export function eventProcessor(
     const evt = queue.shift();
     if (evt) {
       await process(evt.name, evt.event);
+      next();
     }
-    next();
   };
 
   const process = async (name: string, event: any) => {
@@ -95,7 +95,9 @@ export function eventProcessor(
     JOB_START,
     JOB_COMPLETE,
     WORKFLOW_LOG,
-  ].reduce((obj, e) => Object.assign(obj, { [e]: enqueue }), {});
+    JOB_ERROR,
+    WORKFLOW_ERROR,
+  ].reduce((obj, e) => Object.assign(obj, { [e]: (p) => enqueue(e, p) }), {});
 
   engine.listen(planId, e);
 }

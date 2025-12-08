@@ -83,7 +83,7 @@ test.serial(`events: lightning should respond to a ${e.CLAIM} event`, (t) => {
   });
 });
 
-test.serial.only(
+test.serial(
   `events: lightning should respond to a ${e.CLAIM} event with an run id and token`,
   (t) => {
     return new Promise((done) => {
