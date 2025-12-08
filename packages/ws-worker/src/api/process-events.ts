@@ -60,6 +60,7 @@ export function eventProcessor(
     }
 
     if (name in callbacks) {
+      // @ts-ignore
       const lightningEvent = eventMap[name] ?? name;
       try {
         let start = Date.now();
@@ -97,7 +98,10 @@ export function eventProcessor(
     WORKFLOW_LOG,
     JOB_ERROR,
     WORKFLOW_ERROR,
-  ].reduce((obj, e) => Object.assign(obj, { [e]: (p) => enqueue(e, p) }), {});
+  ].reduce(
+    (obj, e) => Object.assign(obj, { [e]: (p: any) => enqueue(e, p) }),
+    {}
+  );
 
   engine.listen(planId, e);
 }
