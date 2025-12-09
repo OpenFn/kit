@@ -399,6 +399,93 @@ test('should interrupt a batch of log events', async (t) => {
   t.is(second, 1);
 });
 
+test('should respect the limit', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn((s) => {
+      console.log(1);
+      console.log(2);
+      console.log(3);
+      console.log(4);
+      return {};
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: number[] = [];
+
+  const callbacks = {
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push(event);
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+    batchLimit: 2,
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+  await waitForAsync(50);
+
+  t.is(events.length, 2);
+  t.is(events[0].length, 2);
+  t.is(events[1].length, 2);
+});
+
+test('should respect the interval', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn(async (s) => {
+      console.log(1);
+      await new Promise((resolve) => setTimeout(() => resolve(s), 5)),
+      console.log(3);
+      return {};
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: number[] = [];
+
+  const callbacks = {
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push(event);
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+    batchInterval: 2,
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+  await waitForAsync(50);
+
+  t.is(events.length, 2);
+  t.is(events[0].length, 1);
+  t.is(events[1].length, 1);
+});
+
 test('should handle two batches of logs', async (t) => {
   const engine = await createMockEngine();
   // syntax is weird because of how the fake RTE works
@@ -447,9 +534,6 @@ test('should handle two batches of logs', async (t) => {
   t.is(first, 2);
   t.is(second, 2);
 });
-
-// TODO: test a slow job with some batched and some non batched logs
-// lots of timeouts
 
 test('should process events in the correct order with batching', async (t) => {
   const engine = await createMockEngine();
@@ -511,4 +595,117 @@ test('should process events in the correct order with batching', async (t) => {
 
   t.is(events[3].type, 'job-complete');
   t.is(events[4].type, 'workflow-complete');
+});
+
+test('queue events behind a slow event', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn((s) => {
+      for(let i=0;i<10;i++) {
+        console.log(i);
+      }
+    })`
+  );
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: number[] = [];
+
+  const callbacks = {
+    // the job start event should stall
+    [JOB_START]: () => {
+      return new Promise((resolve) => setTimeout(resolve, 50));
+    },
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push(event.length);
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+    // set the timeout super long
+    // We don't want the regular timeout to fire
+    // We want to instantly send the batch
+    batchInterval: 5000,
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+
+  await waitForAsync(100);
+  // Should only be one event triggered
+  t.is(events.length, 1);
+
+  // should be a batch of 10
+  t.is(events[0], 10);
+});
+
+// This isn't the most watertight test - but I've debugged it closely and it seems
+// to do the right thing
+test.only('queue events behind a slow event II', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `
+    // This first batch should be triggered from a full queue
+    // after the start event
+    fn((s) => {
+      for(let i=0;i<10;i++) {
+        console.log(i);
+      }
+    }),
+    wait(50),
+    // This second batch should be triggered
+    // on the fly, and fire when full (not when timed out)
+    fn((s) => {
+      for(let i=100;i<110;i++) {
+        console.log(i);
+      }
+    })`
+  );
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: number[] = [];
+
+  const callbacks = {
+    // the job start event should stall
+    [JOB_START]: () => {
+      return new Promise((resolve) => setTimeout(resolve, 50));
+    },
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      console.log(event);
+      events.push(event.length);
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+    // set the timeout super long
+    // We don't want the regular timeout to fire
+    // We want to instantly send the batch
+    batchInterval: 5000,
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+
+  await waitForAsync(100);
+
+  t.is(events.length, 2);
+  t.is(events[0], 10);
+  t.is(events[1], 10);
 });

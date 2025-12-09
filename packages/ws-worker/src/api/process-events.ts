@@ -23,7 +23,12 @@ export type EventHandler = (context: any, event: any) => void;
 
 export type EventProcessorOptions = {
   batch?: Record<string, true>;
+  batchInterval?: number;
+  batchLimit?: number;
 };
+
+const DEFAULT_BATCH_LIMIT = 10;
+const DEFAULT_BATCH_INTERVAL = 10;
 
 const eventMap = {
   [WORKFLOW_START]: RUN_START,
@@ -52,6 +57,10 @@ export function eventProcessor(
   options: EventProcessorOptions = {}
 ) {
   const { id: planId, logger } = context;
+  const {
+    batchLimit: limit = DEFAULT_BATCH_LIMIT,
+    batchInterval: interval = DEFAULT_BATCH_INTERVAL,
+  } = options;
 
   const queue: any = [];
 
@@ -100,6 +109,10 @@ export function eventProcessor(
     if (name === activeBatch) {
       // if there's a batch open, just push the event
       batch.push(event);
+
+      if (batch.length >= limit) {
+        await sendBatch(name);
+      }
       return;
     } else if (activeBatch) {
       // If a different event comes in, send the batch (and carry on processing the event)
@@ -121,8 +134,10 @@ export function eventProcessor(
           while (queue.length > 1 && queue[1].name === name) {
             const [nextBatchItem] = queue.splice(1, 1);
             batch.push(nextBatchItem.event);
-            if (batch.length > 10) {
-              break;
+
+            if (batch.length >= limit) {
+              // If we're at the batch limit, return right away
+              return sendBatch(name);
             }
           }
 
@@ -131,7 +146,7 @@ export function eventProcessor(
             const batchName = activeBatch!;
             batchTimeout = setTimeout(async () => {
               sendBatch(batchName);
-            }, 10);
+            }, interval);
           }
           return;
         }
