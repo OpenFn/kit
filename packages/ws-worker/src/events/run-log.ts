@@ -14,6 +14,11 @@ export default async function onRunLog(
   context: Context,
   events: Omit<WorkerLogPayload, 'workflowId'>[]
 ) {
+  // Little hack for non-batch mode
+  if (!Array.isArray(events)) {
+    events = [events];
+  }
+
   const { state, options } = context;
   const { batchLogs } = options ?? {};
 

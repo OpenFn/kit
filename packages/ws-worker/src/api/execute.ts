@@ -96,11 +96,11 @@ export function execute(
         [WORKFLOW_ERROR]: handleRunError,
       },
       {
-        // We always batch logs internally
-        // (but later, we may break up the batch when we send to Lightning)
-        batch: {
-          [WORKFLOW_LOG]: true,
-        },
+        batch: options.batchLogs
+          ? {
+              [WORKFLOW_LOG]: true,
+            }
+          : {},
       }
     );
 

@@ -83,17 +83,25 @@ export function eventProcessor(
     clearTimeout(batchTimeout);
     // first clear the batch
     activeBatch = null;
-    await send(name, batch);
+    await send(name, batch, batch.length);
     batch = [];
   };
 
-  const send = async (name: string, payload: any) => {
+  const send = async (name: string, payload: any, batchSize?: number) => {
     // @ts-ignore
     const lightningEvent = eventMap[name] ?? name;
     await callbacks[name](context, payload);
-    logger.info(
-      `${planId} :: sent ${lightningEvent} :: OK :: ${Date.now() - start}ms`
-    );
+    if (batchSize) {
+      logger.info(
+        `${planId} :: sent ${lightningEvent} (${batchSize}):: OK :: ${
+          Date.now() - start
+        }ms`
+      );
+    } else {
+      logger.info(
+        `${planId} :: sent ${lightningEvent} :: OK :: ${Date.now() - start}ms`
+      );
+    }
   };
 
   const process = async (name: string, event: any) => {
