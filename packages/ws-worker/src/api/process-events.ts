@@ -131,15 +131,13 @@ export function eventProcessor(
             const batchName = activeBatch!;
             batchTimeout = setTimeout(async () => {
               sendBatch(batchName);
-              // next(); // trigger the queue, just in case
-            }, 100);
+            }, 10);
           }
           return;
         }
 
         await send(name, event);
       } catch (e: any) {
-        console.log(e);
         if (!e.reportedToSentry) {
           Sentry.captureException(e);
           logger.error(e);

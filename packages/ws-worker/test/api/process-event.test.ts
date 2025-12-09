@@ -390,13 +390,62 @@ test('should interrupt a batch of log events', async (t) => {
 
   await engine.execute(plan, {});
 
-  await waitForAsync(100);
+  await waitForAsync(50);
 
   t.is(stepCompleteCounter, 2);
 
   const [first, second] = events;
   t.is(first, 2);
   t.is(second, 1);
+});
+
+test('should handle two batches of logs', async (t) => {
+  const engine = await createMockEngine();
+  // syntax is weird because of how the fake RTE works
+  const plan = createPlan(
+    `fn((s) => {
+      // batch!
+      console.log(11);
+      console.log(12);
+    }),
+    wait(20),
+    fn((s) => {
+      // batch!
+      console.log(21);
+      console.log(22);
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: number[] = [];
+
+  const callbacks = {
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push(event.length);
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+
+  await waitForAsync(50);
+
+  const [first, second] = events;
+  t.is(first, 2);
+  t.is(second, 2);
 });
 
 // TODO: test a slow job with some batched and some non batched logs
