@@ -236,3 +236,70 @@ test('should process a workflow-error event and call the callback', async (t) =>
   await engine.execute(plan, {});
   await new Promise((resolve) => setTimeout(resolve, 50));
 });
+
+test('should process events in the correct order', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn((s) => {
+      console.log(1);
+      console.log(2);
+      console.log(3);
+      return {};
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: Array<{ type: string; workflowId: string; message?: any }> = [];
+
+  const callbacks = {
+    [WORKFLOW_START]: (_ctx: any, event: any) => {
+      events.push({ type: 'workflow-start', workflowId: event.workflowId });
+    },
+    [JOB_START]: (_ctx: any, event: any) => {
+      events.push({ type: 'job-start', workflowId: event.workflowId });
+    },
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push({
+        type: 'workflow-log',
+        workflowId: event.workflowId,
+        message: event.message,
+      });
+    },
+    [JOB_COMPLETE]: (_ctx: any, event: any) => {
+      events.push({ type: 'job-complete', workflowId: event.workflowId });
+    },
+    [WORKFLOW_COMPLETE]: (_ctx: any, event: any) => {
+      events.push({ type: 'workflow-complete', workflowId: event.workflowId });
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await waitForAsync();
+
+  t.is(events.length, 7);
+  t.is(events[0].type, 'workflow-start');
+  t.is(events[1].type, 'job-start');
+
+  t.is(events[2].type, 'workflow-log');
+  t.is(events[2].message, '[1]');
+
+  t.is(events[3].type, 'workflow-log');
+  t.is(events[3].message, '[2]');
+
+  t.is(events[4].type, 'workflow-log');
+  t.is(events[4].message, '[3]');
+
+  t.is(events[5].type, 'job-complete');
+  t.is(events[6].type, 'workflow-complete');
+
+  // Verify all events have the correct workflowId
+  t.assert(events.every((e) => e.workflowId === 'a'));
+});
