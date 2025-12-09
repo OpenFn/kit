@@ -418,7 +418,7 @@ test('should respect the limit', async (t) => {
     logger,
   };
 
-  const events: number[] = [];
+  const events: any[] = [];
 
   const callbacks = {
     [WORKFLOW_LOG]: (_ctx: any, event: any) => {
@@ -461,7 +461,7 @@ test('should respect the interval', async (t) => {
     logger,
   };
 
-  const events: number[] = [];
+  const events: any[] = [];
 
   const callbacks = {
     [WORKFLOW_LOG]: (_ctx: any, event: any) => {

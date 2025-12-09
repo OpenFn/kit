@@ -22,7 +22,7 @@ import { Context } from './execute';
 export type EventHandler = (context: any, event: any) => void;
 
 export type EventProcessorOptions = {
-  batch?: Record<string, true>;
+  batch?: Record<string, boolean>;
   batchInterval?: number;
   batchLimit?: number;
 };
