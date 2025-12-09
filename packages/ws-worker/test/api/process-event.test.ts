@@ -1,0 +1,238 @@
+import test from 'ava';
+import {
+  WORKFLOW_START,
+  WORKFLOW_COMPLETE,
+  JOB_START,
+  JOB_COMPLETE,
+  WORKFLOW_LOG,
+  JOB_ERROR,
+  WORKFLOW_ERROR,
+} from '@openfn/engine-multi';
+
+import { eventProcessor } from '../../src/api/process-events';
+import createMockEngine from '../../src/mock/runtime-engine';
+
+import type { ExecutionPlan } from '@openfn/lexicon';
+import { createMockLogger } from '@openfn/logger';
+
+const logger = createMockLogger();
+
+test.afterEach(() => {
+  logger._reset();
+});
+
+const waitForAsync = () =>
+  new Promise<void>((resolve) => setTimeout(resolve, 10));
+
+const createPlan = (expression: string = '.', id = 'a') =>
+  ({
+    id,
+    workflow: {
+      steps: [
+        {
+          expression,
+          adaptors: [],
+        },
+      ],
+    },
+    options: {},
+  } as ExecutionPlan);
+
+test('should process a workflow-start event and call the callback', async (t) => {
+  t.plan(3);
+
+  const engine = await createMockEngine();
+  const plan = createPlan();
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [WORKFLOW_START]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  // Execute a simple workflow to trigger the event
+  await engine.execute(plan, {});
+
+  await waitForAsync();
+});
+
+test('should process a workflow-complete event and call the callback', async (t) => {
+  t.plan(4);
+
+  const engine = await createMockEngine();
+  const plan = createPlan('fn(() => ({ data: { x: 10 } }))');
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [WORKFLOW_COMPLETE]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+      t.deepEqual(event.state, { data: { x: 10 } });
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await waitForAsync();
+});
+
+test('should process a job-start event and call the callback', async (t) => {
+  t.plan(4);
+
+  const engine = await createMockEngine();
+  const plan = createPlan();
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [JOB_START]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+      t.truthy(event.jobId);
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await waitForAsync();
+});
+
+test('should process a job-complete event and call the callback', async (t) => {
+  t.plan(5);
+
+  const engine = await createMockEngine();
+  const plan = createPlan('fn(() => ({ data: { result: 42 } }))');
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [JOB_COMPLETE]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+      t.truthy(event.jobId);
+      t.deepEqual(event.state, { data: { result: 42 } });
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await waitForAsync();
+});
+
+test('should process a workflow-log event and call the callback', async (t) => {
+  t.plan(4);
+
+  const engine = await createMockEngine();
+  const plan = createPlan('fn((s) => { console.log("test log"); return s; })');
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [WORKFLOW_LOG]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+      t.truthy(event.message);
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await waitForAsync();
+});
+
+test('should process a job-error event and call the callback', async (t) => {
+  t.plan(4);
+
+  const engine = await createMockEngine();
+  const plan = createPlan('fn(() => { throw new Error("job error"); })');
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [JOB_ERROR]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+      t.truthy(event.error);
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await new Promise((resolve) => setTimeout(resolve, 50));
+});
+
+test('should process a workflow-error event and call the callback', async (t) => {
+  t.plan(5);
+
+  const engine = await createMockEngine();
+  const plan = createPlan('fn(() => ( @~!"@£!4 )'); // Invalid syntax to trigger error
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [WORKFLOW_ERROR]: (ctx: any, event: any) => {
+      t.is(context, ctx);
+      t.is(event.workflowId, 'a');
+      t.truthy(event.threadId);
+      t.truthy(event.type);
+      t.truthy(event.message);
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks);
+
+  await engine.execute(plan, {});
+  await new Promise((resolve) => setTimeout(resolve, 50));
+});

@@ -29,10 +29,18 @@ const eventMap = {
   [WORKFLOW_COMPLETE]: RUN_COMPLETE,
 };
 
-// this function will:
-// - listen to all events from the engine
-// - add them to a queue
-// - process them one at a time
+const allEngineEvents = [
+  WORKFLOW_START,
+  WORKFLOW_COMPLETE,
+  JOB_START,
+  JOB_COMPLETE,
+  WORKFLOW_LOG,
+  JOB_ERROR,
+  WORKFLOW_ERROR,
+];
+
+// argument says which events can be batched
+// batched events will call the callback with an array
 export function eventProcessor(
   engine: RuntimeEngine,
   context: Context,
@@ -46,7 +54,7 @@ export function eventProcessor(
     const evt = queue.shift();
     if (evt) {
       await process(evt.name, evt.event);
-      next();
+      next(); // TODO maybe next tick?
     }
   };
 
@@ -78,7 +86,7 @@ export function eventProcessor(
         // and life will go on
       }
     } else {
-      console.warn('no event bound for', name);
+      logger.warn('no event bound for', name);
     }
   };
 
@@ -90,15 +98,7 @@ export function eventProcessor(
     }
   };
 
-  const e = [
-    WORKFLOW_START,
-    WORKFLOW_COMPLETE,
-    JOB_START,
-    JOB_COMPLETE,
-    WORKFLOW_LOG,
-    JOB_ERROR,
-    WORKFLOW_ERROR,
-  ].reduce(
+  const e = allEngineEvents.reduce(
     (obj, e) => Object.assign(obj, { [e]: (p: any) => enqueue(e, p) }),
     {}
   );
