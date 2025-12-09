@@ -152,6 +152,7 @@ export function eventProcessor(
           // finally wait for a time before sending the batch
           if (!batchTimeout) {
             const batchName = activeBatch!;
+            console.log({ interval });
             batchTimeout = setTimeout(async () => {
               sendBatch(batchName);
             }, interval);

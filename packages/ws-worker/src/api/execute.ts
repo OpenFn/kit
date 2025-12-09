@@ -101,6 +101,8 @@ export function execute(
               [WORKFLOW_LOG]: true,
             }
           : {},
+        batchInterval: options.batchInterval,
+        batchLimit: options.batchLimit,
       }
     );
 

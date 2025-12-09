@@ -12,6 +12,8 @@ const DEFAULT_WORKER_CAPACITY = 5;
 type Args = {
   _: string[];
   backoff: string;
+  batchInterval?: number;
+  batchLimit?: number;
   batchLogs: boolean;
   capacity?: number;
   claimTimeoutSeconds?: number;
@@ -74,6 +76,8 @@ export default function parseArgs(argv: string[]): Args {
   const {
     OPENFN_ADAPTORS_REPO,
     WORKER_BACKOFF,
+    WORKER_BATCH_INTERVAL,
+    WORKER_BATCH_LIMIT,
     WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
     WORKER_CLAIM_TIMEOUT_SECONDS,
@@ -175,9 +179,19 @@ export default function parseArgs(argv: string[]): Args {
       default: false,
     })
     .option('batch-logs', {
-      description: 'Allow logs emitted from the server to be batched up',
+      description:
+        'Allow logs emitted from the server to be batched up. Env: WORKER_BATCH_LOGS',
       type: 'boolean',
-      default: false,
+    })
+    .option('batch-interval', {
+      description:
+        'Interval for batching logs, in milliseconds. Env: WORKER_BATCH_INTERVAL',
+      type: 'number',
+    })
+    .option('batch-limit', {
+      description:
+        'Maximum number of logs to batch before sending. Env: WORKER_BATCH_LIMIT',
+      type: 'number',
     })
     .option('backoff', {
       description:
@@ -260,6 +274,9 @@ export default function parseArgs(argv: string[]): Args {
       'ws://localhost:4000/worker'
     ),
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
+    batchLogs: setArg(args.batchLogs, WORKER_BATCH_LOGS, false),
+    batchInterval: setArg(args.batchInterval, WORKER_BATCH_INTERVAL, 10),
+    batchLimit: setArg(args.batchLimit, WORKER_BATCH_LIMIT, 20),
     monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
     secret: setArg(args.secret, WORKER_SECRET),
     sentryDsn: setArg(args.sentryDsn, WORKER_SENTRY_DSN),
