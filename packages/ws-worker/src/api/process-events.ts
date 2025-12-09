@@ -21,6 +21,10 @@ import { Context } from './execute';
 
 export type EventHandler = (context: any, event: any) => void;
 
+export type EventProcessorOptions = {
+  batch?: Record<string, true>;
+};
+
 const eventMap = {
   [WORKFLOW_START]: RUN_START,
   [JOB_START]: STEP_START,
@@ -44,21 +48,47 @@ const allEngineEvents = [
 export function eventProcessor(
   engine: RuntimeEngine,
   context: Context,
-  callbacks: Record<string, EventHandler>
+  callbacks: Record<string, EventHandler>,
+  options: EventProcessorOptions = {}
 ) {
   const { id: planId, logger } = context;
 
   const queue: any = [];
 
   const next = async () => {
-    const evt = queue.shift();
+    const evt = queue[0];
     if (evt) {
       await process(evt.name, evt.event);
-      next(); // TODO maybe next tick?
+      queue.shift(); // keep the event on the queue until processing is finished
+      // setImmediate(next);
+      next();
     }
   };
 
+  let activeBatch: string | null = null;
+  let batch: any = [];
+  let start: number = -1;
+  let batchTimeout: NodeJS.Timeout;
+
+  const sendBatch = async (name: string) => {
+    clearTimeout(batchTimeout);
+    // first clear the batch
+    activeBatch = null;
+    await send(name, batch);
+    batch = [];
+  };
+
+  const send = async (name: string, payload: any) => {
+    // @ts-ignore
+    const lightningEvent = eventMap[name] ?? name;
+    await callbacks[name](context, payload);
+    logger.info(
+      `${planId} :: sent ${lightningEvent} :: OK :: ${Date.now() - start}ms`
+    );
+  };
+
   const process = async (name: string, event: any) => {
+    // TODO this actually shouldn't be here - should be done separately
     if (name !== 'workflow-log') {
       Sentry.addBreadcrumb({
         category: 'event',
@@ -67,17 +97,49 @@ export function eventProcessor(
       });
     }
 
-    if (name in callbacks) {
-      // @ts-ignore
-      const lightningEvent = eventMap[name] ?? name;
-      try {
-        let start = Date.now();
+    if (name === activeBatch) {
+      // if there's a batch open, just push the event
+      batch.push(event);
+      return;
+    } else if (activeBatch) {
+      // If a different event comes in, send the batch (and carry on processing the event)
+      await sendBatch(activeBatch);
+    }
 
-        await callbacks[name](context, event);
-        logger.info(
-          `${planId} :: sent ${lightningEvent} :: OK :: ${Date.now() - start}ms`
-        );
+    if (name in callbacks) {
+      try {
+        start = Date.now();
+
+        if (options?.batch?.[name]) {
+          // batch mode is enabled!
+          activeBatch = name;
+
+          // First, push this event to the batch
+          batch.push(event);
+
+          // Next, peek ahead in the queue for more pending events
+          while (queue.length > 1 && queue[1].name === name) {
+            const [nextBatchItem] = queue.splice(1, 1);
+            batch.push(nextBatchItem.event);
+            if (batch.length > 10) {
+              break;
+            }
+          }
+
+          // finally wait for a time before sending the batch
+          if (!batchTimeout) {
+            const batchName = activeBatch!;
+            batchTimeout = setTimeout(async () => {
+              sendBatch(batchName);
+              // next(); // trigger the queue, just in case
+            }, 100);
+          }
+          return;
+        }
+
+        await send(name, event);
       } catch (e: any) {
+        console.log(e);
         if (!e.reportedToSentry) {
           Sentry.captureException(e);
           logger.error(e);

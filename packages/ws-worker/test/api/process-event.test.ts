@@ -21,19 +21,21 @@ test.afterEach(() => {
   logger._reset();
 });
 
-const waitForAsync = () =>
-  new Promise<void>((resolve) => setTimeout(resolve, 10));
+const waitForAsync = (delay = 10) =>
+  new Promise<void>((resolve) => setTimeout(resolve, delay));
 
-const createPlan = (expression: string = '.', id = 'a') =>
+const createPlan = (...expressions: string[]) =>
   ({
-    id,
+    id: 'a',
     workflow: {
-      steps: [
-        {
-          expression,
-          adaptors: [],
-        },
-      ],
+      steps: expressions.length
+        ? expressions.map((e, idx) => ({
+            id: `${idx}`,
+            expression: e,
+            adaptors: [],
+            next: expressions[idx + 1] ? { [`${idx + 1}`]: true } : {},
+          }))
+        : [{ expression: ['fn(s => s)'] }],
     },
     options: {},
   } as ExecutionPlan);
@@ -302,4 +304,162 @@ test('should process events in the correct order', async (t) => {
 
   // Verify all events have the correct workflowId
   t.assert(events.every((e) => e.workflowId === 'a'));
+});
+
+test('should batch sequential log events', async (t) => {
+  t.plan(4);
+
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn((s) => {
+      console.log(1);
+      console.log(2);
+      console.log(3);
+      return {};
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const callbacks = {
+    [WORKFLOW_LOG]: (_ctx: any, events: any) => {
+      t.is(events.length, 3);
+      t.is(events[0].message, '[1]');
+      t.is(events[1].message, '[2]');
+      t.is(events[2].message, '[3]');
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+  await waitForAsync(50);
+});
+
+// 3 logs will be sent within 10ms, but they'll be interrupted by step:complete and step:start
+test('should interrupt a batch of log events', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn((s) => {
+      console.log(1);
+      console.log(2);
+    })`,
+    `fn((s) => {
+      console.log(3);
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: number[] = [];
+
+  let stepCompleteCounter = 0;
+
+  const callbacks = {
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push(event.length);
+    },
+    [JOB_COMPLETE]: () => {
+      stepCompleteCounter++;
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+
+  await waitForAsync(100);
+
+  t.is(stepCompleteCounter, 2);
+
+  const [first, second] = events;
+  t.is(first, 2);
+  t.is(second, 1);
+});
+
+// TODO: test a slow job with some batched and some non batched logs
+// lots of timeouts
+
+test('should process events in the correct order with batching', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan(
+    `fn((s) => {
+      console.log(1);
+      console.log(2);
+      console.log(3);
+      return {};
+    })`
+  );
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const events: Array<{ type: string; count?: any }> = [];
+
+  const callbacks = {
+    [WORKFLOW_START]: () => {
+      events.push({ type: 'workflow-start' });
+    },
+    [JOB_START]: () => {
+      events.push({ type: 'job-start' });
+    },
+    [WORKFLOW_LOG]: (_ctx: any, event: any) => {
+      events.push({
+        type: 'workflow-log',
+        count: event.length,
+      });
+    },
+    [JOB_COMPLETE]: () => {
+      events.push({ type: 'job-complete' });
+    },
+    [WORKFLOW_COMPLETE]: () => {
+      events.push({ type: 'workflow-complete' });
+    },
+  };
+
+  const options = {
+    batch: {
+      [WORKFLOW_LOG]: true,
+    },
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+  await waitForAsync(50);
+  t.is(events.length, 5);
+  t.is(events[0].type, 'workflow-start');
+  t.is(events[1].type, 'job-start');
+
+  t.is(events[2].type, 'workflow-log');
+  t.is(events[2].count, 3);
+
+  t.is(events[3].type, 'job-complete');
+  t.is(events[4].type, 'workflow-complete');
 });
