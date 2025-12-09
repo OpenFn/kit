@@ -12,6 +12,7 @@ const DEFAULT_WORKER_CAPACITY = 5;
 type Args = {
   _: string[];
   backoff: string;
+  batchLogs: boolean;
   capacity?: number;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
@@ -73,6 +74,7 @@ export default function parseArgs(argv: string[]): Args {
   const {
     OPENFN_ADAPTORS_REPO,
     WORKER_BACKOFF,
+    WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
     WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
@@ -169,6 +171,11 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('mock', {
       description: 'Use a mock runtime engine',
+      type: 'boolean',
+      default: false,
+    })
+    .option('batch-logs', {
+      description: 'Allow logs emitted from the server to be batched up',
       type: 'boolean',
       default: false,
     })

@@ -3,7 +3,8 @@ import { timestamp } from '@openfn/logger';
 import type { WorkflowStartPayload } from '@openfn/engine-multi';
 
 import { RUN_START } from '../events';
-import { Context, onJobLog } from '../api/execute';
+import { Context } from '../api/execute';
+import handleJobLog from './run-log';
 import calculateVersionString from '../util/versions';
 
 import { timeInMicroseconds } from '../util';
@@ -43,21 +44,25 @@ export default async function onRunStart(
   });
 
   if ('payloadLimitMb' in options) {
-    await onJobLog(versionLogContext, {
-      // use the fake time in the log
-      time,
-      message: [`Payload limit: ${options.payloadLimitMb}mb`],
-      level: 'info',
-      name: 'RTE',
-    });
+    await handleJobLog(versionLogContext, [
+      {
+        // use the fake time in the log
+        time,
+        message: [`Payload limit: ${options.payloadLimitMb}mb`],
+        level: 'info',
+        name: 'RTE',
+      },
+    ]);
   }
 
   const versionMessage = calculateVersionString(versions);
 
-  await onJobLog(versionLogContext, {
-    time,
-    message: [versionMessage],
-    level: 'info',
-    name: 'VER',
-  });
+  await handleJobLog(versionLogContext, [
+    {
+      time,
+      message: [versionMessage],
+      level: 'info',
+      name: 'VER',
+    },
+  ]);
 }

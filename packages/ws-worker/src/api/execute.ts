@@ -1,11 +1,10 @@
 import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
-import type { RunLogPayload } from '@openfn/lexicon/lightning';
+
 import type { Logger } from '@openfn/logger';
 import {
   RuntimeEngine,
   Resolvers,
-  WorkerLogPayload,
   JOB_COMPLETE,
   JOB_START,
   WORKFLOW_COMPLETE,
@@ -15,13 +14,14 @@ import {
   WORKFLOW_ERROR,
 } from '@openfn/engine-multi';
 
-import { createRunState, timeInMicroseconds } from '../util';
-import { RUN_LOG, GET_DATACLIP, GET_CREDENTIAL } from '../events';
+import { createRunState } from '../util';
+import { GET_DATACLIP, GET_CREDENTIAL } from '../events';
 import handleRunStart from '../events/run-start';
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
+import handleRunLog from '../events/run-log';
 
 import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
@@ -83,15 +83,26 @@ export function execute(
       },
     });
 
-    eventProcessor(engine, context, {
-      [WORKFLOW_START]: handleRunStart,
-      [JOB_START]: handleStepStart,
-      [JOB_COMPLETE]: handleStepComplete,
-      [JOB_ERROR]: onJobError,
-      [WORKFLOW_LOG]: onJobLog,
-      [WORKFLOW_COMPLETE]: handleRunComplete,
-      [WORKFLOW_ERROR]: handleRunError,
-    });
+    eventProcessor(
+      engine,
+      context,
+      {
+        [WORKFLOW_START]: handleRunStart,
+        [JOB_START]: handleStepStart,
+        [JOB_COMPLETE]: handleStepComplete,
+        [JOB_ERROR]: onJobError,
+        [WORKFLOW_LOG]: handleRunLog,
+        [WORKFLOW_COMPLETE]: handleRunComplete,
+        [WORKFLOW_ERROR]: handleRunError,
+      },
+      {
+        // We always batch logs internally
+        // (but later, we may break up the batch when we send to Lightning)
+        batch: {
+          [WORKFLOW_LOG]: true,
+        },
+      }
+    );
 
     const resolvers = {
       credential: (id: string) => loadCredential(context, id),
@@ -157,11 +168,6 @@ export function execute(
   return context;
 }
 
-// async/await wrapper to push to a channel
-// TODO move into utils I think?
-
-// TODO move all event handlers into api/events/*
-
 // Called on job fail or crash
 // If this was a crash, it'll also trigger a workflow error
 // But first we update the reason for this failed job
@@ -182,37 +188,6 @@ export function onJobError(context: Context, event: any) {
   } else {
     return handleStepComplete(context, event, event.error);
   }
-}
-
-export function onJobLog(
-  context: Context,
-  event: Omit<WorkerLogPayload, 'workflowId'>
-) {
-  const { state, options } = context;
-  let message = event.message as any[];
-
-  if (event.redacted) {
-    message = [
-      `(Log message redacted: exceeds ${options.payloadLimitMb}mb memory limit)`,
-    ];
-  } else if (typeof event.message === 'string') {
-    message = JSON.parse(event.message);
-  }
-  // lightning-friendly log object
-  const log: RunLogPayload = {
-    run_id: `${state.plan.id}`,
-    message,
-    source: event.name,
-    level: event.level,
-    // @ts-ignore
-    timestamp: timeInMicroseconds(event.time) as string,
-  };
-
-  if (state.activeStep) {
-    log.step_id = state.activeStep;
-  }
-
-  return sendEvent<RunLogPayload>(context, RUN_LOG, log);
 }
 
 export async function loadDataclip(

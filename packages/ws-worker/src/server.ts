@@ -32,6 +32,7 @@ import { convertRun } from './util';
 const exec = promisify(_exec);
 
 export type ServerOptions = {
+  batchLogs?: boolean;
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -312,6 +313,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
+        options.batchLogs = app.options.batchLogs;
 
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {

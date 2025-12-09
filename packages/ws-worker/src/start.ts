@@ -52,6 +52,7 @@ function engineReady(engine: any) {
     socketTimeoutSeconds: args.socketTimeoutSeconds,
     timeoutRetryCount: args.timeoutRetryCount,
     timeoutRetryDelayMs: args.timeoutRetryDelayMs,
+    batchLogs: args.batchLogs,
   };
 
   if (args.socketTimeoutSeconds) {
