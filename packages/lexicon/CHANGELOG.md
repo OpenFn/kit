@@ -1,5 +1,11 @@
 # lexicon
 
+## 1.3.0
+
+### Minor Changes
+
+- 5417e97: Accept log-payload-limit-mb (defaults to 1mb)
+
 ## 1.2.7
 
 ### Patch Changes

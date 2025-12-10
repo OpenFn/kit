@@ -1,5 +1,16 @@
 # engine-multi
 
+## 1.9.0
+
+### Minor Changes
+
+- 5417e97: Accept log-payload-limit-mb (defaults to 1mb)
+
+### Patch Changes
+
+- Updated dependencies [5417e97]
+  - @openfn/lexicon@1.3.0
+
 ## 1.8.5
 
 ### Patch Changes
