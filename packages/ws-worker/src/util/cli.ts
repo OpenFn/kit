@@ -276,7 +276,7 @@ export default function parseArgs(argv: string[]): Args {
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
     batchLogs: setArg(args.batchLogs, WORKER_BATCH_LOGS, false),
     batchInterval: setArg(args.batchInterval, WORKER_BATCH_INTERVAL, 10),
-    batchLimit: setArg(args.batchLimit, WORKER_BATCH_LIMIT, 20),
+    batchLimit: setArg(args.batchLimit, WORKER_BATCH_LIMIT, 50),
     monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
     secret: setArg(args.secret, WORKER_SECRET),
     sentryDsn: setArg(args.sentryDsn, WORKER_SENTRY_DSN),
