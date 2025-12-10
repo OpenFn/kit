@@ -48,8 +48,13 @@ const allEngineEvents = [
   WORKFLOW_ERROR,
 ];
 
-// argument says which events can be batched
-// batched events will call the callback with an array
+/**
+ * Queues engine events for sequential processing to Lightning with optional batching.
+ *
+ * Queuing ensures events are sent in order while allowing batching to reduce network calls.
+ * Batching helps with high-volume logs by sending fewer requests with larger payloads,
+ * reducing websocket latency. Events batch by count or time interval, whichever comes first.
+ */
 export function eventProcessor(
   engine: RuntimeEngine,
   context: Context,
