@@ -684,7 +684,6 @@ test.only('queue events behind a slow event II', async (t) => {
       return new Promise((resolve) => setTimeout(resolve, 50));
     },
     [WORKFLOW_LOG]: (_ctx: any, event: any) => {
-      console.log(event);
       events.push(event.length);
     },
   };

@@ -28,7 +28,6 @@ const [minBackoff, maxBackoff] = args.backoff
 
 function engineReady(engine: any) {
   logger.debug('Creating worker instance');
-  console.log(process.env.WORKER_BATCH_LOGS);
   const workerOptions: ServerOptions = {
     port: args.port,
     lightning: args.lightning,
