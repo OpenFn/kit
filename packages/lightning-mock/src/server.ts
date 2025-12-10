@@ -8,7 +8,7 @@ import createLogger, {
   Logger,
 } from '@openfn/logger';
 import type { StepId } from '@openfn/lexicon';
-import type { RunLogPayload, LightningPlan } from '@openfn/lexicon/lightning';
+import type { LightningPlan, RunLogLine } from '@openfn/lexicon/lightning';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
@@ -20,7 +20,7 @@ type JobId = string;
 
 export type RunState = {
   status: 'queued' | 'started' | 'complete';
-  logs: RunLogPayload[];
+  logs: RunLogLine[];
   steps: Record<JobId, StepId>;
 };
 

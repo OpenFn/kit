@@ -12,12 +12,12 @@ import {
   GET_DATACLIP,
 } from '../../src/events';
 import {
-  onJobLog,
   execute,
   loadDataclip,
   loadCredential,
   onJobError,
 } from '../../src/api/execute';
+import onJobLog from '../../src/events/run-log';
 import createMockRTE from '../../src/mock/runtime-engine';
 import { mockChannel } from '../../src/mock/sockets';
 import { stringify, createRunState, sendEvent } from '../../src/util';

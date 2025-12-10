@@ -47,6 +47,7 @@ export const initWorker = async (
     secret: crypto.randomUUID(),
     collectionsVersion: '1.0.0',
     messageTimeoutSeconds: 0.01,
+    batchLogs: true,
     ...workerArgs,
   });
 

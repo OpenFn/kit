@@ -6,7 +6,8 @@ import { timestamp } from '@openfn/logger';
 import { STEP_COMPLETE } from '../events';
 import { stringify, timeInMicroseconds } from '../util';
 import { calculateJobExitReason } from '../api/reasons';
-import { onJobLog, Context } from '../api/execute';
+import { Context } from '../api/execute';
+import handleJobLog from './run-log';
 import { sendEvent } from '../util/send-event';
 
 export default async function onStepComplete(
@@ -60,14 +61,16 @@ export default async function onStepComplete(
     const time = (timestamp() - BigInt(10e6)).toString();
     // If the dataclip is too big, return the step without it
     // (the workflow will carry on internally)
-    await onJobLog(context, {
-      time,
-      message: [
-        'Dataclip exceeds payload limit: output will not be sent back to the app.',
-      ],
-      level: 'info',
-      name: 'R/T',
-    });
+    await handleJobLog(context, [
+      {
+        time,
+        message: [
+          'Dataclip exceeds payload limit: output will not be sent back to the app.',
+        ],
+        level: 'info',
+        name: 'R/T',
+      },
+    ]);
   } else {
     evt.output_dataclip_id = dataclipId;
     if (!options || options.outputDataclips !== false) {

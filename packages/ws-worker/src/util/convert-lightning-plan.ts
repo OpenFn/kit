@@ -51,6 +51,9 @@ export type WorkerRunOptions = ExecuteOptions & {
   jobLogLevel?: LogLevel;
   timeoutRetryCount?: number;
   timeoutRetryDelay?: number;
+  batchLogs?: boolean;
+  batchInterval?: number;
+  batchLimit?: number;
 };
 
 type ConversionOptions = {
