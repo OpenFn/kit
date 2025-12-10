@@ -21,6 +21,7 @@ import type {
   StepCompleteReply,
   StepStartPayload,
   StepStartReply,
+  LegacyRunLogPayload,
 } from '@openfn/lexicon/lightning';
 
 import createPheonixMockSocketServer, {
@@ -320,27 +321,41 @@ const createSocketAPI = (
     evt: PhoenixEvent<RunLogPayload>
   ) {
     const { ref, join_ref, topic } = evt;
-    const { run_id: runId } = evt.payload;
-
-    state.pending[runId].logs.push(evt.payload);
 
     let payload: any = {
       status: 'ok',
     };
 
-    if (
-      !evt.payload.message ||
-      !evt.payload.source ||
-      !evt.payload.timestamp ||
-      !evt.payload.level
-    ) {
-      payload = {
-        status: 'error',
-        response: 'Missing property on log',
-      };
-    }
+    const { run_id: runId } = evt.payload;
 
-    logger?.info(`LOG [${runId}] ${evt.payload.message[0]}`);
+    if (evt.payload.logs) {
+      // handle batch logs
+      evt.payload.logs.forEach((log) => {
+        state.pending[runId].logs.push(log);
+
+        logger?.info(`LOG [${runId}] ${log.message}`);
+
+        if (!log.message || !log.source || !log.timestamp || !log.level) {
+          payload = {
+            status: 'error',
+            response: 'Missing property on log',
+          };
+        }
+      });
+    } else {
+      // handle legacy logs
+      const log = evt.payload as unknown as LegacyRunLogPayload;
+      state.pending[runId].logs.push(log);
+
+      logger?.info(`LOG [${runId}] ${log.message}`);
+
+      if (!log.message || !log.source || !log.timestamp || !log.level) {
+        payload = {
+          status: 'error',
+          response: 'Missing property on log',
+        };
+      }
+    }
 
     ws.reply<RunLogReply>({
       ref,

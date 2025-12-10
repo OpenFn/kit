@@ -117,3 +117,43 @@ test('should send a log event inside a run', async (t) => {
 
   await handleRunLog({ channel, state, options } as any, [log]);
 });
+
+// If batch mode is disabled, logs are sent as a single event
+// (no logs array)
+// I'm calling this the LegacyRunLogPayload
+test('should work with non-batch logging', async (t) => {
+  const plan = { id: 'run-1' };
+
+  const log: JSONLog = {
+    name: 'R/T',
+    level: 'info',
+    time: getBigIntTimestamp(),
+    message: JSON.stringify(['ping']),
+  };
+
+  // The logger should print in nanoseconds (19 digits)
+  t.is(log.time.length, 19);
+
+  const state = {
+    plan,
+    // No active run
+  } as RunState;
+
+  const options = {
+    batchLogs: false,
+  };
+
+  const channel = mockChannel({
+    [RUN_LOG]: (evt) => {
+      t.is(evt.run_id, plan.id);
+      t.deepEqual(evt.message, JSON.parse(log.message));
+      // Conveniently this won't have rounding errors because the last
+      // 3 digits are always 000, because of how we generate the stamp above
+      t.is(evt.timestamp, log.time.substring(0, 16));
+      t.is(evt.level, log.level);
+      t.is(evt.source, log.name);
+    },
+  });
+
+  await handleRunLog({ channel, state, options } as any, log);
+});
