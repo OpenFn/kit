@@ -56,6 +56,7 @@ export type LightningPlanOptions = {
 
   run_memory_limit_mb?: number;
   payload_limit_mb?: number;
+  log_payload_limit_mb?: number;
   job_log_level?: LogLevel;
 };
 
@@ -172,15 +173,23 @@ export type RunCompletePayload = ExitReason & {
 };
 export type RunCompleteReply = undefined;
 
-export type RunLogPayload = {
+export type RunLogLine = {
   message: Array<string | object>;
   timestamp: TimeInMicroSeconds;
-  run_id: string;
   level?: string;
   source?: string; // namespace
-  job_id?: string;
   step_id?: string;
 };
+
+export type RunLogPayload = {
+  run_id: string;
+  logs: RunLogLine[];
+};
+
+export type LegacyRunLogPayload = {
+  run_id: string;
+} & RunLogLine;
+
 export type RunLogReply = void;
 
 export type StepStartPayload = {

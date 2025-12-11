@@ -1,5 +1,18 @@
 # ws-worker
 
+## 1.20.0
+
+### Minor Changes
+
+- 3a7038b: Allow logs to be sent to Lightning in batches. This behavior is disabled by default for back-compatibility: set `WORKER_BATCH_LOGS=true` to enable.
+- 5417e97: Reduce the payload size of log events sent out to Lightning. This defaults to 1mb but can be configured with `WORKER_MAX_LOG_PAYLOAD_MB`
+
+### Patch Changes
+
+- Updated dependencies [5417e97]
+  - @openfn/lexicon@1.3.0
+  - @openfn/engine-multi@1.9.0
+
 ## 1.19.7
 
 ### Patch Changes

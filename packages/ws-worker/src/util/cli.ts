@@ -12,6 +12,9 @@ const DEFAULT_WORKER_CAPACITY = 5;
 type Args = {
   _: string[];
   backoff: string;
+  batchInterval?: number;
+  batchLimit?: number;
+  batchLogs: boolean;
   capacity?: number;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
@@ -22,6 +25,7 @@ type Args = {
   lightning?: string;
   lightningPublicKey?: string;
   log?: LogLevel;
+  logPayloadMemory?: number;
   loop?: boolean;
   maxRunDurationSeconds: number;
   messageTimeoutSeconds?: number;
@@ -72,6 +76,9 @@ export default function parseArgs(argv: string[]): Args {
   const {
     OPENFN_ADAPTORS_REPO,
     WORKER_BACKOFF,
+    WORKER_BATCH_INTERVAL,
+    WORKER_BATCH_LIMIT,
+    WORKER_BATCH_LOGS,
     WORKER_CAPACITY,
     WORKER_CLAIM_TIMEOUT_SECONDS,
     WORKER_COLLECTIONS_URL,
@@ -80,6 +87,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_LIGHTNING_SERVICE_URL,
     WORKER_LOG_LEVEL,
     WORKER_MAX_PAYLOAD_MB,
+    WORKER_MAX_LOG_PAYLOAD_MB,
     WORKER_MAX_RUN_DURATION_SECONDS,
     WORKER_MAX_RUN_MEMORY_MB,
     WORKER_MESSAGE_TIMEOUT_SECONDS,
@@ -155,6 +163,11 @@ export default function parseArgs(argv: string[]): Args {
       description:
         'Set the log level for stdout (default to info, set to debug for verbose output). Env: WORKER_LOG_LEVEL',
     })
+    .option('log-payload-memory', {
+      description:
+        'Maximum memory allocated to log payloads, in mb. Env: WORKER_MAX_LOG_PAYLOAD_MB',
+      type: 'number',
+    })
     .option('loop', {
       description: 'Disable the claims loop',
       type: 'boolean',
@@ -164,6 +177,21 @@ export default function parseArgs(argv: string[]): Args {
       description: 'Use a mock runtime engine',
       type: 'boolean',
       default: false,
+    })
+    .option('batch-logs', {
+      description:
+        'Allow logs emitted from the server to be batched up. Env: WORKER_BATCH_LOGS',
+      type: 'boolean',
+    })
+    .option('batch-interval', {
+      description:
+        'Interval for batching logs, in milliseconds. Env: WORKER_BATCH_INTERVAL',
+      type: 'number',
+    })
+    .option('batch-limit', {
+      description:
+        'Maximum number of logs to batch before sending. Env: WORKER_BATCH_LIMIT',
+      type: 'number',
     })
     .option('backoff', {
       description:
@@ -188,6 +216,7 @@ export default function parseArgs(argv: string[]): Args {
         'Maximum memory allocated to a single run, in mb. Env: WORKER_MAX_PAYLOAD_MB',
       type: 'number',
     })
+
     .option('max-run-duration-seconds', {
       alias: 't',
       description:
@@ -245,6 +274,9 @@ export default function parseArgs(argv: string[]): Args {
       'ws://localhost:4000/worker'
     ),
     repoDir: setArg(args.repoDir, WORKER_REPO_DIR),
+    batchLogs: setArg(args.batchLogs, WORKER_BATCH_LOGS, false),
+    batchInterval: setArg(args.batchInterval, WORKER_BATCH_INTERVAL, 10),
+    batchLimit: setArg(args.batchLimit, WORKER_BATCH_LIMIT, 50),
     monorepoDir: setArg(args.monorepoDir, OPENFN_ADAPTORS_REPO),
     secret: setArg(args.secret, WORKER_SECRET),
     sentryDsn: setArg(args.sentryDsn, WORKER_SENTRY_DSN),
@@ -263,6 +295,11 @@ export default function parseArgs(argv: string[]): Args {
     ),
     runMemory: setArg(args.runMemory, WORKER_MAX_RUN_MEMORY_MB, 500),
     payloadMemory: setArg(args.payloadMemory, WORKER_MAX_PAYLOAD_MB, 10),
+    logPayloadMemory: setArg(
+      args.logPayloadMemory,
+      WORKER_MAX_LOG_PAYLOAD_MB,
+      1
+    ),
     maxRunDurationSeconds: setArg(
       args.maxRunDurationSeconds,
       WORKER_MAX_RUN_DURATION_SECONDS,

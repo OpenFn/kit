@@ -1,36 +1,32 @@
 import type { ExecutionPlan, Lazy, State, UUID } from '@openfn/lexicon';
 import * as Sentry from '@sentry/node';
-import type { RunLogPayload } from '@openfn/lexicon/lightning';
+
 import type { Logger } from '@openfn/logger';
-import type {
+import {
   RuntimeEngine,
   Resolvers,
-  WorkerLogPayload,
+  JOB_COMPLETE,
+  JOB_START,
+  WORKFLOW_COMPLETE,
+  WORKFLOW_LOG,
+  WORKFLOW_START,
+  JOB_ERROR,
+  WORKFLOW_ERROR,
 } from '@openfn/engine-multi';
 
-import {
-  createRunState,
-  throttle as createThrottle,
-  timeInMicroseconds,
-} from '../util';
-import {
-  RUN_COMPLETE,
-  RUN_LOG,
-  RUN_START,
-  GET_DATACLIP,
-  STEP_COMPLETE,
-  STEP_START,
-  GET_CREDENTIAL,
-} from '../events';
+import { createRunState } from '../util';
+import { GET_DATACLIP, GET_CREDENTIAL } from '../events';
 import handleRunStart from '../events/run-start';
 import handleStepComplete from '../events/step-complete';
 import handleStepStart from '../events/step-start';
 import handleRunComplete from '../events/run-complete';
 import handleRunError from '../events/run-error';
+import handleRunLog from '../events/run-log';
 
 import type { Channel, RunState } from '../types';
 import { WorkerRunOptions } from '../util/convert-lightning-plan';
 import { sendEvent } from '../util/send-event';
+import { eventProcessor } from './process-events';
 
 const enc = new TextDecoder('utf-8');
 
@@ -49,15 +45,6 @@ export type Context = {
 };
 
 // mapping engine events to lightning events
-const eventMap = {
-  'workflow-start': RUN_START,
-  'job-start': STEP_START,
-  'job-complete': STEP_COMPLETE,
-  'workflow-log': RUN_LOG,
-  'workflow-complete': RUN_COMPLETE,
-};
-
-type EventHandler = (context: any, event: any) => void;
 
 // pass a web socket connected to the run channel
 // this thing will do all the work
@@ -95,68 +82,29 @@ export function execute(
         runId: plan.id,
       },
     });
-    const throttle = createThrottle();
 
-    // Utility function to:
-    // a) bind an event handler to a runtime-engine event
-    // b) pass the context object into the hander
-    // c) log the response from the websocket from lightning
-    // TODO for debugging and monitoring, we should also send events to the worker's event emitter
-    const addEvent = (eventName: string, handler: EventHandler) => {
-      const wrappedFn = async (event: any) => {
-        if (eventName !== 'workflow-log') {
-          Sentry.addBreadcrumb({
-            category: 'event',
-            message: eventName,
-            level: 'info',
-          });
-        }
-
-        // TODO this logging is in the wrong place
-        // This actually logs errors coming out of the worker
-        // But it presents as logging from messages being send to lightning
-        // really this messaging should move into send event
-
-        // @ts-ignore
-        const lightningEvent = eventMap[eventName] ?? eventName;
-        try {
-          // updateSentryEvent(eventName);
-          let start = Date.now();
-          await handler(context, event);
-          logger.info(
-            `${plan.id} :: sent ${lightningEvent} :: OK :: ${
-              Date.now() - start
-            }ms`
-          );
-        } catch (e: any) {
-          if (!e.reportedToSentry) {
-            Sentry.captureException(e);
-            logger.error(e);
-          }
-          // Do nothing else here: the error should have been handled
-          // and life will go on
-        }
-      };
-      return {
-        [eventName]: wrappedFn,
-      };
-    };
-
-    // TODO listeners need to be called in a strict queue
-    // so that they send in order
-    const listeners = Object.assign(
-      {},
-      addEvent('workflow-start', throttle(handleRunStart)),
-      addEvent('job-start', throttle(handleStepStart)),
-      addEvent('job-complete', throttle(handleStepComplete)),
-      addEvent('job-error', throttle(onJobError)),
-      addEvent('workflow-log', throttle(onJobLog)),
-      // This will also resolve the promise
-      addEvent('workflow-complete', throttle(handleRunComplete)),
-      addEvent('workflow-error', throttle(handleRunError))
-      // TODO send autoinstall logs
+    eventProcessor(
+      engine,
+      context,
+      {
+        [WORKFLOW_START]: handleRunStart,
+        [JOB_START]: handleStepStart,
+        [JOB_COMPLETE]: handleStepComplete,
+        [JOB_ERROR]: onJobError,
+        [WORKFLOW_LOG]: handleRunLog,
+        [WORKFLOW_COMPLETE]: handleRunComplete,
+        [WORKFLOW_ERROR]: handleRunError,
+      },
+      {
+        batch: options.batchLogs
+          ? {
+              [WORKFLOW_LOG]: true,
+            }
+          : {},
+        batchInterval: options.batchInterval,
+        batchLimit: options.batchLimit,
+      }
     );
-    engine.listen(plan.id!, listeners);
 
     const resolvers = {
       credential: (id: string) => loadCredential(context, id),
@@ -222,11 +170,6 @@ export function execute(
   return context;
 }
 
-// async/await wrapper to push to a channel
-// TODO move into utils I think?
-
-// TODO move all event handlers into api/events/*
-
 // Called on job fail or crash
 // If this was a crash, it'll also trigger a workflow error
 // But first we update the reason for this failed job
@@ -247,37 +190,6 @@ export function onJobError(context: Context, event: any) {
   } else {
     return handleStepComplete(context, event, event.error);
   }
-}
-
-export function onJobLog(
-  context: Context,
-  event: Omit<WorkerLogPayload, 'workflowId'>
-) {
-  const { state, options } = context;
-  let message = event.message as any[];
-
-  if (event.redacted) {
-    message = [
-      `(Log message redacted: exceeds ${options.payloadLimitMb}mb memory limit)`,
-    ];
-  } else if (typeof event.message === 'string') {
-    message = JSON.parse(event.message);
-  }
-  // lightning-friendly log object
-  const log: RunLogPayload = {
-    run_id: `${state.plan.id}`,
-    message,
-    source: event.name,
-    level: event.level,
-    // @ts-ignore
-    timestamp: timeInMicroseconds(event.time) as string,
-  };
-
-  if (state.activeStep) {
-    log.step_id = state.activeStep;
-  }
-
-  return sendEvent<RunLogPayload>(context, RUN_LOG, log);
 }
 
 export async function loadDataclip(

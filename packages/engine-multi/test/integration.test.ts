@@ -518,38 +518,7 @@ test.serial('redact final state if it exceeds the payload limit', (t) => {
 
     const expression = `
 export default [(state) => {
-  state.data = new Array(1024 * 1024).fill('a')
-  return state;
-}]`;
-
-    const plan = createPlan([
-      {
-        expression,
-      },
-    ]);
-    const options = {
-      payloadLimitMb: 0.5,
-    };
-
-    api
-      .execute(plan, emptyState, options)
-      .on('workflow-complete', ({ state }) => {
-        t.log(state);
-        t.is(state.data, '[REDACTED]');
-        done();
-      });
-  });
-});
-
-test.serial('redact log line state if it exceeds the payload limit', (t) => {
-  return new Promise(async (done) => {
-    api = await createAPI({
-      logger,
-    });
-
-    const expression = `
-export default [(state) => {
-  console.log(new Array(1024 * 1024).fill('a'));
+  state.data = new Array(1024 * 512).fill('a').join('')
   return state;
 }]`;
 
@@ -564,9 +533,79 @@ export default [(state) => {
 
     api
       .execute(plan, emptyState, options)
+      .on('workflow-complete', ({ state }) => {
+        t.log(state);
+        t.is(state.data, '[REDACTED]');
+        done();
+      });
+  });
+});
+
+test.serial(
+  'redact log line state if it exceeds the default payload limit',
+  (t) => {
+    return new Promise(async (done) => {
+      api = await createAPI({
+        logger,
+      });
+
+      const expression = `
+export default [(state) => {
+  console.log(new Array(1024 * 1024).fill('a'));
+  return state;
+}]`;
+
+      const plan = createPlan([
+        {
+          expression,
+        },
+      ]);
+      const options = {
+        payloadLimitMb: 0.1,
+      };
+
+      api
+        .execute(plan, emptyState, options)
+        .on('workflow-log', (evt) => {
+          if (evt.name === 'JOB') {
+            t.true(/redacted/i.test(evt.message[0]));
+          }
+        })
+        .on('workflow-complete', () => {
+          done();
+        });
+    });
+  }
+);
+
+test.serial('redact logs which exceed logPayloadLimitMb', (t) => {
+  return new Promise(async (done) => {
+    api = await createAPI({
+      logger,
+    });
+
+    const expression = `
+export default [(state) => {
+  console.log("hello");
+  return state;
+}]`;
+
+    const plan = createPlan([
+      {
+        expression,
+      },
+    ]);
+    const options = {
+      logPayloadLimitMb: 0,
+    };
+
+    api
+      .execute(plan, emptyState, options)
       .on('workflow-log', (evt) => {
         if (evt.name === 'JOB') {
-          t.true(/redacted/i.test(evt.message[0]));
+          if (/redacted/i.test(evt.message[0])) {
+            t.pass();
+          }
         }
       })
       .on('workflow-complete', () => {
@@ -574,3 +613,88 @@ export default [(state) => {
       });
   });
 });
+
+test.serial(
+  'redact logs with logPayloadLimitMb but not state with higher payloadLimitMb',
+  (t) => {
+    return new Promise(async (done) => {
+      api = await createAPI({
+        logger,
+      });
+
+      const expression = `
+export default [(state) => {
+  console.log("aaaaa");
+  state.data = "aaaaa";
+  return state;
+}]`;
+
+      const plan = createPlan([
+        {
+          expression,
+        },
+      ]);
+      const options = {
+        payloadLimitMb: 1,
+        logPayloadLimitMb: 0.000001,
+      };
+
+      api
+        .execute(plan, emptyState, options)
+        .on('workflow-log', (evt) => {
+          if (evt.name === 'JOB') {
+            if (/redacted/i.test(evt.message[0])) {
+              t.pass('log was redacted');
+            }
+          }
+        })
+        .on('workflow-complete', ({ state }) => {
+          t.is(state.data, 'aaaaa');
+          t.true(state.data.length > 0, 'State data should exist');
+          done();
+        });
+    });
+  }
+);
+
+test.serial(
+  'redact state with low payloadLimitMb but not logs with higher logPayloadLimitMb',
+  (t) => {
+    return new Promise(async (done) => {
+      api = await createAPI({
+        logger,
+      });
+
+      const expression = `
+export default [(state) => {
+  console.log("aaaaa");
+  state.data = "aaaaa";
+  return state;
+}]`;
+
+      const plan = createPlan([
+        {
+          expression,
+        },
+      ]);
+      const options = {
+        payloadLimitMb: 0,
+        logPayloadLimitMb: 1,
+      };
+
+      api
+        .execute(plan, emptyState, options)
+        .on('workflow-log', (evt) => {
+          if (evt.name === 'JOB') {
+            if (/redacted/i.test(evt.message[0])) {
+              t.fail();
+            }
+          }
+        })
+        .on('workflow-complete', ({ state }) => {
+          t.is(state.data, '[REDACTED]', 'State should be redacted');
+          done();
+        });
+    });
+  }
+);

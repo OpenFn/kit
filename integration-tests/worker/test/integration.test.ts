@@ -988,9 +988,11 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
     };
 
     lightning.on('run:log', (evt) => {
-      if (evt.payload.source === 'JOB') {
-        t.regex(evt.payload.message[0], /redacted/i);
-      }
+      evt.payload.logs.forEach((log) => {
+        if (log.source === 'JOB') {
+          t.regex(log.message[0], /redacted/i);
+        }
+      });
     });
 
     lightning.enqueueRun(run);
@@ -1066,11 +1068,13 @@ test.serial(
       const rtLogs = [];
 
       lightning.on('run:log', (e) => {
-        if (e.payload.source === 'JOB') {
-          jobLogs.push(e.payload);
-        } else if (e.payload.source === 'R/T') {
-          rtLogs.push(e.payload);
-        }
+        e.payload.logs.forEach((log) => {
+          if (log.source === 'JOB') {
+            jobLogs.push(log);
+          } else if (log.source === 'R/T') {
+            rtLogs.push(log);
+          }
+        });
       });
 
       lightning.once('run:complete', () => {

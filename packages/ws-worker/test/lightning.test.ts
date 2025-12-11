@@ -926,6 +926,58 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
   });
 });
 
+test.serial(
+  `events: lightning should receive a ${e.RUN_LOG} event in batch mode`,
+  (t) => {
+    return new Promise(async (done) => {
+      await worker.destroy();
+
+      worker = createWorkerServer(engine, {
+        port: 4568,
+        lightning: urls.lng,
+        secret: 'abc',
+        maxWorkflows: 1,
+        batchLogs: true,
+        runPublicKey: keys.public,
+      });
+
+      const run = {
+        id: 'run-1',
+        jobs: [
+          {
+            body: `fn((s) => {
+              for(let i=0;i<10;i++) {
+                console.log(i)
+              }
+              return s;
+            })`,
+          },
+        ],
+      } as LightningPlan;
+
+      lng.onSocketEvent(
+        e.RUN_LOG,
+        run.id,
+        ({ payload }: any) => {
+          // we expect one batch of ten logs
+          const [log] = payload.logs;
+          if (log.source === 'JOB') {
+            t.is(payload.logs.length, 10);
+            t.deepEqual(log.message, [0]);
+          }
+        },
+        false
+      );
+
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+        done();
+      });
+
+      lng.enqueueRun(run);
+    });
+  }
+);
+
 test.serial('worker should accept a custom socket timeout', async (t) => {
   // re-create the lightning server with a timeout
   lng = createLightningServer({
@@ -933,6 +985,8 @@ test.serial('worker should accept a custom socket timeout', async (t) => {
     runPrivateKey: toBase64(keys.private),
     socketDelay: 500,
   });
+
+  await worker.destroy();
 
   worker = createWorkerServer(engine, {
     port: 4568,

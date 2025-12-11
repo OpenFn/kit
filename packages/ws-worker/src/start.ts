@@ -42,6 +42,7 @@ function engineReady(engine: any) {
     },
     maxWorkflows: args.capacity,
     payloadLimitMb: args.payloadMemory,
+    logPayloadLimitMb: args.logPayloadMemory ?? 1, // Default to 1MB
     collectionsVersion: args.collectionsVersion,
     collectionsUrl: args.collectionsUrl,
     monorepoDir: args.monorepoDir,
@@ -51,6 +52,9 @@ function engineReady(engine: any) {
     socketTimeoutSeconds: args.socketTimeoutSeconds,
     timeoutRetryCount: args.timeoutRetryCount,
     timeoutRetryDelayMs: args.timeoutRetryDelayMs,
+    batchLogs: args.batchLogs,
+    batchInterval: args.batchInterval,
+    batchLimit: args.batchLimit,
   };
 
   if (args.socketTimeoutSeconds) {

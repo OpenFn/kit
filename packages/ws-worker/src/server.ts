@@ -32,6 +32,9 @@ import { convertRun } from './util';
 const exec = promisify(_exec);
 
 export type ServerOptions = {
+  batchLogs?: boolean;
+  batchInterval?: number;
+  batchLimit?: number;
   maxWorkflows?: number;
   port?: number;
   lightning?: string; // url to lightning instance
@@ -53,6 +56,7 @@ export type ServerOptions = {
   messageTimeoutSeconds?: number;
   claimTimeoutSeconds?: number;
   payloadLimitMb?: number; // max memory limit for socket payload (ie, step:complete, log)
+  logPayloadLimitMb?: number; // max memory limit for log payloads specifically
   collectionsVersion?: string;
   collectionsUrl?: string;
   monorepoDir?: string;
@@ -304,9 +308,16 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         if (!('payloadLimitMb' in options)) {
           options.payloadLimitMb = app.options.payloadLimitMb;
         }
+        // Default the log payload limit if it's not otherwise set on the run options
+        if (!('logPayloadLimitMb' in options)) {
+          options.logPayloadLimitMb = app.options.logPayloadLimitMb;
+        }
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
+        options.batchLogs = app.options.batchLogs;
+        options.batchInterval = app.options.batchInterval;
+        options.batchLimit = app.options.batchLimit;
 
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {
