@@ -28,6 +28,11 @@ type UUIDMap = {
   };
 };
 
+type CLIMeta = {
+  version?: number;
+  alias?: string;
+};
+
 export class Project {
   // what schema version is this?
   // And how are we tracking this?
@@ -50,10 +55,10 @@ export class Project {
   // these are all (?) unused clientside
   options: any;
 
-  // local metadata used by the CLI
-  // This stuff is not synced back to lightning
-  // TODO maybe rename cli or local
-  meta: any;
+  /**
+   * Local metadata used by the CLI but not synced to Lightning
+   */
+  cli: CLIMeta;
 
   // this contains meta about the connected openfn project
   openfn?: l.ProjectMeta;
@@ -126,14 +131,25 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: Partial<l.Project>, config?: Partial<l.WorkspaceConfig>) {
-    this.config = buildConfig(config);
-
+  constructor(
+    data: Partial<l.Project>,
+    meta?: Partial<l.WorkspaceConfig> & CLIMeta
+  ) {
     this.id =
       data.id ??
       (data.name
         ? slugify(data.name)
         : humanId({ separator: '-', capitalize: false }));
+
+    const { version, alias, ...otherConfig } = meta ?? {};
+    this.cli = Object.assign(
+      {
+        alias,
+      },
+      data.cli
+    );
+
+    this.config = buildConfig(otherConfig);
 
     this.name = data.name;
 
@@ -143,7 +159,6 @@ export class Project {
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
-    // this.meta = data.meta ?? {};
   }
 
   setConfig(config: Partial<WorkspaceConfig>) {
