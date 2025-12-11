@@ -132,7 +132,7 @@ export class Project {
 
   // TODO maybe the constructor is (data, Workspace)
   constructor(
-    data: Partial<l.Project>,
+    data: Partial<l.Project> = {},
     meta?: Partial<l.WorkspaceConfig> & CLIMeta
   ) {
     this.id =
@@ -142,12 +142,15 @@ export class Project {
         : humanId({ separator: '-', capitalize: false }));
 
     const { version, alias, ...otherConfig } = meta ?? {};
-    this.cli = Object.assign(
-      {
-        alias,
-      },
-      data.cli
-    );
+    this.cli = {};
+    if (data.cli) {
+      Object.assign(this.cli, data.cli);
+    }
+    if (alias) {
+      // A passed-in config alias overrides the data alias
+      // (it likely means the user has asked to override the raw file
+      this.cli.alias = alias;
+    }
 
     this.config = buildConfig(otherConfig);
 
@@ -159,6 +162,10 @@ export class Project {
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
+  }
+
+  get alias() {
+    return this.cli.alias ?? 'main';
   }
 
   setConfig(config: Partial<WorkspaceConfig>) {
