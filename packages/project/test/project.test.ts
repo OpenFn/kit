@@ -92,6 +92,23 @@ test('should generate a correct identifier with weird values', (t) => {
   t.is(id, 'hello@app.com');
 });
 
+test('should return an alias', (t) => {
+  const project = new Project(
+    {},
+    {
+      alias: 'staging',
+    }
+  );
+
+  t.is(project.alias, 'staging');
+});
+
+test('should default alias to "main"', (t) => {
+  const project = new Project();
+
+  t.is(project.alias, 'main');
+});
+
 test('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',
@@ -110,11 +127,6 @@ test('should convert a state file to a project and back again', async (t) => {
   const newState = project.serialize('state');
   t.deepEqual(newState, state);
 });
-
-test.todo('serialize to and from yaml');
-
-test.todo('serialize state as json');
-test.todo('serialize state as yaml');
 
 // Note that this is mostly tested under merge-project
 // This is testing the static function on Project, which is just a proxy
