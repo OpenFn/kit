@@ -277,3 +277,35 @@ test('load project meta', (t) => {
     id: 'project-1',
   });
 });
+
+test('get project by id', (t) => {
+  const ws = new Workspace('/ws4');
+  const project = ws.get('proj-1-staging');
+
+  t.truthy(project);
+  t.is(project?.id, 'proj-1-staging');
+});
+
+test('get project by partial uuid', (t) => {
+  const ws = new Workspace('/ws4');
+  const project = ws.get('proj-1-staging');
+
+  t.truthy(project);
+  t.is(project?.uuid, 'proj-1-staging');
+});
+
+test('get project returns null when not found', (t) => {
+  const ws = new Workspace('/ws4');
+  const project = ws.get('non-existent');
+
+  t.is(project, null);
+});
+
+test('get project throws on ambiguous match', (t) => {
+  const ws = new Workspace('/ws4');
+
+  const error = t.throws(() => ws.get('main'));
+
+  t.truthy(error);
+  t.regex(error!.message, /Failed to resolve unique identifier/);
+});
