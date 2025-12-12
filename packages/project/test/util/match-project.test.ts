@@ -158,3 +158,75 @@ test('throw if ambiguous uuid', (t) => {
   t.truthy(error);
   t.regex(error!.message, /Multiple projects match/);
 });
+
+test('match with domain - by alias', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org'),
+  ];
+
+  const result = matchProject('staging@app.openfn.org', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('match with domain - by id', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org'),
+  ];
+
+  const result = matchProject('my-project@app.openfn.org', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('no match when domain does not match', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org'),
+  ];
+
+  const result = matchProject('staging@other-domain.com', projects);
+
+  t.is(result, null);
+});
+
+test('filter by domain when multiple projects have same alias', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging', 'project-a', 'app.openfn.org'),
+    p('<uuid:2>', 'staging', 'project-b', 'other-domain.com'),
+  ];
+
+  const result = matchProject('staging@app.openfn.org', projects);
+
+  t.is(result?.id, 'project-a');
+});
+
+test('filter by domain when multiple projects have same id', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging-a', 'my-project', 'app.openfn.org'),
+    p('<uuid:2>', 'staging-b', 'my-project', 'other-domain.com'),
+  ];
+
+  const result = matchProject('my-project@app.openfn.org', projects);
+
+  t.is(result?.id, 'my-project');
+  t.is(result?.alias, 'staging-a');
+});
+
+test('filter by domain when multiple projects match same partial uuid', (t) => {
+  const projects = [
+    p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging-a', 'project-a', 'app.openfn.org'),
+    p('abcd5678-9012-34ef-ghij-klmnopqrstuv', 'staging-b', 'project-b', 'other-domain.com'),
+  ];
+
+  const result = matchProject('abcd@app.openfn.org', projects);
+
+  t.is(result?.id, 'project-a');
+});
+
+test('return null for empty projects array', (t) => {
+  const projects: Project[] = [];
+
+  const result = matchProject('anything', projects);
+
+  t.is(result, null);
+});
