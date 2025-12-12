@@ -111,8 +111,7 @@ test('throw if ambiguous alias', (t) => {
   t.regex(error!.message, /Multiple projects match/);
 });
 
-// TODO this doesn't throw - something up here
-test.skip('throw if ambiguous id', (t) => {
+test('throw if ambiguous id', (t) => {
   const projects = [
     p('<uuid:1>', 'staging-a', 'my-project'),
     p('<uuid:2>', 'staging-b', 'my-project'),
@@ -125,9 +124,7 @@ test.skip('throw if ambiguous id', (t) => {
 });
 
 test('match when id and alias are the same', (t) => {
-  const projects = [
-    p('<uuid:1>', 'staging', 'staging'),
-  ];
+  const projects = [p('<uuid:1>', 'staging', 'staging')];
 
   const result = matchProject('staging', projects);
 
@@ -160,9 +157,7 @@ test('throw if ambiguous uuid', (t) => {
 });
 
 test('match with domain - by alias', (t) => {
-  const projects = [
-    p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org'),
-  ];
+  const projects = [p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org')];
 
   const result = matchProject('staging@app.openfn.org', projects);
 
@@ -170,9 +165,7 @@ test('match with domain - by alias', (t) => {
 });
 
 test('match with domain - by id', (t) => {
-  const projects = [
-    p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org'),
-  ];
+  const projects = [p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org')];
 
   const result = matchProject('my-project@app.openfn.org', projects);
 
@@ -180,9 +173,7 @@ test('match with domain - by id', (t) => {
 });
 
 test('no match when domain does not match', (t) => {
-  const projects = [
-    p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org'),
-  ];
+  const projects = [p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org')];
 
   const result = matchProject('staging@other-domain.com', projects);
 
@@ -214,8 +205,18 @@ test('filter by domain when multiple projects have same id', (t) => {
 
 test('filter by domain when multiple projects match same partial uuid', (t) => {
   const projects = [
-    p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging-a', 'project-a', 'app.openfn.org'),
-    p('abcd5678-9012-34ef-ghij-klmnopqrstuv', 'staging-b', 'project-b', 'other-domain.com'),
+    p(
+      'abcd1234-5678-90ef-ghij-klmnopqrstuv',
+      'staging-a',
+      'project-a',
+      'app.openfn.org'
+    ),
+    p(
+      'abcd5678-9012-34ef-ghij-klmnopqrstuv',
+      'staging-b',
+      'project-b',
+      'other-domain.com'
+    ),
   ];
 
   const result = matchProject('abcd@app.openfn.org', projects);

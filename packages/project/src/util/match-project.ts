@@ -9,6 +9,7 @@ const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
 
   // Collect all matching projects
   const matchingProjects: Record<string, Project> = {};
+  let multipleIdMatches = false;
 
   for (const project of candidates) {
     // If domain is specified, check if the project's endpoint matches
@@ -20,6 +21,9 @@ const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
     }
 
     if (project.id === searchTerm) {
+      if (matchingProjects[project.id]) {
+        multipleIdMatches = true;
+      }
       matchingProjects[project.id] = project;
       continue;
     }
@@ -39,7 +43,7 @@ const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
   const matches = Object.values(matchingProjects);
 
   // Multiple matches - throw error
-  if (matches.length > 1) {
+  if (multipleIdMatches || matches.length > 1) {
     throw new Error(
       `Multiple projects match "${name}": ${matches
         .map((p) => p.id)
