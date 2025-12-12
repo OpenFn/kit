@@ -1,5 +1,7 @@
 import test from 'ava';
-import matchProject from '../../src/util/match-project';
+import matchProject, {
+  MultipleMatchingProjectsError,
+} from '../../src/util/match-project';
 import Project from '../../src/Project';
 
 const p = (
@@ -105,10 +107,9 @@ test('throw if ambiguous alias', (t) => {
     p('<uuid:2>', 'staging', 'project-b'),
   ];
 
-  const error = t.throws(() => matchProject('staging', projects));
-
-  t.truthy(error);
-  t.regex(error!.message, /Multiple projects match/);
+  t.throws(() => matchProject('staging', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
 });
 
 test('throw if ambiguous id', (t) => {
@@ -117,10 +118,9 @@ test('throw if ambiguous id', (t) => {
     p('<uuid:2>', 'staging-b', 'my-project'),
   ];
 
-  const error = t.throws(() => matchProject('my-project', projects));
-
-  t.truthy(error);
-  t.regex(error!.message, /Multiple projects match/);
+  t.throws(() => matchProject('my-project', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
 });
 
 test('match when id and alias are the same', (t) => {
@@ -138,10 +138,9 @@ test('throw if ambiguous - id matches one, alias matches another', (t) => {
     p('<uuid:2>', 'other', 'my-project'),
   ];
 
-  const error = t.throws(() => matchProject('my-project', projects));
-
-  t.truthy(error);
-  t.regex(error!.message, /Multiple projects match/);
+  t.throws(() => matchProject('my-project', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
 });
 
 test('throw if ambiguous uuid', (t) => {
@@ -150,10 +149,9 @@ test('throw if ambiguous uuid', (t) => {
     p('abcd5678-1234-90ef-ghij-klmnopqrstuv', 'staging-b', 'project-b'),
   ];
 
-  const error = t.throws(() => matchProject('abcd', projects));
-
-  t.truthy(error);
-  t.regex(error!.message, /Multiple projects match/);
+  t.throws(() => matchProject('abcd', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
 });
 
 test('match with domain - by alias', (t) => {
