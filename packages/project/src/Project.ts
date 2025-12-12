@@ -168,6 +168,18 @@ export class Project {
     return this.cli.alias ?? 'main';
   }
 
+  get uuid() {
+    return this.openfn?.uuid ? `${this.openfn.uuid}` : undefined;
+  }
+
+  // Helper to extract hostname from endpoint
+  get host() {
+    const { endpoint } = this.openfn ?? {};
+    if (endpoint) {
+      return new URL(endpoint).hostname;
+    }
+  }
+
   setConfig(config: Partial<WorkspaceConfig>) {
     this.config = buildConfig(config);
   }
@@ -195,6 +207,10 @@ export class Project {
   // it's the name of the project.yaml file
   // qualified name? Remote name? App name?
   // every project in a repo need a unique identifier
+
+  // TODO this should be a getter prop,
+  // and should be alias@domain
+  // maybe also call it a qname too
   getIdentifier() {
     return getIdentifier(this.openfn);
   }
