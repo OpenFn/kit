@@ -34,7 +34,7 @@ export type Project = {
   config: WorkspaceConfig;
 
   /** Stuff only used by the CLI for this project */
-  meta?: LocalMeta;
+  cli?: LocalMeta;
 };
 
 export interface LocalMeta {

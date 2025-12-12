@@ -9,6 +9,9 @@ const createProject = () => {
     id: 'my-project',
     name: 'My Project',
     description: 'my lovely project',
+    cli: {
+      alias: 'main',
+    },
     openfn: {
       uuid: '1234',
       endpoint: 'https://app.openfn.org',

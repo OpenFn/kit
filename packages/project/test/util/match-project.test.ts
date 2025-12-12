@@ -1,0 +1,231 @@
+import test from 'ava';
+import matchProject, {
+  MultipleMatchingProjectsError,
+} from '../../src/util/match-project';
+import Project from '../../src/Project';
+
+const p = (
+  uuid: any,
+  alias: string,
+  id: string,
+  domain: string = 'app.openfn.org'
+) => {
+  return new Project(
+    {
+      id,
+      openfn: {
+        endpoint: `https://${domain}/abc`,
+        uuid,
+      },
+    },
+    { alias: alias }
+  );
+};
+
+test('match by alias', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project')];
+
+  const result = matchProject('staging', projects);
+
+  t.is(result?.id, 'my-project');
+  t.is(result?.alias, 'staging');
+});
+
+test('match by id', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project')];
+
+  const result = matchProject('my-project', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('match by uuid', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project')];
+
+  const result = matchProject('<uuid:1>', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('return null if there is no match', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project')];
+
+  const result = matchProject('non-existent', projects);
+
+  t.is(result, null);
+});
+
+test('match by partial uuid - prefix', (t) => {
+  const projects = [
+    p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging', 'my-project'),
+  ];
+
+  const result = matchProject('abcd', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('match by partial uuid - middle section', (t) => {
+  const projects = [
+    p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging', 'my-project'),
+  ];
+
+  const result = matchProject('90ef', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('match by partial uuid - case insensitive', (t) => {
+  const projects = [
+    p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging', 'my-project'),
+  ];
+
+  const result = matchProject('ABCD', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('do not match by partial alias', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project')];
+
+  const result = matchProject('stag', projects);
+
+  t.is(result, null);
+});
+
+test('do not match by partial id', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project')];
+
+  const result = matchProject('my-proj', projects);
+
+  t.is(result, null);
+});
+
+test('throw if ambiguous alias', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging', 'project-a'),
+    p('<uuid:2>', 'staging', 'project-b'),
+  ];
+
+  t.throws(() => matchProject('staging', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
+});
+
+test('throw if ambiguous id', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging-a', 'my-project'),
+    p('<uuid:2>', 'staging-b', 'my-project'),
+  ];
+
+  t.throws(() => matchProject('my-project', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
+});
+
+test('match when id and alias are the same', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'staging')];
+
+  const result = matchProject('staging', projects);
+
+  t.is(result?.id, 'staging');
+  t.is(result?.alias, 'staging');
+});
+
+test('throw if ambiguous - id matches one, alias matches another', (t) => {
+  const projects = [
+    p('<uuid:1>', 'my-project', 'staging'),
+    p('<uuid:2>', 'other', 'my-project'),
+  ];
+
+  t.throws(() => matchProject('my-project', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
+});
+
+test('throw if ambiguous uuid', (t) => {
+  const projects = [
+    p('abcd1234-5678-90ef-ghij-klmnopqrstuv', 'staging-a', 'project-a'),
+    p('abcd5678-1234-90ef-ghij-klmnopqrstuv', 'staging-b', 'project-b'),
+  ];
+
+  t.throws(() => matchProject('abcd', projects), {
+    instanceOf: MultipleMatchingProjectsError,
+  });
+});
+
+test('match with domain - by alias', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org')];
+
+  const result = matchProject('staging@app.openfn.org', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('match with domain - by id', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org')];
+
+  const result = matchProject('my-project@app.openfn.org', projects);
+
+  t.is(result?.id, 'my-project');
+});
+
+test('no match when domain does not match', (t) => {
+  const projects = [p('<uuid:1>', 'staging', 'my-project', 'app.openfn.org')];
+
+  const result = matchProject('staging@other-domain.com', projects);
+
+  t.is(result, null);
+});
+
+test('filter by domain when multiple projects have same alias', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging', 'project-a', 'app.openfn.org'),
+    p('<uuid:2>', 'staging', 'project-b', 'other-domain.com'),
+  ];
+
+  const result = matchProject('staging@app.openfn.org', projects);
+
+  t.is(result?.id, 'project-a');
+});
+
+test('filter by domain when multiple projects have same id', (t) => {
+  const projects = [
+    p('<uuid:1>', 'staging-a', 'my-project', 'app.openfn.org'),
+    p('<uuid:2>', 'staging-b', 'my-project', 'other-domain.com'),
+  ];
+
+  const result = matchProject('my-project@app.openfn.org', projects);
+
+  t.is(result?.id, 'my-project');
+  t.is(result?.alias, 'staging-a');
+});
+
+test('filter by domain when multiple projects match same partial uuid', (t) => {
+  const projects = [
+    p(
+      'abcd1234-5678-90ef-ghij-klmnopqrstuv',
+      'staging-a',
+      'project-a',
+      'app.openfn.org'
+    ),
+    p(
+      'abcd5678-9012-34ef-ghij-klmnopqrstuv',
+      'staging-b',
+      'project-b',
+      'other-domain.com'
+    ),
+  ];
+
+  const result = matchProject('abcd@app.openfn.org', projects);
+
+  t.is(result?.id, 'project-a');
+});
+
+test('return null for empty projects array', (t) => {
+  const projects: Project[] = [];
+
+  const result = matchProject('anything', projects);
+
+  t.is(result, null);
+});

@@ -2,6 +2,19 @@ import mock from 'mock-fs';
 import { jsonToYaml, Workspace } from '../src';
 import test from 'ava';
 
+const gen = (uuid: any, alias: string, id: string, domain: string) =>
+  jsonToYaml({
+    id,
+    name: id.toUpperCase(),
+    cli: {
+      alias,
+    },
+    openfn: {
+      uuid: `${uuid}`,
+    },
+    workflows: [],
+  });
+
 // TODO need a test on the legacy and new yaml formats here
 mock({
   '/ws/openfn.yaml': jsonToYaml({
@@ -178,6 +191,14 @@ mock({
       },
     ],
   }),
+
+  // aliasing
+  '/ws4/openfn.yaml': '',
+  '/ws4/.projects/main@openfn.org.yaml': gen(1, 'main', 'proj-1', 'openfn.org'),
+  // prettier-ignore
+  '/ws4/.projects/main@somewhere.com.yaml': gen(11, 'main', 'proj-1', 'somewhere.com'),
+  // prettier-ignore
+  '/ws4/.projects/staging@openfn.org.yaml': gen(2, 'staging', 'proj-1-staging', 'openfn.org'),
 });
 
 test('workspace-path: valid workspace path', (t) => {
@@ -255,4 +276,36 @@ test('load project meta', (t) => {
     uuid: '1234',
     id: 'project-1',
   });
+});
+
+test('get project by id', (t) => {
+  const ws = new Workspace('/ws4');
+  const project = ws.get('proj-1-staging');
+
+  t.truthy(project);
+  t.is(project?.id, 'proj-1-staging');
+});
+
+test('get project by partial uuid', (t) => {
+  const ws = new Workspace('/ws4');
+  const project = ws.get('proj-1-staging');
+
+  t.truthy(project);
+  t.is(project?.uuid, 'proj-1-staging');
+});
+
+test('get project returns null when not found', (t) => {
+  const ws = new Workspace('/ws4');
+  const project = ws.get('non-existent');
+
+  t.is(project, null);
+});
+
+test('get project throws on ambiguous match', (t) => {
+  const ws = new Workspace('/ws4');
+
+  const error = t.throws(() => ws.get('main'));
+
+  t.truthy(error);
+  t.regex(error!.message, /Failed to resolve unique identifier/);
 });

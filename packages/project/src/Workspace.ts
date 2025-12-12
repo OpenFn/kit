@@ -12,6 +12,7 @@ import {
 } from './util/config';
 import fromProject from './parse/from-project';
 import type { Logger } from '@openfn/logger';
+import matchProject from './util/match-project';
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
@@ -85,12 +86,9 @@ export class Workspace {
     return this.projects;
   }
 
-  /** Get a project by its id or UUID */
-  get(id: string) {
-    return (
-      this.projects.find((p) => p.id === id) ??
-      this.projects.find((p) => p.openfn?.uuid === id)
-    );
+  /** Get a project by its alias, id or UUID. Can also include a UUID */
+  get(nameyThing: string) {
+    return matchProject(nameyThing, this.projects);
   }
 
   getProjectPath(id: string) {

@@ -28,6 +28,11 @@ type UUIDMap = {
   };
 };
 
+type CLIMeta = {
+  version?: number;
+  alias?: string;
+};
+
 export class Project {
   // what schema version is this?
   // And how are we tracking this?
@@ -50,10 +55,10 @@ export class Project {
   // these are all (?) unused clientside
   options: any;
 
-  // local metadata used by the CLI
-  // This stuff is not synced back to lightning
-  // TODO maybe rename cli or local
-  meta: any;
+  /**
+   * Local metadata used by the CLI but not synced to Lightning
+   */
+  cli: CLIMeta;
 
   // this contains meta about the connected openfn project
   openfn?: l.ProjectMeta;
@@ -126,14 +131,28 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: Partial<l.Project>, config?: Partial<l.WorkspaceConfig>) {
-    this.config = buildConfig(config);
-
+  constructor(
+    data: Partial<l.Project> = {},
+    meta?: Partial<l.WorkspaceConfig> & CLIMeta
+  ) {
     this.id =
       data.id ??
       (data.name
         ? slugify(data.name)
         : humanId({ separator: '-', capitalize: false }));
+
+    const { version, alias, ...otherConfig } = meta ?? {};
+    this.cli = {};
+    if (data.cli) {
+      Object.assign(this.cli, data.cli);
+    }
+    if (alias) {
+      // A passed-in config alias overrides the data alias
+      // (it likely means the user has asked to override the raw file
+      this.cli.alias = alias;
+    }
+
+    this.config = buildConfig(otherConfig);
 
     this.name = data.name;
 
@@ -143,7 +162,22 @@ export class Project {
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
-    // this.meta = data.meta ?? {};
+  }
+
+  get alias() {
+    return this.cli.alias ?? 'main';
+  }
+
+  get uuid() {
+    return this.openfn?.uuid ? `${this.openfn.uuid}` : undefined;
+  }
+
+  // Helper to extract hostname from endpoint
+  get host() {
+    const { endpoint } = this.openfn ?? {};
+    if (endpoint) {
+      return new URL(endpoint).hostname;
+    }
   }
 
   setConfig(config: Partial<WorkspaceConfig>) {
@@ -173,6 +207,10 @@ export class Project {
   // it's the name of the project.yaml file
   // qualified name? Remote name? App name?
   // every project in a repo need a unique identifier
+
+  // TODO this should be a getter prop,
+  // and should be alias@domain
+  // maybe also call it a qname too
   getIdentifier() {
     return getIdentifier(this.openfn);
   }
