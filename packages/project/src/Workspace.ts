@@ -12,6 +12,7 @@ import {
 } from './util/config';
 import fromProject from './parse/from-project';
 import type { Logger } from '@openfn/logger';
+import matchProject from './util/match-project';
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
@@ -87,22 +88,7 @@ export class Workspace {
 
   /** Get a project by its alias, id or UUID. Can also include a UUID */
   get(nameyThing: string) {
-    const [name, domain] = nameyThing.split('@');
-
-    // first try to find an alias match
-
-    // If there are multiple matches, do we have a domain?
-
-    // TODO next try and find an exact id or uuid match
-
-    // Now try and fuzzy match from alias, id or uuid
-
-    // If there is ambiguity, throw an error
-
-    return (
-      this.projects.find((p) => p.id === id) ??
-      this.projects.find((p) => p.openfn?.uuid === id)
-    );
+    return matchProject(nameyThing, this.projects);
   }
 
   getProjectPath(id: string) {
