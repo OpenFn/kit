@@ -4,6 +4,8 @@ import Project from '../Project';
 type Alias = string;
 type ID = string;
 
+export class MultipleMatchingProjectsError extends Error {}
+
 const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
   const [searchTerm, domain] = `${name}`.split('@');
 
@@ -44,8 +46,8 @@ const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
 
   // Multiple matches - throw error
   if (multipleIdMatches || matches.length > 1) {
-    throw new Error(
-      `Multiple projects match "${name}": ${matches
+    throw new MultipleMatchingProjectsError(
+      `Failed to resolve unique identifier for "${name}", clashes with: ${matches
         .map((p) => p.id)
         .join(', ')}`
     );
