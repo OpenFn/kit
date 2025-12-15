@@ -2,7 +2,7 @@ import test from 'ava';
 import fromAppState, { mapWorkflow } from '../../src/parse/from-app-state';
 import { clone, cloneDeep } from 'lodash-es';
 
-import state from '../fixtures/sample-v1-project';
+import state, { withCreds } from '../fixtures/sample-v1-project';
 
 // I don't think this file really represents anything
 // loosely maps to the old config file
@@ -173,6 +173,27 @@ test('mapWorkflow: map a simple job', (t) => {
       uuid: '66add020-e6eb-4eec-836b-20008afca816',
       project_credential_id: null,
       keychain_credential_id: null,
+    },
+  });
+});
+
+// todo surprised this works
+test('mapWorkflow: map a job with project and keychain credentials', (t) => {
+  const wf = withCreds.workflows[0];
+  wf.jobs.map(console.log);
+  const mapped = mapWorkflow(wf);
+
+  const [_trigger, job] = mapped.steps;
+  t.deepEqual(job, {
+    id: 'transform-data',
+    name: 'Transform data',
+    adaptor: '@openfn/language-common@latest',
+    expression:
+      '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+    openfn: {
+      uuid: '66add020-e6eb-4eec-836b-20008afca816',
+      project_credential_id: 'p',
+      keychain_credential_id: 'k',
     },
   });
 });

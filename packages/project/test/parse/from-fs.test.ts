@@ -5,6 +5,8 @@ import { parseProject } from '../../src/parse/from-fs';
 const s = JSON.stringify;
 
 // mock several projects and use them through the tests
+// TODO: the state files here are all in v1 format - need to add tests with v2
+// Probably need to rethink all these tests tbh
 mock({
   '/p1/openfn.json': s({
     // this must be the whole deploy name right?
@@ -25,14 +27,6 @@ mock({
       // That stuff is all in the project.yaml, not useful here
     },
   }),
-  // // hmm I don't think we need to model this
-  // // in the PROJECT. It should all be implicit.
-  // '/p1/projects/staging@app.openfn.org.json': s({
-  //   openfn: {
-  //     projectId: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
-  //     endpoint: 'http://localhost:4000',
-  //   },
-  // }),
   '/p1/workflows/my-workflow': {},
   '/p1/workflows/my-workflow/my-workflow.json': s({
     id: 'my-workflow',
@@ -64,9 +58,9 @@ mock({
         name: 'My Workflow',
         jobs: [
           {
-            // pretend this is a uuid
             id: '<uuid-1>',
             name: 'a',
+            project_credential_id: 'p',
           },
           {
             id: '<uuid-2>',
@@ -192,6 +186,16 @@ test('should track the UUID of a step', async (t) => {
 
   t.truthy(wf.steps[0].openfn);
   t.is(wf.steps[0].openfn.uuid, '<uuid-1>');
+});
+
+// TODO also test this on different openfn objects
+test('should track openfn props from state file on a step', async (t) => {
+  const project = await parseProject({ root: '/p1' });
+
+  const [wf] = project.workflows;
+
+  t.truthy(wf.steps[0].openfn);
+  t.is(wf.steps[0].openfn.project_credential_id, 'p');
 });
 
 test('should track the UUID of an edge', async (t) => {

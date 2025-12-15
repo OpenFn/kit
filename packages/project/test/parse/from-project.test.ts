@@ -93,6 +93,7 @@ test('import from a v2 project as JSON', async (t) => {
         adaptor: 'common',
         openfn: {
           uuid: 3,
+          project_credential_id: 'x',
         },
       },
       {
@@ -138,6 +139,7 @@ test('import from a v2 project as YAML', async (t) => {
         adaptor: 'common',
         openfn: {
           uuid: 3,
+          project_credential_id: 'x',
         },
       },
       {

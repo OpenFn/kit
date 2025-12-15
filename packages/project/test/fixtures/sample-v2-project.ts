@@ -16,7 +16,7 @@ export const json: SerializedProject = {
         {
           name: 'b',
           id: 'b',
-          openfn: { uuid: 3 },
+          openfn: { uuid: 3, project_credential_id: 'x' },
           expression: 'fn()',
           adaptor: 'common',
         },
@@ -50,6 +50,7 @@ workflows:
         id: b
         openfn:
           uuid: 3
+          project_credential_id: x
         expression: fn()
         adaptor: common
       - id: trigger

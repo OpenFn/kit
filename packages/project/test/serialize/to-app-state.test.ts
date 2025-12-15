@@ -32,7 +32,9 @@ const state: Provisioner.Project = {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
           body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
-          adaptor: '@openfn/language-common@latest',
+          adaptor: '@openfn/language-cmmon@latest',
+
+          // TODO make sure these get serialized back
           project_credential_id: null,
           keychain_credential_id: null,
         },
@@ -221,6 +223,39 @@ test('should write openfn keys to objects', (t) => {
   t.is(state.workflows[0].jobs[0].x, 1);
   t.is(state.workflows[0].triggers[0].x, 1);
   t.is(state.workflows[0].edges[0].x, 1);
+});
+
+test('should handle credentials', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            openfn: {
+              keychain_credential_id: 'k',
+              project_credential_id: 'p',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), { format: 'json' });
+  const [job] = state.workflows[0].jobs;
+  t.is(job.keychain_credential_id, 'k');
+  t.is(job.project_credential_id, 'p');
 });
 
 test.todo('handle edge labels');

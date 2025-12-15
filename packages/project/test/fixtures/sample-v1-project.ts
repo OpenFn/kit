@@ -1,4 +1,5 @@
 import type { Provisioner } from '@openfn/lexicon/lightning';
+import { cloneDeep } from 'lodash-es';
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -55,3 +56,11 @@ const state: Provisioner.Project = {
 };
 
 export default state;
+
+const withCreds = cloneDeep(state);
+Object.assign(withCreds.workflows[0].jobs[0], {
+  project_credential_id: 'p',
+  keychain_credential_id: 'k',
+});
+
+export { withCreds };

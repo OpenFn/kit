@@ -1,5 +1,5 @@
 import yargs from 'yargs';
-import { build, ensure } from '../util/command-builders';
+import { build, ensure, override } from '../util/command-builders';
 import { Opts } from '../options';
 import * as o from '../options';
 
@@ -26,6 +26,8 @@ const options = [
   o.logJson,
   o.projectPath,
   o.statePath,
+
+  override(o.workspace, { hidden: true }),
 ];
 
 const deployCommand: yargs.CommandModule<DeployOptions> = {

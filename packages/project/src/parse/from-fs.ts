@@ -75,14 +75,17 @@ export const parseProject = async (options: FromFsConfig) => {
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
       if (wf.id && Array.isArray(wf.steps)) {
         // load settings from the state file
-        const wfState: any = (state && state.getWorkflow(wf.id)) ?? {};
-        wf.openfn = {
-          uuid: wfState.openfn?.uuid ?? null,
-          // TODO do we need to transfer more stuff? Options maybe?
-        };
+        const wfState = state?.getWorkflow(wf.id);
+
+        wf.openfn = Object.assign({}, wfState?.openfn, {
+          uuid: wfState?.openfn?.uuid ?? null,
+        });
 
         //console.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
+          // This is the saved, remote view of the step
+          // TODO if the id has changed, how do we track?
+          const stateStep = wfState?.get(step.id);
           if (step.expression && step.expression.endsWith('.js')) {
             const dir = path.dirname(filePath);
             const exprPath = path.join(dir, step.expression);
@@ -94,12 +97,7 @@ export const parseProject = async (options: FromFsConfig) => {
               // throw?
             }
           }
-          // check the state file for a matching uuid
-          // TODO this isn't quite right - what if there are other openfn keys to write?
-          // We need to return not just the UUID, but all the openfn keys
-          // TODO do we need to slugify the id here? Not really tbh?
-          const uuid = state?.getUUID(wf.id, step.id) ?? null;
-          step.openfn = { uuid };
+          step.openfn = Object.assign({}, stateStep?.openfn);
 
           // Now track UUIDs for edges against state
           for (const target in step.next || {}) {
