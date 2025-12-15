@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.9.2
+
+### Patch Changes
+
+- 6766d96: Fixed an issue where credentials can get dropped in `deploy --beta`
+
 ## 0.9.1
 
 ### Patch Changes
