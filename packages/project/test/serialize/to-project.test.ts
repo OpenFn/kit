@@ -18,7 +18,7 @@ const createProject = () => {
     },
     workflows: [
       generateWorkflow(
-        'trigger(type=webhook)-b(expression="fn()",adaptor=common)',
+        'trigger(type=webhook)-b(expression="fn()",adaptor=common,project_credential_id=x)',
         {
           uuidSeed: 1,
           openfnUuid: true,
@@ -61,7 +61,7 @@ test('should exclude null values in yaml', (t) => {
 
   // force some null values into the workflow structure
   proj.workflows[0].openfn.concurrency = null;
-  proj.workflows[0].steps[1].openfn.project_credential_id = null;
+  proj.workflows[0].steps[1].openfn.keychain_credential_id = null;
 
   const yaml = proj.serialize('project', { format: 'yaml' });
   t.deepEqual(yaml, v2.yaml);

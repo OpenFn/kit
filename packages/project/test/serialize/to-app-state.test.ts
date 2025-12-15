@@ -32,7 +32,7 @@ const state: Provisioner.Project = {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
           body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
-          adaptor: '@openfn/language-cmmon@latest',
+          adaptor: '@openfn/language-common@latest',
 
           // TODO make sure these get serialized back
           project_credential_id: null,
