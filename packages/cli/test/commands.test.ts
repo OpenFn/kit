@@ -16,7 +16,7 @@ import type { Opts } from '../src/options';
 // because of all the FS mocking
 // To make them more robust in CI, all the tests in this file need
 // an increased timeout
-const TIMEOUT = 1000 * 20;
+const TIMEOUT = 1000 * 30;
 
 const logger = createMockLogger('', { level: 'debug' });
 
