@@ -4,34 +4,28 @@ import Project from '@openfn/project';
 import { DeployConfig, deployProject } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { Opts } from '../options';
+import { loadAppAuthConfig } from '../projects/util';
 
 export type DeployOptionsBeta = Required<
   Pick<
     Opts,
-    'beta' | 'command' | 'log' | 'logJson' | 'apiKey' | 'endpoint' | 'path'
+    | 'beta'
+    | 'command'
+    | 'log'
+    | 'logJson'
+    | 'apiKey'
+    | 'endpoint'
+    | 'path'
+    | 'workspace'
   >
 >;
 
 export async function handler(options: DeployOptionsBeta, logger: Logger) {
-  const { OPENFN_API_KEY } = process.env;
-
-  const { endpoint } = options;
-
-  const config: Partial<DeployConfig> = {
-    apiKey: options.apiKey,
-  };
-
-  if (!options.apiKey && OPENFN_API_KEY) {
-    logger.info('Using OPENFN_API_KEY environment variable');
-    config.apiKey = OPENFN_API_KEY;
-  }
+  const config = loadAppAuthConfig(options, logger);
 
   // TMP use options.path to set the directory for now
   // We'll need to manage this a bit better
-  const project = await Project.from('fs', { root: options.path || '.' });
-  // Why is there an id on openfn here?
-  console.log({ openfn: project.openfn });
-
+  const project = await Project.from('fs', { root: options.workspace || '.' });
   // TODO: work out if there's any diff
 
   // generate state for the provisioner
@@ -41,7 +35,7 @@ export async function handler(options: DeployOptionsBeta, logger: Logger) {
   logger.debug(JSON.stringify(state, null, 2));
 
   // TODO not totally sold on endpoint handling right now
-  config.endpoint = endpoint || project.openfn?.endpoint;
+  config.endpoint ??= project.openfn?.endpoint!;
 
   logger.info('Sending project to app...');
 

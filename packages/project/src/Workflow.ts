@@ -90,7 +90,7 @@ class Workflow {
     return this;
   }
 
-  // Get properties on any step or edge by id
+  // Get properties on any step or edge by id or uuid
   get(id: string): WithMeta<l.Step | l.Trigger | l.StepEdge> {
     const item = this.index.edges[id] || this.index.steps[id];
     if (!item) {
