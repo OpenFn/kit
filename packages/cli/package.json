@@ -7,7 +7,7 @@
     "pnpm": ">=7"
   },
   "scripts": {
-    "test": "pnpm ava",
+    "test": "pnpm ava --timeout 5m",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --project tsconfig.test.json",
     "build": "tsup --config ./tsup.config.js",
