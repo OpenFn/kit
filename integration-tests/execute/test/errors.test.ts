@@ -23,7 +23,7 @@ test.serial('should throw a reference error', async (t) => {
 
   t.is(err.message, 'ReferenceError: x is not defined');
   t.is(err.severity, 'crash');
-  t.is(err.step, 'job-1'); // this name is auto-generated btw
+  t.is(err.step, 'src'); // this name is auto-generated btw
   t.deepEqual(err.pos, {
     column: 11,
     line: 1,
@@ -40,12 +40,12 @@ test.serial('should throw a type error', async (t) => {
   const ignore = ['x'];
 
   const result = await execute(job, state, 'common', ignore);
-  const err = result.errors['job-1'];
+  const err = result.errors['src'];
   t.log(err.pos);
 
   t.is(err.message, 'TypeError: s is not a function');
   t.is(err.severity, 'fail');
-  t.is(err.step, 'job-1');
+  t.is(err.step, 'src');
   t.deepEqual(err.pos, {
     column: 11,
     line: 1,
@@ -65,7 +65,7 @@ test.serial.skip('should throw an adaptor error', async (t) => {
 get("www")`;
 
   const result = await execute(job, state, 'http');
-  const err = result.errors['job-1'];
+  const err = result.errors['src'];
   t.log(err);
 
   t.is(err.message, 'AdaptorError: INVALID_URL');

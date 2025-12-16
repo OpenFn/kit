@@ -22,6 +22,7 @@ const execute = async (
   };
   const compiled = compiler(job, options);
   const result = await run(compiled.code, state, {
+    defaultStepId: 'src',
     sourceMap: compiled.map,
     // preload the linker with some locally installed modules
     linker: {
