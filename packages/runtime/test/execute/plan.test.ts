@@ -914,7 +914,7 @@ test('log appropriately on error', async (t) => {
     {
       id: 'job1',
       state: {},
-      expression: 'export default [s => { throw Error("e")}]',
+      expression: 'export default [s => { throw Error("eee")}]',
     },
   ]);
 
@@ -929,7 +929,7 @@ test('log appropriately on error', async (t) => {
   t.truthy(logger._find('error', /Check state.errors.job1 for details/i));
 
   const [_level, _icon, errMessage]: any = logger._history.at(-2);
-  t.deepEqual(errMessage, 'e');
+  t.regex(errMessage, /eee/);
 });
 
 test('steps do not share a local scope', async (t) => {

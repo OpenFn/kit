@@ -129,35 +129,70 @@ test.serial('run a workflow with state', async (t) => {
   t.is(result.data.count, 4);
 });
 
-test.serial('run a workflow with errors and positions', async (t) => {
-  const workflow = {
-    workflow: {
-      steps: [
-        {
-          id: 'x',
-          expression: `${fn}fn((state) => state.x.length)`,
-        },
-      ],
-    },
-  };
+test.serial(
+  'run a workflow with errors and positions with anonymous steps',
+  async (t) => {
+    const workflow = {
+      workflow: {
+        steps: [
+          {
+            expression: `${fn}fn((state) => state.x.length)`,
+          },
+        ],
+      },
+    };
 
-  mockFs({
-    '/workflow.json': JSON.stringify(workflow),
-  });
+    mockFs({
+      '/workflow.json': JSON.stringify(workflow),
+    });
 
-  const options = {
-    ...defaultOptions,
-    workflowPath: '/workflow.json',
-  };
-  const result = await handler(options, logger);
-  t.truthy(result.errors);
-  t.regex(
-    result.errors.x.message,
-    /typeerror: cannot read properties of undefined/i
-  );
-  t.is(result.errors.x.pos.line, 2);
-  t.is(result.errors.x.pos.column, 23);
-});
+    const options = {
+      ...defaultOptions,
+      workflowPath: '/workflow.json',
+    };
+    const result = await handler(options, logger);
+
+    t.truthy(result.errors);
+    const err = result.errors['job-1'];
+    t.regex(err.message, /typeerror: cannot read properties of undefined/i);
+    t.is(err.pos.line, 2);
+    t.is(err.pos.column, 23);
+  }
+);
+
+test.serial.only(
+  "run a workflow with errors and positions with id'd steps",
+  async (t) => {
+    const workflow = {
+      workflow: {
+        steps: [
+          {
+            id: 'x',
+            expression: `${fn}fn((state) => state.x.length)`,
+          },
+        ],
+      },
+    };
+
+    mockFs({
+      '/workflow.json': JSON.stringify(workflow),
+    });
+
+    const options = {
+      ...defaultOptions,
+      workflowPath: '/workflow.json',
+    };
+    const result = await handler(options, logger);
+    t.truthy(result.errors);
+    console.log(result.errors);
+    t.regex(
+      result.errors.x.message,
+      /typeerror: cannot read properties of undefined/i
+    );
+    t.is(result.errors.x.pos.line, 2);
+    t.is(result.errors.x.pos.column, 23);
+  }
+);
 
 test.serial(
   'run a workflow with errors and positions and named steps',

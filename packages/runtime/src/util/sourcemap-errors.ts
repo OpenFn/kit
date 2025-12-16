@@ -6,30 +6,40 @@ import type { Job } from '@openfn/lexicon';
 // This function takes an error and a job and updates the error with sourcemapped metadata
 export default async (job: Job, error: RTError) => {
   if (job.sourceMap) {
-    const smc = await new SourceMapConsumer(job.sourceMap);
+    try {
+      const smc = await new SourceMapConsumer(job.sourceMap);
 
-    if (error.pos && error.pos.line && error.pos.column) {
-      error.pos = pick(
-        smc.originalPositionFor({
-          line: error.pos.line,
-          column: error.pos.column,
-        }) as any,
-        'line',
-        'column'
+      if (error.pos && error.pos.line && error.pos.column) {
+        error.pos = pick(
+          smc.originalPositionFor({
+            line: error.pos.line,
+            column: error.pos.column,
+          }) as any,
+          'line',
+          'column'
+        );
+
+        error.step = job.name || job.id;
+      }
+
+      if (error.stack) {
+        error.stack = await mapStackTrace(smc, error.stack);
+      }
+
+      if (error.pos && !isNaN(error.pos.line!)) {
+        const fileName = job.name ? `${job.name || job.id}.js` : 'src.js';
+        const src = smc.sourceContentFor(fileName)!.split('\n');
+        const line = src[error.pos.line! - 1];
+        error.pos.src = line;
+      }
+    } catch (e) {
+      // error while trying to map
+      // (we must not throw  here or we'll create more problems)
+      console.warn(
+        'Error occurred trying to resolve sourcemap for ',
+        job.name || job.id
       );
-
-      error.step = job.name || job.id;
-    }
-
-    if (error.stack) {
-      error.stack = await mapStackTrace(smc, error.stack);
-    }
-
-    if (error.pos && !isNaN(error.pos.line!)) {
-      const fileName = job.name ? `${job.name}.js` : 'src.js';
-      const src = smc.sourceContentFor(fileName)!.split('\n');
-      const line = src[error.pos.line! - 1];
-      error.pos.src = line;
+      console.warn(e);
     }
   }
 };

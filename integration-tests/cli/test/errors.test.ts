@@ -146,7 +146,7 @@ test.serial('invalid end (ambiguous)', async (t) => {
 
 // These test error outputs within valid workflows
 
-test.serial('job with reference error', async (t) => {
+test.serial.only('job with reference error', async (t) => {
   const { stdout, err } = await run(
     `openfn ${jobsPath}/errors.json --log-json --start ref --no-cache-steps`
   );

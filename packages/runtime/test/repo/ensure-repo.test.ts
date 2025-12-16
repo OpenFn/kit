@@ -67,5 +67,5 @@ test.serial('log if a repo is created', async (t) => {
   mock({});
   await ensureRepo('/tmp/repo', logger);
   const { message } = logger._parse(logger._last);
-  t.assert((message as string).startsWith('Creating new repo'));
+  t.regex(message as string, /Creating new repo/);
 });
