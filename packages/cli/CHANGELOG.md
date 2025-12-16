@@ -1,5 +1,18 @@
 # @openfn/cli
 
+## 1.20.3
+
+### Patch Changes
+
+- a030ebd: Fix an issue where error positions are not properly reported for named steps in a workflow
+- Updated dependencies [a1bfdc1]
+- Updated dependencies [c70369b]
+  - @openfn/runtime@1.7.7
+  - @openfn/logger@1.1.1
+  - @openfn/compiler@1.2.2
+  - @openfn/deploy@0.11.5
+  - @openfn/project@0.9.3
+
 ## 1.20.2
 
 ### Patch Changes

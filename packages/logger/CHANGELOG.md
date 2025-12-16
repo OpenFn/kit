@@ -1,5 +1,11 @@
 # @openfn/logger
 
+## 1.1.1
+
+### Patch Changes
+
+- c70369b: Add secret "none-really" log level that even suppresses error logs
+
 ## 1.1.0
 
 ### Minor Changes

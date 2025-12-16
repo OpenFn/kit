@@ -12,6 +12,9 @@ import ensureOptions, { LogOptions, LogLevel } from './options';
 // (Note that this doesn't stop a component printing to stdout! It just disables the logger)
 export const NONE = 'none';
 
+// Special debug log level - this even hides errors
+export const REALLY_NONE = 'none-really';
+
 // Defaults for all the family. Prints what the user absolutely has to know.
 // Top-level completions, errors and warnings
 export const SUCCESS = 'success'; // aka default
@@ -113,6 +116,8 @@ const priority: Record<LogFns | LogLevel, number> = {
   [SUCCESS]: 2,
   [NONE]: 9,
   [ERROR]: 100, // errors ALWAYS log
+
+  [REALLY_NONE]: 1000,
 };
 
 // // TODO I'd quite like each package to have its own colour, I think

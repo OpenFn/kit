@@ -35,6 +35,9 @@ export type Options = {
 
   /** Number of ms to wait before polling memory */
   profilePollInterval?: number;
+
+  /** Optional name for the expression (if passed a string) */
+  defaultStepId?: string;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {
@@ -49,7 +52,8 @@ const defaultLogger = createMockLogger();
 const loadPlanFromString = (
   expression: string,
   logger: Logger,
-  sourceMap?: SourceMapWithOperations
+  sourceMap?: SourceMapWithOperations,
+  id?: string
 ) => {
   const plan: ExecutionPlan = {
     workflow: {
@@ -58,6 +62,7 @@ const loadPlanFromString = (
         {
           expression,
           sourceMap,
+          id,
         },
       ],
     },
@@ -78,7 +83,12 @@ const run = (
   const logger = opts.logger || defaultLogger;
 
   if (typeof xplan === 'string') {
-    xplan = loadPlanFromString(xplan, logger, opts.sourceMap);
+    xplan = loadPlanFromString(
+      xplan,
+      logger,
+      opts.sourceMap,
+      opts.defaultStepId
+    );
   }
 
   if (!xplan.options) {

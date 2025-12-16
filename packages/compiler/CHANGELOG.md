@@ -1,5 +1,12 @@
 # @openfn/compiler
 
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [c70369b]
+  - @openfn/logger@1.1.1
+
 ## 1.2.1
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @openfn/project
 
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies [c70369b]
+  - @openfn/logger@1.1.1
+
 ## 0.9.2
 
 ### Patch Changes

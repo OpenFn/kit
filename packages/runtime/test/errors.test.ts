@@ -176,7 +176,7 @@ fn((s) => z)`;
   t.log(code);
   let error: any;
   try {
-    await run(code, {}, { sourceMap: map });
+    await run(code, {}, { defaultStepId: 'src', sourceMap: map });
   } catch (e) {
     error = e;
   }
@@ -443,6 +443,7 @@ test('fail on nested adaptor error and map to a position in the vm', async (t) =
     code,
     {},
     {
+      defaultStepId: 'src',
       linker: {
         modules: {
           x: { path: path.resolve('test/__modules__/@openfn/language-test') },
@@ -452,7 +453,7 @@ test('fail on nested adaptor error and map to a position in the vm', async (t) =
     }
   );
 
-  const error = result.errors['job-1'];
+  const error = result.errors.src;
   t.log(error);
 
   t.deepEqual(error, {
@@ -464,7 +465,7 @@ test('fail on nested adaptor error and map to a position in the vm', async (t) =
     name: 'AdaptorError',
     source: 'runtime',
     severity: 'fail',
-    step: 'job-1',
+    step: 'src',
     pos: {
       column: 20,
       line: 4,
@@ -559,4 +560,72 @@ test('AdaptorError: ensure that error objects are safely serialised', (t) => {
     message: 'e',
     name: 'AxiosError',
   });
+});
+
+test('maps positions for an error on a workflow', async (t) => {
+  // compile the code so we get a source map
+  const { code, map } = compile(`
+    function fn(f) { return f() };
+    fn((x) => x.y);
+  `);
+
+  // Build a workflow with sourcemap included
+  const wf = {
+    workflow: {
+      steps: [
+        {
+          id: 'x',
+          expression: code,
+          sourceMap: map,
+        },
+      ],
+    },
+  };
+
+  const result = await run(wf);
+
+  const error: any = result.errors.x;
+  t.is(error.severity, 'fail');
+  t.is(
+    error.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+  t.is(error.pos.line, 3);
+  t.is(error.pos.column, 17);
+});
+
+test('maps positions for an error on a workflow with a step name', async (t) => {
+  // compile the code so we get a source map
+  const { code, map } = compile(
+    `
+    function fn(f) { return f() };
+    fn((x) => x.y);
+  `,
+    { name: 'x' } // fails if this is not set
+  );
+
+  // Build a workflow with sourcemap included
+  const wf = {
+    workflow: {
+      steps: [
+        {
+          id: 'x',
+          name: 'x',
+          expression: code,
+          sourceMap: map,
+        },
+      ],
+    },
+  };
+
+  const result = await run(wf);
+
+  const error: any = result.errors.x;
+  t.is(error.severity, 'fail');
+  t.is(
+    error.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+  t.is(error.pos.line, 3);
+  t.is(error.pos.column, 17);
 });
