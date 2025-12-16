@@ -27,7 +27,7 @@ export default async (job: Job, error: RTError) => {
       }
 
       if (error.pos && !isNaN(error.pos.line!)) {
-        const fileName = job.name ? `${job.name || job.id}.js` : 'src.js';
+        const fileName = `${job.name || job.id || 'src'}.js`;
         const src = smc.sourceContentFor(fileName)!.split('\n');
         const line = src[error.pos.line! - 1];
         error.pos.src = line;

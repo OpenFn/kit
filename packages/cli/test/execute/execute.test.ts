@@ -8,8 +8,7 @@ import { ExecuteOptions } from '../../src/execute/command';
 import handler from '../../src/execute/handler';
 import { mockFs, resetMockFs } from '../util';
 
-// Why is this logging everywhere?
-const logger = createMockLogger(undefined, { level: 'debug' });
+const logger = createMockLogger(undefined, { level: 'none' });
 
 // These options are designed to minimise i/o
 // and ensure type safely
@@ -20,12 +19,8 @@ const defaultOptions = {
   repoDir: '/repo',
   path: '.',
   log: {
-    // TODO if I pass a mock logger into the handler, the handler then
-    // goes and creates a real logger and passes it to the runtime, which
-    // causes all sorts of logging
-    // Why isn't that affecting other tests?
-    // Why do I need this special handling here?
-    default: 'none',
+    // This special flag even hides errors
+    default: 'none-really',
   } as any, // TODO some weird typing here
   logJson: true,
 } as Partial<ExecuteOptions>;
