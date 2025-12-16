@@ -2,7 +2,7 @@ import { SanitizePolicies } from './sanitize';
 import defaultEmitter from './util/default-emitter';
 import jsonEmitter from './util/json-emitter';
 
-export type LogLevel = 'debug' | 'info' | 'default' | 'none';
+export type LogLevel = 'debug' | 'info' | 'default' | 'none' | 'none-really';
 
 export type LogEmitter = typeof console & {
   success: typeof console.log;
