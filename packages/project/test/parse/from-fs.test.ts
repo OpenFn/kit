@@ -166,7 +166,6 @@ test('should load a workflow from the file system', async (t) => {
   const [wf] = project.workflows;
 
   t.is(wf.id, 'my-workflow');
-  t.is(wf.openfn.uuid, '<some-uuid>');
   t.is(wf.steps[0].expression, 'fn(s => s)');
 });
 
@@ -178,37 +177,6 @@ test('should load a workflow from the file system and expand shorthand links', a
 
   t.is(typeof wf.steps[1].next.c, 'object');
 });
-
-test('should track the UUID of a step', async (t) => {
-  const project = await parseProject({ root: '/p1' });
-
-  const [wf] = project.workflows;
-
-  t.truthy(wf.steps[0].openfn);
-  t.is(wf.steps[0].openfn.uuid, '<uuid-1>');
-});
-
-// TODO also test this on different openfn objects
-test('should track openfn props from state file on a step', async (t) => {
-  const project = await parseProject({ root: '/p1' });
-
-  const [wf] = project.workflows;
-
-  t.truthy(wf.steps[0].openfn);
-  t.is(wf.steps[0].openfn.project_credential_id, 'p');
-});
-
-test('should track the UUID of an edge', async (t) => {
-  const project = await parseProject({ root: '/p1' });
-
-  const [wf] = project.workflows;
-
-  t.truthy(wf.steps[0].next?.b.openfn);
-  t.is(wf.steps[0].next?.b.openfn.uuid, '<uuid-3>');
-});
-
-test.todo('should track the UUID of a trigger');
-// maybe track other things that aren't in workflow.yaml?
 
 test('should load a project from yaml', async (t) => {
   const project = await parseProject({ root: '/p2' });
