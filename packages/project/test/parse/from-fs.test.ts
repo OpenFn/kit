@@ -70,6 +70,99 @@ test.serial('should load workspace config from yaml', async (t) => {
   });
 });
 
+test.serial('should load single workflow', async (t) => {
+  mockFile('/ws/openfn.yaml', buildConfig());
+
+  mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+    id: 'my-workflow',
+    name: 'My Workflow',
+    steps: [
+      {
+        id: 'a',
+        expression: 'job.js',
+      },
+    ],
+  });
+
+  mockFile('/ws/workflows/my-workflow/job.js', `fn(s => s)`);
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+
+  const wf = project.getWorkflow('my-workflow');
+  t.truthy(wf);
+  t.is(wf.id, 'my-workflow');
+  t.is(wf.name, 'My Workflow');
+});
+
+test.serial('should load single workflow from json', async (t) => {
+  mockFile(
+    '/ws/openfn.yaml',
+    buildConfig({
+      formats: {
+        workflow: 'json',
+      },
+    })
+  );
+
+  mockFile('/ws/workflows/my-workflow/my-workflow.json', {
+    id: 'my-workflow',
+    name: 'My Workflow',
+    steps: [
+      {
+        id: 'a',
+        expression: 'job.js',
+      },
+    ],
+  });
+
+  mockFile('/ws/workflows/my-workflow/job.js', `fn(s => s)`);
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+
+  const wf = project.getWorkflow('my-workflow');
+  t.truthy(wf);
+  t.is(wf.id, 'my-workflow');
+  t.is(wf.name, 'My Workflow');
+});
+
+test.serial('should load single workflow from custom path', async (t) => {
+  mockFile(
+    '/ws/openfn.yaml',
+    buildConfig({
+      dirs: {
+        workflows: 'custom-wfs',
+        projects: '.projects',
+      },
+    })
+  );
+
+  mockFile('/ws/custom-wfs/my-workflow/my-workflow.yaml', {
+    id: 'my-workflow',
+    name: 'My Workflow',
+    steps: [
+      {
+        id: 'a',
+        expression: 'job.js',
+      },
+    ],
+  });
+
+  mockFile('/ws/custom-wfs/my-workflow/job.js', `fn(s => s)`);
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.is(project.workflows.length, 1);
+
+  const wf = project.getWorkflow('my-workflow');
+  t.truthy(wf);
+  t.is(wf.id, 'my-workflow');
+  t.is(wf.name, 'My Workflow');
+});
+
 test.serial('should include multiple workflows', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
 
