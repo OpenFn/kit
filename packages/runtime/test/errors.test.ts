@@ -560,3 +560,71 @@ test('AdaptorError: ensure that error objects are safely serialised', (t) => {
     name: 'AxiosError',
   });
 });
+
+test('maps positions for an error on a workflow', async (t) => {
+  // compile the code so we get a source map
+  const { code, map } = compile(`
+    function fn(f) { return f() };
+    fn((x) => x.y);
+  `);
+
+  // Build a workflow with sourcemap included
+  const wf = {
+    workflow: {
+      steps: [
+        {
+          id: 'x',
+          expression: code,
+          sourceMap: map,
+        },
+      ],
+    },
+  };
+
+  const result = await run(wf);
+
+  const error: any = result.errors.x;
+  t.is(error.severity, 'fail');
+  t.is(
+    error.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+  t.is(error.pos.line, 3);
+  t.is(error.pos.column, 17);
+});
+
+test('maps positions for an error on a workflow with a step name', async (t) => {
+  // compile the code so we get a source map
+  const { code, map } = compile(
+    `
+    function fn(f) { return f() };
+    fn((x) => x.y);
+  `,
+    { name: 'x' } // fails if this is not set
+  );
+
+  // Build a workflow with sourcemap included
+  const wf = {
+    workflow: {
+      steps: [
+        {
+          id: 'x',
+          name: 'x',
+          expression: code,
+          sourceMap: map,
+        },
+      ],
+    },
+  };
+
+  const result = await run(wf);
+
+  const error: any = result.errors.x;
+  t.is(error.severity, 'fail');
+  t.is(
+    error.message,
+    "TypeError: Cannot read properties of undefined (reading 'y')"
+  );
+  t.is(error.pos.line, 3);
+  t.is(error.pos.column, 17);
+});
