@@ -160,7 +160,7 @@ test.serial(
   }
 );
 
-test.serial.only(
+test.serial(
   "run a workflow with errors and positions with id'd steps",
   async (t) => {
     const workflow = {
@@ -184,7 +184,6 @@ test.serial.only(
     };
     const result = await handler(options, logger);
     t.truthy(result.errors);
-    console.log(result.errors);
     t.regex(
       result.errors.x.message,
       /typeerror: cannot read properties of undefined/i
