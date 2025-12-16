@@ -57,6 +57,9 @@ const compileJob = async (
 ): Promise<CompiledJob> => {
   try {
     const compilerOptions: Options = await loadTransformOptions(opts, log);
+    if (jobName) {
+      compilerOptions.name = jobName;
+    }
     return compile(job, compilerOptions);
   } catch (e: any) {
     abort(
@@ -91,7 +94,7 @@ const compileWorkflow = async (
         job.expression as string,
         jobOpts,
         log,
-        job.id
+        job.name ?? job.id
       );
       job.expression = code;
       job.sourceMap = map;

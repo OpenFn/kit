@@ -9,7 +9,7 @@ import handler from '../../src/execute/handler';
 import { mockFs, resetMockFs } from '../util';
 
 // Why is this logging everywhere?
-const logger = createMockLogger(undefined, { level: 'none' });
+const logger = createMockLogger(undefined, { level: 'debug' });
 
 // These options are designed to minimise i/o
 // and ensure type safely
@@ -21,7 +21,7 @@ const defaultOptions = {
   path: '.',
   log: {
     // TODO if I pass a mock logger into the handler, the handler then
-    // goes and creates a real logger and passes it to the runtinme, which
+    // goes and creates a real logger and passes it to the runtime, which
     // causes all sorts of logging
     // Why isn't that affecting other tests?
     // Why do I need this special handling here?
@@ -128,6 +128,70 @@ test.serial('run a workflow with state', async (t) => {
   const result = await handler(options, logger);
   t.is(result.data.count, 4);
 });
+
+test.serial('run a workflow with errors and positions', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'x',
+          expression: `${fn}fn((state) => state.x.length)`,
+        },
+      ],
+    },
+  };
+
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+  };
+  const result = await handler(options, logger);
+  t.truthy(result.errors);
+  t.regex(
+    result.errors.x.message,
+    /typeerror: cannot read properties of undefined/i
+  );
+  t.is(result.errors.x.pos.line, 2);
+  t.is(result.errors.x.pos.column, 23);
+});
+
+test.serial(
+  'run a workflow with errors and positions and named steps',
+  async (t) => {
+    const workflow = {
+      workflow: {
+        steps: [
+          {
+            id: 'x',
+            name: 'My Step',
+            expression: `${fn}fn((state) => state.x.length)`,
+          },
+        ],
+      },
+    };
+
+    mockFs({
+      '/workflow.json': JSON.stringify(workflow),
+    });
+
+    const options = {
+      ...defaultOptions,
+      workflowPath: '/workflow.json',
+    };
+    const result = await handler(options, logger);
+    t.truthy(result.errors);
+    t.regex(
+      result.errors.x.message,
+      /typeerror: cannot read properties of undefined/i
+    );
+    t.is(result.errors.x.pos.line, 2);
+    t.is(result.errors.x.pos.column, 23);
+  }
+);
 
 test.serial('run a workflow with cached steps', async (t) => {
   const workflow = {
