@@ -1,5 +1,13 @@
 # @openfn/runtime
 
+## 1.7.7
+
+### Patch Changes
+
+- a1bfdc1: Fix an issue where an error can be thrown while trying to source map errors
+- Updated dependencies [c70369b]
+  - @openfn/logger@1.1.1
+
 ## 1.7.6
 
 ### Patch Changes

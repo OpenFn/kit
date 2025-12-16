@@ -1,5 +1,12 @@
 # @openfn/deploy
 
+## 0.11.5
+
+### Patch Changes
+
+- Updated dependencies [c70369b]
+  - @openfn/logger@1.1.1
+
 ## 0.11.4
 
 ### Patch Changes

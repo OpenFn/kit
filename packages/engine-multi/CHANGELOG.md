@@ -1,5 +1,15 @@
 # engine-multi
 
+## 1.9.1
+
+### Patch Changes
+
+- Updated dependencies [a1bfdc1]
+- Updated dependencies [c70369b]
+  - @openfn/runtime@1.7.7
+  - @openfn/logger@1.1.1
+  - @openfn/compiler@1.2.2
+
 ## 1.9.0
 
 ### Minor Changes
