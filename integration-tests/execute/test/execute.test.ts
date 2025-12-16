@@ -117,8 +117,8 @@ test.serial('catch an error and re-throw it', async (t) => {
   }).catch(e => { throw e })`;
 
   const result = await execute(job, state);
-  t.is(result.errors['job-1'].name, 'JobError');
-  t.is(result.errors['job-1'].message, 'err');
+  t.is(result.errors.src.name, 'JobError');
+  t.is(result.errors.src.message, 'err');
 });
 
 test.serial('catch an error and return state', async (t) => {
