@@ -15,7 +15,6 @@ import { Logger } from '@openfn/logger';
 
 export type FromFsConfig = {
   root: string;
-  config?: Partial<l.WorkspaceConfig>;
   logger?: Logger;
 };
 
