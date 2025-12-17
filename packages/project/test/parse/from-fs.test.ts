@@ -9,8 +9,6 @@ test.afterEach(() => {
   mock.restore();
 });
 
-const s = JSON.stringify;
-
 let files: Record<string, string> = {};
 
 function mockFile(path: string, content: string | object) {

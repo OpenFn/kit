@@ -87,6 +87,8 @@ const fromProject = async (
   logger: Logger
 ): Promise<any> => {
   logger.debug('Loading Repo from ', path.resolve(rootDir));
+
+  // TODO make sure this does not break after changes
   const project = await Project.from('fs', { root: rootDir });
   logger.debug('Loading workflow ', workflowName);
   const workflow = project.getWorkflow(workflowName);
