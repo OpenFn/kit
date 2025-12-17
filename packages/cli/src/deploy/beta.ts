@@ -1,5 +1,21 @@
 // beta v2 version of CLI deploy
 
+/**
+ * New plan for great glory
+ *
+ * - from('fs') does NOT take project file into account
+ * - deploy must first fetch (and ensure no conflcits)
+ * - deploy must then load the project from disk
+ * - deploy must then merge into that project
+ * - then call provisioner
+ * - finally write to disk
+ *
+ *
+ * PLUS: diff summary (changed workflows and steps)
+ * PLUS: confirm
+ * PLUS: dry run
+ */
+
 import Project from '@openfn/project';
 import { DeployConfig, deployProject } from '@openfn/deploy';
 import type { Logger } from '../util/logger';

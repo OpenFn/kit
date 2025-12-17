@@ -9,11 +9,14 @@ test.afterEach(() => {
   mock.restore();
 });
 
+<<<<<<< HEAD
 test.afterEach(() => {
   files = {};
   mock.restore();
 });
 
+=======
+>>>>>>> 3ab3e612 (tidy)
 let files: Record<string, string> = {};
 
 function mockFile(path: string, content: string | object) {
