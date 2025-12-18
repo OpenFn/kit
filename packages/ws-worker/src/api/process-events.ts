@@ -25,6 +25,7 @@ export type EventProcessorOptions = {
   batch?: Record<string, boolean>;
   batchInterval?: number;
   batchLimit?: number;
+  timeout_ms?: number;
 };
 
 const DEFAULT_BATCH_LIMIT = 10;
@@ -65,6 +66,7 @@ export function eventProcessor(
   const {
     batchLimit: limit = DEFAULT_BATCH_LIMIT,
     batchInterval: interval = DEFAULT_BATCH_INTERVAL,
+    timeout_ms,
   } = options;
 
   const queue: any = [];
@@ -72,10 +74,27 @@ export function eventProcessor(
   const next = async () => {
     const evt = queue[0];
     if (evt) {
+      let didFinish = false;
+      let timeoutHandle: NodeJS.Timeout;
+
+      const finish = () => {
+        clearTimeout(timeoutHandle);
+        if (!didFinish) {
+          didFinish = true;
+          queue.shift();
+          next();
+        }
+      };
+
+      if (timeout_ms) {
+        timeoutHandle = setTimeout(() => {
+          logger.error(`${planId} :: ${evt.name} :: timeout (fallback)`);
+          finish();
+        }, timeout_ms);
+      }
+
       await process(evt.name, evt.event);
-      queue.shift(); // keep the event on the queue until processing is finished
-      // setImmediate(next);
-      next();
+      finish();
     }
   };
 

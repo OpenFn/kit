@@ -315,6 +315,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
+        options.eventTimeoutSeconds = app.options.messageTimeoutSeconds;
         options.batchLogs = app.options.batchLogs;
         options.batchInterval = app.options.batchInterval;
         options.batchLimit = app.options.batchLimit;

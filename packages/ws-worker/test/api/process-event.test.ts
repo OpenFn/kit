@@ -35,7 +35,7 @@ const createPlan = (...expressions: string[]) =>
             adaptors: [],
             next: expressions[idx + 1] ? { [`${idx + 1}`]: true } : {},
           }))
-        : [{ expression: ['fn(s => s)'] }],
+        : [{ expression: 'fn(s => s)' }],
     },
     options: {},
   } as ExecutionPlan);
@@ -649,7 +649,7 @@ test('queue events behind a slow event', async (t) => {
 
 // This isn't the most watertight test - but I've debugged it closely and it seems
 // to do the right thing
-test.only('queue events behind a slow event II', async (t) => {
+test('queue events behind a slow event II', async (t) => {
   const engine = await createMockEngine();
   const plan = createPlan(
     `
@@ -707,4 +707,62 @@ test.only('queue events behind a slow event II', async (t) => {
   t.is(events.length, 2);
   t.is(events[0], 10);
   t.is(events[1], 10);
+});
+
+test('should timeout and continue processing when event handler hangs', async (t) => {
+  const engine = await createMockEngine();
+  const plan = createPlan();
+
+  const context = {
+    id: 'a',
+    plan,
+    options: {},
+    logger,
+  };
+
+  const processedEvents: string[] = [];
+
+  const callbacks = {
+    [WORKFLOW_START]: () => {
+      // Hang forever - don't resolve
+      return new Promise(() => {});
+    },
+    [JOB_START]: () => {
+      processedEvents.push('job-start');
+    },
+    [JOB_COMPLETE]: () => {
+      processedEvents.push('job-complete');
+    },
+    [WORKFLOW_COMPLETE]: () => {
+      processedEvents.push('workflow-complete');
+    },
+  };
+
+  const options = {
+    // If we disable the timeout, this test fails to process any event
+    timeout_ms: 50,
+  };
+
+  eventProcessor(engine, context as any, callbacks, options);
+
+  await engine.execute(plan, {});
+
+  // Wait for timeout to fire and subsequent events to process
+  await waitForAsync(100);
+
+  // Check that the timeout error was logged
+  const timeoutLog = logger._find('error', /timeout \(fallback\)/);
+  t.truthy(timeoutLog);
+  if (timeoutLog) {
+    t.true((timeoutLog.message as string).includes('workflow-start'));
+  }
+
+  // Check that subsequent events were processed despite the timeout
+  t.true(
+    processedEvents.length > 0,
+    `Expected events to be processed, got: ${processedEvents.join(', ')}`
+  );
+  t.true(processedEvents.includes('job-start'));
+  t.true(processedEvents.includes('job-complete'));
+  t.true(processedEvents.includes('workflow-complete'));
 });
