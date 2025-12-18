@@ -54,6 +54,7 @@ export type WorkerRunOptions = ExecuteOptions & {
   batchLogs?: boolean;
   batchInterval?: number;
   batchLimit?: number;
+  eventTimeoutSeconds?: number;
 };
 
 type ConversionOptions = {

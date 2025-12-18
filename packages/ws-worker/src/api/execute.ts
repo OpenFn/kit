@@ -83,6 +83,11 @@ export function execute(
       },
     });
 
+    const batch: any = {};
+    if (options.batchLogs) {
+      batch[WORKFLOW_LOG] = true;
+    }
+
     eventProcessor(
       engine,
       context,
@@ -96,13 +101,11 @@ export function execute(
         [WORKFLOW_ERROR]: handleRunError,
       },
       {
-        batch: options.batchLogs
-          ? {
-              [WORKFLOW_LOG]: true,
-            }
-          : {},
+        batch,
         batchInterval: options.batchInterval,
         batchLimit: options.batchLimit,
+        timeout_ms:
+          (options.eventTimeoutSeconds ?? 0) * 1000 * 1.1 /* grace period */,
       }
     );
 

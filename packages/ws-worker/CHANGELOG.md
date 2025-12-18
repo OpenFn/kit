@@ -1,5 +1,12 @@
 # ws-worker
 
+## 1.20.2
+
+### Patch Changes
+
+- Add internal fallback timeout to events. Also adjust error handling to try and catch an uncaught error
+- q
+
 ## 1.20.1
 
 ### Patch Changes

@@ -55,6 +55,11 @@ export const sendEvent = <T>(
         if (!allowRetryOntimeout || thisAttempt >= timeoutRetryCount) {
           report(new LightningTimeoutError(event));
         } else {
+          // TODO at the moment, this retry logic all shares the same timeout,
+          // where the timeout is controlled by the event processor
+          // When we want to restore retries, we need to retry in the event
+          // processor - not here
+          // This actually feels cleaner and easier to test anyway
           logger.warn(
             `${runId} event ${event} timed out, will retry in ${timeoutRetryDelay}ms (attempt ${
               thisAttempt + 1
