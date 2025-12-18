@@ -103,7 +103,8 @@ export function execute(
           : {},
         batchInterval: options.batchInterval,
         batchLimit: options.batchLimit,
-        timeout_ms: (options.eventTimeoutSeconds ?? 0) * 1000,
+        timeout_ms:
+          (options.eventTimeoutSeconds ?? 0) * 1000 * 1.1 /* grace period */,
       }
     );
 
