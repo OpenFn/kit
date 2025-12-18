@@ -7,7 +7,7 @@ import {
 } from '@openfn/deploy';
 import type { Logger } from '../util/logger';
 import { DeployOptions } from './command';
-import * as beta from './beta';
+import * as beta from '../projects/deploy';
 
 export type DeployFn = typeof deploy;
 
