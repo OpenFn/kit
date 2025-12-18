@@ -71,18 +71,23 @@ export function eventProcessor(
 
   const queue: any = [];
 
+  let activeBatch: string | null = null;
+  let batch: any = [];
+  let batchTimeout: NodeJS.Timeout;
+  let didFinish = false;
+  let timeoutHandle: NodeJS.Timeout;
+
   const next = async () => {
     const evt = queue[0];
     if (evt) {
-      let didFinish = false;
-      let timeoutHandle: NodeJS.Timeout;
+      didFinish = false;
 
       const finish = () => {
         clearTimeout(timeoutHandle);
         if (!didFinish) {
           didFinish = true;
           queue.shift();
-          next();
+          setImmediate(next);
         }
       };
 
@@ -98,11 +103,6 @@ export function eventProcessor(
     }
   };
 
-  let activeBatch: string | null = null;
-  let batch: any = [];
-  let start: number = -1;
-  let batchTimeout: NodeJS.Timeout;
-
   const sendBatch = async (name: string) => {
     clearTimeout(batchTimeout);
     // first clear the batch
@@ -112,19 +112,29 @@ export function eventProcessor(
   };
 
   const send = async (name: string, payload: any, batchSize?: number) => {
-    // @ts-ignore
-    const lightningEvent = eventMap[name] ?? name;
-    await callbacks[name](context, payload);
-    if (batchSize) {
-      logger.info(
-        `${planId} :: sent ${lightningEvent} (${batchSize}):: OK :: ${
-          Date.now() - start
-        }ms`
-      );
-    } else {
-      logger.info(
-        `${planId} :: sent ${lightningEvent} :: OK :: ${Date.now() - start}ms`
-      );
+    try {
+      const start = Date.now();
+      // @ts-ignore
+      const lightningEvent = eventMap[name] ?? name;
+      await callbacks[name](context, payload);
+      if (batchSize) {
+        logger.info(
+          `${planId} :: sent ${lightningEvent} (${batchSize}):: OK :: ${
+            Date.now() - start
+          }ms`
+        );
+      } else {
+        logger.info(
+          `${planId} :: sent ${lightningEvent} :: OK :: ${Date.now() - start}ms`
+        );
+      }
+    } catch (e: any) {
+      if (!e.reportedToSentry) {
+        Sentry.captureException(e);
+        logger.error(e);
+      }
+      // Do nothing else here: the error should have been handled
+      // and life will go on
     }
   };
 
@@ -152,45 +162,33 @@ export function eventProcessor(
     }
 
     if (name in callbacks) {
-      try {
-        start = Date.now();
+      if (options?.batch?.[name]) {
+        // batch mode is enabled!
+        activeBatch = name;
 
-        if (options?.batch?.[name]) {
-          // batch mode is enabled!
-          activeBatch = name;
+        // First, push this event to the batch
+        batch.push(event);
 
-          // First, push this event to the batch
-          batch.push(event);
+        // Next, peek ahead in the queue for more pending events
+        while (queue.length > 1 && queue[1].name === name) {
+          const [nextBatchItem] = queue.splice(1, 1);
+          batch.push(nextBatchItem.event);
 
-          // Next, peek ahead in the queue for more pending events
-          while (queue.length > 1 && queue[1].name === name) {
-            const [nextBatchItem] = queue.splice(1, 1);
-            batch.push(nextBatchItem.event);
-
-            if (batch.length >= limit) {
-              // If we're at the batch limit, return right away
-              return sendBatch(name);
-            }
+          if (batch.length >= limit) {
+            // If we're at the batch limit, return right away
+            return sendBatch(name);
           }
-
-          // finally wait for a time before sending the batch
-          if (!batchTimeout) {
-            const batchName = activeBatch!;
-            batchTimeout = setTimeout(async () => {
-              sendBatch(batchName);
-            }, interval);
-          }
-          return;
         }
 
+        // finally wait for a time before sending the batch
+        if (!batchTimeout) {
+          const batchName = activeBatch!;
+          batchTimeout = setTimeout(async () => {
+            sendBatch(batchName);
+          }, interval);
+        }
+      } else {
         await send(name, event);
-      } catch (e: any) {
-        if (!e.reportedToSentry) {
-          Sentry.captureException(e);
-          logger.error(e);
-        }
-        // Do nothing else here: the error should have been handled
-        // and life will go on
       }
     } else {
       logger.warn('no event bound for', name);

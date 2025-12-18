@@ -640,6 +640,7 @@ test('queue events behind a slow event', async (t) => {
   await engine.execute(plan, {});
 
   await waitForAsync(100);
+
   // Should only be one event triggered
   t.is(events.length, 1);
 
