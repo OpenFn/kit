@@ -8,6 +8,18 @@ A single Project can be Checked Out to disk at a time, meaning its source workfl
 
 A Workspace is a set of related Projects , including a Project and its associated Sandboxes, or a Project deployed to apps in multiple web domains
 
+## Structure and Artifects
+
+openfn.yaml
+
+project file
+
+sort of a mix of project.yaml, state.json and config.json
+
+This is strictly a representation of a server-side project, it's like the last-sync-state. CLI-only or offline projects do not have one.
+
+It's also a portable representation of the project
+
 ### Serializing and Parsing
 
 The main idea of Projects is that a Project represents a set of OpenFn workflows defined in any format and present a standard JS-friendly interface to manipulate and reason about them.
