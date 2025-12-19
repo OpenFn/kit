@@ -142,12 +142,12 @@ export class Project {
         : humanId({ separator: '-', capitalize: false }));
 
     const { version, alias = 'main', ...otherConfig } = meta ?? {};
-    this.cli = {
-      alias,
-    };
-    if (data.cli) {
-      Object.assign(this.cli, data.cli);
-    }
+    this.cli = Object.assign(
+      {
+        alias,
+      },
+      data.cli
+    );
 
     this.config = buildConfig(otherConfig);
 
