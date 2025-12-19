@@ -57,14 +57,14 @@ export const myProject_v1: Provisioner.Project = {
 
 export const myProject_yaml = `id: my-project
 name: My Project
-version: 2
+cli:
+  version: 2
 description: my lovely project
 collections: []
 credentials: []
 openfn:
   uuid: e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00
   endpoint: https://app.openfn.org
-  env: project
   inserted_at: 2025-04-23T11:15:59Z
   updated_at: 2025-04-23T11:15:59Z
 options:

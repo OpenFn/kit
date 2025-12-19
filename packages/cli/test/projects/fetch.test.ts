@@ -49,7 +49,7 @@ test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
       apiKey: 'test-api-key',
 
       workspace: '/ws',
-      env: 'project',
+      alias: 'project',
     } as any,
     logger
   );
@@ -74,7 +74,7 @@ test.serial('save to a custom location', async (t) => {
       apiKey: 'test-api-key',
 
       workspace: '/ws',
-      env: 'project',
+      alias: 'project',
       outputPath: '/ws/out.yaml',
     } as any,
     logger
@@ -102,7 +102,7 @@ test.serial(
         apiKey: 'test-api-key',
 
         workspace: '/ws',
-        env: 'project',
+        alias: 'project',
         outputPath: '/ws/out.json',
       } as any,
       logger
@@ -114,14 +114,15 @@ test.serial(
     const json = {
       id: 'my-project',
       name: 'My Project',
-      version: 2,
+      cli: {
+        version: 2,
+      },
       description: 'my lovely project',
       collections: [],
       credentials: [],
       openfn: {
         uuid: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
         endpoint: 'https://app.openfn.org',
-        env: 'project',
         inserted_at: '2025-04-23T11:15:59Z',
         updated_at: '2025-04-23T11:15:59Z',
       },
@@ -198,7 +199,7 @@ test.serial('Override a compatible project', async (t) => {
       apiKey: 'test-api-key',
 
       workspace: '/ws',
-      env: 'project',
+      alias: 'project',
     } as any,
     logger
   );
@@ -233,7 +234,7 @@ test.serial('throw for an incompatible project', async (t) => {
           apiKey: 'test-api-key',
 
           workspace: '/ws',
-          env: 'project',
+          alias: 'project',
         } as any,
         logger
       ),
@@ -266,7 +267,7 @@ test.serial('force merge an incompatible project', async (t) => {
       apiKey: 'test-api-key',
 
       workspace: '/ws',
-      env: 'project',
+      alias: 'project',
       force: true,
     } as any,
     logger

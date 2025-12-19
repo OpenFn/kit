@@ -123,8 +123,6 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     // TODO when project.from fails, throw a clear error like NOT_FOUND
     current = await Project.from('path', finalOutput);
 
-    console.log(current.uuid, project.uuid);
-
     // Make sure that the local project has a matching UUID
     // otherwise something must be wrong!
     if (!options.force && current.uuid != project.uuid) {
@@ -174,7 +172,7 @@ To ignore this error and override the local file, pass --force (-f)
       throw new Error('Error! An incompatible project exists at this location');
     }
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     // Do nothing - project doesn't exist
   }
 
