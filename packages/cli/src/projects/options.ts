@@ -13,7 +13,7 @@ export type Opts = BaseOpts & {
 export const env: CLIOption = {
   name: 'env',
   yargs: {
-    description: '[beta only] Environment name (eg staging, prod, branch)',
+    description: 'Environment name (eg staging, prod, branch)',
     hidden: true,
   },
 };
@@ -21,7 +21,7 @@ export const env: CLIOption = {
 export const alias: CLIOption = {
   name: 'alias',
   yargs: {
-    description: '[beta only] Environment name (eg staging, prod, branch)',
+    description: 'Environment name (eg staging, prod, branch)',
   },
 };
 

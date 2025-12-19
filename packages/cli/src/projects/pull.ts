@@ -55,7 +55,7 @@ export const command: yargs.CommandModule<PullOptions> = {
         'pull 57862287-23e6-4650-8d79-e1dd88b24b1c',
         'Pull project with a UUID from a lightning instance'
       ),
-  handler: ensure('pull', options),
+  handler: ensure('project-pull', options),
 };
 
 export async function handler(options: PullOptions, logger: Logger) {
