@@ -10,39 +10,27 @@ const matchProject = (name: Alias | ID | UUID, candidates: Project[]) => {
   const [searchTerm, domain] = `${name}`.split('@');
 
   // Collect all matching projects
-  const matchingProjects: Record<string, Project> = {};
+  const matchingProjects: Record<string, Project[]> = {};
   let multipleIdMatches = false;
 
+  // Filter candidates by domain
+  candidates = candidates.filter(
+    (project) => !domain || project.host === domain
+  );
+
+  const re = new RegExp(searchTerm, 'i');
   for (const project of candidates) {
-    // If domain is specified, check if the project's endpoint matches
-    if (domain) {
-      if (project.host !== domain) {
-        // Domain doesn't match, skip this project
-        continue;
-      }
-    }
-
-    if (project.id === searchTerm) {
-      if (matchingProjects[project.id]) {
-        multipleIdMatches = true;
-      }
-      matchingProjects[project.id] = project;
-      continue;
-    }
-
-    if (project.alias === searchTerm) {
-      matchingProjects[project.id] = project;
-      continue;
-    }
-
-    // Check if it matches the UUID (partial or full)
-    if (project.uuid && new RegExp(searchTerm, 'i').test(project.uuid)) {
-      matchingProjects[project.id] = project;
-      continue;
+    if (
+      project.id === searchTerm ||
+      project.alias === searchTerm ||
+      (project.uuid && re.test(project.uuid))
+    ) {
+      matchingProjects[project.id] ??= [];
+      matchingProjects[project.id].push(project);
     }
   }
 
-  const matches = Object.values(matchingProjects);
+  const matches = Object.values(matchingProjects).flat();
 
   // Multiple matches - throw error
   if (multipleIdMatches || matches.length > 1) {

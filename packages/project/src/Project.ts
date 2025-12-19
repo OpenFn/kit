@@ -141,15 +141,12 @@ export class Project {
         ? slugify(data.name)
         : humanId({ separator: '-', capitalize: false }));
 
-    const { version, alias, ...otherConfig } = meta ?? {};
-    this.cli = {};
+    const { version, alias = 'main', ...otherConfig } = meta ?? {};
+    this.cli = {
+      alias,
+    };
     if (data.cli) {
       Object.assign(this.cli, data.cli);
-    }
-    if (alias) {
-      // A passed-in config alias overrides the data alias
-      // (it likely means the user has asked to override the raw file
-      this.cli.alias = alias;
     }
 
     this.config = buildConfig(otherConfig);

@@ -69,7 +69,7 @@ workflows:
 });
 
 test('import from a v2 project as JSON', async (t) => {
-  const proj = await Project.from('project', v2.json);
+  const proj = await Project.from('project', v2.json, { alias: 'main' });
 
   t.is(proj.id, 'my-project');
   t.is(proj.name, 'My Project');
@@ -113,6 +113,14 @@ test('import from a v2 project as JSON', async (t) => {
       },
     ],
   });
+});
+
+test('import from a v2 project with alias', async (t) => {
+  const proj = await Project.from('project', v2.json, { alias: 'staging' });
+
+  t.is(proj.id, 'my-project');
+  t.is(proj.name, 'My Project');
+  t.is(proj.cli.alias, 'staging');
 });
 
 test('import from a v2 project as YAML', async (t) => {
