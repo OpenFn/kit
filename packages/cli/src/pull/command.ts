@@ -2,6 +2,7 @@ import yargs from 'yargs';
 import { build, ensure, override } from '../util/command-builders';
 import { Opts } from '../options';
 import * as o from '../options';
+import * as po from '../projects/options';
 
 export type PullOptions = Required<
   Pick<
@@ -22,10 +23,9 @@ export type PullOptions = Required<
 const options = [
   o.apikey,
   o.beta,
-  o.beta,
   o.configPath,
   o.endpoint,
-  o.env,
+  po.env,
   o.log,
   override(o.path, {
     description: 'path to output the project to',
@@ -39,7 +39,7 @@ const options = [
   // These are hidden commands used only by beta
   // The need to be declared here to be initialised and defaulted properly
   override(o.force, { hidden: true }),
-  override(o.workspace, { hidden: true }),
+  override(po.workspace, { hidden: true }),
 ];
 
 const pullCommand: yargs.CommandModule<PullOptions> = {
@@ -49,7 +49,7 @@ const pullCommand: yargs.CommandModule<PullOptions> = {
     build(options, yargs)
       .positional('projectId', {
         describe:
-          'The id of the project that should be pulled shouled be a UUID',
+          'The id of the project that should be pulled should be a UUID',
         demandOption: true,
       })
       .example(
