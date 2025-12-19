@@ -100,8 +100,8 @@ export class Workspace {
 
   getActiveProject() {
     return (
-      this.projects.find((p) => p.id === this.activeProject?.id) ??
-      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid)
+      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
+      this.projects.find((p) => p.id === this.activeProject?.id)
     );
   }
 

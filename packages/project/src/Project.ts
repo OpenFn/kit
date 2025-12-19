@@ -161,6 +161,7 @@ export class Project {
     this.credentials = data.credentials;
   }
 
+  /** Local alias for the project. Comes from the file name. Not shared with Lightning. */
   get alias() {
     return this.cli.alias ?? 'main';
   }

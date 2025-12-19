@@ -14,7 +14,6 @@ export type FromPathConfig = l.WorkspaceConfig & {
 // Otherwise returns the filename without extension
 export const extractAliasFromFilename = (filename: string): string => {
   const basename = path.basename(filename, path.extname(filename));
-
   // Check for alias@domain format
   const atIndex = basename.indexOf('@');
   if (atIndex > 0) {

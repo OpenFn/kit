@@ -36,7 +36,7 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
 
   logger.always(`Available openfn projects\n\n${workspace
     .list()
-    .map((p) => describeProject(p, p.id === workspace.activeProjectId))
+    .map((p) => describeProject(p, p === workspace.getActiveProject()))
     .join('\n\n')}
     `);
 };
@@ -44,7 +44,9 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
 function describeProject(project: Project, active = false) {
   // @ts-ignore
   const uuid = project.openfn?.uuid;
-  return `${project.id} ${active ? '(active)' : ''}\n  ${
-    uuid || '<project-id>'
-  }\n  workflows:\n${project.workflows.map((w) => '    - ' + w.id).join('\n')}`;
+  return `${project.alias || '(no alias)'} | ${project.id} ${
+    active ? '(active)' : ''
+  }\n  ${uuid || '<project-id>'}\n  workflows:\n${project.workflows
+    .map((w) => '    - ' + w.id)
+    .join('\n')}`;
 }
