@@ -74,7 +74,9 @@ test('should generate a correct qname with real values', (t) => {
         endpoint: 'https://app.openfn.org',
       },
     },
-    { alias: 'staging' }
+    {
+      alias: 'staging',
+    }
   );
 
   t.is(project.qname, 'staging@app.openfn.org');
