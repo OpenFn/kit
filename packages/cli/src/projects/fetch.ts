@@ -108,6 +108,8 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   }
 
   // See if a project already exists there
+  // TODO we use serialize the generate the path, but
+  // there should be an easier way really?
   const finalOutput = await serialize(
     project,
     finalOutputPath!,
@@ -118,7 +120,44 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // If a project already exists at the output path, make sure it's compatible
   let current: Project | null = null;
   try {
+    // TODO when project.from fails, throw a clear error like NOT_FOUND
     current = await Project.from('path', finalOutput);
+
+    console.log(current.uuid, project.uuid);
+
+    // Make sure that the local project has a matching UUID
+    // otherwise something must be wrong!
+    if (!options.force && current.uuid != project.uuid) {
+      // TODO make this prettier in output
+      const error: any = new Error('PROJECT_EXISTS');
+      error.message = 'A project with a different UUID exists at this location';
+      error.fix = `You have tried to fetch a remote project into a local project with a different UUID
+
+Try adding an alias to rename the new project:
+
+      openfn fetch ${projectId} --alias ${project.id}
+
+To ignore this error and override the local file, pass --force (-f)
+
+    openfn fetch ${projectId} --force
+`;
+      error.fetched_project = {
+        uuid: project.uuid,
+        id: project.id,
+        alais: project.alias,
+      };
+      error.local_project = {
+        uuid: current.uuid,
+        id: current.id,
+        alais: current.alias,
+      };
+      delete error.stack;
+      logger.error(error);
+
+      // TODO maybe it's not right to exit early
+      // but it'll do until I can resolve these errors
+      process.exit(1);
+    }
 
     const hasAnyHistory = project.workflows.find(
       (w) => w.workflow.history?.length
@@ -135,6 +174,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
       throw new Error('Error! An incompatible project exists at this location');
     }
   } catch (e) {
+    console.log(e);
     // Do nothing - project doesn't exist
   }
 
