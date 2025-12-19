@@ -176,7 +176,7 @@ test.serial('checkout: invalid project id', async (t) => {
 test.serial('checkout: to a different valid project', async (t) => {
   // before checkout. my-project is active and expanded
   const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.activeProject.id, 'my-project');
+  t.is(bcheckout.activeProject!.id, 'my-project');
 
   await checkoutHandler(
     { command: 'project-checkout', projectId: 'my-project', workspace: '/ws' },
@@ -187,7 +187,7 @@ test.serial('checkout: to a different valid project', async (t) => {
 
   // after checkout. my-project is active and expanded
   const acheckout = new Workspace('/ws');
-  t.is(acheckout.activeProject.id, 'my-project');
+  t.is(acheckout.activeProject!.id, 'my-project');
 
   // check if files where well expanded
   t.deepEqual(
@@ -199,7 +199,7 @@ test.serial('checkout: to a different valid project', async (t) => {
 test.serial('checkout: same id as active', async (t) => {
   // before checkout. my-project is active and expanded
   const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.activeProject.id, 'my-project');
+  t.is(bcheckout.activeProject!.id, 'my-project');
 
   await checkoutHandler(
     {
@@ -214,7 +214,7 @@ test.serial('checkout: same id as active', async (t) => {
 
   // after checkout. my-project is active and expanded
   const acheckout = new Workspace('/ws');
-  t.is(acheckout.activeProject.id, 'my-project');
+  t.is(acheckout.activeProject!.id, 'my-project');
 
   // check if files where well expanded
   t.deepEqual(
@@ -226,7 +226,7 @@ test.serial('checkout: same id as active', async (t) => {
 test.serial('checkout: switching to and back between projects', async (t) => {
   // before checkout. my-project is active and expanded
   const bcheckout = new Workspace('/ws');
-  t.is(bcheckout.activeProject.id, 'my-project');
+  t.is(bcheckout.activeProject!.id, 'my-project');
 
   // 1. switch from my-project to my-staging
   await checkoutHandler(
@@ -238,7 +238,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
 
   // after checkout. my-staging is active and expanded
   const acheckout = new Workspace('/ws');
-  t.is(acheckout.activeProject.id, 'my-staging');
+  t.is(acheckout.activeProject!.id, 'my-staging');
 
   // check if files where well expanded
   t.deepEqual(
@@ -260,13 +260,74 @@ test.serial('checkout: switching to and back between projects', async (t) => {
 
   // after checkout. my-project is active and expanded
   const fcheckout = new Workspace('/ws');
-  t.is(fcheckout.activeProject.id, 'my-project');
+  t.is(fcheckout.activeProject!.id, 'my-project');
 
   // check if files where well expanded
   t.deepEqual(
     fs.readdirSync('/ws/workflows').sort(),
     ['simple-workflow-main', 'another-workflow-main'].sort()
   );
+});
+
+test.serial('checkout: switch with id', async (t) => {
+  const before = new Workspace('/ws');
+  t.is(before.activeProject!.id, 'my-project');
+
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      projectId: 'my-staging',
+      workspace: '/ws',
+    },
+    logger
+  );
+  const { message } = logger._parse(logger._last);
+  t.is(message, 'Expanded project to /ws');
+
+  const after = new Workspace('/ws');
+  t.is(after.activeProject!.id, 'my-staging');
+});
+
+test.serial('checkout: switch with alias', async (t) => {
+  const before = new Workspace('/ws');
+  t.is(before.activeProject!.id, 'my-project');
+
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      projectId: 'staging', // this is actually an alias
+      workspace: '/ws',
+    },
+    logger
+  );
+  const { message } = logger._parse(logger._last);
+  t.is(message, 'Expanded project to /ws');
+
+  const after = new Workspace('/ws');
+  t.is(after.activeProject!.id, 'my-staging');
+});
+
+// TODO this doesn't work locally because the serialized files in are in v1,
+// and have no domain information attached
+// This fuzzy match is better covered in the projects testing though
+test.serial.skip('checkout: switch with alias and domain', async (t) => {
+  const before = new Workspace('/ws');
+  t.is(before.activeProject!.id, 'my-project');
+
+  await checkoutHandler(
+    {
+      command: 'project-checkout',
+      projectId: 'staging@app.openfn.org', // this is actually an alias
+      workspace: '/ws',
+    },
+    logger
+  );
+  const { message } = logger._parse(logger._last);
+  t.is(message, 'Expanded project to /ws');
+
+  // after checkout: staging is active and expanded
+  const after = new Workspace('/ws');
+  t.is(after.activeProject!.id, 'my-staging');
 });
 
 test.serial('respect openfn.yaml settings', async (t) => {

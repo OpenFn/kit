@@ -18,6 +18,8 @@ import { extractAliasFromFilename } from './parse/from-path';
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
   config: l.WorkspaceConfig;
+
+  // TODO activeProject should be the actual project
   activeProject?: l.ProjectMeta;
 
   private projects: Project[] = [];
