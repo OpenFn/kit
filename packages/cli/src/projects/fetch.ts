@@ -5,8 +5,9 @@ import Project, { Workspace } from '@openfn/project';
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
+import type { Opts } from './options';
 import { serialize, getProject, loadAppAuthConfig } from './util';
 
 // TODO need to implement these
@@ -24,6 +25,7 @@ export type FetchOptions = Pick<
   | 'force'
   | 'log'
   | 'logJson'
+  | 'snapshots'
   | 'outputPath'
   | 'projectId'
   | 'workspace'
@@ -31,20 +33,20 @@ export type FetchOptions = Pick<
 
 const options = [
   o.apikey,
-  o.configPath,
   o.endpoint,
-  o.env,
   o.log,
   override(o.outputPath, {
     description: 'Path to output the fetched project to',
   }),
   o.logJson,
-  o.workspace,
-  o.snapshots,
+  o.snapshots, // TODO need to add support for this
   o.statePath,
   override(o.force, {
     description: 'Overwrite local file contents with the fetched contents',
   }),
+
+  po.env,
+  po.workspace,
 ];
 
 const command: yargs.CommandModule<FetchOptions> = {

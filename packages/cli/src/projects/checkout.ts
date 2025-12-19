@@ -7,15 +7,16 @@ import { rimraf } from 'rimraf';
 import { ensure, build } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
+import type { Opts } from './options';
 
 export type CheckoutOptions = Pick<
   Opts,
   'command' | 'projectId' | 'workspace' | 'log'
 >;
 
-const options = [o.projectId, o.workspace, o.log];
+const options = [o.projectId, o.log, po.workspace];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project-id>',

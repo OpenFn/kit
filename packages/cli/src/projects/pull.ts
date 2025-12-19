@@ -8,20 +8,18 @@ import * as o2 from './options';
 import type { Logger } from '../util/logger';
 import type { Opts } from '../options';
 
-export type PullOptions = Required<
-  Pick<
-    Opts,
-    | 'beta'
-    | 'command'
-    | 'log'
-    | 'logJson'
-    | 'statePath'
-    | 'projectPath'
-    | 'configPath'
-    | 'projectId'
-    | 'confirm'
-    | 'snapshots'
-  >
+export type PullOptions = Pick<
+  Opts,
+  | 'beta'
+  | 'command'
+  | 'log'
+  | 'logJson'
+  | 'statePath'
+  | 'projectPath'
+  | 'configPath'
+  | 'projectId'
+  | 'confirm'
+  | 'snapshots'
 >;
 
 const options = [

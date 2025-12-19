@@ -4,14 +4,15 @@ import { Workspace } from '@openfn/project';
 import { ensure, build } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
+import type { Opts } from './options';
 
 export type VersionOptions = Required<
   Pick<Opts, 'command' | 'workflow' | 'workspace' | 'workflowMappings' | 'json'>
 >;
 
-const options = [o.workflow, o.workspace, o.workflowMappings];
+const options = [o.workflow, po.workspace, po.workflowMappings];
 
 const command: yargs.CommandModule = {
   command: 'version [workflow]',

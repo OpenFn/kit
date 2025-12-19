@@ -6,8 +6,9 @@ import fs from 'node:fs/promises';
 import { ensure, build, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
+import type { Opts } from './options';
 import { handler as checkout } from './checkout';
 
 export type MergeOptions = Required<
@@ -23,11 +24,11 @@ export type MergeOptions = Required<
   Pick<Opts, 'log' | 'force' | 'outputPath'> & { base?: string };
 
 const options = [
+  po.removeUnmapped,
+  po.workflowMappings,
+  po.workspace,
   o.projectId,
-  o.removeUnmapped,
-  o.workflowMappings,
   o.log,
-  o.workspace,
   // custom output because we don't want defaults or anything
   {
     name: 'output-path',

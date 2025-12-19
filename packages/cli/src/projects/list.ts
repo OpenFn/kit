@@ -8,7 +8,7 @@ import * as po from './options';
 
 import type { Opts } from './options';
 
-export type ProjectsOptions = Pick<Opts, 'workspace'>;
+export type ProjectListOptions = Pick<Opts, 'log' | 'workspace'>;
 
 const options = [o.log, po.workspace];
 
@@ -22,12 +22,12 @@ const command: yargs.CommandModule = {
 
 export default command;
 
-export const handler = async (options: ProjectsOptions, logger: Logger) => {
+export const handler = async (options: ProjectListOptions, logger: Logger) => {
   logger.info('Searching for projects in workspace at:');
   logger.info(' ', options.workspace);
   logger.break();
 
-  const workspace = new Workspace(options.workspace);
+  const workspace = new Workspace(options.workspace!);
 
   if (!workspace.valid) {
     // TODO how can we be more helpful here?

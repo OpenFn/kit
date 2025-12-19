@@ -1,7 +1,8 @@
-import { CLIOption } from '../options';
+import nodePath from 'node:path';
+import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
 
-export type Opts = {
+export type Opts = BaseOpts & {
   env?: string;
   workspace?: string;
   removeUnmapped?: boolean | undefined;
@@ -49,7 +50,7 @@ export const workspace: CLIOption = {
     alias: ['w'],
     description: 'Path to the project workspace (ie, path to openfn.yaml)',
   },
-  ensure: (opts) => {
+  ensure: (opts: any) => {
     const ws = opts.workspace ?? process.env.OPENFN_WORKSPACE;
     if (!ws) {
       opts.workspace = process.cwd();

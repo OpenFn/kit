@@ -17,7 +17,7 @@ export function build(opts: CLIOption[], yargs: yargs.Argv<any>) {
     if (!o?.name) {
       console.error(`ERROR: INVALID COMMAND OPTION PASSED`, o);
       console.error('Check the options passed to the command builder');
-      return null;
+      throw new Error('Invalid command');
     }
     return yargs.option(o.name, expandYargs(o.yargs));
   }, yargs);
