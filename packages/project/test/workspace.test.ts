@@ -303,7 +303,6 @@ test('get project returns null when not found', (t) => {
 
 test('get project throws on ambiguous match', (t) => {
   const ws = new Workspace('/ws4');
-
   const error = t.throws(() => ws.get('main'));
 
   t.truthy(error);

@@ -7,7 +7,7 @@ export const json: SerializedProject = {
   id: 'my-project',
   name: 'My Project',
   description: 'my lovely project',
-  cli: { alias: 'main', version: 2 },
+  cli: { version: 2 },
   openfn: { uuid: '1234', endpoint: 'https://app.openfn.org' },
   options: { allow_support_access: false },
   workflows: [
@@ -38,7 +38,6 @@ export const json: SerializedProject = {
 export const yaml = `id: my-project
 name: My Project
 cli:
-  alias: main
   version: 2
 description: my lovely project
 openfn:

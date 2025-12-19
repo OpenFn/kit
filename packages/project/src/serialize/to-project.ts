@@ -22,12 +22,13 @@ type ToProjectOptions = {
 
 export default (project: Project, options: ToProjectOptions = {}) => {
   // return a compatible json structure
+  const { alias, ...cliWithoutAlias } = project.cli;
   const proj: SerializedProject = omitBy(
     {
       id: project.id,
       name: project.name,
       cli: {
-        ...project.cli,
+        ...cliWithoutAlias,
         version: SERIALIZE_VERSION, // important!
       },
       description: project.description,

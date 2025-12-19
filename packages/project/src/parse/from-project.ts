@@ -27,7 +27,7 @@ export type SerializedWorkflow = {
 
 export default (
   data: l.Project | SerializedProject | string,
-  config?: Partial<l.WorkspaceConfig>
+  config?: Partial<l.WorkspaceConfig> & { alias?: string; version?: number }
 ) => {
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);

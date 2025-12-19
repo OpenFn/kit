@@ -13,6 +13,7 @@ import {
 import fromProject from './parse/from-project';
 import type { Logger } from '@openfn/logger';
 import matchProject from './util/match-project';
+import { extractAliasFromFilename } from './parse/from-path';
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
@@ -57,8 +58,11 @@ export class Workspace {
           const stateFilePath = path.join(projectsPath, file);
           try {
             const data = fs.readFileSync(stateFilePath, 'utf-8');
+            // Extract alias from filename
+            const alias = extractAliasFromFilename(file);
             const project = fromProject(data, {
               ...this.config,
+              alias,
             });
             this.projectPaths.set(project.id, stateFilePath);
             return project;
