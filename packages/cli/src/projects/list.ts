@@ -4,12 +4,13 @@ import Project, { Workspace } from '@openfn/project';
 import { ensure, build } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
+import type { Opts } from './options';
 
-export type ProjectsOptions = Required<Pick<Opts, 'command' | 'workspace'>>;
+export type ProjectsOptions = Pick<Opts, 'workspace'>;
 
-const options = [o.log, o.workspace];
+const options = [o.log, po.workspace];
 
 const command: yargs.CommandModule = {
   command: 'list [project-path]',
