@@ -33,7 +33,6 @@ export default async (
 ) => {
   const source = await readFile(filePath, 'utf8');
 
-  // Extract alias from filename if not provided in config
   const alias = config.alias ?? extractAliasFromFilename(filePath);
 
   return fromProject(source, { ...config, alias });

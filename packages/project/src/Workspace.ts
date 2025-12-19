@@ -58,7 +58,6 @@ export class Workspace {
           const stateFilePath = path.join(projectsPath, file);
           try {
             const data = fs.readFileSync(stateFilePath, 'utf-8');
-            // Extract alias from filename
             const alias = extractAliasFromFilename(file);
             const project = fromProject(data, {
               ...this.config,
