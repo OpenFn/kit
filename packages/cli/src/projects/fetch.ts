@@ -142,12 +142,12 @@ To ignore this error and override the local file, pass --force (-f)
       error.fetched_project = {
         uuid: project.uuid,
         id: project.id,
-        alais: project.alias,
+        alias: project.alias,
       };
       error.local_project = {
         uuid: current.uuid,
         id: current.id,
-        alais: current.alias,
+        alias: current.alias,
       };
       delete error.stack;
       logger.error(error);
