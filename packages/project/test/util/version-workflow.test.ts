@@ -6,15 +6,17 @@ import { generateWorkflow } from '../../src';
 test.todo('include edge label in hash');
 test.todo('include edge expression in hash');
 
-test('generate an 12 character version hash for a basic workflow', (t) => {
+// TODO this has started failing but I don't see why te has hshould have changed?
+// maybe a null got removed?
+test.only('generate an 12 character version hash for a basic workflow', (t) => {
   const workflow = generateWorkflow(
     `
     @name a
     @id some-id
-    webhook-transform_data(name="Transform data",expression="// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n")
+    webhook-transform_data(name="Transform data",expression="fn(s => s)")
     `
   );
-
+  console.log(JSON.stringify(workflow));
   const hash = workflow.getVersionHash();
   t.log(hash);
   t.is(hash, 'cli:7e5ca7843721');

@@ -31,11 +31,9 @@ const state: Provisioner.Project = {
         {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
-          body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+          body: 'fn(s => s)',
           adaptor: '@openfn/language-common@latest',
-
-          // TODO make sure these get serialized back
-          project_credential_id: null,
+          project_credential_id: '<uuid:c1>',
           keychain_credential_id: null,
         },
       ],
@@ -51,7 +49,7 @@ const state: Provisioner.Project = {
     },
   ],
   updated_at: '2025-04-23T11:15:59Z',
-  project_credentials: [],
+  project_credentials: ['<uuid:c1>'],
   scheduled_deletion: null,
   allow_support_access: false,
   requires_mfa: false,
@@ -242,9 +240,9 @@ test('should handle credentials', (t) => {
           {
             id: 'step',
             expression: '.',
+            configuration: 'p',
             openfn: {
               keychain_credential_id: 'k',
-              project_credential_id: 'p',
             },
           },
         ],
@@ -341,7 +339,8 @@ test('should convert a project back to app state in json', (t) => {
   const data = {
     name: 'aaa',
     description: 'a project',
-    credentials: [],
+    // TODO I think we might need more automation of this?
+    credentials: ['<uuid:c1>'],
     collections: [],
     openfn: {
       env: 'project',
@@ -388,12 +387,11 @@ test('should convert a project back to app state in json', (t) => {
           {
             id: 'transform-data',
             name: 'Transform data',
-            expression:
-              '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+            expression: 'fn(s => s)',
             adaptor: '@openfn/language-common@latest',
+            configuration: '<uuid:c1>',
             openfn: {
               uuid: '66add020-e6eb-4eec-836b-20008afca816',
-              project_credential_id: null,
             },
           },
         ],
@@ -472,8 +470,7 @@ test.skip('should convert a project back to app state in yaml', (t) => {
           {
             id: 'transform-data',
             name: 'Transform data',
-            expression:
-              '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+            expression: 'fn(s => s)',
             adaptor: '@openfn/language-common@latest',
             openfn: {
               uuid: '66add020-e6eb-4eec-836b-20008afca816',

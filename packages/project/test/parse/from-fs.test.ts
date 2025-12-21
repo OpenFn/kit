@@ -60,7 +60,7 @@ mock({
           {
             id: '<uuid-1>',
             name: 'a',
-            project_credential_id: 'p',
+            keychain_credential_id: 'k',
           },
           {
             id: '<uuid-2>',
@@ -195,7 +195,7 @@ test('should track openfn props from state file on a step', async (t) => {
   const [wf] = project.workflows;
 
   t.truthy(wf.steps[0].openfn);
-  t.is(wf.steps[0].openfn.project_credential_id, 'p');
+  t.is(wf.steps[0].openfn.keychain_credential_id, 'k');
 });
 
 test('should track the UUID of an edge', async (t) => {
