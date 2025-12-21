@@ -93,6 +93,47 @@ test.serial('run a workflow', async (t) => {
   t.is(result.data.count, 84);
 });
 
+// THis is my new test
+// I want to pass credentials in and I want them to be processed
+test.serial.only('run a workflow with a credential map', async (t) => {
+  const log = `fn(s => { console.log(s.configuration); return s; })`;
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          expression: `${fn}${log}`,
+          configuration: 'A',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}${log}`,
+          configuration: 'B',
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/creds.json': JSON.stringify({
+      A: { password: 'a' },
+      B: { password: 'b' },
+    }),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    credntials: '/creds.json',
+  };
+  const result = await handler(options, logger);
+
+  // TODO how do I get logs?
+
+  console.log(logger._history);
+});
+
 test.serial('run a workflow with state', async (t) => {
   const workflow = {
     workflow: {
