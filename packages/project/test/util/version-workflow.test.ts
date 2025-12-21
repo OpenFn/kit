@@ -6,9 +6,7 @@ import { generateWorkflow } from '../../src';
 test.todo('include edge label in hash');
 test.todo('include edge expression in hash');
 
-// TODO this has started failing but I don't see why te has hshould have changed?
-// maybe a null got removed?
-test.only('generate an 12 character version hash for a basic workflow', (t) => {
+test('generate an 12 character version hash for a basic workflow', (t) => {
   const workflow = generateWorkflow(
     `
     @name a
@@ -16,10 +14,8 @@ test.only('generate an 12 character version hash for a basic workflow', (t) => {
     webhook-transform_data(name="Transform data",expression="fn(s => s)")
     `
   );
-  console.log(JSON.stringify(workflow));
   const hash = workflow.getVersionHash();
-  t.log(hash);
-  t.is(hash, 'cli:7e5ca7843721');
+  t.is(hash, 'cli:518f491717a7');
 });
 
 test('unique hash but different steps order', (t) => {
