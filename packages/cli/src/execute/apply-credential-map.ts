@@ -41,17 +41,19 @@ const applyCredentialMap = (
     }
   }
 
-  logger?.warn(
-    `WARNING: the following credential ids were not mapped and have been removed:`
-  );
-  logger?.warn(Object.keys(unmapped).join(','));
-  if (map) {
+  if (Object.keys(unmapped).length) {
     logger?.warn(
-      'If the workflow fails, add these credentials to the credential map'
+      `WARNING: the following credential ids were not mapped and have been removed:`
     );
-  } else {
-    // TODO if running from project file this might be bad advice
-    logger?.warn('Pass a credential map with --credentials');
+    logger?.warn(Object.keys(unmapped).join(','));
+    if (map) {
+      logger?.warn(
+        'If the workflow fails, add these credentials to the credential map'
+      );
+    } else {
+      // TODO if running from project file this might be bad advice
+      logger?.warn('Pass a credential map with --credentials');
+    }
   }
 };
 

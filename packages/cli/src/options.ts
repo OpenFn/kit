@@ -31,6 +31,7 @@ export type Opts = {
   compile?: boolean;
   configPath?: string;
   confirm?: boolean;
+  credentials?: string;
   describe?: string;
   end?: string; // workflow end node
   env?: string;
@@ -242,6 +243,14 @@ export const configPath: CLIOption = {
     alias: ['c', 'config-path'],
     description: 'The location of your config file',
     default: './.config.json',
+  },
+};
+
+export const credentials: CLIOption = {
+  name: 'credentials',
+  yargs: {
+    alias: ['creds'],
+    description: 'A path which points to a credential map',
   },
 };
 

@@ -1,9 +1,12 @@
 import type { ExecutionPlan } from '@openfn/lexicon';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import type { ExecuteOptions } from './command';
 import execute from './execute';
 import serializeOutput from './serialize-output';
 import getAutoinstallTargets from './get-autoinstall-targets';
+import applyCredentialMap from './apply-credential-map';
 
 import { install } from '../repo/handler';
 import compile from '../compile/compile';
@@ -51,6 +54,25 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   let plan = await loadPlan(options, logger);
   validatePlan(plan, logger);
+
+  if (options.credentials) {
+    let creds = {};
+    try {
+      const credsRaw = await readFile(
+        path.resolve(options.credentials),
+        'utf8'
+      );
+      creds = JSON.parse(credsRaw);
+    } catch (e) {
+      logger.error('Error processing credential map:');
+      logger.error(e);
+      // probably want to exist if the credential map is invalid
+      process.exitCode = 1;
+      return;
+    }
+    applyCredentialMap(plan, creds, logger);
+    logger.info('Credential map loaded ');
+  }
 
   if (options.cacheSteps) {
     await clearCache(plan, options, logger);

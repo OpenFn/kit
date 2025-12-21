@@ -13,6 +13,7 @@ export type ExecuteOptions = Required<
     | 'cacheSteps'
     | 'command'
     | 'compile'
+    | 'credentials'
     | 'expandAdaptors'
     | 'end'
     | 'immutable'
@@ -46,6 +47,7 @@ const options = [
   o.autoinstall,
   o.cacheSteps,
   o.compile,
+  o.credentials,
   o.end,
   o.ignoreImports,
   o.immutable,
