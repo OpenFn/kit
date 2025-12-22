@@ -1,0 +1,11 @@
+{
+  "workflow": {
+    "steps": [
+      {
+        "adaptor": "common",
+        "configuration": "08089249-0890-4a73-8799-e2ec2b9e5d77",
+        "expression": "creds.js"
+      }
+    ]
+  }
+}
