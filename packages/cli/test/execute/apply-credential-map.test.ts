@@ -89,5 +89,7 @@ test('warn if credential unmapped', (t) => {
 
   applyCredentialMap(wf, {}, logger);
 
-  t.truthy(logger._find('warn', /were not mapped/i));
+  t.truthy(
+    logger._find('warn', /WARNING: credential IDs were found in the workflow/i)
+  );
 });

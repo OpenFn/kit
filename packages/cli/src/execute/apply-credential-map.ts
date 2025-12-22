@@ -38,7 +38,7 @@ const applyCredentialMap = (
 
   if (Object.keys(unmapped).length) {
     logger?.warn(
-      `WARNING: credential IDs were found in the workflow, but values have no bene provided:`
+      `WARNING: credential IDs were found in the workflow, but values have not been provided:`
     );
     logger?.warn('  ', Object.keys(unmapped).join(','));
     if (map) {
