@@ -15,13 +15,15 @@ const applyCredentialMap = (
   map: CredentialMap = {},
   logger?: Logger
 ) => {
-  const steps = plan.workflow.steps.filter(
-    (step: any) => typeof step.configuration === 'string'
+  const stepsWithCredentialIds = plan.workflow.steps.filter(
+    (step: any) =>
+      typeof step.configuration === 'string' &&
+      !step.configuration.endsWith('.json')
   ) as { configuration: string; name?: string; id: string }[];
 
   const unmapped: Record<string, true> = {};
 
-  for (const step of steps) {
+  for (const step of stepsWithCredentialIds) {
     if (map[step.configuration]) {
       logger?.debug(
         `Applying credential ${step.configuration} to "${step.name ?? step.id}"`
@@ -43,9 +45,9 @@ const applyCredentialMap = (
 
   if (Object.keys(unmapped).length) {
     logger?.warn(
-      `WARNING: the following credential ids were not mapped and have been removed:`
+      `WARNING: credential IDs were found in the workflow, but values have no bene provided:`
     );
-    logger?.warn(Object.keys(unmapped).join(','));
+    logger?.warn('  ', Object.keys(unmapped).join(','));
     if (map) {
       logger?.warn(
         'If the workflow fails, add these credentials to the credential map'

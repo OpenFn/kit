@@ -55,8 +55,8 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   let plan = await loadPlan(options, logger);
   validatePlan(plan, logger);
 
+  let creds = {};
   if (options.credentials) {
-    let creds = {};
     try {
       const credsRaw = await readFile(
         path.resolve(options.credentials),
@@ -70,9 +70,9 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
       process.exitCode = 1;
       return;
     }
-    applyCredentialMap(plan, creds, logger);
     logger.info('Credential map loaded ');
   }
+  applyCredentialMap(plan, creds, logger);
 
   if (options.cacheSteps) {
     await clearCache(plan, options, logger);
