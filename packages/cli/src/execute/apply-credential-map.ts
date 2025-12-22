@@ -3,7 +3,7 @@
  * and apply credentials to each step
  */
 
-import { ExecutionPlan, Job } from '@openfn/lexicon';
+import { ExecutionPlan } from '@openfn/lexicon';
 import { Logger } from '../util';
 
 type JobId = string;
@@ -29,14 +29,7 @@ const applyCredentialMap = (
         `Applying credential ${step.configuration} to "${step.name ?? step.id}"`
       );
       step.configuration = map[step.configuration];
-    }
-    // TODO  if confug is a string without a mapping,
-    // the job will most likely  fali
-    // We should proably throw a warning at least?
-    // should we also delete the key? Wht will the runtime do if
-    // config i sa string?
-    // probably it gets wierd, so lets delete
-    else {
+    } else {
       unmapped[step.configuration] = true;
       // @ts-ignore
       delete step.configuration;
