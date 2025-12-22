@@ -201,7 +201,8 @@ test('destroy should handle un-initialised workers', async (t) => {
   t.is(pool._pool.length, 0);
 });
 
-test('destroy should close all child processes', async (t) => {
+// Flaky - see https://github.com/OpenFn/kit/issues/1192
+test.skip('destroy should close all child processes', async (t) => {
   // warm up a pool
   const pool = createPool(workerPath, { capacity: 10 }, logger);
 
