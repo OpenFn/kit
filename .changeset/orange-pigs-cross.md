@@ -2,4 +2,4 @@
 '@openfn/cli': minor
 ---
 
-Allow credential map to be passed via --credentials
+Allow credential map, as json or yaml, to be passed via --credentials
