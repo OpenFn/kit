@@ -7,7 +7,6 @@ import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import fromProject, { SerializedProject } from './parse/from-project';
-import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
@@ -202,15 +201,13 @@ export class Project {
     );
   }
 
-  // it's the name of the project.yaml file
-  // qualified name? Remote name? App name?
-  // every project in a repo need a unique identifier
-
-  // TODO this should be a getter prop,
-  // and should be alias@domain
-  // maybe also call it a qname too
-  getIdentifier() {
-    return getIdentifier(this.openfn);
+  /** Returns a fully qualified name for the project, id, alias@domain */
+  get qname() {
+    const { alias, host } = this;
+    if (host) {
+      return `${alias}@${host}`;
+    }
+    return alias;
   }
 
   // Compare this project with another and return a diff

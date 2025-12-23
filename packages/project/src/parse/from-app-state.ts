@@ -10,6 +10,7 @@ import ensureJson from '../util/ensure-json';
 
 export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
+  alias?: string;
 };
 
 export default (

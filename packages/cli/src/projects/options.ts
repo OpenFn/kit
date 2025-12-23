@@ -3,6 +3,7 @@ import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
 
 export type Opts = BaseOpts & {
+  alias?: string;
   env?: string;
   workspace?: string;
   removeUnmapped?: boolean | undefined;
@@ -41,6 +42,16 @@ export const workflowMappings: CLIOption = {
     coerce: getCLIOptionObject,
     description:
       'A manual object mapping of which workflows in source and target should be matched for a merge.',
+  },
+};
+
+// We declare a new output path here, overriding the default cli one,
+// because default rules are different
+export const outputPath: CLIOption = {
+  name: 'output-path',
+  yargs: {
+    type: 'string',
+    description: 'Path to output the fetched project to',
   },
 };
 

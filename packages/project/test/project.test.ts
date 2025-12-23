@@ -61,35 +61,36 @@ const state: Provisioner.Project = {
   dataclip_retention_period: null,
 };
 
-test('should generate a correct identifier with default values', (t) => {
+test('should generate a correct qname with default values', (t) => {
   const project = new Project({}, {});
 
-  const id = project.getIdentifier();
-  t.is(id, 'main@local');
+  t.is(project.qname, 'main');
 });
 
-test('should generate a correct identifier with real values', (t) => {
-  const project = new Project({
-    openfn: {
-      env: 'staging',
-      endpoint: 'https://app.openfn.org',
+test('should generate a correct qname with real values', (t) => {
+  const project = new Project(
+    {
+      openfn: {
+        endpoint: 'https://app.openfn.org',
+      },
     },
-  });
+    { alias: 'staging' }
+  );
 
-  const id = project.getIdentifier();
-  t.is(id, 'staging@app.openfn.org');
+  t.is(project.qname, 'staging@app.openfn.org');
 });
 
-test('should generate a correct identifier with weird values', (t) => {
-  const project = new Project({
-    openfn: {
-      env: 'hello',
-      endpoint: 'https://app.com/openfn',
+test('should generate a correct qname with weird values', (t) => {
+  const project = new Project(
+    {
+      openfn: {
+        endpoint: 'https://app.com/openfn',
+      },
     },
-  });
+    { alias: 'hello' }
+  );
 
-  const id = project.getIdentifier();
-  t.is(id, 'hello@app.com');
+  t.is(project.qname, 'hello@app.com');
 });
 
 test('should return an alias', (t) => {

@@ -116,8 +116,7 @@ export async function getProject(
         `Failed to fetch project ${projectId}: ${response.statusText}`
       );
     }
-
-    logger.info('Project found');
+    logger.success('Project found');
     return response.json();
   } catch (error: any) {
     handleCommonErrors(config, error);

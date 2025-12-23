@@ -18,6 +18,7 @@ import { serialize, getProject, loadAppAuthConfig } from './util';
 
 export type FetchOptions = Pick<
   Opts,
+  | 'alias'
   | 'apiKey'
   | 'command'
   | 'endpoint'
@@ -32,19 +33,17 @@ export type FetchOptions = Pick<
 >;
 
 const options = [
+  po.alias,
   o.apikey,
   o.endpoint,
   o.log,
-  override(o.outputPath, {
-    description: 'Path to output the fetched project to',
-  }),
   o.logJson,
   o.snapshots, // TODO need to add support for this
-  o.statePath,
   override(o.force, {
     description: 'Overwrite local file contents with the fetched contents',
   }),
 
+  po.outputPath,
   po.env,
   po.workspace,
 ];
@@ -71,9 +70,12 @@ export default command;
 export const handler = async (options: FetchOptions, logger: Logger) => {
   const workspacePath = path.resolve(options.workspace ?? process.cwd());
   const workspace = new Workspace(workspacePath);
-  const { projectId, outputPath } = options;
+  const { projectId, outputPath, alias } = options;
 
   const config = loadAppAuthConfig(options, logger);
+  logger.debug(
+    `Fetching project ${projectId} as alias ${alias} from ${config.endpoint}`
+  );
 
   const { data } = await getProject(logger, config, projectId!);
 
@@ -82,18 +84,19 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     data!,
     {
       endpoint: config.endpoint,
-      env: options.env || 'project',
     },
-    workspace.getConfig()
+    { ...workspace.getConfig(), alias }
+  );
+
+  logger.debug(
+    `Loaded project with id ${project.id} and alias ${project.alias}`
   );
 
   // Work out where and how to serialize the project
   const outputRoot = path.resolve(outputPath || workspacePath);
-  const projectFileName = project.getIdentifier();
   const projectsDir = project.config.dirs.projects ?? '.projects';
-
   const finalOutputPath =
-    outputPath ?? `${outputRoot}/${projectsDir}/${projectFileName}`;
+    outputPath ?? `${outputRoot}/${projectsDir}/${project.qname}`;
   let format: undefined | 'json' | 'yaml' = undefined;
 
   if (outputPath) {
@@ -116,23 +119,23 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   let current: Project | null = null;
   try {
     current = await Project.from('path', finalOutput);
+
+    const hasAnyHistory = project.workflows.find(
+      (w) => w.workflow.history?.length
+    );
+
+    // Skip version checking if:
+    const skipVersionCheck =
+      options.force || // The user forced the checkout
+      !current || // there is no project on disk
+      !hasAnyHistory; // the remote project has no history (can happen in old apps)
+
+    if (!skipVersionCheck && !project.canMergeInto(current!)) {
+      // TODO allow rename
+      throw new Error('Error! An incompatible project exists at this location');
+    }
   } catch (e) {
     // Do nothing - project doesn't exist
-  }
-
-  const hasAnyHistory = project.workflows.find(
-    (w) => w.workflow.history?.length
-  );
-
-  // Skip version checking if:
-  const skipVersionCheck =
-    options.force || // The user forced the checkout
-    !current || // there is no project on disk
-    !hasAnyHistory; // the remote project has no history (can happen in old apps)
-
-  if (!skipVersionCheck && !project.canMergeInto(current!)) {
-    // TODO allow rename
-    throw new Error('Error! An incompatible project exists at this location');
   }
 
   // TODO report whether we've updated or not

@@ -180,7 +180,6 @@ test('mapWorkflow: map a simple job', (t) => {
 // todo surprised this works
 test('mapWorkflow: map a job with project and keychain credentials', (t) => {
   const wf = withCreds.workflows[0];
-  wf.jobs.map(console.log);
   const mapped = mapWorkflow(wf);
 
   const [_trigger, job] = mapped.steps;
