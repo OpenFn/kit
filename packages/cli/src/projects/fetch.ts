@@ -2,6 +2,7 @@ import yargs from 'yargs';
 import path from 'node:path';
 import Project, { Workspace } from '@openfn/project';
 
+import resolvePath from '../util/resolve-path';
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
@@ -28,7 +29,7 @@ export type FetchOptions = Pick<
   | 'logJson'
   | 'snapshots'
   | 'outputPath'
-  | 'projectId'
+  | 'project'
   | 'workspace'
 >;
 
@@ -49,13 +50,13 @@ const options = [
 ];
 
 const command: yargs.CommandModule<FetchOptions> = {
-  command: 'fetch [projectId]',
-  describe: `Fetch a project's state and spec from a Lightning Instance to the local state file without expanding to the filesystem.`,
+  command: 'fetch [project]',
+  describe: `Download the latest version of a project from a lightning server (does not expand the project, use checkout)`,
   builder: (yargs: yargs.Argv<FetchOptions>) =>
     build(options, yargs)
-      .positional('projectId', {
+      .positional('project', {
         describe:
-          'The id of the project that should be fetched, should be a UUID',
+          'The id, alias or UUID of the project to fetch. If not set, will default to the active project',
         demandOption: true,
       })
       .example(
@@ -67,17 +68,60 @@ const command: yargs.CommandModule<FetchOptions> = {
 
 export default command;
 
+const printProjectName = (project: Project) =>
+  `${project.qname} (${project.id})`;
+
 export const handler = async (options: FetchOptions, logger: Logger) => {
-  const workspacePath = path.resolve(options.workspace ?? process.cwd());
+  const workspacePath = options.workspace ?? process.cwd();
+  logger.debug('Using workspace at', workspacePath);
+
   const workspace = new Workspace(workspacePath, logger, false);
-  const { projectId, outputPath, alias = 'main' } = options;
-
+  const { project: projectIdentifier, outputPath } = options;
+  let { alias = 'main' } = options;
   const config = loadAppAuthConfig(options, logger);
-  logger.debug(
-    `Fetching project ${projectId} as alias ${alias} from ${config.endpoint}`
-  );
 
-  const { data } = await getProject(logger, config, projectId!);
+  let localProject;
+
+  // first we see if this project exists locally
+  logger.debug('Checking for local copy of project...');
+  if (projectIdentifier) {
+    localProject = workspace.get(projectIdentifier);
+
+    if (!localProject) {
+      logger.debug(`Project ${projectIdentifier} not found locally`);
+      // whatever the user passed could not be found
+      // actually, if its not local,it still might exist remotely
+      // process.exit(1);
+    } else {
+      alias = localProject.alias;
+      logger.debug(`Found local project`, printProjectName(localProject));
+    }
+  } else {
+    logger.debug(
+      'Project identifier not provided. Looking up active project in working dir...'
+    );
+    localProject = workspace.get(workspace.activeProject?.id as string);
+    if (localProject) {
+      logger.debug('Active project found!', printProjectName(localProject)); // todo id? uuid?
+      logger.info('Will fetch latest', printProjectName(localProject));
+      alias = localProject.alias;
+    } else {
+      // TOOD maybe advice passing a project id eh?
+      logger.error('Failed to find local project in working directory');
+      logger.error(
+        'Pass a project UUID, id or alias to set which project to fetch'
+      );
+      process.exit(1);
+    }
+  }
+  const projectUUID = (localProject?.uuid ?? projectIdentifier) as string;
+
+  logger.debug(
+    `Fetching project with UUID ${projectUUID} from ${config.endpoint}`
+  );
+  logger.debug('Using local alias', alias);
+
+  const { data } = await getProject(logger, config, projectUUID);
 
   const project = await Project.from(
     'state',
@@ -93,7 +137,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   );
 
   // Work out where and how to serialize the project
-  const outputRoot = path.resolve(outputPath || workspacePath);
+  const outputRoot = resolvePath(outputPath || workspacePath);
   const projectsDir = project.config.dirs.projects ?? '.projects';
   const finalOutputPath =
     outputPath ?? `${outputRoot}/${projectsDir}/${project.qname}`;
@@ -107,25 +151,8 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     }
   }
 
-  // See if a project already exists there
-  // TODO we use serialize the generate the path, but
-  // there should be an easier way really?
-  const finalOutput = await serialize(
-    project,
-    finalOutputPath!,
-    format,
-    true // dry run - this won't trigger an actual write!
-  );
-
-  // If a project already exists at the output path, make sure it's compatible
-  let current: Project | null = null;
-  try {
-    // TODO when project.from fails, throw a clear error like NOT_FOUND
-    current = await Project.from('path', finalOutput);
-
-    // Make sure that the local project has a matching UUID
-    // otherwise something must be wrong!
-    if (!options.force && current.uuid != project.uuid) {
+  if (localProject) {
+    if (!options.force && localProject.uuid != project.uuid) {
       // TODO make this prettier in output
       const error: any = new Error('PROJECT_EXISTS');
       error.message = 'A project with a different UUID exists at this location';
@@ -133,11 +160,11 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
 
 Try adding an alias to rename the new project:
 
-      openfn fetch ${projectId} --alias ${project.id}
+      openfn fetch ${project} --alias ${project.id}
 
 To ignore this error and override the local file, pass --force (-f)
 
-    openfn fetch ${projectId} --force
+    openfn fetch ${project} --force
 `;
       error.fetched_project = {
         uuid: project.uuid,
@@ -145,9 +172,9 @@ To ignore this error and override the local file, pass --force (-f)
         alias: project.alias,
       };
       error.local_project = {
-        uuid: current.uuid,
-        id: current.id,
-        alias: current.alias,
+        uuid: localProject.uuid,
+        id: localProject.id,
+        alias: localProject.alias,
       };
       delete error.stack;
       logger.error(error);
@@ -164,16 +191,12 @@ To ignore this error and override the local file, pass --force (-f)
     // Skip version checking if:
     const skipVersionCheck =
       options.force || // The user forced the checkout
-      !current || // there is no project on disk
       !hasAnyHistory; // the remote project has no history (can happen in old apps)
 
-    if (!skipVersionCheck && !project.canMergeInto(current!)) {
+    if (!skipVersionCheck && !project.canMergeInto(localProject!)) {
       // TODO allow rename
       throw new Error('Error! An incompatible project exists at this location');
     }
-  } catch (e) {
-    // console.log(e);
-    // Do nothing - project doesn't exist
   }
 
   // TODO report whether we've updated or not
@@ -181,7 +204,7 @@ To ignore this error and override the local file, pass --force (-f)
   // finally, write it!
   await serialize(project, finalOutputPath!, format as any);
 
-  logger.success(`Fetched project file to ${finalOutput}`);
+  logger.success(`Fetched project file to ${finalOutputPath}`);
 
   return project;
 };

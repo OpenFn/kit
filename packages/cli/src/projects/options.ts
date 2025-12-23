@@ -1,4 +1,4 @@
-import nodePath from 'node:path';
+import resolvePath from '../util/resolve-path';
 import { Opts as BaseOpts, CLIOption } from '../options';
 import getCLIOptionObject from '../util/get-cli-option-object';
 
@@ -8,6 +8,7 @@ export type Opts = BaseOpts & {
   workspace?: string;
   removeUnmapped?: boolean | undefined;
   workflowMappings?: Record<string, string> | undefined;
+  project?: string;
 };
 
 // project specific options
@@ -66,7 +67,7 @@ export const workspace: CLIOption = {
     if (!ws) {
       opts.workspace = process.cwd();
     } else {
-      opts.workspace = nodePath.resolve(ws);
+      opts.workspace = resolvePath(ws);
     }
   },
 };

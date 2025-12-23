@@ -10,6 +10,7 @@ import type { ExecutionPlan, Job, WorkflowOptions } from '@openfn/lexicon';
 import type { Opts } from '../options';
 import type { Logger } from './logger';
 import type { CLIExecutionPlan, CLIJobNode, OldCLIWorkflow } from '../types';
+import resolvePath from './resolve-path';
 
 const loadPlan = async (
   options: Pick<
@@ -226,10 +227,7 @@ const fetchFile = async (
 ) => {
   const { rootDir = '', filePath, name } = fileInfo;
   try {
-    // Special handling for ~ feels like a necessary evil
-    const fullPath = filePath.startsWith('~')
-      ? filePath
-      : path.resolve(rootDir, filePath);
+    const fullPath = resolvePath(filePath, rootDir);
     const result = await fs.readFile(fullPath, 'utf8');
     log.debug('Loaded file', fullPath);
     return result;

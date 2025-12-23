@@ -44,7 +44,7 @@ test.afterEach(() => {
 test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_ID,
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
 
@@ -69,7 +69,7 @@ test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
 test.serial('save to a custom location', async (t) => {
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_ID,
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
 
@@ -97,7 +97,7 @@ test.serial(
   async (t) => {
     await fetchHandler(
       {
-        projectId: PROJECT_ID,
+        project: PROJECT_ID,
         endpoint: ENDPOINT,
         apiKey: 'test-api-key',
 
@@ -194,7 +194,7 @@ test.serial('Override a compatible project', async (t) => {
 
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_ID,
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
 
@@ -229,7 +229,7 @@ test.serial('throw for an incompatible project', async (t) => {
     () =>
       fetchHandler(
         {
-          projectId: PROJECT_ID,
+          project: PROJECT_ID,
           endpoint: ENDPOINT,
           apiKey: 'test-api-key',
 
@@ -262,7 +262,7 @@ test.serial('force merge an incompatible project', async (t) => {
 
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_ID,
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
 
