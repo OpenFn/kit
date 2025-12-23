@@ -6,9 +6,7 @@ const gen = (uuid: any, alias: string, id: string, domain: string) =>
   jsonToYaml({
     id,
     name: id.toUpperCase(),
-    cli: {
-      alias,
-    },
+    version: 2,
     openfn: {
       uuid: `${uuid}`,
     },
@@ -194,11 +192,16 @@ mock({
 
   // aliasing
   '/ws4/openfn.yaml': '',
-  '/ws4/.projects/main@openfn.org.yaml': gen(1, 'main', 'proj-1', 'openfn.org'),
+  '/ws4/.projects/main@openfn.org.yaml': gen(
+    111,
+    'main',
+    'proj-1',
+    'openfn.org'
+  ),
   // prettier-ignore
-  '/ws4/.projects/main@somewhere.com.yaml': gen(11, 'main', 'proj-1', 'somewhere.com'),
+  '/ws4/.projects/main@somewhere.com.yaml': gen(112, 'main', 'proj-1', 'somewhere.com'),
   // prettier-ignore
-  '/ws4/.projects/staging@openfn.org.yaml': gen(2, 'staging', 'proj-1-staging', 'openfn.org'),
+  '/ws4/.projects/staging@openfn.org.yaml': gen(113, 'staging', 'proj-1-staging', 'openfn.org'),
 });
 
 test('workspace-path: valid workspace path', (t) => {
@@ -278,6 +281,12 @@ test('load project meta', (t) => {
   });
 });
 
+test('load v2 projects with multiple matching ids', (t) => {
+  const ws = new Workspace('/ws4');
+
+  t.is(ws.projects.length, 3);
+});
+
 test('get project by id', (t) => {
   const ws = new Workspace('/ws4');
   const project = ws.get('proj-1-staging');
@@ -288,10 +297,10 @@ test('get project by id', (t) => {
 
 test('get project by partial uuid', (t) => {
   const ws = new Workspace('/ws4');
-  const project = ws.get('proj-1-staging');
+  const project = ws.get('3');
 
   t.truthy(project);
-  t.is(project?.uuid, 'proj-1-staging');
+  t.is(project?.uuid, '113');
 });
 
 test('get project returns null when not found', (t) => {
