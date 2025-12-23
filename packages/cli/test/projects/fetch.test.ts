@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import test from 'ava';
 import mock from 'mock-fs';
 import { MockAgent, setGlobalDispatcher } from 'undici';
@@ -41,29 +41,170 @@ test.afterEach(() => {
   mock.restore();
 });
 
-test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
+test.serial(
+  'fetch from lightning with UUID and save as v2 yaml file with default alias',
+  async (t) => {
+    await fetchHandler(
+      {
+        project: PROJECT_ID,
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+
+        workspace: '/ws',
+      } as any,
+      logger
+    );
+
+    const filePath = '/ws/.projects/main@app.openfn.org.yaml';
+    const fileContent = await readFile(filePath, 'utf-8');
+
+    const yaml = myProject_yaml;
+
+    t.is(fileContent.trim(), yaml);
+
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'success');
+    t.regex(message, /Fetched project file to/);
+  }
+);
+
+test.serial(
+  'fetch from lightning with UUID and save as v2 yaml file with user alias',
+  async (t) => {
+    await fetchHandler(
+      {
+        project: PROJECT_ID,
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        alias: 'staging',
+      } as any,
+      logger
+    );
+
+    const filePath = '/ws/.projects/staging@app.openfn.org.yaml';
+    const fileContent = await readFile(filePath, 'utf-8');
+
+    const yaml = myProject_yaml;
+
+    t.is(fileContent.trim(), yaml);
+
+    const { message, level } = logger._parse(logger._last);
+    t.is(level, 'success');
+    t.regex(message, /Fetched project file to/);
+  }
+);
+
+// TODO: error if alias not local
+// TODO: fetch with local id
+// TODO: fetch with active project
+// TODO fetch with alias@domain
+test.serial('fetch from lightning with alias', async (t) => {
+  // first set up the file system with a preloaded project file
+  const filePath = '/ws/.projects/staging@app.openfn.org.yaml';
+  await writeFile(filePath, myProject_yaml.replace('fn()', 'alterState()'));
+
+  // Now fetch with an alias value
   await fetchHandler(
     {
-      project: PROJECT_ID,
+      project: 'staging',
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
-
       workspace: '/ws',
-      alias: 'project',
     } as any,
     logger
   );
 
-  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
   const fileContent = await readFile(filePath, 'utf-8');
 
-  const yaml = myProject_yaml;
+  t.is(fileContent.trim(), myProject_yaml);
+});
 
-  t.is(fileContent.trim(), yaml);
+test.serial('use local endpoint when available', async (t) => {
+  // first set up the file system with a preloaded project file
+  const filePath = '/ws/.projects/staging@app.openfn.org.yaml';
+  await writeFile(filePath, myProject_yaml);
 
-  const { message, level } = logger._parse(logger._last);
-  t.is(level, 'success');
-  t.regex(message, /Fetched project file to/);
+  await fetchHandler(
+    {
+      project: 'staging',
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      // No endpoint provided!
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  t.is(fileContent.trim(), myProject_yaml);
+});
+
+test.serial('ignore endpoint argument when fetching from local', async (t) => {
+  // first set up the file system with a preloaded project file
+  const filePath = '/ws/.projects/staging@app.openfn.org.yaml';
+  await writeFile(filePath, myProject_yaml);
+
+  // Now fetch with an alias value
+  await fetchHandler(
+    {
+      project: 'staging',
+      endpoint: 'localhost', // this must be ignored or the test will fail!
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  t.is(fileContent.trim(), myProject_yaml);
+});
+
+test.serial('fetch from lightning with alias and domain', async (t) => {
+  // set up a mock at localhost
+  const mockPool = mockAgent.get('http://localhost');
+  mockPool
+    .intercept({
+      path: `/api/provision/${PROJECT_ID}?`,
+      method: 'GET',
+    })
+    .reply(200, {
+      data: myProject_v1,
+    });
+
+  // first set up the file system with preloaded project files
+  await writeFile(
+    '/ws/.projects/staging@app.openfn.org.yaml',
+    myProject_yaml.replace('fn()', 'jam()')
+  );
+
+  await writeFile(
+    '/ws/.projects/staging@localhost.yaml',
+    myProject_yaml
+      .replace('fn()', 'alterState()')
+      .replace('https://app.openfn.org', 'http://localhost')
+  );
+
+  // Now fetch with an alias value
+  await fetchHandler(
+    {
+      project: 'staging@localhost',
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(
+    '/ws/.projects/staging@localhost.yaml',
+    'utf-8'
+  );
+
+  t.is(
+    fileContent.trim(),
+    myProject_yaml.replace('https://app.openfn.org', 'http://localhost')
+  );
 });
 
 test.serial('save to a custom location', async (t) => {
@@ -74,7 +215,6 @@ test.serial('save to a custom location', async (t) => {
       apiKey: 'test-api-key',
 
       workspace: '/ws',
-      alias: 'project',
       outputPath: '/ws/out.yaml',
     } as any,
     logger
@@ -90,6 +230,30 @@ test.serial('save to a custom location', async (t) => {
   const { message, level } = logger._parse(logger._last);
   t.is(level, 'success');
   t.regex(message, /Fetched project file to/);
+});
+
+test.serial('warn if out and alias are both set', async (t) => {
+  await fetchHandler(
+    {
+      project: PROJECT_ID,
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+
+      workspace: '/ws',
+      outputPath: '/ws/out.yaml',
+      alias: 'jam',
+    } as any,
+    logger
+  );
+
+  const warn = logger._find('warn', /alias "jam" was set/i);
+  t.truthy(warn);
+
+  // Should still output to the right place
+  const filePath = '/ws/out.yaml';
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  t.is(fileContent.trim(), myProject_yaml);
 });
 
 test.serial(
@@ -169,7 +333,7 @@ test.serial(
             lock_version: 1,
           },
           id: 'my-workflow',
-          history: ['a'],
+          history: ['cli:02582f3bb088'],
         },
       ],
     };

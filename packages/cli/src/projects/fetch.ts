@@ -9,7 +9,7 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { serialize, getProject, loadAppAuthConfig } from './util';
+import { serialize, fetchProject, loadAppAuthConfig } from './util';
 
 // TODO need to implement these
 // type Config = {
@@ -114,22 +114,36 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
       process.exit(1);
     }
   }
+
+  // Note: when fetching, we must ALWAYS use the local endpoint
+  // if we're fetching from a local project
+  // otherwise, all the UUIDs and stuff will be wrong
+  // This is a wierd case when we ignore the endpoint passed by the user
+  const projectEndpoint = localProject?.openfn?.endpoint ?? config.endpoint;
   const projectUUID = (localProject?.uuid ?? projectIdentifier) as string;
 
   logger.debug(
-    `Fetching project with UUID ${projectUUID} from ${config.endpoint}`
+    `Fetching project with UUID ${projectUUID} from ${projectEndpoint}`
   );
   logger.debug('Using local alias', alias);
 
-  const { data } = await getProject(logger, config, projectUUID);
+  const { data } = await fetchProject(
+    projectEndpoint,
+    config.apiKey,
+    projectUUID,
+    logger
+  );
 
   const project = await Project.from(
     'state',
     data!,
     {
-      endpoint: config.endpoint,
+      endpoint: projectEndpoint,
     },
-    { ...workspace.getConfig(), alias }
+    {
+      ...workspace.getConfig(),
+      alias,
+    }
   );
 
   logger.debug(
@@ -148,6 +162,12 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     const ext = path.extname(outputPath!).substring(1) as any;
     if (ext.length) {
       format = ext;
+    }
+
+    if (options.alias) {
+      logger.warn(
+        `WARNING: alias "${options.alias}" was set, but will be ignored as output path was provided`
+      );
     }
   }
 
