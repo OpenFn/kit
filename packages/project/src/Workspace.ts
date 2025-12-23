@@ -27,7 +27,9 @@ export class Workspace {
   private isValid: boolean = false;
   private logger: Logger;
 
-  constructor(workspacePath: string, logger?: Logger) {
+  // Set validate to false to suppress warnings if a Workspace doesn't exist
+  // This is appropriate if, say, fetching a project for the first time
+  constructor(workspacePath: string, logger?: Logger, validate = true) {
     this.logger = logger ?? createLogger('Workspace', { level: 'info' });
 
     let context = { workspace: undefined, project: undefined };
@@ -36,9 +38,11 @@ export class Workspace {
       context = loadWorkspaceFile(content, type as any);
       this.isValid = true;
     } catch (e) {
-      this.logger.warn(
-        `Could not find openfn.yaml at ${workspacePath}. Using default values.`
-      );
+      if (validate) {
+        this.logger.warn(
+          `Could not find openfn.yaml at ${workspacePath}. Using default values.`
+        );
+      }
     }
     this.config = buildConfig(context.workspace);
     this.activeProject = context.project;
@@ -74,9 +78,11 @@ export class Workspace {
         })
         .filter((s) => s) as Project[];
     } else {
-      this.logger.warn(
-        `No projects found: directory at ${projectsPath} does not exist`
-      );
+      if (validate) {
+        this.logger.warn(
+          `No projects found: directory at ${projectsPath} does not exist`
+        );
+      }
     }
   }
 

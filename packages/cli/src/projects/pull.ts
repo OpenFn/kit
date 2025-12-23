@@ -6,7 +6,7 @@ import * as o from '../options';
 import * as o2 from './options';
 
 import type { Logger } from '../util/logger';
-import type { Opts } from '../options';
+import type { Opts } from './options';
 
 export type PullOptions = Pick<
   Opts,

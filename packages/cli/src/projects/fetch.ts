@@ -69,8 +69,8 @@ export default command;
 
 export const handler = async (options: FetchOptions, logger: Logger) => {
   const workspacePath = path.resolve(options.workspace ?? process.cwd());
-  const workspace = new Workspace(workspacePath);
-  const { projectId, outputPath, alias } = options;
+  const workspace = new Workspace(workspacePath, logger, false);
+  const { projectId, outputPath, alias = 'main' } = options;
 
   const config = loadAppAuthConfig(options, logger);
   logger.debug(
