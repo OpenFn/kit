@@ -9,6 +9,7 @@ import { Logger } from '@openfn/logger';
 import type {
   LightningPlan,
   RunCompletePayload,
+  Provisioner,
 } from '@openfn/lexicon/lightning';
 
 import { ServerState } from './server';
@@ -63,6 +64,10 @@ const setupDevAPI = (
   app.getRun = (id: string) => state.runs[id];
 
   app.getState = () => state;
+
+  app.addProject = (project: Provisioner.Project_v1) => {
+    state.projects[project.id] = project;
+  };
 
   // Promise which returns when a workflow is complete
   app.waitForResult = (runId: string) => {
