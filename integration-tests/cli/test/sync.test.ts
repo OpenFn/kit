@@ -30,16 +30,21 @@ const initWorkspace = (t: any) => {
   };
 };
 
-test('fetch a project', async (t) => {
-  const { workspace, read } = initWorkspace(t);
+const gen = (name = 'patiients', workflows = ['trigger-job']) => {
   // generate a project
   const project = generateProject('patients', ['trigger-job'], {
     openfnUuid: true,
   });
   const state = project.serialize('state', { format: 'json' });
   lightning.addProject(state);
+  return project;
+};
 
-  const { stdout } = await run(
+test('fetch a project', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+
+  await run(
     `openfn project fetch \
        --workspace ${workspace} \
        --endpoint ${endpoint} \
@@ -50,6 +55,27 @@ test('fetch a project', async (t) => {
 
   // now check that the filesystem is roughly right
   const pyaml = read('.projects/main@localhost.yaml');
+
+  t.regex(pyaml, /id: patients/);
+  t.regex(pyaml, new RegExp(`uuid: ${project.openfn.uuid}`));
+});
+
+test('fetch a project with an alias', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+
+  await run(
+    `openfn project fetch \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --log debug \
+       --alias staging\
+       ${project.openfn.uuid}`
+  );
+
+  // now check that the filesystem is roughly right
+  const pyaml = read('.projects/staging@localhost.yaml');
 
   t.regex(pyaml, /id: patients/);
   t.regex(pyaml, new RegExp(`uuid: ${project.openfn.uuid}`));
