@@ -79,7 +79,6 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   const { project: projectIdentifier, outputPath } = options;
   let { alias = 'main' } = options;
   const config = loadAppAuthConfig(options, logger);
-
   let localProject;
 
   // first we see if this project exists locally

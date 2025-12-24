@@ -58,7 +58,6 @@ export class Workspace {
             path.extname(fileName) === ext &&
             path.parse(fileName).name !== 'openfn'
         );
-
       this.projects = stateFiles
         .map((file) => {
           const stateFilePath = path.join(projectsPath, file);

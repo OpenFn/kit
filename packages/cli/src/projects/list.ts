@@ -31,6 +31,9 @@ export const handler = async (options: ProjectListOptions, logger: Logger) => {
 
   if (!workspace.valid) {
     // TODO how can we be more helpful here?
+    // eg, this will happen if there's no openfn.yaml file
+    // basically we need the workspace to return a reason
+    // (again, I'm thinking of removing the validation entirely)
     throw new Error('No OpenFn projects found');
   }
 
