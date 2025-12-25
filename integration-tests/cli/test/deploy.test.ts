@@ -20,7 +20,7 @@ test.before(async () => {
 
 // This should fail against the built CLI right now
 test.serial(
-  `OPENFN_ENDPOINT=${endpoint} openfn ${DEFAULT_PROJECT_ID} --log-json`,
+  `OPENFN_ENDPOINT=${endpoint} openfn deploy ${DEFAULT_PROJECT_ID} --log-json`,
   async (t) => {
     const { stdout, stderr } = await run(t.title);
     t.falsy(stderr);
