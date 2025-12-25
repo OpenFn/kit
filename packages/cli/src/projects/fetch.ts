@@ -82,6 +82,8 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
 
   // first we see if this project exists locally
   logger.debug('Checking for local copy of project...');
+  // TODO if identifier and alias are BOTH passed, which do we use as local?
+  // there could be a conflict here and maybe we should error util sorted
   if (projectIdentifier) {
     localProject = workspace.get(projectIdentifier);
 
@@ -91,7 +93,8 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
       // actually, if its not local,it still might exist remotely
       // process.exit(1);
     } else {
-      alias = localProject.alias;
+      // Note that if the user passed an explicit alias, we should use that
+      alias = options.alias ?? localProject.alias;
       logger.debug(`Found local project`, printProjectName(localProject));
     }
   } else {

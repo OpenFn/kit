@@ -283,3 +283,5 @@ test('checkout by alias', async (t) => {
   job = read('workflows/workflow/job.js');
   t.is(job, 'fn(x)');
 });
+
+test.todo('merge by alias');
