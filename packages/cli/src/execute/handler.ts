@@ -1,9 +1,13 @@
 import type { ExecutionPlan } from '@openfn/lexicon';
+import { yamlToJson } from '@openfn/project';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import type { ExecuteOptions } from './command';
 import execute from './execute';
 import serializeOutput from './serialize-output';
 import getAutoinstallTargets from './get-autoinstall-targets';
+import applyCredentialMap from './apply-credential-map';
 
 import { install } from '../repo/handler';
 import compile from '../compile/compile';
@@ -44,6 +48,35 @@ const matchStep = (
   return '';
 };
 
+const loadAndApplyCredentialMap = async (
+  plan: ExecutionPlan,
+  options: ExecuteOptions,
+  logger: Logger
+) => {
+  let creds = {};
+  if (options.credentials) {
+    try {
+      const credsRaw = await readFile(
+        path.resolve(options.credentials),
+        'utf8'
+      );
+      if (options.credentials.endsWith('.json')) {
+        creds = JSON.parse(credsRaw);
+      } else {
+        creds = yamlToJson(credsRaw);
+      }
+    } catch (e) {
+      logger.error('Error processing credential map:');
+      logger.error(e);
+      // probably want to exist if the credential map is invalid
+      process.exitCode = 1;
+      return;
+    }
+    logger.info('Credential map loaded ');
+  }
+  return applyCredentialMap(plan, creds, logger);
+};
+
 const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
   const start = new Date().getTime();
   assertPath(options.path);
@@ -51,7 +84,7 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
   let plan = await loadPlan(options, logger);
   validatePlan(plan, logger);
-
+  await loadAndApplyCredentialMap(plan, options, logger);
   if (options.cacheSteps) {
     await clearCache(plan, options, logger);
   }

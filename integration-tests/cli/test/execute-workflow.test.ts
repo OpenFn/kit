@@ -148,6 +148,18 @@ test.serial(
 );
 
 test.serial(
+  `openfn ${jobsPath}/wf-creds.json --credentials ${jobsPath}/creds.json`,
+  async (t) => {
+    const { err, stdout, stderr } = await run(t.title);
+    console.log({ stdout, stderr });
+    t.falsy(err);
+
+    const out = getJSON();
+    t.is(out.value, 'admin:admin');
+  }
+);
+
+test.serial(
   `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 2 } }"`,
   async (t) => {
     const { err } = await run(t.title);
