@@ -198,3 +198,51 @@ test('pull an update to project', async (t) => {
   const job_updated = read('workflows/workflow/job.js');
   t.is(job_updated, 'fn()');
 });
+
+test('checkout by alias', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const main = gen();
+  const staging = gen('patients-staging', ['trigger-job(body="fn(x)")']);
+
+  await run(
+    `openfn project fetch \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --alias main\
+       ${main.openfn.uuid}`
+  );
+  await run(
+    `openfn project fetch \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --alias staging\
+       ${staging.openfn.uuid}`
+  );
+
+  // Ensure the repo is set up correctly
+  const main_yaml = read('.projects/main@localhost.yaml');
+  t.regex(main_yaml, /fn\(\)/);
+  const staging_yaml = read('.projects/staging@localhost.yaml');
+  t.regex(staging_yaml, /fn\(x\)/);
+
+  await run(
+    `openfn project checkout main \
+       --workspace ${workspace}`
+  );
+
+  // only do a rough check of the file system
+  // local tests can be more thorough - at this level
+  // I just want to see that the command has basically worked
+  let job = read('workflows/workflow/job.js');
+  t.is(job, 'fn()');
+
+  await run(
+    `openfn project checkout staging \
+       --workspace ${workspace}`
+  );
+
+  job = read('workflows/workflow/job.js');
+  t.is(job, 'fn(x)');
+});
