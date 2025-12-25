@@ -125,7 +125,13 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       (e) => e.source_job_id === step.id || e.source_trigger_id === step.id
     );
 
-    const { body: expression, name, adaptor, ...remoteProps } = step;
+    const {
+      body: expression,
+      name,
+      adaptor,
+      project_credential_id,
+      ...remoteProps
+    } = step;
 
     const s: any /*l.Job*/ = {
       id: slugify(name),
@@ -134,6 +140,9 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       adaptor, // TODO is this wrong?
       openfn: renameKeys(remoteProps, { id: 'uuid' }),
     };
+    if (project_credential_id) {
+      s.configuration = project_credential_id;
+    }
 
     if (outboundEdges.length) {
       s.next = outboundEdges.reduce((next, edge) => {
