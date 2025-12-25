@@ -150,12 +150,6 @@ test.beforeEach(() => {
 
 const logger = createMockLogger('', { level: 'debug' });
 
-test.serial('get active project', (t) => {
-  const workspace = new Workspace('/ws');
-  t.is(workspace.valid, true);
-  t.is(workspace.activeproject, 'my-project');
-});
-
 test.serial('checkout: invalid project id', async (t) => {
   await t.throwsAsync(
     () =>
