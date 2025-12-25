@@ -51,6 +51,7 @@ export const workflowMappings: CLIOption = {
 export const outputPath: CLIOption = {
   name: 'output-path',
   yargs: {
+    alias: ['output'],
     type: 'string',
     description: 'Path to output the fetched project to',
   },

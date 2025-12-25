@@ -17,7 +17,7 @@ export type PullOptions = Pick<
   | 'statePath'
   | 'projectPath'
   | 'configPath'
-  | 'projectId'
+  | 'project'
   | 'confirm'
   | 'snapshots'
 >;
@@ -44,11 +44,11 @@ const options = [
 ];
 
 export const command: yargs.CommandModule<PullOptions> = {
-  command: 'pull <projectId>',
+  command: 'pull [project]',
   describe: `Pull a project from a Lightning Instance and expand to the file system (ie fetch + checkout)`,
   builder: (yargs: yargs.Argv<PullOptions>) =>
     build(options, yargs)
-      .positional('projectId', {
+      .positional('project', {
         describe: 'The UUID, local id or local alias of the project to pull',
       })
       .example(
@@ -65,6 +65,7 @@ export async function handler(options: PullOptions, logger: Logger) {
   await checkout(
     {
       ...options,
+      // TODO needs renaming
       projectId: project.id,
     },
     logger

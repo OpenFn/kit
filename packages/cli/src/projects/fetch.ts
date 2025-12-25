@@ -223,7 +223,9 @@ To ignore this error and override the local file, pass --force (-f)
   // finally, write it!
   await serialize(project, finalOutputPath!, format as any);
 
-  logger.success(`Fetched project file to ${finalOutputPath}`);
+  logger.success(
+    `Fetched project file to ${finalOutputPath}.${format ?? 'yaml'}`
+  );
 
   return project;
 };
