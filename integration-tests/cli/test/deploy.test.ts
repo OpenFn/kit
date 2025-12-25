@@ -1,6 +1,8 @@
 import test from 'ava';
 import run from '../src/run';
-import createLightningServer from '@openfn/lightning-mock';
+import createLightningServer, {
+  DEFAULT_PROJECT_ID,
+} from '@openfn/lightning-mock';
 import { extractLogs, assertLog } from '../src/util';
 import { rimraf } from 'rimraf';
 
@@ -18,7 +20,7 @@ test.before(async () => {
 
 // This should fail against the built CLI right now
 test.serial(
-  `OPENFN_ENDPOINT=${endpoint} openfn pull 123 --log-json`,
+  `OPENFN_ENDPOINT=${endpoint} openfn ${DEFAULT_PROJECT_ID} --log-json`,
   async (t) => {
     const { stdout, stderr } = await run(t.title);
     t.falsy(stderr);
