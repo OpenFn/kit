@@ -13,22 +13,26 @@ import type { Opts } from './options';
 
 export type CheckoutOptions = Pick<
   Opts,
-  'command' | 'projectId' | 'workspace' | 'log'
+  'command' | 'project' | 'workspace' | 'log'
 >;
 
-const options = [o.projectId, o.log, po.workspace];
+const options = [o.log, po.workspace];
 
 const command: yargs.CommandModule = {
-  command: 'checkout <project-id>',
+  command: 'checkout <project>',
   describe: 'Switch to a different OpenFn project in the same workspace',
   handler: ensure('project-checkout', options),
-  builder: (yargs) => build(options, yargs),
+  builder: (yargs) =>
+    build(options, yargs).positional('project', {
+      describe: 'The id, alias or UUID of the project to chcekout',
+      demandOption: true,
+    }),
 };
 
 export default command;
 
 export const handler = async (options: CheckoutOptions, logger: Logger) => {
-  const projectId = options.projectId!;
+  const projectIdentifier = options.project!;
   const workspacePath = options.workspace ?? process.cwd();
   const workspace = new Workspace(workspacePath, logger);
 
@@ -38,19 +42,21 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
 
   // get the project
   let switchProject;
-  if (/\.(yaml|json)$/.test(projectId)) {
+  if (/\.(yaml|json)$/.test(projectIdentifier)) {
     // TODO: should we allow checkout into an arbitrary folder?
-    const filePath = projectId.startsWith('/')
-      ? projectId
-      : path.join(workspacePath, projectId);
+    const filePath = projectIdentifier.startsWith('/')
+      ? projectIdentifier
+      : path.join(workspacePath, projectIdentifier);
     logger.debug('Loading project from path ', filePath);
     switchProject = await Project.from('path', filePath, config);
   } else {
-    switchProject = workspace.get(projectId);
+    switchProject = workspace.get(projectIdentifier);
   }
 
   if (!switchProject) {
-    throw new Error(`Project with id ${projectId} not found in the workspace`);
+    throw new Error(
+      `Project with id ${projectIdentifier} not found in the workspace`
+    );
   }
 
   // delete workflow dir before expanding project

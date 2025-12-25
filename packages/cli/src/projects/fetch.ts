@@ -57,7 +57,6 @@ const command: yargs.CommandModule<FetchOptions> = {
       .positional('project', {
         describe:
           'The id, alias or UUID of the project to fetch. If not set, will default to the active project',
-        demandOption: true,
       })
       .example(
         'fetch 57862287-23e6-4650-8d79-e1dd88b24b1c',

@@ -101,6 +101,43 @@ test('fetch a new project to a path', async (t) => {
 
 test.todo('fetch throws if writing a new project UUID to an existing file');
 
+test('fetch an existing project with an alias', async (t) => {
+  const { workspace, read } = initWorkspace(t);
+  const project = gen();
+
+  // fetch the project locally
+  await run(
+    `openfn project fetch \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       --alias staging \
+       ${project.openfn.uuid}`
+  );
+
+  const before = read('.projects/staging@localhost.yaml');
+  t.regex(before, /fn\(\)/);
+
+  // now update the remote project
+  project.workflows[0].steps[0].expression = 'fn(x)';
+  const state = project.serialize('state', { format: 'json' });
+  lightning.addProject(state);
+
+  // Now run another fetch but only use the alias - no uuid
+  await run(
+    `openfn project fetch \
+       --workspace ${workspace} \
+       --endpoint ${endpoint} \
+       --api-key abc \
+       staging`
+  );
+
+  // now check that the filesystem is roughly right
+  const after = read('.projects/staging@localhost.yaml');
+
+  t.regex(after, /fn\(x\)/);
+});
+
 test('pull a new project', async (t) => {
   const { workspace, read } = initWorkspace(t);
   const project = gen();

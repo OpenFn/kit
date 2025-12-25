@@ -153,7 +153,7 @@ const logger = createMockLogger('', { level: 'debug' });
 test.serial('get active project', (t) => {
   const workspace = new Workspace('/ws');
   t.is(workspace.valid, true);
-  t.is(workspace.activeProjectId, 'my-project');
+  t.is(workspace.activeproject, 'my-project');
 });
 
 test.serial('checkout: invalid project id', async (t) => {
@@ -162,7 +162,7 @@ test.serial('checkout: invalid project id', async (t) => {
       checkoutHandler(
         {
           command: 'project-checkout',
-          projectId: 'not-known',
+          project: 'not-known',
           workspace: '/ws',
         },
         logger
@@ -179,7 +179,7 @@ test.serial('checkout: to a different valid project', async (t) => {
   t.is(bcheckout.activeProject!.id, 'my-project');
 
   await checkoutHandler(
-    { command: 'project-checkout', projectId: 'my-project', workspace: '/ws' },
+    { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -204,7 +204,7 @@ test.serial('checkout: same id as active', async (t) => {
   await checkoutHandler(
     {
       command: 'project-checkout',
-      projectId: 'my-project',
+      project: 'my-project',
       workspace: '/ws',
     },
     logger
@@ -230,7 +230,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
 
   // 1. switch from my-project to my-staging
   await checkoutHandler(
-    { command: 'project-checkout', projectId: 'my-staging', workspace: '/ws' },
+    { command: 'project-checkout', project: 'my-staging', workspace: '/ws' },
     logger
   );
   const { message } = logger._parse(logger._last);
@@ -250,7 +250,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
   await checkoutHandler(
     {
       command: 'project-checkout',
-      projectId: 'my-project',
+      project: 'my-project',
       workspace: '/ws',
     },
     logger
@@ -276,7 +276,7 @@ test.serial('checkout: switch with id', async (t) => {
   await checkoutHandler(
     {
       command: 'project-checkout',
-      projectId: 'my-staging',
+      project: 'my-staging',
       workspace: '/ws',
     },
     logger
@@ -295,7 +295,7 @@ test.serial('checkout: switch with alias', async (t) => {
   await checkoutHandler(
     {
       command: 'project-checkout',
-      projectId: 'staging', // this is actually an alias
+      project: 'staging', // this is actually an alias
       workspace: '/ws',
     },
     logger
@@ -317,7 +317,7 @@ test.serial.skip('checkout: switch with alias and domain', async (t) => {
   await checkoutHandler(
     {
       command: 'project-checkout',
-      projectId: 'staging@app.openfn.org', // this is actually an alias
+      project: 'staging@app.openfn.org', // this is actually an alias
       workspace: '/ws',
     },
     logger
@@ -422,7 +422,7 @@ test.serial('respect openfn.yaml settings', async (t) => {
   await checkoutHandler(
     {
       command: 'project-checkout',
-      projectId: 'staging',
+      project: 'staging',
       workspace: '/ws1',
     },
     logger

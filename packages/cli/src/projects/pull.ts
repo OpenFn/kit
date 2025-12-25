@@ -59,17 +59,10 @@ export const command: yargs.CommandModule<PullOptions> = {
 };
 
 export async function handler(options: PullOptions, logger: Logger) {
-  const project = await fetch(options, logger);
+  await fetch(options, logger);
   logger.success(`Downloaded latest project version`);
 
-  await checkout(
-    {
-      ...options,
-      // TODO needs renaming
-      projectId: project.id,
-    },
-    logger
-  );
+  await checkout(options, logger);
   logger.success(`Checked out project locally`);
 }
 
