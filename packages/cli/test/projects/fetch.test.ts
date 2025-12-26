@@ -232,7 +232,7 @@ test.serial('save to a custom location', async (t) => {
   t.regex(message, /Fetched project file to/);
 });
 
-test.serial('warn if out and alias are both set', async (t) => {
+test.serial('warn if --out and --alias are both set', async (t) => {
   await fetchHandler(
     {
       project: PROJECT_ID,
