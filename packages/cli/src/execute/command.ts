@@ -49,7 +49,7 @@ const options = [
   o.adaptors,
   override(o.apikey, {
     description: 'API token for collections',
-    alias: ['collections-api-key', 'collection-token'],
+    alias: ['collections-api-key', 'collections-token', 'pat'],
   }),
   o.autoinstall,
   o.cacheSteps,
