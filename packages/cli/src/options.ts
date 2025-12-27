@@ -8,7 +8,6 @@ import {
   ensureLogOpts,
   LogLevel,
 } from './util';
-import getCLIOptionObject from './util/get-cli-option-object';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -34,7 +33,6 @@ export type Opts = {
   credentials?: string;
   describe?: string;
   end?: string; // workflow end node
-  env?: string;
   expandAdaptors?: boolean; // for unit tests really
   expressionPath?: string;
   endpoint?: string;
@@ -67,10 +65,6 @@ export type Opts = {
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
   workflow: string;
-  // merge options
-  removeUnmapped?: boolean | undefined;
-  workflowMappings?: Record<string, string> | undefined;
-  workspace?: string;
 
   // deprecated
   workflowPath?: string;
@@ -281,13 +275,6 @@ export const endpoint: CLIOption = {
   yargs: {
     alias: ['lightning'],
     description: '[beta only] URL to Lightning endpoint',
-  },
-};
-
-export const env: CLIOption = {
-  name: 'env',
-  yargs: {
-    description: '[beta only] Environment name (eg staging, prod, branch)',
   },
 };
 
@@ -591,41 +578,5 @@ export const workflow: CLIOption = {
   yargs: {
     string: true,
     description: 'Name of the workflow to execute',
-  },
-};
-
-// merge options
-export const removeUnmapped: CLIOption = {
-  name: 'remove-unmapped',
-  yargs: {
-    boolean: true,
-    description:
-      "Removes all workflows that didn't get mapped from the final project after merge",
-  },
-};
-
-export const workflowMappings: CLIOption = {
-  name: 'workflow-mappings',
-  yargs: {
-    type: 'string',
-    coerce: getCLIOptionObject,
-    description:
-      'A manual object mapping of which workflows in source and target should be matched for a merge.',
-  },
-};
-
-export const workspace: CLIOption = {
-  name: 'workspace',
-  yargs: {
-    alias: ['w'],
-    description: 'Path to the project workspace (ie, path to openfn.yaml)',
-  },
-  ensure: (opts) => {
-    const ws = opts.workspace ?? process.env.OPENFN_WORKSPACE;
-    if (!ws) {
-      opts.workspace = process.cwd();
-    } else {
-      opts.workspace = nodePath.resolve(ws);
-    }
   },
 };

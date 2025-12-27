@@ -1,5 +1,7 @@
 import { createMockLogger } from '@openfn/logger';
-import createLightningServer from '@openfn/lightning-mock';
+import createLightningServer, {
+  DEFAULT_PROJECT_ID,
+} from '@openfn/lightning-mock';
 import test from 'ava';
 import mock from 'mock-fs';
 import { execSync } from 'node:child_process';
@@ -16,7 +18,7 @@ import type { Opts } from '../src/options';
 // because of all the FS mocking
 // To make them more robust in CI, all the tests in this file need
 // an increased timeout
-const TIMEOUT = 1000 * 20;
+const TIMEOUT = 1000 * 30;
 
 const logger = createMockLogger('', { level: 'debug' });
 
@@ -845,7 +847,7 @@ test.serial('pull: should pull a simple project', async (t) => {
   });
   process.env.OPENFN_ENDPOINT = endpoint;
 
-  const opts = cmd.parse('pull 123') as Opts;
+  const opts = cmd.parse(`pull ${DEFAULT_PROJECT_ID}`) as Opts;
   await commandParser(opts, logger);
 
   const last = logger._parse(logger._history.at(-1));

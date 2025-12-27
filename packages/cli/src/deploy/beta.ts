@@ -9,14 +9,7 @@ import { loadAppAuthConfig } from '../projects/util';
 export type DeployOptionsBeta = Required<
   Pick<
     Opts,
-    | 'beta'
-    | 'command'
-    | 'log'
-    | 'logJson'
-    | 'apiKey'
-    | 'endpoint'
-    | 'path'
-    | 'workspace'
+    'beta' | 'command' | 'log' | 'logJson' | 'apiKey' | 'endpoint' | 'path'
   >
 >;
 
@@ -25,7 +18,10 @@ export async function handler(options: DeployOptionsBeta, logger: Logger) {
 
   // TMP use options.path to set the directory for now
   // We'll need to manage this a bit better
-  const project = await Project.from('fs', { root: options.workspace || '.' });
+  // TODO this is fixed on another branch
+  const project = await Project.from('fs', {
+    root: (options as any).workspace || '.',
+  });
   // TODO: work out if there's any diff
 
   // generate state for the provisioner

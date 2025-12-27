@@ -42,7 +42,9 @@ export const myProject_v1: Provisioner.Project = {
       ],
       lock_version: 1,
       deleted_at: null,
-      version_history: ['a'], // TODO not implemented yet? needed for tests
+      version_history: [
+        'cli:02582f3bb088', // alterstate
+      ],
     },
   ],
   updated_at: '2025-04-23T11:15:59Z',
@@ -57,14 +59,14 @@ export const myProject_v1: Provisioner.Project = {
 
 export const myProject_yaml = `id: my-project
 name: My Project
-version: 2
+cli:
+  version: 2
 description: my lovely project
 collections: []
 credentials: []
 openfn:
   uuid: e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00
   endpoint: https://app.openfn.org
-  env: project
   inserted_at: 2025-04-23T11:15:59Z
   updated_at: 2025-04-23T11:15:59Z
 options:
@@ -92,7 +94,7 @@ workflows:
             openfn:
               uuid: a9a3adef-b394-4405-814d-3ac4323f4b4b
     history:
-      - a
+      - cli:02582f3bb088
     openfn:
       uuid: 72ca3eb0-042c-47a0-a2a1-a545ed4a8406
       inserted_at: 2025-04-23T11:19:32Z

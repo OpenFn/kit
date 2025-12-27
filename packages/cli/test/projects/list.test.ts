@@ -9,6 +9,7 @@ mock({
   '/ws/openfn.yaml': jsonToYaml({
     project: {
       id: 'my-project',
+      uuid: '<uuid:main>',
     },
     workspace: {
       dirs: {
@@ -157,12 +158,12 @@ test('valid workspace', async (t) => {
   t.is(
     `Available openfn projects
 
-my-project (active)
+main | my-project (active)
   <uuid:main>
   workflows:
     - simple-workflow
 
-my-project (active)
+main | my-project 
   <uuid:staging>
   workflows:
     - simple-workflow

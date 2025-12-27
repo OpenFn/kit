@@ -8,7 +8,11 @@ import createLogger, {
   Logger,
 } from '@openfn/logger';
 import type { StepId } from '@openfn/lexicon';
-import type { LightningPlan, RunLogLine } from '@openfn/lexicon/lightning';
+import type {
+  LightningPlan,
+  Provisioner,
+  RunLogLine,
+} from '@openfn/lexicon/lightning';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
@@ -47,6 +51,8 @@ export type ServerState = {
   events: EventEmitter;
 
   options: LightningOptions;
+
+  projects: Record<string, Provisioner.Project_v1>;
 };
 
 export type LightningOptions = {
@@ -75,6 +81,7 @@ const createLightningServer = (options: LightningOptions = {}) => {
     runs: {},
     dataclips: {},
     pending: {},
+    projects: {},
 
     queue: [] as RunId[],
     results: {},

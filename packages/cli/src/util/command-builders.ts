@@ -13,10 +13,14 @@ const expandYargs = (y: {} | (() => any)) => {
 
 // build helper to chain options
 export function build(opts: CLIOption[], yargs: yargs.Argv<any>) {
-  return opts.reduce(
-    (_y, o) => yargs.option(o.name, expandYargs(o.yargs)),
-    yargs
-  );
+  return opts.reduce((_y, o) => {
+    if (!o?.name) {
+      console.error(`ERROR: INVALID COMMAND OPTION PASSED`, o);
+      console.error('Check the options passed to the command builder');
+      throw new Error('Invalid command');
+    }
+    return yargs.option(o.name, expandYargs(o.yargs));
+  }, yargs);
 }
 
 // Mutate the incoming argv with defaults etc

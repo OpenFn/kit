@@ -12,10 +12,14 @@ import {
 } from './util/config';
 import fromProject from './parse/from-project';
 import type { Logger } from '@openfn/logger';
+import matchProject from './util/match-project';
+import { extractAliasFromFilename } from './parse/from-path';
 
 export class Workspace {
   // @ts-ignore config not definitely assigned - it sure is
   config: l.WorkspaceConfig;
+
+  // TODO activeProject should be the actual project
   activeProject?: l.ProjectMeta;
 
   private projects: Project[] = [];
@@ -23,7 +27,9 @@ export class Workspace {
   private isValid: boolean = false;
   private logger: Logger;
 
-  constructor(workspacePath: string, logger?: Logger) {
+  // Set validate to false to suppress warnings if a Workspace doesn't exist
+  // This is appropriate if, say, fetching a project for the first time
+  constructor(workspacePath: string, logger?: Logger, validate = true) {
     this.logger = logger ?? createLogger('Workspace', { level: 'info' });
 
     let context = { workspace: undefined, project: undefined };
@@ -32,9 +38,11 @@ export class Workspace {
       context = loadWorkspaceFile(content, type as any);
       this.isValid = true;
     } catch (e) {
-      this.logger.warn(
-        `Could not find openfn.yaml at ${workspacePath}. Using default values.`
-      );
+      if (validate) {
+        this.logger.warn(
+          `Could not find openfn.yaml at ${workspacePath}. Using default values.`
+        );
+      }
     }
     this.config = buildConfig(context.workspace);
     this.activeProject = context.project;
@@ -50,14 +58,15 @@ export class Workspace {
             path.extname(fileName) === ext &&
             path.parse(fileName).name !== 'openfn'
         );
-
       this.projects = stateFiles
         .map((file) => {
           const stateFilePath = path.join(projectsPath, file);
           try {
             const data = fs.readFileSync(stateFilePath, 'utf-8');
+            const alias = extractAliasFromFilename(file);
             const project = fromProject(data, {
               ...this.config,
+              alias,
             });
             this.projectPaths.set(project.id, stateFilePath);
             return project;
@@ -68,9 +77,11 @@ export class Workspace {
         })
         .filter((s) => s) as Project[];
     } else {
-      this.logger.warn(
-        `No projects found: directory at ${projectsPath} does not exist`
-      );
+      if (validate) {
+        this.logger.warn(
+          `No projects found: directory at ${projectsPath} does not exist`
+        );
+      }
     }
   }
 
@@ -85,12 +96,9 @@ export class Workspace {
     return this.projects;
   }
 
-  /** Get a project by its id or UUID */
-  get(id: string) {
-    return (
-      this.projects.find((p) => p.id === id) ??
-      this.projects.find((p) => p.openfn?.uuid === id)
-    );
+  /** Get a project by its alias, id or UUID. Can also include a UUID */
+  get(nameyThing: string) {
+    return matchProject(nameyThing, this.projects);
   }
 
   getProjectPath(id: string) {
@@ -99,8 +107,8 @@ export class Workspace {
 
   getActiveProject() {
     return (
-      this.projects.find((p) => p.id === this.activeProject?.id) ??
-      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid)
+      this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
+      this.projects.find((p) => p.id === this.activeProject?.id)
     );
   }
 

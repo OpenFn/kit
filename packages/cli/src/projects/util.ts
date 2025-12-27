@@ -73,31 +73,29 @@ export const serialize = async (
 };
 
 export const getLightningUrl = (
-  config: AuthOptions,
+  endpoint: string,
   path: string = '',
   snapshots?: string[]
 ) => {
   const params = new URLSearchParams();
   snapshots?.forEach((snapshot) => params.append('snapshots[]', snapshot));
-  return new URL(
-    `/api/provision/${path}?${params.toString()}`,
-    config.endpoint
-  );
+  return new URL(`/api/provision/${path}?${params.toString()}`, endpoint);
 };
 
-export async function getProject(
-  logger: Logger,
-  config: AuthOptions,
+export async function fetchProject(
+  endpoint: string,
+  apiKey: string,
   projectId: string,
+  logger?: Logger,
   snapshots?: string[]
 ): Promise<{ data: Provisioner.Project | null }> {
-  const url = getLightningUrl(config, projectId, snapshots);
-  logger.info(`Checking ${url} for existing project`);
+  const url = getLightningUrl(endpoint, projectId, snapshots);
+  logger?.info(`Checking ${url} for existing project`);
 
   try {
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${config.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         Accept: 'application/json',
       },
     });
@@ -105,7 +103,7 @@ export async function getProject(
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
         throw new CLIError(
-          `Failed to authorize request with endpoint ${config.endpoint}, got ${response.status} ${response.statusText}`
+          `Failed to authorize request with endpoint ${endpoint}, got ${response.status} ${response.statusText}`
         );
       }
       if (response.status === 404) {
@@ -116,11 +114,10 @@ export async function getProject(
         `Failed to fetch project ${projectId}: ${response.statusText}`
       );
     }
-
-    logger.info('Project found');
+    logger?.info(`Project retrieved from ${endpoint}`);
     return response.json();
   } catch (error: any) {
-    handleCommonErrors(config, error);
+    handleCommonErrors({ endpoint, apiKey }, error);
 
     throw error;
   }

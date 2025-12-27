@@ -7,7 +7,6 @@ import fromPath, { FromPathConfig } from './parse/from-path';
 // TODO this naming clearly isn't right
 import { parseProject as fromFs, FromFsConfig } from './parse/from-fs';
 import fromProject, { SerializedProject } from './parse/from-project';
-import getIdentifier from './util/get-identifier';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
@@ -26,6 +25,11 @@ type UUIDMap = {
       [nodeId: string]: UUID;
     };
   };
+};
+
+type CLIMeta = {
+  version?: number;
+  alias?: string;
 };
 
 export class Project {
@@ -50,10 +54,10 @@ export class Project {
   // these are all (?) unused clientside
   options: any;
 
-  // local metadata used by the CLI
-  // This stuff is not synced back to lightning
-  // TODO maybe rename cli or local
-  meta: any;
+  /**
+   * Local metadata used by the CLI but not synced to Lightning
+   */
+  cli: CLIMeta;
 
   // this contains meta about the connected openfn project
   openfn?: l.ProjectMeta;
@@ -126,14 +130,25 @@ export class Project {
   // stuff that's external to the actual project and managed by the repo
 
   // TODO maybe the constructor is (data, Workspace)
-  constructor(data: Partial<l.Project>, config?: Partial<l.WorkspaceConfig>) {
-    this.config = buildConfig(config);
-
+  constructor(
+    data: Partial<l.Project> = {},
+    meta?: Partial<l.WorkspaceConfig> & CLIMeta
+  ) {
     this.id =
       data.id ??
       (data.name
         ? slugify(data.name)
         : humanId({ separator: '-', capitalize: false }));
+
+    const { version, alias = 'main', ...otherConfig } = meta ?? {};
+    this.cli = Object.assign(
+      {
+        alias,
+      },
+      data.cli
+    );
+
+    this.config = buildConfig(otherConfig);
 
     this.name = data.name;
 
@@ -143,7 +158,23 @@ export class Project {
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
-    // this.meta = data.meta ?? {};
+  }
+
+  /** Local alias for the project. Comes from the file name. Not shared with Lightning. */
+  get alias() {
+    return this.cli.alias ?? 'main';
+  }
+
+  get uuid() {
+    return this.openfn?.uuid ? `${this.openfn.uuid}` : undefined;
+  }
+
+  // Helper to extract hostname from endpoint
+  get host() {
+    const { endpoint } = this.openfn ?? {};
+    if (endpoint) {
+      return new URL(endpoint).hostname;
+    }
   }
 
   setConfig(config: Partial<WorkspaceConfig>) {
@@ -170,11 +201,13 @@ export class Project {
     );
   }
 
-  // it's the name of the project.yaml file
-  // qualified name? Remote name? App name?
-  // every project in a repo need a unique identifier
-  getIdentifier() {
-    return getIdentifier(this.openfn);
+  /** Returns a fully qualified name for the project, id, alias@domain */
+  get qname() {
+    const { alias, host } = this;
+    if (host) {
+      return `${alias}@${host}`;
+    }
+    return alias;
   }
 
   // Compare this project with another and return a diff

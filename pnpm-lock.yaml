@@ -87,6 +87,9 @@ importers:
       '@openfn/lightning-mock':
         specifier: workspace:^
         version: link:../../packages/lightning-mock
+      '@openfn/project':
+        specifier: workspace:*
+        version: link:../../packages/project
       '@types/node':
         specifier: ^18.19.127
         version: 18.19.127

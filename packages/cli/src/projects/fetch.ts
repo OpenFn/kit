@@ -2,12 +2,14 @@ import yargs from 'yargs';
 import path from 'node:path';
 import Project, { Workspace } from '@openfn/project';
 
+import resolvePath from '../util/resolve-path';
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
-import { serialize, getProject, loadAppAuthConfig } from './util';
+import type { Opts } from './options';
+import { serialize, fetchProject, loadAppAuthConfig } from './util';
 
 // TODO need to implement these
 // type Config = {
@@ -17,6 +19,7 @@ import { serialize, getProject, loadAppAuthConfig } from './util';
 
 export type FetchOptions = Pick<
   Opts,
+  | 'alias'
   | 'apiKey'
   | 'command'
   | 'endpoint'
@@ -24,38 +27,36 @@ export type FetchOptions = Pick<
   | 'force'
   | 'log'
   | 'logJson'
+  | 'snapshots'
   | 'outputPath'
-  | 'projectId'
+  | 'project'
   | 'workspace'
 >;
 
 const options = [
+  po.alias,
   o.apikey,
-  o.configPath,
   o.endpoint,
-  o.env,
   o.log,
-  override(o.outputPath, {
-    description: 'Path to output the fetched project to',
-  }),
   o.logJson,
-  o.workspace,
-  o.snapshots,
-  o.statePath,
+  o.snapshots, // TODO need to add support for this
   override(o.force, {
     description: 'Overwrite local file contents with the fetched contents',
   }),
+
+  po.outputPath,
+  po.env,
+  po.workspace,
 ];
 
 const command: yargs.CommandModule<FetchOptions> = {
-  command: 'fetch [projectId]',
-  describe: `Fetch a project's state and spec from a Lightning Instance to the local state file without expanding to the filesystem.`,
+  command: 'fetch [project]',
+  describe: `Download the latest version of a project from a lightning server (does not expand the project, use checkout)`,
   builder: (yargs: yargs.Argv<FetchOptions>) =>
     build(options, yargs)
-      .positional('projectId', {
+      .positional('project', {
         describe:
-          'The id of the project that should be fetched, should be a UUID',
-        demandOption: true,
+          'The id, alias or UUID of the project to fetch. If not set, will default to the active project',
       })
       .example(
         'fetch 57862287-23e6-4650-8d79-e1dd88b24b1c',
@@ -66,32 +67,33 @@ const command: yargs.CommandModule<FetchOptions> = {
 
 export default command;
 
+const printProjectName = (project: Project) =>
+  `${project.qname} (${project.id})`;
+
 export const handler = async (options: FetchOptions, logger: Logger) => {
-  const workspacePath = path.resolve(options.workspace ?? process.cwd());
-  const workspace = new Workspace(workspacePath);
-  const { projectId, outputPath } = options;
+  const workspacePath = options.workspace ?? process.cwd();
+  logger.debug('Using workspace at', workspacePath);
 
-  const config = loadAppAuthConfig(options, logger);
+  const workspace = new Workspace(workspacePath, logger, false);
+  const { outputPath } = options;
 
-  const { data } = await getProject(logger, config, projectId!);
-
-  const project = await Project.from(
-    'state',
-    data!,
-    {
-      endpoint: config.endpoint,
-      env: options.env || 'project',
-    },
-    workspace.getConfig()
+  const localTargetProject = await resolveOutputProject(
+    workspace,
+    options,
+    logger
   );
 
-  // Work out where and how to serialize the project
-  const outputRoot = path.resolve(outputPath || workspacePath);
-  const projectFileName = project.getIdentifier();
-  const projectsDir = project.config.dirs.projects ?? '.projects';
+  const remoteProject = await fetchRemoteProject(workspace, options, logger);
 
+  ensureTargetCompatible(options, remoteProject, localTargetProject);
+
+  // TODO should we use the local target project for output?
+
+  // Work out where and how to serialize the project
+  const outputRoot = resolvePath(outputPath || workspacePath);
+  const projectsDir = remoteProject?.config.dirs.projects ?? '.projects';
   const finalOutputPath =
-    outputPath ?? `${outputRoot}/${projectsDir}/${projectFileName}`;
+    outputPath ?? `${outputRoot}/${projectsDir}/${remoteProject.qname}`;
   let format: undefined | 'json' | 'yaml' = undefined;
 
   if (outputPath) {
@@ -100,45 +102,186 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     if (ext.length) {
       format = ext;
     }
-  }
 
-  // See if a project already exists there
-  const finalOutput = await serialize(
-    project,
-    finalOutputPath!,
-    format,
-    true // dry run - this won't trigger an actual write!
-  );
-
-  // If a project already exists at the output path, make sure it's compatible
-  let current: Project | null = null;
-  try {
-    current = await Project.from('path', finalOutput);
-  } catch (e) {
-    // Do nothing - project doesn't exist
-  }
-
-  const hasAnyHistory = project.workflows.find(
-    (w) => w.workflow.history?.length
-  );
-
-  // Skip version checking if:
-  const skipVersionCheck =
-    options.force || // The user forced the checkout
-    !current || // there is no project on disk
-    !hasAnyHistory; // the remote project has no history (can happen in old apps)
-
-  if (!skipVersionCheck && !project.canMergeInto(current!)) {
-    // TODO allow rename
-    throw new Error('Error! An incompatible project exists at this location');
+    if (options.alias) {
+      logger.warn(
+        `WARNING: alias "${options.alias}" was set, but will be ignored as output path was provided`
+      );
+    }
   }
 
   // TODO report whether we've updated or not
 
   // finally, write it!
-  await serialize(project, finalOutputPath!, format as any);
+  await serialize(remoteProject, finalOutputPath!, format as any);
 
-  logger.success(`Fetched project file to ${finalOutput}`);
+  logger.success(
+    `Fetched project file to ${finalOutputPath}.${format ?? 'yaml'}`
+  );
 
-  return project;
+  return remoteProject;
 };
+
+// Work out the existing target project, if any, to fetch to
+async function resolveOutputProject(
+  workspace: Workspace,
+  options: FetchOptions,
+  logger: Logger
+) {
+  logger.debug('Checking for local copy of project...');
+
+  // If the user is writing to an explicit path,
+  // check to see i fanything exists there
+  if (options.outputPath) {
+    try {
+      const customProject = await Project.from('path', options.outputPath);
+      logger.debug(
+        `Found existing local project ${printProjectName(customProject)} at`,
+        options.outputPath
+      );
+      return customProject;
+    } catch (e) {
+      logger.debug('No project found at', options.outputPath);
+    }
+  }
+  // if an alias is specified, we use that as the output
+  if (options.alias) {
+    const aliasProject = workspace.get(options.alias);
+    if (aliasProject) {
+      logger.debug(
+        `Found local project from alias:`,
+        printProjectName(aliasProject)
+      );
+      return aliasProject;
+    } else {
+      logger.debug(`No local project found with alias ${options.alias}`);
+    }
+  }
+
+  // Otherwise we try and resolve to the projcet identifier to something in teh workspace
+  const project = workspace.get(options.project!);
+  if (project) {
+    logger.debug(
+      `Found local project from identifier:`,
+      printProjectName(project)
+    );
+    return project;
+  } else {
+    logger.debug(
+      `No local project found matching identifier: `,
+      options.project
+    );
+  }
+}
+
+// This will fetch the remote project the user wants
+
+async function fetchRemoteProject(
+  workspace: Workspace,
+  options: FetchOptions,
+  logger: Logger
+) {
+  logger.debug(`Fetching latest project data from app`);
+
+  const config = loadAppAuthConfig(options, logger);
+
+  let projectUUID: string = options.project!;
+
+  // First, we need to see if the project argument, which might be a UUID, id or alias,
+  // resolves to anything
+  const localProject = workspace.get(options.project!);
+  if (
+    localProject?.openfn?.uuid &&
+    localProject.openfn.uuid !== options.project
+  ) {
+    // ifwe resolve the UUID to something other than what the user gave us,
+    // debug-log the UUID we're actually going to use
+    projectUUID = localProject.openfn.uuid as string;
+    logger.debug(
+      `Resolved ${
+        options.project
+      } to UUID ${projectUUID} from local project ${printProjectName(
+        localProject
+      )}}`
+    );
+  }
+
+  const projectEndpoint = localProject?.openfn?.endpoint ?? config.endpoint;
+
+  const { data } = await fetchProject(
+    projectEndpoint,
+    config.apiKey,
+    projectUUID,
+    logger
+  );
+
+  const project = await Project.from(
+    'state',
+    data!,
+    {
+      endpoint: projectEndpoint,
+    },
+    {
+      ...workspace.getConfig(),
+      alias: options.alias ?? localProject?.alias ?? 'main',
+    }
+  );
+
+  logger.debug(
+    `Loaded remote project ${project.openfn!.uuid} with id ${
+      project.id
+    } and alias ${project.alias}`
+  );
+  return project;
+}
+
+function ensureTargetCompatible(
+  options: FetchOptions,
+  remoteProject: Project,
+  localProject?: Project
+) {
+  if (localProject) {
+    if (!options.force && localProject.uuid != remoteProject.uuid) {
+      // TODO make this prettier in output
+      const error: any = new Error('PROJECT_EXISTS');
+      error.message = 'A project with a different UUID exists at this location';
+      error.fix = `You have tried to fetch a remote project into a local project with a different UUID
+
+Try adding an alias to rename the new project:
+
+      openfn fetch ${options.project} --alias ${remoteProject.id}
+
+To ignore this error and override the local file, pass --force (-f)
+
+    openfn fetch ${options.project} --force
+`;
+      error.fetched_project = {
+        uuid: remoteProject.uuid,
+        id: remoteProject.id,
+        alias: remoteProject.alias,
+      };
+      error.local_project = {
+        uuid: localProject.uuid,
+        id: localProject.id,
+        alias: localProject.alias,
+      };
+      delete error.stack;
+
+      throw error;
+    }
+
+    const hasAnyHistory = remoteProject.workflows.find(
+      (w) => w.workflow.history?.length
+    );
+
+    // Skip version checking if:
+    const skipVersionCheck =
+      options.force || // The user forced the checkout
+      !hasAnyHistory; // the remote project has no history (can happen in old apps)
+
+    if (!skipVersionCheck && !remoteProject.canMergeInto(localProject!)) {
+      // TODO allow rename
+      throw new Error('Error! An incompatible project exists at this location');
+    }
+  }
+}

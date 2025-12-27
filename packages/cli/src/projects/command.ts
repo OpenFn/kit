@@ -3,6 +3,7 @@ import version from './version';
 import merge from './merge';
 import checkout from './checkout';
 import fetch from './fetch';
+import { command as pull } from './pull';
 
 import type yargs from 'yargs';
 
@@ -13,6 +14,7 @@ export const projectsCommand = {
   handler: () => {},
   builder: (yargs: yargs.Argv) =>
     yargs
+      .command(pull)
       .command(list)
       .command(version)
       .command(merge)
