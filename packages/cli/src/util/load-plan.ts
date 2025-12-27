@@ -319,7 +319,7 @@ const importExpressions = async (
 
 // Allow users to specify a single adaptor on a job,
 // but convert the internal representation into an array
-const ensureAdaptors = (plan: CLIExecutionPlan, options: any = {}) => {
+const ensureAdaptors = (plan: CLIExecutionPlan) => {
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as CLIJobNode;
     if (job.adaptor) {
@@ -328,18 +328,50 @@ const ensureAdaptors = (plan: CLIExecutionPlan, options: any = {}) => {
     }
     // Also, ensure there is an empty adaptors array, which makes everything else easier
     job.adaptors ??= [];
-
-    // load collections if appropriate
-    if (
-      job.expression?.match(/(collections\.)/) &&
-      !job.adaptors?.find((v) => v.startsWith('@openfn/language-collections'))
-    ) {
-      job.adaptors ??= [];
-      job.adaptors.push(
-        `@openfn/language-collections@${options.collectionsVersion || 'latest'}`
-      );
-    }
   });
+};
+
+type ensureCollectionsOptions = {
+  endpoint?: string;
+  version?: string;
+  apiKey?: string;
+};
+
+const ensureCollections = (
+  plan: CLIExecutionPlan,
+  {
+    endpoint = 'https://app.openfn.org',
+    version = 'latest',
+    apiKey,
+  }: ensureCollectionsOptions = {}
+) => {
+  let requiresApiKey = false;
+
+  Object.values(plan.workflow.steps)
+    .filter((step) => (step as any).expression?.match(/(collections\.)/))
+    .forEach((step) => {
+      const job = step as CLIJobNode;
+      if (
+        !job.adaptors?.find((v: string) =>
+          v.startsWith('@openfn/language-collections')
+        )
+      ) {
+        requiresApiKey = true;
+        job.adaptors ??= [];
+        job.adaptors.push(
+          `@openfn/language-collections@${version || 'latest'}`
+        );
+
+        job.configuration = Object.assign({}, job.configuration, {
+          collections_endpoint: endpoint,
+          collections_token: apiKey,
+        });
+      }
+    });
+
+  if (!apiKey && requiresApiKey) {
+    // TODO throw? Log?
+  }
 };
 
 const loadXPlan = async (
@@ -351,6 +383,8 @@ const loadXPlan = async (
     | 'expandAdaptors'
     | 'globals'
     | 'collectionsVersion'
+    | 'collectionsEndpoint'
+    | 'apiKey'
   >,
   logger: Logger,
   defaultName: string = ''
@@ -362,7 +396,12 @@ const loadXPlan = async (
   if (!plan.workflow.name && defaultName) {
     plan.workflow.name = defaultName;
   }
-  ensureAdaptors(plan, { collectionsVersion: options.collectionsVersion });
+  ensureAdaptors(plan);
+  ensureCollections(plan, {
+    version: options.collectionsVersion,
+    apiKey: options.apiKey,
+    endpoint: options.collectionsEndpoint,
+  });
 
   // import global functions
   // if globals is provided via cli argument. it takes precedence

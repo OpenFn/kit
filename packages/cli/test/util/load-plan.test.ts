@@ -4,7 +4,11 @@ import { createMockLogger } from '@openfn/logger';
 import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
-import { collectionsVersion, Opts } from '../../src/options';
+import {
+  collectionsEndpoint,
+  collectionsVersion,
+  Opts,
+} from '../../src/options';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
@@ -393,6 +397,8 @@ test.serial('xplan: append collections', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
     collectionsVersion: '1.1.1',
+    collectionsEndpoint: 'https://localhost:4000/',
+    apiKey: 'abc',
   };
 
   const plan = createPlan([
@@ -417,4 +423,9 @@ test.serial('xplan: append collections', async (t) => {
   ]);
   // @ts-ignore
   t.is(step.adaptor, undefined);
+
+  t.deepEqual(step.configuration, {
+    collections_endpoint: opts.collectionsEndpoint,
+    collections_token: opts.apiKey,
+  });
 });
