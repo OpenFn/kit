@@ -425,7 +425,7 @@ test.serial('xplan: append collections', async (t) => {
   t.is(step.adaptor, undefined);
 
   t.deepEqual(step.configuration, {
-    collections_endpoint: opts.collectionsEndpoint,
+    collections_endpoint: `${opts.collectionsEndpoint}/collections`,
     collections_token: opts.apiKey,
   });
 });

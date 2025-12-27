@@ -342,10 +342,11 @@ const ensureCollections = (
   {
     endpoint = 'https://app.openfn.org',
     version = 'latest',
-    apiKey,
-  }: ensureCollectionsOptions = {}
+    apiKey = 'null',
+  }: ensureCollectionsOptions = {},
+  logger?: Logger
 ) => {
-  let requiresApiKey = false;
+  let collectionsFound = false;
 
   Object.values(plan.workflow.steps)
     .filter((step) => (step as any).expression?.match(/(collections\.)/))
@@ -356,21 +357,30 @@ const ensureCollections = (
           v.startsWith('@openfn/language-collections')
         )
       ) {
-        requiresApiKey = true;
+        collectionsFound = true;
         job.adaptors ??= [];
         job.adaptors.push(
           `@openfn/language-collections@${version || 'latest'}`
         );
 
         job.configuration = Object.assign({}, job.configuration, {
-          collections_endpoint: endpoint,
+          collections_endpoint: `${endpoint}/collections`,
           collections_token: apiKey,
         });
       }
     });
 
-  if (!apiKey && requiresApiKey) {
-    // TODO throw? Log?
+  if (collectionsFound) {
+    if (!apiKey || apiKey === 'null') {
+      logger?.warn(
+        'WARNING: collections API was not set. Pass --api-key or OPENFN_API_KEY'
+      );
+    }
+    logger?.info(
+      `Configured collections to use endpoint ${endpoint} and API Key ending with ${apiKey?.substring(
+        apiKey.length - 10
+      )}`
+    );
   }
 };
 
@@ -397,11 +407,15 @@ const loadXPlan = async (
     plan.workflow.name = defaultName;
   }
   ensureAdaptors(plan);
-  ensureCollections(plan, {
-    version: options.collectionsVersion,
-    apiKey: options.apiKey,
-    endpoint: options.collectionsEndpoint,
-  });
+  ensureCollections(
+    plan,
+    {
+      version: options.collectionsVersion,
+      apiKey: options.apiKey,
+      endpoint: options.collectionsEndpoint,
+    },
+    logger
+  );
 
   // import global functions
   // if globals is provided via cli argument. it takes precedence

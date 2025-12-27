@@ -143,7 +143,12 @@ export const apikey: CLIOption = {
   yargs: {
     alias: ['key', 'pat', 'token'],
     description:
-      '[beta only] API Key, Personal Access Token (Pat), or other access token',
+      'API Key, Personal Access Token (PAT), or other access token from Ligtning',
+  },
+  ensure: (opts: any) => {
+    if (!opts.apikey) {
+      opts.apiKey = process.env.OPENFN_API_KEY;
+    }
   },
 };
 
@@ -253,6 +258,7 @@ export const collectionsVersion: CLIOption = {
 export const collectionsEndpoint: CLIOption = {
   name: 'collections-endpoint',
   yargs: {
+    alias: ['endpoint'],
     description:
       'The Lightning server to use for collections. Will use the project endpoint if available. Use OPENFN_COLLECTIONS_ENDPOINT env.',
   },
