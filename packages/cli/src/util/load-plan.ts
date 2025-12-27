@@ -319,7 +319,7 @@ const importExpressions = async (
 
 // Allow users to specify a single adaptor on a job,
 // but convert the internal representation into an array
-const ensureAdaptors = (plan: CLIExecutionPlan) => {
+const ensureAdaptors = (plan: CLIExecutionPlan, options: any = {}) => {
   Object.values(plan.workflow.steps).forEach((step) => {
     const job = step as CLIJobNode;
     if (job.adaptor) {
@@ -328,6 +328,17 @@ const ensureAdaptors = (plan: CLIExecutionPlan) => {
     }
     // Also, ensure there is an empty adaptors array, which makes everything else easier
     job.adaptors ??= [];
+
+    // load collections if appropriate
+    if (
+      job.expression?.match(/(collections\.)/) &&
+      !job.adaptors?.find((v) => v.startsWith('@openfn/language-collections'))
+    ) {
+      job.adaptors ??= [];
+      job.adaptors.push(
+        `@openfn/language-collections@${options.collectionsVersion || 'latest'}`
+      );
+    }
   });
 };
 
@@ -335,7 +346,11 @@ const loadXPlan = async (
   plan: CLIExecutionPlan,
   options: Pick<
     Opts,
-    'monorepoPath' | 'baseDir' | 'expandAdaptors' | 'globals'
+    | 'monorepoPath'
+    | 'baseDir'
+    | 'expandAdaptors'
+    | 'globals'
+    | 'collectionsVersion'
   >,
   logger: Logger,
   defaultName: string = ''
@@ -347,7 +362,7 @@ const loadXPlan = async (
   if (!plan.workflow.name && defaultName) {
     plan.workflow.name = defaultName;
   }
-  ensureAdaptors(plan);
+  ensureAdaptors(plan, { collectionsVersion: options.collectionsVersion });
 
   // import global functions
   // if globals is provided via cli argument. it takes precedence

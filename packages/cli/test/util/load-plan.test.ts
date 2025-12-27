@@ -4,7 +4,7 @@ import { createMockLogger } from '@openfn/logger';
 import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
-import { Opts } from '../../src/options';
+import { collectionsVersion, Opts } from '../../src/options';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
@@ -28,6 +28,7 @@ const createPlan = (steps: Partial<Job>[] = []) => ({
 test.beforeEach(() => {
   mock({
     'test/job.js': 'x',
+    'test/collections.js': 'collections.get()',
     'test/wf-old.json': JSON.stringify({
       start: 'a',
       jobs: [{ id: 'a', expression: 'x()' }],
@@ -113,6 +114,50 @@ test.serial('expression: set a start on the plan', async (t) => {
 
   t.is(plan.options.start, 'x');
 });
+
+test.serial('expression: load the collections adaptor', async (t) => {
+  const opts = {
+    expressionPath: 'test/collections.js',
+  } as Partial<Opts>;
+
+  const plan = await loadPlan(opts as Opts, logger);
+
+  t.deepEqual(plan.workflow.steps[0].adaptors, [
+    '@openfn/language-collections@latest',
+  ]);
+});
+
+test.serial(
+  'expression: load the collections adaptor with another',
+  async (t) => {
+    const opts = {
+      expressionPath: 'test/collections.js',
+      adaptors: ['@openfn/language-common@latest'],
+    } as Partial<Opts>;
+
+    const plan = await loadPlan(opts as Opts, logger);
+
+    t.deepEqual(plan.workflow.steps[0].adaptors, [
+      '@openfn/language-common@latest',
+      '@openfn/language-collections@latest',
+    ]);
+  }
+);
+test.serial(
+  'expression: load the collections adaptor with a specific version',
+  async (t) => {
+    const opts = {
+      expressionPath: 'test/collections.js',
+      collectionsVersion: '1.1.1',
+    } as Partial<Opts>;
+
+    const plan = await loadPlan(opts as Opts, logger);
+
+    t.deepEqual(plan.workflow.steps[0].adaptors, [
+      '@openfn/language-collections@1.1.1',
+    ]);
+  }
+);
 
 test.serial('xplan: load a plan from workflow path', async (t) => {
   const opts = {
@@ -339,6 +384,36 @@ test.serial('xplan: support multiple adaptors', async (t) => {
   t.deepEqual(step.adaptors, [
     '@openfn/language-common@1.0.0',
     '@openfn/language-collections@1.0.0',
+  ]);
+  // @ts-ignore
+  t.is(step.adaptor, undefined);
+});
+
+test.serial('xplan: append collections', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    collectionsVersion: '1.1.1',
+  };
+
+  const plan = createPlan([
+    {
+      id: 'a',
+      expression: 'collections.get()',
+      adaptors: ['@openfn/language-common@1.0.0'],
+    },
+  ]);
+
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const result = await loadPlan(opts, logger);
+  t.truthy(result);
+
+  const step = result.workflow.steps[0] as Job;
+  t.deepEqual(step.adaptors, [
+    '@openfn/language-common@1.0.0',
+    '@openfn/language-collections@1.1.1',
   ]);
   // @ts-ignore
   t.is(step.adaptor, undefined);

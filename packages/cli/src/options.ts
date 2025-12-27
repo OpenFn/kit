@@ -31,6 +31,8 @@ export type Opts = {
   configPath?: string;
   confirm?: boolean;
   credentials?: string;
+  collectionsEndpoint?: string;
+  collectionsVersion?: string;
   describe?: string;
   end?: string; // workflow end node
   expandAdaptors?: boolean; // for unit tests really
@@ -237,6 +239,22 @@ export const configPath: CLIOption = {
     alias: ['c', 'config-path'],
     description: 'The location of your config file',
     default: './.config.json',
+  },
+};
+
+export const collectionsVersion: CLIOption = {
+  name: 'collections-version',
+  yargs: {
+    description:
+      'The version of the collections adaptor to use. Defaults to latest. Use OPENFN_COLLECTIONS_VERSION env.',
+  },
+};
+
+export const collectionsEndpoint: CLIOption = {
+  name: 'collections-endpoint',
+  yargs: {
+    description:
+      'The Lightning server to use for collections. Will use the project endpoint if available. Use OPENFN_COLLECTIONS_ENDPOINT env.',
   },
 };
 
