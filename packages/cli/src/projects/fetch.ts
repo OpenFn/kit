@@ -87,7 +87,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
 
   ensureTargetCompatible(options, remoteProject, localTargetProject);
 
-  // TOOD should we use the local target projet for output?
+  // TODO should we use the local target project for output?
 
   // Work out where and how to serialize the project
   const outputRoot = resolvePath(outputPath || workspacePath);
@@ -190,12 +190,20 @@ async function fetchRemoteProject(
   // First, we need to see if the project argument, which might be a UUID, id or alias,
   // resolves to anything
   const localProject = workspace.get(options.project!);
-  if (localProject && localProject.openfn?.uuid) {
-    logger.debug(
-      `Using connection from local project  ${printProjectName(localProject)}}`
-    );
-    // if so, we fetch that UUID
+  if (
+    localProject?.openfn?.uuid &&
+    localProject.openfn.uuid !== options.project
+  ) {
+    // ifwe resolve the UUID to something other than what the user gave us,
+    // debug-log the UUID we're actually going to use
     projectUUID = localProject.openfn.uuid as string;
+    logger.debug(
+      `Resolved ${
+        options.project
+      } to UUID ${projectUUID} from local project ${printProjectName(
+        localProject
+      )}}`
+    );
   }
 
   const projectEndpoint = localProject?.openfn?.endpoint ?? config.endpoint;
@@ -220,7 +228,9 @@ async function fetchRemoteProject(
   );
 
   logger.debug(
-    `Loaded project with id ${project.id} and alias ${project.alias}`
+    `Loaded remote project ${project.openfn!.uuid} with id ${
+      project.id
+    } and alias ${project.alias}`
   );
   return project;
 }

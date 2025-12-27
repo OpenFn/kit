@@ -114,7 +114,7 @@ export async function fetchProject(
         `Failed to fetch project ${projectId}: ${response.statusText}`
       );
     }
-    logger?.success('Project found');
+    logger?.info(`Project retrieved from ${endpoint}`);
     return response.json();
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
