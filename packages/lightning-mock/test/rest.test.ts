@@ -51,3 +51,20 @@ test.serial('should deploy a project and fetch it back', async (t) => {
   t.is(proj.id, 'abc');
   t.is(proj.name, 'my project');
 });
+
+test.serial('should fetch items from a collection', async (t) => {
+  server.collections.createCollection('stuff');
+  server.collections.upsert('stuff', 'x', { id: 'x' });
+
+  const response = await fetch(`${endpoint}/collections/stuff/*`);
+  const { items } = await response.json();
+  t.is(items.length, 1);
+  t.deepEqual(items[0], { key: 'x', value: { id: 'x' } });
+});
+
+test.serial("should return 404 if a collection isn't found", async (t) => {
+  const response = await fetch(`${endpoint}/collections/nope/*`);
+  t.is(response.status, 404);
+});
+
+test.todo("should return 403 if a collection isn't authorized");
