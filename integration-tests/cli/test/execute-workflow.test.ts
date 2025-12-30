@@ -1,8 +1,23 @@
 import test from 'ava';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
+
+import createLightningServer from '@openfn/lightning-mock';
+
 import run from '../src/run';
 import { getJSON } from '../src/util';
+
+// set up a lightning mock
+let server: any;
+
+const port = 8968;
+
+test.before(async () => {
+  server = await createLightningServer({ port });
+  server.collections.createCollection('stuff');
+  server.collections.upsert('stuff', 'x', { id: 'x' });
+  console.log(server.collections.fetch('stuff', '*'));
+});
 
 const jobsPath = path.resolve('test/fixtures');
 
@@ -10,7 +25,7 @@ const jobsPath = path.resolve('test/fixtures');
 // Ensure the repo is clean and clear before these tests run
 test.before(async () => {
   await mkdir('tmp', { recursive: true });
-  await run('openfn repo clean -f --log none');
+  // await run('openfn repo clean -f --log none');
 });
 
 test.afterEach(async () => {
@@ -21,6 +36,21 @@ test.afterEach(async () => {
     await rm('tmp/.', { recursive: true });
   } catch (e) {}
 });
+
+// collections
+
+// TODO I don't understand why this fails??
+test.serial.only(
+  `openfn ${jobsPath}/collections.json --endpoint http://localhost:${port} --api-key xyz`,
+  async (t) => {
+    const { stdout, err } = await run(t.title);
+    t.falsy(err);
+    t.log(stdout);
+
+    const out = getJSON();
+    t.log(out);
+  }
+);
 
 // Autoinstall adaptors
 test.serial(`openfn ${jobsPath}/wf-count.json -i`, async (t) => {

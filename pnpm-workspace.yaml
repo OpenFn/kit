@@ -1,15 +1,14 @@
-minimumReleaseAge: 4320 # 3 days
 packages:
-  # exclude the integration test repos
   - '!integration-tests/worker/dummy-repo/**'
   - '!integration-tests/worker/tmp/**'
   - '!integration-tests/cli/tmp/**'
   - '!integration-tests/cli/repo/**'
-
-  # all packages in subdirs of packages/ and components/
-  - 'packages/**'
-  - 'examples/**'
-  - 'integration-tests/**'
-
-  # exclude packages that are inside test directories
+  - packages/**
+  - examples/**
+  - integration-tests/**
   - '!**/test/**'
+
+minimumReleaseAge: 4320
+
+overrides:
+  '@openfn/language-collections': link:../../../.local/share/pnpm/global/5/node_modules/@openfn/language-collections
