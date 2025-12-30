@@ -3,7 +3,7 @@
     "steps": [
       {
         "adaptor": "common",
-        "expression": "collections.get('stuff', '*')"
+        "expression": "collections.get('stuff', 'x')"
       }
     ]
   }

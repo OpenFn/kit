@@ -15,8 +15,8 @@ const port = 8968;
 test.before(async () => {
   server = await createLightningServer({ port });
   server.collections.createCollection('stuff');
-  server.collections.upsert('stuff', 'x', { id: 'x' });
-  console.log(server.collections.fetch('stuff', '*'));
+  // Important: the collection value MUST be as string
+  server.collections.upsert('stuff', 'x', JSON.stringify({ id: 'x' }));
 });
 
 const jobsPath = path.resolve('test/fixtures');
@@ -36,21 +36,6 @@ test.afterEach(async () => {
     await rm('tmp/.', { recursive: true });
   } catch (e) {}
 });
-
-// collections
-
-// TODO I don't understand why this fails??
-test.serial.only(
-  `openfn ${jobsPath}/collections.json --endpoint http://localhost:${port} --api-key xyz`,
-  async (t) => {
-    const { stdout, err } = await run(t.title);
-    t.falsy(err);
-    t.log(stdout);
-
-    const out = getJSON();
-    t.log(out);
-  }
-);
 
 // Autoinstall adaptors
 test.serial(`openfn ${jobsPath}/wf-count.json -i`, async (t) => {
@@ -313,5 +298,18 @@ test.serial(
         result: 'love-humble-suffix',
       },
     });
+  }
+);
+
+// collections
+test.serial(
+  `openfn ${jobsPath}/collections.json --endpoint http://localhost:${port} --api-key xyz`,
+  async (t) => {
+    const { err } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+
+    t.deepEqual(out.data, { id: 'x' });
   }
 );
