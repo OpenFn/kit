@@ -88,14 +88,6 @@ const key = {
   },
 };
 
-const token = {
-  name: 'pat',
-  yargs: {
-    alias: ['token'],
-    description: 'Lightning Personal Access Token (PAT)',
-  },
-};
-
 const endpoint = {
   name: 'endpoint',
   yargs: {
@@ -160,7 +152,7 @@ const updatedAfter = {
 const getOptions = [
   collectionName,
   key,
-  token,
+  o.apiKey,
   endpoint,
   pageSize,
   limit,
@@ -201,7 +193,7 @@ const dryRun = {
 const removeOptions = [
   collectionName,
   key,
-  token,
+  o.apiKey,
   endpoint,
   dryRun,
 
@@ -243,7 +235,7 @@ const setOptions = [
   override(key as any, {
     demand: false,
   }),
-  token,
+  o.apiKey,
   endpoint,
   value,
   items,

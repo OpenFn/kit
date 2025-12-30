@@ -21,7 +21,7 @@ export type PullOptions = Required<
 >;
 
 const options = [
-  o.apikey,
+  o.apiKey,
   o.beta,
   o.configPath,
   o.endpoint,

@@ -47,7 +47,7 @@ const options = [
   o.expandAdaptors, // order is important
 
   o.adaptors,
-  override(o.apikey, {
+  override(o.apiKey, {
     description: 'API token for collections',
     alias: ['collections-api-key', 'collections-token', 'pat'],
   }),
