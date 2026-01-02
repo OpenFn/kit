@@ -9,6 +9,3 @@ packages:
   - '!**/test/**'
 
 minimumReleaseAge: 1440
-
-overrides:
-  '@openfn/language-collections': link:../../../.local/share/pnpm/global/5/node_modules/@openfn/language-collections
