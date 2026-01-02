@@ -25,7 +25,7 @@ const jobsPath = path.resolve('test/fixtures');
 // Ensure the repo is clean and clear before these tests run
 test.before(async () => {
   await mkdir('tmp', { recursive: true });
-  // await run('openfn repo clean -f --log none');
+  await run('openfn repo clean -f --log none');
 });
 
 test.afterEach(async () => {
@@ -301,7 +301,7 @@ test.serial(
   }
 );
 
-// collections
+// collections basic test
 test.serial(
   `openfn ${jobsPath}/collections.json --endpoint http://localhost:${port} --api-key xyz`,
   async (t) => {
