@@ -118,8 +118,10 @@ export default (
   router.get('/collections/:name/:key', (ctx) => {
     const { name, key } = ctx.params;
     try {
-      ctx.response.body = app.collections.fetch(name, key);
+      const result = app.collections.fetch(name, key);
+      ctx.body = { key: result.items[0].key, value: result.items[0].value };
     } catch (e: any) {
+      console.log(e);
       if ((e.message = 'COLLECTION_NOT_FOUND')) {
         ctx.status = 404;
       }
