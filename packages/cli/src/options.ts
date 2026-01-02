@@ -141,7 +141,7 @@ export const autoinstall: CLIOption = {
 export const apiKey: CLIOption = {
   name: 'apikey',
   yargs: {
-    alias: ['key', 'pat', 'token'],
+    alias: ['pat', 'token', 'api-key'],
     description:
       'API Key, Personal Access Token (PAT), or other access token from Lightning',
   },
