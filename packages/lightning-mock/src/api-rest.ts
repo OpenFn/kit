@@ -97,7 +97,6 @@ export default (
 
   // we also need to provide a yaml endpoint
   router.get('/api/provision/:id', (ctx) => {
-    console.log('wibble');
     // just return a hard-coded project for now
     if (ctx.params.id === 'yaml') {
       // const { i d} = ctx.query;
@@ -117,13 +116,10 @@ export default (
   });
 
   router.get('/collections/:name/:key', (ctx) => {
-    console.log(' >>> COLLECTIONS GET');
     const { name, key } = ctx.params;
     try {
       const result = app.collections.fetch(name, key);
-      console.log({ result });
-      ctx.response.body = result;
-      ctx.headers['content-type'] = 'application/json';
+      ctx.body = { key: result.items[0].key, value: result.items[0].value };
     } catch (e: any) {
       console.log(e);
       if ((e.message = 'COLLECTION_NOT_FOUND')) {
