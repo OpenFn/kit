@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@openfn/language-collections':
-        specifier: link:../../../.local/share/pnpm/global/5/node_modules/@openfn/language-collections
-        version: link:../../../.local/share/pnpm/global/5/node_modules/@openfn/language-collections
     devDependencies:
       '@changesets/cli':
         specifier: ^2.29.7
