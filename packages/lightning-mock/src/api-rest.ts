@@ -115,16 +115,30 @@ export default (
     ctx.response.status = 200;
   });
 
-  router.get('/collections/:name/:key', (ctx) => {
-    const { name, key } = ctx.params;
+  // list with query
+  router.get('/collections/:name', (ctx) => {
+    const { query, ...opts } = ctx.query;
     try {
-      const result = app.collections.fetch(name, key);
-      ctx.body = result;
+      ctx.body = app.collections.fetch(ctx.params.name, query, opts);
     } catch (e: any) {
       if ((e.message = 'COLLECTION_NOT_FOUND')) {
         ctx.status = 404;
-      } else {
-        console.log(e);
+      }
+    }
+  });
+
+  // get by key
+  router.get('/collections/:name/:key', (ctx) => {
+    const { name, key } = ctx.params;
+    try {
+      const result = app.collections.byKey(name, key);
+      ctx.body = {
+        key,
+        value: result,
+      };
+    } catch (e: any) {
+      if ((e.message = 'COLLECTION_NOT_FOUND')) {
+        ctx.status = 404;
       }
     }
   });

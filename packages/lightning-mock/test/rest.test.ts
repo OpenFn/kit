@@ -56,7 +56,7 @@ test.serial('should fetch many items from a collection', async (t) => {
   server.collections.createCollection('stuff');
   server.collections.upsert('stuff', 'x', { id: 'x' });
 
-  const response = await fetch(`${endpoint}/collections/stuff/*`);
+  const response = await fetch(`${endpoint}/collections/stuff?query=*`);
   const { items } = await response.json();
   t.is(items.length, 1);
   t.deepEqual(items[0], { key: 'x', value: { id: 'x' } });
@@ -67,9 +67,8 @@ test.serial('should fetch a single item from a collection', async (t) => {
   server.collections.upsert('stuff', 'x', { id: 'x' });
 
   const response = await fetch(`${endpoint}/collections/stuff/x`);
-  const { items } = await response.json();
-  t.is(items.length, 1);
-  t.deepEqual(items[0], { key: 'x', value: { id: 'x' } });
+  const result = await response.json();
+  t.deepEqual(result, { key: 'x', value: { id: 'x' } });
 });
 
 test.serial("should return 404 if a collection isn't found", async (t) => {
