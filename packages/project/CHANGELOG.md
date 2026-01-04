@@ -1,5 +1,16 @@
 # @openfn/project
 
+## 0.10.0
+
+### Minor Changes
+
+- 4cc799b: Add support for aliases (replaces env)
+
+### Patch Changes
+
+- 3e63c08: Map project_credential_id to configuration
+- 4cc799b: Project: remove `getIdentifier()` in favour of `qname` (qualified name)
+
 ## 0.9.3
 
 ### Patch Changes
