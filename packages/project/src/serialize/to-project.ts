@@ -8,6 +8,7 @@ import type {
 import Project from '../Project';
 import { jsonToYaml } from '../util/yaml';
 import { WithMeta } from '../Workflow';
+import { tidyOpenfn } from '../util/omit-nil';
 
 const SERIALIZE_VERSION = 2;
 
@@ -21,37 +22,35 @@ type ToProjectOptions = {
 
 export default (project: Project, options: ToProjectOptions = {}) => {
   // return a compatible json structure
+  const { alias, ...cliWithoutAlias } = project.cli;
   const proj: SerializedProject = omitBy(
     {
       id: project.id,
       name: project.name,
-      version: SERIALIZE_VERSION, // important!
+      cli: {
+        ...cliWithoutAlias,
+        version: SERIALIZE_VERSION, // important!
+      },
       description: project.description,
 
       collections: project.collections,
       credentials: project.credentials,
 
       openfn: omitBy(project.openfn, isNil),
-      meta: project.meta,
       options: omitBy(project.options, isNil),
 
       workflows: project.workflows.map((w) => {
         const obj = w.toJSON() as SerializedWorkflow;
-        if (obj.openfn) {
-          obj.openfn = omitBy(obj.openfn, isNil);
-        }
+        tidyOpenfn(obj);
         if (obj.steps) {
           obj.steps = obj.steps.sort((a: any, b: any) => {
             return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
           });
           obj.steps.forEach((s: WithMeta<l.Step>) => {
-            s.openfn = omitBy(s.openfn, isNil);
+            tidyOpenfn(s);
             if (s.next && typeof s.next !== 'string') {
               for (const id in s.next) {
-                const edge = s.next[id] as any;
-                if (edge.openfn) {
-                  edge.openfn = omitBy(edge.openfn, isNil);
-                }
+                tidyOpenfn(s.next[id]);
               }
             }
           });

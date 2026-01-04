@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import test from 'ava';
 import mock from 'mock-fs';
 import { MockAgent, setGlobalDispatcher } from 'undici';
@@ -10,7 +10,16 @@ import { myProject_v1, myProject_yaml } from './fixtures';
 const logger = createMockLogger('', { level: 'debug' });
 
 const ENDPOINT = 'https://app.openfn.org';
-const PROJECT_ID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
+const PROJECT_UUID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
+
+// Track two different versions of a project yaml
+// v1 might be stored locallym ready to be updated
+const yaml_v1 = myProject_yaml.replace('fn()', 'alterState()');
+// v2 is always returned by the mock lightning
+const yaml_v2 = myProject_yaml;
+
+const getYamlPath = (alias = 'main') =>
+  `/ws/.projects/${alias}@app.openfn.org.yaml`;
 
 let mockAgent = new MockAgent();
 mockAgent.disableNetConnect();
@@ -20,7 +29,7 @@ test.before(() => {
   const mockPool = mockAgent.get(ENDPOINT);
   mockPool
     .intercept({
-      path: `/api/provision/${PROJECT_ID}?`,
+      path: `/api/provision/${PROJECT_UUID}?`,
       method: 'GET',
     })
     .reply(200, {
@@ -41,41 +50,228 @@ test.afterEach(() => {
   mock.restore();
 });
 
-test.serial('fetch from lightning and save as v2 yaml file', async (t) => {
+test.serial('fetch by UUID to default new alias', async (t) => {
+  t.throwsAsync(() => readFile(getYamlPath('main'), 'utf-8'));
+
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_UUID,
+
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
-
       workspace: '/ws',
-      env: 'project',
     } as any,
     logger
   );
 
-  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
-  const fileContent = await readFile(filePath, 'utf-8');
+  const fileContent = await readFile(getYamlPath('main'), 'utf-8');
 
-  const yaml = myProject_yaml;
-
-  t.is(fileContent.trim(), yaml);
-
-  const { message, level } = logger._parse(logger._last);
-  t.is(level, 'success');
-  t.regex(message, /Fetched project file to/);
+  t.is(fileContent.trim(), yaml_v2);
 });
 
-test.serial('save to a custom location', async (t) => {
+test.serial('fetch by UUID to new custom alias', async (t) => {
+  t.throwsAsync(() => readFile(getYamlPath('staging'), 'utf-8'));
+
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_UUID,
+      alias: 'staging',
+
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(getYamlPath('staging'), 'utf-8');
+
+  t.is(fileContent.trim(), yaml_v2);
+});
+
+test.serial('fetch by UUID to existing custom alias', async (t) => {
+  // Set up a v1 project file
+  await writeFile(getYamlPath('staging'), yaml_v1);
+  const beforeContents = await readFile(getYamlPath('staging'), 'utf-8');
+  t.regex(beforeContents, /alterState\(\)/);
+
+  // Now fetch
+  await fetchHandler(
+    {
+      project: PROJECT_UUID,
+      alias: 'staging',
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  // Now ensure the yaml is updated
+  const fileContent = await readFile(getYamlPath('staging'), 'utf-8');
+  t.is(fileContent.trim(), yaml_v2);
+});
+
+test.serial('error: fetch by UUID to incompatible custom alias ', async (t) => {
+  // Set up a v1 project file with different UUID
+  await writeFile(
+    getYamlPath('staging'),
+    yaml_v1.replace(PROJECT_UUID, 'abcdefg')
+  );
+
+  // The fetch should now throw
+  await t.throwsAsync(
+    () =>
+      fetchHandler(
+        {
+          project: PROJECT_UUID,
+          alias: 'staging',
+
+          endpoint: ENDPOINT,
+          apiKey: 'test-api-key',
+          workspace: '/ws',
+        } as any,
+        logger
+      ),
+    {
+      message: /A project with a different UUID exists at this location/i,
+    }
+  );
+});
+
+test.serial('force fetch by UUID to incompatible custom alias ', async (t) => {
+  // Set up a v1 project file with different UUID
+  await writeFile(
+    getYamlPath('staging'),
+    yaml_v1.replace(PROJECT_UUID, 'abcdefg')
+  );
+
+  await fetchHandler(
+    {
+      project: PROJECT_UUID,
+      alias: 'staging',
+      force: true,
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  // Now ensure the yaml is updated
+  const fileContent = await readFile(getYamlPath('staging'), 'utf-8');
+  t.is(fileContent.trim(), yaml_v2);
+});
+
+test.serial('fetch by existing alias', async (t) => {
+  // first set up the file system with a preloaded project file
+  const filePath = '/ws/.projects/staging@app.openfn.org.yaml';
+  await writeFile(filePath, myProject_yaml.replace('fn()', 'alterState()'));
+
+  // Now fetch with an alias value
+  await fetchHandler(
+    {
+      project: 'staging', // alias
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  // Content should be restored to the default
+  t.is(fileContent.trim(), myProject_yaml);
+});
+
+test.serial('fetch by alias and save to a different alias', async (t) => {
+  await writeFile(getYamlPath('staging'), yaml_v1);
+  const beforeContents = await readFile(getYamlPath('staging'), 'utf-8');
+  t.regex(beforeContents, /alterState\(\)/);
+
+  await fetchHandler(
+    {
+      project: PROJECT_UUID,
+      alias: 'testing',
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  // Now ensure the yaml is updated
+  const fileContent = await readFile(getYamlPath('testing'), 'utf-8');
+  t.is(fileContent.trim(), yaml_v2);
+
+  // Now ensure that the staging alias is unchanged
+  const stagingContents = await readFile(getYamlPath('staging'), 'utf-8');
+  t.is(stagingContents.trim(), beforeContents);
+});
+
+test.serial('fetch by local id', async (t) => {
+  // create a local staging project
+  await writeFile(getYamlPath('staging'), yaml_v1);
+  const beforeContents = await readFile(getYamlPath('staging'), 'utf-8');
+  t.regex(beforeContents, /alterState\(\)/);
+
+  await fetchHandler(
+    {
+      // use the project id but specify no alias
+      project: 'my-project',
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(getYamlPath('staging'), 'utf-8');
+  t.is(fileContent.trim(), yaml_v2);
+});
+
+test.serial('fetch by local id and save to a new alias', async (t) => {
+  // create a local staging project
+  await writeFile(getYamlPath('staging'), yaml_v1);
+  const beforeContents = await readFile(getYamlPath('staging'), 'utf-8');
+  t.regex(beforeContents, /alterState\(\)/);
+
+  await fetchHandler(
+    {
+      // use the project id but specify no alias
+      project: 'my-project',
+      alias: 'testing',
+
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(getYamlPath('testing'), 'utf-8');
+  t.is(fileContent.trim(), yaml_v2);
+
+  // Now ensure that the staging alias is unchanged
+  const stagingContents = await readFile(getYamlPath('staging'), 'utf-8');
+  t.is(stagingContents.trim(), beforeContents);
+});
+
+test.serial('save to a local file with --out', async (t) => {
+  await fetchHandler(
+    {
+      project: PROJECT_UUID,
+      outputPath: '/ws/out.yaml',
 
       workspace: '/ws',
-      env: 'project',
-      outputPath: '/ws/out.yaml',
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
     } as any,
     logger
   );
@@ -92,18 +288,110 @@ test.serial('save to a custom location', async (t) => {
   t.regex(message, /Fetched project file to/);
 });
 
+test.serial('warn if --out and --alias are both set', async (t) => {
+  await fetchHandler(
+    {
+      project: PROJECT_UUID,
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+
+      workspace: '/ws',
+      outputPath: '/ws/out.yaml',
+      alias: 'jam',
+    } as any,
+    logger
+  );
+
+  const warn = logger._find('warn', /alias "jam" was set/i);
+  t.truthy(warn);
+
+  // Should still output to the right place
+  const filePath = '/ws/out.yaml';
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  t.is(fileContent.trim(), myProject_yaml);
+});
+
+test.todo('throw if identifier resolution is ambiguous');
+
+test.serial('fetch using endpoint in project file', async (t) => {
+  // first set up the file system with a preloaded project file
+  const filePath = '/ws/.projects/staging@app.openfn.org.yaml';
+  await writeFile(filePath, myProject_yaml);
+
+  await fetchHandler(
+    {
+      project: 'staging',
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      // No endpoint provided!
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(filePath, 'utf-8');
+
+  t.is(fileContent.trim(), myProject_yaml);
+});
+
+test.serial('fetch by alias and domain', async (t) => {
+  // set up a mock at localhost
+  const mockPool = mockAgent.get('http://localhost');
+  mockPool
+    .intercept({
+      path: `/api/provision/${PROJECT_UUID}?`,
+      method: 'GET',
+    })
+    .reply(200, {
+      data: myProject_v1,
+    });
+
+  // first set up the file system with preloaded project files
+  await writeFile(
+    '/ws/.projects/staging@app.openfn.org.yaml',
+    myProject_yaml.replace('fn()', 'jam()')
+  );
+
+  await writeFile(
+    '/ws/.projects/staging@localhost.yaml',
+    myProject_yaml
+      .replace('fn()', 'alterState()')
+      .replace('https://app.openfn.org', 'http://localhost')
+  );
+
+  // Now fetch with an alias value and no endoint
+  await fetchHandler(
+    {
+      project: 'staging@localhost',
+
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+    } as any,
+    logger
+  );
+
+  const fileContent = await readFile(
+    '/ws/.projects/staging@localhost.yaml',
+    'utf-8'
+  );
+
+  t.is(
+    fileContent.trim(),
+    myProject_yaml.replace('https://app.openfn.org', 'http://localhost')
+  );
+});
+
 test.serial(
   'save JSON to a custom location, overriding project defaults',
   async (t) => {
     await fetchHandler(
       {
-        projectId: PROJECT_ID,
+        project: PROJECT_UUID,
+        outputPath: '/ws/out.json',
+
         endpoint: ENDPOINT,
         apiKey: 'test-api-key',
-
         workspace: '/ws',
-        env: 'project',
-        outputPath: '/ws/out.json',
       } as any,
       logger
     );
@@ -114,14 +402,15 @@ test.serial(
     const json = {
       id: 'my-project',
       name: 'My Project',
-      version: 2,
+      cli: {
+        version: 2,
+      },
       description: 'my lovely project',
       collections: [],
       credentials: [],
       openfn: {
         uuid: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
         endpoint: 'https://app.openfn.org',
-        env: 'project',
         inserted_at: '2025-04-23T11:15:59Z',
         updated_at: '2025-04-23T11:15:59Z',
       },
@@ -168,7 +457,7 @@ test.serial(
             lock_version: 1,
           },
           id: 'my-workflow',
-          history: ['a'],
+          history: ['cli:02582f3bb088'],
         },
       ],
     };
@@ -180,76 +469,50 @@ test.serial(
     t.regex(message, /Fetched project file to/);
   }
 );
-
-test.serial('Override a compatible project', async (t) => {
-  // Change project.yaml
-  const modified = myProject_yaml.replace('my lovely project', 'renamed');
-
-  mock({
-    '/ws/.projects': {},
-    '/ws/openfn.yaml': '',
-    '/ws/.projects/project@app.openfn.org.yaml': modified,
-  });
-
-  await fetchHandler(
-    {
-      projectId: PROJECT_ID,
-      endpoint: ENDPOINT,
-      apiKey: 'test-api-key',
-
-      workspace: '/ws',
-      env: 'project',
-    } as any,
-    logger
-  );
-
-  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
-  const fileContent = await readFile(filePath, 'utf-8');
-
-  // This should overwrite the renamed value back to the default
-  t.regex(fileContent, /my lovely project/);
-});
-
 // In this test, the file on disk has diverged from the remove
 // This means changes could be lost, so we throw!
-test.serial('throw for an incompatible project', async (t) => {
-  // Change project.yaml
-  const modified = myProject_yaml
-    .replace('fn()', 'fn(x)') // arbitrary edit so that we can track the change
-    .replace(' - a', ' - z'); // change the local history to be incompatible
+test.serial(
+  'error: throw if fetching a project that has diverged',
+  async (t) => {
+    // Change project.yaml
+    const modified = myProject_yaml
+      .replace('fn()', 'fn(x)') // arbitrary edit so that we can track the change
+      .replace(' - a', ' - z'); // change the local history to be incompatible
 
-  mock({
-    '/ws/.projects': {},
-    '/ws/openfn.yaml': '',
-    '/ws/.projects/project@app.openfn.org.yaml': modified,
-  });
+    // Make it look like we've checked out hte project
+    mock({
+      '/ws/.projects': {},
+      '/ws/openfn.yaml': '',
+      '/ws/.projects/project@app.openfn.org.yaml': modified,
+    });
 
-  await t.throwsAsync(
-    () =>
-      fetchHandler(
-        {
-          projectId: PROJECT_ID,
-          endpoint: ENDPOINT,
-          apiKey: 'test-api-key',
+    await t.throwsAsync(
+      () =>
+        fetchHandler(
+          {
+            project: PROJECT_UUID,
+            alias: 'project',
 
-          workspace: '/ws',
-          env: 'project',
-        } as any,
-        logger
-      ),
-    {
-      message: /incompatible project/,
-    }
-  );
+            endpoint: ENDPOINT,
+            apiKey: 'test-api-key',
+            workspace: '/ws',
+          } as any,
+          logger
+        ),
+      {
+        message: /incompatible project/,
+      }
+    );
 
-  const filePath = '/ws/.projects/project@app.openfn.org.yaml';
-  const fileContent = await readFile(filePath, 'utf-8');
+    const filePath = '/ws/.projects/project@app.openfn.org.yaml';
+    const fileContent = await readFile(filePath, 'utf-8');
 
-  // The file should NOT be overwritten
-  t.regex(fileContent, /fn\(x\)/);
-});
+    // The file should NOT be overwritten
+    t.regex(fileContent, /fn\(x\)/);
+  }
+);
 
-test.serial('force merge an incompatible project', async (t) => {
+test.serial('force merge a diverged project', async (t) => {
   // Change project.yaml
   const modified = myProject_yaml.replace('fn()', 'fn(x)');
 
@@ -261,13 +524,13 @@ test.serial('force merge an incompatible project', async (t) => {
 
   await fetchHandler(
     {
-      projectId: PROJECT_ID,
+      project: PROJECT_UUID,
+      alias: 'project',
+      force: true,
+
       endpoint: ENDPOINT,
       apiKey: 'test-api-key',
-
       workspace: '/ws',
-      env: 'project',
-      force: true,
     } as any,
     logger
   );

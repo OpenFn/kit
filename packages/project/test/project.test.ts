@@ -34,7 +34,7 @@ const state: Provisioner.Project = {
         {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
-          body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+          body: 'fn(s => s)',
           adaptor: '@openfn/language-common@latest',
           project_credential_id: null,
           keychain_credential_id: null,
@@ -61,35 +61,55 @@ const state: Provisioner.Project = {
   dataclip_retention_period: null,
 };
 
-test('should generate a correct identifier with default values', (t) => {
+test('should generate a correct qname with default values', (t) => {
   const project = new Project({}, {});
 
-  const id = project.getIdentifier();
-  t.is(id, 'main@local');
+  t.is(project.qname, 'main');
 });
 
-test('should generate a correct identifier with real values', (t) => {
-  const project = new Project({
-    openfn: {
-      env: 'staging',
-      endpoint: 'https://app.openfn.org',
+test('should generate a correct qname with real values', (t) => {
+  const project = new Project(
+    {
+      openfn: {
+        endpoint: 'https://app.openfn.org',
+      },
     },
-  });
+    {
+      alias: 'staging',
+    }
+  );
 
-  const id = project.getIdentifier();
-  t.is(id, 'staging@app.openfn.org');
+  t.is(project.qname, 'staging@app.openfn.org');
 });
 
-test('should generate a correct identifier with weird values', (t) => {
-  const project = new Project({
-    openfn: {
-      env: 'hello',
-      endpoint: 'https://app.com/openfn',
+test('should generate a correct qname with weird values', (t) => {
+  const project = new Project(
+    {
+      openfn: {
+        endpoint: 'https://app.com/openfn',
+      },
     },
-  });
+    { alias: 'hello' }
+  );
 
-  const id = project.getIdentifier();
-  t.is(id, 'hello@app.com');
+  t.is(project.qname, 'hello@app.com');
+});
+
+test('should return an alias', (t) => {
+  const project = new Project(
+    {},
+    {
+      alias: 'staging',
+    }
+  );
+
+  t.is(project.alias, 'staging');
+});
+
+test('should default alias to "main"', (t) => {
+  const project = new Project();
+
+  t.is(project.alias, 'main');
 });
 
 test('should convert a state file to a project and back again', async (t) => {
@@ -110,11 +130,6 @@ test('should convert a state file to a project and back again', async (t) => {
   const newState = project.serialize('state');
   t.deepEqual(newState, state);
 });
-
-test.todo('serialize to and from yaml');
-
-test.todo('serialize state as json');
-test.todo('serialize state as yaml');
 
 // Note that this is mostly tested under merge-project
 // This is testing the static function on Project, which is just a proxy

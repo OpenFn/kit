@@ -27,13 +27,13 @@ export type SerializedWorkflow = {
 
 export default (
   data: l.Project | SerializedProject | string,
-  config?: Partial<l.WorkspaceConfig>
+  config?: Partial<l.WorkspaceConfig> & { alias?: string; version?: number }
 ) => {
   // first ensure the data is in JSON format
   let rawJson = ensureJson<any>(data);
 
   let json;
-  if (rawJson.version) {
+  if (rawJson.cli?.version ?? rawJson.version /*deprecated*/) {
     // If there's any version key at all, its at least v2
     json = from_v2(rawJson as SerializedProject);
   } else {

@@ -69,10 +69,11 @@ workflows:
 });
 
 test('import from a v2 project as JSON', async (t) => {
-  const proj = await Project.from('project', v2.json);
+  const proj = await Project.from('project', v2.json, { alias: 'main' });
 
   t.is(proj.id, 'my-project');
   t.is(proj.name, 'My Project');
+  t.is(proj.cli.alias, 'main');
   t.is(proj.openfn!.uuid, '1234');
   t.is(proj.openfn!.endpoint, 'https://app.openfn.org');
 
@@ -114,10 +115,19 @@ test('import from a v2 project as JSON', async (t) => {
   });
 });
 
+test('import from a v2 project with alias', async (t) => {
+  const proj = await Project.from('project', v2.json, { alias: 'staging' });
+
+  t.is(proj.id, 'my-project');
+  t.is(proj.name, 'My Project');
+  t.is(proj.cli.alias, 'staging');
+});
+
 test('import from a v2 project as YAML', async (t) => {
   const proj = await Project.from('project', v2.yaml);
   t.is(proj.id, 'my-project');
   t.is(proj.name, 'My Project');
+  t.is(proj.cli.alias, 'main');
   t.is(proj.openfn!.uuid, '1234');
   t.is(proj.openfn!.endpoint, 'https://app.openfn.org');
   // t.is(proj.options.retention_policy, 'retain_all');
@@ -167,10 +177,14 @@ test('import with custom config', async (t) => {
       projects: 'p',
       workflows: 'w',
     },
+    alias: 'staging',
   };
   const proj = await Project.from('project', v2.yaml, config);
   t.is(proj.id, 'my-project');
 
+  t.is(proj.cli.alias, 'staging');
+
+  // note that alias should have been removed from config
   t.deepEqual(proj.config, {
     dirs: {
       projects: 'p',

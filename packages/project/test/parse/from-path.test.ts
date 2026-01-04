@@ -2,7 +2,7 @@ import test from 'ava';
 import mock from 'mock-fs';
 
 import { generateProject } from '../../src';
-import fromPath from '../../src/parse/from-path';
+import fromPath, { extractAliasFromFilename } from '../../src/parse/from-path';
 import * as v2 from '../fixtures/sample-v2-project';
 
 const proj = generateProject('my-project', ['a-b'], {
@@ -89,4 +89,31 @@ test.serial('should use workspace config', async (t) => {
   });
 
   t.deepEqual(project.openfn.uuid, proj.openfn.uuid);
+});
+
+test('extractAliasFromFilename: should extract alias from alias@domain.yaml format', (t) => {
+  const alias = extractAliasFromFilename('main@app.openfn.org.yaml');
+  t.is(alias, 'main');
+});
+
+test('extractAliasFromFilename: should extract alias from alias@domain.json format', (t) => {
+  const alias = extractAliasFromFilename('staging@localhost.json');
+  t.is(alias, 'staging');
+});
+
+test('extractAliasFromFilename: should extract alias from simple filename', (t) => {
+  const alias = extractAliasFromFilename('production.yaml');
+  t.is(alias, 'production');
+});
+
+test('extractAliasFromFilename: should handle full paths', (t) => {
+  const alias = extractAliasFromFilename('/path/to/dev@app.openfn.org.yaml');
+  t.is(alias, 'dev');
+});
+
+test('extractAliasFromFilename: should handle complex aliases', (t) => {
+  const alias = extractAliasFromFilename(
+    'my-project-staging@app.openfn.org.yaml'
+  );
+  t.is(alias, 'my-project-staging');
 });

@@ -9,6 +9,7 @@ import { Logger } from '@openfn/logger';
 import type {
   LightningPlan,
   RunCompletePayload,
+  Provisioner,
 } from '@openfn/lexicon/lightning';
 
 import { ServerState } from './server';
@@ -64,6 +65,10 @@ const setupDevAPI = (
 
   app.getState = () => state;
 
+  app.addProject = (project: Provisioner.Project_v1) => {
+    state.projects[project.id] = project;
+  };
+
   // Promise which returns when a workflow is complete
   app.waitForResult = (runId: string) => {
     return new Promise((resolve) => {
@@ -85,6 +90,7 @@ const setupDevAPI = (
   app.reset = () => {
     state.queue = [];
     state.results = {};
+    state.projects = {};
     state.events.removeAllListeners();
   };
 

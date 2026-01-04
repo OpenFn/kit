@@ -7,8 +7,13 @@ import createLogger, {
   LogLevel,
   Logger,
 } from '@openfn/logger';
+import { collections } from '@openfn/language-collections';
 import type { StepId } from '@openfn/lexicon';
-import type { LightningPlan, RunLogLine } from '@openfn/lexicon/lightning';
+import type {
+  LightningPlan,
+  Provisioner,
+  RunLogLine,
+} from '@openfn/lexicon/lightning';
 
 import createWebSocketAPI from './api-sockets';
 import createDevAPI from './api-dev';
@@ -47,6 +52,11 @@ export type ServerState = {
   events: EventEmitter;
 
   options: LightningOptions;
+
+  projects: Record<string, Provisioner.Project_v1>;
+
+  /** Mock collections API (imported from the adaptor) */
+  collections: any;
 };
 
 export type LightningOptions = {
@@ -70,11 +80,13 @@ const createLightningServer = (options: LightningOptions = {}) => {
   const runPrivateKey = options.runPrivateKey
     ? fromBase64(options.runPrivateKey)
     : undefined;
+
   const state = {
     credentials: {},
     runs: {},
     dataclips: {},
     pending: {},
+    projects: {},
 
     queue: [] as RunId[],
     results: {},
@@ -90,6 +102,8 @@ const createLightningServer = (options: LightningOptions = {}) => {
   app.use(bodyParser());
 
   app.state = state;
+
+  app.collections = collections.createMockAPI();
 
   const port = options.port || 8888;
   const server = app.listen(port);

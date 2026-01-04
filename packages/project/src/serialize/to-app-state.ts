@@ -10,6 +10,8 @@ import Workflow from '../Workflow';
 type Options = { format?: 'json' | 'yaml' };
 
 const defaultJobProps = {
+  // TODO why does the provisioner throw if these keys are not set?
+  // Ok, 90% of jobs will have a credenial, but it's still optional right?
   keychain_credential_id: null,
   project_credential_id: null,
 };
@@ -101,6 +103,17 @@ const mapWorkflow = (workflow: Workflow) => {
       node.id = uuid;
       if (s.expression) {
         node.body = s.expression;
+      }
+      if (
+        typeof s.configuration === 'string' &&
+        !s.configuration.endsWith('.json')
+      ) {
+        // TODO do I need to ensure that this gets added to project_credntials?
+        // not really - if the credential hasn't been added yet, users have to go into
+        // the app and do it
+        // Maybe there's a feature-request to auto-add credentials if the user
+        // has access
+        otherOpenFnProps.project_credential_id = s.configuration;
       }
 
       Object.assign(node, defaultJobProps, otherOpenFnProps);

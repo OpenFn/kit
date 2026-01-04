@@ -1,8 +1,23 @@
 import test from 'ava';
 import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
+
+import createLightningServer from '@openfn/lightning-mock';
+
 import run from '../src/run';
 import { getJSON } from '../src/util';
+
+// set up a lightning mock
+let server: any;
+
+const port = 8968;
+
+test.before(async () => {
+  server = await createLightningServer({ port });
+  server.collections.createCollection('stuff');
+  // Important: the collection value MUST be as string
+  server.collections.upsert('stuff', 'x', JSON.stringify({ id: 'x' }));
+});
 
 const jobsPath = path.resolve('test/fixtures');
 
@@ -148,6 +163,17 @@ test.serial(
 );
 
 test.serial(
+  `openfn ${jobsPath}/wf-creds.json --credentials ${jobsPath}/creds.json`,
+  async (t) => {
+    const { err, stdout, stderr } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+    t.is(out.value, 'admin:admin');
+  }
+);
+
+test.serial(
   `openfn ${jobsPath}/wf-errors.json -S "{ \\"data\\": { \\"number\\": 2 } }"`,
   async (t) => {
     const { err } = await run(t.title);
@@ -271,5 +297,18 @@ test.serial(
         result: 'love-humble-suffix',
       },
     });
+  }
+);
+
+// collections basic test
+test.serial(
+  `openfn ${jobsPath}/collections.json --endpoint http://localhost:${port} --api-key xyz`,
+  async (t) => {
+    const { err } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+
+    t.deepEqual(out.data, { id: 'x' });
   }
 );

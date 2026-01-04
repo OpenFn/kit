@@ -1,5 +1,19 @@
 # @openfn/cli
 
+## 1.21.0
+
+### Minor Changes
+
+- 6689ad0: Add support for aliases on all project subcommands (ie, `openfn project fetch --staging && openfn project checkout staging`)
+- 3e63c08: Allow credential map, as json or yaml, to be passed via --credentials
+- 6689ad0: Full native support for Collections (no need to manually set `adaptors` key to an array)
+
+### Patch Changes
+
+- 4cc799b: Refactor pull into a project command
+- Updated dependencies [4cc799b]
+  - @openfn/project@0.10.0
+
 ## 1.20.3
 
 ### Patch Changes

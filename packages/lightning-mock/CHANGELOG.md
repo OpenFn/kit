@@ -1,5 +1,12 @@
 # @openfn/lightning-mock
 
+## 2.4.0
+
+### Minor Changes
+
+- 4cc799b: Update the provisioner API to support real data
+- 6689ad0: Add basic collections support (GET only)
+
 ## 2.3.10
 
 ### Patch Changes

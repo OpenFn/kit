@@ -6,30 +6,27 @@ import fs from 'node:fs/promises';
 import { ensure, build, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
+import * as po from './options';
 
-import type { Opts } from '../options';
+import type { Opts } from './options';
 import { handler as checkout } from './checkout';
 
 export type MergeOptions = Required<
   Pick<
     Opts,
-    | 'command'
-    | 'projectId'
-    | 'workspace'
-    | 'removeUnmapped'
-    | 'workflowMappings'
+    'command' | 'project' | 'workspace' | 'removeUnmapped' | 'workflowMappings'
   >
 > &
   Pick<Opts, 'log' | 'force' | 'outputPath'> & { base?: string };
 
 const options = [
-  o.projectId,
-  o.removeUnmapped,
-  o.workflowMappings,
+  po.removeUnmapped,
+  po.workflowMappings,
+  po.workspace,
   o.log,
-  o.workspace,
   // custom output because we don't want defaults or anything
   {
+    // TODO presumably if we do this we don't also checkout?
     name: 'output-path',
     yargs: {
       alias: 'o',
@@ -51,9 +48,9 @@ const options = [
 ];
 
 const command: yargs.CommandModule = {
-  command: 'merge <project-id>',
+  command: 'merge <project>',
   describe:
-    'Merges the specified project into the currently checked out project',
+    'Merges the specified project (by UUID, id or alias) into the currently checked out project',
   handler: ensure('project-merge', options),
   builder: (yargs) => build(options, yargs),
 };
@@ -61,8 +58,8 @@ const command: yargs.CommandModule = {
 export default command;
 
 export const handler = async (options: MergeOptions, logger: Logger) => {
-  const commandPath = options.workspace;
-  const workspace = new Workspace(commandPath);
+  const workspacePath = options.workspace;
+  const workspace = new Workspace(workspacePath);
   if (!workspace.valid) {
     logger.error('Command was run in an invalid openfn workspace');
     return;
@@ -82,18 +79,24 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
     logger.debug(`Loading target project from workspace (${targetProject.id})`);
   }
 
+  const sourceProjectIdentifier = options.project;
+
   // Lookup the source project - the thing we are getting changes from
   let sourceProject;
-  if (/\.(yaml|json)$/.test(options.projectId)) {
-    const filePath = path.join(commandPath, options.projectId);
+  if (/\.(ya?ml|json)$/.test(sourceProjectIdentifier)) {
+    const filePath = path.join(workspacePath, sourceProjectIdentifier);
     logger.debug('Loading source project from path ', filePath);
     sourceProject = await Project.from('path', filePath);
   } else {
-    logger.debug(`Loading source project from workspace ${options.projectId}`);
-    sourceProject = workspace.get(options.projectId);
+    logger.debug(
+      `Loading source project from workspace ${sourceProjectIdentifier}`
+    );
+    sourceProject = workspace.get(sourceProjectIdentifier);
   }
   if (!sourceProject) {
-    logger.error(`Project "${options.projectId}" not found in the workspace`);
+    logger.error(
+      `Project "${sourceProjectIdentifier}" not found in the workspace`
+    );
     return;
   }
 
@@ -143,13 +146,13 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   // Checkout after merge to expand updated files into filesystem
   await checkout(
     {
-      command: 'project-checkout',
-      workspace: commandPath,
-      projectId: options.outputPath ? finalPath : final.id,
+      workspace: workspacePath,
+      project: options.outputPath ? finalPath : final.id,
       log: options.log,
     },
     logger
   );
+
   logger.success(
     `Project ${sourceProject.id} has been merged into Project ${targetProject.id}`
   );

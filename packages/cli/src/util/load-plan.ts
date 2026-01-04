@@ -10,6 +10,7 @@ import type { ExecutionPlan, Job, WorkflowOptions } from '@openfn/lexicon';
 import type { Opts } from '../options';
 import type { Logger } from './logger';
 import type { CLIExecutionPlan, CLIJobNode, OldCLIWorkflow } from '../types';
+import resolvePath from './resolve-path';
 
 const loadPlan = async (
   options: Pick<
@@ -226,10 +227,7 @@ const fetchFile = async (
 ) => {
   const { rootDir = '', filePath, name } = fileInfo;
   try {
-    // Special handling for ~ feels like a necessary evil
-    const fullPath = filePath.startsWith('~')
-      ? filePath
-      : path.resolve(rootDir, filePath);
+    const fullPath = resolvePath(filePath, rootDir);
     const result = await fs.readFile(fullPath, 'utf8');
     log.debug('Loaded file', fullPath);
     return result;
@@ -333,11 +331,70 @@ const ensureAdaptors = (plan: CLIExecutionPlan) => {
   });
 };
 
+type ensureCollectionsOptions = {
+  endpoint?: string;
+  version?: string;
+  apiKey?: string;
+};
+
+const ensureCollections = (
+  plan: CLIExecutionPlan,
+  {
+    endpoint = 'https://app.openfn.org',
+    version = 'latest',
+    apiKey = 'null',
+  }: ensureCollectionsOptions = {},
+  logger?: Logger
+) => {
+  let collectionsFound = false;
+
+  Object.values(plan.workflow.steps)
+    .filter((step) => (step as any).expression?.match(/(collections\.)/))
+    .forEach((step) => {
+      const job = step as CLIJobNode;
+      if (
+        !job.adaptors?.find((v: string) =>
+          v.startsWith('@openfn/language-collections')
+        )
+      ) {
+        collectionsFound = true;
+        job.adaptors ??= [];
+        job.adaptors.push(
+          `@openfn/language-collections@${version || 'latest'}`
+        );
+
+        job.configuration = Object.assign({}, job.configuration, {
+          collections_endpoint: `${endpoint}/collections`,
+          collections_token: apiKey,
+        });
+      }
+    });
+
+  if (collectionsFound) {
+    if (!apiKey || apiKey === 'null') {
+      logger?.warn(
+        'WARNING: collections API was not set. Pass --api-key or OPENFN_API_KEY'
+      );
+    }
+    logger?.info(
+      `Configured collections to use endpoint ${endpoint} and API Key ending with ${apiKey?.substring(
+        apiKey.length - 10
+      )}`
+    );
+  }
+};
+
 const loadXPlan = async (
   plan: CLIExecutionPlan,
   options: Pick<
     Opts,
-    'monorepoPath' | 'baseDir' | 'expandAdaptors' | 'globals'
+    | 'monorepoPath'
+    | 'baseDir'
+    | 'expandAdaptors'
+    | 'globals'
+    | 'collectionsVersion'
+    | 'collectionsEndpoint'
+    | 'apiKey'
   >,
   logger: Logger,
   defaultName: string = ''
@@ -350,6 +407,15 @@ const loadXPlan = async (
     plan.workflow.name = defaultName;
   }
   ensureAdaptors(plan);
+  ensureCollections(
+    plan,
+    {
+      version: options.collectionsVersion,
+      apiKey: options.apiKey,
+      endpoint: options.collectionsEndpoint,
+    },
+    logger
+  );
 
   // import global functions
   // if globals is provided via cli argument. it takes precedence

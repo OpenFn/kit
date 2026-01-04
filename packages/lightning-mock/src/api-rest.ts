@@ -1,12 +1,15 @@
 import Koa from 'koa';
 import Router from '@koa/router';
+import bodyParser from 'koa-bodyparser';
 import { Logger } from '@openfn/logger';
 
 import { ServerState } from './server';
 import type { DevServer } from './types';
 
+export const DEFAULT_PROJECT_ID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
+
 const proj = {
-  id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+  id: DEFAULT_PROJECT_ID,
   name: 'aaa',
   description: 'a project',
   concurrency: null,
@@ -81,12 +84,16 @@ workflows:
 `;
 
 export default (
-  _app: DevServer,
-  _state: ServerState,
+  app: DevServer,
+  state: ServerState,
   _logger: Logger,
   _api: any
 ): Koa.Middleware => {
   const router = new Router();
+  router.use(bodyParser());
+
+  // load a sample project as a default
+  state.projects[DEFAULT_PROJECT_ID] = proj as any;
 
   // we also need to provide a yaml endpoint
   router.get('/api/provision/:id', (ctx) => {
@@ -96,20 +103,44 @@ export default (
       // just return a hard-coded project for now
       ctx.response.body = yaml;
     } else {
-      ctx.response.body = {
-        data: {
-          ...proj,
-          id: ctx.params.id,
-        },
-      };
+      // TODO what if doesn't exist?
+      ctx.response.body = { data: state.projects[ctx.params.id] };
     }
   });
 
   router.post('/api/provision', (ctx) => {
-    // const project = ctx.request.body as LightningPlan;
-    // TODO just return 200 for now
+    const proj: any = ctx.request.body;
+    state.projects[proj.id] = proj;
 
     ctx.response.status = 200;
+  });
+
+  // list with query
+  router.get('/collections/:name', (ctx) => {
+    const { query, ...opts } = ctx.query;
+    try {
+      ctx.body = app.collections.fetch(ctx.params.name, query, opts);
+    } catch (e: any) {
+      if ((e.message = 'COLLECTION_NOT_FOUND')) {
+        ctx.status = 404;
+      }
+    }
+  });
+
+  // get by key
+  router.get('/collections/:name/:key', (ctx) => {
+    const { name, key } = ctx.params;
+    try {
+      const result = app.collections.byKey(name, key);
+      ctx.body = {
+        key,
+        value: result,
+      };
+    } catch (e: any) {
+      if ((e.message = 'COLLECTION_NOT_FOUND')) {
+        ctx.status = 404;
+      }
+    }
   });
 
   return router.routes() as unknown as Koa.Middleware;

@@ -93,6 +93,80 @@ test.serial('run a workflow', async (t) => {
   t.is(result.data.count, 84);
 });
 
+test.serial('run a workflow with a JSON credential map', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          // The two steps in this workflow will just write the credential to state
+          expression: `${fn}fn(s => { s.a = s.configuration.password; return s; })`,
+          configuration: 'A',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}fn(s => { s.b = s.configuration.password; return s; })`,
+          configuration: 'B',
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/creds.json': JSON.stringify({
+      A: { password: 'a' },
+      B: { password: 'b' },
+    }),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    credentials: '/creds.json',
+  };
+  const result = await handler(options, logger);
+  t.is(result.a, 'a');
+  t.is(result.b, 'b');
+});
+
+test.serial.skip('run a workflow with a YAML credential map', async (t) => {
+  const workflow = {
+    workflow: {
+      steps: [
+        {
+          id: 'a',
+          // The two steps in this workflow will just write the credential to state
+          expression: `${fn}fn(s => { s.a = s.configuration.password; return s; })`,
+          configuration: 'A',
+          next: { b: true },
+        },
+        {
+          id: 'b',
+          expression: `${fn}fn(s => { s.b = s.configuration.password; return s; })`,
+          configuration: 'B',
+        },
+      ],
+    },
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+    '/creds.yaml': `A:
+  password: a
+B:
+  password: b`,
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+    credentials: '/creds.yaml',
+  };
+  const result = await handler(options, logger);
+  t.is(result.a, 'a');
+  t.is(result.b, 'b');
+});
+
 test.serial('run a workflow with state', async (t) => {
   const workflow = {
     workflow: {

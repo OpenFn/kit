@@ -39,6 +39,7 @@ export type CommandList =
   | 'repo-install'
   | 'repo-list'
   | 'repo-pwd'
+  | 'project-pull'
   | 'project-list'
   | 'project-version'
   | 'project-merge'
@@ -66,6 +67,7 @@ const handlers = {
   ['repo-install']: repo.install,
   ['repo-pwd']: repo.pwd,
   ['repo-list']: repo.list,
+  ['project-pull']: projects.pull,
   ['project-list']: projects.list,
   ['project-version']: projects.version,
   ['project-merge']: projects.merge,

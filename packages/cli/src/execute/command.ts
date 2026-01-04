@@ -1,5 +1,5 @@
 import yargs from 'yargs';
-import { build, ensure } from '../util/command-builders';
+import { build, ensure, override } from '../util/command-builders';
 import * as o from '../options';
 
 import type { Opts } from '../options';
@@ -7,12 +7,16 @@ import type { Opts } from '../options';
 export type ExecuteOptions = Required<
   Pick<
     Opts,
+    | 'apiKey'
     | 'adaptors'
     | 'autoinstall'
     | 'baseDir'
     | 'cacheSteps'
     | 'command'
     | 'compile'
+    | 'credentials'
+    | 'collectionsEndpoint'
+    | 'collectionsVersion'
     | 'expandAdaptors'
     | 'end'
     | 'immutable'
@@ -43,9 +47,16 @@ const options = [
   o.expandAdaptors, // order is important
 
   o.adaptors,
+  override(o.apiKey, {
+    description: 'API token for collections',
+    alias: ['collections-api-key', 'collections-token', 'pat'],
+  }),
   o.autoinstall,
   o.cacheSteps,
   o.compile,
+  o.credentials,
+  o.collectionsEndpoint,
+  o.collectionsVersion,
   o.end,
   o.ignoreImports,
   o.immutable,

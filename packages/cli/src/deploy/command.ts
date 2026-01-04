@@ -2,6 +2,7 @@ import yargs from 'yargs';
 import { build, ensure, override } from '../util/command-builders';
 import { Opts } from '../options';
 import * as o from '../options';
+import * as o2 from '../projects/options';
 
 export type DeployOptions = Required<
   Pick<
@@ -27,7 +28,7 @@ const options = [
   o.projectPath,
   o.statePath,
 
-  override(o.workspace, { hidden: true }),
+  override(o2.workspace, { hidden: true }),
 ];
 
 const deployCommand: yargs.CommandModule<DeployOptions> = {
