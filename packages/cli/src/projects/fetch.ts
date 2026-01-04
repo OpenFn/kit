@@ -35,7 +35,7 @@ export type FetchOptions = Pick<
 
 const options = [
   po.alias,
-  o.apikey,
+  o.apiKey,
   o.endpoint,
   o.log,
   o.logJson,

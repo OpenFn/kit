@@ -84,7 +84,7 @@ workflows:
 `;
 
 export default (
-  _app: DevServer,
+  app: DevServer,
   state: ServerState,
   _logger: Logger,
   _api: any
@@ -113,6 +113,34 @@ export default (
     state.projects[proj.id] = proj;
 
     ctx.response.status = 200;
+  });
+
+  // list with query
+  router.get('/collections/:name', (ctx) => {
+    const { query, ...opts } = ctx.query;
+    try {
+      ctx.body = app.collections.fetch(ctx.params.name, query, opts);
+    } catch (e: any) {
+      if ((e.message = 'COLLECTION_NOT_FOUND')) {
+        ctx.status = 404;
+      }
+    }
+  });
+
+  // get by key
+  router.get('/collections/:name/:key', (ctx) => {
+    const { name, key } = ctx.params;
+    try {
+      const result = app.collections.byKey(name, key);
+      ctx.body = {
+        key,
+        value: result,
+      };
+    } catch (e: any) {
+      if ((e.message = 'COLLECTION_NOT_FOUND')) {
+        ctx.status = 404;
+      }
+    }
   });
 
   return router.routes() as unknown as Koa.Middleware;

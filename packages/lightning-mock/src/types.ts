@@ -37,4 +37,7 @@ export type DevServer = Koa & {
   reset(): void;
   startRun(id: string): any;
   waitForResult(runId: string): Promise<any>;
+
+  /** Collections API (from the adaptor) */
+  collections: any;
 };

@@ -30,7 +30,7 @@ const options = [
   o2.workspace,
 
   // general options
-  o.apikey,
+  o.apiKey,
   o.endpoint,
   o.log,
   override(o.path, {
