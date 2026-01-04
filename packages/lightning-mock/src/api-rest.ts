@@ -119,11 +119,12 @@ export default (
     const { name, key } = ctx.params;
     try {
       const result = app.collections.fetch(name, key);
-      ctx.body = { key: result.items[0].key, value: result.items[0].value };
+      ctx.body = result;
     } catch (e: any) {
-      console.log(e);
       if ((e.message = 'COLLECTION_NOT_FOUND')) {
         ctx.status = 404;
+      } else {
+        console.log(e);
       }
     }
   });
