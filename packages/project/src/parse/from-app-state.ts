@@ -62,22 +62,28 @@ export default (
   return new Project(proj as l.Project, config);
 };
 
-const mapTriggerEdgeCondition = (edge: Provisioner.Edge) => {
+// TODO maybe this is a util and moved out of this file
+export const mapEdge = (edge: Provisioner.Edge) => {
   const e: any = {
     disabled: !edge.enabled,
   };
-  if (edge.condition_type === 'always') {
-    e.condition = true;
-  } else if (edge.condition_type === 'never') {
-    e.condition = false;
-  } else {
+
+  if (edge.condition_type === 'js_expression') {
     e.condition = edge.condition_expression;
+  } else if (edge.condition_type) {
+    e.condition = edge.condition_type;
+  }
+
+  if (edge.condition_label) {
+    e.name = edge.condition_label;
   }
 
   // Do this last so that it serializes last
-  e.openfn = {
-    uuid: edge.id,
-  };
+  if (edge.id) {
+    e.openfn = {
+      uuid: edge.id,
+    };
+  }
   return e;
 };
 
@@ -114,7 +120,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
           throw new Error(`Failed to find ${edge.target_job_id}`);
         }
         // we use the name, not the id, to reference
-        obj[slugify(target.name)] = mapTriggerEdgeCondition(edge);
+        obj[slugify(target.name)] = mapEdge(edge);
         return obj;
       }, {}),
     } as l.Trigger);
@@ -148,7 +154,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       s.next = outboundEdges.reduce((next, edge) => {
         const target = jobs.find((j) => j.id === edge.target_job_id);
         // @ts-ignore
-        next[slugify(target.name)] = mapTriggerEdgeCondition(edge);
+        next[slugify(target.name)] = mapEdge(edge);
         return next;
       }, {});
     }

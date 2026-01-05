@@ -1,5 +1,8 @@
 import test from 'ava';
-import fromAppState, { mapWorkflow } from '../../src/parse/from-app-state';
+import fromAppState, {
+  mapEdge,
+  mapWorkflow,
+} from '../../src/parse/from-app-state';
 import { clone, cloneDeep } from 'lodash-es';
 
 import state, { withCreds } from '../fixtures/sample-v1-project';
@@ -90,7 +93,7 @@ test('should create a Project from prov state with a workflow', (t) => {
         openfn: { enabled: true, uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
           'transform-data': {
-            condition: true,
+            condition: 'always',
             disabled: false,
             openfn: {
               uuid: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
@@ -130,7 +133,7 @@ test('mapWorkflow: map a simple trigger', (t) => {
     type: 'webhook',
     next: {
       'transform-data': {
-        condition: true,
+        condition: 'always',
         disabled: false,
         openfn: {
           uuid: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
@@ -217,6 +220,155 @@ test('mapWorkflow: map a job with projcet credentials onto job.configuration', (
       keychain_credential_id: 'k',
     },
   });
+});
+
+test('mapEdge: map enabled state', (t) => {
+  let e;
+
+  e = mapEdge({} as any);
+  t.deepEqual(e, {
+    disabled: true,
+  });
+
+  e = mapEdge({
+    enabled: true,
+  } as any);
+  t.deepEqual(e, {
+    disabled: false,
+  });
+
+  e = mapEdge({
+    enabled: false,
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+  });
+});
+
+test('mapEdge: map UUID', (t) => {
+  const e = mapEdge({
+    id: 'abc',
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+    openfn: {
+      uuid: 'abc',
+    },
+  });
+});
+
+test('mapEdge: map label', (t) => {
+  const e = mapEdge({
+    condition_label: 'abc',
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+    name: 'abc',
+  });
+});
+
+test('mapEdge: map conditions', (t) => {
+  let e;
+
+  // basically any condition type should just map
+  e = mapEdge({
+    condition_type: 'always',
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+    condition: 'always',
+  });
+
+  e = mapEdge({
+    condition_type: 'on_job_success',
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+    condition: 'on_job_success',
+  });
+
+  e = mapEdge({
+    condition_type: 'jam',
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+    condition: 'jam',
+  });
+
+  // But js expression should override
+  e = mapEdge({
+    condition_type: 'js_expression',
+    condition_expression: 'abc',
+  } as any);
+  t.deepEqual(e, {
+    disabled: true,
+    condition: 'abc',
+  });
+});
+
+// TODO the workflow yaml is not a project yaml
+// so this test doesn't work
+// I'll need to pull the project yaml, with uuids, to get this to work
+test.skip('mapWorkflow: map edge conditions', (t) => {
+  // TODO for yaml like this:
+  const yaml = `
+workflows:
+  - name: Edge Conditions
+    jobs:
+      - Transform-data:
+        name: Transform data
+        adaptor: "@openfn/language-common@latest"
+        body: assert($.ok)
+      - sucess:
+        name: sucess
+        adaptor: "@openfn/language-common@latest"
+        body: log('All ok!')
+      - fail:
+        name: fail
+        adaptor: "@openfn/language-common@latest"
+        body: log('everything is terrible')
+      - custom:
+        name: custom
+        adaptor: "@openfn/language-common@latest"
+        body: |
+          // Check out the Job Writing Guide for help getting started:
+          // https://docs.openfn.org/documentation/jobs/job-writing-guide
+    triggers:
+      - webhook:
+          type: webhook
+          enabled: true
+    edges:
+      - webhook->Transform-data:
+          condition_type: always
+          enabled: true
+          target_job: Transform-data
+          source_trigger: webhook
+      - Transform-data->sucess:
+          condition_type: on_job_success
+          enabled: true
+          target_job: sucess
+          source_job: Transform-data
+      - Transform-data->fail:
+          condition_type: on_job_failure
+          enabled: true
+          target_job: fail
+          source_job: Transform-data
+      - Transform-data->custom:
+          condition_type: js_expression
+          enabled: true
+          target_job: custom
+          source_job: Transform-data
+          condition_expression: state.ok == 22
+
+`;
+  const project = fromAppState(yaml, meta, {
+    format: 'yaml',
+  });
+  console.log(project.workflows[0].steps);
+  const { next } = project.workflows[0].steps[1];
+  console.log({ next });
+  // make sure that the condition_types get mapped to condition
+  // also make sure that custom conditions work (both ways)
 });
 
 test('should create a Project from prov state yaml', (t) => {

@@ -277,61 +277,35 @@ c-p
   t.deepEqual(edges, [3, 6, 9]);
 });
 
-/**
- * Stumbled on something difficult here
- *
- * lightning saves special edge conditions, like on_job_success
- * We need to convert that two ways
- *
- * I think I need to make the RUNTIME support the special strings
- * in order to make this sync properly. Else it's too hard.
- *
- * See https://github.com/OpenFn/kit/issues/1123
- */
-test.skip('should handle edge conditions', (t) => {
+test('should handle edge conditions', (t) => {
   const wf = `
-a-(condition=true)-b
-a-(condition=false)-c
-a-(condition=false)-c
-a--b
+a-(condition=always)-b
+a-(condition="on_job_success")-c
+a-(condition="on_job_failure")-d
+a-(condition=never)-e
+a-(condition=x)-f
   `;
-  const project = generateProject('p');
-  const data = {
-    id: 'my-project',
-    workflows: [
-      {
-        id: 'wf',
-        steps: [
-          {
-            id: 'trigger',
-            type: 'webhook',
-            next: {
-              step: {},
-            },
-          },
-          {
-            id: 'a',
-            expression: '.',
-          },
-          {
-            id: 'b',
-            expression: '.',
-          },
-          {
-            id: 'c',
-            expression: '.',
-          },
-          {
-            id: 'd',
-            expression: '.',
-          },
-        ],
-      },
-    ],
-  };
+  const project = generateProject('p', [wf], {
+    uuidSeed: 1, // ensure predictable UUIDS
+  });
 
-  const state = toAppState(project);
-  // TODO
+  const state = toAppState(project, { format: 'json' });
+  const [a_b, a_c, a_d, a_e, a_f] = state.workflows[0].edges;
+
+  t.is(a_b.condition_type, 'always');
+  t.falsy(a_b.condition_expression);
+
+  t.is(a_c.condition_type, 'on_job_success');
+  t.falsy(a_c.condition_expression);
+
+  t.is(a_d.condition_type, 'on_job_failure');
+  t.falsy(a_d.condition_expression);
+
+  t.is(a_e.condition_type, 'never');
+  t.falsy(a_e.condition_expression);
+
+  t.is(a_f.condition_type, 'js_expression');
+  t.is(a_f.condition_expression, 'x');
 });
 
 test('should convert a project back to app state in json', (t) => {
