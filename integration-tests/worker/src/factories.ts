@@ -19,7 +19,7 @@ export const createTrigger = () => ({
   id: crypto.randomUUID(),
 });
 
-export const createEdge = (a: any, b: any, condition?: string) => {
+export const createEdge = (a: any, b: any, extra?: any) => {
   const edge: any = {
     id: crypto.randomUUID(),
     target_job_id: b.id,
@@ -29,6 +29,7 @@ export const createEdge = (a: any, b: any, condition?: string) => {
   } else {
     edge.source_job_id = a.id;
   }
+  Object.assign(edge, extra);
   return edge;
 };
 
