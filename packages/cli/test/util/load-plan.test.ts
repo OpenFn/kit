@@ -4,11 +4,7 @@ import { createMockLogger } from '@openfn/logger';
 import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
-import {
-  collectionsEndpoint,
-  collectionsVersion,
-  Opts,
-} from '../../src/options';
+import { Opts } from '../../src/options';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
@@ -46,8 +42,6 @@ test.afterEach(() => {
   logger._reset();
   mock.restore();
 });
-
-// TODO: add some tests for handling yaml stuff
 
 test.serial('expression: load a plan from an expression.js', async (t) => {
   const opts = {
@@ -428,4 +422,58 @@ test.serial('xplan: append collections', async (t) => {
     collections_endpoint: `${opts.collectionsEndpoint}/collections`,
     collections_token: opts.apiKey,
   });
+});
+
+// This is basically an invalid workflow yaml that was accidentally supported
+// Preserving for back compat for now
+test.serial(
+  'xplan: load a workflow.yaml (without top workflow key)',
+  async (t) => {
+    mock({
+      'test/wf.yaml': `
+name: wf
+steps:
+  - id: a
+    adaptors: []
+    expression: x()
+`,
+    });
+    const opts = {
+      path: 'test/wf.yaml', // TODO should this work with workflow path as well?
+      expandAdaptors: true,
+      plan: {},
+    };
+
+    const plan = await loadPlan(opts, logger);
+
+    t.truthy(plan);
+    // Note that options are lost in this design!
+    t.deepEqual(plan, { workflow: sampleXPlan.workflow, options: {} });
+  }
+);
+
+test.serial('xplan: load a proper workflow.yaml', async (t) => {
+  mock({
+    'test/wf.yaml': `
+workflow:
+  name: wf
+  steps:
+    - id: a
+      adaptors: []
+      expression: x()
+options:
+  start: a
+`,
+  });
+  const opts = {
+    path: 'test/wf.yaml', // TODO should this work with workflow path as well?
+    expandAdaptors: true,
+    plan: {},
+  };
+
+  const plan = await loadPlan(opts, logger);
+
+  t.truthy(plan);
+  // Note that options are lost in this design!
+  t.deepEqual(plan, sampleXPlan);
 });

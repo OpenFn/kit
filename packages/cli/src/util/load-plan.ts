@@ -35,8 +35,12 @@ const loadPlan = async (
   if (options.path && /ya?ml$/.test(options.path)) {
     const content = await fs.readFile(path.resolve(options.path), 'utf-8');
     const workflow = yamlToJson(content);
+    // Temporarily support workflow.yaml files without a top workflow key
+    // This was released in july 2025 but it's actually wrong!
+    // we'll support it for a while for back-compat, but this need removing in 2027
+    const plan = workflow.workflow ? workflow : { workflow };
     options.baseDir = dirname(options.path);
-    return loadXPlan({ workflow }, options, logger);
+    return loadXPlan(plan, options, logger);
   }
 
   // Run a workflow from a project, with a path and workflow name
