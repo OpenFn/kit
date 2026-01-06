@@ -852,6 +852,66 @@ test('run from an adaptor with error', async (t) => {
   t.truthy(result.errors['job-1']);
 });
 
+test('run a workflow with special on_job_success condition', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          expression:
+            'export default [(s) =>{ if (s.err) throw new Error("e"); return s}]',
+          next: {
+            b: {
+              condition: 'on_job_success',
+            },
+          },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.data.b = true; return s}]',
+        },
+      ],
+    },
+  };
+
+  // The first should execute step b
+  const result1: any = await run(plan, {});
+  t.true(result1.data.b);
+
+  // The second should NOT execute b
+  const result2: any = await run(plan, { err: true });
+  t.falsy(result2.data.b);
+});
+
+test('run a workflow with special on_job_failure condition', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          expression:
+            'export default [(s) =>{ if (s.err) throw new Error("e"); return s}]',
+          next: {
+            b: {
+              condition: 'on_job_failure',
+            },
+          },
+        },
+        {
+          id: 'b',
+          expression: 'export default [(s) => { s.data.b = true; return s}]',
+        },
+      ],
+    },
+  };
+
+  // The first should NOT execute step b
+  const result1: any = await run(plan, {});
+  t.falsy(result1.data.b);
+
+  // The second should execute b
+  const result2: any = await run(plan, { err: true });
+  t.true(result2.data.b);
+});
+
 test('accept a whitelist as a regex', async (t) => {
   const expression = `
     import { call } from 'blah';

@@ -56,7 +56,7 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
         }
         if (typeof edge.condition === 'function') {
           try {
-            if (!edge.condition(result)) {
+            if (!edge.condition(result, job.id)) {
               logger.debug(
                 `Edge condition returned false; ${nextJobId} will NOT be executed`
               );

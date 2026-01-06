@@ -359,6 +359,82 @@ test('should compile a falsy edge', (t) => {
   t.false(result);
 });
 
+test('should compile an edge with special string: on_job_success (and return true)', (t) => {
+  const plan = planWithEdge({ condition: 'on_job_success' });
+
+  const { workflow } = compilePlan(plan);
+
+  const state = {
+    errors: {}, // no errors!
+  };
+
+  // @ts-ignore
+  const result = workflow.steps.a.next!.b.condition(state, 'x');
+  t.true(result);
+});
+
+test('should compile an edge with special string: on_job_success (and return false)', (t) => {
+  const plan = planWithEdge({ condition: 'on_job_success' });
+
+  const { workflow } = compilePlan(plan);
+
+  const state = {
+    errors: {
+      x: {}, // upstream job failed
+    },
+  };
+
+  // @ts-ignore
+  const result = workflow.steps.a.next!.b.condition(state, 'x');
+  t.false(result);
+});
+
+test('should compile an edge with special string: on_job_failure (and return true)', (t) => {
+  const plan = planWithEdge({ condition: 'on_job_failure' });
+
+  const { workflow } = compilePlan(plan);
+
+  const state = {
+    errors: {
+      x: {},
+    },
+  };
+
+  // @ts-ignore
+  const result = workflow.steps.a.next!.b.condition(state, 'x');
+  t.true(result);
+});
+
+test('should compile an edge with special string: on_job_failure (and return false)', (t) => {
+  const plan = planWithEdge({ condition: 'on_job_failure' });
+
+  const { workflow } = compilePlan(plan);
+
+  const state = {
+    errors: {},
+  };
+
+  // @ts-ignore
+  const result = workflow.steps.a.next!.b.condition(state, 'x');
+  t.false(result);
+});
+
+test('should compile an edge with special string: always', (t) => {
+  const plan = planWithEdge({ condition: 'always' });
+
+  const { workflow } = compilePlan(plan);
+
+  const state = {
+    errors: {
+      x: {},
+    },
+  };
+
+  // @ts-ignore
+  const result = workflow.steps.a.next!.b.condition(state, 'x');
+  t.true(result);
+});
+
 test('should compile an edge with arithmetic', (t) => {
   const plan = planWithEdge({ condition: '1 + 1' });
 
