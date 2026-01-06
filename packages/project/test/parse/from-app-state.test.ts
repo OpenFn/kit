@@ -86,6 +86,7 @@ test('should create a Project from prov state with a workflow', (t) => {
     id: 'my-workflow',
     name: 'My Workflow',
     history: [],
+    start: 'trigger',
     steps: [
       {
         id: 'trigger',

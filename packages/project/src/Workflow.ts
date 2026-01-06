@@ -13,6 +13,7 @@ class Workflow {
   index: any;
 
   name?: string;
+  start?: string;
   id: string;
   openfn?: l.WorkflowMeta;
   options: any; // TODO

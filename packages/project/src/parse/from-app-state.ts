@@ -96,6 +96,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     name: workflow.name,
     steps: [],
     history: workflow.version_history ?? [],
+    start: 'trigger',
     openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
   if (workflow.name) {
