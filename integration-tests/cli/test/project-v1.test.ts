@@ -138,7 +138,7 @@ steps:
     next:
       transform-data:
         disabled: false
-        condition: true
+        condition: always
   - id: transform-data
     name: Transform data
     adaptor: "@openfn/language-common@latest"
