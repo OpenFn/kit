@@ -90,7 +90,7 @@ workflows:
         next:
           transform-data:
             disabled: false
-            condition: true
+            condition: always
             openfn:
               uuid: a9a3adef-b394-4405-814d-3ac4323f4b4b
     history:
