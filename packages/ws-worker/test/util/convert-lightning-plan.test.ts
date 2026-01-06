@@ -41,11 +41,6 @@ const createJob = (props = {}) => ({
   ...props,
 });
 
-const testEdgeCondition = (expr: string, state: any) => {
-  const fn = new Function('state', 'return ' + expr);
-  return fn(state);
-};
-
 test('convert a single job', (t) => {
   const run: Partial<LightningPlan> = {
     id: 'w',
