@@ -91,6 +91,13 @@ export const extractStackTrace = (e: Error) => {
   }
 };
 
+export class StateTooLargeError extends Error {
+  constructor(limit_mb: number) {
+    super();
+    this.message = `State exceeds the limit of ${limit_mb}mb`;
+  }
+}
+
 // Abstract error supertype
 export class RTError extends Error {
   source = 'runtime';

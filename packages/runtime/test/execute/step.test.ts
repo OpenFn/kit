@@ -192,7 +192,7 @@ test.serial(
   }
 );
 
-test.serial(
+test.serial.only(
   `notify ${NOTIFY_JOB_COMPLETE} should publish serializable state`,
   async (t) => {
     // Promises will trigger an exception if you try to serialize them

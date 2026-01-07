@@ -20,6 +20,7 @@ import {
 import { isNullState } from '../util/null-state';
 import sourcemapErrors from '../util/sourcemap-errors';
 import createProfiler from '../util/profile-memory';
+import ensureStateSize from '../util/ensure-state-size';
 
 const loadCredentials = async (
   job: Job,
@@ -79,13 +80,20 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
 
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
-const prepareFinalState = (
+const prepareFinalState = async (
   state: any,
   logger: Logger,
   statePropsToRemove?: string[]
 ) => {
   if (isNullState(state)) return undefined;
   if (state) {
+    try {
+      await ensureStateSize(state);
+    } catch (e) {
+      logger.error('Critical error processing state');
+      throw e;
+    }
+
     if (!statePropsToRemove) {
       // As a strict default, remove the configuration key
       // tbh this should happen higher up in the stack but it causes havoc in unit testing
@@ -190,7 +198,11 @@ const executeStep = async (
         const duration = logger.timer(timerId);
         logger.error(`${jobName} aborted with error (${duration})`);
 
-        state = prepareFinalState(state, logger, ctx.opts.statePropsToRemove);
+        state = await prepareFinalState(
+          state,
+          logger,
+          ctx.opts.statePropsToRemove
+        );
         // Whatever the final state was, save that as the initial state to the next thing
         result = state;
 
@@ -219,7 +231,11 @@ const executeStep = async (
     if (!didError) {
       const humanDuration = logger.timer(timerId);
       logger.success(`${jobName} completed in ${humanDuration}`);
-      result = prepareFinalState(result, logger, ctx.opts.statePropsToRemove);
+      result = await prepareFinalState(
+        result,
+        logger,
+        ctx.opts.statePropsToRemove
+      );
 
       // Take a memory snapshot
       // IMPORTANT: this runs _after_ the state object has been serialized
