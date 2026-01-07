@@ -203,7 +203,7 @@ const executeStep = async (
           state,
           logger,
           ctx.opts.statePropsToRemove,
-          plan.options.stateLimit_mb ?? ctx.opts.defaultStateLimit_mb
+          ctx.opts.stateLimitMb
         );
         // Whatever the final state was, save that as the initial state to the next thing
         result = state;
@@ -237,7 +237,7 @@ const executeStep = async (
         result,
         logger,
         ctx.opts.statePropsToRemove,
-        plan.options.stateLimit_mb ?? ctx.opts.defaultStateLimit_mb
+        ctx.opts.stateLimitMb
       );
 
       // Take a memory snapshot

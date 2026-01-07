@@ -268,7 +268,6 @@ export type WorkflowOptions = {
   // TODO Both numbers in minutes maybe
   timeout?: number;
   stepTimeout?: number;
-  stateLimit_mb?: number;
   start?: StepId;
   end?: StepId;
 

@@ -916,7 +916,7 @@ test('do not enforce state size limit if state is small enough', async (t) => {
   t.pass('did not fail');
 });
 
-test('enforce state size limit from runtime default value', async (t) => {
+test('enforce state size limit from runtime option', async (t) => {
   const plan: ExecutionPlan = {
     workflow: {
       steps: [
@@ -929,31 +929,7 @@ test('enforce state size limit from runtime default value', async (t) => {
   };
 
   try {
-    await run(plan, {}, { defaultStateLimit_mb: 1 / 1024 });
-    t.fail('Should have thrown StateTooLargeError');
-  } catch (error: any) {
-    t.is(error.name, 'StateTooLargeError');
-    t.regex(error.message, /State exceeds the limit/);
-  }
-});
-
-test('enforce state size limit from plan option', async (t) => {
-  const plan: ExecutionPlan = {
-    workflow: {
-      steps: [
-        {
-          expression:
-            'export default [(s) => { s.data.large = new Array(1024).fill("z").join(""); return s; }]',
-        },
-      ],
-    },
-    options: {
-      stateLimit_mb: 1 / 1024,
-    },
-  };
-
-  try {
-    await run(plan, {}, { defaultStateLimit_mb: 1000 });
+    await run(plan, {}, { stateLimitMb: 1 / 1024 });
     t.fail('Should have thrown StateTooLargeError');
   } catch (error: any) {
     t.is(error.name, 'StateTooLargeError');
