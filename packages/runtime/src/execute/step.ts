@@ -83,14 +83,15 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
 const prepareFinalState = async (
   state: any,
   logger: Logger,
-  statePropsToRemove?: string[]
+  statePropsToRemove?: string[],
+  stateLimit_mb?: number
 ) => {
   if (isNullState(state)) return undefined;
   if (state) {
     try {
-      await ensureStateSize(state);
+      await ensureStateSize(state, stateLimit_mb);
     } catch (e) {
-      logger.error('Critical error processing state');
+      logger.error('Critical error processing state:');
       throw e;
     }
 
@@ -201,7 +202,8 @@ const executeStep = async (
         state = await prepareFinalState(
           state,
           logger,
-          ctx.opts.statePropsToRemove
+          ctx.opts.statePropsToRemove,
+          plan.options.stateLimit_mb ?? ctx.opts.defaultStateLimit_mb
         );
         // Whatever the final state was, save that as the initial state to the next thing
         result = state;
@@ -234,7 +236,8 @@ const executeStep = async (
       result = await prepareFinalState(
         result,
         logger,
-        ctx.opts.statePropsToRemove
+        ctx.opts.statePropsToRemove,
+        plan.options.stateLimit_mb ?? ctx.opts.defaultStateLimit_mb
       );
 
       // Take a memory snapshot

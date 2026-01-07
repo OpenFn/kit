@@ -38,6 +38,8 @@ export type Options = {
 
   /** Optional name for the expression (if passed a string) */
   defaultStepId?: string;
+
+  defaultStateLimit_mb?: number;
 };
 
 type RawOptions = Omit<Options, 'linker'> & {

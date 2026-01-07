@@ -92,6 +92,7 @@ export const extractStackTrace = (e: Error) => {
 };
 
 export class StateTooLargeError extends Error {
+  name = 'StateTooLargeError';
   constructor(limit_mb: number) {
     super();
     this.message = `State exceeds the limit of ${limit_mb}mb`;
