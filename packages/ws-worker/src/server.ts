@@ -312,6 +312,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         if (!('logPayloadLimitMb' in options)) {
           options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
+        // Set the maximum size of state objects inside the runtime
+        options.stateLimitMb = Math.max(
+          0.25 * options.memoryLimitMb!,
+          options.payloadLimitMb!,
+          50
+        );
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
@@ -319,7 +325,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         options.batchLogs = app.options.batchLogs;
         options.batchInterval = app.options.batchInterval;
         options.batchLimit = app.options.batchLimit;
-        options.stateLimitMb = 1;
 
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {

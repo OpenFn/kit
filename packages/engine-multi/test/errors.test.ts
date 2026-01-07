@@ -186,7 +186,6 @@ test.serial('state object too big', async (t) => {
     };
 
     engine.execute(plan, {}, options).on(WORKFLOW_ERROR, (evt) => {
-      console.log(evt);
       t.is(evt.type, 'StateTooLargeError');
       t.is(evt.severity, 'kill');
       t.is(evt.message, 'State exceeds the limit of 0.1mb');

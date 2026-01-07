@@ -279,7 +279,7 @@ test('kill: timeout', async (t) => {
   t.is(reason.error_message, 'Workflow failed to return within 100ms');
 });
 
-test.only('exception: state too large', async (t) => {
+test('exception: state too large', async (t) => {
   const plan = createPlan({
     id: 'x',
     expression: `export default [(s) => {
