@@ -1071,7 +1071,6 @@ test('steps can write circular references to state without blowing up downstream
   ]);
 
   const result: any = await executePlan(plan, {}, {}, mockLogger);
-
   t.notThrows(() => JSON.stringify(result));
   t.deepEqual(result, {
     data: {

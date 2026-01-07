@@ -2,7 +2,7 @@ import type { Job, State, StepId } from '@openfn/lexicon';
 import type { Logger } from '@openfn/logger';
 
 import executeExpression, { ExecutionErrorWrapper } from './expression';
-import clone from '../util/clone';
+import clone, { asyncClone } from '../util/clone';
 import assembleState from '../util/assemble-state';
 import type {
   CompiledStep,
@@ -79,7 +79,7 @@ const calculateNext = (job: CompiledStep, result: any, logger: Logger) => {
 
 // TODO this is suboptimal and may be slow on large objects
 // (especially as the result get stringified again downstream)
-const prepareFinalState = (
+const prepareFinalState = async (
   state: any,
   logger: Logger,
   statePropsToRemove?: string[]
@@ -104,7 +104,23 @@ const prepareFinalState = (
         `Cleaning up state. Removing keys: ${removedProps.join(', ')}`
       );
 
-    return clone(state);
+    // Technically this should restrict all state objects
+    // to be the dataclip size limit
+    // But that's likely to be a breaking change
+    // So for now, just set a very high dataclip size limit here
+    // In practice, any state objects this large are likely to trigger
+    // an OOM kill, so the runtime behaviour is a bit academic
+    const stateLimit_mb = 1000;
+    try {
+      return asyncClone(state, stateLimit_mb);
+    } catch (e) {
+      console.log('****');
+      // If the clone failed, we're in trouble
+      logger.error(
+        `Error: State object exceeds size limit of ${stateLimit_mb}. An empty state object will be returned from this step.`
+      );
+      return {};
+    }
   }
   return state;
 };
@@ -190,7 +206,11 @@ const executeStep = async (
         const duration = logger.timer(timerId);
         logger.error(`${jobName} aborted with error (${duration})`);
 
-        state = prepareFinalState(state, logger, ctx.opts.statePropsToRemove);
+        state = await prepareFinalState(
+          state,
+          logger,
+          ctx.opts.statePropsToRemove
+        );
         // Whatever the final state was, save that as the initial state to the next thing
         result = state;
 
@@ -219,7 +239,11 @@ const executeStep = async (
     if (!didError) {
       const humanDuration = logger.timer(timerId);
       logger.success(`${jobName} completed in ${humanDuration}`);
-      result = prepareFinalState(result, logger, ctx.opts.statePropsToRemove);
+      result = await prepareFinalState(
+        result,
+        logger,
+        ctx.opts.statePropsToRemove
+      );
 
       // Take a memory snapshot
       // IMPORTANT: this runs _after_ the state object has been serialized
