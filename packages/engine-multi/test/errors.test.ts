@@ -165,6 +165,36 @@ test.serial.skip('vm oom error', (t) => {
   });
 });
 
+test.serial('state object too big', async (t) => {
+  return new Promise((done) => {
+    const plan = {
+      id: 'x',
+      workflow: {
+        steps: [
+          {
+            expression: `export default [(s) => {
+              s.data = new Array(1024 * 1024).fill("x").join("");
+              return s;
+            }]`,
+          },
+        ],
+      },
+    };
+
+    const options = {
+      stateLimitMb: 0.1,
+    };
+
+    engine.execute(plan, {}, options).on(WORKFLOW_ERROR, (evt) => {
+      console.log(evt);
+      t.is(evt.type, 'StateTooLargeError');
+      t.is(evt.severity, 'kill');
+      t.is(evt.message, 'State exceeds the limit of 0.1mb');
+      done();
+    });
+  });
+});
+
 test.serial('execution error from async code', (t) => {
   return new Promise((done) => {
     const plan = {

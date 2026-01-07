@@ -46,8 +46,16 @@ const execute = async (context: ExecutionContext) => {
       repoDir: options.repoDir,
       profile: context.options.profile,
       profilePollInteval: context.options.profilePollInterval,
+      // work out the max size of the state object at the end of each step
+      // This must be fairly high to prevent crashes
+      defaultStateLimit_mb:
+        options.stateLimitMb ??
+        Math.max(
+          (options.payloadLimitMb ?? 0) * 2,
+          options.memoryLimitMb!,
+          100
+        ),
     } as RunOptions;
-
     // Construct the payload limits object
     const payloadLimits: PayloadLimits = {};
     if (options.payloadLimitMb !== undefined) {

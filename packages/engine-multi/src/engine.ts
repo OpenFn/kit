@@ -167,6 +167,7 @@ const createEngine = async (
       callWorker,
       options: {
         ...options,
+        stateLimitMb: opts.stateLimitMb,
         sanitize: opts.sanitize,
         resolvers: opts.resolvers,
         runTimeoutMs: opts.runTimeoutMs ?? defaultTimeout,

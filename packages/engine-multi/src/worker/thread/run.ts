@@ -20,6 +20,7 @@ export type RunOptions = {
   jobLogLevel?: LogLevel;
   profile?: boolean;
   profilePollInterval?: number;
+  defaultStateLimit_mb?: number;
 };
 
 const eventMap = {
@@ -39,6 +40,7 @@ register({
       jobLogLevel,
       profile,
       profilePollInterval,
+      defaultStateLimit_mb,
     } = runOptions;
     const { logger, jobLogger, adaptorLogger } = createLoggers(
       plan.id!,
@@ -54,9 +56,8 @@ register({
     console = adaptorLogger;
 
     // Leave console.debug for local debugging
-    // This goes to stdout but not the adapator logger
+    // This goes to stdout but not the adaptor logger
     console.debug = debug;
-
     // TODO I would like to pull these options out of here
     const options = {
       // disable the runtime's own timeout
@@ -72,6 +73,7 @@ register({
       profile,
       profilePollInterval,
       statePropsToRemove,
+      defaultStateLimit_mb,
       callbacks: {
         // TODO: this won't actually work across the worker boundary
         // For now I am preloading credentials

@@ -319,6 +319,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         options.batchLogs = app.options.batchLogs;
         options.batchInterval = app.options.batchInterval;
         options.batchLimit = app.options.batchLimit;
+        options.stateLimitMb = 1;
 
         // Callback to be triggered when the work is done (including errors)
         const onFinish = () => {
