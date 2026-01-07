@@ -17,10 +17,6 @@ const replacer = (_key: string, value: any) => {
     return undefined;
   }
 
-  // Return a nicer representation of circular values
-  if (value.$ref && Object.keys(value).length === 1) {
-    return '[Circular]';
-  }
   return value;
 };
 
@@ -54,8 +50,20 @@ export const asyncClone = async (
 
       jsonString += chunk;
     }
+
     // Re-parse the stringified JSON back into an object
-    return JSON.parse(jsonString);
+    // Use a reviver to convert circular reference markers to '[Circular]'
+    return JSON.parse(jsonString, (_key, value) => {
+      if (
+        value &&
+        typeof value === 'object' &&
+        value.$ref &&
+        Object.keys(value).length === 1
+      ) {
+        return '[Circular]';
+      }
+      return value;
+    });
   } catch (error) {
     stream.destroy();
     throw error;
