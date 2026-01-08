@@ -6,7 +6,7 @@ const replacer = (_key: string, value: any) => {
   if (
     value === undefined ||
     typeof value === 'function' ||
-    value.constructor?.name === 'Promise'
+    value?.constructor?.name === 'Promise'
   ) {
     return undefined;
   }
