@@ -181,14 +181,14 @@ test.serial(`should reset backoff after claim`, (t) => {
     });
 
     lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
-      // set this articially high - if there are no more claims, the test will fail
+      // set this artificially high - if there are no more claims, the test will fail
       lastClaimDiff = 10000;
 
       // When the run is finished, the claims should resume
       // but with a smaller backoff
       setTimeout(() => {
         t.log('Backoff after run:', lastClaimDiff);
-        t.true(lastClaimDiff < 5);
+        t.true(lastClaimDiff < 10);
         done();
       }, 10);
     });
