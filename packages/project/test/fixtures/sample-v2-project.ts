@@ -29,7 +29,7 @@ export const json: SerializedProject = {
       ],
       name: 'Workflow',
       id: 'workflow',
-      start: 'trigger',
+      options: { start: 'trigger' },
       openfn: { uuid: 1 },
       history: [],
     },

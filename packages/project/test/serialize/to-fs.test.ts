@@ -1,6 +1,7 @@
 import test from 'ava';
 import { Project } from '../../src/Project';
 import toFs, { extractWorkflow } from '../../src/serialize/to-fs';
+import Workflow from '../../src/Workflow';
 
 const step = {
   id: 'step',
@@ -31,16 +32,54 @@ test('extractWorkflow: single simple workflow (yaml by default)', (t) => {
   const { path, content } = extractWorkflow(project, 'my-workflow');
   t.is(path, 'workflows/my-workflow/my-workflow.yaml');
 
-  // TODO is the empty options object correct here??
   t.deepEqual(
     content,
-    `id: my-workflow
-name: My Workflow
+    `workflow:
+  id: my-workflow
+  name: My Workflow
+  steps:
+    - id: step
+      adaptor: "@openfn/language-common@latest"
+      expression: ./step.js
 options: {}
-steps:
-  - id: step
-    adaptor: "@openfn/language-common@latest"
-    expression: ./step.js
+`
+  );
+});
+
+test('extractWorkflow: workflow with options', (t) => {
+  const project = new Project({
+    workflows: [
+      new Workflow(
+        {
+          // TODO I need to fix  this name/id conflict
+          // the local workflow id is a slugified form of the name
+          id: 'my-workflow',
+          name: 'My Workflow',
+          steps: [step],
+          // should be ignored because this lives in the project file
+          openfn: {
+            id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+          },
+        },
+        { start: 'step' }
+      ),
+    ],
+  });
+
+  const { path, content } = extractWorkflow(project, 'my-workflow');
+  t.is(path, 'workflows/my-workflow/my-workflow.yaml');
+
+  t.deepEqual(
+    content,
+    `workflow:
+  id: my-workflow
+  name: My Workflow
+  steps:
+    - id: step
+      adaptor: "@openfn/language-common@latest"
+      expression: ./step.js
+options:
+  start: step
 `
   );
 });
@@ -58,7 +97,7 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
               id: 'step1',
               next: {
                 step2: {
-                  condition: true,
+                  condition: 'always',
                   openfn: {
                     // should be excluded!
                     uuid: 1,
@@ -88,26 +127,28 @@ test('extractWorkflow: single simple workflow with an edge', (t) => {
 
   t.is(path, 'workflows/my-workflow/my-workflow.json');
   t.deepEqual(JSON.parse(content), {
-    id: 'my-workflow',
-    name: 'My Workflow',
-    options: {},
-    steps: [
-      {
-        id: 'step1',
-        expression: './step1.js',
-        adaptor: '@openfn/language-common@latest',
-        next: {
-          step2: {
-            condition: true,
+    workflow: {
+      id: 'my-workflow',
+      name: 'My Workflow',
+      steps: [
+        {
+          id: 'step1',
+          expression: './step1.js',
+          adaptor: '@openfn/language-common@latest',
+          next: {
+            step2: {
+              condition: 'always',
+            },
           },
         },
-      },
-      {
-        id: 'step2',
-        expression: './step2.js',
-        adaptor: '@openfn/language-common@latest',
-      },
-    ],
+        {
+          id: 'step2',
+          expression: './step2.js',
+          adaptor: '@openfn/language-common@latest',
+        },
+      ],
+    },
+    options: {},
   });
 });
 
@@ -142,17 +183,19 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
 
   t.is(path, 'workflows/my-workflow/my-workflow.json');
   t.deepEqual(JSON.parse(content), {
-    id: 'my-workflow',
-    name: 'My Workflow',
+    workflow: {
+      id: 'my-workflow',
+      name: 'My Workflow',
+      steps: [
+        {
+          id: 'step',
+          expression: './step.js',
+          adaptor: '@openfn/language-common@latest',
+          foo: 'bar',
+        },
+      ],
+    },
     options: {},
-    steps: [
-      {
-        id: 'step',
-        expression: './step.js',
-        adaptor: '@openfn/language-common@latest',
-        foo: 'bar',
-      },
-    ],
   });
 });
 
@@ -177,7 +220,7 @@ test('extractWorkflow: single simple workflow with custom root', (t) => {
     config
   );
 
-  const { path, content } = extractWorkflow(project, 'my-workflow');
+  const { path } = extractWorkflow(project, 'my-workflow');
 
   t.is(path, 'openfn/wfs/my-workflow/my-workflow.json');
 });
@@ -223,7 +266,9 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
     },
   });
 
-  const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
+  const { workflow } = JSON.parse(
+    files['workflows/my-workflow/my-workflow.json']
+  );
   t.is(workflow.id, 'my-workflow');
   t.is(workflow.steps.length, 1);
 

@@ -7,6 +7,7 @@ import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
 import ensureJson from '../util/ensure-json';
+import Workflow from '../Workflow';
 
 export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
@@ -96,7 +97,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     name: workflow.name,
     steps: [],
     history: workflow.version_history ?? [],
-    start: 'trigger',
+
     openfn: renameKeys(remoteProps, { id: 'uuid' }),
   };
   if (workflow.name) {
@@ -162,5 +163,10 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     mapped.steps.push(s);
   });
 
-  return mapped;
+  // TODO do we need to load other options from the state file?
+  const options = {
+    start: 'trigger',
+  };
+
+  return new Workflow(mapped, options);
 };

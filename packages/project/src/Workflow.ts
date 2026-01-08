@@ -16,9 +16,9 @@ class Workflow {
   start?: string;
   id: string;
   openfn?: l.WorkflowMeta;
-  options: any; // TODO
+  options: l.WorkflowOptions;
 
-  constructor(workflow: l.Workflow) {
+  constructor(workflow: l.Workflow, options: l.WorkflowOptions = {}) {
     this.index = {
       steps: {}, // steps by id
       edges: {}, // edges by from-id id
@@ -31,7 +31,7 @@ class Workflow {
     // history needs to be on workflow object.
     this.workflow.history = workflow.history?.length ? workflow.history : [];
 
-    const { id, name, openfn, steps, history, ...options } = workflow;
+    const { id, name, openfn } = workflow;
     if (!(id || name)) {
       throw new Error('A Workflow MUST have a name or id');
     }
@@ -160,7 +160,10 @@ class Workflow {
   }
 
   toJSON(): Object {
-    return clone(this.workflow);
+    return {
+      ...clone(this.workflow),
+      options: this.options,
+    };
   }
 
   getUUIDMap(): Record<string, string> {

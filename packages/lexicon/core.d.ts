@@ -161,8 +161,6 @@ export type Workflow = {
 
   // holds history information of a workflow
   history?: string[];
-
-  start?: string;
 };
 
 export type StepId = string;

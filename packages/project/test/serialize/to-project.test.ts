@@ -1,8 +1,9 @@
 import test from 'ava';
 import { Project } from '../../src/Project';
-import generateWorkflow, { generateProject } from '../../src/gen/generator';
+import generateWorkflow from '../../src/gen/generator';
 
 import * as v2 from '../fixtures/sample-v2-project';
+import Workflow from '../../src/Workflow';
 
 const createProject = () => {
   const proj = new Project({
@@ -20,22 +21,24 @@ const createProject = () => {
       allow_support_access: false,
     },
     workflows: [
-      generateWorkflow(
-        'trigger(type=webhook)-b(expression="fn()",adaptor=common,project_credential_id=x)',
-        {
-          uuidSeed: 1,
-          openfnUuid: true,
-        }
+      new Workflow(
+        generateWorkflow(
+          'trigger(type=webhook)-b(expression="fn()",adaptor=common,project_credential_id=x)',
+          {
+            uuidSeed: 1,
+            openfnUuid: true,
+          }
+        ),
+        { start: 'trigger' }
       ),
     ],
   });
   // hack
   delete proj.workflows[0].steps[0].name;
-  proj.workflows[0].workflow.start = 'trigger';
   return proj;
 };
 
-test('should serialize to YAML format v2 project by default', (t) => {
+test.only('should serialize to YAML format v2 project by default', (t) => {
   const proj = createProject();
   const yaml = proj.serialize('project');
 

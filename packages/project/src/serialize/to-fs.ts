@@ -50,7 +50,6 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
     name: workflow.name,
     // Note: if no options are defined, options will serialize to an empty object
     // Not crazy about this - maybe we should do something better? Or do we like the consistency?
-    options: workflow.options,
     steps: workflow.steps.map((step) => {
       const { openfn, expression, next, ...mapped } = step;
       if (expression) {
@@ -65,7 +64,11 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
       return mapped;
     }),
   };
-  return handleOutput(wf, path, format!);
+  return handleOutput(
+    { workflow: wf, options: workflow.options },
+    path,
+    format!
+  );
 };
 
 // extracts an expression.js from a workflow in project
