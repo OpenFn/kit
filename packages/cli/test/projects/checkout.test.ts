@@ -457,7 +457,7 @@ workspace:
         next: {
           'transform-data-to-fhir-standard': {
             disabled: false,
-            condition: true,
+            condition: 'always',
           },
         },
       },

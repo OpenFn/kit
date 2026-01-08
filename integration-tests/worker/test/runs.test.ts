@@ -283,3 +283,24 @@ test.serial('Run with collections', async (t) => {
     { key: 'c', value: { id: 'c' } },
   ]);
 });
+
+test.serial('Run with edge conditions', async (t) => {
+  const job1 = createJob({
+    body: `fn((s) => s)`,
+  });
+  const job2 = createJob({
+    body: `fn((s) => {
+      s.didExecuteStep2 = true
+      return s;
+    })`,
+  });
+  const edge = createEdge(job1, job2, {
+    // I would prefer this ran  on failure, but that's a lot
+    // harder to do the way these tests are set up
+    condition: 'on_job_success',
+  });
+  const attempt = createRun([], [job1, job2], [edge]);
+
+  const state = await run(t, attempt);
+  t.true(state.didExecuteStep2);
+});

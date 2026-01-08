@@ -45,6 +45,7 @@ export type ExecutionContextConstructor = {
 };
 
 export type ExecuteOptions = {
+  stateLimitMb?: number;
   payloadLimitMb?: number;
   logPayloadLimitMb?: number;
   memoryLimitMb?: number;
@@ -72,7 +73,7 @@ export interface RuntimeEngine {
   execute(
     plan: ExecutionPlan,
     input: State,
-    options?: Partial<EngineOptions>
+    options?: ExecuteOptions
   ): Pick<EventEmitter, 'on' | 'off' | 'once'>;
 
   destroy(instant?: boolean): Promise<void>;

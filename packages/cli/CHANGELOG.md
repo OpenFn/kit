@@ -1,5 +1,19 @@
 # @openfn/cli
 
+## 1.22.0
+
+### Minor Changes
+
+- f089f8d: Fix edge conditions in pulled workflows
+
+### Patch Changes
+
+- Updated dependencies [f089f8d]
+- Updated dependencies [f089f8d]
+- Updated dependencies [064933d]
+  - @openfn/runtime@1.8.0
+  - @openfn/project@0.10.1
+
 ## 1.21.0
 
 ### Minor Changes

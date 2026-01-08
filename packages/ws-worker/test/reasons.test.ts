@@ -279,6 +279,26 @@ test('kill: timeout', async (t) => {
   t.is(reason.error_message, 'Workflow failed to return within 100ms');
 });
 
+test('exception: state too large', async (t) => {
+  const plan = createPlan({
+    id: 'x',
+    expression: `export default [(s) => {
+        s.data = new Array(1024 * 1024 * 10).fill("x").join("");
+        return s;
+      }]`,
+  });
+
+  const options = {
+    stateLimitMb: 0.1,
+  };
+
+  const { reason } = await execute(plan, {}, options);
+  t.is(reason.reason, 'kill');
+  t.is(reason.error_type, 'StateTooLargeError');
+  t.truthy(reason.error_message);
+  t.regex(reason.error_message!, /State exceeds the limit/);
+});
+
 test.todo('crash: workflow validation error');
 test.todo('fail: adaptor error');
 test.todo('crash: import error');

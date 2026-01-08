@@ -16,24 +16,6 @@ import { LightningPlan, LightningEdge } from '@openfn/lexicon/lightning';
 import { ExecuteOptions } from '@openfn/engine-multi';
 import { getNameAndVersion } from '@openfn/runtime';
 
-export const conditions: Record<string, (upstreamId: string) => string | null> =
-  {
-    on_job_success: (upstreamId: string) =>
-      `Boolean(!state?.errors?.["${upstreamId}"] ?? true)`,
-    on_job_failure: (upstreamId: string) =>
-      `Boolean(state?.errors && state.errors["${upstreamId}"])`,
-    always: (_upstreamId: string) => null,
-  };
-
-const mapEdgeCondition = (edge: LightningEdge) => {
-  const { condition } = edge;
-  if (condition && condition in conditions) {
-    const upstream = (edge.source_job_id || edge.source_trigger_id) as string;
-    return conditions[condition](upstream);
-  }
-  return condition;
-};
-
 const mapTriggerEdgeCondition = (edge: LightningEdge) => {
   const { condition } = edge;
   // This handles cron triggers with undefined conditions and the 'always' string.
@@ -205,9 +187,8 @@ export default (
         .reduce((obj, edge) => {
           const newEdge: StepEdge = {};
 
-          const condition = mapEdgeCondition(edge);
-          if (condition) {
-            newEdge.condition = condition;
+          if (edge.condition) {
+            newEdge.condition = edge.condition;
           }
           if (edge.enabled === false) {
             newEdge.disabled = true;

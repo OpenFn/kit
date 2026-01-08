@@ -141,12 +141,19 @@ const mapWorkflow = (workflow: Workflow) => {
         e.source_job_id = node.id;
       }
 
-      if (rules.condition === true) {
-        e.condition_type = 'always';
-      } else if (rules.condition === false) {
-        e.condition_type = 'never';
-      } else if (typeof rules.condition === 'string') {
-        // TODO conditional
+      if (rules.condition) {
+        if (typeof rules.condition === 'boolean') {
+          e.condition_type = rules.condition ? 'always' : 'never';
+        } else if (
+          rules.condition.match(
+            /^(always|never|on_job_success|on_job_failure)$/
+          )
+        ) {
+          e.condition_type = rules.condition;
+        } else {
+          e.condition_type = 'js_expression';
+          e.condition_expression = rules.condition;
+        }
       }
       wfState.edges.push(e);
     });
