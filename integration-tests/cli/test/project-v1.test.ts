@@ -131,6 +131,7 @@ test.serial('Checkout a project', async (t) => {
     workflowYaml,
     `id: my-workflow
 name: my workflow
+start: trigger-webhook
 options: {}
 steps:
   - id: trigger
