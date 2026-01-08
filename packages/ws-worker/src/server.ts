@@ -313,11 +313,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
         // Set the maximum size of state objects inside the runtime
-        options.stateLimitMb = Math.max(
-          0.25 * options.memoryLimitMb!,
-          options.payloadLimitMb!,
-          50
-        );
+        options.stateLimitMb = Math.max(0.25 * options.memoryLimitMb!, 100);
         logger.debug(
           `${id} setting runtime state limit to ${options.stateLimitMb}mb`
         );
