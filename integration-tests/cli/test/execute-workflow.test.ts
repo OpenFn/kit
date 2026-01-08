@@ -83,6 +83,41 @@ test.serial(
   }
 );
 
+test.serial(
+  `openfn ${jobsPath}/wf-array.yaml -S "{ \\"data\\": { \\"items\\": [\\"z\\"] } }"`,
+  async (t) => {
+    const { err } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+    t.is(out.data.items.length, 4);
+    t.deepEqual(out.data.items, ['z', 'a', 'b', 'c']);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/wf-array-legacy.yaml -S "{ \\"data\\": { \\"items\\": [\\"z\\"] } }"`,
+  async (t) => {
+    const { stdout, err } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+    t.is(out.data.items.length, 3);
+    t.deepEqual(out.data.items, ['z', 'b', 'c']);
+  }
+);
+
+test.serial(
+  `openfn ${jobsPath}/wf-array-legacy.json -S "{ \\"data\\": { \\"items\\": [\\"z\\"] } }"`,
+  async (t) => {
+    const { err } = await run(t.title);
+    t.falsy(err);
+    const out = getJSON();
+    t.is(out.data.items.length, 3);
+    t.deepEqual(out.data.items, ['z', 'b', 'c']);
+  }
+);
+
 // special start step
 test.serial(
   `openfn ${jobsPath}/wf-array.json --start b -S "{ \\"data\\": { \\"items\\": [] } }"`,
@@ -93,6 +128,17 @@ test.serial(
     const out = getJSON();
     t.is(out.data.items.length, 2);
     t.true(out.data.items.includes('b'));
+    t.true(out.data.items.includes('c'));
+  }
+);
+test.serial(
+  `openfn ${jobsPath}/wf-array-legacy.json --start c -S "{ \\"data\\": { \\"items\\": [] } }"`,
+  async (t) => {
+    const { err } = await run(t.title);
+    t.falsy(err);
+
+    const out = getJSON();
+    t.is(out.data.items.length, 1);
     t.true(out.data.items.includes('c'));
   }
 );
