@@ -59,7 +59,7 @@ const loadPlan = async (
     return fromProject(path.resolve('.'), workflow!, options, logger);
   }
 
-  if (expressionPath) {
+  if (!workflowObj && expressionPath) {
     return loadExpression(options, logger);
   }
 
