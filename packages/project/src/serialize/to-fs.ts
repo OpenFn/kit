@@ -48,6 +48,7 @@ export const extractWorkflow = (project: Project, workflowId: string) => {
   const wf = {
     id: workflow.id,
     name: workflow.name,
+    start: workflow.start,
     // Note: if no options are defined, options will serialize to an empty object
     // Not crazy about this - maybe we should do something better? Or do we like the consistency?
     options: workflow.options,

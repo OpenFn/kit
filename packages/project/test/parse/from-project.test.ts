@@ -86,6 +86,7 @@ test('import from a v2 project as JSON', async (t) => {
       uuid: 1,
     },
     history: [],
+    start: 'trigger',
     steps: [
       {
         name: 'b',
@@ -140,6 +141,7 @@ test('import from a v2 project as YAML', async (t) => {
     openfn: {
       uuid: 1,
     },
+    start: 'trigger',
     history: [],
     steps: [
       {
