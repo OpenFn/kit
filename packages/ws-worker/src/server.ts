@@ -318,6 +318,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           options.payloadLimitMb!,
           50
         );
+        logger.debug(
+          `${id} setting runtime state limit to ${options.stateLimitMb}mb`
+        );
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
