@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.10.1
+
+### Patch Changes
+
+- f089f8d: Map edge conditions so that they are compatible with CLI
+
 ## 0.10.0
 
 ### Minor Changes

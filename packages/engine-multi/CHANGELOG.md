@@ -1,5 +1,19 @@
 # engine-multi
 
+## 1.10.0
+
+### Minor Changes
+
+- 064933d: Measure the size of state objects at the end of each step, and throw if they exceed a limit
+
+  In the Worker, this limit is set to 25% of the available runtime memory.
+
+### Patch Changes
+
+- Updated dependencies [f089f8d]
+- Updated dependencies [064933d]
+  - @openfn/runtime@1.8.0
+
 ## 1.9.1
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @openfn/runtime
 
+## 1.8.0
+
+### Minor Changes
+
+- f089f8d: Support special condition strings `never`, `always`, `on_job_success` and `on_job_fail`.
+
+  These used to be mapped from Lightning workflows by the Worker, but by supporting them in the runtime directly we get much better compatibility across platforms
+
+- 064933d: Measure the size of state objects at the end of each step, and throw if they exceed a limit
+
+  In the Worker, this limit is set to 25% of the available runtime memory.
+
 ## 1.7.7
 
 ### Patch Changes
