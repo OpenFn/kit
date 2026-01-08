@@ -959,3 +959,40 @@ test('accept a whitelist as a string', async (t) => {
     t.is(error.message, 'module blacklisted: blah');
   }
 });
+
+test('do not enforce state size limit if state is small enough', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          expression:
+            'export default [(s) => { s.data.large = new Array(1024).fill("z").join(""); return s; }]',
+        },
+      ],
+    },
+  };
+
+  await run(plan, {}, {});
+  t.pass('did not fail');
+});
+
+test('enforce state size limit from runtime option', async (t) => {
+  const plan: ExecutionPlan = {
+    workflow: {
+      steps: [
+        {
+          expression:
+            'export default [(s) => { s.data.large = new Array(1024).fill("z").join(""); return s; }]',
+        },
+      ],
+    },
+  };
+
+  try {
+    await run(plan, {}, { stateLimitMb: 1 / 1024 });
+    t.fail('Should have thrown StateTooLargeError');
+  } catch (error: any) {
+    t.is(error.name, 'StateTooLargeError');
+    t.regex(error.message, /State exceeds the limit/);
+  }
+});

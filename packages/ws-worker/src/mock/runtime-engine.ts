@@ -74,7 +74,7 @@ async function createMock() {
     for (const step of steps) {
       const job = step as Job;
       if (typeof job.configuration === 'string') {
-        // Call the crendtial callback, but don't do anything with it
+        // Call the credential callback, but don't do anything with it
         job.configuration = await options.resolvers?.credential?.(
           job.configuration
         );

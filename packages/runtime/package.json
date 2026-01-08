@@ -48,6 +48,7 @@
   "dependencies": {
     "@openfn/logger": "workspace:*",
     "fast-safe-stringify": "^2.1.1",
+    "json-stream-stringify": "^3.1.6",
     "semver": "^7.7.2",
     "source-map": "^0.7.6"
   }

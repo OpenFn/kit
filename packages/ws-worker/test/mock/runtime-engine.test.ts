@@ -1,15 +1,16 @@
 import test from 'ava';
 import type { ExecutionPlan } from '@openfn/lexicon';
 
+import create from '../../src/mock/runtime-engine';
+import { waitForEvent, clone, createPlan } from '../util';
+
 import type {
   JobCompletePayload,
   JobStartPayload,
   WorkflowCompletePayload,
   WorkflowStartPayload,
 } from '@openfn/engine-multi';
-import create from '../../src/mock/runtime-engine';
-import { waitForEvent, clone, createPlan } from '../util';
-import { WorkflowErrorPayload } from '@openfn/engine-multi';
+import type { WorkflowErrorPayload } from '@openfn/engine-multi';
 
 const sampleWorkflow = {
   id: 'w1',
@@ -117,21 +118,30 @@ test.serial('wait function', async (t) => {
 test.serial(
   'resolve credential before job-start if credential is a string',
   async (t) => {
-    const wf = clone(sampleWorkflow);
-    wf.id = t.title;
-    wf.workflow.steps[0].configuration = 'x';
+    t.plan(1);
+    return new Promise((resolve) => {
+      const wf = clone(sampleWorkflow);
+      wf.id = t.title;
+      wf.workflow.steps[0].configuration = 'x';
 
-    let didCallCredentials;
-    const credential = async () => {
-      didCallCredentials = true;
-      return {};
-    };
+      let didCallCredentials = false;
+      const credential = async () => {
+        didCallCredentials = true;
+        return {};
+      };
 
-    // @ts-ignore
-    engine.execute(wf, {}, { resolvers: { credential } });
+      engine.listen(wf.id, {
+        'job-start': () => {
+          t.true(didCallCredentials);
+        },
+        'workflow-complete': () => {
+          resolve();
+        },
+      });
 
-    await waitForEvent<JobStartPayload>(engine, 'job-start');
-    t.true(didCallCredentials);
+      // @ts-ignore
+      engine.execute(wf, {}, { resolvers: { credential } });
+    });
   }
 );
 
@@ -145,7 +155,7 @@ test.serial('listen to events', async (t) => {
   };
 
   const wf = createPlan({
-    id: 'j1',
+    id: t.title,
     adaptors: ['common@1.0.0'],
     expression: 'export default [() => { console.log("x"); }]',
   });

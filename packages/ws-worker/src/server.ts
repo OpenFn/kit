@@ -312,6 +312,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         if (!('logPayloadLimitMb' in options)) {
           options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
+
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;
