@@ -312,11 +312,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         if (!('logPayloadLimitMb' in options)) {
           options.logPayloadLimitMb = app.options.logPayloadLimitMb;
         }
-        // Set the maximum size of state objects inside the runtime
-        options.stateLimitMb = Math.max(0.25 * options.memoryLimitMb!, 100);
-        logger.debug(
-          `${id} setting runtime state limit to ${options.stateLimitMb}mb`
-        );
+
         options.timeoutRetryCount = app.options.timeoutRetryCount;
         options.timeoutRetryDelay =
           app.options.timeoutRetryDelayMs ?? app.options.socketTimeoutSeconds;

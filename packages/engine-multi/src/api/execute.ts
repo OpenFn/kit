@@ -50,12 +50,13 @@ const execute = async (context: ExecutionContext) => {
       // This must be fairly high to prevent crashes
       stateLimitMb:
         options.stateLimitMb ??
-        Math.max(
-          (options.payloadLimitMb ?? 0) * 2,
-          options.memoryLimitMb!,
-          100
-        ),
+        Math.max((options.memoryLimitMb ?? 1000) * 0.25),
     } as RunOptions;
+
+    logger.debug(
+      `${state.plan.id} setting runtime state limit to ${runOptions.stateLimitMb}mb`
+    );
+
     // Construct the payload limits object
     const payloadLimits: PayloadLimits = {};
     if (options.payloadLimitMb !== undefined) {
