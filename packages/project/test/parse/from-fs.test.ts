@@ -40,6 +40,7 @@ test.serial('should load workspace config from json', async (t) => {
 
   t.deepEqual(project.config, {
     x: 1,
+    credentials: 'credentials.yaml',
     dirs: { projects: '.projects', workflows: 'workflows' },
     formats: { openfn: 'json', project: 'json', workflow: 'json' },
   });
@@ -62,6 +63,7 @@ test.serial('should load workspace config from yaml', async (t) => {
   const project = await parseProject({ root: '/ws' });
 
   t.deepEqual(project.config, {
+    credentials: 'credentials.yaml',
     x: 1,
     dirs: { projects: '.projects', workflows: 'workflows' },
     formats: { openfn: 'yaml', project: 'yaml', workflow: 'yaml' },

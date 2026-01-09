@@ -188,6 +188,7 @@ test('import with custom config', async (t) => {
 
   // note that alias should have been removed from config
   t.deepEqual(proj.config, {
+    credentials: 'credentials.yaml',
     dirs: {
       projects: 'p',
       workflows: 'w',

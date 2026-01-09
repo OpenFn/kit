@@ -119,6 +119,10 @@ export class Workspace {
     return Project.from('fs', { root: this.root });
   }
 
+  getCredentialMap() {
+    return this.config.credentials;
+  }
+
   // TODO this needs to return default values
   // We should always rely on the workspace to load these values
   getConfig(): Partial<l.WorkspaceConfig> {

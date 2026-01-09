@@ -8,6 +8,7 @@ import Project from '../Project';
 // Initialize and default Workspace (and Project) config
 
 export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
+  credentials: 'credentials.yaml',
   ...config,
   dirs: {
     projects: config.dirs?.projects ?? '.projects',
