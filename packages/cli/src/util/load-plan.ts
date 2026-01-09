@@ -37,6 +37,12 @@ const loadPlan = async (
     const content = await fs.readFile(path.resolve(options.path), 'utf-8');
     options.baseDir = dirname(options.path);
     workflowObj = yamlToJson(content);
+    const { options: o, ...rest } = workflowObj;
+    // restructure the workflow so that options are not on the workflow object,
+    // but part of hte execution plan options instead
+    if (!workflowObj.workflow && workflowObj.options) {
+      workflowObj = { workflow: rest, options: o };
+    }
   }
   // Run a workflow from a project, with a path and workflow name
   else if (options.path && options.workflow) {
