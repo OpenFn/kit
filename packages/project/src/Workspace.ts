@@ -22,6 +22,8 @@ export class Workspace {
   // TODO activeProject should be the actual project
   activeProject?: l.ProjectMeta;
 
+  root: string;
+
   private projects: Project[] = [];
   private projectPaths = new Map<string, string>();
   private isValid: boolean = false;
@@ -30,6 +32,7 @@ export class Workspace {
   // Set validate to false to suppress warnings if a Workspace doesn't exist
   // This is appropriate if, say, fetching a project for the first time
   constructor(workspacePath: string, logger?: Logger, validate = true) {
+    this.root = workspacePath;
     this.logger = logger ?? createLogger('Workspace', { level: 'info' });
 
     let context = { workspace: undefined, project: undefined };
@@ -110,6 +113,10 @@ export class Workspace {
       this.projects.find((p) => p.openfn?.uuid === this.activeProject?.uuid) ??
       this.projects.find((p) => p.id === this.activeProject?.id)
     );
+  }
+
+  getCheckedOutProject() {
+    return Project.from('fs', { root: this.root });
   }
 
   // TODO this needs to return default values

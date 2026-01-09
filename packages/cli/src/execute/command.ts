@@ -1,6 +1,7 @@
 import yargs from 'yargs';
 import { build, ensure, override } from '../util/command-builders';
 import * as o from '../options';
+import * as po from '../projects/options';
 
 import type { Opts } from '../options';
 
@@ -75,6 +76,8 @@ const options = [
   o.timeout,
   o.trace,
   o.useAdaptorsMonorepo,
+
+  po.workspace,
 ];
 
 const executeCommand: yargs.CommandModule<ExecuteOptions> = {
