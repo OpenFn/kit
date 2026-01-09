@@ -87,6 +87,7 @@ export interface WorkspaceFile {
 }
 
 export interface WorkspaceConfig {
+  credentials?: string;
   dirs: {
     workflows: string;
     projects: string;

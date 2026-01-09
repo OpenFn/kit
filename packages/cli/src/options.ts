@@ -67,6 +67,7 @@ export type Opts = {
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
   workflow: string;
+  workflowName?: string;
 
   // deprecated
   workflowPath?: string;
@@ -377,9 +378,8 @@ export const inputPath: CLIOption = {
       opts.planPath = basePath;
     } else if (basePath?.endsWith('.js')) {
       opts.expressionPath = basePath;
-    } else {
-      const base = getBaseDir(opts);
-      setDefaultValue(opts, 'expressionPath', nodePath.join(base, 'job.js'));
+    } else if (!opts.expressionPath) {
+      opts.workflowName = basePath;
     }
   },
 };

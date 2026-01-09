@@ -35,7 +35,7 @@ workflows:
     jobs:
       - name: Transform data
         body: |
-         // TODO
+          fn(() => ({ x: 1}))
         adaptor: "@openfn/language-common@latest"
         id: b8b780f3-98dd-4244-880b-e534d8f24547
         project_credential_id: null
@@ -151,7 +151,7 @@ steps:
     path.resolve(projectsPath, 'workflows/my-workflow/transform-data.js'),
     'utf8'
   );
-  t.is(expr.trim(), '// TODO');
+  t.is(expr.trim(), 'fn(() => ({ x: 1}))');
 });
 
 // requires the prior test to run
@@ -164,7 +164,7 @@ test.serial('merge a project', async (t) => {
 
   // assert the initial step code
   const initial = await readStep();
-  t.is(initial, '// TODO');
+  t.is(initial, 'fn(() => ({ x: 1}))');
 
   // Run the merge
   await run(`openfn merge hello-world-staging -w ${projectsPath} --force`);
@@ -172,4 +172,18 @@ test.serial('merge a project', async (t) => {
   // Check the step is updated
   const merged = await readStep();
   t.is(merged, "log('hello world')");
+});
+
+test.serial('execute a workflow from the checked out project', async (t) => {
+  // cheeky bonus test of checkout by alias
+  await run(`openfn checkout main --log debug -w ${projectsPath}`);
+
+  // execute a workflow
+  await run(
+    `openfn hello-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
+  );
+
+  const output = await readFile('/tmp/output.json', 'utf8');
+  const finalState = JSON.parse(output);
+  t.deepEqual(finalState, { x: 1 });
 });

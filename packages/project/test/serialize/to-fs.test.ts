@@ -216,6 +216,7 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   const config = JSON.parse(files['openfn.json']);
   t.deepEqual(config, {
     workspace: {
+      credentials: 'credentials.yaml',
       formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
       dirs: { projects: '.projects', workflows: 'workflows' },
     },

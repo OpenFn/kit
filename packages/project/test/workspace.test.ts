@@ -260,6 +260,7 @@ test('load from custom path', (t) => {
 test('load config', (t) => {
   const ws = new Workspace('/ws');
   t.deepEqual(ws.config, {
+    credentials: 'credentials.yaml',
     formats: {
       openfn: 'yaml',
       project: 'yaml',
