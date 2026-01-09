@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path, { dirname } from 'node:path';
 import { isPath } from '@openfn/compiler';
-import Project, { Workspace, yamlToJson } from '@openfn/project';
+import { Workspace, yamlToJson } from '@openfn/project';
 
 import abort from './abort';
 import expandAdaptors from './expand-adaptors';
@@ -41,12 +41,9 @@ const loadPlan = async (
       'Loading workflow from active project in workspace at ',
       options.workspace
     );
-    const workspace = new Workspace(options.workspace);
-    // ah - difficult in this approach is that it loads the yaml,
-    // not the file system
-    // mayeb that's a bug in getActiveProject though?
+    const workspace = new Workspace(options.workspace!);
     const proj = await workspace.getCheckedOutProject();
-    workflowObj = proj?.getWorkflow(workflowName || options.workflow);
+    workflowObj = proj?.getWorkflow(workflowName || options.workflow!);
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {
