@@ -130,7 +130,7 @@ test.serial('run a workflow with a JSON credential map', async (t) => {
   t.is(result.b, 'b');
 });
 
-test.serial.skip('run a workflow with a YAML credential map', async (t) => {
+test.serial('run a workflow with a YAML credential map', async (t) => {
   const workflow = {
     workflow: {
       steps: [

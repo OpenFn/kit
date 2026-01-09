@@ -24,6 +24,7 @@ const loadPlan = async (
     | 'expandAdaptors'
     | 'path'
     | 'globals'
+    | 'credentials'
   > & {
     workflow?: Opts['workflow'];
     workspace?: string; // from project opts
@@ -44,6 +45,10 @@ const loadPlan = async (
     const workspace = new Workspace(options.workspace!);
     const proj = await workspace.getCheckedOutProject();
     workflowObj = proj?.getWorkflow(workflowName || options.workflow!);
+
+    if (!options.credentials) {
+      options.credentials = workspace.getConfig().credentials;
+    }
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {
