@@ -380,10 +380,6 @@ export const inputPath: CLIOption = {
       opts.expressionPath = basePath;
     } else if (!opts.expressionPath) {
       opts.workflowName = basePath;
-    } else {
-      // Ok, so we should stop defaulting to job.js
-      const base = getBaseDir(opts);
-      setDefaultValue(opts, 'expressionPath', nodePath.join(base, 'job.js'));
     }
   },
 };

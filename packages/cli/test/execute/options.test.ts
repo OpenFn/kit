@@ -75,12 +75,6 @@ test('enable immutability', (t) => {
   t.true(options.immutable);
 });
 
-test('default job path', (t) => {
-  const options = parse('execute /tmp/my-job/ --immutable');
-  t.is(options.path, '/tmp/my-job/');
-  t.is(options.expressionPath, '/tmp/my-job/job.js');
-});
-
 test('enable json logging', (t) => {
   const options = parse('execute job.js --log-json');
   t.true(options.logJson);
