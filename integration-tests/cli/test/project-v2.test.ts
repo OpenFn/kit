@@ -26,6 +26,7 @@ options:
   retention_policy: retain_all
 workflows:
   - name: Hello Workflow
+    start: trigger
     steps:
       - id: trigger
         type: webhook
@@ -40,8 +41,8 @@ workflows:
               uuid: add150e9-8616-48ca-844e-8aaa489c7a10
       - id: transform-data
         name: Transform data
-        expression: |-
-          // TODO
+        expression: |
+          fn(() => ({ x: 1}))
         adaptor: "@openfn/language-dhis2@8.0.4"
         openfn:
           uuid: a9f64216-7974-469d-8415-d6d9baf2f92e
@@ -81,6 +82,7 @@ options:
   retention_policy: retain_all
 workflows:
   - name: Hello Workflow
+    start: trigger
     steps:
       - id: trigger
         type: webhook
@@ -95,7 +97,7 @@ workflows:
               uuid: f34146b5-de43-4b05-ac00-3b4f327e62ec
       - id: transform-data
         name: Transform data
-        expression: |-
+        expression: |
           fn()
         adaptor: "@openfn/language-dhis2@8.0.4"
         openfn:
@@ -146,6 +148,7 @@ test.serial('Checkout a project', async (t) => {
     workflowYaml,
     `id: hello-workflow
 name: Hello Workflow
+start: trigger
 options: {}
 steps:
   - id: trigger
@@ -176,8 +179,6 @@ test.serial('merge a project', async (t) => {
       'utf8'
     ).then((str) => str.trim());
 
-  await run(`openfn checkout sandboxing-simple -w ${projectsPath}`);
-
   // assert the initial step code
   const initial = await readStep();
   t.is(initial, '// TODO');
@@ -190,4 +191,18 @@ test.serial('merge a project', async (t) => {
   // Check the step is updated
   const merged = await readStep();
   t.is(merged, 'fn()');
+});
+
+test.serial('execute a workflow from the checked out project', async (t) => {
+  // cheeky bonus test of checkout by alias
+  await run(`openfn checkout main --log debug -w ${projectsPath}`);
+
+  // execute a workflow
+  await run(
+    `openfn hello-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
+  );
+
+  const output = await readFile('/tmp/output.json', 'utf8');
+  const finalState = JSON.parse(output);
+  t.deepEqual(finalState, { x: 1 });
 });
