@@ -589,7 +589,7 @@ test('only execute one job in a two-job execution plan', async (t) => {
   t.is(result.data.x, 1);
 });
 
-test('execute a two-job execution plan with custom start', async (t) => {
+test('execute a two-job execution plan with an option start', async (t) => {
   const plan = createPlan(
     [
       {
@@ -604,6 +604,24 @@ test('execute a two-job execution plan with custom start', async (t) => {
     ],
     { start: 'job2' }
   );
+
+  const result: any = await executePlan(plan, {}, {}, mockLogger);
+  t.is(result.data.result, 11);
+});
+
+test('execute a two-job execution plan with a custom start', async (t) => {
+  const plan = createPlan([
+    {
+      id: 'job1',
+      expression: 'export default [() => ({ data: { result: 11 } }) ]',
+    },
+    {
+      id: 'job2',
+      expression: 'export default [() => ({ data: { result: 1 } }) ]',
+      next: { job1: true },
+    },
+  ]);
+  plan.workflow.start = 'job2';
 
   const result: any = await executePlan(plan, {}, {}, mockLogger);
   t.is(result.data.result, 11);

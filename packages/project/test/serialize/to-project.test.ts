@@ -31,6 +31,7 @@ const createProject = () => {
   });
   // hack
   delete proj.workflows[0].steps[0].name;
+  proj.workflows[0].start = 'trigger';
   return proj;
 };
 

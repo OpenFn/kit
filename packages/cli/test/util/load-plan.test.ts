@@ -4,11 +4,7 @@ import { createMockLogger } from '@openfn/logger';
 import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
-import {
-  collectionsEndpoint,
-  collectionsVersion,
-  Opts,
-} from '../../src/options';
+import { Opts } from '../../src/options';
 
 const logger = createMockLogger(undefined, { level: 'debug' });
 
@@ -38,6 +34,7 @@ test.beforeEach(() => {
       jobs: [{ id: 'a', expression: 'x()' }],
     }),
     'test/wf.json': JSON.stringify(sampleXPlan),
+    'test/wf-flat.json': JSON.stringify(sampleXPlan.workflow),
     'test/wf-err.json': '!!!',
   });
 });
@@ -163,7 +160,7 @@ test.serial(
   }
 );
 
-test.serial('xplan: load a plan from workflow path', async (t) => {
+test.serial('xplan: load an old-style plan from workflow path', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',
     expandAdaptors: true,
@@ -174,6 +171,22 @@ test.serial('xplan: load a plan from workflow path', async (t) => {
 
   t.truthy(plan);
   t.deepEqual(plan, sampleXPlan);
+});
+
+test.serial('xplan: load a new flat plan from workflow path', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf-flat.json',
+    expandAdaptors: true,
+    plan: {},
+  };
+
+  const plan = await loadPlan(opts, logger);
+
+  t.truthy(plan);
+  t.deepEqual(plan, {
+    options: {}, // no options here!
+    workflow: sampleXPlan.workflow,
+  });
 });
 
 test.serial('xplan: expand adaptors', async (t) => {
@@ -428,4 +441,80 @@ test.serial('xplan: append collections', async (t) => {
     collections_endpoint: `${opts.collectionsEndpoint}/collections`,
     collections_token: opts.apiKey,
   });
+});
+
+test.serial(
+  'xplan: load a workflow.yaml without top workflow key',
+  async (t) => {
+    mock({
+      'test/wf.yaml': `
+name: wf
+steps:
+  - id: a
+    adaptors: []
+    expression: x()
+`,
+    });
+    const opts = {
+      path: 'test/wf.yaml',
+    };
+
+    const plan = await loadPlan(opts, logger);
+
+    t.truthy(plan);
+    // Note that options are lost in this design!
+    t.deepEqual(plan, { workflow: sampleXPlan.workflow, options: {} });
+  }
+);
+
+test.serial(
+  'xplan: load a workflow.yaml without top workflow key and options',
+  async (t) => {
+    mock({
+      'test/wf.yaml': `
+name: wf
+steps:
+  - id: a
+    adaptors: []
+    expression: x()
+options:
+  start: x
+`,
+    });
+    const opts = {
+      path: 'test/wf.yaml',
+    };
+
+    const plan = await loadPlan(opts, logger);
+
+    t.truthy(plan);
+    // Note that options are lost in this design!
+    t.deepEqual(plan, {
+      workflow: sampleXPlan.workflow,
+      options: { start: 'x' },
+    });
+  }
+);
+
+test.serial('xplan: load a workflow.yaml with top workflow key', async (t) => {
+  mock({
+    'test/wf.yaml': `
+workflow:
+  name: wf
+  steps:
+    - id: a
+      adaptors: []
+      expression: x()
+options:
+  start: a
+`,
+  });
+  const opts = {
+    path: 'test/wf.yaml',
+  };
+
+  const plan = await loadPlan(opts, logger);
+
+  t.truthy(plan);
+  t.deepEqual(plan, sampleXPlan);
 });

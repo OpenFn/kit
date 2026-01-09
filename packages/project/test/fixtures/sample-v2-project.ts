@@ -31,6 +31,7 @@ export const json: SerializedProject = {
       id: 'workflow',
       openfn: { uuid: 1 },
       history: [],
+      start: 'trigger',
     },
   ],
 };
@@ -67,4 +68,5 @@ workflows:
     openfn:
       uuid: 1
     history: []
+    start: trigger
 `;

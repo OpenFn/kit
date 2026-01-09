@@ -32,15 +32,20 @@ const loadPlan = async (
   // so many more input formats
   const { workflowPath, planPath, expressionPath } = options;
 
+  let workflowObj;
   if (options.path && /ya?ml$/.test(options.path)) {
     const content = await fs.readFile(path.resolve(options.path), 'utf-8');
-    const workflow = yamlToJson(content);
     options.baseDir = dirname(options.path);
-    return loadXPlan({ workflow }, options, logger);
+    workflowObj = yamlToJson(content);
+    const { options: o, ...rest } = workflowObj;
+    // restructure the workflow so that options are not on the workflow object,
+    // but part of hte execution plan options instead
+    if (!workflowObj.workflow && workflowObj.options) {
+      workflowObj = { workflow: rest, options: o };
+    }
   }
-
   // Run a workflow from a project, with a path and workflow name
-  if (options.path && options.workflow) {
+  else if (options.path && options.workflow) {
     options.baseDir = options.path;
     return fromProject(options.path, options.workflow, options, logger);
   }
@@ -48,6 +53,7 @@ const loadPlan = async (
   // Run a workflow from a project in the current working dir
   // (no expression or workflow path, and no file extension)
   if (
+    !workflowObj &&
     !expressionPath &&
     !workflowPath &&
     !/\.(js|json|yaml)+$/.test(options.path || '') &&
@@ -59,7 +65,7 @@ const loadPlan = async (
     return fromProject(path.resolve('.'), workflow!, options, logger);
   }
 
-  if (expressionPath) {
+  if (!workflowObj && expressionPath) {
     return loadExpression(options, logger);
   }
 
@@ -69,13 +75,24 @@ const loadPlan = async (
     options.baseDir = path.dirname(jsonPath!);
   }
 
-  const json = await loadJson(jsonPath!, logger);
-  const defaultName = path.parse(jsonPath!).name;
+  workflowObj = workflowObj ?? (await loadJson(jsonPath!, logger));
+  const defaultName = workflowObj.name || path.parse(jsonPath ?? '').name;
 
-  if (json.workflow) {
-    return loadXPlan(json, options, logger, defaultName);
+  // Support very old workflow formats
+  if (workflowObj.jobs) {
+    return loadOldWorkflow(workflowObj, options, logger, defaultName);
+  }
+  // support workflow saved like { workflow, options }
+  else if (workflowObj.workflow) {
+    return loadXPlan(
+      workflowObj,
+      Object.assign({}, workflowObj.options, options),
+      logger,
+      defaultName
+    );
   } else {
-    return loadOldWorkflow(json, options, logger, defaultName);
+    // This is the main route now - just load the workflow from the file
+    return loadXPlan({ workflow: workflowObj }, options, logger, defaultName);
   }
 };
 

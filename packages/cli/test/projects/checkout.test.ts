@@ -450,6 +450,7 @@ workspace:
     id: 'simple-workflow',
     name: 'Simple Workflow',
     options: {},
+    start: 'trigger-webhook',
     steps: [
       {
         id: 'trigger',

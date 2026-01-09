@@ -30,7 +30,15 @@ class Workflow {
     // history needs to be on workflow object.
     this.workflow.history = workflow.history?.length ? workflow.history : [];
 
-    const { id, name, openfn, steps, history, ...options } = workflow;
+    const {
+      id,
+      name,
+      openfn,
+      steps,
+      history,
+      start: _start,
+      ...options
+    } = workflow;
     if (!(id || name)) {
       throw new Error('A Workflow MUST have a name or id');
     }
@@ -52,6 +60,14 @@ class Workflow {
 
   get steps(): WithMeta<l.Job & l.Trigger>[] {
     return this.workflow.steps;
+  }
+
+  get start(): string | undefined {
+    return this.workflow.start;
+  }
+
+  set start(s: string) {
+    this.workflow.start = s;
   }
 
   _buildIndex() {

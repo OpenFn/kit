@@ -54,7 +54,7 @@ const executePlan = async (
   }
 
   const queue: Array<{ stepName: string; input: any }> = [
-    { stepName: options.start, input },
+    { stepName: options.start ?? workflow.start, input },
   ];
 
   // count how many times each step has been called

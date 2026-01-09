@@ -107,6 +107,10 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   workflow.triggers.forEach((trigger: Provisioner.Trigger) => {
     const { type, ...otherProps } = trigger;
 
+    if (!mapped.start) {
+      mapped.start = `trigger-${type}`;
+    }
+
     const connectedEdges = edges.filter(
       (e) => e.source_trigger_id === trigger.id
     );

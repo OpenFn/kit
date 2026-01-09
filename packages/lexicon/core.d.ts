@@ -161,6 +161,9 @@ export type Workflow = {
 
   // holds history information of a workflow
   history?: string[];
+
+  /** The default start node - the one the workflow was designed for (the trigger) */
+  start?: string;
 };
 
 export type StepId = string;
