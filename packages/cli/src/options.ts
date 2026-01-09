@@ -373,7 +373,7 @@ export const inputPath: CLIOption = {
   },
   ensure: (opts) => {
     const { path: basePath } = opts;
-    if (basePath?.endsWith('.json')) {
+    if (basePath?.match(/.(json|ya?ml)$/)) {
       opts.planPath = basePath;
     } else if (basePath?.endsWith('.js')) {
       opts.expressionPath = basePath;

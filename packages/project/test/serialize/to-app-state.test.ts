@@ -256,6 +256,38 @@ test('should handle credentials', (t) => {
   t.is(job.project_credential_id, 'p');
 });
 
+test('should ignore workflow start keys', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        start: 'step',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'p',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), { format: 'json' });
+  t.falsy(state.workflows[0].start);
+});
+
 test.todo('handle edge labels');
 
 test('serialize steps and trigger in alphabetical order', (t) => {

@@ -100,4 +100,5 @@ workflows:
       inserted_at: 2025-04-23T11:19:32Z
       updated_at: 2025-04-23T11:19:32Z
       lock_version: 1
-    id: my-workflow`;
+    id: my-workflow
+    start: trigger-webhook`;

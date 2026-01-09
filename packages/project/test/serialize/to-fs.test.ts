@@ -20,6 +20,7 @@ test('extractWorkflow: single simple workflow (yaml by default)', (t) => {
         id: 'my-workflow',
         name: 'My Workflow',
         steps: [step],
+        start: 'step',
         // should be ignored because this lives in the project file
         openfn: {
           id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
@@ -31,11 +32,11 @@ test('extractWorkflow: single simple workflow (yaml by default)', (t) => {
   const { path, content } = extractWorkflow(project, 'my-workflow');
   t.is(path, 'workflows/my-workflow/my-workflow.yaml');
 
-  // TODO is the empty options object correct here??
   t.deepEqual(
     content,
     `id: my-workflow
 name: My Workflow
+start: step
 options: {}
 steps:
   - id: step
