@@ -430,6 +430,7 @@ test.serial('respect openfn.yaml settings', async (t) => {
   uuid: <uuid:staging>
   id: staging
 workspace:
+  credentials: credentials.yaml
   dirs:
     projects: p
     workflows: w
