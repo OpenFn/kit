@@ -44,7 +44,10 @@ const loadPlan = async (
     );
     const workspace = new Workspace(options.workspace!);
     const proj = await workspace.getCheckedOutProject();
-    workflowObj = proj?.getWorkflow(workflowName || options.workflow!);
+    // TODO - throw if workflow not found!
+    workflowObj = {
+      workflow: proj?.getWorkflow(workflowName || options.workflow!)?.toJSON(),
+    };
 
     if (!options.credentials) {
       options.credentials = workspace.getConfig().credentials;

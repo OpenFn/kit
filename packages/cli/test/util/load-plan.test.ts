@@ -518,3 +518,75 @@ options:
   t.truthy(plan);
   t.deepEqual(plan, sampleXPlan);
 });
+
+test.serial('xplan: load a workflow through a Workspace', async (t) => {
+  mock({
+    '/tmp/workflows/wf.yaml': `
+id: wf
+steps:
+  - id: a
+    expression: x()
+`,
+    '/tmp/openfn.yaml': `
+dirs:
+  workflows: /tmp/workflows
+`,
+  });
+
+  const opts = {
+    // TODO is worked out through yargs via the inputPath option
+    workflowName: 'wf',
+    workspace: '/tmp',
+  };
+
+  const plan = await loadPlan(opts, logger);
+  t.truthy(plan);
+  t.deepEqual(plan, {
+    workflow: {
+      id: 'wf',
+      steps: [{ id: 'a', expression: 'x()', adaptors: [] }],
+      history: [],
+    },
+    options: {},
+  });
+});
+
+test.serial(
+  'xplan: load a workflow through a project .yaml and apply the credentials map by default',
+  async (t) => {
+    mock({
+      '/tmp/workflows/wf.yaml': `
+id: wf
+steps:
+  - id: a
+    expression: x()
+start: a
+`,
+      '/tmp/openfn.yaml': `
+credentials: /creds.yaml
+dirs:
+  workflows: /tmp/workflows
+`,
+      '/creds.yaml': `x: y`,
+    });
+    const opts = {
+      workflowName: 'wf',
+      workspace: '/tmp',
+    };
+
+    const plan = await loadPlan(opts, logger);
+
+    t.truthy(plan);
+    t.deepEqual(plan, {
+      workflow: {
+        id: 'wf',
+        steps: [{ id: 'a', expression: 'x()', adaptors: [] }],
+        history: [],
+        start: 'a',
+      },
+      options: {},
+    });
+
+    t.is(opts.credentials, '/creds.yaml');
+  }
+);
