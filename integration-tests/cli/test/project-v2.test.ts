@@ -206,3 +206,57 @@ test.serial('execute a workflow from the checked out project', async (t) => {
   const finalState = JSON.parse(output);
   t.deepEqual(finalState, { x: 1 });
 });
+
+test.serial(
+  'execute a workflow from the checked out project with a credential map',
+  async (t) => {
+    await run(`openfn checkout main --log debug -w ${projectsPath}`);
+
+    // Modify the checked out workflow code
+    await writeFile(
+      'tmp/project/workflows/hello-workflow/transform-data.js',
+      `fn(s => ({ user: s.configuration.username }))`
+    );
+
+    // Modify the checked out workflow to add a credential
+    await writeFile(
+      'tmp/project/workflows/hello-workflow/hello-workflow.yaml',
+      `id: hello-workflow
+name: Hello Workflow
+start: trigger
+options: {}
+steps:
+  - id: trigger
+    type: webhook
+    next:
+      transform-data:
+        disabled: false
+        condition: true
+  - id: transform-data
+    name: Transform data
+    configuration: 1234
+    adaptor: "@openfn/language-dhis2@8.0.4"
+    expression: ./transform-data.js
+`
+    );
+
+    // add the credential map to the yaml
+    await writeFile('tmp/project/openfn.yaml', `credentials: creds.yaml`);
+
+    // write the credential map
+    await writeFile(
+      'tmp/project/creds.yaml',
+      `1234:
+username: pparker`
+    );
+
+    // finally execute the workflow
+    const { stdout } = await run(
+      `openfn hello-workflow  -o /tmp/output.json --log debug --workspace ${projectsPath}`
+    );
+    console.log(stdout);
+    const output = await readFile('/tmp/output.json', 'utf8');
+    const finalState = JSON.parse(output);
+    t.deepEqual(finalState, { user: 'pparker' });
+  }
+);

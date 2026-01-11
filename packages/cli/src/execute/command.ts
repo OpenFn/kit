@@ -5,7 +5,7 @@ import * as po from '../projects/options';
 
 import type { Opts } from '../options';
 
-export type ExecuteOptions = Required<
+export type ExecuteOptions = { workspace?: string } & Required<
   Pick<
     Opts,
     | 'apiKey'
