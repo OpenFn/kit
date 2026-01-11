@@ -70,7 +70,7 @@ test.serial('should load workspace config from yaml', async (t) => {
   });
 });
 
-test.serial('should load single workflow', async (t) => {
+test.serial('should load single workflow in new flat format', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
 
   mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
@@ -82,6 +82,7 @@ test.serial('should load single workflow', async (t) => {
         expression: 'job.js',
       },
     ],
+    start: 'a',
   });
 
   mockFile('/ws/workflows/my-workflow/job.js', `fn(s => s)`);
@@ -94,7 +95,45 @@ test.serial('should load single workflow', async (t) => {
   t.truthy(wf);
   t.is(wf.id, 'my-workflow');
   t.is(wf.name, 'My Workflow');
+  t.is(wf.start, 'a');
 });
+
+// hmm, maybe I shouldn't support this, because it puts some wierd stuff in the code
+// and new CLI will just use the new  format
+test.serial(
+  'should load single workflow in old { workflow, options } format',
+  async (t) => {
+    mockFile('/ws/openfn.yaml', buildConfig());
+
+    mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
+      workflow: {
+        id: 'my-workflow',
+        name: 'My Workflow',
+        steps: [
+          {
+            id: 'a',
+            expression: 'job.js',
+          },
+        ],
+      },
+      options: {
+        start: 'a',
+      },
+    });
+
+    mockFile('/ws/workflows/my-workflow/job.js', `fn(s => s)`);
+
+    const project = await parseProject({ root: '/ws' });
+
+    t.is(project.workflows.length, 1);
+
+    const wf = project.getWorkflow('my-workflow');
+    t.truthy(wf);
+    t.is(wf.id, 'my-workflow');
+    t.is(wf.name, 'My Workflow');
+    t.is(wf.start, 'a');
+  }
+);
 
 test.serial('should load single workflow from json', async (t) => {
   mockFile(

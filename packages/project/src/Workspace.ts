@@ -116,7 +116,7 @@ export class Workspace {
   }
 
   getCheckedOutProject() {
-    return Project.from('fs', { root: this.root });
+    return Project.from('fs', { root: this.root, config: this.config });
   }
 
   getCredentialMap() {

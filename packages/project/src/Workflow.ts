@@ -37,7 +37,8 @@ class Workflow {
       steps,
       history,
       start: _start,
-      ...options
+      options,
+      ...rest
     } = workflow;
     if (!(id || name)) {
       throw new Error('A Workflow MUST have a name or id');
@@ -53,7 +54,7 @@ class Workflow {
     }
 
     this.openfn = openfn;
-    this.options = options;
+    this.options = Object.assign({}, options, rest);
 
     this._buildIndex();
   }
