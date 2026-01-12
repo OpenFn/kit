@@ -3,7 +3,7 @@ import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
 
-const TMP_DIR = 'tmp/project-v1';
+const TMP_DIR = path.resolve('tmp/project-v1');
 
 // These tests use the legacy v1 yaml structure
 
@@ -182,10 +182,10 @@ test.serial('execute a workflow from the checked out project', async (t) => {
 
   // execute a workflow
   const { stdout } = await run(
-    `openfn my-workflow  -o /tmp/output.json  --log debug --workspace ${projectsPath}`
+    `openfn my-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
   );
 
-  const output = await readFile('/tmp/output.json', 'utf8');
+  const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
   const finalState = JSON.parse(output);
-  t.deepEqual(finalState, { data: {}, x: 1 });
+  t.deepEqual(finalState, { x: 1 });
 });
