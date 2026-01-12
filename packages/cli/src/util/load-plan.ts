@@ -48,7 +48,9 @@ const loadPlan = async (
     const name = workflowName || options.workflow!;
     const workflow = proj?.getWorkflow(name);
     if (!workflow) {
-      throw new Error(`Could not find Workflow "${name}"`);
+      const e = new Error(`Could not find Workflow "${name}"`);
+      delete e.stack;
+      throw e;
     }
 
     workflowObj = {

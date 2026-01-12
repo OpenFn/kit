@@ -8,6 +8,7 @@ import {
   ensureLogOpts,
   LogLevel,
 } from './util';
+import { existsSync } from 'node:fs';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -270,6 +271,20 @@ export const credentials: CLIOption = {
   yargs: {
     alias: ['creds'],
     description: 'A path which points to a credential map',
+  },
+  ensure(opts) {
+    if (opts.credentials) {
+      const mapPath = nodePath.resolve(
+        (opts as any).workspace ?? '',
+        opts.credentials
+      );
+      // Throw if a user-provided credential map not found
+      if (!existsSync(mapPath)) {
+        const e = new Error('Credential map not found at ' + mapPath);
+        delete e.stack;
+        throw e;
+      }
+    }
   },
 };
 
