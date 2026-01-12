@@ -3,7 +3,7 @@ import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
 
-const TMP_DIR = 'tmp/project';
+const TMP_DIR = 'tmp/project-v1';
 
 // These tests use the legacy v1 yaml structure
 
@@ -97,7 +97,7 @@ workflows:
         source_trigger_id: 7bb476cc-0292-4573-89d0-b13417bc648e
         condition_type: always
 `;
-const projectsPath = path.resolve('tmp/project');
+const projectsPath = path.resolve(TMP_DIR);
 
 test.before(async () => {
   // await rm(TMP_DIR, { recursive: true });
@@ -176,20 +176,17 @@ test.serial('merge a project', async (t) => {
   t.is(merged, "log('hello world')");
 });
 
-test.serial.only(
-  'execute a workflow from the checked out project',
-  async (t) => {
-    // cheeky bonus test of checkout by alias
-    await run(`openfn checkout main -w ${projectsPath}`);
+// TODO why do both projects have alias main??
+test.serial('execute a workflow from the checked out project', async (t) => {
+  // cheeky bonus test of checkout by alias
+  await run(`openfn checkout main -w ${projectsPath}`);
 
-    // execute a workflow
-    const { stdout } = await run(
-      `openfn hello-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
-    );
-    console.log(stdout);
+  // execute a workflow
+  const { stdout } = await run(
+    `openfn my-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
+  );
 
-    const output = await readFile('/tmp/output.json', 'utf8');
-    const finalState = JSON.parse(output);
-    t.deepEqual(finalState, { x: 1 });
-  }
-);
+  const output = await readFile('/tmp/output.json', 'utf8');
+  const finalState = JSON.parse(output);
+  t.deepEqual(finalState, { x: 1 });
+});
