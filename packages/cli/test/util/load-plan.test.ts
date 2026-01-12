@@ -444,6 +444,48 @@ test.serial('xplan: append collections', async (t) => {
 });
 
 test.serial(
+  'xplan: append collections to existing credential object',
+  async (t) => {
+    const opts = {
+      workflowPath: 'test/wf.json',
+      collectionsVersion: '1.1.1',
+      collectionsEndpoint: 'https://localhost:4000/',
+      apiKey: 'abc',
+    };
+
+    const plan = createPlan([
+      {
+        id: 'a',
+        expression: 'collections.get()',
+        adaptors: ['@openfn/language-common@1.0.0'],
+        configuration: {
+          x: 1,
+        },
+      },
+    ]);
+
+    mock({
+      'test/wf.json': JSON.stringify(plan),
+    });
+
+    const result = await loadPlan(opts, logger);
+    t.truthy(result);
+
+    const step = result.workflow.steps[0] as Job;
+    t.deepEqual(step.adaptors, [
+      '@openfn/language-common@1.0.0',
+      '@openfn/language-collections@1.1.1',
+    ]);
+
+    t.deepEqual(step.configuration, {
+      collections_endpoint: `${opts.collectionsEndpoint}/collections`,
+      collections_token: opts.apiKey,
+      x: 1,
+    });
+  }
+);
+
+test.serial(
   'xplan: load a workflow.yaml without top workflow key',
   async (t) => {
     mock({

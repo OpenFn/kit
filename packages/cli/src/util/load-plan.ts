@@ -11,6 +11,7 @@ import type { Opts } from '../options';
 import type { Logger } from './logger';
 import type { CLIExecutionPlan, CLIJobNode, OldCLIWorkflow } from '../types';
 import resolvePath from './resolve-path';
+import { CREDENTIALS_KEY } from '../execute/apply-credential-map';
 
 const loadPlan = async (
   options: Pick<
@@ -25,6 +26,7 @@ const loadPlan = async (
     | 'path'
     | 'globals'
     | 'credentials'
+    | 'collectionsEndpoint'
   > & {
     workflow?: Opts['workflow'];
     workspace?: string; // from project opts
@@ -57,9 +59,8 @@ const loadPlan = async (
       workflow: workflow.toJSON(),
     };
 
-    if (!options.credentials) {
-      options.credentials = workspace.getConfig().credentials;
-    }
+    options.credentials ??= workspace.getConfig().credentials;
+    options.collectionsEndpoint ??= proj.openfn?.endpoint;
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {
@@ -343,13 +344,14 @@ type ensureCollectionsOptions = {
 const ensureCollections = (
   plan: CLIExecutionPlan,
   {
-    endpoint = 'https://app.openfn.org',
+    endpoint,
     version = 'latest',
     apiKey = 'null',
   }: ensureCollectionsOptions = {},
   logger?: Logger
 ) => {
   let collectionsFound = false;
+  endpoint ??= plan.options?.collectionsEndpoint ?? 'https://app.openfn.org';
 
   Object.values(plan.workflow.steps)
     .filter((step) => (step as any).expression?.match(/(collections\.)/))
@@ -365,6 +367,12 @@ const ensureCollections = (
         job.adaptors.push(
           `@openfn/language-collections@${version || 'latest'}`
         );
+        if (typeof job.configuration === 'string') {
+          // If the config is a string credential ID, write it to a special value
+          job.configuration = {
+            [CREDENTIALS_KEY]: job.configuration,
+          };
+        }
 
         job.configuration = Object.assign({}, job.configuration, {
           collections_endpoint: `${endpoint}/collections`,
