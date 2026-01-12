@@ -30,7 +30,7 @@ const validateAdaptors = async (
   }
 
   // If running a .js file directly and no adaptor is specified, send a warning
-  if (!options.expressionPath && !hasDeclaredAdaptors) {
+  if (options.expressionPath && !hasDeclaredAdaptors) {
     logger.warn('WARNING: No adaptor provided!');
     logger.warn(
       'This job will probably fail. Pass an adaptor with the -a flag, eg:'

@@ -39,6 +39,7 @@ export type ExecuteOptions = { workspace?: string } & Required<
     | 'trace'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
+    | 'workflowName'
     | 'globals'
   >
 > &

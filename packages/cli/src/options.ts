@@ -367,6 +367,7 @@ export const projectId: CLIOption = {
 };
 
 // Input path covers expressionPath and workflowPath
+// TODO this needs unit testing!
 export const inputPath: CLIOption = {
   name: 'input-path',
   yargs: {
