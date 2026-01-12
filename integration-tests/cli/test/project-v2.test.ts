@@ -202,10 +202,10 @@ test.serial('execute a workflow from the checked out project', async (t) => {
 
   // execute a workflow
   await run(
-    `openfn hello-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
+    `openfn hello-workflow  ${TMP_DIR}/output.json   --workspace ${projectsPath}`
   );
 
-  const output = await readFile('/tmp/output.json', 'utf8');
+  const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
   const finalState = JSON.parse(output);
   t.deepEqual(finalState, { x: 1 });
 });
@@ -255,9 +255,9 @@ username: pparker`
 
     // finally execute the workflow
     const { stdout } = await run(
-      `openfn hello-workflow  -o /tmp/output.json --log debug --workspace ${projectsPath}`
+      `openfn hello-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
     );
-    const output = await readFile('/tmp/output.json', 'utf8');
+    const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
     const finalState = JSON.parse(output);
     t.deepEqual(finalState, { user: 'pparker' });
   }
@@ -321,10 +321,10 @@ workspace:
     );
 
     const { stdout } = await run(
-      `openfn hello-workflow  -o /tmp/output.json --log debug --workspace ${projectsPath}`
+      `openfn hello-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
     );
 
-    const output = await readFile('/tmp/output.json', 'utf8');
+    const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
     const finalState = JSON.parse(output);
 
     t.deepEqual(finalState, {
