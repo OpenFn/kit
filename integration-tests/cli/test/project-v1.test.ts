@@ -176,17 +176,16 @@ test.serial('merge a project', async (t) => {
   t.is(merged, "log('hello world')");
 });
 
-// TODO why do both projects have alias main??
 test.serial('execute a workflow from the checked out project', async (t) => {
   // cheeky bonus test of checkout by alias
   await run(`openfn checkout main -w ${projectsPath}`);
 
   // execute a workflow
   const { stdout } = await run(
-    `openfn my-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
+    `openfn my-workflow  -o /tmp/output.json  --log debug --workspace ${projectsPath}`
   );
 
   const output = await readFile('/tmp/output.json', 'utf8');
   const finalState = JSON.parse(output);
-  t.deepEqual(finalState, { x: 1 });
+  t.deepEqual(finalState, { data: {}, x: 1 });
 });
