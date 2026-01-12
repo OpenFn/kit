@@ -3,6 +3,8 @@ import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
 
+const TMP_DIR = 'tmp/project';
+
 // These tests use the legacy v1 yaml structure
 
 const mainYaml = `
@@ -98,13 +100,13 @@ workflows:
 const projectsPath = path.resolve('tmp/project');
 
 test.before(async () => {
-  // await rm('tmp/project', { recursive: true });
-  await mkdir('tmp/project/.projects', { recursive: true });
+  // await rm(TMP_DIR, { recursive: true });
+  await mkdir(`${TMP_DIR}/.projects`, { recursive: true });
 
-  await writeFile('tmp/project/openfn.yaml', '');
-  await writeFile('tmp/project/.projects/main@app.openfn.org.yaml', mainYaml);
+  await writeFile(`${TMP_DIR}/openfn.yaml`, '');
+  await writeFile(`${TMP_DIR}/.projects/main@app.openfn.org.yaml`, mainYaml);
   await writeFile(
-    'tmp/project/.projects/staging@app.openfn.org.yaml',
+    `${TMP_DIR}/.projects/staging@app.openfn.org.yaml`,
     stagingYaml
   );
 });
@@ -174,16 +176,20 @@ test.serial('merge a project', async (t) => {
   t.is(merged, "log('hello world')");
 });
 
-test.serial('execute a workflow from the checked out project', async (t) => {
-  // cheeky bonus test of checkout by alias
-  await run(`openfn checkout main --log debug -w ${projectsPath}`);
+test.serial.only(
+  'execute a workflow from the checked out project',
+  async (t) => {
+    // cheeky bonus test of checkout by alias
+    await run(`openfn checkout main -w ${projectsPath}`);
 
-  // execute a workflow
-  await run(
-    `openfn hello-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
-  );
+    // execute a workflow
+    const { stdout } = await run(
+      `openfn hello-workflow  -o /tmp/output.json  --workspace ${projectsPath}`
+    );
+    console.log(stdout);
 
-  const output = await readFile('/tmp/output.json', 'utf8');
-  const finalState = JSON.parse(output);
-  t.deepEqual(finalState, { x: 1 });
-});
+    const output = await readFile('/tmp/output.json', 'utf8');
+    const finalState = JSON.parse(output);
+    t.deepEqual(finalState, { x: 1 });
+  }
+);

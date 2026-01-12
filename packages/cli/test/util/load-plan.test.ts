@@ -551,6 +551,30 @@ dirs:
   });
 });
 
+test.serial('xplan: throw if a named workflow does not exist', async (t) => {
+  mock({
+    '/tmp/workflows/wf.yaml': `
+id: wf
+steps:
+  - id: a
+    expression: x()
+`,
+    '/tmp/openfn.yaml': `
+dirs:
+  workflows: /tmp/workflows
+`,
+  });
+
+  const opts = {
+    workflowName: 'JAM',
+    workspace: '/tmp',
+  };
+
+  await t.throwsAsync(() => loadPlan(opts, logger), {
+    message: /could not find workflow "jam"/i,
+  });
+});
+
 test.serial(
   'xplan: load a workflow through a project .yaml and apply the credentials map by default',
   async (t) => {
