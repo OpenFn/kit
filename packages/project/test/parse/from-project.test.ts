@@ -3,20 +3,7 @@ import state_v1 from '../fixtures/sample-v1-project';
 import Project from '../../src/Project';
 import * as v2 from '../fixtures/sample-v2-project';
 
-test('import from a v1 state as JSON', async (t) => {
-  const proj = await Project.from('project', state_v1, {});
-
-  // make a few basic assertions about the project
-  t.is(proj.id, 'my-workflow');
-  t.is(proj.name, 'My Workflow');
-  t.is(proj.openfn.uuid, 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00');
-  t.is(proj.options.retention_policy, 'retain_all');
-
-  t.is(proj.workflows.length, 1);
-});
-
-test('import from a v1 state as YAML', async (t) => {
-  const yaml = `id: '1234'
+const v1_yaml = `id: '1234'
 name: aaa
 description: a project
 project_credentials: []
@@ -57,7 +44,21 @@ workflows:
         source_trigger_id: 4a06289c-15aa-4662-8dc6-f0aaacd8a058
         condition_type: always
   `;
-  const proj = await Project.from('project', yaml, {});
+
+test('import from a v1 state as JSON', async (t) => {
+  const proj = await Project.from('project', state_v1, {});
+
+  // make a few basic assertions about the project
+  t.is(proj.id, 'my-workflow');
+  t.is(proj.name, 'My Workflow');
+  t.is(proj.openfn.uuid, 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00');
+  t.is(proj.options.retention_policy, 'retain_all');
+
+  t.is(proj.workflows.length, 1);
+});
+
+test('import from a v1 state as YAML', async (t) => {
+  const proj = await Project.from('project', v1_yaml, {});
 
   // make a few basic assertions about the project
   t.is(proj.id, 'aaa');
@@ -172,7 +173,38 @@ test('import from a v2 project as YAML', async (t) => {
   });
 });
 
-test('import with custom config', async (t) => {
+test('import v1 with custom config', async (t) => {
+  const config = {
+    x: 1234,
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
+    alias: 'staging',
+    format: 'yaml',
+  };
+  const proj = await Project.from('project', v1_yaml, config);
+  t.is(proj.id, 'aaa');
+
+  t.is(proj.cli.alias, 'staging');
+
+  // note that alias and format should have been removed from config
+  t.deepEqual(proj.config, {
+    credentials: 'credentials.yaml',
+    dirs: {
+      projects: 'p',
+      workflows: 'w',
+    },
+    formats: {
+      openfn: 'yaml',
+      project: 'yaml',
+      workflow: 'yaml',
+    },
+    x: 1234,
+  });
+});
+
+test('import v2 with custom config', async (t) => {
   const config = {
     x: 1234,
     dirs: {
@@ -188,6 +220,7 @@ test('import with custom config', async (t) => {
 
   // note that alias should have been removed from config
   t.deepEqual(proj.config, {
+    credentials: 'credentials.yaml',
     dirs: {
       projects: 'p',
       workflows: 'w',

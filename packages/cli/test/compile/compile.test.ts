@@ -34,7 +34,7 @@ test.serial('compile from source string', async (t) => {
 
   const opts = {} as CompileOptions;
 
-  const result = await compile(job, opts, mockLog)
+  const result = await compile(job, opts, mockLog);
 
   const expected = 'export default [x()];';
   t.is(result.code, expected);
@@ -92,53 +92,68 @@ test.serial('throw an AbortError if a job is uncompilable', async (t) => {
   t.assert(logger._find('error', /critical error: aborting command/i));
 });
 
-test.serial('throw an AbortError if an xplan contains an uncompilable job', async (t) => {
-  const plan: ExecutionPlan = {
-    workflow: {
-      steps: [{ id: 'a', expression: 'x b' }],
-    },
-    options: {},
-  };
+test.serial(
+  'throw an AbortError if an xplan contains an uncompilable job',
+  async (t) => {
+    const plan: ExecutionPlan = {
+      workflow: {
+        steps: [{ id: 'a', expression: 'x b' }],
+      },
+      options: {},
+    };
 
-  const opts = {} as CompileOptions;
+    const opts = {} as CompileOptions;
 
-  const logger = createMockLogger();
-  await t.throwsAsync(() => compile(plan, opts, logger), {
-    message: 'Failed to compile job a',
-  });
+    const logger = createMockLogger();
+    await t.throwsAsync(() => compile(plan, opts, logger), {
+      message: 'Failed to compile job a',
+    });
 
-  t.assert(logger._find('error', /unexpected token/i));
-  t.assert(logger._find('always', /check the syntax of the job expression/i));
-  t.assert(logger._find('error', /critical error: aborting command/i));
-});
+    t.assert(logger._find('error', /unexpected token/i));
+    t.assert(logger._find('always', /check the syntax of the job expression/i));
+    t.assert(logger._find('error', /critical error: aborting command/i));
+  }
+);
 
-test.serial('stripVersionSpecifier: remove version specifier from @openfn', (t) => {
-  const specifier = '@openfn/language-common@3.0.0-rc2';
-  const transformed = stripVersionSpecifier(specifier);
-  const expected = '@openfn/language-common';
-  t.assert(transformed == expected);
-});
+test.serial(
+  'stripVersionSpecifier: remove version specifier from @openfn',
+  (t) => {
+    const specifier = '@openfn/language-common@3.0.0-rc2';
+    const transformed = stripVersionSpecifier(specifier);
+    const expected = '@openfn/language-common';
+    t.assert(transformed == expected);
+  }
+);
 
-test.serial('stripVersionSpecifier: remove version specifier from arbitrary package', (t) => {
-  const specifier = 'ava@1.0.0';
-  const transformed = stripVersionSpecifier(specifier);
-  const expected = 'ava';
-  t.assert(transformed == expected);
-});
+test.serial(
+  'stripVersionSpecifier: remove version specifier from arbitrary package',
+  (t) => {
+    const specifier = 'ava@1.0.0';
+    const transformed = stripVersionSpecifier(specifier);
+    const expected = 'ava';
+    t.assert(transformed == expected);
+  }
+);
 
-test.serial('stripVersionSpecifier: remove version specifier from arbitrary namespaced package', (t) => {
-  const specifier = '@ava/some-pkg@^1';
-  const transformed = stripVersionSpecifier(specifier);
-  const expected = '@ava/some-pkg';
-  t.assert(transformed == expected);
-});
+test.serial(
+  'stripVersionSpecifier: remove version specifier from arbitrary namespaced package',
+  (t) => {
+    const specifier = '@ava/some-pkg@^1';
+    const transformed = stripVersionSpecifier(specifier);
+    const expected = '@ava/some-pkg';
+    t.assert(transformed == expected);
+  }
+);
 
-test.serial("stripVersionSpecifier: do nothing if there's no specifier", (t) => {
-  const specifier = '@openfn/language-common';
-  const transformed = stripVersionSpecifier(specifier);
-  const expected = '@openfn/language-common';
-  t.assert(transformed == expected);
-});
+test.serial(
+  "stripVersionSpecifier: do nothing if there's no specifier",
+  (t) => {
+    const specifier = '@openfn/language-common';
+    const transformed = stripVersionSpecifier(specifier);
+    const expected = '@openfn/language-common';
+    t.assert(transformed == expected);
+  }
+);
 
 test.serial('loadTransformOptions: do nothing', async (t) => {
   const opts = {};
@@ -157,31 +172,40 @@ test.serial(
   }
 );
 
-test.serial('resolveSpecifierPath: return a relative path if passed', async (t) => {
-  const path = await resolveSpecifierPath('pkg=./a', '/repo', mockLog);
-  t.assert(path === './a');
-});
+test.serial(
+  'resolveSpecifierPath: return a relative path if passed',
+  async (t) => {
+    const path = await resolveSpecifierPath('pkg=./a', '/repo', mockLog);
+    t.assert(path === './a');
+  }
+);
 
-test.serial('resolveSpecifierPath: return an absolute path if passed', async (t) => {
-  const path = await resolveSpecifierPath('pkg=/a', '/repo', mockLog);
-  t.assert(path === '/a');
-});
+test.serial(
+  'resolveSpecifierPath: return an absolute path if passed',
+  async (t) => {
+    const path = await resolveSpecifierPath('pkg=/a', '/repo', mockLog);
+    t.assert(path === '/a');
+  }
+);
 
 test.serial('resolveSpecifierPath: return a path if passed', async (t) => {
   const path = await resolveSpecifierPath('pkg=a/b/c', '/repo', mockLog);
   t.assert(path === 'a/b/c');
 });
 
-test.serial('resolveSpecifierPath: basically return anything after the =', async (t) => {
-  const path = await resolveSpecifierPath('pkg=a', '/repo', mockLog);
-  t.assert(path === 'a');
+test.serial(
+  'resolveSpecifierPath: basically return anything after the =',
+  async (t) => {
+    const path = await resolveSpecifierPath('pkg=a', '/repo', mockLog);
+    t.assert(path === 'a');
 
-  const path2 = await resolveSpecifierPath('pkg=@', '/repo', mockLog);
-  t.assert(path2 === '@');
+    const path2 = await resolveSpecifierPath('pkg=@', '/repo', mockLog);
+    t.assert(path2 === '@');
 
-  const path3 = await resolveSpecifierPath('pkg=!', '/repo', mockLog);
-  t.assert(path3 === '!');
-});
+    const path3 = await resolveSpecifierPath('pkg=!', '/repo', mockLog);
+    t.assert(path3 === '!');
+  }
+);
 
 test.serial(
   'resolveSpecifierPath: return a path to the repo if the module is found',

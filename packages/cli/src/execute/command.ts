@@ -1,10 +1,11 @@
 import yargs from 'yargs';
 import { build, ensure, override } from '../util/command-builders';
 import * as o from '../options';
+import * as po from '../projects/options';
 
 import type { Opts } from '../options';
 
-export type ExecuteOptions = Required<
+export type ExecuteOptions = { workspace?: string } & Required<
   Pick<
     Opts,
     | 'apiKey'
@@ -38,6 +39,7 @@ export type ExecuteOptions = Required<
     | 'trace'
     | 'useAdaptorsMonorepo'
     | 'workflowPath'
+    | 'workflowName'
     | 'globals'
   >
 > &
@@ -75,6 +77,8 @@ const options = [
   o.timeout,
   o.trace,
   o.useAdaptorsMonorepo,
+
+  po.workspace,
 ];
 
 const executeCommand: yargs.CommandModule<ExecuteOptions> = {

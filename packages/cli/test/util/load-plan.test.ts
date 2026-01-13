@@ -444,6 +444,48 @@ test.serial('xplan: append collections', async (t) => {
 });
 
 test.serial(
+  'xplan: append collections to existing credential object',
+  async (t) => {
+    const opts = {
+      workflowPath: 'test/wf.json',
+      collectionsVersion: '1.1.1',
+      collectionsEndpoint: 'https://localhost:4000/',
+      apiKey: 'abc',
+    };
+
+    const plan = createPlan([
+      {
+        id: 'a',
+        expression: 'collections.get()',
+        adaptors: ['@openfn/language-common@1.0.0'],
+        configuration: {
+          x: 1,
+        },
+      },
+    ]);
+
+    mock({
+      'test/wf.json': JSON.stringify(plan),
+    });
+
+    const result = await loadPlan(opts, logger);
+    t.truthy(result);
+
+    const step = result.workflow.steps[0] as Job;
+    t.deepEqual(step.adaptors, [
+      '@openfn/language-common@1.0.0',
+      '@openfn/language-collections@1.1.1',
+    ]);
+
+    t.deepEqual(step.configuration, {
+      collections_endpoint: `${opts.collectionsEndpoint}/collections`,
+      collections_token: opts.apiKey,
+      x: 1,
+    });
+  }
+);
+
+test.serial(
   'xplan: load a workflow.yaml without top workflow key',
   async (t) => {
     mock({
@@ -518,3 +560,99 @@ options:
   t.truthy(plan);
   t.deepEqual(plan, sampleXPlan);
 });
+
+test.serial('xplan: load a workflow through a Workspace', async (t) => {
+  mock({
+    '/tmp/workflows/wf.yaml': `
+id: wf
+steps:
+  - id: a
+    expression: x()
+`,
+    '/tmp/openfn.yaml': `
+dirs:
+  workflows: /tmp/workflows
+`,
+  });
+
+  const opts = {
+    // TODO is worked out through yargs via the inputPath option
+    workflowName: 'wf',
+    workspace: '/tmp',
+  };
+
+  const plan = await loadPlan(opts, logger);
+  t.truthy(plan);
+  t.deepEqual(plan, {
+    workflow: {
+      id: 'wf',
+      steps: [{ id: 'a', expression: 'x()', adaptors: [] }],
+      history: [],
+    },
+    options: {},
+  });
+});
+
+test.serial('xplan: throw if a named workflow does not exist', async (t) => {
+  mock({
+    '/tmp/workflows/wf.yaml': `
+id: wf
+steps:
+  - id: a
+    expression: x()
+`,
+    '/tmp/openfn.yaml': `
+dirs:
+  workflows: /tmp/workflows
+`,
+  });
+
+  const opts = {
+    workflowName: 'JAM',
+    workspace: '/tmp',
+  };
+
+  await t.throwsAsync(() => loadPlan(opts, logger), {
+    message: /could not find workflow "jam"/i,
+  });
+});
+
+test.serial(
+  'xplan: load a workflow through a project .yaml and apply the credentials map by default',
+  async (t) => {
+    mock({
+      '/tmp/workflows/wf.yaml': `
+id: wf
+steps:
+  - id: a
+    expression: x()
+start: a
+`,
+      '/tmp/openfn.yaml': `
+credentials: /creds.yaml
+dirs:
+  workflows: /tmp/workflows
+`,
+      '/creds.yaml': `x: y`,
+    });
+    const opts = {
+      workflowName: 'wf',
+      workspace: '/tmp',
+    };
+
+    const plan = await loadPlan(opts, logger);
+
+    t.truthy(plan);
+    t.deepEqual(plan, {
+      workflow: {
+        id: 'wf',
+        steps: [{ id: 'a', expression: 'x()', adaptors: [] }],
+        history: [],
+        start: 'a',
+      },
+      options: {},
+    });
+
+    t.is(opts.credentials, '/creds.yaml');
+  }
+);

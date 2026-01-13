@@ -10,6 +10,7 @@ const validateAdaptors = async (
     | 'repoDir'
     | 'workflowPath'
     | 'planPath'
+    | 'expressionPath'
   > & {
     workflow?: Opts['workflow'];
   },
@@ -18,11 +19,9 @@ const validateAdaptors = async (
   if (options.skipAdaptorValidation) {
     return;
   }
-  const isPlan = options.planPath || options.workflowPath || options.workflow;
-
   const hasDeclaredAdaptors = options.adaptors && options.adaptors.length > 0;
 
-  if (isPlan && hasDeclaredAdaptors) {
+  if (!options.expressionPath && hasDeclaredAdaptors) {
     logger.error('ERROR: adaptor and workflow provided');
     logger.error(
       'This is probably not what you meant to do. A workflow should declare an adaptor for each job.'
@@ -30,10 +29,8 @@ const validateAdaptors = async (
     throw new Error('adaptor and workflow provided');
   }
 
-  // If no adaptor is specified, pass a warning
-  // (The runtime is happy to run without)
-  // This can be overriden from options
-  if (!isPlan && !hasDeclaredAdaptors) {
+  // If running a .js file directly and no adaptor is specified, send a warning
+  if (options.expressionPath && !hasDeclaredAdaptors) {
     logger.warn('WARNING: No adaptor provided!');
     logger.warn(
       'This job will probably fail. Pass an adaptor with the -a flag, eg:'
