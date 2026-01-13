@@ -76,6 +76,7 @@ test.serial('should use workspace config', async (t) => {
 
   t.is(project.name, proj.name);
   t.deepEqual(project.config, {
+    credentials: 'credentials.yaml',
     dirs: {
       projects: 'p',
       workflows: 'w',

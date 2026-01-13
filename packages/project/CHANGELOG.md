@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.11.0
+
+### Minor Changes
+
+- d1a0e7c: Allow workflows to be run directly through a project
+
 ## 0.10.1
 
 ### Patch Changes

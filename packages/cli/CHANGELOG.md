@@ -1,5 +1,33 @@
 # @openfn/cli
 
+## 1.23.0
+
+### Minor Changes
+
+- d1a0e7c: When running `execute` inside a Workspace (a folder with an `openfn.yaml` file), allow workflows to be run directly. Ie:
+
+  ```bash
+  openfn process-patients
+  ```
+
+  Instead of:
+
+  ```
+  openfn ./workflows/process-patients/process-patients.yaml
+  ```
+
+  When running through a Workspace, credential maps and collections endpoints are automatically applied for you.
+
+### Patch Changes
+
+- b262d10: Support workflow.jaml/json files without a top workflow key
+- d1a0e7c: When executing jobs, the CLI no longer defaults the path to job.js
+- Updated dependencies [b262d10]
+- Updated dependencies [147a431]
+- Updated dependencies [d1a0e7c]
+  - @openfn/runtime@1.8.1
+  - @openfn/project@0.11.0
+
 ## 1.22.0
 
 ### Minor Changes

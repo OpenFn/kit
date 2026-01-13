@@ -3,6 +3,8 @@ import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
 
+const TMP_DIR = path.resolve('tmp/project-v1');
+
 // These tests use the legacy v1 yaml structure
 
 const mainYaml = `
@@ -35,7 +37,7 @@ workflows:
     jobs:
       - name: Transform data
         body: |
-         // TODO
+          fn(() => ({ x: 1}))
         adaptor: "@openfn/language-common@latest"
         id: b8b780f3-98dd-4244-880b-e534d8f24547
         project_credential_id: null
@@ -95,16 +97,16 @@ workflows:
         source_trigger_id: 7bb476cc-0292-4573-89d0-b13417bc648e
         condition_type: always
 `;
-const projectsPath = path.resolve('tmp/project');
+const projectsPath = path.resolve(TMP_DIR);
 
 test.before(async () => {
-  // await rm('tmp/project', { recursive: true });
-  await mkdir('tmp/project/.projects', { recursive: true });
+  // await rm(TMP_DIR, { recursive: true });
+  await mkdir(`${TMP_DIR}/.projects`, { recursive: true });
 
-  await writeFile('tmp/project/openfn.yaml', '');
-  await writeFile('tmp/project/.projects/main@app.openfn.org.yaml', mainYaml);
+  await writeFile(`${TMP_DIR}/openfn.yaml`, '');
+  await writeFile(`${TMP_DIR}/.projects/main@app.openfn.org.yaml`, mainYaml);
   await writeFile(
-    'tmp/project/.projects/staging@app.openfn.org.yaml',
+    `${TMP_DIR}/.projects/staging@app.openfn.org.yaml`,
     stagingYaml
   );
 });
@@ -131,6 +133,7 @@ test.serial('Checkout a project', async (t) => {
     workflowYaml,
     `id: my-workflow
 name: my workflow
+start: trigger-webhook
 options: {}
 steps:
   - id: trigger
@@ -150,25 +153,46 @@ steps:
     path.resolve(projectsPath, 'workflows/my-workflow/transform-data.js'),
     'utf8'
   );
-  t.is(expr.trim(), '// TODO');
+  t.is(expr.trim(), 'fn(() => ({ x: 1}))');
+});
+
+// note: order of tests is important here
+test.serial('execute a workflow from the checked out project', async (t) => {
+  // cheeky bonus test of checkout by alias
+  await run(`openfn checkout main -w ${projectsPath}`);
+
+  // execute a workflow
+  const { stdout } = await run(
+    `openfn my-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
+  );
+
+  const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
+  const finalState = JSON.parse(output);
+  t.deepEqual(finalState, { x: 1 });
 });
 
 // requires the prior test to run
 test.serial('merge a project', async (t) => {
+  // Checkout staging first (which has the code we want to merge in)
+  await run(`openfn checkout hello-world-staging -w ${projectsPath}`);
+
   const readStep = () =>
     readFile(
       path.resolve(projectsPath, 'workflows/my-workflow/transform-data.js'),
       'utf8'
     ).then((str) => str.trim());
 
-  // assert the initial step code
+  // assert the initial step code in staging
   const initial = await readStep();
-  t.is(initial, '// TODO');
+  t.is(initial, "log('hello world')");
 
-  // Run the merge
-  await run(`openfn merge hello-world-staging -w ${projectsPath} --force`);
+  // Run the merge - merge checked-out staging into main
+  await run(`openfn merge hello-world -w ${projectsPath} --force`);
 
-  // Check the step is updated
+  // Checkout main to verify the merge
+  await run(`openfn checkout main -w ${projectsPath}`);
+
+  // Check the step is updated in main
   const merged = await readStep();
   t.is(merged, "log('hello world')");
 });

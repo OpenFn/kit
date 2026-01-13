@@ -15,6 +15,7 @@ import { Logger } from '@openfn/logger';
 
 export type FromFsConfig = {
   root: string;
+  config?: Partial<l.WorkspaceConfig>;
   logger?: Logger;
 };
 
@@ -27,7 +28,7 @@ export const parseProject = async (options: FromFsConfig) => {
 
   const { type, content } = findWorkspaceFile(root);
   const context = loadWorkspaceFile(content, type as any);
-  const config = buildConfig(context.workspace);
+  const config = buildConfig(options.config ?? context.workspace);
 
   const proj: any = {
     id: context.project?.id,
@@ -44,7 +45,7 @@ export const parseProject = async (options: FromFsConfig) => {
   const workflowDir =
     (config as any).workflowRoot ?? config.dirs?.workflows ?? 'workflows';
   const fileType = config.formats?.workflow ?? 'yaml';
-  const pattern = `${root}/${workflowDir}/*/*.${fileType}`;
+  const pattern = path.resolve(root, workflowDir) + `/**/*.${fileType}`;
   const candidateWfs = await glob(pattern, {
     ignore: ['**node_modules/**', '**tmp**'],
   });
@@ -52,8 +53,24 @@ export const parseProject = async (options: FromFsConfig) => {
   for (const filePath of candidateWfs) {
     const candidate = await fs.readFile(filePath, 'utf-8');
     try {
-      const wf =
+      let wf =
         fileType === 'yaml' ? yamlToJson(candidate) : JSON.parse(candidate);
+
+      if (wf.workflow) {
+        // Support the { workflow, options } workflow format
+        // TODO Would like to remove this on the next major
+        if (wf.options) {
+          const { start, ...rest } = wf.options;
+          if (start) {
+            wf.workflow.start = start;
+          }
+          if (rest) {
+            wf.workflow.options = Object.assign({}, wf.workflow.options, rest);
+          }
+        }
+        wf = wf.workflow;
+      }
+
       if (wf.id && Array.isArray(wf.steps)) {
         //logger?.log('Loading workflow at ', filePath); // TODO logger.debug
         for (const step of wf.steps) {
@@ -71,7 +88,7 @@ export const parseProject = async (options: FromFsConfig) => {
             }
           }
 
-          // Now track UUIDs for edges against state
+          // convert edge conditions
           for (const target in step.next || {}) {
             if (typeof step.next[target] === 'boolean') {
               const bool = step.next[target];

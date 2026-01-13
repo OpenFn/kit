@@ -163,7 +163,7 @@ main | my-project (active)
   workflows:
     - simple-workflow
 
-main | my-project 
+staging | my-project 
   <uuid:staging>
   workflows:
     - simple-workflow

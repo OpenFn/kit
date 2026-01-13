@@ -10,6 +10,8 @@ type JobId = string;
 
 export type CredentialMap = Record<JobId, any>;
 
+export const CREDENTIALS_KEY = '$CREDENTIALS$';
+
 const applyCredentialMap = (
   plan: ExecutionPlan,
   map: CredentialMap = {},
@@ -17,22 +19,37 @@ const applyCredentialMap = (
 ) => {
   const stepsWithCredentialIds = plan.workflow.steps.filter(
     (step: any) =>
-      typeof step.configuration === 'string' &&
-      !step.configuration.endsWith('.json')
+      (typeof step.configuration === 'string' &&
+        !step.configuration.endsWith('.json')) ||
+      step.configuration?.[CREDENTIALS_KEY]
   ) as { configuration: string; name?: string; id: string }[];
 
   const unmapped: Record<string, true> = {};
 
   for (const step of stepsWithCredentialIds) {
-    if (map[step.configuration]) {
-      logger?.debug(
-        `Applying credential ${step.configuration} to "${step.name ?? step.id}"`
-      );
-      step.configuration = map[step.configuration];
+    if (typeof step.configuration === 'string') {
+      const configId = step.configuration;
+      if (configId in map) {
+        step.configuration = map[configId];
+      } else {
+        unmapped[configId] = true;
+        // @ts-ignore
+        delete step.configuration;
+      }
     } else {
-      unmapped[step.configuration] = true;
-      // @ts-ignore
-      delete step.configuration;
+      const configId = step.configuration[CREDENTIALS_KEY];
+      delete step.configuration[CREDENTIALS_KEY];
+      if (configId in map) {
+        Object.assign(step.configuration, map[configId]);
+      } else {
+        unmapped[configId] = true;
+      }
+
+      if (!(configId in unmapped)) {
+        logger?.debug(
+          `Applied credential ${configId} to "${step.name ?? step.id}"`
+        );
+      }
     }
   }
 

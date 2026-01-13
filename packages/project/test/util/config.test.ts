@@ -176,6 +176,7 @@ test('generate openfn.yaml', (t) => {
   uuid: 1234
   id: my-project
 workspace:
+  credentials: credentials.yaml
   formats:
     openfn: yaml
     project: yaml

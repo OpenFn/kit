@@ -1,0 +1,17 @@
+workflow:
+  steps:
+    - id: a
+      adaptor: common
+      expression: fn((state) => { if (!state.data.items) { state.data.items = []; }  state.data.items.push('a'); return state; });
+      next:
+        b: true
+    - id: b
+      adaptor: common
+      expression: fn((state) => { state.data.items.push('b'); return state; });
+      next:
+        c: true
+    - id: c
+      adaptor: common
+      expression: fn((state) => { state.data.items.push('c'); return state; });
+options:
+  start: b

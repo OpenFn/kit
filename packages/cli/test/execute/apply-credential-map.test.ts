@@ -1,5 +1,7 @@
 import test from 'ava';
-import applyCredentialMap from '../../src/execute/apply-credential-map';
+import applyCredentialMap, {
+  CREDENTIALS_KEY,
+} from '../../src/execute/apply-credential-map';
 import { createMockLogger } from '@openfn/logger/dist';
 
 const fn = `const fn = (fn) => (s) => fn(s);
@@ -50,6 +52,18 @@ test('apply a credential to a single step', (t) => {
   applyCredentialMap(wf, map);
 
   t.deepEqual(wf.workflow.steps[0].configuration, map.A);
+});
+
+test('apply a credential to a single step which already has config', (t) => {
+  const wf = createWorkflow();
+  wf.workflow.steps[0].configuration = { x: 1, [CREDENTIALS_KEY]: 'A' };
+  const map = {
+    A: { user: 'Anne Arnold' },
+  };
+
+  applyCredentialMap(wf, map);
+
+  t.deepEqual(wf.workflow.steps[0].configuration, { ...map.A, x: 1 });
 });
 
 test('apply a credential to several steps', (t) => {

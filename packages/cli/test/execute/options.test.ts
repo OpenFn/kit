@@ -26,6 +26,45 @@ test('correct default options', (t) => {
   t.falsy(options.useAdaptorsMonorepo);
 });
 
+test('inputPath: expression -> expressionPath', (t) => {
+  const options = parse('execute job.js');
+  t.is(options.expressionPath, 'job.js');
+});
+
+test('inputPath: json workflow -> planPath', (t) => {
+  const filename = parse('execute wf.json');
+  t.is(filename.planPath, 'wf.json');
+
+  const rel = parse('execute ./wf.json');
+  t.is(rel.planPath, './wf.json');
+
+  const abs = parse('execute /wf.json');
+  t.is(abs.planPath, '/wf.json');
+});
+
+test('inputPath: yaml workflow -> planPath', (t) => {
+  const filename = parse('execute wf.yaml');
+  t.is(filename.planPath, 'wf.yaml');
+
+  // .yml extension works too!
+  const rel = parse('execute ./wf.yml');
+  t.is(rel.planPath, './wf.yml');
+
+  const abs = parse('execute /wf.yml');
+  t.is(abs.planPath, '/wf.yml');
+});
+
+test('inputPath: workflow name -> workflowName', (t) => {
+  const simple = parse('execute workflow');
+  t.is(simple.workflowName, 'workflow');
+
+  const hyphenated = parse('execute my-workflow');
+  t.is(hyphenated.workflowName, 'my-workflow');
+
+  const dotted = parse('execute my.workflow');
+  t.is(dotted.workflowName, 'my.workflow');
+});
+
 test('pass an adaptor (longform)', (t) => {
   const options = parse('execute job.js --adaptor @openfn/language-common');
   t.deepEqual(options.adaptors, ['@openfn/language-common']);
@@ -73,12 +112,6 @@ test("don't expand adaptors if --no-expand-adaptors is set", (t) => {
 test('enable immutability', (t) => {
   const options = parse('execute job.js --immutable');
   t.true(options.immutable);
-});
-
-test('default job path', (t) => {
-  const options = parse('execute /tmp/my-job/ --immutable');
-  t.is(options.path, '/tmp/my-job/');
-  t.is(options.expressionPath, '/tmp/my-job/job.js');
 });
 
 test('enable json logging', (t) => {

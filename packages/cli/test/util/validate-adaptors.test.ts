@@ -10,8 +10,8 @@ test.afterEach(() => {
   mockfs.restore();
 });
 
-test.serial('should warn if no adaptor is passed', async (t) => {
-  await validateAdaptors({ adaptors: [] }, logger);
+test.serial('should warn if expression passed with no adaptor', async (t) => {
+  await validateAdaptors({ expressionPath: 'job.js', adaptors: [] }, logger);
   t.assert(logger._history.length > 1);
   const { message, level } = logger._parse(logger._history[0]);
   t.is(level, 'warn');
@@ -19,18 +19,47 @@ test.serial('should warn if no adaptor is passed', async (t) => {
 });
 
 test.serial(
-  'should not warn if no adaptor is passed but skip-adaptor-warning is set',
+  'should NOT warn if no adaptor ifskip-adaptor-warning is set',
   async (t) => {
     await validateAdaptors(
-      { adaptors: [], skipAdaptorValidation: true },
+      { expressionPath: 'job.js', adaptors: [], skipAdaptorValidation: true },
       logger
     );
     t.is(logger._history.length, 0);
   }
 );
 
-test.serial('should not warn if a workflow is being used', async (t) => {
-  await validateAdaptors({ adaptors: [], workflowPath: 'wf.json' }, logger);
+test.serial(
+  'should NOT warn if a workflow json is being used (workflow path)',
+  async (t) => {
+    await validateAdaptors({ adaptors: [], workflowPath: 'wf.json' }, logger);
+    t.is(logger._history.length, 0);
+  }
+);
+
+test.serial(
+  'should NOT warn if a workflow yaml is being used (workflow path)',
+  async (t) => {
+    await validateAdaptors({ adaptors: [], workflowPath: 'wf.yaml' }, logger);
+    t.is(logger._history.length, 0);
+  }
+);
+
+test.serial('should NOT warn if a workflow json is being used', async (t) => {
+  await validateAdaptors({ adaptors: [], planPath: 'wf.json' }, logger);
+  t.is(logger._history.length, 0);
+});
+
+test.serial('should NOT warn if a workflow yaml is being used', async (t) => {
+  await validateAdaptors({ adaptors: [], planPath: 'wf.yaml' }, logger);
+  t.is(logger._history.length, 0);
+});
+
+test.serial('should NOT warn if a workflow name is used', async (t) => {
+  await validateAdaptors(
+    { adaptors: [], workflowName: 'my-workflow' } as any,
+    logger
+  );
   t.is(logger._history.length, 0);
 });
 

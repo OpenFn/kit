@@ -44,8 +44,11 @@ export type CompiledExecutionPlan = {
     globals?: string;
     steps: Record<StepId, CompiledStep>;
     credentials?: Record<string, any>;
+    /** The default start node - the one the workflow was designed for (the trigger) */
+    start?: StepId;
   };
   options: WorkflowOptions & {
+    /** User-specified start node */
     start: StepId;
   };
 };

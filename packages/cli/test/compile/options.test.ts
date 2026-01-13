@@ -49,12 +49,6 @@ test("don't expand adaptors if --no-expand-adaptors is set", (t) => {
   t.deepEqual(options.adaptors, ['common']);
 });
 
-test('default job path', (t) => {
-  const options = parse('compile /tmp/my-job/ --immutable');
-  t.is(options.path, '/tmp/my-job/');
-  t.is(options.expressionPath, '/tmp/my-job/job.js');
-});
-
 test('enable json logging', (t) => {
   const options = parse('compile job.js --log-json');
   t.true(options.logJson);
