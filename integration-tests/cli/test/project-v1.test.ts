@@ -156,6 +156,21 @@ steps:
   t.is(expr.trim(), 'fn(() => ({ x: 1}))');
 });
 
+// note: order of tests is important here
+test.serial('execute a workflow from the checked out project', async (t) => {
+  // cheeky bonus test of checkout by alias
+  await run(`openfn checkout main -w ${projectsPath}`);
+
+  // execute a workflow
+  const { stdout } = await run(
+    `openfn my-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
+  );
+
+  const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
+  const finalState = JSON.parse(output);
+  t.deepEqual(finalState, { x: 1 });
+});
+
 // requires the prior test to run
 test.serial('merge a project', async (t) => {
   const readStep = () =>
@@ -174,18 +189,4 @@ test.serial('merge a project', async (t) => {
   // Check the step is updated
   const merged = await readStep();
   t.is(merged, "log('hello world')");
-});
-
-test.serial('execute a workflow from the checked out project', async (t) => {
-  // cheeky bonus test of checkout by alias
-  await run(`openfn checkout main -w ${projectsPath}`);
-
-  // execute a workflow
-  const { stdout } = await run(
-    `openfn my-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
-  );
-
-  const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
-  const finalState = JSON.parse(output);
-  t.deepEqual(finalState, { x: 1 });
 });
