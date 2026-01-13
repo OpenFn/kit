@@ -174,28 +174,6 @@ steps:
   t.is(expr.trim(), 'fn()');
 });
 
-// requires the prior test to run
-test.serial('merge a project', async (t) => {
-  const readStep = () =>
-    readFile(
-      path.resolve(projectsPath, 'workflows/hello-workflow/transform-data.js'),
-      'utf8'
-    ).then((str) => str.trim());
-
-  // assert the initial step code
-  const initial = await readStep();
-  t.is(initial, '// TODO');
-
-  // Run the merge
-  const { stdout } = await run(
-    `openfn merge staging -w ${projectsPath} --force`
-  );
-
-  // Check the step is updated
-  const merged = await readStep();
-  t.is(merged, 'fn()');
-});
-
 test.serial('execute a workflow from the checked out project', async (t) => {
   // cheeky bonus test of checkout by alias
   await run(`openfn checkout main --log debug -w ${projectsPath}`);
@@ -335,3 +313,25 @@ workspace:
     server.destroy();
   }
 );
+
+// requires the prior test to run
+test.serial('merge a project', async (t) => {
+  const readStep = () =>
+    readFile(
+      path.resolve(projectsPath, 'workflows/hello-workflow/transform-data.js'),
+      'utf8'
+    ).then((str) => str.trim());
+
+  // assert the initial step code
+  const initial = await readStep();
+  t.is(initial, '// TODO');
+
+  // Run the merge
+  const { stdout } = await run(
+    `openfn merge staging -w ${projectsPath} --force`
+  );
+
+  // Check the step is updated
+  const merged = await readStep();
+  t.is(merged, 'fn()');
+});
