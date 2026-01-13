@@ -56,7 +56,7 @@ const loadAndApplyCredentialMap = async (
   let creds = {};
   if (options.credentials) {
     try {
-      let credsRaw = await readFile(
+      const credsRaw = await readFile(
         path.resolve(options.workspace!, options.credentials),
         'utf8'
       );
