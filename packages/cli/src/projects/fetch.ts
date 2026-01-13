@@ -44,7 +44,9 @@ const options = [
     description: 'Overwrite local file contents with the fetched contents',
   }),
 
-  po.outputPath,
+  override(o.outputPath, {
+    alias: ['o', 'output'],
+  }),
   po.env,
   po.workspace,
 ];
