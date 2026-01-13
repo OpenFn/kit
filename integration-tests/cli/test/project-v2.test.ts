@@ -187,7 +187,7 @@ test.serial('execute a workflow from the checked out project', async (t) => {
   t.deepEqual(finalState, { x: 1 });
 });
 
-test.serial.only(
+test.serial(
   'execute a workflow from the checked out project with a credential map',
   async (t) => {
     await run(`openfn checkout main --log debug -w ${TMP_DIR}`);
@@ -286,7 +286,7 @@ steps:
       `${TMP_DIR}/openfn.yaml`,
       `
 project:
-  endpoint: http://localhost:abcd
+  endpoint: http://localhost:1234
 workspace:
   credentials: creds.yaml`
     );
@@ -301,7 +301,6 @@ workspace:
     const { stdout } = await run(
       `openfn hello-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${TMP_DIR}`
     );
-    console.log(stdout);
 
     const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
     const finalState = JSON.parse(output);
@@ -309,14 +308,14 @@ workspace:
     t.deepEqual(finalState, {
       data: { id: 'x' },
       user: 'pparker',
-      references: [],
     });
     server.destroy();
   }
 );
 
-// requires the prior test to run
 test.serial('merge a project', async (t) => {
+  await run(`openfn checkout main -w ${TMP_DIR}`);
+
   const readStep = () =>
     readFile(
       path.resolve(TMP_DIR, 'workflows/hello-workflow/transform-data.js'),
@@ -325,7 +324,7 @@ test.serial('merge a project', async (t) => {
 
   // assert the initial step code
   const initial = await readStep();
-  t.is(initial, '// TODO');
+  t.is(initial, 'fn(() => ({ x: 1}))');
 
   // Run the merge
   const { stdout } = await run(`openfn merge staging -w ${TMP_DIR} --force`);
