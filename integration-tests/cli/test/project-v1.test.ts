@@ -173,20 +173,26 @@ test.serial('execute a workflow from the checked out project', async (t) => {
 
 // requires the prior test to run
 test.serial('merge a project', async (t) => {
+  // Checkout staging first (which has the code we want to merge in)
+  await run(`openfn checkout hello-world-staging -w ${projectsPath}`);
+
   const readStep = () =>
     readFile(
       path.resolve(projectsPath, 'workflows/my-workflow/transform-data.js'),
       'utf8'
     ).then((str) => str.trim());
 
-  // assert the initial step code
+  // assert the initial step code in staging
   const initial = await readStep();
-  t.is(initial, 'fn(() => ({ x: 1}))');
+  t.is(initial, "log('hello world')");
 
-  // Run the merge
-  await run(`openfn merge hello-world-staging -w ${projectsPath} --force`);
+  // Run the merge - merge checked-out staging into main
+  await run(`openfn merge hello-world -w ${projectsPath} --force`);
 
-  // Check the step is updated
+  // Checkout main to verify the merge
+  await run(`openfn checkout main -w ${projectsPath}`);
+
+  // Check the step is updated in main
   const merged = await readStep();
   t.is(merged, "log('hello world')");
 });
