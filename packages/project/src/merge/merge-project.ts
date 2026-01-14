@@ -111,11 +111,26 @@ export function merge(
 
   // TODO: clarify repo preservation strategy
   // TODO: how other properties of a project are being merged.
+  //  - handle basic metadata (name, desc)
+  //  - handle openfn stuff - the source
 
   // with project level props merging, target goes into source because we want to preserve the target props.
   return new Project(
     baseMerge(target, source, ['collections'], {
       workflows: finalWorkflows,
+      // TODO all this needs testing
+      openfn: {
+        ...target.openfn,
+        ...source.openfn,
+      },
+      options: {
+        ...target.options,
+        ...source.options,
+      },
+      name: source.name ?? target.name,
+      description: source.description ?? target.description,
+      credentials: source.credentials ?? target.credentials,
+      collections: source.collections ?? target.collections,
     } as any)
   );
 }
