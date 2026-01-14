@@ -14,6 +14,7 @@ import beta from '../projects/pull';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
+    (options as any).project = options.projectId;
     return beta(options as any, logger);
   }
 

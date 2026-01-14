@@ -87,6 +87,7 @@ export interface WorkspaceFile {
 }
 
 export interface WorkspaceConfig {
+  credentials?: string;
   dirs: {
     workflows: string;
     projects: string;
@@ -161,6 +162,12 @@ export type Workflow = {
 
   // holds history information of a workflow
   history?: string[];
+
+  /** The default start node - the one the workflow was designed for (the trigger) */
+  start?: string;
+
+  /** extra options from the app. Not really used */
+  options?: any;
 };
 
 export type StepId = string;

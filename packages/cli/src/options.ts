@@ -8,6 +8,7 @@ import {
   ensureLogOpts,
   LogLevel,
 } from './util';
+import { existsSync } from 'node:fs';
 
 // Central type definition for the main options
 // This represents the types coming out of yargs,
@@ -67,6 +68,7 @@ export type Opts = {
   trace?: boolean;
   useAdaptorsMonorepo?: boolean;
   workflow: string;
+  workflowName?: string;
 
   // deprecated
   workflowPath?: string;
@@ -270,6 +272,20 @@ export const credentials: CLIOption = {
     alias: ['creds'],
     description: 'A path which points to a credential map',
   },
+  ensure(opts) {
+    if (opts.credentials) {
+      const mapPath = nodePath.resolve(
+        (opts as any).workspace ?? '',
+        opts.credentials
+      );
+      // Throw if a user-provided credential map not found
+      if (!existsSync(mapPath)) {
+        const e = new Error('Credential map not found at ' + mapPath);
+        delete e.stack;
+        throw e;
+      }
+    }
+  },
 };
 
 export const describe: CLIOption = {
@@ -366,6 +382,7 @@ export const projectId: CLIOption = {
 };
 
 // Input path covers expressionPath and workflowPath
+// TODO this needs unit testing!
 export const inputPath: CLIOption = {
   name: 'input-path',
   yargs: {
@@ -373,13 +390,12 @@ export const inputPath: CLIOption = {
   },
   ensure: (opts) => {
     const { path: basePath } = opts;
-    if (basePath?.endsWith('.json')) {
+    if (basePath?.match(/.(json|ya?ml)$/)) {
       opts.planPath = basePath;
     } else if (basePath?.endsWith('.js')) {
       opts.expressionPath = basePath;
-    } else {
-      const base = getBaseDir(opts);
-      setDefaultValue(opts, 'expressionPath', nodePath.join(base, 'job.js'));
+    } else if (!opts.expressionPath) {
+      opts.workflowName = basePath;
     }
   },
 };

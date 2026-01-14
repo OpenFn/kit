@@ -23,6 +23,7 @@ export const env: CLIOption = {
 export const alias: CLIOption = {
   name: 'alias',
   yargs: {
+    alias: ['env'],
     description: 'Environment name (eg staging, prod, branch)',
   },
 };
@@ -51,7 +52,7 @@ export const workflowMappings: CLIOption = {
 export const outputPath: CLIOption = {
   name: 'output-path',
   yargs: {
-    alias: ['output'],
+    alias: ['o', 'output'],
     type: 'string',
     description: 'Path to output the fetched project to',
   },

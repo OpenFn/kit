@@ -2,6 +2,9 @@ import test from 'ava';
 import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import run from '../src/run';
+import createLightningServer from '@openfn/lightning-mock';
+
+const TMP_DIR = path.resolve('tmp/project-v2');
 
 const mainYaml = `
 id: sandboxing-simple
@@ -26,6 +29,7 @@ options:
   retention_policy: retain_all
 workflows:
   - name: Hello Workflow
+    start: trigger
     steps:
       - id: trigger
         type: webhook
@@ -40,8 +44,8 @@ workflows:
               uuid: add150e9-8616-48ca-844e-8aaa489c7a10
       - id: transform-data
         name: Transform data
-        expression: |-
-          // TODO
+        expression: |
+          fn(() => ({ x: 1}))
         adaptor: "@openfn/language-dhis2@8.0.4"
         openfn:
           uuid: a9f64216-7974-469d-8415-d6d9baf2f92e
@@ -81,6 +85,7 @@ options:
   retention_policy: retain_all
 workflows:
   - name: Hello Workflow
+    start: trigger
     steps:
       - id: trigger
         type: webhook
@@ -95,7 +100,7 @@ workflows:
               uuid: f34146b5-de43-4b05-ac00-3b4f327e62ec
       - id: transform-data
         name: Transform data
-        expression: |-
+        expression: |
           fn()
         adaptor: "@openfn/language-dhis2@8.0.4"
         openfn:
@@ -112,22 +117,21 @@ workflows:
     id: hello-workflow
     history: []
 `;
-const projectsPath = path.resolve('tmp/project');
 
 test.before(async () => {
-  await rm('tmp/project', { recursive: true });
-  await mkdir('tmp/project/.projects', { recursive: true });
+  // await rm(TMP_DIR, { recursive: true });
+  await mkdir(`${TMP_DIR}/.projects`, { recursive: true });
 
-  await writeFile('tmp/project/openfn.yaml', '');
-  await writeFile('tmp/project/.projects/main@app.openfn.org.yaml', mainYaml);
+  await writeFile(`${TMP_DIR}/openfn.yaml`, '');
+  await writeFile(`${TMP_DIR}/.projects/main@app.openfn.org.yaml`, mainYaml);
   await writeFile(
-    'tmp/project/.projects/staging@app.openfn.org.yaml',
+    `${TMP_DIR}/.projects/staging@app.openfn.org.yaml`,
     stagingYaml
   );
 });
 
 test.serial('list available projects', async (t) => {
-  const { stdout } = await run(`openfn projects -w ${projectsPath}`);
+  const { stdout } = await run(`openfn projects -w ${TMP_DIR}`);
   t.regex(stdout, /sandboxing-simple/);
   t.regex(stdout, /a272a529-716a-4de7-a01c-a082916c6d23/);
   t.regex(stdout, /staging/);
@@ -135,17 +139,18 @@ test.serial('list available projects', async (t) => {
 });
 
 test.serial('Checkout a project', async (t) => {
-  await run(`openfn checkout staging -w ${projectsPath}`);
+  await run(`openfn checkout staging -w ${TMP_DIR}`);
 
   // check workflow.yaml
   const workflowYaml = await readFile(
-    path.resolve(projectsPath, 'workflows/hello-workflow/hello-workflow.yaml'),
+    path.resolve(TMP_DIR, 'workflows/hello-workflow/hello-workflow.yaml'),
     'utf8'
   );
   t.is(
     workflowYaml,
     `id: hello-workflow
 name: Hello Workflow
+start: trigger
 options: {}
 steps:
   - id: trigger
@@ -162,30 +167,167 @@ steps:
   );
 
   const expr = await readFile(
-    path.resolve(projectsPath, 'workflows/hello-workflow/transform-data.js'),
+    path.resolve(TMP_DIR, 'workflows/hello-workflow/transform-data.js'),
     'utf8'
   );
   t.is(expr.trim(), 'fn()');
 });
 
-// requires the prior test to run
+test.serial('execute a workflow from the checked out project', async (t) => {
+  // cheeky bonus test of checkout by alias
+  await run(`openfn checkout main -w ${TMP_DIR}`);
+
+  // execute a workflow
+  await run(
+    `openfn hello-workflow  -o ${TMP_DIR}/output.json  --workspace ${TMP_DIR}`
+  );
+
+  const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
+  const finalState = JSON.parse(output);
+  t.deepEqual(finalState, { x: 1 });
+});
+
+test.serial(
+  'execute a workflow from the checked out project with a credential map',
+  async (t) => {
+    await run(`openfn checkout main --log debug -w ${TMP_DIR}`);
+
+    // Modify the checked out workflow code
+    await writeFile(
+      `${TMP_DIR}/workflows/hello-workflow/transform-data.js`,
+      `fn(s => ({  user: s.configuration.username }))`
+    );
+
+    // Modify the checked out workflow to add a credential
+    await writeFile(
+      `${TMP_DIR}/workflows/hello-workflow/hello-workflow.yaml`,
+      `id: hello-workflow
+name: Hello Workflow
+start: trigger
+options: {}
+steps:
+  - id: trigger
+    type: webhook
+    next:
+      transform-data:
+        disabled: false
+        condition: true
+  - id: transform-data
+    name: Transform data
+    configuration: abcd
+    adaptor: "@openfn/language-common@3.2.1"
+    expression: ./transform-data.js
+`
+    );
+
+    // add the credential map to the yaml
+    await writeFile(`${TMP_DIR}/openfn.yaml`, `credentials: creds.yaml`);
+
+    // write the credential map
+    await writeFile(
+      `${TMP_DIR}/creds.yaml`,
+      `abcd:
+  username: pparker`
+    );
+
+    // finally execute the workflow
+    const { stdout } = await run(
+      `openfn hello-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${TMP_DIR}`
+    );
+
+    const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
+    const finalState = JSON.parse(output);
+    t.deepEqual(finalState, { user: 'pparker' });
+  }
+);
+
+test.serial(
+  'execute a workflow from the checked out project with credentials and collections',
+  async (t) => {
+    const server = await createLightningServer({ port: 1234 });
+    server.collections.createCollection('stuff');
+    // Important: the collection value MUST be as string
+    server.collections.upsert('stuff', 'x', JSON.stringify({ id: 'x' }));
+
+    await run(`openfn checkout main --log debug -w ${TMP_DIR}`);
+
+    // Modify the checked out workflow code
+    await writeFile(
+      `${TMP_DIR}/workflows/hello-workflow/transform-data.js`,
+      `
+fn(s => ({ ...s, user: s.configuration.username }));
+collections.get('stuff', 'x')`
+    );
+
+    // Modify the checked out workflow to add a credential
+    await writeFile(
+      `${TMP_DIR}/workflows/hello-workflow/hello-workflow.yaml`,
+      `id: hello-workflow
+name: Hello Workflow
+start: trigger
+options: {}
+steps:
+  - id: trigger
+    type: webhook
+    next:
+      transform-data:
+        disabled: false
+        condition: true
+  - id: transform-data
+    name: Transform data
+    configuration: 'abcd'
+    adaptor: "@openfn/language-common@3.2.1"
+    expression: ./transform-data.js
+`
+    );
+
+    // add the credential map to the yaml
+    await writeFile(
+      `${TMP_DIR}/openfn.yaml`,
+      `
+project:
+  endpoint: http://localhost:1234
+workspace:
+  credentials: creds.yaml`
+    );
+
+    // write the credential map
+    await writeFile(
+      `${TMP_DIR}/creds.yaml`,
+      `abcd:
+    username: pparker`
+    );
+
+    const { stdout } = await run(
+      `openfn hello-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${TMP_DIR}`
+    );
+
+    const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
+    const finalState = JSON.parse(output);
+
+    t.deepEqual(finalState, {
+      data: { id: 'x' },
+      user: 'pparker',
+    });
+    server.destroy();
+  }
+);
+
 test.serial('merge a project', async (t) => {
+  await run(`openfn checkout main -w ${TMP_DIR}`);
+
   const readStep = () =>
     readFile(
-      path.resolve(projectsPath, 'workflows/hello-workflow/transform-data.js'),
+      path.resolve(TMP_DIR, 'workflows/hello-workflow/transform-data.js'),
       'utf8'
     ).then((str) => str.trim());
 
-  await run(`openfn checkout sandboxing-simple -w ${projectsPath}`);
-
   // assert the initial step code
   const initial = await readStep();
-  t.is(initial, '// TODO');
+  t.is(initial, 'fn(() => ({ x: 1}))');
 
   // Run the merge
-  const { stdout } = await run(
-    `openfn merge staging -w ${projectsPath} --force`
-  );
+  const { stdout } = await run(`openfn merge staging -w ${TMP_DIR} --force`);
 
   // Check the step is updated
   const merged = await readStep();

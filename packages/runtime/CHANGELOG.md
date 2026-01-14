@@ -1,5 +1,12 @@
 # @openfn/runtime
 
+## 1.8.1
+
+### Patch Changes
+
+- b262d10: Support a start key on a workflow (different from a start option)
+- 147a431: Tweak error messaging when state objects exceed size limit
+
 ## 1.8.0
 
 ### Minor Changes

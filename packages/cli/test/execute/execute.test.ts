@@ -130,7 +130,7 @@ test.serial('run a workflow with a JSON credential map', async (t) => {
   t.is(result.b, 'b');
 });
 
-test.serial.skip('run a workflow with a YAML credential map', async (t) => {
+test.serial('run a workflow with a YAML credential map', async (t) => {
   const workflow = {
     workflow: {
       steps: [
@@ -166,6 +166,38 @@ B:
   t.is(result.a, 'a');
   t.is(result.b, 'b');
 });
+
+// Note that the execute function only logs if the credential map isn't found,
+// which is what will happen when auto-loading the credential map
+// The CLI will throw earlier through ensure() if an explicitly provided map file
+// is not found. See loadAndApplyCredentialMap
+test.serial(
+  'Log if the credential map is not found (through Project map)',
+  async (t) => {
+    const logger = createMockLogger(undefined, { level: 'debug' });
+    const workflow = {
+      workflow: {
+        steps: [
+          {
+            id: 'a',
+          },
+        ],
+      },
+    };
+    mockFs({
+      '/workflow.json': JSON.stringify(workflow),
+    });
+
+    const options = {
+      ...defaultOptions,
+      workflowPath: '/workflow.json',
+      credentials: '/creds.json',
+    };
+
+    await handler(options, logger);
+    t.truthy(logger._find('debug', /credential map not found/i));
+  }
+);
 
 test.serial('run a workflow with state', async (t) => {
   const workflow = {

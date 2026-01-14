@@ -57,7 +57,7 @@ const loadAndApplyCredentialMap = async (
   if (options.credentials) {
     try {
       const credsRaw = await readFile(
-        path.resolve(options.credentials),
+        path.resolve(options.workspace!, options.credentials),
         'utf8'
       );
       if (options.credentials.endsWith('.json')) {
@@ -65,14 +65,25 @@ const loadAndApplyCredentialMap = async (
       } else {
         creds = yamlToJson(credsRaw);
       }
-    } catch (e) {
-      logger.error('Error processing credential map:');
-      logger.error(e);
-      // probably want to exist if the credential map is invalid
-      process.exitCode = 1;
-      return;
+      logger.info('Credential map loaded ');
+    } catch (e: any) {
+      // If we get here, the credential map failed to load
+      // That could mean 3 things:
+      // 1. The user passed --credentials to the CLI with an invalid path.
+      // 2. The user ran through a Project and the default credential map was not found
+      // 3. The user ran through a Project and an explicitly set credential map was not found
+      // The case of 1 is handled by opts.ensure(), which validates the path passed to the CLI
+      // For 2 we should continue executing but log a warning. For 3 we should probably error
+      // But because it's hard to recognise the case, we'll just log.
+      if (e?.message?.match(/ENOENT/)) {
+        logger.debug('Credential map not found at', options.credentials);
+      } else {
+        logger.error('Error processing credential map:');
+        // probably want to exit if the credential map is invalid
+        process.exitCode = 1;
+        throw e;
+      }
     }
-    logger.info('Credential map loaded ');
   }
   return applyCredentialMap(plan, creds, logger);
 };

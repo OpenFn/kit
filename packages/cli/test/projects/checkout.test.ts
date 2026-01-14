@@ -430,6 +430,7 @@ test.serial('respect openfn.yaml settings', async (t) => {
   uuid: <uuid:staging>
   id: staging
 workspace:
+  credentials: credentials.yaml
   dirs:
     projects: p
     workflows: w
@@ -450,6 +451,7 @@ workspace:
     id: 'simple-workflow',
     name: 'Simple Workflow',
     options: {},
+    start: 'trigger-webhook',
     steps: [
       {
         id: 'trigger',
