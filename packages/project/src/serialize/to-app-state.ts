@@ -6,6 +6,7 @@ import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
+import slugify from '../util/slugify';
 
 type Options = { format?: 'json' | 'yaml' };
 
@@ -38,7 +39,12 @@ export default function (
 
   Object.assign(state, rest, project.options);
   state.project_credentials = project.credentials ?? [];
-  state.workflows = project.workflows.map(mapWorkflow);
+  state.workflows = project.workflows
+    .map(mapWorkflow)
+    .reduce((obj: any, wf) => {
+      obj[slugify(wf.name ?? wf.id)] = wf;
+      return obj;
+    }, {});
 
   const shouldReturnYaml =
     options.format === 'yaml' ||

@@ -228,7 +228,7 @@ export namespace Provisioner {
     name: string;
     description: string | null;
 
-    workflows: Workflow[];
+    workflows: Record<string, Workflow>;
     concurrency?: any; // TODO
 
     // TODO typing isn't quite right here either

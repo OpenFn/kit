@@ -8,8 +8,8 @@ const state: Provisioner.Project = {
   concurrency: null,
   inserted_at: '2025-04-23T11:15:59Z',
   collections: [],
-  workflows: [
-    {
+  workflows: {
+    'my-workflow': {
       id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       name: 'My Workflow',
       edges: [
@@ -44,7 +44,7 @@ const state: Provisioner.Project = {
       lock_version: 1,
       deleted_at: null,
     },
-  ],
+  },
   updated_at: '2025-04-23T11:15:59Z',
   project_credentials: [],
   scheduled_deletion: null,
@@ -58,7 +58,7 @@ const state: Provisioner.Project = {
 export default state;
 
 const withCreds = cloneDeep(state);
-Object.assign(withCreds.workflows[0].jobs[0], {
+Object.assign(withCreds.workflows['my-workflow'].jobs[0], {
   project_credential_id: 'p',
   keychain_credential_id: 'k',
 });

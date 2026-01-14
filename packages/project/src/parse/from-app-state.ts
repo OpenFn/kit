@@ -57,7 +57,7 @@ export default (
   //   fetched_at: config.fetchedAt,
   // };
 
-  proj.workflows = stateJson.workflows.map(mapWorkflow);
+  proj.workflows = Object.values(stateJson.workflows).map(mapWorkflow);
 
   return new Project(proj as l.Project, config);
 };

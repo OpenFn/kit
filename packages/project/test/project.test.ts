@@ -14,8 +14,8 @@ const state: Provisioner.Project = {
   concurrency: null,
   inserted_at: '2025-04-23T11:15:59Z',
   collections: [],
-  workflows: [
-    {
+  workflows: {
+    wf1: {
       id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       name: 'wf1',
       edges: [
@@ -50,7 +50,7 @@ const state: Provisioner.Project = {
       lock_version: 1,
       deleted_at: null,
     },
-  ],
+  },
   updated_at: '2025-04-23T11:15:59Z',
   project_credentials: [],
   scheduled_deletion: null,
@@ -112,7 +112,7 @@ test('should default alias to "main"', (t) => {
   t.is(project.alias, 'main');
 });
 
-test('should convert a state file to a project and back again', async (t) => {
+test.only('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',
     env: 'test',

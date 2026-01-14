@@ -66,7 +66,7 @@ test('should create a Project from prov state with positions', (t) => {
   // assign a fake positions object
   // the provisioner right now doesn't include positions
   // - but one day it will, and Project needs to be able to sync it
-  newState.workflows[0].positions = {
+  newState.workflows['my-workflow'].positions = {
     x: 1,
     y: 1,
   };
@@ -125,7 +125,7 @@ test('should create a Project from prov state with a workflow', (t) => {
 });
 
 test('mapWorkflow: map a simple trigger', (t) => {
-  const mapped = mapWorkflow(state.workflows[0]);
+  const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [trigger] = mapped.steps;
 
@@ -149,7 +149,7 @@ test('mapWorkflow: map a simple trigger', (t) => {
 });
 
 test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => {
-  const mapped = mapWorkflow(state.workflows[0]);
+  const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   t.deepEqual(mapped.openfn, {
     lock_version: 1,
@@ -163,7 +163,7 @@ test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => 
 
 // TODO need to test various trigger conditions and states
 test('mapWorkflow: map a simple job', (t) => {
-  const mapped = mapWorkflow(state.workflows[0]);
+  const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [_trigger, job] = mapped.steps;
   t.deepEqual(job, {
@@ -179,7 +179,7 @@ test('mapWorkflow: map a simple job', (t) => {
 });
 
 test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
-  const wf = withCreds.workflows[0];
+  const wf = withCreds.workflows['my-workflow'];
   const mapped = mapWorkflow(wf);
 
   const [_trigger, job] = mapped.steps;
@@ -202,7 +202,7 @@ test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
 });
 
 test('mapWorkflow: map a job with projcet credentials onto job.configuration', (t) => {
-  const wf = withCreds.workflows[0];
+  const wf = withCreds.workflows['my-workflow'];
   const mapped = mapWorkflow(wf);
 
   const [_trigger, job] = mapped.steps;
@@ -365,8 +365,8 @@ workflows:
   const project = fromAppState(yaml, meta, {
     format: 'yaml',
   });
-  console.log(project.workflows[0].steps);
-  const { next } = project.workflows[0].steps[1];
+  console.log(project.workflows['my-workflow'].steps);
+  const { next } = project.workflows['my-workflow'].steps[1];
   console.log({ next });
   // make sure that the condition_types get mapped to condition
   // also make sure that custom conditions work (both ways)
