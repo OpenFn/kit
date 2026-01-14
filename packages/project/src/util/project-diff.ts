@@ -8,39 +8,41 @@ export type WorkflowDiff = {
 };
 
 /**
- * Compare a target project to a source. Diffs are relative to the target.
- *
- * Ie, if the source has a workflow that the target does not, the diff is "removed"
+ * Compare two projects and return a list of workflow changes which would occur
+ * if we go from -> to (ie, staging -> main)
  *
  * Workflows are identified by their ID and compared using version hashes.
+ * The diff describes what changed going FROM the first project TO the second project.
  *
- * @param source - The source project (typically local/current)
- * @param target - The target project (typically remote/comparison)
- * @returns Array of workflow diffs indicating what changed between the two projects
+ * @param from - The baseline project to compare from
+ * @param to - The comparison project to compare with
+ * @returns Array of workflow diffs indicating what changed from → to:
+ *   - 'added': workflow exists in `to` but not in `from`
+ *   - 'removed': workflow exists in `from` but not in `to`
+ *   - 'changed': workflow exists in both but has different version hashes
+ *
  */
-export function diff(source: Project, target: Project): WorkflowDiff[] {
+export function diff(from: Project, to: Project): WorkflowDiff[] {
   const diffs: WorkflowDiff[] = [];
 
-  // Check all of the source project's workflows
-  for (const sourceWorkflow of source.workflows) {
-    const targetWorkflow = target.getWorkflow(sourceWorkflow.id);
+  // Check all of the from project's workflows
+  for (const fromWorkflow of from.workflows) {
+    const toWorkflow = to.getWorkflow(fromWorkflow.id);
 
-    if (!targetWorkflow) {
-      // if the workflow does not exist in the target, it's removed
-      diffs.push({ id: sourceWorkflow.id, type: 'removed' });
-    } else if (
-      sourceWorkflow.getVersionHash() !== targetWorkflow.getVersionHash()
-    ) {
-      // If the version hashes are different, that's a change
-      diffs.push({ id: sourceWorkflow.id, type: 'changed' });
+    if (!toWorkflow) {
+      // workflow exists in from but not in to = removed
+      diffs.push({ id: fromWorkflow.id, type: 'removed' });
+    } else if (fromWorkflow.getVersionHash() !== toWorkflow.getVersionHash()) {
+      // workflow exists in both but with different content = changed
+      diffs.push({ id: fromWorkflow.id, type: 'changed' });
     }
   }
 
-  // Check for workflows that were added in the target
-  for (const targetWorkflow of target.workflows) {
-    if (!source.getWorkflow(targetWorkflow.id)) {
-      // If the target workflow does not exist in source, it's added
-      diffs.push({ id: targetWorkflow.id, type: 'added' });
+  // Check for workflows that were added in to
+  for (const toWorkflow of to.workflows) {
+    if (!from.getWorkflow(toWorkflow.id)) {
+      // workflow exists in to but not in from = added
+      diffs.push({ id: toWorkflow.id, type: 'added' });
     }
   }
 
