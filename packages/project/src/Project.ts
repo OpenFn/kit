@@ -236,6 +236,32 @@ export class Project {
     return result;
   }
 
+  // for now, diff will just return a list of workflows that have changed
+  diff(project: Project) {
+    const diffs: Array<{ id: string; type: 'added' | 'changed' | 'removed' }> = [];
+
+    // Check all of the this project's workflows
+    for (const sourceWorkflow of this.workflows) {
+      // TODO mapping needs work
+      const targetWorkflow = project.getWorkflow(sourceWorkflow.id);
+
+      if (!targetWorkflow) {
+        // if the workflow does not exist in the target, it's removed
+        diffs.push({ id: sourceWorkflow.id, type: 'removed' });
+      } else if (sourceWorkflow.getVersionHash() !== targetWorkflow.getVersionHash()) {
+        // If the version hashes are different, that's a change
+        diffs.push({ id: sourceWorkflow.id, type: 'changed' });
+      }
+    }
+    for (const targetWorkflow of project.workflows) {
+      if (!this.getWorkflow(targetWorkflow.id)) {
+        // If the target workflow does not exist here, it's added
+        diffs.push({ id: targetWorkflow.id, type: 'added' });
+      }
+    }
+    return diffs;
+  }
+
   canMergeInto(target: Project) {
     const potentialConflicts: Record<string, string> = {};
     for (const sourceWorkflow of this.workflows) {
