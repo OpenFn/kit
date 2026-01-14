@@ -16,20 +16,20 @@ const state: Provisioner.Project = {
     wf1: {
       id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       name: 'wf1',
-      edges: [
-        {
+      edges: {
+        'trigger->transform-data': {
           enabled: true,
           id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
           source_trigger_id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
           condition_type: 'always',
           target_job_id: '66add020-e6eb-4eec-836b-20008afca816',
         },
-      ],
+      },
       concurrency: null,
       inserted_at: '2025-04-23T11:19:32Z',
       updated_at: '2025-04-23T11:19:32Z',
-      jobs: [
-        {
+      jobs: {
+        'transform-data': {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
           body: 'fn(s => s)',
@@ -37,14 +37,14 @@ const state: Provisioner.Project = {
           project_credential_id: '<uuid:c1>',
           keychain_credential_id: null,
         },
-      ],
-      triggers: [
-        {
+      },
+      triggers: {
+        webhook: {
           enabled: true, // TODO enabled: false is a bit interesting
           id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
           type: 'webhook',
         },
-      ],
+      },
       lock_version: 1,
       deleted_at: null,
     },
@@ -113,23 +113,23 @@ test('should set defaults for keys that Lightning needs', (t) => {
       'my-workflow': {
         id: 0,
         name: 'my workflow',
-        jobs: [
-          {
+        jobs: {
+          step: {
             body: '.',
             id: 2,
             project_credential_id: null,
             keychain_credential_id: null,
           },
-        ],
-        triggers: [{ type: 'webhook', id: 1 }],
-        edges: [
-          {
+        },
+        triggers: { webhook: { type: 'webhook', id: 1 } },
+        edges: {
+          ['trigger->step']: {
             id: '<trigger-step>',
             target_job_id: 2,
             enabled: true,
             source_trigger_id: 1,
           },
-        ],
+        },
         lock_version: null,
       },
     },
@@ -223,9 +223,9 @@ test('should write openfn keys to objects', (t) => {
   const state = toAppState(project);
   t.is(state.x, 1);
   t.is(state.workflows['wf'].x, 1);
-  t.is(state.workflows['wf'].jobs[0].x, 1);
-  t.is(state.workflows['wf'].triggers[0].x, 1);
-  t.is(state.workflows['wf'].edges[0].x, 1);
+  t.is(state.workflows['wf'].jobs.step.x, 1);
+  t.is(state.workflows['wf'].triggers.webhook.x, 1);
+  t.is(state.workflows['wf'].edges['trigger->step'].x, 1);
 });
 
 test('should handle credentials', (t) => {
@@ -257,9 +257,9 @@ test('should handle credentials', (t) => {
   };
 
   const state = toAppState(new Project(data), { format: 'json' });
-  const [job] = state.workflows['wf'].jobs;
-  t.is(job.keychain_credential_id, 'k');
-  t.is(job.project_credential_id, 'p');
+  const { step } = state.workflows['wf'].jobs;
+  t.is(step.keychain_credential_id, 'k');
+  t.is(step.project_credential_id, 'p');
 });
 
 test('should ignore workflow start keys', (t) => {
@@ -307,13 +307,13 @@ c-p
 
   const state = toAppState(project, { format: 'json' });
 
-  const jobs = state.workflows['wf'].jobs.map((j) => j.name);
+  const jobs = Object.keys(state.workflows['wf'].jobs);
   // short be sorted by name
   t.deepEqual(jobs, ['b', 'c', 'p', 'x', 'y', 'z']);
 
-  const edges = state.workflows['wf'].edges.map((e) => e.id);
+  const edges = Object.keys(state.workflows['wf'].edges);
   // edges are sorted by uuid
-  t.deepEqual(edges, [3, 6, 9]);
+  t.deepEqual(edges, ['z->b', 'y->x', 'c->p']);
 });
 
 test('should handle edge conditions', (t) => {
@@ -329,7 +329,13 @@ a-(condition=x)-f
   });
 
   const state = toAppState(project, { format: 'json' });
-  const [a_b, a_c, a_d, a_e, a_f] = state.workflows.wf.edges;
+  const {
+    'a->b': a_b,
+    'a->c': a_c,
+    'a->d': a_d,
+    'a->e': a_e,
+    'a->f': a_f,
+  } = state.workflows.wf.edges;
 
   t.is(a_b.condition_type, 'always');
   t.falsy(a_b.condition_expression);

@@ -3,7 +3,7 @@ import fromAppState, {
   mapEdge,
   mapWorkflow,
 } from '../../src/parse/from-app-state';
-import { clone, cloneDeep } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 
 import state, { withCreds } from '../fixtures/sample-v1-project';
 import { Job } from '@openfn/lexicon';
@@ -86,10 +86,10 @@ test('should create a Project from prov state with a workflow', (t) => {
     id: 'my-workflow',
     name: 'My Workflow',
     history: [],
-    start: 'trigger-webhook',
+    start: 'webhook',
     steps: [
       {
-        id: 'trigger',
+        id: 'webhook',
         type: 'webhook',
         openfn: { enabled: true, uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
@@ -130,7 +130,7 @@ test('mapWorkflow: map a simple trigger', (t) => {
   const [trigger] = mapped.steps;
 
   t.deepEqual(trigger, {
-    id: 'trigger',
+    id: 'webhook',
     type: 'webhook',
     next: {
       'transform-data': {
@@ -146,6 +146,19 @@ test('mapWorkflow: map a simple trigger', (t) => {
       uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
     },
   });
+});
+
+test('mapWorkflow: use a triggers type as its id', (t) => {
+  const wf = state.workflows['my-workflow'];
+
+  // trigger id in the state is a UUID
+  t.is(wf.triggers.webhook.id, '4a06289c-15aa-4662-8dc6-f0aaacd8a058');
+
+  const mapped = mapWorkflow(wf);
+  const [trigger] = mapped.steps;
+
+  // trigger ID in the Project is the type
+  t.is(trigger.id, 'webhook');
 });
 
 test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => {

@@ -3,4 +3,4 @@
 '@openfn/project': minor
 ---
 
-Update v1 provisioner project structure (workflows as record, not array)
+Update v1 provisioner project structure (workflows, jobs, edges and triggers as record, not array)

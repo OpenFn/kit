@@ -104,22 +104,24 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
 
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
-  workflow.triggers.forEach((trigger: Provisioner.Trigger) => {
+  Object.values(workflow.triggers).forEach((trigger: Provisioner.Trigger) => {
     const { type, ...otherProps } = trigger;
 
     if (!mapped.start) {
-      mapped.start = `trigger-${type}`;
+      mapped.start = type;
     }
 
-    const connectedEdges = edges.filter(
+    const connectedEdges = Object.values(edges).filter(
       (e) => e.source_trigger_id === trigger.id
     );
     mapped.steps.push({
-      id: 'trigger',
+      id: type,
       type,
       openfn: renameKeys(otherProps, { id: 'uuid' }),
       next: connectedEdges.reduce((obj: any, edge) => {
-        const target = jobs.find((j) => j.id === edge.target_job_id);
+        const target = Object.values(jobs).find(
+          (j) => j.id === edge.target_job_id
+        );
         if (!target) {
           throw new Error(`Failed to find ${edge.target_job_id}`);
         }
@@ -130,8 +132,8 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     } as l.Trigger);
   });
 
-  workflow.jobs.forEach((step: Provisioner.Job) => {
-    const outboundEdges = edges.filter(
+  Object.values(workflow.jobs).forEach((step: Provisioner.Job) => {
+    const outboundEdges = Object.values(edges).filter(
       (e) => e.source_job_id === step.id || e.source_trigger_id === step.id
     );
 
@@ -156,7 +158,9 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
 
     if (outboundEdges.length) {
       s.next = outboundEdges.reduce((next, edge) => {
-        const target = jobs.find((j) => j.id === edge.target_job_id);
+        const target = Object.values(jobs).find(
+          (j) => j.id === edge.target_job_id
+        );
         // @ts-ignore
         next[slugify(target.name)] = mapEdge(edge);
         return next;

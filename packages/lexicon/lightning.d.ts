@@ -256,9 +256,9 @@ export namespace Provisioner {
   export interface Workflow {
     id: string;
     name: string;
-    jobs: Job[];
-    triggers: Trigger[];
-    edges: Edge[];
+    jobs: Record<string, Job>;
+    triggers: Record<string, Trigger>;
+    edges: Record<string, Edge>;
     delete?: boolean;
     project_id?: string;
 
