@@ -47,17 +47,17 @@ test('diff: should detect added workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
 
-  const from = new Project({
-    name: 'from',
+  const projectA = new Project({
+    name: 'a',
     workflows: [wf1],
   });
 
-  const to = new Project({
-    name: 'to',
+  const projectB = new Project({
+    name: 'b',
     workflows: [wf1, wf2],
   });
 
-  const diffs = diff(from, to);
+  const diffs = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
@@ -67,17 +67,17 @@ test('diff: should detect removed workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
 
-  const from = new Project({
-    name: 'from',
+  const projectA = new Project({
+    name: 'a',
     workflows: [wf1, wf2],
   });
 
-  const to = new Project({
-    name: 'to',
+  const projectB = new Project({
+    name: 'b',
     workflows: [wf1],
   });
 
-  const diffs = diff(from, to);
+  const diffs = diff(projectA, projectB);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });
@@ -89,20 +89,20 @@ test('diff: should detect multiple changes at once', (t) => {
   const wf3 = generateWorkflow('@id c trigger-z');
   const wf4 = generateWorkflow('@id d trigger-w');
 
-  // wf2 will be changed in to
+  // wf2 will be changed in projectB
   const wf2Changed = generateWorkflow('@id b trigger-different');
 
-  const from = new Project({
-    name: 'from',
+  const projectA = new Project({
+    name: 'a',
     workflows: [wf1, wf2, wf3], // has a, b, c
   });
 
-  const to = new Project({
-    name: 'to',
+  const projectB = new Project({
+    name: 'b',
     workflows: [wf1, wf2Changed, wf4], // has a, b (changed), d (new)
   });
 
-  const diffs = diff(from, to);
+  const diffs = diff(projectA, projectB);
 
   t.is(diffs.length, 3);
   t.deepEqual(

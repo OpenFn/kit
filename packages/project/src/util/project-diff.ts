@@ -8,41 +8,47 @@ export type WorkflowDiff = {
 };
 
 /**
- * Compare two projects and return a list of workflow changes which would occur
- * if we go from -> to (ie, staging -> main)
+ * Compare two projects and return a list of workflow changes showing how
+ * project B has diverged from project A.
  *
  * Workflows are identified by their ID and compared using version hashes.
- * The diff describes what changed going FROM the first project TO the second project.
  *
- * @param from - The baseline project to compare from
- * @param to - The comparison project to compare with
- * @returns Array of workflow diffs indicating what changed from → to:
- *   - 'added': workflow exists in `to` but not in `from`
- *   - 'removed': workflow exists in `from` but not in `to`
+ * @param a - The baseline project (e.g., main branch)
+ * @param b - The comparison project (e.g., staging branch)
+ * @returns Array of workflow diffs indicating how B differs from A:
+ *   - 'added': workflow exists in B but not in A
+ *   - 'removed': workflow exists in A but not in B
  *   - 'changed': workflow exists in both but has different version hashes
  *
+ * @example
+ * ```typescript
+ * const main = await Project.from('fs', { root: '.' });
+ * const staging = await Project.from('state', stagingState);
+ * const diffs = diff(main, staging);
+ * // Shows how staging has diverged from main
+ * ```
  */
-export function diff(from: Project, to: Project): WorkflowDiff[] {
+export function diff(a: Project, b: Project): WorkflowDiff[] {
   const diffs: WorkflowDiff[] = [];
 
-  // Check all of the from project's workflows
-  for (const fromWorkflow of from.workflows) {
-    const toWorkflow = to.getWorkflow(fromWorkflow.id);
+  // Check all of project A's workflows
+  for (const workflowA of a.workflows) {
+    const workflowB = b.getWorkflow(workflowA.id);
 
-    if (!toWorkflow) {
-      // workflow exists in from but not in to = removed
-      diffs.push({ id: fromWorkflow.id, type: 'removed' });
-    } else if (fromWorkflow.getVersionHash() !== toWorkflow.getVersionHash()) {
+    if (!workflowB) {
+      // workflow exists in A but not in B = removed
+      diffs.push({ id: workflowA.id, type: 'removed' });
+    } else if (workflowA.getVersionHash() !== workflowB.getVersionHash()) {
       // workflow exists in both but with different content = changed
-      diffs.push({ id: fromWorkflow.id, type: 'changed' });
+      diffs.push({ id: workflowA.id, type: 'changed' });
     }
   }
 
-  // Check for workflows that were added in to
-  for (const toWorkflow of to.workflows) {
-    if (!from.getWorkflow(toWorkflow.id)) {
-      // workflow exists in to but not in from = added
-      diffs.push({ id: toWorkflow.id, type: 'added' });
+  // Check for workflows that were added in B
+  for (const workflowB of b.workflows) {
+    if (!a.getWorkflow(workflowB.id)) {
+      // workflow exists in B but not in A = added
+      diffs.push({ id: workflowB.id, type: 'added' });
     }
   }
 
