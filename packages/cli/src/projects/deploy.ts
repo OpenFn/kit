@@ -60,34 +60,91 @@
  * (but what if the user edited it and it is? I think the system igores it and that's just a force push)
  */
 
+import yargs from 'yargs';
 import Project from '@openfn/project';
-import { DeployConfig, deployProject } from '@openfn/deploy';
-import type { Logger } from '../util/logger';
-import { Opts } from '../options';
-import { loadAppAuthConfig } from './util';
 
-export type DeployOptionsBeta = Required<
-  Pick<
-    Opts,
-    | 'beta'
-    | 'command'
-    | 'log'
-    | 'logJson'
-    | 'apiKey'
-    | 'endpoint'
-    | 'path'
-    | 'workspace'
-  >
+import { handler as fetch } from './fetch';
+import * as o from '../options';
+import * as o2 from './options';
+import { loadAppAuthConfig, deployProject } from './util';
+import { build, ensure } from '../util/command-builders';
+
+import type { Provisioner } from '@openfn/lexicon/lightning';
+import type { Logger } from '../util/logger';
+import type { Opts } from '../options';
+
+export type DeployOptions = Pick<
+  Opts,
+  | 'apiKey'
+  | 'command'
+  | 'confirm'
+  | 'endpoint'
+  | 'force'
+  | 'log'
+  | 'logJson'
+  | 'workspace'
 >;
 
-export async function handler(options: DeployOptionsBeta, logger: Logger) {
+const options = [
+  // local options
+  o2.env,
+  o2.workspace,
+
+  // general options
+  o.apiKey,
+  o.endpoint,
+  o.log,
+  o.logJson,
+  o.snapshots,
+  o.force,
+  o.confirm,
+];
+
+const printProjectName = (project: Project) =>
+  `${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
+
+export const command: yargs.CommandModule<DeployOptions> = {
+  command: 'deploy',
+  describe: `Deploy the checked out project to a Lightning Instance`,
+  builder: (yargs: yargs.Argv<DeployOptions>) =>
+    build(options, yargs)
+      .positional('project', {
+        describe:
+          'The UUID, local id or local alias of the project to deploy to',
+      })
+      .example(
+        'deploy',
+        'Deploy the checkout project to the connected instance'
+      ),
+  handler: ensure('project-deploy', options),
+};
+
+export async function handler(options: DeployOptions, logger: Logger) {
   const config = loadAppAuthConfig(options, logger);
 
+  logger.info('Attempting to load checked-out project from workspace');
+  const localProject = await Project.from('fs', {
+    root: options.workspace || '.',
+  });
+
+  // TODO if there's no local metadata, the user must pass a UUID or alias to post to
+
+  logger.success(`Loaded local project ${printProjectName(localProject)}`);
   // First step, fetch the latest version and write
   // this may throw!
+  let remoteProject: Project;
   try {
-    await fetch(options, logger);
+    remoteProject = await fetch(
+      {
+        ...options,
+        // Prefer the UUID since it's most specific
+        project: localProject.uuid ?? localProject.id,
+      },
+      logger
+    );
+    logger.success('Downloaded latest version of project at ', config.endpoint);
   } catch (e) {
+    console.log(e);
     // If fetch failed because of compatiblity, what do we do?
     //
     // Basically we failed to write to the local project file
@@ -129,24 +186,93 @@ export async function handler(options: DeployOptionsBeta, logger: Logger) {
     // this leaves you with a file system that can either be merged, deployed or exported
   }
 
-  // TMP use options.path to set the directory for now
-  // We'll need to manage this a bit better
-  const project = await Project.from('fs', { root: options.workspace || '.' });
-  // TODO: work out if there's any diff
+  // TODO warn if the remote UUID is different to the local UUID
+  // That suggests you're doing something wrong!
+  // force will suppress
 
+  const diffs = reportDiff(remoteProject, localProject, logger);
+  if (!diffs.length) {
+    logger.success('Nothing to deploy');
+    return;
+  }
+
+  // Ensure there's no divergence
+  if (!localProject.canMergeInto(remoteProject)) {
+    if (!options.force) {
+    }
+  }
+
+  logger.info(
+    'Remote project has not diverged from local project - it is safe to deploy 🎉'
+  );
+
+  // TODO I think we now gotta merge local into the remote, because
+  // when we deploy we want to keep all the remote metadata
+
+  // TODO the only difficulty I see with this is: what if the user makes
+  // a project change locally? It'll a) diverge and b) get ignored
+  // So that needs thinking about
+
+  logger.info('Merging changes into remote project');
+  const merged = Project.merge(localProject, remoteProject, { force: true });
   // generate state for the provisioner
-  const state = project.serialize('state', { format: 'json' });
+  const state = merged.serialize('state', {
+    format: 'json',
+  }) as Provisioner.Project_v1;
 
-  logger.debug('Converted local project to app state:');
+  // // // hack! needs fixing
+  // state.workflows['turtle-power'].lock_version =
+  //   remoteProject.workflows[0].openfn?.lock_version;
+
+  // TODO only do this if asked
+  // or maybe write it to output with -o?
+  // maybe we can write state.app, state.local and state.result
+  // this is heavy debug stuff
+  logger.debug('Converted merged local project to app state:');
   logger.debug(JSON.stringify(state, null, 2));
 
   // TODO not totally sold on endpoint handling right now
-  config.endpoint ??= project.openfn?.endpoint!;
+  config.endpoint ??= localProject.openfn?.endpoint!;
 
   logger.info('Sending project to app...');
 
-  // TODO do I really want to use this deploy function? Is it suitable?
-  await deployProject(config as DeployConfig, state);
+  await deployProject(config.endpoint, config.apiKey, state, logger);
 
   logger.success('Updated project at', config.endpoint);
 }
+
+export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
+  const diffs = remote.diff(local);
+
+  if (diffs.length === 0) {
+    logger.info('No workflow changes detected');
+    return diffs;
+  }
+
+  const added = diffs.filter((d) => d.type === 'added');
+  const changed = diffs.filter((d) => d.type === 'changed');
+  const removed = diffs.filter((d) => d.type === 'removed');
+
+  if (added.length > 0) {
+    logger.info('Workflows added:');
+    for (const diff of added) {
+      logger.info(`  - ${diff.id}`);
+    }
+  }
+
+  if (changed.length > 0) {
+    logger.info('Workflows modified:');
+    for (const diff of changed) {
+      logger.info(`  - ${diff.id}`);
+    }
+  }
+
+  if (removed.length > 0) {
+    logger.info('Workflows removed:');
+    for (const diff of removed) {
+      logger.info(`  - ${diff.id}`);
+    }
+  }
+
+  return diffs;
+};

@@ -82,6 +82,7 @@ export const getLightningUrl = (
   return new URL(`/api/provision/${path}?${params.toString()}`, endpoint);
 };
 
+// TODO move to client.ts
 export async function fetchProject(
   endpoint: string,
   apiKey: string,
@@ -115,6 +116,43 @@ export async function fetchProject(
       );
     }
     logger?.info(`Project retrieved from ${endpoint}`);
+    return response.json();
+  } catch (error: any) {
+    handleCommonErrors({ endpoint, apiKey }, error);
+
+    throw error;
+  }
+}
+
+export async function deployProject(
+  endpoint: string,
+  apiKey: string,
+  state: Provisioner.Project_v1,
+  logger?: Logger
+): Promise<{ data: Provisioner.Project_v1 }> {
+  try {
+    const url = getLightningUrl(endpoint);
+    console.log(url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(state),
+    });
+    console.log(response);
+
+    if (!response.ok) {
+      const body = await response.json();
+
+      logger?.debug('Failed to deploy project: response');
+      logger?.debug(JSON.stringify(body, null, 2));
+      throw new CLIError(
+        `Failed to deploy project ${state.name}: ${response.status}`
+      );
+    }
+
     return response.json();
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);

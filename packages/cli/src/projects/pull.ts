@@ -10,13 +10,14 @@ import type { Opts } from './options';
 
 export type PullOptions = Pick<
   Opts,
-  | 'beta'
   | 'command'
+  | 'alias'
+  | 'workspace'
+  | 'apiKey'
+  | 'endpoint'
   | 'log'
   | 'logJson'
   | 'statePath'
-  | 'projectPath'
-  | 'configPath'
   | 'project'
   | 'confirm'
   | 'snapshots'
@@ -37,7 +38,6 @@ const options = [
     description: 'path to output the project to',
   }),
   o.logJson,
-  o.projectPath,
   o.snapshots,
   o.path,
   o.force,

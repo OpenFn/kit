@@ -4,6 +4,7 @@ import merge from './merge';
 import checkout from './checkout';
 import fetch from './fetch';
 import { command as pull } from './pull';
+import { command as deploy } from './deploy';
 
 import type yargs from 'yargs';
 
@@ -15,6 +16,7 @@ export const projectsCommand = {
   builder: (yargs: yargs.Argv) =>
     yargs
       .command(pull)
+      .command(deploy)
       .command(list)
       .command(version)
       .command(merge)
