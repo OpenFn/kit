@@ -4,7 +4,8 @@
 
 ### Minor Changes
 
-- d1a0e7c: When running `execute` inside a Workspace (a folder with an `openfn.yaml` file), allow workflows to be run directly. Ie:
+- projects: when pulling, include a `start` option which points to the trigger, ensuring workflow.yaml files start executing from the right place.
+- projects: When running `execute` inside a Workspace (a folder with an `openfn.yaml` file), allow Workflows to be run directly. I.e. do this:
 
   ```bash
   openfn process-patients
@@ -20,7 +21,7 @@
 
 ### Patch Changes
 
-- b262d10: Support workflow.jaml/json files without a top workflow key
+- b262d10: projects: Support workflow.jaml/json files without a top workflow key
 - d1a0e7c: When executing jobs, the CLI no longer defaults the path to job.js
 - Updated dependencies [b262d10]
 - Updated dependencies [147a431]
