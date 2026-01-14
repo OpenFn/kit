@@ -10,6 +10,7 @@ import fromProject, { SerializedProject } from './parse/from-project';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
+import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
 import { buildConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
@@ -236,30 +237,9 @@ export class Project {
     return result;
   }
 
-  // for now, diff will just return a list of workflows that have changed
+  // Compare this project with another and return a list of workflow changes
   diff(project: Project) {
-    const diffs: Array<{ id: string; type: 'added' | 'changed' | 'removed' }> = [];
-
-    // Check all of the this project's workflows
-    for (const sourceWorkflow of this.workflows) {
-      // TODO mapping needs work
-      const targetWorkflow = project.getWorkflow(sourceWorkflow.id);
-
-      if (!targetWorkflow) {
-        // if the workflow does not exist in the target, it's removed
-        diffs.push({ id: sourceWorkflow.id, type: 'removed' });
-      } else if (sourceWorkflow.getVersionHash() !== targetWorkflow.getVersionHash()) {
-        // If the version hashes are different, that's a change
-        diffs.push({ id: sourceWorkflow.id, type: 'changed' });
-      }
-    }
-    for (const targetWorkflow of project.workflows) {
-      if (!this.getWorkflow(targetWorkflow.id)) {
-        // If the target workflow does not exist here, it's added
-        diffs.push({ id: targetWorkflow.id, type: 'added' });
-      }
-    }
-    return diffs;
+    return projectDiff(this, project);
   }
 
   canMergeInto(target: Project) {
