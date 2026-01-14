@@ -23,6 +23,7 @@ export const env: CLIOption = {
 export const alias: CLIOption = {
   name: 'alias',
   yargs: {
+    alias: ['env'],
     description: 'Environment name (eg staging, prod, branch)',
   },
 };
