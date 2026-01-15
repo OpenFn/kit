@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 import Project from '@openfn/project';
+import c from 'chalk';
 
 import { handler as fetch } from './fetch';
 import * as o from '../options';
@@ -208,23 +209,23 @@ export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
   const removed = diffs.filter((d) => d.type === 'removed');
 
   if (added.length > 0) {
-    logger.info('Workflows added:');
+    logger.info(c.green('Workflows added:\n'));
     for (const diff of added) {
-      logger.info(`  - ${diff.id}`);
+      logger.info(c.green(`  - ${diff.id}`));
     }
   }
 
   if (changed.length > 0) {
-    logger.info('Workflows modified:');
+    logger.info(c.yellow('Workflows modified:\n'));
     for (const diff of changed) {
-      logger.info(`  - ${diff.id}`);
+      logger.info(c.yellow(`  - ${diff.id}`));
     }
   }
 
   if (removed.length > 0) {
-    logger.info('Workflows removed:');
+    logger.info(c.red('Workflows removed:\n'));
     for (const diff of removed) {
-      logger.info(`  - ${diff.id}`);
+      logger.info(c.red(`  - ${diff.id}`));
     }
   }
 
