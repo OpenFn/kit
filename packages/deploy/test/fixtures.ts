@@ -80,7 +80,7 @@ export function fullExampleState() {
           },
         },
         triggers: {
-          'trigger-one': {
+          cron: {
             id: '71f0cbf1-4d8e-443e-afca-8a479ec281a1',
             type: 'cron',
             cron_expression: '0 0 1 1 *',

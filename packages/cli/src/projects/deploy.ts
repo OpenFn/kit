@@ -214,7 +214,10 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // So that needs thinking about
 
   logger.info('Merging changes into remote project');
-  const merged = Project.merge(localProject, remoteProject, { force: true });
+  const merged = Project.merge(localProject, remoteProject, {
+    strategy: 'replace',
+    force: true,
+  });
   // generate state for the provisioner
   const state = merged.serialize('state', {
     format: 'json',
