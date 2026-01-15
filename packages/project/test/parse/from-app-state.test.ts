@@ -3,7 +3,7 @@ import fromAppState, {
   mapEdge,
   mapWorkflow,
 } from '../../src/parse/from-app-state';
-import { clone, cloneDeep } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 
 import state, { withCreds } from '../fixtures/sample-v1-project';
 import { Job } from '@openfn/lexicon';
@@ -54,6 +54,20 @@ test('should create a Project from prov state with collections', (t) => {
   t.deepEqual(project.collections, []);
 });
 
+test('should create a Project from prov state with sandbox stuff', (t) => {
+  const stateWithSandbox = {
+    ...state,
+    color: 'red',
+    parent_id: 'abc',
+    env: 'dev',
+  };
+  const project = fromAppState(stateWithSandbox, meta, { format: 'json' });
+
+  t.is(project.sandbox.parentId, 'abc');
+  t.is(project.options.env, 'dev');
+  t.is(project.options.color, 'red');
+});
+
 test('should create a Project from prov state with credentials', (t) => {
   const project = fromAppState(state, meta);
 
@@ -66,7 +80,7 @@ test('should create a Project from prov state with positions', (t) => {
   // assign a fake positions object
   // the provisioner right now doesn't include positions
   // - but one day it will, and Project needs to be able to sync it
-  newState.workflows[0].positions = {
+  newState.workflows['my-workflow'].positions = {
     x: 1,
     y: 1,
   };
@@ -86,10 +100,10 @@ test('should create a Project from prov state with a workflow', (t) => {
     id: 'my-workflow',
     name: 'My Workflow',
     history: [],
-    start: 'trigger-webhook',
+    start: 'webhook',
     steps: [
       {
-        id: 'trigger',
+        id: 'webhook',
         type: 'webhook',
         openfn: { enabled: true, uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
@@ -125,12 +139,12 @@ test('should create a Project from prov state with a workflow', (t) => {
 });
 
 test('mapWorkflow: map a simple trigger', (t) => {
-  const mapped = mapWorkflow(state.workflows[0]);
+  const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [trigger] = mapped.steps;
 
   t.deepEqual(trigger, {
-    id: 'trigger',
+    id: 'webhook',
     type: 'webhook',
     next: {
       'transform-data': {
@@ -148,8 +162,21 @@ test('mapWorkflow: map a simple trigger', (t) => {
   });
 });
 
+test('mapWorkflow: use a triggers type as its id', (t) => {
+  const wf = state.workflows['my-workflow'];
+
+  // trigger id in the state is a UUID
+  t.is(wf.triggers.webhook.id, '4a06289c-15aa-4662-8dc6-f0aaacd8a058');
+
+  const mapped = mapWorkflow(wf);
+  const [trigger] = mapped.steps;
+
+  // trigger ID in the Project is the type
+  t.is(trigger.id, 'webhook');
+});
+
 test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => {
-  const mapped = mapWorkflow(state.workflows[0]);
+  const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   t.deepEqual(mapped.openfn, {
     lock_version: 1,
@@ -163,7 +190,7 @@ test('mapWorkflow: handle openfn meta (uuid, lock_version, deleted_at)', (t) => 
 
 // TODO need to test various trigger conditions and states
 test('mapWorkflow: map a simple job', (t) => {
-  const mapped = mapWorkflow(state.workflows[0]);
+  const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [_trigger, job] = mapped.steps;
   t.deepEqual(job, {
@@ -179,7 +206,7 @@ test('mapWorkflow: map a simple job', (t) => {
 });
 
 test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
-  const wf = withCreds.workflows[0];
+  const wf = withCreds.workflows['my-workflow'];
   const mapped = mapWorkflow(wf);
 
   const [_trigger, job] = mapped.steps;
@@ -202,7 +229,7 @@ test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
 });
 
 test('mapWorkflow: map a job with projcet credentials onto job.configuration', (t) => {
-  const wf = withCreds.workflows[0];
+  const wf = withCreds.workflows['my-workflow'];
   const mapped = mapWorkflow(wf);
 
   const [_trigger, job] = mapped.steps;
@@ -365,8 +392,8 @@ workflows:
   const project = fromAppState(yaml, meta, {
     format: 'yaml',
   });
-  console.log(project.workflows[0].steps);
-  const { next } = project.workflows[0].steps[1];
+  console.log(project.workflows['my-workflow'].steps);
+  const { next } = project.workflows['my-workflow'].steps[1];
   console.log({ next });
   // make sure that the condition_types get mapped to condition
   // also make sure that custom conditions work (both ways)

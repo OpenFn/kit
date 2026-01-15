@@ -222,6 +222,7 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
     },
     project: {
       id: 'my-project',
+      name: 'My Project',
     },
   });
 

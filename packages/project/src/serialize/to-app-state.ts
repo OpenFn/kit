@@ -6,6 +6,7 @@ import { Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
+import slugify from '../util/slugify';
 
 type Options = { format?: 'json' | 'yaml' };
 
@@ -38,7 +39,12 @@ export default function (
 
   Object.assign(state, rest, project.options);
   state.project_credentials = project.credentials ?? [];
-  state.workflows = project.workflows.map(mapWorkflow);
+  state.workflows = project.workflows
+    .map(mapWorkflow)
+    .reduce((obj: any, wf) => {
+      obj[slugify(wf.name ?? wf.id)] = wf;
+      return obj;
+    }, {});
 
   const shouldReturnYaml =
     options.format === 'yaml' ||
@@ -61,11 +67,11 @@ const mapWorkflow = (workflow: Workflow) => {
   const wfState = {
     ...originalOpenfnProps,
     id: workflow.openfn?.uuid ?? randomUUID(),
-    jobs: [],
-    triggers: [],
-    edges: [],
+    jobs: {},
+    triggers: {},
+    edges: {},
     lock_version: workflow.openfn?.lock_version ?? null, // TODO needs testing
-  } as unknown as Provisioner.Workflow;
+  } as Provisioner.Workflow;
 
   if (workflow.name) {
     wfState.name = workflow.name;
@@ -96,7 +102,7 @@ const mapWorkflow = (workflow: Workflow) => {
         type: s.type,
         ...renameKeys(s.openfn, { uuid: 'id' }),
       } as Provisioner.Trigger;
-      wfState.triggers.push(node);
+      wfState.triggers[node.type] = node;
     } else {
       node = omitBy(pick(s, ['name', 'adaptor']), isNil) as Provisioner.Job;
       const { uuid, ...otherOpenFnProps } = s.openfn ?? {};
@@ -118,7 +124,7 @@ const mapWorkflow = (workflow: Workflow) => {
 
       Object.assign(node, defaultJobProps, otherOpenFnProps);
 
-      wfState.jobs.push(node);
+      wfState.jobs[s.id ?? slugify(s.name)] = node;
     }
 
     // create an edge to each linked node
@@ -155,12 +161,20 @@ const mapWorkflow = (workflow: Workflow) => {
           e.condition_expression = rules.condition;
         }
       }
-      wfState.edges.push(e);
+      wfState.edges[`${s.id}->${next}`] = e;
     });
   });
 
   // Sort edges by UUID (for more predictable comparisons in test)
-  wfState.edges = sortBy(wfState.edges, 'id');
+  wfState.edges = Object.keys(wfState.edges)
+    // convert edge ids to strings just in case a number creeps in (it might in test)
+    .sort((a, b) =>
+      `${wfState.edges[a].id}`.localeCompare('' + wfState.edges[b].id)
+    )
+    .reduce((obj: any, key) => {
+      obj[key] = wfState.edges[key];
+      return obj;
+    }, {});
 
   return wfState;
 };

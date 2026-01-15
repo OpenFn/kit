@@ -9,7 +9,7 @@ import docgen from './docgen/handler';
 import docs from './docs/handler';
 import metadata from './metadata/handler';
 import pull from './pull/handler';
-import * as projects from './projects/handler';
+import * as projects from './projects';
 import * as repo from './repo/handler';
 
 import createLogger, { CLI, Logger } from './util/logger';
@@ -23,28 +23,29 @@ import { CLIError } from './errors';
 
 export type CommandList =
   | 'apollo'
-  | 'compile'
   | 'collections-get'
-  | 'collections-set'
   | 'collections-remove'
+  | 'collections-set'
+  | 'compile'
   | 'deploy'
   | 'docgen'
   | 'docs'
   | 'execute'
   | 'metadata'
-  | 'pull'
-  | 'projects'
+  | 'project-checkout'
+  | 'project-deploy'
+  | 'project-fetch'
+  | 'project-list'
+  | 'project-merge'
+  | 'project-pull'
+  | 'project-version'
   | 'project'
+  | 'projects'
+  | 'pull'
   | 'repo-clean'
   | 'repo-install'
   | 'repo-list'
   | 'repo-pwd'
-  | 'project-pull'
-  | 'project-list'
-  | 'project-version'
-  | 'project-merge'
-  | 'project-checkout'
-  | 'project-fetch'
   | 'test'
   | 'version';
 
@@ -67,6 +68,7 @@ const handlers = {
   ['repo-install']: repo.install,
   ['repo-pwd']: repo.pwd,
   ['repo-list']: repo.list,
+  ['project-deploy']: projects.deploy,
   ['project-pull']: projects.pull,
   ['project-list']: projects.list,
   ['project-version']: projects.version,

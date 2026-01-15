@@ -10,10 +10,11 @@ import fromProject, { SerializedProject } from './parse/from-project';
 import slugify from './util/slugify';
 import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
+import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
 import { buildConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
-import { UUID, WorkspaceConfig } from '@openfn/lexicon';
+import { SandboxMeta, UUID, WorkspaceConfig } from '@openfn/lexicon';
 
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
@@ -70,6 +71,8 @@ export class Project {
 
   credentials: string[];
 
+  sandbox?: SandboxMeta;
+
   // project v2. Default.
   // doens't take any options
   static async from(
@@ -124,11 +127,6 @@ export class Project {
     return merge(source, target, options);
   }
 
-  // env is excluded because it's not really part of the project
-  // uh maybe
-  // maybe this second arg is config - like env, branch rules, serialisation rules
-  // stuff that's external to the actual project and managed by the repo
-
   // TODO maybe the constructor is (data, Workspace)
   constructor(
     data: Partial<l.Project> = {},
@@ -158,6 +156,7 @@ export class Project {
     this.workflows = data.workflows?.map(maybeCreateWorkflow) ?? [];
     this.collections = data.collections;
     this.credentials = data.credentials;
+    this.sandbox = data.sandbox;
   }
 
   /** Local alias for the project. Comes from the file name. Not shared with Lightning. */
@@ -234,6 +233,11 @@ export class Project {
       };
     }
     return result;
+  }
+
+  // Compare this project with another and return a list of workflow changes
+  diff(project: Project) {
+    return projectDiff(this, project);
   }
 
   canMergeInto(target: Project) {

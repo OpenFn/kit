@@ -429,6 +429,7 @@ test.serial('respect openfn.yaml settings', async (t) => {
     `project:
   uuid: <uuid:staging>
   id: staging
+  name: Staging
 workspace:
   credentials: credentials.yaml
   dirs:
@@ -451,10 +452,10 @@ workspace:
     id: 'simple-workflow',
     name: 'Simple Workflow',
     options: {},
-    start: 'trigger-webhook',
+    start: 'webhook',
     steps: [
       {
-        id: 'trigger',
+        id: 'webhook',
         type: 'webhook',
         next: {
           'transform-data-to-fhir-standard': {

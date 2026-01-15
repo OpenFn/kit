@@ -230,12 +230,16 @@ export const compile: CLIOption = {
 };
 
 export const confirm: CLIOption = {
-  name: 'no-confirm',
+  name: 'confirm',
   yargs: {
+    alias: ['y'],
     boolean: true,
     description: "Skip confirmation prompts (e.g. 'Are you sure?')",
   },
   ensure: (opts) => {
+    if ((opts as any).y) {
+      opts.confirm = false;
+    }
     setDefaultValue(opts, 'confirm', true);
   },
 };

@@ -27,7 +27,8 @@ requires_mfa: false
 retention_policy: retain_all
 version_history: []
 workflows:
-  - name: my workflow
+  my-workflow:
+    name: my workflow
     id: 0afbefab-5824-4911-aaae-a19f20106dec
     concurrency: null
     inserted_at: 2025-10-07T10:00:23Z
@@ -35,18 +36,21 @@ workflows:
     deleted_at: null
     lock_version: 2
     jobs:
-      - name: Transform data
+      transform-data:
+        name: Transform data
         body: |
           fn(() => ({ x: 1}))
         adaptor: "@openfn/language-common@latest"
         id: b8b780f3-98dd-4244-880b-e534d8f24547
         project_credential_id: null
     triggers:
-      - type: webhook
+      webhook:
+        type: webhook
         enabled: true
         id: 3b4a47c0-7242-4f0c-8886-838e34762654
     edges:
-      - id: 33dce70f-047f-4508-82fd-950eb508519b
+      webhook->transform-data:
+        id: 33dce70f-047f-4508-82fd-950eb508519b
         target_job_id: b8b780f3-98dd-4244-880b-e534d8f24547
         enabled: true
         source_trigger_id: 3b4a47c0-7242-4f0c-8886-838e34762654
@@ -73,7 +77,8 @@ requires_mfa: false
 retention_policy: retain_all
 version_history: []
 workflows:
-  - name: my workflow
+  my-workflow:
+    name: my workflow
     id: 9e2cc86a-8896-4a5a-9467-9c4128207fd3
     concurrency: null
     inserted_at: 2025-10-07T10:00:36Z
@@ -81,17 +86,20 @@ workflows:
     deleted_at: null
     lock_version: 3
     jobs:
-      - name: Transform data
+      transform-data:
+        name: Transform data
         body: log('hello world')
         adaptor: "@openfn/language-common@latest"
         id: 8d627978-ebb9-4fb2-8cda-9b31c10c963e
         project_credential_id: null
     triggers:
-      - type: webhook
+      webhook:
+        type: webhook
         enabled: true
         id: 7bb476cc-0292-4573-89d0-b13417bc648e
     edges:
-      - id: 4c68d22a-4ba7-4d8f-8103-6f4f15c4e7d2
+      webhook->transform-data:
+        id: 4c68d22a-4ba7-4d8f-8103-6f4f15c4e7d2
         target_job_id: 8d627978-ebb9-4fb2-8cda-9b31c10c963e
         enabled: true
         source_trigger_id: 7bb476cc-0292-4573-89d0-b13417bc648e
@@ -133,10 +141,10 @@ test.serial('Checkout a project', async (t) => {
     workflowYaml,
     `id: my-workflow
 name: my workflow
-start: trigger-webhook
+start: webhook
 options: {}
 steps:
-  - id: trigger
+  - id: webhook
     type: webhook
     next:
       transform-data:

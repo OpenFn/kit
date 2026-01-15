@@ -6,6 +6,7 @@ import type { Opts } from '../options';
 import type { Logger } from '@openfn/logger';
 import type Project from '@openfn/project';
 import { CLIError } from '../errors';
+import resolvePath from '../util/resolve-path';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -40,6 +41,16 @@ const ensureExt = (filePath: string, ext: string) => {
     return `${filePath}.${ext}`;
   }
   return filePath;
+};
+
+export const getSerializePath = (
+  project: Project,
+  workspacePath: string,
+  outputPath?: string
+) => {
+  const outputRoot = resolvePath(outputPath || workspacePath);
+  const projectsDir = project?.config.dirs.projects ?? '.projects';
+  return outputPath ?? `${outputRoot}/${projectsDir}/${project.qname}`;
 };
 
 export const serialize = async (
@@ -82,6 +93,7 @@ export const getLightningUrl = (
   return new URL(`/api/provision/${path}?${params.toString()}`, endpoint);
 };
 
+// TODO move to client.ts
 export async function fetchProject(
   endpoint: string,
   apiKey: string,
@@ -116,6 +128,41 @@ export async function fetchProject(
     }
     logger?.info(`Project retrieved from ${endpoint}`);
     return response.json();
+  } catch (error: any) {
+    handleCommonErrors({ endpoint, apiKey }, error);
+
+    throw error;
+  }
+}
+
+export async function deployProject(
+  endpoint: string,
+  apiKey: string,
+  state: Provisioner.Project_v1,
+  logger?: Logger
+): Promise<{ data: Provisioner.Project_v1 }> {
+  try {
+    const url = getLightningUrl(endpoint);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(state),
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+
+      logger?.error('Failed to deploy project:');
+      logger?.error(JSON.stringify(body, null, 2));
+      throw new CLIError(
+        `Failed to deploy project ${state.name}: ${response.status}`
+      );
+    }
+
+    return await response.json();
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 

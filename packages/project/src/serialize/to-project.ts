@@ -61,6 +61,13 @@ export default (project: Project, options: ToProjectOptions = {}) => {
     isNil
   ) as SerializedProject;
 
+  // only write the sandbox key if this project is itself a sandbox
+  if (project.sandbox?.parentId) {
+    proj.sandbox = {
+      parentId: project.sandbox.parentId,
+    };
+  }
+
   const format = options.format ?? proj.config?.formats.project;
 
   if (format === 'json') {

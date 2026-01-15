@@ -28,6 +28,14 @@ export const alias: CLIOption = {
   },
 };
 
+export const dryRun: CLIOption = {
+  name: 'dryRun',
+  yargs: {
+    description:
+      'Runs the command but does not commit any changes to disk or app',
+  },
+};
+
 export const removeUnmapped: CLIOption = {
   name: 'remove-unmapped',
   yargs: {

@@ -228,7 +228,7 @@ export namespace Provisioner {
     name: string;
     description: string | null;
 
-    workflows: Workflow[];
+    workflows: Record<string, Workflow>;
     concurrency?: any; // TODO
 
     // TODO typing isn't quite right here either
@@ -251,14 +251,18 @@ export namespace Provisioner {
     retention_policy?: string;
     history_retention_period: string | null;
     dataclip_retention_period: string | null;
+
+    env?: string;
+    color?: string;
+    parent_id?: string;
   }
 
   export interface Workflow {
     id: string;
     name: string;
-    jobs: Job[];
-    triggers: Trigger[];
-    edges: Edge[];
+    jobs: Record<string, Job>;
+    triggers: Record<string, Trigger>;
+    edges: Record<string, Edge>;
     delete?: boolean;
     project_id?: string;
 

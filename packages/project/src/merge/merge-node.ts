@@ -15,6 +15,7 @@ type Node = Workflow['steps'][number];
 
 const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
+// TODO merge needs to include openfn props and eg lock_version
 export function mergeWorkflows(
   source: Workflow,
   target: Workflow,
@@ -76,6 +77,15 @@ export function mergeWorkflows(
   return {
     ...target,
     ...newSource,
-    openfn: { ...target.openfn }, // preserving the target uuid. we might need a proper helper function for this.
+    openfn: {
+      ...target.openfn,
+      ...source.openfn,
+      // preserving the target uuid. we might need a proper helper function for this
+      uuid: target.openfn?.uuid,
+    },
+    options: {
+      ...target.options,
+      ...source.options,
+    },
   };
 }

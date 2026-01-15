@@ -2,20 +2,18 @@ import yargs from 'yargs';
 import path from 'node:path';
 import Project, { Workspace } from '@openfn/project';
 
-import resolvePath from '../util/resolve-path';
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { serialize, fetchProject, loadAppAuthConfig } from './util';
-
-// TODO need to implement these
-// type Config = {
-//   requireConfirmation?: boolean; // alias to y maybe
-//   dryRun?: boolean;
-// };
+import {
+  serialize,
+  fetchProject,
+  loadAppAuthConfig,
+  getSerializePath,
+} from './util';
 
 export type FetchOptions = Pick<
   Opts,
@@ -90,12 +88,13 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // TODO should we use the local target project for output?
 
   // Work out where and how to serialize the project
-  const outputRoot = resolvePath(outputPath || workspacePath);
-  const projectsDir = remoteProject?.config.dirs.projects ?? '.projects';
-  const finalOutputPath =
-    outputPath ?? `${outputRoot}/${projectsDir}/${remoteProject.qname}`;
-  let format: undefined | 'json' | 'yaml' = undefined;
+  const finalOutputPath = getSerializePath(
+    remoteProject,
+    workspacePath,
+    outputPath
+  );
 
+  let format: undefined | 'json' | 'yaml' = undefined;
   if (outputPath) {
     // If the user gave us a path for output, we need to respect the format we've been given
     const ext = path.extname(outputPath!).substring(1) as any;
@@ -176,7 +175,7 @@ async function resolveOutputProject(
 
 // This will fetch the remote project the user wants
 
-async function fetchRemoteProject(
+export async function fetchRemoteProject(
   workspace: Workspace,
   options: FetchOptions,
   logger: Logger

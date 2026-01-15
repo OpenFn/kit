@@ -22,18 +22,21 @@ export const buildConfig = (config: Partial<l.WorkspaceConfig> = {}) => ({
 });
 
 // Generate a workspace config (openfn.yaml) file for a project
-export const extractConfig = (source: Project) => {
-  const project = {
+export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
+  const project: any = {
     ...(source.openfn || {}),
     id: source.id,
   };
+  if (source.name) {
+    project.name = source.name;
+  }
   const workspace = {
     ...source.config,
   };
 
   const content = { project, workspace };
 
-  const format = workspace.formats.openfn;
+  format = format ?? workspace.formats.openfn;
   if (format === 'yaml') {
     return {
       path: 'openfn.yaml',

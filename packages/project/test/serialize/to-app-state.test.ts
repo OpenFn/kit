@@ -1,8 +1,9 @@
 import test from 'ava';
-import type { Provisioner } from '@openfn/lexicon/lightning';
 import { Project } from '../../src/Project';
 import toAppState from '../../src/serialize/to-app-state';
 import { generateProject } from '../../src/gen/generator';
+
+import type { Provisioner } from '@openfn/lexicon/lightning';
 
 const state: Provisioner.Project = {
   id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
@@ -11,24 +12,24 @@ const state: Provisioner.Project = {
   concurrency: null,
   inserted_at: '2025-04-23T11:15:59Z',
   collections: [],
-  workflows: [
-    {
+  workflows: {
+    wf1: {
       id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       name: 'wf1',
-      edges: [
-        {
+      edges: {
+        'trigger->transform-data': {
           enabled: true,
           id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
           source_trigger_id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
           condition_type: 'always',
           target_job_id: '66add020-e6eb-4eec-836b-20008afca816',
         },
-      ],
+      },
       concurrency: null,
       inserted_at: '2025-04-23T11:19:32Z',
       updated_at: '2025-04-23T11:19:32Z',
-      jobs: [
-        {
+      jobs: {
+        'transform-data': {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
           body: 'fn(s => s)',
@@ -36,18 +37,18 @@ const state: Provisioner.Project = {
           project_credential_id: '<uuid:c1>',
           keychain_credential_id: null,
         },
-      ],
-      triggers: [
-        {
+      },
+      triggers: {
+        webhook: {
           enabled: true, // TODO enabled: false is a bit interesting
           id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
           type: 'webhook',
         },
-      ],
+      },
       lock_version: 1,
       deleted_at: null,
     },
-  ],
+  },
   updated_at: '2025-04-23T11:15:59Z',
   project_credentials: ['<uuid:c1>'],
   scheduled_deletion: null,
@@ -60,7 +61,7 @@ const state: Provisioner.Project = {
 
 test('should set defaults for keys that Lightning needs', (t) => {
   // set up a very minimal project
-  const data = {
+  const data: any = {
     id: 'my-project',
     openfn: {
       uuid: '<uuid>',
@@ -68,6 +69,7 @@ test('should set defaults for keys that Lightning needs', (t) => {
     workflows: [
       {
         id: 'wf',
+        name: 'my workflow',
         openfn: {
           uuid: 0,
         },
@@ -107,29 +109,30 @@ test('should set defaults for keys that Lightning needs', (t) => {
   t.deepEqual(defaultState, {
     id: '<uuid>',
     project_credentials: [],
-    workflows: [
-      {
+    workflows: {
+      'my-workflow': {
         id: 0,
-        jobs: [
-          {
+        name: 'my workflow',
+        jobs: {
+          step: {
             body: '.',
             id: 2,
             project_credential_id: null,
             keychain_credential_id: null,
           },
-        ],
-        triggers: [{ type: 'webhook', id: 1 }],
-        edges: [
-          {
+        },
+        triggers: { webhook: { type: 'webhook', id: 1 } },
+        edges: {
+          ['trigger->step']: {
             id: '<trigger-step>',
             target_job_id: 2,
             enabled: true,
             source_trigger_id: 1,
           },
-        ],
+        },
         lock_version: null,
       },
-    ],
+    },
   });
 });
 
@@ -139,6 +142,7 @@ test('should serialize workflow positions', (t) => {
     workflows: [
       {
         id: 'wf',
+        name: 'wf',
         openfn: {
           positions: {
             step: {
@@ -170,7 +174,7 @@ test('should serialize workflow positions', (t) => {
   });
 
   const state = toAppState(project);
-  t.deepEqual(state.workflows[0].positions, {
+  t.deepEqual(state.workflows['wf'].positions, {
     step: {
       x: 1,
       y: 1,
@@ -188,6 +192,7 @@ test('should write openfn keys to objects', (t) => {
     workflows: [
       {
         id: 'wf',
+        name: 'wf',
         openfn,
         steps: [
           {
@@ -217,10 +222,10 @@ test('should write openfn keys to objects', (t) => {
 
   const state = toAppState(project);
   t.is(state.x, 1);
-  t.is(state.workflows[0].x, 1);
-  t.is(state.workflows[0].jobs[0].x, 1);
-  t.is(state.workflows[0].triggers[0].x, 1);
-  t.is(state.workflows[0].edges[0].x, 1);
+  t.is(state.workflows['wf'].x, 1);
+  t.is(state.workflows['wf'].jobs.step.x, 1);
+  t.is(state.workflows['wf'].triggers.webhook.x, 1);
+  t.is(state.workflows['wf'].edges['trigger->step'].x, 1);
 });
 
 test('should handle credentials', (t) => {
@@ -229,6 +234,7 @@ test('should handle credentials', (t) => {
     workflows: [
       {
         id: 'wf',
+        name: 'wf',
         steps: [
           {
             id: 'trigger',
@@ -251,9 +257,9 @@ test('should handle credentials', (t) => {
   };
 
   const state = toAppState(new Project(data), { format: 'json' });
-  const [job] = state.workflows[0].jobs;
-  t.is(job.keychain_credential_id, 'k');
-  t.is(job.project_credential_id, 'p');
+  const { step } = state.workflows['wf'].jobs;
+  t.is(step.keychain_credential_id, 'k');
+  t.is(step.project_credential_id, 'p');
 });
 
 test('should ignore workflow start keys', (t) => {
@@ -262,6 +268,7 @@ test('should ignore workflow start keys', (t) => {
     workflows: [
       {
         id: 'wf',
+        name: 'wf',
         start: 'step',
         steps: [
           {
@@ -285,13 +292,13 @@ test('should ignore workflow start keys', (t) => {
   };
 
   const state = toAppState(new Project(data), { format: 'json' });
-  t.falsy(state.workflows[0].start);
+  t.falsy(state.workflows['wf'].start);
 });
 
 test.todo('handle edge labels');
 
 test('serialize steps and trigger in alphabetical order', (t) => {
-  const wf = `
+  const wf = `@name wf
 z-b
 y-x
 c-p
@@ -300,17 +307,17 @@ c-p
 
   const state = toAppState(project, { format: 'json' });
 
-  const jobs = state.workflows[0].jobs.map((j) => j.name);
+  const jobs = Object.keys(state.workflows['wf'].jobs);
   // short be sorted by name
   t.deepEqual(jobs, ['b', 'c', 'p', 'x', 'y', 'z']);
 
-  const edges = state.workflows[0].edges.map((e) => e.id);
+  const edges = Object.keys(state.workflows['wf'].edges);
   // edges are sorted by uuid
-  t.deepEqual(edges, [3, 6, 9]);
+  t.deepEqual(edges, ['z->b', 'y->x', 'c->p']);
 });
 
 test('should handle edge conditions', (t) => {
-  const wf = `
+  const wf = `@name wf
 a-(condition=always)-b
 a-(condition="on_job_success")-c
 a-(condition="on_job_failure")-d
@@ -322,7 +329,13 @@ a-(condition=x)-f
   });
 
   const state = toAppState(project, { format: 'json' });
-  const [a_b, a_c, a_d, a_e, a_f] = state.workflows[0].edges;
+  const {
+    'a->b': a_b,
+    'a->c': a_c,
+    'a->d': a_d,
+    'a->e': a_e,
+    'a->f': a_f,
+  } = state.workflows.wf.edges;
 
   t.is(a_b.condition_type, 'always');
   t.falsy(a_b.condition_expression);

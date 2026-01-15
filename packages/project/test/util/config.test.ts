@@ -175,6 +175,7 @@ test('generate openfn.yaml', (t) => {
       `project:
   uuid: 1234
   id: my-project
+  name: My Project
 workspace:
   credentials: credentials.yaml
   formats:
@@ -189,3 +190,15 @@ workspace:
 });
 
 test.todo('generate openfn.json');
+
+test('include project name', (t) => {
+  const proj = new Project({
+    id: 'my-project',
+    name: 'My Project',
+  });
+  const result = extractConfig(proj, 'json');
+  const json = JSON.parse(result.content);
+  t.is(json.project.name, 'My Project');
+});
+
+test.todo('include parent project name');

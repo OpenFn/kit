@@ -14,24 +14,24 @@ const state: Provisioner.Project = {
   concurrency: null,
   inserted_at: '2025-04-23T11:15:59Z',
   collections: [],
-  workflows: [
-    {
+  workflows: {
+    wf1: {
       id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       name: 'wf1',
-      edges: [
-        {
+      edges: {
+        'webhook->transform-data': {
           enabled: true,
           id: 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
           source_trigger_id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
           condition_type: 'always',
           target_job_id: '66add020-e6eb-4eec-836b-20008afca816',
         },
-      ],
+      },
       concurrency: null,
       inserted_at: '2025-04-23T11:19:32Z',
       updated_at: '2025-04-23T11:19:32Z',
-      jobs: [
-        {
+      jobs: {
+        'transform-data': {
           id: '66add020-e6eb-4eec-836b-20008afca816',
           name: 'Transform data',
           body: 'fn(s => s)',
@@ -39,18 +39,18 @@ const state: Provisioner.Project = {
           project_credential_id: null,
           keychain_credential_id: null,
         },
-      ],
-      triggers: [
-        {
+      },
+      triggers: {
+        webhook: {
           enabled: true, // TODO enabled: false is a bit interesting
           id: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
           type: 'webhook',
         },
-      ],
+      },
       lock_version: 1,
       deleted_at: null,
     },
-  ],
+  },
   updated_at: '2025-04-23T11:15:59Z',
   project_credentials: [],
   scheduled_deletion: null,
@@ -112,7 +112,7 @@ test('should default alias to "main"', (t) => {
   t.is(project.alias, 'main');
 });
 
-test('should convert a state file to a project and back again', async (t) => {
+test.only('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',
     env: 'test',
