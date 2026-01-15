@@ -9,7 +9,12 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { serialize, fetchProject, loadAppAuthConfig } from './util';
+import {
+  serialize,
+  fetchProject,
+  loadAppAuthConfig,
+  getSerializePath,
+} from './util';
 
 // TODO need to implement these
 // type Config = {
@@ -90,12 +95,13 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // TODO should we use the local target project for output?
 
   // Work out where and how to serialize the project
-  const outputRoot = resolvePath(outputPath || workspacePath);
-  const projectsDir = remoteProject?.config.dirs.projects ?? '.projects';
-  const finalOutputPath =
-    outputPath ?? `${outputRoot}/${projectsDir}/${remoteProject.qname}`;
-  let format: undefined | 'json' | 'yaml' = undefined;
+  const finalOutputPath = getSerializePath(
+    remoteProject,
+    workspacePath,
+    outputPath
+  );
 
+  let format: undefined | 'json' | 'yaml' = undefined;
   if (outputPath) {
     // If the user gave us a path for output, we need to respect the format we've been given
     const ext = path.extname(outputPath!).substring(1) as any;
@@ -176,7 +182,7 @@ async function resolveOutputProject(
 
 // This will fetch the remote project the user wants
 
-async function fetchRemoteProject(
+export async function fetchRemoteProject(
   workspace: Workspace,
   options: FetchOptions,
   logger: Logger

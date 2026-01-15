@@ -5,7 +5,13 @@ import c from 'chalk';
 import { handler as fetch } from './fetch';
 import * as o from '../options';
 import * as o2 from './options';
-import { loadAppAuthConfig, deployProject } from './util';
+import {
+  loadAppAuthConfig,
+  deployProject,
+  fetchProject,
+  serialize,
+  getSerializePath,
+} from './util';
 import { build, ensure } from '../util/command-builders';
 
 import type { Provisioner } from '@openfn/lexicon/lightning';
@@ -74,56 +80,26 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // this may throw!
   let remoteProject: Project;
   try {
-    remoteProject = await fetch(
-      {
-        ...options,
-        // Prefer the UUID since it's most specific
-        project: localProject.uuid ?? localProject.id,
-      },
+    const { data } = await fetchProject(
+      config.endpoint,
+      config.apiKey,
+      localProject.uuid ?? localProject.id,
       logger
     );
+
+    remoteProject = await Project.from('state', data!, {
+      endpoint: config.endpoint,
+    });
+
     logger.success('Downloaded latest version of project at ', config.endpoint);
   } catch (e) {
     console.log(e);
-    // If fetch failed because of compatiblity, what do we do?
-    //
-    // Basically we failed to write to the local project file
-    // If -f is true, do we:
-    // a) force-fetch the latest project
-    // b) or force merge into the old project, and then force push?
-    //
-    // The file system may be in a real mess if fs, project and app are all diverged!
-    // So I think we:
-    // Log an error: the server has diverged from your local copy
-    // Run fetch to resolve the conflict (it'll throw too!)
-    // Pass -f to ignore your local project and pull the latest app changes
-    // (changes shouldn't be lost here, because its the file system that's kind)
-    //
-    // Actually, the FS is king here.
-    //
-    // What if:
-    // Locally I've changed workflow A
-    // Remove has changed workflow B
-    // I basically want to keep my workflow A changes and keep the workflow B changes
-    // But if we force, we'll force our local workflow into the project, overriding it
-    // Gods its complicated
-    // What I think you actually want to do is:
-    // force pull the remote version
-    // merge only your changed workflows onto the remote
-    // but merge doesn't work like that
-    // So either I need merge to be able to merge the fs with a project (sort of like an expand-and-merge)
-    // Or deploy should accept a list of workflows (only apply these workflows)
-    // The problem with the deploy is that the local fs will still be out of date
-    //
-    // What about openfn project reconcile
-    // This will fetch the remote project
-    // check it out into your fs
-    // any changed workflows you'll be promoted to:
-    // - keep local
-    // - keep app
-    // - keep both
-    // if keep both, two folders will be created. The user must manually merge
-    // this leaves you with a file system that can either be merged, deployed or exported
+    throw e;
+    // If fetch failed because of compatiblity with the local project, what do we do?
+    // Well, actually I don't think I want this fetch to write to disk yet
+    // So if force is passed, we merge and write it anyway
+    // otherwise we throw because we've diverged
+    // this will actually happen later
   }
 
   // TODO warn if the remote UUID is different to the local UUID
@@ -163,10 +139,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
     format: 'json',
   }) as Provisioner.Project_v1;
 
-  // // // hack! needs fixing
-  // state.workflows['turtle-power'].lock_version =
-  //   remoteProject.workflows[0].openfn?.lock_version;
-
   // TODO only do this if asked
   // or maybe write it to output with -o?
   // maybe we can write state.app, state.local and state.result
@@ -180,17 +152,42 @@ export async function handler(options: DeployOptions, logger: Logger) {
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
   } else {
-    if (
-      !(await logger.confirm(`Ready to deploy changes to ${config.endpoint}?`))
-    ) {
-      logger.always('Cancelled deployment');
-      return false;
+    if (options.confirm) {
+      if (
+        !(await logger.confirm(
+          `Ready to deploy changes to ${config.endpoint}?`
+        ))
+      ) {
+        logger.always('Cancelled deployment');
+        return false;
+      }
     }
 
     logger.info('Sending project to app...');
 
-    await deployProject(config.endpoint, config.apiKey, state, logger);
+    const result = await deployProject(
+      config.endpoint,
+      config.apiKey,
+      state,
+      logger
+    );
+
+    // TODO do we think this final project is right?
+    // We need to restore CLI stuff like alias, meta
+    const finalProject = await Project.from(
+      'state',
+      result!,
+      {
+        endpoint: config.endpoint,
+      },
+      merged.config
+    );
+    console.log(finalProject);
     // TODO write the result back to the project file
+
+    const finalOutputPath = getSerializePath(localProject, options.workspace!);
+    logger.debug('Updating local project at ', finalOutputPath);
+    await serialize(finalProject, finalOutputPath);
   }
 
   logger.success('Updated project at', config.endpoint);

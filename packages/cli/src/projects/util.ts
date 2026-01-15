@@ -6,6 +6,7 @@ import type { Opts } from '../options';
 import type { Logger } from '@openfn/logger';
 import type Project from '@openfn/project';
 import { CLIError } from '../errors';
+import resolvePath from '../util/resolve-path';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -40,6 +41,16 @@ const ensureExt = (filePath: string, ext: string) => {
     return `${filePath}.${ext}`;
   }
   return filePath;
+};
+
+export const getSerializePath = (
+  project: Project,
+  workspacePath: string,
+  outputPath?: string
+) => {
+  const outputRoot = resolvePath(outputPath || workspacePath);
+  const projectsDir = project?.config.dirs.projects ?? '.projects';
+  return outputPath ?? `${outputRoot}/${projectsDir}/${project.qname}`;
 };
 
 export const serialize = async (
@@ -153,7 +164,7 @@ export async function deployProject(
       );
     }
 
-    return response.json();
+    return (await response.json()).data!;
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 
