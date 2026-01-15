@@ -1,5 +1,18 @@
 # @openfn/project
 
+## 0.12.0
+
+### Minor Changes
+
+- e33e362: Update v1 provisioner project structure (workflows, jobs, edges and triggers as record, not array)
+
+### Patch Changes
+
+- 1b5e837: Include project name in openfn.yaml
+- Updated dependencies [e33e362]
+- Updated dependencies [ef06f98]
+  - @openfn/lexicon@1.4.0
+
 ## 0.11.0
 
 ### Minor Changes

@@ -1,5 +1,31 @@
 # @openfn/cli
 
+## 1.24.0
+
+### Minor Changes
+
+- Total rewrite of project deploy (aka deploy --beta)
+
+  ```
+  openfn deploy
+  ```
+
+  This will deploy your currently checked out project to the synced app.
+
+  Recommend passing `--log debug` to get richer output of what's happening.
+
+  It will prompt for confirmation before posting.
+
+  This new function appears stable but is currently undergoing testing. Use with caution.
+
+### Patch Changes
+
+- Updated dependencies [e33e362]
+- Updated dependencies [ef06f98]
+- Updated dependencies [1b5e837]
+  - @openfn/lexicon@1.4.0
+  - @openfn/project@0.12.0
+
 ## 1.23.0
 
 ### Minor Changes

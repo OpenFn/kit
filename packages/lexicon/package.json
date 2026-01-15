@@ -1,6 +1,6 @@
 {
   "name": "@openfn/lexicon",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Central repo of names and type definitions",
   "author": "Open Function Group <admin@openfn.org>",
   "license": "ISC",
