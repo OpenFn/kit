@@ -155,8 +155,8 @@ export async function deployProject(
     if (!response.ok) {
       const body = await response.json();
 
-      logger?.debug('Failed to deploy project: response');
-      logger?.debug(JSON.stringify(body, null, 2));
+      logger?.error('Failed to deploy project:');
+      logger?.error(JSON.stringify(body, null, 2));
       throw new CLIError(
         `Failed to deploy project ${state.name}: ${response.status}`
       );
