@@ -75,15 +75,8 @@ import type { Opts } from '../options';
 
 export type DeployOptions = Pick<
   Opts,
-  | 'apiKey'
-  | 'command'
-  | 'confirm'
-  | 'endpoint'
-  | 'force'
-  | 'log'
-  | 'logJson'
-  | 'workspace'
->;
+  'apiKey' | 'command' | 'confirm' | 'endpoint' | 'force' | 'log' | 'logJson'
+> & { workspace?: string };
 
 const options = [
   // local options
@@ -190,14 +183,14 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // That suggests you're doing something wrong!
   // force will suppress
 
-  const diffs = reportDiff(remoteProject, localProject, logger);
+  const diffs = reportDiff(remoteProject!, localProject, logger);
   if (!diffs.length) {
     logger.success('Nothing to deploy');
     return;
   }
 
   // Ensure there's no divergence
-  if (!localProject.canMergeInto(remoteProject)) {
+  if (!localProject.canMergeInto(remoteProject!)) {
     if (!options.force) {
     }
   }
@@ -214,8 +207,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // So that needs thinking about
 
   logger.info('Merging changes into remote project');
-  const merged = Project.merge(localProject, remoteProject, {
-    strategy: 'replace',
+  const merged = Project.merge(localProject, remoteProject!, {
+    mode: 'replace',
     force: true,
   });
   // generate state for the provisioner

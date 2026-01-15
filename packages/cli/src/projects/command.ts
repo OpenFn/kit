@@ -16,7 +16,7 @@ export const projectsCommand = {
   builder: (yargs: yargs.Argv) =>
     yargs
       .command(pull)
-      .command(deploy)
+      .command(deploy as any)
       .command(list)
       .command(version)
       .command(merge)
