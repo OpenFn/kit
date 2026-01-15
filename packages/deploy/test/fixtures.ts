@@ -27,7 +27,7 @@ export function fullExampleSpec() {
           },
         },
         triggers: {
-          'trigger-one': {
+          cron: {
             type: 'cron',
             cron_expression: '0 0 1 1 *',
             enabled: true,
