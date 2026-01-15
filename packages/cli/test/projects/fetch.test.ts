@@ -65,7 +65,7 @@ test.serial('fetch by UUID to default new alias', async (t) => {
   );
 
   const fileContent = await readFile(getYamlPath('main'), 'utf-8');
-
+  t.log(fileContent);
   t.is(fileContent.trim(), yaml_v2);
 });
 
@@ -433,7 +433,7 @@ test.serial(
               },
             },
             {
-              id: 'trigger',
+              id: 'webhook',
               type: 'webhook',
               openfn: {
                 enabled: true,
@@ -450,7 +450,7 @@ test.serial(
               },
             },
           ],
-          start: 'trigger-webhook',
+          start: 'webhook',
           openfn: {
             uuid: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
             inserted_at: '2025-04-23T11:19:32Z',
