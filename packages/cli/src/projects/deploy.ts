@@ -131,12 +131,16 @@ The remote project has been edited since the local project was branched. Changes
 
 Pass --force to override this error and deploy anyway.`);
       return;
+    } else {
+      logger.warn(
+        'Remote project has not diverged from local project! Pushing anyway as -f passed'
+      );
     }
+  } else {
+    logger.info(
+      'Remote project has not diverged from local project - it is safe to deploy 🎉'
+    );
   }
-
-  logger.info(
-    'Remote project has not diverged from local project - it is safe to deploy 🎉'
-  );
 
   // TODO I think we now gotta merge local into the remote, because
   // when we deploy we want to keep all the remote metadata
