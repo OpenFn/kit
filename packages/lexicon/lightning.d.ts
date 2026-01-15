@@ -251,6 +251,10 @@ export namespace Provisioner {
     retention_policy?: string;
     history_retention_period: string | null;
     dataclip_retention_period: string | null;
+
+    env?: string;
+    color?: string;
+    parent_id?: string;
   }
 
   export interface Workflow {

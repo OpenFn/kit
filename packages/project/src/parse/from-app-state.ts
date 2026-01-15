@@ -30,6 +30,7 @@ export default (
     collections,
     inserted_at,
     updated_at,
+    parent_id,
     ...options
   } = stateJson;
 
@@ -52,10 +53,11 @@ export default (
     updated_at,
   };
 
-  // TODO maybe this for local metadata, stuff that isn't synced?
-  // proj.meta = {
-  //   fetched_at: config.fetchedAt,
-  // };
+  if (parent_id) {
+    proj.sandbox = {
+      parentId: parent_id,
+    };
+  }
 
   proj.workflows = Object.values(stateJson.workflows).map(mapWorkflow);
 

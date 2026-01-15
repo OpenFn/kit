@@ -9,7 +9,10 @@ export const json: SerializedProject = {
   description: 'my lovely project',
   cli: { version: 2 },
   openfn: { uuid: '1234', endpoint: 'https://app.openfn.org' },
-  options: { allow_support_access: false },
+  options: { allow_support_access: false, env: 'dev', color: 'red' },
+  sandbox: {
+    parentId: 'abcd',
+  },
   workflows: [
     {
       steps: [
@@ -46,6 +49,8 @@ openfn:
   endpoint: https://app.openfn.org
 options:
   allow_support_access: false
+  env: dev
+  color: red
 workflows:
   - steps:
       - name: b
@@ -69,4 +74,6 @@ workflows:
       uuid: 1
     history: []
     start: trigger
+sandbox:
+  parentId: abcd
 `;

@@ -10,6 +10,11 @@ export type SourceMapWithOperations = RawSourceMap & {
   operations: [{ line: number; order: number; name: string }];
 };
 
+export type SandboxMeta = {
+  parentId?: string;
+  parentName?: string; // not supported yet
+};
+
 // The serialised shape of of a project, as JSON
 // this is what is saved to project.yaml
 export type Project = {
@@ -23,7 +28,14 @@ export type Project = {
 
   workflows: Workflow[];
 
-  options: {};
+  options?: {
+    env?: string;
+    color?: string;
+
+    [key: string]: any;
+  };
+
+  sandbox?: SandboxMeta;
 
   credentials: any;
   collections: string[];

@@ -54,6 +54,20 @@ test('should create a Project from prov state with collections', (t) => {
   t.deepEqual(project.collections, []);
 });
 
+test('should create a Project from prov state with sandbox stuff', (t) => {
+  const stateWithSandbox = {
+    ...state,
+    color: 'red',
+    parent_id: 'abc',
+    env: 'dev',
+  };
+  const project = fromAppState(stateWithSandbox, meta, { format: 'json' });
+
+  t.is(project.sandbox.parentId, 'abc');
+  t.is(project.options.env, 'dev');
+  t.is(project.options.color, 'red');
+});
+
 test('should create a Project from prov state with credentials', (t) => {
   const project = fromAppState(state, meta);
 
