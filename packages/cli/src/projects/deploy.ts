@@ -2,7 +2,6 @@ import yargs from 'yargs';
 import Project from '@openfn/project';
 import c from 'chalk';
 
-import { handler as fetch } from './fetch';
 import * as o from '../options';
 import * as o2 from './options';
 import {
@@ -182,7 +181,7 @@ Pass --force to override this error and deploy anyway.`);
 
     logger.info('Sending project to app...');
 
-    const result = await deployProject(
+    const { data: result } = await deployProject(
       config.endpoint,
       config.apiKey,
       state,
@@ -193,7 +192,7 @@ Pass --force to override this error and deploy anyway.`);
     // We need to restore CLI stuff like alias, meta
     const finalProject = await Project.from(
       'state',
-      result!,
+      result,
       {
         endpoint: config.endpoint,
       },

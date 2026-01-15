@@ -164,7 +164,7 @@ export async function deployProject(
       );
     }
 
-    return (await response.json()).data!;
+    return await response.json();
   } catch (error: any) {
     handleCommonErrors({ endpoint, apiKey }, error);
 

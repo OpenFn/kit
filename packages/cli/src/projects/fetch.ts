@@ -2,7 +2,6 @@ import yargs from 'yargs';
 import path from 'node:path';
 import Project, { Workspace } from '@openfn/project';
 
-import resolvePath from '../util/resolve-path';
 import { build, ensure, override } from '../util/command-builders';
 import type { Logger } from '../util/logger';
 import * as o from '../options';
@@ -15,12 +14,6 @@ import {
   loadAppAuthConfig,
   getSerializePath,
 } from './util';
-
-// TODO need to implement these
-// type Config = {
-//   requireConfirmation?: boolean; // alias to y maybe
-//   dryRun?: boolean;
-// };
 
 export type FetchOptions = Pick<
   Opts,

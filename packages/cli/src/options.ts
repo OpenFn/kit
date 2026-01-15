@@ -237,7 +237,7 @@ export const confirm: CLIOption = {
     description: "Skip confirmation prompts (e.g. 'Are you sure?')",
   },
   ensure: (opts) => {
-    if (opts.y) {
+    if ((opts as any).y) {
       opts.confirm = false;
     }
     setDefaultValue(opts, 'confirm', true);
