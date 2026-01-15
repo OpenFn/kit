@@ -145,13 +145,6 @@ Pass --force to override this error and deploy anyway.`);
     );
   }
 
-  // TODO I think we now gotta merge local into the remote, because
-  // when we deploy we want to keep all the remote metadata
-
-  // TODO the only difficulty I see with this is: what if the user makes
-  // a project change locally? It'll a) diverge and b) get ignored
-  // So that needs thinking about
-
   logger.info('Merging changes into remote project');
   const merged = Project.merge(localProject, remoteProject!, {
     mode: 'replace',
@@ -205,8 +198,6 @@ Pass --force to override this error and deploy anyway.`);
       },
       merged.config
     );
-    console.log(finalProject);
-    // TODO write the result back to the project file
 
     const finalOutputPath = getSerializePath(localProject, options.workspace!);
     logger.debug('Updating local project at ', finalOutputPath);
