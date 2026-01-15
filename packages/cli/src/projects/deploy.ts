@@ -68,6 +68,10 @@ export const command: yargs.CommandModule<DeployOptions> = {
 export async function handler(options: DeployOptions, logger: Logger) {
   const config = loadAppAuthConfig(options, logger);
 
+  // TODO: allow users to specify which project to deploy
+  // Should be able to take any project.yaml file via id, uuid, alias or path
+  // Note that it's a little wierd to deploy a project you haven't checked out,
+  // so put good safeguards here
   logger.info('Attempting to load checked-out project from workspace');
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
@@ -102,9 +106,16 @@ export async function handler(options: DeployOptions, logger: Logger) {
     // this will actually happen later
   }
 
-  // TODO warn if the remote UUID is different to the local UUID
-  // That suggests you're doing something wrong!
-  // force will suppress
+  // warn if the remote UUID is different to the local UUID
+  // This shouldn't happen?
+  if (!options.force && localProject.uuid !== remoteProject.uuid) {
+    logger.error(`UUID conflict!
+
+Your local project (${localProject.uuid}) has a different UUID to the remote project (${remoteProject.uuid}).
+
+Pass --force to override this error and deploy anyway.`);
+    return false;
+  }
 
   const diffs = reportDiff(remoteProject!, localProject, logger);
   if (!diffs.length) {
@@ -115,6 +126,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // Ensure there's no divergence
   if (!localProject.canMergeInto(remoteProject!)) {
     if (!options.force) {
+      logger.error(`Error: Projects have diverged!
+
+The remote project has been edited since the local project was branched. Changes may be lost.
+
+Pass --force to override this error and deploy anyway.`);
+      return;
     }
   }
 
