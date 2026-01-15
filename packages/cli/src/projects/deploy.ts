@@ -65,6 +65,9 @@ export const command: yargs.CommandModule<DeployOptions> = {
 };
 
 export async function handler(options: DeployOptions, logger: Logger) {
+  logger.warn(
+    'WARNING: the project deploy command is in BETA and may not be stable. Use cautiously on production projects.'
+  );
   const config = loadAppAuthConfig(options, logger);
 
   // TODO: allow users to specify which project to deploy
