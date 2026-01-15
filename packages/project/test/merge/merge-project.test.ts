@@ -1,7 +1,7 @@
 import test from 'ava';
 import { randomUUID } from 'node:crypto';
 import Project from '../../src';
-import { merge } from '../../src/merge/merge-project';
+import { merge, REPLACE_MERGE } from '../../src/merge/merge-project';
 import { join } from 'node:path';
 import { generateWorkflow } from '../../src/gen/generator';
 import slugify from '../../src/util/slugify';
@@ -82,6 +82,34 @@ test('Preserve the name and UUID of the target project', (t) => {
   // Ensure that the result has the name and UUID of main
   t.is(result.name, 'a');
   t.is(result.openfn.uuid, main.openfn.uuid);
+});
+
+test('replace mode: replace the name and UUID of the target project', (t) => {
+  const wf = {
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+      },
+    ],
+  };
+
+  // step up two copies with UUIDS
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+
+  const remote = createProject(wf_a, 'a');
+  const local = createProject(wf_b, 'b');
+
+  // merge staging into main
+  const result = merge(local, remote, { mode: REPLACE_MERGE });
+  const step = result.workflows[0].steps[0];
+
+  // Ensure that the result has the name and UUID of local
+  t.is(result.name, 'b');
+  t.is(result.openfn.uuid, local.openfn.uuid);
 });
 
 test('merge a simple change between single-step workflows with preserved uuids', (t) => {

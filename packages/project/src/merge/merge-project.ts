@@ -7,12 +7,28 @@ import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
 
+export const SANDBOX_MERGE = 'sandbox';
+
+export const REPLACE_MERGE = 'replace';
+
 export class UnsafeMergeError extends Error {}
 
 export type MergeProjectOptions = {
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
   force: boolean;
+  mode: typeof SANDBOX_MERGE | typeof REPLACE_MERGE;
+};
+
+const defaultOptions: MergeProjectOptions = {
+  workflowMappings: {},
+  removeUnmapped: false,
+  force: true,
+  /**
+   * If mode is sandbox, basically only content will be merged and all metadata/settings/options/config is ignored
+   * If mode is replace, all properties on the source will override the target (including UUIDs, name)
+   */
+  mode: SANDBOX_MERGE,
 };
 
 /**
@@ -30,11 +46,6 @@ export function merge(
   target: Project,
   opts?: Partial<MergeProjectOptions>
 ) {
-  const defaultOptions: MergeProjectOptions = {
-    workflowMappings: {},
-    removeUnmapped: false,
-    force: true,
-  };
   const options = defaultsDeep(
     opts,
     defaultOptions
@@ -109,28 +120,29 @@ export function merge(
     }
   }
 
-  // TODO: clarify repo preservation strategy
-  // TODO: how other properties of a project are being merged.
-  //  - handle basic metadata (name, desc)
-  //  - handle openfn stuff - the source
+  // Work out what metadata to preserve from the target
+  // in the merge
+  const assigns =
+    options.mode === SANDBOX_MERGE
+      ? {
+          workflows: finalWorkflows,
+        }
+      : {
+          workflows: finalWorkflows,
+          openfn: {
+            ...target.openfn,
+            ...source.openfn,
+          },
+          options: {
+            ...target.options,
+            ...source.options,
+          },
+          name: source.name ?? target.name,
+          description: source.description ?? target.description,
+          credentials: source.credentials ?? target.credentials,
+          collections: source.collections ?? target.collections,
+        };
 
   // with project level props merging, target goes into source because we want to preserve the target props.
-  return new Project(
-    baseMerge(target, source, ['collections'], {
-      workflows: finalWorkflows,
-      // TODO all this needs testing
-      openfn: {
-        ...target.openfn,
-        ...source.openfn,
-      },
-      options: {
-        ...target.options,
-        ...source.options,
-      },
-      name: source.name ?? target.name,
-      description: source.description ?? target.description,
-      credentials: source.credentials ?? target.credentials,
-      collections: source.collections ?? target.collections,
-    } as any)
-  );
+  return new Project(baseMerge(target, source, ['collections'], assigns));
 }
