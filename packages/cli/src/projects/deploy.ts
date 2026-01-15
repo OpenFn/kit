@@ -1,6 +1,5 @@
 import yargs from 'yargs';
 import Project from '@openfn/project';
-import { confirm } from '@inquirer/prompts';
 
 import { handler as fetch } from './fetch';
 import * as o from '../options';
@@ -181,10 +180,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     logger.always('dryRun option set: skipping upload step');
   } else {
     if (
-      !(await confirm({
-        message: `Ready to deploy changes to ${config.endpoint}?`,
-        default: true,
-      }))
+      !(await logger.confirm(`Ready to deploy changes to ${config.endpoint}?`))
     ) {
       logger.always('Cancelled deployment');
       return false;
