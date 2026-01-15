@@ -60,9 +60,8 @@ test('reportDiff: should report changed workflow', (t) => {
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'a', type: 'changed' });
 
-  const messages = logger._history.map((h) => logger._parse(h).message);
-  t.true(messages.includes('Workflows modified:'));
-  t.true(messages.includes('  - a'));
+  t.truthy(logger._find('always', /workflows modified/i));
+  t.truthy(logger._find('always', /- a/i));
 });
 
 test('reportDiff: should report added workflow', (t) => {
@@ -83,9 +82,8 @@ test('reportDiff: should report added workflow', (t) => {
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'b', type: 'added' });
 
-  const messages = logger._history.map((h) => logger._parse(h).message);
-  t.true(messages.includes('Workflows added:'));
-  t.true(messages.includes('  - b'));
+  t.truthy(logger._find('always', /workflows added/i));
+  t.truthy(logger._find('always', /- b/i));
 });
 
 test('reportDiff: should report removed workflow', (t) => {
@@ -106,9 +104,8 @@ test('reportDiff: should report removed workflow', (t) => {
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'b', type: 'removed' });
 
-  const messages = logger._history.map((h) => logger._parse(h).message);
-  t.true(messages.includes('Workflows removed:'));
-  t.true(messages.includes('  - b'));
+  t.truthy(logger._find('always', /workflows removed/i));
+  t.truthy(logger._find('always', /- b/i));
 });
 
 test('reportDiff: should report mix of added, changed, and removed workflows', (t) => {
@@ -144,11 +141,10 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
     { id: 'd', type: 'added' }
   );
 
-  const messages = logger._history.map((h) => logger._parse(h).message);
-  t.true(messages.includes('Workflows added:'));
-  t.true(messages.includes('  - d'));
-  t.true(messages.includes('Workflows modified:'));
-  t.true(messages.includes('  - b'));
-  t.true(messages.includes('Workflows removed:'));
-  t.true(messages.includes('  - c'));
+  t.truthy(logger._find('always', /workflows added/i));
+  t.truthy(logger._find('always', /- d/i));
+  t.truthy(logger._find('always', /workflows modified/i));
+  t.truthy(logger._find('always', /- b/i));
+  t.truthy(logger._find('always', /workflows removed/i));
+  t.truthy(logger._find('always', /- c/i));
 });

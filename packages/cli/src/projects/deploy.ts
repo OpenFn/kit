@@ -209,24 +209,30 @@ export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
   const removed = diffs.filter((d) => d.type === 'removed');
 
   if (added.length > 0) {
-    logger.info(c.green('Workflows added:\n'));
+    logger.break();
+    logger.always(c.green('Workflows added:'));
     for (const diff of added) {
-      logger.info(c.green(`  - ${diff.id}`));
+      logger.always(c.green(`  - ${diff.id}`));
     }
+    logger.break();
   }
 
   if (changed.length > 0) {
-    logger.info(c.yellow('Workflows modified:\n'));
+    logger.break();
+    logger.always(c.yellow('Workflows modified:'));
     for (const diff of changed) {
-      logger.info(c.yellow(`  - ${diff.id}`));
+      logger.always(c.yellow(`  - ${diff.id}`));
     }
+    logger.break();
   }
 
   if (removed.length > 0) {
-    logger.info(c.red('Workflows removed:\n'));
+    logger.break();
+    logger.always(c.red('Workflows removed:'));
     for (const diff of removed) {
-      logger.info(c.red(`  - ${diff.id}`));
+      logger.always(c.red(`  - ${diff.id}`));
     }
+    logger.break();
   }
 
   return diffs;
