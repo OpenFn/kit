@@ -1,67 +1,6 @@
-// beta v2 version of CLI deploy
-
-/**
- * New plan for great glory
- *
- * - from('fs') does NOT take project file into account
- * - deploy must first fetch (and ensure no conflcits)
- * - deploy must then load the project from disk
- * - deploy must then merge into that project
- * - then call provisioner
- * - finally write to disk
- *
- *
- * PLUS: diff summary (changed workflows and steps)
- * PLUS: confirm
- * PLUS: dry run
- *
- *
- *
- * One possible probllem for deploy
- *
- * The idea is we fetch the latest server version,
- * write that to disk, merge our changes, and push
- *
- * But what if our project file is ahead of the server? A fetch
- * will conflict and we don't want to throw.
- *
- * The project may be ahead because: a), we checked out another branch
- * and stashed changes, b) we can ran some kind of reconcilation/merge,
- * c) we did a manual export (take my fs and write it to the project)
- *
- * So basically when fetching, we need to check for divergence in history.
- * When fetching, for each workflow, we need to decide whether to keep or reject the
- * server version based on the history.
- *
- *
- *
- * This is super complex and we're getting into merge territory
- * First priority is: if there's a problem (that's a super difficult thing!) warn the user
- * Second priority is: help the user resolve it
- *
- *
- * The local project files are giving me a headache. But we should be strict and say:
- * the project is ALWAYS a representation of the remote. It is invalid for that project
- * to represent the local system
- *
- * So this idea that I can "save" the local to the project file is wrong
- * The idea thatwhen I checkout, I "stash" to a project file is wrong
- *
- * I should be able to export a project to any arbitrary file, yes
- * And when checking out and there are conflicts, I should be able to create a duplicate
- * file to save my changes without git.
- * I think that means checkout errors (it detects changes will be lost), but you have the option to
- * stash a temporary local project to be checkedout later
- *
- *
- * This clarify and strictness will I think really help
- *
- * So: the local project is NEVER ahead of the server
- * (but what if the user edited it and it is? I think the system igores it and that's just a force push)
- */
-
 import yargs from 'yargs';
 import Project from '@openfn/project';
+import { confirm } from '@inquirer/prompts';
 
 import { handler as fetch } from './fetch';
 import * as o from '../options';
@@ -75,13 +14,21 @@ import type { Opts } from '../options';
 
 export type DeployOptions = Pick<
   Opts,
-  'apiKey' | 'command' | 'confirm' | 'endpoint' | 'force' | 'log' | 'logJson'
-> & { workspace?: string };
+  | 'apiKey'
+  | 'command'
+  | 'confirm'
+  | 'endpoint'
+  | 'force'
+  | 'log'
+  | 'logJson'
+  | 'confirm'
+> & { workspace?: string; dryRun?: boolean };
 
 const options = [
   // local options
   o2.env,
   o2.workspace,
+  o2.dryRun,
 
   // general options
   o.apiKey,
@@ -230,9 +177,24 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // TODO not totally sold on endpoint handling right now
   config.endpoint ??= localProject.openfn?.endpoint!;
 
-  logger.info('Sending project to app...');
+  if (options.dryRun) {
+    logger.always('dryRun option set: skipping upload step');
+  } else {
+    if (
+      !(await confirm({
+        message: `Ready to deploy changes to ${config.endpoint}?`,
+        default: true,
+      }))
+    ) {
+      logger.always('Cancelled deployment');
+      return false;
+    }
 
-  await deployProject(config.endpoint, config.apiKey, state, logger);
+    logger.info('Sending project to app...');
+
+    await deployProject(config.endpoint, config.apiKey, state, logger);
+    // TODO write the result back to the project file
+  }
 
   logger.success('Updated project at', config.endpoint);
 }

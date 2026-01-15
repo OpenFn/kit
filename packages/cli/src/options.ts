@@ -232,6 +232,7 @@ export const compile: CLIOption = {
 export const confirm: CLIOption = {
   name: 'no-confirm',
   yargs: {
+    alias: ['y'],
     boolean: true,
     description: "Skip confirmation prompts (e.g. 'Are you sure?')",
   },
