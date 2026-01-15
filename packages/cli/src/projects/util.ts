@@ -143,7 +143,6 @@ export async function deployProject(
 ): Promise<{ data: Provisioner.Project_v1 }> {
   try {
     const url = getLightningUrl(endpoint);
-    console.log(url);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -152,7 +151,6 @@ export async function deployProject(
       },
       body: JSON.stringify(state),
     });
-    console.log(response);
 
     if (!response.ok) {
       const body = await response.json();
