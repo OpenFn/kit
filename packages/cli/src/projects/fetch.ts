@@ -14,6 +14,7 @@ import {
   loadAppAuthConfig,
   getSerializePath,
 } from './util';
+import { writeFile } from 'node:fs/promises';
 
 export type FetchOptions = Pick<
   Opts,
@@ -23,6 +24,7 @@ export type FetchOptions = Pick<
   | 'endpoint'
   | 'env'
   | 'force'
+  | 'format'
   | 'log'
   | 'logJson'
   | 'snapshots'
@@ -45,6 +47,7 @@ const options = [
   po.outputPath,
   po.env,
   po.workspace,
+  po.format,
 ];
 
 const command: yargs.CommandModule<FetchOptions> = {
@@ -68,24 +71,72 @@ export default command;
 const printProjectName = (project: Project) =>
   `${project.qname} (${project.id})`;
 
+const fetchV1 = async (options: FetchOptions, logger: Logger) => {
+  const workspacePath = options.workspace ?? process.cwd();
+  logger.debug('Using workspace at', workspacePath);
+
+  const workspace = new Workspace(workspacePath, logger, false);
+  // TODO we may need to resolve an alias to a UUID and endpoint
+  const localProject = workspace.get(options.project!);
+  if (localProject) {
+    logger.debug(
+      `Resolved "${options.project}" to local project ${printProjectName(
+        localProject
+      )}`
+    );
+  } else {
+    logger.debug(
+      `Failed to resolve "${options.project}" to local project. Will send request to app anyway.`
+    );
+  }
+
+  const config = loadAppAuthConfig(options, logger);
+
+  const { data } = await fetchProject(
+    options.endpoint ?? localProject?.openfn?.endpoint!,
+    config.apiKey,
+    localProject?.uuid ?? options.project!,
+    logger
+  );
+
+  const finalOutputPath = getSerializePath(
+    localProject,
+    options.workspace,
+    options.outputPath
+  );
+
+  logger.success(`Fetched project file to ${finalOutputPath}`);
+  await writeFile(finalOutputPath, JSON.stringify(data, null, 2));
+
+  // TODO should we return a Project or just the raw state?
+  return data;
+};
+
 export const handler = async (options: FetchOptions, logger: Logger) => {
+  if (options.format === 'state') {
+    return fetchV1(options, logger);
+  }
+  return fetchV2(options, logger);
+};
+
+export const fetchV2 = async (options: FetchOptions, logger: Logger) => {
   const workspacePath = options.workspace ?? process.cwd();
   logger.debug('Using workspace at', workspacePath);
 
   const workspace = new Workspace(workspacePath, logger, false);
   const { outputPath } = options;
 
-  const localTargetProject = await resolveOutputProject(
-    workspace,
-    options,
-    logger
-  );
-
   const remoteProject = await fetchRemoteProject(workspace, options, logger);
 
-  ensureTargetCompatible(options, remoteProject, localTargetProject);
+  if (!options.force && options.format == 'state') {
+    const localTargetProject = await resolveOutputProject(
+      workspace,
+      options,
+      logger
+    );
 
-  // TODO should we use the local target project for output?
+    ensureTargetCompatible(options, remoteProject, localTargetProject);
+  }
 
   // Work out where and how to serialize the project
   const finalOutputPath = getSerializePath(
@@ -94,7 +145,7 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
     outputPath
   );
 
-  let format: undefined | 'json' | 'yaml' = undefined;
+  let format: undefined | 'json' | 'yaml' | 'state' = options.format;
   if (outputPath) {
     // If the user gave us a path for output, we need to respect the format we've been given
     const ext = path.extname(outputPath!).substring(1) as any;
@@ -112,11 +163,13 @@ export const handler = async (options: FetchOptions, logger: Logger) => {
   // TODO report whether we've updated or not
 
   // finally, write it!
-  await serialize(remoteProject, finalOutputPath!, format as any);
-
-  logger.success(
-    `Fetched project file to ${finalOutputPath}.${format ?? 'yaml'}`
+  const finalPathWithExt = await serialize(
+    remoteProject,
+    finalOutputPath!,
+    format as any
   );
+
+  logger.success(`Fetched project file to ${finalPathWithExt}`);
 
   return remoteProject;
 };
@@ -193,7 +246,7 @@ export async function fetchRemoteProject(
     localProject?.openfn?.uuid &&
     localProject.openfn.uuid !== options.project
   ) {
-    // ifwe resolve the UUID to something other than what the user gave us,
+    // if we resolve the UUID to something other than what the user gave us,
     // debug-log the UUID we're actually going to use
     projectUUID = localProject.openfn.uuid as string;
     logger.debug(

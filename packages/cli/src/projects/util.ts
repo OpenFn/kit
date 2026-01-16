@@ -44,26 +44,30 @@ const ensureExt = (filePath: string, ext: string) => {
 };
 
 export const getSerializePath = (
-  project: Project,
-  workspacePath: string,
+  project?: Project,
+  workspacePath?: string,
   outputPath?: string
 ) => {
-  const outputRoot = resolvePath(outputPath || workspacePath);
+  const outputRoot = resolvePath(outputPath || workspacePath || '.');
   const projectsDir = project?.config.dirs.projects ?? '.projects';
-  return outputPath ?? `${outputRoot}/${projectsDir}/${project.qname}`;
+  return outputPath ?? `${outputRoot}/${projectsDir}/${project?.qname}`;
 };
 
 export const serialize = async (
   project: Project,
   outputPath: string,
-  formatOverride?: 'yaml' | 'json',
+  formatOverride?: 'yaml' | 'json' | 'state',
   dryRun = false
 ) => {
   const root = path.dirname(outputPath);
   await mkdir(root, { recursive: true });
 
   const format = formatOverride ?? project.config?.formats.project;
-  const output = project?.serialize('project', { format });
+
+  const output =
+    format === 'state'
+      ? project?.serialize('state', { format: 'json' })
+      : project?.serialize('project', { format });
 
   const maybeWriteFile = (filePath: string, output: string) => {
     if (!dryRun) {
