@@ -40,6 +40,7 @@ export const dryRun: CLIOption = {
 export const format: CLIOption = {
   name: 'format',
   yargs: {
+    hidden: true,
     description:
       'The format to save the project as - state, yaml or json. Use this to download raw state files.',
   },
