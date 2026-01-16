@@ -9,6 +9,7 @@ export type Opts = BaseOpts & {
   removeUnmapped?: boolean | undefined;
   workflowMappings?: Record<string, string> | undefined;
   project?: string;
+  format?: 'yaml' | 'json' | 'state';
 };
 
 // project specific options
@@ -33,6 +34,14 @@ export const dryRun: CLIOption = {
   yargs: {
     description:
       'Runs the command but does not commit any changes to disk or app',
+  },
+};
+
+export const format: CLIOption = {
+  name: 'format',
+  yargs: {
+    description:
+      'The format to save the project as - state, yaml or json. Use this to download raw state files.',
   },
 };
 
