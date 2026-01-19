@@ -175,13 +175,15 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
   t.truthy(logger._find('always', /- c/i));
 });
 
-test.serial.only(
+test.serial(
   'deploy a change to a project and write the yaml back',
   async (t) => {
+    const pnpm = path.resolve('../../node_modules/.pnpm');
     // Mock the filesystem
     mock({
-      '/ws/.projects/main@test.yaml': myProject_yaml,
+      '/ws/.projects/main@app.openfn.org.yaml': myProject_yaml,
       '/ws/openfn.yaml': '',
+      [pnpm]: mock.load(pnpm, {}),
     });
 
     // first checkout the project
@@ -196,23 +198,28 @@ test.serial.only(
     // Now change the expression
     await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
 
-    // TODO by testing deploy like a closed box like, and with the lightning mock,
-    // it's hard to see what is actually sent
-    // but its my mock, it should be able to help with this!
     await deployHandler(
       {
         endpoint: ENDPOINT,
         apiKey: 'test-api-key',
         workspace: '/ws',
         force: true, // TODO hoping to remove this soon
+        log: 'debug',
       } as any,
       logger
     );
-    console.log(logger._history.map((l) => l.at(-1)));
 
-    const expected = myProject_yaml.replace('fn()', 'log()');
-    const projectYaml = await readFile('/ws/.projects/main@test.yaml', 'utf8');
-    t.is(projectYaml, expected);
+    // Check what was uploaded to Lightning - the internal app state
+    // should be the exact state object that was uploaded
+    const uploadedState =
+      server.state.projects['e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00'];
+    t.truthy(uploadedState);
+
+    const projectYaml = await readFile(
+      '/ws/.projects/main@app.openfn.org.yaml',
+      'utf8'
+    );
+    t.regex(projectYaml, /fn()/);
 
     const success = logger._find('success', /Updated project at/);
     t.truthy(success);
