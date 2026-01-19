@@ -25,7 +25,6 @@ export default async (value: any, limit_mb: number = 500) => {
       size_bytes += Buffer.byteLength(chunk, 'utf8');
 
       if (size_bytes > limitBytes) {
-        stream.destroy();
         throw new StateTooLargeError(limit_mb);
       }
     }
