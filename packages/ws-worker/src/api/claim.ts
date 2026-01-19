@@ -163,6 +163,12 @@ const claim = (
         delete app.openClaims[claimId];
         logger.error('TIMEOUT on claim. Runs may be lost.');
         reject(new Error('timeout'));
+      })
+      .receive('*', (response) => {
+        delete app.openClaims[claimId];
+        logger.error(`[Claim ${claimId}] Received UNEXPECTED response status. Full response:`, JSON.stringify(response, null, 2));
+        logger.error(`[Claim ${claimId}] Channel state:`, app.queueChannel?.state);
+        reject(new Error('unexpected response status'));
       });
   });
 };

@@ -106,6 +106,13 @@ const connectToWorkerQueue = (
     // if we fail to connect, the socket will try to reconnect
     // forever (?) with backoff - see reconnectAfterMs
     socket.onError((e: any) => {
+      logger.error('Socket error event:', e);
+      logger.error('Socket error type:', typeof e);
+      logger.error('Socket error details:', {
+        message: e?.message,
+        code: e?.code,
+        reason: e?.reason,
+      });
       Sentry.addBreadcrumb({
         category: 'lifecycle',
         message: 'Error in web socket connection',

@@ -114,6 +114,67 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     app.socket = socket;
     app.queueChannel = channel;
 
+    // Intercept raw channel messages to see what Lightning is sending
+    const originalOnMessage = channel.onMessage.bind(channel);
+    channel.onMessage = function(event, payload, ref) {
+      logger.debug('─────────────────────────────────────');
+      logger.debug('[Channel onMessage] Received raw message');
+      logger.debug('[Channel onMessage] Event:', event);
+      logger.debug('[Channel onMessage] Payload:', JSON.stringify(payload, null, 2));
+      logger.debug('[Channel onMessage] Ref:', ref);
+      logger.debug('[Channel onMessage] Channel state before processing:', channel.state);
+      logger.debug('─────────────────────────────────────');
+
+      const result = originalOnMessage(event, payload, ref);
+
+      logger.debug('[Channel onMessage] After processing, channel state:', channel.state);
+
+      return result;
+    };
+
+    // Add channel event listeners for debugging
+    channel.onError((error) => {
+      logger.error('Channel error event (raw):', error);
+      logger.error('Channel error type:', typeof error);
+      logger.error('Channel error constructor:', error?.constructor?.name);
+      logger.error('Channel error keys:', Object.keys(error || {}));
+      logger.error('Channel error stringified:', JSON.stringify(error, null, 2));
+      // Try to extract common error properties
+      if (error) {
+        logger.error('Error details:', {
+          message: error.message,
+          reason: error.reason,
+          response: error.response,
+          status: error.status,
+          stack: error.stack,
+        });
+      }
+      logger.error('Channel state:', channel.state);
+      logger.error('Open claims:', Object.keys(app.openClaims));
+    });
+
+    channel.onClose((event) => {
+      logger.error('Channel close event:', event);
+      logger.error('Channel state:', channel.state);
+      logger.error('Open claims:', Object.keys(app.openClaims));
+    });
+    logger.debug('Channel event listeners attached (onError, onClose)');
+
+    // Wrap the channel's push method to log all WebSocket messages (Patch 5)
+    const originalPush = channel.push.bind(channel);
+    channel.push = function(event, payload) {
+      logger.debug('[Channel Push] Event:', event);
+      logger.debug('[Channel Push] Payload:', JSON.stringify(payload, null, 2));
+      logger.debug('[Channel Push] Channel state:', channel.state);
+
+      const result = originalPush(event, payload);
+
+      logger.debug('[Channel Push] Push returned, ReceiveHook attached');
+
+      return result;
+    };
+    logger.debug('Channel push method wrapped for debugging');
+
     // trigger the workloop
     if (options.noLoop) {
       // @ts-ignore
