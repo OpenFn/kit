@@ -29,7 +29,16 @@ test.before(async () => {
 test.beforeEach(() => {
   server.addProject(myProject_v1);
   logger._reset();
+  mock.restore();
 });
+
+const mockFs = (paths: Record<string, string>) => {
+  const pnpm = path.resolve('../../node_modules/.pnpm');
+  mock({
+    [pnpm]: mock.load(pnpm, {}),
+    ...paths,
+  });
+};
 
 // what will deploy tests look like?
 
@@ -178,12 +187,9 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
 test.serial(
   'deploy a change to a project and write the yaml back',
   async (t) => {
-    const pnpm = path.resolve('../../node_modules/.pnpm');
-    // Mock the filesystem
-    mock({
+    mockFs({
       '/ws/.projects/main@app.openfn.org.yaml': myProject_yaml,
       '/ws/openfn.yaml': '',
-      [pnpm]: mock.load(pnpm, {}),
     });
 
     // first checkout the project
@@ -223,5 +229,51 @@ test.serial(
 
     const success = logger._find('success', /Updated project at/);
     t.truthy(success);
+  }
+);
+
+test.serial(
+  'Exit early if the remote is not compatible with local',
+  async (t) => {
+    mockFs({
+      '/ws/.projects/main@app.openfn.org.yaml': myProject_yaml,
+      '/ws/openfn.yaml': '',
+    });
+
+    // Update the server-side project
+    const changed = JSON.parse(JSON.stringify(myProject_v1));
+    changed.workflows['my-workflow'].version_history.push('app:abc');
+
+    server.addProject('e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00', changed);
+
+    // checkout the project locally
+    await checkout(
+      {
+        project: 'main',
+        workspace: '/ws',
+      },
+      logger
+    );
+
+    // Now change the expression
+    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+    await deployHandler(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+      } as any,
+      logger
+    );
+
+    // The remote project should not have changed
+    const appState =
+      server.state.projects['e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00'];
+    t.deepEqual(appState, myProject_v1);
+
+    // We should log what's going on to the user
+    const expectedLog = logger._find('error', /projects have diverged/i);
+    t.truthy(expectedLog);
   }
 );

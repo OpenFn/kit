@@ -126,7 +126,14 @@ Pass --force to override this error and deploy anyway.`);
   }
 
   // Ensure there's no divergence
-  if (!localProject.canMergeInto(remoteProject!)) {
+
+  // Skip divergence testing if the remote has no history in its workflows
+  // (this will only happen on older versions of lightning)
+  const skipVersionTest = remoteProject.workflows.find(
+    (wf) => wf.pushHistory.length === 0
+  );
+
+  if (!skipVersionTest && !localProject.canMergeInto(remoteProject!)) {
     if (!options.force) {
       logger.error(`Error: Projects have diverged!
 
@@ -168,6 +175,10 @@ Pass --force to override this error and deploy anyway.`);
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
   } else {
+    // sync summary
+    // :+1: the remove project has not changed since last sync / the remote project has changed since last sync, and your changes may overwrite these
+    // The following workflows will be updated
+
     if (options.confirm) {
       if (
         !(await logger.confirm(
