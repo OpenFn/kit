@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.8.2
+
+### Patch Changes
+
+- 61d9418: Fix an issue where the runtime can crash when processing large dataclips because it needlessly destroys the empty stream
+
 ## 1.8.1
 
 ### Patch Changes
