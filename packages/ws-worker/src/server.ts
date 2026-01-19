@@ -114,6 +114,24 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     app.socket = socket;
     app.queueChannel = channel;
 
+    // Intercept raw channel messages to see what Lightning is sending
+    const originalOnMessage = channel.onMessage.bind(channel);
+    channel.onMessage = function(event, payload, ref) {
+      logger.debug('─────────────────────────────────────');
+      logger.debug('[Channel onMessage] Received raw message');
+      logger.debug('[Channel onMessage] Event:', event);
+      logger.debug('[Channel onMessage] Payload:', JSON.stringify(payload, null, 2));
+      logger.debug('[Channel onMessage] Ref:', ref);
+      logger.debug('[Channel onMessage] Channel state before processing:', channel.state);
+      logger.debug('─────────────────────────────────────');
+
+      const result = originalOnMessage(event, payload, ref);
+
+      logger.debug('[Channel onMessage] After processing, channel state:', channel.state);
+
+      return result;
+    };
+
     // Add channel event listeners for debugging
     channel.onError((error) => {
       logger.error('Channel error event (raw):', error);
