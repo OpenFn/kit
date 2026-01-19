@@ -114,6 +114,35 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     app.socket = socket;
     app.queueChannel = channel;
 
+    // Add channel event listeners for debugging
+    channel.onError((error) => {
+      logger.error('Channel error event:', error);
+      logger.error('Channel state:', channel.state);
+      logger.error('Open claims:', Object.keys(app.openClaims));
+    });
+
+    channel.onClose((event) => {
+      logger.error('Channel close event:', event);
+      logger.error('Channel state:', channel.state);
+      logger.error('Open claims:', Object.keys(app.openClaims));
+    });
+    logger.debug('Channel event listeners attached (onError, onClose)');
+
+    // Wrap the channel's push method to log all WebSocket messages (Patch 5)
+    const originalPush = channel.push.bind(channel);
+    channel.push = function(event, payload) {
+      logger.debug('[Channel Push] Event:', event);
+      logger.debug('[Channel Push] Payload:', JSON.stringify(payload, null, 2));
+      logger.debug('[Channel Push] Channel state:', channel.state);
+
+      const result = originalPush(event, payload);
+
+      logger.debug('[Channel Push] Push returned, ReceiveHook attached');
+
+      return result;
+    };
+    logger.debug('Channel push method wrapped for debugging');
+
     // trigger the workloop
     if (options.noLoop) {
       // @ts-ignore
