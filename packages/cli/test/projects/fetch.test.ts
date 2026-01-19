@@ -480,7 +480,7 @@ test.serial(
       .replace('fn()', 'fn(x)') // arbitrary edit so that we can track the change
       .replace(' - a', ' - z'); // change the local history to be incompatible
 
-    // Make it look like we've checked out hte project
+    // Make it look like we've checked out the project
     mock({
       '/ws/.projects': {},
       '/ws/openfn.yaml': '',
