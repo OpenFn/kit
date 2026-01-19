@@ -116,7 +116,21 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
     // Add channel event listeners for debugging
     channel.onError((error) => {
-      logger.error('Channel error event:', error);
+      logger.error('Channel error event (raw):', error);
+      logger.error('Channel error type:', typeof error);
+      logger.error('Channel error constructor:', error?.constructor?.name);
+      logger.error('Channel error keys:', Object.keys(error || {}));
+      logger.error('Channel error stringified:', JSON.stringify(error, null, 2));
+      // Try to extract common error properties
+      if (error) {
+        logger.error('Error details:', {
+          message: error.message,
+          reason: error.reason,
+          response: error.response,
+          status: error.status,
+          stack: error.stack,
+        });
+      }
       logger.error('Channel state:', channel.state);
       logger.error('Open claims:', Object.keys(app.openClaims));
     });
