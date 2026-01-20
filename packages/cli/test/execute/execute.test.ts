@@ -93,6 +93,33 @@ test.serial('run a workflow', async (t) => {
   t.is(result.data.count, 84);
 });
 
+test.serial('run a workflow in new format with start', async (t) => {
+  const workflow = {
+    start: 'a',
+    steps: [
+      {
+        id: 'b',
+        expression: `${fn}fn((state) => { state.data.count = state.data.count * 2; return state; });`,
+      },
+      {
+        id: 'a',
+        expression: `${fn}fn(() => ({ data: { count: 42 } }));`,
+        next: { b: true },
+      },
+    ],
+  };
+  mockFs({
+    '/workflow.json': JSON.stringify(workflow),
+  });
+
+  const options = {
+    ...defaultOptions,
+    workflowPath: '/workflow.json',
+  };
+  const result = await handler(options, logger);
+  t.is(result.data.count, 84);
+});
+
 test.serial('run a workflow with a JSON credential map', async (t) => {
   const workflow = {
     workflow: {
