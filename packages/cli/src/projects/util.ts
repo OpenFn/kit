@@ -7,6 +7,7 @@ import type { Logger } from '@openfn/logger';
 import type Project from '@openfn/project';
 import { CLIError } from '../errors';
 import resolvePath from '../util/resolve-path';
+import { rimraf } from 'rimraf';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -186,4 +187,32 @@ class DeployError extends Error {
   constructor(message: string) {
     super(message);
   }
+}
+
+export async function tidyWorkflowDir(
+  currentProject: Project | undefined,
+  incomingProject: Project | undefined,
+  dryRun = false
+) {
+  if (!currentProject || !incomingProject) {
+    return [];
+  }
+
+  const currentFiles = currentProject.serialize('fs');
+  const newFiles = incomingProject.serialize('fs');
+
+  const toRemove: string[] = [];
+  // any files not in the new list should be removed
+  for (const path in currentFiles) {
+    if (!newFiles[path]) {
+      toRemove.push(path);
+    }
+  }
+
+  if (!dryRun) {
+    await rimraf(toRemove);
+  }
+
+  // Return and sort for testing
+  return toRemove.sort();
 }

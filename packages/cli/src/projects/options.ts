@@ -10,6 +10,7 @@ export type Opts = BaseOpts & {
   workflowMappings?: Record<string, string> | undefined;
   project?: string;
   format?: 'yaml' | 'json' | 'state';
+  clean?: boolean;
 };
 
 // project specific options
@@ -26,6 +27,15 @@ export const alias: CLIOption = {
   yargs: {
     alias: ['env'],
     description: 'Environment name (eg staging, prod, branch)',
+  },
+};
+
+export const clean: CLIOption = {
+  name: 'clean',
+  yargs: {
+    description: 'Clean the working dir before checking out the new project',
+    default: false,
+    boolean: true,
   },
 };
 
