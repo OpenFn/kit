@@ -64,7 +64,7 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
 
   // delete workflow dir before expanding project
   if (options.clean) {
-    await rimraf(path.join(workspacePath, config.workflowRoot ?? 'workflows'));
+    await rimraf(workspace.workflowsPath);
   } else {
     await tidyWorkflowDir(currentProject!, switchProject);
   }

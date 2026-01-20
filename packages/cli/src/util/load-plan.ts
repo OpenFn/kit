@@ -27,6 +27,7 @@ const loadPlan = async (
     | 'globals'
     | 'credentials'
     | 'collectionsEndpoint'
+    | 'cachePath'
   > & {
     workflow?: Opts['workflow'];
     workspace?: string; // from project opts
@@ -61,6 +62,8 @@ const loadPlan = async (
 
     options.credentials ??= workspace.getConfig().credentials;
     options.collectionsEndpoint ??= proj.openfn?.endpoint;
+    // Set the cache path to be relative to the workflow
+    options.cachePath ??= workspace.workflowsPath + `/${name}/.cli-cache`;
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {
