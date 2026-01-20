@@ -141,3 +141,19 @@ test('tidyWorkflowDir: handles undefined projects', async (t) => {
   toRemove = await tidyWorkflowDir(project, undefined, true);
   t.deepEqual(toRemove, []);
 });
+
+test('tidyWorkflowDir: removes expression files when workflow steps change', async (t) => {
+  const currentProject = new Project({
+    name: 'current',
+    workflows: [generateWorkflow('@id A trigger-x(expression=fn)')],
+  });
+
+  const incomingProject = new Project({
+    name: 'incoming',
+    workflows: [generateWorkflow('@id A trigger-z(expression=fn)')],
+  });
+
+  const toRemove = await tidyWorkflowDir(currentProject, incomingProject, true);
+
+  t.deepEqual(toRemove, ['workflows/A/x.js']);
+});
