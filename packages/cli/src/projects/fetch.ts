@@ -100,7 +100,7 @@ const fetchV1 = async (options: FetchOptions, logger: Logger) => {
   );
 
   const finalOutputPath = getSerializePath(
-    localProject,
+    localProject!,
     options.workspace,
     options.outputPath
   );
