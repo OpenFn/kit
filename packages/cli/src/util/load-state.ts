@@ -71,7 +71,11 @@ export default async (
       const upstreamStepId = getUpstreamStepId(plan, start);
       if (upstreamStepId) {
         log.debug(`Input step for "${start}" is "${upstreamStepId}"`);
-        const cachedStatePath = await getCachePath(plan, opts, upstreamStepId);
+        const cachedStatePath = await getCachePath(
+          opts,
+          plan.workflow.name,
+          upstreamStepId
+        );
         log.debug('Loading cached state from', cachedStatePath);
 
         try {

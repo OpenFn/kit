@@ -65,7 +65,7 @@ export const clearCache = async (
   options: Pick<Opts, 'baseDir'>,
   logger: Logger
 ) => {
-  const cacheDir = await getCachePath(plan, options);
+  const cacheDir = await getCachePath(options, plan.workflow?.name);
 
   try {
     await rmdir(cacheDir, { recursive: true });
