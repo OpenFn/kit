@@ -218,6 +218,36 @@ test.serial('xplan: expand adaptors', async (t) => {
   t.is(step.adaptor, undefined);
 });
 
+test.serial('flat xplan: expand adaptors', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    expandAdaptors: true,
+    plan: {},
+  };
+
+  const plan = {
+    start: 'a',
+    steps: [
+      {
+        id: 'a',
+        expression: '.',
+        adaptor: 'common@1.0.0',
+      },
+    ],
+  };
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const result = await loadPlan(opts, logger);
+  t.truthy(result);
+
+  const step = result.workflow.steps[0] as Job;
+  t.is(step.adaptors[0], '@openfn/language-common@1.0.0');
+  // @ts-ignore
+  t.is(step.adaptor, undefined);
+});
+
 test.serial('xplan: do not expand adaptors', async (t) => {
   const opts = {
     workflowPath: 'test/wf.json',

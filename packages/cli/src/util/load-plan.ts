@@ -106,8 +106,8 @@ const loadPlan = async (
   } else {
     // This is the main route now - just load the workflow from the file
     const { id, start, options: o, ...w } = workflowObj;
-    const options = { ...o, start };
-    const plan = { id, workflow: w, options };
+    const opts = { ...o, start };
+    const plan = { id, workflow: w, options: opts };
     return loadXPlan(plan, options, logger, defaultName);
   }
 };
