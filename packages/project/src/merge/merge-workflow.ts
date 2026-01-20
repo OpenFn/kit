@@ -77,6 +77,7 @@ export function mergeWorkflows(
   return {
     ...target,
     ...newSource,
+    history: source.history ?? target.history,
     openfn: {
       ...target.openfn,
       ...source.openfn,
