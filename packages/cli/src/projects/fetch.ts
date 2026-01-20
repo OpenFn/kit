@@ -128,7 +128,7 @@ export const fetchV2 = async (options: FetchOptions, logger: Logger) => {
 
   const remoteProject = await fetchRemoteProject(workspace, options, logger);
 
-  if (!options.force && options.format == 'state') {
+  if (!options.force && options.format !== 'state') {
     const localTargetProject = await resolveOutputProject(
       workspace,
       options,
