@@ -20,17 +20,20 @@ export const getCachePath = (
     return path.resolve(cachePath);
   }
 
-  const basePath = `${baseDir}/.cli-cache/${workflowName}`;
+  const basePath = path.resolve(
+    baseDir ?? process.cwd(),
+    `.cli-cache/${workflowName}`
+  );
 
   if (stepId) {
-    return path.resolve(`${basePath}/${stepId.replace(/ /, '-')}.json`);
+    return `${basePath}/${stepId.replace(/ /, '-')}.json`;
   }
-  return path.resolve(basePath);
+  return basePath;
 };
 
-const ensureGitIgnore = (options: any) => {
+const ensureGitIgnore = (options: any, cachePath: string) => {
   if (!options._hasGitIgnore) {
-    const ignorePath = getCachePath(options) + '/.gitignore';
+    const ignorePath = path.resolve(cachePath, '.gitignore');
     try {
       fs.accessSync(ignorePath);
     } catch (e) {
@@ -53,7 +56,7 @@ export const saveToCache = async (
     // Note that this is sync because other execution order gets messed up
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
 
-    ensureGitIgnore(options);
+    ensureGitIgnore(options, path.dirname(cachePath));
 
     logger.info(`Writing ${stepId} output to ${cachePath}`);
     fs.writeFileSync(cachePath, JSON.stringify(output));
