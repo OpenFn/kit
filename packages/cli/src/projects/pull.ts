@@ -1,4 +1,6 @@
 import yargs from 'yargs';
+import { Workspace } from '@openfn/project';
+
 import { build, ensure, override } from '../util/command-builders';
 import { handler as fetch } from './fetch';
 import { handler as checkout } from './checkout';
@@ -59,11 +61,24 @@ export const command: yargs.CommandModule<PullOptions> = {
 };
 
 export async function handler(options: PullOptions, logger: Logger) {
+  ensureProjectId(options, logger);
+
   await fetch(options, logger);
   logger.success(`Downloaded latest project version`);
 
   await checkout(options, logger);
   logger.success(`Checked out project locally`);
 }
+
+const ensureProjectId = (options: any, logger?: Logger) => {
+  if (!options.project) {
+    logger?.debug(
+      'No project ID specified: looking up checked out project in Workspace'
+    );
+    const ws = new Workspace(options.workspace);
+    options.project = ws.activeProjectId;
+    logger?.info(`Project id not provided: will default to ${options.project}`);
+  }
+};
 
 export default handler;
