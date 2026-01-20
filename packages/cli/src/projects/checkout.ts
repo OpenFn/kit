@@ -25,7 +25,7 @@ const command: yargs.CommandModule = {
   handler: ensure('project-checkout', options),
   builder: (yargs) =>
     build(options, yargs).positional('project', {
-      describe: 'The id, alias or UUID of the project to chcekout',
+      describe: 'The id, alias or UUID of the project to checkout',
       demandOption: true,
     }),
 };
