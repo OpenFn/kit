@@ -30,6 +30,11 @@ export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
   if (source.name) {
     project.name = source.name;
   }
+
+  if (source.cli.forked_from) {
+    project.forked_from = source.cli.forked_from;
+  }
+
   const workspace = {
     ...source.config,
   };

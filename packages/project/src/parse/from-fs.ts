@@ -12,6 +12,7 @@ import {
 } from '../util/config';
 import { omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
+import omitNil from '../util/omit-nil';
 
 export type FromFsConfig = {
   root: string;
@@ -36,6 +37,9 @@ export const parseProject = async (options: FromFsConfig) => {
     openfn: omit(context.project, ['id']),
     config: config,
     workflows: [],
+    cli: omitNil({
+      forked_from: context.project.forked_from,
+    }),
   };
 
   // now find all the workflows
