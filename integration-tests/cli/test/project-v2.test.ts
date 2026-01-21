@@ -314,7 +314,8 @@ workspace:
 );
 
 test.serial('merge a project', async (t) => {
-  await run(`openfn checkout main -w ${TMP_DIR}`);
+  // Checkout staging first (which has the code we want to merge in)
+  await run(`openfn checkout staging -w ${TMP_DIR}`);
 
   const readStep = () =>
     readFile(
@@ -322,14 +323,17 @@ test.serial('merge a project', async (t) => {
       'utf8'
     ).then((str) => str.trim());
 
-  // assert the initial step code
+  // assert the initial step code in staging
   const initial = await readStep();
-  t.is(initial, 'fn(() => ({ x: 1}))');
+  t.is(initial, 'fn()');
 
-  // Run the merge
-  const { stdout } = await run(`openfn merge staging -w ${TMP_DIR} --force`);
+  // Run the merge - merge checked-out staging into main
+  const { stdout } = await run(`openfn merge sandboxing-simple -w ${TMP_DIR} --force`);
 
-  // Check the step is updated
+  // Checkout main to verify the merge
+  await run(`openfn checkout main -w ${TMP_DIR}`);
+
+  // Check the step is updated in main
   const merged = await readStep();
   t.is(merged, 'fn()');
 });
