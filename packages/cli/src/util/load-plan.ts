@@ -12,6 +12,7 @@ import type { Logger } from './logger';
 import type { CLIExecutionPlan, CLIJobNode, OldCLIWorkflow } from '../types';
 import resolvePath from './resolve-path';
 import { CREDENTIALS_KEY } from '../execute/apply-credential-map';
+import { CACHE_DIR } from './cache';
 
 const loadPlan = async (
   options: Pick<
@@ -63,7 +64,7 @@ const loadPlan = async (
     options.credentials ??= workspace.getConfig().credentials;
     options.collectionsEndpoint ??= proj.openfn?.endpoint;
     // Set the cache path to be relative to the workflow
-    options.cachePath ??= workspace.workflowsPath + `/${name}/.cli-cache`;
+    options.cachePath ??= workspace.workflowsPath + `/${name}/${CACHE_DIR}}`;
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {

@@ -6,6 +6,8 @@ import type { ExecutionPlan } from '@openfn/lexicon';
 import type { Opts } from '../options';
 import type { Logger } from './logger';
 
+export const CACHE_DIR = '.cli-cache';
+
 // TODO this is all a bit over complicated tbh
 export const getCachePath = (
   options: Pick<Opts, 'baseDir' | 'cachePath'>,
@@ -22,7 +24,7 @@ export const getCachePath = (
 
   const basePath = path.resolve(
     baseDir ?? process.cwd(),
-    `.cli-cache/${workflowName}`
+    `${CACHE_DIR}/${workflowName}`
   );
 
   if (stepId) {
@@ -33,7 +35,13 @@ export const getCachePath = (
 
 const ensureGitIgnore = (options: any, cachePath: string) => {
   if (!options._hasGitIgnore) {
-    const ignorePath = path.resolve(cachePath, '.gitignore');
+    // Find the root cache folder
+    let root = cachePath;
+    while (root && !root.endsWith(CACHE_DIR)) {
+      root = path.dirname(root);
+    }
+    // From the root cache, look for a .gitignore
+    const ignorePath = path.resolve(root, '.gitignore');
     try {
       fs.accessSync(ignorePath);
     } catch (e) {
