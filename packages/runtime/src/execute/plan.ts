@@ -28,8 +28,10 @@ const executePlan = async (
     throw e;
   }
   logger.info(`Executing ${plan.workflow.name || plan.id}`);
-
+  console.log({ plan });
+  console.log({ opts });
   const { workflow, options } = compiledPlan;
+  console.log({ workflow, options });
 
   const ctx: ExecutionContext = {
     plan: compiledPlan,
@@ -52,7 +54,7 @@ const executePlan = async (
     opts.callbacks?.notify?.(NOTIFY_STATE_LOAD, { duration, jobId: id });
     logger.success(`loaded state for ${id} in ${duration}ms`);
   }
-
+  console.log({ start: options.start ?? workflow.start });
   const queue: Array<{ stepName: string; input: any }> = [
     { stepName: options.start ?? workflow.start, input },
   ];

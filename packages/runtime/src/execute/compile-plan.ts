@@ -125,7 +125,7 @@ export default (plan: ExecutionPlan) => {
     },
     options: {
       ...options,
-      start: options.start ?? workflow.steps[0]?.id!,
+      start: options.start ?? workflow.start ?? workflow.steps[0]?.id!,
     },
   };
 
