@@ -76,8 +76,16 @@ const ensureProjectId = (options: any, logger?: Logger) => {
       'No project ID specified: looking up checked out project in Workspace'
     );
     const ws = new Workspace(options.workspace);
-    options.project = ws.activeProjectId;
-    logger?.info(`Project id not provided: will default to ${options.project}`);
+    if (ws.activeProject) {
+      options.project = ws.activeProject.uuid;
+      logger?.info(
+        `Project id not provided: will default to ${options.project}`
+      );
+    } else {
+      throw new Error(
+        'Project not provided: specify a project UUID, id or alias'
+      );
+    }
   }
 };
 
