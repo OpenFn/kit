@@ -246,6 +246,7 @@ test.serial('checkout: switching to and back between projects', async (t) => {
       command: 'project-checkout',
       project: 'my-project',
       workspace: '/ws',
+      clean: true,
     },
     logger
   );

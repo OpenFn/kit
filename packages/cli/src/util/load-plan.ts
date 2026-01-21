@@ -12,6 +12,7 @@ import type { Logger } from './logger';
 import type { CLIExecutionPlan, CLIJobNode, OldCLIWorkflow } from '../types';
 import resolvePath from './resolve-path';
 import { CREDENTIALS_KEY } from '../execute/apply-credential-map';
+import { CACHE_DIR } from './cache';
 
 const loadPlan = async (
   options: Pick<
@@ -27,6 +28,7 @@ const loadPlan = async (
     | 'globals'
     | 'credentials'
     | 'collectionsEndpoint'
+    | 'cachePath'
   > & {
     workflow?: Opts['workflow'];
     workspace?: string; // from project opts
@@ -61,6 +63,8 @@ const loadPlan = async (
 
     options.credentials ??= workspace.getConfig().credentials;
     options.collectionsEndpoint ??= proj.openfn?.endpoint;
+    // Set the cache path to be relative to the workflow
+    options.cachePath ??= workspace.workflowsPath + `/${name}/${CACHE_DIR}`;
   }
 
   if (options.path && /ya?ml$/.test(options.path)) {
@@ -102,7 +106,10 @@ const loadPlan = async (
     );
   } else {
     // This is the main route now - just load the workflow from the file
-    return loadXPlan({ workflow: workflowObj }, options, logger, defaultName);
+    const { id, start, options: o, ...w } = workflowObj;
+    const opts = { ...o, start };
+    const plan = { id, workflow: w, options: opts };
+    return loadXPlan(plan, options, logger, defaultName);
   }
 };
 

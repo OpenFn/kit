@@ -191,6 +191,10 @@ class Workflow {
     this.workflow.history?.push(versionHash);
   }
 
+  get history() {
+    return this.workflow.history ?? [];
+  }
+
   // return true if the current workflow can be merged into the target workflow without losing any changes
   canMergeInto(target: Workflow) {
     const thisHistory =

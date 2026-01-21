@@ -17,7 +17,7 @@ import loadState from '../util/load-state';
 import validateAdaptors from '../util/validate-adaptors';
 import loadPlan from '../util/load-plan';
 import assertPath from '../util/assert-path';
-import { clearCache } from '../util/cache';
+import { clearCache, getCachePath } from '../util/cache';
 import fuzzyMatchStep from '../util/fuzzy-match-step';
 import abort from '../util/abort';
 import validatePlan from '../util/validate-plan';
@@ -182,7 +182,10 @@ const executeHandler = async (options: ExecuteOptions, logger: Logger) => {
 
     if (options.cacheSteps) {
       logger.success(
-        'Cached output written to ./cli-cache (see info logs for details)'
+        `Cached output written to ${getCachePath(
+          options,
+          plan.workflow.name
+        )} (see info logs for details)`
       );
     }
 

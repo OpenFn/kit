@@ -75,6 +75,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // Note that it's a little wierd to deploy a project you haven't checked out,
   // so put good safeguards here
   logger.info('Attempting to load checked-out project from workspace');
+
+  // TODO this doesn't have a history!
+  // loading from the fs the history isn't available
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
   });
@@ -126,7 +129,19 @@ Pass --force to override this error and deploy anyway.`);
   }
 
   // Ensure there's no divergence
-  if (!localProject.canMergeInto(remoteProject!)) {
+
+  // Skip divergence testing if the remote has no history in its workflows
+  // (this will only happen on older versions of lightning)
+  const skipVersionTest =
+    localProject.workflows.find((wf) => wf.history.length === 0) ||
+    remoteProject.workflows.find((wf) => wf.history.length === 0);
+
+  if (skipVersionTest) {
+    logger.warn(
+      'Skipping compatibility check as no local version history detected'
+    );
+    logger.warn('Pushing these changes may overrite changes made to the app');
+  } else if (!localProject.canMergeInto(remoteProject!)) {
     if (!options.force) {
       logger.error(`Error: Projects have diverged!
 
@@ -168,6 +183,10 @@ Pass --force to override this error and deploy anyway.`);
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
   } else {
+    // sync summary
+    // :+1: the remove project has not changed since last sync / the remote project has changed since last sync, and your changes may overwrite these
+    // The following workflows will be updated
+
     if (options.confirm) {
       if (
         !(await logger.confirm(

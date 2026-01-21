@@ -28,6 +28,7 @@ export type Opts = {
   json?: boolean;
   beta?: boolean;
   cacheSteps?: boolean;
+  cachePath?: string;
   compile?: boolean;
   configPath?: string;
   confirm?: boolean;
@@ -218,6 +219,13 @@ export const cacheSteps: CLIOption = {
   },
 };
 
+export const cacheDir: CLIOption = {
+  name: 'cache-dir',
+  yargs: {
+    description: 'Set the path to read/write the state cache',
+  },
+};
+
 export const compile: CLIOption = {
   name: 'no-compile',
   yargs: {
@@ -366,8 +374,8 @@ export const ignoreImports: CLIOption = {
   },
 };
 
-const getBaseDir = (opts: { path?: string }) => {
-  const basePath = opts.path ?? '.';
+const getBaseDir = (opts: { path?: string; workspace?: string }) => {
+  const basePath = opts.path ?? opts.workspace ?? '.';
   if (/\.(jso?n?|ya?ml)$/.test(basePath)) {
     return nodePath.dirname(basePath);
   }

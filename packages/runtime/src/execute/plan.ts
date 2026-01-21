@@ -28,7 +28,6 @@ const executePlan = async (
     throw e;
   }
   logger.info(`Executing ${plan.workflow.name || plan.id}`);
-
   const { workflow, options } = compiledPlan;
 
   const ctx: ExecutionContext = {
@@ -53,8 +52,10 @@ const executePlan = async (
     logger.success(`loaded state for ${id} in ${duration}ms`);
   }
 
+  const startNode = options.start ?? workflow.start;
+  logger.debug('Starting execution from step', startNode);
   const queue: Array<{ stepName: string; input: any }> = [
-    { stepName: options.start ?? workflow.start, input },
+    { stepName: startNode, input },
   ];
 
   // count how many times each step has been called

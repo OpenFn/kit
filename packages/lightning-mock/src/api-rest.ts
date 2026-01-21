@@ -110,9 +110,11 @@ export default (
 
   router.post('/api/provision', (ctx) => {
     const proj: any = ctx.request.body;
+
     state.projects[proj.id] = proj;
 
     ctx.response.status = 200;
+    ctx.response.body = { data: proj };
   });
 
   // list with query

@@ -2,9 +2,7 @@ import test from 'ava';
 import { randomUUID } from 'node:crypto';
 import Project from '../../src';
 import { merge, REPLACE_MERGE } from '../../src/merge/merge-project';
-import { join } from 'node:path';
 import { generateWorkflow } from '../../src/gen/generator';
-import slugify from '../../src/util/slugify';
 
 let idgen = 0;
 
@@ -147,6 +145,38 @@ test('merge a simple change between single-step workflows with preserved uuids',
 
   t.is(step.adaptor, wf_b.steps[0].adaptor);
   t.is(step.openfn.uuid, wf_a.steps[0].openfn.uuid);
+});
+
+test('merge with history (prefers source history)', (t) => {
+  // create a base workflow
+  const wf = {
+    id: 'wf',
+    history: ['a'],
+    steps: [
+      {
+        id: 'x',
+        name: 'X',
+        adaptor: 'common',
+        expression: 'fn(s => s)',
+      },
+    ],
+  };
+
+  // step up two copies with UUIDS
+  const wf_a = assignUUIDs(wf);
+  const wf_b = assignUUIDs(wf);
+  wf_b.history.push('b');
+
+  // change the adaptor
+  wf_b.steps[0].adaptor = 'http';
+
+  const main = createProject(wf_a, 'a');
+  const staging = createProject(wf_b, 'b');
+
+  // merge staging into main
+  const result = merge(staging, main);
+
+  t.deepEqual(result.workflows[0].history, ['a', 'b']);
 });
 
 test('merge a simple change between single-step workflows with preserved numeric uuids', (t) => {

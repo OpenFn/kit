@@ -61,6 +61,53 @@ test('should preserve the start option', (t) => {
   t.is(compiledPlan.options.start, 'a');
 });
 
+test('should prefer use workflow.start', (t) => {
+  const compiledPlan = compilePlan({
+    id: 'a',
+    workflow: {
+      start: 'b',
+      steps: [
+        { id: 'a', expression: 'a' },
+        { id: 'b', expression: 'b' },
+      ],
+    },
+  });
+
+  t.is(compiledPlan.options.start, 'b');
+});
+
+test('should prefer use options.start to workflow.start', (t) => {
+  const compiledPlan = compilePlan({
+    id: 'a',
+    workflow: {
+      start: 'b',
+      steps: [
+        { id: 'a', expression: 'a' },
+        { id: 'b', expression: 'b' },
+      ],
+    },
+    options: {
+      start: 'a',
+    },
+  });
+
+  t.is(compiledPlan.options.start, 'a');
+});
+
+test('should default start to the first node', (t) => {
+  const compiledPlan = compilePlan({
+    id: 'a',
+    workflow: {
+      steps: [
+        { id: 'a', expression: 'a' },
+        { id: 'b', expression: 'b' },
+      ],
+    },
+  });
+
+  t.is(compiledPlan.options.start, 'a');
+});
+
 test('should preserve arbitrary options', (t) => {
   const compiledPlan = compilePlan({
     id: 'a',

@@ -99,6 +99,14 @@ export class Workspace {
     return this.projects;
   }
 
+  get projectsPath() {
+    return path.join(this.root, this.config.dirs.projects);
+  }
+
+  get workflowsPath() {
+    return path.join(this.root, this.config.dirs.workflows);
+  }
+
   /** Get a project by its alias, id or UUID. Can also include a UUID */
   get(nameyThing: string) {
     return matchProject(nameyThing, this.projects);

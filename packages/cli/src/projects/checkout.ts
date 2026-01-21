@@ -10,13 +10,14 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
+import { tidyWorkflowDir } from './util';
 
 export type CheckoutOptions = Pick<
   Opts,
-  'command' | 'project' | 'workspace' | 'log'
+  'command' | 'project' | 'workspace' | 'log' | 'clean'
 >;
 
-const options = [o.log, po.workspace];
+const options = [o.log, po.workspace, po.clean];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project>',
@@ -24,7 +25,7 @@ const command: yargs.CommandModule = {
   handler: ensure('project-checkout', options),
   builder: (yargs) =>
     build(options, yargs).positional('project', {
-      describe: 'The id, alias or UUID of the project to chcekout',
+      describe: 'The id, alias or UUID of the project to checkout',
       demandOption: true,
     }),
 };
@@ -39,6 +40,8 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
   // get the config
   // TODO: try to retain the endpoint for the projects
   const { project: _, ...config } = workspace.getConfig() as any;
+
+  const currentProject = workspace.getActiveProject();
 
   // get the project
   let switchProject;
@@ -60,7 +63,11 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
   }
 
   // delete workflow dir before expanding project
-  await rimraf(path.join(workspacePath, config.workflowRoot ?? 'workflows'));
+  if (options.clean) {
+    await rimraf(workspace.workflowsPath);
+  } else {
+    await tidyWorkflowDir(currentProject!, switchProject);
+  }
 
   // expand project into directory
   const files: any = switchProject.serialize('fs');

@@ -1,6 +1,7 @@
 import test from 'ava';
 import mock from 'mock-fs';
 import { createMockLogger } from '@openfn/logger';
+import { omit } from 'lodash-es';
 import type { Job } from '@openfn/lexicon';
 
 import loadPlan from '../../src/util/load-plan';
@@ -181,10 +182,10 @@ test.serial('xplan: load a new flat plan from workflow path', async (t) => {
   };
 
   const plan = await loadPlan(opts, logger);
-
-  t.truthy(plan);
+  console.log(plan);
   t.deepEqual(plan, {
-    options: {}, // no options here!
+    id: undefined,
+    options: { start: undefined },
     workflow: sampleXPlan.workflow,
   });
 });
@@ -204,6 +205,36 @@ test.serial('xplan: expand adaptors', async (t) => {
     },
   ]);
 
+  mock({
+    'test/wf.json': JSON.stringify(plan),
+  });
+
+  const result = await loadPlan(opts, logger);
+  t.truthy(result);
+
+  const step = result.workflow.steps[0] as Job;
+  t.is(step.adaptors[0], '@openfn/language-common@1.0.0');
+  // @ts-ignore
+  t.is(step.adaptor, undefined);
+});
+
+test.serial('flat xplan: expand adaptors', async (t) => {
+  const opts = {
+    workflowPath: 'test/wf.json',
+    expandAdaptors: true,
+    plan: {},
+  };
+
+  const plan = {
+    start: 'a',
+    steps: [
+      {
+        id: 'a',
+        expression: '.',
+        adaptor: 'common@1.0.0',
+      },
+    ],
+  };
   mock({
     'test/wf.json': JSON.stringify(plan),
   });
@@ -490,7 +521,7 @@ test.serial(
   async (t) => {
     mock({
       'test/wf.yaml': `
-name: wf
+start: a
 steps:
   - id: a
     adaptors: []
@@ -504,8 +535,11 @@ steps:
     const plan = await loadPlan(opts, logger);
 
     t.truthy(plan);
-    // Note that options are lost in this design!
-    t.deepEqual(plan, { workflow: sampleXPlan.workflow, options: {} });
+    t.deepEqual(plan, {
+      id: undefined,
+      workflow: omit(sampleXPlan.workflow, ['id', 'name']),
+      options: { start: 'a' },
+    });
   }
 );
 

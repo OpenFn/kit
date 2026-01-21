@@ -1,6 +1,6 @@
 {
   "name": "@openfn/cli",
-  "version": "1.24.1",
+  "version": "1.25.0",
   "description": "CLI devtools for the OpenFn toolchain",
   "engines": {
     "node": ">=18",
@@ -42,6 +42,7 @@
     "@types/ws": "^8.18.1",
     "@types/yargs": "^17.0.33",
     "ava": "5.3.1",
+    "lodash-es": "^4.17.21",
     "mock-fs": "^5.5.0",
     "tslib": "^2.8.1",
     "tsup": "^7.2.0",

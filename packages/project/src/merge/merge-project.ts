@@ -1,7 +1,7 @@
 import { defaultsDeep, isEmpty } from 'lodash-es';
 
 import { Project } from '../Project';
-import { mergeWorkflows } from './merge-node';
+import { mergeWorkflows } from './merge-workflow';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';

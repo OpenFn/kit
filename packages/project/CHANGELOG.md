@@ -1,5 +1,13 @@
 # @openfn/project
 
+## 0.12.1
+
+### Patch Changes
+
+- 090fbf3: Workspace: add getters for project and workflow paths
+- a23e4e7: Fix an issue where workflow history is dropped during merge
+- 8c55995: When checking out new projects, only delete the files necessary
+
 ## 0.12.0
 
 ### Minor Changes
