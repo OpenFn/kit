@@ -37,7 +37,7 @@ const ensureGitIgnore = (options: any, cachePath: string) => {
   if (!options._hasGitIgnore) {
     // Find the root cache folder
     let root = cachePath;
-    while (root && !root.endsWith(CACHE_DIR)) {
+    while (root.length > 1 && !root.endsWith(CACHE_DIR)) {
       root = path.dirname(root);
     }
     // From the root cache, look for a .gitignore
