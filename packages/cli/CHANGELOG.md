@@ -1,5 +1,24 @@
 # @openfn/cli
 
+## 1.25.0
+
+### Minor Changes
+
+- 8b9f402: fetch: allow state files to be writtem to JSON with --format
+
+### Patch Changes
+
+- 26381fa: Fix an issue where start is not correctly loaded from workflow.yaml
+- 5a575eb: On deploy, skip the check to see if the remote history has diverged. History tracking still needs some work and this feature isn't working properly yet"
+- 8c55995: When checking out new projects, only delete the files necessary
+- 090fbf3: Fix step caching when running a workflow through the Project
+- Updated dependencies [090fbf3]
+- Updated dependencies [f2856c5]
+- Updated dependencies [a23e4e7]
+- Updated dependencies [8c55995]
+  - @openfn/project@0.12.1
+  - @openfn/runtime@1.8.3
+
 ## 1.24.1
 
 ### Patch Changes

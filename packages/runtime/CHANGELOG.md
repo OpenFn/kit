@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.8.3
+
+### Patch Changes
+
+- f2856c5: Fix an issue where ExecutionPlan.start is not used properly.
+
 ## 1.8.2
 
 ### Patch Changes
