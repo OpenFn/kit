@@ -10,7 +10,7 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { tidyWorkflowDir } from './util';
+import { tidyWorkflowDir, updateForkedFrom } from './util';
 
 export type CheckoutOptions = Pick<
   Opts,
@@ -69,7 +69,11 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
     await tidyWorkflowDir(currentProject!, switchProject);
   }
 
+  // write the forked from map
+  updateForkedFrom(switchProject);
+
   // expand project into directory
+  // TODO: only write files with a diff
   const files: any = switchProject.serialize('fs');
   for (const f in files) {
     if (files[f]) {

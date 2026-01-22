@@ -216,3 +216,14 @@ export async function tidyWorkflowDir(
   // Return and sort for testing
   return toRemove.sort();
 }
+
+export const updateForkedFrom = (proj: Project) => {
+  proj.cli.forked_from = proj.workflows.reduce((obj: any, wf) => {
+    if (wf.history.length) {
+      obj[wf.id] = wf.history.at(-1);
+    }
+    return obj;
+  }, {});
+
+  return proj;
+};

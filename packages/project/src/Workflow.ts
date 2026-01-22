@@ -27,8 +27,8 @@ class Workflow {
 
     this.workflow = clone(workflow);
 
-    // history needs to be on workflow object.
-    this.workflow.history = workflow.history?.length ? workflow.history : [];
+    // history needs to be on workflow object
+    this.workflow.history = workflow.history ?? [];
 
     const {
       id,
@@ -69,6 +69,10 @@ class Workflow {
 
   set start(s: string) {
     this.workflow.start = s;
+  }
+
+  get history() {
+    return this.workflow.history ?? [];
   }
 
   _buildIndex() {
@@ -189,10 +193,6 @@ class Workflow {
 
   pushHistory(versionHash: string) {
     this.workflow.history?.push(versionHash);
-  }
-
-  get history() {
-    return this.workflow.history ?? [];
   }
 
   // return true if the current workflow can be merged into the target workflow without losing any changes

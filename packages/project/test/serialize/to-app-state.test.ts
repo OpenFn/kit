@@ -262,6 +262,43 @@ test('should handle credentials', (t) => {
   t.is(step.project_credential_id, 'p');
 });
 
+test.only('should ignore forked_from', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'p',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+    cli: {
+      forked_form: { wf: 'a' },
+    },
+  };
+  const proj = new Project(data);
+  console.log(proj);
+  const state = toAppState(proj, { format: 'json' });
+  console.log(state);
+  t.falsy((state as any).forked_form);
+});
+
 test('should ignore workflow start keys', (t) => {
   const data = {
     id: 'my-project',

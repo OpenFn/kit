@@ -1,6 +1,8 @@
 import yargs from 'yargs';
 import Project from '@openfn/project';
 import c from 'chalk';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import * as o from '../options';
 import * as o2 from './options';
@@ -10,6 +12,7 @@ import {
   fetchProject,
   serialize,
   getSerializePath,
+  updateForkedFrom,
 } from './util';
 import { build, ensure } from '../util/command-builders';
 
@@ -62,6 +65,34 @@ export const command: yargs.CommandModule<DeployOptions> = {
         'Deploy the checkout project to the connected instance'
       ),
   handler: ensure('project-deploy', options),
+};
+
+export const hasRemoteDiverged = (
+  local: Project,
+  remote: Project
+): string[] | null => {
+  let diverged: string[] | null = null;
+
+  const refs = local.cli.forked_from ?? {};
+
+  // for each workflow, check that the local fetched_from is the head of the remote history
+  for (const wf of local.workflows) {
+    if (wf.id in refs) {
+      const forkedVersion = refs[wf.id];
+      const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
+      if (forkedVersion !== remoteVersion) {
+        diverged ??= [];
+        diverged.push(wf.id);
+      }
+    } else {
+      // TODO what if there's no forked from for this workflow?
+      // Do we assume divergence because we don't know? Do we warn?
+    }
+  }
+
+  // TODO what if a workflow is removed locally?
+
+  return diverged;
 };
 
 export async function handler(options: DeployOptions, logger: Logger) {
@@ -132,32 +163,41 @@ Pass --force to override this error and deploy anyway.`);
 
   // Skip divergence testing if the remote has no history in its workflows
   // (this will only happen on older versions of lightning)
+  // TODO now maybe skip if there's no forked_from
   const skipVersionTest =
-    localProject.workflows.find((wf) => wf.history.length === 0) ||
+    // localProject.workflows.find((wf) => wf.history.length === 0) ||
     remoteProject.workflows.find((wf) => wf.history.length === 0);
+
+  // localProject.workflows.forEach((w) => console.log(w.history));
 
   if (skipVersionTest) {
     logger.warn(
       'Skipping compatibility check as no local version history detected'
     );
     logger.warn('Pushing these changes may overrite changes made to the app');
-  } else if (!localProject.canMergeInto(remoteProject!)) {
-    if (!options.force) {
-      logger.error(`Error: Projects have diverged!
-
-The remote project has been edited since the local project was branched. Changes may be lost.
-
-Pass --force to override this error and deploy anyway.`);
-      return;
-    } else {
+  } else {
+    const divergentWorkflows = hasRemoteDiverged(localProject, remoteProject!);
+    if (divergentWorkflows) {
       logger.warn(
-        'Remote project has not diverged from local project! Pushing anyway as -f passed'
+        `The following workflows have diverged: ${divergentWorkflows}`
+      );
+      if (!options.force) {
+        logger.error(`Error: Projects have diverged!
+
+  The remote project has been edited since the local project was branched. Changes may be lost.
+
+  Pass --force to override this error and deploy anyway.`);
+        return;
+      } else {
+        logger.warn(
+          'Remote project has not diverged from local project! Pushing anyway as -f passed'
+        );
+      }
+    } else {
+      logger.info(
+        'Remote project has not diverged from local project - it is safe to deploy 🎉'
       );
     }
-  } else {
-    logger.info(
-      'Remote project has not diverged from local project - it is safe to deploy 🎉'
-    );
   }
 
   logger.info('Merging changes into remote project');
@@ -179,6 +219,8 @@ Pass --force to override this error and deploy anyway.`);
 
   // TODO not totally sold on endpoint handling right now
   config.endpoint ??= localProject.openfn?.endpoint!;
+
+  // TODO: I want to report diff HERE, after the merged state and stuff has been built
 
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
@@ -216,6 +258,14 @@ Pass --force to override this error and deploy anyway.`);
         endpoint: config.endpoint,
       },
       merged.config
+    );
+
+    // TODO why isn't this right? oh, because the outpu path isn't quite right
+    updateForkedFrom(finalProject);
+    const configData = finalProject.generateConfig();
+    await writeFile(
+      path.resolve(options.workspace, configData.path),
+      configData.content
     );
 
     const finalOutputPath = getSerializePath(localProject, options.workspace!);
@@ -267,3 +317,4 @@ export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
 
   return diffs;
 };
+``;

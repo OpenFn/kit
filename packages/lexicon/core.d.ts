@@ -118,6 +118,7 @@ export interface ProjectMeta {
   env?: string;
   inserted_at?: string;
   updated_at?: string;
+  forked_from?: Record<string, string>;
 
   [key: string]: unknown;
 }

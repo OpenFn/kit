@@ -233,4 +233,58 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
   t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
 });
 
+test('toFs: extract a project with forked_from meta', (t) => {
+  const project = new Project(
+    {
+      name: 'My Project',
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+      cli: {
+        forked_from: 'abcd',
+      },
+    },
+    {
+      formats: {
+        openfn: 'json', // for easier testing
+        workflow: 'json',
+      },
+    }
+  );
+
+  const files = toFs(project);
+
+  // Ensure that all the right files have been created
+  t.deepEqual(Object.keys(files), [
+    'openfn.json',
+    'workflows/my-workflow/my-workflow.json',
+    'workflows/my-workflow/step.js',
+  ]);
+
+  // rough test on the file contents
+  // (this should be validated in more detail by each step)
+  const config = JSON.parse(files['openfn.json']);
+  t.deepEqual(config, {
+    workspace: {
+      credentials: 'credentials.yaml',
+      formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
+      dirs: { projects: '.projects', workflows: 'workflows' },
+    },
+    project: {
+      id: 'my-project',
+      name: 'My Project',
+      forked_from: 'abcd',
+    },
+  });
+
+  const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
+  t.is(workflow.id, 'my-workflow');
+  t.is(workflow.steps.length, 1);
+
+  t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
+});
+
 // TODO we need many more tests on this, with options

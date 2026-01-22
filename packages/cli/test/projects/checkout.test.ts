@@ -3,7 +3,7 @@ import { createMockLogger } from '@openfn/logger';
 import { handler as checkoutHandler } from '../../src/projects/checkout';
 import mock from 'mock-fs';
 import fs from 'fs';
-import { jsonToYaml, Workspace } from '@openfn/project';
+import { jsonToYaml, Workspace, yamlToJson } from '@openfn/project';
 
 test.beforeEach(() => {
   mock({
@@ -28,6 +28,7 @@ test.beforeEach(() => {
         {
           name: 'simple-workflow',
           id: 'wf-id',
+          history: ['a'],
           jobs: [
             {
               name: 'Transform data to FHIR standard',
@@ -56,6 +57,7 @@ test.beforeEach(() => {
         {
           name: 'another-workflow',
           id: 'another-id',
+          history: ['b'],
           jobs: [
             {
               name: 'Transform data to FHIR standard',
@@ -83,6 +85,7 @@ test.beforeEach(() => {
         },
       ],
     }),
+    // TODO this is actually a v1 state file for some reason, which is wierd
     '/ws/.projects/project@app.openfn.org.yaml': jsonToYaml({
       id: '<uuid:main>',
       name: 'My Project',
@@ -90,6 +93,7 @@ test.beforeEach(() => {
         {
           name: 'simple-workflow-main',
           id: 'wf-id-main',
+          version_history: ['a'],
           jobs: [
             {
               name: 'Transform data to FHIR standard',
@@ -118,6 +122,7 @@ test.beforeEach(() => {
         {
           name: 'another-workflow-main',
           id: 'another-id',
+          version_history: ['b'],
           jobs: [
             {
               name: 'Transform data to FHIR standard',
@@ -216,6 +221,25 @@ test.serial('checkout: same id as active', async (t) => {
     ['simple-workflow-main', 'another-workflow-main'].sort()
   );
 });
+
+test.serial(
+  'checkout: writes forked_from based on version history',
+  async (t) => {
+    const bcheckout = new Workspace('/ws');
+    t.is(bcheckout.activeProject!.id, 'my-project');
+
+    await checkoutHandler(
+      { command: 'project-checkout', project: 'my-project', workspace: '/ws' },
+      logger
+    );
+
+    const openfn = yamlToJson(fs.readFileSync('/ws/openfn.yaml', 'utf8'));
+    t.deepEqual(openfn.project.forked_from, {
+      'simple-workflow-main': 'a',
+      'another-workflow-main': 'b',
+    });
+  }
+);
 
 test.serial('checkout: switching to and back between projects', async (t) => {
   // before checkout. my-project is active and expanded

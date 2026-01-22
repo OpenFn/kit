@@ -10,6 +10,7 @@ import createLightningServer, {
 
 import {
   handler as deployHandler,
+  hasRemoteDiverged,
   reportDiff,
 } from '../../src/projects/deploy';
 import { myProject_yaml, myProject_v1 } from './fixtures';
@@ -278,3 +279,53 @@ test.serial.skip(
     t.truthy(expectedLog);
   }
 );
+
+test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
+  const local = {
+    workflows: [
+      {
+        id: 'w',
+      },
+    ],
+    cli: {
+      forked_from: {
+        w: 'a',
+      },
+    },
+  } as unknown as Project;
+
+  const remote = {
+    getWorkflow: () => ({
+      id: 'w',
+      history: ['a'],
+    }),
+  } as unknown as Project;
+
+  const diverged = hasRemoteDiverged(local, remote);
+  t.falsy(diverged);
+});
+
+test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
+  const local = {
+    workflows: [
+      {
+        id: 'w',
+      },
+    ],
+    cli: {
+      forked_from: {
+        w: 'w',
+      },
+    },
+  } as unknown as Project;
+
+  const remote = {
+    getWorkflow: () => ({
+      id: 'w',
+      history: ['a', 'b'],
+    }),
+  } as unknown as Project;
+
+  const diverged = hasRemoteDiverged(local, remote);
+  t.deepEqual(diverged, ['w']);
+});

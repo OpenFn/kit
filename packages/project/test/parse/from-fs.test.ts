@@ -22,7 +22,7 @@ function mockFile(path: string, content: string | object) {
   mock(files);
 }
 
-test.serial('should include multiple workflows', async (t) => {
+test.serial('should include multiple workflows (legacy format)', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
 
   mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
@@ -66,7 +66,7 @@ test.serial('should include multiple workflows', async (t) => {
   t.is(wf2.name, 'Workflow 2');
 });
 
-test.serial('should load a workflow expression', async (t) => {
+test.serial('should load a workflow expression (legacy format)', async (t) => {
   mockFile('/ws/openfn.yaml', buildConfig());
 
   mockFile('/ws/workflows/my-workflow/my-workflow.yaml', {
@@ -104,7 +104,7 @@ test.serial(
 );
 
 test.serial(
-  'should load a workflow from the file system and expand shorthand links',
+  'should load a workflow from the file system and expand shorthand links (legacy format)',
   async (t) => {
     mockFile('/ws/openfn.yaml', buildConfig());
 
@@ -139,3 +139,33 @@ test.serial(
     t.is(typeof wf.steps[1].next.c, 'object');
   }
 );
+
+test.serial('should track forked_from', async (t) => {
+  mockFile('/ws/openfn.yaml', {
+    workspace: buildConfig(),
+    project: {
+      uuid: '<uuid>',
+      forked_from: {
+        w1: 'abcd',
+      },
+    },
+  });
+
+  mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+    id: 'workflow-1',
+    name: 'Workflow 1',
+    steps: [
+      {
+        id: 'a',
+        expression: 'job.js',
+      },
+    ],
+  });
+
+  mockFile('/ws/workflows/workflow-1/job.js', `fn(s => s)`);
+
+  const project = await parseProject({ root: '/ws' });
+
+  t.deepEqual(project.cli.forked_from, { w1: 'abcd' });
+  t.falsy(project.openfn!.forked_from);
+});

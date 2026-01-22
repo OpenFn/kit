@@ -29,6 +29,8 @@ project:
   env: dev
   inserted_at: 2025-10-21T17:10:57Z
   updated_at: 2025-10-21T17:10:57Z
+  forked_from:
+    w1: abcd
 `;
   const result = loadWorkspaceFile(yaml);
 
@@ -51,6 +53,9 @@ project:
     env: 'dev',
     inserted_at: '2025-10-21T17:10:57Z',
     updated_at: '2025-10-21T17:10:57Z',
+    forked_from: {
+      w1: 'abcd',
+    },
   });
 });
 
@@ -161,6 +166,47 @@ test('generate openfn.yaml', (t) => {
       openfn: {
         uuid: 1234,
       },
+      cli: {
+        forked_from: 'abcd',
+      },
+    },
+    {
+      formats: {
+        openfn: 'yaml',
+      },
+    }
+  );
+  const result = extractConfig(proj);
+  t.is(result.path, 'openfn.yaml'),
+    t.deepEqual(
+      result.content,
+      `project:
+  uuid: 1234
+  id: my-project
+  name: My Project
+  forked_from: abcd
+workspace:
+  credentials: credentials.yaml
+  formats:
+    openfn: yaml
+    project: yaml
+    workflow: yaml
+  dirs:
+    projects: .projects
+    workflows: workflows
+`
+    );
+});
+
+test("exclude forked_from if it's not set", (t) => {
+  const proj = new Project(
+    {
+      id: 'my-project',
+      name: 'My Project',
+      openfn: {
+        uuid: 1234,
+      },
+      cli: {},
     },
     {
       formats: {

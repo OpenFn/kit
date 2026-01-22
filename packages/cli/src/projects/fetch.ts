@@ -331,6 +331,8 @@ To ignore this error and override the local file, pass --force (-f)
       options.force || // The user forced the checkout
       !hasAnyHistory; // the remote project has no history (can happen in old apps)
 
+    // TODO temporarily force skip
+    // TODO canMergeInto needs to return a reason
     if (!skipVersionCheck && !remoteProject.canMergeInto(localProject!)) {
       // TODO allow rename
       throw new Error('Error! An incompatible project exists at this location');
