@@ -31,7 +31,7 @@ type UUIDMap = {
 type CLIMeta = {
   version?: number;
   alias?: string;
-  forked_from?: string;
+  forked_from?: Record<string, string>;
 };
 
 export class Project {

@@ -29,7 +29,8 @@ project:
   env: dev
   inserted_at: 2025-10-21T17:10:57Z
   updated_at: 2025-10-21T17:10:57Z
-  forked_from: abcd
+  forked_from:
+    w1: abcd
 `;
   const result = loadWorkspaceFile(yaml);
 
@@ -52,7 +53,9 @@ project:
     env: 'dev',
     inserted_at: '2025-10-21T17:10:57Z',
     updated_at: '2025-10-21T17:10:57Z',
-    forked_from: 'abcd',
+    forked_from: {
+      w1: 'abcd',
+    },
   });
 });
 

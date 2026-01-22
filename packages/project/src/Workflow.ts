@@ -71,6 +71,10 @@ class Workflow {
     this.workflow.start = s;
   }
 
+  get history() {
+    return this.workflow.history ?? [];
+  }
+
   _buildIndex() {
     for (const step of this.workflow.steps) {
       const s = step as any;
@@ -189,10 +193,6 @@ class Workflow {
 
   pushHistory(versionHash: string) {
     this.workflow.history?.push(versionHash);
-  }
-
-  get history() {
-    return this.workflow.history ?? [];
   }
 
   // return true if the current workflow can be merged into the target workflow without losing any changes

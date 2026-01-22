@@ -140,12 +140,14 @@ test.serial(
   }
 );
 
-test.serial.only('should track forked_from', async (t) => {
+test.serial('should track forked_from', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),
     project: {
       uuid: '<uuid>',
-      forked_from: 'abcd',
+      forked_from: {
+        w1: 'abcd',
+      },
     },
   });
 
@@ -164,5 +166,5 @@ test.serial.only('should track forked_from', async (t) => {
 
   const project = await parseProject({ root: '/ws' });
 
-  t.is(project.cli.forked_from, 'abcd');
+  t.deepEqual(project.cli.forked_from, { w1: 'abcd' });
 });
