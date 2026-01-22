@@ -167,4 +167,5 @@ test.serial('should track forked_from', async (t) => {
   const project = await parseProject({ root: '/ws' });
 
   t.deepEqual(project.cli.forked_from, { w1: 'abcd' });
+  t.falsy(project.openfn!.forked_from);
 });
