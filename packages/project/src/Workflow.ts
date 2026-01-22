@@ -27,8 +27,8 @@ class Workflow {
 
     this.workflow = clone(workflow);
 
-    // history needs to be on workflow object.
-    this.workflow.history = workflow.history?.length ? workflow.history : [];
+    // history needs to be on workflow object
+    this.workflow.history = workflow.history ?? [];
 
     const {
       id,

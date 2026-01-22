@@ -26,6 +26,9 @@ workflows:
     lock_version: 1
     deleted_at: null
     concurrency: null
+    version_history:
+      - a
+      - b 
     jobs:
       transform-data:
         name: Transform data
@@ -93,7 +96,7 @@ test('import from a v2 project as JSON', async (t) => {
     openfn: {
       uuid: 1,
     },
-    history: [],
+    history: ['a', 'b'],
     start: 'trigger',
     steps: [
       {
@@ -152,7 +155,7 @@ test('import from a v2 project as YAML', async (t) => {
       uuid: 1,
     },
     start: 'trigger',
-    history: [],
+    history: ['a', 'b'],
     steps: [
       {
         name: 'b',

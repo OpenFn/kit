@@ -37,6 +37,9 @@ const createProject = (props: Partial<l.Project> = {}) => {
   // hack
   delete proj.workflows[0].steps[0].name;
   proj.workflows[0].start = 'trigger';
+
+  // add some history
+  proj.workflows[0].workflow.history = ['a', 'b'];
   return proj;
 };
 
