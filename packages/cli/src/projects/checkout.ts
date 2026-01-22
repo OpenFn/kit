@@ -69,6 +69,17 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
     await tidyWorkflowDir(currentProject!, switchProject);
   }
 
+  // write the forked from map
+  switchProject.cli.forked_from = switchProject.workflows.reduce(
+    (obj: any, wf) => {
+      if (wf.history.length) {
+        obj[wf.id] = wf.history.at(-1);
+      }
+      return obj;
+    },
+    {}
+  );
+
   // expand project into directory
   const files: any = switchProject.serialize('fs');
   for (const f in files) {
