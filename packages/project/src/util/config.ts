@@ -31,7 +31,7 @@ export const extractConfig = (source: Project, format?: 'yaml' | 'json') => {
     project.name = source.name;
   }
 
-  if (source.cli.forked_from) {
+  if (source.cli.forked_from && Object.keys(source.cli.forked_from).length) {
     project.forked_from = source.cli.forked_from;
   }
 

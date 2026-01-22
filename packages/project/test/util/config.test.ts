@@ -198,6 +198,43 @@ workspace:
     );
 });
 
+test("exclude forked_from if it's not set", (t) => {
+  const proj = new Project(
+    {
+      id: 'my-project',
+      name: 'My Project',
+      openfn: {
+        uuid: 1234,
+      },
+      cli: {},
+    },
+    {
+      formats: {
+        openfn: 'yaml',
+      },
+    }
+  );
+  const result = extractConfig(proj);
+  t.is(result.path, 'openfn.yaml'),
+    t.deepEqual(
+      result.content,
+      `project:
+  uuid: 1234
+  id: my-project
+  name: My Project
+workspace:
+  credentials: credentials.yaml
+  formats:
+    openfn: yaml
+    project: yaml
+    workflow: yaml
+  dirs:
+    projects: .projects
+    workflows: workflows
+`
+    );
+});
+
 test.todo('generate openfn.json');
 
 test('include project name', (t) => {
