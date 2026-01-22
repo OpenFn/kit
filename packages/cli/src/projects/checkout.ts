@@ -10,7 +10,7 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { tidyWorkflowDir } from './util';
+import { tidyWorkflowDir, updateForkedFrom } from './util';
 
 export type CheckoutOptions = Pick<
   Opts,
@@ -70,17 +70,10 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
   }
 
   // write the forked from map
-  switchProject.cli.forked_from = switchProject.workflows.reduce(
-    (obj: any, wf) => {
-      if (wf.history.length) {
-        obj[wf.id] = wf.history.at(-1);
-      }
-      return obj;
-    },
-    {}
-  );
+  updateForkedFrom(switchProject);
 
   // expand project into directory
+  // TODO: only write files with a diff
   const files: any = switchProject.serialize('fs');
   for (const f in files) {
     if (files[f]) {
