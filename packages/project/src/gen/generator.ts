@@ -111,7 +111,7 @@ const initOperations = (options: any = {}) => {
 
       n1.next ??= {};
 
-      n1.next[n2.name] = e;
+      n1.next[n2.id ?? slugify(n2.name)] = e;
 
       return [n1, n2];
     },

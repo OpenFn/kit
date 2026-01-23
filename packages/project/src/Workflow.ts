@@ -113,7 +113,14 @@ class Workflow {
 
   // Get properties on any step or edge by id or uuid
   get(id: string): WithMeta<l.Step | l.Trigger | l.StepEdge> {
-    const item = this.index.edges[id] || this.index.steps[id];
+    // first check if we're passed a UUID - in which case we map it to an id
+    if (id in this.index.id) {
+      id = this.index.id[id];
+    }
+
+    // now look up the item proper
+    let item = this.index.edges[id] || this.index.steps[id];
+
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
     }

@@ -1,6 +1,8 @@
-import { ConditionalStepEdge, Job, Trigger, Workflow } from '@openfn/lexicon';
+import * as l from '@openfn/lexicon';
 import crypto from 'node:crypto';
 import { get } from 'lodash-es';
+import { mapWorkflow } from '../serialize/to-app-state';
+import Workflow from '../Workflow';
 
 const SHORT_HASH_LENGTH = 12;
 
@@ -13,28 +15,40 @@ export const parse = (version: string) => {
   return { source, hash };
 };
 
-export const generateHash = (workflow: Workflow, source = 'cli') => {
+export const generateHash = (
+  wfJson: l.Workflow,
+  { source = 'cli', sha = true } = {}
+) => {
+  const workflow = new Workflow(wfJson);
+
   const parts: string[] = [];
 
+  // convert the workflow into a v1 state object
+  // this means we can match keys with lightning
+  // and everything gets cleaner
+  const wfState = mapWorkflow(workflow);
+
   // These are the keys we hash against
-  const wfKeys = ['name', 'positions'].sort() as Array<keyof Workflow>;
+  const wfKeys = ['name', 'positions'].sort();
+
+  // These keys are manually sorted to match lightning equivalents
   const stepKeys = [
     'name',
-    'adaptors',
-    'adaptor', // there's both adaptor & adaptors key in steps somehow
-    'openfn.keychain_credential_id', // TODO?
-    'configuration', // assumes a string credential id
-    'expression',
+    'adaptor',
+    'keychain_credential_id',
+    'project_credential_id',
+    'body',
+  ].sort();
 
-    // trigger keys
-    'type',
-    'openfn.cron_expression',
-    'openfn.enabled',
-  ].sort() as Array<keyof Job | keyof Trigger>;
+  const triggerKeys = ['type', 'cron_expression', 'enabled'].sort();
+
   const edgeKeys = [
-    'condition',
+    'name', // generated
     'label',
-    'disabled', // This feels more like an option - should be excluded?
+    'condition_type',
+    'condition_label',
+    'condition_expression',
+    'enabled',
   ].sort();
 
   wfKeys.forEach((key) => {
@@ -44,10 +58,22 @@ export const generateHash = (workflow: Workflow, source = 'cli') => {
     }
   });
 
-  const steps = (workflow.steps || []).slice().sort((a, b) => {
-    const aName = a.name ?? '';
-    const bName = b.name ?? '';
-    return aName.localeCompare(bName);
+  // do the trigger first
+  for (const triggerId in wfState.triggers) {
+    const trigger = wfState.triggers[triggerId];
+    triggerKeys.forEach((key) => {
+      const value = get(trigger, key);
+      if (isDefined(value)) {
+        parts.push(serializeValue(value));
+      }
+    });
+  }
+
+  // Now do all steps
+  const steps = Object.values(wfState.jobs).sort((a, b) => {
+    const aName = a.name ?? a.id ?? '';
+    const bName = b.name ?? b.id ?? '';
+    return aName.toLowerCase().localeCompare(bName.toLowerCase());
   });
 
   for (const step of steps) {
@@ -57,28 +83,43 @@ export const generateHash = (workflow: Workflow, source = 'cli') => {
         parts.push(serializeValue(value));
       }
     });
+  }
 
-    const sortedEdges = Object.keys(step.next ?? {}).sort(
-      (a: ConditionalStepEdge, b: ConditionalStepEdge) => {
-        const aLabel = a.label || '';
-        const bLabel = b.label || '';
-        return aLabel.localeCompare(bLabel);
+  const edges = Object.values(wfState.edges)
+    .map((edge) => {
+      const source = workflow.get(edge.source_trigger_id ?? edge.source_job_id);
+      const target = workflow.get(edge.target_job_id);
+      (edge as any).name = `${source.name ?? source.id}-${
+        target.name ?? target.id
+      }`;
+      return edge;
+    })
+    .sort((a: any, b: any) => {
+      // sort edges by name
+      // where name is sourcename-target name
+      const aName = a.name ?? '';
+      const bName = b.name ?? '';
+      return aName.localeCompare(bName);
+    });
+
+  // now do edges
+  for (const edge of edges) {
+    edgeKeys.forEach((key) => {
+      const value = get(edge, key);
+      if (isDefined(value)) {
+        parts.push(serializeValue(value));
       }
-    );
-    for (const edgeId of sortedEdges) {
-      const edge = step.next[edgeId];
-      edgeKeys.forEach((key) => {
-        const value = get(edge, key);
-        if (isDefined(value)) {
-          parts.push(serializeValue(value));
-        }
-      });
-    }
+    });
   }
 
   const str = parts.join('');
-  const hash = crypto.createHash('sha256').update(str).digest('hex');
-  return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
+  // console.log(str);
+  if (sha) {
+    const hash = crypto.createHash('sha256').update(str).digest('hex');
+    return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
+  } else {
+    return `${source}:${str}`;
+  }
 };
 
 function serializeValue(val: unknown) {

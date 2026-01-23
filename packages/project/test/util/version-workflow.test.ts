@@ -4,6 +4,7 @@ import Project, { generateWorkflow } from '../../src';
 
 // this is an actual lightning workflow state, copied verbatim
 // todo already out of data as the version will change soon
+// next, update this
 const example = {
   id: '320157d2-260d-4e32-91c0-db935547c263',
   name: 'Turtle Power',
@@ -11,27 +12,27 @@ const example = {
     {
       enabled: true,
       id: 'ed3ebfbf-6fa3-4438-b21d-06f7eec216c1',
-      target_job_id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
-      source_trigger_id: 'bf10f31a-cf51-45a2-95a4-756d0a25af53',
       condition_type: 'always',
+      source_trigger_id: 'bf10f31a-cf51-45a2-95a4-756d0a25af53',
+      target_job_id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
     },
     {
       enabled: true,
       id: '253bf2d7-1a01-44c8-8e2e-ccf50de92dff',
-      target_job_id: '40b839bd-5ade-414e-8dde-ed3ae77239ea',
-      source_job_id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
       condition_type: 'js_expression',
       condition_label: 'always tbh',
       condition_expression: 'state.data',
+      source_job_id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
+      target_job_id: '40b839bd-5ade-414e-8dde-ed3ae77239ea',
     },
   ],
-  concurrency: null,
+  version_history: ['app:91105e0d0600'],
   inserted_at: '2025-12-19T15:26:49Z',
   jobs: [
     {
       id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
       name: 'Transform data',
-      body: 'thur21\n',
+      body: 'fri1',
       adaptor: '@openfn/language-http@7.2.6',
       project_credential_id: 'dd409089-5569-4157-8cf6-528ace283348',
     },
@@ -43,8 +44,6 @@ const example = {
       project_credential_id: null,
     },
   ],
-  updated_at: '2026-01-23T09:42:50Z',
-  deleted_at: null,
   triggers: [
     {
       enabled: false,
@@ -52,9 +51,14 @@ const example = {
       type: 'webhook',
     },
   ],
-  lock_version: 33,
-  version_history: ['app:87ec28054fe4'],
+  updated_at: '2026-01-23T12:08:47Z',
+  lock_version: 34,
+  deleted_at: null,
+  concurrency: null,
 };
+
+// TODO I need more control over ordering
+// so I want to generate a bunch of decoded strings which test the order
 
 test.skip('match lightning version', async (t) => {
   const [expected] = example.version_history;
@@ -64,15 +68,23 @@ test.skip('match lightning version', async (t) => {
     workflows: [example],
   });
 
+  /**
+   * why difference?
+   *
+   * the order of stuff is quite different
+   * the app version seems to have the node name 3 times?
+   *
+   * step/node order is different
+   *
+   * ok, cli doesnt include structure, the edge targets
+   */
+
   const wf = proj.workflows[0];
   const hash = wf.getVersionHash();
   t.log(expected);
   t.log(hash);
   t.is(parse(hash).hash, parse(expected).hash);
 });
-
-test.todo('include edge label in hash');
-test.todo('include edge expression in hash');
 
 test('generate an 12 character version hash for a basic workflow', (t) => {
   const workflow = generateWorkflow(
@@ -83,7 +95,7 @@ test('generate an 12 character version hash for a basic workflow', (t) => {
     `
   );
   const hash = workflow.getVersionHash();
-  t.is(hash, 'cli:9250135c672d');
+  t.is(hash, 'cli:72aed7c5f224');
 });
 
 test('unique hash but different steps order', (t) => {
@@ -92,22 +104,26 @@ test('unique hash but different steps order', (t) => {
     @name same-workflow
     @id id-one
     a-b
-    b-c
+    a-c
+    a-d
     `
   );
+
+  // different order of nodes but should generate the same hash
   const workflow2 = generateWorkflow(
     `
     @name same-workflow
     @id id-two
+    a-d
     a-c
-    c-b
+    a-b
     `
   );
 
-  // different order of nodes (b & c changed position) but should generate the same hash
   // validate second step is actually different
   t.is(workflow1.steps[1].name, 'b');
-  t.is(workflow2.steps[1].name, 'c');
+  t.is(workflow2.steps[1].name, 'd');
+
   // assert that hashes are the same
   t.is(generateHash(workflow1), generateHash(workflow2));
 });
@@ -147,13 +163,13 @@ test('hash a trigger', (t) => {
   const webhook = generateWorkflow(
     `@name wf-1
     @id workflow-id 
-    t(type=webhook)-x
+    t(type=webhook)-x(expression=x)
     `
   );
   const cron = generateWorkflow(
     `@name wf-1
     @id workflow-id 
-    t(type=cron)-x
+    t(type=cron)-x(expression=x)
     `
   );
 
@@ -161,15 +177,15 @@ test('hash a trigger', (t) => {
 
   const cronEnabled = generateWorkflow(
     `@name wf-1
-    @id workflow-id 
-    t(enabled=true)-x
+    @id workflow-id
+    t(enabled=false)-x
     `
   );
   t.not(generateHash(webhook), generateHash(cronEnabled));
 
   const cronExpression = generateWorkflow(
     `@name wf-1
-    @id workflow-id 
+    @id workflow-id
     t(cron_expression="1")-x
     `
   );

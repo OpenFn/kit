@@ -96,10 +96,10 @@ export const mapWorkflow = (workflow: Workflow) => {
     let isTrigger = false;
     let node: Provisioner.Job | Provisioner.Trigger;
 
-    if (s.type && !s.expression) {
+    if (!s.expression && !s.adaptor) {
       isTrigger = true;
       node = {
-        type: s.type,
+        type: s.type ?? 'webhook', // this is mostly for tests
         ...renameKeys(s.openfn, { uuid: 'id' }),
       } as Provisioner.Trigger;
       wfState.triggers[node.type] = node;
@@ -145,6 +145,11 @@ export const mapWorkflow = (workflow: Workflow) => {
         e.source_trigger_id = node.id;
       } else {
         e.source_job_id = node.id;
+      }
+
+      if (rules.label) {
+        // TODO needs unit test
+        e.condition_label = rules.label;
       }
 
       if (rules.condition) {
