@@ -57,7 +57,7 @@ export default function (
   return state;
 }
 
-const mapWorkflow = (workflow: Workflow) => {
+export const mapWorkflow = (workflow: Workflow) => {
   if (workflow instanceof Workflow) {
     // @ts-ignore
     workflow = workflow.toJSON();

@@ -138,7 +138,38 @@ test('should create a Project from prov state with a workflow', (t) => {
   });
 });
 
-test('mapWorkflow: map a simple trigger', (t) => {
+test('mapWorkflow: map a cron trigger', (t) => {
+  const mapped = mapWorkflow({
+    id: 'cron',
+    name: 'w',
+    deleted_at: null,
+    triggers: {
+      cron: {
+        id: '1234',
+        type: 'cron',
+        cron_expression: '0 1 0 0',
+        enabled: true,
+      },
+    },
+    jobs: {},
+    edges: {},
+  });
+
+  const [trigger] = mapped.steps;
+  console.log(trigger);
+  t.deepEqual(trigger, {
+    id: 'cron',
+    type: 'cron',
+    next: {},
+    openfn: {
+      enabled: true,
+      uuid: '1234',
+      cron_expression: '0 1 0 0',
+    },
+  });
+});
+
+test('mapWorkflow: map a cron trigger', (t) => {
   const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [trigger] = mapped.steps;
