@@ -264,7 +264,7 @@ Pass --force to override this error and deploy anyway.`);
     updateForkedFrom(finalProject);
     const configData = finalProject.generateConfig();
     await writeFile(
-      path.resolve(options.workspace, configData.path),
+      path.resolve(options.workspace!, configData.path),
       configData.content
     );
 
