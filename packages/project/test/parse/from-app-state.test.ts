@@ -156,7 +156,6 @@ test('mapWorkflow: map a cron trigger', (t) => {
   });
 
   const [trigger] = mapped.steps;
-  console.log(trigger);
   t.deepEqual(trigger, {
     id: 'cron',
     type: 'cron',
@@ -169,7 +168,7 @@ test('mapWorkflow: map a cron trigger', (t) => {
   });
 });
 
-test('mapWorkflow: map a cron trigger', (t) => {
+test('mapWorkflow: map a webhook trigger', (t) => {
   const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [trigger] = mapped.steps;

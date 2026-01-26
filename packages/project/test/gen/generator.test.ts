@@ -13,7 +13,7 @@ const gen = (src: string, t: ExecutionContext<unknown>, options = {}) => {
     ...options,
   });
   if (t) {
-    t.log(JSON.stringify(result.toJSON(), null, 2));
+    // t.log(JSON.stringify(result.toJSON(), null, 2));
   }
   return result.toJSON();
 };

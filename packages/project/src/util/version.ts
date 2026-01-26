@@ -87,8 +87,9 @@ export const generateHash = (
 
   const edges = Object.values(wfState.edges)
     .map((edge) => {
-      const source = workflow.get(edge.source_trigger_id ?? edge.source_job_id);
-      const target = workflow.get(edge.target_job_id);
+      const sourceId = (edge.source_trigger_id ?? edge.source_job_id) as string;
+      const source: any = workflow.get(sourceId);
+      const target: any = workflow.get(edge.target_job_id);
       (edge as any).name = `${source.name ?? source.id}-${
         target.name ?? target.id
       }`;
