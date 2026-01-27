@@ -1,4 +1,3 @@
-import * as l from '@openfn/lexicon';
 import crypto from 'node:crypto';
 import { get } from 'lodash-es';
 import { mapWorkflow } from '../serialize/to-app-state';
@@ -15,12 +14,15 @@ export const parse = (version: string) => {
   return { source, hash };
 };
 
-export const generateHash = (
-  wfJson: l.Workflow,
-  { source = 'cli', sha = true } = {}
-) => {
-  const workflow = new Workflow(wfJson);
+export type HashOptions = {
+  source?: string;
+  sha?: boolean;
+};
 
+export const generateHash = (
+  workflow: Workflow,
+  { source = 'cli', sha = true }: HashOptions = {}
+) => {
   const parts: string[] = [];
 
   // convert the workflow into a v1 state object

@@ -1,6 +1,6 @@
 import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
-import { generateHash } from './util/version';
+import { generateHash, HashOptions } from './util/version';
 
 const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
@@ -194,8 +194,8 @@ class Workflow {
     return this.index.uuid;
   }
 
-  getVersionHash() {
-    return generateHash(this);
+  getVersionHash(options?: HashOptions) {
+    return generateHash(this, options);
   }
 
   pushHistory(versionHash: string) {

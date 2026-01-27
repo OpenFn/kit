@@ -98,6 +98,31 @@ test('generate an 12 character version hash for a basic workflow', (t) => {
   t.is(hash, 'cli:72aed7c5f224');
 });
 
+test('ordering: generate version string with no steps', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    `
+  );
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:a');
+});
+
+test('ordering: generate version string with webook trigger and step', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    trigger(type=webhook)-x(adaptor=http,expression=fn,project_credential_id=abc)
+    `
+  );
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:awebhookhttpfnxabctruetrigger-x');
+});
+
+// TODO more ordering tests
+
 test('unique hash but different steps order', (t) => {
   const workflow1 = generateWorkflow(
     `
