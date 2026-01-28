@@ -96,7 +96,7 @@ export const mapWorkflow = (workflow: Workflow) => {
     let isTrigger = false;
     let node: Provisioner.Job | Provisioner.Trigger;
 
-    if (!s.expression && !s.adaptor) {
+    if (s.type) {
       isTrigger = true;
       node = {
         type: s.type ?? 'webhook', // this is mostly for tests

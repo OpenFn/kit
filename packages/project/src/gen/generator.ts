@@ -59,16 +59,16 @@ const initOperations = (options: any = {}) => {
       nodes[name] = {
         id,
       };
-      if (options.openfnUuid !== false) {
-        nodes[name].openfn = {
-          uuid: uuid(id),
-        };
-      }
       if (/^(cron|webhook)$/.test(name)) {
         // This sets up the node as a trigger
         nodes[name].type = name;
       } else {
         nodes[name].name = name;
+      }
+      if (options.openfnUuid !== false) {
+        nodes[name].openfn = {
+          uuid: uuid(id),
+        };
       }
     }
     return nodes[name];

@@ -87,11 +87,24 @@ export const generateHash = (
     });
   }
 
+  // this is annoying
+  const uuidMap: any = {};
+  for (const t in wfState.triggers) {
+    const uuid = wfState.triggers[t].id;
+    uuidMap[uuid] = wfState.triggers[t];
+    // set the type as the trigger name, to get the right value in the map
+    (wfState.triggers[t] as any).name = wfState.triggers[t].type;
+  }
+  for (const j in wfState.jobs) {
+    const uuid = wfState.jobs[j].id;
+    uuidMap[uuid] = wfState.jobs[j];
+  }
+
   const edges = Object.values(wfState.edges)
     .map((edge) => {
-      const sourceId = (edge.source_trigger_id ?? edge.source_job_id) as string;
-      const source: any = workflow.get(sourceId);
-      const target: any = workflow.get(edge.target_job_id);
+      const source = uuidMap[edge.source_trigger_id! ?? edge.source_job_id];
+      const target = uuidMap[edge.target_job_id];
+
       (edge as any).name = `${source.name ?? source.id}-${
         target.name ?? target.id
       }`;

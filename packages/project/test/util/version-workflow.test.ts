@@ -118,7 +118,7 @@ test('ordering: generate version string with webook trigger and step', (t) => {
     `
   );
   const hash = workflow.getVersionHash({ sha: false });
-  t.is(hash, 'cli:awebhookhttpfnxabctruetrigger-x');
+  t.is(hash, 'cli:awebhookhttpfnxabctruewebhook-x');
 });
 
 // TODO more ordering tests
@@ -340,4 +340,22 @@ test('ignored fields do not affect hash', (t) => {
     `
   );
   t.is(generateHash(wf1), generateHash(wf1_ignored));
+});
+
+// This test is important because when merging, the local workflow
+// representation won't have UUIDs in it - and that should be fine, nothing should break
+test('works without UUIDs', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    webhook-transform_data(name="Transform data",expression="fn(s => s)")
+    `,
+    {
+      openfnUuid: false,
+    }
+  );
+
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:awebhookfn(s => s)Transform datatruewebhook-Transform data');
 });
