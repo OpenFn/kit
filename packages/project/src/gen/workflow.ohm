@@ -29,7 +29,7 @@ Workflow {
 
   prop = (alnum | "-" | "_")+ "=" propValue
 
-  propValue = quoted_prop | bool | int | alnum+ 
+  propValue = quoted_prop | bool | int | alnum+
 
   // TODO we only parse numbers as positive ints right now
   // fine for tests

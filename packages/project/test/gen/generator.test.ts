@@ -4,15 +4,17 @@ import { generateWorkflow, generateProject } from '../../src/gen/generator';
 import * as fixtures from './fixtures';
 import Workflow from '../../src/Workflow';
 
+const LOG_OUTPUTS = false;
+
 // Generate a workflow with a fixed UUID seed
 // Pass test context to log the result
-const gen = (src: string, t: ExecutionContext<unknown>, options = {}) => {
+const gen = (src: string, t?: ExecutionContext<unknown>, options = {}) => {
   const result = generateWorkflow(src, {
     uuidSeed: 1,
     printErrors: false,
     ...options,
   });
-  if (t) {
+  if (LOG_OUTPUTS && t) {
     t.log(JSON.stringify(result.toJSON(), null, 2));
   }
   return result.toJSON();
@@ -22,6 +24,24 @@ test('it should generate a simple workflow', (t) => {
   const result = gen('a-b', t);
 
   t.deepEqual(result, fixtures.ab);
+});
+
+test('it should generate a simple workflow without UUIDs', (t) => {
+  const result = gen('a-b', t, {
+    openfnUuid: false,
+  });
+
+  t.log(JSON.stringify(result));
+
+  t.deepEqual(result, {
+    steps: [
+      { name: 'a', id: 'a', next: { b: { openfn: {} } } },
+      { name: 'b', id: 'b' },
+    ],
+    name: 'Workflow',
+    id: 'workflow',
+    history: [],
+  });
 });
 
 test('it should return a Workflow instance', (t) => {
@@ -125,7 +145,6 @@ test('it should generate a workflow with openfn meta', (t) => {
 a-b`,
     t
   );
-  t.log(result);
   t.deepEqual(result.openfn, {
     lock_version: 123,
     concurrency: 3,
@@ -393,6 +412,34 @@ test('it should generate several node pairs', (t) => {
   };
 
   t.deepEqual(result, expected);
+});
+
+test('it should generate a cron trigger', (t) => {
+  const result = generateWorkflow('cron-a', { uuidSeed: 1 });
+
+  const [trigger, node] = result.steps;
+
+  t.deepEqual(trigger, {
+    id: 'cron',
+    type: 'cron',
+    openfn: { uuid: 1 },
+    next: { a: { openfn: { uuid: 3 } } },
+  });
+  t.deepEqual(node, { id: 'a', openfn: { uuid: 2 }, name: 'a' });
+});
+
+test('it should generate a webhook trigger', (t) => {
+  const result = generateWorkflow('webhook-a', { uuidSeed: 1 });
+
+  const [trigger, node] = result.steps;
+
+  t.deepEqual(trigger, {
+    id: 'webhook',
+    type: 'webhook',
+    openfn: { uuid: 1 },
+    next: { a: { openfn: { uuid: 3 } } },
+  });
+  t.deepEqual(node, { id: 'a', openfn: { uuid: 2 }, name: 'a' });
 });
 
 test('it should generate a node with a prop', (t) => {

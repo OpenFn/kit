@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- 8b9f402: fetch: allow state files to be writtem to JSON with --format
+- 8b9f402: fetch: allow state files to be written to JSON with --format
 
 ### Patch Changes
 

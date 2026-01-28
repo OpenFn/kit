@@ -1,73 +1,140 @@
-import { ConditionalStepEdge, Job, Trigger, Workflow } from '@openfn/lexicon';
 import crypto from 'node:crypto';
+import { get } from 'lodash-es';
+import { mapWorkflow } from '../serialize/to-app-state';
+import Workflow from '../Workflow';
 
 const SHORT_HASH_LENGTH = 12;
-
-export const project = () => {};
 
 function isDefined(v: any) {
   return v !== undefined && v !== null;
 }
 
-export const generateHash = (workflow: Workflow, source = 'cli') => {
+export const parse = (version: string) => {
+  const [source, hash] = version.split(':');
+  return { source, hash };
+};
+
+export type HashOptions = {
+  source?: string;
+  sha?: boolean;
+};
+
+export const generateHash = (
+  workflow: Workflow,
+  { source = 'cli', sha = true }: HashOptions = {}
+) => {
   const parts: string[] = [];
 
+  // convert the workflow into a v1 state object
+  // this means we can match keys with lightning
+  // and everything gets cleaner
+  const wfState = mapWorkflow(workflow);
+
   // These are the keys we hash against
-  const wfKeys = ['name', 'credentials'].sort() as Array<keyof Workflow>;
+  const wfKeys = ['name', 'positions'].sort();
+
+  // These keys are manually sorted to match lightning equivalents
   const stepKeys = [
     'name',
-    'adaptors',
-    'adaptor', // there's both adaptor & adaptors key in steps somehow
-    'expression',
-    'configuration', // assumes a string credential id
-    'expression',
+    'adaptor',
+    'keychain_credential_id',
+    'project_credential_id',
+    'body',
+  ].sort();
 
-    // TODO need to model trigger types in this, which I think are currently ignored
-  ].sort() as Array<keyof Job | keyof Trigger>;
+  const triggerKeys = ['type', 'cron_expression', 'enabled'].sort();
+
   const edgeKeys = [
-    'condition',
+    'name', // generated
     'label',
-    'disabled', // This feels more like an option - should be excluded?
+    'condition_type',
+    'condition_label',
+    'condition_expression',
+    'enabled',
   ].sort();
 
   wfKeys.forEach((key) => {
-    if (isDefined(workflow[key])) {
-      parts.push(key, serializeValue(workflow[key]));
+    const value = get(workflow, key);
+    if (isDefined(value)) {
+      parts.push(serializeValue(value));
     }
   });
 
-  const steps = (workflow.steps || []).slice().sort((a, b) => {
-    const aName = a.name ?? '';
-    const bName = b.name ?? '';
-    return aName.localeCompare(bName);
-  });
-  for (const step of steps) {
-    stepKeys.forEach((key) => {
-      if (isDefined((step as any)[key])) {
-        parts.push(key, serializeValue((step as any)[key]));
+  // do the trigger first
+  for (const triggerId in wfState.triggers) {
+    const trigger = wfState.triggers[triggerId];
+    triggerKeys.forEach((key) => {
+      const value = get(trigger, key);
+      if (isDefined(value)) {
+        parts.push(serializeValue(value));
       }
     });
+  }
 
-    if (step.next && Array.isArray(step.next)) {
-      const steps = step.next.slice() as Array<ConditionalStepEdge>;
-      steps.slice().sort((a: ConditionalStepEdge, b: ConditionalStepEdge) => {
-        const aLabel = a.label || '';
-        const bLabel = b.label || '';
-        return aLabel.localeCompare(bLabel);
-      });
-      for (const edge of step.next) {
-        edgeKeys.forEach((key) => {
-          if (isDefined(edge[key])) {
-            parts.push(key, serializeValue(edge[key]));
-          }
-        });
+  // Now do all steps
+  const steps = Object.values(wfState.jobs).sort((a, b) => {
+    const aName = a.name ?? a.id ?? '';
+    const bName = b.name ?? b.id ?? '';
+    return aName.toLowerCase().localeCompare(bName.toLowerCase());
+  });
+
+  for (const step of steps) {
+    stepKeys.forEach((key) => {
+      const value = get(step, key);
+      if (isDefined(value)) {
+        parts.push(serializeValue(value));
       }
-    }
+    });
+  }
+
+  // this is annoying
+  const uuidMap: any = {};
+  for (const t in wfState.triggers) {
+    const uuid = wfState.triggers[t].id;
+    uuidMap[uuid] = wfState.triggers[t];
+    // set the type as the trigger name, to get the right value in the map
+    (wfState.triggers[t] as any).name = wfState.triggers[t].type;
+  }
+  for (const j in wfState.jobs) {
+    const uuid = wfState.jobs[j].id;
+    uuidMap[uuid] = wfState.jobs[j];
+  }
+
+  const edges = Object.values(wfState.edges)
+    .map((edge) => {
+      const source = uuidMap[edge.source_trigger_id! ?? edge.source_job_id];
+      const target = uuidMap[edge.target_job_id];
+
+      (edge as any).name = `${source.name ?? source.id}-${
+        target.name ?? target.id
+      }`;
+      return edge;
+    })
+    .sort((a: any, b: any) => {
+      // sort edges by name
+      // where name is sourcename-target name
+      const aName = a.name ?? '';
+      const bName = b.name ?? '';
+      return aName.localeCompare(bName);
+    });
+
+  // now do edges
+  for (const edge of edges) {
+    edgeKeys.forEach((key) => {
+      const value = get(edge, key);
+      if (isDefined(value)) {
+        parts.push(serializeValue(value));
+      }
+    });
   }
 
   const str = parts.join('');
-  const hash = crypto.createHash('sha256').update(str).digest('hex');
-  return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
+  if (sha) {
+    const hash = crypto.createHash('sha256').update(str).digest('hex');
+    return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
+  } else {
+    return `${source}:${str}`;
+  }
 };
 
 function serializeValue(val: unknown) {

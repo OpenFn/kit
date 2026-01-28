@@ -53,8 +53,8 @@ options:
   color: red
 workflows:
   - steps:
-      - name: b
-        id: b
+      - id: b
+        name: b
         openfn:
           uuid: 3
           project_credential_id: x

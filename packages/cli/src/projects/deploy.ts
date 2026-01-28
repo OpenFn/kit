@@ -153,6 +153,8 @@ Pass --force to override this error and deploy anyway.`);
     return false;
   }
 
+  // this fails now because the local project has no UUIDs
+  // But should that matter ,actually?
   const diffs = reportDiff(remoteProject!, localProject, logger);
   if (!diffs.length) {
     logger.success('Nothing to deploy');
@@ -264,7 +266,7 @@ Pass --force to override this error and deploy anyway.`);
     updateForkedFrom(finalProject);
     const configData = finalProject.generateConfig();
     await writeFile(
-      path.resolve(options.workspace, configData.path),
+      path.resolve(options.workspace!, configData.path),
       configData.content
     );
 
