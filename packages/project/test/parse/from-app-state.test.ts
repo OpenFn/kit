@@ -321,7 +321,7 @@ test('mapEdge: map label', (t) => {
   } as any);
   t.deepEqual(e, {
     disabled: true,
-    name: 'abc',
+    label: 'abc',
   });
 });
 

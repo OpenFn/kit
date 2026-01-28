@@ -293,9 +293,7 @@ test('should ignore forked_from', (t) => {
     },
   };
   const proj = new Project(data);
-  console.log(proj);
   const state = toAppState(proj, { format: 'json' });
-  console.log(state);
   t.falsy((state as any).forked_form);
 });
 

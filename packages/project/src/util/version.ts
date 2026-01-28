@@ -29,7 +29,6 @@ export const generateHash = (
   // this means we can match keys with lightning
   // and everything gets cleaner
   const wfState = mapWorkflow(workflow);
-  console.log(wfState.edges);
 
   // These are the keys we hash against
   const wfKeys = ['name', 'positions'].sort();
