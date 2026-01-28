@@ -57,6 +57,7 @@ const example = {
   concurrency: null,
 };
 
+// So far as I can tell teh strings are the same, but we still fail :(
 test.skip('match lightning version', async (t) => {
   const [expected] = example.version_history;
 
@@ -65,18 +66,9 @@ test.skip('match lightning version', async (t) => {
     workflows: [example],
   });
 
-  /**
-   * why difference?
-   *
-   * the order of stuff is quite different
-   * the app version seems to have the node name 3 times?
-   *
-   * step/node order is different
-   *
-   * ok, cli doesnt include structure, the edge targets
-   */
-
   const wf = proj.workflows[0];
+  // const hashstr = wf.getVersionHash({ sha: false });
+  // console.log(hashstr);
   const hash = wf.getVersionHash();
   t.log(expected);
   t.log(hash);

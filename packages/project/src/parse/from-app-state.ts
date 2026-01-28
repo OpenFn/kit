@@ -77,7 +77,7 @@ export const mapEdge = (edge: Provisioner.Edge) => {
   }
 
   if (edge.condition_label) {
-    e.name = edge.condition_label;
+    e.label = edge.condition_label;
   }
 
   // Do this last so that it serializes last
