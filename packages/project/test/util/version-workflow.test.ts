@@ -26,13 +26,13 @@ const example = {
       target_job_id: '40b839bd-5ade-414e-8dde-ed3ae77239ea',
     },
   ],
-  version_history: ['app:91105e0d0600'],
+  version_history: ['app:211291f6e6d5'],
   inserted_at: '2025-12-19T15:26:49Z',
   jobs: [
     {
       id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
       name: 'Transform data',
-      body: 'fri1',
+      body: 'fri',
       adaptor: '@openfn/language-http@7.2.6',
       project_credential_id: 'dd409089-5569-4157-8cf6-528ace283348',
     },
@@ -57,8 +57,7 @@ const example = {
   concurrency: null,
 };
 
-// So far as I can tell teh strings are the same, but we still fail :(
-test.skip('match lightning version', async (t) => {
+test('match lightning version', async (t) => {
   const [expected] = example.version_history;
 
   // load the project from v1 state
@@ -67,8 +66,6 @@ test.skip('match lightning version', async (t) => {
   });
 
   const wf = proj.workflows[0];
-  // const hashstr = wf.getVersionHash({ sha: false });
-  // console.log(hashstr);
   const hash = wf.getVersionHash();
   t.log(expected);
   t.log(hash);

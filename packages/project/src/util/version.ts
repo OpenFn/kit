@@ -130,7 +130,6 @@ export const generateHash = (
   }
 
   const str = parts.join('');
-  // console.log(str);
   if (sha) {
     const hash = crypto.createHash('sha256').update(str).digest('hex');
     return `${source}:${hash.substring(0, SHORT_HASH_LENGTH)}`;
