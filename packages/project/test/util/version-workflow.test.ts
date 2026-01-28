@@ -57,9 +57,6 @@ const example = {
   concurrency: null,
 };
 
-// TODO I need more control over ordering
-// so I want to generate a bunch of decoded strings which test the order
-
 test.skip('match lightning version', async (t) => {
   const [expected] = example.version_history;
 
@@ -119,6 +116,186 @@ test('ordering: generate version string with webook trigger and step', (t) => {
   );
   const hash = workflow.getVersionHash({ sha: false });
   t.is(hash, 'cli:awebhookhttpfnxabctruewebhook-x');
+});
+
+test('ordering: multiple steps are sorted alphabetically by name', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    z-x
+    a-x
+    m-x
+    `
+  );
+  // With step keys sorted: adaptor, body, keychain_credential_id, name, project_credential_id
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfamxztruea-xtruem-xtruez-x');
+});
+
+test('ordering: step names are sorted case-insensitively', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    Z-x
+    a-x
+    B-x
+    `
+  );
+  // Steps should appear in order: a, B, x, Z (case-insensitive sort)
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfaBxZtruea-xtrueB-xtrueZ-x');
+});
+
+test('ordering: step keys appear in sorted order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-step(project_credential_id=cred,name=step,expression=code,adaptor=http)
+    `
+  );
+  // Step keys sorted: adaptor, body, keychain_credential_id, name, project_credential_id
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfahttpcodestepcredtruea-step');
+});
+
+test('ordering: multiple edges are sorted by edge name', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    z-a
+    a-b
+    m-n
+    `
+  );
+  // Edges sorted by "source-target" name: a-b, m-n, z-a
+  // Each edge has enabled=true and its generated name
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfabmnztruea-btruem-ntruez-a');
+});
+
+test('ordering: edge keys appear in sorted order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-(label=lbl,condition=always,disabled=true)-b
+    `
+  );
+  // Edge keys sorted: condition_expression, condition_label, condition_type, enabled, label, name
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfablblalwaysfalsea-b');
+});
+
+test('ordering: trigger keys appear in sorted order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    t(type=cron,cron_expression="* * *",enabled=false)-x(expression=code)
+    `
+  );
+  // Trigger keys sorted: cron_expression, enabled, type
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wf* * *falsecroncodextruecron-x');
+});
+
+test('ordering: complete workflow with all elements', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name complete
+    @id some-id
+    trigger(type=webhook)-step2(adaptor=http,expression=fn2,project_credential_id=c2)
+    step1(adaptor=common,expression=fn1,project_credential_id=c1)-step2
+    `
+  );
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(
+    hash,
+    'cli:completewebhookcommonfn1step1c1httpfn2step2c2truestep1-step2truewebhook-step2'
+  );
+});
+
+test('ordering: multiple edges from same source are sorted by target', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-z
+    a-m
+    a-b
+    `
+  );
+  // Edges: a-b, a-m, a-z (sorted by full edge name)
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfabmztruea-btruea-mtruea-z');
+});
+
+test('ordering: workflow with webhook trigger connected to step', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    trigger(type=webhook)-step
+    `
+  );
+  // Workflow name, trigger type, step name, edge (enabled + name)
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfwebhooksteptruewebhook-step');
+});
+
+test('ordering: steps with partial fields maintain sorted key order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-step(name=step,adaptor=http)
+    `
+  );
+  // Step keys sorted: adaptor, body, keychain_credential_id, name, project_credential_id
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfahttpsteptruea-step');
+});
+
+test('ordering: edge with js_expression condition', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-(condition="state.x > 5",label=check)-b
+    `
+  );
+  // Edge keys sorted: condition_expression, condition_label, condition_type, enabled, label, name
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfabstate.x > 5checkjs_expressiontruea-b');
+});
+
+test('ordering: undefined fields are omitted', (t) => {
+  const workflow1 = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-b(name=b)
+    `
+  );
+
+  const workflow2 = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-b(name=b)
+    `
+  );
+
+  // Both should produce the same hash
+  const hash1 = workflow1.getVersionHash({ sha: false });
+  const hash2 = workflow2.getVersionHash({ sha: false });
+
+  t.is(hash1, 'cli:wfabtruea-b');
+  t.is(hash1, hash2);
 });
 
 // TODO more ordering tests
