@@ -57,12 +57,19 @@ const initOperations = (options: any = {}) => {
     if (!nodes[name]) {
       const id = slugify(name);
       nodes[name] = {
-        name: name,
         id,
-        openfn: {
-          uuid: uuid(id),
-        },
       };
+      if (options.openfnUuid !== false) {
+        nodes[name].openfn = {
+          uuid: uuid(id),
+        };
+      }
+      if (/^(cron|webhook)$/.test(name)) {
+        // This sets up the node as a trigger
+        nodes[name].type = name;
+      } else {
+        nodes[name].name = name;
+      }
     }
     return nodes[name];
   };
@@ -107,7 +114,10 @@ const initOperations = (options: any = {}) => {
       const n1 = parent.buildWorkflow();
       const n2 = child.buildWorkflow();
       const e = edge.buildWorkflow();
-      e.openfn.uuid = uuid(`${n1.id}-${n2.id}`);
+
+      if (options.openfnUuid !== false) {
+        e.openfn.uuid = uuid(`${n1.id}-${n2.id}`);
+      }
 
       n1.next ??= {};
 
