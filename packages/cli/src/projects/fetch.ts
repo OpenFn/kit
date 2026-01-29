@@ -335,7 +335,13 @@ To ignore this error and override the local file, pass --force (-f)
     // TODO canMergeInto needs to return a reason
     if (!skipVersionCheck && !remoteProject.canMergeInto(localProject!)) {
       // TODO allow rename
-      throw new Error('Error! An incompatible project exists at this location');
+      const e = new Error(
+        `Error! An incompatible project exists at this location.`
+      );
+
+      delete e.stack;
+
+      throw e;
     }
   }
 }
