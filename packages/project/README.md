@@ -91,3 +91,5 @@ Reference:
 parent(propName=propValue,x=y)-child
 a-b # can comment here to
 ```
+
+Use special names `webhook` and `cron` to create trigger nodes (when converting into app state, the difference between a step and a trigger becomes important).

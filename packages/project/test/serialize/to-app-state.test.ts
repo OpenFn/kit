@@ -262,7 +262,7 @@ test('should handle credentials', (t) => {
   t.is(step.project_credential_id, 'p');
 });
 
-test.only('should ignore forked_from', (t) => {
+test('should ignore forked_from', (t) => {
   const data = {
     id: 'my-project',
     workflows: [
@@ -293,9 +293,7 @@ test.only('should ignore forked_from', (t) => {
     },
   };
   const proj = new Project(data);
-  console.log(proj);
   const state = toAppState(proj, { format: 'json' });
-  console.log(state);
   t.falsy((state as any).forked_form);
 });
 
@@ -332,7 +330,40 @@ test('should ignore workflow start keys', (t) => {
   t.falsy(state.workflows['wf'].start);
 });
 
-test.todo('handle edge labels');
+test('should handle edge labels', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        start: 'step',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {
+                label: 'hello',
+              },
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'p',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), { format: 'json' });
+  t.is(state.workflows.wf.edges['trigger->step'].condition_label, 'hello');
+});
 
 test('serialize steps and trigger in alphabetical order', (t) => {
   const wf = `@name wf
