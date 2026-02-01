@@ -470,10 +470,14 @@ test.serial(
     t.regex(message, /Fetched project file to/);
   }
 );
+
 // In this test, the file on disk has diverged from the remove
-// This means changes could be lost, so we throw!
+// This means changes could be lost
+// But we do not validate against this because:
+// a) we can't! Not without infinite immutable history anyway
+// b) users should not be manutally editing these files
 test.serial(
-  'error: throw if fetching a project that has diverged',
+  'do not throw even if fetching a project that has diverged',
   async (t) => {
     // Change project.yaml
     const modified = myProject_yaml
@@ -487,29 +491,25 @@ test.serial(
       '/ws/.projects/project@app.openfn.org.yaml': modified,
     });
 
-    await t.throwsAsync(
-      () =>
-        fetchHandler(
-          {
-            project: PROJECT_UUID,
-            alias: 'project',
+    await t.notThrowsAsync(() =>
+      fetchHandler(
+        {
+          project: PROJECT_UUID,
+          alias: 'project',
 
-            endpoint: ENDPOINT,
-            apiKey: 'test-api-key',
-            workspace: '/ws',
-          } as any,
-          logger
-        ),
-      {
-        message: /incompatible project/,
-      }
+          endpoint: ENDPOINT,
+          apiKey: 'test-api-key',
+          workspace: '/ws',
+        } as any,
+        logger
+      )
     );
 
     const filePath = '/ws/.projects/project@app.openfn.org.yaml';
     const fileContent = await readFile(filePath, 'utf-8');
 
-    // The file should NOT be overwritten
-    t.regex(fileContent, /fn\(x\)/);
+    // The file should be overwritten
+    t.regex(fileContent, /fn\(\)/);
   }
 );
 

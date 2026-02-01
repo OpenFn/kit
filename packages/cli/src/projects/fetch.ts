@@ -266,7 +266,6 @@ export async function fetchRemoteProject(
     projectUUID,
     logger
   );
-  console.log(data.workflows);
 
   const project = await Project.from(
     'state',
@@ -279,8 +278,6 @@ export async function fetchRemoteProject(
       alias: options.alias ?? localProject?.alias ?? 'main',
     }
   );
-
-  console.log(project.workflows[0].history);
 
   logger.debug(
     `Loaded remote project ${project.openfn!.uuid} with id ${
