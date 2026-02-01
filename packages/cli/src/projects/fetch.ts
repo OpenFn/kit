@@ -266,6 +266,7 @@ export async function fetchRemoteProject(
     projectUUID,
     logger
   );
+  console.log(data.workflows);
 
   const project = await Project.from(
     'state',
@@ -278,6 +279,8 @@ export async function fetchRemoteProject(
       alias: options.alias ?? localProject?.alias ?? 'main',
     }
   );
+
+  console.log(project.workflows[0].history);
 
   logger.debug(
     `Loaded remote project ${project.openfn!.uuid} with id ${
@@ -320,28 +323,6 @@ To ignore this error and override the local file, pass --force (-f)
       delete error.stack;
 
       throw error;
-    }
-
-    const hasAnyHistory = remoteProject.workflows.find(
-      (w) => w.workflow.history?.length
-    );
-
-    // Skip version checking if:
-    const skipVersionCheck =
-      options.force || // The user forced the checkout
-      !hasAnyHistory; // the remote project has no history (can happen in old apps)
-
-    // TODO temporarily force skip
-    // TODO canMergeInto needs to return a reason
-    if (!skipVersionCheck && !remoteProject.canMergeInto(localProject!)) {
-      // TODO allow rename
-      const e = new Error(
-        `Error! An incompatible project exists at this location.`
-      );
-
-      delete e.stack;
-
-      throw e;
     }
   }
 }

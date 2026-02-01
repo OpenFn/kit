@@ -204,12 +204,17 @@ class Workflow {
 
   // return true if the current workflow can be merged into the target workflow without losing any changes
   canMergeInto(target: Workflow) {
+    console.log('this is remote project');
     const thisHistory =
       this.workflow.history?.concat(this.getVersionHash()) ?? [];
     const targetHistory =
       target.workflow.history?.concat(target.getVersionHash()) ?? [];
 
+    console.log({ thisHistory });
+    console.log({ targetHistory });
+
     const targetHead = targetHistory[targetHistory.length - 1];
+    console.log({ targetHead });
     return thisHistory.indexOf(targetHead) > -1;
   }
 }
