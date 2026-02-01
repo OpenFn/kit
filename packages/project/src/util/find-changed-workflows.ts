@@ -8,7 +8,7 @@ import { generateHash } from './version';
 export default (project: Project) => {
   const base: Record<string, string> =
     project.cli.forked_from ??
-    project.workflows.reduce((obj, wf) => {
+    project.workflows.reduce((obj: any, wf) => {
       if (wf.history.length) {
         obj[wf.id] = wf.history.at(-1);
       }
