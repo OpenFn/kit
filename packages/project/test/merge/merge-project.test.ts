@@ -669,3 +669,71 @@ test('options: multiple source into one target error', (t) => {
     }
   );
 });
+
+test('options: onlyUpdated with no changed workflows', (t) => {
+  // If I do this as a replace, and nothing has changed, the target UUIDs should be preserved
+  const source = createProject([
+    generateWorkflow('@id a a-b', { history: true }),
+    generateWorkflow('@id b x-y', { history: true }),
+  ]);
+  const target = createProject([
+    generateWorkflow('@id a a-b', { history: true }),
+    generateWorkflow('@id b x-y', { history: true }),
+  ]);
+
+  const result = merge(source, target, {
+    onlyUpdated: true,
+    mode: 'replace',
+  });
+
+  // step UUIDs in the target should not have changed
+  t.is(
+    result.workflows[0].steps[0].openfn.uuid,
+    target.workflows[0].steps[0].openfn.uuid
+  );
+  t.is(
+    result.workflows[0].steps[1].openfn.uuid,
+    target.workflows[0].steps[1].openfn.uuid
+  );
+});
+
+test('options: onlyUpdated with 1 changed, 1 unchanged workflow', (t) => {
+  // If I do this as a replace, and nothing has changed, the target UUIDs should be preserved
+  const source = createProject([
+    generateWorkflow('@id a a-b', { history: true }),
+    generateWorkflow('@id b x-y', { history: true }),
+  ]);
+  const target = createProject([
+    generateWorkflow('@id a a-b', { history: true }),
+    generateWorkflow('@id b x-y', { history: true }),
+  ]);
+
+  // change the source
+  source.workflows[0].steps[0].expression = 'fn()';
+
+  const result = merge(source, target, {
+    onlyUpdated: true,
+
+    // Set this to mode replace and use UUIDs as a proxy for
+    // "did this thing change?"
+    mode: 'replace',
+  });
+
+  // step 1 has changed and should match the source
+  t.is(result.workflows[0].steps[0].expression, 'fn()');
+  t.is(
+    result.workflows[0].steps[0].openfn.uuid,
+    source.workflows[0].steps[0].openfn.uuid
+  );
+
+  // but step 2 did not change and should have the original UUID
+  t.is(
+    result.workflows[0].steps[1].openfn.uuid,
+    target.workflows[0].steps[1].openfn.uuid
+  );
+});
+
+test.todo('options: only changed and 1 workflow');
+
+// this test it's important that the final project includes the unchanged workflow
+test.todo('options: only changed, and 1 changed, 1 unchanged workflow');

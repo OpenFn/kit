@@ -264,6 +264,10 @@ export class Project {
   generateConfig() {
     return extractConfig(this);
   }
+
+  clone() {
+    return new Project(this.serialize('project') as any);
+  }
 }
 
 export default Project;

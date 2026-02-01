@@ -17,6 +17,9 @@ type GenerateWorkflowOptions = {
   uuidMap?: Record<string, string>;
 
   openfnUuid: boolean; // TODO probably need to do this by default?
+
+  /** If true, will set up a version hash in the history array */
+  history: boolean;
 };
 
 type GenerateProjectOptions = GenerateWorkflowOptions & {
@@ -265,6 +268,9 @@ function generateWorkflow(
   }
 
   const wf = new Workflow(raw);
+  if (options.history) {
+    wf.pushHistory(wf.getVersionHash());
+  }
   return wf;
 }
 
