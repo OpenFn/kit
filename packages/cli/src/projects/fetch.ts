@@ -254,7 +254,7 @@ export async function fetchRemoteProject(
         options.project
       } to UUID ${projectUUID} from local project ${printProjectName(
         localProject
-      )}}`
+      )}`
     );
   }
 
