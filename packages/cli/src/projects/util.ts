@@ -158,10 +158,20 @@ export async function deployProject(
     });
 
     if (!response.ok) {
-      const body = await response.json();
-
+      logger?.error(`Deploy failed with code `, response.status);
       logger?.error('Failed to deploy project:');
-      logger?.error(JSON.stringify(body, null, 2));
+
+      const contentType = response.headers.get('content-type');
+
+      if (contentType.match('application/json ')) {
+        const body = await response.json();
+        logger?.error(JSON.stringify(body, null, 2));
+      } else {
+        const content = await response.text();
+        // TODO html errors are too long to be useful... figure this out later
+        logger?.error(content);
+      }
+
       throw new CLIError(
         `Failed to deploy project ${state.name}: ${response.status}`
       );

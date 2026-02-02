@@ -118,18 +118,20 @@ export function merge(
     if (targetWorkflow) {
       usedTargetIds.add(targetWorkflow.id);
 
-      // If mode is replace, just swap out the target workflow for the source workflow
-      // No mapping needed really
-      if (options.mode === REPLACE_MERGE) {
-        finalWorkflows.push(sourceWorkflow);
-      } else {
-        // Otherwise, merge these workflows, preserving UUIDs smartly
-        const mappings = mapUuids(sourceWorkflow, targetWorkflow);
-        finalWorkflows.push(
-          // @ts-ignore
-          mergeWorkflows(sourceWorkflow, targetWorkflow, mappings)
-        );
-      }
+      // Otherwise, merge these workflows, preserving UUIDs smartly
+      const mappings = mapUuids(sourceWorkflow, targetWorkflow);
+      finalWorkflows.push(
+        // @ts-ignore
+        mergeWorkflows(sourceWorkflow, targetWorkflow, mappings)
+      );
+
+      // THis was bad!! Why did I do this?
+      // // If mode is replace, just swap out the target workflow for the source workflow
+      // // No mapping needed really
+      // if (options.mode === REPLACE_MERGE) {
+      //   finalWorkflows.push(cloneDeep(sourceWorkflow));
+      // } else {
+      // }
     } else {
       finalWorkflows.push(sourceWorkflow);
     }
@@ -163,6 +165,7 @@ export function merge(
             ...source.options,
           },
           name: source.name ?? target.name,
+          alias: source.alias ?? target.alias,
           description: source.description ?? target.description,
           credentials: source.credentials ?? target.credentials,
           collections: source.collections ?? target.collections,

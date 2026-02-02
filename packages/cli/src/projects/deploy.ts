@@ -1,5 +1,5 @@
 import yargs from 'yargs';
-import Project from '@openfn/project';
+import Project, { Workspace } from '@openfn/project';
 import c from 'chalk';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -49,7 +49,7 @@ const options = [
 ];
 
 const printProjectName = (project: Project) =>
-  `${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
+  `${project}${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
 
 export const command: yargs.CommandModule<DeployOptions> = {
   command: 'deploy',
@@ -101,21 +101,20 @@ export async function handler(options: DeployOptions, logger: Logger) {
   );
   const config = loadAppAuthConfig(options, logger);
 
-  // TODO: allow users to specify which project to deploy
-  // Should be able to take any project.yaml file via id, uuid, alias or path
-  // Note that it's a little wierd to deploy a project you haven't checked out,
-  // so put good safeguards here
   logger.info('Attempting to load checked-out project from workspace');
 
-  // TODO this doesn't have a history!
-  // loading from the fs the history isn't available
+  // TODO this is the hard way to load the local alias
+  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
+  const ws = new Workspace(options.workspace || '.');
+  const { alias } = ws.getActiveProject()!;
+  // TODO this doesn't have an alias
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
+    alias,
   });
 
-  // TODO if there's no local metadata, the user must pass a UUID or alias to post to
-
   logger.success(`Loaded local project ${printProjectName(localProject)}`);
+
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -153,8 +152,7 @@ Pass --force to override this error and deploy anyway.`);
     return false;
   }
 
-  // this fails now because the local project has no UUIDs
-  // But should that matter ,actually?
+  // TODO: what if remote diff and the version checked disagree for some reason?
   const diffs = reportDiff(remoteProject!, localProject, logger);
   if (!diffs.length) {
     logger.success('Nothing to deploy');
@@ -176,7 +174,7 @@ Pass --force to override this error and deploy anyway.`);
     logger.warn(
       'Skipping compatibility check as no local version history detected'
     );
-    logger.warn('Pushing these changes may overrite changes made to the app');
+    logger.warn('Pushing these changes may overwrite changes made to the app');
   } else {
     const divergentWorkflows = hasRemoteDiverged(localProject, remoteProject!);
     if (divergentWorkflows) {
@@ -203,10 +201,13 @@ Pass --force to override this error and deploy anyway.`);
   }
 
   logger.info('Merging changes into remote project');
+  // TODO I would like to log which workflows are being updated
   const merged = Project.merge(localProject, remoteProject!, {
     mode: 'replace',
     force: true,
+    onlyUpdated: true,
   });
+
   // generate state for the provisioner
   const state = merged.serialize('state', {
     format: 'json',
@@ -262,7 +263,6 @@ Pass --force to override this error and deploy anyway.`);
       merged.config
     );
 
-    // TODO why isn't this right? oh, because the outpu path isn't quite right
     updateForkedFrom(finalProject);
     const configData = finalProject.generateConfig();
     await writeFile(
@@ -270,9 +270,10 @@ Pass --force to override this error and deploy anyway.`);
       configData.content
     );
 
+    // TODO why is alias wrong here?
     const finalOutputPath = getSerializePath(localProject, options.workspace!);
-    logger.debug('Updating local project at ', finalOutputPath);
-    await serialize(finalProject, finalOutputPath);
+    const fullFinalPath = await serialize(finalProject, finalOutputPath);
+    logger.debug('Updated local project at ', fullFinalPath);
   }
 
   logger.success('Updated project at', config.endpoint);

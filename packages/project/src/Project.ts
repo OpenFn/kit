@@ -165,6 +165,11 @@ export class Project {
     return this.cli.alias ?? 'main';
   }
 
+  set alias(value: string) {
+    this.cli ??= {};
+    this.cli.alias = value;
+  }
+
   get uuid() {
     return this.openfn?.uuid ? `${this.openfn.uuid}` : undefined;
   }

@@ -18,6 +18,7 @@ export type FromFsConfig = {
   root: string;
   config?: Partial<l.WorkspaceConfig>;
   logger?: Logger;
+  alias?: string;
 };
 
 // Parse a single project from a root folder
@@ -25,7 +26,7 @@ export type FromFsConfig = {
 // It just builds the project on disk
 // I suppose we could take an option?
 export const parseProject = async (options: FromFsConfig) => {
-  const { root, logger } = options;
+  const { root, logger, alias } = options;
 
   const { type, content } = findWorkspaceFile(root);
   const context = loadWorkspaceFile(content, type as any);
@@ -111,5 +112,8 @@ export const parseProject = async (options: FromFsConfig) => {
     }
   }
 
-  return new Project(proj as l.Project, context.workspace);
+  return new Project(proj as l.Project, {
+    alias,
+    ...context.workspace,
+  });
 };
