@@ -280,12 +280,7 @@ Pass --force to override this error and deploy anyway.`);
 }
 
 export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
-  // console.log(local.workflows[0].workflow);
-  // console.log(remote.workflows[0].workflow);
-  console.log('local', JSON.stringify(local.workflows[0].workflow));
-  console.log('remote', JSON.stringify(remote.workflows[0].workflow));
   const diffs = remote.diff(local);
-  console.log({ diffs });
   if (diffs.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;
