@@ -274,9 +274,9 @@ Pass --force to override this error and deploy anyway.`);
     const finalOutputPath = getSerializePath(localProject, options.workspace!);
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
-  }
 
-  logger.success('Updated project at', config.endpoint);
+    logger.success('Updated project  at', config.endpoint);
+  }
 }
 
 export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
