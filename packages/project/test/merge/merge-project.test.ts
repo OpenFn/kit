@@ -700,13 +700,17 @@ test('options: onlyUpdated with no changed workflows', (t) => {
 test('options: onlyUpdated with 1 changed, 1 unchanged workflow', (t) => {
   // If I do this as a replace, and nothing has changed, the target UUIDs should be preserved
   const source = createProject([
-    generateWorkflow('@id a a-b', { history: true }),
-    generateWorkflow('@id b x-y', { history: true }),
+    generateWorkflow('@id a a-b', { uuidSeed: 100, history: true }),
+    generateWorkflow('@id b x-y', { uuidSeed: 200, history: true }),
   ]);
   const target = createProject([
-    generateWorkflow('@id a a-b', { history: true }),
-    generateWorkflow('@id b x-y', { history: true }),
+    generateWorkflow('@id a a-b', { uuidSeed: 100, history: true }),
+    generateWorkflow('@id b x-y', { uuidSeed: 200, history: true }),
   ]);
+
+  // Scribble on both workflows
+  target.workflows[0].jam = 'jar';
+  target.workflows[1].jam = 'jar';
 
   // change the source
   source.workflows[0].steps[0].expression = 'fn()';
@@ -721,16 +725,11 @@ test('options: onlyUpdated with 1 changed, 1 unchanged workflow', (t) => {
 
   // step 1 has changed and should match the source
   t.is(result.workflows[0].steps[0].expression, 'fn()');
-  t.is(
-    result.workflows[0].steps[0].openfn.uuid,
-    source.workflows[0].steps[0].openfn.uuid
-  );
+  // And our scribble should be lost
+  t.falsy(result.workflows[0].jam);
 
-  // but step 2 did not change and should have the original UUID
-  t.is(
-    result.workflows[0].steps[1].openfn.uuid,
-    target.workflows[0].steps[1].openfn.uuid
-  );
+  // but step 2 did not change and should have our scribble
+  t.is(result.workflows[1].jam, 'jar');
 });
 
 test.todo('options: only changed and 1 workflow');

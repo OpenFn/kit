@@ -124,14 +124,6 @@ export function merge(
         // @ts-ignore
         mergeWorkflows(sourceWorkflow, targetWorkflow, mappings)
       );
-
-      // THis was bad!! Why did I do this?
-      // // If mode is replace, just swap out the target workflow for the source workflow
-      // // No mapping needed really
-      // if (options.mode === REPLACE_MERGE) {
-      //   finalWorkflows.push(cloneDeep(sourceWorkflow));
-      // } else {
-      // }
     } else {
       finalWorkflows.push(sourceWorkflow);
     }
