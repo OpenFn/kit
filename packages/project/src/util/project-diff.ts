@@ -39,13 +39,6 @@ export function diff(a: Project, b: Project): WorkflowDiff[] {
       // workflow exists in A but not in B = removed
       diffs.push({ id: workflowA.id, type: 'removed' });
     } else if (workflowA.getVersionHash() !== workflowB.getVersionHash()) {
-      // TODO what's up with this bullshit diff?
-      console.log(workflowA.getVersionHash({ sha: false }));
-      console.log();
-      console.log();
-      console.log(workflowB.getVersionHash({ sha: false }));
-      console.log();
-      console.log();
       // workflow exists in both but with different content = changed
       diffs.push({ id: workflowA.id, type: 'changed' });
     }
