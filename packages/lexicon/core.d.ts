@@ -213,7 +213,9 @@ export type ConditionalStepEdge = {
 /**
  * A no-op type of Step
  */
-export interface Trigger extends Step {}
+export interface Trigger extends Step {
+  enabled?: boolean;
+}
 
 /**
  * An expression which has been compiled, and so includes import and export statements

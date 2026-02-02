@@ -77,6 +77,7 @@ test('should set defaults for keys that Lightning needs', (t) => {
           {
             id: 'trigger',
             type: 'webhook',
+            enabled: true,
             next: {
               step: {
                 openfn: {
@@ -121,7 +122,7 @@ test('should set defaults for keys that Lightning needs', (t) => {
             keychain_credential_id: null,
           },
         },
-        triggers: { webhook: { type: 'webhook', id: 1 } },
+        triggers: { webhook: { type: 'webhook', id: 1, enabled: true } },
         edges: {
           ['trigger->step']: {
             id: '<trigger-step>',

@@ -1,6 +1,7 @@
 import test from 'ava';
 import { generateHash, parse } from '../../src/util/version';
 import Project, { generateWorkflow } from '../../src';
+import Workflow from '../../src/Workflow';
 
 // this is an actual lightning workflow state, copied verbatim
 // todo already out of data as the version will change soon

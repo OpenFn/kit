@@ -105,7 +105,8 @@ test('should create a Project from prov state with a workflow', (t) => {
       {
         id: 'webhook',
         type: 'webhook',
-        openfn: { enabled: true, uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
+        enabled: true,
+        openfn: { uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
           'transform-data': {
             condition: 'always',
@@ -160,8 +161,8 @@ test('mapWorkflow: map a cron trigger', (t) => {
     id: 'cron',
     type: 'cron',
     next: {},
+    enabled: true,
     openfn: {
-      enabled: true,
       uuid: '1234',
       cron_expression: '0 1 0 0',
     },
@@ -176,6 +177,7 @@ test('mapWorkflow: map a webhook trigger', (t) => {
   t.deepEqual(trigger, {
     id: 'webhook',
     type: 'webhook',
+    enabled: true,
     next: {
       'transform-data': {
         condition: 'always',
@@ -186,7 +188,6 @@ test('mapWorkflow: map a webhook trigger', (t) => {
       },
     },
     openfn: {
-      enabled: true,
       uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
     },
   });

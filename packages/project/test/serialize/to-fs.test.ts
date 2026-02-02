@@ -157,6 +157,78 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   });
 });
 
+test('extractWorkflow: include trigger enabled state (true)', (t) => {
+  const project = new Project(
+    {
+      workflows: [
+        {
+          id: 'my-workflow',
+          name: 'My Workflow',
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: true,
+            },
+          ],
+          openfn: {
+            id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+          },
+        },
+      ],
+    },
+    {
+      formats: {
+        workflow: 'json', // for easier testing
+      },
+    }
+  );
+
+  const { content } = extractWorkflow(project, 'my-workflow');
+
+  t.deepEqual(JSON.parse(content).steps[0], {
+    id: 'webhook',
+    type: 'webhook',
+    enabled: true,
+  });
+});
+
+test('extractWorkflow: include trigger enabled state (false)', (t) => {
+  const project = new Project(
+    {
+      workflows: [
+        {
+          id: 'my-workflow',
+          name: 'My Workflow',
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: false,
+            },
+          ],
+          openfn: {
+            id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+          },
+        },
+      ],
+    },
+    {
+      formats: {
+        workflow: 'json', // for easier testing
+      },
+    }
+  );
+
+  const { content } = extractWorkflow(project, 'my-workflow');
+
+  t.deepEqual(JSON.parse(content).steps[0], {
+    id: 'webhook',
+    type: 'webhook',
+    enabled: false,
+  });
+});
+
 test('extractWorkflow: single simple workflow with custom root', (t) => {
   const config = {
     dirs: {

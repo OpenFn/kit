@@ -65,6 +65,7 @@ export const generateHash = (
     const trigger = wfState.triggers[triggerId];
     triggerKeys.forEach((key) => {
       const value = get(trigger, key);
+      // bit of a hack: default the trigger key value
       if (isDefined(value)) {
         parts.push(serializeValue(value));
       }

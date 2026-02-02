@@ -49,7 +49,7 @@ const options = [
 ];
 
 const printProjectName = (project: Project) =>
-  `${project}${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
+  `${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
 
 export const command: yargs.CommandModule<DeployOptions> = {
   command: 'deploy',
@@ -153,7 +153,7 @@ Pass --force to override this error and deploy anyway.`);
   }
 
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = reportDiff(remoteProject!, localProject, logger);
+  const diffs = reportDiff(localProject, remoteProject, logger);
   if (!diffs.length) {
     logger.success('Nothing to deploy');
     return;
@@ -280,8 +280,12 @@ Pass --force to override this error and deploy anyway.`);
 }
 
 export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
+  // console.log(local.workflows[0].workflow);
+  // console.log(remote.workflows[0].workflow);
+  console.log('local', JSON.stringify(local.workflows[0].workflow));
+  console.log('remote', JSON.stringify(remote.workflows[0].workflow));
   const diffs = remote.diff(local);
-
+  console.log({ diffs });
   if (diffs.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;
