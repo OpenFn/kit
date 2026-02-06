@@ -482,6 +482,7 @@ workspace:
       {
         id: 'webhook',
         type: 'webhook',
+        enabled: true,
         next: {
           'transform-data-to-fhir-standard': {
             disabled: false,
