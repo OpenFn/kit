@@ -161,7 +161,7 @@ export async function deployProject(
       logger?.error(`Deploy failed with code `, response.status);
       logger?.error('Failed to deploy project:');
 
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get('content-type') ?? '';
 
       if (contentType.match('application/json ')) {
         const body = await response.json();
