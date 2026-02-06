@@ -435,8 +435,8 @@ test.serial(
             {
               id: 'webhook',
               type: 'webhook',
+              enabled: true,
               openfn: {
-                enabled: true,
                 uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
               },
               next: {
