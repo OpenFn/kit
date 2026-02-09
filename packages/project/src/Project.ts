@@ -242,8 +242,8 @@ export class Project {
   }
 
   // Compare this project with another and return a list of workflow changes
-  diff(project: Project) {
-    return projectDiff(this, project);
+  diff(project: Project, workflows: string[] = []) {
+    return projectDiff(this, project, workflows);
   }
 
   canMergeInto(target: Project) {

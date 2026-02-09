@@ -28,11 +28,20 @@ export type WorkflowDiff = {
  * // Shows how staging has diverged from main
  * ```
  */
-export function diff(a: Project, b: Project): WorkflowDiff[] {
+export function diff(
+  a: Project,
+  b: Project,
+  // only consider these workflows
+  workflows?: string[]
+): WorkflowDiff[] {
   const diffs: WorkflowDiff[] = [];
 
   // Check all of project A's workflows
   for (const workflowA of a.workflows) {
+    if (workflows?.length && !workflows.includes(workflowA.id)) {
+      continue;
+    }
+
     const workflowB = b.getWorkflow(workflowA.id);
 
     if (!workflowB) {
@@ -46,6 +55,10 @@ export function diff(a: Project, b: Project): WorkflowDiff[] {
 
   // Check for workflows that were added in B
   for (const workflowB of b.workflows) {
+    if (workflows?.length && !workflows.includes(workflowB.id)) {
+      continue;
+    }
+
     if (!a.getWorkflow(workflowB.id)) {
       // workflow exists in B but not in A = added
       diffs.push({ id: workflowB.id, type: 'added' });
