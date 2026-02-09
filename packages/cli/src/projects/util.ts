@@ -228,6 +228,7 @@ export async function tidyWorkflowDir(
 }
 
 export const updateForkedFrom = (proj: Project) => {
+  console.log('>> UPDATING FORKED FROM');
   proj.cli.forked_from = proj.workflows.reduce((obj: any, wf) => {
     if (wf.history.length) {
       obj[wf.id] = wf.history.at(-1);

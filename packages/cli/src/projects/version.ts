@@ -39,10 +39,13 @@ export const handler = async (options: VersionOptions, logger: Logger) => {
       logger.error(`No workflow found with id ${options.workflow}`);
       return;
     }
-    output.set(workflow.name || workflow.id, workflow.getVersionHash());
+    output.set(
+      workflow.name || workflow.id,
+      workflow.getVersionHash({ sha: false })
+    );
   } else {
     for (const wf of activeProject?.workflows || []) {
-      output.set(wf.name || wf.id, wf.getVersionHash());
+      output.set(wf.name || wf.id, wf.getVersionHash({ sha: false }));
     }
   }
   if (!output.size) {

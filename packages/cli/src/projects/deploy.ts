@@ -70,7 +70,8 @@ export const command: yargs.CommandModule<DeployOptions> = {
 
 export const hasRemoteDiverged = (
   local: Project,
-  remote: Project
+  remote: Project,
+  workflows: string[]
 ): string[] | null => {
   let diverged: string[] | null = null;
 
@@ -78,7 +79,7 @@ export const hasRemoteDiverged = (
 
   // for each workflow, check that the local fetched_from is the head of the remote history
   for (const wf of local.workflows) {
-    if (wf.id in refs) {
+    if (workflows.includes(wf.id) && wf.id in refs) {
       const forkedVersion = refs[wf.id];
       const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
       console.log(
@@ -156,8 +157,19 @@ Pass --force to override this error and deploy anyway.`);
     return false;
   }
 
+  const locallyChangedWorkflows = await findLocallyChangedWorkflows(
+    ws,
+    localProject
+  );
+  console.log({ locallyChangedWorkflows });
+
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = reportDiff(localProject, remoteProject, logger);
+  const diffs = reportDiff(
+    localProject,
+    remoteProject,
+    locallyChangedWorkflows,
+    logger
+  );
   if (!diffs.length) {
     logger.success('Nothing to deploy');
     return;
@@ -180,7 +192,11 @@ Pass --force to override this error and deploy anyway.`);
     );
     logger.warn('Pushing these changes may overwrite changes made to the app');
   } else {
-    const divergentWorkflows = hasRemoteDiverged(localProject, remoteProject!);
+    const divergentWorkflows = hasRemoteDiverged(
+      localProject,
+      remoteProject!,
+      locallyChangedWorkflows
+    );
     if (divergentWorkflows) {
       logger.warn(
         `The following workflows have diverged: ${divergentWorkflows}`
@@ -283,8 +299,17 @@ Pass --force to override this error and deploy anyway.`);
   }
 }
 
-export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
-  const diffs = remote.diff(local);
+export const reportDiff = (
+  local: Project,
+  remote: Project,
+  locallyChangedWorkflows: string[],
+  logger: Logger
+) => {
+  // TODO something is wrong here!
+  // this just says the differences between local and remote
+  // but i want to ignore remote changes and only get a diff for anything
+  // where the local has changed since forked_from
+  const diffs = remote.diff(local, locallyChangedWorkflows);
   if (diffs.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;
@@ -324,3 +349,46 @@ export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
   return diffs;
 };
 ``;
+
+export const findLocallyChangedWorkflows = async (
+  workspace: Workspace,
+  project: Project
+) => {
+  // Check openfn.yaml for the forked_from versions
+  const { forked_from } = workspace.activeProject ?? {};
+
+  // If there are no forked_from references, we have no baseline
+  // so assume everything has changed
+  if (!forked_from || Object.keys(forked_from).length === 0) {
+    return project.workflows.map((w) => w.id);
+  }
+
+  const changedWorkflows: string[] = [];
+
+  // Check for changed and added workflows
+  for (const workflow of project.workflows) {
+    const currentHash = workflow.getVersionHash();
+    const forkedHash = forked_from[workflow.id];
+    console.log(currentHash, forkedHash);
+
+    if (forkedHash === undefined) {
+      // Workflow is not in forked_from, so it's been added locally
+      changedWorkflows.push(workflow.id);
+    } else if (forkedHash !== currentHash) {
+      // Workflow exists but hash has changed
+      changedWorkflows.push(workflow.id);
+    }
+    // else: hash matches, no change
+  }
+
+  // Check for removed workflows
+  const currentWorkflowIds = new Set(project.workflows.map((w) => w.id));
+  for (const workflowId in forked_from) {
+    if (!currentWorkflowIds.has(workflowId)) {
+      // Workflow was in forked_from but is no longer in the project
+      changedWorkflows.push(workflowId);
+    }
+  }
+
+  return changedWorkflows;
+};
