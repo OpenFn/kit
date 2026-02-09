@@ -82,9 +82,6 @@ export const hasRemoteDiverged = (
     if (workflows.includes(wf.id) && wf.id in refs) {
       const forkedVersion = refs[wf.id];
       const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
-      console.log(
-        `${wf.id}:  forked_from: ${forkedVersion}, remote: ${remoteVersion}`
-      );
       if (forkedVersion !== remoteVersion) {
         diverged ??= [];
         diverged.push(wf.id);

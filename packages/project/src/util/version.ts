@@ -10,8 +10,20 @@ function isDefined(v: any) {
 }
 
 export const parse = (version: string) => {
-  const [source, hash] = version.split(':');
-  return { source, hash };
+  if (version.match(':')) {
+    const [source, hash] = version.split(':');
+    return { source, hash };
+  }
+  return { hash: version };
+};
+
+/**
+ *
+ * Compare two version hashes
+ * Ignores the source specifier (if present)
+ */
+export const match = (a: string, b: string) => {
+  return parse(a).hash === parse(b).hash;
 };
 
 export type HashOptions = {
