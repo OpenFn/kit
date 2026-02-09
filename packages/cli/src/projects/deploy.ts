@@ -1,5 +1,5 @@
 import yargs from 'yargs';
-import Project, { Workspace } from '@openfn/project';
+import Project, { versionsEqual, Workspace } from '@openfn/project';
 import c from 'chalk';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -70,8 +70,7 @@ export const command: yargs.CommandModule<DeployOptions> = {
 
 export const hasRemoteDiverged = (
   local: Project,
-  remote: Project,
-  workflows: string[]
+  remote: Project
 ): string[] | null => {
   let diverged: string[] | null = null;
 
@@ -79,10 +78,10 @@ export const hasRemoteDiverged = (
 
   // for each workflow, check that the local fetched_from is the head of the remote history
   for (const wf of local.workflows) {
-    if (workflows.includes(wf.id) && wf.id in refs) {
+    if (wf.id in refs) {
       const forkedVersion = refs[wf.id];
       const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
-      if (forkedVersion !== remoteVersion) {
+      if (!versionsEqual(forkedVersion, remoteVersion!)) {
         diverged ??= [];
         diverged.push(wf.id);
       }
@@ -158,7 +157,6 @@ Pass --force to override this error and deploy anyway.`);
     ws,
     localProject
   );
-  console.log({ locallyChangedWorkflows });
 
   // TODO: what if remote diff and the version checked disagree for some reason?
   const diffs = reportDiff(
@@ -189,10 +187,11 @@ Pass --force to override this error and deploy anyway.`);
     );
     logger.warn('Pushing these changes may overwrite changes made to the app');
   } else {
+    console.log({ locallyChangedWorkflows });
     const divergentWorkflows = hasRemoteDiverged(
       localProject,
-      remoteProject!,
-      locallyChangedWorkflows
+      remoteProject!
+      // locallyChangedWorkflows
     );
     if (divergentWorkflows) {
       logger.warn(
@@ -366,12 +365,11 @@ export const findLocallyChangedWorkflows = async (
   for (const workflow of project.workflows) {
     const currentHash = workflow.getVersionHash();
     const forkedHash = forked_from[workflow.id];
-    console.log(currentHash, forkedHash);
 
     if (forkedHash === undefined) {
       // Workflow is not in forked_from, so it's been added locally
       changedWorkflows.push(workflow.id);
-    } else if (forkedHash !== currentHash) {
+    } else if (!versionsEqual(currentHash, forkedHash)) {
       // Workflow exists but hash has changed
       changedWorkflows.push(workflow.id);
     }
