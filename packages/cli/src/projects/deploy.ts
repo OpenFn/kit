@@ -53,6 +53,7 @@ const printProjectName = (project: Project) =>
 
 export const command: yargs.CommandModule<DeployOptions> = {
   command: 'deploy',
+  aliases: 'push',
   describe: `Deploy the checked out project to a Lightning Instance`,
   builder: (yargs: yargs.Argv<DeployOptions>) =>
     build(options, yargs)
