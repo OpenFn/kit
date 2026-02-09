@@ -56,7 +56,11 @@ export const generateHash = (
   wfKeys.forEach((key) => {
     const value = get(workflow, key);
     if (isDefined(value)) {
-      parts.push(serializeValue(value));
+      if (key === 'name') {
+        parts.push(value.toLowerCase());
+      } else {
+        parts.push(serializeValue(value));
+      }
     }
   });
 
