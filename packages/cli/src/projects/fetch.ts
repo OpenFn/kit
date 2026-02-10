@@ -128,6 +128,13 @@ export const fetchV2 = async (options: FetchOptions, logger: Logger) => {
 
   const remoteProject = await fetchRemoteProject(workspace, options, logger);
 
+  // if there's no alias, and this is a sandbox, set the alias
+  if (!options.alias && remoteProject.sandbox?.parentId) {
+    options.alias = remoteProject.id;
+    remoteProject.cli.alias = options.alias;
+    logger.debug('Defaulting alias to sandbox id', options.alias);
+  }
+
   if (!options.force && options.format !== 'state') {
     const localTargetProject = await resolveOutputProject(
       workspace,
@@ -210,7 +217,7 @@ async function resolveOutputProject(
     }
   }
 
-  // Otherwise we try and resolve to the projcet identifier to something in teh workspace
+  // Otherwise we try and resolve to the project identifier to something in the workspace
   const project = workspace.get(options.project!);
   if (project) {
     logger.debug(

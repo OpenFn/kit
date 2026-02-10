@@ -262,7 +262,8 @@ export const findLocallyChangedWorkflows = async (
   for (const workflow of project.workflows) {
     const currentHash = workflow.getVersionHash();
     const forkedHash = forked_from[workflow.id];
-
+    // TODO keep this and use logger?
+    // console.log(` ${workflow.id}: ${currentHash} / ${forkedHash}`);
     if (forkedHash === undefined) {
       // Workflow is not in forked_from, so it's been added locally
       changedWorkflows.push(workflow.id);
