@@ -174,7 +174,6 @@ test.serial('execute a workflow from the checked out project', async (t) => {
   const { stdout } = await run(
     `openfn my-workflow  -o ${TMP_DIR}/output.json  --log debug --workspace ${projectsPath}`
   );
-
   const output = await readFile(`${TMP_DIR}/output.json`, 'utf8');
   const finalState = JSON.parse(output);
   t.deepEqual(finalState, { x: 1 });
