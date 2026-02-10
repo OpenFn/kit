@@ -241,7 +241,8 @@ export const updateForkedFrom = (proj: Project) => {
 
 export const findLocallyChangedWorkflows = async (
   workspace: Workspace,
-  project: Project
+  project: Project,
+  ifNoForkedFrom: 'assume-ok' | 'assume-diverged' = 'assume-diverged'
 ) => {
   // Check openfn.yaml for the forked_from versions
   const { forked_from } = workspace.activeProject ?? {};
@@ -249,6 +250,9 @@ export const findLocallyChangedWorkflows = async (
   // If there are no forked_from references, we have no baseline
   // so assume everything has changed
   if (!forked_from || Object.keys(forked_from).length === 0) {
+    if (ifNoForkedFrom === 'assume-ok') {
+      return [];
+    }
     return project.workflows.map((w) => w.id);
   }
 

@@ -71,7 +71,11 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
     root: options.workspace || '.',
   });
   logger.success(`Loaded local project ${localProject.alias}`);
-  const changed = await findLocallyChangedWorkflows(workspace, localProject);
+  const changed = await findLocallyChangedWorkflows(
+    workspace,
+    localProject,
+    'assume-ok'
+  );
   if (changed.length && !options.force) {
     logger.break();
     logger.warn(
