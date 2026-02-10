@@ -67,31 +67,39 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
   }
 
   // get the current state of the checked out project
-  const localProject = await Project.from('fs', {
-    root: options.workspace || '.',
-  });
-  logger.success(`Loaded local project ${localProject.alias}`);
-  const changed = await findLocallyChangedWorkflows(
-    workspace,
-    localProject,
-    'assume-ok'
-  );
-  if (changed.length && !options.force) {
-    logger.break();
-    logger.warn(
-      'WARNING: detected changes on your currently checked-out project'
+  try {
+    const localProject = await Project.from('fs', {
+      root: options.workspace || '.',
+    });
+    logger.success(`Loaded local project ${localProject.alias}`);
+    const changed = await findLocallyChangedWorkflows(
+      workspace,
+      localProject,
+      'assume-ok'
     );
-    logger.warn(
-      `Changes may be lost by checking out ${localProject.alias} right now`
-    );
-    logger.warn(`Pass --force or -f to override this warning and continue`);
-    // TODO log to run with force
-    // TODO need to implement a save function
-    const e = new Error(
-      `The currently checked out project has diverged! Changes may be lost`
-    );
-    delete e.stack;
-    throw e;
+    if (changed.length && !options.force) {
+      logger.break();
+      logger.warn(
+        'WARNING: detected changes on your currently checked-out project'
+      );
+      logger.warn(
+        `Changes may be lost by checking out ${localProject.alias} right now`
+      );
+      logger.warn(`Pass --force or -f to override this warning and continue`);
+      // TODO log to run with force
+      // TODO need to implement a save function
+      const e = new Error(
+        `The currently checked out project has diverged! Changes may be lost`
+      );
+      delete e.stack;
+      throw e;
+    }
+  } catch (e: any) {
+    if (e.message.match('ENOENT')) {
+      logger.debug('No openfn.yaml found locally: skipping divergence test');
+    } else {
+      throw e;
+    }
   }
   // Check whether the checked out project has diverged from its forked from versions
 
