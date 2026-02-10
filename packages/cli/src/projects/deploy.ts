@@ -72,15 +72,19 @@ export const command: yargs.CommandModule<DeployOptions> = {
 export const hasRemoteDiverged = (
   local: Project,
   remote: Project,
-  workflows: string[] // this was problematic for some reason
+  workflows: string[] = [] // this was problematic for some reason
 ): string[] | null => {
   let diverged: string[] | null = null;
 
   const refs = local.cli.forked_from ?? {};
 
+  const filteredWorkflows = workflows.length
+    ? local.workflows.filter((w) => workflows.includes(w.id))
+    : local.workflows;
+
   // for each workflow, check that the local fetched_from is the head of the remote history
-  for (const wf of local.workflows) {
-    if (workflows.includes(wf.id) && wf.id in refs) {
+  for (const wf of filteredWorkflows) {
+    if (wf.id in refs) {
       const forkedVersion = refs[wf.id];
       const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
       if (!versionsEqual(forkedVersion, remoteVersion!)) {
