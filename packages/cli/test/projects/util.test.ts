@@ -1,6 +1,9 @@
 import test from 'ava';
 import Project, { generateWorkflow } from '@openfn/project';
-import { tidyWorkflowDir } from '../../src/projects/util';
+import {
+  findLocallyChangedWorkflows,
+  tidyWorkflowDir,
+} from '../../src/projects/util';
 
 test('tidyWorkflowDir: removes workflows that no longer exist', async (t) => {
   const currentProject = new Project({
@@ -156,4 +159,115 @@ test('tidyWorkflowDir: removes expression files when workflow steps change', asy
   const toRemove = await tidyWorkflowDir(currentProject, incomingProject, true);
 
   t.deepEqual(toRemove, ['workflows/A/x.js']);
+});
+
+test('findLocallyChangedWorkflows: no changed workflows', async (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-y');
+
+  const hash1 = wf1.getVersionHash();
+  const hash2 = wf2.getVersionHash();
+
+  const project = new Project({
+    name: 'test',
+    workflows: [wf1, wf2],
+  });
+
+  // Create a mock workspace with forked_from that matches current hashes
+  const workspace = {
+    activeProject: {
+      forked_from: {
+        a: hash1,
+        b: hash2,
+      },
+    },
+  } as any;
+
+  const changed = await findLocallyChangedWorkflows(workspace, project);
+  t.deepEqual(changed, []);
+});
+
+test('findLocallyChangedWorkflows: all workflows changed if there is no forked_from', async (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-y');
+
+  const project = new Project({
+    name: 'test',
+    workflows: [wf1, wf2],
+  });
+
+  // Create a mock workspace with NO forked_from
+  const workspace = {
+    activeProject: {},
+  } as any;
+
+  const changed = await findLocallyChangedWorkflows(workspace, project);
+  t.deepEqual(changed, ['a', 'b']);
+});
+
+test('findLocallyChangedWorkflows: detect 1 locally changed workflow', async (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-z');
+
+  const workspace = {
+    activeProject: {
+      forked_from: {
+        a: wf1.getVersionHash(),
+        b: wf2.getVersionHash(),
+      },
+    },
+  } as any;
+
+  const project = new Project({
+    name: 'test',
+    workflows: [wf1, wf2],
+  });
+
+  project.workflows[0].name = 'changed';
+
+  const changed = await findLocallyChangedWorkflows(workspace, project);
+  t.deepEqual(changed, ['a']);
+});
+
+test('findLocallyChangedWorkflows: detect 1 locally added workflow', async (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-y');
+
+  const workspace = {
+    activeProject: {
+      forked_from: {
+        a: wf1.getVersionHash(),
+      },
+    },
+  } as any;
+
+  const project = new Project({
+    name: 'test',
+    workflows: [wf1, wf2],
+  });
+
+  const changed = await findLocallyChangedWorkflows(workspace, project);
+  t.deepEqual(changed, ['b']);
+});
+
+test('findLocallyChangedWorkflows: detect 1 locally removed workflow', async (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-y');
+
+  const workspace = {
+    activeProject: {
+      forked_from: {
+        a: wf1.getVersionHash(),
+        b: wf2.getVersionHash(),
+      },
+    },
+  } as any;
+
+  const project = new Project({
+    name: 'test',
+    workflows: [wf1],
+  });
+
+  const changed = await findLocallyChangedWorkflows(workspace, project);
+  t.deepEqual(changed, ['b']);
 });

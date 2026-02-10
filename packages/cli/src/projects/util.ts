@@ -8,6 +8,7 @@ import type Project from '@openfn/project';
 import { CLIError } from '../errors';
 import resolvePath from '../util/resolve-path';
 import { rimraf } from 'rimraf';
+import { versionsEqual, Workspace } from '@openfn/project';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -236,4 +237,46 @@ export const updateForkedFrom = (proj: Project) => {
   }, {});
 
   return proj;
+};
+
+export const findLocallyChangedWorkflows = async (
+  workspace: Workspace,
+  project: Project
+) => {
+  // Check openfn.yaml for the forked_from versions
+  const { forked_from } = workspace.activeProject ?? {};
+
+  // If there are no forked_from references, we have no baseline
+  // so assume everything has changed
+  if (!forked_from || Object.keys(forked_from).length === 0) {
+    return project.workflows.map((w) => w.id);
+  }
+
+  const changedWorkflows: string[] = [];
+
+  // Check for changed and added workflows
+  for (const workflow of project.workflows) {
+    const currentHash = workflow.getVersionHash();
+    const forkedHash = forked_from[workflow.id];
+
+    if (forkedHash === undefined) {
+      // Workflow is not in forked_from, so it's been added locally
+      changedWorkflows.push(workflow.id);
+    } else if (!versionsEqual(currentHash, forkedHash)) {
+      // Workflow exists but hash has changed
+      changedWorkflows.push(workflow.id);
+    }
+    // else: hash matches, no change
+  }
+
+  // Check for removed workflows
+  const currentWorkflowIds = new Set(project.workflows.map((w) => w.id));
+  for (const workflowId in forked_from) {
+    if (!currentWorkflowIds.has(workflowId)) {
+      // Workflow was in forked_from but is no longer in the project
+      changedWorkflows.push(workflowId);
+    }
+  }
+
+  return changedWorkflows;
 };

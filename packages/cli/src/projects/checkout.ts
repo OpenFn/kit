@@ -10,14 +10,18 @@ import * as o from '../options';
 import * as po from './options';
 
 import type { Opts } from './options';
-import { tidyWorkflowDir, updateForkedFrom } from './util';
+import {
+  findLocallyChangedWorkflows,
+  tidyWorkflowDir,
+  updateForkedFrom,
+} from './util';
 
 export type CheckoutOptions = Pick<
   Opts,
-  'command' | 'project' | 'workspace' | 'log' | 'clean'
+  'command' | 'project' | 'workspace' | 'log' | 'clean' | 'force'
 >;
 
-const options = [o.log, po.workspace, po.clean];
+const options = [o.log, po.workspace, po.clean, o.force];
 
 const command: yargs.CommandModule = {
   command: 'checkout <project>',
@@ -61,6 +65,31 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
       `Project with id ${projectIdentifier} not found in the workspace`
     );
   }
+
+  // get the current state of the checked out project
+  const localProject = await Project.from('fs', {
+    root: options.workspace || '.',
+  });
+  logger.success(`Loaded local project ${localProject.alias}`);
+  const changed = await findLocallyChangedWorkflows(workspace, localProject);
+  if (changed.length && !options.force) {
+    logger.break();
+    logger.warn(
+      'WARNING: detected changes on your currently checked-out project'
+    );
+    logger.warn(
+      `Changes may be lost by checking out ${localProject.alias} right now`
+    );
+    logger.warn(`Pass --force or -f to override this warning and continue`);
+    // TODO log to run with force
+    // TODO need to implement a save function
+    const e = new Error(
+      `The currently checked out project has diverged! Changes may be lost`
+    );
+    delete e.stack;
+    throw e;
+  }
+  // Check whether the checked out project has diverged from its forked from versions
 
   // delete workflow dir before expanding project
   if (options.clean) {
