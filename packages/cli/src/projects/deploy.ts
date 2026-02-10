@@ -71,7 +71,8 @@ export const command: yargs.CommandModule<DeployOptions> = {
 
 export const hasRemoteDiverged = (
   local: Project,
-  remote: Project
+  remote: Project,
+  workflows: string[] // this was problematic for some reason
 ): string[] | null => {
   let diverged: string[] | null = null;
 
@@ -79,7 +80,7 @@ export const hasRemoteDiverged = (
 
   // for each workflow, check that the local fetched_from is the head of the remote history
   for (const wf of local.workflows) {
-    if (wf.id in refs) {
+    if (workflows.includes(wf.id) && wf.id in refs) {
       const forkedVersion = refs[wf.id];
       const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
       if (!versionsEqual(forkedVersion, remoteVersion!)) {
@@ -176,11 +177,9 @@ Pass --force to override this error and deploy anyway.`);
   // Skip divergence testing if the remote has no history in its workflows
   // (this will only happen on older versions of lightning)
   // TODO now maybe skip if there's no forked_from
-  const skipVersionTest =
-    // localProject.workflows.find((wf) => wf.history.length === 0) ||
-    remoteProject.workflows.find((wf) => wf.history.length === 0);
-
-  // localProject.workflows.forEach((w) => console.log(w.history));
+  const skipVersionTest = remoteProject.workflows.find(
+    (wf) => wf.history.length === 0
+  );
 
   if (skipVersionTest) {
     logger.warn(
@@ -188,11 +187,10 @@ Pass --force to override this error and deploy anyway.`);
     );
     logger.warn('Pushing these changes may overwrite changes made to the app');
   } else {
-    console.log({ locallyChangedWorkflows });
     const divergentWorkflows = hasRemoteDiverged(
       localProject,
-      remoteProject!
-      // locallyChangedWorkflows
+      remoteProject!,
+      locallyChangedWorkflows
     );
     if (divergentWorkflows) {
       logger.warn(
@@ -207,7 +205,7 @@ Pass --force to override this error and deploy anyway.`);
         return;
       } else {
         logger.warn(
-          'Remote project has not diverged from local project! Pushing anyway as -f passed'
+          'Remote project has diverged from local project! Pushing anyway as -f passed'
         );
       }
     } else {
