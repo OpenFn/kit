@@ -37,13 +37,6 @@ export const loadAppAuthConfig = (
       'OPENFN_API_KEY is required. Set it in .env, pass --api-key, or set the environment variable.'
     );
   }
-  if (!config.endpoint) {
-    throw new CLIError(
-      'OPENFN_ENDPOINT is required. Set it in .env, pass --endpoint, or set the environment variable.\n' +
-        'Example: OPENFN_ENDPOINT=https://app.openfn.org'
-    );
-  }
-
   return config as Required<AuthOptions>;
 };
 
@@ -103,6 +96,12 @@ export const getLightningUrl = (
   path: string = '',
   snapshots?: string[]
 ) => {
+  if (!endpoint) {
+    throw new CLIError(
+      'OPENFN_ENDPOINT is required. Set it in .env, pass --endpoint, or set the environment variable.\n' +
+        'Example: OPENFN_ENDPOINT=https://app.openfn.org'
+    );
+  }
   const params = new URLSearchParams();
   snapshots?.forEach((snapshot) => params.append('snapshots[]', snapshot));
   return new URL(`/api/provision/${path}?${params.toString()}`, endpoint);
