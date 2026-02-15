@@ -32,7 +32,17 @@ export const loadAppAuthConfig = (
     config.endpoint = OPENFN_ENDPOINT;
   }
 
-  // TODO probably need to throw
+  if (!config.apiKey) {
+    throw new CLIError(
+      'OPENFN_API_KEY is required. Set it in .env, pass --api-key, or set the environment variable.'
+    );
+  }
+  if (!config.endpoint) {
+    throw new CLIError(
+      'OPENFN_ENDPOINT is required. Set it in .env, pass --endpoint, or set the environment variable.\n' +
+        'Example: OPENFN_ENDPOINT=https://app.openfn.org'
+    );
+  }
 
   return config as Required<AuthOptions>;
 };
