@@ -289,7 +289,6 @@ Pass --force to override this error and deploy anyway.`);
       configData.content
     );
 
-    // TODO why is alias wrong here?
     const finalOutputPath = getSerializePath(localProject, options.workspace!);
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
@@ -304,10 +303,6 @@ export const reportDiff = (
   locallyChangedWorkflows: string[],
   logger: Logger
 ) => {
-  // TODO something is wrong here!
-  // this just says the differences between local and remote
-  // but i want to ignore remote changes and only get a diff for anything
-  // where the local has changed since forked_from
   const diffs = remote.diff(local, locallyChangedWorkflows);
   if (diffs.length === 0) {
     logger.info('No workflow changes detected');

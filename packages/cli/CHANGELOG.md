@@ -6,6 +6,7 @@ Overhaul `project deploy` for better conflict detection and more stable uploads,
 
 ### Minor Changes
 
+- When fetching a sandbox, default the alias to the sandbox id
 - When checking out a project, warn if local changes could be lost
 - Update version hash to match Lightning
 - Better conflict detection on `project pull` and `project push`
