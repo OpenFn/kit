@@ -1,5 +1,13 @@
 # @openfn/project
 
+## 0.13.0
+
+- Add `onlyUpdated` flag to project merge
+- Promote trigger `enabled` state
+- Ensure edge labels are properly serialized to app state
+- Fixes for workflow versions, bringing into line with Lightning
+- 5771665: Support forked_from metadata key in openfn.yaml
+
 ## 0.12.1
 
 ### Patch Changes

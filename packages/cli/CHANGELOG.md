@@ -1,5 +1,21 @@
 # @openfn/cli
 
+## 1.26.0
+
+Overhaul `project deploy` for better conflict detection and more stable uploads, with more accurate warnings and less loss of data
+
+### Minor Changes
+
+- When checking out a project, warn if local changes could be lost
+- Update version hash to match Lightning
+- Better conflict detection on `project pull` and `project push`
+- 4f3830e: Add `push` as an alias for `deploy` (v2)
+
+### Patch Changes
+
+- Updated dependencies [5771665]
+  - @openfn/project@0.12.2
+
 ## 1.25.0
 
 ### Minor Changes

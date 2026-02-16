@@ -12,8 +12,6 @@ export const SANDBOX_MERGE = 'sandbox';
 
 export const REPLACE_MERGE = 'replace';
 
-export const SYNC_MERGE = 'replace';
-
 export class UnsafeMergeError extends Error {}
 
 export type MergeProjectOptions = {

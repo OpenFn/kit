@@ -114,7 +114,6 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
   updateForkedFrom(switchProject);
 
   // expand project into directory
-  // TODO: only write files with a diff
   const files: any = switchProject.serialize('fs');
   for (const f in files) {
     if (files[f]) {
