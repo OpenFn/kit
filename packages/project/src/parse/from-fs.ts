@@ -12,11 +12,13 @@ import {
 } from '../util/config';
 import { omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
+import omitNil from '../util/omit-nil';
 
 export type FromFsConfig = {
   root: string;
   config?: Partial<l.WorkspaceConfig>;
   logger?: Logger;
+  alias?: string;
 };
 
 // Parse a single project from a root folder
@@ -24,7 +26,7 @@ export type FromFsConfig = {
 // It just builds the project on disk
 // I suppose we could take an option?
 export const parseProject = async (options: FromFsConfig) => {
-  const { root, logger } = options;
+  const { root, logger, alias } = options;
 
   const { type, content } = findWorkspaceFile(root);
   const context = loadWorkspaceFile(content, type as any);
@@ -33,9 +35,12 @@ export const parseProject = async (options: FromFsConfig) => {
   const proj: any = {
     id: context.project?.id,
     name: context.project?.name,
-    openfn: omit(context.project, ['id']),
+    openfn: omit(context.project, ['id', 'forked_from']),
     config: config,
     workflows: [],
+    cli: omitNil({
+      forked_from: context.project.forked_from,
+    }),
   };
 
   // now find all the workflows
@@ -107,5 +112,8 @@ export const parseProject = async (options: FromFsConfig) => {
     }
   }
 
-  return new Project(proj as l.Project, context.workspace);
+  return new Project(proj as l.Project, {
+    alias,
+    ...context.workspace,
+  });
 };

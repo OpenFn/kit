@@ -8,6 +8,7 @@ import type Project from '@openfn/project';
 import { CLIError } from '../errors';
 import resolvePath from '../util/resolve-path';
 import { rimraf } from 'rimraf';
+import { versionsEqual, Workspace } from '@openfn/project';
 
 type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -158,10 +159,20 @@ export async function deployProject(
     });
 
     if (!response.ok) {
-      const body = await response.json();
-
+      logger?.error(`Deploy failed with code `, response.status);
       logger?.error('Failed to deploy project:');
-      logger?.error(JSON.stringify(body, null, 2));
+
+      const contentType = response.headers.get('content-type') ?? '';
+
+      if (contentType.match('application/json ')) {
+        const body = await response.json();
+        logger?.error(JSON.stringify(body, null, 2));
+      } else {
+        const content = await response.text();
+        // TODO html errors are too long to be useful... figure this out later
+        logger?.error(content);
+      }
+
       throw new CLIError(
         `Failed to deploy project ${state.name}: ${response.status}`
       );
@@ -216,3 +227,61 @@ export async function tidyWorkflowDir(
   // Return and sort for testing
   return toRemove.sort();
 }
+
+export const updateForkedFrom = (proj: Project) => {
+  proj.cli.forked_from = proj.workflows.reduce((obj: any, wf) => {
+    if (wf.history.length) {
+      obj[wf.id] = wf.history.at(-1);
+    }
+    return obj;
+  }, {});
+
+  return proj;
+};
+
+export const findLocallyChangedWorkflows = async (
+  workspace: Workspace,
+  project: Project,
+  ifNoForkedFrom: 'assume-ok' | 'assume-diverged' = 'assume-diverged'
+) => {
+  // Check openfn.yaml for the forked_from versions
+  const { forked_from } = workspace.activeProject ?? {};
+
+  // If there are no forked_from references, we have no baseline
+  // so assume everything has changed
+  if (!forked_from || Object.keys(forked_from).length === 0) {
+    if (ifNoForkedFrom === 'assume-ok') {
+      return [];
+    }
+    return project.workflows.map((w) => w.id);
+  }
+
+  const changedWorkflows: string[] = [];
+
+  // Check for changed and added workflows
+  for (const workflow of project.workflows) {
+    const currentHash = workflow.getVersionHash();
+    const forkedHash = forked_from[workflow.id];
+    // TODO keep this and use logger?
+    // console.log(` ${workflow.id}: ${currentHash} / ${forkedHash}`);
+    if (forkedHash === undefined) {
+      // Workflow is not in forked_from, so it's been added locally
+      changedWorkflows.push(workflow.id);
+    } else if (!versionsEqual(currentHash, forkedHash)) {
+      // Workflow exists but hash has changed
+      changedWorkflows.push(workflow.id);
+    }
+    // else: hash matches, no change
+  }
+
+  // Check for removed workflows
+  const currentWorkflowIds = new Set(project.workflows.map((w) => w.id));
+  for (const workflowId in forked_from) {
+    if (!currentWorkflowIds.has(workflowId)) {
+      // Workflow was in forked_from but is no longer in the project
+      changedWorkflows.push(workflowId);
+    }
+  }
+
+  return changedWorkflows;
+};

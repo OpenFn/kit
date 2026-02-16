@@ -43,6 +43,27 @@ test('diff: should detect changed workflow', (t) => {
   t.deepEqual(diffs[0], { id: wfA.id, type: 'changed' });
 });
 
+test('diff: should only consider changed workflows from a filter list', (t) => {
+  const wfA = generateWorkflow('trigger-x');
+  const wfB = generateWorkflow('trigger-y');
+  // Make sure they have the same id but different content
+  wfB.id = wfA.id;
+
+  const projectA = new Project({
+    name: 'project-a',
+    workflows: [wfA],
+  });
+
+  const projectB = new Project({
+    name: 'project-b',
+    workflows: [wfB],
+  });
+
+  const diffs = diff(projectA, projectB, ['xxx']);
+
+  t.is(diffs.length, 0);
+});
+
 test('diff: should detect added workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
@@ -63,6 +84,27 @@ test('diff: should detect added workflow', (t) => {
   t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
 });
 
+test('diff: should only consider added workflows from a filter list', (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-y');
+  const wf3 = generateWorkflow('@id c trigger-y');
+
+  const projectA = new Project({
+    name: 'a',
+    workflows: [wf1],
+  });
+
+  const projectB = new Project({
+    name: 'b',
+    workflows: [wf1, wf2, wf3],
+  });
+
+  const diffs = diff(projectA, projectB, ['b']);
+
+  t.is(diffs.length, 1);
+  t.deepEqual(diffs[0], { id: wf2.id, type: 'added' });
+});
+
 test('diff: should detect removed workflow', (t) => {
   const wf1 = generateWorkflow('@id a trigger-x');
   const wf2 = generateWorkflow('@id b trigger-y');
@@ -78,6 +120,28 @@ test('diff: should detect removed workflow', (t) => {
   });
 
   const diffs = diff(projectA, projectB);
+
+  t.is(diffs.length, 1);
+  t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });
+});
+
+test('diff: should only consider removed workflows from a filter list', (t) => {
+  const wf1 = generateWorkflow('@id a trigger-x');
+  const wf2 = generateWorkflow('@id b trigger-y');
+  const wf3 = generateWorkflow('@id c trigger-z');
+
+  const projectA = new Project({
+    name: 'a',
+    workflows: [wf1, wf2, wf3],
+  });
+
+  const projectB = new Project({
+    name: 'b',
+    workflows: [wf1], // remove b and c
+  });
+
+  // only compare on b
+  const diffs = diff(projectA, projectB, ['b']);
 
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: wf2.id, type: 'removed' });

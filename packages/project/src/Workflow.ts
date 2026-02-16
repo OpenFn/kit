@@ -1,6 +1,6 @@
 import * as l from '@openfn/lexicon';
 import slugify from './util/slugify';
-import { generateHash } from './util/version';
+import { generateHash, HashOptions } from './util/version';
 
 const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
 
@@ -27,8 +27,8 @@ class Workflow {
 
     this.workflow = clone(workflow);
 
-    // history needs to be on workflow object.
-    this.workflow.history = workflow.history?.length ? workflow.history : [];
+    // history needs to be on workflow object
+    this.workflow.history = workflow.history ?? [];
 
     const {
       id,
@@ -71,6 +71,10 @@ class Workflow {
     this.workflow.start = s;
   }
 
+  get history() {
+    return this.workflow.history ?? [];
+  }
+
   _buildIndex() {
     for (const step of this.workflow.steps) {
       const s = step as any;
@@ -109,7 +113,14 @@ class Workflow {
 
   // Get properties on any step or edge by id or uuid
   get(id: string): WithMeta<l.Step | l.Trigger | l.StepEdge> {
-    const item = this.index.edges[id] || this.index.steps[id];
+    // first check if we're passed a UUID - in which case we map it to an id
+    if (id in this.index.id) {
+      id = this.index.id[id];
+    }
+
+    // now look up the item proper
+    let item = this.index.edges[id] || this.index.steps[id];
+
     if (!item) {
       throw new Error(`step/edge with id "${id}" does not exist in workflow`);
     }
@@ -183,16 +194,12 @@ class Workflow {
     return this.index.uuid;
   }
 
-  getVersionHash() {
-    return generateHash(this);
+  getVersionHash(options?: HashOptions) {
+    return generateHash(this, options);
   }
 
   pushHistory(versionHash: string) {
     this.workflow.history?.push(versionHash);
-  }
-
-  get history() {
-    return this.workflow.history ?? [];
   }
 
   // return true if the current workflow can be merged into the target workflow without losing any changes

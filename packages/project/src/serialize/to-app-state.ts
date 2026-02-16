@@ -57,7 +57,7 @@ export default function (
   return state;
 }
 
-const mapWorkflow = (workflow: Workflow) => {
+export const mapWorkflow = (workflow: Workflow) => {
   if (workflow instanceof Workflow) {
     // @ts-ignore
     workflow = workflow.toJSON();
@@ -96,10 +96,11 @@ const mapWorkflow = (workflow: Workflow) => {
     let isTrigger = false;
     let node: Provisioner.Job | Provisioner.Trigger;
 
-    if (s.type && !s.expression) {
+    if (s.type) {
       isTrigger = true;
       node = {
-        type: s.type,
+        type: s.type ?? 'webhook', // this is mostly for tests
+        enabled: s.enabled,
         ...renameKeys(s.openfn, { uuid: 'id' }),
       } as Provisioner.Trigger;
       wfState.triggers[node.type] = node;
@@ -145,6 +146,11 @@ const mapWorkflow = (workflow: Workflow) => {
         e.source_trigger_id = node.id;
       } else {
         e.source_job_id = node.id;
+      }
+
+      if (rules.label) {
+        // TODO needs unit test
+        e.condition_label = rules.label;
       }
 
       if (rules.condition) {

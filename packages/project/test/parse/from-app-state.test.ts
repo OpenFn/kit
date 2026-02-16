@@ -105,7 +105,8 @@ test('should create a Project from prov state with a workflow', (t) => {
       {
         id: 'webhook',
         type: 'webhook',
-        openfn: { enabled: true, uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
+        enabled: true,
+        openfn: { uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058' },
         next: {
           'transform-data': {
             condition: 'always',
@@ -138,7 +139,37 @@ test('should create a Project from prov state with a workflow', (t) => {
   });
 });
 
-test('mapWorkflow: map a simple trigger', (t) => {
+test('mapWorkflow: map a cron trigger', (t) => {
+  const mapped = mapWorkflow({
+    id: 'cron',
+    name: 'w',
+    deleted_at: null,
+    triggers: {
+      cron: {
+        id: '1234',
+        type: 'cron',
+        cron_expression: '0 1 0 0',
+        enabled: true,
+      },
+    },
+    jobs: {},
+    edges: {},
+  });
+
+  const [trigger] = mapped.steps;
+  t.deepEqual(trigger, {
+    id: 'cron',
+    type: 'cron',
+    next: {},
+    enabled: true,
+    openfn: {
+      uuid: '1234',
+      cron_expression: '0 1 0 0',
+    },
+  });
+});
+
+test('mapWorkflow: map a webhook trigger', (t) => {
   const mapped = mapWorkflow(state.workflows['my-workflow']);
 
   const [trigger] = mapped.steps;
@@ -146,6 +177,7 @@ test('mapWorkflow: map a simple trigger', (t) => {
   t.deepEqual(trigger, {
     id: 'webhook',
     type: 'webhook',
+    enabled: true,
     next: {
       'transform-data': {
         condition: 'always',
@@ -156,7 +188,6 @@ test('mapWorkflow: map a simple trigger', (t) => {
       },
     },
     openfn: {
-      enabled: true,
       uuid: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
     },
   });
@@ -291,7 +322,7 @@ test('mapEdge: map label', (t) => {
   } as any);
   t.deepEqual(e, {
     disabled: true,
-    name: 'abc',
+    label: 'abc',
   });
 });
 

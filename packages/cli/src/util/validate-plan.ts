@@ -39,6 +39,7 @@ const assertStepStructure = (step: Job | Trigger, index: number) => {
     'configuration',
     'linker',
     'openfn',
+    'enabled',
   ];
 
   for (const key in step) {

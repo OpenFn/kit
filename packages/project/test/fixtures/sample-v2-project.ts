@@ -33,7 +33,7 @@ export const json: SerializedProject = {
       name: 'Workflow',
       id: 'workflow',
       openfn: { uuid: 1 },
-      history: [],
+      history: ['a', 'b'],
       start: 'trigger',
     },
   ],
@@ -53,8 +53,8 @@ options:
   color: red
 workflows:
   - steps:
-      - name: b
-        id: b
+      - id: b
+        name: b
         openfn:
           uuid: 3
           project_credential_id: x
@@ -72,7 +72,9 @@ workflows:
     id: workflow
     openfn:
       uuid: 1
-    history: []
+    history:
+      - a
+      - b
     start: trigger
 sandbox:
   parentId: abcd

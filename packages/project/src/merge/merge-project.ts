@@ -6,6 +6,7 @@ import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
+import findChangedWorkflows from '../util/find-changed-workflows';
 
 export const SANDBOX_MERGE = 'sandbox';
 
@@ -17,18 +18,26 @@ export type MergeProjectOptions = {
   workflowMappings: Record<string, string>; // <source, target>
   removeUnmapped: boolean;
   force: boolean;
+
+  /**
+   * If mode is sandbox, basically only content will be merged and all metadata/settings/options/config is ignored
+   * If mode is replace, all properties on the source will override the target (including UUIDs, name)
+   */
   mode: typeof SANDBOX_MERGE | typeof REPLACE_MERGE;
+
+  /**
+   * If true, only workflows that have changed in the source
+   * will be merged.
+   */
+  onlyUpdated: boolean;
 };
 
 const defaultOptions: MergeProjectOptions = {
   workflowMappings: {},
   removeUnmapped: false,
   force: true,
-  /**
-   * If mode is sandbox, basically only content will be merged and all metadata/settings/options/config is ignored
-   * If mode is replace, all properties on the source will override the target (including UUIDs, name)
-   */
   mode: SANDBOX_MERGE,
+  onlyUpdated: false,
 };
 
 /**
@@ -51,28 +60,34 @@ export function merge(
     defaultOptions
   ) as Required<MergeProjectOptions>;
 
-  // check whether multiple workflows are merging into one. throw Error
-  const dupTargetMappings = getDuplicates(
-    Object.values(options.workflowMappings ?? {})
-  );
-  if (dupTargetMappings.length) {
-    throw new Error(
-      `The following target workflows have multiple source workflows merging into them: ${dupTargetMappings.join(
-        ', '
-      )}`
+  const finalWorkflows: Workflow[] = [];
+  const usedTargetIds = new Set<string>();
+  let sourceWorkflows = source.workflows;
+
+  const noMappings = isEmpty(options.workflowMappings);
+
+  if (options.onlyUpdated) {
+    // only include workflows that have changed (since history or forked_from) in the list
+    // unchanged target workflows will be added to the finalWorkflows list later
+    sourceWorkflows = findChangedWorkflows(source);
+  }
+
+  if (!noMappings) {
+    // check whether multiple workflows are merging into one
+    const dupes = getDuplicates(Object.values(options.workflowMappings ?? {}));
+    if (dupes.length) {
+      throw new Error(
+        `The following target workflows have multiple source workflows merging into them: ${dupes.join(
+          ', '
+        )}`
+      );
+    }
+
+    sourceWorkflows = source.workflows.filter(
+      (w) => !!options.workflowMappings[w.id]
     );
   }
 
-  const finalWorkflows: Workflow[] = [];
-  const usedTargetIds = new Set<string>();
-
-  const noMappings = isEmpty(options?.workflowMappings); // no mapping provided. hence *
-  let sourceWorkflows: Workflow[] = source.workflows.filter((w) => {
-    if (noMappings) return true;
-    return !!options?.workflowMappings[w.id];
-  });
-
-  // mergeability
   const potentialConflicts: Record<string, string> = {};
   for (const sourceWorkflow of sourceWorkflows) {
     const targetId =
@@ -100,6 +115,8 @@ export function merge(
 
     if (targetWorkflow) {
       usedTargetIds.add(targetWorkflow.id);
+
+      // Otherwise, merge these workflows, preserving UUIDs smartly
       const mappings = mapUuids(sourceWorkflow, targetWorkflow);
       finalWorkflows.push(
         // @ts-ignore
@@ -138,6 +155,7 @@ export function merge(
             ...source.options,
           },
           name: source.name ?? target.name,
+          alias: source.alias ?? target.alias,
           description: source.description ?? target.description,
           credentials: source.credentials ?? target.credentials,
           collections: source.collections ?? target.collections,

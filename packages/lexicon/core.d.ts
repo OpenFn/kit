@@ -118,6 +118,7 @@ export interface ProjectMeta {
   env?: string;
   inserted_at?: string;
   updated_at?: string;
+  forked_from?: Record<string, string>;
 
   [key: string]: unknown;
 }
@@ -212,7 +213,9 @@ export type ConditionalStepEdge = {
 /**
  * A no-op type of Step
  */
-export interface Trigger extends Step {}
+export interface Trigger extends Step {
+  enabled?: boolean;
+}
 
 /**
  * An expression which has been compiled, and so includes import and export statements

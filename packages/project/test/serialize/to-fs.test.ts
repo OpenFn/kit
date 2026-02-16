@@ -157,6 +157,78 @@ test('extractWorkflow: single simple workflow with random edge property', (t) =>
   });
 });
 
+test('extractWorkflow: include trigger enabled state (true)', (t) => {
+  const project = new Project(
+    {
+      workflows: [
+        {
+          id: 'my-workflow',
+          name: 'My Workflow',
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: true,
+            },
+          ],
+          openfn: {
+            id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+          },
+        },
+      ],
+    },
+    {
+      formats: {
+        workflow: 'json', // for easier testing
+      },
+    }
+  );
+
+  const { content } = extractWorkflow(project, 'my-workflow');
+
+  t.deepEqual(JSON.parse(content).steps[0], {
+    id: 'webhook',
+    type: 'webhook',
+    enabled: true,
+  });
+});
+
+test('extractWorkflow: include trigger enabled state (false)', (t) => {
+  const project = new Project(
+    {
+      workflows: [
+        {
+          id: 'my-workflow',
+          name: 'My Workflow',
+          steps: [
+            {
+              id: 'webhook',
+              type: 'webhook',
+              enabled: false,
+            },
+          ],
+          openfn: {
+            id: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
+          },
+        },
+      ],
+    },
+    {
+      formats: {
+        workflow: 'json', // for easier testing
+      },
+    }
+  );
+
+  const { content } = extractWorkflow(project, 'my-workflow');
+
+  t.deepEqual(JSON.parse(content).steps[0], {
+    id: 'webhook',
+    type: 'webhook',
+    enabled: false,
+  });
+});
+
 test('extractWorkflow: single simple workflow with custom root', (t) => {
   const config = {
     dirs: {
@@ -223,6 +295,60 @@ test('toFs: extract a project with 1 workflow and 1 step', (t) => {
     project: {
       id: 'my-project',
       name: 'My Project',
+    },
+  });
+
+  const workflow = JSON.parse(files['workflows/my-workflow/my-workflow.json']);
+  t.is(workflow.id, 'my-workflow');
+  t.is(workflow.steps.length, 1);
+
+  t.is(files['workflows/my-workflow/step.js'], 'fn(s => s)');
+});
+
+test('toFs: extract a project with forked_from meta', (t) => {
+  const project = new Project(
+    {
+      name: 'My Project',
+      workflows: [
+        {
+          id: 'my-workflow',
+          steps: [step],
+        },
+      ],
+      cli: {
+        forked_from: 'abcd',
+      },
+    },
+    {
+      formats: {
+        openfn: 'json', // for easier testing
+        workflow: 'json',
+      },
+    }
+  );
+
+  const files = toFs(project);
+
+  // Ensure that all the right files have been created
+  t.deepEqual(Object.keys(files), [
+    'openfn.json',
+    'workflows/my-workflow/my-workflow.json',
+    'workflows/my-workflow/step.js',
+  ]);
+
+  // rough test on the file contents
+  // (this should be validated in more detail by each step)
+  const config = JSON.parse(files['openfn.json']);
+  t.deepEqual(config, {
+    workspace: {
+      credentials: 'credentials.yaml',
+      formats: { openfn: 'json', project: 'yaml', workflow: 'json' },
+      dirs: { projects: '.projects', workflows: 'workflows' },
+    },
+    project: {
+      id: 'my-project',
+      name: 'My Project',
+      forked_from: 'abcd',
     },
   });
 

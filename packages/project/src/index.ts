@@ -10,3 +10,7 @@ export { generateWorkflow, generateProject } from './gen/generator';
 
 export { diff } from './util/project-diff';
 export type { WorkflowDiff, DiffType } from './util/project-diff';
+export {
+  generateHash as generateVersionHash,
+  match as versionsEqual,
+} from './util/version';

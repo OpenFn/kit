@@ -77,7 +77,7 @@ export const mapEdge = (edge: Provisioner.Edge) => {
   }
 
   if (edge.condition_label) {
-    e.name = edge.condition_label;
+    e.label = edge.condition_label;
   }
 
   // Do this last so that it serializes last
@@ -107,8 +107,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
   // TODO what do we do if the condition is disabled?
   // I don't think that's the same as edge condition false?
   Object.values(workflow.triggers).forEach((trigger: Provisioner.Trigger) => {
-    const { type, ...otherProps } = trigger;
-
+    const { type, enabled, ...otherProps } = trigger;
     if (!mapped.start) {
       mapped.start = type;
     }
@@ -119,6 +118,7 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
     mapped.steps.push({
       id: type,
       type,
+      enabled,
       openfn: renameKeys(otherProps, { id: 'uuid' }),
       next: connectedEdges.reduce((obj: any, edge) => {
         const target = Object.values(jobs).find(

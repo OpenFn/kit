@@ -1,6 +1,8 @@
 import yargs from 'yargs';
-import Project from '@openfn/project';
+import Project, { versionsEqual, Workspace } from '@openfn/project';
 import c from 'chalk';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import * as o from '../options';
 import * as o2 from './options';
@@ -10,6 +12,8 @@ import {
   fetchProject,
   serialize,
   getSerializePath,
+  updateForkedFrom,
+  findLocallyChangedWorkflows,
 } from './util';
 import { build, ensure } from '../util/command-builders';
 
@@ -50,6 +54,7 @@ const printProjectName = (project: Project) =>
 
 export const command: yargs.CommandModule<DeployOptions> = {
   command: 'deploy',
+  aliases: 'push',
   describe: `Deploy the checked out project to a Lightning Instance`,
   builder: (yargs: yargs.Argv<DeployOptions>) =>
     build(options, yargs)
@@ -64,27 +69,59 @@ export const command: yargs.CommandModule<DeployOptions> = {
   handler: ensure('project-deploy', options),
 };
 
+export const hasRemoteDiverged = (
+  local: Project,
+  remote: Project,
+  workflows: string[] = [] // this was problematic for some reason
+): string[] | null => {
+  let diverged: string[] | null = null;
+
+  const refs = local.cli.forked_from ?? {};
+
+  const filteredWorkflows = workflows.length
+    ? local.workflows.filter((w) => workflows.includes(w.id))
+    : local.workflows;
+
+  // for each workflow, check that the local fetched_from is the head of the remote history
+  for (const wf of filteredWorkflows) {
+    if (wf.id in refs) {
+      const forkedVersion = refs[wf.id];
+      const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
+      if (!versionsEqual(forkedVersion, remoteVersion!)) {
+        diverged ??= [];
+        diverged.push(wf.id);
+      }
+    } else {
+      // TODO what if there's no forked from for this workflow?
+      // Do we assume divergence because we don't know? Do we warn?
+    }
+  }
+
+  // TODO what if a workflow is removed locally?
+
+  return diverged;
+};
+
 export async function handler(options: DeployOptions, logger: Logger) {
   logger.warn(
     'WARNING: the project deploy command is in BETA and may not be stable. Use cautiously on production projects.'
   );
   const config = loadAppAuthConfig(options, logger);
 
-  // TODO: allow users to specify which project to deploy
-  // Should be able to take any project.yaml file via id, uuid, alias or path
-  // Note that it's a little wierd to deploy a project you haven't checked out,
-  // so put good safeguards here
   logger.info('Attempting to load checked-out project from workspace');
 
-  // TODO this doesn't have a history!
-  // loading from the fs the history isn't available
+  // TODO this is the hard way to load the local alias
+  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
+  const ws = new Workspace(options.workspace || '.');
+  const { alias } = ws.getActiveProject()!;
+  // TODO this doesn't have an alias
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
+    alias,
   });
 
-  // TODO if there's no local metadata, the user must pass a UUID or alias to post to
-
   logger.success(`Loaded local project ${printProjectName(localProject)}`);
+
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -122,7 +159,18 @@ Pass --force to override this error and deploy anyway.`);
     return false;
   }
 
-  const diffs = reportDiff(remoteProject!, localProject, logger);
+  const locallyChangedWorkflows = await findLocallyChangedWorkflows(
+    ws,
+    localProject
+  );
+
+  // TODO: what if remote diff and the version checked disagree for some reason?
+  const diffs = reportDiff(
+    localProject,
+    remoteProject,
+    locallyChangedWorkflows,
+    logger
+  );
   if (!diffs.length) {
     logger.success('Nothing to deploy');
     return;
@@ -132,39 +180,53 @@ Pass --force to override this error and deploy anyway.`);
 
   // Skip divergence testing if the remote has no history in its workflows
   // (this will only happen on older versions of lightning)
-  const skipVersionTest =
-    localProject.workflows.find((wf) => wf.history.length === 0) ||
-    remoteProject.workflows.find((wf) => wf.history.length === 0);
+  // TODO now maybe skip if there's no forked_from
+  const skipVersionTest = remoteProject.workflows.find(
+    (wf) => wf.history.length === 0
+  );
 
   if (skipVersionTest) {
     logger.warn(
       'Skipping compatibility check as no local version history detected'
     );
-    logger.warn('Pushing these changes may overrite changes made to the app');
-  } else if (!localProject.canMergeInto(remoteProject!)) {
-    if (!options.force) {
-      logger.error(`Error: Projects have diverged!
-
-The remote project has been edited since the local project was branched. Changes may be lost.
-
-Pass --force to override this error and deploy anyway.`);
-      return;
-    } else {
+    logger.warn('Pushing these changes may overwrite changes made to the app');
+  } else {
+    const divergentWorkflows = hasRemoteDiverged(
+      localProject,
+      remoteProject!,
+      locallyChangedWorkflows
+    );
+    if (divergentWorkflows) {
       logger.warn(
-        'Remote project has not diverged from local project! Pushing anyway as -f passed'
+        `The following workflows have diverged: ${divergentWorkflows}`
+      );
+      if (!options.force) {
+        logger.error(`Error: Projects have diverged!
+
+  The remote project has been edited since the local project was branched. Changes may be lost.
+
+  Pass --force to override this error and deploy anyway.`);
+        return;
+      } else {
+        logger.warn(
+          'Remote project has diverged from local project! Pushing anyway as -f passed'
+        );
+      }
+    } else {
+      logger.info(
+        'Remote project has not diverged from local project - it is safe to deploy 🎉'
       );
     }
-  } else {
-    logger.info(
-      'Remote project has not diverged from local project - it is safe to deploy 🎉'
-    );
   }
 
   logger.info('Merging changes into remote project');
+  // TODO I would like to log which workflows are being updated
   const merged = Project.merge(localProject, remoteProject!, {
     mode: 'replace',
     force: true,
+    onlyUpdated: true,
   });
+
   // generate state for the provisioner
   const state = merged.serialize('state', {
     format: 'json',
@@ -179,6 +241,8 @@ Pass --force to override this error and deploy anyway.`);
 
   // TODO not totally sold on endpoint handling right now
   config.endpoint ??= localProject.openfn?.endpoint!;
+
+  // TODO: I want to report diff HERE, after the merged state and stuff has been built
 
   if (options.dryRun) {
     logger.always('dryRun option set: skipping upload step');
@@ -218,17 +282,28 @@ Pass --force to override this error and deploy anyway.`);
       merged.config
     );
 
-    const finalOutputPath = getSerializePath(localProject, options.workspace!);
-    logger.debug('Updating local project at ', finalOutputPath);
-    await serialize(finalProject, finalOutputPath);
-  }
+    updateForkedFrom(finalProject);
+    const configData = finalProject.generateConfig();
+    await writeFile(
+      path.resolve(options.workspace!, configData.path),
+      configData.content
+    );
 
-  logger.success('Updated project at', config.endpoint);
+    const finalOutputPath = getSerializePath(localProject, options.workspace!);
+    const fullFinalPath = await serialize(finalProject, finalOutputPath);
+    logger.debug('Updated local project at ', fullFinalPath);
+
+    logger.success('Updated project  at', config.endpoint);
+  }
 }
 
-export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
-  const diffs = remote.diff(local);
-
+export const reportDiff = (
+  local: Project,
+  remote: Project,
+  locallyChangedWorkflows: string[],
+  logger: Logger
+) => {
+  const diffs = remote.diff(local, locallyChangedWorkflows);
   if (diffs.length === 0) {
     logger.info('No workflow changes detected');
     return diffs;
@@ -267,3 +342,4 @@ export const reportDiff = (local: Project, remote: Project, logger: Logger) => {
 
   return diffs;
 };
+``;

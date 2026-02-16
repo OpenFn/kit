@@ -12,7 +12,7 @@ import { getUuidForEdge, getUuidForStep } from './util/uuid';
 import { merge, MergeProjectOptions } from './merge/merge-project';
 import { diff as projectDiff } from './util/project-diff';
 import { Workspace } from './Workspace';
-import { buildConfig } from './util/config';
+import { buildConfig, extractConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { SandboxMeta, UUID, WorkspaceConfig } from '@openfn/lexicon';
 
@@ -31,6 +31,7 @@ type UUIDMap = {
 type CLIMeta = {
   version?: number;
   alias?: string;
+  forked_from?: Record<string, string>;
 };
 
 export class Project {
@@ -164,6 +165,11 @@ export class Project {
     return this.cli.alias ?? 'main';
   }
 
+  set alias(value: string) {
+    this.cli ??= {};
+    this.cli.alias = value;
+  }
+
   get uuid() {
     return this.openfn?.uuid ? `${this.openfn.uuid}` : undefined;
   }
@@ -236,8 +242,8 @@ export class Project {
   }
 
   // Compare this project with another and return a list of workflow changes
-  diff(project: Project) {
-    return projectDiff(this, project);
+  diff(project: Project, workflows: string[] = []) {
+    return projectDiff(this, project, workflows);
   }
 
   canMergeInto(target: Project) {
@@ -254,6 +260,18 @@ export class Project {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Generates the contents of the openfn.yaml file,
+   * plus its file path
+   */
+  generateConfig() {
+    return extractConfig(this);
+  }
+
+  clone() {
+    return new Project(this.serialize('project') as any);
   }
 }
 

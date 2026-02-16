@@ -4,12 +4,11 @@ import mock from 'mock-fs';
 import path from 'node:path';
 import Project, { generateWorkflow } from '@openfn/project';
 import { createMockLogger } from '@openfn/logger';
-import createLightningServer, {
-  DEFAULT_PROJECT_ID,
-} from '@openfn/lightning-mock';
+import createLightningServer from '@openfn/lightning-mock';
 
 import {
   handler as deployHandler,
+  hasRemoteDiverged,
   reportDiff,
 } from '../../src/projects/deploy';
 import { myProject_yaml, myProject_v1 } from './fixtures';
@@ -69,7 +68,7 @@ test('reportDiff: should report no changes for identical projects', (t) => {
     workflows: [wf],
   });
 
-  const diffs = reportDiff(local, remote, logger);
+  const diffs = reportDiff(local, remote, [], logger);
   t.is(diffs.length, 0);
 
   const { message, level } = logger._parse(logger._last);
@@ -91,7 +90,7 @@ test('reportDiff: should report changed workflow', (t) => {
     workflows: [wfRemote],
   });
 
-  const diffs = reportDiff(local, remote, logger);
+  const diffs = reportDiff(local, remote, [], logger);
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'a', type: 'changed' });
 
@@ -113,7 +112,7 @@ test('reportDiff: should report added workflow', (t) => {
     workflows: [wf1],
   });
 
-  const diffs = reportDiff(local, remote, logger);
+  const diffs = reportDiff(local, remote, [], logger);
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'b', type: 'added' });
 
@@ -135,7 +134,7 @@ test('reportDiff: should report removed workflow', (t) => {
     workflows: [wf1, wf2],
   });
 
-  const diffs = reportDiff(local, remote, logger);
+  const diffs = reportDiff(local, remote, [], logger);
   t.is(diffs.length, 1);
   t.deepEqual(diffs[0], { id: 'b', type: 'removed' });
 
@@ -160,7 +159,7 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
     workflows: [wf1, wf2Remote, wf3], // has a, b, c
   });
 
-  const diffs = reportDiff(local, remote, logger);
+  const diffs = reportDiff(local, remote, [], logger);
   t.is(diffs.length, 3);
 
   t.deepEqual(
@@ -278,3 +277,53 @@ test.serial.skip(
     t.truthy(expectedLog);
   }
 );
+
+test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
+  const local = {
+    workflows: [
+      {
+        id: 'w',
+      },
+    ],
+    cli: {
+      forked_from: {
+        w: 'a',
+      },
+    },
+  } as unknown as Project;
+
+  const remote = {
+    getWorkflow: () => ({
+      id: 'w',
+      history: ['a'],
+    }),
+  } as unknown as Project;
+
+  const diverged = hasRemoteDiverged(local, remote);
+  t.falsy(diverged);
+});
+
+test('hasRemoteDiverged: 1 workflow, 1 diverged', (t) => {
+  const local = {
+    workflows: [
+      {
+        id: 'w',
+      },
+    ],
+    cli: {
+      forked_from: {
+        w: 'w',
+      },
+    },
+  } as unknown as Project;
+
+  const remote = {
+    getWorkflow: () => ({
+      id: 'w',
+      history: ['a', 'b'],
+    }),
+  } as unknown as Project;
+
+  const diverged = hasRemoteDiverged(local, remote);
+  t.deepEqual(diverged, ['w']);
+});

@@ -1,10 +1,77 @@
 import test from 'ava';
-import { generateHash } from '../../src/util/version';
-import { generateWorkflow } from '../../src';
+import { generateHash, parse } from '../../src/util/version';
+import Project, { generateWorkflow } from '../../src';
+import Workflow from '../../src/Workflow';
 
-// TODO just caught a bug with both of these - needs to add tests around this
-test.todo('include edge label in hash');
-test.todo('include edge expression in hash');
+// this is an actual lightning workflow state, copied verbatim
+// todo already out of data as the version will change soon
+// next, update this
+const example = {
+  id: '320157d2-260d-4e32-91c0-db935547c263',
+  name: 'Turtle Power',
+  edges: [
+    {
+      enabled: true,
+      id: 'ed3ebfbf-6fa3-4438-b21d-06f7eec216c1',
+      condition_type: 'always',
+      source_trigger_id: 'bf10f31a-cf51-45a2-95a4-756d0a25af53',
+      target_job_id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
+    },
+    {
+      enabled: true,
+      id: '253bf2d7-1a01-44c8-8e2e-ccf50de92dff',
+      condition_type: 'js_expression',
+      condition_label: 'always tbh',
+      condition_expression: 'state.data',
+      source_job_id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
+      target_job_id: '40b839bd-5ade-414e-8dde-ed3ae77239ea',
+    },
+  ],
+  version_history: ['app:211291f6e6d5'],
+  inserted_at: '2025-12-19T15:26:49Z',
+  jobs: [
+    {
+      id: '4d18c46b-3bb4-4af1-81e2-07f9aee527fc',
+      name: 'Transform data',
+      body: 'fri',
+      adaptor: '@openfn/language-http@7.2.6',
+      project_credential_id: 'dd409089-5569-4157-8cf6-528ace283348',
+    },
+    {
+      id: '40b839bd-5ade-414e-8dde-ed3ae77239ea',
+      name: 'do something',
+      body: '// Check out the Job Writing Guide for help getting started:\n// https://docs.openfn.org/documentation/jobs/job-writing-guide\n',
+      adaptor: '@openfn/language-http@7.2.6',
+      project_credential_id: null,
+    },
+  ],
+  triggers: [
+    {
+      enabled: false,
+      id: 'bf10f31a-cf51-45a2-95a4-756d0a25af53',
+      type: 'webhook',
+    },
+  ],
+  updated_at: '2026-01-23T12:08:47Z',
+  lock_version: 34,
+  deleted_at: null,
+  concurrency: null,
+};
+
+test('match lightning version', async (t) => {
+  const [expected] = example.version_history;
+
+  // load the project from v1 state
+  const proj = await Project.from('state', {
+    workflows: [example],
+  });
+
+  const wf = proj.workflows[0];
+  const hash = wf.getVersionHash();
+  t.log(expected);
+  t.log(hash);
+  t.is(parse(hash).hash, parse(expected).hash);
+});
 
 test('generate an 12 character version hash for a basic workflow', (t) => {
   const workflow = generateWorkflow(
@@ -15,8 +82,213 @@ test('generate an 12 character version hash for a basic workflow', (t) => {
     `
   );
   const hash = workflow.getVersionHash();
-  t.is(hash, 'cli:518f491717a7');
+  t.is(hash, 'cli:72aed7c5f224');
 });
+
+test('ordering: generate version string with no steps', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    `
+  );
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:a');
+});
+
+test('ordering: generate version string with webook trigger and step', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    trigger(type=webhook)-x(adaptor=http,expression=fn,project_credential_id=abc)
+    `
+  );
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:awebhookhttpfnxabctruewebhook-x');
+});
+
+test('ordering: multiple steps are sorted alphabetically by name', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    z-x
+    a-x
+    m-x
+    `
+  );
+  // With step keys sorted: adaptor, body, keychain_credential_id, name, project_credential_id
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfamxztruea-xtruem-xtruez-x');
+});
+
+test('ordering: step names are sorted case-insensitively', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    Z-x
+    a-x
+    B-x
+    `
+  );
+  // Steps should appear in order: a, B, x, Z (case-insensitive sort)
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfaBxZtruea-xtrueB-xtrueZ-x');
+});
+
+test('ordering: step keys appear in sorted order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-step(project_credential_id=cred,name=step,expression=code,adaptor=http)
+    `
+  );
+  // Step keys sorted: adaptor, body, keychain_credential_id, name, project_credential_id
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfahttpcodestepcredtruea-step');
+});
+
+test('ordering: multiple edges are sorted by edge name', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    z-a
+    a-b
+    m-n
+    `
+  );
+  // Edges sorted by "source-target" name: a-b, m-n, z-a
+  // Each edge has enabled=true and its generated name
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfabmnztruea-btruem-ntruez-a');
+});
+
+test('ordering: edge keys appear in sorted order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-(label=lbl,condition=always,disabled=true)-b
+    `
+  );
+  // Edge keys sorted: condition_expression, condition_label, condition_type, enabled, label, name
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfablblalwaysfalsea-b');
+});
+
+test('ordering: trigger keys appear in sorted order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    t(type=cron,cron_expression="* * *",enabled=false)-x(expression=code)
+    `
+  );
+  // Trigger keys sorted: cron_expression, enabled, type
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wf* * *falsecroncodextruecron-x');
+});
+
+test('ordering: complete workflow with all elements', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name complete
+    @id some-id
+    trigger(type=webhook)-step2(adaptor=http,expression=fn2,project_credential_id=c2)
+    step1(adaptor=common,expression=fn1,project_credential_id=c1)-step2
+    `
+  );
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(
+    hash,
+    'cli:completewebhookcommonfn1step1c1httpfn2step2c2truestep1-step2truewebhook-step2'
+  );
+});
+
+test('ordering: multiple edges from same source are sorted by target', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-z
+    a-m
+    a-b
+    `
+  );
+  // Edges: a-b, a-m, a-z (sorted by full edge name)
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfabmztruea-btruea-mtruea-z');
+});
+
+test('ordering: workflow with webhook trigger connected to step', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    trigger(type=webhook)-step
+    `
+  );
+  // Workflow name, trigger type, step name, edge (enabled + name)
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfwebhooksteptruewebhook-step');
+});
+
+test('ordering: steps with partial fields maintain sorted key order', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-step(name=step,adaptor=http)
+    `
+  );
+  // Step keys sorted: adaptor, body, keychain_credential_id, name, project_credential_id
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfahttpsteptruea-step');
+});
+
+test('ordering: edge with js_expression condition', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-(condition="state.x > 5",label=check)-b
+    `
+  );
+  // Edge keys sorted: condition_expression, condition_label, condition_type, enabled, label, name
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:wfabstate.x > 5checkjs_expressiontruea-b');
+});
+
+test('ordering: undefined fields are omitted', (t) => {
+  const workflow1 = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-b(name=b)
+    `
+  );
+
+  const workflow2 = generateWorkflow(
+    `
+    @name wf
+    @id some-id
+    a-b(name=b)
+    `
+  );
+
+  // Both should produce the same hash
+  const hash1 = workflow1.getVersionHash({ sha: false });
+  const hash2 = workflow2.getVersionHash({ sha: false });
+
+  t.is(hash1, 'cli:wfabtruea-b');
+  t.is(hash1, hash2);
+});
+
+// TODO more ordering tests
 
 test('unique hash but different steps order', (t) => {
   const workflow1 = generateWorkflow(
@@ -24,22 +296,26 @@ test('unique hash but different steps order', (t) => {
     @name same-workflow
     @id id-one
     a-b
-    b-c
+    a-c
+    a-d
     `
   );
+
+  // different order of nodes but should generate the same hash
   const workflow2 = generateWorkflow(
     `
     @name same-workflow
     @id id-two
+    a-d
     a-c
-    c-b
+    a-b
     `
   );
 
-  // different order of nodes (b & c changed position) but should generate the same hash
   // validate second step is actually different
   t.is(workflow1.steps[1].name, 'b');
-  t.is(workflow2.steps[1].name, 'c');
+  t.is(workflow2.steps[1].name, 'd');
+
   // assert that hashes are the same
   t.is(generateHash(workflow1), generateHash(workflow2));
 });
@@ -74,6 +350,81 @@ test('hash changes when workflow name changes', (t) => {
   t.not(generateHash(wf1), generateHash(wf2));
 });
 
+test('hash a trigger', (t) => {
+  // check that various  changes on a trigger update the hash
+  const webhook = generateWorkflow(
+    `@name wf-1
+    @id workflow-id 
+    t(type=webhook)-x(expression=x)
+    `
+  );
+  const cron = generateWorkflow(
+    `@name wf-1
+    @id workflow-id 
+    t(type=cron)-x(expression=x)
+    `
+  );
+
+  t.not(generateHash(webhook), generateHash(cron));
+
+  const cronEnabled = generateWorkflow(
+    `@name wf-1
+    @id workflow-id
+    t(enabled=false)-x
+    `
+  );
+  t.not(generateHash(webhook), generateHash(cronEnabled));
+
+  const cronExpression = generateWorkflow(
+    `@name wf-1
+    @id workflow-id
+    t(cron_expression="1")-x
+    `
+  );
+  t.not(generateHash(webhook), generateHash(cronExpression));
+});
+
+test('hash changes across an edge', (t) => {
+  const basicEdge = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-b
+    `
+  );
+
+  const withLabel = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-(label=x)-b
+    `
+  );
+
+  t.not(generateHash(basicEdge), generateHash(withLabel));
+
+  const withCondition = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-(condition=always)-b
+    `
+  );
+
+  t.not(generateHash(basicEdge), generateHash(withCondition));
+
+  const withDisabled = generateWorkflow(
+    `
+    @name wf-1
+    @id workflow-id 
+    a-(disabled=true)-b
+    `
+  );
+
+  t.not(generateHash(basicEdge), generateHash(withDisabled));
+});
+
+// TODO joe to think more about credential mapping (keychain and project cred keys)
 // can't get credentials to work in the generator, need to fix that
 test.skip('hash changes when credentials field changes', (t) => {
   const wf1 = generateWorkflow(
@@ -156,4 +507,22 @@ test('ignored fields do not affect hash', (t) => {
     `
   );
   t.is(generateHash(wf1), generateHash(wf1_ignored));
+});
+
+// This test is important because when merging, the local workflow
+// representation won't have UUIDs in it - and that should be fine, nothing should break
+test('works without UUIDs', (t) => {
+  const workflow = generateWorkflow(
+    `
+    @name a
+    @id some-id
+    webhook-transform_data(name="Transform data",expression="fn(s => s)")
+    `,
+    {
+      openfnUuid: false,
+    }
+  );
+
+  const hash = workflow.getVersionHash({ sha: false });
+  t.is(hash, 'cli:awebhookfn(s => s)Transform datatruewebhook-Transform data');
 });

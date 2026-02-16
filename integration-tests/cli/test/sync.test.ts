@@ -30,7 +30,10 @@ const initWorkspace = (t: any) => {
   };
 };
 
-const gen = (name = 'patients', workflows = ['trigger-job(body="fn()")']) => {
+const gen = (
+  name = 'patients',
+  workflows = ['trigger-job(expression="fn()")']
+) => {
   // generate a project
   const project = generateProject(name, workflows, {
     openfnUuid: true,
@@ -44,7 +47,7 @@ test('fetch a new project', async (t) => {
   const { workspace, read } = initWorkspace(t);
   const project = gen();
 
-  await run(
+  const { stdout } = await run(
     `openfn project fetch \
        --workspace ${workspace} \
        --endpoint ${endpoint} \
@@ -239,7 +242,7 @@ test('pull an update to project', async (t) => {
 test('checkout by alias', async (t) => {
   const { workspace, read } = initWorkspace(t);
   const main = gen();
-  const staging = gen('patients-staging', ['trigger-job(body="fn(x)")']);
+  const staging = gen('patients-staging', ['trigger-job(expression="fn(x)")']);
 
   await run(
     `openfn project fetch \

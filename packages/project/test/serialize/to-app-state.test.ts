@@ -77,6 +77,7 @@ test('should set defaults for keys that Lightning needs', (t) => {
           {
             id: 'trigger',
             type: 'webhook',
+            enabled: true,
             next: {
               step: {
                 openfn: {
@@ -121,7 +122,7 @@ test('should set defaults for keys that Lightning needs', (t) => {
             keychain_credential_id: null,
           },
         },
-        triggers: { webhook: { type: 'webhook', id: 1 } },
+        triggers: { webhook: { type: 'webhook', id: 1, enabled: true } },
         edges: {
           ['trigger->step']: {
             id: '<trigger-step>',
@@ -262,6 +263,41 @@ test('should handle credentials', (t) => {
   t.is(step.project_credential_id, 'p');
 });
 
+test('should ignore forked_from', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'p',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+    cli: {
+      forked_form: { wf: 'a' },
+    },
+  };
+  const proj = new Project(data);
+  const state = toAppState(proj, { format: 'json' });
+  t.falsy((state as any).forked_form);
+});
+
 test('should ignore workflow start keys', (t) => {
   const data = {
     id: 'my-project',
@@ -295,7 +331,40 @@ test('should ignore workflow start keys', (t) => {
   t.falsy(state.workflows['wf'].start);
 });
 
-test.todo('handle edge labels');
+test('should handle edge labels', (t) => {
+  const data = {
+    id: 'my-project',
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        start: 'step',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {
+                label: 'hello',
+              },
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'p',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), { format: 'json' });
+  t.is(state.workflows.wf.edges['trigger->step'].condition_label, 'hello');
+});
 
 test('serialize steps and trigger in alphabetical order', (t) => {
   const wf = `@name wf
