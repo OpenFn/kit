@@ -10,7 +10,7 @@ import resolvePath from '../util/resolve-path';
 import { rimraf } from 'rimraf';
 import { versionsEqual, Workspace } from '@openfn/project';
 
-type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
+export type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
 export const loadAppAuthConfig = (
   options: AuthOptions,

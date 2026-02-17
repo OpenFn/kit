@@ -169,3 +169,41 @@ test.serial('should track forked_from', async (t) => {
   t.deepEqual(project.cli.forked_from, { w1: 'abcd' });
   t.falsy(project.openfn!.forked_from);
 });
+
+test.serial('should load the name from config', async (t) => {
+  mockFile('/ws/openfn.yaml', {
+    workspace: buildConfig(),
+    project: {
+      name: 'Millions of Peaches',
+      id: 'peaches-for-me',
+    },
+  });
+
+  mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+    id: 'workflow-1',
+    name: 'Workflow 1',
+  });
+
+  const project = await parseProject({ root: '/ws' });
+  t.is(project.name, 'Millions of Peaches');
+  t.is(project.id, 'peaches-for-me');
+});
+
+test.serial('should override the name and id from options', async (t) => {
+  mockFile('/ws/openfn.yaml', {
+    workspace: buildConfig(),
+    project: {
+      name: 'Millions of Peaches',
+      id: 'peaches-for-me',
+    },
+  });
+
+  mockFile('/ws/workflows/workflow-1/workflow-1.yaml', {
+    id: 'workflow-1',
+    name: 'Workflow 1',
+  });
+
+  const project = await parseProject({ root: '/ws', name: 'Hello World' });
+  t.is(project.name, 'hello-world');
+  t.is(project.id, 'hello-world');
+});
