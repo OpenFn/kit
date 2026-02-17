@@ -28,9 +28,12 @@ export default async (job: Job, error: RTError) => {
 
       if (error.pos && !isNaN(error.pos.line!)) {
         const fileName = `${job.name || job.id || 'src'}.js`;
-        const src = smc.sourceContentFor(fileName)!.split('\n');
-        const line = src[error.pos.line! - 1];
-        error.pos.src = line;
+        const content = smc.sourceContentFor(fileName, true);
+        if (content) {
+          const src = content.split('\n');
+          const line = src[error.pos.line! - 1];
+          error.pos.src = line;
+        }
       }
     } catch (e) {
       // error while trying to map

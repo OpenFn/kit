@@ -101,3 +101,22 @@ export const workspace: CLIOption = {
     }
   },
 };
+
+const newProject: CLIOption = {
+  name: 'new',
+  yargs: {
+    description: 'Create a new project when deploying',
+    default: false,
+    boolean: true,
+  },
+};
+
+export const name: CLIOption = {
+  name: 'name',
+  yargs: {
+    type: 'string',
+    description: 'When deploying a new project, set the name',
+  },
+};
+
+export { newProject as new };

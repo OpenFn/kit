@@ -14,6 +14,7 @@ import {
   getSerializePath,
   updateForkedFrom,
   findLocallyChangedWorkflows,
+  AuthOptions,
 } from './util';
 import { build, ensure } from '../util/command-builders';
 
@@ -31,13 +32,22 @@ export type DeployOptions = Pick<
   | 'log'
   | 'logJson'
   | 'confirm'
-> & { workspace?: string; dryRun?: boolean };
+> & {
+  workspace?: string;
+  dryRun?: boolean;
+  new?: boolean;
+  name?: string;
+  alias?: string;
+};
 
 const options = [
   // local options
   o2.env,
   o2.workspace,
   o2.dryRun,
+  o2.new,
+  o2.name,
+  o2.alias,
 
   // general options
   o.apiKey,
@@ -72,7 +82,7 @@ export const command: yargs.CommandModule<DeployOptions> = {
 export const hasRemoteDiverged = (
   local: Project,
   remote: Project,
-  workflows: string[] = [] // this was problematic for some reason
+  workflows: string[] = []
 ): string[] | null => {
   let diverged: string[] | null = null;
 
@@ -102,25 +112,17 @@ export const hasRemoteDiverged = (
   return diverged;
 };
 
-export async function handler(options: DeployOptions, logger: Logger) {
-  logger.warn(
-    'WARNING: the project deploy command is in BETA and may not be stable. Use cautiously on production projects.'
-  );
-  const config = loadAppAuthConfig(options, logger);
-
+// This function is responsible for syncing changes in the user's local project
+// with the remote app version
+// It returns a merged state object
+const syncProjects = async (
+  options: DeployOptions,
+  config: Required<AuthOptions>,
+  ws: Workspace,
+  localProject: Project,
+  logger: Logger
+): Promise<Project> => {
   logger.info('Attempting to load checked-out project from workspace');
-
-  // TODO this is the hard way to load the local alias
-  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
-  const ws = new Workspace(options.workspace || '.');
-  const { alias } = ws.getActiveProject()!;
-  // TODO this doesn't have an alias
-  const localProject = await Project.from('fs', {
-    root: options.workspace || '.',
-    alias,
-  });
-
-  logger.success(`Loaded local project ${printProjectName(localProject)}`);
 
   // First step, fetch the latest version and write
   // this may throw!
@@ -156,7 +158,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
 Your local project (${localProject.uuid}) has a different UUID to the remote project (${remoteProject.uuid}).
 
 Pass --force to override this error and deploy anyway.`);
-    return false;
+    process.exit(1);
   }
 
   const locallyChangedWorkflows = await findLocallyChangedWorkflows(
@@ -173,7 +175,7 @@ Pass --force to override this error and deploy anyway.`);
   );
   if (!diffs.length) {
     logger.success('Nothing to deploy');
-    return;
+    process.exit(0);
   }
 
   // Ensure there's no divergence
@@ -206,7 +208,7 @@ Pass --force to override this error and deploy anyway.`);
   The remote project has been edited since the local project was branched. Changes may be lost.
 
   Pass --force to override this error and deploy anyway.`);
-        return;
+        process.exit(1);
       } else {
         logger.warn(
           'Remote project has diverged from local project! Pushing anyway as -f passed'
@@ -220,6 +222,7 @@ Pass --force to override this error and deploy anyway.`);
   }
 
   logger.info('Merging changes into remote project');
+
   // TODO I would like to log which workflows are being updated
   const merged = Project.merge(localProject, remoteProject!, {
     mode: 'replace',
@@ -227,7 +230,41 @@ Pass --force to override this error and deploy anyway.`);
     onlyUpdated: true,
   });
 
-  // generate state for the provisioner
+  return merged;
+};
+
+export async function handler(options: DeployOptions, logger: Logger) {
+  logger.warn(
+    'WARNING: the project deploy command is in BETA and may not be stable. Use cautiously on production projects.'
+  );
+  const config = loadAppAuthConfig(options, logger);
+
+  // TODO this is the hard way to load the local alias
+  // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
+  const ws = new Workspace(options.workspace || '.');
+
+  const active = ws.getActiveProject();
+  const alias = options.alias ?? active?.alias;
+  // TODO this doesn't have an alias
+  const localProject = await Project.from('fs', {
+    root: options.workspace || '.',
+    alias,
+    name: options.name,
+  });
+
+  if (options.new) {
+    // reset all metadata
+    localProject.openfn = {
+      endpoint: config.endpoint,
+    };
+  }
+
+  logger.success(`Loaded local project ${printProjectName(localProject)}`);
+
+  const merged: Project = options.new
+    ? localProject
+    : await syncProjects(options, config, ws, localProject, logger);
+
   const state = merged.serialize('state', {
     format: 'json',
   }) as Provisioner.Project_v1;
@@ -236,8 +273,9 @@ Pass --force to override this error and deploy anyway.`);
   // or maybe write it to output with -o?
   // maybe we can write state.app, state.local and state.result
   // this is heavy debug stuff
-  logger.debug('Converted merged local project to app state:');
+  logger.debug('Provisioner state ready to upload:');
   logger.debug(JSON.stringify(state, null, 2));
+  logger.debug();
 
   // TODO not totally sold on endpoint handling right now
   config.endpoint ??= localProject.openfn?.endpoint!;
@@ -271,13 +309,12 @@ Pass --force to override this error and deploy anyway.`);
       logger
     );
 
-    // TODO do we think this final project is right?
-    // We need to restore CLI stuff like alias, meta
     const finalProject = await Project.from(
       'state',
       result,
       {
         endpoint: config.endpoint,
+        alias,
       },
       merged.config
     );

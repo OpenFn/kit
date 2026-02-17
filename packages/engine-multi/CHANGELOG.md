@@ -1,5 +1,12 @@
 # engine-multi
 
+## 1.10.4
+
+### Patch Changes
+
+- Updated dependencies [dd88099]
+  - @openfn/runtime@1.8.4
+
 ## 1.10.3
 
 ### Patch Changes

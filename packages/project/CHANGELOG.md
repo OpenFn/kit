@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.13.1
+
+### Patch Changes
+
+- 92c0b49: Allow project name to be overriden when loading from fs
+
 ## 0.13.0
 
 - Add `onlyUpdated` flag to project merge
