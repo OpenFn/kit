@@ -170,7 +170,7 @@ test.serial('should track forked_from', async (t) => {
   t.falsy(project.openfn!.forked_from);
 });
 
-test.serial.only('should load the name from config', async (t) => {
+test.serial('should load the name from config', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),
     project: {
@@ -189,7 +189,7 @@ test.serial.only('should load the name from config', async (t) => {
   t.is(project.id, 'peaches-for-me');
 });
 
-test.serial.only('should override the name and id from options', async (t) => {
+test.serial('should override the name and id from options', async (t) => {
   mockFile('/ws/openfn.yaml', {
     workspace: buildConfig(),
     project: {
