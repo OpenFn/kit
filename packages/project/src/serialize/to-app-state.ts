@@ -2,11 +2,12 @@ import { pick, omitBy, isNil, sortBy } from 'lodash-es';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { randomUUID } from 'node:crypto';
 
-import { Project } from '../Project';
+import { Credential, Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
 import slugify from '../util/slugify';
+import getCredentialName from '../util/get-credential-name';
 
 type Options = { format?: 'json' | 'yaml' };
 
@@ -39,9 +40,15 @@ export default function (
 
   Object.assign(state, rest, project.options);
 
-  state.project_credentials = project.credentials ?? [];
+  state.project_credentials =
+    project.credentials?.map((c) => ({
+      id: c.uuid,
+      name: c.name,
+      owner: c.owner,
+    })) ?? [];
+
   state.workflows = project.workflows
-    .map(mapWorkflow)
+    .map((w) => mapWorkflow(w, project.credentials))
     .reduce((obj: any, wf) => {
       obj[slugify(wf.name ?? wf.id)] = wf;
       return obj;
@@ -58,7 +65,10 @@ export default function (
   return state;
 }
 
-export const mapWorkflow = (workflow: Workflow) => {
+export const mapWorkflow = (
+  workflow: Workflow,
+  credentials: Credential[] = []
+) => {
   if (workflow instanceof Workflow) {
     // @ts-ignore
     workflow = workflow.toJSON();
@@ -116,12 +126,17 @@ export const mapWorkflow = (workflow: Workflow) => {
         typeof s.configuration === 'string' &&
         !s.configuration.endsWith('.json')
       ) {
-        // TODO do I need to ensure that this gets added to project_credntials?
-        // not really - if the credential hasn't been added yet, users have to go into
-        // the app and do it
-        // Maybe there's a feature-request to auto-add credentials if the user
-        // has access
-        otherOpenFnProps.project_credential_id = s.configuration;
+        let projectCredentialId = s.configuration;
+        if (projectCredentialId) {
+          const mappedCredential = credentials.find((c) => {
+            const name = getCredentialName(c);
+            return name === projectCredentialId;
+          });
+          if (mappedCredential) {
+            projectCredentialId = mappedCredential.uuid;
+          }
+          otherOpenFnProps.project_credential_id = projectCredentialId;
+        }
       }
 
       Object.assign(node, defaultJobProps, otherOpenFnProps);

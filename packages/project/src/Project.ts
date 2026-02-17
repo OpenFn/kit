@@ -34,6 +34,14 @@ type CLIMeta = {
   forked_from?: Record<string, string>;
 };
 
+export type Credential = {
+  uuid: string;
+  name: string;
+
+  // TODO having the owner in the credential is controvertial and we may need to rethink this later
+  owner: string;
+};
+
 export class Project {
   // what schema version is this?
   // And how are we tracking this?
@@ -70,7 +78,7 @@ export class Project {
 
   collections: any;
 
-  credentials: string[];
+  credentials: Credential[];
 
   sandbox?: SandboxMeta;
 

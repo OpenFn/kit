@@ -58,6 +58,14 @@ const state: Provisioner.Project = {
 export default state;
 
 const withCreds = cloneDeep(state);
+// TODO I'm not sure about keychain creds hre
+withCreds.project_credentials = [
+  {
+    id: 'p',
+    name: 'My Credential',
+    owner: 'admin@openfn.org',
+  },
+];
 Object.assign(withCreds.workflows['my-workflow'].jobs['transform-data'], {
   project_credential_id: 'p',
   keychain_credential_id: 'k',

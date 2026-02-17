@@ -50,7 +50,13 @@ const state: Provisioner.Project = {
     },
   },
   updated_at: '2025-04-23T11:15:59Z',
-  project_credentials: ['<uuid:c1>'],
+  project_credentials: [
+    {
+      id: '<uuid:c1>',
+      name: 'my cred',
+      owner: 'admin@openfn.org',
+    },
+  ],
   scheduled_deletion: null,
   allow_support_access: false,
   requires_mfa: false,
@@ -427,8 +433,13 @@ test('should convert a project back to app state in json', (t) => {
   const data = {
     name: 'aaa',
     description: 'a project',
-    // TODO I think we might need more automation of this?
-    credentials: ['<uuid:c1>'],
+    credentials: [
+      {
+        uuid: '<uuid:c1>',
+        name: 'my cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
     collections: [],
     openfn: {
       env: 'project',
@@ -477,7 +488,7 @@ test('should convert a project back to app state in json', (t) => {
             name: 'Transform data',
             expression: 'fn(s => s)',
             adaptor: '@openfn/language-common@latest',
-            configuration: '<uuid:c1>',
+            configuration: 'admin@openfn.org-my-cred',
             openfn: {
               uuid: '66add020-e6eb-4eec-836b-20008afca816',
             },

@@ -6,7 +6,10 @@ import * as v2 from '../fixtures/sample-v2-project';
 const v1_yaml = `id: '1234'
 name: aaa
 description: a project
-project_credentials: []
+credentials:
+  - uuid: x
+    owner: admin@openfn.org
+    name: My Credential
 collections: []
 inserted_at: 2025-04-23T11:15:59Z
 updated_at: 2025-04-23T11:15:59Z
@@ -89,6 +92,14 @@ test('import from a v2 project as JSON', async (t) => {
   t.is(proj.openfn!.endpoint, 'https://app.openfn.org');
 
   t.is(proj.workflows.length, 1);
+
+  t.deepEqual(proj.credentials, [
+    {
+      uuid: 'x',
+      owner: 'admin@openfn.org',
+      name: 'My Credential',
+    },
+  ]);
 
   t.deepEqual(proj.workflows[0].workflow, {
     id: 'workflow',

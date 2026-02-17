@@ -3,10 +3,11 @@
 import * as l from '@openfn/lexicon';
 import { Provisioner } from '@openfn/lexicon/lightning';
 
-import { Project } from '../Project';
+import { Project, Credential } from '../Project';
 import renameKeys from '../util/rename-keys';
 import slugify from '../util/slugify';
 import ensureJson from '../util/ensure-json';
+import getCredentialName from '../util/get-credential-name';
 
 export type fromAppStateConfig = Partial<l.WorkspaceConfig> & {
   format?: 'yaml' | 'json';
@@ -26,13 +27,20 @@ export default (
     name,
     description,
     workflows,
-    project_credentials: credentials,
+    project_credentials,
     collections,
     inserted_at,
     updated_at,
     parent_id,
     ...options
   } = stateJson;
+
+  // subtle mapping of credentials keys to align with lexicon
+  const credentials = project_credentials.map((c) => ({
+    uuid: c.id,
+    name: c.name,
+    owner: c.owner,
+  }));
 
   const proj: Partial<l.Project> = {
     name,
@@ -59,7 +67,9 @@ export default (
     };
   }
 
-  proj.workflows = Object.values(stateJson.workflows).map(mapWorkflow);
+  proj.workflows = Object.values(stateJson.workflows).map((w) =>
+    mapWorkflow(w, proj.credentials)
+  );
 
   return new Project(proj as l.Project, config);
 };
@@ -91,7 +101,10 @@ export const mapEdge = (edge: Provisioner.Edge) => {
 
 // map a project workflow to a local cli workflow
 // TODO this probably gets easier if I index everything by name
-export const mapWorkflow = (workflow: Provisioner.Workflow) => {
+export const mapWorkflow = (
+  workflow: Provisioner.Workflow,
+  credentials: Credential[] = []
+) => {
   const { jobs, edges, triggers, name, version_history, ...remoteProps } =
     workflow;
   const mapped: l.Workflow = {
@@ -155,7 +168,14 @@ export const mapWorkflow = (workflow: Provisioner.Workflow) => {
       openfn: renameKeys(remoteProps, { id: 'uuid' }),
     };
     if (project_credential_id) {
-      s.configuration = project_credential_id;
+      const mappedCredential = credentials.find(
+        (c) => c.uuid == project_credential_id
+      );
+      if (mappedCredential) {
+        s.configuration = getCredentialName(mappedCredential);
+      } else {
+        s.configuration = project_credential_id;
+      }
     }
 
     if (outboundEdges.length) {

@@ -112,7 +112,26 @@ test('should default alias to "main"', (t) => {
   t.is(project.alias, 'main');
 });
 
-test.only('should convert a state file to a project and back again', async (t) => {
+test('should support credentials', (t) => {
+  const project = new Project({
+    credentials: [
+      {
+        uuid: '21345',
+        name: 'My Credential',
+        owner: 'admin@openfn.org',
+      },
+    ],
+  });
+
+  const [cred] = project.credentials;
+  t.deepEqual(cred, {
+    uuid: '21345',
+    name: 'My Credential',
+    owner: 'admin@openfn.org',
+  });
+});
+
+test('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',
     env: 'test',

@@ -92,6 +92,18 @@ test('should create a Project from prov state with positions', (t) => {
   });
 });
 
+test('should handle project credentials', (t) => {
+  const newState = cloneDeep(withCreds);
+
+  const project = fromAppState(newState, meta);
+
+  t.is(project.credentials.length, 1);
+  t.is(
+    project.workflows[0].steps[1].configuration,
+    'admin@openfn.org-my-credential'
+  );
+});
+
 test('should create a Project from prov state with a workflow', (t) => {
   const project = fromAppState(state, meta);
 
@@ -250,7 +262,7 @@ test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
     id: 'transform-data',
     name: 'Transform data',
     adaptor: '@openfn/language-common@latest',
-    configuration: 'p',
+    configuration: 'p', // note that without a credential map, this gets left alone
     expression: 'fn(s => s)',
     openfn: {
       uuid: '66add020-e6eb-4eec-836b-20008afca816',
@@ -259,21 +271,28 @@ test('mapWorkflow: map a job with keychain credentials onto .openfn', (t) => {
   });
 });
 
-test('mapWorkflow: map a job with projcet credentials onto job.configuration', (t) => {
+test('mapWorkflow: map a job with project credentials onto job.configuration', (t) => {
   const wf = withCreds.workflows['my-workflow'];
-  const mapped = mapWorkflow(wf);
+  const credentials = [
+    {
+      uuid: 'p',
+      owner: 'admin',
+      name: 'cred',
+    },
+  ];
+  const mapped = mapWorkflow(wf, credentials);
 
   const [_trigger, job] = mapped.steps;
 
   // This is the important bit
-  t.is((job as Job).configuration, 'p');
+  t.is((job as Job).configuration, 'admin-cred');
 
   t.deepEqual(job, {
     id: 'transform-data',
     name: 'Transform data',
     adaptor: '@openfn/language-common@latest',
     expression: 'fn(s => s)',
-    configuration: 'p',
+    configuration: 'admin-cred',
     openfn: {
       uuid: '66add020-e6eb-4eec-836b-20008afca816',
       keychain_credential_id: 'k',
