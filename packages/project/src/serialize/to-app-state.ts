@@ -35,9 +35,10 @@ export default function (
     isNil
   ) as Provisioner.Project;
 
-  state.id = uuid as string;
+  state.id = (uuid as string) ?? randomUUID();
 
   Object.assign(state, rest, project.options);
+
   state.project_credentials = project.credentials ?? [];
   state.workflows = project.workflows
     .map(mapWorkflow)

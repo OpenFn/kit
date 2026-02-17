@@ -36,7 +36,7 @@ export const parseProject = async (options: FromFsConfig) => {
 
   const proj: any = {
     id: options.name ? slugify(options.name) : context.project?.id,
-    name: options.name ?? context.project?.name,
+    name: options.name ? slugify(options.name) : context.project?.name,
     openfn: omit(context.project, ['id', 'forked_from']),
     config: config,
     workflows: [],
