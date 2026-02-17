@@ -32,7 +32,13 @@ export type DeployOptions = Pick<
   | 'log'
   | 'logJson'
   | 'confirm'
-> & { workspace?: string; dryRun?: boolean; new?: boolean; name?: string };
+> & {
+  workspace?: string;
+  dryRun?: boolean;
+  new?: boolean;
+  name?: string;
+  alias?: string;
+};
 
 const options = [
   // local options
@@ -41,6 +47,7 @@ const options = [
   o2.dryRun,
   o2.new,
   o2.name,
+  o2.alias,
 
   // general options
   o.apiKey,
@@ -236,7 +243,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // We need track alias in openfn.yaml to make this easier (and tracked in from fs)
   const ws = new Workspace(options.workspace || '.');
 
-  const { alias } = ws.getActiveProject()!;
+  const active = ws.getActiveProject();
+  const alias = options.alias ?? active?.alias;
   // TODO this doesn't have an alias
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
@@ -246,7 +254,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   if (options.new) {
     // reset all metadata
-    localProject.openfn = {};
+    localProject.openfn = {
+      endpoint: config.endpoint,
+    };
   }
 
   logger.success(`Loaded local project ${printProjectName(localProject)}`);
@@ -299,13 +309,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
       logger
     );
 
-    // TODO do we think this final project is right?
-    // We need to restore CLI stuff like alias, meta
     const finalProject = await Project.from(
       'state',
       result,
       {
         endpoint: config.endpoint,
+        alias,
       },
       merged.config
     );
