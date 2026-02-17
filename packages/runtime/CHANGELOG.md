@@ -1,5 +1,11 @@
 # @openfn/runtime
 
+## 1.8.4
+
+### Patch Changes
+
+- dd88099: Fix an issue which could occur when sourcemaps cannot be found
+
 ## 1.8.3
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @openfn/cli
 
+## 1.27.0
+
+### Minor Changes
+
+- 92c0b49: In `project deploy`, allow new projects to be created if `--new` is passed. Add `--name my-project` to override the name in the newly created project
+
+### Patch Changes
+
+- 5d6237d: DEfault endpoint to app.openfn.org and improve error message
+- Updated dependencies [92c0b49]
+- Updated dependencies [dd88099]
+  - @openfn/project@0.13.1
+  - @openfn/runtime@1.8.4
+
 ## 1.26.0
 
 Overhaul `project deploy` for better conflict detection and more stable uploads, with more accurate warnings and less loss of data
