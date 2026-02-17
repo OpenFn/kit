@@ -20,7 +20,7 @@ export const loadAppAuthConfig = (
 
   const config: AuthOptions = {
     apiKey: options.apiKey,
-    endpoint: options.endpoint,
+    endpoint: options.endpoint ?? 'https://app.openfn.org',
   };
 
   if (!options.apiKey && OPENFN_API_KEY) {
