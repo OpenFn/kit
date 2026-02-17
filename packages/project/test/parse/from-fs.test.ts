@@ -204,6 +204,6 @@ test.serial('should override the name and id from options', async (t) => {
   });
 
   const project = await parseProject({ root: '/ws', name: 'Hello World' });
-  t.is(project.name, 'Hello World');
+  t.is(project.name, 'hello-world');
   t.is(project.id, 'hello-world');
 });
