@@ -13,12 +13,14 @@ import {
 import { omit } from 'lodash-es';
 import { Logger } from '@openfn/logger';
 import omitNil from '../util/omit-nil';
+import slugify from '../util/slugify';
 
 export type FromFsConfig = {
   root: string;
   config?: Partial<l.WorkspaceConfig>;
   logger?: Logger;
   alias?: string;
+  name?: string;
 };
 
 // Parse a single project from a root folder
@@ -33,8 +35,8 @@ export const parseProject = async (options: FromFsConfig) => {
   const config = buildConfig(options.config ?? context.workspace);
 
   const proj: any = {
-    id: context.project?.id,
-    name: context.project?.name,
+    id: options.name ? slugify(options.name) : context.project?.id,
+    name: options.name ?? context.project?.name,
     openfn: omit(context.project, ['id', 'forked_from']),
     config: config,
     workflows: [],
