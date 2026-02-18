@@ -1,8 +1,13 @@
 import test from 'ava';
 import { randomUUID } from 'node:crypto';
 import Project from '../../src';
-import { merge, REPLACE_MERGE } from '../../src/merge/merge-project';
+import {
+  merge,
+  REPLACE_MERGE,
+  replaceCredentials,
+} from '../../src/merge/merge-project';
 import { generateWorkflow } from '../../src/gen/generator';
+import { Credential } from '../../src/Project';
 
 let idgen = 0;
 
@@ -736,3 +741,97 @@ test.todo('options: only changed and 1 workflow');
 
 // this test it's important that the final project includes the unchanged workflow
 test.todo('options: only changed, and 1 changed, 1 unchanged workflow');
+
+test('replaceCredentials: preserves target credentials with their UUIDs', (t) => {
+  const targetCreds: Credential[] = [
+    { uuid: 'target-uuid-1', name: 'cred1', owner: 'user1' },
+    { uuid: 'target-uuid-2', name: 'cred2', owner: 'user1' },
+  ];
+
+  const result = replaceCredentials([], targetCreds);
+
+  t.is(result.length, 2);
+  t.is(result[0].uuid, 'target-uuid-1');
+  t.is(result[1].uuid, 'target-uuid-2');
+});
+
+test('replaceCredentials: adds new credentials from source without their UUIDs', (t) => {
+  const sourceCreds: Credential[] = [
+    { uuid: 'source-uuid-1', name: 'newcred', owner: 'user1' },
+  ];
+  const targetCreds: Credential[] = [
+    { uuid: 'target-uuid-1', name: 'existingcred', owner: 'user1' },
+  ];
+
+  const result = replaceCredentials(sourceCreds, targetCreds);
+
+  t.is(result.length, 2);
+  // First credential should be the existing target credential
+  t.is(result[0].uuid, 'target-uuid-1');
+  t.is(result[0].name, 'existingcred');
+
+  // Second credential should be the new one from source, but without UUID
+  t.is(result[1].name, 'newcred');
+  t.is(result[1].owner, 'user1');
+  t.falsy(result[1].uuid);
+});
+
+test('replaceCredentials: does not duplicate credentials with same name/owner', (t) => {
+  const sourceCreds: Credential[] = [
+    { uuid: 'source-uuid-1', name: 'samecred', owner: 'user1' },
+  ];
+  const targetCreds: Credential[] = [
+    { uuid: 'target-uuid-1', name: 'samecred', owner: 'user1' },
+  ];
+
+  const result = replaceCredentials(sourceCreds, targetCreds);
+
+  // Should only have one credential (from target)
+  t.is(result.length, 1);
+  t.is(result[0].uuid, 'target-uuid-1');
+  t.is(result[0].name, 'samecred');
+  t.is(result[0].owner, 'user1');
+});
+
+test('replaceCredentials: treats credentials with different owners as different', (t) => {
+  const sourceCreds: Credential[] = [
+    { uuid: 'source-uuid-1', name: 'cred1', owner: 'user2' },
+  ];
+  const targetCreds: Credential[] = [
+    { uuid: 'target-uuid-1', name: 'cred1', owner: 'user1' },
+  ];
+
+  const result = replaceCredentials(sourceCreds, targetCreds);
+
+  // Should have both credentials (different owners)
+  t.is(result.length, 2);
+  t.is(result[0].owner, 'user1');
+  t.is(result[1].owner, 'user2');
+  t.falsy(result[1].uuid);
+});
+
+test('replaceCredentials: handles multiple new and existing credentials', (t) => {
+  const sourceCreds: Credential[] = [
+    { uuid: 'source-uuid-1', name: 'existing', owner: 'user1' },
+    { uuid: 'source-uuid-2', name: 'new1', owner: 'user1' },
+    { uuid: 'source-uuid-3', name: 'new2', owner: 'user2' },
+  ];
+  const targetCreds: Credential[] = [
+    { uuid: 'target-uuid-1', name: 'existing', owner: 'user1' },
+    { uuid: 'target-uuid-2', name: 'old', owner: 'user1' },
+  ];
+
+  const result = replaceCredentials(sourceCreds, targetCreds);
+
+  t.is(result.length, 4);
+
+  // First two should be from target with their UUIDs
+  t.is(result[0].uuid, 'target-uuid-1');
+  t.is(result[1].uuid, 'target-uuid-2');
+
+  // Next two should be new credentials without UUIDs
+  t.is(result[2].name, 'new1');
+  t.falsy(result[2].uuid);
+  t.is(result[3].name, 'new2');
+  t.falsy(result[3].uuid);
+});

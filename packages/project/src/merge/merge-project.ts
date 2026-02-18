@@ -1,12 +1,13 @@
 import { defaultsDeep, isEmpty } from 'lodash-es';
 
-import { Project } from '../Project';
+import { Credential, Project } from '../Project';
 import { mergeWorkflows } from './merge-workflow';
 import mapUuids from './map-uuids';
 import baseMerge from '../util/base-merge';
 import getDuplicates from '../util/get-duplicates';
 import Workflow from '../Workflow';
 import findChangedWorkflows from '../util/find-changed-workflows';
+import getCredentialName from '../util/get-credential-name';
 
 export const SANDBOX_MERGE = 'sandbox';
 
@@ -157,7 +158,12 @@ export function merge(
           name: source.name ?? target.name,
           alias: source.alias ?? target.alias,
           description: source.description ?? target.description,
-          credentials: source.credentials ?? target.credentials,
+
+          // when mapping credentials, we prefer the UUIDs on the target
+          credentials: replaceCredentials(
+            source.credentials,
+            target.credentials
+          ),
           collections: source.collections ?? target.collections,
         };
 
@@ -166,3 +172,29 @@ export function merge(
     baseMerge(target, source, ['collections'], assigns as any)
   );
 }
+
+export const replaceCredentials = (
+  sourceCreds: Credential[] = [],
+  targetCreds: Credential[] = []
+): Credential[] => {
+  const result = [...targetCreds];
+
+  // Build an object of existing target credential names for quick lookup
+  const targetCredNames = targetCreds.reduce((acc, cred) => {
+    acc[getCredentialName(cred)] = true;
+    return acc;
+  }, {} as Record<string, boolean>);
+
+  // Find credentials in source that don't exist in target
+  for (const sourceCred of sourceCreds) {
+    const credName = getCredentialName(sourceCred);
+    if (!targetCredNames[credName]) {
+      // This is a new credential - add it without the source uuid
+      // (a new UUID will be generated elsewhere)
+      const { uuid, ...credWithoutUuid } = sourceCred;
+      result.push(credWithoutUuid as Credential);
+    }
+  }
+
+  return result;
+};
