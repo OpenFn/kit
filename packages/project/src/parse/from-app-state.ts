@@ -27,7 +27,7 @@ export default (
     name,
     description,
     workflows,
-    project_credentials,
+    project_credentials = [],
     collections,
     inserted_at,
     updated_at,
