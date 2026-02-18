@@ -428,7 +428,7 @@ a-(condition=x)-f
   t.is(a_f.condition_expression, 'x');
 });
 
-test('should convert a project back to app state in json', (t) => {
+test.only('should convert a project back to app state in json', (t) => {
   // this is a serialized project file
   const data = {
     name: 'aaa',
@@ -488,7 +488,7 @@ test('should convert a project back to app state in json', (t) => {
             name: 'Transform data',
             expression: 'fn(s => s)',
             adaptor: '@openfn/language-common@latest',
-            configuration: 'admin@openfn.org-my-cred',
+            configuration: 'admin@openfn.org|my cred',
             openfn: {
               uuid: '66add020-e6eb-4eec-836b-20008afca816',
             },

@@ -131,6 +131,56 @@ test('should support credentials', (t) => {
   });
 });
 
+test('should generate a credential map', (t) => {
+  const project = new Project({
+    workflows: [
+      {
+        id: 'w',
+        steps: [
+          {
+            id: 'a',
+            configuration: 'admin@openfn.org|My Credential',
+          },
+        ],
+      },
+    ],
+  });
+  const creds = project.buildCredentialMap();
+  t.deepEqual(creds, [
+    {
+      name: 'My Credential',
+      owner: 'admin@openfn.org',
+    },
+  ]);
+});
+
+test('should generate a credential map without duplicates', (t) => {
+  const project = new Project({
+    workflows: [
+      {
+        id: 'w',
+        steps: [
+          {
+            id: 'a',
+            configuration: 'admin@openfn.org|My Credential',
+          },
+          {
+            id: 'b',
+            configuration: 'admin@openfn.org|My Credential',
+          },
+        ],
+      },
+    ],
+  });
+  const creds = project.buildCredentialMap();
+  t.deepEqual(creds, [
+    {
+      name: 'My Credential',
+      owner: 'admin@openfn.org',
+    },
+  ]);
+});
+
 test('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',

@@ -20,7 +20,7 @@ export type SerializedWorkflow = {
   id: string;
   name: string;
 
-  steps: WithMeta<l.Step[]>;
+  steps: WithMeta<Array<l.Job | l.Trigger>>;
 
   openfn?: l.ProjectMeta;
 };

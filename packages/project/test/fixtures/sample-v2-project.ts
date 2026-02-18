@@ -26,7 +26,8 @@ export const json: SerializedProject = {
         {
           name: 'b',
           id: 'b',
-          openfn: { uuid: 3, project_credential_id: 'x' },
+          configuration: 'admin@openfn.org|My Credential',
+          openfn: { uuid: 3 },
           expression: 'fn()',
           adaptor: 'common',
         },
@@ -68,9 +69,9 @@ workflows:
         name: b
         openfn:
           uuid: 3
-          project_credential_id: x
         expression: fn()
         adaptor: common
+        configuration: admin@openfn.org|My Credential
       - id: trigger
         openfn:
           uuid: 2

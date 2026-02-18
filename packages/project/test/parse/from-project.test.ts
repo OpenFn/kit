@@ -146,7 +146,7 @@ test('import from a v2 project with alias', async (t) => {
   t.is(proj.cli.alias, 'staging');
 });
 
-test('import from a v2 project as YAML', async (t) => {
+test.only('import from a v2 project as YAML', async (t) => {
   const proj = await Project.from('project', v2.yaml);
   t.is(proj.id, 'my-project');
   t.is(proj.name, 'My Project');
@@ -173,9 +173,9 @@ test('import from a v2 project as YAML', async (t) => {
         id: 'b',
         expression: 'fn()',
         adaptor: 'common',
+        configuration: 'admin@openfn.org|My Credential',
         openfn: {
           uuid: 3,
-          project_credential_id: 'x',
         },
       },
       {

@@ -100,7 +100,7 @@ test('should handle project credentials', (t) => {
   t.is(project.credentials.length, 1);
   t.is(
     project.workflows[0].steps[1].configuration,
-    'admin@openfn.org-my-credential'
+    'admin@openfn.org|My Credential'
   );
 });
 
@@ -285,14 +285,14 @@ test('mapWorkflow: map a job with project credentials onto job.configuration', (
   const [_trigger, job] = mapped.steps;
 
   // This is the important bit
-  t.is((job as Job).configuration, 'admin-cred');
+  t.is((job as Job).configuration, 'admin|cred');
 
   t.deepEqual(job, {
     id: 'transform-data',
     name: 'Transform data',
     adaptor: '@openfn/language-common@latest',
     expression: 'fn(s => s)',
-    configuration: 'admin-cred',
+    configuration: 'admin|cred',
     openfn: {
       uuid: '66add020-e6eb-4eec-836b-20008afca816',
       keychain_credential_id: 'k',

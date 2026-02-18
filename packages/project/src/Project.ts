@@ -15,6 +15,7 @@ import { Workspace } from './Workspace';
 import { buildConfig, extractConfig } from './util/config';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { SandboxMeta, UUID, WorkspaceConfig } from '@openfn/lexicon';
+import { parse } from './util/get-credential-name';
 
 const maybeCreateWorkflow = (wf: any) =>
   wf instanceof Workflow ? wf : new Workflow(wf);
@@ -247,6 +248,26 @@ export class Project {
       };
     }
     return result;
+  }
+
+  /**
+   * Find all project credentials referenced in all
+   * workflows and return it
+   */
+  buildCredentialMap() {
+    const creds: any = {};
+    for (const wf of this.workflows) {
+      for (const step of wf.steps) {
+        if (
+          typeof step.configuration === 'string' &&
+          !creds[step.configuration]
+        ) {
+          const { name, owner } = parse(step.configuration);
+          creds[step.configuration] = { name, owner };
+        }
+      }
+    }
+    return Object.values(creds);
   }
 
   // Compare this project with another and return a list of workflow changes

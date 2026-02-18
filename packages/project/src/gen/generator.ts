@@ -35,7 +35,7 @@ const expectedNodeProps = [
   // TODO need to clarify adaptor/adaptors confusion
   'adaptor',
   'adaptors',
-
+  'configuration',
   'expression',
   'condition',
   'label',

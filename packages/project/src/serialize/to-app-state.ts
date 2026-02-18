@@ -42,7 +42,10 @@ export default function (
 
   state.project_credentials =
     project.credentials?.map((c) => ({
-      id: c.uuid, // note the subtle conversion here
+      // note the subtle conversion here
+      // Also we generate a UUID if one doesn't exist
+      // The provisioner API will then try to attach this credential to the project
+      id: c.uuid ?? randomUUID(),
       name: c.name,
       owner: c.owner,
     })) ?? [];
@@ -132,6 +135,9 @@ export const mapWorkflow = (
             const name = getCredentialName(c);
             return name === projectCredentialId;
           });
+          // TODO what if the credential isn't mapped?
+          // Will deploy break?
+          // Do we have to warn the user?
           if (mappedCredential) {
             projectCredentialId = mappedCredential.uuid;
           }
