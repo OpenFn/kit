@@ -28,6 +28,7 @@ export default function (
     env,
     id /* shouldn't be there but will cause problems if it's set*/,
     fetched_at /* remove this metadata as it causes problems */,
+    alias, // shouldn't be written but has been caught in some legacy files
     ...rest
   } = project.openfn ?? {};
 
@@ -143,6 +144,10 @@ export const mapWorkflow = (
           // Do we have to warn the user?
           if (mappedCredential) {
             projectCredentialId = mappedCredential.uuid;
+          } else {
+            console.warn(`WARING! Failed to map credential ${projectCredentialId} - Lightning may throw an error.
+              
+Ensure the credential exists in project.yaml and try again (maybe ensure the credential is attached to the project in the app and run project fetch)`);
           }
           otherOpenFnProps.project_credential_id = projectCredentialId;
         }
