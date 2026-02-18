@@ -112,7 +112,76 @@ test('should default alias to "main"', (t) => {
   t.is(project.alias, 'main');
 });
 
-test.only('should convert a state file to a project and back again', async (t) => {
+test('should support credentials', (t) => {
+  const project = new Project({
+    credentials: [
+      {
+        uuid: '21345',
+        name: 'My Credential',
+        owner: 'admin@openfn.org',
+      },
+    ],
+  });
+
+  const [cred] = project.credentials;
+  t.deepEqual(cred, {
+    uuid: '21345',
+    name: 'My Credential',
+    owner: 'admin@openfn.org',
+  });
+});
+
+test('should generate a credential map', (t) => {
+  const project = new Project({
+    workflows: [
+      {
+        id: 'w',
+        steps: [
+          {
+            id: 'a',
+            configuration: 'admin@openfn.org|My Credential',
+          },
+        ],
+      },
+    ],
+  });
+  const creds = project.buildCredentialMap();
+  t.deepEqual(creds, [
+    {
+      name: 'My Credential',
+      owner: 'admin@openfn.org',
+    },
+  ]);
+});
+
+test('should generate a credential map without duplicates', (t) => {
+  const project = new Project({
+    workflows: [
+      {
+        id: 'w',
+        steps: [
+          {
+            id: 'a',
+            configuration: 'admin@openfn.org|My Credential',
+          },
+          {
+            id: 'b',
+            configuration: 'admin@openfn.org|My Credential',
+          },
+        ],
+      },
+    ],
+  });
+  const creds = project.buildCredentialMap();
+  t.deepEqual(creds, [
+    {
+      name: 'My Credential',
+      owner: 'admin@openfn.org',
+    },
+  ]);
+});
+
+test('should convert a state file to a project and back again', async (t) => {
   const meta = {
     endpoint: 'app.openfn.org',
     env: 'test',
@@ -163,8 +232,8 @@ test('should return UUIDs for everything', async (t) => {
     wf1: {
       self: '72ca3eb0-042c-47a0-a2a1-a545ed4a8406',
       children: {
-        trigger: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
-        'trigger-transform-data': 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
+        webhook: '4a06289c-15aa-4662-8dc6-f0aaacd8a058',
+        'webhook-transform-data': 'a9a3adef-b394-4405-814d-3ac4323f4b4b',
         'transform-data': '66add020-e6eb-4eec-836b-20008afca816',
       },
     },

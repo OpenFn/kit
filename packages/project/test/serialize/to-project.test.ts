@@ -23,9 +23,16 @@ const createProject = (props: Partial<l.Project> = {}) => {
       env: 'dev',
       color: 'red',
     },
+    credentials: [
+      {
+        uuid: 'x',
+        owner: 'admin@openfn.org',
+        name: 'My Credential',
+      },
+    ],
     workflows: [
       generateWorkflow(
-        'trigger(type=webhook)-b(expression="fn()",adaptor=common,project_credential_id=x)',
+        'trigger(type=webhook)-b(expression="fn()",adaptor=common,configuration="admin@openfn.org|My Credential")',
         {
           uuidSeed: 1,
           openfnUuid: true,

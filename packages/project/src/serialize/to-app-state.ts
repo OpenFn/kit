@@ -2,11 +2,12 @@ import { pick, omitBy, isNil, sortBy } from 'lodash-es';
 import { Provisioner } from '@openfn/lexicon/lightning';
 import { randomUUID } from 'node:crypto';
 
-import { Project } from '../Project';
+import { Credential, Project } from '../Project';
 import renameKeys from '../util/rename-keys';
 import { jsonToYaml } from '../util/yaml';
 import Workflow from '../Workflow';
 import slugify from '../util/slugify';
+import getCredentialName from '../util/get-credential-name';
 
 type Options = { format?: 'json' | 'yaml' };
 
@@ -27,6 +28,7 @@ export default function (
     env,
     id /* shouldn't be there but will cause problems if it's set*/,
     fetched_at /* remove this metadata as it causes problems */,
+    alias, // shouldn't be written but has been caught in some legacy files
     ...rest
   } = project.openfn ?? {};
 
@@ -39,9 +41,21 @@ export default function (
 
   Object.assign(state, rest, project.options);
 
-  state.project_credentials = project.credentials ?? [];
+  const credentialsWithUuids =
+    project.credentials?.map((c) => ({
+      ...c,
+      uuid: c.uuid ?? randomUUID(),
+    })) ?? [];
+
+  state.project_credentials = credentialsWithUuids.map((c) => ({
+    // note the subtle conversion here
+    id: c.uuid,
+    name: c.name,
+    owner: c.owner,
+  }));
+
   state.workflows = project.workflows
-    .map(mapWorkflow)
+    .map((w) => mapWorkflow(w, credentialsWithUuids))
     .reduce((obj: any, wf) => {
       obj[slugify(wf.name ?? wf.id)] = wf;
       return obj;
@@ -58,7 +72,10 @@ export default function (
   return state;
 }
 
-export const mapWorkflow = (workflow: Workflow) => {
+export const mapWorkflow = (
+  workflow: Workflow,
+  credentials: Credential[] = []
+) => {
   if (workflow instanceof Workflow) {
     // @ts-ignore
     workflow = workflow.toJSON();
@@ -116,12 +133,21 @@ export const mapWorkflow = (workflow: Workflow) => {
         typeof s.configuration === 'string' &&
         !s.configuration.endsWith('.json')
       ) {
-        // TODO do I need to ensure that this gets added to project_credntials?
-        // not really - if the credential hasn't been added yet, users have to go into
-        // the app and do it
-        // Maybe there's a feature-request to auto-add credentials if the user
-        // has access
-        otherOpenFnProps.project_credential_id = s.configuration;
+        let projectCredentialId = s.configuration;
+        if (projectCredentialId) {
+          const mappedCredential = credentials.find((c) => {
+            const name = getCredentialName(c);
+            return name === projectCredentialId;
+          });
+          if (mappedCredential) {
+            projectCredentialId = mappedCredential.uuid;
+          } else {
+            console.warn(`WARING! Failed to map credential ${projectCredentialId} - Lightning may throw an error.
+              
+Ensure the credential exists in project.yaml and try again (maybe ensure the credential is attached to the project in the app and run project fetch)`);
+          }
+          otherOpenFnProps.project_credential_id = projectCredentialId;
+        }
       }
 
       Object.assign(node, defaultJobProps, otherOpenFnProps);

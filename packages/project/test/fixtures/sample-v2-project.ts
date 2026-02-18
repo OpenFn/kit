@@ -13,13 +13,21 @@ export const json: SerializedProject = {
   sandbox: {
     parentId: 'abcd',
   },
+  credentials: [
+    {
+      uuid: 'x',
+      owner: 'admin@openfn.org',
+      name: 'My Credential',
+    },
+  ],
   workflows: [
     {
       steps: [
         {
           name: 'b',
           id: 'b',
-          openfn: { uuid: 3, project_credential_id: 'x' },
+          configuration: 'admin@openfn.org|My Credential',
+          openfn: { uuid: 3 },
           expression: 'fn()',
           adaptor: 'common',
         },
@@ -44,6 +52,10 @@ name: My Project
 cli:
   version: 2
 description: my lovely project
+credentials:
+  - uuid: x
+    owner: admin@openfn.org
+    name: My Credential
 openfn:
   uuid: "1234"
   endpoint: https://app.openfn.org
@@ -57,9 +69,9 @@ workflows:
         name: b
         openfn:
           uuid: 3
-          project_credential_id: x
         expression: fn()
         adaptor: common
+        configuration: admin@openfn.org|My Credential
       - id: trigger
         openfn:
           uuid: 2

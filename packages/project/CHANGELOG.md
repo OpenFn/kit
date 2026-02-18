@@ -1,5 +1,13 @@
 # @openfn/project
 
+## 0.14.0
+
+### Minor Changes
+
+- 1bbc8c4: Update credentials to use credential id, not UUID. This enables credentials to sync better with app projects.
+
+  WARNING: existing credential maps will break after pulling after this change. Update your credential maps to index on the new id values rather than the UUIDs.
+
 ## 0.13.1
 
 ### Patch Changes

@@ -50,7 +50,13 @@ const state: Provisioner.Project = {
     },
   },
   updated_at: '2025-04-23T11:15:59Z',
-  project_credentials: ['<uuid:c1>'],
+  project_credentials: [
+    {
+      id: '<uuid:c1>',
+      name: 'my cred',
+      owner: 'admin@openfn.org',
+    },
+  ],
   scheduled_deletion: null,
   allow_support_access: false,
   requires_mfa: false,
@@ -232,6 +238,13 @@ test('should write openfn keys to objects', (t) => {
 test('should handle credentials', (t) => {
   const data = {
     id: 'my-project',
+    credentials: [
+      {
+        uuid: '123',
+        name: 'cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
     workflows: [
       {
         id: 'wf',
@@ -247,7 +260,7 @@ test('should handle credentials', (t) => {
           {
             id: 'step',
             expression: '.',
-            configuration: 'p',
+            configuration: 'admin@openfn.org|cred',
             openfn: {
               keychain_credential_id: 'k',
             },
@@ -260,7 +273,47 @@ test('should handle credentials', (t) => {
   const state = toAppState(new Project(data), { format: 'json' });
   const { step } = state.workflows['wf'].jobs;
   t.is(step.keychain_credential_id, 'k');
-  t.is(step.project_credential_id, 'p');
+  t.is(step.project_credential_id, '123');
+});
+
+test('should force a UUID on project credentials', (t) => {
+  const data = {
+    id: 'my-project',
+    credentials: [
+      {
+        name: 'cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'admin@openfn.org|cred',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
+  t.truthy(state.project_credentials[0].id);
 });
 
 test('should ignore forked_from', (t) => {
@@ -427,8 +480,13 @@ test('should convert a project back to app state in json', (t) => {
   const data = {
     name: 'aaa',
     description: 'a project',
-    // TODO I think we might need more automation of this?
-    credentials: ['<uuid:c1>'],
+    credentials: [
+      {
+        uuid: '<uuid:c1>',
+        name: 'my cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
     collections: [],
     openfn: {
       env: 'project',
@@ -477,7 +535,7 @@ test('should convert a project back to app state in json', (t) => {
             name: 'Transform data',
             expression: 'fn(s => s)',
             adaptor: '@openfn/language-common@latest',
-            configuration: '<uuid:c1>',
+            configuration: 'admin@openfn.org|my cred',
             openfn: {
               uuid: '66add020-e6eb-4eec-836b-20008afca816',
             },

@@ -245,7 +245,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   const active = ws.getActiveProject();
   const alias = options.alias ?? active?.alias;
-  // TODO this doesn't have an alias
+
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
     alias,
@@ -258,6 +258,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
       endpoint: config.endpoint,
     };
   }
+  // generate a credential map
+  localProject.credentials = localProject.buildCredentialMap();
 
   logger.success(`Loaded local project ${printProjectName(localProject)}`);
 

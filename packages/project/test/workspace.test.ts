@@ -223,9 +223,11 @@ test('workspace-path: invalid workspace path', (t) => {
 
 test('workspace-list: list projects in the workspace', (t) => {
   const ws = new Workspace('/ws');
-  t.is(ws.list().length, 1);
+  const result = ws.list();
+
+  t.is(result.length, 1);
   t.deepEqual(
-    ws.list().map((w) => w.id),
+    result.map((w) => w.id),
     ['project-1']
   );
 });

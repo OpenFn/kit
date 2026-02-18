@@ -231,9 +231,7 @@ export namespace Provisioner {
     workflows: Record<string, Workflow>;
     concurrency?: any; // TODO
 
-    // TODO typing isn't quite right here either
-    //project_credentials: Record<string | symbol, Credential>;
-    project_credentials: any[];
+    project_credentials: Array<{ id: string; name: string; owner: string }>;
 
     // this is clearly wrong?
     //collections: Record<string | symbol, Collection>;
