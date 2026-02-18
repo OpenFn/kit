@@ -254,7 +254,7 @@ export class Project {
    * Find all project credentials referenced in all
    * workflows and return it
    */
-  buildCredentialMap() {
+  buildCredentialMap(): Credential[] {
     const creds: any = {};
     for (const wf of this.workflows) {
       for (const step of wf.steps) {
