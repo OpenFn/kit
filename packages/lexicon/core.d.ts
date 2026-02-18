@@ -193,7 +193,6 @@ export interface Step {
   // TODO a Step must ALWAYS have an id (util functions can default it)
   id?: StepId;
   name?: string; // user-friendly name used in logging
-
   next?: string | Record<StepId, StepEdge>;
   previous?: StepId;
 }
