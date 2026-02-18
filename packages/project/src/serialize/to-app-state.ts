@@ -40,18 +40,21 @@ export default function (
 
   Object.assign(state, rest, project.options);
 
-  state.project_credentials =
+  const credentialsWithUuids =
     project.credentials?.map((c) => ({
-      // note the subtle conversion here
-      // Also we generate a UUID if one doesn't exist
-      // The provisioner API will then try to attach this credential to the project
-      id: c.uuid ?? randomUUID(),
-      name: c.name,
-      owner: c.owner,
+      ...c,
+      uuid: c.uuid ?? randomUUID(),
     })) ?? [];
 
+  state.project_credentials = credentialsWithUuids.map((c) => ({
+    // note the subtle conversion here
+    id: c.uuid,
+    name: c.name,
+    owner: c.owner,
+  }));
+
   state.workflows = project.workflows
-    .map((w) => mapWorkflow(w, project.credentials))
+    .map((w) => mapWorkflow(w, credentialsWithUuids))
     .reduce((obj: any, wf) => {
       obj[slugify(wf.name ?? wf.id)] = wf;
       return obj;

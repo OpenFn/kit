@@ -238,6 +238,13 @@ test('should write openfn keys to objects', (t) => {
 test('should handle credentials', (t) => {
   const data = {
     id: 'my-project',
+    credentials: [
+      {
+        uuid: '123',
+        name: 'cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
     workflows: [
       {
         id: 'wf',
@@ -253,7 +260,7 @@ test('should handle credentials', (t) => {
           {
             id: 'step',
             expression: '.',
-            configuration: 'p',
+            configuration: 'admin@openfn.org|cred',
             openfn: {
               keychain_credential_id: 'k',
             },
@@ -266,7 +273,47 @@ test('should handle credentials', (t) => {
   const state = toAppState(new Project(data), { format: 'json' });
   const { step } = state.workflows['wf'].jobs;
   t.is(step.keychain_credential_id, 'k');
-  t.is(step.project_credential_id, 'p');
+  t.is(step.project_credential_id, '123');
+});
+
+test('should force a UUID on project credentials', (t) => {
+  const data = {
+    id: 'my-project',
+    credentials: [
+      {
+        name: 'cred',
+        owner: 'admin@openfn.org',
+      },
+    ],
+    workflows: [
+      {
+        id: 'wf',
+        name: 'wf',
+        steps: [
+          {
+            id: 'trigger',
+            type: 'webhook',
+            next: {
+              step: {},
+            },
+          },
+          {
+            id: 'step',
+            expression: '.',
+            configuration: 'admin@openfn.org|cred',
+            openfn: {
+              keychain_credential_id: 'k',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = toAppState(new Project(data), {
+    format: 'json',
+  }) as Provisioner.Project_v1;
+  t.truthy(state.project_credentials[0].id);
 });
 
 test('should ignore forked_from', (t) => {
@@ -428,7 +475,7 @@ a-(condition=x)-f
   t.is(a_f.condition_expression, 'x');
 });
 
-test.only('should convert a project back to app state in json', (t) => {
+test('should convert a project back to app state in json', (t) => {
   // this is a serialized project file
   const data = {
     name: 'aaa',
