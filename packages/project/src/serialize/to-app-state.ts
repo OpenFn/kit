@@ -42,7 +42,7 @@ export default function (
 
   state.project_credentials =
     project.credentials?.map((c) => ({
-      id: c.uuid,
+      id: c.uuid, // note the subtle conversion here
       name: c.name,
       owner: c.owner,
     })) ?? [];
