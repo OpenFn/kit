@@ -12,11 +12,8 @@ const createWorkflow = (steps?: any[]) => ({
     steps: steps ?? [
       {
         id: 'a',
-        expression: `${fn}fn(() => ({ data: { count: 42 } }));`,
-        // project_credential_id must map here
-        // what about keychain_credential_id ?
-        // Should we map to credential, rather than configuration? I don't think so
-        configuration: 'A',
+        expression: `${fn}fn(() => ({ dat'admin@openfn.org-cred': { count: 42 } }));`,
+        configuration: 'admin@openfn.org-cred',
         next: { b: true },
       },
     ],
@@ -44,21 +41,41 @@ test('do nothing if map is empty', (t) => {
 test('apply a credential to a single step', (t) => {
   const wf = createWorkflow();
   const map = {
-    A: { user: 'Anne Arnold' },
+    'admin@openfn.org-cred': { user: 'Anne Arnold' },
   };
 
-  t.is(wf.workflow.steps[0].configuration, 'A');
+  t.is(wf.workflow.steps[0].configuration, 'admin@openfn.org-cred');
 
   applyCredentialMap(wf, map);
 
-  t.deepEqual(wf.workflow.steps[0].configuration, map.A);
+  t.deepEqual(wf.workflow.steps[0].configuration, map['admin@openfn.org-cred']);
+});
+
+test('apply a credential to a single step if UUIDs are used', (t) => {
+  const uuid = '4227ea57-6df9-4b6c-877f-04f00a6892b5';
+  const wf = createWorkflow([
+    {
+      id: 'a',
+      expression: `fn(s => s)`,
+      configuration: uuid,
+    },
+  ]);
+  const map = {
+    [uuid]: { user: 'Anne Arnold' },
+  };
+
+  t.is(wf.workflow.steps[0].configuration, uuid);
+
+  applyCredentialMap(wf, map);
+
+  t.deepEqual(wf.workflow.steps[0].configuration, map[uuid]);
 });
 
 test('apply a credential to a single step which already has config', (t) => {
   const wf = createWorkflow();
   wf.workflow.steps[0].configuration = { x: 1, [CREDENTIALS_KEY]: 'A' };
   const map = {
-    A: { user: 'Anne Arnold' },
+    'admin@openfn.org-cred': { user: 'Anne Arnold' },
   };
 
   applyCredentialMap(wf, map);
@@ -68,21 +85,21 @@ test('apply a credential to a single step which already has config', (t) => {
 
 test('apply a credential to several steps', (t) => {
   const wf = createWorkflow([
-    { id: 'a', configuration: 'A' },
-    { id: 'b', configuration: 'B' },
+    { id: 'a', configuration: 'admin@openfn.org-A' },
+    { id: 'b', configuration: 'admin@openfn.org-B' },
   ]);
   const map = {
-    A: { user: 'Anne Arnold' },
-    B: { user: 'Belle Bellvue' },
+    'admin@openfn.org-A': { user: 'Anne Arnold' },
+    'admin@openfn.org-B': { user: 'Belle Bellvue' },
   };
 
-  t.is(wf.workflow.steps[0].configuration, 'A');
-  t.is(wf.workflow.steps[1].configuration, 'B');
+  t.is(wf.workflow.steps[0].configuration, 'admin@openfn.org-A');
+  t.is(wf.workflow.steps[1].configuration, 'admin@openfn.org-B');
 
   applyCredentialMap(wf, map);
 
-  t.deepEqual(wf.workflow.steps[0].configuration, map.A);
-  t.deepEqual(wf.workflow.steps[1].configuration, map.B);
+  t.deepEqual(wf.workflow.steps[0].configuration, map['admin@openfn.org-A']);
+  t.deepEqual(wf.workflow.steps[1].configuration, map['admin@openfn.org-B']);
 });
 
 test('wipe string credential if unmapped', (t) => {
