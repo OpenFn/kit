@@ -8,7 +8,7 @@
 
 ### Patch Changes
 
-- 5d6237d: DEfault endpoint to app.openfn.org and improve error message
+- 5d6237d: Default endpoint to app.openfn.org and improve error message
 - Updated dependencies [92c0b49]
 - Updated dependencies [dd88099]
   - @openfn/project@0.13.1
