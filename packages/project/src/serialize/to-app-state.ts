@@ -139,9 +139,6 @@ export const mapWorkflow = (
             const name = getCredentialName(c);
             return name === projectCredentialId;
           });
-          // TODO what if the credential isn't mapped?
-          // Will deploy break?
-          // Do we have to warn the user?
           if (mappedCredential) {
             projectCredentialId = mappedCredential.uuid;
           } else {
