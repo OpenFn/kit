@@ -245,7 +245,12 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
   const active = ws.getActiveProject();
   const alias = options.alias ?? active?.alias;
-  // TODO this doesn't have an alias
+
+  // TODO what does this do about credentials?
+  // if loading from fs there's no credentials array at all
+  // we could generate it?
+  // No, because slugifying is unsafe - we lose information from the name
+  // so we have to build from the connected remote then
   const localProject = await Project.from('fs', {
     root: options.workspace || '.',
     alias,
@@ -257,6 +262,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
     localProject.openfn = {
       endpoint: config.endpoint,
     };
+
+    // generate a credential map
+    localProject.credentials = localProject.buildCredentialMap();
   }
 
   logger.success(`Loaded local project ${printProjectName(localProject)}`);
