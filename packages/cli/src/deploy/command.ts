@@ -1,12 +1,13 @@
 import yargs from 'yargs';
 import { build, ensure, override } from '../util/command-builders';
 import { Opts } from '../options';
+import { Opts as POpts } from '../projects/options';
 import * as o from '../options';
 import * as o2 from '../projects/options';
 
 export type DeployOptions = Required<
   Pick<
-    Opts,
+    Opts & POpts,
     | 'beta'
     | 'command'
     | 'configPath'
@@ -15,6 +16,7 @@ export type DeployOptions = Required<
     | 'logJson'
     | 'projectPath'
     | 'statePath'
+    | 'workspace'
   >
 >;
 
