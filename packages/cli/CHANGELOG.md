@@ -1,5 +1,14 @@
 # @openfn/cli
 
+## 1.28.1
+
+### Patch Changes
+
+- 58a9919: Fix an issue where added and removed workflows are ignored by merge
+- 66e7c13: Fix deploy when the target project is a different UUID to the local project
+- Updated dependencies [58a9919]
+  - @openfn/project@0.14.1
+
 ## 1.28.0
 
 ### Minor Changes

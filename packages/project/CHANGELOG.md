@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.14.1
+
+### Patch Changes
+
+- 58a9919: Fix an issue where added and removed workflows are ignored by merge
+
 ## 0.14.0
 
 ### Minor Changes

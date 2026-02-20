@@ -1,5 +1,12 @@
 # @openfn/integration-tests-cli
 
+## 1.0.15
+
+### Patch Changes
+
+- Updated dependencies [58a9919]
+  - @openfn/project@0.14.1
+
 ## 1.0.14
 
 ### Patch Changes
