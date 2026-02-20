@@ -8,6 +8,8 @@ import {
 import type { Logger } from '../util/logger';
 import { DeployOptions } from './command';
 import * as beta from '../projects/deploy';
+import path from 'node:path';
+import { fileExists } from '../util/file-exists';
 
 export type DeployFn = typeof deploy;
 
@@ -46,6 +48,14 @@ async function deployHandler(
     if (process.env['OPENFN_ENDPOINT']) {
       logger.info('Using OPENFN_ENDPOINT environment variable');
       config.endpoint = process.env['OPENFN_ENDPOINT'];
+    }
+
+    const final_path = path.join(
+      options.projectPath ?? process.cwd(),
+      'openfn.yaml'
+    );
+    if (await fileExists(final_path)) {
+      return beta.handler(options, logger);
     }
 
     logger.debug('Deploying with config', config);

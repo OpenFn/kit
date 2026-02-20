@@ -11,6 +11,7 @@ import {
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 import beta from '../projects/pull';
+import { fileExists } from '../util/file-exists';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
@@ -29,6 +30,14 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     if (process.env['OPENFN_ENDPOINT']) {
       logger.info('Using OPENFN_ENDPOINT environment variable');
       config.endpoint = process.env['OPENFN_ENDPOINT'];
+    }
+
+    const final_path = path.join(
+      options.projectPath ?? process.cwd(),
+      'openfn.yaml'
+    );
+    if (await fileExists(final_path)) {
+      return beta(options, logger);
     }
 
     logger.always(
