@@ -166,19 +166,6 @@ const syncProjects = async (
     // this will actually happen later
   }
 
-  // This is bogus if doing a deploy-merge to a different project
-  // it's quite legit for local and remote to have different UUIDs
-      // warn if the remote UUID is different to the local UUID
-    // This shouldn't happen?
-  //   if (!options.force && localProject.uuid !== remoteProject.uuid) {
-  //     logger.error(`UUID conflict!
-
-  // Your local project (${localProject.uuid}) has a different UUID to the remote project (${remoteProject.uuid}).
-
-  // Pass --force to override this error and deploy anyway.`);
-  //     process.exit(1);
-  //   }
-
   const locallyChangedWorkflows = await findLocallyChangedWorkflows(
     ws,
     localProject
