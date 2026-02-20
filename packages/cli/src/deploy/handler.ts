@@ -31,6 +31,12 @@ async function deployHandler(
     return beta.handler(options as any, logger);
   }
 
+  const final_path = path.join(process.cwd(), 'openfn.yaml');
+  if (await fileExists(final_path)) {
+    logger.info('Switching to openfn project deploy');
+    return beta.handler(options, logger);
+  }
+
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
@@ -48,15 +54,6 @@ async function deployHandler(
     if (process.env['OPENFN_ENDPOINT']) {
       logger.info('Using OPENFN_ENDPOINT environment variable');
       config.endpoint = process.env['OPENFN_ENDPOINT'];
-    }
-
-    const final_path = path.join(
-      options.projectPath ?? process.cwd(),
-      'openfn.yaml'
-    );
-    if (await fileExists(final_path)) {
-      logger.info('Switching to openfn project deploy');
-      return beta.handler(options, logger);
     }
 
     logger.debug('Deploying with config', config);

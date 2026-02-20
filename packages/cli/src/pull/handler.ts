@@ -19,6 +19,12 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     return beta(options as any, logger);
   }
 
+  const final_path = path.join(process.cwd(), 'openfn.yaml');
+  if (await fileExists(final_path)) {
+    logger.info('Switching to openfn project pull');
+    return beta(options, logger);
+  }
+
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
@@ -30,15 +36,6 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     if (process.env['OPENFN_ENDPOINT']) {
       logger.info('Using OPENFN_ENDPOINT environment variable');
       config.endpoint = process.env['OPENFN_ENDPOINT'];
-    }
-
-    const final_path = path.join(
-      options.projectPath ?? process.cwd(),
-      'openfn.yaml'
-    );
-    if (await fileExists(final_path)) {
-      logger.info('Switching to openfn project pull');
-      return beta(options, logger);
     }
 
     logger.always(
