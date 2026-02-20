@@ -19,14 +19,14 @@ async function pullHandler(options: PullOptions, logger: Logger) {
     return beta(options as any, logger);
   }
 
-  const final_path = path.join(process.cwd(), 'openfn.yaml');
-  if (await fileExists(final_path)) {
-    logger.info('Switching to openfn project pull');
-    return beta(options, logger);
-  }
-
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
+
+    const final_path = path.join(process.cwd(), 'openfn.yaml');
+    if (await fileExists(final_path)) {
+      logger.info('Switching to openfn project pull');
+      return beta({ ...options, project: options.projectId }, logger);
+    }
 
     if (process.env['OPENFN_API_KEY']) {
       logger.info('Using OPENFN_API_KEY environment variable');

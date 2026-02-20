@@ -31,14 +31,14 @@ async function deployHandler(
     return beta.handler(options as any, logger);
   }
 
-  const final_path = path.join(process.cwd(), 'openfn.yaml');
-  if (await fileExists(final_path)) {
-    logger.info('Switching to openfn project deploy');
-    return beta.handler(options, logger);
-  }
-
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
+
+    const final_path = path.join(process.cwd(), 'openfn.yaml');
+    if (await fileExists(final_path)) {
+      logger.info('Switching to openfn project deploy');
+      return beta.handler(options, logger);
+    }
 
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
