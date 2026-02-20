@@ -22,7 +22,7 @@ import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
 import type { Opts } from '../options';
 
-const DEFAULT_ENDPOINT = 'https://app.openfn.org';
+export const DEFAULT_ENDPOINT = 'https://app.openfn.org';
 
 export type DeployOptions = Pick<
   Opts,
@@ -141,7 +141,6 @@ const syncProjects = async (
     // maybe if it's explicitly passed?
     const endpoint = trackedProject.openfn?.endpoint ?? config.endpoint;
 
-    // TODO we need to look up the remote based on the alias
     const { data } = await fetchProject(
       endpoint,
       config.apiKey,
@@ -329,7 +328,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     }
 
     logger.info('Sending project to app...');
-    console.log(endpoint, config.apiKey);
+
     const { data: result } = await deployProject(
       endpoint,
       config.apiKey,
