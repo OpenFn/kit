@@ -35,6 +35,7 @@ export type DeployOptions = Pick<
   | 'logJson'
   | 'confirm'
 > & {
+  project?: string; // this is a CLI positional arg, not an option
   workspace?: string;
   dryRun?: boolean;
   new?: boolean;
@@ -76,7 +77,7 @@ export const command: yargs.CommandModule<DeployOptions> = {
       })
       .example(
         'deploy',
-        'Deploy the checked-out project its connected remoteinstance'
+        'Deploy the checked-out project its connected remote instance'
       )
       .example(
         'deploy staging',
@@ -138,13 +139,13 @@ const syncProjects = async (
     logger.info('Fetching remote target ', printProjectName(trackedProject));
     // TODO should we prefer endpoint over alias?
     // maybe if it's explicitly passed?
-    const endpoint = trackedProject.openfn.endpoint ?? config.endpoint;
+    const endpoint = trackedProject.openfn?.endpoint ?? config.endpoint;
 
     // TODO we need to look up the remote based on the alias
     const { data } = await fetchProject(
       endpoint,
       config.apiKey,
-      trackedProject.uuid,
+      trackedProject.uuid!,
       logger
     );
 
@@ -258,12 +259,30 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // Track the remote we want to target
   // If the used passed a project alias, we need to use that
   // Otherwise just sync with the local project
-  const tracker = ws.get(options.project ?? localProject.uuid);
-  let endpoint = tracker.openfn.endpoint;
+  const tracker = ws.get(options.project ?? localProject.uuid!);
+
+  if (!tracker) {
+    // Is this really an error? Unlikely to happen I thuink
+    console.log(
+      `ERROR: Failed to find tracked remote project ${
+        options.project ?? localProject.uuid!
+      } locally`
+    );
+    console.log('To deploy a new project, add --new to the command');
+    // TODO can we automate the fetch bit?
+    // If it's a UUID it should be ok?
+    console.log(
+      'You may need to fetch the project before you can safely deploy'
+    );
+
+    throw new Error('Failed to find remote project locally');
+  }
+
+  let endpoint: string = tracker.openfn?.endpoint ?? '';
 
   if (options.new) {
     endpoint =
-      config.endpoint ?? localProject.openfn.endpoint ?? DEFAULT_ENDPOINT;
+      config.endpoint ?? localProject.openfn?.endpoint ?? DEFAULT_ENDPOINT;
 
     // reset all metadata
     localProject.openfn = {
