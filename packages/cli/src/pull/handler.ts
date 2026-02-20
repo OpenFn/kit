@@ -22,7 +22,10 @@ async function pullHandler(options: PullOptions, logger: Logger) {
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
-    const final_path = path.join(process.cwd(), 'openfn.yaml');
+    const final_path = path.join(
+      options.workspace || process.cwd(),
+      'openfn.yaml'
+    );
     if (await fileExists(final_path)) {
       logger.info('Switching to openfn project pull');
       return beta({ ...options, project: options.projectId }, logger);
