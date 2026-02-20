@@ -166,9 +166,11 @@ export function merge(
           ),
           collections: source.collections ?? target.collections,
         };
-  
-        // with project level props merging, target goes into source because we want to preserve the target props.
-  return new Project(baseMerge(target, source, ['collections'], assigns as any));
+
+  // with project level props merging, target goes into source because we want to preserve the target props.
+  return new Project(
+    baseMerge(target, source, ['collections'], assigns as any)
+  );
 }
 
 export const replaceCredentials = (

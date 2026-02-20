@@ -131,17 +131,14 @@ const syncProjects = async (
   trackedProject: Project, // the project we want to update
   logger: Logger
 ): Promise<Project> => {
-  
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
   try {
-    
-
     logger.info('Fetching remote target ', printProjectName(trackedProject));
     // TODO should we prefer endpoint over alias?
     // maybe if it's explicitly passed?
-     const endpoint = trackedProject.openfn.endpoint ?? config.endpoint
+    const endpoint = trackedProject.openfn.endpoint ?? config.endpoint;
 
     // TODO we need to look up the remote based on the alias
     const { data } = await fetchProject(
@@ -188,9 +185,9 @@ const syncProjects = async (
   // Skip divergence testing if the remote has no history in its workflows
   // (this will only happen on older versions of lightning)
   // TODO now maybe skip if there's no forked_from
-  const skipVersionTest = options.force || remoteProject.workflows.find(
-    (wf) => wf.history.length === 0
-  );
+  const skipVersionTest =
+    options.force ||
+    remoteProject.workflows.find((wf) => wf.history.length === 0);
 
   if (skipVersionTest) {
     logger.warn(
@@ -265,7 +262,8 @@ export async function handler(options: DeployOptions, logger: Logger) {
   let endpoint = tracker.openfn.endpoint;
 
   if (options.new) {
-    endpoint = config.endpoint ?? localProject.openfn.endpoint ?? DEFAULT_ENDPOINT;
+    endpoint =
+      config.endpoint ?? localProject.openfn.endpoint ?? DEFAULT_ENDPOINT;
 
     // reset all metadata
     localProject.openfn = {
@@ -275,7 +273,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // generate a credential map
   localProject.credentials = localProject.buildCredentialMap();
 
-  logger.success(`Loaded checked-out project ${printProjectName(localProject)}`);
+  logger.success(
+    `Loaded checked-out project ${printProjectName(localProject)}`
+  );
 
   const merged: Project = options.new
     ? localProject
@@ -303,18 +303,14 @@ export async function handler(options: DeployOptions, logger: Logger) {
     // The following workflows will be updated
 
     if (options.confirm) {
-      if (
-        !(await logger.confirm(
-          `Ready to deploy changes to ${endpoint}?`
-        ))
-      ) {
+      if (!(await logger.confirm(`Ready to deploy changes to ${endpoint}?`))) {
         logger.always('Cancelled deployment');
         return false;
       }
     }
 
     logger.info('Sending project to app...');
-    console.log(endpoint, config.apiKey)
+    console.log(endpoint, config.apiKey);
     const { data: result } = await deployProject(
       endpoint,
       config.apiKey,
@@ -392,4 +388,3 @@ export const reportDiff = (
 
   return diffs;
 };
-``;
