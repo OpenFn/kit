@@ -50,7 +50,7 @@ const options = [
 const command: yargs.CommandModule = {
   command: 'merge <project>',
   describe:
-    'Merges the specified project (by UUID, id or alias) into the currently checked out project',
+    'Merges the currently checked-out project into the target project, and checks out the result. Does not update the remote project or local project.yaml file',
   handler: ensure('project-merge', options),
   builder: (yargs) => build(options, yargs),
 };
@@ -140,8 +140,6 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   logger.info(`Updated statefile at `, finalPath);
 
   logger.info('Checking out merged project to filesystem');
-
-  // TODO support --no-checkout to merge without expanding
 
   // Checkout after merge to expand updated files into filesystem
   await checkout(

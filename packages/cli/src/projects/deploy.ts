@@ -22,6 +22,8 @@ import type { Provisioner } from '@openfn/lexicon/lightning';
 import type { Logger } from '../util/logger';
 import type { Opts } from '../options';
 
+const DEFAULT_ENDPOINT = 'https://app.openfn.org';
+
 export type DeployOptions = Pick<
   Opts,
   | 'apiKey'
@@ -63,7 +65,7 @@ const printProjectName = (project: Project) =>
   `${project.id} (${project.openfn?.uuid || '<no UUID>'})`;
 
 export const command: yargs.CommandModule<DeployOptions> = {
-  command: 'deploy',
+  command: 'deploy [project]',
   aliases: 'push',
   describe: `Deploy the checked out project to a Lightning Instance`,
   builder: (yargs: yargs.Argv<DeployOptions>) =>
@@ -74,7 +76,11 @@ export const command: yargs.CommandModule<DeployOptions> = {
       })
       .example(
         'deploy',
-        'Deploy the checkout project to the connected instance'
+        'Deploy the checked-out project its connected remoteinstance'
+      )
+      .example(
+        'deploy staging',
+        'Deploy the checkout-out project to the remote project with alias "staging"'
       ),
   handler: ensure('project-deploy', options),
 };
@@ -97,9 +103,11 @@ export const hasRemoteDiverged = (
     if (wf.id in refs) {
       const forkedVersion = refs[wf.id];
       const remoteVersion = remote.getWorkflow(wf.id)?.history.at(-1);
-      if (!versionsEqual(forkedVersion, remoteVersion!)) {
-        diverged ??= [];
-        diverged.push(wf.id);
+      if (remoteVersion) {
+        if (!versionsEqual(forkedVersion, remoteVersion!)) {
+          diverged ??= [];
+          diverged.push(wf.id);
+        }
       }
     } else {
       // TODO what if there's no forked from for this workflow?
@@ -120,26 +128,34 @@ const syncProjects = async (
   config: Required<AuthOptions>,
   ws: Workspace,
   localProject: Project,
+  trackedProject: Project, // the project we want to update
   logger: Logger
 ): Promise<Project> => {
-  logger.info('Attempting to load checked-out project from workspace');
-
+  
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
   try {
+    
+
+    logger.info('Fetching remote target ', printProjectName(trackedProject));
+    // TODO should we prefer endpoint over alias?
+    // maybe if it's explicitly passed?
+     const endpoint = trackedProject.openfn.endpoint ?? config.endpoint
+
+    // TODO we need to look up the remote based on the alias
     const { data } = await fetchProject(
-      config.endpoint,
+      endpoint,
       config.apiKey,
-      localProject.uuid ?? localProject.id,
+      trackedProject.uuid,
       logger
     );
 
     remoteProject = await Project.from('state', data!, {
-      endpoint: config.endpoint,
+      endpoint: endpoint,
     });
 
-    logger.success('Downloaded latest version of project at ', config.endpoint);
+    logger.success('Downloaded latest version of project at ', endpoint);
   } catch (e) {
     console.log(e);
     throw e;
@@ -150,16 +166,18 @@ const syncProjects = async (
     // this will actually happen later
   }
 
-  // warn if the remote UUID is different to the local UUID
-  // This shouldn't happen?
-  if (!options.force && localProject.uuid !== remoteProject.uuid) {
-    logger.error(`UUID conflict!
+  // This is bogus if doing a deploy-merge to a different project
+  // it's quite legit for local and remote to have different UUIDs
+      // warn if the remote UUID is different to the local UUID
+    // This shouldn't happen?
+  //   if (!options.force && localProject.uuid !== remoteProject.uuid) {
+  //     logger.error(`UUID conflict!
 
-Your local project (${localProject.uuid}) has a different UUID to the remote project (${remoteProject.uuid}).
+  // Your local project (${localProject.uuid}) has a different UUID to the remote project (${remoteProject.uuid}).
 
-Pass --force to override this error and deploy anyway.`);
-    process.exit(1);
-  }
+  // Pass --force to override this error and deploy anyway.`);
+  //     process.exit(1);
+  //   }
 
   const locallyChangedWorkflows = await findLocallyChangedWorkflows(
     ws,
@@ -183,7 +201,7 @@ Pass --force to override this error and deploy anyway.`);
   // Skip divergence testing if the remote has no history in its workflows
   // (this will only happen on older versions of lightning)
   // TODO now maybe skip if there's no forked_from
-  const skipVersionTest = remoteProject.workflows.find(
+  const skipVersionTest = options.force || remoteProject.workflows.find(
     (wf) => wf.history.length === 0
   );
 
@@ -222,10 +240,11 @@ Pass --force to override this error and deploy anyway.`);
   }
 
   logger.info('Merging changes into remote project');
-
   // TODO I would like to log which workflows are being updated
   const merged = Project.merge(localProject, remoteProject!, {
-    mode: 'replace',
+    // If pushing the same project, we use a replace strategy
+    // Otherwise, use the sandbox strategy to preserve UUIDs
+    mode: localProject.uuid === remoteProject.uuid ? 'replace' : 'sandbox',
     force: true,
     onlyUpdated: true,
   });
@@ -252,7 +271,15 @@ export async function handler(options: DeployOptions, logger: Logger) {
     name: options.name,
   });
 
+  // Track the remote we want to target
+  // If the used passed a project alias, we need to use that
+  // Otherwise just sync with the local project
+  const tracker = ws.get(options.project ?? localProject.uuid);
+  let endpoint = tracker.openfn.endpoint;
+
   if (options.new) {
+    endpoint = config.endpoint ?? localProject.openfn.endpoint ?? DEFAULT_ENDPOINT;
+
     // reset all metadata
     localProject.openfn = {
       endpoint: config.endpoint,
@@ -261,11 +288,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
   // generate a credential map
   localProject.credentials = localProject.buildCredentialMap();
 
-  logger.success(`Loaded local project ${printProjectName(localProject)}`);
+  logger.success(`Loaded checked-out project ${printProjectName(localProject)}`);
 
   const merged: Project = options.new
     ? localProject
-    : await syncProjects(options, config, ws, localProject, logger);
+    : await syncProjects(options, config, ws, localProject, tracker, logger);
 
   const state = merged.serialize('state', {
     format: 'json',
@@ -279,9 +306,6 @@ export async function handler(options: DeployOptions, logger: Logger) {
   logger.debug(JSON.stringify(state, null, 2));
   logger.debug();
 
-  // TODO not totally sold on endpoint handling right now
-  config.endpoint ??= localProject.openfn?.endpoint!;
-
   // TODO: I want to report diff HERE, after the merged state and stuff has been built
 
   if (options.dryRun) {
@@ -294,7 +318,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     if (options.confirm) {
       if (
         !(await logger.confirm(
-          `Ready to deploy changes to ${config.endpoint}?`
+          `Ready to deploy changes to ${endpoint}?`
         ))
       ) {
         logger.always('Cancelled deployment');
@@ -303,9 +327,9 @@ export async function handler(options: DeployOptions, logger: Logger) {
     }
 
     logger.info('Sending project to app...');
-
+    console.log(endpoint, config.apiKey)
     const { data: result } = await deployProject(
-      config.endpoint,
+      endpoint,
       config.apiKey,
       state,
       logger
@@ -315,7 +339,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
       'state',
       result,
       {
-        endpoint: config.endpoint,
+        endpoint: endpoint,
         alias,
       },
       merged.config
@@ -332,7 +356,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
 
-    logger.success('Updated project  at', config.endpoint);
+    logger.success('Updated project  at', endpoint);
   }
 }
 
