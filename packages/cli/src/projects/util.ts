@@ -9,6 +9,7 @@ import { CLIError } from '../errors';
 import resolvePath from '../util/resolve-path';
 import { rimraf } from 'rimraf';
 import { versionsEqual, Workspace } from '@openfn/project';
+import { DEFAULT_ENDPOINT } from './deploy';
 
 export type AuthOptions = Pick<Opts, 'apiKey' | 'endpoint'>;
 
@@ -20,7 +21,7 @@ export const loadAppAuthConfig = (
 
   const config: AuthOptions = {
     apiKey: options.apiKey,
-    endpoint: options.endpoint ?? 'https://app.openfn.org',
+    endpoint: options.endpoint ?? DEFAULT_ENDPOINT,
   };
 
   if (!options.apiKey && OPENFN_API_KEY) {

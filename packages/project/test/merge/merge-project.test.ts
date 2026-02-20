@@ -432,6 +432,86 @@ test('should merge two projects and preserve edge id', (t) => {
   t.is(target.getUUID('a-b'), resultEdge.openfn.uuid);
 });
 
+test('merge a new workflow', (t) => {
+  const wf1 = assignUUIDs({
+    name: 'wf1',
+    steps: [],
+  });
+  // Wf2 has no UUIDs
+  const wf2 = {
+    name: 'wf2',
+    steps: [],
+  };
+
+  const main = createProject([wf1], 'a');
+  const staging = createProject([wf1, wf2], 'b');
+  t.is(main.workflows.length, 1)
+  t.is(staging.workflows.length, 2)
+
+  const result = merge(staging, main);
+  t.is(result.workflows.length, 2)
+});
+
+test('merge a new workflow with onlyUpdated: true', (t) => {
+  const wf1 = assignUUIDs({
+    name: 'wf1',
+    steps: [],
+  });
+  // Wf2 has no UUIDs
+  const wf2 = {
+    name: 'wf2',
+    steps: [],
+  };
+
+  const main = createProject([wf1], 'a');
+  const staging = createProject([wf1, wf2], 'b');
+  t.is(main.workflows.length, 1)
+  t.is(staging.workflows.length, 2)
+
+  const result = merge(staging, main, { onlyUpdated: true });
+  t.is(result.workflows.length, 2)
+});
+
+test('remove a workflow', (t) => {
+  const wf1 = assignUUIDs({
+    name: 'wf1',
+    steps: [],
+  });
+  const wf2 = assignUUIDs({
+    name: 'wf2',
+    steps: [],
+  });
+
+  const main = createProject([wf1, wf2], 'a');
+  const staging = createProject([wf1], 'b');
+  
+  t.is(main.workflows.length, 2)
+  t.is(staging.workflows.length, 1)
+
+  const result = merge(staging, main);
+  t.is(result.workflows.length, 1)
+});
+
+test('remove a workflow with onlyUpdated: true', (t) => {
+  const wf1 = assignUUIDs({
+    name: 'wf1',
+    steps: [],
+  });
+  const wf2 = assignUUIDs({
+    name: 'wf2',
+    steps: [],
+  });
+
+  const main = createProject([wf1, wf2], 'a');
+  const staging = createProject([wf1], 'b');
+  
+  t.is(main.workflows.length, 2)
+  t.is(staging.workflows.length, 1)
+
+  const result = merge(staging, main, { onlyUpdated: true });
+  t.is(result.workflows.length, 1)
+});
+
 test('id match: same workflow in source and target project', (t) => {
   const source = generateWorkflow('a-b');
   const target = generateWorkflow('a-b');
