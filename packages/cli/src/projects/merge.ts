@@ -17,7 +17,7 @@ export type MergeOptions = Required<
     'command' | 'project' | 'workspace' | 'removeUnmapped' | 'workflowMappings'
   >
 > &
-  Pick<Opts, 'log' | 'force' | 'outputPath'> & { base?: string };
+  Pick<Opts, 'log' | 'force' | 'outputPath'> & { source?: string };
 
 const options = [
   po.removeUnmapped,
@@ -35,11 +35,11 @@ const options = [
     },
   },
   {
-    name: 'base',
+    name: 'source',
     yargs: {
-      alias: 'target',
+      alias: 's',
       description:
-        'Path to the base (target) state file to merge into (ie, what main should be)',
+        'Path to the source state file to merge from (defaults to the currently checked out project)',
     },
   },
   override(o.force, {
@@ -50,7 +50,7 @@ const options = [
 const command: yargs.CommandModule = {
   command: 'merge <project>',
   describe:
-    'Merges the specified project (by UUID, id or alias) into the currently checked out project',
+    'Merges the currently checked out project into the specified target project (by UUID, id or alias)',
   handler: ensure('project-merge', options),
   builder: (yargs) => build(options, yargs),
 };
@@ -65,37 +65,37 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
     return;
   }
 
-  let targetProject: Project;
-  if (options.base) {
-    const basePath = path.resolve(options.base);
-    logger.debug('Loading target project from path', basePath);
-    targetProject = await Project.from('path', basePath);
+  let sourceProject: Project;
+  if (options.source) {
+    const sourcePath = path.resolve(options.source);
+    logger.debug('Loading source project from path', sourcePath);
+    sourceProject = await Project.from('path', sourcePath);
   } else {
-    targetProject = workspace.getActiveProject()!;
-    if (!targetProject) {
+    sourceProject = workspace.getActiveProject()!;
+    if (!sourceProject) {
       logger.error(`No project currently checked out`);
       return;
     }
-    logger.debug(`Loading target project from workspace (${targetProject.id})`);
+    logger.debug(`Loading source project from workspace (${sourceProject.id})`);
   }
 
-  const sourceProjectIdentifier = options.project;
+  const targetProjectIdentifier = options.project;
 
-  // Lookup the source project - the thing we are getting changes from
-  let sourceProject;
-  if (/\.(ya?ml|json)$/.test(sourceProjectIdentifier)) {
-    const filePath = path.join(workspacePath, sourceProjectIdentifier);
-    logger.debug('Loading source project from path ', filePath);
-    sourceProject = await Project.from('path', filePath);
+  // Lookup the target project - the thing we are merging into
+  let targetProject;
+  if (/\.(ya?ml|json)$/.test(targetProjectIdentifier)) {
+    const filePath = path.join(workspacePath, targetProjectIdentifier);
+    logger.debug('Loading target project from path ', filePath);
+    targetProject = await Project.from('path', filePath);
   } else {
     logger.debug(
-      `Loading source project from workspace ${sourceProjectIdentifier}`
+      `Loading target project from workspace ${targetProjectIdentifier}`
     );
-    sourceProject = workspace.get(sourceProjectIdentifier);
+    targetProject = workspace.get(targetProjectIdentifier);
   }
-  if (!sourceProject) {
+  if (!targetProject) {
     logger.error(
-      `Project "${sourceProjectIdentifier}" not found in the workspace`
+      `Project "${targetProjectIdentifier}" not found in the workspace`
     );
     return;
   }
@@ -106,13 +106,13 @@ export const handler = async (options: MergeOptions, logger: Logger) => {
   }
 
   if (!targetProject.id) {
-    logger.error('The checked out project has no id');
+    logger.error('The target project has no id');
     return;
   }
   const finalPath =
     options.outputPath ?? workspace.getProjectPath(targetProject.id);
   if (!finalPath) {
-    logger.error('Path to checked out project not found.');
+    logger.error('Path to target project not found.');
     return;
   }
   const final = Project.merge(sourceProject, targetProject, {
