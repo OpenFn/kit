@@ -37,6 +37,7 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       'openfn.yaml'
     );
     if (await fileExists(final_path)) {
+      logger.info('Switching to openfn project pull');
       return beta(options, logger);
     }
 

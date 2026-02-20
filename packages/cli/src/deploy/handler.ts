@@ -55,6 +55,7 @@ async function deployHandler(
       'openfn.yaml'
     );
     if (await fileExists(final_path)) {
+      logger.info('Switching to openfn project deploy');
       return beta.handler(options, logger);
     }
 
