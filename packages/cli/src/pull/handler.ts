@@ -137,11 +137,14 @@ function mergeOverrides(
   config: DeployConfig,
   options: PullOptions
 ): DeployConfig {
+  const workspace = options.workspace || process.env['OPENFN_WORKSPACE'] || process.cwd();
   return {
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
     endpoint: pickFirst(process.env['OPENFN_ENDPOINT'], config.endpoint),
-    configPath: options.configPath,
+    configPath: path.isAbsolute(options.configPath) ? options.configPath : path.join(workspace, options.configPath),
+    specPath: path.isAbsolute(config.specPath) ? config.specPath : path.join(workspace, config.specPath),
+    statePath: path.isAbsolute(config.statePath) ? config.statePath : path.join(workspace, config.statePath),
     requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
   };
 }
