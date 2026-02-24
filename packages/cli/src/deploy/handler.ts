@@ -34,7 +34,10 @@ async function deployHandler(
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
-    const final_path = path.join(options.workspace || process.cwd(), 'openfn.yaml');
+    const final_path = path.join(
+      options.workspace || process.cwd(),
+      'openfn.yaml'
+    );
     if (await fileExists(final_path)) {
       logger.info('Switching to openfn project deploy');
       return beta.handler(options, logger);
@@ -84,8 +87,10 @@ function mergeOverrides(
   config: DeployConfig,
   options: DeployOptions
 ): DeployConfig {
-  const workspace = options.workspace || process.env['OPENFN_WORKSPACE'] || process.cwd();
-  const resolveRelative = (p: string) => path.isAbsolute(p) ? p : path.join(workspace, p);
+  const workspace =
+    options.workspace || process.env['OPENFN_WORKSPACE'] || process.cwd();
+  const resolveRelative = (p: string) =>
+    path.isAbsolute(p) ? p : path.join(workspace, p);
   const specPath = pickFirst(options.projectPath, config.specPath);
   const statePath = pickFirst(options.statePath, config.statePath);
   return {
