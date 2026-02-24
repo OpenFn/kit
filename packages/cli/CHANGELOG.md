@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.28.2
+
+### Patch Changes
+
+- `project deploy`: Fix an issue where the version history returned by the Provisioner can be incorrect, resulting in constant incorrect divergence warnings
+
 ## 1.28.1
 
 ### Patch Changes
