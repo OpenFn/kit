@@ -22,12 +22,14 @@ async function pullHandler(options: PullOptions, logger: Logger) {
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
 
-    const final_path = path.join(
+    const v2ConfigPath = path.join(
       options.workspace || process.cwd(),
       'openfn.yaml'
     );
-    if (await fileExists(final_path)) {
-      logger.info('Switching to openfn project pull');
+    if (await fileExists(v2ConfigPath)) {
+      logger.info(
+        'Detected openfn.yaml file - switching to v2 pull (openfn project pull)'
+      );
       return beta({ ...options, project: options.projectId }, logger);
     }
 
@@ -137,8 +139,7 @@ function mergeOverrides(
   config: DeployConfig,
   options: PullOptions
 ): DeployConfig {
-  const workspace =
-    options.workspace || process.env['OPENFN_WORKSPACE'] || process.cwd();
+  const workspace = options.workspace || process.cwd();
   return {
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
