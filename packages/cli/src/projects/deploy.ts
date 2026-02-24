@@ -348,7 +348,7 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
     const finalProject = await Project.from(
       'state',
-      result,
+      result as any,
       {
         endpoint: endpoint,
         alias,
