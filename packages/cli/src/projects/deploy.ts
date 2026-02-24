@@ -329,11 +329,21 @@ export async function handler(options: DeployOptions, logger: Logger) {
 
     logger.info('Sending project to app...');
 
-    const { data: result } = await deployProject(
+    /*const { data: result } =*/ await deployProject(
       endpoint,
       config.apiKey,
       state,
       logger
+    );
+
+    // TMP because of a provisioner bug, fetch the project back down
+    // rather than just using the returned value
+    // (the history will be incorrect)
+    // https://github.com/OpenFn/lightning/issues/4455
+    const { data: result } = await fetchProject(
+      endpoint,
+      config.apiKey,
+      state.id
     );
 
     const finalProject = await Project.from(
