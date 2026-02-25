@@ -43,7 +43,7 @@ export class Workspace {
     } catch (e) {
       if (validate) {
         this.logger.warn(
-          `Could not find openfn.yaml at ${workspacePath}. Using default values.`
+          `Could not find openfn.yaml at ${workspacePath}. Using default configuration.`
         );
       }
     }
