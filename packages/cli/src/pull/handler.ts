@@ -31,7 +31,12 @@ async function pullHandler(options: PullOptions, logger: Logger) {
         'Detected openfn.yaml file - switching to v2 pull (openfn project pull)'
       );
       return beta(
-        { ...options, project: options.projectId, force: true },
+        {
+          ...options,
+          project: options.projectId,
+          force: true,
+          endpoint: config.endpoint,
+        },
         logger
       );
     }
