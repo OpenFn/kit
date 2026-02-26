@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.29.1
+
+### Patch Changes
+
+- Fix an issue when doing an initial pull with GH sync and an openfn.yaml file, where the endpoint in config.json should be used to intiate the sync
+
 ## 1.29.0
 
 ### Minor Changes

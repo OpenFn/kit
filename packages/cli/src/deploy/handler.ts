@@ -42,7 +42,14 @@ async function deployHandler(
       logger.always(
         'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy)'
       );
-      return beta.handler({ ...options, force: true }, logger);
+      return beta.handler(
+        {
+          ...options,
+          force: true,
+          endpoint: config.endpoint,
+        },
+        logger
+      );
     }
 
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
