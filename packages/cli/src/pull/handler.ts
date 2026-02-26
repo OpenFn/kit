@@ -27,10 +27,13 @@ async function pullHandler(options: PullOptions, logger: Logger) {
       'openfn.yaml'
     );
     if (await fileExists(v2ConfigPath)) {
-      logger.info(
+      logger.always(
         'Detected openfn.yaml file - switching to v2 pull (openfn project pull)'
       );
-      return beta({ ...options, project: options.projectId }, logger);
+      return beta(
+        { ...options, project: options.projectId, force: true },
+        logger
+      );
     }
 
     if (process.env['OPENFN_API_KEY']) {

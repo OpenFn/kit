@@ -33,11 +33,6 @@ test.serial(
 
     await t.throwsAsync(() => pullHandler(options, logger));
 
-    t.truthy(
-      logger._find(
-        'info',
-        /Detected openfn.yaml file - switching to v2 pull (openfn project pull)/
-      )
-    );
+    t.truthy(logger._find('always', /Detected openfn.yaml file/i));
   }
 );

@@ -23,6 +23,7 @@ export type PullOptions = Pick<
   | 'project'
   | 'confirm'
   | 'snapshots'
+  | 'force'
 >;
 
 const options = [
