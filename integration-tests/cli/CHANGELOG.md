@@ -1,5 +1,12 @@
 # @openfn/integration-tests-cli
 
+## 1.0.16
+
+### Patch Changes
+
+- Updated dependencies [cbe2800]
+  - @openfn/project@0.14.2
+
 ## 1.0.15
 
 ### Patch Changes

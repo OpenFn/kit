@@ -8,6 +8,8 @@ import {
 import type { Logger } from '../util/logger';
 import { DeployOptions } from './command';
 import * as beta from '../projects/deploy';
+import path from 'node:path';
+import { fileExists } from '../util/file-exists';
 
 export type DeployFn = typeof deploy;
 
@@ -31,6 +33,17 @@ async function deployHandler(
 
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
+
+    const v2ConfigPath = path.join(
+      options.workspace || process.cwd(),
+      'openfn.yaml'
+    );
+    if (await fileExists(v2ConfigPath)) {
+      logger.always(
+        'Detected openfn.yaml file - switching to v2 deploy (openfn project deploy)'
+      );
+      return beta.handler({ ...options, force: true }, logger);
+    }
 
     logger.debug('Deploying with config', JSON.stringify(config, null, 2));
 
@@ -76,13 +89,18 @@ function mergeOverrides(
   config: DeployConfig,
   options: DeployOptions
 ): DeployConfig {
+  const workspace = options.workspace || process.cwd();
+  const resolveRelative = (p: string) =>
+    path.isAbsolute(p) ? p : path.join(workspace, p);
+  const specPath = pickFirst(options.projectPath, config.specPath);
+  const statePath = pickFirst(options.statePath, config.statePath);
   return {
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
     endpoint: pickFirst(process.env['OPENFN_ENDPOINT'], config.endpoint),
-    statePath: pickFirst(options.statePath, config.statePath),
-    specPath: pickFirst(options.projectPath, config.specPath),
-    configPath: options.configPath,
+    statePath: resolveRelative(statePath),
+    specPath: resolveRelative(specPath),
+    configPath: resolveRelative(options.configPath),
     requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
   };
 }

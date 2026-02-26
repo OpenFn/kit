@@ -11,6 +11,7 @@ import {
 import type { Logger } from '../util/logger';
 import { PullOptions } from '../pull/command';
 import beta from '../projects/pull';
+import { fileExists } from '../util/file-exists';
 
 async function pullHandler(options: PullOptions, logger: Logger) {
   if (options.beta) {
@@ -20,6 +21,20 @@ async function pullHandler(options: PullOptions, logger: Logger) {
 
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
+
+    const v2ConfigPath = path.join(
+      options.workspace || process.cwd(),
+      'openfn.yaml'
+    );
+    if (await fileExists(v2ConfigPath)) {
+      logger.always(
+        'Detected openfn.yaml file - switching to v2 pull (openfn project pull)'
+      );
+      return beta(
+        { ...options, project: options.projectId, force: true },
+        logger
+      );
+    }
 
     if (process.env['OPENFN_API_KEY']) {
       logger.info('Using OPENFN_API_KEY environment variable');
@@ -127,11 +142,20 @@ function mergeOverrides(
   config: DeployConfig,
   options: PullOptions
 ): DeployConfig {
+  const workspace = options.workspace || process.cwd();
   return {
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
     endpoint: pickFirst(process.env['OPENFN_ENDPOINT'], config.endpoint),
-    configPath: options.configPath,
+    configPath: path.isAbsolute(options.configPath)
+      ? options.configPath
+      : path.join(workspace, options.configPath),
+    specPath: path.isAbsolute(config.specPath)
+      ? config.specPath
+      : path.join(workspace, config.specPath),
+    statePath: path.isAbsolute(config.statePath)
+      ? config.statePath
+      : path.join(workspace, config.statePath),
     requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
   };
 }

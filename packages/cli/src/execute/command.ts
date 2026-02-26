@@ -84,21 +84,23 @@ const options = [
 const executeCommand: yargs.CommandModule<ExecuteOptions> = {
   command: 'execute <path> [workflow]',
   describe: `Run an openfn expression or workflow. Get more help by running openfn <command> help.
-  \nExecute will run a expression/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)
-  \nRemember to include the adaptor name with -a. Auto install adaptors with the -i flag.`,
+  \nExecute will run a expression/workflow at the path and write the output state to disk (to ./state.json unless otherwise specified)`,
   aliases: ['$0'],
   handler: ensure('execute', options),
   builder: (yargs) =>
     build(options, yargs)
       // TODO this is now path or workflow name
       .positional('path', {
-        describe:
-          'The path to load the job or workflow from (a .js or .json file or a dir containing a job.js file)',
+        describe: 'The path or name of the workflow or expression to run',
         demandOption: true,
       })
       .example(
+        'openfn my-workflow',
+        'Execute a workflow called my-workflow. Requires an openfn.yaml file (created by openfn project pull)'
+      )
+      .example(
         'openfn foo/job.js',
-        'Execute foo/job.js with no adaptor and write the final state to foo/job.json'
+        'Execute foo/job.js (with no adaptor) and write the final state to foo/job.json'
       )
       .example(
         'openfn workflow.json',
@@ -106,11 +108,11 @@ const executeCommand: yargs.CommandModule<ExecuteOptions> = {
       )
       .example(
         'openfn job.js -a common --log info',
-        'Execute job.js with common adaptor and info-level logging'
+        'Execute job.js with common adaptor (which will be automatically installed) and info-level logging'
       )
       .example(
-        'openfn compile job.js -a http',
-        'Compile the expression at job.js with the http adaptor and print the code to stdout'
+        'openfn job.js -ma common',
+        'Execute job.js with the build of the common adaptor found in your adaptors monorepo'
       ),
 };
 

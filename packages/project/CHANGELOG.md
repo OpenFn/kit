@@ -1,5 +1,11 @@
 # @openfn/project
 
+## 0.14.2
+
+### Patch Changes
+
+- cbe2800: Suppress error message when generating app state without a credentials.yaml
+
 ## 0.14.1
 
 ### Patch Changes

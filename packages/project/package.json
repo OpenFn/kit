@@ -1,6 +1,6 @@
 {
   "name": "@openfn/project",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "Read, serialize, replicate and sync OpenFn projects",
   "scripts": {
     "test": "pnpm ava",

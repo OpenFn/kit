@@ -23,6 +23,7 @@ export type PullOptions = Pick<
   | 'project'
   | 'confirm'
   | 'snapshots'
+  | 'force'
 >;
 
 const options = [
@@ -61,6 +62,7 @@ export const command: yargs.CommandModule<PullOptions> = {
 };
 
 export async function handler(options: PullOptions, logger: Logger) {
+  options.workspace ??= process.cwd();
   ensureProjectId(options, logger);
 
   await fetch(options, logger);
