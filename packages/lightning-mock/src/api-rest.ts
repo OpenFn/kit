@@ -104,17 +104,44 @@ export default (
       ctx.response.body = yaml;
     } else {
       // TODO what if doesn't exist?
-      ctx.response.body = { data: state.projects[ctx.params.id] };
+      const project = state.projects[ctx.params.id];
+      if (project && project.workflows && !Array.isArray(project.workflows)) {
+        ctx.response.body = {
+          data: { ...project, workflows: Object.values(project.workflows) },
+        };
+      } else {
+        ctx.response.body = { data: project };
+      }
     }
   });
 
   router.post('/api/provision', (ctx) => {
-    const proj: any = ctx.request.body;
+    const incoming: any = ctx.request.body;
+    const now = new Date().toISOString();
 
-    state.projects[proj.id] = proj;
+    if (!state.projects[incoming.id]) {
+      state.projects[incoming.id] = {
+        ...incoming,
+        workflows: {},
+        inserted_at: now,
+        updated_at: now,
+      };
+    } else {
+      const { workflows: _ignored, ...projectFields } = incoming;
+      state.projects[incoming.id] = {
+        ...state.projects[incoming.id],
+        ...projectFields,
+        updated_at: now,
+      };
+      console.log('han:', _ignored);
+    }
+
+    Object.values(incoming.workflows ?? {}).forEach((wf: any) => {
+      app.updateWorkflow(incoming.id, wf);
+    });
 
     ctx.response.status = 200;
-    ctx.response.body = { data: proj };
+    ctx.response.body = { data: state.projects[incoming.id] };
   });
 
   // list with query

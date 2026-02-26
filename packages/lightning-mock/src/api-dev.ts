@@ -2,6 +2,7 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
+import { createHash } from 'node:crypto';
 import Koa from 'koa';
 import crypto from 'node:crypto';
 import Router from '@koa/router';
@@ -16,6 +17,51 @@ import { ServerState } from './server';
 import { RUN_COMPLETE } from './events';
 import type { DevServer, LightningEvents } from './types';
 import { PhoenixEvent } from './socket-server';
+
+function hashWorkflow(wf: any): string {
+  const pick = (obj: any, keys: string[]) => {
+    const out: any = {};
+    keys.forEach((k) => {
+      if (obj[k] !== undefined) out[k] = obj[k];
+    });
+    return out;
+  };
+
+  const data = {
+    name: wf.name,
+    jobs: Object.values(wf.jobs ?? {})
+      .map((j: any) =>
+        pick(j, [
+          'name',
+          'adaptor',
+          'body',
+          'project_credential_id',
+          'keychain_credential_id',
+        ])
+      )
+      .sort((a: any, b: any) => (a.name ?? '').localeCompare(b.name ?? '')),
+    triggers: Object.values(wf.triggers ?? {})
+      .map((t: any) => pick(t, ['type', 'cron_expression', 'enabled']))
+      .sort((a: any, b: any) => (a.type ?? '').localeCompare(b.type ?? '')),
+    edges: Object.values(wf.edges ?? {})
+      .map((e: any) =>
+        pick(e, [
+          'condition_type',
+          'condition_label',
+          'condition_expression',
+          'enabled',
+        ])
+      )
+      .sort((a: any, b: any) =>
+        (a.condition_type ?? '').localeCompare(b.condition_type ?? '')
+      ),
+  };
+
+  return createHash('sha256')
+    .update(JSON.stringify(data))
+    .digest('hex')
+    .slice(0, 12);
+}
 
 type Api = {
   startRun(runId: string): void;
@@ -67,6 +113,70 @@ const setupDevAPI = (
 
   app.addProject = (project: Provisioner.Project_v1) => {
     state.projects[project.id] = project;
+  };
+
+  app.updateWorkflow = (projectId: string, wf: Provisioner.Workflow) => {
+    const project = state.projects[projectId];
+    if (!project) {
+      throw new Error(`updateWorkflow: project ${projectId} not found`);
+    }
+
+    const now = new Date().toISOString();
+
+    if (Array.isArray(project.workflows)) {
+      (project as any).workflows = (project.workflows as any[]).reduce(
+        (acc: any, w: any) => {
+          acc[w.id] = w;
+          return acc;
+        },
+        {}
+      );
+    }
+
+    const workflows = project.workflows as Record<string, any>;
+    const w = wf as any;
+
+    if (w.delete) {
+      const key = Object.keys(workflows).find((k) => workflows[k].id === w.id);
+      if (key) delete workflows[key];
+      return;
+    }
+
+    const existingEntry = Object.entries(workflows).find(
+      ([, v]: any) => v.id === w.id
+    ) as [string, any] | undefined;
+
+    const newHash = hashWorkflow(w);
+
+    if (!existingEntry) {
+      workflows[w.id] = {
+        ...w,
+        lock_version: w.lock_version ?? 1,
+        inserted_at: now,
+        updated_at: now,
+        deleted_at: w.deleted_at ?? null,
+        version_history: [newHash],
+      };
+    } else {
+      const [existingKey, existingWf] = existingEntry;
+      const existingHash = hashWorkflow(existingWf);
+
+      if (newHash !== existingHash) {
+        const prevHistory: string[] = existingWf.version_history ?? [];
+        const newHistory =
+          prevHistory.length > 0
+            ? [...prevHistory.slice(0, -1), newHash] // squash
+            : [newHash];
+
+        workflows[existingKey] = {
+          ...existingWf,
+          ...w,
+          lock_version: (existingWf.lock_version ?? 1) + 1,
+          updated_at: now,
+          version_history: newHistory,
+        };
+      }
+    }
   };
 
   // Promise which returns when a workflow is complete

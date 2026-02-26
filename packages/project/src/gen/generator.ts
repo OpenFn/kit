@@ -196,6 +196,7 @@ const initOperations = (options: any = {}) => {
 export const createParser = () => {
   // Load the grammar
   // TODO: is there any way I can compile/serialize the grammar into JS?
+  // @ts-expect-error
   const grammarPath = path.resolve(import.meta.dirname, 'workflow.ohm');
   const contents = readFileSync(grammarPath, 'utf-8');
   const parser = grammar(contents);
