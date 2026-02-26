@@ -313,6 +313,28 @@ test('fail on runtime TypeError', async (t) => {
   });
 });
 
+test.only('fail with position on rejected promise', async (t) => {
+  const expression = `export default [(s) => {
+  return Promise.reject({});
+}]`;
+
+  const result: any = await run(expression);
+  const error = result.errors['job-1'];
+  t.log(error);
+
+  // t.deepEqual(error, {
+  //   message: "TypeError: Cannot read properties of undefined (reading 'y')",
+  //   name: 'RuntimeError',
+  //   subtype: 'TypeError',
+  //   severity: 'fail',
+  //   source: 'runtime',
+  //   pos: {
+  //     column: 28,
+  //     line: 1,
+  //   },
+  // });
+});
+
 test('fail on runtime error with RangeError', async (t) => {
   const expression =
     'export default [(s) => Number.parseFloat("1").toFixed(-1)]';
