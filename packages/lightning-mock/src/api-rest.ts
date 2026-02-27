@@ -122,7 +122,7 @@ export default (
     if (!state.projects[incoming.id]) {
       state.projects[incoming.id] = {
         ...incoming,
-        workflows: {},
+        workflows: [],
         inserted_at: now,
         updated_at: now,
       };
@@ -133,10 +133,9 @@ export default (
         ...projectFields,
         updated_at: now,
       };
-      console.log('han:', _ignored);
     }
 
-    Object.values(incoming.workflows ?? {}).forEach((wf: any) => {
+    (incoming.workflows ?? []).forEach((wf: any) => {
       app.updateWorkflow(incoming.id, wf);
     });
 

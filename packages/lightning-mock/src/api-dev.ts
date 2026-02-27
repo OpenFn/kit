@@ -120,17 +120,49 @@ const setupDevAPI = (
     if (!project) {
       throw new Error(`updateWorkflow: project ${projectId} not found`);
     }
-
     const now = new Date().toISOString();
 
-    if (Array.isArray(project.workflows)) {
-      (project as any).workflows = (project.workflows as any[]).reduce(
-        (acc: any, w: any) => {
-          acc[w.id] = w;
-          return acc;
-        },
-        {}
-      );
+    const _newHash = hashWorkflow(wf);
+
+    const _exists = Object.values(project.workflows).find((wf) => {
+      wf.id === wf.id;
+    });
+
+    if (!_exists) {
+      const new_workflow = {
+        ...wf,
+        lock_version: wf.lock_version ?? 1,
+        inserted_at: now,
+        updated_at: now,
+        deleted_at: wf.deleted_at ?? null,
+        version_history: [_newHash],
+      };
+      // @ts-ignore
+      project.workflows = [...Object.values(project.workflows), new_workflow];
+    } else {
+      // if existing. update it
+      const existingHash = hashWorkflow(_exists);
+
+      if (_newHash !== existingHash) {
+        const prevHistory: string[] = _exists.version_history ?? [];
+        const newHistory =
+          prevHistory.length > 0
+            ? [...prevHistory.slice(0, -1), _newHash] // squash
+            : [_newHash];
+
+        // @ts-ignore
+        project.workflows = Object.values(project.workflows).map((wf) => {
+          if (wf.id === _exists.id) {
+            return {
+              ..._exists,
+              ...wf,
+              lock_version: (_exists.lock_version ?? 1) + 1,
+              updated_at: now,
+              version_history: newHistory,
+            };
+          }
+        });
+      }
     }
 
     const workflows = project.workflows as Record<string, any>;
