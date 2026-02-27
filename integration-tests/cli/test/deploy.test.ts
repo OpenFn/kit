@@ -102,7 +102,7 @@ test.serial('deploy a project, update workflow, deploy again', async (t) => {
   t.regex(changesLog.message[0], /fn\(s => \(\{ \.\.\.s, updated: true \}\)\)/);
 });
 
-test.skip('deploy then pull to check version history', async (t) => {
+test.serial('deploy then pull to check version history', async (t) => {
   const projectPath = path.join(tmpDir, 'project.yaml');
   const statePath = path.join(tmpDir, '.state.json');
 
@@ -117,7 +117,7 @@ test.skip('deploy then pull to check version history', async (t) => {
   const deployResult = await run(deployCmd);
   t.falsy(deployResult.stderr);
   assertLog(t, extractLogs(deployResult.stdout), /Deployed/);
-  
+
   const stateAfterDeploy = JSON.parse(await fs.readFile(statePath, 'utf8'));
   // console.log("passed-here", stateAfterDeploy)
   const projectId = stateAfterDeploy.id;
