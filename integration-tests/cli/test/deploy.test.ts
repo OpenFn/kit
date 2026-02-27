@@ -39,6 +39,43 @@ workflows:
         target_job: my-job
 `.trim();
 
+const testProjectMulti = `
+name: test-project
+workflows:
+  my-workflow:
+    name: My Workflow
+    jobs:
+      my-job:
+        name: My Job
+        adaptor: '@openfn/language-common@latest'
+        body: 'fn(s => s)'
+    triggers:
+      webhook:
+        type: webhook
+        enabled: true
+    edges:
+      webhook->my-job:
+        condition_type: always
+        source_trigger: webhook
+        target_job: my-job
+  another-workflow:
+    name: Another Workflow
+    jobs:
+      another-job:
+        name: Another Job
+        adaptor: '@openfn/language-http@latest'
+        body: "get('http://example.com')"
+    triggers:
+      webhook:
+        type: webhook
+        enabled: true
+    edges:
+      webhook->another-job:
+        condition_type: always
+        source_trigger: webhook
+        target_job: another-job
+`.trim();
+
 test.before(async () => {
   server = await createLightningServer({ port });
 });
@@ -119,7 +156,6 @@ test.serial('deploy then pull to check version history', async (t) => {
   assertLog(t, extractLogs(deployResult.stdout), /Deployed/);
 
   const stateAfterDeploy = JSON.parse(await fs.readFile(statePath, 'utf8'));
-  // console.log("passed-here", stateAfterDeploy)
   const projectId = stateAfterDeploy.id;
   t.truthy(projectId);
 
@@ -137,6 +173,59 @@ test.serial('deploy then pull to check version history', async (t) => {
   const workflow = Object.values(pulledState.workflows)[0] as any;
   t.truthy(workflow.version_history);
   t.is(workflow.version_history.length, 1);
+});
+
+test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
+  const projectYamlUpdated = testProjectMulti.replace(
+    'body: "get(\'http://example.com\')"',
+    'body: "post(\'http://success.org\')"'
+  );
+  const projectPath = path.join(tmpDir, 'project.yaml');
+  const statePath = path.join(tmpDir, '.state.json');
+
+  await fs.writeFile(projectPath, testProjectMulti);
+
+  // deploy fresh project
+  const deployCmd = `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn deploy \
+    --project-path ${projectPath} \
+    --state-path ${statePath} \
+    --no-confirm \
+    --log-json -l debug`;
+
+  const deployResult = await run(deployCmd);
+  t.falsy(deployResult.stderr);
+  assertLog(t, extractLogs(deployResult.stdout), /Deployed/);
+
+  const stateAfterDeploy = JSON.parse(await fs.readFile(statePath, 'utf8'));
+  const projectId = stateAfterDeploy.id;
+  t.truthy(projectId);
+
+  // pull the project back
+  const pullResult = await run(
+    `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn pull ${projectId} \
+      --project-path ${projectPath} \
+      --state-path ${statePath} \
+      --log-json`
+  );
+
+  t.falsy(pullResult.stderr);
+  assertLog(t, extractLogs(pullResult.stdout), /Project pulled successfully/i);
+  const pulledState = JSON.parse(await fs.readFile(statePath, 'utf8'));
+  const workflow = Object.values(pulledState.workflows)[0] as any;
+  t.truthy(workflow.version_history);
+  t.is(workflow.version_history.length, 1);
+
+  // now deploy with changes to one workflow
+  await fs.writeFile(projectPath, projectYamlUpdated);
+  const { stdout, stderr } = await run(deployCmd);
+  const logs = extractLogs(stdout);
+  t.falsy(stderr);
+  assertLog(t, logs, /Deployed/);
+  const changesLog = logs.find(
+    (log) => log.level === 'always' && /Changes\:/.test(`${log.message}`)
+  );
+  t.regex(changesLog.message[0], /\-.+body: \"get\('http:\/\/example.com'\)\"/);
+  t.regex(changesLog.message[0], /\+.+body: \"post\('http:\/\/success.org'\)"/);
 });
 
 // This should fail against the built CLI right now
