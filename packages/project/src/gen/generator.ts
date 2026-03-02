@@ -215,10 +215,13 @@ export const createParser = () => {
       const result = parser.match(str);
       if (!result.succeeded()) {
         if (printErrors) {
+          // @ts-ignore
           console.error(result.shortMessage);
+          // @ts-ignore
           console.error(result.message);
         }
         // TODO can we be more helpful here?
+        // @ts-ignore
         throw new Error('Parsing failed!' + result.shortMessage);
       }
 
