@@ -2,6 +2,7 @@ import list from './list';
 import version from './version';
 import merge from './merge';
 import checkout from './checkout';
+import clean from './clean';
 import fetch from './fetch';
 import { command as pull } from './pull';
 import { command as deploy } from './deploy';
@@ -21,6 +22,7 @@ export const projectsCommand = {
       .command(version)
       .command(merge)
       .command(checkout)
+      .command(clean)
       .command(fetch as any)
       .example('project', 'list all projects in the workspace')
       .example('project list', 'list all projects in the workspace')
