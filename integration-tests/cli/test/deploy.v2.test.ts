@@ -260,6 +260,7 @@ test.serial(
     const { stdout, stderr } = await run(deployCmd());
     t.falsy(stderr);
     const logs = extractLogs(stdout);
+    console.log('deploy-logs:', logs);
     assertLog(t, logs, /Updated project/);
 
     const anotherLog = logs.find(
