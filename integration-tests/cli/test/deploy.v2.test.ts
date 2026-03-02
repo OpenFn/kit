@@ -5,6 +5,7 @@ import run from '../src/run';
 import createLightningServer, {
   DEFAULT_PROJECT_ID,
 } from '@openfn/lightning-mock';
+import Project from '@openfn/project';
 import { extractLogs, assertLog } from '../src/util';
 import { rimraf } from 'rimraf';
 
@@ -172,7 +173,7 @@ test.serial('deploy a project, update workflow, deploy again', async (t) => {
   assertLog(t, logs, /Workflows modified/);
 });
 
-test.serial('deploy and check version history in server state', async (t) => {
+test.serial('deploy and pull to check version history', async (t) => {
   const projectId = 'cccccccc';
   server.addProject(makeProject(projectId) as any);
 
@@ -182,17 +183,17 @@ test.serial('deploy and check version history in server state', async (t) => {
   await run(pullCmd(projectId));
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
 
-  // deploy
+  // deploy then pull
   const { stderr } = await run(deployCmd());
   t.falsy(stderr);
+  await run(pullCmd(projectId));
 
   // verify version history
-  const project = server.state.projects[projectId];
-  const wf = (Object.values(project.workflows as any) as any[]).find(
-    (w: any) => w.id === 'my-workflow-1'
-  ) as any;
-  t.truthy(wf.version_history);
-  t.is(wf.version_history.length, 1);
+  const projectFile = path.join(tmpDir, '.projects', 'main@localhost.yaml');
+  const project = await Project.from('path', projectFile);
+  const wf = project.workflows.find((w) => w.id === 'my-workflow');
+  t.truthy(wf?.history);
+  t.is(wf?.history.length, 1);
 });
 
 test.serial('deploy then pull, change one workflow, deploy', async (t) => {
@@ -271,7 +272,7 @@ test.serial(
   }
 );
 
-test.only('warn when local and remote workflows have diverged', async (t) => {
+test.serial('warn when local and remote workflows have diverged', async (t) => {
   const projectId = 'ffffffff';
   server.addProject(makeProject(projectId) as any);
 

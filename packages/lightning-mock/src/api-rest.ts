@@ -143,7 +143,13 @@ export default (
     });
 
     ctx.response.status = 200;
-    ctx.response.body = { data: state.projects[incoming.id] };
+    const projectState = state.projects[incoming.id];
+    ctx.response.body = {
+      data:
+        projectState.workflows && !Array.isArray(projectState.workflows)
+          ? { ...projectState, workflows: Object.values(projectState.workflows) }
+          : projectState,
+    };
   });
 
   // list with query
