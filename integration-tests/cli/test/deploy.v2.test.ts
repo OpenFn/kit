@@ -144,7 +144,6 @@ test.serial('pull and deploy a project', async (t) => {
   // deploy
   const { stdout, stderr } = await run(deployCmd());
   t.falsy(stderr);
-  console.log(stdout);
   assertLog(t, extractLogs(stdout), /Updated project/);
 });
 
@@ -267,11 +266,47 @@ test.serial(
         log.level === 'always' && /another-workflow/.test(`${log.message}`)
     );
     t.truthy(anotherLog);
-
     // TODO it fails to deploy the local changes to the server
     console.log(JSON.stringify(server.state.projects[projectId], undefined, 2));
   }
 );
+
+test.only('warn when local and remote workflows have diverged', async (t) => {
+  const projectId = 'ffffffff';
+  server.addProject(makeProject(projectId) as any);
+
+  const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
+
+  // base
+  await run(pullCmd(projectId));
+  await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
+  const firstDeploy = await run(deployCmd());
+  assertLog(t, extractLogs(firstDeploy.stdout), /Updated project/);
+
+  // remote changed from base
+  const project = server.state.projects[projectId];
+  const wf = Object.values(project.workflows as any).find(
+    (w: any) => w.id === 'my-workflow-1'
+  ) as any;
+  server.updateWorkflow(projectId, {
+    ...wf,
+    jobs: Object.values(wf.jobs ?? {}).map((j: any) =>
+      j.id === 'my-job-1'
+        ? { ...j, body: 'fn(state => ({ ...state, remote: true }))' }
+        : j
+    ),
+  });
+
+  // local changed from base
+  await fs.writeFile(exprPath, 'fn(s => ({ ...s, local: true }))');
+
+  // deploy with divergence
+  const { stdout, err } = await run(deployCmd());
+  t.truthy(err);
+  const logs = extractLogs(stdout);
+  assertLog(t, logs, /have diverged/i);
+  assertLog(t, logs, /Projects have diverged/i);
+});
 
 test.serial('pull a project from lightning mock', async (t) => {
   const { stdout, stderr } = await run(
