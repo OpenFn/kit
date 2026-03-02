@@ -49,8 +49,8 @@ export const handler = async (options: CleanOptions, logger: Logger) => {
     );
   }
 
-  await checkout(
-    { ...options, project: String(activeProject.uuid), force: true },
-    logger
+  const projectId = String(
+    activeProject.uuid ?? (activeProject as any).id
   );
+  await checkout({ ...options, project: projectId, force: true }, logger);
 };
