@@ -147,7 +147,10 @@ export default (
     ctx.response.body = {
       data:
         projectState.workflows && !Array.isArray(projectState.workflows)
-          ? { ...projectState, workflows: Object.values(projectState.workflows) }
+          ? {
+              ...projectState,
+              workflows: Object.values(projectState.workflows),
+            }
           : projectState,
     };
   });
