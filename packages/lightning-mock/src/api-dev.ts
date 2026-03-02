@@ -122,47 +122,11 @@ const setupDevAPI = (
     }
     const now = new Date().toISOString();
 
-    const _newHash = hashWorkflow(wf);
-
-    const _exists = Object.values(project.workflows).find((wf) => {
-      wf.id === wf.id;
-    });
-
-    if (!_exists) {
-      const new_workflow = {
-        ...wf,
-        lock_version: wf.lock_version ?? 1,
-        inserted_at: now,
-        updated_at: now,
-        deleted_at: wf.deleted_at ?? null,
-        version_history: [_newHash],
-      };
-      // @ts-ignore
-      project.workflows = [...Object.values(project.workflows), new_workflow];
-    } else {
-      // if existing. update it
-      const existingHash = hashWorkflow(_exists);
-
-      if (_newHash !== existingHash) {
-        const prevHistory: string[] = _exists.version_history ?? [];
-        const newHistory =
-          prevHistory.length > 0
-            ? [...prevHistory.slice(0, -1), _newHash] // squash
-            : [_newHash];
-
-        // @ts-ignore
-        project.workflows = Object.values(project.workflows).map((wf) => {
-          if (wf.id === _exists.id) {
-            return {
-              ..._exists,
-              ...wf,
-              lock_version: (_exists.lock_version ?? 1) + 1,
-              updated_at: now,
-              version_history: newHistory,
-            };
-          }
-        });
-      }
+    // Normalize workflows to object format if needed
+    if (Array.isArray(project.workflows)) {
+      project.workflows = Object.fromEntries(
+        (project.workflows as any[]).map((w: any) => [w.id, w])
+      );
     }
 
     const workflows = project.workflows as Record<string, any>;
@@ -208,6 +172,56 @@ const setupDevAPI = (
           version_history: newHistory,
         };
       }
+    }
+  };
+
+  app.addNode = (
+    projectId: string,
+    workflowId: string,
+    job: Partial<Provisioner.Job>
+  ) => {
+    job.id ??= crypto.randomUUID();
+    const project = state.projects[projectId];
+    if (!project) {
+      throw new Error(`addNode: project ${projectId} not found`);
+    }
+
+    const workflows = Object.values(project.workflows);
+    const workflow = workflows.find((wf) => wf.id === workflowId);
+    if (!workflow) {
+      throw new Error(
+        `addNode: workflow ${workflowId} not found in project ${projectId}`
+      );
+    }
+
+    // @ts-ignore
+    workflow.jobs = [...workflow.jobs, job];
+
+    // find terminal job
+    const sourceJobIds = new Set(
+      Object.values(workflow.edges)
+        .map((e) => e.source_job_id)
+        .filter(Boolean)
+    );
+
+    const lastJob = Object.values(workflow.jobs).find(
+      (j) => j.id !== job.id && !sourceJobIds.has(j.id)
+    );
+
+    if (lastJob) {
+      const edgeId = crypto.randomUUID();
+      // @ts-ignore
+      workflow.edges = [
+        ...Object.values(workflow.edges),
+        {
+          id: edgeId,
+          condition_type: 'always',
+          source_job_id: lastJob.id,
+          source_trigger_id: null,
+          target_job_id: job.id,
+          enabled: true,
+        },
+      ];
     }
   };
 

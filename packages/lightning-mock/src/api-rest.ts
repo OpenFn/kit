@@ -135,7 +135,10 @@ export default (
       };
     }
 
-    (incoming.workflows ?? []).forEach((wf: any) => {
+    const wfList = Array.isArray(incoming.workflows)
+      ? incoming.workflows
+      : Object.values(incoming.workflows ?? {});
+    wfList.forEach((wf: any) => {
       app.updateWorkflow(incoming.id, wf);
     });
 
