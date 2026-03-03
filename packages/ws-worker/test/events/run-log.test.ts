@@ -2,7 +2,7 @@ import test from 'ava';
 
 import handleRunLog from '../../src/events/run-log';
 import { mockChannel } from '../../src/mock/sockets';
-import { RUN_LOG } from '../../src/events';
+import { RUN_LOG, RUN_LOG_BATCH } from '../../src/events';
 
 import type { RunState, JSONLog } from '../../src/types';
 
@@ -32,7 +32,7 @@ test('should send a log event outside a run', async (t) => {
   };
 
   const channel = mockChannel({
-    [RUN_LOG]: (evt) => {
+    [RUN_LOG_BATCH]: (evt) => {
       t.is(evt.run_id, plan.id);
       t.is(evt.logs.length, 1);
       t.deepEqual(evt.logs[0].message, JSON.parse(log.message));
@@ -66,7 +66,7 @@ test('should replace the message of redacted logs', async (t) => {
   } as RunState;
 
   const channel = mockChannel({
-    [RUN_LOG]: (evt) => {
+    [RUN_LOG_BATCH]: (evt) => {
       t.is(evt.logs.length, 1);
       t.regex(evt.logs[0].message[0], /redacted/i);
     },
@@ -105,7 +105,7 @@ test('should send a log event inside a run', async (t) => {
   };
 
   const channel = mockChannel({
-    [RUN_LOG]: (evt) => {
+    [RUN_LOG_BATCH]: (evt) => {
       t.is(evt.logs.length, 1);
       t.truthy(evt.logs[0].step_id);
       t.deepEqual(evt.logs[0].message, JSON.parse(log.message));
@@ -118,9 +118,6 @@ test('should send a log event inside a run', async (t) => {
   await handleRunLog({ channel, state, options } as any, [log]);
 });
 
-// If batch mode is disabled, logs are sent as a single event
-// (no logs array)
-// I'm calling this the LegacyRunLogPayload
 test('should work with non-batch logging', async (t) => {
   const plan = { id: 'run-1' };
 

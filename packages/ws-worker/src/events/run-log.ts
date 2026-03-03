@@ -5,7 +5,7 @@ import type {
 } from '@openfn/lexicon/lightning';
 import type { WorkerLogPayload } from '@openfn/engine-multi';
 
-import { RUN_LOG } from '../events';
+import { RUN_LOG, RUN_LOG_BATCH } from '../events';
 import { Context } from '../api/execute';
 import { timeInMicroseconds } from '../util';
 import { sendEvent } from '../util/send-event';
@@ -55,7 +55,7 @@ export default async function onRunLog(
       run_id: `${state.plan.id}`,
       logs,
     };
-    return sendEvent<RunLogPayload>(context, RUN_LOG, payload);
+    return sendEvent<RunLogPayload>(context, RUN_LOG_BATCH, payload);
   } else {
     return new Promise<void>(async (resolve) => {
       for (const log of logs) {

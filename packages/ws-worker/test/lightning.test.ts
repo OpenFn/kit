@@ -12,7 +12,7 @@ import createLightningServer, {
   toBase64,
 } from '@openfn/lightning-mock';
 
-import { createRun, createEdge, createJob, sleep } from './util';
+import { createRun, createEdge, createJob, sleep, wait } from './util';
 import createWorkerServer from '../src/server';
 import * as e from '../src/events';
 import createMockRTE from '../src/mock/runtime-engine';
@@ -44,6 +44,7 @@ test.before(async () => {
     maxWorkflows: 1,
     collectionsVersion: '1.0.0',
     collectionsUrl: 'www',
+    batchLogs: true,
     // Note that if this is not passed,
     // JWT verification will be skipped
     runPublicKey: keys.public,
@@ -513,41 +514,42 @@ test.serial(`events: ${e.STEP_COMPLETE} should not return dataclips`, (t) => {
   });
 });
 
-test.serial(`events: lightning should receive a ${e.RUN_LOG} event`, (t) => {
-  return new Promise((done) => {
-    const run = {
-      id: 'run-1',
-      jobs: [
-        {
-          body: 'fn((s) => { console.log("x"); return s })',
+test.serial(
+  `events: lightning should receive a ${e.RUN_LOG_BATCH} event`,
+  (t) => {
+    return new Promise((done) => {
+      const run = {
+        id: 'run-1',
+        jobs: [
+          {
+            body: 'fn((s) => { console.log("x"); return s })',
+          },
+        ],
+      } as LightningPlan;
+
+      lng.onSocketEvent(
+        e.RUN_LOG_BATCH,
+        run.id,
+        ({ payload }: any) => {
+          const jobLog = payload.logs.find((l) => l.source === 'JOB');
+          if (jobLog) {
+            t.is(jobLog.level, 'info');
+            t.truthy(jobLog.step_id);
+            t.truthy(jobLog.message);
+            t.deepEqual(jobLog.message, ['x']);
+          }
         },
-      ],
-    } as LightningPlan;
+        false
+      );
 
-    lng.onSocketEvent(
-      e.RUN_LOG,
-      run.id,
-      ({ payload }: any) => {
-        if (payload.source === 'JOB') {
-          const log = payload;
+      lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
+        done();
+      });
 
-          t.is(log.level, 'info');
-          t.truthy(log.run_id);
-          t.truthy(log.step_id);
-          t.truthy(log.message);
-          t.deepEqual(log.message, ['x']);
-        }
-      },
-      false
-    );
-
-    lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
-      done();
+      lng.enqueueRun(run);
     });
-
-    lng.enqueueRun(run);
-  });
-});
+  }
+);
 
 // Skipping because this is flaky at microsecond resolution
 // See branch hrtime-send-nanoseconds-to-lightning where this should be more robust
@@ -862,8 +864,6 @@ test.serial(
 
 test.serial(`worker should send a success reason in the logs`, (t) => {
   return new Promise((done) => {
-    let log: any;
-
     const run = {
       id: 'run-1',
       jobs: [
@@ -874,18 +874,20 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
     } as LightningPlan;
 
     lng.onSocketEvent(
-      e.RUN_LOG,
+      e.RUN_LOG_BATCH,
       run.id,
       ({ payload }: any) => {
-        if (payload.message[0].match(/Run complete with status: success/)) {
-          log = payload.message[0];
+        const targetLog = payload.logs.find((l) =>
+          l.message[0].match(/Run complete with status: success/)
+        );
+        if (targetLog) {
+          t.pass('Expected log found');
         }
       },
       false
     );
 
     lng.onSocketEvent(e.RUN_COMPLETE, run.id, () => {
-      t.truthy(log);
       done();
     });
 
@@ -906,12 +908,20 @@ test.serial(`worker should send a fail reason in the logs`, (t) => {
     } as LightningPlan;
 
     lng.onSocketEvent(
-      e.RUN_LOG,
+      e.RUN_LOG_BATCH,
       run.id,
       ({ payload }: any) => {
-        if (payload.message[0].match(/Run complete with status: fail/)) {
+        const failMsg = payload.logs.find((l: any) =>
+          l.message[0].match(/Run complete with status: fail/)
+        );
+        if (failMsg) {
           t.pass();
-        } else if (payload.message[0].match(/JobError: blah/i)) {
+        }
+
+        const jobError = payload.logs.find((l: any) =>
+          l.message[0].match(/JobError: blah/i)
+        );
+        if (jobError) {
           t.pass();
         }
       },
@@ -956,7 +966,7 @@ test.serial(
       } as LightningPlan;
 
       lng.onSocketEvent(
-        e.RUN_LOG,
+        e.RUN_LOG_BATCH,
         run.id,
         ({ payload }: any) => {
           // we expect one batch of ten logs
