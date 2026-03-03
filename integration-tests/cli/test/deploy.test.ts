@@ -2,20 +2,13 @@ import test from 'ava';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import run from '../src/run';
-import createLightningServer, {
-  DEFAULT_PROJECT_ID,
-} from '@openfn/lightning-mock';
+import createLightningServer from '@openfn/lightning-mock';
 import { extractLogs, assertLog } from '../src/util';
 import { rimraf } from 'rimraf';
 
-// set up a lightning mock
-
 let server: any;
-
 const port = 8967;
-
 const endpoint = `http://localhost:${port}`;
-
 let tmpDir = path.resolve('tmp/deploy');
 
 const testProject = `
@@ -78,34 +71,46 @@ workflows:
 
 test.before(async () => {
   server = await createLightningServer({ port });
+
+  process.env.IGNORE_DOT_ENV = 'true';
+  process.env.OPENFN_ENDPOINT = endpoint;
+  process.env.OPENFN_API_KEY = 'test-key';
 });
 
 test.beforeEach(async () => {
   await fs.mkdir(tmpDir, { recursive: true });
+  server.reset();
 });
 
 test.afterEach(async () => {
   await rimraf(tmpDir);
 });
 
-test.serial('deploy a local project to lightning mock', async (t) => {
+test.serial('deploy a local project', async (t) => {
   await fs.writeFile(path.join(tmpDir, 'project.yaml'), testProject);
 
+  t.is(Object.keys(server.state.projects).length, 0);
+
   const { stdout, stderr } = await run(
-    `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn deploy \
+    `openfn deploy \
       --project-path ${tmpDir}/project.yaml \
       --state-path ${tmpDir}/.state.json \
       --no-confirm \
-      --log-json -l debug`
+      --log-json \
+      -l debug`
   );
 
   t.falsy(stderr);
 
   const logs = extractLogs(stdout);
   assertLog(t, logs, /Deployed/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  const [project] = Object.values(server.state.projects);
+  t.is(project.name, 'test-project');
 });
 
-test.serial('deploy a project, update workflow, deploy again', async (t) => {
+test.serial('Update a project', async (t) => {
   const projectYamlUpdated = testProject.replace(
     "body: 'fn(s => s)'",
     "body: 'fn(s => ({ ...s, updated: true }))'"
@@ -114,11 +119,13 @@ test.serial('deploy a project, update workflow, deploy again', async (t) => {
   const projectPath = path.join(tmpDir, 'project.yaml');
   const statePath = path.join(tmpDir, '.state.json');
 
-  const deployCmd = `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn deploy \
-    --project-path ${projectPath} \
-    --state-path ${statePath} \
-    --no-confirm \
-    --log-json -l debug`;
+  const deployCmd = `openfn deploy \
+      --project-path ${projectPath} \
+      --state-path ${statePath} \
+      --no-confirm \
+      --log-json -l debug`;
+
+  t.is(Object.keys(server.state.projects).length, 0);
 
   // first deployment
   await fs.writeFile(projectPath, testProject);
@@ -126,48 +133,65 @@ test.serial('deploy a project, update workflow, deploy again', async (t) => {
   t.falsy(first.stderr);
   assertLog(t, extractLogs(first.stdout), /Deployed/);
 
+  t.is(Object.keys(server.state.projects).length, 1);
+
   // second deployment after update
   await fs.writeFile(projectPath, projectYamlUpdated);
+
   const { stdout, stderr } = await run(deployCmd);
-  const logs = extractLogs(stdout);
   t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
   assertLog(t, logs, /Deployed/);
+
   const changesLog = logs.find(
     (log) => log.level === 'always' && /Changes\:/.test(`${log.message}`)
   );
   t.regex(changesLog.message[0], /fn\(s => s\)/);
   t.regex(changesLog.message[0], /fn\(s => \(\{ \.\.\.s, updated: true \}\)\)/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+
+  const [project] = Object.values(server.state.projects) as any[];
+  t.is(project.name, 'test-project');
+
+  const [workflow] = Object.values(project.workflows);
+  t.regex(workflow.jobs[0].body, /updated/);
 });
 
-test.serial('deploy then pull to check version history', async (t) => {
+test.serial('pull a project', async (t) => {
   const projectPath = path.join(tmpDir, 'project.yaml');
   const statePath = path.join(tmpDir, '.state.json');
 
-  await fs.writeFile(projectPath, testProject);
+  await fs.writeFile(projectPath, testProjectMulti);
 
-  const deployCmd = `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn deploy \
+  // deploy a fresh project to set up the server
+  const deployCmd = `openfn deploy \
     --project-path ${projectPath} \
     --state-path ${statePath} \
     --no-confirm \
     --log-json -l debug`;
 
-  const deployResult = await run(deployCmd);
-  t.falsy(deployResult.stderr);
-  assertLog(t, extractLogs(deployResult.stdout), /Deployed/);
+  await run(deployCmd);
 
-  const stateAfterDeploy = JSON.parse(await fs.readFile(statePath, 'utf8'));
-  const projectId = stateAfterDeploy.id;
-  t.truthy(projectId);
+  t.is(Object.keys(server.state.projects).length, 1);
 
-  const pullResult = await run(
-    `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn pull ${projectId} \
+  const [projectId] = Object.keys(server.state.projects);
+
+  // Clear the working dir, like it never existed locally
+  rimraf(`${tmpDir}/*`);
+
+  // Now pull the project as if it's fresh
+  const { stdout, stderr } = await run(
+    `openfn pull ${projectId} \
       --project-path ${projectPath} \
       --state-path ${statePath} \
       --log-json`
   );
 
-  t.falsy(pullResult.stderr);
-  assertLog(t, extractLogs(pullResult.stdout), /Project pulled successfully/i);
+  t.falsy(stderr);
+
+  assertLog(t, extractLogs(stdout), /Project pulled successfully/i);
 
   const pulledState = JSON.parse(await fs.readFile(statePath, 'utf8'));
   const workflow = Object.values(pulledState.workflows)[0] as any;
@@ -186,23 +210,28 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
   await fs.writeFile(projectPath, testProjectMulti);
 
   // deploy fresh project
-  const deployCmd = `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn deploy \
+  const deployCmd = `openfn deploy \
     --project-path ${projectPath} \
     --state-path ${statePath} \
     --no-confirm \
     --log-json -l debug`;
 
+  t.is(Object.keys(server.state.projects).length, 0);
+
   const deployResult = await run(deployCmd);
   t.falsy(deployResult.stderr);
   assertLog(t, extractLogs(deployResult.stdout), /Deployed/);
 
+  t.is(Object.keys(server.state.projects).length, 1);
+
   const stateAfterDeploy = JSON.parse(await fs.readFile(statePath, 'utf8'));
   const projectId = stateAfterDeploy.id;
   t.truthy(projectId);
+  t.truthy(server.state.projects[projectId]);
 
   // pull the project back
   const pullResult = await run(
-    `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn pull ${projectId} \
+    `openfn pull ${projectId} \
       --project-path ${projectPath} \
       --state-path ${statePath} \
       --log-json`
@@ -226,20 +255,7 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
   );
   t.regex(changesLog.message[0], /\-.+body: \"get\('http:\/\/example.com'\)\"/);
   t.regex(changesLog.message[0], /\+.+body: \"post\('http:\/\/success.org'\)"/);
+
+  t.is(Object.keys(server.state.projects).length, 1);
+  t.truthy(server.state.projects[projectId]);
 });
-
-// This should fail against the built CLI right now
-test.serial(
-  `OPENFN_ENDPOINT=${endpoint} openfn pull ${DEFAULT_PROJECT_ID} --log-json`,
-  async (t) => {
-    const { stdout, stderr } = await run(t.title);
-    t.falsy(stderr);
-
-    const stdlogs = extractLogs(stdout);
-    assertLog(t, stdlogs, /Project pulled successfully/i);
-
-    // TODO what's an elegant way to tidy up here?
-    await rimraf('project.yaml');
-    await rimraf('.state.json');
-  }
-);
