@@ -32,6 +32,7 @@ import createPheonixMockSocketServer, {
 import {
   RUN_COMPLETE,
   RUN_LOG,
+  RUN_LOG_BATCH,
   RUN_START,
   CLAIM,
   GET_PLAN,
@@ -150,6 +151,7 @@ const createSocketAPI = (
       [GET_DATACLIP]: wrap(getDataclip),
       [STEP_START]: wrap(handleStepStart),
       [RUN_LOG]: wrap(handleLog),
+      [RUN_LOG_BATCH]: wrap(handleBatchLog),
       [STEP_COMPLETE]: wrap(handleStepComplete),
       [RUN_COMPLETE]: wrap((...args) => {
         handleRunComplete(...args);
@@ -315,6 +317,40 @@ const createSocketAPI = (
     });
   }
 
+  function handleBatchLog(
+    state: ServerState,
+    ws: DevSocket,
+    evt: PhoenixEvent<RunLogPayload>
+  ) {
+    const { ref, join_ref, topic } = evt;
+
+    let payload: any = {
+      status: 'ok',
+    };
+
+    const { run_id: runId } = evt.payload;
+
+    evt.payload.logs.forEach((log) => {
+      state.pending[runId].logs.push(log);
+
+      logger?.info(`LOG [${runId}] ${log.message}`);
+
+      if (!log.message || !log.source || !log.timestamp || !log.level) {
+        payload = {
+          status: 'error',
+          response: 'Missing property on log',
+        };
+      }
+    });
+
+    ws.reply<RunLogReply>({
+      ref,
+      join_ref,
+      topic,
+      payload,
+    });
+  }
+
   function handleLog(
     state: ServerState,
     ws: DevSocket,
@@ -328,33 +364,17 @@ const createSocketAPI = (
 
     const { run_id: runId } = evt.payload;
 
-    if (evt.payload.logs) {
-      // handle batch logs
-      evt.payload.logs.forEach((log) => {
-        state.pending[runId].logs.push(log);
+    // handle legacy logs
+    const log = evt.payload as unknown as LegacyRunLogPayload;
+    state.pending[runId].logs.push(log);
 
-        logger?.info(`LOG [${runId}] ${log.message}`);
+    logger?.info(`LOG [${runId}] ${log.message}`);
 
-        if (!log.message || !log.source || !log.timestamp || !log.level) {
-          payload = {
-            status: 'error',
-            response: 'Missing property on log',
-          };
-        }
-      });
-    } else {
-      // handle legacy logs
-      const log = evt.payload as unknown as LegacyRunLogPayload;
-      state.pending[runId].logs.push(log);
-
-      logger?.info(`LOG [${runId}] ${log.message}`);
-
-      if (!log.message || !log.source || !log.timestamp || !log.level) {
-        payload = {
-          status: 'error',
-          response: 'Missing property on log',
-        };
-      }
+    if (!log.message || !log.source || !log.timestamp || !log.level) {
+      payload = {
+        status: 'error',
+        response: 'Missing property on log',
+      };
     }
 
     ws.reply<RunLogReply>({
