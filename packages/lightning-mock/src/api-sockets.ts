@@ -322,7 +322,6 @@ const createSocketAPI = (
     ws: DevSocket,
     evt: PhoenixEvent<RunLogPayload>
   ) {
-    console.log(' >>> HANDLE BATCH LOG');
     const { ref, join_ref, topic } = evt;
 
     let payload: any = {
