@@ -19,11 +19,13 @@ import mergeCommand from './projects/merge';
 import checkoutCommand from './projects/checkout';
 import fetchCommand from './projects/fetch';
 
-const env = loadDotEnv();
-if (env) {
-  // Write the env so that the inner process can use it
-  // This is just a convenience for logging back to the user
-  process.env.$DOT_ENV_OVERRIDES = Object.keys(env).join(',');
+if (!process.env.IGNORE_DOT_ENV) {
+  const env = loadDotEnv();
+  if (env) {
+    // Write the env so that the inner process can use it
+    // This is just a convenience for logging back to the user
+    process.env.$DOT_ENV_OVERRIDES = Object.keys(env).join(',');
+  }
 }
 
 const y = yargs(hideBin(process.argv));
