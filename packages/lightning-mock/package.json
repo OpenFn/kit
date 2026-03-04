@@ -21,6 +21,7 @@
     "@openfn/language-collections": "0.8.0",
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
+    "@openfn/project": "workspace:*",
     "@openfn/runtime": "workspace:*",
     "@openfn/project": "workspace:*",
     "@types/koa-logger": "^3.1.5",
