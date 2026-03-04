@@ -282,6 +282,8 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
  *
  * 1. why is there no local version history?
  * 2. the remote change gets dropped in the merge
+ *
+ * I suspect the fail here is catching a real bug
  */
 test.serial.skip(
   'only locally changed workflows are deployed when remote also changes',
