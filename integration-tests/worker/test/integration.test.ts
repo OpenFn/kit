@@ -987,7 +987,7 @@ test.serial('Redact logs which exceed the payload limit', (t) => {
       },
     };
 
-    lightning.on('run:log_batch', (evt) => {
+    lightning.on('run:batch_logs', (evt) => {
       evt.payload.logs.forEach((log) => {
         if (log.source === 'JOB') {
           t.regex(log.message[0], /redacted/i);
@@ -1066,8 +1066,7 @@ test.serial(
 
       const jobLogs = [];
       const rtLogs = [];
-
-      lightning.on('run:log_batch', (e) => {
+      lightning.on('run:batch_logs', (e) => {
         e.payload.logs.forEach((log) => {
           if (log.source === 'JOB') {
             jobLogs.push(log);
