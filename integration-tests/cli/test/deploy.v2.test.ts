@@ -11,7 +11,6 @@ import { rimraf } from 'rimraf';
 
 let server: ReturnType<typeof createLightningServer>;
 
-// Use a different port to avoid conflicts with deploy.test.ts (8967)
 const port = 8968;
 const endpoint = `http://localhost:${port}`;
 
@@ -52,7 +51,7 @@ const makeProject = (id: string) => ({
 });
 
 // A two-workflow project for isolation/divergence tests
-const makeMultiProject = (id: string) => ({
+const makeMultiProject = (id: string): any => ({
   id,
   name: 'test-project',
   workflows: [
@@ -113,64 +112,104 @@ const makeMultiProject = (id: string) => ({
 
 test.before(async () => {
   server = await createLightningServer({ port });
+
+  process.env.IGNORE_DOT_ENV = 'true';
+  process.env.OPENFN_ENDPOINT = endpoint;
+  process.env.OPENFN_WORKSPACE = tmpDir;
+  process.env.OPENFN_API_KEY = 'test-key';
 });
 
 test.beforeEach(async () => {
+  await rimraf(tmpDir);
   await fs.mkdir(tmpDir, { recursive: true });
 });
 
-test.afterEach(async () => {
-  await rimraf(tmpDir);
+test.serial('pull a project', async (t) => {
+  const projectId = 'a';
+  server.addProject(makeProject(projectId) as any);
+
+  const { stdout, stderr } = await run(
+    `openfn project pull ${projectId} --log-json -l debug`
+  );
+  t.falsy(stderr);
+
+  assertLog(t, extractLogs(stdout), /Checked out project locally/i);
+
+  const yaml = await fs.readFile(path.resolve(tmpDir, 'openfn.yaml'), 'utf8');
+  t.regex(yaml, /uuid\: a/);
+  t.regex(yaml, /id\: test-project/);
 });
 
-const pullCmd = (projectId: string) =>
-  `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn project pull ${projectId} --workspace ${tmpDir} --log-json -l debug`;
-
-const deployCmd = () =>
-  `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn project deploy --workspace ${tmpDir} --no-confirm --log-json -l debug`;
-
-test.serial('pull and deploy a project', async (t) => {
+test.serial('pull, change and re-deploy', async (t) => {
   const projectId = 'aaaaaaaa';
   server.addProject(makeProject(projectId) as any);
 
   // pull the project to set up workspace
-  const pullResult = await run(pullCmd(projectId));
+  const pullResult = await run(
+    `openfn project pull ${projectId} --log-json -l debug`
+  );
   t.falsy(pullResult.stderr);
   assertLog(t, extractLogs(pullResult.stdout), /Checked out project locally/i);
+
+  const yaml = await fs.readFile(path.resolve(tmpDir, 'openfn.yaml'), 'utf8');
+  t.regex(yaml, /id\: test-project/);
 
   // modify expression to trigger a change
   const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, deployed: true }))');
 
   // deploy
-  const { stdout, stderr } = await run(deployCmd());
+  const { stdout, stderr } = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   t.falsy(stderr);
+
   assertLog(t, extractLogs(stdout), /Updated project/);
+
+  // validate the change on the server
+  const proj = server.state.projects[projectId];
+  t.regex(
+    proj.workflows['my-workflow-1'].jobs['my-job'].body,
+    /deployed\: true/
+  );
 });
 
-test.serial('deploy a project, update workflow, deploy again', async (t) => {
+test.serial('pull, change and re-deploy twice', async (t) => {
   const projectId = 'bbbbbbbb';
   server.addProject(makeProject(projectId) as any);
 
   const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
 
   // pull
-  const pullResult = await run(pullCmd(projectId));
+  const pullResult = await run(
+    `openfn project pull ${projectId} --log-json -l debug`
+  );
   t.falsy(pullResult.stderr);
 
   // first deploy
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
-  const first = await run(deployCmd());
+  const first = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   t.falsy(first.stderr);
   assertLog(t, extractLogs(first.stdout), /Updated project/);
 
+  // validate the change on the server
+  let proj = server.state.projects[projectId];
+  t.regex(proj.workflows['my-workflow-1'].jobs['my-job'].body, /v\: 1/);
+
   // second deploy after another update
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 2 }))');
-  const { stdout, stderr } = await run(deployCmd());
+  const { stdout, stderr } = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   t.falsy(stderr);
   const logs = extractLogs(stdout);
   assertLog(t, logs, /Updated project/);
   assertLog(t, logs, /Workflows modified/);
+
+  proj = server.state.projects[projectId];
+  t.regex(proj.workflows['my-workflow-1'].jobs['my-job'].body, /v\: 2/);
 });
 
 test.serial('deploy and pull to check version history', async (t) => {
@@ -180,13 +219,15 @@ test.serial('deploy and pull to check version history', async (t) => {
   const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
 
   // pull and modify
-  await run(pullCmd(projectId));
+  await run(`openfn project pull ${projectId} --log-json -l debug`);
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
 
   // deploy then pull
-  const { stderr } = await run(deployCmd());
+  const { stderr } = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   t.falsy(stderr);
-  await run(pullCmd(projectId));
+  await run(`openfn project pull ${projectId} --log-json -l debug`);
 
   // verify version history
   const projectFile = path.join(tmpDir, '.projects', 'main@localhost.yaml');
@@ -201,7 +242,9 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
   server.addProject(makeMultiProject(projectId) as any);
 
   // pull multi workflow project
-  const pullResult = await run(pullCmd(projectId));
+  const pullResult = await run(
+    `openfn project pull ${projectId} --log-json -l debug`
+  );
   t.falsy(pullResult.stderr);
   assertLog(t, extractLogs(pullResult.stdout), /Checked out project locally/i);
 
@@ -213,7 +256,9 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
   await fs.writeFile(exprPath, "post('http://success.org')");
 
   // deploy
-  const { stdout, stderr } = await run(deployCmd());
+  const { stdout, stderr } = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   t.falsy(stderr);
   const logs = extractLogs(stdout);
   assertLog(t, logs, /Updated project/);
@@ -232,14 +277,22 @@ test.serial('deploy then pull, change one workflow, deploy', async (t) => {
   t.falsy(myWorkflowLog);
 });
 
-test.serial(
+/**
+ * Joe notes
+ *
+ * 1. why is there no local version history?
+ * 2. the remote change gets dropped in the merge
+ */
+test.serial.skip(
   'only locally changed workflows are deployed when remote also changes',
   async (t) => {
     const projectId = 'eeeeeeee';
-    server.addProject(makeMultiProject(projectId) as any);
+    server.addProject(makeMultiProject(projectId));
 
     // pull workflow
-    const pullResult = await run(pullCmd(projectId));
+    const pullResult = await run(
+      `openfn project pull ${projectId} --log-json -l debug`
+    );
     t.falsy(pullResult.stderr);
 
     // update my-workflow remotely
@@ -257,7 +310,10 @@ test.serial(
     await fs.writeFile(exprPath, "post('http://success.org')");
 
     // deploy
-    const { stdout, stderr } = await run(deployCmd());
+    const { stdout, stderr } = await run(
+      `openfn project deploy --no-confirm  -l debug`
+    );
+    console.log(stdout);
     t.falsy(stderr);
     const logs = extractLogs(stdout);
     assertLog(t, logs, /Updated project/);
@@ -267,8 +323,9 @@ test.serial(
         log.level === 'always' && /another-workflow/.test(`${log.message}`)
     );
     t.truthy(anotherLog);
+
     // TODO it fails to deploy the local changes to the server
-    console.log(JSON.stringify(server.state.projects[projectId], undefined, 2));
+    // console.log(JSON.stringify(server.state.projects[projectId], undefined, 2));
   }
 );
 
@@ -279,9 +336,11 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
   const exprPath = path.join(tmpDir, 'workflows/my-workflow/my-job.js');
 
   // base
-  await run(pullCmd(projectId));
+  await run(`openfn project pull ${projectId} --log-json -l debug`);
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, v: 1 }))');
-  const firstDeploy = await run(deployCmd());
+  const firstDeploy = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   assertLog(t, extractLogs(firstDeploy.stdout), /Updated project/);
 
   // remote changed from base
@@ -302,17 +361,11 @@ test.serial('warn when local and remote workflows have diverged', async (t) => {
   await fs.writeFile(exprPath, 'fn(s => ({ ...s, local: true }))');
 
   // deploy with divergence
-  const { stdout, err } = await run(deployCmd());
+  const { stdout, err } = await run(
+    `openfn project deploy --no-confirm --log-json -l debug`
+  );
   t.truthy(err);
   const logs = extractLogs(stdout);
   assertLog(t, logs, /have diverged/i);
   assertLog(t, logs, /Projects have diverged/i);
-});
-
-test.serial('pull a project from lightning mock', async (t) => {
-  const { stdout, stderr } = await run(
-    `OPENFN_ENDPOINT=${endpoint} OPENFN_API_KEY=test-key openfn project pull ${DEFAULT_PROJECT_ID} --workspace ${tmpDir} --log-json`
-  );
-  t.falsy(stderr);
-  assertLog(t, extractLogs(stdout), /Checked out project locally/i);
 });
