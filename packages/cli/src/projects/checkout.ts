@@ -36,7 +36,7 @@ const command: yargs.CommandModule = {
 
 export default command;
 
-export const handler = async (options: CheckoutOptions, logger: Logger) => {
+export const handler = async (options: CheckoutOptions, logger?: Logger) => {
   const projectIdentifier = options.project!;
   const workspacePath = options.workspace ?? process.cwd();
   const workspace = new Workspace(workspacePath, logger);
@@ -54,7 +54,7 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
     const filePath = projectIdentifier.startsWith('/')
       ? projectIdentifier
       : path.join(workspacePath, projectIdentifier);
-    logger.debug('Loading project from path ', filePath);
+    logger?.debug('Loading project from path ', filePath);
     switchProject = await Project.from('path', filePath, config);
   } else {
     switchProject = workspace.get(projectIdentifier);
@@ -71,21 +71,21 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
     const localProject = await Project.from('fs', {
       root: options.workspace || '.',
     });
-    logger.success(`Loaded local project ${localProject.alias}`);
+    logger?.success(`Loaded local project ${localProject.alias}`);
     const changed = await findLocallyChangedWorkflows(
       workspace,
       localProject,
       'assume-ok'
     );
     if (changed.length && !options.force) {
-      logger.break();
-      logger.warn(
+      logger?.break();
+      logger?.warn(
         'WARNING: detected changes on your currently checked-out project'
       );
-      logger.warn(
+      logger?.warn(
         `Changes may be lost by checking out ${localProject.alias} right now`
       );
-      logger.warn(`Pass --force or -f to override this warning and continue`);
+      logger?.warn(`Pass --force or -f to override this warning and continue`);
       // TODO log to run with force
       // TODO need to implement a save function
       const e = new Error(
@@ -96,7 +96,7 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
     }
   } catch (e: any) {
     if (e.message.match('ENOENT')) {
-      logger.debug('No openfn.yaml found locally: skipping divergence test');
+      logger?.debug('No openfn.yaml found locally: skipping divergence test');
     } else {
       throw e;
     }
@@ -122,8 +122,8 @@ export const handler = async (options: CheckoutOptions, logger: Logger) => {
       });
       fs.writeFileSync(path.join(workspacePath, f), files[f]);
     } else {
-      logger.warn('WARNING! No content for file', f);
+      logger?.warn('WARNING! No content for file', f);
     }
   }
-  logger.success(`Expanded project to ${workspacePath}`);
+  logger?.success(`Expanded project to ${workspacePath}`);
 };

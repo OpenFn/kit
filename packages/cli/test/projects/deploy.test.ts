@@ -183,6 +183,81 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
   t.truthy(logger._find('always', /- c/i));
 });
 
+test.serial.only('deploy a new project', async (t) => {
+  const yaml = `
+id: my-project
+name: My Project
+cli:
+  version: 2
+collections: []
+credentials: []
+openfn:
+  uuid: "<proj-id>"
+  endpoint: http://localhost:${port}
+  inserted_at: 2025-04-23T11:15:59Z
+  updated_at: 2025-04-23T11:15:59Z
+options: {}
+workflows:
+  - name: wf
+    steps:
+      - id: a
+        expression: fn()
+        adaptor: "@openfn/language-common@latest"
+        openfn:
+          uuid: <a>
+      - id: webhook
+        type: webhook
+        enabled: true
+        openfn:
+          uuid: <t>
+        next:
+          a:
+            disabled: false
+            condition: always
+            openfn:
+              uuid: <edge>
+    history:
+      - cli:ba19e179317f
+    openfn:
+      uuid: 72ca3eb0-042c-47a0-a2a1-a545ed4a8406
+      inserted_at: 2025-04-23T11:19:32Z
+      updated_at: 2025-04-23T11:19:32Z
+      lock_version: 1
+    id: my-workflow
+    start: webhook`;
+
+  mockFs({
+    '/ws/.projects/main@localhost.yaml': yaml,
+    '/ws/openfn.yaml': '',
+  });
+
+  // first checkout the project to set up the mock fs
+  await checkout({
+    project: 'main',
+    workspace: '/ws',
+  });
+
+  // Now change the expression
+  await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+
+  await deployHandler(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      log: 'debug',
+      new: true,
+    } as any,
+    logger
+  );
+
+  // ensure that the project is now synced with lightning
+  t.truthy(server.state.projects['e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00']);
+
+  const success = logger._find('success', /Created new project at/);
+  t.truthy(success);
+});
+
 // This doesn't work until local history is tracked properly
 test.serial.skip(
   'deploy a change to a project and write the yaml back (compatible histories)',
