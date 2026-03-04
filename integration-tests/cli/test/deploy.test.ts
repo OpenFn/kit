@@ -14,7 +14,7 @@ let tmpDir = path.resolve('tmp/deploy');
 const testProject = `
 name: test-project
 workflows:
-  my-workflow:
+  My-Workflow:
     name: My Workflow
     jobs:
       my-job:
@@ -35,7 +35,7 @@ workflows:
 const testProjectMulti = `
 name: test-project
 workflows:
-  my-workflow:
+  My-Workflow:
     name: My Workflow
     jobs:
       my-job:
@@ -51,7 +51,7 @@ workflows:
         condition_type: always
         source_trigger: webhook
         target_job: my-job
-  another-workflow:
+  Another-Workflow:
     name: Another Workflow
     jobs:
       another-job:
@@ -78,12 +78,9 @@ test.before(async () => {
 });
 
 test.beforeEach(async () => {
+  await rimraf(tmpDir);
   await fs.mkdir(tmpDir, { recursive: true });
   server.reset();
-});
-
-test.afterEach(async () => {
-  await rimraf(tmpDir);
 });
 
 test.serial('deploy a local project', async (t) => {
@@ -119,16 +116,16 @@ test.serial('Update a project', async (t) => {
   const projectPath = path.join(tmpDir, 'project.yaml');
   const statePath = path.join(tmpDir, '.state.json');
 
+  await fs.writeFile(projectPath, testProject);
+
+  t.is(Object.keys(server.state.projects).length, 0);
+
+  // first deployment
   const deployCmd = `openfn deploy \
       --project-path ${projectPath} \
       --state-path ${statePath} \
       --no-confirm \
       --log-json -l debug`;
-
-  t.is(Object.keys(server.state.projects).length, 0);
-
-  // first deployment
-  await fs.writeFile(projectPath, testProject);
   const first = await run(deployCmd);
   t.falsy(first.stderr);
   assertLog(t, extractLogs(first.stdout), /Deployed/);
@@ -200,6 +197,8 @@ test.serial('pull a project', async (t) => {
 });
 
 test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
+  t.is(Object.keys(server.state.projects).length, 0);
+
   const projectYamlUpdated = testProjectMulti.replace(
     'body: "get(\'http://example.com\')"',
     'body: "post(\'http://success.org\')"'
@@ -211,21 +210,17 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
 
   // deploy fresh project
   const deployCmd = `openfn deploy \
-    --project-path ${projectPath} \
-    --state-path ${statePath} \
-    --no-confirm \
-    --log-json -l debug`;
-
-  t.is(Object.keys(server.state.projects).length, 0);
-
-  const deployResult = await run(deployCmd);
-  t.falsy(deployResult.stderr);
-  assertLog(t, extractLogs(deployResult.stdout), /Deployed/);
+      --project-path ${projectPath} \
+      --state-path ${statePath} \
+      --no-confirm \
+      --log debug \
+      --log-json`;
+  await run(deployCmd);
 
   t.is(Object.keys(server.state.projects).length, 1);
 
-  const stateAfterDeploy = JSON.parse(await fs.readFile(statePath, 'utf8'));
-  const projectId = stateAfterDeploy.id;
+  const { id: projectId } = JSON.parse(await fs.readFile(statePath, 'utf8'));
+
   t.truthy(projectId);
   t.truthy(server.state.projects[projectId]);
 
@@ -239,16 +234,21 @@ test.serial('deploy then pull, changes one workflow, deploy', async (t) => {
 
   t.falsy(pullResult.stderr);
   assertLog(t, extractLogs(pullResult.stdout), /Project pulled successfully/i);
+
   const pulledState = JSON.parse(await fs.readFile(statePath, 'utf8'));
   const workflow = Object.values(pulledState.workflows)[0] as any;
   t.truthy(workflow.version_history);
   t.is(workflow.version_history.length, 1);
 
-  // now deploy with changes to one workflow
+  // change the local workflow yaml
   await fs.writeFile(projectPath, projectYamlUpdated);
+
+  // And deploy those changes
   const { stdout, stderr } = await run(deployCmd);
-  const logs = extractLogs(stdout);
+
   t.falsy(stderr);
+
+  const logs = extractLogs(stdout);
   assertLog(t, logs, /Deployed/);
   const changesLog = logs.find(
     (log) => log.level === 'always' && /Changes\:/.test(`${log.message}`)
