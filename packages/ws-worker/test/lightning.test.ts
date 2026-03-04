@@ -12,7 +12,7 @@ import createLightningServer, {
   toBase64,
 } from '@openfn/lightning-mock';
 
-import { createRun, createEdge, createJob, sleep, wait } from './util';
+import { createRun, createEdge, createJob, sleep } from './util';
 import createWorkerServer from '../src/server';
 import * as e from '../src/events';
 import createMockRTE from '../src/mock/runtime-engine';
@@ -531,7 +531,7 @@ test.serial(
         e.RUN_LOG_BATCH,
         run.id,
         ({ payload }: any) => {
-          const jobLog = payload.logs.find((l) => l.source === 'JOB');
+          const jobLog = payload.logs.find((l: any) => l.source === 'JOB');
           if (jobLog) {
             t.is(jobLog.level, 'info');
             t.truthy(jobLog.step_id);
@@ -877,7 +877,7 @@ test.serial(`worker should send a success reason in the logs`, (t) => {
       e.RUN_LOG_BATCH,
       run.id,
       ({ payload }: any) => {
-        const targetLog = payload.logs.find((l) =>
+        const targetLog = payload.logs.find((l: any) =>
           l.message[0].match(/Run complete with status: success/)
         );
         if (targetLog) {
