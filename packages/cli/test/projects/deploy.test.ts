@@ -183,7 +183,7 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
   t.truthy(logger._find('always', /- c/i));
 });
 
-test.serial.only('deploy a new project', async (t) => {
+test.serial('deploy a new project', async (t) => {
   const yaml = `
 id: my-project
 name: My Project
