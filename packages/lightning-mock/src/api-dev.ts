@@ -2,66 +2,21 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
-import { createHash } from 'node:crypto';
-import Koa from 'koa';
-import crypto from 'node:crypto';
 import Router from '@koa/router';
-import { Logger } from '@openfn/logger';
 import type {
   LightningPlan,
-  RunCompletePayload,
   Provisioner,
+  RunCompletePayload,
 } from '@openfn/lexicon/lightning';
+import { Logger } from '@openfn/logger';
+import { generateVersionHash, mapWorkflow } from '@openfn/project';
+import Koa from 'koa';
+import crypto from 'node:crypto';
 
-import { ServerState } from './server';
 import { RUN_COMPLETE } from './events';
-import type { DevServer, LightningEvents } from './types';
+import { ServerState } from './server';
 import { PhoenixEvent } from './socket-server';
-
-function hashWorkflow(wf: any): string {
-  const pick = (obj: any, keys: string[]) => {
-    const out: any = {};
-    keys.forEach((k) => {
-      if (obj[k] !== undefined) out[k] = obj[k];
-    });
-    return out;
-  };
-
-  const data = {
-    name: wf.name,
-    jobs: Object.values(wf.jobs ?? {})
-      .map((j: any) =>
-        pick(j, [
-          'name',
-          'adaptor',
-          'body',
-          'project_credential_id',
-          'keychain_credential_id',
-        ])
-      )
-      .sort((a: any, b: any) => (a.name ?? '').localeCompare(b.name ?? '')),
-    triggers: Object.values(wf.triggers ?? {})
-      .map((t: any) => pick(t, ['type', 'cron_expression', 'enabled']))
-      .sort((a: any, b: any) => (a.type ?? '').localeCompare(b.type ?? '')),
-    edges: Object.values(wf.edges ?? {})
-      .map((e: any) =>
-        pick(e, [
-          'condition_type',
-          'condition_label',
-          'condition_expression',
-          'enabled',
-        ])
-      )
-      .sort((a: any, b: any) =>
-        (a.condition_type ?? '').localeCompare(b.condition_type ?? '')
-      ),
-  };
-
-  return createHash('sha256')
-    .update(JSON.stringify(data))
-    .digest('hex')
-    .slice(0, 12);
-}
+import type { DevServer, LightningEvents } from './types';
 
 type Api = {
   startRun(runId: string): void;
@@ -142,7 +97,9 @@ const setupDevAPI = (
       ([, v]: any) => v.id === w.id
     ) as [string, any] | undefined;
 
-    const newHash = hashWorkflow(w);
+    const newHash = generateVersionHash(mapWorkflow(w) as any, {
+      source: 'app',
+    });
 
     if (!existingEntry) {
       workflows[w.id] = {
@@ -155,7 +112,9 @@ const setupDevAPI = (
       };
     } else {
       const [existingKey, existingWf] = existingEntry;
-      const existingHash = hashWorkflow(existingWf);
+      const existingHash = generateVersionHash(mapWorkflow(existingWf) as any, {
+        source: 'app',
+      });
 
       if (newHash !== existingHash) {
         const prevHistory: string[] = existingWf.version_history ?? [];

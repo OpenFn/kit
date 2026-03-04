@@ -22,6 +22,7 @@
     "@openfn/lexicon": "workspace:^",
     "@openfn/logger": "workspace:*",
     "@openfn/runtime": "workspace:*",
+    "@openfn/project": "workspace:*",
     "@types/koa-logger": "^3.1.5",
     "@types/ws": "^8.18.1",
     "fast-safe-stringify": "^2.1.1",

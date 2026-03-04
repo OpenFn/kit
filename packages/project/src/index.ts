@@ -14,3 +14,5 @@ export {
   generateHash as generateVersionHash,
   match as versionsEqual,
 } from './util/version';
+
+export { mapWorkflow } from './parse/from-app-state';
