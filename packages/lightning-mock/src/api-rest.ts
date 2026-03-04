@@ -105,12 +105,16 @@ export default (
     } else {
       // TODO what if doesn't exist?
       const project = state.projects[ctx.params.id];
-      if (project && project.workflows && !Array.isArray(project.workflows)) {
-        ctx.response.body = {
-          data: { ...project, workflows: Object.values(project.workflows) },
-        };
+      if (!project) {
+        ctx.status = 404;
       } else {
-        ctx.response.body = { data: project };
+        if (project.workflows && !Array.isArray(project.workflows)) {
+          ctx.response.body = {
+            data: { ...project, workflows: Object.values(project.workflows) },
+          };
+        } else {
+          ctx.response.body = { data: project };
+        }
       }
     }
   });
