@@ -1,5 +1,11 @@
 # @openfn/cli
 
+## 1.30.0
+
+### Minor Changes
+
+- Add a `project clean` command
+
 ## 1.29.2
 
 ### Patch Changes

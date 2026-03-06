@@ -33,6 +33,7 @@ export type CommandList =
   | 'execute'
   | 'metadata'
   | 'project-checkout'
+  | 'project-clean'
   | 'project-deploy'
   | 'project-fetch'
   | 'project-list'
@@ -74,6 +75,7 @@ const handlers = {
   ['project-version']: projects.version,
   ['project-merge']: projects.merge,
   ['project-checkout']: projects.checkout,
+  ['project-clean']: projects.clean,
   ['project-fetch']: projects.fetch,
   version: async (opts: Opts, logger: Logger) =>
     printVersions(logger, opts, true),
