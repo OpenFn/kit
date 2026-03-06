@@ -367,7 +367,11 @@ export async function handler(options: DeployOptions, logger: Logger) {
     const fullFinalPath = await serialize(finalProject, finalOutputPath);
     logger.debug('Updated local project at ', fullFinalPath);
 
-    logger.success('Updated project  at', endpoint);
+    if (options.new) {
+      logger.success('Created new project at', endpoint);
+    } else {
+      logger.success('Updated project at', endpoint);
+    }
   }
 }
 
