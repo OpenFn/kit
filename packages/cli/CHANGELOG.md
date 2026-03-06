@@ -1,5 +1,12 @@
 # @openfn/cli
 
+## 1.29.2
+
+### Patch Changes
+
+- ff595c1: Add an override for dotenv. Set `IGNORE_DOTENV` to a truthy value to force the CLI to ignore any `.env` files.
+- ff595c1: Add a fix to v1 deploy input path resolution
+
 ## 1.29.1
 
 ### Patch Changes
