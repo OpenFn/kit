@@ -21,7 +21,6 @@ async function pullHandler(options: PullOptions, logger: Logger) {
 
   try {
     const config = mergeOverrides(await getConfig(options.configPath), options);
-
     const v2ConfigPath = path.join(
       options.workspace || process.cwd(),
       'openfn.yaml'
@@ -40,7 +39,6 @@ async function pullHandler(options: PullOptions, logger: Logger) {
         logger
       );
     }
-
     if (process.env['OPENFN_API_KEY']) {
       logger.info('Using OPENFN_API_KEY environment variable');
       config.apiKey = process.env['OPENFN_API_KEY'];
@@ -148,6 +146,8 @@ function mergeOverrides(
   options: PullOptions
 ): DeployConfig {
   const workspace = options.workspace || process.cwd();
+  const statePath = options.statePath ?? config.statePath;
+  const specPath = options.projectPath ?? config.specPath;
   return {
     ...config,
     apiKey: pickFirst(process.env['OPENFN_API_KEY'], config.apiKey),
@@ -155,12 +155,12 @@ function mergeOverrides(
     configPath: path.isAbsolute(options.configPath)
       ? options.configPath
       : path.join(workspace, options.configPath),
-    specPath: path.isAbsolute(config.specPath)
-      ? config.specPath
-      : path.join(workspace, config.specPath),
-    statePath: path.isAbsolute(config.statePath)
-      ? config.statePath
-      : path.join(workspace, config.statePath),
+    specPath: path.isAbsolute(specPath)
+      ? specPath
+      : path.join(workspace, specPath),
+    statePath: path.isAbsolute(statePath)
+      ? statePath
+      : path.join(workspace, statePath),
     requireConfirmation: pickFirst(options.confirm, config.requireConfirmation),
   };
 }

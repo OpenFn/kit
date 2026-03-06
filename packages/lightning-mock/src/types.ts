@@ -15,6 +15,12 @@ export type DevServer = Koa & {
   addCredential(id: string, cred: Credential): void;
   addDataclip(id: string, data: DataClip): void;
   addProject(proj: Provisioner.Project_v1): void;
+  updateWorkflow(projectId: string, workflow: Provisioner.Workflow): void;
+  addNode(
+    projectId: string,
+    workflowId: string,
+    job: Partial<Provisioner.Job>
+  ): void;
   enqueueRun(run: LightningPlan): void;
   destroy: () => Promise<void>;
   getRun(id: string): LightningPlan;

@@ -17,11 +17,18 @@ test.serial('should pull a project', async (t) => {
   const response = await fetch(
     `${endpoint}/api/provision/${DEFAULT_PROJECT_ID}`
   );
+  t.is(response.status, 200);
+
   const { data: proj } = await response.json();
 
   t.is(proj.id, DEFAULT_PROJECT_ID);
   t.is(proj.name, 'aaa');
   t.truthy(proj.workflows);
+});
+
+test.serial("should return 404 if a project isn't found", async (t) => {
+  const response = await fetch(`${endpoint}/api/provision/nah`);
+  t.is(response.status, 404);
 });
 
 test.serial('should pull a project as yaml', async (t) => {

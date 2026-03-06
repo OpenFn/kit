@@ -52,8 +52,6 @@ async function deployHandler(
       );
     }
 
-    logger.debug('Deploying with config', JSON.stringify(config, null, 2));
-
     if (options.confirm === false) {
       config.requireConfirmation = options.confirm;
     }

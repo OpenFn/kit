@@ -2,20 +2,21 @@
  * This module sets up a bunch of dev-only APIs
  * These are not intended to be reflected in Lightning itself
  */
-import Koa from 'koa';
-import crypto from 'node:crypto';
 import Router from '@koa/router';
-import { Logger } from '@openfn/logger';
 import type {
   LightningPlan,
-  RunCompletePayload,
   Provisioner,
+  RunCompletePayload,
 } from '@openfn/lexicon/lightning';
+import { Logger } from '@openfn/logger';
+import { generateVersionHash, mapWorkflow } from '@openfn/project';
+import Koa from 'koa';
+import crypto from 'node:crypto';
 
-import { ServerState } from './server';
 import { RUN_COMPLETE } from './events';
-import type { DevServer, LightningEvents } from './types';
+import { ServerState } from './server';
 import { PhoenixEvent } from './socket-server';
+import type { DevServer, LightningEvents } from './types';
 
 type Api = {
   startRun(runId: string): void;
@@ -67,6 +68,120 @@ const setupDevAPI = (
 
   app.addProject = (project: Provisioner.Project_v1) => {
     state.projects[project.id] = project;
+  };
+
+  app.updateWorkflow = (projectId: string, wf: Provisioner.Workflow) => {
+    const project = state.projects[projectId];
+    if (!project) {
+      throw new Error(`updateWorkflow: project ${projectId} not found`);
+    }
+    const now = new Date().toISOString();
+
+    // Normalize workflows to object format if needed
+    if (Array.isArray(project.workflows)) {
+      project.workflows = Object.fromEntries(
+        (project.workflows as any[]).map((w: any) => [w.id, w])
+      );
+    }
+
+    const workflows = project.workflows as Record<string, any>;
+    const w = wf as any;
+
+    if (w.delete) {
+      const key = Object.keys(workflows).find((k) => workflows[k].id === w.id);
+      if (key) delete workflows[key];
+      return;
+    }
+
+    const existingEntry = Object.entries(workflows).find(
+      ([, v]: any) => v.id === w.id
+    ) as [string, any] | undefined;
+
+    const newHash = generateVersionHash(mapWorkflow(w) as any, {
+      source: 'app',
+    });
+
+    if (!existingEntry) {
+      workflows[w.id] = {
+        ...w,
+        lock_version: w.lock_version ?? 1,
+        inserted_at: now,
+        updated_at: now,
+        deleted_at: w.deleted_at ?? null,
+        version_history: [newHash],
+      };
+    } else {
+      const [existingKey, existingWf] = existingEntry;
+      const existingHash = generateVersionHash(mapWorkflow(existingWf) as any, {
+        source: 'app',
+      });
+
+      if (newHash !== existingHash) {
+        const prevHistory: string[] = existingWf.version_history ?? [];
+        const newHistory =
+          prevHistory.length > 0
+            ? [...prevHistory.slice(0, -1), newHash] // squash
+            : [newHash];
+
+        workflows[existingKey] = {
+          ...existingWf,
+          ...w,
+          lock_version: (existingWf.lock_version ?? 1) + 1,
+          updated_at: now,
+          version_history: newHistory,
+        };
+      }
+    }
+  };
+
+  app.addNode = (
+    projectId: string,
+    workflowId: string,
+    job: Partial<Provisioner.Job>
+  ) => {
+    job.id ??= crypto.randomUUID();
+    const project = state.projects[projectId];
+    if (!project) {
+      throw new Error(`addNode: project ${projectId} not found`);
+    }
+
+    const workflows = Object.values(project.workflows);
+    const workflow = workflows.find((wf) => wf.id === workflowId);
+    if (!workflow) {
+      throw new Error(
+        `addNode: workflow ${workflowId} not found in project ${projectId}`
+      );
+    }
+
+    // @ts-ignore
+    workflow.jobs = [...workflow.jobs, job];
+
+    // find terminal job
+    const sourceJobIds = new Set(
+      Object.values(workflow.edges)
+        .map((e) => e.source_job_id)
+        .filter(Boolean)
+    );
+
+    const lastJob = Object.values(workflow.jobs).find(
+      (j) => j.id !== job.id && !sourceJobIds.has(j.id)
+    );
+
+    if (lastJob) {
+      const edgeId = crypto.randomUUID();
+      // @ts-ignore
+      workflow.edges = [
+        ...Object.values(workflow.edges),
+        {
+          id: edgeId,
+          condition_type: 'always',
+          source_job_id: lastJob.id,
+          source_trigger_id: null,
+          target_job_id: job.id,
+          enabled: true,
+        },
+      ];
+    }
   };
 
   // Promise which returns when a workflow is complete
