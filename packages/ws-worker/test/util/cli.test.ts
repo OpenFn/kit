@@ -137,3 +137,65 @@ test('cli should configure engine validation through args', (t) => {
   t.is(args.engineValidationRetries, 22);
   t.is(args.engineValidationTimeoutMs, 3333);
 });
+
+// --queues option tests
+
+test('cli should parse --queues from CLI', (t) => {
+  const argv = ['pnpm', 'start', '--queues', 'fast_lane:1 manual,*:4'];
+  const args = cli(argv);
+  t.is(args.queues, 'fast_lane:1 manual,*:4');
+});
+
+test('cli should pick up WORKER_QUEUES env var', (t) => {
+  process.env.WORKER_QUEUES = '*:5';
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+  t.is(args.queues, '*:5');
+});
+
+test('cli --queues should override WORKER_QUEUES env var', (t) => {
+  process.env.WORKER_QUEUES = '*:5';
+  const argv = ['pnpm', 'start', '--queues', 'fast_lane:1'];
+  const args = cli(argv);
+  t.is(args.queues, 'fast_lane:1');
+});
+
+test('cli queues should be undefined when not set', (t) => {
+  const argv = 'pnpm start'.split(' ');
+  const args = cli(argv);
+  t.is(args.queues, undefined);
+});
+
+test('cli should throw when --capacity and --queues are both set', (t) => {
+  const argv = ['pnpm', 'start', '--capacity', '3', '--queues', '*:5'];
+  const err = t.throws(() => cli(argv));
+  t.true(err?.message.includes('mutually exclusive'));
+});
+
+test('cli should throw when WORKER_CAPACITY and --queues are both set', (t) => {
+  process.env.WORKER_CAPACITY = '3';
+  const argv = ['pnpm', 'start', '--queues', '*:5'];
+  const err = t.throws(() => cli(argv));
+  t.true(err?.message.includes('mutually exclusive'));
+});
+
+test('cli should throw when WORKER_QUEUES and --capacity are both set', (t) => {
+  process.env.WORKER_QUEUES = '*:5';
+  const argv = ['pnpm', 'start', '--capacity', '3'];
+  const err = t.throws(() => cli(argv));
+  t.true(err?.message.includes('mutually exclusive'));
+});
+
+test('cli should work with only --queues (no capacity)', (t) => {
+  const argv = ['pnpm', 'start', '--queues', '*:5'];
+  const args = cli(argv);
+  t.is(args.queues, '*:5');
+  t.is(args.capacity, 5); // default still applied
+});
+
+test('cli should work with only --capacity (no queues)', (t) => {
+  const argv = 'pnpm start --capacity 3'.split(' ');
+  const args = cli(argv);
+  t.is(args.capacity, 3);
+  t.is(args.queues, undefined);
+});
