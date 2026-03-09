@@ -15,7 +15,7 @@ type Args = {
   batchInterval?: number;
   batchLimit?: number;
   batchLogs: boolean;
-  capacity?: number;
+  capacity: number;
   queues?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
