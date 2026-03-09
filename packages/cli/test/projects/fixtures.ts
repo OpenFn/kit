@@ -1,7 +1,9 @@
 import type { Provisioner } from '@openfn/lexicon/lightning';
 
+export const UUID = 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00';
+
 export const myProject_v1: Provisioner.Project = {
-  id: 'e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00',
+  id: UUID,
   name: 'My Project',
   description: 'my lovely project',
   concurrency: null,
@@ -65,7 +67,7 @@ description: my lovely project
 collections: []
 credentials: []
 openfn:
-  uuid: e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00
+  uuid: ${UUID}
   endpoint: https://app.openfn.org
   inserted_at: 2025-04-23T11:15:59Z
   updated_at: 2025-04-23T11:15:59Z

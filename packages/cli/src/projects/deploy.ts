@@ -210,7 +210,9 @@ const syncProjects = async (
   The remote project has been edited since the local project was branched. Changes may be lost.
 
   Pass --force to override this error and deploy anyway.`);
-        process.exit(1);
+        const e: any = new Error('PROJECTS_DIVERGED');
+        e.workflows = divergentWorkflows;
+        throw e;
       } else {
         logger.warn(
           'Remote project has diverged from local project! Pushing anyway as -f passed'
