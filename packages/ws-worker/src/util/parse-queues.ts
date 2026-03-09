@@ -12,6 +12,11 @@ export interface RuntimeSlotGroup extends SlotGroup {
   workloop: Workloop | null;
 }
 
+export function groupHasCapacity(group: RuntimeSlotGroup): boolean {
+  const pendingClaims = Object.values(group.openClaims).reduce((a, b) => a + b, 0);
+  return group.activeRuns.size + pendingClaims < group.maxSlots;
+}
+
 export function createRuntimeGroup(group: SlotGroup): RuntimeSlotGroup {
   return {
     ...group,

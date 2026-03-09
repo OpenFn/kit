@@ -1,5 +1,5 @@
 import test from 'ava';
-import parseQueues, { QueuesValidationError, createRuntimeGroup } from '../../src/util/parse-queues';
+import parseQueues, { QueuesValidationError, createRuntimeGroup, groupHasCapacity } from '../../src/util/parse-queues';
 
 // Happy paths
 
@@ -134,4 +134,38 @@ test('createRuntimeGroup: preserves queues and maxSlots', (t) => {
   const group = createRuntimeGroup({ queues: ['a', 'b', '*'], maxSlots: 3 });
   t.deepEqual(group.queues, ['a', 'b', '*']);
   t.is(group.maxSlots, 3);
+});
+
+// groupHasCapacity tests
+
+test('groupHasCapacity: has capacity when empty', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 3 });
+  t.true(groupHasCapacity(group));
+});
+
+test('groupHasCapacity: has capacity when partially filled', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 3 });
+  group.activeRuns.add('run-1');
+  t.true(groupHasCapacity(group));
+});
+
+test('groupHasCapacity: no capacity when activeRuns fills maxSlots', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 2 });
+  group.activeRuns.add('run-1');
+  group.activeRuns.add('run-2');
+  t.false(groupHasCapacity(group));
+});
+
+test('groupHasCapacity: no capacity when pendingClaims fills maxSlots', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 2 });
+  group.openClaims['claim-a'] = 2;
+  t.false(groupHasCapacity(group));
+});
+
+test('groupHasCapacity: no capacity when activeRuns + pendingClaims fills maxSlots', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 3 });
+  group.activeRuns.add('run-1');
+  group.openClaims['claim-a'] = 1;
+  group.openClaims['claim-b'] = 1;
+  t.false(groupHasCapacity(group));
 });

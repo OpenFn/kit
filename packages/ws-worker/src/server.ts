@@ -29,7 +29,7 @@ import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
 import type { RuntimeSlotGroup } from './util/parse-queues';
-import { createRuntimeGroup, SlotGroup } from './util/parse-queues';
+import { createRuntimeGroup, groupHasCapacity, SlotGroup } from './util/parse-queues';
 
 const exec = promisify(_exec);
 
@@ -171,8 +171,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     if (event === WORK_AVAILABLE) {
       if (!app.destroyed) {
         for (const g of app.slotGroups) {
-          const pendingClaims = Object.values(g.openClaims).reduce((a, b) => a + b, 0);
-          if (g.activeRuns.size + pendingClaims < g.maxSlots) {
+          if (groupHasCapacity(g)) {
             claim(app, logger, { group: g }).catch(() => {
               // do nothing - it's fine if claim throws here
             });
@@ -290,8 +289,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
     const groups = group ? [group] : app.slotGroups;
     for (const g of groups) {
-      const pendingClaims = Object.values(g.openClaims).reduce((a, b) => a + b, 0);
-      if (g.activeRuns.size + pendingClaims >= g.maxSlots) {
+      if (!groupHasCapacity(g)) {
         continue;
       }
       // Stop any existing workloop so we can start fresh with immediate claim
@@ -416,8 +414,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
     const promises = app.slotGroups.map((g) => {
-      const pendingClaims = Object.values(g.openClaims).reduce((a, b) => a + b, 0);
-      if (g.activeRuns.size + pendingClaims < g.maxSlots) {
+      if (groupHasCapacity(g)) {
         return claim(app, logger, { group: g });
       }
       return Promise.reject(new Error('Group at capacity'));
@@ -437,8 +434,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.claim = () => {
     const promises = app.slotGroups.map((g) => {
-      const pendingClaims = Object.values(g.openClaims).reduce((a, b) => a + b, 0);
-      if (g.activeRuns.size + pendingClaims < g.maxSlots) {
+      if (groupHasCapacity(g)) {
         return claim(app, logger, { group: g });
       }
       return Promise.reject(new Error('Group at capacity'));
