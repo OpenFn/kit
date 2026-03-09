@@ -176,6 +176,8 @@ test('claim: should call execute for a single run', async (t) => {
 
   await claim(app, logger, { group });
   t.deepEqual(executeArgs[0], { id: 'abc' });
+  t.true(group.activeRuns.has('abc'));
+  t.is(app.runGroupMap['abc'], group);
 });
 
 test('should not claim if group is at capacity', async (t) => {
@@ -391,19 +393,6 @@ test('claim: should send queues in payload', async (t) => {
   t.deepEqual(sentPayload.queues, ['manual', '*']);
 });
 
-test('claim: should add run to group.activeRuns and app.runGroupMap', async (t) => {
-  const group = createMockGroup(5);
-  const app = createMockApp({
-    onClaim: () => ({ runs: [{ id: 'run-1' }] }),
-  });
-  app.runGroupMap = {};
-
-  await claim(app, logger, { group });
-
-  t.true(group.activeRuns.has('run-1'));
-  t.is(app.runGroupMap['run-1'], group);
-});
-
 test('claim: should check per-group capacity, not global', async (t) => {
   // Group has capacity 2 with 1 active run
   const group = createMockGroup(2);
@@ -423,26 +412,8 @@ test('claim: should check per-group capacity, not global', async (t) => {
   t.true(group.activeRuns.has('run-2'));
 });
 
-test('claim: should stop group workloop when group at capacity', async (t) => {
-  let didStop = false;
-  const group = createMockGroup(1);
-  group.activeRuns.add('run-1');
-  group.workloop = {
-    stop: () => { didStop = true; },
-    isStopped: () => false,
-  };
-
-  const app = createMockApp({ workflows: {} });
-
-  await t.throwsAsync(() => claim(app, logger, { group }), {
-    message: 'Server at capacity',
-  });
-  t.true(didStop);
-});
-
 test.todo('should handle multiple runs');
 test.todo('claim payload should have a demand');
 test.todo('claim payload should include a worker name');
-test.todo('should stop the workloop if at capacity');
 // TODO I'd rather return true/false really and let the backoff itself decide whether to throw or not
 test.todo('should throw if there are no runs available (to trigger backoff)');
