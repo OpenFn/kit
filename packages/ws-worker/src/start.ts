@@ -20,7 +20,12 @@ const effectiveCapacity = slotGroups.reduce((sum, g) => sum + g.maxSlots, 0);
 const logger = createLogger('SRV', { level: args.log });
 
 logger.info('Starting worker server...');
-logger.info('Slot groups:', slotGroups, 'effective capacity:', effectiveCapacity);
+logger.info(
+  'Slot groups:',
+  slotGroups,
+  'effective capacity:',
+  effectiveCapacity
+);
 
 if (args.lightning === 'mock') {
   args.lightning = 'ws://localhost:8888/worker';

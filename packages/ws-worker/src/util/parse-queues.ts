@@ -64,9 +64,7 @@ function parseToken(token: string): SlotGroup {
   const names = prefStr.split(',');
   for (const name of names) {
     if (name === '') {
-      throw new QueuesValidationError(
-        `Empty queue name in token "${token}"`
-      );
+      throw new QueuesValidationError(`Empty queue name in token "${token}"`);
     }
     if (name !== '*' && !VALID_NAME.test(name)) {
       throw new QueuesValidationError(
