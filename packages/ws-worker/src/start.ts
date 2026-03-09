@@ -8,12 +8,11 @@ import parseQueues, { SlotGroup } from './util/parse-queues';
 
 const args = cli(process.argv);
 
-// TODO(#1289): pass slotGroups to createWorker for per-group workloops
 let slotGroups: SlotGroup[];
 if (args.queues) {
   slotGroups = parseQueues(args.queues);
 } else {
-  slotGroups = [{ queues: ['manual', '*'], maxSlots: args.capacity }];
+  slotGroups = [{ queues: ['manual', '*'], maxSlots: args.capacity ?? 5 }];
 }
 const effectiveCapacity = slotGroups.reduce((sum, g) => sum + g.maxSlots, 0);
 
@@ -57,6 +56,7 @@ function engineReady(engine: any) {
       max: maxBackoff,
     },
     maxWorkflows: effectiveCapacity,
+    slotGroups,
     payloadLimitMb: args.payloadMemory,
     logPayloadLimitMb: args.logPayloadMemory ?? 1, // Default to 1MB
     collectionsVersion: args.collectionsVersion,

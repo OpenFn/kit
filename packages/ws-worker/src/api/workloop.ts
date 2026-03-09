@@ -4,6 +4,7 @@ import claim from './claim';
 import type { ServerApp } from '../server';
 import type { CancelablePromise } from '../types';
 import type { Logger } from '@openfn/logger';
+import type { RuntimeSlotGroup } from '../util/parse-queues';
 
 export type Workloop = {
   stop: (reason?: string) => void;
@@ -15,7 +16,7 @@ const startWorkloop = (
   logger: Logger,
   minBackoff: number,
   maxBackoff: number,
-  maxWorkers?: number
+  group: RuntimeSlotGroup,
 ): Workloop => {
   let promise: CancelablePromise;
   let cancelled = false;
@@ -25,7 +26,7 @@ const startWorkloop = (
       promise = tryWithBackoff(
         () =>
           claim(app, logger, {
-            maxWorkers,
+            group,
           }),
         {
           min: minBackoff,
@@ -46,7 +47,7 @@ const startWorkloop = (
   };
   workLoop();
 
-  return {
+  const workloop: Workloop = {
     stop: (reason = 'reason unknown') => {
       if (!cancelled) {
         logger.info(`cancelling workloop: ${reason}`);
@@ -56,6 +57,9 @@ const startWorkloop = (
     },
     isStopped: () => cancelled,
   };
+
+  group.workloop = workloop;
+  return workloop;
 };
 
 export default startWorkloop;

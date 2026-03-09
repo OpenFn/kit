@@ -1,5 +1,5 @@
 import test from 'ava';
-import parseQueues, { QueuesValidationError } from '../../src/util/parse-queues';
+import parseQueues, { QueuesValidationError, createRuntimeGroup } from '../../src/util/parse-queues';
 
 // Happy paths
 
@@ -101,4 +101,37 @@ test('throw on invalid name chars "a@b:1"', (t) => {
 
 test('throw on empty name from double comma "a,,b:1"', (t) => {
   t.throws(() => parseQueues('a,,b:1'), { instanceOf: QueuesValidationError });
+});
+
+// createRuntimeGroup tests
+
+test('createRuntimeGroup: generates correct id', (t) => {
+  const group = createRuntimeGroup({ queues: ['fast_lane'], maxSlots: 1 });
+  t.is(group.id, 'fast_lane:1');
+});
+
+test('createRuntimeGroup: generates id with multiple queues', (t) => {
+  const group = createRuntimeGroup({ queues: ['manual', '*'], maxSlots: 4 });
+  t.is(group.id, 'manual,*:4');
+});
+
+test('createRuntimeGroup: initializes empty activeRuns', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 5 });
+  t.is(group.activeRuns.size, 0);
+});
+
+test('createRuntimeGroup: initializes empty openClaims', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 5 });
+  t.deepEqual(group.openClaims, {});
+});
+
+test('createRuntimeGroup: initializes null workloop', (t) => {
+  const group = createRuntimeGroup({ queues: ['*'], maxSlots: 5 });
+  t.is(group.workloop, null);
+});
+
+test('createRuntimeGroup: preserves queues and maxSlots', (t) => {
+  const group = createRuntimeGroup({ queues: ['a', 'b', '*'], maxSlots: 3 });
+  t.deepEqual(group.queues, ['a', 'b', '*']);
+  t.is(group.maxSlots, 3);
 });

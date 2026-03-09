@@ -9,6 +9,7 @@ import { ServerApp } from '../../src/server';
 import { mockChannel } from '../../src/mock/sockets';
 import { CLAIM } from '../../src';
 import EventEmitter from 'node:events';
+import { createRuntimeGroup, RuntimeSlotGroup } from '../../src/util/parse-queues';
 
 let keys = { public: '.', private: '.' };
 
@@ -127,6 +128,9 @@ test('verifyToken should accept a token with NBF exactly 2 seconds in future (us
   );
 });
 
+const createMockGroup = (maxSlots = 5): RuntimeSlotGroup =>
+  createRuntimeGroup({ queues: ['manual', '*'], maxSlots });
+
 const createMockApp = (opts: any) => {
   const {
     onClaim = () => ({ runs: [] }),
@@ -141,10 +145,11 @@ const createMockApp = (opts: any) => {
   });
 
   return {
-    workloop: undefined, // should be safe
     openClaims: {},
     workflows,
     queueChannel: channel,
+    slotGroups: [],
+    runGroupMap: {},
     execute: (...args: any) => {
       onExecute(...args);
     },
@@ -162,41 +167,41 @@ test('claim: should call execute for a single run', async (t) => {
     executeArgs = args;
   };
 
-  const options = { maxWorkers: 1 };
+  const group = createMockGroup(1);
   const app = createMockApp({
     onClaim,
     onExecute,
   });
+  app.runGroupMap = {};
 
-  await claim(app, logger, options);
+  await claim(app, logger, { group });
   t.deepEqual(executeArgs[0], { id: 'abc' });
 });
 
-test('should not claim if worker is at capacity', async (t) => {
-  const options = { maxWorkers: 1 };
+test('should not claim if group is at capacity', async (t) => {
+  const group = createMockGroup(1);
+  group.activeRuns.add('a');
 
   const app = createMockApp({
-    workflows: {
-      a: true,
-    },
+    workflows: { a: true },
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, logger, { group }), {
     message: 'Server at capacity',
   });
 });
 
 test('should mark a claim when in flight', async (t) => {
-  const options = {};
+  const group = createMockGroup(5);
 
   const app = createMockApp({
     workflows: {},
   });
 
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, logger, { group });
 
+  t.is(group.openClaims['1'], 1);
   t.is(app.openClaims['1'], 1);
-  t.is(Object.keys(app.openClaims).length, 1);
 
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
@@ -204,22 +209,22 @@ test('should mark a claim when in flight', async (t) => {
 });
 
 test('should remove an open claim when completed', async (t) => {
-  const options = {};
+  const group = createMockGroup(5);
 
   const app = createMockApp({
     workflows: {},
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, logger, { group }), {
     message: 'No runs returned',
   });
 
+  t.falsy(group.openClaims['1']);
   t.falsy(app.openClaims['1']);
-  t.is(Object.keys(app.openClaims).length, 0);
 });
 
 test('should remove an open claim on error', async (t) => {
-  const options = {};
+  const group = createMockGroup(5);
 
   const app = createMockApp({
     workflows: {},
@@ -228,17 +233,17 @@ test('should remove an open claim on error', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, logger, { group }), {
     message: 'claim error',
   });
 
+  t.falsy(group.openClaims['1']);
   t.falsy(app.openClaims['1']);
-  t.is(Object.keys(app.openClaims).length, 0);
 });
 
 // TODO not really sure how to check this
 test.skip('should remove an open claim on timeout', async (t) => {
-  const options = {};
+  const group = createMockGroup(5);
 
   const app = createMockApp({
     workflows: {},
@@ -247,18 +252,16 @@ test.skip('should remove an open claim on timeout', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, logger, { group }), {
     message: 'timeout',
   });
 
+  t.falsy(group.openClaims['1']);
   t.falsy(app.openClaims['1']);
-  t.is(Object.keys(app.openClaims).length, 0);
 });
 
 test('should mark a claim when in flight with demand: 2', async (t) => {
-  const options = {
-    demand: 2,
-  };
+  const group = createMockGroup(5);
 
   const app = createMockApp({
     workflows: {
@@ -266,22 +269,25 @@ test('should mark a claim when in flight with demand: 2', async (t) => {
     },
   });
 
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, logger, { group, demand: 2 });
 
+  t.is(group.openClaims['1'], 2);
   t.is(app.openClaims['1'], 2);
-  t.is(Object.keys(app.openClaims).length, 1);
 
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
   });
 });
 
-test('should not claim if open claims exceeds capacity', async (t) => {
+test('should not claim if open claims exceeds group capacity', async (t) => {
   let didStopWorkloop = false;
 
-  const options = {
-    maxWorkers: 1,
-    demand: 1,
+  const group = createMockGroup(1);
+  group.workloop = {
+    stop: () => {
+      didStopWorkloop = true;
+    },
+    isStopped: () => false,
   };
 
   const app = createMockApp({
@@ -293,12 +299,7 @@ test('should not claim if open claims exceeds capacity', async (t) => {
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
-
-  app.workloop = {
-    stop: () => {
-      didStopWorkloop = true;
-    },
-  } as any;
+  app.runGroupMap = {};
 
   // @ts-ignore
   app.execute = ({ id }) => {
@@ -306,10 +307,10 @@ test('should not claim if open claims exceeds capacity', async (t) => {
   };
 
   // first claim should be fine
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, logger, { group });
 
   // second claim should error and stop the loop actually
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, logger, { group }), {
     message: 'Server at capacity',
   });
   t.true(didStopWorkloop);
@@ -323,11 +324,9 @@ test('should not claim if open claims exceeds capacity', async (t) => {
   });
 });
 
-test('should not claim if open claims + active runs exceeds capacity', async (t) => {
-  const options = {
-    maxWorkers: 2,
-    demand: 1,
-  };
+test('should not claim if open claims + active runs exceeds group capacity', async (t) => {
+  const group = createMockGroup(2);
+  group.activeRuns.add('a');
 
   const app = createMockApp({
     workflows: {
@@ -341,6 +340,7 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
+  app.runGroupMap = {};
 
   // @ts-ignore
   app.execute = ({ id }) => {
@@ -348,10 +348,10 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
   };
 
   // first claim should be fine
-  let claimPromise = claim(app, logger, options);
+  let claimPromise = claim(app, logger, { group });
 
   // second claim should error
-  await t.throwsAsync(() => claim(app, logger, options), {
+  await t.throwsAsync(() => claim(app, logger, { group }), {
     message: 'Server at capacity',
   });
 
@@ -362,6 +362,82 @@ test('should not claim if open claims + active runs exceeds capacity', async (t)
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
   });
+});
+
+test('claim: should send queues in payload', async (t) => {
+  let sentPayload: any;
+  const group = createMockGroup(5);
+
+  const channel = mockChannel({
+    [CLAIM]: (payload: any) => {
+      sentPayload = payload;
+      return { runs: [] };
+    },
+  });
+
+  const app = {
+    openClaims: {},
+    workflows: {},
+    queueChannel: channel,
+    runGroupMap: {},
+    execute: () => {},
+    events: new EventEmitter(),
+  } as unknown as ServerApp;
+
+  await t.throwsAsync(() => claim(app, logger, { group }), {
+    message: 'No runs returned',
+  });
+
+  t.deepEqual(sentPayload.queues, ['manual', '*']);
+});
+
+test('claim: should add run to group.activeRuns and app.runGroupMap', async (t) => {
+  const group = createMockGroup(5);
+  const app = createMockApp({
+    onClaim: () => ({ runs: [{ id: 'run-1' }] }),
+  });
+  app.runGroupMap = {};
+
+  await claim(app, logger, { group });
+
+  t.true(group.activeRuns.has('run-1'));
+  t.is(app.runGroupMap['run-1'], group);
+});
+
+test('claim: should check per-group capacity, not global', async (t) => {
+  // Group has capacity 2 with 1 active run
+  const group = createMockGroup(2);
+  group.activeRuns.add('existing-run');
+
+  const app = createMockApp({
+    onClaim: () => ({ runs: [{ id: 'run-2' }] }),
+    // Global workflows has 10 entries - should not matter
+    workflows: Object.fromEntries(
+      Array.from({ length: 10 }, (_, i) => [`w${i}`, true])
+    ),
+  });
+  app.runGroupMap = {};
+
+  // Should succeed because group has capacity (1/2), regardless of global count
+  await claim(app, logger, { group });
+  t.true(group.activeRuns.has('run-2'));
+});
+
+test('claim: should stop group workloop when group at capacity', async (t) => {
+  let didStop = false;
+  const group = createMockGroup(1);
+  group.activeRuns.add('run-1');
+  group.workloop = {
+    stop: () => { didStop = true; },
+    isStopped: () => false,
+  };
+
+  const app = createMockApp({ workflows: {} });
+
+  await t.throwsAsync(() => claim(app, logger, { group }), {
+    message: 'Server at capacity',
+  });
+  t.true(didStop);
 });
 
 test.todo('should handle multiple runs');

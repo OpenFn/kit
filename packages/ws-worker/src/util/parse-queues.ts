@@ -1,6 +1,25 @@
+import type { Workloop } from '../api/workloop';
+
 export interface SlotGroup {
   queues: string[];
   maxSlots: number;
+}
+
+export interface RuntimeSlotGroup extends SlotGroup {
+  id: string;
+  activeRuns: Set<string>;
+  openClaims: Record<string, number>;
+  workloop: Workloop | null;
+}
+
+export function createRuntimeGroup(group: SlotGroup): RuntimeSlotGroup {
+  return {
+    ...group,
+    id: `${group.queues.join(',')}:${group.maxSlots}`,
+    activeRuns: new Set(),
+    openClaims: {},
+    workloop: null,
+  };
 }
 
 export class QueuesValidationError extends Error {
