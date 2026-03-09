@@ -16,7 +16,7 @@ const startWorkloop = (
   logger: Logger,
   minBackoff: number,
   maxBackoff: number,
-  group: RuntimeSlotGroup,
+  group: RuntimeSlotGroup
 ): Workloop => {
   let promise: CancelablePromise;
   let cancelled = false;

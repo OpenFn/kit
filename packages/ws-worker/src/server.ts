@@ -29,7 +29,11 @@ import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
 import type { RuntimeSlotGroup } from './util/parse-queues';
-import { createRuntimeGroup, groupHasCapacity, SlotGroup } from './util/parse-queues';
+import {
+  createRuntimeGroup,
+  groupHasCapacity,
+  SlotGroup,
+} from './util/parse-queues';
 
 const exec = promisify(_exec);
 
@@ -263,8 +267,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.destroyed = false;
 
   // Initialize slot groups: use provided slotGroups, or create a single default group
-  const slotGroupDefs: SlotGroup[] = options.slotGroups ??
-    [{ queues: ['manual', '*'], maxSlots: options.maxWorkflows ?? 5 }];
+  const slotGroupDefs: SlotGroup[] = options.slotGroups ?? [
+    { queues: ['manual', '*'], maxSlots: options.maxWorkflows ?? 5 },
+  ];
   app.slotGroups = slotGroupDefs.map(createRuntimeGroup);
   app.runGroupMap = {};
 
@@ -302,7 +307,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         logger,
         options.backoff?.min || MIN_BACKOFF,
         options.backoff?.max || MAX_BACKOFF,
-        g,
+        g
       );
     }
   };

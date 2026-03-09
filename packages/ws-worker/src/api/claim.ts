@@ -70,7 +70,9 @@ const claim = (
 
     if (activeInGroup >= maxSlots) {
       // Important: stop the group workloop so that we don't try and claim any more
-      group.workloop?.stop(`group ${group.id} at capacity (${activeInGroup}/${maxSlots})`);
+      group.workloop?.stop(
+        `group ${group.id} at capacity (${activeInGroup}/${maxSlots})`
+      );
       return reject(new ClaimError('Server at capacity'));
     } else if (activeInGroup + pendingGroupClaims >= maxSlots) {
       group.workloop?.stop(

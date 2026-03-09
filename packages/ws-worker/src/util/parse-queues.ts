@@ -13,7 +13,10 @@ export interface RuntimeSlotGroup extends SlotGroup {
 }
 
 export function groupHasCapacity(group: RuntimeSlotGroup): boolean {
-  const pendingClaims = Object.values(group.openClaims).reduce((a, b) => a + b, 0);
+  const pendingClaims = Object.values(group.openClaims).reduce(
+    (a, b) => a + b,
+    0
+  );
   return group.activeRuns.size + pendingClaims < group.maxSlots;
 }
 
