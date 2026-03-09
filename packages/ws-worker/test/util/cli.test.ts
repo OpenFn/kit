@@ -186,6 +186,14 @@ test('cli should throw when WORKER_QUEUES and --capacity are both set', (t) => {
   t.true(err?.message.includes('mutually exclusive'));
 });
 
+test('cli should throw when WORKER_QUEUES and WORKER_CAPACITY are both set as env vars', (t) => {
+  process.env.WORKER_QUEUES = '*:5';
+  process.env.WORKER_CAPACITY = '3';
+  const argv = 'pnpm start'.split(' ');
+  const err = t.throws(() => cli(argv));
+  t.true(err?.message.includes('mutually exclusive'));
+});
+
 test('cli should work with only --queues (no capacity)', (t) => {
   const argv = ['pnpm', 'start', '--queues', '*:5'];
   const args = cli(argv);

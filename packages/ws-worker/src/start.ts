@@ -8,11 +8,12 @@ import parseQueues, { SlotGroup } from './util/parse-queues';
 
 const args = cli(process.argv);
 
+// TODO(#1289): pass slotGroups to createWorker for per-group workloops
 let slotGroups: SlotGroup[];
 if (args.queues) {
   slotGroups = parseQueues(args.queues);
 } else {
-  slotGroups = [{ queues: ['manual', '*'], maxSlots: args.capacity ?? 5 }];
+  slotGroups = [{ queues: ['manual', '*'], maxSlots: args.capacity }];
 }
 const effectiveCapacity = slotGroups.reduce((sum, g) => sum + g.maxSlots, 0);
 

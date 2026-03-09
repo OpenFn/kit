@@ -19,7 +19,23 @@ export default function parseQueues(input: string): SlotGroup[] {
   }
 
   const tokens = trimmed.split(/\s+/);
-  return tokens.map(parseToken);
+  const groups = tokens.map(parseToken);
+
+  // Warn if multiple slot groups have identical queue configurations
+  const seenConfigs = new Map<string, number>();
+  for (let i = 0; i < groups.length; i++) {
+    const key = JSON.stringify(groups[i].queues);
+    if (seenConfigs.has(key)) {
+      const prevIndex = seenConfigs.get(key)!;
+      console.warn(
+        `Warning: slot groups at positions ${prevIndex} and ${i} have identical queue configurations: ${tokens[prevIndex]} and ${tokens[i]}`
+      );
+    } else {
+      seenConfigs.set(key, i);
+    }
+  }
+
+  return groups;
 }
 
 function parseToken(token: string): SlotGroup {
@@ -57,6 +73,18 @@ function parseToken(token: string): SlotGroup {
         `Invalid queue name "${name}" in token "${token}": must match /^[a-zA-Z0-9_]+$/ or be "*"`
       );
     }
+  }
+
+  // Warn about duplicate queue names (excluding wildcards)
+  const nonWildcardNames = names.filter((n) => n !== '*');
+  const seen = new Set<string>();
+  for (const name of nonWildcardNames) {
+    if (seen.has(name)) {
+      console.warn(
+        `Warning: duplicate queue name "${name}" in token "${token}"`
+      );
+    }
+    seen.add(name);
   }
 
   const wildcardIndex = names.indexOf('*');
