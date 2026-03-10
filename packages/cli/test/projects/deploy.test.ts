@@ -159,6 +159,87 @@ test.serial(
   }
 );
 
+// 1 project, 2 workflows
+// change 1 locally
+// only 1 should report a diff
+// this is working fine locally.
+test.serial.only('repro bug', async (t) => {
+  t.truthy(server.state.projects[UUID]);
+  t.is(Object.keys(server.state.projects).length, 1);
+
+  // add a new remote workflow
+  // server.updateWorkflow(UUID, {
+  //   id: 'new-workflow',
+  //   name: 'New Workflow',
+  //   jobs: [
+  //     {
+  //       id: '6a850236-e90b-4cb0-a53a-3e1f17575930',
+  //       name: 'My Job',
+  //       body: 'fn(s => s)',
+  //       adaptor: '@openfn/language-common@latest',
+  //       project_credential_id: null,
+  //     },
+  //   ],
+  //   triggers: [],
+  //   edges: [],
+  //   lock_version: 1,
+  //   deleted_at: null,
+  // });
+
+  const newProject = projectYaml.replace(
+    'workflows:',
+    `workflows:
+  - name: New Workflow
+    steps:
+      - id: my-job-1
+        name:  My Job
+        expression: fn(s => s)
+        adaptor: "@openfn/language-common@latest"
+`
+  );
+  await setup(newProject);
+
+  // deploy once just to sync everything
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      confirm: false,
+    } as any,
+    logger
+  );
+
+  // now change the local expression in 1 workflow
+  await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
+  console.log(server.state.projects[UUID].workflows);
+  // and change the other workflow remotely
+  const [wf1, wf2] = Object.keys(server.state.projects[UUID].workflows);
+  const modified = JSON.parse(
+    JSON.stringify(server.state.projects[UUID].workflows[wf2])
+  );
+  modified.jobs['my-job-1'].body = 'each()';
+  server.updateWorkflow(UUID, modified);
+
+  // Now deploy the local changes
+  await deploy(
+    {
+      endpoint: ENDPOINT,
+      apiKey: 'test-api-key',
+      workspace: '/ws',
+      log: 'debug',
+      confirm: false,
+    } as any,
+    logger
+  );
+  console.log(logger._history);
+
+  const warn = logger._find('warn', /workflows have diverged/i);
+  t.falsy(warn);
+
+  // check the remote workflows are both correct
+});
+
 test('reportDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
 
