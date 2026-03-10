@@ -207,3 +207,19 @@ test('cli should work with only --capacity (no queues)', (t) => {
   t.is(args.capacity, 3);
   t.is(args.queues, undefined);
 });
+
+// pnpm v7+ passes '--' through to process.argv
+test('cli should strip leading -- from pnpm passthrough', (t) => {
+  const argv = [
+    'node',
+    'start.ts',
+    '--',
+    '--queues',
+    'fast_lane:2 *:3',
+    '--log',
+    'info',
+  ];
+  const args = cli(argv);
+  t.is(args.queues, 'fast_lane:2 *:3');
+  t.is(args.log, 'info');
+});
