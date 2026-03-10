@@ -16,6 +16,7 @@
     "pack": "pnpm -r run pack",
     "test:format": "prettier --check packages/*/src",
     "test:integration": "pnpm -r --filter=./integration-tests/* run test",
+    "test:integration:ci": "mkdir -p test-results && pnpm -r --filter=./integration-tests/* run test:ci",
     "test:types": "pnpm -r --filter=./packages/* run test:types",
     "test": "pnpm -r --filter=./packages/* run test",
     "typesync": "pnpm exec typesync && pnpm -r exec typesync && pnpm install"
@@ -35,6 +36,7 @@
     "prettier": "^2.8.8",
     "rimraf": "^3.0.2",
     "semver": "^7.7.2",
+    "tap-xunit": "^2.4.1",
     "tar-stream": "^3.1.7",
     "typesync": "^0.13.4"
   },

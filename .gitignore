@@ -33,6 +33,7 @@ pnpm-publish-summary.json
 .DS_Store
 
 tmp
+test-results
 .vscode
 
 *.drawio.bkp
