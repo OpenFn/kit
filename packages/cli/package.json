@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "pnpm ava --timeout 10m",
+    "test:ci": "pnpm ava --timeout 10m --tap | npx tap-xunit > ../../test-results/cli.xml",
     "test:watch": "pnpm ava -w",
     "test:types": "pnpm tsc --project tsconfig.test.json",
     "build": "tsup --config ./tsup.config.js",

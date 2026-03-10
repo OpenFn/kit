@@ -58,10 +58,7 @@ jobs:
           at: ~/project
       - run:
           name: Run Tests
-          command: |
-            mkdir -p test-results
-            set -o pipefail
-            pnpm -r --filter=./packages/* run test -- --tap 2>&1 | npx tap-xunit > test-results/unit.xml
+          command: pnpm test:ci
       - store_test_results:
           path: test-results
 
