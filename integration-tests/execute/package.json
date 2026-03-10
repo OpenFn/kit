@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "test": "pnpm ava",
-    "test:ci": "pnpm ava --tap | tap-xunit > ../../test-results/integration-execute.xml"
+    "test:ci": "pnpm ava --tap | npx tap-xunit > ../../test-results/integration-execute.xml"
   },
   "dependencies": {
     "@openfn/compiler": "workspace:^",

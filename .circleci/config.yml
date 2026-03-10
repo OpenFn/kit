@@ -61,7 +61,7 @@ jobs:
           command: |
             mkdir -p test-results
             set -o pipefail
-            pnpm -r --filter=./packages/* run test -- --tap 2>&1 | tap-xunit > test-results/unit.xml
+            pnpm -r --filter=./packages/* run test -- --tap 2>&1 | npx tap-xunit > test-results/unit.xml
       - store_test_results:
           path: test-results
 
