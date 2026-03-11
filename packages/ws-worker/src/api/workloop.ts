@@ -23,16 +23,10 @@ const startWorkloop = (
 
   const workLoop = () => {
     if (!cancelled) {
-      promise = tryWithBackoff(
-        () =>
-          claim(app, logger, {
-            group,
-          }),
-        {
-          min: minBackoff,
-          max: maxBackoff,
-        }
-      );
+      promise = tryWithBackoff(() => claim(app, logger, group), {
+        min: minBackoff,
+        max: maxBackoff,
+      });
       // TODO this needs more unit tests I think
       promise
         .then(() => {

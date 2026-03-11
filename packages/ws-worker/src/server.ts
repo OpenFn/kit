@@ -176,7 +176,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       if (!app.destroyed) {
         for (const g of app.slotGroups) {
           if (groupHasCapacity(g)) {
-            claim(app, logger, { group: g }).catch(() => {
+            claim(app, logger, g).catch(() => {
               // do nothing - it's fine if claim throws here
             });
           }
@@ -420,7 +420,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     logger.info('triggering claim from POST request');
     const promises = app.slotGroups.map((g) => {
       if (groupHasCapacity(g)) {
-        return claim(app, logger, { group: g });
+        return claim(app, logger, g);
       }
       return Promise.reject(new Error('Group at capacity'));
     });
@@ -440,7 +440,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.claim = () => {
     const promises = app.slotGroups.map((g) => {
       if (groupHasCapacity(g)) {
-        return claim(app, logger, { group: g });
+        return claim(app, logger, g);
       }
       return Promise.reject(new Error('Group at capacity'));
     });

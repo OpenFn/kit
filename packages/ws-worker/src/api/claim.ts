@@ -29,7 +29,6 @@ export const verifyToken = async (token: string, publicKey: string) => {
 };
 
 type ClaimOptions = {
-  group: RuntimeSlotGroup;
   demand?: number;
 };
 
@@ -54,10 +53,11 @@ export const resetClaimIdGen = () => {
 const claim = (
   app: ServerApp,
   logger: Logger = mockLogger,
-  options: ClaimOptions
+  group: RuntimeSlotGroup,
+  options?: ClaimOptions
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const { group, demand = 1 } = options;
+    const { demand = 1 } = options ?? {};
     const podName = NAME ? `[${NAME}] ` : '';
 
     const activeInGroup = group.activeRuns.size;

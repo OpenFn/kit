@@ -174,7 +174,7 @@ test('claim: should call execute for a single run', async (t) => {
   });
   app.runGroupMap = {};
 
-  await claim(app, logger, { group });
+  await claim(app, logger, group);
   t.deepEqual(executeArgs[0], { id: 'abc' });
   t.true(group.activeRuns.has('abc'));
   t.is(app.runGroupMap['abc'], group);
@@ -188,7 +188,7 @@ test('should not claim if group is at capacity', async (t) => {
     workflows: { a: true },
   });
 
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'Server at capacity',
   });
 });
@@ -200,7 +200,7 @@ test('should mark a claim when in flight', async (t) => {
     workflows: {},
   });
 
-  let claimPromise = claim(app, logger, { group });
+  let claimPromise = claim(app, logger, group);
 
   t.is(group.openClaims['1'], 1);
   t.is(app.openClaims['1'], 1);
@@ -217,7 +217,7 @@ test('should remove an open claim when completed', async (t) => {
     workflows: {},
   });
 
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'No runs returned',
   });
 
@@ -235,7 +235,7 @@ test('should remove an open claim on error', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'claim error',
   });
 
@@ -254,7 +254,7 @@ test.skip('should remove an open claim on timeout', async (t) => {
     },
   });
 
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'timeout',
   });
 
@@ -271,7 +271,7 @@ test('should mark a claim when in flight with demand: 2', async (t) => {
     },
   });
 
-  let claimPromise = claim(app, logger, { group, demand: 2 });
+  let claimPromise = claim(app, logger, group, { demand: 2 });
 
   t.is(group.openClaims['1'], 2);
   t.is(app.openClaims['1'], 2);
@@ -309,10 +309,10 @@ test('should not claim if open claims exceeds group capacity', async (t) => {
   };
 
   // first claim should be fine
-  let claimPromise = claim(app, logger, { group });
+  let claimPromise = claim(app, logger, group);
 
   // second claim should error and stop the loop actually
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'Server at capacity',
   });
   t.true(didStopWorkloop);
@@ -350,10 +350,10 @@ test('should not claim if open claims + active runs exceeds group capacity', asy
   };
 
   // first claim should be fine
-  let claimPromise = claim(app, logger, { group });
+  let claimPromise = claim(app, logger, group);
 
   // second claim should error
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'Server at capacity',
   });
 
@@ -386,7 +386,7 @@ test('claim: should send queues in payload', async (t) => {
     events: new EventEmitter(),
   } as unknown as ServerApp;
 
-  await t.throwsAsync(() => claim(app, logger, { group }), {
+  await t.throwsAsync(() => claim(app, logger, group), {
     message: 'No runs returned',
   });
 
@@ -408,7 +408,7 @@ test('claim: should check per-group capacity, not global', async (t) => {
   app.runGroupMap = {};
 
   // Should succeed because group has capacity (1/2), regardless of global count
-  await claim(app, logger, { group });
+  await claim(app, logger, group);
   t.true(group.activeRuns.has('run-2'));
 });
 
