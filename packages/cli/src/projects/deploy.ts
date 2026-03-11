@@ -131,7 +131,7 @@ const syncProjects = async (
   localProject: Project,
   trackedProject: Project, // the project we want to update
   logger: Logger
-): Promise<Project> => {
+): Promise<Project | null> => {
   // First step, fetch the latest version and write
   // this may throw!
   let remoteProject: Project;
@@ -167,17 +167,20 @@ const syncProjects = async (
     ws,
     localProject
   );
-
+  console.log({ locallyChangedWorkflows });
   // TODO: what if remote diff and the version checked disagree for some reason?
-  const diffs = reportDiff(
-    localProject,
-    remoteProject,
-    locallyChangedWorkflows,
-    logger
-  );
+  let diffs = [];
+  if (locallyChangedWorkflows.length) {
+    diffs = reportDiff(
+      localProject,
+      remoteProject,
+      locallyChangedWorkflows,
+      logger
+    );
+  }
   if (!diffs.length) {
     logger.success('Nothing to deploy');
-    process.exit(0);
+    return null;
   }
 
   // Ensure there's no divergence
@@ -303,9 +306,22 @@ export async function handler(options: DeployOptions, logger: Logger) {
     `Loaded checked-out project ${printProjectName(localProject)}`
   );
 
-  const merged: Project = options.new
-    ? localProject
-    : await syncProjects(options, config, ws, localProject, tracker, logger);
+  let merged;
+  if (options.new) {
+    merged = localProject;
+  } else {
+    merged = await syncProjects(
+      options,
+      config,
+      ws,
+      localProject,
+      tracker,
+      logger
+    );
+    if (!merged) {
+      return;
+    }
+  }
 
   const state = merged.serialize('state', {
     format: 'json',

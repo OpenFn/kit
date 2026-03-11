@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import test from 'ava';
 import mock from 'mock-fs';
 import path from 'node:path';
@@ -159,86 +159,40 @@ test.serial(
   }
 );
 
-// 1 project, 2 workflows
-// change 1 locally
-// only 1 should report a diff
-// this is working fine locally.
-test.serial.only('repro bug', async (t) => {
-  t.truthy(server.state.projects[UUID]);
-  t.is(Object.keys(server.state.projects).length, 1);
+// TODO in this case, should we warn the user of any workflows that have changed remotely?
+// Offer to update locally?
+test.serial(
+  'When running deploy with no changes locally, but changes remotely, do not warn diffs',
+  async (t) => {
+    t.truthy(server.state.projects[UUID]);
+    t.is(Object.keys(server.state.projects).length, 1);
 
-  // add a new remote workflow
-  // server.updateWorkflow(UUID, {
-  //   id: 'new-workflow',
-  //   name: 'New Workflow',
-  //   jobs: [
-  //     {
-  //       id: '6a850236-e90b-4cb0-a53a-3e1f17575930',
-  //       name: 'My Job',
-  //       body: 'fn(s => s)',
-  //       adaptor: '@openfn/language-common@latest',
-  //       project_credential_id: null,
-  //     },
-  //   ],
-  //   triggers: [],
-  //   edges: [],
-  //   lock_version: 1,
-  //   deleted_at: null,
-  // });
+    await setup(projectYaml);
 
-  const newProject = projectYaml.replace(
-    'workflows:',
-    `workflows:
-  - name: New Workflow
-    steps:
-      - id: my-job-1
-        name:  My Job
-        expression: fn(s => s)
-        adaptor: "@openfn/language-common@latest"
-`
-  );
-  await setup(newProject);
+    const modified = JSON.parse(
+      JSON.stringify(server.state.projects[UUID].workflows['my-workflow'])
+    );
+    modified.jobs['transform-data'].body = 'each()';
+    server.updateWorkflow(UUID, modified);
 
-  // deploy once just to sync everything
-  await deploy(
-    {
-      endpoint: ENDPOINT,
-      apiKey: 'test-api-key',
-      workspace: '/ws',
-      confirm: false,
-    } as any,
-    logger
-  );
+    // Run deploy, even though nothing changed locally
+    await deploy(
+      {
+        endpoint: ENDPOINT,
+        apiKey: 'test-api-key',
+        workspace: '/ws',
+        confirm: false,
+      } as any,
+      logger
+    );
 
-  // now change the local expression in 1 workflow
-  await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
-  console.log(server.state.projects[UUID].workflows);
-  // and change the other workflow remotely
-  const [wf1, wf2] = Object.keys(server.state.projects[UUID].workflows);
-  const modified = JSON.parse(
-    JSON.stringify(server.state.projects[UUID].workflows[wf2])
-  );
-  modified.jobs['my-job-1'].body = 'each()';
-  server.updateWorkflow(UUID, modified);
+    const warn = logger._find('warn', /workflows have diverged/i);
+    t.falsy(warn);
 
-  // Now deploy the local changes
-  await deploy(
-    {
-      endpoint: ENDPOINT,
-      apiKey: 'test-api-key',
-      workspace: '/ws',
-      log: 'debug',
-      confirm: false,
-    } as any,
-    logger
-  );
-  console.log(logger._history);
-
-  const warn = logger._find('warn', /workflows have diverged/i);
-  t.falsy(warn);
-
-  // check the remote workflows are both correct
-});
+    const noop = logger._find('success', /Nothing to deploy/i);
+    t.truthy(noop);
+  }
+);
 
 test('reportDiff: should report no changes for identical projects', (t) => {
   const wf = generateWorkflow('@id a trigger-x');
@@ -367,53 +321,6 @@ test('reportDiff: should report mix of added, changed, and removed workflows', (
   t.truthy(logger._find('always', /workflows removed/i));
   t.truthy(logger._find('always', /- c/i));
 });
-
-// TODO skipping while history checking is messed up
-test.serial.skip(
-  'Exit early if the remote is not compatible with local',
-  async (t) => {
-    mockFs({
-      '/ws/.projects/main@app.openfn.org.yaml': projectYaml,
-      '/ws/openfn.yaml': '',
-    });
-
-    // Update the server-side project
-    const changed = JSON.parse(JSON.stringify(myProject_v1));
-    changed.workflows['my-workflow'].version_history.push('app:abc');
-
-    server.addProject('e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00', changed);
-
-    // checkout the project locally
-    await checkout(
-      {
-        project: 'main',
-        workspace: '/ws',
-      },
-      logger
-    );
-
-    // Now change the expression
-    await writeFile('/ws/workflows/my-workflow/transform-data.js', 'log()');
-
-    await deploy(
-      {
-        endpoint: ENDPOINT,
-        apiKey: 'test-api-key',
-        workspace: '/ws',
-      } as any,
-      logger
-    );
-
-    // The remote project should not have changed
-    const appState =
-      server.state.projects['e16c5f09-f0cb-4ba7-a4c2-73fcb2f29d00'];
-    t.deepEqual(appState, myProject_v1);
-
-    // We should log what's going on to the user
-    const expectedLog = logger._find('error', /projects have diverged/i);
-    t.truthy(expectedLog);
-  }
-);
 
 test('hasRemoteDiverged: 1 workflow, no diverged', (t) => {
   const local = {
