@@ -8,7 +8,8 @@ import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const args = cli(process.argv);
 
-const workloopConfigs = args.workloops ?? getDefaultWorkloopConfig(args.capacity);
+const workloopConfigs =
+  args.workloops ?? getDefaultWorkloopConfig(args.capacity);
 
 // Sum the capacity from each "<queues>:<n>" token in the workloop string
 const effectiveCapacity = workloopConfigs
