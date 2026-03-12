@@ -1,4 +1,4 @@
-import { ServerApp } from '../server';
+import { ServerApp, pendingClaims } from '../server';
 import { INTERNAL_CLAIM_COMPLETE, INTERNAL_RUN_COMPLETE } from '../events';
 
 import type { Logger } from '@openfn/logger';
@@ -43,18 +43,14 @@ const waitForRunsAndClaims = (app: ServerApp, logger: Logger) =>
   new Promise<void>((resolve) => {
     const log = () => {
       logger.debug(
-        `Waiting for ${Object.keys(app.workflows).length} runs and ${
-          Object.keys(app.openClaims).length
-        } claims to complete...`
+        `Waiting for ${
+          Object.keys(app.workflows).length
+        } runs and ${app.pendingClaims()} claims to complete...`
       );
     };
 
     const checkAllClear = () => {
-      if (
-        Object.keys(app.workflows).length +
-          Object.keys(app.openClaims).length ===
-        0
-      ) {
+      if (Object.keys(app.workflows).length + app.pendingClaims() === 0) {
         logger.debug('All runs completed!');
         app.events.off(INTERNAL_RUN_COMPLETE, checkAllClear);
         app.events.off(INTERNAL_CLAIM_COMPLETE, checkAllClear);
@@ -64,10 +60,7 @@ const waitForRunsAndClaims = (app: ServerApp, logger: Logger) =>
       }
     };
 
-    if (
-      Object.keys(app.workflows).length ||
-      Object.keys(app.openClaims).length
-    ) {
+    if (Object.keys(app.workflows).length || app.pendingClaims()) {
       log();
       app.events.on(INTERNAL_RUN_COMPLETE, checkAllClear);
       app.events.on(INTERNAL_CLAIM_COMPLETE, checkAllClear);

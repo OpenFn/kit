@@ -25,7 +25,6 @@ const createWorkloop = (capacity = 5) =>
 
 const createMockApp = (props: any) => ({
   workflows: {},
-  openClaims: {},
   queueChannel: mockChannel({
     [CLAIM]: () => {
       return { runs: [] };

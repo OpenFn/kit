@@ -74,7 +74,6 @@ export interface ServerApp extends Koa {
   socket?: any;
   queueChannel?: Channel;
   workflows: Record<string, true | Context>;
-  openClaims: Record<string, number>;
   destroyed: boolean;
   events: EventEmitter;
   server: Server;
@@ -87,6 +86,7 @@ export interface ServerApp extends Koa {
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
   resumeWorkloop: (workloop?: Workloop) => void;
+  pendingClaims: () => number;
 
   // debug API
   claim: () => Promise<any>;
@@ -258,7 +258,6 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     })
   );
 
-  app.openClaims = {};
   app.workflows = {};
   app.destroyed = false;
 
@@ -438,6 +437,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     });
     return Promise.any(promises);
   };
+
+  app.pendingClaims = () =>
+    app.workloops.reduce((sum, w) => sum + Object.keys(w.openClaims).length, 0);
 
   app.destroy = () => destroy(app, logger);
 

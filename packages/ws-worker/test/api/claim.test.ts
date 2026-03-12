@@ -145,7 +145,6 @@ const createMockApp = (opts: any) => {
   });
 
   return {
-    openClaims: {},
     workflows,
     queueChannel: channel,
     workloops: [],
@@ -203,7 +202,6 @@ test('should mark a claim when in flight', async (t) => {
   let claimPromise = claim(app, workloop, logger);
 
   t.is(workloop.openClaims['1'], 1);
-  t.is(app.openClaims['1'], 1);
 
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
@@ -222,7 +220,6 @@ test('should remove an open claim when completed', async (t) => {
   });
 
   t.falsy(workloop.openClaims['1']);
-  t.falsy(app.openClaims['1']);
 });
 
 test('should remove an open claim on error', async (t) => {
@@ -240,7 +237,6 @@ test('should remove an open claim on error', async (t) => {
   });
 
   t.falsy(workloop.openClaims['1']);
-  t.falsy(app.openClaims['1']);
 });
 
 // TODO not really sure how to check this
@@ -259,7 +255,6 @@ test.skip('should remove an open claim on timeout', async (t) => {
   });
 
   t.falsy(workloop.openClaims['1']);
-  t.falsy(app.openClaims['1']);
 });
 
 test('should mark a claim when in flight with demand: 2', async (t) => {
@@ -274,7 +269,6 @@ test('should mark a claim when in flight with demand: 2', async (t) => {
   let claimPromise = claim(app, workloop, logger, { demand: 2 });
 
   t.is(workloop.openClaims['1'], 2);
-  t.is(app.openClaims['1'], 2);
 
   await t.throwsAsync(claimPromise, {
     message: 'No runs returned',
@@ -370,7 +364,6 @@ test('claim: should send queues in payload', async (t) => {
   });
 
   const app = {
-    openClaims: {},
     workflows: {},
     queueChannel: channel,
     runWorkloopMap: {},
