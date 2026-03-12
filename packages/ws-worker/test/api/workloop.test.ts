@@ -6,18 +6,18 @@ import { mockChannel } from '../../src/mock/sockets';
 import startWorkloop from '../../src/api/workloop';
 import { CLAIM } from '../../src/events';
 import EventEmitter from 'node:events';
-import { createRuntimeGroup, RuntimeSlotGroup } from '../../src/util/parse-queues';
+import { createWorkloop, Workloop } from '../../src/util/parse-workloops';
 
-let workloop: any;
+let currentWorkloop: Workloop;
 
 const logger = createMockLogger();
 
 test.afterEach(() => {
-  workloop?.stop(); // cancel any workloops
+  currentWorkloop?.stop(); // cancel any workloops
 });
 
-const createMockGroup = (maxSlots = 5): RuntimeSlotGroup =>
-  createRuntimeGroup({ queues: ['manual', '*'], maxSlots });
+const createMockWorkloop = (capacity = 5): Workloop =>
+  createWorkloop({ queues: ['manual', '*'], capacity });
 
 const createMockApp = (props: any) => ({
   workflows: {},
@@ -28,7 +28,7 @@ const createMockApp = (props: any) => ({
     },
   }),
   execute: () => {},
-  runGroupMap: {},
+  runWorkloopMap: {},
 
   events: new EventEmitter(),
   ...props,
@@ -36,30 +36,30 @@ const createMockApp = (props: any) => ({
 
 test('workloop can be cancelled', async (t) => {
   let count = 0;
-  const group = createMockGroup();
+  currentWorkloop = createMockWorkloop();
 
   const app = createMockApp({
     queueChannel: mockChannel({
       [CLAIM]: () => {
         count++;
-        workloop.stop();
+        currentWorkloop.stop();
         return { runs: [] };
       },
     }),
   });
 
-  workloop = startWorkloop(app as any, logger, 1, 1, group);
-  t.false(workloop.isStopped());
+  startWorkloop(app as any, logger, 1, 1, currentWorkloop);
+  t.false(currentWorkloop.isStopped());
 
   await sleep(100);
   // A quirk of how cancel works is that the loop will be called a few times
   t.true(count <= 5);
-  t.true(workloop.isStopped());
+  t.true(currentWorkloop.isStopped());
 });
 
 test('workloop sends the runs:claim event', (t) => {
   return new Promise((done) => {
-    const group = createMockGroup();
+    currentWorkloop = createMockWorkloop();
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
@@ -69,14 +69,14 @@ test('workloop sends the runs:claim event', (t) => {
         },
       }),
     });
-    workloop = startWorkloop(app as any, logger, 1, 1, group);
+    startWorkloop(app as any, logger, 1, 1, currentWorkloop);
   });
 });
 
 test('workloop sends the runs:claim event several times ', (t) => {
   return new Promise((done) => {
     let count = 0;
-    const group = createMockGroup();
+    currentWorkloop = createMockWorkloop();
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
@@ -89,13 +89,13 @@ test('workloop sends the runs:claim event several times ', (t) => {
         },
       }),
     });
-    workloop = startWorkloop(app as any, logger, 1, 1, group);
+    startWorkloop(app as any, logger, 1, 1, currentWorkloop);
   });
 });
 
 test('workloop calls execute if runs:claim returns runs', (t) => {
   return new Promise((done) => {
-    const group = createMockGroup();
+    currentWorkloop = createMockWorkloop();
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => ({
@@ -109,56 +109,65 @@ test('workloop calls execute if runs:claim returns runs', (t) => {
       },
     });
 
-    workloop = startWorkloop(app as any, logger, 1, 1, group);
+    startWorkloop(app as any, logger, 1, 1, currentWorkloop);
   });
 });
 
-test('workloop stores itself on group.workloop', (t) => {
+test('startWorkloop overwrites stop/isStopped on the workloop', (t) => {
   return new Promise((done) => {
-    const group = createMockGroup();
+    currentWorkloop = createMockWorkloop();
+    // Before starting, isStopped returns true (stub)
+    t.true(currentWorkloop.isStopped());
+
     const app = createMockApp({
       queueChannel: mockChannel({
         [CLAIM]: () => {
-          t.is(group.workloop, workloop);
+          // After starting, isStopped returns false (real closure)
+          t.false(currentWorkloop.isStopped());
           t.pass();
           done();
           return { runs: [] };
         },
       }),
     });
-    workloop = startWorkloop(app as any, logger, 1, 1, group);
+    startWorkloop(app as any, logger, 1, 1, currentWorkloop);
   });
 });
 
-test('stopping one group workloop does not affect another', async (t) => {
-  const groupA = createMockGroup(1);
-  const groupB = createMockGroup(1);
+test('stopping one workloop does not affect another', async (t) => {
+  const wlA = createMockWorkloop(1);
+  const wlB = createMockWorkloop(1);
 
   let countB = 0;
 
   const appA = createMockApp({
     queueChannel: mockChannel({
-      [CLAIM]: () => { return { runs: [] }; },
+      [CLAIM]: () => {
+        return { runs: [] };
+      },
     }),
   });
 
   const appB = createMockApp({
     queueChannel: mockChannel({
-      [CLAIM]: () => { countB++; return { runs: [] }; },
+      [CLAIM]: () => {
+        countB++;
+        return { runs: [] };
+      },
     }),
   });
 
-  const wlA = startWorkloop(appA as any, logger, 1, 1, groupA);
-  const wlB = startWorkloop(appB as any, logger, 1, 1, groupB);
+  startWorkloop(appA as any, logger, 1, 1, wlA);
+  startWorkloop(appB as any, logger, 1, 1, wlB);
 
   await sleep(50);
   wlA.stop();
   const countBAtAStop = countB;
   await sleep(50);
 
-  // Group A should be stopped
+  // Workloop A should be stopped
   t.true(wlA.isStopped());
-  // Group B should still be running and claiming
+  // Workloop B should still be running and claiming
   t.false(wlB.isStopped());
   t.true(countB > countBAtAStop);
 

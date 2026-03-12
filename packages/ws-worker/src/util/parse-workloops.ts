@@ -1,74 +1,74 @@
-import type { Workloop } from '../api/workloop';
-
-export interface SlotGroup {
+export interface WorkloopConfig {
   queues: string[];
-  maxSlots: number;
+  capacity: number;
 }
 
-export interface RuntimeSlotGroup extends SlotGroup {
+export interface Workloop extends WorkloopConfig {
   id: string;
   activeRuns: Set<string>;
   openClaims: Record<string, number>;
-  workloop: Workloop | null;
+  stop: (reason?: string) => void;
+  isStopped: () => boolean;
 }
 
-export function groupHasCapacity(group: RuntimeSlotGroup): boolean {
-  const pendingClaims = Object.values(group.openClaims).reduce(
+export function workloopHasCapacity(workloop: Workloop): boolean {
+  const pendingClaims = Object.values(workloop.openClaims).reduce(
     (a, b) => a + b,
     0
   );
-  return group.activeRuns.size + pendingClaims < group.maxSlots;
+  return workloop.activeRuns.size + pendingClaims < workloop.capacity;
 }
 
-export function createRuntimeGroup(group: SlotGroup): RuntimeSlotGroup {
+export function createWorkloop(config: WorkloopConfig): Workloop {
   return {
-    ...group,
-    id: `${group.queues.join(',')}:${group.maxSlots}`,
+    ...config,
+    id: `${config.queues.join('>')}:${config.capacity}`,
     activeRuns: new Set(),
     openClaims: {},
-    workloop: null,
+    stop: () => {},
+    isStopped: () => true,
   };
 }
 
-export class QueuesValidationError extends Error {
+export class WorkloopValidationError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'QueuesValidationError';
+    this.name = 'WorkloopValidationError';
   }
 }
 
 const VALID_NAME = /^[a-zA-Z0-9_]+$/;
 
-export default function parseQueues(input: string): SlotGroup[] {
+export default function parseWorkloops(input: string): WorkloopConfig[] {
   const trimmed = input.trim();
   if (!trimmed) {
-    throw new QueuesValidationError('Queues configuration cannot be empty');
+    throw new WorkloopValidationError('Workloop configuration cannot be empty');
   }
 
   const tokens = trimmed.split(/\s+/);
-  const groups = tokens.map(parseToken);
+  const configs = tokens.map(parseToken);
 
-  // Warn if multiple slot groups have identical queue configurations
+  // Warn if multiple workloops have identical queue configurations
   const seenConfigs = new Map<string, number>();
-  for (let i = 0; i < groups.length; i++) {
-    const key = JSON.stringify(groups[i].queues);
+  for (let i = 0; i < configs.length; i++) {
+    const key = JSON.stringify(configs[i].queues);
     if (seenConfigs.has(key)) {
       const prevIndex = seenConfigs.get(key)!;
       console.warn(
-        `Warning: slot groups at positions ${prevIndex} and ${i} have identical queue configurations: ${tokens[prevIndex]} and ${tokens[i]}`
+        `Warning: workloops at positions ${prevIndex} and ${i} have identical queue configurations: ${tokens[prevIndex]} and ${tokens[i]}`
       );
     } else {
       seenConfigs.set(key, i);
     }
   }
 
-  return groups;
+  return configs;
 }
 
-function parseToken(token: string): SlotGroup {
+function parseToken(token: string): WorkloopConfig {
   const lastColon = token.lastIndexOf(':');
   if (lastColon === -1) {
-    throw new QueuesValidationError(
+    throw new WorkloopValidationError(
       `Invalid token "${token}": missing :<count> suffix`
     );
   }
@@ -78,23 +78,23 @@ function parseToken(token: string): SlotGroup {
 
   const count = Number(countStr);
   if (!Number.isInteger(count) || countStr !== String(Math.floor(count))) {
-    throw new QueuesValidationError(
+    throw new WorkloopValidationError(
       `Invalid count "${countStr}" in token "${token}": must be a positive integer`
     );
   }
   if (count < 1) {
-    throw new QueuesValidationError(
+    throw new WorkloopValidationError(
       `Invalid count "${countStr}" in token "${token}": must be >= 1`
     );
   }
 
-  const names = prefStr.split(',');
+  const names = prefStr.split('>');
   for (const name of names) {
     if (name === '') {
-      throw new QueuesValidationError(`Empty queue name in token "${token}"`);
+      throw new WorkloopValidationError(`Empty queue name in token "${token}"`);
     }
     if (name !== '*' && !VALID_NAME.test(name)) {
-      throw new QueuesValidationError(
+      throw new WorkloopValidationError(
         `Invalid queue name "${name}" in token "${token}": must match /^[a-zA-Z0-9_]+$/ or be "*"`
       );
     }
@@ -114,10 +114,10 @@ function parseToken(token: string): SlotGroup {
 
   const wildcardIndex = names.indexOf('*');
   if (wildcardIndex !== -1 && wildcardIndex !== names.length - 1) {
-    throw new QueuesValidationError(
+    throw new WorkloopValidationError(
       `Wildcard "*" must be the last element in token "${token}"`
     );
   }
 
-  return { queues: names, maxSlots: count };
+  return { queues: names, capacity: count };
 }

@@ -13,9 +13,9 @@ const destroy = async (app: ServerApp, logger: Logger) => {
     new Promise<void>((resolve) => {
       app.destroyed = true;
 
-      // Immediately stop asking for more work on all groups
-      for (const g of app.slotGroups) {
-        g.workloop?.stop('server closed');
+      // Immediately stop asking for more work on all workloops
+      for (const w of app.workloops) {
+        w.stop('server closed');
       }
 
       // Shut down the HTTP server

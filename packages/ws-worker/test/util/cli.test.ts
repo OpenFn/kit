@@ -138,74 +138,74 @@ test('cli should configure engine validation through args', (t) => {
   t.is(args.engineValidationTimeoutMs, 3333);
 });
 
-// --queues option tests
+// --workloops option tests
 
-test('cli should parse --queues from CLI', (t) => {
-  const argv = ['pnpm', 'start', '--queues', 'fast_lane:1 manual,*:4'];
+test('cli should parse --workloops from CLI', (t) => {
+  const argv = ['pnpm', 'start', '--workloops', 'fast_lane:1 manual>*:4'];
   const args = cli(argv);
-  t.is(args.queues, 'fast_lane:1 manual,*:4');
+  t.is(args.workloops, 'fast_lane:1 manual>*:4');
 });
 
-test('cli should pick up WORKER_QUEUES env var', (t) => {
-  process.env.WORKER_QUEUES = '*:5';
+test('cli should pick up WORKER_WORKLOOPS env var', (t) => {
+  process.env.WORKER_WORKLOOPS = '*:5';
   const argv = 'pnpm start'.split(' ');
   const args = cli(argv);
-  t.is(args.queues, '*:5');
+  t.is(args.workloops, '*:5');
 });
 
-test('cli --queues should override WORKER_QUEUES env var', (t) => {
-  process.env.WORKER_QUEUES = '*:5';
-  const argv = ['pnpm', 'start', '--queues', 'fast_lane:1'];
+test('cli --workloops should override WORKER_WORKLOOPS env var', (t) => {
+  process.env.WORKER_WORKLOOPS = '*:5';
+  const argv = ['pnpm', 'start', '--workloops', 'fast_lane:1'];
   const args = cli(argv);
-  t.is(args.queues, 'fast_lane:1');
+  t.is(args.workloops, 'fast_lane:1');
 });
 
-test('cli queues should be undefined when not set', (t) => {
+test('cli workloops should be undefined when not set', (t) => {
   const argv = 'pnpm start'.split(' ');
   const args = cli(argv);
-  t.is(args.queues, undefined);
+  t.is(args.workloops, undefined);
 });
 
-test('cli should throw when --capacity and --queues are both set', (t) => {
-  const argv = ['pnpm', 'start', '--capacity', '3', '--queues', '*:5'];
+test('cli should throw when --capacity and --workloops are both set', (t) => {
+  const argv = ['pnpm', 'start', '--capacity', '3', '--workloops', '*:5'];
   const err = t.throws(() => cli(argv));
   t.true(err?.message.includes('mutually exclusive'));
 });
 
-test('cli should throw when WORKER_CAPACITY and --queues are both set', (t) => {
+test('cli should throw when WORKER_CAPACITY and --workloops are both set', (t) => {
   process.env.WORKER_CAPACITY = '3';
-  const argv = ['pnpm', 'start', '--queues', '*:5'];
+  const argv = ['pnpm', 'start', '--workloops', '*:5'];
   const err = t.throws(() => cli(argv));
   t.true(err?.message.includes('mutually exclusive'));
 });
 
-test('cli should throw when WORKER_QUEUES and --capacity are both set', (t) => {
-  process.env.WORKER_QUEUES = '*:5';
+test('cli should throw when WORKER_WORKLOOPS and --capacity are both set', (t) => {
+  process.env.WORKER_WORKLOOPS = '*:5';
   const argv = ['pnpm', 'start', '--capacity', '3'];
   const err = t.throws(() => cli(argv));
   t.true(err?.message.includes('mutually exclusive'));
 });
 
-test('cli should throw when WORKER_QUEUES and WORKER_CAPACITY are both set as env vars', (t) => {
-  process.env.WORKER_QUEUES = '*:5';
+test('cli should throw when WORKER_WORKLOOPS and WORKER_CAPACITY are both set as env vars', (t) => {
+  process.env.WORKER_WORKLOOPS = '*:5';
   process.env.WORKER_CAPACITY = '3';
   const argv = 'pnpm start'.split(' ');
   const err = t.throws(() => cli(argv));
   t.true(err?.message.includes('mutually exclusive'));
 });
 
-test('cli should work with only --queues (no capacity)', (t) => {
-  const argv = ['pnpm', 'start', '--queues', '*:5'];
+test('cli should work with only --workloops (no capacity)', (t) => {
+  const argv = ['pnpm', 'start', '--workloops', '*:5'];
   const args = cli(argv);
-  t.is(args.queues, '*:5');
+  t.is(args.workloops, '*:5');
   t.is(args.capacity, 5); // default still applied
 });
 
-test('cli should work with only --capacity (no queues)', (t) => {
+test('cli should work with only --capacity (no workloops)', (t) => {
   const argv = 'pnpm start --capacity 3'.split(' ');
   const args = cli(argv);
   t.is(args.capacity, 3);
-  t.is(args.queues, undefined);
+  t.is(args.workloops, undefined);
 });
 
 // pnpm v7+ passes '--' through to process.argv
@@ -214,12 +214,12 @@ test('cli should strip leading -- from pnpm passthrough', (t) => {
     'node',
     'start.ts',
     '--',
-    '--queues',
+    '--workloops',
     'fast_lane:2 *:3',
     '--log',
     'info',
   ];
   const args = cli(argv);
-  t.is(args.queues, 'fast_lane:2 *:3');
+  t.is(args.workloops, 'fast_lane:2 *:3');
   t.is(args.log, 'info');
 });

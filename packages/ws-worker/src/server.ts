@@ -28,12 +28,12 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
-import type { RuntimeSlotGroup } from './util/parse-queues';
+import type { Workloop } from './util/parse-workloops';
 import {
-  createRuntimeGroup,
-  groupHasCapacity,
-  SlotGroup,
-} from './util/parse-queues';
+  createWorkloop,
+  workloopHasCapacity,
+  WorkloopConfig,
+} from './util/parse-workloops';
 
 const exec = promisify(_exec);
 
@@ -42,7 +42,7 @@ export type ServerOptions = {
   batchInterval?: number;
   batchLimit?: number;
   maxWorkflows?: number;
-  slotGroups?: SlotGroup[];
+  workloopConfigs?: WorkloopConfig[];
   port?: number;
   lightning?: string; // url to lightning instance
   logger?: Logger;
@@ -85,12 +85,12 @@ export interface ServerApp extends Koa {
   engine: RuntimeEngine;
   options: ServerOptions;
 
-  slotGroups: RuntimeSlotGroup[];
-  runGroupMap: Record<string, RuntimeSlotGroup>;
+  workloops: Workloop[];
+  runWorkloopMap: Record<string, Workloop>;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
   destroy: () => void;
-  resumeWorkloop: (group?: RuntimeSlotGroup) => void;
+  resumeWorkloop: (workloop?: Workloop) => void;
 
   // debug API
   claim: () => Promise<any>;
@@ -141,9 +141,9 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
 
   // We were disconnected from the queue
   const onDisconnect = () => {
-    for (const g of app.slotGroups) {
-      if (g.workloop && !g.workloop.isStopped()) {
-        g.workloop.stop('Socket disconnected unexpectedly');
+    for (const w of app.workloops) {
+      if (!w.isStopped()) {
+        w.stop('Socket disconnected unexpectedly');
       }
     }
     if (!app.destroyed) {
@@ -174,9 +174,9 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   const onMessage = (event: string) => {
     if (event === WORK_AVAILABLE) {
       if (!app.destroyed) {
-        for (const g of app.slotGroups) {
-          if (groupHasCapacity(g)) {
-            claim(app, logger, g).catch(() => {
+        for (const w of app.workloops) {
+          if (workloopHasCapacity(w)) {
+            claim(app, logger, w).catch(() => {
               // do nothing - it's fine if claim throws here
             });
           }
@@ -185,10 +185,10 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
     }
   };
 
-  // Build queues map from slot groups: key = queues joined by comma, value = maxSlots
+  // Build queues map from workloops: key = queues joined by >, value = capacity
   const queuesMap: Record<string, number> = {};
-  for (const g of app.slotGroups) {
-    queuesMap[g.queues.join(',')] = g.maxSlots;
+  for (const w of app.workloops) {
+    queuesMap[w.queues.join('>')] = w.capacity;
   }
 
   connectToWorkerQueue(options.lightning!, app.id, options.secret!, logger, {
@@ -266,12 +266,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.workflows = {};
   app.destroyed = false;
 
-  // Initialize slot groups: use provided slotGroups, or create a single default group
-  const slotGroupDefs: SlotGroup[] = options.slotGroups ?? [
-    { queues: ['manual', '*'], maxSlots: options.maxWorkflows ?? 5 },
+  // Initialize workloops: use provided workloopConfigs, or create a single default
+  const workloopDefs: WorkloopConfig[] = options.workloopConfigs ?? [
+    { queues: ['manual', '*'], capacity: options.maxWorkflows ?? 5 },
   ];
-  app.slotGroups = slotGroupDefs.map(createRuntimeGroup);
-  app.runGroupMap = {};
+  app.workloops = workloopDefs.map(createWorkloop);
+  app.runWorkloopMap = {};
 
   app.server = app.listen(port);
   logger.success(`Worker ${app.id} listening on ${port}`);
@@ -284,30 +284,30 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.options = options;
 
-  // Start the workloop for a specific group (or all groups if none specified)
-  // When called with a specific group (e.g. after a run completes), we restart
+  // Start the workloop for a specific workloop (or all if none specified)
+  // When called with a specific workloop (e.g. after a run completes), we restart
   // the workloop fresh so it claims immediately rather than waiting in backoff.
-  app.resumeWorkloop = (group?: RuntimeSlotGroup) => {
+  app.resumeWorkloop = (workloop?: Workloop) => {
     if (options.noLoop || app.destroyed) {
       return;
     }
 
-    const groups = group ? [group] : app.slotGroups;
-    for (const g of groups) {
-      if (!groupHasCapacity(g)) {
+    const targets = workloop ? [workloop] : app.workloops;
+    for (const w of targets) {
+      if (!workloopHasCapacity(w)) {
         continue;
       }
       // Stop any existing workloop so we can start fresh with immediate claim
-      if (g.workloop && !g.workloop.isStopped()) {
-        g.workloop.stop('restarting');
+      if (!w.isStopped()) {
+        w.stop('restarting');
       }
-      logger.info(`Starting workloop for group ${g.id}`);
-      g.workloop = startWorkloop(
+      logger.info(`Starting workloop for ${w.id}`);
+      startWorkloop(
         app,
         logger,
         options.backoff?.min || MIN_BACKOFF,
         options.backoff?.max || MAX_BACKOFF,
-        g
+        w
       );
     }
   };
@@ -368,13 +368,13 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
           delete app.workflows[id];
           runChannel.leave();
 
-          // Remove from owning group and resume its workloop
-          const owningGroup = app.runGroupMap[id];
-          if (owningGroup) {
-            owningGroup.activeRuns.delete(id);
-            delete app.runGroupMap[id];
+          // Remove from owning workloop and resume it
+          const owningWorkloop = app.runWorkloopMap[id];
+          if (owningWorkloop) {
+            owningWorkloop.activeRuns.delete(id);
+            delete app.runWorkloopMap[id];
             app.events.emit(INTERNAL_RUN_COMPLETE);
-            app.resumeWorkloop(owningGroup);
+            app.resumeWorkloop(owningWorkloop);
           } else {
             app.events.emit(INTERNAL_RUN_COMPLETE);
             app.resumeWorkloop();
@@ -394,12 +394,12 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
       } catch (e) {
         delete app.workflows[id];
 
-        // Clean up from owning group
-        const owningGroup = app.runGroupMap[id];
-        if (owningGroup) {
-          owningGroup.activeRuns.delete(id);
-          delete app.runGroupMap[id];
-          app.resumeWorkloop(owningGroup);
+        // Clean up from owning workloop
+        const owningWorkloop = app.runWorkloopMap[id];
+        if (owningWorkloop) {
+          owningWorkloop.activeRuns.delete(id);
+          delete app.runWorkloopMap[id];
+          app.resumeWorkloop(owningWorkloop);
         } else {
           app.resumeWorkloop();
         }
@@ -415,14 +415,14 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     }
   };
 
-  // Debug API to manually trigger a claim on all groups with capacity
+  // Debug API to manually trigger a claim on all workloops with capacity
   router.post('/claim', async (ctx) => {
     logger.info('triggering claim from POST request');
-    const promises = app.slotGroups.map((g) => {
-      if (groupHasCapacity(g)) {
-        return claim(app, logger, g);
+    const promises = app.workloops.map((w) => {
+      if (workloopHasCapacity(w)) {
+        return claim(app, logger, w);
       }
-      return Promise.reject(new Error('Group at capacity'));
+      return Promise.reject(new Error('Workloop at capacity'));
     });
     return Promise.any(promises)
       .then(() => {
@@ -438,11 +438,11 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   });
 
   app.claim = () => {
-    const promises = app.slotGroups.map((g) => {
-      if (groupHasCapacity(g)) {
-        return claim(app, logger, g);
+    const promises = app.workloops.map((w) => {
+      if (workloopHasCapacity(w)) {
+        return claim(app, logger, w);
       }
-      return Promise.reject(new Error('Group at capacity'));
+      return Promise.reject(new Error('Workloop at capacity'));
     });
     return Promise.any(promises);
   };

@@ -16,7 +16,7 @@ type Args = {
   batchLimit?: number;
   batchLogs: boolean;
   capacity: number;
-  queues?: string;
+  workloops?: string;
   claimTimeoutSeconds?: number;
   collectionsUrl?: string;
   collectionsVersion?: string;
@@ -103,7 +103,7 @@ export default function parseArgs(argv: string[]): Args {
     WORKER_STATE_PROPS_TO_REMOVE,
     WORKER_TIMEOUT_RETRY_COUNT,
     WORKER_TIMEOUT_RETRY_DELAY_MS,
-    WORKER_QUEUES,
+    WORKER_WORKLOOPS,
     WORKER_VALIDATION_RETRIES,
     WORKER_VALIDATION_TIMEOUT_MS,
   } = process.env;
@@ -208,9 +208,9 @@ export default function parseArgs(argv: string[]): Args {
       description: `max concurrent workers. Default ${DEFAULT_WORKER_CAPACITY}. Env: WORKER_CAPACITY`,
       type: 'number',
     })
-    .option('queues', {
+    .option('workloops', {
       description:
-        'Slot group configuration: "<queues>:<count> ...". Mutually exclusive with --capacity. Env: WORKER_QUEUES',
+        'Workloop configuration: "<queues>:<capacity> ...". Mutually exclusive with --capacity. Env: WORKER_WORKLOOPS',
       type: 'string',
     })
     .option('state-props-to-remove', {
@@ -278,19 +278,19 @@ export default function parseArgs(argv: string[]): Args {
 
   const args = parser.parse() as Args;
 
-  const resolvedQueues = setArg(args.queues, WORKER_QUEUES) as
+  const resolvedWorkloops = setArg(args.workloops, WORKER_WORKLOOPS) as
     | string
     | undefined;
   const capacityExplicit =
     args.capacity !== undefined || WORKER_CAPACITY !== undefined;
 
-  if (resolvedQueues !== undefined && capacityExplicit) {
-    throw new Error('--queues and --capacity are mutually exclusive');
+  if (resolvedWorkloops !== undefined && capacityExplicit) {
+    throw new Error('--workloops and --capacity are mutually exclusive');
   }
 
   return {
     ...args,
-    queues: resolvedQueues,
+    workloops: resolvedWorkloops,
     port: setArg(args.port, WORKER_PORT, DEFAULT_PORT),
     lightning: setArg(
       args.lightning,

@@ -4,24 +4,27 @@ import createRTE from '@openfn/engine-multi';
 import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
-import parseQueues, { SlotGroup } from './util/parse-queues';
+import parseWorkloops, { WorkloopConfig } from './util/parse-workloops';
 
 const args = cli(process.argv);
 
-let slotGroups: SlotGroup[];
-if (args.queues) {
-  slotGroups = parseQueues(args.queues);
+let workloopConfigs: WorkloopConfig[];
+if (args.workloops) {
+  workloopConfigs = parseWorkloops(args.workloops);
 } else {
-  slotGroups = [{ queues: ['manual', '*'], maxSlots: args.capacity ?? 5 }];
+  workloopConfigs = [{ queues: ['manual', '*'], capacity: args.capacity ?? 5 }];
 }
-const effectiveCapacity = slotGroups.reduce((sum, g) => sum + g.maxSlots, 0);
+const effectiveCapacity = workloopConfigs.reduce(
+  (sum, c) => sum + c.capacity,
+  0
+);
 
 const logger = createLogger('SRV', { level: args.log });
 
 logger.info('Starting worker server...');
 logger.info(
-  'Slot groups:',
-  slotGroups,
+  'Workloops:',
+  workloopConfigs,
   'effective capacity:',
   effectiveCapacity
 );
@@ -56,7 +59,7 @@ function engineReady(engine: any) {
       max: maxBackoff,
     },
     maxWorkflows: effectiveCapacity,
-    slotGroups,
+    workloopConfigs,
     payloadLimitMb: args.payloadMemory,
     logPayloadLimitMb: args.logPayloadMemory ?? 1, // Default to 1MB
     collectionsVersion: args.collectionsVersion,
