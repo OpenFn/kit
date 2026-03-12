@@ -13,10 +13,7 @@ export const extractLogs = (jsonLogString: string) =>
   jsonLogString
     .split(/\n/)
     .filter((j) => j.startsWith('{'))
-    .map((j) => {
-      console.log(j);
-      return JSON.parse(j);
-    });
+    .map((j) => JSON.parse(j));
 
 export const assertLog = (t: any, logs: any[], re: RegExp) =>
   t.assert(logs.find(({ message }) => re.test(message[0])));
