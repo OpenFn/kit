@@ -177,7 +177,7 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
       if (!app.destroyed) {
         for (const w of app.workloops) {
           if (workloopHasCapacity(w)) {
-            claim(app, logger, w).catch(() => {
+            claim(app, w, logger).catch(() => {
               // do nothing - it's fine if claim throws here
             });
           }
@@ -424,7 +424,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     logger.info('triggering claim from POST request');
     const promises = app.workloops.map((w) => {
       if (workloopHasCapacity(w)) {
-        return claim(app, logger, w);
+        return claim(app, w, logger);
       }
       return Promise.reject(new Error('Workloop at capacity'));
     });
@@ -444,7 +444,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.claim = () => {
     const promises = app.workloops.map((w) => {
       if (workloopHasCapacity(w)) {
-        return claim(app, logger, w);
+        return claim(app, w, logger);
       }
       return Promise.reject(new Error('Workloop at capacity'));
     });

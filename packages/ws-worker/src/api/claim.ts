@@ -52,12 +52,12 @@ export const resetClaimIdGen = () => {
 
 const claim = (
   app: ServerApp,
-  logger: Logger = mockLogger,
   workloop: Workloop,
-  options?: ClaimOptions
+  logger: Logger = mockLogger,
+  options: ClaimOptions = {}
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const { demand = 1 } = options ?? {};
+    const { demand = 1 } = options;
     const podName = NAME ? `[${NAME}] ` : '';
 
     const activeInWorkloop = workloop.activeRuns.size;

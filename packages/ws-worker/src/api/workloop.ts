@@ -46,7 +46,7 @@ const startWorkloop = (
 
   const workLoop = () => {
     if (!cancelled) {
-      promise = tryWithBackoff(() => claim(app, logger, workloop), {
+      promise = tryWithBackoff(() => claim(app, workloop, logger), {
         min: minBackoff,
         max: maxBackoff,
       });
