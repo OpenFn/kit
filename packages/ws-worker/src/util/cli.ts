@@ -210,7 +210,7 @@ export default function parseArgs(argv: string[]): Args {
     })
     .option('workloops', {
       description:
-        'Workloop configuration: "<queues>:<capacity> ...". Mutually exclusive with --capacity. Env: WORKER_WORKLOOPS',
+        'Workloop configuration: "<queues>:<capacity> ...", e.g., "fast_lane:1 manual>*:4". Mutually exclusive with --capacity. Env: WORKER_WORKLOOPS',
       type: 'string',
     })
     .option('state-props-to-remove', {

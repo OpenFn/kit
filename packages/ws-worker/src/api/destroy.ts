@@ -15,7 +15,7 @@ const destroy = async (app: ServerApp, logger: Logger) => {
 
       // Immediately stop asking for more work on all workloops
       for (const w of app.workloops) {
-        w.stop('server closed');
+        app.workloopHandles.get(w)?.stop('server closed');
       }
 
       // Shut down the HTTP server

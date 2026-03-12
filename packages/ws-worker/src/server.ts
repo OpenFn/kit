@@ -17,7 +17,10 @@ import {
   WORK_AVAILABLE,
 } from './events';
 import destroy from './api/destroy';
-import startWorkloop from './api/workloop';
+import startWorkloop, {
+  createWorkloop,
+  workloopHasCapacity,
+} from './api/workloop';
 import claim from './api/claim';
 import { Context, execute } from './api/execute';
 import healthcheck from './middleware/healthcheck';
@@ -28,12 +31,8 @@ import type { Server } from 'http';
 import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
-import type { Workloop } from './util/parse-workloops';
-import {
-  createWorkloop,
-  workloopHasCapacity,
-  WorkloopConfig,
-} from './util/parse-workloops';
+import type { Workloop, WorkloopHandle } from './api/workloop';
+import type { WorkloopConfig } from './util/parse-workloops';
 
 const exec = promisify(_exec);
 
@@ -86,6 +85,7 @@ export interface ServerApp extends Koa {
   options: ServerOptions;
 
   workloops: Workloop[];
+  workloopHandles: Map<Workloop, WorkloopHandle>;
   runWorkloopMap: Record<string, Workloop>;
 
   execute: ({ id, token }: ClaimRun) => Promise<void>;
@@ -142,8 +142,9 @@ function connect(app: ServerApp, logger: Logger, options: ServerOptions = {}) {
   // We were disconnected from the queue
   const onDisconnect = () => {
     for (const w of app.workloops) {
-      if (!w.isStopped()) {
-        w.stop('Socket disconnected unexpectedly');
+      const handle = app.workloopHandles.get(w);
+      if (handle && !handle.isStopped()) {
+        handle.stop('Socket disconnected unexpectedly');
       }
     }
     if (!app.destroyed) {
@@ -271,6 +272,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
     { queues: ['manual', '*'], capacity: options.maxWorkflows ?? 5 },
   ];
   app.workloops = workloopDefs.map(createWorkloop);
+  app.workloopHandles = new Map();
   app.runWorkloopMap = {};
 
   app.server = app.listen(port);
@@ -298,17 +300,19 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
         continue;
       }
       // Stop any existing workloop so we can start fresh with immediate claim
-      if (!w.isStopped()) {
-        w.stop('restarting');
+      const existingHandle = app.workloopHandles.get(w);
+      if (existingHandle && !existingHandle.isStopped()) {
+        existingHandle.stop('restarting');
       }
       logger.info(`Starting workloop for ${w.id}`);
-      startWorkloop(
+      const handle = startWorkloop(
         app,
         logger,
         options.backoff?.min || MIN_BACKOFF,
         options.backoff?.max || MAX_BACKOFF,
         w
       );
+      app.workloopHandles.set(w, handle);
     }
   };
 

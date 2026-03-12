@@ -9,7 +9,7 @@ import { ServerApp } from '../../src/server';
 import { mockChannel } from '../../src/mock/sockets';
 import { CLAIM } from '../../src';
 import EventEmitter from 'node:events';
-import { createWorkloop, Workloop } from '../../src/util/parse-workloops';
+import { createWorkloop, Workloop } from '../../src/api/workloop';
 
 let keys = { public: '.', private: '.' };
 
@@ -189,7 +189,7 @@ test('should not claim if workloop is at capacity', async (t) => {
   });
 
   await t.throwsAsync(() => claim(app, logger, workloop), {
-    message: 'Server at capacity',
+    message: 'Workloop at capacity',
   });
 });
 
@@ -285,11 +285,12 @@ test('should not claim if open claims exceeds workloop capacity', async (t) => {
   let didStopWorkloop = false;
 
   const workloop = createMockWorkloop(1);
-  // startWorkloop would overwrite these, but for test we set them directly
-  workloop.stop = () => {
-    didStopWorkloop = true;
+  const mockHandle = {
+    stop: () => {
+      didStopWorkloop = true;
+    },
+    isStopped: () => false,
   };
-  workloop.isStopped = () => false;
 
   const app = createMockApp({
     workflows: {},
@@ -300,6 +301,7 @@ test('should not claim if open claims exceeds workloop capacity', async (t) => {
         setTimeout(resolve({ runs: [] }), 100);
       }),
   });
+  app.workloopHandles = new Map([[workloop, mockHandle]]);
   app.runWorkloopMap = {};
 
   // @ts-ignore
@@ -312,7 +314,7 @@ test('should not claim if open claims exceeds workloop capacity', async (t) => {
 
   // second claim should error and stop the loop actually
   await t.throwsAsync(() => claim(app, logger, workloop), {
-    message: 'Server at capacity',
+    message: 'Workloop at capacity',
   });
   t.true(didStopWorkloop);
 
@@ -353,7 +355,7 @@ test('should not claim if open claims + active runs exceeds workloop capacity', 
 
   // second claim should error
   await t.throwsAsync(() => claim(app, logger, workloop), {
-    message: 'Server at capacity',
+    message: 'Workloop at capacity',
   });
 
   // The prior claim should not have counted for anything

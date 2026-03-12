@@ -4,7 +4,35 @@ import claim from './claim';
 import type { ServerApp } from '../server';
 import type { CancelablePromise } from '../types';
 import type { Logger } from '@openfn/logger';
-import type { Workloop } from '../util/parse-workloops';
+import type { WorkloopConfig } from '../util/parse-workloops';
+
+export interface Workloop extends WorkloopConfig {
+  id: string;
+  activeRuns: Set<string>;
+  openClaims: Record<string, number>;
+}
+
+export interface WorkloopHandle {
+  stop: (reason?: string) => void;
+  isStopped: () => boolean;
+}
+
+export function createWorkloop(config: WorkloopConfig): Workloop {
+  return {
+    ...config,
+    id: `${config.queues.join('>')}:${config.capacity}`,
+    activeRuns: new Set(),
+    openClaims: {},
+  };
+}
+
+export function workloopHasCapacity(workloop: Workloop): boolean {
+  const pendingClaims = Object.values(workloop.openClaims).reduce(
+    (a, b) => a + b,
+    0
+  );
+  return workloop.activeRuns.size + pendingClaims < workloop.capacity;
+}
 
 const startWorkloop = (
   app: ServerApp,
@@ -12,7 +40,7 @@ const startWorkloop = (
   minBackoff: number,
   maxBackoff: number,
   workloop: Workloop
-): void => {
+): WorkloopHandle => {
   let promise: CancelablePromise;
   let cancelled = false;
 
@@ -36,14 +64,16 @@ const startWorkloop = (
   };
   workLoop();
 
-  workloop.stop = (reason = 'reason unknown') => {
+  const stop = (reason = 'reason unknown') => {
     if (!cancelled) {
       logger.info(`cancelling workloop: ${reason}`);
       cancelled = true;
       promise.cancel();
     }
   };
-  workloop.isStopped = () => cancelled;
+  const isStopped = () => cancelled;
+
+  return { stop, isStopped };
 };
 
 export default startWorkloop;

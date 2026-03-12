@@ -12,7 +12,7 @@ import {
 } from '../events';
 
 import type { ServerApp } from '../server';
-import type { Workloop } from '../util/parse-workloops';
+import type { Workloop } from './workloop';
 
 const mockLogger = createMockLogger();
 
@@ -70,15 +70,15 @@ const claim = (
 
     if (activeInWorkloop >= capacity) {
       // Important: stop the workloop so that we don't try and claim any more
-      workloop.stop(
+      app.workloopHandles?.get(workloop)?.stop(
         `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity})`
       );
-      return reject(new ClaimError('Server at capacity'));
+      return reject(new ClaimError('Workloop at capacity'));
     } else if (activeInWorkloop + pendingWorkloopClaims >= capacity) {
-      workloop.stop(
+      app.workloopHandles?.get(workloop)?.stop(
         `workloop ${workloop.id} at capacity (${activeInWorkloop}/${capacity}, ${pendingWorkloopClaims} pending)`
       );
-      return reject(new ClaimError('Server at capacity'));
+      return reject(new ClaimError('Workloop at capacity'));
     }
 
     if (!app.queueChannel) {

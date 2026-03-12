@@ -3,32 +3,6 @@ export interface WorkloopConfig {
   capacity: number;
 }
 
-export interface Workloop extends WorkloopConfig {
-  id: string;
-  activeRuns: Set<string>;
-  openClaims: Record<string, number>;
-  stop: (reason?: string) => void;
-  isStopped: () => boolean;
-}
-
-export function workloopHasCapacity(workloop: Workloop): boolean {
-  const pendingClaims = Object.values(workloop.openClaims).reduce(
-    (a, b) => a + b,
-    0
-  );
-  return workloop.activeRuns.size + pendingClaims < workloop.capacity;
-}
-
-export function createWorkloop(config: WorkloopConfig): Workloop {
-  return {
-    ...config,
-    id: `${config.queues.join('>')}:${config.capacity}`,
-    activeRuns: new Set(),
-    openClaims: {},
-    stop: () => {},
-    isStopped: () => true,
-  };
-}
 
 export class WorkloopValidationError extends Error {
   constructor(message: string) {
