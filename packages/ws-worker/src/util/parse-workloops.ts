@@ -3,7 +3,6 @@ export interface WorkloopConfig {
   capacity: number;
 }
 
-
 export class WorkloopValidationError extends Error {
   constructor(message: string) {
     super(message);
