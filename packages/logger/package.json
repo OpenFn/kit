@@ -14,7 +14,6 @@
     "build": "tsup --config ../../tsup.config.js src/index.ts",
     "build:watch": "pnpm build --watch",
     "test": "pnpm ava",
-    "test:ci": "pnpm ava --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/logger.xml",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "test:watch": "pnpm ava -w",
     "pack": "pnpm pack --pack-destination ../../dist"

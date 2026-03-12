@@ -7,7 +7,6 @@
   "type": "module",
   "scripts": {
     "test": "pnpm ava --serial",
-    "test:ci": "pnpm ava --serial --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/lightning-mock.xml",
     "test:types": "pnpm tsc --noEmit --project tsconfig.json",
     "build": "tsup --config ../../tsup.config.js src/index.ts --no-splitting",
     "build:watch": "pnpm build --watch",

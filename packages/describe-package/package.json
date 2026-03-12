@@ -27,7 +27,6 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "pnpm ava",
-    "test:ci": "pnpm ava --tap | tee /dev/stderr | npx tap-xunit > ../../test-results/describe-package.xml",
     "test:watch": "pnpm ava -w",
     "clean": "rimraf dist",
     "build:worker": "tsm esbuild-worker.ts",
