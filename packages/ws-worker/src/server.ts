@@ -29,6 +29,8 @@ import type { RuntimeEngine } from '@openfn/engine-multi';
 import type { Socket, Channel } from './types';
 import { convertRun } from './util';
 import type { Workloop, WorkloopHandle } from './api/workloop';
+import parseWorkloops from './util/parse-workloops';
+import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const exec = promisify(_exec);
 
@@ -263,7 +265,9 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
   app.workflows = {};
   app.destroyed = false;
 
-  app.workloops = options.workloopConfigs ?? [];
+  app.workloops =
+    options.workloopConfigs ??
+    parseWorkloops(getDefaultWorkloopConfig(options.maxWorkflows));
   app.workloopHandles = new Map();
   app.runWorkloopMap = {};
 
@@ -278,7 +282,7 @@ function createServer(engine: RuntimeEngine, options: ServerOptions = {}) {
 
   app.options = options;
 
-  // Start the workloop for a specific workloop (or all if none specified)
+  // Start a specific workloop (or all if none specified)
   // When called with a specific workloop (e.g. after a run completes), we restart
   // the workloop fresh so it claims immediately rather than waiting in backoff.
   app.resumeWorkloop = (workloop?: Workloop) => {

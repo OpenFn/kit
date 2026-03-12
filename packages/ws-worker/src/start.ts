@@ -5,22 +5,13 @@ import createMockRTE from './mock/runtime-engine';
 import createWorker, { ServerOptions } from './server';
 import cli from './util/cli';
 import parseWorkloops from './util/parse-workloops';
+import getDefaultWorkloopConfig from './util/get-default-workloop-config';
 
 const args = cli(process.argv);
 
-const defaultCapacity = args.capacity ?? 5;
-
-const workloopConfigs = args.workloops
-  ? parseWorkloops(args.workloops)
-  : [
-      {
-        id: `manual>*:${defaultCapacity}`,
-        queues: ['manual', '*'],
-        capacity: defaultCapacity,
-        activeRuns: new Set<string>(),
-        openClaims: {} as Record<string, number>,
-      },
-    ];
+const workloopConfigs = parseWorkloops(
+  args.workloops ?? getDefaultWorkloopConfig(args.capacity)
+);
 
 const effectiveCapacity = workloopConfigs.reduce(
   (sum, c) => sum + c.capacity,
